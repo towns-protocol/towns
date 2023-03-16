@@ -12,7 +12,7 @@ import useEvent from 'react-use-event-hook'
 import { TOGGLE_LINK_COMMAND } from '@lexical/link'
 import { BaseEmoji, EmojiData } from 'emoji-mart'
 import { createPortal } from 'react-dom'
-import { Box, RootLayerContext, Stack } from '@ui'
+import { Box, BoxProps, RootLayerContext, Stack } from '@ui'
 import { $createEmojiNode } from '../nodes/EmojiNode'
 import { RichTextEditorControls } from './Controls/RichTextEditorControls'
 import { InlineToolbar } from './InlineToolbar'
@@ -23,7 +23,9 @@ export const RichTextUI = (props: {
     editing?: boolean
     focused: boolean
     readOnly?: boolean
+    background?: BoxProps['background']
 }) => {
+    const { background = 'level2' } = props
     const [editor] = useLexicalComposerContext()
 
     const onSelectEmoji = useCallback(
@@ -142,7 +144,7 @@ export const RichTextUI = (props: {
         <Stack
             gap
             rounded="sm"
-            background="level3"
+            background={background}
             minWidth={props.readOnly ? undefined : '200'}
             position="relative"
             minHeight="x6"

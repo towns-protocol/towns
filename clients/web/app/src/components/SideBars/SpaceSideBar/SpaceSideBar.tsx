@@ -142,10 +142,10 @@ export const SpaceSideBar = (props: Props) => {
                         )}
                     </>
                 </Stack>
+                <Box grow paddingX="sm" paddingY="lg" justifyContent="end">
+                    <SentryReportModal />
+                </Box>
             </SideBar>
-            <Box width="100%" position="absolute" bottom="none" background="level1" padding="sm">
-                <SentryReportModal />
-            </Box>
         </>
     )
 }

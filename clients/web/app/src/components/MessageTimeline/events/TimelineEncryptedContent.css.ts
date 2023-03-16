@@ -14,7 +14,6 @@ export const hoverBackground = style({
 
 export const hoverColor = style({
     transition: 'color 320ms',
-    color: vars.color.background.level2,
     selectors: {
         [`${main}:hover &`]: {
             color: vars.color.foreground.gray2,

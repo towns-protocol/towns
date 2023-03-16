@@ -28,6 +28,7 @@ import { useSpaceChannels } from 'hooks/useSpaceChannels'
 import * as fieldStyles from 'ui/components/_internal/Field/Field.css'
 import { notUndefined } from 'ui/utils/utils'
 import { useStore } from 'store/store'
+import { BoxProps } from '@ui'
 import { useInitialConfig } from './hooks/useInitialConfig'
 import { AnnotationNode } from './nodes/AnnotationNode'
 import { ChannelLinkNode, createChannelLinkTransformer } from './nodes/ChannelLinkNode'
@@ -61,7 +62,7 @@ type Props = {
     container?: (props: { children: React.ReactNode }) => JSX.Element
     tabIndex?: number
     storageId?: string
-}
+} & Pick<BoxProps, 'background'>
 
 const fieldClassName = clsx([fieldStyles.field, styles.richText])
 const inputClassName = clsx([fieldStyles.field, styles.richText, styles.contentEditable])
@@ -194,7 +195,7 @@ export const RichTextEditor = (props: Props) => {
 
     return (
         <LexicalComposer initialConfig={initialConfig}>
-            <RichTextUI focused={focused} editing={isEditing}>
+            <RichTextUI focused={focused} editing={isEditing} background={props.background}>
                 <RichTextPlugin
                     contentEditable={
                         <ContentEditable className={inputClassName} tabIndex={tabIndex} />

@@ -37,6 +37,7 @@ import { env } from 'utils'
 import { Accordion, AccordionGroup } from 'ui/components/Accordion/Accordion'
 import { TownsTokenExample } from '@components/TownsToken/example/TownTokenExample'
 import { VListExample } from '../../ui/components/VList/example/VListExample'
+import { PageColors } from './pages/PageColors'
 
 const A3 = Array(3)
     .fill(undefined)
@@ -182,63 +183,8 @@ export const Playground = () => {
                     </ol>
                 </Box>
             </Container>
-            <Container label="Background (layer)">
-                {Object.keys(vars.color.layer).map((c) => (
-                    <Stack horizontal gap key={c} alignItems="center">
-                        <Grid grow columns={2} width="200">
-                            <Box
-                                border
-                                padding
-                                background={c as keyof typeof vars.color.background}
-                            >
-                                Text
-                            </Box>
-                            <Box justifyContent="center">{c}</Box>
-                        </Grid>
-                    </Stack>
-                ))}
-            </Container>
 
-            <Container label="Background (tones)">
-                {Object.keys(vars.color.tone).map((c) => (
-                    <Stack horizontal gap key={c} alignItems="center">
-                        <Grid grow columns={2} width="200">
-                            <Box border padding background={c as keyof typeof vars.color.tone}>
-                                Text
-                            </Box>
-                            <Box justifyContent="center">{c}</Box>
-                        </Grid>
-                    </Stack>
-                ))}
-            </Container>
-
-            <Container label="Text Color">
-                <Grid grow columns={2} gap="none">
-                    {Object.keys(vars.color.foreground).map((c) => (
-                        <>
-                            <Box borderBottom justifyContent="center">
-                                {c}
-                            </Box>
-                            <Box
-                                borderBottom
-                                padding
-                                background={
-                                    c === 'inverted'
-                                        ? 'inverted'
-                                        : c === 'onTone'
-                                        ? 'error'
-                                        : undefined
-                                }
-                                color={c as keyof typeof vars.color.foreground}
-                                fontWeight="strong"
-                                justifyContent="center"
-                            >
-                                {c}
-                            </Box>
-                        </>
-                    ))}
-                </Grid>
-            </Container>
+            <PageColors />
 
             <Container label="Buttons">
                 <Divider label="tones" />

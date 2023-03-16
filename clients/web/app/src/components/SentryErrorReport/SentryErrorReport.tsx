@@ -77,7 +77,7 @@ export const SentryReportModal = () => {
 
     return (
         <>
-            <Button rounded="sm" tone="level2" onClick={onShow}>
+            <Button rounded="sm" tone="level3" fontWeight="normal" color="gray2" onClick={onShow}>
                 <Icon type="help" />
                 Report a bug
             </Button>

@@ -4,6 +4,7 @@ import { scrollContainerClass } from 'ui/styles/globals/scrollcontainer.css'
 import { AtomNames, Atoms, atoms, boxClass, containerWithGapClass } from 'ui/styles/atoms.css'
 import { debugClass } from 'ui/styles/globals/debug.css'
 import { vars } from 'ui/styles/vars.css'
+import { elevateClass } from 'ui/styles/properties/colorProperties.css'
 
 const shorthands = {
     border: [{ border: 'default' }, { border: 'none' }],
@@ -25,6 +26,7 @@ const shorthands = {
     centerContent: [{ justifyContent: 'center', alignItems: 'center' }],
     absoluteFill: [{ position: 'absoluteFill' }, {}],
     transition: [{ transition: 'default' }, { transition: 'none' }],
+    elevate: [{ background: 'level2' }, {}],
 } as const
 
 const shorhandAttributes = new Set(Object.keys(shorthands))
@@ -126,6 +128,7 @@ export const Box = forwardRef<HTMLElement, Props>((props: Props, ref) => {
             ...atomShorthands,
         }),
         {
+            [elevateClass]: props.elevate,
             [containerWithGapClass]: props.gap && props.gap !== vars.space.none,
             [scrollContainerClass]: scroll,
             [debugClass]: debug,

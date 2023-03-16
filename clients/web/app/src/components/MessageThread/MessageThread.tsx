@@ -71,13 +71,7 @@ export const MessageThread = (props: {
                     </Paragraph>
                     {usernames && <Paragraph color="gray2">{usernames}</Paragraph>}
                 </Box>
-                <Stack scroll grow rounded="sm" background="level2" boxShadow="card">
-                    {/* {parentMessage && parentMessageContent && (
-                        <TimelineMessage
-                            event={parentMessage}
-                            eventContent={parentMessageContent}
-                        />
-                    )} */}
+                <Stack scroll grow elevate rounded="sm" boxShadow="card">
                     <Stack>
                         <MessageTimeline />
                         <Box padding>

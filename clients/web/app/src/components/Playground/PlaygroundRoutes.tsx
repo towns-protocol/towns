@@ -5,6 +5,7 @@ import { UploadImageDebugger } from '@components/UploadImage/UploadImage'
 import { env } from 'utils'
 import { PageToken } from './pages/PageToken'
 import { VListPlayground } from './pages/VListPlayground'
+import { PageColors } from './pages/PageColors'
 
 export const PlaygroundRoutes = () => {
     return (
@@ -12,6 +13,7 @@ export const PlaygroundRoutes = () => {
             <Route element={<PlaygroundMenuLayout />}>
                 <Route path="token" element={<PageToken />} />
                 <Route path="vlist" element={<VListPlayground />} />
+                <Route path="colors" element={<PageColors />} />
                 {env.IS_DEV && <Route path="upload" element={<UploadImageDebugger />} />}
             </Route>
         </Routes>

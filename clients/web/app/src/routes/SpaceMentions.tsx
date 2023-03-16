@@ -77,6 +77,7 @@ const MentionBox = (props: { mention: MentionResult; userId?: string }) => {
     return (
         <NavLink to={link}>
             <Box
+                elevate
                 rounded="md"
                 background={mention.unread ? 'level3' : 'level2'}
                 cursor="alias"

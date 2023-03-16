@@ -125,6 +125,7 @@ const SpacesChannelComponent = () => {
                     <Box gap paddingBottom="lg" paddingX="lg">
                         <RichTextEditor
                             editable
+                            background="level3"
                             key={channelId.networkId}
                             storageId={channel.id.networkId}
                             autoFocus={!hasThreadOpen}

@@ -44,7 +44,12 @@ export const TimelineEncryptedContent = React.memo(
                                 background="level2"
                                 className={styles.hoverBackground}
                             />
-                            <Icon type="nokey" size="square_sm" className={styles.hoverColor} />
+                            <Icon
+                                type="nokey"
+                                size="square_sm"
+                                className={styles.hoverColor}
+                                color="level2"
+                            />
                         </Box>
                     )}
                 </TooltipRenderer>
