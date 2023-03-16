@@ -90,6 +90,7 @@ export interface SpaceFactoryInterface extends utils.Interface {
     "renounceOwnership()": FunctionFragment;
     "setGatingEnabled(bool)": FunctionFragment;
     "setPaused(bool)": FunctionFragment;
+    "setSpaceToken(address)": FunctionFragment;
     "spaceByHash(bytes32)": FunctionFragment;
     "tokenByHash(bytes32)": FunctionFragment;
     "transferOwnership(address)": FunctionFragment;
@@ -120,6 +121,7 @@ export interface SpaceFactoryInterface extends utils.Interface {
       | "renounceOwnership"
       | "setGatingEnabled"
       | "setPaused"
+      | "setSpaceToken"
       | "spaceByHash"
       | "tokenByHash"
       | "transferOwnership"
@@ -221,6 +223,10 @@ export interface SpaceFactoryInterface extends utils.Interface {
     values: [PromiseOrValue<boolean>]
   ): string;
   encodeFunctionData(
+    functionFragment: "setSpaceToken",
+    values: [PromiseOrValue<string>]
+  ): string;
+  encodeFunctionData(
     functionFragment: "spaceByHash",
     values: [PromiseOrValue<BytesLike>]
   ): string;
@@ -318,6 +324,10 @@ export interface SpaceFactoryInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "setPaused", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "setSpaceToken",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "spaceByHash",
     data: BytesLike
@@ -528,6 +538,11 @@ export interface SpaceFactory extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
+    setSpaceToken(
+      _spaceToken: PromiseOrValue<string>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
     spaceByHash(
       arg0: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
@@ -644,6 +659,11 @@ export interface SpaceFactory extends BaseContract {
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
+  setSpaceToken(
+    _spaceToken: PromiseOrValue<string>,
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
   spaceByHash(
     arg0: PromiseOrValue<BytesLike>,
     overrides?: CallOverrides
@@ -755,6 +775,11 @@ export interface SpaceFactory extends BaseContract {
 
     setPaused(
       _paused: PromiseOrValue<boolean>,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
+    setSpaceToken(
+      _spaceToken: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -918,6 +943,11 @@ export interface SpaceFactory extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
+    setSpaceToken(
+      _spaceToken: PromiseOrValue<string>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
     spaceByHash(
       arg0: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
@@ -1044,6 +1074,11 @@ export interface SpaceFactory extends BaseContract {
 
     setPaused(
       _paused: PromiseOrValue<boolean>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    setSpaceToken(
+      _spaceToken: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 

@@ -16,8 +16,6 @@ import {TokenEntitlement} from "contracts/src/core/spaces/entitlements/TokenEnti
 import {ERC1967Proxy} from "openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import {Mock721, Mock1155, MockERC20} from "contracts/src/mocks/MockToken.sol";
 
-import {console} from "forge-std/console.sol";
-
 contract TokenEntitlementTest is SpaceBaseSetup {
   address internal entitlementAddress;
   TokenEntitlement internal implementation;
@@ -28,8 +26,9 @@ contract TokenEntitlementTest is SpaceBaseSetup {
   uint256 tokenId;
 
   function setUp() public {
+    tokenId = spaceToken.nextTokenId();
     vm.prank(address(spaceFactory));
-    tokenId = spaceToken.mintTo(address(this), "");
+    spaceToken.mintTo(address(this), "");
 
     implementation = new TokenEntitlement();
     entitlementAddress = address(

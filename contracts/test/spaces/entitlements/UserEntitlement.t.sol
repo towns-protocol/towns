@@ -23,8 +23,10 @@ contract UserEntitlementTest is SpaceBaseSetup {
   uint256 tokenId;
 
   function setUp() public {
+    tokenId = spaceToken.nextTokenId();
+
     vm.prank(address(spaceFactory));
-    tokenId = spaceToken.mintTo(address(this), "");
+    spaceToken.mintTo(address(this), "");
 
     implementation = new UserEntitlement();
     entitlementAddress = address(

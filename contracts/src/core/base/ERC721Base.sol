@@ -17,8 +17,6 @@ import {BatchMintMetadata} from "contracts/src/misc/BatchMintMetadata.sol";
 import {Ownable} from "openzeppelin-contracts/contracts/access/Ownable.sol";
 import {DefaultOperatorFilterer} from "operator-filter-registry/src/DefaultOperatorFilterer.sol";
 
-import {console} from "forge-std/console.sol";
-
 contract ERC721Base is
   ERC721A,
   Metadata,
@@ -47,9 +45,10 @@ contract ERC721Base is
     bytes4 interfaceId
   ) public view virtual override(Royalty, ERC721A) returns (bool) {
     return
-      interfaceId == type(IERC2981).interfaceId ||
-      interfaceId == type(IERC165).interfaceId ||
-      super.supportsInterface(interfaceId);
+      interfaceId == 0x01ffc9a7 || // ERC165 Interface ID for ERC165
+      interfaceId == 0x80ac58cd || // ERC165 Interface ID for ERC721
+      interfaceId == 0x5b5e139f || // ERC165 Interface ID for ERC721Metadata
+      interfaceId == type(IERC2981).interfaceId; // ERC165 ID for ERC2981
   }
 
   /// @notice Returns the metadata URI for an NFT

@@ -22,7 +22,7 @@ import {Council} from "contracts/src/core/governance/Council.sol";
 // tokens
 import {Towns} from "contracts/src/core/tokens/Towns.sol";
 import {Member} from "contracts/src/core/tokens/Member.sol";
-import {SpaceOwner} from "contracts/src/core/tokens/SpaceOwner.sol";
+import {TownOwner} from "contracts/src/core/tokens/TownOwner.sol";
 import {Operator} from "contracts/src/core/tokens/Operator.sol";
 
 // vaults
@@ -66,7 +66,7 @@ contract DeployDAO is ScriptUtils {
 
     towns = address(new Towns("Towns", "TOWNS"));
     member = address(new Member("Member", "MEMBER", "", ""));
-    owner = address(new SpaceOwner("SpaceOwner", "OWNER"));
+    owner = address(new TownOwner("TownOwner", "OWNER", deployer, 0));
     operator = address(new Operator("Operator", "OPERATOR", deployer, 0));
 
     // deploy timelock
@@ -160,7 +160,7 @@ contract DeployDAO is ScriptUtils {
     Council(council).setOwner(address(timelock));
 
     // set the space owner factory address to deployer
-    SpaceOwner(owner).setFactory(deployer);
+    TownOwner(owner).setFactory(deployer);
 
     vm.stopBroadcast();
 

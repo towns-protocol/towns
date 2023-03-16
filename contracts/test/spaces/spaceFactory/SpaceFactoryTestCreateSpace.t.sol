@@ -325,4 +325,14 @@ contract SpaceFactoryTestCreateSpace is SpaceBaseSetup {
       Space(spaceAddress).isEntitledToSpace(creator, Permissions.Owner)
     );
   }
+
+  function test_setSpaceToken() external {
+    address spaceToken = _randomAddress();
+
+    spaceFactory.setPaused(true);
+    spaceFactory.setSpaceToken(address(spaceToken));
+    spaceFactory.setPaused(false);
+
+    assertEq(spaceFactory.SPACE_TOKEN_ADDRESS(), address(spaceToken));
+  }
 }

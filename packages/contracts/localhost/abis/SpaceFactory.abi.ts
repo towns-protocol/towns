@@ -528,6 +528,19 @@ export default [
   {
     "inputs": [
       {
+        "internalType": "address",
+        "name": "_spaceToken",
+        "type": "address"
+      }
+    ],
+    "name": "setSpaceToken",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
         "internalType": "bytes32",
         "name": "",
         "type": "bytes32"
