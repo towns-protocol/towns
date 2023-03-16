@@ -25,8 +25,8 @@ jobs:
         name: Deploy to AWS ECS
         runs-on: ubuntu-latest
         permissions:
-          contents: write
-          packages: write
+            contents: write
+            packages: write
 
         steps:
             - name: Checkout

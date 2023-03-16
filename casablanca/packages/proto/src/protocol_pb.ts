@@ -3,232 +3,239 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import type { BinaryReadOptions, FieldList, JsonReadOptions, JsonValue, PartialMessage, PlainMessage } from "@bufbuild/protobuf";
-import { Message, proto3 } from "@bufbuild/protobuf";
+import type {
+    BinaryReadOptions,
+    FieldList,
+    JsonReadOptions,
+    JsonValue,
+    PartialMessage,
+    PlainMessage,
+} from '@bufbuild/protobuf'
+import { Message, proto3 } from '@bufbuild/protobuf'
 
 /**
  * @generated from enum casablanca.StreamKind
  */
 export enum StreamKind {
-  /**
-   * @generated from enum value: SK_UNSPECIFIED = 0;
-   */
-  SK_UNSPECIFIED = 0,
+    /**
+     * @generated from enum value: SK_UNSPECIFIED = 0;
+     */
+    SK_UNSPECIFIED = 0,
 
-  /**
-   * @generated from enum value: SK_USER = 1;
-   */
-  SK_USER = 1,
+    /**
+     * @generated from enum value: SK_USER = 1;
+     */
+    SK_USER = 1,
 
-  /**
-   * @generated from enum value: SK_SPACE = 2;
-   */
-  SK_SPACE = 2,
+    /**
+     * @generated from enum value: SK_SPACE = 2;
+     */
+    SK_SPACE = 2,
 
-  /**
-   * @generated from enum value: SK_CHANNEL = 3;
-   */
-  SK_CHANNEL = 3,
+    /**
+     * @generated from enum value: SK_CHANNEL = 3;
+     */
+    SK_CHANNEL = 3,
 }
 // Retrieve enum metadata with: proto3.getEnumType(StreamKind)
-proto3.util.setEnumType(StreamKind, "casablanca.StreamKind", [
-  { no: 0, name: "SK_UNSPECIFIED" },
-  { no: 1, name: "SK_USER" },
-  { no: 2, name: "SK_SPACE" },
-  { no: 3, name: "SK_CHANNEL" },
-]);
+proto3.util.setEnumType(StreamKind, 'casablanca.StreamKind', [
+    { no: 0, name: 'SK_UNSPECIFIED' },
+    { no: 1, name: 'SK_USER' },
+    { no: 2, name: 'SK_SPACE' },
+    { no: 3, name: 'SK_CHANNEL' },
+])
 
 /**
  * @generated from enum casablanca.StreamOp
  */
 export enum StreamOp {
-  /**
-   * @generated from enum value: SO_UNSPECIFIED = 0;
-   */
-  SO_UNSPECIFIED = 0,
+    /**
+     * @generated from enum value: SO_UNSPECIFIED = 0;
+     */
+    SO_UNSPECIFIED = 0,
 
-  /**
-   * @generated from enum value: SO_INVITE = 1;
-   */
-  SO_INVITE = 1,
+    /**
+     * @generated from enum value: SO_INVITE = 1;
+     */
+    SO_INVITE = 1,
 
-  /**
-   * @generated from enum value: SO_JOIN = 2;
-   */
-  SO_JOIN = 2,
+    /**
+     * @generated from enum value: SO_JOIN = 2;
+     */
+    SO_JOIN = 2,
 
-  /**
-   * @generated from enum value: SO_LEAVE = 3;
-   */
-  SO_LEAVE = 3,
+    /**
+     * @generated from enum value: SO_LEAVE = 3;
+     */
+    SO_LEAVE = 3,
 }
 // Retrieve enum metadata with: proto3.getEnumType(StreamOp)
-proto3.util.setEnumType(StreamOp, "casablanca.StreamOp", [
-  { no: 0, name: "SO_UNSPECIFIED" },
-  { no: 1, name: "SO_INVITE" },
-  { no: 2, name: "SO_JOIN" },
-  { no: 3, name: "SO_LEAVE" },
-]);
+proto3.util.setEnumType(StreamOp, 'casablanca.StreamOp', [
+    { no: 0, name: 'SO_UNSPECIFIED' },
+    { no: 1, name: 'SO_INVITE' },
+    { no: 2, name: 'SO_JOIN' },
+    { no: 3, name: 'SO_LEAVE' },
+])
 
 /**
  * @generated from enum casablanca.ChannelOp
  */
 export enum ChannelOp {
-  /**
-   * @generated from enum value: CO_UNSPECIFIED = 0;
-   */
-  CO_UNSPECIFIED = 0,
+    /**
+     * @generated from enum value: CO_UNSPECIFIED = 0;
+     */
+    CO_UNSPECIFIED = 0,
 
-  /**
-   * @generated from enum value: CO_CREATED = 1;
-   */
-  CO_CREATED = 1,
+    /**
+     * @generated from enum value: CO_CREATED = 1;
+     */
+    CO_CREATED = 1,
 
-  /**
-   * @generated from enum value: CO_DELETED = 2;
-   */
-  CO_DELETED = 2,
+    /**
+     * @generated from enum value: CO_DELETED = 2;
+     */
+    CO_DELETED = 2,
 }
 // Retrieve enum metadata with: proto3.getEnumType(ChannelOp)
-proto3.util.setEnumType(ChannelOp, "casablanca.ChannelOp", [
-  { no: 0, name: "CO_UNSPECIFIED" },
-  { no: 1, name: "CO_CREATED" },
-  { no: 2, name: "CO_DELETED" },
-]);
+proto3.util.setEnumType(ChannelOp, 'casablanca.ChannelOp', [
+    { no: 0, name: 'CO_UNSPECIFIED' },
+    { no: 1, name: 'CO_CREATED' },
+    { no: 2, name: 'CO_DELETED' },
+])
 
 /**
  * @generated from enum casablanca.Err
  */
 export enum Err {
-  /**
-   * @generated from enum value: ERR_UNSPECIFIED = 0;
-   */
-  ERR_UNSPECIFIED = 0,
+    /**
+     * @generated from enum value: ERR_UNSPECIFIED = 0;
+     */
+    ERR_UNSPECIFIED = 0,
 
-  /**
-   * @generated from enum value: DEBUG_ERROR = 1;
-   */
-  DEBUG_ERROR = 1,
+    /**
+     * @generated from enum value: DEBUG_ERROR = 1;
+     */
+    DEBUG_ERROR = 1,
 
-  /**
-   * @generated from enum value: BAD_STREAM_ID = 2;
-   */
-  BAD_STREAM_ID = 2,
+    /**
+     * @generated from enum value: BAD_STREAM_ID = 2;
+     */
+    BAD_STREAM_ID = 2,
 
-  /**
-   * @generated from enum value: BAD_STREAM_CREATION_PARAMS = 3;
-   */
-  BAD_STREAM_CREATION_PARAMS = 3,
+    /**
+     * @generated from enum value: BAD_STREAM_CREATION_PARAMS = 3;
+     */
+    BAD_STREAM_CREATION_PARAMS = 3,
 
-  /**
-   * @generated from enum value: STREAM_ALREADY_EXISTS = 4;
-   */
-  STREAM_ALREADY_EXISTS = 4,
+    /**
+     * @generated from enum value: STREAM_ALREADY_EXISTS = 4;
+     */
+    STREAM_ALREADY_EXISTS = 4,
 
-  /**
-   * @generated from enum value: INTERNAL_ERROR_SWITCH = 5;
-   */
-  INTERNAL_ERROR_SWITCH = 5,
+    /**
+     * @generated from enum value: INTERNAL_ERROR_SWITCH = 5;
+     */
+    INTERNAL_ERROR_SWITCH = 5,
 
-  /**
-   * @generated from enum value: BAD_EVENT_ID = 6;
-   */
-  BAD_EVENT_ID = 6,
+    /**
+     * @generated from enum value: BAD_EVENT_ID = 6;
+     */
+    BAD_EVENT_ID = 6,
 
-  /**
-   * @generated from enum value: BAD_EVENT_SIGNATURE = 7;
-   */
-  BAD_EVENT_SIGNATURE = 7,
+    /**
+     * @generated from enum value: BAD_EVENT_SIGNATURE = 7;
+     */
+    BAD_EVENT_SIGNATURE = 7,
 
-  /**
-   * @generated from enum value: BAD_HASH_FORMAT = 8;
-   */
-  BAD_HASH_FORMAT = 8,
+    /**
+     * @generated from enum value: BAD_HASH_FORMAT = 8;
+     */
+    BAD_HASH_FORMAT = 8,
 
-  /**
-   * @generated from enum value: BAD_PREV_EVENTS = 9;
-   */
-  BAD_PREV_EVENTS = 9,
+    /**
+     * @generated from enum value: BAD_PREV_EVENTS = 9;
+     */
+    BAD_PREV_EVENTS = 9,
 
-  /**
-   * @generated from enum value: NO_EVENT_SPECIFIED = 10;
-   */
-  NO_EVENT_SPECIFIED = 10,
+    /**
+     * @generated from enum value: NO_EVENT_SPECIFIED = 10;
+     */
+    NO_EVENT_SPECIFIED = 10,
 
-  /**
-   * @generated from enum value: BAD_EVENT = 11;
-   */
-  BAD_EVENT = 11,
+    /**
+     * @generated from enum value: BAD_EVENT = 11;
+     */
+    BAD_EVENT = 11,
 
-  /**
-   * @generated from enum value: USER_CANT_POST = 12;
-   */
-  USER_CANT_POST = 12,
+    /**
+     * @generated from enum value: USER_CANT_POST = 12;
+     */
+    USER_CANT_POST = 12,
 
-  /**
-   * @generated from enum value: STREAM_NOT_FOUND = 13;
-   */
-  STREAM_NOT_FOUND = 13,
+    /**
+     * @generated from enum value: STREAM_NOT_FOUND = 13;
+     */
+    STREAM_NOT_FOUND = 13,
 
-  /**
-   * @generated from enum value: STREAM_BAD_HASHES = 14;
-   */
-  STREAM_BAD_HASHES = 14,
+    /**
+     * @generated from enum value: STREAM_BAD_HASHES = 14;
+     */
+    STREAM_BAD_HASHES = 14,
 
-  /**
-   * @generated from enum value: STREAM_EMPTY = 15;
-   */
-  STREAM_EMPTY = 15,
+    /**
+     * @generated from enum value: STREAM_EMPTY = 15;
+     */
+    STREAM_EMPTY = 15,
 
-  /**
-   * @generated from enum value: STREAM_BAD_EVENT = 16;
-   */
-  STREAM_BAD_EVENT = 16,
+    /**
+     * @generated from enum value: STREAM_BAD_EVENT = 16;
+     */
+    STREAM_BAD_EVENT = 16,
 
-  /**
-   * @generated from enum value: BAD_DELEGATE_SIG = 17;
-   */
-  BAD_DELEGATE_SIG = 17,
+    /**
+     * @generated from enum value: BAD_DELEGATE_SIG = 17;
+     */
+    BAD_DELEGATE_SIG = 17,
 
-  /**
-   * @generated from enum value: BAD_PUBLIC_KEY = 18;
-   */
-  BAD_PUBLIC_KEY = 18,
+    /**
+     * @generated from enum value: BAD_PUBLIC_KEY = 18;
+     */
+    BAD_PUBLIC_KEY = 18,
 
-  /**
-   * @generated from enum value: BAD_PAYLOAD = 19;
-   */
-  BAD_PAYLOAD = 19,
+    /**
+     * @generated from enum value: BAD_PAYLOAD = 19;
+     */
+    BAD_PAYLOAD = 19,
 
-  /**
-   * @generated from enum value: BAD_HEX_STRING = 20;
-   */
-  BAD_HEX_STRING = 20,
+    /**
+     * @generated from enum value: BAD_HEX_STRING = 20;
+     */
+    BAD_HEX_STRING = 20,
 }
 // Retrieve enum metadata with: proto3.getEnumType(Err)
-proto3.util.setEnumType(Err, "casablanca.Err", [
-  { no: 0, name: "ERR_UNSPECIFIED" },
-  { no: 1, name: "DEBUG_ERROR" },
-  { no: 2, name: "BAD_STREAM_ID" },
-  { no: 3, name: "BAD_STREAM_CREATION_PARAMS" },
-  { no: 4, name: "STREAM_ALREADY_EXISTS" },
-  { no: 5, name: "INTERNAL_ERROR_SWITCH" },
-  { no: 6, name: "BAD_EVENT_ID" },
-  { no: 7, name: "BAD_EVENT_SIGNATURE" },
-  { no: 8, name: "BAD_HASH_FORMAT" },
-  { no: 9, name: "BAD_PREV_EVENTS" },
-  { no: 10, name: "NO_EVENT_SPECIFIED" },
-  { no: 11, name: "BAD_EVENT" },
-  { no: 12, name: "USER_CANT_POST" },
-  { no: 13, name: "STREAM_NOT_FOUND" },
-  { no: 14, name: "STREAM_BAD_HASHES" },
-  { no: 15, name: "STREAM_EMPTY" },
-  { no: 16, name: "STREAM_BAD_EVENT" },
-  { no: 17, name: "BAD_DELEGATE_SIG" },
-  { no: 18, name: "BAD_PUBLIC_KEY" },
-  { no: 19, name: "BAD_PAYLOAD" },
-  { no: 20, name: "BAD_HEX_STRING" },
-]);
+proto3.util.setEnumType(Err, 'casablanca.Err', [
+    { no: 0, name: 'ERR_UNSPECIFIED' },
+    { no: 1, name: 'DEBUG_ERROR' },
+    { no: 2, name: 'BAD_STREAM_ID' },
+    { no: 3, name: 'BAD_STREAM_CREATION_PARAMS' },
+    { no: 4, name: 'STREAM_ALREADY_EXISTS' },
+    { no: 5, name: 'INTERNAL_ERROR_SWITCH' },
+    { no: 6, name: 'BAD_EVENT_ID' },
+    { no: 7, name: 'BAD_EVENT_SIGNATURE' },
+    { no: 8, name: 'BAD_HASH_FORMAT' },
+    { no: 9, name: 'BAD_PREV_EVENTS' },
+    { no: 10, name: 'NO_EVENT_SPECIFIED' },
+    { no: 11, name: 'BAD_EVENT' },
+    { no: 12, name: 'USER_CANT_POST' },
+    { no: 13, name: 'STREAM_NOT_FOUND' },
+    { no: 14, name: 'STREAM_BAD_HASHES' },
+    { no: 15, name: 'STREAM_EMPTY' },
+    { no: 16, name: 'STREAM_BAD_EVENT' },
+    { no: 17, name: 'BAD_DELEGATE_SIG' },
+    { no: 18, name: 'BAD_PUBLIC_KEY' },
+    { no: 19, name: 'BAD_PAYLOAD' },
+    { no: 20, name: 'BAD_HEX_STRING' },
+])
 
 /**
  *
@@ -238,148 +245,160 @@ proto3.util.setEnumType(Err, "casablanca.Err", [
  * @generated from message casablanca.Envelope
  */
 export class Envelope extends Message<Envelope> {
-  /**
-   *
-   * Hash of BaseEvent formatted as 0x1234abcd
-   * While hash can be recalculated from the BaseEvent, having it here explicitely
-   * makes it easier to work with event.
-   * For the event to be valid, must match hash of BaseEvent.
-   *
-   * @generated from field: bytes hash = 1;
-   */
-  hash = new Uint8Array(0);
+    /**
+     *
+     * Hash of BaseEvent formatted as 0x1234abcd
+     * While hash can be recalculated from the BaseEvent, having it here explicitely
+     * makes it easier to work with event.
+     * For the event to be valid, must match hash of BaseEvent.
+     *
+     * @generated from field: bytes hash = 1;
+     */
+    hash = new Uint8Array(0)
 
-  /**
-   *
-   * Signature in the form 0x1234
-   * For the event to be valid, signature must match base.creatorAddress or
-   * be signed by base.delegateSig.
-   *
-   * @generated from field: bytes signature = 2;
-   */
-  signature = new Uint8Array(0);
+    /**
+     *
+     * Signature in the form 0x1234
+     * For the event to be valid, signature must match base.creatorAddress or
+     * be signed by base.delegateSig.
+     *
+     * @generated from field: bytes signature = 2;
+     */
+    signature = new Uint8Array(0)
 
-  /**
-   * @generated from field: bytes event = 3;
-   */
-  event = new Uint8Array(0);
+    /**
+     * @generated from field: bytes event = 3;
+     */
+    event = new Uint8Array(0)
 
-  constructor(data?: PartialMessage<Envelope>) {
-    super();
-    proto3.util.initPartial(data, this);
-  }
+    constructor(data?: PartialMessage<Envelope>) {
+        super()
+        proto3.util.initPartial(data, this)
+    }
 
-  static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "casablanca.Envelope";
-  static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "hash", kind: "scalar", T: 12 /* ScalarType.BYTES */ },
-    { no: 2, name: "signature", kind: "scalar", T: 12 /* ScalarType.BYTES */ },
-    { no: 3, name: "event", kind: "scalar", T: 12 /* ScalarType.BYTES */ },
-  ]);
+    static readonly runtime: typeof proto3 = proto3
+    static readonly typeName = 'casablanca.Envelope'
+    static readonly fields: FieldList = proto3.util.newFieldList(() => [
+        { no: 1, name: 'hash', kind: 'scalar', T: 12 /* ScalarType.BYTES */ },
+        { no: 2, name: 'signature', kind: 'scalar', T: 12 /* ScalarType.BYTES */ },
+        { no: 3, name: 'event', kind: 'scalar', T: 12 /* ScalarType.BYTES */ },
+    ])
 
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): Envelope {
-    return new Envelope().fromBinary(bytes, options);
-  }
+    static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): Envelope {
+        return new Envelope().fromBinary(bytes, options)
+    }
 
-  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): Envelope {
-    return new Envelope().fromJson(jsonValue, options);
-  }
+    static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): Envelope {
+        return new Envelope().fromJson(jsonValue, options)
+    }
 
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): Envelope {
-    return new Envelope().fromJsonString(jsonString, options);
-  }
+    static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): Envelope {
+        return new Envelope().fromJsonString(jsonString, options)
+    }
 
-  static equals(a: Envelope | PlainMessage<Envelope> | undefined, b: Envelope | PlainMessage<Envelope> | undefined): boolean {
-    return proto3.util.equals(Envelope, a, b);
-  }
+    static equals(
+        a: Envelope | PlainMessage<Envelope> | undefined,
+        b: Envelope | PlainMessage<Envelope> | undefined,
+    ): boolean {
+        return proto3.util.equals(Envelope, a, b)
+    }
 }
 
 /**
  * @generated from message casablanca.StreamEvent
  */
 export class StreamEvent extends Message<StreamEvent> {
-  /**
-   *
-   * Address in the form 0xABcD...
-   * Checksummed according to EIP-55.
-   * Creator address can be recovered from the signature, but having
-   * it explicitly in the event makes it easier to work with the event.
-   * For the event to be valid:
-   * If delegateSig is present, creatorAddress must match delegateSig.
-   * If delegateSig is not present, creatorAddress must match event signature.
-   *
-   * @generated from field: bytes creator_address = 1;
-   */
-  creatorAddress = new Uint8Array(0);
+    /**
+     *
+     * Address in the form 0xABcD...
+     * Checksummed according to EIP-55.
+     * Creator address can be recovered from the signature, but having
+     * it explicitly in the event makes it easier to work with the event.
+     * For the event to be valid:
+     * If delegateSig is present, creatorAddress must match delegateSig.
+     * If delegateSig is not present, creatorAddress must match event signature.
+     *
+     * @generated from field: bytes creator_address = 1;
+     */
+    creatorAddress = new Uint8Array(0)
 
-  /**
-   *
-   * Signature that signs public key of the keypair that is used to sign the event.
-   * If present, creatorAddress must match delegateSig and
-   * FullEvent.signature's public key must be signed by delegateSig.
-   *
-   * delegateSig is used to delegate signing authority to another address.
-   * Specifically, it is used to delegate signing authority to an app-managed
-   * keypair from the user's wallet.
-   *
-   * Server nodes sign node-produced events with their own keypair and do not
-   * need to use delegateSig.
-   *
-   * @generated from field: bytes delegage_sig = 2;
-   */
-  delegageSig = new Uint8Array(0);
+    /**
+     *
+     * Signature that signs public key of the keypair that is used to sign the event.
+     * If present, creatorAddress must match delegateSig and
+     * FullEvent.signature's public key must be signed by delegateSig.
+     *
+     * delegateSig is used to delegate signing authority to another address.
+     * Specifically, it is used to delegate signing authority to an app-managed
+     * keypair from the user's wallet.
+     *
+     * Server nodes sign node-produced events with their own keypair and do not
+     * need to use delegateSig.
+     *
+     * @generated from field: bytes delegage_sig = 2;
+     */
+    delegageSig = new Uint8Array(0)
 
-  /**
-   * TODO: move salt to inception event 
-   *
-   * @generated from field: bytes salt = 3;
-   */
-  salt = new Uint8Array(0);
+    /**
+     * TODO: move salt to inception event
+     *
+     * @generated from field: bytes salt = 3;
+     */
+    salt = new Uint8Array(0)
 
-  /**
-   * Hashes of the preceding leaf events in the stream. Empty array for the inception event. 
-   *
-   * @generated from field: repeated bytes prev_events = 4;
-   */
-  prevEvents: Uint8Array[] = [];
+    /**
+     * Hashes of the preceding leaf events in the stream. Empty array for the inception event.
+     *
+     * @generated from field: repeated bytes prev_events = 4;
+     */
+    prevEvents: Uint8Array[] = []
 
-  /**
-   * Variable-type payload. 
-   *
-   * @generated from field: casablanca.Payload payload = 5;
-   */
-  payload?: Payload;
+    /**
+     * Variable-type payload.
+     *
+     * @generated from field: casablanca.Payload payload = 5;
+     */
+    payload?: Payload
 
-  constructor(data?: PartialMessage<StreamEvent>) {
-    super();
-    proto3.util.initPartial(data, this);
-  }
+    constructor(data?: PartialMessage<StreamEvent>) {
+        super()
+        proto3.util.initPartial(data, this)
+    }
 
-  static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "casablanca.StreamEvent";
-  static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "creator_address", kind: "scalar", T: 12 /* ScalarType.BYTES */ },
-    { no: 2, name: "delegage_sig", kind: "scalar", T: 12 /* ScalarType.BYTES */ },
-    { no: 3, name: "salt", kind: "scalar", T: 12 /* ScalarType.BYTES */ },
-    { no: 4, name: "prev_events", kind: "scalar", T: 12 /* ScalarType.BYTES */, repeated: true },
-    { no: 5, name: "payload", kind: "message", T: Payload },
-  ]);
+    static readonly runtime: typeof proto3 = proto3
+    static readonly typeName = 'casablanca.StreamEvent'
+    static readonly fields: FieldList = proto3.util.newFieldList(() => [
+        { no: 1, name: 'creator_address', kind: 'scalar', T: 12 /* ScalarType.BYTES */ },
+        { no: 2, name: 'delegage_sig', kind: 'scalar', T: 12 /* ScalarType.BYTES */ },
+        { no: 3, name: 'salt', kind: 'scalar', T: 12 /* ScalarType.BYTES */ },
+        {
+            no: 4,
+            name: 'prev_events',
+            kind: 'scalar',
+            T: 12 /* ScalarType.BYTES */,
+            repeated: true,
+        },
+        { no: 5, name: 'payload', kind: 'message', T: Payload },
+    ])
 
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): StreamEvent {
-    return new StreamEvent().fromBinary(bytes, options);
-  }
+    static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): StreamEvent {
+        return new StreamEvent().fromBinary(bytes, options)
+    }
 
-  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): StreamEvent {
-    return new StreamEvent().fromJson(jsonValue, options);
-  }
+    static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): StreamEvent {
+        return new StreamEvent().fromJson(jsonValue, options)
+    }
 
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): StreamEvent {
-    return new StreamEvent().fromJsonString(jsonString, options);
-  }
+    static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): StreamEvent {
+        return new StreamEvent().fromJsonString(jsonString, options)
+    }
 
-  static equals(a: StreamEvent | PlainMessage<StreamEvent> | undefined, b: StreamEvent | PlainMessage<StreamEvent> | undefined): boolean {
-    return proto3.util.equals(StreamEvent, a, b);
-  }
+    static equals(
+        a: StreamEvent | PlainMessage<StreamEvent> | undefined,
+        b: StreamEvent | PlainMessage<StreamEvent> | undefined,
+    ): boolean {
+        return proto3.util.equals(StreamEvent, a, b)
+    }
 }
 
 /**
@@ -393,826 +412,953 @@ export class StreamEvent extends Message<StreamEvent> {
  * @generated from message casablanca.EventRef
  */
 export class EventRef extends Message<EventRef> {
-  /**
-   * @generated from field: string stream_id = 1;
-   */
-  streamId = "";
+    /**
+     * @generated from field: string stream_id = 1;
+     */
+    streamId = ''
 
-  /**
-   * @generated from field: bytes hash = 2;
-   */
-  hash = new Uint8Array(0);
+    /**
+     * @generated from field: bytes hash = 2;
+     */
+    hash = new Uint8Array(0)
 
-  /**
-   * @generated from field: bytes signature = 3;
-   */
-  signature = new Uint8Array(0);
+    /**
+     * @generated from field: bytes signature = 3;
+     */
+    signature = new Uint8Array(0)
 
-  constructor(data?: PartialMessage<EventRef>) {
-    super();
-    proto3.util.initPartial(data, this);
-  }
+    constructor(data?: PartialMessage<EventRef>) {
+        super()
+        proto3.util.initPartial(data, this)
+    }
 
-  static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "casablanca.EventRef";
-  static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "stream_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 2, name: "hash", kind: "scalar", T: 12 /* ScalarType.BYTES */ },
-    { no: 3, name: "signature", kind: "scalar", T: 12 /* ScalarType.BYTES */ },
-  ]);
+    static readonly runtime: typeof proto3 = proto3
+    static readonly typeName = 'casablanca.EventRef'
+    static readonly fields: FieldList = proto3.util.newFieldList(() => [
+        { no: 1, name: 'stream_id', kind: 'scalar', T: 9 /* ScalarType.STRING */ },
+        { no: 2, name: 'hash', kind: 'scalar', T: 12 /* ScalarType.BYTES */ },
+        { no: 3, name: 'signature', kind: 'scalar', T: 12 /* ScalarType.BYTES */ },
+    ])
 
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): EventRef {
-    return new EventRef().fromBinary(bytes, options);
-  }
+    static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): EventRef {
+        return new EventRef().fromBinary(bytes, options)
+    }
 
-  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): EventRef {
-    return new EventRef().fromJson(jsonValue, options);
-  }
+    static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): EventRef {
+        return new EventRef().fromJson(jsonValue, options)
+    }
 
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): EventRef {
-    return new EventRef().fromJsonString(jsonString, options);
-  }
+    static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): EventRef {
+        return new EventRef().fromJsonString(jsonString, options)
+    }
 
-  static equals(a: EventRef | PlainMessage<EventRef> | undefined, b: EventRef | PlainMessage<EventRef> | undefined): boolean {
-    return proto3.util.equals(EventRef, a, b);
-  }
+    static equals(
+        a: EventRef | PlainMessage<EventRef> | undefined,
+        b: EventRef | PlainMessage<EventRef> | undefined,
+    ): boolean {
+        return proto3.util.equals(EventRef, a, b)
+    }
 }
 
 /**
  * @generated from message casablanca.Payload
  */
 export class Payload extends Message<Payload> {
-  /**
-   * @generated from oneof casablanca.Payload.payload
-   */
-  payload: {
     /**
-     * @generated from field: casablanca.Payload.Inception inception = 1;
+     * @generated from oneof casablanca.Payload.payload
      */
-    value: Payload_Inception;
-    case: "inception";
-  } | {
-    /**
-     * @generated from field: casablanca.Payload.UserStreamOp user_stream_op = 2;
-     */
-    value: Payload_UserStreamOp;
-    case: "userStreamOp";
-  } | {
-    /**
-     * @generated from field: casablanca.Payload.JoinableStream joinable_stream = 3;
-     */
-    value: Payload_JoinableStream;
-    case: "joinableStream";
-  } | {
-    /**
-     * @generated from field: casablanca.Payload.Channel channel = 4;
-     */
-    value: Payload_Channel;
-    case: "channel";
-  } | {
-    /**
-     * @generated from field: casablanca.Payload.Message message = 5;
-     */
-    value: Payload_Message;
-    case: "message";
-  } | { case: undefined; value?: undefined } = { case: undefined };
+    payload:
+        | {
+              /**
+               * @generated from field: casablanca.Payload.Inception inception = 1;
+               */
+              value: Payload_Inception
+              case: 'inception'
+          }
+        | {
+              /**
+               * @generated from field: casablanca.Payload.UserStreamOp user_stream_op = 2;
+               */
+              value: Payload_UserStreamOp
+              case: 'userStreamOp'
+          }
+        | {
+              /**
+               * @generated from field: casablanca.Payload.JoinableStream joinable_stream = 3;
+               */
+              value: Payload_JoinableStream
+              case: 'joinableStream'
+          }
+        | {
+              /**
+               * @generated from field: casablanca.Payload.Channel channel = 4;
+               */
+              value: Payload_Channel
+              case: 'channel'
+          }
+        | {
+              /**
+               * @generated from field: casablanca.Payload.Message message = 5;
+               */
+              value: Payload_Message
+              case: 'message'
+          }
+        | { case: undefined; value?: undefined } = { case: undefined }
 
-  constructor(data?: PartialMessage<Payload>) {
-    super();
-    proto3.util.initPartial(data, this);
-  }
+    constructor(data?: PartialMessage<Payload>) {
+        super()
+        proto3.util.initPartial(data, this)
+    }
 
-  static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "casablanca.Payload";
-  static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "inception", kind: "message", T: Payload_Inception, oneof: "payload" },
-    { no: 2, name: "user_stream_op", kind: "message", T: Payload_UserStreamOp, oneof: "payload" },
-    { no: 3, name: "joinable_stream", kind: "message", T: Payload_JoinableStream, oneof: "payload" },
-    { no: 4, name: "channel", kind: "message", T: Payload_Channel, oneof: "payload" },
-    { no: 5, name: "message", kind: "message", T: Payload_Message, oneof: "payload" },
-  ]);
+    static readonly runtime: typeof proto3 = proto3
+    static readonly typeName = 'casablanca.Payload'
+    static readonly fields: FieldList = proto3.util.newFieldList(() => [
+        { no: 1, name: 'inception', kind: 'message', T: Payload_Inception, oneof: 'payload' },
+        {
+            no: 2,
+            name: 'user_stream_op',
+            kind: 'message',
+            T: Payload_UserStreamOp,
+            oneof: 'payload',
+        },
+        {
+            no: 3,
+            name: 'joinable_stream',
+            kind: 'message',
+            T: Payload_JoinableStream,
+            oneof: 'payload',
+        },
+        { no: 4, name: 'channel', kind: 'message', T: Payload_Channel, oneof: 'payload' },
+        { no: 5, name: 'message', kind: 'message', T: Payload_Message, oneof: 'payload' },
+    ])
 
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): Payload {
-    return new Payload().fromBinary(bytes, options);
-  }
+    static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): Payload {
+        return new Payload().fromBinary(bytes, options)
+    }
 
-  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): Payload {
-    return new Payload().fromJson(jsonValue, options);
-  }
+    static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): Payload {
+        return new Payload().fromJson(jsonValue, options)
+    }
 
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): Payload {
-    return new Payload().fromJsonString(jsonString, options);
-  }
+    static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): Payload {
+        return new Payload().fromJsonString(jsonString, options)
+    }
 
-  static equals(a: Payload | PlainMessage<Payload> | undefined, b: Payload | PlainMessage<Payload> | undefined): boolean {
-    return proto3.util.equals(Payload, a, b);
-  }
+    static equals(
+        a: Payload | PlainMessage<Payload> | undefined,
+        b: Payload | PlainMessage<Payload> | undefined,
+    ): boolean {
+        return proto3.util.equals(Payload, a, b)
+    }
 }
 
 /**
  * @generated from message casablanca.Payload.Inception
  */
 export class Payload_Inception extends Message<Payload_Inception> {
-  /**
-   * @generated from field: string stream_id = 1;
-   */
-  streamId = "";
+    /**
+     * @generated from field: string stream_id = 1;
+     */
+    streamId = ''
 
-  /**
-   * @generated from field: casablanca.StreamKind stream_kind = 2;
-   */
-  streamKind = StreamKind.SK_UNSPECIFIED;
+    /**
+     * @generated from field: casablanca.StreamKind stream_kind = 2;
+     */
+    streamKind = StreamKind.SK_UNSPECIFIED
 
-  /**
-   * @generated from field: string space_id = 3;
-   */
-  spaceId = "";
+    /**
+     * @generated from field: string space_id = 3;
+     */
+    spaceId = ''
 
-  constructor(data?: PartialMessage<Payload_Inception>) {
-    super();
-    proto3.util.initPartial(data, this);
-  }
+    constructor(data?: PartialMessage<Payload_Inception>) {
+        super()
+        proto3.util.initPartial(data, this)
+    }
 
-  static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "casablanca.Payload.Inception";
-  static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "stream_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 2, name: "stream_kind", kind: "enum", T: proto3.getEnumType(StreamKind) },
-    { no: 3, name: "space_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-  ]);
+    static readonly runtime: typeof proto3 = proto3
+    static readonly typeName = 'casablanca.Payload.Inception'
+    static readonly fields: FieldList = proto3.util.newFieldList(() => [
+        { no: 1, name: 'stream_id', kind: 'scalar', T: 9 /* ScalarType.STRING */ },
+        { no: 2, name: 'stream_kind', kind: 'enum', T: proto3.getEnumType(StreamKind) },
+        { no: 3, name: 'space_id', kind: 'scalar', T: 9 /* ScalarType.STRING */ },
+    ])
 
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): Payload_Inception {
-    return new Payload_Inception().fromBinary(bytes, options);
-  }
+    static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): Payload_Inception {
+        return new Payload_Inception().fromBinary(bytes, options)
+    }
 
-  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): Payload_Inception {
-    return new Payload_Inception().fromJson(jsonValue, options);
-  }
+    static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): Payload_Inception {
+        return new Payload_Inception().fromJson(jsonValue, options)
+    }
 
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): Payload_Inception {
-    return new Payload_Inception().fromJsonString(jsonString, options);
-  }
+    static fromJsonString(
+        jsonString: string,
+        options?: Partial<JsonReadOptions>,
+    ): Payload_Inception {
+        return new Payload_Inception().fromJsonString(jsonString, options)
+    }
 
-  static equals(a: Payload_Inception | PlainMessage<Payload_Inception> | undefined, b: Payload_Inception | PlainMessage<Payload_Inception> | undefined): boolean {
-    return proto3.util.equals(Payload_Inception, a, b);
-  }
+    static equals(
+        a: Payload_Inception | PlainMessage<Payload_Inception> | undefined,
+        b: Payload_Inception | PlainMessage<Payload_Inception> | undefined,
+    ): boolean {
+        return proto3.util.equals(Payload_Inception, a, b)
+    }
 }
 
 /**
  * @generated from message casablanca.Payload.UserStreamOp
  */
 export class Payload_UserStreamOp extends Message<Payload_UserStreamOp> {
-  /**
-   * @generated from field: casablanca.StreamOp op = 1;
-   */
-  op = StreamOp.SO_UNSPECIFIED;
+    /**
+     * @generated from field: casablanca.StreamOp op = 1;
+     */
+    op = StreamOp.SO_UNSPECIFIED
 
-  /**
-   * @generated from field: string stream_id = 2;
-   */
-  streamId = "";
+    /**
+     * @generated from field: string stream_id = 2;
+     */
+    streamId = ''
 
-  /**
-   * @generated from field: string inviter_id = 3;
-   */
-  inviterId = "";
+    /**
+     * @generated from field: string inviter_id = 3;
+     */
+    inviterId = ''
 
-  /**
-   * @generated from field: casablanca.EventRef origin_event = 4;
-   */
-  originEvent?: EventRef;
+    /**
+     * @generated from field: casablanca.EventRef origin_event = 4;
+     */
+    originEvent?: EventRef
 
-  constructor(data?: PartialMessage<Payload_UserStreamOp>) {
-    super();
-    proto3.util.initPartial(data, this);
-  }
+    constructor(data?: PartialMessage<Payload_UserStreamOp>) {
+        super()
+        proto3.util.initPartial(data, this)
+    }
 
-  static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "casablanca.Payload.UserStreamOp";
-  static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "op", kind: "enum", T: proto3.getEnumType(StreamOp) },
-    { no: 2, name: "stream_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 3, name: "inviter_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 4, name: "origin_event", kind: "message", T: EventRef },
-  ]);
+    static readonly runtime: typeof proto3 = proto3
+    static readonly typeName = 'casablanca.Payload.UserStreamOp'
+    static readonly fields: FieldList = proto3.util.newFieldList(() => [
+        { no: 1, name: 'op', kind: 'enum', T: proto3.getEnumType(StreamOp) },
+        { no: 2, name: 'stream_id', kind: 'scalar', T: 9 /* ScalarType.STRING */ },
+        { no: 3, name: 'inviter_id', kind: 'scalar', T: 9 /* ScalarType.STRING */ },
+        { no: 4, name: 'origin_event', kind: 'message', T: EventRef },
+    ])
 
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): Payload_UserStreamOp {
-    return new Payload_UserStreamOp().fromBinary(bytes, options);
-  }
+    static fromBinary(
+        bytes: Uint8Array,
+        options?: Partial<BinaryReadOptions>,
+    ): Payload_UserStreamOp {
+        return new Payload_UserStreamOp().fromBinary(bytes, options)
+    }
 
-  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): Payload_UserStreamOp {
-    return new Payload_UserStreamOp().fromJson(jsonValue, options);
-  }
+    static fromJson(
+        jsonValue: JsonValue,
+        options?: Partial<JsonReadOptions>,
+    ): Payload_UserStreamOp {
+        return new Payload_UserStreamOp().fromJson(jsonValue, options)
+    }
 
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): Payload_UserStreamOp {
-    return new Payload_UserStreamOp().fromJsonString(jsonString, options);
-  }
+    static fromJsonString(
+        jsonString: string,
+        options?: Partial<JsonReadOptions>,
+    ): Payload_UserStreamOp {
+        return new Payload_UserStreamOp().fromJsonString(jsonString, options)
+    }
 
-  static equals(a: Payload_UserStreamOp | PlainMessage<Payload_UserStreamOp> | undefined, b: Payload_UserStreamOp | PlainMessage<Payload_UserStreamOp> | undefined): boolean {
-    return proto3.util.equals(Payload_UserStreamOp, a, b);
-  }
+    static equals(
+        a: Payload_UserStreamOp | PlainMessage<Payload_UserStreamOp> | undefined,
+        b: Payload_UserStreamOp | PlainMessage<Payload_UserStreamOp> | undefined,
+    ): boolean {
+        return proto3.util.equals(Payload_UserStreamOp, a, b)
+    }
 }
 
 /**
  * @generated from message casablanca.Payload.JoinableStream
  */
 export class Payload_JoinableStream extends Message<Payload_JoinableStream> {
-  /**
-   * @generated from field: casablanca.StreamOp op = 1;
-   */
-  op = StreamOp.SO_UNSPECIFIED;
+    /**
+     * @generated from field: casablanca.StreamOp op = 1;
+     */
+    op = StreamOp.SO_UNSPECIFIED
 
-  /**
-   * @generated from field: string user_id = 2;
-   */
-  userId = "";
+    /**
+     * @generated from field: string user_id = 2;
+     */
+    userId = ''
 
-  constructor(data?: PartialMessage<Payload_JoinableStream>) {
-    super();
-    proto3.util.initPartial(data, this);
-  }
+    constructor(data?: PartialMessage<Payload_JoinableStream>) {
+        super()
+        proto3.util.initPartial(data, this)
+    }
 
-  static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "casablanca.Payload.JoinableStream";
-  static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "op", kind: "enum", T: proto3.getEnumType(StreamOp) },
-    { no: 2, name: "user_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-  ]);
+    static readonly runtime: typeof proto3 = proto3
+    static readonly typeName = 'casablanca.Payload.JoinableStream'
+    static readonly fields: FieldList = proto3.util.newFieldList(() => [
+        { no: 1, name: 'op', kind: 'enum', T: proto3.getEnumType(StreamOp) },
+        { no: 2, name: 'user_id', kind: 'scalar', T: 9 /* ScalarType.STRING */ },
+    ])
 
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): Payload_JoinableStream {
-    return new Payload_JoinableStream().fromBinary(bytes, options);
-  }
+    static fromBinary(
+        bytes: Uint8Array,
+        options?: Partial<BinaryReadOptions>,
+    ): Payload_JoinableStream {
+        return new Payload_JoinableStream().fromBinary(bytes, options)
+    }
 
-  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): Payload_JoinableStream {
-    return new Payload_JoinableStream().fromJson(jsonValue, options);
-  }
+    static fromJson(
+        jsonValue: JsonValue,
+        options?: Partial<JsonReadOptions>,
+    ): Payload_JoinableStream {
+        return new Payload_JoinableStream().fromJson(jsonValue, options)
+    }
 
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): Payload_JoinableStream {
-    return new Payload_JoinableStream().fromJsonString(jsonString, options);
-  }
+    static fromJsonString(
+        jsonString: string,
+        options?: Partial<JsonReadOptions>,
+    ): Payload_JoinableStream {
+        return new Payload_JoinableStream().fromJsonString(jsonString, options)
+    }
 
-  static equals(a: Payload_JoinableStream | PlainMessage<Payload_JoinableStream> | undefined, b: Payload_JoinableStream | PlainMessage<Payload_JoinableStream> | undefined): boolean {
-    return proto3.util.equals(Payload_JoinableStream, a, b);
-  }
+    static equals(
+        a: Payload_JoinableStream | PlainMessage<Payload_JoinableStream> | undefined,
+        b: Payload_JoinableStream | PlainMessage<Payload_JoinableStream> | undefined,
+    ): boolean {
+        return proto3.util.equals(Payload_JoinableStream, a, b)
+    }
 }
 
 /**
  * @generated from message casablanca.Payload.Channel
  */
 export class Payload_Channel extends Message<Payload_Channel> {
-  /**
-   * @generated from field: casablanca.ChannelOp op = 1;
-   */
-  op = ChannelOp.CO_UNSPECIFIED;
+    /**
+     * @generated from field: casablanca.ChannelOp op = 1;
+     */
+    op = ChannelOp.CO_UNSPECIFIED
 
-  /**
-   * @generated from field: string channel_id = 2;
-   */
-  channelId = "";
+    /**
+     * @generated from field: string channel_id = 2;
+     */
+    channelId = ''
 
-  /**
-   * @generated from field: casablanca.EventRef origin_event = 3;
-   */
-  originEvent?: EventRef;
+    /**
+     * @generated from field: casablanca.EventRef origin_event = 3;
+     */
+    originEvent?: EventRef
 
-  constructor(data?: PartialMessage<Payload_Channel>) {
-    super();
-    proto3.util.initPartial(data, this);
-  }
+    constructor(data?: PartialMessage<Payload_Channel>) {
+        super()
+        proto3.util.initPartial(data, this)
+    }
 
-  static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "casablanca.Payload.Channel";
-  static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "op", kind: "enum", T: proto3.getEnumType(ChannelOp) },
-    { no: 2, name: "channel_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 3, name: "origin_event", kind: "message", T: EventRef },
-  ]);
+    static readonly runtime: typeof proto3 = proto3
+    static readonly typeName = 'casablanca.Payload.Channel'
+    static readonly fields: FieldList = proto3.util.newFieldList(() => [
+        { no: 1, name: 'op', kind: 'enum', T: proto3.getEnumType(ChannelOp) },
+        { no: 2, name: 'channel_id', kind: 'scalar', T: 9 /* ScalarType.STRING */ },
+        { no: 3, name: 'origin_event', kind: 'message', T: EventRef },
+    ])
 
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): Payload_Channel {
-    return new Payload_Channel().fromBinary(bytes, options);
-  }
+    static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): Payload_Channel {
+        return new Payload_Channel().fromBinary(bytes, options)
+    }
 
-  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): Payload_Channel {
-    return new Payload_Channel().fromJson(jsonValue, options);
-  }
+    static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): Payload_Channel {
+        return new Payload_Channel().fromJson(jsonValue, options)
+    }
 
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): Payload_Channel {
-    return new Payload_Channel().fromJsonString(jsonString, options);
-  }
+    static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): Payload_Channel {
+        return new Payload_Channel().fromJsonString(jsonString, options)
+    }
 
-  static equals(a: Payload_Channel | PlainMessage<Payload_Channel> | undefined, b: Payload_Channel | PlainMessage<Payload_Channel> | undefined): boolean {
-    return proto3.util.equals(Payload_Channel, a, b);
-  }
+    static equals(
+        a: Payload_Channel | PlainMessage<Payload_Channel> | undefined,
+        b: Payload_Channel | PlainMessage<Payload_Channel> | undefined,
+    ): boolean {
+        return proto3.util.equals(Payload_Channel, a, b)
+    }
 }
 
 /**
  * @generated from message casablanca.Payload.Message
  */
 export class Payload_Message extends Message<Payload_Message> {
-  /**
-   * @generated from field: string text = 1;
-   */
-  text = "";
+    /**
+     * @generated from field: string text = 1;
+     */
+    text = ''
 
-  constructor(data?: PartialMessage<Payload_Message>) {
-    super();
-    proto3.util.initPartial(data, this);
-  }
+    constructor(data?: PartialMessage<Payload_Message>) {
+        super()
+        proto3.util.initPartial(data, this)
+    }
 
-  static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "casablanca.Payload.Message";
-  static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "text", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-  ]);
+    static readonly runtime: typeof proto3 = proto3
+    static readonly typeName = 'casablanca.Payload.Message'
+    static readonly fields: FieldList = proto3.util.newFieldList(() => [
+        { no: 1, name: 'text', kind: 'scalar', T: 9 /* ScalarType.STRING */ },
+    ])
 
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): Payload_Message {
-    return new Payload_Message().fromBinary(bytes, options);
-  }
+    static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): Payload_Message {
+        return new Payload_Message().fromBinary(bytes, options)
+    }
 
-  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): Payload_Message {
-    return new Payload_Message().fromJson(jsonValue, options);
-  }
+    static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): Payload_Message {
+        return new Payload_Message().fromJson(jsonValue, options)
+    }
 
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): Payload_Message {
-    return new Payload_Message().fromJsonString(jsonString, options);
-  }
+    static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): Payload_Message {
+        return new Payload_Message().fromJsonString(jsonString, options)
+    }
 
-  static equals(a: Payload_Message | PlainMessage<Payload_Message> | undefined, b: Payload_Message | PlainMessage<Payload_Message> | undefined): boolean {
-    return proto3.util.equals(Payload_Message, a, b);
-  }
+    static equals(
+        a: Payload_Message | PlainMessage<Payload_Message> | undefined,
+        b: Payload_Message | PlainMessage<Payload_Message> | undefined,
+    ): boolean {
+        return proto3.util.equals(Payload_Message, a, b)
+    }
 }
 
 /**
  * @generated from message casablanca.StreamAndCookie
  */
 export class StreamAndCookie extends Message<StreamAndCookie> {
-  /**
-   * @generated from field: repeated casablanca.Envelope events = 1;
-   */
-  events: Envelope[] = [];
+    /**
+     * @generated from field: repeated casablanca.Envelope events = 1;
+     */
+    events: Envelope[] = []
 
-  /**
-   * @generated from field: bytes next_sync_cookie = 2;
-   */
-  nextSyncCookie = new Uint8Array(0);
+    /**
+     * @generated from field: bytes next_sync_cookie = 2;
+     */
+    nextSyncCookie = new Uint8Array(0)
 
-  /**
-   * @generated from field: bytes original_sync_cookie = 3;
-   */
-  originalSyncCookie = new Uint8Array(0);
+    /**
+     * @generated from field: bytes original_sync_cookie = 3;
+     */
+    originalSyncCookie = new Uint8Array(0)
 
-  /**
-   * @generated from field: string stream_id = 4;
-   */
-  streamId = "";
+    /**
+     * @generated from field: string stream_id = 4;
+     */
+    streamId = ''
 
-  constructor(data?: PartialMessage<StreamAndCookie>) {
-    super();
-    proto3.util.initPartial(data, this);
-  }
+    constructor(data?: PartialMessage<StreamAndCookie>) {
+        super()
+        proto3.util.initPartial(data, this)
+    }
 
-  static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "casablanca.StreamAndCookie";
-  static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "events", kind: "message", T: Envelope, repeated: true },
-    { no: 2, name: "next_sync_cookie", kind: "scalar", T: 12 /* ScalarType.BYTES */ },
-    { no: 3, name: "original_sync_cookie", kind: "scalar", T: 12 /* ScalarType.BYTES */ },
-    { no: 4, name: "stream_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-  ]);
+    static readonly runtime: typeof proto3 = proto3
+    static readonly typeName = 'casablanca.StreamAndCookie'
+    static readonly fields: FieldList = proto3.util.newFieldList(() => [
+        { no: 1, name: 'events', kind: 'message', T: Envelope, repeated: true },
+        { no: 2, name: 'next_sync_cookie', kind: 'scalar', T: 12 /* ScalarType.BYTES */ },
+        { no: 3, name: 'original_sync_cookie', kind: 'scalar', T: 12 /* ScalarType.BYTES */ },
+        { no: 4, name: 'stream_id', kind: 'scalar', T: 9 /* ScalarType.STRING */ },
+    ])
 
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): StreamAndCookie {
-    return new StreamAndCookie().fromBinary(bytes, options);
-  }
+    static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): StreamAndCookie {
+        return new StreamAndCookie().fromBinary(bytes, options)
+    }
 
-  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): StreamAndCookie {
-    return new StreamAndCookie().fromJson(jsonValue, options);
-  }
+    static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): StreamAndCookie {
+        return new StreamAndCookie().fromJson(jsonValue, options)
+    }
 
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): StreamAndCookie {
-    return new StreamAndCookie().fromJsonString(jsonString, options);
-  }
+    static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): StreamAndCookie {
+        return new StreamAndCookie().fromJsonString(jsonString, options)
+    }
 
-  static equals(a: StreamAndCookie | PlainMessage<StreamAndCookie> | undefined, b: StreamAndCookie | PlainMessage<StreamAndCookie> | undefined): boolean {
-    return proto3.util.equals(StreamAndCookie, a, b);
-  }
+    static equals(
+        a: StreamAndCookie | PlainMessage<StreamAndCookie> | undefined,
+        b: StreamAndCookie | PlainMessage<StreamAndCookie> | undefined,
+    ): boolean {
+        return proto3.util.equals(StreamAndCookie, a, b)
+    }
 }
 
 /**
  * @generated from message casablanca.CreateStreamRequest
  */
 export class CreateStreamRequest extends Message<CreateStreamRequest> {
-  /**
-   * @generated from field: repeated casablanca.Envelope events = 1;
-   */
-  events: Envelope[] = [];
+    /**
+     * @generated from field: repeated casablanca.Envelope events = 1;
+     */
+    events: Envelope[] = []
 
-  constructor(data?: PartialMessage<CreateStreamRequest>) {
-    super();
-    proto3.util.initPartial(data, this);
-  }
+    constructor(data?: PartialMessage<CreateStreamRequest>) {
+        super()
+        proto3.util.initPartial(data, this)
+    }
 
-  static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "casablanca.CreateStreamRequest";
-  static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "events", kind: "message", T: Envelope, repeated: true },
-  ]);
+    static readonly runtime: typeof proto3 = proto3
+    static readonly typeName = 'casablanca.CreateStreamRequest'
+    static readonly fields: FieldList = proto3.util.newFieldList(() => [
+        { no: 1, name: 'events', kind: 'message', T: Envelope, repeated: true },
+    ])
 
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): CreateStreamRequest {
-    return new CreateStreamRequest().fromBinary(bytes, options);
-  }
+    static fromBinary(
+        bytes: Uint8Array,
+        options?: Partial<BinaryReadOptions>,
+    ): CreateStreamRequest {
+        return new CreateStreamRequest().fromBinary(bytes, options)
+    }
 
-  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): CreateStreamRequest {
-    return new CreateStreamRequest().fromJson(jsonValue, options);
-  }
+    static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): CreateStreamRequest {
+        return new CreateStreamRequest().fromJson(jsonValue, options)
+    }
 
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): CreateStreamRequest {
-    return new CreateStreamRequest().fromJsonString(jsonString, options);
-  }
+    static fromJsonString(
+        jsonString: string,
+        options?: Partial<JsonReadOptions>,
+    ): CreateStreamRequest {
+        return new CreateStreamRequest().fromJsonString(jsonString, options)
+    }
 
-  static equals(a: CreateStreamRequest | PlainMessage<CreateStreamRequest> | undefined, b: CreateStreamRequest | PlainMessage<CreateStreamRequest> | undefined): boolean {
-    return proto3.util.equals(CreateStreamRequest, a, b);
-  }
+    static equals(
+        a: CreateStreamRequest | PlainMessage<CreateStreamRequest> | undefined,
+        b: CreateStreamRequest | PlainMessage<CreateStreamRequest> | undefined,
+    ): boolean {
+        return proto3.util.equals(CreateStreamRequest, a, b)
+    }
 }
 
 /**
  * @generated from message casablanca.CreateStreamResponse
  */
 export class CreateStreamResponse extends Message<CreateStreamResponse> {
-  /**
-   * @generated from field: bytes sync_cookie = 1;
-   */
-  syncCookie = new Uint8Array(0);
+    /**
+     * @generated from field: bytes sync_cookie = 1;
+     */
+    syncCookie = new Uint8Array(0)
 
-  constructor(data?: PartialMessage<CreateStreamResponse>) {
-    super();
-    proto3.util.initPartial(data, this);
-  }
+    constructor(data?: PartialMessage<CreateStreamResponse>) {
+        super()
+        proto3.util.initPartial(data, this)
+    }
 
-  static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "casablanca.CreateStreamResponse";
-  static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "sync_cookie", kind: "scalar", T: 12 /* ScalarType.BYTES */ },
-  ]);
+    static readonly runtime: typeof proto3 = proto3
+    static readonly typeName = 'casablanca.CreateStreamResponse'
+    static readonly fields: FieldList = proto3.util.newFieldList(() => [
+        { no: 1, name: 'sync_cookie', kind: 'scalar', T: 12 /* ScalarType.BYTES */ },
+    ])
 
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): CreateStreamResponse {
-    return new CreateStreamResponse().fromBinary(bytes, options);
-  }
+    static fromBinary(
+        bytes: Uint8Array,
+        options?: Partial<BinaryReadOptions>,
+    ): CreateStreamResponse {
+        return new CreateStreamResponse().fromBinary(bytes, options)
+    }
 
-  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): CreateStreamResponse {
-    return new CreateStreamResponse().fromJson(jsonValue, options);
-  }
+    static fromJson(
+        jsonValue: JsonValue,
+        options?: Partial<JsonReadOptions>,
+    ): CreateStreamResponse {
+        return new CreateStreamResponse().fromJson(jsonValue, options)
+    }
 
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): CreateStreamResponse {
-    return new CreateStreamResponse().fromJsonString(jsonString, options);
-  }
+    static fromJsonString(
+        jsonString: string,
+        options?: Partial<JsonReadOptions>,
+    ): CreateStreamResponse {
+        return new CreateStreamResponse().fromJsonString(jsonString, options)
+    }
 
-  static equals(a: CreateStreamResponse | PlainMessage<CreateStreamResponse> | undefined, b: CreateStreamResponse | PlainMessage<CreateStreamResponse> | undefined): boolean {
-    return proto3.util.equals(CreateStreamResponse, a, b);
-  }
+    static equals(
+        a: CreateStreamResponse | PlainMessage<CreateStreamResponse> | undefined,
+        b: CreateStreamResponse | PlainMessage<CreateStreamResponse> | undefined,
+    ): boolean {
+        return proto3.util.equals(CreateStreamResponse, a, b)
+    }
 }
 
 /**
  * @generated from message casablanca.GetStreamRequest
  */
 export class GetStreamRequest extends Message<GetStreamRequest> {
-  /**
-   * @generated from field: string stream_id = 1;
-   */
-  streamId = "";
+    /**
+     * @generated from field: string stream_id = 1;
+     */
+    streamId = ''
 
-  constructor(data?: PartialMessage<GetStreamRequest>) {
-    super();
-    proto3.util.initPartial(data, this);
-  }
+    constructor(data?: PartialMessage<GetStreamRequest>) {
+        super()
+        proto3.util.initPartial(data, this)
+    }
 
-  static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "casablanca.GetStreamRequest";
-  static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "stream_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-  ]);
+    static readonly runtime: typeof proto3 = proto3
+    static readonly typeName = 'casablanca.GetStreamRequest'
+    static readonly fields: FieldList = proto3.util.newFieldList(() => [
+        { no: 1, name: 'stream_id', kind: 'scalar', T: 9 /* ScalarType.STRING */ },
+    ])
 
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetStreamRequest {
-    return new GetStreamRequest().fromBinary(bytes, options);
-  }
+    static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetStreamRequest {
+        return new GetStreamRequest().fromBinary(bytes, options)
+    }
 
-  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GetStreamRequest {
-    return new GetStreamRequest().fromJson(jsonValue, options);
-  }
+    static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GetStreamRequest {
+        return new GetStreamRequest().fromJson(jsonValue, options)
+    }
 
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GetStreamRequest {
-    return new GetStreamRequest().fromJsonString(jsonString, options);
-  }
+    static fromJsonString(
+        jsonString: string,
+        options?: Partial<JsonReadOptions>,
+    ): GetStreamRequest {
+        return new GetStreamRequest().fromJsonString(jsonString, options)
+    }
 
-  static equals(a: GetStreamRequest | PlainMessage<GetStreamRequest> | undefined, b: GetStreamRequest | PlainMessage<GetStreamRequest> | undefined): boolean {
-    return proto3.util.equals(GetStreamRequest, a, b);
-  }
+    static equals(
+        a: GetStreamRequest | PlainMessage<GetStreamRequest> | undefined,
+        b: GetStreamRequest | PlainMessage<GetStreamRequest> | undefined,
+    ): boolean {
+        return proto3.util.equals(GetStreamRequest, a, b)
+    }
 }
 
 /**
  * @generated from message casablanca.GetStreamResponse
  */
 export class GetStreamResponse extends Message<GetStreamResponse> {
-  /**
-   * @generated from field: casablanca.StreamAndCookie stream = 1;
-   */
-  stream?: StreamAndCookie;
+    /**
+     * @generated from field: casablanca.StreamAndCookie stream = 1;
+     */
+    stream?: StreamAndCookie
 
-  constructor(data?: PartialMessage<GetStreamResponse>) {
-    super();
-    proto3.util.initPartial(data, this);
-  }
+    constructor(data?: PartialMessage<GetStreamResponse>) {
+        super()
+        proto3.util.initPartial(data, this)
+    }
 
-  static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "casablanca.GetStreamResponse";
-  static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "stream", kind: "message", T: StreamAndCookie },
-  ]);
+    static readonly runtime: typeof proto3 = proto3
+    static readonly typeName = 'casablanca.GetStreamResponse'
+    static readonly fields: FieldList = proto3.util.newFieldList(() => [
+        { no: 1, name: 'stream', kind: 'message', T: StreamAndCookie },
+    ])
 
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetStreamResponse {
-    return new GetStreamResponse().fromBinary(bytes, options);
-  }
+    static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): GetStreamResponse {
+        return new GetStreamResponse().fromBinary(bytes, options)
+    }
 
-  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GetStreamResponse {
-    return new GetStreamResponse().fromJson(jsonValue, options);
-  }
+    static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): GetStreamResponse {
+        return new GetStreamResponse().fromJson(jsonValue, options)
+    }
 
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): GetStreamResponse {
-    return new GetStreamResponse().fromJsonString(jsonString, options);
-  }
+    static fromJsonString(
+        jsonString: string,
+        options?: Partial<JsonReadOptions>,
+    ): GetStreamResponse {
+        return new GetStreamResponse().fromJsonString(jsonString, options)
+    }
 
-  static equals(a: GetStreamResponse | PlainMessage<GetStreamResponse> | undefined, b: GetStreamResponse | PlainMessage<GetStreamResponse> | undefined): boolean {
-    return proto3.util.equals(GetStreamResponse, a, b);
-  }
+    static equals(
+        a: GetStreamResponse | PlainMessage<GetStreamResponse> | undefined,
+        b: GetStreamResponse | PlainMessage<GetStreamResponse> | undefined,
+    ): boolean {
+        return proto3.util.equals(GetStreamResponse, a, b)
+    }
 }
 
 /**
  * @generated from message casablanca.AddEventRequest
  */
 export class AddEventRequest extends Message<AddEventRequest> {
-  /**
-   * @generated from field: string stream_id = 1;
-   */
-  streamId = "";
+    /**
+     * @generated from field: string stream_id = 1;
+     */
+    streamId = ''
 
-  /**
-   * @generated from field: casablanca.Envelope event = 2;
-   */
-  event?: Envelope;
+    /**
+     * @generated from field: casablanca.Envelope event = 2;
+     */
+    event?: Envelope
 
-  constructor(data?: PartialMessage<AddEventRequest>) {
-    super();
-    proto3.util.initPartial(data, this);
-  }
+    constructor(data?: PartialMessage<AddEventRequest>) {
+        super()
+        proto3.util.initPartial(data, this)
+    }
 
-  static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "casablanca.AddEventRequest";
-  static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "stream_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 2, name: "event", kind: "message", T: Envelope },
-  ]);
+    static readonly runtime: typeof proto3 = proto3
+    static readonly typeName = 'casablanca.AddEventRequest'
+    static readonly fields: FieldList = proto3.util.newFieldList(() => [
+        { no: 1, name: 'stream_id', kind: 'scalar', T: 9 /* ScalarType.STRING */ },
+        { no: 2, name: 'event', kind: 'message', T: Envelope },
+    ])
 
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): AddEventRequest {
-    return new AddEventRequest().fromBinary(bytes, options);
-  }
+    static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): AddEventRequest {
+        return new AddEventRequest().fromBinary(bytes, options)
+    }
 
-  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): AddEventRequest {
-    return new AddEventRequest().fromJson(jsonValue, options);
-  }
+    static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): AddEventRequest {
+        return new AddEventRequest().fromJson(jsonValue, options)
+    }
 
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): AddEventRequest {
-    return new AddEventRequest().fromJsonString(jsonString, options);
-  }
+    static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): AddEventRequest {
+        return new AddEventRequest().fromJsonString(jsonString, options)
+    }
 
-  static equals(a: AddEventRequest | PlainMessage<AddEventRequest> | undefined, b: AddEventRequest | PlainMessage<AddEventRequest> | undefined): boolean {
-    return proto3.util.equals(AddEventRequest, a, b);
-  }
+    static equals(
+        a: AddEventRequest | PlainMessage<AddEventRequest> | undefined,
+        b: AddEventRequest | PlainMessage<AddEventRequest> | undefined,
+    ): boolean {
+        return proto3.util.equals(AddEventRequest, a, b)
+    }
 }
 
 /**
  * @generated from message casablanca.AddEventResponse
  */
 export class AddEventResponse extends Message<AddEventResponse> {
-  constructor(data?: PartialMessage<AddEventResponse>) {
-    super();
-    proto3.util.initPartial(data, this);
-  }
+    constructor(data?: PartialMessage<AddEventResponse>) {
+        super()
+        proto3.util.initPartial(data, this)
+    }
 
-  static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "casablanca.AddEventResponse";
-  static readonly fields: FieldList = proto3.util.newFieldList(() => [
-  ]);
+    static readonly runtime: typeof proto3 = proto3
+    static readonly typeName = 'casablanca.AddEventResponse'
+    static readonly fields: FieldList = proto3.util.newFieldList(() => [])
 
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): AddEventResponse {
-    return new AddEventResponse().fromBinary(bytes, options);
-  }
+    static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): AddEventResponse {
+        return new AddEventResponse().fromBinary(bytes, options)
+    }
 
-  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): AddEventResponse {
-    return new AddEventResponse().fromJson(jsonValue, options);
-  }
+    static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): AddEventResponse {
+        return new AddEventResponse().fromJson(jsonValue, options)
+    }
 
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): AddEventResponse {
-    return new AddEventResponse().fromJsonString(jsonString, options);
-  }
+    static fromJsonString(
+        jsonString: string,
+        options?: Partial<JsonReadOptions>,
+    ): AddEventResponse {
+        return new AddEventResponse().fromJsonString(jsonString, options)
+    }
 
-  static equals(a: AddEventResponse | PlainMessage<AddEventResponse> | undefined, b: AddEventResponse | PlainMessage<AddEventResponse> | undefined): boolean {
-    return proto3.util.equals(AddEventResponse, a, b);
-  }
+    static equals(
+        a: AddEventResponse | PlainMessage<AddEventResponse> | undefined,
+        b: AddEventResponse | PlainMessage<AddEventResponse> | undefined,
+    ): boolean {
+        return proto3.util.equals(AddEventResponse, a, b)
+    }
 }
 
 /**
  * @generated from message casablanca.SyncPos
  */
 export class SyncPos extends Message<SyncPos> {
-  /**
-   * @generated from field: string stream_id = 1;
-   */
-  streamId = "";
+    /**
+     * @generated from field: string stream_id = 1;
+     */
+    streamId = ''
 
-  /**
-   * @generated from field: bytes sync_cookie = 2;
-   */
-  syncCookie = new Uint8Array(0);
+    /**
+     * @generated from field: bytes sync_cookie = 2;
+     */
+    syncCookie = new Uint8Array(0)
 
-  constructor(data?: PartialMessage<SyncPos>) {
-    super();
-    proto3.util.initPartial(data, this);
-  }
+    constructor(data?: PartialMessage<SyncPos>) {
+        super()
+        proto3.util.initPartial(data, this)
+    }
 
-  static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "casablanca.SyncPos";
-  static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "stream_id", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-    { no: 2, name: "sync_cookie", kind: "scalar", T: 12 /* ScalarType.BYTES */ },
-  ]);
+    static readonly runtime: typeof proto3 = proto3
+    static readonly typeName = 'casablanca.SyncPos'
+    static readonly fields: FieldList = proto3.util.newFieldList(() => [
+        { no: 1, name: 'stream_id', kind: 'scalar', T: 9 /* ScalarType.STRING */ },
+        { no: 2, name: 'sync_cookie', kind: 'scalar', T: 12 /* ScalarType.BYTES */ },
+    ])
 
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): SyncPos {
-    return new SyncPos().fromBinary(bytes, options);
-  }
+    static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): SyncPos {
+        return new SyncPos().fromBinary(bytes, options)
+    }
 
-  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): SyncPos {
-    return new SyncPos().fromJson(jsonValue, options);
-  }
+    static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): SyncPos {
+        return new SyncPos().fromJson(jsonValue, options)
+    }
 
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): SyncPos {
-    return new SyncPos().fromJsonString(jsonString, options);
-  }
+    static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): SyncPos {
+        return new SyncPos().fromJsonString(jsonString, options)
+    }
 
-  static equals(a: SyncPos | PlainMessage<SyncPos> | undefined, b: SyncPos | PlainMessage<SyncPos> | undefined): boolean {
-    return proto3.util.equals(SyncPos, a, b);
-  }
+    static equals(
+        a: SyncPos | PlainMessage<SyncPos> | undefined,
+        b: SyncPos | PlainMessage<SyncPos> | undefined,
+    ): boolean {
+        return proto3.util.equals(SyncPos, a, b)
+    }
 }
 
 /**
  * @generated from message casablanca.SyncStreamsRequest
  */
 export class SyncStreamsRequest extends Message<SyncStreamsRequest> {
-  /**
-   * @generated from field: repeated casablanca.SyncPos sync_pos = 1;
-   */
-  syncPos: SyncPos[] = [];
+    /**
+     * @generated from field: repeated casablanca.SyncPos sync_pos = 1;
+     */
+    syncPos: SyncPos[] = []
 
-  /**
-   * @generated from field: uint32 timeout_ms = 2;
-   */
-  timeoutMs = 0;
+    /**
+     * @generated from field: uint32 timeout_ms = 2;
+     */
+    timeoutMs = 0
 
-  constructor(data?: PartialMessage<SyncStreamsRequest>) {
-    super();
-    proto3.util.initPartial(data, this);
-  }
+    constructor(data?: PartialMessage<SyncStreamsRequest>) {
+        super()
+        proto3.util.initPartial(data, this)
+    }
 
-  static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "casablanca.SyncStreamsRequest";
-  static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "sync_pos", kind: "message", T: SyncPos, repeated: true },
-    { no: 2, name: "timeout_ms", kind: "scalar", T: 13 /* ScalarType.UINT32 */ },
-  ]);
+    static readonly runtime: typeof proto3 = proto3
+    static readonly typeName = 'casablanca.SyncStreamsRequest'
+    static readonly fields: FieldList = proto3.util.newFieldList(() => [
+        { no: 1, name: 'sync_pos', kind: 'message', T: SyncPos, repeated: true },
+        { no: 2, name: 'timeout_ms', kind: 'scalar', T: 13 /* ScalarType.UINT32 */ },
+    ])
 
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): SyncStreamsRequest {
-    return new SyncStreamsRequest().fromBinary(bytes, options);
-  }
+    static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): SyncStreamsRequest {
+        return new SyncStreamsRequest().fromBinary(bytes, options)
+    }
 
-  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): SyncStreamsRequest {
-    return new SyncStreamsRequest().fromJson(jsonValue, options);
-  }
+    static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): SyncStreamsRequest {
+        return new SyncStreamsRequest().fromJson(jsonValue, options)
+    }
 
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): SyncStreamsRequest {
-    return new SyncStreamsRequest().fromJsonString(jsonString, options);
-  }
+    static fromJsonString(
+        jsonString: string,
+        options?: Partial<JsonReadOptions>,
+    ): SyncStreamsRequest {
+        return new SyncStreamsRequest().fromJsonString(jsonString, options)
+    }
 
-  static equals(a: SyncStreamsRequest | PlainMessage<SyncStreamsRequest> | undefined, b: SyncStreamsRequest | PlainMessage<SyncStreamsRequest> | undefined): boolean {
-    return proto3.util.equals(SyncStreamsRequest, a, b);
-  }
+    static equals(
+        a: SyncStreamsRequest | PlainMessage<SyncStreamsRequest> | undefined,
+        b: SyncStreamsRequest | PlainMessage<SyncStreamsRequest> | undefined,
+    ): boolean {
+        return proto3.util.equals(SyncStreamsRequest, a, b)
+    }
 }
 
 /**
  * @generated from message casablanca.SyncStreamsResponse
  */
 export class SyncStreamsResponse extends Message<SyncStreamsResponse> {
-  /**
-   * @generated from field: repeated casablanca.StreamAndCookie streams = 1;
-   */
-  streams: StreamAndCookie[] = [];
+    /**
+     * @generated from field: repeated casablanca.StreamAndCookie streams = 1;
+     */
+    streams: StreamAndCookie[] = []
 
-  constructor(data?: PartialMessage<SyncStreamsResponse>) {
-    super();
-    proto3.util.initPartial(data, this);
-  }
+    constructor(data?: PartialMessage<SyncStreamsResponse>) {
+        super()
+        proto3.util.initPartial(data, this)
+    }
 
-  static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "casablanca.SyncStreamsResponse";
-  static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "streams", kind: "message", T: StreamAndCookie, repeated: true },
-  ]);
+    static readonly runtime: typeof proto3 = proto3
+    static readonly typeName = 'casablanca.SyncStreamsResponse'
+    static readonly fields: FieldList = proto3.util.newFieldList(() => [
+        { no: 1, name: 'streams', kind: 'message', T: StreamAndCookie, repeated: true },
+    ])
 
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): SyncStreamsResponse {
-    return new SyncStreamsResponse().fromBinary(bytes, options);
-  }
+    static fromBinary(
+        bytes: Uint8Array,
+        options?: Partial<BinaryReadOptions>,
+    ): SyncStreamsResponse {
+        return new SyncStreamsResponse().fromBinary(bytes, options)
+    }
 
-  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): SyncStreamsResponse {
-    return new SyncStreamsResponse().fromJson(jsonValue, options);
-  }
+    static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): SyncStreamsResponse {
+        return new SyncStreamsResponse().fromJson(jsonValue, options)
+    }
 
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): SyncStreamsResponse {
-    return new SyncStreamsResponse().fromJsonString(jsonString, options);
-  }
+    static fromJsonString(
+        jsonString: string,
+        options?: Partial<JsonReadOptions>,
+    ): SyncStreamsResponse {
+        return new SyncStreamsResponse().fromJsonString(jsonString, options)
+    }
 
-  static equals(a: SyncStreamsResponse | PlainMessage<SyncStreamsResponse> | undefined, b: SyncStreamsResponse | PlainMessage<SyncStreamsResponse> | undefined): boolean {
-    return proto3.util.equals(SyncStreamsResponse, a, b);
-  }
+    static equals(
+        a: SyncStreamsResponse | PlainMessage<SyncStreamsResponse> | undefined,
+        b: SyncStreamsResponse | PlainMessage<SyncStreamsResponse> | undefined,
+    ): boolean {
+        return proto3.util.equals(SyncStreamsResponse, a, b)
+    }
 }
 
 /**
  * @generated from message casablanca.InfoRequest
  */
 export class InfoRequest extends Message<InfoRequest> {
-  /**
-   * @generated from field: string debug = 1;
-   */
-  debug = "";
+    /**
+     * @generated from field: string debug = 1;
+     */
+    debug = ''
 
-  constructor(data?: PartialMessage<InfoRequest>) {
-    super();
-    proto3.util.initPartial(data, this);
-  }
+    constructor(data?: PartialMessage<InfoRequest>) {
+        super()
+        proto3.util.initPartial(data, this)
+    }
 
-  static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "casablanca.InfoRequest";
-  static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "debug", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-  ]);
+    static readonly runtime: typeof proto3 = proto3
+    static readonly typeName = 'casablanca.InfoRequest'
+    static readonly fields: FieldList = proto3.util.newFieldList(() => [
+        { no: 1, name: 'debug', kind: 'scalar', T: 9 /* ScalarType.STRING */ },
+    ])
 
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): InfoRequest {
-    return new InfoRequest().fromBinary(bytes, options);
-  }
+    static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): InfoRequest {
+        return new InfoRequest().fromBinary(bytes, options)
+    }
 
-  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): InfoRequest {
-    return new InfoRequest().fromJson(jsonValue, options);
-  }
+    static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): InfoRequest {
+        return new InfoRequest().fromJson(jsonValue, options)
+    }
 
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): InfoRequest {
-    return new InfoRequest().fromJsonString(jsonString, options);
-  }
+    static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): InfoRequest {
+        return new InfoRequest().fromJsonString(jsonString, options)
+    }
 
-  static equals(a: InfoRequest | PlainMessage<InfoRequest> | undefined, b: InfoRequest | PlainMessage<InfoRequest> | undefined): boolean {
-    return proto3.util.equals(InfoRequest, a, b);
-  }
+    static equals(
+        a: InfoRequest | PlainMessage<InfoRequest> | undefined,
+        b: InfoRequest | PlainMessage<InfoRequest> | undefined,
+    ): boolean {
+        return proto3.util.equals(InfoRequest, a, b)
+    }
 }
 
 /**
  * @generated from message casablanca.InfoResponse
  */
 export class InfoResponse extends Message<InfoResponse> {
-  /**
-   * @generated from field: string graffiti = 1;
-   */
-  graffiti = "";
+    /**
+     * @generated from field: string graffiti = 1;
+     */
+    graffiti = ''
 
-  constructor(data?: PartialMessage<InfoResponse>) {
-    super();
-    proto3.util.initPartial(data, this);
-  }
+    constructor(data?: PartialMessage<InfoResponse>) {
+        super()
+        proto3.util.initPartial(data, this)
+    }
 
-  static readonly runtime: typeof proto3 = proto3;
-  static readonly typeName = "casablanca.InfoResponse";
-  static readonly fields: FieldList = proto3.util.newFieldList(() => [
-    { no: 1, name: "graffiti", kind: "scalar", T: 9 /* ScalarType.STRING */ },
-  ]);
+    static readonly runtime: typeof proto3 = proto3
+    static readonly typeName = 'casablanca.InfoResponse'
+    static readonly fields: FieldList = proto3.util.newFieldList(() => [
+        { no: 1, name: 'graffiti', kind: 'scalar', T: 9 /* ScalarType.STRING */ },
+    ])
 
-  static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): InfoResponse {
-    return new InfoResponse().fromBinary(bytes, options);
-  }
+    static fromBinary(bytes: Uint8Array, options?: Partial<BinaryReadOptions>): InfoResponse {
+        return new InfoResponse().fromBinary(bytes, options)
+    }
 
-  static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): InfoResponse {
-    return new InfoResponse().fromJson(jsonValue, options);
-  }
+    static fromJson(jsonValue: JsonValue, options?: Partial<JsonReadOptions>): InfoResponse {
+        return new InfoResponse().fromJson(jsonValue, options)
+    }
 
-  static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): InfoResponse {
-    return new InfoResponse().fromJsonString(jsonString, options);
-  }
+    static fromJsonString(jsonString: string, options?: Partial<JsonReadOptions>): InfoResponse {
+        return new InfoResponse().fromJsonString(jsonString, options)
+    }
 
-  static equals(a: InfoResponse | PlainMessage<InfoResponse> | undefined, b: InfoResponse | PlainMessage<InfoResponse> | undefined): boolean {
-    return proto3.util.equals(InfoResponse, a, b);
-  }
+    static equals(
+        a: InfoResponse | PlainMessage<InfoResponse> | undefined,
+        b: InfoResponse | PlainMessage<InfoResponse> | undefined,
+    ): boolean {
+        return proto3.util.equals(InfoResponse, a, b)
+    }
 }
-
