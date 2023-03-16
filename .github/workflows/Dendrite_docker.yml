@@ -48,7 +48,7 @@ jobs:
 
             - name: Build monolith image
               id: docker_build_monolith
-              uses: docker/build-push-action@v3
+              uses: docker/build-push-action@v4
               with:
                   cache-from: type=gha
                   cache-to: type=gha,mode=max

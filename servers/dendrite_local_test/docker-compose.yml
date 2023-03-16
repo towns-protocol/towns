@@ -46,6 +46,8 @@ services:
     build:
       context: ../dendrite
       dockerfile: build/docker/Dockerfile.monolith 
+      args:
+        - RELEASE_VERSION=test-release-version
     
     environment:
         BLOCKCHAIN_PROVIDER_URL: https://goerli.infura.io/v3/888e72a42bbd4ae996b3707864dd8c88
