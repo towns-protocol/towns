@@ -1,8 +1,9 @@
-import React from 'react'
+import React, { useCallback } from 'react'
 import { useNavigate, useParams } from 'react-router'
-import useEvent from 'react-use-event-hook'
-import { createUserIdFromString, useSpaceMembers } from 'use-zion-client'
 import { useSearchParams } from 'react-router-dom'
+import useEvent from 'react-use-event-hook'
+import { createUserIdFromString, useMatrixCredentials, useSpaceMembers } from 'use-zion-client'
+import { setUserBio, useGetUserBio } from 'hooks/useUserBio'
 import { Box, Button, Panel, Paragraph, Stack, Text } from '@ui'
 import { UserProfile } from '@components/UserProfile/UserProfile'
 
@@ -10,6 +11,7 @@ export const SpaceProfilePanel = (props: { children?: React.ReactNode }) => {
     const [search] = useSearchParams()
     const cameFromSpaceInfoPanel = search.get('spaceInfo') !== null
     const { profileId } = useParams()
+
     const navigate = useNavigate()
 
     const onClose = useEvent(() => {
@@ -23,22 +25,17 @@ export const SpaceProfilePanel = (props: { children?: React.ReactNode }) => {
     const { membersMap } = useSpaceMembers()
 
     const user = profileId ? membersMap[profileId] : undefined
-
     const isValid = !!user
 
     const userAddress = isValid ? createUserIdFromString(user.userId)?.accountAddress : undefined
+    const { data: userBio } = useGetUserBio(userAddress)
 
-    const info = [
-        {
-            title: 'Bio',
-            content: (
-                <>
-                    Please come back when I have written my bio. It shouldn&apos; be more thans a
-                    few lines written in a way that makes you want to know more about me.
-                </>
-            ),
-        },
-    ]
+    const { userId: loggedInUserId } = useMatrixCredentials()
+    const loggedInUserAddress = loggedInUserId
+        ? createUserIdFromString(loggedInUserId)?.accountAddress
+        : undefined
+
+    const canEdit = loggedInUserAddress === userAddress
 
     return (
         <Stack grow height="100%" overflow="hidden">
@@ -49,7 +46,8 @@ export const SpaceProfilePanel = (props: { children?: React.ReactNode }) => {
                         displayName={user.name}
                         avatarUrl={user.avatarUrl}
                         userAddress={userAddress}
-                        info={info}
+                        userBio={userBio}
+                        canEdit={canEdit}
                     />
                 ) : (
                     <Stack padding>
