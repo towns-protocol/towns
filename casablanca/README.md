@@ -6,6 +6,16 @@
 
 There are addition install steps for go tools in [./node/README.md](./node/README.md)
 
+# Building protobufs
+
+Protobufs are generated for go and typescript
+
+    cd proto
+    yarn buf:generate
+
+    cd node
+    go generate -v -x protocol/gen.go
+
 # Running Casablanca node
 
 Start storage backend, build node and start:

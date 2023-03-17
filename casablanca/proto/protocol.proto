@@ -101,6 +101,13 @@ message Payload {
         string channel_id = 2;
         EventRef origin_event = 3;
     }
+
+    message UserSetting {
+        UserSettingOp op = 1;
+        bytes value = 2;
+        optional string channel_id = 3;
+        optional EventRef origin_event = 4;
+    }
     
     message Message {
         string text = 1;
@@ -112,6 +119,7 @@ message Payload {
         JoinableStream joinable_stream = 3;
         Channel channel = 4;
         Message message = 5;
+        UserSetting user_setting = 6;
     }
 }
 
@@ -120,6 +128,7 @@ enum StreamKind {
     SK_USER = 1;
     SK_SPACE = 2;
     SK_CHANNEL = 3;
+    SK_USER_SETTING = 4;
 }
 
 
@@ -135,6 +144,11 @@ enum ChannelOp {
     CO_UNSPECIFIED = 0;
     CO_CREATED = 1;
     CO_DELETED = 2;
+}
+
+enum UserSettingOp {
+    USO_UNSPECIFIED = 0;
+    USO_FULLY_READ = 1;
 }
 
 message StreamAndCookie {
