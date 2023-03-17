@@ -3,70 +3,60 @@
 /* eslint-disable */
 // @ts-nocheck
 
-import {
-    AddEventRequest,
-    AddEventResponse,
-    CreateStreamRequest,
-    CreateStreamResponse,
-    GetStreamRequest,
-    GetStreamResponse,
-    InfoRequest,
-    InfoResponse,
-    SyncStreamsRequest,
-    SyncStreamsResponse,
-} from './protocol_pb.js'
-import { MethodKind } from '@bufbuild/protobuf'
+import { AddEventRequest, AddEventResponse, CreateStreamRequest, CreateStreamResponse, GetStreamRequest, GetStreamResponse, InfoRequest, InfoResponse, SyncStreamsRequest, SyncStreamsResponse } from "./protocol_pb.js";
+import { MethodKind } from "@bufbuild/protobuf";
 
 /**
  * @generated from service casablanca.StreamService
  */
 export const StreamService = {
-    typeName: 'casablanca.StreamService',
-    methods: {
-        /**
-         * @generated from rpc casablanca.StreamService.CreateStream
-         */
-        createStream: {
-            name: 'CreateStream',
-            I: CreateStreamRequest,
-            O: CreateStreamResponse,
-            kind: MethodKind.Unary,
-        },
-        /**
-         * @generated from rpc casablanca.StreamService.GetStream
-         */
-        getStream: {
-            name: 'GetStream',
-            I: GetStreamRequest,
-            O: GetStreamResponse,
-            kind: MethodKind.Unary,
-        },
-        /**
-         * @generated from rpc casablanca.StreamService.AddEvent
-         */
-        addEvent: {
-            name: 'AddEvent',
-            I: AddEventRequest,
-            O: AddEventResponse,
-            kind: MethodKind.Unary,
-        },
-        /**
-         * @generated from rpc casablanca.StreamService.SyncStreams
-         */
-        syncStreams: {
-            name: 'SyncStreams',
-            I: SyncStreamsRequest,
-            O: SyncStreamsResponse,
-            kind: MethodKind.Unary,
-        },
-        /**
-         * @generated from rpc casablanca.StreamService.Info
-         */
-        info: {
-            name: 'Info',
-            I: InfoRequest,
-            O: InfoResponse,
-            kind: MethodKind.Unary,
-        },
+  typeName: "casablanca.StreamService",
+  methods: {
+    /**
+     * @generated from rpc casablanca.StreamService.CreateStream
+     */
+    createStream: {
+      name: "CreateStream",
+      I: CreateStreamRequest,
+      O: CreateStreamResponse,
+      kind: MethodKind.Unary,
     },
-} as const
+    /**
+     * @generated from rpc casablanca.StreamService.GetStream
+     */
+    getStream: {
+      name: "GetStream",
+      I: GetStreamRequest,
+      O: GetStreamResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * @generated from rpc casablanca.StreamService.AddEvent
+     */
+    addEvent: {
+      name: "AddEvent",
+      I: AddEventRequest,
+      O: AddEventResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * @generated from rpc casablanca.StreamService.SyncStreams
+     */
+    syncStreams: {
+      name: "SyncStreams",
+      I: SyncStreamsRequest,
+      O: SyncStreamsResponse,
+      kind: MethodKind.Unary,
+    },
+    /**
+     * @generated from rpc casablanca.StreamService.Info
+     */
+    info: {
+      name: "Info",
+      I: InfoRequest,
+      O: InfoResponse,
+      kind: MethodKind.Unary,
+    },
+  }
+} as const;
+

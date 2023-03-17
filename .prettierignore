@@ -21,3 +21,5 @@ out/*
 yarn.lock
 
 packages/generated/*
+
+casablanca/proto/src/protocol_*.ts
