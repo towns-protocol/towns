@@ -378,7 +378,7 @@
   },
   "settings": {
     "compilationTarget": {
-      "contracts/src/interfaces/IEntitlement.sol": "IEntitlement"
+      "packages/contracts/src/interfaces/IEntitlement.sol": "IEntitlement"
     },
     "evmVersion": "london",
     "libraries": {},
@@ -391,8 +391,9 @@
     },
     "remappings": [
       ":@openzeppelin/=lib/openzeppelin-contracts/",
+      ":@towns/=node_modules/@towns/",
       ":ERC721A/=lib/ERC721A/contracts/",
-      ":contracts/=contracts/",
+      ":contracts/=packages/contracts/",
       ":council/=lib/council/contracts/",
       ":ds-test/=lib/ds-test/src/",
       ":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/",
@@ -405,7 +406,7 @@
     ]
   },
   "sources": {
-    "contracts/src/interfaces/IEntitlement.sol": {
+    "packages/contracts/src/interfaces/IEntitlement.sol": {
       "keccak256": "0xf2902303ba01ca2f9e5e0e9c947de3958f92f67a3301e54236472862a39388df",
       "license": "Apache-2.0",
       "urls": [
@@ -413,7 +414,7 @@
         "dweb:/ipfs/QmSPdcBPLQ6hgX7s5zfuWkRqSErfmgrX4wyvm5pQ61w88W"
       ]
     },
-    "contracts/src/libraries/DataTypes.sol": {
+    "packages/contracts/src/libraries/DataTypes.sol": {
       "keccak256": "0x01634666eef1a193d7ce2bc1840dd3424c0e86f3e6b500ea3d5244e6d230785b",
       "license": "Apache-20",
       "urls": [

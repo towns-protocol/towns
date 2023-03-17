@@ -29,6 +29,7 @@ contract UpgradeTownOwner is ScriptUtils {
     spaceFactory.setPaused(true);
     spaceFactory.upgradeTo(address(newSpaceFactory));
     townOwner = new TownOwner("Town Owner", "TOWN", deployer, 0);
+    townOwner.setFactory(address(spaceFactory));
     spaceFactory.setSpaceToken(address(townOwner));
     spaceFactory.setPaused(false);
     vm.stopBroadcast();

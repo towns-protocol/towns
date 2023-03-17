@@ -149,7 +149,7 @@
   },
   "settings": {
     "compilationTarget": {
-      "contracts/src/libraries/Errors.sol": "Errors"
+      "packages/contracts/src/libraries/Errors.sol": "Errors"
     },
     "evmVersion": "london",
     "libraries": {},
@@ -162,8 +162,9 @@
     },
     "remappings": [
       ":@openzeppelin/=lib/openzeppelin-contracts/",
+      ":@towns/=node_modules/@towns/",
       ":ERC721A/=lib/ERC721A/contracts/",
-      ":contracts/=contracts/",
+      ":contracts/=packages/contracts/",
       ":council/=lib/council/contracts/",
       ":ds-test/=lib/ds-test/src/",
       ":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/",
@@ -176,7 +177,7 @@
     ]
   },
   "sources": {
-    "contracts/src/libraries/Errors.sol": {
+    "packages/contracts/src/libraries/Errors.sol": {
       "keccak256": "0x2d478c9688870f6780a19ea34d73db957f194702cbc3c4f4707f9825ba502cf1",
       "license": "Apache-2.0",
       "urls": [
