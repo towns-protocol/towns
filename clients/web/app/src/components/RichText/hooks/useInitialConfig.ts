@@ -34,7 +34,11 @@ export const useInitialConfig = (
         editable,
         editorState: () => {
             if (initialValue) {
-                $convertFromMarkdownString(initialValue, transformers)
+                try {
+                    $convertFromMarkdownString(initialValue, transformers)
+                } catch (error) {
+                    onError(error as Error)
+                }
             } else {
                 const root = $getRoot()
                 if (editable && root.getFirstChild() === null) {
