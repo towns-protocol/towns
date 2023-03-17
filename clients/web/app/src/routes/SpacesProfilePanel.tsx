@@ -1,9 +1,9 @@
-import React, { useCallback } from 'react'
+import React from 'react'
 import { useNavigate, useParams } from 'react-router'
 import { useSearchParams } from 'react-router-dom'
-import useEvent from 'react-use-event-hook'
+import { useEvent } from 'react-use-event-hook'
 import { createUserIdFromString, useMatrixCredentials, useSpaceMembers } from 'use-zion-client'
-import { setUserBio, useGetUserBio } from 'hooks/useUserBio'
+import { useGetUserBio } from 'hooks/useUserBio'
 import { Box, Button, Panel, Paragraph, Stack, Text } from '@ui'
 import { UserProfile } from '@components/UserProfile/UserProfile'
 

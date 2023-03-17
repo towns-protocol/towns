@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { useEvent } from 'react-use-event-hook'
+import { useZionClient } from 'use-zion-client'
 import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
 import { BackgroundImage, Box, Paragraph, Stack, TextField } from '@ui'
 import { useSetUserBio } from 'hooks/useUserBio'
@@ -21,7 +22,8 @@ enum InputId {
 }
 
 export const UserProfile = (props: Props) => {
-    const { center, displayName, avatarUrl, userAddress, info, canEdit, userBio } = props
+    const { avatarUrl, canEdit, center, displayName, info, userAddress, userBio } = props
+    const { setDisplayName } = useZionClient()
 
     const { mutate, isLoading } = useSetUserBio(userAddress)
 
@@ -31,21 +33,30 @@ export const UserProfile = (props: Props) => {
     }, [isLoading])
 
     const onSaveItem = useEvent((id: string, content: undefined | string) => {
-        if (id === InputId.Bio) {
-            if (!userAddress) {
-                throw new Error('no user address provided')
+        switch (id) {
+            case InputId.Bio: {
+                if (!userAddress) {
+                    throw new Error('no user address provided')
+                }
+                content = content?.trim() ?? ''
+                mutate(content, {
+                    onSuccess: async () => {
+                        // TODO: loader
+                        console.log(`UserProfile - bio updated!`)
+                    },
+                    onError: () => {
+                        // TODO: implement error handling
+                        console.error(`UserProfile - bio update failed!`)
+                    },
+                })
+                break
             }
-            content = content?.trim() ?? ''
-            mutate(content, {
-                onSuccess: async () => {
-                    // TODO: loader
-                    console.log(`UserProfile - bio updated!`)
-                },
-                onError: () => {
-                    // TODO: implement error handling
-                    console.error(`UserProfile - bio update failed!`)
-                },
-            })
+            case InputId.DisplayName: {
+                if (content && content?.length > 0 && content?.length < 25) {
+                    setDisplayName(content)
+                }
+                break
+            }
         }
     })
     return (
@@ -61,21 +72,42 @@ export const UserProfile = (props: Props) => {
                     <BackgroundImage src={avatarUrl} size="cover" />
                 </Stack>
             </Stack>
-            <Stack grow gap>
+            <Stack grow gap="lg">
                 <EditRow
                     inputId={InputId.DisplayName}
                     canEdit={canEdit}
                     initialValue={displayName}
                     onSave={onSaveItem}
                 >
-                    {({ isEditing }) => (
-                        <Paragraph strong size="lg">
-                            {displayName}
-                        </Paragraph>
+                    {({ editMenu, value, isEditing, handleEdit, onChange }) => (
+                        <Stack grow horizontal gap alignItems="center" height="input_md">
+                            {!isEditing ? (
+                                <Box grow gap>
+                                    <Box onClick={canEdit && !isEditing ? handleEdit : undefined}>
+                                        <Paragraph strong size="lg">
+                                            {displayName}
+                                        </Paragraph>
+                                    </Box>
+                                    {userAddress && (
+                                        <ClipboardCopy
+                                            label={shortAddress(userAddress)}
+                                            clipboardContent={userAddress}
+                                        />
+                                    )}
+                                </Box>
+                            ) : (
+                                <TextField
+                                    autoFocus
+                                    background="level2"
+                                    value={value}
+                                    placeholder="Enter display name..."
+                                    onChange={onChange}
+                                />
+                            )}
+                            {editMenu}
+                        </Stack>
                     )}
                 </EditRow>
-
-                {userAddress && <ClipboardCopy label={shortAddress(userAddress)} />}
 
                 <EditRow
                     inputId={InputId.Bio}
@@ -83,24 +115,31 @@ export const UserProfile = (props: Props) => {
                     canEdit={canEdit}
                     onSave={onSaveItem}
                 >
-                    {({ isEditing, handleSave: onSave, onChange, handleEdit: onEdit }) => {
+                    {({ editMenu, value, isEditing, handleSave, onChange, handleEdit }) => {
                         return (
-                            <Stack gap grow onClick={canEdit && !isEditing ? onEdit : undefined}>
-                                <Paragraph strong>Bio</Paragraph>
-                                {!isEditing ? (
-                                    <Paragraph color="gray2">
-                                        {userBio ?? `no biography just yet`}
-                                    </Paragraph>
-                                ) : (
-                                    <TextField
-                                        autoFocus
-                                        background="level2"
-                                        value={userBio}
-                                        placeholder="Enter bio..."
-                                        onChange={onChange}
-                                    />
-                                )}
-                            </Stack>
+                            <>
+                                <Box position="topRight">{editMenu}</Box>
+                                <Stack
+                                    gap
+                                    grow
+                                    onClick={canEdit && !isEditing ? handleEdit : undefined}
+                                >
+                                    <Paragraph strong>Bio</Paragraph>
+                                    {!isEditing ? (
+                                        <Paragraph color="gray2">
+                                            {userBio ?? `no biography just yet`}
+                                        </Paragraph>
+                                    ) : (
+                                        <TextField
+                                            autoFocus
+                                            background="level2"
+                                            value={value}
+                                            placeholder="Enter bio..."
+                                            onChange={onChange}
+                                        />
+                                    )}
+                                </Stack>
+                            </>
                         )
                     }}
                 </EditRow>
@@ -126,6 +165,8 @@ type EditRowProps = {
 }
 
 type EditRowRenderProps = {
+    editMenu: JSX.Element | undefined
+    value: string | undefined
     isEditing: boolean
     onChange: (e: React.ChangeEvent<HTMLInputElement>) => void
     handleSave: () => void
@@ -151,11 +192,10 @@ const EditRow = (props: EditRowProps) => {
 
     const hasChanged = props.initialValue !== value
 
-    return (
-        <Stack horizontal justifyContent="spaceBetween" alignItems="baseline" position="relative">
-            {props.children({ isEditing, onChange, handleSave, handleEdit })}
-            {props.canEdit && (
-                <Box horizontal gap position="topRight">
+    const editMenu = useMemo(
+        () =>
+            !props.canEdit ? undefined : (
+                <Box horizontal gap>
                     <Box
                         cursor="pointer"
                         color={{ default: 'gray2', hover: 'default' }}
@@ -173,7 +213,19 @@ const EditRow = (props: EditRowProps) => {
                         </Box>
                     )}
                 </Box>
-            )}
+            ),
+        [handleEdit, handleSave, hasChanged, isEditing, props.canEdit],
+    )
+
+    return (
+        <Stack
+            horizontal
+            grow
+            justifyContent="spaceBetween"
+            alignItems="baseline"
+            position="relative"
+        >
+            {props.children({ editMenu, isEditing, onChange, handleSave, handleEdit, value })}
         </Stack>
     )
 }
