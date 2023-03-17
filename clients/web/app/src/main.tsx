@@ -1,7 +1,7 @@
 import 'allotment/dist/style.css'
 // Only load Sentry in production
 // eslint-disable-next-line @typescript-eslint/no-var-requires
-import Gleap from 'gleap'
+import { Gleap } from 'gleap'
 import * as Sentry from '@sentry/react'
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 import { BrowserTracing } from '@sentry/tracing'

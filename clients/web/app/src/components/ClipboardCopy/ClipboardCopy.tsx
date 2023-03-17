@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import useEvent from 'react-use-event-hook'
+import { useEvent } from 'react-use-event-hook'
 import { Icon, Stack, Text } from '@ui'
 
 export const ClipboardCopy = (props: { label: string; clipboardContent?: string }) => {

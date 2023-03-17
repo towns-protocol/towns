@@ -1,7 +1,7 @@
 import React, { useCallback, useMemo, useState } from 'react'
 import { useParams } from 'react-router'
 import { Channel, SpaceData, useChannelNotificationCounts, useRoom } from 'use-zion-client'
-import useEvent from 'react-use-event-hook'
+import { useEvent } from 'react-use-event-hook'
 import { PATHS } from 'routes'
 import { Badge, ButtonText, Icon, Stack, TooltipRenderer } from '@ui'
 import { ChannelSettingsCard } from '@components/Cards/ChannelSettingsCard'

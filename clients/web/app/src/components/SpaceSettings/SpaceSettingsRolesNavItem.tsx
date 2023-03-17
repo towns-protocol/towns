@@ -1,6 +1,6 @@
 import React from 'react'
 import { NavLink } from 'react-router-dom'
-import useEvent from 'react-use-event-hook'
+import { useEvent } from 'react-use-event-hook'
 import { Box, Card } from '@ui'
 import { MenuItem } from '@components/Cards/MenuItem'
 import { CardOpener } from 'ui/components/Overlay/CardOpener'

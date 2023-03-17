@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react'
 import { useParams } from 'react-router'
-import useEvent from 'react-use-event-hook'
+import { useEvent } from 'react-use-event-hook'
 import { Permission } from 'use-zion-client'
 import { Paragraph, Stack, Toggle } from '@ui'
 import {

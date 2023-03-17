@@ -1,5 +1,5 @@
 import React, { startTransition, useDeferredValue, useEffect, useRef, useState } from 'react'
-import useEvent from 'react-use-event-hook'
+import { useEvent } from 'react-use-event-hook'
 import { IconButton, IconLabelButton, Stack, TextField } from '@ui'
 
 type Props<T> = {

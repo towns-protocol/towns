@@ -1,5 +1,5 @@
 import { RefObject, useEffect, useRef } from 'react'
-import useEvent from 'react-use-event-hook'
+import { useEvent } from 'react-use-event-hook'
 
 export const usePersistScrollPosition = (
     containerRef: RefObject<HTMLElement>,

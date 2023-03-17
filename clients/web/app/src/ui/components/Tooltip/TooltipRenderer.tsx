@@ -1,6 +1,6 @@
 import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import useEvent from 'react-use-event-hook'
+import { useEvent } from 'react-use-event-hook'
 import { RootLayerContext } from './OverlayPortal'
 import { Placement } from './TooltipConstants'
 import { TooltipOffsetContainer } from './TooltipOffsetContainer'

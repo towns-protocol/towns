@@ -1,6 +1,6 @@
 import React, { useCallback, useContext, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import useEvent from 'react-use-event-hook'
+import { useEvent } from 'react-use-event-hook'
 import { RootLayerContext } from '../Tooltip/OverlayPortal'
 import { CardOpenerContext } from './CardOpenerContext'
 import { Placement } from './types'

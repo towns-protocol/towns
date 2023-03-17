@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { Address, useBalance, useNetwork, useSwitchNetwork } from 'wagmi'
-import useEvent from 'react-use-event-hook'
+import { useEvent } from 'react-use-event-hook'
 import { ethers, providers } from 'ethers'
 import { useWeb3Context, useZionClient } from 'use-zion-client'
 import { Box, Button, Divider, Stack, Text } from '@ui'

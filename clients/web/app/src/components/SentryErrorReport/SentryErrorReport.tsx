@@ -1,6 +1,6 @@
 import * as Sentry from '@sentry/react'
 import React, { useState } from 'react'
-import useEvent from 'react-use-event-hook'
+import { useEvent } from 'react-use-event-hook'
 import { z } from 'zod'
 import { useMutation } from 'wagmi'
 import { format } from 'date-fns'

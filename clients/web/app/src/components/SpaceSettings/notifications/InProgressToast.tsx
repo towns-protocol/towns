@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import useEvent from 'react-use-event-hook'
+import { useEvent } from 'react-use-event-hook'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Box, Button, Heading, Icon, Paragraph, Stack, Text } from '@ui'
 import { ModalContainer } from '@components/Modals/ModalContainer'

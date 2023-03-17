@@ -1,6 +1,6 @@
 import React, { useRef } from 'react'
 import { useNavigate, useParams } from 'react-router'
-import useEvent from 'react-use-event-hook'
+import { useEvent } from 'react-use-event-hook'
 import { Icon, Stack } from '@ui'
 import { useSettingsRolesStore } from '@components/SpaceSettings/store/hooks/settingsRolesStore'
 import { SpaceSettingsNavItem } from '../NavItem/SpaceSettingsNavItem'

@@ -1,7 +1,7 @@
 import { AnimatePresence } from 'framer-motion'
 import React, { useCallback, useState } from 'react'
 import { matchPath, useLocation, useNavigate } from 'react-router'
-import useEvent from 'react-use-event-hook'
+import { useEvent } from 'react-use-event-hook'
 import {
     Membership,
     MentionResult,

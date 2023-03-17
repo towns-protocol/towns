@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo } from 'react'
 import { Outlet, useNavigate, useParams } from 'react-router'
 import { NavLink } from 'react-router-dom'
-import useEvent from 'react-use-event-hook'
+import { useEvent } from 'react-use-event-hook'
 import {
     useMultipleRoleDetails,
     useOnTransactionEmitted,

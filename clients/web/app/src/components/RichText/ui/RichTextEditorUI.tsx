@@ -7,7 +7,7 @@ import {
     SELECTION_CHANGE_COMMAND,
 } from 'lexical'
 import React, { useCallback, useContext, useEffect, useRef, useState } from 'react'
-import useEvent from 'react-use-event-hook'
+import { useEvent } from 'react-use-event-hook'
 
 import { TOGGLE_LINK_COMMAND } from '@lexical/link'
 import { BaseEmoji, EmojiData } from 'emoji-mart'

@@ -1,7 +1,7 @@
 import { RoomIdentifier, useZionClient } from 'use-zion-client'
 
 import React from 'react'
-import useEvent from 'react-use-event-hook'
+import { useEvent } from 'react-use-event-hook'
 import { useNavigate } from 'react-router'
 import { PATHS } from 'routes'
 import { Box, Card } from '@ui'

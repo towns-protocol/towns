@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react'
-import useEvent from 'react-use-event-hook'
+import { useEvent } from 'react-use-event-hook'
 import {
     TransactionStatus,
     useCreateRoleTransaction,
