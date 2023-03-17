@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from 'react'
+import React, { useCallback, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import useEvent from 'react-use-event-hook'
 import {
@@ -20,6 +20,7 @@ import {
     Paragraph,
     Stack,
     Text,
+    Toggle,
 } from '@ui'
 import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
 import { shortAddress } from 'ui/utils/utils'
@@ -28,6 +29,7 @@ import { useHasPermission } from 'hooks/useHasPermission'
 import { TextArea } from 'ui/components/TextArea/TextArea'
 import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinner'
 import { useGetSpaceTopic, useSetSpaceTopic } from 'hooks/useSpaceTopic'
+import { InteractiveSpaceIcon } from '@components/SpaceIcon'
 import { useContractSpaceInfo } from '../hooks/useContractSpaceInfo'
 import { useMatrixHomeServerUrl } from '../hooks/useMatrixHomeServerUrl'
 
@@ -51,6 +53,9 @@ export const SpaceInfoPanel = () => {
     const [editErrorMessage, setEditErrorMessage] = useState<string | null>(null)
     const textAreaRef = useRef<HTMLTextAreaElement>(null)
     const { data: roomTopic, isLoading: isLoadingRoomTopic } = useGetSpaceTopic(space?.id.networkId)
+
+    const [isOfficialNFTToggled, setIsOfficialNFTToggled] = React.useState(false)
+    const onToggleOfficialNFT = useCallback(() => setIsOfficialNFTToggled((t) => !t), [])
 
     const { mutate, isLoading } = useSetSpaceTopic(space?.id)
 
@@ -97,26 +102,37 @@ export const SpaceInfoPanel = () => {
     })
 
     return (
-        <Stack grow height="100%" overflow="hidden">
+        <Stack height="100%" overflow="hidden">
             <Panel label="Space" onClose={onClose}>
                 {space?.id && (
                     <Stack centerContent gap="lg">
-                        <FormRender>
-                            {({ register, formState, setError, clearErrors }) => (
-                                <Stack gap="lg">
-                                    <UploadImage
-                                        formFieldName="spaceIcon"
-                                        spaceName={space.name}
-                                        canEdit={Boolean(canEdit)}
-                                        spaceId={space.id.networkId}
-                                        setError={setError}
-                                        register={register}
-                                        formState={formState}
-                                        clearErrors={clearErrors}
-                                    />
-                                </Stack>
-                            )}
-                        </FormRender>
+                        {!isOfficialNFTToggled ? (
+                            <FormRender>
+                                {({ register, formState, setError, clearErrors }) => (
+                                    <Stack gap="lg">
+                                        <UploadImage
+                                            spaceAddress={address}
+                                            formFieldName="spaceIcon"
+                                            spaceName={space.name}
+                                            canEdit={Boolean(canEdit)}
+                                            spaceId={space.id.networkId}
+                                            setError={setError}
+                                            register={register}
+                                            formState={formState}
+                                            clearErrors={clearErrors}
+                                        />
+                                    </Stack>
+                                )}
+                            </FormRender>
+                        ) : (
+                            <InteractiveSpaceIcon
+                                spaceId={space.id.networkId}
+                                size="lg"
+                                spaceName={space.name}
+                                address={address}
+                                overrideSrc="/townsnft.png"
+                            />
+                        )}
                     </Stack>
                 )}
                 <Stack gap="lg" padding="lg">
@@ -245,6 +261,14 @@ export const SpaceInfoPanel = () => {
                             )}
                         </>
                     </MdGap>
+                </Stack>
+                <Stack grow padding paddingBottom="lg" justifyContent="end">
+                    <Stack horizontal justifyContent="spaceBetween" alignItems="center">
+                        <Paragraph color="gray2" size="sm">
+                            Toggle official TownNFT
+                        </Paragraph>
+                        <Toggle toggled={isOfficialNFTToggled} onToggle={onToggleOfficialNFT} />
+                    </Stack>
                 </Stack>
             </Panel>
         </Stack>

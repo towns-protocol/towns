@@ -11,7 +11,7 @@ export const Panel = (props: {
 }) => {
     const { paddingX = 'md' } = props
     return (
-        <Stack overflow="scroll" maxHeight="100%">
+        <Stack overflow="scroll" height="100%">
             <Stack
                 horizontal
                 shrink={false}

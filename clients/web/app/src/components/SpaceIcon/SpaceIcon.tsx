@@ -20,6 +20,8 @@ type Props = {
     firstLetterOfSpaceName: string
     letterFontSize?: LetterStylesVariantProps
     variant?: ImageVariant
+    /* used to toggle official NFT image - may remove in the future */
+    overrideSrc?: string
 } & BoxProps
 
 const MotionBox = motion(Box)
@@ -30,6 +32,7 @@ export const SpaceIcon = (props: Props) => {
         spaceId,
         letterFontSize,
         firstLetterOfSpaceName,
+        overrideSrc,
         variant = ImageVariants.thumbnail300,
         ...boxProps
     } = props
@@ -61,7 +64,7 @@ export const SpaceIcon = (props: Props) => {
                     <AnimatePresence mode="wait">
                         <MotionBox
                             as="img"
-                            src={imageSrc}
+                            src={overrideSrc ?? imageSrc}
                             fit="full"
                             objectFit="cover"
                             initial={{ opacity: 0 }}
@@ -78,16 +81,18 @@ export const SpaceIcon = (props: Props) => {
 }
 
 export const InteractiveSpaceIcon = (
-    props: Pick<Props, 'spaceId'> & Pick<TownsTokenProps, 'size' | 'address' | 'spaceName'>,
+    props: Pick<Props, 'spaceId' | 'overrideSrc'> &
+        Pick<TownsTokenProps, 'size' | 'address' | 'spaceName'>,
 ) => {
-    const { size, spaceName: name, address } = props
+    const { overrideSrc, size, spaceName: name, address } = props
 
     const imageVariant = size === 'sm' ? ImageVariants.thumbnail100 : ImageVariants.thumbnail300
     const { imageSrc, renderKey } = useLoadSpaceIcon(props.spaceId, imageVariant)
+
     return (
         <InteractiveTownsToken
             size={size}
-            imageSrc={imageSrc}
+            imageSrc={overrideSrc ?? imageSrc}
             address={address}
             spaceName={name}
             imageSrcRenderKey={renderKey}

@@ -41,7 +41,7 @@ export const NewDivider = React.memo(
             !isHidden ? (
                 <Stack horizontal gap paddingY="sm" alignItems="center" paddingX="lg" {...boxProps}>
                     <Box grow borderBottom="negative" />
-                    <Box color="negative" ref={ref}>
+                    <Box centerContent color="negative" ref={ref}>
                         <Paragraph size="sm">NEW</Paragraph>
                     </Box>
                 </Stack>
