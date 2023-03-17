@@ -37,6 +37,7 @@ const envSchema = z.object({
     VITE_SENTRY_DSN: z.string().optional(),
     VITE_SENTRY_BEARER_TOKEN: z.string().optional(),
     VITE_AMPLITUDE_KEY: z.string().nullish(), // making this optional since we want to allow local development without it
+    VITE_GLEAP_API_KEY: z.string().optional(), // making this optional since we want to allow local development without it
 })
 
 const parsed = envSchema.safeParse(import.meta.env)

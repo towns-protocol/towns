@@ -2,9 +2,8 @@ import React, { useRef } from 'react'
 import { Navigate, Outlet, Route, Routes } from 'react-router'
 import { SpaceProtocol, ZionContextProvider } from 'use-zion-client'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
-
 import { PlaygroundRoutes } from '@components/Playground/PlaygroundRoutes'
-import { Box, Stack } from '@ui'
+import { Stack } from '@ui'
 import { useAuth } from 'hooks/useAuth'
 import { useWindowListener } from 'hooks/useWindowListener'
 import { PATHS } from 'routes'
@@ -19,7 +18,6 @@ import { AnalyticsProvider } from 'hooks/useAnalytics'
 import { useCorrectChainForServer } from 'hooks/useCorrectChainForServer'
 import { useDevice } from 'hooks/useDevice'
 import { MobileView } from 'routes/MobileView'
-import { SentryReportModal } from '@components/SentryErrorReport/SentryErrorReport'
 
 const AuthenticatedRoutes = React.lazy(() => import('routes/AuthenticatedRoutes'))
 const InviteLinkLanding = React.lazy(() => import('routes/InviteLinkLanding'))
@@ -82,11 +80,6 @@ const AllRoutes = () => {
 
     return (
         <>
-            {!isAuthenticatedAndConnected && (
-                <Box position="fixed" left="lg" bottom="lg">
-                    <SentryReportModal />
-                </Box>
-            )}
             <Routes>
                 <Route element={<AppLayout />}>
                     <Route element={<Outlet />}>

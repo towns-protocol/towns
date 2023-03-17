@@ -1,6 +1,7 @@
 import 'allotment/dist/style.css'
 // Only load Sentry in production
 // eslint-disable-next-line @typescript-eslint/no-var-requires
+import Gleap from 'gleap'
 import * as Sentry from '@sentry/react'
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 import { BrowserTracing } from '@sentry/tracing'
@@ -30,7 +31,6 @@ if (env.IS_DEV) {
         const overlay = new ErrorOverlay(event.error)
         document.body.appendChild(overlay)
     }
-
     window.addEventListener('error', showErrorOverlay)
     window.addEventListener('unhandledrejection', ({ reason }) => showErrorOverlay(reason))
 } else {
@@ -52,6 +52,10 @@ if (env.IS_DEV) {
         release: env.VITE_APP_RELEASE_VERSION,
     })
 }
+
+Gleap.initialize(env.VITE_GLEAP_API_KEY || '')
+Gleap.showFeedbackButton(true)
+Gleap.setEnvironment(env.IS_DEV ? 'dev' : 'prod')
 
 const node = document.getElementById('root')
 

@@ -30,7 +30,6 @@ import { InteractiveSpaceIcon } from '@components/SpaceIcon'
 import { useChannelIdFromPathname } from 'hooks/useChannelIdFromPathname'
 import { useStore } from 'store/store'
 import { CopySpaceLink } from '@components/CopySpaceLink/CopySpaceLink'
-import { SentryReportModal } from '@components/SentryErrorReport/SentryErrorReport'
 import { SideBar } from '../_SideBar'
 import { buttonText, buttonTextParent, copySpaceLink, spaceIconContainer } from './SpaceSideBar.css'
 
@@ -142,9 +141,6 @@ export const SpaceSideBar = (props: Props) => {
                         )}
                     </>
                 </Stack>
-                <Box grow paddingX="sm" paddingY="lg" justifyContent="end">
-                    <SentryReportModal />
-                </Box>
             </SideBar>
         </>
     )
