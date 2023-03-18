@@ -11,7 +11,6 @@ import {MerkleProof} from "openzeppelin-contracts/contracts/utils/cryptography/M
 //contracts
 import {ERC721} from "openzeppelin-contracts/contracts/token/ERC721/ERC721.sol";
 import {Ownable} from "openzeppelin-contracts/contracts/access/Ownable.sol";
-import {AccessControl} from "openzeppelin-contracts/contracts/access/AccessControl.sol";
 
 contract Member is IMember, ERC721, Ownable {
   using Counters for Counters.Counter;

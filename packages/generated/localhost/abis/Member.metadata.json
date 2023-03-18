@@ -872,22 +872,6 @@
     ]
   },
   "sources": {
-    "lib/openzeppelin-contracts/contracts/access/AccessControl.sol": {
-      "keccak256": "0x8d29c5ce9b0d56701c1bf9dce816baa3d8665cea300abdd65e6f16314efcebc6",
-      "license": "MIT",
-      "urls": [
-        "bzz-raw://cfab8ea48d554b8e071cb977be570c78f95a018aa5f71401c512b2b93001b8a9",
-        "dweb:/ipfs/QmP73h6SJsZ857EHM2dhUURaqXbZFaJwVESryfxufvy7Hw"
-      ]
-    },
-    "lib/openzeppelin-contracts/contracts/access/IAccessControl.sol": {
-      "keccak256": "0x59ce320a585d7e1f163cd70390a0ef2ff9cec832e2aa544293a00692465a7a57",
-      "license": "MIT",
-      "urls": [
-        "bzz-raw://bb2c137c343ef0c4c7ce7b18c1d108afdc9d315a04e48307288d2d05adcbde3a",
-        "dweb:/ipfs/QmUxhrAQM3MM3FF5j7AtcXLXguWCJBHJ14BRdVtuoQc8Fh"
-      ]
-    },
     "lib/openzeppelin-contracts/contracts/access/Ownable.sol": {
       "keccak256": "0xa94b34880e3c1b0b931662cb1c09e5dfa6662f31cba80e07c5ee71cd135c9673",
       "license": "MIT",
@@ -1001,11 +985,11 @@
       ]
     },
     "packages/contracts/src/core/tokens/Member.sol": {
-      "keccak256": "0xec5361e61ea0996070ef69eab792bc051625fa6a449d4a51a974bf6742478774",
+      "keccak256": "0x565d31c59b9a3bb1520834db6c4db82ddc70312113efd02c45594daccdd9a2ed",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://30cc253bbcee581f44ff3dc643fe58e7b122b97ef2d6afb82a08fc925196e296",
-        "dweb:/ipfs/QmQsXFYcEzwyApLmcQAzWKnon5aM7jHyKKndbcXzfww8bN"
+        "bzz-raw://3b619ef3d0915552104a8adc4747814145b662f7ec193fab0a1d01c1ebe299aa",
+        "dweb:/ipfs/QmXvHwfxhQcXtiwFz8HVFa7kckV8tsnF4Euhn7N9AuKPxg"
       ]
     },
     "packages/contracts/src/interfaces/IMember.sol": {
