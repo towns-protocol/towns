@@ -61,7 +61,7 @@ export const UserProfile = (props: Props) => {
     })
     return (
         <Stack grow padding gap position="relative">
-            <Stack centerContent={center}>
+            <Stack centerContent={center} padding="lg">
                 <Stack
                     width="100%"
                     aspectRatio="1/1"
@@ -218,13 +218,7 @@ const EditRow = (props: EditRowProps) => {
     )
 
     return (
-        <Stack
-            horizontal
-            grow
-            justifyContent="spaceBetween"
-            alignItems="baseline"
-            position="relative"
-        >
+        <Stack horizontal justifyContent="spaceBetween" alignItems="baseline" position="relative">
             {props.children({ editMenu, isEditing, onChange, handleSave, handleEdit, value })}
         </Stack>
     )
