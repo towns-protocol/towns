@@ -123,10 +123,6 @@ const InviteLinkLanding = () => {
                     onClick={onButtonClick}
                 />
 
-                <Text color="gray2" size="sm" textAlign="center">
-                    By clicking &quot;{buttonLabel}&quot; above, you acknowledge that you have read
-                    and understood, and agree to Town&apos;s Terms & Privacy Policy
-                </Text>
                 <Stack centerContent gap horizontal>
                     <Box horizontal color="gray2" alignItems="center" gap="xs">
                         <Icon type="help" />
