@@ -5,8 +5,7 @@
   "eslint.workingDirectories": [
     "./clients/web/lib",
     "./clients/web/app",
-    "./clients/web/sample-app",
-    "./contracts"
+    "./clients/web/sample-app"
   ],
   "gopls": {
     "build.experimentalWorkspaceModule": true
@@ -15,6 +14,5 @@
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
   "solidity.formatter": "prettier",
-  "solidity.defaultCompiler": "remote",
-  "solidity.compileUsingRemoteVersion": "v0.8.19"
+  "solidity.linter": "solhint"
 }

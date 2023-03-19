@@ -6,7 +6,7 @@ import {ERC1155} from "openzeppelin-contracts/contracts/token/ERC1155/ERC1155.so
 import {ERC20} from "openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
 
 contract Mock721 is ERC721 {
-  uint256 tokenId;
+  uint256 public tokenId;
 
   constructor() ERC721("MyNFT", "MNFT") {}
 
@@ -17,7 +17,7 @@ contract Mock721 is ERC721 {
 }
 
 contract Mock1155 is ERC1155 {
-  uint256 tokenId;
+  uint256 public tokenId;
 
   constructor() ERC1155("ipfs://hash") {}
 
