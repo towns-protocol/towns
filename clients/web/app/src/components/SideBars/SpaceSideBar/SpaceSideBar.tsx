@@ -353,6 +353,7 @@ const SettingsGear = (props: {
     spaceName: string
 }) => {
     const { spaceId, onSettings, spaceName } = props
+    const { data: canEditSettings } = useHasPermission(Permission.ModifySpaceSettings)
 
     const onSettingClick = useCallback(
         (e: React.MouseEvent) => {
@@ -368,7 +369,13 @@ const SettingsGear = (props: {
                 tabIndex={0}
                 trigger="click"
                 placement="horizontal"
-                render={<SpaceSettingsCard spaceId={spaceId} spaceName={spaceName} />}
+                render={
+                    <SpaceSettingsCard
+                        spaceId={spaceId}
+                        spaceName={spaceName}
+                        canEditSettings={Boolean(canEditSettings)}
+                    />
+                }
                 layoutId="settings"
             >
                 {({ triggerProps }) => (

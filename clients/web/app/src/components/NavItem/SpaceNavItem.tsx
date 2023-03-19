@@ -1,7 +1,6 @@
-import React, { useCallback } from 'react'
+import React from 'react'
 import { RoomIdentifier, useSpaceNotificationCounts } from 'use-zion-client'
 import { PATHS } from 'routes'
-import { SpaceSettingsCard } from '@components/Cards/SpaceSettingsCard'
 import { SpaceNavTooltip } from '@components/Tooltips/SpaceNavTooltip'
 import { Badge, Box, ButtonText, Dot, Icon, TooltipRenderer } from '@ui'
 import { IconName } from 'ui/components/Icon'
@@ -26,19 +25,7 @@ type Props = {
 }
 
 export const SpaceNavItem = (props: Props) => {
-    const {
-        id,
-        forceMatch,
-        highlight,
-        avatar,
-        exact,
-        icon,
-        name,
-        pinned,
-        settings,
-        onSettings,
-        isInvite,
-    } = props
+    const { id, forceMatch, highlight, avatar, exact, icon, name, pinned, isInvite } = props
 
     const notificationCounts = useSpaceNotificationCounts(id)
     const mentions = notificationCounts.mentions
@@ -46,14 +33,6 @@ export const SpaceNavItem = (props: Props) => {
     const sizeContext = useSizeContext()
     // TODO: use tokens
     const isSmall = sizeContext.lessThan(180)
-
-    const onSettingClick = useCallback(
-        (e: React.MouseEvent) => {
-            e.preventDefault()
-            onSettings?.(id)
-        },
-        [onSettings, id],
-    )
 
     return (
         <TooltipRenderer
@@ -101,27 +80,6 @@ export const SpaceNavItem = (props: Props) => {
                     <Box shrink display={isSmall ? 'none' : undefined} color="gray2">
                         <Badge value={mentions} />
                     </Box>
-
-                    {props.spaceName && settings && (
-                        <TooltipRenderer
-                            trigger="click"
-                            placement="horizontal"
-                            render={<SpaceSettingsCard spaceId={id} spaceName={props.spaceName} />}
-                            layoutId="settings"
-                        >
-                            {({ triggerProps }) => (
-                                <Box
-                                    shrink
-                                    display={isSmall ? 'none' : undefined}
-                                    color={{ hover: 'default', default: 'gray2' }}
-                                    onClick={onSettingClick}
-                                    {...triggerProps}
-                                >
-                                    <Icon type="settings" size="square_sm" />
-                                </Box>
-                            )}
-                        </TooltipRenderer>
-                    )}
                 </NavItem>
             )}
         </TooltipRenderer>

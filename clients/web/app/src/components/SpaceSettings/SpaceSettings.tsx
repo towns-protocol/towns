@@ -3,6 +3,7 @@ import { Outlet, useNavigate, useParams } from 'react-router'
 import { NavLink } from 'react-router-dom'
 import { useEvent } from 'react-use-event-hook'
 import {
+    Permission,
     useMultipleRoleDetails,
     useOnTransactionEmitted,
     useRoleDetails,
@@ -11,12 +12,14 @@ import {
 import { AnimatePresence } from 'framer-motion'
 import { PATHS } from 'routes'
 
-import { IconButton, Stack } from '@ui'
+import { IconButton, Stack, Text } from '@ui'
 import {
     Role,
     useSettingsRolesStore,
 } from '@components/SpaceSettings/store/hooks/settingsRolesStore'
 import { FadeIn } from '@components/Transitions'
+import { useHasPermission } from 'hooks/useHasPermission'
+import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinner'
 import { SpaceSettingsNavItem } from '../NavItem/SpaceSettingsNavItem'
 import { useModifiedRoles } from './store/hooks/useModifiedRoles'
 import { useSettingsTransactionsStore } from './store/hooks/settingsTransactionStore'
@@ -51,6 +54,10 @@ export const SpaceSettings = () => {
         await invalidateQuery?.()
         useSettingsRolesStore.getState().clearSpace()
     }, [invalidateQuery])
+
+    const { data: canEditSettings, isLoading: canEditLoading } = useHasPermission(
+        Permission.ModifySpaceSettings,
+    )
 
     // when transactions are in progress, or they have completed, until user gives some sort of confirmation
     const lockedState = useMemo(() => {
@@ -117,6 +124,23 @@ export const SpaceSettings = () => {
         }
     })
 
+    if (canEditLoading) {
+        return (
+            <Stack grow centerContent borderLeft="faint" gap="md">
+                <Text>Checking permissions</Text>
+                <ButtonSpinner />
+            </Stack>
+        )
+    }
+
+    if (!canEditSettings) {
+        return (
+            <Stack absoluteFill centerContent>
+                <h3>You cannot edit this town&apos;s settings.</h3>
+            </Stack>
+        )
+    }
+
     return (
         <Stack horizontal grow minWidth="100%">
             <Stack minWidth="200">
@@ -124,12 +148,20 @@ export const SpaceSettings = () => {
                     <SpaceSettingsNavItem selected icon="all">
                         <NavLink to={defaultPath}>Roles</NavLink>
                     </SpaceSettingsNavItem>
-                    <SpaceSettingsNavItem icon="delete" color="secondary">
+                    <SpaceSettingsNavItem icon="delete" color="error">
                         Delete Space
                     </SpaceSettingsNavItem>
                 </Stack>
             </Stack>
-            <Outlet />
+            {!rolesWithDetails ? (
+                <Stack grow centerContent borderLeft="faint" gap="md">
+                    <Text>Loading roles</Text>
+                    <ButtonSpinner />
+                </Stack>
+            ) : (
+                <Outlet />
+            )}
+
             <Stack position="topRight" padding="lg">
                 <IconButton icon="close" color="default" onClick={onClose} />
             </Stack>

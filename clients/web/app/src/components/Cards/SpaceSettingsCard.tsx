@@ -1,15 +1,15 @@
 import React, { useCallback } from 'react'
 import { useNavigate } from 'react-router'
-import { RoomIdentifier, useZionClient } from 'use-zion-client'
+import { Permission, RoomIdentifier, useZionClient } from 'use-zion-client'
 import { PATHS } from 'routes'
 import { Box, Card } from '@ui'
 import { useCardOpenerContext } from 'ui/components/Overlay/CardOpenerContext'
 import { MenuItem } from './MenuItem'
 
-type Props = { spaceId: RoomIdentifier; spaceName: string }
+type Props = { spaceId: RoomIdentifier; spaceName: string; canEditSettings: boolean }
 
 export const SpaceSettingsCard = (props: Props) => {
-    const { spaceId } = props
+    const { spaceId, canEditSettings } = props
 
     const navigate = useNavigate()
 
@@ -34,9 +34,11 @@ export const SpaceSettingsCard = (props: Props) => {
     return (
         <Box position="relative">
             <Card border width="300" fontSize="md" paddingY="sm" role="navigation">
-                <MenuItem icon="settings" onClick={onSettingsClick}>
-                    Settings
-                </MenuItem>
+                {canEditSettings && (
+                    <MenuItem icon="settings" onClick={onSettingsClick}>
+                        Settings
+                    </MenuItem>
+                )}
                 <MenuItem color="error" icon="logout" onClick={onLeaveClick}>
                     Leave {props.spaceName}
                 </MenuItem>
