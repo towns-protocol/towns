@@ -1,35 +1,17 @@
-import { motion } from 'framer-motion'
 import React, { useCallback, useEffect, useMemo } from 'react'
 import { useForm } from 'react-hook-form'
 import { useNavigate } from 'react-router'
-import { useEvent } from 'react-use-event-hook'
 import { LoginStatus, useMatrixStore, useMyProfile, useZionClient } from 'use-zion-client'
-import { vars } from 'ui/styles/vars.css'
-import { Avatar, Box, Button, ErrorMessage, Icon, RadioSelect, Stack, TextField } from '@ui'
+import { Button, ErrorMessage, Icon, Stack, TextField } from '@ui'
 import { useAuth } from 'hooks/useAuth'
+import { UploadAvatar } from '@components/UploadImage/UploadAvatar/UploadAvatar'
 import { PATHS } from 'routes'
-import { swapValueInTests } from 'utils'
-
-const placeholders = {
-    names: [
-        'ben.eth',
-        'benrbn.eth',
-        'selashtalk.eth',
-        'lupi.eth',
-        'genius.eth',
-        'hello.eth',
-        '1345.eth',
-        'jimmicricket.eth',
-        'looper.eth',
-    ],
-    nfts: Array(3)
-        .fill(0)
-        .map((_, index) => `/placeholders/nft_alpha_${index + 1}.png`),
-}
+import { useUploadImage } from 'api/lib/uploadImage'
+import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinner'
 
 export const RegisterForm = ({ isEdit }: { isEdit: boolean }) => {
     const { loggedInWalletAddress, isConnected, register: registerWallet } = useAuth()
-    const { setDisplayName, setAvatarUrl } = useZionClient()
+    const { setDisplayName } = useZionClient()
     const navigate = useNavigate()
     const { loginStatus } = useMatrixStore()
     const myProfile = useMyProfile()
@@ -37,17 +19,30 @@ export const RegisterForm = ({ isEdit }: { isEdit: boolean }) => {
     const defaultValues = useMemo(
         () => ({
             walletAddress: loggedInWalletAddress,
-            ens: undefined,
             displayName: myProfile?.displayName ?? '',
-            nft: myProfile?.avatarUrl ?? '',
+            // this property is used for the upload component and to leverage react-hook-form's error/state tracking, but we don't actually have to track it's defaultValue when the form loads
+            // 1. when registering, if this field is empty at submission time, we will upload a random image
+            // 2. when editing, they will already have an image and we don't want to overwrite it in submission
+            profilePic: undefined,
         }),
         [loggedInWalletAddress, myProfile],
     )
 
-    const { setValue, resetField, register, handleSubmit, watch, formState, reset } = useForm({
-        defaultValues,
-        mode: 'onChange',
-    })
+    const { mutateAsync: upload, isLoading: imageUploading } = useUploadImage(
+        loggedInWalletAddress ?? '',
+    )
+
+    const { setValue, register, handleSubmit, formState, reset, setError, clearErrors, watch } =
+        useForm<{
+            walletAddress: string
+            displayName: string
+            profilePic: FileList | undefined
+        }>({
+            defaultValues,
+            mode: 'onChange',
+        })
+
+    watch(['profilePic', 'displayName'])
 
     useEffect(() => {
         if (!isEdit) {
@@ -65,7 +60,7 @@ export const RegisterForm = ({ isEdit }: { isEdit: boolean }) => {
     })
 
     const onSubmit = useCallback(
-        (data: { displayName: string; nft: string }) => {
+        (data: { displayName: string; profilePic: FileList | undefined }) => {
             ;(async () => {
                 try {
                     if (!isConnected) {
@@ -73,14 +68,28 @@ export const RegisterForm = ({ isEdit }: { isEdit: boolean }) => {
                         navigate('/')
                         return
                     }
+                    // only upload an image when first registering and if the user has not uploaded one
+                    // this needs to be done before the registerWallet call
+                    if (!isEdit && !data.profilePic?.[0] && loggedInWalletAddress) {
+                        // upload to CF a random image
+                        const random = Math.floor(Math.random() * 25) + 1
+                        const url = `/placeholders/pp${random}.png`
+                        const blob = await fetch(url).then((r) => r.blob())
+                        const file = new File([blob], 'avatar.png')
+
+                        await upload({
+                            id: loggedInWalletAddress,
+                            file,
+                            type: 'avatar',
+                            imageUrl: url,
+                        })
+                    }
+
                     if (loginStatus === LoginStatus.LoggedOut) {
                         await registerWallet()
                     }
                     if (data.displayName !== myProfile?.displayName) {
                         await setDisplayName(data.displayName)
-                    }
-                    if (data.nft !== myProfile?.avatarUrl && data.nft !== '') {
-                        await setAvatarUrl(data.nft)
                     }
                 } catch (e: unknown) {
                     console.warn(e)
@@ -96,34 +105,16 @@ export const RegisterForm = ({ isEdit }: { isEdit: boolean }) => {
         },
         [
             isConnected,
+            isEdit,
+            loggedInWalletAddress,
             loginStatus,
-            myProfile?.avatarUrl,
             myProfile?.displayName,
             navigate,
             registerWallet,
-            setAvatarUrl,
             setDisplayName,
+            upload,
         ],
     )
-    const [fieldENS, fieldDisplayName, fieldNFT] = watch(['ens', 'displayName', 'nft'])
-
-    const isENS = placeholders.names.includes(fieldDisplayName)
-
-    const resetENSField = useEvent(() => {
-        resetField('ens', undefined)
-    })
-
-    useEffect(() => {
-        if (!isENS) {
-            resetENSField()
-        }
-    }, [isENS, resetENSField])
-
-    useEffect(() => {
-        if (fieldENS) {
-            setValue('displayName', fieldENS, { shouldValidate: true })
-        }
-    }, [fieldENS, setValue])
 
     return (
         <Stack
@@ -152,13 +143,11 @@ export const RegisterForm = ({ isEdit }: { isEdit: boolean }) => {
                     autoCorrect="off"
                     background="level2"
                     tone={errors?.displayName ? 'negative' : undefined}
-                    inputColor={isENS ? 'accent' : undefined}
                     label="Display Name"
                     secondaryLabel="(required)"
                     description="This is how others will see you."
                     placeholder="Enter a display name"
                     autoComplete="off"
-                    after={isENS && <Icon type="verified" />}
                     message={<ErrorMessage errors={errors} fieldName="displayName" />}
                     {...register('displayName', {
                         pattern: {
@@ -169,59 +158,23 @@ export const RegisterForm = ({ isEdit }: { isEdit: boolean }) => {
                         required: 'Please enter a display name.',
                     })}
                 />
-
-                {/* {!!placeholders.names?.length && (
-                    <Box padding border rounded="sm">
-                        <RadioSelect
-                            label="(Optional) Set an ENS as your username:"
-                            renderLabel={(label) => (
-                                <Text size="lg" color="gray2">
-                                    {label}
-                                </Text>
-                            )}
-                            columns={2}
-                            options={placeholders.names.map((value) => ({
-                                value,
-                                label: value,
-                            }))}
-                            applyChildProps={() => register('ens', { required: false })}
-                        />
-                    </Box>
-                )} */}
             </Stack>
 
-            {!!placeholders.nfts.length && (
-                <RadioSelect
-                    columns="60px"
-                    description="This is your default profile picture."
-                    label="Profile picture"
-                    render={(value, selected) => (
-                        <MotionBox
-                            data-testid="avatar-radio"
-                            rounded="full"
-                            border="strong"
-                            animate={{
-                                opacity: !!fieldNFT && !selected ? 0.5 : 1,
-                                borderColor: !selected
-                                    ? `rgba(255,255,255,0)`
-                                    : swapValueInTests(
-                                          vars.color.foreground.default,
-                                          'rgba(255, 255, 255, 0)',
-                                      ),
-                            }}
-                        >
-                            <Avatar src={value} size="avatar_lg" />
-                        </MotionBox>
-                    )}
-                    options={placeholders.nfts.map((value) => ({ value, label: value }))}
-                    applyChildProps={() => register('nft', { required: true })}
+            {myProfile?.userId && (
+                <UploadAvatar
+                    userId={myProfile.userId}
+                    setError={setError}
+                    register={register}
+                    formState={formState}
+                    clearErrors={clearErrors}
+                    setValue={setValue}
                 />
             )}
-            <Button type="submit" tone="cta1" disabled={!isValid}>
+
+            <Button type="submit" tone="cta1" disabled={!isValid || imageUploading}>
+                {imageUploading && <ButtonSpinner />}
                 Next
             </Button>
         </Stack>
     )
 }
-
-const MotionBox = motion(Box)

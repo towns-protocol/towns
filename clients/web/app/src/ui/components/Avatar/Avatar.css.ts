@@ -15,6 +15,13 @@ export const avatarBaseStyle = style({
     borderRadius: vars.borderRadius.xs,
 })
 
+export const avatarImageStyle = style({
+    width: '100%',
+    height: '100%',
+    objectPosition: 'center',
+    objectFit: 'cover',
+})
+
 export const squircleMask = style({
     WebkitMaskImage: `url(/squircle.svg)`,
     WebkitMaskSize: `cover`,

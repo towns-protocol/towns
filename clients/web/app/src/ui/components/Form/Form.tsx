@@ -2,7 +2,7 @@ import React from 'react'
 import { DefaultValues, FieldValues, Mode, UseFormReturn, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { ZodTypeAny } from 'zod'
-import { Box } from '../Box/Box'
+import { Box, BoxProps } from '../Box/Box'
 
 type FormProps<T extends FieldValues> = {
     children: React.ReactNode
@@ -11,7 +11,7 @@ type FormProps<T extends FieldValues> = {
     id?: string
     mode?: Mode
     schema?: ZodTypeAny
-}
+} & Omit<BoxProps, 'onSubmit'>
 
 /**
  * Automatically injects the result of useForm() into children props
@@ -27,6 +27,7 @@ export function Form<T extends FieldValues>({
     onSubmit,
     mode = 'onSubmit',
     schema,
+    ...boxProps
 }: FormProps<T>) {
     const form = useForm<T>({
         defaultValues,
@@ -35,7 +36,7 @@ export function Form<T extends FieldValues>({
     })
 
     return (
-        <Box as="form" id={id} onSubmit={form.handleSubmit(onSubmit ?? (() => null))}>
+        <Box as="form" id={id} onSubmit={form.handleSubmit(onSubmit ?? (() => null))} {...boxProps}>
             {React.Children.map(children, (child) => {
                 if (React.isValidElement(child) && typeof child.type === 'function') {
                     return React.cloneElement(child, {

@@ -88,7 +88,7 @@ const ThreadRootPreview2 = (props: { threadParentId: string; events: ZRoomMessag
                         .map((u) => membersMap[u])
                         .filter(notUndefined)
                         .map((u) => (
-                            <Avatar src={u.avatarUrl} key={u.userId} size="avatar_xs" />
+                            <Avatar key={u.userId} size="avatar_xs" userId={u.userId} />
                         ))}
                 </Stack>
                 <Box maxWidth="300">

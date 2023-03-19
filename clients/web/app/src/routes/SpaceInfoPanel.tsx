@@ -111,16 +111,22 @@ export const SpaceInfoPanel = () => {
                                 {({ register, formState, setError, clearErrors }) => (
                                     <Stack gap="lg">
                                         <UploadImage
-                                            spaceAddress={address}
+                                            type="spaceIcon"
                                             formFieldName="spaceIcon"
-                                            spaceName={space.name}
                                             canEdit={Boolean(canEdit)}
-                                            spaceId={space.id.networkId}
+                                            resourceId={space.id.networkId}
                                             setError={setError}
                                             register={register}
                                             formState={formState}
                                             clearErrors={clearErrors}
-                                        />
+                                        >
+                                            <InteractiveSpaceIcon
+                                                spaceId={space.id.networkId}
+                                                size="lg"
+                                                spaceName={space.name}
+                                                address={address}
+                                            />
+                                        </UploadImage>
                                     </Stack>
                                 )}
                             </FormRender>
@@ -240,7 +246,7 @@ export const SpaceInfoPanel = () => {
                                             {matrixUserOwner && (
                                                 <Avatar
                                                     size="avatar_x4"
-                                                    src={matrixUserOwner.avatarUrl}
+                                                    userId={matrixUserOwner.userId}
                                                 />
                                             )}
                                             <Box justifyContent="spaceBetween">

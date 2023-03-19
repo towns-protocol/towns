@@ -43,8 +43,8 @@ export const SpaceProfilePanel = (props: { children?: React.ReactNode }) => {
                 {isValid ? (
                     <UserProfile
                         center
+                        userId={user.userId}
                         displayName={user.name}
-                        avatarUrl={user.avatarUrl}
                         userAddress={userAddress}
                         userBio={userBio}
                         canEdit={canEdit}

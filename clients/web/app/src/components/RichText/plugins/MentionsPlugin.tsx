@@ -107,7 +107,7 @@ export const MentionsPlugin = (props: Props) => {
                                       name={option.name}
                                       Icon={
                                           option.picture ? (
-                                              <Avatar size="avatar_sm" src={option.picture} />
+                                              <Avatar size="avatar_sm" userId={option.userId} />
                                           ) : (
                                               <></>
                                           )

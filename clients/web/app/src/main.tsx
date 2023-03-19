@@ -1,9 +1,7 @@
 import 'allotment/dist/style.css'
-// Only load Sentry in production
-// eslint-disable-next-line @typescript-eslint/no-var-requires
+// eslint-disable-next-line import/no-named-as-default
 import Gleap from 'gleap'
 import * as Sentry from '@sentry/react'
-// eslint-disable-next-line @typescript-eslint/no-var-requires
 import { BrowserTracing } from '@sentry/tracing'
 import { ErrorBoundary } from 'react-error-boundary'
 

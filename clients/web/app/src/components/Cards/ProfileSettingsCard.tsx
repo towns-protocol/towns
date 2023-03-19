@@ -17,7 +17,7 @@ type Props = {
 }
 
 export const ProfileSettingsCard = (props: Props) => {
-    const { userAddress, avatarUrl, displayName, userId } = props
+    const { userAddress, displayName, userId } = props
     const { logout } = useAuth()
     const { closeCard } = useCardOpenerContext()
     const { setTheme, theme } = useStore((state) => ({
@@ -53,7 +53,7 @@ export const ProfileSettingsCard = (props: Props) => {
         <Card border paddingBottom="sm" width="300" fontSize="md" tabIndex={1}>
             <Stack horizontal padding gap="md" alignItems="center">
                 <Box>
-                    <Avatar size="avatar_x4" src={avatarUrl} />
+                    <Avatar size="avatar_x4" userId={userId ?? ''} />
                 </Box>
                 <Stack grow gap fontWeight="strong" color="default">
                     <Paragraph>{displayName && displayName}</Paragraph>

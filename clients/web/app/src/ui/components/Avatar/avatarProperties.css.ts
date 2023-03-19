@@ -38,6 +38,16 @@ export const avatarSizes = {
         height: vars.dims.baseline.x15,
         '--size': vars.dims.baseline.x15,
     },
+    avatar_x10: {
+        width: vars.dims.baseline.x10,
+        height: vars.dims.baseline.x10,
+        '--size': vars.dims.baseline.x10,
+    },
+    avatar_100: {
+        width: '100%',
+        height: '100%',
+        '--size': '100%',
+    },
 } as const
 
 export const avatarProperties = defineProperties({

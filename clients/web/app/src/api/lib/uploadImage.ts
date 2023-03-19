@@ -1,7 +1,7 @@
 import { useMutation } from '@tanstack/react-query'
 import { axiosClient } from 'api/apiClient'
 import { env } from 'utils'
-import { useUploadImageStore } from '@components/UploadImage/useUploadImageStore'
+import { useImageStore } from '@components/UploadImage/useImageStore'
 
 type PostVars = {
     id: string
@@ -9,9 +9,9 @@ type PostVars = {
     type: 'spaceIcon' | 'avatar'
 }
 
-async function uploadIcon(
+async function uploadImage(
     args: PostVars & {
-        temporaryImageUrl: string
+        imageUrl: string
     },
 ) {
     const url = new URL(env.VITE_GATEWAY_URL)
@@ -28,27 +28,27 @@ async function uploadIcon(
         },
     })
 
-    return { response: res, temporaryImageUrl: args.temporaryImageUrl }
+    return { response: res, imageUrl: args.imageUrl }
 }
 
 export function useUploadImage(referenceId: string) {
-    return useMutation(uploadIcon, {
+    return useMutation(uploadImage, {
         retry: 3,
         retryDelay: 2500,
         onSuccess: (data) => {
             console.log(`[useUploadImage] upload success `, data.response)
-            const { temporaryImageUrl } = data
-            const { setResource } = useUploadImageStore.getState()
-            // on a successful upload, update all our read queries to start the retry behavior
-            setResource(referenceId, {
-                renderKey: referenceId + '_' + Date.now(),
-                temporaryImageUrl,
+            const { imageUrl } = data
+            const { setLoadedResource } = useImageStore.getState()
+
+            // on a successful upload, set a temporary image that will be used for rest of session
+            setLoadedResource(referenceId, {
+                imageUrl,
             })
 
-            // 3.15.23 - we don't need this for now
-            // Optional: returning this will cause the mutation state to stay in loading state while this query updates
-            // on a brand new space icon upload, this can take a minute+ to resolve (up to cloudflare to generate images)
-            // queryClient.invalidateQueries([queryKeys.spaceIcon, referenceId])
+            // wait a tick before removing previously errored resources
+            setTimeout(() => {
+                useImageStore.getState().removeErroredResource(referenceId)
+            }, 100)
         },
         onError: (error) => {
             console.error(`[useSpaceIconUpload] upload error `, error)

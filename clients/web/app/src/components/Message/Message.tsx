@@ -16,7 +16,6 @@ import { MessageContextMenu } from './MessageContextMenu'
 type Props = {
     userId?: string | null
     senderId?: string
-    avatar?: string
     avatarSize?: AvatarAtoms['size']
     name: string
     displayContext?: 'single' | 'head' | 'tail'
@@ -49,7 +48,6 @@ export const Message = (props: Props) => {
         userId,
         senderId,
         eventId,
-        avatar,
         avatarSize = 'avatar_md',
         name,
         messageSourceAnnotation,
@@ -112,7 +110,6 @@ export const Message = (props: Props) => {
                     senderId ? (
                         <AvatarComponent
                             isActive={isActive}
-                            src={avatar}
                             size={avatarSize}
                             insetY="xxs"
                             userId={senderId}
@@ -256,14 +253,14 @@ const AvatarComponent = (props: AvatarProps & { userId?: string; isActive: boole
     if (isActive && userId) {
         return <ActiveAvatar {...avatarProps} userId={userId} />
     }
-    return <Avatar {...avatarProps} />
+    return <Avatar {...avatarProps} userId={userId} />
 }
 
 const ActiveAvatar = (props: AvatarProps & { userId: string }) => {
-    const { src, size, userId } = props
+    const { size, userId } = props
     return (
         <Link to={`profile/${userId}/`}>
-            <Avatar src={src} size={size} insetY="xxs" />
+            <Avatar userId={userId} size={size} insetY="xxs" />
         </Link>
     )
 }

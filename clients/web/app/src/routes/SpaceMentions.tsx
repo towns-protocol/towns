@@ -56,14 +56,14 @@ export const SpaceMentions = () => {
 }
 
 const MentionBox = (props: { mention: MentionResult; userId?: string }) => {
-    const { mention, userId } = props
+    const { mention } = props
     const { slug: spaceSlug } = useSpaceId() ?? {}
     const { slug: channelSlug } = mention.channel.id
 
     const content = getIsRoomMessageContent(mention.event)
 
     const { membersMap } = useSpaceMembers()
-    const user = membersMap[mention.event.sender.id]
+    const sender = membersMap[mention.event.sender.id]
 
     if (!content) {
         return null
@@ -91,10 +91,9 @@ const MentionBox = (props: { mention: MentionResult; userId?: string }) => {
                         mention.thread ? `Thread in` : ``
                     } #${mention.channel.label.toLowerCase()}`}
                     timestamp={mention.event.originServerTs}
-                    userId={userId}
-                    avatar={user.avatarUrl}
-                    senderId={userId}
-                    name={user.name}
+                    userId={sender.userId}
+                    senderId={sender.userId}
+                    name={sender.name}
                 >
                     <RichTextPreview
                         content={getMessageBody(mention.event.eventId, content)}

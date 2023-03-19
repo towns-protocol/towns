@@ -15,7 +15,7 @@ export const ChannelUsersPill = (props: { spaceId: RoomIdentifier; channelId: Ro
                 <Stack horizontal grow gap="sm" padding="sm" alignItems="center">
                     <Stack horizontal gap="line">
                         {members.slice(0, 3).map((m) => (
-                            <Avatar key={m.userId} src={m.avatarUrl} size="avatar_sm" />
+                            <Avatar key={m.userId} size="avatar_sm" userId={m.userId} />
                         ))}
                     </Stack>
                     <Paragraph size="sm">{members.length}</Paragraph>

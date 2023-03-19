@@ -32,7 +32,7 @@ export const RepliesButton = (props: { threadStats: ThreadStats; eventId: string
                         .map((u) => membersMap[u])
                         .filter(notUndefined)
                         .map((u) => (
-                            <Avatar src={u.avatarUrl} key={u.userId} size="avatar_sm" />
+                            <Avatar userId={u.userId} key={u.userId} size="avatar_sm" />
                         ))}
                 </Stack>
                 <Paragraph size="md">

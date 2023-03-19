@@ -1,9 +1,10 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
 import { useSpaceData, useSpaceMembers } from 'use-zion-client'
-import { BackgroundImage, Card, Paragraph, Stack } from '@ui'
+import { Card, Paragraph, Stack } from '@ui'
 import { useCardOpenerContext } from 'ui/components/Overlay/CardOpenerContext'
 import { shortAddress } from 'ui/utils/utils'
+import { Avatar } from 'ui/components/Avatar/Avatar'
 
 type Props = {
     userId: string
@@ -33,7 +34,7 @@ export const ProfileCard = (props: Props) => {
                         rounded="full"
                         overflow="hidden"
                     >
-                        <BackgroundImage absoluteFill src={user.avatarUrl} />
+                        <Avatar userId={userId} size="avatar_100" />
                         <Stack
                             absoluteFill
                             centerContent

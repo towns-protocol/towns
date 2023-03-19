@@ -92,25 +92,28 @@ describe('#RegisterForm', () => {
     })
 
     test('it should allow to submit once the required fields are populated', async () => {
+        // // dunno if this is a vitest or react-router thing, but if you just try to spy
+        // // on the method w/out mocking the module (at top of this file), then you get errors
+        const spy = vi.fn()
+        vi.spyOn(router, 'useNavigate').mockReturnValue(spy)
         render(
             <Mock>
                 <RegisterForm isEdit={false} />
             </Mock>,
         )
         const displayNameField: HTMLInputElement = screen.getByLabelText(/display name/i)
-        const avatars = screen.getAllByTestId('avatar-radio')
         const submit: HTMLButtonElement = screen.getByText(/next/i)
         // userEvent b/c fireEvent doesn't trigger react-hook-form onChange
         await userEvent.type(displayNameField, 'dude')
-        await userEvent.click(avatars[0])
 
         expect(displayNameField.value).toBe('dude')
         expect(submit).not.toBeDisabled()
 
-        // // dunno if this is a vitest or react-router thing, but if you just try to spy
-        // // on the method w/out mocking the module (at top of this file), then you get errors
-        const spy = vi.spyOn(router, 'useNavigate')
         fireEvent.click(submit)
         await waitFor(async () => await expect(spy).toHaveBeenCalledOnce())
+    })
+
+    test.skip('it should upload to CF only when registering and user has not uploaded an image already', () => {
+        // TODO
     })
 })

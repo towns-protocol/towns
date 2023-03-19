@@ -36,7 +36,6 @@ export const TimelineMessage = React.memo((props: Props) => {
 
     const user = membersMap[sender.id]
     const displayName = user?.name ?? sender.displayName
-    const avatarUrl = user?.avatarUrl ?? sender.avatarUrl
 
     const isOwn = event.content?.kind == ZTEvent.RoomMessage && sender.id === userId
 
@@ -59,7 +58,6 @@ export const TimelineMessage = React.memo((props: Props) => {
             senderId={sender.id}
             canReply={!event.isLocalPending && type !== MessageTimelineType.Thread}
             timestamp={event.originServerTs}
-            avatar={avatarUrl}
             channelId={channelId}
             editable={isOwn && !event.isLocalPending}
             eventId={event.eventId}

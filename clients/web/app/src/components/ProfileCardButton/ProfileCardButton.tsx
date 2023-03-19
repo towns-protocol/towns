@@ -47,7 +47,7 @@ export const ProfileCardButton = (props: Props) => {
                         overflow="hidden"
                         {...triggerProps}
                     >
-                        <Avatar src={myProfile?.avatarUrl} size="avatar_x4" ref={ref} />
+                        <Avatar size="avatar_x4" ref={ref} userId={userId} />
                         <AnimatePresence>
                             {isExpanded && (
                                 <FadeIn>

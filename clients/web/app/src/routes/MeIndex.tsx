@@ -49,8 +49,8 @@ export const MeIndex = () => {
                 {myProfile ? (
                     <UserProfile
                         displayName={myProfile.displayName}
-                        avatarUrl={myProfile.avatarUrl}
                         userAddress={userAddress}
+                        userId={myProfile.userId}
                         info={info}
                     />
                 ) : (

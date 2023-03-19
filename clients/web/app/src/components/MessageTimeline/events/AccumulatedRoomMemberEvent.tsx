@@ -1,6 +1,5 @@
 import React, { useMemo } from 'react'
 import uniqBy from 'lodash/uniqBy'
-import { useZionClient } from 'use-zion-client'
 import { Link } from 'react-router-dom'
 import { AvatarStack, Paragraph, Stack } from '@ui'
 import { atoms } from 'ui/styles/atoms.css'
@@ -15,27 +14,16 @@ type Props = {
 }
 export const AccumulatedRoomMemberEvent = (props: Props) => {
     const { event, channelName, userId, channelEncrypted: isChannelEncrypted } = props
-    const { client } = useZionClient()
     const avatarUsers = useMemo(
         () =>
             uniqBy(
                 event.events.map((e) => ({
-                    avatarUrl: e.content.avatarUrl,
                     displayName: e.content.displayName,
                     userId: e.content.userId,
                 })),
                 (e) => e.userId,
-            )
-                .filter(({ userId: _userId }) => userId !== _userId)
-                .map((e) => {
-                    // e.content.avatarUrl contains outdated avatarUrl in the case user has changed their avatar
-                    const _user = client?.getUser(e.userId)
-                    return {
-                        ...e,
-                        avatarUrl: _user?.avatarUrl,
-                    }
-                }),
-        [client, event.events, userId],
+            ).filter(({ userId: _userId }) => userId !== _userId),
+        [event.events, userId],
     )
 
     const message = useMemo(() => {

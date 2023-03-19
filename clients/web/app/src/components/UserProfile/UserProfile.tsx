@@ -1,18 +1,20 @@
+import { createUserIdFromString, useZionClient } from 'use-zion-client'
 import React, { useEffect, useMemo, useState } from 'react'
 import { useEvent } from 'react-use-event-hook'
-import { useZionClient } from 'use-zion-client'
+import { Avatar, Box, FormRender, Paragraph, Stack, TextField } from '@ui'
 import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
-import { BackgroundImage, Box, Paragraph, Stack, TextField } from '@ui'
 import { useSetUserBio } from 'hooks/useUserBio'
 import { shortAddress } from 'ui/utils/utils'
+import { UploadImage } from '@components/UploadImage/UploadImage'
+import { useAuth } from 'hooks/useAuth'
 
 type Props = {
-    avatarUrl?: string
     displayName: string
     userAddress?: string
     center?: boolean
     info?: { title: string; content?: string | JSX.Element }[]
     userBio?: string
+    userId?: string
     canEdit?: boolean
 }
 
@@ -22,10 +24,15 @@ enum InputId {
 }
 
 export const UserProfile = (props: Props) => {
-    const { avatarUrl, canEdit, center, displayName, info, userAddress, userBio } = props
+    const { userId, canEdit, center, displayName, info, userAddress, userBio } = props
+    const { loggedInWalletAddress } = useAuth()
     const { setDisplayName } = useZionClient()
 
     const { mutate, isLoading } = useSetUserBio(userAddress)
+
+    const resourceId = useMemo(() => {
+        return createUserIdFromString(userId ?? '')?.accountAddress ?? ''
+    }, [userId])
 
     useEffect(() => {
         // TODO: implement loader
@@ -62,15 +69,34 @@ export const UserProfile = (props: Props) => {
     return (
         <Stack grow padding gap position="relative">
             <Stack centerContent={center} padding="lg">
-                <Stack
-                    width="100%"
-                    aspectRatio="1/1"
-                    rounded="full"
-                    overflow="hidden"
-                    maxWidth="200"
-                >
-                    <BackgroundImage src={avatarUrl} size="cover" />
-                </Stack>
+                <FormRender maxWidth="250" width="100%" key={resourceId}>
+                    {({ register, formState, setError, clearErrors }) => (
+                        <UploadImage
+                            canEdit={Boolean(loggedInWalletAddress === resourceId)}
+                            type="avatar"
+                            formFieldName="avatar"
+                            resourceId={resourceId}
+                            setError={setError}
+                            register={register}
+                            formState={formState}
+                            clearErrors={clearErrors}
+                            imageRestrictions={{
+                                minDimension: {
+                                    message: `Image is too small. Please upload an image with a minimum height & width of 300px.`,
+                                    min: 300,
+                                },
+                            }}
+                        >
+                            <Stack aspectRatio="1/1">
+                                <Avatar
+                                    userId={userId}
+                                    size="avatar_100"
+                                    imageVariant="thumbnail300"
+                                />
+                            </Stack>
+                        </UploadImage>
+                    )}
+                </FormRender>
             </Stack>
             <Stack grow gap="lg">
                 <EditRow

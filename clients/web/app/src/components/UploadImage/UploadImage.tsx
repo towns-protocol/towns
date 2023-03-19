@@ -7,9 +7,8 @@ import { srOnlyClass } from 'ui/styles/globals/utils.css'
 import { UploadInput } from 'ui/components/Form/Upload'
 import { ErrorMessage, FormRender, Icon, Text } from '@ui'
 import { FieldOutline } from 'ui/components/_internal/Field/FieldOutline/FieldOutline'
-import { InteractiveSpaceIcon } from '@components/SpaceIcon'
 import { vars } from 'ui/styles/vars.css'
-import { useUploadImage } from 'api/lib/spaceIcon'
+import { useUploadImage } from 'api/lib/uploadImage'
 import { Spinner } from '@components/Spinner'
 import { loadingStyles, spinnerStyles } from './UploadImage.css'
 
@@ -22,15 +21,22 @@ async function getImageDimensions(src: string): Promise<{ width: number; height:
     })
 }
 
-const MIN_DIMENSION = 400
-const MAX_SIZE = 5000000
-
 type Props = {
     formFieldName: string
-    spaceId: string
-    spaceName: string
+    resourceId: string
     canEdit: boolean
-    spaceAddress?: string
+    type: 'spaceIcon' | 'avatar'
+    children?: React.ReactNode
+    imageRestrictions?: {
+        maxSize?: {
+            message: string
+            max: number
+        }
+        minDimension?: {
+            message: string
+            min: number
+        }
+    }
 } & Partial<UseFormReturn>
 
 const config: BoxProps = {
@@ -40,11 +46,32 @@ const config: BoxProps = {
 }
 
 export const UploadImage = (props: Props) => {
-    const { setError, register, clearErrors, spaceId, canEdit, formFieldName, formState } = props
+    const {
+        setError,
+        register,
+        clearErrors,
+        resourceId,
+        canEdit,
+        formFieldName,
+        formState,
+        children,
+        type,
+        imageRestrictions,
+    } = props
     const ref = React.useRef<HTMLInputElement>(null)
-    const _spaceId = useMemo(() => spaceId, [spaceId])
+    const _resourceId = useMemo(() => resourceId, [resourceId])
+    const {
+        maxSize = {
+            message: 'Upload an image less than 5MB',
+            max: 5000000,
+        },
+        minDimension = {
+            message: `Image is too small. Please upload an image with a minimum height & width of 400px.`,
+            min: 400,
+        },
+    } = imageRestrictions ?? {}
 
-    const { mutate: upload, isLoading } = useUploadImage(spaceId)
+    const { mutate: upload, isLoading } = useUploadImage(resourceId)
 
     async function onChange(e: ChangeEvent<HTMLInputElement>) {
         const files = e.target.files
@@ -53,24 +80,24 @@ export const UploadImage = (props: Props) => {
             const { width, height } = await getImageDimensions(url)
             clearErrors?.([formFieldName])
 
-            if (files[0].size > MAX_SIZE) {
+            if (files[0].size > maxSize.max) {
                 setError?.(formFieldName, {
                     type: 'required',
-                    message: 'Upload an image less than 5MB',
+                    message: maxSize.message,
                 })
                 return
             }
 
-            if (width < MIN_DIMENSION || height < MIN_DIMENSION) {
+            if (width < minDimension.min || height < minDimension.min) {
                 setError?.(formFieldName, {
                     type: 'required',
-                    message: `Image is too small. Please upload an image with a minimum height & width of ${MIN_DIMENSION}px.`,
+                    message: minDimension.message,
                 })
                 return
             }
 
             upload(
-                { id: _spaceId, file: files[0], type: 'spaceIcon', temporaryImageUrl: url },
+                { id: _resourceId, file: files[0], type, imageUrl: url },
                 {
                     onError: () => {
                         setError?.(formFieldName, {
@@ -83,19 +110,15 @@ export const UploadImage = (props: Props) => {
     }
 
     function onClick() {
+        if (isLoading) {
+            return
+        }
         ref.current?.click()
     }
 
     return (
         <Box position="relative" data-testid="upload-image-container">
-            <Box className={isLoading ? loadingStyles : ''}>
-                <InteractiveSpaceIcon
-                    spaceId={_spaceId}
-                    size="lg"
-                    spaceName={props.spaceName}
-                    address={props.spaceAddress}
-                />
-            </Box>
+            <Box className={isLoading ? loadingStyles : ''}>{children}</Box>
 
             {isLoading && (
                 <>
@@ -113,6 +136,7 @@ export const UploadImage = (props: Props) => {
                     <Box position="topRight" padding="md">
                         <Box
                             centerContent
+                            disabled={isLoading}
                             data-testid="upload-image-button"
                             role="button"
                             top="xs"
@@ -127,10 +151,10 @@ export const UploadImage = (props: Props) => {
                             onClick={onClick}
                         >
                             <Icon
-                                type="edit"
+                                type="camera"
                                 size="square_sm"
                                 style={{
-                                    color: vars.color.layer.level4,
+                                    color: vars.color.foreground.gray2,
                                 }}
                             />
                         </Box>
@@ -161,7 +185,7 @@ export const UploadImage = (props: Props) => {
                                     textAlign: 'center',
                                 }}
                                 errors={formState.errors}
-                                fieldName="spaceIcon"
+                                fieldName={formFieldName}
                             />
                         </Box>
                     )}
@@ -192,9 +216,9 @@ export const UploadImageDebugger = () => {
                         <UploadImage
                             {...props}
                             canEdit
+                            type="spaceIcon"
                             formFieldName="debugger"
-                            spaceId={spaceId}
-                            spaceName="Test space"
+                            resourceId={spaceId}
                         />
                     </>
                 )}

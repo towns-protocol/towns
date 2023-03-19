@@ -1,19 +1,10 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react'
+import React from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Box, BoxProps, Text } from '@ui'
-import { useUploadImageStore } from '@components/UploadImage/useUploadImageStore'
 import { InteractiveTownsToken } from '@components/TownsToken/InteractiveTownsToken'
 import { TownsTokenProps } from '@components/TownsToken/TownsToken'
+import { ImageVariant, ImageVariants, useImageSource } from '@components/UploadImage/useImageSource'
 import { LetterStyles, LetterStylesVariantProps } from './SpaceIcon.css'
-
-const ImageVariants = {
-    public: 'public',
-    thumbnail100: 'thumbnail100',
-    thumbnail50: 'thumbnail50',
-    thumbnail300: 'thumbnail300',
-} as const
-
-export type ImageVariant = (typeof ImageVariants)[keyof typeof ImageVariants]
 
 type Props = {
     spaceId: string
@@ -37,17 +28,14 @@ export const SpaceIcon = (props: Props) => {
         ...boxProps
     } = props
 
-    const { onLoad, onError, imageError, imageLoaded, imageSrc, renderKey } = useLoadSpaceIcon(
-        spaceId,
-        variant,
-    )
+    const { onLoad, onError, imageError, imageLoaded, imageSrc } = useImageSource(spaceId, variant)
 
     return (
         <>
             <Box
                 centerContent
                 horizontal
-                key={renderKey}
+                key={imageSrc}
                 background="level2"
                 borderRadius="full"
                 flexDirection="row"
@@ -87,15 +75,14 @@ export const InteractiveSpaceIcon = (
     const { overrideSrc, size, spaceName: name, address } = props
 
     const imageVariant = size === 'sm' ? ImageVariants.thumbnail100 : ImageVariants.thumbnail300
-    const { imageSrc, renderKey } = useLoadSpaceIcon(props.spaceId, imageVariant)
-
+    const { imageSrc } = useImageSource(props.spaceId, imageVariant)
     return (
         <InteractiveTownsToken
             size={size}
             imageSrc={overrideSrc ?? imageSrc}
             address={address}
             spaceName={name}
-            imageSrcRenderKey={renderKey}
+            imageSrcRenderKey={imageSrc}
         />
     )
 }
@@ -112,44 +99,3 @@ const SpaceIconInitials = (props: {
         {props.children}
     </Text>
 )
-
-export const useLoadSpaceIcon = (resourceId: string, variant: ImageVariant) => {
-    const _renderKey = useUploadImageStore((state) => state.resources[resourceId]?.renderKey)
-    const temporaryImageSrc = useUploadImageStore(
-        (state) => state.resources[resourceId]?.temporaryImageUrl,
-    )
-
-    const imageSrc = `https://imagedelivery.net/qaaQ52YqlPXKEVQhjChiDA/${resourceId}/${variant}`
-    const initialRenderKey = useRef<string>(resourceId + '_' + Date.now())
-
-    const [imageLoaded, setImageLoaded] = useState<boolean>(false)
-    const [imageError, setImageError] = useState<boolean>(false)
-
-    const onLoad = useCallback(() => {
-        // useUploadImageStore.getState().setRenderKey(resourceId, resourceId + '_' + Date.now())
-        setImageLoaded(true)
-    }, [])
-
-    const onError = useCallback(() => {
-        setImageError(true)
-    }, [])
-
-    // reset image loading when the render key changes
-    useEffect(() => {
-        setImageLoaded(false)
-        setImageError(false)
-    }, [_renderKey])
-
-    const key = _renderKey || initialRenderKey.current
-    return {
-        renderKey: key,
-        imageLoaded,
-        onLoad,
-        onError,
-        imageError,
-        // TODO: temporary cache busting
-        // new images eventually show up, but the browser caches them and users who upload anything might see their old image for a while, even after refreshing
-        // We're calling images directly from imagedelivery.net, we can't modify those headers unless we use some proxy - will need to revisit the CF worker or add a service worker interceptor
-        imageSrc: temporaryImageSrc || imageSrc + `?${key}`,
-    }
-}

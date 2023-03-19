@@ -1,7 +1,7 @@
 import React from 'react'
 import { NavLink } from 'react-router-dom'
 import { SideBar } from '@components/SideBars/_SideBar'
-import { Avatar, Box, ButtonText, Icon, Paragraph, Stack, Text } from '@ui'
+import { Box, ButtonText, Icon, Paragraph, Stack, Text } from '@ui'
 
 export const MessagesSideBar = () => {
     return (
@@ -50,7 +50,6 @@ const MessageItem = ({ active, selected }: { active?: boolean; selected?: boolea
                 alignItems="center"
                 background={selected ? 'level3' : undefined}
             >
-                <Avatar src="/placeholders/nft_2.png" size="avatar_md" />
                 <Stack grow gap="sm">
                     <ButtonText
                         color={active ? 'default' : 'default'}
