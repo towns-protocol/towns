@@ -19,11 +19,13 @@ export const buttonText = style({
 
 export const spaceIconContainer = style({})
 
-globalStyle(`${lightTheme} ${spaceIconContainer}`, {
+export const gradientBackground = style({})
+
+globalStyle(`${lightTheme} ${gradientBackground}`, {
     background: `linear-gradient(180deg, #CCCF 0%, #1110 100%)`,
 })
 
-globalStyle(`${darkTheme} ${spaceIconContainer}`, {
+globalStyle(`${darkTheme} ${gradientBackground}`, {
     background: `linear-gradient(180deg, #222026FF 0%, #151418FF 100%)`,
 })
 
@@ -31,13 +33,7 @@ export const spaceUrlText = style({
     color: vars.color.foreground.gray2,
 })
 
-export const copySpaceLink = style({
-    transition: `opacity 120ms ease`,
-    opacity: 0,
-
-    selectors: {
-        [`${spaceIconContainer}:hover &`]: {
-            opacity: 1,
-        },
-    },
+export const spaceHeader = style({
+    position: 'fixed',
+    width: `calc(var(--sizebox-width) - 1px)`,
 })

@@ -1,5 +1,5 @@
 import useResizeObserver from '@react-hook/resize-observer'
-import React, { RefObject, useLayoutEffect, useRef, useState } from 'react'
+import React, { RefObject, useCallback, useLayoutEffect, useRef, useState } from 'react'
 import { Size, SizeContext } from 'ui/hooks/useSizeContext'
 import { Box, BoxProps } from './Box'
 
@@ -22,14 +22,26 @@ const useSize = (target: RefObject<HTMLDivElement>) => {
         height: undefined,
     })
 
-    useLayoutEffect(() => {
-        const el = target.current
+    const applySize = useCallback((el: HTMLDivElement | null) => {
         if (el) {
             const bounds = el.getBoundingClientRect()
+
+            // not necessary, but can become handy - the current use case is to
+            // grab height for a fixed container
+            el.style.setProperty('--sizebox-width', `${bounds.width}px`)
+            el.style.setProperty('--sizebox-height', `${bounds.height}px`)
+
             setSize({ width: bounds.width, height: bounds.height })
         }
-    }, [target])
+    }, [])
 
-    useResizeObserver(target, (entry) => setSize(entry.contentRect))
+    useLayoutEffect(() => {
+        applySize(target.current)
+    }, [applySize, target])
+
+    useResizeObserver(target, (entry) => {
+        applySize(entry.target as HTMLDivElement)
+    })
+
     return size
 }

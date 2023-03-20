@@ -108,11 +108,13 @@ const SpaceLink = (props: Props) => {
 export const CopySpaceLink = (
     props: {
         spaceId: RoomIdentifier
+        color?: BoxProps['color']
         background?: BoxProps['background']
     } & TooltipBoxVariants,
 ) => {
     const {
         spaceId,
+        color,
         background = {
             default: 'level2',
             hover: 'level3',
@@ -154,6 +156,7 @@ export const CopySpaceLink = (
                         {...triggerProps}
                         padding="xs"
                         rounded="sm"
+                        color={color}
                         background={background}
                         onMouseLeave={() => onMouseLeave(triggerProps.onMouseLeave)}
                         onClick={onCopyClick}

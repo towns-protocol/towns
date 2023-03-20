@@ -1,7 +1,7 @@
 export const TownsTokenConfig = {
     sizes: {
         sm: {
-            containerSize: 140,
+            containerSize: 130,
             addressSize: 105,
             addressRadius: 24,
             badgeSize: 85,

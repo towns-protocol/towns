@@ -3,6 +3,7 @@ import React, { useEffect, useRef } from 'react'
 import { Outlet, useMatch } from 'react-router'
 import { useEvent } from 'react-use-event-hook'
 import { AutojoinChannels, SpaceContextProvider, useZionContext } from 'use-zion-client'
+
 import { PATHS } from 'routes'
 import { SuspenseLoader } from '@components/Loaders/SuspenseLoader'
 import { MainSideBar, MessagesSideBar, SpaceSideBar } from '@components/SideBars'
@@ -12,6 +13,7 @@ import { Register } from 'routes/Register'
 import { atoms } from 'ui/styles/atoms.css'
 import { ChannelsShimmer } from '@components/Shimmer'
 import { useContractAndServerSpaceData } from 'hooks/useContractAndServerSpaceData'
+import * as styles from './AppPanelLayout.css'
 
 export const AppPanelLayout = () => {
     const spaceRoute = useMatch({ path: `/${PATHS.SPACES}/:spaceSlug`, end: false })
@@ -76,7 +78,7 @@ export const AppPanelLayoutContent = () => {
                     onChange={onSizesChange}
                 >
                     {/* left-side side-bar goes here */}
-                    <Allotment.Pane minSize={65} maxSize={320} preferredSize={sizes[0] || 65}>
+                    <Allotment.Pane minSize={65} maxSize={65} preferredSize={sizes[0] || 65}>
                         <MainSideBar expanded={isSpacesExpanded} onExpandClick={onExpandSpaces} />
                     </Allotment.Pane>
 
@@ -88,7 +90,10 @@ export const AppPanelLayoutContent = () => {
                         visible={displaySpacePanel}
                     >
                         {space ? (
-                            <SpaceSideBar space={space} />
+                            <SpaceSideBar
+                                space={space}
+                                className={styles.allotmentResizeBorderPadding}
+                            />
                         ) : (
                             <>
                                 <Stack
@@ -122,7 +127,7 @@ export const AppPanelLayoutContent = () => {
 
                     {/* main container */}
                     <Allotment.Pane>
-                        <Box absoluteFill scroll>
+                        <Box absoluteFill scroll className={styles.allotmentResizeBorderPadding}>
                             <SuspenseLoader>
                                 <Outlet />
                             </SuspenseLoader>

@@ -1,12 +1,12 @@
 import React from 'react'
 import { useInvites, useSpaceContext, useZionContext } from 'use-zion-client'
-import { PATHS } from 'routes'
 import { ActionNavItem } from '@components/NavItem/ActionNavItem'
 import { SpaceNavItem } from '@components/NavItem/SpaceNavItem'
 import { ProfileCardButton } from '@components/ProfileCardButton/ProfileCardButton'
 import { SideBar } from '@components/SideBars/_SideBar'
-import { IconButton, Stack } from '@ui'
+import { Stack } from '@ui'
 import { useIsHolderOfPioneerNFT } from 'api/lib/isHolderOfToken'
+import { PATHS } from 'routes'
 import { env } from 'utils'
 
 type Props = {
@@ -55,7 +55,7 @@ export const MainSideBar = (props: Props) => {
                     />
                 ))}
             </Stack>
-            <Stack
+            {/* <Stack
                 padding
                 gap
                 key="profile_container"
@@ -70,7 +70,7 @@ export const MainSideBar = (props: Props) => {
                     size="square_md"
                     onClick={props.onExpandClick}
                 />
-            </Stack>
+            </Stack> */}
         </SideBar>
     )
 }

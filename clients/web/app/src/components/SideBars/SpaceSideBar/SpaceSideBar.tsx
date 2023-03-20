@@ -1,5 +1,5 @@
 import { AnimatePresence } from 'framer-motion'
-import React, { useCallback, useState } from 'react'
+import React, { useCallback, useRef, useState } from 'react'
 import { matchPath, useLocation, useNavigate } from 'react-router'
 import { useEvent } from 'react-use-event-hook'
 import {
@@ -13,6 +13,7 @@ import {
     useSpaceMentions,
 } from 'use-zion-client'
 import { useSpaceThreadRootsUnreadCount } from 'use-zion-client/dist/hooks/use-space-thread-roots'
+import { clsx } from 'clsx'
 import { SpaceSettingsCard } from '@components/Cards/SpaceSettingsCard'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { ActionNavItem } from '@components/NavItem/ActionNavItem'
@@ -31,10 +32,12 @@ import { useChannelIdFromPathname } from 'hooks/useChannelIdFromPathname'
 import { useStore } from 'store/store'
 import { CopySpaceLink } from '@components/CopySpaceLink/CopySpaceLink'
 import { SideBar } from '../_SideBar'
-import { buttonText, buttonTextParent, copySpaceLink, spaceIconContainer } from './SpaceSideBar.css'
+import * as styles from './SpaceSideBar.css'
+import { FadeIn } from '../../Transitions/FadeIn'
 
 type Props = {
     space: SpaceData
+    className?: string
 }
 
 export const SpaceSideBar = (props: Props) => {
@@ -79,15 +82,38 @@ export const SpaceSideBar = (props: Props) => {
         [setDismissedGettingStarted, space.id.networkId],
     )
 
+    const [hasScrolldedPastHeader, setHasScrolledPastHeader] = useState(false)
+    const [scrollOffset, setScrollOffset] = useState(1)
+
+    const headerRef = useRef<HTMLElement>(null)
+    const onScroll = (e: React.UIEvent) => {
+        const headerY = headerRef.current?.getBoundingClientRect()?.top ?? -1
+        setScrollOffset(Math.max(0, Math.min(headerY - 16, 50)) / 50)
+        setHasScrolledPastHeader(headerY > -1 && headerY <= 0)
+    }
+
     return (
-        <>
-            <SideBar data-testid="space-sidebar" height="100vh">
-                <SpaceSideBarHeader space={space} onSettings={onSettings} />
+        <SideBar data-testid="space-sidebar" height="100vh" onScroll={onScroll}>
+            <Box className={props.className}>
+                <Stack
+                    position="absolute"
+                    className={clsx([styles.gradientBackground])}
+                    width="100%"
+                    height="200"
+                />
+                <SpaceSideBarHeader
+                    scrollOffset={scrollOffset}
+                    space={space}
+                    opaqueHeaderBar={hasScrolldedPastHeader}
+                    headerRef={headerRef}
+                    onSettings={onSettings}
+                />
+
                 <Stack paddingY="md">
                     {membership === Membership.Join && (
                         <>
                             {isOwner && !dismissedGettingStartedMap[space.id.networkId] && (
-                                <Box className={buttonTextParent}>
+                                <Box className={styles.buttonTextParent}>
                                     <ActionNavItem
                                         icon="wand"
                                         id="getting-started"
@@ -95,7 +121,7 @@ export const SpaceSideBar = (props: Props) => {
                                         link={`/${PATHS.SPACES}/${space.id.slug}/${PATHS.GETTING_STARTED}`}
                                     >
                                         <Button
-                                            className={buttonText}
+                                            className={styles.buttonText}
                                             onClick={onRemoveGettingStarted}
                                         >
                                             <Icon type="close" />
@@ -141,16 +167,19 @@ export const SpaceSideBar = (props: Props) => {
                         )}
                     </>
                 </Stack>
-            </SideBar>
-        </>
+            </Box>
+        </SideBar>
     )
 }
 
 const SpaceSideBarHeader = (props: {
+    headerRef: React.RefObject<HTMLElement>
     space: SpaceData
+    opaqueHeaderBar: boolean
+    scrollOffset: number
     onSettings: (spaceId: RoomIdentifier) => void
 }) => {
-    const { space, onSettings } = props
+    const { onSettings, opaqueHeaderBar, space } = props
     const currentChannelId = useChannelIdFromPathname()
     const { pathname } = useLocation()
 
@@ -199,75 +228,140 @@ const SpaceSideBarHeader = (props: {
     const size = useSizeContext()
     const isSmall = size.lessThan(200)
 
+    const [isHeaderHovering, setIsHeaderHovering] = useState(false)
+    const onHeaderOver = useCallback(() => {
+        setIsHeaderHovering(true)
+    }, [])
+    const onHeaderLeave = useCallback(() => {
+        setIsHeaderHovering(false)
+    }, [])
+
     return (
         <>
             <Stack
-                centerContent
-                padding="lg"
-                position="relative"
-                width="100%"
-                gap="sm"
-                shrink={false}
-                className={spaceIconContainer}
+                horizontal
+                height="x8"
+                zIndex="ui"
+                pointerEvents={opaqueHeaderBar ? 'auto' : 'none'}
+                className={clsx([styles.spaceHeader])}
+                justifyContent="spaceBetween"
+                onPointerEnter={onHeaderOver}
+                onPointerLeave={onHeaderLeave}
             >
-                <Box padding="sm" position="topLeft">
+                <Box centerContent width="x8">
                     <SettingsGear
                         spaceId={space.id}
                         spaceName={space.name}
                         onSettings={onSettings}
                     />
                 </Box>
-                <Box grow onClick={onTokenClick}>
-                    {space ? (
-                        <InteractiveSpaceIcon
-                            key={space.id.networkId}
-                            size="sm"
-                            spaceId={space.id.networkId}
-                            address={spaceInfo?.address}
-                            spaceName={space.name}
-                        />
-                    ) : (
-                        <Box background="level1" rounded="full" width="x15" aspectRatio="1/1" />
-                    )}
+                <Box centerContent width="x8">
+                    <AnimatePresence>
+                        {isHeaderHovering && (
+                            <FadeIn fast>
+                                <CopySpaceLink
+                                    spaceId={space.id}
+                                    background="none"
+                                    color={{ hover: 'default', default: 'gray2' }}
+                                />
+                            </FadeIn>
+                        )}
+                    </AnimatePresence>
                 </Box>
-                <Box padding="sm" position="topRight" className={copySpaceLink}>
-                    <CopySpaceLink spaceId={space.id} />
-                </Box>
-                {hasName && (
-                    <Stack centerContent width="100%">
-                        <Paragraph strong size="lg">
-                            {space.name}
-                        </Paragraph>
-                    </Stack>
+            </Stack>
+            <Stack
+                centerContent
+                paddingTop="md"
+                position="relative"
+                width="100%"
+                className={styles.spaceIconContainer}
+                insetBottom="sm" // cheating since sibling is sticky and needs more top space
+                onPointerEnter={onHeaderOver}
+                onPointerLeave={onHeaderLeave}
+                onClick={onTokenClick}
+            >
+                <Box height="x2" />
+                {space ? (
+                    <InteractiveSpaceIcon
+                        key={space.id.networkId}
+                        size="sm"
+                        spaceId={space.id.networkId}
+                        address={spaceInfo?.address}
+                        spaceName={space.name}
+                    />
+                ) : (
+                    <Box background="level1" rounded="full" width="x15" aspectRatio="1/1" />
                 )}
             </Stack>
 
-            {(hasMembers || hasAddress) && (
-                <Stack paddingX="md" gap="sm" insetX="xs">
-                    {hasMembers && (
-                        <SidebarPill
-                            icon="people"
-                            label="Members"
-                            labelRight={membersCount}
-                            onClick={onMembersClick}
-                        />
-                    )}
-                    {hasAddress && (
-                        <SidebarPill
-                            icon="document"
-                            label="Address"
-                            labelRight={
-                                isSmall
-                                    ? `${spaceInfo?.address.slice(
-                                          0,
-                                          4,
-                                      )}..${spaceInfo?.address.slice(-2)}`
-                                    : shortAddress(spaceInfo?.address)
-                            }
-                            onClick={onAddressClick}
-                        />
-                    )}
+            <Stack
+                width="100%"
+                position="sticky"
+                top="none"
+                zIndex="above"
+                height="x8"
+                ref={props.headerRef}
+            >
+                <Stack
+                    position="absolute"
+                    bottom="none"
+                    background="level1"
+                    boxShadow="medium"
+                    borderBottom={opaqueHeaderBar ? 'default' : 'none'}
+                    height="x20"
+                    width="100%"
+                    pointerEvents="none"
+                    style={{ opacity: 1 - props.scrollOffset }}
+                />
+                <Stack horizontal height="x8">
+                    <Box width="x7" shrink={false} />
+                    <Box grow position="relative">
+                        <Box absoluteFill justifyContent="center">
+                            {hasName && (
+                                <Paragraph
+                                    strong
+                                    truncate
+                                    size={isSmall ? 'md' : 'lg'}
+                                    color="gray1"
+                                    textAlign="center"
+                                >
+                                    {space.name}
+                                </Paragraph>
+                            )}
+                        </Box>
+                    </Box>
+                    <Box width="x7" shrink={false} />
                 </Stack>
+            </Stack>
+
+            {(hasMembers || hasAddress) && (
+                <>
+                    <Stack paddingX="md" gap="sm" insetX="xs">
+                        {hasMembers && (
+                            <SidebarPill
+                                icon="people"
+                                label="Members"
+                                labelRight={membersCount}
+                                onClick={onMembersClick}
+                            />
+                        )}
+                        {hasAddress && (
+                            <SidebarPill
+                                icon="document"
+                                label="Address"
+                                labelRight={
+                                    isSmall
+                                        ? `${spaceInfo?.address.slice(
+                                              0,
+                                              4,
+                                          )}..${spaceInfo?.address.slice(-2)}`
+                                        : shortAddress(spaceInfo?.address)
+                                }
+                                onClick={onAddressClick}
+                            />
+                        )}
+                    </Stack>
+                </>
             )}
         </>
     )
@@ -364,31 +458,29 @@ const SettingsGear = (props: {
     )
 
     return (
-        <Box horizontal>
-            <CardOpener
-                tabIndex={0}
-                trigger="click"
-                placement="horizontal"
-                render={
-                    <SpaceSettingsCard
-                        spaceId={spaceId}
-                        spaceName={spaceName}
-                        canEditSettings={Boolean(canEditSettings)}
-                    />
-                }
-                layoutId="settings"
-            >
-                {({ triggerProps }) => (
-                    <Box
-                        padding="xs"
-                        color={{ hover: 'default', default: 'gray2' }}
-                        onClick={onSettingClick}
-                        {...triggerProps}
-                    >
-                        <Icon type="settings" size="square_sm" />
-                    </Box>
-                )}
-            </CardOpener>
-        </Box>
+        <CardOpener
+            tabIndex={0}
+            trigger="click"
+            placement="horizontal"
+            render={
+                <SpaceSettingsCard
+                    spaceId={spaceId}
+                    spaceName={spaceName}
+                    canEditSettings={Boolean(canEditSettings)}
+                />
+            }
+            layoutId="settings"
+        >
+            {({ triggerProps }) => (
+                <Box
+                    padding="xs"
+                    color={{ hover: 'default', default: 'gray2' }}
+                    onClick={onSettingClick}
+                    {...triggerProps}
+                >
+                    <Icon type="settings" size="square_sm" />
+                </Box>
+            )}
+        </CardOpener>
     )
 }

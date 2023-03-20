@@ -116,6 +116,7 @@ export const boxProperties = defineProperties({
         boxShadow: {
             avatar: `0 4px 4px ${vars.color.shadow.medium}`,
             card: `0 0 40px ${vars.color.shadow.medium}`,
+            medium: `0 10px 20px ${vars.color.shadow.medium}`,
         },
 
         height: {

@@ -272,6 +272,7 @@ const root = createGlobalTheme(':root', {
     } as const,
 
     zIndex: {
+        above: '1',
         ui: '100',
         tooltips: '10000',
     } as const,
