@@ -17671,6 +17671,7 @@ __metadata:
     "@emotion/styled": ^11.10.4
     "@esbuild-plugins/node-globals-polyfill": ^0.1.1
     "@harmony/generated": "workspace:^"
+    "@harmony/prettier-config": "workspace:^"
     "@mui/icons-material": ^5.10.9
     "@mui/material": ^5.10.10
     "@mui/styles": ^5.10.10
