@@ -1572,42 +1572,127 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@bufbuild/connect-web@npm:^0.6.0":
-  version: 0.6.0
-  resolution: "@bufbuild/connect-web@npm:0.6.0"
-  peerDependencies:
-    "@bufbuild/protobuf": ^1.0.0
-  checksum: 69b4aa65d3af36aececb8879272545b97ad225188673c60ee7e664ce8ced19f1e2970058a868d15711d670a5cdac3f536b219c2e9d75b4a02c2c3d93500547f0
+"@bufbuild/buf-darwin-arm64@npm:1.15.0":
+  version: 1.15.0
+  resolution: "@bufbuild/buf-darwin-arm64@npm:1.15.0"
+  conditions: os=darwin & cpu=arm64
   languageName: node
   linkType: hard
 
-"@bufbuild/protobuf@npm:1.1.1, @bufbuild/protobuf@npm:^1.0.0":
+"@bufbuild/buf-darwin-x64@npm:1.15.0":
+  version: 1.15.0
+  resolution: "@bufbuild/buf-darwin-x64@npm:1.15.0"
+  conditions: os=darwin & cpu=x64
+  languageName: node
+  linkType: hard
+
+"@bufbuild/buf-linux-aarch64@npm:1.15.0":
+  version: 1.15.0
+  resolution: "@bufbuild/buf-linux-aarch64@npm:1.15.0"
+  conditions: os=linux & cpu=arm64
+  languageName: node
+  linkType: hard
+
+"@bufbuild/buf-linux-x64@npm:1.15.0":
+  version: 1.15.0
+  resolution: "@bufbuild/buf-linux-x64@npm:1.15.0"
+  conditions: os=linux & cpu=x64
+  languageName: node
+  linkType: hard
+
+"@bufbuild/buf-win32-arm64@npm:1.15.0":
+  version: 1.15.0
+  resolution: "@bufbuild/buf-win32-arm64@npm:1.15.0"
+  conditions: os=win32 & cpu=arm64
+  languageName: node
+  linkType: hard
+
+"@bufbuild/buf-win32-x64@npm:1.15.0":
+  version: 1.15.0
+  resolution: "@bufbuild/buf-win32-x64@npm:1.15.0"
+  conditions: os=win32 & cpu=x64
+  languageName: node
+  linkType: hard
+
+"@bufbuild/buf@npm:^1.15.0-1":
+  version: 1.15.0
+  resolution: "@bufbuild/buf@npm:1.15.0"
+  dependencies:
+    "@bufbuild/buf-darwin-arm64": 1.15.0
+    "@bufbuild/buf-darwin-x64": 1.15.0
+    "@bufbuild/buf-linux-aarch64": 1.15.0
+    "@bufbuild/buf-linux-x64": 1.15.0
+    "@bufbuild/buf-win32-arm64": 1.15.0
+    "@bufbuild/buf-win32-x64": 1.15.0
+  dependenciesMeta:
+    "@bufbuild/buf-darwin-arm64":
+      optional: true
+    "@bufbuild/buf-darwin-x64":
+      optional: true
+    "@bufbuild/buf-linux-aarch64":
+      optional: true
+    "@bufbuild/buf-linux-x64":
+      optional: true
+    "@bufbuild/buf-win32-arm64":
+      optional: true
+    "@bufbuild/buf-win32-x64":
+      optional: true
+  bin:
+    buf: bin/buf
+    protoc-gen-buf-breaking: bin/protoc-gen-buf-breaking
+    protoc-gen-buf-lint: bin/protoc-gen-buf-lint
+  checksum: fa00dae116f59b68e0839b337042a68afa8ab20dae61165870f25c84809de2279b1556693baf023624d77f521d9892a7387fa18f2ed6680a884cdd92c657fcf7
+  languageName: node
+  linkType: hard
+
+"@bufbuild/connect-web@npm:^0.8.4":
+  version: 0.8.4
+  resolution: "@bufbuild/connect-web@npm:0.8.4"
+  dependencies:
+    "@bufbuild/connect": 0.8.4
+  peerDependencies:
+    "@bufbuild/protobuf": ^1.0.0
+  checksum: be008ac982cb788edcb902a286a3664ec10d3afa90a5ee42fcd3cb2259ce5ff60747a4ea3904755f9d1559678f9ddfa408882271d337e766a74066fbb3aeb898
+  languageName: node
+  linkType: hard
+
+"@bufbuild/connect@npm:0.8.4, @bufbuild/connect@npm:^0.8.4":
+  version: 0.8.4
+  resolution: "@bufbuild/connect@npm:0.8.4"
+  peerDependencies:
+    "@bufbuild/protobuf": ^1.0.0
+  checksum: 7f0d748f43df190cb804068789a685d9430b2a67eb437a1e1a7b3ad8266da36d9f9747aaaba9423d55e85ad7c2b401856d59ee71319dcbf5eff04b29bf6778a3
+  languageName: node
+  linkType: hard
+
+"@bufbuild/protobuf@npm:1.1.1, @bufbuild/protobuf@npm:^1.0.0, @bufbuild/protobuf@npm:^1.1.1":
   version: 1.1.1
   resolution: "@bufbuild/protobuf@npm:1.1.1"
   checksum: 29a7895142e113ac808639b48e6f4cb3216e53696cf5a54b96521ac61ca3e2cfe931161191f713f4ae7ac2f95fd23c1f1727dfd183cd0a12267e744cd9ce19fb
   languageName: node
   linkType: hard
 
-"@bufbuild/protoc-gen-connect-web@npm:^0.6.0":
-  version: 0.6.0
-  resolution: "@bufbuild/protoc-gen-connect-web@npm:0.6.0"
+"@bufbuild/protoc-gen-connect-web@npm:^0.8.4":
+  version: 0.8.4
+  resolution: "@bufbuild/protoc-gen-connect-web@npm:0.8.4"
   dependencies:
+    "@bufbuild/protobuf": ^1.0.0
     "@bufbuild/protoplugin": ^1.0.0
   peerDependencies:
-    "@bufbuild/connect-web": 0.6.0
+    "@bufbuild/connect": 0.8.4
     "@bufbuild/protoc-gen-es": ^1.0.0
   peerDependenciesMeta:
-    "@bufbuild/connect-web":
+    "@bufbuild/connect":
       optional: true
     "@bufbuild/protoc-gen-es":
       optional: true
   bin:
     protoc-gen-connect-web: bin/protoc-gen-connect-web
-  checksum: ddc8927d425bd2e6f9e7668fa24b67773f4b2e5b34d392b6fe24017a743913c5396ab0ea4fb76c53d0da83ab1d46d7356f5ee15192518942a26e095fcbf747d0
+  checksum: 431870a14b57334595c95767dc48e25a8aba7b30169548e0daa52187003b5d4fd59604cae469302a8d3d10773f2f03bf38d340650b0967e2a8e4648898b6c35f
   languageName: node
   linkType: hard
 
-"@bufbuild/protoc-gen-es@npm:^1.0.0":
+"@bufbuild/protoc-gen-es@npm:^1.1.1":
   version: 1.1.1
   resolution: "@bufbuild/protoc-gen-es@npm:1.1.1"
   dependencies:
@@ -5183,8 +5268,8 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@towns/client@workspace:casablanca/sdk"
   dependencies:
-    "@bufbuild/connect-web": ^0.6.0
-    "@bufbuild/protobuf": ^1.0.0
+    "@bufbuild/connect-web": ^0.8.4
+    "@bufbuild/protobuf": ^1.1.1
     "@ethereumjs/util": ^8.0.1
     "@metamask/eth-sig-util": ^5.0.0
     "@towns/proto": "workspace:^"
@@ -5227,10 +5312,12 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@towns/proto@workspace:casablanca/proto"
   dependencies:
-    "@bufbuild/connect-web": ^0.6.0
-    "@bufbuild/protobuf": ^1.0.0
-    "@bufbuild/protoc-gen-connect-web": ^0.6.0
-    "@bufbuild/protoc-gen-es": ^1.0.0
+    "@bufbuild/buf": ^1.15.0-1
+    "@bufbuild/connect": ^0.8.4
+    "@bufbuild/connect-web": ^0.8.4
+    "@bufbuild/protobuf": ^1.1.1
+    "@bufbuild/protoc-gen-connect-web": ^0.8.4
+    "@bufbuild/protoc-gen-es": ^1.1.1
     "@types/jest": ^29.4.0
     jest: ^29.4.3
     jest-extended: ^3.2.0

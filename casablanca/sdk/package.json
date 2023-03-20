@@ -16,8 +16,8 @@
         "watch": "tsc --watch"
     },
     "dependencies": {
-        "@bufbuild/connect-web": "^0.6.0",
-        "@bufbuild/protobuf": "^1.0.0",
+        "@bufbuild/connect-web": "^0.8.4",
+        "@bufbuild/protobuf": "^1.1.1",
         "@ethereumjs/util": "^8.0.1",
         "@metamask/eth-sig-util": "^5.0.0",
         "@towns/proto": "workspace:^",

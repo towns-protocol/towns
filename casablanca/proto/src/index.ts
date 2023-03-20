@@ -1,3 +1,3 @@
-export * from './protocol_pb'
-export * from './protocol_connectweb'
+export * from './gen/protocol_pb'
+export * from './gen/protocol_connect'
 export * from './types'

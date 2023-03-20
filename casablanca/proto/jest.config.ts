@@ -22,6 +22,8 @@ const config: JestConfigWithTsJest = {
     moduleNameMapper: {
         '(.+)\\.js': '$1',
     },
+    collectCoverage: true,
+    coverageReporters: ['json', 'html'],
 }
 
 export default config

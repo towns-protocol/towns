@@ -1,10 +1,7 @@
-import {
-    createConnectTransport,
-    createGrpcWebTransport,
-    createPromiseClient,
-} from '@bufbuild/connect-web'
-import { StreamService } from './protocol_connectweb'
-import { InfoRequest, InfoResponse } from './protocol_pb'
+import { createPromiseClient } from '@bufbuild/connect'
+import { createConnectTransport, createGrpcWebTransport } from '@bufbuild/connect-web'
+import { StreamService } from './gen/protocol_connect'
+import { InfoRequest, InfoResponse } from './gen/protocol_pb'
 
 describe('protocol', () => {
     test.each([createConnectTransport, createGrpcWebTransport])('info', async (transportFunc) => {

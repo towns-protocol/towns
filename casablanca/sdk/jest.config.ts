@@ -26,6 +26,8 @@ const config: JestConfigWithTsJest = {
         'hash.js': 'hash.js',
         '(.+)\\.js': '$1',
     },
+    collectCoverage: true,
+    coverageReporters: ['json', 'html'],
 }
 
 export default config

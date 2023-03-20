@@ -23,6 +23,7 @@ import {
 } from './id'
 import { makeEvent, SignerContext, unpackEnvelope, unpackEnvelopes } from './sign'
 import { check, throwWithCode } from './check'
+import { StreamService } from '@towns/proto'
 
 function assert(condition: any, message?: string): asserts condition {
     if (!condition) {
