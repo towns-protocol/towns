@@ -2,7 +2,11 @@ import { motion } from 'framer-motion'
 import React, { forwardRef } from 'react'
 import { Stack } from '@ui'
 
-const Notification = forwardRef((props: { children: React.ReactNode }) => {
+type Props = {
+    children: React.ReactNode
+}
+
+const Notification = forwardRef<HTMLDivElement, Props>((props: Props, ref) => {
     return (
         <Stack
             horizontal
@@ -14,6 +18,7 @@ const Notification = forwardRef((props: { children: React.ReactNode }) => {
             position="relative"
             background="level3"
             rounded="sm"
+            ref={ref}
         >
             {props.children}
         </Stack>
