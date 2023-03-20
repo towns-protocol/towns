@@ -25,9 +25,9 @@ type Storage interface {
 	CreateStream(ctx context.Context, streamId string, inceptionEvents []*protocol.Envelope) ([]byte, error)
 	GetStream(ctx context.Context, streamId string) (StreamPos, []*protocol.Envelope, error)
 	// TODO return basic info about stream
-	StreamInfo(ctx context.Context, streamId string) (StreamPos, error)
+	StreamExists(ctx context.Context, streamId string) (bool, error)
 	AddEvent(ctx context.Context, streamId string, event *protocol.Envelope) ([]byte, error)
-	SyncStreams(ctx context.Context, positions []*protocol.SyncPos, TimeoutMs uint32) (map[string]StreamEventsBlock, error)
+	SyncStreams(ctx context.Context, positions []*protocol.SyncPos, maxCount int, TimeoutMs uint32) (map[string]StreamEventsBlock, error)
 }
 
 func NewStorage(ctx context.Context, database_url string) (Storage, error) {

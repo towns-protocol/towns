@@ -74,7 +74,6 @@ func (s *LoggingService) Info(ctx context.Context, req *connect_go.Request[proto
 
 type Service struct {
 	Storage storage.Storage
-	Rollup  *Rollup
 	wallet  *crypto.Wallet
 }
 
@@ -96,8 +95,8 @@ func (s *Service) GetStream(ctx context.Context, req *connect_go.Request[protoco
 	}), nil
 }
 
-func (s *Service) checkPrevEvents(streamId string, prevEvents [][]byte) error {
-	allEvents, err := s.Rollup.Get(streamId)
+func (s *Service) checkPrevEvents(view *StreamView, prevEvents [][]byte) error {
+	allEvents, err := view.Get()
 	if err != nil {
 		return err
 	}
@@ -107,7 +106,7 @@ func (s *Service) checkPrevEvents(streamId string, prevEvents [][]byte) error {
 	}
 	for _, prevEvent := range prevEvents {
 		if _, ok := hashes[string(prevEvent)]; !ok {
-			return fmt.Errorf("prev event %s not found in stream %s", hex.EncodeToString(prevEvent), streamId)
+			return fmt.Errorf("prev event %s not found", hex.EncodeToString(prevEvent))
 		}
 	}
 	return nil
@@ -115,16 +114,18 @@ func (s *Service) checkPrevEvents(streamId string, prevEvents [][]byte) error {
 
 func (s *Service) AddEvent(ctx context.Context, req *connect_go.Request[protocol.AddEventRequest]) (*connect_go.Response[protocol.AddEventResponse], error) {
 	log.Infof("AddEvent: %s %s", string(req.Msg.StreamId), hex.EncodeToString(req.Msg.Event.Hash))
-	_, err := s.addEvent(ctx, req.Msg.StreamId, req.Msg.Event)
+
+	view := makeView(ctx, s.Storage, req.Msg.StreamId)
+	_, err := s.addEvent(ctx, req.Msg.StreamId, view, req.Msg.Event)
 	if err != nil {
 		return nil, err
 	}
 	return connect_go.NewResponse(&protocol.AddEventResponse{}), nil
 }
 
-func (s *Service) addEvent(ctx context.Context, streamId string, envelope *protocol.Envelope) ([]byte, error) {
+func (s *Service) addEvent(ctx context.Context, streamId string, view *StreamView, envelope *protocol.Envelope) ([]byte, error) {
 	log.Info("addEvent: ", hex.EncodeToString(envelope.Hash))
-	parsedEvent, err := ParseEvent(streamId, envelope)
+	parsedEvent, err := ParseEvent(envelope)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "AddEvent: event is not a valid payload")
 	}
@@ -133,13 +134,8 @@ func (s *Service) addEvent(ctx context.Context, streamId string, envelope *proto
 		return nil, status.Errorf(codes.InvalidArgument, "AddEvent: event has no prev events")
 	}
 
-	_, err = s.Storage.StreamInfo(ctx, streamId)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "AddEvent: error getting stream: %v", err)
-	}
-
 	// check if previous event's hashes match
-	err = s.checkPrevEvents(streamId, parsedEvent.Event.PrevEvents)
+	err = s.checkPrevEvents(view, parsedEvent.Event.PrevEvents)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "AddEvent: %v", err)
 	}
@@ -155,7 +151,7 @@ func (s *Service) addEvent(ctx context.Context, streamId string, envelope *proto
 
 	case *protocol.Payload_JoinableStream_:
 		// check is stream kind is channel or space
-		kind, err := s.Rollup.StreamKind(streamId)
+		kind, err := view.StreamKind(streamId)
 		if err != nil {
 			return nil, status.Errorf(codes.Internal, "AddEvent: error getting stream kind: %v", err)
 		}
@@ -171,13 +167,16 @@ func (s *Service) addEvent(ctx context.Context, streamId string, envelope *proto
 			return nil, status.Errorf(codes.Internal, "AddEvent: error adding event to storage: %v", err)
 		}
 
-		// move getAllLeafEvents to rollup
-		allEvents, err := s.Rollup.Get(streamId)
+		err = view.AddEvent(parsedEvent.Envelope)
 		if err != nil {
-			return nil, status.Errorf(codes.Internal, "AddEvent: error getting stream: %v", err)
+			return nil, status.Errorf(codes.Internal, "AddEvent: error adding event to view: %v", err)
+		}
+		
+		leaves, err := view.GetAllLeafEvents()
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "AddEvent: error getting all leaf events: %v", err)
 		}
 
-		//var envelope *protocol.Envelope
 		log.Debug("AddEvent: ", joinableStream.Op)
 		envelope := s.sign(makePayload_UserStreamOp(
 			&protocol.Payload_UserStreamOp{
@@ -190,7 +189,7 @@ func (s *Service) addEvent(ctx context.Context, streamId string, envelope *proto
 					Signature: parsedEvent.Envelope.Signature,
 				},
 			},
-		), getAllLeafEvents(allEvents))
+		), leaves)
 
 		cookie, err := s.Storage.AddEvent(ctx, userStreamId, envelope)
 		if err != nil {
@@ -200,7 +199,7 @@ func (s *Service) addEvent(ctx context.Context, streamId string, envelope *proto
 		return cookie, nil
 
 	case *protocol.Payload_Message_:
-		kind, err := s.Rollup.StreamKind(streamId)
+		kind, err := view.StreamKind(streamId)
 		if err != nil {
 			return nil, status.Errorf(codes.Internal, "AddEvent: error getting stream kind: %v", err)
 		}
@@ -209,7 +208,7 @@ func (s *Service) addEvent(ctx context.Context, streamId string, envelope *proto
 		}
 		user := UserIdFromAddress(streamEvent.CreatorAddress)
 		// check if user is a member of the channel
-		members, err := s.Rollup.JoinedUsers(streamId)
+		members, err := view.JoinedUsers(streamId)
 		if err != nil {
 			return nil, status.Errorf(codes.Internal, "AddEvent: error getting joined users: %v", err)
 		}
@@ -248,20 +247,6 @@ func MakeServiceHandler(ctx context.Context, dbUrl string, opts ...connect_go.Ha
 	if err != nil {
 		log.Fatalf("failed to create storage: %v", err)
 	}
-	rollup := NewRollup(func(s string) ([]*protocol.Envelope, error) {
-		pos := protocol.SyncPos{
-			StreamId:   s,
-			SyncCookie: storage.SeqNumToBytes(0),
-		}
-		val, err := store.SyncStreams(ctx,
-			[]*protocol.SyncPos{&pos}, 1000)
-		if err != nil {
-			return nil, err
-		}
-		events := val[string(s)].Events
-		return events, nil
-
-	})
 
 	wallet, err := crypto.NewWallet()
 	if err != nil {
@@ -271,7 +256,6 @@ func MakeServiceHandler(ctx context.Context, dbUrl string, opts ...connect_go.Ha
 	pattern, handler := protocolconnect.NewStreamServiceHandler(&LoggingService{
 		Service: &Service{
 			Storage: store,
-			Rollup:  rollup,
 			wallet:  wallet,
 		},
 	}, opts...)
@@ -313,27 +297,6 @@ func MakeServer(ctx context.Context, dbUrl string) (protocolconnect.StreamServic
 	)
 
 	return client, closer
-}
-
-func getAllLeafEvents(events []*ParsedEvent) [][]byte {
-	if len(events) == 0 {
-		panic("no events")
-	}
-	leafEventHashes := make(map[string]struct{})
-	for _, event := range events {
-		leafEventHashes[string(event.Hash)] = struct{}{}
-		for _, prev := range event.Event.PrevEvents {
-			delete(leafEventHashes, string(prev))
-		}
-	}
-	if len(leafEventHashes) == 0 {
-		panic("no leaf events")
-	}
-	hashes := make([][]byte, 0, len(leafEventHashes))
-	for hash := range leafEventHashes {
-		hashes = append(hashes, []byte(hash))
-	}
-	return hashes
 }
 
 func (s *Service) sign(payload *protocol.Payload, prevHashes [][]byte) *protocol.Envelope {
@@ -379,4 +342,15 @@ func makePayload_UserStreamOp(op *protocol.Payload_UserStreamOp) *protocol.Paylo
 	return &protocol.Payload{
 		Payload: &protocol.Payload_UserStreamOp_{UserStreamOp: op},
 	}
+}
+
+func makeView(ctx context.Context, store storage.Storage, streamId string) *StreamView {
+	view := NewView(func() ([]*protocol.Envelope, error) {		
+		_, events, err := store.GetStream(ctx, streamId)
+		if err != nil {
+			return nil, err
+		}
+		return events, nil
+	})
+	return view
 }

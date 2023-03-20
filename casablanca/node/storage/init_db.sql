@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS es (
 
 CREATE TABLE IF NOT EXISTS es_events (
   es_name VARCHAR, 
-  seq_num BIGSERIAL, 
+  seq_num BIGSERIAL,
   hash BYTEA NOT NULL,
   signature BYTEA NOT NULL,
   event BYTEA NOT NULL, 
@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS es_events (
 
 CREATE TABLE IF NOT EXISTS es_events_debug (
   es_name VARCHAR, 
-  seq_num BIGSERIAL, 
+  seq_num BIGINT, 
   hash BYTEA NOT NULL,
   signature BYTEA NOT NULL,
   event JSONB NOT NULL, 

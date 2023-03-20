@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math"
 	"time"
 
 	"github.com/google/uuid"
@@ -122,6 +123,14 @@ func createEventStreamInstance(ctx context.Context, tx pgx.Tx, streamId string) 
 	return nil
 }
 
+func startTx(ctx context.Context, pool *pgxpool.Pool) (pgx.Tx, error) {
+	tx, err := pool.BeginTx(ctx, pgx.TxOptions{IsoLevel: pgx.ReadCommitted})
+	if err != nil {
+		return nil, err
+	}
+	return tx, nil
+}
+
 func byteToPgHex(b []byte) string {
 	return fmt.Sprintf("\\x%s", hex.EncodeToString(b))
 }
@@ -133,29 +142,45 @@ func pgHexToByte(in string) ([]byte, error) {
 	return hex.DecodeString(in[2:])
 }
 
+func lockTable(ctx context.Context, tx pgx.Tx, tableName string) error {
+	_, err := tx.Exec(ctx, fmt.Sprintf("LOCK TABLE %s IN EXCLUSIVE MODE", tableName))
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func addEvents(ctx context.Context, tx pgx.Tx, streamId string, events []*protocol.Envelope) (int64, error) {
 	sb := strings.Builder{}
+	hashes := strings.Builder{}
+	params := make([]interface{}, 0, len(events)*4)
+
 	sb.WriteString("INSERT INTO es_events (es_name, hash, signature, event) VALUES ")
 	for idx := range events {
 		if idx > 0 {
 			sb.WriteString(", ")
 		}
-		sb.WriteString("('")
-		sb.WriteString(streamId)
-		sb.WriteString("', '")
-		sb.WriteString(byteToPgHex(events[idx].Hash))
-		sb.WriteString("', '")
-		sb.WriteString(byteToPgHex(events[idx].Signature))
-		sb.WriteString("', '")
-		sb.WriteString(byteToPgHex(events[idx].Event))
-		sb.WriteString("')")
+		sb.WriteString(fmt.Sprintf("($%d, $%d, $%d, $%d)", idx*4+1, idx*4+2, idx*4+3, idx*4+4))
+
+		params = append(params, streamId)
+		params = append(params, events[idx].Hash)
+		params = append(params, events[idx].Signature)
+		params = append(params, events[idx].Event)
+
+		hashes.WriteString(string(events[idx].Hash))
+		hashes.WriteString(",")
 	}
 	sb.WriteString(" RETURNING seq_num")
 
+	log.Debugf("insert message with hashes: %s", hashes.String())
+
+	err := lockTable(ctx, tx, "es_events")
+	if err != nil {
+		return -1, err
+	}
+
 	var seqNum int64
-	sql := sb.String()
-	log.Debug("sql: ", sql)
-	err := tx.QueryRow(ctx, sb.String()).Scan(&seqNum)
+	err = tx.QueryRow(ctx, sb.String(), params...).Scan(&seqNum)
 	if err != nil {
 		return -1, err
 	}
@@ -172,6 +197,8 @@ func addDebugEvents(ctx context.Context, tx pgx.Tx) (int, error) {
 
 	events := make(map[int64]*ParsedEvent)
 
+	var es_main_name string
+
 	for rows.Next() {
 		var es_name string
 		var seq_num int64
@@ -182,7 +209,7 @@ func addDebugEvents(ctx context.Context, tx pgx.Tx) (int, error) {
 		if err != nil {
 			return 0, err
 		}
-		parsedEvent, err := ParseEvent(es_name, &protocol.Envelope{
+		parsedEvent, err := ParseEvent(&protocol.Envelope{
 			Hash:      hash,
 			Signature: signature,
 			Event:     event,
@@ -192,6 +219,7 @@ func addDebugEvents(ctx context.Context, tx pgx.Tx) (int, error) {
 			return 0, err
 		}
 		events[seq_num] = parsedEvent
+		es_main_name = es_name
 	}
 
 	for seq_num, parsedEvent := range events {
@@ -201,9 +229,9 @@ func addDebugEvents(ctx context.Context, tx pgx.Tx) (int, error) {
 			return 0, err
 		}
 
-		log.Debugf("inserting debug event: %s", string(js))
+		log.Debugf("inserting debug event: %s", hex.EncodeToString(parsedEvent.Envelope.Hash))
 		_, err = tx.Exec(ctx, "INSERT INTO es_events_debug (es_name, seq_num, hash, signature, event) VALUES ($1, $2, $3, $4, $5::jsonb)",
-			parsedEvent.StreamId, seq_num, parsedEvent.Envelope.Hash, parsedEvent.Envelope.Signature, string(js))
+			es_main_name, seq_num, parsedEvent.Envelope.Hash, parsedEvent.Envelope.Signature, string(js))
 		if err != nil {
 			return 0, err
 		}
@@ -212,9 +240,19 @@ func addDebugEvents(ctx context.Context, tx pgx.Tx) (int, error) {
 	return len(events), nil
 }
 
+func maxSeqNum(seqNums []int64) int64 {
+	var max int64
+	for _, seqNum := range seqNums {
+		if seqNum > max {
+			max = seqNum
+		}
+	}
+	return max
+}
+
 // CreateStream creates a new event stream
 func (s *PGEventStore) CreateStream(ctx context.Context, streamID string, inceptionEvents []*protocol.Envelope) ([]byte, error) {
-	tx, err := s.pool.Begin(ctx)
+	tx, err := startTx(ctx, s.pool)
 	if err != nil {
 		return nil, err
 	}
@@ -246,8 +284,8 @@ func (s *PGEventStore) CreateStream(ctx context.Context, streamID string, incept
 }
 
 func (s *PGEventStore) AddEvent(ctx context.Context, streamID string, event *protocol.Envelope) ([]byte, error) {
-	log.Debug("Storage: AddEvent: ", string(streamID), " ", hex.EncodeToString(event.Hash))
-	tx, err := s.pool.Begin(ctx)
+	log.Debug("Storage: AddEvent: ", string(streamID), " ", string(event.Hash))
+	tx, err := startTx(ctx, s.pool)
 	if err != nil {
 		return nil, err
 	}
@@ -271,6 +309,7 @@ func (s *PGEventStore) AddEvent(ctx context.Context, streamID string, event *pro
 	if err != nil {
 		return nil, err
 	}
+	log.Debug("Storage: AddEvent: ", string(streamID), " ", string(event.Hash), " done")
 
 	return SeqNumToBytes(seqNum), nil
 }
@@ -294,10 +333,10 @@ func (s *PGEventStore) GetStreams(ctx context.Context) ([]string, error) {
 	return streams, nil
 }
 
-func getStream(ctx context.Context, tx pgx.Tx, streamId string) (string, error) {
+func checkStream(ctx context.Context, tx pgx.Tx, streamId string) (bool, error) {
 	rows, err := tx.Query(ctx, "SELECT name FROM es WHERE name = $1", streamId)
 	if err != nil {
-		return "", err
+		return false, err
 	}
 	defer rows.Close()
 
@@ -305,63 +344,58 @@ func getStream(ctx context.Context, tx pgx.Tx, streamId string) (string, error) 
 		var streamName string
 		err = rows.Scan(&streamName)
 		if err != nil {
-			return "", err
+			return false, err
 		}
-		return streamName, nil
+		return true, nil
 	}
-	return "", errors.New("stream not found")
+	return false, nil
 
 }
 
 func (s *PGEventStore) GetStream(ctx context.Context, streamId string) (StreamPos, []*protocol.Envelope, error) {
-	tx, err := s.pool.Begin(ctx)
+	tx, err := startTx(ctx, s.pool)
 	if err != nil {
 		return StreamPos{}, nil, err
 	}
 	defer tx.Rollback(ctx)
 
-	streamName, err := getStream(ctx, tx, streamId)
+	exists, err := checkStream(ctx, tx, streamId)
+	if err != nil {
+		return StreamPos{}, nil, err
+	}
+	if !exists {
+		return StreamPos{}, nil, fmt.Errorf("stream %s does not exist", string(streamId))
+	}
+
+	pos := StreamPos{
+		StreamId:   streamId,
+		SyncCookie: SeqNumToBytes(-1),
+	}
+	events, seqNum, err := fetchMessages(ctx, tx, []StreamPos{pos}, -1)
 	if err != nil {
 		return StreamPos{}, nil, err
 	}
 
-	pos := StreamPos{
-		StreamId:   streamName,
-		SyncCookie: SeqNumToBytes(-1),
-	}
-	events, seqNum, err := fetchMessages(ctx, tx, []StreamPos{pos})
-	if err != nil {
-		return StreamPos{}, nil, err
-	}
 	streamPos := StreamPos{
-		StreamId:   streamName,
+		StreamId:   streamId,
 		SyncCookie: SeqNumToBytes(seqNum),
 	}
 	return streamPos, events[string(streamId)], nil
 }
 
-func (s *PGEventStore) StreamInfo(ctx context.Context, streamId string) (StreamPos, error) {
-	tx, err := s.pool.Begin(ctx)
+func (s *PGEventStore) StreamExists(ctx context.Context, streamId string) (bool, error) {
+	tx, err := startTx(ctx, s.pool)
 	if err != nil {
-		return StreamPos{}, err
+		return false, err
 	}
 	defer tx.Rollback(ctx)
 
-	streamName, err := getStream(ctx, tx, streamId)
-	if err != nil {
-		return StreamPos{}, err
-	}
-
-	pos := StreamPos{
-		StreamId:   streamName,
-		SyncCookie: SeqNumToBytes(-1),
-	}
-	return pos, nil
+	return checkStream(ctx, tx, streamId)
 }
 
 // DeleteStream deletes an event stream
 func (s *PGEventStore) DeleteStream(ctx context.Context, streamID string) error {
-	tx, err := s.pool.Begin(ctx)
+	tx, err := startTx(ctx, s.pool)
 	if err != nil {
 		return err
 	}
@@ -394,30 +428,27 @@ func (s *PGEventStore) DeleteAllStreams(ctx context.Context) error {
 	return nil
 }
 
-// AddEvents adds events to an event stream
-func (s *PGEventStore) AddEvents(ctx context.Context, streamID string, events []*protocol.Envelope) ([]byte, error) {
-	tx, err := s.pool.Begin(ctx)
-	if err != nil {
-		return nil, err
-	}
-	defer tx.Rollback(ctx)
-
-	seqNum, err := addEvents(ctx, tx, streamID, events)
-	if err != nil {
-		return nil, err
-	}
-
-	err = tx.Commit(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	return SeqNumToBytes(seqNum), nil
-}
-
-func fetchMessages(ctx context.Context, tx pgx.Tx, positions []StreamPos) (map[string][]*protocol.Envelope, int64, error) {
+/**
+ * fetchMessages fetches messages from the event store
+ * @param {context.Context} ctx - the context
+ * @param {pgx.Tx} tx - the transaction
+ * @param {[]StreamPos} positions - the positions to fetch from
+ * @param {int} maxCount - the maximum number of messages to fetch
+ * @returns {map[string][]*protocol.Envelope} - the messages
+ * @returns {int64} - the watermark
+ * @returns {error} - any error
+ */
+func fetchMessages(ctx context.Context, tx pgx.Tx, positions []StreamPos, maxCount int) (map[string][]*protocol.Envelope, int64, error) {
 
 	log.Debug("fetchMessages: ", len(positions))
+	minWaterMark := int64(math.MaxInt64)
+	for _, pos := range positions {
+		seqNum := BytesToSeqNum(pos.SyncCookie)
+		if seqNum < minWaterMark {
+			minWaterMark = seqNum
+		}
+	}
+
 	sql := strings.Builder{}
 	for i, pos := range positions {
 		seqNum := BytesToSeqNum(pos.SyncCookie)
@@ -431,12 +462,16 @@ func fetchMessages(ctx context.Context, tx pgx.Tx, positions []StreamPos) (map[s
 	if len(positions) != 0 {
 		sql.WriteString(" ORDER BY seq_num")
 	}
+	if maxCount > 0 {
+		sql.WriteString(fmt.Sprintf(" LIMIT %d", maxCount))
+	}
 
 	params := make([]interface{}, len(positions))
-	log.Debug("sql: ", sql.String(), " params: ", params)
 	for i, pos := range positions {
 		params[i] = pos.StreamId
 	}
+	log.Debug("sql: ", sql.String(), " params: ", params)
+
 	rows, err := tx.Query(ctx, sql.String(), params...)
 	if err != nil {
 		log.Debug("error: ", err)
@@ -446,6 +481,8 @@ func fetchMessages(ctx context.Context, tx pgx.Tx, positions []StreamPos) (map[s
 
 	events := map[string][]*protocol.Envelope{}
 	var lastSeqNum int64
+	count := 0
+	seqNums := strings.Builder{}
 	for rows.Next() {
 		var name []byte
 		var hash []byte
@@ -467,17 +504,19 @@ func fetchMessages(ctx context.Context, tx pgx.Tx, positions []StreamPos) (map[s
 			Signature: signature,
 			Event:     event_buf,
 		})
+		seqNums.WriteString(fmt.Sprintf("%d,", seqNum))
+		count++
 	}
-	log.Debug("events: ", events, " lastSeqNum: ", lastSeqNum)
+	log.Debug("events: ", seqNums.String(), " lastSeqNum: ", lastSeqNum)
 	return events, lastSeqNum, nil
 }
 
-func send(output chan<- StreamEventsBlock, block StreamEventsBlock) {
+func send(id uuid.UUID, output chan<- StreamEventsBlock, block StreamEventsBlock) {
 	select {
 	case output <- block:
 		log.Debug("Sent block", block)
 	case <-time.After(1 * time.Second):
-		log.Debug("Dropping block after timeout", block)
+		log.Debugf("Dropping block with %d events after timeout (%v)", id, len(block.Events))
 	}
 }
 
@@ -497,15 +536,25 @@ func (s *PGEventStore) getLastSeqNum(ctx context.Context, conn *pgxpool.Conn) (i
 	return seqNum, nil
 }
 
-func (s *PGEventStore) getLastEvents(ctx context.Context, conn *pgxpool.Conn, seqNum int64, lastSeqNum int64) (map[int64]*ParsedEvent, error) {
+/**
+ * getLastEvents returns the last events from the event store
+ * @param {context.Context} ctx - the context
+ * @param {pgx.Tx} tx - the transaction
+ * @param {int64} seqNum - the sequence number to start from
+ * @param {int64} lastSeqNum - the last sequence number
+ * @returns {map[int64]*FullEvent} - the events with their watermarks
+ * @returns {error} - any error
+ */
+func (s *PGEventStore) getLastEvents(ctx context.Context, tx pgx.Tx, seqNum int64, lastSeqNum int64) (map[int64]*FullEvent, error) {
 	log.Debugf("Fetching events from %d to %d", seqNum, lastSeqNum)
-	rows, err := conn.Query(ctx, "SELECT seq_num, es_name, hash, signature, event FROM es_events WHERE seq_num > $1 and seq_num <= $2 ORDER BY seq_num", seqNum, lastSeqNum)
+
+	rows, err := tx.Query(ctx, "SELECT seq_num, es_name, hash, signature, event FROM es_events WHERE seq_num > $1 and seq_num <= $2 ORDER BY seq_num", seqNum, lastSeqNum)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	events := map[int64]*ParsedEvent{}
+	events := map[int64]*FullEvent{}
 	for rows.Next() {
 		var currentSeqNum int64
 		var esName string
@@ -516,7 +565,7 @@ func (s *PGEventStore) getLastEvents(ctx context.Context, conn *pgxpool.Conn, se
 		if err != nil {
 			return nil, err
 		}
-		parsedEvent, err := ParseEvent(esName, &protocol.Envelope{
+		parsedEvent, err := ParseEvent(&protocol.Envelope{
 			Hash:      hash,
 			Signature: signature,
 			Event:     event_buf,
@@ -524,7 +573,11 @@ func (s *PGEventStore) getLastEvents(ctx context.Context, conn *pgxpool.Conn, se
 		if err != nil {
 			return nil, err
 		}
-		events[currentSeqNum] = parsedEvent
+		events[currentSeqNum] = &FullEvent{
+			StreamId:    esName,
+			SeqNum:      currentSeqNum,
+			ParsedEvent: parsedEvent,
+		}
 	}
 	log.Debugf("Fetched %d events", len(events))
 	return events, nil
@@ -565,46 +618,65 @@ func (s *PGEventStore) startMultiplexer(ctx context.Context) error {
 			}
 
 			ctx, cancel := context.WithTimeout(ctx, 1*time.Second)
-			defer cancel()
 
-			notification, err := conn.Conn().WaitForNotification(ctx)
-			if errors.Is(err, context.DeadlineExceeded) {
+			lastEventNum, err := s.getLastSeqNum(ctx, conn)
+			if err != nil {
+				log.Error("Error getting last seq num: ", err)
+				cancel()
 				continue
 			}
-			if err != nil {
-				log.Error("Error waiting for notification: ", err)
-				return
-			}
-			log.Debug("PID:", notification.PID, "Channel:", notification.Channel, "Payload:", notification.Payload)
 
-			pg_event := PGEventNotificationEntry{}
-			err = json.Unmarshal([]byte(notification.Payload), &pg_event)
-			if err != nil {
-				log.Error("Error parsing notification: ", err)
-			} else {
-
-				if pg_event.SeqNum <= seqNum {
-					log.Debug("Skipping event: ", pg_event.SeqNum, " <= ", seqNum)
+			if lastEventNum != seqNum {
+				tx, err := startTx(ctx, s.pool)
+				if err != nil {
+					log.Error("Error starting transaction: ", err)
+					cancel()
 					continue
 				}
-
-				lastEvents, err := s.getLastEvents(ctx, conn, seqNum, pg_event.SeqNum)
+				minWaterMark := s.consumers.getMinSeqNum()
+				if minWaterMark < seqNum {
+					seqNum = minWaterMark
+				}
+				lastEvents, err := s.getLastEvents(ctx, tx, seqNum, lastEventNum)
 				if err != nil {
 					log.Error("Error getting last events: ", err)
+					tx.Rollback(ctx)
+					cancel()
 					continue
 				}
-				log.Debugf("Extracted %d events (last seq: %d)", len(lastEvents), pg_event.SeqNum)
-				seqNum = pg_event.SeqNum
+				tx.Commit(ctx)
 
-				readyBlocks := s.consumers.Filter(lastEvents, SeqNumToBytes(seqNum))
+				seqNums := strings.Builder{}
+				for _, event := range lastEvents {
+					seqNums.WriteString(fmt.Sprintf("%d, ", event.SeqNum))
+				}
+				log.Debugf("Events: %s", seqNums.String())
+				log.Debugf("Extracted %d events (start: %d last seq: %d)", len(lastEvents), seqNum, lastEventNum)
+
+				readyBlocks := s.consumers.Filter(lastEvents, SeqNumToBytes(lastEventNum))
 				for id, block := range readyBlocks {
 					rx, ok := s.consumers.GetByUUID(id)
 					if ok {
 						log.Debugf("Sending %d event(s) to sub %s", len(block.Events), id)
-						go send(rx.notifyChan, block)
+						go send(id, rx.notifyChan, block)
 					}
 				}
+				seqNum = lastEventNum
+
 			}
+
+			notification, err := conn.Conn().WaitForNotification(ctx)
+			if errors.Is(err, context.DeadlineExceeded) {
+				cancel()
+				continue
+			}
+			if err != nil {
+				log.Debug("Error waiting for notification: ", err)
+				cancel()
+				return
+			}
+			log.Debug("PID:", notification.PID, "Channel:", notification.Channel, "Payload:", notification.Payload)
+			cancel()
 		}
 	}()
 
@@ -637,18 +709,15 @@ type syncEvent struct {
 	events   StreamEventsBlock
 }
 
-func (s *PGEventStore) SyncStreams(ctx context.Context, syncPositions []*protocol.SyncPos, TimeoutMs uint32) (map[string]StreamEventsBlock, error) {
-	tx, err := s.pool.Begin(ctx)
-	if err != nil {
-		return nil, err
-	}
-	defer tx.Rollback(ctx)
+func (s *PGEventStore) SyncStreams(ctx context.Context, syncPositions []*protocol.SyncPos, maxCount int, TimeoutMs uint32) (map[string]StreamEventsBlock, error) {
+	log.Debugf("SyncStreams start: %v", syncPositions)
 
 	longStreams := map[string]struct{}{}
 
 	streams := map[string]StreamEventsBlock{}
 	streamPos := make([]StreamPos, len(syncPositions))
 	positions := make(map[string][]byte)
+	startSeqNum := int64(math.MaxInt64)
 	for i, pos := range syncPositions {
 		var cookie []byte
 		if pos.SyncCookie == nil {
@@ -658,16 +727,24 @@ func (s *PGEventStore) SyncStreams(ctx context.Context, syncPositions []*protoco
 		}
 		streamPos[i] = StreamPos{StreamId: pos.StreamId, SyncCookie: cookie}
 		positions[string(pos.StreamId)] = cookie
+		if startSeqNum > BytesToSeqNum(cookie) {
+			startSeqNum = BytesToSeqNum(cookie)
+		}
 	}
-	events, seqNum, err := fetchMessages(ctx, tx, streamPos)
+	tx, err := startTx(ctx, s.pool)
 	if err != nil {
 		return nil, err
 	}
+	events, seqNum, err := fetchMessages(ctx, tx, streamPos, maxCount)
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback(ctx)
 
 	if len(events) != 0 {
 		for streamId, events := range events {
-			streams[string(streamId)] = StreamEventsBlock{
-				OriginalSyncCookie: positions[string(streamId)],
+			streams[streamId] = StreamEventsBlock{
+				OriginalSyncCookie: positions[streamId],
 				SyncCookie:         SeqNumToBytes(seqNum),
 				Events:             events,
 			}
@@ -676,12 +753,26 @@ func (s *PGEventStore) SyncStreams(ctx context.Context, syncPositions []*protoco
 		if err != nil {
 			return nil, err
 		}
+
+		hashes := strings.Builder{}
+		for streamId, block := range streams {
+			hashes.WriteString(streamId)
+			hashes.WriteString(":")
+			for _, event := range block.Events {
+				hashes.WriteString(string(event.Hash))
+				hashes.WriteString(",")
+			}
+			hashes.WriteString(";")
+		}
+
+		log.Debugf("SyncStreams return: %s", hashes.String())
 		return streams, nil
 	}
+
 	var results chan *syncEvent = make(chan *syncEvent, len(events))
 	for _, pos := range syncPositions {
 		streamId := pos.StreamId
-		log.Debugf("SyncStreams: %s", string(streamId))
+		log.Debugf("SyncStreams: %s", streamId)
 		var cookie []byte
 		if pos.SyncCookie == nil {
 			cookie = []byte{0}
@@ -695,13 +786,13 @@ func (s *PGEventStore) SyncStreams(ctx context.Context, syncPositions []*protoco
 		}
 		longStreams[string(streamId)] = struct{}{}
 		prod := func() {
-			log.Debug("Waiting for events for stream: ", streamId)
+			log.Debugf("SyncStreams: Waiting for events for stream: %s (TimeoutMs: %d)", streamId, TimeoutMs)
 			select {
 			case <-ctx.Done():
 			case events := <-rx.notifyChan:
 				results <- &syncEvent{streamId: streamId, events: events}
 			case <-time.After(time.Duration(TimeoutMs) * time.Millisecond):
-				log.Error("Timeout waiting for events for stream: ", string(streamId), " ", TimeoutMs)
+				log.Error("SyncStreams: Timeout waiting for events for stream: ", string(streamId), " ", TimeoutMs)
 				// log.Debug("Sending nil result")
 				var result *syncEvent = nil
 				if result == nil {
@@ -719,30 +810,31 @@ func (s *PGEventStore) SyncStreams(ctx context.Context, syncPositions []*protoco
 	}
 
 	if len(longStreams) != 0 {
-		log.Debug("Waiting for long streams: ", longStreams)
+		log.Debug("SyncStreams: Waiting for long streams: ", longStreams)
 	}
 
-	log.Debugf("Waiting for results for %d long poll", len(longStreams))
+	log.Debugf("SyncStreams: Waiting for results for %d long poll", len(longStreams))
 	// results guaranteed to have this amout of messages
 	count := len(results)
 	if count == 0 && len(longStreams) > 0 {
 		// block for at least one message
 		count = 1
 	}
-	for i := 0; i < count; i++ {
-		log.Debug("Waiting for an event")
+	for count > 0 {
+		log.Debug("SyncStreams: Waiting for an event")
 		result := <-results
 		if result != nil {
-			log.Debugf("Got an event for %s", string(result.streamId))
+			log.Debugf("SyncStreams: Got an event for %s", string(result.streamId))
 			hashes := []string{}
 			for _, event := range result.events.Events {
 				hashes = append(hashes, hex.EncodeToString(event.Hash))
 			}
-			log.Debugf("Got result for stream %s (%v)", string(result.streamId), hashes)
+			log.Debugf("SyncStreams: Got result for stream %s (%v)", string(result.streamId), hashes)
 			streams[string(result.streamId)] = result.events
 		} else {
-			log.Debug("no events")
+			log.Debug("SyncStreams: no events")
 		}
+		count = len(results)
 	}
 	return streams, nil
 }

@@ -127,8 +127,8 @@ func MessageEvent(idx int, creator []byte, content string, prevHash []byte) (*pr
 	}
 
 	message := &protocol.Envelope{
-		Hash:      []byte("hash"),
-		Signature: []byte("signature"),
+		Hash:      []byte(fmt.Sprintf("hash%d", idx)),
+		Signature: []byte(fmt.Sprintf("signature%d", idx)),
 		Event:     eventBuffer,
 	}
 
@@ -158,8 +158,8 @@ func JoinEvent(idx int, creator []byte, user []byte, prevHash []byte) (*protocol
 	}
 
 	join := &protocol.Envelope{
-		Hash:      []byte("hash"),
-		Signature: []byte("signature"),
+		Hash:      []byte(fmt.Sprintf("hash%d", idx)),
+		Signature: []byte(fmt.Sprintf("signature%d", idx)),
 		Event:     eventBuffer,
 	}
 

@@ -7,14 +7,18 @@ import (
 )
 
 type ParsedEvent struct {
-	// TODO: remove StreamId from here
-	StreamId string
 	Event    *StreamEvent
 	Envelope *Envelope
 	Hash     []byte
 }
 
-func ParseEvent(streamId string, envelope *Envelope) (*ParsedEvent, error) {
+type FullEvent struct {
+	StreamId    string
+	SeqNum      int64
+	ParsedEvent *ParsedEvent
+}
+
+func ParseEvent(envelope *Envelope) (*ParsedEvent, error) {
 	var streamEvent StreamEvent
 	err := proto.Unmarshal(envelope.Event, &streamEvent)
 	if err != nil {
@@ -24,7 +28,6 @@ func ParseEvent(streamId string, envelope *Envelope) (*ParsedEvent, error) {
 	// TODO: check hash and signature
 
 	return &ParsedEvent{
-		StreamId: streamId,
 		Event:    &streamEvent,
 		Envelope: envelope,
 		Hash:     envelope.Hash,
@@ -34,7 +37,7 @@ func ParseEvent(streamId string, envelope *Envelope) (*ParsedEvent, error) {
 func ParseEvents(streamId string, events []*Envelope) ([]*ParsedEvent, error) {
 	parsedEvents := make([]*ParsedEvent, len(events))
 	for i, event := range events {
-		parsedEvent, err := ParseEvent(streamId, event)
+		parsedEvent, err := ParseEvent(event)
 		if err != nil {
 			return nil, err
 		}

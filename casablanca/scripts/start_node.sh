@@ -2,4 +2,4 @@
 cd -P -- "$(dirname -- "${BASH_SOURCE[0]}")"
 
 cd ../node
-go run ./node/node.go
+go run ./node/node.go $@

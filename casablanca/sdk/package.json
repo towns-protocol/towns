@@ -12,7 +12,7 @@
         "my-jest": "yarn node -r ../../scripts/node-no-warn.js --experimental-vm-modules $(yarn bin jest)",
         "my-node": "yarn node -r ../../scripts/node-no-warn.js --loader ts-node/esm --experimental-specifier-resolution=node --experimental-vm-modules",
         "test": "yarn my-jest",
-        "test:ci": "SKIP_BROKEN=1 yarn my-jest --testTimeout=180000",
+        "test:ci": "yarn my-jest --testTimeout=180000",
         "watch": "tsc --watch"
     },
     "dependencies": {

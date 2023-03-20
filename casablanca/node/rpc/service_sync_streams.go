@@ -14,7 +14,7 @@ func (s *Service) SyncStreams(ctx context.Context, req *connect.Request[SyncStre
 		log.Infof("SyncStreams: CALL     %s %x", s.StreamId, s.SyncCookie)
 	}
 
-	blocks, err := s.Storage.SyncStreams(ctx, req.Msg.SyncPos, req.Msg.TimeoutMs)
+	blocks, err := s.Storage.SyncStreams(ctx, req.Msg.SyncPos, -1, req.Msg.TimeoutMs)
 	if err != nil {
 		return nil, err
 	}

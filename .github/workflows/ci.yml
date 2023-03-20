@@ -219,13 +219,21 @@ jobs:
                   PGPASSWORD: postgres
 
             - name: Run Casablanca node
-              run: yarn csb:start &
+              run: yarn csb:start dev.yaml &
 
             - name: Wait for Casablanca node to be up
               run: yarn csb:wait
 
             - name: Build & Test
               run: yarn csb:turbo
+
+            - name: Archive Casablanca log
+              if: always()
+              uses: actions/upload-artifact@v3
+              with:
+                  name: casablanca-node-log
+                  path: |
+                      casablanca/node/dev.log
 
             # If CI failed, we send a slack notification
             - name: Slack notification

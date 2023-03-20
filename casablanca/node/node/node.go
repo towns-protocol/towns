@@ -5,6 +5,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
 	"os"
@@ -20,19 +21,45 @@ import (
 )
 
 type Config struct {
-	Port    int    `yaml:"PORT" default:"5157"`
-	Address string `yaml:"ADDRESS" default:""`
-	DbUrl   string `yaml:"DB_URL" default:"postgres://postgres:postgres@localhost:5433/casablanca?sslmode=disable&pool_max_conns=3"`
+	Port    int    `yaml:"port" default:"5157"`
+	Address string `yaml:"address" default:""`
+	DbUrl   string `yaml:"db_url" default:"postgres://postgres:postgres@localhost:5433/casablanca?sslmode=disable&pool_max_conns=3"`
+	Debug   bool   `yaml:"debug" default:"false"`
+	LogFile string `yaml:"log_file" default:""`
 }
 
 func main() {
 	flag.Parse()
 	//logflag.Parse()
 	log.StandardLogger().SetNoLock()
+	log.StandardLogger().SetFormatter(&log.TextFormatter{
+		FullTimestamp: true,
+	})
 
-	config, err := readConfig("config.yaml")
+	// read config file name from args
+	// if no args, use default config file name
+	var configFileName string
+	if len(os.Args) > 1 {
+		configFileName = os.Args[1]
+	} else {
+		configFileName = "dev.yaml"
+	}
+
+	config, err := readConfig(configFileName)
 	if err != nil {
 		log.Fatalf("failed to read config: %v", err)
+	}
+	if config.Debug {
+		log.SetLevel(log.DebugLevel)
+	}
+	if config.LogFile != "" {
+		f, err := os.OpenFile(config.LogFile, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+		if err != nil {
+			log.Fatalf("failed to open log file: %v", err)
+		}
+		defer f.Close()
+		wrt := io.MultiWriter(os.Stdout, f)
+		log.SetOutput(wrt)
 	}
 
 	dbUrl := config.DbUrl
@@ -66,6 +93,7 @@ func main() {
 }
 
 func readConfig(cfg string) (*Config, error) {
+	log.Infof("reading config from %s", cfg)
 	f, err := os.Open(cfg)
 	if err != nil {
 		log.Warn(err)

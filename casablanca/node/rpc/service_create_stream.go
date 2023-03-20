@@ -71,8 +71,10 @@ func (s *Service) CreateStream(ctx context.Context, req *connect.Request[CreateS
 	if err != nil {
 		return nil, err
 	}
+	view := makeView(ctx, s.Storage, streamId)
+
 	for _, event := range req.Msg.Events[1:] {
-		cookie, err = s.addEvent(ctx, streamId, event)
+		cookie, err = s.addEvent(ctx, streamId, view, event)
 		if err != nil {
 			// TODO: s.Storage.DeleteStream(ctx, streamId)
 			return nil, err
