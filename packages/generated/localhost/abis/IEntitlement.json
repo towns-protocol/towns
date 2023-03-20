@@ -278,7 +278,7 @@
     "setEntitlement(uint256,bytes)": "ef8be574",
     "setSpace(address)": "03b40534"
   },
-  "rawMetadata": "{\"compiler\":{\"version\":\"0.8.19+commit.7dd6d404\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[{\"internalType\":\"string\",\"name\":\"channelId\",\"type\":\"string\"},{\"internalType\":\"uint256\",\"name\":\"roleId\",\"type\":\"uint256\"}],\"name\":\"addRoleIdToChannel\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"description\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"roleId\",\"type\":\"uint256\"}],\"name\":\"getEntitlementDataByRoleId\",\"outputs\":[{\"internalType\":\"bytes[]\",\"name\":\"\",\"type\":\"bytes[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"channelId\",\"type\":\"string\"}],\"name\":\"getRoleIdsByChannelId\",\"outputs\":[{\"internalType\":\"uint256[]\",\"name\":\"\",\"type\":\"uint256[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"user\",\"type\":\"address\"}],\"name\":\"getUserRoles\",\"outputs\":[{\"components\":[{\"internalType\":\"uint256\",\"name\":\"roleId\",\"type\":\"uint256\"},{\"internalType\":\"string\",\"name\":\"name\",\"type\":\"string\"}],\"internalType\":\"struct DataTypes.Role[]\",\"name\":\"\",\"type\":\"tuple[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_tokenAddress\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"_tokenId\",\"type\":\"uint256\"}],\"name\":\"initialize\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"channelId\",\"type\":\"string\"},{\"internalType\":\"address\",\"name\":\"user\",\"type\":\"address\"},{\"internalType\":\"bytes32\",\"name\":\"permission\",\"type\":\"bytes32\"}],\"name\":\"isEntitled\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"moduleType\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"name\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"roleId\",\"type\":\"uint256\"},{\"internalType\":\"bytes\",\"name\":\"entitlementData\",\"type\":\"bytes\"}],\"name\":\"removeEntitlement\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"channelId\",\"type\":\"string\"},{\"internalType\":\"uint256\",\"name\":\"roleId\",\"type\":\"uint256\"}],\"name\":\"removeRoleIdFromChannel\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"roleId\",\"type\":\"uint256\"},{\"internalType\":\"bytes\",\"name\":\"entitlementData\",\"type\":\"bytes\"}],\"name\":\"setEntitlement\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_space\",\"type\":\"address\"}],\"name\":\"setSpace\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{\"addRoleIdToChannel(string,uint256)\":{\"params\":{\"channelId\":\"id of the channel to add the role to\",\"roleId\":\"id of the role to add\"}},\"getEntitlementDataByRoleId(uint256)\":{\"params\":{\"roleId\":\"the roleId to fetch the entitlement data for\"},\"returns\":{\"_0\":\"entitlementData array for the role\"}},\"getRoleIdsByChannelId(string)\":{\"params\":{\"channelId\":\"the channel to fetch the roleIds for\"},\"returns\":{\"_0\":\"roleIds array of all the roleIds for the channel\"}},\"getUserRoles(address)\":{\"params\":{\"user\":\"the user to fetch the roles for\"},\"returns\":{\"_0\":\"roles array of all the roles for the user\"}},\"isEntitled(string,address,bytes32)\":{\"params\":{\"channelId\":\"id of the channel to check, if empty string, checks space\",\"permission\":\"the permission to check\",\"user\":\"address of the user to check\"},\"returns\":{\"_0\":\"whether the user is entitled to the permission\"}},\"removeEntitlement(uint256,bytes)\":{\"params\":{\"entitlementData\":\"abi encoded array of the data associated with that entitlement\",\"roleId\":\"id of the role to remove\"},\"returns\":{\"_0\":\"entitlementId the id that was removed\"}},\"removeRoleIdFromChannel(string,uint256)\":{\"params\":{\"channelId\":\"id of the channel to remove the role from\",\"roleId\":\"id of the role to remove\"}},\"setEntitlement(uint256,bytes)\":{\"params\":{\"entitlementData\":\"abi encoded array of data necessary to set the entitlement\",\"roleId\":\"id of the role to gate\"},\"returns\":{\"_0\":\"entitlementId the id that was set\"}},\"setSpace(address)\":{\"params\":{\"_space\":\"address of the space\"}}},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{\"addRoleIdToChannel(string,uint256)\":{\"notice\":\"adds a role to a channel\"},\"description()\":{\"notice\":\"The description of the entitlement module\"},\"getEntitlementDataByRoleId(uint256)\":{\"notice\":\"fetches the entitlement data for a roleId\"},\"getRoleIdsByChannelId(string)\":{\"notice\":\"fetches the roleIds for a given channel\"},\"getUserRoles(address)\":{\"notice\":\"fetches the roles for a given user in the space\"},\"isEntitled(string,address,bytes32)\":{\"notice\":\"checks whether a user is has a given permission for a channel or a space\"},\"moduleType()\":{\"notice\":\"The type of the entitlement module\"},\"name()\":{\"notice\":\"The name of the entitlement module\"},\"removeEntitlement(uint256,bytes)\":{\"notice\":\"removes an entitlement\"},\"removeRoleIdFromChannel(string,uint256)\":{\"notice\":\"removes a role from a channel\"},\"setEntitlement(uint256,bytes)\":{\"notice\":\"sets a new entitlement\"},\"setSpace(address)\":{\"notice\":\"sets the address for the space that controls this entitlement\"}},\"version\":1}},\"settings\":{\"compilationTarget\":{\"packages/contracts/src/interfaces/IEntitlement.sol\":\"IEntitlement\"},\"evmVersion\":\"london\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[\":@openzeppelin/=lib/openzeppelin-contracts/\",\":@towns/=node_modules/@towns/\",\":ERC721A/=lib/ERC721A/contracts/\",\":contracts/=packages/contracts/\",\":council/=lib/council/contracts/\",\":ds-test/=lib/ds-test/src/\",\":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/\",\":forge-std/=lib/forge-std/src/\",\":murky/=lib/murky/src/\",\":openzeppelin-contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/\",\":openzeppelin-contracts/=lib/openzeppelin-contracts/\",\":operator-filter-registry/=lib/operator-filter-registry/\",\":solmate/=lib/solmate/src/\"]},\"sources\":{\"packages/contracts/src/interfaces/IEntitlement.sol\":{\"keccak256\":\"0xf2902303ba01ca2f9e5e0e9c947de3958f92f67a3301e54236472862a39388df\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://99a5e5bfef7a2249c272ac6fc9b5b95a7b14a194e34b2a5d92d3affb76cadbf2\",\"dweb:/ipfs/QmSPdcBPLQ6hgX7s5zfuWkRqSErfmgrX4wyvm5pQ61w88W\"]},\"packages/contracts/src/libraries/DataTypes.sol\":{\"keccak256\":\"0x01634666eef1a193d7ce2bc1840dd3424c0e86f3e6b500ea3d5244e6d230785b\",\"license\":\"Apache-20\",\"urls\":[\"bzz-raw://66f2c398430ae10384660520d872851bd99dc35685615632dd07e7e55761cbdc\",\"dweb:/ipfs/QmQhjnuzDzC14QtqiiXgo2f9myxUzUg5nCbV5mdQAqenyY\"]}},\"version\":1}",
+  "rawMetadata": "{\"compiler\":{\"version\":\"0.8.19+commit.7dd6d404\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[{\"internalType\":\"string\",\"name\":\"channelId\",\"type\":\"string\"},{\"internalType\":\"uint256\",\"name\":\"roleId\",\"type\":\"uint256\"}],\"name\":\"addRoleIdToChannel\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"description\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"roleId\",\"type\":\"uint256\"}],\"name\":\"getEntitlementDataByRoleId\",\"outputs\":[{\"internalType\":\"bytes[]\",\"name\":\"\",\"type\":\"bytes[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"channelId\",\"type\":\"string\"}],\"name\":\"getRoleIdsByChannelId\",\"outputs\":[{\"internalType\":\"uint256[]\",\"name\":\"\",\"type\":\"uint256[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"user\",\"type\":\"address\"}],\"name\":\"getUserRoles\",\"outputs\":[{\"components\":[{\"internalType\":\"uint256\",\"name\":\"roleId\",\"type\":\"uint256\"},{\"internalType\":\"string\",\"name\":\"name\",\"type\":\"string\"}],\"internalType\":\"struct DataTypes.Role[]\",\"name\":\"\",\"type\":\"tuple[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_tokenAddress\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"_tokenId\",\"type\":\"uint256\"}],\"name\":\"initialize\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"channelId\",\"type\":\"string\"},{\"internalType\":\"address\",\"name\":\"user\",\"type\":\"address\"},{\"internalType\":\"bytes32\",\"name\":\"permission\",\"type\":\"bytes32\"}],\"name\":\"isEntitled\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"moduleType\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"name\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"roleId\",\"type\":\"uint256\"},{\"internalType\":\"bytes\",\"name\":\"entitlementData\",\"type\":\"bytes\"}],\"name\":\"removeEntitlement\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"channelId\",\"type\":\"string\"},{\"internalType\":\"uint256\",\"name\":\"roleId\",\"type\":\"uint256\"}],\"name\":\"removeRoleIdFromChannel\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"roleId\",\"type\":\"uint256\"},{\"internalType\":\"bytes\",\"name\":\"entitlementData\",\"type\":\"bytes\"}],\"name\":\"setEntitlement\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_space\",\"type\":\"address\"}],\"name\":\"setSpace\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{\"addRoleIdToChannel(string,uint256)\":{\"params\":{\"channelId\":\"id of the channel to add the role to\",\"roleId\":\"id of the role to add\"}},\"getEntitlementDataByRoleId(uint256)\":{\"params\":{\"roleId\":\"the roleId to fetch the entitlement data for\"},\"returns\":{\"_0\":\"entitlementData array for the role\"}},\"getRoleIdsByChannelId(string)\":{\"params\":{\"channelId\":\"the channel to fetch the roleIds for\"},\"returns\":{\"_0\":\"roleIds array of all the roleIds for the channel\"}},\"getUserRoles(address)\":{\"params\":{\"user\":\"the user to fetch the roles for\"},\"returns\":{\"_0\":\"roles array of all the roles for the user\"}},\"isEntitled(string,address,bytes32)\":{\"params\":{\"channelId\":\"id of the channel to check, if empty string, checks space\",\"permission\":\"the permission to check\",\"user\":\"address of the user to check\"},\"returns\":{\"_0\":\"whether the user is entitled to the permission\"}},\"removeEntitlement(uint256,bytes)\":{\"params\":{\"entitlementData\":\"abi encoded array of the data associated with that entitlement\",\"roleId\":\"id of the role to remove\"},\"returns\":{\"_0\":\"entitlementId the id that was removed\"}},\"removeRoleIdFromChannel(string,uint256)\":{\"params\":{\"channelId\":\"id of the channel to remove the role from\",\"roleId\":\"id of the role to remove\"}},\"setEntitlement(uint256,bytes)\":{\"params\":{\"entitlementData\":\"abi encoded array of data necessary to set the entitlement\",\"roleId\":\"id of the role to gate\"},\"returns\":{\"_0\":\"entitlementId the id that was set\"}},\"setSpace(address)\":{\"params\":{\"_space\":\"address of the space\"}}},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{\"addRoleIdToChannel(string,uint256)\":{\"notice\":\"adds a role to a channel\"},\"description()\":{\"notice\":\"The description of the entitlement module\"},\"getEntitlementDataByRoleId(uint256)\":{\"notice\":\"fetches the entitlement data for a roleId\"},\"getRoleIdsByChannelId(string)\":{\"notice\":\"fetches the roleIds for a given channel\"},\"getUserRoles(address)\":{\"notice\":\"fetches the roles for a given user in the space\"},\"isEntitled(string,address,bytes32)\":{\"notice\":\"checks whether a user is has a given permission for a channel or a space\"},\"moduleType()\":{\"notice\":\"The type of the entitlement module\"},\"name()\":{\"notice\":\"The name of the entitlement module\"},\"removeEntitlement(uint256,bytes)\":{\"notice\":\"removes an entitlement\"},\"removeRoleIdFromChannel(string,uint256)\":{\"notice\":\"removes a role from a channel\"},\"setEntitlement(uint256,bytes)\":{\"notice\":\"sets a new entitlement\"},\"setSpace(address)\":{\"notice\":\"sets the address for the space that controls this entitlement\"}},\"version\":1}},\"settings\":{\"compilationTarget\":{\"packages/contracts/src/interfaces/IEntitlement.sol\":\"IEntitlement\"},\"evmVersion\":\"london\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[\":@openzeppelin/=lib/openzeppelin-contracts/\",\":@towns/=node_modules/@towns/\",\":ERC721A/=lib/ERC721A/contracts/\",\":contracts/=packages/contracts/\",\":council/=lib/council/contracts/\",\":ds-test/=lib/ds-test/src/\",\":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/\",\":forge-std/=lib/forge-std/src/\",\":murky/=lib/murky/src/\",\":openzeppelin-contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/\",\":openzeppelin-contracts/=lib/openzeppelin-contracts/\",\":operator-filter-registry/=lib/operator-filter-registry/\",\":solmate/=lib/solmate/src/\",\":weird-erc20/=lib/solmate/lib/weird-erc20/src/\"]},\"sources\":{\"packages/contracts/src/interfaces/IEntitlement.sol\":{\"keccak256\":\"0xf2902303ba01ca2f9e5e0e9c947de3958f92f67a3301e54236472862a39388df\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://99a5e5bfef7a2249c272ac6fc9b5b95a7b14a194e34b2a5d92d3affb76cadbf2\",\"dweb:/ipfs/QmSPdcBPLQ6hgX7s5zfuWkRqSErfmgrX4wyvm5pQ61w88W\"]},\"packages/contracts/src/libraries/DataTypes.sol\":{\"keccak256\":\"0x01634666eef1a193d7ce2bc1840dd3424c0e86f3e6b500ea3d5244e6d230785b\",\"license\":\"Apache-20\",\"urls\":[\"bzz-raw://66f2c398430ae10384660520d872851bd99dc35685615632dd07e7e55761cbdc\",\"dweb:/ipfs/QmQhjnuzDzC14QtqiiXgo2f9myxUzUg5nCbV5mdQAqenyY\"]}},\"version\":1}",
   "metadata": {
     "compiler": {
       "version": "0.8.19+commit.7dd6d404"
@@ -667,7 +667,8 @@
         ":openzeppelin-contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/",
         ":openzeppelin-contracts/=lib/openzeppelin-contracts/",
         ":operator-filter-registry/=lib/operator-filter-registry/",
-        ":solmate/=lib/solmate/src/"
+        ":solmate/=lib/solmate/src/",
+        ":weird-erc20/=lib/solmate/lib/weird-erc20/src/"
       ],
       "optimizer": {
         "enabled": true,
@@ -703,22 +704,22 @@
   },
   "ast": {
     "absolutePath": "packages/contracts/src/interfaces/IEntitlement.sol",
-    "id": 56013,
+    "id": 58183,
     "exportedSymbols": {
       "DataTypes": [
-        56453
+        58623
       ],
       "IEntitlement": [
-        56012
+        58182
       ]
     },
     "nodeType": "SourceUnit",
-    "src": "38:3142:128",
+    "src": "38:3142:129",
     "nodes": [
       {
-        "id": 55902,
+        "id": 58072,
         "nodeType": "PragmaDirective",
-        "src": "38:23:128",
+        "src": "38:23:129",
         "nodes": [],
         "literals": [
           "solidity",
@@ -727,24 +728,24 @@
         ]
       },
       {
-        "id": 55904,
+        "id": 58074,
         "nodeType": "ImportDirective",
-        "src": "63:64:128",
+        "src": "63:64:129",
         "nodes": [],
         "absolutePath": "packages/contracts/src/libraries/DataTypes.sol",
         "file": "contracts/src/libraries/DataTypes.sol",
         "nameLocation": "-1:-1:-1",
-        "scope": 56013,
-        "sourceUnit": 56454,
+        "scope": 58183,
+        "sourceUnit": 58624,
         "symbolAliases": [
           {
             "foreign": {
-              "id": 55903,
+              "id": 58073,
               "name": "DataTypes",
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
-              "referencedDeclaration": 56453,
-              "src": "71:9:128",
+              "referencedDeclaration": 58623,
+              "src": "71:9:129",
               "typeDescriptions": {}
             },
             "nameLocation": "-1:-1:-1"
@@ -753,19 +754,19 @@
         "unitAlias": ""
       },
       {
-        "id": 56012,
+        "id": 58182,
         "nodeType": "ContractDefinition",
-        "src": "129:3050:128",
+        "src": "129:3050:129",
         "nodes": [
           {
-            "id": 55910,
+            "id": 58080,
             "nodeType": "FunctionDefinition",
-            "src": "205:54:128",
+            "src": "205:54:129",
             "nodes": [],
             "documentation": {
-              "id": 55905,
+              "id": 58075,
               "nodeType": "StructuredDocumentation",
-              "src": "156:46:128",
+              "src": "156:46:129",
               "text": "@notice The name of the entitlement module"
             },
             "functionSelector": "06fdde03",
@@ -773,26 +774,26 @@
             "kind": "function",
             "modifiers": [],
             "name": "name",
-            "nameLocation": "214:4:128",
+            "nameLocation": "214:4:129",
             "parameters": {
-              "id": 55906,
+              "id": 58076,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "218:2:128"
+              "src": "218:2:129"
             },
             "returnParameters": {
-              "id": 55909,
+              "id": 58079,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 55908,
+                  "id": 58078,
                   "mutability": "mutable",
                   "name": "",
                   "nameLocation": "-1:-1:-1",
                   "nodeType": "VariableDeclaration",
-                  "scope": 55910,
-                  "src": "244:13:128",
+                  "scope": 58080,
+                  "src": "244:13:129",
                   "stateVariable": false,
                   "storageLocation": "memory",
                   "typeDescriptions": {
@@ -800,10 +801,10 @@
                     "typeString": "string"
                   },
                   "typeName": {
-                    "id": 55907,
+                    "id": 58077,
                     "name": "string",
                     "nodeType": "ElementaryTypeName",
-                    "src": "244:6:128",
+                    "src": "244:6:129",
                     "typeDescriptions": {
                       "typeIdentifier": "t_string_storage_ptr",
                       "typeString": "string"
@@ -812,22 +813,22 @@
                   "visibility": "internal"
                 }
               ],
-              "src": "243:15:128"
+              "src": "243:15:129"
             },
-            "scope": 56012,
+            "scope": 58182,
             "stateMutability": "view",
             "virtual": false,
             "visibility": "external"
           },
           {
-            "id": 55916,
+            "id": 58086,
             "nodeType": "FunctionDefinition",
-            "src": "312:60:128",
+            "src": "312:60:129",
             "nodes": [],
             "documentation": {
-              "id": 55911,
+              "id": 58081,
               "nodeType": "StructuredDocumentation",
-              "src": "263:46:128",
+              "src": "263:46:129",
               "text": "@notice The type of the entitlement module"
             },
             "functionSelector": "6465e69f",
@@ -835,26 +836,26 @@
             "kind": "function",
             "modifiers": [],
             "name": "moduleType",
-            "nameLocation": "321:10:128",
+            "nameLocation": "321:10:129",
             "parameters": {
-              "id": 55912,
+              "id": 58082,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "331:2:128"
+              "src": "331:2:129"
             },
             "returnParameters": {
-              "id": 55915,
+              "id": 58085,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 55914,
+                  "id": 58084,
                   "mutability": "mutable",
                   "name": "",
                   "nameLocation": "-1:-1:-1",
                   "nodeType": "VariableDeclaration",
-                  "scope": 55916,
-                  "src": "357:13:128",
+                  "scope": 58086,
+                  "src": "357:13:129",
                   "stateVariable": false,
                   "storageLocation": "memory",
                   "typeDescriptions": {
@@ -862,10 +863,10 @@
                     "typeString": "string"
                   },
                   "typeName": {
-                    "id": 55913,
+                    "id": 58083,
                     "name": "string",
                     "nodeType": "ElementaryTypeName",
-                    "src": "357:6:128",
+                    "src": "357:6:129",
                     "typeDescriptions": {
                       "typeIdentifier": "t_string_storage_ptr",
                       "typeString": "string"
@@ -874,22 +875,22 @@
                   "visibility": "internal"
                 }
               ],
-              "src": "356:15:128"
+              "src": "356:15:129"
             },
-            "scope": 56012,
+            "scope": 58182,
             "stateMutability": "view",
             "virtual": false,
             "visibility": "external"
           },
           {
-            "id": 55922,
+            "id": 58092,
             "nodeType": "FunctionDefinition",
-            "src": "432:61:128",
+            "src": "432:61:129",
             "nodes": [],
             "documentation": {
-              "id": 55917,
+              "id": 58087,
               "nodeType": "StructuredDocumentation",
-              "src": "376:53:128",
+              "src": "376:53:129",
               "text": "@notice The description of the entitlement module"
             },
             "functionSelector": "7284e416",
@@ -897,26 +898,26 @@
             "kind": "function",
             "modifiers": [],
             "name": "description",
-            "nameLocation": "441:11:128",
+            "nameLocation": "441:11:129",
             "parameters": {
-              "id": 55918,
+              "id": 58088,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "452:2:128"
+              "src": "452:2:129"
             },
             "returnParameters": {
-              "id": 55921,
+              "id": 58091,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 55920,
+                  "id": 58090,
                   "mutability": "mutable",
                   "name": "",
                   "nameLocation": "-1:-1:-1",
                   "nodeType": "VariableDeclaration",
-                  "scope": 55922,
-                  "src": "478:13:128",
+                  "scope": 58092,
+                  "src": "478:13:129",
                   "stateVariable": false,
                   "storageLocation": "memory",
                   "typeDescriptions": {
@@ -924,10 +925,10 @@
                     "typeString": "string"
                   },
                   "typeName": {
-                    "id": 55919,
+                    "id": 58089,
                     "name": "string",
                     "nodeType": "ElementaryTypeName",
-                    "src": "478:6:128",
+                    "src": "478:6:129",
                     "typeDescriptions": {
                       "typeIdentifier": "t_string_storage_ptr",
                       "typeString": "string"
@@ -936,37 +937,37 @@
                   "visibility": "internal"
                 }
               ],
-              "src": "477:15:128"
+              "src": "477:15:129"
             },
-            "scope": 56012,
+            "scope": 58182,
             "stateMutability": "view",
             "virtual": false,
             "visibility": "external"
           },
           {
-            "id": 55929,
+            "id": 58099,
             "nodeType": "FunctionDefinition",
-            "src": "497:70:128",
+            "src": "497:70:129",
             "nodes": [],
             "functionSelector": "cd6dc687",
             "implemented": false,
             "kind": "function",
             "modifiers": [],
             "name": "initialize",
-            "nameLocation": "506:10:128",
+            "nameLocation": "506:10:129",
             "parameters": {
-              "id": 55927,
+              "id": 58097,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 55924,
+                  "id": 58094,
                   "mutability": "mutable",
                   "name": "_tokenAddress",
-                  "nameLocation": "525:13:128",
+                  "nameLocation": "525:13:129",
                   "nodeType": "VariableDeclaration",
-                  "scope": 55929,
-                  "src": "517:21:128",
+                  "scope": 58099,
+                  "src": "517:21:129",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -974,10 +975,10 @@
                     "typeString": "address"
                   },
                   "typeName": {
-                    "id": 55923,
+                    "id": 58093,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
-                    "src": "517:7:128",
+                    "src": "517:7:129",
                     "stateMutability": "nonpayable",
                     "typeDescriptions": {
                       "typeIdentifier": "t_address",
@@ -988,13 +989,13 @@
                 },
                 {
                   "constant": false,
-                  "id": 55926,
+                  "id": 58096,
                   "mutability": "mutable",
                   "name": "_tokenId",
-                  "nameLocation": "548:8:128",
+                  "nameLocation": "548:8:129",
                   "nodeType": "VariableDeclaration",
-                  "scope": 55929,
-                  "src": "540:16:128",
+                  "scope": 58099,
+                  "src": "540:16:129",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -1002,10 +1003,10 @@
                     "typeString": "uint256"
                   },
                   "typeName": {
-                    "id": 55925,
+                    "id": 58095,
                     "name": "uint256",
                     "nodeType": "ElementaryTypeName",
-                    "src": "540:7:128",
+                    "src": "540:7:129",
                     "typeDescriptions": {
                       "typeIdentifier": "t_uint256",
                       "typeString": "uint256"
@@ -1014,28 +1015,28 @@
                   "visibility": "internal"
                 }
               ],
-              "src": "516:41:128"
+              "src": "516:41:129"
             },
             "returnParameters": {
-              "id": 55928,
+              "id": 58098,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "566:0:128"
+              "src": "566:0:129"
             },
-            "scope": 56012,
+            "scope": 58182,
             "stateMutability": "nonpayable",
             "virtual": false,
             "visibility": "external"
           },
           {
-            "id": 55935,
+            "id": 58105,
             "nodeType": "FunctionDefinition",
-            "src": "688:43:128",
+            "src": "688:43:129",
             "nodes": [],
             "documentation": {
-              "id": 55930,
+              "id": 58100,
               "nodeType": "StructuredDocumentation",
-              "src": "571:114:128",
+              "src": "571:114:129",
               "text": "@notice sets the address for the space that controls this entitlement\n @param _space address of the space"
             },
             "functionSelector": "03b40534",
@@ -1043,20 +1044,20 @@
             "kind": "function",
             "modifiers": [],
             "name": "setSpace",
-            "nameLocation": "697:8:128",
+            "nameLocation": "697:8:129",
             "parameters": {
-              "id": 55933,
+              "id": 58103,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 55932,
+                  "id": 58102,
                   "mutability": "mutable",
                   "name": "_space",
-                  "nameLocation": "714:6:128",
+                  "nameLocation": "714:6:129",
                   "nodeType": "VariableDeclaration",
-                  "scope": 55935,
-                  "src": "706:14:128",
+                  "scope": 58105,
+                  "src": "706:14:129",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -1064,10 +1065,10 @@
                     "typeString": "address"
                   },
                   "typeName": {
-                    "id": 55931,
+                    "id": 58101,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
-                    "src": "706:7:128",
+                    "src": "706:7:129",
                     "stateMutability": "nonpayable",
                     "typeDescriptions": {
                       "typeIdentifier": "t_address",
@@ -1077,28 +1078,28 @@
                   "visibility": "internal"
                 }
               ],
-              "src": "705:16:128"
+              "src": "705:16:129"
             },
             "returnParameters": {
-              "id": 55934,
+              "id": 58104,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "730:0:128"
+              "src": "730:0:129"
             },
-            "scope": 56012,
+            "scope": 58182,
             "stateMutability": "nonpayable",
             "virtual": false,
             "visibility": "external"
           },
           {
-            "id": 55945,
+            "id": 58115,
             "nodeType": "FunctionDefinition",
-            "src": "951:111:128",
+            "src": "951:111:129",
             "nodes": [],
             "documentation": {
-              "id": 55936,
+              "id": 58106,
               "nodeType": "StructuredDocumentation",
-              "src": "735:213:128",
+              "src": "735:213:129",
               "text": "@notice sets a new entitlement\n @param roleId id of the role to gate\n @param entitlementData abi encoded array of data necessary to set the entitlement\n @return entitlementId the id that was set"
             },
             "functionSelector": "ef8be574",
@@ -1106,20 +1107,20 @@
             "kind": "function",
             "modifiers": [],
             "name": "setEntitlement",
-            "nameLocation": "960:14:128",
+            "nameLocation": "960:14:129",
             "parameters": {
-              "id": 55941,
+              "id": 58111,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 55938,
+                  "id": 58108,
                   "mutability": "mutable",
                   "name": "roleId",
-                  "nameLocation": "988:6:128",
+                  "nameLocation": "988:6:129",
                   "nodeType": "VariableDeclaration",
-                  "scope": 55945,
-                  "src": "980:14:128",
+                  "scope": 58115,
+                  "src": "980:14:129",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -1127,10 +1128,10 @@
                     "typeString": "uint256"
                   },
                   "typeName": {
-                    "id": 55937,
+                    "id": 58107,
                     "name": "uint256",
                     "nodeType": "ElementaryTypeName",
-                    "src": "980:7:128",
+                    "src": "980:7:129",
                     "typeDescriptions": {
                       "typeIdentifier": "t_uint256",
                       "typeString": "uint256"
@@ -1140,13 +1141,13 @@
                 },
                 {
                   "constant": false,
-                  "id": 55940,
+                  "id": 58110,
                   "mutability": "mutable",
                   "name": "entitlementData",
-                  "nameLocation": "1015:15:128",
+                  "nameLocation": "1015:15:129",
                   "nodeType": "VariableDeclaration",
-                  "scope": 55945,
-                  "src": "1000:30:128",
+                  "scope": 58115,
+                  "src": "1000:30:129",
                   "stateVariable": false,
                   "storageLocation": "calldata",
                   "typeDescriptions": {
@@ -1154,10 +1155,10 @@
                     "typeString": "bytes"
                   },
                   "typeName": {
-                    "id": 55939,
+                    "id": 58109,
                     "name": "bytes",
                     "nodeType": "ElementaryTypeName",
-                    "src": "1000:5:128",
+                    "src": "1000:5:129",
                     "typeDescriptions": {
                       "typeIdentifier": "t_bytes_storage_ptr",
                       "typeString": "bytes"
@@ -1166,21 +1167,21 @@
                   "visibility": "internal"
                 }
               ],
-              "src": "974:60:128"
+              "src": "974:60:129"
             },
             "returnParameters": {
-              "id": 55944,
+              "id": 58114,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 55943,
+                  "id": 58113,
                   "mutability": "mutable",
                   "name": "",
                   "nameLocation": "-1:-1:-1",
                   "nodeType": "VariableDeclaration",
-                  "scope": 55945,
-                  "src": "1053:7:128",
+                  "scope": 58115,
+                  "src": "1053:7:129",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -1188,10 +1189,10 @@
                     "typeString": "bytes32"
                   },
                   "typeName": {
-                    "id": 55942,
+                    "id": 58112,
                     "name": "bytes32",
                     "nodeType": "ElementaryTypeName",
-                    "src": "1053:7:128",
+                    "src": "1053:7:129",
                     "typeDescriptions": {
                       "typeIdentifier": "t_bytes32",
                       "typeString": "bytes32"
@@ -1200,22 +1201,22 @@
                   "visibility": "internal"
                 }
               ],
-              "src": "1052:9:128"
+              "src": "1052:9:129"
             },
-            "scope": 56012,
+            "scope": 58182,
             "stateMutability": "nonpayable",
             "virtual": false,
             "visibility": "external"
           },
           {
-            "id": 55955,
+            "id": 58125,
             "nodeType": "FunctionDefinition",
-            "src": "1292:114:128",
+            "src": "1292:114:129",
             "nodes": [],
             "documentation": {
-              "id": 55946,
+              "id": 58116,
               "nodeType": "StructuredDocumentation",
-              "src": "1066:223:128",
+              "src": "1066:223:129",
               "text": "@notice removes an entitlement\n @param roleId id of the role to remove\n @param entitlementData abi encoded array of the data associated with that entitlement\n @return entitlementId the id that was removed"
             },
             "functionSelector": "fa6d1adf",
@@ -1223,20 +1224,20 @@
             "kind": "function",
             "modifiers": [],
             "name": "removeEntitlement",
-            "nameLocation": "1301:17:128",
+            "nameLocation": "1301:17:129",
             "parameters": {
-              "id": 55951,
+              "id": 58121,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 55948,
+                  "id": 58118,
                   "mutability": "mutable",
                   "name": "roleId",
-                  "nameLocation": "1332:6:128",
+                  "nameLocation": "1332:6:129",
                   "nodeType": "VariableDeclaration",
-                  "scope": 55955,
-                  "src": "1324:14:128",
+                  "scope": 58125,
+                  "src": "1324:14:129",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -1244,10 +1245,10 @@
                     "typeString": "uint256"
                   },
                   "typeName": {
-                    "id": 55947,
+                    "id": 58117,
                     "name": "uint256",
                     "nodeType": "ElementaryTypeName",
-                    "src": "1324:7:128",
+                    "src": "1324:7:129",
                     "typeDescriptions": {
                       "typeIdentifier": "t_uint256",
                       "typeString": "uint256"
@@ -1257,13 +1258,13 @@
                 },
                 {
                   "constant": false,
-                  "id": 55950,
+                  "id": 58120,
                   "mutability": "mutable",
                   "name": "entitlementData",
-                  "nameLocation": "1359:15:128",
+                  "nameLocation": "1359:15:129",
                   "nodeType": "VariableDeclaration",
-                  "scope": 55955,
-                  "src": "1344:30:128",
+                  "scope": 58125,
+                  "src": "1344:30:129",
                   "stateVariable": false,
                   "storageLocation": "calldata",
                   "typeDescriptions": {
@@ -1271,10 +1272,10 @@
                     "typeString": "bytes"
                   },
                   "typeName": {
-                    "id": 55949,
+                    "id": 58119,
                     "name": "bytes",
                     "nodeType": "ElementaryTypeName",
-                    "src": "1344:5:128",
+                    "src": "1344:5:129",
                     "typeDescriptions": {
                       "typeIdentifier": "t_bytes_storage_ptr",
                       "typeString": "bytes"
@@ -1283,21 +1284,21 @@
                   "visibility": "internal"
                 }
               ],
-              "src": "1318:60:128"
+              "src": "1318:60:129"
             },
             "returnParameters": {
-              "id": 55954,
+              "id": 58124,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 55953,
+                  "id": 58123,
                   "mutability": "mutable",
                   "name": "",
                   "nameLocation": "-1:-1:-1",
                   "nodeType": "VariableDeclaration",
-                  "scope": 55955,
-                  "src": "1397:7:128",
+                  "scope": 58125,
+                  "src": "1397:7:129",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -1305,10 +1306,10 @@
                     "typeString": "bytes32"
                   },
                   "typeName": {
-                    "id": 55952,
+                    "id": 58122,
                     "name": "bytes32",
                     "nodeType": "ElementaryTypeName",
-                    "src": "1397:7:128",
+                    "src": "1397:7:129",
                     "typeDescriptions": {
                       "typeIdentifier": "t_bytes32",
                       "typeString": "bytes32"
@@ -1317,22 +1318,22 @@
                   "visibility": "internal"
                 }
               ],
-              "src": "1396:9:128"
+              "src": "1396:9:129"
             },
-            "scope": 56012,
+            "scope": 58182,
             "stateMutability": "nonpayable",
             "virtual": false,
             "visibility": "external"
           },
           {
-            "id": 55963,
+            "id": 58133,
             "nodeType": "FunctionDefinition",
-            "src": "1551:92:128",
+            "src": "1551:92:129",
             "nodes": [],
             "documentation": {
-              "id": 55956,
+              "id": 58126,
               "nodeType": "StructuredDocumentation",
-              "src": "1410:138:128",
+              "src": "1410:138:129",
               "text": "@notice adds a role to a channel\n @param channelId id of the channel to add the role to\n @param roleId id of the role to add"
             },
             "functionSelector": "c513be77",
@@ -1340,20 +1341,20 @@
             "kind": "function",
             "modifiers": [],
             "name": "addRoleIdToChannel",
-            "nameLocation": "1560:18:128",
+            "nameLocation": "1560:18:129",
             "parameters": {
-              "id": 55961,
+              "id": 58131,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 55958,
+                  "id": 58128,
                   "mutability": "mutable",
                   "name": "channelId",
-                  "nameLocation": "1600:9:128",
+                  "nameLocation": "1600:9:129",
                   "nodeType": "VariableDeclaration",
-                  "scope": 55963,
-                  "src": "1584:25:128",
+                  "scope": 58133,
+                  "src": "1584:25:129",
                   "stateVariable": false,
                   "storageLocation": "calldata",
                   "typeDescriptions": {
@@ -1361,10 +1362,10 @@
                     "typeString": "string"
                   },
                   "typeName": {
-                    "id": 55957,
+                    "id": 58127,
                     "name": "string",
                     "nodeType": "ElementaryTypeName",
-                    "src": "1584:6:128",
+                    "src": "1584:6:129",
                     "typeDescriptions": {
                       "typeIdentifier": "t_string_storage_ptr",
                       "typeString": "string"
@@ -1374,13 +1375,13 @@
                 },
                 {
                   "constant": false,
-                  "id": 55960,
+                  "id": 58130,
                   "mutability": "mutable",
                   "name": "roleId",
-                  "nameLocation": "1623:6:128",
+                  "nameLocation": "1623:6:129",
                   "nodeType": "VariableDeclaration",
-                  "scope": 55963,
-                  "src": "1615:14:128",
+                  "scope": 58133,
+                  "src": "1615:14:129",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -1388,10 +1389,10 @@
                     "typeString": "uint256"
                   },
                   "typeName": {
-                    "id": 55959,
+                    "id": 58129,
                     "name": "uint256",
                     "nodeType": "ElementaryTypeName",
-                    "src": "1615:7:128",
+                    "src": "1615:7:129",
                     "typeDescriptions": {
                       "typeIdentifier": "t_uint256",
                       "typeString": "uint256"
@@ -1400,28 +1401,28 @@
                   "visibility": "internal"
                 }
               ],
-              "src": "1578:55:128"
+              "src": "1578:55:129"
             },
             "returnParameters": {
-              "id": 55962,
+              "id": 58132,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "1642:0:128"
+              "src": "1642:0:129"
             },
-            "scope": 56012,
+            "scope": 58182,
             "stateMutability": "nonpayable",
             "virtual": false,
             "visibility": "external"
           },
           {
-            "id": 55971,
+            "id": 58141,
             "nodeType": "FunctionDefinition",
-            "src": "1801:97:128",
+            "src": "1801:97:129",
             "nodes": [],
             "documentation": {
-              "id": 55964,
+              "id": 58134,
               "nodeType": "StructuredDocumentation",
-              "src": "1647:151:128",
+              "src": "1647:151:129",
               "text": "@notice removes a role from a channel\n @param channelId id of the channel to remove the role from\n @param roleId id of the role to remove"
             },
             "functionSelector": "f32f83ce",
@@ -1429,20 +1430,20 @@
             "kind": "function",
             "modifiers": [],
             "name": "removeRoleIdFromChannel",
-            "nameLocation": "1810:23:128",
+            "nameLocation": "1810:23:129",
             "parameters": {
-              "id": 55969,
+              "id": 58139,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 55966,
+                  "id": 58136,
                   "mutability": "mutable",
                   "name": "channelId",
-                  "nameLocation": "1855:9:128",
+                  "nameLocation": "1855:9:129",
                   "nodeType": "VariableDeclaration",
-                  "scope": 55971,
-                  "src": "1839:25:128",
+                  "scope": 58141,
+                  "src": "1839:25:129",
                   "stateVariable": false,
                   "storageLocation": "calldata",
                   "typeDescriptions": {
@@ -1450,10 +1451,10 @@
                     "typeString": "string"
                   },
                   "typeName": {
-                    "id": 55965,
+                    "id": 58135,
                     "name": "string",
                     "nodeType": "ElementaryTypeName",
-                    "src": "1839:6:128",
+                    "src": "1839:6:129",
                     "typeDescriptions": {
                       "typeIdentifier": "t_string_storage_ptr",
                       "typeString": "string"
@@ -1463,13 +1464,13 @@
                 },
                 {
                   "constant": false,
-                  "id": 55968,
+                  "id": 58138,
                   "mutability": "mutable",
                   "name": "roleId",
-                  "nameLocation": "1878:6:128",
+                  "nameLocation": "1878:6:129",
                   "nodeType": "VariableDeclaration",
-                  "scope": 55971,
-                  "src": "1870:14:128",
+                  "scope": 58141,
+                  "src": "1870:14:129",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -1477,10 +1478,10 @@
                     "typeString": "uint256"
                   },
                   "typeName": {
-                    "id": 55967,
+                    "id": 58137,
                     "name": "uint256",
                     "nodeType": "ElementaryTypeName",
-                    "src": "1870:7:128",
+                    "src": "1870:7:129",
                     "typeDescriptions": {
                       "typeIdentifier": "t_uint256",
                       "typeString": "uint256"
@@ -1489,28 +1490,28 @@
                   "visibility": "internal"
                 }
               ],
-              "src": "1833:55:128"
+              "src": "1833:55:129"
             },
             "returnParameters": {
-              "id": 55970,
+              "id": 58140,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "1897:0:128"
+              "src": "1897:0:129"
             },
-            "scope": 56012,
+            "scope": 58182,
             "stateMutability": "nonpayable",
             "virtual": false,
             "visibility": "external"
           },
           {
-            "id": 55983,
+            "id": 58153,
             "nodeType": "FunctionDefinition",
-            "src": "2226:126:128",
+            "src": "2226:126:129",
             "nodes": [],
             "documentation": {
-              "id": 55972,
+              "id": 58142,
               "nodeType": "StructuredDocumentation",
-              "src": "1902:321:128",
+              "src": "1902:321:129",
               "text": "@notice checks whether a user is has a given permission for a channel or a space\n @param channelId id of the channel to check, if empty string, checks space\n @param user address of the user to check\n @param permission the permission to check\n @return whether the user is entitled to the permission"
             },
             "functionSelector": "00b4eaa8",
@@ -1518,20 +1519,20 @@
             "kind": "function",
             "modifiers": [],
             "name": "isEntitled",
-            "nameLocation": "2235:10:128",
+            "nameLocation": "2235:10:129",
             "parameters": {
-              "id": 55979,
+              "id": 58149,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 55974,
+                  "id": 58144,
                   "mutability": "mutable",
                   "name": "channelId",
-                  "nameLocation": "2267:9:128",
+                  "nameLocation": "2267:9:129",
                   "nodeType": "VariableDeclaration",
-                  "scope": 55983,
-                  "src": "2251:25:128",
+                  "scope": 58153,
+                  "src": "2251:25:129",
                   "stateVariable": false,
                   "storageLocation": "calldata",
                   "typeDescriptions": {
@@ -1539,10 +1540,10 @@
                     "typeString": "string"
                   },
                   "typeName": {
-                    "id": 55973,
+                    "id": 58143,
                     "name": "string",
                     "nodeType": "ElementaryTypeName",
-                    "src": "2251:6:128",
+                    "src": "2251:6:129",
                     "typeDescriptions": {
                       "typeIdentifier": "t_string_storage_ptr",
                       "typeString": "string"
@@ -1552,13 +1553,13 @@
                 },
                 {
                   "constant": false,
-                  "id": 55976,
+                  "id": 58146,
                   "mutability": "mutable",
                   "name": "user",
-                  "nameLocation": "2290:4:128",
+                  "nameLocation": "2290:4:129",
                   "nodeType": "VariableDeclaration",
-                  "scope": 55983,
-                  "src": "2282:12:128",
+                  "scope": 58153,
+                  "src": "2282:12:129",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -1566,10 +1567,10 @@
                     "typeString": "address"
                   },
                   "typeName": {
-                    "id": 55975,
+                    "id": 58145,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
-                    "src": "2282:7:128",
+                    "src": "2282:7:129",
                     "stateMutability": "nonpayable",
                     "typeDescriptions": {
                       "typeIdentifier": "t_address",
@@ -1580,13 +1581,13 @@
                 },
                 {
                   "constant": false,
-                  "id": 55978,
+                  "id": 58148,
                   "mutability": "mutable",
                   "name": "permission",
-                  "nameLocation": "2308:10:128",
+                  "nameLocation": "2308:10:129",
                   "nodeType": "VariableDeclaration",
-                  "scope": 55983,
-                  "src": "2300:18:128",
+                  "scope": 58153,
+                  "src": "2300:18:129",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -1594,10 +1595,10 @@
                     "typeString": "bytes32"
                   },
                   "typeName": {
-                    "id": 55977,
+                    "id": 58147,
                     "name": "bytes32",
                     "nodeType": "ElementaryTypeName",
-                    "src": "2300:7:128",
+                    "src": "2300:7:129",
                     "typeDescriptions": {
                       "typeIdentifier": "t_bytes32",
                       "typeString": "bytes32"
@@ -1606,21 +1607,21 @@
                   "visibility": "internal"
                 }
               ],
-              "src": "2245:77:128"
+              "src": "2245:77:129"
             },
             "returnParameters": {
-              "id": 55982,
+              "id": 58152,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 55981,
+                  "id": 58151,
                   "mutability": "mutable",
                   "name": "",
                   "nameLocation": "-1:-1:-1",
                   "nodeType": "VariableDeclaration",
-                  "scope": 55983,
-                  "src": "2346:4:128",
+                  "scope": 58153,
+                  "src": "2346:4:129",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -1628,10 +1629,10 @@
                     "typeString": "bool"
                   },
                   "typeName": {
-                    "id": 55980,
+                    "id": 58150,
                     "name": "bool",
                     "nodeType": "ElementaryTypeName",
-                    "src": "2346:4:128",
+                    "src": "2346:4:129",
                     "typeDescriptions": {
                       "typeIdentifier": "t_bool",
                       "typeString": "bool"
@@ -1640,22 +1641,22 @@
                   "visibility": "internal"
                 }
               ],
-              "src": "2345:6:128"
+              "src": "2345:6:129"
             },
-            "scope": 56012,
+            "scope": 58182,
             "stateMutability": "view",
             "virtual": false,
             "visibility": "external"
           },
           {
-            "id": 55992,
+            "id": 58162,
             "nodeType": "FunctionDefinition",
-            "src": "2533:107:128",
+            "src": "2533:107:129",
             "nodes": [],
             "documentation": {
-              "id": 55984,
+              "id": 58154,
               "nodeType": "StructuredDocumentation",
-              "src": "2356:174:128",
+              "src": "2356:174:129",
               "text": "@notice fetches the roleIds for a given channel\n @param channelId the channel to fetch the roleIds for\n @return roleIds array of all the roleIds for the channel"
             },
             "functionSelector": "41634aee",
@@ -1663,20 +1664,20 @@
             "kind": "function",
             "modifiers": [],
             "name": "getRoleIdsByChannelId",
-            "nameLocation": "2542:21:128",
+            "nameLocation": "2542:21:129",
             "parameters": {
-              "id": 55987,
+              "id": 58157,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 55986,
+                  "id": 58156,
                   "mutability": "mutable",
                   "name": "channelId",
-                  "nameLocation": "2585:9:128",
+                  "nameLocation": "2585:9:129",
                   "nodeType": "VariableDeclaration",
-                  "scope": 55992,
-                  "src": "2569:25:128",
+                  "scope": 58162,
+                  "src": "2569:25:129",
                   "stateVariable": false,
                   "storageLocation": "calldata",
                   "typeDescriptions": {
@@ -1684,10 +1685,10 @@
                     "typeString": "string"
                   },
                   "typeName": {
-                    "id": 55985,
+                    "id": 58155,
                     "name": "string",
                     "nodeType": "ElementaryTypeName",
-                    "src": "2569:6:128",
+                    "src": "2569:6:129",
                     "typeDescriptions": {
                       "typeIdentifier": "t_string_storage_ptr",
                       "typeString": "string"
@@ -1696,21 +1697,21 @@
                   "visibility": "internal"
                 }
               ],
-              "src": "2563:35:128"
+              "src": "2563:35:129"
             },
             "returnParameters": {
-              "id": 55991,
+              "id": 58161,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 55990,
+                  "id": 58160,
                   "mutability": "mutable",
                   "name": "",
                   "nameLocation": "-1:-1:-1",
                   "nodeType": "VariableDeclaration",
-                  "scope": 55992,
-                  "src": "2622:16:128",
+                  "scope": 58162,
+                  "src": "2622:16:129",
                   "stateVariable": false,
                   "storageLocation": "memory",
                   "typeDescriptions": {
@@ -1719,18 +1720,18 @@
                   },
                   "typeName": {
                     "baseType": {
-                      "id": 55988,
+                      "id": 58158,
                       "name": "uint256",
                       "nodeType": "ElementaryTypeName",
-                      "src": "2622:7:128",
+                      "src": "2622:7:129",
                       "typeDescriptions": {
                         "typeIdentifier": "t_uint256",
                         "typeString": "uint256"
                       }
                     },
-                    "id": 55989,
+                    "id": 58159,
                     "nodeType": "ArrayTypeName",
-                    "src": "2622:9:128",
+                    "src": "2622:9:129",
                     "typeDescriptions": {
                       "typeIdentifier": "t_array$_t_uint256_$dyn_storage_ptr",
                       "typeString": "uint256[]"
@@ -1739,22 +1740,22 @@
                   "visibility": "internal"
                 }
               ],
-              "src": "2621:18:128"
+              "src": "2621:18:129"
             },
-            "scope": 56012,
+            "scope": 58182,
             "stateMutability": "view",
             "virtual": false,
             "visibility": "external"
           },
           {
-            "id": 56001,
+            "id": 58171,
             "nodeType": "FunctionDefinition",
-            "src": "2814:99:128",
+            "src": "2814:99:129",
             "nodes": [],
             "documentation": {
-              "id": 55993,
+              "id": 58163,
               "nodeType": "StructuredDocumentation",
-              "src": "2644:167:128",
+              "src": "2644:167:129",
               "text": "@notice fetches the entitlement data for a roleId\n @param roleId the roleId to fetch the entitlement data for\n @return entitlementData array for the role"
             },
             "functionSelector": "1eee07b2",
@@ -1762,20 +1763,20 @@
             "kind": "function",
             "modifiers": [],
             "name": "getEntitlementDataByRoleId",
-            "nameLocation": "2823:26:128",
+            "nameLocation": "2823:26:129",
             "parameters": {
-              "id": 55996,
+              "id": 58166,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 55995,
+                  "id": 58165,
                   "mutability": "mutable",
                   "name": "roleId",
-                  "nameLocation": "2863:6:128",
+                  "nameLocation": "2863:6:129",
                   "nodeType": "VariableDeclaration",
-                  "scope": 56001,
-                  "src": "2855:14:128",
+                  "scope": 58171,
+                  "src": "2855:14:129",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -1783,10 +1784,10 @@
                     "typeString": "uint256"
                   },
                   "typeName": {
-                    "id": 55994,
+                    "id": 58164,
                     "name": "uint256",
                     "nodeType": "ElementaryTypeName",
-                    "src": "2855:7:128",
+                    "src": "2855:7:129",
                     "typeDescriptions": {
                       "typeIdentifier": "t_uint256",
                       "typeString": "uint256"
@@ -1795,21 +1796,21 @@
                   "visibility": "internal"
                 }
               ],
-              "src": "2849:24:128"
+              "src": "2849:24:129"
             },
             "returnParameters": {
-              "id": 56000,
+              "id": 58170,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 55999,
+                  "id": 58169,
                   "mutability": "mutable",
                   "name": "",
                   "nameLocation": "-1:-1:-1",
                   "nodeType": "VariableDeclaration",
-                  "scope": 56001,
-                  "src": "2897:14:128",
+                  "scope": 58171,
+                  "src": "2897:14:129",
                   "stateVariable": false,
                   "storageLocation": "memory",
                   "typeDescriptions": {
@@ -1818,18 +1819,18 @@
                   },
                   "typeName": {
                     "baseType": {
-                      "id": 55997,
+                      "id": 58167,
                       "name": "bytes",
                       "nodeType": "ElementaryTypeName",
-                      "src": "2897:5:128",
+                      "src": "2897:5:129",
                       "typeDescriptions": {
                         "typeIdentifier": "t_bytes_storage_ptr",
                         "typeString": "bytes"
                       }
                     },
-                    "id": 55998,
+                    "id": 58168,
                     "nodeType": "ArrayTypeName",
-                    "src": "2897:7:128",
+                    "src": "2897:7:129",
                     "typeDescriptions": {
                       "typeIdentifier": "t_array$_t_bytes_storage_$dyn_storage_ptr",
                       "typeString": "bytes[]"
@@ -1838,22 +1839,22 @@
                   "visibility": "internal"
                 }
               ],
-              "src": "2896:16:128"
+              "src": "2896:16:129"
             },
-            "scope": 56012,
+            "scope": 58182,
             "stateMutability": "view",
             "virtual": false,
             "visibility": "external"
           },
           {
-            "id": 56011,
+            "id": 58181,
             "nodeType": "FunctionDefinition",
-            "src": "3085:92:128",
+            "src": "3085:92:129",
             "nodes": [],
             "documentation": {
-              "id": 56002,
+              "id": 58172,
               "nodeType": "StructuredDocumentation",
-              "src": "2917:165:128",
+              "src": "2917:165:129",
               "text": "@notice fetches the roles for a given user in the space\n @param user the user to fetch the roles for\n @return roles array of all the roles for the user"
             },
             "functionSelector": "06a36aee",
@@ -1861,20 +1862,20 @@
             "kind": "function",
             "modifiers": [],
             "name": "getUserRoles",
-            "nameLocation": "3094:12:128",
+            "nameLocation": "3094:12:129",
             "parameters": {
-              "id": 56005,
+              "id": 58175,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 56004,
+                  "id": 58174,
                   "mutability": "mutable",
                   "name": "user",
-                  "nameLocation": "3120:4:128",
+                  "nameLocation": "3120:4:129",
                   "nodeType": "VariableDeclaration",
-                  "scope": 56011,
-                  "src": "3112:12:128",
+                  "scope": 58181,
+                  "src": "3112:12:129",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -1882,10 +1883,10 @@
                     "typeString": "address"
                   },
                   "typeName": {
-                    "id": 56003,
+                    "id": 58173,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
-                    "src": "3112:7:128",
+                    "src": "3112:7:129",
                     "stateMutability": "nonpayable",
                     "typeDescriptions": {
                       "typeIdentifier": "t_address",
@@ -1895,63 +1896,63 @@
                   "visibility": "internal"
                 }
               ],
-              "src": "3106:22:128"
+              "src": "3106:22:129"
             },
             "returnParameters": {
-              "id": 56010,
+              "id": 58180,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 56009,
+                  "id": 58179,
                   "mutability": "mutable",
                   "name": "",
                   "nameLocation": "-1:-1:-1",
                   "nodeType": "VariableDeclaration",
-                  "scope": 56011,
-                  "src": "3152:23:128",
+                  "scope": 58181,
+                  "src": "3152:23:129",
                   "stateVariable": false,
                   "storageLocation": "memory",
                   "typeDescriptions": {
-                    "typeIdentifier": "t_array$_t_struct$_Role_$56408_memory_ptr_$dyn_memory_ptr",
+                    "typeIdentifier": "t_array$_t_struct$_Role_$58578_memory_ptr_$dyn_memory_ptr",
                     "typeString": "struct DataTypes.Role[]"
                   },
                   "typeName": {
                     "baseType": {
-                      "id": 56007,
+                      "id": 58177,
                       "nodeType": "UserDefinedTypeName",
                       "pathNode": {
-                        "id": 56006,
+                        "id": 58176,
                         "name": "DataTypes.Role",
                         "nameLocations": [
-                          "3152:9:128",
-                          "3162:4:128"
+                          "3152:9:129",
+                          "3162:4:129"
                         ],
                         "nodeType": "IdentifierPath",
-                        "referencedDeclaration": 56408,
-                        "src": "3152:14:128"
+                        "referencedDeclaration": 58578,
+                        "src": "3152:14:129"
                       },
-                      "referencedDeclaration": 56408,
-                      "src": "3152:14:128",
+                      "referencedDeclaration": 58578,
+                      "src": "3152:14:129",
                       "typeDescriptions": {
-                        "typeIdentifier": "t_struct$_Role_$56408_storage_ptr",
+                        "typeIdentifier": "t_struct$_Role_$58578_storage_ptr",
                         "typeString": "struct DataTypes.Role"
                       }
                     },
-                    "id": 56008,
+                    "id": 58178,
                     "nodeType": "ArrayTypeName",
-                    "src": "3152:16:128",
+                    "src": "3152:16:129",
                     "typeDescriptions": {
-                      "typeIdentifier": "t_array$_t_struct$_Role_$56408_storage_$dyn_storage_ptr",
+                      "typeIdentifier": "t_array$_t_struct$_Role_$58578_storage_$dyn_storage_ptr",
                       "typeString": "struct DataTypes.Role[]"
                     }
                   },
                   "visibility": "internal"
                 }
               ],
-              "src": "3151:25:128"
+              "src": "3151:25:129"
             },
-            "scope": 56012,
+            "scope": 58182,
             "stateMutability": "view",
             "virtual": false,
             "visibility": "external"
@@ -1964,15 +1965,15 @@
         "contractKind": "interface",
         "fullyImplemented": false,
         "linearizedBaseContracts": [
-          56012
+          58182
         ],
         "name": "IEntitlement",
-        "nameLocation": "139:12:128",
-        "scope": 56013,
+        "nameLocation": "139:12:129",
+        "scope": 58183,
         "usedErrors": []
       }
     ],
     "license": "Apache-2.0"
   },
-  "id": 128
+  "id": 129
 }
