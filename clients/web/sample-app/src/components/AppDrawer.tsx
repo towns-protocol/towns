@@ -1,4 +1,14 @@
-import { Button, Theme } from '@mui/material'
+import {
+    AppBar,
+    Box,
+    Button,
+    CssBaseline,
+    Divider,
+    Drawer,
+    Theme,
+    Toolbar,
+    Typography,
+} from '@mui/material'
 import {
     RoomIdentifier,
     createUserIdFromString,
@@ -8,13 +18,6 @@ import {
 import { Outlet, useNavigate } from 'react-router-dom'
 import React, { useCallback, useMemo, useState } from 'react'
 
-import AppBar from '@mui/material/AppBar'
-import Box from '@mui/material/Box'
-import CssBaseline from '@mui/material/CssBaseline'
-import Divider from '@mui/material/Divider'
-import Drawer from '@mui/material/Drawer'
-import Toolbar from '@mui/material/Toolbar'
-import Typography from '@mui/material/Typography'
 import { InviteData } from 'use-zion-client/dist/types/zion-types'
 import { Logout } from './Logout'
 import { Invites } from './Invites'
