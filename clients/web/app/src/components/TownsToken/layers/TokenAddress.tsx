@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { Box } from '@ui'
 import * as styles from '../TownsToken.css'
 
@@ -26,7 +26,12 @@ const AddressText = (props: {
     size: number
     radius: number
 }) => {
-    const { value } = props
+    // remove 0x prefix - prepended automatically
+    const address = useMemo(
+        () => (props.value?.match(/^0x/) ? props.value?.slice(2) : props.value),
+        [props.value],
+    )
+
     const [hex, setHex] = useState(
         `${Array(40)
             .fill(0)
@@ -46,7 +51,7 @@ const AddressText = (props: {
     const [animateMintIndex, setAnimateIndex] = useState(0)
 
     useEffect(() => {
-        if (value) {
+        if (address) {
             return
         }
         const interval = setInterval(() => {
@@ -62,16 +67,16 @@ const AddressText = (props: {
         return () => {
             clearInterval(interval)
         }
-    }, [value])
+    }, [address])
 
     useEffect(() => {
-        if (!value) {
+        if (!address) {
             setAnimateIndex(-1)
         }
-    }, [value])
+    }, [address])
 
     useEffect(() => {
-        if (!value || animateMintIndex > value.length) {
+        if (!address || animateMintIndex > address.length) {
             return
         }
         const interval = setTimeout(() => {
@@ -80,13 +85,13 @@ const AddressText = (props: {
         return () => {
             clearTimeout(interval)
         }
-    }, [animateMintIndex, value])
+    }, [animateMintIndex, address])
 
-    const result = !value
+    const result = !address
         ? `0x${hex}`
         : (`0x` + hex)
               .split('')
-              .map((h, i) => (i > 1 && animateMintIndex > i - 1 ? value[i - 2] : h))
+              .map((h, i) => (i > 1 && animateMintIndex > i - 1 ? address[i - 2] : h))
               .join('')
 
     return (
