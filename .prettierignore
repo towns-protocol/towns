@@ -6,6 +6,7 @@ storybook-static
 
 servers/*
 !servers/workers
+contracts/cache/*
 contracts/lib/*
 contracts/**/out/*
 contracts/**/types/*
