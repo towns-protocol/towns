@@ -1,9 +1,9 @@
 import React, { useCallback, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { RoomIdentifier, SpaceProtocol, useZionClient } from 'use-zion-client'
-import { Box, Button, Heading, Icon, Stack, Text } from '@ui'
+import { Box, Button, Heading, Icon, Paragraph, Stack, Text } from '@ui'
 import { ModalContainer } from '@components/Modals/ModalContainer'
-import { SpaceIcon } from '@components/SpaceIcon'
+import { InteractiveSpaceIcon, SpaceIcon } from '@components/SpaceIcon'
 import { useAuth } from 'hooks/useAuth'
 import { useWaitForInitialSync } from 'hooks/useWaitForInitialSync'
 import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinner'
@@ -11,6 +11,7 @@ import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinn
 export type JoinData = {
     name: string
     networkId: string
+    spaceAddress?: string
 }
 
 type ModalProps = {
@@ -37,12 +38,11 @@ const SpaceJoinModal = (props: ModalProps) => {
                 {props.notEntitled ? (
                     <>
                         <Box position="relative">
-                            <SpaceIcon
+                            <InteractiveSpaceIcon
                                 spaceId={data.networkId}
-                                width="100"
-                                height="100"
-                                firstLetterOfSpaceName={data.name[0]}
-                                letterFontSize="h1"
+                                size="sm"
+                                spaceName={data.name}
+                                address={data.spaceAddress}
                             />
                             <Box
                                 position="absolute"
@@ -98,18 +98,17 @@ const SpaceJoinModal = (props: ModalProps) => {
                 ) : (
                     <>
                         <Box maxWidth="350">
+                            <Paragraph textAlign="center">Welcome to</Paragraph>
                             <Heading level={2} textAlign="center">
-                                Welcome to <br /> {data.name}
+                                {data.name}
                             </Heading>
                         </Box>
-                        <SpaceIcon
+                        <InteractiveSpaceIcon
+                            size="lg"
+                            spaceName={data.name}
                             spaceId={data.networkId}
-                            width="250"
-                            height="250"
-                            firstLetterOfSpaceName={data.name[0]}
-                            letterFontSize="display"
+                            address={data.spaceAddress}
                         />
-
                         <Box gap="sm">
                             <Button
                                 tone="cta1"

@@ -1,8 +1,8 @@
 import React, { useEffect } from 'react'
 import { Navigate, useSearchParams } from 'react-router-dom'
 import { LoginButton } from '@components/Login/LoginButton/LoginButton'
-import { SpaceIcon } from '@components/SpaceIcon'
-import { Box, Heading, Icon, Stack, Text } from '@ui'
+import { InteractiveSpaceIcon } from '@components/SpaceIcon'
+import { Box, Heading, Icon, Paragraph, Stack, Text } from '@ui'
 import { useAuth } from 'hooks/useAuth'
 import { useContractSpaceInfo } from 'hooks/useContractSpaceInfo'
 import { SignupButtonStatus, useSignupButton } from 'hooks/useSignupButton'
@@ -10,6 +10,7 @@ import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
 import { FadeIn } from '@components/Transitions'
 import { useSetDocTitle } from 'hooks/useDocTitle'
 import { useGetSpaceTopic } from 'hooks/useSpaceTopic'
+import { TownsTokenConfig } from '../components/TownsToken/TownsTokenConfig'
 
 function getButtonLabel(status: SignupButtonStatus) {
     switch (status) {
@@ -58,55 +59,71 @@ const InviteLinkLanding = () => {
         setTitle(`Join ${data.name}`)
     }, [data, setTitle])
 
+    const spaceIconSize = TownsTokenConfig.sizes['lg'].containerSize
+
     if (!isInvite) {
         return <Navigate replace to="/login" />
     }
 
     return (
-        <Stack centerContent grow alignSelf="center" height="100%" maxWidth="420">
+        <Stack
+            centerContent
+            grow
+            gap="lg"
+            alignSelf="center"
+            height="100%"
+            maxWidth="420"
+            alignItems="center"
+        >
             {data && !isLoadingRoomTopic ? (
-                <Stack centerContent gap="md" paddingBottom="lg">
-                    <SpaceIcon
+                <>
+                    <InteractiveSpaceIcon
                         spaceId={data.networkId}
-                        width="250"
-                        height="250"
-                        firstLetterOfSpaceName={data.name[0]}
-                        letterFontSize="display"
+                        address={data.address}
+                        spaceName={data.name}
+                        size="lg"
                     />
-                    <FadeIn>
-                        <Text size="lg">You&apos;re invited to join</Text>
-                    </FadeIn>
-                    <FadeIn>
-                        <Box gap="lg">
-                            <Heading level={2} textAlign="center">
-                                {data?.name}
-                            </Heading>
-                            {roomTopic && (
-                                <Text color="gray1" textAlign="center">
-                                    {roomTopic}
-                                </Text>
-                            )}
-                        </Box>
-                    </FadeIn>
-                </Stack>
+                    <Stack gap>
+                        <FadeIn>
+                            <Paragraph size="lg" textAlign="center">
+                                You&apos;re invited to join
+                            </Paragraph>
+                        </FadeIn>
+                        <FadeIn>
+                            <Box gap="lg">
+                                <Heading level={2} textAlign="center">
+                                    {data?.name}
+                                </Heading>
+                                {roomTopic && (
+                                    <Text color="gray1" textAlign="center">
+                                        {roomTopic}
+                                    </Text>
+                                )}
+                            </Box>
+                        </FadeIn>
+                    </Stack>
+                </>
             ) : (
-                <Stack centerContent gap="md" paddingBottom="lg">
-                    <SpaceIcon
-                        spaceId=""
-                        width="250"
-                        height="250"
-                        firstLetterOfSpaceName=""
-                        letterFontSize="display"
-                    />
+                <>
                     {isLoading ? (
                         <>
-                            <Text>&nbsp;</Text>
-                            <Heading level={2}> &nbsp;</Heading>
+                            <Box
+                                style={{
+                                    width: spaceIconSize,
+                                    height: spaceIconSize,
+                                }}
+                            />
+                            <Stack gap>
+                                <Text>&nbsp;</Text>
+                                <Heading level={2}> &nbsp;</Heading>
+                            </Stack>
                         </>
                     ) : (
-                        <Heading level={2}>Space not found</Heading>
+                        <Heading level={3} color="error">
+                            Space not found
+                        </Heading>
                     )}
-                </Stack>
+                </>
             )}
 
             <Stack paddingTop="sm" gap="lg" alignItems="center">

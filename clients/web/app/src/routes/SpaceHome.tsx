@@ -85,6 +85,7 @@ export const SpaceHome = () => {
         const joinData = {
             name: chainSpace.name,
             networkId: chainSpace.networkId,
+            spaceAddress: chainSpace.address,
         }
         return (
             <Container>
