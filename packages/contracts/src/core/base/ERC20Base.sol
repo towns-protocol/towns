@@ -59,10 +59,13 @@ contract ERC20Base is Metadata, MultiCaller, Ownable, ERC20, ERC20Permit {
   // =============================================================
   //                           Internal
   // =============================================================
+
+  /// @dev Checks if the sender can set contract uri
   function _canSetContractURI() internal view virtual override returns (bool) {
     return _msgSender() == owner();
   }
 
+  /// @dev Checks if the sender can mint.
   function _canMint() internal view virtual returns (bool) {
     return _msgSender() == owner();
   }
