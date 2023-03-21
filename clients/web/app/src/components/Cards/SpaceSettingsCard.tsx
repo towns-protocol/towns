@@ -1,6 +1,6 @@
 import React, { useCallback } from 'react'
 import { useNavigate } from 'react-router'
-import { Permission, RoomIdentifier, useZionClient } from 'use-zion-client'
+import { RoomIdentifier, useZionClient } from 'use-zion-client'
 import { PATHS } from 'routes'
 import { Box, Card } from '@ui'
 import { useCardOpenerContext } from 'ui/components/Overlay/CardOpenerContext'
