@@ -274,6 +274,17 @@ function ProfileContent() {
         chains,
     })
 
+    const myChains = [
+        {
+            id: 31337,
+            name: 'localhost',
+        },
+        {
+            id: 5,
+            name: 'goerli',
+        },
+    ]
+
     if (isConnected) {
         return (
             <>
@@ -296,12 +307,23 @@ function ProfileContent() {
                                     value={activeChain.id.toString()}
                                     onChange={onChangeChainDropDown}
                                 >
-                                    <MenuItem key="31337" value="31337">
-                                        Localhost (31337)
-                                    </MenuItem>
-                                    <MenuItem key="5" value="5">
-                                        Goerli (5)
-                                    </MenuItem>
+                                    {myChains.map((chain) => (
+                                        <MenuItem
+                                            key={chain.id.toString()}
+                                            value={chain.id.toString()}
+                                        >
+                                            {chain.name} ({chain.id.toString()})
+                                        </MenuItem>
+                                    ))}
+                                    {chains.find((chain) => chain.id === activeChain.id) ===
+                                        undefined && (
+                                        <MenuItem
+                                            key={activeChain.id.toString()}
+                                            value={activeChain.id.toString()}
+                                        >
+                                            {activeChain.name} ({activeChain.id.toString()})
+                                        </MenuItem>
+                                    )}
                                 </Select>
                             </FormControl>
                         </Box>
