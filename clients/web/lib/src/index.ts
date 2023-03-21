@@ -107,7 +107,7 @@ export type {
     TimelineEvent_OneOf,
 } from './types/timeline-types'
 
-export { ZTEvent } from './types/timeline-types'
+export { ZTEvent, EventStatus } from './types/timeline-types'
 
 export { WalletStatus } from './types/web3-types'
 

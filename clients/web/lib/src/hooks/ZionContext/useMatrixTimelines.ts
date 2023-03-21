@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { getIdForMatrixEvent, Membership, Mention } from '../../types/zion-types'
 import {
     ClientEvent,
+    EventStatus,
     EventType as MatrixEventType,
     HistoryVisibility,
     IRoomTimelineData,
@@ -234,6 +235,17 @@ export function useMatrixTimelines(client?: MatrixClient) {
                 event.once(MatrixEventEvent.LocalEventIdReplaced, () => {
                     replaceEvent(roomId, timelineEvent.eventId, toEvent(event, userId))
                 })
+                const updateStatusFn = () => {
+                    replaceEvent(roomId, timelineEvent.eventId, toEvent(event, userId))
+                    if (
+                        event.status === EventStatus.SENT ||
+                        event.status === EventStatus.NOT_SENT ||
+                        event.status === EventStatus.CANCELLED
+                    ) {
+                        event.off(MatrixEventEvent.Status, updateStatusFn)
+                    }
+                }
+                event.on(MatrixEventEvent.Status, updateStatusFn)
             }
         }
 
@@ -308,6 +320,7 @@ export function toEvent(event: MatrixEvent, userId: string): TimelineEvent {
         displayName: event.sender?.rawDisplayName ?? event.getSender() ?? 'Unknown',
         avatarUrl: event.sender?.getMxcAvatarUrl() ?? undefined,
     }
+    const isSender = sender.id === userId
     const fbc = `${event.getType()} ${getFallbackContent(
         event,
         sender.displayName,
@@ -317,6 +330,7 @@ export function toEvent(event: MatrixEvent, userId: string): TimelineEvent {
     // console.log("!!!! to event", event.getId(), fbc);
     return {
         eventId: eventId,
+        status: isSender ? event.status ?? undefined : undefined,
         originServerTs: event.getTs(),
         updatedServerTs: event.replacingEvent()?.getTs(),
         content: content,
@@ -342,6 +356,7 @@ function toReplacedMessageEvent(prev: TimelineEvent, next: TimelineEvent): Timel
     const eventId = prev.eventId.startsWith('$') ? prev.eventId : next.eventId
     return {
         eventId: eventId,
+        status: next.status,
         originServerTs: prev.originServerTs,
         updatedServerTs: next.originServerTs,
         content: {
