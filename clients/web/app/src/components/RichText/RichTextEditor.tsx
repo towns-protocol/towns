@@ -226,7 +226,7 @@ export const RichTextEditor = (props: Props) => {
                 onSend={onSendCb}
                 onCancel={props.onCancel}
             />
-            <AutoFocusPlugin />
+            {props.autoFocus ? <AutoFocusPlugin /> : <></>}
             <AutoLinkMatcherPlugin />
             <ChannelMentionPlugin channels={channels} />
             <TabThroughPlugin />

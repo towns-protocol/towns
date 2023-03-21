@@ -1,3 +1,4 @@
+import useResizeObserver from '@react-hook/resize-observer'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
 /**
@@ -34,6 +35,16 @@ export const useViewport = (scrollContainer: HTMLElement | null, _hasScrolledInt
             scrollContainer.removeEventListener('scroll', onScroll)
         }
     }, [onScroll, scrollContainer])
+
+    const onResize = useCallback(
+        (e: ResizeObserverEntry) => {
+            console.log(`VList - useViewport: onResize invoked`, e)
+            onScroll()
+        },
+        [onScroll],
+    )
+
+    useResizeObserver(scrollContainer, onResize)
 
     useEffect(() => {
         // TODO: what we are actually looking for is scoll initiated by user so

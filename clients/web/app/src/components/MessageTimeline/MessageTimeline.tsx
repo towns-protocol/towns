@@ -203,10 +203,56 @@ export const MessageTimeline = (props: Props) => {
             listItems.splice(1, 0, { id: 'divider', type: 'divider' } as const)
         }
 
-        if (isCollapsed && allListItems.length > 3) {
-            listItems.splice(1, listItems.length - 2, { id: 'expanded', type: 'expander' })
+        /*
+         counts chunks of messages backwards, we want to show about the last 2
+         for now a chunk is defined as a sequence of messages from the same
+         user or an image
+        */
+
+        const collapseStats = allListItems.reduceRight(
+            (prev, curr, index) => {
+                if (curr.type === 'message') {
+                    const userId = curr.item.event.sender.id
+                    if (
+                        // count first chunk
+                        typeof prev.collapseEndIndex === undefined ||
+                        // count if user changed
+                        userId !== prev.lastUserId ||
+                        // count if message is an image
+                        (curr.item.event.content.kind === ZTEvent.RoomMessage &&
+                            curr.item.event.content.msgType === MessageType.Image)
+                    ) {
+                        prev.chunkCount++
+                        prev.lastUserId = userId
+                    }
+                }
+                if (prev.chunkCount <= 2) {
+                    // index until which collapsed section ends
+                    prev.collapseEndIndex = index
+                }
+                return prev
+            },
+            {
+                chunkCount: 0,
+                collapseEndIndex: 1,
+                lastUserId: undefined,
+            } as {
+                chunkCount: number
+                collapseEndIndex: number
+                lastUserId: string | undefined
+            },
+        )
+
+        const numHidden = collapseStats.collapseEndIndex - 1 // not counting parent message
+        // no need to collapse if there's only 1 hidden message
+        if (isCollapsed && collapseStats.collapseEndIndex && numHidden > 1) {
+            listItems.splice(1, collapseStats.collapseEndIndex, {
+                id: 'expanded',
+                type: 'expander',
+            })
         }
-        return { listItems, numHidden: allListItems.length - listItems.length + 1 }
+
+        return { listItems, numHidden }
     }, [allListItems, flatGroups.length, isCollapsed, timelineContext?.type])
 
     const groupIds = useMemo(
@@ -244,7 +290,9 @@ export const MessageTimeline = (props: Props) => {
                             fontSize="sm"
                             label={
                                 <Box cursor="pointer" onClick={onExpandClick}>
-                                    <Paragraph> show {numHidden} more messages</Paragraph>
+                                    <Paragraph color="accent" size="sm">
+                                        show {numHidden} more messages
+                                    </Paragraph>
                                 </Box>
                             }
                         />

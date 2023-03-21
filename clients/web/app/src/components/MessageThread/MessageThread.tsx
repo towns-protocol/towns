@@ -83,6 +83,7 @@ export const MessageThread = (props: {
                             <RichTextEditor
                                 editable
                                 threadId={parentId}
+                                storageId={`${channelId.networkId}-${parentId}`}
                                 autoFocus={false}
                                 placeholder="Reply..."
                                 onSend={onSend}
