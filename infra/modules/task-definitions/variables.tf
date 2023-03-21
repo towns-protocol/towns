@@ -12,3 +12,8 @@ variable "dendrite_log_group_name" {
   description = "The name of the dendrite log group"
   type = string
 }
+
+variable "rds_dendrite_node_credentials_arn" {
+  description = "The arn of the rds dendrite node credentials"
+  type = string
+}

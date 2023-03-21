@@ -80,6 +80,7 @@ module "task_definitions" {
   dendrite_file_system_id = module.dendrite_efs.file_system_id
   dendrite_node_name = var.dendrite_node_name
   dendrite_log_group_name = var.dendrite_log_group_name
+  rds_dendrite_node_credentials_arn = module.dendrite_node_db.rds_dendrite_node_credentials_arn
 }
 
 resource "aws_ecs_service" "dendrite-ecs-service" {

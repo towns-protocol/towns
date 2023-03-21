@@ -78,6 +78,13 @@ Publish to staging for branch previews. This will deploy to `{name}`-staging.joh
 yarn publish:stage
 ```
 
+TEST
+Publish to test for testing the workers. 
+
+```bash
+yarn publish:test
+```
+
 PRODUCTION
 
 Unless specified in config, workers are deployed to `{name}`.johnhnt.workers.dev domain. See [Wrangler Config](https://developers.cloudflare.com/workers/wrangler/configuration/) for more details.

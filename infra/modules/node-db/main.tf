@@ -58,6 +58,38 @@ resource "aws_secretsmanager_secret_version" "rds_dendrite_readonly_credentials"
 EOF
 }
 
+data "aws_iam_role" "ecs_task_execution_role" {
+  name = "ecsTaskExecutionRole"
+}
+
+# allow ecs_task_execution_role to read the secret but not write it
+
+resource "aws_iam_role_policy" "ecs-to-dendrite-postgres-secret-policy" {
+  name = "${module.global_constants.environment}-ecs-to-dendrite-postgres-secret-policy"
+  role = data.aws_iam_role.ecs_task_execution_role.id
+
+  depends_on = [
+    aws_secretsmanager_secret_version.rds_dendrite_node_credentials
+  ]
+
+  policy = <<-EOF
+  {
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Action": [
+          "secretsmanager:GetSecretValue"
+        ],
+        "Effect": "Allow",
+        "Resource": [
+          "${aws_secretsmanager_secret.rds_dendrite_node_credentials.arn}"
+        ]
+      }
+    ]
+  }
+  EOF
+}
+
 data "aws_rds_engine_version" "postgresql" {
   engine  = "aurora-postgresql"
   version = "14.6"

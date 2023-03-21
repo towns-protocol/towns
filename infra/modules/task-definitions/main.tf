@@ -6,6 +6,9 @@ data "aws_iam_role" "ecs_task_execution_role" {
   name = "ecsTaskExecutionRole"
 }
 
+locals {
+  app_url = module.global_constants.environment == "production" ? "https://app.towns.com" : "https://app-${module.global_constants.environment}.towns.com"
+}
 resource "aws_ecs_task_definition" "dendrite-fargate" {
   family = "${module.global_constants.environment}-dendrite-fargate" 
 
@@ -35,11 +38,14 @@ resource "aws_ecs_task_definition" "dendrite-fargate" {
       hostPort = 65432
     }]
 
-    environment = [
+    secrets = [
       {
-        name = "DATABASE_CONNECTION_STRING"
-        value = ""
-      },
+        name      = "DATABASE_CONNECTION_STRING"
+        valueFrom = "${var.rds_dendrite_node_credentials_arn}:dbConnectionString::"
+      }
+    ]
+
+    environment = [
       {
         name = "SERVER_NAME",
         value = "${var.dendrite_node_name}.towns.com"
@@ -58,11 +64,11 @@ resource "aws_ecs_task_definition" "dendrite-fargate" {
       },
       {
         name = "PPROFLISTEN",
-        value = ""
+        value = "0.0.0.0:65432"
       },
       {
         name = "APP_URL",
-        value = ""
+        value = local.app_url
       }
     ]
 

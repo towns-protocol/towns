@@ -10,6 +10,7 @@
         "lint": "eslint .",
         "publish:prod": "npx wrangler publish --env production",
         "publish:stage": "npx wrangler publish --env staging",
+        "publish:test": "npx wrangler publish --env test",
         "test": "yarn test:unit",
         "test:unit": "jest"
     },

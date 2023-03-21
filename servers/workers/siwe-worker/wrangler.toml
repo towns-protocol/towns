@@ -39,3 +39,9 @@ vars = { ENVIRONMENT = "staging", VERIFY = "true" } # [vars] access, not secrets
 [env.production]
 routes = [{ pattern = "siwe-worker.zion.xyz", custom_domain = true }, { pattern = "siwe-worker.towns.com", custom_domain = true }]
 vars = { ENVIRONMENT = "production", VERIFY = "true" }
+
+# test routes
+# yarn publish:test
+[env.test]
+routes = [{ pattern = "siwe-worker-test.towns.com", custom_domain = true }]
+vars = { ENVIRONMENT = "test", VERIFY = "true" }
