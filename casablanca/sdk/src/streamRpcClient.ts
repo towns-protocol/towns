@@ -1,17 +1,17 @@
 // forked from https://raw.githubusercontent.com/bufbuild/connect-es/main/packages/connect/src/promise-client.ts to add logging
+import { CallOptions, Code, ConnectError, Transport, makeAnyClient } from '@bufbuild/connect'
+import { createConnectTransport } from '@bufbuild/connect-web'
 import {
+    Message,
     MethodInfo,
     MethodInfoBiDiStreaming,
     MethodInfoClientStreaming,
     MethodInfoServerStreaming,
     MethodInfoUnary,
+    MethodKind,
     PartialMessage,
     ServiceType,
-    Message,
-    MethodKind,
 } from '@bufbuild/protobuf'
-import { Transport, CallOptions, ConnectError, Code, makeAnyClient } from '@bufbuild/connect'
-import { createConnectTransport } from '@bufbuild/connect-web'
 import { StreamService } from '@towns/proto'
 import debug from 'debug'
 import EventTarget, { setMaxListeners } from 'events'
@@ -61,12 +61,10 @@ export function makeStreamRpcClient(
         transport = dest
     }
 
-    if (!isDefined(defaultOptions)) {
-        defaultOptions = {}
-    }
+    const options = isDefined(defaultOptions) ? defaultOptions : {}
 
     let abortController: AbortController | undefined = undefined
-    if (!isDefined(defaultOptions.signal)) {
+    if (!isDefined(options.signal)) {
         abortController = new AbortController()
         if (abortController.signal instanceof EventTarget) {
             setMaxListeners(200, abortController.signal)
@@ -74,23 +72,23 @@ export function makeStreamRpcClient(
         abortController.signal.addEventListener('abort', () => {
             log('abortController aborted')
         })
-        defaultOptions.signal = abortController.signal
+        options.signal = abortController.signal
     }
 
     const client = makeAnyClient(StreamService, (method) => {
         switch (method.kind) {
             case MethodKind.Unary:
-                return createUnaryFn(transport, StreamService, method, defaultOptions!)
+                return createUnaryFn(transport, StreamService, method, options)
             case MethodKind.ServerStreaming:
-                return createServerStreamingFn(transport, StreamService, method, defaultOptions!)
+                return createServerStreamingFn(transport, StreamService, method, options)
             case MethodKind.ClientStreaming:
-                return createClientStreamingFn(transport, StreamService, method, defaultOptions!)
+                return createClientStreamingFn(transport, StreamService, method, options)
             case MethodKind.BiDiStreaming:
-                return createBiDiStreamingFn(transport, StreamService, method, defaultOptions!)
+                return createBiDiStreamingFn(transport, StreamService, method, options)
             default:
                 return null
         }
-    })
+    }) as StreamRpcClientType
 
     client.close = async (): Promise<void> => {
         log('closing client')
@@ -99,7 +97,7 @@ export function makeStreamRpcClient(
         }
         log('client closed')
     }
-    return client as StreamRpcClientType
+    return client
 }
 
 /**
@@ -216,6 +214,7 @@ export function createClientStreamingFn<I extends Message<I>, O extends Message<
         }
 
         try {
+            // eslint-disable-next-line no-inner-declarations
             async function* input() {
                 for await (const partial of request) {
                     yield partial instanceof method.I ? partial : new method.I(partial)
@@ -272,6 +271,7 @@ export function createBiDiStreamingFn<I extends Message<I>, O extends Message<O>
         }
 
         try {
+            // eslint-disable-next-line no-inner-declarations
             async function* input() {
                 for await (const partial of request) {
                     yield partial instanceof method.I ? partial : new method.I(partial)

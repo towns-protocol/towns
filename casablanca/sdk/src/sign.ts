@@ -8,11 +8,10 @@ import {
     stripHexPrefix,
     toRpcSig,
 } from '@ethereumjs/util'
-import { Envelope, EventRef, Payload, StreamEvent } from '@towns/proto'
+import { Envelope, EventRef, Payload, StreamEvent, Err } from '@towns/proto'
 import { Buffer } from 'buffer'
 import { Wallet } from 'ethers'
 import { check, hasElements, isDefined } from './check'
-import { Err } from '@towns/proto'
 import { genIdBlob, userIdFromAddress } from './id'
 import { bin_equal, bin_fromHexString, bin_toHexString, ParsedEvent, stringify } from './types'
 
@@ -80,7 +79,7 @@ export const makeEvent = (
     prevEventHashes?: Uint8Array[] | Uint8Array | Map<string, Uint8Array>,
 ): Envelope => {
     const hashes = normailizeHashes(prevEventHashes)
-    let pl: Payload = payload instanceof Payload ? payload : new Payload(payload)
+    const pl: Payload = payload instanceof Payload ? payload : new Payload(payload)
     check(isDefined(pl.payload.case), "Payload can't be empty", Err.BAD_PAYLOAD)
 
     if (pl.payload.case !== 'inception') {
@@ -124,7 +123,7 @@ export const makeEvents = (
     for (const payload of payloads) {
         const event = makeEvent(context, payload, hashes)
         events.push(event)
-        hashes = [event.hash!]
+        hashes = [event.hash]
     }
     return events
 }
@@ -152,7 +151,7 @@ export const checkDelegateSig = (
     )
 }
 
-export const unpackEnvelope = (envelope: Envelope, prevEventHash?: Uint8Array): ParsedEvent => {
+export const unpackEnvelope = (envelope: Envelope, _prevEventHash?: Uint8Array): ParsedEvent => {
     check(hasElements(envelope.event), 'Event base is not set', Err.BAD_EVENT)
     check(hasElements(envelope.hash), 'Event hash is not set', Err.BAD_EVENT)
     check(hasElements(envelope.signature), 'Event signature is not set', Err.BAD_EVENT)
@@ -196,12 +195,12 @@ export const unpackEnvelope = (envelope: Envelope, prevEventHash?: Uint8Array): 
 
 export const unpackEnvelopes = (event: Envelope[]): ParsedEvent[] => {
     const ret: ParsedEvent[] = []
-    let prevEventHash: Uint8Array | undefined = undefined
+    //let prevEventHash: Uint8Array | undefined = undefined
     for (const e of event) {
         // TODO: this handling of prevEventHash is not correct,
         // hashes should be checked against all preceding events in the stream.
         ret.push(unpackEnvelope(e /*, prevEventHash*/))
-        prevEventHash = e.hash!
+        //prevEventHash = e.hash!
     }
     return ret
 }

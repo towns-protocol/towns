@@ -1,18 +1,9 @@
-import { PartialMessage, PlainMessage } from '@bufbuild/protobuf'
-import {
-    ParsedEvent,
-    bin_equal,
-    bin_toHexString,
-    makeInceptionPayload,
-    makeJoinableStreamPayload,
-    makeMessagePayload,
-} from './types'
+import { PartialMessage } from '@bufbuild/protobuf'
 import { Payload, StreamAndCookie, StreamKind, StreamOp, SyncPos } from '@towns/proto'
 import debug from 'debug'
 import EventEmitter from 'events'
 import TypedEmitter from 'typed-emitter'
-import { StreamRpcClientType } from './streamRpcClient'
-import { StreamEvents, StreamStateView } from './streams'
+import { throwWithCode } from './check'
 import {
     isChannelStreamId,
     isSpaceStreamId,
@@ -21,9 +12,17 @@ import {
     makeUserStreamId,
     userIdFromAddress,
 } from './id'
-import { makeEvent, SignerContext, unpackEnvelope, unpackEnvelopes } from './sign'
-import { check, throwWithCode } from './check'
-import { StreamService } from '@towns/proto'
+import { SignerContext, makeEvent, unpackEnvelope, unpackEnvelopes } from './sign'
+import { StreamRpcClientType } from './streamRpcClient'
+import { StreamEvents, StreamStateView } from './streams'
+import {
+    ParsedEvent,
+    bin_equal,
+    bin_toHexString,
+    makeInceptionPayload,
+    makeJoinableStreamPayload,
+    makeMessagePayload,
+} from './types'
 
 function assert(condition: any, message?: string): asserts condition {
     if (!condition) {
@@ -106,9 +105,8 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
     async stop(): Promise<void> {
         this.logCall('stop')
         this.stopSyncIfStarted()
-        if (this.rpcClient.hasOwnProperty('rpcClient')) {
-            await this.rpcClient.close()
-        }
+        // TODO: close rpcClient
+        // await this.rpcClient.close()
     }
 
     stream(streamId: string): Stream | undefined {
@@ -131,8 +129,8 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
         this.streams.set(userStreamId, stream)
         stream.addEvents(streamAndCookie, true)
 
-        stream.on('userJoinedStream', this.onJoinedStream)
-        stream.on('userLeftStream', this.onLeftStream)
+        stream.on('userJoinedStream', (s) => void this.onJoinedStream(s))
+        stream.on('userLeftStream', (s) => void this.onLeftStream(s))
 
         return Promise.all(
             Array.from(stream.rollup.userJoinedStreams).map((streamId) =>
@@ -205,7 +203,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
             events: [inceptionEvent, joinEvent],
         })
 
-        return { streamId: streamId! }
+        return { streamId: streamId }
     }
 
     async createChannel(spaceId: string, channelId?: string): Promise<{ streamId: string }> {
@@ -237,7 +235,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
             events: [inceptionEvent, joinEvent],
         })
 
-        return { streamId: channelId! }
+        return { streamId: channelId }
     }
 
     async waitForStream(streamId: string): Promise<Stream> {
@@ -299,7 +297,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
         }
     }
 
-    private onJoinedStream = async (streamId: string): Promise<void> => {
+    private onJoinedStream = (streamId: string): Promise<void> => {
         this.logEvent('onJoinedStream', streamId)
         return this.initStream(streamId)
     }

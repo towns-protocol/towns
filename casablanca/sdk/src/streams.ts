@@ -1,7 +1,6 @@
-import { ChannelOp, StreamKind, StreamOp } from '@towns/proto'
+import { ChannelOp, StreamKind, StreamOp, Err } from '@towns/proto'
 import TypedEmitter from 'typed-emitter'
 import { check, isDefined, throwWithCode } from './check'
-import { Err } from '@towns/proto'
 import { ParsedEvent } from './types'
 
 export const findLeafEventHashes = (streamId: string, events: ParsedEvent[]): string[] => {
@@ -87,7 +86,7 @@ export class StreamStateView {
 
         this.events.set(event.hashStr, event)
         this.leafEventHashes.set(event.hashStr, event.envelope.hash)
-        for (const prev of event.event.prevEventsStrs!) {
+        for (const prev of event.event.prevEventsStrs ?? []) {
             this.leafEventHashes.delete(prev)
         }
 
@@ -142,18 +141,20 @@ export class StreamStateView {
                 }
                 break
             case 'channel':
-                const { op, channelId } = payload.value
-                switch (op) {
-                    case ChannelOp.CO_CREATED:
-                        this.spaceChannels.add(channelId)
-                        emitter?.emit('spaceNewChannelCreated', this.streamId, channelId)
-                        break
-                    case ChannelOp.CO_DELETED:
-                        emitter?.emit('spaceChannelDeleted', this.streamId, channelId)
-                        this.spaceChannels.delete(channelId)
-                        break
-                    default:
-                        throwWithCode(`Unknown channel ${op}`, Err.STREAM_BAD_EVENT)
+                {
+                    const { op, channelId } = payload.value
+                    switch (op) {
+                        case ChannelOp.CO_CREATED:
+                            this.spaceChannels.add(channelId)
+                            emitter?.emit('spaceNewChannelCreated', this.streamId, channelId)
+                            break
+                        case ChannelOp.CO_DELETED:
+                            emitter?.emit('spaceChannelDeleted', this.streamId, channelId)
+                            this.spaceChannels.delete(channelId)
+                            break
+                        default:
+                            throwWithCode(`Unknown channel ${op}`, Err.STREAM_BAD_EVENT)
+                    }
                 }
                 break
             case 'message':

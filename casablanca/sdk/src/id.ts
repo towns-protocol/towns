@@ -33,7 +33,7 @@ export const allowedStreamPrefixes = (): string[] => Object.values(StreamPrefix)
 export const makeStreamId = (prefix: StreamPrefix, identity: string): string => prefix + identity
 
 export const makeUserStreamId = (userId: string | Uint8Array): string => {
-    check(isUserId(userId), 'Invalid user id: ' + userId)
+    check(isUserId(userId), 'Invalid user id: ' + userId.toString())
     return makeStreamId(
         StreamPrefix.User,
         userId instanceof Uint8Array ? userIdFromAddress(userId) : userId,

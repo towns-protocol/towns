@@ -1,3 +1,6 @@
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
+
 import { AnyMessage, Message, PartialMessage, ScalarType } from '@bufbuild/protobuf'
 import {
     StreamEvent,
@@ -8,9 +11,9 @@ import {
     Payload_JoinableStream,
     Payload_Channel,
     Payload_Message,
+    Err,
 } from '@towns/proto'
 import { check, isDefined } from './check'
-import { Err } from '@towns/proto'
 
 export interface ParsedEvent {
     event: Stringify<StreamEvent>
@@ -178,11 +181,11 @@ export const stringify = <T extends Message<T>>(message: T): Stringify<T> => {
     const type = message.getType()
     for (const field of type.fields.byNumber()) {
         let value: any // this will be our field value, whether it is member of a oneof or regular field
-        let repeated = field.repeated
-        let localName = field.localName
+        const repeated = field.repeated
+        const localName = field.localName
 
         if (field.oneof) {
-            const oneof = (message as AnyMessage)[field.oneof.localName]
+            const oneof: any = (message as AnyMessage)[field.oneof.localName]
             if (oneof.case !== localName) {
                 continue // field is not selected, skip
             }
@@ -211,7 +214,7 @@ export const stringify = <T extends Message<T>>(message: T): Stringify<T> => {
                     ret[`${localName}Strs`][key] = bin_toHexString(val as Uint8Array)
                 }
             } else if (field.V.kind === 'message') {
-                for (const [key, val] of Object.entries(value)) {
+                for (const [_key, val] of Object.entries(value)) {
                     stringify(val as AnyMessage)
                 }
             }
