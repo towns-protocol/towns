@@ -71,18 +71,22 @@ export const RegisterForm = ({ isEdit }: { isEdit: boolean }) => {
                     // only upload an image when first registering and if the user has not uploaded one
                     // this needs to be done before the registerWallet call
                     if (!isEdit && !data.profilePic?.[0] && loggedInWalletAddress) {
-                        // upload to CF a random image
-                        const random = Math.floor(Math.random() * 25) + 1
-                        const url = `/placeholders/pp${random}.png`
-                        const blob = await fetch(url).then((r) => r.blob())
-                        const file = new File([blob], 'avatar.png')
+                        try {
+                            // upload to CF a random image
+                            const random = Math.floor(Math.random() * 25) + 1
+                            const url = `/placeholders/pp${random}.png`
+                            const blob = await fetch(url).then((r) => r.blob())
+                            const file = new File([blob], 'avatar.png')
 
-                        await upload({
-                            id: loggedInWalletAddress,
-                            file,
-                            type: 'avatar',
-                            imageUrl: url,
-                        })
+                            await upload({
+                                id: loggedInWalletAddress,
+                                file,
+                                type: 'avatar',
+                                imageUrl: url,
+                            })
+                        } catch (error) {
+                            console.error('Error uploading random image', error)
+                        }
                     }
 
                     if (loginStatus === LoginStatus.LoggedOut) {
