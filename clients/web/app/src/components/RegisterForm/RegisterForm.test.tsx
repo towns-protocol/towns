@@ -27,6 +27,16 @@ vi.mock('use-zion-client', async () => {
     }
 })
 
+vi.mock('hooks/useAuth', () => {
+    return {
+        useAuth: () => ({
+            register: () => Promise.resolve(),
+            loggedInWalletAddress: '0x1234',
+            isConnected: true,
+        }),
+    }
+})
+
 const Mock = ({ children }: any) => {
     return (
         <Zion.ZionContextProvider
@@ -111,6 +121,41 @@ describe('#RegisterForm', () => {
 
         fireEvent.click(submit)
         await waitFor(async () => await expect(spy).toHaveBeenCalledOnce())
+    })
+
+    test('it should navigate to town invite link if came from invite link', async () => {
+        vi.stubGlobal('location', {
+            pathname: '/t/1234/',
+            search: '?invite',
+        })
+        const spy = vi.fn()
+        vi.spyOn(router, 'useNavigate').mockReturnValue(spy)
+        render(
+            <Mock>
+                <RegisterForm isEdit={false} />
+            </Mock>,
+        )
+        const displayNameField: HTMLInputElement = screen.getByLabelText(/display name/i)
+        const submit: HTMLButtonElement = screen.getByText(/next/i)
+        // userEvent b/c fireEvent doesn't trigger react-hook-form onChange
+        await userEvent.type(displayNameField, 'dude')
+
+        expect(displayNameField.value).toBe('dude')
+        expect(submit).not.toBeDisabled()
+
+        fireEvent.click(submit)
+        await waitFor(
+            async () =>
+                await expect(spy).toHaveBeenCalledWith(
+                    {
+                        pathname: '/t/1234/',
+                        search: '?invite',
+                    },
+                    {
+                        replace: true,
+                    },
+                ),
+        )
     })
 
     test.skip('it should upload to CF only when registering and user has not uploaded an image already', () => {

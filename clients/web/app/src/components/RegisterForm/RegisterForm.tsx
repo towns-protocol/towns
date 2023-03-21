@@ -1,7 +1,8 @@
 import React, { useCallback, useEffect, useMemo } from 'react'
 import { useForm } from 'react-hook-form'
-import { useNavigate } from 'react-router'
+import { matchPath, useNavigate } from 'react-router'
 import { LoginStatus, useMatrixStore, useMyProfile, useZionClient } from 'use-zion-client'
+
 import { Button, ErrorMessage, Icon, Stack, TextField } from '@ui'
 import { useAuth } from 'hooks/useAuth'
 import { UploadAvatar } from '@components/UploadImage/UploadAvatar/UploadAvatar'
@@ -99,9 +100,11 @@ export const RegisterForm = ({ isEdit }: { isEdit: boolean }) => {
                     console.warn(e)
                 }
 
+                const spacePath = matchPath(`${PATHS.SPACES}/:spaceSlug`, window.location.pathname)
+
                 // if we came from a space invite link, redirect back to the space
-                if (window.location.pathname.includes(PATHS.SPACES)) {
-                    navigate(window.location.pathname, { replace: true })
+                if (spacePath && window.location.search.includes('invite')) {
+                    navigate({ pathname: spacePath.pathname, search: '?invite' }, { replace: true })
                 } else {
                     navigate('/', { replace: true })
                 }
