@@ -104,34 +104,37 @@ func (s *SubsMap) ForEach(thunk func(*SmapEntry)) {
  * @param events the events to filter indexed by seq number
  * @return a map of subs ids to events for the input events
  */
-func (s SubsMap) Filter(events map[int64]*FullEvent, CurrentCookie []byte) map[uuid.UUID]StreamEventsBlock {
+func (s SubsMap) Filter(events map[string][]*FullEvent) map[uuid.UUID]StreamEventsBlock {
 
 	res := make(map[uuid.UUID]StreamEventsBlock)
 
 	s.mtx.Lock()
 	defer s.mtx.Unlock()
 
-	for seqNum, e := range events {
-		subs, ok := s.entries[e.StreamId]
+	for stream, subs := range s.entries {
+		incoming, ok := events[stream]
 		if !ok {
-			// nobody is subscribed to this stream
+			// no events for this stream
 			continue
 		}
-		for _, sub := range subs {
-			if sub.seqNum >= seqNum {
-				// this sub is up to date
-				continue
-			}
-			if block, ok := res[sub.id]; ok {
-				block.Events = append(res[sub.id].Events, e.ParsedEvent.Envelope)
-				// current cookie grows with each event, so it is guaranteed to be larger than the previous one
-				block.SyncCookie = CurrentCookie
-				res[sub.id] = block
-			} else {
-				res[sub.id] = StreamEventsBlock{
-					OriginalSyncCookie: SeqNumToBytes(sub.seqNum),
-					SyncCookie:         CurrentCookie,
-					Events:             []*protocol.Envelope{e.ParsedEvent.Envelope},
+		for _, e := range incoming {
+			seqNum := e.SeqNum
+			for _, sub := range subs {
+				if sub.seqNum >= seqNum {
+					// this sub is up to date
+					continue
+				}
+				if block, ok := res[sub.id]; ok {
+					block.Events = append(res[sub.id].Events, e.ParsedEvent.Envelope)
+					// current cookie grows with each event, so it is guaranteed to be larger than the previous one
+					block.SyncCookie = SeqNumToBytes(e.SeqNum)
+					res[sub.id] = block
+				} else {
+					res[sub.id] = StreamEventsBlock{
+						OriginalSyncCookie: SeqNumToBytes(sub.seqNum),
+						SyncCookie:         SeqNumToBytes(e.SeqNum),
+						Events:             []*protocol.Envelope{e.ParsedEvent.Envelope},
+					}
 				}
 			}
 		}
@@ -139,16 +142,36 @@ func (s SubsMap) Filter(events map[int64]*FullEvent, CurrentCookie []byte) map[u
 	return res
 }
 
- func (s SubsMap) getMinSeqNum() int64 {
- 	var min int64 = -1
- 	s.mtx.Lock()
- 	defer s.mtx.Unlock()
- 	for _, subs := range s.entries {
- 		for _, sub := range subs {
- 			if min == -1 || sub.seqNum < min {
- 				min = sub.seqNum
- 			}
- 		}
- 	}
- 	return min
- }
+/*
+ * Get the minimum seq number for each stream given a map of stream ids to seq numbers in the current changeset
+ */
+func (s SubsMap) getMinSeqNum(changes map[string]int64) map[string]int64 {
+	mins := make(map[string]int64)
+	s.mtx.Lock()
+	defer s.mtx.Unlock()
+	for stream, subs := range s.entries {
+		for _, sub := range subs {
+			min, ok := mins[stream]
+			if !ok || sub.seqNum < min {
+				mins[stream] = sub.seqNum
+			}
+		}
+	}
+
+	selection := make(map[string]int64)
+
+	for stream, seqNum := range mins {
+		maxSeqNum, ok := changes[stream]
+		// no changes, skip
+		if !ok {
+			continue
+		}
+		// changes are ahead of the current subscription, skip
+		if maxSeqNum <= seqNum {
+			continue
+		}
+		selection[stream] = seqNum
+	}
+
+	return selection
+}

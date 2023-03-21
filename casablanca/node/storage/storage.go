@@ -30,8 +30,8 @@ type Storage interface {
 	SyncStreams(ctx context.Context, positions []*protocol.SyncPos, maxCount int, TimeoutMs uint32) (map[string]StreamEventsBlock, error)
 }
 
-func NewStorage(ctx context.Context, database_url string) (Storage, error) {
-	return NewPGEventStore(ctx, database_url)
+func NewStorage(ctx context.Context, database_url string, clean bool) (Storage, error) {
+	return NewPGEventStore(ctx, database_url, clean)
 }
 
 func SeqNumToBytes(seqNum int64) []byte {

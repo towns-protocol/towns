@@ -26,6 +26,7 @@ type Config struct {
 	DbUrl   string `yaml:"db_url" default:"postgres://postgres:postgres@localhost:5433/casablanca?sslmode=disable&pool_max_conns=3"`
 	Debug   bool   `yaml:"debug" default:"false"`
 	LogFile string `yaml:"log_file" default:""`
+	Clean   bool   `yaml:"clean" default:"false"`
 }
 
 func main() {
@@ -62,8 +63,7 @@ func main() {
 		log.SetOutput(wrt)
 	}
 
-	dbUrl := config.DbUrl
-	pattern, handler := rpc.MakeServiceHandler(context.Background(), dbUrl)
+	pattern, handler := rpc.MakeServiceHandler(context.Background(), config.DbUrl, config.Clean)
 	mux := http.NewServeMux()
 	mux.Handle(pattern, handler)
 
@@ -83,7 +83,7 @@ func main() {
 	}()
 
 	log.Printf("Listening on %s%s", address, pattern)
-	log.Printf("Using DB at %s", dbUrl)
+	log.Printf("Using DB at %s", config.DbUrl)
 
 	exitSignal := make(chan os.Signal)
 	signal.Notify(exitSignal, syscall.SIGINT, syscall.SIGTERM)

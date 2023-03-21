@@ -42,7 +42,7 @@ func TestMain(m *testing.M) {
 func TestPGEventStore(t *testing.T) {
 	ctx := context.Background()
 	// Create a new PGEventStore
-	pgEventStore, err := storage.NewPGEventStore(ctx, testDatabaseUrl)
+	pgEventStore, err := storage.NewPGEventStore(ctx, testDatabaseUrl, true)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -120,7 +120,7 @@ func TestPGEventStore(t *testing.T) {
 func TestPGEventStoreLongPoll(t *testing.T) {
 	ctx := context.Background()
 	// Create a new PGEventStore
-	pgEventStore, err := storage.NewPGEventStore(ctx, testDatabaseUrl)
+	pgEventStore, err := storage.NewPGEventStore(ctx, testDatabaseUrl, true)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -207,7 +207,7 @@ func TestPGEventStoreLongPollStress(t *testing.T) {
 
 	ctx := context.Background()
 	// Create a new PGEventStore
-	pgEventStore, err := storage.NewPGEventStore(ctx, testDatabaseUrl)
+	pgEventStore, err := storage.NewPGEventStore(ctx, testDatabaseUrl, true)
 	if err != nil {
 		t.Fatal(err)
 	}

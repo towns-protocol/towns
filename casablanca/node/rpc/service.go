@@ -33,6 +33,7 @@ func (s *LoggingService) CreateStream(ctx context.Context, req *connect_go.Reque
 		log.Errorf("CreateStream error: %v", err)
 		return nil, err
 	}
+	log.Debugf("CreateStream: %v", res)
 	return res, nil
 }
 
@@ -162,7 +163,7 @@ func (s *Service) addEvent(ctx context.Context, streamId string, view *StreamVie
 		userId := joinableStream.UserId
 		userStreamId := UserStreamIdFromId(userId)
 
-		_, err = s.Storage.AddEvent(ctx, streamId, parsedEvent.Envelope)
+		cookie, err := s.Storage.AddEvent(ctx, streamId, parsedEvent.Envelope)
 		if err != nil {
 			return nil, status.Errorf(codes.Internal, "AddEvent: error adding event to storage: %v", err)
 		}
@@ -171,7 +172,7 @@ func (s *Service) addEvent(ctx context.Context, streamId string, view *StreamVie
 		if err != nil {
 			return nil, status.Errorf(codes.Internal, "AddEvent: error adding event to view: %v", err)
 		}
-		
+
 		leaves, err := view.GetAllLeafEvents()
 		if err != nil {
 			return nil, status.Errorf(codes.Internal, "AddEvent: error getting all leaf events: %v", err)
@@ -191,7 +192,7 @@ func (s *Service) addEvent(ctx context.Context, streamId string, view *StreamVie
 			},
 		), leaves)
 
-		cookie, err := s.Storage.AddEvent(ctx, userStreamId, envelope)
+		_, err = s.Storage.AddEvent(ctx, userStreamId, envelope)
 		if err != nil {
 			return nil, status.Errorf(codes.Internal, "AddEvent: error adding event to storage: %v", err)
 		}
@@ -242,8 +243,8 @@ func (s *Service) Info(_ context.Context, request *connect_go.Request[protocol.I
 	}
 }
 
-func MakeServiceHandler(ctx context.Context, dbUrl string, opts ...connect_go.HandlerOption) (string, http.Handler) {
-	store, err := storage.NewPGEventStore(ctx, dbUrl)
+func MakeServiceHandler(ctx context.Context, dbUrl string, clean bool, opts ...connect_go.HandlerOption) (string, http.Handler) {
+	store, err := storage.NewPGEventStore(ctx, dbUrl, clean)
 	if err != nil {
 		log.Fatalf("failed to create storage: %v", err)
 	}
@@ -262,9 +263,9 @@ func MakeServiceHandler(ctx context.Context, dbUrl string, opts ...connect_go.Ha
 	return pattern, handler
 }
 
-func MakeServer(ctx context.Context, dbUrl string) (protocolconnect.StreamServiceClient, func()) {
+func MakeServer(ctx context.Context, dbUrl string, clean bool) (protocolconnect.StreamServiceClient, func()) {
 	mux := http.NewServeMux()
-	pattern, handler := MakeServiceHandler(ctx, dbUrl)
+	pattern, handler := MakeServiceHandler(ctx, dbUrl, clean)
 	mux.Handle(pattern, handler)
 
 	address := ":0"
@@ -345,7 +346,7 @@ func makePayload_UserStreamOp(op *protocol.Payload_UserStreamOp) *protocol.Paylo
 }
 
 func makeView(ctx context.Context, store storage.Storage, streamId string) *StreamView {
-	view := NewView(func() ([]*protocol.Envelope, error) {		
+	view := NewView(func() ([]*protocol.Envelope, error) {
 		_, events, err := store.GetStream(ctx, streamId)
 		if err != nil {
 			return nil, err

@@ -34,7 +34,7 @@ func next() int {
 
 func TestMain(m *testing.M) {
 
-	log.SetLevel(log.InfoLevel)
+	log.SetLevel(log.DebugLevel)
 
 	db, closer, err := testutils.StartDB(context.Background())
 	if err != nil {
@@ -106,7 +106,7 @@ func createChannel(ctx context.Context, client protocolconnect.StreamServiceClie
 
 func TestMethods(t *testing.T) {
 	ctx := context.Background()
-	client, closer := rpc.MakeServer(ctx, testDatabaseUrl)
+	client, closer := rpc.MakeServer(ctx, testDatabaseUrl, false)
 	defer closer()
 	{
 		response, err := client.Info(ctx, connect.NewRequest(&protocol.InfoRequest{}))
@@ -160,7 +160,7 @@ func TestMethods(t *testing.T) {
 		}
 
 		// user2 joins channel
-		join, err := testutils.JoinEvent(2, userId, userId2, channelHash)
+		join, err := testutils.JoinEvent(next(), userId, userId2, channelHash)
 		if err != nil {
 			t.Errorf("error creating join event: %v", err)
 		}
@@ -173,7 +173,7 @@ func TestMethods(t *testing.T) {
 			t.Fatalf("error calling AddEvent: %v", err)
 		}
 
-		message, err := testutils.MessageEvent(2, userId2, "hello", channelHash)
+		message, err := testutils.MessageEvent(next(), userId2, "hello", channelHash)
 		if err != nil {
 			t.Errorf("error creating message event: %v", err)
 		}
@@ -204,7 +204,7 @@ func TestMethods(t *testing.T) {
 			t.Errorf("expected 1 stream, got %d", len(syncRes.Msg.Streams))
 		}
 		if len(syncRes.Msg.Streams[0].Events) != 2 {
-			t.Errorf("expected 1 event, got %d", len(syncRes.Msg.Streams[0].Events))
+			t.Errorf("expected 2 events, got %d", len(syncRes.Msg.Streams[0].Events))
 		}
 
 		var payload protocol.StreamEvent
@@ -223,7 +223,7 @@ func TestMethods(t *testing.T) {
 
 func TestManyUsers(t *testing.T) {
 	ctx := context.Background()
-	client, closer := rpc.MakeServer(ctx, testDatabaseUrl)
+	client, closer := rpc.MakeServer(ctx, testDatabaseUrl, false)
 	defer closer()
 
 	totalUsers := 14
