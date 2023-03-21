@@ -6,11 +6,11 @@ on:
             environment:
                 description: 'Environment'
                 required: true
-                default: 'production'
+                default: 'test'
             node_name:
                 description: 'Node name (i.e node1 if node1.towns.com)'
                 required: true
-                default: 'node1'
+                default: 'node1-test'
             docker_image_tag:
                 description: 'Docker image tag to deploy'
                 required: true

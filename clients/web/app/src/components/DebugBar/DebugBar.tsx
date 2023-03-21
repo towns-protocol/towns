@@ -8,6 +8,7 @@ import { ModalContainer } from '@components/Modals/ModalContainer'
 import { shortAddress } from 'ui/utils/utils'
 import { HomeServerUrl, UseHomeServerUrlReturn } from 'hooks/useMatrixHomeServerUrl'
 import { useAuth } from 'hooks/useAuth'
+import { useCorrectChainForServer } from 'hooks/useCorrectChainForServer'
 
 type Props = {
     homeserverUrl: string
@@ -109,6 +110,8 @@ const DebugModal = ({
         switchNetwork?.(5)
     }
 
+    const appChain = useCorrectChainForServer()
+
     return (
         <ModalContainer onHide={onHide}>
             <Stack gap="lg">
@@ -119,7 +122,7 @@ const DebugModal = ({
                     Wallet Chain: {chain?.name || 'Not connected'}
                 </Text>
                 <Text strong size="sm">
-                    App chain: {homeserverUrl === HomeServerUrl.REMOTE ? 'goerli' : 'foundry'}
+                    App chain: {appChain.name}
                 </Text>
                 {chain?.name && (
                     <>
@@ -193,11 +196,15 @@ const DebugBar = ({ homeserverUrl, setUrl, hasUrl, clearUrl }: Props) => {
 
     const { synced, platform } = areSynced(homeserverUrl, chain?.name || '')
 
+    const appChain = useCorrectChainForServer()
+
     async function onNetworkSwitch(chainId: number) {
         if (chainId === 31337) {
             setUrl(HomeServerUrl.LOCAL)
         } else if (chainId === 5) {
-            setUrl(HomeServerUrl.REMOTE)
+            setUrl(HomeServerUrl.TEST)
+        } else if (chainId === 11155111) {
+            setUrl(HomeServerUrl.PROD)
         }
         await logout()
         window.location.href = 'http://localhost:3000'
@@ -252,8 +259,7 @@ const DebugBar = ({ homeserverUrl, setUrl, hasUrl, clearUrl }: Props) => {
                 </Box>
 
                 <Text strong as="span" size="sm">
-                    {platform}&nbsp; | app using:{' '}
-                    {homeserverUrl === HomeServerUrl.REMOTE ? 'goerli' : 'foundry'}
+                    {platform}&nbsp; | app using: {appChain.name}
                 </Text>
 
                 {hasUrl() && (

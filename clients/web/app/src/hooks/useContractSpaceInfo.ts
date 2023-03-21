@@ -1,12 +1,13 @@
 import { useQuery } from '@tanstack/react-query'
 import { useSpaceDapp, useWeb3Context } from 'use-zion-client'
-import { PROD_CHAIN_ID, env } from 'utils'
+import { useCorrectChainForServer } from './useCorrectChainForServer'
 
 // Grab the space info without requiring matrix client to be initialized
 export const useContractSpaceInfo = (spaceId: string | undefined) => {
-    const { provider, chain } = useWeb3Context()
+    const { provider } = useWeb3Context()
+    const chain = useCorrectChainForServer()
 
-    const chainId = env.IS_DEV ? chain?.id : PROD_CHAIN_ID
+    const chainId = chain.id
 
     const spaceDapp = useSpaceDapp({
         chainId,
