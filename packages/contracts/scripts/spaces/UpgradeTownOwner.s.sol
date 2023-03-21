@@ -13,11 +13,8 @@ contract UpgradeTownOwner is ScriptUtils {
   TownOwner internal townOwner;
 
   function setUp() public {
-    string memory spaceFactoryData = _readPackages("space-factory");
-
-    spaceFactory = SpaceFactory(
-      vm.parseJsonAddress(spaceFactoryData, ".spaceFactory")
-    );
+    address spaceFactoryAddress = _readAddress(".spaceFactory");
+    spaceFactory = SpaceFactory(spaceFactoryAddress);
   }
 
   function run() public {
@@ -36,18 +33,5 @@ contract UpgradeTownOwner is ScriptUtils {
 
     console.log("SpaceFactory: %s", address(spaceFactory));
     console.log("TownOwner: %s", address(townOwner));
-  }
-
-  function _readPackages(
-    string memory input
-  ) internal view returns (string memory) {
-    string memory inputDir = string.concat(
-      vm.projectRoot(),
-      "/packages/generated/"
-    );
-
-    string memory chainDir = string.concat(_getChainName(), "/addresses/");
-    string memory file = string.concat(input, ".json");
-    return vm.readFile(string.concat(inputDir, chainDir, file));
   }
 }

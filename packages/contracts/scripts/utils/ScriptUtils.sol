@@ -2,6 +2,8 @@
 pragma solidity ^0.8.0;
 
 /* Libraries */
+
+// solhint-disable-next-line no-global-import
 import "forge-std/Script.sol";
 
 contract ScriptUtils is Script {
@@ -13,6 +15,7 @@ contract ScriptUtils is Script {
     if (block.chainid == 31337) return vm.envUint("LOCAL_PRIVATE_KEY");
     if (block.chainid == 1337) return vm.envUint("LOCAL_PRIVATE_KEY");
     if (block.chainid == 5) return vm.envUint("GOERLI_PRIVATE_KEY");
+    if (block.chainid == 11155111) return vm.envUint("SEPOLIA_PRIVATE_KEY");
     else revert("No private key found");
   }
 
@@ -44,14 +47,10 @@ contract ScriptUtils is Script {
     uint256 id = block.chainid;
     if (id == 1) {
       return "mainnet";
-    } else if (id == 3) {
-      return "ropsten";
-    } else if (id == 4) {
-      return "rinkeby";
+    } else if (id == 11155111) {
+      return "sepolia";
     } else if (id == 5) {
       return "goerli";
-    } else if (id == 42) {
-      return "kovan";
     } else if (id == 1337) {
       return "localhost";
     } else if (id == 31337) {
@@ -59,5 +58,22 @@ contract ScriptUtils is Script {
     } else {
       return "unknown";
     }
+  }
+
+  function _readAddress(string memory input) internal returns (address) {
+    string memory inputDir = string.concat(
+      vm.projectRoot(),
+      "/packages/generated/addresses.json"
+    );
+
+    string memory file = vm.readFile(inputDir);
+    string memory finalValue = string.concat(
+      ".",
+      vm.toString(block.chainid),
+      ".",
+      input
+    );
+
+    return vm.parseJsonAddress(file, finalValue);
   }
 }

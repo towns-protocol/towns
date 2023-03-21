@@ -17,11 +17,8 @@ contract UpgradeImplementation is ScriptUtils {
   UserEntitlement internal userEntitlement;
 
   function setUp() public {
-    string memory spaceFactoryData = _readPackages("space-factory");
-
-    spaceFactory = SpaceFactory(
-      vm.parseJsonAddress(spaceFactoryData, ".spaceFactory")
-    );
+    address spaceFactoryAddress = _readAddress("spaceFactory");
+    spaceFactory = SpaceFactory(spaceFactoryAddress);
   }
 
   function run() public {
@@ -47,18 +44,5 @@ contract UpgradeImplementation is ScriptUtils {
     console.log("Space: %s", address(space));
     console.log("TokenEntitlement: %s", address(tokenEntitlement));
     console.log("UserEntitlement: %s", address(userEntitlement));
-  }
-
-  function _readPackages(
-    string memory input
-  ) internal view returns (string memory) {
-    string memory inputDir = string.concat(
-      vm.projectRoot(),
-      "/packages/generated/"
-    );
-
-    string memory chainDir = string.concat(_getChainName(), "/addresses/");
-    string memory file = string.concat(input, ".json");
-    return vm.readFile(string.concat(inputDir, chainDir, file));
   }
 }

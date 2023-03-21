@@ -12,9 +12,9 @@
     "member": "0x4bC01028a7f1a56E267Ecabd735567cdB1Fc7744"
   },
   "11155111": {
-    "spaceFactory": "",
-    "spaceToken": "",
-    "pioneerToken": "",
+    "spaceFactory": "0x39a7aDB6528B969c577566914A714aAD15bbA6B5",
+    "spaceToken": "0x05d20AA1f18bFe3BD430baF7eB467A48e38093cE",
+    "pioneerToken": "0xc47de7eCFd251b03D075Ee52a662AA1be5E3AF9d",
     "member": ""
   }
 }
