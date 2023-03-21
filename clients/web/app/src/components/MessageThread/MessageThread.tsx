@@ -82,6 +82,7 @@ export const MessageThread = (props: {
                         <Box padding>
                             <RichTextEditor
                                 editable
+                                threadId={parentId}
                                 autoFocus={false}
                                 placeholder="Reply..."
                                 onSend={onSend}

@@ -61,6 +61,7 @@ export const MessageThreadPanel = (props: Props) => {
                     editable
                     placeholder="Reply..."
                     storageId={`${channelId.networkId}-${messageId}`}
+                    threadId={messageId}
                     onSend={onSend}
                 />
             </Box>

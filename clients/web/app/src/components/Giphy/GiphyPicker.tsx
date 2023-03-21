@@ -1,11 +1,9 @@
 import { IGif } from '@giphy/js-types'
 import { Grid } from '@giphy/react-components'
 import React from 'react'
-import { useParams, useResolvedPath } from 'react-router'
 import { ImageMessageContent, MessageType, useChannelId, useZionClient } from 'use-zion-client'
 import { Spinner } from '@components/Spinner'
 import { Box } from '@ui'
-import { PATHS } from 'routes'
 import { useStore } from 'store/store'
 import { useCardOpenerContext } from 'ui/components/Overlay/CardOpenerContext'
 import { atoms } from 'ui/styles/atoms.css'
@@ -25,13 +23,18 @@ const Loader = () => {
     )
 }
 
-export const GiphyPicker = () => {
-    const isInReplyThread = useResolvedPath('.').pathname.includes(PATHS.REPLIES)
+type Props = {
+    threadId?: string
+}
+
+export const GiphyPicker = (props: Props) => {
     const { theme } = useStore()
+    const { threadId } = props
+
     const { fetchGifs, query, isFetching } = useGiphySearchContext()
     const { sendMessage } = useZionClient()
-    const { messageId: threadId } = useParams()
 
+    const isInReplyThread = !!props.threadId
     const channelId = useChannelId()
     const { closeCard } = useCardOpenerContext()
     const gutterWidth = baseline * 0.75

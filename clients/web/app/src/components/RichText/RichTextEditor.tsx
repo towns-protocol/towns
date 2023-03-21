@@ -62,6 +62,7 @@ type Props = {
     container?: (props: { children: React.ReactNode }) => JSX.Element
     tabIndex?: number
     storageId?: string
+    threadId?: string // only used for giphy plugin
 } & Pick<BoxProps, 'background'>
 
 const fieldClassName = clsx([fieldStyles.field, styles.richText])
@@ -195,7 +196,12 @@ export const RichTextEditor = (props: Props) => {
 
     return (
         <LexicalComposer initialConfig={initialConfig}>
-            <RichTextUI focused={focused} editing={isEditing} background={props.background}>
+            <RichTextUI
+                focused={focused}
+                editing={isEditing}
+                background={props.background}
+                threadId={props.threadId}
+            >
                 <RichTextPlugin
                     contentEditable={
                         <ContentEditable className={inputClassName} tabIndex={tabIndex} />

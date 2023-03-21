@@ -8,13 +8,13 @@ import {
 } from 'lexical'
 import React, { useCallback, useContext, useEffect, useRef, useState } from 'react'
 import { useEvent } from 'react-use-event-hook'
-
 import { TOGGLE_LINK_COMMAND } from '@lexical/link'
 import { BaseEmoji, EmojiData } from 'emoji-mart'
 import { createPortal } from 'react-dom'
 import { Box, BoxProps, RootLayerContext, Stack } from '@ui'
+import { GiphyEntry } from '@components/Giphy/GiphyEntry'
+import { EmojiPickerButton } from '@components/EmojiPickerButton'
 import { $createEmojiNode } from '../nodes/EmojiNode'
-import { RichTextEditorControls } from './Controls/RichTextEditorControls'
 import { InlineToolbar } from './InlineToolbar'
 import { AddLinkModal } from './LinkModal'
 
@@ -24,6 +24,7 @@ export const RichTextUI = (props: {
     focused: boolean
     readOnly?: boolean
     background?: BoxProps['background']
+    threadId?: string
 }) => {
     const { background = 'level2' } = props
     const [editor] = useLexicalComposerContext()
@@ -152,7 +153,10 @@ export const RichTextUI = (props: {
         >
             <Stack horizontal alignItems="center" gap="lg" paddingX="md">
                 <Box grow>{props.children}</Box>
-                <RichTextEditorControls onSelectEmoji={onSelectEmoji} />
+                <Stack horizontal gap="xs" color="gray2" alignItems="start" paddingY="sm">
+                    {!props.editing ? <GiphyEntry threadId={props.threadId} /> : null}
+                    <EmojiPickerButton onSelectEmoji={onSelectEmoji} />
+                </Stack>
                 {rootLayerRef?.current &&
                     createPortal(
                         <Box absoluteFill padding="lg" ref={absoluteRef} pointerEvents="none">
