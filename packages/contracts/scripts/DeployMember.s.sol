@@ -43,19 +43,8 @@ contract DeployMember is ScriptUtils {
     vm.stopBroadcast();
 
     if (!_isTesting()) {
-      _writeJson();
+      _writeAddress("member", address(member));
       console.log("Deploying Council Member NFT: ", address(member));
     }
-  }
-
-  function _writeJson() internal {
-    string memory json = "";
-    json = vm.serializeString(json, "member", vm.toString(address(member)));
-    string memory path = string.concat(
-      "packages/generated/",
-      _getChainName(),
-      "/addresses/member.json"
-    );
-    vm.writeJson(json, path);
   }
 }

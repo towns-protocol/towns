@@ -1,63 +1,55 @@
 /* eslint-disable no-restricted-imports */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-
-import GoerliMemberAddress from '@harmony/generated/goerli/addresses/member.json' assert { type: 'json' }
+import Addresses from '@harmony/generated/addresses.json' assert { type: 'json' }
 import GoerliMemberNFTAbi from '@harmony/generated/goerli/abis/Member.abi.json' assert { type: 'json' }
 import GoerliSpaceFactoryAbi from '@harmony/generated/goerli/abis/SpaceFactory.abi.json' assert { type: 'json' }
-import GoerliSpaceFactoryAddresses from '@harmony/generated/goerli/addresses/space-factory.json' assert { type: 'json' }
 import GoerliPioneerNFTAbi from '@harmony/generated/goerli/abis/Pioneer.abi.json' assert { type: 'json' }
-import LocalhostMemberAddress from '@harmony/generated/localhost/addresses/member.json' assert { type: 'json' }
 import LocalhostCouncilNFTAbi from '@harmony/generated/localhost/abis/Member.abi.json' assert { type: 'json' }
 import LocalhostSpaceFactoryAbi from '@harmony/generated/localhost/abis/SpaceFactory.abi.json' assert { type: 'json' }
-import LocalhostSpaceFactoryAddresses from '@harmony/generated/localhost/addresses/space-factory.json' assert { type: 'json' }
 import LocalhostPioneerNFTAbi from '@harmony/generated/localhost/abis/Pioneer.abi.json' assert { type: 'json' }
 
 const goerliContractsInfo: IStaticContractsInfo = {
     memberNft: {
         abi: GoerliMemberNFTAbi,
-        address: GoerliMemberAddress.member,
+        address: Addresses['5']['member'],
     },
     spaceFactory: {
         abi: GoerliSpaceFactoryAbi,
-        address: GoerliSpaceFactoryAddresses.spaceFactory,
+        address: Addresses['5']['spaceFactory'],
     },
     pioneerNft: {
         abi: GoerliPioneerNFTAbi,
-        address: GoerliSpaceFactoryAddresses.pioneerToken,
+        address: Addresses['5']['pioneerToken'],
     },
 }
 
 const localhostContractsInfo: IStaticContractsInfo = {
     memberNft: {
         abi: LocalhostCouncilNFTAbi,
-        address: LocalhostMemberAddress.member,
+        address: Addresses['31337']['member'],
     },
     spaceFactory: {
         abi: LocalhostSpaceFactoryAbi,
-        address: LocalhostSpaceFactoryAddresses.spaceFactory,
+        address: Addresses['31337']['spaceFactory'],
     },
     pioneerNft: {
         abi: LocalhostPioneerNFTAbi,
-        address: LocalhostSpaceFactoryAddresses.pioneerToken,
+        address: Addresses['31337']['pioneerToken'],
     },
 }
 
 export interface IStaticContractsInfo {
     memberNft: {
         abi: typeof LocalhostCouncilNFTAbi | typeof GoerliMemberNFTAbi
-        address: typeof LocalhostMemberAddress.member | typeof GoerliMemberAddress.member
+        address: (typeof Addresses)['31337']['member'] | (typeof Addresses)[5]['member']
     }
     spaceFactory: {
         abi: typeof LocalhostSpaceFactoryAbi | typeof GoerliSpaceFactoryAbi
-        address:
-            | typeof LocalhostSpaceFactoryAddresses.spaceFactory
-            | typeof GoerliSpaceFactoryAddresses.spaceFactory
+        address: (typeof Addresses)['31337']['spaceFactory'] | (typeof Addresses)[5]['spaceFactory']
     }
     pioneerNft: {
         abi: typeof LocalhostPioneerNFTAbi | typeof GoerliPioneerNFTAbi
-        address:
-            | typeof LocalhostSpaceFactoryAddresses.pioneerToken
-            | typeof GoerliSpaceFactoryAddresses.pioneerToken
+        address: (typeof Addresses)['31337']['pioneerToken'] | (typeof Addresses)[5]['pioneerToken']
     }
 }
 

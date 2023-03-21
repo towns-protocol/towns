@@ -25,6 +25,21 @@ contract ScriptUtils is Script {
     return vm.readFile(string.concat(inputDir, chainDir, file));
   }
 
+  function _writeAddress(string memory key, address value) internal {
+    string memory generatedPath = "packages/generated/addresses.json";
+    string memory goPath = "servers/dendrite/zion/contracts/addresses.json";
+
+    string memory finalValue = string.concat(
+      ".",
+      vm.toString(block.chainid),
+      ".",
+      key
+    );
+
+    vm.writeJson(vm.toString(value), generatedPath, finalValue);
+    vm.writeJson(vm.toString(value), goPath, finalValue);
+  }
+
   function _getChainName() internal view returns (string memory) {
     uint256 id = block.chainid;
     if (id == 1) {

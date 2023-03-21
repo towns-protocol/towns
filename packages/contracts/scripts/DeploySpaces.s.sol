@@ -89,27 +89,9 @@ contract DeploySpaces is ScriptUtils {
   }
 
   function _writeJson() internal {
-    string memory path = string.concat(
-      "packages/generated/",
-      _getChainName(),
-      "/addresses/space-factory.json"
-    );
-
-    string memory goPath = string.concat(
-      "servers/dendrite/zion/contracts/",
-      _getChainName(),
-      "_space_factory",
-      "/space-factory.json"
-    );
-
-    vm.writeJson(vm.toString(address(spaceFactory)), path, ".spaceFactory");
-    vm.writeJson(vm.toString(address(spaceFactory)), goPath, ".spaceFactory");
-
-    vm.writeJson(vm.toString(address(spaceToken)), path, ".spaceToken");
-    vm.writeJson(vm.toString(address(spaceToken)), goPath, ".spaceToken");
-
-    vm.writeJson(vm.toString(address(pioneer)), path, ".pioneerToken");
-    vm.writeJson(vm.toString(address(pioneer)), goPath, ".pioneerToken");
+    _writeAddress("spaceFactory", address(spaceFactory));
+    _writeAddress("spaceToken", address(spaceToken));
+    _writeAddress("pioneerToken", address(pioneer));
   }
 
   function _createInitialOwnerPermissions() internal {
