@@ -242,7 +242,7 @@ const SpaceSideBarHeader = (props: {
                 horizontal
                 height="x8"
                 zIndex="ui"
-                pointerEvents={opaqueHeaderBar ? 'auto' : 'none'}
+                // pointerEvents={opaqueHeaderBar ? 'auto' : 'none'}
                 className={clsx([styles.spaceHeader])}
                 justifyContent="spaceBetween"
                 onPointerEnter={onHeaderOver}
@@ -310,7 +310,7 @@ const SpaceSideBarHeader = (props: {
                     borderBottom={opaqueHeaderBar ? 'default' : 'none'}
                     height="x20"
                     width="100%"
-                    pointerEvents="none"
+                    // pointerEvents="none"
                     style={{ opacity: 1 - props.scrollOffset }}
                 />
                 <Stack horizontal height="x8">
