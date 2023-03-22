@@ -1,12 +1,18 @@
 /* eslint-disable no-restricted-imports */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import Addresses from '@harmony/generated/addresses.json' assert { type: 'json' }
+
 import GoerliMemberNFTAbi from '@harmony/generated/goerli/abis/Member.abi.json' assert { type: 'json' }
 import GoerliSpaceFactoryAbi from '@harmony/generated/goerli/abis/SpaceFactory.abi.json' assert { type: 'json' }
 import GoerliPioneerNFTAbi from '@harmony/generated/goerli/abis/Pioneer.abi.json' assert { type: 'json' }
-import LocalhostCouncilNFTAbi from '@harmony/generated/localhost/abis/Member.abi.json' assert { type: 'json' }
+
+import LocalhostMemberNFTAbi from '@harmony/generated/localhost/abis/Member.abi.json' assert { type: 'json' }
 import LocalhostSpaceFactoryAbi from '@harmony/generated/localhost/abis/SpaceFactory.abi.json' assert { type: 'json' }
 import LocalhostPioneerNFTAbi from '@harmony/generated/localhost/abis/Pioneer.abi.json' assert { type: 'json' }
+
+import SepoliaMemberNFTAbi from '@harmony/generated/sepolia/abis/Member.abi.json' assert { type: 'json' }
+import SepoliaSpaceFactoryAbi from '@harmony/generated/sepolia/abis/SpaceFactory.abi.json' assert { type: 'json' }
+import SepoliaPioneerNFTAbi from '@harmony/generated/sepolia/abis/Pioneer.abi.json' assert { type: 'json' }
 
 const goerliContractsInfo: IStaticContractsInfo = {
     memberNft: {
@@ -25,7 +31,7 @@ const goerliContractsInfo: IStaticContractsInfo = {
 
 const localhostContractsInfo: IStaticContractsInfo = {
     memberNft: {
-        abi: LocalhostCouncilNFTAbi,
+        abi: LocalhostMemberNFTAbi,
         address: Addresses['31337']['member'],
     },
     spaceFactory: {
@@ -38,18 +44,39 @@ const localhostContractsInfo: IStaticContractsInfo = {
     },
 }
 
+const sepoliaContractsInfo: IStaticContractsInfo = {
+    memberNft: {
+        abi: SepoliaMemberNFTAbi,
+        address: Addresses['11155111']['member'],
+    },
+    spaceFactory: {
+        abi: SepoliaSpaceFactoryAbi,
+        address: Addresses['11155111']['spaceFactory'],
+    },
+    pioneerNft: {
+        abi: SepoliaPioneerNFTAbi,
+        address: Addresses['11155111']['pioneerToken'],
+    },
+}
+
 export interface IStaticContractsInfo {
     memberNft: {
-        abi: typeof LocalhostCouncilNFTAbi | typeof GoerliMemberNFTAbi
-        address: (typeof Addresses)['31337']['member'] | (typeof Addresses)[5]['member']
+        abi: typeof LocalhostMemberNFTAbi | typeof GoerliMemberNFTAbi | typeof SepoliaMemberNFTAbi
+        address: string
     }
     spaceFactory: {
-        abi: typeof LocalhostSpaceFactoryAbi | typeof GoerliSpaceFactoryAbi
-        address: (typeof Addresses)['31337']['spaceFactory'] | (typeof Addresses)[5]['spaceFactory']
+        abi:
+            | typeof LocalhostSpaceFactoryAbi
+            | typeof GoerliSpaceFactoryAbi
+            | typeof SepoliaSpaceFactoryAbi
+        address: string
     }
     pioneerNft: {
-        abi: typeof LocalhostPioneerNFTAbi | typeof GoerliPioneerNFTAbi
-        address: (typeof Addresses)['31337']['pioneerToken'] | (typeof Addresses)[5]['pioneerToken']
+        abi:
+            | typeof LocalhostPioneerNFTAbi
+            | typeof GoerliPioneerNFTAbi
+            | typeof SepoliaPioneerNFTAbi
+        address: string
     }
 }
 
@@ -61,6 +88,8 @@ export function getContractsInfo(chainId: number): IStaticContractsInfo {
         case 0:
         case 31337:
             return localhostContractsInfo
+        case 11155111:
+            return sepoliaContractsInfo
         default:
             throw new Error(`Unsupported chainId ${chainId}. Update ContractsInfo.ts`)
     }
