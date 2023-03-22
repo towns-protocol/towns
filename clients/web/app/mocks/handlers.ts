@@ -24,17 +24,14 @@ export const testHandlers = [
         return res(ctx.status(200), ctx.json(data))
     }),
 
-    rest.get(
-        `${env.VITE_TOKEN_SERVER_URL || ''}/api/getContractMetadata/eth-goerli`,
-        (req, res, ctx) => {
-            const address = req.url.searchParams.get('contractAddress')
-            if (!address) {
-                throw new Error('no address provided')
-            }
-            const data = getContractMetadataMock[address]
-            return res(ctx.status(200), ctx.json(data))
-        },
-    ),
+    rest.get(`${env.VITE_TOKEN_SERVER_URL || ''}/api/getContractMetadata/*`, (req, res, ctx) => {
+        const address = req.url.searchParams.get('contractAddress')
+        if (!address) {
+            throw new Error('no address provided')
+        }
+        const data = getContractMetadataMock[address]
+        return res(ctx.status(200), ctx.json(data))
+    }),
     // END TOKEN WORKER ///////////////
 
     // GATEWAY WORKER ///////////////

@@ -5,25 +5,30 @@ import { ContractMetadata } from '@token-worker/types'
 import { ethers } from 'ethers'
 import { env } from 'utils'
 import { axiosClient } from 'api/apiClient'
-import { NETWORK } from './utils'
+import { useAlchemyNetworkForNFTAPI } from 'hooks/useAlchemyNetwork'
 
 const queryKey = 'collectionMetatdata'
 
-async function getCollectionMetadata(address: string): Promise<ContractMetadata> {
+async function getCollectionMetadata(
+    address: string,
+    alchmeyNetwork: string,
+): Promise<ContractMetadata> {
     const TOKENS_SERVER_URL = env.VITE_TOKEN_SERVER_URL
-    const url = `${TOKENS_SERVER_URL}/api/getContractMetadata/${NETWORK}?contractAddress=${address}`
+    const url = `${TOKENS_SERVER_URL}/api/getContractMetadata/${alchmeyNetwork}?contractAddress=${address}`
     const response = await axiosClient.get(url)
 
     return response.data
 }
 
 export function useRoleTokensMetatdata(spaceId: RoomIdentifier, tokenAddresses: string[]) {
+    const alchmeyNetwork = useAlchemyNetworkForNFTAPI()
+
     const queryData = useQueries({
         queries: tokenAddresses.map((address) => {
             return {
                 queryKey: [queryKey, spaceId, address],
                 queryFn: () => {
-                    return getCollectionMetadata(address)
+                    return getCollectionMetadata(address, alchmeyNetwork)
                 },
                 staleTime: 1000 * 60 * 5,
                 enabled: ethers.utils.isAddress(address),
@@ -32,15 +37,19 @@ export function useRoleTokensMetatdata(spaceId: RoomIdentifier, tokenAddresses: 
     })
 
     return useMemo(() => {
+        const errors = queryData.map((token) => token.error).filter((error) => !!error)
+
         if (queryData.every((token) => token.isFetched)) {
             return {
                 data: queryData.map((token) => token.data).filter((data) => !!data),
+                errors,
                 isLoading: false,
             }
         }
 
         return {
             data: undefined,
+            errors,
             isLoading: true,
         }
     }, [queryData])

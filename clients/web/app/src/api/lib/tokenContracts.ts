@@ -6,8 +6,12 @@ import { ethers } from 'ethers'
 import { useMemo } from 'react'
 import { TokenProps } from '@components/Tokens/types'
 import { env } from 'utils'
+import {
+    fetchGoerli,
+    fetchVitalikTokens,
+    useAlchemyNetworkForNFTAPI,
+} from 'hooks/useAlchemyNetwork'
 import { axiosClient } from '../apiClient'
-import { NETWORK, fetchGoerli, fetchVitalikTokens } from './utils'
 
 const queryKey = 'tokenContractsForAddress'
 const queryKeyPaginatedAggregation = 'tokenContractsForAddressAll'
@@ -54,12 +58,19 @@ export function useTokenContractsForAddress({
 }: UseTokenContractsForAdress) {
     const queryClient = useQueryClient()
     const _queryKey = useMemo(() => (all ? [queryKey] : [queryKey, pageKey]), [all, pageKey])
+    const alchmeyNetwork = useAlchemyNetworkForNFTAPI()
     return useQuery(
         _queryKey,
         () =>
             chainId === 31337
-                ? getLocalHostTokens(wallet, zionTokenAddress, pageKey, all)
-                : getTokenContractsForAddress(wallet, zionTokenAddress, pageKey, all),
+                ? getLocalHostTokens(wallet, zionTokenAddress, pageKey, all, alchmeyNetwork)
+                : getTokenContractsForAddress(
+                      wallet,
+                      zionTokenAddress,
+                      pageKey,
+                      all,
+                      alchmeyNetwork,
+                  ),
         {
             onSuccess: (data) => {
                 if (!all) {
@@ -100,10 +111,11 @@ async function getLocalHostTokens(
     zionTokenAddress: string | null,
     pageKey = '',
     all = false,
+    alchmeyNetwork: string,
 ) {
     // to test with a big list of tokens, add ?vitalikTokens to the url, or ?goerli to use the goerli testnet
     if (fetchVitalikTokens || fetchGoerli) {
-        return getTokenContractsForAddress(wallet, zionTokenAddress, pageKey, all)
+        return getTokenContractsForAddress(wallet, zionTokenAddress, pageKey, all, alchmeyNetwork)
     }
 
     // on local, just return the zion token, if it exists (must be anvil account)
@@ -125,9 +137,10 @@ async function getTokenContractsForAddress(
     _zionTokenAddress: string | null,
     pageKey = '',
     all = false,
+    alchmeyNetwork: string,
 ) {
     const TOKENS_SERVER_URL = env.VITE_TOKEN_SERVER_URL
-    const url = `${TOKENS_SERVER_URL}/api/getNftsForOwner/${NETWORK}/${wallet}?contractMetadata&pageKey=${pageKey}${
+    const url = `${TOKENS_SERVER_URL}/api/getNftsForOwner/${alchmeyNetwork}/${wallet}?contractMetadata&pageKey=${pageKey}${
         all ? '&all' : ''
     }`
     const response = await axiosClient.get(url)

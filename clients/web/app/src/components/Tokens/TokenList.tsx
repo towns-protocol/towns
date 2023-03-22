@@ -94,7 +94,7 @@ export const TokenList = ({ isChecked, setValue, chainId, wallet }: TokenListPro
     const { data, isLoading, isError } = useTokenContractsForAddress({
         wallet: hasVitalikParams ? 'vitalik.eth' : wallet,
         zionTokenAddress,
-        enabled: true,
+        enabled: Boolean(chainId),
         all: true,
         chainId,
     })
@@ -163,9 +163,12 @@ export const TokenList = ({ isChecked, setValue, chainId, wallet }: TokenListPro
             )}
             {env.IS_DEV && chainId === 31337 && (
                 <Box padding="sm">
-                    <Text size="sm">
-                        Localhost will only return the zion token for anvil accounts. To test a long
-                        list, add ?vitalikTokens to url. To test your goerli tokens, add ?goerli
+                    <Text size="sm" color="negative">
+                        DEV message: Localhost will only return the zion token for anvil accounts.
+                        To test a long list, add ?vitalikTokens to url. To test your goerli tokens,
+                        add ?goerli. Please note that if you use these query params, you may get
+                        unexpected behavior in other parts of the app, if you are pointed to local
+                        homeserver.
                     </Text>
                 </Box>
             )}

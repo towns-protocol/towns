@@ -4,7 +4,7 @@ import { IsHolderOfCollectionResponse } from '@token-worker/types'
 import { axiosClient } from 'api/apiClient'
 import { env } from 'utils'
 import { useAuth } from 'hooks/useAuth'
-import { NETWORK } from './utils'
+import { useAlchemyNetworkForNFTAPI } from 'hooks/useAlchemyNetwork'
 
 const PIONEER_NFT_ADDRESS = '0xdb66D5b28B9acc9FB55B96751Ba694829d7EE606'
 
@@ -12,9 +12,9 @@ const zSchema: z.ZodType<IsHolderOfCollectionResponse> = z.object({
     isHolderOfCollection: z.boolean(),
 })
 
-async function fetchIsHolderOfToken(wallet: string, address: string) {
+async function fetchIsHolderOfToken(wallet: string, address: string, alchmeyNetwork: string) {
     const TOKENS_SERVER_URL = env.VITE_TOKEN_SERVER_URL
-    const url = `${TOKENS_SERVER_URL}/api/isHolderOfCollection/${NETWORK}?wallet=${wallet}&contractAddress=${address}`
+    const url = `${TOKENS_SERVER_URL}/api/isHolderOfCollection/${alchmeyNetwork}?wallet=${wallet}&contractAddress=${address}`
     const response = await axiosClient.get(url)
     const parseResult = zSchema.safeParse(response.data)
 
@@ -29,6 +29,7 @@ const queryKey = 'isHolderOfToken'
 
 export function useIsHolderOfToken(address: string) {
     const { loggedInWalletAddress: wallet } = useAuth()
+    const alchmeyNetwork = useAlchemyNetworkForNFTAPI()
 
     return useQuery(
         [queryKey, wallet, address],
@@ -36,7 +37,7 @@ export function useIsHolderOfToken(address: string) {
             if (!wallet) {
                 return
             }
-            return fetchIsHolderOfToken(wallet, address)
+            return fetchIsHolderOfToken(wallet, address, alchmeyNetwork)
         },
         {
             select: ({ isHolderOfCollection }) => isHolderOfCollection,

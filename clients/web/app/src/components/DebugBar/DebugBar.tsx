@@ -28,14 +28,14 @@ function areSynced(homeserverUrl: string, chainName: string) {
     const chainIsLocal = chainName.toLowerCase().includes('foundry')
     const localSync = serverIsLocal && chainIsLocal
     // the chain for the deployed app
-    const prodSync = !serverIsLocal && !chainIsLocal && chainName.toLowerCase().includes('goerli')
-    const serverName = serverIsLocal ? 'local' : 'towns.com'
+    const testSync = !serverIsLocal && !chainIsLocal && chainName.toLowerCase().includes('goerli')
+    const serverName = serverIsLocal ? 'local' : 'node1-test.towns.com'
     const platform = !chainName
         ? `Not connected | server:${serverName}`
         : `wallet: ${chainName} | server:${serverName}`
 
     return {
-        synced: localSync || prodSync,
+        synced: localSync || testSync,
         platform,
     }
 }
@@ -162,7 +162,7 @@ const DebugModal = ({
                                 disabled={chain.id === 5}
                                 onClick={switchToTestnet}
                             >
-                                Switch to goerli/towns.com
+                                Switch to goerli/node1-test.towns.com
                             </Button>
                             <Button size="button_xs" onClick={onClearUrl}>
                                 <Text size="sm" color="default">
