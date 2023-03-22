@@ -468,7 +468,6 @@ export function createMessageToSign(args: {
     walletAddress: string
     chainId: number
     homeServer: string
-    origin?: string
     statement: string
 }): string {
     // Create the auth metadata for signing.
