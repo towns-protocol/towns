@@ -9,6 +9,10 @@ import {
     DataTypes as LocalhostDataTypes,
     SpaceFactoryInterface as LocalhostInterface,
 } from '@harmony/generated/localhost/typings/SpaceFactory'
+import {
+    SpaceFactory as SepoliaContract,
+    SpaceFactoryInterface as SepoliaInterface,
+} from '@harmony/generated/sepolia/typings/SpaceFactory'
 
 import { BaseContractShim } from './BaseContractShim'
 
@@ -18,5 +22,7 @@ export class SpaceFactoryShim extends BaseContractShim<
     LocalhostContract,
     LocalhostInterface,
     GoerliContract,
-    GoerliInterface
+    GoerliInterface,
+    SepoliaContract,
+    SepoliaInterface
 > {}

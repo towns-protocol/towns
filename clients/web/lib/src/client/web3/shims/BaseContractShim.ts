@@ -1,10 +1,11 @@
 /* eslint-disable no-restricted-imports */
 
 import { BytesLike, ethers } from 'ethers'
-import { GOERLI, LOCALHOST_CHAIN_ID } from '../Web3Constants'
+import { GOERLI, LOCALHOST_CHAIN_ID, SEPOLIA } from '../Web3Constants'
 
 import GoerliEventsAbi from '@harmony/generated/goerli/abis/Events.abi.json' assert { type: 'json' }
 import LocalhostEventsAbi from '@harmony/generated/localhost/abis/Events.abi.json' assert { type: 'json' }
+import SepoliaEventsAbi from '@harmony/generated/sepolia/abis/Events.abi.json' assert { type: 'json' }
 
 export type PromiseOrValue<T> = T | Promise<T>
 
@@ -15,6 +16,8 @@ export class BaseContractShim<
     T_LOCALHOST_INTERFACE extends ethers.utils.Interface,
     T_GOERLI_CONTRACT extends ethers.Contract,
     T_GOERLI_INTERFACE extends ethers.utils.Interface,
+    T_SEPOLIA_CONTRACT extends ethers.Contract,
+    T_SEPOLIA_INTERFACE extends ethers.utils.Interface,
 > {
     public readonly address: string
     public readonly chainId: number
@@ -41,12 +44,14 @@ export class BaseContractShim<
         this.contractInterface = new ethers.utils.Interface(abi as string)
     }
 
-    public get interface(): T_LOCALHOST_INTERFACE | T_GOERLI_INTERFACE {
+    public get interface(): T_LOCALHOST_INTERFACE | T_GOERLI_INTERFACE | T_SEPOLIA_INTERFACE {
         switch (this.chainId) {
             case LOCALHOST_CHAIN_ID:
                 return this.contractInterface as unknown as T_LOCALHOST_INTERFACE
             case GOERLI:
                 return this.contractInterface as unknown as T_GOERLI_INTERFACE
+            case SEPOLIA:
+                return this.contractInterface as unknown as T_SEPOLIA_INTERFACE
             default:
                 throw new Error(`Unsupported chainId ${this.chainId}`)
         }
@@ -58,12 +63,14 @@ export class BaseContractShim<
                 return LocalhostEventsAbi
             case GOERLI:
                 return GoerliEventsAbi
+            case SEPOLIA:
+                return SepoliaEventsAbi
             default:
                 throw new Error(`Unsupported chainId ${this.chainId}`)
         }
     }
 
-    public get events(): T_LOCALHOST_CONTRACT | T_GOERLI_CONTRACT {
+    public get events(): T_LOCALHOST_CONTRACT | T_GOERLI_CONTRACT | T_SEPOLIA_CONTRACT {
         // lazy create an instance if it is not already cached
         if (!this.eventsContract) {
             this.eventsContract = this.createEventsContractInstance()
@@ -73,12 +80,14 @@ export class BaseContractShim<
                 return this.eventsContract as unknown as T_LOCALHOST_CONTRACT
             case GOERLI:
                 return this.eventsContract as unknown as T_GOERLI_CONTRACT
+            case SEPOLIA:
+                return this.eventsContract as unknown as T_SEPOLIA_CONTRACT
             default:
                 throw new Error(`Unsupported chainId ${this.chainId}`)
         }
     }
 
-    public get read(): T_LOCALHOST_CONTRACT | T_GOERLI_CONTRACT {
+    public get read(): T_LOCALHOST_CONTRACT | T_GOERLI_CONTRACT | T_SEPOLIA_CONTRACT {
         // lazy create an instance if it is not already cached
         if (!this.readContract) {
             this.readContract = this.createReadContractInstance()
@@ -88,12 +97,14 @@ export class BaseContractShim<
                 return this.readContract as unknown as T_LOCALHOST_CONTRACT
             case GOERLI:
                 return this.readContract as unknown as T_GOERLI_CONTRACT
+            case SEPOLIA:
+                return this.readContract as unknown as T_SEPOLIA_CONTRACT
             default:
                 throw new Error(`Unsupported chainId ${this.chainId}`)
         }
     }
 
-    public get write(): T_LOCALHOST_CONTRACT | T_GOERLI_CONTRACT {
+    public get write(): T_LOCALHOST_CONTRACT | T_GOERLI_CONTRACT | T_SEPOLIA_CONTRACT {
         // lazy create an instance if it is not already cached
         if (!this.writeContract) {
             this.writeContract = this.createWriteContractInstance()
@@ -103,6 +114,8 @@ export class BaseContractShim<
                 return this.writeContract as unknown as T_LOCALHOST_CONTRACT
             case GOERLI:
                 return this.writeContract as unknown as T_GOERLI_CONTRACT
+            case SEPOLIA:
+                return this.writeContract as unknown as T_SEPOLIA_CONTRACT
             default:
                 throw new Error(`Unsupported chainId ${this.chainId}`)
         }

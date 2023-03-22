@@ -8,6 +8,10 @@ import {
     UserEntitlement as LocalhostContract,
     UserEntitlementInterface as LocalhostInterface,
 } from '@harmony/generated/localhost/typings/UserEntitlement'
+import {
+    UserEntitlement as SepoliaContract,
+    UserEntitlementInterface as SepoliaInterface,
+} from '@harmony/generated/sepolia/typings/UserEntitlement'
 
 import { BaseContractShim } from './BaseContractShim'
 
@@ -15,5 +19,7 @@ export class UserEntitlementShim extends BaseContractShim<
     LocalhostContract,
     LocalhostInterface,
     GoerliContract,
-    GoerliInterface
+    GoerliInterface,
+    SepoliaContract,
+    SepoliaInterface
 > {}
