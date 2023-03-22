@@ -9,11 +9,18 @@ import {
     PioneerInterface as LocalhostInterface,
 } from '@harmony/generated/localhost/typings/Pioneer'
 
+import {
+    Pioneer as SepoliaContract,
+    PioneerInterface as SepoliaInterface,
+} from '@harmony/generated/sepolia/typings/Pioneer'
+
 import { BaseContractShim } from './BaseContractShim'
 
 export class PioneerNFTShim extends BaseContractShim<
     LocalhostContract,
     LocalhostInterface,
     GoerliContract,
-    GoerliInterface
+    GoerliInterface,
+    SepoliaContract,
+    SepoliaInterface
 > {}

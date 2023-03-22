@@ -10,6 +10,10 @@ import {
     DataTypes as LocalhostDataTypes,
     SpaceInterface as LocalhostInterface,
 } from '@harmony/generated/localhost/typings/Space'
+import {
+    Space as SepoliaContract,
+    SpaceInterface as SepoliaInterface,
+} from '@harmony/generated/sepolia/typings/Space'
 
 import { BaseContractShim } from './BaseContractShim'
 
@@ -19,7 +23,9 @@ export class SpaceShim extends BaseContractShim<
     LocalhostContract,
     LocalhostInterface,
     GoerliContract,
-    GoerliInterface
+    GoerliInterface,
+    SepoliaContract,
+    SepoliaInterface
 > {
     public async getChannels(): Promise<ChannelMetadata[]> {
         const channels: ChannelMetadata[] = []
