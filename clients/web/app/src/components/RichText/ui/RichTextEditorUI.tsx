@@ -11,9 +11,12 @@ import { useEvent } from 'react-use-event-hook'
 import { TOGGLE_LINK_COMMAND } from '@lexical/link'
 import { BaseEmoji, EmojiData } from 'emoji-mart'
 import { createPortal } from 'react-dom'
-import { Box, BoxProps, RootLayerContext, Stack } from '@ui'
+import { AnimatePresence } from 'framer-motion'
+import { Box, BoxProps, Icon, Paragraph, RootLayerContext, Stack } from '@ui'
 import { GiphyEntry } from '@components/Giphy/GiphyEntry'
 import { EmojiPickerButton } from '@components/EmojiPickerButton'
+import { FadeInBox } from '@components/Transitions'
+import { useNetworkStatus } from 'hooks/useNetworkStatus'
 import { $createEmojiNode } from '../nodes/EmojiNode'
 import { InlineToolbar } from './InlineToolbar'
 import { AddLinkModal } from './LinkModal'
@@ -25,6 +28,7 @@ export const RichTextUI = (props: {
     readOnly?: boolean
     background?: BoxProps['background']
     threadId?: string
+    attemptingToSend?: boolean
 }) => {
     const { background = 'level2' } = props
     const [editor] = useLexicalComposerContext()
@@ -170,6 +174,34 @@ export const RichTextUI = (props: {
                     )}
                 {linkLinkModal && <AddLinkModal onHide={onHideModal} onSaveLink={onSaveLink} />}
             </Stack>
+            <OfflineIndicator attemptingToSend={props.attemptingToSend} />
         </Stack>
+    )
+}
+
+const OfflineIndicator = (props: { attemptingToSend?: boolean }) => {
+    const { isOffline } = useNetworkStatus()
+    let message = 'Your connection appears to be offline.'
+    if (props.attemptingToSend) {
+        message = [message, 'Please try again when back online...'].join(' ')
+    }
+    return (
+        <AnimatePresence>
+            {isOffline ? (
+                <FadeInBox
+                    horizontal
+                    key={message}
+                    gap="xs"
+                    position="bottomLeft"
+                    style={{ transform: `translateY(100%)` }}
+                    paddingY="xxs"
+                    color="error"
+                    alignItems="center"
+                >
+                    <Icon type="offline" size="square_sm" />
+                    <Paragraph size="sm">{message}</Paragraph>
+                </FadeInBox>
+            ) : null}
+        </AnimatePresence>
     )
 }

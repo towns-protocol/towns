@@ -482,6 +482,17 @@ export const NumberedListIcon = forwardRef<SVGSVGElement, SVGIconProps>((props, 
     </svg>
 ))
 
+export const OfflineIcon = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" {...props} ref={ref}>
+        <path
+            fillRule="evenodd"
+            clipRule="evenodd"
+            d="M5.39316 7.78945L2.90104 5.29733C2.511 4.90729 2.49763 4.28828 2.87117 3.91473C3.24471 3.54119 3.86372 3.55456 4.25377 3.9446L19.8203 19.5111C20.2103 19.9012 20.2237 20.5202 19.8502 20.8937C19.4766 21.2673 18.8576 21.2539 18.4676 20.8639L16.4821 18.8784C16.2845 18.8683 16.0892 18.8489 15.8965 18.8206C15.6225 18.8641 15.3419 18.8866 15.0567 18.8866H6.32325C3.3833 18.8866 1 16.5033 1 13.5633C1 10.9499 2.88327 8.77637 5.36673 8.32578L5.36673 8.32325C5.36673 8.14309 5.37568 7.96501 5.39316 7.78945ZM14.5772 16.9735H6.32325C4.43985 16.9735 2.91304 15.4467 2.91304 13.5633C2.91304 11.6799 4.43985 10.1531 6.32325 10.1531H7.58079L7.53596 9.93225L14.5772 16.9735ZM8.49546 5.71287L7.13952 4.35692C8.0815 3.51314 9.32581 3 10.69 3C13.0224 3 15.0036 4.49948 15.7235 6.58732C16.0746 6.52555 16.4355 6.49338 16.8034 6.49338C20.2257 6.49338 23 9.26769 23 12.69C23 14.7406 22.0039 16.5586 20.4691 17.6865L19.0933 16.3107C20.2915 15.5513 21.087 14.2135 21.087 12.69C21.087 10.3242 19.1691 8.40643 16.8034 8.40643C16.29 8.40643 15.7998 8.49631 15.3462 8.66039L14.2243 9.06621L14.0721 7.88288C13.8568 6.20787 12.4238 4.91304 10.69 4.91304C9.85415 4.91304 9.08855 5.21374 8.49546 5.71287Z"
+            fill="currentColor"
+        />
+    </svg>
+))
+
 export const PeopleIcon = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" {...props} ref={ref}>
         <path
@@ -911,6 +922,7 @@ const iconMap = {
     newmessage: NewMessageIcon,
     nokey: NoKeyIcon,
     numberedlist: NumberedListIcon,
+    offline: OfflineIcon,
     people: PeopleIcon,
     personAdd: PersonAdd,
     pin: PinIcon,

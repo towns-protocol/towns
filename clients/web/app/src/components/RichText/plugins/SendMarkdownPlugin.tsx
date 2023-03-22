@@ -14,11 +14,13 @@ import { Button, Stack } from '@ui'
 import { $isMentionNode } from '../nodes/MentionNode'
 
 export const SendMarkdownPlugin = (props: {
+    disabled?: boolean
     displayButtons?: boolean
     onSend?: (value: string, mentions: Mention[]) => void
+    onSendAttemptWhileDisabled?: () => void
     onCancel?: () => void
 }) => {
-    const { onSend } = props
+    const { disabled, onSend, onSendAttemptWhileDisabled } = props
     const [editor] = useLexicalComposerContext()
 
     const { parseMarkdown } = useParseMarkdown(onSend)
@@ -47,8 +49,12 @@ export const SendMarkdownPlugin = (props: {
                 KEY_ENTER_COMMAND,
                 (e: KeyboardEvent, editor) => {
                     if (!e.shiftKey) {
-                        parseMarkdown()
-                        editor.dispatchCommand(CLEAR_EDITOR_COMMAND, undefined)
+                        if (!disabled) {
+                            parseMarkdown()
+                            editor.dispatchCommand(CLEAR_EDITOR_COMMAND, undefined)
+                        } else if (onSendAttemptWhileDisabled) {
+                            onSendAttemptWhileDisabled()
+                        }
                         e.preventDefault()
                         e.stopImmediatePropagation()
                     } else {
@@ -62,7 +68,7 @@ export const SendMarkdownPlugin = (props: {
                 COMMAND_PRIORITY_LOW,
             ),
         )
-    }, [editor, onSend, parseMarkdown, registerCommandCount])
+    }, [editor, parseMarkdown, disabled, registerCommandCount])
 
     const sendMessage = useCallback(() => {
         parseMarkdown()

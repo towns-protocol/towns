@@ -29,6 +29,7 @@ import * as fieldStyles from 'ui/components/_internal/Field/Field.css'
 import { notUndefined } from 'ui/utils/utils'
 import { useStore } from 'store/store'
 import { BoxProps } from '@ui'
+import { useNetworkStatus } from 'hooks/useNetworkStatus'
 import { useInitialConfig } from './hooks/useInitialConfig'
 import { AnnotationNode } from './nodes/AnnotationNode'
 import { ChannelLinkNode, createChannelLinkTransformer } from './nodes/ChannelLinkNode'
@@ -186,6 +187,9 @@ export const RichTextEditor = (props: Props) => {
     const onFocusChange = (focus: boolean) => {
         setFocused(focus)
     }
+    const { isOffline } = useNetworkStatus()
+    const [isAttemptingSend, setIsAttemptingSend] = useState(false)
+
     const onSendCb = useCallback(
         (message: string, mentions: Mention[]) => {
             const options = mentions.length > 0 ? { mentions } : undefined
@@ -193,6 +197,9 @@ export const RichTextEditor = (props: Props) => {
         },
         [onSend],
     )
+    const onSendAttemptWhileDisabled = useCallback(() => {
+        setIsAttemptingSend(true)
+    }, [])
 
     return (
         <LexicalComposer initialConfig={initialConfig}>
@@ -201,6 +208,7 @@ export const RichTextEditor = (props: Props) => {
                 editing={isEditing}
                 background={props.background}
                 threadId={props.threadId}
+                attemptingToSend={isAttemptingSend}
             >
                 <RichTextPlugin
                     contentEditable={
@@ -223,7 +231,9 @@ export const RichTextEditor = (props: Props) => {
             <CheckListPlugin />
             <SendMarkdownPlugin
                 displayButtons={props.displayButtons}
+                disabled={isOffline}
                 onSend={onSendCb}
+                onSendAttemptWhileDisabled={onSendAttemptWhileDisabled}
                 onCancel={props.onCancel}
             />
             {props.autoFocus ? <AutoFocusPlugin /> : <></>}
