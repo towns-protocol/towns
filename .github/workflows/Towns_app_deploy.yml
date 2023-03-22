@@ -28,7 +28,7 @@ jobs:
         steps:
             - name: Call render deploy webhook
               run: |
-                  curl -X POST -H "Content-Type: application/json" {{ secrets.RENDER_TOWNS_WEBAPP_DEPLOY_WEBHOOK }} 
+                  curl -X POST -H "Content-Type: application/json" ${{ secrets.RENDER_TOWNS_WEBAPP_DEPLOY_WEBHOOK }} 
 
             # If action failed, we send a slack notification
             - name: Slack notification
