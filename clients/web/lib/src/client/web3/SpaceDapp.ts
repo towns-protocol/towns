@@ -612,20 +612,41 @@ export class SpaceDapp implements ISpaceDapp {
         params: UpdateRoleParams,
     ): BytesLike[] {
         const encodedCallData: BytesLike[] = []
-        // remove current permissions
-        encodedCallData.push(
-            space.interface.encodeFunctionData('removePermissionsFromRole', [
-                params.roleId,
-                roleDetails.permissions,
-            ]),
-        )
-        // replace with new permissions
-        encodedCallData.push(
-            space.interface.encodeFunctionData('addPermissionsToRole', [
-                params.roleId,
-                params.permissions,
-            ]),
-        )
+        // get all the permissions in the role to figure out which ones to add and which to remove
+        const currentPermissions = new Set<Permission>(roleDetails.permissions)
+        const updatedPermissions = new Set<Permission>(params.permissions)
+        const permissionsToRemove: Permission[] = []
+        const permissionsToAdd: Permission[] = []
+        for (const r of updatedPermissions) {
+            // if the current permissions does not include the updated permission, then that permission should be added.
+            if (!currentPermissions.has(r)) {
+                permissionsToAdd.push(r)
+            }
+        }
+        for (const r of currentPermissions) {
+            // if the updated permissions no longer have the current permission, then that permissions should be removed.
+            if (!updatedPermissions.has(r)) {
+                permissionsToRemove.push(r)
+            }
+        }
+        // add any new permissions
+        if (permissionsToAdd.length > 0) {
+            encodedCallData.push(
+                space.interface.encodeFunctionData('addPermissionsToRole', [
+                    params.roleId,
+                    permissionsToAdd,
+                ]),
+            )
+        }
+        // remove any old permissions
+        if (permissionsToRemove.length > 0) {
+            encodedCallData.push(
+                space.interface.encodeFunctionData('removePermissionsFromRole', [
+                    params.roleId,
+                    permissionsToRemove,
+                ]),
+            )
+        }
         // return all the encoded function calls to update the permissions
         return encodedCallData
     }
@@ -635,34 +656,63 @@ export class SpaceDapp implements ISpaceDapp {
         params: UpdateRoleParams,
     ): Promise<BytesLike[]> {
         const encodedCallData: BytesLike[] = []
+        const updatedEntitlements: EntitlementData = {
+            tokens: params.tokens,
+            users: params.users,
+        }
         // get current entitlements for the role
         const entitlementShims = await this.createEntitlementShims(space)
         const [modules, currentEntitlements] = await Promise.all([
             space.read.getEntitlementModules(),
             this.getEntitlementDetails(space, entitlementShims, params.roleId),
         ])
-        // remove current entitlements
-        const encodeRemoveRoleFromEntitlement = this.encodeRemoveRoleFromEntitlement(
-            space,
-            params.roleId,
-            modules,
-            currentEntitlements,
-        )
-        for (const e of encodeRemoveRoleFromEntitlement) {
-            encodedCallData.push(e)
+        // compare the current entitlements with the updated entitlements to
+        // figure out which ones to add and which to remove
+        const entitlementsToRemove: EntitlementData = {
+            tokens: [],
+            users: [],
         }
-        // replace with new entitlements
-        const encodeAddRoleToEntitlement = this.encodeAddRoleToEntitlement(
-            space,
-            params.roleId,
-            modules,
-            {
-                tokens: params.tokens,
-                users: params.users,
-            },
-        )
-        for (const e of encodeAddRoleToEntitlement) {
-            encodedCallData.push(e)
+        const entitlementsToAdd: EntitlementData = {
+            tokens: [],
+            users: [],
+        }
+        if (
+            !this.areTokenEntitlementsEqual(currentEntitlements.tokens, updatedEntitlements.tokens)
+        ) {
+            entitlementsToRemove.tokens = currentEntitlements.tokens
+            entitlementsToAdd.tokens = updatedEntitlements.tokens
+        }
+        if (!this.areUserEntitlementsEqual(currentEntitlements.users, updatedEntitlements.users)) {
+            entitlementsToRemove.users = currentEntitlements.users
+            entitlementsToAdd.users = updatedEntitlements.users
+        }
+        // add entitlements if any
+        // note: Add must preceed Remove. Otherwise, the smart contract's internal logic may revert.
+        // e.g. in order to add a new moderator, the user must first be added to the user's entitlementData.
+        // then, the old user entitlementData must be removed from the role. If the reverse happens, the smart contract
+        // may revert because the user who is making this change would have been removed first.
+        if (entitlementsToAdd.tokens.length > 0 || entitlementsToAdd.users.length > 0) {
+            const encodeAddRoleToEntitlement = this.encodeAddRoleToEntitlement(
+                space,
+                params.roleId,
+                modules,
+                updatedEntitlements,
+            )
+            for (const e of encodeAddRoleToEntitlement) {
+                encodedCallData.push(e)
+            }
+        }
+        // remove outdated entitlements from current
+        if (entitlementsToRemove.tokens.length > 0 || entitlementsToRemove.users.length > 0) {
+            const encodeRemoveRoleFromEntitlement = this.encodeRemoveRoleFromEntitlement(
+                space,
+                params.roleId,
+                modules,
+                currentEntitlements,
+            )
+            for (const e of encodeRemoveRoleFromEntitlement) {
+                encodedCallData.push(e)
+            }
         }
         // return all the encoded function calls to update the entitlements
         return encodedCallData
@@ -672,7 +722,7 @@ export class SpaceDapp implements ISpaceDapp {
         space: SpaceShim,
         roleId: number,
         modules: SpaceDataTypes.EntitlementModuleStructOutput[],
-        entitlements: EntitlementData,
+        entitlementsToAdd: EntitlementData,
     ): BytesLike[] {
         const encodedCallData: BytesLike[] = []
         for (const m of modules) {
@@ -680,10 +730,10 @@ export class SpaceDapp implements ISpaceDapp {
                 case EntitlementModuleType.TokenEntitlement:
                     {
                         // contract execution will revert if the tokens array is empty
-                        if (entitlements.tokens.length) {
+                        if (entitlementsToAdd.tokens.length) {
                             const entitlement = createTokenEntitlementStruct(
                                 m.moduleAddress,
-                                entitlements.tokens,
+                                entitlementsToAdd.tokens,
                             )
                             const addRole = space.interface.encodeFunctionData(
                                 'addRoleToEntitlement',
@@ -696,16 +746,16 @@ export class SpaceDapp implements ISpaceDapp {
                 case EntitlementModuleType.UserEntitlement:
                     {
                         // contract execution will revert if the users array is empty
-                        if (entitlements.users.length) {
+                        if (entitlementsToAdd.users.length) {
                             const entitlement = createUserEntitlementStruct(
                                 m.moduleAddress,
-                                entitlements.users,
+                                entitlementsToAdd.users,
                             )
-                            const removeRole = space.interface.encodeFunctionData(
+                            const addRole = space.interface.encodeFunctionData(
                                 'addRoleToEntitlement',
                                 [roleId, entitlement],
                             )
-                            encodedCallData.push(removeRole)
+                            encodedCallData.push(addRole)
                         }
                     }
                     break
@@ -721,7 +771,7 @@ export class SpaceDapp implements ISpaceDapp {
         space: SpaceShim,
         roleId: number,
         modules: SpaceDataTypes.EntitlementModuleStructOutput[],
-        entitlements: EntitlementData,
+        entitlementsToRemove: EntitlementData,
     ): BytesLike[] {
         const encodedCallData: BytesLike[] = []
         for (const m of modules) {
@@ -729,10 +779,10 @@ export class SpaceDapp implements ISpaceDapp {
                 case EntitlementModuleType.TokenEntitlement:
                     {
                         // contract execution will revert if the tokens array is empty
-                        if (entitlements.tokens.length) {
+                        if (entitlementsToRemove.tokens.length) {
                             const entitlement = createTokenEntitlementStruct(
                                 m.moduleAddress,
-                                entitlements.tokens,
+                                entitlementsToRemove.tokens,
                             )
                             const removeRole = space.interface.encodeFunctionData(
                                 'removeRoleFromEntitlement',
@@ -745,10 +795,10 @@ export class SpaceDapp implements ISpaceDapp {
                 case EntitlementModuleType.UserEntitlement:
                     {
                         // contract execution will revert if the users array is empty
-                        if (entitlements.users.length) {
+                        if (entitlementsToRemove.users.length) {
                             const entitlement = createUserEntitlementStruct(
                                 m.moduleAddress,
-                                entitlements.users,
+                                entitlementsToRemove.users,
                             )
                             const removeRole = space.interface.encodeFunctionData(
                                 'removeRoleFromEntitlement',
@@ -797,9 +847,17 @@ export class SpaceDapp implements ISpaceDapp {
         // The app only requires one at the moment.
         // In the future we might want to support more.
         if (rawTokenDetails.length > 1) {
+            console.error(
+                'More than one token entitlement not supported at the moment.',
+                rawTokenDetails,
+            )
             throw new Error('More than one token entitlement not supported at the moment.')
         }
         if (rawUserDetails.length > 1) {
+            console.error(
+                'More than one user entitlement not supported at the moment.',
+                rawUserDetails,
+            )
             throw new Error('More than one user entitlement not supported at the moment.')
         }
         // Return the entitlement details.
@@ -811,6 +869,57 @@ export class SpaceDapp implements ISpaceDapp {
             tokens,
             users,
         }
+    }
+
+    private areTokenEntitlementsEqual(
+        a: TokenDataTypes.ExternalTokenStruct[],
+        b: TokenDataTypes.ExternalTokenStruct[],
+    ): boolean {
+        if (a.length !== b.length) {
+            return false
+        }
+        for (const aToken of a) {
+            if (!b.some((bToken) => this.isEqualToken(aToken, bToken))) {
+                return false
+            }
+        }
+        return true
+    }
+
+    private areUserEntitlementsEqual(a: string[], b: string[]): boolean {
+        if (a.length !== b.length) {
+            return false
+        }
+        for (const aUser of a) {
+            if (!b.some((bUser) => aUser === bUser)) {
+                return false
+            }
+        }
+        return true
+    }
+
+    private isEqualToken(
+        a: TokenDataTypes.ExternalTokenStruct,
+        b: TokenDataTypes.ExternalTokenStruct,
+    ): boolean {
+        return (
+            a.contractAddress === b.contractAddress &&
+            a.isSingleToken === b.isSingleToken &&
+            a.quantity === b.quantity &&
+            this.isEqualTokenIds(a.tokenIds as BigNumber[], b.tokenIds as BigNumber[])
+        )
+    }
+
+    private isEqualTokenIds(a: BigNumber[], b: BigNumber[]): boolean {
+        if (a.length !== b.length) {
+            return false
+        }
+        for (let i = 0; i < a.length; i++) {
+            if (!a[i].eq(b[i])) {
+                return false
+            }
+        }
+        return true
     }
 
     private async createEntitlementShims(space: SpaceShim): Promise<EntitlementShims> {
