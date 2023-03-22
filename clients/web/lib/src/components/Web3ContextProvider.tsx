@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useRef } from 'react'
 import { useWeb3 } from '../hooks/Web3Context/useWeb3'
 import { WagmiConfig, createClient, configureChains, Chain, Address } from 'wagmi'
-import { goerli, localhost, foundry } from '@wagmi/core/chains'
+import { goerli, localhost, foundry, sepolia } from '@wagmi/core/chains'
 import { publicProvider } from 'wagmi/providers/public'
 import { InjectedConnector } from 'wagmi/connectors/injected'
 import { TProvider, WalletStatus } from '../types/web3-types'
@@ -50,7 +50,7 @@ export function Web3ContextProvider(props: Props): JSX.Element {
         // This indicates the provider is being swapped between public & alchemy during these network changes, so we may need to fine tune this in the future or handle it otherwise if real users experience it
         // Since this also seems to be just on metamask, ignoring for now
         const { chains, provider, webSocketProvider } = configureChains(
-            [goerli, localhost, foundry],
+            [goerli, localhost, foundry, sepolia],
             props.alchemyKey
                 ? [
                       alchemyProvider({ apiKey: props.alchemyKey, priority: 0 }),
