@@ -1,0 +1,43 @@
+# When triggered, will deploy the Towns app to the specified environment.
+# Note: This script does not affect what code gets deployed. Every app
+# on render.com has an associated branch. For example, the test and 
+# production apps both point to the "main" branch. This means that any
+# deploy to those environments will just take the latest commit on the
+# "main" branch.
+
+name: 'Deploy Towns WebApp'
+
+on:
+  workflow_dispatch: # A build was manually requested
+     inputs:
+        environment:
+            description: 'Environment'
+            required: true
+            default: 'test'
+
+jobs:
+    deploy_towns_app:
+        name: Deploy
+        runs-on: ubuntu-latest
+        environment: ${{ inputs.environment }}
+
+        permissions:
+            contents: write
+            packages: write
+
+        steps:
+            - name: Call render deploy webhook
+              run: |
+                  curl -X POST -H "Content-Type: application/json" {{ secrets.RENDER_TOWNS_WEBAPP_DEPLOY_WEBHOOK }} 
+
+            # If action failed, we send a slack notification
+            - name: Slack notification
+              if: failure()
+              uses: rtCamp/action-slack-notify@v2
+              env:
+                  SLACK_WEBHOOK: ${{ secrets.SLACK_CI_CHANNEL_WEBHOOK_URL }}
+                  SLACK_TITLE: 'Failure'
+                  SLACK_USERNAME: 'CI'
+                  SLACK_ICON_EMOJI: ':boom:'
+                  SLACK_COLOR: '#FF0000'
+                  SLACK_MESSAGE: 'Towns App Deploy Failed on ${{ github.repository }}'
