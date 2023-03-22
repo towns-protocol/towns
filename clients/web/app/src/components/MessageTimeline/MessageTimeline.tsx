@@ -150,12 +150,18 @@ export const MessageTimeline = (props: Props) => {
                     return filtered.map((event, index, events) => {
                         let item: MessageRenderEvent | EncryptedMessageRenderEvent
 
+                        // this occurs when a users has mixed encrypted and unencrypted messages
+                        const messageDisplayEncrypted =
+                            (event.content.kind === ZTEvent.RoomMessage &&
+                                event.content.msgType === 'm.bad.encrypted') ||
+                            event.content.kind === ZTEvent.RoomMessageEncrypted
+
                         if (isRoomMessage(event)) {
                             item = {
                                 type: RenderEventType.Message,
                                 key: event.eventId,
                                 event,
-                                displayEncrypted,
+                                displayEncrypted: displayEncrypted || messageDisplayEncrypted,
                                 displayContext:
                                     index > 0 ? 'tail' : events.length > 1 ? 'head' : 'single',
                             }
