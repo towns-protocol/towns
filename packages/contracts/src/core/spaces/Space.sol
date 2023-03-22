@@ -159,7 +159,7 @@ contract Space is
   ) external {
     _isAllowed(IN_SPACE, Permissions.AddRemoveChannels);
 
-    Utils.validateName(channelName);
+    Utils.validateLength(channelName);
 
     bytes32 channelHash = keccak256(abi.encodePacked(channelNetworkId));
 
@@ -178,7 +178,7 @@ contract Space is
   ) external returns (bytes32) {
     _isAllowed(IN_SPACE, Permissions.AddRemoveChannels);
 
-    Utils.validateName(channelName);
+    Utils.validateLength(channelName);
 
     bytes32 channelHash = keccak256(abi.encodePacked(channelNetworkId));
 

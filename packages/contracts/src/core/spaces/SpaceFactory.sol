@@ -107,7 +107,7 @@ contract SpaceFactory is
     _validateGatingEnabled();
 
     // validate space name
-    Utils.validateName(spaceName);
+    Utils.validateLength(spaceName);
 
     // validate space network id
     if (bytes(spaceNetworkId).length == 0) {

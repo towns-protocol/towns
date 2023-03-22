@@ -335,17 +335,17 @@
   },
   "ast": {
     "absolutePath": "packages/contracts/src/libraries/Errors.sol",
-    "id": 58772,
+    "id": 58736,
     "exportedSymbols": {
       "Errors": [
-        58771
+        58735
       ]
     },
     "nodeType": "SourceUnit",
     "src": "38:889:136",
     "nodes": [
       {
-        "id": 58718,
+        "id": 58682,
         "nodeType": "PragmaDirective",
         "src": "38:23:136",
         "nodes": [],
@@ -356,12 +356,12 @@
         ]
       },
       {
-        "id": 58771,
+        "id": 58735,
         "nodeType": "ContractDefinition",
         "src": "63:863:136",
         "nodes": [
           {
-            "id": 58720,
+            "id": 58684,
             "nodeType": "ErrorDefinition",
             "src": "82:26:136",
             "nodes": [],
@@ -369,14 +369,14 @@
             "name": "InvalidParameters",
             "nameLocation": "88:17:136",
             "parameters": {
-              "id": 58719,
+              "id": 58683,
               "nodeType": "ParameterList",
               "parameters": [],
               "src": "105:2:136"
             }
           },
           {
-            "id": 58722,
+            "id": 58686,
             "nodeType": "ErrorDefinition",
             "src": "111:26:136",
             "nodes": [],
@@ -384,14 +384,14 @@
             "name": "NameLengthInvalid",
             "nameLocation": "117:17:136",
             "parameters": {
-              "id": 58721,
+              "id": 58685,
               "nodeType": "ParameterList",
               "parameters": [],
               "src": "134:2:136"
             }
           },
           {
-            "id": 58724,
+            "id": 58688,
             "nodeType": "ErrorDefinition",
             "src": "140:38:136",
             "nodes": [],
@@ -399,14 +399,14 @@
             "name": "NameContainsInvalidCharacters",
             "nameLocation": "146:29:136",
             "parameters": {
-              "id": 58723,
+              "id": 58687,
               "nodeType": "ParameterList",
               "parameters": [],
               "src": "175:2:136"
             }
           },
           {
-            "id": 58726,
+            "id": 58690,
             "nodeType": "ErrorDefinition",
             "src": "181:31:136",
             "nodes": [],
@@ -414,14 +414,14 @@
             "name": "SpaceAlreadyRegistered",
             "nameLocation": "187:22:136",
             "parameters": {
-              "id": 58725,
+              "id": 58689,
               "nodeType": "ParameterList",
               "parameters": [],
               "src": "209:2:136"
             }
           },
           {
-            "id": 58728,
+            "id": 58692,
             "nodeType": "ErrorDefinition",
             "src": "215:33:136",
             "nodes": [],
@@ -429,14 +429,14 @@
             "name": "ChannelAlreadyRegistered",
             "nameLocation": "221:24:136",
             "parameters": {
-              "id": 58727,
+              "id": 58691,
               "nodeType": "ParameterList",
               "parameters": [],
               "src": "245:2:136"
             }
           },
           {
-            "id": 58730,
+            "id": 58694,
             "nodeType": "ErrorDefinition",
             "src": "251:22:136",
             "nodes": [],
@@ -444,14 +444,14 @@
             "name": "NotSpaceOwner",
             "nameLocation": "257:13:136",
             "parameters": {
-              "id": 58729,
+              "id": 58693,
               "nodeType": "ParameterList",
               "parameters": [],
               "src": "270:2:136"
             }
           },
           {
-            "id": 58732,
+            "id": 58696,
             "nodeType": "ErrorDefinition",
             "src": "276:24:136",
             "nodes": [],
@@ -459,14 +459,14 @@
             "name": "NotSpaceManager",
             "nameLocation": "282:15:136",
             "parameters": {
-              "id": 58731,
+              "id": 58695,
               "nodeType": "ParameterList",
               "parameters": [],
               "src": "297:2:136"
             }
           },
           {
-            "id": 58734,
+            "id": 58698,
             "nodeType": "ErrorDefinition",
             "src": "303:28:136",
             "nodes": [],
@@ -474,14 +474,14 @@
             "name": "EntitlementNotFound",
             "nameLocation": "309:19:136",
             "parameters": {
-              "id": 58733,
+              "id": 58697,
               "nodeType": "ParameterList",
               "parameters": [],
               "src": "328:2:136"
             }
           },
           {
-            "id": 58736,
+            "id": 58700,
             "nodeType": "ErrorDefinition",
             "src": "334:24:136",
             "nodes": [],
@@ -489,14 +489,14 @@
             "name": "AddressNotFound",
             "nameLocation": "340:15:136",
             "parameters": {
-              "id": 58735,
+              "id": 58699,
               "nodeType": "ParameterList",
               "parameters": [],
               "src": "355:2:136"
             }
           },
           {
-            "id": 58738,
+            "id": 58702,
             "nodeType": "ErrorDefinition",
             "src": "361:25:136",
             "nodes": [],
@@ -504,14 +504,14 @@
             "name": "QuantityNotFound",
             "nameLocation": "367:16:136",
             "parameters": {
-              "id": 58737,
+              "id": 58701,
               "nodeType": "ParameterList",
               "parameters": [],
               "src": "383:2:136"
             }
           },
           {
-            "id": 58740,
+            "id": 58704,
             "nodeType": "ErrorDefinition",
             "src": "389:38:136",
             "nodes": [],
@@ -519,14 +519,14 @@
             "name": "EntitlementAlreadyWhitelisted",
             "nameLocation": "395:29:136",
             "parameters": {
-              "id": 58739,
+              "id": 58703,
               "nodeType": "ParameterList",
               "parameters": [],
               "src": "424:2:136"
             }
           },
           {
-            "id": 58742,
+            "id": 58706,
             "nodeType": "ErrorDefinition",
             "src": "430:38:136",
             "nodes": [],
@@ -534,14 +534,14 @@
             "name": "EntitlementModuleNotSupported",
             "nameLocation": "436:29:136",
             "parameters": {
-              "id": 58741,
+              "id": 58705,
               "nodeType": "ParameterList",
               "parameters": [],
               "src": "465:2:136"
             }
           },
           {
-            "id": 58744,
+            "id": 58708,
             "nodeType": "ErrorDefinition",
             "src": "471:34:136",
             "nodes": [],
@@ -549,14 +549,14 @@
             "name": "EntitlementNotWhitelisted",
             "nameLocation": "477:25:136",
             "parameters": {
-              "id": 58743,
+              "id": 58707,
               "nodeType": "ParameterList",
               "parameters": [],
               "src": "502:2:136"
             }
           },
           {
-            "id": 58746,
+            "id": 58710,
             "nodeType": "ErrorDefinition",
             "src": "508:33:136",
             "nodes": [],
@@ -564,14 +564,14 @@
             "name": "EntitlementAlreadyExists",
             "nameLocation": "514:24:136",
             "parameters": {
-              "id": 58745,
+              "id": 58709,
               "nodeType": "ParameterList",
               "parameters": [],
               "src": "538:2:136"
             }
           },
           {
-            "id": 58748,
+            "id": 58712,
             "nodeType": "ErrorDefinition",
             "src": "544:39:136",
             "nodes": [],
@@ -579,14 +579,14 @@
             "name": "DefaultEntitlementModuleNotSet",
             "nameLocation": "550:30:136",
             "parameters": {
-              "id": 58747,
+              "id": 58711,
               "nodeType": "ParameterList",
               "parameters": [],
               "src": "580:2:136"
             }
           },
           {
-            "id": 58750,
+            "id": 58714,
             "nodeType": "ErrorDefinition",
             "src": "586:23:136",
             "nodes": [],
@@ -594,14 +594,14 @@
             "name": "SpaceNFTNotSet",
             "nameLocation": "592:14:136",
             "parameters": {
-              "id": 58749,
+              "id": 58713,
               "nodeType": "ParameterList",
               "parameters": [],
               "src": "606:2:136"
             }
           },
           {
-            "id": 58752,
+            "id": 58716,
             "nodeType": "ErrorDefinition",
             "src": "612:36:136",
             "nodes": [],
@@ -609,14 +609,14 @@
             "name": "RoleIsAssignedToEntitlement",
             "nameLocation": "618:27:136",
             "parameters": {
-              "id": 58751,
+              "id": 58715,
               "nodeType": "ParameterList",
               "parameters": [],
               "src": "645:2:136"
             }
           },
           {
-            "id": 58754,
+            "id": 58718,
             "nodeType": "ErrorDefinition",
             "src": "651:40:136",
             "nodes": [],
@@ -624,14 +624,14 @@
             "name": "DefaultPermissionsManagerNotSet",
             "nameLocation": "657:31:136",
             "parameters": {
-              "id": 58753,
+              "id": 58717,
               "nodeType": "ParameterList",
               "parameters": [],
               "src": "688:2:136"
             }
           },
           {
-            "id": 58756,
+            "id": 58720,
             "nodeType": "ErrorDefinition",
             "src": "694:26:136",
             "nodes": [],
@@ -639,14 +639,14 @@
             "name": "SpaceDoesNotExist",
             "nameLocation": "700:17:136",
             "parameters": {
-              "id": 58755,
+              "id": 58719,
               "nodeType": "ParameterList",
               "parameters": [],
               "src": "717:2:136"
             }
           },
           {
-            "id": 58758,
+            "id": 58722,
             "nodeType": "ErrorDefinition",
             "src": "723:28:136",
             "nodes": [],
@@ -654,14 +654,14 @@
             "name": "ChannelDoesNotExist",
             "nameLocation": "729:19:136",
             "parameters": {
-              "id": 58757,
+              "id": 58721,
               "nodeType": "ParameterList",
               "parameters": [],
               "src": "748:2:136"
             }
           },
           {
-            "id": 58760,
+            "id": 58724,
             "nodeType": "ErrorDefinition",
             "src": "754:32:136",
             "nodes": [],
@@ -669,14 +669,14 @@
             "name": "PermissionAlreadyExists",
             "nameLocation": "760:23:136",
             "parameters": {
-              "id": 58759,
+              "id": 58723,
               "nodeType": "ParameterList",
               "parameters": [],
               "src": "783:2:136"
             }
           },
           {
-            "id": 58762,
+            "id": 58726,
             "nodeType": "ErrorDefinition",
             "src": "789:19:136",
             "nodes": [],
@@ -684,14 +684,14 @@
             "name": "NotAllowed",
             "nameLocation": "795:10:136",
             "parameters": {
-              "id": 58761,
+              "id": 58725,
               "nodeType": "ParameterList",
               "parameters": [],
               "src": "805:2:136"
             }
           },
           {
-            "id": 58764,
+            "id": 58728,
             "nodeType": "ErrorDefinition",
             "src": "811:31:136",
             "nodes": [],
@@ -699,14 +699,14 @@
             "name": "MissingOwnerPermission",
             "nameLocation": "817:22:136",
             "parameters": {
-              "id": 58763,
+              "id": 58727,
               "nodeType": "ParameterList",
               "parameters": [],
               "src": "839:2:136"
             }
           },
           {
-            "id": 58766,
+            "id": 58730,
             "nodeType": "ErrorDefinition",
             "src": "845:25:136",
             "nodes": [],
@@ -714,14 +714,14 @@
             "name": "RoleDoesNotExist",
             "nameLocation": "851:16:136",
             "parameters": {
-              "id": 58765,
+              "id": 58729,
               "nodeType": "ParameterList",
               "parameters": [],
               "src": "867:2:136"
             }
           },
           {
-            "id": 58768,
+            "id": 58732,
             "nodeType": "ErrorDefinition",
             "src": "873:26:136",
             "nodes": [],
@@ -729,14 +729,14 @@
             "name": "RoleAlreadyExists",
             "nameLocation": "879:17:136",
             "parameters": {
-              "id": 58767,
+              "id": 58731,
               "nodeType": "ParameterList",
               "parameters": [],
               "src": "896:2:136"
             }
           },
           {
-            "id": 58770,
+            "id": 58734,
             "nodeType": "ErrorDefinition",
             "src": "902:22:136",
             "nodes": [],
@@ -744,7 +744,7 @@
             "name": "AddRoleFailed",
             "nameLocation": "908:13:136",
             "parameters": {
-              "id": 58769,
+              "id": 58733,
               "nodeType": "ParameterList",
               "parameters": [],
               "src": "921:2:136"
@@ -758,12 +758,30 @@
         "contractKind": "library",
         "fullyImplemented": true,
         "linearizedBaseContracts": [
-          58771
+          58735
         ],
         "name": "Errors",
         "nameLocation": "71:6:136",
-        "scope": 58772,
+        "scope": 58736,
         "usedErrors": [
+          58684,
+          58686,
+          58688,
+          58690,
+          58692,
+          58694,
+          58696,
+          58698,
+          58700,
+          58702,
+          58704,
+          58706,
+          58708,
+          58710,
+          58712,
+          58714,
+          58716,
+          58718,
           58720,
           58722,
           58724,
@@ -771,25 +789,7 @@
           58728,
           58730,
           58732,
-          58734,
-          58736,
-          58738,
-          58740,
-          58742,
-          58744,
-          58746,
-          58748,
-          58750,
-          58752,
-          58754,
-          58756,
-          58758,
-          58760,
-          58762,
-          58764,
-          58766,
-          58768,
-          58770
+          58734
         ]
       }
     ],

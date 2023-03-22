@@ -12,7 +12,6 @@ import {console} from "forge-std/console.sol";
 
 contract UpgradeImplementation is ScriptUtils {
   SpaceFactory internal spaceFactory;
-  Space internal space;
   TokenEntitlement internal tokenEntitlement;
   UserEntitlement internal userEntitlement;
 
@@ -24,25 +23,22 @@ contract UpgradeImplementation is ScriptUtils {
   function run() public {
     vm.startBroadcast();
     SpaceFactory newSpaceFactory = new SpaceFactory();
+    Space space = new Space();
 
     spaceFactory.setPaused(true);
     spaceFactory.upgradeTo(address(newSpaceFactory));
 
-    space = new Space();
-    tokenEntitlement = new TokenEntitlement();
-    userEntitlement = new UserEntitlement();
     spaceFactory.updateImplementations(
       address(space),
-      address(tokenEntitlement),
-      address(userEntitlement),
+      address(0),
+      address(0),
       address(0)
     );
 
     spaceFactory.setPaused(false);
     vm.stopBroadcast();
+
     console.log("SpaceFactory: %s", address(spaceFactory));
     console.log("Space: %s", address(space));
-    console.log("TokenEntitlement: %s", address(tokenEntitlement));
-    console.log("UserEntitlement: %s", address(userEntitlement));
   }
 }

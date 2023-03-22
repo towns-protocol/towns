@@ -51,11 +51,6 @@ export default [
   },
   {
     "inputs": [],
-    "name": "NameContainsInvalidCharacters",
-    "type": "error"
-  },
-  {
-    "inputs": [],
     "name": "NameLengthInvalid",
     "type": "error"
   },

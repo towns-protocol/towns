@@ -57,11 +57,6 @@
       },
       {
         "inputs": [],
-        "name": "NameContainsInvalidCharacters",
-        "type": "error"
-      },
-      {
-        "inputs": [],
         "name": "NameLengthInvalid",
         "type": "error"
       },
@@ -1489,11 +1484,11 @@
       ]
     },
     "packages/contracts/src/core/spaces/Space.sol": {
-      "keccak256": "0x00edb3c55538db00ac45095cda2660cea4e321730c463ae2bf2d18d1068c8647",
+      "keccak256": "0x4b5711d3c3bd402baebffc55b59572572251104a67e26878b50e1a01cb03d683",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://95cf6735baa49e27bba602d37a944dd9558dd6149c2560b905ba38044944f0b8",
-        "dweb:/ipfs/QmTcSLst3f52AJ3ZaTn9WcnkwbjwjVVuNVm3GAUHNRWy9P"
+        "bzz-raw://70f7b668e7a0bbc57b1192ebad5894d2554b0c120c2cb252778d2e77249009de",
+        "dweb:/ipfs/QmRDrNH1zJ6apVnNeZbb3zud7TyUhKBkopL9ciq3Ta6hi7"
       ]
     },
     "packages/contracts/src/interfaces/IEntitlement.sol": {

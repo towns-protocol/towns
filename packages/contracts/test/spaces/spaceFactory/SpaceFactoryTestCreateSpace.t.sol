@@ -198,27 +198,6 @@ contract SpaceFactoryTestCreateSpace is SpaceBaseSetup {
     );
   }
 
-  function testRevertIfSpaceNameInvalid() external {
-    DataTypes.CreateSpaceExtraEntitlements memory _extraEntitlements = DataTypes
-      .CreateSpaceExtraEntitlements({
-        roleName: "",
-        permissions: new string[](0),
-        tokens: new DataTypes.ExternalToken[](0),
-        users: new address[](0)
-      });
-
-    string[] memory _everyonePermissions = new string[](0);
-
-    vm.expectRevert(Errors.NameContainsInvalidCharacters.selector);
-    spaceFactory.createSpace(
-      "Crzy_Sp@ce_N@m3",
-      "!7evmpuHDDgkady9u:goerli",
-      "ipfs://QmZion",
-      _everyonePermissions,
-      _extraEntitlements
-    );
-  }
-
   function testRevertIfSpaceAlreadyRegistered() external {
     createSimpleSpace();
 
