@@ -136,7 +136,7 @@ export const SpaceSideBar = (props: Props) => {
 
     return (
         <SideBar data-testid="space-sidebar" height="100vh" onScroll={onScroll}>
-            <Box className={props.className}>
+            <Box grow className={props.className}>
                 <Stack
                     position="absolute"
                     className={clsx([styles.gradientBackground])}
@@ -301,7 +301,6 @@ const SpaceSideBarHeader = (props: {
         <>
             <Stack
                 horizontal
-                debug
                 height="x8"
                 zIndex="ui"
                 pointerEvents={opaqueHeaderBar ? 'auto' : 'none'}
