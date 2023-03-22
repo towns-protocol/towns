@@ -301,22 +301,23 @@ const SpaceSideBarHeader = (props: {
         <>
             <Stack
                 horizontal
+                debug
                 height="x8"
                 zIndex="ui"
-                // pointerEvents={opaqueHeaderBar ? 'auto' : 'none'}
-                className={clsx([styles.spaceHeader])}
+                pointerEvents={opaqueHeaderBar ? 'auto' : 'none'}
+                className={styles.spaceHeader}
                 justifyContent="spaceBetween"
                 onPointerEnter={onHeaderOver}
                 onPointerLeave={onHeaderLeave}
             >
-                <Box centerContent width="x8">
+                <Box centerContent width="x8" pointerEvents="auto">
                     <SettingsGear
                         spaceId={space.id}
                         spaceName={space.name}
                         onSettings={onSettings}
                     />
                 </Box>
-                <Box centerContent width="x8">
+                <Box centerContent width="x8" pointerEvents="auto">
                     <AnimatePresence>
                         {isHeaderHovering && (
                             <FadeIn fast>
@@ -332,6 +333,7 @@ const SpaceSideBarHeader = (props: {
             </Stack>
             <Stack
                 centerContent
+                data-common="hey"
                 paddingTop="md"
                 position="relative"
                 width="100%"
@@ -371,7 +373,7 @@ const SpaceSideBarHeader = (props: {
                     borderBottom={opaqueHeaderBar ? 'default' : 'none'}
                     height="x20"
                     width="100%"
-                    // pointerEvents="none"
+                    pointerEvents="none"
                     style={{ opacity: 1 - props.scrollOffset }}
                 />
                 <Stack horizontal height="x8">
