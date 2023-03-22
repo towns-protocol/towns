@@ -18,6 +18,8 @@ const withNetwork = async (request: RequestWithAlchemyConfig, env: Env) => {
     const url = new URL(request.url)
     if (url.pathname.includes('eth-mainnet')) {
         request.rpcUrl = `https://eth-mainnet.g.alchemy.com/v2/${env.ALCHEMY_API_KEY}`
+    } else if (url.pathname.includes('eth-sepolia')) {
+        request.rpcUrl = `https://eth-sepolia.g.alchemy.com/v2/${env.ALCHEMY_API_KEY}`
     } else {
         request.rpcUrl = `https://eth-goerli.g.alchemy.com/v2/${env.ALCHEMY_API_KEY}`
     }
@@ -29,6 +31,8 @@ const withNetworkPrefixedWithNFT = async (request: RequestWithAlchemyConfig, env
     const url = new URL(request.url)
     if (url.pathname.includes('eth-mainnet')) {
         request.rpcUrl = `https://eth-mainnet.g.alchemy.com/nft/v2/${env.ALCHEMY_API_KEY}`
+    } else if (url.pathname.includes('eth-sepolia')) {
+        request.rpcUrl = `https://eth-sepolia.g.alchemy.com/nft/v2/${env.ALCHEMY_API_KEY}`
     } else {
         request.rpcUrl = `https://eth-goerli.g.alchemy.com/nft/v2/${env.ALCHEMY_API_KEY}`
     }
