@@ -25,7 +25,7 @@ export const transformContainer = style([
         transformStyle: `preserve-3d`,
         transformOrigin: `center center`,
         transform: `
-            translateZ(calc((1 - var(--tk-h,1)) * 30px))
+            translateZ(calc((1 - var(--tk-h,1)) * -10px))
             rotateY(calc(var(--p-d,1) * 0.10 * -3.14rad * var(--tk-x, 0)))
             rotateX(calc(var(--p-d, 1) * 0.10 * 3.14rad * var(--tk-y, 0)))
         `,
@@ -43,7 +43,7 @@ export const addressContainer = style([
         transformStyle: `preserve-3d`,
         transformOrigin: `center center`,
         transform: `
-            translateZ(calc((1 - var(--tk-h,1)) * 300px))
+            translateZ(calc((1 - var(--tk-h,1)) * -5px))
             rotateY(calc(var(--p-d,1) * 0.1 * -3.14rad * var(--tk-x, 0)))
             rotateX(calc(var(--p-d, 1) * 0.1 * 3.14rad * var(--tk-y, 0)))
         `,
@@ -54,7 +54,7 @@ export const tokenShadow = style([
     absoluteCenter,
     {
         opacity: 1,
-        filter: `blur(calc((0.1 + 0.9 * var(--tk-h,1)) * 20px))`,
+        filter: `blur(calc((0.2 + 0.8 * var(--tk-h,1)) * 20px))`,
         transformOrigin: `center center`,
     },
 ])

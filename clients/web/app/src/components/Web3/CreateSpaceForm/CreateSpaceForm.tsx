@@ -53,8 +53,8 @@ const Header = (props: HeaderProps) => {
     const isDisabled = !isTransactionNetwork && isLast
     return (
         <>
-            <Box flexDirection="row" justifyContent="spaceBetween" paddingY="lg">
-                <Heading level={2}> Create Town </Heading>
+            <Box horizontal justifyContent="spaceBetween" alignItems="center">
+                <Heading level={2}>Create a Town</Heading>
                 <Box flexDirection="row" paddingLeft="sm" position="relative">
                     {hasPrev && (
                         <Box
@@ -247,7 +247,7 @@ export const CreateSpaceForm = () => {
     useOnTransactionEmitted(onTransactionEmitted)
 
     return (
-        <Box>
+        <Box padding="lg">
             <Header
                 formId={formId}
                 hasPrev={hasPrev}

@@ -78,7 +78,7 @@ describe('<CreateSpaceForm />', () => {
 
     test('renders the form', async () => {
         render(<Wrapper />)
-        const title = screen.getByText('Create Town')
+        const title = screen.getByText('Create a Town')
         expect(title).toBeInTheDocument()
     }, 10000)
 

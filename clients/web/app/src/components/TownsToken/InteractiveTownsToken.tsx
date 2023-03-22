@@ -8,6 +8,7 @@ import { TownsTokenConfig } from './TownsTokenConfig'
 type Props = TownsTokenProps & {
     onAnimationComplete?: () => void
     mintMode?: boolean
+    imageSrc?: string
 }
 
 export const InteractiveTownsToken = (props: Props) => {
