@@ -20,6 +20,7 @@ export const avatarImageStyle = style({
     height: '100%',
     objectPosition: 'center',
     objectFit: 'cover',
+    aspectRatio: '1/1',
 })
 
 export const squircleMask = style({
