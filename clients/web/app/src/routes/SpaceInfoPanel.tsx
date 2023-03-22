@@ -105,29 +105,27 @@ export const SpaceInfoPanel = () => {
         <Stack height="100%" overflow="hidden">
             <Panel label="Space" onClose={onClose}>
                 {space?.id && (
-                    <Stack centerContent gap="lg">
+                    <Stack centerContent gap padding>
                         {!isOfficialNFTToggled ? (
                             <FormRender>
                                 {({ register, formState, setError, clearErrors }) => (
-                                    <Stack gap="lg">
-                                        <UploadImage
-                                            type="spaceIcon"
-                                            formFieldName="spaceIcon"
-                                            canEdit={Boolean(canEdit)}
-                                            resourceId={space.id.networkId}
-                                            setError={setError}
-                                            register={register}
-                                            formState={formState}
-                                            clearErrors={clearErrors}
-                                        >
-                                            <InteractiveSpaceIcon
-                                                spaceId={space.id.networkId}
-                                                size="lg"
-                                                spaceName={space.name}
-                                                address={address}
-                                            />
-                                        </UploadImage>
-                                    </Stack>
+                                    <UploadImage
+                                        type="spaceIcon"
+                                        formFieldName="spaceIcon"
+                                        canEdit={Boolean(canEdit)}
+                                        resourceId={space.id.networkId}
+                                        setError={setError}
+                                        register={register}
+                                        formState={formState}
+                                        clearErrors={clearErrors}
+                                    >
+                                        <InteractiveSpaceIcon
+                                            spaceId={space.id.networkId}
+                                            size="lg"
+                                            spaceName={space.name}
+                                            address={address}
+                                        />
+                                    </UploadImage>
                                 )}
                             </FormRender>
                         ) : (
@@ -141,7 +139,7 @@ export const SpaceInfoPanel = () => {
                         )}
                     </Stack>
                 )}
-                <Stack gap="lg" padding="lg">
+                <Stack gap="lg" paddingX="lg">
                     <MdGap>
                         <Paragraph strong size="lg">
                             {space?.name}
