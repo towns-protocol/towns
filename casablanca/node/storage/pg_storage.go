@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"bytes"
 	"context"
 	_ "embed"
 	"encoding/hex"
@@ -305,7 +306,7 @@ func (s *PGEventStore) CreateStream(ctx context.Context, streamID string, incept
 		return nil, err
 	}
 	log.Debug("committed stream: ", streamID, " with seq_num: ", seqNum)
-	return SeqNumToBytes(seqNum), nil
+	return SeqNumToBytes(seqNum, streamID), nil
 }
 
 func (s *PGEventStore) AddEvent(ctx context.Context, streamID string, event *protocol.Envelope) ([]byte, error) {
@@ -336,7 +337,7 @@ func (s *PGEventStore) AddEvent(ctx context.Context, streamID string, event *pro
 	}
 	log.Debug("Storage: AddEvent: ", string(streamID), " ", string(event.Hash), " done")
 
-	return SeqNumToBytes(seqNum), nil
+	return SeqNumToBytes(seqNum, streamID), nil
 }
 
 // GetStreams returns a list of all event streams
@@ -394,7 +395,7 @@ func (s *PGEventStore) GetStream(ctx context.Context, streamId string) (StreamPo
 
 	pos := StreamPos{
 		StreamId:   streamId,
-		SyncCookie: SeqNumToBytes(-1),
+		SyncCookie: SeqNumToBytes(-1, streamId),
 	}
 	events, seqNums, err := fetchMessages(ctx, tx, []StreamPos{pos}, -1)
 	if err != nil {
@@ -408,7 +409,7 @@ func (s *PGEventStore) GetStream(ctx context.Context, streamId string) (StreamPo
 
 	streamPos := StreamPos{
 		StreamId:   streamId,
-		SyncCookie: SeqNumToBytes(seqNum),
+		SyncCookie: SeqNumToBytes(seqNum, streamId),
 	}
 	return streamPos, events[streamId], nil
 }
@@ -476,7 +477,10 @@ func fetchMessages(ctx context.Context, tx pgx.Tx, positions []StreamPos, maxCou
 
 	sql := strings.Builder{}
 	for i, pos := range positions {
-		seqNum := BytesToSeqNum(pos.SyncCookie)
+		seqNum, targetStreamId := BytesToSeqNum(pos.SyncCookie)
+		if targetStreamId != pos.StreamId {
+			return nil, nil, fmt.Errorf("invalid sync cookie for stream %s expected %s", targetStreamId, pos.StreamId)
+		}
 		// if no new events, report the original position
 		nextSeqNums[pos.StreamId] = seqNum
 		sql.WriteString(fmt.Sprintf("SELECT '%s' as name, hash, signature, event, seq_num FROM %s", pos.StreamId, streamSqlName(pos.StreamId)))
@@ -786,8 +790,9 @@ func (s *PGEventStore) SyncStreams(ctx context.Context, syncPositions []*protoco
 		}
 		streamPos[i] = StreamPos{StreamId: pos.StreamId, SyncCookie: cookie}
 		positions[string(pos.StreamId)] = cookie
-		if startSeqNum > BytesToSeqNum(cookie) {
-			startSeqNum = BytesToSeqNum(cookie)
+		cookieSeqNum, _ := BytesToSeqNum(cookie)
+		if startSeqNum >  cookieSeqNum {
+			startSeqNum = cookieSeqNum
 		}
 	}
 	tx, err := startTx(ctx, s.pool)
@@ -804,7 +809,7 @@ func (s *PGEventStore) SyncStreams(ctx context.Context, syncPositions []*protoco
 		for streamId, events := range events {
 			streams[streamId] = StreamEventsBlock{
 				OriginalSyncCookie: positions[streamId],
-				SyncCookie:         SeqNumToBytes(seqNums[streamId]),
+				SyncCookie:         SeqNumToBytes(seqNums[streamId], streamId),
 				Events:             events,
 			}
 		}
@@ -895,7 +900,27 @@ func (s *PGEventStore) SyncStreams(ctx context.Context, syncPositions []*protoco
 		}
 		count = len(results)
 	}
+	err = validatePositions(syncPositions, streams)
+	if err != nil {
+		return nil, err
+	}
 	return streams, nil
+}
+
+func validatePositions(initialPosition []*protocol.SyncPos, resultPositions map[string]StreamEventsBlock) error {
+	positions := make(map[string]*protocol.SyncPos)
+	for _, pos := range initialPosition {
+		positions[string(pos.StreamId)] = pos
+	}
+	for str, pos := range resultPositions {
+		if _, ok := positions[str]; !ok {
+			return fmt.Errorf("stream %s not found in initial position", str)
+		}
+		if !bytes.Equal(positions[str].SyncCookie, pos.OriginalSyncCookie) {
+			return fmt.Errorf("syncCookie mismatch for stream %s", str)
+		}
+	}
+	return nil
 }
 
 //go:embed init_db.sql

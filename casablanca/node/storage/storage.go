@@ -34,12 +34,18 @@ func NewStorage(ctx context.Context, database_url string, clean bool) (Storage, 
 	return NewPGEventStore(ctx, database_url, clean)
 }
 
-func SeqNumToBytes(seqNum int64) []byte {
+func SeqNumToBytes(seqNum int64, streamId string) []byte {
 	b := make([]byte, 8)
 	binary.LittleEndian.PutUint64(b, uint64(seqNum))
-	return b
+
+	res := make([]byte, 0, 8+len(streamId))
+	res = append(res, b...)
+	res = append(res, streamId...)
+	return res
 }
 
-func BytesToSeqNum(b []byte) int64 {
-	return int64(binary.LittleEndian.Uint64(b))
+func BytesToSeqNum(b []byte) (int64, string) {
+	seqNum := int64(binary.LittleEndian.Uint64(b[:8]))
+	streamId := string(b[8:])
+	return seqNum, streamId
 }

@@ -73,15 +73,13 @@ func TestPGEventStore(t *testing.T) {
 		t.Fatal("Expected table name streamid got ", streams[0])
 	}
 
-	cookie0 := storage.SeqNumToBytes(0)
-
 	cookie, err := pgEventStore.AddEvent(ctx, streamId, inceptionEvent)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	seq, err := storage.BytesToSeqNum(cookie), nil
-	if err != nil {
+	seq, cookieStr := storage.BytesToSeqNum(cookie)
+	if cookieStr != streamId {
 		t.Fatal(err)
 	}
 
@@ -95,6 +93,8 @@ func TestPGEventStore(t *testing.T) {
 	if cookie2a == nil {
 		t.Fatal("cookie2 is nil")
 	}
+
+	cookie0 := storage.SeqNumToBytes(0, streamId)
 	eventsPos, err := pgEventStore.SyncStreams(ctx, []*protocol.SyncPos{{StreamId: streamId, SyncCookie: cookie0}}, -1, 1000)
 	if err != nil {
 		t.Fatal(err)
@@ -171,7 +171,7 @@ func TestPGEventStoreLongPoll(t *testing.T) {
 
 	// check long poll from 0 sequence (must be one event)
 	{
-		cookie0 := storage.SeqNumToBytes(0)
+		cookie0 := storage.SeqNumToBytes(0, streamId)
 		events, err := pgEventStore.SyncStreams(ctx, []*protocol.SyncPos{{StreamId: streamId, SyncCookie: cookie0}}, -1, 50)
 		if err != nil {
 			t.Fatal(err)
@@ -189,8 +189,10 @@ func TestPGEventStoreLongPoll(t *testing.T) {
 		assert.Nil(t, err)
 		assert.NotNil(t, events)
 		assert.Len(t, events, 1)
-		assert.Len(t, cookie1, 8)
-		assert.Equal(t, storage.BytesToSeqNum(cookie1)+1, storage.BytesToSeqNum(events[string(streamId)].SyncCookie))
+		assert.Greater(t, len(cookie1), 8)
+		sq1, _ := storage.BytesToSeqNum(cookie1)
+		sq2, _ := storage.BytesToSeqNum(events[string(streamId)].SyncCookie)
+		assert.Equal(t, sq1+1, sq2)
 	}
 
 	for i := 0; i < 10; i++ {
@@ -281,7 +283,8 @@ func TestPGEventStoreLongPollStress(t *testing.T) {
 				hashes.WriteString(e)
 				hashes.WriteString(",")
 			}
-			log.Infof("%d counter %d %d missing %s", i, storage.BytesToSeqNum(syncCookie), counter, hashes.String())
+			c, s := storage.BytesToSeqNum(syncCookie)
+			log.Infof("%d counter %d %d:%s missing %s", i, counter, c, s, hashes.String())
 		}
 	}
 

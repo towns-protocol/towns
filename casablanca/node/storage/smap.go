@@ -29,7 +29,10 @@ func NewSmap() *SubsMap {
 
 func (s *SubsMap) Add(streamId string, cookie []byte) *SmapEntry {
 	key := streamId
-	seqNum := BytesToSeqNum(cookie)
+	seqNum, cookieStream := BytesToSeqNum(cookie)
+	if cookieStream != streamId {
+		panic("cookie stream id does not match stream id")
+	}
 	s.mtx.Lock()
 	defer s.mtx.Unlock()
 	entry := &SmapEntry{
@@ -127,12 +130,12 @@ func (s SubsMap) Filter(events map[string][]*FullEvent) map[uuid.UUID]StreamEven
 				if block, ok := res[sub.id]; ok {
 					block.Events = append(res[sub.id].Events, e.ParsedEvent.Envelope)
 					// current cookie grows with each event, so it is guaranteed to be larger than the previous one
-					block.SyncCookie = SeqNumToBytes(e.SeqNum)
+					block.SyncCookie = SeqNumToBytes(e.SeqNum, e.StreamId)
 					res[sub.id] = block
 				} else {
 					res[sub.id] = StreamEventsBlock{
-						OriginalSyncCookie: SeqNumToBytes(sub.seqNum),
-						SyncCookie:         SeqNumToBytes(e.SeqNum),
+						OriginalSyncCookie: SeqNumToBytes(sub.seqNum, stream),
+						SyncCookie:         SeqNumToBytes(e.SeqNum, stream),
 						Events:             []*protocol.Envelope{e.ParsedEvent.Envelope},
 					}
 				}

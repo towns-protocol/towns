@@ -321,7 +321,11 @@ func TestManyUsers(t *testing.T) {
 			if len(syncRes.Msg.Streams[i].Events) != (totalUsers-1)*2 {
 				t.Fatalf("expected %d event, got %d", (totalUsers-1)*2, len(syncRes.Msg.Streams[0].Events))
 			}
-			syncPos[i].SyncCookie = syncRes.Msg.Streams[i].NextSyncCookie
+			for syncPosIdx := range syncPos {
+				if syncPos[syncPosIdx].StreamId == syncRes.Msg.Streams[i].StreamId {
+					syncPos[syncPosIdx].SyncCookie = syncRes.Msg.Streams[i].NextSyncCookie
+				}
+			}
 		}
 
 		selectedUsers := 300
@@ -362,21 +366,27 @@ func TestManyUsers(t *testing.T) {
 		msgTable := make([]int, selectedUsers*selectedChannels)
 		stats := make(map[int]int)
 		updateSyncPos := func() int {
+
 			received := 0
 			syncRes, err = client.SyncStreams(ctx, connect.NewRequest(&protocol.SyncStreamsRequest{
 				SyncPos:   syncPos,
 				TimeoutMs: 1000,
 			}))
+			if err != nil {
+				t.Fatalf("error calling SyncStreams: %v", err)
+			}
 			assert.NoError(t, err)
 			stats[len(syncRes.Msg.Streams)]++
-			for stream := range syncRes.Msg.Streams {
+			for streamIdx := range syncRes.Msg.Streams {
 				for syncPosStrem := range syncPos {
-					if syncPos[syncPosStrem].StreamId == syncRes.Msg.Streams[stream].StreamId {
-						syncPos[syncPosStrem].SyncCookie = syncRes.Msg.Streams[stream].NextSyncCookie
+					if syncPos[syncPosStrem].StreamId == syncRes.Msg.Streams[streamIdx].StreamId {
+						// check if cookie's stream matches
+						assert.Equal(t, syncPos[syncPosStrem].SyncCookie[8:], syncRes.Msg.Streams[streamIdx].NextSyncCookie[8:])
+						syncPos[syncPosStrem].SyncCookie = syncRes.Msg.Streams[streamIdx].NextSyncCookie
 					}
 				}
-				received += len(syncRes.Msg.Streams[stream].Events)
-				for _, event := range syncRes.Msg.Streams[stream].Events {
+				received += len(syncRes.Msg.Streams[streamIdx].Events)
+				for _, event := range syncRes.Msg.Streams[streamIdx].Events {
 					e, err := events.ParseEvent(event)
 					assert.NoError(t, err)
 					msg := e.Event.Payload.GetMessage()
