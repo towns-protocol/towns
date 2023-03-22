@@ -93,7 +93,6 @@ export function useMatrixWalletSignIn() {
                 walletAddress: userIdentifier.accountAddress,
                 chainId: userIdentifier.chainId,
                 homeServer,
-                origin,
                 statement,
             })
 
@@ -469,7 +468,7 @@ export function createMessageToSign(args: {
     walletAddress: string
     chainId: number
     homeServer: string
-    origin: string
+    origin?: string
     statement: string
 }): string {
     // Create the auth metadata for signing.
@@ -484,7 +483,7 @@ export function createMessageToSign(args: {
         domain: eip4361.authority,
         address: eip4361.address,
         statement: eip4361.statement,
-        uri: args.origin,
+        uri: eip4361.authority,
         version: '1',
         chainId: eip4361.chainId,
         nonce: '', // Auto-generate.

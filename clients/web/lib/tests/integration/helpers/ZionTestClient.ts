@@ -189,8 +189,6 @@ export class ZionTestClient extends ZionClient {
         if (this.auth) {
             throw new Error('already registered')
         }
-        // set up some hacky origin varible, no idea how the other code gets this
-        const origin = this.opts.matrixServerUrl
 
         const matrixClient = ZionClient.createMatrixClient(this.opts)
         // create a registration request, this reaches out to our server and sets up a session
@@ -214,7 +212,6 @@ export class ZionTestClient extends ZionClient {
             walletAddress: this.userIdentifier.accountAddress,
             chainId: this.chainId,
             homeServer: this.opts.matrixServerUrl,
-            origin,
             statement: 'this is a test registration',
         })
 
@@ -282,7 +279,6 @@ export class ZionTestClient extends ZionClient {
             walletAddress: this.userIdentifier.accountAddress,
             chainId: this.userIdentifier.chainId,
             homeServer: this.opts.matrixServerUrl,
-            origin,
             statement: 'this is a test login',
         })
 
