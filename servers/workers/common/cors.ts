@@ -1,4 +1,9 @@
-const allowedOrigins = ['http://localhost:3000', 'https://towns.com', 'https://app.towns.com', 'https://app-test.towns.com']
+const allowedOrigins = [
+    'http://localhost:3000',
+    'https://towns.com',
+    'https://app.towns.com',
+    'https://app-test.towns.com',
+]
 
 const onRenderOrigin = (origin: string): string | undefined => {
     if (origin.includes('onrender.com') && origin.includes('harmony-web')) {

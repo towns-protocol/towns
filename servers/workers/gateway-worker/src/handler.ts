@@ -2,6 +2,7 @@ import { Buffer } from 'buffer'
 import { Request as IttyRequest, Router } from 'itty-router'
 import { Env } from '.'
 import { upsertImage } from './upsert'
+import { sendSnsTopic } from './snsClient'
 import { handleCookie } from './cookie'
 import { fetchLocalAuthz } from './fetchLocalAuthz'
 
@@ -12,6 +13,8 @@ const DEFAULT_OPTIONS = 'width=1920,fit=scale-down'
 const IMAGE_DELIVERY_SERVICE = 'https://imagedelivery.net'
 const CACHE_TTL = 5
 const BIO_MAX_SIZE = 280
+
+const USER_FEEDBACK_TOPIC_ARN = 'arn:aws:sns:us-east-1:211286738967:user-feedback'
 
 const validateLength = (text: string, max: number) => {
     if (text.length > max) {
@@ -446,6 +449,20 @@ router.get('/space/:id/bio', async (request: WorkerRequest, env) => {
         return new Response(`bio not found for space: ${spaceId}`, { status: 404 })
     }
     return new Response(JSON.parse(JSON.stringify(value)), { status: 200 })
+})
+
+router.post('/user-feedback', async (request: WorkerRequest, env) => {
+    const requestBody = JSON.parse(JSON.stringify(await request.json()))
+    console.log(`requestBody: ${JSON.stringify(requestBody)}`)
+    const params = {
+        Message: JSON.stringify({
+            name: requestBody.name,
+            email: requestBody.email,
+            comments: requestBody.comments,
+        }), // MESSAGE_TEXT
+        TopicArn: USER_FEEDBACK_TOPIC_ARN, //TOPIC_ARN
+    }
+    return await sendSnsTopic(params, env.AWS_ACCESS_KEY_ID, env.AWS_SECRET_ACCESS_KEY)
 })
 
 router.post('/')

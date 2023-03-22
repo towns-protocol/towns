@@ -1,10 +1,8 @@
 import 'allotment/dist/style.css'
 // eslint-disable-next-line import/no-named-as-default
-import Gleap from 'gleap'
 import * as Sentry from '@sentry/react'
 import { BrowserTracing } from '@sentry/tracing'
 import { ErrorBoundary } from 'react-error-boundary'
-
 import React, { Suspense } from 'react'
 import { createRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
@@ -50,10 +48,6 @@ if (env.IS_DEV) {
         release: env.VITE_APP_RELEASE_VERSION,
     })
 }
-
-Gleap.initialize(env.VITE_GLEAP_API_KEY || '')
-Gleap.showFeedbackButton(true)
-Gleap.setEnvironment(env.IS_DEV ? 'dev' : 'prod')
 
 const node = document.getElementById('root')
 

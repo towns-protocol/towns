@@ -2,6 +2,7 @@ import * as Sentry from '@sentry/react'
 import React, { useState } from 'react'
 import { useEvent } from 'react-use-event-hook'
 import { z } from 'zod'
+import { hexlify, randomBytes } from 'ethers/lib/utils'
 import { useMutation } from 'wagmi'
 import { format } from 'date-fns'
 import { ModalContainer } from '@components/Modals/ModalContainer'
@@ -35,15 +36,15 @@ const defaultValues = {
     [FormStateKeys.comments]: '',
 }
 
-function postSentryError(data: FormState) {
+async function postSentryError(data: FormState, id: string) {
     const URL = 'https://sentry.io/api/0/projects/here-not-there/harmony-web/user-feedback/'
     const message = `User feedback - ${window.location.href} - ${format(
         Date.now(),
         'M/d/yy h:mm a',
-    )}`
+    )} - id:${id}`
     const event_id = Sentry.captureMessage(message, {
         // not sure what is necessary here to make this unique and show up in Sentry, so some of this may be duplicated
-        fingerprint: [data.email, Date.now().toString()],
+        fingerprint: [data.email, Date.now().toString(), id],
         extra: {
             timestamp: Date.now().toString(),
             location: window.location.href,
@@ -63,6 +64,22 @@ function postSentryError(data: FormState) {
             },
         },
     )
+}
+
+async function postCustomError(data: FormState) {
+    const GATEWAY_SERVER_URL = env.VITE_GATEWAY_URL
+    const url = `${GATEWAY_SERVER_URL}/user-feedback`
+    // generate a uuid for the custom error
+    const uuid = hexlify(randomBytes(16))
+    const postCustom = axiosClient.post(
+        url,
+        JSON.stringify({
+            ...data,
+            id: uuid,
+        }),
+    )
+    await postSentryError(data, uuid)
+    return postCustom
 }
 
 export const SentryReportModal = () => {
@@ -94,7 +111,7 @@ export const SentryErrorReportForm = (props: { onHide: () => void }) => {
     const [success, setSuccess] = useState(false)
     const [errorMessage, setErrorMessage] = useState('')
 
-    const { mutate, isLoading } = useMutation(postSentryError)
+    const { mutate: doCustomError, isLoading } = useMutation(postCustomError)
 
     if (success) {
         return (
@@ -114,7 +131,7 @@ export const SentryErrorReportForm = (props: { onHide: () => void }) => {
                 schema={schema}
                 id="sentry-error-report-form"
                 onSubmit={(data) => {
-                    mutate(data, {
+                    doCustomError(data, {
                         onSuccess: () => {
                             setSuccess(true)
                         },
