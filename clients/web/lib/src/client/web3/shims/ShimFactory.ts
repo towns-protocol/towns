@@ -28,7 +28,7 @@ export class ShimFactory {
                 return LocalhostSpaceAbi
             case 5:
                 return GoerliSpaceAbi
-            case 1115111:
+            case 11155111:
                 return SepoliaSpaceAbi
             default:
                 throw new Error(`Space abi for chain id ${chainId} is not supported.`)
@@ -60,7 +60,7 @@ export class ShimFactory {
                     provider,
                     signer,
                 )
-            case 1115111:
+            case 11155111:
                 return new IEntitlementModuleShim(
                     address,
                     SepoliaIEntitlementModuleAbi,
@@ -98,7 +98,7 @@ export class ShimFactory {
                     provider,
                     signer,
                 )
-            case 1115111:
+            case 11155111:
                 return new TokenEntitlementShim(
                     address,
                     SepoliaTokenEntitlementAbi,
@@ -136,7 +136,7 @@ export class ShimFactory {
                     provider,
                     signer,
                 )
-            case 1115111:
+            case 11155111:
                 return new UserEntitlementShim(
                     address,
                     SepoliaIEntitlementModuleAbi,
