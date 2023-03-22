@@ -54,17 +54,16 @@ Wrangler will automatically check your variables in `.dev.vars` in the project r
 
 Deployment account and workers domain is defined in wrangler.toml config.
 
-STAGING
-Publish to staging for branch previews. This will deploy to `{name}`-staging.johnhnt.workers.dev
-
-```bash
-yarn publish:stage
-```
-
 PRODUCTION
 
 Unless specified in config, workers are deployed to `{name}`.johnhnt.workers.dev domain. See [Wrangler Config](https://developers.cloudflare.com/workers/wrangler/configuration/) for more details.
 
 ```bash
 yarn publish:prod
+```
+
+TEST
+
+```
+yarn publish:test
 ```

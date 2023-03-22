@@ -22,17 +22,10 @@ VERIFY = "true"
 #
 # For production, you can add these in the Cloudflare dashboard or run
 # `echo <VALUE> | wrangler secret put <NAME>` for each of these
-# for staging, the secrets must be deployed behind the staging flag
-# `echo <VALUE> | wrangler secret put <NAME> --env staging`
+# for production, the secrets must be deployed behind the production flag
+# `echo <VALUE> | wrangler secret put <NAME> --env production`
 # OR
 # Run `echo <VALUE> | wrangler secret put <NAME>` for each of these
-
-# staging routes
-# yarn publish:stage
-[env.staging]
-workers_dev = true
-routes = [{ pattern = "siwe-worker-staging.zion.xyz", custom_domain = true }, { pattern = "siwe-worker-staging.towns.com", custom_domain = true } ]
-vars = { ENVIRONMENT = "staging", VERIFY = "true" } # [vars] access, not secrets
 
 # production routes
 # yarn publish:prod

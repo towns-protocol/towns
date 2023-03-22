@@ -32,17 +32,10 @@ local_protocol = "http"
 #
 # For production, you can add these in the Cloudflare dashboard or run
 # `echo <VALUE> | wrangler secret put <NAME>` for each of these
-# for staging, the secrets must be deployed behind the staging flag
-# `echo <VALUE> | wrangler secret put <NAME> --env staging`
+# for production, the secrets must be deployed behind the production flag
+# `echo <VALUE> | wrangler secret put <NAME> --env production`
 # OR
 # Run `echo <VALUE> | wrangler secret put <NAME>` for each of these
-
-# staging routes
-# yarn publish:stage
-[env.staging]
-routes = [{ pattern = "unfurl-worker-staging.towns.com", custom_domain = true }]
-workers_dev = true
-vars = { ENVIRONMENT = "staging" }
 
 # production routes
 # yarn publish:prod

@@ -71,13 +71,6 @@ Hello World from GET!
 
 Deployment account and workers domain is defined in wrangler.toml config.
 
-STAGING
-Publish to staging for branch previews. This will deploy to `{name}`-staging.johnhnt.workers.dev
-
-```bash
-yarn publish:stage
-```
-
 TEST
 Publish to test for testing the workers. 
 

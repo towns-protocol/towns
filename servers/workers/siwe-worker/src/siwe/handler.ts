@@ -6,11 +6,12 @@ import { Permission } from 'use-zion-client/src/client/web3/ContractTypes'
 
 const GOERLI_RPC_URL = 'https://eth-goerli.g.alchemy.com/v2/'
 const LOCALHOST_RPC_URL = 'http://127.0.0.1:8545' // not localhost
+const SEPOLIA_RPC_URL = 'https://eth-sepolia.g.alchemy.com/v2/'
 
 const providerMap = new Map<string, string>([
 	['development', LOCALHOST_RPC_URL],
-	['staging', GOERLI_RPC_URL],
-	['production', GOERLI_RPC_URL],
+	['test', GOERLI_RPC_URL],
+	['production', SEPOLIA_RPC_URL],
 ])
 
 const GOERLI = 5
