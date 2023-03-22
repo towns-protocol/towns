@@ -55,6 +55,7 @@ describe('<AppPanelLayout />', () => {
                     avatarSrc: 'test',
                     channelGroups: [],
                     membership: '',
+                    isLoadingChannels: false,
                 },
             }
         })

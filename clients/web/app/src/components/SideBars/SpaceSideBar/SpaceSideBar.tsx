@@ -1,5 +1,5 @@
 import { AnimatePresence } from 'framer-motion'
-import React, { useCallback, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { matchPath, useLocation, useNavigate } from 'react-router'
 import { useEvent } from 'react-use-event-hook'
 import {
@@ -13,6 +13,7 @@ import {
     useSpaceMentions,
 } from 'use-zion-client'
 import { useSpaceThreadRootsUnreadCount } from 'use-zion-client/dist/hooks/use-space-thread-roots'
+import { useQueryClient } from '@tanstack/react-query'
 import { clsx } from 'clsx'
 import { SpaceSettingsCard } from '@components/Cards/SpaceSettingsCard'
 import { ModalContainer } from '@components/Modals/ModalContainer'
@@ -20,7 +21,7 @@ import { ActionNavItem } from '@components/NavItem/ActionNavItem'
 import { ChannelNavGroup } from '@components/NavItem/ChannelNavGroup'
 import { ChannelNavItem } from '@components/NavItem/ChannelNavItem'
 import { CreateChannelFormContainer } from '@components/Web3/CreateChannelForm'
-import { Badge, Box, Button, Icon, IconName, Paragraph, Stack } from '@ui'
+import { Badge, Box, Button, Icon, IconButton, IconName, Paragraph, Stack } from '@ui'
 import { useContractSpaceInfo } from 'hooks/useContractSpaceInfo'
 import { useHasPermission } from 'hooks/useHasPermission'
 import { PATHS } from 'routes'
@@ -31,6 +32,10 @@ import { InteractiveSpaceIcon } from '@components/SpaceIcon'
 import { useChannelIdFromPathname } from 'hooks/useChannelIdFromPathname'
 import { useStore } from 'store/store'
 import { CopySpaceLink } from '@components/CopySpaceLink/CopySpaceLink'
+import {
+    useContractChannels,
+    queryKey as useContractChannelsQueryKey,
+} from 'hooks/useContractChannels'
 import { SideBar } from '../_SideBar'
 import * as styles from './SpaceSideBar.css'
 import { FadeIn } from '../../Transitions/FadeIn'
@@ -48,6 +53,8 @@ export const SpaceSideBar = (props: Props) => {
     const { data: isOwner } = useHasPermission(Permission.Owner)
     const setDismissedGettingStarted = useStore((state) => state.setDismissedGettingStarted)
     const dismissedGettingStartedMap = useStore((state) => state.dismissedGettingStartedMap)
+    const { data: contractChannels } = useContractChannels(props.space.id.networkId)
+    const queryClient = useQueryClient()
 
     const onSettings = useCallback(
         (spaceId: RoomIdentifier) => {
@@ -65,6 +72,10 @@ export const SpaceSideBar = (props: Props) => {
     const onShow = useEvent(() => {
         setModal(true)
     })
+
+    const onBrowseChannelsClick = useEvent(() =>
+        navigate(`/${PATHS.SPACES}/${space.id.slug}/${PATHS.CHANNELS}`),
+    )
 
     const mentions = useSpaceMentions()
     const unreadThreadMentions = mentions.reduce((count, m) => {
@@ -91,6 +102,36 @@ export const SpaceSideBar = (props: Props) => {
         setScrollOffset(Math.max(0, Math.min(headerY - 16, 50)) / 50)
         setHasScrolledPastHeader(headerY > -1 && headerY <= 0)
     }
+
+    const hasContractChannels = contractChannels && contractChannels.length > 0
+    const flatChannels = useMemo(
+        () => space.channelGroups.flatMap((g) => g.channels),
+        [space.channelGroups],
+    )
+    const numChannelsAddedInSession = useRef<undefined | number>(undefined)
+
+    // TODO: a better spot for this is proabably a wrapper component around space routes
+    useEffect(() => {
+        if (space.isLoadingChannels) {
+            return
+        }
+
+        if (
+            // new load or navigated to different space
+            numChannelsAddedInSession.current === undefined ||
+            // new channels were added - this happens when user creates a channel or is auto-joined by another user creating a channel
+            flatChannels.length > numChannelsAddedInSession.current
+        ) {
+            queryClient.invalidateQueries([useContractChannelsQueryKey, space.id.networkId])
+            numChannelsAddedInSession.current = flatChannels.length
+        }
+    }, [flatChannels.length, queryClient, space.id.networkId, space.isLoadingChannels])
+
+    // refetch and reset the channelsAddedDuringSession when space changes
+    useEffect(() => {
+        queryClient.invalidateQueries([useContractChannelsQueryKey, space.id.networkId])
+        numChannelsAddedInSession.current = undefined
+    }, [queryClient, space.id.networkId])
 
     return (
         <SideBar data-testid="space-sidebar" height="100vh" onScroll={onScroll}>
@@ -150,14 +191,30 @@ export const SpaceSideBar = (props: Props) => {
                             />
                         </>
                     )}
+
                     <>
-                        <ChannelList space={space} mentions={mentions} />
+                        <SyncedChannelList
+                            space={space}
+                            mentions={mentions}
+                            canCreateChannel={canCreateChannel}
+                            onShowCreateChannel={onShow}
+                        />
+
+                        {!space.isLoadingChannels && hasContractChannels && (
+                            <ActionNavItem
+                                icon="search"
+                                id="browseChannels"
+                                label="Browse channels"
+                                onClick={onBrowseChannelsClick}
+                            />
+                        )}
+
                         {modal && (
                             <ModalContainer onHide={onHide}>
                                 <CreateChannelFormContainer spaceId={space.id} onHide={onHide} />
                             </ModalContainer>
                         )}
-                        {canCreateChannel && (
+                        {!space.isLoadingChannels && !hasContractChannels && canCreateChannel && (
                             <ActionNavItem
                                 icon="plus"
                                 id="newChannel"
@@ -405,16 +462,43 @@ const SidebarPill = (props: {
     )
 }
 
-const ChannelList = (props: { space: SpaceData; mentions: MentionResult[] }) => {
+// This is a list of the synced Matrix channels
+// working with them can be quite tricky!
+// You can leave a channel and it will still be in the list of channels, as long as another member is still in the channel
+// However, if there are no members in the channel (or maybe no members that you know about from other channels??) then the channel will not sync and is missing from this list
+// Proabably we want to filter this list to only include ones you've joined, b/c now we have the browse channels route
+const SyncedChannelList = (props: {
+    space: SpaceData
+    mentions: MentionResult[]
+    canCreateChannel: boolean | undefined
+    onShowCreateChannel: () => void
+}) => {
     const sizeContext = useSizeContext()
     const isSmall = sizeContext.lessThan(120)
-    const { mentions, space } = props
+    const { mentions, space, onShowCreateChannel, canCreateChannel } = props
 
     return (
         <>
             {space.channelGroups.map((group) => (
                 <Stack key={group.label} display={isSmall ? 'none' : 'flex'}>
-                    <ChannelNavGroup>{group.label}</ChannelNavGroup>
+                    <Stack
+                        horizontal
+                        alignItems="center"
+                        justifyContent="spaceBetween"
+                        paddingRight="sm"
+                        height="height_lg"
+                    >
+                        <Box
+                            style={{
+                                transform: 'translateY(2px)',
+                            }}
+                        >
+                            <ChannelNavGroup>{group.label}</ChannelNavGroup>
+                        </Box>
+                        {canCreateChannel && (
+                            <IconButton icon="plus" onClick={onShowCreateChannel} />
+                        )}
+                    </Stack>
                     {group.channels.map((channel) => {
                         const key = `${group.label}/${channel.id.slug}`
                         // only unread mentions at the channel root

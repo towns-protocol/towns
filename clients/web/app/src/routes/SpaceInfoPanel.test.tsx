@@ -31,6 +31,7 @@ const generateSpaceData = (networkId: string) => {
         avatarSrc: '',
         channelGroups: [],
         membership: Lib.Membership.Join,
+        isLoadingChannels: false,
     }
 
     const onChainSpaceInfo = {

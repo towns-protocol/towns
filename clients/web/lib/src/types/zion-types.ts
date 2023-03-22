@@ -57,6 +57,7 @@ export interface SpaceData {
     avatarSrc: string
     channelGroups: ChannelGroup[]
     membership: string
+    isLoadingChannels: boolean
 }
 
 export interface SpaceHierarchies {

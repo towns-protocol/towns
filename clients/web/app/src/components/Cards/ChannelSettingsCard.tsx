@@ -23,7 +23,7 @@ export const ChannelSettingsCard = (props: Props) => {
 
     const onLeaveClick = useEvent(async () => {
         await leaveRoom(channelId)
-        navigate('/')
+        navigate(`/${PATHS.SPACES}/${spaceId.slug}`)
     })
 
     const onInfoClick = useEvent(() => {

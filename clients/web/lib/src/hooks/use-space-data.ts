@@ -121,7 +121,13 @@ function formatSpace(
     membership: string,
     avatarSrc: string,
 ): SpaceData {
-    return formatRoom(root, membership, avatarSrc, toChannelGroups(spaceHierarchy?.children ?? []))
+    return formatRoom(
+        root,
+        membership,
+        avatarSrc,
+        toChannelGroups(spaceHierarchy?.children ?? []),
+        spaceHierarchy,
+    )
 }
 
 /// formatting helper for changing a room to a space
@@ -130,6 +136,7 @@ export function formatRoom(
     membership: string,
     avatarSrc: string,
     channelGroups: ChannelGroup[] = [],
+    spaceHierarchy: SpaceHierarchy | undefined,
 ): SpaceData {
     return {
         id: r.id,
@@ -137,6 +144,8 @@ export function formatRoom(
         avatarSrc: avatarSrc,
         channelGroups: channelGroups,
         membership: membership,
+        // 3.21.23 adding this prop instead of changing channelGroups always being an array, in case code is relying on that
+        isLoadingChannels: spaceHierarchy?.children === undefined,
     }
 }
 

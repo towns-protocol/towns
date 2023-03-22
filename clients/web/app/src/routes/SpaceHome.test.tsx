@@ -84,6 +84,7 @@ describe('<SpaceHome />', () => {
                     avatarSrc: 'test',
                     channelGroups: [],
                     membership: '',
+                    isLoadingChannels: false,
                 },
             }
         })
@@ -115,6 +116,7 @@ describe('<SpaceHome />', () => {
                     avatarSrc: 'test',
                     channelGroups: [],
                     membership: Lib.Membership.Join,
+                    isLoadingChannels: false,
                 },
             }
         })
@@ -165,6 +167,7 @@ describe('<SpaceHome />', () => {
                             ],
                         },
                     ],
+                    isLoadingChannels: false,
                     membership: Lib.Membership.Join,
                 },
             }

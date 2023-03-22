@@ -516,6 +516,14 @@ export class SpaceDapp implements ISpaceDapp {
         return space.write.multicall(encodedCallData)
     }
 
+    public async getChannels(spaceId: string) {
+        const space = await this.getSpace(spaceId, false)
+        if (!space?.read) {
+            throw new Error(`Space with networkId "${spaceId}" is not found.`)
+        }
+        return space.getChannels()
+    }
+
     private async encodeDeleteRoleFromChannels(
         space: SpaceShim,
         modules: SpaceDataTypes.EntitlementModuleStructOutput[],

@@ -5,6 +5,7 @@ import {
     Room as MatrixRoom,
     IRoomTimelineData,
     EventType,
+    Room,
 } from 'matrix-js-sdk'
 import { useEffect, useRef, useState } from 'react'
 import { toZionSpaceChild } from '../../store/use-matrix-store'
@@ -149,5 +150,34 @@ export function useSyncSpaceHierarchies(
             matrixClient.off(RoomEvent.Timeline, onRoomTimelineEvent)
         }
     }, [matrixClient, queryClient, spaceIds])
+
+    // watch for when user joins or leaves a channel
+    useEffect(() => {
+        function onMyMembership(
+            room: Room,
+            membership: string,
+            prevMembership?: string | undefined,
+        ) {
+            const parentEvents = room.currentState
+                .getStateEvents(EventType.SpaceParent)
+                .map((e) => e.getStateKey())
+
+            const parentSpaceId = parentEvents?.[0]
+
+            if (!parentSpaceId || !spaceIds.find((s) => s.networkId === parentSpaceId)) {
+                return
+            }
+            queryClient.removeQueries({
+                queryKey: [QueryKeyChannels.SyncEntitledChannels, parentSpaceId],
+            })
+            enqueueSpaceId(parentSpaceId)
+        }
+
+        matrixClient?.on(RoomEvent.MyMembership, onMyMembership)
+        return () => {
+            matrixClient?.off(RoomEvent.MyMembership, onMyMembership)
+        }
+    }, [matrixClient, queryClient, spaceIds])
+
     return { spaceHierarchies }
 }
