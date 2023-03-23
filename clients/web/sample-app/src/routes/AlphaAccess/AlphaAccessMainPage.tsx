@@ -39,7 +39,7 @@ export const AlphaAccessMainPage = () => {
             case 5:
                 return 'https://goerli.etherscan.io'
             case 11155111:
-                return 'https://sepolia.solana.com'
+                return 'https://sepolia.etherscan.io'
             default:
                 return ''
         }
