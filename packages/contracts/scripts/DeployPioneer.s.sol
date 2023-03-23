@@ -10,5 +10,7 @@ contract DeployPioneer is ScriptUtils {
   function run() public {
     vm.broadcast();
     pioneer = new Pioneer("Pioneer", "PIONEER", "");
+
+    _writeAddress("pioneerToken", address(pioneer));
   }
 }

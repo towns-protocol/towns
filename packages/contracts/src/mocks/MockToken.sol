@@ -14,6 +14,13 @@ contract Mock721 is ERC721 {
     tokenId++;
     _mint(to, tokenId);
   }
+
+  function mint(address to, uint256 amount) external {
+    for (uint256 i = 0; i < amount; i++) {
+      _mint(to, tokenId);
+      tokenId++;
+    }
+  }
 }
 
 contract Mock1155 is ERC1155 {
