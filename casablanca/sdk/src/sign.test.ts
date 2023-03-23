@@ -6,7 +6,7 @@ import { checkDelegateSig, unpackEnvelope, makeDelegateSig, makeEvent, SignerCon
 import { bin_fromHexString } from './types'
 import debug from 'debug'
 import { StreamKind, Payload, Payload_Message } from '@towns/proto'
-import { PartialMessage, PlainMessage } from '@bufbuild/protobuf'
+import { PlainMessage } from '@bufbuild/protobuf'
 import { makeUserStreamId } from './id'
 
 const log = debug('test:sign')

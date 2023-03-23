@@ -68,7 +68,7 @@ describe('clientTest', () => {
 
         await done.expectToSucceed()
 
-        await bobsAnotherClient.stopSync()
+        bobsAnotherClient.stopSync()
 
         return 'done'
     }
@@ -112,7 +112,7 @@ describe('clientTest', () => {
 
         await done.expectToSucceed()
 
-        await bobsClient.stopSync()
+        bobsClient.stopSync()
 
         log('pass1 done')
 

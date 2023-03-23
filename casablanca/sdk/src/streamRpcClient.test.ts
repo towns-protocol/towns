@@ -401,7 +401,7 @@ describe('streamRpcClient', () => {
         // Alice reads previouse messages from the channel
         const channel = await alice.getStream({ streamId: channelId })
         let messageCount = 0
-        const m1 = unpackEnvelopes(channel.stream?.events!).forEach((e) => {
+        unpackEnvelopes(channel.stream!.events).forEach((e) => {
             const p = e.event.payload?.payload
             if (p?.case === 'message') {
                 messageCount++
@@ -661,5 +661,5 @@ const expectEvent = (
     validator(e.payload?.payload.value)
 
     expect(resp.streams[0].nextSyncCookie).toBeDefined()
-    return resp.streams[0].nextSyncCookie!
+    return resp.streams[0].nextSyncCookie
 }

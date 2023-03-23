@@ -6,7 +6,8 @@
         "plugin:import/typescript",
         "plugin:@typescript-eslint/recommended",
         "plugin:@typescript-eslint/recommended-requiring-type-checking",
-        "plugin:prettier/recommended"
+        "plugin:prettier/recommended",
+        "plugin:jest/recommended"
     ],
     "parser": "@typescript-eslint/parser",
     "parserOptions": { "project": ["./tsconfig.json"] },
@@ -18,9 +19,43 @@
         "@typescript-eslint/no-unsafe-assignment": "off",
         "@typescript-eslint/no-unused-vars": [
             "error",
-            { "argsIgnorePattern": "^_", "destructuredArrayIgnorePattern": "^_" }
+            {
+                "argsIgnorePattern": "^_",
+                "destructuredArrayIgnorePattern": "^_"
+            }
         ],
-        "@typescript-eslint/restrict-template-expressions": ["error", { "allowNever": true }],
-        "@typescript-eslint/no-empty-function": ["error", { "allow": ["arrowFunctions"] }]
-    }
+        "@typescript-eslint/restrict-template-expressions": [
+            "error",
+            {
+                "allowNever": true,
+                "allowBoolean": true,
+                "allowNumber": true,
+                "allowAny": true,
+                "allowNullish": true
+            }
+        ],
+        "@typescript-eslint/no-empty-function": [
+            "error",
+            {
+                "allow": ["arrowFunctions"]
+            }
+        ],
+
+        "@typescript-eslint/ban-ts-comment": "off"
+    },
+    "overrides": [
+        {
+            "files": ["**/*.test.*"],
+            "rules": {
+                "jest/no-standalone-expect": "off",
+                "jest/expect-expect": "off",
+                "jest/no-conditional-expect": "off",
+                "jest/no-disabled-tests": "off",
+                "@typescript-eslint/no-unsafe-call": "off",
+                "@typescript-eslint/no-floating-promises": "off",
+                "@typescript-eslint/no-non-null-assertion": "off",
+                "@typescript-eslint/no-unsafe-argument": "off"
+            }
+        }
+    ]
 }

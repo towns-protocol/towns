@@ -22,7 +22,7 @@ export const makeEvent_test = (
     payload: Payload | PartialMessage<Payload>,
     prevEventHashes: Uint8Array[],
 ): Envelope => {
-    let hashes = normailizeHashes(prevEventHashes)
+    const hashes = normailizeHashes(prevEventHashes)
     const streamEvent = new StreamEvent({
         creatorAddress: context.creatorAddress,
         salt: genIdBlob(),

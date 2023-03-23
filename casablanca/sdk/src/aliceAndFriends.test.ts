@@ -30,9 +30,9 @@ class TestDriver {
 
         await expect(this.client.createNewUser()).toResolve()
 
-        this.client.on('userInvitedToStream', this.userInvitedToStream.bind(this))
-        this.client.on('userJoinedStream', this.userJoinedStream.bind(this))
-        this.client.on('channelNewMessage', this.channelNewMessage.bind(this))
+        this.client.on('userInvitedToStream', (s) => void this.userInvitedToStream.bind(this)(s))
+        this.client.on('userJoinedStream', (s) => void this.userJoinedStream.bind(this)(s))
+        this.client.on('channelNewMessage', (s, m) => void this.channelNewMessage.bind(this)(s, m))
 
         this.client.startSync(1000)
         this.log(`driver started client`)
