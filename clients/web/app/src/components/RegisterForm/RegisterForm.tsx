@@ -9,6 +9,7 @@ import { UploadAvatar } from '@components/UploadImage/UploadAvatar/UploadAvatar'
 import { PATHS } from 'routes'
 import { useUploadImage } from 'api/lib/uploadImage'
 import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinner'
+import { env } from 'utils'
 
 export const RegisterForm = ({ isEdit }: { isEdit: boolean }) => {
     const { loggedInWalletAddress, isConnected, register: registerWallet } = useAuth()
@@ -72,21 +73,27 @@ export const RegisterForm = ({ isEdit }: { isEdit: boolean }) => {
                     // only upload an image when first registering and if the user has not uploaded one
                     // this needs to be done before the registerWallet call
                     if (!isEdit && !data.profilePic?.[0] && loggedInWalletAddress) {
-                        try {
-                            // upload to CF a random image
-                            const random = Math.floor(Math.random() * 25) + 1
-                            const url = `/placeholders/pp${random}.png`
-                            const blob = await fetch(url).then((r) => r.blob())
-                            const file = new File([blob], 'avatar.png')
+                        if (
+                            !env.IS_DEV ||
+                            // only upload an image locally when actually want to using ?registrationUpload
+                            (env.IS_DEV && window.location.search.includes('registrationUpload'))
+                        ) {
+                            try {
+                                // upload to CF a random image
+                                const random = Math.floor(Math.random() * 25) + 1
+                                const url = `/placeholders/pp${random}.png`
+                                const blob = await fetch(url).then((r) => r.blob())
+                                const file = new File([blob], 'avatar.png')
 
-                            await upload({
-                                id: loggedInWalletAddress,
-                                file,
-                                type: 'avatar',
-                                imageUrl: url,
-                            })
-                        } catch (error) {
-                            console.error('Error uploading random image', error)
+                                await upload({
+                                    id: loggedInWalletAddress,
+                                    file,
+                                    type: 'avatar',
+                                    imageUrl: url,
+                                })
+                            } catch (error) {
+                                console.error('Error uploading random image', error)
+                            }
                         }
                     }
 
