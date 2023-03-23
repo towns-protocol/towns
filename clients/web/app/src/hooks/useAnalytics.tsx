@@ -9,12 +9,19 @@ interface Analytics {
     // we never want to depend on the return type of the amplitude track function
     // inside our application layer. we just want to fire and forget.
     track: (...args: Parameters<(typeof amplitudeLib)['track']>) => unknown
+    setUserId: (...args: Parameters<(typeof amplitudeLib)['setUserId']>) => unknown
 }
 
 const UNITITIALIZED_ANALYTICS: Analytics = {
     track: (...args) => {
         console.debug(
             'Analytics not initialized, but track was called with the following arguments:',
+        )
+        args.forEach(console.debug)
+    },
+    setUserId: (...args) => {
+        console.debug(
+            'Analytics not initialized, but setUserId was called with the following arguments:',
         )
         args.forEach(console.debug)
     },
@@ -27,9 +34,18 @@ export const AnalyticsProvider = ({ children }: { children: React.ReactNode }) =
 
     useEffect(() => {
         if (env.VITE_AMPLITUDE_KEY) {
-            amplitudeLib.init(env.VITE_AMPLITUDE_KEY, undefined, {
-                appVersion: APP_VERSION,
-            })
+            if (env.VITE_AMP_WORKER_URL == undefined) {
+                console.warn('VITE_AMP_WORKER_URL is not defined')
+                amplitudeLib.init(env.VITE_AMPLITUDE_KEY, undefined, {
+                    appVersion: APP_VERSION,
+                })
+            } else {
+                amplitudeLib.init(env.VITE_AMPLITUDE_KEY, undefined, {
+                    appVersion: APP_VERSION,
+                    serverUrl: env.VITE_AMP_WORKER_URL,
+                })
+            }
+
             setAnalytics(amplitudeLib)
             console.debug('Amplitude key found. Initializing analytics.')
         } else {

@@ -1,6 +1,7 @@
 import { useCallback, useMemo } from 'react'
 import { WalletStatus, useMatrixCredentials, useWeb3Context, useZionClient } from 'use-zion-client'
 import { useConnect } from 'wagmi'
+import { keccak256 } from 'ethers/lib/utils.js'
 import { useAnalytics } from './useAnalytics'
 
 const loginMsgToSign = `Click to sign in and accept the Towns Terms of Service.`
@@ -11,7 +12,7 @@ export function useAuth() {
         useMatrixCredentials()
     const { loginWithWalletToMatrix, registerWalletWithMatrix, logout: _logout } = useZionClient()
     const { walletStatus, activeWalletAddress } = useWeb3Context()
-    const { track } = useAnalytics()
+    const { track, setUserId } = useAnalytics()
     const {
         connect: _connect,
         connectors,
@@ -19,6 +20,8 @@ export function useAuth() {
         pendingConnector,
     } = useConnect({
         onSuccess: () => {
+            // jterzis somewhat of a hack to set a stable, obfuscated uid derived off the wallet address
+            setUserId(keccak256(activeWalletAddress as string).substring(0, 34))
             track('wallet_connect_success')
         },
         onError: (error) => {

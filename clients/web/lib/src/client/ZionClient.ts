@@ -236,6 +236,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
             initialSyncLimit: this.opts.initialSyncLimit ?? DEFAULT_INITIAL_SYNC_LIMIT,
             pollTimeout: this.opts.pollTimeoutMs ?? DEFAULT_POLL_TIMEOUT,
         })
+
         // wait for the sync to complete
         const initialSync = new Promise<string>((resolve, reject) => {
             if (!this.matrixClient) {
