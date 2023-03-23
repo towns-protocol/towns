@@ -30,6 +30,21 @@ export const AlphaAccessMainPage = () => {
         }
     }, [pioneerNFT])
 
+    const etherscanBaseURL = useMemo(() => {
+        if (!chain) {
+            return ''
+        }
+
+        switch (chain.id) {
+            case 5:
+                return 'https://goerli.etherscan.io'
+            case 11155111:
+                return 'https://sepolia.solana.com'
+            default:
+                return ''
+        }
+    }, [chain])
+
     useEffect(() => {
         handleRefetchContractState()
     }, [handleRefetchContractState])
@@ -281,7 +296,10 @@ export const AlphaAccessMainPage = () => {
                         marginTop: '20px',
                     }}
                 >
-                    <ContractState contractState={contractState} />
+                    <ContractState
+                        contractState={contractState}
+                        etherscanBaseURL={etherscanBaseURL}
+                    />
                 </div>
                 <table
                     style={{

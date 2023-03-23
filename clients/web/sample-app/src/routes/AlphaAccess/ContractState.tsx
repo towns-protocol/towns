@@ -2,14 +2,17 @@ import { ethers } from 'ethers'
 import React from 'react'
 import { PioneerNFTContractState } from 'use-zion-client'
 
-export const ContractState = (props: { contractState: PioneerNFTContractState }) => {
+export const ContractState = (props: {
+    contractState: PioneerNFTContractState
+    etherscanBaseURL: string
+}) => {
     return (
         <div>
             <h2>Contract Address</h2>
 
             <div>
                 <a
-                    href={`https://goerli.etherscan.io/address/${props.contractState.contractAddress}`}
+                    href={`${props.etherscanBaseURL}/address/${props.contractState.contractAddress}`}
                     target="_blank"
                     rel="noreferrer"
                 >
@@ -21,7 +24,7 @@ export const ContractState = (props: { contractState: PioneerNFTContractState })
 
             <div>
                 <a
-                    href={`https://goerli.etherscan.io/address/${props.contractState.owner}`}
+                    href={`${props.etherscanBaseURL}/address/${props.contractState.owner}`}
                     target="_blank"
                     rel="noreferrer"
                 >

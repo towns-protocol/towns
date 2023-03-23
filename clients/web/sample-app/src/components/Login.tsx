@@ -283,6 +283,10 @@ function ProfileContent() {
             id: 5,
             name: 'goerli',
         },
+        {
+            id: 11155111,
+            name: 'sepolia',
+        },
     ]
 
     if (isConnected) {

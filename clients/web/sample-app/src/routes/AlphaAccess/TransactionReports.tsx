@@ -14,7 +14,7 @@ export const TransactionReports = (props: { transactionReports: TransactionRepor
                 {props.transactionReports.map((report) => {
                     return (
                         <li key={report.hash}>
-                            <a href={`https://goerli.etherscan.io/tx/${report.hash}`}>
+                            <a href={`https://sepolia.etherscan.io/tx/${report.hash}`}>
                                 {report.type} - {report.hash}
                             </a>
                         </li>
