@@ -142,7 +142,7 @@ export const SpaceSettings = () => {
     }
 
     return (
-        <Stack horizontal grow minWidth="100%">
+        <Stack horizontal grow minWidth="100%" position="relative" zIndex="ui" background="level1">
             <Stack minWidth="200">
                 <Stack gap="sm" padding="sm">
                     <SpaceSettingsNavItem selected icon="all">

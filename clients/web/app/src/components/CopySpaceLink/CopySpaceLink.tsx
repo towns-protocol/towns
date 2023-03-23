@@ -86,18 +86,14 @@ const SpaceLink = (props: Props) => {
                 >
                     <span ref={copiedTextRef}>Copied!</span>
                     <div ref={spaceUrlTextRef} className={spaceLinkCopy}>
-                        Copy town link: {inviteUrl}
+                        Copy town link
                     </div>
                 </div>
 
                 {widths[0] !== 0 && (
                     <Box>
                         {copied && <FadeIn delay>Copied!</FadeIn>}{' '}
-                        {!copied && (
-                            <span className={spaceLinkCopy}>
-                                Copy town link: <span className={spaceUrlText}>{inviteUrl}</span>
-                            </span>
-                        )}
+                        {!copied && <span className={spaceLinkCopy}>Copy town link</span>}
                     </Box>
                 )}
             </MotionBox>
