@@ -9,7 +9,7 @@
         "dev:local": "wrangler dev --local",
         "lint": "eslint .",
         "publish:prod": "wrangler publish --env production",
-		    "publish:test": "wrangler publish --env test",
+        "publish:test": "wrangler publish --env test",
         "test": "yarn test:unit",
         "test:unit": "jest"
     },
