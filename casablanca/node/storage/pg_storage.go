@@ -18,6 +18,7 @@ import (
 	"strings"
 
 	. "casablanca/node/events"
+	"casablanca/node/infra"
 	"casablanca/node/protocol"
 
 	log "github.com/sirupsen/logrus"
@@ -44,6 +45,8 @@ type PGEventNotificationEntry struct {
 
 // NewPGEventStore creates a new PGEventStore
 func NewPGEventStore(ctx context.Context, database_url string, clean bool) (*PGEventStore, error) {
+	log := infra.GetLogger(ctx)
+
 	pool, err := pgxpool.New(ctx, database_url)
 
 	if err != nil {
@@ -79,6 +82,7 @@ func NewPGEventStore(ctx context.Context, database_url string, clean bool) (*PGE
 	store.startMultiplexer(ctx)
 
 	go func() {
+		ctx, log := infra.SetLoggerWithProcess(ctx, "debug-events-loop")
 		for {
 			select {
 			case <-ctx.Done():
@@ -94,6 +98,7 @@ func NewPGEventStore(ctx context.Context, database_url string, clean bool) (*PGE
 }
 
 func dump(store *PGEventStore, ctx context.Context) {
+	log := infra.GetLogger(ctx)
 	streams, err := store.GetStreams(ctx)
 	if err != nil {
 		log.Errorf("GetStreams: %v", err)
@@ -174,6 +179,8 @@ func lockTable(ctx context.Context, tx pgx.Tx, tableName string) error {
 }
 
 func addEvents(ctx context.Context, tx pgx.Tx, streamId string, events []*protocol.Envelope) (int64, error) {
+	log := infra.GetLogger(ctx)
+
 	sb := strings.Builder{}
 	hashes := strings.Builder{}
 	params := make([]interface{}, 0, len(events)*4)
@@ -211,6 +218,7 @@ func addEvents(ctx context.Context, tx pgx.Tx, streamId string, events []*protoc
 }
 
 func addDebugEvents(ctx context.Context, tx pgx.Tx, streamId string) (int, error) {
+	log := infra.GetLogger(ctx)
 	rows, err := tx.Query(ctx, fmt.Sprintf("SELECT seq_num, hash, signature, event FROM %s e WHERE NOT EXISTS (SELECT 1 FROM es_events_debug d WHERE d.seq_num =  e.seq_num and es_name = $1)",
 		streamSqlName(streamId)), streamId)
 	if err != nil {
@@ -272,6 +280,7 @@ func maxSeqNum(seqNums []int64) int64 {
 
 // CreateStream creates a new event stream
 func (s *PGEventStore) CreateStream(ctx context.Context, streamID string, inceptionEvents []*protocol.Envelope) ([]byte, error) {
+	log := infra.GetLogger(ctx)
 	tx, err := startTx(ctx, s.pool)
 	if err != nil {
 		return nil, err
@@ -310,6 +319,7 @@ func (s *PGEventStore) CreateStream(ctx context.Context, streamID string, incept
 }
 
 func (s *PGEventStore) AddEvent(ctx context.Context, streamID string, event *protocol.Envelope) ([]byte, error) {
+	log := infra.GetLogger(ctx)
 	log.Debug("Storage: AddEvent: ", string(streamID), " ", string(event.Hash))
 	tx, err := startTx(ctx, s.pool)
 	if err != nil {
@@ -470,6 +480,7 @@ func (s *PGEventStore) DeleteAllStreams(ctx context.Context) error {
  * @returns {error} - any error
  */
 func fetchMessages(ctx context.Context, tx pgx.Tx, positions []StreamPos, maxCount int) (map[string][]*protocol.Envelope, map[string]int64, error) {
+	log := infra.GetLogger(ctx)
 
 	log.Debug("fetchMessages: ", len(positions))
 
@@ -548,7 +559,8 @@ func fetchMessages(ctx context.Context, tx pgx.Tx, positions []StreamPos, maxCou
 	return events, nextSeqNums, nil
 }
 
-func send(id uuid.UUID, output chan<- StreamEventsBlock, block StreamEventsBlock) {
+func send(ctx context.Context, id uuid.UUID, output chan<- StreamEventsBlock, block StreamEventsBlock) {
+	log := infra.GetLogger(ctx)
 	select {
 	case output <- block:
 		log.Debug("Sent block", block)
@@ -598,6 +610,7 @@ func (s *PGEventStore) getLastSeqNum(ctx context.Context) (map[string]int64, err
  * @returns {error} - any error
  */
 func (s *PGEventStore) getLastEvents(ctx context.Context, tx pgx.Tx, selection map[string]int64) (map[string][]*FullEvent, error) {
+	log := infra.GetLogger(ctx)
 	log.Debugf("Fetching events from %v", selection)
 
 	allEvents := make(map[string][]*FullEvent)
@@ -640,6 +653,7 @@ func (s *PGEventStore) getLastEvents(ctx context.Context, tx pgx.Tx, selection m
 }
 
 func (s *PGEventStore) startMultiplexer(ctx context.Context) error {
+	ctx, log := infra.SetLoggerWithProcess(ctx, "multiplexer")
 
 	go func() {
 		// TODO handle reconnects
@@ -721,7 +735,7 @@ func (s *PGEventStore) startMultiplexer(ctx context.Context) error {
 					rx, ok := s.consumers.GetByUUID(id)
 					if ok {
 						log.Debugf("Sending %d event(s) to sub %s", len(block.Events), id)
-						go send(id, rx.notifyChan, block)
+						go send(ctx, id, rx.notifyChan, block)
 					}
 				}
 				seqNum = lastEventNums
@@ -756,13 +770,15 @@ func (s *PGEventStore) stopMultiplexer() error {
 	return nil
 }
 
-func (s *PGEventStore) subscribe(streamId string, startCookie []byte) (*SmapEntry, error) {
+func (s *PGEventStore) subscribe(ctx context.Context, streamId string, startCookie []byte) (*SmapEntry, error) {
+	log := infra.GetLogger(ctx)
 	sub := s.consumers.Add(streamId, startCookie)
 	log.Debugf("Subscribing to stream %s - %s", string(streamId), sub.id.String())
 	return sub, nil
 }
 
-func (s *PGEventStore) unsubscribe(streamId string, id uuid.UUID) {
+func (s *PGEventStore) unsubscribe(ctx context.Context, streamId string, id uuid.UUID) {
+	log := infra.GetLogger(ctx)
 	log.Debugf("Unsubscribing %s from stream: %v", id, string(streamId))
 	s.consumers.Delete(streamId, id)
 }
@@ -773,6 +789,7 @@ type syncEvent struct {
 }
 
 func (s *PGEventStore) SyncStreams(ctx context.Context, syncPositions []*protocol.SyncPos, maxCount int, TimeoutMs uint32) (map[string]StreamEventsBlock, error) {
+	log := infra.GetLogger(ctx)
 	log.Debugf("SyncStreams start: %v", syncPositions)
 
 	longStreams := map[string]struct{}{}
@@ -791,7 +808,7 @@ func (s *PGEventStore) SyncStreams(ctx context.Context, syncPositions []*protoco
 		streamPos[i] = StreamPos{StreamId: pos.StreamId, SyncCookie: cookie}
 		positions[string(pos.StreamId)] = cookie
 		cookieSeqNum, _ := BytesToSeqNum(cookie)
-		if startSeqNum >  cookieSeqNum {
+		if startSeqNum > cookieSeqNum {
 			startSeqNum = cookieSeqNum
 		}
 	}
@@ -844,7 +861,7 @@ func (s *PGEventStore) SyncStreams(ctx context.Context, syncPositions []*protoco
 			cookie = pos.SyncCookie
 		}
 		// subscribe to stream
-		rx, err := s.subscribe(streamId, cookie)
+		rx, err := s.subscribe(ctx, streamId, cookie)
 		if err != nil {
 			return nil, err
 		}
@@ -863,7 +880,7 @@ func (s *PGEventStore) SyncStreams(ctx context.Context, syncPositions []*protoco
 					results <- nil
 				}
 			}
-			s.unsubscribe(streamId, rx.id)
+			s.unsubscribe(ctx, streamId, rx.id)
 		}
 		go prod()
 	}

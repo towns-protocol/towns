@@ -2,14 +2,15 @@ package rpc
 
 import (
 	. "casablanca/node/events"
+	"casablanca/node/infra"
 	. "casablanca/node/protocol"
 	"context"
 
 	connect "github.com/bufbuild/connect-go"
-	log "github.com/sirupsen/logrus"
 )
 
 func (s *Service) CreateStream(ctx context.Context, req *connect.Request[CreateStreamRequest]) (*connect.Response[CreateStreamResponse], error) {
+	log := infra.GetLogger(ctx)
 	if len(req.Msg.Events) == 0 {
 		return nil, RpcErrorf(Err_BAD_STREAM_CREATION_PARAMS, "CreateStream: no events")
 	}

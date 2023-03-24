@@ -2,10 +2,10 @@ package rpc
 
 import (
 	. "casablanca/node/events"
+	"casablanca/node/infra"
 	"casablanca/node/protocol"
+	"context"
 	"fmt"
-
-	log "github.com/sirupsen/logrus"
 )
 
 type cachedEvent struct {
@@ -117,7 +117,8 @@ func (r *StreamView) JoinedUsers(streamId string) (map[string]struct{}, error) {
 	return users, nil
 }
 
-func (r *StreamView) GetAllLeafEvents() ([][]byte, error) {
+func (r *StreamView) GetAllLeafEvents(ctx context.Context) ([][]byte, error) {
+	log := infra.GetLogger(ctx)
 	events, err := r.getOrderedEventsCached()
 	if err != nil {
 		return nil, err

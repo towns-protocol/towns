@@ -1,14 +1,15 @@
 package rpc
 
 import (
+	"casablanca/node/infra"
 	. "casablanca/node/protocol"
 	"context"
 
 	connect "github.com/bufbuild/connect-go"
-	log "github.com/sirupsen/logrus"
 )
 
 func (s *Service) SyncStreams(ctx context.Context, req *connect.Request[SyncStreamsRequest]) (*connect.Response[SyncStreamsResponse], error) {
+	log := infra.GetLogger(ctx)
 	log.Info("SyncStreams: CALL ", len(req.Msg.SyncPos), req.Msg.TimeoutMs)
 	for _, s := range req.Msg.SyncPos {
 		log.Infof("SyncStreams: CALL     %s %x", s.StreamId, s.SyncCookie)

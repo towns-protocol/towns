@@ -18,6 +18,7 @@ import (
 
 	"casablanca/node/crypto"
 	. "casablanca/node/events"
+	"casablanca/node/infra"
 	"casablanca/node/protocol"
 	"casablanca/node/protocol/protocolconnect"
 	"casablanca/node/storage"
@@ -28,6 +29,8 @@ type LoggingService struct {
 }
 
 func (s *LoggingService) CreateStream(ctx context.Context, req *connect_go.Request[protocol.CreateStreamRequest]) (*connect_go.Response[protocol.CreateStreamResponse], error) {
+	ctx, log := infra.SetLoggerWithRequestId(ctx)
+
 	res, err := s.Service.CreateStream(ctx, req)
 	if err != nil {
 		log.Errorf("CreateStream error: %v", err)
@@ -38,6 +41,8 @@ func (s *LoggingService) CreateStream(ctx context.Context, req *connect_go.Reque
 }
 
 func (s *LoggingService) GetStream(ctx context.Context, req *connect_go.Request[protocol.GetStreamRequest]) (*connect_go.Response[protocol.GetStreamResponse], error) {
+	ctx, log := infra.SetLoggerWithRequestId(ctx)
+	
 	res, err := s.Service.GetStream(ctx, req)
 	if err != nil {
 		log.Errorf("GetStream error: %v", err)
@@ -47,6 +52,8 @@ func (s *LoggingService) GetStream(ctx context.Context, req *connect_go.Request[
 }
 
 func (s *LoggingService) AddEvent(ctx context.Context, req *connect_go.Request[protocol.AddEventRequest]) (*connect_go.Response[protocol.AddEventResponse], error) {
+	ctx, log := infra.SetLoggerWithRequestId(ctx)
+	
 	res, err := s.Service.AddEvent(ctx, req)
 	if err != nil {
 		log.Errorf("AddEvent error: %v", err)
@@ -56,6 +63,8 @@ func (s *LoggingService) AddEvent(ctx context.Context, req *connect_go.Request[p
 }
 
 func (s *LoggingService) SyncStreams(ctx context.Context, req *connect_go.Request[protocol.SyncStreamsRequest]) (*connect_go.Response[protocol.SyncStreamsResponse], error) {
+	ctx, log := infra.SetLoggerWithRequestId(ctx)
+	
 	res, err := s.Service.SyncStreams(ctx, req)
 	if err != nil {
 		log.Errorf("SyncStreams error: %v", err)
@@ -65,6 +74,8 @@ func (s *LoggingService) SyncStreams(ctx context.Context, req *connect_go.Reques
 }
 
 func (s *LoggingService) Info(ctx context.Context, req *connect_go.Request[protocol.InfoRequest]) (*connect_go.Response[protocol.InfoResponse], error) {
+	ctx, log := infra.SetLoggerWithRequestId(ctx)
+	
 	res, err := s.Service.Info(ctx, req)
 	if err != nil {
 		log.Errorf("Info error: %v", err)
@@ -79,6 +90,7 @@ type Service struct {
 }
 
 func (s *Service) GetStream(ctx context.Context, req *connect_go.Request[protocol.GetStreamRequest]) (*connect_go.Response[protocol.GetStreamResponse], error) {
+	log := infra.GetLogger(ctx)
 
 	streamId := req.Msg.StreamId
 	log.Info("GetStream: ", streamId)
@@ -114,7 +126,8 @@ func (s *Service) checkPrevEvents(view *StreamView, prevEvents [][]byte) error {
 }
 
 func (s *Service) AddEvent(ctx context.Context, req *connect_go.Request[protocol.AddEventRequest]) (*connect_go.Response[protocol.AddEventResponse], error) {
-	log.Infof("AddEvent: %s %s", string(req.Msg.StreamId), hex.EncodeToString(req.Msg.Event.Hash))
+	log := infra.GetLogger(ctx)
+	log.Infof("AddEvent: %s %s", req.Msg.StreamId, hex.EncodeToString(req.Msg.Event.Hash))
 
 	view := makeView(ctx, s.Storage, req.Msg.StreamId)
 	_, err := s.addEvent(ctx, req.Msg.StreamId, view, req.Msg.Event)
@@ -125,6 +138,7 @@ func (s *Service) AddEvent(ctx context.Context, req *connect_go.Request[protocol
 }
 
 func (s *Service) addEvent(ctx context.Context, streamId string, view *StreamView, envelope *protocol.Envelope) ([]byte, error) {
+	log := infra.GetLogger(ctx)
 	log.Info("addEvent: ", hex.EncodeToString(envelope.Hash))
 	parsedEvent, err := ParseEvent(envelope)
 	if err != nil {
@@ -173,7 +187,7 @@ func (s *Service) addEvent(ctx context.Context, streamId string, view *StreamVie
 			return nil, status.Errorf(codes.Internal, "AddEvent: error adding event to view: %v", err)
 		}
 
-		leaves, err := view.GetAllLeafEvents()
+		leaves, err := view.GetAllLeafEvents(ctx)
 		if err != nil {
 			return nil, status.Errorf(codes.Internal, "AddEvent: error getting all leaf events: %v", err)
 		}
