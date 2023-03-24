@@ -111,7 +111,6 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
         this.name = name || ''
         this._chainId = chainId ?? 0
         console.log('~~~ new ZionClient ~~~', this.name, this.opts)
-        this.matrixClient = ZionClient.createMatrixClient(opts, this._auth)
         const { spaceDapp, pioneerNFT } = this.createShims(
             this._chainId,
             this.opts.web3Provider,
@@ -173,7 +172,6 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
         })
 
         this._auth = undefined
-        this.matrixClient = ZionClient.createMatrixClient(this.opts, this._auth)
     }
 
     /************************************************
@@ -205,7 +203,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
         if (this.auth) {
             throw new Error('already authenticated')
         }
-        if (this.matrixClient?.clientRunning) {
+        if (this.matrixClient) {
             throw new Error('matrixClient already running')
         }
         if (!this.opts.web3Provider || !this.opts.web3Signer) {
