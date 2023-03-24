@@ -3,7 +3,8 @@ import { useForm } from 'react-hook-form'
 import { matchPath, useNavigate } from 'react-router'
 import { LoginStatus, useMatrixStore, useMyProfile, useZionClient } from 'use-zion-client'
 
-import { Button, ErrorMessage, Icon, Stack, TextField } from '@ui'
+import { motion } from 'framer-motion'
+import { Box, Button, ErrorMessage, Icon, Paragraph, Stack, TextField } from '@ui'
 import { useAuth } from 'hooks/useAuth'
 import { UploadAvatar } from '@components/UploadImage/UploadAvatar/UploadAvatar'
 import { PATHS } from 'routes'
@@ -132,7 +133,7 @@ export const RegisterForm = ({ isEdit }: { isEdit: boolean }) => {
 
     return (
         <Stack
-            gap="lg"
+            gap="x4"
             minWidth="600"
             as="form"
             autoCorrect="off"
@@ -162,7 +163,7 @@ export const RegisterForm = ({ isEdit }: { isEdit: boolean }) => {
                     description="This is how others will see you."
                     placeholder="Enter a display name"
                     autoComplete="off"
-                    message={<ErrorMessage errors={errors} fieldName="displayName" />}
+                    message={<ErrorMessage preventSpace errors={errors} fieldName="displayName" />}
                     {...register('displayName', {
                         pattern: {
                             value: /^[a-z0-9 '._-]+$/i,
@@ -174,21 +175,34 @@ export const RegisterForm = ({ isEdit }: { isEdit: boolean }) => {
                 />
             </Stack>
 
-            {myProfile?.userId && (
-                <UploadAvatar
-                    userId={myProfile.userId}
-                    setError={setError}
-                    register={register}
-                    formState={formState}
-                    clearErrors={clearErrors}
-                    setValue={setValue}
-                />
-            )}
+            <MotionBox gap="x4" layout="position">
+                <Stack gap>
+                    <Paragraph strong>Profile picture</Paragraph>
+                    <Paragraph color="gray1">Upload a profile picture.</Paragraph>
+                    {myProfile?.userId && (
+                        <UploadAvatar
+                            userId={myProfile.userId}
+                            setError={setError}
+                            register={register}
+                            formState={formState}
+                            clearErrors={clearErrors}
+                            setValue={setValue}
+                        />
+                    )}
+                </Stack>
 
-            <Button type="submit" tone="cta1" disabled={!isValid || imageUploading}>
-                {imageUploading && <ButtonSpinner />}
-                Next
-            </Button>
+                <Button
+                    type="submit"
+                    tone="cta1"
+                    disabled={!isValid || imageUploading}
+                    animate={false}
+                >
+                    {imageUploading && <ButtonSpinner />}
+                    Next
+                </Button>
+            </MotionBox>
         </Stack>
     )
 }
+
+const MotionBox = motion(Box)

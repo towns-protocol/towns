@@ -96,7 +96,7 @@ export const UploadAvatar = (props: Props) => {
     }, [imageError, isLoading])
 
     return (
-        <Box position="relative" data-testid="upload-image-container">
+        <Box gap position="relative" data-testid="upload-image-container">
             <>
                 <Box
                     position="relative"
@@ -121,7 +121,7 @@ export const UploadAvatar = (props: Props) => {
                         onClick={onClick}
                     >
                         <Box absoluteFill>
-                            {
+                            {!imageError && (
                                 <img
                                     src={imageSrc}
                                     style={{
@@ -130,7 +130,7 @@ export const UploadAvatar = (props: Props) => {
                                     onLoad={onLoad}
                                     onError={onError}
                                 />
-                            }
+                            )}
                         </Box>
                         <Box absoluteFill centerContent className={styles}>
                             {isLoading ? (
@@ -155,7 +155,7 @@ export const UploadAvatar = (props: Props) => {
                     <FieldOutline tone="accent" rounded="sm" />
                 </Box>
                 {formState?.errors[formFieldName] && (
-                    <Box padding width="100%">
+                    <Box width="100%">
                         <ErrorMessage errors={formState.errors} fieldName={formFieldName} />
                     </Box>
                 )}

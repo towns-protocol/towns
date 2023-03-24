@@ -8,16 +8,19 @@ type Props = {
     fieldName: string
     message?: string
     textProps?: TextProps
+    preventSpace?: boolean
 } & BoxProps
 
 const ErrorMessage = (props: Props) => {
-    const { errors, fieldName, message, textProps, ...boxProps } = props
+    const { errors, fieldName, message, textProps, preventSpace = false, ...boxProps } = props
     const methods = useFormContext()
     const error = get(errors || methods.formState.errors, fieldName)
     const registrationMessage = error?.message
     const errorMessage = !error ? '\u00A0' : message || registrationMessage
 
-    return (
+    return preventSpace && !error ? (
+        <></>
+    ) : (
         <Box {...boxProps}>
             <ErrorMessageText {...textProps} message={errorMessage} />
         </Box>

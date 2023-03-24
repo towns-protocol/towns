@@ -1,6 +1,7 @@
 import React from 'react'
 import { Box, Stack, Text } from '@ui'
 import { SignupForm } from '@components/RegisterForm'
+import { SentryReportModal } from '@components/SentryErrorReport/SentryErrorReport'
 
 export const Register = ({ isEdit = false }: { isEdit?: boolean }) => {
     return (
@@ -13,6 +14,9 @@ export const Register = ({ isEdit = false }: { isEdit?: boolean }) => {
                 </Box>
                 <SignupForm isEdit={isEdit} />
             </Stack>
+            <Box position="fixed" left="lg" bottom="lg">
+                <SentryReportModal />
+            </Box>
         </Stack>
     )
 }
