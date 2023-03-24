@@ -249,7 +249,7 @@ export const UserProfile = (props: Props) => {
 }
 
 type EditRowProps = {
-    inputId: InputId
+    inputId: string
     initialValue: string | undefined
     children: (renderOptions: EditRowRenderProps) => JSX.Element
     onSave: (id: string, content: undefined | string) => Promise<void> | void

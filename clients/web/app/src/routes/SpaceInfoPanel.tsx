@@ -20,6 +20,7 @@ import {
     Paragraph,
     Stack,
     Text,
+    TextField,
     Toggle,
 } from '@ui'
 import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
@@ -30,6 +31,7 @@ import { TextArea } from 'ui/components/TextArea/TextArea'
 import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinner'
 import { useGetSpaceTopic, useSetSpaceTopic } from 'hooks/useSpaceTopic'
 import { InteractiveSpaceIcon } from '@components/SpaceIcon'
+import { EditModeContainer, TextButton } from '@components/UserProfile/UserProfile'
 import { useContractSpaceInfo } from '../hooks/useContractSpaceInfo'
 import { useMatrixHomeServerUrl } from '../hooks/useMatrixHomeServerUrl'
 
@@ -38,6 +40,10 @@ const MdGap = ({ children, ...boxProps }: { children: JSX.Element } & BoxProps) 
         {children}
     </Box>
 )
+
+enum InputId {
+    SpaceName = 'DisplayName',
+}
 
 export const SpaceInfoPanel = () => {
     const space = useSpaceData()
@@ -101,9 +107,22 @@ export const SpaceInfoPanel = () => {
         })
     })
 
+    const onSaveItem = useEvent((id: string, content: undefined | string) => {
+        switch (id) {
+            case InputId.SpaceName: {
+                if (!content || !content.match(/[a-z0-9-_()]+/i)) {
+                    throw new Error('Use alphanumeric characters only (TBD)')
+                }
+                if (client && space?.id) {
+                    return client.setRoomName(space?.id, content)
+                }
+            }
+        }
+    })
+
     return (
         <Stack height="100%" overflow="hidden">
-            <Panel label="Space" onClose={onClose}>
+            <Panel label="Town Info" onClose={onClose}>
                 {space?.id && (
                     <Stack centerContent gap padding>
                         {!isOfficialNFTToggled ? (
@@ -141,13 +160,98 @@ export const SpaceInfoPanel = () => {
                 )}
                 <Stack gap="lg" paddingX="lg">
                     <MdGap>
-                        <Paragraph strong size="lg">
-                            {space?.name}
-                        </Paragraph>
-                    </MdGap>
-
-                    <MdGap>
-                        <ClipboardCopy clipboardContent={address} label={shortAddress(address)} />
+                        <EditModeContainer
+                            inputId={InputId.SpaceName}
+                            canEdit={canEdit}
+                            initialValue={space?.name}
+                            onSave={onSaveItem}
+                        >
+                            {({
+                                editMenu,
+                                value,
+                                isEditing,
+                                errorComponent,
+                                error,
+                                handleEdit,
+                                onChange,
+                                handleSave,
+                            }) => (
+                                <>
+                                    <Stack
+                                        grow
+                                        horizontal
+                                        gap="sm"
+                                        alignItems="start"
+                                        minHeight="input_md"
+                                    >
+                                        {!isEditing ? (
+                                            <Box grow gap="sm">
+                                                <Box
+                                                    horizontal
+                                                    alignItems="center"
+                                                    gap="xs"
+                                                    height="x5"
+                                                    onClick={
+                                                        canEdit && !isEditing
+                                                            ? handleEdit
+                                                            : undefined
+                                                    }
+                                                >
+                                                    <Paragraph strong size="lg">
+                                                        {value}
+                                                    </Paragraph>
+                                                </Box>
+                                                {address && (
+                                                    <ClipboardCopy
+                                                        label={shortAddress(address)}
+                                                        clipboardContent={address}
+                                                    />
+                                                )}
+                                            </Box>
+                                        ) : (
+                                            <Box grow horizontal gap>
+                                                <Stack grow gap="sm">
+                                                    <Stack>
+                                                        <TextField
+                                                            autoFocus
+                                                            tone={error ? 'error' : undefined}
+                                                            style={{
+                                                                width: 0,
+                                                                minWidth: '100%',
+                                                            }} // shrink hack
+                                                            background="level2"
+                                                            value={value}
+                                                            placeholder="Enter display name..."
+                                                            height="x5"
+                                                            onChange={onChange}
+                                                            onKeyDown={(e) => {
+                                                                if (e.key === 'Enter') {
+                                                                    e.preventDefault()
+                                                                    e.stopPropagation()
+                                                                    handleSave()
+                                                                } else if (e.key === 'Escape') {
+                                                                    handleEdit()
+                                                                }
+                                                            }}
+                                                        />
+                                                        {errorComponent}
+                                                    </Stack>
+                                                    {address && (
+                                                        <ClipboardCopy
+                                                            label={shortAddress(address)}
+                                                            clipboardContent={address}
+                                                        />
+                                                    )}
+                                                </Stack>
+                                            </Box>
+                                        )}
+                                        <Box height="x5" justifyContent="center">
+                                            {editMenu}
+                                        </Box>
+                                    </Stack>
+                                </>
+                            )}
+                        </EditModeContainer>
                     </MdGap>
 
                     {(canEdit || roomTopic) && (
@@ -158,42 +262,31 @@ export const SpaceInfoPanel = () => {
                                     {canEdit &&
                                         (isEdit ? (
                                             <Box horizontal gap="sm">
-                                                <Button
-                                                    size="inline"
-                                                    tone="none"
+                                                <TextButton
                                                     disabled={isLoading}
+                                                    color="gray2"
                                                     onClick={onCancel}
                                                 >
-                                                    <ButtonText color="error" size="sm">
-                                                        Cancel
-                                                    </ButtonText>
-                                                </Button>
-                                                <Box horizontal centerContent gap>
-                                                    <Button
-                                                        size="inline"
-                                                        tone="none"
+                                                    Cancel
+                                                </TextButton>
+                                                <Box horizontal gap>
+                                                    <TextButton
                                                         disabled={isLoading}
                                                         data-testid="save-button"
                                                         onClick={onSave}
                                                     >
-                                                        <ButtonText color="gray1" size="sm">
-                                                            Save
-                                                        </ButtonText>
-                                                    </Button>
+                                                        Save
+                                                    </TextButton>
                                                     {isLoading && <ButtonSpinner />}
                                                 </Box>
                                             </Box>
                                         ) : (
-                                            <Button
-                                                size="inline"
-                                                tone="none"
+                                            <TextButton
                                                 data-testid="edit-description-button"
                                                 onClick={onEdit}
                                             >
-                                                <ButtonText color="gray1" size="sm">
-                                                    Edit
-                                                </ButtonText>
-                                            </Button>
+                                                Edit
+                                            </TextButton>
                                         ))}
                                 </Box>
                                 {!isLoadingRoomTopic &&

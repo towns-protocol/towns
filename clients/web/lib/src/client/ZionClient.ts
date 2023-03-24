@@ -1743,6 +1743,18 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
     }
 
     /************************************************
+     * setRoomName
+     ************************************************/
+    public async setRoomName(roomId: RoomIdentifier, name: string): Promise<void> {
+        // todo casablanca display name
+        if (!this.matrixClient) {
+            throw new Error('matrix client is undefined')
+        }
+
+        await this.matrixClient.setRoomName(roomId.networkId, name)
+    }
+
+    /************************************************
      * getRoomTopic
      ************************************************/
     public async getRoomTopic(roomId: RoomIdentifier): Promise<string> {
