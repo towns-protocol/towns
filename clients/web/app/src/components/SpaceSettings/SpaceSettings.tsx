@@ -145,9 +145,11 @@ export const SpaceSettings = () => {
         <Stack horizontal grow minWidth="100%" position="relative" zIndex="ui" background="level1">
             <Stack minWidth="200">
                 <Stack gap="sm" padding="sm">
-                    <SpaceSettingsNavItem selected icon="all">
-                        <NavLink to={defaultPath}>Roles</NavLink>
-                    </SpaceSettingsNavItem>
+                    <NavLink to={defaultPath}>
+                        <SpaceSettingsNavItem selected icon="all">
+                            Roles
+                        </SpaceSettingsNavItem>
+                    </NavLink>
                     <SpaceSettingsNavItem icon="delete" color="error">
                         Delete Space
                     </SpaceSettingsNavItem>

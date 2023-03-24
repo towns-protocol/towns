@@ -6,7 +6,7 @@ import { AutojoinChannels, SpaceContextProvider, useZionContext } from 'use-zion
 
 import { PATHS } from 'routes'
 import { SuspenseLoader } from '@components/Loaders/SuspenseLoader'
-import { MainSideBar, MessagesSideBar, SpaceSideBar } from '@components/SideBars'
+import { MainSideBar, SpaceSideBar } from '@components/SideBars'
 import { Box, Stack } from '@ui'
 import { usePersistPanes } from 'hooks/usePersistPanes'
 import { Register } from 'routes/Register'
@@ -113,16 +113,6 @@ export const AppPanelLayoutContent = () => {
                                 <ChannelsShimmer />
                             </>
                         )}
-                    </Allotment.Pane>
-
-                    {/* secondary side bar */}
-                    <Allotment.Pane
-                        minSize={180}
-                        maxSize={320}
-                        visible={!!isSecondarySidebarActive}
-                        preferredSize={sizes[2] || 320}
-                    >
-                        <MessagesSideBar />
                     </Allotment.Pane>
 
                     {/* main container */}

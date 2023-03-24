@@ -1,9 +1,8 @@
 import React, { useRef } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import { useEvent } from 'react-use-event-hook'
-import { Icon, Stack } from '@ui'
+import { IconLabelButton, Stack } from '@ui'
 import { useSettingsRolesStore } from '@components/SpaceSettings/store/hooks/settingsRolesStore'
-import { SpaceSettingsNavItem } from '../NavItem/SpaceSettingsNavItem'
 import { SpaceSettingsRolesNavItem } from './SpaceSettingsRolesNavItem'
 
 export const SpaceSettingsRolesNav = () => {
@@ -47,16 +46,7 @@ export const SpaceSettingsRolesNav = () => {
                         />
                     )
                 })}
-                <SpaceSettingsNavItem color="gray2" padding="xs" onClick={onAddRole}>
-                    <Icon
-                        type="plus"
-                        background="level2"
-                        padding="sm"
-                        size="square_lg"
-                        color="gray2"
-                    />
-                    Create new role
-                </SpaceSettingsNavItem>
+                <IconLabelButton label="Create new role" icon="plus" onClick={onAddRole} />
             </Stack>
         </Stack>
     )

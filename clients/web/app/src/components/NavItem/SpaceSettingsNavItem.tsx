@@ -14,7 +14,7 @@ export const SpaceSettingsNavItem = (props: { icon?: IconName; selected?: boolea
             alignItems="center"
             {...boxProps}
         >
-            {icon && <Icon type={icon} size="square_xs" color={props.color ?? 'gray2'} />}
+            {icon && <Icon type={icon} size="square_xs" />}
             {children}
         </Stack>
     )

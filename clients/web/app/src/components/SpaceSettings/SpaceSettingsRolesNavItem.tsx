@@ -47,7 +47,7 @@ export const SpaceRoleNavCard = (props: { onRemoveRole: () => void }) => {
     return (
         <Box position="relative">
             <Card border paddingY="sm" width="300" fontSize="md">
-                <MenuItem icon="logout" color="cta1" onClick={props.onRemoveRole}>
+                <MenuItem icon="logout" color="error" onClick={props.onRemoveRole}>
                     Remove role
                 </MenuItem>
             </Card>
