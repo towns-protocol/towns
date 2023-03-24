@@ -52,6 +52,15 @@ export class PioneerNFT {
         return this.pioneerNFTShim.write.withdraw(address)
     }
 
+    // given a wallet address, check if they have a Pioneer NFT
+    public async isHolder(wallet: string) {
+        if (!this.provider) {
+            throw new Error('No provider')
+        }
+        const balance = await this.pioneerNFTShim.read.balanceOf(wallet)
+        return balance.gt(0)
+    }
+
     public async getContractState(): Promise<PioneerNFTContractState> {
         if (!this.provider) {
             throw new Error('No provider')

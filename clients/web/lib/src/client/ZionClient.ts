@@ -76,6 +76,7 @@ import {
     MatrixDecryptionExtension,
     MatrixDecryptionExtensionDelegate,
 } from './matrix/MatrixDecryptionExtensions'
+import { PioneerNFT } from './web3/PioneerNFT'
 /***
  * Zion Client
  * mostly a "passthrough" abstraction that hides the underlying MatrixClient
@@ -97,6 +98,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
     public readonly opts: ZionOpts
     public readonly name: string
     public spaceDapp: ISpaceDapp
+    public pioneerNFT: PioneerNFT
     public matrixClient?: MatrixClient
     public matrixDecryptionExtension?: MatrixDecryptionExtension
     public casablancaClient?: CasablancaClient
@@ -110,12 +112,13 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
         this._chainId = chainId ?? 0
         console.log('~~~ new ZionClient ~~~', this.name, this.opts)
         this.matrixClient = ZionClient.createMatrixClient(opts, this._auth)
-        const { spaceDapp } = this.createShims(
+        const { spaceDapp, pioneerNFT } = this.createShims(
             this._chainId,
             this.opts.web3Provider,
             this.opts.web3Signer,
         )
         this.spaceDapp = spaceDapp
+        this.pioneerNFT = pioneerNFT
         this._eventHandlers = opts.eventHandlers
     }
 
@@ -1846,10 +1849,12 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
         chainId: number,
         provider: TProvider | undefined,
         signer: ethers.Signer | undefined,
-    ): { spaceDapp: ISpaceDapp } {
+    ): { spaceDapp: ISpaceDapp; pioneerNFT: PioneerNFT } {
         const spaceDapp = new SpaceDapp(chainId, provider, signer)
+        const pioneerNFT = new PioneerNFT(chainId, provider, signer)
         return {
             spaceDapp,
+            pioneerNFT,
         }
     }
 

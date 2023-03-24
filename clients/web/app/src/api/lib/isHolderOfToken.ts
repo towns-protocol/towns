@@ -1,52 +1,25 @@
 import { useQuery } from '@tanstack/react-query'
-import { z } from 'zod'
-import { IsHolderOfCollectionResponse } from '@token-worker/types'
-import { axiosClient } from 'api/apiClient'
-import { env } from 'utils'
+import { useZionClient } from 'use-zion-client'
 import { useAuth } from 'hooks/useAuth'
-import { useAlchemyNetworkForNFTAPI } from 'hooks/useAlchemyNetwork'
 
-const PIONEER_NFT_ADDRESS = '0xdb66D5b28B9acc9FB55B96751Ba694829d7EE606'
-
-const zSchema: z.ZodType<IsHolderOfCollectionResponse> = z.object({
-    isHolderOfCollection: z.boolean(),
-})
-
-async function fetchIsHolderOfToken(wallet: string, address: string, alchmeyNetwork: string) {
-    const TOKENS_SERVER_URL = env.VITE_TOKEN_SERVER_URL
-    const url = `${TOKENS_SERVER_URL}/api/isHolderOfCollection/${alchmeyNetwork}?wallet=${wallet}&contractAddress=${address}`
-    const response = await axiosClient.get(url)
-    const parseResult = zSchema.safeParse(response.data)
-
-    if (!parseResult.success) {
-        throw new Error(`Error parsing IsHolderOfCollectionResponse:: ${parseResult.error}`)
-    }
-
-    return response.data
-}
-
-const queryKey = 'isHolderOfToken'
-
-export function useIsHolderOfToken(address: string) {
-    const { loggedInWalletAddress: wallet } = useAuth()
-    const alchmeyNetwork = useAlchemyNetworkForNFTAPI()
-
-    return useQuery(
-        [queryKey, wallet, address],
-        () => {
-            if (!wallet) {
-                return
-            }
-            return fetchIsHolderOfToken(wallet, address, alchmeyNetwork)
-        },
-        {
-            select: ({ isHolderOfCollection }) => isHolderOfCollection,
-            staleTime: 1000 * 60 * 60 * 24,
-            enabled: Boolean(wallet) && Boolean(alchmeyNetwork),
-        },
-    )
-}
+const QUERY_KEY = 'isHolderOfToken'
 
 export function useIsHolderOfPioneerNFT() {
-    return useIsHolderOfToken(PIONEER_NFT_ADDRESS)
+    const { loggedInWalletAddress: wallet } = useAuth()
+    const { client } = useZionClient()
+
+    return useQuery(
+        [QUERY_KEY, wallet],
+        () => {
+            if (!wallet || !client) {
+                return false
+            }
+            return client.pioneerNFT.isHolder(wallet)
+        },
+        {
+            select: (isHolder) => isHolder,
+            staleTime: 1000 * 60 * 60 * 24,
+            enabled: Boolean(wallet) && Boolean(client),
+        },
+    )
 }
