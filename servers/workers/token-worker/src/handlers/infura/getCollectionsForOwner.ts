@@ -1,0 +1,62 @@
+import { withCorsHeaders } from '../../../../common'
+import { throwCustomError } from '../../router'
+import {
+    GetCollectionsForOwnerInfuraResponse,
+    GetCollectionsForOwnerResponse,
+    TokenProviderRequest,
+} from '../../types'
+
+const fetchCollections = async (
+    rpcUrl: string,
+    wallet: string,
+    cursor: string,
+    authHeader: string,
+): Promise<GetCollectionsForOwnerInfuraResponse> => {
+    const url = `${rpcUrl}/accounts/${wallet}/assets/collections?cursor=${cursor}`
+
+    const response = await fetch(url, {
+        headers: {
+            Authorization: authHeader,
+        },
+    })
+    if (!response.ok) {
+        throwCustomError(
+            (await response.text?.()) || 'could not fetch from infura',
+            response.status,
+        )
+    }
+    return response.json()
+}
+
+export const getCollectionsForOwner = async (request: TokenProviderRequest) => {
+    const { rpcUrl, authHeader, params } = request
+
+    if (!authHeader) {
+        return new Response('Missing auth header', { status: 400 })
+    }
+
+    const { wallet } = params || {}
+    const json = await fetchCollections(rpcUrl, wallet, '', authHeader)
+
+    while (json.cursor) {
+        const res = await fetchCollections(rpcUrl, wallet, json.cursor, authHeader)
+        json.cursor = res.cursor
+        json.collections = [...json.collections, ...res.collections]
+    }
+
+    const collectionResponseForClient: GetCollectionsForOwnerResponse = {
+        totalCount: json.total,
+        collections: json.collections.map((c) => {
+            const { contract, ...rest } = c
+            return {
+                address: contract,
+                ...rest,
+            }
+        }),
+    }
+
+    const body = JSON.stringify(collectionResponseForClient)
+
+    const headers = { 'Content-type': 'application/json', ...withCorsHeaders(request) }
+    return new Response(body, { headers })
+}

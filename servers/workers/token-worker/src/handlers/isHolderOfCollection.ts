@@ -1,6 +1,6 @@
 import { withCorsHeaders } from '../../../common'
 import { throwCustomError } from '../router'
-import { IsHolderOfCollectionAlchemyResponse, RequestWithAlchemyConfig } from '../types'
+import { IsHolderOfCollectionAlchemyResponse, TokenProviderRequest } from '../types'
 
 const fetchIsHolderOfCollection = async (
     rpcUrl: string,
@@ -19,7 +19,7 @@ const fetchIsHolderOfCollection = async (
     return response.json()
 }
 
-export const isHolderOfCollection = async (request: RequestWithAlchemyConfig) => {
+export const isHolderOfCollection = async (request: TokenProviderRequest) => {
     const { rpcUrl, query } = request
 
     const { contractAddress, wallet } = query || {}

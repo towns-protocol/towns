@@ -1,10 +1,10 @@
-import { withCorsHeaders } from '../../../common'
-import { throwCustomError } from '../router'
+import { withCorsHeaders } from '../../../../common'
+import { throwCustomError } from '../../router'
 import {
     ContractMetadata,
     GetContractMetadataAlchemyResponse,
-    RequestWithAlchemyConfig,
-} from '../types'
+    TokenProviderRequest,
+} from '../../types'
 
 const fetchContractMetadata = async (
     rpcUrl: string,
@@ -20,7 +20,7 @@ const fetchContractMetadata = async (
     return response.json()
 }
 
-export const getContractMetadata = async (request: RequestWithAlchemyConfig) => {
+export const getCollectionMetadata = async (request: TokenProviderRequest) => {
     const { rpcUrl, query } = request
 
     const { contractAddress } = query || {}

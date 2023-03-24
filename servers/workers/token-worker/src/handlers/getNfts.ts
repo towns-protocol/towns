@@ -1,6 +1,6 @@
 import { withCorsHeaders } from '../../../common'
 import { throwCustomError } from '../router'
-import { GetNftsAlchemyResponse, GetNftsResponse, RequestWithAlchemyConfig } from '../types'
+import { GetNftsAlchemyResponse, GetNftsResponse, TokenProviderRequest } from '../types'
 
 const fetchAlchemyNfts = async (
     rpcUrl: string,
@@ -23,7 +23,7 @@ const fetchAlchemyNfts = async (
     return response.json()
 }
 
-export const getNftsForOwner = async (request: RequestWithAlchemyConfig) => {
+export const getNftsForOwner = async (request: TokenProviderRequest) => {
     const { rpcUrl, params, query } = request
 
     const { wallet } = params || {}

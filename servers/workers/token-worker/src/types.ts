@@ -1,13 +1,22 @@
 import { Request as IttyRequest } from 'itty-router'
-import { OwnedNftsResponse, NftContract, OwnedNft, OpenSeaCollectionMetadata } from 'alchemy-sdk'
+import {
+    OwnedNftsResponse,
+    NftContract,
+    OwnedNft,
+    OpenSeaCollectionMetadata,
+    GetContractsForOwnerResponse,
+} from 'alchemy-sdk'
 import { AuthEnv } from '../../common'
 
 export interface Env extends AuthEnv {
     ALCHEMY_API_KEY: string
+    INFURA_API_KEY: string
+    INFURA_API_SECRET: string
 }
 
-export interface RequestWithAlchemyConfig extends Request {
+export interface TokenProviderRequest extends Request {
     rpcUrl: string
+    authHeader?: string
     params: IttyRequest['params']
     query: IttyRequest['query']
 }
@@ -20,16 +29,35 @@ interface AccurateOwnedNft extends OwnedNft {
     contractMetadata: NftContract
 }
 
+export interface GetCollectionMetadataInfuraResponse {
+    contract: string
+    name: string
+    symbol: string
+    tokenType: string
+}
+
+export interface GetCollectionsForOwnerInfuraResponse {
+    total: number
+    pageNumber: number
+    pageSize: number
+    network: string
+    cursor: null | string
+    account: string
+    collections: {
+        contract: string
+        name: string
+        symbol: string
+        tokenType: string
+    }[]
+}
+
 export interface GetNftsAlchemyResponse extends OwnedNftsResponse {
     blockHash: string
     ownedNfts: AccurateOwnedNft[]
     pageKey?: string // override readonly
 }
 
-// worker reponse for /getNftsForOwner
-export interface GetNftsResponse extends Omit<GetNftsAlchemyResponse, 'ownedNfts'> {
-    ownedNftsContract: ContractMetadata[]
-}
+export type GetContractsForOwnerAlchemyResponse = GetContractsForOwnerResponse
 
 export interface GetContractMetadataAlchemyResponse extends ContractMetadata {
     address: string
@@ -44,12 +72,22 @@ export interface GetContractMetadataAlchemyResponse extends ContractMetadata {
     }
 }
 
+// worker response for /getCollectionsForOwner
+export type GetCollectionsForOwnerResponse = {
+    totalCount: number
+    pageKey?: string
+    collections: ContractMetadata[]
+}
+
+// worker reponse for /getNftsForOwner
+export interface GetNftsResponse extends Omit<GetNftsAlchemyResponse, 'ownedNfts'> {
+    ownedNftsContract: ContractMetadata[]
+}
+
 // worker response for /getContractMetadata
 export type GetContractMetadataResponse = ContractMetadata
 
-// not all of the Alchemy types are defined in the SDK, this is a type
-// that consists of various/necessary props from various parts of the payload, composed
-// into a single type to make it easier to work with in the client
+// This is a type for the client to work with. Reponses to the client should include this type, whether the payload is from Alchemy or Infura
 export type ContractMetadata = {
     address?: string
     name?: string
@@ -58,5 +96,6 @@ export type ContractMetadata = {
     imageUrl?: string // from OpenSea data if available
 }
 
+// TODO: remove? we probably won't use this endpoint
 export type IsHolderOfCollectionAlchemyResponse = { isHolderOfCollection: boolean }
 export type IsHolderOfCollectionResponse = IsHolderOfCollectionAlchemyResponse

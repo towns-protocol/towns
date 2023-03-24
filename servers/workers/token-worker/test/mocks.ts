@@ -1,3 +1,9 @@
+import {
+    GetCollectionMetadataInfuraResponse,
+    GetContractMetadataAlchemyResponse,
+    ContractMetadata,
+} from '../src/types'
+
 export const getNftsMock = {
     pageKey: 'b',
     totalCount: 4,
@@ -344,7 +350,7 @@ export const getNftsContractMetaMock = {
     ],
 }
 
-export const getContractMetadataAlchemyMock = {
+export const getCollectionMetadataAlchemyMock: GetContractMetadataAlchemyResponse = {
     address: '0xe785e82358879f061bc3dcac6f0444462d4b5330',
     contractMetadata: {
         name: 'World Of Women',
@@ -356,7 +362,7 @@ export const getContractMetadataAlchemyMock = {
         openSea: {
             floorPrice: 1.895,
             collectionName: 'World of Women',
-            safelistRequestStatus: 'verified',
+            // safelistRequestStatus: 'verified',
             imageUrl:
                 'https://i.seadn.io/gae/EFAQpIktMBU5SU0TqSdPWZ4byHr3hFirL_mATsR8KWhM5z-GJljX8E73V933lkyKgv2SAFlfRRjGsWvWbQQmJAwu3F2FDXVa1C9F?w=500&auto=format',
             description:
@@ -369,11 +375,146 @@ export const getContractMetadataAlchemyMock = {
     },
 }
 
-export const getContractMetadataMock = {
+export const getCollectionMetadataInfuraMock: GetCollectionMetadataInfuraResponse = {
+    contract: '0xe785e82358879f061bc3dcac6f0444462d4b5330',
+    name: 'World Of Women',
+    tokenType: 'ERC721',
+    symbol: 'WOW',
+}
+
+export const getContractMetadataMock: ContractMetadata = {
     address: '0xe785e82358879f061bc3dcac6f0444462d4b5330',
     name: 'World Of Women',
     symbol: 'WOW',
     tokenType: 'ERC721',
     imageUrl:
         'https://i.seadn.io/gae/EFAQpIktMBU5SU0TqSdPWZ4byHr3hFirL_mATsR8KWhM5z-GJljX8E73V933lkyKgv2SAFlfRRjGsWvWbQQmJAwu3F2FDXVa1C9F?w=500&auto=format',
+}
+
+export const alchmeyGetCollectionsMock = {
+    contracts: [
+        {
+            address: '0x317a8fe0f1c7102e7674ab231441e485c64c178a',
+            totalBalance: 1,
+            numDistinctTokensOwned: 1,
+            isSpam: false,
+            tokenId: '0x0000000000000000000000000000000000000000000000000000000000043246',
+            name: 'HAVAH Friends',
+            title: 'Harvesting Papa',
+            symbol: 'hHVHF',
+            tokenType: 'ERC721',
+            contractDeployer: '0x82148231d76dfc18a4d1c4063e694c179b7911ed',
+            deployedBlockNumber: 8143848,
+            opensea: {
+                lastIngestedAt: '2023-03-20T20:28:50.000Z',
+            },
+            media: [
+                {
+                    gateway:
+                        'https://nft-cdn.alchemy.com/eth-goerli/9cbfd8dff17ceb7bee4735e48e27aaf8',
+                    thumbnail:
+                        'https://res.cloudinary.com/alchemyapi/image/upload/thumbnailv2/eth-goerli/9cbfd8dff17ceb7bee4735e48e27aaf8',
+                    raw: 'ipfs://bafkreibfiehrdmdr5nl2je27i3s672a3ie3fvekfkgmjb3ptflphvhwgry',
+                    format: 'png',
+                    bytes: 94679,
+                },
+            ],
+        },
+        {
+            address: '0x8b69093be9574162eb50385515e01e6507abf07c',
+            totalBalance: 2,
+            numDistinctTokensOwned: 2,
+            isSpam: false,
+            tokenId: '0x0000000000000000000000000000000000000000000000000000000000000011',
+            name: 'Space Owner',
+            title: '',
+            symbol: 'SPACE',
+            tokenType: 'ERC721',
+            contractDeployer: '0x86312a65b491cf25d9d265f6218ab013daca5e19',
+            deployedBlockNumber: 8533417,
+            opensea: {
+                lastIngestedAt: '2023-03-22T00:32:58.000Z',
+            },
+            media: [
+                {
+                    gateway: '',
+                    raw: '',
+                },
+            ],
+        },
+    ],
+    pageKey: 'abcd',
+    totalCount: 3,
+}
+export const alchmeyGetCollectionsMockPage2 = {
+    contracts: [
+        {
+            address: '0x317a8fe0f1c7102e7674ab231441e485c64c178a',
+            totalBalance: 1,
+            numDistinctTokensOwned: 1,
+            isSpam: false,
+            tokenId: '0x0000000000000000000000000000000000000000000000000000000000043246',
+            name: 'HAVAH Friends',
+            title: 'Harvesting Papa',
+            symbol: 'hHVHF',
+            tokenType: 'ERC721',
+            contractDeployer: '0x82148231d76dfc18a4d1c4063e694c179b7911ed',
+            deployedBlockNumber: 8143848,
+            opensea: {
+                lastIngestedAt: '2023-03-20T20:28:50.000Z',
+            },
+            media: [
+                {
+                    gateway:
+                        'https://nft-cdn.alchemy.com/eth-goerli/9cbfd8dff17ceb7bee4735e48e27aaf8',
+                    thumbnail:
+                        'https://res.cloudinary.com/alchemyapi/image/upload/thumbnailv2/eth-goerli/9cbfd8dff17ceb7bee4735e48e27aaf8',
+                    raw: 'ipfs://bafkreibfiehrdmdr5nl2je27i3s672a3ie3fvekfkgmjb3ptflphvhwgry',
+                    format: 'png',
+                    bytes: 94679,
+                },
+            ],
+        },
+    ],
+    totalCount: 3,
+}
+
+export const infuraGetCollectionMock = {
+    total: 3,
+    pageNumber: 1,
+    pageSize: 100,
+    network: 'ETHEREUM',
+    cursor: 'abcd',
+    account: '0x0a267cf51ef038fc00e71801f5a524aec06e4f07',
+    collections: [
+        {
+            contract: '0xec3d9441d8c5ce4147eec8d05ca337e662f7cf13',
+            tokenType: 'ERC721',
+            name: 'Doodle Prime Apes',
+            symbol: 'DPA',
+        },
+        {
+            contract: '0xd33eb0dc95aff1a5f6ca04ba6cc33acdf85e7f62',
+            tokenType: 'ERC721',
+            name: 'Fast Food Lil Baby Apes Club',
+            symbol: 'WuW',
+        },
+    ],
+}
+
+export const infuraGetCollectionMockPage2 = {
+    total: 3,
+    pageNumber: 1,
+    pageSize: 100,
+    network: 'ETHEREUM',
+    cursor: null,
+    account: '0x0a267cf51ef038fc00e71801f5a524aec06e4f07',
+    collections: [
+        {
+            contract: '0xce82d65314502ce39472a2442d4a2cbc4cb9f293',
+            tokenType: 'ERC721',
+            name: 'Animal Society',
+            symbol: 'AS',
+        },
+    ],
 }

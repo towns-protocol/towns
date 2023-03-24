@@ -9,6 +9,7 @@ compatibility_date = "2023-01-18"
 # keeping zone_id for reference
 account_id="9840f8a36a817b103e00e29a0e2bad6f"
 minify=true
+node_compat=true
 
 # this is for tests, so it gets used even though wrangler CLI says otherwise
 [miniflare]
@@ -25,6 +26,8 @@ local_protocol = "http"
 
 # The necessary secrets are: 
 # ALCHEMY_API_KEY
+# INFURA_API_KEY
+# INFURA_API_SECRET
 # AUTH_SECRET 
 # for local development, you can add these in .dev.vars
 # 
