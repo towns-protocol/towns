@@ -3,6 +3,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { matchPath, useLocation, useNavigate } from 'react-router'
 import { useEvent } from 'react-use-event-hook'
 import {
+    Channel,
     Membership,
     MentionResult,
     Permission,
@@ -11,6 +12,7 @@ import {
     useMyMembership,
     useSpaceMembers,
     useSpaceMentions,
+    useZionClient,
 } from 'use-zion-client'
 import { useSpaceThreadRootsUnreadCount } from 'use-zion-client/dist/hooks/use-space-thread-roots'
 import { useQueryClient } from '@tanstack/react-query'
@@ -467,24 +469,46 @@ const SidebarPill = (props: {
     )
 }
 
-// This is a list of the synced Matrix channels
-// working with them can be quite tricky!
-// You can leave a channel and it will still be in the list of channels, as long as another member is still in the channel
-// However, if there are no members in the channel (or maybe no members that you know about from other channels??) then the channel will not sync and is missing from this list
-// Proabably we want to filter this list to only include ones you've joined, b/c now we have the browse channels route
+// This is a list of the synced, joined Matrix channels
 const SyncedChannelList = (props: {
     space: SpaceData
     mentions: MentionResult[]
     canCreateChannel: boolean | undefined
     onShowCreateChannel: () => void
 }) => {
+    const { client } = useZionClient()
     const sizeContext = useSizeContext()
     const isSmall = sizeContext.lessThan(120)
     const { mentions, space, onShowCreateChannel, canCreateChannel } = props
 
+    // channels that you leave, but other members are still a part of, will still sync (partially?) and show up in this list
+    // but we don't want that, since all channels are listed in the "Browse Channels" section
+    const filterUnjoinedChannels = useCallback(
+        (channels: Channel[]) => {
+            if (!client) {
+                return
+            }
+
+            return channels.filter((channel) => {
+                const roomData = client.getRoomData(channel.id)
+                return roomData?.membership === Membership.Join
+            })
+        },
+        [client],
+    )
+
+    const channelGroups = useMemo(() => {
+        return space.channelGroups.map((group) => {
+            return {
+                ...group,
+                channels: filterUnjoinedChannels(group.channels),
+            }
+        })
+    }, [filterUnjoinedChannels, space.channelGroups])
+
     return (
         <>
-            {space.channelGroups.map((group) => (
+            {channelGroups.map((group) => (
                 <Stack key={group.label} display={isSmall ? 'none' : 'flex'}>
                     <Stack
                         horizontal
@@ -504,7 +528,7 @@ const SyncedChannelList = (props: {
                             <IconButton icon="plus" onClick={onShowCreateChannel} />
                         )}
                     </Stack>
-                    {group.channels.map((channel) => {
+                    {group.channels?.map((channel) => {
                         const key = `${group.label}/${channel.id.slug}`
                         // only unread mentions at the channel root
                         const mentionCount = mentions.reduce(
