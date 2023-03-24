@@ -5,3 +5,4 @@ export type FieldTone =
     | typeof ToneName.Negative
     | typeof ToneName.Neutral
     | typeof ToneName.Accent
+    | typeof ToneName.Error

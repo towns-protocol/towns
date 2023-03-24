@@ -62,9 +62,9 @@ globalStyle('*:focus', {
 globalStyle('*:focus-visible', {
     border: `none`,
     outlineColor: vars.color.foreground.accent,
-    outlineWidth: 3,
+    outlineWidth: 1,
     outlineStyle: 'solid',
-    outlineOffset: -3,
+    outlineOffset: -1,
 })
 
 globalStyle('*:-webkit-autofill', {

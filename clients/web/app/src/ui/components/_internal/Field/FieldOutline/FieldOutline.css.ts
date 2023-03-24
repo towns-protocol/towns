@@ -16,20 +16,20 @@ export const fieldOutline = style({
     selectors: {
         [`${field} ~ &`]: {
             opacity: 0,
-            boxShadow: `0 0 0 2px ${focusedColorVar}`,
+            boxShadow: `0 0 0 1px ${focusedColorVar}`,
         },
         [`${field}:focus ~ &, ${field}.focused ~ &`]: {
             opacity: focusedOpacityVar,
-            boxShadow: `0 0 0 2px ${focusedColorVar}`,
+            boxShadow: `0 0 0 1px ${focusedColorVar}`,
         },
         [`${field}:focus-visible ~ &, ${field}.focus-visible ~ &`]: {
             opacity: focusedOpacityVar,
-            boxShadow: `0 0 0 2px ${focusedColorVar}`,
+            boxShadow: `0 0 0 1px ${focusedColorVar}`,
         },
         // [`${field}:hover:not(:disabled) ~ &, ${field}:focus ~ &, ${field}.focused ~ &`]:
         //   {
         //     opacity: focusedOpacityVar,
-        //     boxShadow: `0 0 0 2px ${focusedColorVar}`,
+        //     boxShadow: `0 0 0 1px ${focusedColorVar}`,
         //   },
     },
 })
@@ -47,6 +47,13 @@ export const fieldTones = styleVariants({
         vars: {
             [focusedOpacityVar]: '1',
             [focusedColorVar]: vars.color.foreground.negative,
+        },
+    },
+    error: {
+        opacity: 1,
+        vars: {
+            [focusedOpacityVar]: '1',
+            [focusedColorVar]: vars.color.foreground.error,
         },
     },
     positive: {

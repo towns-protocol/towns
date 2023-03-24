@@ -18,7 +18,7 @@ type Props = {
     placeholder?: string
 } & FieldBaseProps &
     InputCallbackProps &
-    InputHTMLAttributes<HTMLTextAreaElement>
+    Omit<InputHTMLAttributes<HTMLTextAreaElement>, 'color'>
 
 export const TextArea = forwardRef<HTMLTextAreaElement, Props>((props, ref) => {
     const { placeholder, onChange, ...fieldProps } = props
@@ -32,6 +32,14 @@ export const TextArea = forwardRef<HTMLTextAreaElement, Props>((props, ref) => {
         },
         [onChange],
     )
+
+    // hack to restore carret at the end of the input on autofocus
+    const onFocus = useCallback((e: React.FocusEvent<HTMLTextAreaElement>) => {
+        const value = e.target.value
+        e.target.value = ''
+        e.target.value = value
+    }, [])
+
     return (
         <Field {...fieldProps}>
             {(overlays, { className, ...inputProps }) => (
@@ -43,6 +51,7 @@ export const TextArea = forwardRef<HTMLTextAreaElement, Props>((props, ref) => {
                         placeholder={placeholder}
                         className={clsx(className, styles.input)}
                         onChange={_onChange}
+                        onFocus={onFocus}
                     />
                     {overlays}
                     {inputProps.maxLength && (

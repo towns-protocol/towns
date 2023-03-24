@@ -21,7 +21,9 @@ type Props = {
     'onDrag' | 'onDragEnd' | 'onDragStart' | 'onAnimationStart' | 'size' | 'color'
 > &
     StyleProps &
-    Pick<BoxProps, 'aspectRatio' | 'color' | 'fontWeight'>
+    Pick<BoxProps, 'aspectRatio' | 'color' | 'fontWeight' | 'inset' | 'insetX' | 'insetY'>
+
+export type ButtonProps = Props
 
 export const Button = ({
     aspectRatio,

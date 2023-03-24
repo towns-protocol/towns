@@ -1,10 +1,10 @@
 import React from 'react'
-import { Box } from '@ui'
+import { Box, BoxProps } from '@ui'
 import * as style from './Spinner.css'
 
-export const Spinner = () => {
+export const Spinner = (props: Omit<BoxProps, 'children'>) => {
     return (
-        <Box padding aspectRatio="1/1" position="relative" height="input_md">
+        <Box centerContent aspectRatio="1/1" position="relative" height="input_md" {...props}>
             <svg className={style.circular} viewBox="25 25 50 50">
                 <circle
                     className={style.path}
@@ -25,9 +25,9 @@ export const Spinner = () => {
                         y2="67.4037"
                         gradientUnits="userSpaceOnUse"
                     >
-                        <stop stopColor="#C9356A" />
-                        <stop offset="0.364583" stopColor="#BB1B1B" />
-                        <stop offset="1" stopColor="#FA773F" />
+                        <stop stopColor="#21E078FF" />
+                        <stop offset="0.364583" stopColor="#1FDBF1FF" />
+                        <stop offset="1" stopColor=" #1FDBF100" />
                     </linearGradient>
                 </defs>
             </svg>
