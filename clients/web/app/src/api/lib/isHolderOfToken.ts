@@ -42,7 +42,7 @@ export function useIsHolderOfToken(address: string) {
         {
             select: ({ isHolderOfCollection }) => isHolderOfCollection,
             staleTime: 1000 * 60 * 60 * 24,
-            enabled: Boolean(wallet),
+            enabled: Boolean(wallet) && Boolean(alchmeyNetwork),
         },
     )
 }
