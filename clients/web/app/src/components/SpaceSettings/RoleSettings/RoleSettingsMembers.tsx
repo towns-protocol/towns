@@ -31,6 +31,7 @@ export const RoleSettingsMembers = () => {
                     </Paragraph>
                     <TokenSelector
                         label="Add token"
+                        placeholder="Enter a token address"
                         data={tokens}
                         itemRenderer={(props) => <TokenRenderer {...props} />}
                         itemFromString={(id) => id}
@@ -43,6 +44,7 @@ export const RoleSettingsMembers = () => {
                     <Paragraph color="gray2">Add current members to this role.</Paragraph>
                     <TokenSelector
                         label="Add people"
+                        placeholder="Enter a user's wallet address"
                         data={users}
                         itemRenderer={(props) => <TokenRenderer {...props} />}
                         itemFromString={(id) => id}

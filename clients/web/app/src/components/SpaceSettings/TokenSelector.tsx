@@ -5,6 +5,7 @@ import { IconButton, IconLabelButton, Stack, TextField } from '@ui'
 type Props<T> = {
     label: string
     data: T[]
+    placeholder?: string
     onUpdate: (data: T[]) => void
     itemRenderer: (props: { item: T; onRemoveItem: (id: string) => void }) => React.ReactNode
     itemFromString: (id: string) => T
@@ -57,7 +58,11 @@ export const TokenSelector = <T extends string>(props: Props<T>) => {
                         onClick={onClick}
                     />
                 ) : (
-                    <TokenInput onConfirm={onConfirmInput} onCancel={onCancelInput} />
+                    <TokenInput
+                        placeholder={props.placeholder}
+                        onConfirm={onConfirmInput}
+                        onCancel={onCancelInput}
+                    />
                 )}
             </Stack>
         </>
@@ -67,6 +72,7 @@ export const TokenSelector = <T extends string>(props: Props<T>) => {
 type TokenInputProps = {
     onCancel: () => void
     onConfirm: (token: string) => void
+    placeholder?: string
 }
 
 const TokenInput = (props: TokenInputProps) => {
@@ -99,12 +105,22 @@ const TokenInput = (props: TokenInputProps) => {
     const onCancel = () => {
         props.onCancel()
     }
+    const onBlur = (e: React.FocusEvent) => {
+        const container = fieldRef.current?.parentElement
+        // https://muffinman.io/blog/catching-the-blur-event-on-an-element-and-its-children/
+        requestAnimationFrame(() => {
+            if (container && !container.contains(document.activeElement)) {
+                onCancel()
+            }
+        })
+    }
 
     return (
         <TextField
             autoFocus
             ref={fieldRef}
             height="input_lg"
+            width="500"
             after={
                 isValid ? (
                     <IconButton icon="check" color="positive" onClick={onSave} />
@@ -112,7 +128,8 @@ const TokenInput = (props: TokenInputProps) => {
                     <IconButton icon="close" color="gray2" padding="xs" onClick={onCancel} />
                 )
             }
-            onBlur={onCancel}
+            placeholder={props.placeholder}
+            onBlur={onBlur}
             onKeyDown={onKeyDown}
             onKeyUp={onChange}
             onChange={onChange}
