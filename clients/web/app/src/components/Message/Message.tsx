@@ -71,7 +71,7 @@ export const Message = (props: Props) => {
 
     const ref = useRef<HTMLDivElement>(null)
 
-    const { isHover, onMouseEnter } = useHover(ref, isSelectable)
+    const { isHover, onMouseEnter } = useHover(ref)
     const { isFocused } = useFocused(ref)
 
     const isActive = isFocused || isHover
@@ -97,7 +97,7 @@ export const Message = (props: Props) => {
         <Stack
             horizontal
             ref={ref}
-            onMouseEnter={isSelectable ? onMouseEnter : undefined}
+            onMouseEnter={onMouseEnter}
             {...boxProps}
             {...backgroundProps}
             tabIndex={0}
@@ -193,7 +193,7 @@ export const Message = (props: Props) => {
                         </Stack>
                     )}
                 </Stack>
-                {spaceId && channelId && eventId && isActive && !isEditing && (
+                {spaceId && channelId && eventId && isActive && !isEditing && isSelectable && (
                     <MessageContextMenu
                         canReply={canReply}
                         canReact={!!onReaction}
