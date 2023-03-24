@@ -17,7 +17,7 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	"casablanca/node/crypto"
-	. "casablanca/node/events"
+	"casablanca/node/events"
 	"casablanca/node/infra"
 	"casablanca/node/protocol"
 	"casablanca/node/protocol/protocolconnect"
@@ -140,7 +140,7 @@ func (s *Service) AddEvent(ctx context.Context, req *connect_go.Request[protocol
 func (s *Service) addEvent(ctx context.Context, streamId string, view *StreamView, envelope *protocol.Envelope) ([]byte, error) {
 	log := infra.GetLogger(ctx)
 	log.Info("addEvent: ", hex.EncodeToString(envelope.Hash))
-	parsedEvent, err := ParseEvent(envelope)
+	parsedEvent, err := events.ParseEvent(envelope)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "AddEvent: event is not a valid payload")
 	}

@@ -2,13 +2,13 @@ package rpc
 
 import (
 	"casablanca/node/infra"
-	. "casablanca/node/protocol"
+	"casablanca/node/protocol"
 	"context"
 
 	connect "github.com/bufbuild/connect-go"
 )
 
-func (s *Service) SyncStreams(ctx context.Context, req *connect.Request[SyncStreamsRequest]) (*connect.Response[SyncStreamsResponse], error) {
+func (s *Service) SyncStreams(ctx context.Context, req *connect.Request[protocol.SyncStreamsRequest]) (*connect.Response[protocol.SyncStreamsResponse], error) {
 	log := infra.GetLogger(ctx)
 	log.Info("SyncStreams: CALL ", len(req.Msg.SyncPos), req.Msg.TimeoutMs)
 	for _, s := range req.Msg.SyncPos {
@@ -20,9 +20,9 @@ func (s *Service) SyncStreams(ctx context.Context, req *connect.Request[SyncStre
 		return nil, err
 	}
 
-	var streams []*StreamAndCookie
+	var streams []*protocol.StreamAndCookie
 	for streamId, events := range blocks {
-		streamAndCookie := StreamAndCookie{
+		streamAndCookie := protocol.StreamAndCookie{
 			StreamId:           streamId,
 			Events:             events.Events,
 			NextSyncCookie:     events.SyncCookie,
@@ -32,7 +32,7 @@ func (s *Service) SyncStreams(ctx context.Context, req *connect.Request[SyncStre
 		streams = append(streams, &streamAndCookie)
 	}
 
-	return connect.NewResponse(&SyncStreamsResponse{
+	return connect.NewResponse(&protocol.SyncStreamsResponse{
 		Streams: streams,
 	}), nil
 }

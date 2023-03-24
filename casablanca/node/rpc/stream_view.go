@@ -1,16 +1,12 @@
 package rpc
 
 import (
-	. "casablanca/node/events"
+	"casablanca/node/events"
 	"casablanca/node/infra"
 	"casablanca/node/protocol"
 	"context"
 	"fmt"
 )
-
-type cachedEvent struct {
-	streamKey string
-}
 
 /**
  * StreamView is a cache of all the events for a stream,
@@ -19,7 +15,7 @@ type cachedEvent struct {
 type StreamView struct {
 	getLocalOrderEvents func() ([]*protocol.Envelope, error)
 	loaded              bool
-	events              map[string]*ParsedEvent
+	events              map[string]*events.ParsedEvent
 	eventsOrder         []string
 }
 
@@ -27,24 +23,24 @@ func NewView(getLocalOrderEventsFunc func() ([]*protocol.Envelope, error)) *Stre
 	r := &StreamView{
 		getLocalOrderEvents: getLocalOrderEventsFunc,
 		loaded:              false,
-		events:              make(map[string]*ParsedEvent),
+		events:              make(map[string]*events.ParsedEvent),
 		eventsOrder:         make([]string, 0),
 	}
 	return r
 }
 
-func (r *StreamView) getOrderedEvents() ([]*ParsedEvent, error) {
+func (r *StreamView) getOrderedEvents() ([]*events.ParsedEvent, error) {
 	if !r.loaded {
 		return nil, fmt.Errorf("streamview not loaded")
 	}
-	res := make([]*ParsedEvent, len(r.eventsOrder))
+	res := make([]*events.ParsedEvent, len(r.eventsOrder))
 	for i, hash := range r.eventsOrder {
 		res[i] = r.events[hash]
 	}
 	return res, nil
 }
 
-func (r *StreamView) getOrderedEventsCached() ([]*ParsedEvent, error) {
+func (r *StreamView) getOrderedEventsCached() ([]*events.ParsedEvent, error) {
 	if r.loaded {
 		return r.getOrderedEvents()
 	}
@@ -54,8 +50,8 @@ func (r *StreamView) getOrderedEventsCached() ([]*ParsedEvent, error) {
 		return nil, err
 	}
 
-	for _, e := range res {
-		parsedEvent, err := ParseEvent(e)
+	for _, event := range res {
+		parsedEvent, err := events.ParseEvent(event)
 		if err != nil {
 			return nil, err
 		}
@@ -70,7 +66,7 @@ func (r *StreamView) getOrderedEventsCached() ([]*ParsedEvent, error) {
 	return r.getOrderedEvents()
 }
 
-func (r *StreamView) Get() ([]*ParsedEvent, error) {
+func (r *StreamView) Get() ([]*events.ParsedEvent, error) {
 	return r.getOrderedEventsCached()
 }
 
@@ -150,7 +146,7 @@ func (r *StreamView) AddEvent(event *protocol.Envelope) error {
 	if !r.loaded {
 		return fmt.Errorf("streamview not loaded")
 	}
-	parsedEvent, err := ParseEvent(event)
+	parsedEvent, err := events.ParseEvent(event)
 	if err != nil {
 		return err
 	}

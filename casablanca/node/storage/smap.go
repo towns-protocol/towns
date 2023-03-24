@@ -5,7 +5,7 @@ import (
 
 	"github.com/google/uuid"
 
-	. "casablanca/node/events"
+	e "casablanca/node/events"
 	"casablanca/node/protocol"
 )
 
@@ -107,7 +107,7 @@ func (s *SubsMap) ForEach(thunk func(*SmapEntry)) {
  * @param events the events to filter indexed by seq number
  * @return a map of subs ids to events for the input events
  */
-func (s SubsMap) Filter(events map[string][]*FullEvent) map[uuid.UUID]StreamEventsBlock {
+func (s SubsMap) Filter(events map[string][]*e.FullEvent) map[uuid.UUID]StreamEventsBlock {
 
 	res := make(map[uuid.UUID]StreamEventsBlock)
 

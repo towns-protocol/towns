@@ -17,7 +17,7 @@ import (
 
 	"strings"
 
-	. "casablanca/node/events"
+	"casablanca/node/events"
 	"casablanca/node/infra"
 	"casablanca/node/protocol"
 
@@ -227,7 +227,7 @@ func addDebugEvents(ctx context.Context, tx pgx.Tx, streamId string) (int, error
 	}
 	defer rows.Close()
 
-	events := make(map[int64]*ParsedEvent)
+	parsedEvents := make(map[int64]*events.ParsedEvent)
 
 	for rows.Next() {
 		var seq_num int64
@@ -238,7 +238,7 @@ func addDebugEvents(ctx context.Context, tx pgx.Tx, streamId string) (int, error
 		if err != nil {
 			return 0, err
 		}
-		parsedEvent, err := ParseEvent(&protocol.Envelope{
+		parsedEvent, err := events.ParseEvent(&protocol.Envelope{
 			Hash:      hash,
 			Signature: signature,
 			Event:     event,
@@ -247,10 +247,10 @@ func addDebugEvents(ctx context.Context, tx pgx.Tx, streamId string) (int, error
 		if err != nil {
 			return 0, err
 		}
-		events[seq_num] = parsedEvent
+		parsedEvents[seq_num] = parsedEvent
 	}
 
-	for seq_num, parsedEvent := range events {
+	for seq_num, parsedEvent := range parsedEvents {
 		// convert parsedEvents to json
 		js, err := json.Marshal(parsedEvent)
 		if err != nil {
@@ -265,7 +265,7 @@ func addDebugEvents(ctx context.Context, tx pgx.Tx, streamId string) (int, error
 		}
 
 	}
-	return len(events), nil
+	return len(parsedEvents), nil
 }
 
 func maxSeqNum(seqNums []int64) int64 {
@@ -609,11 +609,11 @@ func (s *PGEventStore) getLastSeqNum(ctx context.Context) (map[string]int64, err
  * @returns {map[string][]*FullEvent} - the events foir each stream sorted by sequence number (ascending)
  * @returns {error} - any error
  */
-func (s *PGEventStore) getLastEvents(ctx context.Context, tx pgx.Tx, selection map[string]int64) (map[string][]*FullEvent, error) {
+func (s *PGEventStore) getLastEvents(ctx context.Context, tx pgx.Tx, selection map[string]int64) (map[string][]*events.FullEvent, error) {
 	log := infra.GetLogger(ctx)
 	log.Debugf("Fetching events from %v", selection)
 
-	allEvents := make(map[string][]*FullEvent)
+	allEvents := make(map[string][]*events.FullEvent)
 	for stream, seqNum := range selection {
 		sql := fmt.Sprintf("SELECT seq_num, hash, signature, event FROM %s WHERE seq_num > $1 ORDER BY seq_num", streamSqlName(stream))
 		log.Debugf("Fetching events from %s with sql %s [%d]", stream, sql, seqNum)
@@ -622,7 +622,7 @@ func (s *PGEventStore) getLastEvents(ctx context.Context, tx pgx.Tx, selection m
 			return nil, err
 		}
 		defer rows.Close()
-		events := []*FullEvent{}
+		fullEvents := []*events.FullEvent{}
 		for rows.Next() {
 			var currentSeqNum int64
 			var hash []byte
@@ -632,7 +632,7 @@ func (s *PGEventStore) getLastEvents(ctx context.Context, tx pgx.Tx, selection m
 			if err != nil {
 				return nil, err
 			}
-			parsedEvent, err := ParseEvent(&protocol.Envelope{
+			parsedEvent, err := events.ParseEvent(&protocol.Envelope{
 				Hash:      hash,
 				Signature: signature,
 				Event:     event_buf,
@@ -640,14 +640,14 @@ func (s *PGEventStore) getLastEvents(ctx context.Context, tx pgx.Tx, selection m
 			if err != nil {
 				return nil, err
 			}
-			events = append(events, &FullEvent{
+			fullEvents = append(fullEvents, &events.FullEvent{
 				StreamId:    stream,
 				SeqNum:      currentSeqNum,
 				ParsedEvent: parsedEvent,
 			})
 		}
-		log.Debugf("Fetched %d events", len(events))
-		allEvents[stream] = events
+		log.Debugf("Fetched %d events", len(fullEvents))
+		allEvents[stream] = fullEvents
 	}
 	return allEvents, nil
 }
