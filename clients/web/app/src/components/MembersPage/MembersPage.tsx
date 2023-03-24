@@ -39,7 +39,11 @@ const GridProfile = ({ member }: { member: RoomMember }) => {
     return (
         <Link to={`profile/${member?.userId}/`}>
             <Stack centerContent gap padding>
-                <Avatar size="avatar_x15" userId={member.userId ?? ''} />
+                <Avatar
+                    size="avatar_x15"
+                    userId={member.userId ?? ''}
+                    imageVariant="thumbnail300"
+                />
                 <Paragraph>{member.name}</Paragraph>
                 {accountAddress && accountAddress && (
                     <ClipboardCopy
