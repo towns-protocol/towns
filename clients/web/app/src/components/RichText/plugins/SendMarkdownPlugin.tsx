@@ -68,7 +68,7 @@ export const SendMarkdownPlugin = (props: {
                 COMMAND_PRIORITY_LOW,
             ),
         )
-    }, [editor, parseMarkdown, disabled, registerCommandCount])
+    }, [editor, parseMarkdown, disabled, registerCommandCount, onSendAttemptWhileDisabled])
 
     const sendMessage = useCallback(() => {
         parseMarkdown()

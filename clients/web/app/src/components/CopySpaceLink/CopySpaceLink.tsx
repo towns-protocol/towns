@@ -6,12 +6,7 @@ import { Box, BoxProps, Icon, TooltipRenderer } from '@ui'
 import { FadeIn } from '@components/Transitions'
 import useCopyToClipboard from 'hooks/useCopyToClipboard'
 import { getInviteUrl } from 'ui/utils/utils'
-import {
-    TooltipBoxVariants,
-    spaceLinkCopy,
-    spaceUrlText,
-    tooltipBoxStyles,
-} from './CopySpaceLink.css'
+import { TooltipBoxVariants, spaceLinkCopy, tooltipBoxStyles } from './CopySpaceLink.css'
 
 const MotionBox = motion(Box)
 
@@ -22,7 +17,7 @@ type Props = {
 } & TooltipBoxVariants
 
 const SpaceLink = (props: Props) => {
-    const { copied, inviteUrl, align, offsetTop } = props
+    const { copied, align, offsetTop } = props
     const [widths, setWidths] = useState([0, 0])
 
     const copiedTextRef = useRef<HTMLDivElement>(null)
