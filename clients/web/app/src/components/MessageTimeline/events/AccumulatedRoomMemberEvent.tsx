@@ -1,7 +1,8 @@
 import React, { useMemo } from 'react'
 import uniqBy from 'lodash/uniqBy'
 import { Link } from 'react-router-dom'
-import { AvatarStack, Paragraph, Stack } from '@ui'
+import { firstBy } from 'thenby'
+import { AvatarStack, Box, Card, Paragraph, Stack, TooltipRenderer } from '@ui'
 import { atoms } from 'ui/styles/atoms.css'
 import { notUndefined } from 'ui/utils/utils'
 import { AccumulatedRoomMemberRenderEvent } from '../util/getEventsByDate'
@@ -33,6 +34,8 @@ export const AccumulatedRoomMemberEvent = (props: Props) => {
         }`
         const names = getNameListFromArray(
             event.events
+                .slice()
+                .sort(firstBy((e) => e.content.userId === userId, -1))
                 .map((e, index) => {
                     if (e.content.userId === userId) {
                         return index === 0 ? 'You' : 'you'
@@ -62,6 +65,8 @@ const getNameListFromArray = (names: React.ReactNode[], verb: string, maxLength 
         return ''
     }
 
+    const originalNames = [...names]
+
     if (maxLength > 1 && names.length > maxLength) {
         names.splice(maxLength - 1, names.length, 'others')
     }
@@ -86,7 +91,24 @@ const getNameListFromArray = (names: React.ReactNode[], verb: string, maxLength 
     return (
         <>
             {str} along with{' '}
-            <span className={atoms({ color: 'default' })}>{names.length - 1} others</span>
+            <TooltipRenderer
+                distance="none"
+                render={<UserListTooltip names={originalNames.slice(1)} />}
+            >
+                {({ triggerProps }) => (
+                    <span className={atoms({ color: 'default' })} {...triggerProps}>
+                        {originalNames.length - 1} others
+                    </span>
+                )}
+            </TooltipRenderer>
         </>
+    )
+}
+
+const UserListTooltip = (props: { names: (React.ReactNode | string | undefined)[] }) => {
+    return (
+        <Card padding border gap="xs" background="level2" rounded="sm">
+            {props.names}
+        </Card>
     )
 }

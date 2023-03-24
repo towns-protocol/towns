@@ -36,11 +36,8 @@ export const avatarToggleClasses = vcn({
         borderRadius: vars.borderRadius.full,
     }),
     stacked: style({
-        selectors: {
-            '&:not(:first-child)': {
-                marginLeft: `calc(-0.33 * var(--size))`,
-            },
-        },
+        boxShadow: `0 0 0 1.5px ${vars.color.layer.level1}`,
+        marginLeft: `calc(-0.33 * var(--size))`,
     }),
 })
 

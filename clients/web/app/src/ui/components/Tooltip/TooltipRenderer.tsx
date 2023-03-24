@@ -1,6 +1,7 @@
 import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useEvent } from 'react-use-event-hook'
+import { BoxProps } from '../Box/Box'
 import { RootLayerContext } from './OverlayPortal'
 import { Placement } from './TooltipConstants'
 import { TooltipOffsetContainer } from './TooltipOffsetContainer'
@@ -18,6 +19,7 @@ type Props = {
     render: JSX.Element | undefined
     keepOpenOnTriggerRefClick?: boolean
     trigger?: (typeof Trigger)[keyof typeof Trigger]
+    distance?: BoxProps['padding']
 }
 
 type TriggerProps = {
@@ -173,7 +175,7 @@ export const TooltipRenderer = (props: Props) => {
 
     const root = useContext(RootLayerContext).rootLayerRef?.current
 
-    const distance = placement === 'pointer' ? 'none' : undefined
+    const distance = placement === 'pointer' ? 'none' : props.distance
 
     return !children ? null : (
         <TooltipContext.Provider value={{ placement }}>

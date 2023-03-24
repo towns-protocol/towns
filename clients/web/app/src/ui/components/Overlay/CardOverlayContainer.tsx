@@ -42,7 +42,7 @@ export const OverlayContainer = (props: OffsetContainerProps) => {
     const isContainerEmpty = size.height === 0
 
     const styles = useMemo(() => {
-        const margin = 16
+        const margin = 4
 
         const anchorStyle: { [key: string]: number | string | undefined } = {
             position: 'absolute',
@@ -72,7 +72,7 @@ export const OverlayContainer = (props: OffsetContainerProps) => {
         }
 
         if (placement === 'horizontal') {
-            anchorStyle.top = triggerRect.top
+            anchorStyle.top = triggerRect.top - margin
 
             const diff = Math.max(0, anchorStyle.top + size.height - safeArea.bottom + margin)
 
