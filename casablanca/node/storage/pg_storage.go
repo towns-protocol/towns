@@ -9,6 +9,8 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"math/rand"
+	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -43,6 +45,10 @@ type PGEventNotificationEntry struct {
 	Event     string `json:"event"`
 }
 
+const (
+	PG_REPORT_INTERVAL = 20 * time.Second
+)
+
 // NewPGEventStore creates a new PGEventStore
 func NewPGEventStore(ctx context.Context, database_url string, clean bool) (*PGEventStore, error) {
 	log := infra.GetLogger(ctx)
@@ -71,7 +77,7 @@ func NewPGEventStore(ctx context.Context, database_url string, clean bool) (*PGE
 			select {
 			case <-ctx.Done():
 				return
-			case <-time.After(10 * time.Second):
+			case <-time.After(PG_REPORT_INTERVAL):
 				stats := pool.Stat()
 				log.Debugf("PG pool stats: %d, %d, %d, %d", stats.AcquireCount(), stats.AcquiredConns(), stats.IdleConns(), stats.TotalConns())
 			}
@@ -157,17 +163,6 @@ func startTx(ctx context.Context, pool *pgxpool.Pool) (pgx.Tx, error) {
 		return nil, err
 	}
 	return tx, nil
-}
-
-func byteToPgHex(b []byte) string {
-	return fmt.Sprintf("\\x%s", hex.EncodeToString(b))
-}
-
-func pgHexToByte(in string) ([]byte, error) {
-	if len(in) < 3 {
-		return nil, errors.New("invalid hex string")
-	}
-	return hex.DecodeString(in[2:])
 }
 
 func lockTable(ctx context.Context, tx pgx.Tx, tableName string) error {
@@ -266,16 +261,6 @@ func addDebugEvents(ctx context.Context, tx pgx.Tx, streamId string) (int, error
 
 	}
 	return len(parsedEvents), nil
-}
-
-func maxSeqNum(seqNums []int64) int64 {
-	var max int64
-	for _, seqNum := range seqNums {
-		if seqNum > max {
-			max = seqNum
-		}
-	}
-	return max
 }
 
 // CreateStream creates a new event stream
@@ -652,6 +637,11 @@ func (s *PGEventStore) getLastEvents(ctx context.Context, tx pgx.Tx, selection m
 	return allEvents, nil
 }
 
+const (
+	// TODO make it configurable
+	NOTIFICATIONS_LOOP_INTERVAL = 30 * time.Second
+)
+
 func (s *PGEventStore) startMultiplexer(ctx context.Context) error {
 	ctx, log := infra.SetLoggerWithProcess(ctx, "multiplexer")
 
@@ -670,51 +660,34 @@ func (s *PGEventStore) startMultiplexer(ctx context.Context) error {
 			return
 		}
 
-		seqNum, err := s.getLastSeqNum(ctx)
+		lastKnownSeqNums, err := s.getLastSeqNum(ctx)
 		if err != nil {
 			log.Error("Error getting last seq num: ", err)
 			return
 		}
 
-		log.Debug("Starting multiplexer")
-
-		for {
-
-			select {
-			case <-s.multiplexerCtl:
-				log.Debug("Stopping multiplexer message")
-				return
-			default:
-			}
-
-			ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+		// multiplexer loop - check for new events and notifies consumers
+		// it is important that the only one instance of this function is running
+		multiplexerIteration := func(ctx context.Context) error {
 
 			lastEventNums, err := s.getLastSeqNum(ctx)
 			if err != nil {
-				log.Error("Error getting last seq num: ", err)
-				cancel()
-				continue
+				return fmt.Errorf("failed to get last seq num: %w", err)
 			}
 
-			diff := seqNumsDiff(seqNum, lastEventNums)
+			diff := seqNumsDiff(lastKnownSeqNums, lastEventNums)
 
-			// some changes in the database
+			// some changes in the database, notify consumers immediately
 			if len(diff) > 0 {
 				tx, err := startTx(ctx, s.pool)
 				if err != nil {
-					log.Error("Error starting transaction: ", err)
-					cancel()
-					continue
+					return fmt.Errorf("failed to start a transaction: %w", err)
 				}
 				selection := s.consumers.getMinSeqNum(lastEventNums)
 				lastEvents, err := s.getLastEvents(ctx, tx, selection)
 				if err != nil {
-					log.Error("Error getting last events: ", err)
 					tx.Rollback(ctx)
-					cancel()
-					// TODO proper handling of retries
-					time.Sleep(1 * time.Second)
-					continue
+					return fmt.Errorf("failed to get last events: %w", err)
 				}
 				tx.Commit(ctx)
 
@@ -727,7 +700,7 @@ func (s *PGEventStore) startMultiplexer(ctx context.Context) error {
 				}
 				log.Debugf("Events: %s", seqNums.String())
 				for stream, events := range lastEvents {
-					log.Debugf("Extracted %d events %s (start: %v last seq: %v)", len(events), stream, seqNum, lastEventNums)
+					log.Debugf("Extracted %d events %s (start: %v last seq: %v)", len(events), stream, lastKnownSeqNums, lastEventNums)
 				}
 
 				readyBlocks := s.consumers.Filter(lastEvents)
@@ -738,22 +711,58 @@ func (s *PGEventStore) startMultiplexer(ctx context.Context) error {
 						go send(ctx, id, rx.notifyChan, block)
 					}
 				}
-				seqNum = lastEventNums
-
+				lastKnownSeqNums = lastEventNums
 			}
 
+			// wait for the database notifications
 			notification, err := conn.Conn().WaitForNotification(ctx)
 			if errors.Is(err, context.DeadlineExceeded) {
-				cancel()
-				continue
+				return nil
 			}
 			if err != nil {
-				log.Debug("Error waiting for notification: ", err)
-				cancel()
-				return
+				return fmt.Errorf("error waiting for notification: %w", err)
 			}
+			// Note: payload is not used for anything except debugging
 			log.Debug("PID:", notification.PID, "Channel:", notification.Channel, "Payload:", notification.Payload)
-			cancel()
+			return nil
+		}
+
+		// run the multiplexer loop
+
+		// waiting group to make sure only once instance of the loop function is running
+		wg := sync.WaitGroup{}
+		retries := 0
+		for {
+			wg.Wait()
+			ctx, cancel := context.WithTimeout(ctx, NOTIFICATIONS_LOOP_INTERVAL)
+			iterationDone := make(chan bool)
+			wg.Add(1)
+			go func() {
+				err := multiplexerIteration(ctx)
+				if err != nil {
+					log.Error(err)
+					// TODO make it configurable
+					timeout := backoff(retries, time.Second, 30*time.Second, 15)
+					time.Sleep(timeout)				
+					retries++
+				}
+				wg.Done()
+				close(iterationDone)
+			}()
+
+			select {
+			case <-s.multiplexerCtl:
+				log.Debug("Stopping multiplexer message")
+				cancel()
+				wg.Wait()
+				return
+			case <-ctx.Done():
+				/* do nothing, restart the loop */
+			case <-iterationDone:
+				cancel()
+				/* do nothing, restart the loop */
+			}
+
 		}
 	}()
 
@@ -1006,4 +1015,18 @@ func seqNumsDiff(origMap map[string]int64, newMap map[string]int64) map[string]i
 		}
 	}
 	return diff
+}
+
+// exponential backoff with min/max timeout and jitter (1s)
+// min/max timeouts are suggestive (with correction for the jitter)
+// the calculated timeout is growing (mostly) exponentially starting with minTimeout and should reach maxTimeout after retriesAtMax retries
+func backoff(retries int, minTimeout time.Duration, maxTimeout time.Duration, retriesAtMax int) time.Duration {
+	timeout := maxTimeout
+	alpha := math.Log(float64(maxTimeout)/float64(minTimeout)) / float64(retriesAtMax)
+	// timeout is capped using effective retries cap
+	if retries < retriesAtMax {
+		timeout = time.Duration(math.Pow(math.E, float64(retries)*alpha)) * minTimeout
+	}
+	timeout += time.Duration(rand.Intn(1000)) * time.Millisecond
+	return timeout
 }

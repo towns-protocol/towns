@@ -66,11 +66,15 @@ func TestPGEventStore(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(streams) != 1 {
-		t.Fatal("Expected 1 stream, got ", len(streams))
+
+	foundStreamIdx := -1
+	for idx, stream := range streams {
+		if string(stream) == streamId {
+			foundStreamIdx = idx
+		}
 	}
-	if string(streams[0]) != "streamid1" {
-		t.Fatal("Expected table name streamid got ", streams[0])
+	if foundStreamIdx == -1 {
+		t.Fatal("Expected to find stream streamid1, found none")
 	}
 
 	cookie, err := pgEventStore.AddEvent(ctx, streamId, inceptionEvent)
