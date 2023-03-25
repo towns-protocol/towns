@@ -4,7 +4,6 @@ import { createUserIdFromEthereumAddress, getUsernameFromId } from '../types/use
 import {
     AuthenticationData,
     AuthenticationError,
-    Eip4361Info,
     getChainName,
     LoginFlows,
     LoginStatus,
@@ -455,9 +454,7 @@ async function getPublicKeySignInSupported(client: MatrixClient): Promise<boolea
 
 export function getAuthority(uri: string): string {
     const url = new URL(uri)
-    // Bug in siwe-go package on the server. Doesn't recognize port.
-    //const authority = url.port ? `${url.hostname}:${url.port}` : url.hostname;
-    return url.hostname
+    return url.port ? `${url.hostname}:${url.port}` : url.hostname
 }
 
 /**
@@ -470,21 +467,22 @@ export function createMessageToSign(args: {
     homeServer: string
     statement: string
 }): string {
-    // Create the auth metadata for signing.
-    const eip4361: Eip4361Info = {
-        authority: getAuthority(args.homeServer),
+    /**
+        // EIP-4361 message template:
+        authority: string // is the RFC 3986 authority that is requesting the signing.
+        address: string // is the Ethereum address performing the signing conformant to capitalization encoded checksum specified in EIP-55 where applicable.
+        version: string // version of the Matrix public key spec that the client is complying with.
+        chainId: number // is the EIP-155 Chain ID to which the session is bound, and the network where Contract Accounts must be resolved.
+        statement: string // is a human-readable ASCII assertion that the user will sign, and it must not contain '\n' (the byte 0x0a).
+        uri: string // is an RFC 3986 URI referring to the resource that is the subject of the signing
+    */
+    const siweMessage = new SiweMessage({
+        domain: getAuthority(window.location.origin),
         address: args.walletAddress,
+        statement: args.statement,
+        uri: window.location.origin,
         version: '1',
         chainId: args.chainId,
-        statement: args.statement,
-    }
-    const siweMessage = new SiweMessage({
-        domain: eip4361.authority,
-        address: eip4361.address,
-        statement: eip4361.statement,
-        uri: eip4361.authority,
-        version: '1',
-        chainId: eip4361.chainId,
         nonce: '', // Auto-generate.
     })
 

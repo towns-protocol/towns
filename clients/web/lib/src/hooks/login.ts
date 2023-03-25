@@ -56,14 +56,6 @@ export interface RegisterRequest {
     initial_device_display_name?: string
 }
 
-export interface Eip4361Info {
-    authority: string // is the RFC 3986 authority that is requesting the signing.
-    address: string // is the Ethereum address performing the signing conformant to capitalization encoded checksum specified in EIP-55 where applicable.
-    version: string // version of the Matrix public key spec that the client is complying with.
-    chainId: number // is the EIP-155 Chain ID to which the session is bound, and the network where Contract Accounts must be resolved.
-    statement: string // is a human-readable ASCII assertion that the user will sign, and it must not contain '\n' (the byte 0x0a).
-}
-
 export interface LoginServerResponse {
     accessToken: string | undefined
     userId: string | undefined
