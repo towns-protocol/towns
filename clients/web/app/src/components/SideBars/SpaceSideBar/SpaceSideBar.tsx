@@ -490,8 +490,13 @@ const SyncedChannelList = (props: {
             }
 
             return channels.filter((channel) => {
-                const roomData = client.getRoomData(channel.id)
-                return roomData?.membership === Membership.Join
+                // getRoomData throws an error when matrix client is undefined during logout
+                try {
+                    const roomData = client?.getRoomData(channel.id)
+                    return roomData?.membership === Membership.Join
+                } catch (error) {
+                    return false
+                }
             })
         },
         [client],
