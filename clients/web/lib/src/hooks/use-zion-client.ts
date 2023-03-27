@@ -216,7 +216,11 @@ export function useZionClient(): ZionClientImpl {
 
 // Map all objects with a name property to an MatrixError
 export function isMatrixError(err: unknown): err is MatrixError {
-    return (err as Error).name !== undefined && typeof (err as Error).name === 'string'
+    return (
+        (err as Error).name !== undefined &&
+        typeof (err as Error).name === 'string' &&
+        (err as MatrixError).httpStatus !== undefined
+    )
 }
 
 // Used to satisfy RETRY_BACKOFF_RATELIMIT, which doesn't actually look at it
