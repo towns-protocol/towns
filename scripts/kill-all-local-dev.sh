@@ -37,3 +37,4 @@ do_killl dendrite
 do_killl yarn
 do_killl anvil
 do_killl wrangler
+do_killl mitmweb
