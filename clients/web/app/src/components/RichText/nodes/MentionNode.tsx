@@ -137,7 +137,9 @@ export function $isMentionNode(node: LexicalNode | null | undefined): node is Me
 export const createMentionTransformer = (
     names: { displayName: string; userId: string }[],
 ): TextMatchTransformer => {
-    const concat = names.map((n) => n.displayName).join('|')
+    const concat = names
+        .map((n) => n.displayName.replace(/[/\-\\^$*+?.()|[\]{}]/g, '\\$&'))
+        .join('|')
     const userIds = names.reduce((acc, n) => {
         acc[n.displayName] = n.userId
         return acc
