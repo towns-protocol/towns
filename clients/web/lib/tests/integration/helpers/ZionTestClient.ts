@@ -211,7 +211,6 @@ export class ZionTestClient extends ZionClient {
         const messageToSign = createMessageToSign({
             walletAddress: this.userIdentifier.accountAddress,
             chainId: this.chainId,
-            homeServer: this.opts.matrixServerUrl,
             statement: 'this is a test registration',
         })
 
@@ -278,7 +277,6 @@ export class ZionTestClient extends ZionClient {
         const messageToSign = createMessageToSign({
             walletAddress: this.userIdentifier.accountAddress,
             chainId: this.userIdentifier.chainId,
-            homeServer: this.opts.matrixServerUrl,
             statement: 'this is a test login',
         })
 

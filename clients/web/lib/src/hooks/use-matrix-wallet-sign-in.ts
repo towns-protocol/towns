@@ -91,7 +91,6 @@ export function useMatrixWalletSignIn() {
             const messageToSign = createMessageToSign({
                 walletAddress: userIdentifier.accountAddress,
                 chainId: userIdentifier.chainId,
-                homeServer,
                 statement,
             })
 
@@ -464,7 +463,6 @@ export function getAuthority(uri: string): string {
 export function createMessageToSign(args: {
     walletAddress: string
     chainId: number
-    homeServer: string
     statement: string
 }): string {
     /**
