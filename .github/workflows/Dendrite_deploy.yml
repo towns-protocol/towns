@@ -7,10 +7,10 @@ on:
                 description: 'Environment'
                 required: true
                 default: 'test'
-            node_name:
-                description: 'Node name (i.e node1 if node1.towns.com)'
-                required: true
-                default: 'node1-test'
+                type: choice
+                options:
+                - test
+                - production
             docker_image_tag:
                 description: 'Docker image tag to deploy'
                 required: true
@@ -24,6 +24,9 @@ jobs:
     deploy:
         name: Deploy to AWS ECS
         runs-on: ubuntu-latest
+
+        environment: ${{ inputs.environment }}
+
         permissions:
             contents: write
             packages: write
@@ -43,4 +46,4 @@ jobs:
               run: ./scripts/create-new-task-definition.sh --environment ${{ inputs.environment }} --docker-image-tag ${{ inputs.docker_image_tag }}
 
             - name: Deploy service
-              run: ./scripts/deploy-task-definition.sh --environment ${{ inputs.environment }} --node-name ${{ inputs.node_name }}
+              run: ./scripts/deploy-task-definition.sh --environment ${{ inputs.environment }} --node-name ${{ vars.PRIMARY_NODE_NAME }}
