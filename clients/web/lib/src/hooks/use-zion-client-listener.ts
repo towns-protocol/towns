@@ -41,7 +41,7 @@ export const useZionClientListener = (opts: ZionOpts) => {
                 'Matrix client listener not started: clientSingleton.current, chainId, accessToken, userId, or deviceId is undefined.',
                 {
                     singleton: clientSingleton.current !== undefined,
-                    matrixCredentials: matrixCredentials !== undefined,
+                    matrixCredentials: matrixCredentials !== null,
                     chainId: chainId !== undefined,
                     _signer: _signer !== undefined,
                 },
@@ -139,6 +139,10 @@ async function startMatrixClientWithRetries(
                 if (retryDelay >= 0) {
                     await new Promise((resolve) => setTimeout(resolve, retryDelay))
                     retryCount++
+                    console.log('Retrying startMatrixClientWithRetries after delay: ', {
+                        retryDelay,
+                        retryCount,
+                    })
                 } else {
                     throw err
                 }
