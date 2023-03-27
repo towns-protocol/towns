@@ -42,10 +42,7 @@ export function useContentAwareTimelineDiff(matrixClient?: MatrixClient) {
             prev: TimelineStoreInterface,
         ) => {
             if (firstTime) {
-                if (timelineState !== prev) {
-                    console.error('firstTime but timelineState !== prev')
-                }
-                effectState = initOnce(matrixClient, userId)
+                effectState = initOnce(matrixClient, userId, timelineState)
                 firstTime = false
             }
             effectState = diffTimeline(timelineState, prev, effectState, userId)
@@ -132,7 +129,11 @@ function toFullyReadMarker(value: any): FullyReadMarker {
 
 /// matrix keeps track of how many events we miss while we're gone
 /// use the unread count to quickly update our local state when we start up
-function initOnce(matrixClient: MatrixClient, userId: string): LocalEffectState {
+function initOnce(
+    matrixClient: MatrixClient,
+    userId: string,
+    timelineState: TimelineStoreInterface,
+): LocalEffectState {
     let effectState: LocalEffectState = {
         encryptedEvents: {},
     }
@@ -159,7 +160,7 @@ function initOnce(matrixClient: MatrixClient, userId: string): LocalEffectState 
                     (e) => isZTimelineEvent(e) && (isCountedAsUnread(e, userId) || e.isEncrypted()),
                 )
                 if (firstMatrixEvent) {
-                    const events = useTimelineStore.getState().timelines[room.roomId] ?? []
+                    const events = timelineState.timelines[room.roomId] ?? []
 
                     const firstEventIndex = events.findIndex(
                         (e) => e.eventId === firstMatrixEvent.getId(),
