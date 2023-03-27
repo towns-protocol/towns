@@ -367,3 +367,5 @@ allowed_origins:
   - http://localhost:3000
   # sample app
   - http://localhost:3001
+  # tests
+  - http://localhost
