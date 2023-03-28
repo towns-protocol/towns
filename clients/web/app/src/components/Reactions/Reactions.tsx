@@ -105,15 +105,10 @@ const Reaction = (props: {
 }) => {
     const { name, users, onReact, isOwn } = props
 
-    const { client } = useZionContext()
-
     const onClick = useCallback(() => {
-        const userId = client?.getUserId()
-        if (userId) {
-            const remove = !!isOwn
-            onReact(name, remove)
-        }
-    }, [client, isOwn, name, onReact])
+        const remove = !!isOwn
+        onReact(name, remove)
+    }, [isOwn, name, onReact])
 
     return users && Object.keys(users).length ? (
         <TooltipRenderer
