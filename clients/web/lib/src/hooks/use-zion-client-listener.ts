@@ -17,17 +17,24 @@ export const useZionClientListener = (opts: ZionOpts) => {
     const matrixCredentials = matrixCredentialsMap[opts.matrixServerUrl]
     const [clientRef, setClientRef] = useState<ZionClient>()
     const clientSingleton = useRef<ZionClient>()
+    // The chain is an optional prop the consuming client can pass to the ZionContextProvider
+    // If passed, we lock ZionClient to that chain
     const chainId = chain?.id
-    const { data: wagmiSigner } = useSigner()
+    // Additionally, The signer should be initialized with the correct chainId so we don't have to worry about it changing for writes
+    // without this, when a user swaps networks and tries to make a transaction, they can have a mismatched signer resulting in "network changed" errors
+    // TBD, we may want to add a ZionClient.createShims() that will recreate the spaceDapp shims with updated signer and provider, and call it here when those props change, but setting the signer chain may be enough
+    const { data: wagmiSigner } = useSigner({
+        chainId,
+    })
+    // web3Signer is passed by tests
     const _signer = opts.web3Signer || wagmiSigner
-    const _provider = opts.web3Provider || provider
 
     if (!clientSingleton.current) {
         if (_signer) {
             clientSingleton.current = new ZionClient(
                 {
                     ...opts,
-                    web3Provider: _provider,
+                    web3Provider: provider,
                     web3Signer: _signer,
                 },
                 chainId,

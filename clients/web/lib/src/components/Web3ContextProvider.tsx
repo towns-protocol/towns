@@ -41,14 +41,6 @@ export function Web3ContextProvider(props: Props): JSX.Element {
     const wagmiClient = useRef<any>()
 
     if (!wagmiClient.current) {
-        // Note re. transactions 1.27.23
-        // On local dev, if you load the app on unsupported chain i.e sepolia, then switch to supported chain, you will get an error when trying to make a transaction, that currently is only solved by refreshing the page.
-        // https://github.com/ethers-io/ethers.js/issues/1107
-        // https://github.com/ethers-io/ethers.js/issues/866
-        // This seems to be caused by the chains/provider being configured here. If you only configure "foundry" you can't reproduce the issue
-        // And on the live site, you can only reproduce the issue if you load with localhost network and then switch to goerli
-        // This indicates the provider is being swapped between public & alchemy during these network changes, so we may need to fine tune this in the future or handle it otherwise if real users experience it
-        // Since this also seems to be just on metamask, ignoring for now
         const { chains, provider, webSocketProvider } = configureChains(
             [goerli, localhost, foundry, sepolia],
             props.alchemyKey
