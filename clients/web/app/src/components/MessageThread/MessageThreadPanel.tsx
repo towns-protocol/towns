@@ -58,10 +58,12 @@ export const MessageThreadPanel = (props: Props) => {
             </Panel>
             <Box paddingY="none" paddingX="md" style={{ position: 'sticky', bottom: 0 }}>
                 <RichTextEditor
+                    autoFocus
                     editable
                     placeholder="Reply..."
                     storageId={`${channelId.networkId}-${messageId}`}
                     threadId={messageId}
+                    background="level3"
                     onSend={onSend}
                 />
             </Box>
