@@ -15,3 +15,14 @@ func RpcError(code protocol.Err, msg string) error {
 func RpcErrorf(code protocol.Err, format string, a ...interface{}) error {
 	return RpcError(code, fmt.Sprintf(format, a...))
 }
+
+func RpcAddRequestId(err error, requestId string) error {
+	if err == nil {
+		return nil
+	}
+	if err, ok := err.(*connect_go.Error); ok {
+		err.Meta().Set("requestId", requestId)
+		return err
+	}
+	return err
+}

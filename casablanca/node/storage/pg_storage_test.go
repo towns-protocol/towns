@@ -14,6 +14,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 
+	"casablanca/node/infra"
 	"casablanca/node/protocol"
 	"casablanca/node/storage"
 	"casablanca/node/testutils"
@@ -40,7 +41,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestPGEventStore(t *testing.T) {
-	ctx := context.Background()
+	ctx, _, _ := infra.SetLoggerWithRequestId(context.Background())
 	// Create a new PGEventStore
 	pgEventStore, err := storage.NewPGEventStore(ctx, testDatabaseUrl, true)
 	if err != nil {
@@ -122,7 +123,8 @@ func TestPGEventStore(t *testing.T) {
 }
 
 func TestPGEventStoreLongPoll(t *testing.T) {
-	ctx := context.Background()
+	ctx, _, _ := infra.SetLoggerWithRequestId(context.Background())
+
 	// Create a new PGEventStore
 	pgEventStore, err := storage.NewPGEventStore(ctx, testDatabaseUrl, true)
 	if err != nil {
@@ -189,14 +191,17 @@ func TestPGEventStoreLongPoll(t *testing.T) {
 	// check long poll for the 1000ms (must be one event)
 	successfulPoll := func() {
 		defer wg.Done()
+		ctx, cancel := context.WithCancel(ctx)
+		defer cancel()
+		ctx, _, requestId := infra.SetLoggerWithRequestId(ctx)
 		events, err := pgEventStore.SyncStreams(ctx, []*protocol.SyncPos{{StreamId: streamId, SyncCookie: cookie1}}, -1, 10000)
-		assert.Nil(t, err)
-		assert.NotNil(t, events)
-		assert.Len(t, events, 1)
-		assert.Greater(t, len(cookie1), 8)
+		assert.Nil(t, err, requestId)
+		assert.NotNil(t, events, requestId)
+		assert.Len(t, events, 1, requestId)
+		assert.Greater(t, len(cookie1), 8, requestId)
 		sq1, _ := storage.BytesToSeqNum(cookie1)
 		sq2, _ := storage.BytesToSeqNum(events[string(streamId)].SyncCookie)
-		assert.Equal(t, sq1+1, sq2)
+		assert.Equal(t, sq1+1, sq2, requestId)
 	}
 
 	for i := 0; i < 10; i++ {
@@ -211,7 +216,7 @@ func TestPGEventStoreLongPollStress(t *testing.T) {
 
 	totalMessages := 200
 
-	ctx := context.Background()
+	ctx, _, requestId := infra.SetLoggerWithRequestId(context.Background())
 	// Create a new PGEventStore
 	pgEventStore, err := storage.NewPGEventStore(ctx, testDatabaseUrl, true)
 	if err != nil {
@@ -224,12 +229,12 @@ func TestPGEventStoreLongPollStress(t *testing.T) {
 	userId := []byte{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9}
 	inceptionEvent1, err := testutils.UserStreamInceptionEvent(1, userId, "streamid1")
 	if err != nil {
-		t.Fatal(err)
+		t.Fatal(err, requestId)
 	}
 	inceptionEvents := []*protocol.Envelope{inceptionEvent1}
 	cookie1, err := pgEventStore.CreateStream(ctx, streamId, inceptionEvents)
 	if err != nil {
-		t.Fatal(err)
+		t.Fatal(err, requestId)
 	}
 
 	wg := sync.WaitGroup{}
@@ -238,6 +243,7 @@ func TestPGEventStoreLongPollStress(t *testing.T) {
 	idx.Store(1000)
 	insert := func(sleepMs int) {
 		defer wg.Done()
+		ctx, log, _ := infra.SetLoggerWithRequestId(context.Background())
 
 		time.Sleep(time.Duration(sleepMs) * time.Millisecond)
 
@@ -269,6 +275,7 @@ func TestPGEventStoreLongPollStress(t *testing.T) {
 
 		syncCookie := cookie1
 		for counter < totalMessages {
+			ctx, log, requestId := infra.SetLoggerWithRequestId(context.Background())
 			events, err := pgEventStore.SyncStreams(ctx, []*protocol.SyncPos{{StreamId: streamId, SyncCookie: syncCookie}}, -1, 1000)
 			assert.Nil(t, err)
 			if len(events) != 0 {
@@ -277,7 +284,7 @@ func TestPGEventStoreLongPollStress(t *testing.T) {
 			}
 			for _, e := range events[streamId].Events {
 				if _, ok := allHashes[string(e.Hash)]; !ok {
-					panic(fmt.Sprintf("%d hash %s not found", i, string(e.Hash)))
+					panic(fmt.Sprintf("%d hash %s not found (requestId: %s)", i, string(e.Hash), requestId))
 				}
 				delete(allHashes, string(e.Hash))
 			}

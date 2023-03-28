@@ -29,57 +29,57 @@ type LoggingService struct {
 }
 
 func (s *LoggingService) CreateStream(ctx context.Context, req *connect_go.Request[protocol.CreateStreamRequest]) (*connect_go.Response[protocol.CreateStreamResponse], error) {
-	ctx, log := infra.SetLoggerWithRequestId(ctx)
+	ctx, log, requestId := infra.SetLoggerWithRequestId(ctx)
 
 	res, err := s.Service.CreateStream(ctx, req)
 	if err != nil {
 		log.Errorf("CreateStream error: %v", err)
-		return nil, err
+		return nil, RpcAddRequestId(err, requestId)
 	}
 	log.Debugf("CreateStream: %v", res)
 	return res, nil
 }
 
 func (s *LoggingService) GetStream(ctx context.Context, req *connect_go.Request[protocol.GetStreamRequest]) (*connect_go.Response[protocol.GetStreamResponse], error) {
-	ctx, log := infra.SetLoggerWithRequestId(ctx)
+	ctx, log, requestId := infra.SetLoggerWithRequestId(ctx)
 	
 	res, err := s.Service.GetStream(ctx, req)
 	if err != nil {
 		log.Errorf("GetStream error: %v", err)
-		return nil, err
+		return nil, RpcAddRequestId(err, requestId)
 	}
 	return res, nil
 }
 
 func (s *LoggingService) AddEvent(ctx context.Context, req *connect_go.Request[protocol.AddEventRequest]) (*connect_go.Response[protocol.AddEventResponse], error) {
-	ctx, log := infra.SetLoggerWithRequestId(ctx)
+	ctx, log, requestId := infra.SetLoggerWithRequestId(ctx)	
 	
 	res, err := s.Service.AddEvent(ctx, req)
 	if err != nil {
 		log.Errorf("AddEvent error: %v", err)
-		return nil, err
+		return nil, RpcAddRequestId(err, requestId)
 	}
 	return res, nil
 }
 
 func (s *LoggingService) SyncStreams(ctx context.Context, req *connect_go.Request[protocol.SyncStreamsRequest]) (*connect_go.Response[protocol.SyncStreamsResponse], error) {
-	ctx, log := infra.SetLoggerWithRequestId(ctx)
+	ctx, log, requestId := infra.SetLoggerWithRequestId(ctx)
 	
 	res, err := s.Service.SyncStreams(ctx, req)
 	if err != nil {
 		log.Errorf("SyncStreams error: %v", err)
-		return nil, err
+		return nil, RpcAddRequestId(err, requestId)
 	}
 	return res, nil
 }
 
 func (s *LoggingService) Info(ctx context.Context, req *connect_go.Request[protocol.InfoRequest]) (*connect_go.Response[protocol.InfoResponse], error) {
-	ctx, log := infra.SetLoggerWithRequestId(ctx)
+	ctx, log, requestId := infra.SetLoggerWithRequestId(ctx)
 	
 	res, err := s.Service.Info(ctx, req)
 	if err != nil {
 		log.Errorf("Info error: %v", err)
-		return nil, err
+		return nil, RpcAddRequestId(err, requestId)
 	}
 	return res, nil
 }
@@ -162,7 +162,7 @@ func (s *Service) addEvent(ctx context.Context, streamId string, view *StreamVie
 		return nil, status.Errorf(codes.InvalidArgument, "AddEvent: event is an inception event")
 
 	case *protocol.Payload_UserStreamOp_, *protocol.Payload_Channel_:
-		return nil, status.Errorf(codes.InvalidArgument, "AddEvent: event is a user stream op event")
+		return nil, status.Errorf(codes.InvalidArgument, "AddEvent: event is a user stream op event or channel event")
 
 	case *protocol.Payload_JoinableStream_:
 		// check is stream kind is channel or space

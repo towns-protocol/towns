@@ -3,8 +3,6 @@ package storage
 import (
 	"sync"
 
-	"github.com/google/uuid"
-
 	e "casablanca/node/events"
 	"casablanca/node/protocol"
 )
@@ -15,7 +13,7 @@ type SubsMap struct {
 }
 
 type SmapEntry struct {
-	id         uuid.UUID
+	id         string
 	seqNum     int64
 	notifyChan chan StreamEventsBlock
 }
@@ -27,7 +25,7 @@ func NewSmap() *SubsMap {
 	}
 }
 
-func (s *SubsMap) Add(streamId string, cookie []byte) *SmapEntry {
+func (s *SubsMap) Add(streamId string, cookie []byte, requestId string) *SmapEntry {
 	key := streamId
 	seqNum, cookieStream := BytesToSeqNum(cookie)
 	if cookieStream != streamId {
@@ -36,7 +34,7 @@ func (s *SubsMap) Add(streamId string, cookie []byte) *SmapEntry {
 	s.mtx.Lock()
 	defer s.mtx.Unlock()
 	entry := &SmapEntry{
-		id:         uuid.New(),
+		id:         requestId,
 		seqNum:     seqNum,
 		notifyChan: make(chan StreamEventsBlock),
 	}
@@ -49,7 +47,7 @@ func (s *SubsMap) Add(streamId string, cookie []byte) *SmapEntry {
 	return entry
 }
 
-func (s *SubsMap) Delete(streamId string, id uuid.UUID) {
+func (s *SubsMap) Delete(streamId string, id string) {
 	key := streamId
 	s.mtx.Lock()
 	defer s.mtx.Unlock()
@@ -78,7 +76,7 @@ func (s *SubsMap) Get(streamId string) ([]*SmapEntry, bool) {
 	return subs, ok
 }
 
-func (s *SubsMap) GetByUUID(id uuid.UUID) (*SmapEntry, bool) {
+func (s *SubsMap) GetByUUID(id string) (*SmapEntry, bool) {
 	s.mtx.Lock()
 	defer s.mtx.Unlock()
 	for _, subs := range s.entries {
@@ -107,9 +105,9 @@ func (s *SubsMap) ForEach(thunk func(*SmapEntry)) {
  * @param events the events to filter indexed by seq number
  * @return a map of subs ids to events for the input events
  */
-func (s SubsMap) Filter(events map[string][]*e.FullEvent) map[uuid.UUID]StreamEventsBlock {
+func (s SubsMap) Filter(events map[string][]*e.FullEvent) map[string]StreamEventsBlock {
 
-	res := make(map[uuid.UUID]StreamEventsBlock)
+	res := make(map[string]StreamEventsBlock)
 
 	s.mtx.Lock()
 	defer s.mtx.Unlock()

@@ -120,7 +120,6 @@ func TestMethods(t *testing.T) {
 		if err == nil {
 			t.Errorf("expected error calling CreateStream with no events")
 		}
-
 		userId := []byte{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9}
 		res, _, err := createUser(ctx, client, userId)
 		if err != nil {
