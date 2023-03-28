@@ -158,8 +158,13 @@ const useDisplayEncryptionProgress = (channelMessages: TimelineEvent[]) => {
             },
             { encrypted: 0, total: 0, progress: 0 },
         )
-    const hasDisplayedOnce = useRef(false)
+
     const hasEncrypted = encryptedMessageStats && encryptedMessageStats.encrypted > 0
+    const hasDisplayedOnce = useRef(
+        // dismiss popup if channel is prepopulated with unencrypted messages
+        encryptedMessageStats ? encryptedMessageStats.encrypted === 0 : false,
+    )
+
     useEffect(() => {
         if (hasDisplayedOnce.current) {
             // when popup is showing...
