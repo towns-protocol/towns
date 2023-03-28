@@ -1,3 +1,4 @@
+import { ErrorBoundary } from '@sentry/react'
 import React, { createContext, useMemo } from 'react'
 import {
     Channel,
@@ -9,6 +10,8 @@ import {
     useTimelineThreadStats,
     useZionClient,
 } from 'use-zion-client'
+import { SomethingWentWrong } from '@components/Errors/SomethingWentWrong'
+import { Box } from '@ui'
 import { useHandleReaction } from 'hooks/useReactions'
 import { useSpaceChannels } from 'hooks/useSpaceChannels'
 import { useTimelineMessageEditing } from './hooks/useTimelineMessageEditing'
@@ -97,8 +100,18 @@ export const MessageTimelineWrapper = (props: {
         membersMap,
     ])
     return (
-        <MessageTimelineContext.Provider value={value}>
-            {props.children}
-        </MessageTimelineContext.Provider>
+        <ErrorBoundary fallback={MessageTimelineFallbackComponent}>
+            <MessageTimelineContext.Provider value={value}>
+                {props.children}
+            </MessageTimelineContext.Provider>
+        </ErrorBoundary>
+    )
+}
+
+const MessageTimelineFallbackComponent = (props: { error: Error }) => {
+    return (
+        <Box centerContent height="100%">
+            <SomethingWentWrong error={props.error} />
+        </Box>
     )
 }

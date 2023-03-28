@@ -16,6 +16,7 @@ import { HeadingNode, QuoteNode } from '@lexical/rich-text'
 import LexicalErrorBoundary from '@lexical/react/LexicalErrorBoundary'
 import { clsx } from 'clsx'
 import isEqual from 'lodash/isEqual'
+import { ErrorBoundary } from '@sentry/react'
 import React, { useCallback, useMemo, useState } from 'react'
 import {
     Channel,
@@ -28,8 +29,9 @@ import { useSpaceChannels } from 'hooks/useSpaceChannels'
 import * as fieldStyles from 'ui/components/_internal/Field/Field.css'
 import { notUndefined } from 'ui/utils/utils'
 import { useStore } from 'store/store'
-import { BoxProps } from '@ui'
+import { Box, BoxProps } from '@ui'
 import { useNetworkStatus } from 'hooks/useNetworkStatus'
+import { SomethingWentWrong } from '@components/Errors/SomethingWentWrong'
 import { useInitialConfig } from './hooks/useInitialConfig'
 import { AnnotationNode } from './nodes/AnnotationNode'
 import { ChannelLinkNode, createChannelLinkTransformer } from './nodes/ChannelLinkNode'
@@ -164,6 +166,14 @@ export const RichTextPreviewPlain = React.memo((props: { content: string; edited
 })
 
 export const RichTextEditor = (props: Props) => {
+    return (
+        <ErrorBoundary fallback={RichTextEditorFallbackComponent}>
+            <RichTextEditorWithoutBoundary {...props} />
+        </ErrorBoundary>
+    )
+}
+
+const RichTextEditorWithoutBoundary = (props: Props) => {
     const { placeholder = 'Write something ...', editing: isEditing, onSend, tabIndex } = props
 
     const { members } = useSpaceMembers()
@@ -244,3 +254,18 @@ export const RichTextEditor = (props: Props) => {
         </LexicalComposer>
     )
 }
+
+const RichTextEditorFallbackComponent = (props: { error: Error }) => (
+    <Box
+        horizontal
+        gap="sm"
+        rounded="sm"
+        background="level3"
+        height="x6"
+        padding="lg"
+        alignItems="center"
+        color="gray2"
+    >
+        <SomethingWentWrong error={props.error} />
+    </Box>
+)
