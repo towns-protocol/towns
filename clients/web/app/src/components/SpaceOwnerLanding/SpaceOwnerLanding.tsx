@@ -93,7 +93,7 @@ export const SpaceOwnerLanding = () => {
                         .
                     </Paragraph>
                     <Paragraph size="lg">
-                        If you’d like to learn more about what we’re doing at Zion, read the{' '}
+                        If you’d like to learn more about what we’re doing at Towns, read the{' '}
                         <Link to="//towns.com/vision/" target="_blank">
                             <Text color="cta1" size="lg" display="inline-block">
                                 vision
