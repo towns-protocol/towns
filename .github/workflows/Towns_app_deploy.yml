@@ -5,21 +5,21 @@
 # deploy to those environments will just take the latest commit on the
 # "main" branch.
 
-name: "Deploy Towns WebApp"
+name: 'Deploy Towns WebApp'
 
 on:
     workflow_dispatch: # A build was manually requested
         inputs:
             environment:
-                description: "Environment"
+                description: 'Environment'
                 required: true
-                default: "test"
+                default: 'test'
                 type: choice
                 options:
                     - test
                     - production
             commit_hash:
-                description: "Commit hash (Leave blank to use latest commit)"
+                description: 'Commit hash (Leave blank to use latest commit)'
                 required: false
 
 jobs:
@@ -49,8 +49,8 @@ jobs:
               uses: rtCamp/action-slack-notify@v2
               env:
                   SLACK_WEBHOOK: ${{ secrets.SLACK_CI_CHANNEL_WEBHOOK_URL }}
-                  SLACK_TITLE: "Failure"
-                  SLACK_USERNAME: "CI"
-                  SLACK_ICON_EMOJI: ":boom:"
-                  SLACK_COLOR: "#FF0000"
-                  SLACK_MESSAGE: "Towns App Deploy Failed on ${{ github.repository }}"
+                  SLACK_TITLE: 'Failure'
+                  SLACK_USERNAME: 'CI'
+                  SLACK_ICON_EMOJI: ':boom:'
+                  SLACK_COLOR: '#FF0000'
+                  SLACK_MESSAGE: 'Towns App Deploy Failed on ${{ github.repository }}'
