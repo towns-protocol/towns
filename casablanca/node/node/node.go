@@ -85,7 +85,7 @@ func main() {
 	log.Printf("Listening on %s%s", address, pattern)
 	log.Printf("Using DB at %s", config.DbUrl)
 
-	exitSignal := make(chan os.Signal)
+	exitSignal := make(chan os.Signal, 1)
 	signal.Notify(exitSignal, syscall.SIGINT, syscall.SIGTERM)
 	<-exitSignal
 	fmt.Println()
