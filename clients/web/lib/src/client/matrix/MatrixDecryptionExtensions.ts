@@ -595,17 +595,18 @@ export class MatrixDecryptionExtension extends TypedEventEmitter<
         const { roomId } = response
         const roomRecord = this.roomRecords[roomId]
         if (!roomRecord) {
-            console.warn('MDE::onKeyResponse - room record not found')
+            console.warn('MDE::onKeyResponse - room record not found', { roomId })
             return
         }
         if (!roomRecord.requests?.[senderId]) {
             console.warn('MDE::onKeyResponse - no request found for sender', {
                 senderId,
                 content: event.getContent(),
+                roomId,
             })
             return
         }
-        console.log('MDE::onKeyResponse', { kind: response.kind, senderId })
+        console.log('MDE::onKeyResponse', { kind: response.kind, senderId, roomId })
         roomRecord.requests[senderId].response = response
 
         switch (response.kind) {
@@ -663,10 +664,14 @@ export class MatrixDecryptionExtension extends TypedEventEmitter<
                 }
                 break
             default:
-                console.log('MDE::onKeyResponse - unknown response kind', { response, senderId })
+                console.log('MDE::onKeyResponse - unknown response kind', {
+                    response,
+                    senderId,
+                    roomId,
+                })
         }
         // clear any request to this user and start looking for keys again
-        console.log('MDE::onKeyResponse complete', { kind: response.kind, senderId })
+        console.log('MDE::onKeyResponse complete', { kind: response.kind, senderId, roomId })
         this.clearKeyRequest(roomId, senderId)
     }
 
