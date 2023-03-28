@@ -34,7 +34,7 @@ func ParseEvent(envelope *protocol.Envelope) (*ParsedEvent, error) {
 	}, nil
 }
 
-func ParseEvents(streamId string, events []*protocol.Envelope) ([]*ParsedEvent, error) {
+func ParseEvents(events []*protocol.Envelope) ([]*ParsedEvent, error) {
 	parsedEvents := make([]*ParsedEvent, len(events))
 	for i, event := range events {
 		parsedEvent, err := ParseEvent(event)

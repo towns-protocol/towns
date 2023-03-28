@@ -15,7 +15,7 @@ func (s *Service) CreateStream(ctx context.Context, req *connect.Request[protoco
 		return nil, RpcErrorf(protocol.Err_BAD_STREAM_CREATION_PARAMS, "CreateStream: no events")
 	}
 
-	events, err := events.ParseEvents("", req.Msg.Events)
+	events, err := events.ParseEvents(req.Msg.Events)
 	if err != nil {
 		return nil, RpcErrorf(protocol.Err_BAD_STREAM_CREATION_PARAMS, "CreateStream: error parsing events: %v", err)
 	}
