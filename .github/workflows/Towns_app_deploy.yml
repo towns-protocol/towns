@@ -1,6 +1,6 @@
 # When triggered, will deploy the Towns app to the specified environment.
 # Note: This script does not affect what code gets deployed. Every app
-# on render.com has an associated branch. For example, the test and 
+# on render.com has an associated branch. For example, the test and
 # production apps both point to the "main" branch. This means that any
 # deploy to those environments will just take the latest commit on the
 # "main" branch.
@@ -8,12 +8,12 @@
 name: 'Deploy Towns WebApp'
 
 on:
-  workflow_dispatch: # A build was manually requested
-     inputs:
-        environment:
-            description: 'Environment'
-            required: true
-            default: 'test'
+    workflow_dispatch: # A build was manually requested
+        inputs:
+            environment:
+                description: 'Environment'
+                required: true
+                default: 'test'
 
 jobs:
     deploy_towns_app:
@@ -28,7 +28,7 @@ jobs:
         steps:
             - name: Call render deploy webhook
               run: |
-                  curl -X POST -H "Content-Type: application/json" ${{ secrets.RENDER_TOWNS_WEBAPP_DEPLOY_WEBHOOK }} 
+                  curl -X POST -H "Content-Type: application/json" ${{ secrets.RENDER_TOWNS_WEBAPP_DEPLOY_WEBHOOK }}
 
             # If action failed, we send a slack notification
             - name: Slack notification

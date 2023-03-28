@@ -9,8 +9,8 @@ on:
                 default: 'test'
                 type: choice
                 options:
-                - test
-                - production
+                    - test
+                    - production
             docker_image_tag:
                 description: 'Docker image tag to deploy'
                 required: true

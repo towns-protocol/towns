@@ -72,7 +72,7 @@ Hello World from GET!
 Deployment account and workers domain is defined in wrangler.toml config.
 
 TEST
-Publish to test for testing the workers. 
+Publish to test for testing the workers.
 
 ```bash
 yarn publish:test
