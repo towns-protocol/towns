@@ -14,6 +14,7 @@ import (
 	"golang.org/x/net/http2/h2c"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 
 	"casablanca/node/crypto"
@@ -30,30 +31,40 @@ type LoggingService struct {
 
 func (s *LoggingService) CreateStream(ctx context.Context, req *connect_go.Request[protocol.CreateStreamRequest]) (*connect_go.Response[protocol.CreateStreamResponse], error) {
 	ctx, log, requestId := infra.SetLoggerWithRequestId(ctx)
+	parsedEvent := events.FormatEventsToJson(req.Msg.Events)
+
+	log.Debugf("CreateStream: request %s events: %s", protojson.Format((req.Msg)), parsedEvent)
 
 	res, err := s.Service.CreateStream(ctx, req)
 	if err != nil {
 		log.Errorf("CreateStream error: %v", err)
 		return nil, RpcAddRequestId(err, requestId)
 	}
-	log.Debugf("CreateStream: %v", res)
+	log.Debugf("CreateStream: response %s", protojson.Format((res.Msg)))
 	return res, nil
 }
 
 func (s *LoggingService) GetStream(ctx context.Context, req *connect_go.Request[protocol.GetStreamRequest]) (*connect_go.Response[protocol.GetStreamResponse], error) {
 	ctx, log, requestId := infra.SetLoggerWithRequestId(ctx)
-	
+	log.Debugf("GetStream: request %s", protojson.Format((req.Msg)))
+
 	res, err := s.Service.GetStream(ctx, req)
 	if err != nil {
 		log.Errorf("GetStream error: %v", err)
 		return nil, RpcAddRequestId(err, requestId)
 	}
+
+	parsedEvents := events.FormatEventsToJson(res.Msg.Stream.Events)
+	log.Debugf("GetStream: response %s %s", protojson.Format((res.Msg)), parsedEvents)
 	return res, nil
 }
 
 func (s *LoggingService) AddEvent(ctx context.Context, req *connect_go.Request[protocol.AddEventRequest]) (*connect_go.Response[protocol.AddEventResponse], error) {
-	ctx, log, requestId := infra.SetLoggerWithRequestId(ctx)	
-	
+	ctx, log, requestId := infra.SetLoggerWithRequestId(ctx)
+
+	parsedEvent := events.FormatEventsToJson([]*protocol.Envelope{req.Msg.Event})
+	log.Debugf("AddEvent: request streamId: %s %s", req.Msg.StreamId, parsedEvent)
+
 	res, err := s.Service.AddEvent(ctx, req)
 	if err != nil {
 		log.Errorf("AddEvent error: %v", err)
@@ -64,7 +75,8 @@ func (s *LoggingService) AddEvent(ctx context.Context, req *connect_go.Request[p
 
 func (s *LoggingService) SyncStreams(ctx context.Context, req *connect_go.Request[protocol.SyncStreamsRequest]) (*connect_go.Response[protocol.SyncStreamsResponse], error) {
 	ctx, log, requestId := infra.SetLoggerWithRequestId(ctx)
-	
+	log.Debugf("SyncStreams: CALL timeout: %d req: %s", req.Msg.TimeoutMs, protojson.Format((req.Msg)))
+
 	res, err := s.Service.SyncStreams(ctx, req)
 	if err != nil {
 		log.Errorf("SyncStreams error: %v", err)
@@ -75,12 +87,14 @@ func (s *LoggingService) SyncStreams(ctx context.Context, req *connect_go.Reques
 
 func (s *LoggingService) Info(ctx context.Context, req *connect_go.Request[protocol.InfoRequest]) (*connect_go.Response[protocol.InfoResponse], error) {
 	ctx, log, requestId := infra.SetLoggerWithRequestId(ctx)
-	
+	log.Debugf("Info: request %s", protojson.Format((req.Msg)))
+
 	res, err := s.Service.Info(ctx, req)
 	if err != nil {
 		log.Errorf("Info error: %v", err)
 		return nil, RpcAddRequestId(err, requestId)
 	}
+	log.Debugf("Info: response %s", protojson.Format((res.Msg)))
 	return res, nil
 }
 
@@ -90,15 +104,11 @@ type Service struct {
 }
 
 func (s *Service) GetStream(ctx context.Context, req *connect_go.Request[protocol.GetStreamRequest]) (*connect_go.Response[protocol.GetStreamResponse], error) {
-	log := infra.GetLogger(ctx)
-
 	streamId := req.Msg.StreamId
-	log.Info("GetStream: ", streamId)
 	pos, events, err := s.Storage.GetStream(ctx, streamId)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "GetStream: error getting stream: %v", err)
 	}
-	log.Debugf("GetStream: %s, %d events", streamId, len(events))
 	return connect_go.NewResponse(&protocol.GetStreamResponse{
 		Stream: &protocol.StreamAndCookie{
 			Events:         events,
@@ -126,9 +136,6 @@ func (s *Service) checkPrevEvents(view *StreamView, prevEvents [][]byte) error {
 }
 
 func (s *Service) AddEvent(ctx context.Context, req *connect_go.Request[protocol.AddEventRequest]) (*connect_go.Response[protocol.AddEventResponse], error) {
-	log := infra.GetLogger(ctx)
-	log.Infof("AddEvent: %s %s", req.Msg.StreamId, hex.EncodeToString(req.Msg.Event.Hash))
-
 	view := makeView(ctx, s.Storage, req.Msg.StreamId)
 	_, err := s.addEvent(ctx, req.Msg.StreamId, view, req.Msg.Event)
 	if err != nil {
@@ -138,8 +145,6 @@ func (s *Service) AddEvent(ctx context.Context, req *connect_go.Request[protocol
 }
 
 func (s *Service) addEvent(ctx context.Context, streamId string, view *StreamView, envelope *protocol.Envelope) ([]byte, error) {
-	log := infra.GetLogger(ctx)
-	log.Info("addEvent: ", hex.EncodeToString(envelope.Hash))
 	parsedEvent, err := events.ParseEvent(envelope)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "AddEvent: event is not a valid payload")

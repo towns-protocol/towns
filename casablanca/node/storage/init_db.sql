@@ -18,7 +18,7 @@ CREATE OR REPLACE FUNCTION public.notify_newevent()
 AS $function$
 DECLARE 
 BEGIN
-    PERFORM pg_notify('es_newevent', TG_ARGV[0] || ':' || row_to_json(NEW)::text);
+    PERFORM pg_notify('es_newevent', 'es_name:' || TG_ARGV[0]);
     RETURN NULL;
 END;
 $function$;

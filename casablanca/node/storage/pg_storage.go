@@ -16,6 +16,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"google.golang.org/protobuf/encoding/protojson"
 
 	"strings"
 
@@ -173,30 +174,28 @@ func lockTable(ctx context.Context, tx pgx.Tx, tableName string) error {
 	return nil
 }
 
-func addEvents(ctx context.Context, tx pgx.Tx, streamId string, events []*protocol.Envelope) (int64, error) {
+func addEvents(ctx context.Context, tx pgx.Tx, streamId string, envelopes []*protocol.Envelope) (int64, error) {
 	log := infra.GetLogger(ctx)
 
+	parsedEvents := events.FormatEventsToJson(envelopes)
 	sb := strings.Builder{}
-	hashes := strings.Builder{}
-	params := make([]interface{}, 0, len(events)*4)
+	params := make([]interface{}, 0, len(envelopes)*4)
 
 	sb.WriteString(fmt.Sprintf("INSERT INTO %s (hash, signature, event) VALUES ", streamSqlName(streamId)))
-	for idx := range events {
+	for idx := range envelopes {
 		if idx > 0 {
 			sb.WriteString(", ")
 		}
 		sb.WriteString(fmt.Sprintf("($%d, $%d, $%d)", idx*3+1, idx*3+2, idx*3+3))
 
-		params = append(params, events[idx].Hash)
-		params = append(params, events[idx].Signature)
-		params = append(params, events[idx].Event)
+		params = append(params, envelopes[idx].Hash)
+		params = append(params, envelopes[idx].Signature)
+		params = append(params, envelopes[idx].Event)
 
-		hashes.WriteString(string(events[idx].Hash))
-		hashes.WriteString(",")
 	}
 	sb.WriteString(" RETURNING seq_num")
 
-	log.Debugf("inserting message with hashes: %s", hashes.String())
+	log.Debugf("inserting message with hashes: %s", parsedEvents)
 
 	err := lockTable(ctx, tx, streamSqlName(streamId))
 	if err != nil {
@@ -208,7 +207,7 @@ func addEvents(ctx context.Context, tx pgx.Tx, streamId string, events []*protoc
 	if err != nil {
 		return -1, err
 	}
-	log.Debugf("inserted message with seq_num: %d for hashes: %s", seqNum, hashes.String())
+	log.Debugf("inserted int streamId: %s message with seq_num: %d for events: %s", streamId, seqNum, parsedEvents)
 	return seqNum, nil
 }
 
@@ -271,19 +270,23 @@ func (s *PGEventStore) CreateStream(ctx context.Context, streamID string, incept
 	}
 
 	log := infra.GetLogger(ctx)
+	log.Debug("CreateStream creating stream: ", streamID)
 	tx, err := startTx(ctx, s.pool)
 	if err != nil {
+		log.Debug("CreateStream startTx error ", err)
 		return nil, err
 	}
 	defer tx.Rollback(ctx)
 
 	exists, err := streamExists(ctx, tx, streamID)
 	if err != nil {
+		log.Debug("CreateStream streamExists error ", err)
 		return nil, err
 	}
 	if !exists {
 		err := createEventStreamInstance(ctx, tx, streamID)
 		if err != nil {
+			log.Debug("CreateStream createEventStreamInstance error ", err)
 			return nil, err
 		}
 	}
@@ -291,12 +294,14 @@ func (s *PGEventStore) CreateStream(ctx context.Context, streamID string, incept
 	sql := createStreamSql(streamID)
 	_, err = tx.Exec(ctx, sql)
 	if err != nil {
+		log.Debug("CreateStream createStreamSql error ", err)
 		return nil, err
 	}
 
 	// add the inception events
 	seqNum, err := addEvents(ctx, tx, streamID, inceptionEvents)
 	if err != nil {
+		log.Debug("CreateStream addEvents error ", err)
 		return nil, err
 	}
 
@@ -308,30 +313,31 @@ func (s *PGEventStore) CreateStream(ctx context.Context, streamID string, incept
 	return SeqNumToBytes(seqNum, streamID), nil
 }
 
-func (s *PGEventStore) AddEvent(ctx context.Context, streamID string, event *protocol.Envelope) ([]byte, error) {
+func (s *PGEventStore) AddEvent(ctx context.Context, streamId string, event *protocol.Envelope) ([]byte, error) {
 	err := infra.EnsureRequestId(ctx)
 	if err != nil {
 		return nil, err
 	}
 
 	log := infra.GetLogger(ctx)
-	log.Debug("Storage: AddEvent: ", string(streamID), " ", string(event.Hash))
+	eventsAsString := events.FormatEventsToJson([]*protocol.Envelope{event})
+	log.Debugf("Storage: AddEvent streamId: %s event %s", streamId, eventsAsString)
 	tx, err := startTx(ctx, s.pool)
 	if err != nil {
 		return nil, err
 	}
 	defer tx.Rollback(ctx)
 
-	exists, err := streamExists(ctx, tx, streamID)
+	exists, err := streamExists(ctx, tx, streamId)
 	if err != nil {
 		return nil, err
 	}
 	if !exists {
-		return nil, fmt.Errorf("stream %s does not exist", string(streamID))
+		return nil, fmt.Errorf("stream %s does not exist", streamId)
 	}
 
 	// add the event
-	seqNum, err := addEvents(ctx, tx, streamID, []*protocol.Envelope{event})
+	seqNum, err := addEvents(ctx, tx, streamId, []*protocol.Envelope{event})
 	if err != nil {
 		return nil, err
 	}
@@ -340,9 +346,8 @@ func (s *PGEventStore) AddEvent(ctx context.Context, streamID string, event *pro
 	if err != nil {
 		return nil, err
 	}
-	log.Debug("Storage: AddEvent: ", string(streamID), " ", string(event.Hash), " done")
 
-	return SeqNumToBytes(seqNum, streamID), nil
+	return SeqNumToBytes(seqNum, streamId), nil
 }
 
 // GetStreams returns a list of all event streams
@@ -496,7 +501,7 @@ func (s *PGEventStore) DeleteAllStreams(ctx context.Context) error {
  */
 func fetchMessages(ctx context.Context, tx pgx.Tx, positions []StreamPos, maxCount int) (map[string][]*protocol.Envelope, map[string]int64, error) {
 	log := infra.GetLogger(ctx)
-	
+
 	log.Debug("fetchMessages: ", len(positions))
 
 	nextSeqNums := make(map[string]int64)
@@ -578,7 +583,8 @@ func send(ctx context.Context, id string, output chan<- StreamEventsBlock, block
 	log := infra.GetLogger(ctx)
 	select {
 	case output <- block:
-		log.Debug("Sent block", block)
+		log.Debugf("Sent to id: %v block with syncCookie %s and %d events", id,
+			hex.EncodeToString(block.SyncCookie), len(block.Events))
 	case <-time.After(1 * time.Second):
 		log.Debugf("Dropping block with %d events after timeout", len(block.Events))
 	}
@@ -706,6 +712,7 @@ func (s *PGEventStore) startMultiplexer(ctx context.Context) error {
 			}
 
 			diff := seqNumsDiff(lastKnownSeqNums, lastEventNums)
+			log.Debugf("Fetched new sequence numbers len(diff) %d diff %v", len(diff), diff)
 
 			// some changes in the database, notify consumers immediately
 			if len(diff) > 0 {
@@ -753,7 +760,8 @@ func (s *PGEventStore) startMultiplexer(ctx context.Context) error {
 				return fmt.Errorf("error waiting for notification: %w", err)
 			}
 			// Note: payload is not used for anything except debugging
-			log.Debug("PID:", notification.PID, "Channel:", notification.Channel, "Payload:", notification.Payload)
+			notificationStreamId := strings.ReplaceAll(strings.Split(notification.Payload, ":")[1], "_", "-")
+			log.Debug("PID:", notification.PID, "Channel:", notification.Channel, "notificationStreamId:", notificationStreamId)
 			return nil
 		}
 
@@ -773,7 +781,7 @@ func (s *PGEventStore) startMultiplexer(ctx context.Context) error {
 					log.Error(err)
 					// TODO make it configurable
 					timeout := backoff(retries, time.Second, 30*time.Second, 15)
-					time.Sleep(timeout)				
+					time.Sleep(timeout)
 					retries++
 				}
 				wg.Done()
@@ -812,13 +820,13 @@ func (s *PGEventStore) stopMultiplexer() error {
 func (s *PGEventStore) subscribe(ctx context.Context, streamId string, startCookie []byte) (*SmapEntry, error) {
 	log := infra.GetLogger(ctx)
 	sub := s.consumers.Add(streamId, startCookie, fmt.Sprintf("%s-%s", infra.GetRequestId(ctx), uuid.New().String()))
-	log.Debugf("Subscribing to stream %s - %s", string(streamId), sub.id)
+	log.Debugf("Subscribing to streamId:  %s as subId: %s", streamId, sub.id)
 	return sub, nil
 }
 
 func (s *PGEventStore) unsubscribe(ctx context.Context, streamId string, id string) {
 	log := infra.GetLogger(ctx)
-	log.Debugf("Unsubscribing %s from stream: %v", id, string(streamId))
+	log.Debugf("Unsubscribing subId: %s from streamId: %s", id, streamId)
 	s.consumers.Delete(streamId, id)
 }
 
@@ -827,9 +835,50 @@ type syncEvent struct {
 	events   StreamEventsBlock
 }
 
+func formatSyncPostisions(syncPositions []*protocol.SyncPos) string {
+	sb := strings.Builder{}
+	sb.WriteString("[")
+	for idx, event := range syncPositions {
+		sb.WriteString(protojson.Format(event))
+		if idx < len(syncPositions)-1 {
+			sb.WriteString(",")
+		}
+	}
+	sb.WriteString("]")
+	return sb.String()
+}
+
+func formatSyncResults(streams map[string]StreamEventsBlock) string {
+	hashes := strings.Builder{}
+	hashes.WriteString("[")
+	var streamIdx = 0
+	for streamId, block := range streams {
+		hashes.WriteString("{\"streamId\":\"")
+		hashes.WriteString(streamId)
+		hashes.WriteString("\",\"events\":")
+		hashes.WriteString("[")
+		for idx, event := range block.Events {
+			hashes.WriteString(events.FormatEventsToJson([]*protocol.Envelope{event}))
+			if idx < len(block.Events)-1 {
+				hashes.WriteString(",")
+			}
+		}
+		hashes.WriteString("]")
+		if streamIdx < len(streams)-1 {
+			hashes.WriteString(",")
+		}
+		hashes.WriteString("}")
+
+		streamIdx++
+	}
+	hashes.WriteString("]")
+	return hashes.String()
+
+}
+
 func (s *PGEventStore) SyncStreams(ctx context.Context, syncPositions []*protocol.SyncPos, maxCount int, TimeoutMs uint32) (map[string]StreamEventsBlock, error) {
 	log := infra.GetLogger(ctx)
-	log.Debugf("SyncStreams start: %v", syncPositions)
+	log.Debugf("SyncStreams start: %s", formatSyncPostisions(syncPositions))
 
 	err := infra.EnsureRequestId(ctx)
 	if err != nil {
@@ -879,18 +928,7 @@ func (s *PGEventStore) SyncStreams(ctx context.Context, syncPositions []*protoco
 			return nil, err
 		}
 
-		hashes := strings.Builder{}
-		for streamId, block := range streams {
-			hashes.WriteString(streamId)
-			hashes.WriteString(":")
-			for _, event := range block.Events {
-				hashes.WriteString(string(event.Hash))
-				hashes.WriteString(",")
-			}
-			hashes.WriteString(";")
-		}
-
-		log.Debugf("SyncStreams return: %s", hashes.String())
+		log.Debugf("SyncStreams return: %s", formatSyncResults(streams))
 		return streams, nil
 	}
 

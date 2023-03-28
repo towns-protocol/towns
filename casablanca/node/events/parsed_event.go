@@ -2,7 +2,9 @@ package events
 
 import (
 	"casablanca/node/protocol"
+	"strings"
 
+	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -32,6 +34,25 @@ func ParseEvent(envelope *protocol.Envelope) (*ParsedEvent, error) {
 		Envelope: envelope,
 		Hash:     envelope.Hash,
 	}, nil
+}
+
+func FormatEventsToJson(events []*protocol.Envelope) string {
+	sb := strings.Builder{}
+	sb.WriteString("[")
+	for idx, event := range events {
+		parsedEvent, _ := ParseEvent(event)
+		sb.WriteString("{ \"envelope\": ")
+
+		sb.WriteString(protojson.Format(parsedEvent.Envelope))
+		sb.WriteString(", \"event\": ")
+		sb.WriteString(protojson.Format(parsedEvent.Event))
+		sb.WriteString(" }")
+		if idx < len(events)-1 {
+			sb.WriteString(",")
+		}
+	}
+	sb.WriteString("]")
+	return sb.String()
 }
 
 func ParseEvents(events []*protocol.Envelope) ([]*ParsedEvent, error) {

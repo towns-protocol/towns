@@ -67,7 +67,7 @@ func (s *Service) CreateStream(ctx context.Context, req *connect.Request[protoco
 	}
 
 	streamId := inception.StreamId
-	log.Info("CreateStream: ", streamId)
+	log.Info("CreateStream: calling storage", streamId)
 	cookie, err := s.Storage.CreateStream(ctx, streamId, req.Msg.Events[0:1])
 	if err != nil {
 		return nil, err
