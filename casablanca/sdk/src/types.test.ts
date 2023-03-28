@@ -1,6 +1,12 @@
 import { StreamEvent, StreamOp } from '@towns/proto'
 import { makeUserStreamId } from './id'
-import { bin_fromHexString, makeJoinableStreamPayload, stringify } from './types'
+import {
+    bin_fromHexString,
+    bin_toBase64,
+    bin_fromBase64,
+    makeJoinableStreamPayload,
+    stringify,
+} from './types'
 
 describe('types', () => {
     test('stringify', () => {
@@ -15,8 +21,11 @@ describe('types', () => {
         const s = stringify(msg)
         // console.dir(msg, { depth: null })
         // console.dir(s, { depth: null })
-        expect(s.creatorAddressStr).toEqual('0x0123456789abcdef')
-        expect(s.prevEventsStrs).toEqual(['0x0123456789abcdef', '0x0123456789'])
+        expect(s.creatorAddressStr).toEqual(bin_toBase64(bin_fromHexString('0123456789abcdef')))
+        expect(s.prevEventsStrs).toEqual([
+            bin_toBase64(bin_fromHexString('0x0123456789abcdef')),
+            bin_toBase64(bin_fromHexString('0x0123456789')),
+        ])
         expect(s.delegageSigStr).toEqual('')
         expect(s.payload).toBeDefined()
         expect(
@@ -41,5 +50,13 @@ describe('types', () => {
         expect(() => bin_fromHexString('0x0')).toThrow()
         expect(() => bin_fromHexString('001')).toThrow()
         expect(() => bin_fromHexString('11223')).toThrow()
+    })
+    test('bin_fromBase64String', () => {
+        const expected = new Uint8Array([1, 2, 3, 4, 5, 6, 7, 8, 9])
+        const expected2 = new Uint8Array([1, 2, 3, 4, 5, 6, 7, 8, 9, 1, 2, 3, 4, 5, 6, 7, 8, 9])
+        expect(bin_fromBase64('AQIDBAUGBwgJ')).toEqual(expected)
+        expect(bin_fromBase64('AQIDBAUGBwgJAQIDBAUGBwgJ')).toEqual(expected2)
+        expect(bin_fromBase64('')).toEqual(new Uint8Array([]))
+        expect(bin_fromBase64('AA==')).toEqual(new Uint8Array([0]))
     })
 })

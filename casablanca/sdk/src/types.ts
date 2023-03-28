@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 
-import { AnyMessage, Message, PartialMessage, ScalarType } from '@bufbuild/protobuf'
+import { AnyMessage, Message, PartialMessage, ScalarType, protoBase64 } from '@bufbuild/protobuf'
 import {
     StreamEvent,
     Envelope,
@@ -22,6 +22,13 @@ export interface ParsedEvent {
     creatorUserId: string
 }
 
+export const bin_fromBase64 = (base64String: string): Uint8Array => {
+    return protoBase64.dec(base64String)
+}
+
+export const bin_toBase64 = (uint8Array: Uint8Array): string => {
+    return protoBase64.enc(uint8Array)
+}
 export const bin_fromHexString = (hexString: string): Uint8Array => {
     if (hexString.startsWith('0x')) {
         hexString = hexString.slice(2)
@@ -196,9 +203,9 @@ export const stringify = <T extends Message<T>>(message: T): Stringify<T> => {
 
         if (field.kind === 'scalar' && field.T === ScalarType.BYTES) {
             if (repeated) {
-                ret[`${localName}Strs`] = (value as Uint8Array[]).map((v) => bin_toHexString(v))
+                ret[`${localName}Strs`] = (value as Uint8Array[]).map((v) => bin_toBase64(v))
             } else {
-                ret[`${localName}Str`] = bin_toHexString(value as Uint8Array)
+                ret[`${localName}Str`] = bin_toBase64(value as Uint8Array)
             }
         } else if (field.kind === 'message') {
             if (repeated) {
@@ -211,7 +218,7 @@ export const stringify = <T extends Message<T>>(message: T): Stringify<T> => {
         } else if (field.kind === 'map') {
             if (field.V.kind === 'scalar' && field.V.T === ScalarType.BYTES) {
                 for (const [key, val] of Object.entries(value)) {
-                    ret[`${localName}Strs`][key] = bin_toHexString(val as Uint8Array)
+                    ret[`${localName}Strs`][key] = bin_toBase64(val as Uint8Array)
                 }
             } else if (field.V.kind === 'message') {
                 for (const [_key, val] of Object.entries(value)) {

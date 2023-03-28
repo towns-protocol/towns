@@ -13,7 +13,14 @@ import { Buffer } from 'buffer'
 import { Wallet } from 'ethers'
 import { check, hasElements, isDefined } from './check'
 import { genIdBlob, userIdFromAddress } from './id'
-import { bin_equal, bin_fromHexString, bin_toHexString, ParsedEvent, stringify } from './types'
+import {
+    bin_equal,
+    bin_fromHexString,
+    bin_toHexString,
+    bin_toBase64,
+    ParsedEvent,
+    stringify,
+} from './types'
 
 // TODO: a lot of unnecessary buffer copying and conversion below, optimize.
 
@@ -188,7 +195,7 @@ export const unpackEnvelope = (envelope: Envelope, _prevEventHash?: Uint8Array):
     return {
         event,
         envelope,
-        hashStr: bin_toHexString(envelope.hash),
+        hashStr: bin_toBase64(envelope.hash),
         creatorUserId: userIdFromAddress(e.creatorAddress),
     }
 }

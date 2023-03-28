@@ -18,7 +18,7 @@ import { StreamEvents, StreamStateView } from './streams'
 import {
     ParsedEvent,
     bin_equal,
-    bin_toHexString,
+    bin_toBase64,
     makeInceptionPayload,
     makeJoinableStreamPayload,
     makeMessagePayload,
@@ -329,7 +329,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
                         'stream=',
                         stream.streamId,
                         'syncCookie=',
-                        bin_toHexString(syncCookie),
+                        bin_toBase64(syncCookie),
                     )
                 }
             })
@@ -366,9 +366,9 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
                     'events=',
                     streamAndCookie.events.length,
                     'nextSyncCookie=',
-                    bin_toHexString(streamAndCookie.nextSyncCookie),
+                    bin_toBase64(streamAndCookie.nextSyncCookie),
                     'originalSyncCookie=',
-                    bin_toHexString(streamAndCookie.originalSyncCookie),
+                    bin_toBase64(streamAndCookie.originalSyncCookie),
                 )
                 const stream = this.streams.get(streamId)
                 if (stream === undefined) {
