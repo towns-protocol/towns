@@ -8,8 +8,9 @@ const GOERLI = 'eth-goerli'
 const MAINNET = 'eth-mainnet'
 const SEPOLIA = 'eth-sepolia'
 
-// This is for making calls to alcemy NFT API via the token-worker. It does not impact the chain configured in the lib setup for the spaceDapp
-export const useAlchemyNetworkForNFTAPI = () => {
+// This is for making calls to token-worker. It does not impact the chain configured in the lib setup for the spaceDapp
+// The network names correspond to Alchemy's network names for their NFT API. The worker maps the names to chain id so it can be used with Infura as well
+export const useNetworkForNftApi = () => {
     const { homeserverUrl } = useMatrixHomeServerUrl()
     return useMemo(() => {
         // special cases that only apply for local testing against different alchmey urls
@@ -25,10 +26,10 @@ export const useAlchemyNetworkForNFTAPI = () => {
                 return SEPOLIA
             case HomeServerUrl.TEST:
                 return GOERLI
-            // local shouldn't use any alchemy by default
+            // local shouldn't have a default network
             case HomeServerUrl.LOCAL:
             default:
-                console.warn('no alchemy network configured for homeserver url', homeserverUrl)
+                console.warn('no Nft Api network configured for homeserver url', homeserverUrl)
                 return ''
         }
     }, [homeserverUrl])

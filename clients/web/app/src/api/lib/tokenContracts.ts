@@ -1,20 +1,15 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { z } from 'zod'
-import { ContractMetadata, GetNftsResponse } from '@token-worker/types'
+import { ContractMetadata, GetCollectionsForOwnerResponse } from '@token-worker/types'
 import { erc20ABI } from 'wagmi'
 import { ethers } from 'ethers'
 import { useMemo } from 'react'
 import { TokenProps } from '@components/Tokens/types'
 import { env } from 'utils'
-import {
-    fetchGoerli,
-    fetchVitalikTokens,
-    useAlchemyNetworkForNFTAPI,
-} from 'hooks/useAlchemyNetwork'
+import { fetchGoerli, fetchVitalikTokens, useNetworkForNftApi } from 'hooks/useAlchemyNetwork'
 import { axiosClient } from '../apiClient'
 
 const queryKey = 'tokenContractsForAddress'
-const queryKeyPaginatedAggregation = 'tokenContractsForAddressAll'
 
 type CachedData = {
     previousPageKey?: string
@@ -26,8 +21,6 @@ type UseTokenContractsForAdress = {
     wallet: string
     zionTokenAddress: string | null
     enabled: boolean
-    pageKey?: string
-    all: boolean
     chainId: number | undefined
 }
 
@@ -39,51 +32,29 @@ const zContractData: z.ZodType<ContractMetadata> = z.object({
     imageUrl: z.string().optional(),
 })
 
-const zSchema: z.ZodType<GetNftsResponse> = z.object({
-    blockHash: z.string(),
+const zSchema: z.ZodType<GetCollectionsForOwnerResponse> = z.object({
     totalCount: z.number(),
     pageKey: z.string().optional(),
-    ownedNftsContract: z.array(zContractData),
+    collections: z.array(zContractData),
 })
 
 // Get the tokens in a user's wallet
 // If the `all` flag is set, it will return all tokens, otherwise it will return a paginated list
-export function useTokenContractsForAddress({
+export function useCollectionsForOwner({
     wallet,
     zionTokenAddress,
     enabled,
-    pageKey,
-    all = false,
     chainId,
 }: UseTokenContractsForAdress) {
-    const queryClient = useQueryClient()
-    const _queryKey = useMemo(() => (all ? [queryKey] : [queryKey, pageKey]), [all, pageKey])
-    const alchmeyNetwork = useAlchemyNetworkForNFTAPI()
+    const alchmeyNetwork = useNetworkForNftApi()
+
     return useQuery(
-        _queryKey,
+        [queryKey],
         () =>
             chainId === 31337
-                ? getLocalHostTokens(wallet, zionTokenAddress, pageKey, all, alchmeyNetwork)
-                : getTokenContractsForAddress(
-                      wallet,
-                      zionTokenAddress,
-                      pageKey,
-                      all,
-                      alchmeyNetwork,
-                  ),
+                ? getLocalHostTokens(wallet, zionTokenAddress, alchmeyNetwork)
+                : getTokenContractsForAddress(wallet, zionTokenAddress, alchmeyNetwork),
         {
-            onSuccess: (data) => {
-                if (!all) {
-                    queryClient.setQueryData<CachedData>(
-                        [queryKeyPaginatedAggregation],
-                        (prevState) => ({
-                            previousPageKey: prevState?.nextPageKey,
-                            nextPageKey: data.nextPageKey,
-                            tokens: [...(prevState?.tokens || []), ...data.tokens],
-                        }),
-                    )
-                }
-            },
             refetchOnMount: false,
             refetchOnWindowFocus: false,
             refetchOnReconnect: false,
@@ -94,28 +65,23 @@ export function useTokenContractsForAddress({
 }
 
 // Grab the tokens from the existing query
-// If the useTokenContractsForAddress() hook was called as a paginated list, the `fromPaginatedAggregation` will return an aggregated list of all tokens from each paginated query
-export function useCachedTokensForWallet(fromPaginatedAggregation = false) {
+export function useCachedTokensForWallet() {
     const queryClient = useQueryClient()
 
     return useMemo(() => {
-        const cached = fromPaginatedAggregation
-            ? queryClient.getQueryData<CachedData>([queryKeyPaginatedAggregation])
-            : queryClient.getQueryData<CachedData>([queryKey])
+        const cached = queryClient.getQueryData<CachedData>([queryKey])
         return cached || { nextPageKey: '', previousPageKey: '', tokens: [] }
-    }, [fromPaginatedAggregation, queryClient])
+    }, [queryClient])
 }
 
 async function getLocalHostTokens(
     wallet: string,
     zionTokenAddress: string | null,
-    pageKey = '',
-    all = false,
     alchmeyNetwork: string,
 ) {
     // to test with a big list of tokens, add ?vitalikTokens to the url, or ?goerli to use the goerli testnet
     if (fetchVitalikTokens || fetchGoerli) {
-        return getTokenContractsForAddress(wallet, zionTokenAddress, pageKey, all, alchmeyNetwork)
+        return getTokenContractsForAddress(wallet, zionTokenAddress, alchmeyNetwork)
     }
 
     // on local, just return the zion token, if it exists (must be anvil account)
@@ -135,14 +101,10 @@ async function getLocalHostTokens(
 async function getTokenContractsForAddress(
     wallet: string,
     _zionTokenAddress: string | null,
-    pageKey = '',
-    all = false,
     alchmeyNetwork: string,
 ) {
     const TOKENS_SERVER_URL = env.VITE_TOKEN_SERVER_URL
-    const url = `${TOKENS_SERVER_URL}/api/getNftsForOwner/${alchmeyNetwork}/${wallet}?contractMetadata&pageKey=${pageKey}${
-        all ? '&all' : ''
-    }`
+    const url = `${TOKENS_SERVER_URL}/api/getCollectionsForOwner/in/${alchmeyNetwork}/${wallet}`
     const response = await axiosClient.get(url)
     const parseResult = zSchema.safeParse(response.data)
 
@@ -150,7 +112,7 @@ async function getTokenContractsForAddress(
         throw new Error(`Error parsing ContractMetadataResponse:: ${parseResult.error}`)
     }
 
-    const tokens = parseResult.data.ownedNftsContract.map(mapToTokenProps)
+    const tokens = parseResult.data.collections.map(mapToTokenProps)
     const nextPageKey = parseResult.data.pageKey
 
     return { tokens, nextPageKey }

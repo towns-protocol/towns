@@ -13,7 +13,7 @@ export const TokenAvatar = (
     return (
         <Box alignItems="center" maxWidth="x6" data-testid="token-avatar">
             <Box position="relative" border={!image ? 'level4' : 'none'} rounded="full">
-                <Avatar src={image} size={size} />
+                {contractAddress && <Avatar key={contractAddress} src={image} size={size} />}
                 {onClick && contractAddress && (
                     <IconButton
                         style={{

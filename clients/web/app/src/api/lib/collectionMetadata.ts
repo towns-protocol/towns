@@ -5,30 +5,30 @@ import { ContractMetadata } from '@token-worker/types'
 import { ethers } from 'ethers'
 import { env } from 'utils'
 import { axiosClient } from 'api/apiClient'
-import { useAlchemyNetworkForNFTAPI } from 'hooks/useAlchemyNetwork'
+import { useNetworkForNftApi } from 'hooks/useAlchemyNetwork'
 
 const queryKey = 'collectionMetatdata'
 
 async function getCollectionMetadata(
     address: string,
-    alchmeyNetwork: string,
+    nftNetwork: string,
 ): Promise<ContractMetadata> {
     const TOKENS_SERVER_URL = env.VITE_TOKEN_SERVER_URL
-    const url = `${TOKENS_SERVER_URL}/api/getContractMetadata/${alchmeyNetwork}?contractAddress=${address}`
+    const url = `${TOKENS_SERVER_URL}/api/getCollectionMetadata/in/${nftNetwork}?contractAddress=${address}`
     const response = await axiosClient.get(url)
 
     return response.data
 }
 
 export function useRoleTokensMetatdata(spaceId: RoomIdentifier, tokenAddresses: string[]) {
-    const alchmeyNetwork = useAlchemyNetworkForNFTAPI()
+    const nftNetwork = useNetworkForNftApi()
 
     const queryData = useQueries({
         queries: tokenAddresses.map((address) => {
             return {
                 queryKey: [queryKey, spaceId, address],
                 queryFn: () => {
-                    return getCollectionMetadata(address, alchmeyNetwork)
+                    return getCollectionMetadata(address, nftNetwork)
                 },
                 staleTime: 1000 * 60 * 5,
                 enabled: ethers.utils.isAddress(address),

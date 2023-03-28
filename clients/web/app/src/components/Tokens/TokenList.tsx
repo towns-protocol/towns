@@ -4,7 +4,7 @@ import { getMemberNftAddress } from 'use-zion-client'
 import uniqBy from 'lodash/uniqBy'
 import { Box, Checkbox, Text, TextField, VList } from '@ui'
 import { shortAddress } from 'ui/utils/utils'
-import { useTokenContractsForAddress } from 'api/lib/tokenContracts'
+import { useCollectionsForOwner } from 'api/lib/tokenContracts'
 import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinner'
 import { FadeIn } from '@components/Transitions'
 import { env, hasVitalkTokensParam } from 'utils'
@@ -91,11 +91,10 @@ export const TokenList = ({ isChecked, setValue, chainId, wallet }: TokenListPro
     const selectedTokens = useCreateSpaceFormStore((state) => state.step1.tokens)
     const toggleToken = useCreateSpaceFormStore((state) => state.toggleToken)
 
-    const { data, isLoading, isError } = useTokenContractsForAddress({
+    const { data, isLoading, isError } = useCollectionsForOwner({
         wallet: hasVitalikParams ? 'vitalik.eth' : wallet,
         zionTokenAddress,
         enabled: Boolean(chainId),
-        all: true,
         chainId,
     })
 
@@ -103,6 +102,7 @@ export const TokenList = ({ isChecked, setValue, chainId, wallet }: TokenListPro
         if (!data?.tokens) {
             return
         }
+        // TODO: this unique can be removed once we are using the getCollectionsForOwner endpoint
         const unique = uniqBy(data.tokens, 'contractAddress')
         const _results = searchArrayOfData(unique, search).map((res) => ({
             ...res,

@@ -19,12 +19,12 @@ export const testHandlers = [
         (_, res, ctx) => res(ctx.status(200), ctx.json({})),
     ),
 
-    rest.get(`${env.VITE_TOKEN_SERVER_URL || ''}/api/getNftsForOwner/*/*`, (req, res, ctx) => {
+    rest.get(`${env.VITE_TOKEN_SERVER_URL || ''}/api/getCollectionsForOwner/*`, (req, res, ctx) => {
         const data = tokenCollections()
         return res(ctx.status(200), ctx.json(data))
     }),
 
-    rest.get(`${env.VITE_TOKEN_SERVER_URL || ''}/api/getContractMetadata/*`, (req, res, ctx) => {
+    rest.get(`${env.VITE_TOKEN_SERVER_URL || ''}/api/getCollectionMetadata/*`, (req, res, ctx) => {
         const address = req.url.searchParams.get('contractAddress')
         if (!address) {
             throw new Error('no address provided')
