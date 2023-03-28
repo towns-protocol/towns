@@ -1,5 +1,4 @@
 import React, { useEffect } from 'react'
-import { FallbackProps } from 'react-error-boundary'
 import { TransitionLogo } from '@components/Logo/Logo'
 import { Stack, Text } from '@ui'
 
@@ -28,7 +27,14 @@ function getWithExpiry(key: string) {
     return item.value
 }
 
-export function AppErrorFallback({ error }: FallbackProps) {
+type FallbackRender = {
+    error: Error
+    componentStack: string
+    eventId: string
+    resetError(): void
+}
+
+export function AppErrorFallback({ error }: FallbackRender) {
     const isDynamicImportError = error.message
         .toLowerCase()
         .includes('failed to fetch dynamically imported module')

@@ -2,7 +2,6 @@ import 'allotment/dist/style.css'
 // eslint-disable-next-line import/no-named-as-default
 import * as Sentry from '@sentry/react'
 import { BrowserTracing } from '@sentry/tracing'
-import { ErrorBoundary } from 'react-error-boundary'
 import React, { Suspense } from 'react'
 import { createRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
@@ -61,11 +60,11 @@ const Main = () => {
         <React.StrictMode>
             <BrowserRouter>
                 <MainLayout>
-                    <ErrorBoundary FallbackComponent={AppErrorFallback}>
+                    <Sentry.ErrorBoundary fallback={AppErrorFallback}>
                         <Suspense fallback={<LoadingScreen />}>
                             <App />
                         </Suspense>
-                    </ErrorBoundary>
+                    </Sentry.ErrorBoundary>
                 </MainLayout>
             </BrowserRouter>
         </React.StrictMode>
