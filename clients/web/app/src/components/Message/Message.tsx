@@ -11,6 +11,7 @@ import { useOpenMessageThread } from 'hooks/useOpenThread'
 import { useHandleReaction } from 'hooks/useReactions'
 import { AvatarProps } from 'ui/components/Avatar/Avatar'
 import { AvatarAtoms } from 'ui/components/Avatar/Avatar.css'
+import { useLinkBuilder } from 'hooks/useLinkBuilder'
 import { MessageContextMenu } from './MessageContextMenu'
 
 type Props = {
@@ -93,6 +94,8 @@ export const Message = (props: Props) => {
         }
     }, [canReply, onOpenMessageThread, eventId])
 
+    const profileLink = useLinkBuilder({ profileId: senderId })
+
     return (
         <Stack
             horizontal
@@ -113,6 +116,7 @@ export const Message = (props: Props) => {
                             size={avatarSize}
                             insetY="xxs"
                             userId={senderId}
+                            link={profileLink}
                         />
                     ) : (
                         <></>
@@ -248,19 +252,21 @@ const useMessageBackground = (
     return { onTransitionEnd, style, background }
 }
 
-const AvatarComponent = (props: AvatarProps & { userId?: string; isActive: boolean }) => {
-    const { userId, isActive, ...avatarProps } = props
-    if (isActive && userId) {
-        return <ActiveAvatar {...avatarProps} userId={userId} />
+const AvatarComponent = (
+    props: AvatarProps & { userId?: string; isActive: boolean; link?: string },
+) => {
+    const { userId, isActive, link, ...avatarProps } = props
+    if (isActive && userId && link) {
+        return <ActiveAvatar {...avatarProps} userId={userId} link={link} />
     }
     return <Avatar {...avatarProps} userId={userId} />
 }
 
-const ActiveAvatar = (props: AvatarProps & { userId: string }) => {
-    const { size, userId } = props
+const ActiveAvatar = (props: AvatarProps & { userId: string; link: string }) => {
+    const { userId, ...avatarProps } = props
     return (
-        <Link to={`profile/${userId}/`}>
-            <Avatar userId={userId} size={size} insetY="xxs" />
+        <Link to={props.link}>
+            <Avatar userId={userId} {...avatarProps} />
         </Link>
     )
 }

@@ -5,8 +5,9 @@ export const PATHS = {
     REGISTER: 'register',
     PREFERENCES: 'preferences',
     GETTING_STARTED: 'getting-started',
+    MENTIONS: 'mentions',
     THREADS: 'threads',
     SETTINGS: 'settings',
     LOGIN: 'login',
     VERSIONS: 'versions',
-}
+} as const
