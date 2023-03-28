@@ -91,6 +91,9 @@ jobs:
             - name: Build
               run: yarn build
 
+            - name: Prettier
+              run: yarn prettier:check
+
             - name: Lint
               run: yarn lint
 
