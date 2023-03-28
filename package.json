@@ -35,7 +35,7 @@
         "syncpack:fix": "syncpack fix-mismatches && syncpack format",
         "test": "turbo test",
         "test:e2e": "turbo test:e2e",
-        "test:unit": "turbo test:unit"
+        "test:unit": "turbo test:unit -- --silent"
     },
     "devDependencies": {
         "@typechain/ethers-v5": "^10.1.1",
