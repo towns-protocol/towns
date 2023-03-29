@@ -3,7 +3,7 @@ import { Request as IttyRequest, Router } from 'itty-router'
 import { Env } from '.'
 import { upsertImage } from './upsert'
 import { sendSnsTopic } from './snsClient'
-import { handleCookie } from './cookie'
+import { handleCookie, invalidCookieResponse } from './cookie'
 import { fetchLocalAuthz } from './fetchLocalAuthz'
 
 const CDN_CGI_PATH = 'cdn-cgi/image'
@@ -127,9 +127,7 @@ router.post('/space-icon/:id', async (request: WorkerRequest, env) => {
         const [signature, message] = decodedCookie.split('__@@__')
 
         if (!signature || !message) {
-            return new Response(JSON.stringify({ error: 'invalid cookie' }), {
-                status: 400,
-            })
+            return invalidCookieResponse()
         }
 
         const newBody = {
@@ -194,9 +192,7 @@ router.post('/user/:id/avatar', async (request: WorkerRequest, env) => {
         const [signature, message] = decodedCookie.split('__@@__')
 
         if (!signature || !message) {
-            return new Response(JSON.stringify({ error: 'invalid cookie' }), {
-                status: 400,
-            })
+            return invalidCookieResponse()
         }
 
         const newBody = {
@@ -309,9 +305,7 @@ router.post('/user/:id/bio', async (request: WorkerRequest, env) => {
         const [signature, message] = decodedCookie.split('__@@__')
 
         if (!signature || !message) {
-            return new Response(JSON.stringify({ error: 'invalid cookie' }), {
-                status: 400,
-            })
+            return invalidCookieResponse()
         }
 
         const newBody = {
@@ -386,9 +380,7 @@ router.post('/space/:id/bio', async (request: WorkerRequest, env) => {
         const [signature, message] = decodedCookie.split('__@@__')
 
         if (!signature || !message) {
-            return new Response(JSON.stringify({ error: 'invalid cookie' }), {
-                status: 400,
-            })
+            return invalidCookieResponse()
         }
 
         const newBody = {

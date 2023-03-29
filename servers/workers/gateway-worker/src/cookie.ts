@@ -11,3 +11,12 @@ export const handleCookie = async (request: Request): Promise<string> => {
     }
     return 'no cookie'
 }
+
+export const invalidCookieResponse = () => {
+    return new Response(JSON.stringify({ error: 'invalid cookie' }), {
+        status: 400,
+        headers: {
+            'X-invalid-cookie': 'true',
+        },
+    })
+}

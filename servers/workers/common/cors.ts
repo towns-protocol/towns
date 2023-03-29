@@ -17,6 +17,7 @@ const corsHeaders = (origin: string) => ({
     'Access-Control-Allow-Methods': 'GET, OPTIONS, POST',
     'Access-Control-Allow-Origin': origin,
     'Access-Control-Allow-Credentials': 'true',
+    'Access-Control-Expose-Headers': 'X-invalid-cookie',
 })
 
 const checkOrigin = (request: Request) => {
