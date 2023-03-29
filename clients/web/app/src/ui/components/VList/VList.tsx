@@ -316,28 +316,21 @@ export function VList<T extends { id: string }>(props: Props<T>) {
 
         setRenderedItems((_prevRenderItems) => {
             DEBUG && console.log(`%cbuild renderItem list`, Debug.Layout)
-            const renderItems = list
-                .filter((l) => {
-                    const item = cachesRef.current.get(l.id)
-                    if (typeof item?.y === 'undefined') {
-                        return false
-                    }
-                    if (groupIds?.includes(l.id)) {
-                        const h = groupHeightsRef.current[l.id]
-                        return (
-                            item.y + item.maxHeight + h >= visibleArea[0] &&
-                            item.y <= visibleArea[1]
-                        )
-                    }
+            const renderItems = list.filter((l) => {
+                const item = cachesRef.current.get(l.id)
+                if (typeof item?.y === 'undefined') {
+                    return false
+                }
+                if (groupIds?.includes(l.id)) {
+                    const h = groupHeightsRef.current[l.id]
+                    return item.y + item.maxHeight + h >= visibleArea[0] && item.y <= visibleArea[1]
+                }
 
-                    // using maxHeight prevents jitter if an
-                    // element on the edge of the threshold shrinks (then gets
-                    // removed, added back, and so on...)
-                    return item.y + item.maxHeight >= visibleArea[0] && item.y <= visibleArea[1]
-                })
-                // resolve heights from bottom -> up since the anchor mostly at the
-                // bottom of the viewport
-                .reverse()
+                // using maxHeight prevents jitter if an
+                // element on the edge of the threshold shrinks (then gets
+                // removed, added back, and so on...)
+                return item.y + item.maxHeight >= visibleArea[0] && item.y <= visibleArea[1]
+            })
 
             return renderItems
         })

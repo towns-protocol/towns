@@ -5,7 +5,6 @@ import { Link } from 'react-router-dom'
 import { Reactions } from '@components/Reactions/Reactions'
 import { RepliesButton } from '@components/Replies/MessageReplies'
 import { Avatar, Box, BoxProps, ButtonText, Paragraph, Stack, Text } from '@ui'
-import { useFocused } from 'hooks/useFocused'
 import { useHover } from 'hooks/useHover'
 import { useOpenMessageThread } from 'hooks/useOpenThread'
 import { useHandleReaction } from 'hooks/useReactions'
@@ -73,9 +72,10 @@ export const Message = (props: Props) => {
     const ref = useRef<HTMLDivElement>(null)
 
     const { isHover, onMouseEnter } = useHover(ref)
-    const { isFocused } = useFocused(ref)
 
-    const isActive = isFocused || isHover
+    // const { isFocused } = useFocused(ref)
+
+    const isActive = /*isFocused || */ isHover
 
     const date = timestamp
         ? isRelativeDate

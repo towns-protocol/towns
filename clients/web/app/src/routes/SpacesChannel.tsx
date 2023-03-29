@@ -198,8 +198,6 @@ const useDisplayEncryptionProgress = (channelMessages: TimelineEvent[]) => {
         }
     }, [hasEncrypted])
 
-    console.log(encryptedMessageStats)
-
     return {
         displayDecryptionPopup,
         decryptionProgress: (encryptedMessageStats && encryptedMessageStats?.progress) || 0,

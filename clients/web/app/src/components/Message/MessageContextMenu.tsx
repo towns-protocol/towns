@@ -3,7 +3,7 @@ import React, { useCallback, useContext, useEffect, useRef } from 'react'
 import { RoomIdentifier, useZionClient } from 'use-zion-client'
 import { motion } from 'framer-motion'
 import { EmojiPickerButton } from '@components/EmojiPickerButton'
-import { Button, Heading, IconButton, Paragraph, Stack } from '@ui'
+import { Box, Button, Heading, IconButton, Paragraph, Stack } from '@ui'
 import { useOpenMessageThread } from 'hooks/useOpenThread'
 import { vars } from 'ui/styles/vars.css'
 import { MessageTimelineContext } from '@components/MessageTimeline/MessageTimelineContext'
@@ -96,32 +96,37 @@ export const MessageContextMenu = (props: Props) => {
 
     return (
         <MotionStack pointerEvents="auto" position="topRight" {...animation} ref={ref}>
-            <Stack
-                border
-                horizontal
-                background="level1"
-                color="gray2"
-                gap="xs"
-                padding="xs"
-                rounded="sm"
-                style={style}
-                width="auto"
-            >
-                {props.canEdit && <IconButton icon="edit" size="square_sm" onClick={onEditClick} />}
+            {/* extra space for hover */}
+            <Box padding style={style} zIndex="ui">
+                <Stack
+                    border
+                    horizontal
+                    inset="xs"
+                    background="level1"
+                    color="gray2"
+                    gap="xs"
+                    padding="xs"
+                    rounded="sm"
+                    width="auto"
+                >
+                    {props.canEdit && (
+                        <IconButton icon="edit" size="square_sm" onClick={onEditClick} />
+                    )}
 
-                {props.canReply && (
-                    <IconButton icon="threads" size="square_sm" onClick={onThreadClick} />
-                )}
-                {props.canReact && <EmojiPickerButton onSelectEmoji={onSelectEmoji} />}
-                {props.canEdit && (
-                    <IconButton
-                        icon="delete"
-                        size="square_sm"
-                        color="error"
-                        onClick={onDeleteClick}
-                    />
-                )}
-            </Stack>
+                    {props.canReply && (
+                        <IconButton icon="threads" size="square_sm" onClick={onThreadClick} />
+                    )}
+                    {props.canReact && <EmojiPickerButton onSelectEmoji={onSelectEmoji} />}
+                    {props.canEdit && (
+                        <IconButton
+                            icon="delete"
+                            size="square_sm"
+                            color="error"
+                            onClick={onDeleteClick}
+                        />
+                    )}
+                </Stack>
+            </Box>
             {showDeletePrompt ? (
                 <ModalContainer onHide={onDeleteCancel}>
                     <Stack padding="sm" gap="lg">
