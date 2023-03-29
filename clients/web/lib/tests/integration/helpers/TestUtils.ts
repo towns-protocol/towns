@@ -3,6 +3,7 @@ import {
     CreateSpaceInfo,
     RoomVisibility,
 } from 'use-zion-client/src/types/zion-types'
+import { Permission, RoleDetails } from '../../../src/client/web3/ContractTypes'
 import { Wallet, ethers } from 'ethers'
 import { ZionTestClient, ZionTestClientProps } from './ZionTestClient'
 import {
@@ -12,12 +13,13 @@ import {
 } from 'use-zion-client/src/client/web3/ContractHelpers'
 
 import { EventTimeline } from 'matrix-js-sdk'
-import { Permission } from '../../../src/client/web3/ContractTypes'
 import { RoomIdentifier } from 'use-zion-client/src/types/room-identifier'
+import { SpaceDataTypes } from '../../../src/client/web3/shims/SpaceShim'
 import { SpaceFactoryDataTypes } from '../../../src/client/web3/shims/SpaceFactoryShim'
+import { SpaceProtocol } from '../../../src/client/ZionClientTypes'
 import { TestConstants } from './TestConstants'
 import { ZionTestWeb3Provider } from './ZionTestWeb3Provider'
-import { SpaceProtocol } from '../../../src/client/ZionClientTypes'
+import { ZionClient } from '../../../src/client/ZionClient'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function assert(condition: any, msg?: string): asserts condition {
@@ -205,4 +207,35 @@ export async function createTestChannelWithSpaceRoles(
     }
 
     return client.createChannel(createChannelInfo)
+}
+
+export async function findRoleByName(
+    client: ZionClient,
+    spaceId: string,
+    roleName: string,
+    roles?: SpaceDataTypes.RoleStructOutput[],
+): Promise<RoleDetails | null> {
+    let role: RoleDetails | null = null
+    roles = roles ?? (await getFilteredRolesFromSpace(client, spaceId))
+    for (const r of roles) {
+        if (r.name === roleName) {
+            // found
+            // get the role details
+            role = await client.spaceDapp.getRole(spaceId, r.roleId.toNumber())
+            break
+        }
+    }
+    return role
+}
+
+export function assertRoleEquals(actual: RoleDetails, expected: RoleDetails) {
+    expect(actual.name).toEqual(expected.name)
+    expect(actual.permissions.length).toEqual(expected.permissions.length)
+    expect(actual.permissions).toEqual(expect.arrayContaining(expected.permissions))
+    expect(actual.tokens.length).toEqual(expected.tokens.length)
+    const actualTokenAddresses = actual.tokens.map((t) => t.contractAddress)
+    const expectedTokenAddresses = expected.tokens.map((t) => t.contractAddress)
+    expect(actualTokenAddresses).toEqual(expect.arrayContaining(expectedTokenAddresses))
+    expect(actual.users.length).toEqual(expected.users.length)
+    expect(actual.users).toEqual(expect.arrayContaining(expected.users))
 }

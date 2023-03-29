@@ -3,15 +3,17 @@
  */
 import { Permission, RoleDetails } from 'use-zion-client/src/client/web3/ContractTypes'
 import {
+    assertRoleEquals,
+    createTestSpaceWithEveryoneRole,
+    createTestSpaceWithZionMemberRole,
+    findRoleByName,
+    registerAndStartClients,
+} from 'use-zion-client/tests/integration/helpers/TestUtils'
+import {
     createExternalTokenStruct,
     getFilteredRolesFromSpace,
     getPioneerNftAddress,
 } from '../../src/client/web3/ContractHelpers'
-import {
-    createTestSpaceWithEveryoneRole,
-    createTestSpaceWithZionMemberRole,
-    registerAndStartClients,
-} from 'use-zion-client/tests/integration/helpers/TestUtils'
 
 import { ContractReceipt } from 'ethers'
 import { TokenDataTypes } from '../../src/client/web3/shims/TokenEntitlementShim'
@@ -28,11 +30,7 @@ describe('update role', () => {
         // get current role details
         const spaceNetworkId = roomId.networkId
         const roles = await getFilteredRolesFromSpace(alice, spaceNetworkId)
-        if (roles.length !== 1) {
-            throw new Error(`Expected to find 1 role in space, but found ${roles.length}`)
-        }
-        const roleId = roles[0].roleId.toNumber()
-        const roleDetails = await alice.spaceDapp.getRole(spaceNetworkId, roleId)
+        const roleDetails = await findRoleByName(alice, spaceNetworkId, 'Everyone', roles)
         if (!roleDetails) {
             throw new Error('roleDetails is undefined')
         }
@@ -43,7 +41,7 @@ describe('update role', () => {
         const newPermissions = [Permission.Read, Permission.Write, Permission.Redact]
         const transaction = await alice.spaceDapp.updateRole({
             spaceNetworkId,
-            roleId,
+            roleId: roleDetails.id,
             roleName: newRoleName,
             permissions: newPermissions,
             tokens: roleDetails.tokens,
@@ -53,7 +51,7 @@ describe('update role', () => {
 
         /** Assert */
         expect(receipt?.status).toEqual(1)
-        const actual = await alice.spaceDapp.getRole(spaceNetworkId, roleId)
+        const actual = await alice.spaceDapp.getRole(spaceNetworkId, roleDetails.id)
         expect(actual).toBeDefined()
         if (actual) {
             expect(actual.name).toEqual(newRoleName)
@@ -73,11 +71,7 @@ describe('update role', () => {
         // get current role details
         const spaceNetworkId = roomId.networkId
         const roles = await getFilteredRolesFromSpace(alice, spaceNetworkId)
-        if (roles.length !== 1) {
-            throw new Error(`Expected to find 1 role in space, but found ${roles.length}`)
-        }
-        const roleId = roles[0].roleId.toNumber()
-        const roleDetails = await alice.spaceDapp.getRole(spaceNetworkId, roleId)
+        const roleDetails = await findRoleByName(alice, spaceNetworkId, 'Member', roles)
         if (!roleDetails) {
             throw new Error('roleDetails is undefined')
         }
@@ -91,7 +85,7 @@ describe('update role', () => {
         const newTokens = createExternalTokenStruct([pioneerNftAddress])
         const transaction = await alice.spaceDapp.updateRole({
             spaceNetworkId,
-            roleId,
+            roleId: roleDetails.id,
             roleName: newRoleName,
             permissions: newPermissions,
             tokens: newTokens,
@@ -109,7 +103,7 @@ describe('update role', () => {
 
         /** Assert */
         expect(receipt?.status).toEqual(1)
-        const actual = await alice.spaceDapp.getRole(spaceNetworkId, roleId)
+        const actual = await alice.spaceDapp.getRole(spaceNetworkId, roleDetails.id)
         if (actual) {
             expect(actual.name).toEqual(newRoleName)
             expect(actual.permissions.length).toEqual(newPermissions.length)
@@ -151,28 +145,7 @@ describe('update role', () => {
         // get current role details for the Moderator role and the Member role
         const spaceNetworkId = roomId.networkId
         let roles = await getFilteredRolesFromSpace(alice, spaceNetworkId)
-        if (roles.length !== 2) {
-            throw new Error(`Expected to find 2 roles in space, but found ${roles.length}`)
-        }
-        let expectedMemberRole: RoleDetails | undefined | null
-        for (const role of roles) {
-            if (role.name === 'Member') {
-                // this is the role we are not updating
-                // get the role details to assert that they have not changed
-                expectedMemberRole = await alice.spaceDapp.getRole(
-                    roomId.networkId,
-                    role.roleId.toNumber(),
-                )
-                break
-            } else if (role.name === moderatorRoleName) {
-                // this is the role we are updating
-                // get the role details after it has been updated
-                // to assert that the details have changed
-            } else {
-                // unexpected role. fail the test
-                throw new Error(`Unexpected role name: ${role.name}`)
-            }
-        }
+        const expectedMemberRole = await findRoleByName(alice, spaceNetworkId, 'Member', roles)
         if (!expectedMemberRole) {
             throw new Error('expectedMemberRole is undefined')
         }
@@ -222,6 +195,9 @@ describe('update role', () => {
                     // this is the role we are updating
                     // assert that they have been updated
                     assertRoleEquals(actual, newModeratorRole)
+                } else if (role.name === 'Everyone') {
+                    // ignore it
+                    // this is a role that is created by default with every space
                 } else {
                     throw new Error(`Unexpected role name: ${role.name}`)
                 }
@@ -259,28 +235,7 @@ describe('update role', () => {
         // get current role details for the Moderator role and the Member role
         const spaceNetworkId = roomId.networkId
         let roles = await getFilteredRolesFromSpace(alice, spaceNetworkId)
-        if (roles.length !== 2) {
-            throw new Error(`Expected to find 2 roles in space, but found ${roles.length}`)
-        }
-        let expectedMemberRole: RoleDetails | undefined | null
-        for (const role of roles) {
-            if (role.name === 'Member') {
-                // this is the role we are not updating
-                // get the role details to assert that they have not changed
-                expectedMemberRole = await alice.spaceDapp.getRole(
-                    roomId.networkId,
-                    role.roleId.toNumber(),
-                )
-                break
-            } else if (role.name === moderatorRoleName) {
-                // this is the role we are updating
-                // get the role details after it has been updated
-                // to assert that the details have changed
-            } else {
-                // unexpected role. fail the test
-                throw new Error(`Unexpected role name: ${role.name}`)
-            }
-        }
+        const expectedMemberRole = await findRoleByName(alice, spaceNetworkId, 'Member', roles)
         if (!expectedMemberRole) {
             throw new Error('expectedMemberRole is undefined')
         }
@@ -330,6 +285,9 @@ describe('update role', () => {
                     // this is the role we are updating
                     // assert that they have been updated
                     assertRoleEquals(actual, newModeratorRole)
+                } else if (role.name === 'Everyone') {
+                    // ignore it
+                    // this is a role that is created by default with every space
                 } else {
                     throw new Error(`Unexpected role name: ${role.name}`)
                 }
@@ -337,15 +295,3 @@ describe('update role', () => {
         }
     })
 })
-
-function assertRoleEquals(actual: RoleDetails, expected: RoleDetails) {
-    expect(actual.name).toEqual(expected.name)
-    expect(actual.permissions.length).toEqual(expected.permissions.length)
-    expect(actual.permissions).toEqual(expect.arrayContaining(expected.permissions))
-    expect(actual.tokens.length).toEqual(expected.tokens.length)
-    const actualTokenAddresses = actual.tokens.map((t) => t.contractAddress)
-    const expectedTokenAddresses = expected.tokens.map((t) => t.contractAddress)
-    expect(actualTokenAddresses).toEqual(expect.arrayContaining(expectedTokenAddresses))
-    expect(actual.users.length).toEqual(expected.users.length)
-    expect(actual.users).toEqual(expect.arrayContaining(expected.users))
-}

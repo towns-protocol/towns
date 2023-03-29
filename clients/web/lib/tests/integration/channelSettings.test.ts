@@ -4,11 +4,11 @@
 import { Permission, RoleEntitlements } from 'use-zion-client/src/client/web3/ContractTypes'
 import {
     createExternalTokenStruct,
-    getFilteredRolesFromSpace,
     getMemberNftAddress,
 } from '../../src/client/web3/ContractHelpers'
 import {
     createTestSpaceWithZionMemberRole,
+    findRoleByName,
     registerAndStartClients,
 } from 'use-zion-client/tests/integration/helpers/TestUtils'
 
@@ -45,11 +45,10 @@ describe('channel settings', () => {
         if (!spaceId) {
             throw new Error('roomId is undefined')
         }
-        const spaceRoles = await getFilteredRolesFromSpace(alice, spaceId.networkId)
-        if (spaceRoles.length === 0) {
-            throw new Error('spaceRoles is empty')
+        const memberRoleDetails = await findRoleByName(alice, spaceId.networkId, 'Member')
+        if (!memberRoleDetails) {
+            throw new Error('memberRoleDetails is null')
         }
-        const memberRoleId = spaceRoles[0].roleId.toNumber()
         // create a new role
         const moderatorRoleIdentifier: RoleIdentifier | undefined = await alice.createRole(
             spaceId.networkId,
@@ -67,7 +66,7 @@ describe('channel settings', () => {
             name: channelName,
             visibility: RoomVisibility.Public,
             parentSpaceId: spaceId,
-            roleIds: [memberRoleId, moderatorRoleId],
+            roleIds: [memberRoleDetails.id, moderatorRoleId],
             topic: channelTopic,
         })
         if (!channelId) {

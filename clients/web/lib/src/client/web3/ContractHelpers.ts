@@ -66,12 +66,8 @@ export async function getFilteredRolesFromSpace(
     const filteredRoles: SpaceDataTypes.RoleStructOutput[] = []
     // Filter out space roles which won't work when creating a channel
     for (const r of spaceRoles) {
-        const permissions = await client.spaceDapp.getPermissionsByRoleId(
-            spaceNetworkId,
-            r.roleId.toNumber(),
-        )
         // Filter out roles which have no permissions & the Owner role
-        if (permissions.length && r.name !== 'Owner') {
+        if (r.name !== 'Owner') {
             filteredRoles.push(r)
         }
     }

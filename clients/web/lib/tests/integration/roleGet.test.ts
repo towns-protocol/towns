@@ -3,18 +3,19 @@
  */
 import {
     createExternalTokenStruct,
-    getFilteredRolesFromSpace,
     getMemberNftAddress,
     getPioneerNftAddress,
 } from '../../src/client/web3/ContractHelpers'
 import {
+    assertRoleEquals,
     createTestSpaceWithEveryoneRole,
     createTestSpaceWithZionMemberRole,
+    findRoleByName,
     registerAndStartClients,
 } from 'use-zion-client/tests/integration/helpers/TestUtils'
 
 import { BigNumber } from 'ethers'
-import { Permission } from 'use-zion-client/src/client/web3/ContractTypes'
+import { Permission, RoleDetails } from 'use-zion-client/src/client/web3/ContractTypes'
 import { RoleIdentifier } from '../../src/types/web3-types'
 import { RoomVisibility } from '../../src/types/zion-types'
 import { SpaceFactoryDataTypes } from '../../src/client/web3/shims/SpaceFactoryShim'
@@ -126,27 +127,23 @@ describe('get role details', () => {
         }
 
         /** Act */
-        const roles = await getFilteredRolesFromSpace(alice, roomId.networkId)
-        if (roles.length !== 1) {
-            throw new Error(`Expected to find 1 role in space, but found ${roles.length}`)
-        }
-        const roleDetails = await alice.spaceDapp.getRole(
-            roomId.networkId,
-            roles[0].roleId.toNumber(),
-        )
+        const memberRole = await findRoleByName(alice, roomId.networkId, 'Member')
 
         /** Assert */
         const councilNftAddress = getMemberNftAddress(alice.chainId)
         const expectedToken = createExternalTokenStruct([councilNftAddress])[0]
-        expect(roleDetails).toBeDefined()
-        if (roleDetails) {
-            expect(roleDetails.tokens.length).toEqual(1)
-            expect(roleDetails.tokens[0].contractAddress).toEqual(expectedToken.contractAddress)
-            expect(roleDetails.tokens[0].isSingleToken).toEqual(expectedToken.isSingleToken)
-            expect(roleDetails.tokens[0].tokenIds).toEqual(expectedToken.tokenIds)
-            expect(roleDetails.permissions).toEqual(expect.arrayContaining(permissions))
-            expect(roleDetails.permissions.length).toEqual(permissions.length)
+        const expectedMemberRole: RoleDetails = {
+            id: 0,
+            name: 'Member',
+            tokens: [expectedToken],
+            users: [],
+            permissions,
+            channels: [],
         }
+        if (!memberRole) {
+            throw new Error('memberRole is undefined')
+        }
+        assertRoleEquals(memberRole, expectedMemberRole)
     })
 
     test('get details of Everyone role', async () => {
@@ -160,25 +157,21 @@ describe('get role details', () => {
         }
 
         /** Act */
-        const roles = await getFilteredRolesFromSpace(alice, roomId.networkId)
-        if (roles.length !== 1) {
-            throw new Error(`Expected to find 1 role in space, but found ${roles.length}`)
-        }
-        const roleDetails = await alice.spaceDapp.getRole(
-            roomId.networkId,
-            roles[0].roleId.toNumber(),
-        )
+        const everyoneRole = await findRoleByName(alice, roomId.networkId, 'Everyone')
 
         /** Assert */
-        expect(roleDetails).toBeDefined()
-        if (roleDetails) {
-            expect(roleDetails.name).toEqual('Everyone')
-            expect(roleDetails.tokens.length).toEqual(0)
-            expect(roleDetails.users.length).toEqual(1)
-            expect(roleDetails.users[0]).toEqual(TestConstants.EveryoneAddress)
-            expect(roleDetails.permissions).toEqual(expect.arrayContaining(permissions))
-            expect(roleDetails.permissions.length).toEqual(permissions.length)
+        if (!everyoneRole) {
+            throw new Error('everyoneRole is undefined')
         }
+        const expectedEveryoneRole: RoleDetails = {
+            id: 0,
+            name: 'Everyone',
+            tokens: [],
+            users: [TestConstants.EveryoneAddress],
+            permissions,
+            channels: [],
+        }
+        assertRoleEquals(everyoneRole, expectedEveryoneRole)
     })
 
     test('get details of role with token entitlement', async () => {

@@ -87,7 +87,7 @@ describe('useAddRolesToChannel', () => {
         // wait for the channel name to render
         await waitFor(() => expect(channelElement).toHaveTextContent(`channelName:${channelName}`))
         // wait for the roles count to render
-        await waitFor(() => expect(rolesCount).toHaveTextContent(`rolesCount:1`))
+        await waitFor(() => expect(rolesCount).toHaveTextContent(`rolesCount:2`))
         // click button to add Test role to channel
         fireEvent.click(addRoleToChannelButton)
         await waitFor(

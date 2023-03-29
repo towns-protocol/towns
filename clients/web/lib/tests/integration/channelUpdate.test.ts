@@ -1,13 +1,13 @@
 import { MAXTRIX_ERROR, MatrixError, NoThrownError, getError } from './helpers/ErrorUtils'
 import {
     createTestSpaceWithZionMemberRole,
+    findRoleByName,
     registerAndStartClients,
 } from 'use-zion-client/tests/integration/helpers/TestUtils'
 
 import { ContractReceipt } from 'ethers'
 import { Permission } from 'use-zion-client/src/client/web3/ContractTypes'
 import { RoomVisibility } from '../../src/types/zion-types'
-import { getFilteredRolesFromSpace } from '../../src/client/web3/ContractHelpers'
 
 describe('channel update', () => {
     test('Update the channel with multicall', async () => {
@@ -23,12 +23,7 @@ describe('channel update', () => {
             throw new Error('spaceId is undefined')
         }
         // get current role details
-        const roles = await getFilteredRolesFromSpace(alice, spaceId.networkId)
-        if (roles.length !== 1) {
-            throw new Error(`Expected to find 1 role in space, but found ${roles.length}`)
-        }
-        const roleId = roles[0].roleId.toNumber()
-        const roleDetails = await alice.spaceDapp.getRole(spaceId.networkId, roleId)
+        const roleDetails = await findRoleByName(alice, spaceId.networkId, 'Member')
         if (!roleDetails) {
             throw new Error('roleDetails is undefined')
         }
@@ -37,7 +32,7 @@ describe('channel update', () => {
             name: channelName,
             visibility: RoomVisibility.Public,
             parentSpaceId: spaceId,
-            roleIds: [roleId],
+            roleIds: [roleDetails.id],
         })
         if (!channelId) {
             throw new Error('channelId is undefined')
