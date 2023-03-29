@@ -47,18 +47,18 @@ describe('editMessage', () => {
         // wait for alice to receive the message
         await waitFor(async () => {
             const e = await alice.getLatestEvent<RoomMessageEvent>(channelId)
-            expect(e?.content?.body === 'Hello Balice!').toEqual(true)
+            expect(e?.content?.body).toEqual('Hello Balice!')
         })
 
         // this is hack to ensure csb cache loads bob's message in bob's client
         await waitFor(async () => {
             const e = await bob.getLatestEvent<RoomMessageEvent>(channelId)
-            expect(e?.content?.body === 'Hello Balice!').toEqual(true)
+            expect(e?.content?.body).toEqual('Hello Balice!')
         })
 
         // bob get the last message
         const event = await bob.getLatestEvent<RoomMessageEvent>(channelId)
-        expect(event?.content?.body === 'Hello Balice!').toEqual(true)
+        expect(event?.content?.body).toEqual('Hello Balice!')
 
         // bob sends edited message to the room
         await bob.editMessage(
@@ -71,17 +71,15 @@ describe('editMessage', () => {
         // bob should see the edited msg.
         await waitFor(async () => {
             const e = await bob.getLatestEvent<RoomMessageEvent>(channelId)
-            expect(
-                e?.content?.body === 'Hello Alice!' && e?.content?.replacedMsgId === event?.eventId,
-            ).toEqual(true)
+            expect(e?.content?.body).toEqual('Hello Alice!')
+            expect(e?.content?.replacedMsgId).toEqual(event?.eventId)
         })
 
         // wait for alice to receive the edited message
         await waitFor(async () => {
             const e = await alice.getLatestEvent<RoomMessageEvent>(channelId)
-            expect(
-                e?.content?.body === 'Hello Alice!' && e?.content?.replacedMsgId === event?.eventId,
-            ).toEqual(true)
+            expect(e?.content?.body).toEqual('Hello Alice!')
+            expect(e?.content?.replacedMsgId).toEqual(event?.eventId)
         })
     }) // end test
 }) // end describe

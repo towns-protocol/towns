@@ -9,7 +9,7 @@ import {
 } from './helpers/TestUtils'
 
 import { Permission } from '../../src/client/web3/ContractTypes'
-import { ZTEvent } from '../../src/types/timeline-types'
+import { ReactionEvent, RoomMessageEvent } from '../../src/types/timeline-types'
 import { RoomVisibility } from '../../src/types/zion-types'
 
 describe('sendReaction', () => {
@@ -47,11 +47,8 @@ describe('sendReaction', () => {
         // wait for alice to receive the message
         await waitFor(async () => {
             // TODO - matrixUserId should be fixed as CB users wont have it
-            const event = await alice.getLatestEvent(channelId)
-            expect(
-                event?.content?.kind === ZTEvent.RoomMessage &&
-                    event?.content?.body === 'Hello, world from Bob!',
-            ).toEqual(true)
+            const event = await alice.getLatestEvent<RoomMessageEvent>(channelId)
+            expect(event?.content?.body).toEqual('Hello, world from Bob!')
         })
 
         // alice grabs the message
@@ -62,10 +59,8 @@ describe('sendReaction', () => {
 
         // wait for bob to receive the reaction
         await waitFor(async () => {
-            const e = await bob.getLatestEvent(channelId, ZTEvent.Reaction)
-            expect(e?.content?.kind === ZTEvent.Reaction && e?.content?.reaction === '👍').toEqual(
-                true,
-            )
+            const e = await bob.getLatestEvent<ReactionEvent>(channelId)
+            expect(e?.content?.reaction).toEqual('👍')
         })
     }) // end test
 }) // end describe

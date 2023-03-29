@@ -17,7 +17,7 @@ import { Permission } from '../../src/client/web3/ContractTypes'
 import { RoomVisibility } from '../../src/types/zion-types'
 import { RoomIdentifier } from '../../src/types/room-identifier'
 import { waitFor } from '@testing-library/dom'
-import { ZTEvent } from '../../src/types/timeline-types'
+import { RoomMessageEvent } from '../../src/types/timeline-types'
 
 describe('sendAMessage', () => {
     // test:
@@ -75,11 +75,8 @@ describe('sendAMessage', () => {
             console.log(`!!!!!! client ${i} waits for message`)
             const client = clients[`client_${i}`]
             await waitFor(async () => {
-                const event = await client.getLatestEvent(channelId)
-                expect(
-                    event?.content?.kind === ZTEvent.RoomMessage &&
-                        event?.content?.body === 'Hello Alice!',
-                ).toEqual(true)
+                const event = await client.getLatestEvent<RoomMessageEvent>(channelId)
+                expect(event?.content?.body).toEqual('Hello Alice!')
             })
         }
         // everyone sends a message to the room
@@ -89,11 +86,8 @@ describe('sendAMessage', () => {
             await client.sendMessage(channelId, `Hello Bob! from ${client.matrixUserId!}`)
             // bob should receive the message
             await waitFor(async () => {
-                const event = await bob.getLatestEvent(channelId)
-                expect(
-                    event?.content?.kind === ZTEvent.RoomMessage &&
-                        event?.content?.body === `Hello Bob! from ${client.matrixUserId!}`,
-                ).toEqual(true)
+                const event = await bob.getLatestEvent<RoomMessageEvent>(channelId)
+                expect(event?.content?.body).toEqual(`Hello Bob! from ${client.matrixUserId!}`)
             })
         }
     }) // end test

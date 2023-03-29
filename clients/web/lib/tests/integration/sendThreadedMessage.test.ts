@@ -11,7 +11,7 @@ import {
 import { Permission } from '../../src/client/web3/ContractTypes'
 import { RoomVisibility } from '../../src/types/zion-types'
 import { waitFor } from '@testing-library/dom'
-import { ZTEvent } from '../../src/types/timeline-types'
+import { RoomMessageEvent } from '../../src/types/timeline-types'
 
 describe('sendThreadedMessage', () => {
     // usefull for debugging or running against cloud servers
@@ -46,11 +46,8 @@ describe('sendThreadedMessage', () => {
         await bob.sendMessage(channelId, 'Hello Alice!')
         // wait for alice to receive the message
         await waitFor(async () => {
-            // TODO - matrixUserId should be fixed as CB users wont have it
-            const e = await alice.getLatestEvent(channelId)
-            expect(
-                e?.content?.kind === ZTEvent.RoomMessage && e?.content?.body === 'Hello Alice!',
-            ).toEqual(true)
+            const e = await alice.getLatestEvent<RoomMessageEvent>(channelId)
+            expect(e?.content?.body).toEqual('Hello Alice!')
         })
         // event
         const event = await alice.getLatestEvent(channelId)
@@ -60,13 +57,9 @@ describe('sendThreadedMessage', () => {
         await alice.sendMessage(channelId, 'Hello Bob!', { threadId: event?.eventId })
         // bob should receive the message & thread id should be set to parent event id
         await waitFor(async () => {
-            // TODO - matrixUserId should be fixed as CB users wont have it
-            const e = await bob.getLatestEvent(channelId)
-            expect(
-                e?.content?.kind === ZTEvent.RoomMessage &&
-                    e?.content?.body === 'Hello Bob!' &&
-                    e?.content?.inReplyTo === event?.eventId,
-            ).toEqual(true)
+            const e = await bob.getLatestEvent<RoomMessageEvent>(channelId)
+            expect(e?.content?.body).toEqual('Hello Bob!')
+            expect(e?.content?.inReplyTo).toEqual(event?.eventId)
         })
     }) // end test
 }) // end describe

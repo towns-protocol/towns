@@ -78,7 +78,7 @@ describe('casablanca', () => {
         await waitFor(async () => {
             const event = await bob.getLatestEvent<RoomMessageEvent>(channelId, ZTEvent.RoomMessage)
             log('latest event=', event)
-            expect(event?.content?.body === 'Hello, world from Bob!').toEqual(true)
+            expect(event?.content?.body).toEqual('Hello, world from Bob!')
         })
 
         log('Bob received the message, test done')
@@ -127,7 +127,7 @@ describe('casablanca', () => {
                 ZTEvent.RoomMessage,
             )
             // TODO - need to merge ZTEvent into a common type for both marix and CB
-            expect(event?.content?.body === 'Hello, world from Bob!').toEqual(true)
+            expect(event?.content?.body).toEqual('Hello, world from Bob!')
         })
 
         log('Alice received the message, test done')
