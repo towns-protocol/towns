@@ -186,7 +186,7 @@ func createEventStreamInstance(ctx context.Context, tx pgx.Tx, streamId string) 
 }
 
 func startTx(ctx context.Context, pool *pgxpool.Pool) (pgx.Tx, error) {
-	tx, err := pool.BeginTx(ctx, pgx.TxOptions{IsoLevel: pgx.ReadCommitted})
+	tx, err := pool.BeginTx(ctx, pgx.TxOptions{IsoLevel: pgx.Serializable})
 	if err != nil {
 		return nil, err
 	}
@@ -201,8 +201,22 @@ func lockTable(ctx context.Context, tx pgx.Tx, tableName string) error {
 	return nil
 }
 
-func addEvents(ctx context.Context, tx pgx.Tx, streamId string, envelopes []*protocol.Envelope) (int64, error) {
+func addEvents(ctx context.Context, pool *pgxpool.Pool, streamId string, envelopes []*protocol.Envelope) (int64, error) {
 	log := infra.GetLogger(ctx)
+
+	tx, err := startTx(ctx, pool)
+	if err != nil {
+		return -1, err
+	}
+	var commited = false
+	defer func() {
+		if !commited {
+			err := tx.Rollback(ctx)
+			if err != nil {
+				log.Errorf("Rollback: %v", err)
+			}
+		}
+	}()
 
 	parsedEvents := events.FormatEventsToJson(envelopes)
 	sb := strings.Builder{}
@@ -222,9 +236,7 @@ func addEvents(ctx context.Context, tx pgx.Tx, streamId string, envelopes []*pro
 	}
 	sb.WriteString(" RETURNING seq_num")
 
-	log.Debugf("inserting message with hashes: %s", parsedEvents)
-
-	err := lockTable(ctx, tx, streamSqlName(streamId))
+	err = lockTable(ctx, tx, streamSqlName(streamId))
 	if err != nil {
 		return -1, err
 	}
@@ -234,6 +246,12 @@ func addEvents(ctx context.Context, tx pgx.Tx, streamId string, envelopes []*pro
 	if err != nil {
 		return -1, err
 	}
+	err = tx.Commit(ctx)
+	if err != nil {
+		log.Error("Commit error: ", err)
+		return -1, err
+	}
+	commited = true
 	log.Debugf("inserted int streamId: %s message with seq_num: %d for events: %s", streamId, seqNum, parsedEvents)
 	return seqNum, nil
 }
@@ -312,6 +330,13 @@ func (s *PGEventStore) CreateStream(ctx context.Context, streamID string, incept
 			}
 		}
 	}()
+
+	err = lockTable(ctx, tx, "es")
+	if err != nil {
+		log.Debug("CreateStream lockTable error ", err)
+		return nil, err
+	}
+
 	exists, err := streamExists(ctx, tx, streamID)
 	if err != nil {
 		log.Error("CreateStream streamExists error ", err)
@@ -323,27 +348,26 @@ func (s *PGEventStore) CreateStream(ctx context.Context, streamID string, incept
 			log.Error("CreateStream createEventStreamInstance error ", err)
 			return nil, err
 		}
-	}
-
-	sql := createStreamSql(streamID)
-	_, err = tx.Exec(ctx, sql)
-	if err != nil {
-		log.Error("CreateStream createStreamSql error ", err)
-		return nil, err
+		sql := createStreamSql(streamID)
+		_, err = tx.Exec(ctx, sql)
+		if err != nil {
+			log.Debug("CreateStream createStreamSql error ", err)
+			return nil, err
+		}
+		err = tx.Commit(ctx)
+		if err != nil {
+			log.Debug("CreateStream Commit error ", err)
+			return nil, err
+		}
+		committed = true
 	}
 
 	// add the inception events
-	seqNum, err := addEvents(ctx, tx, streamID, inceptionEvents)
+	seqNum, err := addEvents(ctx, s.pool, streamID, inceptionEvents)
 	if err != nil {
 		log.Error("CreateStream addEvents error ", err)
 		return nil, err
 	}
-
-	err = tx.Commit(ctx)
-	if err != nil {
-		return nil, err
-	}
-	committed = true
 	log.Debug("committed stream: ", streamID, " with seq_num: ", seqNum)
 	return SeqNumToBytes(seqNum, streamID), nil
 }
@@ -375,17 +399,17 @@ func (s *PGEventStore) AddEvent(ctx context.Context, streamId string, event *pro
 	if err != nil {
 		return nil, err
 	}
+	err = tx.Commit(ctx)
+	if err != nil {
+		return nil, err
+	}
+	committed = true
 	if !exists {
 		return nil, fmt.Errorf("stream %s does not exist", streamId)
 	}
 
 	// add the event
-	seqNum, err := addEvents(ctx, tx, streamId, []*protocol.Envelope{event})
-	if err != nil {
-		return nil, err
-	}
-
-	err = tx.Commit(ctx)
+	seqNum, err := addEvents(ctx, s.pool, streamId, []*protocol.Envelope{event})
 	if err != nil {
 		log.Error("CreateStream commit error ", err)
 		return nil, err

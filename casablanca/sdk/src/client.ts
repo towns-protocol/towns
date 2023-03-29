@@ -473,4 +473,20 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
             event,
         })
     }
+
+    async getStreamSyncCookie(
+        streamId: string,
+    ): Promise<{ eventCount: number; syncCookie: Uint8Array }> {
+        this.logCall('getStreamSyncCookie', streamId)
+        try {
+            const streamContent = await this.rpcClient.getStream({ streamId })
+            return {
+                eventCount: streamContent.stream?.events?.length ?? 0,
+                syncCookie: streamContent.stream?.nextSyncCookie ?? new Uint8Array(8),
+            }
+        } catch (e) {
+            this.logCall('getStreamSyncCookie', streamId, 'ERROR', e)
+            throw e
+        }
+    }
 }

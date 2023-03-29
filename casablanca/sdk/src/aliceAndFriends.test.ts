@@ -124,6 +124,7 @@ const makeTestDriver = async (num: number): Promise<TestDriver> => {
 
 const converse = async (conversation: string[][], testName: string): Promise<void> => {
     const numDrivers = conversation[0].length
+    const numConversationSteps = conversation.length
 
     log(`${testName} START, numDrivers=${numDrivers}, steps=${conversation.length}`)
     const drivers = await Promise.all(
@@ -211,7 +212,24 @@ const converse = async (conversation: string[][], testName: string): Promise<voi
     log(`${testName} conversation complete, now stopping drivers`)
 
     await Promise.all(drivers.map((d) => d.stop()))
-    log(`${testName} drivers stopped`)
+
+    function bytesToNumber(byteArray: Uint8Array) {
+        let result = 0
+        for (let i = byteArray.length - 1; i >= 0; i--) {
+            result = result * 256 + byteArray[i]
+        }
+
+        return result
+    }
+    const { eventCount, syncCookie } = await alice.client.getStreamSyncCookie(channelId)
+    log(
+        `${testName} drivers stopped`,
+        eventCount,
+        bytesToNumber(syncCookie.slice(0, 8)),
+        numDrivers,
+        numConversationSteps,
+    )
+    expect(eventCount).toEqual(bytesToNumber(syncCookie.slice(0, 8)))
 }
 
 // TODO: fix CI and remove this
