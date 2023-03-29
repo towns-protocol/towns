@@ -1,23 +1,17 @@
 package rpc
 
 import (
-	"casablanca/node/infra"
 	"casablanca/node/protocol"
 	"context"
 
 	connect "github.com/bufbuild/connect-go"
 )
 
-func (s *Service) SyncStreams(ctx context.Context, req *connect.Request[protocol.SyncStreamsRequest]) (*connect.Response[protocol.SyncStreamsResponse], error) {
-	log := infra.GetLogger(ctx)
-	log.Info("SyncStreams: CALL ", len(req.Msg.SyncPos), req.Msg.TimeoutMs)
-	for _, s := range req.Msg.SyncPos {
-		log.Infof("SyncStreams: CALL     %s %x", s.StreamId, s.SyncCookie)
-	}
+func (s *Service) SyncStreams(ctx context.Context, req *connect.Request[protocol.SyncStreamsRequest], stream *connect.ServerStream[protocol.SyncStreamsResponse]) error {
 
 	blocks, err := s.Storage.SyncStreams(ctx, req.Msg.SyncPos, -1, req.Msg.TimeoutMs)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	var streams []*protocol.StreamAndCookie
@@ -28,11 +22,12 @@ func (s *Service) SyncStreams(ctx context.Context, req *connect.Request[protocol
 			NextSyncCookie:     events.SyncCookie,
 			OriginalSyncCookie: events.OriginalSyncCookie,
 		}
-		log.Infof("SyncStreams: RESPONSE %s %d %x => %x", streamId, len(events.Events), events.OriginalSyncCookie, events.SyncCookie)
 		streams = append(streams, &streamAndCookie)
 	}
-
-	return connect.NewResponse(&protocol.SyncStreamsResponse{
+	res := protocol.SyncStreamsResponse{
 		Streams: streams,
-	}), nil
+	}
+	err = stream.Send(&res)
+	return err
+
 }

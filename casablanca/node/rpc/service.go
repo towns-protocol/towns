@@ -73,16 +73,16 @@ func (s *LoggingService) AddEvent(ctx context.Context, req *connect_go.Request[p
 	return res, nil
 }
 
-func (s *LoggingService) SyncStreams(ctx context.Context, req *connect_go.Request[protocol.SyncStreamsRequest]) (*connect_go.Response[protocol.SyncStreamsResponse], error) {
+func (s *LoggingService) SyncStreams(ctx context.Context, req *connect_go.Request[protocol.SyncStreamsRequest], stream *connect_go.ServerStream[protocol.SyncStreamsResponse]) error {
 	ctx, log, requestId := infra.SetLoggerWithRequestId(ctx)
 	log.Debugf("SyncStreams: CALL timeout: %d req: %s", req.Msg.TimeoutMs, protojson.Format((req.Msg)))
+	err := s.Service.SyncStreams(ctx, req, stream)
 
-	res, err := s.Service.SyncStreams(ctx, req)
 	if err != nil {
 		log.Errorf("SyncStreams error: %v", err)
-		return nil, RpcAddRequestId(err, requestId)
+		return RpcAddRequestId(err, requestId)
 	}
-	return res, nil
+	return err
 }
 
 func (s *LoggingService) Info(ctx context.Context, req *connect_go.Request[protocol.InfoRequest]) (*connect_go.Response[protocol.InfoResponse], error) {
@@ -109,13 +109,15 @@ func (s *Service) GetStream(ctx context.Context, req *connect_go.Request[protoco
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "GetStream: error getting stream: %v", err)
 	}
-	return connect_go.NewResponse(&protocol.GetStreamResponse{
+	resp := &protocol.GetStreamResponse{
 		Stream: &protocol.StreamAndCookie{
 			Events:         events,
 			StreamId:       pos.StreamId,
 			NextSyncCookie: pos.SyncCookie,
 		},
-	}), nil
+	}
+
+	return connect_go.NewResponse(resp), nil
 }
 
 func (s *Service) checkPrevEvents(view *StreamView, prevEvents [][]byte) error {

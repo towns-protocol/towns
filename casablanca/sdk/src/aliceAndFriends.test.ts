@@ -9,6 +9,15 @@ import { makeUniqueChannelStreamId, makeUniqueSpaceStreamId } from './id'
 
 const log = debug('test:aliceAndFriends')
 
+function bytesToNumber(byteArray: Uint8Array) {
+    let result = 0
+    for (let i = byteArray.length - 1; i >= 0; i--) {
+        result = result * 256 + byteArray[i]
+    }
+
+    return result
+}
+
 class TestDriver {
     readonly client: Client
     readonly num: number
@@ -123,113 +132,124 @@ const makeTestDriver = async (num: number): Promise<TestDriver> => {
 }
 
 const converse = async (conversation: string[][], testName: string): Promise<void> => {
-    const numDrivers = conversation[0].length
-    const numConversationSteps = conversation.length
+    try {
+        const numDrivers = conversation[0].length
+        const numConversationSteps = conversation.length
 
-    log(`${testName} START, numDrivers=${numDrivers}, steps=${conversation.length}`)
-    const drivers = await Promise.all(
-        Array.from({ length: numDrivers })
-            .fill('')
-            .map(async (_, i) => await makeTestDriver(i)),
-    )
+        log(`${testName} START, numDrivers=${numDrivers}, steps=${numConversationSteps}`)
+        const drivers = await Promise.all(
+            Array.from({ length: numDrivers })
+                .fill('')
+                .map(async (_, i) => await makeTestDriver(i)),
+        )
 
-    log(`${testName} starting all drivers`)
-    await Promise.all(
-        drivers.map(async (d) => {
-            log(`${testName} starting driver`, {
-                num: d.num,
-                userId: d.client.userId,
-            })
-            await d.start()
-            log(`${testName} started driver`, { num: d.num })
-        }),
-    )
-    log(`${testName} started all drivers`)
-
-    const alice = drivers[0]
-    const others = drivers.slice(1)
-
-    const spaceId = makeUniqueSpaceStreamId()
-    log(`${testName} creating space ${spaceId}`)
-    await expect(alice.client.createSpace(spaceId)).toResolve()
-    await expect(alice.client.waitForStream(spaceId)).toResolve()
-
-    // Invite and join space.
-    log(`${testName} inviting others to space`)
-    const allJoinedSpace = Promise.all(others.map((d) => d.waitFor('userJoinedStream')))
-    await Promise.all(others.map((d) => alice.client.inviteUser(spaceId, d.client.userId)))
-    log(`${testName} and wait for all to join space...`)
-    await expect(allJoinedSpace).toResolve()
-    log(`${testName} all joined space`)
-    log(
-        `${testName} inviting others to space after`,
-        others.map((d) => ({ num: d.num, userStreamId: d.client.userStreamId })),
-    )
-
-    log(`${testName} creating channel`)
-    const channelId = makeUniqueChannelStreamId()
-    await expect(alice.client.createChannel(spaceId, channelId)).toResolve()
-    await expect(alice.client.waitForStream(channelId)).toResolve()
-
-    // Invite and join channel.
-    log(
-        `${testName} inviting others to channel`,
-        others.map((d) => ({ num: d.num, userStreamId: d.client.userStreamId })),
-    )
-    const allJoined = Promise.all(others.map((d) => d.waitFor('userJoinedStream')))
-    await expect(
-        Promise.all(
-            others.map(async (d) => {
-                alice.client.inviteUser(channelId, d.client.userId)
+        log(`${testName} starting all drivers`)
+        await Promise.all(
+            drivers.map(async (d) => {
+                log(`${testName} starting driver`, {
+                    num: d.num,
+                    userId: d.client.userId,
+                })
+                await d.start()
+                log(`${testName} started driver`, { num: d.num })
             }),
-        ),
-    ).toResolve()
+        )
+        log(`${testName} started all drivers`)
 
-    log(`${testName} and wait for all to join...`)
-    await expect(allJoined).toResolve()
-    log(`${testName} all joined`)
+        const alice = drivers[0]
+        const others = drivers.slice(1)
 
-    for (const [conv_idx, conv] of conversation.entries()) {
-        const expected = new Set(conv.filter((s) => s !== ''))
-        log(`${testName} conversation stepping start ${conv_idx}`, expected, conv)
+        const spaceId = makeUniqueSpaceStreamId()
+        log(`${testName} creating space ${spaceId}`)
+        await expect(alice.client.createSpace(spaceId)).toResolve()
+        await expect(alice.client.waitForStream(spaceId)).toResolve()
+
+        // Invite and join space.
+        log(`${testName} inviting others to space`)
+        const allJoinedSpace = Promise.all(
+            others.map(async (d) => {
+                log(`${testName} awaiting userJoinedStream for`, d.client.userId)
+                await d.waitFor('userJoinedStream')
+                log(`${testName} recevied userJoinedStream for`, d.client.userId)
+            }),
+        )
+        await Promise.all(
+            others.map(async (d) => {
+                log(`${testName} inviting other to space`, d.client.userId)
+                await alice.client.inviteUser(spaceId, d.client.userId)
+                log(`${testName} invited other to space`, d.client.userId)
+            }),
+        )
+        log(`${testName} and wait for all to join space...`)
+        await expect(allJoinedSpace).toResolve()
+        log(`${testName} all joined space`)
+        log(
+            `${testName} inviting others to space after`,
+            others.map((d) => ({ num: d.num, userStreamId: d.client.userStreamId })),
+        )
+
+        log(`${testName} creating channel`)
+        const channelId = makeUniqueChannelStreamId()
+        await expect(alice.client.createChannel(spaceId, channelId)).toResolve()
+        await expect(alice.client.waitForStream(channelId)).toResolve()
+
+        // Invite and join channel.
+        log(
+            `${testName} inviting others to channel`,
+            others.map((d) => ({ num: d.num, userStreamId: d.client.userStreamId })),
+        )
+        const allJoined = Promise.all(
+            others.map(async (d) => {
+                log(`${testName} awaiting userJoinedStream channel for`, d.client.userId, channelId)
+                await d.waitFor('userJoinedStream')
+                log(`${testName} recevied userJoinedStream channel for`, d.client.userId, channelId)
+            }),
+        )
         await expect(
             Promise.all(
-                conv.map(async (msg, msg_idx) => {
-                    log(
-                        `${testName} conversation step before send conv: ${conv_idx} msg: ${msg_idx}`,
-                        msg,
-                    )
-                    await drivers[msg_idx].step(channelId, conv_idx, new Set(expected), msg)
-                    log(
-                        `${testName} conversation step after send conv: ${conv_idx} msg: ${msg_idx}`,
-                        msg,
-                    )
+                others.map(async (d) => {
+                    log(`${testName} inviting user to channel`, d.client.userId, channelId)
+                    await alice.client.inviteUser(channelId, d.client.userId)
+                    log(`${testName} invited user to channel`, d.client.userId, channelId)
                 }),
             ),
         ).toResolve()
-        log(`${testName} conversation stepping end ${conv_idx}`, conv)
-    }
-    log(`${testName} conversation complete, now stopping drivers`)
 
-    await Promise.all(drivers.map((d) => d.stop()))
+        log(`${testName} and wait for all to join...`)
+        await expect(allJoined).toResolve()
+        log(`${testName} all joined`)
 
-    function bytesToNumber(byteArray: Uint8Array) {
-        let result = 0
-        for (let i = byteArray.length - 1; i >= 0; i--) {
-            result = result * 256 + byteArray[i]
+        for (const [conv_idx, conv] of conversation.entries()) {
+            const expected = new Set(conv.filter((s) => s !== ''))
+            log(`${testName} conversation stepping start ${conv_idx}`, expected, conv)
+            await expect(
+                Promise.all(
+                    conv.map(async (msg, msg_idx) => {
+                        log(
+                            `${testName} conversation step before send conv: ${conv_idx} msg: ${msg_idx}`,
+                            msg,
+                        )
+                        await drivers[msg_idx].step(channelId, conv_idx, new Set(expected), msg)
+                        log(
+                            `${testName} conversation step after send conv: ${conv_idx} msg: ${msg_idx}`,
+                            msg,
+                        )
+                    }),
+                ),
+            ).toResolve()
+            log(`${testName} conversation stepping end ${conv_idx}`, conv)
         }
+        log(`${testName} conversation complete, now stopping drivers`)
 
-        return result
+        await Promise.all(drivers.map((d) => d.stop()))
+        log(`${testName} drivers stopped`)
+        const { eventCount, syncCookie } = await alice.client.getStreamSyncCookie(channelId)
+        log(`${testName} drivers stopped`, eventCount, bytesToNumber(syncCookie.slice(0, 8)))
+        expect(eventCount).toEqual(bytesToNumber(syncCookie.slice(0, 8)))
+    } catch (e) {
+        log(`${testName} converse ERROR`, e)
+        throw e
     }
-    const { eventCount, syncCookie } = await alice.client.getStreamSyncCookie(channelId)
-    log(
-        `${testName} drivers stopped`,
-        eventCount,
-        bytesToNumber(syncCookie.slice(0, 8)),
-        numDrivers,
-        numConversationSteps,
-    )
-    expect(eventCount).toEqual(bytesToNumber(syncCookie.slice(0, 8)))
 }
 
 // TODO: fix CI and remove this

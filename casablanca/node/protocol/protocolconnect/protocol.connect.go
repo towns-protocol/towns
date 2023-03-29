@@ -30,7 +30,7 @@ type StreamServiceClient interface {
 	CreateStream(context.Context, *connect_go.Request[protocol.CreateStreamRequest]) (*connect_go.Response[protocol.CreateStreamResponse], error)
 	GetStream(context.Context, *connect_go.Request[protocol.GetStreamRequest]) (*connect_go.Response[protocol.GetStreamResponse], error)
 	AddEvent(context.Context, *connect_go.Request[protocol.AddEventRequest]) (*connect_go.Response[protocol.AddEventResponse], error)
-	SyncStreams(context.Context, *connect_go.Request[protocol.SyncStreamsRequest]) (*connect_go.Response[protocol.SyncStreamsResponse], error)
+	SyncStreams(context.Context, *connect_go.Request[protocol.SyncStreamsRequest]) (*connect_go.ServerStreamForClient[protocol.SyncStreamsResponse], error)
 	Info(context.Context, *connect_go.Request[protocol.InfoRequest]) (*connect_go.Response[protocol.InfoResponse], error)
 }
 
@@ -97,8 +97,8 @@ func (c *streamServiceClient) AddEvent(ctx context.Context, req *connect_go.Requ
 }
 
 // SyncStreams calls casablanca.StreamService.SyncStreams.
-func (c *streamServiceClient) SyncStreams(ctx context.Context, req *connect_go.Request[protocol.SyncStreamsRequest]) (*connect_go.Response[protocol.SyncStreamsResponse], error) {
-	return c.syncStreams.CallUnary(ctx, req)
+func (c *streamServiceClient) SyncStreams(ctx context.Context, req *connect_go.Request[protocol.SyncStreamsRequest]) (*connect_go.ServerStreamForClient[protocol.SyncStreamsResponse], error) {
+	return c.syncStreams.CallServerStream(ctx, req)
 }
 
 // Info calls casablanca.StreamService.Info.
@@ -111,7 +111,7 @@ type StreamServiceHandler interface {
 	CreateStream(context.Context, *connect_go.Request[protocol.CreateStreamRequest]) (*connect_go.Response[protocol.CreateStreamResponse], error)
 	GetStream(context.Context, *connect_go.Request[protocol.GetStreamRequest]) (*connect_go.Response[protocol.GetStreamResponse], error)
 	AddEvent(context.Context, *connect_go.Request[protocol.AddEventRequest]) (*connect_go.Response[protocol.AddEventResponse], error)
-	SyncStreams(context.Context, *connect_go.Request[protocol.SyncStreamsRequest]) (*connect_go.Response[protocol.SyncStreamsResponse], error)
+	SyncStreams(context.Context, *connect_go.Request[protocol.SyncStreamsRequest], *connect_go.ServerStream[protocol.SyncStreamsResponse]) error
 	Info(context.Context, *connect_go.Request[protocol.InfoRequest]) (*connect_go.Response[protocol.InfoResponse], error)
 }
 
@@ -137,7 +137,7 @@ func NewStreamServiceHandler(svc StreamServiceHandler, opts ...connect_go.Handle
 		svc.AddEvent,
 		opts...,
 	))
-	mux.Handle("/casablanca.StreamService/SyncStreams", connect_go.NewUnaryHandler(
+	mux.Handle("/casablanca.StreamService/SyncStreams", connect_go.NewServerStreamHandler(
 		"/casablanca.StreamService/SyncStreams",
 		svc.SyncStreams,
 		opts...,
@@ -165,8 +165,8 @@ func (UnimplementedStreamServiceHandler) AddEvent(context.Context, *connect_go.R
 	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("casablanca.StreamService.AddEvent is not implemented"))
 }
 
-func (UnimplementedStreamServiceHandler) SyncStreams(context.Context, *connect_go.Request[protocol.SyncStreamsRequest]) (*connect_go.Response[protocol.SyncStreamsResponse], error) {
-	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("casablanca.StreamService.SyncStreams is not implemented"))
+func (UnimplementedStreamServiceHandler) SyncStreams(context.Context, *connect_go.Request[protocol.SyncStreamsRequest], *connect_go.ServerStream[protocol.SyncStreamsResponse]) error {
+	return connect_go.NewError(connect_go.CodeUnimplemented, errors.New("casablanca.StreamService.SyncStreams is not implemented"))
 }
 
 func (UnimplementedStreamServiceHandler) Info(context.Context, *connect_go.Request[protocol.InfoRequest]) (*connect_go.Response[protocol.InfoResponse], error) {

@@ -307,15 +307,17 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
         // TODO: implement
     }
 
-    async startSync(timeoutMs?: number): Promise<void> {
+    async startSync(_timeoutMs?: number): Promise<void> {
         this.logSync('sync START')
         assert(this.stopSyncResolve === undefined, 'sync already started')
         assert(this.userStreamId !== undefined, 'streamId must be set')
         let stop = new Promise<string>((resolve) => {
             this.stopSyncResolve = resolve
         })
+        let iteration = 0
 
         while (this.stopSyncResolve !== undefined) {
+            this.logSync('sync ITERATION', iteration++)
             const syncPos: PartialMessage<SyncPos>[] = []
             this.streams.forEach((stream: Stream) => {
                 const syncCookie = stream.syncCookie
@@ -335,12 +337,24 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
             })
             assert(syncPos.length > 0, 'TODO: hande this case')
             const sync = await Promise.race([
-                this.rpcClient.syncStreams({
-                    syncPos,
-                    timeoutMs: timeoutMs ?? 29000, // TODO: from config
-                }),
+                (async () => {
+                    this.logSync('starting syncStreams', syncPos)
+
+                    const sync = this.rpcClient.syncStreams({
+                        syncPos,
+                        timeoutMs: 29000, // TODO: from config
+                    })
+                    this.logSync('started syncStreams', syncPos)
+                    const syncedStreams = []
+                    for await (const syncedStream of sync) {
+                        syncedStreams.push(syncedStream)
+                    }
+                    this.logSync('finished syncStreams', syncPos)
+                    return syncedStreams
+                })(),
                 stop,
             ])
+            this.logSync('sync PROMISE resolved', typeof sync)
             if (typeof sync === 'string') {
                 if (sync === 'cancel') {
                     this.logSync('sync CANCEL')
@@ -356,27 +370,44 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
                 } else {
                     throwWithCode('sync got unknown string result ' + sync)
                 }
-            }
-            this.logSync('sync RESULTS', sync.streams.length)
-            sync.streams.forEach((streamAndCookie) => {
-                const streamId = streamAndCookie.streamId
-                this.logSync(
-                    'sync RESULTS',
-                    streamId,
-                    'events=',
-                    streamAndCookie.events.length,
-                    'nextSyncCookie=',
-                    bin_toBase64(streamAndCookie.nextSyncCookie),
-                    'originalSyncCookie=',
-                    bin_toBase64(streamAndCookie.originalSyncCookie),
-                )
-                const stream = this.streams.get(streamId)
-                if (stream === undefined) {
-                    this.logSync('sync got stream', streamId, 'NOT FOUND')
-                    throwWithCode("Sync got stream that wasn't requested")
+            } else {
+                this.logSync('sync RESULTS received response', sync)
+                if (
+                    sync.length === 0 ||
+                    sync.reduce((prevTotal, stream) => stream.streams.length + prevTotal, 0) === 0
+                ) {
+                    this.logSync(
+                        'sync RESULTS for stream empty',
+                        'originalSyncCookies=',
+                        syncPos
+                            .map((s) => (s.syncCookie ? bin_toBase64(s.syncCookie) : '[undefined]'))
+                            .join(', '),
+                    )
+                } else {
+                    sync.forEach((sync) =>
+                        sync.streams.forEach((streamAndCookie) => {
+                            const streamId = streamAndCookie.streamId
+                            this.logSync(
+                                'sync RESULTS for stream',
+                                streamId,
+                                'events=',
+                                streamAndCookie.events.length,
+                                'nextSyncCookie=',
+                                bin_toBase64(streamAndCookie.nextSyncCookie),
+                                'originalSyncCookie=',
+                                bin_toBase64(streamAndCookie.originalSyncCookie),
+                            )
+                            const stream = this.streams.get(streamId)
+                            if (stream === undefined) {
+                                this.logSync('sync got stream', streamId, 'NOT FOUND')
+                                throwWithCode("Sync got stream that wasn't requested")
+                            }
+                            stream.addEvents(streamAndCookie)
+                        }),
+                    )
                 }
-                stream.addEvents(streamAndCookie)
-            })
+                this.logSync('sync RESULTS processed from response')
+            }
         }
         this.logSync('sync END')
     }

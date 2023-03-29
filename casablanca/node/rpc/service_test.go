@@ -199,24 +199,30 @@ func TestMethods(t *testing.T) {
 			t.Fatalf("error calling SyncStreams: %v", err)
 		}
 
-		if len(syncRes.Msg.Streams) != 1 {
-			t.Errorf("expected 1 stream, got %d", len(syncRes.Msg.Streams))
-		}
-		if len(syncRes.Msg.Streams[0].Events) != 2 {
-			t.Errorf("expected 2 events, got %d", len(syncRes.Msg.Streams[0].Events))
+		for syncRes.Receive() {
+			msg := syncRes.Msg()
+
+			if len(msg.Streams) != 1 {
+				t.Errorf("expected 1 stream, got %d", len(msg.Streams))
+			}
+			if len(msg.Streams[0].Events) != 2 {
+				t.Errorf("expected 2 events, got %d", len(msg.Streams[0].Events))
+			}
+
+			var payload protocol.StreamEvent
+			err = proto.Unmarshal(msg.Streams[0].Events[1].Event, &payload)
+			if err != nil {
+				t.Errorf("error unmarshaling event: %v", err)
+			}
+			switch payload.Payload.Payload.(type) {
+			case *protocol.Payload_Message_:
+				// ok
+			default:
+				t.Fatalf("expected message event, got %v", payload.Payload.Payload)
+			}
+
 		}
 
-		var payload protocol.StreamEvent
-		err = proto.Unmarshal(syncRes.Msg.Streams[0].Events[1].Event, &payload)
-		if err != nil {
-			t.Errorf("error unmarshaling event: %v", err)
-		}
-		switch payload.Payload.Payload.(type) {
-		case *protocol.Payload_Message_:
-			// ok
-		default:
-			t.Fatalf("expected message event, got %v", payload.Payload.Payload)
-		}
 	}
 }
 
@@ -313,16 +319,20 @@ func TestManyUsers(t *testing.T) {
 			t.Fatalf("error calling SyncStreams: %v", err)
 		}
 
-		if len(syncRes.Msg.Streams) != totalChannels {
-			t.Fatalf("expected %d stream, got %d", totalChannels, len(syncRes.Msg.Streams))
-		}
-		for i := 0; i < totalChannels; i++ {
-			if len(syncRes.Msg.Streams[i].Events) != (totalUsers-1)*2 {
-				t.Fatalf("expected %d event, got %d", (totalUsers-1)*2, len(syncRes.Msg.Streams[0].Events))
+		for syncRes.Receive() {
+			msg := syncRes.Msg()
+
+			if len(msg.Streams) != totalChannels {
+				t.Fatalf("expected %d stream, got %d", totalChannels, len(msg.Streams))
 			}
-			for syncPosIdx := range syncPos {
-				if syncPos[syncPosIdx].StreamId == syncRes.Msg.Streams[i].StreamId {
-					syncPos[syncPosIdx].SyncCookie = syncRes.Msg.Streams[i].NextSyncCookie
+			for i := 0; i < totalChannels; i++ {
+				if len(msg.Streams[i].Events) != (totalUsers-1)*2 {
+					t.Fatalf("expected %d event, got %d", (totalUsers-1)*2, len(msg.Streams[0].Events))
+				}
+				for syncPosIdx := range syncPos {
+					if syncPos[syncPosIdx].StreamId == msg.Streams[i].StreamId {
+						syncPos[syncPosIdx].SyncCookie = msg.Streams[i].NextSyncCookie
+					}
 				}
 			}
 		}
@@ -374,31 +384,34 @@ func TestManyUsers(t *testing.T) {
 			if err != nil {
 				t.Fatalf("error calling SyncStreams: %v", err)
 			}
-			assert.NoError(t, err)
-			stats[len(syncRes.Msg.Streams)]++
-			for streamIdx := range syncRes.Msg.Streams {
-				for syncPosStrem := range syncPos {
-					if syncPos[syncPosStrem].StreamId == syncRes.Msg.Streams[streamIdx].StreamId {
-						// check if cookie's stream matches
-						assert.Equal(t, syncPos[syncPosStrem].SyncCookie[8:], syncRes.Msg.Streams[streamIdx].NextSyncCookie[8:])
-						syncPos[syncPosStrem].SyncCookie = syncRes.Msg.Streams[streamIdx].NextSyncCookie
+			for syncRes.Receive() {
+				msg := syncRes.Msg()
+				assert.NoError(t, err)
+				stats[len(msg.Streams)]++
+				for streamIdx := range msg.Streams {
+					for syncPosStrem := range syncPos {
+						if syncPos[syncPosStrem].StreamId == msg.Streams[streamIdx].StreamId {
+							// check if cookie's stream matches
+							assert.Equal(t, syncPos[syncPosStrem].SyncCookie[8:], msg.Streams[streamIdx].NextSyncCookie[8:])
+							syncPos[syncPosStrem].SyncCookie = msg.Streams[streamIdx].NextSyncCookie
+						}
+					}
+					received += len(msg.Streams[streamIdx].Events)
+					for _, event := range msg.Streams[streamIdx].Events {
+						e, err := events.ParseEvent(event)
+						assert.NoError(t, err)
+						msg := e.Event.Payload.GetMessage()
+						assert.NotNil(t, msg)
+						tokens := strings.Split(msg.Text, " ")
+						assert.Equal(t, 4, len(tokens))
+						id, err := strconv.Atoi(tokens[0])
+						assert.NoError(t, err)
+						msgTable[id]++
+						assert.Equal(t, 1, msgTable[id])
 					}
 				}
-				received += len(syncRes.Msg.Streams[streamIdx].Events)
-				for _, event := range syncRes.Msg.Streams[streamIdx].Events {
-					e, err := events.ParseEvent(event)
-					assert.NoError(t, err)
-					msg := e.Event.Payload.GetMessage()
-					assert.NotNil(t, msg)
-					tokens := strings.Split(msg.Text, " ")
-					assert.Equal(t, 4, len(tokens))
-					id, err := strconv.Atoi(tokens[0])
-					assert.NoError(t, err)
-					msgTable[id]++
-					assert.Equal(t, 1, msgTable[id])
-				}
+				rcvMessages.Add(int32(received))
 			}
-			rcvMessages.Add(int32(received))
 			return received
 		}
 

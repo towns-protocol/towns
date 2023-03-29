@@ -40,7 +40,7 @@ describe('streamRpcClient', () => {
         const result = await client.info({})
         expect(result).toBeDefined()
         expect(result.graffiti).toEqual('TBD Project Name node welcomes you!')
-        client.close()
+        await client.close()
     })
 
     test('error', async () => {
@@ -49,7 +49,7 @@ describe('streamRpcClient', () => {
         await expect(client.info({ debug: 'error' })).rejects.toThrow(
             '[invalid_argument] 1:DEBUG_ERROR: Error requested through Info request',
         )
-        client.close()
+        await client.close()
     })
 
     test('panic', async () => {
@@ -58,7 +58,7 @@ describe('streamRpcClient', () => {
         await expect(client.info({ debug: 'panic' })).rejects.toThrow(
             '[internal] TypeError: fetch failed',
         )
-        client.close()
+        await client.close()
     })
 
     test('bobTalksToHimself', async () => {
@@ -134,22 +134,15 @@ describe('streamRpcClient', () => {
 
         // Bob starts sync on the channel
         let syncResult: SyncStreamsResponse | null = null
-        log('bobTalksToHimself Bob starts sync')
-        const syncPromise = bob
-            .syncStreams({
-                syncPos: [
-                    {
-                        streamId: channelId,
-                        syncCookie: channel.stream?.nextSyncCookie,
-                    },
-                ],
-                timeoutMs: 4000,
-            })
-            .then((result) => {
-                syncResult = result
-                return 'done'
-            })
-        expect(syncResult).toBeNull()
+        const bodSyncStream = bob.syncStreams({
+            syncPos: [
+                {
+                    streamId: channelId,
+                    syncCookie: channel.stream?.nextSyncCookie,
+                },
+            ],
+            timeoutMs: 4000,
+        })
         // Bob succesdfully posts a message
         log('bobTalksToHimself Bob posts a message')
 
@@ -166,9 +159,14 @@ describe('streamRpcClient', () => {
         })
         log('bobTalksToHimself Bob waits for sync to complete')
 
+        log('bobTalksToHimself Bob starts sync')
+        for await (const result of bodSyncStream) {
+            syncResult = result
+        }
+
+        expect(syncResult).toBeDefined()
+
         // Bob sees the message in sync result
-        await expect(syncPromise).toResolve()
-        expect(syncResult).not.toBeNull()
         expect(syncResult!.streams).toHaveLength(1)
         expect(syncResult!.streams[0].events).toEqual([event])
 
@@ -311,21 +309,15 @@ describe('streamRpcClient', () => {
         })
         let aliceSyncCookie = userAlice.stream?.nextSyncCookie
         let aliceSyncResult: SyncStreamsResponse | null = null
-        let aliceSyncPromise = alice
-            .syncStreams({
-                syncPos: [
-                    {
-                        streamId: alicesUserStreamId,
-                        syncCookie: aliceSyncCookie,
-                    },
-                ],
-                timeoutMs: 29000,
-            })
-            .then((result) => {
-                aliceSyncResult = result
-                return 'done'
-            })
-        expect(aliceSyncResult).toBeNull()
+        const aliceSyncStreams = alice.syncStreams({
+            syncPos: [
+                {
+                    streamId: alicesUserStreamId,
+                    syncCookie: aliceSyncCookie,
+                },
+            ],
+            timeoutMs: 29000,
+        })
 
         // Bob invites Alice to the channel
         event = makeEvent(
@@ -341,8 +333,12 @@ describe('streamRpcClient', () => {
             event,
         })
 
-        // Alice sees invite in her user stream
-        await expect(aliceSyncPromise).toResolve()
+        for await (const result of aliceSyncStreams) {
+            aliceSyncResult = result
+        }
+
+        expect(aliceSyncResult).toBeDefined()
+
         aliceSyncCookie = expectEvent(
             aliceSyncResult,
             alicesUserStreamId,
@@ -356,21 +352,15 @@ describe('streamRpcClient', () => {
 
         // Alice syncs her user stream again
         aliceSyncResult = null
-        aliceSyncPromise = alice
-            .syncStreams({
-                syncPos: [
-                    {
-                        streamId: alicesUserStreamId,
-                        syncCookie: aliceSyncCookie,
-                    },
-                ],
-                timeoutMs: 29000,
-            })
-            .then((result) => {
-                aliceSyncResult = result
-                return 'done'
-            })
-        expect(aliceSyncResult).toBeNull()
+        const userSyncStream = alice.syncStreams({
+            syncPos: [
+                {
+                    streamId: alicesUserStreamId,
+                    syncCookie: aliceSyncCookie,
+                },
+            ],
+            timeoutMs: 29000,
+        })
 
         // Alice joins the channel
         event = makeEvent(
@@ -386,8 +376,13 @@ describe('streamRpcClient', () => {
             event,
         })
 
+        for await (const stream of userSyncStream) {
+            aliceSyncResult = stream
+        }
+
+        expect(aliceSyncResult).toBeDefined()
+
         // Alice sees derived join event in her user stream
-        await expect(aliceSyncPromise).toResolve()
         aliceSyncCookie = expectEvent(
             aliceSyncResult,
             alicesUserStreamId,
@@ -412,25 +407,19 @@ describe('streamRpcClient', () => {
 
         // Alice syncs both her user stream and the channel
         aliceSyncResult = null
-        aliceSyncPromise = alice
-            .syncStreams({
-                syncPos: [
-                    {
-                        streamId: alicesUserStreamId,
-                        syncCookie: aliceSyncCookie,
-                    },
-                    {
-                        streamId: channelId,
-                        syncCookie: channel.stream?.nextSyncCookie,
-                    },
-                ],
-                timeoutMs: 29000,
-            })
-            .then((result) => {
-                aliceSyncResult = result
-                return 'done'
-            })
-        expect(aliceSyncResult).toBeNull()
+        const userAndChannelStreamSync = alice.syncStreams({
+            syncPos: [
+                {
+                    streamId: alicesUserStreamId,
+                    syncCookie: aliceSyncCookie,
+                },
+                {
+                    streamId: channelId,
+                    syncCookie: channel.stream?.nextSyncCookie,
+                },
+            ],
+            timeoutMs: 29000,
+        })
 
         // Bob posts another message
         event = makeEvent(
@@ -446,7 +435,12 @@ describe('streamRpcClient', () => {
         })
 
         // Alice sees the message in sync result
-        await expect(aliceSyncPromise).toResolve()
+        for await (const stream of userAndChannelStreamSync) {
+            aliceSyncResult = stream
+        }
+
+        expect(aliceSyncResult).toBeDefined()
+
         aliceSyncCookie = expectEvent(
             aliceSyncResult,
             channelId,

@@ -207,7 +207,7 @@ service StreamService {
     rpc CreateStream(CreateStreamRequest) returns (CreateStreamResponse);
     rpc GetStream(GetStreamRequest) returns (GetStreamResponse);
     rpc AddEvent(AddEventRequest) returns (AddEventResponse);
-    rpc SyncStreams(SyncStreamsRequest) returns (SyncStreamsResponse);
+    rpc SyncStreams(SyncStreamsRequest) returns (stream SyncStreamsResponse);
     rpc Info(InfoRequest) returns (InfoResponse);
 }
 
