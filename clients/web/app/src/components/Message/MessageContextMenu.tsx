@@ -3,10 +3,11 @@ import React, { useCallback, useContext, useEffect, useRef } from 'react'
 import { RoomIdentifier, useZionClient } from 'use-zion-client'
 import { motion } from 'framer-motion'
 import { EmojiPickerButton } from '@components/EmojiPickerButton'
-import { IconButton, Stack } from '@ui'
+import { Button, Heading, IconButton, Paragraph, Stack } from '@ui'
 import { useOpenMessageThread } from 'hooks/useOpenThread'
 import { vars } from 'ui/styles/vars.css'
 import { MessageTimelineContext } from '@components/MessageTimeline/MessageTimelineContext'
+import { ModalContainer } from '@components/Modals/ModalContainer'
 
 type Props = {
     eventId: string
@@ -26,7 +27,7 @@ const style = {
 export const MessageContextMenu = (props: Props) => {
     const { eventId, channelId, spaceId } = props
 
-    const { sendReaction } = useZionClient()
+    const { redactEvent, sendReaction } = useZionClient()
     const timelineContext = useContext(MessageTimelineContext)
 
     const { onOpenMessageThread } = useOpenMessageThread(spaceId, channelId)
@@ -54,6 +55,7 @@ export const MessageContextMenu = (props: Props) => {
         [channelId, eventId, sendReaction],
     )
     const ref = useRef<HTMLDivElement>(null)
+
     useEffect(() => {
         const onKeyDown = (e: KeyboardEvent) => {
             if (!document.activeElement?.contains(ref.current)) {
@@ -74,6 +76,24 @@ export const MessageContextMenu = (props: Props) => {
         }
     }, [onEditClick, onThreadClick, props.canEdit, props.canReply])
 
+    const [showDeletePrompt, setShowDeletePrompt] = React.useState(false)
+
+    const onDeleteClick = useCallback(() => {
+        if (channelId && eventId) {
+            setShowDeletePrompt(true)
+        }
+    }, [channelId, eventId])
+
+    const onDeleteConfirm = useCallback(() => {
+        if (channelId) {
+            redactEvent(channelId, eventId)
+        }
+    }, [channelId, eventId, redactEvent])
+
+    const onDeleteCancel = useCallback(() => {
+        setShowDeletePrompt(false)
+    }, [])
+
     return (
         <MotionStack pointerEvents="auto" position="topRight" {...animation} ref={ref}>
             <Stack
@@ -88,11 +108,39 @@ export const MessageContextMenu = (props: Props) => {
                 width="auto"
             >
                 {props.canEdit && <IconButton icon="edit" size="square_sm" onClick={onEditClick} />}
+
                 {props.canReply && (
                     <IconButton icon="threads" size="square_sm" onClick={onThreadClick} />
                 )}
                 {props.canReact && <EmojiPickerButton onSelectEmoji={onSelectEmoji} />}
+                {props.canEdit && (
+                    <IconButton
+                        icon="delete"
+                        size="square_sm"
+                        color="error"
+                        onClick={onDeleteClick}
+                    />
+                )}
             </Stack>
+            {showDeletePrompt ? (
+                <ModalContainer onHide={onDeleteCancel}>
+                    <Stack padding="sm" gap="lg">
+                        <Heading level={3}>Delete message</Heading>
+                        <Paragraph>
+                            Are you sure you want to delete this message? This cannot be undone.
+                        </Paragraph>
+
+                        <Stack horizontal gap justifyContent="end">
+                            <Button onClick={onDeleteCancel}>Cancel</Button>
+                            <Button tone="error" onClick={onDeleteConfirm}>
+                                Delete
+                            </Button>
+                        </Stack>
+                    </Stack>
+                </ModalContainer>
+            ) : (
+                <></>
+            )}
         </MotionStack>
     )
 }
