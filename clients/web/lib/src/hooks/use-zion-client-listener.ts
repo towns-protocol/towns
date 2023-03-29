@@ -1,6 +1,6 @@
-import { MatrixEvent, MatrixScheduler } from 'matrix-js-sdk'
 import { useCallback, useEffect, useRef, useState } from 'react'
-
+import { MatrixClient, MatrixEvent, MatrixScheduler } from 'matrix-js-sdk'
+import { Client as CasablancaClient, SignerContext } from '@towns/client'
 import { LoginStatus } from './login'
 import { ZionClient } from '../client/ZionClient'
 import { ZionOpts } from '../client/ZionClientTypes'
@@ -9,13 +9,17 @@ import { MatrixCredentials, useCredentialStore } from '../store/use-credential-s
 import { useMatrixStore } from '../store/use-matrix-store'
 import { useSigner } from 'wagmi'
 import { useWeb3Context } from '../components/Web3ContextProvider'
+import { ethers } from 'ethers'
 
 export const useZionClientListener = (opts: ZionOpts) => {
     const { provider, chain } = useWeb3Context()
     const { setLoginStatus } = useMatrixStore()
-    const { matrixCredentialsMap, setMatrixCredentials } = useCredentialStore()
+    const { matrixCredentialsMap, setMatrixCredentials, casablancaCredentialsMap } =
+        useCredentialStore()
     const matrixCredentials = matrixCredentialsMap[opts.matrixServerUrl]
-    const [clientRef, setClientRef] = useState<ZionClient>()
+    const casablancaCredentials = casablancaCredentialsMap[opts.casablancaServerUrl]
+    const [matrixClient, setMatrixClient] = useState<MatrixClient>()
+    const [casablancaClient, setCasablancaClient] = useState<CasablancaClient>()
     const clientSingleton = useRef<ZionClient>()
     // The chain is an optional prop the consuming client can pass to the ZionContextProvider
     // If passed, we lock ZionClient to that chain
@@ -42,7 +46,7 @@ export const useZionClientListener = (opts: ZionOpts) => {
         }
     }
 
-    const startClient = useCallback(async () => {
+    const startMatrixClient = useCallback(async () => {
         if (!clientSingleton.current || !matrixCredentials || !chainId) {
             console.log(
                 'Matrix client listener not started: clientSingleton.current, chainId, accessToken, userId, or deviceId is undefined.',
@@ -53,7 +57,7 @@ export const useZionClientListener = (opts: ZionOpts) => {
                     _signer: _signer !== undefined,
                 },
             )
-            setClientRef(undefined)
+            setMatrixClient(undefined)
             return
         }
         // in the standard flow we should already be logged in, but if we're loading
@@ -65,22 +69,26 @@ export const useZionClientListener = (opts: ZionOpts) => {
             if (client.chainId != chainId) {
                 console.warn("ChainId changed, we're not handling this yet")
             } else {
-                console.warn('startClient: called again with same access token')
+                console.log('startMatrixClient: called again with same access token')
             }
             return
         }
         console.log('******* start client *******')
         // unset the client ref if it's not already, we need to cycle the ui
-        setClientRef(undefined)
+        setMatrixClient(undefined)
         // start it up!
         try {
-            await startMatrixClientWithRetries(client, chainId, matrixCredentials)
-            setClientRef(client)
+            const matrixClient = await startMatrixClientWithRetries(
+                client,
+                chainId,
+                matrixCredentials,
+            )
+            setMatrixClient(matrixClient)
             console.log('******* Matrix client listener started *******')
         } catch (e) {
             console.log('******* client encountered exception *******', e)
             try {
-                await client.logout()
+                await client.logoutFromMatrix()
             } catch (e) {
                 console.log('error while logging out', e)
             }
@@ -96,13 +104,63 @@ export const useZionClientListener = (opts: ZionOpts) => {
         _signer,
     ])
 
+    const startCasablancaClient = useCallback(async () => {
+        if (!clientSingleton.current || !casablancaCredentials) {
+            console.log('casablanca client listener not yet started:', {
+                singleton: clientSingleton.current !== undefined,
+                casablancaCredentials: casablancaCredentials !== null,
+                chainId: chainId !== undefined,
+                _signer: _signer !== undefined,
+            })
+            setCasablancaClient(undefined)
+            return
+        }
+
+        const client = clientSingleton.current
+        if (casablancaCredentials.privateKey === client.signerContext?.wallet.privateKey) {
+            if (client.chainId != chainId) {
+                console.warn("ChainId changed, we're not handling this yet")
+            } else {
+                console.log('startMatrixClient: called again with same access token')
+            }
+        }
+        console.log('******* start casablanca client *******')
+        // unset the client ref if it's not already, we need to cycle the ui
+        setCasablancaClient(undefined)
+        // start it up!
+        try {
+            const wallet = new ethers.Wallet(casablancaCredentials.privateKey)
+            const context: SignerContext = {
+                wallet,
+                creatorAddress: casablancaCredentials.creatorAddress,
+                delegateSig: casablancaCredentials.delegateSig,
+            }
+            const casablancaClient = await client.startCasablancaClient(context)
+            setCasablancaClient(casablancaClient)
+            console.log('******* Casablanca client listener started *******')
+        } catch (e) {
+            console.log('******* casablanca client encountered exception *******', e)
+            try {
+                await client.logoutFromCasablanca()
+            } catch (e) {
+                console.log('error while logging out', e)
+            }
+        }
+    }, [_signer, casablancaCredentials, chainId])
+
     useEffect(() => {
-        void (async () => await startClient())()
-    }, [startClient])
+        void (async () => await startMatrixClient())()
+    }, [startMatrixClient])
+
+    useEffect(() => {
+        void (async () => await startCasablancaClient())()
+    }, [startCasablancaClient])
 
     return {
-        client: clientRef,
+        client: matrixClient || casablancaClient ? clientSingleton.current : undefined,
         clientSingleton: clientSingleton.current,
+        matrixClient,
+        casablancaClient,
     }
 }
 
@@ -110,13 +168,13 @@ async function startMatrixClientWithRetries(
     client: ZionClient,
     chainId: number,
     matrixCredentials: MatrixCredentials,
-): Promise<void> {
+): Promise<MatrixClient | undefined> {
     const dummyMatrixEvent = new MatrixEvent()
     let retryCount = 0
-    let isSuccess = false
-    while (!isSuccess) {
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
         try {
-            await client.startMatrixClient(
+            const matrixClient = await client.startMatrixClient(
                 {
                     userId: matrixCredentials.userId,
                     accessToken: matrixCredentials.accessToken,
@@ -128,7 +186,7 @@ async function startMatrixClientWithRetries(
                 console.log(`startMatrixClientWithRetries succeeded after ${retryCount} retries`)
             }
             // succeeded, return
-            isSuccess = true
+            return matrixClient
         } catch (err) {
             if (isMatrixError(err)) {
                 const retryDelay = MatrixScheduler.RETRY_BACKOFF_RATELIMIT(

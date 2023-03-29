@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react'
 import { Address } from 'wagmi'
 import { LoginStatus } from '../../../src/hooks/login'
 import { RoomIdentifier } from '../../../src/types/room-identifier'
-import { MatrixAuth } from '../../../src/client/ZionClientTypes'
+import { MatrixAuth, SpaceProtocol } from '../../../src/client/ZionClientTypes'
 import { getUsernameFromId } from '../../../src/types/user-identifier'
 import { useCredentialStore } from '../../../src/store/use-credential-store'
 import { useMatrixStore } from '../../../src/store/use-matrix-store'
@@ -19,11 +19,14 @@ import { useUpdateChannelTransaction } from '../../../src/hooks/use-update-chann
 import { useCreateRoleTransaction } from '../../../src/hooks/use-create-role-transaction'
 import { useDeleteRoleTransaction } from '../../../src/hooks/use-delete-role-transaction'
 import { useUpdateRoleTransaction } from '../../../src/hooks/use-update-role-transaction'
+import { getPrimaryProtocol } from './TestUtils'
+import { staticAssertNever } from '../../../src/utils/zion-utils'
 
 export const RegisterWallet = () => {
     const { walletStatus, isConnected } = useWeb3Context()
     const { loginStatus, loginError, userId } = useMatrixCredentials()
-    const { clientRunning, registerWalletWithMatrix } = useZionClient()
+    const { clientRunning, registerWalletWithMatrix, registerWalletWithCasablanca } =
+        useZionClient()
     const registeringWallet = useRef(false)
     const [registeredWallet, setRegisteredWallet] = useState(false)
 
@@ -31,11 +34,18 @@ export const RegisterWallet = () => {
         if (walletStatus === WalletStatus.Connected && !registeringWallet.current) {
             registeringWallet.current = true
             void (async () => {
-                await registerWalletWithMatrix('login...')
+                const protocol = getPrimaryProtocol()
+                if (protocol === SpaceProtocol.Matrix) {
+                    await registerWalletWithMatrix('login...')
+                } else if (protocol === SpaceProtocol.Casablanca) {
+                    await registerWalletWithCasablanca('login...')
+                } else {
+                    staticAssertNever(protocol)
+                }
                 setRegisteredWallet(true)
             })()
         }
-    }, [registerWalletWithMatrix, walletStatus])
+    }, [registerWalletWithCasablanca, registerWalletWithMatrix, walletStatus])
     return (
         <>
             <div data-testid="isConnected">{isConnected.toString()}</div>
@@ -52,18 +62,25 @@ export const RegisterWallet = () => {
 export const LoginWithWallet = () => {
     const { walletStatus, isConnected } = useWeb3Context()
     const { loginStatus, loginError } = useMatrixStore()
-    const { clientRunning, loginWithWalletToMatrix } = useZionClient()
+    const { clientRunning, loginWithWalletToMatrix, loginWithWalletToCasablanca } = useZionClient()
     const logingInWithWallet = useRef(false)
 
     useEffect(() => {
         if (walletStatus === WalletStatus.Connected && !logingInWithWallet.current) {
             logingInWithWallet.current = true
             void (async () => {
-                await loginWithWalletToMatrix('login...')
+                const protocol = getPrimaryProtocol()
+                if (protocol === SpaceProtocol.Matrix) {
+                    await loginWithWalletToMatrix('login...')
+                } else if (protocol === SpaceProtocol.Casablanca) {
+                    await loginWithWalletToCasablanca('login...')
+                } else {
+                    staticAssertNever(protocol)
+                }
                 logingInWithWallet.current = false
             })()
         }
-    }, [loginWithWalletToMatrix, walletStatus])
+    }, [loginWithWalletToCasablanca, loginWithWalletToMatrix, walletStatus])
     return (
         <>
             <div data-testid="isConnected">{isConnected.toString()}</div>
@@ -88,14 +105,21 @@ export const LoginWithAuth = (props: LoginWithAuthProps) => {
     const { setMatrixCredentials } = useCredentialStore()
     useEffect(() => {
         if (walletStatus === WalletStatus.Connected) {
-            setMatrixCredentials(homeServerUrl, {
-                accessToken: props.auth.accessToken,
-                deviceId: props.auth.deviceId,
-                userId: props.auth.userId,
-                username: getUsernameFromId(props.auth.userId),
-                loggedInWalletAddress: props.walletAddress as Address,
-            })
-            setLoginStatus(LoginStatus.LoggedIn)
+            const protocol = getPrimaryProtocol()
+            if (protocol === SpaceProtocol.Matrix) {
+                setMatrixCredentials(homeServerUrl, {
+                    accessToken: props.auth.accessToken,
+                    deviceId: props.auth.deviceId,
+                    userId: props.auth.userId,
+                    username: getUsernameFromId(props.auth.userId),
+                    loggedInWalletAddress: props.walletAddress as Address,
+                })
+                setLoginStatus(LoginStatus.LoggedIn)
+            } else if (protocol === SpaceProtocol.Casablanca) {
+                throw new Error('Not implemented')
+            } else {
+                staticAssertNever(protocol)
+            }
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [walletStatus])

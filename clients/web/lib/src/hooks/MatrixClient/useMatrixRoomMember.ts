@@ -1,7 +1,6 @@
 import { SpaceProtocol } from '../../client/ZionClientTypes'
 import {
     ClientEvent,
-    MatrixClient,
     MatrixEvent,
     Room as MatrixRoom,
     RoomMember as MatrixRoomMember,
@@ -12,14 +11,15 @@ import {
 import { useEffect, useState } from 'react'
 import { RoomMember, Membership } from '../../types/zion-types'
 import { RoomIdentifier } from '../../types/room-identifier'
+import { useZionContext } from '../../components/ZionContextProvider'
 
 /// useMember provides the current membership state, displayname, avatar, etc of a user in a room.
 /// note: it might be useful to combine with useUser, which provides the basic user info.
 export function useMatrixRoomMember(
     roomId?: RoomIdentifier,
     userId?: string,
-    matrixClient?: MatrixClient,
 ): RoomMember | undefined {
+    const { matrixClient } = useZionContext()
     const [roomMember, setRoomMember] = useState<RoomMember>()
 
     useEffect(() => {

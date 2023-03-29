@@ -1,13 +1,16 @@
 import { useEffect, useState } from 'react'
 import { ZionClient } from '../../client/ZionClient'
-import { ClientEvent } from 'matrix-js-sdk'
+import { ClientEvent, MatrixClient } from 'matrix-js-sdk'
 import { SyncState } from 'matrix-js-sdk/lib/sync'
 import { useCredentialStore } from '../../store/use-credential-store'
 import { useMatrixStore } from '../../store/use-matrix-store'
 import { LoginStatus } from '../../hooks/login'
 
-export function useSyncErrorHandler(homeServerUrl: string, client?: ZionClient) {
-    const matrixClient = client?.matrixClient
+export function useSyncErrorHandler(
+    homeServerUrl: string,
+    client: ZionClient | undefined,
+    matrixClient: MatrixClient | undefined,
+) {
     const { setLoginStatus } = useMatrixStore()
     const { setMatrixCredentials } = useCredentialStore()
     const [syncError, setSyncError] = useState<string>()

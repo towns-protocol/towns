@@ -79,8 +79,9 @@ import {
 import { PioneerNFT } from './web3/PioneerNFT'
 /***
  * Zion Client
- * mostly a "passthrough" abstraction that hides the underlying MatrixClient
- * normally, a shitty design pattern, but in zions case we want to
+ * for calls that originate from a roomIdentifier, or for createing new rooms
+ * handle toggling between matrix and casablanca
+ * the zion client will:
  * - always encrypt
  * - enforce space / channel relationships
  * - get user wallet info
@@ -99,11 +100,12 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
     public readonly name: string
     public spaceDapp: ISpaceDapp
     public pioneerNFT: PioneerNFT
-    public matrixClient?: MatrixClient
+    protected matrixClient?: MatrixClient
     public matrixDecryptionExtension?: MatrixDecryptionExtension
-    public casablancaClient?: CasablancaClient
+    protected casablancaClient?: CasablancaClient
     private _chainId: number
     private _auth?: MatrixAuth
+    private _signerContext?: SignerContext
     protected _eventHandlers?: ZionClientEventHandlers
 
     constructor(opts: ZionOpts, chainId?: number, name?: string) {
@@ -123,6 +125,10 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
 
     public get auth(): MatrixAuth | undefined {
         return this._auth
+    }
+
+    public get signerContext(): SignerContext | undefined {
+        return this._signerContext
     }
 
     /// chain id at the time the contracts were created
@@ -146,11 +152,20 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
      *************************************************/
     public async logout(): Promise<void> {
         this.log('logout')
+        await this.logoutFromMatrix()
+        await this.logoutFromCasablanca()
+    }
+
+    /************************************************
+     * logoutFromMatrix
+     *************************************************/
+    public async logoutFromMatrix(): Promise<void> {
         if (!this.auth) {
-            throw new Error('not authenticated')
+            return
         }
+        this.log('logoutFromMatrix')
         const matrixClient = this.matrixClient
-        await this.stopClients()
+        this.stopMatrixClient()
         if (matrixClient) {
             try {
                 await matrixClient.logout()
@@ -174,6 +189,22 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
         this._auth = undefined
     }
 
+    /************************************************
+     * logoutFromCasablanca
+     *************************************************/
+    public async logoutFromCasablanca(): Promise<void> {
+        if (!this._signerContext) {
+            return
+        }
+        this.log('logoutFromCasablanca')
+        await this.stopCasablancaClient()
+
+        this._eventHandlers?.onLogout?.({
+            userId: this._signerContext?.creatorAddress.toString() ?? 'unset',
+        })
+
+        this._signerContext = undefined
+    }
     /************************************************
      * signCasablancaDelegate
      * sign the public key of a local wallet
@@ -199,7 +230,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
      * startMatrixClient
      * start the matrix matrixClient, add listeners
      *************************************************/
-    public async startMatrixClient(auth: MatrixAuth, chainId: number) {
+    public async startMatrixClient(auth: MatrixAuth, chainId: number): Promise<MatrixClient> {
         if (this.auth) {
             throw new Error('already authenticated')
         }
@@ -257,15 +288,18 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
             )
         })
         await initialSync
+
+        return this.matrixClient
     }
 
     /************************************************
      * startCasablancaClient
      *************************************************/
-    public async startCasablancaClient(context: SignerContext) {
+    public async startCasablancaClient(context: SignerContext): Promise<CasablancaClient> {
         if (this.casablancaClient) {
             throw new Error('already started casablancaClient')
         }
+        this._signerContext = context
         const rpcClient = makeStreamRpcClient(this.opts.casablancaServerUrl)
         this.casablancaClient = new CasablancaClient(context, rpcClient)
         // TODO - long-term the app should already know if user exists via cookie
@@ -279,6 +313,8 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
 
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this.casablancaClient.startSync()
+
+        return this.casablancaClient
     }
 
     /************************************************
@@ -1235,6 +1271,28 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
     }
 
     /************************************************
+     * sendStateEvent
+     *************************************************/
+    public async sendStateEvent(
+        spaceId: string,
+        eventType: ZTEvent,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        content: any,
+        stateKey: string,
+    ) {
+        if (!this.matrixClient) {
+            throw new Error('matrix client is undefined')
+        }
+        // todo need to figure something out for casablanca
+        await this.matrixClient.sendStateEvent(
+            spaceId,
+            eventType,
+            content,
+            stateKey, // need unique state_key
+        )
+    }
+
+    /************************************************
      * sendMessage
      *************************************************/
     public async sendMessage(
@@ -1707,9 +1765,17 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
     /************************************************
      * getUserId
      ************************************************/
-    public getUserId(): string | undefined {
-        return this.auth?.userId
+    public getUserId(protocol: SpaceProtocol): string | undefined {
+        switch (protocol) {
+            case SpaceProtocol.Matrix:
+                return this.matrixClient?.getUserId() ?? undefined
+            case SpaceProtocol.Casablanca:
+                return this.casablancaClient?.userId
+            default:
+                staticAssertNever(protocol)
+        }
     }
+
     /************************************************
      * setDisplayName
      ************************************************/

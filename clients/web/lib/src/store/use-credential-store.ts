@@ -10,11 +10,23 @@ export type MatrixCredentials = {
     loggedInWalletAddress: Address
 }
 
+export type CasablancaCredentials = {
+    privateKey: string
+    creatorAddress: Uint8Array
+    delegateSig?: Uint8Array
+    loggedInWalletAddress: Address
+}
+
 export type CredentialStoreStates = {
     matrixCredentialsMap: Record<string, MatrixCredentials | null>
     setMatrixCredentials: (
         homeServerUrl: string,
         matrixCredentials: MatrixCredentials | null,
+    ) => void
+    casablancaCredentialsMap: Record<string, CasablancaCredentials | null>
+    setCasablancaCredentials: (
+        homeServerUrl: string,
+        casablancaCredentials: CasablancaCredentials | null,
     ) => void
 }
 
@@ -38,6 +50,18 @@ export const useCredentialStore = create<CredentialStoreStates>(
                     matrixCredentialsMap: {
                         ...state.matrixCredentialsMap,
                         [homeServerUrl]: matrixCredentials,
+                    },
+                })),
+            casablancaCredentialsMap: {},
+            setCasablancaCredentials: (
+                homeServerUrl: string,
+                casablancaCredentials: CasablancaCredentials | null,
+            ) =>
+                set((state) => ({
+                    ...state,
+                    casablancaCredentialsMap: {
+                        ...state.casablancaCredentialsMap,
+                        [homeServerUrl]: casablancaCredentials,
                     },
                 })),
         }),

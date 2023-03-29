@@ -2,6 +2,8 @@ import { HistoryVisibility, IContent, JoinRule, RestrictedAllowType } from 'matr
 import { Channel, Membership, Mention, PowerLevels } from './zion-types'
 import { RoomIdentifier } from './room-identifier'
 import { BlockchainTransaction } from './web3-types'
+import { ChannelOp, StreamKind } from '@towns/proto'
+import { staticAssertNever } from '../utils/zion-utils'
 
 /**************************************************************************
  * We're using a union type to represent the different types of events that
@@ -92,7 +94,7 @@ export interface RoomCreateEvent {
     kind: ZTEvent.RoomCreate
     creator: string
     predecessor?: { event_id: string; room_id: string }
-    type?: string
+    type?: string | StreamKind
 }
 
 export interface RoomEncryptionEvent {
@@ -124,7 +126,7 @@ export interface RoomMemberEvent {
     userId: string
     avatarUrl?: string
     displayName?: string
-    isDirect: boolean
+    isDirect?: boolean
     membership: Membership
     reason?: string
 }
@@ -163,6 +165,7 @@ export interface RoomRedactionEvent {
 export interface SpaceChildEvent {
     kind: ZTEvent.SpaceChild
     childId: string
+    channelOp?: ChannelOp
 }
 
 export interface SpaceParentEvent {
@@ -237,4 +240,63 @@ export interface FullyReadMarker {
 export interface BlockchainTransactionEvent {
     kind: ZTEvent.BlockchainTransaction
     content: BlockchainTransaction
+}
+
+export function getFallbackContent(
+    senderDisplayName: string,
+    content?: TimelineEvent_OneOf,
+    error?: string,
+): string {
+    if (error) {
+        return error
+    }
+    if (!content) {
+        throw new Error('Either content or error should be defined')
+    }
+    switch (content.kind) {
+        case ZTEvent.Reaction:
+            return `${senderDisplayName} reacted with ${content.reaction} to ${content.targetEventId}`
+        case ZTEvent.RoomAvatar:
+            return `url: ${content.url ?? 'undefined'}`
+        case ZTEvent.RoomCanonicalAlias: {
+            const alt = (content.altAliases ?? []).join(', ')
+            return `alias: ${content.alias}, alt alaises: ${alt}`
+        }
+        case ZTEvent.RoomCreate:
+            return content.type ? `type: ${content.type}` : ''
+        case ZTEvent.RoomEncryption:
+            return `algorithm: ${content.roomEncryption.algorithm} rotationMs: ${
+                content.roomEncryption.rotationPeriodMs?.toString() ?? 'N/A'
+            } rotationMsgs: ${content.roomEncryption.rotationPeriodMsgs?.toString() ?? 'N/A'}`
+        case ZTEvent.RoomMessageEncrypted:
+            return `Decrypting...`
+        case ZTEvent.RoomHistoryVisibility:
+            return `newValue: ${content.historyVisibility}`
+        case ZTEvent.RoomJoinRules:
+            return `newValue: ${content.joinRule}`
+        case ZTEvent.RoomMember: {
+            const name = content.displayName ?? content.userId
+            const avatar = content.avatarUrl ?? 'none'
+            return `[${content.membership}] name: ${name} avatar: ${avatar}`
+        }
+        case ZTEvent.RoomMessage:
+            return `${senderDisplayName}: ${content.body}`
+        case ZTEvent.RoomName:
+            return `newValue: ${content.name}`
+        case ZTEvent.RoomTopic:
+            return `newValue: ${content.topic}`
+        case ZTEvent.RoomRedaction:
+            return `${senderDisplayName}: ~Redacted~`
+        case ZTEvent.RoomPowerLevels:
+            return `${content.kind}`
+        case ZTEvent.SpaceChild:
+            return `childId: ${content.childId}`
+        case ZTEvent.SpaceParent:
+            return `parentId: ${content.parentId}`
+        case ZTEvent.BlockchainTransaction:
+            return `blockchainTransaction: ${content.content.hash}`
+        default:
+            staticAssertNever(content)
+            return `Unreachable ${content?.kind ?? 'undefined'}`
+    }
 }

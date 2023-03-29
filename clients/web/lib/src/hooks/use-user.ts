@@ -4,9 +4,9 @@ import { useCasablancaUser } from './CasablancClient/useCasablancaUser'
 import { useMatrixUser } from './MatrixClient/useMatrixUser'
 
 export function useUser(userId?: string): User | undefined {
-    const { client } = useZionContext()
-    const matrixUser = useMatrixUser(userId, client?.matrixClient)
-    const casablancaUser = useCasablancaUser(userId, client?.casablancaClient)
+    const { matrixClient, casablancaClient } = useZionContext()
+    const matrixUser = useMatrixUser(userId, matrixClient)
+    const casablancaUser = useCasablancaUser(userId, casablancaClient)
 
     return matrixUser ?? casablancaUser
 }

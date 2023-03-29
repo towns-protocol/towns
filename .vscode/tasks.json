@@ -113,6 +113,16 @@
         }
       },
       {
+        "label": "YarnClean & Cleanup",
+        "type": "shell",
+        "command": "./scripts/yarn-clean.sh",
+        "isBackground": true,
+        "problemMatcher": [],
+        "presentation": {
+          "group": "ephemeral"
+        }
+      },
+      {
         "label": "Dendrite (from source)",
         "type": "shell",
         "command": "./scripts/start-local-dendrite.sh",

@@ -22,7 +22,7 @@ export class OnboardingStep_LoadProfile extends IOnboardingStep<ObState_Loading>
 
     start() {
         this.client
-            .getProfileInfo(this.userId)
+            .getProfileInfo(this.matrixUserId)
             .then(() => {
                 this.emit(OnboardingStepEvent.StateUpdate, this.state, true)
             })

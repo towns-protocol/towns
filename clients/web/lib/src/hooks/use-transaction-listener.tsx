@@ -45,13 +45,13 @@ async function onSuccessfulTransaction(client: ZionClient, transaction: Blockcha
     }
     switch (transaction.type) {
         case BlockchainTransactionType.CreateChannel:
-            if (!transaction.data.parentSpaceId || !client.matrixClient) {
+            if (!transaction.data.parentSpaceId || !client) {
                 return
             }
 
             try {
                 const content: BlockchainTransactionEvent['content'] = transaction
-                await client.matrixClient.sendStateEvent(
+                await client.sendStateEvent(
                     transaction.data.parentSpaceId,
                     ZTEvent.BlockchainTransaction,
                     content,

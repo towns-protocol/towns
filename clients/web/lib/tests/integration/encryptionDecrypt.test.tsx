@@ -19,7 +19,7 @@ import { ZionTestApp } from './helpers/ZionTestApp'
 import { ZionTestWeb3Provider } from './helpers/ZionTestWeb3Provider'
 import { TestConstants } from './helpers/TestConstants'
 
-describe('canDecryptMessages', () => {
+describe('encryptionDecrypt', () => {
     test('can decrypt previously read messages after logging out and then logging back in', async () => {
         // create clients
         const { jane } = await registerAndStartClients(['jane'])

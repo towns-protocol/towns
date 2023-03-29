@@ -7,8 +7,7 @@ import { enrichPowerLevels } from '../client/matrix/PowerLevels'
 import { SpaceProtocol } from '../client/ZionClientTypes'
 
 export const usePowerLevels = (roomId: RoomIdentifier | undefined): PowerLevels => {
-    const { client } = useZionContext()
-    const matrixClient = client?.matrixClient
+    const { matrixClient } = useZionContext()
     const [powerLevels, setPowerLevels] = useState<PowerLevels>(enrichPowerLevels())
 
     useEffect(() => {

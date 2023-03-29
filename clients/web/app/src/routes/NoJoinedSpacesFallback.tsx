@@ -1,5 +1,4 @@
 import React, { useEffect } from 'react'
-
 import { useNavigate } from 'react-router'
 import { Membership, useZionClient, useZionContext } from 'use-zion-client'
 import { TimelineShimmer } from '@components/Shimmer/TimelineShimmer'
@@ -8,6 +7,7 @@ import { PATHS } from 'routes'
 import { env } from 'utils'
 import { useWaitForInitialSync } from 'hooks/useWaitForInitialSync'
 import { SentryReportModal } from '@components/SentryErrorReport/SentryErrorReport'
+
 import { LiquidContainer } from './SpacesIndex'
 
 export const NoJoinedSpacesFallback = () => {

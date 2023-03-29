@@ -21,9 +21,9 @@ import { useCreateSpaceTransaction } from '../../src/hooks/use-create-space-tran
 import { useRoles } from '../../src/hooks/use-roles'
 import { useSpacesFromContract } from '../../src/hooks/use-spaces-from-contract'
 import { useTransactionStore } from '../../src/store/use-transactions-store'
-import { useZionClient } from '../../src/hooks/use-zion-client'
 import { ZTEvent } from '../../src/types/timeline-types'
 import { MatrixEvent, RoomEvent } from 'matrix-js-sdk'
+import { useZionContext } from '../../src/components/ZionContextProvider'
 
 describe('useCreateChannelTransactionHook', () => {
     test('user can create channel', async () => {
@@ -56,7 +56,7 @@ describe('useCreateChannelTransactionHook', () => {
         }
 
         const TestComponent = () => {
-            const { client } = useZionClient()
+            const { matrixClient } = useZionContext()
             const spaceTransaction = useCreateSpaceTransaction()
             const {
                 createSpaceTransactionWithRole,
@@ -97,12 +97,12 @@ describe('useCreateChannelTransactionHook', () => {
                         setNumberOfChannelBlockchainEvents((t) => t + 1)
                     }
                 }
-                client?.matrixClient?.on(RoomEvent.Timeline, onBlockchainTransaction)
+                matrixClient?.on(RoomEvent.Timeline, onBlockchainTransaction)
 
                 return () => {
-                    client?.matrixClient?.off(RoomEvent.Timeline, onBlockchainTransaction)
+                    matrixClient?.off(RoomEvent.Timeline, onBlockchainTransaction)
                 }
-            }, [client])
+            }, [matrixClient])
 
             const roleIds = useMemo(() => {
                 const roleIds: number[] = []

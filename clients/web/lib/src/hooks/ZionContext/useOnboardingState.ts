@@ -7,6 +7,7 @@ import { OnboardingStep_LoadProfile } from './onboarding/OnboardingStep_LoadProf
 import { OnboardingStep_UserProfile } from './onboarding/OnboardingStep_UserProfile'
 import { OnboardingStep_WelcomeSplash } from './onboarding/OnboardingStep_WelcomeSplash'
 import isEqual from 'lodash/isEqual'
+import { MatrixClient } from 'matrix-js-sdk'
 
 const ONBOARDING_STEPS = [
     OnboardingStep_LoadProfile,
@@ -17,17 +18,20 @@ const ONBOARDING_STEPS = [
 
 const initialState: IOnboardingState = { kind: 'none' }
 
-export function useOnboardingState(client?: ZionClient): IOnboardingState {
+export function useOnboardingState(
+    client: ZionClient | undefined,
+    matrixClient: MatrixClient | undefined,
+): IOnboardingState {
     // single state variable that we report back to the world
     const [state, setState] = useState<IOnboardingState>(initialState)
     // step index that runs our state machine
     const [stepIndex, setStepIndex] = useState(0)
     // if the client is defined, userId should be defined as well
-    const userId = client?.getUserId()
+    const matrixUserId = matrixClient?.getUserId() ?? undefined
     // step queue machinery:
     useEffect(() => {
         // initial condidtions
-        if (!client || !userId) {
+        if (!client || !matrixClient || !matrixUserId) {
             setState(initialState)
             setStepIndex(0)
             return
@@ -60,7 +64,7 @@ export function useOnboardingState(client?: ZionClient): IOnboardingState {
         }
 
         // instantiate the step
-        const step = new ONBOARDING_STEPS[stepIndex](client, userId)
+        const step = new ONBOARDING_STEPS[stepIndex](client, matrixClient, matrixUserId)
         // start or advance
         if (step.shouldExecute()) {
             const state = step.state
@@ -77,7 +81,7 @@ export function useOnboardingState(client?: ZionClient): IOnboardingState {
         } else {
             advanceState()
         }
-    }, [client, stepIndex, userId])
+    }, [client, matrixClient, stepIndex, matrixUserId])
 
     return state
 }

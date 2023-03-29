@@ -35,12 +35,12 @@ describe('mentions', () => {
         console.log("bob's spaceId", { spaceId, channelId })
 
         await alice.joinRoom(channelId)
-        const bobDisplayName = bob.getUser(bob.getUserId()!)?.displayName ?? 'bob'
+        const bobDisplayName = bob.getUser(bob.getUserId(channelId.protocol)!)?.displayName ?? 'bob'
         // alice sends a wenmoon message
         await alice.sendMessage(channelId, 'Hi @bob', {
             mentions: [
                 {
-                    userId: bob.getUserId()!,
+                    userId: bob.getUserId(channelId.protocol)!,
                     displayName: bobDisplayName,
                 },
             ],
@@ -54,7 +54,7 @@ describe('mentions', () => {
                     e?.content?.body === 'Hi @bob' &&
                     e?.content?.mentions != undefined &&
                     e?.content?.mentions.length > 0 &&
-                    e?.content?.mentions[0].userId === bob.getUserId() &&
+                    e?.content?.mentions[0].userId === bob.getUserId(channelId.protocol) &&
                     e?.content?.mentions[0].displayName === bobDisplayName,
             ).toEqual(true)
         })

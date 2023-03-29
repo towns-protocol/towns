@@ -1,6 +1,6 @@
 import { RoomIdentifier } from '../../types/room-identifier'
 import { Membership, RoomMember } from '../../types/zion-types'
-import { Client as CasablancaClient } from '@towns/client'
+import { Stream } from '@towns/client'
 import { useEffect, useState } from 'react'
 import { SpaceProtocol } from '../../client/ZionClientTypes'
 import { useCasablancaStream } from './useCasablancaStream'
@@ -8,7 +8,6 @@ import { useCasablancaStream } from './useCasablancaStream'
 export function useCasablancaStreamMember(
     roomId?: RoomIdentifier,
     userId?: string,
-    casablancaClient?: CasablancaClient,
 ): RoomMember | undefined {
     const channelStream = useCasablancaStream(roomId?.networkId)
     const [roomMember, setRoomMember] = useState<RoomMember>()
@@ -17,34 +16,48 @@ export function useCasablancaStreamMember(
         if (roomId?.protocol !== SpaceProtocol.Casablanca) {
             return
         }
-        if (!casablancaClient || !userId || !roomId || !channelStream) {
+        if (!userId || !roomId || !channelStream) {
             return
         }
-
         const updateMember = () => {
-            // TODO https://linear.app/hnt-labs/issue/HNT-634/getroom-for-casablanca
             setRoomMember({
                 userId,
                 name: 'TODO. Get from casablanca stream',
                 rawDisplayName: '',
-                membership: Membership.Join,
+                membership: getCasablancaMembership(channelStream, userId),
                 disambiguate: false,
                 avatarUrl: undefined,
             })
         }
 
-        const onNewUserJoined = (streamId: string, newUserId: string) => {
+        updateMember()
+
+        const onStreamUserEvent = (streamId: string, newUserId: string) => {
             if (userId === newUserId) {
                 updateMember()
             }
         }
 
-        channelStream.on('streamNewUserJoined', onNewUserJoined)
+        channelStream.on('streamNewUserJoined', onStreamUserEvent)
+        channelStream.on('streamNewUserInvited', onStreamUserEvent)
+        channelStream.on('streamUserLeft', onStreamUserEvent)
 
         return () => {
-            channelStream.off('streamNewUserJoined', onNewUserJoined)
+            channelStream.off('streamNewUserJoined', onStreamUserEvent)
+            channelStream.off('streamNewUserInvited', onStreamUserEvent)
+            channelStream.off('streamUserLeft', onStreamUserEvent)
         }
-    }, [casablancaClient, roomId, channelStream, userId])
+    }, [roomId, channelStream, userId])
 
     return roomMember
+}
+
+function getCasablancaMembership(stream: Stream, userId: string): Membership {
+    if (stream.rollup.joinedUsers.has(userId)) {
+        return Membership.Join
+    } else if (stream.rollup.invitedUsers.has(userId)) {
+        return Membership.Invite
+    } else {
+        return Membership.None
+    }
 }

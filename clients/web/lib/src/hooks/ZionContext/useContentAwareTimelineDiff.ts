@@ -11,7 +11,7 @@ import { useEffect } from 'react'
 import { FullyReadMarker, TimelineEvent, ZTEvent } from '../../types/timeline-types'
 import { useFullyReadMarkerStore } from '../../store/use-fully-read-marker-store'
 import { makeRoomIdentifier, RoomIdentifier } from '../../types/room-identifier'
-import { TimelineStoreInterface, useTimelineStore } from '../../store/use-timeline-store'
+import { TimelineStore, useTimelineStore } from '../../store/use-timeline-store'
 import { ZionAccountDataType, SpaceProtocol } from '../../client/ZionClientTypes'
 import { isZTimelineEvent } from './useMatrixTimelines'
 
@@ -37,10 +37,7 @@ export function useContentAwareTimelineDiff(matrixClient?: MatrixClient) {
         }
 
         // listen to the timeine for changes, diff each change, and update the unread counts
-        const onTimelineChange = (
-            timelineState: TimelineStoreInterface,
-            prev: TimelineStoreInterface,
-        ) => {
+        const onTimelineChange = (timelineState: TimelineStore, prev: TimelineStore) => {
             if (firstTime) {
                 effectState = initOnce(matrixClient, userId, timelineState)
                 firstTime = false
@@ -132,7 +129,7 @@ function toFullyReadMarker(value: any): FullyReadMarker {
 function initOnce(
     matrixClient: MatrixClient,
     userId: string,
-    timelineState: TimelineStoreInterface,
+    timelineState: TimelineStore,
 ): LocalEffectState {
     let effectState: LocalEffectState = {
         encryptedEvents: {},
@@ -219,8 +216,8 @@ function onRemoteRoomAccountDataEvent(event: MatrixEvent, _room: MatrixRoom, _pr
 }
 
 function diffTimeline(
-    timelineState: TimelineStoreInterface,
-    prev: TimelineStoreInterface,
+    timelineState: TimelineStore,
+    prev: TimelineStore,
     effectState: LocalEffectState,
     userId: string,
 ): LocalEffectState {

@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 
 export function useCasablancaStream(streamId?: string): Stream | undefined {
     const [stream, setStream] = useState<Stream>()
-    const casablancaClient = useZionContext().client?.casablancaClient
+    const { casablancaClient } = useZionContext()
 
     useEffect(() => {
         if (!casablancaClient || !streamId) {

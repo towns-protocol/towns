@@ -18,7 +18,7 @@ export class OnboardingStep_UserProfile extends IOnboardingStep<ObState_UserProf
                 this.matrixUser?.displayName === null ||
                 this.matrixUser?.displayName === undefined ||
                 this.matrixUser.displayName === '' ||
-                this.userId.indexOf(this.matrixUser.displayName) >= 0,
+                this.matrixUserId.indexOf(this.matrixUser.displayName) >= 0,
         }
     }
 
@@ -36,7 +36,7 @@ export class OnboardingStep_UserProfile extends IOnboardingStep<ObState_UserProf
 
     start() {
         if (!this.matrixUser) {
-            throw new Error('OnboardingStep_UserProfile::UserId is undefined')
+            throw new Error('OnboardingStep_UserProfile::matrixUser is undefined')
         }
         this.matrixUser?.on(UserEvent.DisplayName, this.onUserUpdatedCB)
         this.matrixUser?.on(UserEvent.AvatarUrl, this.onUserUpdatedCB)

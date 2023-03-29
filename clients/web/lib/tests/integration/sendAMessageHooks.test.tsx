@@ -72,6 +72,7 @@ describe('sendMessageHooks', () => {
             )
             // send message
             const onClickSendMessage = useCallback(() => {
+                console.log(`sendAMessage::onClickSendMessage`, { janesChannelId })
                 void (async () => {
                     await sendMessage(janesChannelId, 'hello jane')
                     setMsgSent(true)
@@ -79,6 +80,10 @@ describe('sendMessageHooks', () => {
             }, [sendMessage])
             // edit message
             const onEdit = useCallback(() => {
+                console.log(`sendAMessage::onEdit`, {
+                    janesChannelId,
+                    eventId: messagesOrRedactions[1].eventId,
+                })
                 void (async () => {
                     console.log(`onEdit`, messagesOrRedactions[1].eventId)
                     await editMessage(
@@ -94,6 +99,10 @@ describe('sendMessageHooks', () => {
             }, [channelId, editMessage, messagesOrRedactions])
             // redact message
             const onRedact = useCallback(() => {
+                console.log(`sendAMessage::onRedact`, {
+                    janesChannelId,
+                    eventId: messagesOrRedactions[1].eventId,
+                })
                 void redactEvent(channelId, messagesOrRedactions[1].eventId)
             }, [channelId, messagesOrRedactions, redactEvent])
             // format for easy reading

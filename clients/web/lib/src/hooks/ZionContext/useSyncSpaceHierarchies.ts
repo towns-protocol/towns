@@ -6,6 +6,7 @@ import {
     IRoomTimelineData,
     EventType,
     Room,
+    MatrixClient,
 } from 'matrix-js-sdk'
 import { useEffect, useRef, useState } from 'react'
 import { toZionSpaceChild } from '../../store/use-matrix-store'
@@ -23,10 +24,10 @@ import { useSpaceIdStore } from './useSpaceIds'
 // assumes spaceIds is stable, meaning if networkId doesn't change, it will remain the same object
 export function useSyncSpaceHierarchies(
     client: ZionClient | undefined,
+    matrixClient: MatrixClient | undefined,
     invitedToIds: RoomIdentifier[],
 ): { spaceHierarchies: SpaceHierarchies } {
     const { spaceIds } = useSpaceIdStore()
-    const matrixClient = client?.matrixClient
     const [spaceHierarchies, setSpaceHierarchies] = useState<SpaceHierarchies>({})
     const [spaceIdsQueue, setSpaceIdsQueue] = useState<string[]>(spaceIds.map((r) => r.networkId))
     const [inFlightCurrent, setInflightCurrnet] = useState<Promise<void> | null>(null)
@@ -52,7 +53,7 @@ export function useSyncSpaceHierarchies(
     }
     // our queue
     useEffect(() => {
-        if (!matrixClient) {
+        if (!client || !matrixClient) {
             return
         }
         if (inFlightCurrent) {

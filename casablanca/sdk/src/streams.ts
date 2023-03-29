@@ -30,7 +30,7 @@ export type StreamEvents = {
     channelNewMessage: (channelId: string, message: ParsedEvent) => void
 
     streamInitialized: (streamId: string, streamKind: StreamKind, events: ParsedEvent[]) => void
-    streamUpdated: (streamId: string, events: ParsedEvent[]) => void
+    streamUpdated: (streamId: string, streamKind: StreamKind, events: ParsedEvent[]) => void
 }
 
 export type StreamEventKeys = keyof StreamEvents
@@ -39,6 +39,7 @@ export class StreamStateView {
     readonly streamId: string
     readonly streamKind: StreamKind
 
+    readonly timeline: ParsedEvent[] = []
     readonly events = new Map<string, ParsedEvent>()
 
     readonly joinedUsers = new Set<string>()
@@ -83,7 +84,7 @@ export class StreamStateView {
 
     private addEvent(event: ParsedEvent, emitter?: TypedEmitter<StreamEvents>): void {
         // TODO: is there need to check event validity and chaining here?
-
+        this.timeline.push(event)
         this.events.set(event.hashStr, event)
         this.leafEventHashes.set(event.hashStr, event.envelope.hash)
         for (const prev of event.event.prevEventsStrs ?? []) {
@@ -174,7 +175,7 @@ export class StreamStateView {
             if (init ?? false) {
                 emitter.emit('streamInitialized', this.streamId, this.streamKind, events)
             } else {
-                emitter.emit('streamUpdated', this.streamId, events)
+                emitter.emit('streamUpdated', this.streamId, this.streamKind, events)
             }
         }
     }

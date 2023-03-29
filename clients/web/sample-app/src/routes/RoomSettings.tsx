@@ -12,13 +12,13 @@ import {
 
 export const RoomSettings = () => {
     const { spaceSlug, channelSlug } = useParams()
-    const { client } = useZionContext()
+    const { matrixClient } = useZionContext()
     const { setPowerLevel } = useZionClient()
     // if we have a room id, use it, otherwise pull up the space id
     const targetId = channelSlug || spaceSlug
     const roomId = targetId ? makeRoomIdentifier(targetId) : undefined
     const room = useRoom(roomId)
-    const matrixRoom = roomId ? client?.matrixClient?.getRoom(roomId.networkId) : undefined
+    const matrixRoom = roomId ? matrixClient?.getRoom(roomId.networkId) : undefined
     const joinRule = matrixRoom ? matrixRoom.getJoinRule() : 'unknown'
 
     const powerLevels = usePowerLevels(room?.id)

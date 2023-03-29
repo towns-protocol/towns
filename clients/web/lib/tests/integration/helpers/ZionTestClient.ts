@@ -33,6 +33,8 @@ import { staticAssertNever } from '../../../src/utils/zion-utils'
 import { toEvent } from '../../../src/hooks/ZionContext/useMatrixTimelines'
 import { toZionEventFromCsbEvent } from '../../../src/client/casablanca/CasablancaUtils'
 import { newMatrixLoginSession, newMatrixRegisterSession } from '../../../src/hooks/session'
+import { MatrixClient } from 'matrix-js-sdk'
+import { Client as CasablancaClient } from '@towns/client'
 
 export interface ZionTestClientProps {
     primaryProtocol?: SpaceProtocol
@@ -52,6 +54,9 @@ export class ZionTestClient extends ZionClient {
         this.allClients = []
         console.log('========= ZionTestClient: cleanup done =========')
     }
+
+    public matrixClient?: MatrixClient = undefined // override base class to be public for tests
+    public casablancaClient?: CasablancaClient = undefined // override base class to be public for tests
 
     public props?: ZionTestClientProps
     public provider: ZionTestWeb3Provider

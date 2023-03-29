@@ -36,6 +36,7 @@ import { useMatrixWalletSignIn } from './use-matrix-wallet-sign-in'
 import { useResetFullyReadMarkers } from './ZionContext/useResetFullyReadMarkers'
 import { useSendReadReceipt } from './ZionContext/useSendReadReceipt'
 import { useZionContext } from '../components/ZionContextProvider'
+import { useCasablancaWalletSignIn } from './use-casablanca-wallet-signin'
 
 /**
  * Matrix client API to interact with the Matrix server.
@@ -111,6 +112,7 @@ interface ZionClientImpl {
         SendTextMessageOptions: SendTextMessageOptions | undefined,
     ) => Promise<void>
     getIsWalletRegisteredWithMatrix: () => Promise<boolean>
+    getIsWalletRegisteredWithCasablanca: () => Promise<boolean>
     getServerVersions: () => Promise<IZionServerVersions | undefined>
     inviteUser: (roomId: RoomIdentifier, userId: string) => Promise<void>
     isRoomEncrypted: (roomId: RoomIdentifier) => boolean | undefined
@@ -118,8 +120,10 @@ interface ZionClientImpl {
     leaveRoom: (roomId: RoomIdentifier, parentNetworkId?: string) => Promise<void>
     logout: () => Promise<void>
     loginWithWalletToMatrix: (statement: string) => Promise<void>
+    loginWithWalletToCasablanca: (statement: string) => Promise<void>
     redactEvent: (roomId: RoomIdentifier, eventId: string, reason?: string) => Promise<void>
     registerWalletWithMatrix: (statement: string) => Promise<void>
+    registerWalletWithCasablanca: (statement: string) => Promise<void>
     resetFullyReadMarkers: () => void
     scrollback: (roomId: RoomIdentifier, limit?: number) => Promise<void>
     sendMessage: (
@@ -145,6 +149,11 @@ interface ZionClientImpl {
 export function useZionClient(): ZionClientImpl {
     const { getIsWalletRegisteredWithMatrix, loginWithWalletToMatrix, registerWalletWithMatrix } =
         useMatrixWalletSignIn()
+    const {
+        getIsWalletRegisteredWithCasablanca,
+        loginWithWalletToCasablanca,
+        registerWalletWithCasablanca,
+    } = useCasablancaWalletSignIn()
     const { client } = useZionContext()
     const clientRunning = useMemo(() => client !== undefined, [client])
     const logout = useLogout()
@@ -190,15 +199,18 @@ export function useZionClient(): ZionClientImpl {
         waitForDeleteRoleTransaction: useWithCatch(client?.waitForDeleteRoleTransaction),
         editMessage: useWithCatch(client?.editMessage),
         getIsWalletRegisteredWithMatrix,
+        getIsWalletRegisteredWithCasablanca,
         getServerVersions: useWithCatch(client?.getServerVersions),
         inviteUser: useWithCatch(client?.inviteUser),
         isRoomEncrypted,
         joinRoom: useWithCatch(client?.joinRoom),
         leaveRoom: useWithCatch(client?.leave),
         loginWithWalletToMatrix,
+        loginWithWalletToCasablanca,
         logout,
         redactEvent: useWithCatch(client?.redactEvent),
         registerWalletWithMatrix,
+        registerWalletWithCasablanca,
         resetFullyReadMarkers,
         scrollback: useWithCatch(client?.scrollback),
         sendMessage: useWithCatch(client?.sendMessage),

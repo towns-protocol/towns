@@ -19,10 +19,15 @@ import { Web3ContextProvider } from './Web3ContextProvider'
 import { Chain } from 'wagmi'
 import { useTransactionListener } from '../hooks/use-transaction-listener'
 import { QueryProvider } from './QueryProvider'
+import { MatrixClient } from 'matrix-js-sdk'
+import { Client as CasablancaClient } from '@towns/client'
+import { useCasablancaTimelines } from '../hooks/ZionContext/useCasablancaTimelines'
 
 export interface IZionContext {
-    client?: ZionClient /// only set when user is authenticated with matrix
+    client?: ZionClient /// only set when user is authenticated with matrix or casablanca
     clientSingleton?: ZionClient /// always set, can be use for matrix, this duplication can be removed once we transition to casablanca
+    matrixClient?: MatrixClient /// set if we're logged in and matrix client is started
+    casablancaClient?: CasablancaClient /// set if we're logged in and casablanca client is started
     rooms: Record<string, Room | undefined>
     invitedToIds: RoomIdentifier[] // ordered list of invites (spaces and channels)
     spaceUnreads: Record<string, boolean> // spaceId -> aggregated hasUnread
@@ -85,11 +90,11 @@ const ContextImpl = (props: Props): JSX.Element => {
         defaultSpaceAvatarSrc,
     } = props
 
-    const { client, clientSingleton } = useZionClientListener(props)
-    const { invitedToIds } = useSpacesIds(client)
-    useContentAwareTimelineDiff(client?.matrixClient)
-    const { spaces } = useSpaces(client)
-    const { spaceHierarchies } = useSyncSpaceHierarchies(client, invitedToIds)
+    const { client, clientSingleton, matrixClient, casablancaClient } = useZionClientListener(props)
+    const { invitedToIds } = useSpacesIds(matrixClient)
+    useContentAwareTimelineDiff(matrixClient)
+    const { spaces } = useSpaces(matrixClient, casablancaClient)
+    const { spaceHierarchies } = useSyncSpaceHierarchies(client, matrixClient, invitedToIds)
     const { spaceUnreads, spaceMentions } = useSpaceUnreads(
         client,
         spaceHierarchies,
@@ -101,10 +106,11 @@ const ContextImpl = (props: Props): JSX.Element => {
         [defaultSpaceId],
     )
 
-    const rooms = useMatrixRooms(client?.matrixClient)
-    useMatrixTimelines(client?.matrixClient)
-    const onboardingState = useOnboardingState(client)
-    const syncError = useSyncErrorHandler(matrixServerUrl, client)
+    const rooms = useMatrixRooms(matrixClient)
+    useMatrixTimelines(matrixClient)
+    useCasablancaTimelines(casablancaClient)
+    const onboardingState = useOnboardingState(client, matrixClient)
+    const syncError = useSyncErrorHandler(matrixServerUrl, client, matrixClient)
 
     useFavIconBadge(invitedToIds, spaceUnreads, spaceMentions)
 
@@ -115,6 +121,8 @@ const ContextImpl = (props: Props): JSX.Element => {
             value={{
                 client,
                 clientSingleton,
+                matrixClient,
+                casablancaClient,
                 rooms,
                 invitedToIds,
                 spaceUnreads,

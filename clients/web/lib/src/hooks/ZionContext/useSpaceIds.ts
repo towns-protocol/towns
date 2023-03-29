@@ -1,8 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { useEffect, useRef, useState } from 'react'
-import { ZionClient } from '../../client/ZionClient'
 import { Membership } from '../../types/zion-types'
-import { ClientEvent, Room as MatrixRoom, RoomEvent } from 'matrix-js-sdk'
+import { ClientEvent, MatrixClient, Room as MatrixRoom, RoomEvent } from 'matrix-js-sdk'
 import isEqual from 'lodash/isEqual'
 import { makeRoomIdentifier, RoomIdentifier } from '../../types/room-identifier'
 import { create } from 'zustand'
@@ -23,10 +22,9 @@ export const useSpaceIdStore = create<SpaceIdStoreInterface>((set) => ({
 }))
 
 /// returns a stable list of space ids (if the networkId is the same, the object reference should stay the same)
-export function useSpacesIds(client: ZionClient | undefined): {
+export function useSpacesIds(matrixClient: MatrixClient | undefined): {
     invitedToIds: RoomIdentifier[]
 } {
-    const matrixClient = client?.matrixClient
     const [invitedToIds, setInvitedToIds] = useState<RoomIdentifier[]>([])
 
     const { setSpaceIds } = useSpaceIdStore()
