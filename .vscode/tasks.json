@@ -60,6 +60,7 @@
           "Casablanca",
           "WatchSharedLib",
           "WatchCasablancaClient",
+          "WatchCasablancaProto",
           "App",
           "SampleApp",
           "UnfurlWorker",
@@ -196,6 +197,16 @@
         "label": "WatchCasablancaClient",
         "type": "shell",
         "command": "./scripts/wait-for-casablanca.sh && cd casablanca/sdk && yarn watch",
+        "isBackground": true,
+        "problemMatcher": [],
+        "presentation": {
+          "group": "local-watch"
+        }
+      },
+      {
+        "label": "WatchCasablancaProto",
+        "type": "shell",
+        "command": "./scripts/wait-for-casablanca.sh && cd casablanca/proto && yarn watch",
         "isBackground": true,
         "problemMatcher": [],
         "presentation": {
