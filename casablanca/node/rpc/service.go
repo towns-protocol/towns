@@ -346,6 +346,7 @@ func (s *Service) sign(payload *protocol.Payload, prevHashes [][]byte) *protocol
 	}
 }
 
+/*
 func makeInceptionEvent(streamId string, streamKind protocol.StreamKind, spaceId string) *protocol.Payload {
 	return &protocol.Payload{
 		Payload: &protocol.Payload_Inception_{
@@ -357,6 +358,7 @@ func makeInceptionEvent(streamId string, streamKind protocol.StreamKind, spaceId
 		},
 	}
 }
+*/
 
 func makePayload_UserStreamOp(op *protocol.Payload_UserStreamOp) *protocol.Payload {
 	return &protocol.Payload{

@@ -24,11 +24,13 @@ func StartDB(ctx context.Context) (string, func(), error) {
 	pool, err := dockertest.NewPool("")
 	if err != nil {
 		log.Fatalf("Could not construct pool: %s", err)
+		return dbUrl, func() {}, err
 	}
 
 	err = pool.Client.Ping()
 	if err != nil {
 		log.Fatalf("Could not connect to Docker: %s", err)
+		return dbUrl, func() {}, err
 	}
 
 	// pulls an image, creates a container based on it and runs it
@@ -48,6 +50,7 @@ func StartDB(ctx context.Context) (string, func(), error) {
 	})
 	if err != nil {
 		log.Fatalf("Could not start resource: %s", err)
+		return dbUrl, func() {}, err
 	}
 
 	hostAndPort := resource.GetHostPort("5432/tcp")
@@ -55,7 +58,11 @@ func StartDB(ctx context.Context) (string, func(), error) {
 
 	log.Println("Connecting to database on url: ", testDatabaseUrl)
 
-	resource.Expire(600) // Tell docker to hard kill the container in 120 seconds
+	err = resource.Expire(600) // Tell docker to hard kill the container in 120 seconds
+	if err != nil {
+		log.Fatalf("Could not set expiration on resource: %s", err)
+		return dbUrl, func() {}, err
+	}
 
 	// exponential backoff-retry, because the application in the container might not be ready to accept connections yet
 	pool.MaxWait = 120 * time.Second
@@ -68,6 +75,7 @@ func StartDB(ctx context.Context) (string, func(), error) {
 		return db.Ping()
 	}); err != nil {
 		log.Fatalf("Could not connect to docker: %s", err)
+		return dbUrl, func() {}, err
 	}
 
 	return testDatabaseUrl, func() {

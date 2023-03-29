@@ -86,7 +86,10 @@ func NewPGEventStore(ctx context.Context, database_url string, clean bool) (*PGE
 	}()
 
 	store := &PGEventStore{pool: pool, multiplexerCtl: make(chan bool), consumers: NewSmap()}
-	store.startMultiplexer(ctx)
+	err = store.startMultiplexer(ctx)
+	if err != nil {
+		return nil, err
+	}
 
 	go func() {
 		ctx, log := infra.SetLoggerWithProcess(ctx, "debug-events-loop")
@@ -96,7 +99,10 @@ func NewPGEventStore(ctx context.Context, database_url string, clean bool) (*PGE
 				log.Debug("Debug events dump: context done")
 				return
 			case <-time.After(1 * time.Second):
-				dump(store, ctx)
+				err := dump(store, ctx)
+				if err != nil {
+					log.Errorf("Debug events dump error: %v", err)
+				}
 			}
 		}
 	}()
@@ -104,39 +110,60 @@ func NewPGEventStore(ctx context.Context, database_url string, clean bool) (*PGE
 	return store, nil
 }
 
-func dump(store *PGEventStore, ctx context.Context) {
+func dump(store *PGEventStore, ctx context.Context) error {
 	log := infra.GetLogger(ctx)
 	streams, err := store.GetStreams(ctx)
 	if err != nil {
 		log.Errorf("GetStreams: %v", err)
-		return
+		return err
 	}
 
 	tx, err := store.pool.Begin(ctx)
 	if err != nil {
 		log.Errorf("Begin: %v", err)
-		return
+		return err
 	}
-	defer tx.Commit(ctx)
+	var committed = false
+	defer func() {
+		if !committed {
+			err := tx.Rollback(ctx)
+			if err != nil {
+				log.Errorf("Rollback: %v", err)
+			}
+		}
+	}()
 
 	for _, stream := range streams {
 
 		numEvents, err := addDebugEvents(ctx, tx, stream)
 		if err != nil {
 			log.Errorf("addDebugEvents: %v", err)
-			tx.Rollback(ctx)
-			return
+			rollbackErr := tx.Rollback(ctx)
+			if rollbackErr != nil {
+				log.Errorf("addDebugEvents Rollback: %v", rollbackErr)
+			}
+			return err
 		}
 		if numEvents > 0 {
 			log.Debug("Debug events dump: ", numEvents)
 		}
 	}
+	err = tx.Commit(ctx)
+	if err != nil {
+		log.Errorf("Commit: %v", err)
+		return err
+	}
+	committed = true
+	return nil
 }
 
 // Close closes the connection to the database
 func (s *PGEventStore) Close() error {
-	s.stopMultiplexer()
-	s.pool.Close()
+	defer s.pool.Close()
+	err := s.stopMultiplexer()
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -276,17 +303,24 @@ func (s *PGEventStore) CreateStream(ctx context.Context, streamID string, incept
 		log.Debug("CreateStream startTx error ", err)
 		return nil, err
 	}
-	defer tx.Rollback(ctx)
-
+	committed := false
+	defer func() {
+		if !committed {
+			err := tx.Rollback(ctx)
+			if err != nil {
+				log.Error("CreateStream rollback error ", err)
+			}
+		}
+	}()
 	exists, err := streamExists(ctx, tx, streamID)
 	if err != nil {
-		log.Debug("CreateStream streamExists error ", err)
+		log.Error("CreateStream streamExists error ", err)
 		return nil, err
 	}
 	if !exists {
 		err := createEventStreamInstance(ctx, tx, streamID)
 		if err != nil {
-			log.Debug("CreateStream createEventStreamInstance error ", err)
+			log.Error("CreateStream createEventStreamInstance error ", err)
 			return nil, err
 		}
 	}
@@ -294,14 +328,14 @@ func (s *PGEventStore) CreateStream(ctx context.Context, streamID string, incept
 	sql := createStreamSql(streamID)
 	_, err = tx.Exec(ctx, sql)
 	if err != nil {
-		log.Debug("CreateStream createStreamSql error ", err)
+		log.Error("CreateStream createStreamSql error ", err)
 		return nil, err
 	}
 
 	// add the inception events
 	seqNum, err := addEvents(ctx, tx, streamID, inceptionEvents)
 	if err != nil {
-		log.Debug("CreateStream addEvents error ", err)
+		log.Error("CreateStream addEvents error ", err)
 		return nil, err
 	}
 
@@ -309,6 +343,7 @@ func (s *PGEventStore) CreateStream(ctx context.Context, streamID string, incept
 	if err != nil {
 		return nil, err
 	}
+	committed = true
 	log.Debug("committed stream: ", streamID, " with seq_num: ", seqNum)
 	return SeqNumToBytes(seqNum, streamID), nil
 }
@@ -326,7 +361,15 @@ func (s *PGEventStore) AddEvent(ctx context.Context, streamId string, event *pro
 	if err != nil {
 		return nil, err
 	}
-	defer tx.Rollback(ctx)
+	committed := false
+	defer func() {
+		if !committed {
+			err := tx.Rollback(ctx)
+			if err != nil {
+				log.Error("CreateStream rollback error ", err)
+			}
+		}
+	}()
 
 	exists, err := streamExists(ctx, tx, streamId)
 	if err != nil {
@@ -344,8 +387,10 @@ func (s *PGEventStore) AddEvent(ctx context.Context, streamId string, event *pro
 
 	err = tx.Commit(ctx)
 	if err != nil {
+		log.Error("CreateStream commit error ", err)
 		return nil, err
 	}
+	committed = true
 
 	return SeqNumToBytes(seqNum, streamId), nil
 }
@@ -403,7 +448,15 @@ func (s *PGEventStore) GetStream(ctx context.Context, streamId string) (StreamPo
 	if err != nil {
 		return StreamPos{}, nil, err
 	}
-	defer tx.Rollback(ctx)
+	committed := false
+	defer func() {
+		if !committed {
+			err := tx.Rollback(ctx)
+			if err != nil {
+				log.Error("CreateStream rollback error ", err)
+			}
+		}
+	}()
 
 	exists, err := checkStream(ctx, tx, streamId)
 	if err != nil {
@@ -422,6 +475,13 @@ func (s *PGEventStore) GetStream(ctx context.Context, streamId string) (StreamPo
 		return StreamPos{}, nil, err
 	}
 
+	err = tx.Commit(ctx)
+	if err != nil {
+		log.Error("GetStream commit error ", err)
+		return StreamPos{}, nil, err
+	}
+	committed = true
+
 	seqNum, ok := seqNums[streamId]
 	if !ok {
 		panic("stream exists, but has not events")
@@ -439,7 +499,12 @@ func (s *PGEventStore) StreamExists(ctx context.Context, streamId string) (bool,
 	if err != nil {
 		return false, err
 	}
-	defer tx.Rollback(ctx)
+	defer func() {
+		err := tx.Rollback(ctx)
+		if err != nil {
+			log.Error("StreamExists rollback error ", err)
+		}
+	}()
 
 	return checkStream(ctx, tx, streamId)
 }
@@ -723,10 +788,17 @@ func (s *PGEventStore) startMultiplexer(ctx context.Context) error {
 				selection := s.consumers.getMinSeqNum(lastEventNums)
 				lastEvents, err := s.getLastEvents(ctx, tx, selection)
 				if err != nil {
-					tx.Rollback(ctx)
+					rollbackErr := tx.Rollback(ctx)
+					if rollbackErr != nil {
+						log.Errorf("Failed to rollback transaction: %v", rollbackErr)
+					}
 					return fmt.Errorf("failed to get last events: %w", err)
 				}
-				tx.Commit(ctx)
+				commitErr := tx.Commit(ctx)
+				if commitErr != nil {
+					log.Errorf("Failed to commit transaction: %v", commitErr)
+					return commitErr
+				}
 
 				seqNums := strings.Builder{}
 				for stream, events := range lastEvents {
@@ -913,7 +985,12 @@ func (s *PGEventStore) SyncStreams(ctx context.Context, syncPositions []*protoco
 	if err != nil {
 		return nil, err
 	}
-	defer tx.Rollback(ctx)
+	defer func() {
+		err := tx.Rollback(ctx)
+		if err != nil {
+			log.Errorf("Failed to rollback transaction: %s", err)
+		}
+	}()
 
 	if len(events) != 0 {
 		for streamId, events := range events {
@@ -1031,14 +1108,28 @@ func initStorage(ctx context.Context, pool *pgxpool.Pool) error {
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback(ctx)
+	committed := false
+	defer func() {
+		if !committed {
+			err := tx.Rollback(ctx)
+			if err != nil {
+				log.Errorf("Failed to rollback transaction: %s", err)
+			}
+		}
+	}()
 
 	_, err = tx.Exec(context.Background(), schema)
 	if err != nil {
 		return err
 	}
 
-	return tx.Commit(ctx)
+	err = tx.Commit(ctx)
+	if err != nil {
+		log.Errorf("Failed to commit transaction: %s", err)
+		return err
+	}
+	committed = true
+	return nil
 }
 
 func cleanStorage(ctx context.Context, pool *pgxpool.Pool) error {
@@ -1047,7 +1138,15 @@ func cleanStorage(ctx context.Context, pool *pgxpool.Pool) error {
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback(ctx)
+	committed := false
+	defer func() {
+		if !committed {
+			err := tx.Rollback(ctx)
+			if err != nil {
+				log.Errorf("Failed to rollback transaction: %s", err)
+			}
+		}
+	}()
 
 	_, err = tx.Exec(context.Background(), "DROP SCHEMA public CASCADE")
 	if err != nil {
@@ -1059,7 +1158,13 @@ func cleanStorage(ctx context.Context, pool *pgxpool.Pool) error {
 		return err
 	}
 
-	return tx.Commit(ctx)
+	err = tx.Commit(ctx)
+	if err != nil {
+		log.Errorf("Failed to commit transaction: %s", err)
+		return err
+	}
+	committed = true
+	return nil
 }
 
 //go:embed create_stream.sql

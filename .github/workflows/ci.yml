@@ -289,6 +289,11 @@ jobs:
               with:
                   access_token: ${{ github.token }}
 
+            - name: Linting
+              uses: golangci/golangci-lint-action@v3
+              with:
+                  working-directory: casablanca/node
+
             - name: Casablanca create db
               run: psql -h localhost -p 5433 -U postgres -f scripts/sql/create_db.sql
               working-directory: casablanca
@@ -297,7 +302,7 @@ jobs:
                   PGPASSWORD: postgres
 
             - name: Run node tests
-              run: go test ./...
+              run: go test --race ./...
               working-directory: casablanca/node
 
             # If CI failed, we send a slack notification
