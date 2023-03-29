@@ -833,7 +833,7 @@ func (s *PGEventStore) startMultiplexer(ctx context.Context) error {
 				}
 				log.Debugf("Events: %s", seqNums.String())
 				for stream, events := range lastEvents {
-					log.Debugf("Extracted %d events %s (start: %v last seq: %v)", len(events), stream, lastKnownSeqNums, lastEventNums)
+					log.Tracef("Extracted %d events %s (start: %v last seq: %v)", len(events), stream, lastKnownSeqNums, lastEventNums)
 				}
 
 				readyBlocks := s.consumers.Filter(lastEvents)
