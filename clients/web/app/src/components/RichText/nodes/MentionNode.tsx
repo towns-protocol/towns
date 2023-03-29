@@ -95,6 +95,8 @@ export class MentionNode extends TextNode {
             paddingY: 'xxs',
             rounded: 'xs',
         })
+        dom.setAttribute('data-lexical-mention', 'true')
+        dom.setAttribute('data-testid', 'mention-node')
         return dom
     }
 

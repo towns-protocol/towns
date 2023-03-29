@@ -4,6 +4,7 @@ import {
     SendMessageOptions,
     ZTEvent,
     useMyProfile,
+    useSpaceMembers,
     useTimelineThread,
 } from 'use-zion-client'
 import { MessageTimeline } from '@components/MessageTimeline/MessageTimeline'
@@ -11,6 +12,7 @@ import { MessageTimelineWrapper } from '@components/MessageTimeline/MessageTimel
 import { RichTextEditor } from '@components/RichText/RichTextEditor'
 import { Box, Paragraph, Stack } from '@ui'
 import { useSendReply } from 'hooks/useSendReply'
+import { useSpaceChannels } from 'hooks/useSpaceChannels'
 
 export const MessageThread = (props: {
     userId: string
@@ -62,6 +64,9 @@ export const MessageThread = (props: {
         [messages, parentMessage],
     )
 
+    const { members } = useSpaceMembers()
+    const channels = useSpaceChannels()
+
     return parentMessage ? (
         <MessageTimelineWrapper
             events={messagesWithParent}
@@ -86,6 +91,8 @@ export const MessageThread = (props: {
                                 storageId={`${channelId.networkId}-${parentId}`}
                                 autoFocus={false}
                                 placeholder="Reply..."
+                                channels={channels}
+                                members={members}
                                 onSend={onSend}
                             />
                         </Box>

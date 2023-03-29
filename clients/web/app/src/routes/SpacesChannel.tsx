@@ -9,6 +9,7 @@ import {
     useChannelData,
     useChannelTimeline,
     useMyMembership,
+    useSpaceMembers,
     useZionClient,
 } from 'use-zion-client'
 import { ChannelHeader } from '@components/ChannelHeader/ChannelHeader'
@@ -19,6 +20,8 @@ import { RichTextEditor } from '@components/RichText/RichTextEditor'
 import { TimelineShimmer } from '@components/Shimmer'
 import { DecryptingCard } from '@components/Shimmer/DecryptingCard'
 import { Box, Button, Stack } from '@ui'
+
+import { useSpaceChannels } from 'hooks/useSpaceChannels'
 import { CentralPanelLayout } from './layouts/CentralPanelLayout'
 
 export const SpacesChannel = () => {
@@ -78,6 +81,9 @@ const SpacesChannelComponent = () => {
     const { displayDecryptionPopup, decryptionProgress } =
         useDisplayEncryptionProgress(channelMessages)
 
+    const { members } = useSpaceMembers()
+    const channels = useSpaceChannels()
+
     return (
         <CentralPanelLayout>
             {!channel || !channelId || displayDecryptionPopup ? (
@@ -131,6 +137,8 @@ const SpacesChannelComponent = () => {
                             autoFocus={!hasThreadOpen}
                             initialValue=""
                             placeholder={`Send a message to #${channel?.label}`}
+                            channels={channels}
+                            members={members}
                             onSend={onSend}
                         />
                     </Box>

@@ -18,14 +18,7 @@ import { clsx } from 'clsx'
 import isEqual from 'lodash/isEqual'
 import { ErrorBoundary } from '@sentry/react'
 import React, { useCallback, useMemo, useState } from 'react'
-import {
-    Channel,
-    Mention,
-    RoomMember,
-    SendTextMessageOptions,
-    useSpaceMembers,
-} from 'use-zion-client'
-import { useSpaceChannels } from 'hooks/useSpaceChannels'
+import { Channel, Mention, RoomMember, SendTextMessageOptions } from 'use-zion-client'
 import * as fieldStyles from 'ui/components/_internal/Field/Field.css'
 import { notUndefined } from 'ui/utils/utils'
 import { useStore } from 'store/store'
@@ -66,6 +59,8 @@ type Props = {
     tabIndex?: number
     storageId?: string
     threadId?: string // only used for giphy plugin
+    channels: Channel[]
+    members: RoomMember[]
 } & Pick<BoxProps, 'background'>
 
 const fieldClassName = clsx([fieldStyles.field, styles.richText])
@@ -102,10 +97,10 @@ const useTransformers = ({ members, channels }: IUseTransformers) => {
             .map((m) => ({ displayName: m.name, userId: m.userId }))
         const channelHashtags = channels.filter(notUndefined)
         return [
-            CHECK_LIST,
-            ...filteredDefaultTransforms,
             createMentionTransformer(names),
             createChannelLinkTransformer(channelHashtags),
+            CHECK_LIST,
+            ...filteredDefaultTransforms,
         ]
     }, [members, channels])
     return { transformers }
@@ -174,10 +169,15 @@ export const RichTextEditor = (props: Props) => {
 }
 
 const RichTextEditorWithoutBoundary = (props: Props) => {
-    const { placeholder = 'Write something ...', editing: isEditing, onSend, tabIndex } = props
+    const {
+        members,
+        channels,
+        placeholder = 'Write something ...',
+        editing: isEditing,
+        onSend,
+        tabIndex,
+    } = props
 
-    const { members } = useSpaceMembers()
-    const channels = useSpaceChannels()
     const { transformers } = useTransformers({ members, channels })
 
     const userInput = useStore((state) =>

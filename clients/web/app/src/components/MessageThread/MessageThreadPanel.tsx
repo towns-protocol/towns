@@ -3,6 +3,7 @@ import {
     SendMessageOptions,
     useChannelContext,
     useChannelData,
+    useSpaceMembers,
     useTimelineThread,
 } from 'use-zion-client'
 import { MessageTimeline } from '@components/MessageTimeline/MessageTimeline'
@@ -11,6 +12,7 @@ import { RichTextEditor } from '@components/RichText/RichTextEditor'
 import { Box, Panel, Paragraph, Stack } from '@ui'
 import { useSendReply } from 'hooks/useSendReply'
 import { atoms } from 'ui/styles/atoms.css'
+import { useSpaceChannels } from 'hooks/useSpaceChannels'
 
 type Props = {
     messageId: string
@@ -34,6 +36,9 @@ export const MessageThreadPanel = (props: Props) => {
     const onSend = (value: string, options: SendMessageOptions | undefined) => {
         sendReply(value, channelId, options)
     }
+    const { members } = useSpaceMembers()
+    const channels = useSpaceChannels()
+
     const panelLabel = (
         <Paragraph>
             Thread{' '}
@@ -63,6 +68,8 @@ export const MessageThreadPanel = (props: Props) => {
                     placeholder="Reply..."
                     storageId={`${channelId.networkId}-${messageId}`}
                     threadId={messageId}
+                    channels={channels}
+                    members={members}
                     background="level3"
                     onSend={onSend}
                 />

@@ -1,9 +1,10 @@
 import React, { useCallback, useContext } from 'react'
-import { RoomIdentifier, SendTextMessageOptions } from 'use-zion-client'
+import { RoomIdentifier, SendTextMessageOptions, useSpaceMembers } from 'use-zion-client'
 import { RichTextEditor } from '@components/RichText/RichTextEditor'
 import { Stack } from '@ui'
 import { useEditMessage } from 'hooks/useEditMessage'
 import { MessageTimelineContext } from '@components/MessageTimeline/MessageTimelineContext'
+import { useSpaceChannels } from 'hooks/useSpaceChannels'
 
 export const TimelineMessageEditor = (props: {
     eventId: string
@@ -26,6 +27,9 @@ export const TimelineMessageEditor = (props: {
         timelineActions?.onCancelEditingMessage?.()
     }, [timelineActions])
 
+    const { members } = useSpaceMembers()
+    const channels = useSpaceChannels()
+
     return (
         <Stack gap>
             <RichTextEditor
@@ -33,6 +37,8 @@ export const TimelineMessageEditor = (props: {
                 editing
                 displayButtons
                 initialValue={initialValue}
+                channels={channels}
+                members={members}
                 onSend={onSend}
                 onCancel={onCancel}
             />
