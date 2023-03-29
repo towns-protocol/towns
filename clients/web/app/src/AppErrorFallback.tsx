@@ -52,7 +52,7 @@ export function AppErrorFallback({ error }: FallbackRender) {
         <Stack centerContent gap="lg" height="100vh">
             <TransitionLogo />
             <Text size="lg">
-                We&apos;re sorry, we&apos;re having some techincal issues right now.
+                We&apos;re sorry, we&apos;re having some technical issues right now.
             </Text>
             <Text size="lg">Please try again later.</Text>
         </Stack>
