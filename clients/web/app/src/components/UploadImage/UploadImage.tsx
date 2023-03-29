@@ -1,5 +1,7 @@
 import React, { ChangeEvent, useMemo } from 'react'
 import { UseFormReturn } from 'react-hook-form'
+import { toast } from 'react-hot-toast/headless'
+
 import * as fieldStyles from 'ui/components/_internal/Field/Field.css'
 
 import { Box, BoxProps } from 'ui/components/Box/Box'
@@ -10,6 +12,8 @@ import { FieldOutline } from 'ui/components/_internal/Field/FieldOutline/FieldOu
 import { vars } from 'ui/styles/vars.css'
 import { useUploadImage } from 'api/lib/uploadImage'
 import { Spinner } from '@components/Spinner'
+import { InvalidCookieNotification } from '@components/Notifications/InvalidCookieNotification'
+import { errorHasInvalidCookieResponseHeader } from 'api/apiClient'
 import { loadingStyles, spinnerStyles } from './UploadImage.css'
 
 async function getImageDimensions(src: string): Promise<{ width: number; height: number }> {
@@ -99,7 +103,16 @@ export const UploadImage = (props: Props) => {
             upload(
                 { id: _resourceId, file: files[0], type, imageUrl: url },
                 {
-                    onError: () => {
+                    onError: (error) => {
+                        if (errorHasInvalidCookieResponseHeader(error)) {
+                            toast.custom((t) => (
+                                <InvalidCookieNotification
+                                    toast={t}
+                                    actionMessage="upload an image"
+                                />
+                            ))
+                        }
+
                         setError?.(formFieldName, {
                             message: 'There was an error uploading your image. Please try again.',
                         })

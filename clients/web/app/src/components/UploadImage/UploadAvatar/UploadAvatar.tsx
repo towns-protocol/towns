@@ -1,6 +1,7 @@
 import React, { ChangeEvent, useMemo } from 'react'
 import { FieldValues, UseFormRegister, UseFormReturn } from 'react-hook-form'
 import { createUserIdFromString } from 'use-zion-client'
+import { toast } from 'react-hot-toast'
 import * as fieldStyles from 'ui/components/_internal/Field/Field.css'
 
 import { Box } from 'ui/components/Box/Box'
@@ -11,6 +12,8 @@ import { FieldOutline } from 'ui/components/_internal/Field/FieldOutline/FieldOu
 import { useUploadImage } from 'api/lib/uploadImage'
 import { atoms } from 'ui/styles/atoms.css'
 import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinner'
+import { errorHasInvalidCookieResponseHeader } from 'api/apiClient'
+import { InvalidCookieNotification } from '@components/Notifications/InvalidCookieNotification'
 import { useImageSource } from '../useImageSource'
 import { avatarHoverStyles, avatarIsLoadingStyles } from './UploadAvatar.css'
 
@@ -74,7 +77,15 @@ export const UploadAvatar = (props: Props) => {
             upload(
                 { id: resourceId, file: files[0], imageUrl: url, type: 'avatar' },
                 {
-                    onError: () => {
+                    onError: (error) => {
+                        if (errorHasInvalidCookieResponseHeader(error)) {
+                            toast.custom((t) => (
+                                <InvalidCookieNotification
+                                    toast={t}
+                                    actionMessage="upload an image"
+                                />
+                            ))
+                        }
                         setError?.(formFieldName, {
                             message: 'There was an error uploading your image. Please try again.',
                         })

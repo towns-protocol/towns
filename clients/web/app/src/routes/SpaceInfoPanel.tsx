@@ -9,6 +9,7 @@ import {
     useZionClient,
 } from 'use-zion-client'
 import { Link } from 'react-router-dom'
+import { toast } from 'react-hot-toast/headless'
 import {
     Avatar,
     Box,
@@ -30,6 +31,8 @@ import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinn
 import { useGetSpaceTopic, useSetSpaceTopic } from 'hooks/useSpaceTopic'
 import { InteractiveSpaceIcon } from '@components/SpaceIcon'
 import { EditModeContainer, TextButton } from '@components/UserProfile/UserProfile'
+import { errorHasInvalidCookieResponseHeader } from 'api/apiClient'
+import { InvalidCookieNotification } from '@components/Notifications/InvalidCookieNotification'
 import { useContractSpaceInfo } from '../hooks/useContractSpaceInfo'
 import { useMatrixHomeServerUrl } from '../hooks/useMatrixHomeServerUrl'
 
@@ -99,7 +102,12 @@ export const SpaceInfoPanel = () => {
                 setIsEdit(false)
                 setEditErrorMessage(null)
             },
-            onError: () => {
+            onError: (error) => {
+                if (errorHasInvalidCookieResponseHeader(error)) {
+                    toast.custom((t) => (
+                        <InvalidCookieNotification toast={t} actionMessage="edit the description" />
+                    ))
+                }
                 setEditErrorMessage("We weren't able to save your changes. Please try again later.")
             },
         })

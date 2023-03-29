@@ -1,6 +1,7 @@
 import { createUserIdFromString, useZionClient } from 'use-zion-client'
 import React, { useEffect, useMemo, useState } from 'react'
 import { useEvent } from 'react-use-event-hook'
+import { toast } from 'react-hot-toast/headless'
 import { Avatar, Box, Button, ButtonProps, FormRender, Paragraph, Stack, TextField } from '@ui'
 import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
 import { useSetUserBio } from 'hooks/useUserBio'
@@ -10,6 +11,8 @@ import { useAuth } from 'hooks/useAuth'
 import { TextArea } from 'ui/components/TextArea/TextArea'
 import { Spinner } from '@components/Spinner'
 import { ButtonTextProps } from 'ui/components/Text/ButtonText'
+import { errorHasInvalidCookieResponseHeader } from 'api/apiClient'
+import { InvalidCookieNotification } from '@components/Notifications/InvalidCookieNotification'
 
 type Props = {
     displayName: string
@@ -60,7 +63,18 @@ export const UserProfile = (props: Props) => {
                 //     }, 1000)
                 // })
 
-                return mutateAsyncBio(content)
+                return mutateAsyncBio(content, {
+                    onError: (error) => {
+                        if (errorHasInvalidCookieResponseHeader(error)) {
+                            toast.custom((t) => (
+                                <InvalidCookieNotification
+                                    toast={t}
+                                    actionMessage="edit the description"
+                                />
+                            ))
+                        }
+                    },
+                })
             }
         }
     })

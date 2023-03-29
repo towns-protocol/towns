@@ -19,6 +19,7 @@ import { useCorrectChainForServer } from 'hooks/useCorrectChainForServer'
 import { useDevice } from 'hooks/useDevice'
 import { MobileView } from 'routes/MobileView'
 import { SentryReportModal } from '@components/SentryErrorReport/SentryErrorReport'
+import { Notifications } from '@components/Notifications/Notifications'
 
 const AuthenticatedRoutes = React.lazy(() => import('routes/AuthenticatedRoutes'))
 const InviteLinkLanding = React.lazy(() => import('routes/InviteLinkLanding'))
@@ -56,6 +57,7 @@ export const App = () => {
                     <AllRoutes />
                 </AnalyticsProvider>
                 <ReactQueryDevtools position="bottom-right" initialIsOpen={false} />
+                <Notifications />
             </>
         </ZionContextProvider>
     ) : (

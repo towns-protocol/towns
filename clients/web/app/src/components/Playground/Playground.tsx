@@ -1,5 +1,7 @@
 import axios, { AxiosResponse } from 'axios'
 import React, { useEffect, useState } from 'react'
+import { toast } from 'react-hot-toast/headless'
+
 import { AddressPill } from '@components/AddressPill'
 import { richText } from '@components/RichText/RichTextEditor.css'
 import { TextFieldWithPill } from '@components/TextFieldWithPill'
@@ -36,6 +38,7 @@ import { vars } from 'ui/styles/vars.css'
 import { env } from 'utils'
 import { Accordion, AccordionGroup } from 'ui/components/Accordion/Accordion'
 import { TownsTokenExample } from '@components/TownsToken/example/TownTokenExample'
+import { InvalidCookieNotification } from '@components/Notifications/InvalidCookieNotification'
 import { VListExample } from '../../ui/components/VList/example/VListExample'
 import { PageColors } from './pages/PageColors'
 
@@ -52,6 +55,20 @@ export const Playground = () => {
     }, [])
     return (
         <Stack position="relative">
+            <Container label="Notification">
+                <Button
+                    onClick={() =>
+                        toast.custom((t) => (
+                            <InvalidCookieNotification
+                                toast={t}
+                                actionMessage="edit your profile"
+                            />
+                        ))
+                    }
+                >
+                    click
+                </Button>
+            </Container>
             <Container label="Towns Token">
                 <TownsTokenExample size="sm" />
             </Container>
