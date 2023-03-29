@@ -5,7 +5,6 @@ import { AutoDiscovery } from 'matrix-js-sdk'
 import { TestConstants } from './tests/integration/helpers/TestConstants'
 import { ZionTestClient } from './tests/integration/helpers/ZionTestClient'
 import Olm from '@matrix-org/olm'
-import fetch from 'node-fetch'
 import { configure } from '@testing-library/dom'
 import 'jest-canvas-mock'
 import { queryClient } from './src/query/queryClient'
@@ -18,6 +17,9 @@ process.env.CASABLANCA_SERVER_URL = 'http://localhost:5157'
 process.env.DISABLE_ENCRYPTION = 'false'
 process.env.ETHERS_NETWORK = 'http://127.0.0.1:8545' // OR "rinkeby"
 
+// fetch-polyfill.js
+import fetch, { Headers, Request, Response } from 'node-fetch'
+
 // initialize the static wallets
 TestConstants.init()
 
@@ -28,10 +30,14 @@ beforeAll(async () => {
     configure({
         asyncUtilTimeout: TestConstants.DefaultWaitForTimeoutMS, // default is 1000
     })
-    // set up required global for the matrix client to allow us to make http requests
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-    AutoDiscovery.setFetchFn(fetchForTests)
-    global.fetch = fetchForTests
+
+    if (!globalThis.fetch) {
+        globalThis.fetch = fetch as unknown as typeof globalThis.fetch
+        globalThis.Headers = Headers as unknown as typeof globalThis.Headers
+        globalThis.Request = Request as unknown as typeof globalThis.Request
+        globalThis.Response = Response as unknown as typeof globalThis.Response
+    }
+    AutoDiscovery.setFetchFn(globalThis.fetch)
 })
 
 afterEach(() => {
@@ -48,23 +54,3 @@ afterAll(() => {
     global.sessionStorage.clear()
     indexedDB = new IDBFactory()
 })
-
-/// aellis 1.29.2023 not sure if i'm doing this right, but it seems to work
-/// matrix uses global.fetch, which doesn't exist outside the browser
-/// and... the types don't match up.
-async function fetchForTests(
-    resource: URL | RequestInfo,
-    options?: RequestInit | undefined,
-): ReturnType<typeof global.fetch> {
-    if (typeof resource === 'string') {
-        // do nothing
-    } else if (resource instanceof URL) {
-        resource = resource.toString()
-    } else {
-        resource = resource.url
-    }
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-argument
-    const retval = await fetch(resource, options as any)
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-    return retval as unknown as ReturnType<typeof global.fetch>
-}
