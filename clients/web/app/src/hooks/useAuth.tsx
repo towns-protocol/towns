@@ -18,6 +18,7 @@ export function useAuth() {
         connectors,
         error: connectError,
         pendingConnector,
+        isLoading: connectLoading,
     } = useConnect({
         onSuccess: () => {
             // jterzis somewhat of a hack to set a stable, obfuscated uid derived off the wallet address
@@ -54,13 +55,6 @@ export function useAuth() {
     const isAuthenticatedAndConnected = useMemo(() => {
         return isAuthenticated && isConnected
     }, [isAuthenticated, isConnected])
-
-    // wagmi's useConnect().isLoading resolves much faster than our own wallet status and so we need to create our own connect loading status
-    const connectLoading = useMemo(() => {
-        return (
-            walletStatus === WalletStatus.Reconnecting || walletStatus === WalletStatus.Connecting
-        )
-    }, [walletStatus])
 
     return {
         connect,

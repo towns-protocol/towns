@@ -43,7 +43,9 @@ export const Welcome = () => (
             </>
         ) : (
             <>
-                <Text strong>Connect your wallet to continue</Text>
+                <FadeIn delay>
+                    <Text strong>Connect your wallet to continue</Text>
+                </FadeIn>
                 <Suspense>
                     <motion.div
                         initial={{
