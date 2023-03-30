@@ -223,7 +223,7 @@ Streams are loosely append-only. Although it's possible to generate event which 
 
 There is a desire to discard old events since old messages are less valuable in the context of the chat application and there is a need to limit cost for the free streams. But administrative events, such as `join`, `leave`, `set stream name` can't be freely discarded without state loss.
 
-To address this `snapshot` events are introduced. Preceding events are "rolled up", for example `join` and `leave` events are rolled up into the `membership roster`. Snapshot event is [rain event](#drain-events). Snapshot event includes a copy of stream inception event.
+To address this `snapshot` events are introduced. Preceding events are "rolled up", for example `join` and `leave` events are rolled up into the `membership roster`. Snapshot event is [drain event](#drain-events). Snapshot event includes a copy of stream inception event.
 
 Once snapshot event is added to the stream, preceding events can be safely garbage collected.
 
