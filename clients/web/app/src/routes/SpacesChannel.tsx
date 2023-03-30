@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef } from 'react'
 import { Outlet, useParams } from 'react-router'
 import {
     ChannelContextProvider,
@@ -78,7 +78,7 @@ const SpacesChannelComponent = () => {
     const eventHash = window.location.hash?.replace(/^#/, '')
     const highlightId = eventHash?.match(/^\$[a-z0-9_-]{16,128}/i) ? eventHash : undefined
 
-    const { displayDecryptionPopup, decryptionProgress } =
+    const { displayDecryptionProgress: displayDecryptionPopup, decryptionProgress } =
         useDisplayEncryptionProgress(channelMessages)
 
     const { members } = useSpaceMembers()
@@ -157,58 +157,60 @@ const SpacesChannelComponent = () => {
     )
 }
 
+const encryptedMessageTypes = [ZTEvent.RoomMessageEncrypted, ZTEvent.RoomMessage]
 const useDisplayEncryptionProgress = (channelMessages: TimelineEvent[]) => {
-    const [displayDecryptionPopup, setDisplayEncrypted] = React.useState(false)
-    const messageTypes = [ZTEvent.RoomMessageEncrypted, ZTEvent.RoomMessage]
-    const encryptedMessageStats =
-        channelMessages.length > 0 &&
-        channelMessages.reduce(
-            (k, e) => {
-                if (e.content?.kind && messageTypes.includes(e.content?.kind)) {
-                    k.total++
-                    if (e.content?.kind === ZTEvent.RoomMessageEncrypted) {
-                        k.encrypted++
+    const encryptedMessageStats = useMemo(
+        () =>
+            channelMessages.length > 0 &&
+            channelMessages.reduce(
+                (k, e) => {
+                    if (e.content?.kind && encryptedMessageTypes.includes(e.content?.kind)) {
+                        k.total++
+                        if (e.content?.kind === ZTEvent.RoomMessageEncrypted) {
+                            k.yetEncrypted++
+                        }
                     }
-                }
-                k.progress = 1 - k.encrypted / k.total
-                return k
-            },
-            { encrypted: 0, total: 0, progress: 0 },
-        )
-
-    const hasEncrypted = encryptedMessageStats && encryptedMessageStats.encrypted > 0
-    const hasDisplayedOnce = useRef(
-        // dismiss popup if channel is prepopulated with unencrypted messages
-        encryptedMessageStats ? encryptedMessageStats.encrypted === 0 : false,
+                    k.progress = 1 - k.yetEncrypted / k.total
+                    return k
+                },
+                { yetEncrypted: 0, total: 0, progress: 0 },
+            ),
+        [channelMessages],
     )
 
+    const isDecrypting = encryptedMessageStats && encryptedMessageStats.yetEncrypted > 0
+    const [displayDecryptionProgress, setDisplayDecryptionProgress] = React.useState(isDecrypting)
+
+    const hasDisplayedOnceRef = useRef(false)
+
     useEffect(() => {
-        if (hasDisplayedOnce.current) {
-            // when popup is showing...
-            if (!hasEncrypted) {
-                // remove popup when no encrypted message is left
-                setDisplayEncrypted(false)
+        // display decryption progress once
+        if (isDecrypting) {
+            if (!hasDisplayedOnceRef.current) {
+                hasDisplayedOnceRef.current = true
+                setDisplayDecryptionProgress(true)
             }
         } else {
-            // when popup is not showing...
-            if (hasEncrypted) {
-                // display
-                setDisplayEncrypted(true)
-                hasDisplayedOnce.current = true
-                const timeout = setTimeout(() => {
-                    // remove on timeout
-                    setDisplayEncrypted(false)
-                }, 1000 * 15)
+            setDisplayDecryptionProgress(false)
+        }
+    }, [isDecrypting])
 
-                return () => {
-                    clearTimeout(timeout)
-                }
+    useEffect(() => {
+        // reset timeout on decryption progress
+        encryptedMessageStats && encryptedMessageStats.yetEncrypted
+        if (displayDecryptionProgress) {
+            // no progress after 3s, hide the popup for good
+            const timeout = setTimeout(() => {
+                setDisplayDecryptionProgress(false)
+            }, 1000 * 3)
+            return () => {
+                clearTimeout(timeout)
             }
         }
-    }, [hasEncrypted])
+    }, [displayDecryptionProgress, encryptedMessageStats])
 
     return {
-        displayDecryptionPopup,
+        displayDecryptionProgress,
         decryptionProgress: (encryptedMessageStats && encryptedMessageStats?.progress) || 0,
     }
 }
