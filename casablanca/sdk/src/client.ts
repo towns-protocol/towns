@@ -1,5 +1,5 @@
 import { PartialMessage } from '@bufbuild/protobuf'
-import { Payload, StreamAndCookie, StreamKind, StreamOp, SyncPos } from '@towns/proto'
+import { Payload, StreamAndCookie, StreamKind, MembershipOp, SyncPos } from '@towns/proto'
 import debug from 'debug'
 import EventEmitter from 'events'
 import TypedEmitter from 'typed-emitter'
@@ -194,7 +194,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
             this.signerContext,
             makeJoinableStreamPayload({
                 userId: this.userId,
-                op: StreamOp.SO_JOIN,
+                op: MembershipOp.SO_JOIN,
             }),
             [inceptionEvent.hash],
         )
@@ -226,7 +226,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
             this.signerContext,
             makeJoinableStreamPayload({
                 userId: this.userId,
-                op: StreamOp.SO_JOIN,
+                op: MembershipOp.SO_JOIN,
             }),
             [inceptionEvent.hash],
         )
@@ -461,7 +461,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
         return this.makeEventAndAddToStream(
             streamId,
             makeJoinableStreamPayload({
-                op: StreamOp.SO_INVITE,
+                op: MembershipOp.SO_INVITE,
                 userId, // TODO: USER_ID: other encoding?
             }),
             'inviteUser',
@@ -475,7 +475,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
         return this.makeEventAndAddToStream(
             streamId,
             makeJoinableStreamPayload({
-                op: StreamOp.SO_JOIN,
+                op: MembershipOp.SO_JOIN,
                 userId: this.userId,
             }),
             'joinChannel',

@@ -168,7 +168,7 @@ func (s *Service) addEvent(ctx context.Context, streamId string, view *StreamVie
 	case *protocol.Payload_Inception_:
 		return nil, status.Errorf(codes.InvalidArgument, "AddEvent: event is an inception event")
 
-	case *protocol.Payload_UserStreamOp_, *protocol.Payload_Channel_:
+	case *protocol.Payload_UserMembershipOp_, *protocol.Payload_Channel_:
 		return nil, status.Errorf(codes.InvalidArgument, "AddEvent: event is a user stream op event or channel event")
 
 	case *protocol.Payload_JoinableStream_:
@@ -200,8 +200,8 @@ func (s *Service) addEvent(ctx context.Context, streamId string, view *StreamVie
 		}
 
 		log.Debug("AddEvent: ", joinableStream.Op)
-		envelope := s.sign(makePayload_UserStreamOp(
-			&protocol.Payload_UserStreamOp{
+		envelope := s.sign(makePayload_UserMembershipOp(
+			&protocol.Payload_UserMembershipOp{
 				Op:        joinableStream.Op,
 				StreamId:  streamId,
 				InviterId: UserIdFromAddress(parsedEvent.Event.CreatorAddress),
@@ -362,9 +362,9 @@ func makeInceptionEvent(streamId string, streamKind protocol.StreamKind, spaceId
 }
 */
 
-func makePayload_UserStreamOp(op *protocol.Payload_UserStreamOp) *protocol.Payload {
+func makePayload_UserMembershipOp(op *protocol.Payload_UserMembershipOp) *protocol.Payload {
 	return &protocol.Payload{
-		Payload: &protocol.Payload_UserStreamOp_{UserStreamOp: op},
+		Payload: &protocol.Payload_UserMembershipOp_{UserMembershipOp: op},
 	}
 }
 

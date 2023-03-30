@@ -1,4 +1,4 @@
-import { ChannelOp, StreamKind, StreamOp, Err } from '@towns/proto'
+import { ChannelOp, StreamKind, MembershipOp, Err } from '@towns/proto'
 import TypedEmitter from 'typed-emitter'
 import { check, isDefined, throwWithCode } from './check'
 import { ParsedEvent } from './types'
@@ -98,24 +98,24 @@ export class StreamStateView {
             case 'inception':
                 emitter?.emit('streamInception', this.streamId, payload.value.streamKind)
                 break
-            case 'userStreamOp':
+            case 'userMembershipOp':
                 {
                     const { op, streamId } = payload.value
                     switch (op) {
-                        case StreamOp.SO_INVITE:
+                        case MembershipOp.SO_INVITE:
                             this.userInvitedStreams.add(streamId)
                             emitter?.emit('userInvitedToStream', streamId)
                             break
-                        case StreamOp.SO_JOIN:
+                        case MembershipOp.SO_JOIN:
                             this.userJoinedStreams.add(streamId)
                             emitter?.emit('userJoinedStream', streamId)
                             break
-                        case StreamOp.SO_LEAVE:
+                        case MembershipOp.SO_LEAVE:
                             emitter?.emit('userLeftStream', streamId)
                             this.userJoinedStreams.delete(streamId)
                             break
                         default:
-                            throwWithCode(`Unknown userStreamOp ${op}`, Err.STREAM_BAD_EVENT)
+                            throwWithCode(`Unknown userMembershipOp ${op}`, Err.STREAM_BAD_EVENT)
                     }
                 }
                 break
@@ -123,15 +123,15 @@ export class StreamStateView {
                 {
                     const { op, userId } = payload.value
                     switch (op) {
-                        case StreamOp.SO_INVITE:
+                        case MembershipOp.SO_INVITE:
                             this.invitedUsers.add(userId)
                             emitter?.emit('streamNewUserInvited', this.streamId, userId)
                             break
-                        case StreamOp.SO_JOIN:
+                        case MembershipOp.SO_JOIN:
                             this.joinedUsers.add(userId)
                             emitter?.emit('streamNewUserJoined', this.streamId, userId)
                             break
-                        case StreamOp.SO_LEAVE:
+                        case MembershipOp.SO_LEAVE:
                             this.joinedUsers.delete(userId)
                             this.invitedUsers.delete(userId)
                             emitter?.emit('streamUserLeft', this.streamId, userId)

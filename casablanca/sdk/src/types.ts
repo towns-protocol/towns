@@ -7,7 +7,7 @@ import {
     Envelope,
     Payload_Inception,
     Payload,
-    Payload_UserStreamOp,
+    Payload_UserMembershipOp,
     Payload_JoinableStream,
     Payload_Channel,
     Payload_Message,
@@ -94,12 +94,12 @@ export const makeInceptionPayload = (
     }
 }
 
-export const makeUserStreamOpPayload = (
-    value: PartialMessage<Payload_UserStreamOp>,
+export const makeUserMembershipOpPayload = (
+    value: PartialMessage<Payload_UserMembershipOp>,
 ): PartialMessage<Payload> => {
     return {
         payload: {
-            case: 'userStreamOp',
+            case: 'userMembershipOp',
             value,
         },
     }

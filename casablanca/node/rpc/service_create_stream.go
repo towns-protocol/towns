@@ -91,7 +91,7 @@ func validateJoinEvent(events []*events.ParsedEvent) error {
 	if join == nil {
 		return RpcErrorf(protocol.Err_BAD_STREAM_CREATION_PARAMS, "CreateStream: second event is not a join event")
 	}
-	if join.GetOp() != protocol.StreamOp_SO_JOIN {
+	if join.GetOp() != protocol.MembershipOp_SO_JOIN {
 		return RpcErrorf(protocol.Err_BAD_STREAM_CREATION_PARAMS, "CreateStream: bad join op %d", join.GetOp())
 	}
 	creatorUserId := UserIdFromAddress(events[0].Event.GetCreatorAddress())

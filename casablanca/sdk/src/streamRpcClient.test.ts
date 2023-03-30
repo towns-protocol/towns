@@ -3,9 +3,9 @@ import {
     Err,
     PayloadCaseType,
     Payload_Message,
-    Payload_UserStreamOp,
+    Payload_UserMembershipOp,
     StreamKind,
-    StreamOp,
+    MembershipOp,
     SyncStreamsResponse,
 } from '@towns/proto'
 import debug from 'debug'
@@ -98,7 +98,7 @@ describe('streamRpcClient', () => {
                     bobsContext,
                     makeJoinableStreamPayload({
                         userId: bobsUserId,
-                        op: StreamOp.SO_JOIN,
+                        op: MembershipOp.SO_JOIN,
                     }),
                     [spaceInceptionEvent.hash],
                 ),
@@ -120,7 +120,7 @@ describe('streamRpcClient', () => {
             bobsContext,
             makeJoinableStreamPayload({
                 userId: bobsUserId,
-                op: StreamOp.SO_JOIN,
+                op: MembershipOp.SO_JOIN,
             }),
             [channelInceptionEvent.hash],
         )
@@ -245,7 +245,7 @@ describe('streamRpcClient', () => {
             bobsContext,
             makeJoinableStreamPayload({
                 userId: bobsUserId,
-                op: StreamOp.SO_JOIN,
+                op: MembershipOp.SO_JOIN,
             }),
             [inceptionEvent.hash],
         )
@@ -268,7 +268,7 @@ describe('streamRpcClient', () => {
             bobsContext,
             makeJoinableStreamPayload({
                 userId: bobsUserId,
-                op: StreamOp.SO_JOIN,
+                op: MembershipOp.SO_JOIN,
             }),
             [channelInceptionEvent.hash],
         )
@@ -323,7 +323,7 @@ describe('streamRpcClient', () => {
         event = makeEvent(
             bobsContext,
             makeJoinableStreamPayload({
-                op: StreamOp.SO_INVITE,
+                op: MembershipOp.SO_INVITE,
                 userId: alicesUserId,
             }),
             [event.hash],
@@ -342,9 +342,9 @@ describe('streamRpcClient', () => {
         aliceSyncCookie = expectEvent(
             aliceSyncResult,
             alicesUserStreamId,
-            'userStreamOp',
-            (p: Payload_UserStreamOp) => {
-                expect(p.op).toEqual(StreamOp.SO_INVITE)
+            'userMembershipOp',
+            (p: Payload_UserMembershipOp) => {
+                expect(p.op).toEqual(MembershipOp.SO_INVITE)
                 expect(p.inviterId).toEqual(bobsUserId)
                 expect(p.streamId).toEqual(channelId)
             },
@@ -366,7 +366,7 @@ describe('streamRpcClient', () => {
         event = makeEvent(
             alicesContext,
             makeJoinableStreamPayload({
-                op: StreamOp.SO_JOIN,
+                op: MembershipOp.SO_JOIN,
                 userId: alicesUserId,
             }),
             [event.hash],
@@ -386,9 +386,9 @@ describe('streamRpcClient', () => {
         aliceSyncCookie = expectEvent(
             aliceSyncResult,
             alicesUserStreamId,
-            'userStreamOp',
-            (p: Payload_UserStreamOp) => {
-                expect(p.op).toEqual(StreamOp.SO_JOIN)
+            'userMembershipOp',
+            (p: Payload_UserMembershipOp) => {
+                expect(p.op).toEqual(MembershipOp.SO_JOIN)
                 expect(p.streamId).toEqual(channelId)
             },
         )
@@ -505,7 +505,7 @@ describe('streamRpcClient', () => {
             }),
             makeJoinableStreamPayload({
                 userId: bobsUserId,
-                op: StreamOp.SO_JOIN,
+                op: MembershipOp.SO_JOIN,
             }),
         ])
         await bob.createStream({
@@ -522,7 +522,7 @@ describe('streamRpcClient', () => {
             }),
             makeJoinableStreamPayload({
                 userId: bobsUserId,
-                op: StreamOp.SO_JOIN,
+                op: MembershipOp.SO_JOIN,
             }),
         ])
         await bob.createStream({
@@ -544,7 +544,7 @@ describe('streamRpcClient', () => {
             bobsContext,
             makeJoinableStreamPayload({
                 userId: bobsUserId,
-                op: StreamOp.SO_JOIN,
+                op: MembershipOp.SO_JOIN,
             }),
             [],
         )
@@ -565,7 +565,7 @@ describe('streamRpcClient', () => {
             bobsContext,
             makeJoinableStreamPayload({
                 userId: bobsUserId,
-                op: StreamOp.SO_JOIN,
+                op: MembershipOp.SO_JOIN,
             }),
             [channelEvent2_1.hash],
         )

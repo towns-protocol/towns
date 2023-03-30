@@ -1,4 +1,4 @@
-import { StreamEvent, StreamOp } from '@towns/proto'
+import { StreamEvent, MembershipOp } from '@towns/proto'
 import { makeUserStreamId } from './id'
 import {
     bin_fromHexString,
@@ -14,7 +14,7 @@ describe('types', () => {
             creatorAddress: bin_fromHexString('0123456789abcdef'),
             prevEvents: [bin_fromHexString('0123456789abcdef'), bin_fromHexString('0123456789')],
             payload: makeJoinableStreamPayload({
-                op: StreamOp.SO_JOIN,
+                op: MembershipOp.SO_JOIN,
                 userId: makeUserStreamId('0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'),
             }),
         })

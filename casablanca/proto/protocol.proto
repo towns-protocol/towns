@@ -84,15 +84,15 @@ message Payload {
         string space_id = 3;
     }
     
-    message UserStreamOp {
-        StreamOp op = 1;
+    message UserMembershipOp {
+        MembershipOp op = 1;
         string stream_id = 2;
         string inviter_id = 3;
         EventRef origin_event = 4;
     }
     
     message JoinableStream {
-        StreamOp op = 1;
+        MembershipOp op = 1;
         string user_id = 2;
     }
     
@@ -115,7 +115,7 @@ message Payload {
     
     oneof payload {
         Inception inception = 1;
-        UserStreamOp user_stream_op = 2;
+        UserMembershipOp user_membership_op = 2;
         JoinableStream joinable_stream = 3;
         Channel channel = 4;
         Message message = 5;
@@ -132,7 +132,7 @@ enum StreamKind {
 }
 
 
-enum StreamOp {
+enum MembershipOp {
     SO_UNSPECIFIED = 0;
     SO_INVITE = 1;
     SO_JOIN = 2;

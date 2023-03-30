@@ -103,9 +103,9 @@ func (r *StreamView) JoinedUsers(streamId string) (map[string]struct{}, error) {
 			joinableStream := e.Event.Payload.GetJoinableStream()
 			user := joinableStream.GetUserId()
 			switch joinableStream.Op {
-			case protocol.StreamOp_SO_JOIN:
+			case protocol.MembershipOp_SO_JOIN:
 				users[user] = struct{}{}
-			case protocol.StreamOp_SO_LEAVE:
+			case protocol.MembershipOp_SO_LEAVE:
 				delete(users, user)
 			}
 		}

@@ -1,5 +1,5 @@
 import { Client as CasablancaClient, ParsedEvent } from '@towns/client'
-import { StreamKind, StreamOp } from '@towns/proto'
+import { StreamKind, MembershipOp } from '@towns/proto'
 import { useEffect } from 'react'
 import { Membership, Mention } from '../../types/zion-types'
 import {
@@ -118,8 +118,8 @@ function toZionContent(
                 },
             }
         }
-        case 'userStreamOp': {
-            throw new Error(`${description} userStreamOp should only happen in a userStream`)
+        case 'userMembershipOp': {
+            throw new Error(`${description} userMembershipOp should only happen in a userStream`)
         }
         case 'joinableStream': {
             const payload = message.event.payload.payload.value
@@ -201,13 +201,13 @@ function toZionContent(
         }
     }
 }
-function toMembership(op: StreamOp): Membership {
+function toMembership(op: MembershipOp): Membership {
     switch (op) {
-        case StreamOp.SO_JOIN:
+        case MembershipOp.SO_JOIN:
             return Membership.Join
-        case StreamOp.SO_LEAVE:
+        case MembershipOp.SO_LEAVE:
             return Membership.Leave
-        case StreamOp.SO_INVITE:
+        case MembershipOp.SO_INVITE:
             return Membership.Invite
     }
     return Membership.None

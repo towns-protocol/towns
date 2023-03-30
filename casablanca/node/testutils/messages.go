@@ -145,7 +145,7 @@ func JoinEvent(idx int, creator []byte, user []byte, prevHash []byte) (*protocol
 		Payload: &protocol.Payload{
 			Payload: &protocol.Payload_JoinableStream_{
 				JoinableStream: &protocol.Payload_JoinableStream{
-					Op:     protocol.StreamOp_SO_JOIN,
+					Op:     protocol.MembershipOp_SO_JOIN,
 					UserId: userId,
 				},
 			},
