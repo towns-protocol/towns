@@ -1,15 +1,20 @@
 import React from 'react'
 import { Avatar, Box, IconButton, Text } from '@ui'
 import { AvatarProps } from 'ui/components/Avatar/Avatar'
-import { PIONEER_ADDRESS } from 'utils'
+import { useGetPioneerNftAddress } from 'hooks/useGetPioneerNftAddress'
 import { TokenProps } from './types'
 
 export const TokenAvatar = (
     props: Partial<TokenProps> & { contractAddress: string; size: AvatarProps['size'] },
 ) => {
     const { imgSrc, label, contractAddress, onClick, size } = props
+    const pioneerAddress = useGetPioneerNftAddress()
+
     const image =
-        contractAddress === PIONEER_ADDRESS ? `/placeholders/pioneer_thumb300.avif` : imgSrc
+        contractAddress.toLowerCase() === pioneerAddress?.toLowerCase()
+            ? `/placeholders/pioneer_thumb300.avif`
+            : imgSrc
+
     return (
         <Box alignItems="center" maxWidth="x6" data-testid="token-avatar">
             <Box position="relative" border={!image ? 'level4' : 'none'} rounded="full">
