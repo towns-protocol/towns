@@ -10,9 +10,10 @@ import { MessageTimeline } from '@components/MessageTimeline/MessageTimeline'
 import { MessageTimelineWrapper } from '@components/MessageTimeline/MessageTimelineContext'
 import { RichTextEditor } from '@components/RichText/RichTextEditor'
 import { Box, Panel, Paragraph, Stack } from '@ui'
+import { useIsChannelWritable } from 'hooks/useIsChannelWritable'
 import { useSendReply } from 'hooks/useSendReply'
-import { atoms } from 'ui/styles/atoms.css'
 import { useSpaceChannels } from 'hooks/useSpaceChannels'
+import { atoms } from 'ui/styles/atoms.css'
 
 type Props = {
     messageId: string
@@ -49,31 +50,37 @@ export const MessageThreadPanel = (props: Props) => {
             ) : null}
         </Paragraph>
     )
+
+    const { isChannelWritable } = useIsChannelWritable(channelId)
+
     return (
         <MessageTimelineWrapper
             spaceId={spaceId}
             channelId={channelId}
             threadParentId={messageId}
             events={messagesWithParent}
+            isChannelWritable={isChannelWritable}
         >
             <Panel label={panelLabel} onClose={props.onClose}>
                 <Stack grow overflow="hidden">
                     <MessageTimeline highlightId={props.highlightId} />
                 </Stack>
             </Panel>
-            <Box paddingY="none" paddingX="md" style={{ position: 'sticky', bottom: 0 }}>
-                <RichTextEditor
-                    autoFocus
-                    editable
-                    placeholder="Reply..."
-                    storageId={`${channelId.networkId}-${messageId}`}
-                    threadId={messageId}
-                    channels={channels}
-                    members={members}
-                    background="level3"
-                    onSend={onSend}
-                />
-            </Box>
+            {isChannelWritable && (
+                <Box paddingY="none" paddingX="md" style={{ position: 'sticky', bottom: 0 }}>
+                    <RichTextEditor
+                        autoFocus
+                        editable={!!isChannelWritable}
+                        placeholder="Reply..."
+                        storageId={`${channelId.networkId}-${messageId}`}
+                        threadId={messageId}
+                        channels={channels}
+                        members={members}
+                        background="level3"
+                        onSend={onSend}
+                    />
+                </Box>
+            )}
         </MessageTimelineWrapper>
     )
 }

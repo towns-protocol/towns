@@ -26,6 +26,7 @@ export const MessageTimelineContext = createContext<{
     spaceId: RoomIdentifier
     channelId: RoomIdentifier
     isChannelEncrypted?: boolean
+    isChannelWritable?: boolean
     threadParentId?: string
     channels: Channel[]
     events: TimelineEvent[]
@@ -45,8 +46,9 @@ export const MessageTimelineWrapper = (props: {
     channelId: RoomIdentifier
     events: TimelineEvent[]
     threadParentId?: string
+    isChannelWritable?: boolean
 }) => {
-    const { spaceId, channelId, events, threadParentId } = props
+    const { spaceId, channelId, events, isChannelWritable, threadParentId } = props
     const { userId } = useMatrixCredentials()
     const { sendReadReceipt } = useZionClient()
     const type = threadParentId ? MessageTimelineType.Thread : MessageTimelineType.Channel
@@ -73,6 +75,7 @@ export const MessageTimelineWrapper = (props: {
             channels,
             events,
             isChannelEncrypted,
+            isChannelWritable,
             messageRepliesMap,
             messageReactionsMap,
             timelineActions,
@@ -90,6 +93,7 @@ export const MessageTimelineWrapper = (props: {
         channels,
         events,
         isChannelEncrypted,
+        isChannelWritable,
         messageRepliesMap,
         messageReactionsMap,
         timelineActions,

@@ -39,6 +39,7 @@ type Props = {
     padding?: BoxProps['padding']
     background?: BoxProps['background']
     channelLabel?: string
+    isChannelWritable?: boolean
 } & BoxProps
 
 export type MessageProps = Props
@@ -56,6 +57,7 @@ export const Message = (props: Props) => {
         editable: isEditable,
         editing: isEditing,
         highlight: isHighlight,
+        isChannelWritable = true,
         selectable: isSelectable,
         listView: isListView,
         displayContext = 'single',
@@ -197,16 +199,22 @@ export const Message = (props: Props) => {
                         </Stack>
                     )}
                 </Stack>
-                {spaceId && channelId && eventId && isActive && !isEditing && isSelectable && (
-                    <MessageContextMenu
-                        canReply={canReply}
-                        canReact={!!onReaction}
-                        channelId={channelId}
-                        spaceId={spaceId}
-                        eventId={eventId}
-                        canEdit={isEditable}
-                    />
-                )}
+                {isChannelWritable &&
+                    spaceId &&
+                    channelId &&
+                    eventId &&
+                    isActive &&
+                    !isEditing &&
+                    isSelectable && (
+                        <MessageContextMenu
+                            canReply={canReply}
+                            canReact={!!onReaction}
+                            channelId={channelId}
+                            spaceId={spaceId}
+                            eventId={eventId}
+                            canEdit={isEditable}
+                        />
+                    )}
             </Stack>
         </Stack>
     )

@@ -1,7 +1,6 @@
 import { render, screen } from '@testing-library/react'
 import React from 'react'
 import { describe, expect, test } from 'vitest'
-
 import { Membership, SpaceProtocol } from 'use-zion-client'
 import { SpaceContext } from 'use-zion-client/dist/components/SpaceContextProvider'
 import { RichTextEditor } from './RichTextEditor'
@@ -15,8 +14,32 @@ const Wrapper = (props: { children?: React.ReactNode }) => {
     return <SpaceContext.Provider value={{ spaceId }}>{props.children}</SpaceContext.Provider>
 }
 
-describe('#RichTextEditor', () => {
+describe('#RichTextEditor editable', () => {
     test('it should display a message', async () => {
+        render(
+            <Wrapper>
+                <RichTextEditor initialValue="welcome!" channels={[]} members={[]} />
+            </Wrapper>,
+        )
+        expect(screen.getByText('welcome!')).toBeTruthy()
+    })
+
+    test('it should display placeholder if not editable', async () => {
+        render(
+            <Wrapper>
+                <RichTextEditor
+                    editable={false}
+                    initialValue="welcome!"
+                    placeholder="this field is read only"
+                    channels={[]}
+                    members={[]}
+                />
+            </Wrapper>,
+        )
+        expect(screen.getByText('this field is read only')).toBeDefined()
+    })
+
+    test('it should not display value if not editable', async () => {
         render(
             <Wrapper>
                 <RichTextEditor
@@ -27,14 +50,15 @@ describe('#RichTextEditor', () => {
                 />
             </Wrapper>,
         )
-        expect(screen.getByText('welcome!')).toBeTruthy()
+        expect(screen.queryByText('welcome!')).toBeNull()
     })
+})
 
+describe('#RichTextEditor mention nodes', () => {
     test('it should create a mention node', async () => {
         render(
             <Wrapper>
                 <RichTextEditor
-                    editable={false}
                     initialValue="welcome! @ben"
                     channels={[]}
                     members={[
@@ -57,7 +81,6 @@ describe('#RichTextEditor', () => {
         render(
             <Wrapper>
                 <RichTextEditor
-                    editable={false}
                     initialValue={`welcome! @${name}`}
                     channels={[]}
                     members={[
@@ -80,7 +103,6 @@ describe('#RichTextEditor', () => {
         render(
             <Wrapper>
                 <RichTextEditor
-                    editable={false}
                     initialValue={`welcome! @${name}`}
                     channels={[]}
                     members={[

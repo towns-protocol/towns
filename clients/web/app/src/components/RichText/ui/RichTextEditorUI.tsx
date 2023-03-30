@@ -21,7 +21,7 @@ import { $createEmojiNode } from '../nodes/EmojiNode'
 import { InlineToolbar } from './InlineToolbar'
 import { AddLinkModal } from './LinkModal'
 
-export const RichTextUI = (props: {
+type Props = {
     children: React.ReactNode
     editing?: boolean
     focused: boolean
@@ -29,7 +29,9 @@ export const RichTextUI = (props: {
     background?: BoxProps['background']
     threadId?: string
     attemptingToSend?: boolean
-}) => {
+}
+
+export const RichTextUI = (props: Props) => {
     const { background = 'level2' } = props
     const [editor] = useLexicalComposerContext()
 
@@ -146,15 +148,7 @@ export const RichTextUI = (props: {
     const { rootLayerRef } = useContext(RootLayerContext)
 
     return (
-        <Stack
-            gap
-            rounded="sm"
-            background={background}
-            minWidth={props.readOnly ? undefined : '200'}
-            position="relative"
-            minHeight="x6"
-            justifyContent="center"
-        >
+        <RichTextUIContainer key="editor" background={background} readOnly={props.readOnly}>
             <Stack horizontal alignItems="center" gap="lg" paddingX="md">
                 <Box grow>{props.children}</Box>
                 <Stack horizontal gap="xs" color="gray2" alignItems="start" paddingY="sm">
@@ -175,9 +169,28 @@ export const RichTextUI = (props: {
                 {linkLinkModal && <AddLinkModal onHide={onHideModal} onSaveLink={onSaveLink} />}
             </Stack>
             <OfflineIndicator attemptingToSend={props.attemptingToSend} />
-        </Stack>
+        </RichTextUIContainer>
     )
 }
+
+export const RichTextUIContainer = ({
+    background = 'level2',
+    readOnly,
+    children,
+}: Pick<Props, 'background' | 'readOnly'> & { children?: React.ReactNode }) => (
+    <Stack
+        gap
+        transition
+        rounded="sm"
+        background={background}
+        minWidth={readOnly ? undefined : '200'}
+        position="relative"
+        minHeight="x6"
+        justifyContent="center"
+    >
+        {children}
+    </Stack>
+)
 
 const OfflineIndicator = (props: { attemptingToSend?: boolean }) => {
     const { isOffline } = useNetworkStatus()

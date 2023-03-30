@@ -20,7 +20,7 @@ import { RichTextEditor } from '@components/RichText/RichTextEditor'
 import { TimelineShimmer } from '@components/Shimmer'
 import { DecryptingCard } from '@components/Shimmer/DecryptingCard'
 import { Box, Button, Stack } from '@ui'
-
+import { useIsChannelWritable } from 'hooks/useIsChannelWritable'
 import { useSpaceChannels } from 'hooks/useSpaceChannels'
 import { CentralPanelLayout } from './layouts/CentralPanelLayout'
 
@@ -84,6 +84,14 @@ const SpacesChannelComponent = () => {
     const { members } = useSpaceMembers()
     const channels = useSpaceChannels()
 
+    const { isChannelWritable } = useIsChannelWritable(channelId)
+
+    const placeholder = isChannelWritable
+        ? `Send a message to #${channel?.label}`
+        : isChannelWritable === false
+        ? `You don't have permission to send messages to this channel`
+        : `Loading permissions`
+
     return (
         <CentralPanelLayout>
             {!channel || !channelId || displayDecryptionPopup ? (
@@ -116,6 +124,7 @@ const SpacesChannelComponent = () => {
                         spaceId={spaceId}
                         channelId={channelId}
                         events={channelMessages}
+                        isChannelWritable={isChannelWritable}
                     >
                         <MessageTimeline
                             header={
@@ -130,13 +139,13 @@ const SpacesChannelComponent = () => {
 
                     <Box gap paddingBottom="lg" paddingX="lg">
                         <RichTextEditor
-                            editable
-                            background="level3"
+                            editable={!!isChannelWritable}
+                            background={isChannelWritable ? 'level3' : 'level2'}
                             key={channelId.networkId}
                             storageId={channel.id.networkId}
                             autoFocus={!hasThreadOpen}
                             initialValue=""
-                            placeholder={`Send a message to #${channel?.label}`}
+                            placeholder={placeholder}
                             channels={channels}
                             members={members}
                             onSend={onSend}

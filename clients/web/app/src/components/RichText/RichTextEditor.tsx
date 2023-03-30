@@ -41,7 +41,7 @@ import { OnFocusPlugin } from './plugins/OnFocusPlugin'
 import { SendMarkdownPlugin } from './plugins/SendMarkdownPlugin'
 import * as styles from './RichTextEditor.css'
 import { RichTextPlaceholder } from './ui/Placeholder/RichTextEditorPlaceholder'
-import { RichTextUI } from './ui/RichTextEditorUI'
+import { RichTextUI, RichTextUIContainer } from './ui/RichTextEditorUI'
 import { BLANK_LINK } from './transformers/LinkTransformer'
 import { TabThroughPlugin } from './plugins/TabThroughPlugin'
 import { RememberInputPlugin } from './plugins/RememberInputPlugin'
@@ -50,7 +50,7 @@ type Props = {
     onSend?: (value: string, options: SendTextMessageOptions | undefined) => void
     onCancel?: () => void
     autoFocus?: boolean
-    editable: boolean
+    editable?: boolean
     editing?: boolean
     placeholder?: string
     initialValue?: string
@@ -170,6 +170,7 @@ export const RichTextEditor = (props: Props) => {
 
 const RichTextEditorWithoutBoundary = (props: Props) => {
     const {
+        editable = true,
         members,
         channels,
         placeholder = 'Write something ...',
@@ -187,10 +188,10 @@ const RichTextEditorWithoutBoundary = (props: Props) => {
     const valueFromStore = props.storageId ? userInput : undefined
 
     const initialConfig = useInitialConfig(
-        props.initialValue || valueFromStore,
+        props.initialValue || (editable ? valueFromStore : ''),
         nodes,
         transformers,
-        true,
+        editable,
     )
 
     const [focused, setFocused] = useState(false)
@@ -210,6 +211,14 @@ const RichTextEditorWithoutBoundary = (props: Props) => {
     const onSendAttemptWhileDisabled = useCallback(() => {
         setIsAttemptingSend(true)
     }, [])
+
+    if (!editable) {
+        return (
+            <RichTextUIContainer>
+                <RichTextPlaceholder placeholder={placeholder} color="level4" />
+            </RichTextUIContainer>
+        )
+    }
 
     return (
         <LexicalComposer initialConfig={initialConfig}>

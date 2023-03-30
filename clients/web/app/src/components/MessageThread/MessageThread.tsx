@@ -13,6 +13,7 @@ import { RichTextEditor } from '@components/RichText/RichTextEditor'
 import { Box, Paragraph, Stack } from '@ui'
 import { useSendReply } from 'hooks/useSendReply'
 import { useSpaceChannels } from 'hooks/useSpaceChannels'
+import { useIsChannelWritable } from 'hooks/useIsChannelWritable'
 
 export const MessageThread = (props: {
     userId: string
@@ -67,6 +68,8 @@ export const MessageThread = (props: {
     const { members } = useSpaceMembers()
     const channels = useSpaceChannels()
 
+    const { isChannelWritable } = useIsChannelWritable(channelId)
+
     return parentMessage ? (
         <MessageTimelineWrapper
             events={messagesWithParent}
@@ -86,7 +89,7 @@ export const MessageThread = (props: {
                         <MessageTimeline collapsed />
                         <Box padding>
                             <RichTextEditor
-                                editable
+                                editable={!!isChannelWritable}
                                 threadId={parentId}
                                 storageId={`${channelId.networkId}-${parentId}`}
                                 autoFocus={false}

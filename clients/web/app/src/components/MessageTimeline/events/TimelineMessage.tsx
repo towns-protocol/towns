@@ -32,6 +32,7 @@ export const TimelineMessage = React.memo((props: Props) => {
         type,
         messageRepliesMap,
         messageReactionsMap,
+        isChannelWritable,
     } = timelineContext
 
     const user = membersMap[sender.id]
@@ -62,6 +63,7 @@ export const TimelineMessage = React.memo((props: Props) => {
             editable={isOwn && !event.isLocalPending}
             eventId={event.eventId}
             displayContext={displayContext}
+            isChannelWritable={isChannelWritable}
             name={displayName}
             paddingY={displayContext === 'tail' ? 'sm' : 'md'}
             paddingBottom={displayContext === 'head' ? 'sm' : undefined}
