@@ -7,7 +7,7 @@ data "aws_iam_role" "ecs_task_execution_role" {
 }
 
 locals {
-  app_url = module.global_constants.environment == "production" ? "https://app.towns.com" : "https://app-${module.global_constants.environment}.towns.com"
+  app_url = module.global_constants.environment == "production" ? "https://alpha.towns.com" : "https://app-${module.global_constants.environment}.towns.com"
 }
 resource "aws_ecs_task_definition" "dendrite-fargate" {
   family = "${module.global_constants.environment}-dendrite-fargate" 

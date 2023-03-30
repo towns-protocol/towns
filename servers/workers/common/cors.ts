@@ -1,8 +1,12 @@
 const allowedOrigins = [
     'http://localhost:3000',
     'https://towns.com',
+    'https://alpha.towns.com',
     'https://app.towns.com',
     'https://app-test.towns.com',
+    'https://app-staging.towns.com',
+    'https://harmony-web-pr-*.onrender.com',
+    'https://test-harmony-web-pr-*.onrender.com',
 ]
 
 const onRenderOrigin = (origin: string): string | undefined => {
