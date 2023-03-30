@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from 'react'
 import { WalletStatus, useMatrixCredentials, useWeb3Context, useZionClient } from 'use-zion-client'
-import { useConnect } from 'wagmi'
+import { useAccount, useConnect } from 'wagmi'
 import { keccak256 } from 'ethers/lib/utils.js'
 import { useAnalytics } from './useAnalytics'
 
@@ -11,14 +11,13 @@ export function useAuth() {
     const { isAuthenticated, loginStatus, loginError, loggedInWalletAddress } =
         useMatrixCredentials()
     const { loginWithWalletToMatrix, registerWalletWithMatrix, logout: _logout } = useZionClient()
-    const { walletStatus, activeWalletAddress } = useWeb3Context()
+    const { activeWalletAddress } = useWeb3Context()
     const { track, setUserId } = useAnalytics()
     const {
         connect: _connect,
         connectors,
         error: connectError,
         pendingConnector,
-        isLoading: connectLoading,
     } = useConnect({
         onSuccess: () => {
             // jterzis somewhat of a hack to set a stable, obfuscated uid derived off the wallet address
@@ -31,6 +30,10 @@ export function useAuth() {
             })
         },
     })
+
+    // useWeb3Context().walletStatus sometimes hangs at 'reconnecting' on first load (cannot reproduce locally) - why?? - which causes our app to hang in the loading/login screen
+    // reusing useAccount() here to get the wallet status in more directly, maybe that will fix it
+    const { status } = useAccount()
 
     const connect = useCallback(() => {
         _connect({ connector: connectors[0] })
@@ -49,12 +52,16 @@ export function useAuth() {
     }, [_logout])
 
     const isConnected = useMemo(() => {
-        return walletStatus === WalletStatus.Connected
-    }, [walletStatus])
+        return status === WalletStatus.Connected
+    }, [status])
 
     const isAuthenticatedAndConnected = useMemo(() => {
         return isAuthenticated && isConnected
     }, [isAuthenticated, isConnected])
+
+    const connectLoading = useMemo(() => {
+        return status === WalletStatus.Reconnecting || status === WalletStatus.Connecting
+    }, [status])
 
     return {
         connect,
@@ -71,6 +78,6 @@ export function useAuth() {
         isConnected,
         loginStatus,
         loginError,
-        walletStatus,
+        walletStatus: status as WalletStatus,
     }
 }
