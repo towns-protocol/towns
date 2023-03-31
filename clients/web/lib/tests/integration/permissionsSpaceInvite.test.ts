@@ -5,11 +5,13 @@ import {
     createTestSpaceWithZionMemberRole,
     registerAndStartClients,
     registerAndStartClient,
+    createTestSpaceWithEveryoneRole,
 } from 'use-zion-client/tests/integration/helpers/TestUtils'
 
 import { Permission } from 'use-zion-client/src/client/web3/ContractTypes'
-import { Room } from 'use-zion-client/src/types/zion-types'
+import { Room, RoomVisibility } from 'use-zion-client/src/types/zion-types'
 import { TestConstants } from './helpers/TestConstants'
+import { ZionTestClient } from './helpers/ZionTestClient'
 
 describe('space invite', () => {
     test('Inviter is not allowed due to missing Invite permission', async () => {
@@ -174,4 +176,51 @@ describe('space invite', () => {
         // Forbidden exception because the user does not have Read permission
         expect(error.data).toHaveProperty('errcode', MAXTRIX_ERROR.M_FORBIDDEN)
     }) // end test
+
+    test('Cannot join Space over quota', async () => {
+        /** Arrange */
+
+        // create all the users for the test
+        // maxUsers should exceed the default quota of 5
+        const maxUsers = 6
+        const joiners: ZionTestClient[] = []
+        const registerClients: Promise<Record<string, ZionTestClient>>[] = []
+        for (let i = 0; i < maxUsers; i++) {
+            registerClients.push(registerAndStartClients([`tokenGrantedUser_${i}`]))
+        }
+        await Promise.all(registerClients).then((clients) => {
+            clients.forEach((clientObj) => {
+                for (const key in clientObj) {
+                    joiners.push(clientObj[key])
+                }
+            })
+        })
+        const { bob } = await registerAndStartClients(['bob'])
+        await bob.fundWallet()
+
+        // create a space with everyone entitlement
+        const roomId = await createTestSpaceWithEveryoneRole(bob, [Permission.Read], {
+            name: 'test',
+            visibility: RoomVisibility.Public,
+        })
+
+        // invite users to join the space.
+        /** Act */
+        let failedJoinIndex = 0
+        let numJoinersProcessed = 1
+        if (roomId) {
+            for (const user of joiners) {
+                try {
+                    await user.joinRoom(roomId)
+                    numJoinersProcessed++
+                } catch (e) {
+                    console.log('error joining room', e)
+                    failedJoinIndex = numJoinersProcessed
+                    break
+                }
+            }
+        }
+        /** Assert */
+        expect(failedJoinIndex).toBe(maxUsers)
+    }, 120000) // end test
 }) // end describe

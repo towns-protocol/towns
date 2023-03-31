@@ -112,6 +112,15 @@ global:
     # useful if running more than one Dendrite on the same NATS deployment.
     topic_prefix: Dendrite
 
+  room_quotas:
+    # Pioneer Town spaceId and any other excluded spaceId goes here
+    # example array with two random spaceIds below
+    # note: this is the matrix id, not spaceId slug
+    excluded_towns:
+      - "!ESIQlTSa4zDmhrez:localhost"
+      - "!ABCDlTSa4zDmhSAr:localhost"
+    member_cap: 5
+
   # Configuration for Prometheus metric collection.
   metrics:
     # Whether or not Prometheus metrics are enabled.
