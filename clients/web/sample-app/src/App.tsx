@@ -9,7 +9,7 @@ import { Mentions } from 'routes/Mentions'
 import { useSampleAppStore } from 'store/store'
 import { AlphaAccessMainPage } from 'routes/AlphaAccess'
 import { Home } from './routes/Home'
-import { Main } from './components/Main'
+import { MainLayout } from './components/MainLayout'
 import { NotFound } from './routes/NotFound'
 import { RoomSettings } from './routes/RoomSettings'
 import { SpaceInvite } from './routes/SpaceInvite'
@@ -44,7 +44,7 @@ export const App = () => {
                 >
                     <Routes>
                         <Route path="/alpha-access" element={<AlphaAccessMainPage />} />
-                        <Route element={<Main />}>
+                        <Route element={<MainLayout />}>
                             <Route element={<AuthenticatedContent />}>
                                 <Route index element={<Home />} />
                                 <Route path="spaces/new" element={<SpacesNew />} />

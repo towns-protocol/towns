@@ -3,7 +3,7 @@ import { WalletStatus, useMatrixCredentials, useWeb3Context } from 'use-zion-cli
 import { Outlet } from 'react-router-dom'
 import { Login } from './Login'
 
-export function Main(): JSX.Element {
+export function MainLayout(): JSX.Element {
     const { isAuthenticated } = useMatrixCredentials()
     const { walletStatus } = useWeb3Context()
     const isAuthed = isAuthenticated && walletStatus !== WalletStatus.Disconnected
