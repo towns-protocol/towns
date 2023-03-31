@@ -3,59 +3,24 @@ import { useSpaceData } from 'use-zion-client'
 import { Link } from 'react-router-dom'
 import { AnimatePresence } from 'framer-motion'
 import { useEvent } from 'react-use-event-hook'
-import { Box, Button, Heading, Icon, IconProps, Paragraph, Stack, Text, TextField } from '@ui'
-import { StackProps } from 'ui/components/Stack/Stack'
+import { Box, Button, Heading, Icon, Paragraph, Stack, Text } from '@ui'
 import { PATHS } from 'routes'
 import useCopyToClipboard from 'hooks/useCopyToClipboard'
 import { FadeIn } from '@components/Transitions'
-import { useSpaceRoles } from 'hooks/useContractRoles'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { CreateChannelFormContainer } from '@components/Web3/CreateChannelForm'
 import { getInviteUrl } from 'ui/utils/utils'
 import { childStyle, contentStyle, copiedStyle, headerStyle } from './SpaceOwnerLanding.css'
-
-type InviteCardProps = {
-    icon: IconProps['type']
-    description: string
-    children?: React.ReactNode
-} & StackProps
-
-const InviteCard = (props: InviteCardProps) => {
-    const { icon, description, children, ...stackProps } = props
-    return (
-        <Stack
-            background="level2"
-            rounded="md"
-            padding="md"
-            gap="md"
-            flexDirection="row"
-            alignItems="center"
-            {...stackProps}
-        >
-            <Stack flexDirection="row" gap="sm" alignItems="center">
-                <Icon type={icon} />
-                <Text color="default">{description}</Text>
-            </Stack>
-            {children}
-        </Stack>
-    )
-}
 
 export const SpaceOwnerLanding = () => {
     const space = useSpaceData()
     const [, copy] = useCopyToClipboard()
     const [copyWasClicked, setCopyWasClicked] = React.useState(false)
     const inviteUrl = getInviteUrl(space?.id)
-    const { data: roles } = useSpaceRoles(space?.id.networkId)
-    const hasMemberRole = roles?.find((role) => role.name === 'Member')
     const [modal, setModal] = useState(false)
 
     const onHide = useEvent(() => {
         setModal(false)
-    })
-
-    const onShow = useEvent(() => {
-        setModal(true)
     })
 
     function onCopy() {
@@ -68,10 +33,6 @@ export const SpaceOwnerLanding = () => {
         setTimeout(() => {
             setCopyWasClicked(false)
         }, 2000)
-    }
-
-    function onChannel() {
-        onShow()
     }
 
     return (
@@ -109,49 +70,39 @@ export const SpaceOwnerLanding = () => {
                     </Paragraph>
                 </Stack>
                 <Stack gap="md" className={childStyle}>
-                    <InviteCard
-                        flexDirection="column"
-                        alignItems="start"
-                        icon="link"
-                        description="Share your town link:"
+                    <Stack
+                        background="level2"
+                        rounded="md"
+                        padding="md"
+                        flexDirection="row"
+                        justifyContent="spaceBetween"
+                        alignItems="center"
+                        maxWidth="420"
+                        border="default"
                     >
-                        <Stack flexDirection="row" flexWrap="wrap" gap="sm" width="100%">
-                            <TextField readOnly value={inviteUrl} background="level3" />
-
-                            <Box position="relative">
-                                <Button width="x10" tone="cta1" onClick={onCopy}>
-                                    Copy
-                                </Button>
-                                <AnimatePresence mode="wait">
-                                    {copyWasClicked && (
-                                        <FadeIn>
-                                            <Box
-                                                position="absolute"
-                                                background="level4"
-                                                rounded="sm"
-                                                padding="sm"
-                                                className={copiedStyle}
-                                            >
-                                                <Text size="sm">Copied!</Text>
-                                            </Box>
-                                        </FadeIn>
-                                    )}
-                                </AnimatePresence>
-                            </Box>
+                        <Stack flexDirection="row" gap="md" alignItems="center">
+                            <Icon color="gray2" type="link" />
+                            <Text color="default">{'Share your town link:'}</Text>
                         </Stack>
-                    </InviteCard>
-
-                    {hasMemberRole && (
-                        <InviteCard
-                            icon="lock"
-                            description="Create a token gated channel"
-                            justifyContent="spaceBetween"
-                        >
-                            <Button width="x10" tone="cta1" onClick={onChannel}>
-                                Add
-                            </Button>
-                        </InviteCard>
-                    )}
+                        <Button tone="cta1" onClick={onCopy}>
+                            Copy town link
+                        </Button>
+                        <AnimatePresence mode="wait">
+                            {copyWasClicked && (
+                                <FadeIn>
+                                    <Box
+                                        position="absolute"
+                                        background="level4"
+                                        rounded="sm"
+                                        padding="sm"
+                                        className={copiedStyle}
+                                    >
+                                        <Text size="sm">Copied!</Text>
+                                    </Box>
+                                </FadeIn>
+                            )}
+                        </AnimatePresence>
+                    </Stack>
                 </Stack>
             </Stack>
 
