@@ -172,7 +172,7 @@ export const TokenList = ({ isChecked, setValue, chainId, wallet }: TokenListPro
                         label={
                             <TokenCheckboxLabel
                                 contractAddress={search}
-                                label="Add unknown token"
+                                label="Add token"
                                 imgSrc=""
                             />
                         }
