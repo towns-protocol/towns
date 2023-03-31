@@ -1,7 +1,11 @@
 # add your secret variables here for local development
 # for public variables, add them in wrangler.toml
-# get from credentials page in Notion
 AUTH_SECRET=foo
 
-# get from https://www.notion.so/herenottherelabs/Credentials-4f284469da01425a9f7f936b9e3ed8aa
+# In team Alchemy dashboard, use the key from Towns(server)
 ALCHEMY_API_KEY=
+
+# From the Towns(server) API key on Infura dashboard
+# secret key is available from the "security" tab
+INFURA_API_KEY=
+INFURA_API_SECRET=
