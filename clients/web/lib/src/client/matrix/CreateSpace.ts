@@ -63,7 +63,7 @@ function makeInitialState(createSpaceInfo: CreateSpaceInfo) {
             content: {
                 algorithm: 'm.megolm.v1.aes-sha2',
                 rotation_period_ms: 604800000,
-                rotation_period_msgs: 100,
+                rotation_period_msgs: 1000000,
             },
             state_key: '',
             type: 'm.room.encryption',
