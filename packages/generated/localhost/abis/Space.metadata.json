@@ -117,6 +117,25 @@
         "inputs": [
           {
             "indexed": false,
+            "internalType": "string",
+            "name": "prevURI",
+            "type": "string"
+          },
+          {
+            "indexed": false,
+            "internalType": "string",
+            "name": "newURI",
+            "type": "string"
+          }
+        ],
+        "name": "ContractURIUpdated",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": false,
             "internalType": "uint8",
             "name": "version",
             "type": "uint8"
@@ -137,6 +156,32 @@
         ],
         "name": "Upgraded",
         "type": "event"
+      },
+      {
+        "inputs": [],
+        "name": "MODULE_TYPE",
+        "outputs": [
+          {
+            "internalType": "string",
+            "name": "",
+            "type": "string"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "MODULE_VERSION",
+        "outputs": [
+          {
+            "internalType": "uint48",
+            "name": "",
+            "type": "uint48"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
       },
       {
         "inputs": [
@@ -262,6 +307,19 @@
             "internalType": "bool",
             "name": "disabled",
             "type": "bool"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "contractURI",
+        "outputs": [
+          {
+            "internalType": "string",
+            "name": "",
+            "type": "string"
           }
         ],
         "stateMutability": "view",
@@ -926,6 +984,19 @@
       {
         "inputs": [
           {
+            "internalType": "string",
+            "name": "_uri",
+            "type": "string"
+          }
+        ],
+        "name": "setContractURI",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
             "internalType": "address",
             "name": "_entitlementModule",
             "type": "address"
@@ -1086,6 +1157,9 @@
         },
         "BeaconUpgraded(address)": {
           "details": "Emitted when the beacon is upgraded."
+        },
+        "ContractURIUpdated(string,string)": {
+          "details": "Emitted when the contract URI is updated."
         },
         "Initialized(uint8)": {
           "details": "Triggered when the contract has been initialized or reinitialized."
@@ -1353,6 +1427,9 @@
         "setChannelAccess(string,bool)": {
           "notice": "sets whether the channel is disabled or not"
         },
+        "setContractURI(string)": {
+          "notice": "inheritdoc IMetadata"
+        },
         "setEntitlementModule(address,bool)": {
           "notice": "sets a new entitlement module for the space"
         },
@@ -1484,11 +1561,11 @@
       ]
     },
     "packages/contracts/src/core/spaces/Space.sol": {
-      "keccak256": "0x4b5711d3c3bd402baebffc55b59572572251104a67e26878b50e1a01cb03d683",
+      "keccak256": "0xe76112bc7d48979c0e8198585c76863bb489ea58a8437b52d5237caeccb1846a",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://70f7b668e7a0bbc57b1192ebad5894d2554b0c120c2cb252778d2e77249009de",
-        "dweb:/ipfs/QmRDrNH1zJ6apVnNeZbb3zud7TyUhKBkopL9ciq3Ta6hi7"
+        "bzz-raw://044235524b3709b85031cd06feb7694b5aa8619380b43ccc4aafb4e4bb32d2ca",
+        "dweb:/ipfs/QmWYg5j4p9NqZEroZjihGs3S37vuapGkLcvHRUBADR9y4J"
       ]
     },
     "packages/contracts/src/interfaces/IEntitlement.sol": {
@@ -1547,12 +1624,28 @@
         "dweb:/ipfs/QmTr6J7qqkF8xiZkJSt8e812r4srdmXQetZk6jTgJbcasJ"
       ]
     },
+    "packages/contracts/src/misc/Metadata.sol": {
+      "keccak256": "0xc1530022c5ebb294986fc963c97e12edf7d3a83a6759e2f5942b61c09deaa775",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://ce76d3926fa45d1a8e97400dbffa9f96803a6df18b58ca9062769cdf87762c73",
+        "dweb:/ipfs/Qmcpz7ZEsZMcF4CwFooJnCjZx5nxiXdzTtkmaXdKnKVfds"
+      ]
+    },
     "packages/contracts/src/misc/MultiCaller.sol": {
       "keccak256": "0x3441542d90123c265e94b948a4215418c4a5f8a8e23bca3ba929671ef6bc8246",
       "license": "Apache-2.0",
       "urls": [
         "bzz-raw://fab07fcf9c590926072868d314ccc453eece66a02a6fd5cba7aceed36b4ac33e",
         "dweb:/ipfs/QmR29MwNCevmsa13kVoLDUf5LFCJw1SnY6VuB4f54TC7Ly"
+      ]
+    },
+    "packages/contracts/src/misc/interfaces/IMetadata.sol": {
+      "keccak256": "0xd16cdbf4362883382409025e41760f2382470cabada7fe0ce5fe165855debf52",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://0c3424b5243f243c7ea9d1760a99636ef8587beab81a161eae31ad65be66b702",
+        "dweb:/ipfs/QmUMsXbkA667dBhTwjmPE8VtLQCWeFWHqcrTmeAuWqw5Dn"
       ]
     }
   },

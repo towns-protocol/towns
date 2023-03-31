@@ -1092,11 +1092,11 @@
       ]
     },
     "packages/contracts/src/core/spaces/Space.sol": {
-      "keccak256": "0x4b5711d3c3bd402baebffc55b59572572251104a67e26878b50e1a01cb03d683",
+      "keccak256": "0xe76112bc7d48979c0e8198585c76863bb489ea58a8437b52d5237caeccb1846a",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://70f7b668e7a0bbc57b1192ebad5894d2554b0c120c2cb252778d2e77249009de",
-        "dweb:/ipfs/QmRDrNH1zJ6apVnNeZbb3zud7TyUhKBkopL9ciq3Ta6hi7"
+        "bzz-raw://044235524b3709b85031cd06feb7694b5aa8619380b43ccc4aafb4e4bb32d2ca",
+        "dweb:/ipfs/QmWYg5j4p9NqZEroZjihGs3S37vuapGkLcvHRUBADR9y4J"
       ]
     },
     "packages/contracts/src/core/spaces/SpaceFactory.sol": {

@@ -19,12 +19,14 @@ import {Initializable} from "openzeppelin-contracts-upgradeable/proxy/utils/Init
 import {ContextUpgradeable} from "openzeppelin-contracts-upgradeable/utils/ContextUpgradeable.sol";
 import {UUPSUpgradeable} from "openzeppelin-contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import {MultiCaller} from "contracts/src/misc/MultiCaller.sol";
+import {Metadata} from "contracts/src/misc/Metadata.sol";
 
 contract Space is
   Initializable,
   ContextUpgradeable,
   UUPSUpgradeable,
   MultiCaller,
+  Metadata,
   ISpace
 {
   string public name;
@@ -47,6 +49,8 @@ contract Space is
   bytes32[] public channels;
 
   string internal constant IN_SPACE = "";
+  string public constant MODULE_TYPE = "Space";
+  uint48 public constant MODULE_VERSION = 1;
 
   /**
    * @dev Added to allow future versions to add new variables in case this contract becomes
@@ -790,6 +794,10 @@ contract Space is
         type(IEntitlement).interfaceId
       ) == false
     ) revert Errors.EntitlementModuleNotSupported();
+  }
+
+  function _canSetContractURI() internal view override returns (bool) {
+    return _isOwner();
   }
 
   function _authorizeUpgrade(
