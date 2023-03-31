@@ -1,11 +1,14 @@
 package rpc
 
 import (
+	"casablanca/node/infra"
 	"casablanca/node/protocol"
 	"context"
 
 	connect "github.com/bufbuild/connect-go"
 )
+
+var syncStreamsResultSize = infra.NewCounter("sync_streams_result_size", "The total number of events returned by sync streams")
 
 func (s *Service) SyncStreams(ctx context.Context, req *connect.Request[protocol.SyncStreamsRequest], stream *connect.ServerStream[protocol.SyncStreamsResponse]) error {
 
@@ -27,6 +30,11 @@ func (s *Service) SyncStreams(ctx context.Context, req *connect.Request[protocol
 	res := protocol.SyncStreamsResponse{
 		Streams: streams,
 	}
+	total := 0
+	for _, stream := range streams {
+		total += len(stream.Events)
+	}
+	syncStreamsResultSize.Add(float64(total))
 	err = stream.Send(&res)
 	return err
 

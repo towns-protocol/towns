@@ -50,6 +50,10 @@ const (
 	PG_REPORT_INTERVAL = 20 * time.Second
 )
 
+var (
+	syncStreamsLongPoll = infra.NewCounter("sync_streams_long_poll", "Sync streams long poll invocations metric")
+)
+
 // NewPGEventStore creates a new PGEventStore
 func NewPGEventStore(ctx context.Context, database_url string, clean bool) (*PGEventStore, error) {
 	log := infra.GetLogger(ctx)
@@ -1032,6 +1036,8 @@ func (s *PGEventStore) SyncStreams(ctx context.Context, syncPositions []*protoco
 		log.Debugf("SyncStreams return: %s", formatSyncResults(streams))
 		return streams, nil
 	}
+
+	syncStreamsLongPoll.Inc()
 
 	var results chan *syncEvent = make(chan *syncEvent, len(events))
 	for _, pos := range syncPositions {

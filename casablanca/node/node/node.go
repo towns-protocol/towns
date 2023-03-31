@@ -1,6 +1,7 @@
 package main
 
 import (
+	"casablanca/node/infra"
 	"casablanca/node/rpc"
 	"context"
 	"flag"
@@ -21,12 +22,13 @@ import (
 )
 
 type Config struct {
-	Port    int    `yaml:"port" default:"5157"`
-	Address string `yaml:"address" default:""`
-	DbUrl   string `yaml:"db_url" default:"postgres://postgres:postgres@localhost:5433/casablanca?sslmode=disable&pool_max_conns=3"`
-	Debug   bool   `yaml:"debug" default:"false"`
-	LogFile string `yaml:"log_file" default:""`
-	Clean   bool   `yaml:"clean" default:"false"`
+	Port    int                 `yaml:"port" default:"5157"`
+	Address string              `yaml:"address" default:""`
+	DbUrl   string              `yaml:"db_url" default:"postgres://postgres:postgres@localhost:5433/casablanca?sslmode=disable&pool_max_conns=3"`
+	Debug   bool                `yaml:"debug" default:"false"`
+	LogFile string              `yaml:"log_file" default:""`
+	Clean   bool                `yaml:"clean" default:"false"`
+	Metrics infra.MetricsConfig `yaml:"metrics"`
 }
 
 func main() {
@@ -63,6 +65,10 @@ func main() {
 		log.SetOutput(wrt)
 	}
 
+	if config.Metrics.Enabled {
+		go infra.StartMetricsService(config.Metrics)
+	}
+
 	pattern, handler := rpc.MakeServiceHandler(context.Background(), config.DbUrl, config.Clean)
 	mux := http.NewServeMux()
 	mux.Handle(pattern, handler)
@@ -93,7 +99,7 @@ func main() {
 }
 
 func readConfig(cfg string) (*Config, error) {
-	log.Infof("reading config from %s", cfg)
+	log.Infof("Reading config from %s", cfg)
 	f, err := os.Open(cfg)
 	if err != nil {
 		log.Warn(err)

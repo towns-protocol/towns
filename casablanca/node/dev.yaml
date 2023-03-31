@@ -3,3 +3,4 @@ db_url: postgres://postgres:postgres@localhost:5433/casablanca?sslmode=disable&p
 address:
 debug: true
 log_file: dev.log
+metrics: { enabled: true, port: 8081 }

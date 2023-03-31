@@ -29,7 +29,16 @@ type LoggingService struct {
 	Service *Service
 }
 
+var (
+	serviceRequests      = infra.NewSuccessMetrics("service_requests", nil)
+	createStreamRequests = infra.NewSuccessMetrics("create_stream_requests", serviceRequests)
+	getStreamRequests    = infra.NewSuccessMetrics("get_stream_requests", serviceRequests)
+	addEventRequests     = infra.NewSuccessMetrics("add_event_requests", serviceRequests)
+	syncStreamsRequests  = infra.NewSuccessMetrics("sync_streams_requests", serviceRequests)
+)
+
 func (s *LoggingService) CreateStream(ctx context.Context, req *connect_go.Request[protocol.CreateStreamRequest]) (*connect_go.Response[protocol.CreateStreamResponse], error) {
+
 	ctx, log, requestId := infra.SetLoggerWithRequestId(ctx)
 	parsedEvent := events.FormatEventsToJson(req.Msg.Events)
 
@@ -38,9 +47,11 @@ func (s *LoggingService) CreateStream(ctx context.Context, req *connect_go.Reque
 	res, err := s.Service.CreateStream(ctx, req)
 	if err != nil {
 		log.Errorf("CreateStream error: %v", err)
+		createStreamRequests.Fail()
 		return nil, RpcAddRequestId(err, requestId)
 	}
 	log.Debugf("CreateStream: response %s", protojson.Format((res.Msg)))
+	createStreamRequests.Pass()
 	return res, nil
 }
 
@@ -51,11 +62,14 @@ func (s *LoggingService) GetStream(ctx context.Context, req *connect_go.Request[
 	res, err := s.Service.GetStream(ctx, req)
 	if err != nil {
 		log.Errorf("GetStream error: %v", err)
+		getStreamRequests.Fail()
 		return nil, RpcAddRequestId(err, requestId)
 	}
 
 	parsedEvents := events.FormatEventsToJson(res.Msg.Stream.Events)
 	log.Debugf("GetStream: response %s %s", protojson.Format((res.Msg)), parsedEvents)
+	getStreamRequests.Pass()
+
 	return res, nil
 }
 
@@ -68,8 +82,10 @@ func (s *LoggingService) AddEvent(ctx context.Context, req *connect_go.Request[p
 	res, err := s.Service.AddEvent(ctx, req)
 	if err != nil {
 		log.Errorf("AddEvent error: %v", err)
+		addEventRequests.Fail()
 		return nil, RpcAddRequestId(err, requestId)
 	}
+	addEventRequests.Pass()
 	return res, nil
 }
 
@@ -80,8 +96,10 @@ func (s *LoggingService) SyncStreams(ctx context.Context, req *connect_go.Reques
 
 	if err != nil {
 		log.Errorf("SyncStreams error: %v", err)
+		syncStreamsRequests.Fail()
 		return RpcAddRequestId(err, requestId)
 	}
+	syncStreamsRequests.Pass()
 	return err
 }
 
@@ -92,9 +110,11 @@ func (s *LoggingService) Info(ctx context.Context, req *connect_go.Request[proto
 	res, err := s.Service.Info(ctx, req)
 	if err != nil {
 		log.Errorf("Info error: %v", err)
+		serviceRequests.Fail()
 		return nil, RpcAddRequestId(err, requestId)
 	}
 	log.Debugf("Info: response %s", protojson.Format((res.Msg)))
+	serviceRequests.Pass()
 	return res, nil
 }
 
