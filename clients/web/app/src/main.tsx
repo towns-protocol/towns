@@ -22,8 +22,13 @@ if (env.IS_DEV) {
         if (!ErrorOverlay) {
             return
         }
-        console.log(event.error)
-        const overlay = new ErrorOverlay(event.error)
+        const error = event.error || event
+        if (!error) {
+            console.error('no error found in event', event)
+            return
+        }
+        console.log('showErrorOverlay:', error)
+        const overlay = new ErrorOverlay(error)
         document.body.appendChild(overlay)
     }
     window.addEventListener('error', showErrorOverlay)
