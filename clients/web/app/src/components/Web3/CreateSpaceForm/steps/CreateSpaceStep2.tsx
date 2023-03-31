@@ -30,12 +30,10 @@ const schema = z.object({
                 }
 
                 return {
-                    message:
-                        'Town name can only contain lowercase letters, numbers, spaces, hyphens, periods and underscores.',
+                    message: 'Town name must be between 2 and 32 characters.',
                 }
             },
         })
-        .regex(/^[a-z0-9 ._-]+$/)
         .min(2)
         .max(MAX_LENGTH),
 })
