@@ -104,7 +104,7 @@ export function AppDrawer(props: Props): JSX.Element {
                 onClickChannel={onClickChannel}
             />
             <Divider />
-            <SidebarNewItemButton label="Create Space" onClick={onClickCreateSpace} />
+            <SidebarNewItemButton label="Create A Town" onClick={onClickCreateSpace} />
             <Divider />
             <Invites title="Invites" onClickInvite={onClickInvite} />
             <SidebarItemButton label="Web 3" onClick={onWeb3Click} />

@@ -151,7 +151,7 @@ export const SpaceSettings = () => {
                         </SpaceSettingsNavItem>
                     </NavLink>
                     <SpaceSettingsNavItem icon="delete" color="error">
-                        Delete Space
+                        Delete Town
                     </SpaceSettingsNavItem>
                 </Stack>
             </Stack>

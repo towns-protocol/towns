@@ -216,7 +216,7 @@ export const CreateSpaceForm = (props: Props) => {
                     </Typography>
                     <TextField
                         id="filled-basic"
-                        label="Name of the space"
+                        label="Name of the Town"
                         variant="filled"
                         onChange={onChangespaceName}
                     />

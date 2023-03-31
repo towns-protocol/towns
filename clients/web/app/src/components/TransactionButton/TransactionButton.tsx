@@ -22,7 +22,7 @@ const MotionText = motion(Text)
 export const TransactionButton = (props: Props) => {
     const {
         transactionUIState,
-        transactingText = 'Creating Space',
+        transactingText = 'Creating Town',
         requestingText = 'Waiting for Approval',
         formId,
         disabled,

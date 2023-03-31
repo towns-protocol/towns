@@ -114,7 +114,7 @@ export const CreateSpaceForm = () => {
     useEffect(() => {
         if (hasError) {
             Sentry.captureException(
-                new Error(`Error creating space: ${error?.name} ${error?.message}`),
+                new Error(`Error creating town: ${error?.name} ${error?.message}`),
             )
         }
     }, [error, hasError])

@@ -204,7 +204,7 @@ export const CreateChannelForm = (props: Props) => {
                                     <ErrorMessageText
                                         message={
                                             isForbiddenError(transactionError)
-                                                ? "You don't have permission to create a channel in this space"
+                                                ? "You don't have permission to create a channel in this town"
                                                 : 'There was an error creating the channel'
                                         }
                                     />

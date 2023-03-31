@@ -237,7 +237,7 @@ describe('<CreateSpaceForm />', () => {
         fireEvent.click(nextButton)
 
         await waitFor(async () => {
-            await screen.findByText('Creating Space')
+            await screen.findByText('Creating Town')
         })
 
         await waitFor(
@@ -373,7 +373,7 @@ describe('<CreateSpaceForm />', () => {
         fireEvent.click(nextButton)
 
         await waitFor(async () => {
-            await screen.findByText('Creating Space')
+            await screen.findByText('Creating Town')
         })
 
         await waitFor(async () => {
@@ -429,7 +429,7 @@ describe('<CreateSpaceForm />', () => {
         fireEvent.click(screen.getByTestId('create-space-next-button'))
 
         await waitFor(async () => {
-            await screen.findByText('Creating Space')
+            await screen.findByText('Creating Town')
         })
 
         await waitFor(

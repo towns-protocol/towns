@@ -41,7 +41,7 @@ export const MainSideBar = (props: Props) => {
                         id={`${PATHS.SPACES}/new`}
                         link={`/${PATHS.SPACES}/new`}
                         icon="plus"
-                        label="New Space"
+                        label="New Town"
                     />
                 )}
                 {invites.map((m, index) => (

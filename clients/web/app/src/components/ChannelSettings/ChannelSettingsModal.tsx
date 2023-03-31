@@ -270,7 +270,7 @@ function ChannelSettingsPopup({
                                         <ErrorMessageText
                                             message={
                                                 isForbiddenError(transactionError)
-                                                    ? "You don't have permission to update a channel in this space"
+                                                    ? "You don't have permission to update a channel in this town"
                                                     : 'There was an error updating the channel'
                                             }
                                         />

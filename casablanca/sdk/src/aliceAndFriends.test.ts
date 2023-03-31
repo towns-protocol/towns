@@ -160,12 +160,12 @@ const converse = async (conversation: string[][], testName: string): Promise<voi
         const others = drivers.slice(1)
 
         const spaceId = makeUniqueSpaceStreamId()
-        log(`${testName} creating space ${spaceId}`)
+        log(`${testName} creating town ${spaceId}`)
         await expect(alice.client.createSpace(spaceId)).toResolve()
         await expect(alice.client.waitForStream(spaceId)).toResolve()
 
         // Invite and join space.
-        log(`${testName} inviting others to space`)
+        log(`${testName} inviting others to town`)
         const allJoinedSpace = Promise.all(
             others.map(async (d) => {
                 log(`${testName} awaiting userJoinedStream for`, d.client.userId)

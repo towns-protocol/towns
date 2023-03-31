@@ -342,6 +342,6 @@ describe('CreateChannelForm', () => {
             return screen.getByText('Creating channel')
         })
 
-        await screen.findByText("You don't have permission to create a channel in this space")
+        await screen.findByText("You don't have permission to create a channel in this town")
     })
 })
