@@ -6,8 +6,9 @@ type Props = {
     children: React.ReactNode
     delay?: boolean | number
     fast?: boolean
+    useScale?: boolean
     disabled?: boolean
-    layout?: boolean
+    layout?: boolean | 'position'
 }
 
 export const FadeIn = forwardRef<HTMLDivElement, Props & HTMLMotionProps<'div'>>((props, ref) => {
@@ -24,8 +25,8 @@ export const FadeIn = forwardRef<HTMLDivElement, Props & HTMLMotionProps<'div'>>
 
 export const FadeInBox = forwardRef<HTMLDivElement, BoxProps & Props & HTMLMotionProps<'div'>>(
     (props, ref) => {
-        const { disabled, layout, fast, delay, ...boxProps } = props
-        const transition = generateTransition({ layout, fast, delay })
+        const { disabled, layout, fast, delay, useScale, ...boxProps } = props
+        const transition = generateTransition({ layout, fast, delay, useScale })
         return disabled ? (
             <>{props.children}</>
         ) : (
@@ -36,14 +37,17 @@ export const FadeInBox = forwardRef<HTMLDivElement, BoxProps & Props & HTMLMotio
 
 const MotionBox = motion(Box)
 
-const generateTransition = ({ layout, fast, delay }: Omit<Props, 'children'>) => {
+const generateTransition = ({ layout, fast, delay, useScale }: Omit<Props, 'children'>) => {
     return {
         layout: layout,
         transition: {
             duration: fast ? 0.16 : 0.33,
             delay: typeof delay === 'number' ? delay : delay ? 0.1 : 0,
         },
-        variants: { hide: { opacity: 0 }, show: { opacity: 1 } },
+        variants: {
+            hide: { opacity: 0, scale: useScale ? 0.5 : undefined },
+            show: { opacity: 1, scale: useScale ? 1 : undefined },
+        },
         initial: 'hide',
         animate: 'show',
         exit: 'hide',

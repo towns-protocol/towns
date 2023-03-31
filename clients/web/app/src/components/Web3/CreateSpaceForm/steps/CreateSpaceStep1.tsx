@@ -6,6 +6,7 @@ import { AnimatePresence } from 'framer-motion'
 import { Box, ErrorMessage, FormRender, Heading, RadioCard, Stack } from '@ui'
 import { useAuth } from 'hooks/useAuth'
 import { FadeInBox } from '@components/Transitions'
+import { MotionBox } from '@components/Transitions/MotionBox'
 import { useCreateSpaceFormStore } from '../CreateSpaceFormStore'
 import { FormStepProps } from '../../../../hooks/useFormSteps'
 import { TokenList } from '../../../Tokens/TokenList'
@@ -109,21 +110,23 @@ export const CreateSpaceStep1 = ({ onSubmit, id }: FormStepProps) => {
                                     }}
                                 </RadioCard>
                             )}
-                            <AnimatePresence>
-                                {isValid ? null : (
-                                    <FadeInBox key="error">
-                                        <ErrorMessage
-                                            errors={formProps.formState.errors}
-                                            fieldName={MEMBERSHIP_TYPE}
-                                        />
+                            <MotionBox layout="position">
+                                <AnimatePresence>
+                                    {isValid ? null : (
+                                        <FadeInBox key="error">
+                                            <ErrorMessage
+                                                errors={formProps.formState.errors}
+                                                fieldName={MEMBERSHIP_TYPE}
+                                            />
 
-                                        <ErrorMessage
-                                            errors={formProps.formState.errors}
-                                            fieldName={TOKENS}
-                                        />
-                                    </FadeInBox>
-                                )}
-                            </AnimatePresence>
+                                            <ErrorMessage
+                                                errors={formProps.formState.errors}
+                                                fieldName={TOKENS}
+                                            />
+                                        </FadeInBox>
+                                    )}
+                                </AnimatePresence>
+                            </MotionBox>
                         </Stack>
                     </Stack>
                 )

@@ -4,6 +4,8 @@ import '@testing-library/jest-dom/extend-expect' // dont delete this line its ne
 import { vi } from 'vitest'
 import { act } from 'react-test-renderer'
 
+vi.mock('./src/components/Transitions/MotionBox')
+
 const storeResetFns = new Set<() => void>()
 
 // resetting zustand stores between tests

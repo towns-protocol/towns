@@ -16,6 +16,7 @@ export const IconButton = forwardRef<HTMLDivElement, Props>((props, ref) => {
         size = 'square_sm',
         active: isActive,
         opaque: isOpaque,
+        type = 'button',
         background,
         ...boxProps
     } = props
@@ -23,6 +24,7 @@ export const IconButton = forwardRef<HTMLDivElement, Props>((props, ref) => {
     return (
         <Box
             as="button"
+            type={type}
             ref={ref}
             role="button"
             className={styles.iconButton}

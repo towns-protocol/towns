@@ -1,12 +1,12 @@
+import { clsx } from 'clsx'
 import React from 'react'
 import { Controller, UseFormReturn } from 'react-hook-form'
-import { clsx } from 'clsx'
+import { MotionBox, MotionStack } from '@components/Transitions/MotionBox'
 import { Stack } from 'ui/components/Stack/Stack'
-import { Box } from 'ui/components/Box/Box'
 import { Paragraph } from 'ui/components/Text/Paragraph'
-import * as style from './RadioSelect/RadioSelect.css'
 import * as fieldStyles from '../../_internal/Field/Field.css'
 import { FieldOutline } from '../../_internal/Field/FieldOutline/FieldOutline'
+import * as style from './RadioSelect/RadioSelect.css'
 
 type Props = {
     value: string
@@ -22,8 +22,23 @@ export const RadioCard = (props: Props) => {
     const { title, description, children, onClick, name, control } = props
 
     return (
-        <Box padding gap background="level2" cursor="pointer" borderRadius="sm" onClick={onClick}>
-            <Box horizontal justifyContent="spaceBetween" alignItems="start">
+        <MotionStack
+            layout
+            padding
+            gap
+            style={{ borderRadius: 8, originY: 0 }}
+            background="level2"
+            cursor="pointer"
+            borderRadius="sm"
+            overflow="hidden"
+            onClick={onClick}
+        >
+            <MotionBox
+                horizontal
+                layout="position"
+                justifyContent="spaceBetween"
+                alignItems="start"
+            >
                 <Stack gap="paragraph">
                     <Paragraph>{title}</Paragraph>
                     <Paragraph size="sm" color="gray2">
@@ -50,8 +65,8 @@ export const RadioCard = (props: Props) => {
                         )
                     }}
                 />
-            </Box>
-            {children?.()}
-        </Box>
+            </MotionBox>
+            {children?.() ?? <></>}
+        </MotionStack>
     )
 }

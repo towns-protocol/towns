@@ -1,15 +1,17 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { ethers } from 'ethers'
+import { AnimatePresence } from 'framer-motion'
+import uniqBy from 'lodash/uniqBy'
+import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
 import { UseFormReturn } from 'react-hook-form'
 import { getMemberNftAddress } from 'use-zion-client'
-import uniqBy from 'lodash/uniqBy'
-import { ethers } from 'ethers'
-import { Box, Checkbox, Text, TextField, VList } from '@ui'
-import { shortAddress } from 'ui/utils/utils'
-import { useCollectionsForOwner } from 'api/lib/tokenContracts'
 import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinner'
-import { FadeIn } from '@components/Transitions'
-import { env, hasVitalkTokensParam } from 'utils'
+import { FadeIn, FadeInBox } from '@components/Transitions'
+import { MotionBox } from '@components/Transitions/MotionBox'
 import { useCreateSpaceFormStore } from '@components/Web3/CreateSpaceForm/CreateSpaceFormStore'
+import { Box, Checkbox, Paragraph, Text, TextField, VList } from '@ui'
+import { useCollectionsForOwner } from 'api/lib/tokenContracts'
+import { shortAddress } from 'ui/utils/utils'
+import { env, hasVitalkTokensParam } from 'utils'
 import { TokenAvatar } from './TokenAvatar'
 import { TokenProps } from './types'
 
@@ -133,36 +135,48 @@ export const TokenList = ({ isChecked, setValue, chainId, wallet }: TokenListPro
     const isCustomToken = ethers.utils.isAddress(search) && !results.length
     const noResults = !results.length && !isCustomToken && !isLoading
 
-    return (
-        <Box cursor="default" gap="sm">
-            {!selectedTokens.length
-                ? null
-                : data && (
-                      <Box display="flex" flexDirection="row" gap="md" paddingY="md">
-                          {selectedTokens.map((contractAddress: string) => {
-                              const token = data.tokens.find(
-                                  (t) => t.contractAddress === contractAddress,
-                              )
-                              return (
-                                  <TokenAvatar
-                                      key={contractAddress}
-                                      imgSrc={token?.imgSrc || ''}
-                                      label={token?.label || ''}
-                                      contractAddress={contractAddress}
-                                      size="avatar_md"
-                                      onClick={onTokenClick}
-                                  />
-                              )
-                          })}
-                      </Box>
-                  )}
+    const listId = useId()
 
-            <TextField
-                data-testid="token-search"
-                background="level3"
-                placeholder="Search or paste contract address"
-                onChange={(e) => setSearch(e.target.value)}
-            />
+    return (
+        <MotionBox gap layout style={{ originY: 0 }} cursor="default">
+            <AnimatePresence mode="popLayout">
+                {!selectedTokens.length ? null : data ? (
+                    <FadeInBox horizontal gap fast layout="position" paddingY="md">
+                        <AnimatePresence mode="popLayout">
+                            {selectedTokens.map((contractAddress: string) => {
+                                const token = data.tokens.find(
+                                    (t) => t.contractAddress === contractAddress,
+                                )
+                                return (
+                                    <FadeInBox
+                                        useScale
+                                        key={listId + contractAddress}
+                                        layout="position"
+                                    >
+                                        <TokenAvatar
+                                            imgSrc={token?.imgSrc || ''}
+                                            label={token?.label || ''}
+                                            contractAddress={contractAddress}
+                                            size="avatar_md"
+                                            onClick={onTokenClick}
+                                        />
+                                    </FadeInBox>
+                                )
+                            })}
+                        </AnimatePresence>
+                    </FadeInBox>
+                ) : (
+                    <></>
+                )}
+            </AnimatePresence>
+            <MotionBox layout="position">
+                <TextField
+                    data-testid="token-search"
+                    background="level3"
+                    placeholder="Search or paste contract address"
+                    onChange={(e) => setSearch(e.target.value)}
+                />
+            </MotionBox>
             {isCustomToken && (
                 <Box padding="md" background="level3" rounded="sm">
                     <Checkbox
@@ -181,31 +195,38 @@ export const TokenList = ({ isChecked, setValue, chainId, wallet }: TokenListPro
                     />
                 </Box>
             )}
-
-            {isError && (
-                <Box>
-                    <Text size="sm" color="error">
-                        There was an error fetching your tokens
-                    </Text>
-                </Box>
-            )}
-            {env.IS_DEV && chainId === 31337 && (
-                <Box padding="sm" maxWidth="400">
-                    <Text size="sm" color="error">
-                        DEV message: Localhost will only return the zion token for anvil accounts.
-                        To test a long list, add ?vitalikTokens to url. To test your goerli tokens,
-                        add ?goerli. Please note that if you use these query params, you may get
-                        unexpected behavior in other parts of the app, if you are pointed to local
-                        homeserver.
-                    </Text>
-                </Box>
-            )}
+            <AnimatePresence mode="wait">
+                {isError && (
+                    <FadeInBox key="error">
+                        <Paragraph size="sm" color="error">
+                            There was an error fetching your tokens
+                        </Paragraph>
+                    </FadeInBox>
+                )}
+                {env.IS_DEV && chainId === 31337 && (
+                    <FadeInBox key="dev-message" maxWidth="400">
+                        <Paragraph size="sm" color="error">
+                            DEV message: Localhost will only return the zion token for anvil
+                            accounts. To test a long list, add ?vitalikTokens to url. To test your
+                            goerli tokens, add ?goerli. Please note that if you use these query
+                            params, you may get unexpected behavior in other parts of the app, if
+                            you are pointed to local homeserver.
+                        </Paragraph>
+                    </FadeInBox>
+                )}
+            </AnimatePresence>
             {isChecked && !isCustomToken && (
-                <Box padding="md" minHeight="100" maxHeight="500" background="level3" rounded="sm">
+                <MotionBox
+                    padding
+                    layout="position"
+                    minHeight="100"
+                    maxHeight="500"
+                    background="level3"
+                    rounded="sm"
+                >
                     <Box paddingBottom="md">
                         <Text textTransform="uppercase" color="gray2">
-                            {' '}
-                            Your wallet{' '}
+                            Your wallet
                         </Text>
                     </Box>
                     {noResults && (
@@ -235,8 +256,8 @@ export const TokenList = ({ isChecked, setValue, chainId, wallet }: TokenListPro
                     />
 
                     {isLoading && <Loader />}
-                </Box>
+                </MotionBox>
             )}
-        </Box>
+        </MotionBox>
     )
 }
