@@ -1,5 +1,5 @@
 import { ErrorBoundary } from '@sentry/react'
-import React, { createContext, useMemo } from 'react'
+import React, { createContext, useCallback, useMemo } from 'react'
 import {
     Channel,
     RoomIdentifier,
@@ -10,10 +10,12 @@ import {
     useTimelineThreadStats,
     useZionClient,
 } from 'use-zion-client'
+import { useNavigate } from 'react-router-dom'
 import { SomethingWentWrong } from '@components/Errors/SomethingWentWrong'
 import { Box } from '@ui'
 import { useHandleReaction } from 'hooks/useReactions'
 import { useSpaceChannels } from 'hooks/useSpaceChannels'
+import { useCreateLink } from 'hooks/useCreateLink'
 import { useTimelineMessageEditing } from './hooks/useTimelineMessageEditing'
 
 export enum MessageTimelineType {
@@ -38,6 +40,7 @@ export const MessageTimelineContext = createContext<{
     sendReadReceipt: ReturnType<typeof useZionClient>['sendReadReceipt']
     membersMap: ReturnType<typeof useSpaceMembers>['membersMap']
     members: ReturnType<typeof useSpaceMembers>['members']
+    onMentionClick?: (mentionName: string) => void
 } | null>(null)
 
 export const MessageTimelineWrapper = (props: {
@@ -63,6 +66,23 @@ export const MessageTimelineWrapper = (props: {
 
     const { membersMap, members } = useSpaceMembers()
 
+    const navigate = useNavigate()
+    const { createLink } = useCreateLink()
+
+    const onMentionClick = useCallback(
+        (mentionName: string) => {
+            const profileId = members?.find((m) => m.name === mentionName.trim())?.userId
+            if (!profileId) {
+                return
+            }
+            const link = createLink({ profileId })
+            if (link) {
+                navigate(link)
+            }
+        },
+        [createLink, members, navigate],
+    )
+
     const value = useMemo(() => {
         if (!userId) {
             return null
@@ -78,6 +98,7 @@ export const MessageTimelineWrapper = (props: {
             isChannelWritable,
             messageRepliesMap,
             messageReactionsMap,
+            onMentionClick,
             timelineActions,
             handleReaction,
             sendReadReceipt,
@@ -96,6 +117,7 @@ export const MessageTimelineWrapper = (props: {
         isChannelWritable,
         messageRepliesMap,
         messageReactionsMap,
+        onMentionClick,
         timelineActions,
         handleReaction,
         sendReadReceipt,

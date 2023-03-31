@@ -26,7 +26,7 @@ export const MessageTimelineItem = (props: {
         return <></>
     }
 
-    const { channels, members, channelId, timelineActions } = timelineContext
+    const { channels, members, channelId, onMentionClick, timelineActions } = timelineContext
 
     switch (itemData.type) {
         case RenderEventType.EncryptedMessage:
@@ -70,6 +70,7 @@ export const MessageTimelineItem = (props: {
                             eventContent={itemData.event.content}
                             members={members}
                             channels={channels}
+                            onMentionClick={onMentionClick}
                         />
                     )}
                 </TimelineMessage>

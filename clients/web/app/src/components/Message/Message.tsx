@@ -10,7 +10,7 @@ import { useOpenMessageThread } from 'hooks/useOpenThread'
 import { useHandleReaction } from 'hooks/useReactions'
 import { AvatarProps } from 'ui/components/Avatar/Avatar'
 import { AvatarAtoms } from 'ui/components/Avatar/Avatar.css'
-import { useLinkBuilder } from 'hooks/useLinkBuilder'
+import { useCreateLink } from 'hooks/useCreateLink'
 import { MessageContextMenu } from './MessageContextMenu'
 
 type Props = {
@@ -96,7 +96,8 @@ export const Message = (props: Props) => {
         }
     }, [canReply, onOpenMessageThread, eventId])
 
-    const profileLink = useLinkBuilder({ profileId: senderId })
+    const { createLink } = useCreateLink()
+    const profileLink = createLink({ profileId: senderId })
 
     return (
         <Stack

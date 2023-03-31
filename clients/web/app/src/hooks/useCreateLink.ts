@@ -22,18 +22,21 @@ const linkParams = {
 
 type LinkParams = (typeof linkParams)[keyof typeof linkParams]['params']
 
-export const useLinkBuilder = (linkParams: LinkParams) => {
+export const useCreateLink = () => {
     const { pathname } = useLocation()
+    return {
+        createLink: (linkParams: LinkParams) => {
+            const matches = matchRoutes(paths, pathname)
+            const match = matches?.[0]
 
-    const matches = matchRoutes(paths, pathname)
-    const match = matches?.[0]
+            if (match) {
+                return generatePath(match.route.replace ?? match.route.path, {
+                    ...match.params,
+                    profileId: linkParams.profileId,
+                })
+            }
 
-    if (match) {
-        return generatePath(match.route.replace ?? match.route.path, {
-            ...match.params,
-            profileId: linkParams.profileId,
-        })
+            return undefined
+        },
     }
-
-    return undefined
 }

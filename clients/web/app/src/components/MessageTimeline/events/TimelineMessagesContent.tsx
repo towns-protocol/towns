@@ -8,10 +8,11 @@ type Props = {
     eventContent: RoomMessageEvent
     members: RoomMember[]
     channels: Channel[]
+    onMentionClick?: (mentionName: string) => void
 }
 
 export const TimelineMessageContent = (props: Props) => {
-    const { eventContent, event, members, channels } = props
+    const { eventContent, event, members, channels, onMentionClick } = props
 
     switch (eventContent.msgType) {
         case MessageType.Image: {
@@ -32,6 +33,7 @@ export const TimelineMessageContent = (props: Props) => {
                     event={event}
                     members={members}
                     channels={channels}
+                    onMentionClick={onMentionClick}
                 />
             )
         }

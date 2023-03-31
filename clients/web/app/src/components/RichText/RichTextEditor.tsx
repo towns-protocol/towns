@@ -36,6 +36,7 @@ import { ChannelMentionPlugin } from './plugins/ChannelMentionPlugin'
 import { EmojiReplacePlugin } from './plugins/EmojiReplacePlugin'
 import { EmojiShortcutPlugin } from './plugins/EmojiShortcutPlugin'
 import ListMaxIndentLevelPlugin from './plugins/ListMaxIndentLevelPlugin'
+import { MentionClickPlugin } from './plugins/MentionClickPlugin'
 import { MentionsPlugin } from './plugins/MentionsPlugin'
 import { OnFocusPlugin } from './plugins/OnFocusPlugin'
 import { SendMarkdownPlugin } from './plugins/SendMarkdownPlugin'
@@ -112,8 +113,9 @@ export const RichTextPreview = React.memo(
         edited?: boolean
         members?: RoomMember[]
         channels?: Channel[]
+        onMentionClick?: (mentionName: string) => void
     }) => {
-        const { channels = [], members = [] } = props
+        const { onMentionClick, channels = [], members = [] } = props
         // note: unnecessary repetition here, could be optimised by handling above
         // inside e.g. space context or timeline
 
@@ -132,6 +134,11 @@ export const RichTextPreview = React.memo(
             // ...yet to find out why this occurs
             <div>
                 <LexicalComposer initialConfig={initialConfig}>
+                    {onMentionClick ? (
+                        <MentionClickPlugin onMentionClick={onMentionClick} />
+                    ) : (
+                        <></>
+                    )}
                     <RichTextPlugin
                         ErrorBoundary={LexicalErrorBoundary}
                         contentEditable={<ContentEditable className={fieldClassName} />}

@@ -16,6 +16,7 @@ type Props = {
     eventContent: RoomMessageEvent
     members: RoomMember[]
     channels: Channel[]
+    onMentionClick?: (mentionName: string) => void
 }
 
 function ErrorFallback({ error, resetErrorBoundary }: FallbackProps) {
@@ -48,7 +49,13 @@ function getUrls(body: string) {
     return [...new Set(Array.from(body.matchAll(regexp), (m) => m[2]))]
 }
 
-export const MessageZionText = ({ eventContent, event, members, channels }: Props) => {
+export const MessageZionText = ({
+    eventContent,
+    event,
+    members,
+    channels,
+    onMentionClick,
+}: Props) => {
     const body = getMessageBody(event.eventId, eventContent)
     const urls = getUrls(body)
 
@@ -66,6 +73,7 @@ export const MessageZionText = ({ eventContent, event, members, channels }: Prop
                 edited={eventContent.replacedMsgId !== undefined}
                 members={members}
                 channels={channels}
+                onMentionClick={onMentionClick}
             />
             {invalidContent
                 ? null

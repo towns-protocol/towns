@@ -9,9 +9,9 @@ import {
 } from 'use-zion-client'
 import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
 import { Avatar, Box, Panel, Paragraph, Stack } from '@ui'
-import { useLinkBuilder } from 'hooks/useLinkBuilder'
 import { atoms } from 'ui/styles/atoms.css'
 import { shortAddress } from 'ui/utils/utils'
+import { useCreateLink } from 'hooks/useCreateLink'
 
 export const ChannelDirectoryPanel = () => {
     const { channel } = useChannelData()
@@ -54,7 +54,7 @@ const ChannelMembers = () => {
 
 const ChannelMemberRow = ({ user }: { user: RoomMember }) => {
     const isValid = !!user?.userId
-    const link = useLinkBuilder({ profileId: user.userId })
+    const link = useCreateLink().createLink({ profileId: user.userId })
     const userAddress = isValid ? createUserIdFromString(user.userId)?.accountAddress : undefined
 
     const navigate = useNavigate()
