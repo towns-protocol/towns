@@ -36,7 +36,7 @@ export const ChannelInfoPanel = () => {
 
     return (
         <Stack grow height="100%" overflow="hidden">
-            <Panel label="Channel" onClose={onClose}>
+            <Panel label="Channel Info" onClose={onClose}>
                 <Stack gap="lg" padding="lg">
                     <Paragraph strong size="lg">
                         {channel?.label}

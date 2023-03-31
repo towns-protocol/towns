@@ -1,5 +1,5 @@
 import React from 'react'
-import { Channel, RoomIdentifier, useZionClient } from 'use-zion-client'
+import { Channel, RoomIdentifier, useRoom } from 'use-zion-client'
 import { Link } from 'react-router-dom'
 import { ChannelUsersPill } from '@components/ChannelUserPill/ChannelUserPill'
 import { Icon, Paragraph, Stack } from '@ui'
@@ -11,8 +11,8 @@ type Props = {
 
 export const ChannelHeader = (props: Props) => {
     const { channel, spaceId } = props
-    const { isRoomEncrypted } = useZionClient()
-    const isEncrypted = isRoomEncrypted(channel.id)
+
+    const topic = useRoom(channel?.id)?.topic
 
     return (
         <Stack
@@ -27,12 +27,12 @@ export const ChannelHeader = (props: Props) => {
             overflow="hidden"
             shrink={false}
         >
-            <Icon type={isEncrypted ? 'lock' : 'unlock'} background="level2" size="square_lg" />
+            <Icon type="tag" background="level2" size="square_lg" />
             <Stack horizontal gap alignItems="end">
                 <Paragraph strong size="lg">
-                    <Link to="info">{channel.label}</Link>
+                    <Link to="info?channel">{channel.label}</Link>
                 </Paragraph>
-                <Paragraph color="gray2">{/* {`Main space for Zioneers`} */}</Paragraph>
+                {topic && <Paragraph color="gray2">{topic}</Paragraph>}
             </Stack>
             <Stack grow />
             <ChannelUsersPill channelId={channel.id} spaceId={spaceId} />

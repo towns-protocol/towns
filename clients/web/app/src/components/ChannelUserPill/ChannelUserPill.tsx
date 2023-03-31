@@ -11,7 +11,7 @@ export const ChannelUsersPill = (props: { spaceId: RoomIdentifier; channelId: Ro
 
     return (
         <Stack horizontal border="level4" background="level3" rounded="sm" height="height_lg">
-            <Link to="members">
+            <Link to="info?directory">
                 <Stack horizontal grow gap="sm" padding="sm" alignItems="center">
                     <Stack horizontal gap="line">
                         {members.slice(0, 3).map((m) => (
