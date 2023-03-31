@@ -451,5 +451,5 @@ function toTimelineEvents(room: MatrixRoom, userId: string) {
 }
 
 export function isZTimelineEvent(event: MatrixEvent): boolean {
-    return !event.isRelation(RelationType.Replace)
+    return !event.isRelation(RelationType.Replace) && !event.isRedacted()
 }
