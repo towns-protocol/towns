@@ -5,12 +5,14 @@ enum HeadingNames {
     h1 = 'h1',
     h2 = 'h2',
     h3 = 'h3',
+    h4 = 'h4',
 }
 
 const HeadingLevel = {
     1: { el: HeadingNames.h1, size: 'h1' as const },
     2: { el: HeadingNames.h2, size: 'h2' as const },
     3: { el: HeadingNames.h3, size: 'h3' as const },
+    4: { el: HeadingNames.h3, size: 'h4' as const },
 } as const
 
 type HeadingProps = {

@@ -2,8 +2,10 @@ import React, { useCallback } from 'react'
 import * as z from 'zod'
 import { useZionClient } from 'use-zion-client'
 import { UseFormReturn } from 'react-hook-form'
-import { Box, ErrorMessage, FormRender, Heading, RadioCard } from '@ui'
+import { AnimatePresence } from 'framer-motion'
+import { Box, ErrorMessage, FormRender, Heading, RadioCard, Stack } from '@ui'
 import { useAuth } from 'hooks/useAuth'
+import { FadeInBox } from '@components/Transitions'
 import { useCreateSpaceFormStore } from '../CreateSpaceFormStore'
 import { FormStepProps } from '../../../../hooks/useFormSteps'
 import { TokenList } from '../../../Tokens/TokenList'
@@ -72,57 +74,58 @@ export const CreateSpaceStep1 = ({ onSubmit, id }: FormStepProps) => {
                 const isValid = !Object.values(formProps.formState.errors).length
 
                 return (
-                    <>
-                        <Box paddingTop="lg" paddingBottom="md">
-                            <Heading level={3}> Who can join your town? </Heading>
-                        </Box>
-                        <Box paddingY="sm">
-                            <RadioCard
-                                name={MEMBERSHIP_TYPE}
-                                value={EVERYONE}
-                                title="Everyone"
-                                description="Anyone with the town link may join your town"
-                                onClick={() => onEveryoneClick(formProps)}
-                                {...formProps}
-                            />
-                        </Box>
-
-                        {wallet && (
-                            <RadioCard
-                                name={MEMBERSHIP_TYPE}
-                                value={TOKEN_HOLDERS}
-                                title="Token holders"
-                                description="People who hold a specific token may join your town"
-                                onClick={() => onTokensClick(formProps)}
-                                {...formProps}
-                            >
-                                {() => {
-                                    return (
-                                        <TokenList
-                                            wallet={wallet}
-                                            chainId={chainId}
-                                            isChecked={isTokenHolders}
-                                            {...formProps}
-                                        />
-                                    )
-                                }}
-                            </RadioCard>
-                        )}
-
-                        {isValid ? null : (
-                            <Box padding="sm">
-                                <ErrorMessage
-                                    errors={formProps.formState.errors}
-                                    fieldName={MEMBERSHIP_TYPE}
-                                />
-
-                                <ErrorMessage
-                                    errors={formProps.formState.errors}
-                                    fieldName={TOKENS}
+                    <Stack gap="paragraph">
+                        <Heading level={4}>Who can join your town?</Heading>
+                        <Stack gap="sm">
+                            <Box>
+                                <RadioCard
+                                    name={MEMBERSHIP_TYPE}
+                                    value={EVERYONE}
+                                    title="Everyone"
+                                    description="Anyone with the town link may join your town"
+                                    onClick={() => onEveryoneClick(formProps)}
+                                    {...formProps}
                                 />
                             </Box>
-                        )}
-                    </>
+
+                            {wallet && (
+                                <RadioCard
+                                    name={MEMBERSHIP_TYPE}
+                                    value={TOKEN_HOLDERS}
+                                    title="Token holders"
+                                    description="People who hold a specific token may join your town"
+                                    onClick={() => onTokensClick(formProps)}
+                                    {...formProps}
+                                >
+                                    {() => {
+                                        return (
+                                            <TokenList
+                                                wallet={wallet}
+                                                chainId={chainId}
+                                                isChecked={isTokenHolders}
+                                                {...formProps}
+                                            />
+                                        )
+                                    }}
+                                </RadioCard>
+                            )}
+                            <AnimatePresence>
+                                {isValid ? null : (
+                                    <FadeInBox key="error">
+                                        <ErrorMessage
+                                            errors={formProps.formState.errors}
+                                            fieldName={MEMBERSHIP_TYPE}
+                                        />
+
+                                        <ErrorMessage
+                                            errors={formProps.formState.errors}
+                                            fieldName={TOKENS}
+                                        />
+                                    </FadeInBox>
+                                )}
+                            </AnimatePresence>
+                        </Stack>
+                    </Stack>
                 )
             }}
         </FormRender>

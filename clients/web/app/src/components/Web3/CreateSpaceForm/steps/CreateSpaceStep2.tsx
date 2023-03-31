@@ -1,9 +1,11 @@
 import React, { useRef } from 'react'
 import * as z from 'zod'
 import { UseFormReturn } from 'react-hook-form'
-import { Box, ErrorMessage, FormRender, Stack, Text, TextField } from '@ui'
+import { AnimatePresence, motion } from 'framer-motion'
+import { Box, ErrorMessage, FormRender, Heading, Paragraph, Stack, TextField } from '@ui'
 import { useCachedTokensForWallet } from 'api/lib/tokenContracts'
 import { useAuth } from 'hooks/useAuth'
+import { FadeInBox } from '@components/Transitions'
 import { FormStepProps } from '../../../../hooks/useFormSteps'
 import { useCreateSpaceFormStore } from '../CreateSpaceFormStore'
 import { TokenAvatar } from '../../../Tokens/TokenAvatar'
@@ -57,41 +59,26 @@ const TokenList = (props: Partial<UseFormReturn>) => {
         toggleToken(contractAddress)
     }
 
-    return (
-        <>
-            <Box paddingTop="lg" paddingBottom="sm">
-                <Text strong>Members</Text>
-            </Box>
-            {!tokens.length ? (
-                <Box paddingY="sm">
-                    <Text>Everyone </Text>
-                </Box>
-            ) : (
-                <Box
-                    display="flex"
-                    flexDirection="row"
-                    gap="md"
-                    paddingY="md"
-                    data-testid="step-2-avatars"
-                >
-                    {tokens.map((contractAddress: string) => {
-                        const token = cachedTokensForWallet.tokens.find(
-                            (t) => t.contractAddress === contractAddress,
-                        )
-                        return (
-                            <TokenAvatar
-                                size="avatar_md"
-                                key={contractAddress}
-                                imgSrc={token?.imgSrc || ''}
-                                label={token?.label || ''}
-                                contractAddress={contractAddress}
-                                onClick={handleClick}
-                            />
-                        )
-                    })}
-                </Box>
-            )}
-        </>
+    return !tokens.length ? (
+        <Paragraph color="gray1">Everyone</Paragraph>
+    ) : (
+        <Box display="flex" flexDirection="row" gap="md" data-testid="step-2-avatars">
+            {tokens.map((contractAddress: string) => {
+                const token = cachedTokensForWallet.tokens.find(
+                    (t) => t.contractAddress === contractAddress,
+                )
+                return (
+                    <TokenAvatar
+                        size="avatar_md"
+                        key={contractAddress}
+                        imgSrc={token?.imgSrc || ''}
+                        label={token?.label || ''}
+                        contractAddress={contractAddress}
+                        onClick={handleClick}
+                    />
+                )
+            })}
+        </Box>
     )
 }
 
@@ -130,36 +117,56 @@ export const CreateSpaceStep2 = ({ onSubmit, id }: FormStepProps) => {
                 }
 
                 return (
-                    <>
-                        <Stack gap="sm" paddingY="lg" data-testid="space-form-name-field">
-                            <TextField
-                                maxLength={MAX_LENGTH}
-                                background="level2"
-                                label="Town Name"
-                                placeholder="Town Name"
-                                {...register(SPACE_NAME)}
-                            />
-                            {formState.errors[SPACE_NAME] && showSpaceNameError() && (
-                                <ErrorMessage errors={formState.errors} fieldName={SPACE_NAME} />
-                            )}
-                        </Stack>
+                    <Stack gap="x4">
+                        <AnimatePresence>
+                            <Stack gap="sm" data-testid="space-form-name-field" key="field">
+                                <TextField
+                                    maxLength={MAX_LENGTH}
+                                    background="level2"
+                                    label="Town Name"
+                                    placeholder="Town Name"
+                                    autoComplete="off"
+                                    tone={
+                                        formState.errors[SPACE_NAME] && showSpaceNameError()
+                                            ? 'error'
+                                            : undefined
+                                    }
+                                    {...register(SPACE_NAME)}
+                                />
 
-                        <Stack gap="md" paddingBottom="sm">
-                            <Box>
-                                <Text strong>Owner</Text>
-                            </Box>
-                            <Box>
-                                <Text>{wallet}</Text>
-                            </Box>
-                        </Stack>
+                                {formState.errors[SPACE_NAME] && showSpaceNameError() && (
+                                    <FadeInBox key="error">
+                                        <ErrorMessage
+                                            errors={formState.errors}
+                                            fieldName={SPACE_NAME}
+                                        />
+                                    </FadeInBox>
+                                )}
+                            </Stack>
 
-                        <TokenList setError={setError} clearErrors={clearErrors} />
-                        {formState.errors.tokens && (
-                            <ErrorMessage errors={formState.errors} fieldName="tokens" />
-                        )}
-                    </>
+                            <MotionBox layout="position" gap="x4">
+                                <Stack>
+                                    <Paragraph strong>Owner</Paragraph>
+                                    <Paragraph color="gray1">{wallet}</Paragraph>
+                                </Stack>
+
+                                <Stack gap>
+                                    <Heading level={4}>Members</Heading>
+                                    <TokenList setError={setError} clearErrors={clearErrors} />
+                                    {formState.errors.tokens && (
+                                        <ErrorMessage
+                                            errors={formState.errors}
+                                            fieldName="tokens"
+                                        />
+                                    )}
+                                </Stack>
+                            </MotionBox>
+                        </AnimatePresence>
+                    </Stack>
                 )
             }}
         </FormRender>
     )
 }
+
+const MotionBox = motion(Box)

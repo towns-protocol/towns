@@ -19,6 +19,7 @@ import { TransactionButton } from '@components/TransactionButton'
 import { useOnTransactionStages } from 'hooks/useOnTransactionStages'
 import { useRequireTransactionNetwork } from 'hooks/useRequireTransactionNetwork'
 import { RequireTransactionNetworkMessage } from '@components/RequireTransactionNetworkMessage/RequireTransactionNetworkMessage'
+import { FadeInBox } from '@components/Transitions'
 import { CreateSpaceStep1 } from './steps/CreateSpaceStep1'
 import { CreateSpaceStep2 } from './steps/CreateSpaceStep2'
 import { useFormSteps } from '../../../hooks/useFormSteps'
@@ -52,20 +53,22 @@ const Header = (props: HeaderProps) => {
     const { isTransactionNetwork, switchNetwork } = useRequireTransactionNetwork()
     const isDisabled = !isTransactionNetwork && isLast
     return (
-        <>
+        <Box gap>
             <Box horizontal justifyContent="spaceBetween" alignItems="center">
                 <Heading level={2}>Create a Town</Heading>
                 <Box flexDirection="row" paddingLeft="sm" position="relative">
-                    {hasPrev && (
-                        <Box
-                            position={!isAbleToInteract ? 'absolute' : 'relative'}
-                            left={!isAbleToInteract ? 'md' : 'none'}
-                        >
-                            <Button onClick={goPrev}>
-                                <Text>Prev</Text>
-                            </Button>
-                        </Box>
-                    )}
+                    <AnimatePresence>
+                        {hasPrev && (
+                            <FadeInBox
+                                position={!isAbleToInteract ? 'absolute' : 'relative'}
+                                left={!isAbleToInteract ? 'md' : 'none'}
+                            >
+                                <Button animate onClick={goPrev}>
+                                    <Text>Prev</Text>
+                                </Button>
+                            </FadeInBox>
+                        )}
+                    </AnimatePresence>
 
                     <MotionBox layout paddingLeft="sm" width={!isAbleToInteract ? '250' : 'auto'}>
                         <TransactionButton
@@ -88,7 +91,7 @@ const Header = (props: HeaderProps) => {
                 </Box>
             )}
             {hasError && errorBox}
-        </>
+        </Box>
     )
 }
 
@@ -247,7 +250,7 @@ export const CreateSpaceForm = () => {
     useOnTransactionEmitted(onTransactionEmitted)
 
     return (
-        <Box padding="lg">
+        <Box gap="x4" padding="lg">
             <Header
                 formId={formId}
                 hasPrev={hasPrev}
@@ -261,9 +264,10 @@ export const CreateSpaceForm = () => {
             <AnimatePresence mode="wait">
                 <MotionBox
                     key={stepIndex}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
+                    initial={{ opacity: 0, x: 5 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -5 }}
+                    transition={{ duration: 0.3 }}
                 >
                     <StepComponent id={formId} onSubmit={onSubmit} />
                 </MotionBox>

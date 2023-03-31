@@ -12,8 +12,8 @@ export const SpacesNew = () => {
 
     return (
         <Stack alignItems="center" height="100%">
-            <Stack grow width="600">
-                <Box padding="lg">
+            <Stack grow padding="lg">
+                <Box minWidth="700">
                     <CreateSpaceForm />
                 </Box>
             </Stack>

@@ -134,7 +134,7 @@ export const TokenList = ({ isChecked, setValue, chainId, wallet }: TokenListPro
     const noResults = !results.length && !isCustomToken && !isLoading
 
     return (
-        <Box paddingTop="md" cursor="default" gap="sm">
+        <Box cursor="default" gap="sm">
             {!selectedTokens.length
                 ? null
                 : data && (
@@ -183,15 +183,15 @@ export const TokenList = ({ isChecked, setValue, chainId, wallet }: TokenListPro
             )}
 
             {isError && (
-                <Box paddingTop="sm">
-                    <Text size="sm" color="negative">
+                <Box>
+                    <Text size="sm" color="error">
                         There was an error fetching your tokens
                     </Text>
                 </Box>
             )}
             {env.IS_DEV && chainId === 31337 && (
-                <Box padding="sm">
-                    <Text size="sm" color="negative">
+                <Box padding="sm" maxWidth="400">
+                    <Text size="sm" color="error">
                         DEV message: Localhost will only return the zion token for anvil accounts.
                         To test a long list, add ?vitalikTokens to url. To test your goerli tokens,
                         add ?goerli. Please note that if you use these query params, you may get

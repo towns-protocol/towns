@@ -32,6 +32,7 @@ export const TransactionButton = (props: Props) => {
     const { isAbleToInteract, isRequesting, isSuccess } = transactionUIState
     return (
         <Button
+            animate
             data-testid="create-space-next-button"
             tone={!isAbleToInteract || isSuccess ? 'level2' : 'cta1'}
             disabled={disabled || !isAbleToInteract}
@@ -43,7 +44,7 @@ export const TransactionButton = (props: Props) => {
             {/* broken up b/c of weird behavior with framer layout warping text */}
             {!isAbleToInteract && (
                 <FadeIn delay>
-                    <Box flexDirection="row" gap="sm">
+                    <Box horizontal gap="sm">
                         <ButtonSpinner />
                         {isRequesting && <MotionText layout>{requestingText}</MotionText>}
                         {!isRequesting && <MotionText layout>{transactingText}</MotionText>}

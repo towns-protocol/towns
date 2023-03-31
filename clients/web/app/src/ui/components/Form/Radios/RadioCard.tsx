@@ -3,7 +3,7 @@ import { Controller, UseFormReturn } from 'react-hook-form'
 import { clsx } from 'clsx'
 import { Stack } from 'ui/components/Stack/Stack'
 import { Box } from 'ui/components/Box/Box'
-import { Text } from 'ui/components/Text/Text'
+import { Paragraph } from 'ui/components/Text/Paragraph'
 import * as style from './RadioSelect/RadioSelect.css'
 import * as fieldStyles from '../../_internal/Field/Field.css'
 import { FieldOutline } from '../../_internal/Field/FieldOutline/FieldOutline'
@@ -22,13 +22,13 @@ export const RadioCard = (props: Props) => {
     const { title, description, children, onClick, name, control } = props
 
     return (
-        <Box padding="md" background="level2" cursor="pointer" borderRadius="sm" onClick={onClick}>
-            <Box justifyContent="spaceBetween" flexDirection="row" alignItems="start">
-                <Stack gap="sm">
-                    <Text>{title}</Text>
-                    <Text size="sm" color="gray2">
+        <Box padding gap background="level2" cursor="pointer" borderRadius="sm" onClick={onClick}>
+            <Box horizontal justifyContent="spaceBetween" alignItems="start">
+                <Stack gap="paragraph">
+                    <Paragraph>{title}</Paragraph>
+                    <Paragraph size="sm" color="gray2">
                         {description}
-                    </Text>
+                    </Paragraph>
                 </Stack>
                 <Controller
                     name={name}

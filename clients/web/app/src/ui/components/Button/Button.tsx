@@ -27,7 +27,7 @@ export type ButtonProps = Props
 
 export const Button = ({
     aspectRatio,
-    animate = true,
+    animate = false,
     size = 'button_md',
     rounded,
     disabled,

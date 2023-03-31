@@ -1,5 +1,5 @@
 import React, { forwardRef } from 'react'
-import { motion } from 'framer-motion'
+import { HTMLMotionProps, motion } from 'framer-motion'
 import { Box, BoxProps } from '@ui'
 
 type Props = {
@@ -10,21 +10,29 @@ type Props = {
     layout?: boolean
 }
 
-export const FadeIn = (props: Props) => {
+export const FadeIn = forwardRef<HTMLDivElement, Props & HTMLMotionProps<'div'>>((props, ref) => {
     const { disabled, layout, fast, delay } = props
     const transition = generateTransition({ layout, fast, delay })
     return disabled ? (
         <>{props.children}</>
     ) : (
-        <motion.div {...transition}>{props.children}</motion.div>
+        <motion.div {...transition} ref={ref}>
+            {props.children}
+        </motion.div>
     )
-}
-
-export const FadeInBox = forwardRef<HTMLDivElement, BoxProps & Props>((props: Props) => {
-    const { disabled, layout, fast, delay, ...boxProps } = props
-    const transition = generateTransition({ layout, fast, delay })
-    return disabled ? <>{props.children}</> : <MotionBox {...boxProps} {...transition} />
 })
+
+export const FadeInBox = forwardRef<HTMLDivElement, BoxProps & Props & HTMLMotionProps<'div'>>(
+    (props, ref) => {
+        const { disabled, layout, fast, delay, ...boxProps } = props
+        const transition = generateTransition({ layout, fast, delay })
+        return disabled ? (
+            <>{props.children}</>
+        ) : (
+            <MotionBox {...boxProps} {...transition} ref={ref} />
+        )
+    },
+)
 
 const MotionBox = motion(Box)
 

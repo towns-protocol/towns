@@ -234,6 +234,7 @@ const root = createGlobalTheme(':root', {
         h1: `${56}px`,
         h2: `${32}px`,
         h3: `${18}px`,
+        h4: `${15}px`,
     } as const,
 
     textAlign: {
