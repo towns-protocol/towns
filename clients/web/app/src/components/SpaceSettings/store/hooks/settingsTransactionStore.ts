@@ -21,7 +21,7 @@ type Actions = {
     getTransaction: (changeData: ModifiedRole) => SettingsTransactionStatus | undefined
     setPotentialTransaction: (changeData: ModifiedRole) => void
     removePotentialTransaction: (roleId: string) => void
-    clearSettled: () => void
+    clearTransactions: () => void
     saveToSettledAndClearInProgress: () => void
 }
 
@@ -85,8 +85,9 @@ export const useSettingsTransactionsStore = create(
                 state.inProgressTransactions = {}
             })
         },
-        clearSettled() {
+        clearTransactions() {
             set((state) => {
+                state.inProgressTransactions = {}
                 state.settledTransactions = {}
             })
         },

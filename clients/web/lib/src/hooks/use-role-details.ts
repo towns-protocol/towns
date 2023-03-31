@@ -111,12 +111,13 @@ export function useMultipleRoleDetails(spaceId: string, roleIds: number[]) {
         [client],
     )
 
-    const queryData = useQueries({
+    const queryData = useQueries<RoleDetails[]>({
         queries: roleIds.map((roleId) => {
             return {
                 queryKey: [QueryKeyRoles.BySpaceId, spaceId, QueryKeyRoles.ByRoleId, roleId],
                 queryFn: () => getRole(spaceId, roleId),
                 enabled: isEnabled,
+                refetchOnWindowFocus: false,
                 staleTime: 1000 * 60 * 5,
                 cacheTime: 1000 * 60 * 10,
                 retry: false,
@@ -124,11 +125,7 @@ export function useMultipleRoleDetails(spaceId: string, roleIds: number[]) {
         }),
     })
 
-    return useMemo<{
-        data: RoleDetails[] | undefined
-        isLoading: boolean
-        invalidateQuery: () => Promise<void>
-    }>(() => {
+    return useMemo(() => {
         const invalidateQuery = () =>
             queryClient.invalidateQueries([
                 QueryKeyRoles.BySpaceId,
@@ -136,15 +133,7 @@ export function useMultipleRoleDetails(spaceId: string, roleIds: number[]) {
                 QueryKeyRoles.ByRoleId,
             ])
 
-        if (!queryData.length) {
-            return {
-                data: undefined,
-                isLoading: true,
-                invalidateQuery,
-            }
-        }
-
-        if (queryData.every((token) => token.isFetched)) {
+        if (!queryData.some((token) => token.isLoading)) {
             return {
                 data: queryData
                     .map((token) => token.data)

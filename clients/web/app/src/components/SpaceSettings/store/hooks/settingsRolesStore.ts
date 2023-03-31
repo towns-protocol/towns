@@ -44,10 +44,7 @@ export const useSettingsRolesStore = create(
                     })
                 },
 
-                setIntitialState: (settings: SpaceSettings) => {
-                    if (get().modifiedSpace) {
-                        return settings
-                    }
+                setSpace: (settings: SpaceSettings) => {
                     set((state) => {
                         state.modifiedSpace = settings
                         state.spaceSnapshot = settings
@@ -97,13 +94,20 @@ export const useSettingsRolesStore = create(
                 },
 
                 removeRole: (roleId: string) => {
+                    const roles = get().modifiedSpace?.roles
+                    const index = roles?.findIndex((role) => role.id === roleId) ?? -1
+
                     set((state) => {
-                        const roles = state.modifiedSpace?.roles
-                        const index = roles?.findIndex((role) => role.id === roleId) ?? -1
                         if (index > -1) {
-                            roles?.splice(index, 1)
+                            state.modifiedSpace?.roles?.splice(index, 1)
                         }
                     })
+
+                    const nextRole =
+                        roles?.length === 1
+                            ? undefined
+                            : roles?.at(index + 1) ?? roles?.at(index - 1)
+                    return nextRole?.id
                 },
                 setRoleName: (roleId: string, name: string) => {
                     set((state) => {

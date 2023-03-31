@@ -5,6 +5,8 @@ import { IconLabelButton, Stack } from '@ui'
 import { useSettingsRolesStore } from '@components/SpaceSettings/store/hooks/settingsRolesStore'
 import { SpaceSettingsRolesNavItem } from './SpaceSettingsRolesNavItem'
 
+export const NEW_ROLE_ID_PREFIX = 'n-'
+
 export const SpaceSettingsRolesNav = () => {
     const { role } = useParams()
     const addRole = useSettingsRolesStore((state) => state.addRole)
@@ -14,38 +16,32 @@ export const SpaceSettingsRolesNav = () => {
     const newRolesRef = useRef(1)
 
     const onAddRole = useEvent(() => {
-        const newId = `n-${newRolesRef.current}`
+        const newId = `${NEW_ROLE_ID_PREFIX}${newRolesRef.current}`
         addRole({ id: newId, name: `New Role ${newRolesRef.current}` })
         navigate(`../roles/${newId}/display`)
         newRolesRef.current += 1
     })
-    const getDefaultRole = useSettingsRolesStore((state) => state.getDefaultRole)
-
-    const defaultPath = `../roles/${getDefaultRole()?.id}/permissions`
 
     const onRemoveRole = useEvent((roleId: string) => {
-        removeRole(roleId)
-        navigate(defaultPath)
+        const nextRole = removeRole(roleId)
+        navigate(`../roles/${nextRole ? nextRole : 'empty'}/permissions`)
     })
-
-    if (!roles) {
-        return null
-    }
 
     return (
         <Stack borderLeft="faint" minWidth="200">
             <Stack gap="sm" padding="sm">
-                {roles.map((r) => {
-                    const selected = role === r.id
-                    return (
-                        <SpaceSettingsRolesNavItem
-                            role={r}
-                            key={r.id}
-                            selected={selected}
-                            onRemoveRole={onRemoveRole}
-                        />
-                    )
-                })}
+                {roles &&
+                    roles.map((r) => {
+                        const selected = role === r.id
+                        return (
+                            <SpaceSettingsRolesNavItem
+                                role={r}
+                                key={r.id}
+                                selected={selected}
+                                onRemoveRole={onRemoveRole}
+                            />
+                        )
+                    })}
                 <IconLabelButton label="Create new role" icon="plus" onClick={onAddRole} />
             </Stack>
         </Stack>

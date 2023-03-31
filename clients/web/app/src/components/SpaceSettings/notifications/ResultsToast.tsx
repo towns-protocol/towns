@@ -8,7 +8,10 @@ import { useSettingsTransactionsStore } from '../store/hooks/settingsTransaction
 import { ModifiedRole } from '../store/hooks/useModifiedRoles'
 import { MotionNotification, notificationMotion } from './Notification'
 
-export const ResultsToast = (props: { modifiedRoles: ModifiedRole[] }) => {
+export const ResultsToast = (props: {
+    modifiedRoles: ModifiedRole[]
+    onMoreChangesClick: () => void
+}) => {
     const { modifiedRoles } = props
     const spaceId = useSpaceIdFromPathname()
     const navigate = useNavigate()
@@ -82,12 +85,7 @@ export const ResultsToast = (props: { modifiedRoles: ModifiedRole[] }) => {
                                 )}
 
                                 <Stack horizontal gap>
-                                    <Button
-                                        tone="level2"
-                                        onClick={
-                                            useSettingsTransactionsStore.getState().clearSettled
-                                        }
-                                    >
+                                    <Button tone="level2" onClick={props.onMoreChangesClick}>
                                         Make more changes
                                     </Button>
                                     <Button

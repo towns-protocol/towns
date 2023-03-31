@@ -1,22 +1,13 @@
-import React, { useCallback, useEffect, useMemo } from 'react'
+import React, { useEffect, useMemo } from 'react'
 import { Outlet, useNavigate, useParams } from 'react-router'
 import { NavLink } from 'react-router-dom'
 import { useEvent } from 'react-use-event-hook'
-import {
-    Permission,
-    useMultipleRoleDetails,
-    useOnTransactionEmitted,
-    useRoleDetails,
-    useRoles,
-} from 'use-zion-client'
+import { Permission } from 'use-zion-client'
 import { AnimatePresence } from 'framer-motion'
 import { PATHS } from 'routes'
 
 import { IconButton, Stack, Text } from '@ui'
-import {
-    Role,
-    useSettingsRolesStore,
-} from '@components/SpaceSettings/store/hooks/settingsRolesStore'
+import { useSettingsRolesStore } from '@components/SpaceSettings/store/hooks/settingsRolesStore'
 import { FadeIn } from '@components/Transitions'
 import { useHasPermission } from 'hooks/useHasPermission'
 import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinner'
@@ -25,47 +16,59 @@ import { useModifiedRoles } from './store/hooks/useModifiedRoles'
 import { useSettingsTransactionsStore } from './store/hooks/settingsTransactionStore'
 import { InProgressToast } from './notifications/InProgressToast'
 import { ResultsToast } from './notifications/ResultsToast'
+import { useGetAllRoleDetails } from './useGetAllRoleDetails'
+import { NavigateToFirstRoleOnEntry, useDefaultPath } from './NavigateToFirstRoleOnEntry'
+import { useTransactionEffects } from './useTransactionEffects'
 
 // Space settings relies on a couple stores and hook to keep track of the state of the space and the blockchain transactions
 //
-// settingsRolesStore: stores changes to the roles in the space
+// settingsRolesStore: stores changes to the roles in the space and - the list of roles displayed in the UI is driven by this store
 // useModifiedRoles: tracks the roles that are modified and need to be saved
 // settingsTransactionStore: keeps track of the transactions that are in progress
+//
+// TODO: I think there are improvements to be made for this feature.
+//
+// 1. We should move away from the current route architecture, where each role has it's own dedicated route.
+// It's a bit hard to work with becuase you're adding/deleting routes on the fly. We also have to wait for the role data to be fetched before determining the correct route to navigate to.
+// Yes, we could prefetch, but I think it would be overall easier to work with if the roles were a single route
+//
+// 2. We're using react-query to fetch the roles, and invalidating the query when role transactions are made. Invalidating doesn't work exactly like I was expecting - individual queries are refetched and the UI rerenders when each updates.
+// instead of the useQuery hooks, we should use imperative flow with queryClient.fetchQuery, or the like, and once transactions complete we can fetch all the roles again at once, wait for them all to resolve, and then update the UI
+//
+// 3. we should update the lib's transaciton hooks to so that the client can pass in whatever data they want to be stored in the lib's transaction store.
+//
+// 4. really needs tests
 export const SpaceSettings = () => {
-    const { role: roleId, spaceSlug = '' } = useParams()
+    const navigate = useNavigate()
+    const { spaceSlug = '' } = useParams()
     const spaceId = useMemo(() => decodeURIComponent(spaceSlug), [spaceSlug])
-    const space = useSettingsRolesStore((state) => state.modifiedSpace)
-    const { data: rolesWithDetails, invalidateQuery } = useGetAllRoleDetails(spaceId)
     const inProgressTransactions = useSettingsTransactionsStore(
         (state) => state.inProgressTransactions,
     )
+    const hasInProgressTransactions = Object.keys(inProgressTransactions).length > 0
     const settledTransactions = useSettingsTransactionsStore((state) => state.settledTransactions)
-    const setTransactionSuccess = useSettingsTransactionsStore(
-        (state) => state.setTransactionSuccess,
-    )
-    const modifiedRoles = useModifiedRoles()
-    const navigate = useNavigate()
+    const defaultPath = useDefaultPath()
 
-    const getDefaultRole = useSettingsRolesStore((state) => state.getDefaultRole)
-    const defaultPath = `roles/${getDefaultRole()?.id}/permissions`
-
-    const clearStoresAndRevalidateQuery = useCallback(async () => {
-        useSettingsTransactionsStore.getState().saveToSettledAndClearInProgress()
-        await invalidateQuery?.()
-        useSettingsRolesStore.getState().clearSpace()
-    }, [invalidateQuery])
+    const {
+        data: fetchedRoles,
+        invalidateQuery,
+        isLoading: fetchedRolesLoading,
+    } = useGetAllRoleDetails(spaceId)
 
     const { data: canEditSettings, isLoading: canEditLoading } = useHasPermission(
         Permission.ModifySpaceSettings,
     )
 
-    // when transactions are in progress, or they have completed, until user gives some sort of confirmation
+    // The lockedState blocks the user from interacting with the UI
+    // they should not be able to interact with the settings while changes are being saved
+    // after they are saved, they should not be able to interact with the settings until they give acknowledgement (clicking the toast)
     const lockedState = useMemo(() => {
-        return (
-            Object.values(inProgressTransactions).length > 0 ||
-            Object.values(settledTransactions).length > 0
-        )
-    }, [inProgressTransactions, settledTransactions])
+        return hasInProgressTransactions || Object.values(settledTransactions).length > 0
+    }, [hasInProgressTransactions, settledTransactions])
+
+    const clearLockedState = useEvent(() => {
+        useSettingsTransactionsStore.getState().clearTransactions()
+    })
 
     const onClose = useEvent(() => {
         navigate(`/${PATHS.SPACES}/${spaceId}`)
@@ -76,52 +79,27 @@ export const SpaceSettings = () => {
         return () => {
             useSettingsRolesStore.getState().clearSpace()
             // TODO: just resetting the transactions store for now. Meaning user could navigate away and come back and have transactions still in progress and the UI wouldn't reflect their last changes. But that is for next iteration
-            useSettingsTransactionsStore.getState().saveToSettledAndClearInProgress()
-            useSettingsTransactionsStore.getState().clearSettled()
+            useSettingsTransactionsStore.getState().clearTransactions()
         }
     }, [])
 
-    // when first loading the space, set the initial state of the store
+    // update the roles store whenever new role data is fetched from blockchain
+    // Happens on load and when new changes are saved and the data is refetched
     useEffect(() => {
-        if (!rolesWithDetails) {
+        if (fetchedRolesLoading || !fetchedRoles) {
             return
         }
-        useSettingsRolesStore.getState().setIntitialState({ spaceId, roles: rolesWithDetails })
-    }, [rolesWithDetails, spaceId])
-
-    // when the transactions are all resolved
-    useEffect(() => {
-        if (Object.keys(inProgressTransactions).length === 0) {
+        // if any transactions are going on, wait until they're finished before update the store and UI
+        if (hasInProgressTransactions) {
             return
         }
 
-        const allResolved = Object.values(inProgressTransactions).every((data) => {
-            return data.status === 'success' || data.status === 'failed'
-        })
+        useSettingsRolesStore.getState().setSpace({ spaceId, roles: fetchedRoles })
+    }, [fetchedRoles, spaceId, hasInProgressTransactions, fetchedRolesLoading])
 
-        if (!allResolved) {
-            return
-        }
-
-        clearStoresAndRevalidateQuery()
-    }, [inProgressTransactions, lockedState, clearStoresAndRevalidateQuery])
-
-    // redirect if not found
-    useEffect(() => {
-        if (space && !roleId) {
-            navigate(defaultPath)
-        }
-    }, [defaultPath, navigate, roleId, space])
-
-    // when a transaction resolves, update the transaction store
-    useOnTransactionEmitted(async (arg) => {
-        const [id] =
-            Object.entries(inProgressTransactions).find(([key, data]) => {
-                return data.hash === arg.hash
-            }) ?? []
-        if (id) {
-            setTransactionSuccess(id)
-        }
+    useTransactionEffects({
+        fetchedRoles,
+        invalidateQuery,
     })
 
     if (canEditLoading) {
@@ -141,11 +119,16 @@ export const SpaceSettings = () => {
         )
     }
 
+    // TODO: should prefecth the roles data and navigate there directly
+    const waitingForNavigation = !defaultPath
+
     return (
         <Stack horizontal grow minWidth="100%" position="relative" zIndex="ui" background="level1">
+            <NavigateToFirstRoleOnEntry fetchedRolesLoading={fetchedRolesLoading} />
+
             <Stack minWidth="200">
                 <Stack gap="sm" padding="sm">
-                    <NavLink to={defaultPath}>
+                    <NavLink to={defaultPath ?? '.'}>
                         <SpaceSettingsNavItem selected icon="all">
                             Roles
                         </SpaceSettingsNavItem>
@@ -155,13 +138,16 @@ export const SpaceSettings = () => {
                     </SpaceSettingsNavItem>
                 </Stack>
             </Stack>
-            {!rolesWithDetails ? (
+
+            {waitingForNavigation ? (
                 <Stack grow centerContent borderLeft="faint" gap="md">
                     <Text>Loading roles</Text>
                     <ButtonSpinner />
                 </Stack>
             ) : (
-                <Outlet />
+                <>
+                    <Outlet />
+                </>
             )}
 
             <Stack position="topRight" padding="lg">
@@ -174,50 +160,25 @@ export const SpaceSettings = () => {
                             <Stack
                                 absoluteFill
                                 background="level1"
-                                opacity="0.8"
+                                opacity="0.9"
                                 cursor="crosshair"
                             />
                         </Stack>
                     </FadeIn>
                 )}
             </AnimatePresence>
-            <InProgressToast modifiedRoles={modifiedRoles} />
-            <ResultsToast modifiedRoles={modifiedRoles} />
+            <ToastBar onMoreChangesClick={clearLockedState} />
         </Stack>
     )
 }
 
-function mapRoleStructToRole(
-    roleDetails: ReturnType<typeof useRoleDetails>['roleDetails'],
-): Role | undefined {
-    if (!roleDetails) {
-        return
-    }
-    return {
-        id: roleDetails.id.toString(),
-        name: roleDetails.name,
-        permissions: roleDetails.permissions,
-        tokens: roleDetails.tokens.map((t) => t.contractAddress as string),
-        users: roleDetails.users,
-    }
-}
+function ToastBar({ onMoreChangesClick }: { onMoreChangesClick: () => void }) {
+    const modifiedRoles = useModifiedRoles()
 
-function useGetAllRoleDetails(spaceId: string) {
-    const { spaceRoles: _roles, isLoading: rolesLoading } = useRoles(decodeURIComponent(spaceId))
-
-    const roledIds = useMemo(() => _roles?.map((r) => r.roleId?.toNumber()) ?? [], [_roles])
-    const {
-        data: _rolesDetails,
-        isLoading: detailsLoading,
-        invalidateQuery,
-    } = useMultipleRoleDetails(decodeURIComponent(spaceId), roledIds)
-    return useMemo(() => {
-        if (!_rolesDetails || rolesLoading || detailsLoading) {
-            return {}
-        }
-        return {
-            data: _rolesDetails?.map(mapRoleStructToRole).filter((role): role is Role => !!role),
-            invalidateQuery,
-        }
-    }, [_rolesDetails, rolesLoading, detailsLoading, invalidateQuery])
+    return (
+        <>
+            <InProgressToast modifiedRoles={modifiedRoles} />
+            <ResultsToast modifiedRoles={modifiedRoles} onMoreChangesClick={onMoreChangesClick} />
+        </>
+    )
 }

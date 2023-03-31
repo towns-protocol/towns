@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { useEvent } from 'react-use-event-hook'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Box, Button, Heading, Icon, Paragraph, Stack, Text } from '@ui'
@@ -24,19 +24,41 @@ export const InProgressToast = (props: { modifiedRoles: ModifiedRole[] }) => {
         (state) => state.inProgressTransactions,
     )
     const hasInProgressTransactions = Object.keys(inProgressTransactions).length > 0
+    const madeATransaction = useRef(false)
+
+    if (Object.keys(inProgressTransactions).length) {
+        madeATransaction.current = true
+    }
+
     const [preventCloseMessage, setPreventCloseMessage] = useState('')
 
     const onSave = useEvent(() => {
         setShowSavePopup(true)
     })
+    // prevent closing the modal while transactions are pending
     const onHidePopup = useEvent(() => {
         if (Object.values(inProgressTransactions).some((data) => data.status === 'potential')) {
             setPreventCloseMessage('Please confirm the changes in your wallet to continue.')
+            return
+        } else if (hasInProgressTransactions) {
             return
         }
         setPreventCloseMessage('')
         setShowSavePopup(false)
     })
+
+    // watch transactions and close the modal when they're all completed
+    useEffect(() => {
+        // user has not proceeded with any transaction. Don't close yet
+        if (!madeATransaction.current) {
+            return
+        }
+        if (Object.keys(inProgressTransactions).length > 0) {
+            setPreventCloseMessage('')
+        } else {
+            setShowSavePopup(false)
+        }
+    }, [inProgressTransactions])
 
     return (
         <>
@@ -86,6 +108,7 @@ const SavePopup = (props: {
     roles: ModifiedRole[]
     preventCloseMessage: string
 }) => {
+    const { onCancel, roles, preventCloseMessage } = props
     const spaceId = useSpaceIdFromPathname()
     const onSave = useEvent(() => {
         const transactionButtons: NodeListOf<HTMLButtonElement> = document.querySelectorAll(
@@ -98,14 +121,7 @@ const SavePopup = (props: {
     )
     const hasInProgressTransactions = Object.keys(inProgressTransactions).length > 0
 
-    // if a user dismisses all the changes, close the modal
-    useEffect(() => {
-        if (props.roles.length === 0) {
-            props.onCancel()
-        }
-    }, [props, props.roles])
-
-    const rolesToAccordionContent: AccordionGroupProps['accordions'] = props.roles.map((role) => {
+    const rolesToAccordionContent: AccordionGroupProps['accordions'] = roles.map((role) => {
         const [, transactionData] =
             Object.entries(inProgressTransactions).find(
                 ([, data]) => data.changeData.metadata.id === role.metadata.id,
@@ -139,10 +155,10 @@ const SavePopup = (props: {
                     ))}
                 <AccordionGroup accordions={rolesToAccordionContent} />
             </Stack>
-            {props.preventCloseMessage ? (
+            {preventCloseMessage ? (
                 <>
                     <Text textAlign="center" color="negative">
-                        {props.preventCloseMessage}
+                        {preventCloseMessage}
                     </Text>
                 </>
             ) : null}
@@ -151,7 +167,7 @@ const SavePopup = (props: {
                     tone="level2"
                     value="Cancel"
                     disabled={hasInProgressTransactions}
-                    onClick={props.onCancel}
+                    onClick={onCancel}
                 >
                     Cancel
                 </Button>

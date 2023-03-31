@@ -20,9 +20,9 @@ import { Paragraph, Stack, TextField } from '@ui'
 export const RoleSettingsDisplay = () => {
     const { role: roleId = '' } = useParams()
 
-    const role = useSettingsRolesStore((state) =>
-        state.modifiedSpace?.roles.find((r) => r.id === roleId),
-    )
+    const space = useSettingsRolesStore((state) => state.modifiedSpace)
+    const role = space?.roles.find((r) => r.id === roleId)
+
     const setRoleName = useSettingsRolesStore((state) => state.setRoleName)
     // const setRoleColor = useSpaceSettingsStore((state) => state.setRoleColor)
 
