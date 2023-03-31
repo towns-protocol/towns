@@ -1,24 +1,92 @@
-import React from 'react'
-import { Avatar, Box, IconButton, Text } from '@ui'
+import React, { useEffect, useRef } from 'react'
+import { clsx } from 'clsx'
+import { Box, Icon, IconButton, Text, TooltipRenderer } from '@ui'
 import { AvatarProps } from 'ui/components/Avatar/Avatar'
+import {
+    avatarAtoms,
+    avatarBaseStyle,
+    avatarImageStyle,
+    avatarToggleClasses,
+} from 'ui/components/Avatar/Avatar.css'
 import { useGetPioneerNftAddress } from 'hooks/useGetPioneerNftAddress'
+import { shortAddress } from 'ui/utils/utils'
+import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
+import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinner'
 import { TokenProps } from './types'
 
-export const TokenAvatar = (
-    props: Partial<TokenProps> & { contractAddress: string; size: AvatarProps['size'] },
-) => {
-    const { imgSrc, label, contractAddress, onClick, size } = props
-    const pioneerAddress = useGetPioneerNftAddress()
+const tokenAvatarImageSourceMap = new Map<string, string>()
 
-    const image =
-        contractAddress.toLowerCase() === pioneerAddress?.toLowerCase()
-            ? `/placeholders/pioneer_thumb300.avif`
-            : imgSrc
+const FALLBACK = 'fallback'
+
+export const TokenAvatar = (
+    props: Partial<TokenProps> & {
+        contractAddress: string
+        size: AvatarProps['size']
+        noLabel?: boolean
+        noCopy?: boolean
+        isLoading?: boolean
+    },
+) => {
+    const {
+        imgSrc,
+        label,
+        contractAddress,
+        onClick,
+        size,
+        noLabel,
+        isLoading,
+        noCopy = true,
+    } = props
+    const _label = isLoading ? '' : label || shortAddress(contractAddress)
+    const imageSource = useCheckImage({ src: imgSrc, contractAddress, isLoading })
+    const isFallbackType = !isLoading && imageSource === FALLBACK
+    const iconSize = size === 'avatar_x4' ? 'square_sm' : 'square_md'
+    const clipboardCopyRef = useRef<HTMLDivElement | null>(null)
+    const showLabel = !noLabel && _label
+
+    const content = () => {
+        if (isLoading) {
+            return (
+                <Box centerContent horizontal height="100%">
+                    <ButtonSpinner />
+                </Box>
+            )
+        }
+
+        if (isFallbackType) {
+            return (
+                <Box centerContent horizontal height="100%">
+                    <Icon type="token" size={iconSize} color="gray2" />
+                </Box>
+            )
+        }
+        if (imageSource) {
+            return <img src={imageSource} className={avatarImageStyle} />
+        }
+
+        return null
+    }
 
     return (
-        <Box alignItems="center" maxWidth="x6" data-testid="token-avatar">
-            <Box position="relative" border={!image ? 'level4' : 'none'} rounded="full">
-                {contractAddress && <Avatar key={contractAddress} src={image} size={size} />}
+        <Box alignItems="center" maxWidth="x6" data-testid="token-avatar" gap="sm">
+            <Box position="relative" rounded="full" background="level4">
+                <Box
+                    display="block"
+                    className={clsx(
+                        avatarToggleClasses({ circle: true, noBg: true }),
+                        avatarAtoms({
+                            size,
+                        }),
+                        avatarBaseStyle,
+                        {
+                            backgroundColor: 'red !important',
+                        },
+                    )}
+                    overflow="hidden"
+                >
+                    {content()}
+                </Box>
+
                 {onClick && contractAddress && (
                     <IconButton
                         style={{
@@ -33,18 +101,99 @@ export const TokenAvatar = (
                         position="absolute"
                         icon="close"
                         background="level4"
+                        border="faint"
                         color="default"
                         onClick={(e) => onClick(contractAddress, e)}
                     />
                 )}
             </Box>
-            {label && (
-                <Box paddingTop="sm">
-                    <Text size="sm" color="default" textAlign="center">
-                        {label}
-                    </Text>
-                </Box>
+            {/* wip and maybe remove tooltip */}
+            {showLabel && (
+                <TooltipRenderer
+                    keepOpenOnTriggerRefClick
+                    render={
+                        <Box background="level3" padding="sm" rounded="sm" border="faint">
+                            {noCopy ? (
+                                <Text color="gray2" size="sm">
+                                    {contractAddress}
+                                </Text>
+                            ) : (
+                                <ClipboardCopy
+                                    ref={clipboardCopyRef}
+                                    label={contractAddress}
+                                    clipboardContent={contractAddress}
+                                />
+                            )}
+                        </Box>
+                    }
+                    trigger="hover"
+                >
+                    {(props) => (
+                        <Box
+                            {...props.triggerProps}
+                            onClick={() => {
+                                clipboardCopyRef.current?.click()
+                            }}
+                        >
+                            <Text size="sm" color="default" textAlign="center">
+                                {_label}
+                            </Text>
+                        </Box>
+                    )}
+                </TooltipRenderer>
             )}
         </Box>
     )
+}
+
+function useCheckImage({
+    src,
+    contractAddress,
+    isLoading,
+}: {
+    src: string | undefined
+    contractAddress: string
+    isLoading?: boolean
+}) {
+    const [imageSource, setImageSource] = React.useState<string | undefined>(undefined)
+    const pioneerAddress = useGetPioneerNftAddress()
+
+    useEffect(() => {
+        if (isLoading) {
+            return
+        }
+        if (!pioneerAddress) {
+            return
+        }
+
+        if (tokenAvatarImageSourceMap.has(contractAddress)) {
+            setImageSource(tokenAvatarImageSourceMap.get(contractAddress))
+            return
+        }
+
+        if (contractAddress.toLowerCase() === pioneerAddress?.toLowerCase()) {
+            setImageSource(`/placeholders/pioneer_thumb300.avif`)
+            tokenAvatarImageSourceMap.set(contractAddress, `/placeholders/pioneer_thumb300.avif`)
+            return
+        }
+
+        if (!src) {
+            setImageSource(FALLBACK)
+            tokenAvatarImageSourceMap.set(contractAddress, FALLBACK)
+            return
+        }
+
+        const image = new Image()
+        image.src = src
+        image.onload = () => {
+            setImageSource(src)
+            tokenAvatarImageSourceMap.set(contractAddress, src)
+        }
+
+        image.onerror = () => {
+            setImageSource(FALLBACK)
+            tokenAvatarImageSourceMap.set(contractAddress, FALLBACK)
+        }
+    }, [src, contractAddress, pioneerAddress, isLoading])
+    return imageSource
 }

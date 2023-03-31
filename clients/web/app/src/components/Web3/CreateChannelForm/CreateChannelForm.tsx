@@ -19,6 +19,7 @@ import { useRequireTransactionNetwork } from 'hooks/useRequireTransactionNetwork
 import { RequireTransactionNetworkMessage } from '@components/RequireTransactionNetworkMessage/RequireTransactionNetworkMessage'
 import { Spinner } from '@components/Spinner'
 import { TokenCheckboxLabel } from '@components/Tokens/TokenCheckboxLabel'
+import { env } from 'utils'
 
 type Props = {
     spaceId: RoomIdentifier
@@ -187,6 +188,16 @@ export const CreateChannelForm = (props: Props) => {
                                     </Box>
                                 )
                             })}
+
+                            {env.IS_DEV ? (
+                                <Box color="negative" maxWidth="400">
+                                    <Text size="sm">
+                                        DEV message: If you are not seeing token display data here,
+                                        make sure you are on the correct network and pointed to
+                                        correct homeserver. See useNetworkForNftApi()
+                                    </Text>
+                                </Box>
+                            ) : null}
 
                             <ErrorMessage
                                 errors={formState.errors}

@@ -39,6 +39,9 @@ export const avatarToggleClasses = vcn({
         boxShadow: `0 0 0 1.5px ${vars.color.layer.level1}`,
         marginLeft: `calc(-0.33 * var(--size))`,
     }),
+    noBg: style({
+        background: 'none',
+    }),
 })
 
 export type ToggleProps = Parameters<typeof avatarToggleClasses>[0]

@@ -1,10 +1,16 @@
-import React, { useEffect, useState } from 'react'
+import React, { forwardRef, useEffect, useState } from 'react'
 import { useEvent } from 'react-use-event-hook'
 import { Icon, Stack, Text } from '@ui'
 
-export const ClipboardCopy = (props: { label: string; clipboardContent?: string }) => {
+type Props = {
+    label: string
+    clipboardContent?: string
+}
+
+export const ClipboardCopy = forwardRef<HTMLDivElement, Props>((props, ref) => {
     const [copied, setCopied] = useState(false)
-    const onCopy = useEvent(() => {
+    const onCopy = useEvent((e) => {
+        e.stopPropagation()
         navigator.clipboard.writeText(props.clipboardContent ?? props.label)
         setCopied(true)
     })
@@ -24,6 +30,7 @@ export const ClipboardCopy = (props: { label: string; clipboardContent?: string 
             gap="sm"
             alignItems="center"
             cursor={!copied ? 'pointer' : 'default'}
+            ref={ref}
             onClick={onCopy}
         >
             <Text truncate size="md" color="gray2">
@@ -36,4 +43,4 @@ export const ClipboardCopy = (props: { label: string; clipboardContent?: string 
             )}
         </Stack>
     )
-}
+})

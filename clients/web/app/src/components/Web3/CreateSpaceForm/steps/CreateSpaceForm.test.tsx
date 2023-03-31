@@ -5,8 +5,9 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { act } from 'react-dom/test-utils'
 import * as zionClient from 'use-zion-client'
 import * as router from 'react-router'
+import userEvent from '@testing-library/user-event'
 import { PATHS } from 'routes'
-import { TestApp, mockUseMatrixCredentials } from 'test/testUtils'
+import { TestApp, address1, mockUseMatrixCredentials } from 'test/testUtils'
 import { SpacesNew } from 'routes/SpacesNew'
 import { UseMockCreateSpaceReturn, mockCreateTransactionWithSpy } from 'test/transactionHookMock'
 import * as useRequireTransactionNetwork from 'hooks/useRequireTransactionNetwork'
@@ -103,6 +104,24 @@ describe('<CreateSpaceForm />', () => {
         fireEvent.click(nextButton)
 
         await screen.findByText(/select at least one token/i)
+    }, 10000)
+
+    test('Step 1: can paste in any custom token if not found in users token list', async () => {
+        render(<Wrapper />)
+        const nextButton = screen.getByTestId('create-space-next-button')
+        const tokenRadio = screen.getByText('Token holders')
+        fireEvent.click(tokenRadio)
+        const searchInput = await screen.findByTestId('token-search')
+        await userEvent.type(searchInput, address1)
+        const checkboxes = await screen.findAllByTestId('checkbox-tokens')
+        fireEvent.click(checkboxes[0])
+
+        // going to step 2
+        fireEvent.click(nextButton)
+
+        const tokenContainer = await screen.findByTestId('step-2-avatars')
+        const step2Tokens = await within(tokenContainer).findAllByRole('button')
+        expect(step2Tokens).toHaveLength(1)
     }, 10000)
 
     test('Retains state if moving to next step and then going back', async () => {

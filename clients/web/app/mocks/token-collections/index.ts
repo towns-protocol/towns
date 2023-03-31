@@ -5,8 +5,8 @@ export function tokenCollections() {
 }
 
 export const MOCK_CONTRACT_METADATA_ADDRESSES = [
-    '0xfA4D0250769B07FC132573ea38D758D159770998',
-    '0xfA9937555Dc20A020A161232de4D2B109C62Aa9c',
+    '0xfA4D0250769B07FC132573ea38D758D159770998'.toLowerCase(),
+    '0xfA9937555Dc20A020A161232de4D2B109C62Aa9c'.toLowerCase(),
 ]
 export const getContractMetadataMock: {
     [x: string]: {

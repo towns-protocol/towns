@@ -1,64 +1,44 @@
-import { ContractMetadata } from '@token-worker/types'
 import React from 'react'
 import { RoomIdentifier } from 'use-zion-client'
-import { Box, Text } from '@ui'
-import { useRoleTokensMetatdata } from 'api/lib/collectionMetadata'
-import { env } from 'utils'
+import { Box } from '@ui'
+import { useTokenMetadata } from 'api/lib/collectionMetadata'
 import { TokenAvatar } from './TokenAvatar'
+
+function FetchedAvatar({ address }: { address: string }) {
+    const { data, isFetched, failureCount } = useTokenMetadata(address)
+    // if there's a single failure, show the fallback content
+    // a subsequent success will re-render the component and show the correct data
+    const isLoading = isFetched ? false : failureCount === 0
+
+    return (
+        <Box>
+            <TokenAvatar
+                key={address}
+                contractAddress={address ?? ''}
+                isLoading={isLoading}
+                imgSrc={data?.imageUrl}
+                size="avatar_md"
+                label={data?.name}
+            />
+        </Box>
+    )
+}
 
 export function TokenCheckboxLabel(props: {
     spaceId: RoomIdentifier
     tokenAddresses: string[]
     label: string
 }): JSX.Element {
-    const { data, errors } = useRoleTokensMetatdata(props.spaceId, props.tokenAddresses)
     return (
         <Box>
             <Box>{props.label}</Box>
-
-            {!data ? (
-                <Box visibility="hidden">
-                    <TokenAvatar size="avatar_md" contractAddress="" />
-                </Box>
-            ) : !data.length ? null : (
+            {props.tokenAddresses.length > 0 && (
                 <Box horizontal gap="lg" paddingTop="md">
-                    {data
-                        .filter((token): token is ContractMetadata => !!token)
-                        .map((token) => {
-                            return (
-                                <TokenAvatar
-                                    key={token.address}
-                                    contractAddress={token.address ?? ''}
-                                    imgSrc={token.imageUrl}
-                                    size="avatar_md"
-                                    label={token.name}
-                                />
-                            )
-                        })}
+                    {props.tokenAddresses.map((address) => (
+                        <FetchedAvatar key={address} address={address} />
+                    ))}
                 </Box>
             )}
-
-            {env.IS_DEV && errors.length ? (
-                <Box color="negative" maxWidth="400">
-                    <Text size="sm">
-                        DEV message: If you are not seeing token display data here, the Alchemy NFT
-                        API call failed. Usually this indicates 1 of 2 things:
-                        <br />
-                        <br />
-                        1. that you created this town with tokens from goerli, but you are pointed
-                        to local homeserver, so you need to append ?goerli to url to get the data to
-                        show up
-                        <br />
-                        <br />
-                        2. that you created this town with a Foundry asset, using an Anvil account -
-                        i.e. the zion token - and making it show up here requires more work yet to
-                        be done
-                        <br />
-                        <br />
-                        In either case, this is just display data and you can still create a channel
-                    </Text>
-                </Box>
-            ) : null}
         </Box>
     )
 }

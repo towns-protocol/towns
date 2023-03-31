@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { UseFormReturn } from 'react-hook-form'
 import { getMemberNftAddress } from 'use-zion-client'
 import uniqBy from 'lodash/uniqBy'
+import { ethers } from 'ethers'
 import { Box, Checkbox, Text, TextField, VList } from '@ui'
 import { shortAddress } from 'ui/utils/utils'
 import { useCollectionsForOwner } from 'api/lib/tokenContracts'
@@ -27,7 +28,12 @@ export const searchArrayOfData = (array: TokenProps[], query: string): TokenProp
 const TokenCheckboxLabel = ({ imgSrc, label, contractAddress }: TokenProps) => {
     return (
         <Box flexDirection="row" alignItems="center" paddingY="sm">
-            <TokenAvatar contractAddress={contractAddress} size="avatar_x4" imgSrc={imgSrc} />
+            <TokenAvatar
+                noLabel
+                contractAddress={contractAddress}
+                size="avatar_x4"
+                imgSrc={imgSrc}
+            />
             <Box paddingX="md">
                 <Text>{label}</Text>
             </Box>
@@ -124,6 +130,9 @@ export const TokenList = ({ isChecked, setValue, chainId, wallet }: TokenListPro
         [toggleToken],
     )
 
+    const isCustomToken = ethers.utils.isAddress(search) && !results.length
+    const noResults = !results.length && !isCustomToken && !isLoading
+
     return (
         <Box paddingTop="md" cursor="default" gap="sm">
             {!selectedTokens.length
@@ -149,10 +158,29 @@ export const TokenList = ({ isChecked, setValue, chainId, wallet }: TokenListPro
                   )}
 
             <TextField
+                data-testid="token-search"
                 background="level3"
                 placeholder="Search or paste contract address"
                 onChange={(e) => setSearch(e.target.value)}
             />
+            {isCustomToken && (
+                <Box padding="md" background="level3" rounded="sm">
+                    <Checkbox
+                        name="tokens"
+                        width="100%"
+                        value={search}
+                        label={
+                            <TokenCheckboxLabel
+                                contractAddress={search}
+                                label="Add unknown token"
+                                imgSrc=""
+                            />
+                        }
+                        checked={selectedTokens.includes(search)}
+                        onChange={() => onTokenClick(search)}
+                    />
+                </Box>
+            )}
 
             {isError && (
                 <Box paddingTop="sm">
@@ -172,7 +200,7 @@ export const TokenList = ({ isChecked, setValue, chainId, wallet }: TokenListPro
                     </Text>
                 </Box>
             )}
-            {isChecked && (
+            {isChecked && !isCustomToken && (
                 <Box padding="md" minHeight="100" maxHeight="500" background="level3" rounded="sm">
                     <Box paddingBottom="md">
                         <Text textTransform="uppercase" color="gray2">
@@ -180,6 +208,11 @@ export const TokenList = ({ isChecked, setValue, chainId, wallet }: TokenListPro
                             Your wallet{' '}
                         </Text>
                     </Box>
+                    {noResults && (
+                        <Box alignSelf="center" paddingTop="sm">
+                            No tokens found.
+                        </Box>
+                    )}
                     <VList<TokenPropsForVList>
                         padding={0}
                         list={results}
