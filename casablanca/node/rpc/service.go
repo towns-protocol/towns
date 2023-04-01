@@ -270,6 +270,7 @@ func (s *Service) addEvent(ctx context.Context, streamId string, view *StreamVie
 }
 
 func (s *Service) Info(_ context.Context, request *connect_go.Request[protocol.InfoRequest]) (*connect_go.Response[protocol.InfoResponse], error) {
+	log.Trace("Info request: ", request)
 	if request.Msg.Debug == "error" {
 		// TODO: flag
 		return nil, RpcError(protocol.Err_DEBUG_ERROR, "Error requested through Info request")
@@ -278,8 +279,10 @@ func (s *Service) Info(_ context.Context, request *connect_go.Request[protocol.I
 		log.Panic("panic requested through Info request")
 		return nil, errors.New("panic")
 	} else {
+		// TODO: set graffiti in config
+		// TODO: return version
 		return connect_go.NewResponse(&protocol.InfoResponse{
-			Graffiti: "TBD Project Name node welcomes you!",
+			Graffiti: "Towns.com node welcomes you!",
 		}), nil
 	}
 }

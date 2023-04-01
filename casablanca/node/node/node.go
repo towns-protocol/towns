@@ -53,7 +53,7 @@ func main() {
 		log.Fatalf("failed to read config: %v", err)
 	}
 	if config.Debug {
-		log.SetLevel(log.DebugLevel)
+		log.SetLevel(log.InfoLevel)
 	}
 	if config.LogFile != "" {
 		f, err := os.OpenFile(config.LogFile, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
@@ -71,7 +71,37 @@ func main() {
 
 	pattern, handler := rpc.MakeServiceHandler(context.Background(), config.DbUrl, config.Clean)
 	mux := http.NewServeMux()
+	log.Info("Registering handler for ", pattern)
 	mux.Handle(pattern, handler)
+
+	mux.HandleFunc("/info", func(w http.ResponseWriter, r *http.Request) {
+		// TODO: reply with graffiti from config and with node version
+		log.Tracef("Got request for /info %v", *r)
+		w.Header().Set("Content-Type", "text/plain")
+		w.WriteHeader(http.StatusOK)
+		_, err := w.Write([]byte("All good in the Towns land!\n"))
+		if err != nil {
+			log.Warnf("Failed to write response: %v\nfor request: %v", err, *r)
+		}
+	})
+
+	corsMiddleware := func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			log.Tracef("Adding CORS headers to request: %v", *r)
+
+			w.Header().Set("Access-Control-Allow-Origin", "*")
+			w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
+			w.Header().Set("Access-Control-Allow-Headers", "Content-Type,connect-protocol-version,x-grpc-web,x-user-agent")
+
+			if r.Method == http.MethodOptions {
+				w.WriteHeader(http.StatusOK)
+				log.Tracef("Replying to CORS preflight request: %v", *r)
+				return
+			}
+
+			next.ServeHTTP(w, r)
+		})
+	}
 
 	address := fmt.Sprintf("%s:%d", config.Address, config.Port)
 	httpListener, err := net.Listen("tcp", address)
@@ -83,7 +113,7 @@ func main() {
 			httpListener,
 			// For gRPC clients, it's convenient to support HTTP/2 without TLS. You can
 			// avoid x/net/http2 by using http.ListenAndServeTLS.
-			h2c.NewHandler(mux, &http2.Server{}),
+			h2c.NewHandler(corsMiddleware(mux), &http2.Server{}),
 		)
 		log.Fatalf("listen failed: %v", err)
 	}()

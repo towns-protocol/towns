@@ -39,7 +39,7 @@ describe('streamRpcClient', () => {
         expect(client).toBeDefined()
         const result = await client.info({})
         expect(result).toBeDefined()
-        expect(result.graffiti).toEqual('TBD Project Name node welcomes you!')
+        expect(result.graffiti).toEqual('Towns.com node welcomes you!')
         await client.close()
     })
 

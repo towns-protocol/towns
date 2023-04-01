@@ -113,7 +113,7 @@ func TestMethods(t *testing.T) {
 		if err != nil {
 			t.Errorf("error calling Info: %v", err)
 		}
-		assert.Equal(t, "TBD Project Name node welcomes you!", response.Msg.Graffiti)
+		assert.Equal(t, "Towns.com node welcomes you!", response.Msg.Graffiti)
 	}
 	{
 		_, err := client.CreateStream(ctx, connect.NewRequest(&protocol.CreateStreamRequest{}))

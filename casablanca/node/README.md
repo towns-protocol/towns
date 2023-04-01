@@ -14,3 +14,8 @@ https://connect.build/docs/go/getting-started/#install-tools:
 # Generate proto definitions
 
     go generate -v -x protocol/gen.go
+
+# Lint
+
+    brew install golangci-lint
+    golangci-lint run
