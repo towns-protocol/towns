@@ -69,3 +69,4 @@ servers/workers/siwe-worker/worker/bundle.js
 casablanca/proto/src/gen/protocol_pb.ts
 casablanca/proto/src/gen/protocol_connect.ts
 **/coverage/*
+/casablanca/node/node/__debug_bin
