@@ -20,6 +20,6 @@ describe('protocol', () => {
             signal: abortController.signal,
         })
         expect(response).toBeDefined()
-        expect(response.graffiti).toEqual('TBD Project Name node welcomes you!')
+        expect(response.graffiti).toEqual('Towns.com node welcomes you!')
     })
 })
