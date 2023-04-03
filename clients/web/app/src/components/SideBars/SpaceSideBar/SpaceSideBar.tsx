@@ -26,6 +26,7 @@ import { CreateChannelFormContainer } from '@components/Web3/CreateChannelForm'
 import { Badge, Box, Button, Icon, IconButton, IconName, Paragraph, Stack } from '@ui'
 import { useContractSpaceInfo } from 'hooks/useContractSpaceInfo'
 import { useHasPermission } from 'hooks/useHasPermission'
+import { useCorrectChainForServer } from 'hooks/useCorrectChainForServer'
 import { PATHS } from 'routes'
 import { CardOpener } from 'ui/components/Overlay/CardOpener'
 import { useSizeContext } from 'ui/hooks/useSizeContext'
@@ -244,6 +245,7 @@ const SpaceSideBarHeader = (props: {
 }) => {
     const { onSettings, opaqueHeaderBar, space } = props
     const currentChannelId = useChannelIdFromPathname()
+    const { network } = useCorrectChainForServer()
     const { pathname } = useLocation()
 
     const { members } = useSpaceMembers()
@@ -259,7 +261,7 @@ const SpaceSideBarHeader = (props: {
 
     const onAddressClick = useEvent(() => {
         window.open(
-            `https://goerli.etherscan.io/address/${spaceInfo?.address}`,
+            `https://${network}.etherscan.io/address/${spaceInfo?.address}`,
             '_blank',
             'noopener,noreferrer',
         )
