@@ -17,8 +17,6 @@ import (
 	"golang.org/x/net/http2/h2c"
 )
 
-var AllowedOrigins = []string{"http://localhost:3001"}
-
 func StartServer(ctx context.Context, host string, port int, dbUrl string) (closer func(), actualPort int) {
 	pattern, handler := MakeServiceHandler(context.Background(), dbUrl)
 	mux := http.NewServeMux()
@@ -44,11 +42,11 @@ func StartServer(ctx context.Context, host string, port int, dbUrl string) (clos
 	actualPort = httpListener.Addr().(*net.TCPAddr).Port
 
 	corsMiddleware := cors.New(cors.Options{
-		AllowCredentials: true,
-		Debug:            true,
-		AllowedOrigins:   AllowedOrigins,
+		AllowCredentials: false,
+		Debug:            false,
+		AllowedOrigins:   []string{"*"},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE"},
-		AllowedHeaders:   []string{"Origin", "X-Requested-With", "Accept", "Authorization", "Content-Type", "X-Grpc-Web", "X-User-Agent", "Connect-Protocol-Version"},
+		AllowedHeaders:   []string{"Origin", "X-Requested-With", "Accept", "Content-Type", "X-Grpc-Web", "X-User-Agent", "Connect-Protocol-Version"},
 	})
 
 	// For gRPC clients, it's convenient to support HTTP/2 without TLS. You can

@@ -76,7 +76,7 @@ func StartMetricsService(config config.MetricsConfig) {
 	r := mux.NewRouter()
 
 	r.Handle("/metrics", promhttp.Handler())
-	log.Infof("Starting HTTP server on %s:%d", config.Interface, config.Port)
+	log.Infof("Starting metrics HTTP server on %s:%d", config.Interface, config.Port)
 	err := http.ListenAndServe(fmt.Sprintf("%s:%d", config.Interface, config.Port), r)
 	if err != nil {
 		log.Fatal(err)

@@ -59,7 +59,6 @@ export function makeStreamRpcClient(
         transport = createConnectTransport({
             baseUrl: dest,
             useBinaryFormat: true,
-            credentials: 'include',
         })
     } else {
         transport = dest
