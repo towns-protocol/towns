@@ -63,6 +63,7 @@
           "WatchCasablancaProto",
           "App",
           "SampleApp",
+          "Casablanca DebugApp",
           "UnfurlWorker",
           "TokenWorker"
         ],
@@ -227,6 +228,16 @@
         "label": "SampleApp",
         "type": "shell",
         "command": "cd clients/web/sample-app && yarn dev",
+        "isBackground": true,
+        "problemMatcher": [],
+        "presentation": {
+          "group": "local-clients"
+        }
+      },
+      {
+        "label": "Casablanca DebugApp",
+        "type": "shell",
+        "command": "./scripts/wait-for-casablanca.sh && cd casablanca/debug-app && yarn dev",
         "isBackground": true,
         "problemMatcher": [],
         "presentation": {

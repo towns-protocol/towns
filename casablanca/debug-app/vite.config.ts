@@ -29,7 +29,7 @@ export default defineConfig({
         visualizer({ filename: 'dist/stats.html' }),
     ],
     server: {
-        port: 3001,
+        port: 3002,
         hmr: {
             overlay: false,
         },
