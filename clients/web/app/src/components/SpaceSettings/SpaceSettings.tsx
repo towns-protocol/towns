@@ -133,9 +133,14 @@ export const SpaceSettings = () => {
                             Roles
                         </SpaceSettingsNavItem>
                     </NavLink>
+                    {/*
+                    // Hide the delete town button for now.
+                    // Re-enable when this is implemented:
+                    // https://linear.app/hnt-labs/issue/HNT-1050/as-a-user-i-should-be-able-to-delete-a-town
                     <SpaceSettingsNavItem icon="delete" color="error">
                         Delete Town
                     </SpaceSettingsNavItem>
+                    */}
                 </Stack>
             </Stack>
 
