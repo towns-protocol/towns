@@ -1,11 +1,19 @@
 import React from 'react'
-import { WalletStatus, useMatrixCredentials, useWeb3Context } from 'use-zion-client'
+import {
+    WalletStatus,
+    useCasablancaCredentials,
+    useMatrixCredentials,
+    useWeb3Context,
+} from 'use-zion-client'
 import { Outlet } from 'react-router-dom'
 import { Login } from './Login'
 
 export function MainLayout(): JSX.Element {
-    const { isAuthenticated } = useMatrixCredentials()
+    const { isAuthenticated: isAuthenticatedMatrix } = useMatrixCredentials()
+    const { isAuthenticated: isAuthenticatedCasablanca } = useCasablancaCredentials()
     const { walletStatus } = useWeb3Context()
-    const isAuthed = isAuthenticated && walletStatus !== WalletStatus.Disconnected
+    const isAuthed =
+        (isAuthenticatedCasablanca || isAuthenticatedMatrix) &&
+        walletStatus !== WalletStatus.Disconnected
     return <div>{isAuthed ? <Outlet /> : <Login />}</div>
 }

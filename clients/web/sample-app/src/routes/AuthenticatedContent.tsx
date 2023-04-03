@@ -16,7 +16,7 @@ export function AuthenticatedContent(): JSX.Element {
         case 'loading':
             return <LargeToast message={onboardingState.message} />
         case 'none':
-            return <></>
+            return <>Onboarding State == none</>
         case 'toast':
             return <LargeToast message={onboardingState.message} />
         case 'user-profile':

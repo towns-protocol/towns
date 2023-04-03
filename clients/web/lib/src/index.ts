@@ -9,6 +9,7 @@ export { useWeb3Context } from './components/Web3ContextProvider'
 export { AutojoinChannels } from './components/AutojoinChannels'
 
 export { LoginStatus } from './hooks/login'
+export { useCasablancaCredentials } from './hooks/use-casablanca-credentials'
 export { useChannelData } from './hooks/use-channel-data'
 export { useChannelId } from './hooks/use-channel-id'
 export { useChannelMembers } from './hooks/use-channel-members'

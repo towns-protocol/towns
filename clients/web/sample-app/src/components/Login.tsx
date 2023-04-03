@@ -432,7 +432,7 @@ function WalletInfo() {
                         <Button
                             variant="outlined"
                             color="primary"
-                            sx={{ marginTop: '20px' }}
+                            sx={{ margin: '20px' }}
                             onClick={() => disconnect()}
                         >
                             Disconnect Wallet

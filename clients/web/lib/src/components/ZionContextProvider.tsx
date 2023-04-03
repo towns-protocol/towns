@@ -24,6 +24,8 @@ import { Client as CasablancaClient } from '@towns/client'
 import { useCasablancaTimelines } from '../hooks/ZionContext/useCasablancaTimelines'
 
 export interface IZionContext {
+    homeServerUrl: string
+    casablancaServerUrl: string
     client?: ZionClient /// only set when user is authenticated with matrix or casablanca
     clientSingleton?: ZionClient /// always set, can be use for matrix, this duplication can be removed once we transition to casablanca
     matrixClient?: MatrixClient /// set if we're logged in and matrix client is started
@@ -35,7 +37,6 @@ export interface IZionContext {
     spaces: SpaceItem[]
     spaceHierarchies: SpaceHierarchies
     onboardingState: IOnboardingState
-    homeServerUrl: string
     defaultSpaceId?: RoomIdentifier
     defaultSpaceName?: string
     defaultSpaceAvatarSrc?: string
@@ -83,6 +84,7 @@ export function ZionContextProvider({
 /// the zion client needs to be nested inside a Web3 provider, hence the need for this component
 const ContextImpl = (props: Props): JSX.Element => {
     const {
+        casablancaServerUrl,
         matrixServerUrl,
         enableSpaceRootUnreads,
         defaultSpaceId,
@@ -131,6 +133,7 @@ const ContextImpl = (props: Props): JSX.Element => {
                 spaceHierarchies,
                 onboardingState,
                 homeServerUrl: matrixServerUrl,
+                casablancaServerUrl: casablancaServerUrl,
                 defaultSpaceId: convertedDefaultSpaceId,
                 defaultSpaceName,
                 defaultSpaceAvatarSrc,
