@@ -45,9 +45,10 @@ func StartServer(ctx context.Context, host string, port int, dbUrl string) (clos
 
 	corsMiddleware := cors.New(cors.Options{
 		AllowCredentials: true,
+		Debug:            true,
 		AllowedOrigins:   AllowedOrigins,
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE"},
-		AllowedHeaders:   []string{"Origin", "X-Requested-With", "Accept", "Authorization", "Content-Type", "X-Grpc-Web", "X-User-Agent"},
+		AllowedHeaders:   []string{"Origin", "X-Requested-With", "Accept", "Authorization", "Content-Type", "X-Grpc-Web", "X-User-Agent", "Connect-Protocol-Version"},
 	})
 
 	// For gRPC clients, it's convenient to support HTTP/2 without TLS. You can
