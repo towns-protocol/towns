@@ -8,6 +8,7 @@ describe('protocol', () => {
         const transport = transportFunc({
             baseUrl: 'http://localhost:5157',
             useBinaryFormat: true,
+            credentials: 'include',
         })
         expect(transport).toBeDefined()
 

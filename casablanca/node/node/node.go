@@ -13,6 +13,7 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/rs/cors"
 	"gopkg.in/yaml.v3"
 
 	log "github.com/sirupsen/logrus"
@@ -85,35 +86,23 @@ func main() {
 		}
 	})
 
-	corsMiddleware := func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			log.Tracef("Adding CORS headers to request: %v", *r)
-
-			w.Header().Set("Access-Control-Allow-Origin", "*")
-			w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
-			w.Header().Set("Access-Control-Allow-Headers", "Content-Type,connect-protocol-version,x-grpc-web,x-user-agent")
-
-			if r.Method == http.MethodOptions {
-				w.WriteHeader(http.StatusOK)
-				log.Tracef("Replying to CORS preflight request: %v", *r)
-				return
-			}
-
-			next.ServeHTTP(w, r)
-		})
-	}
-
 	address := fmt.Sprintf("%s:%d", config.Address, config.Port)
 	httpListener, err := net.Listen("tcp", address)
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
 	go func() {
+		c := cors.New(cors.Options{
+			AllowCredentials: true,
+			AllowedOrigins:   rpc.AllowedOrigins,
+			AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE"},
+			AllowedHeaders:   []string{"Origin", "X-Requested-With", "Accept", "Authorization", "Content-Type", "X-Grpc-Web", "X-User-Agent"},
+		})
 		err := http.Serve(
 			httpListener,
 			// For gRPC clients, it's convenient to support HTTP/2 without TLS. You can
 			// avoid x/net/http2 by using http.ListenAndServeTLS.
-			h2c.NewHandler(corsMiddleware(mux), &http2.Server{}),
+			h2c.NewHandler(c.Handler(mux), &http2.Server{}),
 		)
 		log.Fatalf("listen failed: %v", err)
 	}()

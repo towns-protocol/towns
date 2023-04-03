@@ -9,6 +9,7 @@ import (
 	"net/http"
 
 	connect_go "github.com/bufbuild/connect-go"
+	"github.com/rs/cors"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
@@ -28,6 +29,8 @@ import (
 type LoggingService struct {
 	Service *Service
 }
+
+var AllowedOrigins = []string{"http://localhost:3001"}
 
 var (
 	serviceRequests      = infra.NewSuccessMetrics("service_requests", nil)
@@ -317,7 +320,14 @@ func MakeServer(ctx context.Context, dbUrl string, clean bool) (protocolconnect.
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
-	srv := &http.Server{Handler: h2c.NewHandler(mux, &http2.Server{})}
+	c := cors.New(cors.Options{
+		AllowCredentials: true,
+		AllowedOrigins:   AllowedOrigins,
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE"},
+		AllowedHeaders:   []string{"Origin", "X-Requested-With", "Accept", "Authorization", "Content-Type", "X-Grpc-Web", "X-User-Agent"},
+	})
+
+	srv := &http.Server{Handler: h2c.NewHandler(c.Handler(mux), &http2.Server{})}
 
 	go func() {
 		err := srv.Serve(httpListener)

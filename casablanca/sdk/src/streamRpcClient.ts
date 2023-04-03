@@ -1,6 +1,6 @@
 // forked from https://raw.githubusercontent.com/bufbuild/connect-es/main/packages/connect/src/promise-client.ts to add logging
 import { CallOptions, Code, ConnectError, Transport, makeAnyClient } from '@bufbuild/connect'
-import { createGrpcWebTransport } from '@bufbuild/connect-web'
+import { createConnectTransport } from '@bufbuild/connect-web'
 import {
     Message,
     MethodInfo,
@@ -56,7 +56,11 @@ export function makeStreamRpcClient(
 ): StreamRpcClientType {
     let transport: Transport
     if (typeof dest === 'string') {
-        transport = createGrpcWebTransport({ baseUrl: dest, useBinaryFormat: true })
+        transport = createConnectTransport({
+            baseUrl: dest,
+            useBinaryFormat: true,
+            credentials: 'include',
+        })
     } else {
         transport = dest
     }
