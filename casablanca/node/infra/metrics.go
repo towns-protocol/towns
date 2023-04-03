@@ -8,13 +8,9 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	log "github.com/sirupsen/logrus"
-)
 
-type MetricsConfig struct {
-	Enabled   bool   `yaml:"enabled" default:"false"`
-	Interface string `yaml:"interface" default:""`
-	Port      int    `yaml:"port" default:"8080"`
-}
+	"casablanca/node/config"
+)
 
 type SuccessMetrics struct {
 	Sucess prometheus.Counter
@@ -76,7 +72,7 @@ func (m *SuccessMetrics) Fail() {
 	}
 }
 
-func StartMetricsService(config MetricsConfig) {
+func StartMetricsService(config config.MetricsConfig) {
 	r := mux.NewRouter()
 
 	r.Handle("/metrics", promhttp.Handler())

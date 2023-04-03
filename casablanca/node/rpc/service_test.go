@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"math/rand"
+	"net/http"
 	"os"
 	"strconv"
 	"strings"
@@ -33,7 +34,6 @@ func next() int {
 }
 
 func TestMain(m *testing.M) {
-
 	log.SetLevel(log.DebugLevel)
 
 	db, closer, err := testutils.StartDB(context.Background())
@@ -104,9 +104,20 @@ func createChannel(ctx context.Context, client protocolconnect.StreamServiceClie
 	return reschannel.Msg.SyncCookie, joinChannel.Hash, nil
 }
 
+func testServerAndClient(ctx context.Context, dbUrl string) (protocolconnect.StreamServiceClient, func()) {
+	closer, port := rpc.StartServer(ctx, "localhost", 0, dbUrl)
+
+	client := protocolconnect.NewStreamServiceClient(
+		http.DefaultClient,
+		fmt.Sprintf("http://localhost:%d", port),
+	)
+
+	return client, closer
+}
+
 func TestMethods(t *testing.T) {
 	ctx := context.Background()
-	client, closer := rpc.MakeServer(ctx, testDatabaseUrl, false)
+	client, closer := testServerAndClient(ctx, testDatabaseUrl)
 	defer closer()
 	{
 		response, err := client.Info(ctx, connect.NewRequest(&protocol.InfoRequest{}))
@@ -228,7 +239,7 @@ func TestMethods(t *testing.T) {
 
 func TestManyUsers(t *testing.T) {
 	ctx := context.Background()
-	client, closer := rpc.MakeServer(ctx, testDatabaseUrl, false)
+	client, closer := testServerAndClient(ctx, testDatabaseUrl)
 	defer closer()
 
 	totalUsers := 14

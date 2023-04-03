@@ -1,6 +1,9 @@
 port: 5157
-db_url: postgres://postgres:postgres@localhost:5433/casablanca?sslmode=disable&pool_max_conns=3
+dburl: postgres://postgres:postgres@localhost:5433/casablanca?sslmode=disable&pool_max_conns=3
 address:
-debug: true
-log_file: dev.log
-metrics: { enabled: true, port: 8081 }
+log:
+    file: logs/dev.log
+    level: info
+metrics:
+    enabled: true
+    port: 8081

@@ -5,14 +5,10 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"net"
 	"net/http"
 
 	connect_go "github.com/bufbuild/connect-go"
-	"github.com/rs/cors"
 	log "github.com/sirupsen/logrus"
-	"golang.org/x/net/http2"
-	"golang.org/x/net/http2/h2c"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -29,8 +25,6 @@ import (
 type LoggingService struct {
 	Service *Service
 }
-
-var AllowedOrigins = []string{"http://localhost:3001"}
 
 var (
 	serviceRequests      = infra.NewSuccessMetrics("service_requests", nil)
@@ -290,8 +284,8 @@ func (s *Service) Info(_ context.Context, request *connect_go.Request[protocol.I
 	}
 }
 
-func MakeServiceHandler(ctx context.Context, dbUrl string, clean bool, opts ...connect_go.HandlerOption) (string, http.Handler) {
-	store, err := storage.NewPGEventStore(ctx, dbUrl, clean)
+func MakeServiceHandler(ctx context.Context, dbUrl string, opts ...connect_go.HandlerOption) (string, http.Handler) {
+	store, err := storage.NewPGEventStore(ctx, dbUrl, false)
 	if err != nil {
 		log.Fatalf("failed to create storage: %v", err)
 	}
@@ -308,50 +302,6 @@ func MakeServiceHandler(ctx context.Context, dbUrl string, clean bool, opts ...c
 		},
 	}, opts...)
 	return pattern, handler
-}
-
-func MakeServer(ctx context.Context, dbUrl string, clean bool) (protocolconnect.StreamServiceClient, func()) {
-	mux := http.NewServeMux()
-	pattern, handler := MakeServiceHandler(ctx, dbUrl, clean)
-	mux.Handle(pattern, handler)
-
-	address := ":0"
-	httpListener, err := net.Listen("tcp", address)
-	if err != nil {
-		log.Fatalf("failed to listen: %v", err)
-	}
-	c := cors.New(cors.Options{
-		AllowCredentials: true,
-		AllowedOrigins:   AllowedOrigins,
-		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE"},
-		AllowedHeaders:   []string{"Origin", "X-Requested-With", "Accept", "Authorization", "Content-Type", "X-Grpc-Web", "X-User-Agent"},
-	})
-
-	srv := &http.Server{Handler: h2c.NewHandler(c.Handler(mux), &http2.Server{})}
-
-	go func() {
-		err := srv.Serve(httpListener)
-		if err != http.ErrServerClosed {
-			log.Fatalf("listen failed: %v", err)
-		}
-	}()
-
-	closer := func() {
-		log.Info("closing server")
-		err := srv.Shutdown(ctx)
-		if err != nil {
-			log.Fatalf("failed to shutdown server: %v", err)
-		}
-	}
-
-	port := httpListener.Addr().(*net.TCPAddr).Port
-
-	client := protocolconnect.NewStreamServiceClient(
-		http.DefaultClient,
-		fmt.Sprintf("http://localhost:%d", port),
-	)
-
-	return client, closer
 }
 
 func (s *Service) sign(payload *protocol.Payload, prevHashes [][]byte) *protocol.Envelope {
