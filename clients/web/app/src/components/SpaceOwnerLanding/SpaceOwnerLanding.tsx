@@ -71,10 +71,10 @@ export const SpaceOwnerLanding = () => {
                 </Stack>
                 <Stack gap="md" className={childStyle}>
                     <Stack
+                        horizontal
                         background="level2"
                         rounded="md"
                         padding="md"
-                        flexDirection="row"
                         justifyContent="spaceBetween"
                         alignItems="center"
                         maxWidth="420"
@@ -84,24 +84,26 @@ export const SpaceOwnerLanding = () => {
                             <Icon color="gray2" type="link" />
                             <Text color="default">{'Share your town link:'}</Text>
                         </Stack>
-                        <Button tone="cta1" onClick={onCopy}>
-                            Copy town link
-                        </Button>
-                        <AnimatePresence mode="wait">
-                            {copyWasClicked && (
-                                <FadeIn>
-                                    <Box
-                                        position="absolute"
-                                        background="level4"
-                                        rounded="sm"
-                                        padding="sm"
-                                        className={copiedStyle}
-                                    >
-                                        <Text size="sm">Copied!</Text>
-                                    </Box>
-                                </FadeIn>
-                            )}
-                        </AnimatePresence>
+                        <Box position="relative">
+                            <Button tone="cta1" onClick={onCopy}>
+                                Copy town link
+                            </Button>
+                            <AnimatePresence>
+                                {copyWasClicked && (
+                                    <FadeIn fast>
+                                        <Box
+                                            position="absolute"
+                                            background="level4"
+                                            rounded="sm"
+                                            padding="sm"
+                                            className={copiedStyle}
+                                        >
+                                            <Text size="sm">Copied!</Text>
+                                        </Box>
+                                    </FadeIn>
+                                )}
+                            </AnimatePresence>
+                        </Box>
                     </Stack>
                 </Stack>
             </Stack>

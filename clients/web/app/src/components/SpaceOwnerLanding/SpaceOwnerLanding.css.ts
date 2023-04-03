@@ -27,7 +27,7 @@ export const childStyle = style({
 })
 
 export const copiedStyle = style({
-    top: '-40px',
+    bottom: '-30px',
     left: '50%',
     transform: 'translateX(-50%)',
 })
