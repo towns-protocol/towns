@@ -6,6 +6,8 @@ import { ModalContainer } from '@components/Modals/ModalContainer'
 import { AccordionGroup, AccordionGroupProps } from 'ui/components/Accordion/Accordion'
 import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinner'
 import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
+import { useRequireTransactionNetwork } from 'hooks/useRequireTransactionNetwork'
+import { RequireTransactionNetworkMessage } from '@components/RequireTransactionNetworkMessage/RequireTransactionNetworkMessage'
 import {
     SettingsTransactionStatus,
     useSettingsTransactionsStore,
@@ -121,6 +123,8 @@ const SavePopup = (props: {
     )
     const hasInProgressTransactions = Object.keys(inProgressTransactions).length > 0
 
+    const { isTransactionNetwork, switchNetwork } = useRequireTransactionNetwork()
+
     const rolesToAccordionContent: AccordionGroupProps['accordions'] = roles.map((role) => {
         const [, transactionData] =
             Object.entries(inProgressTransactions).find(
@@ -175,12 +179,20 @@ const SavePopup = (props: {
                     icon="wallet"
                     tone="cta1"
                     value="Save"
-                    disabled={hasInProgressTransactions}
+                    disabled={hasInProgressTransactions || !isTransactionNetwork}
                     onClick={onSave}
                 >
                     {hasInProgressTransactions ? <ButtonSpinner /> : 'Save on chain'}
                 </Button>
             </Stack>
+            {!isTransactionNetwork && (
+                <Box horizontal justifyContent="end">
+                    <RequireTransactionNetworkMessage
+                        postCta="to make changes."
+                        switchNetwork={switchNetwork}
+                    />
+                </Box>
+            )}
         </Stack>
     )
 }
