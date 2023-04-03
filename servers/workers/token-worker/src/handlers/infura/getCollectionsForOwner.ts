@@ -5,6 +5,7 @@ import {
     GetCollectionsForOwnerResponse,
     TokenProviderRequest,
 } from '../../types'
+import { removeNullCollectionValues } from './utils'
 
 const fetchCollections = async (
     rpcUrl: string,
@@ -25,7 +26,12 @@ const fetchCollections = async (
             response.status,
         )
     }
-    return response.json()
+    const json: GetCollectionsForOwnerInfuraResponse = await response.json()
+    return {
+        ...json,
+        // infura can return `null` values, remove them
+        collections: json.collections.map((c) => removeNullCollectionValues(c)),
+    }
 }
 
 export const getCollectionsForOwner = async (request: TokenProviderRequest) => {

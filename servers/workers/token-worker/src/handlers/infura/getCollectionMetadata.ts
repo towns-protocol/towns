@@ -5,6 +5,7 @@ import {
     GetCollectionMetadataInfuraResponse,
     TokenProviderRequest,
 } from '../../types'
+import { removeNullCollectionValues } from './utils'
 
 const fetchContractMetadata = async (
     rpcUrl: string,
@@ -25,7 +26,8 @@ const fetchContractMetadata = async (
             response.status,
         )
     }
-    return response.json()
+    const json: GetCollectionMetadataInfuraResponse = await response.json()
+    return removeNullCollectionValues(json)
 }
 
 export const getCollectionMetadata = async (request: TokenProviderRequest) => {
