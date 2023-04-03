@@ -126,7 +126,6 @@ describe('casablanca', () => {
                 channelId,
                 ZTEvent.RoomMessage,
             )
-            // TODO - need to merge ZTEvent into a common type for both marix and CB
             expect(event?.content?.body).toEqual('Hello, world from Bob!')
         })
 
