@@ -9,9 +9,9 @@
         "type": "go",
         "request": "launch",
         "mode": "auto",
-        "cwd": "${workspaceFolder}",
-        "program": "./node/node/node.go",
-        "args": []
+        "cwd": "${workspaceFolder}/node",
+        "program": "./node/node/main.go",
+        "args": ["run", "-l", "info"]
       }
     ]
   }
