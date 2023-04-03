@@ -11,7 +11,8 @@ import { useCreateSpaceFormStore } from '@components/Web3/CreateSpaceForm/Create
 import { Box, Checkbox, Paragraph, Text, TextField, VList } from '@ui'
 import { useCollectionsForOwner } from 'api/lib/tokenContracts'
 import { shortAddress } from 'ui/utils/utils'
-import { env, hasVitalkTokensParam } from 'utils'
+import { env } from 'utils'
+import { fetchVitalikTokens, vitalikAddress } from 'hooks/useNetworkForNftApi'
 import { TokenAvatar } from './TokenAvatar'
 import { TokenProps } from './types'
 
@@ -86,8 +87,6 @@ type TokenListProps = {
 
 type TokenPropsForVList = TokenProps & { id: string }
 
-const hasVitalikParams = hasVitalkTokensParam()
-
 export const TokenList = ({ isChecked, setValue, chainId, wallet }: TokenListProps) => {
     const zionTokenAddress = useMemo(
         () => (chainId ? getMemberNftAddress(chainId) : null),
@@ -100,7 +99,7 @@ export const TokenList = ({ isChecked, setValue, chainId, wallet }: TokenListPro
     const toggleToken = useCreateSpaceFormStore((state) => state.toggleToken)
 
     const { data, isLoading, isError } = useCollectionsForOwner({
-        wallet: hasVitalikParams ? 'vitalik.eth' : wallet,
+        wallet: fetchVitalikTokens ? vitalikAddress : wallet,
         zionTokenAddress,
         enabled: Boolean(chainId),
         chainId,
@@ -141,7 +140,7 @@ export const TokenList = ({ isChecked, setValue, chainId, wallet }: TokenListPro
         <MotionBox gap layout style={{ originY: 0 }} cursor="default">
             <AnimatePresence mode="popLayout">
                 {!selectedTokens.length ? null : data ? (
-                    <FadeInBox horizontal gap fast layout="position" paddingY="md">
+                    <FadeInBox horizontal fast gap="lg" layout="position" paddingY="md">
                         <AnimatePresence mode="popLayout">
                             {selectedTokens.map((contractAddress: string) => {
                                 const token = data.tokens.find(

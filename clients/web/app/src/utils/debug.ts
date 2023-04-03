@@ -6,14 +6,3 @@ export const hasQueryParam = (query: string) => {
     }
     return new URLSearchParams(window.location.search).get(query) != undefined
 }
-
-// For debugging
-// Use ?vitalikTokens to grab Vitalik's tokens from mainnet
-// when fetching tokens for a wallet
-export const hasVitalkTokensParam = () => {
-    return hasQueryParam('vitalikTokens')
-}
-
-export const hasGoerliParam = () => {
-    return hasQueryParam('goerli')
-}

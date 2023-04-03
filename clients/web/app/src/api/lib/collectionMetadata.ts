@@ -5,7 +5,7 @@ import { ContractMetadata } from '@token-worker/types'
 import { ethers } from 'ethers'
 import { env } from 'utils'
 import { axiosClient } from 'api/apiClient'
-import { useNetworkForNftApi } from 'hooks/useAlchemyNetwork'
+import { useNetworkForNftApi } from 'hooks/useNetworkForNftApi'
 
 const queryKey = 'tokenMetadata'
 

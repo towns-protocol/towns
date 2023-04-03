@@ -78,11 +78,10 @@ export const TokenAvatar = (
                             size,
                         }),
                         avatarBaseStyle,
-                        {
-                            backgroundColor: 'red !important',
-                        },
                     )}
-                    overflow="hidden"
+                    style={{
+                        overflow: 'hidden',
+                    }}
                 >
                     {content()}
                 </Box>
@@ -177,9 +176,24 @@ function useCheckImage({
             return
         }
 
+        // if no image src was passed in, check that we haven't uploaded a custom image for this token for alpha cohorts
+        // once past alpha, we can remove the cf image check and simply set FALLBACK if no src passed in
         if (!src) {
-            setImageSource(FALLBACK)
-            tokenAvatarImageSourceMap.set(contractAddress, FALLBACK)
+            const cloudflareImage = new Image()
+            // CF images should have been uploaded via base64 encoded contract address
+            cloudflareImage.src = `https://imagedelivery.net/qaaQ52YqlPXKEVQhjChiDA/${window.btoa(
+                contractAddress,
+            )}/thumbnail100`
+            cloudflareImage.onload = () => {
+                setImageSource(cloudflareImage.src)
+                tokenAvatarImageSourceMap.set(contractAddress, cloudflareImage.src)
+            }
+
+            cloudflareImage.onerror = () => {
+                setImageSource(FALLBACK)
+                tokenAvatarImageSourceMap.set(contractAddress, FALLBACK)
+            }
+
             return
         }
 

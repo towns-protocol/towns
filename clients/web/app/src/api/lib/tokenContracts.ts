@@ -6,7 +6,7 @@ import { ethers } from 'ethers'
 import { useMemo } from 'react'
 import { TokenProps } from '@components/Tokens/types'
 import { env } from 'utils'
-import { fetchGoerli, fetchVitalikTokens, useNetworkForNftApi } from 'hooks/useAlchemyNetwork'
+import { fetchGoerli, fetchVitalikTokens, useNetworkForNftApi } from 'hooks/useNetworkForNftApi'
 import { axiosClient } from '../apiClient'
 
 const queryKey = 'tokenContractsForAddress'
