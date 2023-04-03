@@ -250,6 +250,11 @@ jobs:
                   SLACK_COLOR: '#FF0000'
                   SLACK_MESSAGE: 'CI Casablance Failure on ${{ github.repository }}'
 
+            - name: Upload coverage reports to Codecov
+              uses: codecov/codecov-action@v3
+              with:
+                  token: ${{ secrets.CODECOV_TOKEN }}
+
     Casablanca_Node:
         if: github.event_name != 'workflow_dispatch' || !inputs.skip_casablanca_node
         runs-on: ubuntu-latest-8-cores
@@ -304,6 +309,11 @@ jobs:
             - name: Run node tests
               run: go test --race ./...
               working-directory: casablanca/node
+
+            - name: Upload coverage reports to Codecov
+              uses: codecov/codecov-action@v3
+              with:
+                  token: ${{ secrets.CODECOV_TOKEN }}
 
             # If CI failed, we send a slack notification
             - name: Slack notification
