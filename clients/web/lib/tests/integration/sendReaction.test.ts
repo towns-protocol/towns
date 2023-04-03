@@ -9,7 +9,7 @@ import {
 } from './helpers/TestUtils'
 
 import { Permission } from '../../src/client/web3/ContractTypes'
-import { ReactionEvent, RoomMessageEvent } from '../../src/types/timeline-types'
+import { ReactionEvent, RoomMessageEvent, ZTEvent } from '../../src/types/timeline-types'
 import { RoomVisibility } from '../../src/types/zion-types'
 
 describe('sendReaction', () => {
@@ -54,12 +54,16 @@ describe('sendReaction', () => {
         // alice grabs the message
         const event = await alice.getLatestEvent(channelId)
 
+        expect(event).toBeTruthy()
+
         // alice sends a reaction
-        event && (await alice.sendReaction(channelId, event.eventId, '👍'))
+        await alice.sendReaction(channelId, event!.eventId, '👍')
 
         // wait for bob to receive the reaction
         await waitFor(async () => {
-            const e = await bob.getLatestEvent<ReactionEvent>(channelId)
+            const e = await bob.getLatestEvent<ReactionEvent>(channelId, ZTEvent.Reaction)
+            bob.logEvents(channelId)
+            expect(e?.content?.kind).toEqual(ZTEvent.Reaction)
             expect(e?.content?.reaction).toEqual('👍')
         })
     }) // end test
