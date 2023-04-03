@@ -17,7 +17,6 @@ export type MatrixStoreStates = {
 }
 
 export const useMatrixStore = create<MatrixStoreStates>((set) => ({
-    isAuthenticated: false,
     loginStatus: LoginStatus.LoggedOut,
     setLoginStatus: (loginStatus: LoginStatus) =>
         loginStatus === LoginStatus.LoggedOut

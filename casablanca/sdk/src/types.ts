@@ -14,6 +14,7 @@ import {
     Err,
 } from '@towns/proto'
 import { check, isDefined } from './check'
+import { Buffer } from 'buffer'
 
 export interface ParsedEvent {
     event: Stringify<StreamEvent>

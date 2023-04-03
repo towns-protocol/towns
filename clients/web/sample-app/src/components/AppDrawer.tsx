@@ -93,6 +93,10 @@ export function AppDrawer(props: Props): JSX.Element {
         navigate('/web3')
     }
 
+    const onLoginsClick = () => {
+        navigate('/logins')
+    }
+
     const drawer = (
         <div>
             <Toolbar />
@@ -108,6 +112,7 @@ export function AppDrawer(props: Props): JSX.Element {
             <Divider />
             <Invites title="Invites" onClickInvite={onClickInvite} />
             <SidebarItemButton label="Web 3" onClick={onWeb3Click} />
+            <SidebarItemButton label="Logins" onClick={onLoginsClick} />
             <Divider />
             <DebugBar />
         </div>

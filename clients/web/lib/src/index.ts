@@ -52,6 +52,7 @@ export { useUpdateRoleTransaction } from './hooks/use-update-role-transaction'
 export { useUser } from './hooks/use-user'
 export { useZionClient } from './hooks/use-zion-client'
 
+export { useCasablancaStore } from './store/use-casablanca-store'
 export { useFullyReadMarkerStore } from './store/use-fully-read-marker-store'
 export { useMatrixStore } from './store/use-matrix-store'
 export { useTimelineStore } from './store/use-timeline-store'
@@ -131,3 +132,12 @@ export {
 export { staticAssertNever } from './utils/zion-utils'
 
 export * from './client/web3/PioneerNFT'
+
+// buffer hack required for casalanca: https://github.com/randlabs/myalgo-connect/issues/27
+import buffer from 'buffer'
+const { Buffer } = buffer
+
+// ...
+if (!window.Buffer) {
+    window.Buffer = Buffer
+}

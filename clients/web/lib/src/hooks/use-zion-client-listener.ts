@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { MatrixClient, MatrixEvent, MatrixScheduler } from 'matrix-js-sdk'
-import { Client as CasablancaClient, SignerContext } from '@towns/client'
+import { bin_fromHexString, Client as CasablancaClient, SignerContext } from '@towns/client'
 import { LoginStatus } from './login'
 import { ZionClient } from '../client/ZionClient'
 import { ZionOpts } from '../client/ZionClientTypes'
@@ -10,12 +10,18 @@ import { useMatrixStore } from '../store/use-matrix-store'
 import { useSigner } from 'wagmi'
 import { useWeb3Context } from '../components/Web3ContextProvider'
 import { ethers } from 'ethers'
+import { useCasablancaStore } from '../store/use-casablanca-store'
 
 export const useZionClientListener = (opts: ZionOpts) => {
     const { provider, chain } = useWeb3Context()
-    const { setLoginStatus } = useMatrixStore()
-    const { matrixCredentialsMap, setMatrixCredentials, casablancaCredentialsMap } =
-        useCredentialStore()
+    const { setLoginStatus: setMatrixLoginStatus } = useMatrixStore()
+    const { setLoginStatus: setCasablancaLoginStatus } = useCasablancaStore()
+    const {
+        matrixCredentialsMap,
+        setMatrixCredentials,
+        casablancaCredentialsMap,
+        setCasablancaCredentials,
+    } = useCredentialStore()
     const matrixCredentials = matrixCredentialsMap[opts.matrixServerUrl]
     const casablancaCredentials = casablancaCredentialsMap[opts.casablancaServerUrl]
     const [matrixClient, setMatrixClient] = useState<MatrixClient>()
@@ -62,7 +68,7 @@ export const useZionClientListener = (opts: ZionOpts) => {
         }
         // in the standard flow we should already be logged in, but if we're loading
         // credentials from local host, this aligns the login status with the credentials
-        setLoginStatus(LoginStatus.LoggedIn)
+        setMatrixLoginStatus(LoginStatus.LoggedIn)
         const client = clientSingleton.current
         // make sure we're not re-starting the client
         if (client.auth?.accessToken === matrixCredentials.accessToken) {
@@ -92,14 +98,14 @@ export const useZionClientListener = (opts: ZionOpts) => {
             } catch (e) {
                 console.log('error while logging out', e)
             }
-            setLoginStatus(LoginStatus.LoggedOut)
+            setMatrixLoginStatus(LoginStatus.LoggedOut)
             setMatrixCredentials(opts.matrixServerUrl, null)
         }
     }, [
         matrixCredentials,
         chainId,
         opts.matrixServerUrl,
-        setLoginStatus,
+        setMatrixLoginStatus,
         setMatrixCredentials,
         _signer,
     ])
@@ -121,8 +127,9 @@ export const useZionClientListener = (opts: ZionOpts) => {
             if (client.chainId != chainId) {
                 console.warn("ChainId changed, we're not handling this yet")
             } else {
-                console.log('startMatrixClient: called again with same access token')
+                console.log('startCasablancaClient: called again with same access token')
             }
+            return
         }
         console.log('******* start casablanca client *******')
         // unset the client ref if it's not already, we need to cycle the ui
@@ -132,11 +139,14 @@ export const useZionClientListener = (opts: ZionOpts) => {
             const wallet = new ethers.Wallet(casablancaCredentials.privateKey)
             const context: SignerContext = {
                 wallet,
-                creatorAddress: casablancaCredentials.creatorAddress,
-                delegateSig: casablancaCredentials.delegateSig,
+                creatorAddress: bin_fromHexString(casablancaCredentials.creatorAddress),
+                delegateSig: casablancaCredentials.delegateSig
+                    ? bin_fromHexString(casablancaCredentials.delegateSig)
+                    : undefined,
             }
             const casablancaClient = await client.startCasablancaClient(context)
             setCasablancaClient(casablancaClient)
+            setCasablancaLoginStatus(LoginStatus.LoggedIn)
             console.log('******* Casablanca client listener started *******')
         } catch (e) {
             console.log('******* casablanca client encountered exception *******', e)
@@ -145,8 +155,17 @@ export const useZionClientListener = (opts: ZionOpts) => {
             } catch (e) {
                 console.log('error while logging out', e)
             }
+            setCasablancaLoginStatus(LoginStatus.LoggedOut)
+            setCasablancaCredentials(opts.casablancaServerUrl, null)
         }
-    }, [_signer, casablancaCredentials, chainId])
+    }, [
+        _signer,
+        casablancaCredentials,
+        chainId,
+        opts.casablancaServerUrl,
+        setCasablancaCredentials,
+        setCasablancaLoginStatus,
+    ])
 
     useEffect(() => {
         void (async () => await startMatrixClient())()

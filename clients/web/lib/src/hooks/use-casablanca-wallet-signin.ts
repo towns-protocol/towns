@@ -3,38 +3,73 @@ import { useCallback } from 'react'
 import { useCredentialStore } from '../store/use-credential-store'
 import { useWeb3Context } from '../components/Web3ContextProvider'
 import { useZionContext } from '../components/ZionContextProvider'
+import { useCasablancaStore } from '../store/use-casablanca-store'
+import { LoginStatus } from './login'
+import { bin_toHexString } from '@towns/client'
 
 export function useCasablancaWalletSignIn() {
     const { clientSingleton } = useZionContext()
     const { activeWalletAddress } = useWeb3Context()
     const { setCasablancaCredentials } = useCredentialStore()
+    const { setLoginError, setLoginStatus } = useCasablancaStore()
 
     const getIsWalletRegisteredWithCasablanca = useCallback(async () => {
         // currently we don't need to register? you can just login with your wallet
         return Promise.resolve(true)
     }, [])
 
-    const loginWithWalletToCasablanca = useCallback(async () => {
-        if (!clientSingleton) {
-            throw new Error('Zion client not initialized')
-        }
-        if (!activeWalletAddress) {
-            throw new Error('No active wallet')
-        }
-        const delegateWallet = ethers.Wallet.createRandom()
-        const casablancaContext = await clientSingleton.signCasablancaDelegate(delegateWallet)
-        setCasablancaCredentials(clientSingleton.opts.casablancaServerUrl, {
-            privateKey: delegateWallet.privateKey,
-            creatorAddress: casablancaContext.creatorAddress,
-            delegateSig: casablancaContext.delegateSig,
-            loggedInWalletAddress: activeWalletAddress,
-        })
-    }, [activeWalletAddress, clientSingleton, setCasablancaCredentials])
+    const loginWithWalletToCasablanca = useCallback(
+        async (_statement: string) => {
+            if (!clientSingleton) {
+                throw new Error('Zion client not initialized')
+            }
+            if (!activeWalletAddress) {
+                throw new Error('No active wallet')
+            }
+            setLoginStatus(LoginStatus.LoggingIn)
+            const delegateWallet = ethers.Wallet.createRandom()
+            try {
+                const casablancaContext = await clientSingleton.signCasablancaDelegate(
+                    delegateWallet,
+                )
+                setCasablancaCredentials(clientSingleton.opts.casablancaServerUrl, {
+                    privateKey: delegateWallet.privateKey,
+                    creatorAddress: bin_toHexString(casablancaContext.creatorAddress),
+                    delegateSig: casablancaContext.delegateSig
+                        ? bin_toHexString(casablancaContext.delegateSig)
+                        : undefined,
+                    loggedInWalletAddress: activeWalletAddress,
+                })
+                setLoginStatus(LoginStatus.LoggedIn)
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            } catch (e: any) {
+                console.error('loginWithWalletToCasablanca error', e)
+                setLoginError({
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+                    code: e?.code ?? 0,
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/restrict-template-expressions
+                    message: e?.message ?? `${e}`,
+                    error: e as Error,
+                })
+                setLoginStatus(LoginStatus.LoggedOut)
+            }
+        },
+        [
+            activeWalletAddress,
+            clientSingleton,
+            setCasablancaCredentials,
+            setLoginError,
+            setLoginStatus,
+        ],
+    )
 
-    const registerWalletWithCasablanca = useCallback(async () => {
-        // currently we don't need to register? you can just login with your wallet
-        return loginWithWalletToCasablanca()
-    }, [loginWithWalletToCasablanca])
+    const registerWalletWithCasablanca = useCallback(
+        async (statement: string) => {
+            // currently we don't need to register? you can just login with your wallet
+            return loginWithWalletToCasablanca(statement)
+        },
+        [loginWithWalletToCasablanca],
+    )
 
     return {
         getIsWalletRegisteredWithCasablanca,

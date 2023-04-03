@@ -14,6 +14,7 @@ export enum LoginStatus {
 export interface AuthenticationError {
     code: number
     message: string
+    error?: Error
 }
 
 interface UserInteractiveFlow {

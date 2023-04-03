@@ -12,8 +12,8 @@ export type MatrixCredentials = {
 
 export type CasablancaCredentials = {
     privateKey: string
-    creatorAddress: Uint8Array
-    delegateSig?: Uint8Array
+    creatorAddress: string
+    delegateSig?: string
     loggedInWalletAddress: Address
 }
 

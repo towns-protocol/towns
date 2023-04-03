@@ -1,9 +1,11 @@
 import {
     Box,
     Button,
+    Chip,
     FormControl,
     InputLabel,
     MenuItem,
+    Paper,
     Select,
     SelectChangeEvent,
     TextField,
@@ -18,10 +20,13 @@ import {
     Permission,
     RoomIdentifier,
     RoomVisibility,
+    SpaceProtocol,
     TransactionStatus,
     getMemberNftAddress,
     getPioneerNftAddress,
+    useCasablancaStore,
     useCreateSpaceTransaction,
+    useMatrixStore,
     useWeb3Context,
     useZionClient,
 } from 'use-zion-client'
@@ -37,8 +42,12 @@ interface Props {
 export const CreateSpaceForm = (props: Props) => {
     const { chain, accounts, provider } = useWeb3Context()
     const { chainId } = useZionClient()
+    const { loginStatus: matrixLoginStatus } = useMatrixStore()
+    const { loginStatus: casablancaLoginStatus } = useCasablancaStore()
     const [spaceName, setSpaceName] = useState<string>('')
-    const [visibility, setVisibility] = useState<RoomVisibility>(RoomVisibility.Private)
+    const [visibility, setVisibility] = useState<RoomVisibility>(RoomVisibility.Public)
+    const [protocol, setProtocol] = useState<SpaceProtocol>(SpaceProtocol.Matrix)
+
     const [membershipRequirement, setMembershipRequirement] = useState<MembershipRequirement>(
         MembershipRequirement.Everyone,
     )
@@ -124,6 +133,10 @@ export const CreateSpaceForm = (props: Props) => {
         setVisibility(event.target.value as RoomVisibility)
     }, [])
 
+    const onChangeProtocol = useCallback((event: SelectChangeEvent) => {
+        setProtocol(event.target.value as SpaceProtocol)
+    }, [])
+
     const onClickCreateSpace = useCallback(async () => {
         if (!councilNftAddress) {
             console.error('Cannot create space. No council NFT address.')
@@ -156,6 +169,7 @@ export const CreateSpaceForm = (props: Props) => {
         const createSpaceInfo: CreateSpaceInfo = {
             name: spaceName,
             visibility,
+            spaceProtocol: protocol,
         }
         await createSpaceTransactionWithRole(
             createSpaceInfo,
@@ -170,6 +184,7 @@ export const CreateSpaceForm = (props: Props) => {
         membershipRequirement,
         spaceName,
         visibility,
+        protocol,
         createSpaceTransactionWithRole,
     ])
 
@@ -203,6 +218,12 @@ export const CreateSpaceForm = (props: Props) => {
 
             <Typography noWrap variant="body1" component="div" sx={spacingStyle}>
                 ChainId: {chain ? chain?.id : 'Not connected'}
+            </Typography>
+            <Typography noWrap variant="body1" component="div" sx={spacingStyle}>
+                Casablanca: {casablancaLoginStatus}
+            </Typography>
+            <Typography noWrap variant="body1" component="div" sx={spacingStyle}>
+                Matrix: {matrixLoginStatus}
             </Typography>
             <Box display="grid">
                 <Box
@@ -244,6 +265,24 @@ export const CreateSpaceForm = (props: Props) => {
                             </Select>
                         </FormControl>
                     </Box>
+
+                    <Typography noWrap variant="body1" component="div" sx={spacingStyle}>
+                        Protocol:
+                    </Typography>
+                    <Box minWidth="120px">
+                        <FormControl fullWidth>
+                            <InputLabel id="protocol-select-label" />
+                            <Select
+                                labelId="protocol-select-label"
+                                id="protocol-select"
+                                value={protocol}
+                                onChange={onChangeProtocol}
+                            >
+                                <MenuItem value={SpaceProtocol.Matrix}>Matrix</MenuItem>
+                                <MenuItem value={SpaceProtocol.Casablanca}>Casablanca</MenuItem>
+                            </Select>
+                        </FormControl>
+                    </Box>
                 </Box>
                 <Box
                     display="grid"
@@ -273,7 +312,7 @@ export const CreateSpaceForm = (props: Props) => {
                     chain?.id === foundry.id ||
                     chain?.id === hardhat.id) &&
                     accounts.map((accountId) => (
-                        <AccountDisplay
+                        <LocalhostWalletInfo
                             accountId={accountId}
                             key={accountId}
                             onClickFundWallet={onClickFundLocalHostWallet}
@@ -284,43 +323,41 @@ export const CreateSpaceForm = (props: Props) => {
     )
 }
 
-const AccountDisplay = (props: {
+const LocalhostWalletInfo = (props: {
     accountId: Address
     onClickFundWallet: (accountId: string) => void
 }) => {
     const { accountId, onClickFundWallet } = props
     const balance = useBalance({ address: accountId, watch: true })
     return (
-        <Box
-            display="flex"
-            flexDirection="column"
-            alignItems="center"
-            marginTop="20px"
-            padding="10px"
-            border="1px dashed grey"
-        >
-            <Typography noWrap variant="body1" component="div" sx={spacingStyle}>
-                (DEBUG)
-            </Typography>
-            <Typography noWrap variant="body1" component="div" sx={spacingStyle}>
-                Account: {accountId}
-            </Typography>
-            <Typography noWrap variant="body1" component="div" sx={spacingStyle}>
-                balance:{' '}
-                {balance.isLoading
-                    ? 'loading...'
-                    : balance.isError
-                    ? 'Error: ' + balance.error ?? '??'
-                    : balance.data?.formatted + ' : ' + balance.data?.symbol}
-            </Typography>
-            <Button
-                variant="contained"
-                color="primary"
-                disabled={false}
-                onClick={() => onClickFundWallet(accountId)}
-            >
-                Fund Wallet ({accountId})
-            </Button>
+        <Box display="grid" flexDirection="column" alignItems="center" marginTop="20px">
+            <Chip
+                label="DEBUG"
+                sx={{
+                    borderRadius: 0,
+                }}
+            />
+            <Paper elevation={3} sx={{ padding: '20px' }}>
+                <Typography noWrap variant="body1" component="div" sx={spacingStyle}>
+                    Account: {accountId}
+                </Typography>
+                <Typography noWrap variant="body1" component="div" sx={spacingStyle}>
+                    balance:{' '}
+                    {balance.isLoading
+                        ? 'loading...'
+                        : balance.isError
+                        ? 'Error: ' + balance.error ?? '??'
+                        : balance.data?.formatted + ' : ' + balance.data?.symbol}
+                </Typography>
+                <Button
+                    variant="contained"
+                    color="primary"
+                    disabled={false}
+                    onClick={() => onClickFundWallet(accountId)}
+                >
+                    Fund Wallet ({accountId})
+                </Button>
+            </Paper>
         </Box>
     )
 }

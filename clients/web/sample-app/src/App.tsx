@@ -8,6 +8,7 @@ import { Threads } from 'routes/Threads'
 import { Mentions } from 'routes/Mentions'
 import { useSampleAppStore } from 'store/store'
 import { AlphaAccessMainPage } from 'routes/AlphaAccess'
+import { Login } from '@components/Login'
 import { Home } from './routes/Home'
 import { MainLayout } from './components/MainLayout'
 import { NotFound } from './routes/NotFound'
@@ -24,7 +25,7 @@ import { Channels } from './routes/Channels'
 import { AuthenticatedContent } from './routes/AuthenticatedContent'
 
 const MATRIX_HOMESERVER_URL = import.meta.env.VITE_MATRIX_HOMESERVER_URL ?? ``
-const CASABLANCA_SERVER_URL = import.meta.env.VITE_CASABLANCA_SERVER_URL ?? ''
+const CASABLANCA_SERVER_URL = import.meta.env.VITE_CASABLANCA_HOMESERVER_URL ?? ''
 const ALCHEMY_KEY = import.meta.env.VITE_ALCHEMY_API_KEY ?? ''
 
 export const App = () => {
@@ -65,6 +66,7 @@ export const App = () => {
                                     <Route path="mentions" element={<Mentions />} />
                                 </Route>
                                 <Route path="web3" element={<Web3 />} />
+                                <Route path="logins" element={<Login />} />
                                 <Route path="*" element={<NotFound />} />
                             </Route>
                         </Route>

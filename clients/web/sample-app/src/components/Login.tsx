@@ -2,10 +2,12 @@ import {
     Alert,
     Box,
     Button,
+    Chip,
     CircularProgress,
     FormControl,
     InputLabel,
     MenuItem,
+    Paper,
     Select,
     SelectChangeEvent,
     Snackbar,
@@ -14,6 +16,7 @@ import {
 } from '@mui/material'
 import {
     LoginStatus,
+    useCasablancaStore,
     useMatrixStore,
     useWeb3Context,
     useZionClient,
@@ -39,92 +42,24 @@ const registerWalletMsgToSign = `Click to register and accept the Harmony Terms 
 export function Login(): JSX.Element {
     const styles = useStyles()
     const [showError, setShowError] = useState<string | undefined>(undefined)
-    const { getIsWalletRegisteredWithMatrix, loginWithWalletToMatrix, registerWalletWithMatrix } =
-        useZionClient()
-    const { loginStatus, loginError } = useMatrixStore()
+    const { getIsWalletRegisteredWithMatrix } = useZionClient()
+    const { loginStatus: matrixLoginStatus, loginError: matrixLoginError } = useMatrixStore()
+    const { loginError: casablancaLoginError } = useCasablancaStore()
     const { isConnected } = useWeb3Context()
-    const { disconnect } = useDisconnect()
-
-    const [walletRegistered, setWalletRegistered] = useState<boolean>(true)
-
-    const onLoginWithWallet = useCallback(
-        async function () {
-            loginWithWalletToMatrix(loginMsgToSign)
-        },
-        [loginWithWalletToMatrix],
-    )
-
-    const onRegisterNewWallet = useCallback(
-        async function () {
-            registerWalletWithMatrix(registerWalletMsgToSign)
-        },
-        [registerWalletWithMatrix],
-    )
+    const [walletRegisteredWithMatrix, setWalletRegisteredWithMatrix] = useState<boolean>(false)
 
     const onCloseAlert = useCallback(function () {
         setShowError(undefined)
     }, [])
 
     useEffect(() => {
-        if (loginError?.message) {
-            setShowError(loginError.message)
-        } else {
-            setShowError('')
-        }
-    }, [loginError])
-
-    const registerButton = useMemo(() => {
-        if (isConnected) {
-            if (loginStatus === LoginStatus.Registering) {
-                return <CircularProgress size={56} />
-            } else if (loginStatus === LoginStatus.LoggedOut) {
-                return (
-                    <Button
-                        variant="contained"
-                        color="primary"
-                        sx={{ margin: '20px' }}
-                        onClick={onRegisterNewWallet}
-                    >
-                        Register new wallet
-                    </Button>
-                )
-            } else {
-                return <div>login status: {loginStatus}</div>
-            }
-        }
-        return undefined
-    }, [isConnected, loginStatus, onRegisterNewWallet])
-
-    const signInButton = useMemo(() => {
-        if (isConnected) {
-            if (loginStatus === LoginStatus.LoggingIn) {
-                return <CircularProgress size={56} />
-            } else if (loginStatus === LoginStatus.LoggedOut) {
-                return (
-                    <Button
-                        variant="contained"
-                        color="primary"
-                        sx={{ margin: '20px' }}
-                        onClick={onLoginWithWallet}
-                    >
-                        Sign in with wallet
-                    </Button>
-                )
-            } else {
-                return <div>login status: {loginStatus}</div>
-            }
-        }
-        return undefined
-    }, [isConnected, loginStatus, onLoginWithWallet])
-
-    useEffect(() => {
         let cancelled = false
         ;(async () => {
             try {
-                if (loginStatus === LoginStatus.LoggedOut && isConnected) {
+                if (matrixLoginStatus === LoginStatus.LoggedOut && isConnected) {
                     const isRegistered = await getIsWalletRegisteredWithMatrix()
                     if (!cancelled) {
-                        setWalletRegistered(isRegistered)
+                        setWalletRegisteredWithMatrix(isRegistered)
                     }
                 }
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -137,31 +72,25 @@ export function Login(): JSX.Element {
         return () => {
             cancelled = true
         }
-    }, [getIsWalletRegisteredWithMatrix, loginStatus, isConnected])
+    }, [getIsWalletRegisteredWithMatrix, matrixLoginStatus, isConnected])
+
+    useEffect(() => {
+        if (matrixLoginError?.message) {
+            setShowError(matrixLoginError.message)
+        } else if (casablancaLoginError?.message) {
+            setShowError(casablancaLoginError.message)
+        } else {
+            setShowError('')
+        }
+    }, [casablancaLoginError, matrixLoginError])
 
     return (
         <div className={styles.container}>
             <Box sx={{ display: 'grid' }}>
-                <Profile />
-                <Box
-                    sx={{
-                        display: 'grid',
-                        marginTop: '20px',
-                        alignItems: 'Center',
-                    }}
-                >
-                    {!walletRegistered && registerButton}
-                    {walletRegistered && signInButton}
-                </Box>
+                <HomeServerSelection />
+                <WalletInfo />
                 {isConnected && (
-                    <Button
-                        variant="outlined"
-                        color="primary"
-                        sx={{ margin: '20px' }}
-                        onClick={() => disconnect()}
-                    >
-                        Disconnect Wallet
-                    </Button>
+                    <NetworkInfo walletRegisteredWithMatrix={walletRegisteredWithMatrix} />
                 )}
             </Box>
             <Snackbar
@@ -177,7 +106,155 @@ export function Login(): JSX.Element {
     )
 }
 
-export function Profile() {
+function NetworkInfo(props: { walletRegisteredWithMatrix: boolean }) {
+    const { walletRegisteredWithMatrix } = props
+    const { isConnected } = useWeb3Context()
+    const { loginWithWalletToMatrix, registerWalletWithMatrix, loginWithWalletToCasablanca } =
+        useZionClient()
+    const { loginStatus: matrixLoginStatus } = useMatrixStore()
+    const { loginStatus: casablancaLoginStatus } = useCasablancaStore()
+
+    const onLoginWithWallet = useCallback(
+        async function () {
+            loginWithWalletToMatrix(loginMsgToSign)
+        },
+        [loginWithWalletToMatrix],
+    )
+
+    const onRegisterNewWallet = useCallback(
+        async function () {
+            registerWalletWithMatrix(registerWalletMsgToSign)
+        },
+        [registerWalletWithMatrix],
+    )
+
+    const onLoginCasablanca = useCallback(
+        async function () {
+            loginWithWalletToCasablanca(loginMsgToSign)
+        },
+        [loginWithWalletToCasablanca],
+    )
+
+    const registerButton = useMemo(() => {
+        if (isConnected) {
+            if (matrixLoginStatus === LoginStatus.Registering) {
+                return <CircularProgress size={56} />
+            } else if (matrixLoginStatus === LoginStatus.LoggedOut) {
+                return (
+                    <Button
+                        variant="contained"
+                        color="primary"
+                        sx={{ margin: '20px' }}
+                        onClick={onRegisterNewWallet}
+                    >
+                        Register new wallet (matrix)
+                    </Button>
+                )
+            } else {
+                return (
+                    <Typography variant="h6" component="span">
+                        Matrix Login Status: {matrixLoginStatus}
+                    </Typography>
+                )
+            }
+        }
+        return undefined
+    }, [isConnected, matrixLoginStatus, onRegisterNewWallet])
+
+    const casablancaButton = useMemo(() => {
+        if (isConnected) {
+            if (casablancaLoginStatus === LoginStatus.LoggingIn) {
+                return <CircularProgress size={56} />
+            } else if (casablancaLoginStatus === LoginStatus.LoggedOut) {
+                return (
+                    <Button
+                        variant="contained"
+                        color="primary"
+                        sx={{ margin: '20px' }}
+                        onClick={onLoginCasablanca}
+                    >
+                        Login (casablanca)
+                    </Button>
+                )
+            } else {
+                return (
+                    <Typography variant="h6" component="span">
+                        Casablanca Login Status: {casablancaLoginStatus}
+                    </Typography>
+                )
+            }
+        }
+        return undefined
+    }, [casablancaLoginStatus, isConnected, onLoginCasablanca])
+
+    const signInButton = useMemo(() => {
+        if (isConnected) {
+            if (matrixLoginStatus === LoginStatus.LoggingIn) {
+                return <CircularProgress size={56} />
+            } else if (matrixLoginStatus === LoginStatus.LoggedOut) {
+                return (
+                    <Button
+                        variant="contained"
+                        color="primary"
+                        sx={{ margin: '20px' }}
+                        onClick={onLoginWithWallet}
+                    >
+                        Sign in with wallet
+                    </Button>
+                )
+            } else {
+                return (
+                    <Typography variant="h6" component="span">
+                        Matrix Login Status: {matrixLoginStatus}
+                    </Typography>
+                )
+            }
+        }
+        return undefined
+    }, [isConnected, matrixLoginStatus, onLoginWithWallet])
+
+    return (
+        <>
+            <Box
+                sx={{
+                    display: 'grid',
+                    marginTop: '20px',
+                    alignItems: 'Center',
+                }}
+            >
+                <Chip
+                    label="Matrix"
+                    sx={{
+                        borderRadius: 0,
+                    }}
+                />
+                <Paper elevation={3} sx={{ padding: '20px' }}>
+                    {!walletRegisteredWithMatrix && registerButton}
+                    {walletRegisteredWithMatrix && signInButton}
+                </Paper>
+            </Box>
+            <Box
+                sx={{
+                    display: 'grid',
+                    marginTop: '20px',
+                    alignItems: 'Center',
+                }}
+            >
+                <Chip
+                    label="Casablanca"
+                    sx={{
+                        borderRadius: 0,
+                    }}
+                />
+                <Paper elevation={3} sx={{ padding: '20px' }}>
+                    {casablancaButton}
+                </Paper>
+            </Box>
+        </>
+    )
+}
+
+function HomeServerSelection() {
     const { homeServerUrl } = useZionContext()
     const { saveHomeServerUrl } = useSampleAppStore()
     const servers = useRef(['http://localhost:8008', 'https://node1.towns.com'])
@@ -225,12 +302,11 @@ export function Profile() {
                     </FormControl>
                 </Box>
             </Box>
-            <ProfileContent />
         </>
     )
 }
 
-function ProfileContent() {
+function WalletInfo() {
     const onConnnectCb = useCallback(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (params: { address: any; connector: any; isReconnected: any }) => {
@@ -252,6 +328,7 @@ function ProfileContent() {
     })
     const { chain: activeChain, chains } = useNetwork()
     const { connect, connectors, error, isLoading, pendingConnector } = useConnect()
+    const { disconnect } = useDisconnect()
 
     const { switchNetwork } = useSwitchNetwork({
         onSuccess: (chain) => {
@@ -333,16 +410,34 @@ function ProfileContent() {
                         </Box>
                     </Box>
                 )}
-                {activeChain?.id === 1 && <ENSInfo address={address} />}
                 <Box sx={{ display: 'grid', marginTop: '20px', alignItems: 'Center' }}>
-                    <Typography variant="h6" component="span">
-                        {`Address: ${address}`}
-                    </Typography>
-                </Box>
-                <Box sx={{ display: 'grid', marginTop: '20px', alignItems: 'Center' }}>
-                    <Typography variant="h6" component="span">
-                        Status: Connected to {connector?.name}
-                    </Typography>
+                    <Chip
+                        label="Wallet"
+                        sx={{
+                            borderRadius: 0,
+                        }}
+                    />
+
+                    <Paper elevation={3} sx={{ padding: '20px' }}>
+                        {activeChain?.id === 1 && <ENSInfo address={address} />}
+
+                        <Typography variant="h6" component="p">
+                            {`Address: ${address}`}
+                        </Typography>
+
+                        <Typography variant="h6" component="p" sx={{ marginTop: '20px' }}>
+                            Wallet Status: Connected to {connector?.name}
+                        </Typography>
+
+                        <Button
+                            variant="outlined"
+                            color="primary"
+                            sx={{ marginTop: '20px' }}
+                            onClick={() => disconnect()}
+                        >
+                            Disconnect Wallet
+                        </Button>
+                    </Paper>
                 </Box>
             </>
         )
