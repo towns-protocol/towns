@@ -6,12 +6,14 @@ import {
     registerAndStartClients,
     registerAndStartClient,
     createTestSpaceWithEveryoneRole,
+    createTestChannelWithSpaceRoles,
 } from 'use-zion-client/tests/integration/helpers/TestUtils'
 
 import { Permission } from 'use-zion-client/src/client/web3/ContractTypes'
 import { Room, RoomVisibility } from 'use-zion-client/src/types/zion-types'
 import { TestConstants } from './helpers/TestConstants'
 import { ZionTestClient } from './helpers/ZionTestClient'
+import { RoomIdentifier } from '../../src/types/room-identifier'
 
 describe('space invite', () => {
     test('Inviter is not allowed due to missing Invite permission', async () => {
@@ -222,5 +224,77 @@ describe('space invite', () => {
         }
         /** Assert */
         expect(failedJoinIndex).toBe(maxUsers)
+    }, 120000) // end test
+
+    test('Can join new Channel for space over quota', async () => {
+        /** Arrange */
+
+        // create all the users for the test
+        // maxUsers should exceed the default quota of 5
+        // sese member_cap in dendrite config for
+        // maxUsers allowed in space
+        const maxUsers = 6
+        const joiners: ZionTestClient[] = []
+        const registerClients: Promise<Record<string, ZionTestClient>>[] = []
+        for (let i = 0; i < maxUsers; i++) {
+            registerClients.push(registerAndStartClients([`tokenGrantedUser_${i}`]))
+        }
+        await Promise.all(registerClients).then((clients) => {
+            clients.forEach((clientObj) => {
+                for (const key in clientObj) {
+                    joiners.push(clientObj[key])
+                }
+            })
+        })
+        const { bob } = await registerAndStartClients(['bob'])
+        await bob.fundWallet()
+
+        // create a space with everyone entitlement
+        const spaceId = await createTestSpaceWithEveryoneRole(bob, [Permission.Read], {
+            name: 'test',
+            visibility: RoomVisibility.Public,
+        })
+
+        // create a channel with the same roles and permissions as the space
+        const channelId = await createTestChannelWithSpaceRoles(bob, {
+            name: 'alice channel',
+            visibility: RoomVisibility.Public,
+            parentSpaceId: spaceId as RoomIdentifier,
+            roleIds: [],
+        })
+
+        // users to join the space.
+        /** Act */
+        if (spaceId) {
+            for (const user of joiners) {
+                try {
+                    await user.joinRoom(spaceId)
+                } catch (e) {
+                    console.log('error joining room', e)
+                    break
+                }
+            }
+        }
+
+        // users to join the channel. last will fail as in space
+        // since quota applies to channel or space when
+        // not on allow list
+        /** Act */
+        let failedJoinIndex = 0
+        let numJoinersProcessed = 1
+        if (channelId) {
+            for (const user of joiners) {
+                try {
+                    await user.joinRoom(channelId)
+                    numJoinersProcessed++
+                } catch (e) {
+                    console.log('error joining room', e)
+                    failedJoinIndex = numJoinersProcessed
+                    break
+                }
+            }
+        }
+        /** Assert */
+        expect(failedJoinIndex).toBe(6)
     }, 120000) // end test
 }) // end describe
