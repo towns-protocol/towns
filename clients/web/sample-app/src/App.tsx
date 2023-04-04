@@ -9,6 +9,7 @@ import { Mentions } from 'routes/Mentions'
 import { useSampleAppStore } from 'store/store'
 import { AlphaAccessMainPage } from 'routes/AlphaAccess'
 import { Login } from '@components/Login'
+import { VersionsPage } from 'routes/VersionsPage'
 import { Home } from './routes/Home'
 import { MainLayout } from './components/MainLayout'
 import { NotFound } from './routes/NotFound'
@@ -45,6 +46,7 @@ export const App = () => {
                 >
                     <Routes>
                         <Route path="/alpha-access" element={<AlphaAccessMainPage />} />
+                        <Route path="/versions" element={<VersionsPage />} />
                         <Route element={<MainLayout />}>
                             <Route element={<AuthenticatedContent />}>
                                 <Route index element={<Home />} />
