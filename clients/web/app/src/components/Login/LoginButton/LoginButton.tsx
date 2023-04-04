@@ -13,8 +13,11 @@ export const LoginButton = (props: {
     icon?: IconName
     onClick: () => void
     tone?: keyof typeof vars.color.background
+    userOnWrongNetworkForSignIn: boolean
+    isConnected: boolean
 }) => {
     const hasSpinner = useDeferredLoading(props.loading)
+    const isDisabled = hasSpinner || (props.isConnected && props.userOnWrongNetworkForSignIn)
 
     const label = useDebounce(props.label, 300)
 
@@ -22,7 +25,7 @@ export const LoginButton = (props: {
         <AnimatePresence mode="popLayout">
             <Button
                 animate
-                disabled={hasSpinner}
+                disabled={isDisabled}
                 // minWidth="200"
                 tone={hasSpinner ? 'level3' : 'cta1'}
                 onClick={props.onClick}

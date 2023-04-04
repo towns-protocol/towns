@@ -21,6 +21,7 @@ import { useZionContext } from '../components/ZionContextProvider'
 import { useCredentialStore } from '../store/use-credential-store'
 import { useMatrixStore } from '../store/use-matrix-store'
 import { newMatrixLoginSession, newMatrixRegisterSession } from './session'
+import { useNetwork } from 'wagmi'
 
 interface SignedAuthenticationData {
     signature: string
@@ -32,6 +33,14 @@ export function useMatrixWalletSignIn() {
     const { homeServerUrl: homeServer } = useZionContext()
     const { setMatrixCredentials } = useCredentialStore()
     const { sign, chain, activeWalletAddress } = useWeb3Context()
+    const { chain: walletChain } = useNetwork()
+    // `chain` is the chain we initialize the lib to
+    // `walletChain` is the user's current chain in their wallet extension
+    // Though we use `chain` to sign the message, (allowing user to sign in on correct network for lib, regardless of chain in wallet),
+    // for greater transparency and less confusion, this prop is provided for clients to implement their own UX for this scenario
+    const userOnWrongNetworkForSignIn = useMemo(() => {
+        return chain?.id !== walletChain?.id
+    }, [walletChain, chain])
 
     const chainIdEip155 = chain?.id
 
@@ -437,6 +446,7 @@ export function useMatrixWalletSignIn() {
     )
 
     return {
+        userOnWrongNetworkForSignIn,
         getIsWalletRegisteredWithMatrix,
         loginWithWalletToMatrix,
         registerWalletWithMatrix,

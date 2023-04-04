@@ -144,11 +144,16 @@ interface ZionClientImpl {
     setRoomTopic: (roomId: RoomIdentifier, roomTopic: string) => Promise<void>
     getRoomTopic: (roomId: RoomIdentifier) => Promise<string | undefined>
     syncSpace: (spaceId: RoomIdentifier) => Promise<MatrixSpaceHierarchy | undefined>
+    userOnWrongNetworkForSignIn: boolean
 }
 
 export function useZionClient(): ZionClientImpl {
-    const { getIsWalletRegisteredWithMatrix, loginWithWalletToMatrix, registerWalletWithMatrix } =
-        useMatrixWalletSignIn()
+    const {
+        getIsWalletRegisteredWithMatrix,
+        loginWithWalletToMatrix,
+        registerWalletWithMatrix,
+        userOnWrongNetworkForSignIn,
+    } = useMatrixWalletSignIn()
     const {
         getIsWalletRegisteredWithCasablanca,
         loginWithWalletToCasablanca,
@@ -223,6 +228,7 @@ export function useZionClient(): ZionClientImpl {
         setRoomTopic: useWithCatch(client?.setRoomTopic),
         getRoomTopic: useWithCatch(client?.getRoomTopic),
         setAvatarUrl: useWithCatch(client?.setAvatarUrl),
+        userOnWrongNetworkForSignIn,
     }
 }
 

@@ -3,6 +3,8 @@ import { AnimatePresence } from 'framer-motion'
 import { useAuth } from 'hooks/useAuth'
 import { SignupButtonStatus, useSignupButton } from 'hooks/useSignupButton'
 import { Box, Text } from '@ui'
+import { RequireTransactionNetworkMessage } from '@components/RequireTransactionNetworkMessage/RequireTransactionNetworkMessage'
+import { useRequireTransactionNetwork } from 'hooks/useRequireTransactionNetwork'
 import { FadeIn } from '@components/Transitions'
 import { LoginButton } from './LoginButton/LoginButton'
 
@@ -17,7 +19,11 @@ export const LoginComponent = () => {
         pendingConnector,
         connectError,
         connectLoading,
+        userOnWrongNetworkForSignIn,
+        isConnected,
     } = useAuth()
+
+    const { switchNetwork } = useRequireTransactionNetwork()
 
     useEffect(() => {
         console.log('LoginComponent wagmi info:', {
@@ -47,11 +53,21 @@ export const LoginComponent = () => {
     return (
         <Box centerContent gap="md">
             <LoginButton
+                isConnected={isConnected}
+                userOnWrongNetworkForSignIn={userOnWrongNetworkForSignIn}
                 label={buttonLabel}
                 loading={isSpinning}
                 icon="wallet"
                 onClick={onButtonClick}
             />
+            {isConnected && userOnWrongNetworkForSignIn && (
+                <Box paddingTop="md" flexDirection="row" justifyContent="end">
+                    <RequireTransactionNetworkMessage
+                        postCta="to sign in."
+                        switchNetwork={switchNetwork}
+                    />
+                </Box>
+            )}
             <AnimatePresence>
                 {errorMessage && (
                     <FadeIn>

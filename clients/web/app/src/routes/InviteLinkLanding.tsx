@@ -10,6 +10,8 @@ import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
 import { FadeIn } from '@components/Transitions'
 import { useSetDocTitle } from 'hooks/useDocTitle'
 import { useGetSpaceTopic } from 'hooks/useSpaceTopic'
+import { useRequireTransactionNetwork } from 'hooks/useRequireTransactionNetwork'
+import { RequireTransactionNetworkMessage } from '@components/RequireTransactionNetworkMessage/RequireTransactionNetworkMessage'
 import { TownsTokenConfig } from '../components/TownsToken/TownsTokenConfig'
 
 function getButtonLabel(status: SignupButtonStatus) {
@@ -36,7 +38,15 @@ const InviteLinkLanding = () => {
     const setTitle = useSetDocTitle()
     const { data: roomTopic, isLoading: isLoadingRoomTopic } = useGetSpaceTopic(spaceId)
 
-    const { walletStatus, connect, loginStatus, login, register } = useAuth()
+    const {
+        walletStatus,
+        connect,
+        loginStatus,
+        login,
+        register,
+        userOnWrongNetworkForSignIn,
+        isConnected,
+    } = useAuth()
 
     const {
         status,
@@ -51,6 +61,7 @@ const InviteLinkLanding = () => {
     })
 
     const buttonLabel = getButtonLabel(status)
+    const { switchNetwork } = useRequireTransactionNetwork()
 
     useEffect(() => {
         if (!data) {
@@ -134,11 +145,22 @@ const InviteLinkLanding = () => {
                 )}
 
                 <LoginButton
+                    isConnected={isConnected}
+                    userOnWrongNetworkForSignIn={userOnWrongNetworkForSignIn}
                     loading={isSpinning}
                     label={buttonLabel}
                     tone="cta1"
                     onClick={onButtonClick}
                 />
+
+                {isConnected && userOnWrongNetworkForSignIn && (
+                    <Box paddingTop="md" flexDirection="row" justifyContent="end">
+                        <RequireTransactionNetworkMessage
+                            postCta="sign in."
+                            switchNetwork={switchNetwork}
+                        />
+                    </Box>
+                )}
 
                 <Stack centerContent gap horizontal>
                     <Box horizontal color="gray2" alignItems="center" gap="xs">
