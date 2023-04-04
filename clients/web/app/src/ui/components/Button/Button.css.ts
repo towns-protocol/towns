@@ -1,5 +1,6 @@
 import { RecipeVariants, recipe } from '@vanilla-extract/recipes'
 import { atoms } from 'ui/styles/atoms.css'
+import { ToneName } from 'ui/styles/themes'
 import { vars } from 'ui/styles/vars.css'
 
 export const buttonStyle = recipe({
@@ -7,7 +8,7 @@ export const buttonStyle = recipe({
         border: 'none',
         whiteSpace: 'nowrap',
         borderRadius: vars.borderRadius.xs,
-        transition: 'box-shadow 1s',
+        transition: 'box-shadow 1s, background 1s',
 
         selectors: {
             '&:hover:enabled': {
@@ -63,6 +64,7 @@ export const buttonStyle = recipe({
                 fontVariationSettings: vars.fontVariationSettings.medium,
                 paddingLeft: vars.dims.baseline.x3,
                 paddingRight: vars.dims.baseline.x3,
+                borderRadius: vars.borderRadius.sm,
                 gap: vars.space.sm,
             },
             button_lg: {
@@ -74,6 +76,34 @@ export const buttonStyle = recipe({
                 paddingRight: vars.space.lg,
                 gap: vars.space.md,
             },
+        },
+        tone: {
+            none: {},
+            default: {},
+            level1: {},
+            level2: {},
+            level3: {},
+            level4: {},
+            [ToneName.CTA1]: {
+                position: 'relative',
+                overflow: 'hidden',
+                background: '#21E078',
+                selectors: {
+                    '&:before': {
+                        content: '',
+                        inset: 0,
+                        position: 'absolute',
+                        background: `linear-gradient(90deg, #21E07800 0%, #1FDBF1 100%)`,
+                    },
+                },
+            },
+            [ToneName.CTA2]: {
+                background: '#21E078',
+            },
+            [ToneName.Error]: {},
+            [ToneName.Neutral]: {},
+            [ToneName.Accent]: {},
+            [ToneName.Positive]: {},
         },
         hoverEffect: {
             none: {

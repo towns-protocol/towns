@@ -1,7 +1,9 @@
 import React, { useEffect } from 'react'
+import { AnimatePresence } from 'framer-motion'
 import { useAuth } from 'hooks/useAuth'
 import { SignupButtonStatus, useSignupButton } from 'hooks/useSignupButton'
 import { Box, Text } from '@ui'
+import { FadeIn } from '@components/Transitions'
 import { LoginButton } from './LoginButton/LoginButton'
 
 export const LoginComponent = () => {
@@ -50,11 +52,15 @@ export const LoginComponent = () => {
                 icon="wallet"
                 onClick={onButtonClick}
             />
-            {errorMessage && (
-                <Text color="negative" size="sm">
-                    {errorMessage}
-                </Text>
-            )}
+            <AnimatePresence>
+                {errorMessage && (
+                    <FadeIn>
+                        <Text color="negative" size="sm">
+                            {errorMessage}
+                        </Text>
+                    </FadeIn>
+                )}
+            </AnimatePresence>
         </Box>
     )
 }

@@ -13,7 +13,7 @@ export const useSizeContext = () => {
 
     const isNumber = typeof width === 'number'
 
-    const w = isNumber && Math.floor(width)
+    const w = (isNumber && Math.floor(width)) || 0
 
     return useMemo(() => {
         return {

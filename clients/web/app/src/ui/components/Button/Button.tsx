@@ -1,7 +1,7 @@
-import { Variants, motion } from 'framer-motion'
 import React, { ButtonHTMLAttributes } from 'react'
 import { vars } from 'ui/styles/vars.css'
-import { Box, BoxProps } from '../Box/Box'
+import { MotionStack } from '@components/Transitions/MotionBox'
+import { BoxProps } from '../Box/Box'
 import { Icon, IconName } from '../Icon'
 import { ButtonStyleVariants, buttonStyle } from './Button.css'
 
@@ -44,11 +44,10 @@ export const Button = ({
         aspectRatio={aspectRatio}
         as="button"
         cursor={disabled ? 'default' : 'pointer'}
-        className={buttonStyle({ size, rounded, hoverEffect })}
+        className={buttonStyle({ size, rounded, hoverEffect, tone })}
         justifyContent="center"
         alignItems="center"
         background={tone}
-        variants={buttonVariants}
         whileHover="hover"
         disabled={disabled}
         onClick={onClick}
@@ -58,11 +57,3 @@ export const Button = ({
         {children}
     </MotionStack>
 )
-
-const buttonVariants: Variants = {
-    hover: {
-        // border: `0 0 0 1px ${Figma.Colors.Orange}`,
-    },
-}
-
-const MotionStack = motion(Box)

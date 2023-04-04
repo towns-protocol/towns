@@ -1,9 +1,10 @@
 import { AnimatePresence } from 'framer-motion'
 import React, { useEffect, useState } from 'react'
-import { FadeIn } from '@components/Transitions'
+import { FadeIn, FadeInBox } from '@components/Transitions'
 import { Button } from '@ui'
 import { Icon, IconName } from 'ui/components/Icon'
 import { vars } from 'ui/styles/vars.css'
+import useDebounce from 'hooks/useDebounce'
 import { ButtonSpinner } from './Spinner/ButtonSpinner'
 
 export const LoginButton = (props: {
@@ -15,34 +16,42 @@ export const LoginButton = (props: {
 }) => {
     const hasSpinner = useDeferredLoading(props.loading)
 
+    const label = useDebounce(props.label, 300)
+
     return (
-        <AnimatePresence mode="wait">
+        <AnimatePresence mode="popLayout">
             <Button
+                animate
                 disabled={hasSpinner}
-                animate={false}
-                minWidth="200"
+                // minWidth="200"
                 tone={hasSpinner ? 'level3' : 'cta1'}
                 onClick={props.onClick}
             >
                 {hasSpinner && (
-                    <FadeIn delay>
+                    <IconContainer key="spinner">
                         <ButtonSpinner />
-                    </FadeIn>
+                    </IconContainer>
                 )}
 
                 {!hasSpinner && props.icon && (
-                    <FadeIn layout key="wallet">
+                    <IconContainer key="wallet">
                         <Icon type="wallet" />
-                    </FadeIn>
+                    </IconContainer>
                 )}
 
-                <FadeIn layout key={props.label}>
-                    {props.label}
+                <FadeIn delay layout="position" key={label}>
+                    {label}
                 </FadeIn>
             </Button>
         </AnimatePresence>
     )
 }
+
+const IconContainer = (props: { children: React.ReactNode }) => (
+    <FadeInBox centerContent key="spinner" square="square_md" layout="position">
+        {props.children}
+    </FadeInBox>
+)
 
 /**
  * to prevent gliches avoid showing spinner immediatly,
