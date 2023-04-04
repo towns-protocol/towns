@@ -1,15 +1,16 @@
 import { UserEvent } from 'matrix-js-sdk'
-import { ObState_UserProfile } from './IOnboardingState'
-import { IOnboardingStep, OnboardingStepEvent } from './IOnboardingStep'
+import { ObState_UpdateProfile } from './IOnboardingState'
+import { OnboardingStepEvent } from './IOnboardingStep'
+import { IOnboardingStep_Matrix } from './IOnboardingStep_Matrix'
 
 /**
  * UserProfile
  * Make sure we have an avatar an display name
  */
-export class OnboardingStep_UserProfile extends IOnboardingStep<ObState_UserProfile> {
-    get state(): ObState_UserProfile {
+export class OnboardingStep_MatrixUpdateProfile extends IOnboardingStep_Matrix<ObState_UpdateProfile> {
+    get state(): ObState_UpdateProfile {
         return {
-            kind: 'user-profile',
+            kind: 'update-profile',
             bNeedsAvatar:
                 this.matrixUser?.avatarUrl === null ||
                 this.matrixUser?.avatarUrl === undefined ||
@@ -36,7 +37,7 @@ export class OnboardingStep_UserProfile extends IOnboardingStep<ObState_UserProf
 
     start() {
         if (!this.matrixUser) {
-            throw new Error('OnboardingStep_UserProfile::matrixUser is undefined')
+            throw new Error('OnboardingStep_MatrixUpdateProfile::matrixUser is undefined')
         }
         this.matrixUser?.on(UserEvent.DisplayName, this.onUserUpdatedCB)
         this.matrixUser?.on(UserEvent.AvatarUrl, this.onUserUpdatedCB)

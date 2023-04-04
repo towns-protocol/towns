@@ -3,7 +3,10 @@ import { ZionClient } from '../client/ZionClient'
 import { ZionOpts } from '../client/ZionClientTypes'
 import { useContentAwareTimelineDiff } from '../hooks/ZionContext/useContentAwareTimelineDiff'
 import { IOnboardingState } from '../hooks/ZionContext/onboarding/IOnboardingState'
-import { useOnboardingState } from '../hooks/ZionContext/useOnboardingState'
+import {
+    useOnboardingState_Casablanca,
+    useOnboardingState_Matrix,
+} from '../hooks/ZionContext/useOnboardingState'
 import { useSpacesIds } from '../hooks/ZionContext/useSpaceIds'
 import { useSpaceUnreads } from '../hooks/ZionContext/useSpaceUnreads'
 import { useSpaces } from '../hooks/ZionContext/useSpaces'
@@ -36,7 +39,8 @@ export interface IZionContext {
     spaceMentions: Record<string, number> // spaceId -> aggregated mentionCount
     spaces: SpaceItem[]
     spaceHierarchies: SpaceHierarchies
-    onboardingState: IOnboardingState
+    matrixOnboardingState: IOnboardingState
+    casablancaOnboardingState: IOnboardingState
     defaultSpaceId?: RoomIdentifier
     defaultSpaceName?: string
     defaultSpaceAvatarSrc?: string
@@ -111,7 +115,8 @@ const ContextImpl = (props: Props): JSX.Element => {
     const rooms = useMatrixRooms(matrixClient)
     useMatrixTimelines(matrixClient)
     useCasablancaTimelines(casablancaClient)
-    const onboardingState = useOnboardingState(client, matrixClient)
+    const matrixOnboardingState = useOnboardingState_Matrix(client, matrixClient)
+    const casablancaOnboardingState = useOnboardingState_Casablanca(client, casablancaClient)
     const syncError = useSyncErrorHandler(matrixServerUrl, client, matrixClient)
 
     useFavIconBadge(invitedToIds, spaceUnreads, spaceMentions)
@@ -131,7 +136,8 @@ const ContextImpl = (props: Props): JSX.Element => {
                 spaceMentions,
                 spaces,
                 spaceHierarchies,
-                onboardingState,
+                matrixOnboardingState,
+                casablancaOnboardingState,
                 homeServerUrl: matrixServerUrl,
                 casablancaServerUrl: casablancaServerUrl,
                 defaultSpaceId: convertedDefaultSpaceId,

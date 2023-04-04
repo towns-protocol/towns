@@ -1,49 +1,92 @@
 import { useEffect, useState } from 'react'
 import { ZionClient } from '../../client/ZionClient'
 import { IOnboardingState, ObState_Error } from './onboarding/IOnboardingState'
-import { OnboardingStepEvent } from './onboarding/IOnboardingStep'
+import { IOnboardingStep, OnboardingStepEvent } from './onboarding/IOnboardingStep'
 import { OnboardingStep_Done } from './onboarding/OnboardingStep_Done'
-import { OnboardingStep_LoadProfile } from './onboarding/OnboardingStep_LoadProfile'
-import { OnboardingStep_UserProfile } from './onboarding/OnboardingStep_UserProfile'
+import { OnboardingStep_MatrixLoadProfile } from './onboarding/OnboardingStep_MatrixLoadProfile'
+import { OnboardingStep_MatrixUpdateProfile } from './onboarding/OnboardingStep_MatrixUpdateProfile'
 import { OnboardingStep_WelcomeSplash } from './onboarding/OnboardingStep_WelcomeSplash'
 import isEqual from 'lodash/isEqual'
 import { MatrixClient } from 'matrix-js-sdk'
+import { Client as CasablancaClient } from '@towns/client'
+import { OnboardingStep_CasablancaLoadProfile } from './onboarding/OnboardingStep_CasablancaLoadProfile'
+import { OnboardingStep_CasablancaUpdateProfile } from './onboarding/OnboardingStep_CasablancaUpdateProfile'
 
-const ONBOARDING_STEPS = [
-    OnboardingStep_LoadProfile,
-    OnboardingStep_UserProfile,
+const initialState: IOnboardingState = { kind: 'none' }
+
+const CASABLANCA_ONBOARDING_STEPS = [
+    OnboardingStep_CasablancaLoadProfile,
+    OnboardingStep_CasablancaUpdateProfile,
     OnboardingStep_WelcomeSplash,
     OnboardingStep_Done,
 ]
 
-const initialState: IOnboardingState = { kind: 'none' }
+export function useOnboardingState_Casablanca(
+    client: ZionClient | undefined,
+    casablancaClient: CasablancaClient | undefined,
+) {
+    const userId = casablancaClient?.userId
+    return useOnboardingState(
+        'casablanca',
+        client,
+        casablancaClient,
+        userId,
+        CASABLANCA_ONBOARDING_STEPS,
+    )
+}
 
-export function useOnboardingState(
+const MATRIX_ONBOARDING_STEPS = [
+    OnboardingStep_MatrixLoadProfile,
+    OnboardingStep_MatrixUpdateProfile,
+    OnboardingStep_WelcomeSplash,
+    OnboardingStep_Done,
+]
+
+export function useOnboardingState_Matrix(
     client: ZionClient | undefined,
     matrixClient: MatrixClient | undefined,
+) {
+    const matrixUserId = matrixClient?.getUserId() ?? undefined
+    return useOnboardingState('matrix', client, matrixClient, matrixUserId, MATRIX_ONBOARDING_STEPS)
+}
+
+function useOnboardingState<TNetworkClient>(
+    name: string,
+    client: ZionClient | undefined,
+    networkClient: TNetworkClient | undefined,
+    userId: string | undefined,
+    steps: Array<
+        new (client: ZionClient, networkClient: TNetworkClient, userId: string) => IOnboardingStep
+    >,
 ): IOnboardingState {
     // single state variable that we report back to the world
     const [state, setState] = useState<IOnboardingState>(initialState)
     // step index that runs our state machine
     const [stepIndex, setStepIndex] = useState(0)
-    // if the client is defined, userId should be defined as well
-    const matrixUserId = matrixClient?.getUserId() ?? undefined
     // step queue machinery:
     useEffect(() => {
         // initial condidtions
-        if (!client || !matrixClient || !matrixUserId) {
+        if (!client || !networkClient || !userId) {
             setState(initialState)
             setStepIndex(0)
             return
         }
-        console.log(`=== useOnboardingState step: ${stepIndex}`)
+
         // helpers
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const log = (message: string, ...optionalParams: any[]) => {
+            console.log(
+                `=== useOnboardingState ${name} step: ${stepIndex} ${message}`,
+                optionalParams,
+            )
+        }
+
         const advanceState = () => {
             setStepIndex((prev) => prev + 1)
         }
 
         const onStateUpdate = (newState: IOnboardingState, isComplete: boolean) => {
-            console.log('useOnboardingState onStateUpdate: ', {
+            log('onStateUpdate: ', {
                 newState,
                 isComplete,
             })
@@ -55,7 +98,7 @@ export function useOnboardingState(
         }
 
         const onError = (error: ObState_Error) => {
-            console.log('useOnboardingState error: ', error)
+            log('error: ', error)
             // maybe someday figure out retries?
             setState((prev) => ({
                 ...error,
@@ -63,12 +106,14 @@ export function useOnboardingState(
             }))
         }
 
+        // start
+        log(`start`)
         // instantiate the step
-        const step = new ONBOARDING_STEPS[stepIndex](client, matrixClient, matrixUserId)
+        const step = new steps[stepIndex](client, networkClient, userId)
         // start or advance
         if (step.shouldExecute()) {
             const state = step.state
-            console.log(`=== useOnboardingState state:`, state)
+            log(`state:`, state)
             setState(state)
             step.on(OnboardingStepEvent.StateUpdate, onStateUpdate)
             step.on(OnboardingStepEvent.Error, onError)
@@ -81,7 +126,7 @@ export function useOnboardingState(
         } else {
             advanceState()
         }
-    }, [client, matrixClient, stepIndex, matrixUserId])
+    }, [client, name, networkClient, stepIndex, steps, userId])
 
     return state
 }

@@ -24,8 +24,8 @@ describe('<AppPanelLayout />', () => {
         vi.spyOn(Lib, 'useZionContext').mockImplementationOnce(() => {
             return {
                 ...Lib.useZionContext(),
-                onboardingState: {
-                    kind: 'user-profile',
+                matrixOnboardingState: {
+                    kind: 'update-profile',
                     bNeedsDisplayName: true,
                     bNeedsAvatar: true,
                 },

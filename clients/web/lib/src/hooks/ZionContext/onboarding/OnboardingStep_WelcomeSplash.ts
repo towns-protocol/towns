@@ -10,7 +10,7 @@ export class OnboardingStep_WelcomeSplash extends IOnboardingStep<ObState_Toast>
     get state(): ObState_Toast {
         return {
             kind: 'toast',
-            message: 'Welcome To Zion!',
+            message: 'Welcome To Towns!',
         }
     }
 

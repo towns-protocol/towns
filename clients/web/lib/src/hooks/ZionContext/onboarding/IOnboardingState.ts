@@ -1,7 +1,7 @@
 export type IOnboardingState =
     | ObState_None
     | ObState_Loading
-    | ObState_UserProfile
+    | ObState_UpdateProfile
     | ObState_Toast
     | ObState_Done
     | ObState_Error
@@ -15,8 +15,8 @@ export interface ObState_Loading {
     message: string
 }
 
-export interface ObState_UserProfile {
-    kind: 'user-profile'
+export interface ObState_UpdateProfile {
+    kind: 'update-profile'
     bNeedsAvatar: boolean
     bNeedsDisplayName: boolean
 }

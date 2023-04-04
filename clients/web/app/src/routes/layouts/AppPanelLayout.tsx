@@ -130,10 +130,10 @@ export const AppPanelLayoutContent = () => {
 }
 
 function useNeedsOnboarding(): boolean {
-    const { onboardingState } = useZionContext()
-    switch (onboardingState.kind) {
-        case 'user-profile':
-            return onboardingState.bNeedsDisplayName
+    const { matrixOnboardingState } = useZionContext()
+    switch (matrixOnboardingState.kind) {
+        case 'update-profile':
+            return matrixOnboardingState.bNeedsDisplayName
         default:
             return false
     }

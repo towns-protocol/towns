@@ -7,6 +7,8 @@ import { RegisterWallet } from './helpers/TestComponents'
 import { ZionTestWeb3Provider } from './helpers/ZionTestWeb3Provider'
 import { useZionContext } from '../../src/components/ZionContextProvider'
 import { useMyProfile } from '../../src/hooks/use-my-profile'
+import { getPrimaryProtocol } from './helpers/TestUtils'
+import { SpaceProtocol } from '../../src/client/ZionClientTypes'
 
 // TODO Zustand https://docs.pmnd.rs/zustand/testing
 
@@ -17,7 +19,11 @@ describe('onboardingStateHooks', () => {
         // create a veiw for bob
         const TestComponent = () => {
             const { setDisplayName, setAvatarUrl } = useZionClient()
-            const { onboardingState } = useZionContext()
+            const { matrixOnboardingState, casablancaOnboardingState } = useZionContext()
+            const onboardingState =
+                getPrimaryProtocol() === SpaceProtocol.Matrix
+                    ? matrixOnboardingState
+                    : casablancaOnboardingState
             const myProfile = useMyProfile()
             const [seenStates, setSeenStates] = useState<string[]>([])
             const [avatarSet, setAvatarSet] = useState(false)
@@ -74,7 +80,7 @@ describe('onboardingStateHooks', () => {
             name: 'Set Avatar Url',
         })
         // wait for client to be running
-        await waitFor(() => expect(seenStates).toHaveTextContent('none,loading,user-profile'))
+        await waitFor(() => expect(seenStates).toHaveTextContent('none,loading,update-profile'))
         // check needs display name and avatar
         await waitFor(() => expect(onboardingState).toHaveTextContent('bNeedsDisplayName: true'))
         await waitFor(() => expect(onboardingState).toHaveTextContent('bNeedsAvatar: true'))
@@ -82,8 +88,8 @@ describe('onboardingStateHooks', () => {
         fireEvent.click(setDisplayName)
         // check needs avatar
         await waitFor(() => expect(onboardingState).toHaveTextContent('bNeedsDisplayName: false'))
-        // full state hasn't updated, we retrigger user-profile but with different params
-        await waitFor(() => expect(seenStates).toHaveTextContent('user-profile'))
+        // full state hasn't updated, we retrigger update-profile but with different params
+        await waitFor(() => expect(seenStates).toHaveTextContent('update-profile'))
         // set avatar
         fireEvent.click(setAvatarUrl)
         // and all states have been seen

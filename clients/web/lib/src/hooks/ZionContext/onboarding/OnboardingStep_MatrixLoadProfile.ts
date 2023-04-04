@@ -1,5 +1,6 @@
 import { ObState_Loading } from './IOnboardingState'
-import { IOnboardingStep, OnboardingStepEvent } from './IOnboardingStep'
+import { OnboardingStepEvent } from './IOnboardingStep'
+import { IOnboardingStep_Matrix } from './IOnboardingStep_Matrix'
 
 /***
  * Load profile
@@ -8,7 +9,7 @@ import { IOnboardingStep, OnboardingStepEvent } from './IOnboardingStep'
  * and emit a new state
  * On error, emit an error state
  */
-export class OnboardingStep_LoadProfile extends IOnboardingStep<ObState_Loading> {
+export class OnboardingStep_MatrixLoadProfile extends IOnboardingStep_Matrix<ObState_Loading> {
     get state(): ObState_Loading {
         return {
             kind: 'loading',
@@ -24,7 +25,8 @@ export class OnboardingStep_LoadProfile extends IOnboardingStep<ObState_Loading>
         this.client
             .getProfileInfo(this.matrixUserId)
             .then(() => {
-                this.emit(OnboardingStepEvent.StateUpdate, this.state, true)
+                const isComplete = true
+                this.emit(OnboardingStepEvent.StateUpdate, this.state, isComplete)
             })
             .catch((error) => {
                 this.emit(OnboardingStepEvent.Error, {
