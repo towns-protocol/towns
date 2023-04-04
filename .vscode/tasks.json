@@ -287,7 +287,7 @@
       {
         "label": "KillAllLocalDev",
         "type": "shell",
-        "command": "./scripts/kill-all-local-dev.sh",
+        "command": "./scripts/kill-all-local-dev.sh -y",
         "isBackground": true,
         "problemMatcher": [],
         "presentation": {

@@ -19,7 +19,14 @@ function do_killl() {
     then
         ps -ax | grep "$term"
         echo ""
-        read b_continue'?Kill these processes?:y/n/f '
+
+        if [[ "$2" == "-y" ]]
+        then
+            b_continue="y"
+        else
+            read b_continue'?Kill these processes?:y/n/f '
+        fi
+
         if [[ "$b_continue" == "f" ]]
         then
             kill -9 $(ps -ax | grep "$term" | awk '{print $1}')
@@ -33,8 +40,8 @@ function do_killl() {
 }
 
 
-do_killl dendrite
-do_killl yarn
-do_killl anvil
-do_killl wrangler
-do_killl mitmweb
+do_killl dendrite "$1"
+do_killl yarn "$1"
+do_killl anvil "$1"
+do_killl wrangler "$1"
+do_killl mitmweb "$1"
