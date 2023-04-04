@@ -4,7 +4,7 @@ pushd "$(git rev-parse --show-toplevel)"
 echo "building protobufs"
 
 # typescript: we need to build the protobufs and generate the towns/proto package
-yarn csb:cb
+yarn csb:build
 
 # golang
 cd casablanca/node
