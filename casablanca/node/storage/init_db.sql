@@ -18,7 +18,7 @@ CREATE OR REPLACE FUNCTION public.notify_newevent()
 AS $function$
 DECLARE 
 BEGIN
-    PERFORM pg_notify('es_newevent', 'es_name:' || TG_ARGV[0]);
+    PERFORM pg_notify('es_newevent_' || lower(TG_ARGV[0]), '');
     RETURN NULL;
 END;
 $function$;

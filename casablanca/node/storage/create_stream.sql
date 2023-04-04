@@ -5,6 +5,4 @@ CREATE TABLE IF NOT EXISTS stream_<<name>> (
   event BYTEA NOT NULL, 
   PRIMARY KEY (seq_num));
 
-
-
-CREATE OR REPLACE TRIGGER new_event_trigger AFTER INSERT ON  stream_<<name>> FOR EACH ROW EXECUTE PROCEDURE notify_newevent('<<name>>')
+CREATE OR REPLACE TRIGGER new_event_trigger_<<name>> AFTER INSERT ON stream_<<name>> FOR EACH ROW EXECUTE PROCEDURE notify_newevent('<<name>>')

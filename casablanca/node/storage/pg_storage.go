@@ -1,7 +1,6 @@
 package storage
 
 import (
-	"bytes"
 	"context"
 	_ "embed"
 	"encoding/hex"
@@ -9,11 +8,8 @@ import (
 	"errors"
 	"fmt"
 	"math"
-	"math/rand"
-	"sync"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -33,9 +29,8 @@ const (
 
 // implemnent the EventStore interface
 type PGEventStore struct {
-	pool           *pgxpool.Pool
-	consumers      *SubsMap
-	multiplexerCtl chan bool
+	pool     *pgxpool.Pool
+	debugCtl chan struct{}
 }
 
 type PGEventNotificationEntry struct {
@@ -52,6 +47,7 @@ const (
 
 var (
 	syncStreamsLongPoll = infra.NewCounter("sync_streams_long_poll", "Sync streams long poll invocations metric")
+	longPollTimeout     = infra.NewCounter("sync_streams_long_poll_timeout", "Sync streams long poll timeout metric")
 )
 
 // NewPGEventStore creates a new PGEventStore
@@ -89,11 +85,7 @@ func NewPGEventStore(ctx context.Context, database_url string, clean bool) (*PGE
 		}
 	}()
 
-	store := &PGEventStore{pool: pool, multiplexerCtl: make(chan bool), consumers: NewSmap()}
-	err = store.startMultiplexer(ctx)
-	if err != nil {
-		return nil, err
-	}
+	store := &PGEventStore{pool: pool, debugCtl: make(chan struct{})}
 
 	go func() {
 		ctx, log := infra.SetLoggerWithProcess(ctx, "debug-events-loop")
@@ -101,6 +93,9 @@ func NewPGEventStore(ctx context.Context, database_url string, clean bool) (*PGE
 			select {
 			case <-ctx.Done():
 				log.Debug("Debug events dump: context done")
+				return
+			case <-store.debugCtl:
+				log.Debug("Debug events stop")
 				return
 			case <-time.After(1 * time.Second):
 				err := dump(store, ctx)
@@ -163,11 +158,8 @@ func dump(store *PGEventStore, ctx context.Context) error {
 
 // Close closes the connection to the database
 func (s *PGEventStore) Close() error {
-	defer s.pool.Close()
-	err := s.stopMultiplexer()
-	if err != nil {
-		return err
-	}
+	close(s.debugCtl)
+	s.pool.Close()
 	return nil
 }
 
@@ -191,6 +183,14 @@ func createEventStreamInstance(ctx context.Context, tx pgx.Tx, streamId string) 
 
 func startTx(ctx context.Context, pool *pgxpool.Pool) (pgx.Tx, error) {
 	tx, err := pool.BeginTx(ctx, pgx.TxOptions{IsoLevel: pgx.Serializable})
+	if err != nil {
+		return nil, err
+	}
+	return tx, nil
+}
+
+func startConnTx(ctx context.Context, conn *pgxpool.Conn) (pgx.Tx, error) {
+	tx, err := conn.BeginTx(ctx, pgx.TxOptions{IsoLevel: pgx.Serializable})
 	if err != nil {
 		return nil, err
 	}
@@ -668,271 +668,28 @@ func fetchMessages(ctx context.Context, tx pgx.Tx, positions []StreamPos, maxCou
 	if currName != "" {
 		nextSeqNums[currName] = currLastSeqNum
 	}
-	log.Debug("events: ", seqNums.String(), " lastSeqNum: ", nextSeqNums)
+	log.Debug("events(", count, "): ", seqNums.String(), " lastSeqNum: ", nextSeqNums)
 	return events, nextSeqNums, nil
 }
 
-func send(ctx context.Context, id string, output chan<- StreamEventsBlock, block StreamEventsBlock) {
+func listenNotifications(ctx context.Context, conn *pgxpool.Conn, notificationStream string) error {
 	log := infra.GetLogger(ctx)
-	select {
-	case output <- block:
-		log.Debugf("Sent to id: %v block with syncCookie %s and %d events", id,
-			hex.EncodeToString(block.SyncCookie), len(block.Events))
-	case <-time.After(1 * time.Second):
-		log.Debugf("Dropping block with %d events after timeout", len(block.Events))
-	}
-}
-
-// TODO only select streams that have listeners
-func (s *PGEventStore) getLastSeqNum(ctx context.Context) (map[string]int64, error) {
-	streams, err := s.GetStreams(ctx)
+	log.Debug("listenNotifications: ", notificationStream)
+	_, err := conn.Exec(ctx, fmt.Sprintf("LISTEN %s", notificationStream))
 	if err != nil {
-		return nil, err
+		return err
 	}
+	return err
+}
 
-	conn, err := s.pool.Acquire(ctx)
+func unlistenNotifications(ctx context.Context, conn *pgxpool.Conn, notificationStream string) {
+	log := infra.GetLogger(ctx)
+	log.Debug("unlistenNotifications: ", notificationStream)
+	_, err := conn.Exec(ctx, fmt.Sprintf("UNLISTEN %s", notificationStream))
 	if err != nil {
-		return nil, err
+		// TODO check for context deadline exceeded error
+		log.Trace("Error unlistening to notifications: ", err)
 	}
-	defer conn.Release()
-	seqNums := make(map[string]int64)
-	for _, stream := range streams {
-		rows, err := conn.Query(ctx, fmt.Sprintf("SELECT COALESCE(max(seq_num), -1) FROM %s", streamSqlName(stream)))
-		if err != nil {
-			return nil, err
-		}
-		defer rows.Close()
-		var seqNum int64
-		for rows.Next() {
-			err = rows.Scan(&seqNum)
-			if err != nil {
-				return nil, err
-			}
-		}
-		seqNums[stream] = seqNum
-	}
-	return seqNums, nil
-}
-
-/**
- * getLastEvents returns the last events from the event store
- * @param {context.Context} ctx - the context
- * @param {pgx.Tx} tx - the transaction
- * @param {int64} seqNum - the sequence number to start from
- * @param {int64} lastSeqNum - the last sequence number
- * @returns {map[string][]*FullEvent} - the events foir each stream sorted by sequence number (ascending)
- * @returns {error} - any error
- */
-func (s *PGEventStore) getLastEvents(ctx context.Context, tx pgx.Tx, selection map[string]int64) (map[string][]*events.FullEvent, error) {
-	log := infra.GetLogger(ctx)
-	log.Debugf("Fetching events from %v", selection)
-
-	allEvents := make(map[string][]*events.FullEvent)
-	for stream, seqNum := range selection {
-		sql := fmt.Sprintf("SELECT seq_num, hash, signature, event FROM %s WHERE seq_num > $1 ORDER BY seq_num", streamSqlName(stream))
-		log.Debugf("Fetching events from %s with sql %s [%d]", stream, sql, seqNum)
-		rows, err := tx.Query(ctx, sql, seqNum)
-		if err != nil {
-			return nil, err
-		}
-		defer rows.Close()
-		fullEvents := []*events.FullEvent{}
-		for rows.Next() {
-			var currentSeqNum int64
-			var hash []byte
-			var signature []byte
-			var event_buf []byte
-			err = rows.Scan(&currentSeqNum, &hash, &signature, &event_buf)
-			if err != nil {
-				return nil, err
-			}
-			parsedEvent, err := events.ParseEvent(&protocol.Envelope{
-				Hash:      hash,
-				Signature: signature,
-				Event:     event_buf,
-			})
-			if err != nil {
-				return nil, err
-			}
-			fullEvents = append(fullEvents, &events.FullEvent{
-				StreamId:    stream,
-				SeqNum:      currentSeqNum,
-				ParsedEvent: parsedEvent,
-			})
-		}
-		log.Debugf("Fetched %d events", len(fullEvents))
-		allEvents[stream] = fullEvents
-	}
-	return allEvents, nil
-}
-
-const (
-	// TODO make it configurable
-	NOTIFICATIONS_LOOP_INTERVAL = 30 * time.Second
-)
-
-func (s *PGEventStore) startMultiplexer(ctx context.Context) error {
-	ctx, log := infra.SetLoggerWithProcess(ctx, "multiplexer")
-
-	go func() {
-		// TODO handle reconnects
-		conn, err := s.pool.Acquire(ctx)
-		if err != nil {
-			log.Error("Error acquiring connection: ", err)
-			return
-		}
-		defer conn.Release()
-
-		_, err = conn.Exec(ctx, "LISTEN es_newevent")
-		if err != nil {
-			log.Error("Error listening to es_events: ", err)
-			return
-		}
-
-		lastKnownSeqNums, err := s.getLastSeqNum(ctx)
-		if err != nil {
-			log.Error("Error getting last seq num: ", err)
-			return
-		}
-
-		// multiplexer loop - check for new events and notifies consumers
-		// it is important that the only one instance of this function is running
-		multiplexerIteration := func(ctx context.Context) error {
-
-			lastEventNums, err := s.getLastSeqNum(ctx)
-			if err != nil {
-				return fmt.Errorf("failed to get last seq num: %w", err)
-			}
-
-			diff := seqNumsDiff(lastKnownSeqNums, lastEventNums)
-			log.Debugf("Fetched new sequence numbers len(diff) %d diff %v", len(diff), diff)
-
-			// some changes in the database, notify consumers immediately
-			if len(diff) > 0 {
-				tx, err := startTx(ctx, s.pool)
-				if err != nil {
-					return fmt.Errorf("failed to start a transaction: %w", err)
-				}
-				selection := s.consumers.getMinSeqNum(lastEventNums)
-				lastEvents, err := s.getLastEvents(ctx, tx, selection)
-				if err != nil {
-					rollbackErr := tx.Rollback(ctx)
-					if rollbackErr != nil {
-						log.Errorf("Failed to rollback transaction: %v", rollbackErr)
-					}
-					return fmt.Errorf("failed to get last events: %w", err)
-				}
-				commitErr := tx.Commit(ctx)
-				if commitErr != nil {
-					log.Errorf("Failed to commit transaction: %v", commitErr)
-					return commitErr
-				}
-
-				seqNums := strings.Builder{}
-				for stream, events := range lastEvents {
-					seqNums.WriteString(fmt.Sprintf("%s: ", stream))
-					for _, event := range events {
-						seqNums.WriteString(fmt.Sprintf("%d, ", event.SeqNum))
-					}
-				}
-				log.Debugf("Events: %s", seqNums.String())
-				for stream, events := range lastEvents {
-					log.Tracef("Extracted %d events %s (start: %v last seq: %v)", len(events), stream, lastKnownSeqNums, lastEventNums)
-				}
-
-				readyBlocks := s.consumers.Filter(lastEvents)
-				for id, block := range readyBlocks {
-					rx, ok := s.consumers.GetByUUID(id)
-					if ok {
-						log.Debugf("Sending %d event(s) to sub %s", len(block.Events), id)
-						go send(ctx, id, rx.notifyChan, block)
-					}
-				}
-				lastKnownSeqNums = lastEventNums
-			}
-
-			// wait for the database notifications
-			notification, err := conn.Conn().WaitForNotification(ctx)
-			if errors.Is(err, context.DeadlineExceeded) {
-				return nil
-			}
-			if err != nil {
-				return fmt.Errorf("error waiting for notification: %w", err)
-			}
-			// Note: payload is not used for anything except debugging
-			notificationStreamId := strings.ReplaceAll(strings.Split(notification.Payload, ":")[1], "_", "-")
-			log.Debug("PID:", notification.PID, "Channel:", notification.Channel, "notificationStreamId:", notificationStreamId)
-			return nil
-		}
-
-		// run the multiplexer loop
-
-		// waiting group to make sure only once instance of the loop function is running
-		wg := sync.WaitGroup{}
-		retries := 0
-		for {
-			wg.Wait()
-			ctx, cancel := context.WithTimeout(ctx, NOTIFICATIONS_LOOP_INTERVAL)
-			iterationDone := make(chan bool)
-			wg.Add(1)
-			go func() {
-				err := multiplexerIteration(ctx)
-				if err != nil {
-					log.Error(err)
-					// TODO make it configurable
-					timeout := backoff(retries, time.Second, 30*time.Second, 15)
-					time.Sleep(timeout)
-					retries++
-				}
-				wg.Done()
-				close(iterationDone)
-			}()
-
-			select {
-			case <-s.multiplexerCtl:
-				log.Debug("Stopping multiplexer message")
-				cancel()
-				wg.Wait()
-				return
-			case <-ctx.Done():
-				/* do nothing, restart the loop */
-			case <-iterationDone:
-				cancel()
-				/* do nothing, restart the loop */
-			}
-
-		}
-	}()
-
-	return nil
-}
-
-func (s *PGEventStore) stopMultiplexer() error {
-	s.multiplexerCtl <- true
-	log.Debug("Stopping multiplexer")
-	s.consumers.ForEach(func(sub *SmapEntry) {
-		log.Debugf("Unsubscribing from subscriber %s", sub.id)
-		close(sub.notifyChan)
-	})
-	return nil
-}
-
-func (s *PGEventStore) subscribe(ctx context.Context, streamId string, startCookie []byte) (*SmapEntry, error) {
-	log := infra.GetLogger(ctx)
-	sub := s.consumers.Add(streamId, startCookie, fmt.Sprintf("%s-%s", infra.GetRequestId(ctx), uuid.New().String()))
-	log.Debugf("Subscribing to streamId:  %s as subId: %s", streamId, sub.id)
-	return sub, nil
-}
-
-func (s *PGEventStore) unsubscribe(ctx context.Context, streamId string, id string) {
-	log := infra.GetLogger(ctx)
-	log.Debugf("Unsubscribing subId: %s from streamId: %s", id, streamId)
-	s.consumers.Delete(streamId, id)
-}
-
-type syncEvent struct {
-	streamId string
-	events   StreamEventsBlock
 }
 
 func formatSyncPostisions(syncPositions []*protocol.SyncPos) string {
@@ -985,9 +742,9 @@ func (s *PGEventStore) SyncStreams(ctx context.Context, syncPositions []*protoco
 		return nil, err
 	}
 
-	longStreams := map[string]struct{}{}
+	ctx, cancel := context.WithTimeout(ctx, time.Duration(TimeoutMs)*time.Millisecond)
+	defer cancel()
 
-	streams := map[string]StreamEventsBlock{}
 	streamPos := make([]StreamPos, len(syncPositions))
 	positions := make(map[string][]byte)
 	startSeqNum := int64(math.MaxInt64)
@@ -1005,21 +762,58 @@ func (s *PGEventStore) SyncStreams(ctx context.Context, syncPositions []*protoco
 			startSeqNum = cookieSeqNum
 		}
 	}
-	tx, err := startTx(ctx, s.pool)
+
+	conn, err := s.pool.Acquire(ctx)
 	if err != nil {
 		return nil, err
 	}
-	events, seqNums, err := fetchMessages(ctx, tx, streamPos, maxCount)
+	defer conn.Release()
+
+	for _, pos := range streamPos {
+		streamName := string(pos.StreamId)
+		pgNotficationStream := fmt.Sprintf("es_newevent_%s", sanitizeSqlName(streamName))
+
+		err = listenNotifications(ctx, conn, pgNotficationStream)
+		if err != nil {
+			return nil, err
+		}
+		defer unlistenNotifications(ctx, conn, pgNotficationStream)
+	}
+
+	for {
+		streams, retry, err := longFetch(ctx, conn, streamPos, maxCount, positions)
+		if err != nil {
+			return nil, err
+		}
+		if !retry {
+			log.Debugf("SyncStreams end: %s", formatSyncResults(streams))
+			return streams, nil
+		}
+		log.Debugf("SyncStreams retry: %s", formatSyncResults(streams))
+	}
+}
+
+func longFetch(ctx context.Context, conn *pgxpool.Conn, streamPos []StreamPos, maxCount int, positions map[string][]byte) (map[string]StreamEventsBlock, bool, error) {
+	tx, err := startConnTx(ctx, conn)
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
 	defer func() {
 		err := tx.Rollback(ctx)
 		if err != nil {
-			log.Errorf("Failed to rollback transaction: %s", err)
+			if errors.Is(err, pgx.ErrTxClosed) {
+				return
+			}
+			log.Errorf("SyncStream: Failed to rollback transaction: %s", err)
 		}
 	}()
 
+	events, seqNums, err := fetchMessages(ctx, tx, streamPos, maxCount)
+	if err != nil {
+		return nil, false, err
+	}
+
+	streams := map[string]StreamEventsBlock{}
 	if len(events) != 0 {
 		for streamId, events := range events {
 			streams[streamId] = StreamEventsBlock{
@@ -1030,103 +824,36 @@ func (s *PGEventStore) SyncStreams(ctx context.Context, syncPositions []*protoco
 		}
 		err := tx.Commit(ctx)
 		if err != nil {
-			return nil, err
+			return nil, false, err
 		}
 
 		log.Debugf("SyncStreams return: %s", formatSyncResults(streams))
-		return streams, nil
-	}
-
-	syncStreamsLongPoll.Inc()
-
-	var results chan *syncEvent = make(chan *syncEvent, len(events))
-	for _, pos := range syncPositions {
-		streamId := pos.StreamId
-		log.Debugf("SyncStreams: %s", streamId)
-		var cookie []byte
-		if pos.SyncCookie == nil {
-			cookie = []byte{0}
-		} else {
-			cookie = pos.SyncCookie
-		}
-		// subscribe to stream
-		rx, err := s.subscribe(ctx, streamId, cookie)
-		if err != nil {
-			return nil, err
-		}
-		longStreams[string(streamId)] = struct{}{}
-		prod := func() {
-			log.Debugf("SyncStreams: Waiting for events for stream: %s (TimeoutMs: %d)", streamId, TimeoutMs)
-			select {
-			case <-ctx.Done():
-			case events := <-rx.notifyChan:
-				results <- &syncEvent{streamId: streamId, events: events}
-			case <-time.After(time.Duration(TimeoutMs) * time.Millisecond):
-				log.Warn("SyncStreams: Timeout waiting for events for stream: ", string(streamId), " ", TimeoutMs)
-				// log.Debug("Sending nil result")
-				var result *syncEvent = nil
-				if result == nil {
-					results <- nil
-				}
-			}
-			s.unsubscribe(ctx, streamId, rx.id)
-		}
-		go prod()
+		return streams, false, nil
 	}
 
 	err = tx.Commit(ctx)
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
 
-	if len(longStreams) != 0 {
-		log.Debug("SyncStreams: Waiting for long streams: ", longStreams)
+	syncStreamsLongPoll.Inc()
+	// wait for the database notifications
+	log.Debug("SyncStreams wait for notification ...")
+	_, err = conn.Conn().WaitForNotification(ctx)
+	if errors.Is(err, context.DeadlineExceeded) {
+		log.Debug("SyncStreams wait for notification timeout")
+		longPollTimeout.Inc()
+		return nil, false, nil
 	}
-
-	log.Debugf("SyncStreams: Waiting for results for %d long poll", len(longStreams))
-	// results guaranteed to have this amout of messages
-	count := len(results)
-	if count == 0 && len(longStreams) > 0 {
-		// block for at least one message
-		count = 1
-	}
-	for count > 0 {
-		log.Debug("SyncStreams: Waiting for an event")
-		result := <-results
-		if result != nil {
-			log.Debugf("SyncStreams: Got an event for %s", string(result.streamId))
-			hashes := []string{}
-			for _, event := range result.events.Events {
-				hashes = append(hashes, hex.EncodeToString(event.Hash))
-			}
-			log.Debugf("SyncStreams: Got result for stream %s (%v)", result.streamId, hashes)
-			streams[result.streamId] = result.events
-		} else {
-			log.Debug("SyncStreams: no events")
-		}
-		count = len(results)
-	}
-	err = validatePositions(syncPositions, streams)
 	if err != nil {
-		return nil, err
-	}
-	return streams, nil
-}
-
-func validatePositions(initialPosition []*protocol.SyncPos, resultPositions map[string]StreamEventsBlock) error {
-	positions := make(map[string]*protocol.SyncPos)
-	for _, pos := range initialPosition {
-		positions[string(pos.StreamId)] = pos
-	}
-	for str, pos := range resultPositions {
-		if _, ok := positions[str]; !ok {
-			return fmt.Errorf("stream %s not found in initial position", str)
+		log.Debug("SyncStreams wait for notification error %w", err)
+		if errors.Is(err, context.Canceled) {
+			return nil, false, nil
 		}
-		if !bytes.Equal(positions[str].SyncCookie, pos.OriginalSyncCookie) {
-			return fmt.Errorf("syncCookie mismatch for stream %s", str)
-		}
+		return nil, false, fmt.Errorf("error waiting for notification: %w", err)
 	}
-	return nil
+	log.Debug("SyncStreams wait for notification done")
+	return nil, true, nil
 }
 
 //go:embed init_db.sql
@@ -1143,7 +870,10 @@ func initStorage(ctx context.Context, pool *pgxpool.Pool) error {
 		if !committed {
 			err := tx.Rollback(ctx)
 			if err != nil {
-				log.Errorf("Failed to rollback transaction: %s", err)
+				if errors.Is(err, pgx.ErrTxClosed) {
+					return
+				}
+				log.Errorf("InitStorage: Failed to rollback transaction: %s", err)
 			}
 		}
 	}()
@@ -1173,7 +903,10 @@ func cleanStorage(ctx context.Context, pool *pgxpool.Pool) error {
 		if !committed {
 			err := tx.Rollback(ctx)
 			if err != nil {
-				log.Errorf("Failed to rollback transaction: %s", err)
+				if errors.Is(err, pgx.ErrTxClosed) {
+					return
+				}
+				log.Errorf("CleanStorage: Failed to rollback transaction: %s", err)
 			}
 		}
 	}()
@@ -1202,39 +935,13 @@ var createStream string
 
 func createStreamSql(streamId string) string {
 	return strings.ReplaceAll(createStream, "<<name>>",
-		strings.ReplaceAll(streamId, "-", "_"))
+		sanitizeSqlName(streamId))
 }
 
 func streamSqlName(streamId string) string {
-	return fmt.Sprintf("stream_%s", strings.ReplaceAll(streamId, "-", "_"))
-
+	return fmt.Sprintf("stream_%s", sanitizeSqlName(streamId))
 }
 
-/*
-This function returns watermarks for all updated streams.
-*/
-func seqNumsDiff(origMap map[string]int64, newMap map[string]int64) map[string]int64 {
-
-	diff := map[string]int64{}
-	for streamId, seqNum := range newMap {
-		oldVal, ok := origMap[streamId]
-		if !ok || oldVal != seqNum {
-			diff[streamId] = seqNum
-		}
-	}
-	return diff
-}
-
-// exponential backoff with min/max timeout and jitter (1s)
-// min/max timeouts are suggestive (with correction for the jitter)
-// the calculated timeout is growing (mostly) exponentially starting with minTimeout and should reach maxTimeout after retriesAtMax retries
-func backoff(retries int, minTimeout time.Duration, maxTimeout time.Duration, retriesAtMax int) time.Duration {
-	timeout := maxTimeout
-	alpha := math.Log(float64(maxTimeout)/float64(minTimeout)) / float64(retriesAtMax)
-	// timeout is capped using effective retries cap
-	if retries < retriesAtMax {
-		timeout = time.Duration(math.Pow(math.E, float64(retries)*alpha)) * minTimeout
-	}
-	timeout += time.Duration(rand.Intn(1000)) * time.Millisecond
-	return timeout
+func sanitizeSqlName(name string) string {
+	return strings.ReplaceAll(name, "-", "_")
 }

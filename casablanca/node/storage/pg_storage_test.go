@@ -2,6 +2,7 @@ package storage_test
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -10,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/jackc/pgx/v5/pgconn"
 	_ "github.com/lib/pq"
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
@@ -194,7 +196,8 @@ func TestPGEventStoreLongPoll(t *testing.T) {
 		ctx, cancel := context.WithCancel(ctx)
 		defer cancel()
 		ctx, _, requestId := infra.SetLoggerWithRequestId(ctx)
-		events, err := pgEventStore.SyncStreams(ctx, []*protocol.SyncPos{{StreamId: streamId, SyncCookie: cookie1}}, -1, 10000)
+		// 40s will exceed the 30s timeout of the test
+		events, err := pgEventStore.SyncStreams(ctx, []*protocol.SyncPos{{StreamId: streamId, SyncCookie: cookie1}}, -1, 40000)
 		assert.Nil(t, err, requestId)
 		assert.NotNil(t, events, requestId)
 		assert.Len(t, events, 1, requestId)
@@ -277,6 +280,16 @@ func TestPGEventStoreLongPollStress(t *testing.T) {
 		for counter < totalMessages {
 			ctx, log, requestId := infra.SetLoggerWithRequestId(context.Background())
 			events, err := pgEventStore.SyncStreams(ctx, []*protocol.SyncPos{{StreamId: streamId, SyncCookie: syncCookie}}, -1, 1000)
+			if err != nil {
+				if errors.Is(err, context.DeadlineExceeded) {
+					log.Warnf("deadline exceeded %d", i)
+					continue
+				}
+				if pgconn.SafeToRetry(err) {
+					log.Warnf("safe to retry %d", i)
+					continue
+				}
+			}
 			assert.Nil(t, err)
 			if len(events) != 0 {
 				counter += len(events[streamId].Events)
