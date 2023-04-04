@@ -16,7 +16,7 @@ export class OnboardingStep_CasablancaUpdateProfile extends IOnboardingStep_Casa
     }
 
     shouldExecute(): boolean {
-        return true
+        return false
     }
 
     start() {
