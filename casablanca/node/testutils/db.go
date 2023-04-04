@@ -43,6 +43,7 @@ func StartDB(ctx context.Context) (string, func(), error) {
 			"POSTGRES_DB=casablanca",
 			"listen_addresses = '*'",
 		},
+		Cmd: []string{"postgres", "-c", "max_connections=1000"},
 	}, func(config *docker.HostConfig) {
 		// set AutoRemove to true so that stopped container goes away by itself
 		config.AutoRemove = true
@@ -65,7 +66,7 @@ func StartDB(ctx context.Context) (string, func(), error) {
 	}
 
 	// exponential backoff-retry, because the application in the container might not be ready to accept connections yet
-	pool.MaxWait = 120 * time.Second
+	pool.MaxWait = 20 * time.Second
 	if err = pool.Retry(func() error {
 		db, err := sql.Open("postgres", testDatabaseUrl)
 		if err != nil {
@@ -78,7 +79,7 @@ func StartDB(ctx context.Context) (string, func(), error) {
 		return dbUrl, func() {}, err
 	}
 
-	return testDatabaseUrl, func() {
+	return fmt.Sprintf("%s&pool_max_conns=1000", testDatabaseUrl), func() {
 		// You can't defer this because os.Exit doesn't care for defer
 		if err := pool.Purge(resource); err != nil {
 			log.Fatalf("Could not purge resource: %s", err)

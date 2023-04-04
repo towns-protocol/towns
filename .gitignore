@@ -71,3 +71,6 @@ casablanca/proto/src/gen/protocol_connect.ts
 **/coverage/*
 /casablanca/node/node/__debug_bin
 casablanca/node/dev.log
+
+# profiling files
+*.prof
