@@ -182,7 +182,7 @@ function useCheckImage({
             const cloudflareImage = new Image()
             // CF images should have been uploaded via base64 encoded contract address
             cloudflareImage.src = `https://imagedelivery.net/qaaQ52YqlPXKEVQhjChiDA/${window.btoa(
-                contractAddress,
+                contractAddress.toLowerCase(),
             )}/thumbnail100`
             cloudflareImage.onload = () => {
                 setImageSource(cloudflareImage.src)
