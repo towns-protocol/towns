@@ -47,52 +47,6 @@ describe('Zion event handlers test', () => {
         expect(eventHandlerResult?.roomIdentifier.networkId).toBeDefined()
     })
 
-    test('onInviteUser', async () => {
-        let eventHandlerResult:
-            | {
-                  roomId: RoomIdentifier
-                  userId: string
-              }
-            | undefined
-
-        const { alice, bob } = await registerAndStartClients(['alice', 'bob'], {
-            eventHandlers: {
-                onInviteUser(roomId, userId) {
-                    eventHandlerResult = {
-                        roomId,
-                        userId,
-                    }
-                },
-            },
-        })
-        await alice.fundWallet()
-
-        // alice creates a room
-        const roomId = await createTestSpaceWithEveryoneRole(
-            alice,
-            [Permission.Read, Permission.Write],
-            {
-                name: alice.makeUniqueName(),
-                visibility: RoomVisibility.Private,
-            },
-        )
-
-        if (!roomId) {
-            throw new Error('roomId is undefined')
-        }
-
-        if (!bob.matrixUserId) {
-            throw new Error('bob.matrixUserId is undefined')
-        }
-        // alice invites bob to the room
-        await alice.inviteUser(roomId, bob.matrixUserId)
-
-        expect(eventHandlerResult).toBeDefined()
-        expect(eventHandlerResult?.roomId).toEqual(roomId)
-        expect(eventHandlerResult?.userId).toBeDefined()
-        expect(eventHandlerResult?.userId).toEqual(bob.matrixUserId)
-    })
-
     test('onJoinRoom', async () => {
         let eventHandlerResult:
             | {
@@ -239,5 +193,42 @@ describe('Zion event handlers test', () => {
         await alice.logout()
 
         expect(authEvents.loggedOut).toBe(true)
+    })
+
+    test('Unset onSendMessage', async () => {
+        let eventHandlerResult:
+            | {
+                  roomId: RoomIdentifier
+              }
+            | undefined
+
+        const { alice } = await registerAndStartClients(['alice'], {
+            eventHandlers: {
+                onSendMessage(roomId) {
+                    eventHandlerResult = {
+                        roomId,
+                    }
+                },
+            },
+        })
+        await alice.fundWallet()
+
+        // alice creates a room
+        const roomId = await createTestSpaceWithEveryoneRole(
+            alice,
+            [Permission.Read, Permission.Write],
+            {
+                name: alice.makeUniqueName(),
+                visibility: RoomVisibility.Private,
+            },
+        )
+
+        if (!roomId) {
+            throw new Error('roomId is undefined')
+        }
+        alice.setEventHandlers(undefined)
+        await alice.sendMessage(roomId, 'Hello World!')
+
+        expect(eventHandlerResult).toBeUndefined()
     })
 })

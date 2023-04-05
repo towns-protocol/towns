@@ -138,6 +138,5 @@ export const useSignupButton = ({
     })
 
     const isSpinning = useMemo(() => getIsSpinning(status), [status])
-
     return { status, onClick, isSpinning }
 }

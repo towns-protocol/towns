@@ -1,5 +1,6 @@
 import React, { createContext, useCallback, useContext, useEffect, useState } from 'react'
 import * as amplitudeLib from '@amplitude/analytics-browser'
+import isEqual from 'lodash/isEqual'
 import { MessageType, RoomIdentifier, SendMessageOptions, ZionContext } from 'use-zion-client'
 import { env } from '../utils/environment'
 
@@ -10,6 +11,7 @@ interface Analytics {
     // inside our application layer. we just want to fire and forget.
     track: (...args: Parameters<(typeof amplitudeLib)['track']>) => unknown
     setUserId: (...args: Parameters<(typeof amplitudeLib)['setUserId']>) => unknown
+    getUserId: () => string | undefined
 }
 
 const UNITITIALIZED_ANALYTICS: Analytics = {
@@ -24,6 +26,10 @@ const UNITITIALIZED_ANALYTICS: Analytics = {
             'Analytics not initialized, but setUserId was called with the following arguments:',
         )
         args.forEach(console.debug)
+    },
+    getUserId: () => {
+        console.debug('Analytics not initialized')
+        return 'UNITITIALIZED_ANALYTICS'
     },
 }
 
@@ -64,25 +70,23 @@ export const AnalyticsProvider = ({ children }: { children: React.ReactNode }) =
         [analytics],
     )
 
-    const onInviteUser = useCallback(
-        (roomId: RoomIdentifier, userId: string) => {
-            analytics.track('invite_user', {
-                invitedUserId: userId,
-                protocol: roomId.protocol,
-                slug: roomId.slug,
-                networkId: roomId.networkId,
-            })
-        },
-        [analytics],
-    )
-
     const onJoinRoom = useCallback(
-        (roomId: RoomIdentifier) => {
-            analytics.track('join_room', {
-                protocol: roomId.protocol,
-                slug: roomId.slug,
-                networkId: roomId.networkId,
-            })
+        (roomId: RoomIdentifier, spaceId: RoomIdentifier) => {
+            if (isEqual(roomId, spaceId)) {
+                analytics.track('join_space', {
+                    protocol: roomId.protocol,
+                    slug: roomId.slug,
+                    networkId: roomId.networkId,
+                    spaceId: spaceId.slug,
+                })
+            } else {
+                analytics.track('join_channel', {
+                    protocol: roomId.protocol,
+                    slug: roomId.slug,
+                    networkId: roomId.networkId,
+                    spaceId: spaceId.slug,
+                })
+            }
         },
         [analytics],
     )
@@ -101,17 +105,19 @@ export const AnalyticsProvider = ({ children }: { children: React.ReactNode }) =
                 messageType: sendMessageOptions?.messageType,
                 isInThread: !!sendMessageOptions?.threadId,
                 isURL,
+                spaceId: sendMessageOptions?.parentSpaceId?.slug,
             })
         },
         [analytics],
     )
 
-    const onLogin = useCallback(({ userId }: { userId: string }) => {
-        const identifyObj = new amplitudeLib.Identify()
-        amplitudeLib.identify(identifyObj, {
-            user_id: userId,
-        })
-    }, [])
+    const onLogin = useCallback(
+        ({ userId }: { userId: string }) => {
+            analytics.setUserId(userId)
+            analytics.track('wallet_login_success')
+        },
+        [analytics],
+    )
 
     const onLogout = useCallback(() => {
         amplitudeLib.reset()
@@ -121,18 +127,23 @@ export const AnalyticsProvider = ({ children }: { children: React.ReactNode }) =
     // use useZionContext() instead, but we were crashing a lot here on local host, maybe
     // something is trying to useAnalytics during loading or initializtion.
     const zionContext = useContext(ZionContext)
-    const client = zionContext?.client
+    // note jterzis 04/2023 must use client singleton when setting event handlers
+    // since it is instantiated prior to matrix registration
+    const clientSingleton = zionContext?.clientSingleton
 
     useEffect(() => {
-        client?.setEventHandlers({
+        clientSingleton?.setEventHandlers({
             onCreateSpace,
-            onInviteUser,
             onJoinRoom,
             onSendMessage,
             onLogin,
             onLogout,
         })
-    }, [onCreateSpace, onInviteUser, onJoinRoom, onSendMessage, client, onLogin, onLogout])
+
+        return () => {
+            clientSingleton?.setEventHandlers(undefined)
+        }
+    }, [onCreateSpace, onJoinRoom, onSendMessage, clientSingleton, onLogin, onLogout])
 
     return <AnalyticsContext.Provider value={analytics}>{children}</AnalyticsContext.Provider>
 }

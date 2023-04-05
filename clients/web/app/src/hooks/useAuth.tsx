@@ -17,19 +17,18 @@ export function useAuth() {
         userOnWrongNetworkForSignIn,
     } = useZionClient()
     const { activeWalletAddress } = useWeb3Context()
-    const { track, setUserId } = useAnalytics()
+    const { track, setUserId, getUserId } = useAnalytics()
     const {
         connect: _connect,
         connectors,
         error: connectError,
         pendingConnector,
     } = useConnect({
-        onSuccess: () => {
-            // jterzis somewhat of a hack to set a stable, obfuscated uid derived off the wallet address
-            setUserId(keccak256(activeWalletAddress as string).substring(0, 34))
-            track('wallet_connect_success')
-        },
         onError: (error) => {
+            const userId = getUserId()
+            if (userId == undefined) {
+                setUserId(keccak256(activeWalletAddress as string).substring(0, 34))
+            }
             track('wallet_connect_error', {
                 error: error.message,
             })

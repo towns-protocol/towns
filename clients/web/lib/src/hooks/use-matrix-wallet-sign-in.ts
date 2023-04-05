@@ -1,5 +1,6 @@
 import { createClient, IAuthData, MatrixClient, MatrixError } from 'matrix-js-sdk'
 import { useCallback, useMemo } from 'react'
+import { keccak256 } from 'ethers/lib/utils.js'
 import { createUserIdFromEthereumAddress, getUsernameFromId } from '../types/user-identifier'
 import {
     AuthenticationData,
@@ -30,7 +31,7 @@ interface SignedAuthenticationData {
 
 export function useMatrixWalletSignIn() {
     const { loginStatus, setLoginError, setLoginStatus } = useMatrixStore()
-    const { homeServerUrl: homeServer } = useZionContext()
+    const { homeServerUrl: homeServer, clientSingleton } = useZionContext()
     const { setMatrixCredentials } = useCredentialStore()
     const { sign, chain, activeWalletAddress } = useWeb3Context()
     const { chain: walletChain } = useNetwork()
@@ -75,6 +76,10 @@ export function useMatrixWalletSignIn() {
                     loggedInWalletAddress: activeWalletAddress,
                 })
                 setLoginStatus(LoginStatus.LoggedIn)
+                // call onLogin event handler
+                clientSingleton?.onLogin?.({
+                    userId: keccak256(activeWalletAddress as string).substring(0, 34),
+                })
             } else {
                 setLoginError({
                     code: StatusCodes.UNAUTHORIZED,
@@ -83,7 +88,14 @@ export function useMatrixWalletSignIn() {
                 setLoginStatus(LoginStatus.LoggedOut)
             }
         },
-        [activeWalletAddress, homeServer, setLoginError, setLoginStatus, setMatrixCredentials],
+        [
+            activeWalletAddress,
+            clientSingleton,
+            homeServer,
+            setLoginError,
+            setLoginStatus,
+            setMatrixCredentials,
+        ],
     )
 
     const signMessage = useCallback(

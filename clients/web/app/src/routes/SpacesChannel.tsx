@@ -62,11 +62,13 @@ const SpacesChannelComponent = () => {
 
     const onSend = useCallback(
         (value: string, options: SendMessageOptions | undefined) => {
-            if (value && channelId) {
+            if (value && channelId && spaceId) {
+                sendMessage(channelId, value, { parentSpaceId: spaceId, ...options })
+            } else if (value && channelId) {
                 sendMessage(channelId, value, options)
             }
         },
-        [channelId, sendMessage],
+        [channelId, spaceId, sendMessage],
     )
 
     const onJoinChannel = useCallback(() => {

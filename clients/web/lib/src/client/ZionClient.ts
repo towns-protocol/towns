@@ -1181,7 +1181,6 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
                     userId,
                     roomId,
                 })
-                this._eventHandlers?.onInviteUser?.(roomId, userId)
                 return
             case SpaceProtocol.Casablanca:
                 throw new Error('inviteUser not implemented for Casablanca')
@@ -1253,7 +1252,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
                     membershipStatus: Membership.Join,
                 })
 
-                this._eventHandlers?.onJoinRoom?.(zionRoom.id)
+                this._eventHandlers?.onJoinRoom?.(zionRoom.id, spaceId)
                 return zionRoom
             }
             case SpaceProtocol.Casablanca: {
@@ -2067,7 +2066,11 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
         }
     }
 
-    public setEventHandlers(eventHandlers: ZionClientEventHandlers) {
+    public setEventHandlers(eventHandlers: ZionClientEventHandlers | undefined) {
         this._eventHandlers = eventHandlers
+    }
+
+    public onLogin({ userId }: { userId: string }) {
+        this._eventHandlers?.onLogin?.({ userId: userId })
     }
 }

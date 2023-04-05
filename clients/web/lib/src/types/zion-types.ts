@@ -200,11 +200,17 @@ export interface SendZionReactionOptions {
     targetEventId: string
 }
 
-export type SendMessageOptions =
+export interface SpaceIdOptions {
+    parentSpaceId?: RoomIdentifier
+}
+
+export type SendMessageOptionsBase =
     | SendTextMessageOptions
     | SendWenMoonOptions
     | SendImageMessageOptions
     | SendZionTextMessageOptions
+
+export type SendMessageOptions = SendMessageOptionsBase & SpaceIdOptions
 
 export type ImageMessageContent = IContent & Omit<SendImageMessageOptions, 'messageType'>
 
