@@ -1,4 +1,4 @@
-import React, { ButtonHTMLAttributes } from 'react'
+import React, { ButtonHTMLAttributes, forwardRef } from 'react'
 import { vars } from 'ui/styles/vars.css'
 import { MotionStack } from '@components/Transitions/MotionBox'
 import { BoxProps } from '../Box/Box'
@@ -25,35 +25,47 @@ type Props = {
 
 export type ButtonProps = Props
 
-export const Button = ({
-    aspectRatio,
-    animate = false,
-    size = 'button_md',
-    rounded,
-    disabled,
-    hoverEffect,
-    tone = 'level3',
-    icon,
-    children,
-    onClick,
-    ...inputProps
-}: Props) => (
-    <MotionStack
-        horizontal
-        layout={animate}
-        aspectRatio={aspectRatio}
-        as="button"
-        cursor={disabled ? 'default' : 'pointer'}
-        className={buttonStyle({ size, rounded, hoverEffect, tone })}
-        justifyContent="center"
-        alignItems="center"
-        background={tone}
-        whileHover="hover"
-        disabled={disabled}
-        onClick={onClick}
-        {...inputProps}
-    >
-        {icon && <Icon type={icon} size="square_inline" />}
-        {children}
-    </MotionStack>
+export const Button = forwardRef<HTMLButtonElement, Props>(
+    (
+        {
+            aspectRatio,
+            animate = false,
+            size = 'button_md',
+            rounded,
+            disabled,
+            hoverEffect,
+            tone = 'level3',
+            icon,
+            children,
+            onClick,
+            ...inputProps
+        },
+        ref,
+    ) => (
+        <MotionStack
+            horizontal
+            layout={animate}
+            aspectRatio={aspectRatio}
+            as="button"
+            cursor={disabled ? 'default' : 'pointer'}
+            className={buttonStyle({
+                size,
+                rounded,
+                hoverEffect,
+                // a tone can be specified here in order to transition background
+                tone: animate ? tone : undefined,
+            })}
+            justifyContent="center"
+            alignItems="center"
+            background={tone}
+            whileHover="hover"
+            disabled={disabled}
+            onClick={onClick}
+            {...inputProps}
+            ref={ref}
+        >
+            {icon && <Icon type={icon} size="square_inline" />}
+            {children}
+        </MotionStack>
+    ),
 )
