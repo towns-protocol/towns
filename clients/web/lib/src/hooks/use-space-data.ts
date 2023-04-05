@@ -10,17 +10,14 @@ import {
     SpaceHierarchy,
 } from '../types/zion-types'
 import { RoomIdentifier } from '../types/room-identifier'
-import { useZionClient } from './use-zion-client'
 import { useRoom } from './use-room'
 import { useZionContext } from '../components/ZionContextProvider'
 import { useSpaceContext } from '../components/SpaceContextProvider'
 
 /// returns default space if no space slug is provided
 export function useSpaceData(): SpaceData | undefined {
-    const { defaultSpaceId, defaultSpaceAvatarSrc, defaultSpaceName, spaceHierarchies } =
-        useZionContext()
+    const { spaceHierarchies } = useZionContext()
     const { spaceId } = useSpaceContext()
-    const { clientRunning } = useZionClient()
     const spaceRoom = useRoom(spaceId)
     const spaceHierarchy = useMemo(
         () => (spaceId?.networkId ? spaceHierarchies[spaceId.networkId] : undefined),
@@ -35,37 +32,9 @@ export function useSpaceData(): SpaceData | undefined {
                 spaceRoom?.membership ?? '',
                 '/placeholders/nft_29.png',
             )
-        } else if (
-            clientRunning &&
-            defaultSpaceId &&
-            spaceId?.networkId == defaultSpaceId?.networkId
-        ) {
-            // this bit is temporary because client.peek(...) ("rooms_initial_sync") is unimplemented in dendrite https://github.com/HereNotThere/harmony/issues/188
-            const defaultSpaceRoom: Room = {
-                id: defaultSpaceId,
-                name: defaultSpaceName ?? 'Default Space',
-                members: [],
-                membersMap: {},
-                membership: '',
-                isSpaceRoom: true,
-            }
-            return formatSpace(
-                defaultSpaceRoom,
-                undefined,
-                defaultSpaceRoom.membership,
-                defaultSpaceAvatarSrc ?? '/placeholders/nft_29.png',
-            )
         }
         return undefined
-    }, [
-        clientRunning,
-        defaultSpaceAvatarSrc,
-        defaultSpaceId,
-        defaultSpaceName,
-        spaceHierarchy,
-        spaceRoom,
-        spaceId,
-    ])
+    }, [spaceHierarchy, spaceRoom])
 }
 
 export function useInvites(): InviteData[] {

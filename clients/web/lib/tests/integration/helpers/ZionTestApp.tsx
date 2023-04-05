@@ -13,9 +13,6 @@ interface Props {
     provider: ZionTestWeb3Provider
     primaryProtocol?: SpaceProtocol
     onboardingOpts?: ZionOnboardingOpts
-    defaultSpaceId?: string
-    defaultSpaceName?: string
-    defaultSpaceAvatarSrc?: string
     initialSyncLimit?: number
     pollTimeoutMs?: number
     chainId?: number
@@ -27,9 +24,6 @@ export const ZionTestApp = (props: Props) => {
         provider,
         primaryProtocol: inPrimaryProtocol,
         onboardingOpts: inOnboardingOpts,
-        defaultSpaceId,
-        defaultSpaceName,
-        defaultSpaceAvatarSrc,
         initialSyncLimit,
         pollTimeoutMs,
         children,
@@ -55,9 +49,6 @@ export const ZionTestApp = (props: Props) => {
             casablancaServerUrl={casablancaServerUrl}
             onboardingOpts={onboardingOpts}
             web3Signer={provider.wallet}
-            defaultSpaceId={defaultSpaceId}
-            defaultSpaceName={defaultSpaceName}
-            defaultSpaceAvatarSrc={defaultSpaceAvatarSrc}
             initialSyncLimit={initialSyncLimit}
             pollTimeoutMs={pollTimeoutMs}
             chain={foundry}

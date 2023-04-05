@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useMemo } from 'react'
 import { RoomIdentifier, toRoomIdentifier } from '../types/room-identifier'
-import { useZionContext } from './ZionContextProvider'
 
 export interface ISpaceContext {
     spaceId?: RoomIdentifier
@@ -27,10 +26,9 @@ interface Props {
 
 export function SpaceContextProvider(props: Props): JSX.Element {
     // in a very safe way, memoize all space context parameters
-    const { defaultSpaceId } = useZionContext()
     const spaceId = useMemo(
-        () => (props.spaceId ? toRoomIdentifier(props.spaceId) : defaultSpaceId),
-        [props.spaceId, defaultSpaceId],
+        () => (props.spaceId ? toRoomIdentifier(props.spaceId) : undefined),
+        [props.spaceId],
     )
     const spaceContext: ISpaceContext = useMemo(
         () => ({

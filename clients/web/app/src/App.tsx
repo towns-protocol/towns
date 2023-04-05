@@ -31,8 +31,6 @@ const DebugBar = React.lazy(() => import('@components/DebugBar/DebugBar'))
 FontLoader.init()
 
 const CASABLANCA_SERVER_URL = env.VITE_CASABLANCA_SERVER_URL ?? ''
-const ZION_SPACE_NAME = 'towns preview' // name is temporary until peek() is implemented https://github.com/HereNotThere/harmony/issues/188
-const ZION_SPACE_AVATAR_SRC = '/placeholders/nft_10.png' // avatar is temporary until peek() is implemented https://github.com/HereNotThere/harmony/issues/188
 
 export const App = () => {
     const { homeserverUrl, ...rest } = useMatrixHomeServerUrl()
@@ -45,8 +43,6 @@ export const App = () => {
             primaryProtocol={SpaceProtocol.Matrix}
             casablancaServerUrl={CASABLANCA_SERVER_URL}
             matrixServerUrl={homeserverUrl}
-            defaultSpaceName={ZION_SPACE_NAME}
-            defaultSpaceAvatarSrc={ZION_SPACE_AVATAR_SRC}
             onboardingOpts={{ skipAvatar: true }}
             initialSyncLimit={100}
             chain={chain}

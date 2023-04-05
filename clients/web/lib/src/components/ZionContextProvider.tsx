@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useMemo } from 'react'
+import React, { createContext, useContext } from 'react'
 import { ZionClient } from '../client/ZionClient'
 import { ZionOpts } from '../client/ZionClientTypes'
 import { useContentAwareTimelineDiff } from '../hooks/ZionContext/useContentAwareTimelineDiff'
@@ -17,7 +17,7 @@ import { useMatrixRooms } from '../hooks/ZionContext/useMatrixRooms'
 import { useMatrixTimelines } from '../hooks/ZionContext/useMatrixTimelines'
 import { useZionClientListener } from '../hooks/use-zion-client-listener'
 import { Room, SpaceHierarchies, SpaceItem } from '../types/zion-types'
-import { makeRoomIdentifier, RoomIdentifier } from '../types/room-identifier'
+import { RoomIdentifier } from '../types/room-identifier'
 import { Web3ContextProvider } from './Web3ContextProvider'
 import { Chain } from 'wagmi'
 import { useTransactionListener } from '../hooks/use-transaction-listener'
@@ -41,9 +41,6 @@ export interface IZionContext {
     spaceHierarchies: SpaceHierarchies
     matrixOnboardingState: IOnboardingState
     casablancaOnboardingState: IOnboardingState
-    defaultSpaceId?: RoomIdentifier
-    defaultSpaceName?: string
-    defaultSpaceAvatarSrc?: string
     syncError?: string
 }
 
@@ -62,9 +59,6 @@ export function useZionContext(): IZionContext {
 
 interface Props extends ZionOpts {
     enableSpaceRootUnreads?: boolean
-    defaultSpaceId?: string
-    defaultSpaceName?: string // name is temporary until peek() is implemented https://github.com/HereNotThere/harmony/issues/188
-    defaultSpaceAvatarSrc?: string // avatar is temporary until peek() is implemented https://github.com/HereNotThere/harmony/issues/188
     chain?: Chain
     children: JSX.Element
     alchemyKey?: string
@@ -87,14 +81,7 @@ export function ZionContextProvider({
 
 /// the zion client needs to be nested inside a Web3 provider, hence the need for this component
 const ContextImpl = (props: Props): JSX.Element => {
-    const {
-        casablancaServerUrl,
-        matrixServerUrl,
-        enableSpaceRootUnreads,
-        defaultSpaceId,
-        defaultSpaceName,
-        defaultSpaceAvatarSrc,
-    } = props
+    const { casablancaServerUrl, matrixServerUrl, enableSpaceRootUnreads } = props
 
     const { client, clientSingleton, matrixClient, casablancaClient } = useZionClientListener(props)
     const { invitedToIds } = useSpacesIds(matrixClient)
@@ -105,11 +92,6 @@ const ContextImpl = (props: Props): JSX.Element => {
         client,
         spaceHierarchies,
         enableSpaceRootUnreads === true,
-    )
-
-    const convertedDefaultSpaceId = useMemo(
-        () => (defaultSpaceId ? makeRoomIdentifier(defaultSpaceId) : undefined),
-        [defaultSpaceId],
     )
 
     const rooms = useMatrixRooms(matrixClient)
@@ -140,9 +122,6 @@ const ContextImpl = (props: Props): JSX.Element => {
                 casablancaOnboardingState,
                 homeServerUrl: matrixServerUrl,
                 casablancaServerUrl: casablancaServerUrl,
-                defaultSpaceId: convertedDefaultSpaceId,
-                defaultSpaceName,
-                defaultSpaceAvatarSrc,
                 syncError,
             }}
         >
