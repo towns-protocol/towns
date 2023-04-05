@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react'
 import { Navigate, useSearchParams } from 'react-router-dom'
+import { useAccount } from 'wagmi'
 import { LoginButton } from '@components/Login/LoginButton/LoginButton'
 import { InteractiveSpaceIcon } from '@components/SpaceIcon'
 import { Box, Heading, Icon, Paragraph, Stack, Text } from '@ui'
@@ -37,6 +38,14 @@ const InviteLinkLanding = () => {
     const { data, isLoading } = useContractSpaceInfo(spaceId)
     const setTitle = useSetDocTitle()
     const { data: roomTopic, isLoading: isLoadingRoomTopic } = useGetSpaceTopic(spaceId)
+    const url = new URL(window.location.href)
+    const { address: currentWallet } = useAccount()
+    const invalidWallet = url.searchParams.get('invalidWallet')
+    // relevant only if a user has tried to join the town already, but we're denied b/c they don't have permission, and they then selected "switch wallet"
+    // which navigates them back to this view, but with the invalidWallet param set. We need this b/c metamask UI is not very intuitive
+    // and it's not clear that a user still needs to switch their account after connecting a new wallet
+    const currentWalletIsInvalidForTown =
+        currentWallet && invalidWallet && currentWallet === invalidWallet
 
     const {
         walletStatus,
@@ -152,6 +161,16 @@ const InviteLinkLanding = () => {
                     tone="cta1"
                     onClick={onButtonClick}
                 />
+
+                {currentWalletIsInvalidForTown && (
+                    <Box color="negative" paddingTop="md">
+                        <Text size="sm" textAlign="center">
+                            {
+                                "Your selected wallet doesn't have permissions for this town. Select a different wallet and try again."
+                            }
+                        </Text>
+                    </Box>
+                )}
 
                 {isConnected && userOnWrongNetworkForSignIn && (
                     <Box paddingTop="md" flexDirection="row" justifyContent="end">

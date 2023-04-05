@@ -1,6 +1,7 @@
 import React, { useCallback, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { RoomIdentifier, SpaceProtocol, useZionClient } from 'use-zion-client'
+import { useAccount } from 'wagmi'
 import { Box, Button, Heading, Icon, Paragraph, Stack, Text } from '@ui'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { InteractiveSpaceIcon } from '@components/SpaceIcon'
@@ -28,6 +29,22 @@ const SpaceJoinModal = (props: ModalProps) => {
     const data = props.joinData
     const { logout } = useAuth()
     const initialSyncComplete = useWaitForInitialSync()
+    const { address } = useAccount()
+
+    const onSwitchWallet = useCallback(async () => {
+        await logout()
+        // save this in the url so InviteLinkLanding can pick it up
+        window.history.replaceState(null, '', `?invite&invalidWallet=${address}`)
+        // triggers MM prompt to user to connect with different wallet, after connecting, they still have to change their account
+        try {
+            await window.ethereum?.request({
+                method: 'wallet_requestPermissions',
+                params: [{ eth_accounts: {} }],
+            })
+        } catch (error) {
+            console.error(error)
+        }
+    }, [address, logout])
 
     if (!data) {
         return null
@@ -85,6 +102,7 @@ const SpaceJoinModal = (props: ModalProps) => {
                             >
                                 <Text>OK</Text>
                             </Button>
+
                             {props.notEntitled && (
                                 <Button
                                     animate={false}
@@ -93,7 +111,7 @@ const SpaceJoinModal = (props: ModalProps) => {
                                     style={{
                                         boxShadow: 'none',
                                     }}
-                                    onClick={logout}
+                                    onClick={onSwitchWallet}
                                 >
                                     <Text size="sm" color="gray1">
                                         Switch Wallet
