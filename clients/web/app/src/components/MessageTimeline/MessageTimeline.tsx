@@ -1,5 +1,11 @@
-import React, { useCallback, useContext, useMemo, useRef, useState } from 'react'
-import { FullyReadMarker, MessageType, ZTEvent, useFullyReadMarker } from 'use-zion-client'
+import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import {
+    FullyReadMarker,
+    MessageType,
+    ZTEvent,
+    useFullyReadMarker,
+    useZionClient,
+} from 'use-zion-client'
 import { Box, Divider, Paragraph, VList } from '@ui'
 import { useExperimentsStore } from 'store/experimentsStore'
 import { notUndefined } from 'ui/utils/utils'
@@ -54,6 +60,21 @@ export const MessageTimeline = (props: Props) => {
         !fullyPersistedRef.current && !fullyReadMarker?.isUnread ? undefined : fullyReadMarker
 
     const fullyReadPersisted = fullyPersistedRef.current
+
+    const isSentRef = useRef(fullyReadMarker && !fullyReadMarker.isUnread)
+    const { sendReadReceipt } = useZionClient()
+    const onMarkAsRead = useCallback(
+        (fullyReadMarker: FullyReadMarker) => {
+            if (isSentRef.current) {
+                // repeated calls can occur if server reponse is lagging and
+                // user scrolls back into view
+                return
+            }
+            sendReadReceipt(fullyReadMarker)
+            isSentRef.current = true
+        },
+        [sendReadReceipt],
+    )
 
     const isThread = timelineContext?.type === MessageTimelineType.Thread
 
@@ -261,6 +282,20 @@ export const MessageTimeline = (props: Props) => {
         return { listItems, numHidden }
     }, [allListItems, flatGroups.length, isCollapsed, timelineContext?.type])
 
+    const hasUnreadMarker = fullyPersistedRef.current
+    const [isUnreadMarkerFaded, setIsUnreadMarkerFaded] = useState(false)
+
+    useEffect(() => {
+        if (hasUnreadMarker) {
+            const timeout = setTimeout(() => {
+                setIsUnreadMarkerFaded(true)
+            }, 3000)
+            return () => {
+                clearTimeout(timeout)
+            }
+        }
+    }, [hasUnreadMarker])
+
     const groupIds = useMemo(
         () =>
             listItems.reduce((groupIds, item) => {
@@ -284,7 +319,12 @@ export const MessageTimeline = (props: Props) => {
                 return r.type === 'header' ? (
                     <>{props.header}</>
                 ) : r.type === 'group' ? (
-                    <DateDivider label={r.date} ref={ref} new={r.isNew} />
+                    <DateDivider
+                        label={r.date}
+                        ref={ref}
+                        new={r.isNew}
+                        faded={isUnreadMarkerFaded}
+                    />
                 ) : r.type === 'divider' ? (
                     <Box paddingX="md" paddingY="md">
                         <Divider space="none" />
@@ -307,9 +347,11 @@ export const MessageTimeline = (props: Props) => {
                     <NewDivider
                         fullyReadMarker={r.item.event}
                         hidden={r.item.isHidden}
+                        faded={isUnreadMarkerFaded}
                         paddingX={
                             timelineContext?.type === MessageTimelineType.Channel ? 'lg' : 'md'
                         }
+                        onMarkAsRead={onMarkAsRead}
                     />
                 ) : (
                     <MessageTimelineItem

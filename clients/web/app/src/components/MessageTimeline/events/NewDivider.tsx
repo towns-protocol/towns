@@ -1,55 +1,69 @@
-import React, { useCallback, useEffect, useRef } from 'react'
+import React, { useEffect, useMemo } from 'react'
 import { useInView } from 'react-intersection-observer'
-import { FullyReadMarker, useZionClient } from 'use-zion-client'
+import { FullyReadMarker } from 'use-zion-client'
 import { useStore } from 'store/store'
 import { Box, BoxProps, Paragraph, Stack } from '@ui'
 
-export const NewDivider = React.memo(
-    (props: { fullyReadMarker: FullyReadMarker; hidden?: boolean } & BoxProps) => {
-        const { fullyReadMarker, hidden: isHidden, ...boxProps } = props
-        const { sendReadReceipt } = useZionClient()
+type Props = {
+    onMarkAsRead: (fullyReadMarker: FullyReadMarker) => void
+    fullyReadMarker: FullyReadMarker
+    faded?: boolean
+    hidden?: boolean
+} & BoxProps
 
-        const isSentRef = useRef(!fullyReadMarker.isUnread)
+export const NewDivider = (props: Props) => {
+    const {
+        fullyReadMarker,
+        hidden: isHidden,
+        faded: isNewFaded,
+        onMarkAsRead,
+        ...boxProps
+    } = props
 
-        const markAsRead = useCallback(() => {
-            if (isSentRef.current) {
-                // repeated calls can occur if server reponse is lagging and
-                // user scrolls back into view
-                return
+    const isWindowActive = useStore((state) => state.isWindowFocused)
+
+    const { ref, inView } = useInView({
+        threshold: 0,
+        triggerOnce: true,
+    })
+
+    useEffect(() => {
+        if (fullyReadMarker.isUnread && inView && isWindowActive) {
+            const timeout = setTimeout(() => {
+                onMarkAsRead(fullyReadMarker)
+            }, 100)
+            return () => {
+                clearTimeout(timeout)
             }
-            sendReadReceipt(fullyReadMarker)
-            isSentRef.current = true
-        }, [fullyReadMarker, sendReadReceipt])
+        }
+    }, [onMarkAsRead, fullyReadMarker.isUnread, isWindowActive, inView, fullyReadMarker])
 
-        const isWindowActive = useStore((state) => state.isWindowFocused)
+    const opacityStyle = useMemo(
+        () => (isNewFaded ? { opacity: 0.33, transition: `opacity 1s` } : undefined),
+        [isNewFaded],
+    )
 
-        const { ref, inView } = useInView({
-            threshold: 0,
-            triggerOnce: true,
-        })
-
-        useEffect(() => {
-            if (fullyReadMarker.isUnread && inView && isWindowActive) {
-                const timeout = setTimeout(markAsRead, 100)
-                return () => {
-                    clearTimeout(timeout)
-                }
-            }
-        }, [markAsRead, fullyReadMarker.isUnread, isWindowActive, inView])
-
-        return fullyReadMarker ? (
-            !isHidden ? (
-                <Stack horizontal gap paddingY="sm" alignItems="center" paddingX="lg" {...boxProps}>
-                    <Box grow borderBottom="negative" />
-                    <Box centerContent color="negative" ref={ref}>
-                        <Paragraph size="sm">NEW</Paragraph>
-                    </Box>
-                </Stack>
-            ) : (
-                <div ref={ref} />
-            )
+    return fullyReadMarker ? (
+        !isHidden ? (
+            <Stack
+                horizontal
+                gap="sm"
+                paddingY="sm"
+                alignItems="center"
+                paddingRight="lg"
+                paddingLeft="none"
+                {...boxProps}
+                style={opacityStyle}
+            >
+                <Box grow borderBottom="accent" />
+                <Box centerContent color="accent" ref={ref}>
+                    <Paragraph size="sm">NEW</Paragraph>
+                </Box>
+            </Stack>
         ) : (
-            <></>
+            <div ref={ref} />
         )
-    },
-)
+    ) : (
+        <></>
+    )
+}
