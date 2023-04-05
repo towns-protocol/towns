@@ -21,6 +21,7 @@ type ModalProps = {
     // we don't have access to matrix room data - we haven't joined the room yet - this joinData comes from contract
     joinData?: JoinData
     notEntitled: boolean
+    maxLimitReached: boolean
 }
 
 const SpaceJoinModal = (props: ModalProps) => {
@@ -32,10 +33,12 @@ const SpaceJoinModal = (props: ModalProps) => {
         return null
     }
 
+    const notAllowd = props.notEntitled || props.maxLimitReached
+
     return (
         <ModalContainer minWidth="420" onHide={props.onHide}>
             <Stack centerContent gap="lg" padding="lg">
-                {props.notEntitled ? (
+                {notAllowd ? (
                     <>
                         <Box position="relative">
                             <InteractiveSpaceIcon
@@ -66,8 +69,10 @@ const SpaceJoinModal = (props: ModalProps) => {
 
                             <Box maxWidth="350" paddingTop="sm">
                                 <Text textAlign="center" color="gray2" size="lg">
-                                    You don&apos;t have permission to join this space because we
-                                    were unable to verify the required assets in your wallet.
+                                    {props.notEntitled &&
+                                        "You don't have permission to join this town because we were unable to verify the required assets in your wallet."}
+                                    {props.maxLimitReached &&
+                                        'You are unable to join because this town has reached its capacity.'}
                                 </Text>
                             </Box>
                         </Box>
@@ -80,19 +85,21 @@ const SpaceJoinModal = (props: ModalProps) => {
                             >
                                 <Text>OK</Text>
                             </Button>
-                            <Button
-                                animate={false}
-                                tone="none"
-                                size="button_sm"
-                                style={{
-                                    boxShadow: 'none',
-                                }}
-                                onClick={logout}
-                            >
-                                <Text size="sm" color="gray1">
-                                    Switch Wallet
-                                </Text>
-                            </Button>
+                            {props.notEntitled && (
+                                <Button
+                                    animate={false}
+                                    tone="none"
+                                    size="button_sm"
+                                    style={{
+                                        boxShadow: 'none',
+                                    }}
+                                    onClick={logout}
+                                >
+                                    <Text size="sm" color="gray1">
+                                        Switch Wallet
+                                    </Text>
+                                </Button>
+                            )}
                         </Box>
                     </>
                 ) : (
@@ -155,10 +162,14 @@ export const SpaceJoin = (props: Props) => {
     const { onSuccessfulJoin, joinData, onCancel } = props
     const [modal, setModal] = useState(true)
     const navigate = useNavigate()
-    const { joinRoom } = useZionClient()
+    const { client } = useZionClient()
     const [notEntitled, setNotEntitled] = useState(false)
+    const [maxLimitReached, setMaxLimitReached] = useState(false)
 
     const joinSpace = useCallback(async () => {
+        if (!client) {
+            return
+        }
         if (joinData?.networkId) {
             const roomIdentifier: RoomIdentifier = {
                 protocol: SpaceProtocol.Matrix,
@@ -166,16 +177,23 @@ export const SpaceJoin = (props: Props) => {
                 networkId: joinData.networkId,
             }
 
-            const result = await joinRoom(roomIdentifier)
-            // a 401 response (not propagated) means the result will be undefined
-            // TODO: should the error be propagated?
-            if (!result) {
-                setNotEntitled(true)
-            } else {
-                onSuccessfulJoin?.()
+            try {
+                // use client.joinRoom b/c it will throw an error, not the joinRoom wrapped in useWithCatch()
+                const result = await client.joinRoom(roomIdentifier)
+                if (!result) {
+                    setNotEntitled(true)
+                } else {
+                    onSuccessfulJoin?.()
+                }
+            } catch (error) {
+                if ((error as Error)?.message?.includes('has exceeded the member cap')) {
+                    setMaxLimitReached(true)
+                } else {
+                    setNotEntitled(true)
+                }
             }
         }
-    }, [joinData.networkId, joinRoom, onSuccessfulJoin])
+    }, [joinData.networkId, client, onSuccessfulJoin])
 
     const onHide = useCallback(() => {
         setModal(false)
@@ -193,6 +211,7 @@ export const SpaceJoin = (props: Props) => {
                 <SpaceJoinModal
                     joinData={joinData}
                     notEntitled={notEntitled}
+                    maxLimitReached={maxLimitReached}
                     onHide={onHide}
                     onCancel={_onCancel}
                     onJoin={joinSpace}

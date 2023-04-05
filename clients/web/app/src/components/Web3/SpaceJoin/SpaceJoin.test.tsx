@@ -14,7 +14,9 @@ vi.mock('use-zion-client', async () => {
         useZionClient: () => {
             return {
                 ...actual.useZionClient(),
-                joinRoom: joinRoomSpy,
+                client: {
+                    joinRoom: joinRoomSpy,
+                },
             }
         },
         useZionContext: () => {
@@ -95,8 +97,8 @@ describe('<SpaceJoin />', () => {
         })
     })
 
-    test('it shows failed to join message if unable to join room', async () => {
-        joinRoomSpy.mockReturnValueOnce(undefined)
+    test('it failed permission message if unable to join room because of invalid permissions', async () => {
+        joinRoomSpy.mockRejectedValueOnce(Error('Invalid permissions'))
 
         const onSuccessfulJoinSpy = vi.fn()
 
@@ -121,6 +123,35 @@ describe('<SpaceJoin />', () => {
         expect(onSuccessfulJoinSpy).not.toHaveBeenCalled()
         await waitFor(() => {
             expect(screen.getByText(/You don't have permission/gi)).toBeInTheDocument()
+        })
+    })
+
+    test('it shows room limit message if unable to join room because of room limit', async () => {
+        joinRoomSpy.mockRejectedValueOnce(Error('has exceeded the member cap'))
+
+        const onSuccessfulJoinSpy = vi.fn()
+
+        render(
+            <Wrapper
+                joinData={{ name: 'doodles', networkId: 'doodles-id' }}
+                onSuccessfulJoin={onSuccessfulJoinSpy}
+            />,
+        )
+
+        const joinButton = await screen.findByText('Join doodles')
+        fireEvent.click(joinButton)
+
+        await waitFor(() => {
+            expect(joinRoomSpy).toHaveBeenCalledWith({
+                networkId: 'doodles-id',
+                protocol: 'matrix',
+                slug: 'doodles-id',
+            })
+        })
+
+        expect(onSuccessfulJoinSpy).not.toHaveBeenCalled()
+        await waitFor(() => {
+            expect(screen.getByText(/this town has reached its capacity./gi)).toBeInTheDocument()
         })
     })
 })
