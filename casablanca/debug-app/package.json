@@ -7,7 +7,7 @@
         "build": "tsc"
     },
     "dependencies": {
-        "@towns/client": "workspace:^"
+        "@towns/sdk": "workspace:^"
     },
     "devDependencies": {
         "ts-node": "^10.9.1",

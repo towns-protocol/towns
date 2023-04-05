@@ -1,4 +1,4 @@
-import { Client as CasablancaClient, ParsedEvent } from '@towns/client'
+import { Client as CasablancaClient, ParsedEvent } from '@towns/sdk'
 import { StreamKind, MembershipOp } from '@towns/proto'
 import { useEffect } from 'react'
 import { Membership, Mention } from '../../types/zion-types'

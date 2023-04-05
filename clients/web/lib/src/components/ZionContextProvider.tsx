@@ -23,7 +23,7 @@ import { Chain } from 'wagmi'
 import { useTransactionListener } from '../hooks/use-transaction-listener'
 import { QueryProvider } from './QueryProvider'
 import { MatrixClient } from 'matrix-js-sdk'
-import { Client as CasablancaClient } from '@towns/client'
+import { Client as CasablancaClient } from '@towns/sdk'
 import { useCasablancaTimelines } from '../hooks/ZionContext/useCasablancaTimelines'
 
 export interface IZionContext {

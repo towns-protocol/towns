@@ -2,7 +2,7 @@ import { SpaceItem } from '../../types/zion-types'
 import { useMatrixSpaces } from '../MatrixClient/useMatrixSpaces'
 import { useCasablancaSpaces } from '../CasablancClient/useCasablancaSpaces'
 import { MatrixClient } from 'matrix-js-sdk'
-import { Client as CasablancaClient } from '@towns/client'
+import { Client as CasablancaClient } from '@towns/sdk'
 
 export function useSpaces(
     matrixClient: MatrixClient | undefined,

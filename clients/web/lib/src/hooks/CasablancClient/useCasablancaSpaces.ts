@@ -1,4 +1,4 @@
-import { Client as CasablancaClient } from '@towns/client'
+import { Client as CasablancaClient } from '@towns/sdk'
 import { SpaceItem } from '../../types/zion-types'
 import { useSpaceIdStore } from '../../hooks/ZionContext/useSpaceIds'
 

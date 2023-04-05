@@ -1,7 +1,7 @@
 import { IOnboardingState } from './IOnboardingState'
 import { IOnboardingStep } from './IOnboardingStep'
 import { ZionClient } from '../../../client/ZionClient'
-import { Client as CasablancaClient } from '@towns/client'
+import { Client as CasablancaClient } from '@towns/sdk'
 
 export abstract class IOnboardingStep_Casablanca<T = IOnboardingState> extends IOnboardingStep<T> {
     casablancaClient: CasablancaClient

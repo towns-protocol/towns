@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
-import { getMessagePayload, Stream } from '@towns/client'
-import { ParsedEvent } from '@towns/client'
+import { getMessagePayload, Stream } from '@towns/sdk'
+import { ParsedEvent } from '@towns/sdk'
 import {
     ReactionEvent,
     RoomMessageEvent,

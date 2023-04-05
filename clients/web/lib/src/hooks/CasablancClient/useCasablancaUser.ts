@@ -1,4 +1,4 @@
-import { Client as CasablancaClient } from '@towns/client'
+import { Client as CasablancaClient } from '@towns/sdk'
 import { User } from '../../types/zion-types'
 
 export function useCasablancaUser(userId?: string, client?: CasablancaClient): User | undefined {

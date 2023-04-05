@@ -3,8 +3,8 @@
  * @group casablanca
  */
 import { waitFor } from '@testing-library/dom'
-import { Client as CasablancaClient, makeStreamRpcClient } from '@towns/client'
-import { bin_fromHexString, publicKeyToBuffer, SignerContext } from '@towns/client'
+import { Client as CasablancaClient, makeStreamRpcClient } from '@towns/sdk'
+import { bin_fromHexString, publicKeyToBuffer, SignerContext } from '@towns/sdk'
 import { ethers } from 'ethers'
 import { Permission } from '../../src/client/web3/ContractTypes'
 import { SpaceProtocol } from '../../src/client/ZionClientTypes'

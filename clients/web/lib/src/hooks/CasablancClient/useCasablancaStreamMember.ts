@@ -1,6 +1,6 @@
 import { RoomIdentifier } from '../../types/room-identifier'
 import { Membership, RoomMember } from '../../types/zion-types'
-import { Stream } from '@towns/client'
+import { Stream } from '@towns/sdk'
 import { useEffect, useState } from 'react'
 import { SpaceProtocol } from '../../client/ZionClientTypes'
 import { useCasablancaStream } from './useCasablancaStream'

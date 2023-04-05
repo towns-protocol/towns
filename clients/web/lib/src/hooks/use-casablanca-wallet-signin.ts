@@ -5,7 +5,7 @@ import { useWeb3Context } from '../components/Web3ContextProvider'
 import { useZionContext } from '../components/ZionContextProvider'
 import { useCasablancaStore } from '../store/use-casablanca-store'
 import { LoginStatus } from './login'
-import { bin_toHexString } from '@towns/client'
+import { bin_toHexString } from '@towns/sdk'
 
 export function useCasablancaWalletSignIn() {
     const { clientSingleton } = useZionContext()
