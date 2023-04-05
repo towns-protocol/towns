@@ -6,8 +6,6 @@ import {
 } from '../../common'
 import { getCollectionMetadata as getCollectionMetadataInfura } from './handlers/infura/getCollectionMetadata'
 import { getCollectionMetadata as getCollectionMetadataAlchemy } from './handlers/alchemy/getCollectionMetadata'
-import { getNftsForOwner } from './handlers/getNfts'
-import { isHolderOfCollection } from './handlers/isHolderOfCollection'
 import { router } from './router'
 import { Env, TokenProviderRequest } from './types'
 import { getCollectionsForOwner as getCollectionsForOwnerInfura } from './handlers/infura/getCollectionsForOwner'
@@ -42,6 +40,7 @@ const withInfuraAuthHeader = (request: TokenProviderRequest, env: Env) => {
     }
 }
 
+// adds a rpcUrl to the request object
 const withNetwork = async (request: TokenProviderRequest, env: Env) => {
     const provider = request.params?.provider
     const network = request.params?.network
@@ -77,52 +76,32 @@ const withNetwork = async (request: TokenProviderRequest, env: Env) => {
         }
 
         request.rpcUrl = `${base}.g.alchemy.com/nft/v2/${env.ALCHEMY_API_KEY}`
-    }
-    // TODO: remove
-    else {
-        // https://docs.alchemy.com/docs/choosing-a-web3-network
-        const url = new URL(request.url)
-        if (url.pathname.includes('eth-mainnet')) {
-            request.rpcUrl = `https://eth-mainnet.g.alchemy.com/v2/${env.ALCHEMY_API_KEY}`
-        } else if (url.pathname.includes('eth-sepolia')) {
-            request.rpcUrl = `https://eth-sepolia.g.alchemy.com/v2/${env.ALCHEMY_API_KEY}`
-        } else {
-            request.rpcUrl = `https://eth-goerli.g.alchemy.com/v2/${env.ALCHEMY_API_KEY}`
-        }
-    }
-}
-
-// TODO: Alchemy has updated their API to prefix it with /nft/v2 whereas before it was just /v2. All their endpoints seems updaated, with backwards compat for old ones. Should verify and make this the default for alchemy
-const withNetworkPrefixedWithNFT = async (request: TokenProviderRequest, env: Env) => {
-    // https://docs.alchemy.com/docs/choosing-a-web3-network
-    const url = new URL(request.url)
-    if (url.pathname.includes('eth-mainnet')) {
-        request.rpcUrl = `https://eth-mainnet.g.alchemy.com/nft/v2/${env.ALCHEMY_API_KEY}`
-    } else if (url.pathname.includes('eth-sepolia')) {
-        request.rpcUrl = `https://eth-sepolia.g.alchemy.com/nft/v2/${env.ALCHEMY_API_KEY}`
     } else {
-        request.rpcUrl = `https://eth-goerli.g.alchemy.com/nft/v2/${env.ALCHEMY_API_KEY}`
+        return new Response(`invalid provider:: ${provider}`, { status: 400 })
     }
 }
 
 router
-    // TODO: remove? if client switches to using balanceOf we don't need this
-    // https://docs.alchemy.com/reference/isholderofcollection
-    .get('/api/isHolderOfCollection/:network', withNetworkPrefixedWithNFT, isHolderOfCollection)
+    /**
+     * isHolderOfCollection
+     * Not used currently. If needed, must add support for infura
+     * .get('/api/isHolderOfCollection/:network', withNetwork, isHolderOfCollection)
+     */
 
-    // get all NFTs for a wallet
-    // ALCHEMY: https://docs.alchemy.com/reference/getnfts
-    // TODO: add support for infura if needed
-    // NOTE: If used w/ Alchemy, this should be changed to withNetworkPrefixedWithNFT, alchmemy has updated their API, but it works without it
-    .get('/api/getNftsForOwner/:network/:wallet', withNetwork, getNftsForOwner)
+    /**
+     * getNftsForOwner
+     * Not used currently. If needed, must add support for infura
+     * .get('/api/getNftsForOwner/:network/:wallet', withNetwork, getNftsForOwner)
+     */
 
-    // TODO: REMOVE in favor of getCollectionMetadata
-    .get('/api/getContractMetadata/:network', withNetwork, getCollectionMetadataAlchemy)
-
-    // get all collections for a wallet
-    // examples
-    // ALCHEMY: /api/getCollectionsForOwner/al/eth-mainnet/0x0
-    // INFURA: /api/getCollectionsForOwner/in/eth-mainnet/0x0
+    /**
+     * getCollectionsForOwner
+     * get all collections for a wallet
+     *
+     * examples
+     * ALCHEMY: /api/getCollectionsForOwner/al/eth-mainnet/0x0
+     * INFURA: /api/getCollectionsForOwner/in/eth-mainnet/0x0
+     */
     .get(
         '/api/getCollectionsForOwner/:provider/:network/:wallet',
         withNetwork,
@@ -136,10 +115,17 @@ router
         },
     )
 
-    // get metadata for a collection
-    // examples
-    // ALCHEMY: /api/getCollectionMetadata/al/eth-mainnet/0x0
-    // INFURA: /api/getCollectionMetadata/in/eth-mainnet/0x0
+    /**
+     * getCollectionMetadata
+     * get metadata for a collection
+     *
+     * requires a contractAddress query param
+     * TODO: change query param to path param
+     *
+     * examples
+     * ALCHEMY: /api/getCollectionMetadata/al/eth-mainnet?contractAddress=0x0
+     * INFURA: /api/getCollectionMetadata/in/eth-mainnet?contractAddress=0x0
+     */
     .get(
         '/api/getCollectionMetadata/:provider/:network',
         withNetwork,

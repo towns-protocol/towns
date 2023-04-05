@@ -4,7 +4,8 @@ const ALCHEMY_URL = 'https://eth-mainnet.g.alchemy.com'
 const IS_HOLDER_OF_COLLECTION_PATH =
     '/nft/v2/fake_key/isHolderOfCollection?wallet=0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045&contractAddress=0xe785E82358879F061BC3dcAC6f0444462D4b5330'
 
-test('getContractMetadata()', async () => {
+// 4.4.23 - isHolderOfCollection() not being used
+test.skip('isHolderOfCollection()', async () => {
     const fetchMock = getMiniflareFetchMock()
 
     fetchMock.disableNetConnect()
