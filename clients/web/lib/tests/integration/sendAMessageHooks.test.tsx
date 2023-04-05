@@ -86,12 +86,14 @@ describe('sendMessageHooks', () => {
                 })
                 void (async () => {
                     console.log(`onEdit`, messagesOrRedactions[1].eventId)
+                    if (messagesOrRedactions[1].content?.kind !== ZTEvent.RoomMessage) {
+                        throw new Error('not a message')
+                    }
                     await editMessage(
                         channelId,
+                        messagesOrRedactions[1].eventId,
+                        messagesOrRedactions[1].content,
                         'hello jane gm!',
-                        {
-                            originalEventId: messagesOrRedactions[1].eventId,
-                        },
                         undefined,
                     )
                     setMsgEdited(true)

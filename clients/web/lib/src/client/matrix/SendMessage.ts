@@ -46,6 +46,38 @@ function getMessageContent(message: string, options: SendMessageOptions): Messag
     }
 }
 
+export function editMessageContent(
+    message: string,
+    previousContent: MessageContent,
+    options: SendMessageOptions,
+): MessageContent {
+    const content = { ...previousContent, body: message }
+    switch (options.messageType) {
+        case MessageType.Image:
+            return {
+                ...content,
+                url: options.url,
+                info: options.info,
+            }
+        case MessageType.ZionText:
+            return {
+                ...content,
+                ...(options.attachments ? { attachments: options.attachments } : {}),
+            }
+        case undefined:
+        case MessageType.Text:
+            if (options.mentions) {
+                return {
+                    ...content,
+                    mentions: options.mentions,
+                }
+            }
+            return content
+        default:
+            return content
+    }
+}
+
 /** treat message as a reply to parentId if specified */
 export async function sendMatrixMessage(
     matrixClient: MatrixClient,

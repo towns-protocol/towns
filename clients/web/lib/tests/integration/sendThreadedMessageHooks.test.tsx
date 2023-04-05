@@ -2,6 +2,7 @@
 
 import {
     FullyReadMarker,
+    RoomMessageEvent,
     ThreadResult,
     ThreadStats,
     TimelineEvent,
@@ -30,6 +31,7 @@ import { useSpaceNotificationCounts } from '../../src/hooks/use-space-notificati
 import { useSpaceThreadRoots } from '../../src/hooks/use-space-thread-roots'
 import { useTimelineThread } from '../../src/hooks/use-timeline-thread'
 import { useZionClient } from '../../src/hooks/use-zion-client'
+import { useTimeline } from '../../src/hooks/use-timeline'
 
 // TODO Zustand https://docs.pmnd.rs/zustand/testing
 
@@ -85,6 +87,7 @@ describe('sendThreadedMessageHooks', () => {
             const { sendMessage, editMessage, sendReadReceipt } = useZionClient()
             const threadRoots = useSpaceThreadRoots()
             const { timeline: channelTimeline } = useChannelTimeline()
+            const { timeline: channel_2_timeline } = useTimeline(channel_2)
             const channelThreadStats = useChannelThreadStats()
             const spaceNotifications = useSpaceNotificationCounts(spaceId)
             const channel_1_fullyRead = useFullyReadMarker(channel_1)
@@ -118,14 +121,16 @@ describe('sendThreadedMessageHooks', () => {
                     if (!channel_2_threadRoot) {
                         throw new Error('no channel_2_threadRoot')
                     }
+                    if (!channel_2_threadRoot.thread.parentMessageContent) {
+                        throw new Error('no channel_2_threadRoot.thread.parentMessageContent')
+                    }
                     const channelId = channel_2_threadRoot.channel.id
                     const messageId = channel_2_threadRoot.thread.parentId
                     await editMessage(
                         channelId,
+                        messageId,
+                        channel_2_threadRoot.thread.parentMessageContent,
                         'hello jane old friend in channel_2',
-                        {
-                            originalEventId: messageId,
-                        },
                         undefined,
                     )
                     console.log(`editChannel2Message1 finished`)
@@ -169,12 +174,12 @@ describe('sendThreadedMessageHooks', () => {
             )
 
             const formatMessage = useCallback(
-                (e: TimelineEvent) => {
+                (e: TimelineEvent, v?: 'short') => {
                     const replyCount = channelThreadStats[e.eventId]?.replyCount
                     const replyCountStr = replyCount ? `(replyCount:${replyCount})` : ''
-                    return `${e.fallbackContent} ${replyCountStr} content: ${JSON.stringify(
-                        e.content,
-                    )}`
+                    const idStr = `id:${e.eventId}`
+                    const content = v !== undefined ? '' : `content: ${JSON.stringify(e.content)}`
+                    return `${e.fallbackContent} ${replyCountStr} ${idStr} ${content}`
                 },
                 [channelThreadStats],
             )
@@ -228,6 +233,11 @@ describe('sendThreadedMessageHooks', () => {
                     </div>
                     <div data-testid="channelMessages">
                         {channelTimeline
+                            .map((event, i) => `message-${i} ${formatMessage(event, 'short')}`)
+                            .join('\n')}
+                    </div>
+                    <div data-testid="channel_2_messages">
+                        {channel_2_timeline
                             .map((event, i) => `message-${i} ${formatMessage(event)}`)
                             .join('\n')}
                     </div>
@@ -372,7 +382,7 @@ describe('sendThreadedMessageHooks', () => {
             await jane.sendMessage(channel_2, 'hello channel_2 @bob', {
                 mentions: [{ userId: bobUserId.textContent!, displayName: 'bob' }],
             })
-            await jane.sendMessage(channel_2, 'hello thread in channel_2 @bob', {
+            await jane.sendMessage(channel_2, 'whats up bob! thread in channel_2 @bob', {
                 threadId: channel_2_message_1.eventId,
                 mentions: [{ userId: bobUserId.textContent!, displayName: 'bob' }],
             })
@@ -382,6 +392,8 @@ describe('sendThreadedMessageHooks', () => {
         await waitFor(() => expect(channel_1_fullyRead).toHaveTextContent('mentions:1'))
         await waitFor(() => expect(channel_2_fullyRead).toHaveTextContent('mentions:1'))
         await waitFor(() => expect(channel_2_thread_fullyRead).toHaveTextContent('mentions:1'))
+        // -- and the message
+        await waitFor(() => expect(channel2ThreadMessages).toHaveTextContent('whats up bob!'))
         // - bob marks the thread markers as read
         fireEvent.click(markAllAsRead)
         // did it work?
@@ -390,5 +402,44 @@ describe('sendThreadedMessageHooks', () => {
         await waitFor(() => expect(channel_2_fullyRead).toHaveTextContent('mentions:0'))
         await waitFor(() => expect(channel_2_thread_fullyRead).toHaveTextContent('mentions:0'))
         await waitFor(() => expect(unreadInProgress).toHaveTextContent('0'))
+
+        // get our threaded message...
+        let event = await jane.getLatestEvent<RoomMessageEvent>(channel_2)
+        expect(event?.threadParentId).toBe(channel_2_message_1.eventId)
+        expect(event?.content.body).toContain('whats up bob!')
+
+        // can we edit it?
+        await act(async () => {
+            if (!event) {
+                throw new Error('no event')
+            }
+            await jane.editMessage(
+                channel_2,
+                event.eventId,
+                event.content,
+                'Im a turtle!',
+                undefined,
+            )
+        })
+        // what does bob see?
+        await waitFor(() => expect(channel2ThreadMessages).not.toHaveTextContent('whats up bob!'))
+        await waitFor(() => expect(channel2ThreadMessages).toHaveTextContent('Im a turtle!'))
+
+        // refetch the event
+        const ogEventId = event?.eventId
+        event = await jane.getLatestEvent<RoomMessageEvent>(channel_2)
+        expect(event?.threadParentId).toBe(channel_2_message_1.eventId)
+        expect(event?.content.body).toContain('Im a turtle!')
+        expect(event?.content.replacedMsgId).toBe(ogEventId)
+
+        // can we delete it?
+        await act(async () => {
+            if (!event || !event.content.replacedMsgId) {
+                throw new Error('no event')
+            }
+            await jane.redactEvent(channel_2, event.content.replacedMsgId)
+        })
+        // what does bob see?
+        await waitFor(() => expect(channel2ThreadMessages).not.toHaveTextContent('Im a turtle!'))
     })
 })

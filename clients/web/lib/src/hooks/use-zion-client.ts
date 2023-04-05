@@ -12,7 +12,6 @@ import {
 import {
     CreateChannelInfo,
     CreateSpaceInfo,
-    EditMessageOptions,
     PowerLevel,
     Room,
     SendMessageOptions,
@@ -22,7 +21,7 @@ import {
 import { MatrixError, MatrixEvent, MatrixScheduler } from 'matrix-js-sdk'
 import { useCallback, useMemo } from 'react'
 
-import { FullyReadMarker } from '../types/timeline-types'
+import { FullyReadMarker, RoomMessageEvent } from '../types/timeline-types'
 import { ISpaceDapp } from 'client/web3/ISpaceDapp'
 import { MatrixSpaceHierarchy } from '../client/matrix/SyncSpace'
 import { Permission } from '../client/web3/ContractTypes'
@@ -107,9 +106,10 @@ interface ZionClientImpl {
     ) => Promise<TransactionContext<void> | undefined>
     editMessage: (
         roomId: RoomIdentifier,
+        eventId: string,
+        originalEventContent: RoomMessageEvent,
         message: string,
-        options: EditMessageOptions,
-        SendTextMessageOptions: SendTextMessageOptions | undefined,
+        options: SendTextMessageOptions | undefined,
     ) => Promise<void>
     getIsWalletRegisteredWithMatrix: () => Promise<boolean>
     getIsWalletRegisteredWithCasablanca: () => Promise<boolean>

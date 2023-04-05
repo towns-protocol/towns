@@ -58,15 +58,13 @@ describe('editMessage', () => {
 
         // bob get the last message
         const event = await bob.getLatestEvent<RoomMessageEvent>(channelId)
+        if (!event) {
+            throw new Error('event is undefined')
+        }
         expect(event?.content?.body).toEqual('Hello Balice!')
 
         // bob sends edited message to the room
-        await bob.editMessage(
-            channelId,
-            'Hello Alice!',
-            { originalEventId: event?.eventId || '' },
-            undefined,
-        )
+        await bob.editMessage(channelId, event.eventId, event.content, 'Hello Alice!', undefined)
 
         // bob should see the edited msg.
         await waitFor(async () => {

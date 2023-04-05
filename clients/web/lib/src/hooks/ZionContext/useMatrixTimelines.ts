@@ -14,6 +14,7 @@ import {
     RestrictedAllowType,
     Room as MatrixRoom,
     RoomEvent,
+    IContent,
 } from 'matrix-js-sdk'
 import { enrichPowerLevels } from '../../client/matrix/PowerLevels'
 import {
@@ -83,7 +84,10 @@ export function useMatrixTimelines(client?: MatrixClient) {
             if (removed) {
                 setState.removeEvent(roomId, timelineEvent.eventId)
             } else if (replacedMsgId !== undefined) {
-                setState.replaceEvent(userId, roomId, replacedMsgId, timelineEvent)
+                // if the event is still encrypted, just drop it on the floor, we'll get it later
+                if (timelineEvent.content?.kind !== ZTEvent.RoomMessageEncrypted) {
+                    setState.replaceEvent(userId, roomId, replacedMsgId, timelineEvent)
+                }
             } else if (toStartOfTimeline) {
                 setState.prependEvent(userId, roomId, timelineEvent)
             } else {
@@ -125,7 +129,8 @@ export function useMatrixTimelines(client?: MatrixClient) {
                 return
             }
             roomIds.add(roomId)
-            setState.replaceEvent(userId, roomId, eventId, toEvent(event, userId))
+            const replacedMsgId = getReplacedMessageId(event)
+            setState.replaceEvent(userId, roomId, replacedMsgId ?? eventId, toEvent(event, userId))
         }
 
         const onRoomRedaction = (event: MatrixEvent, eventRoom: MatrixRoom) => {
@@ -189,7 +194,7 @@ export function toEvent(event: MatrixEvent, userId: string): TimelineEvent {
     }
     const isSender = sender.id === userId
     const fbc = `${event.getType()} ${getFallbackContent(sender.displayName, content, error)}`
-    // console.log("!!!! to event", event.getId(), fbc);
+    // console.log('!!!! to event', { id: event.getId(), fbc, content, mcontent: event.getContent() })
     return {
         eventId: eventId,
         status: isSender ? event.status ?? undefined : undefined,
@@ -215,7 +220,8 @@ function toZionContent(
     const describe = () => {
         return `${event.getType()} id: ${eventId}`
     }
-    const content = event.getContent()
+    const fullContent = event.getContent()
+    const content = (fullContent['m.new_content'] as IContent) ?? fullContent
     const eventType = event.getType()
 
     switch (eventType) {
@@ -351,7 +357,7 @@ function toZionContent(
             return {
                 content: {
                     kind: ZTEvent.RoomMessage,
-                    inReplyTo: event.replyEventId,
+                    inReplyTo: getReplyEventId(event),
                     body: content.body as string,
                     msgType: content.msgtype,
                     replacedMsgId: getReplacedMessageId(event),
@@ -452,4 +458,14 @@ function toTimelineEvents(room: MatrixRoom, userId: string) {
 
 export function isZTimelineEvent(event: MatrixEvent): boolean {
     return !event.isRelation(RelationType.Replace) && !event.isRedacted()
+}
+
+/// using custom function to get reply event id becauset the matrix version breaks when replacing a message
+function getReplyEventId(event: MatrixEvent): string | undefined {
+    const content = event.getContent()
+    if (content['m.new_content']) {
+        return (content['m.new_content'] as IContent)['m.relates_to']?.['m.in_reply_to']?.event_id
+    }
+    const mRelatesTo = event.getContent()['m.relates_to'] || event.getWireContent()['m.relates_to']
+    return mRelatesTo?.['m.in_reply_to']?.event_id
 }

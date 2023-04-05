@@ -29,7 +29,6 @@ import { LocalStorageCryptoStore } from 'matrix-js-sdk/lib/crypto/store/localSto
 import {
     CreateChannelInfo,
     CreateSpaceInfo,
-    EditMessageOptions,
     Membership,
     PowerLevel,
     PowerLevels,
@@ -46,7 +45,7 @@ import {
     isUserStreamId as isCasablancaUserStreamId,
 } from '@towns/sdk'
 
-import { FullyReadMarker, ZTEvent } from '../types/timeline-types'
+import { FullyReadMarker, RoomMessageEvent, ZTEvent } from '../types/timeline-types'
 import { ISpaceDapp } from './web3/ISpaceDapp'
 import { Permission } from './web3/ContractTypes'
 import { RoleIdentifier, TProvider } from '../types/web3-types'
@@ -1413,9 +1412,10 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
      *************************************************/
     public async editMessage(
         roomId: RoomIdentifier,
+        eventId: string,
+        originalEventContent: RoomMessageEvent,
         message: string,
-        options: EditMessageOptions,
-        msgOptions: SendTextMessageOptions | undefined,
+        options: SendTextMessageOptions | undefined,
     ) {
         switch (roomId.protocol) {
             case SpaceProtocol.Matrix:
@@ -1425,9 +1425,10 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
                 return await editZionMessage(
                     this.matrixClient,
                     roomId,
+                    eventId,
+                    originalEventContent,
                     message,
                     options,
-                    msgOptions,
                 )
             case SpaceProtocol.Casablanca:
                 if (!this.casablancaClient) {
@@ -1438,9 +1439,9 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
                     ZTEvent.RoomMessage,
                     roomId,
                     message,
-                    msgOptions,
-                    undefined,
                     options,
+                    undefined,
+                    { originalEventId: eventId },
                 )
             default:
                 staticAssertNever(roomId)

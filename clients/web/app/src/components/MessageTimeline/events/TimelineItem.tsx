@@ -1,5 +1,5 @@
 import React, { useContext } from 'react'
-import { staticAssertNever } from 'use-zion-client'
+import { ZTEvent, staticAssertNever } from 'use-zion-client'
 import { MessageTimelineContext } from '../MessageTimelineContext'
 import { RenderEvent, RenderEventType } from '../util/getEventsByDate'
 import { AccumulatedRoomMemberEvent } from './AccumulatedRoomMemberEvent'
@@ -58,10 +58,11 @@ export const MessageTimelineItem = (props: {
                 >
                     {displayEncrypted ? (
                         <TimelineEncryptedContent event={event} displayContext={displayContext} />
-                    ) : isEditing ? (
+                    ) : isEditing && event.content.kind === ZTEvent.RoomMessage ? (
                         <TimelineMessageEditor
                             initialValue={itemData.event.content.body}
                             eventId={event.eventId}
+                            eventContent={event.content}
                             channelId={channelId}
                         />
                     ) : (
