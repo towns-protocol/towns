@@ -22,6 +22,7 @@ import { useCreateSpaceTransaction } from '../../src/hooks/use-create-space-tran
 import { useRoles } from '../../src/hooks/use-roles'
 import { useSpacesFromContract } from '../../src/hooks/use-spaces-from-contract'
 import { useUpdateChannelTransaction } from '../../src/hooks/use-update-channel-transaction'
+import { useSpaceData } from '../../src/hooks/use-space-data'
 
 /**
  * This test suite tests the useRoles hook.
@@ -72,6 +73,7 @@ describe('useUpdateChannelTransaction', () => {
         // get our test elements
         const spaceElement = screen.getByTestId('spacesElement')
         const channelElement = screen.getByTestId('channelElement')
+        const SpaceHierachyElement = screen.getByTestId('spaceHierachyElement')
         const createSpaceButton = screen.getByRole('button', {
             name: 'Create Space',
         })
@@ -100,6 +102,7 @@ describe('useUpdateChannelTransaction', () => {
             TestConstants.DecaDefaultWaitForTimeout,
         )
         await waitFor(() => expect(channelElement).toHaveTextContent(`channelName:${channelName}`))
+        await waitFor(() => expect(SpaceHierachyElement).toHaveTextContent(channelName))
 
         /* Act */
         // click button to update the channel name
@@ -114,6 +117,8 @@ describe('useUpdateChannelTransaction', () => {
         await waitFor(() =>
             expect(channelElement).toHaveTextContent(`channelName:${updatedChannelName}`),
         )
+        await waitFor(() => expect(SpaceHierachyElement).toHaveTextContent(updatedChannelName))
+
         // verify the channel topic has changed
         await waitFor(() =>
             expect(channelElement).toHaveTextContent(`channelTopic:${updatedChannelTopic}`),
@@ -239,6 +244,7 @@ function TestComponent(args: {
             <TransactionInfo for={updateChannelTransactionInfo} label="updateChannelTransaction" />
             <SpaceContextProvider spaceId={spaceId}>
                 <>
+                    <SpaceHierachy />
                     <SpacesComponent />
                     <div data-testid="channelElement">
                         {channelId && (
@@ -261,6 +267,20 @@ function SpacesComponent(): JSX.Element {
             {spaces.map((element) => (
                 <div key={element.key}>{element.name}</div>
             ))}
+        </div>
+    )
+}
+
+function SpaceHierachy() {
+    const space = useSpaceData()
+    const channelNames = space?.channelGroups.flatMap((c) =>
+        c.channels.map((channel) => channel.label),
+    )
+    return (
+        <div data-testid="spaceHierachyElement">
+            {channelNames
+                ? channelNames.map((channelName) => <div key={channelName}>{channelName}</div>)
+                : null}
         </div>
     )
 }

@@ -152,6 +152,24 @@ export function useSyncSpaceHierarchies(
         }
     }, [matrixClient, queryClient, spaceIds])
 
+    // watch for when a channel name changes
+    useEffect(() => {
+        const onNameEvent = (room: MatrixRoom) => {
+            const parentSpaceId = getParentSpaceId(room, spaceIds)
+            if (parentSpaceId) {
+                queryClient.removeQueries({
+                    queryKey: [QueryKeyChannels.SyncEntitledChannels, parentSpaceId],
+                })
+                enqueueSpaceId(parentSpaceId)
+            }
+        }
+
+        matrixClient?.on(RoomEvent.Name, onNameEvent)
+        return () => {
+            matrixClient?.off(RoomEvent.Name, onNameEvent)
+        }
+    }, [matrixClient, queryClient, spaceIds])
+
     // watch for when user joins or leaves a channel
     useEffect(() => {
         function onMyMembership(
@@ -159,19 +177,13 @@ export function useSyncSpaceHierarchies(
             membership: string,
             prevMembership?: string | undefined,
         ) {
-            const parentEvents = room.currentState
-                .getStateEvents(EventType.SpaceParent)
-                .map((e) => e.getStateKey())
-
-            const parentSpaceId = parentEvents?.[0]
-
-            if (!parentSpaceId || !spaceIds.find((s) => s.networkId === parentSpaceId)) {
-                return
+            const parentSpaceId = getParentSpaceId(room, spaceIds)
+            if (parentSpaceId) {
+                queryClient.removeQueries({
+                    queryKey: [QueryKeyChannels.SyncEntitledChannels, parentSpaceId],
+                })
+                enqueueSpaceId(parentSpaceId)
             }
-            queryClient.removeQueries({
-                queryKey: [QueryKeyChannels.SyncEntitledChannels, parentSpaceId],
-            })
-            enqueueSpaceId(parentSpaceId)
         }
 
         matrixClient?.on(RoomEvent.MyMembership, onMyMembership)
@@ -181,4 +193,18 @@ export function useSyncSpaceHierarchies(
     }, [matrixClient, queryClient, spaceIds])
 
     return { spaceHierarchies }
+}
+
+function getParentSpaceId(room: MatrixRoom, spaceIds: RoomIdentifier[]) {
+    const parentEvents = room.currentState
+        .getStateEvents(EventType.SpaceParent)
+        .map((e) => e.getStateKey())
+
+    const parentSpaceId = parentEvents?.[0]
+
+    if (!parentSpaceId || !spaceIds.find((s) => s.networkId === parentSpaceId)) {
+        return
+    }
+
+    return parentSpaceId
 }
