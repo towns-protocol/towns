@@ -57,6 +57,7 @@ export { useCasablancaStore } from './store/use-casablanca-store'
 export { useFullyReadMarkerStore } from './store/use-fully-read-marker-store'
 export { useMatrixStore } from './store/use-matrix-store'
 export { useTimelineStore } from './store/use-timeline-store'
+export { useTransactionStore } from './store/use-transactions-store'
 export { TxnsEventEmitter, useOnTransactionEmitted } from './store/use-transactions-store'
 export type { EmittedTransaction } from './store/use-transactions-store'
 
@@ -111,7 +112,7 @@ export type {
 
 export { ZTEvent, EventStatus } from './types/timeline-types'
 
-export { WalletStatus } from './types/web3-types'
+export { WalletStatus, BlockchainTransactionType } from './types/web3-types'
 
 export type { UserIdentifier } from './types/user-identifier'
 

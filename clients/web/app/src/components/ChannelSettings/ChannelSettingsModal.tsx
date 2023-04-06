@@ -1,9 +1,11 @@
 import { FieldValues, UseFormRegister } from 'react-hook-form'
 import React, { useCallback, useMemo, useState } from 'react'
 import {
+    BlockchainTransactionType,
     RoomIdentifier,
     useMultipleRoleDetails,
     useRoom,
+    useTransactionStore,
     useUpdateChannelTransaction,
 } from 'use-zion-client'
 
@@ -31,6 +33,7 @@ import {
     Text,
     TextField,
 } from '@ui'
+import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinner'
 import { ModalContainer } from '../Modals/ModalContainer'
 
 const FormStateKeys = {
@@ -74,28 +77,32 @@ function ChannelSettingsPopup({
     channelId,
     onHide,
     onUpdatedChannel,
-}: ChannelSettingsModalProps): JSX.Element {
+    preventCloseMessage,
+}: ChannelSettingsModalProps & {
+    preventCloseMessage: string | undefined
+}): JSX.Element {
     const room = useRoom(channelId)
     // get the space roles and other role details
-    const spaceRoleIds = useSpaceRoleIds(spaceId.networkId)
+    const { spaceRoleIds, isLoading: isLoadingSpaceRoleIds } = useSpaceRoleIds(spaceId.networkId)
     const { data: _rolesDetails, invalidateQuery } = useMultipleRoleDetails(
         spaceId.networkId,
         spaceRoleIds,
     )
-    const rolesWithDetails = useMemo(
-        (): RoleCheckboxProps[] | undefined =>
-            _rolesDetails?.map((role) => {
-                const channelHasRole = role.channels.some(
-                    (c) => c.channelNetworkId === channelId.networkId,
-                )
-                return {
-                    ...role,
-                    channelHasRole,
-                    tokenAddresses: role.tokens.map((token) => token.contractAddress as string),
-                }
-            }),
-        [_rolesDetails, channelId.networkId],
-    )
+    const rolesWithDetails = useMemo((): RoleCheckboxProps[] | undefined => {
+        if (isLoadingSpaceRoleIds) {
+            return undefined
+        }
+        return _rolesDetails?.map((role) => {
+            const channelHasRole = role.channels.some(
+                (c) => c.channelNetworkId === channelId.networkId,
+            )
+            return {
+                ...role,
+                channelHasRole,
+                tokenAddresses: role.tokens.map((token) => token.contractAddress as string),
+            }
+        })
+    }, [_rolesDetails, channelId.networkId, isLoadingSpaceRoleIds])
 
     const defaultValues = useMemo((): FormState => {
         if (room) {
@@ -234,22 +241,29 @@ function ChannelSettingsPopup({
                             </Stack>
 
                             <Stack gap="sm">
-                                <Stack>
-                                    <Box paddingTop="md" paddingBottom="sm">
-                                        <Text strong>Which roles have access to this channel</Text>
+                                {!rolesWithDetails ? (
+                                    <Box gap paddingY="lg">
+                                        <ButtonSpinner />
                                     </Box>
-                                </Stack>
-
-                                {rolesWithDetails?.map((role) => {
-                                    return (
-                                        <RoleDetailsComponent
-                                            key={role.id}
-                                            spaceId={spaceId}
-                                            role={role}
-                                            register={register}
-                                        />
-                                    )
-                                })}
+                                ) : (
+                                    <>
+                                        <Box paddingY="sm">
+                                            <Text strong>
+                                                Which roles have access to this channel
+                                            </Text>
+                                        </Box>
+                                        {rolesWithDetails?.map((role) => {
+                                            return (
+                                                <RoleDetailsComponent
+                                                    key={role.id}
+                                                    spaceId={spaceId}
+                                                    role={role}
+                                                    register={register}
+                                                />
+                                            )
+                                        })}
+                                    </>
+                                )}
 
                                 <ErrorMessage
                                     errors={formState.errors}
@@ -285,7 +299,14 @@ function ChannelSettingsPopup({
 
                             <Box flexDirection="row" justifyContent="end" gap="sm" paddingTop="lg">
                                 <Stack horizontal gap justifyContent="end">
-                                    <Button tone="level2" value="Cancel" onClick={onHide}>
+                                    <Button
+                                        tone="level2"
+                                        value="Cancel"
+                                        disabled={
+                                            isDisabled || !transactionUIState.isAbleToInteract
+                                        }
+                                        onClick={onHide}
+                                    >
                                         Cancel
                                     </Button>
 
@@ -298,6 +319,15 @@ function ChannelSettingsPopup({
                                     </TransactionButton>
                                 </Stack>
                             </Box>
+
+                            {preventCloseMessage && (
+                                <Box centerContent paddingY="md">
+                                    <ErrorMessageText
+                                        color="negative"
+                                        message={preventCloseMessage}
+                                    />
+                                </Box>
+                            )}
 
                             {!isTransactionNetwork && (
                                 <Box paddingTop="md" flexDirection="row" justifyContent="end">
@@ -352,10 +382,25 @@ export function ChannelSettingsModal({
     onHide,
     onUpdatedChannel,
 }: ChannelSettingsModalProps): JSX.Element {
+    const storedTransactions = useTransactionStore((state) => state.transactions)
+    const [transactionMessage, setTransactionMessage] = useState<string | undefined>()
+
+    const _onHide = useCallback(() => {
+        const pendingTransaction = Object.values(storedTransactions).some(
+            (v) => v.type === BlockchainTransactionType.EditChannel,
+        )
+        if (pendingTransaction) {
+            setTransactionMessage('Please wait for the transaction to complete.')
+            return
+        }
+        onHide()
+    }, [onHide, storedTransactions])
+
     return (
-        <ModalContainer key={`${spaceId.networkId}_${channelId.networkId}}`} onHide={onHide}>
+        <ModalContainer key={`${spaceId.networkId}_${channelId.networkId}}`} onHide={_onHide}>
             <ChannelSettingsPopup
                 spaceId={spaceId}
+                preventCloseMessage={transactionMessage}
                 channelId={channelId}
                 onHide={onHide}
                 onUpdatedChannel={onUpdatedChannel}

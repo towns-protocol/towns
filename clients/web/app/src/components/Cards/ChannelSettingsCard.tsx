@@ -1,10 +1,11 @@
-import { RoomIdentifier, useZionClient } from 'use-zion-client'
+import { Permission, RoomIdentifier, useZionClient } from 'use-zion-client'
 
 import React from 'react'
 import { useEvent } from 'react-use-event-hook'
 import { useNavigate } from 'react-router'
 import { PATHS } from 'routes'
 import { Box, Card } from '@ui'
+import { useHasPermission } from 'hooks/useHasPermission'
 import { MenuItem } from './MenuItem'
 
 type Props = {
@@ -16,7 +17,7 @@ type Props = {
 
 export const ChannelSettingsCard = (props: Props) => {
     const { channelId, spaceId, channelName } = props
-
+    const { data: canEditChannel } = useHasPermission(Permission.ModifySpaceSettings)
     const navigate = useNavigate()
 
     const { leaveRoom } = useZionClient()
@@ -41,9 +42,11 @@ export const ChannelSettingsCard = (props: Props) => {
                     Info
                 </MenuItem>
 
-                <MenuItem icon="edit" onClick={onEditClick}>
-                    Edit channel
-                </MenuItem>
+                {canEditChannel && (
+                    <MenuItem icon="edit" onClick={onEditClick}>
+                        Edit channel
+                    </MenuItem>
+                )}
 
                 <MenuItem icon="logout" color="error" onClick={onLeaveClick}>
                     Leave {channelName}

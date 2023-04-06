@@ -3,6 +3,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { UpdateChannelInfo } from 'types/zion-types'
 import { removeSyncedEntitleChannelsQueries } from '../query/removeSyncedEntitledChannelQueries'
+import { useTransactionStore } from '../store/use-transactions-store'
+import { BlockchainTransactionType } from '../types/web3-types'
 import { useZionClient } from './use-zion-client'
 
 /**
@@ -48,8 +50,12 @@ export function useUpdateChannelTransaction() {
                 const txContext = await updateChannelTransaction(updateChannelInfo)
                 setTransactionContext(txContext)
                 if (txContext?.status === TransactionStatus.Pending) {
+                    // save it to local storage so we can track it
                     if (txContext.transaction && txContext.data) {
-                        // todo: add to the transaction store
+                        useTransactionStore.getState().storeTransaction({
+                            hash: txContext.transaction?.hash as `0x${string}`,
+                            type: BlockchainTransactionType.EditChannel,
+                        })
                     }
                     // Wait for transaction to be mined
                     const rxContext = await waitForUpdateChannelTransaction(txContext)

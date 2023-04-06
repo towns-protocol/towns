@@ -21,8 +21,11 @@ export const useSpaceRoles = (spaceNetworkId?: string) => {
 }
 
 export const useSpaceRoleIds = (spaceNetworkId?: string) => {
-    const { data: spaceRoles } = useSpaceRoles(spaceNetworkId)
+    const { data: spaceRoles, isLoading } = useSpaceRoles(spaceNetworkId)
     return useMemo(() => {
-        return spaceRoles?.map((role) => role.roleId.toNumber()) ?? []
-    }, [spaceRoles])
+        return {
+            isLoading,
+            spaceRoleIds: spaceRoles?.map((role) => role.roleId.toNumber()) ?? [],
+        }
+    }, [isLoading, spaceRoles])
 }

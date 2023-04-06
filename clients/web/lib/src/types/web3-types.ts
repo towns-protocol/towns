@@ -18,6 +18,7 @@ export type TProvider = ReturnType<typeof useProvider>
 export enum BlockchainTransactionType {
     CreateSpace = 'createSpace',
     CreateChannel = 'createChannel',
+    EditChannel = 'editChannel',
     UpdateRole = 'updateRole',
     CreateRole = 'createRole',
     DeleteRole = 'deleteRole',
