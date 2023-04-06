@@ -1,28 +1,36 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
     Channel,
     ChannelGroup,
     InviteData,
+    Membership,
     Room,
     SpaceChild,
     SpaceData,
     SpaceHierarchies,
     SpaceHierarchy,
 } from '../types/zion-types'
-import { RoomIdentifier } from '../types/room-identifier'
+import { RoomIdentifier, makeRoomIdentifier } from '../types/room-identifier'
 import { useRoom } from './use-room'
 import { useZionContext } from '../components/ZionContextProvider'
 import { useSpaceContext } from '../components/SpaceContextProvider'
+import { useCasablancaStream } from './CasablancClient/useCasablancaStream'
+import { Stream } from '@towns/sdk'
+import { StreamKind } from '@towns/proto'
+import isEqual from 'lodash/isEqual'
 
 /// returns default space if no space slug is provided
-export function useSpaceData(): SpaceData | undefined {
+export function useSpaceData(inSpaceId?: RoomIdentifier): SpaceData | undefined {
     const { spaceHierarchies } = useZionContext()
-    const { spaceId } = useSpaceContext()
+    const { spaceId: contextSpaceId } = useSpaceContext()
+    const spaceId = inSpaceId ?? contextSpaceId
     const spaceRoom = useRoom(spaceId)
     const spaceHierarchy = useMemo(
         () => (spaceId?.networkId ? spaceHierarchies[spaceId.networkId] : undefined),
         [spaceId?.networkId, spaceHierarchies],
     )
+    const casablancaSpaceData = useSpaceRollup(spaceId?.networkId)
+
     return useMemo(() => {
         if (spaceRoom || spaceHierarchy) {
             return formatSpace(
@@ -32,9 +40,11 @@ export function useSpaceData(): SpaceData | undefined {
                 spaceRoom?.membership ?? '',
                 '/placeholders/nft_29.png',
             )
+        } else if (casablancaSpaceData) {
+            return casablancaSpaceData
         }
         return undefined
-    }, [spaceHierarchy, spaceRoom])
+    }, [spaceHierarchy, spaceRoom, casablancaSpaceData])
 }
 
 export function useInvites(): InviteData[] {
@@ -155,4 +165,90 @@ function toChannelGroups(children: SpaceChild[]): ChannelGroup[] {
     }
     // the backend doesn't yet support tags, just return all channels in the "Channels" group
     return [toChannelGroup('Channels', children)]
+}
+
+function useSpaceRollup(streamId: string | undefined): SpaceData | undefined {
+    const { casablancaClient } = useZionContext()
+    const stream = useCasablancaStream(streamId)
+    const [space, setSpace] = useState<SpaceData | undefined>(undefined)
+
+    useEffect(() => {
+        if (!stream || !casablancaClient) {
+            return
+        }
+        const userId = casablancaClient.userId
+
+        const getChannels = () => {
+            return Array.from(casablancaClient.streams.values()).filter(
+                (s) => s.rollup.parentSpaceId === stream.rollup.streamId,
+            )
+        }
+
+        const onStreamUpdate = () => {
+            const newSpace = rollupSpace(stream, userId, getChannels())
+            setSpace((prev) => {
+                if (isEqual(prev, newSpace)) {
+                    return prev
+                }
+                return newSpace
+            })
+        }
+
+        setSpace(rollupSpace(stream, userId, getChannels()))
+
+        stream.on('streamInitialized', onStreamUpdate)
+        stream.on('streamUpdated', onStreamUpdate)
+
+        return () => {
+            stream.off('streamInitialized', onStreamUpdate)
+            stream.off('streamUpdated', onStreamUpdate)
+            setSpace(undefined)
+        }
+    }, [casablancaClient, stream])
+    return space
+}
+
+function rollupSpace(stream: Stream, userId: string, channels: Stream[]): SpaceData | undefined {
+    if (stream.rollup.streamKind !== StreamKind.SK_SPACE) {
+        throw new Error('stream is not a space')
+    }
+
+    const membership = stream.rollup.userJoinedStreams.has(userId)
+        ? Membership.Join
+        : stream.rollup.userInvitedStreams.has(userId)
+        ? Membership.Invite
+        : Membership.None
+
+    return {
+        id: makeRoomIdentifier(stream.rollup.streamId),
+        name: stream.rollup.streamId,
+        avatarSrc: '',
+        channelGroups: [
+            {
+                label: 'Channels',
+                // channels: Array.from(stream.rollup.spaceChannels)
+                //     .sort()
+                //     .map((c) => ({
+                //         id: makeRoomIdentifier(c),
+                //         label: c,
+                //         private: false,
+                //         highlight: false,
+                //         topic: '',
+                //     })),
+                channels: channels
+                    .sort((a, b) => a.rollup.streamId.localeCompare(b.rollup.streamId))
+                    .map((c) => ({
+                        id: makeRoomIdentifier(c.rollup.streamId),
+                        label: c.rollup.streamId,
+                        private: false,
+                        highlight: false,
+                        topic: '',
+                    })),
+            },
+        ],
+        membership: membership,
+        isLoadingChannels: false,
+    }
+
+    return undefined
 }

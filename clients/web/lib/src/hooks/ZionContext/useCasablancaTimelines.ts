@@ -62,7 +62,7 @@ export function useCasablancaTimelines(casablancaClient: CasablancaClient | unde
 
 function toEvent(streamId: string, message: ParsedEvent, userId: string): TimelineEvent {
     const eventId = message.hashStr
-    const { content, error } = toZionContent(streamId, eventId, message)
+    const { content, error } = toTownsContent(streamId, eventId, message)
     const sender = {
         id: message.creatorUserId,
         displayName: message.creatorUserId, // todo displayName
@@ -90,7 +90,7 @@ function toEvent(streamId: string, message: ParsedEvent, userId: string): Timeli
     }
 }
 
-function toZionContent(
+function toTownsContent(
     streamId: string,
     eventId: string,
     message: ParsedEvent,

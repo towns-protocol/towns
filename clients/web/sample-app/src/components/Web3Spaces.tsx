@@ -18,6 +18,7 @@ export function Web3Spaces(): JSX.Element {
                     <Button onClick={() => onListItemClick(space)}>
                         <ListItemText>{space.name}</ListItemText>
                     </Button>
+                    {space.networkId}
                 </ListItem>
             ))}
         </List>

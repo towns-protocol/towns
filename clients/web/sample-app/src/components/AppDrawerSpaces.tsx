@@ -1,15 +1,16 @@
 import { Divider, List, ListItem, ListItemText } from '@mui/material'
 import {
+    Channel,
     RoomIdentifier,
+    SpaceItem,
     toRoomIdentifier,
     useChannelNotificationCounts,
-    useSpaceHierarchy,
+    useSpaceData,
     useSpaceNotificationCounts,
     useSpaceThreadRootsUnreadCount,
     useZionContext,
 } from 'use-zion-client'
 
-import { SpaceChild, SpaceItem } from 'use-zion-client/dist/types/zion-types'
 import React, { useCallback, useMemo } from 'react'
 import { useParams } from 'react-router-dom'
 
@@ -69,7 +70,7 @@ const SpaceListItem = (props: {
         return id.networkId === selectedSpaceId?.networkId
     }
     const spaceNotifications = useSpaceNotificationCounts(space.id)
-    const spaceHierarchy = useSpaceHierarchy(space.id)
+    const spaceData = useSpaceData(space.id)
     const spaceThreadCount = useSpaceThreadRootsUnreadCount()
     const formatNameWithUnreads = useCallback(
         (space: SpaceItem) => {
@@ -80,11 +81,12 @@ const SpaceListItem = (props: {
         },
         [spaceNotifications],
     )
+
     return (
         <ListItem button key={space.id.slug} onClick={() => onClickSpace(space.id)}>
             <ListItemText>
                 {formatNameWithUnreads(space)}
-                {isSelectedSpace(space.id) && spaceHierarchy && (
+                {isSelectedSpace(space.id) && spaceData && (
                     <List>
                         <ListItem
                             button
@@ -109,7 +111,7 @@ const SpaceListItem = (props: {
                             Mentions
                         </ListItem>
                         <Divider key={space.id.slug + '_threadsDivider'} />
-                        {spaceHierarchy.children.map((c) => (
+                        {spaceData?.channelGroups.at(0)?.channels.map((c) => (
                             <ChannelListItem
                                 key={c.id.slug}
                                 spaceId={space.id}
@@ -127,7 +129,7 @@ const SpaceListItem = (props: {
 
 const ChannelListItem = (props: {
     spaceId: RoomIdentifier
-    channel: SpaceChild
+    channel: Channel
     selectedChannelId?: RoomIdentifier
     onClickChannel: (spaceId: RoomIdentifier, channelId: RoomIdentifier) => void
 }) => {
@@ -137,12 +139,12 @@ const ChannelListItem = (props: {
     }
     const channelNotifications = useChannelNotificationCounts(channel.id)
     const formatChannelNameWithUnreads = useCallback(
-        (channel: SpaceChild) => {
+        (channel: Channel) => {
             const isUnread = channelNotifications.isUnread
             const mentionCount = channelNotifications.mentions
             const unreadPostfix = isUnread ? ' *' : ''
             const mentionPostfix = mentionCount > 0 ? ` (${mentionCount})` : ''
-            return `${channel.name}${unreadPostfix}${mentionPostfix}`
+            return `${channel.label}${unreadPostfix}${mentionPostfix}`
         },
         [channelNotifications],
     )

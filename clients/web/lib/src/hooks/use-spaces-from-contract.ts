@@ -9,6 +9,8 @@ import { useMatrixCredentials } from './use-matrix-credentials'
 import { useZionClient } from './use-zion-client'
 import { useZionClientEvent } from './use-zion-client-event'
 import { useZionContext } from '../components/ZionContextProvider'
+import { useCasablancaCredentials } from './use-casablanca-credentials'
+import uniqBy from 'lodash/uniqBy'
 
 type UseSpaceFromContractReturn = {
     spaces: SpaceIdentifier[]
@@ -17,6 +19,37 @@ type UseSpaceFromContractReturn = {
 }
 
 export function useSpacesFromContract(): UseSpaceFromContractReturn {
+    const matrixSpaces = useMatrixSpacesFromContract()
+    const casablancaSpaces = useCasablancaSpacesFromContract()
+
+    const spaces = useMemo(() => {
+        return uniqBy([...matrixSpaces.spaces, ...casablancaSpaces.spaces], (s) => s.networkId)
+    }, [matrixSpaces.spaces, casablancaSpaces.spaces])
+
+    return {
+        spaces,
+        isLoading: matrixSpaces.isLoading || casablancaSpaces.isLoading,
+        isError: matrixSpaces.isError || casablancaSpaces.isError,
+    }
+}
+
+export function useCasablancaSpacesFromContract(): UseSpaceFromContractReturn {
+    const { loggedInWalletAddress } = useCasablancaCredentials()
+    const matrixSpaces = useSpacesFromContractWithAddress(loggedInWalletAddress)
+    return matrixSpaces
+}
+
+export function useMatrixSpacesFromContract(): UseSpaceFromContractReturn {
+    const { userId } = useMatrixCredentials()
+    const myWalletAddress = useMemo(() => {
+        return userId ? createUserIdFromString(userId)?.accountAddress : undefined
+    }, [userId])
+    const matrixSpaces = useSpacesFromContractWithAddress(myWalletAddress)
+
+    return matrixSpaces
+}
+
+function useSpacesFromContractWithAddress(myWalletAddress?: string): UseSpaceFromContractReturn {
     const { spaceDapp } = useZionClient()
     const { spaces: spaceRooms } = useZionContext()
     const [{ isLoading, spaces, isError }, setSpaceIdentifiers] =
@@ -26,10 +59,6 @@ export function useSpacesFromContract(): UseSpaceFromContractReturn {
             spaces: [],
         })
     const onNewSpace = useZionClientEvent(ZionClientEvent.NewSpace)
-    const { userId } = useMatrixCredentials()
-    const myWalletAddress = useMemo(() => {
-        return userId ? createUserIdFromString(userId)?.accountAddress : undefined
-    }, [userId])
 
     useEffect(() => {
         const getEntitledSpaceItems = async () => {
@@ -58,6 +87,7 @@ export function useSpacesFromContract(): UseSpaceFromContractReturn {
 
         const getSpaces = async () => {
             const spaceItems = await getEntitledSpaceItems()
+            console.log('spaceItems', { spaceItems, myWalletAddress })
             if (!spaceDapp || spaceItems.length === 0) {
                 setSpaceIdentifiers({
                     isError: false,

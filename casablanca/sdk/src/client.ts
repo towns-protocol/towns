@@ -88,8 +88,15 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
     readonly logEmitFromClient: debug.Debugger
     readonly logEvent: debug.Debugger
 
-    constructor(signerContext: SignerContext, rpcClient: StreamRpcClientType) {
+    constructor(
+        signerContext: SignerContext,
+        rpcClient: StreamRpcClientType,
+        logNamespaceFilter?: string,
+    ) {
         super()
+        if (logNamespaceFilter) {
+            debug.enable(logNamespaceFilter)
+        }
         this.signerContext = signerContext
         this.rpcClient = rpcClient
         this.userId = userIdFromAddress(signerContext.creatorAddress)

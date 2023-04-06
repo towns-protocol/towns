@@ -300,7 +300,11 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
         }
         this._signerContext = context
         const rpcClient = makeStreamRpcClient(this.opts.casablancaServerUrl)
-        this.casablancaClient = new CasablancaClient(context, rpcClient)
+        this.casablancaClient = new CasablancaClient(
+            context,
+            rpcClient,
+            this.opts.logNamespaceFilter,
+        )
         // TODO - long-term the app should already know if user exists via cookie
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
         try {
@@ -1272,22 +1276,29 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
      * sendStateEvent
      *************************************************/
     public async sendStateEvent(
-        spaceId: string,
+        spaceId: RoomIdentifier,
         eventType: ZTEvent,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         content: any,
         stateKey: string,
     ) {
-        if (!this.matrixClient) {
-            throw new Error('matrix client is undefined')
+        switch (spaceId.protocol) {
+            case SpaceProtocol.Matrix:
+                if (!this.matrixClient) {
+                    throw new Error('matrix client is undefined')
+                }
+                // todo need to figure something out for casablanca
+                await this.matrixClient.sendStateEvent(
+                    spaceId.networkId,
+                    eventType,
+                    content,
+                    stateKey, // need unique state_key
+                )
+                break
+            case SpaceProtocol.Casablanca:
+                console.error('sendStateEvent not implemented for Casablanca')
+                break
         }
-        // todo need to figure something out for casablanca
-        await this.matrixClient.sendStateEvent(
-            spaceId,
-            eventType,
-            content,
-            stateKey, // need unique state_key
-        )
     }
 
     /************************************************

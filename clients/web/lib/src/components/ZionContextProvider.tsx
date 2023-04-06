@@ -84,7 +84,7 @@ const ContextImpl = (props: Props): JSX.Element => {
     const { casablancaServerUrl, matrixServerUrl, enableSpaceRootUnreads } = props
 
     const { client, clientSingleton, matrixClient, casablancaClient } = useZionClientListener(props)
-    const { invitedToIds } = useSpacesIds(matrixClient)
+    const { invitedToIds } = useSpacesIds(matrixClient, casablancaClient)
     useContentAwareTimelineDiff(matrixClient)
     const { spaces } = useSpaces(matrixClient, casablancaClient)
     const { spaceHierarchies } = useSyncSpaceHierarchies(client, matrixClient, invitedToIds)

@@ -21,6 +21,7 @@ export interface ZionOpts {
     web3Provider?: TProvider
     web3Signer?: ethers.Signer
     eventHandlers?: ZionClientEventHandlers
+    logNamespaceFilter?: string
 }
 
 export interface MatrixAuth {

@@ -5,6 +5,7 @@ import { waitForTransaction } from '@wagmi/core'
 import { useQueries } from '@tanstack/react-query'
 import { BlockchainTransactionEvent, ZTEvent } from '../types/timeline-types'
 import { BlockchainTransaction, BlockchainTransactionType } from '../types/web3-types'
+import { makeRoomIdentifier } from '../types/room-identifier'
 
 export const useTransactionListener = (client: ZionClient | undefined, homeServerUrl: string) => {
     const transactions = useTransactionStore((state) => state.transactions)
@@ -52,7 +53,7 @@ async function onSuccessfulTransaction(client: ZionClient, transaction: Blockcha
             try {
                 const content: BlockchainTransactionEvent['content'] = transaction
                 await client.sendStateEvent(
-                    transaction.data.parentSpaceId,
+                    makeRoomIdentifier(transaction.data.parentSpaceId),
                     ZTEvent.BlockchainTransaction,
                     content,
                     transaction.hash, // need unique state_key

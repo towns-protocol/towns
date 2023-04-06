@@ -48,6 +48,7 @@ export class StreamStateView {
     readonly messages = new Map<string, ParsedEvent>()
 
     readonly spaceChannels = new Set<string>()
+    readonly parentSpaceId?: string
 
     readonly userInvitedStreams = new Set<string>()
     readonly userJoinedStreams = new Set<string>()
@@ -80,6 +81,7 @@ export class StreamStateView {
         )
         this.streamId = streamId
         this.streamKind = inceptionPayload.streamKind
+        this.parentSpaceId = inceptionPayload.spaceId !== '' ? inceptionPayload.spaceId : undefined
     }
 
     private addEvent(event: ParsedEvent, emitter?: TypedEmitter<StreamEvents>): void {

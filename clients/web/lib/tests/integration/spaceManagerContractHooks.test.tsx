@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react'
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, prettyDOM, render, screen, waitFor } from '@testing-library/react'
 
 import { Permission } from '../../src/client/web3/ContractTypes'
 import {
@@ -149,5 +149,7 @@ describe('spaceManagerContractHooks', () => {
             () => expect(spaceElement).toHaveTextContent(tokenGatedSpaceName),
             TestConstants.DoubleDefaultWaitForTimeout,
         )
+
+        console.log(prettyDOM())
     }) // end test
 }) // end describe

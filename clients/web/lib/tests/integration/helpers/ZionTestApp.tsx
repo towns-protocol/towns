@@ -53,6 +53,7 @@ export const ZionTestApp = (props: Props) => {
             pollTimeoutMs={pollTimeoutMs}
             chain={foundry}
             QueryClientProvider={TestQueryClientProvider}
+            logNamespaceFilter="csb:*"
         >
             <ZionWalletAutoConnect children={children} />
         </ZionContextProvider>

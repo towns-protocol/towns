@@ -5,11 +5,12 @@ import { useNetwork } from 'wagmi'
 
 export const DebugBar = () => {
     const { chain } = useNetwork()
-    const { homeServerUrl } = useZionContext()
+    const { homeServerUrl, casablancaServerUrl } = useZionContext()
     return (
         <Box paddingX="md" paddingTop={2} flexDirection="row">
             <Typography align="center" fontSize={10} paddingTop="20">
-                Server: <b>{homeServerUrl}</b> Chain: <b>{chain?.name || 'Not connected'}</b>
+                Matrix: <b>{homeServerUrl}</b> Casablanca: <b>{casablancaServerUrl}</b> Chain:{' '}
+                <b>{chain?.name || 'Not connected'}</b>
             </Typography>
         </Box>
     )
