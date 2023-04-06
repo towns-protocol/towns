@@ -2,8 +2,8 @@ import { ChannelUpdateTransactionContext, TransactionStatus } from '../client/Zi
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { UpdateChannelInfo } from 'types/zion-types'
-import { useZionClient } from './use-zion-client'
 import { removeSyncedEntitleChannelsQueries } from '../query/removeSyncedEntitledChannelQueries'
+import { useZionClient } from './use-zion-client'
 
 /**
  * Hook to create a role with a transaction.

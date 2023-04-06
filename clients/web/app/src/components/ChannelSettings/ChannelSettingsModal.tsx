@@ -1,5 +1,5 @@
 import { FieldValues, UseFormRegister } from 'react-hook-form'
-import React, { useCallback, useMemo } from 'react'
+import React, { useCallback, useMemo, useState } from 'react'
 import {
     RoomIdentifier,
     useMultipleRoleDetails,
@@ -9,14 +9,17 @@ import {
 
 import { RoleDetails } from 'use-zion-client/dist/client/web3/ContractTypes'
 import { UpdateChannelInfo } from 'use-zion-client/dist/types/zion-types'
+import { useEvent } from 'react-use-event-hook'
 import { z } from 'zod'
 import { RequireTransactionNetworkMessage } from '@components/RequireTransactionNetworkMessage/RequireTransactionNetworkMessage'
 import { TokenCheckboxLabel } from '@components/Tokens/TokenCheckboxLabel'
 import { TransactionButton } from '@components/TransactionButton'
-import { ChannelNameRegExp, isForbiddenError, isRejectionError } from 'ui/utils/utils'
+import { useOnTransactionStages } from 'hooks/useOnTransactionStages'
 import { useRequireTransactionNetwork } from 'hooks/useRequireTransactionNetwork'
 import { useSpaceRoleIds } from 'hooks/useContractRoles'
 import { useTransactionUIStates } from 'hooks/useTransactionStatus'
+import { ErrorMessageText } from 'ui/components/ErrorMessage/ErrorMessage'
+import { ChannelNameRegExp, isForbiddenError, isRejectionError } from 'ui/utils/utils'
 import {
     Box,
     Button,
@@ -28,8 +31,6 @@ import {
     Text,
     TextField,
 } from '@ui'
-import { ErrorMessageText } from 'ui/components/ErrorMessage/ErrorMessage'
-import { useOnTransactionStages } from 'hooks/useOnTransactionStages'
 import { ModalContainer } from '../Modals/ModalContainer'
 
 const FormStateKeys = {
@@ -77,7 +78,10 @@ function ChannelSettingsPopup({
     const room = useRoom(channelId)
     // get the space roles and other role details
     const spaceRoleIds = useSpaceRoleIds(spaceId.networkId)
-    const { data: _rolesDetails } = useMultipleRoleDetails(spaceId.networkId, spaceRoleIds)
+    const { data: _rolesDetails, invalidateQuery } = useMultipleRoleDetails(
+        spaceId.networkId,
+        spaceRoleIds,
+    )
     const rolesWithDetails = useMemo(
         (): RoleCheckboxProps[] | undefined =>
             _rolesDetails?.map((role) => {
@@ -114,8 +118,9 @@ function ChannelSettingsPopup({
     const transactionUIState = useTransactionUIStates(transactionStatus, Boolean(channelId))
 
     const onSuccessfulTransaction = useCallback(() => {
+        invalidateQuery()
         onUpdatedChannel()
-    }, [onUpdatedChannel])
+    }, [invalidateQuery, onUpdatedChannel])
 
     useOnTransactionStages({
         transactionStatus,
@@ -315,6 +320,11 @@ function RoleDetailsComponent(props: {
     role: RoleCheckboxProps
     register: UseFormRegister<FieldValues>
 }): JSX.Element {
+    const [checked, setChecked] = useState<boolean>(props.role.channelHasRole)
+    const onChange = useEvent((event: React.ChangeEvent<HTMLInputElement>) => {
+        setChecked(event.target.checked)
+    })
+
     return (
         <Box padding="md" background="level2" borderRadius="sm" key={props.role.id}>
             <Checkbox
@@ -327,9 +337,10 @@ function RoleDetailsComponent(props: {
                         tokenAddresses={props.role.tokenAddresses}
                     />
                 }
-                defaultChecked={props.role.channelHasRole}
                 value={props.role.id.toString()}
                 register={props.register}
+                checked={checked}
+                onChange={onChange}
             />
         </Box>
     )
