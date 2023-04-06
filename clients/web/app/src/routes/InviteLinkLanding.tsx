@@ -1,9 +1,9 @@
 import React, { useEffect } from 'react'
-import { Navigate, useSearchParams } from 'react-router-dom'
+import { Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAccount } from 'wagmi'
 import { LoginButton } from '@components/Login/LoginButton/LoginButton'
 import { InteractiveSpaceIcon } from '@components/SpaceIcon'
-import { Box, Heading, Icon, Paragraph, Stack, Text } from '@ui'
+import { Box, Button, Heading, Icon, Paragraph, Stack, Text } from '@ui'
 import { useAuth } from 'hooks/useAuth'
 import { useContractSpaceInfo } from 'hooks/useContractSpaceInfo'
 import { SignupButtonStatus, useSignupButton } from 'hooks/useSignupButton'
@@ -13,6 +13,8 @@ import { useSetDocTitle } from 'hooks/useDocTitle'
 import { useGetSpaceTopic } from 'hooks/useSpaceTopic'
 import { useRequireTransactionNetwork } from 'hooks/useRequireTransactionNetwork'
 import { RequireTransactionNetworkMessage } from '@components/RequireTransactionNetworkMessage/RequireTransactionNetworkMessage'
+import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinner'
+import { PATHS } from 'routes'
 import { TownsTokenConfig } from '../components/TownsToken/TownsTokenConfig'
 
 function getButtonLabel(status: SignupButtonStatus) {
@@ -41,6 +43,7 @@ const InviteLinkLanding = () => {
     const url = new URL(window.location.href)
     const { address: currentWallet } = useAccount()
     const invalidWallet = url.searchParams.get('invalidWallet')
+    const navigate = useNavigate()
     // relevant only if a user has tried to join the town already, but we're denied b/c they don't have permission, and they then selected "switch wallet"
     // which navigates them back to this view, but with the invalidWallet param set. We need this b/c metamask UI is not very intuitive
     // and it's not clear that a user still needs to switch their account after connecting a new wallet
@@ -82,7 +85,7 @@ const InviteLinkLanding = () => {
     const spaceIconSize = TownsTokenConfig.sizes['lg'].containerSize
 
     if (!isInvite) {
-        return <Navigate replace to="/login" />
+        return <Navigate replace to={`/${PATHS.LOGIN}`} />
     }
 
     return (
@@ -103,7 +106,7 @@ const InviteLinkLanding = () => {
                         spaceName={data.name}
                         size="lg"
                     />
-                    <Stack gap>
+                    <Stack gap data-testid="town-info">
                         <FadeIn>
                             <Paragraph size="lg" textAlign="center">
                                 You&apos;re invited to join
@@ -128,20 +131,24 @@ const InviteLinkLanding = () => {
                     {isLoading ? (
                         <>
                             <Box
+                                centerContent
                                 style={{
                                     width: spaceIconSize,
                                     height: spaceIconSize,
                                 }}
-                            />
+                            >
+                                <ButtonSpinner />
+                            </Box>
                             <Stack gap>
                                 <Text>&nbsp;</Text>
                                 <Heading level={2}> &nbsp;</Heading>
                             </Stack>
                         </>
                     ) : (
-                        <Heading level={3} color="error">
-                            Space not found
-                        </Heading>
+                        <Box centerContent gap="lg" data-testid="not-found">
+                            <Icon color="error" type="alert" size="square_xl" />
+                            <Text size="lg">Town not found</Text>
+                        </Box>
                     )}
                 </>
             )}
@@ -153,14 +160,22 @@ const InviteLinkLanding = () => {
                     </Text>
                 )}
 
-                <LoginButton
-                    isConnected={isConnected}
-                    userOnWrongNetworkForSignIn={userOnWrongNetworkForSignIn}
-                    loading={isSpinning}
-                    label={buttonLabel}
-                    tone="cta1"
-                    onClick={onButtonClick}
-                />
+                {isLoading ? (
+                    <Box height="x5" />
+                ) : data ? (
+                    <FadeIn>
+                        <LoginButton
+                            isConnected={isConnected}
+                            userOnWrongNetworkForSignIn={userOnWrongNetworkForSignIn}
+                            loading={isSpinning}
+                            label={buttonLabel}
+                            tone="cta1"
+                            onClick={onButtonClick}
+                        />
+                    </FadeIn>
+                ) : (
+                    <Button onClick={() => navigate(`/${PATHS.LOGIN}`)}>Take me to login</Button>
+                )}
 
                 {currentWalletIsInvalidForTown && (
                     <Box color="negative" paddingTop="md">
@@ -181,33 +196,35 @@ const InviteLinkLanding = () => {
                     </Box>
                 )}
 
-                <Stack centerContent gap horizontal>
-                    <Box horizontal color="gray2" alignItems="center" gap="xs">
-                        <Icon type="help" />
-                        <Text size="sm" textAlign="center">
-                            <a
-                                href="https://www.towns.com/introduction/"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                            >
-                                What is Towns?
-                            </a>
-                        </Text>
-                    </Box>
+                {!isLoading && (
+                    <Stack centerContent gap horizontal>
+                        <Box horizontal color="gray2" alignItems="center" gap="xs">
+                            <Icon type="help" />
+                            <Text size="sm" textAlign="center">
+                                <a
+                                    href="https://www.towns.com/introduction/"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                >
+                                    What is Towns?
+                                </a>
+                            </Text>
+                        </Box>
 
-                    <Box horizontal color="gray2" alignItems="center" gap="xs">
-                        <Icon type="manifesto" />
-                        <Text size="sm" textAlign="center">
-                            <a
-                                href="https://www.towns.com/vision/"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                            >
-                                Read the vision
-                            </a>
-                        </Text>
-                    </Box>
-                </Stack>
+                        <Box horizontal color="gray2" alignItems="center" gap="xs">
+                            <Icon type="manifesto" />
+                            <Text size="sm" textAlign="center">
+                                <a
+                                    href="https://www.towns.com/vision/"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                >
+                                    Read the vision
+                                </a>
+                            </Text>
+                        </Box>
+                    </Stack>
+                )}
             </Stack>
         </Stack>
     )

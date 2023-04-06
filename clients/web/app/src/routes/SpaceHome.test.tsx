@@ -189,4 +189,23 @@ describe('<SpaceHome />', () => {
             },
         )
     })
+
+    test('shows not found message when town does not exist', async () => {
+        vi.spyOn(
+            useContractAndServerSpaceDataHook,
+            'useContractAndServerSpaceData',
+        ).mockImplementation(() => {
+            return {
+                chainSpaceLoading: false,
+                chainSpace: undefined,
+                serverSpace: undefined,
+            }
+        })
+
+        render(<Wrapper />)
+
+        await waitFor(() => {
+            expect(screen.getByText(/town not found/gi)).toBeInTheDocument()
+        })
+    })
 })

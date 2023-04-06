@@ -1,9 +1,9 @@
 import React, { useEffect, useMemo } from 'react'
 
-import { Navigate, useLocation, useNavigate } from 'react-router'
+import { useLocation, useNavigate } from 'react-router'
 import { Membership } from 'use-zion-client'
 import { TimelineShimmer } from '@components/Shimmer/TimelineShimmer'
-import { Box, Stack } from '@ui'
+import { Box, Icon, Stack, Text } from '@ui'
 import { PATHS } from 'routes'
 import { SpaceJoin } from '@components/Web3/SpaceJoin'
 import { useContractAndServerSpaceData } from 'hooks/useContractAndServerSpaceData'
@@ -51,7 +51,12 @@ export const SpaceHome = () => {
 
     // space doesn't exist
     if (!chainSpaceLoading && !chainSpace && !space) {
-        return <Navigate to="/" />
+        return (
+            <Box absoluteFill centerContent gap="lg">
+                <Icon color="error" type="alert" size="square_xl" />
+                <Text size="lg">Town not found</Text>
+            </Box>
+        )
     }
 
     // space is on chain, but user has no matrix data, indicating they have landed via an invite link

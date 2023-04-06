@@ -123,6 +123,7 @@ export {
     isUserIdentifier,
 } from './types/user-identifier'
 
+export type { ISpaceDapp } from './client/web3/ISpaceDapp'
 export { Permission } from './client/web3/ContractTypes'
 export {
     getMemberNftAddress,
