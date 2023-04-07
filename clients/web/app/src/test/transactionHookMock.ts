@@ -52,7 +52,10 @@ const failedWithMatrixPermissionContext = {
     error: { name: 'M_FORBIDDEN', message: 'some error' },
 }
 
-type TransactionFnNames = 'createSpaceTransactionWithRole' | 'createChannelTransaction'
+type TransactionFnNames =
+    | 'createSpaceTransactionWithRole'
+    | 'createChannelTransaction'
+    | 'updateChannelTransaction'
 
 type UseMockTransactionReturn = {
     isLoading: boolean
@@ -70,6 +73,15 @@ export type UseMockCreateChannelReturn = UseMockTransactionReturn & {
     createChannelTransaction: Mock
 }
 
+export type UseMockUpdateChannelReturn = UseMockTransactionReturn & {
+    updateChannelTransaction: Mock
+}
+
+type UseMockHookReturn =
+    | UseMockCreateSpaceReturn
+    | UseMockCreateChannelReturn
+    | UseMockUpdateChannelReturn
+
 // useCreateSpaceTransaction/useCreateChannelTransaction contains calls to other lib functions whose references aren't replaced by mocking: createSpaceTransaction, waitForCreateSpaceTransaction, etc
 // Workarounds:
 // 1. Could mock a logged in state - useWithCatch wrapped around createSpaceTransaction is failing b/c not logged in, and ultimately causes test failures
@@ -82,7 +94,7 @@ export const mockCreateTransactionWithSpy = (transactionFunctionName: Transactio
             | 'success'
             | 'failWithTransaction'
             | 'failedWithMatrixPermissionContext' = 'success',
-    ): UseMockCreateSpaceReturn | UseMockCreateChannelReturn => {
+    ): UseMockHookReturn | undefined => {
         const [transactionContext, setTransactionContext] = useState<
             zionClient.TransactionContext<zionClient.RoomIdentifier> | undefined
         >(undefined)
@@ -127,16 +139,24 @@ export const mockCreateTransactionWithSpy = (transactionFunctionName: Transactio
             transactionStatus,
         }
 
-        if (transactionFunctionName === 'createSpaceTransactionWithRole') {
-            return {
-                ...txData,
-                createSpaceTransactionWithRole: createTransactionMockFn,
-            }
-        } else {
-            return {
-                ...txData,
-                createChannelTransaction: createTransactionMockFn,
-            }
+        switch (transactionFunctionName) {
+            case 'createSpaceTransactionWithRole':
+                return {
+                    ...txData,
+                    createSpaceTransactionWithRole: createTransactionMockFn,
+                }
+            case 'createChannelTransaction':
+                return {
+                    ...txData,
+                    createChannelTransaction: createTransactionMockFn,
+                }
+            case 'updateChannelTransaction':
+                return {
+                    ...txData,
+                    updateChannelTransaction: createTransactionMockFn,
+                }
+            default:
+                break
         }
     }
 

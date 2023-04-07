@@ -1,64 +1,26 @@
-import { FieldValues, UseFormRegister } from 'react-hook-form'
 import React, { useCallback, useMemo, useState } from 'react'
 import {
     BlockchainTransactionType,
     RoomIdentifier,
-    useMultipleRoleDetails,
     useRoom,
     useTransactionStore,
     useUpdateChannelTransaction,
 } from 'use-zion-client'
 
-import { RoleDetails } from 'use-zion-client/dist/client/web3/ContractTypes'
 import { UpdateChannelInfo } from 'use-zion-client/dist/types/zion-types'
-import { useEvent } from 'react-use-event-hook'
-import { z } from 'zod'
 import { RequireTransactionNetworkMessage } from '@components/RequireTransactionNetworkMessage/RequireTransactionNetworkMessage'
-import { TokenCheckboxLabel } from '@components/Tokens/TokenCheckboxLabel'
 import { TransactionButton } from '@components/TransactionButton'
 import { useOnTransactionStages } from 'hooks/useOnTransactionStages'
 import { useRequireTransactionNetwork } from 'hooks/useRequireTransactionNetwork'
-import { useSpaceRoleIds } from 'hooks/useContractRoles'
 import { useTransactionUIStates } from 'hooks/useTransactionStatus'
 import { ErrorMessageText } from 'ui/components/ErrorMessage/ErrorMessage'
 import { ChannelNameRegExp, isForbiddenError, isRejectionError } from 'ui/utils/utils'
-import {
-    Box,
-    Button,
-    Checkbox,
-    ErrorMessage,
-    FormRender,
-    Heading,
-    Stack,
-    Text,
-    TextField,
-} from '@ui'
+import { Box, Button, ErrorMessage, FormRender, Heading, Stack, TextField } from '@ui'
 import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinner'
 import { ModalContainer } from '../Modals/ModalContainer'
-
-const FormStateKeys = {
-    name: 'name',
-    description: 'description',
-    roleIds: 'roleIds',
-} as const
-
-type FormState = {
-    [FormStateKeys.name]: string
-    [FormStateKeys.description]: string | undefined
-    [FormStateKeys.roleIds]: string[]
-}
-
-const schema = z.object({
-    [FormStateKeys.name]: z.string().min(1, 'Please enter a channel name'),
-    [FormStateKeys.description]: z.string().min(0, 'Please enter a description'),
-    [FormStateKeys.roleIds]: z.string().array().nonempty('Please select at least one role'),
-})
-
-const emptyDefaultValues = {
-    [FormStateKeys.name]: '',
-    [FormStateKeys.description]: undefined,
-    [FormStateKeys.roleIds]: [],
-}
+import { useAllRoleDetails } from './useAllRoleDetails'
+import { RoleCheckboxProps, RolesSection, getCheckedValuesForRoleIdsField } from './RolesSection'
+import { FormState, FormStateKeys, emptyDefaultValues, schema } from './formConfig'
 
 type ChannelSettingsModalProps = {
     spaceId: RoomIdentifier
@@ -67,12 +29,7 @@ type ChannelSettingsModalProps = {
     onUpdatedChannel: () => void
 }
 
-interface RoleCheckboxProps extends RoleDetails {
-    channelHasRole: boolean
-    tokenAddresses: string[]
-}
-
-function ChannelSettingsPopup({
+export function ChannelSettingsForm({
     spaceId,
     channelId,
     onHide,
@@ -82,17 +39,13 @@ function ChannelSettingsPopup({
     preventCloseMessage: string | undefined
 }): JSX.Element {
     const room = useRoom(channelId)
-    // get the space roles and other role details
-    const { spaceRoleIds, isLoading: isLoadingSpaceRoleIds } = useSpaceRoleIds(spaceId.networkId)
-    const { data: _rolesDetails, invalidateQuery } = useMultipleRoleDetails(
-        spaceId.networkId,
-        spaceRoleIds,
-    )
+    const { data, isLoading, invalidateQuery } = useAllRoleDetails(spaceId.networkId)
+
     const rolesWithDetails = useMemo((): RoleCheckboxProps[] | undefined => {
-        if (isLoadingSpaceRoleIds) {
+        if (isLoading) {
             return undefined
         }
-        return _rolesDetails?.map((role) => {
+        return data?.map((role) => {
             const channelHasRole = role.channels.some(
                 (c) => c.channelNetworkId === channelId.networkId,
             )
@@ -102,18 +55,19 @@ function ChannelSettingsPopup({
                 tokenAddresses: role.tokens.map((token) => token.contractAddress as string),
             }
         })
-    }, [_rolesDetails, channelId.networkId, isLoadingSpaceRoleIds])
+    }, [data, channelId.networkId, isLoading])
 
     const defaultValues = useMemo((): FormState => {
         if (room) {
             return {
                 [FormStateKeys.name]: room.name,
                 [FormStateKeys.description]: room.topic,
-                [FormStateKeys.roleIds]: spaceRoleIds?.map((roleId) => roleId.toString()) ?? [],
+                // default values for this field are monitored and reset within RolesSection
+                [FormStateKeys.roleIds]: getCheckedValuesForRoleIdsField(rolesWithDetails ?? []),
             }
         }
         return emptyDefaultValues
-    }, [room, spaceRoleIds])
+    }, [room, rolesWithDetails])
 
     const {
         updateChannelTransaction,
@@ -193,7 +147,7 @@ function ChannelSettingsPopup({
                 mode="onChange"
                 onSubmit={onSubmit}
             >
-                {({ register, formState, setValue }) => {
+                {({ register, formState, setValue, resetField }) => {
                     const { onChange: onNameChange, ...restOfNameProps } = register(
                         FormStateKeys.name,
                     )
@@ -246,23 +200,12 @@ function ChannelSettingsPopup({
                                         <ButtonSpinner />
                                     </Box>
                                 ) : (
-                                    <>
-                                        <Box paddingY="sm">
-                                            <Text strong>
-                                                Which roles have access to this channel
-                                            </Text>
-                                        </Box>
-                                        {rolesWithDetails?.map((role) => {
-                                            return (
-                                                <RoleDetailsComponent
-                                                    key={role.id}
-                                                    spaceId={spaceId}
-                                                    role={role}
-                                                    register={register}
-                                                />
-                                            )
-                                        })}
-                                    </>
+                                    <RolesSection
+                                        rolesWithDetails={rolesWithDetails}
+                                        resetField={resetField}
+                                        spaceId={spaceId}
+                                        register={register}
+                                    />
                                 )}
 
                                 <ErrorMessage
@@ -345,37 +288,6 @@ function ChannelSettingsPopup({
     )
 }
 
-function RoleDetailsComponent(props: {
-    spaceId: RoomIdentifier
-    role: RoleCheckboxProps
-    register: UseFormRegister<FieldValues>
-}): JSX.Element {
-    const [checked, setChecked] = useState<boolean>(props.role.channelHasRole)
-    const onChange = useEvent((event: React.ChangeEvent<HTMLInputElement>) => {
-        setChecked(event.target.checked)
-    })
-
-    return (
-        <Box padding="md" background="level2" borderRadius="sm" key={props.role.id}>
-            <Checkbox
-                width="100%"
-                name={FormStateKeys.roleIds}
-                label={
-                    <TokenCheckboxLabel
-                        label={props.role.name}
-                        spaceId={props.spaceId}
-                        tokenAddresses={props.role.tokenAddresses}
-                    />
-                }
-                value={props.role.id.toString()}
-                register={props.register}
-                checked={checked}
-                onChange={onChange}
-            />
-        </Box>
-    )
-}
-
 export function ChannelSettingsModal({
     spaceId,
     channelId,
@@ -398,7 +310,7 @@ export function ChannelSettingsModal({
 
     return (
         <ModalContainer key={`${spaceId.networkId}_${channelId.networkId}}`} onHide={_onHide}>
-            <ChannelSettingsPopup
+            <ChannelSettingsForm
                 spaceId={spaceId}
                 preventCloseMessage={transactionMessage}
                 channelId={channelId}

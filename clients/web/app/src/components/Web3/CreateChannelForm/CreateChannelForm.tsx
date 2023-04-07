@@ -51,7 +51,10 @@ export const CreateChannelForm = (props: Props) => {
     const { onCreateChannel, onHide } = props
     const { data: roles } = useSpaceRoles(props.spaceId.networkId)
     const roledIds = useMemo(() => roles?.map((r) => r.roleId?.toNumber()) ?? [], [roles])
-    const { data: _rolesDetails } = useMultipleRoleDetails(props.spaceId.networkId, roledIds)
+    const { data: _rolesDetails, invalidateQuery } = useMultipleRoleDetails(
+        props.spaceId.networkId,
+        roledIds,
+    )
     const rolesWithDetails = useMemo(
         () =>
             _rolesDetails?.map((role) => {
@@ -103,8 +106,9 @@ export const CreateChannelForm = (props: Props) => {
     }, [])
 
     const onSuccessfulTransaction = useCallback(() => {
+        invalidateQuery()
         channelId && onCreateChannel(channelId)
-    }, [channelId, onCreateChannel])
+    }, [channelId, onCreateChannel, invalidateQuery])
 
     useOnTransactionStages({
         transactionStatus,

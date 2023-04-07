@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react'
 import { useMultipleRoleDetails, useRoleDetails, useRoles } from 'use-zion-client'
 import { Role } from './store/hooks/settingsRolesStore'
 
+// TODO: refactor to use useAllRoleDetails, then map to struct
 export function useGetAllRoleDetails(spaceId: string) {
     const { spaceRoles: _roles } = useRoles(decodeURIComponent(spaceId))
     const roledIds = useMemo(() => _roles?.map((r) => r.roleId?.toNumber()) ?? [], [_roles])

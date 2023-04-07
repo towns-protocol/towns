@@ -60,6 +60,7 @@ vi.mock('use-zion-client', async () => {
         ...actual,
         useMultipleRoleDetails: () => {
             return {
+                invalidateQuery: () => null,
                 data: [
                     {
                         id: 7,
