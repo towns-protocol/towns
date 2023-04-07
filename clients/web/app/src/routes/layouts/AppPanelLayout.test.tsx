@@ -1,7 +1,6 @@
 import React from 'react'
 import { render, screen, waitFor } from '@testing-library/react'
 import { beforeAll, describe, expect, test, vi } from 'vitest'
-import { ResizeObserver } from '@juggle/resize-observer' // dependency of react-hook/resize-observer
 import * as Lib from 'use-zion-client'
 import { TestApp } from 'test/testUtils'
 import * as useContractAndServerSpaceDataHook from 'hooks/useContractAndServerSpaceData'

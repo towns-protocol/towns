@@ -12,7 +12,6 @@ import { DocumentTitleFromSpaceOutlet } from 'routes/DocumentTitleFromSpaceOutle
 import { AllChannelsList } from 'routes/AllChannelsList/AllChannelsList'
 import { ChannelSettings } from './ChannelSettings'
 import { InvitesIndex } from './InvitesIndex'
-import { MeIndex } from './MeIndex'
 import { SpaceGettingStarted } from './SpaceGettingStarted'
 import { SpaceHome } from './SpaceHome'
 import { SpaceMentions } from './SpaceMentions'
@@ -42,7 +41,6 @@ export const AuthenticatedRoutes = () => {
 
     return (
         <Routes>
-            <Route path="me" element={<MeIndex />} />
             <Route path="invites/:inviteSlug" element={<InvitesIndex />} />
             {(env.IS_DEV || isHolderOfPioneerNft) && (
                 <Route path={`${PATHS.SPACES}/new`} element={<SpacesNew />} />
@@ -109,7 +107,9 @@ export const AuthenticatedRoutes = () => {
                         <NoJoinedSpacesFallback />
                     </CheckRedirect>
                 }
-            />
+            >
+                <Route path="me" element={<SpaceProfilePanel />} />
+            </Route>
         </Routes>
     )
 }

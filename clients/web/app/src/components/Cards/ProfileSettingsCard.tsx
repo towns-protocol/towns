@@ -1,11 +1,11 @@
 import React, { useCallback } from 'react'
-import { useMatch, useNavigate } from 'react-router'
+import { useNavigate } from 'react-router'
 import { Avatar, Box, Card, Divider, Paragraph, Stack } from '@ui'
 import { useAuth } from 'hooks/useAuth'
-import { PATHS } from 'routes'
 import { useStore } from 'store/store'
 import { useCardOpenerContext } from 'ui/components/Overlay/CardOpenerContext'
 import { shortAddress } from 'ui/utils/utils'
+import { useCreateLink } from 'hooks/useCreateLink'
 import { MenuItem } from './MenuItem'
 
 type Props = {
@@ -31,23 +31,16 @@ export const ProfileSettingsCard = (props: Props) => {
 
     const navigate = useNavigate()
 
-    const matchSpace = useMatch(`${PATHS.SPACES}/:spaceSlug/*`)
-    const matchChannel = useMatch(`${PATHS.SPACES}/:spaceSlug/${PATHS.CHANNELS}/:channelSlug/*`)
+    const { createLink: createProfileLink } = useCreateLink()
+
+    const link = userId ? createProfileLink({ profileId: 'me' }) : undefined
 
     const onProfileClick = useCallback(() => {
         closeCard()
-        let link = `/me`
-        if (matchChannel) {
-            link = `${PATHS.SPACES}/${matchChannel.params.spaceSlug}/${PATHS.CHANNELS}/${matchChannel.params.channelSlug}/profile/${userId}`
-        } else if (matchSpace) {
-            const segment = matchSpace.params['*']?.split('/')?.[0] ?? ''
-            // matches threads/mentions/members
-            link = `${PATHS.SPACES}/${matchSpace.params.spaceSlug}/${
-                segment ? `${segment}/` : ``
-            }profile/${userId}`
+        if (link) {
+            navigate(link)
         }
-        navigate(link)
-    }, [closeCard, matchChannel, matchSpace, navigate, userId])
+    }, [closeCard, link, navigate])
 
     return (
         <Card border paddingBottom="sm" width="300" fontSize="md" tabIndex={1}>

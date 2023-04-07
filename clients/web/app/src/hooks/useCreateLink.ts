@@ -2,6 +2,10 @@ import { generatePath, matchRoutes, useLocation } from 'react-router'
 import { PATHS } from 'routes'
 
 const paths = [
+    {
+        path: `/profile?/:profileId?`,
+        replace: `/me`,
+    },
     { path: `/${PATHS.SPACES}/:spaceId/${PATHS.THREADS}/profile?/:profileId?` },
     { path: `/${PATHS.SPACES}/:spaceId/${PATHS.MENTIONS}/profile?/:profileId?` },
     { path: `/${PATHS.SPACES}/:spaceId/${PATHS.CHANNELS}/:channelId/profile?/:profileId?` },

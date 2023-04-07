@@ -1,8 +1,13 @@
-import React from 'react'
-import { useNavigate, useParams } from 'react-router'
+import React, { useMemo } from 'react'
+import { matchRoutes, useLocation, useNavigate, useParams } from 'react-router'
 import { useSearchParams } from 'react-router-dom'
 import { useEvent } from 'react-use-event-hook'
-import { createUserIdFromString, useMatrixCredentials, useSpaceMembers } from 'use-zion-client'
+import {
+    createUserIdFromString,
+    useMatrixCredentials,
+    useMyProfile,
+    useSpaceMembers,
+} from 'use-zion-client'
 import { useGetUserBio } from 'hooks/useUserBio'
 import { Box, Button, Panel, Paragraph, Stack, Text } from '@ui'
 import { UserProfile } from '@components/UserProfile/UserProfile'
@@ -22,9 +27,25 @@ export const SpaceProfilePanel = (props: { children?: React.ReactNode }) => {
         navigate(-1)
     })
 
+    const profileUser = useMyProfile()
     const { membersMap } = useSpaceMembers()
+    const location = useLocation()
+    const isMeRoute = matchRoutes([{ path: '/me' }], location) || profileId === 'me'
 
-    const user = profileId ? membersMap[profileId] : undefined
+    const user = useMemo(
+        () =>
+            isMeRoute
+                ? {
+                      ...profileUser,
+                      userId: profileUser?.userId ?? '',
+                      name: profileUser?.displayName ?? '',
+                  }
+                : profileId
+                ? membersMap[profileId]
+                : undefined,
+        [isMeRoute, membersMap, profileId, profileUser],
+    )
+
     const isValid = !!user
 
     const userAddress = isValid ? createUserIdFromString(user.userId)?.accountAddress : undefined

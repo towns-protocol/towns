@@ -3,6 +3,7 @@ import { server } from './mocks/server'
 import '@testing-library/jest-dom/extend-expect' // dont delete this line its needed for extending vitest expect matchers
 import { vi } from 'vitest'
 import { act } from 'react-test-renderer'
+import { ResizeObserver } from '@juggle/resize-observer' // dependency of react-hook/resize-observer
 
 vi.mock('./src/components/Transitions/MotionBox')
 
@@ -23,6 +24,7 @@ vi.mock('zustand', async () => {
 })
 
 beforeAll(() => {
+    globalThis.ResizeObserver = ResizeObserver
     server.listen()
 })
 
