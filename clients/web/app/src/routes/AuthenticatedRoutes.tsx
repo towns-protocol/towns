@@ -9,7 +9,6 @@ import { RoleSettingsDisplay } from '@components/SpaceSettings/RoleSettings/Role
 import { useIsHolderOfPioneerNFT } from 'api/lib/isHolderOfToken'
 import { env } from 'utils'
 import { DocumentTitleFromSpaceOutlet } from 'routes/DocumentTitleFromSpaceOutlet'
-import { AllChannelsList } from 'routes/AllChannelsList/AllChannelsList'
 import { ChannelSettings } from './ChannelSettings'
 import { InvitesIndex } from './InvitesIndex'
 import { SpaceGettingStarted } from './SpaceGettingStarted'
@@ -51,8 +50,6 @@ export const AuthenticatedRoutes = () => {
                     <Route path="profile/:profileId" element={<SpaceProfilePanel />} />
                     <Route path="info" element={<InfoPanelWrapper />} />
                 </Route>
-
-                <Route path={PATHS.CHANNELS} element={<AllChannelsList />} />
 
                 <Route path="mentions" element={<SpaceMentions />}>
                     <Route path="profile/:profileId" element={<SpaceProfilePanel />} />
