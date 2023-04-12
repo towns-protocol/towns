@@ -1,16 +1,19 @@
-import React, { useRef } from 'react'
+import React, { useCallback, useRef } from 'react'
 import * as z from 'zod'
 import { UseFormReturn } from 'react-hook-form'
 import { AnimatePresence, motion } from 'framer-motion'
-import { Box, ErrorMessage, FormRender, Heading, Paragraph, Stack, TextField } from '@ui'
+import { Box, ErrorMessage, FormRender, Heading, Paragraph, Stack, Text, TextField } from '@ui'
 import { useCachedTokensForWallet } from 'api/lib/tokenContracts'
 import { useAuth } from 'hooks/useAuth'
 import { FadeInBox } from '@components/Transitions'
+import { SmallUploadImageTemplate } from '@components/UploadImage/SmallUploadImageTemplate'
+import { useImageStore } from '@components/UploadImage/useImageStore'
+import { UploadImageRequestConfig } from 'api/lib/uploadImage'
 import { FormStepProps } from '../../../../hooks/useFormSteps'
 import { useCreateSpaceFormStore } from '../CreateSpaceFormStore'
 import { TokenAvatar } from '../../../Tokens/TokenAvatar'
 import { CreateSpaceFormState } from '../types'
-import { SPACE_NAME } from '../constants'
+import { SPACE_NAME, TEMPORARY_SPACE_ICON_URL } from '../constants'
 
 const MAX_LENGTH = 32
 
@@ -87,6 +90,19 @@ export const CreateSpaceStep2 = ({ onSubmit, id }: FormStepProps) => {
 
     const { loggedInWalletAddress: wallet } = useAuth()
 
+    const onUpload = useCallback(
+        ({ imageUrl, file, id }: Omit<UploadImageRequestConfig, 'type'>) => {
+            // set resource on image store so the image updates in the upload component
+            const { setLoadedResource } = useImageStore.getState()
+            setLoadedResource(id, {
+                imageUrl,
+            })
+            // also save to space form store so that the image can actually be uploaded later after space is minted
+            useCreateSpaceFormStore.getState().setImageData({ imageUrl, file })
+        },
+        [],
+    )
+
     return (
         <FormRender<CreateSpaceFormState['step2']>
             id={id}
@@ -140,6 +156,28 @@ export const CreateSpaceStep2 = ({ onSubmit, id }: FormStepProps) => {
                                         />
                                     </FadeInBox>
                                 )}
+                            </Stack>
+                            <Stack gap="md" data-testid="space-icon" key="icon">
+                                <Text strong>Town Icon</Text>
+
+                                <SmallUploadImageTemplate
+                                    canEdit
+                                    overrideUploadCb={onUpload}
+                                    type="avatar"
+                                    formFieldName="profilePic"
+                                    resourceId={TEMPORARY_SPACE_ICON_URL}
+                                    setError={setError}
+                                    register={register}
+                                    formState={formState}
+                                    clearErrors={clearErrors}
+                                    rounded="sm"
+                                    imageRestrictions={{
+                                        minDimension: {
+                                            message: `Image is too small. Please upload an image with a minimum height & width of 300px.`,
+                                            min: 300,
+                                        },
+                                    }}
+                                />
                             </Stack>
 
                             <MotionBox layout="position" gap="x4">

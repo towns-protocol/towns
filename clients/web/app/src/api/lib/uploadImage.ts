@@ -3,17 +3,14 @@ import { axiosClient } from 'api/apiClient'
 import { env } from 'utils'
 import { useImageStore } from '@components/UploadImage/useImageStore'
 
-type PostVars = {
+export type UploadImageRequestConfig = {
     id: string
     file: File
     type: 'spaceIcon' | 'avatar'
+    imageUrl: string
 }
 
-async function uploadImage(
-    args: PostVars & {
-        imageUrl: string
-    },
-) {
+async function uploadImage(args: UploadImageRequestConfig) {
     const url = new URL(env.VITE_GATEWAY_URL)
     url.pathname = args.type === 'spaceIcon' ? `/space-icon/${args.id}` : `/user/${args.id}/avatar`
 
@@ -31,27 +28,38 @@ async function uploadImage(
     return { response: res, imageUrl: args.imageUrl }
 }
 
-export function useUploadImage(referenceId: string) {
+export function useUploadImage(
+    resourceId: string | undefined,
+    {
+        onError,
+    }: {
+        onError?: (error: unknown) => void
+    } = {},
+) {
     return useMutation(uploadImage, {
         retry: 3,
         retryDelay: 2500,
         onSuccess: (data) => {
             console.log(`[useUploadImage] upload success `, data.response)
-            const { imageUrl } = data
-            const { setLoadedResource } = useImageStore.getState()
+            if (resourceId) {
+                const { imageUrl } = data
+                const { setLoadedResource } = useImageStore.getState()
+                // on a successful upload, set a temporary image that will be used for rest of session
+                setLoadedResource(resourceId, {
+                    imageUrl,
+                })
 
-            // on a successful upload, set a temporary image that will be used for rest of session
-            setLoadedResource(referenceId, {
-                imageUrl,
-            })
-
-            // wait a tick before removing previously errored resources
-            setTimeout(() => {
-                useImageStore.getState().removeErroredResource(referenceId)
-            }, 100)
+                // wait a tick before removing previously errored resources
+                setTimeout(() => {
+                    useImageStore.getState().removeErroredResource(resourceId)
+                }, 100)
+            }
         },
         onError: (error) => {
             console.error(`[useSpaceIconUpload] upload error `, error)
+            if (onError) {
+                onError(error)
+            }
         },
     })
 }

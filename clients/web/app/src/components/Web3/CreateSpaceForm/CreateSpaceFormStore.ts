@@ -13,6 +13,7 @@ interface CreateSpaceActions {
     toggleToken: (token: string) => void
     clearTokens: () => void
     reset: () => void
+    setImageData: (spaceImageData: CreateSpaceFormState['spaceImageData']) => void
     setCreatedSpaceId: (createdSpaceId: string) => void
     setMintedTokenAddress: (mintedTokenAddress: Address) => void
 }
@@ -25,6 +26,8 @@ let initialState: CreateSpaceFormState = {
     step2: {
         spaceName: null,
     },
+    // appears in step 2, but has no bearing on data submitted to blockchain/server, so treated as separate
+    spaceImageData: null,
     createdSpaceId: null,
     mintedTokenAddress: null,
 }
@@ -45,6 +48,14 @@ export const useCreateSpaceFormStore = create<CreateSpaceFormState & CreateSpace
             ...state,
             step2,
         })),
+    setImageData: (spaceImageData: CreateSpaceFormState['spaceImageData']) => {
+        set((state) => {
+            return {
+                ...state,
+                spaceImageData,
+            }
+        })
+    },
     toggleToken: (token: string) =>
         set((state) => {
             let tokens

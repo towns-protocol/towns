@@ -3,7 +3,7 @@ export const TOKEN_HOLDERS = 'tokenHolders'
 export const MEMBERSHIP_TYPE = 'membershipType'
 export const TOKENS = 'tokens'
 export const SPACE_NAME = 'spaceName'
-export const SPACE_ICON_URL = 'spaceIconUrl'
+export const TEMPORARY_SPACE_ICON_URL = 'temporarySpaceIconUrl'
 
 // See error types: https://github.com/HereNotThere/harmony/blob/main/contracts/src/libraries/Errors.sol
 export const ERROR_INVALID_PARAMETERS = 'InvalidParameters'

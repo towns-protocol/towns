@@ -6,13 +6,13 @@ import { Avatar, Box, Button, ButtonProps, FormRender, Paragraph, Stack, TextFie
 import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
 import { useSetUserBio } from 'hooks/useUserBio'
 import { shortAddress } from 'ui/utils/utils'
-import { UploadImage } from '@components/UploadImage/UploadImage'
 import { useAuth } from 'hooks/useAuth'
 import { TextArea } from 'ui/components/TextArea/TextArea'
 import { Spinner } from '@components/Spinner'
 import { ButtonTextProps } from 'ui/components/Text/ButtonText'
 import { errorHasInvalidCookieResponseHeader } from 'api/apiClient'
 import { InvalidCookieNotification } from '@components/Notifications/InvalidCookieNotification'
+import { LargeUploadImageTemplate } from '@components/UploadImage/LargeUploadImageTemplate'
 
 type Props = {
     displayName: string
@@ -83,7 +83,7 @@ export const UserProfile = (props: Props) => {
             <Stack centerContent={center} padding="lg">
                 <FormRender maxWidth="250" width="100%" key={resourceId}>
                     {({ register, formState, setError, clearErrors }) => (
-                        <UploadImage
+                        <LargeUploadImageTemplate
                             canEdit={Boolean(loggedInWalletAddress === resourceId)}
                             type="avatar"
                             formFieldName="avatar"
@@ -106,7 +106,7 @@ export const UserProfile = (props: Props) => {
                                     imageVariant="thumbnail300"
                                 />
                             </Stack>
-                        </UploadImage>
+                        </LargeUploadImageTemplate>
                     )}
                 </FormRender>
             </Stack>

@@ -1,23 +1,22 @@
 import { clsx } from 'clsx'
-import React, { ChangeEvent, MutableRefObject, forwardRef } from 'react'
-import { UseFormReturn } from 'react-hook-form'
+import React, { ChangeEvent, ForwardedRef, MutableRefObject, forwardRef } from 'react'
+import { FieldValues, Path, UseFormReturn } from 'react-hook-form'
 
-type Props = {
-    name: string
+type Props<T extends FieldValues> = {
+    name: Path<T>
     className?: string[]
     onChange?: (event: ChangeEvent<HTMLInputElement>) => void
     onClick?: () => void
     accept?: string
-} & Partial<UseFormReturn>
+} & Pick<UseFormReturn<T>, 'register'>
 
-export const UploadInput = forwardRef<HTMLInputElement, Props>((props: Props, ref) => {
+const InputComponent = <T extends FieldValues>(
+    props: Props<T>,
+    ref: ForwardedRef<HTMLInputElement>,
+) => {
     const { register, name, className, onChange, accept } = props
 
-    const {
-        ref: hookFormRef,
-        onChange: hookFormOnChange,
-        ...registerProps
-    } = register?.(name) ?? {}
+    const { ref: hookFormRef, onChange: hookFormOnChange, ...registerProps } = register(name)
 
     return (
         <>
@@ -39,4 +38,10 @@ export const UploadInput = forwardRef<HTMLInputElement, Props>((props: Props, re
             />
         </>
     )
-})
+}
+
+// using a generic + forwardRef + type asserion to get the correct typing
+// https://stackoverflow.com/questions/58469229/react-with-typescript-generics-while-using-react-forwardref/58473012
+export const UploadInput = forwardRef(InputComponent) as <T extends FieldValues>(
+    props: Props<T> & { ref?: ForwardedRef<HTMLInputElement> },
+) => JSX.Element

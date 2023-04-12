@@ -16,6 +16,7 @@ export const useImageStore = create<{
     addErroredResource: (resourceId: string) => void
     removeErroredResource: (resourceId: string) => void
     setLoadedResource: (resourceId: string, resource: Resource) => void
+    removeLoadedResource: (resourceId: string) => void
 }>((set) => ({
     loadedResource: {},
     erroredResources: {},
@@ -54,6 +55,15 @@ export const useImageStore = create<{
                     ...state.loadedResource,
                     [resourceId]: resource,
                 },
+            }
+        })
+    },
+    removeLoadedResource: (resourceId) => {
+        set((state) => {
+            const loadedResource = { ...state.loadedResource }
+            delete loadedResource[resourceId]
+            return {
+                loadedResource,
             }
         })
     },

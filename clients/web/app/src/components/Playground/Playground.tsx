@@ -5,7 +5,6 @@ import { toast } from 'react-hot-toast/headless'
 import { AddressPill } from '@components/AddressPill'
 import { richText } from '@components/RichText/RichTextEditor.css'
 import { TextFieldWithPill } from '@components/TextFieldWithPill'
-import { UploadSpaceIcon } from '@components/Web3/CreateSpaceForm/steps/UploadSpaceIcon'
 import {
     Avatar,
     Box,
@@ -14,7 +13,6 @@ import {
     Checkbox,
     Divider,
     Dropdown,
-    ErrorMessage,
     Form,
     Grid,
     Heading,
@@ -429,32 +427,6 @@ export const Playground = () => {
                 </FormRender>
             </Container>
 
-            <Container label="Upload">
-                <FormRender<{
-                    spaceIcon: File
-                }>
-                    mode="onChange"
-                    onSubmit={(data) => {
-                        console.log(data)
-                    }}
-                >
-                    {({ register, formState, setError, clearErrors }) => (
-                        <>
-                            <UploadSpaceIcon
-                                setError={setError}
-                                register={register}
-                                formState={formState}
-                                clearErrors={clearErrors}
-                                name="spaceIcon"
-                            />
-                            {formState.errors.spaceIcon && (
-                                <ErrorMessage errors={formState.errors} fieldName="spaceIcon" />
-                            )}
-                            <Button type="submit">Submit</Button>
-                        </>
-                    )}
-                </FormRender>
-            </Container>
             <Container darkOnly label="VList" padding="none">
                 <Stack>
                     <VListExample />

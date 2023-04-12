@@ -81,6 +81,7 @@ export const StoreMockForManualSubmissionsNotToBeUsedInTests: CreateSpaceFormSta
     step2: {
         spaceName: randProductName().toLowerCase(),
     },
+    spaceImageData: null,
     createdSpaceId: null,
     mintedTokenAddress: null,
 }

@@ -11,6 +11,7 @@ import {
     useZionClient,
 } from 'use-zion-client'
 import { shallow } from 'zustand/shallow'
+import { toast } from 'react-hot-toast/headless'
 import { Box, Button, Heading, Text } from '@ui'
 import { useDevOnlyQueryParams } from 'hooks/useQueryParam'
 import { ErrorMessageText } from 'ui/components/ErrorMessage/ErrorMessage'
@@ -20,6 +21,9 @@ import { useOnTransactionStages } from 'hooks/useOnTransactionStages'
 import { useRequireTransactionNetwork } from 'hooks/useRequireTransactionNetwork'
 import { RequireTransactionNetworkMessage } from '@components/RequireTransactionNetworkMessage/RequireTransactionNetworkMessage'
 import { FadeInBox } from '@components/Transitions'
+import { useUploadImage } from 'api/lib/uploadImage'
+import { useImageStore } from '@components/UploadImage/useImageStore'
+import { FailedUploadAfterSpaceCreation } from '@components/Notifications/FailedUploadAfterSpaceCreation'
 import { CreateSpaceStep1 } from './steps/CreateSpaceStep1'
 import { CreateSpaceStep2 } from './steps/CreateSpaceStep2'
 import { useFormSteps } from '../../../hooks/useFormSteps'
@@ -225,18 +229,48 @@ export const CreateSpaceForm = () => {
         shallow,
     )
 
+    const { mutate: uploadImage } = useUploadImage(createdSpaceId ?? undefined, {
+        onError: () => {
+            if (!createdSpaceId) {
+                return
+            }
+            const { removeLoadedResource } = useImageStore.getState()
+            removeLoadedResource(createdSpaceId)
+            toast.custom((t) => (
+                <FailedUploadAfterSpaceCreation toast={t} spaceId={createdSpaceId} />
+            ))
+        },
+    })
+
     const onTransactionEmitted = useCallback(
         async (args: EmittedTransaction) => {
             const spaceId = args.data?.spaceId
             if (spaceId && spaceDapp) {
                 // TODO: spaceDapp typing is inferred as `any`
                 const spaceInfo = await spaceDapp.getSpaceInfo(spaceId.networkId)
+                // space created on chain
                 if (spaceInfo && spaceInfo.networkId === createdSpaceId) {
+                    const spaceImageData = useCreateSpaceFormStore.getState().spaceImageData
+                    if (spaceImageData) {
+                        const { setLoadedResource } = useImageStore.getState()
+                        // set the image before upload so that it displays immediately
+                        setLoadedResource(spaceId.networkId, {
+                            imageUrl: spaceImageData.imageUrl,
+                        })
+                        // upload image in BG
+                        uploadImage({
+                            id: spaceId.networkId,
+                            file: spaceImageData.file,
+                            type: 'spaceIcon',
+                            imageUrl: spaceImageData.imageUrl,
+                        })
+                    }
+                    // trigger the mint animation
                     setMintedTokenAddress(spaceInfo.address)
                 }
             }
         },
-        [createdSpaceId, setMintedTokenAddress, spaceDapp],
+        [createdSpaceId, setMintedTokenAddress, spaceDapp, uploadImage],
     )
 
     // listen for when transaction is created

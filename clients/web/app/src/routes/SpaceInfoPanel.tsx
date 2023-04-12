@@ -24,7 +24,6 @@ import {
 } from '@ui'
 import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
 import { shortAddress } from 'ui/utils/utils'
-import { UploadImage } from '@components/UploadImage/UploadImage'
 import { useHasPermission } from 'hooks/useHasPermission'
 import { TextArea } from 'ui/components/TextArea/TextArea'
 import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinner'
@@ -33,6 +32,7 @@ import { InteractiveSpaceIcon } from '@components/SpaceIcon'
 import { EditModeContainer, TextButton } from '@components/UserProfile/UserProfile'
 import { errorHasInvalidCookieResponseHeader } from 'api/apiClient'
 import { InvalidCookieNotification } from '@components/Notifications/InvalidCookieNotification'
+import { LargeUploadImageTemplate } from '@components/UploadImage/LargeUploadImageTemplate'
 import { useContractSpaceInfo } from '../hooks/useContractSpaceInfo'
 import { useMatrixHomeServerUrl } from '../hooks/useMatrixHomeServerUrl'
 
@@ -134,7 +134,7 @@ export const SpaceInfoPanel = () => {
                         {!isOfficialNFTToggled ? (
                             <FormRender>
                                 {({ register, formState, setError, clearErrors }) => (
-                                    <UploadImage
+                                    <LargeUploadImageTemplate
                                         type="spaceIcon"
                                         formFieldName="spaceIcon"
                                         canEdit={Boolean(canEdit)}
@@ -150,7 +150,7 @@ export const SpaceInfoPanel = () => {
                                             spaceName={space.name}
                                             address={address}
                                         />
-                                    </UploadImage>
+                                    </LargeUploadImageTemplate>
                                 )}
                             </FormRender>
                         ) : (

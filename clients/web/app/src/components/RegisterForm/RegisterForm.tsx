@@ -6,11 +6,17 @@ import { LoginStatus, useMatrixStore, useMyProfile, useZionClient } from 'use-zi
 import { motion } from 'framer-motion'
 import { Box, Button, ErrorMessage, Icon, Paragraph, Stack, TextField } from '@ui'
 import { useAuth } from 'hooks/useAuth'
-import { UploadAvatar } from '@components/UploadImage/UploadAvatar/UploadAvatar'
 import { PATHS } from 'routes'
 import { useUploadImage } from 'api/lib/uploadImage'
 import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinner'
 import { env } from 'utils'
+import { SmallUploadImageTemplate } from '@components/UploadImage/SmallUploadImageTemplate'
+
+type RegisterFormFieldValues = {
+    walletAddress: string
+    displayName: string
+    profilePic: FileList | undefined
+}
 
 export const RegisterForm = ({ isEdit }: { isEdit: boolean }) => {
     const { loggedInWalletAddress, isConnected, register: registerWallet } = useAuth()
@@ -35,12 +41,8 @@ export const RegisterForm = ({ isEdit }: { isEdit: boolean }) => {
         loggedInWalletAddress ?? '',
     )
 
-    const { setValue, register, handleSubmit, formState, reset, setError, clearErrors, watch } =
-        useForm<{
-            walletAddress: string
-            displayName: string
-            profilePic: FileList | undefined
-        }>({
+    const { register, handleSubmit, formState, reset, setError, clearErrors, watch } =
+        useForm<RegisterFormFieldValues>({
             defaultValues,
             mode: 'onChange',
         })
@@ -179,14 +181,22 @@ export const RegisterForm = ({ isEdit }: { isEdit: boolean }) => {
                 <Stack gap>
                     <Paragraph strong>Profile picture</Paragraph>
                     <Paragraph color="gray1">Upload a profile picture.</Paragraph>
-                    {myProfile?.userId && (
-                        <UploadAvatar
-                            userId={myProfile.userId}
+                    {myProfile?.userId && loggedInWalletAddress && (
+                        <SmallUploadImageTemplate
+                            canEdit
+                            type="avatar"
+                            formFieldName="profilePic"
+                            resourceId={loggedInWalletAddress}
                             setError={setError}
                             register={register}
                             formState={formState}
                             clearErrors={clearErrors}
-                            setValue={setValue}
+                            imageRestrictions={{
+                                minDimension: {
+                                    message: `Image is too small. Please upload an image with a minimum height & width of 300px.`,
+                                    min: 300,
+                                },
+                            }}
                         />
                     )}
                 </Stack>
