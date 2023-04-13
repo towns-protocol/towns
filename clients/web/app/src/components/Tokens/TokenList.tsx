@@ -2,17 +2,16 @@ import { ethers } from 'ethers'
 import { AnimatePresence } from 'framer-motion'
 import uniqBy from 'lodash/uniqBy'
 import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
-import { UseFormReturn } from 'react-hook-form'
 import { getMemberNftAddress } from 'use-zion-client'
 import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinner'
 import { FadeIn, FadeInBox } from '@components/Transitions'
 import { MotionBox } from '@components/Transitions/MotionBox'
-import { useCreateSpaceFormStore } from '@components/Web3/CreateSpaceForm/CreateSpaceFormStore'
-import { Box, Checkbox, Paragraph, Text, TextField, VList } from '@ui'
+import { Box, BoxProps, Checkbox, Paragraph, Text, TextField, VList } from '@ui'
 import { useCollectionsForOwner } from 'api/lib/tokenContracts'
 import { shortAddress } from 'ui/utils/utils'
 import { env } from 'utils'
 import { fetchVitalikTokens, vitalikAddress } from 'hooks/useNetworkForNftApi'
+import { useCorrectChainForServer } from 'hooks/useCorrectChainForServer'
 import { TokenAvatar } from './TokenAvatar'
 import { TokenProps } from './types'
 
@@ -80,23 +79,32 @@ const Loader = () => {
 }
 
 type TokenListProps = {
-    isChecked: boolean
+    showTokenList: boolean
     wallet: string
-    chainId?: number
-} & UseFormReturn
+    onUpdate?: (tokenAddresses: string[]) => void
+    initialTokens?: string[]
+    listMaxHeight?: BoxProps['maxHeight']
+    listMinHeight?: BoxProps['minHeight']
+}
 
 type TokenPropsForVList = TokenProps & { id: string }
 
-export const TokenList = ({ isChecked, setValue, chainId, wallet }: TokenListProps) => {
-    const zionTokenAddress = useMemo(
-        () => (chainId ? getMemberNftAddress(chainId) : null),
-        [chainId],
-    )
-
+export const TokenList = ({
+    showTokenList,
+    wallet,
+    onUpdate,
+    initialTokens,
+    listMaxHeight,
+    listMinHeight,
+}: TokenListProps) => {
+    const chain = useCorrectChainForServer()
+    const chainId = chain.id
+    const onUpdateRef = useRef(onUpdate)
+    onUpdateRef.current = onUpdate
+    const zionTokenAddress = useMemo(() => getMemberNftAddress(chainId), [chainId])
     const [results, setResults] = React.useState<TokenPropsForVList[]>([])
     const [search, setSearch] = React.useState('')
-    const selectedTokens = useCreateSpaceFormStore((state) => state.step1.tokens)
-    const toggleToken = useCreateSpaceFormStore((state) => state.toggleToken)
+    const [selectedTokens, setSelectedTokens] = React.useState<string[]>(initialTokens ?? [])
 
     const { data, isLoading, isError } = useCollectionsForOwner({
         wallet: fetchVitalikTokens ? vitalikAddress : wallet,
@@ -105,6 +113,7 @@ export const TokenList = ({ isChecked, setValue, chainId, wallet }: TokenListPro
         chainId,
     })
 
+    // watch text input and update results
     useEffect(() => {
         if (!data?.tokens) {
             return
@@ -118,18 +127,20 @@ export const TokenList = ({ isChecked, setValue, chainId, wallet }: TokenListPro
         setResults(_results)
     }, [data?.tokens, search])
 
-    // react-hook-form isn't playing nicely with VList
-    // so we're tracking tokens in the store, and manually updating the form value for correct schema validation
+    // emit selected tokens when changed
     useEffect(() => {
-        setValue('tokens', selectedTokens, { shouldValidate: true })
-    }, [selectedTokens, setValue])
+        onUpdateRef.current?.(selectedTokens)
+    }, [selectedTokens])
 
-    const onTokenClick = useCallback(
-        (contractAddress: string) => {
-            toggleToken(contractAddress)
-        },
-        [toggleToken],
-    )
+    const onTokenClick = useCallback((contractAddress: string) => {
+        setSelectedTokens((prev) => {
+            const isSelected = prev.includes(contractAddress)
+            if (isSelected) {
+                return prev.filter((t) => t !== contractAddress)
+            }
+            return [...prev, contractAddress]
+        })
+    }, [])
 
     const isCustomToken = ethers.utils.isAddress(search) && !results.length
     const noResults = !results.length && !isCustomToken && !isLoading
@@ -214,12 +225,12 @@ export const TokenList = ({ isChecked, setValue, chainId, wallet }: TokenListPro
                     </FadeInBox>
                 )}
             </AnimatePresence>
-            {isChecked && !isCustomToken && (
+            {showTokenList && !isCustomToken && (
                 <MotionBox
                     padding
                     layout="position"
-                    minHeight="100"
-                    maxHeight="500"
+                    minHeight={listMinHeight ?? '100'}
+                    maxHeight={listMaxHeight ?? '500'}
                     background="level3"
                     rounded="sm"
                 >

@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react'
 import { clsx } from 'clsx'
-import { Box, Icon, IconButton, Text, TooltipRenderer } from '@ui'
+import { Box, BoxProps, Icon, IconButton, Text, TooltipRenderer } from '@ui'
 import { AvatarProps } from 'ui/components/Avatar/Avatar'
 import {
     avatarAtoms,
@@ -18,15 +18,20 @@ const tokenAvatarImageSourceMap = new Map<string, string>()
 
 const FALLBACK = 'fallback'
 
-export const TokenAvatar = (
-    props: Partial<TokenProps> & {
-        contractAddress: string
-        size: AvatarProps['size']
-        noLabel?: boolean
-        noCopy?: boolean
-        isLoading?: boolean
-    },
-) => {
+export type TokenAvatarProps = Partial<TokenProps> & {
+    contractAddress: string
+    size: AvatarProps['size']
+    noLabel?: boolean
+    noCopy?: boolean
+    isLoading?: boolean
+    horizontal?: 'horizontal'
+    layoutProps?: BoxProps
+    labelProps?: {
+        size: 'sm' | 'md'
+    }
+}
+
+export const TokenAvatar = (props: TokenAvatarProps) => {
     const {
         imgSrc,
         label,
@@ -36,6 +41,8 @@ export const TokenAvatar = (
         noLabel,
         isLoading,
         noCopy = true,
+        layoutProps,
+        labelProps,
     } = props
     const _label = isLoading ? '' : label || shortAddress(contractAddress)
     const imageSource = useCheckImage({ src: imgSrc, contractAddress, isLoading })
@@ -68,7 +75,7 @@ export const TokenAvatar = (
     }
 
     return (
-        <Box alignItems="center" maxWidth="x6" data-testid="token-avatar" gap="sm">
+        <Box alignItems="center" maxWidth="x6" data-testid="token-avatar" gap="sm" {...layoutProps}>
             <Box position="relative" rounded="full" background="level4">
                 <Box
                     display="block"
@@ -134,7 +141,7 @@ export const TokenAvatar = (
                                 clipboardCopyRef.current?.click()
                             }}
                         >
-                            <Text size="sm" color="default" textAlign="center">
+                            <Text size="sm" color="default" textAlign="center" {...labelProps}>
                                 {_label}
                             </Text>
                         </Box>

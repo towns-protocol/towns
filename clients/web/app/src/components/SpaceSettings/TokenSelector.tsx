@@ -2,22 +2,23 @@ import React, { startTransition, useDeferredValue, useEffect, useRef, useState }
 import { useEvent } from 'react-use-event-hook'
 import { IconButton, IconLabelButton, Stack, TextField } from '@ui'
 
-type Props<T> = {
+type Props = {
     label: string
-    data: T[]
+    data: string[]
     placeholder?: string
-    onUpdate: (data: T[]) => void
-    itemRenderer: (props: { item: T; onRemoveItem: (id: string) => void }) => React.ReactNode
-    itemFromString: (id: string) => T
+    onClick?: () => void
+    onUpdate: (data: string[]) => void
+    itemRenderer: (props: { item: string; onRemoveItem: (id: string) => void }) => React.ReactNode
 }
 
-export const TokenSelector = <T extends string>(props: Props<T>) => {
+// When updating the members list UI, can remove the input from this component
+export const TokenSelector = (props: Props) => {
     const buttonRef = useRef<HTMLInputElement>(null)
     const { data, itemRenderer } = props
     const [isInputShowing, setInputShowing] = useState(false)
 
     const onClick = () => {
-        setInputShowing(true)
+        props.onClick?.() ?? setInputShowing(true)
     }
 
     const onCancelInput = useEvent(() => {
@@ -25,9 +26,8 @@ export const TokenSelector = <T extends string>(props: Props<T>) => {
     })
 
     const onConfirmInput = useEvent((token: string) => {
-        const item: T = props.itemFromString(token)
-        if (item) {
-            props.onUpdate([...data, item])
+        if (token) {
+            props.onUpdate([...data, token])
             setInputShowing(false)
 
             setTimeout(() => {
@@ -42,7 +42,7 @@ export const TokenSelector = <T extends string>(props: Props<T>) => {
 
     return (
         <>
-            <Stack horizontal gap alignItems="start">
+            <Stack horizontal gap flexWrap="wrap" alignItems="start">
                 {Object.values(data).map((item) => (
                     <React.Fragment key={item}>
                         {itemRenderer({ item, onRemoveItem })}

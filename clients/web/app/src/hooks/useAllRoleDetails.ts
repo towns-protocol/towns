@@ -3,7 +3,6 @@ import { useMemo, useState } from 'react'
 import { useMultipleRoleDetails, useRoles } from 'use-zion-client'
 import { RoleDetails } from 'use-zion-client/dist/client/web3/ContractTypes'
 
-// TODO: add this to useGetAllRoleDetails
 export function useAllRoleDetails(spaceId: string) {
     const { spaceRoles: _roles, isLoading: rolesLoading } = useRoles(decodeURIComponent(spaceId))
     const roledIds = useMemo(() => _roles?.map((r) => r.roleId?.toNumber()) ?? [], [_roles])

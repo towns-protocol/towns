@@ -1,13 +1,12 @@
 import { randProductName, randTextRange } from '@ngneat/falso'
-import { GetNftsResponse } from '@token-worker/types'
+import { GetCollectionsForOwnerResponse } from '@token-worker/types'
 import { CreateSpaceFormState } from './types'
 
-export const MOCK_CONTRACT_METADATA_RESPONSE: GetNftsResponse = {
+export const MOCK_CONTRACT_METADATA_RESPONSE: GetCollectionsForOwnerResponse = {
     pageKey:
         'MHgwMDcwM2Y5YjExZjJhYzAyZDM5MWExMWU3Yjk3YzZlZTgwY2Q4NTYzOjB4MDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwNTpmYWxzZQ==',
     totalCount: 25434,
-    blockHash: '0x1a07c6ef5ce48c573d212f9f971a8ab4392b5f28c4d1dbe95aca6c1b868eba18',
-    ownedNftsContract: [
+    collections: [
         {
             name: 'Bored Ape Nike Club',
             address: '0x000386e3f7559d9b6a2f5c46b4ad1a9587d59dc3',

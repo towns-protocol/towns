@@ -146,7 +146,7 @@ const SavePopup = (props: {
     })
 
     return (
-        <Stack gap="lg">
+        <Stack gap="lg" maxWidth="600">
             <Heading level={3}>Confirm your changes</Heading>
             <Stack gap="sm">
                 {spaceId &&

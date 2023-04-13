@@ -100,14 +100,14 @@ export const useModifiedRoles = () => {
                 if (!isEqual(role.tokens.slice().sort(), snapshotRole?.tokens.slice().sort())) {
                     updatesToRole.push({
                         title: `Token gated membership`,
-                        description: `${role.tokens.join()}`,
+                        description: `${role.tokens.join(', ')}`,
                         shouldDisplay: role.tokens.length > 0,
                     })
                 }
                 if (!isEqual(role.users.slice().sort(), snapshotRole?.users.slice().sort())) {
                     updatesToRole.push({
                         title: 'User gated membership',
-                        description: `${role.users.join()}`,
+                        description: `${role.users.join(', ')}`,
                         shouldDisplay: role.users.length > 0,
                     })
                 }

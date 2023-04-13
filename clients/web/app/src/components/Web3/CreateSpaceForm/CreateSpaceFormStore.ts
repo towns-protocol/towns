@@ -11,6 +11,7 @@ interface CreateSpaceActions {
     setStep1: (step1: CreateSpaceFormState['step1']) => void
     setStep2: (step1: CreateSpaceFormState['step2']) => void
     toggleToken: (token: string) => void
+    setTokens: (tokens: string[]) => void
     clearTokens: () => void
     reset: () => void
     setImageData: (spaceImageData: CreateSpaceFormState['spaceImageData']) => void
@@ -74,6 +75,8 @@ export const useCreateSpaceFormStore = create<CreateSpaceFormState & CreateSpace
                 },
             }
         }),
+    setTokens: (tokens: string[]) =>
+        set((state) => ({ ...state, step1: { ...state.step1, tokens } })),
     clearTokens: () => set((state) => ({ ...state, step1: { ...state.step1, tokens: [] } })),
     setCreatedSpaceId: (createdSpaceId: string) => set({ createdSpaceId }),
     setMintedTokenAddress: (mintedTokenAddress: Address) => set({ mintedTokenAddress }),

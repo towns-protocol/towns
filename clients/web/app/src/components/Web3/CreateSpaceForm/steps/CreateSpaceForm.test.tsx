@@ -20,6 +20,19 @@ vi.mock('react-router', async () => {
     }
 })
 
+// mock the viewport for VList
+vi.mock('ui/components/VList/hooks/useViewport', async () => {
+    const viewPort = [0, 777]
+    return {
+        useViewport: () => {
+            return {
+                viewport: viewPort,
+                isScrolling: false,
+            }
+        },
+    }
+})
+
 vi.mock('use-zion-client', async () => {
     return {
         ...((await vi.importActual('use-zion-client')) as Record<string, unknown>),
@@ -114,6 +127,7 @@ describe('<CreateSpaceForm />', () => {
         const searchInput = await screen.findByTestId('token-search')
         await userEvent.type(searchInput, address1)
         const checkboxes = await screen.findAllByTestId('checkbox-tokens')
+
         fireEvent.click(checkboxes[0])
 
         // going to step 2
@@ -140,7 +154,7 @@ describe('<CreateSpaceForm />', () => {
         expect(everyoneRadio).toBeChecked()
     }, 10000)
 
-    // Evan 2.2.23 Doesn't fail in local, still fails in CI
+    // Evan 4.13.23 this is still flaky on CI
     test.skip('Step 2: if tokens are selected, can delete all but 1 token', async () => {
         render(<Wrapper />)
         const nextButton = screen.getByTestId('create-space-next-button')
@@ -409,8 +423,7 @@ describe('<CreateSpaceForm />', () => {
         })
     }, 10000)
 
-    // Evan 2.2.23 Doesn't fail in local, still fails in CI
-    test.skip('If space membership is for token holders, token permissions should be [Read,Write] and everyone permissions should be []', async () => {
+    test('If space membership is for token holders, token permissions should be [Read,Write] and everyone permissions should be []', async () => {
         vi.spyOn(zionClient, 'useCreateSpaceTransaction').mockImplementation(
             useMockedCreateSpaceTransaction,
         )

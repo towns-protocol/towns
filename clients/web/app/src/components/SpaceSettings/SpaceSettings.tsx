@@ -2,21 +2,24 @@ import React, { useEffect, useMemo } from 'react'
 import { Outlet, useNavigate, useParams } from 'react-router'
 import { NavLink } from 'react-router-dom'
 import { useEvent } from 'react-use-event-hook'
-import { Permission } from 'use-zion-client'
+import { Permission, useRoleDetails } from 'use-zion-client'
 import { AnimatePresence } from 'framer-motion'
 import { PATHS } from 'routes'
 
 import { IconButton, Stack, Text } from '@ui'
-import { useSettingsRolesStore } from '@components/SpaceSettings/store/hooks/settingsRolesStore'
+import {
+    Role,
+    useSettingsRolesStore,
+} from '@components/SpaceSettings/store/hooks/settingsRolesStore'
 import { FadeIn } from '@components/Transitions'
 import { useHasPermission } from 'hooks/useHasPermission'
 import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinner'
+import { useAllRoleDetails } from 'hooks/useAllRoleDetails'
 import { SpaceSettingsNavItem } from '../NavItem/SpaceSettingsNavItem'
 import { useModifiedRoles } from './store/hooks/useModifiedRoles'
 import { useSettingsTransactionsStore } from './store/hooks/settingsTransactionStore'
 import { InProgressToast } from './notifications/InProgressToast'
 import { ResultsToast } from './notifications/ResultsToast'
-import { useGetAllRoleDetails } from './useGetAllRoleDetails'
 import { NavigateToFirstRoleOnEntry, useDefaultPath } from './NavigateToFirstRoleOnEntry'
 import { useTransactionEffects } from './useTransactionEffects'
 
@@ -49,11 +52,11 @@ export const SpaceSettings = () => {
     const settledTransactions = useSettingsTransactionsStore((state) => state.settledTransactions)
     const defaultPath = useDefaultPath()
 
-    const {
-        data: fetchedRoles,
-        invalidateQuery,
-        isLoading: fetchedRolesLoading,
-    } = useGetAllRoleDetails(spaceId)
+    const { data, invalidateQuery, isLoading: fetchedRolesLoading } = useAllRoleDetails(spaceId)
+    const fetchedRoles = useMemo(
+        () => data?.map(mapRoleStructToRole).filter((role): role is Role => !!role) ?? [],
+        [data],
+    )
 
     const { data: canEditSettings, isLoading: canEditLoading } = useHasPermission(
         Permission.ModifySpaceSettings,
@@ -186,4 +189,21 @@ function ToastBar({ onMoreChangesClick }: { onMoreChangesClick: () => void }) {
             <ResultsToast modifiedRoles={modifiedRoles} onMoreChangesClick={onMoreChangesClick} />
         </>
     )
+}
+
+export function mapRoleStructToRole(
+    roleDetails: ReturnType<typeof useRoleDetails>['roleDetails'],
+): Role | undefined {
+    if (!roleDetails) {
+        return
+    }
+    return {
+        id: roleDetails.id.toString(),
+        name: roleDetails.name,
+        permissions: roleDetails.permissions,
+        // NFT API data (both Alchemy and Infura) lowercase all their contract addresses
+        // perhaps we should do the same in lib?
+        tokens: roleDetails.tokens.map((t) => (t.contractAddress as string).toLowerCase()),
+        users: roleDetails.users,
+    }
 }

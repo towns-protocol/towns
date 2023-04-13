@@ -1,6 +1,5 @@
 import React, { useCallback } from 'react'
 import * as z from 'zod'
-import { useZionClient } from 'use-zion-client'
 import { UseFormReturn } from 'react-hook-form'
 import { AnimatePresence } from 'framer-motion'
 import { Box, ErrorMessage, FormRender, Heading, RadioCard, Stack } from '@ui'
@@ -40,7 +39,6 @@ const schema = z
 export const CreateSpaceStep1 = ({ onSubmit, id }: FormStepProps) => {
     const defaultState = useCreateSpaceFormStore((state) => state.step1)
     const setStep1 = useCreateSpaceFormStore((state) => state.setStep1)
-    const { chainId } = useZionClient()
     const { loggedInWalletAddress: wallet } = useAuth()
 
     const onEveryoneClick = useCallback((formProps: UseFormReturn) => {
@@ -53,11 +51,25 @@ export const CreateSpaceStep1 = ({ onSubmit, id }: FormStepProps) => {
         useCreateSpaceFormStore.getState().clearTokens()
     }, [])
 
-    const onTokensClick = useCallback((formProps: UseFormReturn) => {
+    const onTokensCardClick = useCallback((formProps: UseFormReturn) => {
         formProps.setValue(MEMBERSHIP_TYPE, TOKEN_HOLDERS, {
             shouldValidate: true,
         })
     }, [])
+
+    const onSelectedTokensUpdate = useCallback(
+        (tokens: string[], setValue: UseFormReturn['setValue']) => {
+            // set form values (for validation)
+            setValue?.(TOKENS, tokens, {
+                shouldValidate: true,
+            })
+            // and set store
+            useCreateSpaceFormStore.getState().setTokens(tokens)
+        },
+        [],
+    )
+
+    const storedTokens = useCreateSpaceFormStore((state) => state.step1.tokens)
 
     return (
         <FormRender<CreateSpaceFormState['step1']>
@@ -95,16 +107,21 @@ export const CreateSpaceStep1 = ({ onSubmit, id }: FormStepProps) => {
                                     value={TOKEN_HOLDERS}
                                     title="Token holders"
                                     description="People who hold a specific token may join your town"
-                                    onClick={() => onTokensClick(formProps)}
+                                    onClick={() => onTokensCardClick(formProps)}
                                     {...formProps}
                                 >
                                     {() => {
                                         return (
                                             <TokenList
                                                 wallet={wallet}
-                                                chainId={chainId}
-                                                isChecked={isTokenHolders}
-                                                {...formProps}
+                                                showTokenList={isTokenHolders}
+                                                initialTokens={storedTokens}
+                                                onUpdate={(tokens) =>
+                                                    onSelectedTokensUpdate(
+                                                        tokens,
+                                                        formProps.setValue,
+                                                    )
+                                                }
                                             />
                                         )
                                     }}

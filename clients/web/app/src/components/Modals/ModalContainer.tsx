@@ -6,6 +6,7 @@ export const ModalContainer = (props: {
     children: React.ReactNode
     onHide: () => void
     minWidth?: BoxProps['minWidth']
+    stableTopAlignment?: boolean
 }) => {
     const root = useContext(RootLayerContext).rootLayerRef?.current
 
@@ -22,7 +23,20 @@ export const ModalContainer = (props: {
                 style={{ background: `rgba(0,0,0,0.3)`, backdropFilter: `blur(4px)` }}
                 onClick={props.onHide}
             />
-            <Box absoluteFill centerContent pointerEvents="none">
+            <Box
+                absoluteFill
+                justifyContent={props.stableTopAlignment ? undefined : 'center'}
+                alignItems="center"
+                pointerEvents="none"
+                style={
+                    props.stableTopAlignment
+                        ? {
+                              top: '45%',
+                              transform: 'translateY(-50%)',
+                          }
+                        : undefined
+                }
+            >
                 <Box
                     padding
                     border
