@@ -4,7 +4,7 @@ export interface TokenProps extends TokenData {
     onClick?: (contractAddress: string, e: React.MouseEvent) => void
 }
 
-export interface TokenData {
+export type TokenData = {
     imgSrc: string
     label: string
     contractAddress: string

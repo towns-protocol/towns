@@ -2,6 +2,7 @@ import { clsx } from 'clsx'
 import { motion } from 'framer-motion'
 import React, { forwardRef, useCallback, useEffect, useMemo } from 'react'
 import { createUserIdFromString } from 'use-zion-client'
+import { ethers } from 'ethers'
 import { ImageVariant, useImageSource } from '@components/UploadImage/useImageSource'
 import { useImageStore } from '@components/UploadImage/useImageStore'
 import { Box, BoxProps } from '../Box/Box'
@@ -12,6 +13,7 @@ import {
     avatarImageStyle,
     avatarToggleClasses,
 } from './Avatar.css'
+import { Icon, IconProps } from '../Icon'
 
 type Props = {
     src?: string
@@ -27,7 +29,11 @@ type Props = {
     inset?: BoxProps['inset']
     boxShadow?: BoxProps['boxShadow']
     children?: React.ReactNode
+    /**
+     * matrix userId or ethereum address
+     */
     userId?: string
+    icon?: IconProps['type']
     imageVariant?: ImageVariant
 } & Omit<AvatarAtoms, 'circle'>
 
@@ -36,6 +42,9 @@ export type AvatarProps = Props
 function useAvatarImageSrc(props: { imageVariant?: ImageVariant; userId?: string }) {
     const { imageVariant = 'thumbnail100', userId } = props
     const resourceId = useMemo(() => {
+        if (userId && ethers.utils.isAddress(userId)) {
+            return userId
+        }
         return createUserIdFromString(userId ?? '')?.accountAddress ?? ''
     }, [userId])
 
@@ -83,6 +92,7 @@ const _Avatar = forwardRef<HTMLElement, Omit<Props, 'userId'> & { resourceId: st
             border,
             src,
             resourceId,
+            icon,
             ...boxProps
         } = props
 
@@ -104,6 +114,35 @@ const _Avatar = forwardRef<HTMLElement, Omit<Props, 'userId'> & { resourceId: st
 
         const failedResource = useImageStore((state) => state.erroredResources[resourceId])
         const loadedResource = useImageStore((state) => state.loadedResource[resourceId])
+
+        const content = () => {
+            if (icon) {
+                return (
+                    <Box centerContent horizontal height="100%" background="level4">
+                        <Icon type={icon} color="gray2" />
+                    </Box>
+                )
+            }
+
+            //initial image load - this should render for each resourceId once to save the failed/loaded state so subsequent instances don't need to check
+            if (src && !failedResource && !loadedResource) {
+                return (
+                    <img
+                        src={src}
+                        className={avatarImageStyle}
+                        style={{
+                            opacity: 0,
+                        }}
+                        onLoad={onLoad}
+                        onError={onError}
+                    />
+                )
+            }
+
+            if (loadedResource) {
+                return <img src={src} className={avatarImageStyle} />
+            }
+        }
 
         return (
             <Container
@@ -127,20 +166,7 @@ const _Avatar = forwardRef<HTMLElement, Omit<Props, 'userId'> & { resourceId: st
                 }}
                 {...boxProps}
             >
-                {loadedResource && <img src={src} className={avatarImageStyle} />}
-
-                {/* initial image load - this should render for each resourceId once to save the failed/loaded state so subsequent instances don't need to check */}
-                {src && !failedResource && !loadedResource && (
-                    <img
-                        src={src}
-                        className={avatarImageStyle}
-                        style={{
-                            opacity: 0,
-                        }}
-                        onLoad={onLoad}
-                        onError={onError}
-                    />
-                )}
+                {content()}
             </Container>
         )
     },

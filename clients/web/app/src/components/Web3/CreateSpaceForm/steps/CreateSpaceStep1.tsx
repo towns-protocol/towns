@@ -6,9 +6,9 @@ import { Box, ErrorMessage, FormRender, Heading, RadioCard, Stack } from '@ui'
 import { useAuth } from 'hooks/useAuth'
 import { FadeInBox } from '@components/Transitions'
 import { MotionBox } from '@components/Transitions/MotionBox'
+import { TokensList } from '@components/Tokens'
 import { useCreateSpaceFormStore } from '../CreateSpaceFormStore'
 import { FormStepProps } from '../../../../hooks/useFormSteps'
-import { TokenList } from '../../../Tokens/TokenList'
 import { CreateSpaceFormState } from '../types'
 import { EVERYONE, MEMBERSHIP_TYPE, TOKENS, TOKEN_HOLDERS } from '../constants'
 
@@ -112,10 +112,10 @@ export const CreateSpaceStep1 = ({ onSubmit, id }: FormStepProps) => {
                                 >
                                     {() => {
                                         return (
-                                            <TokenList
+                                            <TokensList
                                                 wallet={wallet}
                                                 showTokenList={isTokenHolders}
-                                                initialTokens={storedTokens}
+                                                initialItems={storedTokens}
                                                 onUpdate={(tokens) =>
                                                     onSelectedTokensUpdate(
                                                         tokens,
