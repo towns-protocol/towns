@@ -3,7 +3,7 @@ import { useEvent } from 'react-use-event-hook'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { TokensList } from '@components/Tokens'
 import { Button, IconButton, Stack, Text } from '@ui'
-import { MemberList } from '@components/SpaceSettings/MemberListSearch'
+import { MemberList } from '@components/SpaceSettings/RoleSettings/MemberListSearch'
 
 export function TokenListModal({
     setStoreTokens,

@@ -1,7 +1,7 @@
 import { useEffect, useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import { useOnTransactionEmitted } from 'use-zion-client'
-import { useDefaultPath } from './NavigateToFirstRoleOnEntry'
+import { useDefaultRolePath } from './useDefaultRolePath'
 import { NEW_ROLE_ID_PREFIX } from './SpaceSettingsRolesNav'
 import { Role } from './store/hooks/settingsRolesStore'
 import { useSettingsTransactionsStore } from './store/hooks/settingsTransactionStore'
@@ -19,7 +19,7 @@ export function useTransactionEffects({
 }) {
     const { spaceSlug = '' } = useParams()
     const spaceId = useMemo(() => decodeURIComponent(spaceSlug), [spaceSlug])
-    const defaultPath = useDefaultPath()
+    const defaultPath = useDefaultRolePath()
 
     const setTransactionSuccess = useSettingsTransactionsStore(
         (state) => state.setTransactionSuccess,
@@ -33,7 +33,18 @@ export function useTransactionEffects({
     )
     const hasInProgressTransactions = Object.keys(inProgressTransactions).length > 0
 
-    // watch pending transactions. When they all resolve, refetch the roles and clear the store data
+    // when a single transaction resolves, update the transaction store
+    useOnTransactionEmitted(async (arg) => {
+        const [id] =
+            Object.entries(inProgressTransactions).find(([, data]) => {
+                return data.hash === arg.hash
+            }) ?? []
+        if (id) {
+            setTransactionSuccess(id)
+        }
+    })
+
+    // watch all pending transactions. When they all resolve, refetch the roles and clear the store data
     useEffect(() => {
         const invalidateQueryAndSetSpace = async () => {
             if (!fetchedRoles?.length) {
@@ -43,7 +54,7 @@ export function useTransactionEffects({
             useSettingsTransactionsStore.getState().saveToSettledAndClearInProgress()
             // refetch the roles
             await invalidateQuery?.()
-
+            // if the user was on a new role screen, navigate to the default role
             if (roleId?.includes(NEW_ROLE_ID_PREFIX) && defaultPath) {
                 navigate(defaultPath)
             }
@@ -73,15 +84,4 @@ export function useTransactionEffects({
         roleId,
         spaceId,
     ])
-
-    // when a single transaction resolves, update the transaction store
-    useOnTransactionEmitted(async (arg) => {
-        const [id] =
-            Object.entries(inProgressTransactions).find(([key, data]) => {
-                return data.hash === arg.hash
-            }) ?? []
-        if (id) {
-            setTransactionSuccess(id)
-        }
-    })
 }
