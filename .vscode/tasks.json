@@ -65,7 +65,8 @@
           "SampleApp",
           "Casablanca DebugApp",
           "UnfurlWorker",
-          "TokenWorker"
+          "TokenWorker",
+          "GatewayWorker"
         ],
         "group": {
           "kind": "build",
@@ -93,6 +94,14 @@
           "kind": "build",
           "isDefault": false
         }
+      },
+      {
+        // Optional worker that's only required if testing the gateway worker with siwe verification
+        "label": "Start SIWE worker",
+        "type": "shell",
+        "command": "cd servers/workers/siwe-worker && yarn dev:local",
+        "isBackground": true,
+        "problemMatcher": [],
       },
       {
         "label": "FoundryUp",
@@ -278,6 +287,16 @@
         "label": "TokenWorker",
         "type": "shell",
         "command": "cd servers/workers/token-worker && yarn dev:local",
+        "isBackground": true,
+        "problemMatcher": [],
+        "presentation": {
+          "group": "local-workers"
+        }
+      },
+      {
+        "label": "GatewayWorker",
+        "type": "shell",
+        "command": "cd servers/workers/gateway-worker && yarn dev:local",
         "isBackground": true,
         "problemMatcher": [],
         "presentation": {
