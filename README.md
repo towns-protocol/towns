@@ -57,7 +57,7 @@ Then update `clients/web/app/.env.local` with the required (blank) keys.
 
 ![Screen Shot 2023-01-09 at 11 52 26 AM](https://user-images.githubusercontent.com/950745/211434823-f38ed503-a282-479c-99c2-fb3bc350ab59.png)
 
-5. Optional - for local Cloudflare workers to run properly, you'll need to add their secret env variables. There are two workers: `servers/workers/unfurl-worker` and `servers/workers/token-worker`. For each, `cp .dev.vars-sample .dev.vars` and add the required keys.
+5. For local Cloudflare workers to run properly, you'll need to add their secret env variables. At `servers/workers/` you'll see: `gateway-worker`, `token-worker`, and `unfurl-worker`. For each, `cp .dev.vars-sample .dev.vars` and add the required config. The `siwe-worker` is optional for local development.
 
 ## Running everything locally
 
