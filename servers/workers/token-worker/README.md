@@ -7,7 +7,7 @@ Cloudflare worker for interacting with NFTs (via Alchemy)
 !! Not deployed, only runs in local environment, any client code using endpoint should be behind `isDev` flag.
 
 1. `yarn install`
-2. Copy dev.vars-sample to dev.vars and fill in the ALCHEMY_API_KEY available from Notion credentials page
+2. Copy dev.vars-sample to dev.vars
 3. Run `yarn dev:local`
 4. The server should be running at `localhost:8006`
 

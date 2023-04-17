@@ -18,7 +18,7 @@ export interface Env extends AuthEnv {
 	//
 	// Example binding to R2. Learn more at https://developers.cloudflare.com/workers/runtime-apis/r2/
 	// MY_BUCKET: R2Bucket
-	ALCHEMY_API_KEY: string
+	INFURA_API_KEY: string
 	ENVIRONMENT: string
 	VERIFY: string
 }

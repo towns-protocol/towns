@@ -4,9 +4,9 @@ import { ethers } from 'ethers'
 import { Env } from '..'
 import { Permission } from 'use-zion-client/src/client/web3/ContractTypes'
 
-const GOERLI_RPC_URL = 'https://eth-goerli.g.alchemy.com/v2/'
+const GOERLI_RPC_URL = 'https://goerli.infura.io/v3/'
 const LOCALHOST_RPC_URL = 'http://127.0.0.1:8545' // not localhost
-const SEPOLIA_RPC_URL = 'https://eth-sepolia.g.alchemy.com/v2/'
+const SEPOLIA_RPC_URL = 'https://sepolia.infura.io/v3/'
 
 const providerMap = new Map<string, string>([
 	['development', LOCALHOST_RPC_URL],
@@ -42,7 +42,7 @@ export async function verifySiweMessage(
 				url:
 					env.ENVIRONMENT == 'development'
 						? `${providerMap.get(env.ENVIRONMENT)}`
-						: `${providerMap.get(env.ENVIRONMENT)}${env.ALCHEMY_API_KEY}`,
+						: `${providerMap.get(env.ENVIRONMENT)}${env.INFURA_API_KEY}`,
 				skipFetchSetup: true,
 			},
 			network,
