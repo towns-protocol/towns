@@ -268,16 +268,13 @@ export const SpaceInfoPanel = () => {
                                     {canEdit &&
                                         (isEdit ? (
                                             <Box horizontal gap="sm">
-                                                <TextButton
-                                                    disabled={isLoading}
-                                                    color="gray2"
-                                                    onClick={onCancel}
-                                                >
+                                                <TextButton disabled={isLoading} onClick={onCancel}>
                                                     Cancel
                                                 </TextButton>
                                                 <Box horizontal gap>
                                                     <TextButton
                                                         disabled={isLoading}
+                                                        color="default"
                                                         data-testid="save-button"
                                                         onClick={onSave}
                                                     >
