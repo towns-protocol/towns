@@ -1,13 +1,18 @@
 import { ethers } from 'ethers'
 import React from 'react'
 import { PioneerNFTContractState } from 'use-zion-client'
+import { Chain } from 'wagmi'
 
 export const ContractState = (props: {
+    chain: Chain | undefined
     contractState: PioneerNFTContractState
     etherscanBaseURL: string
 }) => {
     return (
         <div>
+            <h2>Selected Chain</h2>
+
+            <div>{props.chain?.id ?? 'unset'}</div>
             <h2>Contract Address</h2>
 
             <div>

@@ -297,6 +297,7 @@ export const AlphaAccessMainPage = () => {
                     }}
                 >
                     <ContractState
+                        chain={chain}
                         contractState={contractState}
                         etherscanBaseURL={etherscanBaseURL}
                     />
