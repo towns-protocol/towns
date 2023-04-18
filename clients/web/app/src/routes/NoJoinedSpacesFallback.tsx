@@ -58,11 +58,11 @@ export const NoJoinedSpacesFallback = () => {
                                 Join alpha
                             </Button>
                         </Box>
-                        <Box horizontal centerContent>
-                            <SentryReportModal />
-                        </Box>
                     </Stack>
                 </Stack>
+                <Box position="absolute" left="lg" bottom="lg">
+                    <SentryReportModal />
+                </Box>
             </Stack>
         </CentralPanelLayout>
     )
