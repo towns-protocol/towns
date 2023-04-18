@@ -23,7 +23,7 @@ export const RoleSettingsPermissions = () => {
     })
 
     return (
-        <Stack gap="x4" key={roleId}>
+        <Stack gap="x4" key={roleId} data-testid="role-settings-permissions-content">
             {enabledRolePermissions.map((permissionId: Permission) => {
                 return role ? (
                     <RoleRow

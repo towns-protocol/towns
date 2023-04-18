@@ -2,11 +2,11 @@ import React from 'react'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import * as zionClient from 'use-zion-client'
-import { BigNumber } from 'ethers'
 import { TestApp } from 'test/testUtils'
 import * as useContractRoles from 'hooks/useContractRoles'
 import { UseMockCreateChannelReturn, mockCreateTransactionWithSpy } from 'test/transactionHookMock'
 import * as useRequireTransactionNetwork from 'hooks/useRequireTransactionNetwork'
+import { everyoneRole, memberRole } from 'test/testMocks'
 import { CreateChannelForm } from '.'
 import { MOCK_CONTRACT_METADATA_ADDRESSES } from '../../../../mocks/token-collections'
 
@@ -30,21 +30,6 @@ const Wrapper = ({
             />
         </TestApp>
     )
-}
-
-type ContractRole = {
-    roleId: BigNumber
-    name: string
-}
-
-const everyoneRole: ContractRole = {
-    roleId: BigNumber.from(7),
-    name: 'Everyone',
-}
-
-const memberRole: ContractRole = {
-    roleId: BigNumber.from(8),
-    name: 'Member',
 }
 
 const { createTransactionSpy: createChannelSpy, useMockedCreateTransaction } =

@@ -56,10 +56,15 @@ type TransactionFnNames =
     | 'createSpaceTransactionWithRole'
     | 'createChannelTransaction'
     | 'updateChannelTransaction'
+    | 'deleteRoleTransaction'
+    | 'createRoleTransaction'
+    | 'updateRoleTransaction'
 
 type UseMockTransactionReturn = {
     isLoading: boolean
-    data: zionClient.RoomIdentifier | undefined
+    // TODO: fix this type - likely a generic
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    data: any | undefined
     error: Error | undefined
     transactionHash: string | undefined
     transactionStatus: zionClient.TransactionStatus
@@ -77,10 +82,25 @@ export type UseMockUpdateChannelReturn = UseMockTransactionReturn & {
     updateChannelTransaction: Mock
 }
 
+export type UseMockDeleteRoleReturn = UseMockTransactionReturn & {
+    deleteRoleTransaction: Mock
+}
+
+export type UseMockCreateRoleReturn = UseMockTransactionReturn & {
+    createRoleTransaction: Mock
+}
+
+export type UseMockUpdateRoleReturn = UseMockTransactionReturn & {
+    updateRoleTransaction: Mock
+}
+
 type UseMockHookReturn =
     | UseMockCreateSpaceReturn
     | UseMockCreateChannelReturn
     | UseMockUpdateChannelReturn
+    | UseMockDeleteRoleReturn
+    | UseMockCreateRoleReturn
+    | UseMockUpdateRoleReturn
 
 // useCreateSpaceTransaction/useCreateChannelTransaction contains calls to other lib functions whose references aren't replaced by mocking: createSpaceTransaction, waitForCreateSpaceTransaction, etc
 // Workarounds:
@@ -96,7 +116,9 @@ export const mockCreateTransactionWithSpy = (transactionFunctionName: Transactio
             | 'failedWithMatrixPermissionContext' = 'success',
     ): UseMockHookReturn | undefined => {
         const [transactionContext, setTransactionContext] = useState<
-            zionClient.TransactionContext<zionClient.RoomIdentifier> | undefined
+            // TODO: fix this type - likely a generic
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            zionClient.TransactionContext<any> | undefined
         >(undefined)
 
         const { data, isLoading, transactionHash, transactionStatus, error } = useMemo(() => {
@@ -154,6 +176,21 @@ export const mockCreateTransactionWithSpy = (transactionFunctionName: Transactio
                 return {
                     ...txData,
                     updateChannelTransaction: createTransactionMockFn,
+                }
+            case 'deleteRoleTransaction':
+                return {
+                    ...txData,
+                    deleteRoleTransaction: createTransactionMockFn,
+                }
+            case 'createRoleTransaction':
+                return {
+                    ...txData,
+                    createRoleTransaction: createTransactionMockFn,
+                }
+            case 'updateRoleTransaction':
+                return {
+                    ...txData,
+                    updateRoleTransaction: createTransactionMockFn,
                 }
             default:
                 break

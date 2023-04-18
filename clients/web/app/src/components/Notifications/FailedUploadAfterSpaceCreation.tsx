@@ -1,7 +1,7 @@
 import React from 'react'
 import headlessToast, { Toast } from 'react-hot-toast/headless'
 import { matchPath, useLocation, useNavigate } from 'react-router'
-import useEvent from 'react-use-event-hook'
+import { useEvent } from 'react-use-event-hook'
 import { Box, Button, Icon, Text } from '@ui'
 import { PATHS } from 'routes'
 

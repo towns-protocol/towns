@@ -31,7 +31,7 @@ export const RoleSettingsDisplay = () => {
     }
 
     return (
-        <Stack gap="lg" maxWidth="700">
+        <Stack gap="lg" maxWidth="700" data-testid="role-settings-display-content">
             <Stack gap>
                 <Paragraph strong> Role name</Paragraph>
                 <TextField

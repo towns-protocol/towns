@@ -2,13 +2,17 @@ import React from 'react'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import * as zionClient from 'use-zion-client'
-import { BigNumber } from 'ethers'
 import { TestApp } from 'test/testUtils'
 import * as useContractRoles from 'hooks/useContractRoles'
 import { UseMockUpdateChannelReturn, mockCreateTransactionWithSpy } from 'test/transactionHookMock'
 import * as useRequireTransactionNetwork from 'hooks/useRequireTransactionNetwork'
+import {
+    everyoneRole,
+    memberRole,
+    roleDataWithBothRolesAssignedToChannel,
+    roleDataWithMemberAssignedToChannel,
+} from 'test/testMocks'
 import { ChannelSettingsForm } from './ChannelSettingsModal'
-import { MOCK_CONTRACT_METADATA_ADDRESSES } from '../../../mocks/token-collections'
 
 const CHANNEL_ID = 'channel1'
 const SPACE_ID = 'town1'
@@ -51,74 +55,12 @@ const Wrapper = ({
     )
 }
 
-type ContractRole = {
-    roleId: BigNumber
-    name: string
-}
-
-const everyoneRole: ContractRole = {
-    roleId: BigNumber.from(7),
-    name: 'Everyone',
-}
-
-const memberRole: ContractRole = {
-    roleId: BigNumber.from(8),
-    name: 'Member',
-}
-
 const { createTransactionSpy: updateChannelTransactionSpy, useMockedCreateTransaction } =
     mockCreateTransactionWithSpy('updateChannelTransaction')
 
 const useMockedUpdateChannelTransaction = (
     ...args: (typeof zionClient.useCreateChannelTransaction)['arguments']
 ) => useMockedCreateTransaction(...args) as UseMockUpdateChannelReturn
-
-const channelDataForRole: {
-    name: string
-    channelNetworkId: string
-    disabled: boolean
-} = {
-    name: 'Channel 1',
-    channelNetworkId: channelRoomIdentifier.networkId,
-    disabled: false,
-}
-
-const roleDataWithBothRolesAssignedToChannel = [
-    {
-        id: 7,
-        name: 'Everyone',
-        permissions: ['Read', 'Write'],
-        tokens: [],
-        users: ['0x1'],
-        channels: [channelDataForRole],
-    },
-    {
-        id: 8,
-        name: 'Member',
-        permissions: ['Read', 'Write'],
-        tokens: [
-            {
-                contractAddress: MOCK_CONTRACT_METADATA_ADDRESSES[0],
-            },
-            {
-                contractAddress: MOCK_CONTRACT_METADATA_ADDRESSES[1],
-            },
-        ],
-        users: [],
-        channels: [channelDataForRole],
-    },
-]
-
-const roleDataWithMemberAssignedToChannel = [
-    {
-        ...roleDataWithBothRolesAssignedToChannel[0],
-        channels: [],
-    },
-    {
-        ...roleDataWithBothRolesAssignedToChannel[1],
-        channels: [channelDataForRole],
-    },
-]
 
 let mockDataForUseMultipleRoleDetails = roleDataWithBothRolesAssignedToChannel
 

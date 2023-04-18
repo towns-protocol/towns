@@ -147,6 +147,7 @@ export const AccordionGroup = (props: AccordionGroupProps) => {
         <>
             {props.accordions.map(({ children, id, ...rest }, index) => (
                 <_Accordion<number>
+                    data-testid="accordion-group-item"
                     activeIndex={index}
                     setActiveIndex={setActiveIndex}
                     isExpanded={activeIndex === index}

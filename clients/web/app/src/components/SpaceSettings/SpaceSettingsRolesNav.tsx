@@ -28,7 +28,7 @@ export const SpaceSettingsRolesNav = () => {
     })
 
     return (
-        <Stack borderLeft="faint" minWidth="200">
+        <Stack borderLeft="faint" minWidth="200" data-testid="space-settings-roles-nav">
             <Stack gap="sm" padding="sm">
                 {roles &&
                     roles.map((r) => {

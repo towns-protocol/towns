@@ -79,7 +79,7 @@ export function MemberListModal({
 
     return (
         <ModalContainer stableTopAlignment onHide={hideMemberModal}>
-            <Stack gap>
+            <Stack gap data-testid="role-settings-members-modal">
                 <Stack horizontal justifyContent="spaceBetween" alignItems="center">
                     <Text strong>Edit members</Text>
                     <IconButton icon="close" color="default" onClick={hideMemberModal} />

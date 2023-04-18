@@ -70,7 +70,7 @@ export const SpaceSettings = () => {
         <Stack horizontal grow minWidth="100%" position="relative" zIndex="ui" background="level1">
             <Stack minWidth="200">
                 <Stack gap="sm" padding="sm">
-                    <NavLink to={defaultPath ?? '.'}>
+                    <NavLink to={defaultPath ?? '.'} data-testid="space-settings-roles-button">
                         <SpaceSettingsNavItem selected icon="all">
                             Roles
                         </SpaceSettingsNavItem>

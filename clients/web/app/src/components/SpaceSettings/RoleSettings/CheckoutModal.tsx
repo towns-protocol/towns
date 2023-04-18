@@ -61,7 +61,7 @@ export const CheckoutModal = (props: {
     })
 
     return (
-        <Stack gap="lg" maxWidth="600">
+        <Stack gap="lg" maxWidth="600" data-testid="role-settings-checkout-modal">
             <Heading level={3}>Confirm your changes</Heading>
             <Stack gap="sm">
                 {spaceId &&
@@ -91,6 +91,7 @@ export const CheckoutModal = (props: {
                     Cancel
                 </Button>
                 <Button
+                    data-testid="role-settings-checkout-modal-save-button"
                     icon="wallet"
                     tone="cta1"
                     value="Save"

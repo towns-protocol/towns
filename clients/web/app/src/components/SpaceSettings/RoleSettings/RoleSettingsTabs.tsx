@@ -7,11 +7,19 @@ import { Box, BoxProps, Stack } from '@ui'
 export const RoleSettingsTabs = () => {
     return (
         <Stack horizontal gap="sm" padding="sm" borderBottom="faint">
-            <RoleSettingsTabItem selected to="permissions">
+            <RoleSettingsTabItem
+                selected
+                to="permissions"
+                data-testid="role-settings-permissions-tab"
+            >
                 Permissions
             </RoleSettingsTabItem>
-            <RoleSettingsTabItem to="members">Members</RoleSettingsTabItem>
-            <RoleSettingsTabItem to="display">Display</RoleSettingsTabItem>
+            <RoleSettingsTabItem data-testid="role-settings-members-tab" to="members">
+                Members
+            </RoleSettingsTabItem>
+            <RoleSettingsTabItem data-testid="role-settings-display-tab" to="display">
+                Display
+            </RoleSettingsTabItem>
         </Stack>
     )
 }

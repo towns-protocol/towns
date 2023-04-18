@@ -57,7 +57,10 @@ export const InProgressToast = (props: { modifiedRoles: ModifiedRole[] }) => {
             <Stack position="absolute" bottom="md" left="md" right="md">
                 <AnimatePresence>
                     {!!modifiedRoles.length && (
-                        <motion.div {...notificationMotion}>
+                        <motion.div
+                            {...notificationMotion}
+                            data-testid="role-settings-in-progress-toast"
+                        >
                             <MotionNotification>
                                 <Paragraph color={hasInProgressTransactions ? 'negative' : 'cta1'}>
                                     You have{' '}

@@ -10,6 +10,7 @@ type TestAppProps = {
     children: JSX.Element
     zionContextProviderProps?: React.ComponentProps<typeof Lib.ZionContextProvider>
     Router?: typeof MemoryRouter | typeof BrowserRouter
+    initialEntries?: string[]
 }
 
 export const TestApp = (props: TestAppProps) => {
@@ -37,7 +38,7 @@ export const TestApp = (props: TestAppProps) => {
                     casablancaServerUrl=""
                     {...props.zionContextProviderProps}
                 >
-                    <Router>{props.children}</Router>
+                    <Router initialEntries={props.initialEntries}>{props.children}</Router>
                 </Lib.ZionContextProvider>
             </QueryClientProvider>
         </MainLayout>

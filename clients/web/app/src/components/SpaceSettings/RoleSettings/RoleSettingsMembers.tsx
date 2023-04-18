@@ -34,9 +34,9 @@ export const RoleSettingsMembers = () => {
         return <>Undefined role {roleId}</>
     }
     return (
-        <Stack>
+        <Stack data-testid="role-settings-members-content">
             <Box gap="lg">
-                <Stack gap>
+                <Stack gap data-testid="role-settings-members-token-gated">
                     <Paragraph strong>Token gated</Paragraph>
                     <Paragraph color="gray2">
                         Users may hold any of the following tokens to get access to this role.
@@ -50,7 +50,7 @@ export const RoleSettingsMembers = () => {
                     />
                 </Stack>
                 <Divider />
-                <Stack gap>
+                <Stack gap data-testid="role-settings-members-user-gated">
                     <Paragraph strong>User gated</Paragraph>
                     <Paragraph color="gray2">Add current members to this role.</Paragraph>
                     <TokenSelector
