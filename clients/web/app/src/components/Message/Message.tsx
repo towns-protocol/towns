@@ -2,6 +2,7 @@ import { format, formatDistance } from 'date-fns'
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { MessageReactions, RoomIdentifier, ThreadStats } from 'use-zion-client'
 import { Link } from 'react-router-dom'
+import { ProfileHoverCard } from '@components/ProfileHoverCard/ProfileHoverCard'
 import { Reactions } from '@components/Reactions/Reactions'
 import { RepliesButton } from '@components/Replies/MessageReplies'
 import { Avatar, Box, BoxProps, ButtonText, Paragraph, Stack, Text } from '@ui'
@@ -10,6 +11,7 @@ import { useOpenMessageThread } from 'hooks/useOpenThread'
 import { useHandleReaction } from 'hooks/useReactions'
 import { AvatarProps } from 'ui/components/Avatar/Avatar'
 import { AvatarAtoms } from 'ui/components/Avatar/Avatar.css'
+import { TooltipRenderer } from 'ui/components/Tooltip/TooltipRenderer'
 import { useCreateLink } from 'hooks/useCreateLink'
 import { MessageContextMenu } from './MessageContextMenu'
 
@@ -142,13 +144,24 @@ export const Message = (props: Props) => {
                 {/* name & date top row */}
                 {displayContext !== 'tail' && (
                     <Stack horizontal grow gap="sm" height="height_sm" alignItems="end">
-                        {/* display name */}
-                        {name && (
-                            <Link to={`profile/${senderId}`}>
-                                <Text truncate fontSize="md" color="gray1" as="span">
-                                    {name}&nbsp;
-                                </Text>
-                            </Link>
+                        {/* display name with tooltip */}
+                        {name && senderId && (
+                            <TooltipRenderer
+                                render={<ProfileHoverCard userId={senderId} />}
+                                key={name}
+                                trigger="hover"
+                                placement="vertical"
+                            >
+                                {({ triggerProps }) => (
+                                    <Box {...triggerProps}>
+                                        <Link to={`profile/${senderId}`}>
+                                            <Text truncate fontSize="md" color="gray1" as="span">
+                                                {name}&nbsp;
+                                            </Text>
+                                        </Link>
+                                    </Box>
+                                )}
+                            </TooltipRenderer>
                         )}
                         {props.channelLabel ? (
                             <Text color="gray2">{`#${props.channelLabel}`}</Text>
