@@ -7,9 +7,6 @@
     "./clients/web/app",
     "./clients/web/sample-app"
   ],
-  "gopls": {
-    "build.experimentalWorkspaceModule": true
-  },
   "[solidity]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },

@@ -25,7 +25,7 @@ jobs:
         strategy:
             fail-fast: false
             matrix:
-                go: ['1.19']
+                go: ['1.20']
         steps:
             # install yarn and go
             - name: Checkout Code
@@ -73,7 +73,7 @@ jobs:
         strategy:
             fail-fast: false
             matrix:
-                go: ['1.19']
+                go: ['1.20']
         steps:
             - uses: actions/checkout@v3
             # John: should this run on types included in branch instead of job generated types?
