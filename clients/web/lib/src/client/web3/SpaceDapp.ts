@@ -274,7 +274,8 @@ export class SpaceDapp implements ISpaceDapp {
         if (!space?.read) {
             throw new Error(`Space with networkId "${spaceId}" is not found.`)
         }
-        return space.read.getRoles()
+        const roles = await space.read.getRoles()
+        return roles.filter((role) => role.roleId.toNumber() !== 0)
     }
 
     public async getRolesByChannel(
