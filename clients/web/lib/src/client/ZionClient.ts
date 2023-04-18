@@ -1,4 +1,4 @@
-import { BigNumber, ContractReceipt, ContractTransaction, Wallet, ethers } from 'ethers'
+import { BigNumber, ContractReceipt, ContractTransaction, Wallet } from 'ethers'
 import { bin_fromHexString, Client as CasablancaClient, makeStreamRpcClient } from '@towns/sdk'
 import {
     ChannelTransactionContext,
@@ -48,7 +48,7 @@ import {
 import { FullyReadMarker, RoomMessageEvent, ZTEvent } from '../types/timeline-types'
 import { ISpaceDapp } from './web3/ISpaceDapp'
 import { Permission } from './web3/ContractTypes'
-import { RoleIdentifier, TProvider } from '../types/web3-types'
+import { RoleIdentifier } from '../types/web3-types'
 import { makeMatrixRoomIdentifier, RoomIdentifier } from '../types/room-identifier'
 import { SpaceDapp } from './web3/SpaceDapp'
 import { SpaceFactoryDataTypes } from './web3/shims/SpaceFactoryShim'
@@ -102,23 +102,16 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
     protected matrixClient?: MatrixClient
     public matrixDecryptionExtension?: MatrixDecryptionExtension
     protected casablancaClient?: CasablancaClient
-    private _chainId: number
     private _auth?: MatrixAuth
     private _signerContext?: SignerContext
     protected _eventHandlers?: ZionClientEventHandlers
 
-    constructor(opts: ZionOpts, chainId?: number, name?: string) {
+    constructor(opts: ZionOpts, name?: string) {
         this.opts = opts
         this.name = name || ''
-        this._chainId = chainId ?? 0
         console.log('~~~ new ZionClient ~~~', this.name, this.opts)
-        const { spaceDapp, pioneerNFT } = this.createShims(
-            this._chainId,
-            this.opts.web3Provider,
-            this.opts.web3Signer,
-        )
-        this.spaceDapp = spaceDapp
-        this.pioneerNFT = pioneerNFT
+        this.spaceDapp = new SpaceDapp(opts.chainId, opts.web3Provider, opts.web3Signer)
+        this.pioneerNFT = new PioneerNFT(opts.chainId, opts.web3Provider, opts.web3Signer)
         this._eventHandlers = opts.eventHandlers
     }
 
@@ -130,10 +123,8 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
         return this._signerContext
     }
 
-    /// chain id at the time the contracts were created
-    /// contracts are recreated when the client is started
     public get chainId(): number {
-        return this._chainId
+        return this.opts.chainId
     }
 
     /************************************************
@@ -229,7 +220,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
      * startMatrixClient
      * start the matrix matrixClient, add listeners
      *************************************************/
-    public async startMatrixClient(auth: MatrixAuth, chainId: number): Promise<MatrixClient> {
+    public async startMatrixClient(auth: MatrixAuth): Promise<MatrixClient> {
         if (this.auth) {
             throw new Error('already authenticated')
         }
@@ -241,16 +232,8 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
         }
         // log startOpts
         this.log('Starting matrixClient')
-        // set auth, chainId
+        // set auth
         this._auth = auth
-        this._chainId = chainId
-        // new contracts
-        const { spaceDapp } = this.createShims(
-            this._chainId,
-            this.opts.web3Provider,
-            this.opts.web3Signer,
-        )
-        this.spaceDapp = spaceDapp
         // new matrixClient
         this.matrixClient = ZionClient.createMatrixClient(this.opts, this._auth)
         // start it up, this begins a sync command
@@ -297,6 +280,9 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
     public async startCasablancaClient(context: SignerContext): Promise<CasablancaClient> {
         if (this.casablancaClient) {
             throw new Error('already started casablancaClient')
+        }
+        if (!this.opts.casablancaServerUrl) {
+            throw new Error('casablancaServerUrl is required')
         }
         this._signerContext = context
         const rpcClient = makeStreamRpcClient(this.opts.casablancaServerUrl)
@@ -1919,19 +1905,6 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
      *************************************************/
     protected log(message: string, ...optionalParams: unknown[]) {
         console.log(message, ...optionalParams)
-    }
-
-    private createShims(
-        chainId: number,
-        provider: TProvider | undefined,
-        signer: ethers.Signer | undefined,
-    ): { spaceDapp: ISpaceDapp; pioneerNFT: PioneerNFT } {
-        const spaceDapp = new SpaceDapp(chainId, provider, signer)
-        const pioneerNFT = new PioneerNFT(chainId, provider, signer)
-        return {
-            spaceDapp,
-            pioneerNFT,
-        }
     }
 
     /************************************************

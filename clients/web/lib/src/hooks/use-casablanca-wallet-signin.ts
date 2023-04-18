@@ -26,6 +26,9 @@ export function useCasablancaWalletSignIn() {
             if (!activeWalletAddress) {
                 throw new Error('No active wallet')
             }
+            if (!clientSingleton.opts.casablancaServerUrl) {
+                throw new Error('Casablanca server url not set')
+            }
             setLoginStatus(LoginStatus.LoggingIn)
             const delegateWallet = ethers.Wallet.createRandom()
             try {

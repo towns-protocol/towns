@@ -19,7 +19,6 @@ import { useZionClientListener } from '../hooks/use-zion-client-listener'
 import { Room, SpaceHierarchies, SpaceItem } from '../types/zion-types'
 import { RoomIdentifier } from '../types/room-identifier'
 import { Web3ContextProvider } from './Web3ContextProvider'
-import { Chain } from 'wagmi'
 import { useTransactionListener } from '../hooks/use-transaction-listener'
 import { QueryProvider } from './QueryProvider'
 import { MatrixClient } from 'matrix-js-sdk'
@@ -28,7 +27,7 @@ import { useCasablancaTimelines } from '../hooks/ZionContext/useCasablancaTimeli
 
 export interface IZionContext {
     homeServerUrl: string
-    casablancaServerUrl: string
+    casablancaServerUrl?: string
     client?: ZionClient /// only set when user is authenticated with matrix or casablanca
     clientSingleton?: ZionClient /// always set, can be use for matrix, this duplication can be removed once we transition to casablanca
     matrixClient?: MatrixClient /// set if we're logged in and matrix client is started
@@ -59,7 +58,6 @@ export function useZionContext(): IZionContext {
 
 interface Props extends ZionOpts {
     enableSpaceRootUnreads?: boolean
-    chain?: Chain
     children: JSX.Element
     alchemyKey?: string
     QueryClientProvider?: React.ElementType<{ children: JSX.Element }>
@@ -69,10 +67,10 @@ export function ZionContextProvider({
     QueryClientProvider = QueryProvider,
     ...props
 }: Props): JSX.Element {
-    const { alchemyKey, chain, ...contextProps } = props
+    const { alchemyKey, ...contextProps } = props
     return (
         <QueryClientProvider>
-            <Web3ContextProvider alchemyKey={alchemyKey} chain={chain}>
+            <Web3ContextProvider alchemyKey={alchemyKey} chainId={contextProps.chainId}>
                 <ContextImpl {...contextProps}></ContextImpl>
             </Web3ContextProvider>
         </QueryClientProvider>

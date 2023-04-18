@@ -43,6 +43,7 @@ const Mock = ({ children }: any) => {
             primaryProtocol={Zion.SpaceProtocol.Matrix}
             matrixServerUrl=""
             casablancaServerUrl=""
+            chainId={0}
         >
             <BrowserRouter>{children}</BrowserRouter>
         </Zion.ZionContextProvider>

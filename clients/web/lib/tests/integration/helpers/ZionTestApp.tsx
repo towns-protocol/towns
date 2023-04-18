@@ -51,7 +51,7 @@ export const ZionTestApp = (props: Props) => {
             web3Signer={provider.wallet}
             initialSyncLimit={initialSyncLimit}
             pollTimeoutMs={pollTimeoutMs}
-            chain={foundry}
+            chainId={foundry.id}
             QueryClientProvider={TestQueryClientProvider}
             logNamespaceFilter="csb:*"
         >

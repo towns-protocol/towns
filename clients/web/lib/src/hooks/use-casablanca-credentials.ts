@@ -8,7 +8,7 @@ import { useCredentialStore } from '../store/use-credential-store'
 export function useCasablancaCredentials() {
     const { casablancaServerUrl } = useZionContext()
     const credentials = useCredentialStore(
-        (state) => state.casablancaCredentialsMap[casablancaServerUrl] ?? undefined,
+        (state) => state.casablancaCredentialsMap[casablancaServerUrl ?? ''] ?? undefined,
     )
     const { loginStatus, loginError } = useCasablancaStore()
     const isAuthenticated = credentials?.delegateSig !== undefined

@@ -14,7 +14,8 @@ export enum SpaceProtocol {
 export interface ZionOpts {
     primaryProtocol: SpaceProtocol
     matrixServerUrl: string
-    casablancaServerUrl: string
+    casablancaServerUrl?: string
+    chainId: number
     initialSyncLimit?: number
     pollTimeoutMs?: number
     onboardingOpts?: ZionOnboardingOpts

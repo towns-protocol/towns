@@ -84,12 +84,12 @@ export class ZionTestClient extends ZionClient {
                 primaryProtocol: props?.primaryProtocol ?? getPrimaryProtocol(),
                 matrixServerUrl: process.env.HOMESERVER!,
                 casablancaServerUrl: process.env.CASABLANCA_SERVER_URL!,
+                chainId,
                 initialSyncLimit: 20,
                 web3Signer: provider.wallet,
                 web3Provider: provider,
                 eventHandlers: props?.eventHandlers,
             },
-            chainId,
             name,
         )
         this.props = props
@@ -258,8 +258,7 @@ export class ZionTestClient extends ZionClient {
 
         if (this.opts.primaryProtocol === SpaceProtocol.Matrix) {
             const myAuth = await this.registerMatrixWallet()
-            const chainId = (await this.provider.getNetwork()).chainId
-            await this.startMatrixClient(myAuth, chainId)
+            await this.startMatrixClient(myAuth)
         } else if (this.opts.primaryProtocol === SpaceProtocol.Casablanca) {
             const casablancaContext = await this.signCasablancaDelegate(this.delegateWallet)
             await this.startCasablancaClient(casablancaContext)
@@ -366,8 +365,7 @@ export class ZionTestClient extends ZionClient {
                     if (!myAuth) {
                         myAuth = await this.loginToMatrixWithTestWallet()
                     }
-                    const chainId = (await this.provider.getNetwork()).chainId
-                    await this.startMatrixClient(myAuth, chainId)
+                    await this.startMatrixClient(myAuth)
                 }
                 break
             case SpaceProtocol.Casablanca:

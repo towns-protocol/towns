@@ -13,7 +13,7 @@ import { ethers } from 'ethers'
 import { useCasablancaStore } from '../store/use-casablanca-store'
 
 export const useZionClientListener = (opts: ZionOpts) => {
-    const { provider, chain } = useWeb3Context()
+    const { provider } = useWeb3Context()
     const { setLoginStatus: setMatrixLoginStatus } = useMatrixStore()
     const { setLoginStatus: setCasablancaLoginStatus } = useCasablancaStore()
     const {
@@ -23,43 +23,35 @@ export const useZionClientListener = (opts: ZionOpts) => {
         setCasablancaCredentials,
     } = useCredentialStore()
     const matrixCredentials = matrixCredentialsMap[opts.matrixServerUrl]
-    const casablancaCredentials = casablancaCredentialsMap[opts.casablancaServerUrl]
+    const casablancaCredentials = casablancaCredentialsMap[opts.casablancaServerUrl ?? '']
     const [matrixClient, setMatrixClient] = useState<MatrixClient>()
     const [casablancaClient, setCasablancaClient] = useState<CasablancaClient>()
     const clientSingleton = useRef<ZionClient>()
-    // The chain is an optional prop the consuming client can pass to the ZionContextProvider
-    // If passed, we lock ZionClient to that chain
-    const chainId = chain?.id
-    // Additionally, The signer should be initialized with the correct chainId so we don't have to worry about it changing for writes
+    // The signer should be initialized with the correct chainId so we don't have to worry about it changing for writes
     // without this, when a user swaps networks and tries to make a transaction, they can have a mismatched signer resulting in "network changed" errors
-    // TBD, we may want to add a ZionClient.createShims() that will recreate the spaceDapp shims with updated signer and provider, and call it here when those props change, but setting the signer chain may be enough
     const { data: wagmiSigner } = useSigner({
-        chainId,
+        chainId: opts.chainId,
     })
     // web3Signer is passed by tests
     const _signer = opts.web3Signer || wagmiSigner
 
     if (!clientSingleton.current) {
         if (_signer) {
-            clientSingleton.current = new ZionClient(
-                {
-                    ...opts,
-                    web3Provider: provider,
-                    web3Signer: _signer,
-                },
-                chainId,
-            )
+            clientSingleton.current = new ZionClient({
+                ...opts,
+                web3Provider: provider,
+                web3Signer: _signer,
+            })
         }
     }
 
     const startMatrixClient = useCallback(async () => {
-        if (!clientSingleton.current || !matrixCredentials || !chainId) {
+        if (!clientSingleton.current || !matrixCredentials) {
             console.log(
                 'Matrix client listener not started: clientSingleton.current, chainId, accessToken, userId, or deviceId is undefined.',
                 {
                     singleton: clientSingleton.current !== undefined,
                     matrixCredentials: matrixCredentials !== null,
-                    chainId: chainId !== undefined,
                     _signer: _signer !== undefined,
                 },
             )
@@ -72,11 +64,7 @@ export const useZionClientListener = (opts: ZionOpts) => {
         const client = clientSingleton.current
         // make sure we're not re-starting the client
         if (client.auth?.accessToken === matrixCredentials.accessToken) {
-            if (client.chainId != chainId) {
-                console.warn("ChainId changed, we're not handling this yet")
-            } else {
-                console.log('startMatrixClient: called again with same access token')
-            }
+            console.log('startMatrixClient: called again with same access token')
             return
         }
         console.log('******* start client *******')
@@ -84,11 +72,7 @@ export const useZionClientListener = (opts: ZionOpts) => {
         setMatrixClient(undefined)
         // start it up!
         try {
-            const matrixClient = await startMatrixClientWithRetries(
-                client,
-                chainId,
-                matrixCredentials,
-            )
+            const matrixClient = await startMatrixClientWithRetries(client, matrixCredentials)
             setMatrixClient(matrixClient)
             console.log('******* Matrix client listener started *******')
         } catch (e) {
@@ -103,7 +87,6 @@ export const useZionClientListener = (opts: ZionOpts) => {
         }
     }, [
         matrixCredentials,
-        chainId,
         opts.matrixServerUrl,
         setMatrixLoginStatus,
         setMatrixCredentials,
@@ -115,7 +98,6 @@ export const useZionClientListener = (opts: ZionOpts) => {
             console.log('casablanca client listener not yet started:', {
                 singleton: clientSingleton.current !== undefined,
                 casablancaCredentials: casablancaCredentials !== null,
-                chainId: chainId !== undefined,
                 _signer: _signer !== undefined,
             })
             setCasablancaClient(undefined)
@@ -124,11 +106,7 @@ export const useZionClientListener = (opts: ZionOpts) => {
 
         const client = clientSingleton.current
         if (casablancaCredentials.privateKey === client.signerContext?.wallet.privateKey) {
-            if (client.chainId != chainId) {
-                console.warn("ChainId changed, we're not handling this yet")
-            } else {
-                console.log('startCasablancaClient: called again with same access token')
-            }
+            console.log('startCasablancaClient: called again with same access token')
             return
         }
         console.log('******* start casablanca client *******')
@@ -156,12 +134,11 @@ export const useZionClientListener = (opts: ZionOpts) => {
                 console.log('error while logging out', e)
             }
             setCasablancaLoginStatus(LoginStatus.LoggedOut)
-            setCasablancaCredentials(opts.casablancaServerUrl, null)
+            setCasablancaCredentials(opts.casablancaServerUrl ?? '', null)
         }
     }, [
         _signer,
         casablancaCredentials,
-        chainId,
         opts.casablancaServerUrl,
         setCasablancaCredentials,
         setCasablancaLoginStatus,
@@ -185,7 +162,6 @@ export const useZionClientListener = (opts: ZionOpts) => {
 
 async function startMatrixClientWithRetries(
     client: ZionClient,
-    chainId: number,
     matrixCredentials: MatrixCredentials,
 ): Promise<MatrixClient | undefined> {
     const dummyMatrixEvent = new MatrixEvent()
@@ -193,14 +169,11 @@ async function startMatrixClientWithRetries(
     // eslint-disable-next-line no-constant-condition
     while (true) {
         try {
-            const matrixClient = await client.startMatrixClient(
-                {
-                    userId: matrixCredentials.userId,
-                    accessToken: matrixCredentials.accessToken,
-                    deviceId: matrixCredentials.deviceId,
-                },
-                chainId,
-            )
+            const matrixClient = await client.startMatrixClient({
+                userId: matrixCredentials.userId,
+                accessToken: matrixCredentials.accessToken,
+                deviceId: matrixCredentials.deviceId,
+            })
             if (retryCount > 0) {
                 console.log(`startMatrixClientWithRetries succeeded after ${retryCount} retries`)
             }

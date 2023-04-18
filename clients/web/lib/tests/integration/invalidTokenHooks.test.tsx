@@ -33,9 +33,7 @@ describe('invalidTokenHooks', () => {
             deviceId: '9111',
         }
         const alice = new ZionTestClient(chainId, 'alice')
-        await expect(alice.startMatrixClient(badAliceAuth, chainId)).rejects.toThrow(
-            'Unknown token',
-        )
+        await expect(alice.startMatrixClient(badAliceAuth)).rejects.toThrow('Unknown token')
     })
     test('test logging in with a bad auth resolves to good state', async () => {
         const provider = new ZionTestWeb3Provider()

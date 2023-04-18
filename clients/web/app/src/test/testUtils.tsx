@@ -36,6 +36,7 @@ export const TestApp = (props: TestAppProps) => {
                     primaryProtocol={Lib.SpaceProtocol.Matrix}
                     matrixServerUrl=""
                     casablancaServerUrl=""
+                    chainId={0}
                     {...props.zionContextProviderProps}
                 >
                     <Router initialEntries={props.initialEntries}>{props.children}</Router>

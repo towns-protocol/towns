@@ -12,7 +12,7 @@ import { Welcome } from 'routes/Welcome'
 import { AppPanelLayout } from 'routes/layouts/AppPanelLayout'
 import { FontLoader } from 'ui/utils/FontLoader'
 import { env } from 'utils'
-import { useMatrixHomeServerUrl } from 'hooks/useMatrixHomeServerUrl'
+import { HomeServerUrl, useMatrixHomeServerUrl } from 'hooks/useMatrixHomeServerUrl'
 import { LoadingScreen } from 'routes/LoadingScreen'
 import { AnalyticsProvider } from 'hooks/useAnalytics'
 import { useCorrectChainForServer } from 'hooks/useCorrectChainForServer'
@@ -33,7 +33,10 @@ FontLoader.init()
 const CASABLANCA_SERVER_URL = env.VITE_CASABLANCA_SERVER_URL ?? ''
 
 export const App = () => {
+    // aellis april 2023, the two server urls and the chain id should all be considered
+    // a single piece of state, PROD, TEST, and LOCAL each should have {matrixUrl, casablancaUrl, chainId}
     const { homeserverUrl, ...rest } = useMatrixHomeServerUrl()
+    const casablancaServerUrl = homeserverUrl === HomeServerUrl.LOCAL ? CASABLANCA_SERVER_URL : ''
     const chain = useCorrectChainForServer()
     const { isMobile } = useDevice()
 
@@ -41,11 +44,11 @@ export const App = () => {
         <ZionContextProvider
             alchemyKey={env.VITE_ALCHEMY_API_KEY}
             primaryProtocol={SpaceProtocol.Matrix}
-            casablancaServerUrl={CASABLANCA_SERVER_URL}
+            casablancaServerUrl={casablancaServerUrl}
             matrixServerUrl={homeserverUrl}
             onboardingOpts={{ skipAvatar: true }}
             initialSyncLimit={100}
-            chain={chain}
+            chainId={chain.id}
         >
             <>
                 <AnalyticsProvider>

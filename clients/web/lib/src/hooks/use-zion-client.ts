@@ -170,7 +170,7 @@ export function useZionClient(): ZionClientImpl {
     )
 
     return {
-        chainId: client?.chainId,
+        chainId: client?.opts.chainId,
         client,
         clientRunning,
         spaceDapp: client?.spaceDapp,

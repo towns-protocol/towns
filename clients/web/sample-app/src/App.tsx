@@ -10,6 +10,7 @@ import { useSampleAppStore } from 'store/store'
 import { AlphaAccessMainPage } from 'routes/AlphaAccess'
 import { Login } from '@components/Login'
 import { VersionsPage } from 'routes/VersionsPage'
+import { Environment, getChainIdForMatrixUrl, getEnvironment } from 'utils/environment'
 import { Home } from './routes/Home'
 import { MainLayout } from './components/MainLayout'
 import { NotFound } from './routes/NotFound'
@@ -32,6 +33,8 @@ const ALCHEMY_KEY = import.meta.env.VITE_ALCHEMY_API_KEY ?? ''
 export const App = () => {
     const { homeServerUrl: savedHomeServerUrl } = useSampleAppStore()
     const homeServerUrl = savedHomeServerUrl ?? MATRIX_HOMESERVER_URL
+    const casablancaServerUrl =
+        homeServerUrl === getEnvironment(Environment.Local).matrixUrl ? CASABLANCA_SERVER_URL : ''
     return (
         <ThemeProvider theme={theme}>
             <Container maxWidth="md">
@@ -40,7 +43,8 @@ export const App = () => {
                     alchemyKey={ALCHEMY_KEY}
                     primaryProtocol={SpaceProtocol.Matrix}
                     matrixServerUrl={homeServerUrl}
-                    casablancaServerUrl={CASABLANCA_SERVER_URL}
+                    casablancaServerUrl={casablancaServerUrl}
+                    chainId={getChainIdForMatrixUrl(homeServerUrl)}
                     onboardingOpts={{ skipAvatar: true, showWelcomeSpash: false }}
                     initialSyncLimit={100}
                 >

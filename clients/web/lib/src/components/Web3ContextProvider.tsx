@@ -32,9 +32,11 @@ export function useWeb3Context(): IWeb3Context {
 
 interface Props {
     children: JSX.Element
-    chain?: Chain
+    chainId: number
     alchemyKey?: string
 }
+
+const SUPPORTED_CHAINS = [goerli, localhost, foundry, sepolia]
 
 export function Web3ContextProvider(props: Props): JSX.Element {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -42,7 +44,7 @@ export function Web3ContextProvider(props: Props): JSX.Element {
 
     if (!wagmiClient.current) {
         const { chains, provider, webSocketProvider } = configureChains(
-            [goerli, localhost, foundry, sepolia],
+            SUPPORTED_CHAINS,
             props.alchemyKey
                 ? [
                       alchemyProvider({ apiKey: props.alchemyKey, priority: 0 }),
@@ -67,6 +69,10 @@ export function Web3ContextProvider(props: Props): JSX.Element {
 }
 
 export function ContextImpl(props: Props): JSX.Element {
-    const web3 = useWeb3(props.chain)
+    const chain = SUPPORTED_CHAINS.find((c) => c.id === props.chainId)
+    if (!chain) {
+        console.error('Unsupported chain for Towns', props.chainId)
+    }
+    const web3 = useWeb3(chain)
     return <Web3Context.Provider value={web3}>{props.children}</Web3Context.Provider>
 }
