@@ -15,7 +15,7 @@ export const CreateSpaceStep3 = ({ onSubmit, id }: FormStepProps) => {
     const { mintedTokenAddress, createdSpaceId, name } = useCreateSpaceFormStore(
         (s) => ({
             mintedTokenAddress: s.mintedTokenAddress,
-            createdSpaceId: s.createdSpaceId,
+            createdSpaceId: encodeURIComponent(s.createdSpaceId ?? ''),
             name: s.step2.spaceName,
         }),
         shallow,
