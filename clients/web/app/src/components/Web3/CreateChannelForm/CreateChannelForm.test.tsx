@@ -160,7 +160,9 @@ describe('CreateChannelForm', () => {
         fireEvent.click(submitButton)
 
         await waitFor(() => {
-            expect(screen.getByText(/please enter a channel name/i)).toBeInTheDocument()
+            expect(
+                screen.getByText(/Channel names must have at least 2 characters/i),
+            ).toBeInTheDocument()
         })
 
         await waitFor(() => {

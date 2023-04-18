@@ -38,7 +38,7 @@ type FormState = {
 }
 
 const schema = z.object({
-    [FormStateKeys.name]: z.string().min(1, 'Please enter a channel name'),
+    [FormStateKeys.name]: z.string().min(2, 'Channel names must have at least 2 characters'),
     [FormStateKeys.roleIds]: z.string().array().nonempty('Please select at least one role'),
 })
 
