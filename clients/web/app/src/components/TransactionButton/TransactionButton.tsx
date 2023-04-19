@@ -44,7 +44,7 @@ export const TransactionButton = (props: Props) => {
             {/* broken up b/c of weird behavior with framer layout warping text */}
             {!isAbleToInteract && (
                 <FadeIn delay>
-                    <Box horizontal gap="sm">
+                    <Box horizontal centerContent gap="sm">
                         <ButtonSpinner />
                         {isRequesting && <MotionText layout>{requestingText}</MotionText>}
                         {!isRequesting && <MotionText layout>{transactingText}</MotionText>}
