@@ -30,7 +30,7 @@ export const makeEvent_test = (
         payload: payload,
     })
     if (context.delegateSig !== undefined) {
-        streamEvent.delegageSig = context.delegateSig
+        streamEvent.delegateSig = context.delegateSig
     }
 
     const event = streamEvent.toBinary()

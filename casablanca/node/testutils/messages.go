@@ -12,7 +12,7 @@ import (
 func UserStreamInceptionEvent(idx int, creator []byte, streamId string) (*protocol.Envelope, error) {
 	event := protocol.StreamEvent{
 		CreatorAddress: creator,
-		DelegageSig:    []byte(fmt.Sprintf("delegage sig%d", idx)),
+		DelegateSig:    []byte(fmt.Sprintf("delegate sig%d", idx)),
 		Salt:           []byte(fmt.Sprintf("salt %d", idx)),
 		PrevEvents:     [][]byte{},
 		Payload: &protocol.Payload{
@@ -44,7 +44,7 @@ func UserStreamInceptionEvent(idx int, creator []byte, streamId string) (*protoc
 func SpaceStreamInceptionEvent(idx int, creator []byte, streamId string) (*protocol.Envelope, error) {
 	event := protocol.StreamEvent{
 		CreatorAddress: creator,
-		DelegageSig:    []byte(fmt.Sprintf("delegage sig%d", idx)),
+		DelegateSig:    []byte(fmt.Sprintf("delegate sig%d", idx)),
 		Salt:           []byte(fmt.Sprintf("salt %d", idx)),
 		PrevEvents:     [][]byte{},
 		Payload: &protocol.Payload{
@@ -76,7 +76,7 @@ func SpaceStreamInceptionEvent(idx int, creator []byte, streamId string) (*proto
 func ChannelStreamInceptionEvent(idx int, creator []byte, streamId string, spaceId string) (*protocol.Envelope, error) {
 	event := protocol.StreamEvent{
 		CreatorAddress: creator,
-		DelegageSig:    []byte(fmt.Sprintf("delegage sig%d", idx)),
+		DelegateSig:    []byte(fmt.Sprintf("delegate sig%d", idx)),
 		Salt:           []byte(fmt.Sprintf("salt %d", idx)),
 		PrevEvents:     [][]byte{},
 		Payload: &protocol.Payload{
@@ -109,7 +109,7 @@ func ChannelStreamInceptionEvent(idx int, creator []byte, streamId string, space
 func MessageEvent(idx int, creator []byte, content string, prevHash []byte) (*protocol.Envelope, error) {
 	event := protocol.StreamEvent{
 		CreatorAddress: creator,
-		DelegageSig:    []byte("delegage sig"),
+		DelegateSig:    []byte("delegate sig"),
 		Salt:           []byte("salt"),
 		PrevEvents:     [][]byte{prevHash},
 		Payload: &protocol.Payload{
@@ -139,7 +139,7 @@ func JoinEvent(idx int, creator []byte, user []byte, prevHash []byte) (*protocol
 	userId := rpc.UserIdFromAddress(user)
 	event := protocol.StreamEvent{
 		CreatorAddress: creator,
-		DelegageSig:    []byte("delegage sig"),
+		DelegateSig:    []byte("delegate sig"),
 		Salt:           []byte("salt"),
 		PrevEvents:     [][]byte{prevHash},
 		Payload: &protocol.Payload{

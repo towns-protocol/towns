@@ -51,7 +51,7 @@ message StreamEvent {
       * Server nodes sign node-produced events with their own keypair and do not
       * need to use delegateSig.
       */
-    bytes delegage_sig = 2;
+    bytes delegate_sig = 2;
  
     /** Salt ensures that similar messages are not hashed to the same value. genId() from id.ts may be used. */
     /** TODO: move salt to inception event */

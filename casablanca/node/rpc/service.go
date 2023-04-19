@@ -307,7 +307,7 @@ func MakeServiceHandler(ctx context.Context, dbUrl string, opts ...connect_go.Ha
 func (s *Service) sign(payload *protocol.Payload, prevHashes [][]byte) *protocol.Envelope {
 	streamEvent := &protocol.StreamEvent{
 		CreatorAddress: s.wallet.Address,
-		DelegageSig:    s.wallet.DelegateSignature,
+		DelegateSig:    s.wallet.DelegateSignature,
 		Salt:           []byte("salt"),
 		PrevEvents:     prevHashes,
 		Payload:        payload,

@@ -26,7 +26,7 @@ describe('types', () => {
             bin_toBase64(bin_fromHexString('0x0123456789abcdef')),
             bin_toBase64(bin_fromHexString('0x0123456789')),
         ])
-        expect(s.delegageSigStr).toEqual('')
+        expect(s.delegateSigStr).toEqual('')
         expect(s.payload).toBeDefined()
         expect(
             s.payload!.payload.case === 'joinableStream' ? s.payload!.payload.value.userId : '',

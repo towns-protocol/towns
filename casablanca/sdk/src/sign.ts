@@ -108,7 +108,7 @@ export const makeEvent = (
         payload: payload,
     })
     if (context.delegateSig !== undefined) {
-        streamEvent.delegageSig = context.delegateSig
+        streamEvent.delegateSig = context.delegateSig
     }
 
     const event = streamEvent.toBinary()
@@ -170,7 +170,7 @@ export const unpackEnvelope = (envelope: Envelope, _prevEventHash?: Uint8Array):
     const pubKey = ecrecover(hash, v, r, s)
 
     const e = StreamEvent.fromBinary(envelope.event)
-    if (!hasElements(e.delegageSig)) {
+    if (!hasElements(e.delegateSig)) {
         const address = Uint8Array.from(publicToAddress(pubKey))
         check(
             bin_equal(address, e.creatorAddress),
@@ -178,7 +178,7 @@ export const unpackEnvelope = (envelope: Envelope, _prevEventHash?: Uint8Array):
             Err.BAD_EVENT_SIGNATURE,
         )
     } else {
-        checkDelegateSig(pubKey, e.creatorAddress, e.delegageSig)
+        checkDelegateSig(pubKey, e.creatorAddress, e.delegateSig)
     }
 
     if (e.payload?.payload.case !== 'inception') {
