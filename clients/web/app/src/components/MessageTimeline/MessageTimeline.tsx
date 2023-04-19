@@ -1,4 +1,12 @@
-import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import React, {
+    MutableRefObject,
+    useCallback,
+    useContext,
+    useEffect,
+    useMemo,
+    useRef,
+    useState,
+} from 'react'
 import {
     FullyReadMarker,
     MessageType,
@@ -9,10 +17,10 @@ import {
 import { Box, Divider, Paragraph, VList } from '@ui'
 import { useExperimentsStore } from 'store/experimentsStore'
 import { notUndefined } from 'ui/utils/utils'
+import { MessageTimelineContext, MessageTimelineType } from './MessageTimelineContext'
 import { DateDivider } from './events/DateDivider'
 import { NewDivider } from './events/NewDivider'
 import { MessageTimelineItem } from './events/TimelineItem'
-import { MessageTimelineContext, MessageTimelineType } from './MessageTimelineContext'
 import {
     EncryptedMessageRenderEvent,
     FullyReadRenderEvent,
@@ -29,6 +37,7 @@ type Props = {
     header?: JSX.Element
     highlightId?: string
     collapsed?: boolean
+    containerRef?: MutableRefObject<HTMLDivElement | null>
 }
 
 export const MessageTimeline = (props: Props) => {
@@ -310,6 +319,7 @@ export const MessageTimeline = (props: Props) => {
     return (
         <VList
             debug={false}
+            containerRef={props.containerRef}
             key={channelId?.networkId}
             highlightId={props.highlightId}
             esimtateItemSize={estimateItemHeight}

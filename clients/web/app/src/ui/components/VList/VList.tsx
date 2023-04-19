@@ -1,4 +1,5 @@
 import React, {
+    MutableRefObject,
     RefObject,
     useCallback,
     useEffect,
@@ -35,6 +36,7 @@ interface Props<T> {
     groupIds?: string[]
     debug?: boolean
     padding?: number
+    containerRef?: MutableRefObject<HTMLDivElement | null>
 }
 
 export function VList<T extends { id: string }>(props: Props<T>) {
@@ -106,6 +108,10 @@ export function VList<T extends { id: string }>(props: Props<T>) {
     // DOM refs
     const scrollContentRef = useRef<HTMLDivElement>(null)
     const scrollContainerRef = useRef<HTMLDivElement>(null)
+
+    if (props.containerRef) {
+        props.containerRef.current = scrollContainerRef.current
+    }
 
     const { viewport: physicalViewport, isScrolling } = useViewport(
         scrollContainerRef.current,

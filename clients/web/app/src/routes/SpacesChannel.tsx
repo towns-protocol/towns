@@ -1,4 +1,5 @@
-import React, { useCallback, useEffect, useMemo, useRef } from 'react'
+import React, { MutableRefObject, useCallback, useEffect, useMemo, useRef } from 'react'
+import { useInView } from 'react-intersection-observer'
 import { Outlet, useParams } from 'react-router'
 import {
     ChannelContextProvider,
@@ -51,13 +52,14 @@ const SpaceChannelWrapper = (props: { children: React.ReactElement }) => {
 const SpacesChannelComponent = () => {
     const { messageId } = useParams()
 
-    const { joinRoom, sendMessage, isRoomEncrypted } = useZionClient()
+    const { joinRoom, scrollback, sendMessage, isRoomEncrypted } = useZionClient()
 
     const { spaceId, channelId, channel } = useChannelData()
 
     const isChannelEncrypted = channel && isRoomEncrypted(channel.id)
 
     const myMembership = useMyMembership(channelId)
+
     const { timeline: channelMessages } = useChannelTimeline()
 
     const onSend = useCallback(
@@ -94,6 +96,25 @@ const SpacesChannelComponent = () => {
         ? `You don't have permission to send messages to this channel`
         : `Loading permissions`
 
+    const onLoadMore = useCallback(() => {
+        scrollback(channelId, 100)
+    }, [channelId, scrollback])
+
+    // scrollback handling
+    // i.e. loads more messages when the first message enters the viewport
+    const timelineContainerRef = useRef<HTMLDivElement>(null)
+    const watermarkRef = useRef<string | undefined>(undefined)
+    const onFirstMessageReached = useCallback(
+        (watermark: string) => {
+            if (watermark === watermarkRef.current) {
+                return
+            }
+            watermarkRef.current = watermark
+            onLoadMore()
+        },
+        [onLoadMore],
+    )
+
     return (
         <CentralPanelLayout>
             {!channel || !channelId || displayDecryptionPopup ? (
@@ -128,11 +149,19 @@ const SpacesChannelComponent = () => {
                     */}
                         <Stack grow />
                         <MessageTimeline
+                            containerRef={timelineContainerRef}
                             header={
-                                <ChannelIntro
-                                    name={channel.label}
-                                    channelEncrypted={isChannelEncrypted}
-                                />
+                                <>
+                                    <ChannelIntro
+                                        name={channel.label}
+                                        channelEncrypted={isChannelEncrypted}
+                                    />
+                                    <ScrollbackMarker
+                                        containerRef={timelineContainerRef}
+                                        watermark={channelMessages.at(0)?.eventId}
+                                        onMarkerReached={onFirstMessageReached}
+                                    />
+                                </>
                             }
                             highlightId={messageId || highlightId}
                         />
@@ -156,6 +185,26 @@ const SpacesChannelComponent = () => {
             )}
         </CentralPanelLayout>
     )
+}
+
+const ScrollbackMarker = (props: {
+    containerRef?: MutableRefObject<HTMLDivElement | null>
+    watermark?: string
+    onMarkerReached: (watermark: string) => void
+}) => {
+    const { watermark, onMarkerReached, containerRef } = props
+    const { inView, ref } = useInView({
+        threshold: 0,
+        // the `rootMargin` can be excessive, what actually counts is the
+        // `viewMargin` prop of VList which toggles the visibility of the marker
+        rootMargin: '5000px',
+        root: containerRef?.current,
+    })
+
+    if (inView && watermark) {
+        onMarkerReached(watermark)
+    }
+    return <Box ref={ref} />
 }
 
 const encryptedMessageTypes = [ZTEvent.RoomMessageEncrypted, ZTEvent.RoomMessage]
