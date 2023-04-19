@@ -112,15 +112,6 @@ const SpacesChannelComponent = () => {
                 </Box>
             ) : (
                 <Box grow absoluteFill height="100%" justifyContent="end">
-                    <ChannelHeader channel={channel} spaceId={spaceId} />
-
-                    {/* 
-                        /!\ keep
-                        spacer allowing the header to always stick to the top 
-                        in case the timeline is smaller than the screen
-                    */}
-                    <Stack grow />
-
                     <MessageTimelineWrapper
                         key={channelId.slug}
                         spaceId={spaceId}
@@ -128,6 +119,14 @@ const SpacesChannelComponent = () => {
                         events={channelMessages}
                         isChannelWritable={isChannelWritable}
                     >
+                        <ChannelHeader channel={channel} spaceId={spaceId} />
+
+                        {/* 
+                        /!\ keep
+                        spacer allowing the header to always stick to the top 
+                        in case the timeline is smaller than the screen
+                    */}
+                        <Stack grow />
                         <MessageTimeline
                             header={
                                 <ChannelIntro
