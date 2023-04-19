@@ -1,7 +1,7 @@
 import React from 'react'
 import { Box, Text } from '@ui'
 import { useRequireTransactionNetwork } from 'hooks/useRequireTransactionNetwork'
-import { useCorrectChainForServer } from 'hooks/useCorrectChainForServer'
+import { useEnvironment } from 'hooks/useEnvironmnet'
 
 type Props = {
     switchNetwork?: ReturnType<typeof useRequireTransactionNetwork>['switchNetwork']
@@ -16,7 +16,7 @@ export const RequireTransactionNetworkMessage = ({
     cta,
     postCta,
 }: Props) => {
-    const { name } = useCorrectChainForServer()
+    const { chainName: name } = useEnvironment()
     return (
         <Text color="gray1" size="sm">
             {children || (

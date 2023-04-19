@@ -6,10 +6,9 @@ import { TokenSelector } from '@components/SpaceSettings/TokenSelector'
 import { Avatar, Box, Button, Divider, Icon, Paragraph, Stack, Text } from '@ui'
 import { useSettingsRolesStore } from '@components/SpaceSettings/store/hooks/settingsRolesStore'
 import { shortAddress } from 'ui/utils/utils'
-import { useCorrectChainForServer } from 'hooks/useCorrectChainForServer'
 import { useAuth } from 'hooks/useAuth'
 import { FetchedTokenAvatar } from '@components/Tokens/FetchedTokenAvatar'
-import { useMatrixHomeServerUrl } from 'hooks/useMatrixHomeServerUrl'
+import { useEnvironment } from 'hooks/useEnvironmnet'
 import { EVERYONE_ADDRESS } from 'utils'
 import { MemberListModal, TokenListModal } from './GatingModals'
 
@@ -86,22 +85,21 @@ export const RoleSettingsMembers = () => {
 }
 
 const MemberRenderer = (props: { item: string; onRemoveItem: (id: string) => void }) => {
-    const { id: chainId } = useCorrectChainForServer()
-    const { homeserverUrl } = useMatrixHomeServerUrl()
+    const { chainId, matrixUrl } = useEnvironment()
     const { client } = useZionClient()
 
     const matrixuser = useMemo(() => {
         if (!chainId) {
             return undefined
         }
-        const _homeserverUrl = new URL(homeserverUrl || '')
+        const _homeserverUrl = new URL(matrixUrl || '')
         const userId = createUserIdFromEthereumAddress(
             props.item,
             chainId,
         ).matrixUserIdLocalpart.toLowerCase()
         const matrixIdFromAddress = `@${userId}:${_homeserverUrl.hostname}`
         return client?.getUser(matrixIdFromAddress)
-    }, [chainId, homeserverUrl, props.item, client])
+    }, [chainId, matrixUrl, props.item, client])
 
     const onClick = useEvent(() => {
         props.onRemoveItem(props.item)
@@ -142,7 +140,7 @@ const MemberRenderer = (props: { item: string; onRemoveItem: (id: string) => voi
 }
 
 const TokenRenderer = (props: { item: string; onRemoveItem: (id: string) => void }) => {
-    const { network } = useCorrectChainForServer()
+    const { chainName } = useEnvironment()
 
     const onClick = useEvent(() => {
         props.onRemoveItem(props.item)
@@ -150,7 +148,7 @@ const TokenRenderer = (props: { item: string; onRemoveItem: (id: string) => void
 
     const onAddressClick = useEvent(() => {
         window.open(
-            `https://${network}.etherscan.io/address/${props.item}`,
+            `https://${chainName}.etherscan.io/address/${props.item}`,
             '_blank',
             'noopener,noreferrer',
         )

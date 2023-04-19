@@ -34,7 +34,7 @@ import { errorHasInvalidCookieResponseHeader } from 'api/apiClient'
 import { InvalidCookieNotification } from '@components/Notifications/InvalidCookieNotification'
 import { LargeUploadImageTemplate } from '@components/UploadImage/LargeUploadImageTemplate'
 import { useContractSpaceInfo } from '../hooks/useContractSpaceInfo'
-import { useMatrixHomeServerUrl } from '../hooks/useMatrixHomeServerUrl'
+import { useEnvironment } from '../hooks/useEnvironmnet'
 
 const MdGap = ({ children, ...boxProps }: { children: JSX.Element } & BoxProps) => (
     <Box gap="md" {...boxProps}>
@@ -55,7 +55,7 @@ export const SpaceInfoPanel = () => {
     const navigate = useNavigate()
     const { data: canEdit } = useHasPermission(Permission.ModifySpaceSettings)
 
-    const { homeserverUrl } = useMatrixHomeServerUrl()
+    const { matrixUrl } = useEnvironment()
     const [isEdit, setIsEdit] = useState(false)
     const [editErrorMessage, setEditErrorMessage] = useState<string | null>(null)
     const textAreaRef = useRef<HTMLTextAreaElement>(null)
@@ -70,14 +70,14 @@ export const SpaceInfoPanel = () => {
         if (!data?.owner || !chainId) {
             return undefined
         }
-        const _homeserverUrl = new URL(homeserverUrl || '')
+        const _homeserverUrl = new URL(matrixUrl || '')
         const userId = createUserIdFromEthereumAddress(
             data.owner,
             chainId,
         ).matrixUserIdLocalpart.toLowerCase()
         const matrixIdFromOwnerAddress = `@${userId}:${_homeserverUrl.hostname}`
         return client?.getUser(matrixIdFromOwnerAddress)
-    }, [client, data?.owner, homeserverUrl, chainId])
+    }, [client, data?.owner, matrixUrl, chainId])
 
     const { members } = useSpaceMembers()
 

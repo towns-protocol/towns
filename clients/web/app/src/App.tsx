@@ -12,10 +12,9 @@ import { Welcome } from 'routes/Welcome'
 import { AppPanelLayout } from 'routes/layouts/AppPanelLayout'
 import { FontLoader } from 'ui/utils/FontLoader'
 import { env } from 'utils'
-import { HomeServerUrl, useMatrixHomeServerUrl } from 'hooks/useMatrixHomeServerUrl'
+import { useEnvironment } from 'hooks/useEnvironmnet'
 import { LoadingScreen } from 'routes/LoadingScreen'
 import { AnalyticsProvider } from 'hooks/useAnalytics'
-import { useCorrectChainForServer } from 'hooks/useCorrectChainForServer'
 import { useDevice } from 'hooks/useDevice'
 import { MobileView } from 'routes/MobileView'
 import { SentryReportModal } from '@components/SentryErrorReport/SentryErrorReport'
@@ -30,29 +29,25 @@ const DebugBar = React.lazy(() => import('@components/DebugBar/DebugBar'))
 
 FontLoader.init()
 
-const CASABLANCA_SERVER_URL = env.VITE_CASABLANCA_SERVER_URL ?? ''
-
 export const App = () => {
     // aellis april 2023, the two server urls and the chain id should all be considered
     // a single piece of state, PROD, TEST, and LOCAL each should have {matrixUrl, casablancaUrl, chainId}
-    const { homeserverUrl, ...rest } = useMatrixHomeServerUrl()
-    const casablancaServerUrl = homeserverUrl === HomeServerUrl.LOCAL ? CASABLANCA_SERVER_URL : ''
-    const chain = useCorrectChainForServer()
+    const environment = useEnvironment()
     const { isMobile } = useDevice()
 
     return !isMobile ? (
         <ZionContextProvider
             alchemyKey={env.VITE_ALCHEMY_API_KEY}
             primaryProtocol={SpaceProtocol.Matrix}
-            casablancaServerUrl={casablancaServerUrl}
-            matrixServerUrl={homeserverUrl}
+            casablancaServerUrl={environment.casablancaUrl}
+            matrixServerUrl={environment.matrixUrl}
             onboardingOpts={{ skipAvatar: true }}
             initialSyncLimit={100}
-            chainId={chain.id}
+            chainId={environment.chainId}
         >
             <>
                 <AnalyticsProvider>
-                    <>{env.IS_DEV && <DebugBar homeserverUrl={homeserverUrl} {...rest} />}</>
+                    <>{env.IS_DEV && <DebugBar {...environment} />}</>
                     <AllRoutes />
                 </AnalyticsProvider>
                 <ReactQueryDevtools position="bottom-right" initialIsOpen={false} />

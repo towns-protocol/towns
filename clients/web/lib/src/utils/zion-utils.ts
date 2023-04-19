@@ -1,3 +1,5 @@
+import * as allChains from '@wagmi/core/chains'
+
 export function sleep(ms: number) {
     return new Promise((resolve) => setTimeout(resolve, ms))
 }
@@ -31,4 +33,14 @@ export function invariant(cond: any, message: string): asserts cond {
 
 export function staticAssertNever(x: never): never {
     throw new Error('Unexpected object: ', x)
+}
+
+// https://chainlist.org/
+// https://eips.ethereum.org/EIPS/eip-155#list-of-chain-ids
+export function getChainName(chainId: number): string {
+    const chain = Object.values(allChains).find((x) => x.id === chainId)
+    if (chain) {
+        return chain.name
+    }
+    throw new Error(`ChainId ${chainId} not found`)
 }

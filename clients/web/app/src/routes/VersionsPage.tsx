@@ -6,12 +6,14 @@ import { TransitionLogo } from '@components/Logo/Logo'
 import { FadeIn } from '@components/Transitions'
 import { Stack } from '@ui'
 import { PATHS } from 'routes'
-import { useMatrixHomeServerUrl } from 'hooks/useMatrixHomeServerUrl'
+import { useEnvironment } from 'hooks/useEnvironmnet'
 
 export const VersionsPage = () => {
-    const { homeserverUrl } = useMatrixHomeServerUrl()
+    const { matrixUrl } = useEnvironment()
 
-    const { isFetched, isSuccess, isError, serverVersions } = useServerVersions({ homeserverUrl })
+    const { isFetched, isSuccess, isError, serverVersions } = useServerVersions({
+        homeserverUrl: matrixUrl,
+    })
 
     return (
         <VersionsPageLayout>

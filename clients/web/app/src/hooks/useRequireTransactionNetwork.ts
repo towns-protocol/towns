@@ -1,5 +1,5 @@
 import { Chain, useNetwork, useSwitchNetwork } from 'wagmi'
-import { useCorrectChainForServer } from './useCorrectChainForServer'
+import { useEnvironment } from './useEnvironmnet'
 
 type Props = {
     onSuccess?: (chain: Chain) => void
@@ -8,16 +8,16 @@ type Props = {
 
 export const useRequireTransactionNetwork = ({ onSuccess, onError }: Props = {}) => {
     const { chain } = useNetwork()
-    const targetChain = useCorrectChainForServer()
+    const { chainId: targetChainId, chainName: targetChainName } = useEnvironment()
     const { switchNetwork } = useSwitchNetwork({
-        chainId: targetChain.id,
+        chainId: targetChainId,
         onSuccess: (chain) => onSuccess?.(chain),
         onError: (error) => onError?.(error),
     })
 
     return {
-        isTransactionNetwork: chain?.id === targetChain.id,
-        name: targetChain.name,
+        isTransactionNetwork: chain?.id === targetChainId,
+        name: targetChainName,
         switchNetwork,
     }
 }

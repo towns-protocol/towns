@@ -1,43 +1,32 @@
-import React, { useState } from 'react'
+import React, { useCallback, useRef, useState } from 'react'
 import { Address, useBalance, useNetwork, useSwitchNetwork } from 'wagmi'
 import { useEvent } from 'react-use-event-hook'
 import { ethers, providers } from 'ethers'
-import { useWeb3Context, useZionClient } from 'use-zion-client'
+import { useWeb3Context } from 'use-zion-client'
 import { Box, Button, Divider, Stack, Text } from '@ui'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { shortAddress } from 'ui/utils/utils'
-import { HomeServerUrl, UseHomeServerUrlReturn } from 'hooks/useMatrixHomeServerUrl'
+import {
+    ENVIRONMENTS,
+    TownsEnvironment,
+    TownsEnvironmentInfo,
+    UseEnvironmentReturn,
+} from 'hooks/useEnvironmnet'
 import { useAuth } from 'hooks/useAuth'
-import { useCorrectChainForServer } from 'hooks/useCorrectChainForServer'
 
-type Props = {
-    homeserverUrl: string
-} & UseHomeServerUrlReturn
+type Props = UseEnvironmentReturn
 
 type ModalProps = {
     onHide: () => void
     platform: string
     synced: boolean
-    homeserverUrl: string
-    onNetworkSwitch: (chainId: number) => void
-    onClearUrl: () => void
-}
-
-function areSynced(homeserverUrl: string, chainName: string) {
-    const serverIsLocal = homeserverUrl.includes('localhost')
-    const chainIsLocal = chainName.toLowerCase().includes('foundry')
-    const localSync = serverIsLocal && chainIsLocal
-    // the chain for the deployed app
-    const testSync = !serverIsLocal && !chainIsLocal && chainName.toLowerCase().includes('goerli')
-    const serverName = serverIsLocal ? 'local' : 'node1-test.towns.com'
-    const platform = !chainName
-        ? `Not connected | server:${serverName}`
-        : `wallet: ${chainName} | server:${serverName}`
-
-    return {
-        synced: localSync || testSync,
-        platform,
-    }
+    environment?: TownsEnvironment
+    matrixUrl: string
+    casablancaUrl?: string
+    chainId: number
+    chainName: string
+    onSwitchEnvironment: (env: TownsEnvironmentInfo) => void
+    onClear: () => void
 }
 
 type FundProps = {
@@ -86,51 +75,48 @@ const FundButton = (props: FundProps & { disabled: boolean }) => {
 }
 
 const DebugModal = ({
-    homeserverUrl,
+    environment,
+    matrixUrl,
+    casablancaUrl,
+    chainId,
+    chainName,
     onHide,
-    onNetworkSwitch,
-    onClearUrl,
-    platform,
+    onSwitchEnvironment,
+    onClear,
 }: ModalProps) => {
     const { accounts, provider } = useWeb3Context()
-    const { chain } = useNetwork()
-    const { chainId } = useZionClient()
-
-    const { switchNetwork } = useSwitchNetwork({
-        onSuccess: (chain) => {
-            onNetworkSwitch(chain.id)
-        },
-    })
-
-    const switchToLocal = () => {
-        switchNetwork?.(31337)
-    }
-
-    const switchToTestnet = () => {
-        switchNetwork?.(5)
-    }
-
-    const appChain = useCorrectChainForServer()
+    const { chain: walletChain } = useNetwork()
 
     return (
         <ModalContainer onHide={onHide}>
             <Stack gap="lg">
                 <Text strong size="sm">
-                    Server: {homeserverUrl}
+                    Environment:{' '}
+                    {environment ??
+                        `Default (${
+                            ENVIRONMENTS.find((e) => e.matrixUrl === matrixUrl)?.name || 'Unknown'
+                        })`}
                 </Text>
                 <Text strong size="sm">
-                    Wallet Chain: {chain?.name || 'Not connected'}
+                    MatrixUrl: {matrixUrl}
                 </Text>
                 <Text strong size="sm">
-                    App chain: {appChain.name}
+                    CasablancaUrl: {!casablancaUrl ? 'Not Set' : casablancaUrl}
                 </Text>
-                {chain?.name && (
+                <Text strong size="sm">
+                    Wallet Chain: {walletChain?.name || 'Not connected'}{' '}
+                    {walletChain?.id !== chainId && '(Mismatch)'}
+                </Text>
+                <Text strong size="sm">
+                    App chain: {chainName}
+                </Text>
+                {walletChain?.name && (
                     <>
                         <Divider />
 
                         <Box shrink display="block">
                             <Text strong size="sm">
-                                {chain.id === 31337 && 'Fund '}
+                                {walletChain.id === 31337 && 'Fund '}
                                 Accounts
                             </Text>
                             <br />
@@ -138,7 +124,7 @@ const DebugModal = ({
                                 <FundButton
                                     key={accountId}
                                     accountId={accountId}
-                                    disabled={chain.id !== 31337}
+                                    disabled={walletChain.id !== 31337}
                                     provider={provider}
                                     chainId={chainId}
                                 />
@@ -148,23 +134,20 @@ const DebugModal = ({
                         <Divider />
 
                         <Stack horizontal gap justifyContent="end">
-                            <Button
-                                size="button_xs"
-                                tone="accent"
-                                disabled={chain.id === 31337}
-                                onClick={switchToLocal}
-                            >
-                                Switch to foundry/local
-                            </Button>
-                            <Button
-                                size="button_xs"
-                                tone="cta1"
-                                disabled={chain.id === 5}
-                                onClick={switchToTestnet}
-                            >
-                                Switch to goerli/node1-test.towns.com
-                            </Button>
-                            <Button size="button_xs" onClick={onClearUrl}>
+                            {ENVIRONMENTS.map((env) => (
+                                <Button
+                                    key={env.name}
+                                    size="button_xs"
+                                    tone="accent"
+                                    disabled={
+                                        chainId === env.chainId && walletChain.id === env.chainId
+                                    }
+                                    onClick={() => onSwitchEnvironment(env)}
+                                >
+                                    Switch to {env.name}/{env.chain.name}
+                                </Button>
+                            ))}
+                            <Button size="button_xs" onClick={onClear}>
                                 <Text size="sm" color="default">
                                     Clear Local Storage
                                 </Text>
@@ -180,11 +163,96 @@ const DebugModal = ({
     )
 }
 
-const DebugBar = ({ homeserverUrl, setUrl, hasUrl, clearUrl }: Props) => {
+const useAsyncSwitchNetwork = () => {
+    const promiseRef = useRef<Promise<number>>()
+    const resolveRef = useRef<(chainId: number) => void>()
+    const rejectRef = useRef<(error: Error) => void>()
+
+    if (!promiseRef.current) {
+        console.log('useSwitchNetwork creating promise')
+        promiseRef.current = new Promise<number>((resolve, reject) => {
+            resolveRef.current = resolve
+            rejectRef.current = reject
+        })
+        console.log('useSwitchNetwork promise created', promiseRef.current)
+    }
+
+    const { switchNetwork } = useSwitchNetwork({
+        onSuccess: (chain) => {
+            console.log('switched network to', chain.name)
+            resolveRef.current?.(chain.id)
+        },
+        onError: (error) => {
+            console.error('switch network error', error)
+            rejectRef.current?.(error)
+        },
+        onMutate: () => {
+            console.log('switching network onMutate')
+        },
+        onSettled: () => {
+            console.log('switching network onSettled')
+        },
+    })
+    const executor = useCallback(
+        async (chainId: number) => {
+            console.log('useSwitchNetwork calling switchNetwork with chainId: ', {
+                chainId,
+                promise: promiseRef.current,
+            })
+            switchNetwork?.(chainId)
+            try {
+                console.log('useSwitchNetwork waiting for promise', promiseRef.current)
+                const chainId = await promiseRef.current
+                console.log('useSwitchNetwork promise resolved with chainId: ', chainId)
+                return chainId
+            } finally {
+                // skip the catch, because we want to reject if things fail, but always reset
+                console.log('useSwitchNetwork resetting promise')
+                promiseRef.current = new Promise<number>((resolve, reject) => {
+                    resolveRef.current = resolve
+                    rejectRef.current = reject
+                })
+            }
+        },
+        [switchNetwork],
+    )
+    return executor
+}
+
+const DebugBar = ({
+    environment,
+    chainId: destinationChainId,
+    chainName: destinationChainName,
+    matrixUrl,
+    casablancaUrl,
+    setEnvironment,
+    clearEnvironment,
+}: Props) => {
     const { chain } = useNetwork()
     const { logout } = useAuth()
 
     const [modal, setModal] = useState(false)
+
+    const switchNetwork = useAsyncSwitchNetwork()
+
+    const onSwitchEnvironment = useCallback(
+        async (env: TownsEnvironmentInfo) => {
+            console.log('onSwitchEnvironment', { env })
+            if (env.chainId !== chain?.id) {
+                console.log('onSwitchEnvironment switching chain')
+                const newChainId = await switchNetwork?.(env.chainId)
+                console.log('onSwitchEnvironment switched chain', { newChainId })
+            }
+            if (env.id !== environment) {
+                console.log('onSwitchEnvironment logging out')
+                await logout()
+                console.log('onSwitchEnvironment updating environment')
+                setEnvironment(env.id)
+                window.location.href = 'http://localhost:3000'
+            }
+        },
+        [chain?.id, environment, logout, setEnvironment, switchNetwork],
+    )
 
     const onHide = useEvent(() => {
         setModal(false)
@@ -194,25 +262,16 @@ const DebugBar = ({ homeserverUrl, setUrl, hasUrl, clearUrl }: Props) => {
         setModal(true)
     })
 
-    const { synced, platform } = areSynced(homeserverUrl, chain?.name || '')
+    const connectedChainId = chain?.id
+    const synced = destinationChainId === connectedChainId
+    const serverName = matrixUrl.replaceAll('https://', '').replaceAll('http://', '')
+    const platform = !chain?.name
+        ? `Not connected | server:${serverName}`
+        : `wallet: ${chain.name} | server:${serverName}`
 
-    const appChain = useCorrectChainForServer()
-
-    async function onNetworkSwitch(chainId: number) {
-        if (chainId === 31337) {
-            setUrl(HomeServerUrl.LOCAL)
-        } else if (chainId === 5) {
-            setUrl(HomeServerUrl.TEST)
-        } else if (chainId === 11155111) {
-            setUrl(HomeServerUrl.PROD)
-        }
-        await logout()
-        window.location.href = 'http://localhost:3000'
-    }
-
-    function onClearUrl() {
-        clearUrl()
-    }
+    const onClear = useCallback(() => {
+        clearEnvironment()
+    }, [clearEnvironment])
 
     return (
         <Box
@@ -228,11 +287,15 @@ const DebugBar = ({ homeserverUrl, setUrl, hasUrl, clearUrl }: Props) => {
         >
             {modal && (
                 <DebugModal
-                    homeserverUrl={homeserverUrl}
+                    environment={environment}
+                    matrixUrl={matrixUrl}
+                    casablancaUrl={casablancaUrl}
+                    chainId={destinationChainId}
+                    chainName={destinationChainName}
                     platform={platform}
                     synced={synced}
-                    onNetworkSwitch={onNetworkSwitch}
-                    onClearUrl={onClearUrl}
+                    onSwitchEnvironment={onSwitchEnvironment}
+                    onClear={onClear}
                     onHide={onHide}
                 />
             )}
@@ -259,10 +322,10 @@ const DebugBar = ({ homeserverUrl, setUrl, hasUrl, clearUrl }: Props) => {
                 </Box>
 
                 <Text strong as="span" size="sm">
-                    {platform}&nbsp; | app using: {appChain.name}
+                    {platform}&nbsp; | app using: {destinationChainName}
                 </Text>
 
-                {hasUrl() && (
+                {environment && (
                     <Text as="span" size="sm" color="negative">
                         Local Storage
                     </Text>

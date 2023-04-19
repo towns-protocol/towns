@@ -5,7 +5,7 @@ import { Permission, RoomIdentifier, SpaceData, useSpaceMembers } from 'use-zion
 import { AnimatePresence } from 'framer-motion'
 import { useChannelIdFromPathname } from 'hooks/useChannelIdFromPathname'
 import { useContractSpaceInfo } from 'hooks/useContractSpaceInfo'
-import { useCorrectChainForServer } from 'hooks/useCorrectChainForServer'
+import { useEnvironment } from 'hooks/useEnvironmnet'
 import { PATHS } from 'routes'
 import { useSizeContext } from 'ui/hooks/useSizeContext'
 import { Box, Icon, IconName, Paragraph, Stack, TooltipRenderer } from '@ui'
@@ -28,7 +28,7 @@ export const SpaceSideBarHeader = (props: {
 }) => {
     const { onSettings, opaqueHeaderBar, space } = props
     const currentChannelId = useChannelIdFromPathname()
-    const { network } = useCorrectChainForServer()
+    const { chainName } = useEnvironment()
     const { pathname } = useLocation()
 
     const { members } = useSpaceMembers()
@@ -44,7 +44,7 @@ export const SpaceSideBarHeader = (props: {
 
     const onAddressClick = useEvent(() => {
         window.open(
-            `https://${network}.etherscan.io/address/${spaceInfo?.address}`,
+            `https://${chainName}.etherscan.io/address/${spaceInfo?.address}`,
             '_blank',
             'noopener,noreferrer',
         )

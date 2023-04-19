@@ -5,7 +5,6 @@ import { createUserIdFromEthereumAddress, getUsernameFromId } from '../types/use
 import {
     AuthenticationData,
     AuthenticationError,
-    getChainName,
     LoginFlows,
     LoginStatus,
     LoginTypePublicKey,
@@ -13,6 +12,7 @@ import {
     RegisterRequest,
     RegistrationAuthentication,
 } from './login'
+import { getChainName } from '../utils/zion-utils'
 
 import { StatusCodes } from 'http-status-codes'
 import { SiweMessage } from 'siwe'

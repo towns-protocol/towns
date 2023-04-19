@@ -10,13 +10,13 @@ import { useCollectionsForOwner } from 'api/lib/tokenContracts'
 import { shortAddress } from 'ui/utils/utils'
 import { env } from 'utils'
 import { fetchVitalikTokens, vitalikAddress } from 'hooks/useNetworkForNftApi'
-import { useCorrectChainForServer } from 'hooks/useCorrectChainForServer'
 import {
     AddressListSearch,
     SelectedItemsList,
     useTokenSearch,
     useWatchItems,
 } from '@components/AddressListSearch/AddressListSearch'
+import { useEnvironment } from 'hooks/useEnvironmnet'
 import { TokenAvatar } from './TokenAvatar'
 import { TokenData, TokenProps } from './types'
 
@@ -86,8 +86,7 @@ export function TokensList({
     onUpdate: (items: string[]) => void
     listMaxHeight?: BoxProps['maxHeight']
 }) {
-    const chain = useCorrectChainForServer()
-    const chainId = chain.id
+    const { chainId } = useEnvironment()
     const zionTokenAddress = useMemo(() => getMemberNftAddress(chainId), [chainId])
     const { data, isLoading, isError } = useCollectionsForOwner({
         wallet: fetchVitalikTokens ? vitalikAddress : wallet,
