@@ -55,9 +55,6 @@ export const env = {
     IS_DEV: coerceBoolish(rawEnv.DEV),
 }
 
-// TODO: we probably want to move to .env at some point, and maybe we need a STAGE_CHAIN_ID at some point
-export const PROD_CHAIN_ID = 5
-
 // hacky workaround b/c framer motion throws weird errors when running tests
 export function swapValueInTests<O, X>(orignalValue: O, testValue: X) {
     if (env.MODE === 'test') {

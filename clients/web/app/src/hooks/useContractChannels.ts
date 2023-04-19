@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { ISpaceDapp, useSpaceDapp, useWeb3Context } from 'use-zion-client'
-import { PROD_CHAIN_ID, env } from 'utils'
+import { useCorrectChainForServer } from './useCorrectChainForServer'
 
 async function getChannels(spaceId: string | undefined, spaceDapp: ISpaceDapp | undefined) {
     if (spaceId && spaceDapp) {
@@ -14,8 +14,10 @@ async function getChannels(spaceId: string | undefined, spaceDapp: ISpaceDapp | 
 export const queryKey = 'spaceDappGetChannels'
 
 export const useContractChannels = (spaceId: string | undefined) => {
-    const { provider, chain } = useWeb3Context()
-    const chainId = env.IS_DEV ? chain?.id : PROD_CHAIN_ID
+    const { provider } = useWeb3Context()
+    const chain = useCorrectChainForServer()
+    const chainId = chain.id
+
     const spaceDapp = useSpaceDapp({
         chainId,
         provider,
