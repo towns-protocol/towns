@@ -7,7 +7,8 @@ import {
 } from 'use-zion-client'
 import { z } from 'zod'
 import { useNavigate } from 'react-router'
-import { Box, Button, Checkbox, ErrorMessage, FormRender, Stack, Text, TextField } from '@ui'
+import { Link } from 'react-router-dom'
+import { Box, Button, Checkbox, ErrorMessage, FormRender, Icon, Stack, Text, TextField } from '@ui'
 import { TransactionButton } from '@components/TransactionButton'
 import { useTransactionUIStates } from 'hooks/useTransactionStatus'
 import { useSpaceRoles } from 'hooks/useContractRoles'
@@ -192,6 +193,17 @@ export const CreateChannelForm = (props: Props) => {
                                     </Box>
                                 )
                             })}
+
+                            <Box flexDirection="row" justifyContent="start" paddingTop="sm">
+                                <Link
+                                    to={`/${PATHS.SPACES}/${props.spaceId.slug}/${PATHS.SETTINGS}`}
+                                >
+                                    <Button onClick={onHide}>
+                                        <Icon type="plus" size="square_sm" />
+                                        Create a new role
+                                    </Button>
+                                </Link>
+                            </Box>
 
                             {env.IS_DEV ? (
                                 <Box color="negative" maxWidth="400">

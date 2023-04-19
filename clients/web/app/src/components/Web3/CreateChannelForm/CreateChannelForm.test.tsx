@@ -141,7 +141,7 @@ describe('CreateChannelForm', () => {
         )
 
         render(<Wrapper />)
-        const submitButton = await screen.findByRole('button', { name: /create/i })
+        const submitButton = await screen.getAllByRole('button', { name: /create/i })[1]
         fireEvent.click(submitButton)
 
         await waitFor(() => {
@@ -174,7 +174,7 @@ describe('CreateChannelForm', () => {
         )
 
         render(<Wrapper />)
-        const submitButton = screen.getByRole('button', { name: /create/i })
+        const submitButton = screen.getAllByRole('button', { name: /create/i })[1]
         fireEvent.click(submitButton)
 
         expect(submitButton).toBeDisabled()
@@ -209,7 +209,7 @@ describe('CreateChannelForm', () => {
 
         render(<Wrapper />)
 
-        const submitButton = screen.getByRole('button', { name: /create/i })
+        const submitButton = screen.getAllByRole('button', { name: /create/i })[1]
 
         const nameInput = screen.getByRole('textbox', { name: /name/i })
         const everyoneCheckbox = screen.getByRole('checkbox', { name: /everyone/i })
@@ -267,7 +267,7 @@ describe('CreateChannelForm', () => {
 
         render(<Wrapper />)
 
-        const submitButton = screen.getByRole('button', { name: /create/i })
+        const submitButton = screen.getAllByRole('button', { name: /create/i })[1]
 
         const nameInput = screen.getByRole('textbox', { name: /name/i })
         const everyoneCheckbox = screen.getByRole('checkbox', { name: /everyone/i })
@@ -314,7 +314,7 @@ describe('CreateChannelForm', () => {
 
         render(<Wrapper />)
 
-        const submitButton = screen.getByRole('button', { name: /create/i })
+        const submitButton = screen.getAllByRole('button', { name: /create/i })[1]
 
         const nameInput = screen.getByRole('textbox', { name: /name/i })
         const everyoneCheckbox = screen.getByRole('checkbox', { name: /everyone/i })
