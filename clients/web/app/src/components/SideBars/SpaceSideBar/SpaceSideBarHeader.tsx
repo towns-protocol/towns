@@ -8,7 +8,7 @@ import { useContractSpaceInfo } from 'hooks/useContractSpaceInfo'
 import { useCorrectChainForServer } from 'hooks/useCorrectChainForServer'
 import { PATHS } from 'routes'
 import { useSizeContext } from 'ui/hooks/useSizeContext'
-import { Box, Icon, IconName, Paragraph, Stack } from '@ui'
+import { Box, Icon, IconName, Paragraph, Stack, TooltipRenderer } from '@ui'
 import { useHasPermission } from 'hooks/useHasPermission'
 import { SpaceSettingsCard } from '@components/Cards/SpaceSettingsCard'
 import { CardOpener } from 'ui/components/Overlay/CardOpener'
@@ -16,6 +16,7 @@ import { shortAddress } from 'ui/utils/utils'
 import { InteractiveSpaceIcon } from '@components/SpaceIcon'
 import { CopySpaceLink } from '@components/CopySpaceLink/CopySpaceLink'
 import { FadeIn } from '@components/Transitions'
+import { OpenInEtherscan } from '@components/Tooltips/OpenInEtherscan'
 import * as styles from './SpaceSideBar.css'
 
 export const SpaceSideBarHeader = (props: {
@@ -194,19 +195,31 @@ export const SpaceSideBarHeader = (props: {
                             />
                         )}
                         {hasAddress && (
-                            <SidebarPill
-                                icon="document"
-                                label="Address"
-                                labelRight={
-                                    isSmall
-                                        ? `${spaceInfo?.address.slice(
-                                              0,
-                                              4,
-                                          )}..${spaceInfo?.address.slice(-2)}`
-                                        : shortAddress(spaceInfo?.address)
-                                }
-                                onClick={onAddressClick}
-                            />
+                            <TooltipRenderer
+                                keepOpenOnTriggerRefClick
+                                trigger="hover"
+                                distance="xxs"
+                                placement="vertical-top"
+                                render={<OpenInEtherscan />}
+                            >
+                                {({ triggerProps }) => (
+                                    <Box {...triggerProps} padding="xs" rounded="sm">
+                                        <SidebarPill
+                                            icon="document"
+                                            label="Address"
+                                            labelRight={
+                                                isSmall
+                                                    ? `${spaceInfo?.address.slice(
+                                                          0,
+                                                          4,
+                                                      )}..${spaceInfo?.address.slice(-2)}`
+                                                    : shortAddress(spaceInfo?.address)
+                                            }
+                                            onClick={onAddressClick}
+                                        />
+                                    </Box>
+                                )}
+                            </TooltipRenderer>
                         )}
                     </Stack>
                 </>
