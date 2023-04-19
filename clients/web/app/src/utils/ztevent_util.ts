@@ -1,5 +1,10 @@
-import { MessageType, RoomMessageEvent, TimelineEvent, ZTEvent } from 'use-zion-client'
-import { ReactionEvent } from 'use-zion-client/dist/types/timeline-types'
+import {
+    MessageType,
+    ReactionEvent,
+    RoomMessageEvent,
+    TimelineEvent,
+    ZTEvent,
+} from 'use-zion-client'
 
 export const getIsRoomMessageContent = (e?: TimelineEvent): RoomMessageEvent | undefined => {
     if (e?.content?.kind === ZTEvent.RoomMessage) {

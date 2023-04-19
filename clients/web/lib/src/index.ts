@@ -3,12 +3,13 @@ export { TransactionStatus, SpaceProtocol } from './client/ZionClientTypes'
 
 export { ChannelContextProvider, useChannelContext } from './components/ChannelContextProvider'
 export { QueryProvider } from './components/QueryProvider'
-export { SpaceContextProvider, useSpaceContext } from './components/SpaceContextProvider'
+export * from './components/SpaceContextProvider'
 export { ZionContextProvider, useZionContext, ZionContext } from './components/ZionContextProvider'
 export { useWeb3Context } from './components/Web3ContextProvider'
 export { AutojoinChannels } from './components/AutojoinChannels'
 
 export { LoginStatus } from './hooks/login'
+export * from './hooks/ZionContext/onboarding/IOnboardingState'
 export { useCasablancaCredentials } from './hooks/use-casablanca-credentials'
 export { useChannelData } from './hooks/use-channel-data'
 export { useChannelId } from './hooks/use-channel-id'
@@ -61,61 +62,13 @@ export { useTransactionStore } from './store/use-transactions-store'
 export { TxnsEventEmitter, useOnTransactionEmitted } from './store/use-transactions-store'
 export type { EmittedTransaction } from './store/use-transactions-store'
 
-export type {
-    Channel,
-    ChannelGroup,
-    CreateChannelInfo,
-    CreateSpaceInfo,
-    ImageMessageContent,
-    Mention,
-    PowerLevel,
-    PowerLevels,
-    PowerLevelDefinition,
-    Room,
-    RoomMember,
-    Rooms,
-    SendMessageOptions,
-    SendTextMessageOptions,
-    SpaceChild,
-    SpaceData,
-    SpaceItem,
-    MessageContent,
-    ZionTextMessageContent,
-} from './types/zion-types'
-
+export * from './types/zion-types'
 export { Membership, MessageType, RoomVisibility } from './types/zion-types'
-
 export type { RoomIdentifier } from './types/room-identifier'
 export { makeRoomIdentifier, toRoomIdentifier } from './types/room-identifier'
-
-export type {
-    FullyReadMarker,
-    MentionResult,
-    MessageReactions,
-    RoomCanonicalAliasEvent,
-    RoomHistoryVisibilityEvent,
-    RoomJoinRulesEvent,
-    RoomAvatarEvent,
-    RoomCreateEvent,
-    RoomMemberEvent,
-    RoomMessageEncryptedEvent,
-    RoomMessageEvent,
-    RoomNameEvent,
-    RoomPowerLevelsEvent,
-    SpaceChildEvent,
-    SpaceParentEvent,
-    ThreadResult,
-    ThreadStats,
-    TimelineEvent,
-    TimelineEvent_OneOf,
-} from './types/timeline-types'
-
-export { ZTEvent, EventStatus } from './types/timeline-types'
-
+export * from './types/timeline-types'
 export { WalletStatus, BlockchainTransactionType } from './types/web3-types'
-
 export type { UserIdentifier } from './types/user-identifier'
-
 export {
     createUserIdFromEthereumAddress,
     createUserIdFromString,
@@ -125,7 +78,7 @@ export {
 } from './types/user-identifier'
 
 export type { ISpaceDapp } from './client/web3/ISpaceDapp'
-export { Permission } from './client/web3/ContractTypes'
+export * from './client/web3/ContractTypes'
 export {
     getMemberNftAddress,
     getFilteredRolesFromSpace,

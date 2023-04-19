@@ -1,8 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import React from 'react'
 import { describe, expect, test } from 'vitest'
-import { Membership, SpaceProtocol } from 'use-zion-client'
-import { SpaceContext } from 'use-zion-client/dist/components/SpaceContextProvider'
+import { Membership, SpaceContext, SpaceProtocol } from 'use-zion-client'
 import { RichTextEditor } from './RichTextEditor'
 
 const Wrapper = (props: { children?: React.ReactNode }) => {

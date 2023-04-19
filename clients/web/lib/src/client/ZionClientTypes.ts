@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { BigNumberish, ContractReceipt, ContractTransaction, ethers } from 'ethers'
-import { SendMessageOptions, UpdateChannelInfo } from 'types/zion-types'
-import { RoleIdentifier, TProvider } from 'types/web3-types'
+import { SendMessageOptions, UpdateChannelInfo } from '../types/zion-types'
+import { RoleIdentifier, TProvider } from '../types/web3-types'
 
 import { RoomIdentifier } from '../types/room-identifier'
 

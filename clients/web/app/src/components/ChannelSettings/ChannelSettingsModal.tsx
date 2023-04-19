@@ -2,12 +2,12 @@ import React, { useCallback, useMemo, useState } from 'react'
 import {
     BlockchainTransactionType,
     RoomIdentifier,
+    UpdateChannelInfo,
     useRoom,
     useTransactionStore,
     useUpdateChannelTransaction,
 } from 'use-zion-client'
 
-import { UpdateChannelInfo } from 'use-zion-client/dist/types/zion-types'
 import { RequireTransactionNetworkMessage } from '@components/RequireTransactionNetworkMessage/RequireTransactionNetworkMessage'
 import { TransactionButton } from '@components/TransactionButton'
 import { useOnTransactionStages } from 'hooks/useOnTransactionStages'

@@ -1,7 +1,6 @@
 import React from 'react'
-import { SpaceContextProvider, useZionContext } from 'use-zion-client'
+import { IOnboardingState, SpaceContextProvider, useZionContext } from 'use-zion-client'
 import { useMatch } from 'react-router-dom'
-import { IOnboardingState } from 'use-zion-client/dist/hooks/ZionContext/onboarding/IOnboardingState'
 import { AppDrawer } from '../components/AppDrawer'
 import { UserDisplayNameForm } from '../components/UserDisplayNameForm'
 import { LargeToast } from '../components/LargeToast'

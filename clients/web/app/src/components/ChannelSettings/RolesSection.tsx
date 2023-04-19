@@ -1,7 +1,6 @@
 import React, { useEffect } from 'react'
 import { FieldValues, UseFormRegister, UseFormReturn } from 'react-hook-form'
-import { RoomIdentifier } from 'use-zion-client'
-import { RoleDetails } from 'use-zion-client/dist/client/web3/ContractTypes'
+import { RoleDetails, RoomIdentifier } from 'use-zion-client'
 import { Box, Checkbox, Text } from '@ui'
 import { TokenCheckboxLabel } from '@components/Tokens/TokenCheckboxLabel'
 import { FormStateKeys } from './formConfig'

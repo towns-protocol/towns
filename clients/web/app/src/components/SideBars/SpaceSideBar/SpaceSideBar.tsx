@@ -8,8 +8,8 @@ import {
     SpaceData,
     useMyMembership,
     useSpaceMentions,
+    useSpaceThreadRootsUnreadCount,
 } from 'use-zion-client'
-import { useSpaceThreadRootsUnreadCount } from 'use-zion-client/dist/hooks/use-space-thread-roots'
 import { useQueryClient } from '@tanstack/react-query'
 import { clsx } from 'clsx'
 import { ModalContainer } from '@components/Modals/ModalContainer'

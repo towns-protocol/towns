@@ -10,6 +10,7 @@ import {
     Typography,
 } from '@mui/material'
 import {
+    InviteData,
     RoomIdentifier,
     createUserIdFromString,
     getShortUsername,
@@ -18,7 +19,6 @@ import {
 import { Outlet, useNavigate } from 'react-router-dom'
 import React, { useCallback, useMemo, useState } from 'react'
 
-import { InviteData } from 'use-zion-client/dist/types/zion-types'
 import { Logout } from './Logout'
 import { Invites } from './Invites'
 import { SidebarNewItemButton } from './Buttons/SidebarNewItemButton'

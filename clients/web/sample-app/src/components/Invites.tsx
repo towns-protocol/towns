@@ -1,8 +1,7 @@
 import React from 'react'
 import { List, ListItem, ListItemText, Typography } from '@mui/material'
-import { useInvites } from 'use-zion-client'
+import { InviteData, useInvites } from 'use-zion-client'
 import { Theme } from '@mui/system'
-import { InviteData } from 'use-zion-client/dist/types/zion-types'
 
 interface Props {
     title: string
