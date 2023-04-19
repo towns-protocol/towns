@@ -53,7 +53,7 @@ export const Button = forwardRef<HTMLButtonElement, Props>(
                 rounded,
                 hoverEffect,
                 // a tone can be specified here in order to transition background
-                tone: animate ? tone : undefined,
+                tone: animate || tone == 'level3' ? tone : undefined,
             })}
             justifyContent="center"
             alignItems="center"

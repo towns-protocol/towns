@@ -82,7 +82,9 @@ export const buttonStyle = recipe({
             default: {},
             level1: {},
             level2: {},
-            level3: {},
+            level3: {
+                boxShadow: `0 0 0px 1px ${vars.color.background.level4}`,
+            },
             level4: {},
             [ToneName.CTA1]: {
                 position: 'relative',
