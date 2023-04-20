@@ -14,6 +14,7 @@ import { Room, RoomVisibility } from 'use-zion-client/src/types/zion-types'
 import { TestConstants } from './helpers/TestConstants'
 import { ZionTestClient } from './helpers/ZionTestClient'
 import { RoomIdentifier } from '../../src/types/room-identifier'
+import { sleep } from '../../src/utils/zion-utils'
 
 describe('space invite', () => {
     test('Inviter is not allowed due to missing Invite permission', async () => {
@@ -183,20 +184,25 @@ describe('space invite', () => {
         /** Arrange */
 
         // create all the users for the test
-        // maxUsers should exceed the default quota of 5
-        const maxUsers = 6
+        // maxUsers should exceed the default quota
+        const maxUsers = 11
         const joiners: ZionTestClient[] = []
         const registerClients: Promise<Record<string, ZionTestClient>>[] = []
         for (let i = 0; i < maxUsers; i++) {
             registerClients.push(registerAndStartClients([`tokenGrantedUser_${i}`]))
         }
-        await Promise.all(registerClients).then((clients) => {
-            clients.forEach((clientObj) => {
-                for (const key in clientObj) {
-                    joiners.push(clientObj[key])
-                }
+        await Promise.all(registerClients)
+            .then((clients) => {
+                clients.forEach((clientObj) => {
+                    for (const key in clientObj) {
+                        joiners.push(clientObj[key])
+                    }
+                })
             })
-        })
+            .catch(function (err) {
+                console.log('error registering clients', err)
+            })
+        await sleep(500)
         const { bob } = await registerAndStartClients(['bob'])
         await bob.fundWallet()
 
@@ -226,14 +232,14 @@ describe('space invite', () => {
         expect(failedJoinIndex).toBe(maxUsers)
     }, 120000) // end test
 
-    test('Can join new Channel for space over quota', async () => {
+    test('Cannot join new Channel for space over quota', async () => {
         /** Arrange */
 
         // create all the users for the test
-        // maxUsers should exceed the default quota of 5
+        // maxUsers should exceed the default quota
         // sese member_cap in dendrite config for
         // maxUsers allowed in space
-        const maxUsers = 6
+        const maxUsers = 11
         const joiners: ZionTestClient[] = []
         const registerClients: Promise<Record<string, ZionTestClient>>[] = []
         for (let i = 0; i < maxUsers; i++) {
@@ -246,6 +252,7 @@ describe('space invite', () => {
                 }
             })
         })
+        await sleep(500)
         const { bob } = await registerAndStartClients(['bob'])
         await bob.fundWallet()
 
@@ -295,6 +302,6 @@ describe('space invite', () => {
             }
         }
         /** Assert */
-        expect(failedJoinIndex).toBe(6)
+        expect(failedJoinIndex).toBe(maxUsers)
     }, 120000) // end test
 }) // end describe

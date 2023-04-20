@@ -119,7 +119,7 @@ global:
     excluded_towns:
       - "!ESIQlTSa4zDmhrez:localhost"
       - "!ABCDlTSa4zDmhSAr:localhost"
-    member_cap: 5
+    member_cap: 10
 
   # Configuration for Prometheus metric collection.
   metrics:
