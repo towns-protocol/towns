@@ -4678,10 +4678,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@matrix-org/matrix-sdk-crypto-js@npm:^0.1.0-alpha.5":
-  version: 0.1.0-alpha.6
-  resolution: "@matrix-org/matrix-sdk-crypto-js@npm:0.1.0-alpha.6::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40matrix-org%2Fmatrix-sdk-crypto-js%2F-%2Fmatrix-sdk-crypto-js-0.1.0-alpha.6.tgz"
-  checksum: 50d704002bec40bde7d92c965c3a3e901da60a6a48ee53d7847bf559cbe8b18ad92f65f0af63ebc2bf77daf9a3db771f32d3d71d67888e2e906a86a7c2a51cb7
+"@matrix-org/matrix-sdk-crypto-js@npm:^0.1.0-alpha.6":
+  version: 0.1.0-alpha.7
+  resolution: "@matrix-org/matrix-sdk-crypto-js@npm:0.1.0-alpha.7::__archiveUrl=https%3A%2F%2Fregistry.npmjs.org%2F%40matrix-org%2Fmatrix-sdk-crypto-js%2F-%2Fmatrix-sdk-crypto-js-0.1.0-alpha.7.tgz"
+  checksum: 2efdc2b2ba3811aa06e2e661fd72b17fa9a28040b4e464ce89464f6659f4ea15fba0dd8579f984dee7dbc0f8a9025011a38fb5586ec7303a453e2edefb0a4200
   languageName: node
   linkType: hard
 
@@ -13066,7 +13066,7 @@ __metadata:
     jsdom: ^21.1.0
     lexical: ^0.8.1
     lodash: ^4.17.21
-    matrix-js-sdk: 24.1.0
+    matrix-js-sdk: 25.0.0-rc.1
     msw: ^1.0.1
     react: ^18.2.0
     react-dom: ^18.2.0
@@ -15513,12 +15513,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"matrix-js-sdk@npm:24.1.0":
-  version: 24.1.0
-  resolution: "matrix-js-sdk@npm:24.1.0"
+"matrix-js-sdk@npm:25.0.0-rc.1":
+  version: 25.0.0-rc.1
+  resolution: "matrix-js-sdk@npm:25.0.0-rc.1"
   dependencies:
     "@babel/runtime": ^7.12.5
-    "@matrix-org/matrix-sdk-crypto-js": ^0.1.0-alpha.5
+    "@matrix-org/matrix-sdk-crypto-js": ^0.1.0-alpha.6
     another-json: ^0.2.0
     bs58: ^5.0.0
     content-type: ^1.0.4
@@ -15529,7 +15529,7 @@ __metadata:
     sdp-transform: ^2.14.1
     unhomoglyph: ^1.0.6
     uuid: 9
-  checksum: 7b128cd4a238a038d4d155ddac01fcac8d09bbac0b6a86fd6e9ec2d1e6e1366ee26e195cb71367c5a305a75eea1932f299c862d0425a5ab5deb8c3844a2bc0d6
+  checksum: 100bd62a7f68286678cee5fe1a14c5ca05db7c4991bd17c917f4fb234c7e6bfac1d0e3fc498dd58ed488e65d950d6b95e87e463abb6ec9e3b84e73b047dcebee
   languageName: node
   linkType: hard
 
@@ -18809,7 +18809,7 @@ __metadata:
     ethers: ^5.7.2
     http-status-codes: ^2.2.0
     lodash: ^4.17.21
-    matrix-js-sdk: 24.1.0
+    matrix-js-sdk: 25.0.0-rc.1
     node-stdlib-browser: ^1.2.0
     pino: ^8.7.0
     react: ^18.2.0
@@ -21126,7 +21126,7 @@ __metadata:
     jest-environment-jsdom: ^29.4.3
     jest-runner-groups: ^2.2.0
     lodash: ^4.17.21
-    matrix-js-sdk: 24.1.0
+    matrix-js-sdk: 25.0.0-rc.1
     node-emoji: ^1.11.0
     pino: ^8.7.0
     react: ^18.2.0
