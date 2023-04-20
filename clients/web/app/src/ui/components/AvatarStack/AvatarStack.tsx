@@ -1,10 +1,12 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
-import { useChannelId, useSpaceId } from 'use-zion-client'
 import { avatarSizes } from 'ui/components/Avatar/avatarProperties.css'
-import { PATHS } from 'routes'
+import { ProfileHoverCard } from '@components/ProfileHoverCard/ProfileHoverCard'
+import { useCreateLink } from 'hooks/useCreateLink'
 import { Avatar } from '../Avatar/Avatar'
 import { Stack } from '../Stack/Stack'
+import { Box } from '../Box/Box'
+import { TooltipRenderer } from '../Tooltip/TooltipRenderer'
 
 type Props = {
     users: {
@@ -16,19 +18,27 @@ type Props = {
 
 export const AvatarStack = (props: Props) => {
     const { size = 'avatar_md', users } = props
-    const spaceId = useSpaceId()
-    const channelId = useChannelId()
+    const { createLink } = useCreateLink()
+
     return (
         <Stack horizontal>
             {users
                 .filter((u) => u.userId)
                 .map((u, index) => (
-                    <Link
+                    <TooltipRenderer
+                        render={<ProfileHoverCard userId={u.userId ?? ''} />}
                         key={u.userId}
-                        to={`/${PATHS.SPACES}/${spaceId?.networkId}/channels/${channelId.networkId}/profile/${u.userId}/`}
+                        trigger="hover"
+                        placement="vertical"
                     >
-                        <Avatar stacked={index > 0} userId={u.userId} size={size} />
-                    </Link>
+                        {({ triggerProps }) => (
+                            <Box {...triggerProps}>
+                                <Link key={u.userId} to={createLink({ profileId: u.userId }) ?? ''}>
+                                    <Avatar stacked={index > 0} userId={u.userId} size={size} />
+                                </Link>
+                            </Box>
+                        )}
+                    </TooltipRenderer>
                 ))}
         </Stack>
     )

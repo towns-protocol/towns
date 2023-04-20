@@ -116,13 +116,24 @@ export const Message = (props: Props) => {
             <Box minWidth="x8">
                 {displayContext !== 'tail' ? (
                     senderId ? (
-                        <AvatarComponent
-                            isActive={isActive}
-                            size={avatarSize}
-                            insetY="xxs"
-                            userId={senderId}
-                            link={profileLink}
-                        />
+                        <TooltipRenderer
+                            render={<ProfileHoverCard userId={senderId} />}
+                            key={name}
+                            trigger="hover"
+                            placement="vertical"
+                        >
+                            {({ triggerProps }) => (
+                                <Box {...triggerProps}>
+                                    <AvatarComponent
+                                        isActive={isActive}
+                                        size={avatarSize}
+                                        insetY="xxs"
+                                        userId={senderId}
+                                        link={profileLink}
+                                    />
+                                </Box>
+                            )}
+                        </TooltipRenderer>
                     ) : (
                         <></>
                     )

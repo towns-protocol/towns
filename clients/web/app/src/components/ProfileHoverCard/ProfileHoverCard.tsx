@@ -1,6 +1,7 @@
 import React from 'react'
+import { motion } from 'framer-motion'
 import { createUserIdFromString, useSpaceData, useSpaceMembers } from 'use-zion-client'
-import { Avatar, Card, Paragraph, Stack } from '@ui'
+import { Avatar, Box, Paragraph, Stack } from '@ui'
 import { shortAddress } from 'ui/utils/utils'
 import { useGetUserBio } from 'hooks/useUserBio'
 
@@ -17,7 +18,18 @@ export const ProfileHoverCard = (props: Props) => {
     const { data: userBio } = useGetUserBio(userAddress)
 
     return (
-        <Card padding gap width="300">
+        <MotionBox
+            border
+            gap
+            padding
+            background="level2"
+            rounded="sm"
+            maxWidth="300"
+            boxShadow="avatar"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.2, duration: 0.1 }}
+        >
             <Stack horizontal gap>
                 <Stack
                     width="x10"
@@ -40,13 +52,19 @@ export const ProfileHoverCard = (props: Props) => {
                 <Paragraph color="gray2" size="sm">
                     Member of {space?.name}
                 </Paragraph>
-                <Paragraph strong size="sm">
-                    Bio
-                </Paragraph>
-                <Paragraph size="sm" color="gray1">
-                    {userBio ?? `no biography just yet`}
-                </Paragraph>
+                {userBio && (
+                    <>
+                        <Paragraph strong size="sm">
+                            Bio
+                        </Paragraph>
+                        <Paragraph size="sm" color="gray1">
+                            {userBio}
+                        </Paragraph>
+                    </>
+                )}
             </Stack>
-        </Card>
+        </MotionBox>
     )
 }
+
+const MotionBox = motion(Box)
