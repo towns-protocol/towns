@@ -12,7 +12,7 @@ export const OpenInEtherscan = () => {
             rounded="sm"
             color="default"
         >
-            <Stack horizontal gap="md" centerContent>
+            <Stack centerContent horizontal gap="md">
                 Open in Etherscan
                 <Icon type="linkOut" size="square_sm" />
             </Stack>

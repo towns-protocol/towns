@@ -37,21 +37,21 @@ describe('unreadMessageCount', () => {
                 name: bob.makeUniqueName(),
                 visibility: RoomVisibility.Private,
             },
-        )) as RoomIdentifier
+        ))!
         // and a channel
         const channel_1 = (await createTestChannelWithSpaceRoles(bob, {
             name: 'channel 1',
             parentSpaceId: spaceId,
             visibility: RoomVisibility.Private,
             roleIds: [],
-        })) as RoomIdentifier
+        }))!
         // and another channel
         const channel_2 = (await createTestChannelWithSpaceRoles(bob, {
             name: 'channel 2',
             parentSpaceId: spaceId,
             visibility: RoomVisibility.Private,
             roleIds: [],
-        })) as RoomIdentifier
+        }))!
         // log
         console.log('!!!sync room ids', {
             space: spaceId.networkId,
@@ -71,7 +71,6 @@ describe('unreadMessageCount', () => {
             if (!alice.matrixClient) {
                 throw new Error('alice matrix client is not defined')
             }
-            await alice.matrixClient.startClient()
             const initialSync = new Promise<string>((resolve, reject) => {
                 if (!alice.matrixClient) {
                     throw new Error('alice matrix client is not defined')
@@ -84,7 +83,9 @@ describe('unreadMessageCount', () => {
                     }
                 })
             })
+            await alice.matrixClient.startClient()
             await initialSync
+            console.log('!!!started alice', { syncData: alice.matrixClient.getSyncStateData() })
         }
 
         const countFor = (roomId: RoomIdentifier) => {
@@ -116,10 +117,11 @@ describe('unreadMessageCount', () => {
 
         // ali should see the room
         await waitFor(() => expect(alice.getRoomData(spaceId)).toBeDefined())
-        // initially we have 1 unread messages for space and each channel
-        await waitFor(
-            () => expect(countFor(spaceId)).toBe(0), // we don't get notifications for invites
-        )
+        // initially we have 0 unread messages for space and each channel
+        await waitFor(() => expect(countFor(spaceId)).toBe(0))
+        await waitFor(() => expect(countFor(channel_1)).toBe(0))
+        await waitFor(() => expect(countFor(channel_2)).toBe(0))
+
         // alice joins the room
         await alice.joinRoom(spaceId)
         await alice.joinRoom(channel_1)
@@ -128,6 +130,11 @@ describe('unreadMessageCount', () => {
         await waitFor(() => expect(alice.getRoomData(spaceId)?.membership).toBe('join'))
         await waitFor(() => expect(alice.getRoomData(channel_1)?.membership).toBe('join'))
         await waitFor(() => expect(alice.getRoomData(channel_2)?.membership).toBe('join'))
+
+        // Even after invite and join we have 0 unread messages for space and each channel
+        await waitFor(() => expect(countFor(spaceId)).toBe(0))
+        await waitFor(() => expect(countFor(channel_1)).toBe(0))
+        await waitFor(() => expect(countFor(channel_2)).toBe(0))
 
         ////// Stop alice /////
         await stopAlice()
@@ -138,10 +145,26 @@ describe('unreadMessageCount', () => {
         ////// Start alice /////
         await startAlice()
 
-        // che our counts
-        await waitFor(() => expect(countFor(spaceId)).toBe(1))
-        await waitFor(() => expect(countFor(channel_1)).toBe(2))
-        await waitFor(() => expect(countFor(channel_2)).toBe(1))
+        // Wait for message decryption to complete, otherwise we may not see the message
+        console.log(`!!!startAlice after message and sleep`, alice.matrixClient?.getSyncStateData())
+        alice.logEvents(spaceId)
+        alice.logEvents(channel_1)
+        alice.logEvents(channel_2)
+
+        // check our counts with extended timeout to await decryption
+        await waitFor(
+            () => expect(countFor(spaceId)).toBe(0),
+            TestConstants.DecaDefaultWaitForTimeout,
+        )
+        await waitFor(
+            () => expect(countFor(channel_1)).toBe(2),
+            TestConstants.DecaDefaultWaitForTimeout,
+        )
+        await waitFor(
+            () => expect(countFor(channel_2)).toBe(0),
+            TestConstants.DecaDefaultWaitForTimeout,
+        )
+
         // start clearing the notifications
         await alice.sendReadReceipt(channel_1)
 
@@ -152,10 +175,14 @@ describe('unreadMessageCount', () => {
         await startAlice()
 
         // and see the update
+        await waitFor(() => expect(countFor(spaceId)).toBe(0))
         await waitFor(() => expect(countFor(channel_1)).toBe(0))
+        await waitFor(() => expect(countFor(channel_2)).toBe(0))
         // clear
         await alice.sendReadReceipt(spaceId)
         // and see the update
         await waitFor(() => expect(countFor(spaceId)).toBe(0))
+        await waitFor(() => expect(countFor(channel_1)).toBe(0))
+        await waitFor(() => expect(countFor(channel_2)).toBe(0))
     }) // end test
 }) // end describe

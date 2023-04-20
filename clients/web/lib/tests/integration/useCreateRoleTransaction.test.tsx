@@ -59,7 +59,10 @@ describe('useCreateRoleTransaction', () => {
         )
         const clientRunning = screen.getByTestId('clientRunning')
         // wait for the client to be running
-        await waitFor(() => expect(clientRunning).toHaveTextContent('true'))
+        await waitFor(
+            () => expect(clientRunning).toHaveTextContent('true'),
+            TestConstants.DecaDefaultWaitForTimeout,
+        )
         if (!memberNftAddress) {
             throw new Error('councilNftAddress is undefined')
         }
