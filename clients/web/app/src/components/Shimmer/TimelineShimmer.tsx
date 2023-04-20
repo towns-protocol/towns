@@ -38,7 +38,7 @@ export const TimelineShimmer = (props: { children?: React.ReactNode }) => {
                                                 rounded="full"
                                                 className={shimmerClass}
                                             />
-                                            <Stack flexGrow="h8" gap="sm">
+                                            <Stack grow gap="sm">
                                                 <Stack
                                                     width="200"
                                                     height="x2"
