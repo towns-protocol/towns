@@ -5,6 +5,7 @@ import { CentralPanelLayout } from 'routes/layouts/CentralPanelLayout'
 import { shortAddress } from 'ui/utils/utils'
 import { Avatar, Grid, Paragraph, Stack } from '@ui'
 import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
+import { useCreateLink } from 'hooks/useCreateLink'
 
 type Props = {
     members?: RoomMember[]
@@ -36,22 +37,27 @@ export const MembersPage = (props: Props) => {
 
 const GridProfile = ({ member }: { member: RoomMember }) => {
     const accountAddress = createUserIdFromString(member.userId)?.accountAddress
+    const { createLink } = useCreateLink()
+    const link = createLink({ profileId: member.userId })
+
+    const profile = (
+        <Stack centerContent gap>
+            <Avatar size="avatar_x15" userId={member.userId ?? ''} imageVariant="thumbnail300" />
+            <Paragraph textAlign="center">{member.name}</Paragraph>
+        </Stack>
+    )
+
+    const linkedProfile = !link ? profile : <Link to={link}>{profile}</Link>
+
     return (
-        <Link to={`profile/${member?.userId}/`}>
-            <Stack centerContent gap padding>
-                <Avatar
-                    size="avatar_x15"
-                    userId={member.userId ?? ''}
-                    imageVariant="thumbnail300"
+        <Stack centerContent gap padding>
+            {linkedProfile}
+            {accountAddress && accountAddress && (
+                <ClipboardCopy
+                    label={shortAddress(accountAddress)}
+                    clipboardContent={accountAddress}
                 />
-                <Paragraph>{member.name}</Paragraph>
-                {accountAddress && accountAddress && (
-                    <ClipboardCopy
-                        label={shortAddress(accountAddress)}
-                        clipboardContent={accountAddress}
-                    />
-                )}
-            </Stack>
-        </Link>
+            )}
+        </Stack>
     )
 }

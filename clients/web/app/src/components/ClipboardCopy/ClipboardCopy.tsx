@@ -1,6 +1,7 @@
 import React, { forwardRef, useEffect, useState } from 'react'
 import { useEvent } from 'react-use-event-hook'
 import { Icon, Stack, Text } from '@ui'
+import useCopyToClipboard from 'hooks/useCopyToClipboard'
 
 type Props = {
     label: string
@@ -9,11 +10,8 @@ type Props = {
 
 export const ClipboardCopy = forwardRef<HTMLDivElement, Props>((props, ref) => {
     const [copied, setCopied] = useState(false)
-    const onCopy = useEvent((e) => {
-        e.stopPropagation()
-        navigator.clipboard.writeText(props.clipboardContent ?? props.label)
-        setCopied(true)
-    })
+    const [, copy] = useCopyToClipboard()
+
     useEffect(() => {
         if (copied) {
             const timeout = setTimeout(() => {
@@ -24,6 +22,15 @@ export const ClipboardCopy = forwardRef<HTMLDivElement, Props>((props, ref) => {
             }
         }
     }, [copied])
+
+    const onCopy = useEvent((e: React.MouseEvent) => {
+        const asyncCopy = async () => {
+            const copied = await copy(props.clipboardContent ?? props.label)
+            setCopied(copied)
+        }
+        asyncCopy()
+    })
+
     return (
         <Stack
             horizontal

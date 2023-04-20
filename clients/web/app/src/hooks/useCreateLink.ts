@@ -8,6 +8,7 @@ const paths = [
     },
     { path: `/${PATHS.SPACES}/:spaceId/${PATHS.THREADS}/profile?/:profileId?` },
     { path: `/${PATHS.SPACES}/:spaceId/${PATHS.MENTIONS}/profile?/:profileId?` },
+    { path: `/${PATHS.SPACES}/:spaceId/${PATHS.MEMBERS}/profile?/:profileId?` },
     { path: `/${PATHS.SPACES}/:spaceId/${PATHS.CHANNELS}/:channelId/profile?/:profileId?` },
     {
         path: `/${PATHS.SPACES}/:spaceId/${PATHS.CHANNELS}/:channelId/replies/:replyId`,
