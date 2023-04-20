@@ -21,7 +21,7 @@ export interface TownsEnvironmentInfo {
     chain: Chain
 }
 
-export const ENVIRONMENTS = [
+export const ENVIRONMENTS: TownsEnvironmentInfo[] = [
     {
         id: TownsEnvironment.Local,
         name: 'Local',

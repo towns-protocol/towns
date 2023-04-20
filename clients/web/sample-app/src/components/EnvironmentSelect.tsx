@@ -1,0 +1,38 @@
+// TopBar.tsx
+import React, { useCallback } from 'react'
+import { FormControl, InputLabel, MenuItem, Select, SelectChangeEvent } from '@mui/material'
+import { ENVIRONMENTS, TownsEnvironment } from 'utils/environment'
+import { useSampleAppStore } from 'store/store'
+import { useEnvironment } from 'hooks/use-environment'
+
+export function EnvironmentSelect() {
+    const { environment } = useEnvironment()
+    const { setEnvironment } = useSampleAppStore()
+
+    const onChangeSelection = useCallback(
+        (event: SelectChangeEvent) => {
+            setEnvironment(event.target.value as TownsEnvironment)
+            window.location.href = 'http://localhost:3001'
+        },
+        [setEnvironment],
+    )
+
+    return (
+        <FormControl fullWidth size="small">
+            <InputLabel id="environment-select-label">Environment:</InputLabel>
+            <Select
+                size="small"
+                labelId="environment-select-label"
+                id="environment-select"
+                value={environment}
+                onChange={onChangeSelection}
+            >
+                {ENVIRONMENTS.map((env) => (
+                    <MenuItem key={env.id} value={env.id}>
+                        {env.name}
+                    </MenuItem>
+                ))}
+            </Select>
+        </FormControl>
+    )
+}

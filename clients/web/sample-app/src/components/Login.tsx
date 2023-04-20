@@ -4,12 +4,7 @@ import {
     Button,
     Chip,
     CircularProgress,
-    FormControl,
-    InputLabel,
-    MenuItem,
     Paper,
-    Select,
-    SelectChangeEvent,
     Snackbar,
     Theme,
     Typography,
@@ -20,9 +15,8 @@ import {
     useMatrixStore,
     useWeb3Context,
     useZionClient,
-    useZionContext,
 } from 'use-zion-client'
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 
 import { makeStyles } from '@mui/styles'
 import {
@@ -34,7 +28,8 @@ import {
     useNetwork,
     useSwitchNetwork,
 } from 'wagmi'
-import { useSampleAppStore } from 'store/store'
+import { useEnvironment } from 'hooks/use-environment'
+import { EnvironmentSelect } from './EnvironmentSelect'
 
 const loginMsgToSign = `Click to sign in and accept the Harmony Terms of Service.`
 const registerWalletMsgToSign = `Click to register and accept the Harmony Terms of Service.`
@@ -87,7 +82,7 @@ export function Login(): JSX.Element {
     return (
         <div className={styles.container}>
             <Box sx={{ display: 'grid' }}>
-                <HomeServerSelection />
+                <EnvironmentSelect />
                 <WalletInfo />
                 {isConnected && (
                     <NetworkInfo walletRegisteredWithMatrix={walletRegisteredWithMatrix} />
@@ -254,58 +249,6 @@ function NetworkInfo(props: { walletRegisteredWithMatrix: boolean }) {
     )
 }
 
-function HomeServerSelection() {
-    const { homeServerUrl } = useZionContext()
-    const { saveHomeServerUrl } = useSampleAppStore()
-    const servers = useRef(['http://localhost:8008', 'https://node1.towns.com'])
-    if (homeServerUrl && !servers.current.includes(homeServerUrl)) {
-        servers.current.push(homeServerUrl)
-    }
-
-    const onChangeHomeServerUrl = useCallback(
-        (event: SelectChangeEvent) => {
-            saveHomeServerUrl(event.target.value as string)
-            // hard reload the app, somehow the matrix client
-            // hangs on to the old url in crypto, so if you sign in after
-            // switching it tries to upload keys to the wrong server
-            window.location.reload()
-        },
-        [saveHomeServerUrl],
-    )
-
-    return (
-        <>
-            <Box
-                display="grid"
-                alignItems="center"
-                gridTemplateColumns="repeat(2, 1fr)"
-                marginTop="20px"
-            >
-                <Typography noWrap variant="h6" component="div">
-                    homeServer:
-                </Typography>
-                <Box minWidth="120px">
-                    <FormControl fullWidth>
-                        <InputLabel id="encrypted-select-label" />
-                        <Select
-                            labelId="encrypted-select-label"
-                            id="encrypted-select"
-                            value={homeServerUrl}
-                            onChange={onChangeHomeServerUrl}
-                        >
-                            {servers.current.map((server) => (
-                                <MenuItem key={server} value={server}>
-                                    {server}
-                                </MenuItem>
-                            ))}
-                        </Select>
-                    </FormControl>
-                </Box>
-            </Box>
-        </>
-    )
-}
-
 function WalletInfo() {
     const onConnnectCb = useCallback(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -326,7 +269,9 @@ function WalletInfo() {
         onConnect: onConnnectCb,
         onDisconnect: onDisconnectCb,
     })
-    const { chain: activeChain, chains } = useNetwork()
+
+    const { chainId: appChainId, chainName: appChainName } = useEnvironment()
+    const { chain: walletChain } = useNetwork()
     const { connect, connectors, error, isLoading, pendingConnector } = useConnect()
     const { disconnect } = useDisconnect()
 
@@ -336,78 +281,40 @@ function WalletInfo() {
         },
     })
 
-    const onChangeChainDropDown = useCallback(
-        (event: SelectChangeEvent) => {
-            switchNetwork?.(parseInt(event.target.value))
-        },
-        [switchNetwork],
-    )
+    const onSwitchToAppChain = useCallback(() => {
+        switchNetwork?.(appChainId)
+    }, [appChainId, switchNetwork])
 
     console.log('!!Profile', {
         address,
         connector,
         isConnected,
-        activeChain,
-        chains,
+        appChainName,
+        walletChain,
     })
-
-    const myChains = [
-        {
-            id: 31337,
-            name: 'localhost',
-        },
-        {
-            id: 5,
-            name: 'goerli',
-        },
-        {
-            id: 11155111,
-            name: 'sepolia',
-        },
-    ]
 
     if (isConnected) {
         return (
             <>
-                {activeChain && (
+                {walletChain?.id !== appChainId && (
                     <Box
                         display="grid"
                         alignItems="center"
                         gridTemplateColumns="repeat(2, 1fr)"
                         marginTop="20px"
                     >
-                        <Typography noWrap variant="h6" component="div">
-                            Chain:
+                        <Typography variant="h6" component="span">
+                            You are on the wrong chain. This environment requires you to be on{' '}
+                            <b>{appChainName}</b>
                         </Typography>
-                        <Box minWidth="120px">
-                            <FormControl fullWidth>
-                                <InputLabel id="chain-select-label" />
-                                <Select
-                                    labelId="chain-select-label"
-                                    id="chain-select"
-                                    value={activeChain.id.toString()}
-                                    onChange={onChangeChainDropDown}
-                                >
-                                    {myChains.map((chain) => (
-                                        <MenuItem
-                                            key={chain.id.toString()}
-                                            value={chain.id.toString()}
-                                        >
-                                            {chain.name} ({chain.id.toString()})
-                                        </MenuItem>
-                                    ))}
-                                    {chains.find((chain) => chain.id === activeChain.id) ===
-                                        undefined && (
-                                        <MenuItem
-                                            key={activeChain.id.toString()}
-                                            value={activeChain.id.toString()}
-                                        >
-                                            {activeChain.name} ({activeChain.id.toString()})
-                                        </MenuItem>
-                                    )}
-                                </Select>
-                            </FormControl>
-                        </Box>
+                        <Button
+                            variant="contained"
+                            color="primary"
+                            sx={{ margin: '20px' }}
+                            onClick={onSwitchToAppChain}
+                        >
+                            Switch to {appChainName}
+                        </Button>
                     </Box>
                 )}
                 <Box sx={{ display: 'grid', marginTop: '20px', alignItems: 'Center' }}>
@@ -419,12 +326,14 @@ function WalletInfo() {
                     />
 
                     <Paper elevation={3} sx={{ padding: '20px' }}>
-                        {activeChain?.id === 1 && <ENSInfo address={address} />}
+                        {walletChain?.id === 1 && <ENSInfo address={address} />}
 
                         <Typography variant="h6" component="p">
+                            {`Chain: ${walletChain?.name}`}
+                        </Typography>
+                        <Typography variant="h6" component="p" sx={{ marginTop: '20px' }}>
                             {`Address: ${address}`}
                         </Typography>
-
                         <Typography variant="h6" component="p" sx={{ marginTop: '20px' }}>
                             Wallet Status: Connected to {connector?.name}
                         </Typography>

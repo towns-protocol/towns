@@ -6,11 +6,10 @@ import { ThemeProvider } from '@mui/material/styles'
 import { Thread } from 'routes/Thread'
 import { Threads } from 'routes/Threads'
 import { Mentions } from 'routes/Mentions'
-import { useSampleAppStore } from 'store/store'
 import { AlphaAccessMainPage } from 'routes/AlphaAccess'
 import { Login } from '@components/Login'
 import { VersionsPage } from 'routes/VersionsPage'
-import { Environment, getChainIdForMatrixUrl, getEnvironment } from 'utils/environment'
+import { useEnvironment } from 'hooks/use-environment'
 import { Home } from './routes/Home'
 import { MainLayout } from './components/MainLayout'
 import { NotFound } from './routes/NotFound'
@@ -26,15 +25,10 @@ import { ChannelsIndex } from './routes/ChannelsIndex'
 import { Channels } from './routes/Channels'
 import { AuthenticatedContent } from './routes/AuthenticatedContent'
 
-const MATRIX_HOMESERVER_URL = import.meta.env.VITE_MATRIX_HOMESERVER_URL ?? ``
-const CASABLANCA_SERVER_URL = import.meta.env.VITE_CASABLANCA_HOMESERVER_URL ?? ''
 const ALCHEMY_KEY = import.meta.env.VITE_ALCHEMY_API_KEY ?? ''
 
 export const App = () => {
-    const { homeServerUrl: savedHomeServerUrl } = useSampleAppStore()
-    const homeServerUrl = savedHomeServerUrl ?? MATRIX_HOMESERVER_URL
-    const casablancaServerUrl =
-        homeServerUrl === getEnvironment(Environment.Local).matrixUrl ? CASABLANCA_SERVER_URL : ''
+    const { matrixUrl, casablancaUrl, chainId } = useEnvironment()
     return (
         <ThemeProvider theme={theme}>
             <Container maxWidth="md">
@@ -42,9 +36,9 @@ export const App = () => {
                     enableSpaceRootUnreads
                     alchemyKey={ALCHEMY_KEY}
                     primaryProtocol={SpaceProtocol.Matrix}
-                    matrixServerUrl={homeServerUrl}
-                    casablancaServerUrl={casablancaServerUrl}
-                    chainId={getChainIdForMatrixUrl(homeServerUrl)}
+                    matrixServerUrl={matrixUrl}
+                    casablancaServerUrl={casablancaUrl}
+                    chainId={chainId}
                     onboardingOpts={{ skipAvatar: true, showWelcomeSpash: false }}
                     initialSyncLimit={100}
                 >
