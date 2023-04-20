@@ -68,8 +68,7 @@ export const SpaceOwnerLanding = () => {
                         </Link>
                         .
                     </Paragraph>
-                </Stack>
-                <Stack gap="md" className={childStyle}>
+
                     <Stack
                         horizontal
                         background="level2"
