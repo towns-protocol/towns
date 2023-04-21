@@ -12,7 +12,7 @@ export function EnvironmentSelect() {
     const onChangeSelection = useCallback(
         (event: SelectChangeEvent) => {
             setEnvironment(event.target.value as TownsEnvironment)
-            window.location.href = 'http://localhost:3001'
+            window.location.href = window.location.protocol + '//' + window.location.host
         },
         [setEnvironment],
     )
