@@ -66,8 +66,7 @@ servers/dendrite/dendrite.*yaml
 
 # siwe-worker bundle
 servers/workers/siwe-worker/worker/bundle.js
-casablanca/proto/src/gen/protocol_pb.ts
-casablanca/proto/src/gen/protocol_connect.ts
+casablanca/proto/src/gen/*
 **/coverage/*
 /casablanca/node/node/__debug_bin
 casablanca/node/dev.log
