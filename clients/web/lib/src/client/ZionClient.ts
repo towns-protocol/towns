@@ -22,10 +22,9 @@ import {
     RelationType,
     UserEvent,
     createClient,
-    IndexedDBCryptoStore,
     ISendEventResponse,
+    Store,
 } from 'matrix-js-sdk'
-import { LocalStorageCryptoStore } from 'matrix-js-sdk/lib/crypto/store/localStorage-crypto-store'
 import {
     CreateChannelInfo,
     CreateSpaceInfo,
@@ -76,6 +75,8 @@ import {
     MatrixDecryptionExtensionDelegate,
 } from './matrix/MatrixDecryptionExtensions'
 import { PioneerNFT } from './web3/PioneerNFT'
+import { CryptoStore } from 'matrix-js-sdk/lib/crypto/store/base'
+import { MatrixDbManager } from './matrix/MatrixDbManager'
 /***
  * Zion Client
  * for calls that originate from a roomIdentifier, or for createing new rooms
@@ -102,6 +103,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
     protected matrixClient?: MatrixClient
     public matrixDecryptionExtension?: MatrixDecryptionExtension
     protected casablancaClient?: CasablancaClient
+    private dbManager: MatrixDbManager
     private _auth?: MatrixAuth
     private _signerContext?: SignerContext
     protected _eventHandlers?: ZionClientEventHandlers
@@ -110,6 +112,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
         this.opts = opts
         this.name = name || ''
         console.log('~~~ new ZionClient ~~~', this.name, this.opts)
+        this.dbManager = new MatrixDbManager()
         this.spaceDapp = new SpaceDapp(opts.chainId, opts.web3Provider, opts.web3Signer)
         this.pioneerNFT = new PioneerNFT(opts.chainId, opts.web3Provider, opts.web3Signer)
         this._eventHandlers = opts.eventHandlers
@@ -155,7 +158,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
         }
         this.log('logoutFromMatrix')
         const matrixClient = this.matrixClient
-        this.stopMatrixClient()
+        await this.stopMatrixClient()
         if (matrixClient) {
             try {
                 await matrixClient.logout()
@@ -234,8 +237,11 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
         this.log('Starting matrixClient')
         // set auth
         this._auth = auth
+        // get storage
+        const store = await this.dbManager.getDb(auth.userId, auth.deviceId)
+        const cryptoStore = this.dbManager.getCryptoDb(auth.userId)
         // new matrixClient
-        this.matrixClient = ZionClient.createMatrixClient(this.opts, this._auth)
+        this.matrixClient = ZionClient.createMatrixClient(this.opts, this._auth, store, cryptoStore)
         // start it up, this begins a sync command
         if (!this.matrixClient.crypto) {
             await loadOlm()
@@ -309,10 +315,11 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
     /************************************************
      * stopMatrixClient
      *************************************************/
-    public stopMatrixClient() {
+    public async stopMatrixClient() {
         this.matrixDecryptionExtension?.stop()
         this.matrixDecryptionExtension = undefined
         if (this.matrixClient) {
+            await this.matrixClient.store.save(true)
             this.matrixClient.stopClient()
             this.matrixClient.removeAllListeners()
             this.matrixClient = undefined
@@ -335,7 +342,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
      * stopClients
      *************************************************/
     public async stopClients() {
-        this.stopMatrixClient()
+        await this.stopMatrixClient()
         await this.stopCasablancaClient()
     }
 
@@ -1911,26 +1918,23 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
      * createMatrixClient
      * helper, creates a matrix matrixClient with appropriate auth
      *************************************************/
-    protected static createMatrixClient(opts: ZionOpts, auth?: MatrixAuth): MatrixClient {
+    protected static createMatrixClient(
+        opts: ZionOpts,
+        auth?: MatrixAuth,
+        store?: Store,
+        cryptoStore?: CryptoStore,
+    ): MatrixClient {
         if (auth) {
             // just *accessing* indexedDB throws an exception in firefox with indexeddb disabled.
-            let indexedDB: IDBFactory | undefined
-            try {
-                indexedDB = global.indexedDB
-                // eslint-disable-next-line no-empty
-            } catch (e) {}
+
             return createClient({
                 baseUrl: opts.matrixServerUrl,
                 accessToken: auth.accessToken,
                 userId: auth.userId,
                 deviceId: auth.deviceId,
                 useAuthorizationHeader: true,
-                cryptoStore: indexedDB
-                    ? new IndexedDBCryptoStore(
-                          global.indexedDB,
-                          `matrix-js-sdk:crypto:${auth.userId}`,
-                      )
-                    : new LocalStorageCryptoStore(global.localStorage), // note, local storage doesn't support key sharing
+                store: store,
+                cryptoStore: cryptoStore,
             })
         } else {
             return createClient({

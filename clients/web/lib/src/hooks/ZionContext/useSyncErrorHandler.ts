@@ -23,15 +23,18 @@ export function useSyncErrorHandler(
             if (state === SyncState.Error) {
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
                 if ((res as any)?.error?.errcode === 'M_UNKNOWN_TOKEN') {
-                    console.log('Access token no longer valid, logging out')
-                    try {
-                        client.stopMatrixClient()
-                    } catch (e) {
-                        console.log('Error stopping client', e)
+                    const stopClientFN = async () => {
+                        console.log('Access token no longer valid, logging out')
+                        setSyncError('M_UNKNOWN_TOKEN')
+                        try {
+                            await client.stopMatrixClient()
+                        } catch (e) {
+                            console.log('Error stopping client', e)
+                        }
+                        setLoginStatus(LoginStatus.LoggedOut)
+                        setMatrixCredentials(homeServerUrl, null)
                     }
-                    setSyncError('M_UNKNOWN_TOKEN')
-                    setLoginStatus(LoginStatus.LoggedOut)
-                    setMatrixCredentials(homeServerUrl, null)
+                    void stopClientFN()
                 }
             }
         }

@@ -57,7 +57,7 @@ describe('roomAccountData', () => {
         }
 
         await bob.setRoomFullyReadData(roomId, fullyRead)
-        await bob.stopClients()
+        await bob.logout()
 
         // save some data
         const bob2 = await registerAndStartClient('bob', bob.provider.wallet)
@@ -65,10 +65,10 @@ describe('roomAccountData', () => {
         if (roomId.protocol === SpaceProtocol.Matrix) {
             // bob should have the account data
             const room = bob2.matrixClient?.getRoom(roomId.networkId)
-            expect(room).toBeDefined()
+            expect(room).toBeTruthy()
             // get the account data
             const accountData = room!.getAccountData(ZionAccountDataType.FullyRead)
-            expect(accountData).toBeDefined()
+            expect(accountData).toBeTruthy()
             // check out the content
             const content = accountData?.getContent()
             expect(content).toEqual(fullyRead)

@@ -9,6 +9,7 @@ import { SpaceFactoryDataTypes } from '../../src/client/web3/shims/SpaceFactoryS
 import { waitFor } from '@testing-library/dom'
 import { Permission } from '../../src/client/web3/ContractTypes'
 import { SpaceProtocol } from '../../src/client/ZionClientTypes'
+import { sleep } from '../../src/utils/zion-utils'
 
 describe('Zion event handlers test', () => {
     test('onCreateSpace', async () => {
@@ -165,8 +166,9 @@ describe('Zion event handlers test', () => {
         })
 
         if (alice.opts.primaryProtocol === SpaceProtocol.Matrix) {
+            await sleep(5000) /// todo: fix matrix logout https://linear.app/hnt-labs/issue/HNT-1334/logging-out-is-problematic-in-the-tests
             await alice.logout()
-
+            await sleep(5000)
             expect(authEvents.loggedIn).toBe(false)
 
             await alice.loginToMatrixWithTestWallet()
@@ -189,9 +191,9 @@ describe('Zion event handlers test', () => {
         })
 
         expect(authEvents.loggedOut).toBe(false)
-
+        await sleep(5000) /// todo: fix matrix logout https://linear.app/hnt-labs/issue/HNT-1334/logging-out-is-problematic-in-the-tests
         await alice.logout()
-
+        await sleep(5000)
         expect(authEvents.loggedOut).toBe(true)
     })
 

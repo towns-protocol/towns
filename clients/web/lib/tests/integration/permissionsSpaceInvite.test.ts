@@ -180,7 +180,10 @@ describe('space invite', () => {
         expect(error.data).toHaveProperty('errcode', MAXTRIX_ERROR.M_FORBIDDEN)
     }) // end test
 
-    test('Cannot join Space over quota', async () => {
+    // this test is dependent on member_cap in dendrite_local_test/dendrite.yaml,
+    // takse forever, and
+    // shouldn't be run in integration tests
+    test.skip('Cannot join Space over quota', async () => {
         /** Arrange */
 
         // create all the users for the test
@@ -232,7 +235,10 @@ describe('space invite', () => {
         expect(failedJoinIndex).toBe(maxUsers)
     }, 120000) // end test
 
-    test('Cannot join new Channel for space over quota', async () => {
+    // this test is dependent on member_cap in dendrite_local_test/dendrite.yaml,
+    // takse forever, and
+    // shouldn't be run in integration tests
+    test.skip('Cannot join new Channel for space over quota', async () => {
         /** Arrange */
 
         // create all the users for the test

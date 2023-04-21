@@ -12,7 +12,7 @@ import {
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 
 import { ChannelContextProvider } from '../../src/components/ChannelContextProvider'
-import { LoginWithAuth } from './helpers/TestComponents'
+import { LoginWithWallet } from './helpers/TestComponents'
 import { Permission } from '../../src/client/web3/ContractTypes'
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
 import { ZionTestApp } from './helpers/ZionTestApp'
@@ -53,7 +53,7 @@ describe('messageScrollbackHooks', () => {
             await bob.sendMessage(channelId, `message ${i}`)
         }
         // stop alice
-        await alice.stopClients()
+        await alice.logout()
         // create a veiw for alice
         const TestComponent = () => {
             const { scrollback } = useZionClient()
@@ -64,10 +64,7 @@ describe('messageScrollbackHooks', () => {
             }, [scrollback])
             return (
                 <>
-                    <LoginWithAuth
-                        auth={alice.auth!}
-                        walletAddress={alice.provider.wallet.address}
-                    />
+                    <LoginWithWallet />
                     <div data-testid="spaceMembership"> {mySpaceMembership} </div>
                     <button onClick={onClickScrollback}>Scrollback</button>
                     <div data-testid="messageslength">

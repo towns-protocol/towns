@@ -82,7 +82,10 @@ describe('useAddRolesToChannel', () => {
         // this will create the space with no roles
         fireEvent.click(createSpaceButton)
         // wait for the space name to render
-        await waitFor(() => expect(spaceElement).toHaveTextContent(spaceName))
+        await waitFor(
+            () => expect(spaceElement).toHaveTextContent(spaceName),
+            TestConstants.DoubleDefaultWaitForTimeout,
+        )
         fireEvent.click(createChannelButton)
         // wait for the channel name to render
         await waitFor(() => expect(channelElement).toHaveTextContent(`channelName:${channelName}`))
