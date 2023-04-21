@@ -17,7 +17,6 @@ export function useEnvironment() {
     const matrixUrl = environmentInfo.matrixUrl
     const casablancaUrl = environmentInfo.casablancaUrl
 
-    console.log('useEnvironment', { environment, chainId, chainName, matrixUrl, casablancaUrl })
     return {
         environment, // only defined if IS_DEV
         chainId,

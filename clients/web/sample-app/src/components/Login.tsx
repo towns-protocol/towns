@@ -285,13 +285,15 @@ function WalletInfo() {
         switchNetwork?.(appChainId)
     }, [appChainId, switchNetwork])
 
-    console.log('!!Profile', {
-        address,
-        connector,
-        isConnected,
-        appChainName,
-        walletChain,
-    })
+    useEffect(() => {
+        console.log('Profile', {
+            address,
+            connector,
+            isConnected,
+            appChainName,
+            walletChain,
+        })
+    }, [address, connector, isConnected, appChainName, walletChain])
 
     if (isConnected) {
         return (
