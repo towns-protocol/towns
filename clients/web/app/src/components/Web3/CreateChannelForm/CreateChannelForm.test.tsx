@@ -150,6 +150,10 @@ describe('CreateChannelForm', () => {
             ).toBeInTheDocument()
         })
 
+        // Uncheck the automatically preselected checkbox
+        const everyoneCheckbox = screen.getByRole('checkbox', { name: /everyone/i })
+        fireEvent.click(everyoneCheckbox)
+
         await waitFor(() => {
             expect(screen.getByText(/Please select at least one role/i)).toBeInTheDocument()
         })
@@ -179,6 +183,38 @@ describe('CreateChannelForm', () => {
 
         expect(submitButton).toBeDisabled()
         expect(screen.getByText(/switch to/gi)).toBeInTheDocument()
+    })
+
+    test('the `Everyone` role is preselected', async () => {
+        vi.spyOn(useRequireTransactionNetwork, 'useRequireTransactionNetwork').mockReturnValue({
+            isTransactionNetwork: true,
+            name: 'Goerli',
+
+            switchNetwork: () => null,
+        })
+        vi.spyOn(zionClient, 'useCreateChannelTransaction').mockImplementation(
+            useMockedCreateChannelTransaction,
+        )
+
+        vi.spyOn(useContractRoles, 'useSpaceRoles').mockImplementation(
+            (_spaceNetworkId: string | undefined) => {
+                return {
+                    data: [
+                        {
+                            ...everyoneRole,
+                        },
+                        {
+                            ...memberRole,
+                        },
+                    ],
+                } as unknown as ReturnType<typeof useContractRoles.useSpaceRoles>
+            },
+        )
+
+        render(<Wrapper />)
+
+        const everyoneCheckbox = screen.getByRole('checkbox', { name: /everyone/i })
+        expect(everyoneCheckbox).toBeChecked()
     })
 
     test('submits with the correct values', async () => {
@@ -212,11 +248,9 @@ describe('CreateChannelForm', () => {
         const submitButton = screen.getAllByRole('button', { name: /create/i })[1]
 
         const nameInput = screen.getByRole('textbox', { name: /name/i })
-        const everyoneCheckbox = screen.getByRole('checkbox', { name: /everyone/i })
         const memberCheckbox = screen.getByRole('checkbox', { name: /member/i })
 
         fireEvent.change(nameInput, { target: { value: 'test channel' } })
-        fireEvent.click(everyoneCheckbox)
         fireEvent.click(memberCheckbox)
 
         fireEvent.click(submitButton)

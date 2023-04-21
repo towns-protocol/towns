@@ -1,5 +1,6 @@
 import React, { useCallback, useMemo } from 'react'
 import {
+    Permission,
     RoomIdentifier,
     RoomVisibility,
     useCreateChannelTransaction,
@@ -42,11 +43,6 @@ const schema = z.object({
     [FormStateKeys.name]: z.string().min(2, 'Channel names must have at least 2 characters'),
     [FormStateKeys.roleIds]: z.string().array().nonempty('Please select at least one role'),
 })
-
-const defaultValues = {
-    [FormStateKeys.name]: '',
-    [FormStateKeys.roleIds]: [],
-}
 
 export const CreateChannelForm = (props: Props) => {
     const { onCreateChannel, onHide } = props
@@ -111,13 +107,24 @@ export const CreateChannelForm = (props: Props) => {
         channelId && onCreateChannel(channelId)
     }, [channelId, onCreateChannel, invalidateQuery])
 
+    const firstRoleIDWithReadPermission = rolesWithDetails
+        ?.find((role) => role.permissions.includes(Permission.Read))
+        ?.id.toString()
+
+    const defaultValues = {
+        [FormStateKeys.name]: '',
+        [FormStateKeys.roleIds]: firstRoleIDWithReadPermission
+            ? [firstRoleIDWithReadPermission]
+            : [],
+    }
+
     useOnTransactionStages({
         transactionStatus,
         transactionHash,
         onSuccess: onSuccessfulTransaction,
     })
 
-    return (
+    return rolesWithDetails ? (
         <FormRender<FormState>
             schema={schema}
             defaultValues={defaultValues}
@@ -265,6 +272,8 @@ export const CreateChannelForm = (props: Props) => {
                 )
             }}
         </FormRender>
+    ) : (
+        <></>
     )
 }
 
