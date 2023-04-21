@@ -249,6 +249,4 @@ function rollupSpace(stream: Stream, userId: string, channels: Stream[]): SpaceD
         membership: membership,
         isLoadingChannels: false,
     }
-
-    return undefined
 }

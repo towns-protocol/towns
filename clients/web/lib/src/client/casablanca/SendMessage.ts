@@ -1,5 +1,6 @@
 import { Client as CasablancaClient } from '@towns/sdk'
 import {
+    NoticeEvent,
     ReactionEvent,
     RoomMessageEvent,
     TimelineEvent_OneOf,
@@ -53,4 +54,16 @@ export async function sendCsbMessage(
             return await sendEvent(event)
         }
     }
+}
+
+export async function sendCsbNotice(
+    _casablancaClient: CasablancaClient,
+    _roomId: CasablancaStreamIdentifier,
+    _event: NoticeEvent,
+): Promise<void> {
+    // todo
+    // Modeled after https://spec.matrix.org/v1.6/client-server-api/#mnotice
+    // Useful for things like blockchain transactions. The client should not
+    // display the notice to the user, but may use the information contained
+    // within the event.
 }

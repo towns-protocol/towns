@@ -11,9 +11,8 @@ import {
 import { useEffect, useRef, useState } from 'react'
 import { toZionSpaceChild } from '../../store/use-matrix-store'
 import { ZionClient } from '../../client/ZionClient'
-import { SpaceHierarchies } from '../../types/zion-types'
+import { MessageType, SpaceHierarchies } from '../../types/zion-types'
 import { RoomIdentifier } from '../../types/room-identifier'
-import { ZTEvent } from '../../types/timeline-types'
 import { useQueryClient } from '@tanstack/react-query'
 import { QueryKeyChannels } from '../query-keys'
 import { useSpaceIdStore } from './useSpaceIds'
@@ -113,7 +112,7 @@ export function useSyncSpaceHierarchies(
         }
         seenInvitedToIds.current = invitedToIds
     }, [invitedToIds, spaceIds])
-    // watch client for space udpates
+    // watch client for space updates
     useEffect(() => {
         if (!matrixClient) {
             return
@@ -137,7 +136,7 @@ export function useSyncSpaceHierarchies(
             // TODO:  ZTEvent.BlockchainTransaction is too broad of an identifier, this is only fired for a create channel transaction. Need to update the event types to be ChannelTransaction, SpaceTransaction, etc.
             // - a ZTEvent.BlockchainTransaction is fired when a blockchain transaction stored in user's local storage resolves - it's not a Matrix Event
             // - we should sync again when this happens
-            if (eventType === EventType.SpaceChild || eventType === ZTEvent.BlockchainTransaction) {
+            if (eventType === EventType.SpaceChild || eventType === MessageType.Notice) {
                 queryClient.removeQueries({
                     queryKey: [QueryKeyChannels.SyncEntitledChannels, eventRoomId],
                 })

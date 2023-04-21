@@ -1,12 +1,14 @@
-import { MatrixClient } from 'matrix-js-sdk'
+import { IContent, MatrixClient } from 'matrix-js-sdk'
 import {
+    ImageMessageContent,
     MessageContent,
     MessageType,
     SendMessageOptions,
-    ImageMessageContent,
     ZionTextMessageContent,
 } from '../../types/zion-types'
+
 import { MatrixRoomIdentifier } from '../../types/room-identifier'
+import { NoticeEvent } from '../../types/timeline-types'
 
 function getMessageContent(message: string, options: SendMessageOptions): MessageContent {
     const defaultContent: MessageContent = {
@@ -106,4 +108,16 @@ export async function sendMatrixMessage(
             '',
         )
     }
+}
+
+export async function sendMatrixNotice(
+    matrixClient: MatrixClient,
+    roomId: MatrixRoomIdentifier,
+    event: NoticeEvent,
+): Promise<void> {
+    const content: IContent = {
+        msgtype: MessageType.Notice,
+        ...event,
+    }
+    await matrixClient.sendEvent(roomId.networkId, MessageType.Notice, content)
 }

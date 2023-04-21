@@ -147,6 +147,7 @@ export enum MessageType {
     WenMoon = 'm.wenmoon',
     Image = 'm.Image',
     ZionText = 'm.ZionText',
+    Notice = 'm.notice',
 }
 
 export interface SendTextMessageOptions {
@@ -196,6 +197,12 @@ interface SendZionTextMessageOptions {
     }[]
 }
 
+export interface SendNoticeOptions {
+    messageType: MessageType.Notice
+    eventType: string
+    threadId?: string
+}
+
 export interface SendZionReactionOptions {
     targetEventId: string
 }
@@ -209,6 +216,7 @@ export type SendMessageOptionsBase =
     | SendWenMoonOptions
     | SendImageMessageOptions
     | SendZionTextMessageOptions
+    | SendNoticeOptions
 
 export type SendMessageOptions = SendMessageOptionsBase & SpaceIdOptions
 

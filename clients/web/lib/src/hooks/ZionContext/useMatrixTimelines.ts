@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { getIdForMatrixEvent, Membership, Mention } from '../../types/zion-types'
+import { getIdForMatrixEvent, Membership, Mention, MessageType } from '../../types/zion-types'
 import {
     ClientEvent,
     EventStatus,
@@ -412,22 +412,24 @@ function toZionContent(
             }
         }
 
-        case ZTEvent.BlockchainTransaction: {
-            const hash = event.getStateKey()
-            if (!hash) {
+        case MessageType.Notice: {
+            if (content.kind === ZTEvent.BlockchainTransaction) {
                 return {
-                    error: `${describe()} has no state key`,
+                    content: {
+                        kind: ZTEvent.BlockchainTransaction,
+                        content: content as BlockchainTransactionEvent['content'],
+                    },
                 }
             }
-
+            // else ignore the notice.
             return {
                 content: {
-                    kind: ZTEvent.BlockchainTransaction,
-                    content: content as BlockchainTransactionEvent['content'],
+                    kind: ZTEvent.Notice,
+                    contentKind: content.kind as string,
+                    message: `${describe()} is ignored`,
                 },
             }
         }
-
         default:
             console.log(`Unhandled Room.timeline event`, event.getType(), {
                 event: event,

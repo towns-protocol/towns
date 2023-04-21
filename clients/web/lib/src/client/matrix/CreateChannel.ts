@@ -28,6 +28,7 @@ export async function createMatrixChannel(
         topic: createInfo.topic,
         power_level_content_override: {
             redact: 0, // permission to redact messages is enforced on the server through entitlement checks
+            events: { 'm.room.topic': 0 }, // permission to change channel description
         },
     }
     // create the room

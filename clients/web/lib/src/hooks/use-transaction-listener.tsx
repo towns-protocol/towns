@@ -1,11 +1,12 @@
-import { useTransactionStore } from '../store/use-transactions-store'
-import { ZionClient } from 'client/ZionClient'
-import { useCredentialStore } from '../store/use-credential-store'
-import { waitForTransaction } from '@wagmi/core'
-import { useQueries } from '@tanstack/react-query'
-import { BlockchainTransactionEvent, ZTEvent } from '../types/timeline-types'
 import { BlockchainTransaction, BlockchainTransactionType } from '../types/web3-types'
+import { BlockchainTransactionEvent, ZTEvent } from '../types/timeline-types'
+
+import { ZionClient } from '../client/ZionClient'
 import { makeRoomIdentifier } from '../types/room-identifier'
+import { useCredentialStore } from '../store/use-credential-store'
+import { useQueries } from '@tanstack/react-query'
+import { useTransactionStore } from '../store/use-transactions-store'
+import { waitForTransaction } from '@wagmi/core'
 
 export const useTransactionListener = (client: ZionClient | undefined, homeServerUrl: string) => {
     const transactions = useTransactionStore((state) => state.transactions)
@@ -52,12 +53,10 @@ async function onSuccessfulTransaction(client: ZionClient, transaction: Blockcha
 
             try {
                 const content: BlockchainTransactionEvent['content'] = transaction
-                await client.sendStateEvent(
-                    makeRoomIdentifier(transaction.data.parentSpaceId),
-                    ZTEvent.BlockchainTransaction,
+                await client.sendNotice(makeRoomIdentifier(transaction.data.parentSpaceId), {
+                    kind: ZTEvent.BlockchainTransaction,
                     content,
-                    transaction.hash, // need unique state_key
-                )
+                })
             } catch (error) {
                 console.error('Error sending state BlockchainTransaction event', error)
             }

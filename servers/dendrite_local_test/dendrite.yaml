@@ -80,7 +80,7 @@ global:
 
   # Server notices allows server admins to send messages to all users.
   server_notices:
-    enabled: false
+    enabled: true
     # The server localpart to be used when sending notices, ensure this is not yet taken
     local_part: "_server"
     # The displayname to be used when sending notices
@@ -199,7 +199,6 @@ client_api:
       version: 1
       chain_id: 31337
       network_url: "http://127.0.0.1:8545"
-      enable_authz: false
 
   # Whether to require reCAPTCHA for registration.
   enable_registration_captcha: false

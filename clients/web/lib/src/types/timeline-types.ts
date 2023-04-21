@@ -30,6 +30,8 @@ export enum EventStatus {
 
 // Zion Timeline Event
 export enum ZTEvent {
+    BlockchainTransaction = 'blockchain.transaction',
+    Notice = 'm.notice',
     Reaction = 'm.reaction',
     RoomAvatar = 'm.room.avatar',
     RoomCanonicalAlias = 'm.room.canonical_alias',
@@ -46,11 +48,11 @@ export enum ZTEvent {
     RoomTopic = 'm.room.topic',
     SpaceChild = 'm.space.child',
     SpaceParent = 'm.space.parent',
-    BlockchainTransaction = 'blockchain.transaction',
 }
 
 /// a timeline event should have one or none of the following fields set
 export type TimelineEvent_OneOf =
+    | NoticeEvent
     | ReactionEvent
     | RoomCanonicalAliasEvent
     | RoomEncryptionEvent
@@ -67,7 +69,6 @@ export type TimelineEvent_OneOf =
     | RoomTopicEvent
     | SpaceChildEvent
     | SpaceParentEvent
-    | BlockchainTransactionEvent
 
 // NOTE this is an inexhaustive list, see https://spec.matrix.org/v1.2/client-server-api/#server-behaviour-16
 // and https://spec.matrix.org/v1.2/client-server-api/#stripped-state
@@ -242,6 +243,14 @@ export interface BlockchainTransactionEvent {
     content: BlockchainTransaction
 }
 
+export interface IgnoredNoticeEvent {
+    kind: ZTEvent.Notice
+    message: string
+    contentKind?: string
+}
+
+export type NoticeEvent = BlockchainTransactionEvent | IgnoredNoticeEvent
+
 export function getFallbackContent(
     senderDisplayName: string,
     content?: TimelineEvent_OneOf,
@@ -295,8 +304,11 @@ export function getFallbackContent(
             return `parentId: ${content.parentId}`
         case ZTEvent.BlockchainTransaction:
             return `blockchainTransaction: ${content.content.hash}`
+        case ZTEvent.Notice:
+            return `Notice: { msgType: ${content.contentKind ?? 'unknown'}, message: ${
+                content.message
+            } }`
         default:
             staticAssertNever(content)
-            return `Unreachable ${content?.kind ?? 'undefined'}`
     }
 }

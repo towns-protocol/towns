@@ -44,7 +44,7 @@ import {
     isUserStreamId as isCasablancaUserStreamId,
 } from '@towns/sdk'
 
-import { FullyReadMarker, RoomMessageEvent, ZTEvent } from '../types/timeline-types'
+import { FullyReadMarker, NoticeEvent, RoomMessageEvent, ZTEvent } from '../types/timeline-types'
 import { ISpaceDapp } from './web3/ISpaceDapp'
 import { Permission } from './web3/ContractTypes'
 import { RoleIdentifier } from '../types/web3-types'
@@ -62,13 +62,13 @@ import { enrichPowerLevels } from './matrix/PowerLevels'
 import { inviteMatrixUser } from './matrix/InviteUser'
 import { joinMatrixRoom } from './matrix/Join'
 import { loadOlm } from './loadOlm'
-import { sendMatrixMessage } from './matrix/SendMessage'
+import { sendMatrixMessage, sendMatrixNotice } from './matrix/SendMessage'
 import { setMatrixPowerLevel } from './matrix/SetPowerLevels'
 import { staticAssertNever } from '../utils/zion-utils'
 import { syncMatrixSpace } from './matrix/SyncSpace'
 import { toZionRoom, toZionUser } from '../store/use-matrix-store'
 import { toZionRoomFromStream } from './casablanca/CasablancaUtils'
-import { sendCsbMessage } from './casablanca/SendMessage'
+import { sendCsbMessage, sendCsbNotice } from './casablanca/SendMessage'
 import { toUtf8String } from 'ethers/lib/utils.js'
 import {
     MatrixDecryptionExtension,
@@ -1322,6 +1322,23 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
                     message,
                     options,
                 )
+            default:
+                staticAssertNever(roomId)
+        }
+    }
+
+    public async sendNotice(roomId: RoomIdentifier, event: NoticeEvent) {
+        switch (roomId.protocol) {
+            case SpaceProtocol.Matrix:
+                if (!this.matrixClient) {
+                    throw new Error('matrix client is undefined')
+                }
+                return await sendMatrixNotice(this.matrixClient, roomId, event)
+            case SpaceProtocol.Casablanca:
+                if (!this.casablancaClient) {
+                    throw new Error('Casablanca client not initialized')
+                }
+                return await sendCsbNotice(this.casablancaClient, roomId, event)
             default:
                 staticAssertNever(roomId)
         }
