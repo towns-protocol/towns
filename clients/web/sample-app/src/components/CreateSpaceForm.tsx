@@ -12,7 +12,7 @@ import {
     Theme,
     Typography,
 } from '@mui/material'
-import { Address, useBalance } from 'wagmi'
+import { Address, useBalance, useNetwork } from 'wagmi'
 import { foundry, hardhat, localhost } from 'wagmi/chains'
 import {
     CreateSpaceInfo,
@@ -28,12 +28,13 @@ import {
     useCreateSpaceTransaction,
     useMatrixStore,
     useWeb3Context,
-    useZionClient,
 } from 'use-zion-client'
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { ethers } from 'ethers'
 import { MembershipRequirement, SpaceRoleSettings } from 'routes/SpaceRoleSettings'
+import { useEnvironment } from 'hooks/use-environment'
+import { ChainSwitchingButton } from './Buttons/ChainSwitchingButton'
 
 interface Props {
     onClick: (roomId: RoomIdentifier, membership: Membership) => void
@@ -41,7 +42,8 @@ interface Props {
 
 export const CreateSpaceForm = (props: Props) => {
     const { chain, accounts, provider } = useWeb3Context()
-    const { chainId } = useZionClient()
+    const { chainName, chainId } = useEnvironment()
+    const { chain: walletChain } = useNetwork()
     const { loginStatus: matrixLoginStatus } = useMatrixStore()
     const { loginStatus: casablancaLoginStatus } = useCasablancaStore()
     const [spaceName, setSpaceName] = useState<string>('')
@@ -212,12 +214,9 @@ export const CreateSpaceForm = (props: Props) => {
                 p: (theme: Theme) => theme.spacing(1),
             }}
         >
-            <Typography noWrap variant="h6" component="div" sx={spacingStyle}>
-                CREATE SPACE
-            </Typography>
-
             <Typography noWrap variant="body1" component="div" sx={spacingStyle}>
-                ChainId: {chain ? chain?.id : 'Not connected'}
+                App/Wallet Chain: {chainName} ({chainId}) /{' '}
+                {walletChain ? `${walletChain.name} (${walletChain.id})` : 'Not connected'}
             </Typography>
             <Typography noWrap variant="body1" component="div" sx={spacingStyle}>
                 Casablanca: {casablancaLoginStatus}
@@ -299,14 +298,14 @@ export const CreateSpaceForm = (props: Props) => {
                     marginTop="20px"
                 />
                 <Box display="flex" flexDirection="column" alignItems="center">
-                    <Button
+                    <ChainSwitchingButton
                         variant="contained"
                         color="primary"
                         disabled={disableCreateButton}
                         onClick={onClickCreateSpace}
                     >
                         Create
-                    </Button>
+                    </ChainSwitchingButton>
                 </Box>
                 {(chain?.id === localhost.id ||
                     chain?.id === foundry.id ||

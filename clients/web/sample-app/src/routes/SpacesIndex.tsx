@@ -19,6 +19,7 @@ export const SpacesIndex = () => {
     const { timeline } = useSpaceTimeline()
     const { leaveRoom, sendMessage, joinRoom, resetFullyReadMarkers } = useZionClient()
     const [joinFailed, setJoinFailed] = useState(false)
+    const [clipboarded, setClipboarded] = useState(false)
 
     const onClickSettings = useCallback(() => {
         if (space?.id.slug) {
@@ -30,9 +31,15 @@ export const SpacesIndex = () => {
         navigate('/spaces/' + space?.id.slug + '/channels/new')
     }, [navigate, space?.id.slug])
 
-    const onClickInvite = useCallback(() => {
-        navigate('/spaces/' + space?.id.slug + '/invite')
-    }, [navigate, space?.id.slug])
+    const onClickCopy = useCallback(() => {
+        const text = `${window.location.protocol}//${window.location.host}/spaces/${space?.id.slug}/`
+        navigator.clipboard.writeText(text).then(() => {
+            setClipboarded(true)
+            setTimeout(() => {
+                setClipboarded(false)
+            }, 1000)
+        })
+    }, [space?.id.slug])
 
     const onClickLeaveSpace = useCallback(async () => {
         if (space?.id) {
@@ -75,7 +82,8 @@ export const SpacesIndex = () => {
                         <button onClick={onCreateChannelClick}>Create a channel</button>
                     </div>
                     <div>
-                        <button onClick={onClickInvite}>Invite to space</button>
+                        <button onClick={onClickCopy}>Copy town link</button>{' '}
+                        {clipboarded && 'Copied!'}
                     </div>
                     <div>
                         <button onClick={onClickLeaveSpace}>Leave space</button>

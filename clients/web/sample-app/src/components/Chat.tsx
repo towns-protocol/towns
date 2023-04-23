@@ -1,11 +1,9 @@
 import { Box, Grid, Theme, Typography } from '@mui/material'
 import { RoomIdentifier, useChannelData, useChannelTimeline, useZionClient } from 'use-zion-client'
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useCallback, useState } from 'react'
 
 import { useNavigate } from 'react-router-dom'
 import { ChatMessages } from './ChatMessages'
-import { InviteButton } from './Buttons/InviteButton'
-import { InviteForm } from './InviteForm'
 import { LeaveRoomButton } from './Buttons/LeaveRoomButton'
 import { SettingsButton } from './Buttons/SettingsButton'
 import { LargeToast } from './LargeToast'
@@ -19,8 +17,7 @@ interface Props {
 
 export function Chat(props: Props): JSX.Element {
     const { spaceId, channelId, channel } = useChannelData()
-    const { inviteUser, leaveRoom, joinRoom, sendMessage } = useZionClient()
-    const [showInviteForm, setShowInviteForm] = useState<boolean>(false)
+    const { leaveRoom, joinRoom, sendMessage } = useZionClient()
     const navigate = useNavigate()
     const { timeline } = useChannelTimeline()
     const [joinFailed, setJoinFailed] = useState(false)
@@ -33,22 +30,6 @@ export function Chat(props: Props): JSX.Element {
         await leaveRoom(channelId)
         props.onClickLeaveRoom()
     }, [channelId, leaveRoom, props])
-
-    const onClickOpenInviteForm = useCallback(() => {
-        setShowInviteForm(true)
-    }, [])
-
-    const onClickCloseInviteForm = useCallback(() => {
-        setShowInviteForm(false)
-    }, [])
-
-    const onClickSendInvite = useCallback(
-        async (roomId: RoomIdentifier, inviteeId: string) => {
-            setShowInviteForm(false)
-            await inviteUser(roomId, inviteeId)
-        },
-        [inviteUser],
-    )
 
     const onClickSendMessage = useCallback(
         async (roomId: RoomIdentifier, message: string) => {
@@ -72,10 +53,6 @@ export function Chat(props: Props): JSX.Element {
 
     const roomName = channel?.label ?? ''
 
-    useEffect(() => {
-        setShowInviteForm(false)
-    }, [props.roomId])
-
     return (
         <Box
             display="flex"
@@ -94,20 +71,10 @@ export function Chat(props: Props): JSX.Element {
                     <SettingsButton onClick={onClickSettings} />
                 </Grid>
                 <Grid item xs={1} md={1}>
-                    <InviteButton onClick={onClickOpenInviteForm} />
-                </Grid>
-                <Grid item xs={1} md={1}>
                     <LeaveRoomButton onClick={onClickLeaveRoom} />
                 </Grid>
             </Grid>
-            {showInviteForm ? (
-                <InviteForm
-                    roomId={props.roomId}
-                    roomName={roomName}
-                    sendInvite={onClickSendInvite}
-                    onClickCancel={onClickCloseInviteForm}
-                />
-            ) : joinFailed ? (
+            {joinFailed ? (
                 <LargeToast message="Join room failed" />
             ) : (
                 <ChatMessages

@@ -1,6 +1,5 @@
 import {
     Box,
-    Button,
     FormControl,
     InputLabel,
     MenuItem,
@@ -23,6 +22,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { ChannelRoleSettings, RolesSettings } from 'routes/ChannelRoleSettings'
 
 import { useAsyncButtonCallback } from '../hooks/use-async-button-callback'
+import { ChainSwitchingButton } from './Buttons/ChainSwitchingButton'
 
 interface Props {
     parentSpaceId: RoomIdentifier
@@ -160,14 +160,14 @@ export function CreateChannelForm(props: Props): JSX.Element {
                 </Box>
                 <Box />
                 <Box display="flex" flexDirection="column" alignItems="center">
-                    <Button
+                    <ChainSwitchingButton
                         variant="contained"
                         color="primary"
                         disabled={disableCreateButton}
                         onClick={onClickCreateChannel}
                     >
                         Create
-                    </Button>
+                    </ChainSwitchingButton>
                 </Box>
             </Box>
         </Box>
