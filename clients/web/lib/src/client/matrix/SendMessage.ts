@@ -4,7 +4,6 @@ import {
     MessageContent,
     MessageType,
     SendMessageOptions,
-    ZionTextMessageContent,
 } from '../../types/zion-types'
 
 import { MatrixRoomIdentifier } from '../../types/room-identifier'
@@ -22,12 +21,6 @@ function getMessageContent(message: string, options: SendMessageOptions): Messag
                 ...defaultContent,
                 info: options.info,
                 thumbnail: options.thumbnail,
-            }
-            return content
-        }
-        case MessageType.ZionText: {
-            const content: ZionTextMessageContent = {
-                ...defaultContent,
             }
             return content
         }
@@ -59,10 +52,6 @@ export function editMessageContent(
                 ...content,
                 info: options.info,
                 thumbnail: options.thumbnail,
-            }
-        case MessageType.ZionText:
-            return {
-                ...content,
             }
         case undefined:
         case MessageType.Text:

@@ -5,7 +5,6 @@ import {
     MessageType,
     RoomVisibility,
     SendImageMessageOptions,
-    ZionTextMessageContent,
 } from '../../src/types/zion-types'
 import { RoomIdentifier } from '../../src/types/room-identifier'
 import {
@@ -102,47 +101,6 @@ describe('messageTypes', () => {
                 IMAGE_MSG_CONTENT.info.url,
             )
             expect((imageMessage?.content.content as ImageMessageContent).thumbnail?.size).toBe(30)
-        })
-    })
-
-    test('send a m.ZionText message', async () => {
-        const ZION_TEXT_MESSAGE_CONTENT: ZionTextMessageContent = {
-            messageType: MessageType.ZionText,
-        }
-        // create clients
-        // alice needs to have a valid nft in order to join bob's space / channel
-        const alice = await registerAndStartClient('alice', TestConstants.getWalletWithNft())
-        const { bob } = await registerAndStartClients(['bob'])
-        // bob needs funds to create a space
-        await bob.fundWallet()
-        // bob creates a public room
-        const roomId = (await createTestSpaceWithZionMemberRole(
-            bob,
-            [Permission.Read, Permission.Write],
-            [],
-            {
-                name: makeUniqueName('bobs room'),
-                visibility: RoomVisibility.Public,
-            },
-        )) as RoomIdentifier
-        // alice joins the room
-        await alice.joinRoom(roomId)
-        // alice sends a image message
-        await alice.sendMessage(
-            roomId,
-            'this is a message with https://example.com in the body',
-            ZION_TEXT_MESSAGE_CONTENT,
-        )
-
-        await waitFor(() => {
-            expect(bob.getMessages(roomId)).toContain(
-                'this is a message with https://example.com in the body',
-            )
-            const zionTextMessage = bob
-                .getEvents_TypedRoomMessage(roomId)
-                .find((event) => event.content.msgType === MessageType.ZionText)
-
-            expect(zionTextMessage).toBeDefined()
         })
     })
 }) // end describe

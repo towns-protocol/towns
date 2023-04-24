@@ -165,6 +165,7 @@ interface SendWenMoonOptions {
     threadId?: string
     messageType: MessageType.WenMoon
 }
+
 // ImageInfo from matrix-js-sdk (node_modules/matrix-js-sdk/src/@types/partials.ts) is incomplete against matrix spec (https://spec.matrix.org/v1.3/client-server-api/#mimage)
 // and missing key `url` props so rolling our own
 // note aellis 04/2023 we updated the format
@@ -188,11 +189,6 @@ export interface SendImageMessageOptions {
     }
 }
 
-export interface SendZionTextMessageOptions {
-    threadId?: string
-    messageType: MessageType.ZionText
-}
-
 export interface SendNoticeOptions {
     messageType: MessageType.Notice
     eventType: string
@@ -211,16 +207,13 @@ export type SendMessageOptionsBase =
     | SendTextMessageOptions
     | SendWenMoonOptions
     | SendImageMessageOptions
-    | SendZionTextMessageOptions
     | SendNoticeOptions
 
 export type SendMessageOptions = SendMessageOptionsBase & SpaceIdOptions
 
 export type ImageMessageContent = IContent & Omit<SendImageMessageOptions, 'messageType'>
 
-export type ZionTextMessageContent = IContent & Omit<SendZionTextMessageOptions, 'messageType'>
-
-export type MessageContent = IContent | ImageMessageContent | ZionTextMessageContent
+export type MessageContent = IContent | ImageMessageContent
 
 export interface EditMessageOptions {
     originalEventId: string

@@ -25,13 +25,8 @@ export const getMessageBody = (eventId: string, message: RoomMessageEvent): stri
             return `${message.content.body} 
       ${eventId}
       `
-        case MessageType.ZionText:
         case MessageType.Text:
-            return (
-                message.content.body ??
-                // here for historical reasons TODO: delete
-                message.content['m.body']
-            )
+            return message.content.body
         default:
             return `${message.content.body}\n*Unsupported message type* **${message.msgType}**`
     }
