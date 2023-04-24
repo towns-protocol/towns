@@ -81,6 +81,22 @@ export const SendMarkdownPlugin = (props: {
 }
 
 const EditMessageButtons = (props: { onSave?: () => void; onCancel?: () => void }) => {
+    const { onCancel } = props
+    useEffect(() => {
+        if (!onCancel) {
+            return
+        }
+        function onKey(e: KeyboardEvent) {
+            if (e.key === 'Escape') {
+                onCancel?.()
+            }
+        }
+        window.addEventListener('keydown', onKey)
+        return () => {
+            window.removeEventListener('keydown', onKey)
+        }
+    }, [onCancel])
+
     return (
         <Stack horizontal gap>
             <Button size="button_sm" tone="cta1" animate={false} onClick={props.onSave}>
