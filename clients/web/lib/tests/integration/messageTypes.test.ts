@@ -53,7 +53,7 @@ describe('messageTypes', () => {
     }) // end test
 
     test('send a m.image message', async () => {
-        const IMAGE_MSG_CONTENT = {
+        const IMAGE_MSG_CONTENT: SendImageMessageOptions = {
             messageType: MessageType.Image,
             info: {
                 url: 'https://what.com/what.jpg',
