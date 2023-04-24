@@ -19,7 +19,12 @@ import {
     makeUserStreamId,
     userIdFromAddress,
 } from './id'
-import { makeInceptionPayload, makeJoinableStreamPayload, makeMessagePayload } from './types'
+import {
+    getChannelPayload,
+    makeInceptionPayload,
+    makeJoinableStreamPayload,
+    makeMessagePayload,
+} from './types'
 
 const log = debug('test:streamRpcClient')
 
@@ -104,7 +109,6 @@ describe('streamRpcClient', () => {
                 ),
             ],
         })
-        log('bobTalksToHimself Bob created space, about to create channel')
 
         const channelId = makeChannelStreamId('bobs-channel-' + genId())
         const channelInceptionEvent = makeEvent(
@@ -131,6 +135,14 @@ describe('streamRpcClient', () => {
         const channel = await bob.getStream({ streamId: channelId })
         expect(channel).toBeDefined()
         expect(channel.stream?.streamId).toEqual(channelId)
+
+        // Now there must be "channel created" event in the space stream.
+        const spaceResponse = await bob.getStream({ streamId: spacedStreamId })
+        const channelCreatePayload = getChannelPayload(
+            _.last(unpackEnvelopes(spaceResponse.stream!.events)),
+        )
+        expect(channelCreatePayload).toBeDefined()
+        expect(channelCreatePayload?.channelId).toEqual(channelId)
 
         // Bob starts sync on the channel
         let syncResult: SyncStreamsResponse | null = null
@@ -556,7 +568,7 @@ describe('streamRpcClient', () => {
         ).rejects.toThrow(
             expect.objectContaining({
                 message:
-                    '[unknown] rpc error: code = InvalidArgument desc = AddEvent: event has no prev events',
+                    '[invalid_argument] 3:BAD_STREAM_CREATION_PARAMS: CreateStream: bad hash on second event',
             }),
         )
 
@@ -577,7 +589,7 @@ describe('streamRpcClient', () => {
         ).rejects.toThrow(
             expect.objectContaining({
                 message: expect.stringContaining(
-                    '[unknown] rpc error: code = InvalidArgument desc = AddEvent: prev event',
+                    '[invalid_argument] 3:BAD_STREAM_CREATION_PARAMS: CreateStream: bad hash on second event',
                 ),
             }),
         )

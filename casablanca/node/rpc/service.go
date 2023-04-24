@@ -351,6 +351,12 @@ func makePayload_UserMembershipOp(op *protocol.Payload_UserMembershipOp) *protoc
 	}
 }
 
+func makePayload_Channel(op *protocol.Payload_Channel) *protocol.Payload {
+	return &protocol.Payload{
+		Payload: &protocol.Payload_Channel_{Channel: op},
+	}
+}
+
 func makeView(ctx context.Context, store storage.Storage, streamId string) *StreamView {
 	view := NewView(func() ([]*protocol.Envelope, error) {
 		_, events, err := store.GetStream(ctx, streamId)

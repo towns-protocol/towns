@@ -127,6 +127,20 @@ export const makeChannelPayload = (
         },
     }
 }
+export const getChannelPayload = (
+    event: ParsedEvent | StreamEvent | undefined,
+): Payload_Channel | undefined => {
+    if (!isDefined(event)) {
+        return undefined
+    }
+    if ('event' in event) {
+        event = event.event as unknown as StreamEvent
+    }
+    if (event.payload?.payload.case === 'channel') {
+        return event.payload.payload.value
+    }
+    return undefined
+}
 
 export const makeMessagePayload = (
     value: PartialMessage<Payload_Message>,
@@ -139,8 +153,11 @@ export const makeMessagePayload = (
     }
 }
 export const getMessagePayload = (
-    event: ParsedEvent | StreamEvent,
+    event: ParsedEvent | StreamEvent | undefined,
 ): Payload_Message | undefined => {
+    if (!isDefined(event)) {
+        return undefined
+    }
     if ('event' in event) {
         event = event.event as unknown as StreamEvent
     }

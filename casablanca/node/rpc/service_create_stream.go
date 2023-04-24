@@ -1,6 +1,7 @@
 package rpc
 
 import (
+	"bytes"
 	"casablanca/node/events"
 	"casablanca/node/infra"
 	"casablanca/node/protocol"
@@ -20,10 +21,13 @@ func (s *Service) CreateStream(ctx context.Context, req *connect.Request[protoco
 		return nil, RpcErrorf(protocol.Err_BAD_STREAM_CREATION_PARAMS, "CreateStream: error parsing events: %v", err)
 	}
 
-	inception := events[0].GetInceptionPayload()
+	inceptionEvent := events[0]
+	inception := inceptionEvent.GetInceptionPayload()
 	if inception == nil {
 		return nil, RpcErrorf(protocol.Err_BAD_STREAM_CREATION_PARAMS, "CreateStream: first event is not an inception event")
 	}
+
+	var spaceStreamLeafHashes [][]byte
 
 	switch inception.StreamKind {
 	case protocol.StreamKind_SK_USER:
@@ -62,10 +66,17 @@ func (s *Service) CreateStream(ctx context.Context, req *connect.Request[protoco
 		if err := validateJoinEvent(events); err != nil {
 			return nil, err
 		}
+		spaceView := makeView(ctx, s.Storage, inception.SpaceId)
+		spaceStreamLeafHashes, err = spaceView.GetAllLeafEvents(ctx)
+		if err != nil {
+			return nil, err
+		}
 	default:
 		return nil, RpcErrorf(protocol.Err_BAD_STREAM_CREATION_PARAMS, "CreateStream: invalid stream kind %d", inception.StreamKind)
 	}
 
+	// TODO(HNT-1355): this needs to be fixed: there is no need to load stream back and append second event through separate call
+	// Storage.CreateStream should work fine with two events.
 	streamId := inception.StreamId
 	log.Info("CreateStream: calling storage", streamId)
 	cookie, err := s.Storage.CreateStream(ctx, streamId, req.Msg.Events[0:1])
@@ -81,13 +92,48 @@ func (s *Service) CreateStream(ctx context.Context, req *connect.Request[protoco
 			return nil, err
 		}
 	}
+
+	// streamId := inception.StreamId
+	// log.Info("CreateStream: calling storage", streamId)
+	// cookie, err := s.Storage.CreateStream(ctx, streamId, req.Msg.Events)
+	// if err != nil {
+	// 	return nil, err
+	// }
+
+	if inception.StreamKind == protocol.StreamKind_SK_CHANNEL {
+		envelope := s.sign(
+			makePayload_Channel(
+				&protocol.Payload_Channel{
+					Op:        protocol.ChannelOp_CO_CREATED,
+					ChannelId: inception.StreamId,
+					OriginEvent: &protocol.EventRef{
+						StreamId:  streamId,
+						Hash:      inceptionEvent.Envelope.Hash,
+						Signature: inceptionEvent.Envelope.Signature,
+					},
+				},
+			),
+			spaceStreamLeafHashes,
+		)
+
+		_, err = s.Storage.AddEvent(ctx, inception.SpaceId, envelope)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	return connect.NewResponse(&protocol.CreateStreamResponse{
 		SyncCookie: cookie,
 	}), nil
 }
 
 func validateJoinEvent(events []*events.ParsedEvent) error {
+	if len(events[1].Event.PrevEvents) != 1 || !bytes.Equal(events[1].Event.PrevEvents[0], events[0].Hash) {
+		return RpcErrorf(protocol.Err_BAD_STREAM_CREATION_PARAMS, "CreateStream: bad hash on second event")
+	}
+
 	join := events[1].GetJoinableStreamPayload()
+
 	if join == nil {
 		return RpcErrorf(protocol.Err_BAD_STREAM_CREATION_PARAMS, "CreateStream: second event is not a join event")
 	}
