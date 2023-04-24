@@ -2,7 +2,7 @@ import React from 'react'
 import { DefaultValues, FieldValues, Mode, UseFormReturn, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { ZodTypeAny } from 'zod'
-import { Box, BoxProps } from '../Box/Box'
+import { Box, BoxProps } from 'ui/components/Box/Box'
 
 type FormProps<T extends FieldValues> = {
     children: React.ReactNode

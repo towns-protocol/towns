@@ -1,6 +1,6 @@
 import React from 'react'
 import { TownsTokenExample } from '@components/TownsToken/example/TownTokenExample'
-import { Container } from '../Playground'
+import { Container } from '../components/PlaygroundContainer'
 
 export const PageToken = () => {
     return (

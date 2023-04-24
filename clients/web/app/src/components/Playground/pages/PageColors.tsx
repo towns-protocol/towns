@@ -1,7 +1,7 @@
 import React from 'react'
 import { Box, Grid, Icon, Stack } from '@ui'
 import { vars } from 'ui/styles/vars.css'
-import { Container } from '../Playground'
+import { Container } from '../components/PlaygroundContainer'
 
 export const PageColors = () => {
     return (

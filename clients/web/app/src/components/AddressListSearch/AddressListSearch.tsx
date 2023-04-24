@@ -1,8 +1,7 @@
 import React, { useCallback, useEffect, useId, useRef } from 'react'
 import { AnimatePresence } from 'framer-motion'
 import { ethers } from 'ethers'
-import { MotionBox } from '@components/Transitions/MotionBox'
-import { Box, BoxProps, VList } from '@ui'
+import { Box, BoxProps, MotionBox, VList } from '@ui'
 import { FadeInBox } from '@components/Transitions'
 
 const searchArrayOfData = <T extends Record<string, unknown>>(array: T[], query: string): T[] => {

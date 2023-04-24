@@ -1,9 +1,9 @@
 import React, { ButtonHTMLAttributes, forwardRef } from 'react'
 import { vars } from 'ui/styles/vars.css'
-import { MotionStack } from '@components/Transitions/MotionBox'
 import { BoxProps } from '../Box/Box'
 import { Icon, IconName } from '../Icon'
 import { ButtonStyleVariants, buttonStyle } from './Button.css'
+import { MotionStack } from '../Motion/MotionBox'
 
 type StyleProps = Omit<NonNullable<ButtonStyleVariants>, 'active'>
 

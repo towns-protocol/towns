@@ -1,5 +1,4 @@
 import { clsx } from 'clsx'
-import { motion } from 'framer-motion'
 import React, { forwardRef, useCallback, useEffect, useMemo } from 'react'
 import { createUserIdFromString } from 'use-zion-client'
 import { ethers } from 'ethers'
@@ -14,6 +13,7 @@ import {
     avatarToggleClasses,
 } from './Avatar.css'
 import { Icon, IconProps } from '../Icon'
+import { MotionBox } from '../Motion/MotionBox'
 
 type Props = {
     src?: string
@@ -171,5 +171,3 @@ const _Avatar = forwardRef<HTMLElement, Omit<Props, 'userId'> & { resourceId: st
         )
     },
 )
-
-const MotionBox = motion(Box)

@@ -1,9 +1,11 @@
 import React from 'react'
-import { motion } from 'framer-motion'
 import { createUserIdFromString, useSpaceData, useSpaceMembers } from 'use-zion-client'
-import { Avatar, Box, Paragraph, Stack } from '@ui'
 import { shortAddress } from 'ui/utils/utils'
 import { useGetUserBio } from 'hooks/useUserBio'
+import { Paragraph } from 'ui/components/Text/Paragraph'
+import { Stack } from 'ui/components/Stack/Stack'
+import { Avatar } from 'ui/components/Avatar/Avatar'
+import { MotionBox } from 'ui/components/Motion/MotionBox'
 
 type Props = {
     userId: string
@@ -66,5 +68,3 @@ export const ProfileHoverCard = (props: Props) => {
         </MotionBox>
     )
 }
-
-const MotionBox = motion(Box)

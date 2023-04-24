@@ -1,9 +1,9 @@
 import React, { useMemo } from 'react'
 import { RoomMember } from 'matrix-js-sdk'
 import { createUserIdFromString, useSpaceMembers } from 'use-zion-client'
-import { Avatar, Box, Checkbox, IconButton, Text, TextField } from '@ui'
+import { Avatar, Box, Checkbox, IconButton, MotionBox, Text, TextField } from '@ui'
 import { shortAddress } from 'ui/utils/utils'
-import { MotionBox } from '@components/Transitions/MotionBox'
+
 import { EVERYONE_ADDRESS } from 'utils'
 import {
     AddressListSearch,
