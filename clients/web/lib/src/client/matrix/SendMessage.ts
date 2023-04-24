@@ -20,8 +20,8 @@ function getMessageContent(message: string, options: SendMessageOptions): Messag
         case MessageType.Image: {
             const content: ImageMessageContent = {
                 ...defaultContent,
-                url: options.url,
                 info: options.info,
+                thumbnail: options.thumbnail,
             }
             return content
         }
@@ -58,8 +58,8 @@ export function editMessageContent(
         case MessageType.Image:
             return {
                 ...content,
-                url: options.url,
                 info: options.info,
+                thumbnail: options.thumbnail,
             }
         case MessageType.ZionText:
             return {

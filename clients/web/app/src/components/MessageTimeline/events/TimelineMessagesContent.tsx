@@ -16,16 +16,29 @@ export const TimelineMessageContent = (props: Props) => {
 
     switch (eventContent.msgType) {
         case MessageType.Image: {
-            return (
-                <RatioedBackgroundImage
-                    withLinkOut
-                    url={eventContent.content.url}
-                    width={eventContent.content.info?.thumbnail_info?.w}
-                    height={eventContent.content.info?.thumbnail_info?.h}
-                />
-            )
+            if (eventContent.content.info?.url) {
+                // render v2 image format
+                return (
+                    <RatioedBackgroundImage
+                        withLinkOut
+                        url={eventContent.content.info.url}
+                        width={eventContent.content.thumbnail?.w}
+                        height={eventContent.content.thumbnail?.h}
+                    />
+                )
+            } else {
+                // render pre-beta image format
+                // see timelineItem.test.tsx for pre-beta format
+                return (
+                    <RatioedBackgroundImage
+                        withLinkOut
+                        url={eventContent.content.url}
+                        width={eventContent.content.info?.thumbnail_info?.w}
+                        height={eventContent.content.info?.thumbnail_info?.h}
+                    />
+                )
+            }
         }
-
         default: {
             return (
                 <MessageZionText

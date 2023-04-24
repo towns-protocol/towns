@@ -67,20 +67,20 @@ export const GiphyPicker = (props: Props) => {
         const ogImage = gifData.images.original
         const messageContent: ImageMessageContent = {
             threadId: isInReplyThread ? threadId : undefined,
-            url: ogImage.url,
             messageType: MessageType.Image,
             info: {
+                url: ogImage.url,
                 size: checkSize(ogImage.size),
                 w: ogImage.width,
                 h: ogImage.height,
                 mimetype: 'image/gif',
-                thumbnail_url: downsized.url,
-                thumbnail_info: {
-                    w: downsized.width,
-                    h: downsized.height,
-                    size: checkSize(downsized.size),
-                    mimetype: 'image/gif',
-                },
+            },
+            thumbnail: {
+                url: downsized.url,
+                w: downsized.width,
+                h: downsized.height,
+                size: checkSize(downsized.size),
+                mimetype: 'image/gif',
             },
         }
         sendMessage(channelId, gifData.title, messageContent)

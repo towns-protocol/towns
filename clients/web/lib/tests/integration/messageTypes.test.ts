@@ -4,6 +4,7 @@ import {
     ImageMessageContent,
     MessageType,
     RoomVisibility,
+    SendImageMessageOptions,
     ZionTextMessageContent,
 } from '../../src/types/zion-types'
 import { RoomIdentifier } from '../../src/types/room-identifier'
@@ -54,20 +55,21 @@ describe('messageTypes', () => {
     test('send a m.image message', async () => {
         const IMAGE_MSG_CONTENT = {
             messageType: MessageType.Image,
-            url: 'https://what.com/what.jpg',
             info: {
+                url: 'https://what.com/what.jpg',
                 size: 500,
                 mimetype: 'image/jpg',
                 w: 300,
                 h: 400,
-                thumbnail_info: {
-                    w: 100,
-                    h: 100,
-                    size: 30,
-                    mimetype: 'image/jpg',
-                },
             },
-        }
+            thumbnail: {
+                url: 'https://what.com/what-thumb.jpg',
+                size: 30,
+                mimetype: 'image/jpg',
+                w: 100,
+                h: 100,
+            },
+        } satisfies SendImageMessageOptions
         // create clients
         // alice needs to have a valid nft in order to join bob's space / channel
         const alice = await registerAndStartClient('alice', TestConstants.getWalletWithNft())
@@ -96,12 +98,10 @@ describe('messageTypes', () => {
                 .find((event) => event.content?.msgType === MessageType.Image)
 
             expect(imageMessage).toBeDefined()
-            expect((imageMessage?.content.content as ImageMessageContent).url).toBe(
-                IMAGE_MSG_CONTENT.url,
+            expect((imageMessage?.content.content as ImageMessageContent).info.url).toBe(
+                IMAGE_MSG_CONTENT.info.url,
             )
-            expect(
-                (imageMessage?.content.content as ImageMessageContent).info?.thumbnail_info?.size,
-            ).toBe(30)
+            expect((imageMessage?.content.content as ImageMessageContent).thumbnail?.size).toBe(30)
         })
     })
 
