@@ -2660,20 +2660,20 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@emoji-mart/data@npm:1.0.6":
-  version: 1.0.6
-  resolution: "@emoji-mart/data@npm:1.0.6"
-  checksum: deed8f754e4f1c5f5cfeb1756d78cf6e91e8bbbc37f392e523766ff180080b92c7bda98c03deefb482cf94bd79009f67ce8e93fd698c51af49dfe43bfa993e11
+"@emoji-mart/data@npm:^1.1.2":
+  version: 1.1.2
+  resolution: "@emoji-mart/data@npm:1.1.2"
+  checksum: 1216ac85e05bddfebaccd79710b70d5a4efd68ca6eef632c94ce9688c288de5f2ba2e98a694c024568e9eb2d1cd63e7a5e3c4a2979e10aa2d501b019ee2f1fda
   languageName: node
   linkType: hard
 
-"@emoji-mart/react@npm:1.0.1":
-  version: 1.0.1
-  resolution: "@emoji-mart/react@npm:1.0.1"
+"@emoji-mart/react@npm:^1.1.1":
+  version: 1.1.1
+  resolution: "@emoji-mart/react@npm:1.1.1"
   peerDependencies:
     emoji-mart: ^5.2
     react: ^16.8 || ^17 || ^18
-  checksum: ada175665331955d0ef9b1ef1daf41f33264aa46995d370d05dac78b75711b609336ae3e18924936cfd6116e5f92ce1d9ebf6e96e2da28f5a8d9759d5925bbad
+  checksum: def4dddaa01ce88c396510d84d1878b881fe0f9c484a836a50e3db784a91ab98edf94816cff503b4d1cab7b00400a01c87e32d19dee2d950f64ef9243f79101e
   languageName: node
   linkType: hard
 
@@ -10896,10 +10896,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"emoji-mart@npm:5.2.2":
-  version: 5.2.2
-  resolution: "emoji-mart@npm:5.2.2"
-  checksum: 2b1619133cc82ef331f3f34d5014dffa64b2714b6521ca592f403ecc7c5a9bca1987bd243fedefc382b3f6174a43114936f961aebcb940856ff7f884d9d10acf
+"emoji-mart@npm:^5.5.2":
+  version: 5.5.2
+  resolution: "emoji-mart@npm:5.5.2"
+  checksum: a9d8db731443581baebafbcb8494086e9d02b1475ddee9901fc657a7e8f08c14594a810605a3abe8d52627b75f5d78ea19adf3166fb0f38cea174694f86635f9
   languageName: node
   linkType: hard
 
@@ -13189,8 +13189,8 @@ __metadata:
   dependencies:
     "@amplitude/analytics-browser": 1.8.0
     "@capsizecss/vanilla-extract": ^1.0.0
-    "@emoji-mart/data": 1.0.6
-    "@emoji-mart/react": 1.0.1
+    "@emoji-mart/data": ^1.1.2
+    "@emoji-mart/react": ^1.1.1
     "@giphy/js-fetch-api": ^4.4.0
     "@giphy/react-components": ^6.2.0
     "@harmony/generated": "workspace:^"
@@ -13233,7 +13233,7 @@ __metadata:
     axios: ^1.2.6
     clsx: ^1.2.1
     date-fns: ^2.29.3
-    emoji-mart: 5.2.2
+    emoji-mart: ^5.5.2
     eslint: ^8.36.0
     eslint-config-react-app: ^7.0.1
     eslint-config-standard-with-typescript: ^34.0.0

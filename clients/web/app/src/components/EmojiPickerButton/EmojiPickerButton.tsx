@@ -1,4 +1,3 @@
-import { EmojiData } from 'emoji-mart'
 import React from 'react'
 import { Box, IconButton, IconProps } from '@ui'
 import { CardOpener } from 'ui/components/Overlay/CardOpener'
@@ -6,7 +5,7 @@ import { EmojiPickerContainer } from './EmojiPickerContainer'
 
 type Props = {
     children?: React.ReactNode
-    onSelectEmoji: (data: EmojiData) => void
+    onSelectEmoji: (data: EmojiPickerSelection) => void
     size?: IconProps['size']
     tabIndex?: number
 }

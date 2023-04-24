@@ -1,4 +1,3 @@
-import { EmojiData } from 'emoji-mart'
 import React, { Suspense, useCallback } from 'react'
 import { MessageReactions } from 'use-zion-client'
 import { Box } from 'ui/components/Box/Box'
@@ -21,7 +20,7 @@ export const Reactions = (props: Props) => {
     const { userId, parentId, reactions, onReaction } = props
 
     const onReactionPicker = useCallback(
-        (data: EmojiData) => {
+        (data: EmojiPickerSelection) => {
             if (onReaction && parentId && data.id) {
                 onReaction({
                     type: 'add',

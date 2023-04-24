@@ -168,7 +168,7 @@ const ColonEmojisRegexAliasRegex = new RegExp(
 const mentionsCache = new Map()
 
 const search = async function (string: string) {
-    const { emojis } = await import('../data/emoji_list')
+    const { emojis } = await import('data/emojis')
 
     const results = Object.keys(emojis)
         .filter((e) => e.toLowerCase().includes(string.toLowerCase()))

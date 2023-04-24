@@ -1,4 +1,3 @@
-import { EmojiData } from 'emoji-mart'
 import React, { useCallback, useContext, useEffect, useRef } from 'react'
 import { RoomIdentifier, useZionClient } from 'use-zion-client'
 import { motion } from 'framer-motion'
@@ -41,7 +40,7 @@ export const MessageContextMenu = (props: Props) => {
     }, [eventId, timelineContext])
 
     const onSelectEmoji = useCallback(
-        (data: EmojiData) => {
+        (data: EmojiPickerSelection) => {
             if (!channelId) {
                 console.error('no channel id')
                 return

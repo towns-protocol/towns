@@ -1,6 +1,6 @@
 // https://raw.githubusercontent.com/omnidan/node-emoji/master/lib/emoji.json
 
-import emojisRaw from '@emoji-mart/data'
+import emojisRaw from '@emoji-mart/data/sets/14/native.json'
 
 export const emojis = Object.entries(emojisRaw.emojis).reduce((emojis, e) => {
     const key = e[0]

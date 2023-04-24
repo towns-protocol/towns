@@ -9,7 +9,6 @@ import {
 import React, { useCallback, useContext, useEffect, useRef, useState } from 'react'
 import { useEvent } from 'react-use-event-hook'
 import { TOGGLE_LINK_COMMAND } from '@lexical/link'
-import { BaseEmoji, EmojiData } from 'emoji-mart'
 import { createPortal } from 'react-dom'
 import { AnimatePresence } from 'framer-motion'
 import { Box, BoxProps, Icon, Paragraph, RootLayerContext, Stack } from '@ui'
@@ -36,11 +35,11 @@ export const RichTextUI = (props: Props) => {
     const [editor] = useLexicalComposerContext()
 
     const onSelectEmoji = useCallback(
-        (data: EmojiData) => {
+        (data: EmojiPickerSelection) => {
             editor.focus(() => {
                 editor.update(() => {
                     const selection = $getSelection()
-                    const emojiNode = $createEmojiNode('', (data as BaseEmoji).native)
+                    const emojiNode = $createEmojiNode('', data.native)
                     if ($isRangeSelection(selection)) {
                         selection.insertNodes([emojiNode])
                     }
