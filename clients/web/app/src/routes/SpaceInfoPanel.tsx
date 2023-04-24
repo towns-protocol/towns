@@ -15,6 +15,7 @@ import {
     Box,
     BoxProps,
     FormRender,
+    Icon,
     Panel,
     Paragraph,
     Stack,
@@ -33,6 +34,9 @@ import { EditModeContainer, TextButton } from '@components/UserProfile/UserProfi
 import { errorHasInvalidCookieResponseHeader } from 'api/apiClient'
 import { InvalidCookieNotification } from '@components/Notifications/InvalidCookieNotification'
 import { LargeUploadImageTemplate } from '@components/UploadImage/LargeUploadImageTemplate'
+import { useSpaceChannels } from 'hooks/useSpaceChannels'
+import { ModalContainer } from '@components/Modals/ModalContainer'
+import { AllChannelsList } from './AllChannelsList/AllChannelsList'
 import { useContractSpaceInfo } from '../hooks/useContractSpaceInfo'
 import { useEnvironment } from '../hooks/useEnvironmnet'
 
@@ -49,6 +53,7 @@ enum InputId {
 export const SpaceInfoPanel = () => {
     const space = useSpaceData()
     const { client, chainId } = useZionClient()
+    const channels = useSpaceChannels()
 
     const { data } = useContractSpaceInfo(space?.id?.networkId)
     const address = data?.address ?? ''
@@ -80,6 +85,10 @@ export const SpaceInfoPanel = () => {
     }, [client, data?.owner, matrixUrl, chainId])
 
     const { members } = useSpaceMembers()
+
+    const [isBrowseChannelsModalVisible, setBrowseChannelsModalVisible] = useState(false)
+    const onHideBrowseChannels = useEvent(() => setBrowseChannelsModalVisible(false))
+    const onShowBrowseChannels = useEvent(() => setBrowseChannelsModalVisible(true))
 
     const onClose = useEvent(() => {
         navigate('..')
@@ -329,6 +338,30 @@ export const SpaceInfoPanel = () => {
                             </Paragraph>
                         </>
                     </MdGap>
+
+                    <MdGap>
+                        <>
+                            <Paragraph strong>Channels</Paragraph>
+                            <Stack horizontal alignItems="center" gap="sm">
+                                <Paragraph color="gray2">
+                                    {`${channels.length} channel${channels.length != 1 ? `s` : ``}`}
+                                </Paragraph>
+                                <Icon
+                                    cursor="pointer"
+                                    color="gray2"
+                                    type="search"
+                                    size="square_xs"
+                                    onClick={onShowBrowseChannels}
+                                />
+                            </Stack>
+                        </>
+                    </MdGap>
+
+                    {isBrowseChannelsModalVisible && (
+                        <ModalContainer minWidth="500" onHide={onHideBrowseChannels}>
+                            <AllChannelsList onHideBrowseChannels={onHideBrowseChannels} />
+                        </ModalContainer>
+                    )}
 
                     <MdGap>
                         <>
