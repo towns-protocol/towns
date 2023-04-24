@@ -100,7 +100,11 @@ export interface RoleTransactionContext extends TransactionContext<RoleIdentifie
 export type ZionClientEventHandlers = {
     onCreateSpace?: (roomId: RoomIdentifier) => void
     onJoinRoom?: (roomId: RoomIdentifier, spaceId: RoomIdentifier) => void
-    onSendMessage?: (roomId: RoomIdentifier, sendMessageOptions?: SendMessageOptions) => void
+    onSendMessage?: (
+        roomId: RoomIdentifier,
+        body: string,
+        sendMessageOptions?: SendMessageOptions,
+    ) => void
     onLogin?: (auth: { userId: string }) => void
     onLogout?: (auth: { userId: string }) => void
     onRegister?: (auth: { userId: string }) => void

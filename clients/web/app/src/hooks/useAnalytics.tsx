@@ -1,7 +1,8 @@
 import React, { createContext, useCallback, useContext, useEffect, useState } from 'react'
 import * as amplitudeLib from '@amplitude/analytics-browser'
 import isEqual from 'lodash/isEqual'
-import { MessageType, RoomIdentifier, SendMessageOptions, ZionContext } from 'use-zion-client'
+import { RoomIdentifier, SendMessageOptions, ZionContext } from 'use-zion-client'
+import { getUrls } from 'utils/ztevent_util'
 import { env } from '../utils/environment'
 
 interface Analytics {
@@ -92,12 +93,8 @@ export const AnalyticsProvider = ({ children }: { children: React.ReactNode }) =
     )
 
     const onSendMessage = useCallback(
-        (roomId: RoomIdentifier, sendMessageOptions?: SendMessageOptions) => {
-            const isURL =
-                sendMessageOptions?.messageType == MessageType.ZionText &&
-                sendMessageOptions.attachments?.some(
-                    (attachment) => typeof attachment.url == 'string',
-                )
+        (roomId: RoomIdentifier, body: string, sendMessageOptions?: SendMessageOptions) => {
+            const isURL = getUrls(body).length > 0
             analytics.track('send_message', {
                 protocol: roomId.protocol,
                 slug: roomId.slug,

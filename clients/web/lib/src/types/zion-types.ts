@@ -191,9 +191,6 @@ export interface SendImageMessageOptions {
 export interface SendZionTextMessageOptions {
     threadId?: string
     messageType: MessageType.ZionText
-    attachments?: {
-        url?: string
-    }[]
 }
 
 export interface SendNoticeOptions {

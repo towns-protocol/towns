@@ -1,10 +1,9 @@
 import React from 'react'
 import { Channel, RoomMember, RoomMessageEvent, TimelineEvent } from 'use-zion-client'
-import { LINK } from '@lexical/markdown'
 import { UnfurlData } from '@unfurl-worker/types'
 import { ErrorBoundary, FallbackProps } from 'react-error-boundary'
 import { RichTextPreview } from '@components/RichText/RichTextEditor'
-import { getMessageBody } from 'utils/ztevent_util'
+import { getMessageBody, getUrls } from 'utils/ztevent_util'
 import { RatioedBackgroundImage } from '@components/RatioedBackgroundImage'
 import { Paragraph, Stack } from '@ui'
 import { useUnfurlContent } from '../../api/lib/unfurl'
@@ -41,12 +40,6 @@ const UnfurlBlock = (props: UnfurlData) => {
     }
 
     return <UnfurledGenericBlock {...props} />
-}
-
-// matching whatever lexical decides a "url" is
-function getUrls(body: string) {
-    const regexp = new RegExp(LINK.importRegExp, 'g')
-    return [...new Set(Array.from(body.matchAll(regexp), (m) => m[2]))]
 }
 
 export const MessageZionText = ({

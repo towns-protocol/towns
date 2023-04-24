@@ -108,7 +108,6 @@ describe('messageTypes', () => {
     test('send a m.ZionText message', async () => {
         const ZION_TEXT_MESSAGE_CONTENT: ZionTextMessageContent = {
             messageType: MessageType.ZionText,
-            attachments: [{ url: 'https://example.com' }],
         }
         // create clients
         // alice needs to have a valid nft in order to join bob's space / channel
@@ -144,9 +143,6 @@ describe('messageTypes', () => {
                 .find((event) => event.content.msgType === MessageType.ZionText)
 
             expect(zionTextMessage).toBeDefined()
-            expect(
-                (zionTextMessage?.content.content as ZionTextMessageContent).attachments?.[0],
-            ).toEqual(expect.objectContaining({ url: 'https://example.com' }))
         })
     })
 }) // end describe

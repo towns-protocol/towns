@@ -1309,7 +1309,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
                 }
                 await sendMatrixMessage(this.matrixClient, roomId, message, options)
 
-                this._eventHandlers?.onSendMessage?.(roomId, options)
+                this._eventHandlers?.onSendMessage?.(roomId, message, options)
                 return
             case SpaceProtocol.Casablanca:
                 if (!this.casablancaClient) {

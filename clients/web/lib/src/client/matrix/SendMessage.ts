@@ -28,7 +28,6 @@ function getMessageContent(message: string, options: SendMessageOptions): Messag
         case MessageType.ZionText: {
             const content: ZionTextMessageContent = {
                 ...defaultContent,
-                ...(options.attachments ? { attachments: options.attachments } : {}),
             }
             return content
         }
@@ -64,7 +63,6 @@ export function editMessageContent(
         case MessageType.ZionText:
             return {
                 ...content,
-                ...(options.attachments ? { attachments: options.attachments } : {}),
             }
         case undefined:
         case MessageType.Text:

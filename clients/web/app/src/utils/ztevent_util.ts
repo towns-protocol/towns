@@ -1,3 +1,4 @@
+import { LINK } from '@lexical/markdown'
 import {
     MessageType,
     ReactionEvent,
@@ -34,4 +35,10 @@ export const getMessageBody = (eventId: string, message: RoomMessageEvent): stri
         default:
             return `${message.content.body}\n*Unsupported message type* **${message.msgType}**`
     }
+}
+
+// matching whatever lexical decides a "url" is
+export function getUrls(body: string) {
+    const regexp = new RegExp(LINK.importRegExp, 'g')
+    return [...new Set(Array.from(body.matchAll(regexp), (m) => m[2]))]
 }
