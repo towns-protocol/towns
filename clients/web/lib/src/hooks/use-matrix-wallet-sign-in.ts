@@ -402,7 +402,7 @@ export function useMatrixWalletSignIn() {
                                 } else {
                                     authenticationError({
                                         code: StatusCodes.UNAUTHORIZED,
-                                        message: `Attempt to sign the login message failed!`,
+                                        message: `Your wallet signature attempt failed. Please try again.`,
                                     })
                                 }
                             } else if (!chainIds.includes(userIdentifier.chainId)) {
