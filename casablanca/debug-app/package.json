@@ -3,8 +3,8 @@
     "packageManager": "yarn@3.2.3",
     "type": "module",
     "scripts": {
-        "dev": "vite --config vite.config.js",
-        "build": "tsc"
+        "build": "tsc",
+        "dev": "vite --config vite.config.js"
     },
     "dependencies": {
         "@towns/sdk": "workspace:^"
