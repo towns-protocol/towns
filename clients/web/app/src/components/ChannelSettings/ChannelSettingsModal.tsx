@@ -12,7 +12,7 @@ import { RequireTransactionNetworkMessage } from '@components/RequireTransaction
 import { TransactionButton } from '@components/TransactionButton'
 import { useOnTransactionStages } from 'hooks/useOnTransactionStages'
 import { useRequireTransactionNetwork } from 'hooks/useRequireTransactionNetwork'
-import { useTransactionUIStates } from 'hooks/useTransactionStatus'
+import { TransactionUIState, useTransactionUIStates } from 'hooks/useTransactionStatus'
 import { ErrorMessageText } from 'ui/components/ErrorMessage/ErrorMessage'
 import { ChannelNameRegExp, isForbiddenError, isRejectionError } from 'ui/utils/utils'
 import { Box, Button, ErrorMessage, FormRender, Heading, Stack, TextField } from '@ui'
@@ -21,7 +21,6 @@ import { useAllRoleDetails } from 'hooks/useAllRoleDetails'
 import { ModalContainer } from '../Modals/ModalContainer'
 import { RoleCheckboxProps, RolesSection, getCheckedValuesForRoleIdsField } from './RolesSection'
 import { FormState, FormStateKeys, emptyDefaultValues, schema } from './formConfig'
-
 type ChannelSettingsModalProps = {
     spaceId: RoomIdentifier
     channelId: RoomIdentifier
@@ -80,7 +79,9 @@ export function ChannelSettingsForm({
 
     const onSuccessfulTransaction = useCallback(() => {
         invalidateQuery()
-        onUpdatedChannel()
+        setTimeout(() => {
+            onUpdatedChannel()
+        }, 1500)
     }, [invalidateQuery, onUpdatedChannel])
 
     useOnTransactionStages({
@@ -105,7 +106,7 @@ export function ChannelSettingsForm({
 
     const onSubmit = useCallback(
         async (changes: FormState) => {
-            if (transactionUIState.isAbleToInteract) {
+            if (transactionUIState === TransactionUIState.None) {
                 const name = changes[FormStateKeys.name]
                 const description = changes[FormStateKeys.description]
                 const roleIds = changes[FormStateKeys.roleIds].map((roleId) => Number(roleId))
@@ -119,7 +120,7 @@ export function ChannelSettingsForm({
                 await updateChannelTransaction(channelInfo)
             }
         },
-        [channelId, spaceId, transactionUIState.isAbleToInteract, updateChannelTransaction],
+        [channelId, spaceId, transactionUIState, updateChannelTransaction],
     )
 
     const onNameKeyDown = useCallback(async (event: React.KeyboardEvent<HTMLInputElement>) => {
@@ -246,7 +247,8 @@ export function ChannelSettingsForm({
                                         tone="level2"
                                         value="Cancel"
                                         disabled={
-                                            isDisabled || !transactionUIState.isAbleToInteract
+                                            isDisabled ||
+                                            transactionUIState != TransactionUIState.None
                                         }
                                         onClick={onHide}
                                     >
@@ -255,11 +257,11 @@ export function ChannelSettingsForm({
 
                                     <TransactionButton
                                         disabled={isDisabled}
-                                        transactionUIState={transactionUIState}
+                                        transactionState={transactionUIState}
                                         transactingText="Updating channel"
-                                    >
-                                        Save on chain
-                                    </TransactionButton>
+                                        successText="Channel updated"
+                                        idleText="Save on chain"
+                                    />
                                 </Stack>
                             </Box>
 

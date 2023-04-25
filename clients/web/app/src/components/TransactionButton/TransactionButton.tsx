@@ -1,58 +1,155 @@
 import React from 'react'
-import { motion } from 'framer-motion'
+import { AnimatePresence, motion } from 'framer-motion'
 import { clsx } from 'clsx'
 import { Box, Button, Text } from '@ui'
-import { TransactionUIStatesType } from 'hooks/useTransactionStatus'
-import { FadeIn } from '@components/Transitions'
 import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinner'
 import { buttonStyle } from 'ui/components/Button'
+import { TransactionUIState } from 'hooks/useTransactionStatus'
+import * as styles from './TransactionButton.css'
 
 type Props = {
-    requestingText?: string
+    idleText?: string
+    signingText?: string
     transactingText?: string
-    children: React.ReactNode
+    successText: string
     formId?: string
-    transactionUIState: TransactionUIStatesType
+    transactionState: TransactionUIState
     disabled?: boolean
     className?: string
 }
 
-const MotionText = motion(Text)
-
 export const TransactionButton = (props: Props) => {
     const {
-        transactionUIState,
-        transactingText = 'Creating Town',
-        requestingText = 'Waiting for Approval',
+        transactionState,
+        transactingText,
+        signingText = 'Waiting for Wallet',
+        successText,
         formId,
         disabled,
         className,
+        idleText,
     } = props
 
-    const { isAbleToInteract, isRequesting, isSuccess } = transactionUIState
-    return (
-        <Button
-            animate
-            data-testid="create-space-next-button"
-            tone={!isAbleToInteract || isSuccess ? 'level2' : 'cta1'}
-            disabled={disabled || !isAbleToInteract}
-            style={{ opacity: !isAbleToInteract ? 1 : disabled ? 0.5 : 1, zIndex: 1 }}
-            type="submit"
-            form={formId}
-            className={clsx([className, buttonStyle()])}
-        >
-            {/* broken up b/c of weird behavior with framer layout warping text */}
-            {!isAbleToInteract && (
-                <FadeIn delay>
-                    <Box horizontal centerContent gap="sm">
-                        <ButtonSpinner />
-                        {isRequesting && <MotionText layout>{requestingText}</MotionText>}
-                        {!isRequesting && <MotionText layout>{transactingText}</MotionText>}
-                    </Box>
-                </FadeIn>
-            )}
+    const progressBarVisible = transactionState != TransactionUIState.None
+    const width: string = (() => {
+        switch (transactionState) {
+            case TransactionUIState.None:
+                return '0%'
+            case TransactionUIState.Pending:
+                return '30%'
+            case TransactionUIState.PendingWithData:
+                return '60%'
+            case TransactionUIState.Success:
+                return '100%'
+        }
+    })()
 
-            {isAbleToInteract && <FadeIn delay>{props.children}</FadeIn>}
-        </Button>
+    const buttonText = (() => {
+        switch (transactionState) {
+            case TransactionUIState.Success:
+                return successText
+            case TransactionUIState.Pending:
+                return signingText
+            case TransactionUIState.PendingWithData:
+                return transactingText
+            case TransactionUIState.None:
+                return idleText
+        }
+    })()
+
+    const progressDurationTime: number = (() => {
+        switch (transactionState) {
+            case TransactionUIState.Success:
+                return 1
+            default:
+                return 2
+        }
+    })()
+
+    return (
+        <MotionBox>
+            <AnimatePresence mode="wait">
+                {!progressBarVisible && (
+                    <MotionBox
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        initial={{ opacity: 0 }}
+                        transition={{ duration: 0.1 }}
+                    >
+                        <Button
+                            data-testid="create-space-next-button"
+                            tone="cta1"
+                            form={formId}
+                            className={clsx([
+                                className,
+                                buttonStyle(),
+                                styles.relativePositionButton,
+                            ])}
+                            disabled={disabled || transactionState != TransactionUIState.None}
+                            style={{
+                                opacity:
+                                    transactionState != TransactionUIState.None
+                                        ? 1
+                                        : disabled
+                                        ? 0.5
+                                        : 1,
+                                zIndex: 1,
+                            }}
+                            type="submit"
+                        >
+                            {idleText}
+                        </Button>
+                    </MotionBox>
+                )}
+
+                {progressBarVisible && (
+                    <MotionBox
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        initial={{ opacity: 0 }}
+                        transition={{ duration: 0.2 }}
+                    >
+                        <Button
+                            disabled
+                            form={formId}
+                            tone="level2"
+                            className={clsx([
+                                className,
+                                buttonStyle(),
+                                styles.relativePositionButton,
+                            ])}
+                            type="submit"
+                            style={{ opacity: 1, zIndex: 1 }}
+                        >
+                            <MotionBox
+                                border
+                                height="100%"
+                                initial={{
+                                    height: '100%',
+                                    width: '0%',
+                                    borderRadius: 8,
+                                }}
+                                animate={{ width: width }}
+                                className={clsx(styles.buttonProgressBackground)}
+                                transition={{ duration: progressDurationTime }}
+                            />
+                            <MotionBox
+                                horizontal
+                                centerContent
+                                gap
+                                exit={{ opacity: 0 }}
+                                layout="position"
+                                style={{ zIndex: 2 }}
+                            >
+                                <ButtonSpinner />
+                                <Text>{buttonText}</Text>
+                            </MotionBox>
+                        </Button>
+                    </MotionBox>
+                )}
+            </AnimatePresence>
+        </MotionBox>
     )
 }
+
+const MotionBox = motion(Box)

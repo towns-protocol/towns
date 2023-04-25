@@ -11,7 +11,7 @@ import { useNavigate } from 'react-router'
 import { Link } from 'react-router-dom'
 import { Box, Button, Checkbox, ErrorMessage, FormRender, Icon, Stack, Text, TextField } from '@ui'
 import { TransactionButton } from '@components/TransactionButton'
-import { useTransactionUIStates } from 'hooks/useTransactionStatus'
+import { TransactionUIState, useTransactionUIStates } from 'hooks/useTransactionStatus'
 import { useSpaceRoles } from 'hooks/useContractRoles'
 import { PATHS } from 'routes'
 import { ErrorMessageText } from 'ui/components/ErrorMessage/ErrorMessage'
@@ -22,7 +22,6 @@ import { RequireTransactionNetworkMessage } from '@components/RequireTransaction
 import { Spinner } from '@components/Spinner'
 import { TokenCheckboxLabel } from '@components/Tokens/TokenCheckboxLabel'
 import { env } from 'utils'
-
 type Props = {
     spaceId: RoomIdentifier
     onCreateChannel: (roomId: RoomIdentifier) => void
@@ -71,7 +70,7 @@ export const CreateChannelForm = (props: Props) => {
         data: channelId,
     } = useCreateChannelTransaction()
     const transactionUIState = useTransactionUIStates(transactionStatus, Boolean(channelId))
-    const { isAbleToInteract } = transactionUIState
+    const isAbleToInteract = transactionUIState === TransactionUIState.None
     const { isTransactionNetwork, switchNetwork } = useRequireTransactionNetwork()
     const isDisabled = !isTransactionNetwork
 
@@ -104,7 +103,12 @@ export const CreateChannelForm = (props: Props) => {
 
     const onSuccessfulTransaction = useCallback(() => {
         invalidateQuery()
-        channelId && onCreateChannel(channelId)
+        if (!channelId) {
+            return
+        }
+        setTimeout(() => {
+            onCreateChannel(channelId)
+        }, 1500)
     }, [channelId, onCreateChannel, invalidateQuery])
 
     const firstRoleIDWithReadPermission = rolesWithDetails
@@ -253,11 +257,11 @@ export const CreateChannelForm = (props: Props) => {
 
                             <TransactionButton
                                 disabled={isDisabled}
-                                transactionUIState={transactionUIState}
+                                transactionState={transactionUIState}
                                 transactingText="Creating channel"
-                            >
-                                Create
-                            </TransactionButton>
+                                successText="Channel created"
+                                idleText="Create"
+                            />
                         </Box>
 
                         {isDisabled && (

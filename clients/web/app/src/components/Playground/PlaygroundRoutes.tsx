@@ -6,12 +6,14 @@ import { env } from 'utils'
 import { PageToken } from './pages/PageToken'
 import { VListPlayground } from './pages/VListPlayground'
 import { PageColors } from './pages/PageColors'
+import { PageTransactionButton } from './pages/PageTransactionButton'
 
 export const PlaygroundRoutes = () => {
     return (
         <Routes>
             <Route element={<PlaygroundMenuLayout />}>
                 <Route path="token" element={<PageToken />} />
+                <Route path="transaction-button" element={<PageTransactionButton />} />
                 <Route path="vlist" element={<VListPlayground />} />
                 <Route path="colors" element={<PageColors />} />
                 {env.IS_DEV && <Route path="upload" element={<UploadImageDebugger />} />}

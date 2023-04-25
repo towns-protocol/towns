@@ -187,7 +187,7 @@ describe('CreateChannelForm', () => {
         fireEvent.click(submitButton)
 
         await waitFor(async () => {
-            await screen.findByText('Updating channel')
+            await screen.findByText('Channel updated')
         })
 
         await waitFor(async () => {
@@ -258,7 +258,7 @@ describe('CreateChannelForm', () => {
         fireEvent.click(submitButton)
 
         await waitFor(async () => {
-            await screen.findByText('Updating channel')
+            await screen.findByText('Channel updated')
         })
 
         await waitFor(async () => {

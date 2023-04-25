@@ -256,7 +256,7 @@ describe('CreateChannelForm', () => {
         fireEvent.click(submitButton)
 
         await waitFor(async () => {
-            await screen.findByText('Creating channel')
+            await screen.findByText('Channel created')
         })
 
         await waitFor(async () => {
@@ -314,7 +314,7 @@ describe('CreateChannelForm', () => {
         fireEvent.click(submitButton)
 
         await waitFor(() => {
-            return screen.getByText('Creating channel')
+            return screen.getByText('Create')
         })
 
         await screen.findByText('There was an error with the transaction. Please try again')
@@ -361,7 +361,7 @@ describe('CreateChannelForm', () => {
         fireEvent.click(submitButton)
 
         await waitFor(() => {
-            return screen.getByText('Creating channel')
+            return screen.getByText('Create')
         })
 
         await screen.findByText("You don't have permission to create a channel in this town")

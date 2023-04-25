@@ -15,12 +15,11 @@ import { toast } from 'react-hot-toast/headless'
 import { Box, Button, Heading, Text } from '@ui'
 import { useDevOnlyQueryParams } from 'hooks/useQueryParam'
 import { ErrorMessageText } from 'ui/components/ErrorMessage/ErrorMessage'
-import { TransactionUIStatesType, useTransactionUIStates } from 'hooks/useTransactionStatus'
+import { TransactionUIState, useTransactionUIStates } from 'hooks/useTransactionStatus'
 import { TransactionButton } from '@components/TransactionButton'
 import { useOnTransactionStages } from 'hooks/useOnTransactionStages'
 import { useRequireTransactionNetwork } from 'hooks/useRequireTransactionNetwork'
 import { RequireTransactionNetworkMessage } from '@components/RequireTransactionNetworkMessage/RequireTransactionNetworkMessage'
-import { FadeInBox } from '@components/Transitions'
 import { useUploadImage } from 'api/lib/uploadImage'
 import { useImageStore } from '@components/UploadImage/useImageStore'
 import { FailedUploadAfterSpaceCreation } from '@components/Notifications/FailedUploadAfterSpaceCreation'
@@ -39,7 +38,6 @@ import {
 } from './constants'
 
 const MotionBox = motion(Box)
-const MotionText = motion(Text)
 
 type HeaderProps = {
     formId: string
@@ -48,41 +46,49 @@ type HeaderProps = {
     goPrev: () => void
     hasError: boolean
     errorBox: React.ReactNode
-    transactionUIState: TransactionUIStatesType
+    transactionState: TransactionUIState
 }
 
 const Header = (props: HeaderProps) => {
-    const { hasPrev, goPrev, isLast, formId, transactionUIState, hasError, errorBox } = props
-    const { isAbleToInteract } = transactionUIState
+    const { hasPrev, goPrev, isLast, formId, transactionState, hasError, errorBox } = props
     const { isTransactionNetwork, switchNetwork } = useRequireTransactionNetwork()
     const isDisabled = !isTransactionNetwork && isLast
+    const showBackButton = transactionState == TransactionUIState.None && hasPrev
+
     return (
         <Box gap>
             <Box horizontal justifyContent="spaceBetween" alignItems="center">
                 <Heading level={2}>Create a Town</Heading>
-                <Box flexDirection="row" paddingLeft="sm" position="relative">
+                <Box flexDirection="row" paddingLeft="sm" position="relative" gap="sm">
                     <AnimatePresence>
-                        {hasPrev && (
-                            <FadeInBox
-                                position={!isAbleToInteract ? 'absolute' : 'relative'}
-                                left={!isAbleToInteract ? 'md' : 'none'}
+                        {showBackButton && (
+                            <MotionButton
+                                animate
+                                exit={{ opacity: 0 }}
+                                transition={{ duration: 0.2 }}
+                                onClick={goPrev}
                             >
-                                <Button animate onClick={goPrev}>
-                                    <Text>Prev</Text>
-                                </Button>
-                            </FadeInBox>
+                                <Text>Prev</Text>
+                            </MotionButton>
                         )}
                     </AnimatePresence>
 
-                    <MotionBox layout paddingLeft="sm" width={!isAbleToInteract ? '250' : 'auto'}>
+                    <MotionBox
+                        layout
+                        paddingLeft="sm"
+                        transition={{ duration: 0.2 }}
+                        animate={{
+                            width: transactionState != TransactionUIState.None ? '250px' : 'auto',
+                        }}
+                    >
                         <TransactionButton
                             formId={formId}
-                            transactionUIState={transactionUIState}
+                            transactionState={transactionState}
                             disabled={isDisabled}
-                        >
-                            {isLast && <MotionText layout>Mint</MotionText>}
-                            {!isLast && <MotionText layout>Next</MotionText>}
-                        </TransactionButton>
+                            idleText={isLast ? 'Mint' : 'Next'}
+                            transactingText="Creating Town"
+                            successText="Town Created"
+                        />
                     </MotionBox>
                 </Box>
             </Box>
@@ -292,7 +298,7 @@ export const CreateSpaceForm = () => {
                 isLast={isLast}
                 hasError={hasError}
                 errorBox={errorBox}
-                transactionUIState={transactionUIState}
+                transactionState={transactionUIState}
             />
 
             <AnimatePresence mode="wait">
@@ -309,3 +315,5 @@ export const CreateSpaceForm = () => {
         </Box>
     )
 }
+
+const MotionButton = motion(Button)
