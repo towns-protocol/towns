@@ -1,3 +1,4 @@
+import { CreateSpaceInfo, RoomVisibility } from '../../types/zion-types'
 import {
     HistoryVisibility,
     ICreateRoomOpts,
@@ -5,9 +6,10 @@ import {
     MatrixClient,
     Visibility,
 } from 'matrix-js-sdk'
+import { MatrixRoomIdentifier, makeMatrixRoomIdentifier } from '../../types/room-identifier'
+
+import { DefaultSpacePowerLevels } from '../../data/power-level-definitions'
 import { sleepUntil } from '../../utils/zion-utils'
-import { CreateSpaceInfo, RoomVisibility } from '../../types/zion-types'
-import { makeMatrixRoomIdentifier, MatrixRoomIdentifier } from '../../types/room-identifier'
 
 export async function createMatrixSpace(
     matrixClient: MatrixClient,
@@ -26,10 +28,7 @@ export async function createMatrixSpace(
             type: 'm.space',
         },
         initial_state: makeInitialState(createSpaceInfo),
-        power_level_content_override: {
-            invite: createSpaceInfo.visibility === RoomVisibility.Public ? 0 : 50,
-            events: { 'm.space.child': 0, 'm.room.topic': 0 }, // permission to create channel in the space
-        },
+        power_level_content_override: DefaultSpacePowerLevels,
     }
     const response = await matrixClient.createRoom(options)
     if (!createSpaceInfo.disableEncryption === true) {

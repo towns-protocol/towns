@@ -1,3 +1,4 @@
+import { CreateChannelInfo, RoomVisibility } from '../../types/zion-types'
 import {
     HistoryVisibility,
     ICreateRoomOpts,
@@ -5,9 +6,10 @@ import {
     MatrixClient,
     Visibility,
 } from 'matrix-js-sdk'
+import { MatrixRoomIdentifier, makeMatrixRoomIdentifier } from '../../types/room-identifier'
+
+import { DefaultChannelPowerLevels } from '../../data/power-level-definitions'
 import { sleepUntil } from '../../utils/zion-utils'
-import { CreateChannelInfo, RoomVisibility } from '../../types/zion-types'
-import { makeMatrixRoomIdentifier, MatrixRoomIdentifier } from '../../types/room-identifier'
 
 export async function createMatrixChannel(
     matrixClient: MatrixClient,
@@ -19,17 +21,13 @@ export async function createMatrixChannel(
     const homeServerUrl = matrixClient.baseUrl
     // initial state
     const options: ICreateRoomOpts = {
-        //room_alias_name: "my_room_alias3",
         visibility: createInfo.visibility as unknown as Visibility,
         name: createInfo.name,
         is_direct: false,
         initial_state: makeInitialState(homeServerUrl, createInfo),
         room_version: '10',
         topic: createInfo.topic,
-        power_level_content_override: {
-            redact: 0, // permission to redact messages is enforced on the server through entitlement checks
-            events: { 'm.room.topic': 0 }, // permission to change channel description
-        },
+        power_level_content_override: DefaultChannelPowerLevels,
     }
     // create the room
     const response = await matrixClient.createRoom(options)

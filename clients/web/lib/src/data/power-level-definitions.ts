@@ -1,5 +1,44 @@
 import { PowerLevelDefinition } from '../types/zion-types'
 
+/*
+    Our app uses smart contracts isEntitled functions to check if user has
+    permission to perform an action. We do not use dendrite's power levels.
+    Drop all power levels to 0 to avoid conflicts with dendrite's power level
+    enforcement.
+*/
+export const DefaultChannelPowerLevels = {
+    ban: 0,
+    events: {
+        'm.reaction': 0,
+        'm.room.avatar': 0,
+        'm.room.canonical_alias': 0,
+        'm.room.history_visibility': 0,
+        'm.room.name': 0,
+        'm.room.pinned_events': 0,
+        'm.room.power_levels': 0,
+        'm.room.server_acl': 0,
+        'm.room.tombstone': 0,
+        'm.room.topic': 0,
+    },
+    events_default: 0,
+    invite: 0,
+    kick: 0,
+    notifications: {
+        room: 0,
+    },
+    redact: 0,
+    state_default: 0,
+    users_default: 0,
+}
+
+export const DefaultSpacePowerLevels = {
+    ...DefaultChannelPowerLevels,
+    events: {
+        ...DefaultChannelPowerLevels.events,
+        'm.space.child': 0,
+    },
+}
+
 export const powerLevelDefinitions: PowerLevelDefinition[] = [
     {
         key: 'users_default',
