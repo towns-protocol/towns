@@ -146,7 +146,6 @@ export enum MessageType {
     Text = 'm.text',
     WenMoon = 'm.wenmoon',
     Image = 'm.Image',
-    ZionText = 'm.ZionText',
     Notice = 'm.notice',
 }
 
