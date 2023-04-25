@@ -9,7 +9,7 @@ import {
 import { useEvent } from 'react-use-event-hook'
 import { useNavigate } from 'react-router'
 import { useContractChannels } from 'hooks/useContractChannels'
-import { Button, Icon, IconButton, Stack, Text } from '@ui'
+import { Box, Button, Icon, IconButton, Stack, Text } from '@ui'
 import { useSpaceChannels } from 'hooks/useSpaceChannels'
 import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinner'
 import { PATHS } from 'routes'
@@ -129,9 +129,11 @@ const ChannelItem = ({
     }, [isJoined])
 
     const [syncingSpace, setSyncingSpace] = React.useState(false)
+    const [joinFailed, setJoinFailed] = React.useState(false)
 
     const onClick = useEvent(async () => {
         setSyncingSpace(true)
+        setJoinFailed(false)
 
         const flatChannels = space.channelGroups.flatMap((g) => g.channels)
         const joinedChannels = flatChannels.filter((c) => {
@@ -168,28 +170,49 @@ const ChannelItem = ({
                 }
             }
         } else {
-            await client?.joinRoom(channelIdentifier, space.id.networkId)
+            try {
+                await client?.joinRoom(channelIdentifier, space.id.networkId)
+            } catch (e) {
+                console.warn(
+                    '[AllChannelsList]',
+                    'cannot join channel',
+                    `{ name: ${name}, networkId: ${channelNetworkId} }`,
+                    e,
+                )
+                setJoinFailed(true)
+            } finally {
+                setSyncingSpace(false)
+            }
         }
     })
 
     return (
-        <Stack horizontal justifyContent="spaceBetween">
-            <Stack horizontal centerContent gap="sm">
-                <Icon type="tag" padding="line" background="level2" size="square_lg" />
-                <Text color="gray1">{name}</Text>
+        <Stack>
+            <Stack horizontal justifyContent="spaceBetween">
+                <Stack horizontal centerContent gap="sm">
+                    <Icon type="tag" padding="line" background="level2" size="square_lg" />
+                    <Text color="gray1">{name}</Text>
+                </Stack>
+                <Button
+                    disabled={syncingSpace}
+                    minWidth="100"
+                    size="button_sm"
+                    rounded="sm"
+                    hoverEffect="none"
+                    tone={syncingSpace ? 'level3' : isJoined ? 'level3' : 'cta1'}
+                    onClick={onClick}
+                >
+                    {syncingSpace ? <ButtonSpinner /> : isJoined ? 'Leave' : 'Join'}
+                </Button>
             </Stack>
-
-            <Button
-                disabled={syncingSpace}
-                minWidth="100"
-                size="button_sm"
-                rounded="sm"
-                hoverEffect="none"
-                tone={syncingSpace ? 'level3' : isJoined ? 'level3' : 'cta1'}
-                onClick={onClick}
-            >
-                {syncingSpace ? <ButtonSpinner /> : isJoined ? 'Leave' : 'Join'}
-            </Button>
+            {joinFailed && (
+                <Box maxWidth="350" paddingTop="sm">
+                    <Text textAlign="center" color="gray2" size="sm">
+                        You are unable to join either because you don&apos;t have permission or this
+                        town has reached its capacity
+                    </Text>
+                </Box>
+            )}
         </Stack>
     )
 }
