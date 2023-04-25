@@ -5,7 +5,7 @@ import { firstBy } from 'thenby'
 import { AvatarStack, Card, Paragraph, Stack, TooltipRenderer } from '@ui'
 import { atoms } from 'ui/styles/atoms.css'
 import { notUndefined } from 'ui/utils/utils'
-import { AccumulatedRoomMemberRenderEvent } from '../util/getEventsByDate'
+import { AccumulatedRoomMemberRenderEvent } from '../../MessageTimeline/util/getEventsByDate'
 
 type Props = {
     event: AccumulatedRoomMemberRenderEvent

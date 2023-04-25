@@ -1,7 +1,7 @@
 import React from 'react'
 import { useMyProfile, useSpaceMembers } from 'use-zion-client'
 import { Paragraph, Stack } from '@ui'
-import { ZRoomCreateEvent } from '../util/getEventsByDate'
+import { ZRoomCreateEvent } from '../../MessageTimeline/util/getEventsByDate'
 
 export const TimelineChannelCreateEvent = (props: {
     event: ZRoomCreateEvent

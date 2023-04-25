@@ -10,7 +10,7 @@ import {
 import { PATHS } from 'routes'
 import { Box, Heading, Icon, Paragraph, Stack } from '@ui'
 import { RichTextPreview } from '@components/RichText/RichTextEditor'
-import { Message } from '@components/Message'
+import { Message } from '@components/MessageLayout'
 import { getIsRoomMessageContent, getMessageBody } from 'utils/ztevent_util'
 import { CentralPanelLayout } from './layouts/CentralPanelLayout'
 

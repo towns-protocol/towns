@@ -17,10 +17,10 @@ import {
 import { Box, Divider, Paragraph, VList } from '@ui'
 import { useExperimentsStore } from 'store/experimentsStore'
 import { notUndefined } from 'ui/utils/utils'
+import { MessageTimelineItem } from '@components/MessageTimeIineItem/TimelineItem'
 import { MessageTimelineContext, MessageTimelineType } from './MessageTimelineContext'
-import { DateDivider } from './events/DateDivider'
-import { NewDivider } from './events/NewDivider'
-import { MessageTimelineItem } from './events/TimelineItem'
+import { DateDivider } from '../MessageTimeIineItem/items/DateDivider'
+import { NewDivider } from '../MessageTimeIineItem/items/NewDivider'
 import {
     EncryptedMessageRenderEvent,
     FullyReadRenderEvent,

@@ -9,9 +9,12 @@ import {
 } from 'use-zion-client'
 import { describe, expect, test, vi } from 'vitest'
 import { TestApp } from 'test/testUtils'
-import { image, normal, twitter } from '../../../../mocks/unfurl/data'
-import { MessageTimelineContext, MessageTimelineType } from '../MessageTimelineContext'
-import { MessageRenderEvent, RenderEventType } from '../util/getEventsByDate'
+import { image, normal, twitter } from '../../../mocks/unfurl/data'
+import {
+    MessageTimelineContext,
+    MessageTimelineType,
+} from '../MessageTimeline/MessageTimelineContext'
+import { MessageRenderEvent, RenderEventType } from '../MessageTimeline/util/getEventsByDate'
 import { MessageTimelineItem } from './TimelineItem'
 
 vi.mock('use-zion-client', async () => {

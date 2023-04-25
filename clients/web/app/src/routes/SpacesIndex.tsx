@@ -1,5 +1,5 @@
 import React, { ComponentProps, forwardRef } from 'react'
-import { Message } from '@components/Message'
+import { Message } from '@components/MessageLayout'
 import { Box, BoxProps } from '@ui'
 
 export const LiquidContainer = forwardRef<HTMLElement, { fullbleed?: boolean } & BoxProps>(

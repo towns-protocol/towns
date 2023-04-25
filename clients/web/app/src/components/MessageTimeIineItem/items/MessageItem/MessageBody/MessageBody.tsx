@@ -6,7 +6,7 @@ import { RichTextPreview } from '@components/RichText/RichTextEditor'
 import { getMessageBody, getUrls } from 'utils/ztevent_util'
 import { RatioedBackgroundImage } from '@components/RatioedBackgroundImage'
 import { Paragraph, Stack } from '@ui'
-import { useUnfurlContent } from '../../api/lib/unfurl'
+import { useUnfurlContent } from '../../../../../api/lib/unfurl'
 import { UnfurledTwitterBlock } from './UnfurledTwitterBlock'
 import { UnfurledGenericBlock } from './UnfurledGenericBlock'
 
@@ -42,13 +42,7 @@ const UnfurlBlock = (props: UnfurlData) => {
     return <UnfurledGenericBlock {...props} />
 }
 
-export const MessageZionText = ({
-    eventContent,
-    event,
-    members,
-    channels,
-    onMentionClick,
-}: Props) => {
+export const MessageBody = ({ eventContent, event, members, channels, onMentionClick }: Props) => {
     const body = getMessageBody(event.eventId, eventContent)
     const urls = getUrls(body)
 

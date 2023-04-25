@@ -44,9 +44,9 @@ type Props = {
     isChannelWritable?: boolean
 } & BoxProps
 
-export type MessageProps = Props
+export type MessageLayoutProps = Props
 
-export const Message = (props: Props) => {
+export const MessageLayout = (props: Props) => {
     const {
         userId,
         senderId,
