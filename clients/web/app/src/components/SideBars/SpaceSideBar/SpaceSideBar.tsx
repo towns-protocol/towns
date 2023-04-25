@@ -9,6 +9,7 @@ import {
     useMyMembership,
     useSpaceMentions,
     useSpaceThreadRootsUnreadCount,
+    useZionClient,
 } from 'use-zion-client'
 import { useQueryClient } from '@tanstack/react-query'
 import { clsx } from 'clsx'
@@ -25,6 +26,7 @@ import {
     queryKey as useContractChannelsQueryKey,
 } from 'hooks/useContractChannels'
 import { AllChannelsList } from 'routes/AllChannelsList/AllChannelsList'
+import { useSpaceChannels } from 'hooks/useSpaceChannels'
 import { SideBar } from '../_SideBar'
 import * as styles from './SpaceSideBar.css'
 import { SyncedChannelList } from './SyncedChannelList'
@@ -71,6 +73,7 @@ function useInvalidateChannelsQueryOnNewChannelCreation(space: SpaceData) {
 
 export const SpaceSideBar = (props: Props) => {
     const { space } = props
+    const { client } = useZionClient()
     const navigate = useNavigate()
     const unreadThreadsCount = useSpaceThreadRootsUnreadCount()
     const membership = useMyMembership(space?.id)
@@ -78,6 +81,7 @@ export const SpaceSideBar = (props: Props) => {
     const setDismissedGettingStarted = useStore((state) => state.setDismissedGettingStarted)
     const dismissedGettingStartedMap = useStore((state) => state.dismissedGettingStartedMap)
     const { data: contractChannels } = useContractChannels(props.space.id.networkId)
+    const channels = useSpaceChannels()
 
     const onSettings = useCallback(
         (spaceId: RoomIdentifier) => {
@@ -119,6 +123,17 @@ export const SpaceSideBar = (props: Props) => {
         setScrollOffset(Math.max(0, Math.min(headerY - 16, 50)) / 50)
         setHasScrolledPastHeader(headerY > -1 && headerY <= 0)
     }
+
+    const isMemberOfAnyChannel = useMemo(() => {
+        if (!client) {
+            return false
+        }
+
+        return channels.some((channel) => {
+            const roomData = client?.getRoomData(channel.id)
+            return roomData?.membership === Membership.Join
+        })
+    }, [client, channels])
 
     const hasContractChannels = contractChannels && contractChannels.length > 0
 
@@ -213,7 +228,7 @@ export const SpaceSideBar = (props: Props) => {
                                 />
                             </ModalContainer>
                         )}
-                        {!space.isLoadingChannels && !hasContractChannels && canCreateChannel && (
+                        {!space.isLoadingChannels && !isMemberOfAnyChannel && canCreateChannel && (
                             <ActionNavItem
                                 icon="plus"
                                 id="newChannel"
