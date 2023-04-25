@@ -36,7 +36,7 @@ describe('mentions', () => {
 
         await alice.joinRoom(channelId)
         const bobDisplayName = bob.getUser(bob.getUserId(channelId.protocol)!)?.displayName ?? 'bob'
-        // alice sends a wenmoon message
+        // alice sends a message
         await alice.sendMessage(channelId, 'Hi @bob', {
             mentions: [
                 {

@@ -26,7 +26,7 @@ describe('messageThreads', () => {
         )) as RoomIdentifier
         // alice joins the room
         await alice.joinRoom(roomId)
-        // alice sends a wenmoon message
+        // alice sends a message
         await alice.sendMessage(roomId, 'hi Bob!')
         // bob should receive the message
         await waitFor(() => expect(bob.getMessages(roomId)).toContain('hi Bob!'))

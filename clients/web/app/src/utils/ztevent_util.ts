@@ -21,7 +21,7 @@ export const getIsReactionContent = (e?: TimelineEvent): ReactionEvent | undefin
 
 export const getMessageBody = (eventId: string, message: RoomMessageEvent): string => {
     switch (message.msgType) {
-        case MessageType.WenMoon:
+        case MessageType.GM:
             return `${message.content.body} 
       ${eventId}
       `

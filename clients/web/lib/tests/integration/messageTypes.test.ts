@@ -19,7 +19,7 @@ import { TestConstants } from './helpers/TestConstants'
 import { waitFor } from '@testing-library/dom'
 
 describe('messageTypes', () => {
-    test('send a m.wenmoon message to test message types', async () => {
+    test('send a m.gm message to test message types', async () => {
         // create clients
         // alice needs to have a valid nft in order to join bob's space / channel
         const alice = await registerAndStartClient('alice', TestConstants.getWalletWithNft())
@@ -38,16 +38,16 @@ describe('messageTypes', () => {
         )) as RoomIdentifier
         // alice joins the room
         await alice.joinRoom(roomId)
-        // alice sends a wenmoon message
-        await alice.sendMessage(roomId, 'Wen Moon?', {
-            messageType: MessageType.WenMoon,
+        // alice sends a gm message
+        await alice.sendMessage(roomId, 'GM', {
+            messageType: MessageType.GM,
         })
         // bob should receive the message
-        await waitFor(() => expect(bob.getMessages(roomId)).toContain('Wen Moon?'))
+        await waitFor(() => expect(bob.getMessages(roomId)).toContain('GM'))
         expect(
             bob
                 .getEvents_TypedRoomMessage(roomId)
-                .find((event) => event.content.msgType === MessageType.WenMoon),
+                .find((event) => event.content.msgType === MessageType.GM),
         ).toBeDefined()
     }) // end test
 

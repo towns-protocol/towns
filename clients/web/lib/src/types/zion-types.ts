@@ -144,7 +144,7 @@ export interface UpdateChannelInfo {
 /// currently unsupported: Emote = "m.emote", Notice = "m.notice", File = "m.file", Audio = "m.audio", Location = "m.location", Video = "m.video",
 export enum MessageType {
     Text = 'm.text',
-    WenMoon = 'm.wenmoon',
+    GM = 'm.gm',
     Image = 'm.Image',
     Notice = 'm.notice',
 }
@@ -160,9 +160,9 @@ export interface Mention {
     userId?: string
 }
 
-interface SendWenMoonOptions {
+interface SendGMOptions {
     threadId?: string
-    messageType: MessageType.WenMoon
+    messageType: MessageType.GM
 }
 
 // ImageInfo from matrix-js-sdk (node_modules/matrix-js-sdk/src/@types/partials.ts) is incomplete against matrix spec (https://spec.matrix.org/v1.3/client-server-api/#mimage)
@@ -204,7 +204,7 @@ export interface SpaceIdOptions {
 
 export type SendMessageOptionsBase =
     | SendTextMessageOptions
-    | SendWenMoonOptions
+    | SendGMOptions
     | SendImageMessageOptions
     | SendNoticeOptions
 
