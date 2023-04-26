@@ -5,17 +5,19 @@ import {
     Permission,
     createUserIdFromEthereumAddress,
     useSpaceData,
+    useSpaceId,
     useSpaceMembers,
     useZionClient,
 } from 'use-zion-client'
 import { Link } from 'react-router-dom'
 import { toast } from 'react-hot-toast/headless'
+import { motion } from 'framer-motion'
 import {
     Avatar,
     Box,
     BoxProps,
+    Button,
     FormRender,
-    Icon,
     Panel,
     Paragraph,
     Stack,
@@ -36,12 +38,15 @@ import { InvalidCookieNotification } from '@components/Notifications/InvalidCook
 import { LargeUploadImageTemplate } from '@components/UploadImage/LargeUploadImageTemplate'
 import { useSpaceChannels } from 'hooks/useSpaceChannels'
 import { ModalContainer } from '@components/Modals/ModalContainer'
+import { vars } from 'ui/styles/vars.css'
+import { PATHS } from 'routes'
+import { transitions } from 'ui/transitions/transitions'
 import { AllChannelsList } from './AllChannelsList/AllChannelsList'
 import { useContractSpaceInfo } from '../hooks/useContractSpaceInfo'
 import { useEnvironment } from '../hooks/useEnvironmnet'
 
 const MdGap = ({ children, ...boxProps }: { children: JSX.Element } & BoxProps) => (
-    <Box gap="md" {...boxProps}>
+    <Box padding="md" gap="md" {...boxProps} background="level2" rounded="sm">
         {children}
     </Box>
 )
@@ -135,6 +140,11 @@ export const SpaceInfoPanel = () => {
         }
     })
 
+    const spaceID = useSpaceId()
+    const onMembersClick = useEvent(() => {
+        navigate(`/${PATHS.SPACES}/${spaceID?.slug}/members/info`)
+    })
+
     return (
         <Stack height="100%" overflow="hidden">
             <Panel label="Town Info" onClose={onClose}>
@@ -173,35 +183,42 @@ export const SpaceInfoPanel = () => {
                         )}
                     </Stack>
                 )}
-                <Stack gap="lg" paddingX="lg">
+                <Stack gap padding="lg">
                     <MdGap>
-                        <EditModeContainer
-                            inputId={InputId.SpaceName}
-                            canEdit={canEdit}
-                            initialValue={space?.name}
-                            onSave={onSaveItem}
-                        >
-                            {({
-                                editMenu,
-                                value,
-                                isEditing,
-                                errorComponent,
-                                error,
-                                handleEdit,
-                                onChange,
-                                handleSave,
-                            }) => (
-                                <>
-                                    <Stack
-                                        grow
-                                        horizontal
-                                        gap="sm"
-                                        alignItems="start"
-                                        minHeight="input_md"
-                                    >
-                                        {!isEditing ? (
-                                            <Box grow gap="sm">
+                        <Stack gap="sm">
+                            <EditModeContainer
+                                inputId={InputId.SpaceName}
+                                canEdit={canEdit}
+                                initialValue={space?.name}
+                                onSave={onSaveItem}
+                            >
+                                {({
+                                    editMenu,
+                                    value,
+                                    isEditing,
+                                    errorComponent,
+                                    error,
+                                    handleEdit,
+                                    onChange,
+                                    handleSave,
+                                }) => (
+                                    <>
+                                        <MotionStack
+                                            grow
+                                            horizontal
+                                            gap="sm"
+                                            alignItems="start"
+                                            minHeight="input_md"
+                                            insetTop="xs"
+                                            animate={{
+                                                paddingTop: isEditing ? vars.space.sm : ' 0px',
+                                                paddingBottom: isEditing ? vars.space.sm : ' 0px',
+                                            }}
+                                            transition={transitions.button}
+                                        >
+                                            {!isEditing ? (
                                                 <Box
+                                                    grow
                                                     horizontal
                                                     alignItems="center"
                                                     gap="xs"
@@ -216,63 +233,53 @@ export const SpaceInfoPanel = () => {
                                                         {value}
                                                     </Paragraph>
                                                 </Box>
-                                                {address && (
-                                                    <ClipboardCopy
-                                                        label={shortAddress(address)}
-                                                        clipboardContent={address}
+                                            ) : (
+                                                <Stack grow>
+                                                    <TextField
+                                                        autoFocus
+                                                        tone={error ? 'error' : undefined}
+                                                        background="level2"
+                                                        value={value}
+                                                        placeholder="Enter display name..."
+                                                        height="x5"
+                                                        style={{
+                                                            width: 0,
+                                                            minWidth: '100%',
+                                                        }} // shrink hack
+                                                        onChange={onChange}
+                                                        onKeyDown={(e) => {
+                                                            if (e.key === 'Enter') {
+                                                                e.preventDefault()
+                                                                e.stopPropagation()
+                                                                handleSave()
+                                                            } else if (e.key === 'Escape') {
+                                                                handleEdit()
+                                                            }
+                                                        }}
                                                     />
-                                                )}
-                                            </Box>
-                                        ) : (
-                                            <Box grow horizontal gap>
-                                                <Stack grow gap="sm">
-                                                    <Stack>
-                                                        <TextField
-                                                            autoFocus
-                                                            tone={error ? 'error' : undefined}
-                                                            style={{
-                                                                width: 0,
-                                                                minWidth: '100%',
-                                                            }} // shrink hack
-                                                            background="level2"
-                                                            value={value}
-                                                            placeholder="Enter display name..."
-                                                            height="x5"
-                                                            onChange={onChange}
-                                                            onKeyDown={(e) => {
-                                                                if (e.key === 'Enter') {
-                                                                    e.preventDefault()
-                                                                    e.stopPropagation()
-                                                                    handleSave()
-                                                                } else if (e.key === 'Escape') {
-                                                                    handleEdit()
-                                                                }
-                                                            }}
-                                                        />
-                                                        {errorComponent}
-                                                    </Stack>
-                                                    {address && (
-                                                        <ClipboardCopy
-                                                            label={shortAddress(address)}
-                                                            clipboardContent={address}
-                                                        />
-                                                    )}
+                                                    {errorComponent}
                                                 </Stack>
+                                            )}
+                                            <Box height="x5" justifyContent="center">
+                                                {editMenu}
                                             </Box>
-                                        )}
-                                        <Box height="x5" justifyContent="center">
-                                            {editMenu}
-                                        </Box>
-                                    </Stack>
-                                </>
+                                        </MotionStack>
+                                    </>
+                                )}
+                            </EditModeContainer>
+                            {address && (
+                                <ClipboardCopy
+                                    label={shortAddress(address)}
+                                    clipboardContent={address}
+                                />
                             )}
-                        </EditModeContainer>
+                        </Stack>
                     </MdGap>
 
                     {(canEdit || roomTopic) && (
                         <MdGap data-testid="about-section">
                             <>
-                                <Box horizontal justifyContent="spaceBetween">
+                                <Box horizontal justifyContent="spaceBetween" alignItems="center">
                                     <Paragraph strong>About</Paragraph>{' '}
                                     {canEdit &&
                                         (isEdit ? (
@@ -330,38 +337,6 @@ export const SpaceInfoPanel = () => {
                             </>
                         </MdGap>
                     )}
-                    <MdGap>
-                        <>
-                            <Paragraph strong>Population</Paragraph>
-                            <Paragraph color="gray2">
-                                {`${members.length} member${members.length > 1 ? `s` : ``}`}
-                            </Paragraph>
-                        </>
-                    </MdGap>
-
-                    <MdGap>
-                        <>
-                            <Paragraph strong>Channels</Paragraph>
-                            <Stack horizontal alignItems="center" gap="sm">
-                                <Paragraph color="gray2">
-                                    {`${channels.length} channel${channels.length != 1 ? `s` : ``}`}
-                                </Paragraph>
-                                <Icon
-                                    cursor="pointer"
-                                    color="gray2"
-                                    type="search"
-                                    size="square_xs"
-                                    onClick={onShowBrowseChannels}
-                                />
-                            </Stack>
-                        </>
-                    </MdGap>
-
-                    {isBrowseChannelsModalVisible && (
-                        <ModalContainer minWidth="500" onHide={onHideBrowseChannels}>
-                            <AllChannelsList onHideBrowseChannels={onHideBrowseChannels} />
-                        </ModalContainer>
-                    )}
 
                     <MdGap>
                         <>
@@ -394,6 +369,40 @@ export const SpaceInfoPanel = () => {
                             )}
                         </>
                     </MdGap>
+
+                    <Button
+                        icon="people"
+                        size="button_md"
+                        style={{ paddingLeft: vars.space.md }}
+                        color="gray2"
+                        onClick={onMembersClick}
+                    >
+                        <Stack grow horizontal alignItems="center" gap="sm">
+                            <Paragraph color="default">
+                                {`${members.length} member${members.length > 1 ? `s` : ``}`}
+                            </Paragraph>
+                        </Stack>
+                    </Button>
+
+                    <Button
+                        icon="tag"
+                        style={{ paddingLeft: vars.space.md }}
+                        color="gray2"
+                        disabled={channels.length === 0}
+                        onClick={onShowBrowseChannels}
+                    >
+                        <Stack grow horizontal alignItems="center" gap="sm">
+                            <Paragraph color="default">
+                                {`${channels.length} channel${channels.length != 1 ? `s` : ``}`}
+                            </Paragraph>
+                        </Stack>
+                    </Button>
+
+                    {isBrowseChannelsModalVisible && (
+                        <ModalContainer minWidth="500" onHide={onHideBrowseChannels}>
+                            <AllChannelsList onHideBrowseChannels={onHideBrowseChannels} />
+                        </ModalContainer>
+                    )}
                 </Stack>
                 <Stack grow padding paddingBottom="lg" justifyContent="end">
                     <Stack horizontal justifyContent="spaceBetween" alignItems="center">
@@ -407,3 +416,5 @@ export const SpaceInfoPanel = () => {
         </Stack>
     )
 }
+
+const MotionStack = motion(Stack)
