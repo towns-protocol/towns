@@ -105,7 +105,7 @@ export const CreateSpaceStep1 = ({ onSubmit, id }: FormStepProps) => {
                                     name={MEMBERSHIP_TYPE}
                                     value={TOKEN_HOLDERS}
                                     title="Token holders"
-                                    description="People who hold a specific token may join your town"
+                                    description="Users must hold ALL of the following tokens to join your town"
                                     onClick={() => onTokensCardClick(formProps)}
                                     {...formProps}
                                 >

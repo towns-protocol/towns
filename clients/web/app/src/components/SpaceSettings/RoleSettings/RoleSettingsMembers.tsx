@@ -38,7 +38,7 @@ export const RoleSettingsMembers = () => {
                 <Stack gap data-testid="role-settings-members-token-gated">
                     <Paragraph strong>Token gated</Paragraph>
                     <Paragraph color="gray2">
-                        Users may hold any of the following tokens to get access to this role.
+                        Users must hold ALL of the following tokens to get access to this role.
                     </Paragraph>
                     <TokenSelector
                         label="Add tokens"
