@@ -196,7 +196,7 @@
       {
         "label": "WatchSharedLib",
         "type": "shell",
-        "command": "./scripts/wait-for-casablanca.sh && cd clients/web/lib && yarn watch",
+        "command": "cd clients/web/lib && yarn watch",
         "isBackground": true,
         "problemMatcher": [],
         "presentation": {
@@ -206,7 +206,7 @@
       {
         "label": "WatchCasablancaClient",
         "type": "shell",
-        "command": "./scripts/wait-for-casablanca.sh && cd casablanca/sdk && yarn watch",
+        "command": "cd casablanca/sdk && yarn watch",
         "isBackground": true,
         "problemMatcher": [],
         "presentation": {
@@ -216,7 +216,7 @@
       {
         "label": "WatchCasablancaProto",
         "type": "shell",
-        "command": "./scripts/wait-for-casablanca.sh && cd casablanca/proto && yarn watch",
+        "command": "cd casablanca/proto && yarn watch",
         "isBackground": true,
         "problemMatcher": [],
         "presentation": {
