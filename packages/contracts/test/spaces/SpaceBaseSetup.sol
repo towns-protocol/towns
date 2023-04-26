@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.0;
 
-import "../utils/TestUtils.sol";
+import {TestUtils} from "../utils/TestUtils.sol";
 
 /** Interfaces */
 import {IEntitlement} from "contracts/src/interfaces/IEntitlement.sol";

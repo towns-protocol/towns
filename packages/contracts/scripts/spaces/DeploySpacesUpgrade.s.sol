@@ -11,7 +11,6 @@ import {DataTypes} from "contracts/src/libraries/DataTypes.sol";
 
 /* Contracts */
 import {Space} from "contracts/src/core/spaces/Space.sol";
-import {SpaceOwner} from "contracts/src/core/tokens/SpaceOwner.sol";
 import {SpaceFactory} from "contracts/src/core/spaces/SpaceFactory.sol";
 import {UserEntitlement} from "contracts/src/core/spaces/entitlements/UserEntitlement.sol";
 import {TokenEntitlement} from "contracts/src/core/spaces/entitlements/TokenEntitlement.sol";

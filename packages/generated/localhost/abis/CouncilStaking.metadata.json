@@ -400,7 +400,7 @@
   },
   "settings": {
     "compilationTarget": {
-      "packages/contracts/src/core/council/CouncilStaking.sol": "CouncilStaking"
+      "packages/contracts/src/core/governance/staking/CouncilStaking.sol": "CouncilStaking"
     },
     "evmVersion": "london",
     "libraries": {},
@@ -477,7 +477,7 @@
         "dweb:/ipfs/QmP7C3CHdY9urF4dEMb9wmsp1wMxHF6nhA2yQE5SKiPAdy"
       ]
     },
-    "packages/contracts/src/core/council/CouncilStaking.sol": {
+    "packages/contracts/src/core/governance/staking/CouncilStaking.sol": {
       "keccak256": "0x90cffbd84e5e36dfa0cf18aae6fb54f83cc2b78b163ce9f0a6f04a64a488bded",
       "license": "Apache-2.0",
       "urls": [

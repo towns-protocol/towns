@@ -675,6 +675,7 @@
       }
     ],
     "devdoc": {
+      "details": "Member contract",
       "events": {
         "Approval(address,address,uint256)": {
           "details": "Emitted when `owner` enables `approved` to manage the `tokenId` token."
@@ -760,6 +761,7 @@
           }
         }
       },
+      "title": "Member",
       "version": 1
     },
     "userdoc": {
@@ -978,11 +980,11 @@
       ]
     },
     "packages/contracts/src/core/tokens/Member.sol": {
-      "keccak256": "0x565d31c59b9a3bb1520834db6c4db82ddc70312113efd02c45594daccdd9a2ed",
+      "keccak256": "0x687b18719bc7fef2c199faa58d84173330c93fa90b10c7a161a615d52f9bc5b4",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://3b619ef3d0915552104a8adc4747814145b662f7ec193fab0a1d01c1ebe299aa",
-        "dweb:/ipfs/QmXvHwfxhQcXtiwFz8HVFa7kckV8tsnF4Euhn7N9AuKPxg"
+        "bzz-raw://288c2ec7d13bf522cccfb86921d0c7483c6a7bb15352fff4815e011275d8e5ee",
+        "dweb:/ipfs/QmeBqf76SWcsaS1kwtp2frVURMJCbBocjvGofuaRByrX66"
       ]
     },
     "packages/contracts/src/interfaces/IMember.sol": {
