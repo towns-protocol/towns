@@ -10,6 +10,7 @@ import { $createTextNode, TextNode } from 'lexical'
 import * as React from 'react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import * as ReactDOM from 'react-dom'
+import fuzzysort from 'fuzzysort'
 import { Text, TypeaheadMenu, TypeaheadMenuItem } from '@ui'
 import { $createEmojiNode } from '../nodes/EmojiNode'
 
@@ -167,17 +168,33 @@ const ColonEmojisRegexAliasRegex = new RegExp(
 
 const mentionsCache = new Map()
 
+let emojiCache: Array<{
+    name: string
+    emoji: string
+    keyword: string
+}>
+
 const search = async function (string: string) {
     const { emojis } = await import('data/emojis')
 
-    const results = Object.keys(emojis)
-        .filter((e) => e.toLowerCase().includes(string.toLowerCase()))
-        .map((k: string) => ({
-            name: k,
-            emoji: emojis[k as keyof typeof emojis].default,
-        }))
+    // prepare the data once, search on []keywords and name.
+    emojiCache =
+        emojiCache ??
+        Object.values(emojis).flatMap((emoji) => {
+            return emoji.keywords
+                .map((keyword) => ({ name: emoji.name, emoji: emoji.default, keyword: keyword }))
+                .concat({ name: emoji.name, emoji: emoji.default, keyword: emoji.name })
+        })
 
-    return results
+    return fuzzysort
+        .go(string, emojiCache, {
+            key: 'keyword',
+            all: true,
+        })
+        .map((r) => ({
+            name: r.obj.name,
+            emoji: r.obj.emoji,
+        }))
 }
 
 function useEmojiLockupService(mentionString: string | null) {
