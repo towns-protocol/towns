@@ -234,7 +234,9 @@ function toReplacedMessageEvent(prev: TimelineEvent, next: TimelineEvent): Timel
         prev.content?.kind !== ZTEvent.RoomMessage ||
         !next.content
     ) {
-        return next
+        // When returning early, make sure we carry the originServerTs of the previous event
+        // so we don't end up with a timeline that has events out of order.
+        return { ...next, originServerTs: prev.originServerTs }
     }
     // when we replace an event, we copy the content up to the root event
     // so we keep the prev id, but use the next content

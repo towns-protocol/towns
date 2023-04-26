@@ -130,7 +130,16 @@ export function useMatrixTimelines(client?: MatrixClient) {
             }
             roomIds.add(roomId)
             const replacedMsgId = getReplacedMessageId(event)
-            setState.replaceEvent(userId, roomId, replacedMsgId ?? eventId, toEvent(event, userId))
+            if (replacedMsgId !== undefined) {
+                // in most cases, the event will not be in the timeline, so removeEvent will be a no op
+                // but for events that are encrypted on app start, we're rendring a stub event which we need to remove
+                setState.removeEvent(roomId, eventId)
+                // replace the underlying event
+                setState.replaceEvent(userId, roomId, replacedMsgId, toEvent(event, userId))
+            } else {
+                // update the event with the unencrypted content
+                setState.replaceEvent(userId, roomId, eventId, toEvent(event, userId))
+            }
         }
 
         const onRoomRedaction = (event: MatrixEvent, eventRoom: MatrixRoom) => {
