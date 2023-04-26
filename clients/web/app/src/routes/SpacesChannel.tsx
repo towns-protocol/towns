@@ -1,4 +1,4 @@
-import React, { MutableRefObject, useCallback, useEffect, useMemo, useRef } from 'react'
+import React, { MutableRefObject, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useInView } from 'react-intersection-observer'
 import { Outlet, useParams } from 'react-router'
 import {
@@ -82,7 +82,7 @@ const SpacesChannelComponent = () => {
     const eventHash = window.location.hash?.replace(/^#/, '')
     const highlightId = eventHash?.match(/^\$[a-z0-9_-]{16,128}/i) ? eventHash : undefined
 
-    const { displayDecryptionProgress: displayDecryptionPopup, decryptionProgress } =
+    const { displayDecryptionProgress, decryptionProgress } =
         useDisplayEncryptionProgress(channelMessages)
 
     const { members } = useSpaceMembers()
@@ -115,16 +115,31 @@ const SpacesChannelComponent = () => {
         [onLoadMore],
     )
 
+    const [debounceShimmer, setDebounceShimmer] = useState(true)
+
+    useEffect(() => {
+        const timeout = setTimeout(() => {
+            setDebounceShimmer(false)
+        }, 50)
+        return () => {
+            clearTimeout(timeout)
+        }
+    }, [])
+
     return (
         <CentralPanelLayout>
-            {!channel || !channelId || displayDecryptionPopup ? (
-                <TimelineShimmer>
-                    {displayDecryptionPopup && (
-                        <Stack absoluteFill centerContent>
-                            <DecryptingCard progress={decryptionProgress} />
-                        </Stack>
-                    )}
-                </TimelineShimmer>
+            {!channel || !channelId || displayDecryptionProgress || !myMembership ? (
+                debounceShimmer ? (
+                    <></>
+                ) : (
+                    <TimelineShimmer>
+                        {displayDecryptionProgress && (
+                            <Stack absoluteFill centerContent>
+                                <DecryptingCard progress={decryptionProgress} />
+                            </Stack>
+                        )}
+                    </TimelineShimmer>
+                )
             ) : myMembership !== Membership.Join ? (
                 <Box absoluteFill centerContent>
                     <Button key={channelId.slug} size="button_lg" onClick={onJoinChannel}>
@@ -218,20 +233,33 @@ const useDisplayEncryptionProgress = (channelMessages: TimelineEvent[]) => {
                         k.total++
                         if (e.content?.kind === ZTEvent.RoomMessageEncrypted) {
                             k.yetEncrypted++
+                        } else {
+                            k.readable++
                         }
                     }
                     k.progress = 1 - k.yetEncrypted / k.total
                     return k
                 },
-                { yetEncrypted: 0, total: 0, progress: 0 },
+                { yetEncrypted: 0, total: 0, progress: 0, readable: 0 },
             ),
         [channelMessages],
     )
 
-    const isDecrypting = encryptedMessageStats && encryptedMessageStats.yetEncrypted > 0
-    const [displayDecryptionProgress, setDisplayDecryptionProgress] = React.useState(isDecrypting)
+    // when the component is initially rendered, we only want to display the
+    // decryption overlay if it's decrypting all the messages from the scratch.
+    // Most of the times enterning a channel, first section of messages is
+    // already decrypted
+    const isInitiallyReadable =
+        encryptedMessageStats &&
+        (encryptedMessageStats.readable > 0 || encryptedMessageStats.total === 0)
 
-    const hasDisplayedOnceRef = useRef(false)
+    const isDecrypting = encryptedMessageStats && encryptedMessageStats.yetEncrypted > 0
+
+    const [displayDecryptionProgress, setDisplayDecryptionProgress] = React.useState(
+        !isInitiallyReadable,
+    )
+
+    const hasDisplayedOnceRef = useRef(isInitiallyReadable)
 
     useEffect(() => {
         // display decryption progress once

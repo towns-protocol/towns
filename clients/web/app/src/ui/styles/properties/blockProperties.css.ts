@@ -61,16 +61,16 @@ export const blockProperties = defineProperties({
 
         overflowY: {
             hidden: {
-                overflowX: 'hidden',
+                overflowY: 'hidden',
             },
             visible: {
-                overflowX: 'visible',
+                overflowY: 'visible',
             },
             auto: {
-                overflowX: 'auto',
+                overflowY: 'auto',
             },
             scroll: {
-                overflowX: 'scroll',
+                overflowY: 'scroll',
                 ['::-webkit-scrollbar']: { display: 'none' },
                 scrollbarWidth: 'none',
             },

@@ -12,6 +12,8 @@ interface AppState {
     channelMessageInputMap: { [inputId: string]: string }
     dismissedGettingStartedMap: { [spaceId: string]: string }
     setDismissedGettingStarted: (spaceId: string) => void
+    setTownRouteBookmark: (spaceId: string, route: string) => void
+    townRouteBookmarks: { [spaceId: string]: string }
 }
 
 export const useStore = create(
@@ -20,6 +22,13 @@ export const useStore = create(
             theme: undefined,
             setTheme: (theme) => {
                 set(() => ({ theme }))
+            },
+
+            townRouteBookmarks: {},
+            setTownRouteBookmark: (spaceId, route) => {
+                set(() => ({
+                    townRouteBookmarks: { ...get().townRouteBookmarks, [spaceId]: route },
+                }))
             },
 
             isWindowFocused: true,

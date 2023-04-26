@@ -1,12 +1,13 @@
 import React, { useEffect, useMemo } from 'react'
 
-import { useLocation, useNavigate } from 'react-router'
+import { matchPath, useLocation, useNavigate } from 'react-router'
 import { Membership } from 'use-zion-client'
 import { TimelineShimmer } from '@components/Shimmer/TimelineShimmer'
 import { Box, Icon, Stack, Text } from '@ui'
 import { PATHS } from 'routes'
 import { SpaceJoin } from '@components/Web3/SpaceJoin'
 import { useContractAndServerSpaceData } from 'hooks/useContractAndServerSpaceData'
+import { useStore } from 'store/store'
 import { LiquidContainer } from './SpacesIndex'
 
 export const SpaceHome = () => {
@@ -19,6 +20,24 @@ export const SpaceHome = () => {
         () => space?.channelGroups.flatMap((g) => g.channels),
         [space?.channelGroups],
     )
+
+    let bookmarkedRoute = useStore((s) =>
+        spaceId?.slug ? s.townRouteBookmarks[spaceId?.slug] : undefined,
+    )
+    // verify the stored route matches the current URL scheme
+    bookmarkedRoute = matchPath(`${PATHS.SPACES}/${space?.id.slug}/*`, bookmarkedRoute ?? '')
+        ? bookmarkedRoute
+        : undefined
+
+    useEffect(() => {
+        // if we have a bookmarked route (e.g. channel or thread), instead of
+        // waiting for the channels to load to guess the first channel, we
+        // assume we have access to the route and optimistically navigate to it.
+        // if the route fails, we'll delete the bookmark and start over
+        if (bookmarkedRoute) {
+            navigate(bookmarkedRoute, { replace: true })
+        }
+    }, [bookmarkedRoute, navigate, space?.isLoadingChannels])
 
     useEffect(() => {
         if (space?.isLoadingChannels) {
@@ -41,7 +60,7 @@ export const SpaceHome = () => {
 
             const timeout = setTimeout(() => {
                 navigate(route, { replace: true })
-            }, 500)
+            }, 1000)
 
             return () => {
                 clearTimeout(timeout)
@@ -76,13 +95,7 @@ export const SpaceHome = () => {
         )
     }
 
-    return (
-        <Container>
-            <Box absoluteFill padding grow overflow="hidden">
-                <TimelineShimmer />
-            </Box>
-        </Container>
-    )
+    return <></>
 }
 
 const Container = (props: { children: React.ReactNode }) => {
