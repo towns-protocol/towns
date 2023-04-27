@@ -272,7 +272,7 @@ describe('SpaceSettings', () => {
             'role-settings-members-user-gated',
         )
         const addButton = await within(userGatedSection).findByRole('button', {
-            name: /add people/gi,
+            name: /add users/gi,
         })
         userEvent.click(addButton)
 

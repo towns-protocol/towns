@@ -51,9 +51,9 @@ export const RoleSettingsMembers = () => {
                 <Divider />
                 <Stack gap data-testid="role-settings-members-user-gated">
                     <Paragraph strong>User gated</Paragraph>
-                    <Paragraph color="gray2">Add current members to this role.</Paragraph>
+                    <Paragraph color="gray2">Add the following users to this role:</Paragraph>
                     <TokenSelector
-                        label="Add people"
+                        label="Add users"
                         data={storeUsers}
                         itemRenderer={(props) => <MemberRenderer {...props} />}
                         onClick={showMemberModal}
