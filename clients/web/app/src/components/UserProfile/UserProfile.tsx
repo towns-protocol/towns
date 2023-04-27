@@ -2,6 +2,7 @@ import { createUserIdFromString, useZionClient } from 'use-zion-client'
 import React, { useEffect, useMemo, useState } from 'react'
 import { useEvent } from 'react-use-event-hook'
 import { toast } from 'react-hot-toast/headless'
+import { motion } from 'framer-motion'
 import { Avatar, Box, Button, ButtonProps, FormRender, Paragraph, Stack, TextField } from '@ui'
 import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
 import { useSetUserBio } from 'hooks/useUserBio'
@@ -13,6 +14,8 @@ import { ButtonTextProps } from 'ui/components/Text/ButtonText'
 import { errorHasInvalidCookieResponseHeader } from 'api/apiClient'
 import { InvalidCookieNotification } from '@components/Notifications/InvalidCookieNotification'
 import { LargeUploadImageTemplate } from '@components/UploadImage/LargeUploadImageTemplate'
+import { vars } from 'ui/styles/vars.css'
+import { transitions } from 'ui/transitions/transitions'
 
 type Props = {
     displayName: string
@@ -127,8 +130,20 @@ export const UserProfile = (props: Props) => {
                         onChange,
                         handleSave,
                     }) => (
-                        <>
-                            <Stack grow horizontal gap="sm" alignItems="start" minHeight="input_md">
+                        <Stack grow padding gap="sm" background="level2" rounded="sm">
+                            <MotionStack
+                                grow
+                                horizontal
+                                gap="sm"
+                                alignItems="start"
+                                minHeight="input_md"
+                                insetTop="xs"
+                                animate={{
+                                    paddingTop: isEditing ? vars.space.sm : ' 0px',
+                                    paddingBottom: isEditing ? vars.space.sm : ' 0px',
+                                }}
+                                transition={transitions.button}
+                            >
                                 {!isEditing ? (
                                     <Box grow gap="sm">
                                         <Box
@@ -193,8 +208,8 @@ export const UserProfile = (props: Props) => {
                                 <Box height="x5" justifyContent="center">
                                     {editMenu}
                                 </Box>
-                            </Stack>
-                        </>
+                            </MotionStack>
+                        </Stack>
                     )}
                 </EditModeContainer>
 
@@ -215,37 +230,39 @@ export const UserProfile = (props: Props) => {
                         handleEdit,
                     }) => {
                         return (
-                            <>
-                                <Box position="topRight">{editMenu}</Box>
-                                <Stack
-                                    gap
-                                    grow
-                                    onClick={canEdit && !isEditing ? handleEdit : undefined}
-                                >
-                                    <Paragraph strong>Bio</Paragraph>
-                                    <Stack gap="sm">
-                                        {!isEditing ? (
-                                            <Paragraph color="gray2">
-                                                {userBio ?? `no biography just yet`}
-                                            </Paragraph>
-                                        ) : (
-                                            <TextArea
-                                                autoFocus
-                                                key={error ? 'errored' : 'not-errored'}
-                                                tone={error ? 'error' : undefined}
-                                                paddingY="md"
-                                                background="level2"
-                                                defaultValue={value}
-                                                height="100"
-                                                maxLength={160}
-                                                disabled={isSaving}
-                                                onChange={onChange}
-                                            />
-                                        )}
-                                        {errorComponent}
+                            <Stack grow padding gap background="level2" rounded="sm">
+                                <Stack horizontal>
+                                    <Stack
+                                        gap
+                                        grow
+                                        onClick={canEdit && !isEditing ? handleEdit : undefined}
+                                    >
+                                        <Paragraph strong>Bio</Paragraph>
                                     </Stack>
+                                    <Box>{editMenu}</Box>
                                 </Stack>
-                            </>
+                                <Stack gap="sm">
+                                    {!isEditing ? (
+                                        <Paragraph color="gray2">
+                                            {userBio ?? `no biography just yet`}
+                                        </Paragraph>
+                                    ) : (
+                                        <TextArea
+                                            autoFocus
+                                            key={error ? 'errored' : 'not-errored'}
+                                            tone={error ? 'error' : undefined}
+                                            paddingY="md"
+                                            background="level2"
+                                            defaultValue={value}
+                                            height="100"
+                                            maxLength={160}
+                                            disabled={isSaving}
+                                            onChange={onChange}
+                                        />
+                                    )}
+                                    {errorComponent}
+                                </Stack>
+                            </Stack>
                         )
                     }}
                 </EditModeContainer>
@@ -406,3 +423,5 @@ export const TextButton = ({
         </Button>
     )
 }
+
+const MotionStack = motion(Stack)

@@ -57,7 +57,7 @@ enum InputId {
 
 export const SpaceInfoPanel = () => {
     const space = useSpaceData()
-    const { client, chainId } = useZionClient()
+    const { client, chainId, leaveRoom } = useZionClient()
     const channels = useSpaceChannels()
 
     const { data } = useContractSpaceInfo(space?.id?.networkId)
@@ -144,6 +144,20 @@ export const SpaceInfoPanel = () => {
     const onMembersClick = useEvent(() => {
         navigate(`/${PATHS.SPACES}/${spaceID?.slug}/members/info`)
     })
+
+    const onSettingsClick = useEvent(() => {
+        navigate(`/${PATHS.SPACES}/${spaceID?.slug}/settings`)
+    })
+
+    const onLeaveClick = useCallback(async () => {
+        if (!spaceID) {
+            return
+        }
+        await leaveRoom(spaceID)
+        setTimeout(() => {
+            navigate('/')
+        }, 1000)
+    }, [leaveRoom, navigate, spaceID])
 
     return (
         <Stack height="100%" overflow="hidden">
@@ -403,7 +417,32 @@ export const SpaceInfoPanel = () => {
                             <AllChannelsList onHideBrowseChannels={onHideBrowseChannels} />
                         </ModalContainer>
                     )}
+
+                    {canEdit && (
+                        <Button
+                            icon="settings"
+                            style={{ paddingLeft: vars.space.md }}
+                            color="gray2"
+                            onClick={onSettingsClick}
+                        >
+                            <Stack grow horizontal alignItems="center" gap="sm">
+                                <Paragraph color="default">Settings</Paragraph>
+                            </Stack>
+                        </Button>
+                    )}
+
+                    <Button
+                        icon="logout"
+                        style={{ paddingLeft: vars.space.md }}
+                        color="error"
+                        onClick={onLeaveClick}
+                    >
+                        <Stack grow horizontal alignItems="center" gap="sm">
+                            <Paragraph color="error">Leave {space?.name}</Paragraph>
+                        </Stack>
+                    </Button>
                 </Stack>
+
                 <Stack grow padding paddingBottom="lg" justifyContent="end">
                     <Stack horizontal justifyContent="spaceBetween" alignItems="center">
                         <Paragraph color="gray2" size="sm">
