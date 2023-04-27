@@ -10,6 +10,7 @@ import { LoginButton } from './LoginButton/LoginButton'
 
 export const LoginComponent = () => {
     const {
+        activeWalletAddress,
         loginStatus,
         loginError,
         login,
@@ -27,13 +28,21 @@ export const LoginComponent = () => {
 
     useEffect(() => {
         console.log('LoginComponent wagmi info:', {
+            activeWalletAddress,
             walletStatus,
             error: connectError,
             isLoading: connectLoading,
             pendingConnector,
             loginError,
         })
-    }, [connectError, connectLoading, loginError, pendingConnector, walletStatus])
+    }, [
+        activeWalletAddress,
+        connectError,
+        connectLoading,
+        loginError,
+        pendingConnector,
+        walletStatus,
+    ])
 
     const {
         status,

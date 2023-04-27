@@ -2,6 +2,7 @@ export type { Space, SpaceIdentifier, TransactionContext } from './client/ZionCl
 export { TransactionStatus, SpaceProtocol } from './client/ZionClientTypes'
 
 export { ChannelContextProvider, useChannelContext } from './components/ChannelContextProvider'
+export { CustomInjectedConnector } from './components/CustomInjectedConnector'
 export { QueryProvider } from './components/QueryProvider'
 export * from './components/SpaceContextProvider'
 export { ZionContextProvider, useZionContext, ZionContext } from './components/ZionContextProvider'
@@ -67,7 +68,7 @@ export { Membership, MessageType, RoomVisibility } from './types/zion-types'
 export type { RoomIdentifier } from './types/room-identifier'
 export { makeRoomIdentifier, toRoomIdentifier } from './types/room-identifier'
 export * from './types/timeline-types'
-export { WalletStatus, BlockchainTransactionType } from './types/web3-types'
+export { WalletStatus, BlockchainTransactionType, isNullAddress } from './types/web3-types'
 export type { UserIdentifier } from './types/user-identifier'
 export {
     createUserIdFromEthereumAddress,

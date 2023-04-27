@@ -1,6 +1,7 @@
-import { useCallback, useMemo } from 'react'
 import { WalletStatus, useMatrixCredentials, useWeb3Context, useZionClient } from 'use-zion-client'
 import { useAccount, useConnect } from 'wagmi'
+import { useCallback, useMemo } from 'react'
+
 import { keccak256 } from 'ethers/lib/utils.js'
 import { useAnalytics } from './useAnalytics'
 
@@ -39,9 +40,15 @@ export function useAuth() {
     // reusing useAccount() here to get the wallet status in more directly, maybe that will fix it
     const { status } = useAccount()
 
+    const connector = useMemo(() => {
+        return connectors.length > 0 ? connectors[0] : undefined
+    }, [connectors])
+
     const connect = useCallback(() => {
-        _connect({ connector: connectors[0] })
-    }, [_connect, connectors])
+        if (connector) {
+            _connect({ connector })
+        }
+    }, [_connect, connector])
 
     const login = useCallback(async () => {
         await loginWithWalletToMatrix(loginMsgToSign)

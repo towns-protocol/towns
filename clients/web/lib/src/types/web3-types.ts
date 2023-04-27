@@ -1,6 +1,12 @@
 import { Address, useProvider } from 'wagmi'
 import { RoomIdentifier } from './room-identifier'
 
+export const NULL_ADDRESS: Address = '0x0000000000000000000000000000000000000000'
+
+export function isNullAddress(address: Address | undefined): boolean {
+    return address === undefined || address === NULL_ADDRESS
+}
+
 export enum WalletStatus {
     Connected = 'connected',
     Reconnecting = 'reconnecting',

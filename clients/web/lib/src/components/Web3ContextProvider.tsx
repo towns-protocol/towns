@@ -1,11 +1,12 @@
+import { Address, Chain, WagmiConfig, configureChains, createClient } from 'wagmi'
 import React, { createContext, useContext, useRef } from 'react'
-import { useWeb3 } from '../hooks/Web3Context/useWeb3'
-import { WagmiConfig, createClient, configureChains, Chain, Address } from 'wagmi'
-import { goerli, localhost, foundry, sepolia } from '@wagmi/core/chains'
-import { publicProvider } from 'wagmi/providers/public'
-import { InjectedConnector } from 'wagmi/connectors/injected'
 import { TProvider, WalletStatus } from '../types/web3-types'
+import { foundry, goerli, localhost, sepolia } from '@wagmi/core/chains'
+
+import { CustomInjectedConnector } from './CustomInjectedConnector'
 import { alchemyProvider } from 'wagmi/providers/alchemy'
+import { publicProvider } from 'wagmi/providers/public'
+import { useWeb3 } from '../hooks/Web3Context/useWeb3'
 
 export interface IWeb3Context {
     provider?: TProvider
@@ -54,7 +55,11 @@ export function Web3ContextProvider(props: Props): JSX.Element {
         )
         const client = createClient({
             autoConnect: true,
-            connectors: [new InjectedConnector({ chains })],
+            connectors: [new CustomInjectedConnector({ chains })],
+            // cannot use the default InjectedConnector. Disconnecting the last
+            // connected wallet will kick the user out of the app. This is
+            // because it triggers the disconnected event.
+            //connectors: [new InjectedConnector({ chains })],
             provider,
             webSocketProvider,
         })
