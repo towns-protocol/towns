@@ -1,4 +1,4 @@
-import { IContent, MatrixClient } from 'matrix-js-sdk'
+import { IContent, MatrixClient, MsgType as MatrixMsgType } from 'matrix-js-sdk'
 import truncate from 'lodash/truncate'
 import {
     ImageMessageContent,
@@ -109,8 +109,8 @@ export async function sendMatrixNotice(
     event: NoticeEvent,
 ): Promise<void> {
     const content: IContent = {
-        msgtype: MessageType.Notice,
+        msgtype: MatrixMsgType.Notice,
         ...event,
     }
-    await matrixClient.sendEvent(roomId.networkId, MessageType.Notice, content)
+    await matrixClient.sendEvent(roomId.networkId, MatrixMsgType.Notice, content)
 }

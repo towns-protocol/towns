@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { getIdForMatrixEvent, Membership, Mention, MessageType } from '../../types/zion-types'
+import { getIdForMatrixEvent, Membership, Mention } from '../../types/zion-types'
 import {
     ClientEvent,
     EventStatus,
@@ -15,6 +15,7 @@ import {
     Room as MatrixRoom,
     RoomEvent,
     IContent,
+    MsgType as MatrixMsgType,
 } from 'matrix-js-sdk'
 import { enrichPowerLevels } from '../../client/matrix/PowerLevels'
 import {
@@ -422,7 +423,7 @@ function toZionContent(
             }
         }
 
-        case MessageType.Notice: {
+        case MatrixMsgType.Notice: {
             if (content.kind === ZTEvent.BlockchainTransaction) {
                 return {
                     content: {

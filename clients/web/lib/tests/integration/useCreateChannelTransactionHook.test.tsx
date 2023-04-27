@@ -1,10 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-explicit-any */
 
-import {
-    CreateChannelInfo,
-    MessageType,
-    RoomVisibility,
-} from 'use-zion-client/src/types/zion-types'
+import { CreateChannelInfo, RoomVisibility } from 'use-zion-client/src/types/zion-types'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 
@@ -26,7 +22,7 @@ import { useRoles } from '../../src/hooks/use-roles'
 import { useSpacesFromContract } from '../../src/hooks/use-spaces-from-contract'
 import { useTransactionStore } from '../../src/store/use-transactions-store'
 import { ZTEvent } from '../../src/types/timeline-types'
-import { MatrixEvent, RoomEvent } from 'matrix-js-sdk'
+import { MatrixEvent, MsgType as MatrixMsgType, RoomEvent } from 'matrix-js-sdk'
 import { useZionContext } from '../../src/components/ZionContextProvider'
 
 describe('useCreateChannelTransactionHook', () => {
@@ -99,7 +95,7 @@ describe('useCreateChannelTransactionHook', () => {
                 function onBlockchainTransaction(event: MatrixEvent) {
                     const content = event.getContent()
                     if (
-                        event.getType() === MessageType.Notice &&
+                        event.getType() === MatrixMsgType.Notice &&
                         content.kind === ZTEvent.BlockchainTransaction
                     ) {
                         setNumberOfChannelBlockchainEvents((t) => t + 1)

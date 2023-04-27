@@ -140,13 +140,10 @@ export interface UpdateChannelInfo {
     updatedChannelTopic?: string
 }
 
-/// use to send different types of messages, e.g. text, emoji, image, etc.
-/// currently unsupported: Emote = "m.emote", Notice = "m.notice", File = "m.file", Audio = "m.audio", Location = "m.location", Video = "m.video",
 export enum MessageType {
     Text = 'm.text',
     GM = 'm.gm',
     Image = 'm.Image',
-    Notice = 'm.notice',
 }
 
 export interface ThreadIdOptions {
@@ -190,11 +187,6 @@ export type SendImageMessageOptions = ThreadIdOptions & {
     }
 }
 
-export type SendNoticeOptions = ThreadIdOptions & {
-    messageType: MessageType.Notice
-    eventType: string
-}
-
 export interface SendZionReactionOptions {
     targetEventId: string
 }
@@ -207,7 +199,6 @@ export type SendMessageOptionsBase =
     | SendTextMessageOptions
     | SendGMOptions
     | SendImageMessageOptions
-    | SendNoticeOptions
 
 export type SendMessageOptions = SendMessageOptionsBase & SpaceIdOptions
 

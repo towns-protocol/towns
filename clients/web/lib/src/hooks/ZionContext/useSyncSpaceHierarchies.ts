@@ -4,9 +4,10 @@ import {
     RoomEvent,
     Room as MatrixRoom,
     IRoomTimelineData,
-    EventType,
+    EventType as MatrixEventType,
     Room,
     MatrixClient,
+    MsgType as MatrixMsgType,
 } from 'matrix-js-sdk'
 import { useEffect, useRef, useState } from 'react'
 import { toZionSpaceChild } from '../../store/use-matrix-store'
@@ -136,7 +137,7 @@ export function useSyncSpaceHierarchies(
             // TODO:  ZTEvent.BlockchainTransaction is too broad of an identifier, this is only fired for a create channel transaction. Need to update the event types to be ChannelTransaction, SpaceTransaction, etc.
             // - a ZTEvent.BlockchainTransaction is fired when a blockchain transaction stored in user's local storage resolves - it's not a Matrix Event
             // - we should sync again when this happens
-            if (eventType === EventType.SpaceChild || eventType === MessageType.Notice) {
+            if (eventType === MatrixEventType.SpaceChild || eventType === MatrixMsgType.Notice) {
                 queryClient.removeQueries({
                     queryKey: [QueryKeyChannels.SyncEntitledChannels, eventRoomId],
                 })
@@ -196,7 +197,7 @@ export function useSyncSpaceHierarchies(
 
 function getParentSpaceId(room: MatrixRoom, spaceIds: RoomIdentifier[]) {
     const parentEvents = room.currentState
-        .getStateEvents(EventType.SpaceParent)
+        .getStateEvents(MatrixEventType.SpaceParent)
         .map((e) => e.getStateKey())
 
     const parentSpaceId = parentEvents?.[0]
