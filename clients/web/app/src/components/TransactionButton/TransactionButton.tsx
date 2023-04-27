@@ -88,7 +88,7 @@ export const TransactionButton = (props: Props) => {
                             disabled={disabled || transactionState != TransactionUIState.None}
                             style={{
                                 opacity:
-                                    transactionState != TransactionUIState.None
+                                    transactionState !== TransactionUIState.None
                                         ? 1
                                         : disabled
                                         ? 0.5

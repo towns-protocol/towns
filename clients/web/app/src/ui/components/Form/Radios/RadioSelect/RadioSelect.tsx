@@ -1,5 +1,5 @@
 import { clsx } from 'clsx'
-import React, { FormEvent, SelectHTMLAttributes, useRef } from 'react'
+import React, { ChangeEvent, SelectHTMLAttributes, useRef } from 'react'
 import { RefCallBack } from 'react-hook-form'
 import { Text } from 'ui/components/Text/Text'
 import { Grid } from 'ui/components/Grid/Grid'
@@ -16,8 +16,7 @@ type Props = {
     render?: (value: string, selected: boolean) => JSX.Element
     options: ({ label: string; value: string } | string)[]
     columns?: number | string
-    onChange?: (e: FormEvent<HTMLSelectElement>) => void
-    onValueChange?: (value: string) => void
+    onChange?: (e: ChangeEvent<HTMLSelectElement>) => void
     applyChildProps?: () => {
         ref: RefCallBack
     } & Omit<SelectHTMLAttributes<HTMLSelectElement>, 'color'>
