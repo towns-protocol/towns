@@ -18,7 +18,13 @@ import { clsx } from 'clsx'
 import isEqual from 'lodash/isEqual'
 import { ErrorBoundary } from '@sentry/react'
 import React, { useCallback, useMemo, useState } from 'react'
-import { Channel, Mention, RoomMember, SendTextMessageOptions } from 'use-zion-client'
+import {
+    Channel,
+    Mention,
+    RoomMember,
+    SendImageMessageOptions,
+    SendTextMessageOptions,
+} from 'use-zion-client'
 import * as fieldStyles from 'ui/components/_internal/Field/Field.css'
 import { notUndefined } from 'ui/utils/utils'
 import { useStore } from 'store/store'
@@ -49,6 +55,7 @@ import { RememberInputPlugin } from './plugins/RememberInputPlugin'
 
 type Props = {
     onSend?: (value: string, options: SendTextMessageOptions | undefined) => void
+    onSendImage?: (imageTitle: string, options: SendImageMessageOptions) => Promise<void>
     onCancel?: () => void
     autoFocus?: boolean
     editable?: boolean
@@ -60,6 +67,7 @@ type Props = {
     tabIndex?: number
     storageId?: string
     threadId?: string // only used for giphy plugin
+    threadPreview?: string
     channels: Channel[]
     members: RoomMember[]
 } & Pick<BoxProps, 'background'>
@@ -233,8 +241,9 @@ const RichTextEditorWithoutBoundary = (props: Props) => {
                 focused={focused}
                 editing={isEditing}
                 background={props.background}
-                threadId={props.threadId}
                 attemptingToSend={isAttemptingSend}
+                threadId={props.threadId}
+                threadPreview={props.threadPreview}
             >
                 <RichTextPlugin
                     contentEditable={

@@ -149,8 +149,12 @@ export enum MessageType {
     Notice = 'm.notice',
 }
 
-export interface SendTextMessageOptions {
+export interface ThreadIdOptions {
     threadId?: string
+    threadPreview?: string
+}
+
+export type SendTextMessageOptions = ThreadIdOptions & {
     messageType?: MessageType.Text
     mentions?: Mention[]
 }
@@ -160,8 +164,7 @@ export interface Mention {
     userId?: string
 }
 
-interface SendGMOptions {
-    threadId?: string
+export type SendGMOptions = ThreadIdOptions & {
     messageType: MessageType.GM
 }
 
@@ -169,8 +172,7 @@ interface SendGMOptions {
 // and missing key `url` props so rolling our own
 // note aellis 04/2023 we updated the format
 // tests in app/timelineItem.test.tsx ensure that we can render both types
-export interface SendImageMessageOptions {
-    threadId?: string
+export type SendImageMessageOptions = ThreadIdOptions & {
     messageType: MessageType.Image
     info: {
         url: string
@@ -188,10 +190,9 @@ export interface SendImageMessageOptions {
     }
 }
 
-export interface SendNoticeOptions {
+export type SendNoticeOptions = ThreadIdOptions & {
     messageType: MessageType.Notice
     eventType: string
-    threadId?: string
 }
 
 export interface SendZionReactionOptions {

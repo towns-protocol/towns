@@ -135,6 +135,7 @@ export interface RoomMemberEvent {
 export interface RoomMessageEvent {
     kind: ZTEvent.RoomMessage
     inReplyTo?: string
+    threadPreview?: string
     body: string
     msgType: string
     mentions: Mention[]

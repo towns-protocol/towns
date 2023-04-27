@@ -1,12 +1,10 @@
-import React, { useCallback } from 'react'
+import React, { ComponentProps, useCallback } from 'react'
 import { IconButton } from '@ui'
 import { CardOpener } from 'ui/components/Overlay/CardOpener'
 import { GiphyPicker } from './GiphyPicker'
 import { GiphySearchContextProvider, useGiphySearchContext } from './GiphySearchContext'
 
-type Props = {
-    threadId?: string
-}
+type Props = ComponentProps<typeof GiphyPicker>
 
 // TODO: not sure why this causes whole Timeline to rerender
 // const LazyGiphy = React.lazy(() => import('./GiphyPicker'))
@@ -27,11 +25,7 @@ export const GiphyContainer = (props: Props) => {
     }, [setInputValue])
 
     return (
-        <CardOpener
-            placement="vertical"
-            render={<GiphyPicker threadId={props.threadId} />}
-            onClose={onCardClose}
-        >
+        <CardOpener placement="vertical" render={<GiphyPicker {...props} />} onClose={onCardClose}>
             {({ triggerProps: { onClick: clickCb, ...rest } }) => (
                 <IconButton
                     icon="gif"
@@ -47,7 +41,7 @@ export const GiphyContainer = (props: Props) => {
 export const GiphyEntry = (props: Props) => {
     return (
         <GiphySearchContextProvider>
-            <GiphyContainer threadId={props.threadId} />
+            <GiphyContainer {...props} />
         </GiphySearchContextProvider>
     )
 }

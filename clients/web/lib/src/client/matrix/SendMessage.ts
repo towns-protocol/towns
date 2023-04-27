@@ -1,4 +1,5 @@
 import { IContent, MatrixClient } from 'matrix-js-sdk'
+import truncate from 'lodash/truncate'
 import {
     ImageMessageContent,
     MessageContent,
@@ -90,6 +91,7 @@ export async function sendMatrixMessage(
             'm.room.message',
             {
                 ...content,
+                threadPreview: truncate(options.threadPreview, { length: 128 }),
                 'm.relates_to': {
                     'm.in_reply_to': {
                         event_id: options.threadId,

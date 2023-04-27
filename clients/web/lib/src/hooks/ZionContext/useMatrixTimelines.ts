@@ -367,6 +367,7 @@ function toZionContent(
                 content: {
                     kind: ZTEvent.RoomMessage,
                     inReplyTo: getReplyEventId(event),
+                    threadPreview: getThreadPreview(event),
                     body: content.body as string,
                     msgType: content.msgtype,
                     replacedMsgId: getReplacedMessageId(event),
@@ -479,4 +480,9 @@ function getReplyEventId(event: MatrixEvent): string | undefined {
     }
     const mRelatesTo = event.getContent()['m.relates_to'] || event.getWireContent()['m.relates_to']
     return mRelatesTo?.['m.in_reply_to']?.event_id
+}
+
+function getThreadPreview(event: MatrixEvent): string | undefined {
+    const content = event.getContent()
+    return content['threadPreview'] as string | undefined
 }

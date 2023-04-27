@@ -6,7 +6,7 @@ import {
     COMMAND_PRIORITY_LOW,
     SELECTION_CHANGE_COMMAND,
 } from 'lexical'
-import React, { useCallback, useContext, useEffect, useRef, useState } from 'react'
+import React, { ComponentProps, useCallback, useContext, useEffect, useRef, useState } from 'react'
 import { useEvent } from 'react-use-event-hook'
 import { TOGGLE_LINK_COMMAND } from '@lexical/link'
 import { createPortal } from 'react-dom'
@@ -26,9 +26,8 @@ type Props = {
     focused: boolean
     readOnly?: boolean
     background?: BoxProps['background']
-    threadId?: string
     attemptingToSend?: boolean
-}
+} & ComponentProps<typeof GiphyEntry>
 
 export const RichTextUI = (props: Props) => {
     const { background = 'level2' } = props
@@ -151,7 +150,9 @@ export const RichTextUI = (props: Props) => {
             <Stack horizontal alignItems="center" gap="lg" paddingX="md">
                 <Box grow>{props.children}</Box>
                 <Stack horizontal gap="xs" color="gray2" alignItems="start" paddingY="sm">
-                    {!props.editing ? <GiphyEntry threadId={props.threadId} /> : null}
+                    {!props.editing ? (
+                        <GiphyEntry threadId={props.threadId} threadPreview={props.threadPreview} />
+                    ) : null}
                     <EmojiPickerButton onSelectEmoji={onSelectEmoji} />
                 </Stack>
                 {rootLayerRef?.current &&

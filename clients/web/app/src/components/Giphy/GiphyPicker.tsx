@@ -1,7 +1,7 @@
 import { IGif } from '@giphy/js-types'
 import { Grid } from '@giphy/react-components'
 import React from 'react'
-import { ImageMessageContent, MessageType, useChannelId, useZionClient } from 'use-zion-client'
+import { MessageType, SendImageMessageOptions, useChannelId, useZionClient } from 'use-zion-client'
 import { Spinner } from '@components/Spinner'
 import { Box } from '@ui'
 import { useStore } from 'store/store'
@@ -25,11 +25,12 @@ const Loader = () => {
 
 type Props = {
     threadId?: string
+    threadPreview?: string
 }
 
 export const GiphyPicker = (props: Props) => {
     const { theme } = useStore()
-    const { threadId } = props
+    const { threadId, threadPreview } = props
 
     const { fetchGifs, query, isFetching } = useGiphySearchContext()
     const { sendMessage } = useZionClient()
@@ -65,8 +66,9 @@ export const GiphyPicker = (props: Props) => {
         // slack serves the downsized image so that should suffice for us too
         const downsized = gifData.images.downsized
         const ogImage = gifData.images.original
-        const messageContent: ImageMessageContent = {
+        const messageContent = {
             threadId: isInReplyThread ? threadId : undefined,
+            threadPreview: threadPreview,
             messageType: MessageType.Image,
             info: {
                 url: ogImage.url,
@@ -82,7 +84,7 @@ export const GiphyPicker = (props: Props) => {
                 size: checkSize(downsized.size),
                 mimetype: 'image/gif',
             },
-        }
+        } satisfies SendImageMessageOptions
         sendMessage(channelId, gifData.title, messageContent)
     }
 

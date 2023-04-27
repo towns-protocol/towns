@@ -26,7 +26,7 @@ export const MessageThread = (props: {
     const { parent, messages } = useTimelineThread(channelId, parentId)
     const parentMessage = parent?.parentEvent
 
-    const { sendReply } = useSendReply(parentId)
+    const { sendReply } = useSendReply(parentId, parentMessage?.fallbackContent)
 
     const onSend = (value: string, options: SendMessageOptions | undefined) => {
         sendReply(value, channelId, options)
@@ -91,6 +91,7 @@ export const MessageThread = (props: {
                             <RichTextEditor
                                 editable={!!isChannelWritable}
                                 threadId={parentId}
+                                threadPreview={parentMessage?.fallbackContent}
                                 storageId={`${channelId.networkId}-${parentId}`}
                                 autoFocus={false}
                                 placeholder="Reply..."
