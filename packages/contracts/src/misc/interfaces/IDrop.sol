@@ -4,14 +4,13 @@ pragma solidity 0.8.19;
 // interfaces
 import {IClaimConditionMultiPhase} from "./IClaimConditionMultiPhase.sol";
 
-// libraries
-
-// contracts
-
-/// @title Drop interface
-/// @notice Distribution mechanism for a token
-/// @dev An authorized account can create a series of claim conditions, ordered by their `startTimestamp`.
-/// A condition defines a set of criteria that must be met for a claim to be valid. They can be overwritten or added to by the authorized account. There can only be one active claim condition at a time.
+/**
+ * @title Drop interface
+ * @notice Distribution mechanism for a token
+ * @dev An authorized account can create a series of claim conditions, ordered by their `startTimestamp`.
+ *    - A condition defines a set of criteria that must be met for a claim to be valid.
+ *    - They can be overwritten or added to by the authorized account. There can only be one active claim condition at a time.
+ */
 interface IDrop is IClaimConditionMultiPhase {
   /// @notice A struct representing an allowlist proof
   /// @param proof The proof data for the allowlist

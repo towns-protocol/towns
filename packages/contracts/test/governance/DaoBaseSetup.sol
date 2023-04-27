@@ -134,6 +134,7 @@ contract DaoBaseSetup is TestUtils {
     Dao(dao).changeVaultStatus(address(memberVault), true);
 
     // fund treasury with towns and ETH
+    // Towns(towns).paused
     Towns(towns).mintTo(address(treasury), 1000000 ether);
 
     // dao ownership

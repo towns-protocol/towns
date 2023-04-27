@@ -12,7 +12,7 @@ import {MultiCaller} from "contracts/src/misc/MultiCaller.sol";
  *  @title ERC20Base
  *  @author Towns
  *  @notice This contract is used to create a base ERC20 token.
- *  It includes the following additions to standard ERC20 logic:
+ *  It includes the following additions to standard OpenZeppelin ERC20 logic:
  *
  *      - Ability to mint & burn tokens via the provided `mint` & `burn` functions.
  *
