@@ -40,13 +40,17 @@ func FormatEventsToJson(events []*protocol.Envelope) string {
 	sb := strings.Builder{}
 	sb.WriteString("[")
 	for idx, event := range events {
-		parsedEvent, _ := ParseEvent(event)
-		sb.WriteString("{ \"envelope\": ")
+		parsedEvent, err := ParseEvent(event)
+		if err == nil {
+			sb.WriteString("{ \"envelope\": ")
 
-		sb.WriteString(protojson.Format(parsedEvent.Envelope))
-		sb.WriteString(", \"event\": ")
-		sb.WriteString(protojson.Format(parsedEvent.Event))
-		sb.WriteString(" }")
+			sb.WriteString(protojson.Format(parsedEvent.Envelope))
+			sb.WriteString(", \"event\": ")
+			sb.WriteString(protojson.Format(parsedEvent.Event))
+			sb.WriteString(" }")
+		} else {
+			sb.WriteString("{ \"error\": \"" + err.Error() + "\" }")
+		}
 		if idx < len(events)-1 {
 			sb.WriteString(",")
 		}
