@@ -45,7 +45,11 @@ export function editMessageContent(
     previousContent: MessageContent,
     options: SendMessageOptions,
 ): MessageContent {
-    const content = { ...previousContent, body: message }
+    const content = {
+        ...previousContent,
+        body: message,
+        msgtype: options.messageType ?? MessageType.Text,
+    }
     switch (options.messageType) {
         case MessageType.Image:
             return {
