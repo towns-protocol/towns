@@ -258,7 +258,7 @@ jobs:
               with:
                   name: casablanca-node-log
                   path: |
-                      casablanca/node/dev.log
+                      casablanca/node/logs/dev.log
 
             # If CI failed, we send a slack notification
             - name: Slack notification

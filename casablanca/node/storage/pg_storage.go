@@ -54,7 +54,13 @@ var (
 func NewPGEventStore(ctx context.Context, database_url string, clean bool) (*PGEventStore, error) {
 	log := infra.GetLogger(ctx)
 
-	pool, err := pgxpool.New(ctx, database_url)
+	pool_conf, err := pgxpool.ParseConfig(database_url)
+	if err != nil {
+		return nil, err
+	}
+	pool_conf.ConnConfig.DefaultQueryExecMode = pgx.QueryExecModeSimpleProtocol
+
+	pool, err := pgxpool.NewWithConfig(ctx, pool_conf)
 
 	if err != nil {
 		return nil, err
