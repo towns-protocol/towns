@@ -1,3 +1,6 @@
+/**
+ * @group casablanca
+ */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import {
@@ -12,6 +15,7 @@ import {
     makeUniqueName,
     registerAndStartClients,
     registerAndStartClient,
+    createTestChannelWithSpaceRoles,
 } from './helpers/TestUtils'
 
 import { Permission } from '../../src/client/web3/ContractTypes'
@@ -27,7 +31,7 @@ describe('messageTypes', () => {
         // bob needs funds to create a space
         await bob.fundWallet()
         // bob creates a public room
-        const roomId = (await createTestSpaceWithZionMemberRole(
+        const spaceId = (await createTestSpaceWithZionMemberRole(
             bob,
             [Permission.Read, Permission.Write],
             [],
@@ -36,17 +40,25 @@ describe('messageTypes', () => {
                 visibility: RoomVisibility.Public,
             },
         )) as RoomIdentifier
+        // create a channel
+        const channelId = (await createTestChannelWithSpaceRoles(bob, {
+            name: 'bobs channel',
+            parentSpaceId: spaceId,
+            visibility: RoomVisibility.Public,
+            roleIds: [],
+        }))!
+
         // alice joins the room
-        await alice.joinRoom(roomId)
+        await alice.joinRoom(channelId)
         // alice sends a gm message
-        await alice.sendMessage(roomId, 'GM', {
+        await alice.sendMessage(channelId, 'GM', {
             messageType: MessageType.GM,
         })
         // bob should receive the message
-        await waitFor(() => expect(bob.getMessages(roomId)).toContain('GM'))
+        await waitFor(() => expect(bob.getMessages(channelId)).toContain('GM'))
         expect(
             bob
-                .getEvents_TypedRoomMessage(roomId)
+                .getEvents_TypedRoomMessage(channelId)
                 .find((event) => event.content.msgType === MessageType.GM),
         ).toBeDefined()
     }) // end test
@@ -76,7 +88,7 @@ describe('messageTypes', () => {
         // bob needs funds to create a space
         await bob.fundWallet()
         // bob creates a public room
-        const roomId = (await createTestSpaceWithZionMemberRole(
+        const spaceId = (await createTestSpaceWithZionMemberRole(
             bob,
             [Permission.Read, Permission.Write],
             [],
@@ -85,15 +97,23 @@ describe('messageTypes', () => {
                 visibility: RoomVisibility.Public,
             },
         )) as RoomIdentifier
+        // create a channel
+        const channelId = (await createTestChannelWithSpaceRoles(bob, {
+            name: 'bobs channel',
+            parentSpaceId: spaceId,
+            visibility: RoomVisibility.Public,
+            roleIds: [],
+        }))!
+
         // alice joins the room
-        await alice.joinRoom(roomId)
+        await alice.joinRoom(channelId)
         // alice sends a image message
-        await alice.sendMessage(roomId, 'what.jpg', IMAGE_MSG_CONTENT)
+        await alice.sendMessage(channelId, 'what.jpg', IMAGE_MSG_CONTENT)
 
         await waitFor(() => {
-            expect(bob.getMessages(roomId)).toContain('what.jpg')
+            expect(bob.getMessages(channelId)).toContain('what.jpg')
             const imageMessage = bob
-                .getEvents_TypedRoomMessage(roomId)
+                .getEvents_TypedRoomMessage(channelId)
                 .find((event) => event.content?.msgType === MessageType.Image)
 
             expect(imageMessage).toBeDefined()

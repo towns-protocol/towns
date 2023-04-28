@@ -1,3 +1,10 @@
+/**
+ * sendReaction.test.ts
+ *
+ * // https://www.npmjs.com/package/jest-runner-groups
+ * @group casablanca
+ *
+ */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { waitFor } from '@testing-library/dom'
@@ -39,7 +46,6 @@ describe('sendReaction', () => {
         console.log("bob's spaceId", { spaceId, channelId })
 
         await alice.joinRoom(channelId)
-        expect(alice.matrixClient?.isRoomEncrypted(channelId.networkId)).toEqual(true)
 
         // bob sends a message to the room
         await bob.sendMessage(channelId, 'Hello, world from Bob!')

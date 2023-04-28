@@ -48,6 +48,7 @@ export const RegisterWallet = () => {
     }, [registerWalletWithCasablanca, registerWalletWithMatrix, walletStatus])
     return (
         <>
+            <div data-testid="primaryProtocol">{getPrimaryProtocol()}</div>
             <div data-testid="isConnected">{isConnected.toString()}</div>
             <div data-testid="registeredWallet">{String(registeredWallet)}</div>
             <div data-testid="userId">{userId}</div>
@@ -83,6 +84,7 @@ export const LoginWithWallet = () => {
     }, [loginWithWalletToCasablanca, loginWithWalletToMatrix, walletStatus])
     return (
         <>
+            <div data-testid="primaryProtocol">{getPrimaryProtocol()}</div>
             <div data-testid="isConnected">{isConnected.toString()}</div>
             <div data-testid="walletStatus">{walletStatus}</div>
             <div data-testid="loginStatus">{loginStatus}</div>
@@ -125,6 +127,7 @@ export const LoginWithAuth = (props: LoginWithAuthProps) => {
     }, [walletStatus])
     return (
         <>
+            <div data-testid="primaryProtocol">{getPrimaryProtocol()}</div>
             <div data-testid="isConnected">{isConnected.toString()}</div>
             <div data-testid="walletStatus">{walletStatus}</div>
             <div data-testid="loginStatus">{loginStatus}</div>

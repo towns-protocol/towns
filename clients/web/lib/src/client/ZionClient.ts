@@ -29,12 +29,14 @@ import {
     CreateChannelInfo,
     CreateSpaceInfo,
     Membership,
+    MessageType,
     PowerLevel,
     PowerLevels,
     Room,
     RoomMember,
     SendMessageOptions,
     SendTextMessageOptions,
+    ThreadIdOptions,
     UpdateChannelInfo,
     User,
 } from '../types/zion-types'
@@ -44,7 +46,12 @@ import {
     isUserStreamId as isCasablancaUserStreamId,
 } from '@towns/sdk'
 
-import { FullyReadMarker, NoticeEvent, RoomMessageEvent, ZTEvent } from '../types/timeline-types'
+import {
+    BlockchainTransactionEvent,
+    FullyReadMarker,
+    RoomMessageEvent,
+    ZTEvent,
+} from '../types/timeline-types'
 import { ISpaceDapp } from './web3/ISpaceDapp'
 import { Permission } from './web3/ContractTypes'
 import { RoleIdentifier } from '../types/web3-types'
@@ -68,7 +75,6 @@ import { staticAssertNever } from '../utils/zion-utils'
 import { syncMatrixSpace } from './matrix/SyncSpace'
 import { toZionRoom, toZionUser } from '../store/use-matrix-store'
 import { toZionRoomFromStream } from './casablanca/CasablancaUtils'
-import { sendCsbMessage, sendCsbNotice } from './casablanca/SendMessage'
 import { toUtf8String } from 'ethers/lib/utils.js'
 import {
     MatrixDecryptionExtension,
@@ -1310,35 +1316,84 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
                 await sendMatrixMessage(this.matrixClient, roomId, message, options)
 
                 this._eventHandlers?.onSendMessage?.(roomId, message, options)
-                return
+                break
             case SpaceProtocol.Casablanca:
-                if (!this.casablancaClient) {
-                    throw new Error('Casablanca client not initialized')
+                {
+                    if (!this.casablancaClient) {
+                        throw new Error('Casablanca client not initialized')
+                    }
+                    switch (options?.messageType) {
+                        case undefined:
+                        case MessageType.Text:
+                            {
+                                await this.casablancaClient.sendChannelMessage_Text(
+                                    roomId.networkId,
+                                    {
+                                        threadId: options?.threadId,
+                                        threadPreview: options?.threadPreview,
+                                        content: {
+                                            body: message,
+                                            mentions: options?.mentions ?? [],
+                                        },
+                                    },
+                                )
+                            }
+                            break
+                        case MessageType.Image:
+                            await this.casablancaClient.sendChannelMessage_Image(roomId.networkId, {
+                                threadId: options?.threadId,
+                                threadPreview: options?.threadPreview,
+                                content: {
+                                    title: message,
+                                    info: options?.info,
+                                    thumbnail: options?.thumbnail,
+                                },
+                            })
+                            break
+                        case MessageType.GM:
+                            await this.casablancaClient.sendChannelMessage_GM(roomId.networkId, {
+                                threadId: options?.threadId,
+                                threadPreview: options?.threadPreview,
+                                content: {
+                                    typeUrl: message,
+                                },
+                            })
+                            break
+                        default:
+                            staticAssertNever(options)
+                    }
                 }
-                return await sendCsbMessage(
-                    this.casablancaClient,
-                    ZTEvent.RoomMessage,
-                    roomId,
-                    message,
-                    options,
-                )
+                break
             default:
                 staticAssertNever(roomId)
         }
     }
 
-    public async sendNotice(roomId: RoomIdentifier, event: NoticeEvent) {
+    public async sendBlockTxn(
+        roomId: RoomIdentifier,
+        txn: BlockchainTransactionEvent,
+        threadIdOptions?: ThreadIdOptions,
+    ) {
         switch (roomId.protocol) {
             case SpaceProtocol.Matrix:
                 if (!this.matrixClient) {
                     throw new Error('matrix client is undefined')
                 }
-                return await sendMatrixNotice(this.matrixClient, roomId, event)
+                await sendMatrixNotice(this.matrixClient, roomId, txn)
+                break
             case SpaceProtocol.Casablanca:
                 if (!this.casablancaClient) {
                     throw new Error('Casablanca client not initialized')
                 }
-                return await sendCsbNotice(this.casablancaClient, roomId, event)
+
+                await this.casablancaClient.sendChannelMessage_BlockTxn(roomId.networkId, {
+                    ...threadIdOptions,
+                    content: {
+                        type: txn.content.type,
+                        hash: txn.content.hash,
+                    },
+                })
+                break
             default:
                 staticAssertNever(roomId)
         }
@@ -1376,14 +1431,10 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
                 if (!this.casablancaClient) {
                     throw new Error('Casablanca client not initialized')
                 }
-                await sendCsbMessage(
-                    this.casablancaClient,
-                    ZTEvent.Reaction,
-                    roomId,
+                await this.casablancaClient.sendChannelMessage_Reaction(roomId.networkId, {
                     reaction,
-                    undefined,
-                    { targetEventId: eventId },
-                )
+                    refEventId: eventId,
+                })
                 console.log('sendReaction')
                 break
             default:
@@ -1455,14 +1506,17 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
                 if (!this.casablancaClient) {
                     throw new Error('casablanca client is undefined')
                 }
-                return await sendCsbMessage(
-                    this.casablancaClient,
-                    ZTEvent.RoomMessage,
-                    roomId,
-                    message,
-                    options,
-                    undefined,
-                    { originalEventId: eventId },
+                return await this.casablancaClient.sendChannelMessage_Edit_Text(
+                    roomId.networkId,
+                    eventId,
+                    {
+                        threadId: originalEventContent.inReplyTo,
+                        threadPreview: originalEventContent.threadPreview,
+                        content: {
+                            body: message,
+                            mentions: options?.mentions ?? [],
+                        },
+                    },
                 )
             default:
                 staticAssertNever(roomId)
@@ -1491,7 +1545,14 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
                 }
                 break
             case SpaceProtocol.Casablanca:
-                throw new Error('not implemented')
+                if (!this.casablancaClient) {
+                    throw new Error('casablanca client is undefined')
+                }
+                await this.casablancaClient.sendChannelMessage_Redaction(roomId.networkId, {
+                    refEventId: eventId,
+                    reason,
+                })
+                break
             default:
                 staticAssertNever(roomId)
         }

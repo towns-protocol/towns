@@ -582,6 +582,14 @@ function getMessageSenderId(event: TimelineEvent): string | undefined {
     return event.sender.id
 }
 
+export function getReplacedId(content: TimelineEvent_OneOf | undefined): string | undefined {
+    return content?.kind === ZTEvent.RoomMessage ? content.replacedMsgId : undefined
+}
+
+export function getRedactsId(content: TimelineEvent_OneOf | undefined): string | undefined {
+    return content?.kind === ZTEvent.RoomRedaction ? content.inReplyTo : undefined
+}
+
 export function getThreadParentId(content: TimelineEvent_OneOf | undefined): string | undefined {
     return content?.kind === ZTEvent.RoomMessage ? content.inReplyTo : undefined
 }

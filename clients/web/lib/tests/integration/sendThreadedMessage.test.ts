@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 /**
- * @group csb_TodoReenable
+ * @group casablanca
  */
 import {
     createTestChannelWithSpaceRoles,

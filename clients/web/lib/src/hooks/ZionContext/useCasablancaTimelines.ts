@@ -1,22 +1,27 @@
 import { Client as CasablancaClient, ParsedEvent } from '@towns/sdk'
-import { StreamKind, MembershipOp } from '@towns/proto'
+import { StreamKind, MembershipOp, ChannelMessage, ChannelMessage_Post } from '@towns/proto'
 import { useEffect } from 'react'
-import { Membership, Mention } from '../../types/zion-types'
+import { Membership, MessageType } from '../../types/zion-types'
 import {
     getIsMentioned,
     getReactionParentId,
+    getRedactsId,
+    getReplacedId,
     getThreadParentId,
     useTimelineStore,
 } from '../../store/use-timeline-store'
 import {
+    BlockchainTransactionEvent,
     getFallbackContent,
     ReactionEvent,
     RoomMessageEvent,
+    RoomRedactionEvent,
     TimelineEvent,
     TimelineEvent_OneOf,
     ZTEvent,
 } from '../../types/timeline-types'
-import { staticAssertNever } from '../../utils/zion-utils'
+import { BlockchainTransactionType } from 'types/web3-types'
+import { Address } from 'wagmi'
 
 export function useCasablancaTimelines(casablancaClient: CasablancaClient | undefined) {
     const setState = useTimelineStore((s) => s.setState)
@@ -28,6 +33,21 @@ export function useCasablancaTimelines(casablancaClient: CasablancaClient | unde
 
         const streamIds = new Set<string>()
 
+        const onStreamEvents = (streamId: string, timelineEvents: TimelineEvent[]) => {
+            timelineEvents.forEach((event) => {
+                const replacedEventId = getReplacedId(event.content)
+                const redactsEventId = getRedactsId(event.content)
+                if (redactsEventId) {
+                    setState.removeEvent(streamId, redactsEventId)
+                    setState.appendEvent(userId, streamId, event)
+                } else if (replacedEventId) {
+                    setState.replaceEvent(userId, streamId, replacedEventId, event)
+                } else {
+                    setState.appendEvent(userId, streamId, event)
+                }
+            })
+        }
+
         const onStreamInitialized = (
             streamId: string,
             kind: StreamKind,
@@ -35,18 +55,17 @@ export function useCasablancaTimelines(casablancaClient: CasablancaClient | unde
         ) => {
             if (kind === StreamKind.SK_CHANNEL || kind === StreamKind.SK_SPACE) {
                 streamIds.add(streamId)
-                const timelineEvents = messages.map((message) => toEvent(streamId, message, userId))
-                setState.initializeRoom(userId, streamId, timelineEvents)
+                const timelineEvents = messages.map((message) => toEvent(message, userId))
+                setState.initializeRoom(userId, streamId, [])
+                onStreamEvents(streamId, timelineEvents)
             }
         }
 
         const onStreamUpdated = (streamId: string, kind: StreamKind, messages: ParsedEvent[]) => {
             if (kind === StreamKind.SK_CHANNEL || kind === StreamKind.SK_SPACE) {
                 streamIds.add(streamId)
-                const timelineEvents = messages.map((message) => toEvent(streamId, message, userId))
-                timelineEvents.forEach((event) => {
-                    setState.appendEvent(userId, streamId, event)
-                })
+                const timelineEvents = messages.map((message) => toEvent(message, userId))
+                onStreamEvents(streamId, timelineEvents)
             }
         }
 
@@ -60,20 +79,16 @@ export function useCasablancaTimelines(casablancaClient: CasablancaClient | unde
     }, [casablancaClient, setState])
 }
 
-function toEvent(streamId: string, message: ParsedEvent, userId: string): TimelineEvent {
+export function toEvent(message: ParsedEvent, userId: string): TimelineEvent {
     const eventId = message.hashStr
-    const { content, error } = toTownsContent(streamId, eventId, message)
+    const { content, error } = toTownsContent(eventId, message)
     const sender = {
         id: message.creatorUserId,
         displayName: message.creatorUserId, // todo displayName
         avatarUrl: undefined, // todo avatarUrl
     }
     const isSender = sender.id === userId
-    const fbc = `${message.event.payload?.payload.case ?? '??'} ${getFallbackContent(
-        sender.displayName,
-        content,
-        error,
-    )}`
+    const fbc = `${content?.kind ?? '??'} ${getFallbackContent(sender.displayName, content, error)}`
     // console.log("!!!! to event", event.getId(), fbc);
     return {
         eventId: eventId,
@@ -91,7 +106,6 @@ function toEvent(streamId: string, message: ParsedEvent, userId: string): Timeli
 }
 
 function toTownsContent(
-    streamId: string,
     eventId: string,
     message: ParsedEvent,
 ): {
@@ -154,37 +168,45 @@ function toTownsContent(
             }
             // todo type this out in the protobuf
             // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-            const msgEvent = JSON.parse(payload.text)
+            const channelMessage = ChannelMessage.fromJsonString(payload.text)
             // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-            switch (msgEvent.kind) {
-                case ZTEvent.Reaction:
+
+            switch (channelMessage.payload.case) {
+                case 'post':
+                    return (
+                        toEvent_ChannelMessagePost(channelMessage.payload.value) ?? {
+                            error: `${description} unknown message type`,
+                        }
+                    )
+                case 'reaction':
                     return {
                         content: {
                             kind: ZTEvent.Reaction,
                             // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-                            reaction: msgEvent.reaction as string,
+                            reaction: channelMessage.payload.value.reaction,
                             // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-                            targetEventId: msgEvent.targetEventId as string,
+                            targetEventId: channelMessage.payload.value.refEventId,
                         } satisfies ReactionEvent,
                     }
-                case ZTEvent.RoomMessage:
+                case 'redaction':
                     return {
                         content: {
-                            kind: ZTEvent.RoomMessage,
-                            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-                            body: msgEvent.body,
-                            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-                            msgType: msgEvent.msgType,
-                            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-                            inReplyTo: msgEvent.inReplyTo,
-                            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-                            replacedMsgId: msgEvent.replacedMsgId,
-                            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
-                            mentions: msgEvent.mentions as Mention[],
+                            kind: ZTEvent.RoomRedaction,
+                            inReplyTo: channelMessage.payload.value.refEventId,
                             content: {},
-                            wireContent: {},
-                        } satisfies RoomMessageEvent,
+                        } satisfies RoomRedactionEvent,
                     }
+                case 'edit': {
+                    const newPost = channelMessage.payload.value.post
+                    if (!newPost) {
+                        return { error: `${description} no post in edit` }
+                    }
+                    const newContent = toEvent_ChannelMessagePost(
+                        newPost,
+                        channelMessage.payload.value.refEventId,
+                    )
+                    return newContent ?? { error: `${description} no content in edit` }
+                }
             }
             return { error: `${description} unknown message kind` }
         }
@@ -193,14 +215,80 @@ function toTownsContent(
         }
         default: {
             console.error('$$$ onChannelMessage', {
-                streamId,
                 payload: message.event.payload,
             })
-            staticAssertNever(message.event.payload.payload)
             return { error: `${description} unknown payload case` }
         }
     }
 }
+
+function toEvent_ChannelMessagePost(value: ChannelMessage_Post, replacedMsgId?: string) {
+    switch (value.content.case) {
+        case 'text':
+            return {
+                content: {
+                    kind: ZTEvent.RoomMessage,
+                    body: value.content.value.body,
+                    msgType: MessageType.Text,
+                    inReplyTo: value.threadId,
+                    threadPreview: value.threadPreview,
+                    mentions: value.content.value.mentions,
+                    replacedMsgId: replacedMsgId,
+                    content: {},
+                    wireContent: {},
+                } satisfies RoomMessageEvent,
+            }
+        case 'image':
+            return {
+                content: {
+                    kind: ZTEvent.RoomMessage,
+                    body: value.content.value.title,
+                    msgType: MessageType.Image,
+                    inReplyTo: value.threadId,
+                    threadPreview: value.threadPreview,
+                    mentions: [],
+                    replacedMsgId: replacedMsgId,
+                    content: {
+                        info: value.content.value.info,
+                        thumbnail: value.content.value.thumbnail,
+                    },
+                    wireContent: {},
+                } satisfies RoomMessageEvent,
+            }
+
+        case 'blockTxn':
+            return {
+                content: {
+                    kind: ZTEvent.BlockchainTransaction,
+                    inReplyTo: value.threadId,
+                    threadPreview: value.threadPreview,
+                    content: {
+                        hash: value.content.value.hash as Address,
+                        type: value.content.value.type as BlockchainTransactionType,
+                    },
+                } satisfies BlockchainTransactionEvent,
+            }
+        case 'gm':
+            return {
+                content: {
+                    kind: ZTEvent.RoomMessage,
+                    body: value.content.value.typeUrl,
+                    msgType: MessageType.GM,
+                    inReplyTo: value.threadId,
+                    threadPreview: value.threadPreview,
+                    mentions: [],
+                    replacedMsgId: replacedMsgId,
+                    content: {
+                        data: value.content.value.value,
+                    },
+                    wireContent: {},
+                } satisfies RoomMessageEvent,
+            }
+        default:
+            return undefined
+    }
+}
+
 function toMembership(op: MembershipOp): Membership {
     switch (op) {
         case MembershipOp.SO_JOIN:

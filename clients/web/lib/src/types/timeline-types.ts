@@ -241,6 +241,8 @@ export interface FullyReadMarker {
 
 export interface BlockchainTransactionEvent {
     kind: ZTEvent.BlockchainTransaction
+    inReplyTo?: string
+    threadPreview?: string
     content: BlockchainTransaction
 }
 

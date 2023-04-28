@@ -30,8 +30,8 @@ import { createMessageToSign } from '../../../src/hooks/use-matrix-wallet-sign-i
 import { ethers } from 'ethers'
 import { getPrimaryProtocol, makeUniqueName } from './TestUtils'
 import { staticAssertNever } from '../../../src/utils/zion-utils'
-import { toEvent } from '../../../src/hooks/ZionContext/useMatrixTimelines'
-import { toZionEventFromCsbEvent } from '../../../src/client/casablanca/CasablancaUtils'
+import { toEvent as toEventFromMatrixEvent } from '../../../src/hooks/ZionContext/useMatrixTimelines'
+import { toEvent as toEventFromCasablancaEvent } from '../../../src/hooks/ZionContext/useCasablancaTimelines'
 import { newMatrixLoginSession, newMatrixRegisterSession } from '../../../src/hooks/session'
 import { MatrixClient } from 'matrix-js-sdk'
 import { Client as CasablancaClient } from '@towns/sdk'
@@ -432,7 +432,7 @@ export class ZionTestClient extends ZionClient {
                         .getRoom(roomId.networkId)
                         ?.getLiveTimeline()
                         .getEvents()
-                        .map((e) => toEvent(e, userId)) ?? []
+                        .map((e) => toEventFromMatrixEvent(e, userId)) ?? []
                 return events
             }
             case SpaceProtocol.Casablanca: {
@@ -440,8 +440,9 @@ export class ZionTestClient extends ZionClient {
                     throw new Error('casablanca client is undefined')
                 }
                 const stream = this.casablancaClient.stream(roomId.networkId)
+                const userId = this.casablancaClient.userId
                 const events = Array.from(stream?.rollup.events.values() ?? []).map((e) =>
-                    toZionEventFromCsbEvent(e),
+                    toEventFromCasablancaEvent(e, userId),
                 )
                 return events
             }

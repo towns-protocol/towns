@@ -174,14 +174,14 @@ export type SendImageMessageOptions = ThreadIdOptions & {
     info: {
         url: string
         size?: number
-        mimetype?: string
+        mimetype: string
         w?: number
         h?: number
     }
     thumbnail?: {
         url: string
         size?: number
-        mimetype?: string
+        mimetype: string
         w?: number
         h?: number
     }

@@ -53,7 +53,7 @@ async function onSuccessfulTransaction(client: ZionClient, transaction: Blockcha
 
             try {
                 const content: BlockchainTransactionEvent['content'] = transaction
-                await client.sendNotice(makeRoomIdentifier(transaction.data.parentSpaceId), {
+                await client.sendBlockTxn(makeRoomIdentifier(transaction.data.parentSpaceId), {
                     kind: ZTEvent.BlockchainTransaction,
                     content,
                 })
