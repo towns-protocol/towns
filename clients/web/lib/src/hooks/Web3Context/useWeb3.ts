@@ -18,7 +18,9 @@ export function useWeb3(chain?: Chain): IWeb3Context {
     const { address, connector, isConnected, status } = useAccount()
     const { chain: walletChain, chains } = useNetwork()
     const { signMessageAsync } = useSignMessage()
-    const [activeWalletAddress, setActiveWalletAddress] = useState<Address | undefined>(address)
+    const [activeWalletAddressOverride, setActiveWalletAddressOverride] = useState<
+        { address: Address | undefined } | undefined
+    >()
     const [accounts, setAccounts] = useState<Address[]>(address ? [address] : [])
 
     // allowing app to pass in chain allows to load on correct chain per env regardless of user wallet settings
@@ -26,11 +28,6 @@ export function useWeb3(chain?: Chain): IWeb3Context {
     // we still need guards for transactions
     const activeChain = useMemo(() => chain || walletChain, [chain, walletChain])
     const provider = useProvider({ chainId: activeChain?.id })
-
-    // update activeWalletAddress when address changes
-    useEffect(() => {
-        setActiveWalletAddress(address)
-    }, [address])
 
     // hook up accountChanged event handler to the connector
     useEffect(() => {
@@ -45,13 +42,13 @@ export function useWeb3(chain?: Chain): IWeb3Context {
                 activeAccount = data.account
             }
             setAccounts(accounts)
-            setActiveWalletAddress(activeAccount)
+            setActiveWalletAddressOverride({ address: activeAccount })
             console.log('useWeb3', 'onChange', data, accounts)
         }
         const onDisconnect = () => {
             console.log('useWeb3', 'onDisconnect')
             setAccounts([])
-            setActiveWalletAddress(undefined)
+            setActiveWalletAddressOverride({ address: undefined })
         }
 
         if (connector) {
@@ -80,19 +77,22 @@ export function useWeb3(chain?: Chain): IWeb3Context {
     useEffect(() => {
         console.log('use web3', {
             connector,
-            activeWalletAddress,
+            address,
+            activeWalletAddressOverride,
             activeChain,
             chains,
             rpc: activeChain?.rpcUrls,
             def: activeChain?.rpcUrls?.default,
             status,
         })
-    }, [activeChain, activeWalletAddress, chains, connector, status])
+    }, [activeChain, activeWalletAddressOverride, address, chains, connector, status])
 
     return {
         provider,
         sign: sign,
-        activeWalletAddress,
+        activeWalletAddress: activeWalletAddressOverride
+            ? activeWalletAddressOverride.address
+            : address,
         accounts,
         chain: activeChain,
         chains: chains,
