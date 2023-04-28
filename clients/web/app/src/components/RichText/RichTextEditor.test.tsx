@@ -73,6 +73,9 @@ describe('#RichTextEditor mention nodes', () => {
             </Wrapper>,
         )
         expect(screen.getByTestId('mention-node')).toHaveTextContent('@ben')
+        const node = screen.getByTestId('mention-node')
+        expect(node.getAttribute('data-mention-name')).toEqual('@ben')
+        expect(node.getAttribute('data-user-id')).toEqual('1')
     })
 
     test('it should create a mention node even when the user has RegExp characters included', async () => {
@@ -95,6 +98,9 @@ describe('#RichTextEditor mention nodes', () => {
             </Wrapper>,
         )
         expect(screen.getByTestId('mention-node')).toHaveTextContent(name)
+        const node = screen.getByTestId('mention-node')
+        expect(node.getAttribute('data-mention-name')).toEqual(`@${name}`)
+        expect(node.getAttribute('data-user-id')).toEqual('1')
     })
 
     test('it should create a mention instead of markdown', async () => {
@@ -117,5 +123,8 @@ describe('#RichTextEditor mention nodes', () => {
             </Wrapper>,
         )
         expect(screen.getByTestId('mention-node')).toHaveTextContent(name)
+        const node = screen.getByTestId('mention-node')
+        expect(node.getAttribute('data-mention-name')).toEqual(`@${name}`)
+        expect(node.getAttribute('data-user-id')).toEqual('1')
     })
 })

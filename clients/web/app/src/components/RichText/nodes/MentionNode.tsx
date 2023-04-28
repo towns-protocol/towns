@@ -12,13 +12,13 @@ import {
     Spread,
     TextNode,
 } from 'lexical'
-import { Mention } from 'use-zion-client'
 
 import { atoms } from 'ui/styles/atoms.css'
 
 export type SerializedMentionNode = Spread<
     {
         mentionName: string
+        userId: string
         type: 'mention'
         version: 1
     },
@@ -27,9 +27,10 @@ export type SerializedMentionNode = Spread<
 
 function convertMentionElement(domNode: HTMLElement): DOMConversionOutput | null {
     const textContent = domNode.textContent
+    const userId = domNode.getAttribute('data-user-id') ?? ''
 
     if (textContent !== null) {
-        const node = $createMentionNode(textContent, undefined)
+        const node = $createMentionNode(textContent, userId)
         return {
             node,
         }
@@ -40,7 +41,7 @@ function convertMentionElement(domNode: HTMLElement): DOMConversionOutput | null
 
 export class MentionNode extends TextNode {
     __mentionName: string
-    __userId: string | undefined
+    __userId: string
 
     static getType(): string {
         return 'mention'
@@ -51,7 +52,7 @@ export class MentionNode extends TextNode {
     }
 
     static importJSON(serializedNode: SerializedMentionNode): MentionNode {
-        const node = $createMentionNode(serializedNode.mentionName, undefined)
+        const node = $createMentionNode(serializedNode.mentionName, serializedNode.userId)
         node.setTextContent(serializedNode.text)
         node.setFormat(serializedNode.format)
         node.setDetail(serializedNode.detail)
@@ -60,7 +61,7 @@ export class MentionNode extends TextNode {
         return node
     }
 
-    constructor(mentionName: string, userId: string | undefined, key?: NodeKey) {
+    constructor(mentionName: string, userId: string, key?: NodeKey) {
         super(mentionName, key)
         this.__mentionName = mentionName
         this.__userId = userId
@@ -70,7 +71,7 @@ export class MentionNode extends TextNode {
         return this.__mentionName
     }
 
-    getMention(): Mention {
+    getMention(): { displayName: string; userId: string } {
         return {
             displayName: this.__mentionName,
             userId: this.__userId,
@@ -81,6 +82,7 @@ export class MentionNode extends TextNode {
         return {
             ...super.exportJSON(),
             mentionName: this.__mentionName,
+            userId: this.__userId,
             type: 'mention',
             version: 1,
         }
@@ -99,12 +101,18 @@ export class MentionNode extends TextNode {
         dom.setAttribute('data-lexical-mention', 'true')
         dom.setAttribute('data-mention-name', this.__mentionName)
         dom.setAttribute('data-testid', 'mention-node')
+        if (this.__userId) {
+            dom.setAttribute('data-user-id', this.__userId)
+        }
         return dom
     }
 
     exportDOM(): DOMExportOutput {
         const element = document.createElement('span')
         element.setAttribute('data-lexical-mention', 'true')
+        if (this.__userId) {
+            element.setAttribute('data-user-id', this.__userId)
+        }
         element.textContent = this.__text
         return { element }
     }
@@ -128,7 +136,7 @@ export class MentionNode extends TextNode {
     }
 }
 
-export function $createMentionNode(mentionName: string, userId: string | undefined): MentionNode {
+export function $createMentionNode(mentionName: string, userId: string): MentionNode {
     const mentionNode = new MentionNode(mentionName, userId)
     mentionNode.setMode('segmented').toggleDirectionless()
     return $applyNodeReplacement(mentionNode)
@@ -160,7 +168,7 @@ export const createMentionTransformer = (
         regExp: /(@[a-z0-9_-]+)$/i,
         replace: (textNode, match) => {
             const name = match[1]
-            const userId = userIds[name]
+            const userId = userIds[name.replace('@', '')] ?? ''
             const mentionNode = $createMentionNode(match[1], userId)
             textNode.replace(mentionNode)
         },

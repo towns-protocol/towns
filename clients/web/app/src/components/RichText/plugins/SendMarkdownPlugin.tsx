@@ -11,6 +11,7 @@ import {
 import React, { useCallback, useEffect, useState } from 'react'
 import { Mention } from 'use-zion-client'
 import { Button, Stack } from '@ui'
+import { notUndefined } from 'ui/utils/utils'
 import { $isMentionNode } from '../nodes/MentionNode'
 
 export const SendMarkdownPlugin = (props: {
@@ -118,12 +119,17 @@ const useParseMarkdown = (onSend?: (value: string, mentions: Mention[]) => void)
                     .getAllTextNodes()
                     .filter($isMentionNode)
                     .map((node) => {
-                        const mention = node.getMention()
-                        if (!mention.userId) {
+                        const { userId, displayName } = node.getMention()
+                        if (!userId) {
                             console.error('Mention is missing userId')
+                            return undefined
                         }
-                        return mention
+                        return {
+                            userId,
+                            displayName,
+                        } satisfies Mention
                     })
+                    .filter(notUndefined)
                 const markdown = $convertToMarkdownString()
                 onSend(markdown, mentions)
             })

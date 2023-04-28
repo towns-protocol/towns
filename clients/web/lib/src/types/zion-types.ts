@@ -158,7 +158,7 @@ export type SendTextMessageOptions = ThreadIdOptions & {
 
 export interface Mention {
     displayName: string
-    userId?: string
+    userId: string
 }
 
 export type SendGMOptions = ThreadIdOptions & {
