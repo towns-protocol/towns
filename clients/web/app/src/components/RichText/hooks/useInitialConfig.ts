@@ -8,6 +8,7 @@ import {
     Klass,
     LexicalNode,
 } from 'lexical'
+import { $isCodeNode } from '@lexical/code'
 import { $createAnnotationNode } from '../nodes/AnnotationNode'
 import { theme } from '../RichTextEditor.theme'
 
@@ -62,6 +63,14 @@ function appendEditedNotation() {
     if (!lastChild) {
         root.append(lastElement)
     }
-    const textNode = $createAnnotationNode(' (edited)')
-    lastElement.append(textNode)
+
+    if ($isCodeNode(lastElement)) {
+        const paragraphNode = $createParagraphNode()
+        const textNode = $createAnnotationNode('(edited)')
+        paragraphNode.append(textNode)
+        root.append(paragraphNode)
+    } else {
+        const textNode = $createAnnotationNode(' (edited)')
+        lastElement.append(textNode)
+    }
 }

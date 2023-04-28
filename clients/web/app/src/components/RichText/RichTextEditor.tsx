@@ -1,4 +1,4 @@
-import { CodeNode } from '@lexical/code'
+import { CodeHighlightNode, CodeNode } from '@lexical/code'
 import { AutoLinkNode, LinkNode } from '@lexical/link'
 import { ListItemNode, ListNode } from '@lexical/list'
 import { CHECK_LIST, HEADING, LINK, TRANSFORMERS } from '@lexical/markdown'
@@ -52,6 +52,8 @@ import { RichTextUI, RichTextUIContainer } from './ui/RichTextEditorUI'
 import { BLANK_LINK } from './transformers/LinkTransformer'
 import { TabThroughPlugin } from './plugins/TabThroughPlugin'
 import { RememberInputPlugin } from './plugins/RememberInputPlugin'
+import CodeHighlightPlugin from './plugins/CodeHighlightPlugin'
+import { TabIndentationPlugin } from './plugins/TabIndentationPlugin'
 
 type Props = {
     onSend?: (value: string, options: SendTextMessageOptions | undefined) => void
@@ -77,6 +79,7 @@ const inputClassName = clsx([fieldStyles.field, styles.richText, styles.contentE
 
 const nodes = [
     CodeNode,
+    CodeHighlightNode,
     HeadingNode,
     AnnotationNode,
     EmojiNode,
@@ -152,6 +155,7 @@ export const RichTextPreview = React.memo(
                         contentEditable={<ContentEditable className={fieldClassName} />}
                         placeholder={<div />}
                     />
+                    <CodeHighlightPlugin />
                 </LexicalComposer>
             </div>
         )
@@ -162,8 +166,7 @@ export const RichTextPreviewPlain = React.memo((props: { content: string; edited
     // note: unnecessary repetition here, could be optimised by handling above
     // inside e.g. space context or timeline
 
-    const initialConfig = useInitialConfig(props.content, nodes, [], false, props.edited)
-
+    const initialConfig = useInitialConfig(undefined, nodes, [], false, props.edited)
     return (
         <LexicalComposer initialConfig={initialConfig}>
             <RichTextPlugin
@@ -276,6 +279,8 @@ const RichTextEditorWithoutBoundary = (props: Props) => {
             <ChannelMentionPlugin channels={channels} />
             <TabThroughPlugin />
             <RememberInputPlugin storageId={props.storageId} />
+            <CodeHighlightPlugin />
+            <TabIndentationPlugin />
         </LexicalComposer>
     )
 }

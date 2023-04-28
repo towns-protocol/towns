@@ -125,6 +125,14 @@ export const listitemUnchecked = style([
     },
 ])
 
+export const code = style({
+    fontFamily: 'monospace',
+    marginTop: vars.space.sm,
+    marginBottom: vars.space.sm,
+    fontSize: vars.fontSize.sm,
+    tabSize: vars.space.md,
+})
+
 globalStyle(`${richText} ul ul, ${richText} ul ol`, {
     marginLeft: vars.space.md,
 })

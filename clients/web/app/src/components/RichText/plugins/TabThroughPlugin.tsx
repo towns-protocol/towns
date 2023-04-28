@@ -1,3 +1,4 @@
+import { $isCodeHighlightNode } from '@lexical/code'
 import { $isListItemNode } from '@lexical/list'
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext'
 import { mergeRegister } from '@lexical/utils'
@@ -15,6 +16,9 @@ export const TabThroughPlugin = () => {
                     if ($isRangeSelection(selection)) {
                         const node = selection.anchor.getNode().getParentOrThrow()
                         if ($isListItemNode(node)) {
+                            return false
+                        }
+                        if ($isCodeHighlightNode(selection.anchor.getNode())) {
                             return false
                         }
                     }

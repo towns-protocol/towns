@@ -1,7 +1,8 @@
 import { $isLinkNode, TOGGLE_LINK_COMMAND } from '@lexical/link'
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext'
-import { $isAtNodeEnd } from '@lexical/selection'
+import { $isAtNodeEnd, $setBlocksType } from '@lexical/selection'
 import {
+    $createParagraphNode,
     $getSelection,
     $isRangeSelection,
     $isTextNode,
@@ -10,6 +11,7 @@ import {
 } from 'lexical'
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { INSERT_ORDERED_LIST_COMMAND, INSERT_UNORDERED_LIST_COMMAND } from '@lexical/list'
+import { $createCodeNode, $isCodeNode } from '@lexical/code'
 import { Box, IconButton, Stack } from '@ui'
 import { vars } from 'ui/styles/vars.css'
 
@@ -28,6 +30,8 @@ export const InlineToolbar = (props: {
     const [isItalic, setIsItalic] = useState(false)
     const [isBold, setIsBold] = useState(false)
     const [isLink, setIsLink] = useState(false)
+    const [isCode, setIsCode] = useState(false)
+    const [isCodeBlock, setIsCodeBlock] = useState(false)
 
     const updateToolbar = useCallback(() => {
         editor.getEditorState().read(() => {
@@ -53,6 +57,7 @@ export const InlineToolbar = (props: {
 
             setIsBold(selection.hasFormat('bold'))
             setIsItalic(selection.hasFormat('italic'))
+            setIsCode(selection.hasFormat('code'))
 
             // Update links
             const parent = node.getParent()
@@ -67,6 +72,12 @@ export const InlineToolbar = (props: {
                 setIsText($isTextNode(node))
             } else {
                 setIsText(false)
+            }
+
+            if ($isCodeNode(parent)) {
+                setIsCodeBlock(true)
+            } else {
+                setIsCodeBlock(false)
             }
         })
     }, [editor])
@@ -90,6 +101,23 @@ export const InlineToolbar = (props: {
 
     const onBulletListClick = () => {
         editor.dispatchCommand(INSERT_UNORDERED_LIST_COMMAND, undefined)
+    }
+
+    const onCodeClick = () => {
+        editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'code')
+    }
+
+    const onCodeBlockClick = () => {
+        editor.update(() => {
+            const selection = $getSelection()
+            if ($isRangeSelection(selection)) {
+                if (isCodeBlock) {
+                    $setBlocksType(selection, () => $createParagraphNode())
+                } else {
+                    $setBlocksType(selection, () => $createCodeNode())
+                }
+            }
+        })
     }
 
     const onLinkClick = () => {
@@ -141,6 +169,9 @@ export const InlineToolbar = (props: {
             <Divider />
             <IconButton opaque active={isLink} icon="numberedlist" onClick={onOrderedListClick} />
             <IconButton opaque active={isLink} icon="bulletedlist" onClick={onBulletListClick} />
+            <Divider />
+            <IconButton opaque active={isCode} icon="code" onClick={onCodeClick} />
+            <IconButton opaque active={isCodeBlock} icon="codeBlock" onClick={onCodeBlockClick} />
         </Stack>
     )
 }

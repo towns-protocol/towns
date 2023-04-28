@@ -1,6 +1,9 @@
 import { EditorThemeClasses } from 'lexical'
+import { clsx } from 'clsx'
 import { atoms } from 'ui/styles/atoms.css'
+
 import {
+    code,
     listitem,
     listitemChecked,
     listitemUnchecked,
@@ -19,15 +22,62 @@ import {
     ul4,
 } from './RichTextEditor.css'
 
+const tokens = {
+    attribute: atoms({ color: 'accent' }),
+    property: atoms({ color: 'cta1' }),
+    selector: atoms({ color: 'cta2' }),
+    function: atoms({ color: 'cta2' }),
+    comment: atoms({ color: 'gray1' }),
+    operator: atoms({ color: 'cta1' }),
+    variable: atoms({ color: 'cta2' }),
+    punctuation: atoms({ color: 'default' }),
+}
+
 export const theme: EditorThemeClasses = {
     paragraph,
     root,
-    code: atoms({
-        padding: 'md',
-        display: 'block',
-        borderRadius: 'xs',
-        background: 'level3',
-    }),
+    code: clsx([
+        atoms({
+            padding: 'sm',
+            display: 'block',
+            borderRadius: 'xs',
+            background: 'level2',
+            border: 'level4',
+        }),
+        code,
+    ]),
+    codeHighlight: {
+        atrule: tokens.attribute,
+        attr: tokens.attribute,
+        boolean: tokens.property,
+        builtin: tokens.selector,
+        cdata: tokens.comment,
+        char: tokens.selector,
+        class: tokens.function,
+        'class-name': tokens.function,
+        comment: tokens.comment,
+        constant: tokens.property,
+        deleted: tokens.property,
+        doctype: tokens.comment,
+        entity: tokens.operator,
+        function: tokens.function,
+        important: tokens.variable,
+        inserted: tokens.selector,
+        keyword: tokens.attribute,
+        namespace: tokens.variable,
+        number: tokens.property,
+        operator: tokens.operator,
+        prolog: tokens.comment,
+        property: tokens.property,
+        punctuation: tokens.punctuation,
+        regex: tokens.variable,
+        selector: tokens.selector,
+        string: tokens.selector,
+        symbol: tokens.property,
+        tag: tokens.property,
+        url: tokens.operator,
+        variable: tokens.variable,
+    },
     quote: atoms({
         paddingLeft: 'sm',
         borderLeft: 'quote',
@@ -67,53 +117,4 @@ export const theme: EditorThemeClasses = {
             textDecoration: 'underline',
         }),
     },
-    // ...codeHighlight,
 }
-
-// TODO: keep for later...
-
-// const tokens = {
-//   attribute: atoms({ color: "accent" }),
-//   property: atoms({ color: "cta1" }),
-//   selector: atoms({ color: "cta2" }),
-//   function: atoms({ color: "cta2" }),
-//   comment: atoms({ color: "gray1" }),
-//   operator: atoms({ color: "cta1" }),
-//   variable: atoms({ color: "cta2" }),
-//   punctuation: atoms({ color: "default" }),
-// };
-
-// const codeHighlight: EditorThemeClasses = {
-//   codeHighlight: {
-//     atrule: tokens.attribute,
-//     attr: tokens.attribute,
-//     boolean: tokens.property,
-//     builtin: tokens.selector,
-//     cdata: tokens.comment,
-//     char: tokens.selector,
-//     class: tokens.function,
-//     "class-name": tokens.function,
-//     comment: tokens.comment,
-//     constant: tokens.property,
-//     deleted: tokens.property,
-//     doctype: tokens.comment,
-//     entity: tokens.operator,
-//     function: tokens.function,
-//     important: tokens.variable,
-//     inserted: tokens.selector,
-//     keyword: tokens.attribute,
-//     namespace: tokens.variable,
-//     number: tokens.property,
-//     operator: tokens.operator,
-//     prolog: tokens.comment,
-//     property: tokens.property,
-//     punctuation: tokens.punctuation,
-//     regex: tokens.variable,
-//     selector: tokens.selector,
-//     string: tokens.selector,
-//     symbol: tokens.property,
-//     tag: tokens.property,
-//     url: tokens.operator,
-//     variable: tokens.variable,
-//   },
-// };
