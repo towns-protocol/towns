@@ -20,7 +20,7 @@
       "internalConsoleOptions": "neverOpen"
     },
     {
-      "name": "Jest: current file in 'web/lib/",
+      "name": "Jest: current file in 'web/lib/'",
       "type": "node",
       "request": "launch",
       "env": { "NODE_ENV": "development" },
@@ -30,7 +30,7 @@
       "console": "integratedTerminal",
     },
     {
-      "name": "Jest: current file in 'web/lib/ Casablanca",
+      "name": "Jest: current file in 'web/lib/' NODE_ENV=Casablanca",
       "type": "node",
       "request": "launch",
       "env": { "NODE_ENV": "development", "PRIMARY_PROTOCOL": "casablanca" },
@@ -40,7 +40,7 @@
       "console": "integratedTerminal",
     },
     {
-      "name": "Jest: current file in 'sdk/ Casablanca",
+      "name": "Jest: current file in 'sdk/' Casablanca",
       "type": "node",
       "request": "launch",
       "env": { "NODE_ENV": "development", "PRIMARY_PROTOCOL": "casablanca" },
