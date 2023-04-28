@@ -2,7 +2,7 @@ import { StreamKind } from '@towns/proto'
 import debug from 'debug'
 import { Client } from './client'
 import { genId, makeChannelStreamId, makeSpaceStreamId } from './id'
-import { getMessagePayload, ParsedEvent } from './types'
+import { getMessagePayloadContent_Text, ParsedEvent } from './types'
 import { makeDonePromise, makeTestClient } from './util.test'
 
 const log = debug('test')
@@ -39,7 +39,7 @@ describe('clientTest', () => {
             log('channelNewMessage', channelId)
             log(message)
             done.runAndDone(() => {
-                expect(getMessagePayload(message)?.text).toBe('Hello, again!')
+                expect(getMessagePayloadContent_Text(message)?.body).toBe('Hello, again!')
             })
         }
 
@@ -53,7 +53,7 @@ describe('clientTest', () => {
 
                     const messages = Array.from(channel.rollup.messages.values())
                     expect(messages).toHaveLength(1)
-                    expect(getMessagePayload(messages[0])?.text).toBe('Hello, world!')
+                    expect(getMessagePayloadContent_Text(messages[0])?.body).toBe('Hello, world!')
 
                     channel.on('channelNewMessage', onChannelNewMessage)
                     bobsAnotherClient.sendMessage(streamId, 'Hello, again!')
@@ -80,7 +80,7 @@ describe('clientTest', () => {
             log('channelNewMessage', channelId)
             log(message)
             done.runAndDone(() => {
-                expect(getMessagePayload(message)?.text).toBe('Hello, world!')
+                expect(getMessagePayloadContent_Text(message)?.body).toBe('Hello, world!')
             })
         }
 
@@ -138,12 +138,12 @@ describe('clientTest', () => {
         // Bob can send a message.
         const bobSelfHello = makeDonePromise()
         bobsClient.once('channelNewMessage', (channelId: string, message: ParsedEvent): void => {
-            const payload = getMessagePayload(message)
-            log('channelNewMessage', 'Bob Initial Message', channelId, payload?.text)
+            const payload = getMessagePayloadContent_Text(message)
+            log('channelNewMessage', 'Bob Initial Message', channelId, payload?.body)
             bobSelfHello.runAndDone(() => {
                 // TODO: why 'Hello, world from Bob!' can be received here?
                 expect(channelId).toBe(bobsChannelId)
-                expect(payload?.text).toBe('Hello, world from Bob!')
+                expect(payload?.body).toBe('Hello, world from Bob!')
             })
         })
 
@@ -174,12 +174,12 @@ describe('clientTest', () => {
         // Bob can send a message.
         const bobSelfHello = makeDonePromise()
         bobsClient.once('channelNewMessage', (channelId: string, message: ParsedEvent): void => {
-            const payload = getMessagePayload(message)
-            log('channelNewMessage', 'Bob Initial Message', channelId, payload?.text)
+            const payload = getMessagePayloadContent_Text(message)
+            log('channelNewMessage', 'Bob Initial Message', channelId, payload?.body)
             bobSelfHello.runAndDone(() => {
                 // TODO: why 'Hello, world from Bob!' can be received here?
                 expect(channelId).toBe(bobsChannelId)
-                expect(payload?.text).toBe('Hello, world from Bob!')
+                expect(payload?.body).toBe('Hello, world from Bob!')
             })
         })
 
@@ -218,17 +218,17 @@ describe('clientTest', () => {
         ]
 
         alicesClient.on('channelNewMessage', (channelId: string, message: ParsedEvent): void => {
-            const payload = getMessagePayload(message)!
-            log('channelNewMessage', 'Alice', channelId, payload.text)
+            const payload = getMessagePayloadContent_Text(message)!
+            log('channelNewMessage', 'Alice', channelId, payload.body)
             aliceGetsMessage.run(() => {
                 expect(channelId).toBe(bobsChannelId)
                 // @ts-ignore
-                expect(payload.text).toBeOneOf(conversation)
-                if (payload.text === 'Hello, Alice!') {
+                expect(payload.body).toBeOneOf(conversation)
+                if (payload.body === 'Hello, Alice!') {
                     alicesClient.sendMessage(channelId, 'Hello, Bob!')
-                } else if (payload.text === 'Weather nice?') {
+                } else if (payload.body === 'Weather nice?') {
                     alicesClient.sendMessage(channelId, 'Sun and rain!')
-                } else if (payload.text === 'Coffee or tea?') {
+                } else if (payload.body === 'Coffee or tea?') {
                     alicesClient.sendMessage(channelId, 'Both!')
                     aliceGetsMessage.done()
                 }
@@ -236,17 +236,17 @@ describe('clientTest', () => {
         })
 
         bobsClient.on('channelNewMessage', (channelId: string, message: ParsedEvent): void => {
-            const payload = getMessagePayload(message)!
-            log('channelNewMessage', 'Bob', channelId, payload.text)
+            const payload = getMessagePayloadContent_Text(message)!
+            log('channelNewMessage', 'Bob', channelId, payload.body)
             bobGetsMessage.run(() => {
                 expect(channelId).toBe(bobsChannelId)
                 // @ts-ignore
-                expect(payload.text).toBeOneOf(conversation)
-                if (payload.text === 'Hello, Bob!') {
+                expect(payload.body).toBeOneOf(conversation)
+                if (payload.body === 'Hello, Bob!') {
                     bobsClient.sendMessage(channelId, 'Weather nice?')
-                } else if (payload.text === 'Sun and rain!') {
+                } else if (payload.body === 'Sun and rain!') {
                     bobsClient.sendMessage(channelId, 'Coffee or tea?')
-                } else if (payload.text === 'Both!') {
+                } else if (payload.body === 'Both!') {
                     bobGetsMessage.done()
                 }
             })

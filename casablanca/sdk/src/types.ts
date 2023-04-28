@@ -12,6 +12,8 @@ import {
     Payload_Channel,
     Payload_Message,
     Err,
+    ChannelMessage,
+    ChannelMessage_Post_Content_Text,
 } from '@towns/proto'
 import { check, isDefined } from './check'
 import { Buffer } from 'buffer'
@@ -165,6 +167,32 @@ export const getMessagePayload = (
         return event.payload.payload.value
     }
     return undefined
+}
+
+export const getMessagePayloadContent = (
+    event: ParsedEvent | StreamEvent | undefined,
+): ChannelMessage | undefined => {
+    const payload = getMessagePayload(event)
+    if (!payload) {
+        return undefined
+    }
+    return ChannelMessage.fromJsonString(payload.text)
+}
+
+export const getMessagePayloadContent_Text = (
+    event: ParsedEvent | StreamEvent | undefined,
+): ChannelMessage_Post_Content_Text | undefined => {
+    const content = getMessagePayloadContent(event)
+    if (!content) {
+        return undefined
+    }
+    if (content.payload.case !== 'post') {
+        throw new Error('Expected post message')
+    }
+    if (content.payload.value.content.case !== 'text') {
+        throw new Error('Expected text message')
+    }
+    return content.payload.value.content.value
 }
 
 type OneofSelectedMessage<K extends string, M extends Message<M>> = {

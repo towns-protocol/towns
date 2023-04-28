@@ -1,9 +1,8 @@
 import { Client } from './client'
 import debug from 'debug'
 import seedrandom from 'seedrandom'
-import { Payload_Message } from '@towns/proto'
 import { makeTestClient } from './util.test'
-import { ParsedEvent } from './types'
+import { ParsedEvent, getMessagePayloadContent_Text } from './types'
 import { StreamEventKeys } from './streams'
 import { makeUniqueChannelStreamId, makeUniqueSpaceStreamId } from './id'
 
@@ -63,17 +62,20 @@ class TestDriver {
     }
 
     channelNewMessage(channelId: string, message: ParsedEvent): void {
-        const text = (message.event.payload!.payload.value! as Payload_Message).text
-        this.log(`channelNewMessage channelId=${channelId} message=${text}`, this.expected)
-        if (this.expected?.delete(text)) {
-            this.log(`channelNewMessage expected message Received, text=${text}`)
+        const content = getMessagePayloadContent_Text(message)
+        if (!content) {
+            throw new Error(`Expected text message, got=${message.event.toJsonString()}`)
+        }
+        this.log(`channelNewMessage channelId=${channelId} message=${content.body}`, this.expected)
+        if (this.expected?.delete(content.body)) {
+            this.log(`channelNewMessage expected message Received, text=${content.body}`)
 
             if (this.expected.size === 0) {
                 this.expected = undefined
                 if (this.allExpectedReceived === undefined) {
                     throw new Error('allExpectedReceived is undefined')
                 }
-                this.log(`channelNewMessage all expected messages Received, text=${text}`)
+                this.log(`channelNewMessage all expected messages Received, text=${content.body}`)
                 this.allExpectedReceived()
             } else {
                 this.log(`channelNewMessage still expecting messages`, this.expected)
@@ -82,8 +84,16 @@ class TestDriver {
             if (this.badMessageReceived === undefined) {
                 throw new Error('badMessageReceived is undefined')
             }
-            this.log(`channelNewMessage badMessageReceived text=${text}`)
-            this.badMessageReceived(`badMessageReceived text=${text}`)
+            this.log(
+                `channelNewMessage badMessageReceived text=${content.body}, expected=${Array.from(
+                    this.expected?.values() ?? [],
+                ).join(', ')}`,
+            )
+            this.badMessageReceived(
+                `badMessageReceived text=${content.body}, expected=${Array.from(
+                    this.expected?.values() ?? [],
+                ).join(', ')}`,
+            )
         }
     }
 

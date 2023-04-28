@@ -1,5 +1,20 @@
-import { PartialMessage } from '@bufbuild/protobuf'
-import { Payload, StreamAndCookie, StreamKind, MembershipOp, SyncPos } from '@towns/proto'
+import { PartialMessage, PlainMessage } from '@bufbuild/protobuf'
+import {
+    Payload,
+    StreamAndCookie,
+    StreamKind,
+    MembershipOp,
+    SyncPos,
+    ChannelMessage_Post_Mention,
+    ChannelMessage,
+    ChannelMessage_Post,
+    ChannelMessage_Post_Content_Text,
+    ChannelMessage_Post_Content_Image,
+    ChannelMessage_Post_Content_GM,
+    ChannelMessage_Post_Content_BlockTxn,
+    ChannelMessage_Reaction,
+    ChannelMessage_Redaction,
+} from '@towns/proto'
 import debug from 'debug'
 import EventEmitter from 'events'
 import TypedEmitter from 'typed-emitter'
@@ -26,6 +41,7 @@ import {
 
 function assert(condition: any, message?: string): asserts condition {
     if (!condition) {
+        console.error('assertion failed: ', message ?? '')
         throw new Error(message)
     }
 }
@@ -454,14 +470,158 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
         return super.emit(event, ...args)
     }
 
-    async sendMessage(streamId: string, text: string): Promise<void> {
+    async sendMessage(
+        streamId: string,
+        body: string,
+        mentions?: ChannelMessage_Post_Mention[],
+    ): Promise<void> {
+        return this.sendChannelMessage_Text(streamId, {
+            content: {
+                body,
+                mentions: mentions ?? [],
+            },
+        })
+    }
+
+    async sendChannelMessage(
+        streamId: string,
+        payload: PartialMessage<ChannelMessage>['payload'],
+    ): Promise<void> {
+        const channelMessage = new ChannelMessage({ payload: payload })
         return this.makeEventAndAddToStream(
             streamId,
             makeMessagePayload({
-                text,
+                text: channelMessage.toJsonString(),
             }),
             'sendMessage',
         )
+    }
+
+    async sendChannelMessage_Text(
+        streamId: string,
+        payload: Omit<PlainMessage<ChannelMessage_Post>, 'content'> & {
+            content: PlainMessage<ChannelMessage_Post_Content_Text>
+        },
+    ): Promise<void> {
+        const { content, ...options } = payload
+        return this.sendChannelMessage(streamId, {
+            case: 'post',
+            value: {
+                ...options,
+                content: {
+                    case: 'text',
+                    value: content,
+                },
+            },
+        })
+    }
+
+    async sendChannelMessage_Image(
+        streamId: string,
+        payload: Omit<PlainMessage<ChannelMessage_Post>, 'content'> & {
+            content: PlainMessage<ChannelMessage_Post_Content_Image>
+        },
+    ): Promise<void> {
+        const { content, ...options } = payload
+        return this.sendChannelMessage(streamId, {
+            case: 'post',
+            value: {
+                ...options,
+                content: {
+                    case: 'image',
+                    value: content,
+                },
+            },
+        })
+    }
+
+    async sendChannelMessage_GM(
+        streamId: string,
+        payload: Omit<PlainMessage<ChannelMessage_Post>, 'content'> & {
+            content: PlainMessage<ChannelMessage_Post_Content_GM>
+        },
+    ): Promise<void> {
+        const { content, ...options } = payload
+        return this.sendChannelMessage(streamId, {
+            case: 'post',
+            value: {
+                ...options,
+                content: {
+                    case: 'gm',
+                    value: content,
+                },
+            },
+        })
+    }
+
+    async sendChannelMessage_BlockTxn(
+        streamId: string,
+        payload: Omit<PlainMessage<ChannelMessage_Post>, 'content'> & {
+            content: PlainMessage<ChannelMessage_Post_Content_BlockTxn>
+        },
+    ): Promise<void> {
+        const { content, ...options } = payload
+        return this.sendChannelMessage(streamId, {
+            case: 'post',
+            value: {
+                ...options,
+                content: {
+                    case: 'blockTxn',
+                    value: content,
+                },
+            },
+        })
+    }
+
+    async sendChannelMessage_Reaction(
+        streamId: string,
+        payload: PlainMessage<ChannelMessage_Reaction>,
+    ): Promise<void> {
+        return this.sendChannelMessage(streamId, {
+            case: 'reaction',
+            value: new ChannelMessage_Reaction(payload),
+        })
+    }
+
+    async sendChannelMessage_Redaction(
+        streamId: string,
+        payload: PlainMessage<ChannelMessage_Redaction>,
+    ): Promise<void> {
+        return this.sendChannelMessage(streamId, {
+            case: 'redaction',
+            value: new ChannelMessage_Redaction(payload),
+        })
+    }
+
+    async sendChannelMessage_Edit(
+        streamId: string,
+        refEventId: string,
+        newPost: PlainMessage<ChannelMessage_Post>,
+    ): Promise<void> {
+        return this.sendChannelMessage(streamId, {
+            case: 'edit',
+            value: {
+                refEventId: refEventId,
+                post: newPost,
+            },
+        })
+    }
+
+    async sendChannelMessage_Edit_Text(
+        streamId: string,
+        refEventId: string,
+        payload: Omit<PlainMessage<ChannelMessage_Post>, 'content'> & {
+            content: PlainMessage<ChannelMessage_Post_Content_Text>
+        },
+    ): Promise<void> {
+        const { content, ...options } = payload
+        return this.sendChannelMessage_Edit(streamId, refEventId, {
+            ...options,
+            content: {
+                case: 'text',
+                value: content,
+            },
+        })
     }
 
     async inviteUser(streamId: string, userId: string): Promise<void> {
