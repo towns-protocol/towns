@@ -2,7 +2,6 @@ export type { Space, SpaceIdentifier, TransactionContext } from './client/ZionCl
 export { TransactionStatus, SpaceProtocol } from './client/ZionClientTypes'
 
 export { ChannelContextProvider, useChannelContext } from './components/ChannelContextProvider'
-export { CustomInjectedConnector } from './components/CustomInjectedConnector'
 export { QueryProvider } from './components/QueryProvider'
 export * from './components/SpaceContextProvider'
 export { ZionContextProvider, useZionContext, ZionContext } from './components/ZionContextProvider'

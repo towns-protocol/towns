@@ -1,5 +1,5 @@
 import { Address, Chain, WagmiConfig, configureChains, createClient } from 'wagmi'
-import React, { createContext, useContext, useRef } from 'react'
+import React, { createContext, useContext, useMemo } from 'react'
 import { TProvider, WalletStatus } from '../types/web3-types'
 import { foundry, goerli, localhost, sepolia } from '@wagmi/core/chains'
 
@@ -40,10 +40,11 @@ interface Props {
 const SUPPORTED_CHAINS = [goerli, localhost, foundry, sepolia]
 
 export function Web3ContextProvider(props: Props): JSX.Element {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const wagmiClient = useRef<any>()
-
-    if (!wagmiClient.current) {
+    // Note: this is a hack to get the provider to be created only once
+    // If the useMemo is not here, the provider would be created on every render
+    // If the memo ever discards the state, the provider will be recreated
+    // and the user will be disconnected from the wallet which is not too bad
+    const client = useMemo(() => {
         const { chains, provider, webSocketProvider } = configureChains(
             SUPPORTED_CHAINS,
             props.alchemyKey
@@ -53,7 +54,7 @@ export function Web3ContextProvider(props: Props): JSX.Element {
                   ]
                 : [publicProvider()],
         )
-        const client = createClient({
+        return createClient({
             autoConnect: true,
             connectors: [new CustomInjectedConnector({ chains })],
             // cannot use the default InjectedConnector. Disconnecting the last
@@ -63,11 +64,10 @@ export function Web3ContextProvider(props: Props): JSX.Element {
             provider,
             webSocketProvider,
         })
-        wagmiClient.current = client
-    }
+    }, [props.alchemyKey])
+
     return (
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-        <WagmiConfig client={wagmiClient.current}>
+        <WagmiConfig client={client}>
             <ContextImpl {...props} />
         </WagmiConfig>
     )

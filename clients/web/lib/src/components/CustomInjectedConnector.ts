@@ -60,7 +60,8 @@ export class CustomInjectedConnector extends InjectedConnector {
         this.emit('change', data)
     }
 
-    protected override onDisconnect = (): void => {
+    // eslint-disable-next-line @typescript-eslint/require-await
+    protected override onDisconnect = async (_error: Error): Promise<void> => {
         // emit an event when wallet is disconnected
         console.log('CustomInjectedConnector.onDisconnect')
         this.emit('disconnect')
