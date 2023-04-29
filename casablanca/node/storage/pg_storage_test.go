@@ -5,9 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"strings"
 	"sync"
-	"sync/atomic"
 	"testing"
 	"time"
 
@@ -16,6 +14,8 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 
+	"casablanca/node/crypto"
+	"casablanca/node/events"
 	"casablanca/node/infra"
 	"casablanca/node/protocol"
 	"casablanca/node/storage"
@@ -51,14 +51,19 @@ func TestPGEventStore(t *testing.T) {
 	}
 	defer pgEventStore.Close()
 
-	userId := []byte{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9}
-	inceptionEvent, err := testutils.UserStreamInceptionEvent(1, userId, "streamid1")
+	streamId := "streamid1"
+
+	wallet, _ := crypto.NewWallet()
+	inceptionEvent, err := events.MakeEnvelopeWithPayload(
+		wallet,
+		events.MakePayload_Inception(streamId, protocol.StreamKind_SK_USER, ""),
+		nil,
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	// Create a new stream
-	streamId := "streamid1"
 	inceptionEvents := []*protocol.Envelope{inceptionEvent}
 	_, err = pgEventStore.CreateStream(ctx, streamId, inceptionEvents)
 	if err != nil {
@@ -136,8 +141,12 @@ func TestPGEventStoreLongPoll(t *testing.T) {
 
 	streamId := "streamid1"
 
-	userId := []byte{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9}
-	inceptionEvent1, err := testutils.UserStreamInceptionEvent(1, userId, "streamid1")
+	wallet, _ := crypto.NewWallet()
+	inceptionEvent1, err := events.MakeEnvelopeWithPayload(
+		wallet,
+		events.MakePayload_Inception(streamId, protocol.StreamKind_SK_USER, ""),
+		nil,
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -154,7 +163,11 @@ func TestPGEventStoreLongPoll(t *testing.T) {
 		defer wg.Done()
 		time.Sleep(1 * time.Second)
 
-		inceptionEvent2, err := testutils.UserStreamInceptionEvent(2, userId, "streamid1")
+		inceptionEvent2, err := events.MakeEnvelopeWithPayload(
+			wallet,
+			events.MakePayload_Inception(streamId, protocol.StreamKind_SK_USER, ""),
+			nil,
+		)
 		if err != nil {
 			log.Error(err)
 			return
@@ -215,6 +228,47 @@ func TestPGEventStoreLongPoll(t *testing.T) {
 	wg.Wait()
 }
 
+type SyncByteSet struct {
+	data map[string]struct{}
+	mu   sync.RWMutex
+}
+
+func NewSyncByteSet() *SyncByteSet {
+	return &SyncByteSet{
+		data: make(map[string]struct{}),
+	}
+}
+
+func (s *SyncByteSet) Add(value []byte) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.data[string(value)] = struct{}{}
+}
+
+func (s *SyncByteSet) Remove(value []byte) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	delete(s.data, string(value))
+}
+
+func (s *SyncByteSet) Contains(value []byte) bool {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	_, ok := s.data[string(value)]
+	return ok
+}
+
+func (s *SyncByteSet) Values() [][]byte {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	values := make([][]byte, 0, len(s.data))
+	for k := range s.data {
+		values = append(values, []byte(k))
+	}
+	return values
+}
+
 func TestPGEventStoreLongPollStress(t *testing.T) {
 
 	totalMessages := 200
@@ -229,8 +283,12 @@ func TestPGEventStoreLongPollStress(t *testing.T) {
 
 	streamId := "streamid1"
 
-	userId := []byte{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9}
-	inceptionEvent1, err := testutils.UserStreamInceptionEvent(1, userId, "streamid1")
+	wallet, _ := crypto.NewWallet()
+	inceptionEvent1, err := events.MakeEnvelopeWithPayload(
+		wallet,
+		events.MakePayload_Inception(streamId, protocol.StreamKind_SK_USER, ""),
+		nil,
+	)
 	if err != nil {
 		t.Fatal(err, requestId)
 	}
@@ -240,42 +298,54 @@ func TestPGEventStoreLongPollStress(t *testing.T) {
 		t.Fatal(err, requestId)
 	}
 
+	allHashes := NewSyncByteSet()
 	wg := sync.WaitGroup{}
 	// create a message in parallel after 1000ms
-	idx := atomic.Int32{}
-	idx.Store(1000)
-	insert := func(sleepMs int) {
+	insert := func(i int) {
 		defer wg.Done()
-		ctx, log, _ := infra.SetLoggerWithRequestId(context.Background())
 
-		time.Sleep(time.Duration(sleepMs) * time.Millisecond)
+		ctx, _, _ := infra.SetLoggerWithRequestId(context.Background())
 
-		msg, err := testutils.MessageEvent(int(idx.Add(1)), userId, "streamid1", []byte("hello"))
-		if err != nil {
-			log.Error(err)
+		time.Sleep(time.Duration(i*10) * time.Millisecond)
+
+		if t.Failed() {
 			return
 		}
+
+		msg, err := events.MakeEnvelopeWithPayload(
+			wallet,
+			events.MakePayload_Message(fmt.Sprintf("hello %d", i)),
+			[][]byte{inceptionEvent1.Hash},
+		)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		allHashes.Add(msg.Hash)
 		_, err = pgEventStore.AddEvent(ctx, streamId, msg)
 		if err != nil {
-			log.Error(err)
+			t.Error(err)
 			return
 		}
 	}
 
 	for i := 0; i < totalMessages; i++ {
 		wg.Add(1)
-		go insert(i * 10)
+		go insert(i)
+	}
+
+	if t.Failed() {
+		return
 	}
 
 	poll := func(i int) {
 		defer wg.Done()
-		counter := 0
 
-		allHashes := make(map[string]struct{})
-		for i := 0; i < totalMessages; i++ {
-			allHashes[fmt.Sprintf("hash%d", 1001+i)] = struct{}{}
+		if t.Failed() {
+			return
 		}
 
+		counter := 0
 		syncCookie := cookie1
 		for counter < totalMessages {
 			ctx, log, requestId := infra.SetLoggerWithRequestId(context.Background())
@@ -296,26 +366,17 @@ func TestPGEventStoreLongPollStress(t *testing.T) {
 				syncCookie = events[string(streamId)].SyncCookie
 			}
 			for _, e := range events[streamId].Events {
-				if _, ok := allHashes[string(e.Hash)]; !ok {
-					panic(fmt.Sprintf("%d hash %s not found (requestId: %s)", i, string(e.Hash), requestId))
+				if !allHashes.Contains(e.Hash) {
+					t.Errorf("%d hash %s not found (requestId: %s)", i, string(e.Hash), requestId)
+					return
 				}
-				delete(allHashes, string(e.Hash))
 			}
-
-			hashes := strings.Builder{}
-			for e := range allHashes {
-				hashes.WriteString(e)
-				hashes.WriteString(",")
-			}
-			c, s := storage.BytesToSeqNum(syncCookie)
-			log.Infof("%d counter %d %d:%s missing %s", i, counter, c, s, hashes.String())
 		}
 	}
 
 	for i := 0; i < 300; i++ {
 		wg.Add(1)
 		go poll(i)
-		//time.Sleep(20 * time.Millisecond)
 	}
 
 	wg.Wait()

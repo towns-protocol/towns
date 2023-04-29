@@ -5,6 +5,7 @@ import (
 	"errors"
 	"strconv"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/crypto/secp256k1"
 
@@ -15,7 +16,7 @@ import (
 
 type Wallet struct {
 	PrivateKey        *ecdsa.PrivateKey
-	Address           []byte
+	Address           common.Address
 	DelegateSignature []byte
 }
 
@@ -43,7 +44,7 @@ func NewWallet() (*Wallet, error) {
 	}
 
 	log.Debugf("New wallet generated: %s %v %v", address.String(), crypto.FromECDSAPub(&key.PublicKey), delegateSig)
-	return &Wallet{PrivateKey: key, Address: address.Bytes(), DelegateSignature: delegateSig}, nil
+	return &Wallet{PrivateKey: key, Address: address, DelegateSignature: delegateSig}, nil
 }
 
 func makeDelegateSig(key *ecdsa.PrivateKey) ([]byte, error) {
@@ -66,6 +67,10 @@ func (w *Wallet) Sign(data []byte) ([]byte, error) {
 		return nil, err
 	}
 	return sig, nil
+}
+
+func (w *Wallet) SignHash(hash []byte) ([]byte, error) {
+	return sign(w.PrivateKey, hash)
 }
 
 func sign(key *ecdsa.PrivateKey, hash []byte) ([]byte, error) {

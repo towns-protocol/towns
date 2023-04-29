@@ -217,18 +217,19 @@ func (s *Service) addEvent(ctx context.Context, streamId string, view *StreamVie
 		}
 
 		log.Debug("AddEvent: ", joinableStream.Op)
-		envelope := s.sign(makePayload_UserMembershipOp(
-			&protocol.Payload_UserMembershipOp{
-				Op:        joinableStream.Op,
-				StreamId:  streamId,
-				InviterId: UserIdFromAddress(parsedEvent.Event.CreatorAddress),
-				OriginEvent: &protocol.EventRef{
+		envelope := s.sign(
+			events.MakePayload_UserMembershipOp(
+				joinableStream.Op,
+				streamId,
+				UserIdFromAddress(parsedEvent.Event.CreatorAddress),
+				&protocol.EventRef{
 					StreamId:  streamId,
 					Hash:      parsedEvent.Envelope.Hash,
 					Signature: parsedEvent.Envelope.Signature,
 				},
-			},
-		), leaves)
+			),
+			leaves,
+		)
 
 		_, err = s.Storage.AddEvent(ctx, userStreamId, envelope)
 		if err != nil {
@@ -306,7 +307,7 @@ func MakeServiceHandler(ctx context.Context, dbUrl string, opts ...connect_go.Ha
 
 func (s *Service) sign(payload *protocol.Payload, prevHashes [][]byte) *protocol.Envelope {
 	streamEvent := &protocol.StreamEvent{
-		CreatorAddress: s.wallet.Address,
+		CreatorAddress: s.wallet.Address.Bytes(),
 		DelegateSig:    s.wallet.DelegateSignature,
 		Salt:           []byte("salt"),
 		PrevEvents:     prevHashes,
@@ -328,32 +329,6 @@ func (s *Service) sign(payload *protocol.Payload, prevHashes [][]byte) *protocol
 		Event:     eventBytes,
 		Signature: signature,
 		Hash:      hash,
-	}
-}
-
-/*
-func makeInceptionEvent(streamId string, streamKind protocol.StreamKind, spaceId string) *protocol.Payload {
-	return &protocol.Payload{
-		Payload: &protocol.Payload_Inception_{
-			Inception: &protocol.Payload_Inception{
-				StreamId:   streamId,
-				StreamKind: streamKind,
-				SpaceId:    spaceId,
-			},
-		},
-	}
-}
-*/
-
-func makePayload_UserMembershipOp(op *protocol.Payload_UserMembershipOp) *protocol.Payload {
-	return &protocol.Payload{
-		Payload: &protocol.Payload_UserMembershipOp_{UserMembershipOp: op},
-	}
-}
-
-func makePayload_Channel(op *protocol.Payload_Channel) *protocol.Payload {
-	return &protocol.Payload{
-		Payload: &protocol.Payload_Channel_{Channel: op},
 	}
 }
 

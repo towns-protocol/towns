@@ -16,12 +16,12 @@ func (s *Service) CreateStream(ctx context.Context, req *connect.Request[protoco
 		return nil, RpcErrorf(protocol.Err_BAD_STREAM_CREATION_PARAMS, "CreateStream: no events")
 	}
 
-	events, err := events.ParseEvents(req.Msg.Events)
+	parsedEvents, err := events.ParseEvents(req.Msg.Events)
 	if err != nil {
 		return nil, RpcErrorf(protocol.Err_BAD_STREAM_CREATION_PARAMS, "CreateStream: error parsing events: %v", err)
 	}
 
-	inceptionEvent := events[0]
+	inceptionEvent := parsedEvents[0]
 	inception := inceptionEvent.GetInceptionPayload()
 	if inception == nil {
 		return nil, RpcErrorf(protocol.Err_BAD_STREAM_CREATION_PARAMS, "CreateStream: first event is not an inception event")
@@ -37,7 +37,7 @@ func (s *Service) CreateStream(ctx context.Context, req *connect.Request[protoco
 		if inception.SpaceId != "" {
 			return nil, RpcErrorf(protocol.Err_BAD_STREAM_CREATION_PARAMS, "CreateStream: space id must be empty for user stream")
 		}
-		if len(events) != 1 {
+		if len(parsedEvents) != 1 {
 			return nil, RpcErrorf(protocol.Err_BAD_STREAM_CREATION_PARAMS, "CreateStream: user stream must have only one event")
 		}
 	case protocol.StreamKind_SK_SPACE:
@@ -47,10 +47,10 @@ func (s *Service) CreateStream(ctx context.Context, req *connect.Request[protoco
 		if inception.SpaceId != "" {
 			return nil, RpcErrorf(protocol.Err_BAD_STREAM_CREATION_PARAMS, "CreateStream: (parent) space id must be empty for space stream")
 		}
-		if len(events) != 2 {
+		if len(parsedEvents) != 2 {
 			return nil, RpcErrorf(protocol.Err_BAD_STREAM_CREATION_PARAMS, "CreateStream: space stream must have exactly two events")
 		}
-		if err := validateJoinEvent(events); err != nil {
+		if err := validateJoinEvent(parsedEvents); err != nil {
 			return nil, err
 		}
 	case protocol.StreamKind_SK_CHANNEL:
@@ -60,10 +60,10 @@ func (s *Service) CreateStream(ctx context.Context, req *connect.Request[protoco
 		if inception.SpaceId == "" {
 			return nil, RpcErrorf(protocol.Err_BAD_STREAM_CREATION_PARAMS, "CreateStream: space id must not be empty for channel stream")
 		}
-		if len(events) != 2 {
+		if len(parsedEvents) != 2 {
 			return nil, RpcErrorf(protocol.Err_BAD_STREAM_CREATION_PARAMS, "CreateStream: channel stream must have exactly two events")
 		}
-		if err := validateJoinEvent(events); err != nil {
+		if err := validateJoinEvent(parsedEvents); err != nil {
 			return nil, err
 		}
 		spaceView := makeView(ctx, s.Storage, inception.SpaceId)
@@ -102,15 +102,13 @@ func (s *Service) CreateStream(ctx context.Context, req *connect.Request[protoco
 
 	if inception.StreamKind == protocol.StreamKind_SK_CHANNEL {
 		envelope := s.sign(
-			makePayload_Channel(
-				&protocol.Payload_Channel{
-					Op:        protocol.ChannelOp_CO_CREATED,
-					ChannelId: inception.StreamId,
-					OriginEvent: &protocol.EventRef{
-						StreamId:  streamId,
-						Hash:      inceptionEvent.Envelope.Hash,
-						Signature: inceptionEvent.Envelope.Signature,
-					},
+			events.MakePayload_Channel(
+				protocol.ChannelOp_CO_CREATED,
+				inception.StreamId,
+				&protocol.EventRef{
+					StreamId:  streamId,
+					Hash:      inceptionEvent.Envelope.Hash,
+					Signature: inceptionEvent.Envelope.Signature,
 				},
 			),
 			spaceStreamLeafHashes,

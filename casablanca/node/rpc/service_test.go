@@ -13,6 +13,7 @@ import (
 	"testing"
 	"time"
 
+	"casablanca/node/crypto"
 	"casablanca/node/events"
 	"casablanca/node/protocol"
 	"casablanca/node/protocol/protocolconnect"
@@ -26,12 +27,6 @@ import (
 )
 
 var testDatabaseUrl string
-
-var counter atomic.Int32 = atomic.Int32{}
-
-func next() int {
-	return int(counter.Add(1))
-}
 
 func TestMain(m *testing.M) {
 	log.SetLevel(log.DebugLevel)
@@ -49,9 +44,17 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
-func createUser(ctx context.Context, client protocolconnect.StreamServiceClient, userId []byte) ([]byte, []byte, error) {
-	userStreamId := rpc.UserStreamIdFromAddress(userId)
-	inception, err := testutils.UserStreamInceptionEvent(next(), userId, userStreamId)
+func createUser(ctx context.Context, wallet *crypto.Wallet, client protocolconnect.StreamServiceClient) ([]byte, []byte, error) {
+	userStreamId := rpc.UserStreamIdFromAddress(wallet.Address.Bytes())
+	inception, err := events.MakeEnvelopeWithPayload(
+		wallet,
+		events.MakePayload_Inception(
+			userStreamId,
+			protocol.StreamKind_SK_USER,
+			"",
+		),
+		nil,
+	)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -64,12 +67,27 @@ func createUser(ctx context.Context, client protocolconnect.StreamServiceClient,
 	return res.Msg.SyncCookie, inception.Hash, nil
 }
 
-func createSpace(ctx context.Context, client protocolconnect.StreamServiceClient, userId []byte, spaceId string) ([]byte, []byte, error) {
-	space, err := testutils.SpaceStreamInceptionEvent(next(), userId, rpc.SpaceStreamIdFromName(spaceId))
+func createSpace(ctx context.Context, wallet *crypto.Wallet, client protocolconnect.StreamServiceClient, spaceId string) ([]byte, []byte, error) {
+	space, err := events.MakeEnvelopeWithPayload(
+		wallet,
+		events.MakePayload_Inception(
+			rpc.SpaceStreamIdFromName(spaceId),
+			protocol.StreamKind_SK_SPACE,
+			"",
+		),
+		nil,
+	)
 	if err != nil {
 		return nil, nil, err
 	}
-	joinSpace, err := testutils.JoinEvent(next(), userId, userId, space.Hash)
+	joinSpace, err := events.MakeEnvelopeWithPayload(
+		wallet,
+		events.MakePayload_JoinableStream(
+			protocol.MembershipOp_SO_JOIN,
+			rpc.UserIdFromAddress(wallet.Address.Bytes()),
+		),
+		[][]byte{space.Hash},
+	)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -85,12 +103,27 @@ func createSpace(ctx context.Context, client protocolconnect.StreamServiceClient
 	return resspace.Msg.SyncCookie, joinSpace.Hash, nil
 }
 
-func createChannel(ctx context.Context, client protocolconnect.StreamServiceClient, userId []byte, spaceId string, channelId string) ([]byte, []byte, error) {
-	channel, err := testutils.ChannelStreamInceptionEvent(next(), userId, rpc.ChannelStreamIdFromName(channelId), rpc.SpaceStreamIdFromName(spaceId))
+func createChannel(ctx context.Context, wallet *crypto.Wallet, client protocolconnect.StreamServiceClient, spaceId string, channelId string) ([]byte, []byte, error) {
+	channel, err := events.MakeEnvelopeWithPayload(
+		wallet,
+		events.MakePayload_Inception(
+			rpc.ChannelStreamIdFromName(channelId),
+			protocol.StreamKind_SK_CHANNEL,
+			spaceId,
+		),
+		nil,
+	)
 	if err != nil {
 		return nil, nil, err
 	}
-	joinChannel, err := testutils.JoinEvent(next(), userId, userId, channel.Hash)
+	joinChannel, err := events.MakeEnvelopeWithPayload(
+		wallet,
+		events.MakePayload_JoinableStream(
+			protocol.MembershipOp_SO_JOIN,
+			rpc.UserIdFromAddress(wallet.Address.Bytes()),
+		),
+		[][]byte{channel.Hash},
+	)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -118,6 +151,8 @@ func testServerAndClient(ctx context.Context, dbUrl string) (protocolconnect.Str
 func TestMethods(t *testing.T) {
 	ctx := context.Background()
 	client, closer := testServerAndClient(ctx, testDatabaseUrl)
+	wallet1, _ := crypto.NewWallet()
+	wallet2, _ := crypto.NewWallet()
 	defer closer()
 	{
 		response, err := client.Info(ctx, connect.NewRequest(&protocol.InfoRequest{}))
@@ -131,8 +166,9 @@ func TestMethods(t *testing.T) {
 		if err == nil {
 			t.Errorf("expected error calling CreateStream with no events")
 		}
-		userId := []byte{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9}
-		res, _, err := createUser(ctx, client, userId)
+
+		// create user stream for user 1
+		res, _, err := createUser(ctx, wallet1, client)
 		if err != nil {
 			t.Fatalf("error calling CreateStream: %v", err)
 		}
@@ -140,10 +176,8 @@ func TestMethods(t *testing.T) {
 			t.Errorf("nil sync cookie")
 		}
 
-		// create user stream
-
-		userId2 := []byte{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 10}
-		resuser, _, err := createUser(ctx, client, userId2)
+		// create user stream for user 2
+		resuser, _, err := createUser(ctx, wallet2, client)
 		if err != nil {
 			t.Fatalf("error calling CreateStream: %v", err)
 		}
@@ -152,7 +186,7 @@ func TestMethods(t *testing.T) {
 		}
 
 		// create space
-		resspace, _, err := createSpace(ctx, client, userId, "test")
+		resspace, _, err := createSpace(ctx, wallet1, client, "test")
 		if err != nil {
 			t.Fatalf("error calling CreateStream: %v", err)
 		}
@@ -161,7 +195,7 @@ func TestMethods(t *testing.T) {
 		}
 
 		// create channel
-		channel, channelHash, err := createChannel(ctx, client, userId, "test", "channel1")
+		channel, channelHash, err := createChannel(ctx, wallet1, client, rpc.SpaceStreamIdFromName("test"), "channel1")
 		if err != nil {
 			t.Fatalf("error calling CreateStream: %v", err)
 		}
@@ -170,42 +204,66 @@ func TestMethods(t *testing.T) {
 		}
 
 		// user2 joins channel
-		join, err := testutils.JoinEvent(next(), userId, userId2, channelHash)
+		join, err := events.MakeEnvelopeWithPayload(
+			wallet2,
+			events.MakePayload_JoinableStream(
+				protocol.MembershipOp_SO_JOIN,
+				rpc.UserIdFromAddress(wallet2.Address.Bytes()),
+			),
+			[][]byte{channelHash},
+		)
 		if err != nil {
 			t.Errorf("error creating join event: %v", err)
 		}
-		_, err = client.AddEvent(ctx, connect.NewRequest(&protocol.AddEventRequest{
-			StreamId: rpc.ChannelStreamIdFromName("channel1"),
-			Event:    join,
-		},
-		))
+		_, err = client.AddEvent(
+			ctx,
+			connect.NewRequest(
+				&protocol.AddEventRequest{
+					StreamId: rpc.ChannelStreamIdFromName("channel1"),
+					Event:    join,
+				},
+			),
+		)
 		if err != nil {
 			t.Fatalf("error calling AddEvent: %v", err)
 		}
 
-		message, err := testutils.MessageEvent(next(), userId2, "hello", channelHash)
+		message, err := events.MakeEnvelopeWithPayload(
+			wallet2,
+			events.MakePayload_Message("hello"),
+			[][]byte{join.Hash},
+		)
 		if err != nil {
 			t.Errorf("error creating message event: %v", err)
 		}
 
-		_, err = client.AddEvent(ctx, connect.NewRequest(&protocol.AddEventRequest{
-			StreamId: rpc.ChannelStreamIdFromName("channel1"),
-			Event:    message,
-		},
-		))
+		_, err = client.AddEvent(
+			ctx,
+			connect.NewRequest(
+				&protocol.AddEventRequest{
+					StreamId: rpc.ChannelStreamIdFromName("channel1"),
+					Event:    message,
+				},
+			),
+		)
 		if err != nil {
 			t.Fatalf("error calling AddEvent: %v", err)
 		}
 
-		syncRes, err := client.SyncStreams(ctx, connect.NewRequest(&protocol.SyncStreamsRequest{
-			SyncPos: []*protocol.SyncPos{
-				{
-					StreamId:   rpc.ChannelStreamIdFromName("channel1"),
-					SyncCookie: channel,
+		syncRes, err := client.SyncStreams(
+			ctx,
+			connect.NewRequest(
+				&protocol.SyncStreamsRequest{
+					SyncPos: []*protocol.SyncPos{
+						{
+							StreamId:   rpc.ChannelStreamIdFromName("channel1"),
+							SyncCookie: channel,
+						},
+					},
+					TimeoutMs: 1000,
 				},
-			},
-			TimeoutMs: 1000,
-		}))
+			),
+		)
 		if err != nil {
 			t.Fatalf("error calling SyncStreams: %v", err)
 		}
@@ -231,9 +289,7 @@ func TestMethods(t *testing.T) {
 			default:
 				t.Fatalf("expected message event, got %v", payload.Payload.Payload)
 			}
-
 		}
-
 	}
 }
 
@@ -245,194 +301,210 @@ func TestManyUsers(t *testing.T) {
 	totalUsers := 14
 	totalChannels := 10
 
-	{
-		userIds := [][]byte{}
-		for i := 0; i < totalUsers; i++ {
-			userId := []byte{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, byte(10 + i)}
-			res, _, err := createUser(ctx, client, userId)
-			if err != nil {
-				t.Fatalf("error calling CreateStream: %v", err)
-			}
-			if res == nil {
-				t.Fatalf("nil sync cookie")
-			}
-			userIds = append(userIds, userId)
-		}
+	wallets := []*crypto.Wallet{}
+	for i := 0; i < totalUsers; i++ {
+		wallet, _ := crypto.NewWallet()
+		wallets = append(wallets, wallet)
 
-		// create space
-		resspace, _, err := createSpace(ctx, client, userIds[0], "test")
+		res, _, err := createUser(ctx, wallet, client)
 		if err != nil {
 			t.Fatalf("error calling CreateStream: %v", err)
 		}
-		if resspace == nil {
+		if res == nil {
 			t.Fatalf("nil sync cookie")
 		}
+	}
 
-		// create channels
-		var channelHashes [][]byte
-		var channels [][]byte
-		for i := 0; i < totalChannels; i++ {
-			channel, channelHash, err := createChannel(ctx, client, userIds[0], "test", fmt.Sprintf("channel-%d", i))
-			if err != nil {
-				t.Fatalf("error calling CreateStream: %v", err)
-			}
-			if channel == nil {
-				t.Fatalf("nil sync cookie")
-			}
-			channelHashes = append(channelHashes, channelHash)
-			channels = append(channels, channel)
+	// create space
+	resspace, _, err := createSpace(ctx, wallets[0], client, "test")
+	if err != nil {
+		t.Fatalf("error calling CreateStream: %v", err)
+	}
+	if resspace == nil {
+		t.Fatalf("nil sync cookie")
+	}
+
+	// create channels
+	var channelHashes [][]byte
+	var channels [][]byte
+	for i := 0; i < totalChannels; i++ {
+		channel, channelHash, err := createChannel(ctx, wallets[0], client, rpc.SpaceStreamIdFromName("test"), fmt.Sprintf("channel-%d", i))
+		if err != nil {
+			t.Fatalf("error calling CreateStream: %v", err)
 		}
+		if channel == nil {
+			t.Fatalf("nil sync cookie")
+		}
+		channelHashes = append(channelHashes, channelHash)
+		channels = append(channels, channel)
+	}
 
-		for i := 1; i < totalUsers; i++ {
-			// users joins channels
-			for j := 0; j < totalChannels; j++ {
-				join, err := testutils.JoinEvent(next(), userIds[0], userIds[i], channelHashes[j])
-				if err != nil {
-					t.Fatalf("error creating join event: %v", err)
+	for i := 1; i < totalUsers; i++ {
+		// users joins channels
+		for j := 0; j < totalChannels; j++ {
+			join, err := events.MakeEnvelopeWithPayload(
+				wallets[i],
+				events.MakePayload_JoinableStream(
+					protocol.MembershipOp_SO_JOIN,
+					rpc.UserIdFromAddress(wallets[i].Address.Bytes()),
+				),
+				[][]byte{channelHashes[j]},
+			)
+			channelHashes[j] = join.Hash
+
+			if err != nil {
+				t.Fatalf("error creating join event: %v", err)
+			}
+			_, err = client.AddEvent(ctx, connect.NewRequest(&protocol.AddEventRequest{
+				StreamId: rpc.ChannelStreamIdFromName(fmt.Sprintf("channel-%d", j)),
+				Event:    join,
+			},
+			))
+			if err != nil {
+				t.Fatalf("error calling AddEvent: %v", err)
+			}
+
+			message, err := events.MakeEnvelopeWithPayload(
+				wallets[i],
+				events.MakePayload_Message("hello"),
+				[][]byte{channelHashes[j]},
+			)
+			if err != nil {
+				t.Fatalf("error creating message event: %v", err)
+			}
+
+			_, err = client.AddEvent(ctx, connect.NewRequest(&protocol.AddEventRequest{
+				StreamId: rpc.ChannelStreamIdFromName(fmt.Sprintf("channel-%d", j)),
+				Event:    message,
+			},
+			))
+			if err != nil {
+				t.Fatalf("error calling AddEvent: %v", err)
+			}
+		}
+	}
+
+	syncPos := []*protocol.SyncPos{}
+	for i := 0; i < totalChannels; i++ {
+		syncPos = append(syncPos, &protocol.SyncPos{
+			StreamId:   rpc.ChannelStreamIdFromName(fmt.Sprintf("channel-%d", i)),
+			SyncCookie: channels[i],
+		})
+	}
+	syncRes, err := client.SyncStreams(ctx, connect.NewRequest(&protocol.SyncStreamsRequest{
+		SyncPos:   syncPos,
+		TimeoutMs: 1000,
+	}))
+	if err != nil {
+		t.Fatalf("error calling SyncStreams: %v", err)
+	}
+
+	for syncRes.Receive() {
+		msg := syncRes.Msg()
+
+		if len(msg.Streams) != totalChannels {
+			t.Fatalf("expected %d stream, got %d", totalChannels, len(msg.Streams))
+		}
+		for i := 0; i < totalChannels; i++ {
+			if len(msg.Streams[i].Events) != (totalUsers-1)*2 {
+				t.Fatalf("expected %d event, got %d", (totalUsers-1)*2, len(msg.Streams[0].Events))
+			}
+			for syncPosIdx := range syncPos {
+				if syncPos[syncPosIdx].StreamId == msg.Streams[i].StreamId {
+					syncPos[syncPosIdx].SyncCookie = msg.Streams[i].NextSyncCookie
 				}
+			}
+		}
+	}
+
+	selectedUsers := 300
+	selectedChannels := 3
+	waitForMessages := sync.WaitGroup{}
+	waitForMessages.Add(selectedUsers * selectedChannels)
+	defer waitForMessages.Wait()
+
+	s1 := rand.NewSource(time.Now().UnixNano())
+	r1 := rand.New(s1)
+
+	msgId := atomic.Int32{}
+	generateMessages := func() {
+		for i := 0; i < selectedUsers; i++ {
+
+			user := r1.Intn(totalUsers)
+
+			for i := 0; i < selectedChannels; i++ {
+
+				channel := r1.Intn(totalChannels)
+
+				message, err := events.MakeEnvelopeWithPayload(
+					wallets[user],
+					events.MakePayload_Message(fmt.Sprintf("%d hello from %d", msgId.Add(1)-1, user)),
+					[][]byte{channelHashes[channel]},
+				)
+				assert.NoError(t, err)
+
 				_, err = client.AddEvent(ctx, connect.NewRequest(&protocol.AddEventRequest{
-					StreamId: rpc.ChannelStreamIdFromName(fmt.Sprintf("channel-%d", j)),
-					Event:    join,
-				},
-				))
-				if err != nil {
-					t.Fatalf("error calling AddEvent: %v", err)
-				}
-
-				message, err := testutils.MessageEvent(next(), userIds[i], "hello", channelHashes[j])
-				if err != nil {
-					t.Fatalf("error creating message event: %v", err)
-				}
-
-				_, err = client.AddEvent(ctx, connect.NewRequest(&protocol.AddEventRequest{
-					StreamId: rpc.ChannelStreamIdFromName(fmt.Sprintf("channel-%d", j)),
+					StreamId: rpc.ChannelStreamIdFromName(fmt.Sprintf("channel-%d", channel)),
 					Event:    message,
 				},
 				))
-				if err != nil {
-					t.Fatalf("error calling AddEvent: %v", err)
-				}
+				assert.NoError(t, err)
+				waitForMessages.Done()
 			}
 		}
+	}
+	go generateMessages()
 
-		syncPos := []*protocol.SyncPos{}
-		for i := 0; i < totalChannels; i++ {
-			syncPos = append(syncPos, &protocol.SyncPos{
-				StreamId:   rpc.ChannelStreamIdFromName(fmt.Sprintf("channel-%d", i)),
-				SyncCookie: channels[i],
-			})
-		}
-		syncRes, err := client.SyncStreams(ctx, connect.NewRequest(&protocol.SyncStreamsRequest{
+	rcvMessages := atomic.Int32{}
+	msgTable := make([]int, selectedUsers*selectedChannels)
+	stats := make(map[int]int)
+	updateSyncPos := func() int {
+
+		received := 0
+		syncRes, err = client.SyncStreams(ctx, connect.NewRequest(&protocol.SyncStreamsRequest{
 			SyncPos:   syncPos,
 			TimeoutMs: 1000,
 		}))
 		if err != nil {
 			t.Fatalf("error calling SyncStreams: %v", err)
 		}
-
 		for syncRes.Receive() {
 			msg := syncRes.Msg()
-
-			if len(msg.Streams) != totalChannels {
-				t.Fatalf("expected %d stream, got %d", totalChannels, len(msg.Streams))
-			}
-			for i := 0; i < totalChannels; i++ {
-				if len(msg.Streams[i].Events) != (totalUsers-1)*2 {
-					t.Fatalf("expected %d event, got %d", (totalUsers-1)*2, len(msg.Streams[0].Events))
-				}
-				for syncPosIdx := range syncPos {
-					if syncPos[syncPosIdx].StreamId == msg.Streams[i].StreamId {
-						syncPos[syncPosIdx].SyncCookie = msg.Streams[i].NextSyncCookie
+			assert.NoError(t, err)
+			stats[len(msg.Streams)]++
+			for streamIdx := range msg.Streams {
+				for syncPosStrem := range syncPos {
+					if syncPos[syncPosStrem].StreamId == msg.Streams[streamIdx].StreamId {
+						// check if cookie's stream matches
+						assert.Equal(t, syncPos[syncPosStrem].SyncCookie[8:], msg.Streams[streamIdx].NextSyncCookie[8:])
+						syncPos[syncPosStrem].SyncCookie = msg.Streams[streamIdx].NextSyncCookie
 					}
 				}
-			}
-		}
-
-		selectedUsers := 300
-		selectedChannels := 3
-		waitForMessages := sync.WaitGroup{}
-		waitForMessages.Add(selectedUsers * selectedChannels)
-		defer waitForMessages.Wait()
-
-		s1 := rand.NewSource(time.Now().UnixNano())
-		r1 := rand.New(s1)
-
-		msgId := atomic.Int32{}
-		generateMessages := func() {
-			for i := 0; i < selectedUsers; i++ {
-
-				user := r1.Intn(totalUsers)
-
-				for i := 0; i < selectedChannels; i++ {
-
-					channel := r1.Intn(totalChannels)
-
-					message, err := testutils.MessageEvent(next(), userIds[user], fmt.Sprintf("%d hello from %d", msgId.Add(1)-1, user), channelHashes[channel])
+				received += len(msg.Streams[streamIdx].Events)
+				for _, event := range msg.Streams[streamIdx].Events {
+					e, err := events.ParseEvent(event)
 					assert.NoError(t, err)
-
-					_, err = client.AddEvent(ctx, connect.NewRequest(&protocol.AddEventRequest{
-						StreamId: rpc.ChannelStreamIdFromName(fmt.Sprintf("channel-%d", channel)),
-						Event:    message,
-					},
-					))
+					msg := e.Event.Payload.GetMessage()
+					assert.NotNil(t, msg)
+					tokens := strings.Split(msg.Text, " ")
+					assert.Equal(t, 4, len(tokens))
+					id, err := strconv.Atoi(tokens[0])
 					assert.NoError(t, err)
-					waitForMessages.Done()
+					msgTable[id]++
+					assert.Equal(t, 1, msgTable[id])
 				}
 			}
+			rcvMessages.Add(int32(received))
 		}
-		go generateMessages()
-
-		rcvMessages := atomic.Int32{}
-		msgTable := make([]int, selectedUsers*selectedChannels)
-		stats := make(map[int]int)
-		updateSyncPos := func() int {
-
-			received := 0
-			syncRes, err = client.SyncStreams(ctx, connect.NewRequest(&protocol.SyncStreamsRequest{
-				SyncPos:   syncPos,
-				TimeoutMs: 1000,
-			}))
-			if err != nil {
-				t.Fatalf("error calling SyncStreams: %v", err)
-			}
-			for syncRes.Receive() {
-				msg := syncRes.Msg()
-				assert.NoError(t, err)
-				stats[len(msg.Streams)]++
-				for streamIdx := range msg.Streams {
-					for syncPosStrem := range syncPos {
-						if syncPos[syncPosStrem].StreamId == msg.Streams[streamIdx].StreamId {
-							// check if cookie's stream matches
-							assert.Equal(t, syncPos[syncPosStrem].SyncCookie[8:], msg.Streams[streamIdx].NextSyncCookie[8:])
-							syncPos[syncPosStrem].SyncCookie = msg.Streams[streamIdx].NextSyncCookie
-						}
-					}
-					received += len(msg.Streams[streamIdx].Events)
-					for _, event := range msg.Streams[streamIdx].Events {
-						e, err := events.ParseEvent(event)
-						assert.NoError(t, err)
-						msg := e.Event.Payload.GetMessage()
-						assert.NotNil(t, msg)
-						tokens := strings.Split(msg.Text, " ")
-						assert.Equal(t, 4, len(tokens))
-						id, err := strconv.Atoi(tokens[0])
-						assert.NoError(t, err)
-						msgTable[id]++
-						assert.Equal(t, 1, msgTable[id])
-					}
-				}
-				rcvMessages.Add(int32(received))
-			}
-			return received
-		}
-
-		for int(rcvMessages.Load()) < selectedUsers*selectedChannels {
-			if updateSyncPos() > 0 {
-				// sleep for a while to let the other goroutine generate more messages
-				time.Sleep(100 * time.Millisecond)
-			}
-		}
-		assert.Equal(t, selectedUsers*selectedChannels, int(rcvMessages.Load()))
-		log.Info("stats ", stats)
+		return received
 	}
+
+	for int(rcvMessages.Load()) < selectedUsers*selectedChannels {
+		if updateSyncPos() > 0 {
+			// sleep for a while to let the other goroutine generate more messages
+			time.Sleep(100 * time.Millisecond)
+		}
+	}
+	assert.Equal(t, selectedUsers*selectedChannels, int(rcvMessages.Load()))
+	log.Info("stats ", stats)
 }

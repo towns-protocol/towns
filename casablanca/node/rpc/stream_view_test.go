@@ -3,16 +3,20 @@ package rpc_test
 import (
 	"testing"
 
+	"casablanca/node/crypto"
+	"casablanca/node/events"
 	"casablanca/node/protocol"
 	"casablanca/node/rpc"
-	"casablanca/node/testutils"
 )
 
 func TestLoad(t *testing.T) {
-
-	userId := []byte{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9}
+	wallet, _ := crypto.NewWallet()
 	rollup := rpc.NewView(func() ([]*protocol.Envelope, error) {
-		inception, err := testutils.UserStreamInceptionEvent(1, userId, "streamid$1")
+		inception, err := events.MakeEnvelopeWithPayload(
+			wallet,
+			events.MakePayload_Inception("streamid$1", protocol.StreamKind_SK_USER, ""),
+			nil,
+		)
 		if err != nil {
 			t.Fatalf("error creating inception event: %v", err)
 		}
