@@ -74,7 +74,7 @@ describe('streamRpcClient', () => {
         const bobsUserStreamId = makeUserStreamId(bobsUserId)
         await bob.createStream({
             events: [
-                makeEvent(
+                await makeEvent(
                     bobsContext,
                     makeInceptionPayload({
                         streamKind: StreamKind.SK_USER,
@@ -88,7 +88,7 @@ describe('streamRpcClient', () => {
 
         // Bob creates space and channel
         const spacedStreamId = makeSpaceStreamId('bobs-space-' + genId())
-        const spaceInceptionEvent = makeEvent(
+        const spaceInceptionEvent = await makeEvent(
             bobsContext,
             makeInceptionPayload({
                 streamKind: StreamKind.SK_SPACE,
@@ -99,7 +99,7 @@ describe('streamRpcClient', () => {
         await bob.createStream({
             events: [
                 spaceInceptionEvent,
-                makeEvent(
+                await makeEvent(
                     bobsContext,
                     makeJoinableStreamPayload({
                         userId: bobsUserId,
@@ -111,7 +111,7 @@ describe('streamRpcClient', () => {
         })
 
         const channelId = makeChannelStreamId('bobs-channel-' + genId())
-        const channelInceptionEvent = makeEvent(
+        const channelInceptionEvent = await makeEvent(
             bobsContext,
             makeInceptionPayload({
                 streamKind: StreamKind.SK_CHANNEL,
@@ -120,7 +120,7 @@ describe('streamRpcClient', () => {
             }),
             [],
         )
-        const channelJoinEvent = makeEvent(
+        const channelJoinEvent = await makeEvent(
             bobsContext,
             makeJoinableStreamPayload({
                 userId: bobsUserId,
@@ -158,7 +158,7 @@ describe('streamRpcClient', () => {
         // Bob succesdfully posts a message
         log('bobTalksToHimself Bob posts a message')
 
-        const event = makeEvent(
+        const event = await makeEvent(
             bobsContext,
             makeMessagePayload({
                 text: 'hello',
@@ -183,7 +183,11 @@ describe('streamRpcClient', () => {
         expect(syncResult!.streams[0].events).toEqual([event])
 
         log("bobTalksToHimself Bob can't post event without previous event hashes")
-        const badEvent = makeEvent_test(bobsContext, makeMessagePayload({ text: 'hello' }), [])
+        const badEvent = await makeEvent_test(
+            bobsContext,
+            makeMessagePayload({ text: 'hello' }),
+            [],
+        )
         await expect(
             bob.addEvent({
                 streamId: channelId,
@@ -191,7 +195,7 @@ describe('streamRpcClient', () => {
             }),
         ).rejects.toThrow()
 
-        const badEvent1 = makeEvent_test(bobsContext, makeMessagePayload({ text: 'hello' }), [
+        const badEvent1 = await makeEvent_test(bobsContext, makeMessagePayload({ text: 'hello' }), [
             badEvent.hash,
         ])
         await expect(
@@ -219,7 +223,7 @@ describe('streamRpcClient', () => {
         // Create accounts for Bob and Alice
         await bob.createStream({
             events: [
-                makeEvent(
+                await makeEvent(
                     bobsContext,
                     makeInceptionPayload({
                         streamKind: StreamKind.SK_USER,
@@ -232,7 +236,7 @@ describe('streamRpcClient', () => {
 
         await alice.createStream({
             events: [
-                makeEvent(
+                await makeEvent(
                     alicesContext,
                     makeInceptionPayload({
                         streamKind: StreamKind.SK_USER,
@@ -245,7 +249,7 @@ describe('streamRpcClient', () => {
 
         // Bob creates space
         const spaceId = makeSpaceStreamId('bobs-space-' + genId())
-        const inceptionEvent = makeEvent(
+        const inceptionEvent = await makeEvent(
             bobsContext,
             makeInceptionPayload({
                 streamKind: StreamKind.SK_SPACE,
@@ -253,7 +257,7 @@ describe('streamRpcClient', () => {
             }),
             [],
         )
-        const joinEvent = makeEvent(
+        const joinEvent = await makeEvent(
             bobsContext,
             makeJoinableStreamPayload({
                 userId: bobsUserId,
@@ -267,7 +271,7 @@ describe('streamRpcClient', () => {
 
         // Bob creates channel
         const channelId = makeChannelStreamId('bobs-channel-' + genId())
-        const channelInceptionEvent = makeEvent(
+        const channelInceptionEvent = await makeEvent(
             bobsContext,
             makeInceptionPayload({
                 streamKind: StreamKind.SK_CHANNEL,
@@ -276,7 +280,7 @@ describe('streamRpcClient', () => {
             }),
             [],
         )
-        let event = makeEvent(
+        let event = await makeEvent(
             bobsContext,
             makeJoinableStreamPayload({
                 userId: bobsUserId,
@@ -289,7 +293,7 @@ describe('streamRpcClient', () => {
         })
 
         // Bob succesdfully posts a message
-        event = makeEvent(
+        event = await makeEvent(
             bobsContext,
             makeMessagePayload({
                 text: 'hello',
@@ -305,7 +309,7 @@ describe('streamRpcClient', () => {
         await expect(
             alice.addEvent({
                 streamId: channelId,
-                event: makeEvent(
+                event: await makeEvent(
                     alicesContext,
                     makeMessagePayload({
                         text: 'hello',
@@ -332,7 +336,7 @@ describe('streamRpcClient', () => {
         })
 
         // Bob invites Alice to the channel
-        event = makeEvent(
+        event = await makeEvent(
             bobsContext,
             makeJoinableStreamPayload({
                 op: MembershipOp.SO_INVITE,
@@ -375,7 +379,7 @@ describe('streamRpcClient', () => {
         })
 
         // Alice joins the channel
-        event = makeEvent(
+        event = await makeEvent(
             alicesContext,
             makeJoinableStreamPayload({
                 op: MembershipOp.SO_JOIN,
@@ -434,7 +438,7 @@ describe('streamRpcClient', () => {
         })
 
         // Bob posts another message
-        event = makeEvent(
+        event = await makeEvent(
             bobsContext,
             makeMessagePayload({
                 text: 'Hello, Alice!',
@@ -469,7 +473,7 @@ describe('streamRpcClient', () => {
         await expect(
             bob.createStream({
                 events: [
-                    makeEvent(
+                    await makeEvent(
                         bobsContext,
                         makeInceptionPayload({
                             streamKind: StreamKind.SK_USER,
@@ -495,7 +499,7 @@ describe('streamRpcClient', () => {
         await expect(
             bob.createStream({
                 events: [
-                    makeEvent(
+                    await makeEvent(
                         bobsContext,
                         makeInceptionPayload({
                             streamKind: StreamKind.SK_USER,
@@ -510,7 +514,7 @@ describe('streamRpcClient', () => {
 
         // Bob creates space and channel
         const spacedStreamId = makeSpaceStreamId('bobs-space-' + genId())
-        const spaceEvents = makeEvents(bobsContext, [
+        const spaceEvents = await makeEvents(bobsContext, [
             makeInceptionPayload({
                 streamKind: StreamKind.SK_SPACE,
                 streamId: spacedStreamId,
@@ -526,7 +530,7 @@ describe('streamRpcClient', () => {
         log('Bob created space, about to create channel')
 
         const channelId = makeChannelStreamId('bobs-channel-' + genId())
-        const channelEvents = makeEvents(bobsContext, [
+        const channelEvents = await makeEvents(bobsContext, [
             makeInceptionPayload({
                 streamKind: StreamKind.SK_CHANNEL,
                 streamId: channelId,
@@ -544,7 +548,7 @@ describe('streamRpcClient', () => {
 
         log('Bob fails to create channel with badly chained initial events, hash empty')
         const channelId2 = makeChannelStreamId('bobs-channel2-' + genId())
-        const channelEvent2_0 = makeEvent(
+        const channelEvent2_0 = await makeEvent(
             bobsContext,
             makeInceptionPayload({
                 streamKind: StreamKind.SK_CHANNEL,
@@ -552,7 +556,7 @@ describe('streamRpcClient', () => {
                 spaceId: spacedStreamId,
             }),
         )
-        const channelEvent2_1 = makeEvent_test(
+        const channelEvent2_1 = await makeEvent_test(
             bobsContext,
             makeJoinableStreamPayload({
                 userId: bobsUserId,
@@ -573,7 +577,7 @@ describe('streamRpcClient', () => {
         )
 
         log('Bob fails to create channel with badly chained initial events, wrong hash value')
-        const channelEvent2_2 = makeEvent(
+        const channelEvent2_2 = await makeEvent(
             bobsContext,
             makeJoinableStreamPayload({
                 userId: bobsUserId,
@@ -595,7 +599,7 @@ describe('streamRpcClient', () => {
         )
 
         log('Bob adds event with correct hash')
-        const messageEvent = makeEvent(
+        const messageEvent = await makeEvent(
             bobsContext,
             makeMessagePayload({
                 text: 'Hello, World!',
@@ -613,7 +617,7 @@ describe('streamRpcClient', () => {
         await expect(
             bob.addEvent({
                 streamId: channelId,
-                event: makeEvent_test(
+                event: await makeEvent_test(
                     bobsContext,
                     makeMessagePayload({
                         text: 'Hello, World!',
@@ -632,7 +636,7 @@ describe('streamRpcClient', () => {
         await expect(
             bob.addEvent({
                 streamId: channelId,
-                event: makeEvent(
+                event: await makeEvent(
                     bobsContext,
                     makeMessagePayload({
                         text: 'Hello, World!',

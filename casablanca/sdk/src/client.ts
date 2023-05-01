@@ -168,7 +168,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
         const streamId = makeUserStreamId(this.userId)
 
         const events = [
-            makeEvent(
+            await makeEvent(
                 this.signerContext,
                 makeInceptionPayload({
                     streamId,
@@ -205,7 +205,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
 
         // create utf8 encoder
         const streamId = spaceId
-        const inceptionEvent = makeEvent(
+        const inceptionEvent = await makeEvent(
             this.signerContext,
             makeInceptionPayload({
                 streamId,
@@ -213,7 +213,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
             }),
             [],
         )
-        const joinEvent = makeEvent(
+        const joinEvent = await makeEvent(
             this.signerContext,
             makeJoinableStreamPayload({
                 userId: this.userId,
@@ -236,7 +236,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
         assert(isSpaceStreamId(spaceId), 'spaceId must be a valid streamId')
         assert(isChannelStreamId(channelId), 'channelId must be a valid streamId')
 
-        const inceptionEvent = makeEvent(
+        const inceptionEvent = await makeEvent(
             this.signerContext,
             makeInceptionPayload({
                 streamId: channelId,
@@ -245,7 +245,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
             }),
             [],
         )
-        const joinEvent = makeEvent(
+        const joinEvent = await makeEvent(
             this.signerContext,
             makeJoinableStreamPayload({
                 userId: this.userId,
@@ -664,7 +664,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
         const prevHashes = Array.from(stream.rollup.leafEventHashes.values())
         assert(prevHashes.length > 0, 'no prev hashes for stream ' + streamId)
         // TODO: should rollup now reference this event's hash?
-        const event = makeEvent(this.signerContext, payload, prevHashes)
+        const event = await makeEvent(this.signerContext, payload, prevHashes)
 
         await this.rpcClient.addEvent({
             streamId,

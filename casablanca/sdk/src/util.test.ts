@@ -17,11 +17,11 @@ const log = debug('csb:test:util')
 
 export const TEST_URL = 'http://localhost:5157'
 
-export const makeEvent_test = (
+export const makeEvent_test = async (
     context: SignerContext,
     payload: Payload | PartialMessage<Payload>,
     prevEventHashes: Uint8Array[],
-): Envelope => {
+): Promise<Envelope> => {
     const hashes = normailizeHashes(prevEventHashes)
     const streamEvent = new StreamEvent({
         creatorAddress: context.creatorAddress,

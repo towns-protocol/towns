@@ -113,11 +113,11 @@ describe('sign', () => {
                     value: message,
                 },
             }
-            const event = makeEvent(context, payload, [hash])
+            const event = await makeEvent(context, payload, [hash])
             expect(unpackEnvelope(event)).toBeDefined()
 
             // Event with same payload from different wallet doesn't match
-            const event2 = makeEvent(context2, payload, [hash])
+            const event2 = await makeEvent(context2, payload, [hash])
             expect(unpackEnvelope(event2)).toBeDefined()
             expect(event2).not.toEqual(event)
 
@@ -140,7 +140,7 @@ describe('sign', () => {
             }).toThrow()
 
             // Event with same payload from the same wallet doesn't match
-            const event3 = makeEvent(context, payload, [hash])
+            const event3 = await makeEvent(context, payload, [hash])
             expect(unpackEnvelope(event3)).toBeDefined()
             expect(event3.hash).not.toEqual(event.hash)
             expect(event3).not.toEqual(event)
@@ -152,7 +152,7 @@ describe('sign', () => {
         async (method: string, c: () => Promise<SignerContext>) => {
             const context = await c()
             expect(
-                makeEvent(
+                await makeEvent(
                     context,
                     {
                         payload: {
@@ -175,20 +175,16 @@ describe('sign', () => {
                     value: { text: 'Hello, World!' },
                 },
             }
-            expect(makeEvent(context, payload, [hash])).toBeDefined()
-            expect(makeEvent(context, payload, [hash, hash, hash])).toBeDefined()
+            expect(await makeEvent(context, payload, [hash])).toBeDefined()
+            expect(await makeEvent(context, payload, [hash, hash, hash])).toBeDefined()
 
-            badHashes.forEach((h) => {
-                expect(() => {
-                    makeEvent(context, payload, [h])
-                }).toThrow()
-            })
+            for (const h of badHashes) {
+                await expect(makeEvent(context, payload, [h])).rejects.toThrow()
+            }
 
-            badHashes.forEach((h) => {
-                expect(() => {
-                    makeEvent(context, payload, [hash, h])
-                }).toThrow()
-            })
+            for (const h of badHashes) {
+                await expect(makeEvent(context, payload, [hash, h])).rejects.toThrow()
+            }
         },
     )
 })

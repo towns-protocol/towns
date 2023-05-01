@@ -80,11 +80,11 @@ export const normailizeHashes = (
 // due to potensial instability in JSON encoding.
 // signTypedData requires type descriptor, and a bit too much to maintain
 // it at this stage of development.
-export const makeEvent = (
+export const makeEvent = async (
     context: SignerContext,
     payload: Payload | PartialMessage<Payload>,
     prevEventHashes?: Uint8Array[] | Uint8Array | Map<string, Uint8Array>,
-): Envelope => {
+): Promise<Envelope> => {
     const hashes = normailizeHashes(prevEventHashes)
     const pl: Payload = payload instanceof Payload ? payload : new Payload(payload)
     check(isDefined(pl.payload.case), "Payload can't be empty", Err.BAD_PAYLOAD)
@@ -120,15 +120,15 @@ export const makeEvent = (
     return new Envelope({ hash: Uint8Array.from(hash), signature, event })
 }
 
-export const makeEvents = (
+export const makeEvents = async (
     context: SignerContext,
     payloads: (Payload | PartialMessage<Payload>)[],
     prevEventHashes?: Uint8Array[] | Uint8Array | Map<string, Uint8Array>,
-): Envelope[] => {
+): Promise<Envelope[]> => {
     const events: Envelope[] = []
     let hashes = normailizeHashes(prevEventHashes)
     for (const payload of payloads) {
-        const event = makeEvent(context, payload, hashes)
+        const event = await makeEvent(context, payload, hashes)
         events.push(event)
         hashes = [event.hash]
     }
