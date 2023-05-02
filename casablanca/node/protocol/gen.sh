@@ -7,3 +7,5 @@ cd -P -- "$(dirname -- "${BASH_SOURCE[0]}")"
 cp ../../proto/protocol.proto .
 buf generate --path protocol.proto
 rm protocol.proto
+cd ../protocol_extensions
+go run main.go
