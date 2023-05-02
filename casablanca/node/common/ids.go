@@ -1,4 +1,4 @@
-package rpc
+package common
 
 import (
 	"encoding/hex"
@@ -62,4 +62,15 @@ func ValidSpaceStreamId(id string) bool {
 
 func ValidChannelStreamId(id string) bool {
 	return strings.HasPrefix(id, "22-")
+}
+
+func RoomTypeFromStreamId(id string) RoomType {
+	if ValidSpaceStreamId(id) {
+		return Space
+	} else if ValidChannelStreamId(id) {
+		return Channel
+	} else  if ValidUserStreamId(id) {
+		return User
+	}
+	panic(fmt.Sprintf("invalid room type %s", id))
 }

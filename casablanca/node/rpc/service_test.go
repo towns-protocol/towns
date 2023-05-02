@@ -13,6 +13,7 @@ import (
 	"testing"
 	"time"
 
+	"casablanca/node/common"
 	"casablanca/node/crypto"
 	"casablanca/node/events"
 	"casablanca/node/protocol"
@@ -45,7 +46,7 @@ func TestMain(m *testing.M) {
 }
 
 func createUser(ctx context.Context, wallet *crypto.Wallet, client protocolconnect.StreamServiceClient) ([]byte, []byte, error) {
-	userStreamId := rpc.UserStreamIdFromAddress(wallet.Address.Bytes())
+	userStreamId := common.UserStreamIdFromAddress(wallet.Address.Bytes())
 	inception, err := events.MakeEnvelopeWithPayload(
 		wallet,
 		events.MakePayload_Inception(
@@ -71,7 +72,7 @@ func createSpace(ctx context.Context, wallet *crypto.Wallet, client protocolconn
 	space, err := events.MakeEnvelopeWithPayload(
 		wallet,
 		events.MakePayload_Inception(
-			rpc.SpaceStreamIdFromName(spaceId),
+			common.SpaceStreamIdFromName(spaceId),
 			protocol.StreamKind_SK_SPACE,
 			"",
 		),
@@ -84,7 +85,7 @@ func createSpace(ctx context.Context, wallet *crypto.Wallet, client protocolconn
 		wallet,
 		events.MakePayload_JoinableStream(
 			protocol.MembershipOp_SO_JOIN,
-			rpc.UserIdFromAddress(wallet.Address.Bytes()),
+			common.UserIdFromAddress(wallet.Address.Bytes()),
 		),
 		[][]byte{space.Hash},
 	)
@@ -107,7 +108,7 @@ func createChannel(ctx context.Context, wallet *crypto.Wallet, client protocolco
 	channel, err := events.MakeEnvelopeWithPayload(
 		wallet,
 		events.MakePayload_Inception(
-			rpc.ChannelStreamIdFromName(channelId),
+			common.ChannelStreamIdFromName(channelId),
 			protocol.StreamKind_SK_CHANNEL,
 			spaceId,
 		),
@@ -120,7 +121,7 @@ func createChannel(ctx context.Context, wallet *crypto.Wallet, client protocolco
 		wallet,
 		events.MakePayload_JoinableStream(
 			protocol.MembershipOp_SO_JOIN,
-			rpc.UserIdFromAddress(wallet.Address.Bytes()),
+			common.UserIdFromAddress(wallet.Address.Bytes()),
 		),
 		[][]byte{channel.Hash},
 	)
@@ -195,7 +196,7 @@ func TestMethods(t *testing.T) {
 		}
 
 		// create channel
-		channel, channelHash, err := createChannel(ctx, wallet1, client, rpc.SpaceStreamIdFromName("test"), "channel1")
+		channel, channelHash, err := createChannel(ctx, wallet1, client, common.SpaceStreamIdFromName("test"), "channel1")
 		if err != nil {
 			t.Fatalf("error calling CreateStream: %v", err)
 		}
@@ -208,7 +209,7 @@ func TestMethods(t *testing.T) {
 			wallet2,
 			events.MakePayload_JoinableStream(
 				protocol.MembershipOp_SO_JOIN,
-				rpc.UserIdFromAddress(wallet2.Address.Bytes()),
+				common.UserIdFromAddress(wallet2.Address.Bytes()),
 			),
 			[][]byte{channelHash},
 		)
@@ -219,7 +220,7 @@ func TestMethods(t *testing.T) {
 			ctx,
 			connect.NewRequest(
 				&protocol.AddEventRequest{
-					StreamId: rpc.ChannelStreamIdFromName("channel1"),
+					StreamId: common.ChannelStreamIdFromName("channel1"),
 					Event:    join,
 				},
 			),
@@ -241,7 +242,7 @@ func TestMethods(t *testing.T) {
 			ctx,
 			connect.NewRequest(
 				&protocol.AddEventRequest{
-					StreamId: rpc.ChannelStreamIdFromName("channel1"),
+					StreamId: common.ChannelStreamIdFromName("channel1"),
 					Event:    message,
 				},
 			),
@@ -256,7 +257,7 @@ func TestMethods(t *testing.T) {
 				&protocol.SyncStreamsRequest{
 					SyncPos: []*protocol.SyncPos{
 						{
-							StreamId:   rpc.ChannelStreamIdFromName("channel1"),
+							StreamId:   common.ChannelStreamIdFromName("channel1"),
 							SyncCookie: channel,
 						},
 					},
@@ -328,7 +329,7 @@ func TestManyUsers(t *testing.T) {
 	var channelHashes [][]byte
 	var channels [][]byte
 	for i := 0; i < totalChannels; i++ {
-		channel, channelHash, err := createChannel(ctx, wallets[0], client, rpc.SpaceStreamIdFromName("test"), fmt.Sprintf("channel-%d", i))
+		channel, channelHash, err := createChannel(ctx, wallets[0], client, common.SpaceStreamIdFromName("test"), fmt.Sprintf("channel-%d", i))
 		if err != nil {
 			t.Fatalf("error calling CreateStream: %v", err)
 		}
@@ -346,7 +347,7 @@ func TestManyUsers(t *testing.T) {
 				wallets[i],
 				events.MakePayload_JoinableStream(
 					protocol.MembershipOp_SO_JOIN,
-					rpc.UserIdFromAddress(wallets[i].Address.Bytes()),
+					common.UserIdFromAddress(wallets[i].Address.Bytes()),
 				),
 				[][]byte{channelHashes[j]},
 			)
@@ -356,7 +357,7 @@ func TestManyUsers(t *testing.T) {
 				t.Fatalf("error creating join event: %v", err)
 			}
 			_, err = client.AddEvent(ctx, connect.NewRequest(&protocol.AddEventRequest{
-				StreamId: rpc.ChannelStreamIdFromName(fmt.Sprintf("channel-%d", j)),
+				StreamId: common.ChannelStreamIdFromName(fmt.Sprintf("channel-%d", j)),
 				Event:    join,
 			},
 			))
@@ -374,7 +375,7 @@ func TestManyUsers(t *testing.T) {
 			}
 
 			_, err = client.AddEvent(ctx, connect.NewRequest(&protocol.AddEventRequest{
-				StreamId: rpc.ChannelStreamIdFromName(fmt.Sprintf("channel-%d", j)),
+				StreamId: common.ChannelStreamIdFromName(fmt.Sprintf("channel-%d", j)),
 				Event:    message,
 			},
 			))
@@ -387,7 +388,7 @@ func TestManyUsers(t *testing.T) {
 	syncPos := []*protocol.SyncPos{}
 	for i := 0; i < totalChannels; i++ {
 		syncPos = append(syncPos, &protocol.SyncPos{
-			StreamId:   rpc.ChannelStreamIdFromName(fmt.Sprintf("channel-%d", i)),
+			StreamId:   common.ChannelStreamIdFromName(fmt.Sprintf("channel-%d", i)),
 			SyncCookie: channels[i],
 		})
 	}
@@ -444,7 +445,7 @@ func TestManyUsers(t *testing.T) {
 				assert.NoError(t, err)
 
 				_, err = client.AddEvent(ctx, connect.NewRequest(&protocol.AddEventRequest{
-					StreamId: rpc.ChannelStreamIdFromName(fmt.Sprintf("channel-%d", channel)),
+					StreamId: common.ChannelStreamIdFromName(fmt.Sprintf("channel-%d", channel)),
 					Event:    message,
 				},
 				))

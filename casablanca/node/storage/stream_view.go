@@ -1,6 +1,7 @@
-package rpc
+package storage
 
 import (
+	"casablanca/node/common"
 	"casablanca/node/events"
 	"casablanca/node/infra"
 	"casablanca/node/protocol"
@@ -27,6 +28,17 @@ func NewView(getLocalOrderEventsFunc func() ([]*protocol.Envelope, error)) *Stre
 		eventsOrder:         make([]string, 0),
 	}
 	return r
+}
+
+func NewViewFromStreamId(ctx context.Context, store Storage, streamId string) *StreamView {
+	view := NewView(func() ([]*protocol.Envelope, error) {
+		_, events, err := store.GetStream(ctx, streamId)
+		if err != nil {
+			return nil, err
+		}
+		return events, nil
+	})
+	return view
 }
 
 func (r *StreamView) getOrderedEvents() ([]*events.ParsedEvent, error) {
@@ -153,4 +165,48 @@ func (r *StreamView) AddEvent(event *protocol.Envelope) error {
 	r.events[string(parsedEvent.Envelope.Hash)] = parsedEvent
 	r.eventsOrder = append(r.eventsOrder, string(parsedEvent.Envelope.Hash))
 	return nil
+}
+
+func (r *StreamView) GetRoomInfo(ctx context.Context, roomId string, userId string) (*common.RoomInfo, error) {
+	parsedEvent, err := r.getOrderedEventsCached()
+	if err != nil {
+		return nil, err
+	}
+	if len(parsedEvent) == 0 {
+		return nil, fmt.Errorf("no payloads for stream %s", roomId)
+	}
+
+	for _, e := range parsedEvent {
+		creator := common.UserIdFromAddress(e.Event.GetCreatorAddress())
+		switch e.Event.Payload.Payload.(type) {
+		case *protocol.Payload_Inception_:
+			inception := e.Event.Payload.GetInception()
+			switch inception.StreamKind {
+			case protocol.StreamKind_SK_CHANNEL:
+				return &common.RoomInfo{
+					SpaceNetworkId:   inception.SpaceId,
+					ChannelNetworkId: inception.StreamId,
+					RoomType:         common.Channel,
+					IsOwner:          creator == userId,
+				}, nil
+			case protocol.StreamKind_SK_SPACE:
+
+				return &common.RoomInfo{
+					SpaceNetworkId: inception.StreamId,
+					RoomType:       common.Space,
+					IsOwner:        creator == userId,
+				}, nil
+
+			case protocol.StreamKind_SK_USER:
+
+				return &common.RoomInfo{
+					SpaceNetworkId: inception.StreamId,
+					RoomType:       common.User,
+					IsOwner:        creator == userId,
+				}, nil
+
+			}
+		}
+	}
+	return nil, fmt.Errorf("no inception event found")
 }

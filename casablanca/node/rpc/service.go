@@ -14,6 +14,7 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 
 	. "casablanca/node/base"
+	"casablanca/node/common"
 	"casablanca/node/crypto"
 	"casablanca/node/events"
 	"casablanca/node/infra"
@@ -137,7 +138,7 @@ func (s *Service) GetStream(ctx context.Context, req *connect_go.Request[protoco
 	return connect_go.NewResponse(resp), nil
 }
 
-func (s *Service) checkPrevEvents(view *StreamView, prevEvents [][]byte) error {
+func (s *Service) checkPrevEvents(view *storage.StreamView, prevEvents [][]byte) error {
 	allEvents, err := view.Get()
 	if err != nil {
 		return err
@@ -163,7 +164,7 @@ func (s *Service) AddEvent(ctx context.Context, req *connect_go.Request[protocol
 	return connect_go.NewResponse(&protocol.AddEventResponse{}), nil
 }
 
-func (s *Service) addEvent(ctx context.Context, streamId string, view *StreamView, envelope *protocol.Envelope) ([]byte, error) {
+func (s *Service) addEvent(ctx context.Context, streamId string, view *storage.StreamView, envelope *protocol.Envelope) ([]byte, error) {
 	parsedEvent, err := events.ParseEvent(envelope)
 	if err != nil {
 		return nil, err
@@ -199,7 +200,7 @@ func (s *Service) addEvent(ctx context.Context, streamId string, view *StreamVie
 		}
 		joinableStream := streamEvent.Payload.GetJoinableStream()
 		userId := joinableStream.UserId
-		userStreamId := UserStreamIdFromId(userId)
+		userStreamId := common.UserStreamIdFromId(userId)
 
 		cookie, err := s.Storage.AddEvent(ctx, streamId, parsedEvent.Envelope)
 		if err != nil {
@@ -221,7 +222,7 @@ func (s *Service) addEvent(ctx context.Context, streamId string, view *StreamVie
 			events.MakePayload_UserMembershipOp(
 				joinableStream.Op,
 				streamId,
-				UserIdFromAddress(parsedEvent.Event.CreatorAddress),
+				common.UserIdFromAddress(parsedEvent.Event.CreatorAddress),
 				&protocol.EventRef{
 					StreamId:  streamId,
 					Hash:      parsedEvent.Envelope.Hash,
@@ -249,7 +250,7 @@ func (s *Service) addEvent(ctx context.Context, streamId string, view *StreamVie
 		if kind != protocol.StreamKind_SK_CHANNEL {
 			return nil, status.Errorf(codes.InvalidArgument, "AddEvent: event is a message event, but stream is not a channel")
 		}
-		user := UserIdFromAddress(streamEvent.CreatorAddress)
+		user := common.UserIdFromAddress(streamEvent.CreatorAddress)
 		// check if user is a member of the channel
 		members, err := view.JoinedUsers(streamId)
 		if err != nil {
@@ -324,8 +325,8 @@ func (s *Service) makeEnvelopeWithPayload(payload *protocol.Payload, prevHashes 
 	return events.MakeEnvelopeWithPayload(s.wallet, payload, prevHashes)
 }
 
-func makeView(ctx context.Context, store storage.Storage, streamId string) *StreamView {
-	view := NewView(func() ([]*protocol.Envelope, error) {
+func makeView(ctx context.Context, store storage.Storage, streamId string) *storage.StreamView {
+	view := storage.NewView(func() ([]*protocol.Envelope, error) {
 		_, events, err := store.GetStream(ctx, streamId)
 		if err != nil {
 			return nil, err

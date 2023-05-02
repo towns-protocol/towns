@@ -2,6 +2,7 @@ package rpc
 
 import (
 	"bytes"
+	"casablanca/node/common"
 	"casablanca/node/events"
 	"casablanca/node/infra"
 	"casablanca/node/protocol"
@@ -33,7 +34,7 @@ func (s *Service) CreateStream(ctx context.Context, req *connect.Request[protoco
 
 	switch inception.StreamKind {
 	case protocol.StreamKind_SK_USER:
-		if !ValidUserStreamId(inception.StreamId) {
+		if !common.ValidUserStreamId(inception.StreamId) {
 			return nil, RpcErrorf(protocol.Err_BAD_STREAM_ID, "CreateStream: invalid user stream id '%s'", inception.StreamId)
 		}
 		if inception.SpaceId != "" {
@@ -43,7 +44,7 @@ func (s *Service) CreateStream(ctx context.Context, req *connect.Request[protoco
 			return nil, RpcErrorf(protocol.Err_BAD_STREAM_CREATION_PARAMS, "CreateStream: user stream must have only one event")
 		}
 	case protocol.StreamKind_SK_SPACE:
-		if !ValidSpaceStreamId(inception.StreamId) {
+		if !common.ValidSpaceStreamId(inception.StreamId) {
 			return nil, RpcErrorf(protocol.Err_BAD_STREAM_ID, "CreateStream: invalid space stream id '%s'", inception.StreamId)
 		}
 		if inception.SpaceId != "" {
@@ -56,7 +57,7 @@ func (s *Service) CreateStream(ctx context.Context, req *connect.Request[protoco
 			return nil, err
 		}
 	case protocol.StreamKind_SK_CHANNEL:
-		if !ValidChannelStreamId(inception.StreamId) {
+		if !common.ValidChannelStreamId(inception.StreamId) {
 			return nil, RpcErrorf(protocol.Err_BAD_STREAM_ID, "CreateStream: invalid channel stream id '%s'", inception.StreamId)
 		}
 		if inception.SpaceId == "" {
@@ -143,7 +144,7 @@ func validateJoinEvent(events []*events.ParsedEvent) error {
 	if join.GetOp() != protocol.MembershipOp_SO_JOIN {
 		return RpcErrorf(protocol.Err_BAD_STREAM_CREATION_PARAMS, "CreateStream: bad join op %d", join.GetOp())
 	}
-	creatorUserId := UserIdFromAddress(events[0].Event.GetCreatorAddress())
+	creatorUserId := common.UserIdFromAddress(events[0].Event.GetCreatorAddress())
 	if join.UserId != creatorUserId {
 		return RpcErrorf(protocol.Err_BAD_STREAM_CREATION_PARAMS, "CreateStream: bad join user id '%s', created by '%s'", join.UserId, creatorUserId)
 	}

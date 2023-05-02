@@ -1,4 +1,4 @@
-package rpc_test
+package storage_test
 
 import (
 	"testing"
@@ -6,12 +6,13 @@ import (
 	"casablanca/node/crypto"
 	"casablanca/node/events"
 	"casablanca/node/protocol"
-	"casablanca/node/rpc"
+	"casablanca/node/storage"
 )
 
 func TestLoad(t *testing.T) {
+
 	wallet, _ := crypto.NewWallet()
-	rollup := rpc.NewView(func() ([]*protocol.Envelope, error) {
+	rollup := storage.NewView(func() ([]*protocol.Envelope, error) {
 		inception, err := events.MakeEnvelopeWithPayload(
 			wallet,
 			events.MakePayload_Inception("streamid$1", protocol.StreamKind_SK_USER, ""),
