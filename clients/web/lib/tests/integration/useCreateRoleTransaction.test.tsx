@@ -1,3 +1,10 @@
+/**
+ * useCreateRoleTransaction.test.tsx
+ *
+ * // https://www.npmjs.com/package/jest-runner-groups
+ * @group casablanca
+ *
+ */
 import { Permission } from '../../src/client/web3/ContractTypes'
 import React, { useCallback, useEffect } from 'react'
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'

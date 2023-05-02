@@ -1,3 +1,10 @@
+/**
+ * useRoleDetails.test.tsx
+ *
+ * // https://www.npmjs.com/package/jest-runner-groups
+ * @group casablanca
+ *
+ */
 import React, { useCallback, useEffect } from 'react'
 import { RegisterWallet, TransactionInfo } from './helpers/TestComponents'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'

@@ -1,3 +1,10 @@
+/**
+ * spaceManagerContractHooks.test.tsx
+ *
+ * // https://www.npmjs.com/package/jest-runner-groups
+ * @group casablanca
+ *
+ */
 import React, { useCallback, useEffect, useState } from 'react'
 import { fireEvent, prettyDOM, render, screen, waitFor } from '@testing-library/react'
 
