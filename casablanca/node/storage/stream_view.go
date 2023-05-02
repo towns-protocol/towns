@@ -63,7 +63,7 @@ func (r *StreamView) getOrderedEventsCached() ([]*events.ParsedEvent, error) {
 	}
 
 	for _, event := range res {
-		parsedEvent, err := events.ParseEvent(event)
+		parsedEvent, err := events.ParseEvent(event, true)
 		if err != nil {
 			return nil, err
 		}
@@ -158,7 +158,7 @@ func (r *StreamView) AddEvent(event *protocol.Envelope) error {
 	if !r.loaded {
 		return fmt.Errorf("streamview not loaded")
 	}
-	parsedEvent, err := events.ParseEvent(event)
+	parsedEvent, err := events.ParseEvent(event, true)
 	if err != nil {
 		return err
 	}

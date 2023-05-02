@@ -165,7 +165,7 @@ func (s *Service) AddEvent(ctx context.Context, req *connect_go.Request[protocol
 }
 
 func (s *Service) addEvent(ctx context.Context, streamId string, view *storage.StreamView, envelope *protocol.Envelope) ([]byte, error) {
-	parsedEvent, err := events.ParseEvent(envelope)
+	parsedEvent, err := events.ParseEvent(envelope, true)
 	if err != nil {
 		return nil, err
 	}

@@ -291,7 +291,7 @@ func addDebugEvents(ctx context.Context, tx pgx.Tx, streamId string) (int, error
 			Hash:      hash,
 			Signature: signature,
 			Event:     event,
-		})
+		}, false)
 
 		if err != nil {
 			return 0, err
