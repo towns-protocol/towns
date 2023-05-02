@@ -16,7 +16,8 @@
         "postinstall": "yarn build",
         "test": "yarn my-jest",
         "test:ci": "yarn my-jest",
-        "watch": "node scripts/watch_proto_files.cjs"
+        "watch": "node scripts/watch_proto_files.cjs",
+        "watch:go": "node scripts/watch_proto_files_go.cjs"
     },
     "dependencies": {
         "@bufbuild/connect": "^0.8.4",

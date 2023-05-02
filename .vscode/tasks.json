@@ -224,6 +224,16 @@
         }
       },
       {
+        "label": "WatchCasablancaProto_Go",
+        "type": "shell",
+        "command": "cd casablanca/proto && yarn watch:go",
+        "isBackground": true,
+        "problemMatcher": [],
+        "presentation": {
+          "group": "local-watch"
+        }
+      },
+      {
         "label": "App",
         "type": "shell",
         "command": "cd clients/web/app && yarn dev",
