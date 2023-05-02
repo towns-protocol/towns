@@ -27,41 +27,20 @@ export const makeEvent_test = async (
     return _impl_makeEvent_impl_(context, pl, hashes)
 }
 
-// async function createWallet(): Promise<Wallet> {
-//     const result = await new Promise<{ wallet: string }>((resolve, reject) => {
-//         const worker = new Worker(
-//             `
-//                 const {parentPort} = require("worker_threads");
-//                 const ethers = require('ethers');
-//                 const wallet = ethers.Wallet.createRandom()
-//                 parentPort.postMessage(JSON.stringify({wallet: wallet.privateKey}))
-//                 process.exit( 0 )
-//         `,
-//             { eval: true },
-//         )
-//         worker.on('message', (msg) => resolve(JSON.parse(msg)))
-//         worker.on('error', reject)
-//         worker.on('exit', (code) => {
-//             if (code !== 0)
-//                 reject(new Error(`makeRandomUserContext worker stopped with ${code} exit code`))
-//         })
-//     })
-//     return new Wallet(result.wallet)
-// }
-
 /**
  *
  * @returns a random user context
  * Done using a worker thread to avoid blocking the main thread
  */
 export const makeRandomUserContext = async (): Promise<SignerContext> => {
+    log('makeRandomUserContext start')
     const userPrivateKey = utils.randomPrivateKey()
     const devicePrivateKey = utils.randomPrivateKey()
     const devicePrivateKeyStr = bin_toHexString(devicePrivateKey)
 
     const creatorAddress = publicKeyToAddress(getPublicKey(userPrivateKey, false))
     log('makeRandomUserContext', userIdFromAddress(creatorAddress))
-    return {
+    const ret: SignerContext = {
         signerPrivateKey: () => devicePrivateKeyStr,
         creatorAddress,
         delegateSig: await makeTownsDelegateSig(
@@ -69,6 +48,8 @@ export const makeRandomUserContext = async (): Promise<SignerContext> => {
             getPublicKey(devicePrivateKeyStr, false),
         ),
     }
+    log('makeRandomUserContext end', bin_toHexString(creatorAddress))
+    return ret
 }
 
 // TODO(HNT-1380): remove
