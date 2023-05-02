@@ -1,21 +1,30 @@
-import { ecsign, hashPersonalMessage, publicToAddress, toRpcSig } from '@ethereumjs/util'
-import { personalSign } from '@metamask/eth-sig-util'
-import { Wallet } from 'ethers'
 import _ from 'lodash'
-import { checkDelegateSig, unpackEnvelope, makeDelegateSig, makeEvent, SignerContext } from './sign'
-import { bin_fromHexString } from './types'
+import { checkDelegateSig, unpackEnvelope, makeEvent, SignerContext } from './sign'
+import { bin_fromHexString, bin_toHexString } from './types'
 import debug from 'debug'
 import { StreamKind, Payload, Payload_Message } from '@towns/proto'
 import { PlainMessage } from '@bufbuild/protobuf'
 import { makeUserStreamId } from './id'
+import { makeTownsDelegateSig, makeOldTownsDelegateSig, publicKeyToAddress } from './crypto'
+import { getPublicKey } from 'ethereum-cryptography/secp256k1'
+import { ethers } from 'ethers'
 
 const log = debug('test:sign')
 
 describe('sign', () => {
-    const msg = 'Hello, World!'
-    const privateKey = '0123456789012345678901234567890123456789012345678901234567890123'
-    const privateKey2 = '0123456789012345678901234567890123456789012345678901234567890124'
-    const primaryPrivateKey = '0123456789012345678901234567890123456789012345678901234567890125'
+    const keys = [
+        '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef',
+        '0123456789012345678901234567890123456789012345678901234567890124',
+        '0123456789012345678901234567890123456789012345678901234567890125',
+        'aaaa456789012345678901234567890123456789012345678901234567890125',
+    ].map((key) => {
+        const pub = getPublicKey(key)
+        return {
+            privateKey: key,
+            publicKey: pub,
+            address: publicKeyToAddress(pub),
+        }
+    })
     const hash = bin_fromHexString(
         '0x8dc27dbd6fc775e3a05c509c6eb1c63c4ab5bc6e7010bf9a9a80a42ae1ea56b0',
     )
@@ -29,68 +38,65 @@ describe('sign', () => {
         expect(buffer).toBeInstanceOf(Uint8Array)
     })
 
-    test('compare-ethereumjs-metamask-ethers', async () => {
-        const privateKeyBuffer = Buffer.from(privateKey, 'hex')
-
-        const hashEjs = hashPersonalMessage(Buffer.from(msg))
-        const sigStructEjs = ecsign(hashEjs, privateKeyBuffer)
-        const sigEjs = toRpcSig(sigStructEjs.v, sigStructEjs.r, sigStructEjs.s)
-
-        const sigMM = personalSign({ data: msg, privateKey: privateKeyBuffer })
-        expect(sigEjs).toEqual(sigMM)
-
-        const wallet = new Wallet(privateKey)
-        const sigEthers = await wallet.signMessage(msg)
-        expect(sigMM).toEqual(sigEthers)
-    })
-
     test('delegate-sig', async () => {
-        const sigWallet1 = new Wallet(privateKey)
-        const sigWallet2 = new Wallet(privateKey2)
-        const primaryWallet = new Wallet(primaryPrivateKey)
+        const device1 = keys[0]
+        const device2 = keys[1]
+        const user = keys[2]
 
-        const sig1 = await makeDelegateSig(primaryWallet, sigWallet1)
-        log('sig1', sig1)
-        const sig2 = await makeDelegateSig(primaryWallet, sigWallet2)
-        log('sig2', sig2)
+        const sig1 = await makeTownsDelegateSig(() => user.privateKey, device1.publicKey)
+        log('sig1', bin_toHexString(sig1))
+        const sig2 = await makeTownsDelegateSig(() => user.privateKey, device2.publicKey)
+        log('sig2', bin_toHexString(sig2))
         expect(sig1).not.toEqual(sig2)
 
-        expect(() =>
-            checkDelegateSig(sigWallet1.publicKey, primaryWallet.address, sig1),
-        ).not.toThrow()
-        expect(() =>
-            checkDelegateSig(sigWallet2.publicKey, primaryWallet.address, sig2),
-        ).not.toThrow()
+        expect(() => checkDelegateSig(device1.publicKey, user.address, sig1)).not.toThrow()
+        expect(() => checkDelegateSig(device2.publicKey, user.address, sig2)).not.toThrow()
 
-        expect(() => checkDelegateSig(sigWallet2.publicKey, primaryWallet.address, sig1)).toThrow()
-        expect(() => checkDelegateSig(sigWallet1.publicKey, sigWallet2.address, sig1)).toThrow()
-        expect(() => checkDelegateSig(sigWallet1.publicKey, primaryWallet.address, sig2)).toThrow()
-        publicToAddress
+        expect(() => checkDelegateSig(device2.publicKey, user.address, sig1)).toThrow()
+        expect(() => checkDelegateSig(device1.publicKey, device2.address, sig1)).toThrow()
+        expect(() => checkDelegateSig(device1.publicKey, user.address, sig2)).toThrow()
+    })
+
+    test('old-format-delegate', async () => {
+        const primary = keys[0]
+        const primaryWallet = new ethers.Wallet(primary.privateKey)
+
+        const device = keys[1]
+        log('device PublicKey', bin_toHexString(device.publicKey))
+        const delegateSig = await makeOldTownsDelegateSig(primaryWallet, device.publicKey)
+        log('OLD delegateSig', bin_toHexString(delegateSig))
+
+        expect(() => checkDelegateSig(device.publicKey, primary.address, delegateSig)).not.toThrow()
     })
 
     const makeContext = async (
-        privateKey: string,
-        primaryPrivateKey?: string,
+        userPrivateKey: string,
+        devicePrivateKey?: string,
     ): Promise<SignerContext> => {
-        const wallet = new Wallet(privateKey)
-        if (primaryPrivateKey === undefined) {
-            return { wallet, creatorAddress: bin_fromHexString(wallet.address) }
-        } else {
-            const primaryWallet = new Wallet(primaryPrivateKey)
+        const creatorAddress = publicKeyToAddress(getPublicKey(userPrivateKey, false))
+        if (devicePrivateKey === undefined) {
             return {
-                wallet,
-                creatorAddress: bin_fromHexString(primaryWallet.address),
-                delegateSig: await makeDelegateSig(primaryWallet, wallet),
+                signerPrivateKey: () => userPrivateKey,
+                creatorAddress,
+            }
+        } else {
+            return {
+                signerPrivateKey: () => devicePrivateKey,
+                creatorAddress,
+                delegateSig: await makeTownsDelegateSig(
+                    () => userPrivateKey,
+                    getPublicKey(devicePrivateKey, false),
+                ),
             }
         }
     }
 
     const testParams: [string, () => Promise<SignerContext>, () => Promise<SignerContext>][] = [
-        ['direct', () => makeContext(privateKey), () => makeContext(privateKey2)],
+        ['direct', () => makeContext(keys[0].privateKey), () => makeContext(keys[1].privateKey)],
         [
             'delegate',
-            () => makeContext(privateKey, primaryPrivateKey),
-            () => makeContext(privateKey2, primaryPrivateKey),
+            () => makeContext(keys[0].privateKey, keys[1].privateKey),
+            () => makeContext(keys[2].privateKey, keys[3].privateKey),
         ],
     ]
 

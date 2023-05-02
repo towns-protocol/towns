@@ -1,52 +1,46 @@
 import { PartialMessage } from '@bufbuild/protobuf'
-import {
-    ecrecover,
-    ecsign,
-    fromRpcSig,
-    hashPersonalMessage,
-    publicToAddress,
-    stripHexPrefix,
-    toRpcSig,
-} from '@ethereumjs/util'
 import { Envelope, EventRef, Payload, StreamEvent, Err } from '@towns/proto'
-import { Buffer } from 'buffer'
-import { Wallet } from 'ethers'
 import { check, hasElements, isDefined } from './check'
+import {
+    townsHash,
+    townsRecoverPubKey,
+    townsSign,
+    publicKeyToAddress,
+    publicKeyToUint8Array,
+} from './crypto'
 import { genIdBlob, userIdFromAddress } from './id'
 import {
     bin_equal,
     bin_fromHexString,
-    bin_toHexString,
     bin_toBase64,
+    bin_toHexString,
     ParsedEvent,
     stringify,
 } from './types'
+import { ecrecover, fromRpcSig, hashPersonalMessage } from '@ethereumjs/util'
 
-// TODO: a lot of unnecessary buffer copying and conversion below, optimize.
-
+/**
+ * SignerContext is a context used for signing events.
+ *
+ * Two different scenarios are supported:
+ *
+ * 1. Signing is delegeted from the user key to the device key, and events are signed with device key.
+ *    In this case, `signerPrivateKey` should return a device private key, and `delegateSig` should be
+ *    a signature of the device public key by the user private key.
+ *
+ * 2. Events are signed with the user key. In this case, `signerPrivateKey` should return a user private key.
+ *    `delegateSig` should be undefined.
+ *
+ * In both scenarios `creatorAddress` should be set to the user address derived from the user public key.
+ *
+ * @param signerPrivateKey - a function that returns a private key to sign events
+ * @param creatorAddress - a creator, i.e. user address derived from the user public key
+ * @param delegateSig - an optional delegate signature
+ */
 export interface SignerContext {
-    wallet: Wallet
+    signerPrivateKey: () => string
     creatorAddress: Uint8Array
     delegateSig?: Uint8Array
-}
-
-export const publicKeyToBuffer = (publicKey: string): Buffer => {
-    // Uncompressed public key in string form should start with '0x04'.
-    check(
-        typeof publicKey === 'string' && publicKey.startsWith('0x04'),
-        'Bad public key',
-        Err.BAD_PUBLIC_KEY,
-    )
-    return Buffer.from(publicKey.slice(4), 'hex')
-}
-
-export const makeDelegateSig = async (
-    primaryWallet: Wallet,
-    signatureWallet: Wallet,
-): Promise<Uint8Array> => {
-    return bin_fromHexString(
-        await primaryWallet.signMessage(publicKeyToBuffer(signatureWallet.publicKey)),
-    )
 }
 
 export const normailizeHashes = (
@@ -64,22 +58,28 @@ export const normailizeHashes = (
     return Array.from(hashes.values())
 }
 
-// TODO: Here event should be hashed according to "EIP-712: Typed structured data hashing and signing"
-// For now, not to fiddle with the type descriptor, we just use hashPersonalMessage.
-// export const hashEvent = (event: IBaseEvent): [string, Buffer] => {
-//     const hashBuffer = hashPersonalMessage(Buffer.from(JSON.stringify(event)))
-//     const hash = '0x' + hashBuffer.toString('hex')
-//     return [hash, hashBuffer]
-// }
+export const _impl_makeEvent_impl_ = async (
+    context: SignerContext,
+    payload: Payload,
+    prevEvents: Uint8Array[],
+): Promise<Envelope> => {
+    const streamEvent = new StreamEvent({
+        creatorAddress: context.creatorAddress,
+        salt: genIdBlob(),
+        prevEvents,
+        payload,
+    })
+    if (context.delegateSig !== undefined) {
+        streamEvent.delegateSig = context.delegateSig
+    }
 
-// To make event, we need hash, creator address and signature
-// Sign APIs usually only return a signature, so this implementation
-// hashes and then signs directly by using private key from the Wallet.
-//
-// TODO: switch to signTypedData before realease, which is more stable than this implementation
-// due to potensial instability in JSON encoding.
-// signTypedData requires type descriptor, and a bit too much to maintain
-// it at this stage of development.
+    const event = streamEvent.toBinary()
+    const hash = townsHash(event)
+    const signature = await townsSign(hash, context.signerPrivateKey())
+
+    return new Envelope({ hash, signature, event })
+}
+
 export const makeEvent = async (
     context: SignerContext,
     payload: Payload | PartialMessage<Payload>,
@@ -101,23 +101,7 @@ export const makeEvent = async (
         }
     }
 
-    const streamEvent = new StreamEvent({
-        creatorAddress: context.creatorAddress,
-        salt: genIdBlob(),
-        prevEvents: hashes,
-        payload: payload,
-    })
-    if (context.delegateSig !== undefined) {
-        streamEvent.delegateSig = context.delegateSig
-    }
-
-    const event = streamEvent.toBinary()
-    const hash = hashPersonalMessage(Buffer.from(event))
-    const { v, r, s } = ecsign(hash, Buffer.from(stripHexPrefix(context.wallet.privateKey), 'hex'))
-
-    const signature = bin_fromHexString(toRpcSig(v, r, s))
-
-    return new Envelope({ hash: Uint8Array.from(hash), signature, event })
+    return _impl_makeEvent_impl_(context, pl, hashes)
 }
 
 export const makeEvents = async (
@@ -135,24 +119,42 @@ export const makeEvents = async (
     return events
 }
 
+// TODO(HNT-1380): remove this function
+export const verifyOldDelegateSig = (
+    devicePubKey: Uint8Array,
+    creatorAddress: Uint8Array,
+    delegateSig: Uint8Array,
+): boolean => {
+    const hashBuffer = hashPersonalMessage(Buffer.from(devicePubKey))
+    const { v, r, s } = fromRpcSig('0x' + bin_toHexString(delegateSig))
+    const delegatePubKey = ecrecover(hashBuffer, v, r, s)
+    const delegateAddress = Uint8Array.from(publicKeyToAddress(delegatePubKey))
+    return bin_equal(delegateAddress, creatorAddress)
+}
+
 export const checkDelegateSig = (
-    chainedPubKey: Buffer | string,
+    devicePubKey: Uint8Array | string,
     creatorAddress: Uint8Array | string,
     delegateSig: Uint8Array,
 ): void => {
-    if (typeof chainedPubKey === 'string') {
-        chainedPubKey = publicKeyToBuffer(chainedPubKey)
+    if (typeof devicePubKey === 'string') {
+        devicePubKey = publicKeyToUint8Array(devicePubKey)
     }
     if (typeof creatorAddress === 'string') {
         creatorAddress = bin_fromHexString(creatorAddress)
     }
-    const hashBuffer = hashPersonalMessage(Buffer.from(chainedPubKey))
 
-    const { v, r, s } = fromRpcSig(bin_toHexString(delegateSig))
-    const delegatePubKey = ecrecover(hashBuffer, v, r, s)
-    const delegateAddress = Uint8Array.from(publicToAddress(delegatePubKey))
+    if (verifyOldDelegateSig(devicePubKey, creatorAddress, delegateSig)) {
+        return
+    }
+
+    const hash = townsHash(devicePubKey)
+
+    const recoveredKey = townsRecoverPubKey(hash, delegateSig)
+    const recoveredAddress = publicKeyToAddress(recoveredKey)
+
     check(
-        bin_equal(delegateAddress, creatorAddress),
+        bin_equal(recoveredAddress, creatorAddress),
         'delegateSig does not match creatorAddress',
         Err.BAD_DELEGATE_SIG,
     )
@@ -163,22 +165,21 @@ export const unpackEnvelope = (envelope: Envelope, _prevEventHash?: Uint8Array):
     check(hasElements(envelope.hash), 'Event hash is not set', Err.BAD_EVENT)
     check(hasElements(envelope.signature), 'Event signature is not set', Err.BAD_EVENT)
 
-    const hash = hashPersonalMessage(Buffer.from(envelope.event))
+    const hash = townsHash(envelope.event)
     check(bin_equal(hash, envelope.hash), 'Event id is not valid', Err.BAD_EVENT_ID)
 
-    const { v, r, s } = fromRpcSig(bin_toHexString(envelope.signature))
-    const pubKey = ecrecover(hash, v, r, s)
+    const recoveredPubKey = townsRecoverPubKey(hash, envelope.signature)
 
     const e = StreamEvent.fromBinary(envelope.event)
     if (!hasElements(e.delegateSig)) {
-        const address = Uint8Array.from(publicToAddress(pubKey))
+        const address = publicKeyToAddress(recoveredPubKey)
         check(
             bin_equal(address, e.creatorAddress),
             'Event signature is not valid',
             Err.BAD_EVENT_SIGNATURE,
         )
     } else {
-        checkDelegateSig(pubKey, e.creatorAddress, e.delegateSig)
+        checkDelegateSig(recoveredPubKey, e.creatorAddress, e.delegateSig)
     }
 
     if (e.payload?.payload.case !== 'inception') {

@@ -1,13 +1,10 @@
-// Stream kind is set in inception payload explicitely as StreamKind in data.streamKind field.
-// Stream ids are prefixed with the kind of the stream to make it easier to
-
-import { isHexString } from '@ethereumjs/util'
+import { utils } from 'ethers'
 import { nanoid } from 'nanoid'
 import { check } from './check'
 import { bin_toHexString } from './types'
 
-// TODO: ERC-55 checksum
-export const userIdFromAddress = (address: Uint8Array): string => bin_toHexString(address)
+export const userIdFromAddress = (address: Uint8Array): string =>
+    utils.getAddress(bin_toHexString(address))
 
 // User id is an Ethereum address.
 // In string form it is 42 characters long, should start with 0x and TODO: have ERC-55 checksum.
@@ -16,7 +13,7 @@ export const isUserId = (userId: string | Uint8Array): boolean => {
     if (userId instanceof Uint8Array) {
         return userId.length === 20
     } else if (typeof userId === 'string') {
-        return isHexString(userId, 20)
+        return utils.isAddress(userId)
     }
     return false
 }

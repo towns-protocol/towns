@@ -8,6 +8,8 @@ import (
 	"context"
 
 	connect "github.com/bufbuild/connect-go"
+
+	. "casablanca/node/base"
 )
 
 func (s *Service) CreateStream(ctx context.Context, req *connect.Request[protocol.CreateStreamRequest]) (*connect.Response[protocol.CreateStreamResponse], error) {
@@ -101,7 +103,7 @@ func (s *Service) CreateStream(ctx context.Context, req *connect.Request[protoco
 	// }
 
 	if inception.StreamKind == protocol.StreamKind_SK_CHANNEL {
-		envelope := s.sign(
+		envelope, err := s.makeEnvelopeWithPayload(
 			events.MakePayload_Channel(
 				protocol.ChannelOp_CO_CREATED,
 				inception.StreamId,
@@ -113,6 +115,9 @@ func (s *Service) CreateStream(ctx context.Context, req *connect.Request[protoco
 			),
 			spaceStreamLeafHashes,
 		)
+		if err != nil {
+			return nil, err
+		}
 
 		_, err = s.Storage.AddEvent(ctx, inception.SpaceId, envelope)
 		if err != nil {

@@ -4,13 +4,15 @@ import (
 	"encoding/hex"
 	"fmt"
 	"strings"
+
+	"github.com/ethereum/go-ethereum/common"
 )
 
 func UserIdFromAddress(address []byte) string {
 	if len(address) != 20 {
 		panic(fmt.Sprintf("invalid address length %s len %d", string(address), len(address)))
 	}
-	return "0x" + hex.EncodeToString(address)
+	return common.BytesToAddress(address).Hex()
 }
 
 func AddressFromUserId(userId string) ([]byte, error) {

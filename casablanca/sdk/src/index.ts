@@ -1,5 +1,6 @@
 export * from './check'
 export * from './client'
+export * from './crypto'
 export * from './id'
 export * from './sign'
 export * from './streamRpcClient'

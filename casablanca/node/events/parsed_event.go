@@ -1,16 +1,20 @@
 package events
 
 import (
-	"casablanca/node/protocol"
+	"bytes"
 	"strings"
 
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
+
+	. "casablanca/node/base"
+	. "casablanca/node/crypto"
+	. "casablanca/node/protocol"
 )
 
 type ParsedEvent struct {
-	Event    *protocol.StreamEvent
-	Envelope *protocol.Envelope
+	Event    *StreamEvent
+	Envelope *Envelope
 	Hash     []byte
 }
 
@@ -20,14 +24,37 @@ type FullEvent struct {
 	ParsedEvent *ParsedEvent
 }
 
-func ParseEvent(envelope *protocol.Envelope) (*ParsedEvent, error) {
-	var streamEvent protocol.StreamEvent
-	err := proto.Unmarshal(envelope.Event, &streamEvent)
+func ParseEvent(envelope *Envelope) (*ParsedEvent, error) {
+	hash := TownsHash(envelope.Event)
+	if !bytes.Equal(hash, envelope.Hash) {
+		return nil, RpcErrorf(Err_BAD_EVENT_HASH, "Bad hash provided, computed %x, got %x", hash, envelope.Hash)
+	}
+
+	signerPubKey, err := RecoverSignerPublicKey(hash, envelope.Signature)
 	if err != nil {
 		return nil, err
 	}
 
-	// TODO: check hash and signature
+	var streamEvent StreamEvent
+	err = proto.Unmarshal(envelope.Event, &streamEvent)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(streamEvent.DelegateSig) > 0 {
+		err = CheckDelegateSig(streamEvent.CreatorAddress, signerPubKey, streamEvent.DelegateSig)
+		if err != nil {
+			err2 := CheckOldDelegateSig(streamEvent.CreatorAddress, signerPubKey, streamEvent.DelegateSig)
+			if err2 != nil {
+				return nil, RpcErrorf(Err_BAD_EVENT_SIGNATURE, "%s and (old delegate) %s", err.Error(), err2.Error())
+			}
+		}
+	} else {
+		address := PublicKeyToAddress(signerPubKey)
+		if !bytes.Equal(address.Bytes(), streamEvent.CreatorAddress) {
+			return nil, RpcErrorf(Err_BAD_EVENT_SIGNATURE, "Bad signature provided, computed address %x, event creatorAddress %x", address, streamEvent.CreatorAddress)
+		}
+	}
 
 	return &ParsedEvent{
 		Event:    &streamEvent,
@@ -36,7 +63,8 @@ func ParseEvent(envelope *protocol.Envelope) (*ParsedEvent, error) {
 	}, nil
 }
 
-func FormatEventsToJson(events []*protocol.Envelope) string {
+// TODO(HNT-1381): needs to be refactored
+func FormatEventsToJson(events []*Envelope) string {
 	sb := strings.Builder{}
 	sb.WriteString("[")
 	for idx, event := range events {
@@ -59,7 +87,7 @@ func FormatEventsToJson(events []*protocol.Envelope) string {
 	return sb.String()
 }
 
-func ParseEvents(events []*protocol.Envelope) ([]*ParsedEvent, error) {
+func ParseEvents(events []*Envelope) ([]*ParsedEvent, error) {
 	parsedEvents := make([]*ParsedEvent, len(events))
 	for i, event := range events {
 		parsedEvent, err := ParseEvent(event)
@@ -71,10 +99,10 @@ func ParseEvents(events []*protocol.Envelope) ([]*ParsedEvent, error) {
 	return parsedEvents, nil
 }
 
-func (e *ParsedEvent) GetInceptionPayload() *protocol.Payload_Inception {
+func (e *ParsedEvent) GetInceptionPayload() *Payload_Inception {
 	return e.Event.GetPayload().GetInception()
 }
 
-func (e *ParsedEvent) GetJoinableStreamPayload() *protocol.Payload_JoinableStream {
+func (e *ParsedEvent) GetJoinableStreamPayload() *Payload_JoinableStream {
 	return e.Event.GetPayload().GetJoinableStream()
 }

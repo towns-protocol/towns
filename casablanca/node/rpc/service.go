@@ -12,8 +12,8 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
-	"google.golang.org/protobuf/proto"
 
+	. "casablanca/node/base"
 	"casablanca/node/crypto"
 	"casablanca/node/events"
 	"casablanca/node/infra"
@@ -166,7 +166,7 @@ func (s *Service) AddEvent(ctx context.Context, req *connect_go.Request[protocol
 func (s *Service) addEvent(ctx context.Context, streamId string, view *StreamView, envelope *protocol.Envelope) ([]byte, error) {
 	parsedEvent, err := events.ParseEvent(envelope)
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "AddEvent: event is not a valid payload")
+		return nil, err
 	}
 
 	if len(parsedEvent.Event.PrevEvents) == 0 {
@@ -217,7 +217,7 @@ func (s *Service) addEvent(ctx context.Context, streamId string, view *StreamVie
 		}
 
 		log.Debug("AddEvent: ", joinableStream.Op)
-		envelope := s.sign(
+		envelope, err := s.makeEnvelopeWithPayload(
 			events.MakePayload_UserMembershipOp(
 				joinableStream.Op,
 				streamId,
@@ -230,6 +230,9 @@ func (s *Service) addEvent(ctx context.Context, streamId string, view *StreamVie
 			),
 			leaves,
 		)
+		if err != nil {
+			return nil, err
+		}
 
 		_, err = s.Storage.AddEvent(ctx, userStreamId, envelope)
 		if err != nil {
@@ -305,31 +308,8 @@ func MakeServiceHandler(ctx context.Context, dbUrl string, opts ...connect_go.Ha
 	return pattern, handler
 }
 
-func (s *Service) sign(payload *protocol.Payload, prevHashes [][]byte) *protocol.Envelope {
-	streamEvent := &protocol.StreamEvent{
-		CreatorAddress: s.wallet.Address.Bytes(),
-		DelegateSig:    s.wallet.DelegateSignature,
-		Salt:           []byte("salt"),
-		PrevEvents:     prevHashes,
-		Payload:        payload,
-	}
-
-	eventBytes, err := proto.Marshal(streamEvent)
-	if err != nil {
-		panic(err)
-	}
-
-	hash := crypto.HashPersonalMessage(eventBytes)
-	signature, err := s.wallet.Sign(eventBytes)
-	if err != nil {
-		panic(err)
-	}
-
-	return &protocol.Envelope{
-		Event:     eventBytes,
-		Signature: signature,
-		Hash:      hash,
-	}
+func (s *Service) makeEnvelopeWithPayload(payload *protocol.Payload, prevHashes [][]byte) (*protocol.Envelope, error) {
+	return events.MakeEnvelopeWithPayload(s.wallet, payload, prevHashes)
 }
 
 func makeView(ctx context.Context, store storage.Storage, streamId string) *StreamView {

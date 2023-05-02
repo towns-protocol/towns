@@ -9,7 +9,12 @@ import {
     SyncStreamsResponse,
 } from '@towns/proto'
 import debug from 'debug'
-import { makeEvent_test, makeRandomUserContext, TEST_URL } from './util.test'
+import {
+    makeEvent_test,
+    makeRandomUserContext,
+    makeRandomUserContextWithOldDelegate,
+    TEST_URL,
+} from './util.test'
 import { makeStreamRpcClient } from './streamRpcClient'
 import _ from 'lodash'
 import {
@@ -64,6 +69,26 @@ describe('streamRpcClient', () => {
             '[internal] TypeError: fetch failed',
         )
         await client.close()
+    })
+
+    test('charlieUsesOldDelegate', async () => {
+        const charliesContext = await makeRandomUserContextWithOldDelegate()
+
+        const charlie = makeTestRpcClient()
+        const userId = userIdFromAddress(charliesContext.creatorAddress)
+        const streamId = makeUserStreamId(userId)
+        await charlie.createStream({
+            events: [
+                await makeEvent(
+                    charliesContext,
+                    makeInceptionPayload({
+                        streamKind: StreamKind.SK_USER,
+                        streamId: streamId,
+                    }),
+                    [],
+                ),
+            ],
+        })
     })
 
     test('bobTalksToHimself', async () => {
@@ -651,6 +676,93 @@ describe('streamRpcClient', () => {
                 ),
             }),
         )
+    })
+
+    test('cantAddWithBadSignature', async () => {
+        const bob = makeTestRpcClient()
+        const bobsUserId = userIdFromAddress(bobsContext.creatorAddress)
+        const bobsUserStreamId = makeUserStreamId(bobsUserId)
+        await expect(
+            bob.createStream({
+                events: [
+                    await makeEvent(
+                        bobsContext,
+                        makeInceptionPayload({
+                            streamKind: StreamKind.SK_USER,
+                            streamId: bobsUserStreamId,
+                        }),
+                        [],
+                    ),
+                ],
+            }),
+        ).toResolve()
+        log('Bob created user, about to create space')
+
+        // Bob creates space and channel
+        const spacedStreamId = makeSpaceStreamId('bobs-space-' + genId())
+        const spaceEvents = await makeEvents(bobsContext, [
+            makeInceptionPayload({
+                streamKind: StreamKind.SK_SPACE,
+                streamId: spacedStreamId,
+            }),
+            makeJoinableStreamPayload({
+                userId: bobsUserId,
+                op: MembershipOp.SO_JOIN,
+            }),
+        ])
+        await bob.createStream({
+            events: spaceEvents,
+        })
+        log('Bob created space, about to create channel')
+
+        const channelId = makeChannelStreamId('bobs-channel-' + genId())
+        const channelEvents = await makeEvents(bobsContext, [
+            makeInceptionPayload({
+                streamKind: StreamKind.SK_CHANNEL,
+                streamId: channelId,
+                spaceId: spacedStreamId,
+            }),
+            makeJoinableStreamPayload({
+                userId: bobsUserId,
+                op: MembershipOp.SO_JOIN,
+            }),
+        ])
+        await bob.createStream({
+            events: channelEvents,
+        })
+        log('Bob created channel')
+
+        log('Bob adds event with correct signature')
+        const messageEvent = await makeEvent(
+            bobsContext,
+            makeMessagePayload({
+                text: 'Hello, World!',
+            }),
+            _.last(channelEvents)!.hash,
+        )
+        channelEvents.push(messageEvent)
+        await expect(
+            bob.addEvent({
+                streamId: channelId,
+                event: messageEvent,
+            }),
+        ).toResolve()
+
+        log('Bob failes to add event with bad signature')
+        const badEvent = await makeEvent(
+            bobsContext,
+            makeMessagePayload({
+                text: 'Nah, not really',
+            }),
+            _.last(channelEvents)!.hash,
+        )
+        badEvent.signature = messageEvent.signature
+        await expect(
+            bob.addEvent({
+                streamId: channelId,
+                event: badEvent,
+            }),
+        ).rejects.toThrow(/^\[invalid_argument\] 7:BAD_EVENT_SIGNATURE:.*$/)
     })
 })
 

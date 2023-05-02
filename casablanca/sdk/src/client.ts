@@ -18,7 +18,7 @@ import {
 import debug from 'debug'
 import EventEmitter from 'events'
 import TypedEmitter from 'typed-emitter'
-import { throwWithCode } from './check'
+import { isDefined, throwWithCode } from './check'
 import {
     isChannelStreamId,
     isSpaceStreamId,
@@ -113,6 +113,15 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
         if (logNamespaceFilter) {
             debug.enable(logNamespaceFilter)
         }
+        assert(
+            isDefined(signerContext.creatorAddress) && signerContext.creatorAddress.length === 20,
+            'creatorAddress must be set',
+        )
+        assert(
+            isDefined(signerContext.signerPrivateKey()) &&
+                signerContext.signerPrivateKey().length === 64,
+            'signerPrivateKey must be set',
+        )
         this.signerContext = signerContext
         this.rpcClient = rpcClient
         this.userId = userIdFromAddress(signerContext.creatorAddress)
@@ -655,7 +664,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
         method?: string,
     ): Promise<void> {
         // TODO: filter this.logged payload for PII reasons
-        this.logCall('makeEventAndAddToStream', method, streamId, payload)
+        this.logCall('await makeEventAndAddToStream', method, streamId, payload)
         assert(this.userStreamId !== undefined, 'userStreamId must be set')
 
         const stream = this.streams.get(streamId)

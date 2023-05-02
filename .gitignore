@@ -67,9 +67,11 @@ servers/dendrite/dendrite.*yaml
 # siwe-worker bundle
 servers/workers/siwe-worker/worker/bundle.js
 casablanca/proto/src/gen/*
-**/coverage/*
 /casablanca/node/node/__debug_bin
 casablanca/node/dev.log
 
 # profiling files
 *.prof
+
+**/coverage
+**/.turbo

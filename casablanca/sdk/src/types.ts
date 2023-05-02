@@ -11,12 +11,17 @@ import {
     Payload_JoinableStream,
     Payload_Channel,
     Payload_Message,
-    Err,
     ChannelMessage,
     ChannelMessage_Post_Content_Text,
 } from '@towns/proto'
-import { check, isDefined } from './check'
-import { Buffer } from 'buffer'
+import {
+    bytesToHex,
+    bytesToUtf8,
+    equalsBytes,
+    hexToBytes,
+    utf8ToBytes,
+} from 'ethereum-cryptography/utils'
+import { isDefined } from './check'
 
 export interface ParsedEvent {
     event: Stringify<StreamEvent>
@@ -33,26 +38,20 @@ export const bin_toBase64 = (uint8Array: Uint8Array): string => {
     return protoBase64.enc(uint8Array)
 }
 export const bin_fromHexString = (hexString: string): Uint8Array => {
-    if (hexString.startsWith('0x')) {
-        hexString = hexString.slice(2)
-    }
-    check((hexString.length & 1) === 0, 'Bad hex string', Err.BAD_HEX_STRING)
-    const ret = Uint8Array.from(Buffer.from(hexString, 'hex'))
-    check(ret.length === hexString.length >> 1, 'Bad hex string', Err.BAD_HEX_STRING)
-    return ret
+    return hexToBytes(hexString)
 }
 
 export const bin_toHexString = (uint8Array: Uint8Array): string => {
-    return uint8Array.length > 0 ? '0x' + Buffer.from(uint8Array).toString('hex') : ''
+    return bytesToHex(uint8Array)
 }
 
-// export const bin_fromString = (str: string): Uint8Array => {
-//     return Uint8Array.from(Buffer.from(str, 'utf8'))
-// }
+export const bin_fromString = (str: string): Uint8Array => {
+    return utf8ToBytes(str)
+}
 
-// export const bin_toString = (uint8Array: Uint8Array): string => {
-//     return Buffer.from(uint8Array).toString('utf8')
-// }
+export const bin_toString = (buf: Uint8Array): string => {
+    return bytesToUtf8(buf)
+}
 
 export const bin_equal = (
     a: Uint8Array | null | undefined,
@@ -63,28 +62,8 @@ export const bin_equal = (
     } else if (!isDefined(a) || !isDefined(b)) {
         return false
     }
-    if (a.length !== b.length) {
-        return false
-    }
-    for (let i = 0; i < a.length; i++) {
-        if (a[i] !== b[i]) {
-            return false
-        }
-    }
-    return true
+    return equalsBytes(a, b)
 }
-
-// // TODO: remove?
-// export const streamId_toString = (streamId: Uint8Array | null | undefined): string => {
-//     check(isDefined(streamId) && streamId.length > 0, 'streamId is not set', Err.BAD_STREAM_ID)
-//     return bin_toString(streamId)
-// }
-
-// // TODO: remove?
-// export const userId_toString = (userId: Uint8Array | null | undefined): string => {
-//     check(isDefined(userId) && userId.length > 0, 'userId is not set', Err.BAD_STREAM_ID)
-//     return bin_toHexString(userId)
-// }
 
 export const makeInceptionPayload = (
     value: PartialMessage<Payload_Inception>,

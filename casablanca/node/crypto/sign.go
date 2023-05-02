@@ -2,8 +2,8 @@ package crypto
 
 import (
 	"crypto/ecdsa"
-	"errors"
-	"strconv"
+	"encoding/binary"
+	"io"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -14,71 +14,69 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-type Wallet struct {
-	PrivateKey        *ecdsa.PrivateKey
-	Address           common.Address
-	DelegateSignature []byte
+// String 'CSBLANCA' as bytes.
+var HASH_HEADER = []byte{67, 83, 66, 76, 65, 78, 67, 65}
+
+// String 'ABCDEFG>' as bytes.
+var HASH_SEPARATOR = []byte{65, 66, 67, 68, 69, 70, 71, 62}
+
+// String '<GFEDCBA' as bytes.
+var HASH_FOOTER = []byte{60, 71, 70, 69, 68, 67, 66, 65}
+
+func writeOrPanic(w io.Writer, buf []byte) {
+	_, err := w.Write(buf)
+	if err != nil {
+		panic(err)
+	}
 }
 
-func HashPersonalMessage(buffer []byte) []byte {
-	len := []byte(strconv.Itoa(len(buffer)))
+func TownsHash(buffer []byte) []byte {
 	hash := sha3.NewLegacyKeccak256()
-	hash.Write([]byte{0x19})
-	hash.Write([]byte("Ethereum Signed Message:"))
-	hash.Write([]byte{0x0A})
-	hash.Write(len)
-	hash.Write(buffer)
-	sum := hash.Sum(nil)
-	return sum
+	writeOrPanic(hash, HASH_HEADER)
+	// Write length of buffer as 64-bit little endian uint.
+	err := binary.Write(hash, binary.LittleEndian, uint64(len(buffer)))
+	if err != nil {
+		panic(err)
+	}
+	writeOrPanic(hash, HASH_SEPARATOR)
+	writeOrPanic(hash, buffer)
+	writeOrPanic(hash, HASH_FOOTER)
+	return hash.Sum(nil)
 }
 
+type Wallet struct {
+	PrivateKeyStruct *ecdsa.PrivateKey
+	PrivateKey       []byte
+	Address          common.Address
+	AddressStr       string
+}
+
+// TODO: stop generating and load from file
 func NewWallet() (*Wallet, error) {
 	key, err := crypto.GenerateKey()
 	if err != nil {
 		return nil, err
 	}
 	address := crypto.PubkeyToAddress(key.PublicKey)
-	delegateSig, err := makeDelegateSig(key)
-	if err != nil {
-		return nil, err
-	}
 
-	log.Debugf("New wallet generated: %s %v %v", address.String(), crypto.FromECDSAPub(&key.PublicKey), delegateSig)
-	return &Wallet{PrivateKey: key, Address: address, DelegateSignature: delegateSig}, nil
-}
-
-func makeDelegateSig(key *ecdsa.PrivateKey) ([]byte, error) {
-	pubKeyBytes := crypto.FromECDSAPub(&key.PublicKey)
-	if len(pubKeyBytes) == 0 || pubKeyBytes[0] != 4 {
-		return nil, errors.New("invalid public key")
-	}
-	publicKeyHash := HashPersonalMessage(pubKeyBytes[1:])
-	delegateSig, err := sign(key, publicKeyHash)
-	if err != nil {
-		return nil, err
-	}
-	return delegateSig, nil
-}
-
-func (w *Wallet) Sign(data []byte) ([]byte, error) {
-	hash := HashPersonalMessage(data)
-	sig, err := sign(w.PrivateKey, hash)
-	if err != nil {
-		return nil, err
-	}
-	return sig, nil
+	log.Debugf("New wallet generated: %s %v", address.Hex(), crypto.FromECDSAPub(&key.PublicKey))
+	return &Wallet{
+			PrivateKeyStruct: key,
+			PrivateKey:       crypto.FromECDSA(key),
+			Address:          address,
+			AddressStr:       address.Hex(),
+		},
+		nil
 }
 
 func (w *Wallet) SignHash(hash []byte) ([]byte, error) {
-	return sign(w.PrivateKey, hash)
+	return secp256k1.Sign(hash, w.PrivateKey)
 }
 
-func sign(key *ecdsa.PrivateKey, hash []byte) ([]byte, error) {
-	sig, err := secp256k1.Sign(hash, key.D.Bytes())
-	if err != nil {
-		return nil, err
-	}
+func RecoverSignerPublicKey(hash, signature []byte) ([]byte, error) {
+	return secp256k1.RecoverPubkey(hash, signature)
+}
 
-	sig[64] += 27 // Transform V from 0/1 to 27/28
-	return sig, nil
+func PublicKeyToAddress(publicKey []byte) common.Address {
+	return common.BytesToAddress(crypto.Keccak256(publicKey[1:])[12:])
 }

@@ -1,4 +1,4 @@
-package rpc
+package base
 
 import (
 	"casablanca/node/protocol"

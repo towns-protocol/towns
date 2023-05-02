@@ -1,5 +1,10 @@
 import { BigNumber, ContractReceipt, ContractTransaction, Wallet } from 'ethers'
-import { bin_fromHexString, Client as CasablancaClient, makeStreamRpcClient } from '@towns/sdk'
+import {
+    bin_fromHexString,
+    Client as CasablancaClient,
+    makeOldTownsDelegateSig,
+    makeStreamRpcClient,
+} from '@towns/sdk'
 import {
     ChannelTransactionContext,
     ChannelUpdateTransactionContext,
@@ -40,11 +45,7 @@ import {
     UpdateChannelInfo,
     User,
 } from '../types/zion-types'
-import {
-    SignerContext,
-    publicKeyToBuffer,
-    isUserStreamId as isCasablancaUserStreamId,
-} from '@towns/sdk'
+import { SignerContext, isUserStreamId as isCasablancaUserStreamId } from '@towns/sdk'
 
 import {
     BlockchainTransactionEvent,
@@ -208,19 +209,22 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
      * signCasablancaDelegate
      * sign the public key of a local wallet
      * that you will use to sign messages to casablanca
+     * TODO(HNT-1380): this is not final implementation
      *************************************************/
     public async signCasablancaDelegate(delegateWallet: Wallet): Promise<SignerContext> {
         if (!this.opts.web3Signer) {
             throw new Error("can't sign without a web3 signer")
         }
-        const primaryAddress = await this.opts.web3Signer.getAddress()
-        const delegateSig = await this.opts.web3Signer.signMessage(
-            publicKeyToBuffer(delegateWallet.publicKey),
+        const creatorAddress = bin_fromHexString(await this.opts.web3Signer.getAddress())
+        const delegateSig = await makeOldTownsDelegateSig(
+            this.opts.web3Signer,
+            delegateWallet.publicKey,
         )
+        const pk = delegateWallet.privateKey.slice(2)
         const context: SignerContext = {
-            wallet: delegateWallet,
-            creatorAddress: bin_fromHexString(primaryAddress),
-            delegateSig: bin_fromHexString(delegateSig),
+            signerPrivateKey: () => pk,
+            creatorAddress,
+            delegateSig,
         }
         return context
     }

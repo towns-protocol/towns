@@ -11,6 +11,7 @@ export type MatrixCredentials = {
 }
 
 export type CasablancaCredentials = {
+    // TODO(HNT-1380): replace with function, so if object is logged, private key is not printed.
     privateKey: string
     creatorAddress: string
     delegateSig?: string

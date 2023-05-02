@@ -23,8 +23,8 @@ describe('types', () => {
         // console.dir(s, { depth: null })
         expect(s.creatorAddressStr).toEqual(bin_toBase64(bin_fromHexString('0123456789abcdef')))
         expect(s.prevEventsStrs).toEqual([
-            bin_toBase64(bin_fromHexString('0x0123456789abcdef')),
-            bin_toBase64(bin_fromHexString('0x0123456789')),
+            bin_toBase64(bin_fromHexString('0123456789abcdef')),
+            bin_toBase64(bin_fromHexString('0123456789')),
         ])
         expect(s.delegateSigStr).toEqual('')
         expect(s.payload).toBeDefined()

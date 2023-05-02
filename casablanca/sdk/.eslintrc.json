@@ -11,9 +11,15 @@
     ],
     "parser": "@typescript-eslint/parser",
     "parserOptions": { "project": ["./tsconfig.json"] },
-    "plugins": ["@typescript-eslint"],
+    "plugins": ["@typescript-eslint", "import"],
     "ignorePatterns": ["dist/**", ".turbo/**", "node_modules/**", "jest.config.ts"],
     "rules": {
+        "import/no-extraneous-dependencies": [
+            "error",
+            {
+                "packageDir": "."
+            }
+        ],
         "@typescript-eslint/require-await": "off",
         "@typescript-eslint/no-explicit-any": "off",
         "@typescript-eslint/no-unsafe-assignment": "off",

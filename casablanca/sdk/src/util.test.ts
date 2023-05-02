@@ -1,17 +1,17 @@
-import { ecsign, stripHexPrefix, toRpcSig } from '@ethereumjs/util'
-import { makeDelegateSig, normailizeHashes, SignerContext } from './sign'
-import { Wallet } from 'ethers'
+import { normailizeHashes, SignerContext, _impl_makeEvent_impl_ } from './sign'
 
-import { Worker } from 'worker_threads'
+//import { Worker } from 'worker_threads'
 
 import debug from 'debug'
-import { Envelope, Payload, StreamEvent } from '@towns/proto'
-import { hashPersonalMessage } from 'ethereumjs-util'
+import { Envelope, Payload } from '@towns/proto'
 import { PartialMessage } from '@bufbuild/protobuf'
 import { Client } from './client'
 import { makeStreamRpcClient } from './streamRpcClient'
-import { genIdBlob, userIdFromAddress } from './id'
-import { bin_fromHexString } from './types'
+import { userIdFromAddress } from './id'
+import { bin_fromHexString, bin_toHexString } from './types'
+import { getPublicKey, utils } from 'ethereum-cryptography/secp256k1'
+import { makeTownsDelegateSig, makeOldTownsDelegateSig, publicKeyToAddress } from './crypto'
+import { ethers } from 'ethers'
 
 const log = debug('csb:test:util')
 
@@ -20,50 +20,34 @@ export const TEST_URL = 'http://localhost:5157'
 export const makeEvent_test = async (
     context: SignerContext,
     payload: Payload | PartialMessage<Payload>,
-    prevEventHashes: Uint8Array[],
+    prevEventHashes?: Uint8Array[] | Uint8Array | Map<string, Uint8Array>,
 ): Promise<Envelope> => {
     const hashes = normailizeHashes(prevEventHashes)
-    const streamEvent = new StreamEvent({
-        creatorAddress: context.creatorAddress,
-        salt: genIdBlob(),
-        prevEvents: hashes,
-        payload: payload,
-    })
-    if (context.delegateSig !== undefined) {
-        streamEvent.delegateSig = context.delegateSig
-    }
-
-    const event = streamEvent.toBinary()
-    const hash = hashPersonalMessage(Buffer.from(event))
-    const { v, r, s } = ecsign(hash, Buffer.from(stripHexPrefix(context.wallet.privateKey), 'hex'))
-
-    const signature = bin_fromHexString(toRpcSig(v, r, s))
-    log('makeEvent_test', { hash, signature }, context, payload)
-
-    return new Envelope({ hash: Uint8Array.from(hash), signature, event })
+    const pl: Payload = payload instanceof Payload ? payload : new Payload(payload)
+    return _impl_makeEvent_impl_(context, pl, hashes)
 }
 
-async function createWallet(): Promise<Wallet> {
-    const result = await new Promise<{ wallet: string }>((resolve, reject) => {
-        const worker = new Worker(
-            `
-                const {parentPort} = require("worker_threads");
-                const ethers = require('ethers');
-                const wallet = ethers.Wallet.createRandom()
-                parentPort.postMessage(JSON.stringify({wallet: wallet.privateKey}))
-                process.exit( 0 )
-        `,
-            { eval: true },
-        )
-        worker.on('message', (msg) => resolve(JSON.parse(msg)))
-        worker.on('error', reject)
-        worker.on('exit', (code) => {
-            if (code !== 0)
-                reject(new Error(`makeRandomUserContext worker stopped with ${code} exit code`))
-        })
-    })
-    return new Wallet(result.wallet)
-}
+// async function createWallet(): Promise<Wallet> {
+//     const result = await new Promise<{ wallet: string }>((resolve, reject) => {
+//         const worker = new Worker(
+//             `
+//                 const {parentPort} = require("worker_threads");
+//                 const ethers = require('ethers');
+//                 const wallet = ethers.Wallet.createRandom()
+//                 parentPort.postMessage(JSON.stringify({wallet: wallet.privateKey}))
+//                 process.exit( 0 )
+//         `,
+//             { eval: true },
+//         )
+//         worker.on('message', (msg) => resolve(JSON.parse(msg)))
+//         worker.on('error', reject)
+//         worker.on('exit', (code) => {
+//             if (code !== 0)
+//                 reject(new Error(`makeRandomUserContext worker stopped with ${code} exit code`))
+//         })
+//     })
+//     return new Wallet(result.wallet)
+// }
 
 /**
  *
@@ -71,13 +55,37 @@ async function createWallet(): Promise<Wallet> {
  * Done using a worker thread to avoid blocking the main thread
  */
 export const makeRandomUserContext = async (): Promise<SignerContext> => {
-    const wallets = await Promise.all([createWallet(), createWallet()])
-    const creatorAddress = bin_fromHexString(wallets[0].address)
+    const userPrivateKey = utils.randomPrivateKey()
+    const devicePrivateKey = utils.randomPrivateKey()
+    const devicePrivateKeyStr = bin_toHexString(devicePrivateKey)
+
+    const creatorAddress = publicKeyToAddress(getPublicKey(userPrivateKey, false))
     log('makeRandomUserContext', userIdFromAddress(creatorAddress))
     return {
-        wallet: wallets[1],
-        creatorAddress: creatorAddress,
-        delegateSig: await makeDelegateSig(wallets[0], wallets[1]),
+        signerPrivateKey: () => devicePrivateKeyStr,
+        creatorAddress,
+        delegateSig: await makeTownsDelegateSig(
+            () => userPrivateKey,
+            getPublicKey(devicePrivateKeyStr, false),
+        ),
+    }
+}
+
+// TODO(HNT-1380): remove
+export const makeRandomUserContextWithOldDelegate = async (): Promise<SignerContext> => {
+    const userPrimaryWallet = ethers.Wallet.createRandom()
+    const devicePrivateKey = utils.randomPrivateKey()
+    const devicePrivateKeyStr = bin_toHexString(devicePrivateKey)
+
+    const creatorAddress = publicKeyToAddress(bin_fromHexString(userPrimaryWallet.publicKey))
+    log('makeRandomUserContext', userIdFromAddress(creatorAddress))
+    return {
+        signerPrivateKey: () => devicePrivateKeyStr,
+        creatorAddress,
+        delegateSig: await makeOldTownsDelegateSig(
+            userPrimaryWallet,
+            getPublicKey(devicePrivateKeyStr, false),
+        ),
     }
 }
 

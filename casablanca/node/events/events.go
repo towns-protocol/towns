@@ -23,7 +23,7 @@ func MakeEnvelopeWithEvent(wallet *crypto.Wallet, streamEvent *StreamEvent) (*En
 		return nil, err
 	}
 
-	hash := crypto.HashPersonalMessage(eventBytes)
+	hash := crypto.TownsHash(eventBytes)
 	signature, err := wallet.SignHash(hash)
 	if err != nil {
 		return nil, err

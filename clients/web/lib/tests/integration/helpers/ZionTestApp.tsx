@@ -53,7 +53,7 @@ export const ZionTestApp = (props: Props) => {
             pollTimeoutMs={pollTimeoutMs}
             chainId={foundry.id}
             QueryClientProvider={TestQueryClientProvider}
-            logNamespaceFilter="csb:*"
+            logNamespaceFilter="" // "csb:*" A bit too much for tests, better way to set?
         >
             <ZionWalletAutoConnect children={children} />
         </ZionContextProvider>

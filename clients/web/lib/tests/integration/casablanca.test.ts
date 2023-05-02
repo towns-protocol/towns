@@ -3,8 +3,12 @@
  * @group casablanca
  */
 import { waitFor } from '@testing-library/dom'
-import { Client as CasablancaClient, makeStreamRpcClient } from '@towns/sdk'
-import { bin_fromHexString, publicKeyToBuffer, SignerContext } from '@towns/sdk'
+import {
+    Client as CasablancaClient,
+    makeOldTownsDelegateSig,
+    makeStreamRpcClient,
+} from '@towns/sdk'
+import { bin_fromHexString, SignerContext } from '@towns/sdk'
 import { ethers } from 'ethers'
 import { Permission } from '../../src/client/web3/ContractTypes'
 import { SpaceProtocol } from '../../src/client/ZionClientTypes'
@@ -24,13 +28,13 @@ describe('casablanca', () => {
     test('test instantiating a casablanca client', async () => {
         const primaryWallet = ethers.Wallet.createRandom()
         const delegateWallet = ethers.Wallet.createRandom()
-        const delegateSig = await primaryWallet.signMessage(
-            publicKeyToBuffer(delegateWallet.publicKey),
-        )
+        const creatorAddress = bin_fromHexString(primaryWallet.address)
+        const delegateSig = await makeOldTownsDelegateSig(primaryWallet, delegateWallet.publicKey)
+        const pk = delegateWallet.privateKey.slice(2)
         const context: SignerContext = {
-            wallet: delegateWallet,
-            creatorAddress: bin_fromHexString(primaryWallet.address),
-            delegateSig: bin_fromHexString(delegateSig),
+            signerPrivateKey: () => pk,
+            creatorAddress,
+            delegateSig,
         }
         const csurl: string = process.env.CASABLANCA_SERVER_URL!
         log('new CasablancaClient', csurl)

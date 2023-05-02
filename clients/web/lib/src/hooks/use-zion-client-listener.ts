@@ -9,7 +9,6 @@ import { MatrixCredentials, useCredentialStore } from '../store/use-credential-s
 import { useMatrixStore } from '../store/use-matrix-store'
 import { useSigner } from 'wagmi'
 import { useWeb3Context } from '../components/Web3ContextProvider'
-import { ethers } from 'ethers'
 import { useCasablancaStore } from '../store/use-casablanca-store'
 
 export const useZionClientListener = (opts: ZionOpts) => {
@@ -105,7 +104,7 @@ export const useZionClientListener = (opts: ZionOpts) => {
         }
 
         const client = clientSingleton.current
-        if (casablancaCredentials.privateKey === client.signerContext?.wallet.privateKey) {
+        if (casablancaCredentials.privateKey === client.signerContext?.signerPrivateKey()) {
             console.log('startCasablancaClient: called again with same access token')
             return
         }
@@ -113,10 +112,11 @@ export const useZionClientListener = (opts: ZionOpts) => {
         // unset the client ref if it's not already, we need to cycle the ui
         setCasablancaClient(undefined)
         // start it up!
+        // TODO(HNT-1380): transition to final signing model
         try {
-            const wallet = new ethers.Wallet(casablancaCredentials.privateKey)
+            const pk = casablancaCredentials.privateKey.slice(2)
             const context: SignerContext = {
-                wallet,
+                signerPrivateKey: () => pk,
                 creatorAddress: bin_fromHexString(casablancaCredentials.creatorAddress),
                 delegateSig: casablancaCredentials.delegateSig
                     ? bin_fromHexString(casablancaCredentials.delegateSig)

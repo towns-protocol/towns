@@ -5,22 +5,22 @@ option go_package = "casablanca/node/protocol";
 // TODO: fix comments
 
 /**
- * FullEvent is a hashed and signed event.
+ * Envelope contains serialized event, and its hash and signature.
  * hash is used as event id. Subsequent events reference this event by hash.
  */
 message Envelope {
     /**
-     * Hash of BaseEvent formatted as 0x1234abcd
-     * While hash can be recalculated from the BaseEvent, having it here explicitely
+     * Hash of event.
+     * While hash can be recalculated from the event, having it here explicitely
      * makes it easier to work with event.
-     * For the event to be valid, must match hash of BaseEvent.
+     * For the event to be valid, must match hash of event field. 
      */
     bytes hash = 1;
 
     /**
-     * Signature in the form 0x1234
-     * For the event to be valid, signature must match base.creatorAddress or
-     * be signed by base.delegateSig.
+     * Signature.
+     * For the event to be valid, signature must match event.creator_address
+     * or be signed by the address from evant.delegate_sig.
      */
     bytes signature = 2;
 
@@ -29,27 +29,29 @@ message Envelope {
 
 message StreamEvent {
     /**
-     * Address in the form 0xABcD...
-     * Checksummed according to EIP-55.
-     * Creator address can be recovered from the signature, but having
-     * it explicitly in the event makes it easier to work with the event.
+     * Address of the creator of the event.
+     * For user - address of the user's Towns wallet.
+     * For server - address of the server's keypair in staking smart contract.
+     *
      * For the event to be valid:
-     * If delegateSig is present, creatorAddress must match delegateSig.
-     * If delegateSig is not present, creatorAddress must match event signature.
+     * If delegate_sig is present, creator_address must match delegate_sig.
+     * If delegate_sig is not present, creator_address must match event signature in the Envelope.
      */
     bytes creator_address = 1;
 
      /**
-      * Signature that signs public key of the keypair that is used to sign the event.
-      * If present, creatorAddress must match delegateSig and
-      * FullEvent.signature's public key must be signed by delegateSig.
+      * delegate_sig allows event to be signed by device keypair 
+      * which is linked to the user's Towns wallet.
       *
-      * delegateSig is used to delegate signing authority to another address.
-      * Specifically, it is used to delegate signing authority to an app-managed
-      * keypair from the user's wallet.
+      * delegate_sig constains signature of the public key of the device keypair.
+      * User's Towns wallet is used to produce this signature.
+      * 
+      * If present, for the event to be valid:
+      * 1. creator_address must match delegate_sig's signer public key
+      * 2. delegate_sig should be the signature of Envelope.signature's public key.
       *
       * Server nodes sign node-produced events with their own keypair and do not
-      * need to use delegateSig.
+      * need to use delegate_sig.
       */
     bytes delegate_sig = 2;
  
@@ -233,4 +235,5 @@ enum Err {
     BAD_PUBLIC_KEY = 18;
     BAD_PAYLOAD = 19;
     BAD_HEX_STRING = 20;
+    BAD_EVENT_HASH = 21;
 }
