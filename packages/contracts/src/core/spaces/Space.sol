@@ -506,16 +506,14 @@ contract Space is
       revert Errors.NotAllowed();
     }
 
-    for (uint256 i = 0; i < entitlements.length; i++) {
-      if (
-        _isEntitled(
-          _channelNetworkId,
-          _user,
-          bytes32(abi.encodePacked(_permission))
-        )
-      ) {
-        _entitled = true;
-      }
+    if (
+      _isEntitled(
+        _channelNetworkId,
+        _user,
+        bytes32(abi.encodePacked(_permission))
+      )
+    ) {
+      _entitled = true;
     }
   }
 
@@ -524,12 +522,8 @@ contract Space is
     address _user,
     string calldata _permission
   ) external view returns (bool _entitled) {
-    for (uint256 i = 0; i < entitlements.length; i++) {
-      if (
-        _isEntitled(IN_SPACE, _user, bytes32(abi.encodePacked(_permission)))
-      ) {
-        _entitled = true;
-      }
+    if (_isEntitled(IN_SPACE, _user, bytes32(abi.encodePacked(_permission)))) {
+      _entitled = true;
     }
   }
 
