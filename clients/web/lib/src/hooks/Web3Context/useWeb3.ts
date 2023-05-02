@@ -19,9 +19,15 @@ export function useWeb3(chain?: Chain): IWeb3Context {
     const { chain: walletChain, chains } = useNetwork()
     const { signMessageAsync } = useSignMessage()
     const [activeWalletAddressOverride, setActiveWalletAddressOverride] = useState<
-        { address: Address | undefined } | undefined
-    >()
-    const [accounts, setAccounts] = useState<Address[]>(address ? [address] : [])
+        { account: Address | undefined } | undefined
+    >(undefined)
+    const activeWalletAddress = activeWalletAddressOverride
+        ? activeWalletAddressOverride.account
+        : address
+    const accounts = useMemo(
+        () => (activeWalletAddress ? [activeWalletAddress] : []),
+        [activeWalletAddress],
+    )
 
     // allowing app to pass in chain allows to load on correct chain per env regardless of user wallet settings
     // they are able to login w/out swapping networks
@@ -32,23 +38,19 @@ export function useWeb3(chain?: Chain): IWeb3Context {
     // hook up accountChanged event handler to the connector
     useEffect(() => {
         const onChange = (data: ConnectorData<Ethereum | undefined>) => {
-            let accounts: Address[] = []
             let activeAccount: Address | undefined
             if (data.account && !isNullAddress(data.account)) {
                 // the first account is the active one
                 // also check that this is not the NULL_ADDRESS
                 // before setting the activeWalletAddress
-                accounts = [data.account] as Address[]
                 activeAccount = data.account
             }
-            setAccounts(accounts)
-            setActiveWalletAddressOverride({ address: activeAccount })
-            console.log('useWeb3', 'onChange', data, accounts)
+            setActiveWalletAddressOverride(activeAccount ? { account: activeAccount } : undefined)
+            console.log('useWeb3', 'onChange', data)
         }
         const onDisconnect = () => {
             console.log('useWeb3', 'onDisconnect')
-            setAccounts([])
-            setActiveWalletAddressOverride({ address: undefined })
+            setActiveWalletAddressOverride({ account: undefined })
         }
 
         if (connector) {
@@ -75,9 +77,10 @@ export function useWeb3(chain?: Chain): IWeb3Context {
     )
 
     useEffect(() => {
-        console.log('use web3', {
+        console.log('use web3 ##', {
             connector,
             address,
+            activeWalletAddress,
             activeWalletAddressOverride,
             activeChain,
             chains,
@@ -85,14 +88,20 @@ export function useWeb3(chain?: Chain): IWeb3Context {
             def: activeChain?.rpcUrls?.default,
             status,
         })
-    }, [activeChain, activeWalletAddressOverride, address, chains, connector, status])
+    }, [
+        activeChain,
+        activeWalletAddress,
+        activeWalletAddressOverride,
+        address,
+        chains,
+        connector,
+        status,
+    ])
 
     return {
         provider,
         sign: sign,
-        activeWalletAddress: activeWalletAddressOverride
-            ? activeWalletAddressOverride.address
-            : address,
+        activeWalletAddress,
         accounts,
         chain: activeChain,
         chains: chains,
