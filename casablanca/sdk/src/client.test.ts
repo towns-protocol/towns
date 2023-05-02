@@ -2,7 +2,7 @@ import { StreamKind } from '@towns/proto'
 import debug from 'debug'
 import { Client } from './client'
 import { genId, makeChannelStreamId, makeSpaceStreamId } from './id'
-import { getMessagePayloadContent_Text, ParsedEvent } from './types'
+import { getMessagePayloadContent_Text, getToDeviceMessagePayload, ParsedEvent } from './types'
 import { makeDonePromise, makeTestClient } from './util.test'
 
 const log = debug('test')
@@ -259,5 +259,81 @@ describe('clientTest', () => {
         log('Waiting for Bob to get messages...')
         await bobGetsMessage.expectToSucceed()
         log('bobAndAliceConverse All done!')
+    })
+
+    test('bobSendsAliceToDeviceMessage', async () => {
+        log('bobSendsAliceToDeviceMessage')
+        // Bob gets created, creates a space, and creates a channel.
+        await expect(bobsClient.createNewUser()).toResolve()
+        bobsClient.startSync(1000)
+
+        // Alice gets created.
+        await expect(alicesClient.createNewUser()).toResolve()
+        const aliceUserStreamId = alicesClient.userStreamId
+        console.log('aliceUserStreamId', aliceUserStreamId)
+        const aliceUserId = alicesClient.userId
+        alicesClient.startSync(1000)
+
+        const aliceSelfToDevice = makeDonePromise()
+        alicesClient.once(
+            'toDeviceMessage',
+            (streamId: string, deviceId: string, message: ParsedEvent): void => {
+                const payload = getToDeviceMessagePayload(message)
+                log('toDeviceMessage for Alice', streamId, deviceId, payload?.value)
+                aliceSelfToDevice.runAndDone(() => {
+                    expect(streamId).toBe(aliceUserStreamId)
+                    expect(payload?.value).toBeDefined()
+                    const decoder = new TextDecoder()
+                    const decodedPayload = decoder.decode(payload?.value)
+                    expect(decodedPayload).toContain('Hi Alice!')
+                })
+            },
+        )
+        // bob sends a message to Alice's device.
+        await expect(
+            bobsClient.sendToDeviceMessage(aliceUserId, aliceUserId, {
+                type: 'to_device',
+                content: 'Hi Alice!',
+            }),
+        ).toResolve()
+        await aliceSelfToDevice.expectToSucceed()
+    })
+
+    test('bobSendsAliceToDevicesMessages', async () => {
+        log('bobSendsAliceToDeviceMessages')
+        // Bob gets created, creates a space, and creates a channel.
+        await expect(bobsClient.createNewUser()).toResolve()
+        bobsClient.startSync(1000)
+
+        // Alice gets created.
+        await expect(alicesClient.createNewUser()).toResolve()
+        const aliceUserStreamId = alicesClient.userStreamId
+        console.log('aliceUserStreamId', aliceUserStreamId)
+        const aliceUserId = alicesClient.userId
+        alicesClient.startSync(1000)
+
+        const aliceSelfToDevice = makeDonePromise()
+        alicesClient.once(
+            'toDeviceMessage',
+            (streamId: string, deviceId: string, message: ParsedEvent): void => {
+                const payload = getToDeviceMessagePayload(message)
+                log('toDeviceMessage for Alice', streamId, deviceId, payload?.value)
+                aliceSelfToDevice.runAndDone(() => {
+                    expect(streamId).toBe(aliceUserStreamId)
+                    expect(payload?.value).toBeDefined()
+                    const decoder = new TextDecoder()
+                    const decodedPayload = decoder.decode(payload?.value)
+                    expect(decodedPayload).toContain('Hi Alice!')
+                })
+            },
+        )
+        // bob sends a message to all Alice's devices.
+        await expect(
+            bobsClient.sendToDevicesMessage(aliceUserId, {
+                type: 'to_device',
+                content: 'Hi Alice!',
+            }),
+        ).toResolve()
+        await aliceSelfToDevice.expectToSucceed()
     })
 })

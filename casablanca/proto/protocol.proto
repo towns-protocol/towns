@@ -110,6 +110,12 @@ message Payload {
         optional string channel_id = 3;
         optional EventRef origin_event = 4;
     }
+
+    message ToDevice {
+        ToDeviceOp op = 1;
+        bytes value = 2;
+        string device_id = 3;
+    }
     
     message Message {
         string text = 1;
@@ -122,6 +128,7 @@ message Payload {
         Channel channel = 4;
         Message message = 5;
         UserSetting user_setting = 6;
+        ToDevice to_device = 7;
     }
 }
 
@@ -151,6 +158,11 @@ enum ChannelOp {
 enum UserSettingOp {
     USO_UNSPECIFIED = 0;
     USO_FULLY_READ = 1;
+}
+
+enum ToDeviceOp {
+    TDO_UNSPECIFIED = 0;
+    TDO_TO_DEVICE = 1;
 }
 
 message StreamAndCookie {

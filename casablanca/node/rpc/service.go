@@ -264,9 +264,21 @@ func (s *Service) addEvent(ctx context.Context, streamId string, view *StreamVie
 			return nil, status.Errorf(codes.Internal, "AddEvent: error adding event to storage: %v", err)
 		}
 		return cookie, nil
-
+	case *protocol.Payload_ToDevice_:
+		kind, err := view.StreamKind(streamId)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "AddEvent: error getting stream kind: %v", err)
+		}
+		if kind != protocol.StreamKind_SK_USER {
+			return nil, status.Errorf(codes.InvalidArgument, "AddEvent: event is a to-device event, but stream is not a user stream")
+		}
+		cookie, err := s.Storage.AddEvent(ctx, streamId, envelope)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "AddEvent: error adding event to storage: %v", err)
+		}
+		return cookie, nil
 	default:
-		return nil, status.Errorf(codes.InvalidArgument, "AddEvent: event has no valid payload")
+		return nil, status.Errorf(codes.InvalidArgument, "AddEvent: event has no valid payload for type %T", streamEvent.Payload.Payload)
 	}
 }
 

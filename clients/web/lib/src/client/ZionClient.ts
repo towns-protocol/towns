@@ -1451,8 +1451,11 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
      *************************************************/
     public canSendToDeviceMessage(userId: string) {
         if (isCasablancaUserStreamId(userId)) {
-            // todo casablanca look for user in casablanca
-            throw new Error('not implemented')
+            if (!this.casablancaClient) {
+                throw new Error('Casablanca client not initialized')
+            }
+            const devices = this.casablancaClient.getStoredDevicesForUser(userId)
+            return devices.length > 0
         } else {
             if (!this.matrixClient) {
                 throw new Error('matrix client is undefined')
@@ -1469,7 +1472,13 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
     public async sendToDeviceMessage(userId: string, type: string, content: object) {
         if (isCasablancaUserStreamId(userId)) {
             // todo casablanca look for user in casablanca
-            throw new Error('not implemented')
+            if (!this.casablancaClient) {
+                throw new Error('Casablanca client not initialized')
+            }
+            if (!this.canSendToDeviceMessage(userId)) {
+                throw new Error('cannot send to device for user ' + userId)
+            }
+            await this.casablancaClient.sendToDevicesMessage(userId, { type, content })
         } else {
             if (!this.matrixClient) {
                 throw new Error('matrix client is undefined')

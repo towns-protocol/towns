@@ -4,6 +4,7 @@ import {
     StreamAndCookie,
     StreamKind,
     MembershipOp,
+    ToDeviceOp,
     SyncPos,
     ChannelMessage_Post_Mention,
     ChannelMessage,
@@ -37,6 +38,7 @@ import {
     makeInceptionPayload,
     makeJoinableStreamPayload,
     makeMessagePayload,
+    makeToDeviceStreamPayload,
 } from './types'
 
 function assert(condition: any, message?: string): asserts condition {
@@ -51,6 +53,7 @@ export class Stream extends (EventEmitter as new () => TypedEmitter<StreamEvents
     readonly clientEmitter: TypedEmitter<StreamEvents>
     readonly logEmitFromStream: debug.Debugger
     readonly rollup: StreamStateView
+    readonly foreignUserStream: boolean
     syncCookie?: Uint8Array
 
     constructor(
@@ -58,12 +61,14 @@ export class Stream extends (EventEmitter as new () => TypedEmitter<StreamEvents
         inceptionEvent: ParsedEvent | undefined,
         clientEmitter: TypedEmitter<StreamEvents>,
         logEmitFromStream: debug.Debugger,
+        foreignUserStream?: boolean,
     ) {
         super()
         this.streamId = streamId
         this.clientEmitter = clientEmitter
         this.logEmitFromStream = logEmitFromStream
         this.rollup = new StreamStateView(streamId, inceptionEvent)
+        this.foreignUserStream = foreignUserStream ?? false
     }
 
     /**
@@ -204,6 +209,30 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
         const userStream = await this.rpcClient.getStream({ streamId })
         assert(userStream.stream !== undefined, 'got bad user stream')
         return this.initUserStream(streamId, userStream.stream)
+    }
+
+    async loadExistingForeignUser(userId: string): Promise<void> {
+        // loads user stream for a foreign user without listeners
+        this.logCall('loadExistingForeignUser', userId)
+        assert(this.userId !== userId, 'userId must be different from current user')
+        const streamId = makeUserStreamId(userId)
+        if (this.streams.has(streamId)) {
+            return
+        }
+
+        const userStream = await this.rpcClient.getStream({ streamId })
+        assert(userStream.stream !== undefined, 'got bad user stream')
+        const streamAndCookie = userStream.stream
+        const stream = new Stream(
+            streamId,
+            unpackEnvelope(streamAndCookie.events[0]),
+            this,
+            this.logEmitFromStream,
+            true,
+        )
+        this.streams.set(streamId, stream)
+        // add init events
+        stream.addEvents(streamAndCookie, true)
     }
 
     async createSpace(spaceId?: string): Promise<{ streamId: string }> {
@@ -352,6 +381,9 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
             this.logSync('sync ITERATION', iteration++)
             const syncPos: PartialMessage<SyncPos>[] = []
             this.streams.forEach((stream: Stream) => {
+                // TODO: jterzis prune foreign user streams
+                // that are created to send to_device
+                // messages.
                 const syncCookie = stream.syncCookie
                 if (syncCookie !== undefined) {
                     syncPos.push({
@@ -656,6 +688,58 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
             }),
             'joinChannel',
         )
+    }
+
+    async sendToDevicesMessage(userId: string, event: object): Promise<void[]> {
+        const streamId: string = makeUserStreamId(userId)
+        await this.loadExistingForeignUser(userId)
+        // retrieve all device_ids of a user
+        const deviceIds = this.getStoredDevicesForUser(userId)
+        // todo: this should use client protobuf not JSON and be encrypted
+        const encoder = new TextEncoder()
+        const envelope = encoder.encode(JSON.stringify(event))
+        return Promise.all(
+            deviceIds.map((deviceId) => {
+                this.logCall(`toDevice ${deviceId}, streamId ${streamId}, userId ${userId}`)
+                return this.makeEventAndAddToStream(
+                    streamId,
+                    makeToDeviceStreamPayload({
+                        op: ToDeviceOp.TDO_TO_DEVICE,
+                        // todo: this should use client protobuf not JSON
+                        value: envelope,
+                        deviceId: deviceId,
+                    }),
+                    'toDevice',
+                )
+            }),
+        )
+    }
+
+    async sendToDeviceMessage(userId: string, deviceId: string, event: object): Promise<void> {
+        const streamId: string = makeUserStreamId(userId)
+        await this.loadExistingForeignUser(userId)
+        // assert device_id belongs to user
+        const deviceIds = this.getStoredDevicesForUser(userId)
+        assert(deviceIds.includes(deviceId))
+        this.logCall(`toDevice ${deviceId}, streamId ${streamId}, userId ${userId}`)
+        // todo: this should use client protobuf not JSON and be encrypted
+        const encoder = new TextEncoder()
+        const envelope = encoder.encode(JSON.stringify(event))
+        return this.makeEventAndAddToStream(
+            streamId,
+            makeToDeviceStreamPayload({
+                op: ToDeviceOp.TDO_TO_DEVICE,
+                value: envelope,
+                deviceId: deviceId,
+            }),
+            'toDevice',
+        )
+    }
+
+    public getStoredDevicesForUser(userId: string): string[] {
+        this.logCall('getStoredDevicesForUser', userId)
+        // TODO: Implement
+        return [userId]
     }
 
     async makeEventAndAddToStream(

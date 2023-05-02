@@ -28,6 +28,7 @@ export type StreamEvents = {
     spaceNewChannelCreated: (spaceId: string, channelId: string) => void
     spaceChannelDeleted: (spaceId: string, channelId: string) => void
     channelNewMessage: (channelId: string, message: ParsedEvent) => void
+    toDeviceMessage: (streamId: string, deviceId: string, value: ParsedEvent) => void
 
     streamInitialized: (streamId: string, streamKind: StreamKind, events: ParsedEvent[]) => void
     streamUpdated: (streamId: string, streamKind: StreamKind, events: ParsedEvent[]) => void
@@ -52,6 +53,8 @@ export class StreamStateView {
 
     readonly userInvitedStreams = new Set<string>()
     readonly userJoinedStreams = new Set<string>()
+
+    readonly toDeviceMessages: ParsedEvent[] = []
 
     readonly leafEventHashes = new Map<string, Uint8Array>()
 
@@ -163,6 +166,14 @@ export class StreamStateView {
             case 'message':
                 this.messages.set(event.hashStr, event)
                 emitter?.emit('channelNewMessage', this.streamId, event)
+                break
+            case 'toDevice':
+                {
+                    const { deviceId } = payload.value
+                    emitter?.emit('toDeviceMessage', this.streamId, deviceId, event)
+                    // TODO: filter by deviceId and only store current deviceId's events
+                    this.toDeviceMessages.push(event)
+                }
                 break
             default:
                 throwWithCode(`Unhandled event kind`, Err.INTERNAL_ERROR_SWITCH)

@@ -213,6 +213,9 @@ function toTownsContent(
         case 'userSetting': {
             throw new Error('userSetting should only happen in a userSettingStream')
         }
+        case 'toDevice': {
+            throw new Error('toDevice should only happen in a userStream')
+        }
         default: {
             console.error('$$$ onChannelMessage', {
                 payload: message.event.payload,

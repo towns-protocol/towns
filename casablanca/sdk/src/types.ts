@@ -11,6 +11,7 @@ import {
     Payload_JoinableStream,
     Payload_Channel,
     Payload_Message,
+    Payload_ToDevice,
     ChannelMessage,
     ChannelMessage_Post_Content_Text,
 } from '@towns/proto'
@@ -98,6 +99,17 @@ export const makeJoinableStreamPayload = (
     }
 }
 
+export const makeToDeviceStreamPayload = (
+    value: PartialMessage<Payload_ToDevice>,
+): PartialMessage<Payload> => {
+    return {
+        payload: {
+            case: 'toDevice',
+            value,
+        },
+    }
+}
+
 export const makeChannelPayload = (
     value: PartialMessage<Payload_Channel>,
 ): PartialMessage<Payload> => {
@@ -143,6 +155,21 @@ export const getMessagePayload = (
         event = event.event as unknown as StreamEvent
     }
     if (event.payload?.payload.case === 'message') {
+        return event.payload.payload.value
+    }
+    return undefined
+}
+
+export const getToDeviceMessagePayload = (
+    event: ParsedEvent | StreamEvent | undefined,
+): Payload_ToDevice | undefined => {
+    if (!isDefined(event)) {
+        return undefined
+    }
+    if ('event' in event) {
+        event = event.event as unknown as StreamEvent
+    }
+    if (event.payload?.payload.case === 'toDevice') {
         return event.payload.payload.value
     }
     return undefined
