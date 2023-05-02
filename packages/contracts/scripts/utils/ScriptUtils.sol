@@ -31,6 +31,8 @@ contract ScriptUtils is Script {
   function _writeAddress(string memory key, address value) internal {
     string memory generatedPath = "packages/generated/addresses.json";
     string memory goPath = "servers/dendrite/zion/contracts/addresses.json";
+    string
+      memory casablancaPath = "casablanca/node/auth/contracts/addresses.json";
 
     string memory finalValue = string.concat(
       ".",
@@ -41,6 +43,7 @@ contract ScriptUtils is Script {
 
     vm.writeJson(vm.toString(value), generatedPath, finalValue);
     vm.writeJson(vm.toString(value), goPath, finalValue);
+    vm.writeJson(vm.toString(value), casablancaPath, finalValue);
   }
 
   function _getChainName() internal view returns (string memory) {

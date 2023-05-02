@@ -8,6 +8,7 @@ servers/*
 !servers/workers
 casablanca/**/gen/*
 casablanca/**/coverage/*
+casablanca/node/auth/contracts/*
 packages/contracts/cache/*
 packages/contracts/lib/*
 packages/contracts/**/out/*
