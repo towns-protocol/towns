@@ -286,7 +286,7 @@
       {
         "label": "UnfurlWorker",
         "type": "shell",
-        "command": "cd servers/workers/unfurl-worker && yarn dev:local",
+        "command": "sleep 1 && cd servers/workers/unfurl-worker && yarn dev:local",
         "isBackground": true,
         "problemMatcher": [],
         "presentation": {
@@ -296,7 +296,7 @@
       {
         "label": "TokenWorker",
         "type": "shell",
-        "command": "cd servers/workers/token-worker && yarn dev:local",
+        "command": "sleep 2 && cd servers/workers/token-worker && yarn dev:local",
         "isBackground": true,
         "problemMatcher": [],
         "presentation": {
@@ -306,7 +306,7 @@
       {
         "label": "GatewayWorker",
         "type": "shell",
-        "command": "cd servers/workers/gateway-worker && yarn dev:local",
+        "command": "sleep 3 && cd servers/workers/gateway-worker && yarn dev:local",
         "isBackground": true,
         "problemMatcher": [],
         "presentation": {
