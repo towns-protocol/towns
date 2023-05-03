@@ -73,7 +73,7 @@ export function MemberList({
             <MotionBox layout="position">
                 <TextField
                     data-testid="member-search"
-                    background="level3"
+                    background="level2"
                     placeholder="Search"
                     onChange={(e) => setSearch(e.target.value)}
                 />

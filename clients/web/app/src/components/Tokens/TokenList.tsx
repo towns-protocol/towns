@@ -131,7 +131,7 @@ export function TokensList({
             <MotionBox layout="position">
                 <TextField
                     data-testid="token-search"
-                    background="level3"
+                    background="level2"
                     placeholder="Search or paste contract address"
                     onChange={(e) => setSearch(e.target.value)}
                 />

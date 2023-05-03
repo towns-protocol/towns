@@ -76,7 +76,7 @@ export const MessageThreadPanel = (props: Props) => {
                         threadId={messageId}
                         channels={channels}
                         members={members}
-                        background="level3"
+                        background="level2"
                         onSend={onSend}
                     />
                 </Box>
