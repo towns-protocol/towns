@@ -10,7 +10,7 @@
         "build": "tsc",
         "cb": "yarn clean && yarn build",
         "clean": "rm -rf dist",
-        "csb:test-web-lib": "PRIMARY_PROTOCOL=casablanca yarn my-jest --maxWorkers=1",
+        "csb:test-web-lib": "PRIMARY_PROTOCOL=casablanca yarn my-jest --maxWorkers=5",
         "csb:test-web-lib-done": "yarn csb:test-web-lib --group=casablanca",
         "csb:test-web-lib-todo": "yarn csb:test-web-lib --group=-casablanca",
         "lint": "eslint .",
