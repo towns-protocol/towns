@@ -3,8 +3,6 @@ package storage
 import (
 	"context"
 	_ "embed"
-	"encoding/hex"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"math"
@@ -104,63 +102,11 @@ func NewPGEventStore(ctx context.Context, database_url string, clean bool) (*PGE
 			case <-store.debugCtl:
 				log.Debug("Debug events stop")
 				return
-			case <-time.After(1 * time.Second):
-				err := dump(store, ctx)
-				if err != nil {
-					log.Errorf("Debug events dump error: %v", err)
-				}
 			}
 		}
 	}()
 
 	return store, nil
-}
-
-func dump(store *PGEventStore, ctx context.Context) error {
-	log := infra.GetLogger(ctx)
-	streams, err := store.GetStreams(ctx)
-	if err != nil {
-		log.Errorf("GetStreams: %v", err)
-		return err
-	}
-
-	tx, err := store.pool.Begin(ctx)
-	if err != nil {
-		log.Errorf("Begin: %v", err)
-		return err
-	}
-	var committed = false
-	defer func() {
-		if !committed {
-			err := tx.Rollback(ctx)
-			if err != nil {
-				log.Errorf("Rollback: %v", err)
-			}
-		}
-	}()
-
-	for _, stream := range streams {
-
-		numEvents, err := addDebugEvents(ctx, tx, stream)
-		if err != nil {
-			log.Errorf("addDebugEvents: %v", err)
-			rollbackErr := tx.Rollback(ctx)
-			if rollbackErr != nil {
-				log.Errorf("addDebugEvents Rollback: %v", rollbackErr)
-			}
-			return err
-		}
-		if numEvents > 0 {
-			log.Debug("Debug events dump: ", numEvents)
-		}
-	}
-	err = tx.Commit(ctx)
-	if err != nil {
-		log.Errorf("Commit: %v", err)
-		return err
-	}
-	committed = true
-	return nil
 }
 
 // Close closes the connection to the database
@@ -213,7 +159,7 @@ func lockTable(ctx context.Context, tx pgx.Tx, tableName string) error {
 }
 
 func addEvents(ctx context.Context, pool *pgxpool.Pool, streamId string, envelopes []*protocol.Envelope) (int64, error) {
-	log := infra.GetLogger(ctx)
+	logger := infra.GetLogger(ctx)
 
 	tx, err := startTx(ctx, pool)
 	if err != nil {
@@ -230,6 +176,11 @@ func addEvents(ctx context.Context, pool *pgxpool.Pool, streamId string, envelop
 	}()
 
 	parsedEvents := events.FormatEventsToJson(envelopes)
+
+	if logger.Logger.GetLevel() >= log.DebugLevel {
+		addDebugEventEntry(streamId, parsedEvents)
+	}
+
 	sb := strings.Builder{}
 	params := make([]interface{}, 0, len(envelopes)*4)
 
@@ -259,63 +210,16 @@ func addEvents(ctx context.Context, pool *pgxpool.Pool, streamId string, envelop
 	}
 	err = tx.Commit(ctx)
 	if err != nil {
-		log.Error("Commit error: ", err)
+		logger.Error("Commit error: ", err)
 		return -1, err
 	}
 	commited = true
-	log.Debugf("inserted int streamId: %s message with seq_num: %d for events: %s", streamId, seqNum, parsedEvents)
+	logger.Debugf("inserted int streamId: %s message with seq_num: %d for events: %s", streamId, seqNum, parsedEvents)
 	return seqNum, nil
 }
 
-func addDebugEvents(ctx context.Context, tx pgx.Tx, streamId string) (int, error) {
-	log := infra.GetLogger(ctx)
-	rows, err := tx.Query(ctx, fmt.Sprintf("SELECT seq_num, hash, signature, event FROM %s e WHERE NOT EXISTS (SELECT 1 FROM es_events_debug d WHERE d.seq_num =  e.seq_num and es_name = $1)",
-		streamSqlName(streamId)), streamId)
-	if err != nil {
-		log.Debug("error: ", err)
-		return 0, err
-	}
-	defer rows.Close()
-
-	parsedEvents := make(map[int64]*events.ParsedEvent)
-
-	for rows.Next() {
-		var seq_num int64
-		var hash []byte
-		var signature []byte
-		var event []byte
-		err = rows.Scan(&seq_num, &hash, &signature, &event)
-		if err != nil {
-			return 0, err
-		}
-		parsedEvent, err := events.ParseEvent(&protocol.Envelope{
-			Hash:      hash,
-			Signature: signature,
-			Event:     event,
-		}, false)
-
-		if err != nil {
-			return 0, err
-		}
-		parsedEvents[seq_num] = parsedEvent
-	}
-
-	for seq_num, parsedEvent := range parsedEvents {
-		// convert parsedEvents to json
-		js, err := json.Marshal(parsedEvent)
-		if err != nil {
-			return 0, err
-		}
-
-		log.Debugf("inserting debug event: %s", hex.EncodeToString(parsedEvent.Envelope.Hash))
-		_, err = tx.Exec(ctx, "INSERT INTO es_events_debug (es_name, seq_num, hash, signature, event) VALUES ($1, $2, $3, $4, $5::jsonb)",
-			streamId, seq_num, parsedEvent.Envelope.Hash, parsedEvent.Envelope.Signature, string(js))
-		if err != nil {
-			return 0, err
-		}
-
-	}
-	return len(parsedEvents), nil
+func addDebugEventEntry(streamId string, parsedEvent string) {
+	infra.EventsLogger.Debugf("stream: %s, event: %s", streamId, parsedEvent)
 }
 
 // CreateStream creates a new event stream

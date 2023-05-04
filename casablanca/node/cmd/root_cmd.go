@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"casablanca/node/config"
+	"casablanca/node/infra"
 	"io"
 
 	"fmt"
@@ -15,6 +16,7 @@ import (
 var configFile string
 var logLevelOverride string
 var logFileOverride string
+var eventsFileOverride string
 var cmdConfig *config.Config
 
 var rootCmd = &cobra.Command{
@@ -54,7 +56,9 @@ func initConfigAndLog() {
 				configStruct.Log.File = ""
 			}
 		}
-
+		if eventsFileOverride != "none" {
+			configStruct.Log.Events = eventsFileOverride
+		}
 		// If loaded successfully, set the global config
 		cmdConfig = &configStruct
 
@@ -67,9 +71,13 @@ func initConfigAndLog() {
 			log.Warnf("failed to parse log level %v: %v", cmdConfig.Log.Level, err)
 		} else {
 			log.SetLevel(level)
+			infra.EventsLogger.SetLevel(level)
 		}
 
 		log.Infof("Log file set to %v", cmdConfig.Log.File)
+		if cmdConfig.Log.Events != "" && log.GetLevel() >= log.DebugLevel {
+			log.Infof("Event log file set to %v", cmdConfig.Log.Events)
+		}
 		// TODO: use hook instead of multiwriter
 		if cmdConfig.Log.File != "" {
 			f, err := os.OpenFile(cmdConfig.Log.File, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
@@ -79,6 +87,15 @@ func initConfigAndLog() {
 			cobra.OnFinalize(func() { f.Close() })
 			wrt := io.MultiWriter(os.Stdout, f)
 			log.SetOutput(wrt)
+		}
+		if cmdConfig.Log.Events != "" && log.GetLevel() >= log.DebugLevel {
+			f, err := os.OpenFile(cmdConfig.Log.Events, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+			if err != nil {
+				log.Warnf("failed to open event log file: %v", err)
+			}
+			cobra.OnFinalize(func() { f.Close() })
+			wrt := io.MultiWriter(os.Stdout, f)
+			infra.EventsLogger.SetOutput(wrt)
 		}
 	} else {
 		fmt.Println("No config file specified")
@@ -90,4 +107,6 @@ func init() {
 	rootCmd.PersistentFlags().StringVarP(&configFile, "config", "c", "dev.yaml", "Path to the configuration file")
 	rootCmd.PersistentFlags().StringVarP(&logLevelOverride, "log_level", "l", "", "Override log level (options: trace, debug, info, warn, error, panic, fatal)")
 	rootCmd.PersistentFlags().StringVar(&logFileOverride, "log_file", "default", "Override log file ('default' to use the one specified in the config file, 'none' to disable logging to file)")
+	rootCmd.PersistentFlags().StringVar(&eventsFileOverride, "events_file", "none", "Override log event file for debug mode ('none' to disable logging to file, it is default setting)")
+
 }

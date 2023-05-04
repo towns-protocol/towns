@@ -11,6 +11,7 @@ import (
 type ContextKey string
 
 var townsLoggerKey = ContextKey("townsLogger")
+var EventsLogger = log.New()
 
 func SetLoggerWithRequestId(ctx context.Context) (context.Context, *log.Entry, string) {
 	requestId := uuid.NewString()
