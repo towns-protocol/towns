@@ -17,8 +17,13 @@ import (
 	"golang.org/x/net/http2/h2c"
 )
 
-func StartServer(ctx context.Context, host string, port int, dbUrl string) (closer func(), actualPort int) {
-	pattern, handler := MakeServiceHandler(context.Background(), dbUrl)
+func StartServer(ctx context.Context, cfg *config.Config) (closer func(), actualPort int) {
+	var chainConfig *config.ChainConfig
+	if cfg.Authorization {
+		chainConfig = &cfg.Chain
+	}
+
+	pattern, handler := MakeServiceHandler(context.Background(), cfg.DbUrl, chainConfig)
 	mux := http.NewServeMux()
 	log.Info("Registering handler for ", pattern)
 	mux.Handle(pattern, handler)
@@ -34,7 +39,7 @@ func StartServer(ctx context.Context, host string, port int, dbUrl string) (clos
 		}
 	})
 
-	address := fmt.Sprintf("%s:%d", host, port)
+	address := fmt.Sprintf("%s:%d", cfg.Address, cfg.Port)
 	httpListener, err := net.Listen("tcp", address)
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
@@ -65,12 +70,12 @@ func StartServer(ctx context.Context, host string, port int, dbUrl string) (clos
 	}
 
 	log.Printf("Listening on %s%s", address, pattern)
-	log.Printf("Using DB at %s", dbUrl)
+	log.Printf("Using DB at %s", cfg.DbUrl)
 	return
 }
 
 func RunServer(config *config.Config) {
-	closer, _ := StartServer(context.Background(), config.Address, config.Port, config.DbUrl)
+	closer, _ := StartServer(context.Background(), config)
 	defer closer()
 
 	exitSignal := make(chan os.Signal, 1)

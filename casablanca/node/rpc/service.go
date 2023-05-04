@@ -13,8 +13,10 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
 
+	"casablanca/node/auth"
 	. "casablanca/node/base"
 	"casablanca/node/common"
+	"casablanca/node/config"
 	"casablanca/node/crypto"
 	"casablanca/node/events"
 	"casablanca/node/infra"
@@ -34,6 +36,9 @@ var (
 	addEventRequests     = infra.NewSuccessMetrics("add_event_requests", serviceRequests)
 	syncStreamsRequests  = infra.NewSuccessMetrics("sync_streams_requests", serviceRequests)
 )
+
+// TODO-auth-check
+// Add missing authentification checks based on Dendrite's implementation
 
 func (s *LoggingService) CreateStream(ctx context.Context, req *connect_go.Request[protocol.CreateStreamRequest]) (*connect_go.Response[protocol.CreateStreamResponse], error) {
 
@@ -117,8 +122,9 @@ func (s *LoggingService) Info(ctx context.Context, req *connect_go.Request[proto
 }
 
 type Service struct {
-	Storage storage.Storage
-	wallet  *crypto.Wallet
+	Storage       storage.Storage
+	Authorization auth.Authorization
+	wallet        *crypto.Wallet
 }
 
 func (s *Service) GetStream(ctx context.Context, req *connect_go.Request[protocol.GetStreamRequest]) (*connect_go.Response[protocol.GetStreamResponse], error) {
@@ -156,7 +162,7 @@ func (s *Service) checkPrevEvents(view *storage.StreamView, prevEvents [][]byte)
 }
 
 func (s *Service) AddEvent(ctx context.Context, req *connect_go.Request[protocol.AddEventRequest]) (*connect_go.Response[protocol.AddEventResponse], error) {
-	view := makeView(ctx, s.Storage, req.Msg.StreamId)
+	view := storage.NewViewFromStreamId(ctx, s.Storage, req.Msg.StreamId)
 	_, err := s.addEvent(ctx, req.Msg.StreamId, view, req.Msg.Event)
 	if err != nil {
 		return nil, err
@@ -202,6 +208,22 @@ func (s *Service) addEvent(ctx context.Context, streamId string, view *storage.S
 		userId := joinableStream.UserId
 		userStreamId := common.UserStreamIdFromId(userId)
 
+		allowed, err := s.Authorization.IsAllowed(
+			ctx,
+			auth.AuthorizationArgs{
+				RoomId:     streamId,
+				UserId:     userId,
+				Permission: auth.PermissionWrite,
+			},
+			view,
+		)
+		if err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "AddEvent: failed to get permissions: %v", err)
+		}
+		if !allowed {
+			return nil, status.Errorf(codes.PermissionDenied, "AddEvent: user %s is not allowed to write to stream %s", userId, streamId)
+		}
+
 		cookie, err := s.Storage.AddEvent(ctx, streamId, parsedEvent.Envelope)
 		if err != nil {
 			return nil, status.Errorf(codes.Internal, "AddEvent: error adding event to storage: %v", err)
@@ -243,6 +265,7 @@ func (s *Service) addEvent(ctx context.Context, streamId string, view *storage.S
 		return cookie, nil
 
 	case *protocol.Payload_Message_:
+
 		kind, err := view.StreamKind(streamId)
 		if err != nil {
 			return nil, status.Errorf(codes.Internal, "AddEvent: error getting stream kind: %v", err)
@@ -251,6 +274,23 @@ func (s *Service) addEvent(ctx context.Context, streamId string, view *storage.S
 			return nil, status.Errorf(codes.InvalidArgument, "AddEvent: event is a message event, but stream is not a channel")
 		}
 		user := common.UserIdFromAddress(streamEvent.CreatorAddress)
+
+		allowed, err := s.Authorization.IsAllowed(
+			ctx,
+			auth.AuthorizationArgs{
+				RoomId:     streamId,
+				UserId:     user,
+				Permission: auth.PermissionWrite,
+			},
+			view,
+		)
+		if err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "AddEvent: failed to get permissions: %v", err)
+		}
+		if !allowed {
+			return nil, status.Errorf(codes.PermissionDenied, "AddEvent: user %s is not allowed to write to channel %s", user, streamId)
+		}
+
 		// check if user is a member of the channel
 		members, err := view.JoinedUsers(streamId)
 		if err != nil {
@@ -301,7 +341,7 @@ func (s *Service) Info(_ context.Context, request *connect_go.Request[protocol.I
 	}
 }
 
-func MakeServiceHandler(ctx context.Context, dbUrl string, opts ...connect_go.HandlerOption) (string, http.Handler) {
+func MakeServiceHandler(ctx context.Context, dbUrl string, chainConfig *config.ChainConfig, opts ...connect_go.HandlerOption) (string, http.Handler) {
 	store, err := storage.NewPGEventStore(ctx, dbUrl, false)
 	if err != nil {
 		log.Fatalf("failed to create storage: %v", err)
@@ -312,10 +352,23 @@ func MakeServiceHandler(ctx context.Context, dbUrl string, opts ...connect_go.Ha
 		log.Fatalf("failed to create wallet: %v", err)
 	}
 
+	var authorization auth.Authorization
+	if chainConfig == nil {
+		log.Infof("Using passthrough auth")
+		authorization = auth.NewPassthroughAuth()
+	} else {
+		log.Infof("Using casablanca auth with chain config: %v", chainConfig)
+		authorization, err = auth.NewChainAuth(chainConfig)
+		if err != nil {
+			log.Fatalf("failed to create auth: %v", err)
+		}
+	}
+
 	pattern, handler := protocolconnect.NewStreamServiceHandler(&LoggingService{
 		Service: &Service{
-			Storage: store,
-			wallet:  wallet,
+			Storage:       store,
+			Authorization: authorization,
+			wallet:        wallet,
 		},
 	}, opts...)
 	return pattern, handler

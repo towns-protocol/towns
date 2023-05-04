@@ -93,6 +93,7 @@ func (za *ChainAuth) IsAllowed(ctx context.Context, args AuthorizationArgs, view
 	}
 
 	// Owner of the space / channel is always allowed to proceed.
+	// TODO:  remove this check once the client creates the space on blockchain first	 
 	if roomInfo.IsOwner {
 		return true, nil
 	}

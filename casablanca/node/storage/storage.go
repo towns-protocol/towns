@@ -2,6 +2,7 @@ package storage
 
 import (
 	"casablanca/node/protocol"
+	"casablanca/node/common"
 	"context"
 	"encoding/binary"
 )
@@ -28,6 +29,7 @@ type Storage interface {
 	StreamExists(ctx context.Context, streamId string) (bool, error)
 	AddEvent(ctx context.Context, streamId string, event *protocol.Envelope) ([]byte, error)
 	SyncStreams(ctx context.Context, positions []*protocol.SyncPos, maxCount int, TimeoutMs uint32) (map[string]StreamEventsBlock, error)
+	GetRoomInfo(ctx context.Context, roomId string) (*common.RoomInfo, error)
 }
 
 func NewStorage(ctx context.Context, database_url string) (Storage, error) {

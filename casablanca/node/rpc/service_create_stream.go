@@ -6,6 +6,7 @@ import (
 	"casablanca/node/events"
 	"casablanca/node/infra"
 	"casablanca/node/protocol"
+	"casablanca/node/storage"
 	"context"
 
 	connect "github.com/bufbuild/connect-go"
@@ -81,12 +82,12 @@ func (s *Service) CreateStream(ctx context.Context, req *connect.Request[protoco
 	// TODO(HNT-1355): this needs to be fixed: there is no need to load stream back and append second event through separate call
 	// Storage.CreateStream should work fine with two events.
 	streamId := inception.StreamId
-	log.Info("CreateStream: calling storage", streamId)
+	log.Infof("CreateStream: calling storage %s", streamId)
 	cookie, err := s.Storage.CreateStream(ctx, streamId, req.Msg.Events[0:1])
 	if err != nil {
 		return nil, err
 	}
-	view := makeView(ctx, s.Storage, streamId)
+	view := storage.NewViewFromStreamId(ctx, s.Storage, streamId)
 
 	for _, event := range req.Msg.Events[1:] {
 		cookie, err = s.addEvent(ctx, streamId, view, event)

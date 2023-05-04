@@ -16,6 +16,7 @@ import (
 
 	"strings"
 
+	"casablanca/node/common"
 	"casablanca/node/events"
 	"casablanca/node/infra"
 	"casablanca/node/protocol"
@@ -586,6 +587,20 @@ func (s *PGEventStore) DeleteAllStreams(ctx context.Context) error {
 		}
 	}
 	return nil
+}
+
+func (s *PGEventStore) GetRoomInfo(ctx context.Context, roomId string) (*common.RoomInfo, error) {
+	err := infra.EnsureRequestId(ctx)
+	if err != nil {
+		return nil, err
+	}
+	// TODO implement with real values
+	return &common.RoomInfo{
+		SpaceNetworkId:   roomId,
+		ChannelNetworkId: roomId,
+		RoomType:         common.RoomTypeFromStreamId(roomId),
+		IsOwner:          false,
+	}, nil
 }
 
 /**

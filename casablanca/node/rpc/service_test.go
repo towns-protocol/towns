@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"casablanca/node/common"
+	"casablanca/node/config"
 	"casablanca/node/crypto"
 	"casablanca/node/events"
 	"casablanca/node/protocol"
@@ -139,7 +140,19 @@ func createChannel(ctx context.Context, wallet *crypto.Wallet, client protocolco
 }
 
 func testServerAndClient(ctx context.Context, dbUrl string) (protocolconnect.StreamServiceClient, func()) {
-	closer, port := rpc.StartServer(ctx, "localhost", 0, dbUrl)
+
+	cfg := &config.Config{
+		Authorization: false,
+		Chain: config.ChainConfig{
+			ChainId:    31337,
+			NetworkUrl: "http://localhost:8545",
+		},
+		Address: "localhost",
+		Port:    1234,
+		DbUrl:   dbUrl,
+	}
+
+	closer, port := rpc.StartServer(ctx, cfg)
 
 	client := protocolconnect.NewStreamServiceClient(
 		http.DefaultClient,
@@ -483,7 +496,7 @@ func TestManyUsers(t *testing.T) {
 				}
 				received += len(msg.Streams[streamIdx].Events)
 				for _, event := range msg.Streams[streamIdx].Events {
-					e, err := events.ParseEvent(event, false)
+					e, err := events.ParseEvent(event, true)
 					assert.NoError(t, err)
 					msg := e.Event.Payload.GetMessage()
 					assert.NotNil(t, msg)
