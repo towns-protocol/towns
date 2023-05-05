@@ -81,7 +81,7 @@ export const SpaceOwnerLanding = () => {
                     >
                         <Stack flexDirection="row" gap="md" alignItems="center">
                             <Icon color="gray2" type="link" />
-                            <Text color="default">{'Share your town link:'}</Text>
+                            <Text color="default">{'Share town link:'}</Text>
                         </Stack>
                         <Box position="relative">
                             <Button tone="cta1" onClick={onCopy}>
