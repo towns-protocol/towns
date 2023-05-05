@@ -18,26 +18,25 @@ export interface Env extends AuthEnv {
     ENVIRONMENT: string
 }
 
-// have to use module syntax to gain access to env which contains secret variables for local dev
-export default {
+const worker: ExportedHandler<Env> = {
     // eslint-disable-next-line  @typescript-eslint/no-unused-vars
-    fetch(request: Request, env: Env, ctx: ExecutionContext) {
-        return worker.fetch(request, env)
-    },
-}
-
-export const worker = {
-    // eslint-disable-next-line  @typescript-eslint/no-unused-vars
-    async fetch(request: FetchEvent['request'], env: Env): Promise<Response> {
+    async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
         if (isOptionsRequest(request)) {
             return getOptionsResponse(request)
         }
+        if (request.method === 'GET' && new URL(request.url).pathname === '/health') {
+            return new Response('OK', {
+                status: 200,
+                headers: {
+                    'content-type': 'application/json;charset=UTF-8',
+                    ...withCorsHeaders(request),
+                },
+            })
+        }
 
         try {
-            const newRequest = new Request(new URL(AMPLITUDE_API), new Request(request.clone()))
-            return await fetch(newRequest)
+            return await fetch(AMPLITUDE_API, request.clone())
         } catch (e) {
-            console.error(`error: `, e)
             return new Response('Internal Server Error', {
                 status: 500,
                 headers: {
@@ -48,3 +47,5 @@ export const worker = {
         }
     },
 }
+
+export default worker

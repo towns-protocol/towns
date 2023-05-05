@@ -1,13 +1,13 @@
 export default {
 	preset: 'ts-jest',
-	globals: {
-		'ts-jest': {
-			tsconfig: './test/tsconfig.json',
-			useESM: true,
-		},
-	},
 	transform: {
-		'^.+\\.(t|j)sx?$': 'ts-jest',
+		'^.+\\.(t|j)sx?$': [
+			'ts-jest',
+			{
+				tsconfig: './test/tsconfig.json',
+				useESM: true,
+			},
+		],
 	},
 	moduleNameMapper: {
 		'^@/(.*)$': '<rootDir>/src/$1',

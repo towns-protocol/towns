@@ -7,7 +7,7 @@
         "lib": ["ES2020"],
         "outDir": "./dist",
         "moduleResolution": "node" /* Specify how TypeScript looks up a file from a given module specifier. */,
-        "types": ["@cloudflare/workers-types", "@types/jest", "miniflare"],
+        "types": ["@cloudflare/workers-types"],
         // "noResolve": true,                                /* Disallow `import`s, `require`s or `<reference>`s from expanding the number of files TypeScript should add to a project. */
         "noEmit": false /* Disable emitting files from a compilation. */,
         "strict": true /* Enable all strict type-checking options. */,

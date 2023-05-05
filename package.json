@@ -59,7 +59,7 @@
         "turbo": "1.9.3",
         "typechain": "^8.1.1",
         "typescript": "^5.0.4",
-        "wait-on": "^6.0.0"
+        "wait-on": "^7.0.1"
     },
     "husky": {
         "hooks": {

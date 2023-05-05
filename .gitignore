@@ -75,3 +75,4 @@ casablanca/node/dev.log
 
 **/coverage
 **/.turbo
+servers/workers/*/dist/*

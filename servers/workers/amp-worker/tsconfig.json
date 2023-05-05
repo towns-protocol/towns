@@ -4,13 +4,16 @@
         "incremental": true,
         "target": "ESNext" /* Set the JavaScript language version for emitted JavaScript and include compatible library declarations. */,
         "module": "ESNext" /* Specify what module code is generated. */,
-        "lib": ["ESNext", "DOM"],
+        "lib": [
+            "ESNext"
+        ] /* Specify a set of bundled library declaration files that describe the target runtime environment. */,
         "outDir": "./dist",
         "moduleResolution": "node" /* Specify how TypeScript looks up a file from a given module specifier. */,
-        "types": ["@cloudflare/workers-types", "@types/jest", "miniflare"],
+        "types": ["@cloudflare/workers-types"],
         // "noResolve": true,                                /* Disallow `import`s, `require`s or `<reference>`s from expanding the number of files TypeScript should add to a project. */
         "noEmit": false /* Disable emitting files from a compilation. */,
         "strict": true /* Enable all strict type-checking options. */,
+        "esModuleInterop": true,
         // "noImplicitAny": true /* Enable error reporting for expressions and declarations with an implied `any` type.. */
         // "strictNullChecks": true,                         /* When type checking, take into account `null` and `undefined`. */
         // "strictFunctionTypes": true,                      /* When assigning functions, check to ensure parameters and the return values are subtype-compatible. */
