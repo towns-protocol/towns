@@ -19,7 +19,7 @@ import { ContractReceipt } from 'ethers'
 import { TokenDataTypes } from '../../src/client/web3/shims/TokenEntitlementShim'
 
 describe('update role', () => {
-    test.skip('Update Everyone role with multicall', async () => {
+    test('Update Everyone role with multicall', async () => {
         /** Arrange */
         const { alice } = await registerAndStartClients(['alice'])
         await alice.fundWallet()
