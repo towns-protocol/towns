@@ -848,7 +848,7 @@
     "compilationTarget": {
       "packages/contracts/src/core/tokens/Member.sol": "Member"
     },
-    "evmVersion": "london",
+    "evmVersion": "paris",
     "libraries": {},
     "metadata": {
       "bytecodeHash": "ipfs"

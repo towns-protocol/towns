@@ -133,7 +133,7 @@
     "compilationTarget": {
       "packages/contracts/src/libraries/Events.sol": "Events"
     },
-    "evmVersion": "london",
+    "evmVersion": "paris",
     "libraries": {},
     "metadata": {
       "bytecodeHash": "ipfs"

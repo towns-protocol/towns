@@ -402,7 +402,7 @@
     "compilationTarget": {
       "packages/contracts/src/core/governance/staking/CouncilStaking.sol": "CouncilStaking"
     },
-    "evmVersion": "london",
+    "evmVersion": "paris",
     "libraries": {},
     "metadata": {
       "bytecodeHash": "ipfs"

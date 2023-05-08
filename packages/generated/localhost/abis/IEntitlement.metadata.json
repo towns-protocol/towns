@@ -380,7 +380,7 @@
     "compilationTarget": {
       "packages/contracts/src/interfaces/IEntitlement.sol": "IEntitlement"
     },
-    "evmVersion": "london",
+    "evmVersion": "paris",
     "libraries": {},
     "metadata": {
       "bytecodeHash": "ipfs"

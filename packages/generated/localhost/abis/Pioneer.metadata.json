@@ -690,7 +690,7 @@
     "compilationTarget": {
       "packages/contracts/src/core/tokens/Pioneer.sol": "Pioneer"
     },
-    "evmVersion": "london",
+    "evmVersion": "paris",
     "libraries": {},
     "metadata": {
       "bytecodeHash": "ipfs"

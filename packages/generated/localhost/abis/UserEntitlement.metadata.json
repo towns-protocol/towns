@@ -647,7 +647,7 @@
     "compilationTarget": {
       "packages/contracts/src/core/spaces/entitlements/UserEntitlement.sol": "UserEntitlement"
     },
-    "evmVersion": "london",
+    "evmVersion": "paris",
     "libraries": {},
     "metadata": {
       "bytecodeHash": "ipfs"

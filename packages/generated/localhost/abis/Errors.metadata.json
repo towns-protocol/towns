@@ -151,7 +151,7 @@
     "compilationTarget": {
       "packages/contracts/src/libraries/Errors.sol": "Errors"
     },
-    "evmVersion": "london",
+    "evmVersion": "paris",
     "libraries": {},
     "metadata": {
       "bytecodeHash": "ipfs"

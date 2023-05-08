@@ -1453,7 +1453,7 @@
     "compilationTarget": {
       "packages/contracts/src/core/spaces/Space.sol": "Space"
     },
-    "evmVersion": "london",
+    "evmVersion": "paris",
     "libraries": {},
     "metadata": {
       "bytecodeHash": "ipfs"

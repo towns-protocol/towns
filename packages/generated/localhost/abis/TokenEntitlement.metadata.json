@@ -718,7 +718,7 @@
     "compilationTarget": {
       "packages/contracts/src/core/spaces/entitlements/TokenEntitlement.sol": "TokenEntitlement"
     },
-    "evmVersion": "london",
+    "evmVersion": "paris",
     "libraries": {},
     "metadata": {
       "bytecodeHash": "ipfs"

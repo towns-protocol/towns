@@ -752,7 +752,7 @@
     "compilationTarget": {
       "packages/contracts/src/core/spaces/SpaceFactory.sol": "SpaceFactory"
     },
-    "evmVersion": "london",
+    "evmVersion": "paris",
     "libraries": {},
     "metadata": {
       "bytecodeHash": "ipfs"
