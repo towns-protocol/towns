@@ -10,6 +10,7 @@ import {
     MethodInfoUnary,
     MethodKind,
     PartialMessage,
+    PlainMessage,
     ServiceType,
 } from '@bufbuild/protobuf'
 import { StreamService } from '@towns/proto'
@@ -36,13 +37,13 @@ export async function* createAsyncIterable<T>(items: T[]): AsyncIterable<T> {
  */
 export type PromiseClient<T extends ServiceType> = {
     [P in keyof T['methods']]: T['methods'][P] extends MethodInfoUnary<infer I, infer O>
-        ? (request: PartialMessage<I>, options?: CallOptions) => Promise<O>
+        ? (request: PlainMessage<I>, options?: CallOptions) => Promise<O>
         : T['methods'][P] extends MethodInfoServerStreaming<infer I, infer O>
-        ? (request: PartialMessage<I>, options?: CallOptions) => AsyncIterable<O>
+        ? (request: PlainMessage<I>, options?: CallOptions) => AsyncIterable<O>
         : T['methods'][P] extends MethodInfoClientStreaming<infer I, infer O>
-        ? (request: AsyncIterable<PartialMessage<I>>, options?: CallOptions) => Promise<O>
+        ? (request: AsyncIterable<PlainMessage<I>>, options?: CallOptions) => Promise<O>
         : T['methods'][P] extends MethodInfoBiDiStreaming<infer I, infer O>
-        ? (request: AsyncIterable<PartialMessage<I>>, options?: CallOptions) => AsyncIterable<O>
+        ? (request: AsyncIterable<PlainMessage<I>>, options?: CallOptions) => AsyncIterable<O>
         : never
 }
 

@@ -1,4 +1,4 @@
-import { PartialMessage, PlainMessage } from '@bufbuild/protobuf'
+import { PlainMessage } from '@bufbuild/protobuf'
 import {
     StreamAndCookie,
     MembershipOp,
@@ -372,7 +372,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
 
         while (this.stopSyncResolve !== undefined) {
             this.logSync('sync ITERATION', iteration++)
-            const syncPos: PartialMessage<SyncPos>[] = []
+            const syncPos: PlainMessage<SyncPos>[] = []
             this.streams.forEach((stream: Stream) => {
                 // TODO: jterzis prune foreign user streams
                 // that are created to send to_device

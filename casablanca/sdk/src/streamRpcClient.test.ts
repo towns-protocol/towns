@@ -49,7 +49,7 @@ describe('streamRpcClient', () => {
     test('makeStreamRpcClient', async () => {
         const client = makeTestRpcClient()
         expect(client).toBeDefined()
-        const result = await client.info({})
+        const result = await client.info({ debug: 'graffiti' })
         expect(result).toBeDefined()
         expect(result.graffiti).toEqual('Towns.com node welcomes you!')
         await client.close()
@@ -169,11 +169,12 @@ describe('streamRpcClient', () => {
 
         // Bob starts sync on the channel
         let syncResult: SyncStreamsResponse | null = null
+        if (!channel.stream) throw new Error('channel.stream is null')
         const bodSyncStream = bob.syncStreams({
             syncPos: [
                 {
                     streamId: channelId,
-                    syncCookie: channel.stream?.nextSyncCookie,
+                    syncCookie: channel.stream.nextSyncCookie,
                 },
             ],
             timeoutMs: 4000,
@@ -346,7 +347,8 @@ describe('streamRpcClient', () => {
         const userAlice = await alice.getStream({
             streamId: alicesUserStreamId,
         })
-        let aliceSyncCookie = userAlice.stream?.nextSyncCookie
+        if (!userAlice.stream) throw new Error('userAlice stream not found')
+        let aliceSyncCookie = userAlice.stream.nextSyncCookie
         let aliceSyncResult: SyncStreamsResponse | null = null
         const aliceSyncStreams = alice.syncStreams({
             syncPos: [
@@ -435,7 +437,8 @@ describe('streamRpcClient', () => {
         // Alice reads previouse messages from the channel
         const channel = await alice.getStream({ streamId: channelId })
         let messageCount = 0
-        unpackEnvelopes(channel.stream!.events).forEach((e) => {
+        if (!channel.stream) throw new Error('channel stream not found')
+        unpackEnvelopes(channel.stream.events).forEach((e) => {
             const p = e.event.payload
             if (p?.case === 'channelPayload' && p.value.payload.case === 'message') {
                 messageCount++
@@ -454,7 +457,7 @@ describe('streamRpcClient', () => {
                 },
                 {
                     streamId: channelId,
-                    syncCookie: channel.stream?.nextSyncCookie,
+                    syncCookie: channel.stream.nextSyncCookie,
                 },
             ],
             timeoutMs: 29000,
