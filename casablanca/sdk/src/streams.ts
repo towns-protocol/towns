@@ -5,6 +5,7 @@ import {
     ChannelPayload_Inception,
     StreamEvent,
     SpacePayload_Inception,
+    UserDeviceKeyPayload_Inception,
     UserSettingsPayload_Inception,
     UserPayload_Inception,
     PayloadCaseType,
@@ -50,6 +51,11 @@ export type StreamEvents = {
         streamId: string,
         event: Stringify<StreamEvent>,
         inceptionEvent: Stringify<UserSettingsPayload_Inception>,
+    ) => void
+    userDeviceKeyInception: (
+        streamId: string,
+        event: Stringify<StreamEvent>,
+        inceptionEvent: Stringify<UserDeviceKeyPayload_Inception>,
     ) => void
     streamNewUserJoined: (streamId: string, userId: string) => void
     streamNewUserInvited: (streamId: string, userId: string) => void
@@ -122,6 +128,7 @@ export class StreamStateView {
             case 'spacePayload':
             case 'userPayload':
             case 'userSettingsPayload':
+            case 'userDeviceKeyPayload':
             case undefined:
                 this.parentSpaceId = undefined
                 break
@@ -231,6 +238,24 @@ export class StreamStateView {
                             )
                             break
                         case 'userSetting':
+                            break
+                        case undefined:
+                            break
+                        default:
+                            checkNever(payload.value.content)
+                    }
+                    break
+                case 'userDeviceKeyPayload':
+                    switch (payload.value.content.case) {
+                        case 'inception':
+                            emitter?.emit(
+                                'userDeviceKeyInception',
+                                this.streamId,
+                                event.event,
+                                payload.value.content.value,
+                            )
+                            break
+                        case 'userDeviceKey':
                             break
                         case undefined:
                             break

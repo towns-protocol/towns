@@ -75,6 +75,7 @@ message StreamEvent {
         ChannelPayload channel_payload = 101;
         UserPayload user_payload = 102;
         UserSettingsPayload user_settings_payload = 103;
+        UserDeviceKeyPayload user_device_key_payload = 104;
     }
 }
 
@@ -133,7 +134,6 @@ message SpacePayload {
         ChannelOp op = 1;
         string channel_id = 2;
         EventRef origin_event = 3;
-        
     }
 
     oneof content {
@@ -179,6 +179,24 @@ message UserSettingsPayload {
     }
 }
 
+message UserDeviceKeyPayload {
+    message Inception {
+        string stream_id = 1;
+        string user_id = 2;
+    }
+
+    message UserDeviceKey {
+        string user_id = 1;
+        optional DeviceKeys device_keys = 2;
+        optional FallbackKeys fallback_keys = 3;
+    }
+
+    oneof content {
+        Inception inception = 1;
+        UserDeviceKey user_device_key = 2;
+    }
+}
+
 enum MembershipOp {
     SO_UNSPECIFIED = 0;
     SO_INVITE = 1;
@@ -200,6 +218,43 @@ enum UserSettingOp {
 enum ToDeviceOp {
     TDO_UNSPECIFIED = 0;
     TDO_TO_DEVICE = 1;
+}
+
+/**
+* DeviceKeys are used to store public identity keys and signatures for a particular
+* user's device. 
+* 
+* algorithms: encryption algorithms supported by the device.
+* keys: public identity keys (signing keys) for the device with property in format <algorithm>:<device_id>.
+*       Keys should be encoded as specified by key algorithm. 
+* signatures: map from <algorithm>:<device_id> to signature. 
+*/
+message DeviceKeys {
+    string device_id = 1;
+    repeated string algorithms = 2;
+    map<string, string> keys = 3;
+    map<string, string> signatures = 4;
+}
+
+/**
+* FallbackKeys are used to store "pre-key" messages for a particular user's device.
+*
+* algo_key_id: map from <algorithm>:<key_id> to Key.
+*/
+message FallbackKeys {
+    map<string, Key> algo_key_id = 1;
+}
+
+/**
+* Key is used to store fallback keys and depending on the algorithm signatures
+* that are formatted as <algorithm>:<device_id> mapped to <signature>
+*
+* key: key value
+* signatures: map from <algorithm>:<device_id> to signature for given key.
+*/
+message Key {
+    string key = 1;
+    map<string, string> signatures = 2;
 }
 
 message StreamAndCookie {
