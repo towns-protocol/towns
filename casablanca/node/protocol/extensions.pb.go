@@ -38,22 +38,22 @@ func (e *StreamEvent) VerifyPayloadTypeMatchesStreamType(i IsInceptionPayload) e
 	case *StreamEvent_UserPayload:
 		_, ok := i.(*UserPayload_Inception)
 		if !ok {
-			return fmt.Errorf("inception type mismatch: %T::%T vs %T", e.Payload, e.GetUserPayload().Payload, i)
+			return fmt.Errorf("inception type mismatch: *protocol.StreamEvent_UserPayload::%T vs %T", e.GetUserPayload().Payload, i)
 		}
 	case *StreamEvent_SpacePayload:
 		_, ok := i.(*SpacePayload_Inception)
 		if !ok {
-			return fmt.Errorf("inception type mismatch: %T::%T vs %T", e.Payload, e.GetSpacePayload().Payload, i)
+			return fmt.Errorf("inception type mismatch: *protocol.StreamEvent_SpacePayload::%T vs %T", e.GetSpacePayload().Payload, i)
 		}
 	case *StreamEvent_ChannelPayload:
 		_, ok := i.(*ChannelPayload_Inception)
 		if !ok {
-			return fmt.Errorf("inception type mismatch: %T::%T vs %T", e.Payload, e.GetChannelPayload().Payload, i)
+			return fmt.Errorf("inception type mismatch: *protocol.StreamEvent_ChannelPayload::%T vs %T", e.GetChannelPayload().Payload, i)
 		}
 	case *StreamEvent_UserSettingsPayload:
 		_, ok := i.(*UserSettingsPayload_Inception)
 		if !ok {
-			return fmt.Errorf("inception type mismatch: %T::%T vs %T", e.Payload, e.GetUserSettingsPayload().Payload, i)
+			return fmt.Errorf("inception type mismatch: *protocol.StreamEvent_UserSettingsPayload::%T vs %T", e.GetUserSettingsPayload().Payload, i)
 		}
 	default:
 		return fmt.Errorf("inception type type not handled: %T vs %T", e.Payload, i)

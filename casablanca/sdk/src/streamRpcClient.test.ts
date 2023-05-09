@@ -92,6 +92,45 @@ describe('streamRpcClient', () => {
         })
     })
 
+    test('bobSendsMismatchedPayloadCase', async () => {
+        log('bobSendsMismatchedPayloadCase', 'start')
+        const bob = makeTestRpcClient()
+        const bobsUserId = userIdFromAddress(bobsContext.creatorAddress)
+        const bobsUserStreamId = makeUserStreamId(bobsUserId)
+        const inceptionEvent = await makeEvent(
+            bobsContext,
+            make_UserPayload_Inception({
+                streamId: bobsUserStreamId,
+            }),
+            [],
+        )
+        await bob.createStream({
+            events: [inceptionEvent],
+        })
+        const userStream = await bob.getStream({ streamId: bobsUserStreamId })
+        expect(userStream).toBeDefined()
+        expect(userStream.stream?.streamId).toEqual(bobsUserStreamId)
+
+        // try to send a channel message
+        const event = await makeEvent(
+            bobsContext,
+            make_ChannelPayload_Message({
+                text: 'hello',
+            }),
+            [inceptionEvent.hash],
+        )
+        const promise = bob.addEvent({
+            streamId: bobsUserStreamId,
+            event,
+        })
+
+        await expect(promise).rejects.toThrow(
+            'inception type mismatch: *protocol.StreamEvent_ChannelPayload::*protocol.ChannelPayload_Message_ vs *protocol.UserPayload_Inception',
+        )
+
+        log('bobSendsMismatchedPayloadCase', 'done')
+    })
+
     test('bobTalksToHimself', async () => {
         log('bobTalksToHimself', 'start')
 

@@ -158,7 +158,7 @@ func (e *StreamEvent) VerifyPayloadTypeMatchesStreamType(i IsInceptionPayload) e
 	case *StreamEvent_%s:
 		_, ok := i.(*%s_Inception)
 		if !ok {
-			return fmt.Errorf("inception type mismatch: %%T::%%T vs %%T", e.Payload, e.Get%s().Payload, i)
+			return fmt.Errorf("inception type mismatch: *protocol.StreamEvent_%s::%%T vs %%T", e.Get%s().Payload, i)
 		}`
 	}
 	validatorEnd := func() string {
@@ -185,7 +185,7 @@ func (e *StreamEvent) VerifyPayloadTypeMatchesStreamType(i IsInceptionPayload) e
 	outputFile.WriteString2(validatorStart())
 	for _, inceptionTypeName := range inceptionTypes {
 		inceptionTypeBase := strings.Split(inceptionTypeName, "_")[0]
-		outputFile.WriteString2(fmt.Sprintf(validatorCase(), inceptionTypeBase, inceptionTypeBase, inceptionTypeBase))
+		outputFile.WriteString2(fmt.Sprintf(validatorCase(), inceptionTypeBase, inceptionTypeBase, inceptionTypeBase, inceptionTypeBase))
 	}
 	outputFile.WriteString2(validatorEnd())
 }
