@@ -295,11 +295,11 @@ func TestMethods(t *testing.T) {
 			switch p := payload.Payload.(type) {
 			case *protocol.StreamEvent_ChannelPayload:
 				// ok
-				switch p.ChannelPayload.Payload.(type) {
+				switch p.ChannelPayload.Content.(type) {
 				case *protocol.ChannelPayload_Message_:
 					// ok
 				default:
-					t.Fatalf("expected message event, got %v", p.ChannelPayload.Payload)
+					t.Fatalf("expected message event, got %v", p.ChannelPayload.Content)
 				}
 			default:
 				t.Fatalf("expected channel event, got %v", payload.Payload)

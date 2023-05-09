@@ -96,11 +96,11 @@ export class StreamStateView {
     constructor(streamId: string, inceptionEvent: ParsedEvent | undefined) {
         check(inceptionEvent !== undefined, `Stream is empty ${streamId}`, Err.STREAM_EMPTY)
         check(
-            inceptionEvent.event.payload?.value?.payload.case === 'inception',
+            inceptionEvent.event.payload?.value?.content.case === 'inception',
             `First event is not inception ${streamId}`,
             Err.STREAM_BAD_EVENT,
         )
-        const inceptionPayload = inceptionEvent.event.payload?.value?.payload.value
+        const inceptionPayload = inceptionEvent.event.payload?.value?.content.value
         check(
             isDefined(inceptionPayload),
             `First event is not inception ${streamId}`,
@@ -142,20 +142,20 @@ export class StreamStateView {
         const payload = event.event.payload
         check(isDefined(payload), `Event has no payload ${event.hashStr}`, Err.STREAM_BAD_EVENT)
 
-        if (payload.value?.payload?.case === 'inception') {
+        if (payload.value?.content?.case === 'inception') {
             emitter?.emit('streamInception', this.streamId, event.event)
         }
 
         try {
             switch (payload.case) {
                 case 'channelPayload':
-                    switch (payload.value.payload.case) {
+                    switch (payload.value.content.case) {
                         case 'inception':
                             emitter?.emit(
                                 'channelInception',
                                 this.streamId,
                                 event.event,
-                                payload.value.payload.value,
+                                payload.value.content.value,
                             )
                             break
                         case 'message':
@@ -163,52 +163,52 @@ export class StreamStateView {
                             emitter?.emit('channelNewMessage', this.streamId, event)
                             break
                         case 'membership':
-                            this.addMembershipEvent(payload.value.payload.value, emitter)
+                            this.addMembershipEvent(payload.value.content.value, emitter)
                             break
                         case undefined:
                             break
                         default:
-                            checkNever(payload.value.payload)
+                            checkNever(payload.value.content)
                     }
                     break
                 case 'spacePayload':
-                    switch (payload.value.payload.case) {
+                    switch (payload.value.content.case) {
                         case 'inception':
                             emitter?.emit(
                                 'spaceInception',
                                 this.streamId,
                                 event.event,
-                                payload.value.payload.value,
+                                payload.value.content.value,
                             )
                             break
                         case 'channel':
-                            this.addChannelEvent(payload.value.payload.value, emitter)
+                            this.addChannelEvent(payload.value.content.value, emitter)
                             break
                         case 'membership':
-                            this.addMembershipEvent(payload.value.payload.value, emitter)
+                            this.addMembershipEvent(payload.value.content.value, emitter)
                             break
                         case undefined:
                             break
                         default:
-                            checkNever(payload.value.payload)
+                            checkNever(payload.value.content)
                     }
                     break
                 case 'userPayload':
-                    switch (payload.value.payload.case) {
+                    switch (payload.value.content.case) {
                         case 'inception':
                             emitter?.emit(
                                 'userInception',
                                 this.streamId,
                                 event.event,
-                                payload.value.payload.value,
+                                payload.value.content.value,
                             )
                             break
                         case 'userMembership':
-                            this.addUserMembershipEvent(payload.value.payload.value, emitter)
+                            this.addUserMembershipEvent(payload.value.content.value, emitter)
                             break
                         case 'toDevice':
                             {
-                                const { deviceId } = payload.value.payload.value
+                                const { deviceId } = payload.value.content.value
                                 emitter?.emit('toDeviceMessage', this.streamId, deviceId, event)
                                 // TODO: filter by deviceId and only store current deviceId's events
                                 this.toDeviceMessages.push(event)
@@ -217,17 +217,17 @@ export class StreamStateView {
                         case undefined:
                             break
                         default:
-                            checkNever(payload.value.payload)
+                            checkNever(payload.value.content)
                     }
                     break
                 case 'userSettingsPayload':
-                    switch (payload.value.payload.case) {
+                    switch (payload.value.content.case) {
                         case 'inception':
                             emitter?.emit(
                                 'userSettingsInception',
                                 this.streamId,
                                 event.event,
-                                payload.value.payload.value,
+                                payload.value.content.value,
                             )
                             break
                         case 'userSetting':
@@ -235,7 +235,7 @@ export class StreamStateView {
                         case undefined:
                             break
                         default:
-                            checkNever(payload.value.payload)
+                            checkNever(payload.value.content)
                     }
                     break
                 case undefined:

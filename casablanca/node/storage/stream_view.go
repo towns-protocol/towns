@@ -110,7 +110,7 @@ func (r *StreamView) JoinedUsers(streamId string) (map[string]struct{}, error) {
 	for _, e := range parsedEvents {
 		switch payload := e.Event.Payload.(type) {
 		case *protocol.StreamEvent_SpacePayload:
-			switch spacePayload := payload.SpacePayload.Payload.(type) {
+			switch spacePayload := payload.SpacePayload.Content.(type) {
 			case *protocol.SpacePayload_Membership:
 				user := spacePayload.Membership.UserId
 				if spacePayload.Membership.GetOp() == protocol.MembershipOp_SO_JOIN {
@@ -122,7 +122,7 @@ func (r *StreamView) JoinedUsers(streamId string) (map[string]struct{}, error) {
 				break
 			}
 		case *protocol.StreamEvent_ChannelPayload:
-			switch channelPayload := payload.ChannelPayload.Payload.(type) {
+			switch channelPayload := payload.ChannelPayload.Content.(type) {
 			case *protocol.ChannelPayload_Membership:
 				user := channelPayload.Membership.UserId
 				if channelPayload.Membership.GetOp() == protocol.MembershipOp_SO_JOIN {

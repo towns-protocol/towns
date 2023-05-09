@@ -123,7 +123,7 @@ func ParseEvents(events []*Envelope) ([]*ParsedEvent, error) {
 func (e *ParsedEvent) GetChannelMessage() *ChannelPayload_Message {
 	switch payload := e.Event.Payload.(type) {
 	case *StreamEvent_ChannelPayload:
-		switch cp := payload.ChannelPayload.Payload.(type) {
+		switch cp := payload.ChannelPayload.Content.(type) {
 		case *ChannelPayload_Message_:
 			return cp.Message
 		}

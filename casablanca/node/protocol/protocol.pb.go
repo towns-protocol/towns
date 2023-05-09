@@ -427,6 +427,13 @@ type StreamEvent struct {
 	// * Hashes of the preceding leaf events in the stream. Empty array for the inception event.
 	PrevEvents [][]byte `protobuf:"bytes,4,rep,name=prev_events,json=prevEvents,proto3" json:"prev_events,omitempty"`
 	// * Variable-type payload.
+	// Payloads should obey the following rules:
+	// - payloads should have their own unique type
+	// - each payload should have a oneof content field
+	// - each payload should have an inception field inside the content oneof
+	// - each payload should have a unique Inception type
+	// - payloads can't violate previous type recursively to inception payload
+	//
 	// Types that are assignable to Payload:
 	//
 	//	*StreamEvent_SpacePayload
@@ -688,12 +695,12 @@ type UserPayload struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// Types that are assignable to Payload:
+	// Types that are assignable to Content:
 	//
 	//	*UserPayload_Inception_
 	//	*UserPayload_UserMembership_
 	//	*UserPayload_ToDevice_
-	Payload isUserPayload_Payload `protobuf_oneof:"payload"`
+	Content isUserPayload_Content `protobuf_oneof:"content"`
 }
 
 func (x *UserPayload) Reset() {
@@ -728,36 +735,36 @@ func (*UserPayload) Descriptor() ([]byte, []int) {
 	return file_protocol_proto_rawDescGZIP(), []int{4}
 }
 
-func (m *UserPayload) GetPayload() isUserPayload_Payload {
+func (m *UserPayload) GetContent() isUserPayload_Content {
 	if m != nil {
-		return m.Payload
+		return m.Content
 	}
 	return nil
 }
 
 func (x *UserPayload) GetInception() *UserPayload_Inception {
-	if x, ok := x.GetPayload().(*UserPayload_Inception_); ok {
+	if x, ok := x.GetContent().(*UserPayload_Inception_); ok {
 		return x.Inception
 	}
 	return nil
 }
 
 func (x *UserPayload) GetUserMembership() *UserPayload_UserMembership {
-	if x, ok := x.GetPayload().(*UserPayload_UserMembership_); ok {
+	if x, ok := x.GetContent().(*UserPayload_UserMembership_); ok {
 		return x.UserMembership
 	}
 	return nil
 }
 
 func (x *UserPayload) GetToDevice() *UserPayload_ToDevice {
-	if x, ok := x.GetPayload().(*UserPayload_ToDevice_); ok {
+	if x, ok := x.GetContent().(*UserPayload_ToDevice_); ok {
 		return x.ToDevice
 	}
 	return nil
 }
 
-type isUserPayload_Payload interface {
-	isUserPayload_Payload()
+type isUserPayload_Content interface {
+	isUserPayload_Content()
 }
 
 type UserPayload_Inception_ struct {
@@ -772,23 +779,23 @@ type UserPayload_ToDevice_ struct {
 	ToDevice *UserPayload_ToDevice `protobuf:"bytes,3,opt,name=to_device,json=toDevice,proto3,oneof"`
 }
 
-func (*UserPayload_Inception_) isUserPayload_Payload() {}
+func (*UserPayload_Inception_) isUserPayload_Content() {}
 
-func (*UserPayload_UserMembership_) isUserPayload_Payload() {}
+func (*UserPayload_UserMembership_) isUserPayload_Content() {}
 
-func (*UserPayload_ToDevice_) isUserPayload_Payload() {}
+func (*UserPayload_ToDevice_) isUserPayload_Content() {}
 
 type SpacePayload struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// Types that are assignable to Payload:
+	// Types that are assignable to Content:
 	//
 	//	*SpacePayload_Inception_
 	//	*SpacePayload_Channel_
 	//	*SpacePayload_Membership
-	Payload isSpacePayload_Payload `protobuf_oneof:"payload"`
+	Content isSpacePayload_Content `protobuf_oneof:"content"`
 }
 
 func (x *SpacePayload) Reset() {
@@ -823,36 +830,36 @@ func (*SpacePayload) Descriptor() ([]byte, []int) {
 	return file_protocol_proto_rawDescGZIP(), []int{5}
 }
 
-func (m *SpacePayload) GetPayload() isSpacePayload_Payload {
+func (m *SpacePayload) GetContent() isSpacePayload_Content {
 	if m != nil {
-		return m.Payload
+		return m.Content
 	}
 	return nil
 }
 
 func (x *SpacePayload) GetInception() *SpacePayload_Inception {
-	if x, ok := x.GetPayload().(*SpacePayload_Inception_); ok {
+	if x, ok := x.GetContent().(*SpacePayload_Inception_); ok {
 		return x.Inception
 	}
 	return nil
 }
 
 func (x *SpacePayload) GetChannel() *SpacePayload_Channel {
-	if x, ok := x.GetPayload().(*SpacePayload_Channel_); ok {
+	if x, ok := x.GetContent().(*SpacePayload_Channel_); ok {
 		return x.Channel
 	}
 	return nil
 }
 
 func (x *SpacePayload) GetMembership() *Membership {
-	if x, ok := x.GetPayload().(*SpacePayload_Membership); ok {
+	if x, ok := x.GetContent().(*SpacePayload_Membership); ok {
 		return x.Membership
 	}
 	return nil
 }
 
-type isSpacePayload_Payload interface {
-	isSpacePayload_Payload()
+type isSpacePayload_Content interface {
+	isSpacePayload_Content()
 }
 
 type SpacePayload_Inception_ struct {
@@ -867,23 +874,23 @@ type SpacePayload_Membership struct {
 	Membership *Membership `protobuf:"bytes,3,opt,name=membership,proto3,oneof"`
 }
 
-func (*SpacePayload_Inception_) isSpacePayload_Payload() {}
+func (*SpacePayload_Inception_) isSpacePayload_Content() {}
 
-func (*SpacePayload_Channel_) isSpacePayload_Payload() {}
+func (*SpacePayload_Channel_) isSpacePayload_Content() {}
 
-func (*SpacePayload_Membership) isSpacePayload_Payload() {}
+func (*SpacePayload_Membership) isSpacePayload_Content() {}
 
 type ChannelPayload struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// Types that are assignable to Payload:
+	// Types that are assignable to Content:
 	//
 	//	*ChannelPayload_Inception_
 	//	*ChannelPayload_Message_
 	//	*ChannelPayload_Membership
-	Payload isChannelPayload_Payload `protobuf_oneof:"payload"`
+	Content isChannelPayload_Content `protobuf_oneof:"content"`
 }
 
 func (x *ChannelPayload) Reset() {
@@ -918,36 +925,36 @@ func (*ChannelPayload) Descriptor() ([]byte, []int) {
 	return file_protocol_proto_rawDescGZIP(), []int{6}
 }
 
-func (m *ChannelPayload) GetPayload() isChannelPayload_Payload {
+func (m *ChannelPayload) GetContent() isChannelPayload_Content {
 	if m != nil {
-		return m.Payload
+		return m.Content
 	}
 	return nil
 }
 
 func (x *ChannelPayload) GetInception() *ChannelPayload_Inception {
-	if x, ok := x.GetPayload().(*ChannelPayload_Inception_); ok {
+	if x, ok := x.GetContent().(*ChannelPayload_Inception_); ok {
 		return x.Inception
 	}
 	return nil
 }
 
 func (x *ChannelPayload) GetMessage() *ChannelPayload_Message {
-	if x, ok := x.GetPayload().(*ChannelPayload_Message_); ok {
+	if x, ok := x.GetContent().(*ChannelPayload_Message_); ok {
 		return x.Message
 	}
 	return nil
 }
 
 func (x *ChannelPayload) GetMembership() *Membership {
-	if x, ok := x.GetPayload().(*ChannelPayload_Membership); ok {
+	if x, ok := x.GetContent().(*ChannelPayload_Membership); ok {
 		return x.Membership
 	}
 	return nil
 }
 
-type isChannelPayload_Payload interface {
-	isChannelPayload_Payload()
+type isChannelPayload_Content interface {
+	isChannelPayload_Content()
 }
 
 type ChannelPayload_Inception_ struct {
@@ -962,22 +969,22 @@ type ChannelPayload_Membership struct {
 	Membership *Membership `protobuf:"bytes,3,opt,name=membership,proto3,oneof"`
 }
 
-func (*ChannelPayload_Inception_) isChannelPayload_Payload() {}
+func (*ChannelPayload_Inception_) isChannelPayload_Content() {}
 
-func (*ChannelPayload_Message_) isChannelPayload_Payload() {}
+func (*ChannelPayload_Message_) isChannelPayload_Content() {}
 
-func (*ChannelPayload_Membership) isChannelPayload_Payload() {}
+func (*ChannelPayload_Membership) isChannelPayload_Content() {}
 
 type UserSettingsPayload struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// Types that are assignable to Payload:
+	// Types that are assignable to Content:
 	//
 	//	*UserSettingsPayload_Inception_
 	//	*UserSettingsPayload_UserSetting_
-	Payload isUserSettingsPayload_Payload `protobuf_oneof:"payload"`
+	Content isUserSettingsPayload_Content `protobuf_oneof:"content"`
 }
 
 func (x *UserSettingsPayload) Reset() {
@@ -1012,29 +1019,29 @@ func (*UserSettingsPayload) Descriptor() ([]byte, []int) {
 	return file_protocol_proto_rawDescGZIP(), []int{7}
 }
 
-func (m *UserSettingsPayload) GetPayload() isUserSettingsPayload_Payload {
+func (m *UserSettingsPayload) GetContent() isUserSettingsPayload_Content {
 	if m != nil {
-		return m.Payload
+		return m.Content
 	}
 	return nil
 }
 
 func (x *UserSettingsPayload) GetInception() *UserSettingsPayload_Inception {
-	if x, ok := x.GetPayload().(*UserSettingsPayload_Inception_); ok {
+	if x, ok := x.GetContent().(*UserSettingsPayload_Inception_); ok {
 		return x.Inception
 	}
 	return nil
 }
 
 func (x *UserSettingsPayload) GetUserSetting() *UserSettingsPayload_UserSetting {
-	if x, ok := x.GetPayload().(*UserSettingsPayload_UserSetting_); ok {
+	if x, ok := x.GetContent().(*UserSettingsPayload_UserSetting_); ok {
 		return x.UserSetting
 	}
 	return nil
 }
 
-type isUserSettingsPayload_Payload interface {
-	isUserSettingsPayload_Payload()
+type isUserSettingsPayload_Content interface {
+	isUserSettingsPayload_Content()
 }
 
 type UserSettingsPayload_Inception_ struct {
@@ -1045,9 +1052,9 @@ type UserSettingsPayload_UserSetting_ struct {
 	UserSetting *UserSettingsPayload_UserSetting `protobuf:"bytes,2,opt,name=user_setting,json=userSetting,proto3,oneof"`
 }
 
-func (*UserSettingsPayload_Inception_) isUserSettingsPayload_Payload() {}
+func (*UserSettingsPayload_Inception_) isUserSettingsPayload_Content() {}
 
-func (*UserSettingsPayload_UserSetting_) isUserSettingsPayload_Payload() {}
+func (*UserSettingsPayload_UserSetting_) isUserSettingsPayload_Content() {}
 
 type StreamAndCookie struct {
 	state         protoimpl.MessageState
@@ -2254,7 +2261,7 @@ var file_protocol_proto_rawDesc = []byte{
 	0x76, 0x61, 0x6c, 0x75, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0c, 0x52, 0x05, 0x76, 0x61, 0x6c,
 	0x75, 0x65, 0x12, 0x1b, 0x0a, 0x09, 0x64, 0x65, 0x76, 0x69, 0x63, 0x65, 0x5f, 0x69, 0x64, 0x18,
 	0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x08, 0x64, 0x65, 0x76, 0x69, 0x63, 0x65, 0x49, 0x64, 0x42,
-	0x09, 0x0a, 0x07, 0x70, 0x61, 0x79, 0x6c, 0x6f, 0x61, 0x64, 0x22, 0x8a, 0x03, 0x0a, 0x0c, 0x53,
+	0x09, 0x0a, 0x07, 0x63, 0x6f, 0x6e, 0x74, 0x65, 0x6e, 0x74, 0x22, 0x8a, 0x03, 0x0a, 0x0c, 0x53,
 	0x70, 0x61, 0x63, 0x65, 0x50, 0x61, 0x79, 0x6c, 0x6f, 0x61, 0x64, 0x12, 0x42, 0x0a, 0x09, 0x69,
 	0x6e, 0x63, 0x65, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x22,
 	0x2e, 0x63, 0x61, 0x73, 0x61, 0x62, 0x6c, 0x61, 0x6e, 0x63, 0x61, 0x2e, 0x53, 0x70, 0x61, 0x63,
@@ -2279,7 +2286,7 @@ var file_protocol_proto_rawDesc = []byte{
 	0x65, 0x6e, 0x74, 0x18, 0x03, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x14, 0x2e, 0x63, 0x61, 0x73, 0x61,
 	0x62, 0x6c, 0x61, 0x6e, 0x63, 0x61, 0x2e, 0x45, 0x76, 0x65, 0x6e, 0x74, 0x52, 0x65, 0x66, 0x52,
 	0x0b, 0x6f, 0x72, 0x69, 0x67, 0x69, 0x6e, 0x45, 0x76, 0x65, 0x6e, 0x74, 0x42, 0x09, 0x0a, 0x07,
-	0x70, 0x61, 0x79, 0x6c, 0x6f, 0x61, 0x64, 0x22, 0xbf, 0x02, 0x0a, 0x0e, 0x43, 0x68, 0x61, 0x6e,
+	0x63, 0x6f, 0x6e, 0x74, 0x65, 0x6e, 0x74, 0x22, 0xbf, 0x02, 0x0a, 0x0e, 0x43, 0x68, 0x61, 0x6e,
 	0x6e, 0x65, 0x6c, 0x50, 0x61, 0x79, 0x6c, 0x6f, 0x61, 0x64, 0x12, 0x44, 0x0a, 0x09, 0x69, 0x6e,
 	0x63, 0x65, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x24, 0x2e,
 	0x63, 0x61, 0x73, 0x61, 0x62, 0x6c, 0x61, 0x6e, 0x63, 0x61, 0x2e, 0x43, 0x68, 0x61, 0x6e, 0x6e,
@@ -2299,7 +2306,7 @@ var file_protocol_proto_rawDesc = []byte{
 	0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x07, 0x73, 0x70, 0x61, 0x63, 0x65, 0x49, 0x64, 0x1a,
 	0x1d, 0x0a, 0x07, 0x4d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x12, 0x12, 0x0a, 0x04, 0x74, 0x65,
 	0x78, 0x74, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x74, 0x65, 0x78, 0x74, 0x42, 0x09,
-	0x0a, 0x07, 0x70, 0x61, 0x79, 0x6c, 0x6f, 0x61, 0x64, 0x22, 0xd5, 0x03, 0x0a, 0x13, 0x55, 0x73,
+	0x0a, 0x07, 0x63, 0x6f, 0x6e, 0x74, 0x65, 0x6e, 0x74, 0x22, 0xd5, 0x03, 0x0a, 0x13, 0x55, 0x73,
 	0x65, 0x72, 0x53, 0x65, 0x74, 0x74, 0x69, 0x6e, 0x67, 0x73, 0x50, 0x61, 0x79, 0x6c, 0x6f, 0x61,
 	0x64, 0x12, 0x49, 0x0a, 0x09, 0x69, 0x6e, 0x63, 0x65, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x18, 0x01,
 	0x20, 0x01, 0x28, 0x0b, 0x32, 0x29, 0x2e, 0x63, 0x61, 0x73, 0x61, 0x62, 0x6c, 0x61, 0x6e, 0x63,
@@ -2328,8 +2335,8 @@ var file_protocol_proto_rawDesc = []byte{
 	0x74, 0x52, 0x65, 0x66, 0x48, 0x01, 0x52, 0x0b, 0x6f, 0x72, 0x69, 0x67, 0x69, 0x6e, 0x45, 0x76,
 	0x65, 0x6e, 0x74, 0x88, 0x01, 0x01, 0x42, 0x0d, 0x0a, 0x0b, 0x5f, 0x63, 0x68, 0x61, 0x6e, 0x6e,
 	0x65, 0x6c, 0x5f, 0x69, 0x64, 0x42, 0x0f, 0x0a, 0x0d, 0x5f, 0x6f, 0x72, 0x69, 0x67, 0x69, 0x6e,
-	0x5f, 0x65, 0x76, 0x65, 0x6e, 0x74, 0x42, 0x09, 0x0a, 0x07, 0x70, 0x61, 0x79, 0x6c, 0x6f, 0x61,
-	0x64, 0x22, 0xb8, 0x01, 0x0a, 0x0f, 0x53, 0x74, 0x72, 0x65, 0x61, 0x6d, 0x41, 0x6e, 0x64, 0x43,
+	0x5f, 0x65, 0x76, 0x65, 0x6e, 0x74, 0x42, 0x09, 0x0a, 0x07, 0x63, 0x6f, 0x6e, 0x74, 0x65, 0x6e,
+	0x74, 0x22, 0xb8, 0x01, 0x0a, 0x0f, 0x53, 0x74, 0x72, 0x65, 0x61, 0x6d, 0x41, 0x6e, 0x64, 0x43,
 	0x6f, 0x6f, 0x6b, 0x69, 0x65, 0x12, 0x2c, 0x0a, 0x06, 0x65, 0x76, 0x65, 0x6e, 0x74, 0x73, 0x18,
 	0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x14, 0x2e, 0x63, 0x61, 0x73, 0x61, 0x62, 0x6c, 0x61, 0x6e,
 	0x63, 0x61, 0x2e, 0x45, 0x6e, 0x76, 0x65, 0x6c, 0x6f, 0x70, 0x65, 0x52, 0x06, 0x65, 0x76, 0x65,

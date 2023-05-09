@@ -203,7 +203,7 @@ func (s *Service) addEvent(ctx context.Context, streamId string, view *storage.S
 	// custom business logic...
 	switch payload := streamEvent.Payload.(type) {
 	case *protocol.StreamEvent_ChannelPayload:
-		switch channelPayload := payload.ChannelPayload.Payload.(type) {
+		switch channelPayload := payload.ChannelPayload.Content.(type) {
 		case *protocol.ChannelPayload_Inception_:
 			return nil, status.Errorf(codes.InvalidArgument, "AddEvent: event is an inception event")
 		case *protocol.ChannelPayload_Membership:
@@ -212,10 +212,10 @@ func (s *Service) addEvent(ctx context.Context, streamId string, view *storage.S
 		case *protocol.ChannelPayload_Message_:
 			return addChannelMessage(streamEvent, s, ctx, streamId, view, envelope)
 		default:
-			return nil, status.Errorf(codes.InvalidArgument, "AddEvent: Channel event has no valid payload for type %T", payload.ChannelPayload.Payload)
+			return nil, status.Errorf(codes.InvalidArgument, "AddEvent: Channel event has no valid payload for type %T", payload.ChannelPayload.Content)
 		}
 	case *protocol.StreamEvent_SpacePayload:
-		switch spacePayload := payload.SpacePayload.Payload.(type) {
+		switch spacePayload := payload.SpacePayload.Content.(type) {
 		case *protocol.SpacePayload_Inception_:
 			return nil, status.Errorf(codes.InvalidArgument, "AddEvent: event is an inception event")
 		case *protocol.SpacePayload_Membership:
@@ -224,10 +224,10 @@ func (s *Service) addEvent(ctx context.Context, streamId string, view *storage.S
 		case *protocol.SpacePayload_Channel_:
 			return nil, status.Errorf(codes.InvalidArgument, "AddEvent: adding channels is unimplemented")
 		default:
-			return nil, status.Errorf(codes.InvalidArgument, "AddEvent: Space event has no valid payload for type %T", payload.SpacePayload.Payload)
+			return nil, status.Errorf(codes.InvalidArgument, "AddEvent: Space event has no valid payload for type %T", payload.SpacePayload.Content)
 		}
 	case *protocol.StreamEvent_UserPayload:
-		switch payload.UserPayload.Payload.(type) {
+		switch payload.UserPayload.Content.(type) {
 		case *protocol.UserPayload_Inception_:
 			return nil, status.Errorf(codes.InvalidArgument, "AddEvent: event is an inception event")
 		case *protocol.UserPayload_UserMembership_:
@@ -235,16 +235,16 @@ func (s *Service) addEvent(ctx context.Context, streamId string, view *storage.S
 		case *protocol.UserPayload_ToDevice_:
 			return addEventToStorage(s, ctx, streamId, envelope)
 		default:
-			return nil, status.Errorf(codes.InvalidArgument, "AddEvent: User event has no valid payload for type %T", payload.UserPayload.Payload)
+			return nil, status.Errorf(codes.InvalidArgument, "AddEvent: User event has no valid payload for type %T", payload.UserPayload.Content)
 		}
 	case *protocol.StreamEvent_UserSettingsPayload:
-		switch payload.UserSettingsPayload.Payload.(type) {
+		switch payload.UserSettingsPayload.Content.(type) {
 		case *protocol.UserSettingsPayload_Inception_:
 			return nil, status.Errorf(codes.InvalidArgument, "AddEvent: event is an inception event")
 		case *protocol.UserSettingsPayload_UserSetting_:
 			return nil, status.Errorf(codes.InvalidArgument, "AddEvent: adding UserSetting is unimplemented")
 		default:
-			return nil, status.Errorf(codes.InvalidArgument, "AddEvent: UserSettings event has no valid payload for type %T", payload.UserSettingsPayload.Payload)
+			return nil, status.Errorf(codes.InvalidArgument, "AddEvent: UserSettings event has no valid payload for type %T", payload.UserSettingsPayload.Content)
 		}
 	default:
 		return nil, status.Errorf(codes.InvalidArgument, "AddEvent: event has no valid payload for type %T", streamEvent.Payload)

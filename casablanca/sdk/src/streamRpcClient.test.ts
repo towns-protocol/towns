@@ -479,9 +479,9 @@ describe('streamRpcClient', () => {
         if (!channel.stream) throw new Error('channel stream not found')
         unpackEnvelopes(channel.stream.events).forEach((e) => {
             const p = e.event.payload
-            if (p?.case === 'channelPayload' && p.value.payload.case === 'message') {
+            if (p?.case === 'channelPayload' && p.value.content.case === 'message') {
                 messageCount++
-                expect(p.value.payload.value.text).toEqual('hello')
+                expect(p.value.content.value.text).toEqual('hello')
             }
         })
         expect(messageCount).toEqual(1)
@@ -812,7 +812,7 @@ const expectEvent = (
 
     const e = unpackEnvelope(resp.streams[0].events[0]).event
     expect(e.payload?.case).toEqual(streamKind)
-    validator(e.payload?.value?.payload.value)
+    validator(e.payload?.value?.content.value)
 
     expect(resp.streams[0].nextSyncCookie).toBeDefined()
     return resp.streams[0].nextSyncCookie

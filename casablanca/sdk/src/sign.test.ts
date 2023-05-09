@@ -116,7 +116,7 @@ describe('sign', () => {
             const payload: PlainMessage<StreamEvent>['payload'] = {
                 case: 'channelPayload',
                 value: {
-                    payload: {
+                    content: {
                         case: 'message',
                         value: message,
                     },
@@ -173,7 +173,7 @@ describe('sign', () => {
             const payload: PlainMessage<StreamEvent>['payload'] = {
                 case: 'channelPayload',
                 value: {
-                    payload: {
+                    content: {
                         case: 'message',
                         value: { text: 'Hello, World!' },
                     },

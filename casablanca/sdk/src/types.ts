@@ -70,7 +70,7 @@ export const make_UserPayload_Inception = (
     return {
         case: 'userPayload',
         value: {
-            payload: {
+            content: {
                 case: 'inception',
                 value,
             },
@@ -83,7 +83,7 @@ export const make_SpacePayload_Inception = (
     return {
         case: 'spacePayload',
         value: {
-            payload: {
+            content: {
                 case: 'inception',
                 value,
             },
@@ -96,7 +96,7 @@ export const make_ChannelPayload_Inception = (
     return {
         case: 'channelPayload',
         value: {
-            payload: {
+            content: {
                 case: 'inception',
                 value,
             },
@@ -109,7 +109,7 @@ export const make_UserSettingsPayload_Inception = (
     return {
         case: 'userSettingsPayload',
         value: {
-            payload: {
+            content: {
                 case: 'inception',
                 value,
             },
@@ -123,7 +123,7 @@ export const make_SpacePayload_Membership = (
     return {
         case: 'spacePayload',
         value: {
-            payload: {
+            content: {
                 case: 'membership',
                 value,
             },
@@ -137,7 +137,7 @@ export const make_ChannelPayload_Membership = (
     return {
         case: 'channelPayload',
         value: {
-            payload: {
+            content: {
                 case: 'membership',
                 value,
             },
@@ -151,7 +151,7 @@ export const make_UserPayload_ToDevice = (
     return {
         case: 'userPayload',
         value: {
-            payload: {
+            content: {
                 case: 'toDevice',
                 value,
             },
@@ -165,7 +165,7 @@ export const make_SpacePayload_Channel = (
     return {
         case: 'spacePayload',
         value: {
-            payload: {
+            content: {
                 case: 'channel',
                 value,
             },
@@ -183,8 +183,8 @@ export const getChannelPayload = (
         event = event.event as unknown as StreamEvent
     }
     if (event.payload?.case === 'spacePayload') {
-        if (event.payload.value.payload.case === 'channel') {
-            return event.payload.value.payload.value
+        if (event.payload.value.content.case === 'channel') {
+            return event.payload.value.content.value
         }
     }
     return undefined
@@ -196,7 +196,7 @@ export const make_ChannelPayload_Message = (
     return {
         case: 'channelPayload',
         value: {
-            payload: {
+            content: {
                 case: 'message',
                 value,
             },
@@ -214,8 +214,8 @@ export const getMessagePayload = (
         event = event.event as unknown as StreamEvent
     }
     if (event.payload?.case === 'channelPayload') {
-        if (event.payload.value.payload.case === 'message') {
-            return event.payload.value.payload.value
+        if (event.payload.value.content.case === 'message') {
+            return event.payload.value.content.value
         }
     }
     return undefined
@@ -231,8 +231,8 @@ export const getToDeviceMessagePayload = (
         event = event.event as unknown as StreamEvent
     }
     if (event.payload.case === 'userPayload') {
-        if (event.payload.value.payload.case === 'toDevice') {
-            return event.payload.value.payload.value
+        if (event.payload.value.content.case === 'toDevice') {
+            return event.payload.value.content.value
         }
     }
     return undefined

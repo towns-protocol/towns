@@ -146,7 +146,7 @@ func validateChannelJoinEvent(event *events.ParsedEvent) error {
 	if !ok {
 		return RpcErrorf(protocol.Err_BAD_STREAM_CREATION_PARAMS, "CreateStream: second event is not a channel payload")
 	}
-	membershipPayload, ok := payload.ChannelPayload.GetPayload().(*protocol.ChannelPayload_Membership)
+	membershipPayload, ok := payload.ChannelPayload.GetContent().(*protocol.ChannelPayload_Membership)
 	if !ok {
 		return RpcErrorf(protocol.Err_BAD_STREAM_CREATION_PARAMS, "CreateStream: second event is not a channel join event")
 	}
@@ -158,7 +158,7 @@ func validateSpaceJoinEvent(event *events.ParsedEvent) error {
 	if !ok {
 		return RpcErrorf(protocol.Err_BAD_STREAM_CREATION_PARAMS, "CreateStream: second event is not a channel payload")
 	}
-	membershipPayload, ok := payload.SpacePayload.GetPayload().(*protocol.SpacePayload_Membership)
+	membershipPayload, ok := payload.SpacePayload.GetContent().(*protocol.SpacePayload_Membership)
 	if !ok {
 		return RpcErrorf(protocol.Err_BAD_STREAM_CREATION_PARAMS, "CreateStream: second event is not a channel join event")
 	}

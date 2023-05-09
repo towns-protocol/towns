@@ -47,7 +47,7 @@ func MakeEnvelopeWithPayload(wallet *crypto.Wallet, payload protocol.IsStreamEve
 func Make_UserPayload_Inception(streamId string) *StreamEvent_UserPayload {
 	return &StreamEvent_UserPayload{
 		UserPayload: &UserPayload{
-			Payload: &UserPayload_Inception_{
+			Content: &UserPayload_Inception_{
 				Inception: &UserPayload_Inception{
 					StreamId: streamId,
 				},
@@ -59,7 +59,7 @@ func Make_UserPayload_Inception(streamId string) *StreamEvent_UserPayload {
 func Make_ChannelPayload_Inception(streamId string, spaceId string) *StreamEvent_ChannelPayload {
 	return &StreamEvent_ChannelPayload{
 		ChannelPayload: &ChannelPayload{
-			Payload: &ChannelPayload_Inception_{
+			Content: &ChannelPayload_Inception_{
 				Inception: &ChannelPayload_Inception{
 					StreamId: streamId,
 					SpaceId:  spaceId,
@@ -72,7 +72,7 @@ func Make_ChannelPayload_Inception(streamId string, spaceId string) *StreamEvent
 func Make_SpacePayload_Inception(streamId string) *StreamEvent_SpacePayload {
 	return &StreamEvent_SpacePayload{
 		SpacePayload: &SpacePayload{
-			Payload: &SpacePayload_Inception_{
+			Content: &SpacePayload_Inception_{
 				Inception: &SpacePayload_Inception{
 					StreamId: streamId,
 				},
@@ -84,7 +84,7 @@ func Make_SpacePayload_Inception(streamId string) *StreamEvent_SpacePayload {
 func Make_UserSettingsPayload_Inception(streamId string) *StreamEvent_UserSettingsPayload {
 	return &StreamEvent_UserSettingsPayload{
 		UserSettingsPayload: &UserSettingsPayload{
-			Payload: &UserSettingsPayload_Inception_{
+			Content: &UserSettingsPayload_Inception_{
 				Inception: &UserSettingsPayload_Inception{
 					StreamId: streamId,
 				},
@@ -96,7 +96,7 @@ func Make_UserSettingsPayload_Inception(streamId string) *StreamEvent_UserSettin
 func Make_ChannelPayload_Membership(op protocol.MembershipOp, userId string) *StreamEvent_ChannelPayload {
 	return &StreamEvent_ChannelPayload{
 		ChannelPayload: &ChannelPayload{
-			Payload: &ChannelPayload_Membership{
+			Content: &ChannelPayload_Membership{
 				Membership: &Membership{
 					Op:     op,
 					UserId: userId,
@@ -109,7 +109,7 @@ func Make_ChannelPayload_Membership(op protocol.MembershipOp, userId string) *St
 func Make_SpacePayload_Membership(op MembershipOp, userId string) *StreamEvent_SpacePayload {
 	return &StreamEvent_SpacePayload{
 		SpacePayload: &SpacePayload{
-			Payload: &protocol.SpacePayload_Membership{
+			Content: &protocol.SpacePayload_Membership{
 				Membership: &Membership{
 					Op:     op,
 					UserId: userId,
@@ -122,7 +122,7 @@ func Make_SpacePayload_Membership(op MembershipOp, userId string) *StreamEvent_S
 func Make_UserPayload_Membership(op protocol.MembershipOp, inviterId string, streamId string, originEvent *protocol.EventRef) *StreamEvent_UserPayload {
 	return &StreamEvent_UserPayload{
 		UserPayload: &UserPayload{
-			Payload: &protocol.UserPayload_UserMembership_{
+			Content: &protocol.UserPayload_UserMembership_{
 				UserMembership: &UserPayload_UserMembership{
 					StreamId:    streamId,
 					OriginEvent: originEvent,
@@ -137,7 +137,7 @@ func Make_UserPayload_Membership(op protocol.MembershipOp, inviterId string, str
 func Make_SpacePayload_Channel(op ChannelOp, channelId string, originEvent *protocol.EventRef) *StreamEvent_SpacePayload {
 	return &StreamEvent_SpacePayload{
 		SpacePayload: &SpacePayload{
-			Payload: &protocol.SpacePayload_Channel_{
+			Content: &protocol.SpacePayload_Channel_{
 				Channel: &SpacePayload_Channel{
 					Op:          op,
 					ChannelId:   channelId,
@@ -151,7 +151,7 @@ func Make_SpacePayload_Channel(op ChannelOp, channelId string, originEvent *prot
 func Make_ChannelPayload_Message(content string) *StreamEvent_ChannelPayload {
 	return &StreamEvent_ChannelPayload{
 		ChannelPayload: &ChannelPayload{
-			Payload: &ChannelPayload_Message_{
+			Content: &ChannelPayload_Message_{
 				Message: &protocol.ChannelPayload_Message{
 					Text: content,
 				},

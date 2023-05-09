@@ -3,10 +3,10 @@ package protocol
 import "fmt"
 
 type IsStreamEvent_Payload = isStreamEvent_Payload
-type IsUserPayload_Payload = isUserPayload_Payload
-type IsSpacePayload_Payload = isSpacePayload_Payload
-type IsChannelPayload_Payload = isChannelPayload_Payload
-type IsUserSettingsPayload_Payload = isUserSettingsPayload_Payload
+type IsUserPayload_Content = isUserPayload_Content
+type IsSpacePayload_Content = isSpacePayload_Content
+type IsChannelPayload_Content = isChannelPayload_Content
+type IsUserSettingsPayload_Content = isUserSettingsPayload_Content
 
 type IsInceptionPayload interface {
 	isInceptionPayload()
@@ -38,22 +38,22 @@ func (e *StreamEvent) VerifyPayloadTypeMatchesStreamType(i IsInceptionPayload) e
 	case *StreamEvent_UserPayload:
 		_, ok := i.(*UserPayload_Inception)
 		if !ok {
-			return fmt.Errorf("inception type mismatch: *protocol.StreamEvent_UserPayload::%T vs %T", e.GetUserPayload().Payload, i)
+			return fmt.Errorf("inception type mismatch: *protocol.StreamEvent_UserPayload::%T vs %T", e.GetUserPayload().Content, i)
 		}
 	case *StreamEvent_SpacePayload:
 		_, ok := i.(*SpacePayload_Inception)
 		if !ok {
-			return fmt.Errorf("inception type mismatch: *protocol.StreamEvent_SpacePayload::%T vs %T", e.GetSpacePayload().Payload, i)
+			return fmt.Errorf("inception type mismatch: *protocol.StreamEvent_SpacePayload::%T vs %T", e.GetSpacePayload().Content, i)
 		}
 	case *StreamEvent_ChannelPayload:
 		_, ok := i.(*ChannelPayload_Inception)
 		if !ok {
-			return fmt.Errorf("inception type mismatch: *protocol.StreamEvent_ChannelPayload::%T vs %T", e.GetChannelPayload().Payload, i)
+			return fmt.Errorf("inception type mismatch: *protocol.StreamEvent_ChannelPayload::%T vs %T", e.GetChannelPayload().Content, i)
 		}
 	case *StreamEvent_UserSettingsPayload:
 		_, ok := i.(*UserSettingsPayload_Inception)
 		if !ok {
-			return fmt.Errorf("inception type mismatch: *protocol.StreamEvent_UserSettingsPayload::%T vs %T", e.GetUserSettingsPayload().Payload, i)
+			return fmt.Errorf("inception type mismatch: *protocol.StreamEvent_UserSettingsPayload::%T vs %T", e.GetUserSettingsPayload().Content, i)
 		}
 	default:
 		return fmt.Errorf("inception type type not handled: %T vs %T", e.Payload, i)

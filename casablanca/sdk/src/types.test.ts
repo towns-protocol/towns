@@ -29,8 +29,8 @@ describe('types', () => {
         expect(s.delegateSigStr).toEqual('')
         expect(s.payload).toBeDefined()
         expect(
-            s.payload.case === 'spacePayload' && s.payload.value.payload.case === 'membership'
-                ? s.payload.value.payload.value.userId
+            s.payload.case === 'spacePayload' && s.payload.value.content.case === 'membership'
+                ? s.payload.value.content.value.userId
                 : '',
         ).toEqual('00-0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa')
     })

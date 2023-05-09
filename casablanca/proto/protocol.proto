@@ -62,7 +62,14 @@ message StreamEvent {
     /** Hashes of the preceding leaf events in the stream. Empty array for the inception event. */
     repeated bytes prev_events = 4;
  
-    /** Variable-type payload. */
+    /** Variable-type payload. 
+      * Payloads should obey the following rules:
+      * - payloads should have their own unique type
+      * - each payload should have a oneof content field
+      * - each payload should have an inception field inside the content oneof
+      * - each payload should have a unique Inception type
+      * - payloads can't violate previous type recursively to inception payload
+    */
     oneof payload {
         SpacePayload space_payload = 100;
         ChannelPayload channel_payload = 101;
@@ -109,7 +116,7 @@ message UserPayload {
         string device_id = 3;
     }
     
-    oneof payload {
+    oneof content {
         Inception inception = 1;
         UserMembership user_membership = 2;
         ToDevice to_device = 3;
@@ -129,7 +136,7 @@ message SpacePayload {
         
     }
 
-    oneof payload {
+    oneof content {
         Inception inception = 1;
         Channel channel = 2;
         Membership membership = 3;
@@ -146,7 +153,7 @@ message ChannelPayload {
         string text = 1;
     }
 
-    oneof payload {
+    oneof content {
         Inception inception = 1;
         Message message = 2;
         Membership membership = 3;
@@ -166,7 +173,7 @@ message UserSettingsPayload {
         optional EventRef origin_event = 4;
     }
 
-    oneof payload {
+    oneof content {
         Inception inception = 1;
         UserSetting user_setting = 2;
     }

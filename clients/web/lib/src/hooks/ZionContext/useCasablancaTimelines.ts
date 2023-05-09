@@ -123,17 +123,17 @@ function toTownsContent(
     if (!message.event.payload.case) {
         return { error: 'caseless payload' }
     }
-    if (!message.event.payload.value.payload.case) {
+    if (!message.event.payload.value.content.case) {
         return { error: 'caseless payload content' }
     }
-    const description = `${message.event.payload.case}::${message.event.payload.value.payload.case} id: ${eventId}`
+    const description = `${message.event.payload.case}::${message.event.payload.value.content.case} id: ${eventId}`
 
     switch (message.event.payload.case) {
         case 'channelPayload':
             {
-                switch (message.event.payload.value.payload.case) {
+                switch (message.event.payload.value.content.case) {
                     case 'inception': {
-                        const payload = message.event.payload.value.payload.value
+                        const payload = message.event.payload.value.content.value
                         return {
                             content: {
                                 kind: ZTEvent.RoomCreate,
@@ -145,7 +145,7 @@ function toTownsContent(
                         }
                     }
                     case 'membership': {
-                        const payload = message.event.payload.value.payload.value
+                        const payload = message.event.payload.value.content.value
                         return {
                             content: {
                                 kind: ZTEvent.RoomMember,
@@ -159,7 +159,7 @@ function toTownsContent(
                         }
                     }
                     case 'message': {
-                        const payload = message.event.payload.value.payload.value
+                        const payload = message.event.payload.value.content.value
                         if (!payload.text) {
                             return { error: `${description} no text in message` }
                         }
@@ -208,13 +208,13 @@ function toTownsContent(
                         return { error: `${description} unknown message kind` }
                     }
                     default:
-                        staticAssertNever(message.event.payload.value.payload)
+                        staticAssertNever(message.event.payload.value.content)
                 }
             }
             break
         case 'spacePayload':
             {
-                switch (message.event.payload.value.payload.case) {
+                switch (message.event.payload.value.content.case) {
                     case 'inception': {
                         return {
                             content: {
@@ -226,7 +226,7 @@ function toTownsContent(
                         }
                     }
                     case 'channel': {
-                        const payload = message.event.payload.value.payload.value
+                        const payload = message.event.payload.value.content.value
                         const childId = payload.channelId
                         return {
                             content: {
@@ -237,7 +237,7 @@ function toTownsContent(
                         }
                     }
                     case 'membership': {
-                        const payload = message.event.payload.value.payload.value
+                        const payload = message.event.payload.value.content.value
                         return {
                             content: {
                                 kind: ZTEvent.RoomMember,
@@ -251,7 +251,7 @@ function toTownsContent(
                         }
                     }
                     default:
-                        staticAssertNever(message.event.payload.value.payload)
+                        staticAssertNever(message.event.payload.value.content)
                 }
             }
             break

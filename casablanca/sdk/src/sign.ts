@@ -91,10 +91,10 @@ export const makeEvent = async (
     check(isDefined(pl), "Payload can't be undefined", Err.BAD_PAYLOAD)
     check(isDefined(pl.case), "Payload can't be empty", Err.BAD_PAYLOAD)
     check(isDefined(pl.value), "Payload value can't be empty", Err.BAD_PAYLOAD)
-    check(isDefined(pl.value.payload), "Payload content can't be empty", Err.BAD_PAYLOAD)
-    check(isDefined(pl.value.payload.case), "Payload content case can't be empty", Err.BAD_PAYLOAD)
+    check(isDefined(pl.value.content), "Payload content can't be empty", Err.BAD_PAYLOAD)
+    check(isDefined(pl.value.content.case), "Payload content case can't be empty", Err.BAD_PAYLOAD)
 
-    if (pl.value.payload.case !== 'inception') {
+    if (pl.value.content.case !== 'inception') {
         check(hashes.length > 0, 'prevEventHashes should be present', Err.BAD_PREV_EVENTS)
 
         for (const prevEvent of hashes) {
@@ -187,7 +187,7 @@ export const unpackEnvelope = (envelope: Envelope, _prevEventHash?: Uint8Array):
         checkDelegateSig(recoveredPubKey, e.creatorAddress, e.delegateSig)
     }
 
-    if (e.payload?.value?.payload.case !== 'inception') {
+    if (e.payload?.value?.content.case !== 'inception') {
         check(e.prevEvents.length > 0, "prevEvents can't be empty", Err.BAD_PREV_EVENTS)
         // TODO replace with a proper check
         // check(
