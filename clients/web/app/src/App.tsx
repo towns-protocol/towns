@@ -15,10 +15,10 @@ import { env } from 'utils'
 import { useEnvironment } from 'hooks/useEnvironmnet'
 import { LoadingScreen } from 'routes/LoadingScreen'
 import { AnalyticsProvider } from 'hooks/useAnalytics'
-import { useDevice } from 'hooks/useDevice'
 import { MobileView } from 'routes/MobileView'
 import { SentryReportModal } from '@components/SentryErrorReport/SentryErrorReport'
 import { Notifications } from '@components/Notifications/Notifications'
+import { useShouldDisplayDesktopOnlyScreen } from 'hooks/useShouldDisplayDesktopOnlyScreen'
 
 const AuthenticatedRoutes = React.lazy(() => import('routes/AuthenticatedRoutes'))
 const InviteLinkLanding = React.lazy(() => import('routes/InviteLinkLanding'))
@@ -33,9 +33,9 @@ export const App = () => {
     // aellis april 2023, the two server urls and the chain id should all be considered
     // a single piece of state, PROD, TEST, and LOCAL each should have {matrixUrl, casablancaUrl, chainId}
     const environment = useEnvironment()
-    const { isMobile } = useDevice()
+    const displayDesktopOnlyScreen = useShouldDisplayDesktopOnlyScreen()
 
-    return !isMobile ? (
+    return !displayDesktopOnlyScreen ? (
         <ZionContextProvider
             alchemyKey={env.VITE_ALCHEMY_API_KEY}
             primaryProtocol={SpaceProtocol.Matrix}
