@@ -83,16 +83,16 @@ func (r *StreamView) Get() ([]*events.ParsedEvent, error) {
 }
 
 func (r *StreamView) StreamKind(streamId string) (protocol.StreamKind, error) {
-	parsedEvent, err := r.getOrderedEventsCached()
+	parsedEvents, err := r.getOrderedEventsCached()
 	if err != nil {
 		return 0, err
 	}
-	if len(parsedEvent) == 0 {
+	if len(parsedEvents) == 0 {
 		return 0, fmt.Errorf("no payloads for stream %s", streamId)
 	}
-	switch parsedEvent[0].Event.Payload.Payload.(type) {
+	switch parsedEvents[0].Event.Payload.Payload.(type) {
 	case *protocol.Payload_Inception_:
-		inception := (*protocol.Payload_Inception)(parsedEvent[0].Event.Payload.GetInception())
+		inception := (*protocol.Payload_Inception)(parsedEvents[0].Event.Payload.GetInception())
 		return inception.StreamKind, nil
 	default:
 		return 0, fmt.Errorf("unknown stream kind")
@@ -100,16 +100,16 @@ func (r *StreamView) StreamKind(streamId string) (protocol.StreamKind, error) {
 }
 
 func (r *StreamView) JoinedUsers(streamId string) (map[string]struct{}, error) {
-	parsedEvent, err := r.getOrderedEventsCached()
+	parsedEvents, err := r.getOrderedEventsCached()
 	if err != nil {
 		return nil, err
 	}
-	if len(parsedEvent) == 0 {
+	if len(parsedEvents) == 0 {
 		return nil, fmt.Errorf("no payloads for stream %s", streamId)
 	}
 
 	users := make(map[string]struct{})
-	for _, e := range parsedEvent {
+	for _, e := range parsedEvents {
 		switch e.Event.Payload.Payload.(type) {
 		case *protocol.Payload_JoinableStream_:
 			joinableStream := e.Event.Payload.GetJoinableStream()
@@ -168,45 +168,45 @@ func (r *StreamView) AddEvent(event *protocol.Envelope) error {
 }
 
 func (r *StreamView) GetStreamInfo(ctx context.Context, roomId string, userId string) (*common.RoomInfo, error) {
-	parsedEvent, err := r.getOrderedEventsCached()
+	parsedEvents, err := r.getOrderedEventsCached()
 	if err != nil {
 		return nil, err
 	}
-	if len(parsedEvent) == 0 {
+	if len(parsedEvents) == 0 {
 		return nil, fmt.Errorf("no payloads for stream %s", roomId)
 	}
 
-	for _, e := range parsedEvent {
-		creator := common.UserIdFromAddress(e.Event.GetCreatorAddress())
-		switch e.Event.Payload.Payload.(type) {
-		case *protocol.Payload_Inception_:
-			inception := e.Event.Payload.GetInception()
-			switch inception.StreamKind {
-			case protocol.StreamKind_SK_CHANNEL:
-				return &common.RoomInfo{
-					SpaceNetworkId:   inception.SpaceId,
-					ChannelNetworkId: inception.StreamId,
-					RoomType:         common.Channel,
-					IsOwner:          creator == userId,
-				}, nil
-			case protocol.StreamKind_SK_SPACE:
+	e := parsedEvents[0]
 
-				return &common.RoomInfo{
-					SpaceNetworkId: inception.StreamId,
-					RoomType:       common.Space,
-					IsOwner:        creator == userId,
-				}, nil
+	creator := common.UserIdFromAddress(e.Event.GetCreatorAddress())
+	switch e.Event.Payload.Payload.(type) {
+	case *protocol.Payload_Inception_:
+		inception := e.Event.Payload.GetInception()
+		switch inception.StreamKind {
+		case protocol.StreamKind_SK_CHANNEL:
+			return &common.RoomInfo{
+				SpaceNetworkId:   inception.SpaceId,
+				ChannelNetworkId: inception.StreamId,
+				RoomType:         common.Channel,
+				IsOwner:          creator == userId,
+			}, nil
+		case protocol.StreamKind_SK_SPACE:
 
-			case protocol.StreamKind_SK_USER:
+			return &common.RoomInfo{
+				SpaceNetworkId: inception.StreamId,
+				RoomType:       common.Space,
+				IsOwner:        creator == userId,
+			}, nil
 
-				return &common.RoomInfo{
-					SpaceNetworkId: inception.StreamId,
-					RoomType:       common.User,
-					IsOwner:        creator == userId,
-				}, nil
+		case protocol.StreamKind_SK_USER:
 
-			}
+			return &common.RoomInfo{
+				SpaceNetworkId: inception.StreamId,
+				RoomType:       common.User,
+				IsOwner:        creator == userId,
+			}, nil
 		}
 	}
+
 	return nil, fmt.Errorf("no inception event found")
 }
