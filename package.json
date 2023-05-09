@@ -125,12 +125,8 @@
     },
     "workspaces": [
         "casablanca/*",
-        "clients/web/app",
-        "clients/web/lib",
-        "clients/web/sample-app",
+        "clients/web/*",
         "clients/governance-ui",
-        "clients/contract-debug-ui",
-        "contracts",
         "packages/*",
         "servers/workers/*"
     ]
