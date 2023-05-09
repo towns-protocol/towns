@@ -54,7 +54,7 @@ class TestDriver {
 
     userInvitedToStream(streamId: string): void {
         this.log(`userInvitedToStream streamId=${streamId}`)
-        this.client.joinChannel(streamId)
+        this.client.joinStream(streamId)
     }
 
     userJoinedStream(streamId: string): void {

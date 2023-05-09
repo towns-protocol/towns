@@ -2,7 +2,7 @@ import { HistoryVisibility, IContent, JoinRule, RestrictedAllowType } from 'matr
 import { Channel, Membership, Mention, PowerLevels } from './zion-types'
 import { RoomIdentifier } from './room-identifier'
 import { BlockchainTransaction } from './web3-types'
-import { ChannelOp, StreamKind } from '@towns/proto'
+import { ChannelOp, PayloadCaseType } from '@towns/proto'
 import { staticAssertNever } from '../utils/zion-utils'
 
 /**************************************************************************
@@ -95,7 +95,8 @@ export interface RoomCreateEvent {
     kind: ZTEvent.RoomCreate
     creator: string
     predecessor?: { event_id: string; room_id: string }
-    type?: string | StreamKind
+    type?: string | PayloadCaseType
+    spaceId?: string // valid on casablanca channel streams
 }
 
 export interface RoomEncryptionEvent {

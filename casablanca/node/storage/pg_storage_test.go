@@ -56,7 +56,7 @@ func TestPGEventStore(t *testing.T) {
 	wallet, _ := crypto.NewWallet()
 	inceptionEvent, err := events.MakeEnvelopeWithPayload(
 		wallet,
-		events.MakePayload_Inception(streamId, protocol.StreamKind_SK_USER, ""),
+		events.Make_UserPayload_Inception(streamId),
 		nil,
 	)
 	if err != nil {
@@ -144,7 +144,7 @@ func TestPGEventStoreLongPoll(t *testing.T) {
 	wallet, _ := crypto.NewWallet()
 	inceptionEvent1, err := events.MakeEnvelopeWithPayload(
 		wallet,
-		events.MakePayload_Inception(streamId, protocol.StreamKind_SK_USER, ""),
+		events.Make_UserPayload_Inception(streamId),
 		nil,
 	)
 	if err != nil {
@@ -165,7 +165,7 @@ func TestPGEventStoreLongPoll(t *testing.T) {
 
 		inceptionEvent2, err := events.MakeEnvelopeWithPayload(
 			wallet,
-			events.MakePayload_Inception(streamId, protocol.StreamKind_SK_USER, ""),
+			events.Make_UserPayload_Inception(streamId),
 			nil,
 		)
 		if err != nil {
@@ -286,7 +286,7 @@ func TestPGEventStoreLongPollStress(t *testing.T) {
 	wallet, _ := crypto.NewWallet()
 	inceptionEvent1, err := events.MakeEnvelopeWithPayload(
 		wallet,
-		events.MakePayload_Inception(streamId, protocol.StreamKind_SK_USER, ""),
+		events.Make_UserPayload_Inception(streamId),
 		nil,
 	)
 	if err != nil {
@@ -314,7 +314,7 @@ func TestPGEventStoreLongPollStress(t *testing.T) {
 
 		msg, err := events.MakeEnvelopeWithPayload(
 			wallet,
-			events.MakePayload_Message(fmt.Sprintf("hello %d", i)),
+			events.Make_ChannelPayload_Message(fmt.Sprintf("hello %d", i)),
 			[][]byte{inceptionEvent1.Hash},
 		)
 		if err != nil {

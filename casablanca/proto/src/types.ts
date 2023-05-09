@@ -1,4 +1,4 @@
-import { Payload } from './gen/protocol_pb'
+import { StreamEvent } from './gen/protocol_pb'
 
-export type PayloadCaseType = Payload['payload']['case']
-export type PayloadValueType = Payload['payload']['value']
+export type PayloadCaseType = StreamEvent['payload']['case']
+export type PayloadValueType = StreamEvent['payload']['value']

@@ -120,10 +120,13 @@ func ParseEvents(events []*Envelope) ([]*ParsedEvent, error) {
 	return parsedEvents, nil
 }
 
-func (e *ParsedEvent) GetInceptionPayload() *Payload_Inception {
-	return e.Event.GetPayload().GetInception()
-}
-
-func (e *ParsedEvent) GetJoinableStreamPayload() *Payload_JoinableStream {
-	return e.Event.GetPayload().GetJoinableStream()
+func (e *ParsedEvent) GetChannelMessage() *ChannelPayload_Message {
+	switch payload := e.Event.Payload.(type) {
+	case *StreamEvent_ChannelPayload:
+		switch cp := payload.ChannelPayload.Payload.(type) {
+		case *ChannelPayload_Message_:
+			return cp.Message
+		}
+	}
+	return nil
 }

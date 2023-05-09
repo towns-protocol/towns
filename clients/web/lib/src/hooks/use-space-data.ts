@@ -16,7 +16,6 @@ import { useZionContext } from '../components/ZionContextProvider'
 import { useSpaceContext } from '../components/SpaceContextProvider'
 import { useCasablancaStream } from './CasablancClient/useCasablancaStream'
 import { Stream } from '@towns/sdk'
-import { StreamKind } from '@towns/proto'
 import isEqual from 'lodash/isEqual'
 
 /// returns default space if no space slug is provided
@@ -209,7 +208,7 @@ function useSpaceRollup(streamId: string | undefined): SpaceData | undefined {
 }
 
 function rollupSpace(stream: Stream, userId: string, channels: Stream[]): SpaceData | undefined {
-    if (stream.rollup.streamKind !== StreamKind.SK_SPACE) {
+    if (stream.rollup.payloadKind !== 'spacePayload') {
         throw new Error('stream is not a space')
     }
 

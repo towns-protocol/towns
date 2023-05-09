@@ -1,5 +1,5 @@
-import { PartialMessage } from '@bufbuild/protobuf'
-import { Envelope, EventRef, Payload, StreamEvent, Err } from '@towns/proto'
+import { PlainMessage } from '@bufbuild/protobuf'
+import { Envelope, EventRef, StreamEvent, Err } from '@towns/proto'
 import { check, hasElements, isDefined } from './check'
 import {
     townsHash,
@@ -60,7 +60,7 @@ export const normailizeHashes = (
 
 export const _impl_makeEvent_impl_ = async (
     context: SignerContext,
-    payload: Payload,
+    payload: PlainMessage<StreamEvent>['payload'],
     prevEvents: Uint8Array[],
 ): Promise<Envelope> => {
     const streamEvent = new StreamEvent({
@@ -82,14 +82,19 @@ export const _impl_makeEvent_impl_ = async (
 
 export const makeEvent = async (
     context: SignerContext,
-    payload: Payload | PartialMessage<Payload>,
+    payload: PlainMessage<StreamEvent>['payload'],
     prevEventHashes?: Uint8Array[] | Uint8Array | Map<string, Uint8Array>,
 ): Promise<Envelope> => {
     const hashes = normailizeHashes(prevEventHashes)
-    const pl: Payload = payload instanceof Payload ? payload : new Payload(payload)
-    check(isDefined(pl.payload.case), "Payload can't be empty", Err.BAD_PAYLOAD)
+    // const pl: Payload = payload instanceof Payload ? payload : new Payload(payload)
+    const pl = payload // todo check this
+    check(isDefined(pl), "Payload can't be undefined", Err.BAD_PAYLOAD)
+    check(isDefined(pl.case), "Payload can't be empty", Err.BAD_PAYLOAD)
+    check(isDefined(pl.value), "Payload value can't be empty", Err.BAD_PAYLOAD)
+    check(isDefined(pl.value.payload), "Payload content can't be empty", Err.BAD_PAYLOAD)
+    check(isDefined(pl.value.payload.case), "Payload content case can't be empty", Err.BAD_PAYLOAD)
 
-    if (pl.payload.case !== 'inception') {
+    if (pl.value.payload.case !== 'inception') {
         check(hashes.length > 0, 'prevEventHashes should be present', Err.BAD_PREV_EVENTS)
 
         for (const prevEvent of hashes) {
@@ -106,7 +111,7 @@ export const makeEvent = async (
 
 export const makeEvents = async (
     context: SignerContext,
-    payloads: (Payload | PartialMessage<Payload>)[],
+    payloads: PlainMessage<StreamEvent>['payload'][],
     prevEventHashes?: Uint8Array[] | Uint8Array | Map<string, Uint8Array>,
 ): Promise<Envelope[]> => {
     const events: Envelope[] = []
@@ -182,7 +187,7 @@ export const unpackEnvelope = (envelope: Envelope, _prevEventHash?: Uint8Array):
         checkDelegateSig(recoveredPubKey, e.creatorAddress, e.delegateSig)
     }
 
-    if (e.payload?.payload.case !== 'inception') {
+    if (e.payload?.value?.payload.case !== 'inception') {
         check(e.prevEvents.length > 0, "prevEvents can't be empty", Err.BAD_PREV_EVENTS)
         // TODO replace with a proper check
         // check(

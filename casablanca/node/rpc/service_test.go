@@ -50,10 +50,8 @@ func createUser(ctx context.Context, wallet *crypto.Wallet, client protocolconne
 	userStreamId := common.UserStreamIdFromAddress(wallet.Address.Bytes())
 	inception, err := events.MakeEnvelopeWithPayload(
 		wallet,
-		events.MakePayload_Inception(
+		events.Make_UserPayload_Inception(
 			userStreamId,
-			protocol.StreamKind_SK_USER,
-			"",
 		),
 		nil,
 	)
@@ -72,10 +70,8 @@ func createUser(ctx context.Context, wallet *crypto.Wallet, client protocolconne
 func createSpace(ctx context.Context, wallet *crypto.Wallet, client protocolconnect.StreamServiceClient, spaceId string) ([]byte, []byte, error) {
 	space, err := events.MakeEnvelopeWithPayload(
 		wallet,
-		events.MakePayload_Inception(
+		events.Make_SpacePayload_Inception(
 			common.SpaceStreamIdFromName(spaceId),
-			protocol.StreamKind_SK_SPACE,
-			"",
 		),
 		nil,
 	)
@@ -84,7 +80,7 @@ func createSpace(ctx context.Context, wallet *crypto.Wallet, client protocolconn
 	}
 	joinSpace, err := events.MakeEnvelopeWithPayload(
 		wallet,
-		events.MakePayload_JoinableStream(
+		events.Make_SpacePayload_Membership(
 			protocol.MembershipOp_SO_JOIN,
 			common.UserIdFromAddress(wallet.Address.Bytes()),
 		),
@@ -108,9 +104,8 @@ func createSpace(ctx context.Context, wallet *crypto.Wallet, client protocolconn
 func createChannel(ctx context.Context, wallet *crypto.Wallet, client protocolconnect.StreamServiceClient, spaceId string, channelId string) ([]byte, []byte, error) {
 	channel, err := events.MakeEnvelopeWithPayload(
 		wallet,
-		events.MakePayload_Inception(
+		events.Make_ChannelPayload_Inception(
 			common.ChannelStreamIdFromName(channelId),
-			protocol.StreamKind_SK_CHANNEL,
 			spaceId,
 		),
 		nil,
@@ -120,7 +115,7 @@ func createChannel(ctx context.Context, wallet *crypto.Wallet, client protocolco
 	}
 	joinChannel, err := events.MakeEnvelopeWithPayload(
 		wallet,
-		events.MakePayload_JoinableStream(
+		events.Make_ChannelPayload_Membership(
 			protocol.MembershipOp_SO_JOIN,
 			common.UserIdFromAddress(wallet.Address.Bytes()),
 		),
@@ -220,7 +215,7 @@ func TestMethods(t *testing.T) {
 		// user2 joins channel
 		join, err := events.MakeEnvelopeWithPayload(
 			wallet2,
-			events.MakePayload_JoinableStream(
+			events.Make_ChannelPayload_Membership(
 				protocol.MembershipOp_SO_JOIN,
 				common.UserIdFromAddress(wallet2.Address.Bytes()),
 			),
@@ -244,7 +239,7 @@ func TestMethods(t *testing.T) {
 
 		message, err := events.MakeEnvelopeWithPayload(
 			wallet2,
-			events.MakePayload_Message("hello"),
+			events.Make_ChannelPayload_Message("hello"),
 			[][]byte{join.Hash},
 		)
 		if err != nil {
@@ -297,11 +292,17 @@ func TestMethods(t *testing.T) {
 			if err != nil {
 				t.Errorf("error unmarshaling event: %v", err)
 			}
-			switch payload.Payload.Payload.(type) {
-			case *protocol.Payload_Message_:
+			switch p := payload.Payload.(type) {
+			case *protocol.StreamEvent_ChannelPayload:
 				// ok
+				switch p.ChannelPayload.Payload.(type) {
+				case *protocol.ChannelPayload_Message_:
+					// ok
+				default:
+					t.Fatalf("expected message event, got %v", p.ChannelPayload.Payload)
+				}
 			default:
-				t.Fatalf("expected message event, got %v", payload.Payload.Payload)
+				t.Fatalf("expected channel event, got %v", payload.Payload)
 			}
 		}
 	}
@@ -358,7 +359,7 @@ func TestManyUsers(t *testing.T) {
 		for j := 0; j < totalChannels; j++ {
 			join, err := events.MakeEnvelopeWithPayload(
 				wallets[i],
-				events.MakePayload_JoinableStream(
+				events.Make_ChannelPayload_Membership(
 					protocol.MembershipOp_SO_JOIN,
 					common.UserIdFromAddress(wallets[i].Address.Bytes()),
 				),
@@ -380,7 +381,7 @@ func TestManyUsers(t *testing.T) {
 
 			message, err := events.MakeEnvelopeWithPayload(
 				wallets[i],
-				events.MakePayload_Message("hello"),
+				events.Make_ChannelPayload_Message("hello"),
 				[][]byte{channelHashes[j]},
 			)
 			if err != nil {
@@ -452,7 +453,7 @@ func TestManyUsers(t *testing.T) {
 
 				message, err := events.MakeEnvelopeWithPayload(
 					wallets[user],
-					events.MakePayload_Message(fmt.Sprintf("%d hello from %d", msgId.Add(1)-1, user)),
+					events.Make_ChannelPayload_Message(fmt.Sprintf("%d hello from %d", msgId.Add(1)-1, user)),
 					[][]byte{channelHashes[channel]},
 				)
 				assert.NoError(t, err)
@@ -498,7 +499,7 @@ func TestManyUsers(t *testing.T) {
 				for _, event := range msg.Streams[streamIdx].Events {
 					e, err := events.ParseEvent(event, true)
 					assert.NoError(t, err)
-					msg := e.Event.Payload.GetMessage()
+					msg := e.GetChannelMessage()
 					assert.NotNil(t, msg)
 					tokens := strings.Split(msg.Text, " ")
 					assert.Equal(t, 4, len(tokens))

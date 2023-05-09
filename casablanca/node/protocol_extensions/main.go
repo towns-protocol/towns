@@ -12,9 +12,21 @@ import (
 	"golang.org/x/text/language"
 )
 
+type SaneFile struct {
+	*os.File
+}
+
+func (f *SaneFile) WriteString_(s string) {
+	_, err := f.WriteString(s)
+	if err != nil {
+		fmt.Println("Error writing to output file:", err)
+	}
+}
+
 func main() {
 	inputFileName := "../protocol/protocol.pb.go"
 	outputFileName := "../protocol/extensions.pb.go"
+	printAllStructs := false
 
 	fset := token.NewFileSet()
 	file, err := parser.ParseFile(fset, inputFileName, nil, parser.ParseComments)
@@ -24,6 +36,8 @@ func main() {
 	}
 
 	var oneOfTypes []string
+	var inceptionTypes []string
+	var allStructs []string
 	ast.Inspect(file, func(n ast.Node) bool {
 		switch x := n.(type) {
 		case *ast.GenDecl:
@@ -31,13 +45,35 @@ func main() {
 				for _, spec := range x.Specs {
 					typeSpec := spec.(*ast.TypeSpec)
 					if structType, ok := typeSpec.Type.(*ast.StructType); ok {
+						allStructs = append(allStructs, typeSpec.Name.Name)
+						if strings.HasSuffix(typeSpec.Name.Name, "_Inception") {
+							inceptionTypes = append(inceptionTypes, typeSpec.Name.Name)
+						}
 						for _, field := range structType.Fields.List {
-							if field.Tag != nil && strings.Contains(field.Tag.Value, "protobuf_oneof") {
-								fieldType, ok := field.Type.(*ast.Ident)
-								if ok {
+							fieldType, ok := field.Type.(*ast.Ident)
+							if ok {
+								if field.Tag != nil && strings.Contains(field.Tag.Value, "protobuf_oneof") {
 									oneOfTypes = append(oneOfTypes, fieldType.Name)
+									allStructs = append(allStructs, fmt.Sprintf("	/* tag:%s */\n	/* comment:%s */\n	/* doc: \n %s	*/", field.Tag.Value, field.Comment.Text(), field.Doc.Text()))
 								}
 							}
+							switch x := field.Type.(type) {
+							case *ast.Ident:
+								allStructs = append(allStructs, fmt.Sprintf("  %s %s", field.Names[0], x.Name))
+							case *ast.SelectorExpr:
+								if !strings.Contains(fmt.Sprintf("%s", x.X), "protoimpl") {
+									allStructs = append(allStructs, fmt.Sprintf("  %s %s.%s", field.Names[0], x.X, x.Sel.Name))
+								}
+							case *ast.StarExpr:
+								allStructs = append(allStructs, fmt.Sprintf("  %s *%s", field.Names[0], x.X))
+							case *ast.ArrayType:
+								allStructs = append(allStructs, fmt.Sprintf("  %s []%s", field.Names[0], x.Elt))
+							case *ast.MapType:
+								allStructs = append(allStructs, fmt.Sprintf("  %s map[%s]%s", field.Names[0], x.Key, x.Value))
+							default:
+								allStructs = append(allStructs, fmt.Sprintf("  not found======%s %s", field.Names[0], x))
+							}
+
 						}
 					}
 				}
@@ -46,7 +82,8 @@ func main() {
 		return true
 	})
 
-	outputFile, err := os.Create(outputFileName)
+	outputFileF, err := os.Create(outputFileName)
+	outputFile := &SaneFile{outputFileF}
 	if err != nil {
 		fmt.Println("Error creating output file:", err)
 		return
@@ -54,19 +91,98 @@ func main() {
 	defer outputFile.Close()
 
 	packageName := file.Name.Name
-	_, err2 := outputFile.WriteString(fmt.Sprintf("package %s\n\n", packageName))
-	if err2 != nil {
-		fmt.Println("Error writing to output file:", err2)
-	}
+	outputFile.WriteString_(fmt.Sprintf("package %s\n\n", packageName))
+	outputFile.WriteString_("import \"fmt\"\n\n")
 
 	caser := cases.Title(language.English, cases.NoLower)
 	for _, oneOfTypeName := range oneOfTypes {
 		exportedTypeName := caser.String(oneOfTypeName)
-		_, err3 := outputFile.WriteString(fmt.Sprintf("type %s = %s\n", exportedTypeName, oneOfTypeName))
-		if err3 != nil {
-			fmt.Println("Error writing to output file:", err3)
+		outputFile.WriteString_(fmt.Sprintf("type %s = %s\n", exportedTypeName, oneOfTypeName))
+	}
+
+	// inceptions
+	genInceptionPayloadImpl(inceptionTypes, outputFile)
+
+	if printAllStructs {
+		for _, structName := range allStructs {
+			outputFile.WriteString_(fmt.Sprintf("// %s \n", structName))
 		}
 	}
 
 	fmt.Println("Generated custom extensions in file:", outputFileName)
+}
+
+func genInceptionPayloadImpl(inceptionTypes []string, outputFile *SaneFile) {
+	header := func() string {
+		return `
+type IsInceptionPayload interface {
+	isInceptionPayload()
+	GetStreamId() string
+}`
+	}
+	conformance := func() string {
+		return `
+func (*%s) isInceptionPayload() {}`
+	}
+	getterStart := func() string {
+		return `
+
+func (e *StreamEvent) GetInceptionPayload() IsInceptionPayload {
+	switch e.Payload.(type) {`
+	}
+	getterCase := func() string {
+		return `
+	case *StreamEvent_%s:
+		return e.Payload.(*StreamEvent_%s).%s.GetInception()`
+	}
+	getterEnd := func() string {
+		return `
+	default:
+		return nil
+	}
+}
+`
+	}
+
+	validatorStart := func() string {
+		return `
+
+func (e *StreamEvent) VerifyPayloadTypeMatchesStreamType(i IsInceptionPayload) error {
+	switch e.Payload.(type) {`
+	}
+	validatorCase := func() string {
+		return `
+	case *StreamEvent_%s:
+		_, ok := i.(*%s_Inception)
+		if !ok {
+			return fmt.Errorf("inception type mismatch: %%T::%%T vs %%T", e.Payload, e.Get%s().Payload, i)
+		}`
+	}
+	validatorEnd := func() string {
+		return `
+	default:
+		return fmt.Errorf("inception type type not handled: %T vs %T", e.Payload, i)
+	}
+	return nil
+}
+`
+	}
+
+	outputFile.WriteString_(header())
+	for _, inceptionTypeName := range inceptionTypes {
+		outputFile.WriteString_(fmt.Sprintf(conformance(), inceptionTypeName))
+	}
+	outputFile.WriteString_(getterStart())
+	for _, inceptionTypeName := range inceptionTypes {
+		inceptionTypeBase := strings.Split(inceptionTypeName, "_")[0]
+		outputFile.WriteString_(fmt.Sprintf(getterCase(), inceptionTypeBase, inceptionTypeBase, inceptionTypeBase))
+	}
+
+	outputFile.WriteString_(getterEnd())
+	outputFile.WriteString_(validatorStart())
+	for _, inceptionTypeName := range inceptionTypes {
+		inceptionTypeBase := strings.Split(inceptionTypeName, "_")[0]
+		outputFile.WriteString_(fmt.Sprintf(validatorCase(), inceptionTypeBase, inceptionTypeBase, inceptionTypeBase))
+	}
+	outputFile.WriteString_(validatorEnd())
 }

@@ -82,21 +82,19 @@ func (r *StreamView) Get() ([]*events.ParsedEvent, error) {
 	return r.getOrderedEventsCached()
 }
 
-func (r *StreamView) StreamKind(streamId string) (protocol.StreamKind, error) {
+func (r *StreamView) InceptionPayload(streamId string) (protocol.IsInceptionPayload, error) {
 	parsedEvents, err := r.getOrderedEventsCached()
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
 	if len(parsedEvents) == 0 {
-		return 0, fmt.Errorf("no payloads for stream %s", streamId)
+		return nil, fmt.Errorf("no payloads for stream %s", streamId)
 	}
-	switch parsedEvents[0].Event.Payload.Payload.(type) {
-	case *protocol.Payload_Inception_:
-		inception := (*protocol.Payload_Inception)(parsedEvents[0].Event.Payload.GetInception())
-		return inception.StreamKind, nil
-	default:
-		return 0, fmt.Errorf("unknown stream kind")
+	payload := parsedEvents[0].Event.GetInceptionPayload()
+	if payload == nil {
+		return nil, fmt.Errorf("no inception payload for stream %s", streamId)
 	}
+	return payload, nil
 }
 
 func (r *StreamView) JoinedUsers(streamId string) (map[string]struct{}, error) {
@@ -110,15 +108,30 @@ func (r *StreamView) JoinedUsers(streamId string) (map[string]struct{}, error) {
 
 	users := make(map[string]struct{})
 	for _, e := range parsedEvents {
-		switch e.Event.Payload.Payload.(type) {
-		case *protocol.Payload_JoinableStream_:
-			joinableStream := e.Event.Payload.GetJoinableStream()
-			user := joinableStream.GetUserId()
-			switch joinableStream.Op {
-			case protocol.MembershipOp_SO_JOIN:
-				users[user] = struct{}{}
-			case protocol.MembershipOp_SO_LEAVE:
-				delete(users, user)
+		switch payload := e.Event.Payload.(type) {
+		case *protocol.StreamEvent_SpacePayload:
+			switch spacePayload := payload.SpacePayload.Payload.(type) {
+			case *protocol.SpacePayload_Membership:
+				user := spacePayload.Membership.UserId
+				if spacePayload.Membership.GetOp() == protocol.MembershipOp_SO_JOIN {
+					users[user] = struct{}{}
+				} else if spacePayload.Membership.GetOp() == protocol.MembershipOp_SO_LEAVE {
+					delete(users, user)
+				}
+			default:
+				break
+			}
+		case *protocol.StreamEvent_ChannelPayload:
+			switch channelPayload := payload.ChannelPayload.Payload.(type) {
+			case *protocol.ChannelPayload_Membership:
+				user := channelPayload.Membership.UserId
+				if channelPayload.Membership.GetOp() == protocol.MembershipOp_SO_JOIN {
+					users[user] = struct{}{}
+				} else if channelPayload.Membership.GetOp() == protocol.MembershipOp_SO_LEAVE {
+					delete(users, user)
+				}
+			default:
+				break
 			}
 		}
 	}
@@ -167,46 +180,48 @@ func (r *StreamView) AddEvent(event *protocol.Envelope) error {
 	return nil
 }
 
-func (r *StreamView) GetStreamInfo(ctx context.Context, roomId string, userId string) (*common.RoomInfo, error) {
+func (r *StreamView) GetStreamInfo(ctx context.Context, streamId string, userId string) (*common.RoomInfo, error) {
 	parsedEvents, err := r.getOrderedEventsCached()
 	if err != nil {
 		return nil, err
 	}
 	if len(parsedEvents) == 0 {
-		return nil, fmt.Errorf("no payloads for stream %s", roomId)
+		return nil, fmt.Errorf("no payloads for stream %s", streamId)
 	}
-
 	e := parsedEvents[0]
+	payload := e.Event.GetInceptionPayload()
+	if payload == nil {
+		return nil, fmt.Errorf("no inception payload for stream %s", streamId)
+	}
 
 	creator := common.UserIdFromAddress(e.Event.GetCreatorAddress())
-	switch e.Event.Payload.Payload.(type) {
-	case *protocol.Payload_Inception_:
-		inception := e.Event.Payload.GetInception()
-		switch inception.StreamKind {
-		case protocol.StreamKind_SK_CHANNEL:
-			return &common.RoomInfo{
-				SpaceNetworkId:   inception.SpaceId,
-				ChannelNetworkId: inception.StreamId,
-				RoomType:         common.Channel,
-				IsOwner:          creator == userId,
-			}, nil
-		case protocol.StreamKind_SK_SPACE:
-
-			return &common.RoomInfo{
-				SpaceNetworkId: inception.StreamId,
-				RoomType:       common.Space,
-				IsOwner:        creator == userId,
-			}, nil
-
-		case protocol.StreamKind_SK_USER:
-
-			return &common.RoomInfo{
-				SpaceNetworkId: inception.StreamId,
-				RoomType:       common.User,
-				IsOwner:        creator == userId,
-			}, nil
-		}
+	switch inception := payload.(type) {
+	case *protocol.UserPayload_Inception:
+		return &common.RoomInfo{
+			SpaceNetworkId: inception.StreamId,
+			RoomType:       common.User,
+			IsOwner:        creator == userId,
+		}, nil
+	case *protocol.ChannelPayload_Inception:
+		return &common.RoomInfo{
+			SpaceNetworkId:   inception.SpaceId,
+			ChannelNetworkId: inception.StreamId,
+			RoomType:         common.Channel,
+			IsOwner:          creator == userId,
+		}, nil
+	case *protocol.SpacePayload_Inception:
+		return &common.RoomInfo{
+			SpaceNetworkId: inception.StreamId,
+			RoomType:       common.Space,
+			IsOwner:        creator == userId,
+		}, nil
+	case *protocol.UserSettingsPayload_Inception:
+		return &common.RoomInfo{
+			SpaceNetworkId: inception.StreamId,
+			RoomType:       common.UserSettings,
+			IsOwner:        creator == userId,
+		}, nil
+	default:
+		return nil, fmt.Errorf("unimplemented stream type %T", inception)
 	}
-
-	return nil, fmt.Errorf("no inception event found")
 }

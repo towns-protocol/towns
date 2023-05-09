@@ -188,139 +188,171 @@ func (s *Service) addEvent(ctx context.Context, streamId string, view *storage.S
 
 	// check event type
 	streamEvent := parsedEvent.Event
-	switch streamEvent.Payload.Payload.(type) {
-	case *protocol.Payload_Inception_:
-		return nil, status.Errorf(codes.InvalidArgument, "AddEvent: event is an inception event")
 
-	case *protocol.Payload_UserMembershipOp_, *protocol.Payload_Channel_:
-		return nil, status.Errorf(codes.InvalidArgument, "AddEvent: event is a user stream op event or channel event")
-
-	case *protocol.Payload_JoinableStream_:
-		// check is stream kind is channel or space
-		kind, err := view.StreamKind(streamId)
-		if err != nil {
-			return nil, status.Errorf(codes.Internal, "AddEvent: error getting stream kind: %v", err)
-		}
-		if kind != protocol.StreamKind_SK_CHANNEL && kind != protocol.StreamKind_SK_SPACE {
-			return nil, status.Errorf(codes.InvalidArgument, "AddEvent: event is a joinable stream event, but stream is not a channel or space")
-		}
-		joinableStream := streamEvent.Payload.GetJoinableStream()
-		userId := joinableStream.UserId
-		userStreamId := common.UserStreamIdFromId(userId)
-
-		allowed, err := s.Authorization.IsAllowed(
-			ctx,
-			auth.AuthorizationArgs{
-				RoomId:     streamId,
-				UserId:     userId,
-				Permission: auth.PermissionWrite,
-			},
-			view,
-		)
-		if err != nil {
-			return nil, status.Errorf(codes.InvalidArgument, "AddEvent: failed to get permissions: %v", err)
-		}
-		if !allowed {
-			return nil, status.Errorf(codes.PermissionDenied, "AddEvent: user %s is not allowed to write to stream %s", userId, streamId)
-		}
-
-		cookie, err := s.Storage.AddEvent(ctx, streamId, parsedEvent.Envelope)
-		if err != nil {
-			return nil, status.Errorf(codes.Internal, "AddEvent: error adding event to storage: %v", err)
-		}
-
-		err = view.AddEvent(parsedEvent.Envelope)
-		if err != nil {
-			return nil, status.Errorf(codes.Internal, "AddEvent: error adding event to view: %v", err)
-		}
-
-		leaves, err := view.GetAllLeafEvents(ctx)
-		if err != nil {
-			return nil, status.Errorf(codes.Internal, "AddEvent: error getting all leaf events: %v", err)
-		}
-
-		log.Debug("AddEvent: ", joinableStream.Op)
-		envelope, err := s.makeEnvelopeWithPayload(
-			events.MakePayload_UserMembershipOp(
-				joinableStream.Op,
-				streamId,
-				common.UserIdFromAddress(parsedEvent.Event.CreatorAddress),
-				&protocol.EventRef{
-					StreamId:  streamId,
-					Hash:      parsedEvent.Envelope.Hash,
-					Signature: parsedEvent.Envelope.Signature,
-				},
-			),
-			leaves,
-		)
-		if err != nil {
-			return nil, err
-		}
-
-		_, err = s.Storage.AddEvent(ctx, userStreamId, envelope)
-		if err != nil {
-			return nil, status.Errorf(codes.Internal, "AddEvent: error adding event to storage: %v", err)
-		}
-
-		return cookie, nil
-
-	case *protocol.Payload_Message_:
-
-		kind, err := view.StreamKind(streamId)
-		if err != nil {
-			return nil, status.Errorf(codes.Internal, "AddEvent: error getting stream kind: %v", err)
-		}
-		if kind != protocol.StreamKind_SK_CHANNEL {
-			return nil, status.Errorf(codes.InvalidArgument, "AddEvent: event is a message event, but stream is not a channel")
-		}
-		user := common.UserIdFromAddress(streamEvent.CreatorAddress)
-
-		allowed, err := s.Authorization.IsAllowed(
-			ctx,
-			auth.AuthorizationArgs{
-				RoomId:     streamId,
-				UserId:     user,
-				Permission: auth.PermissionWrite,
-			},
-			view,
-		)
-		if err != nil {
-			return nil, status.Errorf(codes.InvalidArgument, "AddEvent: failed to get permissions: %v", err)
-		}
-		if !allowed {
-			return nil, status.Errorf(codes.PermissionDenied, "AddEvent: user %s is not allowed to write to channel %s", user, streamId)
-		}
-
-		// check if user is a member of the channel
-		members, err := view.JoinedUsers(streamId)
-		if err != nil {
-			return nil, status.Errorf(codes.Internal, "AddEvent: error getting joined users: %v", err)
-		}
-		if _, ok := members[user]; !ok {
-			return nil, status.Errorf(codes.InvalidArgument, "AddEvent: user %s is not a member of channel %s", user, streamId)
-		}
-
-		cookie, err := s.Storage.AddEvent(ctx, streamId, envelope)
-		if err != nil {
-			return nil, status.Errorf(codes.Internal, "AddEvent: error adding event to storage: %v", err)
-		}
-		return cookie, nil
-	case *protocol.Payload_ToDevice_:
-		kind, err := view.StreamKind(streamId)
-		if err != nil {
-			return nil, status.Errorf(codes.Internal, "AddEvent: error getting stream kind: %v", err)
-		}
-		if kind != protocol.StreamKind_SK_USER {
-			return nil, status.Errorf(codes.InvalidArgument, "AddEvent: event is a to-device event, but stream is not a user stream")
-		}
-		cookie, err := s.Storage.AddEvent(ctx, streamId, envelope)
-		if err != nil {
-			return nil, status.Errorf(codes.Internal, "AddEvent: error adding event to storage: %v", err)
-		}
-		return cookie, nil
-	default:
-		return nil, status.Errorf(codes.InvalidArgument, "AddEvent: event has no valid payload for type %T", streamEvent.Payload.Payload)
+	// get the streams inception
+	inceptionPayload, err := view.InceptionPayload(streamId)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "AddEvent: error getting inception payload: %v", err)
 	}
+	// make sure the stream event is of the same type as the inception event
+	err = streamEvent.VerifyPayloadTypeMatchesStreamType(inceptionPayload)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "AddEvent: %v", err)
+	}
+
+	// custom business logic...
+	switch payload := streamEvent.Payload.(type) {
+	case *protocol.StreamEvent_ChannelPayload:
+		switch channelPayload := payload.ChannelPayload.Payload.(type) {
+		case *protocol.ChannelPayload_Inception_:
+			return nil, status.Errorf(codes.InvalidArgument, "AddEvent: event is an inception event")
+		case *protocol.ChannelPayload_Membership:
+			membership := channelPayload.Membership
+			return addMembershipEvent(membership, s, ctx, streamId, view, parsedEvent)
+		case *protocol.ChannelPayload_Message_:
+			return addChannelMessage(streamEvent, s, ctx, streamId, view, envelope)
+		default:
+			return nil, status.Errorf(codes.InvalidArgument, "AddEvent: Channel event has no valid payload for type %T", payload.ChannelPayload.Payload)
+		}
+	case *protocol.StreamEvent_SpacePayload:
+		switch spacePayload := payload.SpacePayload.Payload.(type) {
+		case *protocol.SpacePayload_Inception_:
+			return nil, status.Errorf(codes.InvalidArgument, "AddEvent: event is an inception event")
+		case *protocol.SpacePayload_Membership:
+			membership := spacePayload.Membership
+			return addMembershipEvent(membership, s, ctx, streamId, view, parsedEvent)
+		case *protocol.SpacePayload_Channel_:
+			return nil, status.Errorf(codes.InvalidArgument, "AddEvent: adding channels is unimplemented")
+		default:
+			return nil, status.Errorf(codes.InvalidArgument, "AddEvent: Space event has no valid payload for type %T", payload.SpacePayload.Payload)
+		}
+	case *protocol.StreamEvent_UserPayload:
+		switch payload.UserPayload.Payload.(type) {
+		case *protocol.UserPayload_Inception_:
+			return nil, status.Errorf(codes.InvalidArgument, "AddEvent: event is an inception event")
+		case *protocol.UserPayload_UserMembership_:
+			return nil, status.Errorf(codes.InvalidArgument, "AddEvent: adding UserMembership is unimplemented")
+		case *protocol.UserPayload_ToDevice_:
+			return addEventToStorage(s, ctx, streamId, envelope)
+		default:
+			return nil, status.Errorf(codes.InvalidArgument, "AddEvent: User event has no valid payload for type %T", payload.UserPayload.Payload)
+		}
+	case *protocol.StreamEvent_UserSettingsPayload:
+		switch payload.UserSettingsPayload.Payload.(type) {
+		case *protocol.UserSettingsPayload_Inception_:
+			return nil, status.Errorf(codes.InvalidArgument, "AddEvent: event is an inception event")
+		case *protocol.UserSettingsPayload_UserSetting_:
+			return nil, status.Errorf(codes.InvalidArgument, "AddEvent: adding UserSetting is unimplemented")
+		default:
+			return nil, status.Errorf(codes.InvalidArgument, "AddEvent: UserSettings event has no valid payload for type %T", payload.UserSettingsPayload.Payload)
+		}
+	default:
+		return nil, status.Errorf(codes.InvalidArgument, "AddEvent: event has no valid payload for type %T", streamEvent.Payload)
+	}
+}
+
+func addEventToStorage(s *Service, ctx context.Context, streamId string, envelope *protocol.Envelope) ([]byte, error) {
+	cookie, err := s.Storage.AddEvent(ctx, streamId, envelope)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "AddEvent: error adding event to storage: %v", err)
+	}
+	return cookie, nil
+}
+
+func addChannelMessage(streamEvent *protocol.StreamEvent, s *Service, ctx context.Context, streamId string, view *storage.StreamView, envelope *protocol.Envelope) ([]byte, error) {
+	user := common.UserIdFromAddress(streamEvent.CreatorAddress)
+
+	allowed, err := s.Authorization.IsAllowed(
+		ctx,
+		auth.AuthorizationArgs{
+			RoomId:     streamId,
+			UserId:     user,
+			Permission: auth.PermissionWrite,
+		},
+		view,
+	)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "AddEvent: failed to get permissions: %v", err)
+	}
+	if !allowed {
+		return nil, status.Errorf(codes.PermissionDenied, "AddEvent: user %s is not allowed to write to channel %s", user, streamId)
+	}
+
+	// check if user is a member of the channel
+	members, err := view.JoinedUsers(streamId)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "AddEvent: error getting joined users: %v", err)
+	}
+	if _, ok := members[user]; !ok {
+		return nil, status.Errorf(codes.InvalidArgument, "AddEvent: user %s is not a member of channel %s", user, streamId)
+	}
+
+	cookie, err := s.Storage.AddEvent(ctx, streamId, envelope)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "AddEvent: error adding event to storage: %v", err)
+	}
+	return cookie, nil
+}
+
+func addMembershipEvent(membership *protocol.Membership, s *Service, ctx context.Context, streamId string, view *storage.StreamView, parsedEvent *events.ParsedEvent) ([]byte, error) {
+	userId := membership.UserId
+	userStreamId := common.UserStreamIdFromId(userId)
+
+	allowed, err := s.Authorization.IsAllowed(
+		ctx,
+		auth.AuthorizationArgs{
+			RoomId:     streamId,
+			UserId:     userId,
+			Permission: auth.PermissionWrite,
+		},
+		view,
+	)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "AddEvent: failed to get permissions: %v", err)
+	}
+	if !allowed {
+		return nil, status.Errorf(codes.PermissionDenied, "AddEvent: user %s is not allowed to write to stream %s", userId, streamId)
+	}
+
+	cookie, err := s.Storage.AddEvent(ctx, streamId, parsedEvent.Envelope)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "AddEvent: error adding event to storage: %v", err)
+	}
+
+	err = view.AddEvent(parsedEvent.Envelope)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "AddEvent: error adding event to view: %v", err)
+	}
+
+	leaves, err := view.GetAllLeafEvents(ctx)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "AddEvent: error getting all leaf events: %v", err)
+	}
+
+	log.Debug("AddEvent: ", membership.Op)
+	envelope, err := s.makeEnvelopeWithPayload(
+		events.Make_UserPayload_Membership(
+			membership.Op,
+			common.UserIdFromAddress(parsedEvent.Event.CreatorAddress),
+			streamId,
+			&protocol.EventRef{
+				StreamId:  streamId,
+				Hash:      parsedEvent.Envelope.Hash,
+				Signature: parsedEvent.Envelope.Signature,
+			},
+		),
+		leaves,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = s.Storage.AddEvent(ctx, userStreamId, envelope)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "AddEvent: error adding event to storage: %v", err)
+	}
+
+	return cookie, nil
 }
 
 func (s *Service) Info(_ context.Context, request *connect_go.Request[protocol.InfoRequest]) (*connect_go.Response[protocol.InfoResponse], error) {
@@ -374,7 +406,7 @@ func MakeServiceHandler(ctx context.Context, dbUrl string, chainConfig *config.C
 	return pattern, handler
 }
 
-func (s *Service) makeEnvelopeWithPayload(payload *protocol.Payload, prevHashes [][]byte) (*protocol.Envelope, error) {
+func (s *Service) makeEnvelopeWithPayload(payload protocol.IsStreamEvent_Payload, prevHashes [][]byte) (*protocol.Envelope, error) {
 	return events.MakeEnvelopeWithPayload(s.wallet, payload, prevHashes)
 }
 

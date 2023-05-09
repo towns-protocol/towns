@@ -1266,7 +1266,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
                 if (!this.casablancaClient) {
                     throw new Error('Casablanca client not initialized')
                 }
-                await this.casablancaClient.joinChannel(roomId.networkId)
+                await this.casablancaClient.joinStream(roomId.networkId)
                 const stream = await this.casablancaClient.waitForStream(roomId.networkId)
                 return toZionRoomFromStream(stream)
             }

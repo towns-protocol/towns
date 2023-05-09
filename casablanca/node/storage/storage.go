@@ -1,8 +1,8 @@
 package storage
 
 import (
-	"casablanca/node/protocol"
 	"casablanca/node/common"
+	"casablanca/node/protocol"
 	"context"
 	"encoding/binary"
 )

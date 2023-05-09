@@ -63,7 +63,12 @@ message StreamEvent {
     repeated bytes prev_events = 4;
  
     /** Variable-type payload. */
-    Payload payload = 5; 
+    oneof payload {
+        SpacePayload space_payload = 100;
+        ChannelPayload channel_payload = 101;
+        UserPayload user_payload = 102;
+        UserSettingsPayload user_settings_payload = 103;
+    }
 }
 
 /**
@@ -79,29 +84,79 @@ message EventRef {
     bytes signature = 3;
 }
 
-message Payload {
+
+message Membership {
+    MembershipOp op = 1;
+    string user_id = 2;
+}
+
+
+message UserPayload {
     message Inception {
         string stream_id = 1;
-        StreamKind stream_kind = 2;
-        string space_id = 3;
     }
     
-    message UserMembershipOp {
-        MembershipOp op = 1;
-        string stream_id = 2;
+    message UserMembership {
+        string stream_id = 1;
+        EventRef origin_event = 2;
         string inviter_id = 3;
-        EventRef origin_event = 4;
+        MembershipOp op = 4;
     }
     
-    message JoinableStream {
-        MembershipOp op = 1;
-        string user_id = 2;
+    message ToDevice {
+        ToDeviceOp op = 1;
+        bytes value = 2;
+        string device_id = 3;
     }
     
+    oneof payload {
+        Inception inception = 1;
+        UserMembership user_membership = 2;
+        ToDevice to_device = 3;
+    }
+}
+
+
+message SpacePayload {
+    message Inception {
+        string stream_id = 1;
+    }
+
     message Channel {
         ChannelOp op = 1;
         string channel_id = 2;
         EventRef origin_event = 3;
+        
+    }
+
+    oneof payload {
+        Inception inception = 1;
+        Channel channel = 2;
+        Membership membership = 3;
+    }
+}
+
+message ChannelPayload {
+    message Inception {
+        string stream_id = 1;
+        string space_id = 3;
+    }
+
+    message Message {
+        string text = 1;
+    }
+
+    oneof payload {
+        Inception inception = 1;
+        Message message = 2;
+        Membership membership = 3;
+    }
+}
+
+message UserSettingsPayload {
+    message Inception {
+        string stream_id = 1;
+        string space_id = 3;
     }
 
     message UserSetting {
@@ -111,35 +166,11 @@ message Payload {
         optional EventRef origin_event = 4;
     }
 
-    message ToDevice {
-        ToDeviceOp op = 1;
-        bytes value = 2;
-        string device_id = 3;
-    }
-    
-    message Message {
-        string text = 1;
-    }
-    
     oneof payload {
         Inception inception = 1;
-        UserMembershipOp user_membership_op = 2;
-        JoinableStream joinable_stream = 3;
-        Channel channel = 4;
-        Message message = 5;
-        UserSetting user_setting = 6;
-        ToDevice to_device = 7;
+        UserSetting user_setting = 2;
     }
 }
-
-enum StreamKind {
-    SK_UNSPECIFIED = 0;
-    SK_USER = 1;
-    SK_SPACE = 2;
-    SK_CHANNEL = 3;
-    SK_USER_SETTING = 4;
-}
-
 
 enum MembershipOp {
     SO_UNSPECIFIED = 0;
@@ -147,7 +178,6 @@ enum MembershipOp {
     SO_JOIN = 2;
     SO_LEAVE = 3;
 }
-
 
 enum ChannelOp {
     CO_UNSPECIFIED = 0;

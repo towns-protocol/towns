@@ -1,19 +1,17 @@
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
-
-import { AnyMessage, Message, PartialMessage, ScalarType, protoBase64 } from '@bufbuild/protobuf'
+import { AnyMessage, Message, PlainMessage, ScalarType, protoBase64 } from '@bufbuild/protobuf'
 import {
     StreamEvent,
     Envelope,
-    Payload_Inception,
-    Payload,
-    Payload_UserMembershipOp,
-    Payload_JoinableStream,
-    Payload_Channel,
-    Payload_Message,
-    Payload_ToDevice,
     ChannelMessage,
     ChannelMessage_Post_Content_Text,
+    UserPayload_Inception,
+    SpacePayload_Inception,
+    ChannelPayload_Inception,
+    UserSettingsPayload_Inception,
+    Membership,
+    UserPayload_ToDevice,
+    SpacePayload_Channel,
+    ChannelPayload_Message,
 } from '@towns/proto'
 import {
     bytesToHex,
@@ -66,111 +64,176 @@ export const bin_equal = (
     return equalsBytes(a, b)
 }
 
-export const makeInceptionPayload = (
-    value: PartialMessage<Payload_Inception>,
-): PartialMessage<Payload> => {
+export const make_UserPayload_Inception = (
+    value: PlainMessage<UserPayload_Inception>,
+): PlainMessage<StreamEvent>['payload'] => {
     return {
-        payload: {
-            case: 'inception',
-            value,
+        case: 'userPayload',
+        value: {
+            payload: {
+                case: 'inception',
+                value,
+            },
+        },
+    }
+}
+export const make_SpacePayload_Inception = (
+    value: PlainMessage<SpacePayload_Inception>,
+): PlainMessage<StreamEvent>['payload'] => {
+    return {
+        case: 'spacePayload',
+        value: {
+            payload: {
+                case: 'inception',
+                value,
+            },
+        },
+    }
+}
+export const make_ChannelPayload_Inception = (
+    value: PlainMessage<ChannelPayload_Inception>,
+): PlainMessage<StreamEvent>['payload'] => {
+    return {
+        case: 'channelPayload',
+        value: {
+            payload: {
+                case: 'inception',
+                value,
+            },
+        },
+    }
+}
+export const make_UserSettingsPayload_Inception = (
+    value: PlainMessage<UserSettingsPayload_Inception>,
+): PlainMessage<StreamEvent>['payload'] => {
+    return {
+        case: 'userSettingsPayload',
+        value: {
+            payload: {
+                case: 'inception',
+                value,
+            },
         },
     }
 }
 
-export const makeUserMembershipOpPayload = (
-    value: PartialMessage<Payload_UserMembershipOp>,
-): PartialMessage<Payload> => {
+export const make_SpacePayload_Membership = (
+    value: PlainMessage<Membership>,
+): PlainMessage<StreamEvent>['payload'] => {
     return {
-        payload: {
-            case: 'userMembershipOp',
-            value,
+        case: 'spacePayload',
+        value: {
+            payload: {
+                case: 'membership',
+                value,
+            },
         },
     }
 }
 
-export const makeJoinableStreamPayload = (
-    value: PartialMessage<Payload_JoinableStream>,
-): PartialMessage<Payload> => {
+export const make_ChannelPayload_Membership = (
+    value: PlainMessage<Membership>,
+): PlainMessage<StreamEvent>['payload'] => {
     return {
-        payload: {
-            case: 'joinableStream',
-            value,
+        case: 'channelPayload',
+        value: {
+            payload: {
+                case: 'membership',
+                value,
+            },
         },
     }
 }
 
-export const makeToDeviceStreamPayload = (
-    value: PartialMessage<Payload_ToDevice>,
-): PartialMessage<Payload> => {
+export const make_UserPayload_ToDevice = (
+    value: PlainMessage<UserPayload_ToDevice>,
+): PlainMessage<StreamEvent>['payload'] => {
     return {
-        payload: {
-            case: 'toDevice',
-            value,
+        case: 'userPayload',
+        value: {
+            payload: {
+                case: 'toDevice',
+                value,
+            },
         },
     }
 }
 
-export const makeChannelPayload = (
-    value: PartialMessage<Payload_Channel>,
-): PartialMessage<Payload> => {
+export const make_SpacePayload_Channel = (
+    value: PlainMessage<SpacePayload_Channel>,
+): PlainMessage<StreamEvent>['payload'] => {
     return {
-        payload: {
-            case: 'channel',
-            value,
+        case: 'spacePayload',
+        value: {
+            payload: {
+                case: 'channel',
+                value,
+            },
         },
     }
 }
+
 export const getChannelPayload = (
     event: ParsedEvent | StreamEvent | undefined,
-): Payload_Channel | undefined => {
+): SpacePayload_Channel | undefined => {
     if (!isDefined(event)) {
         return undefined
     }
     if ('event' in event) {
         event = event.event as unknown as StreamEvent
     }
-    if (event.payload?.payload.case === 'channel') {
-        return event.payload.payload.value
+    if (event.payload?.case === 'spacePayload') {
+        if (event.payload.value.payload.case === 'channel') {
+            return event.payload.value.payload.value
+        }
     }
     return undefined
 }
 
-export const makeMessagePayload = (
-    value: PartialMessage<Payload_Message>,
-): PartialMessage<Payload> => {
+export const make_ChannelPayload_Message = (
+    value: PlainMessage<ChannelPayload_Message>,
+): PlainMessage<StreamEvent>['payload'] => {
     return {
-        payload: {
-            case: 'message',
-            value,
+        case: 'channelPayload',
+        value: {
+            payload: {
+                case: 'message',
+                value,
+            },
         },
     }
 }
+
 export const getMessagePayload = (
     event: ParsedEvent | StreamEvent | undefined,
-): Payload_Message | undefined => {
+): ChannelPayload_Message | undefined => {
     if (!isDefined(event)) {
         return undefined
     }
     if ('event' in event) {
         event = event.event as unknown as StreamEvent
     }
-    if (event.payload?.payload.case === 'message') {
-        return event.payload.payload.value
+    if (event.payload?.case === 'channelPayload') {
+        if (event.payload.value.payload.case === 'message') {
+            return event.payload.value.payload.value
+        }
     }
     return undefined
 }
 
 export const getToDeviceMessagePayload = (
     event: ParsedEvent | StreamEvent | undefined,
-): Payload_ToDevice | undefined => {
+): UserPayload_ToDevice | undefined => {
     if (!isDefined(event)) {
         return undefined
     }
     if ('event' in event) {
         event = event.event as unknown as StreamEvent
     }
-    if (event.payload?.payload.case === 'toDevice') {
-        return event.payload.payload.value
+    if (event.payload.case === 'userPayload') {
+        if (event.payload.value.payload.case === 'toDevice') {
+            return event.payload.value.payload.value
+        }
     }
     return undefined
 }
@@ -238,6 +301,8 @@ export type Stringify<T extends Message<T>> = Stringify1<T> & Stringify2<T> & St
 export const stringify = <T extends Message<T>>(message: T): Stringify<T> => {
     const ret = message as any
     const type = message.getType()
+    /* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument */
+
     for (const field of type.fields.byNumber()) {
         let value: any // this will be our field value, whether it is member of a oneof or regular field
         const repeated = field.repeated
@@ -279,7 +344,6 @@ export const stringify = <T extends Message<T>>(message: T): Stringify<T> => {
             }
         }
     }
+    /* eslint-enable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument */
     return ret as Stringify<T>
 }
-
-export type StringifiedPayloadValueType = Stringify<Payload>['payload']['value']

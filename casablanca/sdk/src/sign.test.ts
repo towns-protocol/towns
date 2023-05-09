@@ -1,13 +1,13 @@
 import _ from 'lodash'
 import { checkDelegateSig, unpackEnvelope, makeEvent, SignerContext } from './sign'
-import { bin_fromHexString, bin_toHexString } from './types'
+import { bin_fromHexString, bin_toHexString, make_UserPayload_Inception } from './types'
 import debug from 'debug'
-import { StreamKind, Payload, Payload_Message } from '@towns/proto'
 import { PlainMessage } from '@bufbuild/protobuf'
 import { makeUserStreamId } from './id'
 import { makeTownsDelegateSig, makeOldTownsDelegateSig, publicKeyToAddress } from './crypto'
 import { getPublicKey } from 'ethereum-cryptography/secp256k1'
 import { ethers } from 'ethers'
+import { ChannelPayload_Message, StreamEvent } from '@towns/proto'
 
 const log = debug('test:sign')
 
@@ -110,13 +110,16 @@ describe('sign', () => {
             const context = await c()
             const context2 = await c2()
 
-            const message: PlainMessage<Payload_Message> = {
+            const message: PlainMessage<ChannelPayload_Message> = {
                 text: 'Hello, World!',
             }
-            const payload: PlainMessage<Payload> = {
-                payload: {
-                    case: 'message',
-                    value: message,
+            const payload: PlainMessage<StreamEvent>['payload'] = {
+                case: 'channelPayload',
+                value: {
+                    payload: {
+                        case: 'message',
+                        value: message,
+                    },
                 },
             }
             const event = await makeEvent(context, payload, [hash])
@@ -160,25 +163,20 @@ describe('sign', () => {
             expect(
                 await makeEvent(
                     context,
-                    {
-                        payload: {
-                            case: 'inception',
-                            value: {
-                                streamId: makeUserStreamId(
-                                    '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
-                                ),
-                                streamKind: StreamKind.SK_USER,
-                            },
-                        },
-                    },
+                    make_UserPayload_Inception({
+                        streamId: makeUserStreamId('0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'),
+                    }),
                     [],
                 ),
             ).toBeDefined()
 
-            const payload: PlainMessage<Payload> = {
-                payload: {
-                    case: 'message',
-                    value: { text: 'Hello, World!' },
+            const payload: PlainMessage<StreamEvent>['payload'] = {
+                case: 'channelPayload',
+                value: {
+                    payload: {
+                        case: 'message',
+                        value: { text: 'Hello, World!' },
+                    },
                 },
             }
             expect(await makeEvent(context, payload, [hash])).toBeDefined()

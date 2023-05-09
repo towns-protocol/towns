@@ -8,13 +8,15 @@ import (
 	. "casablanca/node/protocol"
 )
 
-func MakeStreamEvent(wallet *crypto.Wallet, payload *Payload, prevHashes [][]byte) *StreamEvent {
-	return &StreamEvent{
+func MakeStreamEvent(wallet *crypto.Wallet, payload protocol.IsStreamEvent_Payload, prevHashes [][]byte) *StreamEvent {
+	event := &StreamEvent{
 		CreatorAddress: wallet.Address.Bytes(),
 		Salt:           []byte("salt"), //TODO: do we really need salt in non-inception events? If needed, randomize it
 		PrevEvents:     prevHashes,
 		Payload:        payload,
 	}
+
+	return event
 }
 
 func MakeEnvelopeWithEvent(wallet *crypto.Wallet, streamEvent *StreamEvent) (*Envelope, error) {
@@ -36,86 +38,124 @@ func MakeEnvelopeWithEvent(wallet *crypto.Wallet, streamEvent *StreamEvent) (*En
 	}, nil
 }
 
-func MakeEnvelopeWithPayload(wallet *crypto.Wallet, payload *Payload, prevHashes [][]byte) (*Envelope, error) {
+func MakeEnvelopeWithPayload(wallet *crypto.Wallet, payload protocol.IsStreamEvent_Payload, prevHashes [][]byte) (*Envelope, error) {
 	streamEvent := MakeStreamEvent(wallet, payload, prevHashes)
 
 	return MakeEnvelopeWithEvent(wallet, streamEvent)
 }
 
-func WrapPayload_Inception(inception *Payload_Inception) *Payload {
-	return &Payload{
-		Payload: &Payload_Inception_{Inception: inception},
+func Make_UserPayload_Inception(streamId string) *StreamEvent_UserPayload {
+	return &StreamEvent_UserPayload{
+		UserPayload: &UserPayload{
+			Payload: &UserPayload_Inception_{
+				Inception: &UserPayload_Inception{
+					StreamId: streamId,
+				},
+			},
+		},
 	}
 }
 
-func MakePayload_Inception(streamId string, streamKind StreamKind, spaceId string) *Payload {
-	return WrapPayload_Inception(
-		&Payload_Inception{
-			StreamId:   streamId,
-			StreamKind: streamKind,
-			SpaceId:    spaceId,
+func Make_ChannelPayload_Inception(streamId string, spaceId string) *StreamEvent_ChannelPayload {
+	return &StreamEvent_ChannelPayload{
+		ChannelPayload: &ChannelPayload{
+			Payload: &ChannelPayload_Inception_{
+				Inception: &ChannelPayload_Inception{
+					StreamId: streamId,
+					SpaceId:  spaceId,
+				},
+			},
 		},
-	)
-}
-
-func WrapPayload_UserMembershipOp(op *Payload_UserMembershipOp) *Payload {
-	return &Payload{
-		Payload: &Payload_UserMembershipOp_{UserMembershipOp: op},
 	}
 }
 
-func MakePayload_UserMembershipOp(op MembershipOp, streamId string, inviterId string, originEvent *EventRef) *Payload {
-	return WrapPayload_UserMembershipOp(
-		&Payload_UserMembershipOp{
-			Op:          op,
-			StreamId:    streamId,
-			InviterId:   inviterId,
-			OriginEvent: originEvent,
+func Make_SpacePayload_Inception(streamId string) *StreamEvent_SpacePayload {
+	return &StreamEvent_SpacePayload{
+		SpacePayload: &SpacePayload{
+			Payload: &SpacePayload_Inception_{
+				Inception: &SpacePayload_Inception{
+					StreamId: streamId,
+				},
+			},
 		},
-	)
-}
-
-func WrapPayload_Channel(channel *Payload_Channel) *Payload {
-	return &Payload{
-		Payload: &Payload_Channel_{Channel: channel},
 	}
 }
 
-func MakePayload_Channel(op ChannelOp, channelId string, originEvent *EventRef) *Payload {
-	return WrapPayload_Channel(
-		&Payload_Channel{
-			Op:          op,
-			ChannelId:   channelId,
-			OriginEvent: originEvent,
+func Make_UserSettingsPayload_Inception(streamId string) *StreamEvent_UserSettingsPayload {
+	return &StreamEvent_UserSettingsPayload{
+		UserSettingsPayload: &UserSettingsPayload{
+			Payload: &UserSettingsPayload_Inception_{
+				Inception: &UserSettingsPayload_Inception{
+					StreamId: streamId,
+				},
+			},
 		},
-	)
-}
-
-func WrapPayload_JoinableStream(op *Payload_JoinableStream) *Payload {
-	return &Payload{
-		Payload: &Payload_JoinableStream_{JoinableStream: op},
 	}
 }
 
-func MakePayload_JoinableStream(op MembershipOp, userId string) *Payload {
-	return WrapPayload_JoinableStream(
-		&Payload_JoinableStream{
-			Op:     op,
-			UserId: userId,
+func Make_ChannelPayload_Membership(op protocol.MembershipOp, userId string) *StreamEvent_ChannelPayload {
+	return &StreamEvent_ChannelPayload{
+		ChannelPayload: &ChannelPayload{
+			Payload: &ChannelPayload_Membership{
+				Membership: &Membership{
+					Op:     op,
+					UserId: userId,
+				},
+			},
 		},
-	)
-}
-
-func WrapPayload_Message(message *Payload_Message) *Payload {
-	return &Payload{
-		Payload: &Payload_Message_{Message: message},
 	}
 }
 
-func MakePayload_Message(content string) *Payload {
-	return WrapPayload_Message(
-		&protocol.Payload_Message{
-			Text: content,
+func Make_SpacePayload_Membership(op MembershipOp, userId string) *StreamEvent_SpacePayload {
+	return &StreamEvent_SpacePayload{
+		SpacePayload: &SpacePayload{
+			Payload: &protocol.SpacePayload_Membership{
+				Membership: &Membership{
+					Op:     op,
+					UserId: userId,
+				},
+			},
 		},
-	)
+	}
+}
+
+func Make_UserPayload_Membership(op protocol.MembershipOp, inviterId string, streamId string, originEvent *protocol.EventRef) *StreamEvent_UserPayload {
+	return &StreamEvent_UserPayload{
+		UserPayload: &UserPayload{
+			Payload: &protocol.UserPayload_UserMembership_{
+				UserMembership: &UserPayload_UserMembership{
+					StreamId:    streamId,
+					OriginEvent: originEvent,
+					InviterId:   inviterId,
+					Op:          op,
+				},
+			},
+		},
+	}
+}
+
+func Make_SpacePayload_Channel(op ChannelOp, channelId string, originEvent *protocol.EventRef) *StreamEvent_SpacePayload {
+	return &StreamEvent_SpacePayload{
+		SpacePayload: &SpacePayload{
+			Payload: &protocol.SpacePayload_Channel_{
+				Channel: &SpacePayload_Channel{
+					Op:          op,
+					ChannelId:   channelId,
+					OriginEvent: originEvent,
+				},
+			},
+		},
+	}
+}
+
+func Make_ChannelPayload_Message(content string) *StreamEvent_ChannelPayload {
+	return &StreamEvent_ChannelPayload{
+		ChannelPayload: &ChannelPayload{
+			Payload: &ChannelPayload_Message_{
+				Message: &protocol.ChannelPayload_Message{
+					Text: content,
+				},
+			},
+		},
+	}
 }

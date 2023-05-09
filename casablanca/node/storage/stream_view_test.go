@@ -15,7 +15,7 @@ func TestLoad(t *testing.T) {
 	rollup := storage.NewView(func() ([]*protocol.Envelope, error) {
 		inception, err := events.MakeEnvelopeWithPayload(
 			wallet,
-			events.MakePayload_Inception("streamid$1", protocol.StreamKind_SK_USER, ""),
+			events.Make_UserPayload_Inception("streamid$1"),
 			nil,
 		)
 		if err != nil {

@@ -1,7 +1,20 @@
-import { ChannelOp, StreamKind, MembershipOp, Err } from '@towns/proto'
+import {
+    ChannelOp,
+    MembershipOp,
+    Err,
+    ChannelPayload_Inception,
+    StreamEvent,
+    SpacePayload_Inception,
+    UserSettingsPayload_Inception,
+    UserPayload_Inception,
+    PayloadCaseType,
+    Membership,
+    SpacePayload_Channel,
+    UserPayload_UserMembership,
+} from '@towns/proto'
 import TypedEmitter from 'typed-emitter'
-import { check, isDefined, throwWithCode } from './check'
-import { ParsedEvent } from './types'
+import { check, checkNever, isDefined, throwWithCode } from './check'
+import { ParsedEvent, Stringify } from './types'
 
 export const findLeafEventHashes = (streamId: string, events: ParsedEvent[]): string[] => {
     check(events.length > 0, `Stream is empty ${streamId}`, Err.STREAM_BAD_HASHES)
@@ -16,9 +29,28 @@ export const findLeafEventHashes = (streamId: string, events: ParsedEvent[]): st
     return [...hashes]
 }
 
-// TOOO: add FullEvents to emitted events, tigheten types to specific payload for ease of use.
 export type StreamEvents = {
-    streamInception: (streamId: string, streamKind: StreamKind) => void
+    streamInception: (streamId: string, event: Stringify<StreamEvent>) => void
+    spaceInception: (
+        streamId: string,
+        event: Stringify<StreamEvent>,
+        inceptionEvent: Stringify<SpacePayload_Inception>,
+    ) => void
+    channelInception: (
+        streamId: string,
+        event: Stringify<StreamEvent>,
+        inceptionEvent: Stringify<ChannelPayload_Inception>,
+    ) => void
+    userInception: (
+        streamId: string,
+        event: Stringify<StreamEvent>,
+        inceptionEvent: Stringify<UserPayload_Inception>,
+    ) => void
+    userSettingsInception: (
+        streamId: string,
+        event: Stringify<StreamEvent>,
+        inceptionEvent: Stringify<UserSettingsPayload_Inception>,
+    ) => void
     streamNewUserJoined: (streamId: string, userId: string) => void
     streamNewUserInvited: (streamId: string, userId: string) => void
     streamUserLeft: (streamId: string, userId: string) => void
@@ -29,16 +61,19 @@ export type StreamEvents = {
     spaceChannelDeleted: (spaceId: string, channelId: string) => void
     channelNewMessage: (channelId: string, message: ParsedEvent) => void
     toDeviceMessage: (streamId: string, deviceId: string, value: ParsedEvent) => void
-
-    streamInitialized: (streamId: string, streamKind: StreamKind, events: ParsedEvent[]) => void
-    streamUpdated: (streamId: string, streamKind: StreamKind, events: ParsedEvent[]) => void
+    streamInitialized: (
+        streamId: string,
+        payloadKind: PayloadCaseType,
+        events: ParsedEvent[],
+    ) => void
+    streamUpdated: (streamId: string, payloadKind: PayloadCaseType, events: ParsedEvent[]) => void
 }
 
 export type StreamEventKeys = keyof StreamEvents
 
 export class StreamStateView {
     readonly streamId: string
-    readonly streamKind: StreamKind
+    readonly payloadKind: PayloadCaseType
 
     readonly timeline: ParsedEvent[] = []
     readonly events = new Map<string, ParsedEvent>()
@@ -61,20 +96,14 @@ export class StreamStateView {
     constructor(streamId: string, inceptionEvent: ParsedEvent | undefined) {
         check(inceptionEvent !== undefined, `Stream is empty ${streamId}`, Err.STREAM_EMPTY)
         check(
-            inceptionEvent.event.payload?.payload.case === 'inception',
+            inceptionEvent.event.payload?.value?.payload.case === 'inception',
             `First event is not inception ${streamId}`,
             Err.STREAM_BAD_EVENT,
         )
-        const inceptionPayload = inceptionEvent.event.payload?.payload.value
+        const inceptionPayload = inceptionEvent.event.payload?.value?.payload.value
         check(
             isDefined(inceptionPayload),
             `First event is not inception ${streamId}`,
-            Err.STREAM_BAD_EVENT,
-        )
-        check(
-            isDefined(inceptionPayload.streamKind) &&
-                inceptionPayload.streamKind !== StreamKind.SK_UNSPECIFIED,
-            `Unknown stream kind ${streamId}`,
             Err.STREAM_BAD_EVENT,
         )
         check(
@@ -82,9 +111,23 @@ export class StreamStateView {
             `Non-matching stream id in inception ${streamId} != ${inceptionPayload.streamId}`,
             Err.STREAM_BAD_EVENT,
         )
+
         this.streamId = streamId
-        this.streamKind = inceptionPayload.streamKind
-        this.parentSpaceId = inceptionPayload.spaceId !== '' ? inceptionPayload.spaceId : undefined
+        this.payloadKind = inceptionEvent.event.payload.case
+
+        switch (inceptionEvent.event.payload.case) {
+            case 'channelPayload':
+                this.parentSpaceId = (inceptionPayload as ChannelPayload_Inception).spaceId
+                break
+            case 'spacePayload':
+            case 'userPayload':
+            case 'userSettingsPayload':
+            case undefined:
+                this.parentSpaceId = undefined
+                break
+            default:
+                checkNever(inceptionEvent.event.payload)
+        }
     }
 
     private addEvent(event: ParsedEvent, emitter?: TypedEmitter<StreamEvents>): void {
@@ -96,87 +139,180 @@ export class StreamStateView {
             this.leafEventHashes.delete(prev)
         }
 
-        const payload = event.event.payload?.payload
+        const payload = event.event.payload
         check(isDefined(payload), `Event has no payload ${event.hashStr}`, Err.STREAM_BAD_EVENT)
 
-        switch (payload.case) {
-            case 'inception':
-                emitter?.emit('streamInception', this.streamId, payload.value.streamKind)
-                break
-            case 'userMembershipOp':
-                {
-                    const { op, streamId } = payload.value
-                    switch (op) {
-                        case MembershipOp.SO_INVITE:
-                            this.userInvitedStreams.add(streamId)
-                            emitter?.emit('userInvitedToStream', streamId)
+        if (payload.value?.payload?.case === 'inception') {
+            emitter?.emit('streamInception', this.streamId, event.event)
+        }
+
+        try {
+            switch (payload.case) {
+                case 'channelPayload':
+                    switch (payload.value.payload.case) {
+                        case 'inception':
+                            emitter?.emit(
+                                'channelInception',
+                                this.streamId,
+                                event.event,
+                                payload.value.payload.value,
+                            )
                             break
-                        case MembershipOp.SO_JOIN:
-                            this.userJoinedStreams.add(streamId)
-                            emitter?.emit('userJoinedStream', streamId)
+                        case 'message':
+                            this.messages.set(event.hashStr, event)
+                            emitter?.emit('channelNewMessage', this.streamId, event)
                             break
-                        case MembershipOp.SO_LEAVE:
-                            emitter?.emit('userLeftStream', streamId)
-                            this.userJoinedStreams.delete(streamId)
+                        case 'membership':
+                            this.addMembershipEvent(payload.value.payload.value, emitter)
                             break
-                        default:
-                            throwWithCode(`Unknown userMembershipOp ${op}`, Err.STREAM_BAD_EVENT)
-                    }
-                }
-                break
-            case 'joinableStream':
-                {
-                    const { op, userId } = payload.value
-                    switch (op) {
-                        case MembershipOp.SO_INVITE:
-                            this.invitedUsers.add(userId)
-                            emitter?.emit('streamNewUserInvited', this.streamId, userId)
-                            break
-                        case MembershipOp.SO_JOIN:
-                            this.joinedUsers.add(userId)
-                            emitter?.emit('streamNewUserJoined', this.streamId, userId)
-                            break
-                        case MembershipOp.SO_LEAVE:
-                            this.joinedUsers.delete(userId)
-                            this.invitedUsers.delete(userId)
-                            emitter?.emit('streamUserLeft', this.streamId, userId)
+                        case undefined:
                             break
                         default:
-                            throwWithCode(`Unknown joinableStream ${op}`, Err.STREAM_BAD_EVENT)
+                            checkNever(payload.value.payload)
                     }
-                }
-                break
-            case 'channel':
-                {
-                    const { op, channelId } = payload.value
-                    switch (op) {
-                        case ChannelOp.CO_CREATED:
-                            this.spaceChannels.add(channelId)
-                            emitter?.emit('spaceNewChannelCreated', this.streamId, channelId)
+                    break
+                case 'spacePayload':
+                    switch (payload.value.payload.case) {
+                        case 'inception':
+                            emitter?.emit(
+                                'spaceInception',
+                                this.streamId,
+                                event.event,
+                                payload.value.payload.value,
+                            )
                             break
-                        case ChannelOp.CO_DELETED:
-                            emitter?.emit('spaceChannelDeleted', this.streamId, channelId)
-                            this.spaceChannels.delete(channelId)
+                        case 'channel':
+                            this.addChannelEvent(payload.value.payload.value, emitter)
+                            break
+                        case 'membership':
+                            this.addMembershipEvent(payload.value.payload.value, emitter)
+                            break
+                        case undefined:
                             break
                         default:
-                            throwWithCode(`Unknown channel ${op}`, Err.STREAM_BAD_EVENT)
+                            checkNever(payload.value.payload)
                     }
-                }
+                    break
+                case 'userPayload':
+                    switch (payload.value.payload.case) {
+                        case 'inception':
+                            emitter?.emit(
+                                'userInception',
+                                this.streamId,
+                                event.event,
+                                payload.value.payload.value,
+                            )
+                            break
+                        case 'userMembership':
+                            this.addUserMembershipEvent(payload.value.payload.value, emitter)
+                            break
+                        case 'toDevice':
+                            {
+                                const { deviceId } = payload.value.payload.value
+                                emitter?.emit('toDeviceMessage', this.streamId, deviceId, event)
+                                // TODO: filter by deviceId and only store current deviceId's events
+                                this.toDeviceMessages.push(event)
+                            }
+                            break
+                        case undefined:
+                            break
+                        default:
+                            checkNever(payload.value.payload)
+                    }
+                    break
+                case 'userSettingsPayload':
+                    switch (payload.value.payload.case) {
+                        case 'inception':
+                            emitter?.emit(
+                                'userSettingsInception',
+                                this.streamId,
+                                event.event,
+                                payload.value.payload.value,
+                            )
+                            break
+                        case 'userSetting':
+                            break
+                        case undefined:
+                            break
+                        default:
+                            checkNever(payload.value.payload)
+                    }
+                    break
+                case undefined:
+                    break
+                default:
+                    checkNever(payload)
+            }
+        } catch (e) {
+            console.error(`Error processing event ${event.hashStr}`, e)
+            // throwWithCode(`Error processing event`, Err.STREAM_BAD_EVENT) // todo the old code threw, but it's client side parsing, so why?
+        }
+    }
+
+    addChannelEvent(
+        payload: Stringify<SpacePayload_Channel>,
+        emitter?: TypedEmitter<StreamEvents>,
+    ): void {
+        const { op, channelId } = payload
+        switch (op) {
+            case ChannelOp.CO_CREATED:
+                this.spaceChannels.add(channelId)
+                emitter?.emit('spaceNewChannelCreated', this.streamId, channelId)
                 break
-            case 'message':
-                this.messages.set(event.hashStr, event)
-                emitter?.emit('channelNewMessage', this.streamId, event)
-                break
-            case 'toDevice':
-                {
-                    const { deviceId } = payload.value
-                    emitter?.emit('toDeviceMessage', this.streamId, deviceId, event)
-                    // TODO: filter by deviceId and only store current deviceId's events
-                    this.toDeviceMessages.push(event)
-                }
+            case ChannelOp.CO_DELETED:
+                emitter?.emit('spaceChannelDeleted', this.streamId, channelId)
+                this.spaceChannels.delete(channelId)
                 break
             default:
-                throwWithCode(`Unhandled event kind`, Err.INTERNAL_ERROR_SWITCH)
+                throwWithCode(`Unknown channel ${op}`, Err.STREAM_BAD_EVENT)
+        }
+    }
+
+    addUserMembershipEvent(
+        payload: Stringify<UserPayload_UserMembership>,
+        emitter?: TypedEmitter<StreamEvents>,
+    ): void {
+        const { op, streamId } = payload
+        switch (op) {
+            case MembershipOp.SO_INVITE:
+                this.userInvitedStreams.add(streamId)
+                emitter?.emit('userInvitedToStream', streamId)
+                break
+            case MembershipOp.SO_JOIN:
+                this.userJoinedStreams.add(streamId)
+                emitter?.emit('userJoinedStream', streamId)
+                break
+            case MembershipOp.SO_LEAVE:
+                emitter?.emit('userLeftStream', streamId)
+                this.userJoinedStreams.delete(streamId)
+                break
+            case MembershipOp.SO_UNSPECIFIED:
+                break
+            default:
+                checkNever(op)
+        }
+    }
+
+    addMembershipEvent(payload: Stringify<Membership>, emitter?: TypedEmitter<StreamEvents>): void {
+        const { op, userId } = payload
+        switch (op) {
+            case MembershipOp.SO_INVITE:
+                this.invitedUsers.add(userId)
+                emitter?.emit('streamNewUserInvited', this.streamId, userId)
+                break
+            case MembershipOp.SO_JOIN:
+                this.joinedUsers.add(userId)
+                emitter?.emit('streamNewUserJoined', this.streamId, userId)
+                break
+            case MembershipOp.SO_LEAVE:
+                this.joinedUsers.delete(userId)
+                this.invitedUsers.delete(userId)
+                emitter?.emit('streamUserLeft', this.streamId, userId)
+                break
+            case MembershipOp.SO_UNSPECIFIED:
+                break
+            default:
+                checkNever(op)
         }
     }
 
@@ -186,9 +322,9 @@ export class StreamStateView {
         }
         if (emitter !== undefined) {
             if (init ?? false) {
-                emitter.emit('streamInitialized', this.streamId, this.streamKind, events)
+                emitter.emit('streamInitialized', this.streamId, this.payloadKind, events)
             } else {
-                emitter.emit('streamUpdated', this.streamId, this.streamKind, events)
+                emitter.emit('streamUpdated', this.streamId, this.payloadKind, events)
             }
         }
     }

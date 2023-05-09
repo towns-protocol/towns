@@ -1,9 +1,9 @@
-import { StreamKind } from '@towns/proto'
 import debug from 'debug'
 import { Client } from './client'
 import { genId, makeChannelStreamId, makeSpaceStreamId } from './id'
 import { getMessagePayloadContent_Text, getToDeviceMessagePayload, ParsedEvent } from './types'
 import { makeDonePromise, makeTestClient } from './util.test'
+import { PayloadCaseType } from '@towns/proto'
 
 const log = debug('test')
 
@@ -43,10 +43,10 @@ describe('clientTest', () => {
             })
         }
 
-        const onStreamInitialized = (streamId: string, streamKind: StreamKind) => {
+        const onStreamInitialized = (streamId: string, streamKind: PayloadCaseType) => {
             log('streamInitialized', streamId, streamKind)
             done.run(() => {
-                if (streamKind === StreamKind.SK_CHANNEL) {
+                if (streamKind === 'channelPayload') {
                     const channel = bobsAnotherClient.stream(streamId)!
                     log('channel content')
                     log(channel.rollup)
@@ -84,10 +84,10 @@ describe('clientTest', () => {
             })
         }
 
-        const onStreamInitialized = (streamId: string, streamKind: StreamKind) => {
+        const onStreamInitialized = (streamId: string, streamKind: PayloadCaseType) => {
             log('streamInitialized', streamId, streamKind)
             done.run(() => {
-                if (streamKind === StreamKind.SK_CHANNEL) {
+                if (streamKind === 'channelPayload') {
                     const channel = bobsClient.stream(streamId)!
                     log('channel content')
                     log(channel.rollup)
@@ -197,7 +197,7 @@ describe('clientTest', () => {
             log('userInvitedToStream', 'Alice', streamId)
             aliceJoined.runAndDoneAsync(async () => {
                 expect(streamId).toBe(bobsChannelId)
-                await expect(alicesClient.joinChannel(streamId)).toResolve()
+                await expect(alicesClient.joinStream(streamId)).toResolve()
             })
         })
 

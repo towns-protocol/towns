@@ -1,8 +1,6 @@
 import { PartialMessage, PlainMessage } from '@bufbuild/protobuf'
 import {
-    Payload,
     StreamAndCookie,
-    StreamKind,
     MembershipOp,
     ToDeviceOp,
     SyncPos,
@@ -15,6 +13,7 @@ import {
     ChannelMessage_Post_Content_BlockTxn,
     ChannelMessage_Reaction,
     ChannelMessage_Redaction,
+    StreamEvent,
 } from '@towns/proto'
 import debug from 'debug'
 import EventEmitter from 'events'
@@ -35,10 +34,13 @@ import {
     ParsedEvent,
     bin_equal,
     bin_toBase64,
-    makeInceptionPayload,
-    makeJoinableStreamPayload,
-    makeMessagePayload,
-    makeToDeviceStreamPayload,
+    make_ChannelPayload_Inception,
+    make_ChannelPayload_Membership,
+    make_ChannelPayload_Message,
+    make_SpacePayload_Inception,
+    make_SpacePayload_Membership,
+    make_UserPayload_Inception,
+    make_UserPayload_ToDevice,
 } from './types'
 
 function assert(condition: any, message?: string): asserts condition {
@@ -182,14 +184,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
         const streamId = makeUserStreamId(this.userId)
 
         const events = [
-            await makeEvent(
-                this.signerContext,
-                makeInceptionPayload({
-                    streamId,
-                    streamKind: StreamKind.SK_USER,
-                }),
-                [],
-            ),
+            await makeEvent(this.signerContext, make_UserPayload_Inception({ streamId }), []),
         ]
         const { syncCookie } = await this.rpcClient.createStream({
             events,
@@ -245,15 +240,14 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
         const streamId = spaceId
         const inceptionEvent = await makeEvent(
             this.signerContext,
-            makeInceptionPayload({
+            make_SpacePayload_Inception({
                 streamId,
-                streamKind: StreamKind.SK_SPACE,
             }),
             [],
         )
         const joinEvent = await makeEvent(
             this.signerContext,
-            makeJoinableStreamPayload({
+            make_SpacePayload_Membership({
                 userId: this.userId,
                 op: MembershipOp.SO_JOIN,
             }),
@@ -276,16 +270,15 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
 
         const inceptionEvent = await makeEvent(
             this.signerContext,
-            makeInceptionPayload({
+            make_ChannelPayload_Inception({
                 streamId: channelId,
-                streamKind: StreamKind.SK_CHANNEL,
                 spaceId,
             }),
             [],
         )
         const joinEvent = await makeEvent(
             this.signerContext,
-            makeJoinableStreamPayload({
+            make_ChannelPayload_Membership({
                 userId: this.userId,
                 op: MembershipOp.SO_JOIN,
             }),
@@ -526,12 +519,12 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
 
     async sendChannelMessage(
         streamId: string,
-        payload: PartialMessage<ChannelMessage>['payload'],
+        payload: PlainMessage<ChannelMessage>['payload'],
     ): Promise<void> {
         const channelMessage = new ChannelMessage({ payload: payload })
         return this.makeEventAndAddToStream(
             streamId,
-            makeMessagePayload({
+            make_ChannelPayload_Message({
                 text: channelMessage.toJsonString(),
             }),
             'sendMessage',
@@ -666,28 +659,53 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
     }
 
     async inviteUser(streamId: string, userId: string): Promise<void> {
-        return this.makeEventAndAddToStream(
-            streamId,
-            makeJoinableStreamPayload({
-                op: MembershipOp.SO_INVITE,
-                userId, // TODO: USER_ID: other encoding?
-            }),
-            'inviteUser',
-        )
+        if (isSpaceStreamId(streamId)) {
+            return this.makeEventAndAddToStream(
+                streamId,
+                make_SpacePayload_Membership({
+                    op: MembershipOp.SO_INVITE,
+                    userId, // TODO: USER_ID: other encoding?
+                }),
+                'inviteUser',
+            )
+        } else if (isChannelStreamId(streamId)) {
+            return this.makeEventAndAddToStream(
+                streamId,
+                make_ChannelPayload_Membership({
+                    op: MembershipOp.SO_INVITE,
+                    userId, // TODO: USER_ID: other encoding?
+                }),
+                'inviteUser',
+            )
+        } else {
+            throw new Error('invalid streamId')
+        }
     }
 
-    // TODO: is it possible to join a space?
-    async joinChannel(streamId: string): Promise<void> {
-        this.logCall('joinChannel', streamId)
+    async joinStream(streamId: string): Promise<void> {
+        this.logCall('joinStream', streamId)
         await this.initStream(streamId)
-        return this.makeEventAndAddToStream(
-            streamId,
-            makeJoinableStreamPayload({
-                op: MembershipOp.SO_JOIN,
-                userId: this.userId,
-            }),
-            'joinChannel',
-        )
+        if (isChannelStreamId(streamId)) {
+            return this.makeEventAndAddToStream(
+                streamId,
+                make_ChannelPayload_Membership({
+                    op: MembershipOp.SO_JOIN,
+                    userId: this.userId,
+                }),
+                'joinChannel',
+            )
+        } else if (isSpaceStreamId(streamId)) {
+            return this.makeEventAndAddToStream(
+                streamId,
+                make_SpacePayload_Membership({
+                    op: MembershipOp.SO_JOIN,
+                    userId: this.userId,
+                }),
+                'joinSpace',
+            )
+        } else {
+            throw new Error('invalid streamId')
+        }
     }
 
     async sendToDevicesMessage(userId: string, event: object): Promise<void[]> {
@@ -703,7 +721,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
                 this.logCall(`toDevice ${deviceId}, streamId ${streamId}, userId ${userId}`)
                 return this.makeEventAndAddToStream(
                     streamId,
-                    makeToDeviceStreamPayload({
+                    make_UserPayload_ToDevice({
                         op: ToDeviceOp.TDO_TO_DEVICE,
                         // todo: this should use client protobuf not JSON
                         value: envelope,
@@ -727,7 +745,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
         const envelope = encoder.encode(JSON.stringify(event))
         return this.makeEventAndAddToStream(
             streamId,
-            makeToDeviceStreamPayload({
+            make_UserPayload_ToDevice({
                 op: ToDeviceOp.TDO_TO_DEVICE,
                 value: envelope,
                 deviceId: deviceId,
@@ -744,7 +762,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
 
     async makeEventAndAddToStream(
         streamId: string,
-        payload: Payload | PartialMessage<Payload>,
+        payload: PlainMessage<StreamEvent>['payload'],
         method?: string,
     ): Promise<void> {
         // TODO: filter this.logged payload for PII reasons

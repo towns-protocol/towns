@@ -4,8 +4,8 @@ import {
     bin_fromHexString,
     bin_toBase64,
     bin_fromBase64,
-    makeJoinableStreamPayload,
     stringify,
+    make_SpacePayload_Membership,
 } from './types'
 
 describe('types', () => {
@@ -13,7 +13,7 @@ describe('types', () => {
         const msg = new StreamEvent({
             creatorAddress: bin_fromHexString('0123456789abcdef'),
             prevEvents: [bin_fromHexString('0123456789abcdef'), bin_fromHexString('0123456789')],
-            payload: makeJoinableStreamPayload({
+            payload: make_SpacePayload_Membership({
                 op: MembershipOp.SO_JOIN,
                 userId: makeUserStreamId('0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'),
             }),
@@ -29,7 +29,9 @@ describe('types', () => {
         expect(s.delegateSigStr).toEqual('')
         expect(s.payload).toBeDefined()
         expect(
-            s.payload!.payload.case === 'joinableStream' ? s.payload!.payload.value.userId : '',
+            s.payload.case === 'spacePayload' && s.payload.value.payload.case === 'membership'
+                ? s.payload.value.payload.value.userId
+                : '',
         ).toEqual('00-0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa')
     })
 

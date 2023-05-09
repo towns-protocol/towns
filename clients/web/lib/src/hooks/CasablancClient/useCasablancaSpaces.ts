@@ -1,9 +1,9 @@
 import { Client as CasablancaClient, ParsedEvent, Stream } from '@towns/sdk'
 import { useEffect, useState } from 'react'
 import { makeRoomIdentifier } from '../../types/room-identifier'
-import { StreamKind } from '@towns/proto'
 import { SpaceItem } from '../../types/zion-types'
 import isEqual from 'lodash/isEqual'
+import { PayloadCaseType } from '@towns/proto'
 
 export function useCasablancaSpaces(casablancaClient?: CasablancaClient): SpaceItem[] {
     const [spaces, setSpaces] = useState<SpaceItem[]>([])
@@ -15,7 +15,7 @@ export function useCasablancaSpaces(casablancaClient?: CasablancaClient): SpaceI
 
         const updateSpaces = () => {
             const streams = Array.from(casablancaClient.streams.values())
-                .filter((stream: Stream) => stream.rollup.streamKind === StreamKind.SK_SPACE)
+                .filter((stream: Stream) => stream.rollup.payloadKind === 'spacePayload')
                 .sort((a: Stream, b: Stream) => a.rollup.streamId.localeCompare(b.rollup.streamId))
                 .map(
                     (stream: Stream) =>
@@ -34,8 +34,12 @@ export function useCasablancaSpaces(casablancaClient?: CasablancaClient): SpaceI
             })
         }
 
-        const onStreamChange = (_streamId: string, kind: StreamKind, _messages: ParsedEvent[]) => {
-            if (kind === StreamKind.SK_SPACE) {
+        const onStreamChange = (
+            _streamId: string,
+            kind: PayloadCaseType,
+            _messages: ParsedEvent[],
+        ) => {
+            if (kind === 'spacePayload') {
                 updateSpaces()
             }
         }

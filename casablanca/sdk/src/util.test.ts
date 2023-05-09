@@ -3,8 +3,8 @@ import { normailizeHashes, SignerContext, _impl_makeEvent_impl_ } from './sign'
 //import { Worker } from 'worker_threads'
 
 import debug from 'debug'
-import { Envelope, Payload } from '@towns/proto'
-import { PartialMessage } from '@bufbuild/protobuf'
+import { Envelope, StreamEvent } from '@towns/proto'
+import { PlainMessage } from '@bufbuild/protobuf'
 import { Client } from './client'
 import { makeStreamRpcClient } from './streamRpcClient'
 import { userIdFromAddress } from './id'
@@ -19,12 +19,11 @@ export const TEST_URL = 'http://localhost:5157'
 
 export const makeEvent_test = async (
     context: SignerContext,
-    payload: Payload | PartialMessage<Payload>,
+    payload: PlainMessage<StreamEvent>['payload'],
     prevEventHashes?: Uint8Array[] | Uint8Array | Map<string, Uint8Array>,
 ): Promise<Envelope> => {
     const hashes = normailizeHashes(prevEventHashes)
-    const pl: Payload = payload instanceof Payload ? payload : new Payload(payload)
-    return _impl_makeEvent_impl_(context, pl, hashes)
+    return _impl_makeEvent_impl_(context, payload, hashes)
 }
 
 /**

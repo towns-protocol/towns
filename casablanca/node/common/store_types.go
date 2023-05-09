@@ -15,6 +15,7 @@ const (
 	Space RoomType = iota
 	Channel
 	User
+	UserSettings
 	Unknown
 )
 
@@ -36,4 +37,3 @@ type RoomInfo struct {
 	RoomType         RoomType
 	IsOwner          bool
 }
-
