@@ -3,9 +3,12 @@
     "source.fixAll.eslint": true
   },
   "eslint.workingDirectories": [
-    "./clients/web/lib",
+    "./casablanca/proto",
+    "./casablanca/debug-app",
+    "./casablanca/sdk",
     "./clients/web/app",
-    "./clients/web/sample-app"
+    "./clients/web/lib",
+    "./clients/web/sample-app",
   ],
   "[solidity]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
