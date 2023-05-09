@@ -72,68 +72,66 @@ export const ChannelInfoPanel = () => {
     )
 
     return (
-        <Stack grow height="100%" overflow="hidden">
-            <Panel label="Channel Info" onClose={onClose}>
-                {showChannelSettings && spaceData && channel?.id && (
-                    <ChannelSettingsModal
-                        spaceId={spaceData?.id}
-                        channelId={channel?.id}
-                        onHide={onHideChannelSettingsPopup}
-                        onUpdatedChannel={onUpdatedChannel}
-                    />
-                )}
-                <Stack gap padding="lg">
-                    <Stack gap padding background="level2" rounded="sm">
-                        <Paragraph strong size="lg">
-                            #{channel?.label}
-                        </Paragraph>
-                        <ClipboardCopy label={channel?.id.networkId ?? ''} />
-                    </Stack>
-                    {!!info?.length &&
-                        info.map((n) => (
-                            <Stack padding key={`${n.title}`} background="level2" rounded="sm">
-                                <Paragraph strong>{n.title}</Paragraph>
-                                <Paragraph color="gray2">{n.content}</Paragraph>
-                            </Stack>
-                        ))}
+        <Panel label="Channel Info" onClose={onClose}>
+            {showChannelSettings && spaceData && channel?.id && (
+                <ChannelSettingsModal
+                    spaceId={spaceData?.id}
+                    channelId={channel?.id}
+                    onHide={onHideChannelSettingsPopup}
+                    onUpdatedChannel={onUpdatedChannel}
+                />
+            )}
+            <Stack gap padding="lg">
+                <Stack gap padding background="level2" rounded="sm">
+                    <Paragraph strong size="lg">
+                        #{channel?.label}
+                    </Paragraph>
+                    <ClipboardCopy label={channel?.id.networkId ?? ''} />
+                </Stack>
+                {!!info?.length &&
+                    info.map((n) => (
+                        <Stack padding key={`${n.title}`} background="level2" rounded="sm">
+                            <Paragraph strong>{n.title}</Paragraph>
+                            <Paragraph color="gray2">{n.content}</Paragraph>
+                        </Stack>
+                    ))}
 
+                <Button
+                    icon="people"
+                    style={{ paddingLeft: vars.space.md }}
+                    color="gray2"
+                    onClick={onMembersClick}
+                >
+                    <Stack grow horizontal alignItems="center" gap="sm">
+                        <Paragraph color="default">
+                            {`${members.length} member${members.length > 1 ? `s` : ``}`}
+                        </Paragraph>
+                    </Stack>
+                </Button>
+
+                {canEditChannel && (
                     <Button
-                        icon="people"
+                        icon="edit"
                         style={{ paddingLeft: vars.space.md }}
                         color="gray2"
-                        onClick={onMembersClick}
+                        onClick={onShowChannelSettingsPopup}
                     >
                         <Stack grow horizontal alignItems="center" gap="sm">
-                            <Paragraph color="default">
-                                {`${members.length} member${members.length > 1 ? `s` : ``}`}
-                            </Paragraph>
+                            <Paragraph color="default">Edit channel</Paragraph>
                         </Stack>
                     </Button>
-
-                    {canEditChannel && (
-                        <Button
-                            icon="edit"
-                            style={{ paddingLeft: vars.space.md }}
-                            color="gray2"
-                            onClick={onShowChannelSettingsPopup}
-                        >
-                            <Stack grow horizontal alignItems="center" gap="sm">
-                                <Paragraph color="default">Edit channel</Paragraph>
-                            </Stack>
-                        </Button>
-                    )}
-                    <Button
-                        icon="logout"
-                        style={{ paddingLeft: vars.space.md }}
-                        color="error"
-                        onClick={onLeaveClick}
-                    >
-                        <Stack grow horizontal alignItems="center" gap="sm">
-                            <Paragraph color="error">Leave #{channel?.label}</Paragraph>
-                        </Stack>
-                    </Button>
-                </Stack>
-            </Panel>
-        </Stack>
+                )}
+                <Button
+                    icon="logout"
+                    style={{ paddingLeft: vars.space.md }}
+                    color="error"
+                    onClick={onLeaveClick}
+                >
+                    <Stack grow horizontal alignItems="center" gap="sm">
+                        <Paragraph color="error">Leave #{channel?.label}</Paragraph>
+                    </Stack>
+                </Button>
+            </Stack>
+        </Panel>
     )
 }

@@ -59,39 +59,37 @@ export const SpaceProfilePanel = (props: { children?: React.ReactNode }) => {
     const canEdit = loggedInUserAddress === userAddress
 
     return (
-        <Stack grow height="100%" overflow="hidden">
-            <Panel label="Profile" onClose={onClose}>
-                {isValid ? (
-                    <UserProfile
-                        center
-                        userId={user.userId}
-                        displayName={user.name}
-                        userAddress={userAddress}
-                        userBio={userBio}
-                        canEdit={canEdit}
-                    />
-                ) : (
-                    <Stack padding>
-                        <Paragraph>Profile not found</Paragraph>
-                    </Stack>
-                )}
+        <Panel label="Profile" onClose={onClose}>
+            {isValid ? (
+                <UserProfile
+                    center
+                    userId={user.userId}
+                    displayName={user.name}
+                    userAddress={userAddress}
+                    userBio={userBio}
+                    canEdit={canEdit}
+                />
+            ) : (
+                <Stack padding>
+                    <Paragraph>Profile not found</Paragraph>
+                </Stack>
+            )}
 
-                {cameFromSpaceInfoPanel && (
-                    <Box centerContent>
-                        <Button
-                            width="auto"
-                            tone="none"
-                            size="button_sm"
-                            style={{
-                                boxShadow: 'none',
-                            }}
-                            onClick={onBack}
-                        >
-                            <Text color="cta1">Back to space info</Text>
-                        </Button>
-                    </Box>
-                )}
-            </Panel>
-        </Stack>
+            {cameFromSpaceInfoPanel && (
+                <Box centerContent>
+                    <Button
+                        width="auto"
+                        tone="none"
+                        size="button_sm"
+                        style={{
+                            boxShadow: 'none',
+                        }}
+                        onClick={onBack}
+                    >
+                        <Text color="cta1">Back to space info</Text>
+                    </Button>
+                </Box>
+            )}
+        </Panel>
     )
 }

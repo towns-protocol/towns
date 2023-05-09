@@ -22,21 +22,19 @@ export const ChannelDirectoryPanel = () => {
     })
 
     return (
-        <Stack grow height="100%" overflow="hidden">
-            <Panel
-                label={
-                    <Stack horizontal gap="xs">
-                        <>Members</>
-                        {channel?.label && (
-                            <span className={atoms({ color: 'default' })}>#{channel?.label}</span>
-                        )}
-                    </Stack>
-                }
-                onClose={onClose}
-            >
-                <ChannelMembers />
-            </Panel>
-        </Stack>
+        <Panel
+            label={
+                <Stack horizontal gap="xs">
+                    <>Members</>
+                    {channel?.label && (
+                        <span className={atoms({ color: 'default' })}>#{channel?.label}</span>
+                    )}
+                </Stack>
+            }
+            onClose={onClose}
+        >
+            <ChannelMembers />
+        </Panel>
     )
 }
 

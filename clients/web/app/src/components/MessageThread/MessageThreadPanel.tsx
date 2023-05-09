@@ -54,18 +54,19 @@ export const MessageThreadPanel = (props: Props) => {
     const { isChannelWritable } = useIsChannelWritable(channelId)
 
     return (
-        <MessageTimelineWrapper
-            spaceId={spaceId}
-            channelId={channelId}
-            threadParentId={messageId}
-            events={messagesWithParent}
-            isChannelWritable={isChannelWritable}
-        >
-            <Panel label={panelLabel} onClose={props.onClose}>
+        <Panel label={panelLabel} onClose={props.onClose}>
+            <MessageTimelineWrapper
+                spaceId={spaceId}
+                channelId={channelId}
+                threadParentId={messageId}
+                events={messagesWithParent}
+                isChannelWritable={isChannelWritable}
+            >
                 <Stack grow overflow="hidden">
                     <MessageTimeline highlightId={props.highlightId} />
                 </Stack>
-            </Panel>
+            </MessageTimelineWrapper>
+
             {isChannelWritable && (
                 <Box paddingY="none" paddingX="md" style={{ position: 'sticky', bottom: 0 }}>
                     <RichTextEditor
@@ -81,6 +82,6 @@ export const MessageThreadPanel = (props: Props) => {
                     />
                 </Box>
             )}
-        </MessageTimelineWrapper>
+        </Panel>
     )
 }
