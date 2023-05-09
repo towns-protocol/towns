@@ -12,17 +12,20 @@ import (
 	"golang.org/x/text/language"
 )
 
-type SaneFile struct {
+// Wrap os.File to add a WriteString2 method that prints errors to stdout.
+type FileHelper struct {
 	*os.File
 }
 
-func (f *SaneFile) WriteString_(s string) {
+// WriteString returns an error. WriteString2 prints the error to stdout.
+func (f *FileHelper) WriteString2(s string) {
 	_, err := f.WriteString(s)
 	if err != nil {
 		fmt.Println("Error writing to output file:", err)
 	}
 }
 
+// Parse the protocol file and generate a new file with custom extensions.
 func main() {
 	inputFileName := "../protocol/protocol.pb.go"
 	outputFileName := "../protocol/extensions.pb.go"
@@ -83,7 +86,7 @@ func main() {
 	})
 
 	outputFileF, err := os.Create(outputFileName)
-	outputFile := &SaneFile{outputFileF}
+	outputFile := &FileHelper{outputFileF}
 	if err != nil {
 		fmt.Println("Error creating output file:", err)
 		return
@@ -91,13 +94,13 @@ func main() {
 	defer outputFile.Close()
 
 	packageName := file.Name.Name
-	outputFile.WriteString_(fmt.Sprintf("package %s\n\n", packageName))
-	outputFile.WriteString_("import \"fmt\"\n\n")
+	outputFile.WriteString2(fmt.Sprintf("package %s\n\n", packageName))
+	outputFile.WriteString2("import \"fmt\"\n\n")
 
 	caser := cases.Title(language.English, cases.NoLower)
 	for _, oneOfTypeName := range oneOfTypes {
 		exportedTypeName := caser.String(oneOfTypeName)
-		outputFile.WriteString_(fmt.Sprintf("type %s = %s\n", exportedTypeName, oneOfTypeName))
+		outputFile.WriteString2(fmt.Sprintf("type %s = %s\n", exportedTypeName, oneOfTypeName))
 	}
 
 	// inceptions
@@ -105,14 +108,14 @@ func main() {
 
 	if printAllStructs {
 		for _, structName := range allStructs {
-			outputFile.WriteString_(fmt.Sprintf("// %s \n", structName))
+			outputFile.WriteString2(fmt.Sprintf("// %s \n", structName))
 		}
 	}
 
 	fmt.Println("Generated custom extensions in file:", outputFileName)
 }
 
-func genInceptionPayloadImpl(inceptionTypes []string, outputFile *SaneFile) {
+func genInceptionPayloadImpl(inceptionTypes []string, outputFile *FileHelper) {
 	header := func() string {
 		return `
 type IsInceptionPayload interface {
@@ -168,21 +171,21 @@ func (e *StreamEvent) VerifyPayloadTypeMatchesStreamType(i IsInceptionPayload) e
 `
 	}
 
-	outputFile.WriteString_(header())
+	outputFile.WriteString2(header())
 	for _, inceptionTypeName := range inceptionTypes {
-		outputFile.WriteString_(fmt.Sprintf(conformance(), inceptionTypeName))
+		outputFile.WriteString2(fmt.Sprintf(conformance(), inceptionTypeName))
 	}
-	outputFile.WriteString_(getterStart())
+	outputFile.WriteString2(getterStart())
 	for _, inceptionTypeName := range inceptionTypes {
 		inceptionTypeBase := strings.Split(inceptionTypeName, "_")[0]
-		outputFile.WriteString_(fmt.Sprintf(getterCase(), inceptionTypeBase, inceptionTypeBase, inceptionTypeBase))
+		outputFile.WriteString2(fmt.Sprintf(getterCase(), inceptionTypeBase, inceptionTypeBase, inceptionTypeBase))
 	}
 
-	outputFile.WriteString_(getterEnd())
-	outputFile.WriteString_(validatorStart())
+	outputFile.WriteString2(getterEnd())
+	outputFile.WriteString2(validatorStart())
 	for _, inceptionTypeName := range inceptionTypes {
 		inceptionTypeBase := strings.Split(inceptionTypeName, "_")[0]
-		outputFile.WriteString_(fmt.Sprintf(validatorCase(), inceptionTypeBase, inceptionTypeBase, inceptionTypeBase))
+		outputFile.WriteString2(fmt.Sprintf(validatorCase(), inceptionTypeBase, inceptionTypeBase, inceptionTypeBase))
 	}
-	outputFile.WriteString_(validatorEnd())
+	outputFile.WriteString2(validatorEnd())
 }
