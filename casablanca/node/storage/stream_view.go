@@ -167,7 +167,7 @@ func (r *StreamView) AddEvent(event *protocol.Envelope) error {
 	return nil
 }
 
-func (r *StreamView) GetRoomInfo(ctx context.Context, roomId string, userId string) (*common.RoomInfo, error) {
+func (r *StreamView) GetStreamInfo(ctx context.Context, roomId string, userId string) (*common.RoomInfo, error) {
 	parsedEvent, err := r.getOrderedEventsCached()
 	if err != nil {
 		return nil, err

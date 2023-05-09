@@ -85,7 +85,7 @@ func (za *ChainAuth) IsAllowed(ctx context.Context, args AuthorizationArgs, view
 	userIdentifier := CreateUserIdentifier(args.UserId)
 	log.Infof("IsAllowed: %v %v", args, userIdentifier)
 
-	roomInfo, err := view.GetRoomInfo(ctx, args.RoomId, args.UserId)
+	roomInfo, err := view.GetStreamInfo(ctx, args.RoomId, args.UserId)
 	log.Debugf("roomInfo: %v", roomInfo)
 	if err != nil {
 		log.Errorf("error getting room info: %v", err)
@@ -93,7 +93,7 @@ func (za *ChainAuth) IsAllowed(ctx context.Context, args AuthorizationArgs, view
 	}
 
 	// Owner of the space / channel is always allowed to proceed.
-	// TODO:  remove this check once the client creates the space on blockchain first	 
+	// TODO:  remove this check once the client creates the space on blockchain first
 	if roomInfo.IsOwner {
 		return true, nil
 	}
