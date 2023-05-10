@@ -24,10 +24,12 @@ import { QueryProvider } from './QueryProvider'
 import { MatrixClient } from 'matrix-js-sdk'
 import { Client as CasablancaClient } from '@towns/sdk'
 import { useCasablancaTimelines } from '../hooks/ZionContext/useCasablancaTimelines'
+import { ethers } from 'ethers'
 
 export interface IZionContext {
     homeServerUrl: string
     casablancaServerUrl?: string
+    appChainId: number /// our app is locked to a single chain that matches the server deployment
     client?: ZionClient /// only set when user is authenticated with matrix or casablanca
     clientSingleton?: ZionClient /// always set, can be use for matrix, this duplication can be removed once we transition to casablanca
     matrixClient?: MatrixClient /// set if we're logged in and matrix client is started
@@ -60,6 +62,7 @@ interface Props extends ZionOpts {
     enableSpaceRootUnreads?: boolean
     children: JSX.Element
     alchemyKey?: string
+    web3Signer?: ethers.Signer
     QueryClientProvider?: React.ElementType<{ children: JSX.Element }>
 }
 
@@ -67,10 +70,14 @@ export function ZionContextProvider({
     QueryClientProvider = QueryProvider,
     ...props
 }: Props): JSX.Element {
-    const { alchemyKey, ...contextProps } = props
+    const { alchemyKey, web3Signer, ...contextProps } = props
     return (
         <QueryClientProvider>
-            <Web3ContextProvider alchemyKey={alchemyKey} chainId={contextProps.chainId}>
+            <Web3ContextProvider
+                alchemyKey={alchemyKey}
+                chainId={contextProps.chainId}
+                web3Signer={web3Signer}
+            >
                 <ContextImpl {...contextProps}></ContextImpl>
             </Web3ContextProvider>
         </QueryClientProvider>
@@ -108,6 +115,7 @@ const ContextImpl = (props: Props): JSX.Element => {
             value={{
                 client,
                 clientSingleton,
+                appChainId: props.chainId,
                 matrixClient,
                 casablancaClient,
                 rooms,

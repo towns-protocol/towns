@@ -34,12 +34,10 @@ export class BaseContractShim<
         abi: ethers.ContractInterface,
         chainId: number,
         provider: ethers.providers.Provider | undefined,
-        signer: ethers.Signer | undefined,
     ) {
         this.address = address
         this.chainId = chainId
         this.provider = provider
-        this.signer = signer
         this.abi = abi
         this.contractInterface = new ethers.utils.Interface(abi as string)
     }
@@ -104,10 +102,12 @@ export class BaseContractShim<
         }
     }
 
-    public get write(): T_LOCALHOST_CONTRACT | T_GOERLI_CONTRACT | T_SEPOLIA_CONTRACT {
+    public write(
+        signer: ethers.Signer | undefined,
+    ): T_LOCALHOST_CONTRACT | T_GOERLI_CONTRACT | T_SEPOLIA_CONTRACT {
         // lazy create an instance if it is not already cached
         if (!this.writeContract) {
-            this.writeContract = this.createWriteContractInstance()
+            this.writeContract = this.createWriteContractInstance(signer)
         }
         switch (this.chainId) {
             case LOCALHOST_CHAIN_ID:
@@ -211,10 +211,10 @@ export class BaseContractShim<
         return new ethers.Contract(this.address, this.abi, this.provider)
     }
 
-    private createWriteContractInstance(): ethers.Contract {
-        if (!this.signer) {
+    private createWriteContractInstance(signer: ethers.Signer | undefined): ethers.Contract {
+        if (!signer) {
             throw new Error('No signer')
         }
-        return new ethers.Contract(this.address, this.abi, this.signer)
+        return new ethers.Contract(this.address, this.abi, signer)
     }
 }

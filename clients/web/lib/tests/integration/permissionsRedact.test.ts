@@ -28,12 +28,15 @@ describe('redact messages', () => {
         }
         // create a channel for reading and writing
         const roles = await getFilteredRolesFromSpace(alice, spaceId.networkId)
-        const channelId = await alice.createChannel({
-            name: 'test channel',
-            visibility: RoomVisibility.Public,
-            parentSpaceId: spaceId,
-            roleIds: [roles[0].roleId.toNumber()],
-        })
+        const channelId = await alice.createChannel(
+            {
+                name: 'test channel',
+                visibility: RoomVisibility.Public,
+                parentSpaceId: spaceId,
+                roleIds: [roles[0].roleId.toNumber()],
+            },
+            alice.provider.wallet,
+        )
         if (!channelId) {
             throw new Error('channelId is undefined')
         }
@@ -78,12 +81,15 @@ describe('redact messages', () => {
         }
         // create a channel for reading and writing
         const roles = await getFilteredRolesFromSpace(alice, spaceId.networkId)
-        const channelId = await alice.createChannel({
-            name: 'test channel',
-            visibility: RoomVisibility.Public,
-            parentSpaceId: spaceId,
-            roleIds: [roles[0].roleId.toNumber()],
-        })
+        const channelId = await alice.createChannel(
+            {
+                name: 'test channel',
+                visibility: RoomVisibility.Public,
+                parentSpaceId: spaceId,
+                roleIds: [roles[0].roleId.toNumber()],
+            },
+            alice.provider.wallet,
+        )
         if (!channelId) {
             throw new Error('channelId is undefined')
         }
@@ -150,13 +156,16 @@ describe('redact messages', () => {
             throw new Error('Failed to create moderator role')
         }
         // create a channel for reading and writing
-        const channelId = await alice.createChannel({
-            name: 'test channel',
-            visibility: RoomVisibility.Public,
-            parentSpaceId: spaceId,
-            // add the space role and the moderator role to the channel
-            roleIds: [roles[0].roleId.toNumber(), moderatorRoleId.roleId],
-        })
+        const channelId = await alice.createChannel(
+            {
+                name: 'test channel',
+                visibility: RoomVisibility.Public,
+                parentSpaceId: spaceId,
+                // add the space role and the moderator role to the channel
+                roleIds: [roles[0].roleId.toNumber(), moderatorRoleId.roleId],
+            },
+            alice.provider.wallet,
+        )
         if (!channelId) {
             throw new Error('channelId is undefined')
         }

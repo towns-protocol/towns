@@ -16,7 +16,7 @@ export const useContractSpaceInfo = (spaceId: string | undefined) => {
         ['spaceDappGetSpaceInfo', spaceId],
         async () => {
             if (spaceId && spaceDapp) {
-                const spaceInfo = await spaceDapp.getSpaceInfo(spaceId, false)
+                const spaceInfo = await spaceDapp.getSpaceInfo(spaceId)
                 if (spaceInfo) {
                     return spaceInfo
                 }

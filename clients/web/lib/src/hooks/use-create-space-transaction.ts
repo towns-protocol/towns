@@ -9,6 +9,7 @@ import { SpaceFactoryDataTypes } from '../client/web3/shims/SpaceFactoryShim'
 import { createExternalTokenStruct } from '../client/web3/ContractHelpers'
 import { useTransactionStore } from '../store/use-transactions-store'
 import { useZionClient } from './use-zion-client'
+import { useWeb3Context } from '../components/Web3ContextProvider'
 
 /**
  * Combine Matrix space creation and smart contract space
@@ -20,6 +21,7 @@ export function useCreateSpaceTransaction() {
         TransactionContext<RoomIdentifier> | undefined
     >(undefined)
     const isTransacting = useRef<boolean>(false)
+    const { signer } = useWeb3Context()
 
     const { data, isLoading, transactionHash, transactionStatus, error } = useMemo(() => {
         return {
@@ -74,6 +76,7 @@ export function useCreateSpaceTransaction() {
                     createInfo,
                     tokenEntitlement,
                     everyonePermissions,
+                    signer,
                 )
 
                 setTransactionContext(txContext)
@@ -99,7 +102,7 @@ export function useCreateSpaceTransaction() {
                 isTransacting.current = false
             }
         },
-        [createSpaceTransaction, waitForCreateSpaceTransaction],
+        [createSpaceTransaction, signer, waitForCreateSpaceTransaction],
     )
 
     /*

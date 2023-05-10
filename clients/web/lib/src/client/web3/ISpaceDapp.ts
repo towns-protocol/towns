@@ -32,6 +32,7 @@ export interface ISpaceDapp {
         spaceId: string,
         channelNetworkId: string,
         roleId: number,
+        signer: ethers.Signer | undefined,
     ) => Promise<ContractTransaction>
     createSpace: (
         spaceName: string,
@@ -39,12 +40,14 @@ export interface ISpaceDapp {
         spaceMetadata: string,
         memberEntitlements: SpaceFactoryDataTypes.CreateSpaceExtraEntitlementsStruct,
         everyonePermissions: Permission[],
+        signer: ethers.Signer | undefined,
     ) => Promise<ContractTransaction>
     createChannel: (
         spaceId: string,
         channelName: string,
         channelNetworkId: string,
         roleIds: number[],
+        signer: ethers.Signer | undefined,
     ) => Promise<ContractTransaction>
     createRole(
         spaceId: string,
@@ -52,8 +55,13 @@ export interface ISpaceDapp {
         permissions: Permission[],
         tokens: SpaceFactoryDataTypes.ExternalTokenStruct[],
         users: string[],
+        signer: ethers.Signer | undefined,
     ): Promise<ContractTransaction>
-    deleteRole(spaceId: string, roleId: number): Promise<ContractTransaction>
+    deleteRole(
+        spaceId: string,
+        roleId: number,
+        signer: ethers.Signer | undefined,
+    ): Promise<ContractTransaction>
     getChannels: (spaceId: string) => Promise<ChannelMetadata[]>
     getChannelDetails: (spaceId: string, channelId: string) => Promise<ChannelDetails | null>
     getPermissionsByRoleId: (spaceId: string, roleId: number) => Promise<Permission[]>
@@ -63,10 +71,10 @@ export interface ISpaceDapp {
         spaceId: string,
         channelNetworkId: string,
     ) => Promise<SpaceDataTypes.RoleStructOutput[]>
-    getSpace: (spaceId: string, requireSigner?: boolean) => Promise<SpaceShim | undefined>
+    getSpace: (spaceId: string) => Promise<SpaceShim | undefined>
     getSpaceFactoryEventsContractInfo: () => EventsContractInfo
     getSpaceEventsContractInfo: (spaceId: string) => Promise<EventsContractInfo>
-    getSpaceInfo: (spaceId: string, requireSigner?: boolean) => Promise<SpaceInfo | undefined>
+    getSpaceInfo: (spaceId: string) => Promise<SpaceInfo | undefined>
     isEntitledToSpace: (spaceId: string, user: string, permission: Permission) => Promise<boolean>
     isEntitledToChannel: (
         spaceId: string,
@@ -76,12 +84,23 @@ export interface ISpaceDapp {
     ) => Promise<boolean>
     parseSpaceFactoryError: (error: unknown) => Error
     parseSpaceError: (spaceId: string, error: unknown) => Promise<Error>
-    updateChannel: (params: UpdateChannelParams) => Promise<ContractTransaction>
-    updateRole: (params: UpdateRoleParams) => Promise<ContractTransaction>
-    setSpaceAccess: (spaceId: string, disabled: boolean) => Promise<ContractTransaction>
+    updateChannel: (
+        params: UpdateChannelParams,
+        signer: ethers.Signer | undefined,
+    ) => Promise<ContractTransaction>
+    updateRole: (
+        params: UpdateRoleParams,
+        signer: ethers.Signer | undefined,
+    ) => Promise<ContractTransaction>
+    setSpaceAccess: (
+        spaceId: string,
+        disabled: boolean,
+        signer: ethers.Signer | undefined,
+    ) => Promise<ContractTransaction>
     setChannelAccess: (
         spaceId: string,
         channelId: string,
         disabled: boolean,
+        signer: ethers.Signer | undefined,
     ) => Promise<ContractTransaction>
 }

@@ -47,12 +47,15 @@ describe('On-chain channel creation tests', () => {
         for (const r of allowedRoles) {
             roleIds.push(r.roleId.toNumber())
         }
-        const channel = (await alice.createChannel({
-            name: 'test_channel',
-            visibility: RoomVisibility.Public,
-            parentSpaceId: roomId,
-            roleIds,
-        })) as RoomIdentifier
+        const channel = (await alice.createChannel(
+            {
+                name: 'test_channel',
+                visibility: RoomVisibility.Public,
+                parentSpaceId: roomId,
+                roleIds,
+            },
+            alice.provider.wallet,
+        )) as RoomIdentifier
 
         /* Act */
         await alice.setRoomTopic(channel, 'test topic')

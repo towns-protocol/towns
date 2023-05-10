@@ -87,12 +87,15 @@ describe('get role details', () => {
         }
         // create a channel with the role
         const channelName = 'test_channel'
-        const channel = await alice.createChannel({
-            name: channelName,
-            visibility: RoomVisibility.Public,
-            parentSpaceId: roomId,
-            roleIds: [roleIdentifier.roleId],
-        })
+        const channel = await alice.createChannel(
+            {
+                name: channelName,
+                visibility: RoomVisibility.Public,
+                parentSpaceId: roomId,
+                roleIds: [roleIdentifier.roleId],
+            },
+            alice.provider.wallet,
+        )
         if (!channel) {
             throw new Error('channel is undefined')
         }

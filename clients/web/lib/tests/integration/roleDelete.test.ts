@@ -58,12 +58,15 @@ describe('delete role', () => {
         console.log('!!!! new role created: ', { roleIdentifier })
         const roleId = roleIdentifier.roleId
         // create a channel with the role
-        const channel = await alice.createChannel({
-            name: 'test_channel',
-            visibility: RoomVisibility.Public,
-            parentSpaceId: roomId,
-            roleIds: [roleId],
-        })
+        const channel = await alice.createChannel(
+            {
+                name: 'test_channel',
+                visibility: RoomVisibility.Public,
+                parentSpaceId: roomId,
+                roleIds: [roleId],
+            },
+            alice.provider.wallet,
+        )
         if (!channel) {
             throw new Error('channel is undefined')
         }
@@ -80,7 +83,11 @@ describe('delete role', () => {
         let rejoinedRoom: Room | undefined
         try {
             // delete the role
-            const transaction = await alice.spaceDapp.deleteRole(spaceId, roleIdentifier.roleId)
+            const transaction = await alice.spaceDapp.deleteRole(
+                spaceId,
+                roleIdentifier.roleId,
+                alice.provider.wallet,
+            )
             receipt = await transaction.wait()
         } catch (e) {
             // unexpected error. fail the test.
@@ -166,12 +173,15 @@ describe('delete role', () => {
         console.log('!!! roleIdentifier', { roleIdentifier })
         const roleId = roleIdentifier.roleId
         // create a channel with the role
-        const channel = await alice.createChannel({
-            name: 'test_channel',
-            visibility: RoomVisibility.Public,
-            parentSpaceId: roomId,
-            roleIds: [roleId],
-        })
+        const channel = await alice.createChannel(
+            {
+                name: 'test_channel',
+                visibility: RoomVisibility.Public,
+                parentSpaceId: roomId,
+                roleIds: [roleId],
+            },
+            alice.provider.wallet,
+        )
         if (!channel) {
             throw new Error('channel is undefined')
         }
@@ -188,7 +198,11 @@ describe('delete role', () => {
         let rejoinedRoom: Room | undefined
         try {
             // delete the role
-            const transaction = await alice.spaceDapp.deleteRole(spaceId, roleIdentifier.roleId)
+            const transaction = await alice.spaceDapp.deleteRole(
+                spaceId,
+                roleIdentifier.roleId,
+                alice.provider.wallet,
+            )
             receipt = await transaction.wait()
         } catch (e) {
             // unexpected error. fail the test.
@@ -276,7 +290,11 @@ describe('delete role', () => {
         let receipt: ContractReceipt | undefined
         try {
             // delete the role
-            const transaction = await alice.spaceDapp.deleteRole(spaceId, roleIdentifier.roleId)
+            const transaction = await alice.spaceDapp.deleteRole(
+                spaceId,
+                roleIdentifier.roleId,
+                alice.provider.wallet,
+            )
             receipt = await transaction.wait()
         } catch (e) {
             // unexpected error. fail the test.

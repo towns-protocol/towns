@@ -5,19 +5,19 @@ import {
     useAccount,
     useNetwork,
     useProvider,
-    useSignMessage,
+    useSigner,
 } from 'wagmi'
 import { WalletStatus, isNullAddress } from '../../types/web3-types'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 import { Ethereum } from '@wagmi/core'
 import { IWeb3Context } from '../../components/Web3ContextProvider'
+import { ethers } from 'ethers'
 
-/// web3 grabs some of the wagmi data for convience, please feel free to use wagmi directly
-export function useWeb3(chain?: Chain): IWeb3Context {
+/// web3 components, pass chain to lock to a specific chain, pass signer to override the default signer (usefull for tests)
+export function useWeb3(chainId: number, chain?: Chain, web3Signer?: ethers.Signer): IWeb3Context {
     const { address, connector, isConnected, status } = useAccount()
     const { chain: walletChain, chains } = useNetwork()
-    const { signMessageAsync } = useSignMessage()
     const [activeWalletAddressOverride, setActiveWalletAddressOverride] = useState<
         { account: Address | undefined } | undefined
     >(undefined)
@@ -28,6 +28,7 @@ export function useWeb3(chain?: Chain): IWeb3Context {
         () => (activeWalletAddress ? [activeWalletAddress] : []),
         [activeWalletAddress],
     )
+    const signer = useAppSigner(chainId, web3Signer)
 
     // allowing app to pass in chain allows to load on correct chain per env regardless of user wallet settings
     // they are able to login w/out swapping networks
@@ -69,13 +70,6 @@ export function useWeb3(chain?: Chain): IWeb3Context {
         }
     }, [connector])
 
-    const sign = useCallback(
-        async (message: string): Promise<string | undefined> => {
-            return signMessageAsync({ message })
-        },
-        [signMessageAsync],
-    )
-
     useEffect(() => {
         console.log('use web3 ##', {
             connector,
@@ -100,7 +94,7 @@ export function useWeb3(chain?: Chain): IWeb3Context {
 
     return {
         provider,
-        sign: sign,
+        signer,
         activeWalletAddress,
         accounts,
         chain: activeChain,
@@ -108,4 +102,16 @@ export function useWeb3(chain?: Chain): IWeb3Context {
         isConnected: isConnected,
         walletStatus: status as WalletStatus,
     }
+}
+
+function useAppSigner(appChainId: number, web3Signer?: ethers.Signer) {
+    const { data: wagmiSigner } = useSigner({
+        chainId: appChainId,
+    })
+    if (web3Signer) {
+        return web3Signer
+    } else if (wagmiSigner) {
+        return wagmiSigner
+    }
+    return undefined
 }

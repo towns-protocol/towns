@@ -48,12 +48,12 @@ export const ZionTestApp = (props: Props) => {
             matrixServerUrl={homeServerUrl}
             casablancaServerUrl={casablancaServerUrl}
             onboardingOpts={onboardingOpts}
-            web3Signer={provider.wallet}
             initialSyncLimit={initialSyncLimit}
             pollTimeoutMs={pollTimeoutMs}
             chainId={foundry.id}
             QueryClientProvider={TestQueryClientProvider}
             logNamespaceFilter="" // "csb:*" A bit too much for tests, better way to set?
+            web3Signer={provider.wallet}
         >
             <ZionWalletAutoConnect children={children} />
         </ZionContextProvider>

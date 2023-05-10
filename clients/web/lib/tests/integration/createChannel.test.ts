@@ -22,12 +22,15 @@ describe('On-chain channel creation tests', () => {
         /* Act */
         if (roomId) {
             // create a channel on-chain with no roles
-            channel = await alice.createChannel({
-                name: 'test_channel',
-                visibility: RoomVisibility.Public,
-                parentSpaceId: roomId,
-                roleIds: [],
-            })
+            channel = await alice.createChannel(
+                {
+                    name: 'test_channel',
+                    visibility: RoomVisibility.Public,
+                    parentSpaceId: roomId,
+                    roleIds: [],
+                },
+                alice.provider.wallet,
+            )
         }
 
         /* Assert */
@@ -52,12 +55,15 @@ describe('On-chain channel creation tests', () => {
         for (const r of allowedRoles) {
             roleIds.push(r.roleId.toNumber())
         }
-        const channel = (await alice.createChannel({
-            name: 'test_channel',
-            visibility: RoomVisibility.Public,
-            parentSpaceId: roomId,
-            roleIds,
-        })) as RoomIdentifier
+        const channel = (await alice.createChannel(
+            {
+                name: 'test_channel',
+                visibility: RoomVisibility.Public,
+                parentSpaceId: roomId,
+                roleIds,
+            },
+            alice.provider.wallet,
+        )) as RoomIdentifier
 
         /* Assert */
         expect(channel?.networkId).toBeTruthy()
@@ -85,12 +91,15 @@ describe('On-chain channel creation tests', () => {
         }
 
         const error = await getError<Error>(async function () {
-            await alice.createChannel({
-                name: 'test_channel',
-                visibility: RoomVisibility.Public,
-                parentSpaceId: roomId,
-                roleIds,
-            })
+            await alice.createChannel(
+                {
+                    name: 'test_channel',
+                    visibility: RoomVisibility.Public,
+                    parentSpaceId: roomId,
+                    roleIds,
+                },
+                alice.provider.wallet,
+            )
         })
 
         /* Assert */

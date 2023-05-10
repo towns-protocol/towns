@@ -33,7 +33,7 @@ export function useMatrixWalletSignIn() {
     const { loginStatus, setLoginError, setLoginStatus } = useMatrixStore()
     const { homeServerUrl: homeServer, clientSingleton } = useZionContext()
     const { setMatrixCredentials } = useCredentialStore()
-    const { sign, chain, activeWalletAddress } = useWeb3Context()
+    const { signer, chain, activeWalletAddress } = useWeb3Context()
     const { chain: walletChain } = useNetwork()
     // `chain` is the chain we initialize the lib to
     // `walletChain` is the user's current chain in their wallet extension
@@ -109,6 +109,10 @@ export function useMatrixWalletSignIn() {
                 console.log(`[signMessage] undefined homeServer`)
                 return undefined
             }
+            if (!signer) {
+                console.log(`[signMessage] undefined signer`)
+                return undefined
+            }
             const messageToSign = createMessageToSign({
                 walletAddress: userIdentifier.accountAddress,
                 chainId: userIdentifier.chainId,
@@ -116,7 +120,7 @@ export function useMatrixWalletSignIn() {
             })
 
             // Prompt the user to sign the message.
-            const signature = await sign(messageToSign, userIdentifier.accountAddress)
+            const signature = await signer.signMessage(messageToSign)
 
             if (signature) {
                 console.log(`[signMessage] succeeded`, {
@@ -133,7 +137,7 @@ export function useMatrixWalletSignIn() {
 
             console.log(`[signMessage] end`)
         },
-        [homeServer, sign, userIdentifier],
+        [homeServer, signer, userIdentifier],
     )
 
     const getIsWalletRegisteredWithMatrix = useCallback(

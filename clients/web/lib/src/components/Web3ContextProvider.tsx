@@ -7,10 +7,11 @@ import { CustomInjectedConnector } from './CustomInjectedConnector'
 import { alchemyProvider } from 'wagmi/providers/alchemy'
 import { publicProvider } from 'wagmi/providers/public'
 import { useWeb3 } from '../hooks/Web3Context/useWeb3'
+import { ethers } from 'ethers'
 
 export interface IWeb3Context {
     provider?: TProvider
-    sign: (message: string, walletAddress: string) => Promise<string | undefined>
+    signer: ethers.Signer | undefined
     accounts: Address[]
     activeWalletAddress: Address | undefined
     chain?: Chain & {
@@ -35,6 +36,7 @@ interface Props {
     children: JSX.Element
     chainId: number
     alchemyKey?: string
+    web3Signer?: ethers.Signer // sometimes, like during testing, it makes sense to inject a signer
 }
 
 const SUPPORTED_CHAINS = [goerli, localhost, foundry, sepolia]
@@ -78,6 +80,6 @@ export function ContextImpl(props: Props): JSX.Element {
     if (!chain) {
         console.error('Unsupported chain for Towns', props.chainId)
     }
-    const web3 = useWeb3(chain)
+    const web3 = useWeb3(props.chainId, chain, props.web3Signer)
     return <Web3Context.Provider value={web3}>{props.children}</Web3Context.Provider>
 }

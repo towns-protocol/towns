@@ -6,6 +6,7 @@ import { CreateChannelInfo } from '../types/zion-types'
 import { RoomIdentifier } from '../types/room-identifier'
 import { useTransactionStore } from '../store/use-transactions-store'
 import { useZionClient } from './use-zion-client'
+import { useWeb3Context } from '../components/Web3ContextProvider'
 
 /**
  * Combine Matrix channel creation and Smart Contract channel
@@ -16,6 +17,7 @@ export function useCreateChannelTransaction() {
     const [transactionContext, setTransactionContext] = useState<
         TransactionContext<RoomIdentifier> | undefined
     >(undefined)
+    const { signer } = useWeb3Context()
     const isTransacting = useRef<boolean>(false)
 
     const { data, isLoading, transactionHash, transactionStatus, error } = useMemo(() => {
@@ -44,7 +46,7 @@ export function useCreateChannelTransaction() {
             isTransacting.current = true
             try {
                 setTransactionContext(loading)
-                const txContext = await createChannelTransaction(createInfo)
+                const txContext = await createChannelTransaction(createInfo, signer)
                 setTransactionContext(txContext)
                 if (txContext?.status === TransactionStatus.Pending) {
                     // No error and transaction is pending
@@ -67,7 +69,7 @@ export function useCreateChannelTransaction() {
                 isTransacting.current = false
             }
         },
-        [createChannelTransaction, waitForCreateChannelTransaction],
+        [createChannelTransaction, signer, waitForCreateChannelTransaction],
     )
 
     useEffect(() => {

@@ -36,6 +36,7 @@ import { useResetFullyReadMarkers } from './ZionContext/useResetFullyReadMarkers
 import { useSendReadReceipt } from './ZionContext/useSendReadReceipt'
 import { useZionContext } from '../components/ZionContextProvider'
 import { useCasablancaWalletSignIn } from './use-casablanca-wallet-signin'
+import { ethers } from 'ethers'
 
 /**
  * Matrix client API to interact with the Matrix server.
@@ -50,20 +51,26 @@ interface ZionClientImpl {
         createSpaceInfo: CreateSpaceInfo,
         memberEntitlements: SpaceFactoryDataTypes.CreateSpaceExtraEntitlementsStruct,
         everyonePermissions: Permission[],
+        signer: ethers.Signer | undefined,
     ) => Promise<TransactionContext<RoomIdentifier> | undefined>
     waitForCreateSpaceTransaction: (
         context: TransactionContext<RoomIdentifier> | undefined,
     ) => Promise<TransactionContext<RoomIdentifier> | undefined>
     createChannelRoom: (createInfo: CreateChannelInfo) => Promise<RoomIdentifier | undefined>
-    createChannel: (createInfo: CreateChannelInfo) => Promise<RoomIdentifier | undefined>
+    createChannel: (
+        createInfo: CreateChannelInfo,
+        signer: ethers.Signer | undefined,
+    ) => Promise<RoomIdentifier | undefined>
     createChannelTransaction: (
         createChannelInfo: CreateChannelInfo,
+        signer: ethers.Signer | undefined,
     ) => Promise<ChannelTransactionContext | undefined>
     waitForCreateChannelTransaction: (
         context: ChannelTransactionContext | undefined,
     ) => Promise<TransactionContext<RoomIdentifier> | undefined>
     updateChannelTransaction: (
         updateChannelInfo: UpdateChannelInfo,
+        signer: ethers.Signer | undefined,
     ) => Promise<ChannelUpdateTransactionContext | undefined>
     waitForUpdateChannelTransaction: (
         context: ChannelUpdateTransactionContext | undefined,
@@ -74,11 +81,13 @@ interface ZionClientImpl {
         permissions: Permission[],
         tokens: SpaceFactoryDataTypes.ExternalTokenStruct[],
         users: string[],
+        signer: ethers.Signer | undefined,
     ) => Promise<RoleTransactionContext | undefined>
     addRoleToChannelTransaction: (
         spaceNetworkId: string,
         channelNetworkId: string,
         roleId: number,
+        signer: ethers.Signer | undefined,
     ) => Promise<TransactionContext<void> | undefined>
     waitForAddRoleToChannelTransaction: (
         context: TransactionContext<void> | undefined,
@@ -93,6 +102,7 @@ interface ZionClientImpl {
         permissions: Permission[],
         tokens: SpaceFactoryDataTypes.ExternalTokenStruct[],
         users: string[],
+        signer: ethers.Signer | undefined,
     ) => Promise<TransactionContext<void> | undefined>
     waitForUpdateRoleTransaction: (
         context: TransactionContext<void> | undefined,
@@ -100,6 +110,7 @@ interface ZionClientImpl {
     deleteRoleTransaction: (
         spaceNetworkId: string,
         roleId: number,
+        signer: ethers.Signer | undefined,
     ) => Promise<TransactionContext<void> | undefined>
     waitForDeleteRoleTransaction: (
         context: TransactionContext<void> | undefined,

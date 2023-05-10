@@ -6,6 +6,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useZionClient } from './use-zion-client'
 import { useTransactionStore } from '../store/use-transactions-store'
 import { BlockchainTransactionType } from '../types/web3-types'
+import { useWeb3Context } from '../components/Web3ContextProvider'
 
 /**
  * Hook to create a role with a transaction.
@@ -17,6 +18,7 @@ export function useDeleteRoleTransaction() {
     const isTransacting = useRef<boolean>(false)
     const { deleteRoleTransaction, waitForDeleteRoleTransaction } = useZionClient()
     const queryClient = useQueryClient()
+    const { signer } = useWeb3Context()
 
     const { data, isLoading, transactionHash, transactionStatus, error } = useMemo(() => {
         return {
@@ -45,7 +47,7 @@ export function useDeleteRoleTransaction() {
                     data: undefined,
                 }
                 setTransactionContext(loading)
-                const txContext = await deleteRoleTransaction(spaceNetworkId, roleId)
+                const txContext = await deleteRoleTransaction(spaceNetworkId, roleId, signer)
                 setTransactionContext(txContext)
                 if (txContext?.status === TransactionStatus.Pending) {
                     if (txContext.transaction?.hash) {
@@ -69,7 +71,7 @@ export function useDeleteRoleTransaction() {
                 isTransacting.current = false
             }
         },
-        [deleteRoleTransaction, queryClient, waitForDeleteRoleTransaction],
+        [deleteRoleTransaction, queryClient, signer, waitForDeleteRoleTransaction],
     )
 
     useEffect(() => {

@@ -13,43 +13,36 @@ export interface PioneerNFTContractState {
 export class PioneerNFT {
     private readonly contractsInfo: IStaticContractsInfo
     private readonly provider: ethers.providers.Provider | undefined
-    private readonly signer: ethers.Signer | undefined
     public readonly pioneerNFTShim: PioneerNFTShim
 
-    constructor(
-        chainId: number,
-        provider: ethers.providers.Provider | undefined,
-        signer: ethers.Signer | undefined,
-    ) {
+    constructor(chainId: number, provider: ethers.providers.Provider | undefined) {
         this.provider = provider
-        this.signer = signer
         this.contractsInfo = getContractsInfo(chainId)
         this.pioneerNFTShim = new PioneerNFTShim(
             this.contractsInfo.pioneerNft.address,
             this.contractsInfo.pioneerNft.abi,
             chainId,
             provider,
-            signer,
         )
     }
 
-    public deposit(amount: BigNumber) {
-        if (!this?.signer) {
+    public deposit(amount: BigNumber, signer: ethers.Signer | undefined) {
+        if (!signer) {
             throw new Error('No signer')
         }
 
-        return this.signer.sendTransaction({
+        return signer.sendTransaction({
             to: this.pioneerNFTShim.address,
             value: amount,
         })
     }
 
-    public async withdraw() {
-        if (!this?.signer) {
+    public async withdraw(signer: ethers.Signer | undefined) {
+        if (!signer) {
             throw new Error('No signer')
         }
-        const address = await this.signer.getAddress()
-        return this.pioneerNFTShim.write.withdraw(address)
+        const address = await signer.getAddress()
+        return this.pioneerNFTShim.write(signer).withdraw(address)
     }
 
     // given a wallet address, check if they have a Pioneer NFT

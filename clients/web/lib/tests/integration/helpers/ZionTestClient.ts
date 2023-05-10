@@ -86,7 +86,6 @@ export class ZionTestClient extends ZionClient {
                 casablancaServerUrl: process.env.CASABLANCA_SERVER_URL!,
                 chainId,
                 initialSyncLimit: 20,
-                web3Signer: provider.wallet,
                 web3Provider: provider,
                 eventHandlers: props?.eventHandlers,
             },
@@ -119,6 +118,7 @@ export class ZionTestClient extends ZionClient {
             createSpaceInfo,
             memberEntitlements,
             everyonePermissions,
+            this.provider.wallet,
         )
         if (txContext.error) {
             throw txContext.error
@@ -150,6 +150,7 @@ export class ZionTestClient extends ZionClient {
             permissions,
             tokens,
             users,
+            this.provider.wallet,
         )
         if (txContext.error) {
             throw txContext.error
@@ -260,7 +261,10 @@ export class ZionTestClient extends ZionClient {
             const myAuth = await this.registerMatrixWallet()
             await this.startMatrixClient(myAuth)
         } else if (this.opts.primaryProtocol === SpaceProtocol.Casablanca) {
-            const casablancaContext = await this.signCasablancaDelegate(this.delegateWallet)
+            const casablancaContext = await this.signCasablancaDelegate(
+                this.delegateWallet,
+                this.provider.wallet,
+            )
             await this.startCasablancaClient(casablancaContext)
         }
     }
@@ -370,7 +374,10 @@ export class ZionTestClient extends ZionClient {
                 break
             case SpaceProtocol.Casablanca:
                 {
-                    const casablancaContext = await this.signCasablancaDelegate(this.delegateWallet)
+                    const casablancaContext = await this.signCasablancaDelegate(
+                        this.delegateWallet,
+                        this.provider.wallet,
+                    )
                     await this.startCasablancaClient(casablancaContext)
                 }
                 break

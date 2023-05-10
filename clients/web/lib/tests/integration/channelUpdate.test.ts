@@ -28,12 +28,15 @@ describe('channel update', () => {
             throw new Error('roleDetails is undefined')
         }
         // create a channel with the space role
-        const channelId = await alice.createChannel({
-            name: channelName,
-            visibility: RoomVisibility.Public,
-            parentSpaceId: spaceId,
-            roleIds: [roleDetails.id],
-        })
+        const channelId = await alice.createChannel(
+            {
+                name: channelName,
+                visibility: RoomVisibility.Public,
+                parentSpaceId: spaceId,
+                roleIds: [roleDetails.id],
+            },
+            alice.provider.wallet,
+        )
         if (!channelId) {
             throw new Error('channelId is undefined')
         }
@@ -60,12 +63,15 @@ describe('channel update', () => {
         // alice updates the channel with the new role
         let receipt: ContractReceipt | undefined
         try {
-            const transaction = await alice.spaceDapp.updateChannel({
-                spaceNetworkId: spaceId.networkId,
-                channelNetworkId: channelId.networkId,
-                channelName,
-                roleIds: [newRoleId.roleId],
-            })
+            const transaction = await alice.spaceDapp.updateChannel(
+                {
+                    spaceNetworkId: spaceId.networkId,
+                    channelNetworkId: channelId.networkId,
+                    channelName,
+                    roleIds: [newRoleId.roleId],
+                },
+                alice.provider.wallet,
+            )
             receipt = await transaction.wait()
         } catch (e) {
             const error = await alice.spaceDapp.parseSpaceError(spaceId.networkId, e)

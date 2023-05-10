@@ -8,6 +8,7 @@ import { BlockchainTransactionType, RoleIdentifier } from '../types/web3-types'
 import { useQueryClient } from '@tanstack/react-query'
 import { useZionClient } from './use-zion-client'
 import { useTransactionStore } from '../store/use-transactions-store'
+import { useWeb3Context } from '../components/Web3ContextProvider'
 
 /**
  * Hook to create a role with a transaction.
@@ -19,6 +20,7 @@ export function useCreateRoleTransaction() {
     const isTransacting = useRef<boolean>(false)
     const { createRoleTransaction, waitForCreateRoleTransaction } = useZionClient()
     const queryClient = useQueryClient()
+    const { signer } = useWeb3Context()
 
     const { data, isLoading, transactionHash, transactionStatus, error } = useMemo(() => {
         return {
@@ -59,6 +61,7 @@ export function useCreateRoleTransaction() {
                     permissions,
                     createExternalTokenStruct(tokens),
                     users,
+                    signer,
                 )
                 setTransactionContext(txContext)
                 if (txContext?.status === TransactionStatus.Pending) {
@@ -83,7 +86,7 @@ export function useCreateRoleTransaction() {
                 isTransacting.current = false
             }
         },
-        [createRoleTransaction, queryClient, waitForCreateRoleTransaction],
+        [createRoleTransaction, queryClient, signer, waitForCreateRoleTransaction],
     )
 
     useEffect(() => {

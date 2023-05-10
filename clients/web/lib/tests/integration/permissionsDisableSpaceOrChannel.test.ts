@@ -27,6 +27,7 @@ describe('disable channel', () => {
         const success: boolean | undefined = await alice.setSpaceAccess(
             spaceNetworkId as string,
             true,
+            alice.provider.wallet,
         )
 
         const spaceInfo = await alice.getSpaceInfoBySpaceId(spaceNetworkId as string)
@@ -50,9 +51,17 @@ describe('disable channel', () => {
         const spaceNetworkId = roomId.networkId
         /** Act */
         // set space access off, disabling space in ZionSpaceManager
-        const disabled: boolean | undefined = await alice.setSpaceAccess(spaceNetworkId, true)
+        const disabled: boolean | undefined = await alice.setSpaceAccess(
+            spaceNetworkId,
+            true,
+            alice.provider.wallet,
+        )
         // set space access on, re-enabling space in ZionSpaceManager
-        const enabled: boolean | undefined = await alice.setSpaceAccess(spaceNetworkId, false)
+        const enabled: boolean | undefined = await alice.setSpaceAccess(
+            spaceNetworkId,
+            false,
+            alice.provider.wallet,
+        )
         const spaceInfo = await alice.getSpaceInfoBySpaceId(spaceNetworkId)
 
         /** Assert */
@@ -74,7 +83,7 @@ describe('disable channel', () => {
         /** Act */
         // set space access off, disabling space in ZionSpaceManager
         const error = await getError<Error>(async function () {
-            await bob.setSpaceAccess(spaceNetworkId as string, true)
+            await bob.setSpaceAccess(spaceNetworkId as string, true, bob.provider.wallet)
         })
 
         /* Assert */
@@ -114,7 +123,7 @@ describe('disable channel', () => {
         /** Act */
 
         // set space access off, disabling space in ZionSpaceManager
-        await bob.setSpaceAccess(roomId.networkId, true)
+        await bob.setSpaceAccess(roomId.networkId, true, bob.provider.wallet)
 
         /** Assert */
 
@@ -162,7 +171,7 @@ describe('disable channel', () => {
         await alice.joinRoom(roomId)
 
         // set space access off, disabling space in ZionSpaceManager
-        await bob.setSpaceAccess(roomId.networkId, true)
+        await bob.setSpaceAccess(roomId.networkId, true, bob.provider.wallet)
 
         await waitFor(
             () =>
@@ -175,7 +184,7 @@ describe('disable channel', () => {
         // space is re-enabled. Should be able to join.
 
         // re-enable space
-        await bob.setSpaceAccess(roomId.networkId, false)
+        await bob.setSpaceAccess(roomId.networkId, false, bob.provider.wallet)
 
         /** Assert */
         await bob.inviteUser(roomId, alice.matrixUserId)

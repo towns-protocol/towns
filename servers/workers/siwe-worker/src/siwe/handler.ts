@@ -71,13 +71,12 @@ export async function verifySpaceOwner(
 	chainId: number = GOERLI,
 	provider: ethers.providers.StaticJsonRpcProvider,
 ): Promise<boolean> {
-	const spaceDapp = new SpaceDapp(chainId, provider, undefined)
+	const spaceDapp = new SpaceDapp(chainId, provider)
 	try {
 		const hasPermission = await spaceDapp.isEntitledToSpace(
 			decodeURIComponent(spaceId),
 			address,
 			PERMISSION,
-			false,
 		)
 		return hasPermission
 	} catch (error) {

@@ -39,14 +39,17 @@ describe('update role', () => {
         // change the role details
         const newRoleName = 'newRoleName'
         const newPermissions = [Permission.Read, Permission.Write, Permission.Redact]
-        const transaction = await alice.spaceDapp.updateRole({
-            spaceNetworkId,
-            roleId: roleDetails.id,
-            roleName: newRoleName,
-            permissions: newPermissions,
-            tokens: roleDetails.tokens,
-            users: roleDetails.users,
-        })
+        const transaction = await alice.spaceDapp.updateRole(
+            {
+                spaceNetworkId,
+                roleId: roleDetails.id,
+                roleName: newRoleName,
+                permissions: newPermissions,
+                tokens: roleDetails.tokens,
+                users: roleDetails.users,
+            },
+            alice.provider.wallet,
+        )
         const receipt = await transaction.wait()
 
         /** Assert */
@@ -83,14 +86,17 @@ describe('update role', () => {
         const pioneerNftAddress = getPioneerNftAddress(alice.chainId)
         // test space was created with council token. replace with zioneer token
         const newTokens = createExternalTokenStruct([pioneerNftAddress])
-        const transaction = await alice.spaceDapp.updateRole({
-            spaceNetworkId,
-            roleId: roleDetails.id,
-            roleName: newRoleName,
-            permissions: newPermissions,
-            tokens: newTokens,
-            users: roleDetails.users,
-        })
+        const transaction = await alice.spaceDapp.updateRole(
+            {
+                spaceNetworkId,
+                roleId: roleDetails.id,
+                roleName: newRoleName,
+                permissions: newPermissions,
+                tokens: newTokens,
+                users: roleDetails.users,
+            },
+            alice.provider.wallet,
+        )
         let receipt: ContractReceipt | undefined
         try {
             receipt = await transaction.wait()
@@ -163,14 +169,17 @@ describe('update role', () => {
         }
         let receipt: ContractReceipt | undefined
         try {
-            const transaction = await alice.spaceDapp.updateRole({
-                spaceNetworkId,
-                roleId: newModeratorRole.id,
-                roleName: newModeratorRole.name,
-                permissions: newModeratorRole.permissions,
-                tokens: newModeratorRole.tokens,
-                users: newModeratorRole.users,
-            })
+            const transaction = await alice.spaceDapp.updateRole(
+                {
+                    spaceNetworkId,
+                    roleId: newModeratorRole.id,
+                    roleName: newModeratorRole.name,
+                    permissions: newModeratorRole.permissions,
+                    tokens: newModeratorRole.tokens,
+                    users: newModeratorRole.users,
+                },
+                alice.provider.wallet,
+            )
 
             receipt = await transaction.wait()
         } catch (e) {
@@ -253,14 +262,17 @@ describe('update role', () => {
         }
         let receipt: ContractReceipt | undefined
         try {
-            const transaction = await alice.spaceDapp.updateRole({
-                spaceNetworkId,
-                roleId: newModeratorRole.id,
-                roleName: newModeratorRole.name,
-                permissions: newModeratorRole.permissions,
-                tokens: newModeratorRole.tokens,
-                users: newModeratorRole.users,
-            })
+            const transaction = await alice.spaceDapp.updateRole(
+                {
+                    spaceNetworkId,
+                    roleId: newModeratorRole.id,
+                    roleName: newModeratorRole.name,
+                    permissions: newModeratorRole.permissions,
+                    tokens: newModeratorRole.tokens,
+                    users: newModeratorRole.users,
+                },
+                alice.provider.wallet,
+            )
 
             receipt = await transaction.wait()
         } catch (e) {

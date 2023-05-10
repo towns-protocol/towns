@@ -9,7 +9,7 @@ import { bin_toHexString } from '@towns/sdk'
 
 export function useCasablancaWalletSignIn() {
     const { clientSingleton } = useZionContext()
-    const { activeWalletAddress } = useWeb3Context()
+    const { activeWalletAddress, signer } = useWeb3Context()
     const { setCasablancaCredentials } = useCredentialStore()
     const { setLoginError, setLoginStatus } = useCasablancaStore()
 
@@ -34,6 +34,7 @@ export function useCasablancaWalletSignIn() {
             try {
                 const casablancaContext = await clientSingleton.signCasablancaDelegate(
                     delegateWallet,
+                    signer,
                 )
                 setCasablancaCredentials(clientSingleton.opts.casablancaServerUrl, {
                     privateKey: delegateWallet.privateKey,
@@ -63,6 +64,7 @@ export function useCasablancaWalletSignIn() {
             setCasablancaCredentials,
             setLoginError,
             setLoginStatus,
+            signer,
         ],
     )
 

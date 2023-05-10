@@ -6,6 +6,7 @@ import { removeSyncedEntitleChannelsQueries } from '../query/removeSyncedEntitle
 import { useTransactionStore } from '../store/use-transactions-store'
 import { BlockchainTransactionType } from '../types/web3-types'
 import { useZionClient } from './use-zion-client'
+import { useWeb3Context } from '../components/Web3ContextProvider'
 
 /**
  * Hook to create a role with a transaction.
@@ -16,6 +17,7 @@ export function useUpdateChannelTransaction() {
     >(undefined)
     const isTransacting = useRef<boolean>(false)
     const { updateChannelTransaction, waitForUpdateChannelTransaction } = useZionClient()
+    const { signer } = useWeb3Context()
     const { data, isLoading, transactionHash, transactionStatus, error } = useMemo(() => {
         return {
             data: transactionContext?.data,
@@ -47,7 +49,7 @@ export function useUpdateChannelTransaction() {
                     hasOffChainUpdate: updateChannelInfo.updatedChannelTopic !== undefined,
                 }
                 setTransactionContext(loading)
-                const txContext = await updateChannelTransaction(updateChannelInfo)
+                const txContext = await updateChannelTransaction(updateChannelInfo, signer)
                 setTransactionContext(txContext)
                 if (txContext?.status === TransactionStatus.Pending) {
                     // save it to local storage so we can track it
@@ -65,7 +67,7 @@ export function useUpdateChannelTransaction() {
                 isTransacting.current = false
             }
         },
-        [updateChannelTransaction, waitForUpdateChannelTransaction],
+        [signer, updateChannelTransaction, waitForUpdateChannelTransaction],
     )
 
     useEffect(() => {

@@ -39,7 +39,6 @@ export class ShimFactory {
         address: string,
         chainId: number,
         provider: ethers.providers.Provider | undefined,
-        signer: ethers.Signer | undefined,
     ): IEntitlementModuleShim {
         // todo: fetch the abi by version. For now, use the latest abi
         // from json.
@@ -50,7 +49,6 @@ export class ShimFactory {
                     LocalhostIEntitlementModuleAbi,
                     chainId,
                     provider,
-                    signer,
                 )
             case 5:
                 return new IEntitlementModuleShim(
@@ -58,7 +56,6 @@ export class ShimFactory {
                     GoerliIEntitlementModuleAbi,
                     chainId,
                     provider,
-                    signer,
                 )
             case 11155111:
                 return new IEntitlementModuleShim(
@@ -66,7 +63,6 @@ export class ShimFactory {
                     SepoliaIEntitlementModuleAbi,
                     chainId,
                     provider,
-                    signer,
                 )
             default:
                 throw new Error(`Entitlement module for chain id ${chainId} is not supported.`)
@@ -77,7 +73,6 @@ export class ShimFactory {
         address: string,
         chainId: number,
         provider: ethers.providers.Provider | undefined,
-        signer: ethers.Signer | undefined,
     ): TokenEntitlementShim {
         // todo: fetch the abi by version. For now, use the latest abi
         // from json.
@@ -88,7 +83,6 @@ export class ShimFactory {
                     LocalhostTokenEntitlementAbi,
                     chainId,
                     provider,
-                    signer,
                 )
             case 5:
                 return new TokenEntitlementShim(
@@ -96,7 +90,6 @@ export class ShimFactory {
                     GoerliTokenEntitlementAbi,
                     chainId,
                     provider,
-                    signer,
                 )
             case 11155111:
                 return new TokenEntitlementShim(
@@ -104,7 +97,6 @@ export class ShimFactory {
                     SepoliaTokenEntitlementAbi,
                     chainId,
                     provider,
-                    signer,
                 )
             default:
                 throw new Error(`TokenEntitlement for chain id ${chainId} is not supported.`)
@@ -115,7 +107,6 @@ export class ShimFactory {
         address: string,
         chainId: number,
         provider: ethers.providers.Provider | undefined,
-        signer: ethers.Signer | undefined,
     ): UserEntitlementShim {
         // todo: fetch the abi by version. For now, use the latest abi
         // from json.
@@ -126,23 +117,15 @@ export class ShimFactory {
                     LocalhostUserEntitlementAbi,
                     chainId,
                     provider,
-                    signer,
                 )
             case 5:
-                return new UserEntitlementShim(
-                    address,
-                    GoerliUserEntitlementAbi,
-                    chainId,
-                    provider,
-                    signer,
-                )
+                return new UserEntitlementShim(address, GoerliUserEntitlementAbi, chainId, provider)
             case 11155111:
                 return new UserEntitlementShim(
                     address,
                     SepoliaIEntitlementModuleAbi,
                     chainId,
                     provider,
-                    signer,
                 )
             default:
                 throw new Error(`UserEntitlement for chain id ${chainId} is not supported.`)

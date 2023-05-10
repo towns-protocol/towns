@@ -7,7 +7,6 @@ import { ZionOpts } from '../client/ZionClientTypes'
 import { isMatrixError } from './use-zion-client'
 import { MatrixCredentials, useCredentialStore } from '../store/use-credential-store'
 import { useMatrixStore } from '../store/use-matrix-store'
-import { useSigner } from 'wagmi'
 import { useWeb3Context } from '../components/Web3ContextProvider'
 import { useCasablancaStore } from '../store/use-casablanca-store'
 
@@ -26,22 +25,12 @@ export const useZionClientListener = (opts: ZionOpts) => {
     const [matrixClient, setMatrixClient] = useState<MatrixClient>()
     const [casablancaClient, setCasablancaClient] = useState<CasablancaClient>()
     const clientSingleton = useRef<ZionClient>()
-    // The signer should be initialized with the correct chainId so we don't have to worry about it changing for writes
-    // without this, when a user swaps networks and tries to make a transaction, they can have a mismatched signer resulting in "network changed" errors
-    const { data: wagmiSigner } = useSigner({
-        chainId: opts.chainId,
-    })
-    // web3Signer is passed by tests
-    const _signer = opts.web3Signer || wagmiSigner
 
     if (!clientSingleton.current) {
-        if (_signer) {
-            clientSingleton.current = new ZionClient({
-                ...opts,
-                web3Provider: provider,
-                web3Signer: _signer,
-            })
-        }
+        clientSingleton.current = new ZionClient({
+            ...opts,
+            web3Provider: provider,
+        })
     }
 
     const startMatrixClient = useCallback(async () => {
@@ -51,7 +40,6 @@ export const useZionClientListener = (opts: ZionOpts) => {
                 {
                     singleton: clientSingleton.current !== undefined,
                     matrixCredentials: matrixCredentials !== null,
-                    _signer: _signer !== undefined,
                 },
             )
             setMatrixClient(undefined)
@@ -84,20 +72,13 @@ export const useZionClientListener = (opts: ZionOpts) => {
             setMatrixLoginStatus(LoginStatus.LoggedOut)
             setMatrixCredentials(opts.matrixServerUrl, null)
         }
-    }, [
-        matrixCredentials,
-        opts.matrixServerUrl,
-        setMatrixLoginStatus,
-        setMatrixCredentials,
-        _signer,
-    ])
+    }, [matrixCredentials, opts.matrixServerUrl, setMatrixLoginStatus, setMatrixCredentials])
 
     const startCasablancaClient = useCallback(async () => {
         if (!clientSingleton.current || !casablancaCredentials) {
             console.log('casablanca client listener not yet started:', {
                 singleton: clientSingleton.current !== undefined,
                 casablancaCredentials: casablancaCredentials !== null,
-                _signer: _signer !== undefined,
             })
             setCasablancaClient(undefined)
             return
@@ -137,7 +118,6 @@ export const useZionClientListener = (opts: ZionOpts) => {
             setCasablancaCredentials(opts.casablancaServerUrl ?? '', null)
         }
     }, [
-        _signer,
         casablancaCredentials,
         opts.casablancaServerUrl,
         setCasablancaCredentials,

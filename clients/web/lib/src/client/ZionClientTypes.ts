@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { BigNumberish, ContractReceipt, ContractTransaction, ethers } from 'ethers'
+import { BigNumberish, ContractReceipt, ContractTransaction } from 'ethers'
 import { SendMessageOptions, UpdateChannelInfo } from '../types/zion-types'
 import { RoleIdentifier, TProvider } from '../types/web3-types'
 
@@ -20,7 +20,6 @@ export interface ZionOpts {
     pollTimeoutMs?: number
     onboardingOpts?: ZionOnboardingOpts
     web3Provider?: TProvider
-    web3Signer?: ethers.Signer
     eventHandlers?: ZionClientEventHandlers
     logNamespaceFilter?: string
 }

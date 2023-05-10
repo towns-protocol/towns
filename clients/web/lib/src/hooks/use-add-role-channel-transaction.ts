@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { QueryKeyRoles } from './query-keys'
 import { useQueryClient } from '@tanstack/react-query'
 import { useZionClient } from './use-zion-client'
+import { useWeb3Context } from '../components/Web3ContextProvider'
 
 /**
  * Hook to add a role to a channel with a transaction.
@@ -15,6 +16,7 @@ export function useAddRoleToChannelTransaction() {
     const isTransacting = useRef<boolean>(false)
     const { addRoleToChannelTransaction, waitForAddRoleToChannelTransaction } = useZionClient()
     const queryClient = useQueryClient()
+    const { signer } = useWeb3Context()
 
     const { data, isLoading, transactionHash, transactionStatus, error } = useMemo(() => {
         return {
@@ -46,6 +48,7 @@ export function useAddRoleToChannelTransaction() {
                     spaceNetworkId,
                     channelNetworkId,
                     roleId,
+                    signer,
                 )
                 setTransactionContext(txContext)
                 if (txContext?.status === TransactionStatus.Pending) {
@@ -70,7 +73,7 @@ export function useAddRoleToChannelTransaction() {
                 isTransacting.current = false
             }
         },
-        [queryClient, addRoleToChannelTransaction, waitForAddRoleToChannelTransaction],
+        [addRoleToChannelTransaction, signer, waitForAddRoleToChannelTransaction, queryClient],
     )
 
     useEffect(() => {

@@ -203,12 +203,15 @@ describe('unreadMessageCountHooks', () => {
         await waitFor(() => expect(spaceHasUnread).toHaveTextContent('false'))
         await waitFor(() => expect(channelFullyReadMarker).toHaveTextContent('isUnread:false'))
         // have jane create a new room and invite bob
-        const newRoomId = await jane.createChannel({
-            name: 'janes channel',
-            visibility: RoomVisibility.Private,
-            parentSpaceId: janesSpaceId,
-            roleIds: [],
-        })
+        const newRoomId = await jane.createChannel(
+            {
+                name: 'janes channel',
+                visibility: RoomVisibility.Private,
+                parentSpaceId: janesSpaceId,
+                roleIds: [],
+            },
+            jane.provider.wallet,
+        )
         if (!newRoomId) {
             throw new Error('new room id is undefined')
         }

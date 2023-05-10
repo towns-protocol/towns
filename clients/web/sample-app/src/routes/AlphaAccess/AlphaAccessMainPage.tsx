@@ -1,27 +1,24 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { PioneerNFT, PioneerNFTContractState, useWeb3Context } from 'use-zion-client'
 import { ethers } from 'ethers'
-
-import { useSigner } from 'wagmi'
 import { ContractState } from './ContractState'
 import { TransactionReport, TransactionReports } from './TransactionReports'
 import { validateEthFromString } from './validateEthFromString'
 
 export const AlphaAccessMainPage = () => {
-    const { provider, chain } = useWeb3Context()
-    const { data: signer } = useSigner()
+    const { provider, chain, signer } = useWeb3Context()
 
     const [contractState, setContractState] = useState<PioneerNFTContractState | null>(null)
 
     const [loading, setLoading] = useState(false)
 
     const pioneerNFT = useMemo(() => {
-        if (!provider || !chain || !signer) {
+        if (!provider || !chain) {
             return null
         }
 
-        return new PioneerNFT(chain.id, provider, signer)
-    }, [provider, chain, signer])
+        return new PioneerNFT(chain.id, provider)
+    }, [provider, chain])
 
     const handleRefetchContractState = useCallback(async () => {
         const refetched = await pioneerNFT?.getContractState()
@@ -84,7 +81,7 @@ export const AlphaAccessMainPage = () => {
         setLoading(true)
 
         try {
-            const tx = await pioneerNFT.deposit(parsedEther.amount)
+            const tx = await pioneerNFT.deposit(parsedEther.amount, signer)
             recordTransactionReport({
                 hash: tx.hash,
                 type: 'Deposit',
@@ -103,7 +100,7 @@ export const AlphaAccessMainPage = () => {
         }
 
         setLoading(false)
-    }, [depositAmountETH, handleRefetchContractState, recordTransactionReport, pioneerNFT])
+    }, [pioneerNFT, depositAmountETH, signer, recordTransactionReport, handleRefetchContractState])
 
     const handleSubmitMintTo = useCallback(async () => {
         if (!pioneerNFT) {
@@ -136,7 +133,7 @@ export const AlphaAccessMainPage = () => {
         setLoading(true)
 
         try {
-            const tx = await pioneerNFT.pioneerNFTShim.write.mintTo(mintToAddress)
+            const tx = await pioneerNFT.pioneerNFTShim.write(signer).mintTo(mintToAddress)
             recordTransactionReport({
                 hash: tx.hash,
                 type: 'Mint',
@@ -157,11 +154,12 @@ export const AlphaAccessMainPage = () => {
 
         setLoading(false)
     }, [
-        contractState,
-        handleRefetchContractState,
-        mintToAddress,
-        recordTransactionReport,
         pioneerNFT,
+        mintToAddress,
+        contractState,
+        signer,
+        recordTransactionReport,
+        handleRefetchContractState,
     ])
 
     const handleSubmitSetMintReward = useCallback(async () => {
@@ -180,7 +178,9 @@ export const AlphaAccessMainPage = () => {
         setLoading(true)
 
         try {
-            const tx = await pioneerNFT.pioneerNFTShim.write.setMintReward(parsedEther.amount)
+            const tx = await pioneerNFT.pioneerNFTShim
+                .write(signer)
+                .setMintReward(parsedEther.amount)
             recordTransactionReport({
                 hash: tx.hash,
                 type: 'Set Mint Reward',
@@ -200,7 +200,7 @@ export const AlphaAccessMainPage = () => {
         }
 
         setLoading(false)
-    }, [pioneerNFT, mintRewardETH, handleRefetchContractState, recordTransactionReport])
+    }, [pioneerNFT, mintRewardETH, signer, recordTransactionReport, handleRefetchContractState])
 
     const handleSubmitSetAllowed = useCallback(async () => {
         if (!pioneerNFT) {
@@ -216,7 +216,9 @@ export const AlphaAccessMainPage = () => {
         setLoading(true)
 
         try {
-            const tx = await pioneerNFT.pioneerNFTShim.write.setAllowed(allowedUser, allowedState)
+            const tx = await pioneerNFT.pioneerNFTShim
+                .write(signer)
+                .setAllowed(allowedUser, allowedState)
             recordTransactionReport({
                 hash: tx.hash,
                 type: 'Set Allowed',
@@ -237,7 +239,14 @@ export const AlphaAccessMainPage = () => {
         }
 
         setLoading(false)
-    }, [pioneerNFT, allowedUser, allowedState, handleRefetchContractState, recordTransactionReport])
+    }, [
+        pioneerNFT,
+        allowedUser,
+        signer,
+        allowedState,
+        recordTransactionReport,
+        handleRefetchContractState,
+    ])
 
     const handleSubmitWithdraw = useCallback(async () => {
         if (!pioneerNFT) {
@@ -248,7 +257,7 @@ export const AlphaAccessMainPage = () => {
         setLoading(true)
 
         try {
-            const tx = await pioneerNFT.withdraw()
+            const tx = await pioneerNFT.withdraw(signer)
             recordTransactionReport({
                 hash: tx.hash,
                 type: 'Withdraw',
@@ -266,7 +275,7 @@ export const AlphaAccessMainPage = () => {
         }
 
         setLoading(false)
-    }, [handleRefetchContractState, recordTransactionReport, pioneerNFT])
+    }, [pioneerNFT, signer, recordTransactionReport, handleRefetchContractState])
 
     if (!pioneerNFT) {
         return <div>Not signed in. Go back to the home page to sign in.</div>

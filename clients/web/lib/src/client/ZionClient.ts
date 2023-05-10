@@ -1,4 +1,4 @@
-import { BigNumber, ContractReceipt, ContractTransaction, Wallet } from 'ethers'
+import { BigNumber, ContractReceipt, ContractTransaction, Wallet, ethers } from 'ethers'
 import {
     bin_fromHexString,
     Client as CasablancaClient,
@@ -120,8 +120,8 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
         this.name = name || ''
         console.log('~~~ new ZionClient ~~~', this.name, this.opts)
         this.dbManager = new MatrixDbManager()
-        this.spaceDapp = new SpaceDapp(opts.chainId, opts.web3Provider, opts.web3Signer)
-        this.pioneerNFT = new PioneerNFT(opts.chainId, opts.web3Provider, opts.web3Signer)
+        this.spaceDapp = new SpaceDapp(opts.chainId, opts.web3Provider)
+        this.pioneerNFT = new PioneerNFT(opts.chainId, opts.web3Provider)
         this._eventHandlers = opts.eventHandlers
     }
 
@@ -211,15 +211,15 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
      * that you will use to sign messages to casablanca
      * TODO(HNT-1380): this is not final implementation
      *************************************************/
-    public async signCasablancaDelegate(delegateWallet: Wallet): Promise<SignerContext> {
-        if (!this.opts.web3Signer) {
+    public async signCasablancaDelegate(
+        delegateWallet: Wallet,
+        signer: ethers.Signer | undefined,
+    ): Promise<SignerContext> {
+        if (!signer) {
             throw new Error("can't sign without a web3 signer")
         }
-        const creatorAddress = bin_fromHexString(await this.opts.web3Signer.getAddress())
-        const delegateSig = await makeOldTownsDelegateSig(
-            this.opts.web3Signer,
-            delegateWallet.publicKey,
-        )
+        const creatorAddress = bin_fromHexString(await signer.getAddress())
+        const delegateSig = await makeOldTownsDelegateSig(signer, delegateWallet.publicKey)
         const pk = delegateWallet.privateKey.slice(2)
         const context: SignerContext = {
             signerPrivateKey: () => pk,
@@ -240,7 +240,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
         if (this.matrixClient) {
             throw new Error('matrixClient already running')
         }
-        if (!this.opts.web3Provider || !this.opts.web3Signer) {
+        if (!this.opts.web3Provider) {
             throw new Error('web3Provider and web3Signer are required')
         }
         // log startOpts
@@ -360,6 +360,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
         createSpaceInfo: CreateSpaceInfo,
         memberEntitlements: SpaceFactoryDataTypes.CreateSpaceExtraEntitlementsStruct,
         everyonePermissions: Permission[],
+        signer: ethers.Signer | undefined,
     ): Promise<TransactionContext<RoomIdentifier>> {
         const roomId: RoomIdentifier | undefined = await this.createSpaceRoom(createSpaceInfo)
 
@@ -386,6 +387,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
                 createSpaceInfo.spaceMetadata ?? '',
                 memberEntitlements,
                 everyonePermissions,
+                signer,
             )
 
             console.log(`[createSpaceTransaction] transaction created` /*, transaction*/)
@@ -517,8 +519,9 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
      *************************************************/
     public async createChannel(
         createChannelInfo: CreateChannelInfo,
+        signer: ethers.Signer | undefined,
     ): Promise<RoomIdentifier | undefined> {
-        const txContext = await this.createChannelTransaction(createChannelInfo)
+        const txContext = await this.createChannelTransaction(createChannelInfo, signer)
         if (txContext.error) {
             throw txContext.error
         }
@@ -532,6 +535,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
 
     public async createChannelTransaction(
         createChannelInfo: CreateChannelInfo,
+        signer: ethers.Signer | undefined,
     ): Promise<ChannelTransactionContext> {
         let roomId: RoomIdentifier | undefined
         try {
@@ -561,6 +565,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
                 createChannelInfo.name,
                 roomId.networkId,
                 createChannelInfo.roleIds,
+                signer,
             )
             console.log(`[createChannelTransaction] transaction created` /*, transaction*/)
         } catch (err) {
@@ -646,18 +651,22 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
 
     public async updateChannelTransaction(
         updateChannelInfo: UpdateChannelInfo,
+        signer: ethers.Signer | undefined,
     ): Promise<ChannelUpdateTransactionContext> {
         const hasOffChainUpdate = !updateChannelInfo.updatedChannelTopic
         let transaction: ContractTransaction | undefined = undefined
         let error: Error | undefined = undefined
         try {
             if (updateChannelInfo.updatedChannelName && updateChannelInfo.updatedRoleIds) {
-                transaction = await this.spaceDapp.updateChannel({
-                    spaceNetworkId: updateChannelInfo.parentSpaceId.networkId,
-                    channelNetworkId: updateChannelInfo.channelId.networkId,
-                    channelName: updateChannelInfo.updatedChannelName,
-                    roleIds: updateChannelInfo.updatedRoleIds,
-                })
+                transaction = await this.spaceDapp.updateChannel(
+                    {
+                        spaceNetworkId: updateChannelInfo.parentSpaceId.networkId,
+                        channelNetworkId: updateChannelInfo.channelId.networkId,
+                        channelName: updateChannelInfo.updatedChannelName,
+                        roleIds: updateChannelInfo.updatedRoleIds,
+                    },
+                    signer,
+                )
                 console.log(`[updateChannelTransaction] transaction created` /*, transaction*/)
             } else {
                 // this is a matrix/casablanca off chain state update
@@ -825,6 +834,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
         permissions: Permission[],
         tokens: SpaceFactoryDataTypes.ExternalTokenStruct[],
         users: string[],
+        signer: ethers.Signer | undefined,
     ): Promise<RoleTransactionContext> {
         let transaction: ContractTransaction | undefined = undefined
         let error: Error | undefined = undefined
@@ -835,6 +845,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
                 permissions,
                 tokens,
                 users,
+                signer,
             )
             console.log(`[createRoleTransaction] transaction created` /*, transaction*/)
         } catch (err) {
@@ -913,6 +924,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
         spaceNetworkId: string,
         channelNetworkId: string,
         roleId: number,
+        signer: ethers.Signer | undefined,
     ): Promise<TransactionContext<void>> {
         let transaction: ContractTransaction | undefined = undefined
         let error: Error | undefined = undefined
@@ -931,6 +943,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
                 spaceNetworkId,
                 channelNetworkId,
                 roleId,
+                signer,
             )
             console.log(`[addRoleToChannelTransaction] transaction created` /*, transaction*/)
         } catch (err) {
@@ -954,18 +967,22 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
         permissions: Permission[],
         tokens: SpaceFactoryDataTypes.ExternalTokenStruct[],
         users: string[],
+        signer: ethers.Signer | undefined,
     ): Promise<TransactionContext<void>> {
         let transaction: ContractTransaction | undefined = undefined
         let error: Error | undefined = undefined
         try {
-            transaction = await this.spaceDapp.updateRole({
-                spaceNetworkId,
-                roleId,
-                roleName,
-                permissions,
-                tokens,
-                users,
-            })
+            transaction = await this.spaceDapp.updateRole(
+                {
+                    spaceNetworkId,
+                    roleId,
+                    roleName,
+                    permissions,
+                    tokens,
+                    users,
+                },
+                signer,
+            )
             console.log(`[updateRoleTransaction] transaction created` /*, transaction*/)
         } catch (err) {
             console.error('[updateRoleTransaction] error', err)
@@ -1078,11 +1095,12 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
     public async deleteRoleTransaction(
         spaceNetworkId: string,
         roleId: number,
+        signer: ethers.Signer | undefined,
     ): Promise<TransactionContext<void>> {
         let transaction: ContractTransaction | undefined = undefined
         let error: Error | undefined = undefined
         try {
-            transaction = await this.spaceDapp.deleteRole(spaceNetworkId, roleId)
+            transaction = await this.spaceDapp.deleteRole(spaceNetworkId, roleId, signer)
             console.log(`[deleteRoleTransaction] transaction created` /*, transaction*/)
         } catch (err) {
             console.error('[deleteRoleTransaction] error', err)
@@ -1151,12 +1169,16 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
     /************************************************
      * setSpaceAccess
      *************************************************/
-    public async setSpaceAccess(spaceNetworkId: string, disabled: boolean): Promise<boolean> {
+    public async setSpaceAccess(
+        spaceNetworkId: string,
+        disabled: boolean,
+        signer: ethers.Signer | undefined,
+    ): Promise<boolean> {
         let transaction: ContractTransaction | undefined = undefined
         let receipt: ContractReceipt | undefined = undefined
         let success = false
         try {
-            transaction = await this.spaceDapp.setSpaceAccess(spaceNetworkId, disabled)
+            transaction = await this.spaceDapp.setSpaceAccess(spaceNetworkId, disabled, signer)
             receipt = await transaction.wait()
         } catch (err) {
             const decodedError = await this.getDecodedErrorForSpace(spaceNetworkId, err)

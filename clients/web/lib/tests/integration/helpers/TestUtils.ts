@@ -206,7 +206,7 @@ export async function createTestChannelWithSpaceRoles(
         }
     }
 
-    return client.createChannel(createChannelInfo)
+    return client.createChannel(createChannelInfo, client.provider.wallet)
 }
 
 export async function findRoleByName(
