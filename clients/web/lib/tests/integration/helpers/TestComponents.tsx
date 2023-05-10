@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { Address } from 'wagmi'
 import { LoginStatus } from '../../../src/hooks/login'
 import { RoomIdentifier } from '../../../src/types/room-identifier'
@@ -209,18 +209,25 @@ export function TransactionInfo<
 }) {
     const { for: transaction, label } = props
 
-    const renderData = (data?: T['data']) => {
-        if (!data) {
+    const renderData = useCallback(() => {
+        if (!transaction.data) {
             return 'undefined'
         }
-        return JSON.stringify(data)
-    }
+        return JSON.stringify(transaction.data)
+    }, [transaction.data])
+
+    const renderError = useCallback(() => {
+        if (!transaction.error) {
+            return 'undefined'
+        }
+        return JSON.stringify(transaction.error)
+    }, [transaction.error])
 
     return (
         <div data-testid={label}>
             <div>isLoading: {transaction.isLoading.toString()}</div>
-            <div>data: {renderData(transaction.data)}</div>
-            <div>error: {transaction.error?.message ?? 'undefined'}</div>
+            <div>data: {renderData()}</div>
+            <div>error: {renderError()}</div>
             <div>transactionHash: {transaction.transactionHash ?? 'undefined'}</div>
             <div>transactionStatus: {transaction.transactionStatus ?? 'undefined'}</div>
         </div>
