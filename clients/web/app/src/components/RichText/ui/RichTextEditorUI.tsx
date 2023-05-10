@@ -6,12 +6,12 @@ import {
     COMMAND_PRIORITY_LOW,
     SELECTION_CHANGE_COMMAND,
 } from 'lexical'
-import React, { ComponentProps, useCallback, useContext, useEffect, useRef, useState } from 'react'
+import React, { ComponentProps, useCallback, useEffect, useRef, useState } from 'react'
 import { useEvent } from 'react-use-event-hook'
 import { TOGGLE_LINK_COMMAND } from '@lexical/link'
 import { createPortal } from 'react-dom'
 import { AnimatePresence } from 'framer-motion'
-import { Box, BoxProps, Icon, Paragraph, RootLayerContext, Stack } from '@ui'
+import { Box, BoxProps, Icon, Paragraph, Stack, useZLayerContext } from '@ui'
 import { GiphyEntry } from '@components/Giphy/GiphyEntry'
 import { EmojiPickerButton } from '@components/EmojiPickerButton'
 import { FadeInBox } from '@components/Transitions'
@@ -143,7 +143,7 @@ export const RichTextUI = (props: Props) => {
         )
     }, [editor, updateToolbarPosition])
 
-    const { rootLayerRef } = useContext(RootLayerContext)
+    const { rootLayerRef } = useZLayerContext()
 
     return (
         <RichTextUIContainer key="editor" background={background} readOnly={props.readOnly}>

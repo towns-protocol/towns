@@ -111,7 +111,7 @@ const Reaction = (props: {
 
     return users && Object.keys(users).length ? (
         <TooltipRenderer
-            render={<ReactionTootip userIds={users} reaction={name} />}
+            tooltip={<ReactionTootip userIds={users} reaction={name} />}
             key={name}
             trigger="hover"
             placement="vertical"

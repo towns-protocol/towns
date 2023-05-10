@@ -23,6 +23,7 @@ import { DecryptingCard } from '@components/Shimmer/DecryptingCard'
 import { Box, Button, Stack } from '@ui'
 import { useIsChannelWritable } from 'hooks/useIsChannelWritable'
 import { useSpaceChannels } from 'hooks/useSpaceChannels'
+import { TooltipBoundaryBox } from 'ui/components/Tooltip/TooltipBoundary'
 import { CentralPanelLayout } from './layouts/CentralPanelLayout'
 
 export const SpacesChannel = () => {
@@ -147,7 +148,13 @@ const SpacesChannelComponent = () => {
                     </Button>
                 </Box>
             ) : (
-                <Box grow absoluteFill height="100%" justifyContent="end">
+                <TooltipBoundaryBox
+                    grow
+                    absoluteFill
+                    height="100%"
+                    justifyContent="end"
+                    tooltipPadding={16}
+                >
                     <MessageTimelineWrapper
                         key={channelId.slug}
                         spaceId={spaceId}
@@ -196,7 +203,7 @@ const SpacesChannelComponent = () => {
                             onSend={onSend}
                         />
                     </Box>
-                </Box>
+                </TooltipBoundaryBox>
             )}
         </CentralPanelLayout>
     )

@@ -277,7 +277,7 @@ export const Playground = () => {
 
             <Container label="Tooltips">
                 <Box>
-                    <TooltipRenderer trigger="hover" render={<Tooltip>Hello</Tooltip>}>
+                    <TooltipRenderer trigger="hover" tooltip={<Tooltip>Hello</Tooltip>}>
                         {({ triggerProps }) => (
                             <Box {...triggerProps} alignSelf="start">
                                 Hover Me

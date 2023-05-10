@@ -11,8 +11,7 @@ export const TimelineEncryptedContent = React.memo(
         return (
             <Stack insetY="xxs" className={styles.main}>
                 <TooltipRenderer
-                    placement="vertical-top"
-                    render={
+                    tooltip={
                         <Card
                             border
                             centerContent

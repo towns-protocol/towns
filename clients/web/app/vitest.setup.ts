@@ -6,6 +6,7 @@ import { act } from 'react-test-renderer'
 import { ResizeObserver } from '@juggle/resize-observer' // dependency of react-hook/resize-observer
 
 vi.mock('./src/components/Transitions/MotionBox')
+vi.mock('./src/ui/components/ZLayer/ZLayer')
 
 const storeResetFns = new Set<() => void>()
 

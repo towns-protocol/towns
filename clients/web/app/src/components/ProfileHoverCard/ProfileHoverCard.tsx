@@ -5,7 +5,7 @@ import { useGetUserBio } from 'hooks/useUserBio'
 import { Paragraph } from 'ui/components/Text/Paragraph'
 import { Stack } from 'ui/components/Stack/Stack'
 import { Avatar } from 'ui/components/Avatar/Avatar'
-import { MotionBox } from 'ui/components/Motion/MotionBox'
+import { Tooltip } from 'ui/components/Tooltip/Tooltip'
 
 type Props = {
     userId: string
@@ -20,18 +20,7 @@ export const ProfileHoverCard = (props: Props) => {
     const { data: userBio } = useGetUserBio(userAddress)
 
     return (
-        <MotionBox
-            border
-            gap
-            padding
-            background="level2"
-            rounded="sm"
-            maxWidth="300"
-            boxShadow="avatar"
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.2, duration: 0.1 }}
-        >
+        <Tooltip gap padding maxWidth="300">
             <Stack horizontal gap>
                 <Stack
                     width="x10"
@@ -65,6 +54,6 @@ export const ProfileHoverCard = (props: Props) => {
                     </>
                 )}
             </Stack>
-        </MotionBox>
+        </Tooltip>
     )
 }

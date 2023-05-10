@@ -1,6 +1,6 @@
-import { MutableRefObject, useCallback, useContext, useEffect, useRef, useState } from 'react'
+import { MutableRefObject, useCallback, useEffect, useRef, useState } from 'react'
 import { throttle } from 'lodash'
-import { RootLayerContext } from '@ui'
+import { useZLayerContext } from '@ui'
 
 /**
  * similar to https://github.com/mjsarfatti/use-mouse-leave but taking into
@@ -14,7 +14,7 @@ export const useHover = (ref: MutableRefObject<HTMLDivElement | null>, isEnabled
         setIsHoverEvent(true)
     }, [])
 
-    const { rootLayerRef } = useContext(RootLayerContext)
+    const { rootLayerRef } = useZLayerContext()
     const prevRef = useRef({ clientX: 0, clientY: 0 })
 
     useEffect(() => {

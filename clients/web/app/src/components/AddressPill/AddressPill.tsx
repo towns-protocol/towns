@@ -16,7 +16,7 @@ export const AddressPill = ({ address, onClick }: Props) => {
     return (
         <TooltipRenderer
             trigger="hover"
-            render={
+            tooltip={
                 <Box background="level4" padding="sm" rounded="sm">
                     <Text size="sm">{address}</Text>
                 </Box>

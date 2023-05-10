@@ -1,6 +1,6 @@
-import React, { useContext } from 'react'
+import React from 'react'
 import { createPortal } from 'react-dom'
-import { Box, BoxProps, RootLayerContext } from '@ui'
+import { Box, BoxProps, useZLayerContext } from '@ui'
 
 export const ModalContainer = (props: {
     children: React.ReactNode
@@ -8,7 +8,7 @@ export const ModalContainer = (props: {
     minWidth?: BoxProps['minWidth']
     stableTopAlignment?: boolean
 }) => {
-    const root = useContext(RootLayerContext).rootLayerRef?.current
+    const root = useZLayerContext().rootLayerRef?.current
 
     if (!root) {
         console.error(`no root context declared for use of modal`)

@@ -1,5 +1,5 @@
 import React, { forwardRef } from 'react'
-import { Box, BoxProps } from '../Box/Box'
+import { TooltipBox as Box, TooltipBoxProps as BoxProps } from '../Box/TooltipBox'
 
 export type StackProps = {
     horizontal?: boolean

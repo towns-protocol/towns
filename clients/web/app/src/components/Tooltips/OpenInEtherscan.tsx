@@ -1,21 +1,11 @@
 import React from 'react'
-import { Card, Icon, Stack } from '@ui'
+import { Icon, Paragraph, Tooltip } from '@ui'
 
 export const OpenInEtherscan = () => {
     return (
-        <Card
-            border
-            centerContent
-            paddingX="md"
-            paddingY="paragraph"
-            fontSize="md"
-            rounded="sm"
-            color="default"
-        >
-            <Stack horizontal centerContent gap="md">
-                Open in Etherscan
-                <Icon type="linkOut" size="square_sm" />
-            </Stack>
-        </Card>
+        <Tooltip horizontal gap="sm" alignItems="center">
+            <Paragraph size="sm">Open in Etherscan</Paragraph>
+            <Icon type="linkOut" size="square_xs" />
+        </Tooltip>
     )
 }

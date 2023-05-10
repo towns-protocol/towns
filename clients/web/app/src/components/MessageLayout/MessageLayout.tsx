@@ -11,7 +11,6 @@ import { useOpenMessageThread } from 'hooks/useOpenThread'
 import { useHandleReaction } from 'hooks/useReactions'
 import { AvatarProps } from 'ui/components/Avatar/Avatar'
 import { AvatarAtoms } from 'ui/components/Avatar/Avatar.css'
-import { TooltipRenderer } from 'ui/components/Tooltip/TooltipRenderer'
 import { useCreateLink } from 'hooks/useCreateLink'
 import { MessageContextMenu } from './MessageContextMenu'
 
@@ -116,24 +115,14 @@ export const MessageLayout = (props: Props) => {
             <Box minWidth="x8">
                 {displayContext !== 'tail' ? (
                     senderId ? (
-                        <TooltipRenderer
-                            render={<ProfileHoverCard userId={senderId} />}
-                            key={name}
-                            trigger="hover"
-                            placement="vertical"
-                        >
-                            {({ triggerProps }) => (
-                                <Box {...triggerProps}>
-                                    <AvatarComponent
-                                        isActive={isActive}
-                                        size={avatarSize}
-                                        insetY="xxs"
-                                        userId={senderId}
-                                        link={profileLink}
-                                    />
-                                </Box>
-                            )}
-                        </TooltipRenderer>
+                        <AvatarComponent
+                            isActive={isActive}
+                            size={avatarSize}
+                            insetY="xxs"
+                            userId={senderId}
+                            link={profileLink}
+                            tooltip={<ProfileHoverCard userId={senderId} />}
+                        />
                     ) : (
                         <></>
                     )
@@ -157,22 +146,13 @@ export const MessageLayout = (props: Props) => {
                     <Stack horizontal grow gap="sm" height="height_sm" alignItems="end">
                         {/* display name with tooltip */}
                         {name && senderId && (
-                            <TooltipRenderer
-                                render={<ProfileHoverCard userId={senderId} />}
-                                key={name}
-                                trigger="hover"
-                                placement="vertical"
-                            >
-                                {({ triggerProps }) => (
-                                    <Box {...triggerProps}>
-                                        <Link to={`profile/${senderId}`}>
-                                            <Text truncate fontSize="md" color="gray1" as="span">
-                                                {name}&nbsp;
-                                            </Text>
-                                        </Link>
-                                    </Box>
-                                )}
-                            </TooltipRenderer>
+                            <Box tooltip={<ProfileHoverCard userId={senderId} />}>
+                                <Link to={`profile/${senderId}`}>
+                                    <Text truncate fontSize="md" color="gray1" as="span">
+                                        {name}&nbsp;
+                                    </Text>
+                                </Link>
+                            </Box>
                         )}
                         {props.channelLabel ? (
                             <Text color="gray2">{`#${props.channelLabel}`}</Text>

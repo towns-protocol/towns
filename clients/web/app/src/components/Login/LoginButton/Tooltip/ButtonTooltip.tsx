@@ -9,7 +9,7 @@ export const ButtonTooltip = ({
     children: React.ReactNode
 }) => (
     <TooltipRenderer
-        render={
+        tooltip={
             label ? (
                 <Box
                     border
@@ -23,7 +23,6 @@ export const ButtonTooltip = ({
                 </Box>
             ) : undefined
         }
-        layoutId=""
         placement="vertical"
     >
         {(props) => (

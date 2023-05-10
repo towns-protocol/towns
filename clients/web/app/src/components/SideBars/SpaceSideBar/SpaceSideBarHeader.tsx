@@ -8,7 +8,7 @@ import { useContractSpaceInfo } from 'hooks/useContractSpaceInfo'
 import { useEnvironment } from 'hooks/useEnvironmnet'
 import { PATHS } from 'routes'
 import { useSizeContext } from 'ui/hooks/useSizeContext'
-import { Box, Icon, IconName, Paragraph, Stack, TooltipRenderer } from '@ui'
+import { Box, Icon, IconName, Paragraph, Stack } from '@ui'
 import { useHasPermission } from 'hooks/useHasPermission'
 import { SpaceSettingsCard } from '@components/Cards/SpaceSettingsCard'
 import { CardOpener } from 'ui/components/Overlay/CardOpener'
@@ -195,31 +195,24 @@ export const SpaceSideBarHeader = (props: {
                             />
                         )}
                         {hasAddress && (
-                            <TooltipRenderer
-                                keepOpenOnTriggerRefClick
-                                trigger="hover"
-                                distance="xxs"
-                                placement="vertical-top"
-                                render={<OpenInEtherscan />}
+                            <Box
+                                tooltip={<OpenInEtherscan />}
+                                tooltipOptions={{ placement: 'horizontal', align: 'end' }}
                             >
-                                {({ triggerProps }) => (
-                                    <Box {...triggerProps} padding="xs" rounded="sm">
-                                        <SidebarPill
-                                            icon="document"
-                                            label="Address"
-                                            labelRight={
-                                                isSmall
-                                                    ? `${spaceInfo?.address.slice(
-                                                          0,
-                                                          4,
-                                                      )}..${spaceInfo?.address.slice(-2)}`
-                                                    : shortAddress(spaceInfo?.address)
-                                            }
-                                            onClick={onAddressClick}
-                                        />
-                                    </Box>
-                                )}
-                            </TooltipRenderer>
+                                <SidebarPill
+                                    icon="document"
+                                    label="Address"
+                                    labelRight={
+                                        isSmall
+                                            ? `${spaceInfo?.address.slice(
+                                                  0,
+                                                  4,
+                                              )}..${spaceInfo?.address.slice(-2)}`
+                                            : shortAddress(spaceInfo?.address)
+                                    }
+                                    onClick={onAddressClick}
+                                />
+                            </Box>
                         )}
                     </Stack>
                 </>

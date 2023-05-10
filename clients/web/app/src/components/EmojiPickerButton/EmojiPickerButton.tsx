@@ -1,6 +1,5 @@
 import React from 'react'
-import { Box, IconButton, IconProps } from '@ui'
-import { CardOpener } from 'ui/components/Overlay/CardOpener'
+import { Box, CardOpener, IconButton, IconProps } from '@ui'
 import { EmojiPickerContainer } from './EmojiPickerContainer'
 
 type Props = {

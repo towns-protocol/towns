@@ -1,7 +1,7 @@
-import React, { useCallback, useContext, useEffect, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useEvent } from 'react-use-event-hook'
-import { RootLayerContext } from '../Tooltip/OverlayPortal'
+import { useZLayerContext } from '../ZLayer/ZLayer'
 import { CardOpenerContext } from './CardOpenerContext'
 import { Placement } from './types'
 import { OverlayContainer } from './CardOverlayContainer'
@@ -51,7 +51,7 @@ export const CardOpener = (props: Props) => {
         tabIndex,
     } = props
 
-    const { rootLayerRef } = useContext(RootLayerContext)
+    const { rootLayerRef } = useZLayerContext()
     const root = rootLayerRef?.current ?? document.body
 
     const containerRef = useRef<HTMLDivElement>(null)

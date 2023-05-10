@@ -91,10 +91,7 @@ const getNameListFromArray = (names: React.ReactNode[], verb: string, maxLength 
     return (
         <>
             {str} along with{' '}
-            <TooltipRenderer
-                distance="none"
-                render={<UserListTooltip names={originalNames.slice(1)} />}
-            >
+            <TooltipRenderer tooltip={<UserListTooltip names={originalNames.slice(1)} />}>
                 {({ triggerProps }) => (
                     <span className={atoms({ color: 'default' })} {...triggerProps}>
                         {originalNames.length - 1} others

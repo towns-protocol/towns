@@ -4,7 +4,7 @@ import { createUserIdFromString } from 'use-zion-client'
 import { ethers } from 'ethers'
 import { ImageVariant, useImageSource } from '@components/UploadImage/useImageSource'
 import { useImageStore } from '@components/UploadImage/useImageStore'
-import { Box, BoxProps } from '../Box/Box'
+import { TooltipBox as Box, TooltipBoxProps as BoxProps } from '../Box/TooltipBox'
 import {
     AvatarAtoms,
     avatarAtoms,
@@ -35,7 +35,8 @@ type Props = {
     userId?: string
     icon?: IconProps['type']
     imageVariant?: ImageVariant
-} & Omit<AvatarAtoms, 'circle'>
+} & Omit<AvatarAtoms, 'circle'> &
+    Pick<BoxProps, 'tooltip' | 'tooltipOptions'>
 
 export type AvatarProps = Props
 

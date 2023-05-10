@@ -3,7 +3,7 @@ import { useParams } from 'react-router'
 import { Channel, SpaceData, useChannelNotificationCounts } from 'use-zion-client'
 import { useEvent } from 'react-use-event-hook'
 import { PATHS } from 'routes'
-import { Badge, ButtonText, Icon, Stack, TooltipRenderer } from '@ui'
+import { Badge, ButtonText, CardOpener, Icon, Stack } from '@ui'
 import { ChannelSettingsCard } from '@components/Cards/ChannelSettingsCard'
 import { ChannelSettingsModal } from '@components/ChannelSettings/ChannelSettingsModal'
 import { NavItem } from './_NavItem'
@@ -49,7 +49,7 @@ export const ChannelNavItem = (props: Props) => {
                     onUpdatedChannel={onUpdatedChannel}
                 />
             )}
-            <TooltipRenderer
+            <CardOpener
                 trigger="contextmenu"
                 placement="pointer"
                 render={
@@ -88,7 +88,7 @@ export const ChannelNavItem = (props: Props) => {
                         </NavItem>
                     )
                 }}
-            </TooltipRenderer>
+            </CardOpener>
         </>
     )
 }

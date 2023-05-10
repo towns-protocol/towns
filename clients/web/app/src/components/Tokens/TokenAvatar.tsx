@@ -116,8 +116,7 @@ export const TokenAvatar = (props: TokenAvatarProps) => {
             {/* wip and maybe remove tooltip */}
             {showLabel && (
                 <TooltipRenderer
-                    keepOpenOnTriggerRefClick
-                    render={
+                    tooltip={
                         <Box background="level3" padding="sm" rounded="sm" border="faint">
                             {noCopy ? (
                                 <Text color="gray2" size="sm">
