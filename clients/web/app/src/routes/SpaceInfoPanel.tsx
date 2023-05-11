@@ -23,7 +23,6 @@ import {
     Stack,
     Text,
     TextField,
-    Toggle,
 } from '@ui'
 import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
 import { shortAddress } from 'ui/utils/utils'
@@ -44,6 +43,7 @@ import { transitions } from 'ui/transitions/transitions'
 import { AllChannelsList } from './AllChannelsList/AllChannelsList'
 import { useContractSpaceInfo } from '../hooks/useContractSpaceInfo'
 import { useEnvironment } from '../hooks/useEnvironmnet'
+import { env } from '../utils/environment'
 
 const MdGap = ({ children, ...boxProps }: { children: JSX.Element } & BoxProps) => (
     <Box padding="md" gap="md" {...boxProps} background="level2" rounded="sm">
@@ -70,9 +70,6 @@ export const SpaceInfoPanel = () => {
     const [editErrorMessage, setEditErrorMessage] = useState<string | null>(null)
     const textAreaRef = useRef<HTMLTextAreaElement>(null)
     const { data: roomTopic, isLoading: isLoadingRoomTopic } = useGetSpaceTopic(space?.id.networkId)
-
-    const [isOfficialNFTToggled, setIsOfficialNFTToggled] = React.useState(false)
-    const onToggleOfficialNFT = useCallback(() => setIsOfficialNFTToggled((t) => !t), [])
 
     const { mutate, isLoading } = useSetSpaceTopic(space?.id)
 
@@ -163,37 +160,29 @@ export const SpaceInfoPanel = () => {
         <Panel label="Town Info" onClose={onClose}>
             {space?.id && (
                 <Stack centerContent gap padding>
-                    {!isOfficialNFTToggled ? (
-                        <FormRender>
-                            {({ register, formState, setError, clearErrors }) => (
-                                <LargeUploadImageTemplate
-                                    type="spaceIcon"
-                                    formFieldName="spaceIcon"
-                                    canEdit={Boolean(canEdit)}
-                                    resourceId={space.id.networkId}
-                                    setError={setError}
-                                    register={register}
-                                    formState={formState}
-                                    clearErrors={clearErrors}
-                                >
+                    <FormRender>
+                        {({ register, formState, setError, clearErrors }) => (
+                            <LargeUploadImageTemplate
+                                type="spaceIcon"
+                                formFieldName="spaceIcon"
+                                canEdit={Boolean(canEdit)}
+                                resourceId={space.id.networkId}
+                                setError={setError}
+                                register={register}
+                                formState={formState}
+                                clearErrors={clearErrors}
+                            >
+                                <TownContractOpener>
                                     <InteractiveSpaceIcon
                                         spaceId={space.id.networkId}
                                         size="lg"
                                         spaceName={space.name}
                                         address={address}
                                     />
-                                </LargeUploadImageTemplate>
-                            )}
-                        </FormRender>
-                    ) : (
-                        <InteractiveSpaceIcon
-                            spaceId={space.id.networkId}
-                            size="lg"
-                            spaceName={space.name}
-                            address={address}
-                            overrideSrc="/townsnft.png"
-                        />
-                    )}
+                                </TownContractOpener>
+                            </LargeUploadImageTemplate>
+                        )}
+                    </FormRender>
                 </Stack>
             )}
             <Stack gap padding="lg">
@@ -441,14 +430,25 @@ export const SpaceInfoPanel = () => {
             </Stack>
 
             <Stack grow padding paddingBottom="lg" justifyContent="end">
-                <Stack horizontal justifyContent="spaceBetween" alignItems="center">
-                    <Paragraph color="gray2" size="sm">
-                        Toggle official TownNFT
-                    </Paragraph>
-                    <Toggle toggled={isOfficialNFTToggled} onToggle={onToggleOfficialNFT} />
-                </Stack>
+                {/* footer content */}
             </Stack>
         </Panel>
+    )
+}
+
+const TownContractOpener = (props: { children?: React.ReactNode }) => {
+    const onClick = useCallback(() => {
+        window.open(env.VITE_TOWNS_TOKEN_URL, '_blank', 'noopener noreferrer')
+    }, [])
+    if (!env.VITE_TOWNS_TOKEN_URL) {
+        return <>{props.children}</>
+    }
+    return (
+        <Box padding="x4">
+            <Box tooltip="View official town NFT" onClick={onClick}>
+                <Box inset="md">{props.children}</Box>
+            </Box>
+        </Box>
     )
 }
 
