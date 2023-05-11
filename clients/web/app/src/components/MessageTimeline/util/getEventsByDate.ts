@@ -133,7 +133,7 @@ export type RenderEvent =
     | ThreadUpdateRenderEvent
     | EncryptedMessageRenderEvent
 
-const DEBUG_SINGLE = false
+const DEBUG_NO_GROUP_BY_USER = false
 
 const createRelativeDateUtil = () => {
     const today = new Date()
@@ -161,6 +161,8 @@ export const getEventsByDate = (
     experiments?: ExperimentsState,
 ) => {
     const { getRelativeDays } = createRelativeDateUtil()
+
+    const groupByUser = !isThread || DEBUG_NO_GROUP_BY_USER
 
     const result = events.reduce(
         (result, event: TimelineEvent, index) => {
@@ -231,7 +233,7 @@ export const getEventsByDate = (
                         }
                     }
                 } else if (
-                    !DEBUG_SINGLE &&
+                    groupByUser &&
                     prevEvent &&
                     prevEvent.type === RenderEventType.UserMessages &&
                     prevEvent.events[0].sender.id === event.sender.id &&
