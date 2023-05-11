@@ -53,6 +53,12 @@ resource "aws_instance" "bastion-host-instance" {
 
   ami = data.aws_ami.amazon-linux-2-latest.id
 
+  lifecycle {
+    ignore_changes = [
+      ami
+    ]
+  }
+
   tags = merge(module.global_constants.tags, {Name = "${module.global_constants.environment}-bastion-host-instance"})
 
   network_interface {

@@ -8,6 +8,11 @@ variable "ecs_cluster_id" {
   type = string
 }
 
+variable "ecs_cluster_name" {
+  description = "The name of the ecs cluster"
+  type = string
+}
+
 variable "dendrite_node_subnets" {
   description = "A list of subnets to associate with the dendrite nodes"
   type        = list(string)
@@ -45,12 +50,22 @@ variable "dendrite_log_group_name" {
   type = string
 }
 
-variable "dendrite_server_target_group_arn" {
-  description = "The arn of the dendrite server target group"
+variable "dendrite_server_blue_target_group_arn" {
+  description = "The arn for the blue dendrite server target group"
+  type = string
+}
+
+variable "dendrite_server_green_target_group_arn" {
+  description = "The arn for the green dendrite server target group"
   type = string
 }
 
 variable "dendrite_profiler_target_group_arn" {
   description = "The arn of the dendrite profiler target group"
+  type = string
+}
+
+variable "dendrite_https_listener_arn" {
+  description = "The arn for the https listener"
   type = string
 }

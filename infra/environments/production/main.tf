@@ -20,6 +20,10 @@ module global_constants {
   source = "../../modules/global-constants"
 }
 
+locals {
+  ecs_cluster_name = "${module.global_constants.environment}-dendrite-ecs-cluster"
+}
+
 module "vpc" {
   source = "terraform-aws-modules/vpc/aws"
 
@@ -56,7 +60,7 @@ resource "aws_cloudwatch_log_group" "dendrite_log_group" {
 }
 
 resource "aws_ecs_cluster" "dendrite_ecs_cluster" {
-  name = "${module.global_constants.environment}-dendrite-ecs-cluster"
+  name = local.ecs_cluster_name
 }
 
 
@@ -86,14 +90,18 @@ module "dendrite_node" {
   ]
 
   ecs_cluster_id = aws_ecs_cluster.dendrite_ecs_cluster.id
+  ecs_cluster_name = local.ecs_cluster_name
+
   dendrite_node_subnets = module.vpc.private_subnets
   vpc_id = module.vpc.vpc_id
   dendrite_node_name = "node1"
   bastion_host_security_group_id = module.bastion_host.bastion_sg_id
   dendrite_log_group_name = aws_cloudwatch_log_group.dendrite_log_group.name
 
+  dendrite_https_listener_arn = module.dendrite_alb.dendrite_https_listener_arn
   dendrite_alb_security_group_id = module.dendrite_alb.security_group_id
-  dendrite_server_target_group_arn = module.dendrite_alb.dendrite_server_target_group_arn
+  dendrite_server_blue_target_group_arn = module.dendrite_alb.dendrite_server_blue_target_group_arn
+  dendrite_server_green_target_group_arn = module.dendrite_alb.dendrite_server_green_target_group_arn
   dendrite_profiler_target_group_arn = module.dendrite_alb.dendrite_profiler_target_group_arn
 
   database_allowed_cidr_blocks = module.vpc.private_subnets_cidr_blocks

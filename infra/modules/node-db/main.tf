@@ -110,6 +110,7 @@ module "rds_aurora_postgresql" {
 
   allowed_cidr_blocks = var.allowed_cidr_blocks
 
+  iam_role_name = "${var.dendrite_node_name}-${module.global_constants.environment}-dendrite-rds-postgresql-monitoring-role"
   monitoring_interval = 60
   apply_immediately   = true
   skip_final_snapshot = false
