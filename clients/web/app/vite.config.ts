@@ -8,6 +8,7 @@ import eslintPlugin from 'vite-plugin-eslint'
 import { visualizer } from 'rollup-plugin-visualizer'
 import polyfillNode from 'rollup-plugin-polyfill-node'
 import mkcert from 'vite-plugin-mkcert'
+import path from 'path'
 
 // https://vitejs.dev/config/
 export default ({ mode }) => {
@@ -30,6 +31,11 @@ export default ({ mode }) => {
                         } else if (id.includes('matrix')) {
                             return 'matrix-rest'
                         }
+                    },
+                    sourcemapIgnoreList: (relativeSourcePath) => {
+                        // avoid spending memory and cpu cycles on source-mapping node_modules
+                        const normalizedPath = path.normalize(relativeSourcePath)
+                        return normalizedPath.includes('node_modules')
                     },
                 },
             },

@@ -6,6 +6,7 @@ import tsconfigPaths from 'vite-tsconfig-paths'
 import eslintPlugin from 'vite-plugin-eslint'
 import { visualizer } from 'rollup-plugin-visualizer'
 import polyfillNode from 'rollup-plugin-polyfill-node'
+import path from 'path'
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -22,6 +23,11 @@ export default defineConfig({
                     } else if (id.includes('lodash')) {
                         return 'lodash'
                     }
+                },
+                sourcemapIgnoreList: (relativeSourcePath) => {
+                    // avoid spending memory and cpu cycles on source-mapping node_modules
+                    const normalizedPath = path.normalize(relativeSourcePath)
+                    return normalizedPath.includes('node_modules')
                 },
             },
         },
