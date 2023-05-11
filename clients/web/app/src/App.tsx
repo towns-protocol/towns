@@ -9,7 +9,6 @@ import { useWindowListener } from 'hooks/useWindowListener'
 import { PATHS } from 'routes'
 import { Register } from 'routes/Register'
 import { Welcome } from 'routes/Welcome'
-import { AppPanelLayout } from 'routes/layouts/AppPanelLayout'
 import { FontLoader } from 'ui/utils/FontLoader'
 import { env } from 'utils'
 import { useEnvironment } from 'hooks/useEnvironmnet'
@@ -19,6 +18,7 @@ import { MobileView } from 'routes/MobileView'
 import { SentryReportModal } from '@components/SentryErrorReport/SentryErrorReport'
 import { Notifications } from '@components/Notifications/Notifications'
 import { useShouldDisplayDesktopOnlyScreen } from 'hooks/useShouldDisplayDesktopOnlyScreen'
+import { AppLayout } from 'routes/layouts/AppLayout'
 
 const AuthenticatedRoutes = React.lazy(() => import('routes/AuthenticatedRoutes'))
 const InviteLinkLanding = React.lazy(() => import('routes/InviteLinkLanding'))
@@ -56,7 +56,7 @@ export const App = () => {
         </ZionContextProvider>
     ) : (
         <Routes>
-            <Route element={<AppLayout />}>
+            <Route element={<AppTopLevelLayout />}>
                 <Route path="*" element={<MobileView />} />
             </Route>
         </Routes>
@@ -83,7 +83,7 @@ const AllRoutes = () => {
                 </Box>
             )}
             <Routes>
-                <Route element={<AppLayout />}>
+                <Route element={<AppTopLevelLayout />}>
                     <Route element={<Outlet />}>
                         <>
                             <Route path={PATHS.VERSIONS} element={<VersionsPage />} />
@@ -109,7 +109,7 @@ const AllRoutes = () => {
                                         path={`/${PATHS.PREFERENCES}`}
                                         element={<Register isEdit />}
                                     />
-                                    <Route path="*" element={<AppPanelLayout />}>
+                                    <Route path="*" element={<AppLayout />}>
                                         <Route path="*" element={<AuthenticatedRoutes />} />
                                     </Route>
                                 </>
@@ -128,7 +128,7 @@ const RedirectToLoginWithSavedLocation = () => (
     <Navigate replace to={PATHS.LOGIN} state={{ redirectTo: window.location.pathname }} />
 )
 
-const AppLayout = () => {
+const AppTopLevelLayout = () => {
     return (
         <Stack grow color="default" minHeight="100vh">
             <Outlet />

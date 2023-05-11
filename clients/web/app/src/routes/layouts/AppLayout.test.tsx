@@ -4,12 +4,12 @@ import { beforeAll, describe, expect, test, vi } from 'vitest'
 import * as Lib from 'use-zion-client'
 import { TestApp } from 'test/testUtils'
 import * as useContractAndServerSpaceDataHook from 'hooks/useContractAndServerSpaceData'
-import { AppPanelLayout } from './AppPanelLayout'
+import { AppLayout } from './AppLayout'
 
 const Wrapper = () => {
     return (
         <TestApp>
-            <AppPanelLayout />
+            <AppLayout />
         </TestApp>
     )
 }

@@ -2,41 +2,17 @@ import { Allotment, AllotmentHandle } from 'allotment'
 import React, { useEffect, useRef } from 'react'
 import { Outlet, useMatch } from 'react-router'
 import { useEvent } from 'react-use-event-hook'
-import { AutojoinChannels, SpaceContextProvider, useZionContext } from 'use-zion-client'
-
 import { PATHS } from 'routes'
 import { SuspenseLoader } from '@components/Loaders/SuspenseLoader'
 import { MainSideBar, SpaceSideBar } from '@components/SideBars'
 import { Box, Stack } from '@ui'
 import { usePersistPanes } from 'hooks/usePersistPanes'
-import { Register } from 'routes/Register'
 import { atoms } from 'ui/styles/atoms.css'
 import { ChannelsShimmer } from '@components/Shimmer'
 import { useContractAndServerSpaceData } from 'hooks/useContractAndServerSpaceData'
 import * as styles from './AppPanelLayout.css'
 
 export const AppPanelLayout = () => {
-    const spaceRoute = useMatch({ path: `/${PATHS.SPACES}/:spaceSlug`, end: false })
-    const needsOnboarding = useNeedsOnboarding()
-    const spaceId = spaceRoute?.params.spaceSlug ?? ''
-
-    return (
-        <>
-            {needsOnboarding ? (
-                <Register />
-            ) : (
-                <SpaceContextProvider spaceId={spaceId}>
-                    <>
-                        <AutojoinChannels />
-                        <AppPanelLayoutContent />
-                    </>
-                </SpaceContextProvider>
-            )}
-        </>
-    )
-}
-
-export const AppPanelLayoutContent = () => {
     const allotemntRef = useRef<AllotmentHandle>(null)
     const messageRoute = useMatch({ path: '/messages', end: false })
     const homeRoute = useMatch({ path: '/home', end: true })
@@ -127,14 +103,4 @@ export const AppPanelLayoutContent = () => {
             </Box>
         </Stack>
     )
-}
-
-function useNeedsOnboarding(): boolean {
-    const { matrixOnboardingState } = useZionContext()
-    switch (matrixOnboardingState.kind) {
-        case 'update-profile':
-            return matrixOnboardingState.bNeedsDisplayName
-        default:
-            return false
-    }
 }
