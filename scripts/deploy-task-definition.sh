@@ -53,6 +53,8 @@ if [ -z "$DENDRITE_NODE_NAME" ]; then
     exit 1
 fi
 
+CODE_DEPLOY_APP_NAME="${ENVIRONMENT}-dendrite-${DENDRITE_NODE_NAME}-codedeploy-app"
+CODE_DEPLOY_GROUP_NAME="${ENVIRONMENT}-dendrite-${DENDRITE_NODE_NAME}-codedeploy-deployment-group"
 
 CLUSTER_NAME="${ENVIRONMENT}-dendrite-ecs-cluster"
 REGISTERED_TASK_DEFINITION_FILENAME="$( pwd )/registered-task-definition.json"
@@ -63,13 +65,21 @@ TASK_DEFINITION_ARN="$( jq -r '.taskDefinition.taskDefinitionArn' ${REGISTERED_T
 
 echo "Updating service ${SERVICE_NAME} to use task definition ${TASK_DEFINITION_ARN}"
 
-# Update the service to use the new task definition
-aws ecs update-service \
-  --service=${SERVICE_NAME} \
-  --cluster=${CLUSTER_NAME} \
-  --task-definition=${TASK_DEFINITION_ARN} > /dev/null
+DEPLOYMENT_ID_FILENAME="$( pwd )/deploy-id.json"
 
-echo "Waiting for service ${SERVICE_NAME} to be stable..."
+aws deploy create-deployment \
+    --application-name ${CODE_DEPLOY_APP_NAME} \
+    --deployment-group-name ${CODE_DEPLOY_GROUP_NAME} \
+    --revision '{"revisionType": "AppSpecContent", "appSpecContent": {"content": "{\"Resources\":[{\"TargetService\":{\"Properties\":{\"TaskDefinition\":\"'${TASK_DEFINITION_ARN}'\",\"LoadBalancerInfo\": {\"ContainerName\": \"dendrite\", \"ContainerPort\": 8008} }, \"Type\":\"AWS::ECS::Service\"}}],\"version\":1}"}}' > ${DEPLOYMENT_ID_FILENAME}
 
-# Wait for the service to be stable
-aws ecs wait services-stable --cluster=${CLUSTER_NAME} --services=${SERVICE_NAME}
+# Get the deploy id
+DEPLOYMENT_ID="$( jq -r '.deploymentId' ${DEPLOYMENT_ID_FILENAME} )"
+
+echo "Deploy id: ${DEPLOYMENT_ID}"
+
+echo "Waiting for successful deploy on Deployment Id: ${DEPLOYMENT_ID} for ${SERVICE_NAME}..."
+
+# Wait for the deploy to succeed
+aws deploy wait deployment-successful --deployment-id ${DEPLOYMENT_ID}
+
+echo "Deploy successful"
