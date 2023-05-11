@@ -7,8 +7,9 @@ import {
 export async function createCasablancaChannel(
     client: CasablancaClient,
     spaceId: CasablancaStreamIdentifier,
+    networkId: string,
 ): Promise<CasablancaStreamIdentifier> {
-    const { streamId } = await client.createChannel(spaceId.networkId)
+    const { streamId } = await client.createChannel(spaceId.networkId, networkId)
     await client.waitForStream(streamId)
     return makeCasablancaStreamIdentifier(streamId)
 }

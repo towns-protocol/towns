@@ -9,11 +9,12 @@ import {
 export async function createCasablancaSpace(
     casablancaClient: CasablancaClient,
     createSpaceInfo: CreateSpaceInfo,
+    networkId: string | undefined,
 ): Promise<CasablancaStreamIdentifier> {
     if (createSpaceInfo.spaceProtocol !== SpaceProtocol.Casablanca) {
         throw new Error("Can't create a casablanca space with a non-casablanca protocol")
     }
-    const result = await casablancaClient.createSpace()
+    const result = await casablancaClient.createSpace(networkId)
     await casablancaClient.waitForStream(result.streamId)
     return makeCasablancaStreamIdentifier(result.streamId)
 }

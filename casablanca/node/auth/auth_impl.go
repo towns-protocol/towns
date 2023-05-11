@@ -92,19 +92,16 @@ func (za *ChainAuth) IsAllowed(ctx context.Context, args AuthorizationArgs, view
 		return false, err
 	}
 
-	// Owner of the space / channel is always allowed to proceed.
-	// TODO:  remove this check once the client creates the space on blockchain first
-	if roomInfo.IsOwner {
-		return true, nil
-	}
 
 	// Check if user is entitled to space / channel.
 	switch roomInfo.RoomType {
 	case common.Space:
 		isEntitled, err := za.isEntitledToSpace(roomInfo, userIdentifier.AccountAddress, args.Permission)
+		log.Debugf("isEntitled: %v %v", isEntitled, err)
 		return isEntitled, err
 	case common.Channel:
 		isEntitled, err := za.isEntitledToChannel(roomInfo, userIdentifier.AccountAddress, args.Permission)
+		log.Debugf("isEntitled: %v %v", isEntitled, err)
 		return isEntitled, err
 	default:
 		errMsg := fmt.Sprintf("unhandled room type: %s", roomInfo.RoomType)

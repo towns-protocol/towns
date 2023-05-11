@@ -46,7 +46,10 @@ interface ZionClientImpl {
     client: ZionClient | undefined
     clientRunning: boolean
     spaceDapp: ISpaceDapp | undefined
-    createSpaceRoom: (createInfo: CreateSpaceInfo) => Promise<RoomIdentifier | undefined>
+    createSpaceRoom: (
+        createInfo: CreateSpaceInfo,
+        networkId: string,
+    ) => Promise<RoomIdentifier | undefined>
     createSpaceTransaction: (
         createSpaceInfo: CreateSpaceInfo,
         memberEntitlements: SpaceFactoryDataTypes.CreateSpaceExtraEntitlementsStruct,
@@ -56,7 +59,10 @@ interface ZionClientImpl {
     waitForCreateSpaceTransaction: (
         context: TransactionContext<RoomIdentifier> | undefined,
     ) => Promise<TransactionContext<RoomIdentifier> | undefined>
-    createChannelRoom: (createInfo: CreateChannelInfo) => Promise<RoomIdentifier | undefined>
+    createChannelRoom: (
+        createInfo: CreateChannelInfo,
+        networkId: string,
+    ) => Promise<RoomIdentifier | undefined>
     createChannel: (
         createInfo: CreateChannelInfo,
         signer: ethers.Signer | undefined,
