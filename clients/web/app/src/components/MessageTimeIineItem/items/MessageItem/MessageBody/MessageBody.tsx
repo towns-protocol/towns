@@ -1,11 +1,12 @@
 import React from 'react'
-import { Channel, RoomMember, RoomMessageEvent, TimelineEvent } from 'use-zion-client'
+import { Channel, EventStatus, RoomMember, RoomMessageEvent, TimelineEvent } from 'use-zion-client'
 import { UnfurlData } from '@unfurl-worker/types'
 import { ErrorBoundary, FallbackProps } from 'react-error-boundary'
 import { RichTextPreview } from '@components/RichText/RichTextEditor'
 import { getMessageBody, getUrls } from 'utils/ztevent_util'
 import { RatioedBackgroundImage } from '@components/RatioedBackgroundImage'
 import { Paragraph, Stack } from '@ui'
+import { MessageStatusAnnotation } from '@components/RichText/hooks/useInitialConfig'
 import { useUnfurlContent } from '../../../../../api/lib/unfurl'
 import { UnfurledTwitterBlock } from './UnfurledTwitterBlock'
 import { UnfurledGenericBlock } from './UnfurledGenericBlock'
@@ -53,15 +54,23 @@ export const MessageBody = ({ eventContent, event, members, channels, onMentionC
 
     const invalidContent = isError || !Array.isArray(unfurledContent)
 
+    let statusAnnotation: MessageStatusAnnotation | undefined = undefined
+    if (eventContent.replacedMsgId !== undefined) {
+        statusAnnotation = 'edited' as const
+    } else if (event.status === EventStatus.NOT_SENT) {
+        statusAnnotation = 'not-sent' as const
+    }
+
     return (
         <>
             <RichTextPreview
                 content={getMessageBody(event.eventId, eventContent)}
-                edited={eventContent.replacedMsgId !== undefined}
+                statusAnnotation={statusAnnotation}
                 members={members}
                 channels={channels}
                 onMentionClick={onMentionClick}
             />
+
             {invalidContent
                 ? null
                 : unfurledContent.map((unfurlData: UnfurlData) => (

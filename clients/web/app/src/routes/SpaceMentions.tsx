@@ -1,6 +1,7 @@
 import React from 'react'
 import { NavLink } from 'react-router-dom'
 import {
+    EventStatus,
     MentionResult,
     useMatrixCredentials,
     useSpaceId,
@@ -97,7 +98,13 @@ const MentionBox = (props: { mention: MentionResult; userId?: string }) => {
                 >
                     <RichTextPreview
                         content={getMessageBody(mention.event.eventId, content)}
-                        edited={content.replacedMsgId !== undefined}
+                        statusAnnotation={
+                            content.replacedMsgId !== undefined
+                                ? 'edited'
+                                : mention.event.status === EventStatus.NOT_SENT
+                                ? 'not-sent'
+                                : undefined
+                        }
                     />
                 </Message>
             </Box>

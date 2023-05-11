@@ -31,7 +31,8 @@ import { useStore } from 'store/store'
 import { Box, BoxProps } from '@ui'
 import { useNetworkStatus } from 'hooks/useNetworkStatus'
 import { SomethingWentWrong } from '@components/Errors/SomethingWentWrong'
-import { useInitialConfig } from './hooks/useInitialConfig'
+import { atoms } from 'ui/styles/atoms.css'
+import { MessageStatusAnnotation, useInitialConfig } from './hooks/useInitialConfig'
 import { AnnotationNode } from './nodes/AnnotationNode'
 import { ChannelLinkNode, createChannelLinkTransformer } from './nodes/ChannelLinkNode'
 import { ChannelMentionNode } from './nodes/ChannelMentionNode'
@@ -121,12 +122,12 @@ const useTransformers = ({ members, channels }: IUseTransformers) => {
 export const RichTextPreview = React.memo(
     (props: {
         content: string
-        edited?: boolean
+        statusAnnotation?: MessageStatusAnnotation
         members?: RoomMember[]
         channels?: Channel[]
         onMentionClick?: (mentionName: string) => void
     }) => {
-        const { onMentionClick, channels = [], members = [] } = props
+        const { statusAnnotation, onMentionClick, channels = [], members = [] } = props
         // note: unnecessary repetition here, could be optimised by handling above
         // inside e.g. space context or timeline
 
@@ -137,14 +138,18 @@ export const RichTextPreview = React.memo(
             nodes,
             transformers,
             false,
-            props.edited,
+            statusAnnotation,
         )
 
         return (
             // this extra <div> prevents the preview from starting up too big,
             // ...yet to find out why this occurs
-            <div>
-                <LexicalComposer initialConfig={initialConfig}>
+            <div
+                className={atoms({
+                    color: props.statusAnnotation === 'not-sent' ? 'error' : undefined,
+                })}
+            >
+                <LexicalComposer initialConfig={initialConfig} key={statusAnnotation}>
                     {onMentionClick ? (
                         <MentionClickPlugin onMentionClick={onMentionClick} />
                     ) : (
@@ -162,21 +167,23 @@ export const RichTextPreview = React.memo(
     },
 )
 
-export const RichTextPreviewPlain = React.memo((props: { content: string; edited?: boolean }) => {
-    // note: unnecessary repetition here, could be optimised by handling above
-    // inside e.g. space context or timeline
+export const RichTextPreviewPlain = React.memo(
+    (props: { content: string; annotation?: MessageStatusAnnotation }) => {
+        // note: unnecessary repetition here, could be optimised by handling above
+        // inside e.g. space context or timeline
 
-    const initialConfig = useInitialConfig(undefined, nodes, [], false, props.edited)
-    return (
-        <LexicalComposer initialConfig={initialConfig}>
-            <RichTextPlugin
-                contentEditable={<ContentEditable className={fieldClassName} />}
-                placeholder={<div />}
-                ErrorBoundary={LexicalErrorBoundary}
-            />
-        </LexicalComposer>
-    )
-})
+        const initialConfig = useInitialConfig(undefined, nodes, [], false, props.annotation)
+        return (
+            <LexicalComposer initialConfig={initialConfig}>
+                <RichTextPlugin
+                    contentEditable={<ContentEditable className={fieldClassName} />}
+                    placeholder={<div />}
+                    ErrorBoundary={LexicalErrorBoundary}
+                />
+            </LexicalComposer>
+        )
+    },
+)
 
 export const RichTextEditor = (props: Props) => {
     return (

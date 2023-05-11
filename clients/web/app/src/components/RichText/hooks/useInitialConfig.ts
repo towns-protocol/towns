@@ -22,12 +22,14 @@ const initialConfig = {
     onError,
 }
 
+export type MessageStatusAnnotation = 'edited' | 'not-sent'
+
 export const useInitialConfig = (
     initialValue: string | undefined,
     nodes: Klass<LexicalNode>[],
     transformers: Transformer[],
     editable?: boolean,
-    edited?: boolean,
+    statusAnnotation?: MessageStatusAnnotation,
 ) => {
     return {
         ...initialConfig,
@@ -47,15 +49,15 @@ export const useInitialConfig = (
                     root.append(defaultParagraph)
                 }
             }
-            if (edited) {
-                appendEditedNotation()
+            if (statusAnnotation) {
+                appendStatusAnnotation(statusAnnotation)
             }
             $setSelection(null)
         },
     }
 }
 
-function appendEditedNotation() {
+function appendStatusAnnotation(statusAnnotation: MessageStatusAnnotation) {
     const root = $getRoot()
     const lastChild = root.getLastChild()
     const lastElement =
@@ -64,13 +66,15 @@ function appendEditedNotation() {
         root.append(lastElement)
     }
 
+    const text = statusAnnotation === 'edited' ? '(edited)' : '(Message failed to send)'
+
     if ($isCodeNode(lastElement)) {
         const paragraphNode = $createParagraphNode()
-        const textNode = $createAnnotationNode('(edited)')
+        const textNode = $createAnnotationNode(text)
         paragraphNode.append(textNode)
         root.append(paragraphNode)
     } else {
-        const textNode = $createAnnotationNode(' (edited)')
+        const textNode = $createAnnotationNode(' '.concat(text))
         lastElement.append(textNode)
     }
 }

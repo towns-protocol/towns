@@ -10,7 +10,7 @@ export const TimelineGenericEvent = (props: Props) => {
     const { event } = props
     return (
         <Box centerContent paddingX="lg" paddingY="sm" color="gray2">
-            <RichTextPreview content={event.fallbackContent} edited={false} />
+            <RichTextPreview content={event.fallbackContent} />
         </Box>
     )
 }
