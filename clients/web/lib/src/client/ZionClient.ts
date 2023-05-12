@@ -454,7 +454,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
      *************************************************/
     public async createSpaceRoom(
         createSpaceInfo: CreateSpaceInfo,
-        networkId: string | undefined,
+        networkId?: string,
     ): Promise<RoomIdentifier> {
         if (!createSpaceInfo.spaceProtocol) {
             createSpaceInfo.spaceProtocol = this.opts.primaryProtocol
@@ -571,7 +571,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
      *************************************************/
     public async createChannelRoom(
         createInfo: CreateChannelInfo,
-        networkId: string | undefined,
+        networkId?: string,
     ): Promise<RoomIdentifier> {
         switch (createInfo.parentSpaceId.protocol) {
             case SpaceProtocol.Matrix: {
