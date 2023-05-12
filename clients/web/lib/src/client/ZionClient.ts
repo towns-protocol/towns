@@ -1,7 +1,13 @@
 import { BigNumber, ContractReceipt, ContractTransaction, Wallet, ethers } from 'ethers'
 import {
-    bin_fromHexString,
+    BlockchainTransactionEvent,
+    FullyReadMarker,
+    RoomMessageEvent,
+    ZTEvent,
+} from '../types/timeline-types'
+import {
     Client as CasablancaClient,
+    bin_fromHexString,
     makeOldTownsDelegateSig,
     makeStreamRpcClient,
 } from '@towns/sdk'
@@ -9,26 +15,26 @@ import {
     ChannelTransactionContext,
     ChannelUpdateTransactionContext,
     IZionServerVersions,
+    MatrixAuth,
     RoleTransactionContext,
     SpaceProtocol,
     TransactionContext,
     TransactionStatus,
     ZionAccountDataType,
-    MatrixAuth,
     ZionClientEventHandlers,
     ZionOpts,
 } from './ZionClientTypes'
 import {
     ClientEvent,
     EventType,
+    ISendEventResponse,
     MatrixClient,
     MatrixError,
     PendingEventOrdering,
     RelationType,
+    Store,
     UserEvent,
     createClient,
-    ISendEventResponse,
-    Store,
 } from 'matrix-js-sdk'
 import {
     CreateChannelInfo,
@@ -45,22 +51,26 @@ import {
     UpdateChannelInfo,
     User,
 } from '../types/zion-types'
-import { SignerContext, isUserStreamId as isCasablancaUserStreamId } from '@towns/sdk'
-
 import {
-    BlockchainTransactionEvent,
-    FullyReadMarker,
-    RoomMessageEvent,
-    ZTEvent,
-} from '../types/timeline-types'
-import { ISpaceDapp } from './web3/ISpaceDapp'
-import { Permission } from './web3/ContractTypes'
-import { RoleIdentifier } from '../types/web3-types'
+    MatrixDecryptionExtension,
+    MatrixDecryptionExtensionDelegate,
+} from './matrix/MatrixDecryptionExtensions'
 import {
+    RoomIdentifier,
     makeCasablancaStreamIdentifier,
     makeMatrixRoomIdentifier,
-    RoomIdentifier,
 } from '../types/room-identifier'
+import { SignerContext, isUserStreamId as isCasablancaUserStreamId } from '@towns/sdk'
+import { sendMatrixMessage, sendMatrixNotice } from './matrix/SendMessage'
+import { toZionRoom, toZionUser } from '../store/use-matrix-store'
+
+import { CryptoStore } from 'matrix-js-sdk/lib/crypto/store/base'
+import { ISpaceDapp } from './web3/ISpaceDapp'
+import { MatrixDbManager } from './matrix/MatrixDbManager'
+import { Permission } from './web3/ContractTypes'
+import { PioneerNFT } from './web3/PioneerNFT'
+import { RoleIdentifier } from '../types/web3-types'
+import { SignerUndefined } from '../types/error-types'
 import { SpaceDapp } from './web3/SpaceDapp'
 import { SpaceFactoryDataTypes } from './web3/shims/SpaceFactoryShim'
 import { SpaceInfo } from './web3/SpaceInfo'
@@ -74,22 +84,14 @@ import { enrichPowerLevels } from './matrix/PowerLevels'
 import { inviteMatrixUser } from './matrix/InviteUser'
 import { joinMatrixRoom } from './matrix/Join'
 import { loadOlm } from './loadOlm'
-import { sendMatrixMessage, sendMatrixNotice } from './matrix/SendMessage'
+import { makeUniqueChannelStreamId } from '@towns/sdk'
+import { makeUniqueSpaceStreamId } from '@towns/sdk'
 import { setMatrixPowerLevel } from './matrix/SetPowerLevels'
 import { staticAssertNever } from '../utils/zion-utils'
 import { syncMatrixSpace } from './matrix/SyncSpace'
-import { toZionRoom, toZionUser } from '../store/use-matrix-store'
-import { toZionRoomFromStream } from './casablanca/CasablancaUtils'
 import { toUtf8String } from 'ethers/lib/utils.js'
-import {
-    MatrixDecryptionExtension,
-    MatrixDecryptionExtensionDelegate,
-} from './matrix/MatrixDecryptionExtensions'
-import { PioneerNFT } from './web3/PioneerNFT'
-import { CryptoStore } from 'matrix-js-sdk/lib/crypto/store/base'
-import { MatrixDbManager } from './matrix/MatrixDbManager'
-import { makeUniqueSpaceStreamId } from '@towns/sdk'
-import { makeUniqueChannelStreamId } from '@towns/sdk'
+import { toZionRoomFromStream } from './casablanca/CasablancaUtils'
+
 /***
  * Zion Client
  * for calls that originate from a roomIdentifier, or for createing new rooms
@@ -222,7 +224,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
         signer: ethers.Signer | undefined,
     ): Promise<SignerContext> {
         if (!signer) {
-            throw new Error("can't sign without a web3 signer")
+            throw new SignerUndefined("can't sign without a web3 signer")
         }
         const creatorAddress = bin_fromHexString(await signer.getAddress())
         const delegateSig = await makeOldTownsDelegateSig(signer, delegateWallet.publicKey)
@@ -368,6 +370,9 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
         everyonePermissions: Permission[],
         signer: ethers.Signer | undefined,
     ): Promise<TransactionContext<RoomIdentifier>> {
+        if (!signer) {
+            throw new SignerUndefined()
+        }
         if (!createSpaceInfo.spaceProtocol) {
             createSpaceInfo.spaceProtocol = this.opts.primaryProtocol
         }
@@ -479,7 +484,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
         createSpaceInfo: CreateSpaceInfo,
         memberEntitlements: SpaceFactoryDataTypes.CreateSpaceExtraEntitlementsStruct,
         everyonePermissions: Permission[],
-        signer: ethers.Signer | undefined,
+        signer: ethers.Signer,
     ): Promise<TransactionContext<RoomIdentifier>> {
         const roomId: RoomIdentifier = makeCasablancaStreamIdentifier(makeUniqueSpaceStreamId())
 
@@ -518,7 +523,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
         createSpaceInfo: CreateSpaceInfo,
         memberEntitlements: SpaceFactoryDataTypes.CreateSpaceExtraEntitlementsStruct,
         everyonePermissions: Permission[],
-        signer: ethers.Signer | undefined,
+        signer: ethers.Signer,
     ): Promise<TransactionContext<RoomIdentifier>> {
         const roomId: RoomIdentifier | undefined = await this.createSpaceRoom(
             createSpaceInfo,
@@ -606,7 +611,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
 
     private async createCasablancaChannelTransaction(
         createChannelInfo: CreateChannelInfo,
-        signer: ethers.Signer | undefined,
+        signer: ethers.Signer,
     ): Promise<ChannelTransactionContext> {
         let roomId: RoomIdentifier = makeCasablancaStreamIdentifier(makeUniqueChannelStreamId())
 
@@ -661,7 +666,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
 
     private async createMatrixChannelTransaction(
         createChannelInfo: CreateChannelInfo,
-        signer: ethers.Signer | undefined,
+        signer: ethers.Signer,
     ): Promise<ChannelTransactionContext> {
         let roomId: RoomIdentifier | undefined
         try {
@@ -720,6 +725,9 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
         createChannelInfo: CreateChannelInfo,
         signer: ethers.Signer | undefined,
     ): Promise<RoomIdentifier | undefined> {
+        if (!signer) {
+            throw new SignerUndefined()
+        }
         const txContext = await this.createChannelTransaction(createChannelInfo, signer)
         if (txContext.error) {
             throw txContext.error
@@ -736,6 +744,9 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
         createChannelInfo: CreateChannelInfo,
         signer: ethers.Signer | undefined,
     ): Promise<ChannelTransactionContext> {
+        if (!signer) {
+            throw new SignerUndefined()
+        }
         switch (createChannelInfo.parentSpaceId.protocol) {
             case SpaceProtocol.Matrix:
                 return this.createMatrixChannelTransaction(createChannelInfo, signer)
@@ -812,6 +823,9 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
         updateChannelInfo: UpdateChannelInfo,
         signer: ethers.Signer | undefined,
     ): Promise<ChannelUpdateTransactionContext> {
+        if (!signer) {
+            throw new SignerUndefined()
+        }
         const hasOffChainUpdate = !updateChannelInfo.updatedChannelTopic
         let transaction: ContractTransaction | undefined = undefined
         let error: Error | undefined = undefined
@@ -995,6 +1009,9 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
         users: string[],
         signer: ethers.Signer | undefined,
     ): Promise<RoleTransactionContext> {
+        if (!signer) {
+            throw new SignerUndefined()
+        }
         let transaction: ContractTransaction | undefined = undefined
         let error: Error | undefined = undefined
         try {
@@ -1085,6 +1102,9 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
         roleId: number,
         signer: ethers.Signer | undefined,
     ): Promise<TransactionContext<void>> {
+        if (!signer) {
+            throw new SignerUndefined()
+        }
         let transaction: ContractTransaction | undefined = undefined
         let error: Error | undefined = undefined
         // check that entitlement address exists
@@ -1128,6 +1148,9 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
         users: string[],
         signer: ethers.Signer | undefined,
     ): Promise<TransactionContext<void>> {
+        if (!signer) {
+            throw new SignerUndefined()
+        }
         let transaction: ContractTransaction | undefined = undefined
         let error: Error | undefined = undefined
         try {
@@ -1256,6 +1279,9 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
         roleId: number,
         signer: ethers.Signer | undefined,
     ): Promise<TransactionContext<void>> {
+        if (!signer) {
+            throw new SignerUndefined()
+        }
         let transaction: ContractTransaction | undefined = undefined
         let error: Error | undefined = undefined
         try {
@@ -1333,6 +1359,9 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
         disabled: boolean,
         signer: ethers.Signer | undefined,
     ): Promise<boolean> {
+        if (!signer) {
+            throw new SignerUndefined()
+        }
         let transaction: ContractTransaction | undefined = undefined
         let receipt: ContractReceipt | undefined = undefined
         let success = false

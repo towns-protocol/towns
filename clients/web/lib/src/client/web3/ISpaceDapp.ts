@@ -32,7 +32,7 @@ export interface ISpaceDapp {
         spaceId: string,
         channelNetworkId: string,
         roleId: number,
-        signer: ethers.Signer | undefined,
+        signer: ethers.Signer,
     ) => Promise<ContractTransaction>
     createSpace: (
         spaceName: string,
@@ -40,14 +40,14 @@ export interface ISpaceDapp {
         spaceMetadata: string,
         memberEntitlements: SpaceFactoryDataTypes.CreateSpaceExtraEntitlementsStruct,
         everyonePermissions: Permission[],
-        signer: ethers.Signer | undefined,
+        signer: ethers.Signer,
     ) => Promise<ContractTransaction>
     createChannel: (
         spaceId: string,
         channelName: string,
         channelNetworkId: string,
         roleIds: number[],
-        signer: ethers.Signer | undefined,
+        signer: ethers.Signer,
     ) => Promise<ContractTransaction>
     createRole(
         spaceId: string,
@@ -55,13 +55,9 @@ export interface ISpaceDapp {
         permissions: Permission[],
         tokens: SpaceFactoryDataTypes.ExternalTokenStruct[],
         users: string[],
-        signer: ethers.Signer | undefined,
+        signer: ethers.Signer,
     ): Promise<ContractTransaction>
-    deleteRole(
-        spaceId: string,
-        roleId: number,
-        signer: ethers.Signer | undefined,
-    ): Promise<ContractTransaction>
+    deleteRole(spaceId: string, roleId: number, signer: ethers.Signer): Promise<ContractTransaction>
     getChannels: (spaceId: string) => Promise<ChannelMetadata[]>
     getChannelDetails: (spaceId: string, channelId: string) => Promise<ChannelDetails | null>
     getPermissionsByRoleId: (spaceId: string, roleId: number) => Promise<Permission[]>
@@ -86,21 +82,18 @@ export interface ISpaceDapp {
     parseSpaceError: (spaceId: string, error: unknown) => Promise<Error>
     updateChannel: (
         params: UpdateChannelParams,
-        signer: ethers.Signer | undefined,
+        signer: ethers.Signer,
     ) => Promise<ContractTransaction>
-    updateRole: (
-        params: UpdateRoleParams,
-        signer: ethers.Signer | undefined,
-    ) => Promise<ContractTransaction>
+    updateRole: (params: UpdateRoleParams, signer: ethers.Signer) => Promise<ContractTransaction>
     setSpaceAccess: (
         spaceId: string,
         disabled: boolean,
-        signer: ethers.Signer | undefined,
+        signer: ethers.Signer,
     ) => Promise<ContractTransaction>
     setChannelAccess: (
         spaceId: string,
         channelId: string,
         disabled: boolean,
-        signer: ethers.Signer | undefined,
+        signer: ethers.Signer,
     ) => Promise<ContractTransaction>
 }

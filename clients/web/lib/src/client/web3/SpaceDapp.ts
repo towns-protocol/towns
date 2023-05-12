@@ -64,7 +64,7 @@ export class SpaceDapp implements ISpaceDapp {
         spaceMetadata: string,
         memberEntitlements: SpaceFactoryDataTypes.CreateSpaceExtraEntitlementsStruct,
         everyonePermissions: Permission[],
-        signer: ethers.Signer | undefined,
+        signer: ethers.Signer,
     ): Promise<ContractTransaction> {
         if (!this.spaceFactory.write) {
             throw new Error('SpaceFactory write contract is not deployed properly.')
@@ -85,7 +85,7 @@ export class SpaceDapp implements ISpaceDapp {
         channelName: string,
         channelNetworkId: string,
         roleIds: number[],
-        signer: ethers.Signer | undefined,
+        signer: ethers.Signer,
     ): Promise<ContractTransaction> {
         const space = await this.getSpace(spaceId)
         if (!space?.write) {
@@ -100,7 +100,7 @@ export class SpaceDapp implements ISpaceDapp {
         permissions: Permission[],
         tokens: SpaceFactoryDataTypes.ExternalTokenStruct[],
         users: string[],
-        signer: ethers.Signer | undefined,
+        signer: ethers.Signer,
     ): Promise<ContractTransaction> {
         const space = await this.getSpace(spaceId)
         if (!space?.read || !space?.write) {
@@ -164,7 +164,7 @@ export class SpaceDapp implements ISpaceDapp {
         spaceId: string,
         channelNetworkId: string,
         roleId: number,
-        signer: ethers.Signer | undefined,
+        signer: ethers.Signer,
     ): Promise<ContractTransaction> {
         const encodedCallData: BytesLike[] = []
         const space = await this.getSpace(spaceId)
@@ -378,7 +378,7 @@ export class SpaceDapp implements ISpaceDapp {
     public async setSpaceAccess(
         spaceId: string,
         disabled: boolean,
-        signer: ethers.Signer | undefined,
+        signer: ethers.Signer,
     ): Promise<ContractTransaction> {
         const space = await this.getSpace(spaceId)
         if (!space?.write) {
@@ -391,7 +391,7 @@ export class SpaceDapp implements ISpaceDapp {
         spaceId: string,
         channelId: string,
         disabled: boolean,
-        signer: ethers.Signer | undefined,
+        signer: ethers.Signer,
     ): Promise<ContractTransaction> {
         const space = await this.getSpace(spaceId)
         if (!space?.write) {
@@ -403,7 +403,7 @@ export class SpaceDapp implements ISpaceDapp {
     public async deleteRole(
         spaceId: string,
         roleId: number,
-        signer: ethers.Signer | undefined,
+        signer: ethers.Signer,
     ): Promise<ContractTransaction> {
         const space = await this.getSpace(spaceId)
         if (!space?.write) {
@@ -445,7 +445,7 @@ export class SpaceDapp implements ISpaceDapp {
 
     public async updateChannel(
         params: UpdateChannelParams,
-        signer: ethers.Signer | undefined,
+        signer: ethers.Signer,
     ): Promise<ContractTransaction> {
         const space = await this.getSpace(params.spaceNetworkId)
         if (!space?.write) {
@@ -488,7 +488,7 @@ export class SpaceDapp implements ISpaceDapp {
 
     public async updateRole(
         params: UpdateRoleParams,
-        signer: ethers.Signer | undefined,
+        signer: ethers.Signer,
     ): Promise<ContractTransaction> {
         const space = await this.getSpace(params.spaceNetworkId)
         if (!space?.write) {

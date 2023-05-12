@@ -85,6 +85,7 @@ export {
     getPioneerNftAddress,
 } from './client/web3/ContractHelpers'
 
+export * from './types/error-types'
 export * from './utils/zion-utils'
 
 export * from './client/web3/PioneerNFT'
