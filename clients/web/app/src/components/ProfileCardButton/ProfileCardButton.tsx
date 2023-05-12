@@ -5,6 +5,7 @@ import { ProfileSettingsCard } from '@components/Cards/ProfileSettingsCard'
 import { FadeIn } from '@components/Transitions'
 import { Avatar, Paragraph, Stack } from '@ui'
 import { CardOpener } from 'ui/components/Overlay/CardOpener'
+import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 
 type Props = {
     expanded?: boolean
@@ -27,7 +28,7 @@ export const ProfileCardButton = (props: Props) => {
                     userId={userId ?? ''}
                     username={username ?? ''}
                     avatarUrl={myProfile?.avatarUrl}
-                    displayName={myProfile?.displayName}
+                    displayName={getPrettyDisplayName(myProfile).name}
                     userAddress={userAddress}
                 />
             }

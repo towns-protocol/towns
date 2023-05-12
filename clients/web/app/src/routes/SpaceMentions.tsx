@@ -13,6 +13,7 @@ import { Box, Heading, Icon, Paragraph, Stack } from '@ui'
 import { RichTextPreview } from '@components/RichText/RichTextEditor'
 import { Message } from '@components/MessageLayout'
 import { getIsRoomMessageContent, getMessageBody } from 'utils/ztevent_util'
+import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { CentralPanelLayout } from './layouts/CentralPanelLayout'
 
 export const SpaceMentions = () => {
@@ -94,7 +95,7 @@ const MentionBox = (props: { mention: MentionResult; userId?: string }) => {
                     timestamp={mention.event.originServerTs}
                     userId={sender.userId}
                     senderId={sender.userId}
-                    name={sender.name}
+                    name={getPrettyDisplayName(sender).name}
                 >
                     <RichTextPreview
                         content={getMessageBody(mention.event.eventId, content)}

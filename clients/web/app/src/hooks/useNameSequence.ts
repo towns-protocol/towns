@@ -2,6 +2,7 @@ import { useMyProfile, useSpaceMembers } from 'use-zion-client'
 import { firstBy } from 'thenby'
 import { useMemo } from 'react'
 import { notUndefined } from 'ui/utils/utils'
+import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 
 export const useNameSequence = (users: Record<string, { eventId: string }>) => {
     const { membersMap } = useSpaceMembers()
@@ -10,7 +11,7 @@ export const useNameSequence = (users: Record<string, { eventId: string }>) => {
     return useMemo(() => {
         return Array.from(Object.keys(users))
             .map((u) => {
-                const name = membersMap[u]?.name
+                const name = getPrettyDisplayName(membersMap[u]).name
                 if (!name) {
                     return undefined
                 } else if (name === displayName) {

@@ -11,6 +11,7 @@ import {
     useTokenSearch,
     useWatchItems,
 } from '@components/AddressListSearch/AddressListSearch'
+import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 type MyRoomMember = Pick<RoomMember, 'userId' | 'name'>
 
 type ResultsWithIdForVList = {
@@ -32,7 +33,7 @@ export function MemberList({
             const address = createUserIdFromString(m.userId)?.accountAddress ?? ''
             return {
                 userId: m.userId,
-                name: m.name,
+                name: getPrettyDisplayName(m).name,
                 address,
                 id: m.userId,
             }

@@ -9,7 +9,7 @@ import { AppPanelLayout } from './AppPanelLayout'
 
 export const AppLayout = () => {
     const spaceRoute = useMatch({ path: `/${PATHS.SPACES}/:spaceSlug`, end: false })
-    const needsOnboarding = useNeedsOnboarding()
+    const needsOnboarding = useNeedsOnboarding() || false
     const spaceId = spaceRoute?.params.spaceSlug ?? ''
     const { isMobile } = useDevice()
 

@@ -11,6 +11,7 @@ import {
 import { useGetUserBio } from 'hooks/useUserBio'
 import { Box, Button, Panel, Paragraph, Stack, Text } from '@ui'
 import { UserProfile } from '@components/UserProfile/UserProfile'
+import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 
 export const SpaceProfilePanel = (props: { children?: React.ReactNode }) => {
     const [search] = useSearchParams()
@@ -64,7 +65,7 @@ export const SpaceProfilePanel = (props: { children?: React.ReactNode }) => {
                 <UserProfile
                     center
                     userId={user.userId}
-                    displayName={user.name}
+                    displayName={getPrettyDisplayName(user).name}
                     userAddress={userAddress}
                     userBio={userBio}
                     canEdit={canEdit}

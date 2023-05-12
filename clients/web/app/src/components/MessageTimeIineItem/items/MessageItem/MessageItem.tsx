@@ -2,6 +2,7 @@ import React, { useContext } from 'react'
 import { MessageType, TimelineEvent, ZTEvent } from 'use-zion-client'
 import { MessageLayout, MessageLayoutProps } from '@components/MessageLayout/MessageLayout'
 import { RatioedBackgroundImage } from '@components/RatioedBackgroundImage'
+import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import {
     MessageTimelineContext,
     MessageTimelineType,
@@ -128,7 +129,7 @@ const MessageWrapper = React.memo((props: MessageWrapperProps) => {
     } = timelineContext
 
     const user = membersMap[sender.id]
-    const displayName = user?.name ?? sender.displayName
+    const displayName = getPrettyDisplayName(user).name
 
     const isOwn = event.content?.kind == ZTEvent.RoomMessage && sender.id === userId
 

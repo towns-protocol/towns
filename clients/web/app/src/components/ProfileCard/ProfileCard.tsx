@@ -5,6 +5,7 @@ import { Card, Paragraph, Stack } from '@ui'
 import { useCardOpenerContext } from 'ui/components/Overlay/CardOpenerContext'
 import { shortAddress } from 'ui/utils/utils'
 import { Avatar } from 'ui/components/Avatar/Avatar'
+import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 
 type Props = {
     userId: string
@@ -59,7 +60,7 @@ export const ProfileCard = (props: Props) => {
                 </Link>
                 <Stack justifyContent="center" gap="sm">
                     <Paragraph truncate strong>
-                        {user.name}
+                        {getPrettyDisplayName(user).name}
                     </Paragraph>
                     <Paragraph color="gray2">{shortAddress(userAddress)}</Paragraph>
                 </Stack>

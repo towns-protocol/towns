@@ -6,6 +6,7 @@ import { shortAddress } from 'ui/utils/utils'
 import { Avatar, Grid, Paragraph, Stack } from '@ui'
 import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
 import { useCreateLink } from 'hooks/useCreateLink'
+import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 
 type Props = {
     members?: RoomMember[]
@@ -43,7 +44,7 @@ const GridProfile = ({ member }: { member: RoomMember }) => {
     const profile = (
         <Stack centerContent gap>
             <Avatar size="avatar_x15" userId={member.userId ?? ''} imageVariant="thumbnail300" />
-            <Paragraph textAlign="center">{member.name}</Paragraph>
+            <Paragraph textAlign="center">{getPrettyDisplayName(member).initialName}</Paragraph>
         </Stack>
     )
 

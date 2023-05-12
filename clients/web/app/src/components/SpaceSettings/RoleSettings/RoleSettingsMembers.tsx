@@ -10,6 +10,7 @@ import { useAuth } from 'hooks/useAuth'
 import { FetchedTokenAvatar } from '@components/Tokens/FetchedTokenAvatar'
 import { useEnvironment } from 'hooks/useEnvironmnet'
 import { EVERYONE_ADDRESS } from 'utils'
+import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { MemberListModal, TokenListModal } from './GatingModals'
 
 export const RoleSettingsMembers = () => {
@@ -126,7 +127,11 @@ const MemberRenderer = (props: { item: string; onRemoveItem: (id: string) => voi
             borderRadius="sm"
         >
             {avatarContent()}
-            <Text>{props.item === EVERYONE_ADDRESS ? 'Everyone' : matrixuser?.displayName}</Text>
+            <Text>
+                {props.item === EVERYONE_ADDRESS
+                    ? 'Everyone'
+                    : getPrettyDisplayName(matrixuser).name}
+            </Text>
             <Text color="gray2">
                 {props.item === EVERYONE_ADDRESS
                     ? 'All wallet addresses'

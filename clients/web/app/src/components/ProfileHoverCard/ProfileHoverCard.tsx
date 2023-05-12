@@ -6,6 +6,7 @@ import { Paragraph } from 'ui/components/Text/Paragraph'
 import { Stack } from 'ui/components/Stack/Stack'
 import { Avatar } from 'ui/components/Avatar/Avatar'
 import { Tooltip } from 'ui/components/Tooltip/Tooltip'
+import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 
 type Props = {
     userId: string
@@ -33,7 +34,7 @@ export const ProfileHoverCard = (props: Props) => {
                 </Stack>
                 <Stack justifyContent="center" gap="sm">
                     <Paragraph truncate strong>
-                        {user.name}
+                        {getPrettyDisplayName(user).name}
                     </Paragraph>
                     <Paragraph color="gray2">{userAddress && shortAddress(userAddress)}</Paragraph>
                 </Stack>
