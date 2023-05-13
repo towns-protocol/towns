@@ -103,6 +103,10 @@ export const AlphaAccessMainPage = () => {
     }, [pioneerNFT, depositAmountETH, signer, recordTransactionReport, handleRefetchContractState])
 
     const handleSubmitMintTo = useCallback(async () => {
+        if (!signer) {
+            alert('Please connect your wallet')
+            return
+        }
         if (!pioneerNFT) {
             alert('Please sign in')
             return
@@ -163,6 +167,10 @@ export const AlphaAccessMainPage = () => {
     ])
 
     const handleSubmitSetMintReward = useCallback(async () => {
+        if (!signer) {
+            alert('Please connect your wallet')
+            return
+        }
         if (!pioneerNFT) {
             alert('Please sign in')
             return
@@ -203,6 +211,10 @@ export const AlphaAccessMainPage = () => {
     }, [pioneerNFT, mintRewardETH, signer, recordTransactionReport, handleRefetchContractState])
 
     const handleSubmitSetAllowed = useCallback(async () => {
+        if (!signer) {
+            alert('Please connect your wallet')
+            return
+        }
         if (!pioneerNFT) {
             alert('Please sign in')
             return

@@ -103,7 +103,7 @@ export class BaseContractShim<
     }
 
     public write(
-        signer: ethers.Signer | undefined,
+        signer: ethers.Signer,
     ): T_LOCALHOST_CONTRACT | T_GOERLI_CONTRACT | T_SEPOLIA_CONTRACT {
         // lazy create an instance if it is not already cached
         if (!this.writeContract) {
@@ -211,10 +211,7 @@ export class BaseContractShim<
         return new ethers.Contract(this.address, this.abi, this.provider)
     }
 
-    private createWriteContractInstance(signer: ethers.Signer | undefined): ethers.Contract {
-        if (!signer) {
-            throw new Error('No signer')
-        }
+    private createWriteContractInstance(signer: ethers.Signer): ethers.Contract {
         return new ethers.Contract(this.address, this.abi, signer)
     }
 }
