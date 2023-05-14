@@ -12,8 +12,8 @@
         "publish:stage": "wrangler publish --env staging",
         "publish:test": "wrangler publish --env test",
         "test": "yarn test:unit",
-        "test:unit": "concurrently \"yarn test:jest\"",
         "test:jest": "jest --coverage",
+        "test:unit": "concurrently \"yarn test:jest\"",
         "test:wrangler": "concurrently --success command-1 --kill-others --kill-signal=SIGINT \"wrangler dev --local --port 8787\" \"wait-on --timeout 5000 http-get://localhost:8787/health\""
     },
     "dependencies": {
