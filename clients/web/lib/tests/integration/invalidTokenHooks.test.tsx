@@ -1,4 +1,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
+/**
+ * @group dendrite
+ */
 import React from 'react'
 import { LoginWithAuth } from './helpers/TestComponents'
 import { render, screen, waitFor } from '@testing-library/react'

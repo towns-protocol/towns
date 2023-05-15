@@ -1,4 +1,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
+/**
+ * @group dendrite
+ */
 import { waitFor } from '@testing-library/dom'
 import { ClientEvent, MatrixEvent } from 'matrix-js-sdk'
 import { Permission } from '../../src/client/web3/ContractTypes'

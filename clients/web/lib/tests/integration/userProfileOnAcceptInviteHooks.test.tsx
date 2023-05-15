@@ -1,5 +1,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-explicit-any */
-
+/**
+ * @group dendrite
+ */
 import { Membership, RoomVisibility } from '../../src/types/zion-types'
 import { createTestSpaceWithEveryoneRole, registerAndStartClients } from './helpers/TestUtils'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'

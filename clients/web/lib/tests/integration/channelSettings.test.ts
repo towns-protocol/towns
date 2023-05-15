@@ -1,5 +1,6 @@
 /**
  * @group casablanca
+ * @group dendrite
  */
 import { Permission, RoleEntitlements } from 'use-zion-client/src/client/web3/ContractTypes'
 import {

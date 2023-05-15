@@ -1,10 +1,9 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 /**
  * sendAMessage
  *
+ * @group dendrite
  */
-
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
-
 import {
     createTestSpaceWithEveryoneRole,
     registerAndStartClients,

@@ -1,5 +1,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-
+/**
+ * @group dendrite
+ */
 import { RoomIdentifier } from '../../src/types/room-identifier'
 import {
     createTestSpaceWithZionMemberRole,

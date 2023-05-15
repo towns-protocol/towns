@@ -1,5 +1,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-
+/**
+ * @group dendrite
+ */
 import { createTestSpaceWithEveryoneRole, registerAndStartClients } from './helpers/TestUtils'
 
 import { Permission } from '../../src/client/web3/ContractTypes'

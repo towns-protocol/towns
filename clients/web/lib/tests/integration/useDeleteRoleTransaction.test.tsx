@@ -3,6 +3,7 @@
  *
  * // https://www.npmjs.com/package/jest-runner-groups
  * @group casablanca
+ * @group dendrite
  *
  */
 import { Permission } from '../../src/client/web3/ContractTypes'

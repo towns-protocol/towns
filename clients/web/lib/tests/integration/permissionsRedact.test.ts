@@ -1,3 +1,6 @@
+/**
+ * @group dendrite
+ */
 import { MAXTRIX_ERROR, NoThrownError, getError } from './helpers/ErrorUtils'
 import {
     createTestSpaceWithEveryoneRole,

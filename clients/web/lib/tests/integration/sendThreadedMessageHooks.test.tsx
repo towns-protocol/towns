@@ -1,5 +1,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-explicit-any */
-
+/**
+ * @group dendrite
+ */
 import {
     FullyReadMarker,
     RoomMessageEvent,

@@ -1,3 +1,6 @@
+/**
+ * @group dendrite
+ */
 import { createTestSpaceWithEveryoneRole, registerAndStartClients } from './helpers/TestUtils'
 import { RoomIdentifier } from '../../src/types/room-identifier'
 import { RoomVisibility } from '../../src/types/zion-types'

@@ -1,5 +1,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-
+/**
+ * @group dendrite
+ */
 import { ClientEvent, NotificationCountType } from 'matrix-js-sdk'
 import {
     createTestChannelWithSpaceRoles,

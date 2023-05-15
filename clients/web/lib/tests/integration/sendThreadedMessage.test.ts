@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 /**
  * @group casablanca
+ * @group dendrite
  */
 import {
     createTestChannelWithSpaceRoles,

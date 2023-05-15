@@ -1,5 +1,6 @@
 /**
  * @group casablanca
+ * @group dendrite
  */
 import {
     createExternalTokenStruct,

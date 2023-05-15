@@ -1,3 +1,6 @@
+/**
+ * @group dendrite
+ */
 import { Permission } from '../../src/client/web3/ContractTypes'
 import React, { useCallback, useEffect, useMemo } from 'react'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'

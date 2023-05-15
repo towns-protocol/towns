@@ -1,3 +1,6 @@
+/**
+ * @group dendrite
+ */
 import { MAXTRIX_ERROR, MatrixError, NoThrownError, getError } from './helpers/ErrorUtils'
 import {
     createTestSpaceWithZionMemberRole,

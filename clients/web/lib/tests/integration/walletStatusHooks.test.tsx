@@ -1,5 +1,6 @@
 /**
  * @group casablanca
+ * @group dendrite
  */
 /* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-explicit-any */
 

@@ -1,5 +1,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-explicit-any */
-
+/**
+ * @group dendrite
+ */
 import { Membership, RoomVisibility, SpaceItem } from '../../src/types/zion-types'
 import React, { useCallback } from 'react'
 import {

@@ -1,4 +1,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
+/**
+ * @group dendrite
+ */
 import { RoomVisibility } from '../../src/types/zion-types'
 import { registerAndStartClients } from './helpers/TestUtils'
 

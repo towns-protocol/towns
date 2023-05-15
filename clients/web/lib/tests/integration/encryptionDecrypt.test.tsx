@@ -1,4 +1,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
+/**
+ * @group dendrite
+ */
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import React, { useState } from 'react'
 import { Permission } from '../../src/client/web3/ContractTypes'

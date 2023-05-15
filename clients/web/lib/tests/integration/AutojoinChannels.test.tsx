@@ -1,3 +1,6 @@
+/**
+ * @group dendrite
+ */
 import {
     createTestChannelWithSpaceRoles,
     createTestSpaceWithZionMemberRole,

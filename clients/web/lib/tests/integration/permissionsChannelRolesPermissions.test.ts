@@ -1,5 +1,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-
+/**
+ * @group dendrite
+ */
 import { RoomVisibility } from 'use-zion-client/src/types/zion-types'
 import { RoomIdentifier } from '../../src/types/room-identifier'
 import {

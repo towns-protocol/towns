@@ -1,3 +1,6 @@
+/**
+ * @group dendrite
+ */
 import {
     CreateChannelInfo,
     RoomVisibility,

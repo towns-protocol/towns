@@ -1,4 +1,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-explicit-any */
+/**
+ * @group dendrite
+ */
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { useZionClient } from '../../src/hooks/use-zion-client'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'

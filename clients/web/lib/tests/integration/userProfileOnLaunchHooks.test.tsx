@@ -1,4 +1,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-explicit-any */
+/**
+ * @group dendrite
+ */
 import React from 'react'
 import { render, screen, waitFor } from '@testing-library/react'
 import { ZionTestApp } from './helpers/ZionTestApp'

@@ -1,3 +1,6 @@
+/**
+ * @group dendrite
+ */
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 
