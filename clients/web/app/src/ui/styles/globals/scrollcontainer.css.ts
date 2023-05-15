@@ -6,6 +6,7 @@ export const scrollContainerClass = style({
     overflowY: 'scroll',
     scrollbarWidth: 'none',
     overflowAnchor: 'none',
+    overscrollBehaviorY: 'contain',
 })
 
 globalStyle(`${scrollContainerClass}::-webkit-scrollbar`, {

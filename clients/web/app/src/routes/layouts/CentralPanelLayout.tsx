@@ -1,17 +1,35 @@
 import { Allotment } from 'allotment'
 import { useOutlet } from 'react-router'
 import React from 'react'
-import { Stack } from '@ui'
+import { Box, Stack } from '@ui'
 import { usePersistPanes } from 'hooks/usePersistPanes'
+import { useDevice } from 'hooks/useDevice'
+import { StackLayoutHeader } from '@components/StackLayoutHeader/StackLayoutHeader'
 
 export const CentralPanelLayout = (props: { children: React.ReactNode }) => {
     const { children } = props
     const { sizes, onSizesChange } = usePersistPanes(['channel', 'right'])
     const outlet = useOutlet()
-    return (
-        <Stack horizontal minHeight="100%">
+    const { isMobile } = useDevice()
+
+    return isMobile ? (
+        <>
+            <Stack height="100svh">
+                <StackLayoutHeader />
+                <Box grow centerContent position="relative">
+                    <Box absoluteFill>{children}</Box>
+                </Box>
+            </Stack>
+            {outlet && outlet}
+        </>
+    ) : (
+        <Stack minHeight="100%">
             <Allotment onChange={onSizesChange}>
-                <Allotment.Pane minSize={550}>{children}</Allotment.Pane>
+                <Allotment.Pane minSize={550}>
+                    <Box grow centerContent position="relative" height="100%">
+                        <Box absoluteFill>{children}</Box>
+                    </Box>
+                </Allotment.Pane>
                 {outlet && (
                     <Allotment.Pane minSize={300} preferredSize={sizes[1] || 840}>
                         {outlet}

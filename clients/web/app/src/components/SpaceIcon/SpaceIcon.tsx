@@ -13,6 +13,7 @@ type Props = {
     variant?: ImageVariant
     /* used to toggle official NFT image - may remove in the future */
     overrideSrc?: string
+    overrideBorderRadius?: BoxProps['borderRadius']
 } & BoxProps
 
 const MotionBox = motion(Box)
@@ -24,6 +25,7 @@ export const SpaceIcon = (props: Props) => {
         letterFontSize,
         firstLetterOfSpaceName,
         overrideSrc,
+        overrideBorderRadius,
         variant = ImageVariants.thumbnail300,
         ...boxProps
     } = props
@@ -37,7 +39,7 @@ export const SpaceIcon = (props: Props) => {
                 horizontal
                 key={imageSrc}
                 background="level2"
-                borderRadius="full"
+                borderRadius={overrideBorderRadius ?? 'full'}
                 flexDirection="row"
                 overflow="hidden"
                 position="relative"

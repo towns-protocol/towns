@@ -14,6 +14,7 @@ import { useIsChannelWritable } from 'hooks/useIsChannelWritable'
 import { useSendReply } from 'hooks/useSendReply'
 import { useSpaceChannels } from 'hooks/useSpaceChannels'
 import { atoms } from 'ui/styles/atoms.css'
+import { useDevice } from 'hooks/useDevice'
 
 type Props = {
     messageId: string
@@ -39,6 +40,7 @@ export const MessageThreadPanel = (props: Props) => {
     }
     const { members } = useSpaceMembers()
     const channels = useSpaceChannels()
+    const { isMobile } = useDevice()
 
     const panelLabel = (
         <Paragraph>
@@ -55,33 +57,35 @@ export const MessageThreadPanel = (props: Props) => {
 
     return (
         <Panel label={panelLabel} onClose={props.onClose}>
-            <MessageTimelineWrapper
-                spaceId={spaceId}
-                channelId={channelId}
-                threadParentId={messageId}
-                events={messagesWithParent}
-                isChannelWritable={isChannelWritable}
-            >
-                <Stack grow overflow="hidden">
-                    <MessageTimeline highlightId={props.highlightId} />
-                </Stack>
-            </MessageTimelineWrapper>
+            <Stack>
+                <MessageTimelineWrapper
+                    spaceId={spaceId}
+                    channelId={channelId}
+                    threadParentId={messageId}
+                    events={messagesWithParent}
+                    isChannelWritable={isChannelWritable}
+                >
+                    <Stack grow overflow="hidden">
+                        <MessageTimeline highlightId={props.highlightId} />
+                    </Stack>
+                </MessageTimelineWrapper>
 
-            {isChannelWritable && (
-                <Box paddingY="none" paddingX="md" style={{ position: 'sticky', bottom: 0 }}>
-                    <RichTextEditor
-                        autoFocus
-                        editable={!!isChannelWritable}
-                        placeholder="Reply..."
-                        storageId={`${channelId.networkId}-${messageId}`}
-                        threadId={messageId}
-                        channels={channels}
-                        members={members}
-                        background="level2"
-                        onSend={onSend}
-                    />
-                </Box>
-            )}
+                {isChannelWritable && (
+                    <Box paddingY="none" paddingX="md" style={{ position: 'sticky', bottom: 0 }}>
+                        <RichTextEditor
+                            autoFocus={!isMobile}
+                            editable={!!isChannelWritable}
+                            placeholder="Reply..."
+                            storageId={`${channelId.networkId}-${messageId}`}
+                            threadId={messageId}
+                            channels={channels}
+                            members={members}
+                            background="level2"
+                            onSend={onSend}
+                        />
+                    </Box>
+                )}
+            </Stack>
         </Panel>
     )
 }

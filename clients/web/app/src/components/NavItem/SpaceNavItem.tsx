@@ -64,7 +64,7 @@ export const SpaceNavItem = (props: Props) => {
 
             {icon && <Icon type={icon} color="gray2" background="level2" size="square_lg" />}
 
-            <ButtonText grow truncate>
+            <ButtonText grow truncate color="default">
                 {isInvite ? '(Invite) ' + name : name}
             </ButtonText>
 

@@ -6,8 +6,12 @@ import * as styles from './EncryptedMessageBody.css'
 export const TimelineEncryptedContent = React.memo(
     (props: { event: TimelineEvent; displayContext: 'tail' | 'body' | 'head' | 'single' }) => {
         const { event } = props
-        const width =
-            (Math.floor((Math.cos(event.originServerTs / 1000) * 0.5 + 0.5) * 4) / 4) * 250 + 200
+
+        const width = Math.min(
+            (Math.floor((Math.cos(event.originServerTs / 1000) * 0.5 + 0.5) * 4) / 4) * 250 + 200,
+            window.innerWidth - 100,
+        )
+
         return (
             <Stack insetY="xxs" className={styles.main}>
                 <TooltipRenderer

@@ -23,7 +23,7 @@ import { DecryptingCard } from '@components/Shimmer/DecryptingCard'
 import { Box, Button, Stack } from '@ui'
 import { useIsChannelWritable } from 'hooks/useIsChannelWritable'
 import { useSpaceChannels } from 'hooks/useSpaceChannels'
-import { TooltipBoundaryBox } from 'ui/components/Tooltip/TooltipBoundary'
+import { useDevice } from 'hooks/useDevice'
 import { CentralPanelLayout } from './layouts/CentralPanelLayout'
 
 export const SpacesChannel = () => {
@@ -52,7 +52,7 @@ const SpaceChannelWrapper = (props: { children: React.ReactElement }) => {
 
 const SpacesChannelComponent = () => {
     const { messageId } = useParams()
-
+    const { isMobile } = useDevice()
     const { joinRoom, scrollback, sendMessage, isRoomEncrypted } = useZionClient()
 
     const { spaceId, channelId, channel } = useChannelData()
@@ -148,13 +148,7 @@ const SpacesChannelComponent = () => {
                     </Button>
                 </Box>
             ) : (
-                <TooltipBoundaryBox
-                    grow
-                    absoluteFill
-                    height="100%"
-                    justifyContent="end"
-                    tooltipPadding={16}
-                >
+                <>
                     <MessageTimelineWrapper
                         key={channelId.slug}
                         spaceId={spaceId}
@@ -188,14 +182,13 @@ const SpacesChannelComponent = () => {
                             highlightId={messageId || highlightId}
                         />
                     </MessageTimelineWrapper>
-
                     <Box gap paddingBottom="lg" paddingX="lg">
                         <RichTextEditor
                             editable={!!isChannelWritable}
                             background={isChannelWritable ? 'level2' : 'level1'}
                             key={channelId.networkId}
                             storageId={channel.id.networkId}
-                            autoFocus={!hasThreadOpen}
+                            autoFocus={!hasThreadOpen && !isMobile}
                             initialValue=""
                             placeholder={placeholder}
                             channels={channels}
@@ -203,7 +196,7 @@ const SpacesChannelComponent = () => {
                             onSend={onSend}
                         />
                     </Box>
-                </TooltipBoundaryBox>
+                </>
             )}
         </CentralPanelLayout>
     )

@@ -6,6 +6,8 @@ import { useWeb3Context } from 'use-zion-client'
 import { Box, Button, Divider, Stack, Text } from '@ui'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { shortAddress } from 'ui/utils/utils'
+import { useDevice } from 'hooks/useDevice'
+
 import {
     ENVIRONMENTS,
     TownsEnvironment,
@@ -86,6 +88,7 @@ const DebugModal = ({
 }: ModalProps) => {
     const { accounts, provider } = useWeb3Context()
     const { chain: walletChain } = useNetwork()
+    const { isMobile } = useDevice()
 
     return (
         <ModalContainer onHide={onHide}>
@@ -133,7 +136,7 @@ const DebugModal = ({
 
                         <Divider />
 
-                        <Stack horizontal gap justifyContent="end">
+                        <Stack gap horizontal={!isMobile} justifyContent="end">
                             {ENVIRONMENTS.map((env) => (
                                 <Button
                                     key={env.name}

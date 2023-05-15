@@ -13,6 +13,7 @@ export const scrollContainer = style({
     overflowY: `scroll`,
     overflowAnchor: 'none',
     marginRight: `calc(-1 * var(--negative-scrollbars))`,
+    overscrollBehaviorY: `contain`,
     selectors: {
         [`&::-webkit-scrollbar`]: {
             display: 'none',

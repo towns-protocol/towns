@@ -4,7 +4,6 @@ import './debug.css'
 import './fonts.css'
 
 globalStyle('html, body', {
-    minHeight: '100vh',
     textRendering: 'optimizeLegibility',
     WebkitFontSmoothing: 'antialiased',
     MozOsxFontSmoothing: 'grayscale',

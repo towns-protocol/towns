@@ -19,6 +19,8 @@ import { SentryReportModal } from '@components/SentryErrorReport/SentryErrorRepo
 import { Notifications } from '@components/Notifications/Notifications'
 import { useShouldDisplayDesktopOnlyScreen } from 'hooks/useShouldDisplayDesktopOnlyScreen'
 import { AppLayout } from 'routes/layouts/AppLayout'
+import { useDevice } from 'hooks/useDevice'
+import { mobileAppClass } from 'ui/styles/globals/utils.css'
 
 const AuthenticatedRoutes = React.lazy(() => import('routes/AuthenticatedRoutes'))
 const InviteLinkLanding = React.lazy(() => import('routes/InviteLinkLanding'))
@@ -129,7 +131,13 @@ const RedirectToLoginWithSavedLocation = () => (
 )
 
 const AppTopLevelLayout = () => {
-    return (
+    const { isMobile } = useDevice()
+
+    return isMobile ? (
+        <Box className={mobileAppClass}>
+            <Outlet />
+        </Box>
+    ) : (
         <Stack grow color="default" minHeight="100vh">
             <Outlet />
         </Stack>

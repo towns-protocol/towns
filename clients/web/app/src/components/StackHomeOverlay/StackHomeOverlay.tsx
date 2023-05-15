@@ -1,0 +1,132 @@
+import React, { useCallback } from 'react'
+import { motion } from 'framer-motion'
+import {
+    createUserIdFromString,
+    useMyProfile,
+    useSpaceContext,
+    useZionContext,
+} from 'use-zion-client'
+import { useNavigate } from 'react-router'
+import { Avatar, Box, Icon, IconName, Stack, Text } from '@ui'
+import { shortAddress } from 'ui/utils/utils'
+import { SpaceNavItem } from '@components/NavItem/SpaceNavItem'
+import { useCreateLink } from 'hooks/useCreateLink'
+import { useAuth } from 'hooks/useAuth'
+
+type Props = {
+    onClose: () => void
+}
+
+export const StackHomeOverlay = (props: Props) => {
+    const { onClose } = props
+    const { logout } = useAuth()
+    const user = useMyProfile()
+    const userAddress = user ? createUserIdFromString(user.userId)?.accountAddress : undefined
+    const { spaces } = useZionContext()
+    const { spaceId } = useSpaceContext()
+
+    const { createLink: createProfileLink } = useCreateLink()
+    const link = createProfileLink({ profileId: 'me' })
+    const navigate = useNavigate()
+
+    const onViewProfileClicked = useCallback(() => {
+        if (link) {
+            navigate(link)
+        }
+    }, [link, navigate])
+
+    return (
+        <Box absoluteFill>
+            <MotionBox
+                absoluteFill
+                initial={{ opacity: 0 }}
+                exit={{ opacity: 0 }}
+                animate={{ opacity: 0.5 }}
+                background="level1"
+                onClick={onClose}
+            />
+            <MotionStack
+                borderRight
+                gap="xs"
+                paddingY="md"
+                initial={{ x: '-75%', opacity: 0 }}
+                exit={{ x: '-75%', opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                transition={{ duration: 0.33 }}
+                width="75%"
+                height="100%"
+                background="level1"
+            >
+                {user && (
+                    <Stack horizontal padding alignItems="center" gap="sm">
+                        <Avatar
+                            size="avatar_x4"
+                            userId={user.userId}
+                            onClick={onViewProfileClicked}
+                        />
+                        <Stack gap="sm" onClick={onViewProfileClicked}>
+                            <Text>{user.displayName}</Text>
+                            {userAddress && <Text color="gray2">{shortAddress(userAddress)}</Text>}
+                        </Stack>
+
+                        <Stack grow />
+                        <Icon type="close" color="gray2" onClick={onClose} />
+                    </Stack>
+                )}
+
+                <Stack scroll paddingX="sm" height="100%">
+                    {spaces.map((s) => (
+                        <SpaceNavItem
+                            key={s.id.slug}
+                            exact={false}
+                            forceMatch={s.id.networkId === spaceId?.networkId}
+                            id={s.id}
+                            name={s.name}
+                            avatar={s.avatarSrc}
+                            pinned={false}
+                        />
+                    ))}
+                </Stack>
+
+                <Stack gap borderTop padding="lg">
+                    <BottomSectionButton
+                        signout={false}
+                        label="View profile"
+                        icon="profile"
+                        onClick={onViewProfileClicked}
+                    />
+                    <BottomSectionButton
+                        signout={false}
+                        label="Report a bug"
+                        icon="help"
+                        onClick={onClose}
+                    />
+                    <BottomSectionButton signout label="Log out" icon="logout" onClick={logout} />
+                </Stack>
+            </MotionStack>
+        </Box>
+    )
+}
+
+const BottomSectionButton = (props: {
+    onClick: () => void
+    label: string
+    icon: IconName
+    signout: boolean
+}) => {
+    return (
+        <Stack horizontal gap="sm" alignItems="center" onClick={props.onClick}>
+            <Box padding="sm" background="level2" rounded="sm">
+                <Icon
+                    color={props.signout ? 'error' : 'gray2'}
+                    type={props.icon}
+                    size="square_xs"
+                />
+            </Box>
+            <Text color={props.signout ? 'error' : 'default'}>{props.label}</Text>
+        </Stack>
+    )
+}
+
+const MotionBox = motion(Box)
+const MotionStack = motion(Stack)

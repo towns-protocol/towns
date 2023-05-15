@@ -27,6 +27,7 @@ const root = createGlobalTheme(':root', {
 
         x4: `${baseline * 4}px`, // old lg
 
+        x8: `${baseline * 8}px`,
         // suited for text spacing
         paragraph: `${baseline * 1.5}px`, // m
         line: `${baseline * 0.75}px`,
@@ -277,6 +278,7 @@ const root = createGlobalTheme(':root', {
     zIndex: {
         above: '1',
         ui: '100',
+        uiAbove: '101',
         tooltips: '10000',
     } as const,
 })
