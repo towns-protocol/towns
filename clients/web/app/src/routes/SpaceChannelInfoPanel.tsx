@@ -72,7 +72,7 @@ export const ChannelInfoPanel = () => {
     )
 
     return (
-        <Panel label="Channel Info" onClose={onClose}>
+        <Panel modalPresentable label="Channel Info" onClose={onClose}>
             {showChannelSettings && spaceData && channel?.id && (
                 <ChannelSettingsModal
                     spaceId={spaceData?.id}

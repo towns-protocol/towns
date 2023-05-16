@@ -1,13 +1,16 @@
-import React from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
+import Sheet from 'react-modal-sheet'
 import { useDevice } from 'hooks/useDevice'
 import { Box, BoxProps } from '../Box/Box'
 import { IconButton } from '../IconButton/IconButton'
 import { Stack } from '../Stack/Stack'
+import { modalClass } from './Sheet.css'
 
 type Props = {
     children: React.ReactNode
     label?: React.ReactNode | string
     paddingX?: BoxProps['padding']
+    modalPresentable?: boolean
     onClose?: () => void
 }
 
@@ -43,7 +46,46 @@ const DesktopPanel = (props: Props) => {
 }
 
 const MobilePanel = (props: Props) => {
-    return (
+    const { onClose } = props
+    const [modalPresented, setModalPresented] = useState(false)
+    const modalPresentable = props.modalPresentable ?? false
+
+    const closeModal = useCallback(() => {
+        setModalPresented(false)
+    }, [])
+
+    const didCloseModal = useCallback(() => {
+        onClose?.()
+    }, [onClose])
+
+    useEffect(() => {
+        setModalPresented(true)
+    }, [])
+
+    return modalPresentable ? (
+        <Sheet
+            className={modalClass}
+            isOpen={modalPresented}
+            detent="content-height"
+            onClose={closeModal}
+            onCloseEnd={didCloseModal}
+        >
+            <Sheet.Container>
+                <Sheet.Header />
+                <Sheet.Content>
+                    <div
+                        style={{
+                            maxHeight: '100svh',
+                            overflow: 'auto',
+                        }}
+                    >
+                        {props.children}
+                    </div>
+                </Sheet.Content>
+            </Sheet.Container>
+            <Sheet.Backdrop onTap={closeModal} />
+        </Sheet>
+    ) : (
         // TODO: sort out zIndexes
         <Stack absoluteFill background="level2" zIndex="tooltips">
             <Stack

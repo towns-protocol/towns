@@ -157,7 +157,7 @@ export const SpaceInfoPanel = () => {
     }, [leaveRoom, navigate, spaceID])
 
     return (
-        <Panel label="Town Info" onClose={onClose}>
+        <Panel modalPresentable label="Town Info" onClose={onClose}>
             {space?.id && (
                 <Stack centerContent gap padding>
                     <FormRender>
