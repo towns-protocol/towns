@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react'
+import React, { useCallback, useState } from 'react'
 import { motion } from 'framer-motion'
 import {
     createUserIdFromString,
@@ -7,11 +7,14 @@ import {
     useZionContext,
 } from 'use-zion-client'
 import { useNavigate } from 'react-router'
+import useEvent from 'react-use-event-hook'
 import { Avatar, Box, Icon, IconName, Stack, Text } from '@ui'
 import { shortAddress } from 'ui/utils/utils'
 import { SpaceNavItem } from '@components/NavItem/SpaceNavItem'
 import { useCreateLink } from 'hooks/useCreateLink'
 import { useAuth } from 'hooks/useAuth'
+import { ModalContainer } from '@components/Modals/ModalContainer'
+import { SentryErrorReportForm } from '@components/SentryErrorReport/SentryErrorReport'
 
 type Props = {
     onClose: () => void
@@ -28,6 +31,10 @@ export const StackHomeOverlay = (props: Props) => {
     const { createLink: createProfileLink } = useCreateLink()
     const link = createProfileLink({ profileId: 'me' })
     const navigate = useNavigate()
+
+    const [isSentryModalVisible, setIsSentryModalVisible] = useState(false)
+    const showSentryModal = useEvent(() => setIsSentryModalVisible(true))
+    const hideSentryModal = useEvent(() => setIsSentryModalVisible(false))
 
     const onViewProfileClicked = useCallback(() => {
         if (link) {
@@ -99,10 +106,16 @@ export const StackHomeOverlay = (props: Props) => {
                         signout={false}
                         label="Report a bug"
                         icon="help"
-                        onClick={onClose}
+                        onClick={showSentryModal}
                     />
                     <BottomSectionButton signout label="Log out" icon="logout" onClick={logout} />
                 </Stack>
+
+                {isSentryModalVisible && (
+                    <ModalContainer onHide={hideSentryModal}>
+                        <SentryErrorReportForm onHide={hideSentryModal} />
+                    </ModalContainer>
+                )}
             </MotionStack>
         </Box>
     )
