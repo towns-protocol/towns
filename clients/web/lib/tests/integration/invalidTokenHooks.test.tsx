@@ -53,7 +53,10 @@ describe('invalidTokenHooks', () => {
         const TestComponent = () => {
             return (
                 <>
-                    <LoginWithAuth auth={badAliceAuth} walletAddress={xxx.accountAddress} />
+                    <LoginWithAuth
+                        auth={badAliceAuth}
+                        walletAddress={xxx.accountAddress ?? '0x000'}
+                    />
                 </>
             )
         }
