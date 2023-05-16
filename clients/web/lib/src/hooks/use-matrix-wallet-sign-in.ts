@@ -61,11 +61,15 @@ export function useMatrixWalletSignIn() {
         [setLoginError, setLoginStatus],
     )
 
-    const authenticationSuccess = useCallback(
+    const authenticationDone = useCallback(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        function (response: IAuthData, authData: AuthenticationData) {
+        function (
+            response: IAuthData,
+            authData: AuthenticationData,
+            loggedInWalletAddress: `0x${string}` | undefined,
+        ) {
             const { access_token, device_id, user_id } = response
-            if (access_token && device_id && user_id && activeWalletAddress) {
+            if (access_token && device_id && user_id && loggedInWalletAddress) {
                 // set zion_siwe cookie on successful registration
                 document.cookie = setZionSiweCookie(authData)
                 setMatrixCredentials(homeServer, {
@@ -73,7 +77,7 @@ export function useMatrixWalletSignIn() {
                     deviceId: device_id,
                     userId: user_id,
                     username: getUsernameFromId(user_id),
-                    loggedInWalletAddress: activeWalletAddress,
+                    loggedInWalletAddress,
                 })
                 setLoginStatus(LoginStatus.LoggedIn)
                 // call onLogin event handler
@@ -101,8 +105,8 @@ export function useMatrixWalletSignIn() {
     const signMessage = useCallback(
         async function (statement: string): Promise<SignedAuthenticationData | undefined> {
             console.log(`[signMessage] start`)
-            if (!userIdentifier) {
-                console.log(`[signMessage] no userIdentifier`)
+            if (!userIdentifier || !userIdentifier.accountAddress) {
+                console.log(`[signMessage] no userIdentifier or accountAddress`)
                 return undefined
             }
             if (!homeServer) {
@@ -260,9 +264,10 @@ export function useMatrixWalletSignIn() {
                                     )
 
                                     if (response.access_token) {
-                                        authenticationSuccess(
+                                        authenticationDone(
                                             response,
                                             authData as AuthenticationData,
+                                            userIdentifier.accountAddress,
                                         )
                                     } else {
                                         authenticationError({
@@ -331,7 +336,7 @@ export function useMatrixWalletSignIn() {
         },
         [
             authenticationError,
-            authenticationSuccess,
+            authenticationDone,
             createAndSignAuthData,
             homeServer,
             loginStatus,
@@ -381,7 +386,11 @@ export function useMatrixWalletSignIn() {
 
                                         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
                                         if (response.access_token) {
-                                            authenticationSuccess(response as IAuthData, auth)
+                                            authenticationDone(
+                                                response as IAuthData,
+                                                auth,
+                                                userIdentifier.accountAddress,
+                                            )
                                         } else {
                                             authenticationError({
                                                 code: StatusCodes.UNAUTHORIZED,
@@ -452,7 +461,7 @@ export function useMatrixWalletSignIn() {
         },
         [
             authenticationError,
-            authenticationSuccess,
+            authenticationDone,
             createAndSignAuthData,
             homeServer,
             loginStatus,
@@ -487,7 +496,7 @@ export function getAuthority(uri: string): string {
  * for message template.
  */
 export function createMessageToSign(args: {
-    walletAddress: string
+    walletAddress: string | undefined
     chainId: number
     statement: string
 }): string {

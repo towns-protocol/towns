@@ -45,7 +45,7 @@ export function AppDrawer(props: Props): JSX.Element {
     const myWalletAddress = useMemo(() => {
         if (userId) {
             const uid = createUserIdFromString(userId)
-            return uid ? getShortUsername(uid.accountAddress) : undefined
+            return uid?.accountAddress ? getShortUsername(uid.accountAddress) : undefined
         }
     }, [userId])
 

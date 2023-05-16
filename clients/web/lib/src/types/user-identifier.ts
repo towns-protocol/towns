@@ -2,7 +2,7 @@ import { ethers } from 'ethers'
 
 export interface UserIdentifier {
     readonly namespace: string
-    readonly accountAddress: string
+    readonly accountAddress: `0x${string}` | undefined
     readonly chainId: number
     readonly chainAgnosticId: string
     readonly matrixUserId: string | undefined
@@ -31,7 +31,7 @@ export function createUserIdFromEthereumAddress(
 export function createUserIdFromString(matrixUserId: string): UserIdentifier | undefined {
     let namespace: string | undefined
     let chainId: number | undefined
-    let accountAddress: string | undefined
+    let accountAddress: `0x${string}` | undefined
     let serverName: string | undefined
 
     const regex = /^@(?<namespace>.*)=3a(?<chainId>.*)=3a(?<accountAddress>.*):(?<serverName>.*)/
@@ -43,10 +43,8 @@ export function createUserIdFromString(matrixUserId: string): UserIdentifier | u
             case 'eip155': {
                 try {
                     chainId = match.groups?.chainId ? parseInt(match.groups?.chainId) : undefined
-                    accountAddress = match.groups?.accountAddress
-                    accountAddress = accountAddress
-                        ? ethers.utils.getAddress(accountAddress)
-                        : undefined
+                    const address = match.groups?.accountAddress
+                    accountAddress = address ? ethers.utils.getAddress(address) : undefined
                     serverName = match.groups?.serverName
                 } catch (e) {
                     console.error('createServerName failed WithError', e)
