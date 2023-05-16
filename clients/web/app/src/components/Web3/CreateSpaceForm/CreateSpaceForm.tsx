@@ -1,33 +1,37 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import * as Sentry from '@sentry/react'
+
 import { AnimatePresence, motion } from 'framer-motion'
 import {
     CreateSpaceInfo,
     EmittedTransaction,
     Permission,
     RoomVisibility,
+    SignerUndefinedError,
+    WalletDoesNotMatchSignedInAccountError,
     useCreateSpaceTransaction,
+    useCurrentWalletEqualsSignedInAccount,
     useOnTransactionEmitted,
     useZionClient,
 } from 'use-zion-client'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
+
 import { shallow } from 'zustand/shallow'
 import { toast } from 'react-hot-toast/headless'
+import { ErrorMessageText } from 'ui/components/ErrorMessage/ErrorMessage'
+import { FailedUploadAfterSpaceCreation } from '@components/Notifications/FailedUploadAfterSpaceCreation'
+import { RequireTransactionNetworkMessage } from '@components/RequireTransactionNetworkMessage/RequireTransactionNetworkMessage'
+import { TransactionButton } from '@components/TransactionButton'
+import { TransactionUIState, useTransactionUIStates } from 'hooks/useTransactionStatus'
 import { Box, Button, Heading, Text } from '@ui'
 import { useDevOnlyQueryParams } from 'hooks/useQueryParam'
-import { ErrorMessageText } from 'ui/components/ErrorMessage/ErrorMessage'
-import { TransactionUIState, useTransactionUIStates } from 'hooks/useTransactionStatus'
-import { TransactionButton } from '@components/TransactionButton'
+import { useImageStore } from '@components/UploadImage/useImageStore'
 import { useOnTransactionStages } from 'hooks/useOnTransactionStages'
 import { useRequireTransactionNetwork } from 'hooks/useRequireTransactionNetwork'
-import { RequireTransactionNetworkMessage } from '@components/RequireTransactionNetworkMessage/RequireTransactionNetworkMessage'
 import { useUploadImage } from 'api/lib/uploadImage'
-import { useImageStore } from '@components/UploadImage/useImageStore'
-import { FailedUploadAfterSpaceCreation } from '@components/Notifications/FailedUploadAfterSpaceCreation'
-import { CreateSpaceStep1 } from './steps/CreateSpaceStep1'
-import { CreateSpaceStep2 } from './steps/CreateSpaceStep2'
-import { useFormSteps } from '../../../hooks/useFormSteps'
 import { CreateSpaceStep3 } from './steps/CreateSpaceStep3'
-import { useCreateSpaceFormStore } from './CreateSpaceFormStore'
+import { CreateSpaceStep2 } from './steps/CreateSpaceStep2'
+import { CreateSpaceStep1 } from './steps/CreateSpaceStep1'
+import { useFormSteps } from '../../../hooks/useFormSteps'
 import {
     ERROR_INVALID_PARAMETERS,
     ERROR_NAME_CONTAINS_INVALID_CHARACTERS,
@@ -36,6 +40,7 @@ import {
     EVERYONE,
     TOKEN_HOLDERS,
 } from './constants'
+import { useCreateSpaceFormStore } from './CreateSpaceFormStore'
 
 const MotionBox = motion(Box)
 
@@ -52,7 +57,8 @@ type HeaderProps = {
 const Header = (props: HeaderProps) => {
     const { hasPrev, goPrev, isLast, formId, transactionState, hasError, errorBox } = props
     const { isTransactionNetwork, switchNetwork } = useRequireTransactionNetwork()
-    const isDisabled = !isTransactionNetwork && isLast
+    const currentWalletEqualsSignedInAccount = useCurrentWalletEqualsSignedInAccount()
+    const isWrongNetwork = !isTransactionNetwork && isLast
     const showBackButton = transactionState == TransactionUIState.None && hasPrev
 
     return (
@@ -84,7 +90,7 @@ const Header = (props: HeaderProps) => {
                         <TransactionButton
                             formId={formId}
                             transactionState={transactionState}
-                            disabled={isDisabled}
+                            disabled={isWrongNetwork || !currentWalletEqualsSignedInAccount}
                             idleText={isLast ? 'Mint' : 'Next'}
                             transactingText="Creating Town"
                             successText="Town Created"
@@ -92,12 +98,17 @@ const Header = (props: HeaderProps) => {
                     </MotionBox>
                 </Box>
             </Box>
-            {isDisabled && (
+            {isWrongNetwork && (
                 <Box paddingBottom="sm" flexDirection="row" justifyContent="end">
                     <RequireTransactionNetworkMessage
                         postCta="to mint a space."
                         switchNetwork={switchNetwork}
                     />
+                </Box>
+            )}
+            {!isWrongNetwork && !currentWalletEqualsSignedInAccount && (
+                <Box paddingBottom="sm" flexDirection="row" justifyContent="end">
+                    <ErrorMessageText message="Wallet is not connected, or is not the same as the signed in account." />
                 </Box>
             )}
             {hasError && errorBox}
@@ -135,24 +146,35 @@ export const CreateSpaceForm = () => {
     const errorBox = useMemo(() => {
         if (hasError) {
             let errorText = ''
-            switch (error?.name) {
-                case ERROR_NAME_CONTAINS_INVALID_CHARACTERS:
-                    errorText = 'The space name contains invalid characters.'
+            const errorName = error?.name ?? ''
+            switch (true) {
+                case errorName === ERROR_NAME_CONTAINS_INVALID_CHARACTERS:
+                    errorText =
+                        'Space name contains invalid characters. Please update the space name and try again.'
                     break
-                case ERROR_NAME_LENGTH_INVALID:
-                    errorText = 'The space name must be between 3 and 32 characters.'
+                case errorName === ERROR_NAME_LENGTH_INVALID:
+                    errorText =
+                        'The space name must be between 3 and 32 characters. Please update the space name and try again.'
                     break
-                case ERROR_SPACE_ALREADY_REGISTERED:
-                    errorText = 'The space name is already registered.'
+                case errorName === ERROR_SPACE_ALREADY_REGISTERED:
+                    errorText =
+                        'The space name is already registered. Please choose a different space name and try again.'
                     break
-                case ERROR_INVALID_PARAMETERS:
-                    errorText = 'The space name is invalid.'
+                case errorName === ERROR_INVALID_PARAMETERS:
+                    errorText = 'The space name is invalid. Please try again.'
+                    break
+                case error instanceof SignerUndefinedError:
+                    errorText = 'Wallet is not connected. Please connect your wallet and try again.'
+                    break
+                case error instanceof WalletDoesNotMatchSignedInAccountError:
+                    errorText =
+                        'Current wallet is not the same as the signed in account. Please switch your wallet and try again.'
                     break
                 default:
-                    errorText = 'An unknown error occurred.'
+                    errorText = 'An unknown error occurred. Cannot save transaction.'
                     break
             }
-            const fullErrorText = `There was an error with the transaction! ${errorText} Please try again.`
+            const fullErrorText = `Transaction error: ${errorText}`
             return (
                 <Box paddingBottom="sm" flexDirection="row" justifyContent="end">
                     <ErrorMessageText message={fullErrorText} />

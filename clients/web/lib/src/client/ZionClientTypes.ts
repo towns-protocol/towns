@@ -108,3 +108,16 @@ export type ZionClientEventHandlers = {
     onLogout?: (auth: { userId: string }) => void
     onRegister?: (auth: { userId: string }) => void
 }
+
+export function createTransactionContext<T>(
+    status: TransactionStatus,
+    error?: Error,
+): TransactionContext<T> {
+    return {
+        status,
+        transaction: undefined,
+        receipt: undefined,
+        data: undefined,
+        error,
+    }
+}

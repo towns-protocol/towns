@@ -1,26 +1,30 @@
-import React, { useCallback, useMemo, useState } from 'react'
 import {
     BlockchainTransactionType,
     RoomIdentifier,
+    SignerUndefinedError,
     UpdateChannelInfo,
+    WalletDoesNotMatchSignedInAccountError,
+    useCurrentWalletEqualsSignedInAccount,
     useRoom,
     useTransactionStore,
     useUpdateChannelTransaction,
 } from 'use-zion-client'
-
-import { RequireTransactionNetworkMessage } from '@components/RequireTransactionNetworkMessage/RequireTransactionNetworkMessage'
-import { TransactionButton } from '@components/TransactionButton'
-import { useOnTransactionStages } from 'hooks/useOnTransactionStages'
-import { useRequireTransactionNetwork } from 'hooks/useRequireTransactionNetwork'
-import { TransactionUIState, useTransactionUIStates } from 'hooks/useTransactionStatus'
-import { ErrorMessageText } from 'ui/components/ErrorMessage/ErrorMessage'
+import React, { useCallback, useMemo, useState } from 'react'
 import { ChannelNameRegExp, isForbiddenError, isRejectionError } from 'ui/utils/utils'
 import { Box, Button, ErrorMessage, FormRender, Heading, Stack, TextField } from '@ui'
+import { TransactionUIState, useTransactionUIStates } from 'hooks/useTransactionStatus'
+
 import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinner'
+import { ErrorMessageText } from 'ui/components/ErrorMessage/ErrorMessage'
+import { RequireTransactionNetworkMessage } from '@components/RequireTransactionNetworkMessage/RequireTransactionNetworkMessage'
+import { TransactionButton } from '@components/TransactionButton'
 import { useAllRoleDetails } from 'hooks/useAllRoleDetails'
+import { useOnTransactionStages } from 'hooks/useOnTransactionStages'
+import { useRequireTransactionNetwork } from 'hooks/useRequireTransactionNetwork'
+import { FormState, FormStateKeys, emptyDefaultValues, schema } from './formConfig'
 import { ModalContainer } from '../Modals/ModalContainer'
 import { RoleCheckboxProps, RolesSection, getCheckedValuesForRoleIdsField } from './RolesSection'
-import { FormState, FormStateKeys, emptyDefaultValues, schema } from './formConfig'
+
 type ChannelSettingsModalProps = {
     spaceId: RoomIdentifier
     channelId: RoomIdentifier
@@ -91,7 +95,8 @@ export function ChannelSettingsForm({
     })
 
     const { isTransactionNetwork, switchNetwork } = useRequireTransactionNetwork()
-    const isDisabled = !isTransactionNetwork
+    const currentWalletEqualsSignedInAccount = useCurrentWalletEqualsSignedInAccount()
+    const isDisabled = !isTransactionNetwork || !currentWalletEqualsSignedInAccount
 
     const { hasTransactionError, hasServerError } = useMemo(() => {
         return {
@@ -138,6 +143,39 @@ export function ChannelSettingsForm({
             event.preventDefault()
         }
     }, [])
+
+    const errorBox = useMemo(() => {
+        let errMsg: string | undefined = undefined
+        switch (true) {
+            case transactionError instanceof SignerUndefinedError:
+                errMsg = 'Wallet is not connected'
+                break
+            case transactionError instanceof WalletDoesNotMatchSignedInAccountError:
+                errMsg = 'Current wallet is not the same as the signed in account'
+                break
+            case transactionError && hasServerError:
+                if (transactionError && isForbiddenError(transactionError)) {
+                    errMsg = "You don't have permission to update a channel in this town"
+                } else {
+                    errMsg = 'There was an error updating the channel'
+                }
+                break
+            case hasTransactionError:
+                errMsg = 'There was an error with the transaction. Please try again'
+                break
+            default:
+                errMsg = undefined
+                break
+        }
+        if (errMsg) {
+            return (
+                <Box paddingBottom="sm" flexDirection="row" justifyContent="end">
+                    <ErrorMessageText message={errMsg} />
+                </Box>
+            )
+        }
+        return null
+    }, [hasServerError, hasTransactionError, transactionError])
 
     return (
         <Stack gap="lg">
@@ -214,31 +252,7 @@ export function ChannelSettingsForm({
                                     fieldName={FormStateKeys.roleIds}
                                 />
 
-                                {hasTransactionError && (
-                                    <Box
-                                        paddingBottom="sm"
-                                        flexDirection="row"
-                                        justifyContent="end"
-                                    >
-                                        <ErrorMessageText message="There was an error with the transaction. Please try again" />
-                                    </Box>
-                                )}
-
-                                {transactionError && hasServerError && (
-                                    <Box
-                                        paddingBottom="sm"
-                                        flexDirection="row"
-                                        justifyContent="end"
-                                    >
-                                        <ErrorMessageText
-                                            message={
-                                                isForbiddenError(transactionError)
-                                                    ? "You don't have permission to update a channel in this town"
-                                                    : 'There was an error updating the channel'
-                                            }
-                                        />
-                                    </Box>
-                                )}
+                                {errorBox}
                             </Stack>
 
                             <Box flexDirection="row" justifyContent="end" gap="sm" paddingTop="lg">
@@ -280,6 +294,11 @@ export function ChannelSettingsForm({
                                         postCta="to update a channel."
                                         switchNetwork={switchNetwork}
                                     />
+                                </Box>
+                            )}
+                            {isTransactionNetwork && !currentWalletEqualsSignedInAccount && (
+                                <Box paddingTop="md" flexDirection="row" justifyContent="end">
+                                    <ErrorMessageText message="Wallet is not connected, or is not the same as the signed in account." />
                                 </Box>
                             )}
                         </Stack>

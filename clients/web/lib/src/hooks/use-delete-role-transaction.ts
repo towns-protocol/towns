@@ -1,12 +1,17 @@
-import { TransactionContext, TransactionStatus } from '../client/ZionClientTypes'
+import {
+    TransactionContext,
+    TransactionStatus,
+    createTransactionContext,
+} from '../client/ZionClientTypes'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
-import { QueryKeyRoles } from './query-keys'
-import { useQueryClient } from '@tanstack/react-query'
-import { useZionClient } from './use-zion-client'
-import { useTransactionStore } from '../store/use-transactions-store'
 import { BlockchainTransactionType } from '../types/web3-types'
+import { QueryKeyRoles } from './query-keys'
+import { SignerUndefinedError, toError } from '../types/error-types'
+import { useQueryClient } from '@tanstack/react-query'
+import { useTransactionStore } from '../store/use-transactions-store'
 import { useWeb3Context } from '../components/Web3ContextProvider'
+import { useZionClient } from './use-zion-client'
 
 /**
  * Hook to create a role with a transaction.
@@ -37,15 +42,18 @@ export function useDeleteRoleTransaction() {
                 // Transaction already in progress
                 return
             }
-
+            if (!signer) {
+                setTransactionContext(
+                    createTransactionContext(TransactionStatus.Failed, new SignerUndefinedError()),
+                )
+                return
+            }
+            // ok to proceed
             isTransacting.current = true
             try {
-                const loading: TransactionContext<void> = {
-                    status: TransactionStatus.Pending,
-                    transaction: undefined,
-                    receipt: undefined,
-                    data: undefined,
-                }
+                const loading: TransactionContext<void> = createTransactionContext(
+                    TransactionStatus.Pending,
+                )
                 setTransactionContext(loading)
                 const txContext = await deleteRoleTransaction(spaceNetworkId, roleId, signer)
                 setTransactionContext(txContext)
@@ -67,6 +75,11 @@ export function useDeleteRoleTransaction() {
                         ])
                     }
                 }
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            } catch (e: any) {
+                setTransactionContext(
+                    createTransactionContext(TransactionStatus.Failed, toError(e)),
+                )
             } finally {
                 isTransacting.current = false
             }

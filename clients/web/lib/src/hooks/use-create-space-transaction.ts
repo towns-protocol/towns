@@ -1,4 +1,9 @@
-import { TransactionContext, TransactionStatus } from '../client/ZionClientTypes'
+import { SignerUndefinedError, toError } from '../types/error-types'
+import {
+    TransactionContext,
+    TransactionStatus,
+    createTransactionContext,
+} from '../client/ZionClientTypes'
 import { useCallback, useMemo, useRef, useState } from 'react'
 
 import { BlockchainTransactionType } from '../types/web3-types'
@@ -8,8 +13,8 @@ import { RoomIdentifier } from '../types/room-identifier'
 import { SpaceFactoryDataTypes } from '../client/web3/shims/SpaceFactoryShim'
 import { createExternalTokenStruct } from '../client/web3/ContractHelpers'
 import { useTransactionStore } from '../store/use-transactions-store'
-import { useZionClient } from './use-zion-client'
 import { useWeb3Context } from '../components/Web3ContextProvider'
+import { useZionClient } from './use-zion-client'
 
 /**
  * Combine Matrix space creation and smart contract space
@@ -45,15 +50,18 @@ export function useCreateSpaceTransaction() {
                 // Transaction already in progress
                 return
             }
-
+            if (!signer) {
+                setTransactionContext(
+                    createTransactionContext(TransactionStatus.Failed, new SignerUndefinedError()),
+                )
+                return
+            }
+            // ok to proceed
             isTransacting.current = true
             try {
-                const loading: TransactionContext<RoomIdentifier> = {
-                    status: TransactionStatus.Pending,
-                    transaction: undefined,
-                    receipt: undefined,
-                    data: undefined,
-                }
+                const loading: TransactionContext<RoomIdentifier> = createTransactionContext(
+                    TransactionStatus.Pending,
+                )
                 setTransactionContext(loading)
                 let tokenEntitlement: SpaceFactoryDataTypes.CreateSpaceExtraEntitlementsStruct
                 if (tokenAddresses.length) {
@@ -98,6 +106,11 @@ export function useCreateSpaceTransaction() {
                     const rxContext = await waitForCreateSpaceTransaction(txContext)
                     setTransactionContext(rxContext)
                 }
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            } catch (e: any) {
+                setTransactionContext(
+                    createTransactionContext(TransactionStatus.Failed, toError(e)),
+                )
             } finally {
                 isTransacting.current = false
             }

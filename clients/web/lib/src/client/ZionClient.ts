@@ -70,7 +70,7 @@ import { MatrixDbManager } from './matrix/MatrixDbManager'
 import { Permission } from './web3/ContractTypes'
 import { PioneerNFT } from './web3/PioneerNFT'
 import { RoleIdentifier } from '../types/web3-types'
-import { SignerUndefined } from '../types/error-types'
+import { SignerUndefinedError } from '../types/error-types'
 import { SpaceDapp } from './web3/SpaceDapp'
 import { SpaceFactoryDataTypes } from './web3/shims/SpaceFactoryShim'
 import { SpaceInfo } from './web3/SpaceInfo'
@@ -224,7 +224,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
         signer: ethers.Signer | undefined,
     ): Promise<SignerContext> {
         if (!signer) {
-            throw new SignerUndefined("can't sign without a web3 signer")
+            throw new SignerUndefinedError("can't sign without a web3 signer")
         }
         const creatorAddress = bin_fromHexString(await signer.getAddress())
         const delegateSig = await makeOldTownsDelegateSig(signer, delegateWallet.publicKey)
@@ -371,7 +371,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
         signer: ethers.Signer | undefined,
     ): Promise<TransactionContext<RoomIdentifier>> {
         if (!signer) {
-            throw new SignerUndefined()
+            throw new SignerUndefinedError()
         }
         if (!createSpaceInfo.spaceProtocol) {
             createSpaceInfo.spaceProtocol = this.opts.primaryProtocol
@@ -726,7 +726,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
         signer: ethers.Signer | undefined,
     ): Promise<RoomIdentifier | undefined> {
         if (!signer) {
-            throw new SignerUndefined()
+            throw new SignerUndefinedError()
         }
         const txContext = await this.createChannelTransaction(createChannelInfo, signer)
         if (txContext.error) {
@@ -745,7 +745,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
         signer: ethers.Signer | undefined,
     ): Promise<ChannelTransactionContext> {
         if (!signer) {
-            throw new SignerUndefined()
+            throw new SignerUndefinedError()
         }
         switch (createChannelInfo.parentSpaceId.protocol) {
             case SpaceProtocol.Matrix:
@@ -824,7 +824,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
         signer: ethers.Signer | undefined,
     ): Promise<ChannelUpdateTransactionContext> {
         if (!signer) {
-            throw new SignerUndefined()
+            throw new SignerUndefinedError()
         }
         const hasOffChainUpdate = !updateChannelInfo.updatedChannelTopic
         let transaction: ContractTransaction | undefined = undefined
@@ -1010,7 +1010,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
         signer: ethers.Signer | undefined,
     ): Promise<RoleTransactionContext> {
         if (!signer) {
-            throw new SignerUndefined()
+            throw new SignerUndefinedError()
         }
         let transaction: ContractTransaction | undefined = undefined
         let error: Error | undefined = undefined
@@ -1103,7 +1103,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
         signer: ethers.Signer | undefined,
     ): Promise<TransactionContext<void>> {
         if (!signer) {
-            throw new SignerUndefined()
+            throw new SignerUndefinedError()
         }
         let transaction: ContractTransaction | undefined = undefined
         let error: Error | undefined = undefined
@@ -1149,7 +1149,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
         signer: ethers.Signer | undefined,
     ): Promise<TransactionContext<void>> {
         if (!signer) {
-            throw new SignerUndefined()
+            throw new SignerUndefinedError()
         }
         let transaction: ContractTransaction | undefined = undefined
         let error: Error | undefined = undefined
@@ -1280,7 +1280,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
         signer: ethers.Signer | undefined,
     ): Promise<TransactionContext<void>> {
         if (!signer) {
-            throw new SignerUndefined()
+            throw new SignerUndefinedError()
         }
         let transaction: ContractTransaction | undefined = undefined
         let error: Error | undefined = undefined
@@ -1360,7 +1360,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
         signer: ethers.Signer | undefined,
     ): Promise<boolean> {
         if (!signer) {
-            throw new SignerUndefined()
+            throw new SignerUndefinedError()
         }
         let transaction: ContractTransaction | undefined = undefined
         let receipt: ContractReceipt | undefined = undefined

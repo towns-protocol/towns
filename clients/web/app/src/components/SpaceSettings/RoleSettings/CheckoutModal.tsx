@@ -1,18 +1,19 @@
 import React from 'react'
-import { useEvent } from 'react-use-event-hook'
 import { motion } from 'framer-motion'
-import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
-import { useRequireTransactionNetwork } from 'hooks/useRequireTransactionNetwork'
-import { AccordionGroup, AccordionGroupProps } from 'ui/components/Accordion/Accordion'
-import { Box, Button, Heading, Icon, Stack, Text } from '@ui'
+import { useCurrentWalletEqualsSignedInAccount } from 'use-zion-client'
+import { useEvent } from 'react-use-event-hook'
 import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinner'
 import { RequireTransactionNetworkMessage } from '@components/RequireTransactionNetworkMessage/RequireTransactionNetworkMessage'
-import { ModifiedRole, ModifiedRoleType } from '../store/hooks/useModifiedRoles'
+import { Box, Button, Heading, Icon, Stack, Text } from '@ui'
+import { AccordionGroup, AccordionGroupProps } from 'ui/components/Accordion/Accordion'
+import { useRequireTransactionNetwork } from 'hooks/useRequireTransactionNetwork'
+import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
 import { TRANSACTION_HIDDEN_BUTTON, TransactionHookInstance } from './TransactionHookInstances'
 import {
     SettingsTransactionStatus,
     useSettingsTransactionsStore,
 } from '../store/hooks/settingsTransactionStore'
+import { ModifiedRole, ModifiedRoleType } from '../store/hooks/useModifiedRoles'
 
 const MotionIcon = motion(Icon)
 
@@ -23,6 +24,7 @@ export const CheckoutModal = (props: {
 }) => {
     const { onCancel, roles, preventCloseMessage } = props
     const spaceId = useSpaceIdFromPathname()
+    const currentWalletEqualsSignedInAccount = useCurrentWalletEqualsSignedInAccount()
 
     // when the user clicks the main save button in the modal, it will trigger the hidden button within each TransactionHookInstance
     // Alternatively, we could track each potential transaction callbacks in an array, and call them all here. But seems unessarily complicated and more room for bugs
@@ -95,7 +97,11 @@ export const CheckoutModal = (props: {
                     icon="wallet"
                     tone="cta1"
                     value="Save"
-                    disabled={hasInProgressTransactions || !isTransactionNetwork}
+                    disabled={
+                        hasInProgressTransactions ||
+                        !isTransactionNetwork ||
+                        !currentWalletEqualsSignedInAccount
+                    }
                     onClick={onSave}
                 >
                     {hasInProgressTransactions ? <ButtonSpinner /> : 'Save on chain'}
@@ -107,6 +113,14 @@ export const CheckoutModal = (props: {
                         postCta="to make changes."
                         switchNetwork={switchNetwork}
                     />
+                </Box>
+            )}
+            {!currentWalletEqualsSignedInAccount && (
+                <Box horizontal justifyContent="end">
+                    <Text textAlign="center" color="error">
+                        Current wallet does not match the signed in account. Please change your
+                        wallet.
+                    </Text>
                 </Box>
             )}
         </Stack>

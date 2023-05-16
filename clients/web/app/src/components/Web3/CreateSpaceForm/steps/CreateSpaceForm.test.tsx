@@ -67,6 +67,7 @@ vi.mock('use-zion-client', async () => {
         },
         // useAuth deps
         useMatrixCredentials: () => mockUseMatrixCredentials(),
+        useCurrentWalletEqualsSignedInAccount: () => true,
     }
 })
 
@@ -326,7 +327,7 @@ describe('<CreateSpaceForm />', () => {
         await screen.findByTestId('space-form-3')
         fireEvent.click(nextButton)
 
-        await screen.findByText(/There was an error with the transaction/i)
+        await screen.findByText(/Transaction error/i)
 
         expect(navigateSpy).not.toHaveBeenCalled()
     }, 10000)

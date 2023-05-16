@@ -1,10 +1,15 @@
-import { TransactionContext, TransactionStatus } from '../client/ZionClientTypes'
+import {
+    TransactionContext,
+    TransactionStatus,
+    createTransactionContext,
+} from '../client/ZionClientTypes'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { QueryKeyRoles } from './query-keys'
+import { toError } from '../types/error-types'
 import { useQueryClient } from '@tanstack/react-query'
-import { useZionClient } from './use-zion-client'
 import { useWeb3Context } from '../components/Web3ContextProvider'
+import { useZionClient } from './use-zion-client'
 
 /**
  * Hook to add a role to a channel with a transaction.
@@ -69,6 +74,11 @@ export function useAddRoleToChannelTransaction() {
                         ])
                     }
                 }
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            } catch (e: any) {
+                setTransactionContext(
+                    createTransactionContext(TransactionStatus.Failed, toError(e)),
+                )
             } finally {
                 isTransacting.current = false
             }

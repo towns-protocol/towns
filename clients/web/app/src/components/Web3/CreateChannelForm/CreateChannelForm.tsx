@@ -1,27 +1,31 @@
-import React, { useCallback, useMemo } from 'react'
 import {
     Permission,
     RoomIdentifier,
     RoomVisibility,
+    SignerUndefinedError,
+    WalletDoesNotMatchSignedInAccountError,
     useCreateChannelTransaction,
+    useCurrentWalletEqualsSignedInAccount,
     useMultipleRoleDetails,
 } from 'use-zion-client'
-import { z } from 'zod'
-import { useNavigate } from 'react-router'
+import React, { useCallback, useMemo } from 'react'
 import { Link } from 'react-router-dom'
+import { useNavigate } from 'react-router'
+import { z } from 'zod'
 import { Box, Button, Checkbox, ErrorMessage, FormRender, Icon, Stack, Text, TextField } from '@ui'
-import { TransactionButton } from '@components/TransactionButton'
-import { TransactionUIState, useTransactionUIStates } from 'hooks/useTransactionStatus'
-import { useSpaceRoles } from 'hooks/useContractRoles'
-import { PATHS } from 'routes'
-import { ErrorMessageText } from 'ui/components/ErrorMessage/ErrorMessage'
-import { useOnTransactionStages } from 'hooks/useOnTransactionStages'
 import { ChannelNameRegExp, isForbiddenError, isRejectionError } from 'ui/utils/utils'
-import { useRequireTransactionNetwork } from 'hooks/useRequireTransactionNetwork'
+import { TransactionUIState, useTransactionUIStates } from 'hooks/useTransactionStatus'
+
+import { ErrorMessageText } from 'ui/components/ErrorMessage/ErrorMessage'
+import { PATHS } from 'routes'
 import { RequireTransactionNetworkMessage } from '@components/RequireTransactionNetworkMessage/RequireTransactionNetworkMessage'
 import { Spinner } from '@components/Spinner'
 import { TokenCheckboxLabel } from '@components/Tokens/TokenCheckboxLabel'
+import { TransactionButton } from '@components/TransactionButton'
 import { env } from 'utils'
+import { useOnTransactionStages } from 'hooks/useOnTransactionStages'
+import { useRequireTransactionNetwork } from 'hooks/useRequireTransactionNetwork'
+import { useSpaceRoles } from 'hooks/useContractRoles'
 type Props = {
     spaceId: RoomIdentifier
     onCreateChannel: (roomId: RoomIdentifier) => void
@@ -72,7 +76,8 @@ export const CreateChannelForm = (props: Props) => {
     const transactionUIState = useTransactionUIStates(transactionStatus, Boolean(channelId))
     const isAbleToInteract = transactionUIState === TransactionUIState.None
     const { isTransactionNetwork, switchNetwork } = useRequireTransactionNetwork()
-    const isDisabled = !isTransactionNetwork
+    const currentWalletEqualsSignedInAccount = useCurrentWalletEqualsSignedInAccount()
+    const isDisabled = !isTransactionNetwork || !currentWalletEqualsSignedInAccount
 
     const { hasTransactionError, hasServerError } = useMemo(() => {
         return {
@@ -84,6 +89,39 @@ export const CreateChannelForm = (props: Props) => {
             ),
         }
     }, [transactionError, transactionHash])
+
+    const errorBox = useMemo(() => {
+        let errMsg: string | undefined = undefined
+        switch (true) {
+            case transactionError instanceof SignerUndefinedError:
+                errMsg = 'Wallet is not connected'
+                break
+            case transactionError instanceof WalletDoesNotMatchSignedInAccountError:
+                errMsg = 'Current wallet is not the same as the signed in account.'
+                break
+            case transactionError && hasServerError:
+                if (transactionError && isForbiddenError(transactionError)) {
+                    errMsg = "You don't have permission to create a channel in this town"
+                } else {
+                    errMsg = 'There was an error creating the channel'
+                }
+                break
+            case hasTransactionError:
+                errMsg = 'There was an error with the transaction. Please try again'
+                break
+            default:
+                errMsg = undefined
+                break
+        }
+        if (errMsg) {
+            return (
+                <Box paddingBottom="sm" flexDirection="row" justifyContent="end">
+                    <ErrorMessageText message={errMsg} />
+                </Box>
+            )
+        }
+        return null
+    }, [hasServerError, hasTransactionError, transactionError])
 
     const onKeyDown = useCallback(async (event: React.KeyboardEvent<HTMLInputElement>) => {
         if (!ChannelNameRegExp.test(event.key)) {
@@ -231,23 +269,7 @@ export const CreateChannelForm = (props: Props) => {
                                 fieldName={FormStateKeys.roleIds}
                             />
 
-                            {hasTransactionError && (
-                                <Box paddingBottom="sm" flexDirection="row" justifyContent="end">
-                                    <ErrorMessageText message="There was an error with the transaction. Please try again" />
-                                </Box>
-                            )}
-
-                            {transactionError && hasServerError && (
-                                <Box paddingBottom="sm" flexDirection="row" justifyContent="end">
-                                    <ErrorMessageText
-                                        message={
-                                            isForbiddenError(transactionError)
-                                                ? "You don't have permission to create a channel in this town"
-                                                : 'There was an error creating the channel'
-                                        }
-                                    />
-                                </Box>
-                            )}
+                            {errorBox}
                         </Stack>
 
                         <Box flexDirection="row" justifyContent="end" gap="sm" paddingTop="lg">
@@ -264,12 +286,17 @@ export const CreateChannelForm = (props: Props) => {
                             />
                         </Box>
 
-                        {isDisabled && (
+                        {!isTransactionNetwork && (
                             <Box paddingTop="md" flexDirection="row" justifyContent="end">
                                 <RequireTransactionNetworkMessage
                                     postCta="to create a channel."
                                     switchNetwork={switchNetwork}
                                 />
+                            </Box>
+                        )}
+                        {isTransactionNetwork && !currentWalletEqualsSignedInAccount && (
+                            <Box paddingTop="md" flexDirection="row" justifyContent="end">
+                                <ErrorMessageText message="Wallet is not connected, or is not the same as the signed in account." />
                             </Box>
                         )}
                     </Stack>

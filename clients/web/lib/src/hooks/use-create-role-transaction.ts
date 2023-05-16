@@ -1,14 +1,19 @@
-import { TransactionContext, TransactionStatus } from '../client/ZionClientTypes'
+import { BlockchainTransactionType, RoleIdentifier } from '../types/web3-types'
+import { SignerUndefinedError, toError } from '../types/error-types'
+import {
+    TransactionContext,
+    TransactionStatus,
+    createTransactionContext,
+} from '../client/ZionClientTypes'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { createExternalTokenStruct } from '../client/web3/ContractHelpers'
 
 import { Permission } from '../client/web3/ContractTypes'
 import { QueryKeyRoles } from './query-keys'
-import { BlockchainTransactionType, RoleIdentifier } from '../types/web3-types'
+import { createExternalTokenStruct } from '../client/web3/ContractHelpers'
 import { useQueryClient } from '@tanstack/react-query'
-import { useZionClient } from './use-zion-client'
 import { useTransactionStore } from '../store/use-transactions-store'
 import { useWeb3Context } from '../components/Web3ContextProvider'
+import { useZionClient } from './use-zion-client'
 
 /**
  * Hook to create a role with a transaction.
@@ -45,15 +50,18 @@ export function useCreateRoleTransaction() {
                 // Transaction already in progress
                 return
             }
-
+            if (!signer) {
+                setTransactionContext(
+                    createTransactionContext(TransactionStatus.Failed, new SignerUndefinedError()),
+                )
+                return
+            }
+            // ok to proceed
             isTransacting.current = true
             try {
-                const loading: TransactionContext<RoleIdentifier> = {
-                    status: TransactionStatus.Pending,
-                    transaction: undefined,
-                    receipt: undefined,
-                    data: undefined,
-                }
+                const loading: TransactionContext<RoleIdentifier> = createTransactionContext(
+                    TransactionStatus.Pending,
+                )
                 setTransactionContext(loading)
                 const txContext = await createRoleTransaction(
                     spaceNetworkId,
@@ -82,6 +90,11 @@ export function useCreateRoleTransaction() {
                         ])
                     }
                 }
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            } catch (e: any) {
+                setTransactionContext(
+                    createTransactionContext(TransactionStatus.Failed, toError(e)),
+                )
             } finally {
                 isTransacting.current = false
             }
