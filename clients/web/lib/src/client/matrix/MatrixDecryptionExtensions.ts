@@ -790,43 +790,48 @@ export class MatrixDecryptionExtension extends TypedEventEmitter<
         const allRequestedSessions = sharedHistorySessions.concat(uniqueRequestedSessions)
 
         const exportedSessions: IMegolmSessionData[] = []
-        await this.matrixClient.crypto?.cryptoStore.doTxn(
-            'readonly',
-            [
-                IndexedDBCryptoStore.STORE_INBOUND_GROUP_SESSIONS,
-                IndexedDBCryptoStore.STORE_INBOUND_GROUP_SESSIONS_WITHHELD,
-            ],
-            (txn) => {
-                allRequestedSessions.forEach(([senderKey, sessionId]) => {
-                    this.matrixClient.crypto?.cryptoStore.getEndToEndInboundGroupSession(
-                        senderKey,
-                        sessionId,
-                        txn,
-                        (sessionData, _groupSessionWitheld) => {
-                            if (!sessionData || !this.matrixClient.crypto) {
-                                return
-                            }
-                            if (sessionData.room_id === roomId) {
-                                const sess =
-                                    this.matrixClient.crypto.olmDevice.exportInboundGroupSession(
-                                        senderKey,
-                                        sessionId,
-                                        sessionData,
+        try {
+            await this.matrixClient.crypto?.cryptoStore.doTxn(
+                'readonly',
+                [
+                    IndexedDBCryptoStore.STORE_INBOUND_GROUP_SESSIONS,
+                    IndexedDBCryptoStore.STORE_INBOUND_GROUP_SESSIONS_WITHHELD,
+                ],
+                (txn) => {
+                    allRequestedSessions.forEach(([senderKey, sessionId]) => {
+                        this.matrixClient.crypto?.cryptoStore.getEndToEndInboundGroupSession(
+                            senderKey,
+                            sessionId,
+                            txn,
+                            (sessionData, _groupSessionWitheld) => {
+                                if (!sessionData || !this.matrixClient.crypto) {
+                                    return
+                                }
+                                if (sessionData.room_id === roomId) {
+                                    const sess =
+                                        this.matrixClient.crypto.olmDevice.exportInboundGroupSession(
+                                            senderKey,
+                                            sessionId,
+                                            sessionData,
+                                        )
+                                    delete sess.first_known_index
+                                    sess.algorithm = MEGOLM_ALGORITHM
+                                    exportedSessions.push(sess)
+                                } else {
+                                    console.error(
+                                        'MDE::onKeyRequest got key sharing request for wrong room',
+                                        { roomId, fromUserId, sessionId },
                                     )
-                                delete sess.first_known_index
-                                sess.algorithm = MEGOLM_ALGORITHM
-                                exportedSessions.push(sess)
-                            } else {
-                                console.error(
-                                    'MDE::onKeyRequest got key sharing request for wrong room',
-                                    { roomId, fromUserId, sessionId },
-                                )
-                            }
-                        },
-                    )
-                })
-            },
-        )
+                                }
+                            },
+                        )
+                    })
+                },
+            )
+        } catch (error) {
+            console.error(error)
+            return
+        }
 
         console.info('MDE::onKeyRequest responding to key request', {
             fromUserId,
