@@ -59,7 +59,8 @@
           "Dendrite (from source)",
           "Casablanca",
           "WatchSharedLib",
-          "WatchCasablancaClient",
+          "WatchCasablancaSdk",
+          "WatchCasablancaMechOlm",
           "WatchCasablancaProto",
           "App",
           "SampleApp",
@@ -80,7 +81,8 @@
           "Casablanca",
           "Anvil",
           "DeployZionGovernance",
-          "WatchCasablancaClient"
+          "WatchCasablancaSdk",
+          "WatchCasablancaMechOlm"
         ],
         "problemMatcher": [],
       },
@@ -204,7 +206,17 @@
         }
       },
       {
-        "label": "WatchCasablancaClient",
+        "label": "WatchCasablancaSdk",
+        "type": "shell",
+        "command": "cd casablanca/sdk && yarn watch",
+        "isBackground": true,
+        "problemMatcher": [],
+        "presentation": {
+          "group": "local-watch"
+        }
+      },
+      {
+        "label": "WatchCasablancaMechOlm",
         "type": "shell",
         "command": "cd casablanca/sdk && yarn watch",
         "isBackground": true,
@@ -220,7 +232,7 @@
         "isBackground": true,
         "problemMatcher": [],
         "presentation": {
-          "group": "local-watch"
+          "group": "local-watch-proto"
         }
       },
       {
@@ -230,7 +242,7 @@
         "isBackground": true,
         "problemMatcher": [],
         "presentation": {
-          "group": "local-watch"
+          "group": "local-watch-proto"
         }
       },
       {
