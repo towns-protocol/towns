@@ -7,7 +7,7 @@ import {
     useZionContext,
 } from 'use-zion-client'
 import { useNavigate } from 'react-router'
-import useEvent from 'react-use-event-hook'
+import { useEvent } from 'react-use-event-hook'
 import { Avatar, Box, Icon, IconName, Stack, Text } from '@ui'
 import { shortAddress } from 'ui/utils/utils'
 import { SpaceNavItem } from '@components/NavItem/SpaceNavItem'
