@@ -14,6 +14,9 @@
         "test:ci": "yarn test",
         "watch": "tsc --watch"
     },
+    "dependencies": {
+        "@matrix-org/olm": "^3.2.14"
+    },
     "devDependencies": {
         "@types/jest": "^29.4.0",
         "@types/lodash": "^4.14.186",

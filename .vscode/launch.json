@@ -20,6 +20,16 @@
       "internalConsoleOptions": "neverOpen"
     },
     {
+      "name": "Jest: current file in 'mecholm/ Casablanca'",
+      "type": "node",
+      "request": "launch",
+      "env": { "NODE_ENV": "development" },
+      "program": "${workspaceFolder}/node_modules/.bin/jest",
+      "runtimeArgs": ["--experimental-vm-modules", "--experimental-wasm-modules"],
+      "args": ["${fileBasenameNoExtension}", "--config", "${workspaceFolder}/casablanca/mecholm/jest.config.ts", "-i", "--no-cache", "--forceExit"],
+      "console": "integratedTerminal",
+    },
+    {
       "name": "Jest: current file in 'web/lib/'",
       "type": "node",
       "request": "launch",

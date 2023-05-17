@@ -218,7 +218,7 @@
       {
         "label": "WatchCasablancaMechOlm",
         "type": "shell",
-        "command": "cd casablanca/sdk && yarn watch",
+        "command": "cd casablanca/mecholm && yarn watch",
         "isBackground": true,
         "problemMatcher": [],
         "presentation": {

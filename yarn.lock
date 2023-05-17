@@ -6468,6 +6468,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@towns/mecholm@workspace:casablanca/mecholm"
   dependencies:
+    "@matrix-org/olm": ^3.2.14
     "@types/jest": ^29.4.0
     "@types/lodash": ^4.14.186
     "@types/node": ^18.14.2
