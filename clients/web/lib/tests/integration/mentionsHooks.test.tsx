@@ -26,7 +26,7 @@ describe('mentionsHooks', () => {
     test('user can see mentions, and can see mentions after login', async () => {
         // create clients
         const { bob, alice } = await registerAndStartClients(['bob', 'alice'])
-        
+
         const aliceUserId = alice.getUserId()
 
         if (!aliceUserId) {

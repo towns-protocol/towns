@@ -2070,18 +2070,14 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
     /************************************************
      * getUserId
      ************************************************/
-    public getUserId(protocol?: SpaceProtocol): string | undefined {
-        if (protocol === undefined) {
-            protocol = this.opts.primaryProtocol
-        }
-        
-        switch (protocol) {
+    public getUserId(): string | undefined {
+        switch (this.opts.primaryProtocol) {
             case SpaceProtocol.Matrix:
-                return this.matrixClient?.getUserId() ?? undefined
+                return this.auth?.userId
             case SpaceProtocol.Casablanca:
                 return this.casablancaClient?.userId
             default:
-                staticAssertNever(protocol)
+                staticAssertNever(this.opts.primaryProtocol)
         }
     }
 
