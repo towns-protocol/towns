@@ -32,6 +32,7 @@
     "dependencies": {
         "@harmony/generated": "workspace:^",
         "@matrix-org/olm": "^3.2.14",
+        "@rainbow-me/rainbowkit": "0.12.14",
         "@tanstack/react-query": "^4.14.3",
         "@towns/sdk": "workspace:^",
         "@types/node-emoji": "^1.8.2",
@@ -42,7 +43,7 @@
         "matrix-js-sdk": "25.0.0-rc.1",
         "node-emoji": "^1.11.0",
         "siwe": "^1.1.6",
-        "wagmi": "^0.11.7",
+        "wagmi": "0.12.11",
         "zustand": "^4.3.3"
     },
     "devDependencies": {

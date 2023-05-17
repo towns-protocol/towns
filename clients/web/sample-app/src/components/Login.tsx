@@ -28,8 +28,10 @@ import {
     useNetwork,
     useSwitchNetwork,
 } from 'wagmi'
+import { ConnectButton } from '@rainbow-me/rainbowkit'
 import { useEnvironment } from 'hooks/use-environment'
 import { EnvironmentSelect } from './EnvironmentSelect'
+import '@rainbow-me/rainbowkit/styles.css'
 
 const loginMsgToSign = `Click to sign in and accept the Harmony Terms of Service.`
 const registerWalletMsgToSign = `Click to register and accept the Harmony Terms of Service.`
@@ -272,7 +274,8 @@ function WalletInfo() {
 
     const { chainId: appChainId, chainName: appChainName } = useEnvironment()
     const { chain: walletChain } = useNetwork()
-    const { connect, connectors, error, isLoading, pendingConnector } = useConnect()
+    const { error } = useConnect()
+
     const { disconnect } = useDisconnect()
 
     const { switchNetwork } = useSwitchNetwork({
@@ -360,23 +363,7 @@ function WalletInfo() {
             gridTemplateColumns="repeat(2, 1fr)"
             marginTop="20px"
         >
-            <Typography variant="h6" component="span">
-                Connect with:
-            </Typography>
-            {connectors.map((connector) => (
-                <Button
-                    variant="contained"
-                    color="primary"
-                    sx={{ margin: '10px' }}
-                    disabled={!connector.ready}
-                    key={connector.id}
-                    onClick={() => connect({ connector })}
-                >
-                    {connector.name}
-                    {!connector.ready && ' (unsupported)'}
-                    {isLoading && connector.id === pendingConnector?.id && ' (connecting)'}
-                </Button>
-            ))}
+            <ConnectButton />
             {error && <div>{error.message}</div>}
         </Box>
     )

@@ -2,11 +2,13 @@ import React, { useEffect } from 'react'
 import { AnimatePresence } from 'framer-motion'
 import { useAuth } from 'hooks/useAuth'
 import { SignupButtonStatus, useSignupButton } from 'hooks/useSignupButton'
-import { Box, Text } from '@ui'
+import { Box, Stack, Text } from '@ui'
 import { RequireTransactionNetworkMessage } from '@components/RequireTransactionNetworkMessage/RequireTransactionNetworkMessage'
 import { useRequireTransactionNetwork } from 'hooks/useRequireTransactionNetwork'
 import { FadeIn } from '@components/Transitions'
 import { LoginButton } from './LoginButton/LoginButton'
+import { RainbowKitLoginButton } from './RainbowKitLoginButton'
+import '@rainbow-me/rainbowkit/styles.css'
 
 export const LoginComponent = () => {
     const {
@@ -64,14 +66,20 @@ export const LoginComponent = () => {
 
     return (
         <Box centerContent gap="md">
-            <LoginButton
-                isConnected={isConnected}
-                userOnWrongNetworkForSignIn={userOnWrongNetworkForSignIn}
-                label={buttonLabel}
-                loading={isSpinning}
-                icon="wallet"
-                onClick={onButtonClick}
-            />
+            <Stack gap>
+                {isConnected && (
+                    <LoginButton
+                        isConnected={isConnected}
+                        userOnWrongNetworkForSignIn={userOnWrongNetworkForSignIn}
+                        label={buttonLabel}
+                        loading={isSpinning}
+                        icon="wallet"
+                        onClick={onButtonClick}
+                    />
+                )}
+                <RainbowKitLoginButton isConnected={isConnected} />
+            </Stack>
+
             {isConnected && userOnWrongNetworkForSignIn && (
                 <Box paddingTop="md" flexDirection="row" justifyContent="end">
                     <RequireTransactionNetworkMessage
@@ -80,6 +88,7 @@ export const LoginComponent = () => {
                     />
                 </Box>
             )}
+
             <AnimatePresence>
                 {errorMessage && (
                     <FadeIn>

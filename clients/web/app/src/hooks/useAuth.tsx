@@ -1,5 +1,5 @@
 import { WalletStatus, useMatrixCredentials, useWeb3Context, useZionClient } from 'use-zion-client'
-import { useAccount, useConnect } from 'wagmi'
+import { useAccount, useConnect, useDisconnect } from 'wagmi'
 import { useCallback, useMemo } from 'react'
 
 import { keccak256 } from 'ethers/lib/utils.js'
@@ -35,6 +35,8 @@ export function useAuth() {
             })
         },
     })
+
+    const { disconnect } = useDisconnect()
 
     // useWeb3Context().walletStatus sometimes hangs at 'reconnecting' on first load (cannot reproduce locally) - why?? - which causes our app to hang in the loading/login screen
     // reusing useAccount() here to get the wallet status in more directly, maybe that will fix it
@@ -76,6 +78,7 @@ export function useAuth() {
 
     return {
         connect,
+        disconnect,
         login,
         logout,
         register,

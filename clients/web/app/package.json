@@ -32,6 +32,7 @@
         "@lexical/selection": "^0.10.0",
         "@lexical/utils": "^0.10.0",
         "@ngneat/falso": "^6.1.0",
+        "@rainbow-me/rainbowkit": "0.12.14",
         "@react-hook/resize-observer": "^1.2.6",
         "@sentry/cli": "^2.17.4",
         "@sentry/react": "^7.49.0",
@@ -70,7 +71,7 @@
         "ua-parser-js": "^1.0.33",
         "use-zion-client": "workspace:^",
         "vanilla-classnames": "^0.1.0",
-        "wagmi": "^0.11.7",
+        "wagmi": "0.12.11",
         "zod": "^3.21.4",
         "zustand": "^4.3.3"
     },

@@ -2,12 +2,12 @@ import { Address, Chain, WagmiConfig, configureChains, createClient } from 'wagm
 import React, { createContext, useContext, useMemo } from 'react'
 import { TProvider, WalletStatus } from '../types/web3-types'
 import { foundry, goerli, localhost, sepolia } from '@wagmi/core/chains'
-
-import { InjectedConnector } from '@wagmi/connectors/injected'
 import { alchemyProvider } from 'wagmi/providers/alchemy'
 import { ethers } from 'ethers'
 import { publicProvider } from 'wagmi/providers/public'
 import { useWeb3 } from '../hooks/Web3Context/useWeb3'
+import { getDefaultWallets, RainbowKitProvider } from '@rainbow-me/rainbowkit'
+import { InjectedConnector } from '@wagmi/connectors/injected'
 
 export interface IWeb3Context {
     provider?: TProvider
@@ -46,7 +46,8 @@ export function Web3ContextProvider(props: Props): JSX.Element {
     // If the useMemo is not here, the provider would be created on every render
     // If the memo ever discards the state, the provider will be recreated
     // and the user will be disconnected from the wallet which is not too bad
-    const client = useMemo(() => {
+
+    const { client, chains } = useMemo(() => {
         const { chains, provider, webSocketProvider } = configureChains(
             SUPPORTED_CHAINS,
             props.alchemyKey
@@ -56,17 +57,24 @@ export function Web3ContextProvider(props: Props): JSX.Element {
                   ]
                 : [publicProvider()],
         )
-        return createClient({
+
+        const { connectors } = getDefaultWallets({ appName: 'Towns', chains: chains })
+
+        const client = createClient({
             autoConnect: true,
-            connectors: [new InjectedConnector({ chains })],
+            connectors: [new InjectedConnector({ chains })].concat(connectors()),
             provider,
             webSocketProvider,
         })
+
+        return { client, chains }
     }, [props.alchemyKey])
 
     return (
         <WagmiConfig client={client}>
-            <ContextImpl {...props} />
+            <RainbowKitProvider chains={chains}>
+                <ContextImpl {...props} />
+            </RainbowKitProvider>
         </WagmiConfig>
     )
 }
