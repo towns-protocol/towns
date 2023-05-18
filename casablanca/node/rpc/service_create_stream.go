@@ -2,6 +2,7 @@ package rpc
 
 import (
 	"bytes"
+	"casablanca/node/auth"
 	"casablanca/node/common"
 	"casablanca/node/events"
 	"casablanca/node/infra"
@@ -10,6 +11,8 @@ import (
 	"context"
 
 	connect "github.com/bufbuild/connect-go"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	. "casablanca/node/base"
 )
@@ -49,6 +52,27 @@ func (s *Service) CreateStream(ctx context.Context, req *connect.Request[protoco
 		if len(parsedEvents) != 2 {
 			return nil, RpcErrorf(protocol.Err_BAD_STREAM_CREATION_PARAMS, "CreateStream: channel stream must have exactly two events")
 		}
+
+		user := common.UserIdFromAddress(inceptionEvent.Event.CreatorAddress)
+
+		view := storage.NewViewFromStreamId(ctx, s.Storage, inception.SpaceId)
+		// check permissions
+		allowed, err := s.Authorization.IsAllowed(
+			ctx,
+			auth.AuthorizationArgs{
+				RoomId:     inception.SpaceId,
+				UserId:     user,
+				Permission: auth.PermissionAddRemoveChannels,
+			},
+			view,
+		)
+		if err != nil {
+			return nil, err
+		}
+		if !allowed {
+			return nil, status.Errorf(codes.PermissionDenied, "CreateStream: user %s is not allowed to create channels in space %s", user, inception.SpaceId)
+		}
+
 		if err := validateChannelJoinEvent(parsedEvents[1]); err != nil {
 			return nil, err
 		}

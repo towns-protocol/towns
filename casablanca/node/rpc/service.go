@@ -144,7 +144,7 @@ func (s *Service) GetStream(ctx context.Context, req *connect_go.Request[protoco
 	return connect_go.NewResponse(resp), nil
 }
 
-func (s *Service) checkPrevEvents(view *storage.StreamView, prevEvents [][]byte) error {
+func (s *Service) checkPrevEvents(view storage.StreamView, prevEvents [][]byte) error {
 	allEvents, err := view.Get()
 	if err != nil {
 		return err
@@ -170,7 +170,7 @@ func (s *Service) AddEvent(ctx context.Context, req *connect_go.Request[protocol
 	return connect_go.NewResponse(&protocol.AddEventResponse{}), nil
 }
 
-func (s *Service) addEvent(ctx context.Context, streamId string, view *storage.StreamView, envelope *protocol.Envelope) ([]byte, error) {
+func (s *Service) addEvent(ctx context.Context, streamId string, view storage.StreamView, envelope *protocol.Envelope) ([]byte, error) {
 	parsedEvent, err := events.ParseEvent(envelope, true)
 	if err != nil {
 		return nil, err
@@ -268,7 +268,7 @@ func addEventToStorage(s *Service, ctx context.Context, streamId string, envelop
 	return cookie, nil
 }
 
-func addChannelMessage(streamEvent *protocol.StreamEvent, s *Service, ctx context.Context, streamId string, view *storage.StreamView, envelope *protocol.Envelope) ([]byte, error) {
+func addChannelMessage(streamEvent *protocol.StreamEvent, s *Service, ctx context.Context, streamId string, view storage.StreamView, envelope *protocol.Envelope) ([]byte, error) {
 	user := common.UserIdFromAddress(streamEvent.CreatorAddress)
 
 	allowed, err := s.Authorization.IsAllowed(
@@ -303,24 +303,34 @@ func addChannelMessage(streamEvent *protocol.StreamEvent, s *Service, ctx contex
 	return cookie, nil
 }
 
-func addMembershipEvent(membership *protocol.Membership, s *Service, ctx context.Context, streamId string, view *storage.StreamView, parsedEvent *events.ParsedEvent) ([]byte, error) {
+func addMembershipEvent(membership *protocol.Membership, s *Service, ctx context.Context, streamId string, view storage.StreamView, parsedEvent *events.ParsedEvent) ([]byte, error) {
 	userId := membership.UserId
 	userStreamId := common.UserStreamIdFromId(userId)
 
-	allowed, err := s.Authorization.IsAllowed(
-		ctx,
-		auth.AuthorizationArgs{
-			RoomId:     streamId,
-			UserId:     userId,
-			Permission: auth.PermissionWrite,
-		},
-		view,
-	)
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "AddEvent: failed to get permissions: %v", err)
+	permission := auth.PermissionUndefined
+	switch membership.Op {
+	case protocol.MembershipOp_SO_INVITE:
+		permission = auth.PermissionInvite
+	case protocol.MembershipOp_SO_JOIN:
+		permission = auth.PermissionWrite
 	}
-	if !allowed {
-		return nil, status.Errorf(codes.PermissionDenied, "AddEvent: user %s is not allowed to write to stream %s", userId, streamId)
+
+	if permission != auth.PermissionUndefined {
+		allowed, err := s.Authorization.IsAllowed(
+			ctx,
+			auth.AuthorizationArgs{
+				RoomId:     streamId,
+				UserId:     userId,
+				Permission: permission,
+			},
+			view,
+		)
+		if err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "AddEvent: failed to get permissions: %v", err)
+		}
+		if !allowed {
+			return nil, status.Errorf(codes.PermissionDenied, "AddEvent: user %s is not allowed to write to stream %s", userId, streamId)
+		}
 	}
 
 	cookie, err := s.Storage.AddEvent(ctx, streamId, parsedEvent.Envelope)
@@ -419,7 +429,7 @@ func (s *Service) makeEnvelopeWithPayload(payload protocol.IsStreamEvent_Payload
 	return events.MakeEnvelopeWithPayload(s.wallet, payload, prevHashes)
 }
 
-func makeView(ctx context.Context, store storage.Storage, streamId string) *storage.StreamView {
+func makeView(ctx context.Context, store storage.Storage, streamId string) storage.StreamView {
 	view := storage.NewView(func() ([]*protocol.Envelope, error) {
 		_, events, err := store.GetStream(ctx, streamId)
 		if err != nil {

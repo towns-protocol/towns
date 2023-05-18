@@ -9,19 +9,30 @@ import (
 	"fmt"
 )
 
+type StreamView interface {
+	getOrderedEvents() ([]*events.ParsedEvent, error)
+	getOrderedEventsCached() ([]*events.ParsedEvent, error)
+	Get() ([]*events.ParsedEvent, error)
+	InceptionPayload(streamId string) (protocol.IsInceptionPayload, error)
+	JoinedUsers(streamId string) (map[string]struct{}, error)
+	GetAllLeafEvents(context.Context) ([][]byte, error)
+	AddEvent(event *protocol.Envelope) error
+	GetStreamInfo(ctx context.Context, streamId string, userId string) (*common.RoomInfo, error)
+}
+
 /**
  * StreamView is a cache of all the events for a stream,
  * used to avoid loading from storage on every request
  */
-type StreamView struct {
+type StreamViewCache struct {
 	getLocalOrderEvents func() ([]*protocol.Envelope, error)
 	loaded              bool
 	events              map[string]*events.ParsedEvent
 	eventsOrder         []string
 }
 
-func NewView(getLocalOrderEventsFunc func() ([]*protocol.Envelope, error)) *StreamView {
-	r := &StreamView{
+func NewView(getLocalOrderEventsFunc func() ([]*protocol.Envelope, error)) StreamView {
+	r := &StreamViewCache{
 		getLocalOrderEvents: getLocalOrderEventsFunc,
 		loaded:              false,
 		events:              make(map[string]*events.ParsedEvent),
@@ -30,7 +41,7 @@ func NewView(getLocalOrderEventsFunc func() ([]*protocol.Envelope, error)) *Stre
 	return r
 }
 
-func NewViewFromStreamId(ctx context.Context, store Storage, streamId string) *StreamView {
+func NewViewFromStreamId(ctx context.Context, store Storage, streamId string) StreamView {
 	view := NewView(func() ([]*protocol.Envelope, error) {
 		_, events, err := store.GetStream(ctx, streamId)
 		if err != nil {
@@ -41,9 +52,9 @@ func NewViewFromStreamId(ctx context.Context, store Storage, streamId string) *S
 	return view
 }
 
-func (r *StreamView) getOrderedEvents() ([]*events.ParsedEvent, error) {
+func (r *StreamViewCache) getOrderedEvents() ([]*events.ParsedEvent, error) {
 	if !r.loaded {
-		return nil, fmt.Errorf("streamview not loaded")
+		return nil, fmt.Errorf("StreamViewCache not loaded")
 	}
 	res := make([]*events.ParsedEvent, len(r.eventsOrder))
 	for i, hash := range r.eventsOrder {
@@ -52,7 +63,7 @@ func (r *StreamView) getOrderedEvents() ([]*events.ParsedEvent, error) {
 	return res, nil
 }
 
-func (r *StreamView) getOrderedEventsCached() ([]*events.ParsedEvent, error) {
+func (r *StreamViewCache) getOrderedEventsCached() ([]*events.ParsedEvent, error) {
 	if r.loaded {
 		return r.getOrderedEvents()
 	}
@@ -78,11 +89,11 @@ func (r *StreamView) getOrderedEventsCached() ([]*events.ParsedEvent, error) {
 	return r.getOrderedEvents()
 }
 
-func (r *StreamView) Get() ([]*events.ParsedEvent, error) {
+func (r *StreamViewCache) Get() ([]*events.ParsedEvent, error) {
 	return r.getOrderedEventsCached()
 }
 
-func (r *StreamView) InceptionPayload(streamId string) (protocol.IsInceptionPayload, error) {
+func (r *StreamViewCache) InceptionPayload(streamId string) (protocol.IsInceptionPayload, error) {
 	parsedEvents, err := r.getOrderedEventsCached()
 	if err != nil {
 		return nil, err
@@ -97,7 +108,7 @@ func (r *StreamView) InceptionPayload(streamId string) (protocol.IsInceptionPayl
 	return payload, nil
 }
 
-func (r *StreamView) JoinedUsers(streamId string) (map[string]struct{}, error) {
+func (r *StreamViewCache) JoinedUsers(streamId string) (map[string]struct{}, error) {
 	parsedEvents, err := r.getOrderedEventsCached()
 	if err != nil {
 		return nil, err
@@ -138,7 +149,7 @@ func (r *StreamView) JoinedUsers(streamId string) (map[string]struct{}, error) {
 	return users, nil
 }
 
-func (r *StreamView) GetAllLeafEvents(ctx context.Context) ([][]byte, error) {
+func (r *StreamViewCache) GetAllLeafEvents(ctx context.Context) ([][]byte, error) {
 	log := infra.GetLogger(ctx)
 	events, err := r.getOrderedEventsCached()
 	if err != nil {
@@ -167,9 +178,9 @@ func (r *StreamView) GetAllLeafEvents(ctx context.Context) ([][]byte, error) {
 	return hashes, nil
 }
 
-func (r *StreamView) AddEvent(event *protocol.Envelope) error {
+func (r *StreamViewCache) AddEvent(event *protocol.Envelope) error {
 	if !r.loaded {
-		return fmt.Errorf("streamview not loaded")
+		return fmt.Errorf("StreamViewCache not loaded")
 	}
 	parsedEvent, err := events.ParseEvent(event, true)
 	if err != nil {
@@ -180,7 +191,7 @@ func (r *StreamView) AddEvent(event *protocol.Envelope) error {
 	return nil
 }
 
-func (r *StreamView) GetStreamInfo(ctx context.Context, streamId string, userId string) (*common.RoomInfo, error) {
+func (r *StreamViewCache) GetStreamInfo(ctx context.Context, streamId string, userId string) (*common.RoomInfo, error) {
 	parsedEvents, err := r.getOrderedEventsCached()
 	if err != nil {
 		return nil, err
