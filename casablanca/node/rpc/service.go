@@ -237,6 +237,15 @@ func (s *Service) addEvent(ctx context.Context, streamId string, view *storage.S
 		default:
 			return nil, status.Errorf(codes.InvalidArgument, "AddEvent: User event has no valid payload for type %T", payload.UserPayload.Content)
 		}
+	case *protocol.StreamEvent_UserDeviceKeyPayload:
+		switch payload.UserDeviceKeyPayload.Content.(type) {
+		case *protocol.UserDeviceKeyPayload_Inception_:
+			return nil, status.Errorf(codes.InvalidArgument, "AddEvent: event is an inception event")
+		case *protocol.UserDeviceKeyPayload_UserDeviceKey_:
+			return addEventToStorage(s, ctx, streamId, envelope)
+		default:
+			return nil, status.Errorf(codes.InvalidArgument, "AddEvent: UserDeviceKey event has no valid payload for type %T", payload.UserDeviceKeyPayload.Content)
+		}
 	case *protocol.StreamEvent_UserSettingsPayload:
 		switch payload.UserSettingsPayload.Content.(type) {
 		case *protocol.UserSettingsPayload_Inception_:

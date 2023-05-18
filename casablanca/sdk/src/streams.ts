@@ -1,5 +1,6 @@
 import {
     ChannelOp,
+    DeviceKeys,
     MembershipOp,
     Err,
     ChannelPayload_Inception,
@@ -12,6 +13,7 @@ import {
     Membership,
     SpacePayload_Channel,
     UserPayload_UserMembership,
+    UserDeviceKeyPayload_UserDeviceKey,
 } from '@towns/proto'
 import TypedEmitter from 'typed-emitter'
 import { check, checkNever, isDefined, throwWithCode } from './check'
@@ -67,6 +69,12 @@ export type StreamEvents = {
     spaceChannelDeleted: (spaceId: string, channelId: string) => void
     channelNewMessage: (channelId: string, message: ParsedEvent) => void
     toDeviceMessage: (streamId: string, deviceId: string, value: ParsedEvent) => void
+    userDeviceKeyMessage: (
+        streamId: string,
+        userId: string,
+        deviceKeys: DeviceKeys,
+        fallbackKeys: object | undefined,
+    ) => void
     streamInitialized: (
         streamId: string,
         payloadKind: PayloadCaseType,
@@ -96,6 +104,8 @@ export class StreamStateView {
     readonly userJoinedStreams = new Set<string>()
 
     readonly toDeviceMessages: ParsedEvent[] = []
+    // device_id -> device_keys, fallback_keys
+    readonly uploadedDeviceKeys = new Map<string, UserDeviceKeyPayload_UserDeviceKey[]>()
 
     readonly leafEventHashes = new Map<string, Uint8Array>()
 
@@ -256,6 +266,24 @@ export class StreamStateView {
                             )
                             break
                         case 'userDeviceKey':
+                            {
+                                const { userId, deviceKeys, fallbackKeys } =
+                                    payload.value.content.value
+                                emitter?.emit(
+                                    'userDeviceKeyMessage',
+                                    this.streamId,
+                                    userId,
+                                    deviceKeys as DeviceKeys,
+                                    fallbackKeys,
+                                )
+                                if (deviceKeys?.deviceId !== undefined) {
+                                    this.uploadedDeviceKeys.set(deviceKeys.deviceId, [
+                                        ...(this.uploadedDeviceKeys.get(deviceKeys.deviceId) || []),
+                                        payload.value.content
+                                            .value as UserDeviceKeyPayload_UserDeviceKey,
+                                    ])
+                                }
+                            }
                             break
                         case undefined:
                             break

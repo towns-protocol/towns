@@ -14,7 +14,9 @@ import {
     ChannelMessage_Reaction,
     ChannelMessage_Redaction,
     StreamEvent,
+    UserDeviceKeyPayload_UserDeviceKey,
 } from '@towns/proto'
+import { Crypto } from './crypto'
 import debug from 'debug'
 import EventEmitter from 'events'
 import TypedEmitter from 'typed-emitter'
@@ -24,6 +26,7 @@ import {
     isSpaceStreamId,
     makeUniqueChannelStreamId,
     makeUniqueSpaceStreamId,
+    makeUserDeviceKeyStreamId,
     makeUserStreamId,
     userIdFromAddress,
 } from './id'
@@ -34,6 +37,10 @@ import {
     ParsedEvent,
     bin_equal,
     bin_toBase64,
+    IDeviceKeys,
+    IFallbackKey,
+    make_UserDeviceKeyPayload_UserDeviceKey,
+    make_UserDeviceKeyPayload_Inception,
     make_ChannelPayload_Inception,
     make_ChannelPayload_Membership,
     make_ChannelPayload_Message,
@@ -101,7 +108,9 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
     readonly signerContext: SignerContext
     readonly rpcClient: StreamRpcClientType
     readonly userId: string
+    readonly deviceId: string | undefined
     userStreamId?: string
+    userDeviceKeyStreamId?: string
     readonly streams: Map<string, Stream> = new Map()
     stopSyncResolve?: (value: string) => void
 
@@ -110,6 +119,8 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
     readonly logEmitFromStream: debug.Debugger
     readonly logEmitFromClient: debug.Debugger
     readonly logEvent: debug.Debugger
+
+    private cryptoBackend?: Crypto
 
     constructor(
         signerContext: SignerContext,
@@ -132,6 +143,8 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
         this.signerContext = signerContext
         this.rpcClient = rpcClient
         this.userId = userIdFromAddress(signerContext.creatorAddress)
+        // TODO: tighten deviceId type and validate as we do with userId
+        this.deviceId = signerContext.deviceId
         this.logCall = debug('csb:client:call').extend(this.userId)
         this.logSync = debug('csb:client:sync').extend(this.userId)
         this.logEmitFromStream = debug('csb:client:emit:stream').extend(this.userId)
@@ -178,32 +191,88 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
         ).then(() => {})
     }
 
+    private async initUserDeviceKeyStream(
+        userDeviceKeyStreamId: string,
+        streamAndCookie: StreamAndCookie,
+    ): Promise<void> {
+        assert(this.userDeviceKeyStreamId === undefined, 'streamId must not be set')
+        this.userDeviceKeyStreamId = userDeviceKeyStreamId
+
+        const stream = new Stream(
+            userDeviceKeyStreamId,
+            unpackEnvelope(streamAndCookie.events[0]),
+            this,
+            this.logEmitFromStream,
+        )
+        this.streams.set(userDeviceKeyStreamId, stream)
+        stream.addEvents(streamAndCookie, true)
+    }
+
     async createNewUser(): Promise<void> {
         this.logCall('createNewUser')
         assert(this.userStreamId === undefined, 'streamId must not be set')
-        const streamId = makeUserStreamId(this.userId)
+        const userStreamId = makeUserStreamId(this.userId)
+        const userDeviceKeyStreamId = makeUserDeviceKeyStreamId(this.userId)
 
-        const events = [
-            await makeEvent(this.signerContext, make_UserPayload_Inception({ streamId }), []),
+        const userEvents = [
+            await makeEvent(
+                this.signerContext,
+                make_UserPayload_Inception({
+                    streamId: userStreamId,
+                }),
+                [],
+            ),
         ]
-        const { syncCookie } = await this.rpcClient.createStream({
-            events,
+        const { syncCookie: userSyncCookie } = await this.rpcClient.createStream({
+            events: userEvents,
         })
 
+        const userDeviceKeyEvents = [
+            await makeEvent(
+                this.signerContext,
+                make_UserDeviceKeyPayload_Inception({
+                    streamId: userDeviceKeyStreamId,
+                    userId: this.userId,
+                }),
+                [],
+            ),
+        ]
+
+        const { syncCookie: userDeviceKeySyncCookie } = await this.rpcClient.createStream({
+            events: userDeviceKeyEvents,
+        })
+
+        await this.initUserDeviceKeyStream(
+            userDeviceKeyStreamId,
+            new StreamAndCookie({
+                events: userDeviceKeyEvents,
+                nextSyncCookie: userDeviceKeySyncCookie,
+            }),
+        )
+
         return this.initUserStream(
-            streamId,
-            new StreamAndCookie({ events, nextSyncCookie: syncCookie }),
+            userStreamId,
+            new StreamAndCookie({ events: userEvents, nextSyncCookie: userSyncCookie }),
         )
     }
 
     async loadExistingUser(): Promise<void> {
         this.logCall('loadExistingUser')
         assert(this.userStreamId === undefined, 'streamId must not be set')
-        const streamId = makeUserStreamId(this.userId)
+        const userStreamId = makeUserStreamId(this.userId)
+        const userDeviceKeyStreamId = makeUserDeviceKeyStreamId(this.userId)
 
-        const userStream = await this.rpcClient.getStream({ streamId })
+        // init userDeviceKeyStream
+        const userDeviceKeyStream = await this.rpcClient.getStream({
+            streamId: userDeviceKeyStreamId,
+        })
+        assert(userDeviceKeyStream.stream !== undefined, 'got bad user device key stream')
+        await this.initUserDeviceKeyStream(userDeviceKeyStreamId, userDeviceKeyStream.stream)
+
+        // init userStream
+        const userStream = await this.rpcClient.getStream({ streamId: userStreamId })
         assert(userStream.stream !== undefined, 'got bad user stream')
-        return this.initUserStream(streamId, userStream.stream)
+        return this.initUserStream(userStreamId, userStream.stream)
     }
 
     async loadExistingForeignUser(userId: string): Promise<void> {
@@ -374,9 +443,9 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
             this.logSync('sync ITERATION', iteration++)
             const syncPos: PlainMessage<SyncPos>[] = []
             this.streams.forEach((stream: Stream) => {
-                // TODO: jterzis prune foreign user streams
-                // that are created to send to_device
-                // messages.
+                // TODO: jterzis as an optimization in the future,
+                // prune foreign user streams that are created to send
+                // to_device messages.
                 const syncCookie = stream.syncCookie
                 if (syncCookie !== undefined) {
                     syncPos.push({
@@ -754,6 +823,89 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
         )
     }
 
+    async uploadKeysRequest(content: IUploadKeysRequest): Promise<void> {
+        const userId: string = content.user_id
+        const deviceId: string = content.device_id
+        const streamId: string = makeUserDeviceKeyStreamId(userId)
+        // TODO: assert device_id belongs to user
+        // const deviceIds = this.getStoredDevicesForUser(userId)
+        // TODO: check for fallbackKeys in arguments and ensure upload
+        // of actual keys, algorithms.
+        return this.makeEventAndAddToStream(
+            streamId,
+            make_UserDeviceKeyPayload_UserDeviceKey({
+                userId: userId,
+                deviceKeys: { deviceId: deviceId, algorithms: [], keys: {}, signatures: {} },
+                fallbackKeys: { algoKeyId: {} },
+            }),
+            'userDeviceKey',
+        )
+    }
+    /**
+     * Download device keys for a list of users asynchronously.
+     *
+     * @param userIds - list of userIds to sync userDeviceKey streams for deviceKeys
+     * @returns a promise that resolves to a map from userId to a map from deviceId to deviceInfo.
+     * Additionally, returns map of userIds to error for
+     */
+    async downloadKeysForUsers(userIds: string[]): Promise<IDownloadKeyResponse> {
+        const streamIds: { [userId: string]: string } = userIds.reduce(
+            (map: { [userId: string]: string }, userId) => {
+                map[userId] = makeUserDeviceKeyStreamId(userId)
+                return map
+            },
+            {},
+        )
+        // streams have either already been added to client or should be fetched/added from rpcServer
+        const promises: Promise<IDownloadKeyResponse>[] = []
+        Object.keys(streamIds).forEach((userId: string) => {
+            const streamId: string = streamIds[userId]
+            promises.push(
+                (async (): Promise<IDownloadKeyResponse> => {
+                    try {
+                        await this.initStream(streamId)
+                        // jterzis: should we add a wait timeout here to allow the stateView to be built from stream events
+                        // if it's initting for the first time ?
+                        // build response
+                        const stream: Stream | undefined = this.streams.get(streamId)
+                        const response: IDownloadKeyResponse = {
+                            device_keys: {},
+                        }
+                        const userDeviceKeyPaylaod: UserDeviceKeyPayload_UserDeviceKey[] =
+                            Array.from((stream as Stream).rollup.uploadedDeviceKeys.values())[0]
+                        const deviceKeys: DeviceKeys[] = userDeviceKeyPaylaod
+                            .filter(
+                                (v): v is UserDeviceKeyPayload_UserDeviceKey =>
+                                    v.deviceKeys !== undefined,
+                            )
+                            .map((v) => v.deviceKeys as unknown as DeviceKeys)
+                        // push all known device keys for all devices of user
+                        response.device_keys[userId] = deviceKeys
+                        return Promise.resolve(response)
+                    } catch (e) {
+                        // return error in response
+                        const response: IDownloadKeyResponse = {
+                            failures: { [userId]: { error: e } },
+                            device_keys: {},
+                        }
+                        return Promise.resolve(response)
+                    }
+                })(),
+            )
+        })
+        const results = await Promise.all(promises)
+        const mergedResults: IDownloadKeyResponse = results.reduce(
+            (acc, currentResult) => {
+                return {
+                    failures: { ...acc.failures, ...currentResult.failures },
+                    device_keys: { ...acc.device_keys, ...currentResult.device_keys },
+                }
+            },
+            { failures: {}, device_keys: {} },
+        )
+        return mergedResults
+    }
+
     public getStoredDevicesForUser(userId: string): string[] {
         this.logCall('getStoredDevicesForUser', userId)
         // TODO: Implement
@@ -798,4 +950,50 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
             throw e
         }
     }
+
+    async initCrypto(): Promise<void> {
+        this.logCall('initCrypto')
+        if (this.cryptoBackend) {
+            console.warn('Attempt to re-init crypto backend, ignoring')
+            return
+        }
+
+        // TODO: for now this just creates crypto module and uploads deviceKeys.
+        // We should ensure cryptoStore is not empty, initialize room list, and set the olmVersion.
+        if (this.deviceId === undefined) {
+            throw new Error('deviceId must be set to init crypto')
+        }
+
+        const crypto = new Crypto(this, this.userId, this.deviceId)
+        this.cryptoBackend = crypto
+        // TODO: register event handlers once crypto module is successfully initiatilized
+        this.logCall('initCrypto:: uploading device keys...')
+        return this.cryptoBackend.uploadDeviceKeys()
+    }
+}
+
+export interface DeviceKeys {
+    [deviceId: string]: IDeviceKeys & {
+        unsigned?: {
+            device_display_name: string
+        }
+    }
+}
+
+export interface IDownloadKeyResponse {
+    failures?: { [userId: string]: object }
+    device_keys: { [userId: string]: DeviceKeys[] }
+}
+
+export interface IKeysUploadResponse {
+    fallback_key_counts: {
+        [algorithm: string]: number
+    }
+}
+
+export interface IUploadKeysRequest {
+    user_id: string
+    device_id: string
+    device_keys?: Required<IDeviceKeys>
+    fallback_keys?: Record<string, IFallbackKey>
 }

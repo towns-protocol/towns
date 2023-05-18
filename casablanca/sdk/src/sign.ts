@@ -37,10 +37,12 @@ import { ecrecover, fromRpcSig, hashPersonalMessage } from '@ethereumjs/util'
  * @param creatorAddress - a creator, i.e. user address derived from the user public key
  * @param delegateSig - an optional delegate signature
  */
+
 export interface SignerContext {
     signerPrivateKey: () => string
     creatorAddress: Uint8Array
     delegateSig?: Uint8Array
+    deviceId?: string
 }
 
 export const normailizeHashes = (

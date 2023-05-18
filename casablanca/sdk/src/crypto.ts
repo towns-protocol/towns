@@ -8,8 +8,11 @@ import { assertBytes } from 'ethereum-cryptography/utils'
 import { keccak256 } from 'ethereum-cryptography/keccak'
 import { recoverPublicKey, signSync, verify } from 'ethereum-cryptography/secp256k1'
 import { check } from './check'
+import { Client } from './client'
+import EventEmitter from 'events'
+import TypedEmitter from 'typed-emitter'
 import { Err } from '@towns/proto'
-import { bin_fromHexString } from './types'
+import { bin_fromHexString, IDeviceKeys, ISignatures, recursiveMapToObject } from './types'
 import { ethers } from 'ethers'
 
 // Create hash header as Uint8Array from string 'CSBLANCA'
@@ -111,4 +114,200 @@ export const makeOldTownsDelegateSig = async (
     }
     check(devicePubKey.length === 65, 'Bad public key', Err.BAD_PUBLIC_KEY)
     return bin_fromHexString(await primaryWallet.signMessage(devicePubKey))
+}
+
+export interface IDevice {
+    keys: Record<string, string>
+    algorithms: string[]
+    verified: DeviceVerification
+    known: boolean
+    unsigned?: Record<string, any>
+    signatures?: ISignatures
+}
+
+enum DeviceVerification {
+    Blocked = -1,
+    Unverified = 0,
+    Verified = 1,
+}
+
+export class DeviceInfo {
+    public static fromStorage(obj: Partial<IDevice>, deviceId: string): DeviceInfo {
+        const res = new DeviceInfo(deviceId)
+        for (const prop in obj) {
+            // eslint-disable-next-line
+            if (obj.hasOwnProperty(prop)) {
+                // @ts-ignore
+                res[prop as keyof IDevice] = obj[prop as keyof IDevice]
+            }
+        }
+        return res
+    }
+
+    public static DeviceVerification = {
+        VERIFIED: DeviceVerification.Verified,
+        UNVERIFIED: DeviceVerification.Unverified,
+        BLOCKED: DeviceVerification.Blocked,
+    }
+
+    /** list of algorithms supported by this device */
+    public algorithms: string[] = []
+    /** a map from `<key type>:<id> -> <base64-encoded key>` */
+    public keys: Record<string, string> = {}
+    /** whether the device has been verified/blocked by the user */
+    public verified = DeviceVerification.Unverified
+    /**
+     * whether the user knows of this device's existence
+     * (useful when warning the user that a user has added new devices)
+     */
+    public known = false
+    public unsigned: Record<string, string> = {}
+    public signatures: ISignatures = {}
+
+    public constructor(public readonly deviceId: string) {}
+
+    public toStorage(): IDevice {
+        return {
+            algorithms: this.algorithms,
+            keys: this.keys,
+            verified: this.verified,
+            known: this.known,
+            unsigned: this.unsigned,
+            signatures: this.signatures,
+        }
+    }
+
+    /**
+     * Get the fingerprint for this device (i.e. Ed25519 key)
+     *
+     * returns base64-encoded fingerprint of this device
+     */
+    public getFingerprint(): string {
+        return this.keys['ed25519:' + this.deviceId]
+    }
+
+    /**
+     * Get the identity key for this device (i.e. Curve25519 key)
+     *
+     * returns base64-encoded identity key of this device
+     */
+    public getIdentityKey(): string {
+        return this.keys['curve25519:' + this.deviceId]
+    }
+
+    public getDisplayName(): string | undefined {
+        return this.unsigned.device_display_name || undefined
+    }
+
+    public isBlocked(): boolean {
+        return this.verified == DeviceVerification.Blocked
+    }
+
+    public isVerified(): boolean {
+        return this.verified == DeviceVerification.Verified
+    }
+
+    public isUnverified(): boolean {
+        return this.verified == DeviceVerification.Unverified
+    }
+
+    public isKnown(): boolean {
+        return this.known === true
+    }
+}
+
+// jterzis: what events do we need for olm-megolm ?
+export enum CryptoEvent {
+    DeviceVerificationChanged = 'deviceVerificationChanged',
+    WillUpdateDevices = 'crypto.willUpdateDevices',
+    DevicesUpdated = 'crypto.devicesUpdated',
+}
+
+export type CryptoEventHandlerMap = {
+    /**
+     * Fires whenever a device is marked as verified|unverified|blocked|unblocked
+     */
+    [CryptoEvent.DeviceVerificationChanged]: (
+        userId: string,
+        deviceId: string,
+        device: DeviceInfo,
+    ) => void
+    /**
+     * Fires whenever the stored devices for a user will be updated
+     */
+    [CryptoEvent.WillUpdateDevices]: (users: string[], initialFetch: boolean) => void
+    /**
+     * Fires whenever the stored devices for a user have changed
+     */
+    [CryptoEvent.DevicesUpdated]: (users: string[], initialFetch: boolean) => void
+}
+
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
+export interface CryptoBackend {
+    // TODO: add common interface for crypto implementations
+}
+
+interface ISignableObject {
+    signatures?: ISignatures
+    unsigned?: object
+}
+
+export class Crypto
+    extends (EventEmitter as new () => TypedEmitter<CryptoEventHandlerMap>)
+    implements CryptoBackend
+{
+    private deviceKeys: Record<string, string> = {}
+
+    public readonly supportedAlgorithms: string[]
+
+    public constructor(
+        public readonly client: Client,
+        public readonly userId: string,
+        public readonly deviceId: string,
+    ) {
+        super()
+        // jterzis 05/05/23: this list is probably close to the actual list, but also tentative until confirmed.
+        this.supportedAlgorithms = ['m.olm.v1.curve25519-aes-sha2', 'm.megolm.v1.aes-sha2']
+    }
+
+    public async init(): Promise<void> {
+        // build device keys to upload
+        // TODO: implement olmDevice and init
+        this.deviceKeys['ed25519:' + this.deviceId] = ''
+        this.deviceKeys['curve25519:' + this.deviceId] = ''
+    }
+
+    public async uploadDeviceKeys(): Promise<void> {
+        const deviceKeys = {
+            algorithms: this.supportedAlgorithms,
+            device_id: this.deviceId,
+            keys: this.deviceKeys,
+            user_id: this.userId,
+        }
+
+        return this.signObject(deviceKeys).then(() => {
+            return this.client.uploadKeysRequest({
+                user_id: this.userId,
+                device_id: this.deviceId,
+                device_keys: deviceKeys as unknown as Required<IDeviceKeys>,
+            })
+        })
+    }
+
+    public async signObject<T extends ISignableObject & object>(obj: T): Promise<void> {
+        const sigs = new Map(Object.entries(obj.signatures || {}))
+        const unsigned = obj.unsigned
+
+        delete obj.signatures
+        delete obj.unsigned
+
+        const userSignatures = sigs.get(this.userId) || {}
+        sigs.set(this.userId, userSignatures)
+        // todo: implement olmDevice sign
+        userSignatures['ed25519:' + this.deviceId] = ''
+        obj.signatures = recursiveMapToObject(sigs)
+        if (unsigned !== undefined) {
+            obj.unsigned = unsigned
+        }
+    }
 }

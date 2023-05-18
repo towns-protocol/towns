@@ -4,6 +4,8 @@ import {
     Envelope,
     ChannelMessage,
     ChannelMessage_Post_Content_Text,
+    UserDeviceKeyPayload_Inception,
+    UserDeviceKeyPayload_UserDeviceKey,
     UserPayload_Inception,
     SpacePayload_Inception,
     ChannelPayload_Inception,
@@ -20,6 +22,7 @@ import {
     hexToBytes,
     utf8ToBytes,
 } from 'ethereum-cryptography/utils'
+import { keccak256 } from 'ethereum-cryptography/keccak'
 import { isDefined } from './check'
 
 export interface ParsedEvent {
@@ -27,6 +30,27 @@ export interface ParsedEvent {
     envelope: Envelope
     hashStr: string
     creatorUserId: string
+}
+
+export interface ISignatures {
+    [entity: string]: {
+        [keyId: string]: string
+    }
+}
+
+export interface ISigned {
+    signatures?: ISignatures
+}
+
+export interface IDeviceKeys {
+    algorithms: Array<string>
+    keys: Record<string, string>
+    signatures?: ISignatures
+}
+export interface IFallbackKey {
+    key: string
+    fallback?: boolean
+    signatures?: ISignatures
 }
 
 export const bin_fromBase64 = (base64String: string): Uint8Array => {
@@ -50,6 +74,11 @@ export const bin_fromString = (str: string): Uint8Array => {
 
 export const bin_toString = (buf: Uint8Array): string => {
     return bytesToUtf8(buf)
+}
+
+export const takeKeccakFingerprintInHex = (buf: Uint8Array, n: number): string => {
+    const hash = bin_toHexString(keccak256(buf))
+    return hash.slice(0, n)
 }
 
 export const bin_equal = (
@@ -117,6 +146,20 @@ export const make_UserSettingsPayload_Inception = (
     }
 }
 
+export const make_UserDeviceKeyPayload_Inception = (
+    value: PlainMessage<UserDeviceKeyPayload_Inception>,
+): PlainMessage<StreamEvent>['payload'] => {
+    return {
+        case: 'userDeviceKeyPayload',
+        value: {
+            content: {
+                case: 'inception',
+                value,
+            },
+        },
+    }
+}
+
 export const make_SpacePayload_Membership = (
     value: PlainMessage<Membership>,
 ): PlainMessage<StreamEvent>['payload'] => {
@@ -153,6 +196,20 @@ export const make_UserPayload_ToDevice = (
         value: {
             content: {
                 case: 'toDevice',
+                value,
+            },
+        },
+    }
+}
+
+export const make_UserDeviceKeyPayload_UserDeviceKey = (
+    value: PlainMessage<UserDeviceKeyPayload_UserDeviceKey>,
+): PlainMessage<StreamEvent>['payload'] => {
+    return {
+        case: 'userDeviceKeyPayload',
+        value: {
+            content: {
+                case: 'userDeviceKey',
                 value,
             },
         },
@@ -232,6 +289,23 @@ export const getToDeviceMessagePayload = (
     }
     if (event.payload.case === 'userPayload') {
         if (event.payload.value.content.case === 'toDevice') {
+            return event.payload.value.content.value
+        }
+    }
+    return undefined
+}
+
+export const getUserDeviceKeyMessagePayload = (
+    event: ParsedEvent | StreamEvent | undefined,
+): UserDeviceKeyPayload_UserDeviceKey | undefined => {
+    if (!isDefined(event)) {
+        return undefined
+    }
+    if ('event' in event) {
+        event = event.event as unknown as StreamEvent
+    }
+    if (event.payload.case === 'userDeviceKeyPayload') {
+        if (event.payload.value.content.case === 'userDeviceKey') {
             return event.payload.value.content.value
         }
     }
@@ -346,4 +420,28 @@ export const stringify = <T extends Message<T>>(message: T): Stringify<T> => {
     }
     /* eslint-enable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument */
     return ret as Stringify<T>
+}
+
+function processMapToObjectValue(value: any): any {
+    if (value instanceof Map) {
+        return recursiveMapToObject(value)
+    } else if (Array.isArray(value)) {
+        // TODO: tighten this return type
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+        return value.map((v) => processMapToObjectValue(v))
+    } else {
+        return value
+    }
+}
+
+export function recursiveMapToObject(map: Map<any, any>): Record<any, any> {
+    const targetMap = new Map()
+
+    for (const [key, value] of map) {
+        targetMap.set(key, processMapToObjectValue(value))
+    }
+
+    // TODO: tighten this return type
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    return Object.fromEntries(targetMap.entries())
 }

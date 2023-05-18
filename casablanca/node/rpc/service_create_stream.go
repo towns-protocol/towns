@@ -74,6 +74,13 @@ func (s *Service) CreateStream(ctx context.Context, req *connect.Request[protoco
 		if len(parsedEvents) != 1 {
 			return nil, RpcErrorf(protocol.Err_BAD_STREAM_CREATION_PARAMS, "CreateStream: user stream must have only one event")
 		}
+	case *protocol.UserDeviceKeyPayload_Inception:
+		if !common.ValidUserDeviceKeyStreamId(inception.StreamId) {
+			return nil, RpcErrorf(protocol.Err_BAD_STREAM_ID, "CreateStream: invalid user device key stream id '%s'", inception.StreamId)
+		}
+		if len(parsedEvents) != 1 {
+			return nil, RpcErrorf(protocol.Err_BAD_STREAM_CREATION_PARAMS, "CreateStream: user device key stream must have only one event")
+		}
 	case *protocol.UserSettingsPayload_Inception:
 	default:
 		return nil, RpcErrorf(protocol.Err_BAD_STREAM_CREATION_PARAMS, "CreateStream: invalid stream kind %T", inception)

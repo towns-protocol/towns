@@ -31,6 +31,17 @@ func ValidUserStreamId(id string) bool {
 	return len(id) == 45 && strings.HasPrefix(id, "00-0x")
 }
 
+func ValidUserDeviceKeyStreamId(id string) bool {
+	return len(id) == 45 && strings.HasPrefix(id, "33-0x")
+}
+
+func UserDeviceKeyStreamIdFromId(id string) string {
+	if len(id) != 42 {
+		panic(fmt.Sprintf("invalid id length %s", id))
+	}
+	return "33-" + id
+}
+
 func UserStreamIdFromId(id string) string {
 	if len(id) != 42 {
 		panic(fmt.Sprintf("invalid id length %s", id))

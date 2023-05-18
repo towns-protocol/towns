@@ -10,6 +10,7 @@ import {
     bin_fromHexString,
     makeOldTownsDelegateSig,
     makeStreamRpcClient,
+    takeKeccakFingerprintInHex,
 } from '@towns/sdk'
 import {
     ChannelTransactionContext,
@@ -227,12 +228,16 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
             throw new SignerUndefinedError("can't sign without a web3 signer")
         }
         const creatorAddress = bin_fromHexString(await signer.getAddress())
+        // TODO: for now let's take 16 bytes of the keccak256 hash of creatorAddress as our device_id,
+        // but in the future let's ensure device_id is stable across addresses of the same "device".
+        const deviceId = takeKeccakFingerprintInHex(creatorAddress, 16)
         const delegateSig = await makeOldTownsDelegateSig(signer, delegateWallet.publicKey)
         const pk = delegateWallet.privateKey.slice(2)
         const context: SignerContext = {
             signerPrivateKey: () => pk,
             creatorAddress,
             delegateSig,
+            deviceId,
         }
         return context
     }
@@ -323,6 +328,8 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
             console.log('user does not exist, creating new user', (e as Error).message)
             await this.casablancaClient.createNewUser()
         }
+        // TODO: init crypto store and load olm prior to initting crypto module
+        await this.casablancaClient.initCrypto()
 
         // eslint-disable-next-line @typescript-eslint/no-floating-promises
         this.casablancaClient.startSync()

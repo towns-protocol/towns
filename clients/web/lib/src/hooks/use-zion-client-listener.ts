@@ -102,6 +102,7 @@ export const useZionClientListener = (opts: ZionOpts) => {
                 delegateSig: casablancaCredentials.delegateSig
                     ? bin_fromHexString(casablancaCredentials.delegateSig)
                     : undefined,
+                deviceId: casablancaCredentials.deviceId,
             }
             const casablancaClient = await client.startCasablancaClient(context)
             setCasablancaClient(casablancaClient)

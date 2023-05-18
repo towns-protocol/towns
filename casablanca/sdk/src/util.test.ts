@@ -8,7 +8,7 @@ import { PlainMessage } from '@bufbuild/protobuf'
 import { Client } from './client'
 import { makeStreamRpcClient } from './streamRpcClient'
 import { userIdFromAddress } from './id'
-import { bin_fromHexString, bin_toHexString } from './types'
+import { bin_fromHexString, bin_toHexString, takeKeccakFingerprintInHex } from './types'
 import { getPublicKey, utils } from 'ethereum-cryptography/secp256k1'
 import { makeTownsDelegateSig, makeOldTownsDelegateSig, publicKeyToAddress } from './crypto'
 import { ethers } from 'ethers'
@@ -46,6 +46,7 @@ export const makeRandomUserContext = async (): Promise<SignerContext> => {
             () => userPrivateKey,
             getPublicKey(devicePrivateKeyStr, false),
         ),
+        deviceId: takeKeccakFingerprintInHex(creatorAddress, 16),
     }
     log('makeRandomUserContext end', bin_toHexString(creatorAddress))
     return ret
@@ -146,4 +147,8 @@ class DonePromise {
 
 export const makeDonePromise = (): DonePromise => {
     return new DonePromise()
+}
+
+export const awaitTimeout = (milliseconds: number) => {
+    return new Promise((resolve) => setTimeout(resolve, milliseconds))
 }

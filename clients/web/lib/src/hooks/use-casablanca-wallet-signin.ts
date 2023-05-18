@@ -43,6 +43,7 @@ export function useCasablancaWalletSignIn() {
                         ? bin_toHexString(casablancaContext.delegateSig)
                         : undefined,
                     loggedInWalletAddress: activeWalletAddress,
+                    deviceId: casablancaContext.deviceId,
                 })
                 setLoginStatus(LoginStatus.LoggedIn)
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
