@@ -65,7 +65,7 @@ const Main = () => {
         <React.StrictMode>
             <BrowserRouter>
                 <MainLayout>
-                    <Sentry.ErrorBoundary fallback={AppErrorFallback}>
+                    <Sentry.ErrorBoundary fallback={(props) => <AppErrorFallback {...props} />}>
                         <Suspense fallback={<LoadingScreen />}>
                             <App />
                         </Suspense>
