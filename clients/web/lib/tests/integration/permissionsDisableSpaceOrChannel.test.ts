@@ -101,7 +101,7 @@ describe('disable channel', () => {
         // create all the users for the test
         const tokenGrantedUser = await registerAndStartClient(
             'tokenGrantedUser',
-            TestConstants.getWalletWithNft(),
+            TestConstants.getWalletWithMemberNft(),
         )
         const { bob } = await registerAndStartClients(['bob'])
         await bob.fundWallet()

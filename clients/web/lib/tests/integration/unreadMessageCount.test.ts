@@ -26,7 +26,7 @@ describe('unreadMessageCount', () => {
     test('create room, invite user, accept invite, and send message, check unread counts', async () => {
         // create clients
         // alice needs to have a valid nft in order to join bob's space / channel
-        const alice = await registerAndStartClient('alice', TestConstants.getWalletWithNft())
+        const alice = await registerAndStartClient('alice', TestConstants.getWalletWithMemberNft())
         const { bob } = await registerAndStartClients(['bob'])
         // bob needs funds to create a space
         await bob.fundWallet()

@@ -46,7 +46,7 @@ describe('create role', () => {
         /** Arrange */
         const tokenGrantedUser = await registerAndStartClient(
             'tokenGrantedUser',
-            TestConstants.getWalletWithNft(),
+            TestConstants.getWalletWithMemberNft(),
         )
         const { bob } = await registerAndStartClients(['bob'])
         await bob.fundWallet()
@@ -81,7 +81,7 @@ describe('create role', () => {
         /** Arrange */
         const tokenGrantedUser = await registerAndStartClient(
             'tokenGrantedUser',
-            TestConstants.getWalletWithNft(),
+            TestConstants.getWalletWithMemberNft(),
         )
         const { bob } = await registerAndStartClients(['bob'])
         await bob.fundWallet()

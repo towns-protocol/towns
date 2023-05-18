@@ -17,7 +17,6 @@ import { RoomIdentifier } from 'use-zion-client/src/types/room-identifier'
 import { SpaceDataTypes } from '../../../src/client/web3/shims/SpaceShim'
 import { SpaceFactoryDataTypes } from '../../../src/client/web3/shims/SpaceFactoryShim'
 import { SpaceProtocol } from '../../../src/client/ZionClientTypes'
-import { TestConstants } from './TestConstants'
 import { ZionTestWeb3Provider } from './ZionTestWeb3Provider'
 import { ZionClient } from '../../../src/client/ZionClient'
 
@@ -26,6 +25,12 @@ export function assert(condition: any, msg?: string): asserts condition {
     if (!condition) {
         throw new Error(msg)
     }
+}
+
+export function getJsonProvider() {
+    const providerUrl = process.env.ETHERS_NETWORK ?? 'http://127.0.0.1:8545'
+
+    return new ethers.providers.JsonRpcProvider(providerUrl)
 }
 
 export function parseOptInt(value?: string): number | undefined {
@@ -78,19 +83,25 @@ export async function registerAndStartClients(
  */
 export async function registerAndStartClient(
     name: string,
-    wallet: Wallet,
+    walletPromise: Promise<Wallet>,
     props?: ZionTestClientProps,
 ): Promise<ZionTestClient> {
     const chainId = await getChainId()
-    const client = new ZionTestClient(chainId, name, props, wallet)
+    try {
+        const wallet = await walletPromise
+        const client = new ZionTestClient(chainId, name, props, wallet)
 
-    if (await client.isUserRegistered()) {
-        await client.loginWalletAndStartClient()
-    } else {
-        await client.registerWalletAndStartClient()
+        if (await client.isUserRegistered()) {
+            await client.loginWalletAndStartClient()
+        } else {
+            await client.registerWalletAndStartClient()
+        }
+
+        return client
+    } catch (e) {
+        console.error('registerAndStartClient error', e)
+        throw e
     }
-
-    return client
 }
 
 export function makeUniqueName(prefix: string): string {
@@ -107,37 +118,16 @@ export function logTimeline(timeline?: EventTimeline) {
     })
 }
 
-export async function fundWallet(walletToFund: ethers.Wallet, amount = 0.1) {
-    let retries = 0
-    let isFunded = false
-    while (!isFunded && retries < 5) {
-        try {
-            isFunded = await _fundWallet(walletToFund, amount)
-        } catch (error) {
-            if ((error as Error).message.includes('nonce has already been used')) {
-                // we have multiple tests running in parallel, so this is expected.
-                // ignore this error and try again
-            } else {
-                throw error
-            }
-        } finally {
-            retries++
-        }
-    }
+export async function fundWallet(walletToFund: ethers.Wallet) {
+    const provider = getJsonProvider()
+    const amountInWei = ethers.BigNumber.from(10).pow(18).toHexString()
 
-    if (!isFunded) {
-        throw new Error('Failed to fund wallet')
-    }
-}
+    const result = provider.send('anvil_setBalance', [walletToFund.address, amountInWei])
 
-async function _fundWallet(walletToFund: ethers.Wallet, amount = 0.1): Promise<boolean> {
-    const fundedWallet = TestConstants.getWalletWithoutNft()
-    const result = await fundedWallet.sendTransaction({
-        from: fundedWallet.address,
-        to: walletToFund.address,
-        value: ethers.utils.parseEther(amount.toString()),
-    })
-    await result.wait()
+    console.log('fundWallet tx', result, amountInWei, walletToFund.address)
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    const receipt = await result
+    console.log('fundWallet receipt', receipt)
     return true
 }
 

@@ -4,6 +4,7 @@ import * as Lib from 'use-zion-client'
 import { afterEach, vi } from 'vitest'
 import { MemoryRouter } from 'react-router'
 import { BrowserRouter } from 'react-router-dom'
+import { ethers } from 'ethers'
 import { MainLayout } from 'MainLayout'
 
 type TestAppProps = {
@@ -12,6 +13,8 @@ type TestAppProps = {
     Router?: typeof MemoryRouter | typeof BrowserRouter
     initialEntries?: string[]
 }
+
+export const getWalletAddress = () => ethers.Wallet.createRandom().address
 
 export const TestApp = (props: TestAppProps) => {
     // new query client for each test for isolation
@@ -93,8 +96,3 @@ export function mockUseWeb3Context() {
         walletStatus: 'connected',
     }
 }
-
-export const address1 = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266'
-export const address2 = '0x70997970C51812dc3A010C7d01b50e0d17dc79C8'
-export const address3 = '0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC'
-export const address4 = '0x90F79bf6EB2c4f870365E785982E1f101E93b906'

@@ -1,13 +1,21 @@
 //SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.13;
 
+//interfaces
+
+//libraries
+import {console} from "forge-std/console.sol";
+
+//contracts
 import {ScriptUtils} from "contracts/scripts/utils/ScriptUtils.sol";
 import {Member} from "contracts/src/core/tokens/Member.sol";
-import {console} from "forge-std/console.sol";
 import {Merkle} from "murky/Merkle.sol";
+import {Mock721} from "contracts/src/mocks/MockToken.sol";
 
 contract DeployLocalMember is ScriptUtils {
   Member private member;
+  Mock721 private mockNFT;
+
   uint256 private NFT_PRICE = 0.08 ether;
 
   function run() external {
@@ -34,16 +42,22 @@ contract DeployLocalMember is ScriptUtils {
       memory baseURI = "https://bafybeihuygd5wm43kmxl4pocbv5uchdrkimhfwk75qgbmtlrqsy2bwwijq.ipfs.nftstorage.link/metadata/";
 
     vm.startBroadcast();
+    mockNFT = new Mock721();
     member = new Member(name, symbol, baseURI, root);
     member.privateMint{value: NFT_PRICE}(first, 1, m.getProof(data, 0));
     member.privateMint{value: NFT_PRICE}(second, 1, m.getProof(data, 1));
     member.privateMint{value: NFT_PRICE}(third, 1, m.getProof(data, 2));
     member.privateMint{value: NFT_PRICE}(fourth, 1, m.getProof(data, 3));
     member.privateMint{value: NFT_PRICE}(fifth, 1, m.getProof(data, 4));
+
+    // For testing, enable public minting so new wallets may also mint a token
+    member.startWaitlistMint();
+    member.startPublicMint();
     vm.stopBroadcast();
 
     if (!_isTesting()) {
       _writeAddress("member", address(member));
+      _writeAddress("mock721", address(mockNFT));
       console.log("Deploying Council Member NFT: ", address(member));
     }
   }

@@ -184,8 +184,8 @@ export class ZionTestClient extends ZionClient {
     }
 
     /// add some funds to this wallet
-    public async fundWallet(amount = 0.1) {
-        await this.provider.fundWallet(amount)
+    public async fundWallet() {
+        await this.provider.fundWallet()
         this.log('funded wallet')
     }
 

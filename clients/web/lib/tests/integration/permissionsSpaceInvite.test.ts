@@ -86,7 +86,7 @@ describe('space invite', () => {
         // create all the users for the test
         const tokenGrantedUser = await registerAndStartClient(
             'tokenGrantedUser',
-            TestConstants.getWalletWithNft(),
+            TestConstants.getWalletWithMemberNft(),
         )
         const { bob } = await registerAndStartClients(['bob'])
         await bob.fundWallet()
@@ -129,7 +129,7 @@ describe('space invite', () => {
         // create all the users for the test
         const tokenGrantedUser = await registerAndStartClient(
             'tokenGrantedUser',
-            TestConstants.getWalletWithNft(),
+            TestConstants.getWalletWithMemberNft(),
         )
         const { bob } = await registerAndStartClients(['bob'])
         await bob.fundWallet()

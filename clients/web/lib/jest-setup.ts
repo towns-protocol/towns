@@ -20,9 +20,6 @@ process.env.ETHERS_NETWORK = 'http://127.0.0.1:8545' // OR "rinkeby"
 // fetch-polyfill.js
 import fetch, { Headers, Request, Response } from 'node-fetch'
 
-// initialize the static wallets
-TestConstants.init()
-
 beforeAll(async () => {
     globalThis.Olm = Olm
     await globalThis.Olm.init()

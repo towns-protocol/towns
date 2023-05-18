@@ -4,7 +4,7 @@ import { fireEvent, render, screen } from '@testing-library/react'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import * as Lib from 'use-zion-client'
 import * as Router from 'react-router'
-import { TestApp, address1, address2 } from 'test/testUtils'
+import { TestApp, getWalletAddress } from 'test/testUtils'
 import * as useHasPermission from 'hooks/useHasPermission'
 import * as useContractSpaceInfoHook from 'hooks/useContractSpaceInfo'
 import { SpaceInfoPanel } from './SpaceInfoPanel'
@@ -35,10 +35,10 @@ const generateSpaceData = (networkId: string) => {
     }
 
     const onChainSpaceInfo = {
-        address: address1,
+        address: getWalletAddress(),
         networkId: roomIdentifier.networkId,
         name: spaceData.name,
-        owner: address2,
+        owner: getWalletAddress(),
         disabled: false,
     }
 

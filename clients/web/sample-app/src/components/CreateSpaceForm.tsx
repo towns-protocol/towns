@@ -41,7 +41,7 @@ interface Props {
 }
 
 export const CreateSpaceForm = (props: Props) => {
-    const { chain, accounts, provider } = useWeb3Context()
+    const { chain, accounts } = useWeb3Context()
     const { chainName, chainId } = useEnvironment()
     const { chain: walletChain } = useNetwork()
     const { loginStatus: matrixLoginStatus } = useMatrixStore()
@@ -92,44 +92,50 @@ export const CreateSpaceForm = (props: Props) => {
     )
     const txInProgress = useRef(false)
 
-    const onClickFundLocalHostWallet = useCallback(
-        (accountId: string) => {
-            if (!txInProgress.current) {
-                const fundWallet = async () => {
-                    try {
-                        txInProgress.current = true
-                        const anvilKey =
-                            '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80' // anvil default funded address #1
-
-                        const wallet = new ethers.Wallet(anvilKey, provider)
-
-                        const amount = 0.1
-
-                        const tx = {
-                            from: wallet.address,
-                            to: accountId,
-                            value: ethers.utils.parseEther(amount.toString()),
-                            gasLimit: 1000000,
-                            chainId: chainId,
-                        }
-                        console.log('fundWallet tx', tx)
-                        const result = await wallet.sendTransaction(tx)
-                        console.log('fundWallet result', result)
-                        const receipt = await result.wait()
-                        console.log('fundWallet receipt', receipt)
-                    } catch (error) {
-                        console.error('fundWallet failed', error)
-                    } finally {
-                        txInProgress.current = false
+    const onClickFundLocalHostWallet = useCallback((accountId: string) => {
+        if (!txInProgress.current) {
+            const fundWallet = async () => {
+                try {
+                    txInProgress.current = true
+                    // We're on Anvil, so we can use the anvil_setBalance RPC
+                    const getWsProvider = () => {
+                        return new ethers.providers.WebSocketProvider('ws://127.0.0.1:8545')
                     }
+
+                    const provider = getWsProvider()
+                    const amount = ethers.BigNumber.from(10).pow(18).toHexString()
+
+                    const result = provider.send('anvil_setBalance', [accountId, amount])
+
+                    console.log('fundWallet tx', result, amount, accountId)
+                    const receipt = await result
+                    console.log('fundWallet receipt', receipt)
+                    {
+                        const result = provider.send('anvil_nodeInfo')
+
+                        console.log('anvil_nodeInfo tx', result, amount, accountId)
+                        const receipt = await result
+                        console.log('anvil_nodeInfo receipt', receipt)
+                    }
+                    {
+                        const result = provider.send('eth_getBalance', [accountId, 'latest'])
+
+                        console.log('eth_getBalance tx', result, amount, accountId)
+                        const receipt = await result
+                        const newBalance = ethers.BigNumber.from(receipt).toString()
+                        console.log('eth_getBalance newBalance', newBalance)
+                    }
+                } catch (error) {
+                    console.error('fundWallet failed', error)
+                } finally {
+                    txInProgress.current = false
                 }
-                fundWallet()
-            } else {
-                console.log('fundWallet in progress')
             }
-        },
-        [chainId, provider],
-    )
+            fundWallet()
+        } else {
+            console.log('fundWallet in progress')
+        }
+    }, [])
 
     const onChangeVisibility = useCallback((event: SelectChangeEvent) => {
         setVisibility(event.target.value as RoomVisibility)

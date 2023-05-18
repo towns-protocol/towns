@@ -19,8 +19,8 @@ export class ZionTestWeb3Provider extends ethers.providers.JsonRpcProvider {
         console.log('initializing web3 provider with wallet', this.wallet.address)
     }
 
-    public async fundWallet(amount = 0.1) {
-        await fundWallet(this.wallet, amount)
+    public async fundWallet() {
+        await fundWallet(this.wallet)
     }
 
     public async request({

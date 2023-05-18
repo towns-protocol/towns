@@ -7,7 +7,7 @@ import * as zionClient from 'use-zion-client'
 import * as router from 'react-router'
 import userEvent from '@testing-library/user-event'
 import { PATHS } from 'routes'
-import { TestApp, address1, mockUseMatrixCredentials } from 'test/testUtils'
+import { TestApp, getWalletAddress, mockUseMatrixCredentials } from 'test/testUtils'
 import { SpacesNew } from 'routes/SpacesNew'
 import { UseMockCreateSpaceReturn, mockCreateTransactionWithSpy } from 'test/transactionHookMock'
 import * as useRequireTransactionNetwork from 'hooks/useRequireTransactionNetwork'
@@ -126,7 +126,7 @@ describe('<CreateSpaceForm />', () => {
         const tokenRadio = screen.getByText('Token holders')
         fireEvent.click(tokenRadio)
         const searchInput = await screen.findByTestId('token-search')
-        await userEvent.type(searchInput, address1)
+        await userEvent.type(searchInput, getWalletAddress())
         const checkboxes = await screen.findAllByTestId('checkbox-tokens')
 
         fireEvent.click(checkboxes[0])

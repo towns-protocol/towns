@@ -2,7 +2,7 @@ import { BigNumber } from 'ethers'
 import * as zionClient from 'use-zion-client'
 import { EVERYONE_ADDRESS } from 'utils'
 import { MOCK_CONTRACT_METADATA_ADDRESSES } from '../../mocks/token-collections'
-import { address1, address2 } from './testUtils'
+import { getWalletAddress } from './testUtils'
 
 const CHANNEL_ID = 'channel1'
 const SPACE_ID = 'town1'
@@ -80,6 +80,9 @@ export const roleDataWithMemberAssignedToChannel = [
         channels: [channelDataForRole],
     },
 ]
+
+const address1 = getWalletAddress()
+const address2 = getWalletAddress()
 
 export const mockMembers: zionClient.RoomMember[] = [
     {

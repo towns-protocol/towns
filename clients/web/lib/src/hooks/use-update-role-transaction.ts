@@ -48,10 +48,13 @@ export function useUpdateRoleTransaction() {
             users: string[],
         ) {
             if (isTransacting.current) {
+                console.warn('useUpdateRoleTransaction', 'Transaction already in progress')
                 // Transaction already in progress
                 return
             }
             if (!signer) {
+                console.error('useUpdateRoleTransaction', 'Transaction has no signer')
+
                 setTransactionContext(
                     createTransactionContext(TransactionStatus.Failed, new SignerUndefinedError()),
                 )
@@ -96,6 +99,7 @@ export function useUpdateRoleTransaction() {
                 }
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
             } catch (e: any) {
+                console.error('useUpdateRoleTransaction', 'Transaction failed', e)
                 setTransactionContext(
                     createTransactionContext(TransactionStatus.Failed, toError(e)),
                 )

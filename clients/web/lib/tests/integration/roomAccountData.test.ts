@@ -59,7 +59,8 @@ describe('roomAccountData', () => {
         await bob.logout()
 
         // save some data
-        const bob2 = await registerAndStartClient('bob', bob.provider.wallet)
+        // eslint-disable-next-line @typescript-eslint/require-await
+        const bob2 = await registerAndStartClient('bob', (async () => bob.provider.wallet)())
 
         if (roomId.protocol === SpaceProtocol.Matrix) {
             // bob should have the account data
