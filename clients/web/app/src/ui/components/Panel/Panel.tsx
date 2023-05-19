@@ -87,7 +87,7 @@ const MobilePanel = (props: Props) => {
         </Sheet>
     ) : (
         // TODO: sort out zIndexes
-        <Stack absoluteFill background="level2" zIndex="tooltips">
+        <Stack absoluteFill background="level2" zIndex="tooltips" insetTop="safeArea">
             <Stack
                 gap
                 horizontal

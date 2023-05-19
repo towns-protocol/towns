@@ -13,6 +13,8 @@ export const mobileAppClass = style({
     overflowY: 'hidden',
     overscrollBehaviorY: 'contain',
     touchAction: 'none',
+    paddingTop: 'env(safe-area-inset-top)',
+    marginBottom: 'env(safe-area-inset-bottom)',
 })
 
 export const srOnlyClass = style({

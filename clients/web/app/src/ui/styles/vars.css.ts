@@ -31,6 +31,9 @@ const root = createGlobalTheme(':root', {
         // suited for text spacing
         paragraph: `${baseline * 1.5}px`, // m
         line: `${baseline * 0.75}px`,
+
+        safeAreaInsetTop: 'env(safe-area-inset-top)',
+        safeAreaInsetBottom: 'env(safe-area-inset-bottom)',
     } as const,
 
     dims: {
@@ -190,6 +193,7 @@ const root = createGlobalTheme(':root', {
         xl: {
             marginTop: `${baseline * -16}px`,
         },
+        safeArea: { marginTop: 'env(safe-area-inset-top)' },
     } as const,
 
     insetBottom: {
@@ -204,6 +208,7 @@ const root = createGlobalTheme(':root', {
         xl: {
             marginBottom: `${baseline * -16}px`,
         },
+        safeArea: { marginBottom: 'env(safe-area-inset-bottom)' },
     } as const,
 
     borderRadius: {

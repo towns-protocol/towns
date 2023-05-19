@@ -43,7 +43,7 @@ export const StackHomeOverlay = (props: Props) => {
     }, [link, navigate])
 
     return (
-        <Box absoluteFill>
+        <Box absoluteFill insetTop="safeArea">
             <MotionBox
                 absoluteFill
                 initial={{ opacity: 0 }}

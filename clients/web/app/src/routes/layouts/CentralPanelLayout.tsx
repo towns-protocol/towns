@@ -14,7 +14,7 @@ export const CentralPanelLayout = (props: { children: React.ReactNode }) => {
 
     return isMobile ? (
         <>
-            <Stack height="100svh">
+            <Stack height="100svh" paddingBottom="safeAreaInsetBottom">
                 <StackLayoutHeader />
                 <Box grow centerContent position="relative">
                     <Box absoluteFill>{children}</Box>
