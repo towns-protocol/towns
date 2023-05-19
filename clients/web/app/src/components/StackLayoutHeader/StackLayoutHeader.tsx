@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from 'react'
-import { useMatrixCredentials, useSpaceData } from 'use-zion-client'
+import { useMyProfile, useSpaceData } from 'use-zion-client'
 import { AnimatePresence } from 'framer-motion'
 import { ImageVariants } from '@components/UploadImage/useImageSource'
 import { Avatar, Box, Stack, Text } from '@ui'
@@ -8,7 +8,7 @@ import { StackHomeOverlay } from '@components/StackHomeOverlay/StackHomeOverlay'
 import { useNavigateToCurrentSpaceInfo } from 'hooks/useNavigateToCurrentSpaceInfo'
 
 export const StackLayoutHeader = () => {
-    const { userId } = useMatrixCredentials()
+    const userId = useMyProfile()?.userId
     const space = useSpaceData()
     const [showOverlay, setShowOverlay] = useState(false)
     const { navigateToCurrentSpace } = useNavigateToCurrentSpaceInfo()

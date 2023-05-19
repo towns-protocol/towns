@@ -4,7 +4,7 @@ import {
     Channel,
     RoomIdentifier,
     TimelineEvent,
-    useMatrixCredentials,
+    useMyProfile,
     useSpaceMembers,
     useTimelineReactions,
     useTimelineThreadStats,
@@ -52,7 +52,7 @@ export const MessageTimelineWrapper = (props: {
     isChannelWritable?: boolean
 }) => {
     const { spaceId, channelId, events, isChannelWritable, threadParentId } = props
-    const { userId } = useMatrixCredentials()
+    const userId = useMyProfile()?.userId
     const { sendReadReceipt } = useZionClient()
     const type = threadParentId ? MessageTimelineType.Thread : MessageTimelineType.Channel
     const channels = useSpaceChannels()

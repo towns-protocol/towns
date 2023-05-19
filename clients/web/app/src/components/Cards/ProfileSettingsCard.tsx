@@ -10,9 +10,7 @@ import { MenuItem } from './MenuItem'
 
 type Props = {
     userId: string | null
-    username: string | null
     displayName?: string
-    avatarUrl?: string
     userAddress?: string
 }
 
