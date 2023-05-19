@@ -1,0 +1,7 @@
+linters-settings:
+    exhaustive:
+        check-switch: true
+
+linters:
+    enable:
+        - exhaustive

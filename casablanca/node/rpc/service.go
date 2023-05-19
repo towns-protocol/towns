@@ -313,6 +313,10 @@ func addMembershipEvent(membership *protocol.Membership, s *Service, ctx context
 		permission = auth.PermissionInvite
 	case protocol.MembershipOp_SO_JOIN:
 		permission = auth.PermissionWrite
+	case protocol.MembershipOp_SO_LEAVE:
+		permission = auth.PermissionWrite
+	case protocol.MembershipOp_SO_UNSPECIFIED:
+		permission = auth.PermissionUndefined
 	}
 
 	if permission != auth.PermissionUndefined {

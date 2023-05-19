@@ -102,6 +102,12 @@ func (za *ChainAuth) IsAllowed(ctx context.Context, args AuthorizationArgs, view
 		isEntitled, err := za.isEntitledToChannel(roomInfo, userIdentifier.AccountAddress, args.Permission)
 		log.Debugf("isEntitled: %v %v", isEntitled, err)
 		return isEntitled, err
+	case common.User:
+		fallthrough
+	case common.UserSettings:
+		fallthrough
+	case common.Unknown:
+		fallthrough
 	default:
 		errMsg := fmt.Sprintf("unhandled room type: %s", roomInfo.RoomType)
 		log.Error("IsAllowed", errMsg)

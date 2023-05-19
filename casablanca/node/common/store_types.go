@@ -27,8 +27,13 @@ func (r RoomType) String() string {
 		return "channel"
 	case User:
 		return "user"
+	case UserSettings:
+		return "user_settings"
+	case Unknown:
+		return "unknown"
+	default:
+		return "unknown"
 	}
-	return "unknown"
 }
 
 type RoomInfo struct {
