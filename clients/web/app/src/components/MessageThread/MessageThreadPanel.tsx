@@ -3,6 +3,7 @@ import {
     SendMessageOptions,
     useChannelContext,
     useChannelData,
+    useMyProfile,
     useSpaceMembers,
     useTimelineThread,
 } from 'use-zion-client'
@@ -39,6 +40,7 @@ export const MessageThreadPanel = (props: Props) => {
         sendReply(value, channelId, options)
     }
     const { members } = useSpaceMembers()
+    const userId = useMyProfile()?.userId
     const channels = useSpaceChannels()
     const { isMobile } = useDevice()
 
@@ -81,6 +83,7 @@ export const MessageThreadPanel = (props: Props) => {
                             channels={channels}
                             members={members}
                             background="level2"
+                            userId={userId}
                             onSend={onSend}
                         />
                     </Box>

@@ -11,9 +11,9 @@ import { MessageTimeline } from '@components/MessageTimeline/MessageTimeline'
 import { MessageTimelineWrapper } from '@components/MessageTimeline/MessageTimelineContext'
 import { RichTextEditor } from '@components/RichText/RichTextEditor'
 import { Box, Paragraph, Stack } from '@ui'
+import { useIsChannelWritable } from 'hooks/useIsChannelWritable'
 import { useSendReply } from 'hooks/useSendReply'
 import { useSpaceChannels } from 'hooks/useSpaceChannels'
-import { useIsChannelWritable } from 'hooks/useIsChannelWritable'
 
 export const MessageThread = (props: {
     userId: string
@@ -66,6 +66,7 @@ export const MessageThread = (props: {
     )
 
     const { members } = useSpaceMembers()
+    const userId = useMyProfile()?.userId
     const channels = useSpaceChannels()
 
     const { isChannelWritable } = useIsChannelWritable(channelId)
@@ -97,6 +98,7 @@ export const MessageThread = (props: {
                                 placeholder="Reply..."
                                 channels={channels}
                                 members={members}
+                                userId={userId}
                                 onSend={onSend}
                             />
                         </Box>

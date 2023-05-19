@@ -9,6 +9,7 @@ import {
     ZTEvent,
     useChannelData,
     useChannelTimeline,
+    useMatrixCredentials,
     useMyMembership,
     useSpaceMembers,
     useZionClient,
@@ -87,6 +88,7 @@ const SpacesChannelComponent = () => {
         useDisplayEncryptionProgress(channelMessages)
 
     const { members } = useSpaceMembers()
+    const { userId } = useMatrixCredentials()
     const channels = useSpaceChannels()
 
     const { isChannelWritable } = useIsChannelWritable(channelId)
@@ -193,6 +195,7 @@ const SpacesChannelComponent = () => {
                             placeholder={placeholder}
                             channels={channels}
                             members={members}
+                            userId={userId}
                             onSend={onSend}
                         />
                     </Box>

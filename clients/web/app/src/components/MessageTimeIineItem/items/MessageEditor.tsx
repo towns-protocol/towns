@@ -3,6 +3,7 @@ import {
     RoomIdentifier,
     RoomMessageEvent,
     SendTextMessageOptions,
+    useMyProfile,
     useSpaceMembers,
 } from 'use-zion-client'
 import { RichTextEditor } from '@components/RichText/RichTextEditor'
@@ -34,6 +35,7 @@ export const TimelineMessageEditor = (props: {
     }, [timelineActions])
 
     const { members } = useSpaceMembers()
+    const userId = useMyProfile()?.userId
     const channels = useSpaceChannels()
 
     return (
@@ -45,6 +47,7 @@ export const TimelineMessageEditor = (props: {
                 initialValue={initialValue}
                 channels={channels}
                 members={members}
+                userId={userId}
                 onSend={onSend}
                 onCancel={onCancel}
             />

@@ -73,6 +73,7 @@ type Props = {
     threadPreview?: string
     channels: Channel[]
     members: RoomMember[]
+    userId?: string
 } & Pick<BoxProps, 'background'>
 
 const fieldClassName = clsx([fieldStyles.field, styles.richText])
@@ -196,6 +197,7 @@ export const RichTextEditor = (props: Props) => {
 const RichTextEditorWithoutBoundary = (props: Props) => {
     const {
         editable = true,
+        userId,
         members,
         channels,
         placeholder = 'Write something ...',
@@ -269,7 +271,7 @@ const RichTextEditorWithoutBoundary = (props: Props) => {
             <HistoryPlugin />
             <LinkPlugin />
             <EmojiReplacePlugin />
-            <MentionsPlugin members={members} />
+            <MentionsPlugin members={members} userId={userId} />
             <EmojiShortcutPlugin />
             <ListMaxIndentLevelPlugin maxDepth={4} />
             <ListPlugin />

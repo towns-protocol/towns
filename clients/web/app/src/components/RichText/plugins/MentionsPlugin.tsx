@@ -14,6 +14,7 @@ import * as ReactDOM from 'react-dom'
 import { RoomMember } from 'use-zion-client'
 import { notUndefined } from 'ui/utils/utils'
 import { Avatar, TypeaheadMenu, TypeaheadMenuItem } from '@ui'
+import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { $createMentionNode } from '../nodes/MentionNode'
 
 // At most, 5 suggestions are shown in the popup.
@@ -21,6 +22,7 @@ const SUGGESTION_LIST_LENGTH_LIMIT = 10
 
 type Props = {
     members: RoomMember[]
+    userId?: string
 }
 
 export const MentionsPlugin = (props: Props) => {
@@ -35,10 +37,16 @@ export const MentionsPlugin = (props: Props) => {
     const options = useMemo(() => {
         return props.members
             .map((m) =>
-                m.name ? new MentionTypeaheadOption(m.name, m.userId, m.avatarUrl) : undefined,
+                m.name
+                    ? new MentionTypeaheadOption(
+                          getPrettyDisplayName(m).name +
+                              (m.userId === props.userId ? ' (you)' : ''),
+                          m.userId,
+                      )
+                    : undefined,
             )
             .filter(notUndefined)
-    }, [props.members])
+    }, [props.members, props.userId])
 
     const results = useMemo(
         () =>
@@ -105,13 +113,7 @@ export const MentionsPlugin = (props: Props) => {
                                       key={option.key}
                                       option={option}
                                       name={option.name}
-                                      Icon={
-                                          option.picture ? (
-                                              <Avatar size="avatar_sm" userId={option.userId} />
-                                          ) : (
-                                              <></>
-                                          )
-                                      }
+                                      Icon={<Avatar size="avatar_sm" userId={option.userId} />}
                                       onClick={() => {
                                           setHighlightedIndex(i)
                                           selectOptionAndCleanUp(option)
@@ -247,12 +249,10 @@ const getPossibleQueryMatch = (text: string): QueryMatch | null => {
 class MentionTypeaheadOption extends TypeaheadOption {
     name: string
     userId: string
-    picture: string | undefined
 
-    constructor(name: string, userId: string, picture: string | undefined) {
+    constructor(name: string, userId: string) {
         super(name)
         this.name = name
         this.userId = userId
-        this.picture = picture
     }
 }
