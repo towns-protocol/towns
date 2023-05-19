@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity 0.8.19;
 
-import "council/interfaces/ICoreVoting.sol";
-import "council/interfaces/IVotingVault.sol";
-import "council/libraries/Authorizable.sol";
+import {ICoreVoting} from "council/interfaces/ICoreVoting.sol";
+import {IVotingVault} from "council/interfaces/IVotingVault.sol";
+import {Authorizable} from "council/libraries/Authorizable.sol";
 
 // This vault allows someone to gain one vote on the GSC and tracks that status through time
 // it will be a voting vault of the gsc voting contract

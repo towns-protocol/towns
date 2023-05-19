@@ -35,7 +35,7 @@ contract UserEntitlement is
   mapping(bytes32 => Entitlement) public entitlementsById;
   mapping(bytes32 => uint256[]) public roleIdsByChannelId;
   mapping(uint256 => bytes32[]) public entitlementIdsByRoleId;
-  mapping(address => bytes32[]) entitlementIdsByUser;
+  mapping(address => bytes32[]) internal entitlementIdsByUser;
 
   string public constant name = "User Entitlement";
   string public constant description = "Entitlement for users";

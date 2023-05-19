@@ -1116,11 +1116,11 @@
       ]
     },
     "packages/contracts/src/core/spaces/entitlements/UserEntitlement.sol": {
-      "keccak256": "0xa27c21152dc8a8918513088462b6e48c862db1e12abf4754017caa98637d611d",
+      "keccak256": "0x82d47df744c1289140bc64bccc81c3c8515c224a87ea75f8ff6739921d4a2090",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://55e3af3391e22500f1b2be90e0ad0a0c7ab99fbe24d25da3006a550ddcbe2735",
-        "dweb:/ipfs/Qme21VjuA9KRJSiqquMJux8KWfkifX6zoKZXdTo6AZtgKn"
+        "bzz-raw://176376d5dd42c677a2f044efdfa6f6dbf0f32cf9573f6e212e63301fd436fd5e",
+        "dweb:/ipfs/QmUVs73zLkrtbJ47cxfygkWaCnQv652x6ufik8NBoe1ddJ"
       ]
     },
     "packages/contracts/src/core/tokens/TownOwner.sol": {

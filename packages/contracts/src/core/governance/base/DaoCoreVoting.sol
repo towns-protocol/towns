@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity 0.8.19;
 
-import "council/interfaces/IVotingVault.sol";
-import "council/libraries/Authorizable.sol";
-import "council/libraries/ReentrancyBlock.sol";
-import "council/interfaces/ICoreVoting.sol";
+import {IVotingVault} from "council/interfaces/IVotingVault.sol";
+import {Authorizable} from "council/libraries/Authorizable.sol";
+import {ReentrancyBlock} from "council/libraries/ReentrancyBlock.sol";
+import {ICoreVoting} from "council/interfaces/ICoreVoting.sol";
 
 /// @title DaoCoreVoting
 /// @dev Modifies CoreVoting to only proposals that have been approved by the GSC
