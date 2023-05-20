@@ -8,9 +8,12 @@ import (
 	connect "github.com/bufbuild/connect-go"
 )
 
-var syncStreamsResultSize = infra.NewCounter("sync_streams_result_size", "The total number of events returned by sync streams")
+var (
+	syncStreamsRequests   = infra.NewSuccessMetrics("sync_streams_requests", serviceRequests)
+	syncStreamsResultSize = infra.NewCounter("sync_streams_result_size", "The total number of events returned by sync streams")
+)
 
-func (s *Service) SyncStreams(ctx context.Context, req *connect.Request[protocol.SyncStreamsRequest], stream *connect.ServerStream[protocol.SyncStreamsResponse]) error {
+func (s *Service) syncStreams(ctx context.Context, req *connect.Request[protocol.SyncStreamsRequest], stream *connect.ServerStream[protocol.SyncStreamsResponse]) error {
 
 	blocks, err := s.Storage.SyncStreams(ctx, req.Msg.SyncPos, -1, req.Msg.TimeoutMs)
 	if err != nil {

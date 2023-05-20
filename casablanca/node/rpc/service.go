@@ -25,44 +25,20 @@ import (
 	"casablanca/node/storage"
 )
 
-type LoggingService struct {
-	Service *Service
-}
-
 var (
 	serviceRequests      = infra.NewSuccessMetrics("service_requests", nil)
-	createStreamRequests = infra.NewSuccessMetrics("create_stream_requests", serviceRequests)
 	getStreamRequests    = infra.NewSuccessMetrics("get_stream_requests", serviceRequests)
 	addEventRequests     = infra.NewSuccessMetrics("add_event_requests", serviceRequests)
-	syncStreamsRequests  = infra.NewSuccessMetrics("sync_streams_requests", serviceRequests)
 )
 
 // TODO-auth-check
 // Add missing authentification checks based on Dendrite's implementation
 
-func (s *LoggingService) CreateStream(ctx context.Context, req *connect_go.Request[protocol.CreateStreamRequest]) (*connect_go.Response[protocol.CreateStreamResponse], error) {
-
-	ctx, log, requestId := infra.SetLoggerWithRequestId(ctx)
-	parsedEvent := events.FormatEventsToJson(req.Msg.Events)
-
-	log.Debugf("CreateStream: request %s events: %s", protojson.Format((req.Msg)), parsedEvent)
-
-	res, err := s.Service.CreateStream(ctx, req)
-	if err != nil {
-		log.Errorf("CreateStream error: %v", err)
-		createStreamRequests.Fail()
-		return nil, RpcAddRequestId(err, requestId)
-	}
-	log.Debugf("CreateStream: response %s", protojson.Format((res.Msg)))
-	createStreamRequests.Pass()
-	return res, nil
-}
-
-func (s *LoggingService) GetStream(ctx context.Context, req *connect_go.Request[protocol.GetStreamRequest]) (*connect_go.Response[protocol.GetStreamResponse], error) {
+func (s *Service) GetStream(ctx context.Context, req *connect_go.Request[protocol.GetStreamRequest]) (*connect_go.Response[protocol.GetStreamResponse], error) {
 	ctx, log, requestId := infra.SetLoggerWithRequestId(ctx)
 	log.Debugf("GetStream: request %s", protojson.Format((req.Msg)))
 
-	res, err := s.Service.GetStream(ctx, req)
+	res, err := s.getStream(ctx, req)
 	if err != nil {
 		log.Errorf("GetStream error: %v", err)
 		getStreamRequests.Fail()
@@ -76,13 +52,13 @@ func (s *LoggingService) GetStream(ctx context.Context, req *connect_go.Request[
 	return res, nil
 }
 
-func (s *LoggingService) AddEvent(ctx context.Context, req *connect_go.Request[protocol.AddEventRequest]) (*connect_go.Response[protocol.AddEventResponse], error) {
+func (s *Service) AddEvent(ctx context.Context, req *connect_go.Request[protocol.AddEventRequest]) (*connect_go.Response[protocol.AddEventResponse], error) {
 	ctx, log, requestId := infra.SetLoggerWithRequestId(ctx)
 
 	parsedEvent := events.FormatEventsToJson([]*protocol.Envelope{req.Msg.Event})
 	log.Debugf("AddEvent: request streamId: %s %s", req.Msg.StreamId, parsedEvent)
 
-	res, err := s.Service.AddEvent(ctx, req)
+	res, err := s.addEventImpl(ctx, req)
 	if err != nil {
 		log.Errorf("AddEvent error: %v", err)
 		addEventRequests.Fail()
@@ -92,10 +68,10 @@ func (s *LoggingService) AddEvent(ctx context.Context, req *connect_go.Request[p
 	return res, nil
 }
 
-func (s *LoggingService) SyncStreams(ctx context.Context, req *connect_go.Request[protocol.SyncStreamsRequest], stream *connect_go.ServerStream[protocol.SyncStreamsResponse]) error {
+func (s *Service) SyncStreams(ctx context.Context, req *connect_go.Request[protocol.SyncStreamsRequest], stream *connect_go.ServerStream[protocol.SyncStreamsResponse]) error {
 	ctx, log, requestId := infra.SetLoggerWithRequestId(ctx)
 	log.Debugf("SyncStreams: CALL timeout: %d req: %s", req.Msg.TimeoutMs, protojson.Format((req.Msg)))
-	err := s.Service.SyncStreams(ctx, req, stream)
+	err := s.syncStreams(ctx, req, stream)
 
 	if err != nil {
 		log.Errorf("SyncStreams error: %v", err)
@@ -106,11 +82,11 @@ func (s *LoggingService) SyncStreams(ctx context.Context, req *connect_go.Reques
 	return err
 }
 
-func (s *LoggingService) Info(ctx context.Context, req *connect_go.Request[protocol.InfoRequest]) (*connect_go.Response[protocol.InfoResponse], error) {
+func (s *Service) Info(ctx context.Context, req *connect_go.Request[protocol.InfoRequest]) (*connect_go.Response[protocol.InfoResponse], error) {
 	ctx, log, requestId := infra.SetLoggerWithRequestId(ctx)
 	log.Debugf("Info: request %s", protojson.Format((req.Msg)))
 
-	res, err := s.Service.Info(ctx, req)
+	res, err := s.info(ctx, req)
 	if err != nil {
 		log.Errorf("Info error: %v", err)
 		serviceRequests.Fail()
@@ -127,7 +103,7 @@ type Service struct {
 	wallet        *crypto.Wallet
 }
 
-func (s *Service) GetStream(ctx context.Context, req *connect_go.Request[protocol.GetStreamRequest]) (*connect_go.Response[protocol.GetStreamResponse], error) {
+func (s *Service) getStream(ctx context.Context, req *connect_go.Request[protocol.GetStreamRequest]) (*connect_go.Response[protocol.GetStreamResponse], error) {
 	streamId := req.Msg.StreamId
 	pos, events, err := s.Storage.GetStream(ctx, streamId)
 	if err != nil {
@@ -161,7 +137,7 @@ func (s *Service) checkPrevEvents(view storage.StreamView, prevEvents [][]byte) 
 	return nil
 }
 
-func (s *Service) AddEvent(ctx context.Context, req *connect_go.Request[protocol.AddEventRequest]) (*connect_go.Response[protocol.AddEventResponse], error) {
+func (s *Service) addEventImpl(ctx context.Context, req *connect_go.Request[protocol.AddEventRequest]) (*connect_go.Response[protocol.AddEventResponse], error) {
 	view := storage.NewViewFromStreamId(ctx, s.Storage, req.Msg.StreamId)
 	_, err := s.addEvent(ctx, req.Msg.StreamId, view, req.Msg.Event)
 	if err != nil {
@@ -378,7 +354,7 @@ func addMembershipEvent(membership *protocol.Membership, s *Service, ctx context
 	return cookie, nil
 }
 
-func (s *Service) Info(_ context.Context, request *connect_go.Request[protocol.InfoRequest]) (*connect_go.Response[protocol.InfoResponse], error) {
+func (s *Service) info(_ context.Context, request *connect_go.Request[protocol.InfoRequest]) (*connect_go.Response[protocol.InfoResponse], error) {
 	log.Trace("Info request: ", request)
 	if request.Msg.Debug == "error" {
 		// TODO: flag
@@ -419,14 +395,14 @@ func MakeServiceHandler(ctx context.Context, dbUrl string, chainConfig *config.C
 		}
 	}
 
-	pattern, handler := protocolconnect.NewStreamServiceHandler(&LoggingService{
-		Service: &Service{
+	return protocolconnect.NewStreamServiceHandler(
+		&Service{
 			Storage:       store,
 			Authorization: authorization,
 			wallet:        wallet,
 		},
-	}, opts...)
-	return pattern, handler
+		opts...,
+	)
 }
 
 func (s *Service) makeEnvelopeWithPayload(payload protocol.IsStreamEvent_Payload, prevHashes [][]byte) (*protocol.Envelope, error) {

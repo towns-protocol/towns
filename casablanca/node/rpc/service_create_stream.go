@@ -10,14 +10,36 @@ import (
 	"casablanca/node/storage"
 	"context"
 
-	connect "github.com/bufbuild/connect-go"
+	connect_go "github.com/bufbuild/connect-go"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/encoding/protojson"
 
 	. "casablanca/node/base"
 )
 
-func (s *Service) CreateStream(ctx context.Context, req *connect.Request[protocol.CreateStreamRequest]) (*connect.Response[protocol.CreateStreamResponse], error) {
+var (
+	createStreamRequests = infra.NewSuccessMetrics("create_stream_requests", serviceRequests)
+)
+
+func (s *Service) CreateStream(ctx context.Context, req *connect_go.Request[protocol.CreateStreamRequest]) (*connect_go.Response[protocol.CreateStreamResponse], error) {
+	ctx, log, requestId := infra.SetLoggerWithRequestId(ctx)
+	parsedEvent := events.FormatEventsToJson(req.Msg.Events)
+
+	log.Debugf("CreateStream: request %s events: %s", protojson.Format((req.Msg)), parsedEvent)
+
+	res, err := s.createStream(ctx, req)
+	if err != nil {
+		log.Errorf("CreateStream error: %v", err)
+		createStreamRequests.Fail()
+		return nil, RpcAddRequestId(err, requestId)
+	}
+	log.Debugf("CreateStream: response %s", protojson.Format((res.Msg)))
+	createStreamRequests.Pass()
+	return res, nil
+}
+
+func (s *Service) createStream(ctx context.Context, req *connect_go.Request[protocol.CreateStreamRequest]) (*connect_go.Response[protocol.CreateStreamResponse], error) {
 	log := infra.GetLogger(ctx)
 	if len(req.Msg.Events) == 0 {
 		return nil, RpcErrorf(protocol.Err_BAD_STREAM_CREATION_PARAMS, "CreateStream: no events")
@@ -155,7 +177,7 @@ func (s *Service) CreateStream(ctx context.Context, req *connect.Request[protoco
 		break
 	}
 
-	return connect.NewResponse(&protocol.CreateStreamResponse{
+	return connect_go.NewResponse(&protocol.CreateStreamResponse{
 		SyncCookie: cookie,
 	}), nil
 }
