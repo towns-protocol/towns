@@ -5,7 +5,10 @@ import (
 	"casablanca/node/protocol"
 	"context"
 
-	connect "github.com/bufbuild/connect-go"
+	. "casablanca/node/base"
+
+	connect_go "github.com/bufbuild/connect-go"
+	"google.golang.org/protobuf/encoding/protojson"
 )
 
 var (
@@ -13,7 +16,21 @@ var (
 	syncStreamsResultSize = infra.NewCounter("sync_streams_result_size", "The total number of events returned by sync streams")
 )
 
-func (s *Service) syncStreams(ctx context.Context, req *connect.Request[protocol.SyncStreamsRequest], stream *connect.ServerStream[protocol.SyncStreamsResponse]) error {
+func (s *Service) SyncStreams(ctx context.Context, req *connect_go.Request[protocol.SyncStreamsRequest], stream *connect_go.ServerStream[protocol.SyncStreamsResponse]) error {
+	ctx, log, requestId := infra.SetLoggerWithRequestId(ctx)
+	log.Debugf("SyncStreams: CALL timeout: %d req: %s", req.Msg.TimeoutMs, protojson.Format((req.Msg)))
+	err := s.syncStreams(ctx, req, stream)
+
+	if err != nil {
+		log.Errorf("SyncStreams error: %v", err)
+		syncStreamsRequests.Fail()
+		return RpcAddRequestId(err, requestId)
+	}
+	syncStreamsRequests.Pass()
+	return err
+}
+
+func (s *Service) syncStreams(ctx context.Context, req *connect_go.Request[protocol.SyncStreamsRequest], stream *connect_go.ServerStream[protocol.SyncStreamsResponse]) error {
 
 	blocks, err := s.Storage.SyncStreams(ctx, req.Msg.SyncPos, -1, req.Msg.TimeoutMs)
 	if err != nil {
