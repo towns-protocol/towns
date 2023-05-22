@@ -1,6 +1,6 @@
 {
   "compiler": {
-    "version": "0.8.17+commit.8df45f5f"
+    "version": "0.8.19+commit.7dd6d404"
   },
   "language": "Solidity",
   "output": {
@@ -149,9 +149,9 @@
   },
   "settings": {
     "compilationTarget": {
-      "contracts/src/libraries/Errors.sol": "Errors"
+      "packages/contracts/src/libraries/Errors.sol": "Errors"
     },
-    "evmVersion": "london",
+    "evmVersion": "paris",
     "libraries": {},
     "metadata": {
       "bytecodeHash": "ipfs"
@@ -161,9 +161,10 @@
       "runs": 200
     },
     "remappings": [
-      ":@opengsn/=node_modules/@opengsn/",
-      ":@openzeppelin/=node_modules/@openzeppelin/",
-      ":contracts/=contracts/",
+      ":@openzeppelin/=lib/openzeppelin-contracts/",
+      ":@towns/=node_modules/@towns/",
+      ":ERC721A/=lib/ERC721A/contracts/",
+      ":contracts/=packages/contracts/",
       ":council/=lib/council/contracts/",
       ":ds-test/=lib/ds-test/src/",
       ":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/",
@@ -171,16 +172,18 @@
       ":murky/=lib/murky/src/",
       ":openzeppelin-contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/",
       ":openzeppelin-contracts/=lib/openzeppelin-contracts/",
-      ":solmate/=lib/solmate/src/"
+      ":operator-filter-registry/=lib/operator-filter-registry/",
+      ":solmate/=lib/solmate/src/",
+      ":weird-erc20/=lib/solmate/lib/weird-erc20/src/"
     ]
   },
   "sources": {
-    "contracts/src/libraries/Errors.sol": {
-      "keccak256": "0xa58c2c12ba0d81501a37a360097b07288341c582efee3787179f7ec7edc0509a",
+    "packages/contracts/src/libraries/Errors.sol": {
+      "keccak256": "0x2d478c9688870f6780a19ea34d73db957f194702cbc3c4f4707f9825ba502cf1",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://9ef8c5a09ded0537b7c631ff38c1ee1a9eb6071cd2dfdcbbdbb8ff50fcf388ff",
-        "dweb:/ipfs/QmTy1iNZfz69MCJwE1U9aDR4ZyKXujhmYUVrVjakSYFd8R"
+        "bzz-raw://2d777ea8d3fa5ce20b9cc36fc5194d7d129dc7b2ece31d060087f797628566fa",
+        "dweb:/ipfs/QmZ1KjfrYZ9A2FTUJkYs3rezxFrsUQWZySJRBL6RHQoyQF"
       ]
     }
   },

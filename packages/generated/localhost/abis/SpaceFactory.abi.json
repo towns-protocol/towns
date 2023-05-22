@@ -219,7 +219,7 @@
       },
       {
         "internalType": "string",
-        "name": "spaceNetworkId",
+        "name": "spaceId",
         "type": "string"
       },
       {
@@ -323,7 +323,7 @@
     "inputs": [
       {
         "internalType": "string",
-        "name": "spaceNetworkId",
+        "name": "spaceId",
         "type": "string"
       }
     ],
@@ -342,7 +342,7 @@
     "inputs": [
       {
         "internalType": "string",
-        "name": "spaceNetworkId",
+        "name": "spaceId",
         "type": "string"
       }
     ],

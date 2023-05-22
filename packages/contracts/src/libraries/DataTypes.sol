@@ -10,7 +10,7 @@ pragma solidity 0.8.19;
 library DataTypes {
   struct Channel {
     string name;
-    string channelNetworkId;
+    string channelId;
     bytes32 channelHash;
     uint256 createdAt;
     bool disabled;
@@ -43,15 +43,6 @@ library DataTypes {
   /// *********************************
   /// **************DTO****************
   /// *********************************
-  /// @notice A struct containing the parameters required for creating a space
-  /// @param spaceName The name of the space
-  /// @param networkId The network id of the space
-  struct CreateSpaceData {
-    string spaceName;
-    string spaceNetworkId;
-    string spaceMetadata;
-  }
-
   /// @notice A struct containing the parameters required for creating a space with a  token entitlement
   struct CreateSpaceExtraEntitlements {
     //The role and permissions to create for the associated users or token entitlements

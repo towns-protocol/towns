@@ -474,7 +474,7 @@ export interface SpaceFactory extends BaseContract {
 
     createSpace(
       spaceName: PromiseOrValue<string>,
-      spaceNetworkId: PromiseOrValue<string>,
+      spaceId: PromiseOrValue<string>,
       spaceMetadata: PromiseOrValue<string>,
       _everyonePermissions: PromiseOrValue<string>[],
       _extraEntitlements: DataTypes.CreateSpaceExtraEntitlementsStruct,
@@ -486,12 +486,12 @@ export interface SpaceFactory extends BaseContract {
     getOwnerPermissions(overrides?: CallOverrides): Promise<[string[]]>;
 
     getSpaceAddressByNetworkId(
-      spaceNetworkId: PromiseOrValue<string>,
+      spaceId: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<[string]>;
 
     getTokenIdByNetworkId(
-      spaceNetworkId: PromiseOrValue<string>,
+      spaceId: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<[BigNumber]>;
 
@@ -595,7 +595,7 @@ export interface SpaceFactory extends BaseContract {
 
   createSpace(
     spaceName: PromiseOrValue<string>,
-    spaceNetworkId: PromiseOrValue<string>,
+    spaceId: PromiseOrValue<string>,
     spaceMetadata: PromiseOrValue<string>,
     _everyonePermissions: PromiseOrValue<string>[],
     _extraEntitlements: DataTypes.CreateSpaceExtraEntitlementsStruct,
@@ -607,12 +607,12 @@ export interface SpaceFactory extends BaseContract {
   getOwnerPermissions(overrides?: CallOverrides): Promise<string[]>;
 
   getSpaceAddressByNetworkId(
-    spaceNetworkId: PromiseOrValue<string>,
+    spaceId: PromiseOrValue<string>,
     overrides?: CallOverrides
   ): Promise<string>;
 
   getTokenIdByNetworkId(
-    spaceNetworkId: PromiseOrValue<string>,
+    spaceId: PromiseOrValue<string>,
     overrides?: CallOverrides
   ): Promise<BigNumber>;
 
@@ -716,7 +716,7 @@ export interface SpaceFactory extends BaseContract {
 
     createSpace(
       spaceName: PromiseOrValue<string>,
-      spaceNetworkId: PromiseOrValue<string>,
+      spaceId: PromiseOrValue<string>,
       spaceMetadata: PromiseOrValue<string>,
       _everyonePermissions: PromiseOrValue<string>[],
       _extraEntitlements: DataTypes.CreateSpaceExtraEntitlementsStruct,
@@ -728,12 +728,12 @@ export interface SpaceFactory extends BaseContract {
     getOwnerPermissions(overrides?: CallOverrides): Promise<string[]>;
 
     getSpaceAddressByNetworkId(
-      spaceNetworkId: PromiseOrValue<string>,
+      spaceId: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<string>;
 
     getTokenIdByNetworkId(
-      spaceNetworkId: PromiseOrValue<string>,
+      spaceId: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
@@ -879,7 +879,7 @@ export interface SpaceFactory extends BaseContract {
 
     createSpace(
       spaceName: PromiseOrValue<string>,
-      spaceNetworkId: PromiseOrValue<string>,
+      spaceId: PromiseOrValue<string>,
       spaceMetadata: PromiseOrValue<string>,
       _everyonePermissions: PromiseOrValue<string>[],
       _extraEntitlements: DataTypes.CreateSpaceExtraEntitlementsStruct,
@@ -891,12 +891,12 @@ export interface SpaceFactory extends BaseContract {
     getOwnerPermissions(overrides?: CallOverrides): Promise<BigNumber>;
 
     getSpaceAddressByNetworkId(
-      spaceNetworkId: PromiseOrValue<string>,
+      spaceId: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
     getTokenIdByNetworkId(
-      spaceNetworkId: PromiseOrValue<string>,
+      spaceId: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
@@ -1011,7 +1011,7 @@ export interface SpaceFactory extends BaseContract {
 
     createSpace(
       spaceName: PromiseOrValue<string>,
-      spaceNetworkId: PromiseOrValue<string>,
+      spaceId: PromiseOrValue<string>,
       spaceMetadata: PromiseOrValue<string>,
       _everyonePermissions: PromiseOrValue<string>[],
       _extraEntitlements: DataTypes.CreateSpaceExtraEntitlementsStruct,
@@ -1025,12 +1025,12 @@ export interface SpaceFactory extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     getSpaceAddressByNetworkId(
-      spaceNetworkId: PromiseOrValue<string>,
+      spaceId: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
     getTokenIdByNetworkId(
-      spaceNetworkId: PromiseOrValue<string>,
+      spaceId: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 

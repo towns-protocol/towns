@@ -38,7 +38,7 @@ export class SpaceShim extends BaseContractShim<
         for (const channel of channelData) {
             channels.push({
                 name: channel.name as string,
-                channelNetworkId: channel.channelNetworkId as string,
+                channelNetworkId: channel.channelId as string,
                 disabled: channel.disabled as boolean,
             })
         }

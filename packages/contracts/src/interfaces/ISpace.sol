@@ -45,12 +45,12 @@ interface ISpace {
 
   /// @notice creates a new channel for the space
   /// @param channelName the name of the channel
-  /// @param channelNetworkId the network id of the channel linking it to the dendrite/casablanca protocol
+  /// @param channelId the network id of the channel linking it to the dendrite/casablanca protocol
   /// @param roleIds the roleIds to be set as the initial roles for the channel
   /// @return the channelId of the created channel
   function createChannel(
     string memory channelName,
-    string memory channelNetworkId,
+    string memory channelId,
     uint256[] memory roleIds
   ) external returns (bytes32);
 

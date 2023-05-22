@@ -16,36 +16,34 @@ contract UpdateChannelTest is SpaceBaseSetup {
 
     (
       string memory channelName,
-      string memory channelNetworkId,
+      string memory channelId,
       uint256[] memory roleIds
     ) = _createSimpleChannelData();
-    Space(_space).createChannel(channelName, channelNetworkId, roleIds);
+    Space(_space).createChannel(channelName, channelId, roleIds);
 
     string memory newChannelName = "new-channel-name";
 
-    Space(_space).updateChannel(channelNetworkId, newChannelName);
+    Space(_space).updateChannel(channelId, newChannelName);
 
     DataTypes.Channel memory _channel = Space(_space).getChannelByHash(
-      keccak256(abi.encodePacked(channelNetworkId))
+      keccak256(abi.encodePacked(channelId))
     );
 
     assertEq(_channel.name, newChannelName);
   }
 
-  function testUpdateChannelNotAllowed(
-    string memory channelNetworkId
-  ) external {
+  function testUpdateChannelNotAllowed(string memory channelId) external {
     string memory channelName = "channl-2";
 
     address _space = createSimpleSpace();
 
     (, , uint256[] memory roleIds) = _createSimpleChannelData();
 
-    Space(_space).createChannel("channel-1", channelNetworkId, roleIds);
+    Space(_space).createChannel("channel-1", channelId, roleIds);
 
     vm.prank(_randomAddress());
     vm.expectRevert(Errors.NotAllowed.selector);
-    Space(_space).updateChannel(channelNetworkId, channelName);
+    Space(_space).updateChannel(channelId, channelName);
   }
 
   function testUpdateChannelDoesNotExist(string memory channelName) external {
@@ -55,15 +53,13 @@ contract UpdateChannelTest is SpaceBaseSetup {
     Space(_space).updateChannel(channelName, newChannelName);
   }
 
-  function testUpdateChannelEmptyString(
-    string memory channelNetworkId
-  ) external {
+  function testUpdateChannelEmptyString(string memory channelId) external {
     address _space = createSimpleSpace();
     (, , uint256[] memory roleIds) = _createSimpleChannelData();
 
-    Space(_space).createChannel("channel-1", channelNetworkId, roleIds);
+    Space(_space).createChannel("channel-1", channelId, roleIds);
 
     vm.expectRevert(Errors.NameLengthInvalid.selector);
-    Space(_space).updateChannel(channelNetworkId, "");
+    Space(_space).updateChannel(channelId, "");
   }
 }

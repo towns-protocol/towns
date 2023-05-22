@@ -199,7 +199,7 @@ export default [
     "inputs": [
       {
         "internalType": "string",
-        "name": "_channelNetworkId",
+        "name": "_channelId",
         "type": "string"
       },
       {
@@ -284,7 +284,7 @@ export default [
       },
       {
         "internalType": "string",
-        "name": "channelNetworkId",
+        "name": "channelId",
         "type": "string"
       },
       {
@@ -328,7 +328,7 @@ export default [
       },
       {
         "internalType": "string",
-        "name": "channelNetworkId",
+        "name": "channelId",
         "type": "string"
       },
       {
@@ -459,7 +459,7 @@ export default [
           },
           {
             "internalType": "string",
-            "name": "channelNetworkId",
+            "name": "channelId",
             "type": "string"
           },
           {
@@ -703,7 +703,7 @@ export default [
     "inputs": [
       {
         "internalType": "string",
-        "name": "_channelNetworkId",
+        "name": "_channelId",
         "type": "string"
       },
       {
@@ -871,7 +871,7 @@ export default [
     "inputs": [
       {
         "internalType": "string",
-        "name": "_channelNetworkId",
+        "name": "_channelId",
         "type": "string"
       },
       {
@@ -961,7 +961,7 @@ export default [
     "inputs": [
       {
         "internalType": "string",
-        "name": "channelNetworkId",
+        "name": "channelId",
         "type": "string"
       },
       {
@@ -1062,7 +1062,7 @@ export default [
     "inputs": [
       {
         "internalType": "string",
-        "name": "channelNetworkId",
+        "name": "channelId",
         "type": "string"
       },
       {

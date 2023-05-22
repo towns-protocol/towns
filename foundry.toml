@@ -10,6 +10,7 @@ fs_permissions = [{ access = "read-write", path = "./packages"}, { access = "rea
 gas_reports = ["*"]
 optimizer = true
 optimizer_runs = 200
+evm_version="paris"
 
 [rpc_endpoints]
 goerli = "${GOERLI_RPC_URL}"

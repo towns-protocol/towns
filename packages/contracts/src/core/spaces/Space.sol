@@ -143,12 +143,12 @@ contract Space is
 
   /// @inheritdoc ISpace
   function setChannelAccess(
-    string calldata channelNetworkId,
+    string calldata channelId,
     bool disableChannel
   ) external {
     _isAllowed(IN_SPACE, Permissions.AddRemoveChannels);
 
-    bytes32 channelHash = keccak256(abi.encodePacked(channelNetworkId));
+    bytes32 channelHash = keccak256(abi.encodePacked(channelId));
 
     if (channelsByHash[channelHash].channelHash == 0) {
       revert Errors.ChannelDoesNotExist();
@@ -158,14 +158,14 @@ contract Space is
   }
 
   function updateChannel(
-    string calldata channelNetworkId,
+    string calldata channelId,
     string calldata channelName
   ) external {
     _isAllowed(IN_SPACE, Permissions.AddRemoveChannels);
 
     Utils.validateLength(channelName);
 
-    bytes32 channelHash = keccak256(abi.encodePacked(channelNetworkId));
+    bytes32 channelHash = keccak256(abi.encodePacked(channelId));
 
     if (channelsByHash[channelHash].channelHash == 0) {
       revert Errors.ChannelDoesNotExist();
@@ -177,14 +177,14 @@ contract Space is
   /// @inheritdoc ISpace
   function createChannel(
     string calldata channelName,
-    string memory channelNetworkId,
+    string memory channelId,
     uint256[] memory roleIds
   ) external returns (bytes32) {
     _isAllowed(IN_SPACE, Permissions.AddRemoveChannels);
 
     Utils.validateLength(channelName);
 
-    bytes32 channelHash = keccak256(abi.encodePacked(channelNetworkId));
+    bytes32 channelHash = keccak256(abi.encodePacked(channelId));
 
     if (channelsByHash[channelHash].channelHash != 0) {
       revert Errors.ChannelAlreadyRegistered();
@@ -193,7 +193,7 @@ contract Space is
     // save channel info
     channelsByHash[channelHash] = DataTypes.Channel({
       name: channelName,
-      channelNetworkId: channelNetworkId,
+      channelId: channelId,
       channelHash: channelHash,
       createdAt: block.timestamp,
       disabled: false
@@ -206,10 +206,7 @@ contract Space is
     for (uint256 i = 0; i < entitlements.length; i++) {
       address entitlement = entitlements[i];
 
-      IEntitlement(entitlement).addRoleIdToChannel(
-        channelNetworkId,
-        ownerRoleId
-      );
+      IEntitlement(entitlement).addRoleIdToChannel(channelId, ownerRoleId);
 
       // Add extra roles to the channel's entitlements
       for (uint256 j = 0; j < roleIds.length; j++) {
@@ -221,10 +218,7 @@ contract Space is
         }
 
         try
-          IEntitlement(entitlement).addRoleIdToChannel(
-            channelNetworkId,
-            roleIds[j]
-          )
+          IEntitlement(entitlement).addRoleIdToChannel(channelId, roleIds[j])
         {} catch {
           revert Errors.AddRoleFailed();
         }
@@ -482,20 +476,20 @@ contract Space is
 
   /// @inheritdoc ISpace
   function isEntitledToChannel(
-    string calldata _channelNetworkId,
+    string calldata _channelId,
     address _user,
     string calldata _permission
   ) external view returns (bool _entitled) {
-    // check that a _channelNetworkId is not empty
+    // check that a _channelId is not empty
     if (
-      bytes(_channelNetworkId).length == 0 ||
+      bytes(_channelId).length == 0 ||
       bytes(_permission).length == 0 ||
       _user == address(0)
     ) {
       revert Errors.InvalidParameters();
     }
 
-    bytes32 channelHash = keccak256(abi.encodePacked(_channelNetworkId));
+    bytes32 channelHash = keccak256(abi.encodePacked(_channelId));
 
     if (channelsByHash[channelHash].channelHash == 0) {
       revert Errors.ChannelDoesNotExist();
@@ -507,11 +501,7 @@ contract Space is
     }
 
     if (
-      _isEntitled(
-        _channelNetworkId,
-        _user,
-        bytes32(abi.encodePacked(_permission))
-      )
+      _isEntitled(_channelId, _user, bytes32(abi.encodePacked(_permission)))
     ) {
       _entitled = true;
     }
@@ -649,11 +639,11 @@ contract Space is
 
   /// @inheritdoc ISpace
   function addRoleToChannel(
-    string calldata _channelNetworkId,
+    string calldata _channelId,
     address _entitlement,
     uint256 _roleId
   ) external {
-    _isAllowed(_channelNetworkId, Permissions.AddRemoveChannels);
+    _isAllowed(_channelId, Permissions.AddRemoveChannels);
 
     if (!hasEntitlement[_entitlement]) {
       revert Errors.EntitlementNotWhitelisted();
@@ -664,16 +654,16 @@ contract Space is
       revert Errors.RoleDoesNotExist();
     }
 
-    IEntitlement(_entitlement).addRoleIdToChannel(_channelNetworkId, _roleId);
+    IEntitlement(_entitlement).addRoleIdToChannel(_channelId, _roleId);
   }
 
   /// @inheritdoc ISpace
   function removeRoleFromChannel(
-    string calldata _channelNetworkId,
+    string calldata _channelId,
     address _entitlement,
     uint256 _roleId
   ) external {
-    _isAllowed(_channelNetworkId, Permissions.AddRemoveChannels);
+    _isAllowed(_channelId, Permissions.AddRemoveChannels);
 
     if (!hasEntitlement[_entitlement]) {
       revert Errors.EntitlementNotWhitelisted();
@@ -684,10 +674,7 @@ contract Space is
       revert Errors.RoleDoesNotExist();
     }
 
-    IEntitlement(_entitlement).removeRoleIdFromChannel(
-      _channelNetworkId,
-      _roleId
-    );
+    IEntitlement(_entitlement).removeRoleIdFromChannel(_channelId, _roleId);
   }
 
   /// ***** Internal *****
@@ -722,14 +709,14 @@ contract Space is
   }
 
   function _isAllowed(
-    string memory _channelNetworkId,
+    string memory _channelId,
     string memory _permission
   ) internal view {
     if (
       _isOwner() ||
       (!disabled &&
         _isEntitled(
-          _channelNetworkId,
+          _channelId,
           _msgSender(),
           bytes32(abi.encodePacked(_permission))
         ))
@@ -759,17 +746,13 @@ contract Space is
   }
 
   function _isEntitled(
-    string memory _channelNetworkId,
+    string memory _channelId,
     address _user,
     bytes32 _permission
   ) internal view returns (bool _entitled) {
     for (uint256 i = 0; i < entitlements.length; i++) {
       if (
-        IEntitlement(entitlements[i]).isEntitled(
-          _channelNetworkId,
-          _user,
-          _permission
-        )
+        IEntitlement(entitlements[i]).isEntitled(_channelId, _user, _permission)
       ) {
         _entitled = true;
       }

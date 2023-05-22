@@ -131,7 +131,7 @@
         "inputs": [
           {
             "internalType": "string",
-            "name": "channelNetworkId",
+            "name": "channelId",
             "type": "string"
           },
           {
@@ -234,7 +234,7 @@
         "inputs": [
           {
             "internalType": "string",
-            "name": "channelNetworkId",
+            "name": "channelId",
             "type": "string"
           }
         ],
@@ -394,7 +394,7 @@
         "inputs": [
           {
             "internalType": "string",
-            "name": "channelNetworkId",
+            "name": "channelId",
             "type": "string"
           },
           {
@@ -537,6 +537,12 @@
       },
       "kind": "dev",
       "methods": {
+        "addRoleIdToChannel(string,uint256)": {
+          "params": {
+            "channelId": "id of the channel to add the role to",
+            "roleId": "id of the role to add"
+          }
+        },
         "constructor": {
           "custom:oz-upgrades-unsafe-allow": "constructor"
         },
@@ -546,6 +552,14 @@
           },
           "returns": {
             "_0": "entitlementData array for the role"
+          }
+        },
+        "getRoleIdsByChannelId(string)": {
+          "params": {
+            "channelId": "the channel to fetch the roleIds for"
+          },
+          "returns": {
+            "_0": "roleIds array of all the roleIds for the channel"
           }
         },
         "getUserRoles(address)": {
@@ -576,6 +590,12 @@
           },
           "returns": {
             "entitlementId": "the id that was removed"
+          }
+        },
+        "removeRoleIdFromChannel(string,uint256)": {
+          "params": {
+            "channelId": "id of the channel to remove the role from",
+            "roleId": "id of the role to remove"
           }
         },
         "setEntitlement(uint256,bytes)": {
@@ -612,11 +632,17 @@
     "userdoc": {
       "kind": "user",
       "methods": {
+        "addRoleIdToChannel(string,uint256)": {
+          "notice": "adds a role to a channel"
+        },
         "description()": {
           "notice": "The description of the entitlement module"
         },
         "getEntitlementDataByRoleId(uint256)": {
           "notice": "fetches the entitlement data for a roleId"
+        },
+        "getRoleIdsByChannelId(string)": {
+          "notice": "fetches the roleIds for a given channel"
         },
         "getUserRoles(address)": {
           "notice": "fetches the roles for a given user in the space"
@@ -633,6 +659,9 @@
         "removeEntitlement(uint256,bytes)": {
           "notice": "removes an entitlement"
         },
+        "removeRoleIdFromChannel(string,uint256)": {
+          "notice": "removes a role from a channel"
+        },
         "setEntitlement(uint256,bytes)": {
           "notice": "sets a new entitlement"
         },
@@ -647,7 +676,7 @@
     "compilationTarget": {
       "packages/contracts/src/core/spaces/entitlements/UserEntitlement.sol": "UserEntitlement"
     },
-    "evmVersion": "london",
+    "evmVersion": "paris",
     "libraries": {},
     "metadata": {
       "bytecodeHash": "ipfs"
@@ -669,7 +698,8 @@
       ":openzeppelin-contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/",
       ":openzeppelin-contracts/=lib/openzeppelin-contracts/",
       ":operator-filter-registry/=lib/operator-filter-registry/",
-      ":solmate/=lib/solmate/src/"
+      ":solmate/=lib/solmate/src/",
+      ":weird-erc20/=lib/solmate/lib/weird-erc20/src/"
     ]
   },
   "sources": {
@@ -698,27 +728,27 @@
       ]
     },
     "lib/openzeppelin-contracts-upgradeable/contracts/proxy/utils/Initializable.sol": {
-      "keccak256": "0xedc5eaa54866c6d0e8960d9fe8ea6f9052ba28686907f6886f83dfba41fa1549",
+      "keccak256": "0x037c334add4b033ad3493038c25be1682d78c00992e1acb0e2795caff3925271",
       "license": "MIT",
       "urls": [
-        "bzz-raw://0b296244e62d13e87d8272c574fb58c22af02b262d74d7a8f642753522351bb0",
-        "dweb:/ipfs/Qmcd3MfBWRE8EQt67AqgGGHviNum5aQ7JE7manH5nNtx4o"
+        "bzz-raw://8a313cf42389440e2706837c91370323b85971c06afd6d056d21e2bc86459618",
+        "dweb:/ipfs/QmT8XUrUvQ9aZaPKrqgRU2JVGWnaxBcUYJA7Q7K5KcLBSZ"
       ]
     },
     "lib/openzeppelin-contracts-upgradeable/contracts/proxy/utils/UUPSUpgradeable.sol": {
-      "keccak256": "0xcf6837f68b5376c07f7b5130dc8de39f00f357f119113a82a15229bf2b96fdc5",
+      "keccak256": "0x7967d130887c4b40666cd88f8744691d4527039a1b2a38aa0de41481ef646778",
       "license": "MIT",
       "urls": [
-        "bzz-raw://6be1e3e05f79a714c08a446a994dba2939203092d7aa97302d7b2ab157b437fb",
-        "dweb:/ipfs/QmdgBbHNijVgApRQ9UM17qds6QdhTgXxKHUoLAswA6VNyH"
+        "bzz-raw://40e60cbf0e2efede4d9c169e66336a64615af7b719a896ef1f37ae8cd4614ec1",
+        "dweb:/ipfs/QmYNiwY22ifhfa8yK6mLCEKfj39caYUHLqe2VBtzDnvdsV"
       ]
     },
     "lib/openzeppelin-contracts-upgradeable/contracts/utils/AddressUpgradeable.sol": {
-      "keccak256": "0x0a3b4afc301241e2629ad192fa02e0f8626e3cf38ab6f45342bfd7afbde16ee0",
+      "keccak256": "0x2edcb41c121abc510932e8d83ff8b82cf9cdde35e7c297622f5c29ef0af25183",
       "license": "MIT",
       "urls": [
-        "bzz-raw://b189423f1102ff4487e9c59a65ec400b98cc4aeef478dac8272b482e9f5ad7de",
-        "dweb:/ipfs/QmdpYHrzD8wPe5DMuEiWkXiVLsTkqD7C4tbBjWwkBQwJi2"
+        "bzz-raw://72460c66cd1c3b1c11b863e0d8df0a1c56f37743019e468dc312c754f43e3b06",
+        "dweb:/ipfs/QmPExYKiNb9PUsgktQBupPaM33kzDHxaYoVeJdLhv8s879"
       ]
     },
     "lib/openzeppelin-contracts-upgradeable/contracts/utils/ContextUpgradeable.sol": {
@@ -754,11 +784,11 @@
       ]
     },
     "lib/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol": {
-      "keccak256": "0x41bbb2c41036ca64b2f6c9e973e8cfaa113ebc42af86702cd0d267f915a7e886",
+      "keccak256": "0xab28a56179c1db258c9bf5235b382698cb650debecb51b23d12be9e241374b68",
       "license": "MIT",
       "urls": [
-        "bzz-raw://6bf6699c55e82c7af6ae90b61ea9643ca0c905097da9a31269319f1b5a2a696a",
-        "dweb:/ipfs/QmRJZa2UmWcRo6W8JnuomwzfjVtAS21QC8HKggxBhoPsU4"
+        "bzz-raw://daae589a9d6fa7e55f99f86c0a16796ca490f243fb3693632c3711c0646c1d56",
+        "dweb:/ipfs/QmR3zpd7wNw3rcUdekwiv6FYHJqksuTCXLVioTxu6Fbxk3"
       ]
     },
     "lib/openzeppelin-contracts/contracts/utils/introspection/IERC165.sol": {
@@ -770,11 +800,11 @@
       ]
     },
     "packages/contracts/src/core/spaces/entitlements/UserEntitlement.sol": {
-      "keccak256": "0xa27c21152dc8a8918513088462b6e48c862db1e12abf4754017caa98637d611d",
+      "keccak256": "0xc60cc67155b5400952e00389723faa3b8ce306822378d4c68b984e3d6b4f1f22",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://55e3af3391e22500f1b2be90e0ad0a0c7ab99fbe24d25da3006a550ddcbe2735",
-        "dweb:/ipfs/Qme21VjuA9KRJSiqquMJux8KWfkifX6zoKZXdTo6AZtgKn"
+        "bzz-raw://bf24e01d1aea6844606b7061629c702e13d247565f3c31c74002cf8fc8610a4b",
+        "dweb:/ipfs/QmQ23zFb1mMRSUX7Y5MVPKuH9uotqqFm3djU6TZbP7zUAW"
       ]
     },
     "packages/contracts/src/interfaces/IEntitlement.sol": {
@@ -786,19 +816,19 @@
       ]
     },
     "packages/contracts/src/interfaces/ISpace.sol": {
-      "keccak256": "0x6adbf7a1aed2a1d2524741ede2955288263ec249220bd1165df7597e166d966e",
+      "keccak256": "0xe6e7890861fd1770612b7bdfa70c629a85803da8c35a423c7e8aef03b5b9a13d",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://12d1d6a18c3ba048528cbdcb5c63aee805b2ae83f66c5e0936d9c9ad2136acaa",
-        "dweb:/ipfs/Qmbd85p3KjbtM2q5adjtsenCUVHiCcSGLRmL2mnBweKmF5"
+        "bzz-raw://f6db99ae6f37e1cbb46fd079d175b28b9d89c928ea43d049c900d9433052c312",
+        "dweb:/ipfs/QmU97CnJCFSBLJi2mysV6TQjBRb8og66kdZncSH3tqpagM"
       ]
     },
     "packages/contracts/src/libraries/DataTypes.sol": {
-      "keccak256": "0x01634666eef1a193d7ce2bc1840dd3424c0e86f3e6b500ea3d5244e6d230785b",
+      "keccak256": "0x79aa36153557ca842e39d4eddc8606d3999dbaf476bd6d151bcfcd292233e2fa",
       "license": "Apache-20",
       "urls": [
-        "bzz-raw://66f2c398430ae10384660520d872851bd99dc35685615632dd07e7e55761cbdc",
-        "dweb:/ipfs/QmQhjnuzDzC14QtqiiXgo2f9myxUzUg5nCbV5mdQAqenyY"
+        "bzz-raw://3ec543dcb58eb80730069e5ae3caaccb9ae8f01d028bc62270ff9878f183b089",
+        "dweb:/ipfs/QmPLja6aZy7HMQKax9ikEaNiGW2qkbtMkVG81kmFLb9coF"
       ]
     },
     "packages/contracts/src/libraries/Errors.sol": {

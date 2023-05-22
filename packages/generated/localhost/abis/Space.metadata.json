@@ -205,7 +205,7 @@
         "inputs": [
           {
             "internalType": "string",
-            "name": "_channelNetworkId",
+            "name": "_channelId",
             "type": "string"
           },
           {
@@ -290,7 +290,7 @@
           },
           {
             "internalType": "string",
-            "name": "channelNetworkId",
+            "name": "channelId",
             "type": "string"
           },
           {
@@ -334,7 +334,7 @@
           },
           {
             "internalType": "string",
-            "name": "channelNetworkId",
+            "name": "channelId",
             "type": "string"
           },
           {
@@ -465,7 +465,7 @@
               },
               {
                 "internalType": "string",
-                "name": "channelNetworkId",
+                "name": "channelId",
                 "type": "string"
               },
               {
@@ -709,7 +709,7 @@
         "inputs": [
           {
             "internalType": "string",
-            "name": "_channelNetworkId",
+            "name": "_channelId",
             "type": "string"
           },
           {
@@ -877,7 +877,7 @@
         "inputs": [
           {
             "internalType": "string",
-            "name": "_channelNetworkId",
+            "name": "_channelId",
             "type": "string"
           },
           {
@@ -967,7 +967,7 @@
         "inputs": [
           {
             "internalType": "string",
-            "name": "channelNetworkId",
+            "name": "channelId",
             "type": "string"
           },
           {
@@ -1068,7 +1068,7 @@
         "inputs": [
           {
             "internalType": "string",
-            "name": "channelNetworkId",
+            "name": "channelId",
             "type": "string"
           },
           {
@@ -1194,8 +1194,8 @@
         },
         "createChannel(string,string,uint256[])": {
           "params": {
+            "channelId": "the network id of the channel linking it to the dendrite/casablanca protocol",
             "channelName": "the name of the channel",
-            "channelNetworkId": "the network id of the channel linking it to the dendrite/casablanca protocol",
             "roleIds": "the roleIds to be set as the initial roles for the channel"
           },
           "returns": {
@@ -1338,6 +1338,12 @@
             "disabled": "whether to make the space disabled or not"
           }
         },
+        "updateChannel(string,string)": {
+          "params": {
+            "channelId": "the channelId to update",
+            "channelName": "the new name of the channel"
+          }
+        },
         "updateRole(uint256,string)": {
           "params": {
             "roleId": "the roleId to update",
@@ -1438,6 +1444,9 @@
         },
         "setSpaceAccess(bool)": {
           "notice": "sets whether the space is disabled or not"
+        },
+        "updateChannel(string,string)": {
+          "notice": "updates a channel name"
         },
         "updateRole(uint256,string)": {
           "notice": "updates a role name by roleId"
@@ -1561,11 +1570,11 @@
       ]
     },
     "packages/contracts/src/core/spaces/Space.sol": {
-      "keccak256": "0xe9814a11dcd47c3987fab6db5462028c1a757ae291a1eb562b9e7540a41f8608",
+      "keccak256": "0xc037c6453e8902e73be9dbda7daf30a8570f4359759e1442c31e7115ff2bc485",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://025e9eba1dbd28a89c41e9913baabf4124854b5c372229a4b8b29d0c3b9e81e2",
-        "dweb:/ipfs/Qmd8S8szHRFRmaqsqZGk4PEBzyF8sSz2U5uoj3Y5GtXk8J"
+        "bzz-raw://de79707eff71e0452d2a80e90cbb916b947e5fb2f10a0ea66baf62a63eb0cd5c",
+        "dweb:/ipfs/Qmeo6kNPMVVmzkUnVSs8pKh8XoG4tXFXKvguxKKN5BjQAH"
       ]
     },
     "packages/contracts/src/interfaces/IEntitlement.sol": {
@@ -1577,19 +1586,19 @@
       ]
     },
     "packages/contracts/src/interfaces/ISpace.sol": {
-      "keccak256": "0x6adbf7a1aed2a1d2524741ede2955288263ec249220bd1165df7597e166d966e",
+      "keccak256": "0xe6e7890861fd1770612b7bdfa70c629a85803da8c35a423c7e8aef03b5b9a13d",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://12d1d6a18c3ba048528cbdcb5c63aee805b2ae83f66c5e0936d9c9ad2136acaa",
-        "dweb:/ipfs/Qmbd85p3KjbtM2q5adjtsenCUVHiCcSGLRmL2mnBweKmF5"
+        "bzz-raw://f6db99ae6f37e1cbb46fd079d175b28b9d89c928ea43d049c900d9433052c312",
+        "dweb:/ipfs/QmU97CnJCFSBLJi2mysV6TQjBRb8og66kdZncSH3tqpagM"
       ]
     },
     "packages/contracts/src/libraries/DataTypes.sol": {
-      "keccak256": "0x01634666eef1a193d7ce2bc1840dd3424c0e86f3e6b500ea3d5244e6d230785b",
+      "keccak256": "0x79aa36153557ca842e39d4eddc8606d3999dbaf476bd6d151bcfcd292233e2fa",
       "license": "Apache-20",
       "urls": [
-        "bzz-raw://66f2c398430ae10384660520d872851bd99dc35685615632dd07e7e55761cbdc",
-        "dweb:/ipfs/QmQhjnuzDzC14QtqiiXgo2f9myxUzUg5nCbV5mdQAqenyY"
+        "bzz-raw://3ec543dcb58eb80730069e5ae3caaccb9ae8f01d028bc62270ff9878f183b089",
+        "dweb:/ipfs/QmPLja6aZy7HMQKax9ikEaNiGW2qkbtMkVG81kmFLb9coF"
       ]
     },
     "packages/contracts/src/libraries/Errors.sol": {

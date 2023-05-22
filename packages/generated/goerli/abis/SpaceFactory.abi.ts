@@ -11,11 +11,6 @@ export default [
   },
   {
     "inputs": [],
-    "name": "NameContainsInvalidCharacters",
-    "type": "error"
-  },
-  {
-    "inputs": [],
     "name": "NameLengthInvalid",
     "type": "error"
   },
@@ -224,7 +219,7 @@ export default [
       },
       {
         "internalType": "string",
-        "name": "spaceNetworkId",
+        "name": "spaceId",
         "type": "string"
       },
       {
@@ -328,7 +323,7 @@ export default [
     "inputs": [
       {
         "internalType": "string",
-        "name": "spaceNetworkId",
+        "name": "spaceId",
         "type": "string"
       }
     ],
@@ -347,7 +342,7 @@ export default [
     "inputs": [
       {
         "internalType": "string",
-        "name": "spaceNetworkId",
+        "name": "spaceId",
         "type": "string"
       }
     ],
@@ -521,6 +516,19 @@ export default [
       }
     ],
     "name": "setPaused",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_spaceToken",
+        "type": "address"
+      }
+    ],
+    "name": "setSpaceToken",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

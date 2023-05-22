@@ -16,15 +16,15 @@ contract SetChannelAccessTest is SpaceBaseSetup {
 
     (
       string memory channelName,
-      string memory channelNetworkId,
+      string memory channelId,
       uint256[] memory roleIds
     ) = _createSimpleChannelData();
-    Space(_space).createChannel(channelName, channelNetworkId, roleIds);
+    Space(_space).createChannel(channelName, channelId, roleIds);
 
-    Space(_space).setChannelAccess(channelNetworkId, true);
+    Space(_space).setChannelAccess(channelId, true);
 
     DataTypes.Channel memory _channel = Space(_space).getChannelByHash(
-      keccak256(abi.encodePacked(channelNetworkId))
+      keccak256(abi.encodePacked(channelId))
     );
 
     assertTrue(_channel.disabled);
@@ -35,15 +35,15 @@ contract SetChannelAccessTest is SpaceBaseSetup {
 
     (
       string memory channelName,
-      string memory channelNetworkId,
+      string memory channelId,
       uint256[] memory roleIds
     ) = _createSimpleChannelData();
 
-    Space(_space).createChannel(channelName, channelNetworkId, roleIds);
+    Space(_space).createChannel(channelName, channelId, roleIds);
 
     vm.prank(_randomAddress());
     vm.expectRevert(Errors.NotAllowed.selector);
-    Space(_space).setChannelAccess(channelNetworkId, true);
+    Space(_space).setChannelAccess(channelId, true);
   }
 
   function testSetChannelAccessChannelDoesNotExist(

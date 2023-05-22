@@ -99,7 +99,7 @@ contract SpaceFactory is
   /// @inheritdoc ISpaceFactory
   function createSpace(
     string calldata spaceName,
-    string calldata spaceNetworkId,
+    string calldata spaceId,
     string calldata spaceMetadata,
     string[] calldata _everyonePermissions,
     DataTypes.CreateSpaceExtraEntitlements calldata _extraEntitlements
@@ -110,12 +110,12 @@ contract SpaceFactory is
     Utils.validateLength(spaceName);
 
     // validate space network id
-    if (bytes(spaceNetworkId).length == 0) {
+    if (bytes(spaceId).length == 0) {
       revert Errors.InvalidParameters();
     }
 
     // hash the network id
-    bytes32 _networkHash = keccak256(bytes(spaceNetworkId));
+    bytes32 _networkHash = keccak256(bytes(spaceId));
 
     // validate that the network id hasn't been used before
     if (spaceByHash[_networkHash] != address(0)) {
@@ -161,13 +161,7 @@ contract SpaceFactory is
         SPACE_IMPLEMENTATION_ADDRESS,
         abi.encodeCall(
           Space.initialize,
-          (
-            spaceName,
-            spaceNetworkId,
-            _entitlements,
-            SPACE_TOKEN_ADDRESS,
-            _tokenId
-          )
+          (spaceName, spaceId, _entitlements, SPACE_TOKEN_ADDRESS, _tokenId)
         )
       )
     );
@@ -199,7 +193,7 @@ contract SpaceFactory is
       _tokenId
     );
 
-    emit Events.SpaceCreated(_spaceAddress, _msgSender(), spaceNetworkId);
+    emit Events.SpaceCreated(_spaceAddress, _msgSender(), spaceId);
   }
 
   function setGatingEnabled(bool _gatingEnabled) external onlyOwner whenPaused {
@@ -237,17 +231,17 @@ contract SpaceFactory is
 
   /// @inheritdoc ISpaceFactory
   function getTokenIdByNetworkId(
-    string calldata spaceNetworkId
+    string calldata spaceId
   ) external view returns (uint256) {
-    bytes32 _networkHash = keccak256(bytes(spaceNetworkId));
+    bytes32 _networkHash = keccak256(bytes(spaceId));
     return tokenByHash[_networkHash];
   }
 
   /// @inheritdoc ISpaceFactory
   function getSpaceAddressByNetworkId(
-    string calldata spaceNetworkId
+    string calldata spaceId
   ) external view returns (address) {
-    bytes32 _networkHash = keccak256(bytes(spaceNetworkId));
+    bytes32 _networkHash = keccak256(bytes(spaceId));
     return spaceByHash[_networkHash];
   }
 

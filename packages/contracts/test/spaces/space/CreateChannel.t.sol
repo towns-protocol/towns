@@ -21,7 +21,7 @@ contract CreateChannelTest is SpaceBaseSetup {
 
     (
       string memory channelName,
-      string memory channelNetworkId,
+      string memory channelId,
       uint256[] memory roleIds
     ) = _createSimpleChannelData();
 
@@ -29,7 +29,7 @@ contract CreateChannelTest is SpaceBaseSetup {
     roleIds[0] = _nonExistentRoleId;
 
     vm.expectRevert(Errors.RoleDoesNotExist.selector);
-    Space(_space).createChannel(channelName, channelNetworkId, roleIds);
+    Space(_space).createChannel(channelName, channelId, roleIds);
   }
 
   function testCreateChannelWithRoles() external {
@@ -67,19 +67,17 @@ contract CreateChannelTest is SpaceBaseSetup {
     // add member role id to channel data
     (
       string memory channelName,
-      string memory channelNetworkId,
+      string memory channelId,
       uint256[] memory roleIds
     ) = _createSimpleChannelData();
     roleIds = new uint256[](1);
     roleIds[0] = _memberRoleId;
 
     // create channel
-    Space(_space).createChannel(channelName, channelNetworkId, roleIds);
+    Space(_space).createChannel(channelName, channelId, roleIds);
 
     // check if bob is entitled to channel
-    assertTrue(
-      Space(_space).isEntitledToChannel(channelNetworkId, _bob, _permission)
-    );
+    assertTrue(Space(_space).isEntitledToChannel(channelId, _bob, _permission));
   }
 
   function testCreateChannelNotAllowed() external {
@@ -87,13 +85,13 @@ contract CreateChannelTest is SpaceBaseSetup {
 
     (
       string memory channelName,
-      string memory channelNetworkId,
+      string memory channelId,
       uint256[] memory roleIds
     ) = _createSimpleChannelData();
 
     vm.prank(_randomAddress());
     vm.expectRevert(Errors.NotAllowed.selector);
-    Space(_space).createChannel(channelName, channelNetworkId, roleIds);
+    Space(_space).createChannel(channelName, channelId, roleIds);
   }
 
   function testCreateChannelAlreadyRegistered() external {
@@ -101,14 +99,14 @@ contract CreateChannelTest is SpaceBaseSetup {
 
     (
       string memory channelName,
-      string memory channelNetworkId,
+      string memory channelId,
       uint256[] memory roleIds
     ) = _createSimpleChannelData();
 
-    Space(_space).createChannel(channelName, channelNetworkId, roleIds);
+    Space(_space).createChannel(channelName, channelId, roleIds);
 
     vm.expectRevert(Errors.ChannelAlreadyRegistered.selector);
-    Space(_space).createChannel(channelName, channelNetworkId, roleIds);
+    Space(_space).createChannel(channelName, channelId, roleIds);
   }
 
   function testCreateChannel() external {
@@ -119,28 +117,24 @@ contract CreateChannelTest is SpaceBaseSetup {
 
     (
       string memory channelName,
-      string memory channelNetworkId,
+      string memory channelId,
       uint256[] memory roleIds
     ) = _createSimpleChannelData();
 
     vm.prank(creator);
-    Space(_space).createChannel(channelName, channelNetworkId, roleIds);
+    Space(_space).createChannel(channelName, channelId, roleIds);
 
-    bytes32 channelId = keccak256(abi.encodePacked(channelNetworkId));
+    bytes32 channelHash = keccak256(abi.encodePacked(channelId));
 
     DataTypes.Channel memory _channel = Space(_space).getChannelByHash(
-      channelId
+      channelHash
     );
 
     assertEq(_channel.name, channelName);
-    assertEq(_channel.channelHash, channelId);
+    assertEq(_channel.channelHash, channelHash);
 
     assertTrue(
-      Space(_space).isEntitledToChannel(
-        channelNetworkId,
-        creator,
-        Permissions.Owner
-      )
+      Space(_space).isEntitledToChannel(channelId, creator, Permissions.Owner)
     );
   }
 
@@ -152,12 +146,12 @@ contract CreateChannelTest is SpaceBaseSetup {
 
     (
       string memory channelName,
-      string memory channelNetworkId,
+      string memory channelId,
       uint256[] memory roleIds
     ) = ("", "!7evmpuHDDgkady9u:localhost", new uint256[](0)); // Empty Name here
 
     vm.prank(creator);
     vm.expectRevert(Errors.NameLengthInvalid.selector);
-    Space(_space).createChannel(channelName, channelNetworkId, roleIds);
+    Space(_space).createChannel(channelName, channelId, roleIds);
   }
 }

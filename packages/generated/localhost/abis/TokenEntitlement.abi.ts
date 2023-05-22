@@ -130,7 +130,7 @@ export default [
     "inputs": [
       {
         "internalType": "string",
-        "name": "channelNetworkId",
+        "name": "channelId",
         "type": "string"
       },
       {
@@ -287,7 +287,7 @@ export default [
     "inputs": [
       {
         "internalType": "string",
-        "name": "channelNetworkId",
+        "name": "channelId",
         "type": "string"
       }
     ],
@@ -447,7 +447,7 @@ export default [
     "inputs": [
       {
         "internalType": "string",
-        "name": "channelNetworkId",
+        "name": "channelId",
         "type": "string"
       },
       {

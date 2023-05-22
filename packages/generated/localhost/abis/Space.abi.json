@@ -199,7 +199,7 @@
     "inputs": [
       {
         "internalType": "string",
-        "name": "_channelNetworkId",
+        "name": "_channelId",
         "type": "string"
       },
       {
@@ -284,7 +284,7 @@
       },
       {
         "internalType": "string",
-        "name": "channelNetworkId",
+        "name": "channelId",
         "type": "string"
       },
       {
@@ -328,7 +328,7 @@
       },
       {
         "internalType": "string",
-        "name": "channelNetworkId",
+        "name": "channelId",
         "type": "string"
       },
       {
@@ -459,7 +459,7 @@
           },
           {
             "internalType": "string",
-            "name": "channelNetworkId",
+            "name": "channelId",
             "type": "string"
           },
           {
@@ -703,7 +703,7 @@
     "inputs": [
       {
         "internalType": "string",
-        "name": "_channelNetworkId",
+        "name": "_channelId",
         "type": "string"
       },
       {
@@ -871,7 +871,7 @@
     "inputs": [
       {
         "internalType": "string",
-        "name": "_channelNetworkId",
+        "name": "_channelId",
         "type": "string"
       },
       {
@@ -961,7 +961,7 @@
     "inputs": [
       {
         "internalType": "string",
-        "name": "channelNetworkId",
+        "name": "channelId",
         "type": "string"
       },
       {
@@ -1062,7 +1062,7 @@
     "inputs": [
       {
         "internalType": "string",
-        "name": "channelNetworkId",
+        "name": "channelId",
         "type": "string"
       },
       {

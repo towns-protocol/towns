@@ -252,14 +252,14 @@ contract RemoveRoleTest is SpaceBaseSetup {
     // create channel and add role to it
     (
       string memory channelName,
-      string memory channelNetworkId,
+      string memory channelId,
       uint256[] memory roleIds
     ) = _createSimpleChannelData();
     vm.prank(_tokenHolder);
-    Space(_space).createChannel(channelName, channelNetworkId, roleIds);
+    Space(_space).createChannel(channelName, channelId, roleIds);
     vm.prank(_tokenHolder);
     Space(_space).addRoleToChannel(
-      channelNetworkId,
+      channelId,
       _userEntitlementModule.moduleAddress,
       readRoleID
     );
@@ -267,7 +267,7 @@ contract RemoveRoleTest is SpaceBaseSetup {
     // see that "Read" is active
     assertTrue(
       Space(_space).isEntitledToChannel(
-        channelNetworkId,
+        channelId,
         _channelAccessor,
         Permissions.Read
       )
@@ -275,12 +275,12 @@ contract RemoveRoleTest is SpaceBaseSetup {
 
     // deactivate channel
     vm.prank(_tokenHolder);
-    Space(_space).setChannelAccess(channelNetworkId, true);
+    Space(_space).setChannelAccess(channelId, true);
 
     // see that "Read" is still active
     vm.expectRevert(Errors.NotAllowed.selector);
     Space(_space).isEntitledToChannel(
-      channelNetworkId,
+      channelId,
       _channelAccessor,
       Permissions.Read
     );

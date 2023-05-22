@@ -171,9 +171,9 @@ contract UserEntitlement is
 
   // @inheritdoc IEntitlement
   function getRoleIdsByChannelId(
-    string calldata channelNetworkId
+    string calldata channelId
   ) external view returns (uint256[] memory) {
-    bytes32 _channelHash = keccak256(abi.encodePacked(channelNetworkId));
+    bytes32 _channelHash = keccak256(abi.encodePacked(channelId));
     return roleIdsByChannelId[_channelHash];
   }
 
@@ -210,10 +210,10 @@ contract UserEntitlement is
 
   // @inheritdoc IEntitlement
   function addRoleIdToChannel(
-    string calldata channelNetworkId,
+    string calldata channelId,
     uint256 roleId
   ) external onlySpace {
-    bytes32 _channelHash = keccak256(abi.encodePacked(channelNetworkId));
+    bytes32 _channelHash = keccak256(abi.encodePacked(channelId));
 
     uint256[] memory roles = roleIdsByChannelId[_channelHash];
 
@@ -228,10 +228,10 @@ contract UserEntitlement is
 
   // @inheritdoc IEntitlement
   function removeRoleIdFromChannel(
-    string calldata channelNetworkId,
+    string calldata channelId,
     uint256 roleId
   ) external onlySpace {
-    bytes32 _channelHash = keccak256(abi.encodePacked(channelNetworkId));
+    bytes32 _channelHash = keccak256(abi.encodePacked(channelId));
 
     uint256[] storage roleIds = roleIdsByChannelId[_channelHash];
 

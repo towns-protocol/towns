@@ -84,10 +84,10 @@ contract SpaceBaseSetup is TestUtils, ERC721Holder {
   function createSimpleChannel(address _space) internal returns (bytes32) {
     (
       string memory channelName,
-      string memory channelNetworkId,
+      string memory channelId,
       uint256[] memory roleIds
     ) = _createSimpleChannelData();
-    return Space(_space).createChannel(channelName, channelNetworkId, roleIds);
+    return Space(_space).createChannel(channelName, channelId, roleIds);
   }
 
   function createFuzzySpace(
@@ -211,7 +211,7 @@ contract SpaceBaseSetup is TestUtils, ERC721Holder {
     pure
     returns (
       string memory channelName,
-      string memory channelNetworkId,
+      string memory channelId,
       uint256[] memory roleIds
     )
   {

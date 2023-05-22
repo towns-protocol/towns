@@ -1,6 +1,11 @@
 export default [
   {
     "inputs": [],
+    "stateMutability": "nonpayable",
+    "type": "constructor"
+  },
+  {
+    "inputs": [],
     "name": "AddressNotFound",
     "type": "error"
   },
@@ -120,7 +125,7 @@ export default [
     "inputs": [
       {
         "internalType": "string",
-        "name": "channelNetworkId",
+        "name": "channelId",
         "type": "string"
       },
       {
@@ -223,7 +228,7 @@ export default [
     "inputs": [
       {
         "internalType": "string",
-        "name": "channelNetworkId",
+        "name": "channelId",
         "type": "string"
       }
     ],
@@ -383,7 +388,7 @@ export default [
     "inputs": [
       {
         "internalType": "string",
-        "name": "channelNetworkId",
+        "name": "channelId",
         "type": "string"
       },
       {

@@ -13,7 +13,7 @@ interface ISpaceFactory {
 
   /// @notice Creates a new space
   /// @param spaceName The name of the space
-  /// @param spaceNetworkId The network id of the space
+  /// @param spaceId The network id of the space
   /// @param spaceMetadata The metadata of the space
   /// @param _everyonePermissions The permissions of the everyone role
   /// @param _extraEntitlements The extra entitlements of the space
@@ -21,7 +21,7 @@ interface ISpaceFactory {
   /// @return The address of the new space
   function createSpace(
     string calldata spaceName,
-    string calldata spaceNetworkId,
+    string calldata spaceId,
     string calldata spaceMetadata,
     string[] calldata _everyonePermissions,
     DataTypes.CreateSpaceExtraEntitlements calldata _extraEntitlements
@@ -33,12 +33,12 @@ interface ISpaceFactory {
 
   /// @notice Returns token id by network id
   function getTokenIdByNetworkId(
-    string calldata spaceNetworkId
+    string calldata spaceId
   ) external view returns (uint256);
 
   /// @notice Returns space address by network id
   function getSpaceAddressByNetworkId(
-    string calldata spaceNetworkId
+    string calldata spaceId
   ) external view returns (address);
 
   /// @notice Returns the initial owner permissions at space creation

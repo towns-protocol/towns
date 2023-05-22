@@ -1,6 +1,6 @@
 {
   "compiler": {
-    "version": "0.8.17+commit.8df45f5f"
+    "version": "0.8.19+commit.7dd6d404"
   },
   "language": "Solidity",
   "output": {
@@ -131,9 +131,9 @@
   },
   "settings": {
     "compilationTarget": {
-      "contracts/src/libraries/Events.sol": "Events"
+      "packages/contracts/src/libraries/Events.sol": "Events"
     },
-    "evmVersion": "london",
+    "evmVersion": "paris",
     "libraries": {},
     "metadata": {
       "bytecodeHash": "ipfs"
@@ -143,9 +143,10 @@
       "runs": 200
     },
     "remappings": [
-      ":@opengsn/=node_modules/@opengsn/",
-      ":@openzeppelin/=node_modules/@openzeppelin/",
-      ":contracts/=contracts/",
+      ":@openzeppelin/=lib/openzeppelin-contracts/",
+      ":@towns/=node_modules/@towns/",
+      ":ERC721A/=lib/ERC721A/contracts/",
+      ":contracts/=packages/contracts/",
       ":council/=lib/council/contracts/",
       ":ds-test/=lib/ds-test/src/",
       ":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/",
@@ -153,16 +154,18 @@
       ":murky/=lib/murky/src/",
       ":openzeppelin-contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/",
       ":openzeppelin-contracts/=lib/openzeppelin-contracts/",
-      ":solmate/=lib/solmate/src/"
+      ":operator-filter-registry/=lib/operator-filter-registry/",
+      ":solmate/=lib/solmate/src/",
+      ":weird-erc20/=lib/solmate/lib/weird-erc20/src/"
     ]
   },
   "sources": {
-    "contracts/src/libraries/Events.sol": {
-      "keccak256": "0xf85630e7cf615f44c0e40ae2bc54fe617c7fb0ed9f5b5f2be305c1b893929281",
+    "packages/contracts/src/libraries/Events.sol": {
+      "keccak256": "0xaab06310ec51a878125595216b6c1b72fa26096859c8297ed4d19cc91b6b4701",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://06c543e82bb8ac6121d0613cc405263cc6130563aae54cfa55a7958978664381",
-        "dweb:/ipfs/QmV6z23bcZtTdeKxTeQZkym9syDXu1sd7mSjgiVDg1Nsnd"
+        "bzz-raw://a26b81e03bae742ca30dfa0af4d8b3c2017798829f6a75ecca3550bb2cc37c46",
+        "dweb:/ipfs/QmWsUqtx3frKovXz9YQRSjxPVWUp8BzmRxY8s4u3hQbzzz"
       ]
     }
   },
