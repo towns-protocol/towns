@@ -6483,7 +6483,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@towns/mecholm@workspace:casablanca/mecholm":
+"@towns/mecholm@workspace:^, @towns/mecholm@workspace:casablanca/mecholm":
   version: 0.0.0-use.local
   resolution: "@towns/mecholm@workspace:casablanca/mecholm"
   dependencies:
@@ -6534,6 +6534,7 @@ __metadata:
     "@bufbuild/connect-web": ^0.8.4
     "@bufbuild/protobuf": ^1.1.1
     "@ethereumjs/util": ^8.0.1
+    "@towns/mecholm": "workspace:^"
     "@towns/proto": "workspace:^"
     "@types/jest": ^29.4.0
     "@types/lodash": ^4.14.186

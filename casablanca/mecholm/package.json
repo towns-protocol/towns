@@ -6,10 +6,12 @@
     "types": "dist/index.d.ts",
     "scripts": {
         "build": "tsc",
+        "cb": "yarn clean && yarn build",
         "clean": "rm -rf dist",
         "lint": "yarn eslint --format unix ./src",
         "lint:fix": "yarn lint --fix",
         "my-jest": "yarn node -r ../../scripts/node-no-warn.js --experimental-vm-modules $(yarn bin jest)",
+        "test:debug": "DEBUG=test yarn my-jest",
         "test": "yarn my-jest",
         "test:ci": "yarn test",
         "watch": "tsc --watch"

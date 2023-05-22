@@ -11,6 +11,7 @@ import { check } from './check'
 import { Client } from './client'
 import EventEmitter from 'events'
 import TypedEmitter from 'typed-emitter'
+import { OlmMegolmDelegate } from '@towns/mecholm'
 import { Err } from '@towns/proto'
 import { bin_fromHexString, IDeviceKeys, ISignatures, recursiveMapToObject } from './types'
 import { ethers } from 'ethers'
@@ -257,6 +258,7 @@ export class Crypto
     implements CryptoBackend
 {
     private deviceKeys: Record<string, string> = {}
+    private olmDelegate: OlmMegolmDelegate | undefined
 
     public readonly supportedAlgorithms: string[]
 
@@ -270,7 +272,15 @@ export class Crypto
         this.supportedAlgorithms = ['m.olm.v1.curve25519-aes-sha2', 'm.megolm.v1.aes-sha2']
     }
 
+    /** Iniitalize crypto module prior to usage
+     *
+     */
     public async init(): Promise<void> {
+        // initialize Olm library
+        this.olmDelegate = new OlmMegolmDelegate()
+        await this.olmDelegate.init()
+        // TODO: initialize Olm device
+
         // build device keys to upload
         // TODO: implement olmDevice and init
         this.deviceKeys['ed25519:' + this.deviceId] = ''
