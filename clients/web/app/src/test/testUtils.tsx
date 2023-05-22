@@ -5,7 +5,7 @@ import { afterEach, vi } from 'vitest'
 import { MemoryRouter } from 'react-router'
 import { BrowserRouter } from 'react-router-dom'
 import { ethers } from 'ethers'
-import { MainLayout } from 'MainLayout'
+import { ZLayerProvider } from '@ui'
 
 type TestAppProps = {
     children: JSX.Element
@@ -33,7 +33,7 @@ export const TestApp = (props: TestAppProps) => {
         },
     })
     return (
-        <MainLayout>
+        <ZLayerProvider>
             <QueryClientProvider client={queryClient}>
                 <Lib.ZionContextProvider
                     primaryProtocol={Lib.SpaceProtocol.Matrix}
@@ -45,7 +45,7 @@ export const TestApp = (props: TestAppProps) => {
                     <Router initialEntries={props.initialEntries}>{props.children}</Router>
                 </Lib.ZionContextProvider>
             </QueryClientProvider>
-        </MainLayout>
+        </ZLayerProvider>
     )
 }
 

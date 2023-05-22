@@ -1,16 +1,10 @@
 import 'allotment/dist/style.css'
-// eslint-disable-next-line import/no-named-as-default
-import * as Sentry from '@sentry/react'
-import { BrowserTracing } from '@sentry/tracing'
-import React, { Suspense } from 'react'
+import { init as SentryInit, Replay as SentryReplay } from '@sentry/react'
+import { BrowserTracing } from '@sentry/browser'
+import React from 'react'
 import { createRoot } from 'react-dom/client'
-import { BrowserRouter } from 'react-router-dom'
-import { MainLayout } from 'MainLayout'
+import { Main } from 'Main'
 import { env } from 'utils'
-import { LoadingScreen } from 'routes/LoadingScreen'
-import { useRootTheme } from 'hooks/useRootTheme'
-import { AppErrorFallback } from 'AppErrorFallback'
-const App = React.lazy(() => import('./App'))
 
 if (env.IS_DEV) {
     // Register runtime-error overlay
@@ -34,7 +28,7 @@ if (env.IS_DEV) {
     window.addEventListener('error', showErrorOverlay)
     window.addEventListener('unhandledrejection', ({ reason }) => showErrorOverlay(reason))
 } else {
-    Sentry.init({
+    SentryInit({
         dsn:
             env.VITE_SENTRY_DSN ||
             'https://a5bc2df7099a4adbadd6ff1f87c7b66a@o327188.ingest.sentry.io/4504600696061952',
@@ -48,33 +42,12 @@ if (env.IS_DEV) {
         // If the entire session is not sampled, use the below sample rate to sample
         // sessions when an error occurs.
         replaysOnErrorSampleRate: 1.0,
-        integrations: [new Sentry.Replay(), new BrowserTracing()],
+        integrations: [new SentryReplay(), new BrowserTracing()],
         release: env.VITE_APP_RELEASE_VERSION,
     })
 }
 
 const node = document.getElementById('root')
-
-const Main = () => {
-    useRootTheme({
-        ammendHTMLBody: true,
-        useDefaultOSTheme: false,
-    })
-
-    return (
-        <React.StrictMode>
-            <BrowserRouter>
-                <MainLayout>
-                    <Sentry.ErrorBoundary fallback={(props) => <AppErrorFallback {...props} />}>
-                        <Suspense fallback={<LoadingScreen />}>
-                            <App />
-                        </Suspense>
-                    </Sentry.ErrorBoundary>
-                </MainLayout>
-            </BrowserRouter>
-        </React.StrictMode>
-    )
-}
 
 if (node) {
     if (env.IS_DEV) {

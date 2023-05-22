@@ -1,26 +1,27 @@
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import React, { useRef } from 'react'
 import { Navigate, Outlet, Route, Routes } from 'react-router'
 import { SpaceProtocol, ZionContextProvider } from 'use-zion-client'
-import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
+import { Notifications } from '@components/Notifications/Notifications'
 import { PlaygroundRoutes } from '@components/Playground/PlaygroundRoutes'
+import { SentryReportModal } from '@components/SentryErrorReport/SentryErrorReport'
 import { Box, Stack } from '@ui'
+import { AnalyticsProvider } from 'hooks/useAnalytics'
 import { useAuth } from 'hooks/useAuth'
+import { useDevice } from 'hooks/useDevice'
+import { useEnvironment } from 'hooks/useEnvironmnet'
+import { useRootTheme } from 'hooks/useRootTheme'
+import { useShouldDisplayDesktopOnlyScreen } from 'hooks/useShouldDisplayDesktopOnlyScreen'
 import { useWindowListener } from 'hooks/useWindowListener'
 import { PATHS } from 'routes'
+import { LoadingScreen } from 'routes/LoadingScreen'
+import { MobileView } from 'routes/MobileView'
 import { Register } from 'routes/Register'
 import { Welcome } from 'routes/Welcome'
+import { AppLayout } from 'routes/layouts/AppLayout'
+import { mobileAppClass } from 'ui/styles/globals/utils.css'
 import { FontLoader } from 'ui/utils/FontLoader'
 import { env } from 'utils'
-import { useEnvironment } from 'hooks/useEnvironmnet'
-import { LoadingScreen } from 'routes/LoadingScreen'
-import { AnalyticsProvider } from 'hooks/useAnalytics'
-import { MobileView } from 'routes/MobileView'
-import { SentryReportModal } from '@components/SentryErrorReport/SentryErrorReport'
-import { Notifications } from '@components/Notifications/Notifications'
-import { useShouldDisplayDesktopOnlyScreen } from 'hooks/useShouldDisplayDesktopOnlyScreen'
-import { AppLayout } from 'routes/layouts/AppLayout'
-import { useDevice } from 'hooks/useDevice'
-import { mobileAppClass } from 'ui/styles/globals/utils.css'
 
 const AuthenticatedRoutes = React.lazy(() => import('routes/AuthenticatedRoutes'))
 const InviteLinkLanding = React.lazy(() => import('routes/InviteLinkLanding'))
@@ -32,6 +33,11 @@ const DebugBar = React.lazy(() => import('@components/DebugBar/DebugBar'))
 FontLoader.init()
 
 export const App = () => {
+    useRootTheme({
+        ammendHTMLBody: true,
+        useDefaultOSTheme: false,
+    })
+
     // aellis april 2023, the two server urls and the chain id should all be considered
     // a single piece of state, PROD, TEST, and LOCAL each should have {matrixUrl, casablancaUrl, chainId}
     const environment = useEnvironment()
