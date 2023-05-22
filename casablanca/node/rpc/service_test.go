@@ -497,7 +497,7 @@ func TestManyUsers(t *testing.T) {
 				}
 				received += len(msg.Streams[streamIdx].Events)
 				for _, event := range msg.Streams[streamIdx].Events {
-					e, err := events.ParseEvent(event, true)
+					e, err := events.ParseEvent(event)
 					assert.NoError(t, err)
 					msg := e.GetChannelMessage()
 					assert.NotNil(t, msg)

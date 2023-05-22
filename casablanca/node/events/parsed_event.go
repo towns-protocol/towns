@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"strings"
 
-	"github.com/gologme/log"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 
@@ -14,9 +13,12 @@ import (
 )
 
 type ParsedEvent struct {
-	Event    *StreamEvent
-	Envelope *Envelope
-	Hash     []byte
+	Event         *StreamEvent
+	Envelope      *Envelope
+	Hash          []byte
+	HashStr       string // strangely Go can't have key maps of type []byte...
+	PrevEventStrs []string
+	shortDebugStr string
 }
 
 type FullEvent struct {
@@ -25,33 +27,21 @@ type FullEvent struct {
 	ParsedEvent *ParsedEvent
 }
 
-func ParseEvent(envelope *Envelope, strict bool) (*ParsedEvent, error) {
+func ParseEvent(envelope *Envelope) (*ParsedEvent, error) {
 	hash := TownsHash(envelope.Event)
 	if !bytes.Equal(hash, envelope.Hash) {
-		if strict {
-			return nil, RpcErrorf(Err_BAD_EVENT_HASH, "Bad hash provided, computed %x, got %x", hash, envelope.Hash)
-		} else {
-			log.Warnf("Bad hash provided, computed %x, got %x", hash, envelope.Hash)
-		}
+		return nil, RpcErrorf(Err_BAD_EVENT_HASH, "Bad hash provided, computed %x, got %x", hash, envelope.Hash)
 	}
 
 	signerPubKey, err := RecoverSignerPublicKey(hash, envelope.Signature)
 	if err != nil {
-		if strict {
-			return nil, err
-		} else {
-			log.Warnf("Bad signature provided, %s", err.Error())
-		}
+		return nil, err
 	}
 
 	var streamEvent StreamEvent
 	err = proto.Unmarshal(envelope.Event, &streamEvent)
 	if err != nil {
-		if strict {
-			return nil, err
-		} else {
-			log.Warnf("Bad event provided, %s", err.Error())
-		}
+		return nil, err
 	}
 
 	if len(streamEvent.DelegateSig) > 0 {
@@ -59,29 +49,44 @@ func ParseEvent(envelope *Envelope, strict bool) (*ParsedEvent, error) {
 		if err != nil {
 			err2 := CheckOldDelegateSig(streamEvent.CreatorAddress, signerPubKey, streamEvent.DelegateSig)
 			if err2 != nil {
-				if strict {
-					return nil, RpcErrorf(Err_BAD_EVENT_SIGNATURE, "%s and (old delegate) %s", err.Error(), err2.Error())
-				} else {
-					log.Warnf("%s and (old delegate) %s", err.Error(), err2.Error())
-				}
+				return nil, RpcErrorf(Err_BAD_EVENT_SIGNATURE, "%s and (old delegate) %s", err.Error(), err2.Error())
 			}
 		}
 	} else {
 		address := PublicKeyToAddress(signerPubKey)
 		if !bytes.Equal(address.Bytes(), streamEvent.CreatorAddress) {
-			if strict {
-				return nil, RpcErrorf(Err_BAD_EVENT_SIGNATURE, "Bad signature provided, computed address %x, event creatorAddress %x", address, streamEvent.CreatorAddress)
-			} else {
-				log.Warnf("Bad signature provided, computed address %x, event creatorAddress %x", address, streamEvent.CreatorAddress)
-			}
+			return nil, RpcErrorf(Err_BAD_EVENT_SIGNATURE, "Bad signature provided, computed address %x, event creatorAddress %x", address, streamEvent.CreatorAddress)
 		}
 	}
 
+	prevEventStrs := make([]string, len(streamEvent.PrevEvents))
+	for i, prevEvent := range streamEvent.PrevEvents {
+		prevEventStrs[i] = string(prevEvent)
+	}
+
 	return &ParsedEvent{
-		Event:    &streamEvent,
-		Envelope: envelope,
-		Hash:     envelope.Hash,
+		Event:         &streamEvent,
+		Envelope:      envelope,
+		Hash:          envelope.Hash,
+		HashStr:       string(envelope.Hash),
+		PrevEventStrs: prevEventStrs,
 	}, nil
+}
+
+func (e *ParsedEvent) ShortDebugStr() string {
+	if e == nil {
+		return "nil"
+	}
+	if (e.shortDebugStr) != "" {
+		return e.shortDebugStr
+	}
+
+	e.shortDebugStr = FormatEventShort(e)
+	return e.shortDebugStr
+}
+
+func FormatEventToJsonSB(sb *strings.Builder, event *ParsedEvent) {
+	sb.WriteString(protojson.Format(event.Event))
 }
 
 // TODO(HNT-1381): needs to be refactored
@@ -89,7 +94,7 @@ func FormatEventsToJson(events []*Envelope) string {
 	sb := strings.Builder{}
 	sb.WriteString("[")
 	for idx, event := range events {
-		parsedEvent, err := ParseEvent(event, true)
+		parsedEvent, err := ParseEvent(event)
 		if err == nil {
 			sb.WriteString("{ \"envelope\": ")
 
@@ -111,7 +116,7 @@ func FormatEventsToJson(events []*Envelope) string {
 func ParseEvents(events []*Envelope) ([]*ParsedEvent, error) {
 	parsedEvents := make([]*ParsedEvent, len(events))
 	for i, event := range events {
-		parsedEvent, err := ParseEvent(event, true)
+		parsedEvent, err := ParseEvent(event)
 		if err != nil {
 			return nil, err
 		}

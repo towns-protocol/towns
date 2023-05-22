@@ -50,9 +50,11 @@ import {
     make_UserPayload_ToDevice,
 } from './types'
 
+const log = debug('csb:client')
+
 function assert(condition: any, message?: string): asserts condition {
     if (!condition) {
-        console.error('assertion failed: ', message ?? '')
+        log('assertion failed: ', message ?? '')
         throw new Error(message)
     }
 }

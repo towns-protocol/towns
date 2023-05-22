@@ -64,13 +64,11 @@ func (s *Service) makeEnvelopeWithPayload(payload protocol.IsStreamEvent_Payload
 	return events.MakeEnvelopeWithPayload(s.wallet, payload, prevHashes)
 }
 
-func makeView(ctx context.Context, store storage.Storage, streamId string) storage.StreamView {
-	view := storage.NewView(func() ([]*protocol.Envelope, error) {
-		_, events, err := store.GetStream(ctx, streamId)
-		if err != nil {
-			return nil, err
-		}
-		return events, nil
-	})
-	return view
+func (s *Service) loadStream(ctx context.Context, streamId string) (events.StreamView, error) {
+	_, envelopes, err := s.Storage.GetStream(ctx, streamId)
+	if err != nil {
+		return nil, err
+	}
+
+	return events.MakeStreamView(envelopes)
 }

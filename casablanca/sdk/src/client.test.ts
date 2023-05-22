@@ -187,6 +187,8 @@ describe('clientTest', () => {
         await bobSelfHello.expectToSucceed()
 
         // Alice can't sent a message to Bob's channel.
+        // TODO: since Alice doesn't sync Bob's channel, this fails fast (i.e. stream is unknown to Alice's client).
+        // It would be interesting for Alice to sync this channel, and then try to send a message.
         await expect(
             alicesClient.sendMessage(bobsChannelId, 'Hello, world from Alice!'),
         ).rejects.toThrow()
@@ -269,7 +271,7 @@ describe('clientTest', () => {
         // Alice gets created.
         await expect(alicesClient.createNewUser()).toResolve()
         const aliceUserStreamId = alicesClient.userStreamId
-        console.log('aliceUserStreamId', aliceUserStreamId)
+        log('aliceUserStreamId', aliceUserStreamId)
         const aliceUserId = alicesClient.userId
         alicesClient.startSync(1000)
 
@@ -307,7 +309,7 @@ describe('clientTest', () => {
         // Alice gets created.
         await expect(alicesClient.createNewUser()).toResolve()
         const aliceUserStreamId = alicesClient.userStreamId
-        console.log('aliceUserStreamId', aliceUserStreamId)
+        log('aliceUserStreamId', aliceUserStreamId)
         const aliceUserId = alicesClient.userId
         alicesClient.startSync(1000)
 

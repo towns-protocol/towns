@@ -13,8 +13,12 @@ type ContextKey string
 var townsLoggerKey = ContextKey("townsLogger")
 var EventsLogger = log.New()
 
+func NewRequestId() string {
+	return uuid.NewString()
+}
+
 func SetLoggerWithRequestId(ctx context.Context) (context.Context, *log.Entry, string) {
-	requestId := uuid.NewString()
+	requestId := NewRequestId()
 	log := log.WithFields(log.Fields{
 		"requestId": requestId,
 	})

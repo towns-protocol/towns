@@ -7,7 +7,6 @@ import (
 	"casablanca/node/events"
 	"casablanca/node/infra"
 	"casablanca/node/protocol"
-	"casablanca/node/storage"
 	"context"
 
 	connect_go "github.com/bufbuild/connect-go"
@@ -56,13 +55,13 @@ func (s *Service) createStream(ctx context.Context, req *connect_go.Request[prot
 		return nil, RpcErrorf(protocol.Err_BAD_STREAM_CREATION_PARAMS, "CreateStream: first event is not an inception event")
 	}
 
-	var spaceStreamLeafHashes [][]byte
-
 	if err := validateHashes(parsedEvents); err != nil {
 		return nil, err
 	}
 
-	// validation
+	var spaceView events.StreamView
+
+	// Validation of creation params.
 	switch inception := inceptionPayload.(type) {
 	case *protocol.ChannelPayload_Inception:
 		if !common.ValidChannelStreamId(inception.StreamId) {
@@ -74,32 +73,12 @@ func (s *Service) createStream(ctx context.Context, req *connect_go.Request[prot
 		if len(parsedEvents) != 2 {
 			return nil, RpcErrorf(protocol.Err_BAD_STREAM_CREATION_PARAMS, "CreateStream: channel stream must have exactly two events")
 		}
-
-		user := common.UserIdFromAddress(inceptionEvent.Event.CreatorAddress)
-
-		view := storage.NewViewFromStreamId(ctx, s.Storage, inception.SpaceId)
-		// check permissions
-		allowed, err := s.Authorization.IsAllowed(
-			ctx,
-			auth.AuthorizationArgs{
-				RoomId:     inception.SpaceId,
-				UserId:     user,
-				Permission: auth.PermissionAddRemoveChannels,
-			},
-			view,
-		)
-		if err != nil {
-			return nil, err
-		}
-		if !allowed {
-			return nil, status.Errorf(codes.PermissionDenied, "CreateStream: user %s is not allowed to create channels in space %s", user, inception.SpaceId)
-		}
-
 		if err := validateChannelJoinEvent(parsedEvents[1]); err != nil {
 			return nil, err
 		}
-		spaceView := makeView(ctx, s.Storage, inception.SpaceId)
-		spaceStreamLeafHashes, err = spaceView.GetAllLeafEvents(ctx)
+
+		// Load space. Check if it exists. Used later for auth and to add the channel to the space.
+		spaceView, err = s.loadStream(ctx, inception.SpaceId)
 		if err != nil {
 			return nil, err
 		}
@@ -132,18 +111,47 @@ func (s *Service) createStream(ctx context.Context, req *connect_go.Request[prot
 		return nil, RpcErrorf(protocol.Err_BAD_STREAM_CREATION_PARAMS, "CreateStream: invalid stream kind %T", inception)
 	}
 
+	// Authorization.
+	switch inception := inceptionPayload.(type) {
+	case *protocol.ChannelPayload_Inception:
+		user := common.UserIdFromAddress(inceptionEvent.Event.CreatorAddress)
+		spaceInfo, err := events.RoomInfoFromInceptionEvent(spaceView.InceptionEvent(), inception.SpaceId, user)
+		if err != nil {
+			return nil, err
+		}
+
+		// check permissions
+		allowed, err := s.Authorization.IsAllowed(
+			ctx,
+			auth.AuthorizationArgs{
+				RoomId:     inception.SpaceId,
+				UserId:     user,
+				Permission: auth.PermissionAddRemoveChannels,
+			},
+			spaceInfo,
+		)
+		if err != nil {
+			return nil, err
+		}
+		if !allowed {
+			return nil, status.Errorf(codes.PermissionDenied, "CreateStream: user %s is not allowed to create channels in space %s", user, inception.SpaceId)
+		}
+
+	default:
+		// No auth for other stream types yet.
+		break
+	}
+
 	// TODO(HNT-1355): this needs to be fixed: there is no need to load stream back and append second event through separate call
-	// Storage.CreateStream should work fine with two events.
+	// Storage.CreateStream should work fine with two events (although side-effects need to be processed separately in this case).
 	streamId := inceptionPayload.GetStreamId()
 	log.Infof("CreateStream: calling storage %s", streamId)
 	cookie, err := s.Storage.CreateStream(ctx, streamId, req.Msg.Events[0:1])
 	if err != nil {
 		return nil, err
 	}
-	view := storage.NewViewFromStreamId(ctx, s.Storage, streamId)
-
-	for _, event := range req.Msg.Events[1:] {
-		cookie, err = s.addEvent(ctx, streamId, view, event)
+	for _, event := range parsedEvents[1:] {
+		cookie, err = s.addParsedEvent(ctx, streamId, event)
 		if err != nil {
 			// TODO: s.Storage.DeleteStream(ctx, streamId)
 			return nil, err
@@ -163,7 +171,7 @@ func (s *Service) createStream(ctx context.Context, req *connect_go.Request[prot
 					Signature: inceptionEvent.Envelope.Signature,
 				},
 			),
-			spaceStreamLeafHashes,
+			spaceView.LeafEventHashes(),
 		)
 		if err != nil {
 			return nil, err

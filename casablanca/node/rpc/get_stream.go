@@ -38,13 +38,20 @@ func (s *Service) GetStream(ctx context.Context, req *connect_go.Request[protoco
 
 func (s *Service) getStream(ctx context.Context, req *connect_go.Request[protocol.GetStreamRequest]) (*connect_go.Response[protocol.GetStreamResponse], error) {
 	streamId := req.Msg.StreamId
-	pos, events, err := s.Storage.GetStream(ctx, streamId)
+	pos, unsortedEvents, err := s.Storage.GetStream(ctx, streamId)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "GetStream: error getting stream: %v", err)
 	}
+
+	// Creating StreamView validates event integrity and sorts the events topologically.
+	streamView, err := events.MakeStreamView(unsortedEvents)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "GetStream: error making stream view: %v", err)
+	}
+
 	resp := &protocol.GetStreamResponse{
 		Stream: &protocol.StreamAndCookie{
-			Events:         events,
+			Events:         streamView.Envelopes(),
 			StreamId:       pos.StreamId,
 			NextSyncCookie: pos.SyncCookie,
 		},

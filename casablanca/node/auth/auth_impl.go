@@ -3,7 +3,6 @@ package auth
 import (
 	"casablanca/node/common"
 	"casablanca/node/config"
-	"casablanca/node/storage"
 	"context"
 	_ "embed"
 	"errors"
@@ -22,7 +21,7 @@ type AuthorizationArgs struct {
 }
 
 type Authorization interface {
-	IsAllowed(ctx context.Context, args AuthorizationArgs, view storage.StreamView) (bool, error)
+	IsAllowed(ctx context.Context, args AuthorizationArgs, info *common.RoomInfo) (bool, error)
 }
 
 var ErrSpaceDisabled = errors.New("space disabled")
@@ -76,22 +75,15 @@ func NewChainAuth(cfg *config.ChainConfig) (Authorization, error) {
 	return za, nil
 }
 
-func (za *PassthroughAuth) IsAllowed(ctx context.Context, args AuthorizationArgs, view storage.StreamView) (bool, error) {
+func (za *PassthroughAuth) IsAllowed(ctx context.Context, args AuthorizationArgs, info *common.RoomInfo) (bool, error) {
 	return true, nil
 }
 
-func (za *ChainAuth) IsAllowed(ctx context.Context, args AuthorizationArgs, view storage.StreamView) (bool, error) {
-
+func (za *ChainAuth) IsAllowed(ctx context.Context, args AuthorizationArgs, roomInfo *common.RoomInfo) (bool, error) {
 	userIdentifier := CreateUserIdentifier(args.UserId)
 	log.Debugf("IsAllowed: %v %v", args, userIdentifier)
 
-	roomInfo, err := view.GetStreamInfo(ctx, args.RoomId, args.UserId)
 	log.Debugf("roomInfo: %v", roomInfo)
-	if err != nil {
-		log.Errorf("error getting room info: %v", err)
-		return false, err
-	}
-
 	// Check if user is entitled to space / channel.
 	switch roomInfo.RoomType {
 	case common.Space:

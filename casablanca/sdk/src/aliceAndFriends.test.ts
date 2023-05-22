@@ -262,11 +262,8 @@ const converse = async (conversation: string[][], testName: string): Promise<voi
     }
 }
 
-// TODO: fix CI and remove this
-const testSkipCI = process.env.SKIP_BROKEN ? test.skip : test
-
 describe('aliceAndBobAndFriends', () => {
-    testSkipCI('3participants', async () => {
+    test('3participants', async () => {
         const conversation: string[][] = [
             ["I'm Alice", "I'm Bob", ''],
             ['Alice: hi Bob', 'Bob: hi', ''],
@@ -279,7 +276,20 @@ describe('aliceAndBobAndFriends', () => {
         log(`3participants completed`, convResult)
     })
 
-    testSkipCI('10for20', async () => {
+    test('3for8', async () => {
+        const conversation: string[][] = []
+        for (let i = 0; i < 8; i++) {
+            const step: string[] = []
+            for (let j = 0; j < 3; j++) {
+                step.push(`step ${i} from ${j}`)
+            }
+            conversation.push(step)
+        }
+        const convResult = converse(conversation, '3for8')
+        await expect(convResult).toResolve()
+    })
+
+    test('10for10', async () => {
         const conversation: string[][] = []
         for (let i = 0; i < 10; i++) {
             const step: string[] = []
@@ -288,11 +298,11 @@ describe('aliceAndBobAndFriends', () => {
             }
             conversation.push(step)
         }
-        const convResult = converse(conversation, '10for20')
+        const convResult = converse(conversation, '10for10')
         await expect(convResult).toResolve()
     })
 
-    testSkipCI('longAndRandom', async () => {
+    test('longAndRandom', async () => {
         const rng = seedrandom('this is not a random')
         const conversation: string[][] = []
         for (let i = 0; i < 100; i++) {
