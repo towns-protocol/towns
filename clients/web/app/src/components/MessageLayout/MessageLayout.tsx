@@ -5,14 +5,17 @@ import { Link } from 'react-router-dom'
 import { ProfileHoverCard } from '@components/ProfileHoverCard/ProfileHoverCard'
 import { Reactions } from '@components/Reactions/Reactions'
 import { RepliesButton } from '@components/Replies/MessageReplies'
-import { Avatar, Box, BoxProps, ButtonText, Paragraph, Stack, Text } from '@ui'
+import { Avatar, Box, BoxProps, ButtonText, IconButton, Paragraph, Stack, Text } from '@ui'
 import { useHover } from 'hooks/useHover'
 import { useOpenMessageThread } from 'hooks/useOpenThread'
 import { useHandleReaction } from 'hooks/useReactions'
 import { AvatarProps } from 'ui/components/Avatar/Avatar'
 import { AvatarAtoms } from 'ui/components/Avatar/Avatar.css'
 import { useCreateLink } from 'hooks/useCreateLink'
+import { useDevice } from 'hooks/useDevice'
+import { useFocused } from 'hooks/useFocused'
 import { MessageContextMenu } from './MessageContextMenu'
+import { MessageModalSheet } from './MessageModalSheet'
 
 type Props = {
     userId?: string | null
@@ -73,12 +76,14 @@ export const MessageLayout = (props: Props) => {
     } = props
 
     const ref = useRef<HTMLDivElement>(null)
+    const { isMobile } = useDevice()
 
     const { isHover, onMouseEnter } = useHover(ref)
+    const { isFocused } = useFocused(ref)
 
-    // const { isFocused } = useFocused(ref)
+    const [isModalSheetVisible, setIsModalSheetVisible] = useState(false)
 
-    const isActive = /*isFocused || */ isHover
+    const isActive = isMobile ? isFocused : isHover
 
     const date = timestamp
         ? isRelativeDate
@@ -108,7 +113,7 @@ export const MessageLayout = (props: Props) => {
             {...boxProps}
             {...backgroundProps}
             tabIndex={0}
-            onDoubleClick={canReply ? onDoubleClick : undefined}
+            onDoubleClick={!isMobile && canReply ? onDoubleClick : undefined}
         >
             {/* left / avatar gutter */}
             {/* snippet: center avatar with name row by keeping the size of the containers equal  */}
@@ -116,7 +121,6 @@ export const MessageLayout = (props: Props) => {
                 {displayContext !== 'tail' ? (
                     senderId ? (
                         <AvatarComponent
-                            isActive={isActive}
                             size={avatarSize}
                             insetY="xxs"
                             userId={senderId}
@@ -176,8 +180,16 @@ export const MessageLayout = (props: Props) => {
                     </Stack>
                 )}
                 <Stack gap="md">
-                    <Stack fontSize="md" color="default" gap="md">
+                    <Stack horizontal alignItems="center" fontSize="md" color="default" gap="md">
                         {children}
+                        <Stack grow />
+
+                        <IconButton
+                            visibility={isActive ? 'visible' : 'hidden'}
+                            icon="more"
+                            color="gray2"
+                            onClick={() => setIsModalSheetVisible(true)}
+                        />
                     </Stack>
 
                     {/* channel */}
@@ -204,7 +216,8 @@ export const MessageLayout = (props: Props) => {
                         </Stack>
                     )}
                 </Stack>
-                {isChannelWritable &&
+                {!isMobile &&
+                    isChannelWritable &&
                     spaceId &&
                     channelId &&
                     eventId &&
@@ -221,6 +234,24 @@ export const MessageLayout = (props: Props) => {
                         />
                     )}
             </Stack>
+
+            {isModalSheetVisible &&
+                isMobile &&
+                isChannelWritable &&
+                spaceId &&
+                channelId &&
+                eventId &&
+                isSelectable && (
+                    <MessageModalSheet
+                        canReply={canReply}
+                        canReact={!!onReaction}
+                        channelId={channelId}
+                        spaceId={spaceId}
+                        eventId={eventId}
+                        canEdit={isEditable}
+                        onClose={() => setIsModalSheetVisible(false)}
+                    />
+                )}
         </Stack>
     )
 }
@@ -265,11 +296,9 @@ const useMessageBackground = (
     return { onTransitionEnd, style, background }
 }
 
-const AvatarComponent = (
-    props: AvatarProps & { userId?: string; isActive: boolean; link?: string },
-) => {
-    const { userId, isActive, link, ...avatarProps } = props
-    if (isActive && userId && link) {
+const AvatarComponent = (props: AvatarProps & { userId?: string; link?: string }) => {
+    const { userId, link, ...avatarProps } = props
+    if (userId && link) {
         return <ActiveAvatar {...avatarProps} userId={userId} link={link} />
     }
     return <Avatar {...avatarProps} userId={userId} />

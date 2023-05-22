@@ -2,11 +2,11 @@ import React, { useCallback, useContext, useEffect, useRef } from 'react'
 import { RoomIdentifier, useZionClient } from 'use-zion-client'
 import { motion } from 'framer-motion'
 import { EmojiPickerButton } from '@components/EmojiPickerButton'
-import { Box, Button, Heading, IconButton, Paragraph, Stack } from '@ui'
+import { Box, IconButton, Stack } from '@ui'
 import { useOpenMessageThread } from 'hooks/useOpenThread'
 import { vars } from 'ui/styles/vars.css'
 import { MessageTimelineContext } from '@components/MessageTimeline/MessageTimelineContext'
-import { ModalContainer } from '@components/Modals/ModalContainer'
+import { DeleteMessagePrompt } from './DeleteMessagePrompt'
 
 type Props = {
     eventId: string
@@ -126,24 +126,11 @@ export const MessageContextMenu = (props: Props) => {
                     )}
                 </Stack>
             </Box>
-            {showDeletePrompt ? (
-                <ModalContainer onHide={onDeleteCancel}>
-                    <Stack padding="sm" gap="lg">
-                        <Heading level={3}>Delete message</Heading>
-                        <Paragraph>
-                            Are you sure you want to delete this message? This cannot be undone.
-                        </Paragraph>
-
-                        <Stack horizontal gap justifyContent="end">
-                            <Button onClick={onDeleteCancel}>Cancel</Button>
-                            <Button tone="error" onClick={onDeleteConfirm}>
-                                Delete
-                            </Button>
-                        </Stack>
-                    </Stack>
-                </ModalContainer>
-            ) : (
-                <></>
+            {showDeletePrompt ?? (
+                <DeleteMessagePrompt
+                    onDeleteCancel={onDeleteCancel}
+                    onDeleteConfirm={onDeleteConfirm}
+                />
             )}
         </MotionStack>
     )

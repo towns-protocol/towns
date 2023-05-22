@@ -1,0 +1,20 @@
+import { globalStyle, style } from '@vanilla-extract/css'
+import { vars } from 'ui/styles/vars.css'
+export const modalSheetClass = style({})
+
+globalStyle(`${modalSheetClass} .react-modal-sheet-backdrop`, {
+    backgroundColor: vars.color.shadow.medium + '!important',
+})
+
+globalStyle(`${modalSheetClass} .react-modal-sheet-container`, {
+    backgroundColor: vars.color.background.level1 + '!important',
+    borderTop: '1px solid ' + vars.color.background.level3,
+    borderLeft: '1px solid ' + vars.color.background.level3,
+    borderRight: '1px solid ' + vars.color.background.level3,
+    borderTopLeftRadius: vars.borderRadius.md + '!important',
+    borderTopRightRadius: vars.borderRadius.md + '!important',
+})
+
+globalStyle(`${modalSheetClass} .react-modal-sheet-drag-indicator`, {
+    backgroundColor: vars.color.background.level3 + '!important',
+})

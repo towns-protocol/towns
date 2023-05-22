@@ -113,7 +113,7 @@ describe('#TimelineItem', () => {
             />,
         )
         await screen.findByText(/do you like dogs/)
-        const link = screen.getAllByRole('link')[1]
+        const link = screen.getAllByRole('link')[2]
 
         expect(link).toHaveAttribute('href', 'https://www.dogs.com/')
     })

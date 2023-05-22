@@ -1,10 +1,10 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import Sheet from 'react-modal-sheet'
+import { modalSheetClass } from 'ui/styles/globals/sheet.css'
 import { useDevice } from 'hooks/useDevice'
 import { Box, BoxProps } from '../Box/Box'
 import { IconButton } from '../IconButton/IconButton'
 import { Stack } from '../Stack/Stack'
-import { modalClass } from './Sheet.css'
 
 type Props = {
     children: React.ReactNode
@@ -64,7 +64,7 @@ const MobilePanel = (props: Props) => {
 
     return modalPresentable ? (
         <Sheet
-            className={modalClass}
+            className={modalSheetClass}
             isOpen={modalPresented}
             detent="content-height"
             onClose={closeModal}
