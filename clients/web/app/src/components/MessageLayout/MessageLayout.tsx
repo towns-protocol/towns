@@ -182,14 +182,19 @@ export const MessageLayout = (props: Props) => {
                 <Stack gap="md">
                     <Stack horizontal alignItems="center" fontSize="md" color="default" gap="md">
                         {children}
-                        <Stack grow />
 
-                        <IconButton
-                            visibility={isActive ? 'visible' : 'hidden'}
-                            icon="more"
-                            color="gray2"
-                            onClick={() => setIsModalSheetVisible(true)}
-                        />
+                        {isMobile && (
+                            <>
+                                <Stack grow />
+
+                                <IconButton
+                                    visibility={isActive ? 'visible' : 'hidden'}
+                                    icon="more"
+                                    color="gray2"
+                                    onClick={() => setIsModalSheetVisible(true)}
+                                />
+                            </>
+                        )}
                     </Stack>
 
                     {/* channel */}

@@ -126,7 +126,7 @@ export const MessageContextMenu = (props: Props) => {
                     )}
                 </Stack>
             </Box>
-            {showDeletePrompt ?? (
+            {showDeletePrompt && (
                 <DeleteMessagePrompt
                     onDeleteCancel={onDeleteCancel}
                     onDeleteConfirm={onDeleteConfirm}
