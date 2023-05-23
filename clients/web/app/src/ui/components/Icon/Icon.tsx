@@ -33,6 +33,53 @@ export const AllIcon = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => (
     </svg>
 ))
 
+const ArrowDown = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => (
+    <svg
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        {...props}
+        ref={ref}
+    >
+        <path
+            fillRule="evenodd"
+            clipRule="evenodd"
+            d="M18.7071 8.29289C19.0976 8.68342 19.0976 9.31658 18.7071 9.70711L12.8787 15.5355C12.4882 15.9261 11.855 15.9261 11.4645 15.5355L5.63604 9.70711C5.24552 9.31658 5.24551 8.68342 5.63604 8.29289C6.02656 7.90237 6.65973 7.90237 7.05025 8.29289L12.1716 13.4142L17.2929 8.29289C17.6834 7.90237 18.3166 7.90237 18.7071 8.29289Z"
+            fill="currentColor"
+        />
+    </svg>
+))
+
+const ArrowDownActive = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => (
+    <svg
+        width="20"
+        height="20"
+        viewBox="0 0 20 20"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        {...props}
+        ref={ref}
+    >
+        <g clipPath="url(#clip0_115_1316)">
+            <rect x="0.5" y="0.5" width="19" height="19" rx="9.5" fill="#1FDBF1" />
+            <rect x="0.5" y="0.5" width="19" height="19" rx="9.5" stroke="#222026" />
+            <path
+                fillRule="evenodd"
+                clipRule="evenodd"
+                d="M5.52876 7.99531C5.26841 8.25566 5.26841 8.67777 5.52876 8.93812L9.41438 12.8237C9.67473 13.0841 10.0968 13.0841 10.3572 12.8237L14.2428 8.93812C14.5032 8.67777 14.5032 8.25566 14.2428 7.99531C13.9825 7.73496 13.5603 7.73496 13.3 7.99531L9.88578 11.4095L6.47157 7.99531C6.21122 7.73496 5.78911 7.73496 5.52876 7.99531Z"
+                fill="#222026"
+            />
+        </g>
+        <defs>
+            <clipPath id="clip0_115_1316">
+                <rect width="20" height="20" fill="white" />
+            </clipPath>
+        </defs>
+    </svg>
+))
+
 export const AtIcon = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" {...props} ref={ref}>
         <path
@@ -953,29 +1000,11 @@ const Alert = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => (
     </svg>
 ))
 
-const ArrowDown = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => (
-    <svg
-        width="24"
-        height="24"
-        viewBox="0 0 24 24"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-        {...props}
-        ref={ref}
-    >
-        <path
-            fillRule="evenodd"
-            clipRule="evenodd"
-            d="M18.7071 8.29289C19.0976 8.68342 19.0976 9.31658 18.7071 9.70711L12.8787 15.5355C12.4882 15.9261 11.855 15.9261 11.4645 15.5355L5.63604 9.70711C5.24552 9.31658 5.24551 8.68342 5.63604 8.29289C6.02656 7.90237 6.65973 7.90237 7.05025 8.29289L12.1716 13.4142L17.2929 8.29289C17.6834 7.90237 18.3166 7.90237 18.7071 8.29289Z"
-            fill="currentColor"
-        />
-    </svg>
-))
-
 const iconMap = {
     alert: Alert,
     all: AllIcon,
     arrowDown: ArrowDown,
+    arrowDownActive: ArrowDownActive,
     at: AtIcon,
     back: BackIcon,
     bell: BellIcon,

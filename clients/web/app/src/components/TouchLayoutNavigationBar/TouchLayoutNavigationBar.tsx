@@ -1,6 +1,10 @@
 import React, { useCallback, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Channel } from 'use-zion-client'
+import {
+    Channel,
+    useSpaceThreadRootsUnreadCount,
+    useSpaceUnreadThreadMentions,
+} from 'use-zion-client'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Box, Icon, IconName, Stack, Text } from '@ui'
 import { TouchLayoutDropdownMenu } from '@components/TouchLayoutNavigationBar/TouchLayoutDropdownMenu'
@@ -14,6 +18,9 @@ export const TouchLayoutNavigationBar = (props: Props) => {
     const { value } = props
 
     const [dropDownOpen, setDropDownOpen] = useState(false)
+    const unreadThreadsCount = useSpaceThreadRootsUnreadCount()
+    const unreadThreadMentions = useSpaceUnreadThreadMentions()
+    const hasUnreadCount = unreadThreadsCount + unreadThreadMentions > 0
 
     const toggleDropDown = useCallback(() => {
         setDropDownOpen(!dropDownOpen)
@@ -77,7 +84,7 @@ export const TouchLayoutNavigationBar = (props: Props) => {
                 <Text color="default">{labelText}</Text>
 
                 <Stack grow />
-                <Stack horizontal gap="lg" padding="none">
+                <Stack horizontal gap="lg" padding="none" alignItems="center">
                     {shouldDisplayChannelInfoButton && (
                         <Link to="info?channel">
                             <Icon type="info" size="square_sm" color="default" />
@@ -85,7 +92,7 @@ export const TouchLayoutNavigationBar = (props: Props) => {
                     )}
                     <motion.div animate={{ rotate: dropDownOpen ? -180 : 0 }}>
                         <Icon
-                            type="arrowDown"
+                            type={hasUnreadCount ? 'arrowDownActive' : 'arrowDown'}
                             size="square_sm"
                             color="default"
                             onClick={toggleDropDown}
@@ -106,7 +113,10 @@ export const TouchLayoutNavigationBar = (props: Props) => {
                             width="100%"
                             height="100svh"
                         >
-                            <TouchLayoutDropdownMenu />
+                            <TouchLayoutDropdownMenu
+                                unreadThreadMentions={unreadThreadMentions}
+                                unreadThreadsCount={unreadThreadsCount}
+                            />
                         </MotionStack>
                     </Box>
                 )}
