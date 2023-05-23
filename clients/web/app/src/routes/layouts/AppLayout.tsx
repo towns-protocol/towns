@@ -4,7 +4,7 @@ import { useMatch } from 'react-router'
 import { useDevice } from 'hooks/useDevice'
 import { PATHS } from 'routes'
 import { Register } from 'routes/Register'
-import { AppStackLayout } from './AppStackLayout'
+import { AppTouchLayout } from './AppTouchLayout'
 import { AppPanelLayout } from './AppPanelLayout'
 
 export const AppLayout = () => {
@@ -19,7 +19,7 @@ export const AppLayout = () => {
         <SpaceContextProvider spaceId={spaceId}>
             <>
                 <AutojoinChannels />
-                {isMobile ? <AppStackLayout /> : <AppPanelLayout />}
+                {isMobile ? <AppTouchLayout /> : <AppPanelLayout />}
             </>
         </SpaceContextProvider>
     )

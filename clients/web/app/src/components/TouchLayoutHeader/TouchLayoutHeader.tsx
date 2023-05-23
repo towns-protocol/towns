@@ -4,10 +4,10 @@ import { AnimatePresence } from 'framer-motion'
 import { ImageVariants } from '@components/UploadImage/useImageSource'
 import { Avatar, Box, Stack, Text } from '@ui'
 import { SpaceIcon } from '@components/SpaceIcon'
-import { StackHomeOverlay } from '@components/StackHomeOverlay/StackHomeOverlay'
+import { TouchHomeOverlay } from '@components/TouchHomeOverlay/TouchHomeOverlay'
 import { useNavigateToCurrentSpaceInfo } from 'hooks/useNavigateToCurrentSpaceInfo'
 
-export const StackLayoutHeader = () => {
+export const TouchLayoutHeader = () => {
     const userId = useMyProfile()?.userId
     const space = useSpaceData()
     const [showOverlay, setShowOverlay] = useState(false)
@@ -57,7 +57,7 @@ export const StackLayoutHeader = () => {
             <Stack grow />
             <Box background="cta1" width="x3" height="x3" />
             <AnimatePresence>
-                {showOverlay && <StackHomeOverlay onClose={() => setShowOverlay(false)} />}
+                {showOverlay && <TouchHomeOverlay onClose={() => setShowOverlay(false)} />}
             </AnimatePresence>
         </Stack>
     )

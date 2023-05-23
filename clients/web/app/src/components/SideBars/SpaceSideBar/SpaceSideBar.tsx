@@ -9,6 +9,7 @@ import {
     useMyMembership,
     useSpaceMentions,
     useSpaceThreadRootsUnreadCount,
+    useSpaceUnreadThreadMentions,
     useZionClient,
 } from 'use-zion-client'
 import { useQueryClient } from '@tanstack/react-query'
@@ -99,9 +100,7 @@ export const SpaceSideBar = (props: Props) => {
     const onShowBrowseChannels = useEvent(() => setBrowseChannelsModalVisible(true))
 
     const mentions = useSpaceMentions()
-    const unreadThreadMentions = mentions.reduce((count, m) => {
-        return m.thread && m.unread ? count + 1 : count
-    }, 0)
+    const unreadThreadMentions = useSpaceUnreadThreadMentions()
 
     const { data: canCreateChannel } = useHasPermission(Permission.AddRemoveChannels)
 

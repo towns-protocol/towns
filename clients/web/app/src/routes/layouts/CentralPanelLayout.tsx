@@ -4,7 +4,7 @@ import React from 'react'
 import { Box, Stack } from '@ui'
 import { usePersistPanes } from 'hooks/usePersistPanes'
 import { useDevice } from 'hooks/useDevice'
-import { StackLayoutHeader } from '@components/StackLayoutHeader/StackLayoutHeader'
+import { TouchLayoutHeader } from '@components/TouchLayoutHeader/TouchLayoutHeader'
 
 export const CentralPanelLayout = (props: { children: React.ReactNode }) => {
     const { children } = props
@@ -15,7 +15,7 @@ export const CentralPanelLayout = (props: { children: React.ReactNode }) => {
     return isMobile ? (
         <>
             <Stack height="100svh" paddingBottom="safeAreaInsetBottom">
-                <StackLayoutHeader />
+                <TouchLayoutHeader />
                 <Box grow centerContent position="relative">
                     <Box absoluteFill>{children}</Box>
                 </Box>

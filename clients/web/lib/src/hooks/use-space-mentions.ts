@@ -65,3 +65,10 @@ export function useSpaceMentions(): MentionResult[] {
         )
     }, [channels, threadsStats, timelines, unreadMarkers])
 }
+
+export function useSpaceUnreadThreadMentions(): number {
+    const mentions = useSpaceMentions()
+    return mentions.reduce((count, m) => {
+        return m.thread && m.unread ? count + 1 : count
+    }, 0)
+}

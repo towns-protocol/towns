@@ -20,7 +20,7 @@ type Props = {
     onClose: () => void
 }
 
-export const StackHomeOverlay = (props: Props) => {
+export const TouchHomeOverlay = (props: Props) => {
     const { onClose } = props
     const { logout } = useAuth()
     const user = useMyProfile()

@@ -14,17 +14,21 @@ import { RichTextPreview } from '@components/RichText/RichTextEditor'
 import { Message } from '@components/MessageLayout'
 import { getIsRoomMessageContent, getMessageBody } from 'utils/ztevent_util'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
+import { TouchLayoutNavigationBar } from '@components/TouchLayoutNavigationBar/TouchLayoutNavigationBar'
+import { useDevice } from 'hooks/useDevice'
 import { CentralPanelLayout } from './layouts/CentralPanelLayout'
 
 export const SpaceMentions = () => {
     const { userId } = useMatrixCredentials()
     const mentions = useSpaceMentions()
+    const { isMobile } = useDevice()
 
     return (
         <CentralPanelLayout>
-            <Stack absoluteFill overflowY="scroll">
+            {isMobile && <TouchLayoutNavigationBar value="mentions" />}
+            <Stack absoluteFill scroll paddingTop={isMobile ? 'x8' : 'none'}>
                 {mentions.length ? (
-                    <Stack grow>
+                    <Stack grow minHeight="100svh">
                         <Stack gap padding>
                             {mentions.map((m, index, mentions) => {
                                 return (
@@ -40,8 +44,8 @@ export const SpaceMentions = () => {
                         </Stack>
                     </Stack>
                 ) : (
-                    <Stack centerContent grow>
-                        <Stack centerContent gap="lg" width="250">
+                    <Stack centerContent grow absoluteFill scroll>
+                        <Stack centerContent gap="lg" width="250" minHeight="100svh">
                             <Box padding="md" color="gray2" background="level2" rounded="sm">
                                 <Icon type="at" size="square_sm" />
                             </Box>

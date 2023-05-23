@@ -10,6 +10,8 @@ import {
 import { MessageThread } from '@components/MessageThread/MessageThread'
 import { Box, Heading, Icon, Paragraph, Stack } from '@ui'
 import { usePersistOrder } from 'hooks/usePersistOrder'
+import { TouchLayoutNavigationBar } from '@components/TouchLayoutNavigationBar/TouchLayoutNavigationBar'
+import { useDevice } from 'hooks/useDevice'
 import { CentralPanelLayout } from './layouts/CentralPanelLayout'
 
 function sortThreads(threads: ThreadResult[]) {
@@ -22,6 +24,7 @@ export const SpaceThreads = () => {
     const { userId } = useMatrixCredentials()
     const spaceId = useSpaceId()
     const threadRoots = useSpaceThreadRoots()
+    const { isMobile } = useDevice()
 
     const threads = usePersistOrder(threadRoots, {
         sorterFn: sortThreads,
@@ -30,9 +33,10 @@ export const SpaceThreads = () => {
 
     return (
         <CentralPanelLayout>
+            {isMobile && <TouchLayoutNavigationBar value="threads" />}
             {userId && spaceId && threads.length > 0 ? (
-                <Stack absoluteFill overflowY="scroll">
-                    <Stack gap="lg" padding="lg">
+                <Stack absoluteFill scroll paddingTop={isMobile ? 'x8' : 'none'}>
+                    <Stack gap="lg" padding="lg" minHeight="100svh">
                         {threads.map(({ thread, channel }) => {
                             return (
                                 <ChannelContextProvider
@@ -52,8 +56,8 @@ export const SpaceThreads = () => {
                     </Stack>
                 </Stack>
             ) : (
-                <Stack centerContent grow absoluteFill>
-                    <Stack centerContent gap="lg" width="250">
+                <Stack centerContent grow scroll absoluteFill>
+                    <Stack centerContent gap="lg" width="250" minHeight="100svh">
                         <Box padding="md" color="gray2" background="level2" rounded="sm">
                             <Icon type="threads" size="square_sm" />
                         </Box>
