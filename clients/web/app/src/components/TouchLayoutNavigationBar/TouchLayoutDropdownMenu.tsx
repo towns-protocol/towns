@@ -61,7 +61,7 @@ export const TouchLayoutDropdownMenu = () => {
             )}
 
             {visibleModal === 'browse' && (
-                <ModalContainer minWidth="500" onHide={onHideBrowseChannels}>
+                <ModalContainer touchTitle="Browse channels" onHide={onHideBrowseChannels}>
                     <AllChannelsList onHideBrowseChannels={onHideBrowseChannels} />
                 </ModalContainer>
             )}

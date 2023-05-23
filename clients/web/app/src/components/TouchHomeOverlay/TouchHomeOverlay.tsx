@@ -112,7 +112,7 @@ export const TouchHomeOverlay = (props: Props) => {
                 </Stack>
 
                 {isSentryModalVisible && (
-                    <ModalContainer onHide={hideSentryModal}>
+                    <ModalContainer touchTitle="Report a bug" onHide={hideSentryModal}>
                         <SentryErrorReportForm onHide={hideSentryModal} />
                     </ModalContainer>
                 )}

@@ -14,6 +14,7 @@ import { useSpaceChannels } from 'hooks/useSpaceChannels'
 import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinner'
 import { PATHS } from 'routes'
 import { useChannelIdFromPathname } from 'hooks/useChannelIdFromPathname'
+import { useDevice } from 'hooks/useDevice'
 
 export const AllChannelsList = ({
     onHideBrowseChannels,
@@ -22,6 +23,7 @@ export const AllChannelsList = ({
 }) => {
     const space = useSpaceData()
     const { client } = useZionClient()
+    const { isMobile } = useDevice()
     // matrix doesn't always sync left rooms. For example if you leave a room, and all other members leave it too. And there may be other unexpected cases.
     // matrix sdk .syncLeftRooms() returns empty array
     // so using blockchain data to get all the channels
@@ -54,27 +56,29 @@ export const AllChannelsList = ({
         <Stack>
             {space && !space?.isLoadingChannels && contractChannelsWithJoinedStatus.length > 0 ? (
                 <>
-                    <Stack
-                        horizontal
-                        justifyContent="spaceBetween"
-                        alignItems="center"
-                        paddingTop="sm"
-                        paddingX="sm"
-                        paddingBottom="x4"
-                    >
-                        <Text size="lg" fontWeight="strong">
-                            Browse channels
-                        </Text>
+                    {!isMobile && (
+                        <Stack
+                            horizontal
+                            justifyContent="spaceBetween"
+                            alignItems="center"
+                            paddingTop="sm"
+                            paddingX="sm"
+                            paddingBottom="x4"
+                        >
+                            <Text size="lg" fontWeight="strong">
+                                Browse channels
+                            </Text>
 
-                        {onHideBrowseChannels && (
-                            <IconButton
-                                color="default"
-                                icon="close"
-                                label="close"
-                                onClick={onHideBrowseChannels}
-                            />
-                        )}
-                    </Stack>
+                            {onHideBrowseChannels && (
+                                <IconButton
+                                    color="default"
+                                    icon="close"
+                                    label="close"
+                                    onClick={onHideBrowseChannels}
+                                />
+                            )}
+                        </Stack>
+                    )}
                     <Stack gap="lg" maxHeight="400" overflow="auto" padding="sm">
                         {contractChannelsWithJoinedStatus?.map((channel) => (
                             <Stack key={channel.channelNetworkId}>

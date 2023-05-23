@@ -158,7 +158,6 @@ export const SentryErrorReportForm = (props: { onHide: () => void }) => {
                             {...register(FormStateKeys.name)}
                         />
                         <TextField
-                            autoFocus
                             background="level2"
                             placeholder="Email"
                             message={
