@@ -11,11 +11,9 @@ import { useAuth } from 'hooks/useAuth'
 import { useDevice } from 'hooks/useDevice'
 import { useEnvironment } from 'hooks/useEnvironmnet'
 import { useRootTheme } from 'hooks/useRootTheme'
-import { useShouldDisplayDesktopOnlyScreen } from 'hooks/useShouldDisplayDesktopOnlyScreen'
 import { useWindowListener } from 'hooks/useWindowListener'
 import { PATHS } from 'routes'
 import { LoadingScreen } from 'routes/LoadingScreen'
-import { MobileView } from 'routes/MobileView'
 import { Register } from 'routes/Register'
 import { Welcome } from 'routes/Welcome'
 import { AppLayout } from 'routes/layouts/AppLayout'
@@ -41,9 +39,8 @@ export const App = () => {
     // aellis april 2023, the two server urls and the chain id should all be considered
     // a single piece of state, PROD, TEST, and LOCAL each should have {matrixUrl, casablancaUrl, chainId}
     const environment = useEnvironment()
-    const displayDesktopOnlyScreen = useShouldDisplayDesktopOnlyScreen()
 
-    return !displayDesktopOnlyScreen ? (
+    return (
         <ZionContextProvider
             alchemyKey={env.VITE_ALCHEMY_API_KEY}
             primaryProtocol={SpaceProtocol.Matrix}
@@ -62,12 +59,6 @@ export const App = () => {
                 <Notifications />
             </>
         </ZionContextProvider>
-    ) : (
-        <Routes>
-            <Route element={<AppTopLevelLayout />}>
-                <Route path="*" element={<MobileView />} />
-            </Route>
-        </Routes>
     )
 }
 
