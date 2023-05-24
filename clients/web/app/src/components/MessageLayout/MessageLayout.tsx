@@ -184,13 +184,13 @@ export const MessageLayout = (props: Props) => {
                     </Stack>
                 )}
                 <Stack gap="md">
-                    <Stack horizontal alignItems="center" fontSize="md" color="default" gap="md">
-                        {children}
-
+                    <Stack horizontal alignItems="center">
+                        <Stack fontSize="md" color="default" gap="md">
+                            {children}
+                        </Stack>
                         {isMobile && (
                             <>
                                 <Stack grow />
-
                                 <IconButton
                                     visibility={isActive ? 'visible' : 'hidden'}
                                     icon="more"
