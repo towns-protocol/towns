@@ -68,8 +68,8 @@ const TouchFullScreenModalContainer = (props: TouchFullScreenModalContainerProps
                     zIndex="tooltips"
                 >
                     <Stack>
-                        <Stack paddingX horizontal borderBottom gap alignItems="center" height="x8">
-                            <Icon type="back" color="gray1" onClick={onClose} />
+                        <Stack horizontal borderBottom gap="sm" padding="sm" alignItems="center">
+                            <Icon type="back" color="gray2" size="square_sm" onClick={onClose} />
                             <Text fontWeight="strong">{title}</Text>
                         </Stack>
                         <Stack

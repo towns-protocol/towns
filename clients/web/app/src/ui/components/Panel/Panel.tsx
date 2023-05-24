@@ -5,6 +5,7 @@ import { useDevice } from 'hooks/useDevice'
 import { Box, BoxProps } from '../Box/Box'
 import { IconButton } from '../IconButton/IconButton'
 import { Stack } from '../Stack/Stack'
+import { Text } from '../Text/Text'
 
 type Props = {
     children: React.ReactNode
@@ -89,21 +90,28 @@ const MobilePanel = (props: Props) => {
         </Sheet>
     ) : (
         // TODO: sort out zIndexes
-        <Stack absoluteFill background="level2" zIndex="tooltips" insetTop="safeArea">
+        <Stack absoluteFill background="level1" zIndex="tooltips">
             <Stack
-                gap
                 horizontal
-                padding
+                borderBottom
+                gap="sm"
+                padding="sm"
                 alignItems="center"
                 color="gray1"
                 position="sticky"
                 background="level1"
             >
-                <IconButton icon="close" onClick={props.onClose} />
-                {props.label}
+                <IconButton icon="back" color="gray2" size="square_sm" onClick={props.onClose} />
+                <Text fontWeight="strong">{props.label}</Text>
             </Stack>
             <Stack scroll>
-                <Box minHeight="100svh">{props.children}</Box>
+                <Box
+                    minHeight="100svh"
+                    paddingTop="safeAreaInsetTop"
+                    paddingBottom="safeAreaInsetBottom"
+                >
+                    {props.children}
+                </Box>
             </Stack>
         </Stack>
     )

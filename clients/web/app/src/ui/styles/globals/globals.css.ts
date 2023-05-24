@@ -9,6 +9,7 @@ globalStyle('html, body', {
     MozOsxFontSmoothing: 'grayscale',
     fontSize: vars.fontSize.md,
     touchAction: 'pan-x pan-y',
+    backgroundColor: vars.color.background.level1,
 })
 
 globalStyle('*', {
