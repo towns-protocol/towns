@@ -33,7 +33,7 @@ FontLoader.init()
 export const App = () => {
     useRootTheme({
         ammendHTMLBody: true,
-        useDefaultOSTheme: false,
+        useDefaultOSTheme: true,
     })
 
     // aellis april 2023, the two server urls and the chain id should all be considered

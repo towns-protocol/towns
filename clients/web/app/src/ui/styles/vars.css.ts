@@ -234,6 +234,7 @@ const root = createGlobalTheme(':root', {
     } as const,
 
     fontSize: {
+        xs: `${11}px`,
         sm: `${13}px`,
         md: `${15}px`,
         lg: `${18}px`,

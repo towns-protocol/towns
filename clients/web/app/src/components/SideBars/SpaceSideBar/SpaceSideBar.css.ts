@@ -22,7 +22,7 @@ export const spaceIconContainer = style({})
 export const gradientBackground = style({})
 
 globalStyle(`${lightTheme} ${gradientBackground}`, {
-    background: `linear-gradient(180deg, #CCCF 0%, #1110 100%)`,
+    background: `inherit`,
 })
 
 globalStyle(`${darkTheme} ${gradientBackground}`, {

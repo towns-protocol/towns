@@ -32,7 +32,7 @@ export const ChannelUsersPill = (props: { spaceId: RoomIdentifier; channelId: Ro
     }, [timelineContext?.events, members])
 
     return (
-        <Stack horizontal border="level4" background="level3" rounded="sm" height="height_lg">
+        <Stack horizontal border background="level2" rounded="sm" height="height_lg">
             <Link to="info?directory">
                 <Stack horizontal grow gap="sm" padding="sm" alignItems="center">
                     <Stack horizontal gap="line">
@@ -44,15 +44,8 @@ export const ChannelUsersPill = (props: { spaceId: RoomIdentifier; channelId: Ro
                 </Stack>
             </Link>
 
-            <Box centerContent paddingX="xs" borderLeft="level4">
-                <CopySpaceLink
-                    spaceId={spaceId}
-                    align="right"
-                    offsetTop="md"
-                    background={{
-                        default: 'level3',
-                    }}
-                />
+            <Box centerContent borderLeft paddingX="xs">
+                <CopySpaceLink spaceId={spaceId} align="right" offsetTop="md" />
             </Box>
         </Stack>
     )

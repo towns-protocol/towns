@@ -85,7 +85,7 @@ export const MessageThread = (props: {
                     </Paragraph>
                     {usernames && <Paragraph color="gray2">{usernames}</Paragraph>}
                 </Box>
-                <Stack scroll grow elevate rounded="sm" boxShadow="card">
+                <Stack scroll grow elevate rounded="sm" boxShadow="panel">
                     <Stack>
                         <MessageTimeline collapsed />
                         <Box padding>

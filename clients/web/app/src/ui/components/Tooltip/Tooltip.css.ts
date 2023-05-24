@@ -1,5 +1,5 @@
 import { globalStyle, style } from '@vanilla-extract/css'
-import { vars } from 'ui/styles/vars.css'
+import { lightTheme } from 'ui/styles/vars.css'
 
 export const tooltip = style({
     filter: `
@@ -9,6 +9,14 @@ export const tooltip = style({
     `,
     padding: `10px 10px`,
     wordBreak: `normal`,
+})
+
+globalStyle(`${lightTheme} ${tooltip} `, {
+    filter: `
+        drop-shadow(0px 0px 0.25px rgba(0, 0, 0, 0.25))
+        drop-shadow(-2px 4px 8px rgba(0, 0, 0, 0.15))
+
+    `,
 })
 
 export const arrow = style({
@@ -42,26 +50,26 @@ globalStyle(`${tooltipRight} ${arrow}:after`, {
     left: '0',
     top: 'var(--tooltip-arrow-position)',
     transform: `translate(calc(-100% + 1px), -50%)`,
-    borderRightColor: vars.color.background.level2,
+    borderRightColor: `var(--background)`,
 })
 
 globalStyle(`${tooltipLeft} ${arrow}:after`, {
     right: '0',
     top: 'var(--tooltip-arrow-position)',
     transform: `translate(calc(100% - 1px), -50%)`,
-    borderLeftColor: vars.color.background.level2,
+    borderLeftColor: `var(--background)`,
 })
 
 globalStyle(`${tooltipBottom} ${arrow}:after`, {
     left: 'var(--tooltip-arrow-position)',
     top: '0',
     transform: `translate(-50%, calc(-100% + 1px))`,
-    borderBottomColor: vars.color.background.level2,
+    borderBottomColor: `var(--background)`,
 })
 
 globalStyle(`${tooltipTop} ${arrow}:after`, {
     left: 'var(--tooltip-arrow-position)',
     bottom: '0',
     transform: `translate(-50%, calc(100% - 1px))`,
-    borderTopColor: vars.color.background.level2,
+    borderTopColor: `var(--background)`,
 })

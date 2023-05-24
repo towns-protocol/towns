@@ -4,6 +4,7 @@ import { ToneName } from 'ui/styles/themes'
 import { darkTheme, vars } from 'ui/styles/vars.css'
 
 export const elevateClass = style({})
+export const elevateReadabilityClass = style({})
 
 export const colorProperties = defineProperties({
     conditions: {
@@ -26,12 +27,26 @@ export const colorProperties = defineProperties({
             },
             default: {
                 background: vars.color.background.level1,
+                selectors: {
+                    [`${elevateClass} &`]: {
+                        background: vars.color.background.level2,
+                    },
+                    [`${elevateReadabilityClass} &`]: {
+                        background: vars.color.background.readability,
+                    },
+                },
+            },
+            readability: {
+                background: vars.color.background.readability,
             },
             level1: {
                 background: vars.color.background.level1,
                 selectors: {
                     [`${elevateClass} &`]: {
                         background: vars.color.background.level2,
+                    },
+                    [`${elevateReadabilityClass} &`]: {
+                        background: vars.color.background.readability,
                     },
                 },
             },
@@ -75,7 +90,7 @@ export const colorProperties = defineProperties({
             /** html semantic - links and highlights */
             [ToneName.Accent]: {
                 background: vars.color.tone.accent,
-                color: vars.color.text.onTone,
+                color: vars.color.text.inverted,
             },
             [ToneName.CTA1]: {
                 background: `linear-gradient(90deg, #21E078 0%, #1FDBF1 100%);`,
@@ -102,7 +117,7 @@ export const colorProperties = defineProperties({
             },
 
             [ToneName.Error]: {
-                background: vars.color.tone.error,
+                background: vars.color.tone.negative,
                 color: vars.color.text.onTone,
             },
         },

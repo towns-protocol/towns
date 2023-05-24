@@ -1,6 +1,6 @@
 import React from 'react'
 import { TimelineEvent } from 'use-zion-client'
-import { Box, Card, Icon, Stack, TooltipRenderer } from '@ui'
+import { Box, Icon, Stack, Tooltip } from '@ui'
 import * as styles from './EncryptedMessageBody.css'
 
 export const TimelineEncryptedContent = React.memo(
@@ -14,49 +14,40 @@ export const TimelineEncryptedContent = React.memo(
 
         return (
             <Stack insetY="xxs" className={styles.main}>
-                <TooltipRenderer
-                    tooltip={
-                        <Card
-                            border
-                            centerContent
-                            padding="sm"
-                            gap="sm"
-                            fontSize="sm"
-                            rounded="sm"
-                            width="250"
-                            overflow="hidden"
-                            textAlign="center"
-                        >
-                            This message cannot be decrypted because you don&apos;t have this
-                            user&apos;s keys.
-                            <div className={styles.loader}>
-                                <div />
-                                <div />
-                                <div />
-                                <div />
-                            </div>
-                        </Card>
-                    }
+                <Box
+                    horizontal
+                    centerContent
+                    gap="sm"
+                    style={{ width }}
+                    tooltip={<DecryptionTooltip />}
                 >
-                    {({ triggerProps }) => (
-                        <Box {...triggerProps} horizontal centerContent gap="sm" style={{ width }}>
-                            <Box
-                                grow
-                                height="x2"
-                                borderRadius="xs"
-                                background="level2"
-                                className={styles.hoverBackground}
-                            />
-                            <Icon
-                                type="nokey"
-                                size="square_sm"
-                                className={styles.hoverColor}
-                                color="level2"
-                            />
-                        </Box>
-                    )}
-                </TooltipRenderer>
+                    <Box
+                        grow
+                        height="x2"
+                        borderRadius="xs"
+                        background="level3"
+                        className={styles.hoverBackground}
+                    />
+                    <Icon
+                        type="nokey"
+                        size="square_sm"
+                        className={styles.hoverColor}
+                        color="level3"
+                    />
+                </Box>
             </Stack>
         )
     },
+)
+
+const DecryptionTooltip = () => (
+    <Tooltip centerContent gap="sm" width="250" textAlign="center">
+        This message cannot be decrypted because you don&apos;t have this user&apos;s keys.
+        <div className={styles.loader}>
+            <div />
+            <div />
+            <div />
+            <div />
+        </div>
+    </Tooltip>
 )

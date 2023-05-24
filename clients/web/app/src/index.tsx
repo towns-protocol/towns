@@ -1,4 +1,5 @@
 import 'allotment/dist/style.css'
+import 'index.css'
 import { init as SentryInit, Replay as SentryReplay } from '@sentry/react'
 import { BrowserTracing } from '@sentry/browser'
 import React from 'react'

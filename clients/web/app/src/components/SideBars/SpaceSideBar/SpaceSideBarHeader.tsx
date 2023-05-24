@@ -1,7 +1,7 @@
 import React, { useCallback, useState } from 'react'
 import { matchPath, useLocation, useNavigate } from 'react-router'
 import { useEvent } from 'react-use-event-hook'
-import { Permission, RoomIdentifier, SpaceData, useSpaceMembers } from 'use-zion-client'
+import { SpaceData, useSpaceMembers } from 'use-zion-client'
 import { AnimatePresence } from 'framer-motion'
 import { useChannelIdFromPathname } from 'hooks/useChannelIdFromPathname'
 import { useContractSpaceInfo } from 'hooks/useContractSpaceInfo'
@@ -9,9 +9,6 @@ import { useEnvironment } from 'hooks/useEnvironmnet'
 import { PATHS } from 'routes'
 import { useSizeContext } from 'ui/hooks/useSizeContext'
 import { Box, Icon, IconName, Paragraph, Stack } from '@ui'
-import { useHasPermission } from 'hooks/useHasPermission'
-import { SpaceSettingsCard } from '@components/Cards/SpaceSettingsCard'
-import { CardOpener } from 'ui/components/Overlay/CardOpener'
 import { shortAddress } from 'ui/utils/utils'
 import { InteractiveSpaceIcon } from '@components/SpaceIcon'
 import { CopySpaceLink } from '@components/CopySpaceLink/CopySpaceLink'
@@ -24,9 +21,8 @@ export const SpaceSideBarHeader = (props: {
     space: SpaceData
     opaqueHeaderBar: boolean
     scrollOffset: number
-    onSettings: (spaceId: RoomIdentifier) => void
 }) => {
-    const { onSettings, opaqueHeaderBar, space } = props
+    const { opaqueHeaderBar, space } = props
     const currentChannelId = useChannelIdFromPathname()
     const { chainName } = useEnvironment()
     const { pathname } = useLocation()
@@ -97,11 +93,14 @@ export const SpaceSideBarHeader = (props: {
                 onPointerLeave={onHeaderLeave}
             >
                 <Box centerContent width="x8" pointerEvents="auto">
-                    <SettingsGear
-                        spaceId={space.id}
-                        spaceName={space.name}
-                        onSettings={onSettings}
-                    />
+                    <Box
+                        cursor="pointer"
+                        padding="xs"
+                        color={{ hover: 'default', default: 'gray2' }}
+                        onClick={onTokenClick}
+                    >
+                        <Icon type="settings" size="square_sm" />
+                    </Box>
                 </Box>
                 <Box centerContent width="x8" pointerEvents="auto">
                     <AnimatePresence>
@@ -165,13 +164,17 @@ export const SpaceSideBarHeader = (props: {
                 <Stack horizontal height="x8">
                     <Box width="x7" shrink={false} />
                     <Box grow position="relative">
-                        <Box absoluteFill justifyContent="center">
+                        <Box
+                            absoluteFill
+                            justifyContent="center"
+                            cursor="pointer"
+                            onClick={onTokenClick}
+                        >
                             {hasName && (
                                 <Paragraph
                                     strong
                                     truncate
                                     size={isSmall ? 'md' : 'lg'}
-                                    color="gray1"
                                     textAlign="center"
                                 >
                                     {space.name}
@@ -256,49 +259,5 @@ const SidebarPill = (props: {
                 </Paragraph>
             </Stack>
         </Stack>
-    )
-}
-
-const SettingsGear = (props: {
-    spaceId: RoomIdentifier
-    onSettings: (spaceId: RoomIdentifier) => void
-    spaceName: string
-}) => {
-    const { spaceId, onSettings, spaceName } = props
-    const { data: canEditSettings } = useHasPermission(Permission.ModifySpaceSettings)
-
-    const onSettingClick = useCallback(
-        (e: React.MouseEvent) => {
-            e.preventDefault()
-            onSettings?.(spaceId)
-        },
-        [onSettings, spaceId],
-    )
-
-    return (
-        <CardOpener
-            tabIndex={0}
-            trigger="click"
-            placement="horizontal"
-            render={
-                <SpaceSettingsCard
-                    spaceId={spaceId}
-                    spaceName={spaceName}
-                    canEditSettings={Boolean(canEditSettings)}
-                />
-            }
-            layoutId="settings"
-        >
-            {({ triggerProps }) => (
-                <Box
-                    padding="xs"
-                    color={{ hover: 'default', default: 'gray2' }}
-                    onClick={onSettingClick}
-                    {...triggerProps}
-                >
-                    <Icon type="settings" size="square_sm" />
-                </Box>
-            )}
-        </CardOpener>
     )
 }

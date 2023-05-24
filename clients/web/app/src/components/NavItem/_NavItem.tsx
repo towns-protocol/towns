@@ -1,10 +1,8 @@
-import { clsx } from 'clsx'
 import React, { ComponentProps, HTMLAttributes, forwardRef, useContext } from 'react'
 import { useMatch, useResolvedPath } from 'react-router'
 import { NavLink } from 'react-router-dom'
 import { Box, BoxProps, Stack } from '@ui'
 import { SidebarContext } from '@components/SideBars/_SideBar'
-import * as styles from './_NavItem.css'
 
 type NavLinkProps = {
     to?: string
@@ -15,59 +13,71 @@ type NavLinkProps = {
 
 export const NavItem = forwardRef<
     HTMLElement,
-    { id?: string; highlight?: boolean } & NavLinkProps & BoxProps & HTMLAttributes<HTMLDivElement>
->(({ id, to, exact, highlight: isHighlight, forceMatch, children, ...props }, ref) => {
-    const resolved = useResolvedPath(`/${to === '/' ? '' : to}`)
+    { id?: string; highlight?: boolean; activeBackground?: BoxProps['background'] } & NavLinkProps &
+        BoxProps &
+        HTMLAttributes<HTMLDivElement>
+>(
+    (
+        { id, to, exact, highlight: isHighlight, activeBackground, forceMatch, children, ...props },
+        ref,
+    ) => {
+        const resolved = useResolvedPath(`/${to === '/' ? '' : to}`)
 
-    const match =
-        useMatch({
-            path: resolved.pathname || '/',
-            end: to === '/' || exact,
-        }) || forceMatch
+        const match =
+            useMatch({
+                path: resolved.pathname || '/',
+                end: to === '/' || exact,
+            }) || forceMatch
 
-    const { activeItem, setActiveItem } = useContext(SidebarContext)
+        const { activeItem, setActiveItem } = useContext(SidebarContext)
 
-    const onMouseEnter = (e: React.MouseEvent<HTMLDivElement>) => {
-        // relays event to custom NavItem implementation (e.g. used by tooltips)
-        props.onMouseEnter && props.onMouseEnter(e)
-        if (setActiveItem && id) {
-            setActiveItem(id)
+        const onMouseEnter = (e: React.MouseEvent<HTMLDivElement>) => {
+            // relays event to custom NavItem implementation (e.g. used by tooltips)
+            props.onMouseEnter && props.onMouseEnter(e)
+            if (setActiveItem && id) {
+                setActiveItem(id)
+            }
         }
-    }
 
-    const onMouseLeave = (e: React.MouseEvent<HTMLDivElement>) => {
-        props.onMouseLeave && props.onMouseLeave(e)
-        if (setActiveItem && id && activeItem === id) {
-            setActiveItem(null)
+        const onMouseLeave = (e: React.MouseEvent<HTMLDivElement>) => {
+            props.onMouseLeave && props.onMouseLeave(e)
+            if (setActiveItem && id && activeItem === id) {
+                setActiveItem(null)
+            }
         }
-    }
 
-    const isHovered = activeItem === id
+        const isHovered = activeItem === id
 
-    return (
-        <ConditionalNavLink to={to}>
-            <Box onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
-                <Stack position="relative" paddingX="sm" paddingY="xs" {...props} ref={ref}>
-                    {/* background fill to highlight element */}
-                    <NavItemHighlight selected={!!match} hovered={isHovered} paddingY="xs" />
-                    <Stack
-                        horizontal
-                        grow
-                        position="relative"
-                        rounded="xs"
-                        alignItems="center"
-                        gap="sm"
-                        minHeight="x6"
-                        paddingX="sm"
-                        color={isHighlight || match ? 'gray1' : 'gray2'}
-                    >
-                        {children}
+        return (
+            <ConditionalNavLink to={to}>
+                <Box onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
+                    <Stack position="relative" paddingX="sm" paddingY="xs" {...props} ref={ref}>
+                        {/* background fill to highlight element */}
+                        <NavItemHighlight
+                            selected={!!match}
+                            hovered={isHovered}
+                            activeBackground={activeBackground}
+                            paddingY="xs"
+                        />
+                        <Stack
+                            horizontal
+                            grow
+                            position="relative"
+                            rounded="xs"
+                            alignItems="center"
+                            gap="sm"
+                            minHeight="x6"
+                            paddingX="sm"
+                            color={isHighlight || match ? undefined : 'gray2'}
+                        >
+                            {children}
+                        </Stack>
                     </Stack>
-                </Stack>
-            </Box>
-        </ConditionalNavLink>
-    )
-})
+                </Box>
+            </ConditionalNavLink>
+        )
+    },
+)
 
 /**
  * Highlights selected or hovered item
@@ -76,46 +86,17 @@ export const NavItem = forwardRef<
 type HighlightProps = {
     selected: boolean
     hovered: boolean
+    activeBackground?: BoxProps['background']
 } & BoxProps
 
 const NavItemHighlight = (props: HighlightProps) => {
-    const { selected: isSelected, hovered: isHovered, ...boxProps } = props
+    const { selected, hovered, activeBackground = 'level2', ...boxProps } = props
 
-    // if one item is hovered (current or sibling)
-    const { isInteracting } = useContext(SidebarContext)
-
-    // if the element is highlighted
-    const isHighlight = isSelected
-
-    // enables some emphasis for the following conditions:
-    // 1/ if the first or last item touched when hovering the menu
-    // 2/ if the pre-selected item transitioning back to its initial state
-    const isProminentInteraction = false //!isInteracting === isSelected && !isHovered;
-
-    const transition = isInteracting
-        ? // minimal effects whilst interacting
-          styles.highlightTransitionSwift
-        : isSelected
-        ? // x-fade between last hovered item and pre-selected
-          styles.highlightTransitionSelected
-        : styles.highlightTransitionOut
+    const isActive = selected || hovered
 
     return (
         <Box absoluteFill paddingX="sm" {...boxProps}>
-            <Box
-                grow
-                className={clsx([
-                    transition,
-                    isHovered
-                        ? styles.hoveredActive
-                        : isHighlight
-                        ? styles.highlightActive
-                        : styles.highlightInactive,
-
-                    // add scale effect for first hover + selected item
-                    isProminentInteraction && styles.highlightSelectedInactive,
-                ])}
-            />
+            <Box grow rounded="sm" background={isActive ? activeBackground : undefined} />
         </Box>
     )
 }

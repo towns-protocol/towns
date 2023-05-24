@@ -3,7 +3,8 @@ import { vars } from 'ui/styles/vars.css'
 export const modalSheetClass = style({})
 
 globalStyle(`${modalSheetClass} .react-modal-sheet-backdrop`, {
-    backgroundColor: vars.color.shadow.medium + '!important',
+    // TODO:replace with background.hover
+    backgroundColor: 'rgba(0, 0, 0, 0.25) !important',
 })
 
 globalStyle(`${modalSheetClass} .react-modal-sheet-container`, {

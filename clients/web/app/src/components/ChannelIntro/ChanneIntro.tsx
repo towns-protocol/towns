@@ -13,8 +13,8 @@ export const ChannelIntro = (props: Props) => {
     return (
         <Stack gap="md" paddingX="lg" paddingY="sm">
             <Stack horizontal gap>
-                <Box centerContent rounded="sm" background="level3" aspectRatio="1/1" height="x7">
-                    <Icon type="tag" color="gray2" background="level3" size="square_lg" />
+                <Box centerContent rounded="sm" background="level2" aspectRatio="1/1" height="x7">
+                    <Icon type="tag" color="gray2" size="square_lg" />
                 </Box>
                 <Stack justifyContent="spaceBetween" paddingY="sm">
                     <Paragraph color="gray1">{name}</Paragraph>

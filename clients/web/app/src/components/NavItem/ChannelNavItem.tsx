@@ -68,8 +68,8 @@ export const ChannelNavItem = (props: Props) => {
                             <Icon
                                 type="tag"
                                 padding="line"
-                                background="level2"
-                                color="gray2"
+                                background={{ darkMode: 'level2' }}
+                                color={{ darkMode: 'gray2', default: 'gray2' }}
                                 size="square_lg"
                             />
                             <ButtonText

@@ -1,5 +1,5 @@
 import { defineProperties } from '@vanilla-extract/sprinkles'
-import { vars } from 'ui/styles/vars.css'
+import { lightTheme, vars } from 'ui/styles/vars.css'
 import { responsivePropertiesMixin } from 'ui/styles/breakpoints'
 
 export const border = {
@@ -114,9 +114,38 @@ export const boxProperties = defineProperties({
         aspectRatio: aspectRatio,
 
         boxShadow: {
-            avatar: `0 4px 4px ${vars.color.shadow.medium}`,
-            card: `0 0 40px ${vars.color.shadow.medium}`,
-            medium: `0 10px 20px ${vars.color.shadow.medium}`,
+            avatar: {
+                boxShadow: `0 4px 4px rgba(0, 0, 0, 0.25)`,
+                selectors: {
+                    [`${lightTheme} &`]: {
+                        boxShadow: `0 4px 4px rgba(0, 0, 0, 0.5)`,
+                    },
+                },
+            },
+            card: {
+                boxShadow: `0 0 16px rgba(0, 0, 0, 0.25)`,
+                selectors: {
+                    [`${lightTheme} &`]: {
+                        boxShadow: `none`,
+                    },
+                },
+            },
+            medium: {
+                boxShadow: `0 10px 20px rgba(0, 0, 0, 0.25)`,
+                selectors: {
+                    [`${lightTheme} &`]: {
+                        boxShadow: `0 4px 4px rgba(0, 0, 0, 0.05)`,
+                    },
+                },
+            },
+            panel: {
+                boxShadow: `0 10px 20px rgba(0, 0, 0, 0.25)`,
+                selectors: {
+                    [`${lightTheme} &`]: {
+                        boxShadow: `none`,
+                    },
+                },
+            },
         },
 
         height: {

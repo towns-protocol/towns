@@ -55,22 +55,6 @@ export const MainSideBar = (props: Props) => {
                     />
                 ))}
             </Stack>
-            {/* <Stack
-                padding
-                gap
-                key="profile_container"
-                justifyContent="spaceBetween"
-                alignItems="start"
-                horizontal={isExpanded}
-            >
-                <IconButton
-                    centerContent
-                    opaque
-                    icon={isExpanded ? 'sidebaropen' : 'sidebarclose'}
-                    size="square_md"
-                    onClick={props.onExpandClick}
-                />
-            </Stack> */}
         </SideBar>
     )
 }

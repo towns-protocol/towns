@@ -1,10 +1,9 @@
 import React, { Suspense, useCallback } from 'react'
 import { MessageReactions } from 'use-zion-client'
-import { Box } from 'ui/components/Box/Box'
+import { TooltipBox as Box } from 'ui/components/Box/TooltipBox'
 import { Text } from 'ui/components/Text/Text'
 import { EmojiPickerButton } from '@components/EmojiPickerButton'
 import { useHandleReaction } from 'hooks/useReactions'
-import { TooltipRenderer } from 'ui/components/Tooltip/TooltipRenderer'
 import { Stack } from 'ui/components/Stack/Stack'
 import { ReactionTootip } from './ReactionTooltip'
 import { getNativeEmojiFromName } from './ReactionConstants'
@@ -110,31 +109,22 @@ const Reaction = (props: {
     }, [isOwn, name, onReact])
 
     return users && Object.keys(users).length ? (
-        <TooltipRenderer
-            tooltip={<ReactionTootip userIds={users} reaction={name} />}
-            key={name}
-            trigger="hover"
-            placement="vertical"
-        >
-            {({ triggerProps }) => (
-                <Box paddingX="xs" {...triggerProps} horizontal>
-                    <Box
-                        horizontal
-                        centerContent
-                        position="relative"
-                        border={isOwn ? 'accent' : 'level4'}
-                        gap="sm"
-                        rounded="lg"
-                        background="level3"
-                        color="gray1"
-                        paddingX="sm"
-                        onClick={onClick}
-                    >
-                        <Text size="md">{getNativeEmojiFromName(props.name)}</Text>
-                        <Text size="sm">{Object.keys(users).length}</Text>
-                    </Box>
-                </Box>
-            )}
-        </TooltipRenderer>
+        <Box horizontal paddingX="xs" tooltip={<ReactionTootip userIds={users} reaction={name} />}>
+            <Box
+                horizontal
+                centerContent
+                position="relative"
+                border={isOwn ? 'accent' : 'level4'}
+                gap="sm"
+                rounded="lg"
+                background="level2"
+                color="gray1"
+                paddingX="sm"
+                onClick={onClick}
+            >
+                <Text size="md">{getNativeEmojiFromName(props.name)}</Text>
+                <Text size="sm">{Object.keys(users).length}</Text>
+            </Box>
+        </Box>
     ) : null
 }

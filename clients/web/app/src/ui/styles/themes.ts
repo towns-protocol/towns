@@ -20,9 +20,8 @@ const tone = {
     [ToneName.CTA1]: Figma.Colors.Green,
     [ToneName.CTA2]: Figma.Colors.Purple,
     [ToneName.Error]: Figma.Colors.Red,
-    // forms
     [ToneName.Positive]: Figma.Colors.Green,
-    [ToneName.Negative]: Figma.Colors.Yellow,
+    [ToneName.Negative]: Figma.Colors.Red,
 } as const
 
 const overlay = {
@@ -46,7 +45,8 @@ const light = (() => {
         level2: Figma.LightMode.Level2,
         level3: Figma.LightMode.Level3,
         level4: Figma.LightMode.Level4,
-        inverted: Figma.DarkMode.Level1,
+        readability: Figma.LightMode.Readability,
+        inverted: Figma.LightMode.Primary,
     } as const
 
     const text = {
@@ -59,16 +59,10 @@ const light = (() => {
         onTone: Figma.Colors.Black,
     }
 
-    const shadow = {
-        light: `rgba(25, 27, 33, 0.2)`,
-        medium: `rgba(0, 0, 0, 0.25)`,
-    } as const
-
     return {
         tone,
         layer,
         text,
-        shadow,
         overlay,
         foreground: {
             ...text,
@@ -90,7 +84,8 @@ const dark = (() => {
         level2: Figma.DarkMode.Level2,
         level3: Figma.DarkMode.Level3,
         level4: Figma.DarkMode.Level4,
-        inverted: Figma.DarkMode.Secondary,
+        readability: Figma.DarkMode.Readability,
+        inverted: Figma.DarkMode.Primary,
     } as const
 
     const text = {
@@ -103,16 +98,11 @@ const dark = (() => {
         onTone: Figma.Colors.Black,
     } as const
 
-    const shadow = {
-        light: `rgba(25, 27, 33, 0.2)`,
-        medium: `rgba(0, 0, 0, 0.25)`,
-    } as const
-
     return {
         tone,
         layer,
         text,
-        shadow,
+
         overlay,
         foreground: {
             ...text,

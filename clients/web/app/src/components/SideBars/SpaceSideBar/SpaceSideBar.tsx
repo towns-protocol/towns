@@ -1,10 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useNavigate } from 'react-router'
 import { useEvent } from 'react-use-event-hook'
 import {
     Membership,
     Permission,
-    RoomIdentifier,
     SpaceData,
     useMyMembership,
     useSpaceMentions,
@@ -75,7 +73,7 @@ function useInvalidateChannelsQueryOnNewChannelCreation(space: SpaceData) {
 export const SpaceSideBar = (props: Props) => {
     const { space } = props
     const { client } = useZionClient()
-    const navigate = useNavigate()
+
     const unreadThreadsCount = useSpaceThreadRootsUnreadCount()
     const membership = useMyMembership(space?.id)
     const { data: isOwner } = useHasPermission(Permission.Owner)
@@ -83,13 +81,6 @@ export const SpaceSideBar = (props: Props) => {
     const dismissedGettingStartedMap = useStore((state) => state.dismissedGettingStartedMap)
     const { data: contractChannels } = useContractChannels(props.space.id.networkId)
     const channels = useSpaceChannels()
-
-    const onSettings = useCallback(
-        (spaceId: RoomIdentifier) => {
-            navigate(`/${PATHS.SPACES}/${spaceId.slug}/settings`)
-        },
-        [navigate],
-    )
 
     const [isCreateChannelModalVisible, setCreateChannelModalVisible] = useState(false)
     const onHideCreateChannel = useEvent(() => setCreateChannelModalVisible(false))
@@ -152,7 +143,6 @@ export const SpaceSideBar = (props: Props) => {
                     space={space}
                     opaqueHeaderBar={hasScrolldedPastHeader}
                     headerRef={headerRef}
-                    onSettings={onSettings}
                 />
 
                 <Stack paddingY="md">

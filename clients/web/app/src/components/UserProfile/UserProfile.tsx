@@ -153,7 +153,7 @@ export const UserProfile = (props: Props) => {
                                             height="x5"
                                             onClick={canEdit && !isEditing ? handleEdit : undefined}
                                         >
-                                            <Paragraph strong size="lg">
+                                            <Paragraph strong size="lg" color="default">
                                                 {displayName}
                                             </Paragraph>
                                             {/* {canEdit ? (
@@ -237,7 +237,9 @@ export const UserProfile = (props: Props) => {
                                         grow
                                         onClick={canEdit && !isEditing ? handleEdit : undefined}
                                     >
-                                        <Paragraph strong>Bio</Paragraph>
+                                        <Paragraph strong color="default">
+                                            Bio
+                                        </Paragraph>
                                     </Stack>
                                     <Box>{editMenu}</Box>
                                 </Stack>

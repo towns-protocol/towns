@@ -1,6 +1,5 @@
 import { clsx } from 'clsx'
 import React, { forwardRef } from 'react'
-import { vars } from 'ui/styles/vars.css'
 import { Box, BoxProps } from '../Box/Box'
 import { IconAtoms, iconAtoms, iconBaseStyle } from './Icon.css'
 
@@ -1071,22 +1070,14 @@ export type IconName = keyof typeof iconMap
 
 export type IconProps = {
     type: IconName
-    background?: keyof typeof vars.color.background
+    background?: BoxProps['background']
     className?: string
 } & IconAtoms &
     Omit<BoxProps, 'children' | 'size' | 'background'>
 
 export const Icon = forwardRef<HTMLDivElement, IconProps>((props, ref) => {
-    const {
-        size = 'square_md',
-        color,
-        background,
-        type,
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        height,
-        className,
-        ...boxProps
-    } = props
+    const { size = 'square_md', color, type, height, className, ...boxProps } = props
+    height // prevent unused var error
     const Icon = iconMap[type ?? 'bell']
 
     return (
@@ -1095,12 +1086,8 @@ export const Icon = forwardRef<HTMLDivElement, IconProps>((props, ref) => {
             centerContent
             aspectRatio="square"
             className={clsx(iconBaseStyle, iconAtoms({ size }), className)}
-            background={background}
             color={color}
-            padding={
-                props.padding ??
-                (!background || background?.match(/^(none|transparent|default)$/) ? 'none' : 'xs')
-            }
+            padding={props.padding ?? 'none'}
             ref={ref}
             {...boxProps}
         >

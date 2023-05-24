@@ -1,5 +1,6 @@
 import React, { forwardRef } from 'react'
 import { Box, BoxProps } from '../Box/Box'
+import { Paragraph } from '../Text/Paragraph'
 
 type Props = {
     value?: string | number | JSX.Element | false
@@ -11,16 +12,14 @@ export const Badge = forwardRef<typeof Box, BoxProps & Props>(({ value, ...props
     ) : (
         <Box
             centerContent
-            background="level2"
-            padding="sm"
+            background="accent"
             rounded="full"
-            minWidth="x3"
-            height="x3"
-            fontSize="sm"
+            minWidth="x2"
+            height="x2"
             fontWeight="strong"
             {...props}
         >
-            {value}
+            <Paragraph size="xs">1</Paragraph>
         </Box>
     ),
 )

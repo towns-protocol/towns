@@ -23,8 +23,8 @@ export class Badger {
     private img?: HTMLImageElement
 
     constructor(
-        backgroundColor = '#d00',
-        liteBackgroundColor = '#FFCF55',
+        backgroundColor = '#1FDBF1',
+        liteBackgroundColor = '#1FDBF1',
         color = '#fff',
         scale = 0.6, // 0..1 (Scale in respect to the favicon image size)
         liteScale = 0.4, // 0..1 (Scale in respect to the favicon image size)

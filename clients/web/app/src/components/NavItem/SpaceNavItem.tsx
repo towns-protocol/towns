@@ -39,6 +39,7 @@ export const SpaceNavItem = (props: Props) => {
             to={isInvite ? `/invites/${id.slug}/` : `/${PATHS.SPACES}/${id.slug}/`}
             exact={exact}
             forceMatch={forceMatch}
+            activeBackground="level3"
             highlight={highlight}
             tooltip={props.name}
             tooltipOptions={{
@@ -49,6 +50,7 @@ export const SpaceNavItem = (props: Props) => {
             {avatar && (
                 <Box position="relative">
                     <SpaceIcon
+                        border
                         width="x4"
                         minWidth="x4"
                         aspectRatio="1/1"

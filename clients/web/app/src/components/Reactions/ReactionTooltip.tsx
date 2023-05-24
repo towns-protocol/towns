@@ -1,9 +1,9 @@
-import { motion } from 'framer-motion'
 import React from 'react'
 import { useNameSequence } from 'hooks/useNameSequence'
 import { Box } from 'ui/components/Box/Box'
 import { Paragraph } from 'ui/components/Text/Paragraph'
 import { Text } from 'ui/components/Text/Text'
+import { Tooltip } from '@ui'
 import { getNativeEmojiFromName } from './ReactionConstants'
 
 export const ReactionTootip = ({
@@ -16,20 +16,18 @@ export const ReactionTootip = ({
     const names = useNameSequence(users)
 
     return (
-        <MotionBox
-            centerContent
-            border
-            padding="sm"
-            background="level2"
-            rounded="sm"
-            gap="sm"
-            maxWidth="200"
-            boxShadow="avatar"
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.2, duration: 0.1 }}
-        >
-            <Box border padding centerContent rounded="sm" background="inverted" aspectRatio="1/1">
+        <Tooltip background="level2" rounded="sm" gap="sm" maxWidth="200">
+            <Box
+                border
+                padding
+                centerContent
+                rounded="sm"
+                background={{
+                    lightMode: 'level3',
+                    darkMode: 'inverted',
+                }}
+                aspectRatio="1/1"
+            >
                 <Text size="h2">{getNativeEmojiFromName(reaction)}</Text>
             </Box>
 
@@ -39,8 +37,6 @@ export const ReactionTootip = ({
                     reacted with :{reaction}:
                 </Text>
             </Paragraph>
-        </MotionBox>
+        </Tooltip>
     )
 }
-
-const MotionBox = motion(Box)
