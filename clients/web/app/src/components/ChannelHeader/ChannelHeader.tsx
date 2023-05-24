@@ -31,7 +31,6 @@ const DesktopChannelHeader = (props: Props) => {
             borderBottom
             gap
             paddingX="lg"
-            background="level1"
             height="x8"
             alignItems="center"
             color="gray1"
@@ -43,6 +42,7 @@ const DesktopChannelHeader = (props: Props) => {
                     horizontal
                     border
                     paddingX
+                    hoverable
                     gap="sm"
                     paddingY="sm"
                     background="level2"

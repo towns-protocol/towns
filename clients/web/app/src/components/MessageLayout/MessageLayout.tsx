@@ -93,7 +93,7 @@ export const MessageLayout = (props: Props) => {
             : format(timestamp, 'h:mm a')
         : undefined
 
-    const backgroundProps = useMessageBackground(isSelectable, isEditing, isActive, isHighlight)
+    const backgroundProps = useHighlightBackground(isHighlight)
 
     const { onOpenMessageThread } = useOpenMessageThread(spaceId, channelId)
     const onDoubleClick = useCallback(() => {
@@ -111,6 +111,10 @@ export const MessageLayout = (props: Props) => {
             ref={ref}
             onMouseEnter={onMouseEnter}
             {...boxProps}
+            hoverable={isSelectable}
+            elevate={isEditing || isHighlight}
+            hoverActive={isEditing || isHighlight}
+            background="level1"
             {...backgroundProps}
             tabIndex={0}
             onDoubleClick={!isMobile && canReply ? onDoubleClick : undefined}
@@ -261,21 +265,10 @@ export const MessageLayout = (props: Props) => {
     )
 }
 
-const useMessageBackground = (
-    isSelectable?: boolean,
-    isEditing?: boolean,
-    isActive?: boolean,
-    isHighlight?: boolean,
-) => {
+const useHighlightBackground = (isHighlight?: boolean) => {
     const [isHighlightActive, setHighlightActive] = useState(isHighlight)
 
-    const background = !isSelectable
-        ? undefined
-        : isHighlightActive
-        ? ('level4' as const)
-        : isEditing || isActive
-        ? ('level2' as const)
-        : undefined
+    const background = isHighlightActive ? ('level3' as const) : undefined
 
     useEffect(() => {
         if (isHighlightActive) {
@@ -298,7 +291,7 @@ const useMessageBackground = (
 
     const style = backgroundTransitionEnabled ? { transition: `background 1s ease` } : undefined
 
-    return { onTransitionEnd, style, background }
+    return background ? { onTransitionEnd, style, background } : { onTransitionEnd, style }
 }
 
 const AvatarComponent = (props: AvatarProps & { userId?: string; link?: string }) => {

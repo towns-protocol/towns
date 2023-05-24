@@ -1,5 +1,7 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react'
+import { toast } from 'react-hot-toast/headless'
 import { useNavigate } from 'react-router'
+import { Link } from 'react-router-dom'
 import { useEvent } from 'react-use-event-hook'
 import {
     Permission,
@@ -9,41 +11,40 @@ import {
     useSpaceMembers,
     useZionClient,
 } from 'use-zion-client'
-import { Link } from 'react-router-dom'
-import { toast } from 'react-hot-toast/headless'
-import { motion } from 'framer-motion'
+import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
+import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinner'
+import { ModalContainer } from '@components/Modals/ModalContainer'
+import { InvalidCookieNotification } from '@components/Notifications/InvalidCookieNotification'
+import { InteractiveSpaceIcon } from '@components/SpaceIcon'
+import { LargeUploadImageTemplate } from '@components/UploadImage/LargeUploadImageTemplate'
+import { EditModeContainer, TextButton } from '@components/UserProfile/UserProfile'
 import {
     Avatar,
     Box,
     BoxProps,
-    Button,
     FormRender,
+    Icon,
+    MotionStack,
     Panel,
+    PanelButton,
     Paragraph,
     Stack,
     Text,
     TextField,
 } from '@ui'
-import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
-import { shortAddress } from 'ui/utils/utils'
-import { useHasPermission } from 'hooks/useHasPermission'
-import { TextArea } from 'ui/components/TextArea/TextArea'
-import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinner'
-import { useGetSpaceTopic, useSetSpaceTopic } from 'hooks/useSpaceTopic'
-import { InteractiveSpaceIcon } from '@components/SpaceIcon'
-import { EditModeContainer, TextButton } from '@components/UserProfile/UserProfile'
 import { errorHasInvalidCookieResponseHeader } from 'api/apiClient'
-import { InvalidCookieNotification } from '@components/Notifications/InvalidCookieNotification'
-import { LargeUploadImageTemplate } from '@components/UploadImage/LargeUploadImageTemplate'
+import { useHasPermission } from 'hooks/useHasPermission'
 import { useSpaceChannels } from 'hooks/useSpaceChannels'
-import { ModalContainer } from '@components/Modals/ModalContainer'
-import { vars } from 'ui/styles/vars.css'
+import { useGetSpaceTopic, useSetSpaceTopic } from 'hooks/useSpaceTopic'
 import { PATHS } from 'routes'
+import { TextArea } from 'ui/components/TextArea/TextArea'
+import { vars } from 'ui/styles/vars.css'
 import { transitions } from 'ui/transitions/transitions'
-import { AllChannelsList } from './AllChannelsList/AllChannelsList'
+import { shortAddress } from 'ui/utils/utils'
 import { useContractSpaceInfo } from '../hooks/useContractSpaceInfo'
 import { useEnvironment } from '../hooks/useEnvironmnet'
 import { env } from '../utils/environment'
+import { AllChannelsList } from './AllChannelsList/AllChannelsList'
 
 const MdGap = ({ children, ...boxProps }: { children: JSX.Element } & BoxProps) => (
     <Box padding="md" gap="md" {...boxProps} background="level2" rounded="sm">
@@ -138,6 +139,7 @@ export const SpaceInfoPanel = () => {
     })
 
     const spaceID = useSpaceId()
+
     const onMembersClick = useEvent(() => {
         navigate(`/${PATHS.SPACES}/${spaceID?.slug}/members/info`)
     })
@@ -187,7 +189,7 @@ export const SpaceInfoPanel = () => {
             )}
             <Stack gap padding="lg">
                 <MdGap>
-                    <Stack gap="sm">
+                    <Stack>
                         <EditModeContainer
                             inputId={InputId.SpaceName}
                             canEdit={canEdit}
@@ -229,7 +231,7 @@ export const SpaceInfoPanel = () => {
                                                     canEdit && !isEditing ? handleEdit : undefined
                                                 }
                                             >
-                                                <Paragraph strong size="lg">
+                                                <Paragraph strong size="lg" color="default">
                                                     {value}
                                                 </Paragraph>
                                             </Box>
@@ -280,7 +282,9 @@ export const SpaceInfoPanel = () => {
                     <MdGap data-testid="about-section">
                         <>
                             <Box horizontal justifyContent="spaceBetween" alignItems="center">
-                                <Paragraph strong>About</Paragraph>{' '}
+                                <Paragraph strong color="default">
+                                    About
+                                </Paragraph>{' '}
                                 {canEdit &&
                                     (isEdit ? (
                                         <Box horizontal gap="sm">
@@ -340,7 +344,9 @@ export const SpaceInfoPanel = () => {
 
                 <MdGap>
                     <>
-                        <Paragraph strong>Owner</Paragraph>
+                        <Paragraph strong color="default">
+                            Owner
+                        </Paragraph>
                         {matrixUserOwner ? (
                             <>
                                 <Link to={`../profile/${matrixUserOwner.userId}?spaceInfo`}>
@@ -370,33 +376,19 @@ export const SpaceInfoPanel = () => {
                     </>
                 </MdGap>
 
-                <Button
-                    icon="people"
-                    size="button_md"
-                    style={{ paddingLeft: vars.space.md }}
-                    color="gray2"
-                    onClick={onMembersClick}
-                >
-                    <Stack grow horizontal alignItems="center" gap="sm">
-                        <Paragraph color="default">
-                            {`${members.length} member${members.length > 1 ? `s` : ``}`}
-                        </Paragraph>
-                    </Stack>
-                </Button>
+                <PanelButton onClick={onMembersClick}>
+                    <Icon type="people" />
+                    <Paragraph color="default">
+                        {`${members.length} member${members.length > 1 ? `s` : ``}`}
+                    </Paragraph>
+                </PanelButton>
 
-                <Button
-                    icon="tag"
-                    style={{ paddingLeft: vars.space.md }}
-                    color="gray2"
-                    disabled={channels.length === 0}
-                    onClick={onShowBrowseChannels}
-                >
-                    <Stack grow horizontal alignItems="center" gap="sm">
-                        <Paragraph color="default">
-                            {`${channels.length} channel${channels.length != 1 ? `s` : ``}`}
-                        </Paragraph>
-                    </Stack>
-                </Button>
+                <PanelButton disabled={channels.length === 0} onClick={onShowBrowseChannels}>
+                    <Icon type="tag" />
+                    <Paragraph color="default" fontWeight="medium">
+                        {`${channels.length} channel${channels.length != 1 ? `s` : ``}`}
+                    </Paragraph>
+                </PanelButton>
 
                 {isBrowseChannelsModalVisible && (
                     <ModalContainer minWidth="500" onHide={onHideBrowseChannels}>
@@ -405,28 +397,16 @@ export const SpaceInfoPanel = () => {
                 )}
 
                 {canEdit && (
-                    <Button
-                        icon="settings"
-                        style={{ paddingLeft: vars.space.md }}
-                        color="gray2"
-                        onClick={onSettingsClick}
-                    >
-                        <Stack grow horizontal alignItems="center" gap="sm">
-                            <Paragraph color="default">Settings</Paragraph>
-                        </Stack>
-                    </Button>
+                    <PanelButton onClick={onSettingsClick}>
+                        <Icon type="settings" />
+                        <Paragraph color="default">Settings</Paragraph>
+                    </PanelButton>
                 )}
 
-                <Button
-                    icon="logout"
-                    style={{ paddingLeft: vars.space.md }}
-                    color="error"
-                    onClick={onLeaveClick}
-                >
-                    <Stack grow horizontal alignItems="center" gap="sm">
-                        <Paragraph color="error">Leave {space?.name}</Paragraph>
-                    </Stack>
-                </Button>
+                <PanelButton tone="negative" onClick={onLeaveClick}>
+                    <Icon type="logout" />
+                    <Paragraph color="error">Leave {space?.name}</Paragraph>
+                </PanelButton>
             </Stack>
 
             <Stack grow padding paddingBottom="lg" justifyContent="end">
@@ -451,5 +431,3 @@ const TownContractOpener = (props: { children?: React.ReactNode }) => {
         </Box>
     )
 }
-
-const MotionStack = motion(Stack)

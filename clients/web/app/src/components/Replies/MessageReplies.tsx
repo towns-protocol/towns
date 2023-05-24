@@ -18,7 +18,15 @@ export const RepliesButton = (props: { threadStats: ThreadStats; eventId: string
     const onClick = useCallback(() => onOpenMessageThread(eventId), [onOpenMessageThread, eventId])
 
     return (
-        <Box horizontal border height="height_lg" paddingX="sm" rounded="sm" background="level2">
+        <Box
+            horizontal
+            border
+            hoverable
+            height="height_lg"
+            paddingX="sm"
+            rounded="sm"
+            background="level2"
+        >
             <Box shrink centerContent horizontal gap="sm" cursor="pointer" onClick={onClick}>
                 <Stack horizontal gap="xs">
                     {Array.from(threadStats.userIds)

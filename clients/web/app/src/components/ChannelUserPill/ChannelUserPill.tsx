@@ -32,9 +32,17 @@ export const ChannelUsersPill = (props: { spaceId: RoomIdentifier; channelId: Ro
     }, [timelineContext?.events, members])
 
     return (
-        <Stack horizontal border background="level2" rounded="sm" height="height_lg">
+        <Stack horizontal border rounded="sm" height="height_lg" overflow="hidden">
             <Link to="info?directory">
-                <Stack horizontal grow gap="sm" padding="sm" alignItems="center">
+                <Stack
+                    horizontal
+                    grow
+                    hoverable
+                    gap="sm"
+                    padding="sm"
+                    alignItems="center"
+                    background="level2"
+                >
                     <Stack horizontal gap="line">
                         {lastInteractedUniqueUserIds.map((userId) => (
                             <Avatar key={userId} size="avatar_sm" userId={userId} />
@@ -44,7 +52,7 @@ export const ChannelUsersPill = (props: { spaceId: RoomIdentifier; channelId: Ro
                 </Stack>
             </Link>
 
-            <Box centerContent borderLeft paddingX="xs">
+            <Box centerContent borderLeft hoverable paddingX="xs" background="level2">
                 <CopySpaceLink spaceId={spaceId} align="right" offsetTop="md" />
             </Box>
         </Stack>

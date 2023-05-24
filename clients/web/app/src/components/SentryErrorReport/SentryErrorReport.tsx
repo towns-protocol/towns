@@ -6,7 +6,17 @@ import { hexlify, randomBytes } from 'ethers/lib/utils'
 import { useMutation } from 'wagmi'
 import { format } from 'date-fns'
 import { ModalContainer } from '@components/Modals/ModalContainer'
-import { Button, ErrorMessage, FormRender, Icon, Stack, Text, TextField } from '@ui'
+import {
+    Button,
+    ErrorMessage,
+    FormRender,
+    Icon,
+    PanelButton,
+    Paragraph,
+    Stack,
+    Text,
+    TextField,
+} from '@ui'
 import { TextArea } from 'ui/components/TextArea/TextArea'
 import { axiosClient } from 'api/apiClient'
 import { env } from 'utils'
@@ -94,10 +104,11 @@ export const SentryReportModal = () => {
 
     return (
         <>
-            <Button rounded="sm" tone="level3" fontWeight="normal" color="gray2" onClick={onShow}>
+            <PanelButton centerContent background="level2" onClick={onShow}>
                 <Icon type="help" />
-                Report a bug
-            </Button>
+                <Paragraph>Report a bug</Paragraph>
+            </PanelButton>
+
             {modal && (
                 <ModalContainer onHide={onHide}>
                     <SentryErrorReportForm onHide={onHide} />

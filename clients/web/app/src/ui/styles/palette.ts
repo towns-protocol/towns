@@ -1,10 +1,22 @@
 export const Figma = {
     LightMode: {
         Level1: 'hsl(255, 33%, 98%)',
+        Level1Hover: 'hsl(255, 33%, 95%)',
+
         Level2: 'hsl(260, 21%, 94%)',
+        Level2Hover: 'hsl(260, 21%, 91%)',
+
         Level3: 'hsl(258, 15%, 89%)',
+        Level3Hover: 'hsl(258, 15%, 86%)',
+
         Level4: 'hsl(258, 8%, 76%)',
+        Level4Hover: 'hsl(258, 8%, 73%)',
+
         Readability: 'hsl(255, 33%, 97%)',
+        ReadabilityHover: 'hsl(255, 33%, 94%)',
+
+        // Hover1: 'hsla(264, 6%, 17%,0.04)',
+        Hover2: 'hsla(264, 6%, 17%,0.20)',
 
         Primary: 'hsl(260, 5%, 17%)',
         Secondary: 'hsl(264, 5%, 54%)',
@@ -12,10 +24,21 @@ export const Figma = {
     },
     DarkMode: {
         Level1: 'hsla(255, 9%, 9%, 1)',
+        Level1Hover: 'hsla(255, 9%, 12%, 1)',
+
         Level2: 'hsla(260, 9%, 14%, 1)',
+        Level2Hover: 'hsla(260, 9%, 17%, 1)',
+
         Level3: 'hsla(263, 8%, 20%, 1)',
+        Level3Hover: 'hsla(263, 8%, 23%, 1)',
+
         Level4: 'hsla(256, 7%, 30%, 1)',
+        Level4Hover: 'hsla(256, 7%, 34%, 1)',
+
         Readability: 'hsl(255 9% 11%)',
+        ReadabilityHover: 'hsl(255 9% 13%)',
+        // Hover1: 'hsla(255, 100%, 94% , 0.1)',
+        Hover2: 'hsla(255, 100%, 94% , 0.2)',
         //
         Primary: 'hsla(0, 0%, 92%, 1)',
         Secondary: 'hsla(254, 14%, 82%, 1)',

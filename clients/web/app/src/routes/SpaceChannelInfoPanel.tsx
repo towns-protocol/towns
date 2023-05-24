@@ -10,12 +10,11 @@ import {
     useZionClient,
 } from 'use-zion-client'
 
-import { vars } from 'ui/styles/vars.css'
-import { Button, Panel, Paragraph, Stack } from '@ui'
-import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
-import { PATHS } from 'routes'
 import { ChannelSettingsModal } from '@components/ChannelSettings/ChannelSettingsModal'
+import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
+import { Icon, Panel, PanelButton, Paragraph, Stack } from '@ui'
 import { useHasPermission } from 'hooks/useHasPermission'
+import { PATHS } from 'routes'
 export const ChannelInfoPanel = () => {
     const { channel } = useChannelData()
     const { members } = useChannelMembers()
@@ -96,41 +95,23 @@ export const ChannelInfoPanel = () => {
                         </Stack>
                     ))}
 
-                <Button
-                    icon="people"
-                    style={{ paddingLeft: vars.space.md }}
-                    color="gray2"
-                    onClick={onMembersClick}
-                >
-                    <Stack grow horizontal alignItems="center" gap="sm">
-                        <Paragraph color="default">
-                            {`${members.length} member${members.length > 1 ? `s` : ``}`}
-                        </Paragraph>
-                    </Stack>
-                </Button>
+                <PanelButton onClick={onMembersClick}>
+                    <Icon type="people" />
+                    <Paragraph color="default">
+                        {`${members.length} member${members.length > 1 ? `s` : ``}`}
+                    </Paragraph>
+                </PanelButton>
 
                 {canEditChannel && (
-                    <Button
-                        icon="edit"
-                        style={{ paddingLeft: vars.space.md }}
-                        color="gray2"
-                        onClick={onShowChannelSettingsPopup}
-                    >
-                        <Stack grow horizontal alignItems="center" gap="sm">
-                            <Paragraph color="default">Edit channel</Paragraph>
-                        </Stack>
-                    </Button>
+                    <PanelButton onClick={onShowChannelSettingsPopup}>
+                        <Icon type="edit" />
+                        <Paragraph color="default">Edit channel</Paragraph>
+                    </PanelButton>
                 )}
-                <Button
-                    icon="logout"
-                    style={{ paddingLeft: vars.space.md }}
-                    color="error"
-                    onClick={onLeaveClick}
-                >
-                    <Stack grow horizontal alignItems="center" gap="sm">
-                        <Paragraph color="error">Leave #{channel?.label}</Paragraph>
-                    </Stack>
-                </Button>
+                <PanelButton tone="negative" onClick={onLeaveClick}>
+                    <Icon type="logout" />
+                    <Paragraph color="error">Leave #{channel?.label}</Paragraph>
+                </PanelButton>
             </Stack>
         </Panel>
     )

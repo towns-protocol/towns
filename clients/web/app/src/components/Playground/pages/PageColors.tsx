@@ -1,5 +1,5 @@
 import React from 'react'
-import { Box, Grid, Icon, Stack } from '@ui'
+import { Box, BoxProps, Grid, Icon, Stack } from '@ui'
 import { vars } from 'ui/styles/vars.css'
 import { Container } from '../components/PlaygroundContainer'
 
@@ -35,20 +35,18 @@ export const PageColors = () => {
                 </Stack>
             </Container>
             <Container label="Background (layer)">
-                {Object.keys(vars.color.layer).map((c) => (
-                    <Stack horizontal gap key={c} alignItems="center">
-                        <Grid grow columns={2} width="200">
-                            <Box
-                                border
-                                padding
-                                background={c as keyof typeof vars.color.background}
-                            >
-                                Text
-                            </Box>
-                            <Box justifyContent="center">{c}</Box>
-                        </Grid>
-                    </Stack>
-                ))}
+                {Object.keys(vars.color.layer)
+                    .filter((c) => !c.match(/hover$/i))
+                    .map((c) => (
+                        <Stack horizontal gap key={c} alignItems="center">
+                            <Grid grow columns={2} width="200">
+                                <Box border padding background={c as BoxProps['background']}>
+                                    Text
+                                </Box>
+                                <Box justifyContent="center">{c}</Box>
+                            </Grid>
+                        </Stack>
+                    ))}
             </Container>
             <Container label="Background (tones)">
                 {Object.keys(vars.color.tone).map((c) => (

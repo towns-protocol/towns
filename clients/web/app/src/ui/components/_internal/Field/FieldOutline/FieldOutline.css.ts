@@ -60,7 +60,7 @@ export const fieldTones = styleVariants({
         opacity: 1,
         vars: {
             [focusedOpacityVar]: '1',
-            [focusedColorVar]: vars.color.foreground.positive,
+            [focusedColorVar]: vars.color.foreground.accent,
         },
     },
     accent: {

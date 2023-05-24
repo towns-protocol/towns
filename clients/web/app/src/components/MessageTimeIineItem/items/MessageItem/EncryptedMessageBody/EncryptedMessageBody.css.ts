@@ -7,7 +7,7 @@ export const hoverBackground = style({
     transition: 'background 320ms',
     selectors: {
         [`${main}:hover &`]: {
-            background: vars.color.foreground.gray2,
+            background: vars.color.background.level3Hover,
         },
     },
 })
@@ -16,7 +16,7 @@ export const hoverColor = style({
     transition: 'color 320ms',
     selectors: {
         [`${main}:hover &`]: {
-            color: vars.color.foreground.gray2,
+            color: vars.color.background.level3Hover,
         },
     },
 })
@@ -44,10 +44,10 @@ globalStyle(`${loader} div`, {
     position: 'absolute',
     width: '12px',
     height: '12px',
-    border: `1.5px solid ${vars.color.background.level2}`,
+    border: `1.5px solid`,
     opacity: 1,
     borderRadius: '50%',
-    borderColor: '#fff transparent transparent transparent',
+    borderColor: `${vars.color.foreground.gray2} transparent transparent transparent`,
 })
 globalStyle(`${loader} div:nth-child(1)`, {
     animationDelay: '-0.45s',

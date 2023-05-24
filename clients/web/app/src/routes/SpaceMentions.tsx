@@ -84,10 +84,12 @@ const MentionBox = (props: { mention: MentionResult; userId?: string }) => {
         <NavLink to={link}>
             <Box
                 elevate
+                hoverable
                 rounded="md"
                 background={mention.unread ? 'level3' : 'level2'}
                 cursor="alias"
                 boxShadow="card"
+                overflow="hidden"
             >
                 <Message
                     relativeDate

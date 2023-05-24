@@ -42,10 +42,16 @@ const light = (() => {
         none: 'none',
         inherit: 'inherit',
         level1: Figma.LightMode.Level1,
+        level1Hover: Figma.LightMode.Level1Hover,
         level2: Figma.LightMode.Level2,
+        level2Hover: Figma.LightMode.Level2Hover,
         level3: Figma.LightMode.Level3,
+        level3Hover: Figma.LightMode.Level3Hover,
         level4: Figma.LightMode.Level4,
+        level4Hover: Figma.LightMode.Level4Hover,
         readability: Figma.LightMode.Readability,
+        readabilityHover: Figma.LightMode.ReadabilityHover,
+        hover: Figma.LightMode.Hover2,
         inverted: Figma.LightMode.Primary,
     } as const
 
@@ -81,10 +87,16 @@ const dark = (() => {
         none: 'none',
         inherit: 'inherit',
         level1: Figma.DarkMode.Level1,
+        level1Hover: Figma.DarkMode.Level1Hover,
         level2: Figma.DarkMode.Level2,
+        level2Hover: Figma.DarkMode.Level2Hover,
         level3: Figma.DarkMode.Level3,
+        level3Hover: Figma.DarkMode.Level3Hover,
         level4: Figma.DarkMode.Level4,
+        level4Hover: Figma.DarkMode.Level4Hover,
         readability: Figma.DarkMode.Readability,
+        readabilityHover: Figma.DarkMode.ReadabilityHover,
+        hover: Figma.DarkMode.Hover2,
         inverted: Figma.DarkMode.Primary,
     } as const
 

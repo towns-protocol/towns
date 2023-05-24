@@ -44,6 +44,7 @@ export const Button = forwardRef<HTMLButtonElement, Props>(
     ) => (
         <MotionStack
             horizontal
+            hoverable
             layout={animate}
             aspectRatio={aspectRatio}
             as="button"

@@ -100,6 +100,7 @@ export const MessageContextMenu = (props: Props) => {
                 <Stack
                     border
                     horizontal
+                    hoverable
                     inset="xs"
                     background="level1"
                     color="gray2"

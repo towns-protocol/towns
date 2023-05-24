@@ -12,14 +12,7 @@ export const CopySpaceLink = (
         background?: BoxProps['background']
     } & TooltipBoxVariants,
 ) => {
-    const {
-        spaceId,
-        color,
-        background = {
-            default: 'level2',
-            hover: 'level3',
-        },
-    } = props
+    const { spaceId, color } = props
     const [, copy] = useCopyToClipboard()
     const inviteUrl = getInviteUrl(spaceId)
     const [copyDisplay, setCopyDisplay] = useState(false)
@@ -43,6 +36,7 @@ export const CopySpaceLink = (
     return (
         <Box horizontal>
             <Box
+                hoverable
                 cursor="pointer"
                 tooltip={
                     <Tooltip horizontal alignItems="center" gap="sm">
@@ -67,7 +61,6 @@ export const CopySpaceLink = (
                 padding="xs"
                 rounded="sm"
                 color={color}
-                background={background}
                 onClick={onCopyClick}
             >
                 <Icon type="link" size="square_sm" />

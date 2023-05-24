@@ -235,16 +235,14 @@ const SidebarPill = (props: {
             horizontal
             transition
             border
+            hoverable
+            background="level2"
             gap="sm"
             rounded="lg"
             paddingX="md"
             height="height_lg"
             alignItems="center"
             cursor="pointer"
-            background={{
-                default: 'level2',
-                hover: 'level3',
-            }}
             color="gray2"
             position="relative"
             onClick={props.onClick}
