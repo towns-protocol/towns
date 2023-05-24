@@ -34,7 +34,7 @@ const shorthands = {
     hoverable: [{}, {}],
     hoverActive: [{}, {}],
     elevate: [{ background: 'level2' }, {}],
-    elevateReadability: [{ background: 'level1' }, {}],
+    elevateReadability: [{ background: 'default' }, {}],
 } as const
 
 const shorhandAttributes = new Set(Object.keys(shorthands))

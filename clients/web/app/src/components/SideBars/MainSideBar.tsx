@@ -23,7 +23,7 @@ export const MainSideBar = (props: Props) => {
 
     return (
         <SideBar paddingY="sm">
-            <Stack grow>
+            <Stack grow elevateReadability>
                 <ProfileCardButton expanded={isExpanded} />
                 {spaces.map((s) => (
                     <SpaceNavItem

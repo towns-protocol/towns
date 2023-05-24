@@ -38,8 +38,12 @@ export const colorProperties = defineProperties({
                     [`${elevateClass} &`]: {
                         background: vars.color.background.level2,
                     },
-                    [`${elevateReadabilityClass} &`]: {
+                    [`${elevateReadabilityClass} &,&${elevateReadabilityClass}`]: {
                         background: vars.color.background.readability,
+                        vars: {
+                            '--background': vars.color.background.readability,
+                            '--background-hover': vars.color.background.readabilityHover,
+                        },
                     },
                 },
             },
@@ -53,7 +57,7 @@ export const colorProperties = defineProperties({
                     '--background-hover': vars.color.background.level1Hover,
                 },
                 selectors: {
-                    [`${elevateReadabilityClass} &`]: {
+                    [`${elevateReadabilityClass} &,&${elevateReadabilityClass}`]: {
                         background: vars.color.background.readability,
                         vars: {
                             '--background': vars.color.background.readability,

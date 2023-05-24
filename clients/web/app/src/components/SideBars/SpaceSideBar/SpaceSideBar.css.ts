@@ -26,7 +26,7 @@ globalStyle(`${lightTheme} ${gradientBackground}`, {
 })
 
 globalStyle(`${darkTheme} ${gradientBackground}`, {
-    background: `linear-gradient(180deg, #222026FF 0%, #151418FF 100%)`,
+    background: `linear-gradient(180deg, #252026FF 0%, var(--background) 100%)`,
 })
 
 export const spaceUrlText = style({

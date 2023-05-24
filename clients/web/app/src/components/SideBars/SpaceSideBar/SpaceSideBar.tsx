@@ -131,7 +131,7 @@ export const SpaceSideBar = (props: Props) => {
 
     return (
         <SideBar data-testid="space-sidebar" height="100vh" onScroll={onScroll}>
-            <Box grow className={props.className}>
+            <Box grow elevateReadability className={props.className}>
                 <Stack
                     position="absolute"
                     className={clsx([styles.gradientBackground])}

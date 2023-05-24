@@ -23,7 +23,7 @@ export const CentralPanelLayout = (props: { children: React.ReactNode }) => {
             {outlet && outlet}
         </>
     ) : (
-        <Stack elevateReadability minHeight="100%">
+        <Stack minHeight="100%">
             <Allotment onChange={onSizesChange}>
                 <Allotment.Pane minSize={550}>
                     <Box absoluteFill background="level1">
