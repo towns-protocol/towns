@@ -9,9 +9,11 @@ import {
     useSpaceMembers,
 } from 'use-zion-client'
 import { useGetUserBio } from 'hooks/useUserBio'
-import { Box, Button, Panel, Paragraph, Stack, Text } from '@ui'
+import { Box, Button, Icon, Panel, PanelButton, Paragraph, Stack, Text } from '@ui'
 import { UserProfile } from '@components/UserProfile/UserProfile'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
+import { useAuth } from 'hooks/useAuth'
+import { useStore } from 'store/store'
 
 export const SpaceProfilePanel = (props: { children?: React.ReactNode }) => {
     const [search] = useSearchParams()
@@ -26,6 +28,12 @@ export const SpaceProfilePanel = (props: { children?: React.ReactNode }) => {
 
     const onBack = useEvent(() => {
         navigate(-1)
+    })
+
+    const { logout } = useAuth()
+
+    const onLogoutClick = useEvent(() => {
+        logout()
     })
 
     const profileUser = useMyProfile()
@@ -59,6 +67,15 @@ export const SpaceProfilePanel = (props: { children?: React.ReactNode }) => {
 
     const canEdit = loggedInUserAddress === userAddress
 
+    const { setTheme, theme } = useStore((state) => ({
+        theme: state.theme,
+        setTheme: state.setTheme,
+    }))
+
+    const onThemeClick = () => {
+        setTheme(theme === 'light' ? 'dark' : 'light')
+    }
+
     return (
         <Panel label="Profile" onClose={onClose}>
             {isValid ? (
@@ -91,6 +108,28 @@ export const SpaceProfilePanel = (props: { children?: React.ReactNode }) => {
                     </Button>
                 </Box>
             )}
+            {user?.userId === profileUser?.userId ? (
+                <Stack padding gap paddingBottom="lg">
+                    <PanelButton onClick={onThemeClick}>
+                        <Box
+                            border
+                            centerContent
+                            rounded="sm"
+                            aspectRatio="1/1"
+                            height="height_md"
+                            background="inverted"
+                        >
+                            {theme === 'dark' ? 'Aa' : 'Aa'}
+                        </Box>
+                        <Paragraph color="default">Switch theme</Paragraph>
+                    </PanelButton>
+
+                    <PanelButton tone="negative" onClick={onLogoutClick}>
+                        <Icon type="logout" />
+                        <Paragraph>Logout</Paragraph>
+                    </PanelButton>
+                </Stack>
+            ) : undefined}
         </Panel>
     )
 }

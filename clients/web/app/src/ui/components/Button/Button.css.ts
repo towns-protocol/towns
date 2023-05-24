@@ -1,6 +1,5 @@
 import { RecipeVariants, recipe } from '@vanilla-extract/recipes'
 import { atoms } from 'ui/styles/atoms.css'
-import { ToneName } from 'ui/styles/themes'
 import { vars } from 'ui/styles/vars.css'
 
 export const buttonStyle = recipe({
@@ -75,36 +74,6 @@ export const buttonStyle = recipe({
                 paddingRight: vars.space.lg,
                 gap: vars.space.md,
             },
-        },
-        tone: {
-            none: {},
-            default: {},
-            level1: {},
-            level2: {},
-            level3: {
-                boxShadow: `0 0 0px 1px ${vars.color.background.level4}`,
-            },
-            level4: {},
-            [ToneName.CTA1]: {
-                position: 'relative',
-                overflow: 'hidden',
-                background: '#21E078',
-                selectors: {
-                    '&:before': {
-                        content: '',
-                        inset: 0,
-                        position: 'absolute',
-                        background: `linear-gradient(90deg, #21E07800 0%, #1FDBF1 100%)`,
-                    },
-                },
-            },
-            [ToneName.CTA2]: {
-                background: '#21E078',
-            },
-            [ToneName.Error]: {},
-            [ToneName.Neutral]: {},
-            [ToneName.Accent]: {},
-            [ToneName.Positive]: {},
         },
         hoverEffect: {
             none: {

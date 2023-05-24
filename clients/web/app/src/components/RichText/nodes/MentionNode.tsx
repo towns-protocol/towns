@@ -92,7 +92,7 @@ export class MentionNode extends TextNode {
         const dom = super.createDOM(config)
         dom.className = atoms({
             fontWeight: 'strong',
-            background: 'level3',
+            background: 'level2',
             paddingX: 'xs',
             paddingY: 'xxs',
             rounded: 'xs',

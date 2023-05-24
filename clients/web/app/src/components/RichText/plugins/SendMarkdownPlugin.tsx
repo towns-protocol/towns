@@ -100,10 +100,10 @@ const EditMessageButtons = (props: { onSave?: () => void; onCancel?: () => void 
 
     return (
         <Stack horizontal gap>
-            <Button size="button_sm" tone="cta1" animate={false} onClick={props.onSave}>
+            <Button size="button_sm" tone="cta1" onClick={props.onSave}>
                 Save
             </Button>
-            <Button size="button_sm" animate={false} onClick={props.onCancel}>
+            <Button size="button_sm" onClick={props.onCancel}>
                 Cancel
             </Button>
         </Stack>

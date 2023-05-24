@@ -142,9 +142,11 @@ const MessageWrapper = React.memo((props: MessageWrapperProps) => {
             : undefined
 
     const reactions = messageReactionsMap[event.eventId]
+    const isEditing = event.eventId === timelineContext.timelineActions.editingMessageId
 
     return !event ? null : (
         <MessageLayout
+            editing={isEditing}
             id={`event-${event.eventId}`}
             highlight={props.highlight}
             selectable={selectable}

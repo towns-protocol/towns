@@ -26,6 +26,7 @@ const DesktopPanel = (props: Props) => {
             <Stack
                 horizontal
                 hoverable
+                borderBottom
                 shrink={false}
                 paddingX={paddingX}
                 background="level2"

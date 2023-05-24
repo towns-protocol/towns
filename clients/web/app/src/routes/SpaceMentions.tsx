@@ -16,6 +16,7 @@ import { getIsRoomMessageContent, getMessageBody } from 'utils/ztevent_util'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { TouchLayoutNavigationBar } from '@components/TouchLayoutNavigationBar/TouchLayoutNavigationBar'
 import { useDevice } from 'hooks/useDevice'
+import { FadeInBox } from '@components/Transitions'
 import { CentralPanelLayout } from './layouts/CentralPanelLayout'
 
 export const SpaceMentions = () => {
@@ -29,7 +30,7 @@ export const SpaceMentions = () => {
             <Stack absoluteFill scroll paddingTop={isMobile ? 'x8' : 'none'}>
                 {mentions.length ? (
                     <Stack grow minHeight="100svh">
-                        <Stack gap padding>
+                        <Stack gap padding="lg">
                             {mentions.map((m, index, mentions) => {
                                 return (
                                     m.type === 'mention' && (
@@ -82,7 +83,7 @@ const MentionBox = (props: { mention: MentionResult; userId?: string }) => {
 
     return (
         <NavLink to={link}>
-            <Box
+            <FadeInBox
                 elevate
                 hoverable
                 rounded="md"
@@ -114,7 +115,7 @@ const MentionBox = (props: { mention: MentionResult; userId?: string }) => {
                         }
                     />
                 </Message>
-            </Box>
+            </FadeInBox>
         </NavLink>
     )
 }

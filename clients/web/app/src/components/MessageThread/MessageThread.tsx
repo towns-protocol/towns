@@ -14,6 +14,7 @@ import { Box, Paragraph, Stack } from '@ui'
 import { useIsChannelWritable } from 'hooks/useIsChannelWritable'
 import { useSendReply } from 'hooks/useSendReply'
 import { useSpaceChannels } from 'hooks/useSpaceChannels'
+import { FadeInBox } from '@components/Transitions'
 
 export const MessageThread = (props: {
     userId: string
@@ -78,7 +79,7 @@ export const MessageThread = (props: {
             channelId={channelId}
             threadParentId={parentId}
         >
-            <Stack gap>
+            <FadeInBox gap>
                 <Box>
                     <Paragraph size="lg" color="default">
                         #{channelLabel.toLocaleLowerCase()}
@@ -104,7 +105,7 @@ export const MessageThread = (props: {
                         </Box>
                     </Stack>
                 </Stack>
-            </Stack>
+            </FadeInBox>
         </MessageTimelineWrapper>
     ) : (
         <></>

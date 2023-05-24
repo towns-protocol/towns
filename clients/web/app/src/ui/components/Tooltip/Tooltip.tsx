@@ -19,7 +19,7 @@ export const Tooltip = ({ children, ...boxProps }: { children: React.ReactNode }
     return (
         <Box
             padding="sm"
-            background="level2"
+            background="level1"
             color="gray1"
             rounded="sm"
             className={clsx(style.tooltip, style.arrow, arrowDirection)}

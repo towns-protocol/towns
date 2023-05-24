@@ -1,5 +1,4 @@
 import React, { ButtonHTMLAttributes, forwardRef } from 'react'
-import { vars } from 'ui/styles/vars.css'
 import { BoxProps } from '../Box/Box'
 import { Icon, IconName } from '../Icon'
 import { ButtonStyleVariants, buttonStyle } from './Button.css'
@@ -9,7 +8,7 @@ type StyleProps = Omit<NonNullable<ButtonStyleVariants>, 'active'>
 
 type Props = {
     children?: React.ReactNode
-    tone?: keyof typeof vars.color.background
+    tone?: BoxProps['background']
     icon?: IconName
     disabled?: boolean
     minWidth?: BoxProps['minWidth']
@@ -54,7 +53,7 @@ export const Button = forwardRef<HTMLButtonElement, Props>(
                 rounded,
                 hoverEffect,
                 // a tone can be specified here in order to transition background
-                tone: animate || tone == 'level3' ? tone : undefined,
+                // tone: animate || tone == 'level3' ? tone : undefined,
             })}
             justifyContent="center"
             alignItems="center"
