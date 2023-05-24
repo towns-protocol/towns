@@ -165,7 +165,7 @@ export const createMentionTransformer = (
             }
             return `${node.getMentionName()}`
         },
-        importRegExp: new RegExp('(@(' + concat + ')(\\s|$))', 'i'),
+        importRegExp: new RegExp('(@(' + concat + ')(?=\\s|$))', 'i'),
         regExp: /(@[a-z0-9_-]+)$/i,
         replace: (textNode, match) => {
             const name = match[1]
