@@ -24,7 +24,7 @@
         "test:ci": "yarn csb:test-web-lib-done --silent",
         "test:ci-todo": "yarn csb:test-web-lib-todo --silent",
         "test:dendrite": "yarn my-jest --group=dendrite --maxWorkers=5",
-        "test:e2e": "yarn my-jest --silent --maxWorkers=10",
+        "test:e2e": "yarn my-jest --maxWorkers=10",
         "test:e2e-csb": "PRIMARY_PROTOCOL=casablanca yarn test:e2e",
         "test:e2e-csb-ts-only": "yarn test:e2e-csb **/*.ts",
         "watch": "tsc --watch"

@@ -10,6 +10,8 @@ import {
     ClientEvent,
     EventType,
     IndexedDBCryptoStore,
+    Room,
+    IRoomTimelineData,
 } from 'matrix-js-sdk'
 import { CryptoEvent, IMegolmSessionData } from 'matrix-js-sdk/lib/crypto'
 import uniq from 'lodash/uniq'
@@ -17,6 +19,8 @@ import { createUserIdFromString } from '../../types/user-identifier'
 import { TypedEventEmitter } from 'matrix-js-sdk/lib/models/typed-event-emitter'
 import throttle from 'lodash/throttle'
 import { MEGOLM_ALGORITHM } from 'matrix-js-sdk/lib/crypto/olmlib'
+// eslint-disable-next-line lodash/import-scope
+import type { DebouncedFunc } from 'lodash'
 
 /**
  * If I have messages that I can't decrypt (which happens all the time in normal use cases,
@@ -126,12 +130,86 @@ export class MatrixDecryptionExtension extends TypedEventEmitter<
         string,
         (event: MatrixEvent, senderId: string) => Promise<void>
     >
-    private throttledStartLookingForKeys: () => void
+    private throttledStartLookingForKeys: DebouncedFunc<() => void>
     private delgate: MatrixDecryptionExtensionDelegate
     private clientRunning = true
     private hasUpToDateDeviceForUser = new Set<string>()
     private userId: string
     private accountAddress: string
+
+    private onTimelineEvent = (
+        event: MatrixEvent,
+        _room: Room | undefined,
+        _toStartOfTimeline: boolean | undefined,
+        _removed: boolean,
+        _data: IRoomTimelineData,
+    ) => {
+        if (event.getType() === MatrixEventType.RoomMessageEncrypted) {
+            if (event.shouldAttemptDecryption()) {
+                // not sure why matrix isn't always doing this for us, but sometimes it gets skipped
+                // it's okay to call multiple times, the underlying logic returns an existing promise
+                // if one exists
+                // we don't need to do anything with the result, a decrypted event gets fired
+                // and it makes sense to just pick the event up there
+                void this.matrixClient.decryptEventIfNeeded(event, DECRYPTION_OPTIONS)
+            }
+        }
+    }
+
+    private onDecryptedEvent = (event: MatrixEvent, err: Error | undefined) => {
+        if (event.isDecryptionFailure()) {
+            const roomId = event.getRoomId()
+            if (!roomId) {
+                console.log("MDE::onDecryptionFailure - event doesn't have a roomId", {
+                    eventId: event.getId(),
+                    err: err,
+                })
+                return
+            }
+            if (!this.roomRecords[roomId]) {
+                this.roomRecords[roomId] = { decryptionFailures: [] }
+            }
+            const roomRecord = this.roomRecords[roomId]
+            if (roomRecord.decryptionFailures.indexOf(event) === -1) {
+                roomRecord.decryptionFailures.push(event)
+            }
+            this.throttledStartLookingForKeys()
+        }
+    }
+
+    private onCurrentlyActive = (event: MatrixEvent | undefined, user: MatrixUser) => {
+        console.log('MDE::onCurrentlyActive', { userId: user.userId, user: user.presence })
+        if (user.currentlyActive) {
+            this.throttledStartLookingForKeys()
+        }
+    }
+
+    private onPresence = (event: MatrixEvent | undefined, user: MatrixUser) => {
+        console.log('MDE::onPresence', { userId: user.userId, user: user.presence })
+        if (user.presence === 'online') {
+            this.throttledStartLookingForKeys()
+        }
+    }
+
+    private onDeviceUpdate = (users: string[], _initialFetch: boolean) => {
+        users.forEach((userId) => this.hasUpToDateDeviceForUser.add(userId))
+        this.throttledStartLookingForKeys()
+    }
+
+    private onToDeviceEvent = (event: MatrixEvent) => {
+        this.matrixClient
+            .decryptEventIfNeeded(event)
+            .then(() => {
+                // if the event is one we care about
+                if (Object.keys(this.receivedToDeviceProcessersMap).includes(event.getType())) {
+                    // enqueue the event to be processed
+                    this.receivedToDeviceEventsQueue.enqueue(event)
+                }
+            })
+            .catch((err: Error) => {
+                console.log('MDE::onToDeviceEvent - error trying to decrypt', { err })
+            })
+    }
 
     constructor(matrixClient: MatrixClient, delegate: MatrixDecryptionExtensionDelegate) {
         super()
@@ -153,7 +231,6 @@ export class MatrixDecryptionExtension extends TypedEventEmitter<
         }
         // queue for processing to-device events
         this.receivedToDeviceEventsQueue = new ProcessingQueue<MatrixEvent>({
-            shouldStop: () => !this.clientRunning,
             process: (event) => {
                 return this.processToDeviceEvent(event)
             },
@@ -175,85 +252,45 @@ export class MatrixDecryptionExtension extends TypedEventEmitter<
         }
 
         // listen for encrypted events
-        matrixClient.on(RoomEvent.Timeline, (event) => {
-            if (event.getType() === MatrixEventType.RoomMessageEncrypted) {
-                if (event.shouldAttemptDecryption()) {
-                    // not sure why matrix isn't always doing this for us, but sometimes it gets skipped
-                    // it's okay to call multiple times, the underlying logic returns an existing promise
-                    // if one exists
-                    // we don't need to do anything with the result, a decrypted event gets fired
-                    // and it makes sense to just pick the event up there
-                    void this.matrixClient.decryptEventIfNeeded(event, DECRYPTION_OPTIONS)
-                }
-            }
-        })
+        matrixClient.on(RoomEvent.Timeline, this.onTimelineEvent)
 
         // listen for unable to decrypt events
-        matrixClient.on(MatrixEventEvent.Decrypted, (event, err) => {
-            if (event.isDecryptionFailure()) {
-                const roomId = event.getRoomId()
-                if (!roomId) {
-                    console.log("MDE::onDecryptionFailure - event doesn't have a roomId", {
-                        eventId: event.getId(),
-                        err: err,
-                    })
-                    return
-                }
-                if (!this.roomRecords[roomId]) {
-                    this.roomRecords[roomId] = { decryptionFailures: [] }
-                }
-                const roomRecord = this.roomRecords[roomId]
-                if (roomRecord.decryptionFailures.indexOf(event) === -1) {
-                    roomRecord.decryptionFailures.push(event)
-                }
-                this.throttledStartLookingForKeys()
-            }
-        })
+        matrixClient.on(MatrixEventEvent.Decrypted, this.onDecryptedEvent)
 
         // listen for "currently_active" members (in go `time.Since(p.LastActiveTS.Time()).Minutes() < 5`)
-        matrixClient.on(
-            UserEvent.CurrentlyActive,
-            (event: MatrixEvent | undefined, user: MatrixUser) => {
-                console.log('MDE::onCurrentlyActive', { userId: user.userId, user: user.presence })
-                if (user.currentlyActive) {
-                    this.throttledStartLookingForKeys()
-                }
-            },
-        )
+        matrixClient.on(UserEvent.CurrentlyActive, this.onCurrentlyActive)
         // listen for "online" members (in go `p.Presence == "online"`)
-        matrixClient.on(UserEvent.Presence, (event: MatrixEvent | undefined, user: MatrixUser) => {
-            console.log('MDE::onPresence', { userId: user.userId, user: user.presence })
-            if (user.presence === 'online') {
-                this.throttledStartLookingForKeys()
-            }
-        })
+        matrixClient.on(UserEvent.Presence, this.onPresence)
 
         // listen for new devices
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        matrixClient.on(CryptoEvent.DevicesUpdated, (users: string[], initialFetch: boolean) => {
-            users.forEach((userId) => this.hasUpToDateDeviceForUser.add(userId))
-            this.throttledStartLookingForKeys()
-        })
+        matrixClient.on(CryptoEvent.DevicesUpdated, this.onDeviceUpdate)
 
         // listen for extended key requests
-        matrixClient.on(ClientEvent.ToDeviceEvent, (event: MatrixEvent) => {
-            this.matrixClient
-                .decryptEventIfNeeded(event)
-                .then(() => {
-                    // if the event is one we care about
-                    if (Object.keys(this.receivedToDeviceProcessersMap).includes(event.getType())) {
-                        // enqueue the event to be processed
-                        this.receivedToDeviceEventsQueue.enqueue(event)
-                    }
-                })
-                .catch((err: Error) => {
-                    console.log('MDE::onToDeviceEvent - error trying to decrypt', { err })
-                })
-        })
+        matrixClient.on(ClientEvent.ToDeviceEvent, this.onToDeviceEvent)
     }
 
     public stop(): void {
-        this.clientRunning = false
+        // stop listening for encrypted events
+        this.matrixClient.off(RoomEvent.Timeline, this.onTimelineEvent)
+
+        // stop listening for unable to decrypt events
+        this.matrixClient.off(MatrixEventEvent.Decrypted, this.onDecryptedEvent)
+
+        // stop listening for "currently_active" members (in go `time.Since(p.LastActiveTS.Time()).Minutes() < 5`)
+        this.matrixClient.off(UserEvent.CurrentlyActive, this.onCurrentlyActive)
+        // stop listening for "online" members (in go `p.Presence == "online"`)
+        this.matrixClient.off(UserEvent.Presence, this.onPresence)
+
+        // stop listening for new devices
+        this.matrixClient.off(CryptoEvent.DevicesUpdated, this.onDeviceUpdate)
+
+        // stop listening for extended key requests
+        this.matrixClient.off(ClientEvent.ToDeviceEvent, this.onToDeviceEvent)
+
+        this.receivedToDeviceProcessersMap = {}
+        this.throttledStartLookingForKeys.cancel()
+        this.receivedToDeviceEventsQueue.stop()
     }
 
     private currentlyRequestingCount(): number {
@@ -854,32 +891,40 @@ export class MatrixDecryptionExtension extends TypedEventEmitter<
 }
 
 class ProcessingQueue<TItem> {
-    private shouldStopFn: () => boolean
+    private running = true
     private processFn: (item: TItem) => Promise<void>
     private delayMs: number
     private queue: TItem[] = []
     private processing = false
+    private timeout: NodeJS.Timeout | undefined
 
-    constructor(params: {
-        shouldStop: () => boolean
-        process: (item: TItem) => Promise<void>
-        delayMs: number
-    }) {
-        this.shouldStopFn = params.shouldStop
+    constructor(params: { process: (item: TItem) => Promise<void>; delayMs: number }) {
         this.processFn = params.process
         this.delayMs = params.delayMs
     }
 
     public enqueue(item: TItem) {
-        this.queue.push(item)
-        this.process()
+        if (this.running) {
+            this.queue.push(item)
+            this.process()
+        } else {
+            console.warn('ProcessingQueue::enqueue called when not running')
+        }
+    }
+
+    public stop() {
+        if (this.timeout) {
+            clearTimeout(this.timeout)
+        }
+        if (this.queue.length > 0) {
+            console.warn('ProcessingQueue::stop called with items still queued', this.queue.length)
+        }
+        this.queue = []
+        this.running = false
     }
 
     private process() {
-        if (this.processing) {
-            return
-        }
-        if (this.shouldStopFn()) {
+        if (this.processing || !this.running) {
             return
         }
         const item = this.queue.shift()
@@ -891,7 +936,10 @@ class ProcessingQueue<TItem> {
                 })
                 .finally(() => {
                     this.processing = false
-                    setTimeout(() => this.process(), this.delayMs)
+                    this.timeout = setTimeout(() => {
+                        this.timeout = undefined
+                        this.process()
+                    }, this.delayMs)
                 })
         }
     }
