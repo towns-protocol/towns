@@ -1,5 +1,6 @@
 import {
     BlockchainTransactionType,
+    Permission,
     RoomIdentifier,
     SignerUndefinedError,
     UpdateChannelInfo,
@@ -48,16 +49,18 @@ export function ChannelSettingsForm({
         if (isLoading) {
             return undefined
         }
-        return data?.map((role) => {
-            const channelHasRole = role.channels.some(
-                (c) => c.channelNetworkId === channelId.networkId,
-            )
-            return {
-                ...role,
-                channelHasRole,
-                tokenAddresses: role.tokens.map((token) => token.contractAddress as string),
-            }
-        })
+        return data
+            ?.filter((role) => role.permissions.includes(Permission.Read))
+            .map((role) => {
+                const channelHasRole = role.channels.some(
+                    (c) => c.channelNetworkId === channelId.networkId,
+                )
+                return {
+                    ...role,
+                    channelHasRole,
+                    tokenAddresses: role.tokens.map((token) => token.contractAddress as string),
+                }
+            })
     }, [data, channelId.networkId, isLoading])
 
     const defaultValues = useMemo((): FormState => {

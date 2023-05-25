@@ -43,6 +43,20 @@ library DataTypes {
   /// *********************************
   /// **************DTO****************
   /// *********************************
+  /// @notice A struct containing the parameters required for creating a space
+  /// @param spaceName The name of the space
+  /// @param spaceId The network id of the space
+  /// @param spaceMetadata The metadata of the space
+  /// @param channelName The name of the channel
+  /// @param channelId The network id of the channel
+  struct CreateSpaceData {
+    string spaceName;
+    string spaceId;
+    string spaceMetadata;
+    string channelName;
+    string channelId;
+  }
+
   /// @notice A struct containing the parameters required for creating a space with a  token entitlement
   struct CreateSpaceExtraEntitlements {
     //The role and permissions to create for the associated users or token entitlements

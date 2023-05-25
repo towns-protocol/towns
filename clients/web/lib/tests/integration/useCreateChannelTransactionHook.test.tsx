@@ -226,21 +226,30 @@ describe('useCreateChannelTransactionHook', () => {
         await waitFor(() => expect(clientRunning).toHaveTextContent('true'))
         // click button to create the space
         fireEvent.click(createSpaceButton)
-        await waitFor(() => expect(transactionsNumber).toHaveTextContent('1'))
+        await waitFor(
+            () => expect(transactionsNumber).toHaveTextContent('1'),
+            TestConstants.DecaDefaultWaitForTimeout,
+        )
         // wait for the space name to render
         await waitFor(
             () => expect(spaceElement).toHaveTextContent(spaceName),
-            TestConstants.DoubleDefaultWaitForTimeout,
+            TestConstants.DecaDefaultWaitForTimeout,
         )
 
         /* Act */
         // click button to create the channel
         fireEvent.click(createChannelButton)
-        await waitFor(() => expect(transactionsNumber).toHaveTextContent('2'))
+        await waitFor(
+            () => expect(transactionsNumber).toHaveTextContent('2'),
+            TestConstants.DoubleDefaultWaitForTimeout,
+        )
         await waitFor(() => expect(transactions).toHaveTextContent('0'))
         await waitFor(() => expect(blockchainEvents).toHaveTextContent('1'))
 
         /* Assert */
-        await waitFor(() => expect(channelElement).toHaveTextContent(channelName))
+        await waitFor(
+            () => expect(channelElement).toHaveTextContent(channelName),
+            TestConstants.DoubleDefaultWaitForTimeout,
+        )
     }) // end test
 }) // end describe

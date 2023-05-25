@@ -2,8 +2,8 @@
 pragma solidity ^0.8.0;
 
 import {Errors} from "contracts/src/libraries/Errors.sol";
-import {DataTypes} from "contracts/src/libraries/DataTypes.sol";
 import {Permissions} from "contracts/src/libraries/Permissions.sol";
+import {DataTypes} from "contracts/src/libraries/DataTypes.sol";
 
 import {SpaceFactory} from "contracts/src/core/spaces/SpaceFactory.sol";
 import {Space} from "contracts/src/core/spaces/Space.sol";
@@ -40,9 +40,13 @@ contract SpaceFactoryTestCreateSpace is SpaceBaseSetup {
   function testRevertIfNoSpaceNetworkId() external {
     vm.expectRevert(Errors.InvalidParameters.selector);
     spaceFactory.createSpace(
-      "zion",
-      "",
-      "ipfs://QmZion",
+      DataTypes.CreateSpaceData(
+        "zion",
+        "",
+        "ipfs://QmZion",
+        "general",
+        "!8evmpuHDDgkady6u:goerli"
+      ),
       new string[](0),
       DataTypes.CreateSpaceExtraEntitlements({
         roleName: "",
@@ -51,6 +55,26 @@ contract SpaceFactoryTestCreateSpace is SpaceBaseSetup {
         users: new address[](0)
       })
     );
+  }
+
+  function test_createSpaceWithDefaultChannel() external {
+    address spaceOwner = makeAddr("spaceOwner");
+
+    vm.prank(spaceOwner);
+    address spaceAddress = createSimpleSpace();
+
+    Space space = Space(spaceAddress);
+
+    bytes32[] memory channels = space.getChannels();
+
+    assertEq(channels.length, 1);
+
+    for (uint256 i = 0; i < channels.length; i++) {
+      bytes32 channelHash = channels[i];
+      DataTypes.Channel memory channel = space.getChannelByHash(channelHash);
+
+      assertTrue(_isEqual(channel.name, "general"));
+    }
   }
 
   function testCreateSpaceWithERC20Token() external {
@@ -78,7 +102,13 @@ contract SpaceFactoryTestCreateSpace is SpaceBaseSetup {
     });
 
     vm.prank(spaceOwner1);
-    address space1 = createFuzzySpace("space1", "space1networkId", "ipfs://");
+    address space1 = createFuzzySpace(
+      "space1",
+      "space1networkId",
+      "ipfs://",
+      "general",
+      "!8evmpuHDDgkady6u:goerli"
+    );
 
     vm.prank(spaceOwner2);
     address space2 = createSpaceWithEntitlements(_entitlementData);
@@ -100,10 +130,22 @@ contract SpaceFactoryTestCreateSpace is SpaceBaseSetup {
     address spaceOwner2 = _randomAddress();
 
     vm.prank(spaceOwner1);
-    address space1 = createFuzzySpace("space1", "space1networkId", "ipfs://");
+    address space1 = createFuzzySpace(
+      "space1",
+      "space1networkId",
+      "ipfs://",
+      "general",
+      "!8evmpuHDDgkady6u:goerli"
+    );
 
     vm.prank(spaceOwner2);
-    address space2 = createFuzzySpace("space2", "space2networkId", "ipfs://");
+    address space2 = createFuzzySpace(
+      "space2",
+      "space2networkId",
+      "ipfs://",
+      "general",
+      "!8evmpuHDDgkady6u:goerli"
+    );
 
     assertTrue(Space(space1).isEntitledToSpace(spaceOwner1, Permissions.Owner));
     assertFalse(
@@ -133,9 +175,13 @@ contract SpaceFactoryTestCreateSpace is SpaceBaseSetup {
     vm.expectRevert(Errors.NotAllowed.selector);
     vm.prank(_randomAddress());
     spaceFactory.createSpace(
-      "zion",
-      "!7evmpuHDDgkady9u:goerli",
-      "ipfs://QmZion",
+      DataTypes.CreateSpaceData(
+        "zion",
+        "!7evmpuHDDgkady9u:goerli",
+        "ipfs://QmZion",
+        "general",
+        "!8evmpuHDDgkady6u:goerli"
+      ),
       _permissions,
       _entitlementData
     );
@@ -190,9 +236,13 @@ contract SpaceFactoryTestCreateSpace is SpaceBaseSetup {
 
     vm.expectRevert(Errors.NameLengthInvalid.selector);
     spaceFactory.createSpace(
-      "z",
-      "!7evmpuHDDgkady9u:goerli",
-      "ipfs://QmZion",
+      DataTypes.CreateSpaceData(
+        "z",
+        "!7evmpuHDDgkady9u:goerli",
+        "ipfs://QmZion",
+        "general",
+        "!8evmpuHDDgkady6u:goerli"
+      ),
       _permissions,
       _extraEntitlements
     );

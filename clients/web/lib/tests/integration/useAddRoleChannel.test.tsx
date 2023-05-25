@@ -87,11 +87,14 @@ describe('useAddRolesToChannel', () => {
         // wait for the space name to render
         await waitFor(
             () => expect(spaceElement).toHaveTextContent(spaceName),
-            TestConstants.DoubleDefaultWaitForTimeout,
+            TestConstants.DecaDefaultWaitForTimeout,
         )
         fireEvent.click(createChannelButton)
         // wait for the channel name to render
-        await waitFor(() => expect(channelElement).toHaveTextContent(`channelName:${channelName}`))
+        await waitFor(
+            () => expect(channelElement).toHaveTextContent(`channelName:${channelName}`),
+            TestConstants.DoubleDefaultWaitForTimeout,
+        )
         // wait for the roles count to render
         await waitFor(() => expect(rolesCount).toHaveTextContent(`rolesCount:2`))
         // click button to add Test role to channel

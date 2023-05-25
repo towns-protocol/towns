@@ -54,9 +54,13 @@ contract DeploySpacesUpgrade is ScriptUtils {
     string[] memory _permissions = new string[](0);
 
     address space = spaceFactory.createSpace(
-      "zion",
-      "!7evmpuHDDgkady9u:goerli",
-      "ipfs://QmZion",
+      DataTypes.CreateSpaceData(
+        "zion",
+        "!7evmpuHDDgkady9u:goerli",
+        "ipfs://QmZion",
+        "general",
+        "!8evmpuHDDgkady6u:goerli"
+      ),
       _permissions,
       _entitlementData
     );

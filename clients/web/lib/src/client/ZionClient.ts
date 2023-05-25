@@ -46,6 +46,7 @@ import {
     PowerLevels,
     Room,
     RoomMember,
+    RoomVisibility,
     SendMessageOptions,
     SendTextMessageOptions,
     ThreadIdOptions,
@@ -493,35 +494,42 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
         everyonePermissions: Permission[],
         signer: ethers.Signer,
     ): Promise<TransactionContext<RoomIdentifier>> {
-        const roomId: RoomIdentifier = makeCasablancaStreamIdentifier(makeUniqueSpaceStreamId())
+        const spaceId: RoomIdentifier = makeCasablancaStreamIdentifier(makeUniqueSpaceStreamId())
+        const channelId: RoomIdentifier = makeCasablancaStreamIdentifier(
+            makeUniqueChannelStreamId(),
+        )
 
         let transaction: ContractTransaction | undefined = undefined
         let error: Error | undefined = undefined
 
         try {
             transaction = await this.spaceDapp.createSpace(
-                createSpaceInfo.name,
-                roomId.networkId,
-                createSpaceInfo.spaceMetadata ?? '',
-                memberEntitlements,
-                everyonePermissions,
+                {
+                    spaceId: spaceId.networkId,
+                    spaceName: createSpaceInfo.name,
+                    spaceMetadata: '', // unused
+                    channelId: channelId.networkId,
+                    channelName: createSpaceInfo.defaultChannelName ?? 'general', // default channel name
+                    memberEntitlements,
+                    everyonePermissions,
+                },
                 signer,
             )
 
             console.log(`[createCasablancaSpaceTransaction] transaction created` /*, transaction*/)
         } catch (err) {
             console.error('[createCasablancaSpaceTransaction] error', err)
-            error = await this.onErrorLeaveSpaceRoomAndDecodeError(roomId, err)
+            error = await this.onErrorLeaveSpaceRoomAndDecodeError(spaceId, err)
         }
 
-        await this.createSpaceRoom(createSpaceInfo, roomId.networkId)
-        console.log('[createCasablancaSpaceTransaction] Space created', roomId)
+        await this.createSpaceRoom(createSpaceInfo, spaceId.networkId)
+        console.log('[createCasablancaSpaceTransaction] Space created', spaceId)
 
         return {
             transaction,
             receipt: undefined,
             status: transaction ? TransactionStatus.Pending : TransactionStatus.Failed,
-            data: transaction ? roomId : undefined,
+            data: transaction ? spaceId : undefined,
             error,
         }
     }
@@ -532,48 +540,69 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
         everyonePermissions: Permission[],
         signer: ethers.Signer,
     ): Promise<TransactionContext<RoomIdentifier>> {
-        const roomId: RoomIdentifier | undefined = await this.createSpaceRoom(
-            createSpaceInfo,
-            undefined,
-        )
+        let transaction: ContractTransaction | undefined
+        let error: Error | undefined
+        let spaceId: RoomIdentifier | undefined = undefined
+        let channelId: RoomIdentifier | undefined = undefined
 
-        if (!roomId) {
-            console.error('[createMatrixSpaceTransaction] createSpace failed')
+        // create matrix space
+        spaceId = await this.createSpaceRoom(createSpaceInfo)
+        if (!spaceId) {
+            console.error('[createMatrixSpaceTransaction] Space creation failed')
             return {
                 transaction: undefined,
                 receipt: undefined,
                 status: TransactionStatus.Failed,
                 data: undefined,
-                error: new Error('Matrix createSpace failed'),
+                error: new Error('Matrix Space creation failed'),
+            }
+        }
+        console.log('[createMatrixSpaceTransaction] Space created', spaceId)
+
+        try {
+            channelId = await this.createSpaceDefaultChannelRoom(spaceId)
+            console.log('[createMatrixSpaceTransaction] default channel created', channelId)
+        } catch (error) {
+            console.error('[createMatrixSpaceTransaction] default channel creation failed', error)
+            // leave the parent space if the channel creation failed
+            await this.leave(spaceId)
+        }
+
+        if (!channelId) {
+            return {
+                transaction: undefined,
+                receipt: undefined,
+                status: TransactionStatus.Failed,
+                data: undefined,
+                error: new Error('Matrix default channel creation failed'),
             }
         }
 
-        console.log('[createMatrixSpaceTransaction] Space created', roomId)
-
-        let transaction: ContractTransaction | undefined = undefined
-        let error: Error | undefined = undefined
-
+        // create space transaction
         try {
             transaction = await this.spaceDapp.createSpace(
-                createSpaceInfo.name,
-                roomId.networkId,
-                createSpaceInfo.spaceMetadata ?? '',
-                memberEntitlements,
-                everyonePermissions,
+                {
+                    spaceId: spaceId.networkId,
+                    spaceName: createSpaceInfo.name,
+                    spaceMetadata: '', // unused
+                    channelId: channelId.networkId,
+                    channelName: createSpaceInfo.defaultChannelName ?? 'general', // default channel name
+                    memberEntitlements,
+                    everyonePermissions,
+                },
                 signer,
             )
-
             console.log(`[createMatrixSpaceTransaction] transaction created` /*, transaction*/)
         } catch (err) {
             console.error('[createMatrixSpaceTransaction] error', err)
-            error = await this.onErrorLeaveSpaceRoomAndDecodeError(roomId, err)
+            error = await this.onErrorLeaveSpaceRoomAndDecodeError(spaceId, err)
         }
 
         return {
             transaction,
             receipt: undefined,
             status: transaction ? TransactionStatus.Pending : TransactionStatus.Failed,
-            data: transaction ? roomId : undefined,
+            data: transaction ? spaceId : undefined,
             error,
         }
     }
@@ -614,6 +643,19 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
             default:
                 staticAssertNever(createInfo.parentSpaceId)
         }
+    }
+
+    private async createSpaceDefaultChannelRoom(
+        parentSpaceId: RoomIdentifier,
+        channelName?: string,
+    ): Promise<RoomIdentifier> {
+        const channelInfo: CreateChannelInfo = {
+            name: channelName ?? 'general',
+            visibility: RoomVisibility.Public,
+            parentSpaceId,
+            roleIds: [],
+        }
+        return await this.createChannelRoom(channelInfo)
     }
 
     private async createCasablancaChannelTransaction(
@@ -840,8 +882,8 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
             if (updateChannelInfo.updatedChannelName && updateChannelInfo.updatedRoleIds) {
                 transaction = await this.spaceDapp.updateChannel(
                     {
-                        spaceNetworkId: updateChannelInfo.parentSpaceId.networkId,
-                        channelNetworkId: updateChannelInfo.channelId.networkId,
+                        spaceId: updateChannelInfo.parentSpaceId.networkId,
+                        channelId: updateChannelInfo.channelId.networkId,
                         channelName: updateChannelInfo.updatedChannelName,
                         roleIds: updateChannelInfo.updatedRoleIds,
                     },

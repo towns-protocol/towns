@@ -186,5 +186,5 @@ describe('unreadMessageCount', () => {
         await waitFor(() => expect(countFor(spaceId)).toBe(0))
         await waitFor(() => expect(countFor(channel_1)).toBe(0))
         await waitFor(() => expect(countFor(channel_2)).toBe(0))
-    }) // end test
+    }, 120000) // slow test that takes more than 60 seconds occasionally
 }) // end describe

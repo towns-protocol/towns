@@ -1,5 +1,6 @@
 import { BigNumber } from 'ethers'
 import * as zionClient from 'use-zion-client'
+import { Permission } from 'use-zion-client'
 import { EVERYONE_ADDRESS } from 'utils'
 import { MOCK_CONTRACT_METADATA_ADDRESSES } from '../../mocks/token-collections'
 import { getWalletAddress } from './testUtils'
@@ -48,7 +49,7 @@ export const roleDataWithBothRolesAssignedToChannel = [
     {
         id: 7,
         name: 'Everyone',
-        permissions: [],
+        permissions: [Permission.Read],
         tokens: [],
         users: [EVERYONE_ADDRESS],
         channels: [channelDataForRole],

@@ -32,7 +32,6 @@ export async function syncMatrixSpace(
 
     try {
         while (roomHierarchy.canLoadMore || roomHierarchy.loading) {
-            console.log('syncing space', networkId)
             await roomHierarchy.load()
         }
     } catch (reason) {
@@ -73,19 +72,18 @@ async function getEntitledChannels(
         await Promise.all(
             children.map(async (c) => {
                 if (!root || !address) {
-                    return
+                    return undefined
                 }
 
                 try {
-                    if (
-                        !(await spaceDapp.isEntitledToChannel(
-                            root.room_id,
-                            c.room_id,
-                            address,
-                            Permission.Read,
-                        ))
-                    ) {
-                        return
+                    const isEntitled = await spaceDapp.isEntitledToChannel(
+                        root.room_id,
+                        c.room_id,
+                        address,
+                        Permission.Read,
+                    )
+                    if (isEntitled) {
+                        return c
                     }
                 } catch (e) {
                     console.error(
@@ -94,10 +92,8 @@ async function getEntitledChannels(
                         c.room_id,
                         JSON.stringify(e),
                     )
-                    return
                 }
-
-                return c
+                return undefined
             }),
         )
     ).filter((c): c is IHierarchyRoom => !!c)

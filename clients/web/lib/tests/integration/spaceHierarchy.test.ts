@@ -39,7 +39,7 @@ describe('spaceHierarchy', () => {
         })) as RoomIdentifier
 
         const bob_spaceInfo = await bob.syncSpace(spaceId, bob.provider.wallet.address)
-        expect(bob_spaceInfo?.children.length).toEqual(1)
+        expect(bob_spaceInfo?.children.length).toEqual(2)
 
         // alice peeks the space // todo https://github.com/HereNotThere/harmony/issues/188
         // await alice.client.peekInRoom(spaceId.networkId);
@@ -50,7 +50,7 @@ describe('spaceHierarchy', () => {
 
         // alice syncs the space
         const alice_spaceInfo = await alice.syncSpace(spaceId, alice.provider.wallet.address)
-        expect(alice_spaceInfo?.children.length).toEqual(1)
+        expect(alice_spaceInfo?.children.length).toEqual(2)
 
         // can she join it?
         const alice_roomInfo = await alice.joinRoom(roomId)
@@ -83,7 +83,7 @@ describe('spaceHierarchy', () => {
         })) as RoomIdentifier
 
         const bob_spaceInfo = await bob.syncSpace(spaceId, bob.provider.wallet.address)
-        expect(bob_spaceInfo?.children.length).toEqual(1)
+        expect(bob_spaceInfo?.children.length).toEqual(2)
 
         // alice syncs the space before getting an invite...
         const alice_spaceInfo_pre_join = await alice.syncSpace(
@@ -100,7 +100,7 @@ describe('spaceHierarchy', () => {
 
         // alice syncs the space
         const alice_spaceInfo = await alice.syncSpace(spaceId, alice.provider.wallet.address)
-        expect(alice_spaceInfo?.children.length).toEqual(1)
+        expect(alice_spaceInfo?.children.length).toEqual(2)
 
         // can she join it?
         const alice_roomInfo = await alice.joinRoom(roomId)

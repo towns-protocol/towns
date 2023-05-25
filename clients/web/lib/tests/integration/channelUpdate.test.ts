@@ -68,8 +68,8 @@ describe('channel update', () => {
         try {
             const transaction = await alice.spaceDapp.updateChannel(
                 {
-                    spaceNetworkId: spaceId.networkId,
-                    channelNetworkId: channelId.networkId,
+                    spaceId: spaceId.networkId,
+                    channelId: channelId.networkId,
                     channelName,
                     roleIds: [newRoleId.roleId],
                 },

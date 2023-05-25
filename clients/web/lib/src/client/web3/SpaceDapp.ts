@@ -8,7 +8,13 @@ import {
     RoleDetails,
     RoleEntitlements,
 } from './ContractTypes'
-import { EventsContractInfo, ISpaceDapp, UpdateChannelParams, UpdateRoleParams } from './ISpaceDapp'
+import {
+    CreateSpaceParams,
+    EventsContractInfo,
+    ISpaceDapp,
+    UpdateChannelParams,
+    UpdateRoleParams,
+} from './ISpaceDapp'
 import { IStaticContractsInfo, getContractsInfo } from './IStaticContractsInfo'
 import { SpaceDataTypes, SpaceShim } from './shims/SpaceShim'
 import { SpaceFactoryDataTypes, SpaceFactoryShim } from './shims/SpaceFactoryShim'
@@ -58,26 +64,23 @@ export class SpaceDapp implements ISpaceDapp {
         )
     }
 
-    public async createSpace(
-        spaceName: string,
-        spaceNetworkId: string,
-        spaceMetadata: string,
-        memberEntitlements: SpaceFactoryDataTypes.CreateSpaceExtraEntitlementsStruct,
-        everyonePermissions: Permission[],
+    public createSpace(
+        params: CreateSpaceParams,
         signer: ethers.Signer,
     ): Promise<ContractTransaction> {
         if (!this.spaceFactory.write) {
             throw new Error('SpaceFactory write contract is not deployed properly.')
         }
+        const createSpaceData = {
+            spaceId: params.spaceId,
+            spaceName: params.spaceName,
+            spaceMetadata: params.spaceMetadata,
+            channelId: params.channelId,
+            channelName: params.channelName,
+        }
         return this.spaceFactory
             .write(signer)
-            .createSpace(
-                spaceName,
-                spaceNetworkId,
-                spaceMetadata,
-                everyonePermissions,
-                memberEntitlements,
-            )
+            .createSpace(createSpaceData, params.everyonePermissions, params.memberEntitlements)
     }
 
     public async createChannel(
@@ -447,28 +450,23 @@ export class SpaceDapp implements ISpaceDapp {
         params: UpdateChannelParams,
         signer: ethers.Signer,
     ): Promise<ContractTransaction> {
-        const space = await this.getSpace(params.spaceNetworkId)
+        const space = await this.getSpace(params.spaceId)
         if (!space?.write) {
-            throw new Error(
-                `Space with networkId "${params.spaceNetworkId}" is not deployed properly.`,
-            )
+            throw new Error(`Space with networkId "${params.spaceId}" is not deployed properly.`)
         }
         const encodedCallData: BytesLike[] = []
         // update any channel name changes
-        const channelDetails = await this.getChannelDetails(
-            params.spaceNetworkId,
-            params.channelNetworkId,
-        )
+        const channelDetails = await this.getChannelDetails(params.spaceId, params.channelId)
         if (!channelDetails) {
             // cannot find this channel
             throw new Error(
-                `Channel with spaceNetworkId "${params.spaceNetworkId}", channelId: "${params.channelNetworkId}" is not found.`,
+                `Channel with spaceNetworkId "${params.spaceId}", channelId: "${params.channelId}" is not found.`,
             )
         }
         if (channelDetails.name !== params.channelName) {
             encodedCallData.push(
                 space.interface.encodeFunctionData('updateChannel', [
-                    params.channelNetworkId,
+                    params.channelId,
                     params.channelName,
                 ]),
             )
@@ -476,8 +474,8 @@ export class SpaceDapp implements ISpaceDapp {
         // update any channel role changes
         const encodedUpdateChannelRoles = await this.encodeUpdateChannelRoles(
             space,
-            params.spaceNetworkId,
-            params.channelNetworkId,
+            params.spaceId,
+            params.channelId,
             params.roleIds,
         )
         for (const callData of encodedUpdateChannelRoles) {

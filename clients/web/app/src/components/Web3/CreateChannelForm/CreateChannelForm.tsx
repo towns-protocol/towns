@@ -55,16 +55,17 @@ export const CreateChannelForm = (props: Props) => {
         props.spaceId.networkId,
         roledIds,
     )
-    const rolesWithDetails = useMemo(
-        () =>
-            _rolesDetails?.map((role) => {
+    const rolesWithDetails = useMemo(() => {
+        const r = _rolesDetails
+            ?.filter((role) => role.permissions.includes(Permission.Read))
+            .map((role) => {
                 return {
                     ...role,
                     tokenAddresses: role.tokens.map((token) => token.contractAddress as string),
                 }
-            }),
-        [_rolesDetails],
-    )
+            })
+        return r
+    }, [_rolesDetails])
 
     const {
         createChannelTransaction,

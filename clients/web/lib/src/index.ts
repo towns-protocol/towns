@@ -47,6 +47,7 @@ export { useSpaceNotificationCounts } from './hooks/use-space-notification-count
 export { useSpaceTimeline } from './hooks/use-space-timeline'
 export { useSpaceThreadRoots, useSpaceThreadRootsUnreadCount } from './hooks/use-space-thread-roots'
 export { useSpacesFromContract, useSpaceFromContract } from './hooks/use-spaces-from-contract'
+export { useSyncSpace } from './hooks/use-sync-space'
 export { useTimelineReactions } from './hooks/use-timeline-reactions'
 export { useTimelineThread } from './hooks/use-timeline-thread'
 export { useTimelineThreadStats } from './hooks/use-timeline-thread-stats'

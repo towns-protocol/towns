@@ -128,11 +128,11 @@ describe('<AutojoinChannels />', () => {
         // wait for registration
         await waitFor(() => expect(loginStatus).toHaveTextContent(LoginStatus.LoggedIn))
 
-        // expect the initial space child count to be 1
-        await waitFor(() => expect(spaceChildCount).toHaveTextContent('1'))
+        // expect the initial space child count to include the channel alice created and the default channel
+        await waitFor(() => expect(spaceChildCount).toHaveTextContent('2'))
 
         // bob should auto joined the previously created channel when he loads the app
-        await waitFor(() => expect(screen.getAllByTestId('bob-joined')).toHaveLength(1))
+        await waitFor(() => expect(screen.getAllByTestId('bob-joined')).toHaveLength(2))
 
         // have alice create another channel
         await createTestChannelWithSpaceRoles(alice, {
@@ -143,15 +143,15 @@ describe('<AutojoinChannels />', () => {
         })
 
         // wait for the space child count to change
-        await waitFor(() => expect(spaceChildCount).toHaveTextContent('2'))
+        await waitFor(() => expect(spaceChildCount).toHaveTextContent('3'))
 
         // bob should auto join this channel too
-        await waitFor(() => expect(screen.getAllByTestId('bob-joined')).toHaveLength(2))
+        await waitFor(() => expect(screen.getAllByTestId('bob-joined')).toHaveLength(3))
 
         fireEvent.click(leaveChannelButton)
 
         // bob should no longer be in the first channel
-        await waitFor(() => expect(screen.getAllByTestId('bob-joined')).toHaveLength(1))
+        await waitFor(() => expect(screen.getAllByTestId('bob-joined')).toHaveLength(2))
 
         // have alice create a 3rd channel
         await createTestChannelWithSpaceRoles(alice, {
@@ -161,9 +161,9 @@ describe('<AutojoinChannels />', () => {
             roleIds: [],
         })
 
-        // out of 3 channels, bob should only be in 2
-        await waitFor(() => expect(spaceChildCount).toHaveTextContent('3'))
-        await waitFor(() => expect(screen.getAllByTestId('bob-joined')).toHaveLength(2))
+        // out of 4 channels, bob should only be in 3
+        await waitFor(() => expect(spaceChildCount).toHaveTextContent('4'))
+        await waitFor(() => expect(screen.getAllByTestId('bob-joined')).toHaveLength(3))
 
         // TODO: test banning when implemented
         // await alice.banUser(channelId, bob.matrixUserId)

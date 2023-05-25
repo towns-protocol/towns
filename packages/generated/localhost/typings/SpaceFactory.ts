@@ -29,6 +29,28 @@ import type {
 } from "./common";
 
 export declare namespace DataTypes {
+  export type CreateSpaceDataStruct = {
+    spaceName: PromiseOrValue<string>;
+    spaceId: PromiseOrValue<string>;
+    spaceMetadata: PromiseOrValue<string>;
+    channelName: PromiseOrValue<string>;
+    channelId: PromiseOrValue<string>;
+  };
+
+  export type CreateSpaceDataStructOutput = [
+    string,
+    string,
+    string,
+    string,
+    string
+  ] & {
+    spaceName: string;
+    spaceId: string;
+    spaceMetadata: string;
+    channelName: string;
+    channelId: string;
+  };
+
   export type ExternalTokenStruct = {
     contractAddress: PromiseOrValue<string>;
     quantity: PromiseOrValue<BigNumberish>;
@@ -76,7 +98,7 @@ export interface SpaceFactoryInterface extends utils.Interface {
     "TOKEN_IMPLEMENTATION_ADDRESS()": FunctionFragment;
     "USER_IMPLEMENTATION_ADDRESS()": FunctionFragment;
     "addOwnerPermissions(string[])": FunctionFragment;
-    "createSpace(string,string,string,string[],(string,string[],(address,uint256,bool,uint256[])[],address[]))": FunctionFragment;
+    "createSpace((string,string,string,string,string),string[],(string,string[],(address,uint256,bool,uint256[])[],address[]))": FunctionFragment;
     "gatingEnabled()": FunctionFragment;
     "getOwnerPermissions()": FunctionFragment;
     "getSpaceAddressByNetworkId(string)": FunctionFragment;
@@ -157,9 +179,7 @@ export interface SpaceFactoryInterface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "createSpace",
     values: [
-      PromiseOrValue<string>,
-      PromiseOrValue<string>,
-      PromiseOrValue<string>,
+      DataTypes.CreateSpaceDataStruct,
       PromiseOrValue<string>[],
       DataTypes.CreateSpaceExtraEntitlementsStruct
     ]
@@ -473,9 +493,7 @@ export interface SpaceFactory extends BaseContract {
     ): Promise<ContractTransaction>;
 
     createSpace(
-      spaceName: PromiseOrValue<string>,
-      spaceId: PromiseOrValue<string>,
-      spaceMetadata: PromiseOrValue<string>,
+      _spaceData: DataTypes.CreateSpaceDataStruct,
       _everyonePermissions: PromiseOrValue<string>[],
       _extraEntitlements: DataTypes.CreateSpaceExtraEntitlementsStruct,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -594,9 +612,7 @@ export interface SpaceFactory extends BaseContract {
   ): Promise<ContractTransaction>;
 
   createSpace(
-    spaceName: PromiseOrValue<string>,
-    spaceId: PromiseOrValue<string>,
-    spaceMetadata: PromiseOrValue<string>,
+    _spaceData: DataTypes.CreateSpaceDataStruct,
     _everyonePermissions: PromiseOrValue<string>[],
     _extraEntitlements: DataTypes.CreateSpaceExtraEntitlementsStruct,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -715,9 +731,7 @@ export interface SpaceFactory extends BaseContract {
     ): Promise<void>;
 
     createSpace(
-      spaceName: PromiseOrValue<string>,
-      spaceId: PromiseOrValue<string>,
-      spaceMetadata: PromiseOrValue<string>,
+      _spaceData: DataTypes.CreateSpaceDataStruct,
       _everyonePermissions: PromiseOrValue<string>[],
       _extraEntitlements: DataTypes.CreateSpaceExtraEntitlementsStruct,
       overrides?: CallOverrides
@@ -878,9 +892,7 @@ export interface SpaceFactory extends BaseContract {
     ): Promise<BigNumber>;
 
     createSpace(
-      spaceName: PromiseOrValue<string>,
-      spaceId: PromiseOrValue<string>,
-      spaceMetadata: PromiseOrValue<string>,
+      _spaceData: DataTypes.CreateSpaceDataStruct,
       _everyonePermissions: PromiseOrValue<string>[],
       _extraEntitlements: DataTypes.CreateSpaceExtraEntitlementsStruct,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -1010,9 +1022,7 @@ export interface SpaceFactory extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     createSpace(
-      spaceName: PromiseOrValue<string>,
-      spaceId: PromiseOrValue<string>,
-      spaceMetadata: PromiseOrValue<string>,
+      _spaceData: DataTypes.CreateSpaceDataStruct,
       _everyonePermissions: PromiseOrValue<string>[],
       _extraEntitlements: DataTypes.CreateSpaceExtraEntitlementsStruct,
       overrides?: Overrides & { from?: PromiseOrValue<string> }

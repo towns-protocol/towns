@@ -213,19 +213,36 @@ export default [
   {
     "inputs": [
       {
-        "internalType": "string",
-        "name": "spaceName",
-        "type": "string"
-      },
-      {
-        "internalType": "string",
-        "name": "spaceId",
-        "type": "string"
-      },
-      {
-        "internalType": "string",
-        "name": "spaceMetadata",
-        "type": "string"
+        "components": [
+          {
+            "internalType": "string",
+            "name": "spaceName",
+            "type": "string"
+          },
+          {
+            "internalType": "string",
+            "name": "spaceId",
+            "type": "string"
+          },
+          {
+            "internalType": "string",
+            "name": "spaceMetadata",
+            "type": "string"
+          },
+          {
+            "internalType": "string",
+            "name": "channelName",
+            "type": "string"
+          },
+          {
+            "internalType": "string",
+            "name": "channelId",
+            "type": "string"
+          }
+        ],
+        "internalType": "struct DataTypes.CreateSpaceData",
+        "name": "_spaceData",
+        "type": "tuple"
       },
       {
         "internalType": "string[]",

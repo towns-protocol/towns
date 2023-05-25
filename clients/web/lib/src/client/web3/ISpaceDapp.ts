@@ -11,9 +11,19 @@ export interface EventsContractInfo {
     address: string
 }
 
+export interface CreateSpaceParams {
+    spaceId: string
+    spaceName: string
+    spaceMetadata: string
+    channelId: string
+    channelName: string
+    memberEntitlements: SpaceFactoryDataTypes.CreateSpaceExtraEntitlementsStruct
+    everyonePermissions: string[]
+}
+
 export interface UpdateChannelParams {
-    spaceNetworkId: string
-    channelNetworkId: string
+    spaceId: string
+    channelId: string
     channelName: string
     roleIds: number[]
 }
@@ -34,14 +44,7 @@ export interface ISpaceDapp {
         roleId: number,
         signer: ethers.Signer,
     ) => Promise<ContractTransaction>
-    createSpace: (
-        spaceName: string,
-        spaceNetworkId: string,
-        spaceMetadata: string,
-        memberEntitlements: SpaceFactoryDataTypes.CreateSpaceExtraEntitlementsStruct,
-        everyonePermissions: Permission[],
-        signer: ethers.Signer,
-    ) => Promise<ContractTransaction>
+    createSpace: (params: CreateSpaceParams, signer: ethers.Signer) => Promise<ContractTransaction>
     createChannel: (
         spaceId: string,
         channelName: string,

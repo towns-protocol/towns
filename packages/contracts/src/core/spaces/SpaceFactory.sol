@@ -98,24 +98,22 @@ contract SpaceFactory is
 
   /// @inheritdoc ISpaceFactory
   function createSpace(
-    string calldata spaceName,
-    string calldata spaceId,
-    string calldata spaceMetadata,
+    DataTypes.CreateSpaceData calldata _spaceData,
     string[] calldata _everyonePermissions,
     DataTypes.CreateSpaceExtraEntitlements calldata _extraEntitlements
   ) external nonReentrant whenNotPaused returns (address _spaceAddress) {
     _validateGatingEnabled();
 
     // validate space name
-    Utils.validateLength(spaceName);
+    Utils.validateLength(_spaceData.spaceName);
 
     // validate space network id
-    if (bytes(spaceId).length == 0) {
+    if (bytes(_spaceData.spaceId).length == 0) {
       revert Errors.InvalidParameters();
     }
 
     // hash the network id
-    bytes32 _networkHash = keccak256(bytes(spaceId));
+    bytes32 _networkHash = keccak256(bytes(_spaceData.spaceId));
 
     // validate that the network id hasn't been used before
     if (spaceByHash[_networkHash] != address(0)) {
@@ -124,7 +122,10 @@ contract SpaceFactory is
 
     // mint space nft to owner
     uint256 _tokenId = TownOwner(SPACE_TOKEN_ADDRESS).nextTokenId();
-    TownOwner(SPACE_TOKEN_ADDRESS).mintTo(address(this), spaceMetadata);
+    TownOwner(SPACE_TOKEN_ADDRESS).mintTo(
+      address(this),
+      _spaceData.spaceMetadata
+    );
 
     // save token id to mapping
     tokenByHash[_networkHash] = _tokenId;
@@ -161,7 +162,13 @@ contract SpaceFactory is
         SPACE_IMPLEMENTATION_ADDRESS,
         abi.encodeCall(
           Space.initialize,
-          (spaceName, spaceId, _entitlements, SPACE_TOKEN_ADDRESS, _tokenId)
+          (
+            _spaceData.spaceName,
+            _spaceData.spaceId,
+            SPACE_TOKEN_ADDRESS,
+            _tokenId,
+            _entitlements
+          )
         )
       )
     );
@@ -174,17 +181,22 @@ contract SpaceFactory is
       IEntitlement(_entitlements[i]).setSpace(_spaceAddress);
     }
 
-    _createOwnerEntitlement(_spaceAddress, _tokenEntitlement, _tokenId);
-    _createEveryoneEntitlement(
+    _createChannel(
       _spaceAddress,
-      _userEntitlement,
-      _everyonePermissions
-    );
-    _createExtraEntitlements(
-      _spaceAddress,
-      _tokenEntitlement,
-      _userEntitlement,
-      _extraEntitlements
+      _createOwnerEntitlement(_spaceAddress, _tokenEntitlement, _tokenId),
+      _createEveryoneEntitlement(
+        _spaceAddress,
+        _userEntitlement,
+        _everyonePermissions
+      ),
+      _createExtraEntitlements(
+        _spaceAddress,
+        _tokenEntitlement,
+        _userEntitlement,
+        _extraEntitlements
+      ),
+      _spaceData.channelName,
+      _spaceData.channelId
     );
 
     TownOwner(SPACE_TOKEN_ADDRESS).safeTransferFrom(
@@ -193,7 +205,29 @@ contract SpaceFactory is
       _tokenId
     );
 
-    emit Events.SpaceCreated(_spaceAddress, _msgSender(), spaceId);
+    emit Events.SpaceCreated(_spaceAddress, _msgSender(), _spaceData.spaceId);
+  }
+
+  function _createChannel(
+    address _spaceAddress,
+    uint256 _ownerRoleId,
+    uint256 _everyoneRoleId,
+    uint256 _additionalRoleId,
+    string memory _channelName,
+    string memory _channelId
+  ) internal {
+    uint256[] memory _roleIds = new uint256[](2);
+
+    _roleIds[0] = _ownerRoleId;
+
+    if (_additionalRoleId != 0) {
+      _roleIds[1] = _additionalRoleId;
+    } else {
+      _roleIds[1] = _everyoneRoleId;
+    }
+
+    // // create channel on space
+    Space(_spaceAddress).createChannel(_channelName, _channelId, _roleIds);
   }
 
   function setGatingEnabled(bool _gatingEnabled) external onlyOwner whenPaused {
@@ -258,15 +292,15 @@ contract SpaceFactory is
     address tokenAddress,
     address userAddress,
     DataTypes.CreateSpaceExtraEntitlements memory _extraEntitlements
-  ) internal {
-    if (_extraEntitlements.permissions.length == 0) return;
+  ) internal returns (uint256 additionalRoleId) {
+    if (_extraEntitlements.permissions.length == 0) return 0;
 
     DataTypes.Entitlement[] memory _entitlements = new DataTypes.Entitlement[](
       1
     );
     _entitlements[0] = DataTypes.Entitlement(address(0), "");
 
-    uint256 additionalRoleId = Space(spaceAddress).createRole(
+    additionalRoleId = Space(spaceAddress).createRole(
       _extraEntitlements.roleName,
       _extraEntitlements.permissions,
       _entitlements
@@ -281,7 +315,7 @@ contract SpaceFactory is
     }
 
     // check entitlementdata has tokens
-    if (_extraEntitlements.tokens.length == 0) return;
+    if (_extraEntitlements.tokens.length == 0) return additionalRoleId;
 
     Space(spaceAddress).addRoleToEntitlement(
       additionalRoleId,
@@ -293,7 +327,7 @@ contract SpaceFactory is
     address spaceAddress,
     address tokenAddress,
     uint256 tokenId
-  ) internal {
+  ) internal returns (uint256 ownerRoleId) {
     // create external token struct
     DataTypes.ExternalToken[] memory tokens = new DataTypes.ExternalToken[](1);
 
@@ -317,7 +351,7 @@ contract SpaceFactory is
     });
 
     // create owner role with all permissions
-    uint256 ownerRoleId = Space(spaceAddress).createRole(
+    ownerRoleId = Space(spaceAddress).createRole(
       ownerRoleName,
       ownerPermissions,
       _entitlements
@@ -330,7 +364,7 @@ contract SpaceFactory is
     address spaceAddress,
     address userAddress,
     string[] memory _permissions
-  ) internal {
+  ) internal returns (uint256 everyoneRoleId) {
     DataTypes.Entitlement[] memory _entitlements = new DataTypes.Entitlement[](
       1
     );
@@ -343,7 +377,7 @@ contract SpaceFactory is
       data: abi.encode(users)
     });
 
-    Space(spaceAddress).createRole(
+    everyoneRoleId = Space(spaceAddress).createRole(
       everyoneRoleName,
       _permissions,
       _entitlements

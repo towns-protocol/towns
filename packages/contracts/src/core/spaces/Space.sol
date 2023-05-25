@@ -74,9 +74,9 @@ contract Space is
   function initialize(
     string memory _name,
     string memory _networkId,
-    address[] memory _entitlements,
     address _token,
-    uint256 _tokenId
+    uint256 _tokenId,
+    address[] memory _entitlements
   ) external initializer {
     __UUPSUpgradeable_init();
     __Context_init();

@@ -219,19 +219,36 @@
       {
         "inputs": [
           {
-            "internalType": "string",
-            "name": "spaceName",
-            "type": "string"
-          },
-          {
-            "internalType": "string",
-            "name": "spaceId",
-            "type": "string"
-          },
-          {
-            "internalType": "string",
-            "name": "spaceMetadata",
-            "type": "string"
+            "components": [
+              {
+                "internalType": "string",
+                "name": "spaceName",
+                "type": "string"
+              },
+              {
+                "internalType": "string",
+                "name": "spaceId",
+                "type": "string"
+              },
+              {
+                "internalType": "string",
+                "name": "spaceMetadata",
+                "type": "string"
+              },
+              {
+                "internalType": "string",
+                "name": "channelName",
+                "type": "string"
+              },
+              {
+                "internalType": "string",
+                "name": "channelId",
+                "type": "string"
+              }
+            ],
+            "internalType": "struct DataTypes.CreateSpaceData",
+            "name": "_spaceData",
+            "type": "tuple"
           },
           {
             "internalType": "string[]",
@@ -681,14 +698,12 @@
         "constructor": {
           "custom:oz-upgrades-unsafe-allow": "constructor"
         },
-        "createSpace(string,string,string,string[],(string,string[],(address,uint256,bool,uint256[])[],address[]))": {
+        "createSpace((string,string,string,string,string),string[],(string,string[],(address,uint256,bool,uint256[])[],address[]))": {
           "details": "The space network id must be unique",
           "params": {
+            "_createSpaceData": "The data required to create a space",
             "_everyonePermissions": "The permissions of the everyone role",
-            "_extraEntitlements": "The extra entitlements of the space",
-            "spaceId": "The network id of the space",
-            "spaceMetadata": "The metadata of the space",
-            "spaceName": "The name of the space"
+            "_extraEntitlements": "The extra entitlements of the space"
           },
           "returns": {
             "_spaceAddress": "The address of the new space"
@@ -732,7 +747,7 @@
         "addOwnerPermissions(string[])": {
           "notice": "Adds permissions to the owner role at space creation"
         },
-        "createSpace(string,string,string,string[],(string,string[],(address,uint256,bool,uint256[])[],address[]))": {
+        "createSpace((string,string,string,string,string),string[],(string,string[],(address,uint256,bool,uint256[])[],address[]))": {
           "notice": "Creates a new space"
         },
         "getOwnerPermissions()": {
@@ -1092,19 +1107,19 @@
       ]
     },
     "packages/contracts/src/core/spaces/Space.sol": {
-      "keccak256": "0xc037c6453e8902e73be9dbda7daf30a8570f4359759e1442c31e7115ff2bc485",
+      "keccak256": "0x253d7c00ce09b40b5e321ead1e310d243afc71b88104f4f749ce040ac93a1988",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://de79707eff71e0452d2a80e90cbb916b947e5fb2f10a0ea66baf62a63eb0cd5c",
-        "dweb:/ipfs/Qmeo6kNPMVVmzkUnVSs8pKh8XoG4tXFXKvguxKKN5BjQAH"
+        "bzz-raw://96e31fba06c9fa267bdda7dca3a5e5f92b615dfe5c9f84ca0c1dfccf6706c22c",
+        "dweb:/ipfs/Qmb4bXqCTq1hv2sGXVt5eYEjjVzwaq8ytpLVpsFAtdD1BQ"
       ]
     },
     "packages/contracts/src/core/spaces/SpaceFactory.sol": {
-      "keccak256": "0x61078b46bc9de1383e298e35df1b753a71b4d8e58c49657fb2a46c98c0ecf4b0",
+      "keccak256": "0x6f303126734c1132f10e33171e9f85697e1ed132406589b64bcfe4da1d00c314",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://683741f7aadf61d26f3176ba617c20c30df8eaf6fd5b32924a4540333e36929a",
-        "dweb:/ipfs/QmYm7K8Ss7ET25zPPPzfn5GjThZLJBimA37NyvuCwLNJaL"
+        "bzz-raw://72b2684d3a30bdab9637ae09f3b3aa3cfd2087fb0b17a7184a6d10d5c806c67d",
+        "dweb:/ipfs/QmVQiYF8cVNgvEV3qASt1qUg6EHEUEnCr32n5CckUUBZHo"
       ]
     },
     "packages/contracts/src/core/spaces/entitlements/TokenEntitlement.sol": {
@@ -1140,27 +1155,27 @@
       ]
     },
     "packages/contracts/src/interfaces/ISpace.sol": {
-      "keccak256": "0xe6e7890861fd1770612b7bdfa70c629a85803da8c35a423c7e8aef03b5b9a13d",
+      "keccak256": "0x4db577f41605312e618a4c70d71a071623982739236bf6fd3dccb84dfbe75935",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://f6db99ae6f37e1cbb46fd079d175b28b9d89c928ea43d049c900d9433052c312",
-        "dweb:/ipfs/QmU97CnJCFSBLJi2mysV6TQjBRb8og66kdZncSH3tqpagM"
+        "bzz-raw://035e378a17c4d6fa2b2e7ed3aa5afe7e726cbf2c787b34370aa3bef65bc0f02c",
+        "dweb:/ipfs/QmNwmqeWkpXkYVPKcpo2CSdTcWLThcnrNHRYoNHnaGY9Uc"
       ]
     },
     "packages/contracts/src/interfaces/ISpaceFactory.sol": {
-      "keccak256": "0x7ba2b2140d0c8a430ae24ff2c160b2a20a19de6188f1c3d8c0546cb424fcfd47",
+      "keccak256": "0xfb815354bd0ea4aacd98f0875c7ccfc86403a2a699b62ca579c7cd690f71dfe3",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://82d2ba7411ed8ad7e57ea3b2dd31c8b2019223d0a1b2647203c8aff776c0e05f",
-        "dweb:/ipfs/QmT4NL1NmbKNzagHAc6yvccVyQs28owoA23gXzfYVxFKao"
+        "bzz-raw://ed468728eb05098515b8c81ea6977531912edc8440506db22947b02ba7a5a390",
+        "dweb:/ipfs/QmQx4W1xLJYb88CoQ3h3XaMRHW33QLELd299Fr2sfEcQFs"
       ]
     },
     "packages/contracts/src/libraries/DataTypes.sol": {
-      "keccak256": "0x79aa36153557ca842e39d4eddc8606d3999dbaf476bd6d151bcfcd292233e2fa",
+      "keccak256": "0x59127dc6905dcf95782e379c0cadabaaed7514799dc85c29b9db7d3faaa26fcc",
       "license": "Apache-20",
       "urls": [
-        "bzz-raw://3ec543dcb58eb80730069e5ae3caaccb9ae8f01d028bc62270ff9878f183b089",
-        "dweb:/ipfs/QmPLja6aZy7HMQKax9ikEaNiGW2qkbtMkVG81kmFLb9coF"
+        "bzz-raw://6d7c7aa13983d09bcec7aad416a5b1077c81765664386c519d3dad43a19cd5eb",
+        "dweb:/ipfs/Qmbu3S4RVybAQPNU5f7jhMxG1eFZhBypgbYVLpPhGDpNen"
       ]
     },
     "packages/contracts/src/libraries/Errors.sol": {

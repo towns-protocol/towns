@@ -40,6 +40,7 @@ export interface IZionContext {
     spaceMentions: Record<string, number> // spaceId -> aggregated mentionCount
     spaces: SpaceItem[]
     spaceHierarchies: SpaceHierarchies
+    syncSpaceHierarchy: (spaceId: RoomIdentifier) => void
     matrixOnboardingState: IOnboardingState
     casablancaOnboardingState: IOnboardingState
     syncError?: string
@@ -92,7 +93,11 @@ const ContextImpl = (props: Props): JSX.Element => {
     const { invitedToIds } = useSpacesIds(matrixClient, casablancaClient)
     useContentAwareTimelineDiff(matrixClient)
     const { spaces } = useSpaces(matrixClient, casablancaClient)
-    const { spaceHierarchies } = useSyncSpaceHierarchies(client, matrixClient, invitedToIds)
+    const { spaceHierarchies, syncSpaceHierarchy } = useSyncSpaceHierarchies(
+        client,
+        matrixClient,
+        invitedToIds,
+    )
     const { spaceUnreads, spaceMentions } = useSpaceUnreads(
         client,
         spaceHierarchies,
@@ -129,6 +134,7 @@ const ContextImpl = (props: Props): JSX.Element => {
                 homeServerUrl: matrixServerUrl,
                 casablancaServerUrl: casablancaServerUrl,
                 syncError,
+                syncSpaceHierarchy,
             }}
         >
             {props.children}

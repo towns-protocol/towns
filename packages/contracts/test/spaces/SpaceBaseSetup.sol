@@ -93,7 +93,9 @@ contract SpaceBaseSetup is TestUtils, ERC721Holder {
   function createFuzzySpace(
     string memory _spaceName,
     string memory _spaceNetworkId,
-    string memory _spaceMetadata
+    string memory _spaceMetadata,
+    string memory _channelName,
+    string memory _channelId
   ) internal returns (address) {
     DataTypes.CreateSpaceExtraEntitlements memory _entitlementData = DataTypes
       .CreateSpaceExtraEntitlements({
@@ -106,9 +108,13 @@ contract SpaceBaseSetup is TestUtils, ERC721Holder {
     string[] memory _permissions = new string[](0);
 
     address space = spaceFactory.createSpace(
-      _spaceName,
-      _spaceNetworkId,
-      _spaceMetadata,
+      DataTypes.CreateSpaceData(
+        _spaceName,
+        _spaceNetworkId,
+        _spaceMetadata,
+        _channelName,
+        _channelId
+      ),
       _permissions,
       _entitlementData
     );
@@ -127,9 +133,13 @@ contract SpaceBaseSetup is TestUtils, ERC721Holder {
 
     string[] memory _permissions = new string[](0);
     address space = spaceFactory.createSpace(
-      "zion",
-      "!7evmpuHDDgkady9u:goerli",
-      "ipfs://QmZion",
+      DataTypes.CreateSpaceData(
+        "zion",
+        "!7evmpuHDDgkady9u:goerli",
+        "ipfs://QmZion",
+        "general",
+        "!8evmpuHDDgkady6u:goerli"
+      ),
       _permissions,
       _entitlementData
     );
@@ -149,9 +159,13 @@ contract SpaceBaseSetup is TestUtils, ERC721Holder {
       });
 
     address space = spaceFactory.createSpace(
-      "zion",
-      "!7evmpuHDDgkady9u:goerli",
-      "ipfs://QmZion",
+      DataTypes.CreateSpaceData(
+        "zion",
+        "!7evmpuHDDgkady9u:goerli",
+        "ipfs://QmZion",
+        "general",
+        "!8evmpuHDDgkady6u:goerli"
+      ),
       _permissions,
       _entitlementData
     );
@@ -165,9 +179,13 @@ contract SpaceBaseSetup is TestUtils, ERC721Holder {
     string[] memory _permissions = new string[](0);
 
     address space = spaceFactory.createSpace(
-      "zion",
-      "!7evmpuHDDgkady9u:goerli",
-      "ipfs://QmZion",
+      DataTypes.CreateSpaceData(
+        "zion",
+        "!7evmpuHDDgkady9u:goerli",
+        "ipfs://QmZion",
+        "general",
+        "!8evmpuHDDgkady6u:goerli"
+      ),
       _permissions,
       _entitlementData
     );

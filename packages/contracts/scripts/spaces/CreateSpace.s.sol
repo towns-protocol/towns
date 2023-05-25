@@ -25,9 +25,13 @@ contract CreateSpace is Script {
 
     vm.startBroadcast();
     spaceFactory.createSpace(
-      "moonbirds",
-      "!7evmpuHDDgkady6u:goerli",
-      "ipfs://QmZion",
+      DataTypes.CreateSpaceData(
+        "moonbirds",
+        "!7evmpuHDDgkady6u:goerli",
+        "ipfs://QmZion",
+        "general",
+        "!8evmpuHDDgkady6u:goerli"
+      ),
       _permissions,
       _entitlementData
     );

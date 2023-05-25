@@ -12,17 +12,13 @@ interface ISpaceFactory {
   ) external;
 
   /// @notice Creates a new space
-  /// @param spaceName The name of the space
-  /// @param spaceId The network id of the space
-  /// @param spaceMetadata The metadata of the space
+  /// @param _createSpaceData The data required to create a space
   /// @param _everyonePermissions The permissions of the everyone role
   /// @param _extraEntitlements The extra entitlements of the space
   /// @dev The space network id must be unique
   /// @return The address of the new space
   function createSpace(
-    string calldata spaceName,
-    string calldata spaceId,
-    string calldata spaceMetadata,
+    DataTypes.CreateSpaceData calldata _createSpaceData,
     string[] calldata _everyonePermissions,
     DataTypes.CreateSpaceExtraEntitlements calldata _extraEntitlements
   ) external returns (address);

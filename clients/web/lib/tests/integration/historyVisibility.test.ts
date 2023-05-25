@@ -134,5 +134,5 @@ describe('historyVisibility', () => {
         await waitFor(() => expect(alice3.getMessages(roomId)).toContain("I'm John!"))
 
         await waitFor(() => expect(alice3.getMessages(roomId)).toContain("I'm Alice!"))
-    })
+    }, 120000) // slow test that takes more than 60 seconds occasionally
 })

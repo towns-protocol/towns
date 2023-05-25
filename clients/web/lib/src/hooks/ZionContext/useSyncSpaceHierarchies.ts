@@ -1,21 +1,22 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import {
-    MatrixEvent,
-    RoomEvent,
-    Room as MatrixRoom,
     IRoomTimelineData,
-    EventType as MatrixEventType,
-    Room,
     MatrixClient,
+    MatrixEvent,
+    EventType as MatrixEventType,
     MsgType as MatrixMsgType,
+    Room as MatrixRoom,
+    Room,
+    RoomEvent,
 } from 'matrix-js-sdk'
-import { useEffect, useRef, useState } from 'react'
-import { toZionSpaceChild } from '../../store/use-matrix-store'
-import { ZionClient } from '../../client/ZionClient'
 import { MessageType, SpaceHierarchies } from '../../types/zion-types'
-import { RoomIdentifier } from '../../types/room-identifier'
-import { useQueryClient } from '@tanstack/react-query'
+import { useCallback, useEffect, useRef, useState } from 'react'
+
 import { QueryKeyChannels } from '../query-keys'
+import { RoomIdentifier } from '../../types/room-identifier'
+import { ZionClient } from '../../client/ZionClient'
+import { toZionSpaceChild } from '../../store/use-matrix-store'
+import { useQueryClient } from '@tanstack/react-query'
 import { useSpaceIdStore } from './useSpaceIds'
 
 // the spaces are just tacked on to the matrix design system,
@@ -26,7 +27,7 @@ export function useSyncSpaceHierarchies(
     client: ZionClient | undefined,
     matrixClient: MatrixClient | undefined,
     invitedToIds: RoomIdentifier[],
-): { spaceHierarchies: SpaceHierarchies } {
+): { spaceHierarchies: SpaceHierarchies; syncSpaceHierarchy: (spaceId: RoomIdentifier) => void } {
     const { spaceIds } = useSpaceIdStore()
     const [spaceHierarchies, setSpaceHierarchies] = useState<SpaceHierarchies>({})
     const [spaceIdsQueue, setSpaceIdsQueue] = useState<string[]>(spaceIds.map((r) => r.networkId))
@@ -51,6 +52,9 @@ export function useSyncSpaceHierarchies(
             return prev.filter((id) => id !== spaceId)
         })
     }
+    const syncSpaceHierarchy = useCallback((spaceId: RoomIdentifier) => {
+        enqueueSpaceId(spaceId.networkId)
+    }, [])
     // our queue
     useEffect(() => {
         if (!client || !matrixClient) {
@@ -192,7 +196,7 @@ export function useSyncSpaceHierarchies(
         }
     }, [matrixClient, queryClient, spaceIds])
 
-    return { spaceHierarchies }
+    return { spaceHierarchies, syncSpaceHierarchy }
 }
 
 function getParentSpaceId(room: MatrixRoom, spaceIds: RoomIdentifier[]) {

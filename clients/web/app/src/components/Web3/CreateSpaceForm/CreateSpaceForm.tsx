@@ -11,6 +11,7 @@ import {
     useCreateSpaceTransaction,
     useCurrentWalletEqualsSignedInAccount,
     useOnTransactionEmitted,
+    useSyncSpace,
     useZionClient,
 } from 'use-zion-client'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
@@ -249,6 +250,13 @@ export const CreateSpaceForm = () => {
         roomId && useCreateSpaceFormStore.getState().setCreatedSpaceId(roomId.networkId)
     }, [roomId])
 
+    const { syncSpace } = useSyncSpace()
+    const onTransactionSuccessful = useCallback(async () => {
+        if (roomId) {
+            await syncSpace(roomId) // re-sync the space hierarchy once the transaction is completed
+        }
+    }, [roomId, syncSpace])
+
     const { createdSpaceId, setMintedTokenAddress } = useCreateSpaceFormStore(
         (state) => ({
             createdSpaceId: state.createdSpaceId,
@@ -306,6 +314,7 @@ export const CreateSpaceForm = () => {
         transactionHash,
         transactionStatus,
         onCreate: onTransactionCreated,
+        onSuccess: onTransactionSuccessful,
     })
 
     // listen for when transaction is emitted from store

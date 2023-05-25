@@ -83,8 +83,8 @@ describe('spaceHierarchyHooks', () => {
         const spaceChildCount = screen.getByTestId('spaceChildCount')
         // wait for registration
         await waitFor(() => expect(loginStatus).toHaveTextContent(LoginStatus.LoggedIn))
-        // expect the initial space child count to be 1
-        await waitFor(() => expect(spaceChildCount).toHaveTextContent('1'))
+        // expect the initial space child count to include the channel bob created and the default channel
+        await waitFor(() => expect(spaceChildCount).toHaveTextContent('2'))
         // have alice create a channel
         await createTestChannelWithSpaceRoles(alice, {
             name: 'alices channel',
@@ -93,7 +93,7 @@ describe('spaceHierarchyHooks', () => {
             roleIds: [],
         })
         // wait for the space child count to change
-        await waitFor(() => expect(spaceChildCount).toHaveTextContent('2'), {
+        await waitFor(() => expect(spaceChildCount).toHaveTextContent('3'), {
             timeout: 3000,
         })
     })

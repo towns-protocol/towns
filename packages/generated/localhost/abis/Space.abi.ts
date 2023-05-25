@@ -679,11 +679,6 @@ export default [
         "type": "string"
       },
       {
-        "internalType": "address[]",
-        "name": "_entitlements",
-        "type": "address[]"
-      },
-      {
         "internalType": "address",
         "name": "_token",
         "type": "address"
@@ -692,6 +687,11 @@ export default [
         "internalType": "uint256",
         "name": "_tokenId",
         "type": "uint256"
+      },
+      {
+        "internalType": "address[]",
+        "name": "_entitlements",
+        "type": "address[]"
       }
     ],
     "name": "initialize",

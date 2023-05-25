@@ -12,9 +12,9 @@ interface ISpace {
   function initialize(
     string memory name,
     string memory networkId,
-    address[] memory modules,
     address token,
-    uint256 tokenId
+    uint256 tokenId,
+    address[] memory modules
   ) external;
 
   /// @notice fetches the Space owner

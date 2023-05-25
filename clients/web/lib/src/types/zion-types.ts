@@ -120,6 +120,7 @@ export interface CreateSpaceInfo {
     spaceMetadata?: string
     spaceProtocol?: SpaceProtocol
     disableEncryption?: boolean
+    defaultChannelName?: string
 }
 
 export interface CreateChannelInfo {

@@ -115,7 +115,7 @@ export interface SpaceInterface extends utils.Interface {
     "getRoleById(uint256)": FunctionFragment;
     "getRoles()": FunctionFragment;
     "hasEntitlement(address)": FunctionFragment;
-    "initialize(string,string,address[],address,uint256)": FunctionFragment;
+    "initialize(string,string,address,uint256,address[])": FunctionFragment;
     "isEntitledToChannel(string,address,string)": FunctionFragment;
     "isEntitledToSpace(address,string)": FunctionFragment;
     "multicall(bytes[])": FunctionFragment;
@@ -296,9 +296,9 @@ export interface SpaceInterface extends utils.Interface {
     values: [
       PromiseOrValue<string>,
       PromiseOrValue<string>,
-      PromiseOrValue<string>[],
       PromiseOrValue<string>,
-      PromiseOrValue<BigNumberish>
+      PromiseOrValue<BigNumberish>,
+      PromiseOrValue<string>[]
     ]
   ): string;
   encodeFunctionData(
@@ -750,9 +750,9 @@ export interface Space extends BaseContract {
     initialize(
       _name: PromiseOrValue<string>,
       _networkId: PromiseOrValue<string>,
-      _entitlements: PromiseOrValue<string>[],
       _token: PromiseOrValue<string>,
       _tokenId: PromiseOrValue<BigNumberish>,
+      _entitlements: PromiseOrValue<string>[],
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
@@ -986,9 +986,9 @@ export interface Space extends BaseContract {
   initialize(
     _name: PromiseOrValue<string>,
     _networkId: PromiseOrValue<string>,
-    _entitlements: PromiseOrValue<string>[],
     _token: PromiseOrValue<string>,
     _tokenId: PromiseOrValue<BigNumberish>,
+    _entitlements: PromiseOrValue<string>[],
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
@@ -1222,9 +1222,9 @@ export interface Space extends BaseContract {
     initialize(
       _name: PromiseOrValue<string>,
       _networkId: PromiseOrValue<string>,
-      _entitlements: PromiseOrValue<string>[],
       _token: PromiseOrValue<string>,
       _tokenId: PromiseOrValue<BigNumberish>,
+      _entitlements: PromiseOrValue<string>[],
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -1486,9 +1486,9 @@ export interface Space extends BaseContract {
     initialize(
       _name: PromiseOrValue<string>,
       _networkId: PromiseOrValue<string>,
-      _entitlements: PromiseOrValue<string>[],
       _token: PromiseOrValue<string>,
       _tokenId: PromiseOrValue<BigNumberish>,
+      _entitlements: PromiseOrValue<string>[],
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
@@ -1715,9 +1715,9 @@ export interface Space extends BaseContract {
     initialize(
       _name: PromiseOrValue<string>,
       _networkId: PromiseOrValue<string>,
-      _entitlements: PromiseOrValue<string>[],
       _token: PromiseOrValue<string>,
       _tokenId: PromiseOrValue<BigNumberish>,
+      _entitlements: PromiseOrValue<string>[],
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
