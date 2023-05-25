@@ -26,17 +26,17 @@ anvil :; anvil -m 'test test test test test test test test test test test junk'
 # Seperate build from script to avoid race inside forge where the linker wasn't fnisihing before the script started running
 deploy-anvil :;
 	@forge build
-	@forge script scripts/${contract}.s.sol:${contract} --rpc-url http://localhost:8545 --private-key ${LOCAL_PRIVATE_KEY} --broadcast
+	@SAVE_DEPLOYMENTS=1 forge script scripts/${contract}.s.sol:${contract} --ffi --rpc-url anvil --private-key ${LOCAL_PRIVATE_KEY} --broadcast --watch
 
 # Seperate build from script to avoid race inside forge where the linker wasn't fnisihing before the script started running
 deploy-goerli :;
 	@forge build
-	@forge script scripts/${contract}.s.sol:${contract} --rpc-url ${GOERLI_RPC_URL} --private-key ${GOERLI_PRIVATE_KEY} --broadcast --verify -vvvv
+	@SAVE_DEPLOYMENTS=1 forge script scripts/${contract}.s.sol:${contract} --ffi --rpc-url goerli --private-key ${PRIVATE_KEY} --broadcast --verify --watch -vvvv
 
 # Seperate build from script to avoid race inside forge where the linker wasn't fnisihing before the script started running
 deploy-sepolia :;
 	@forge build
-	@forge script scripts/${contract}.s.sol:${contract} --rpc-url ${SEPOLIA_RPC_URL} --private-key ${SEPOLIA_PRIVATE_KEY} --broadcast --verify -vvvv
+	@forge script scripts/${contract}.s.sol:${contract} --ffi --rpc-url sepolia --private-key ${PRIVATE_KEY} --broadcast --verify --watch -vvvv
 
 # Council NFT interaction scripts
 read-anvil :; @cast call ${contractAddress} "${functionName}" --rpc-url http://localhost:8545 --private-key ${LOCAL_PRIVATE_KEY}

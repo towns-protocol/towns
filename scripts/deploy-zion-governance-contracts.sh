@@ -4,5 +4,5 @@ cd packages/contracts/
 set -a
 . .env.localhost
 set +a
-make deploy-anvil contract=DeployLocalMember
-make deploy-anvil contract=DeploySpaces
+make deploy-anvil contract=DeployMember
+make deploy-anvil contract=DeploySpaceFactory

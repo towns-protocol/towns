@@ -1,16 +1,16 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity 0.8.19;
 
-import {ScriptUtils} from "contracts/scripts/utils/ScriptUtils.sol";
+import {Deployer} from "./common/Deployer.s.sol";
 import {Pioneer} from "contracts/src/core/tokens/Pioneer.sol";
 
-contract DeployPioneer is ScriptUtils {
-  Pioneer public pioneer;
+contract DeployPioneer is Deployer {
+  function versionName() public pure override returns (string memory) {
+    return "pioneerToken";
+  }
 
-  function run() public {
-    vm.broadcast();
-    pioneer = new Pioneer("Pioneer", "PIONEER", "");
-
-    _writeAddress("pioneerToken", address(pioneer));
+  function __deploy(uint256 deployerPK) public override returns (address) {
+    vm.broadcast(deployerPK);
+    return address(new Pioneer("Pioneer", "PIONEER", ""));
   }
 }

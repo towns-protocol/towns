@@ -11,7 +11,6 @@ import {DaoCoreVoting} from "contracts/src/core/governance/base/DaoCoreVoting.so
 
 // contracts
 import {ScriptUtils} from "contracts/scripts/utils/ScriptUtils.sol";
-import {DeployTowns} from "contracts/scripts/DeployTowns.s.sol";
 
 import {Timelock} from "council/features/Timelock.sol";
 import {Treasury} from "council/features/Treasury.sol";

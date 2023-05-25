@@ -15,6 +15,7 @@ packages/contracts/**/out/*
 packages/contracts/out/*
 packages/contracts/**/types/*
 packages/contracts/docgen/*
+packages/contract/out
 
 broadcast/*
 cache/*

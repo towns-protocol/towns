@@ -45,7 +45,7 @@ contract AirdropERC721Test is TestUtils {
   }
 
   function test_airdrop() external {
-    console.log(_mock721.balanceOf(_deployer));
+    // console.log(_mock721.balanceOf(_deployer));
 
     vm.prank(_deployer);
     _airdropERC721.addAirdropRecipients(_airdrops);

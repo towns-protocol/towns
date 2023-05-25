@@ -4,8 +4,7 @@ pragma solidity 0.8.19;
 /* Interfaces */
 
 /* Libraries */
-import {console} from "forge-std/console.sol";
-import {ScriptUtils} from "contracts/scripts/utils/ScriptUtils.sol";
+import {Deployer} from "./common/Deployer.s.sol";
 import {Permissions} from "contracts/src/libraries/Permissions.sol";
 
 /* Contracts */
@@ -19,10 +18,15 @@ import {ERC1967Proxy} from "openzeppelin-contracts/contracts/proxy/ERC1967/ERC19
 
 import {DeployPioneer} from "contracts/scripts/DeployPioneer.s.sol";
 import {DeployTownOwner} from "contracts/scripts/DeployTownOwner.s.sol";
+import {DeployTokenImpl, DeployUserImpl} from "contracts/scripts/DeployImplementations.s.sol";
+import {DeploySpaceImpl} from "contracts/scripts/DeploySpaceImpl.s.sol";
 
-contract DeploySpaces is ScriptUtils {
+contract DeploySpaceFactory is Deployer {
   DeployPioneer internal deployPioneer;
-  DeployTownOwner internal deploySpaceOwner;
+  DeployTownOwner internal deployTownOwner;
+  DeploySpaceImpl internal deploySpaceImpl;
+  DeployTokenImpl internal deployTokenImpl;
+  DeployUserImpl internal deployUserImpl;
 
   SpaceFactory internal spaceFactory;
   Space internal spaceImplementation;
@@ -30,23 +34,32 @@ contract DeploySpaces is ScriptUtils {
   UserEntitlement internal userImplementation;
   TownOwner internal spaceToken;
   Pioneer internal pioneer;
+
   string[] public initialPermissions;
 
-  function run() public {
-    deployPioneer = new DeployPioneer();
-    deployPioneer.run();
-    pioneer = deployPioneer.pioneer();
+  function versionName() public pure override returns (string memory) {
+    return "spaceFactory";
+  }
 
-    deploySpaceOwner = new DeployTownOwner();
-    deploySpaceOwner.run();
-    spaceToken = deploySpaceOwner.townOwner();
+  function __deploy(uint256 deployerPK) public override returns (address) {
+    deployPioneer = new DeployPioneer();
+    pioneer = Pioneer(payable(deployPioneer.deploy()));
+
+    deployTownOwner = new DeployTownOwner();
+    spaceToken = TownOwner(deployTownOwner.deploy());
+
+    deploySpaceImpl = new DeploySpaceImpl();
+    spaceImplementation = Space(deploySpaceImpl.deploy());
+
+    deployTokenImpl = new DeployTokenImpl();
+    tokenImplementation = TokenEntitlement(deployTokenImpl.deploy());
+
+    deployUserImpl = new DeployUserImpl();
+    userImplementation = UserEntitlement(deployUserImpl.deploy());
 
     _createInitialOwnerPermissions();
 
-    vm.startBroadcast();
-    spaceImplementation = new Space();
-    tokenImplementation = new TokenEntitlement();
-    userImplementation = new UserEntitlement();
+    vm.startBroadcast(deployerPK);
     spaceFactory = new SpaceFactory();
 
     address spaceFactoryAddress = address(
@@ -69,29 +82,7 @@ contract DeploySpaces is ScriptUtils {
     spaceToken.setFactory(spaceFactoryAddress);
     vm.stopBroadcast();
 
-    spaceFactory = SpaceFactory(spaceFactoryAddress);
-
-    if (!_isTesting()) {
-      _writeJson();
-      _logAddresses();
-    }
-  }
-
-  function _logAddresses() internal view {
-    console.log("--- Deployed Spaces ---");
-    console.log("Pioneer Token: ", address(pioneer));
-    console.log("Space Token: ", address(spaceToken));
-    console.log("Space: ", address(spaceImplementation));
-    console.log("Token Entitlement: ", address(tokenImplementation));
-    console.log("User Entitlement: ", address(userImplementation));
-    console.log("Space Factory: ", address(spaceFactory));
-    console.log("------------------------");
-  }
-
-  function _writeJson() internal {
-    _writeAddress("spaceFactory", address(spaceFactory));
-    _writeAddress("spaceToken", address(spaceToken));
-    _writeAddress("pioneerToken", address(pioneer));
+    return spaceFactoryAddress;
   }
 
   function _createInitialOwnerPermissions() internal {
