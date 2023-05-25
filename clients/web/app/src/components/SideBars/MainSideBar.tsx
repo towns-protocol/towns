@@ -22,8 +22,8 @@ export const MainSideBar = (props: Props) => {
     const { data: isHolderOfPioneerNft } = useIsHolderOfPioneerNFT()
 
     return (
-        <SideBar paddingY="sm">
-            <Stack grow elevateReadability>
+        <SideBar elevateReadability paddingY="sm">
+            <Stack grow>
                 <ProfileCardButton expanded={isExpanded} />
                 {spaces.map((s) => (
                     <SpaceNavItem
