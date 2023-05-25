@@ -8,7 +8,7 @@ export const vitePWAOptions: Partial<VitePWAOptions> = {
     srcDir: 'src/workers',
     filename: 'main-sw.ts',
     injectManifest: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2,wasm}'],
         maximumFileSizeToCacheInBytes: 5000000,
     },
 
