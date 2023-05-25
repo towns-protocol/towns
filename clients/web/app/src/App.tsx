@@ -20,6 +20,7 @@ import { AppLayout } from 'routes/layouts/AppLayout'
 import { mobileAppClass } from 'ui/styles/globals/utils.css'
 import { FontLoader } from 'ui/utils/FontLoader'
 import { env } from 'utils'
+import { ReloadPrompt } from '@components/ReloadPrompt/ReloadPrompt'
 
 const AuthenticatedRoutes = React.lazy(() => import('routes/AuthenticatedRoutes'))
 const InviteLinkLanding = React.lazy(() => import('routes/InviteLinkLanding'))
@@ -57,6 +58,7 @@ export const App = () => {
                 </AnalyticsProvider>
                 <ReactQueryDevtools position="bottom-right" initialIsOpen={false} />
                 <Notifications />
+                <ReloadPrompt />
             </>
         </ZionContextProvider>
     )

@@ -1,6 +1,7 @@
 /// <reference types="vitest" />
 import { vanillaExtractPlugin } from '@vanilla-extract/vite-plugin'
-import { defineConfig } from 'vite'
+import { defineConfig } from 'vitest/config'
+import { VitePWA } from 'vite-plugin-pwa'
 import tsconfigPaths from 'vite-tsconfig-paths'
 
 export default defineConfig({
@@ -21,5 +22,5 @@ export default defineConfig({
             ],
         },
     },
-    plugins: [tsconfigPaths(), vanillaExtractPlugin()],
+    plugins: [tsconfigPaths(), vanillaExtractPlugin(), VitePWA()] as any,
 })

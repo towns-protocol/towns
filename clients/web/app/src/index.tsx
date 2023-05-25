@@ -7,6 +7,14 @@ import { createRoot } from 'react-dom/client'
 import { Main } from 'Main'
 import { env } from 'utils'
 
+console.log(
+    `%c\n\nTOWNS\n%c${APP_VERSION}[${APP_COMMIT_HASH}]\n${env.IS_DEV ? 'DEV' : ''}${'\n'.repeat(
+        3,
+    )}`,
+    `font-size:32px;font-weight:bold;font-family:sans-serif;`,
+    ``,
+)
+
 if (env.IS_DEV) {
     // Register runtime-error overlay
     // From: https://github.com/vitejs/vite/issues/2076

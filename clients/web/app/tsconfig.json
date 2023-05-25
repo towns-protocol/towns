@@ -8,7 +8,7 @@
         "forceConsistentCasingInFileNames": true,
         "isolatedModules": true,
         "jsx": "react",
-        "lib": ["dom", "dom.iterable", "esnext"],
+        "lib": ["dom", "dom.iterable", "esnext", "WebWorker"],
         "module": "esnext",
         "moduleResolution": "node",
         "noEmit": true,
@@ -23,8 +23,8 @@
         "strict": true,
         "strictNullChecks": true,
         "target": "esnext",
-        "types": ["vite/client"]
+        "types": ["vite/client", "vite-plugin-pwa/client"]
     },
-    "include": ["src"],
+    "include": ["src", "*.config.ts"],
     "exclude": ["node_modules"]
 }

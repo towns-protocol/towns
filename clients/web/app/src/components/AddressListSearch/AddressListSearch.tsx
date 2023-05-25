@@ -84,7 +84,7 @@ export const SelectedItemsList = ({
                     <AnimatePresence mode="popLayout">
                         {items.map((item: string) => {
                             return (
-                                <FadeInBox useScale key={listId + item} layout="position">
+                                <FadeInBox preset="fadeup" key={listId + item} layout="position">
                                     {children({ item: item })}
                                 </FadeInBox>
                             )
