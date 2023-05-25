@@ -367,6 +367,18 @@ describe('SpaceSettings', () => {
         const newRoleButton = screen.getByText(/create new role/gi)
         await userEvent.click(newRoleButton)
 
+        const membersButton = screen.getAllByText(/members/gi)[0]
+        await userEvent.click(membersButton)
+
+        const userGatedButton = screen.getByText(/Add users/)
+        await userEvent.click(userGatedButton)
+
+        const everyoneButton = screen.getByText(/all wallet addresses/gi)
+        await userEvent.click(everyoneButton)
+
+        const updateButton = screen.getByText(/update/gi)
+        await userEvent.click(updateButton)
+
         await checkChangesInProgressToastVisible()
 
         const saveOnChainButton = screen.getByRole('button', { name: /save on chain/gi })
@@ -392,7 +404,7 @@ describe('SpaceSettings', () => {
                 'New Role 1',
                 [Lib.Permission.Read],
                 [],
-                [],
+                [EVERYONE_ADDRESS],
             )
         })
 

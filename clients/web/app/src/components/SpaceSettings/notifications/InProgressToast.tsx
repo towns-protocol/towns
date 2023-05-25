@@ -27,6 +27,11 @@ export const InProgressToast = (props: { modifiedRoles: ModifiedRole[] }) => {
     const onSave = useEvent(() => {
         setShowSavePopup(true)
     })
+
+    const hasEmptyRoles = modifiedRoles.some((role) => {
+        return role.metadata.tokens.length === 0 && role.metadata.users.length === 0
+    })
+
     // prevent closing the modal while transactions are pending
     const onHidePopup = useEvent(() => {
         if (Object.values(inProgressTransactions).some((data) => data.status === 'potential')) {
@@ -62,13 +67,25 @@ export const InProgressToast = (props: { modifiedRoles: ModifiedRole[] }) => {
                             data-testid="role-settings-in-progress-toast"
                         >
                             <MotionNotification>
-                                <Paragraph color={hasInProgressTransactions ? 'negative' : 'cta1'}>
-                                    You have{' '}
-                                    {hasInProgressTransactions
-                                        ? 'changes in progress'
-                                        : 'unsaved changes'}
-                                </Paragraph>
+                                <Stack gap>
+                                    {hasEmptyRoles ? (
+                                        <Paragraph color="default">
+                                            Please add users or tokens on the Members tab to
+                                            proceed.
+                                        </Paragraph>
+                                    ) : (
+                                        <Paragraph
+                                            color={hasInProgressTransactions ? 'negative' : 'cta1'}
+                                        >
+                                            You have{' '}
+                                            {hasInProgressTransactions
+                                                ? 'changes in progress'
+                                                : 'unsaved changes'}
+                                        </Paragraph>
+                                    )}
+                                </Stack>
                                 <Button
+                                    disabled={hasEmptyRoles}
                                     tone="cta1"
                                     icon={hasInProgressTransactions ? undefined : 'wallet'}
                                     value="Save on chain"
