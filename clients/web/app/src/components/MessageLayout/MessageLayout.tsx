@@ -185,7 +185,7 @@ export const MessageLayout = (props: Props) => {
                 )}
                 <Stack gap="md">
                     <Stack horizontal alignItems="center">
-                        <Stack fontSize="md" color="default" gap="md">
+                        <Stack grow fontSize="md" color="default" gap="md">
                             {children}
                         </Stack>
                         {isMobile && (
