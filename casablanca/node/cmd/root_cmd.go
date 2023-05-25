@@ -4,6 +4,7 @@ import (
 	"casablanca/node/config"
 	"casablanca/node/infra"
 	"io"
+	"strings"
 
 	"fmt"
 	"os"
@@ -35,6 +36,9 @@ func initConfigAndLog() {
 	if configFile != "" {
 		viper.SetConfigFile(configFile)
 
+		// This is needed to allow for nested config values to be set via environment variables
+		// For example: METRICS__ENABLED=true, METRICS__PORT=8080
+		viper.SetEnvKeyReplacer(strings.NewReplacer(".", "__"))
 		viper.AutomaticEnv()
 
 		if err := viper.ReadInConfig(); err != nil {

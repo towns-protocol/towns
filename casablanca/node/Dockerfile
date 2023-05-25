@@ -21,10 +21,20 @@ LABEL org.opencontainers.image.source="https://github.com/HereNotThere/harmony"
 LABEL org.opencontainers.image.licenses="Apache-2.0"
 
 COPY --from=base /build/bin/* /usr/bin/
-
-# TODO: this is only temporary. we can't be using our dev.yaml configuration inside the dockerfile.
-# next step should be moving to environment variables.
 COPY --from=base /build/dev.yaml /usr/etc/config.yaml
+
+# ENV VARS FOR REFERENCE
+#
+# PORT 
+# DBURL 
+# CHAIN__CHAINID 
+# CHAIN__NETWORKURL
+# METRICS__ENABLED
+# METRICS__PORT
+
+# This allows us to set the release version to anything, such as a commit hash, at build time.
+ARG RELEASE_VERSION="Unreleased"
+ENV RELEASE_VERSION=${RELEASE_VERSION}
 
 ENTRYPOINT /usr/bin/node run \
     --config /usr/etc/config.yaml \

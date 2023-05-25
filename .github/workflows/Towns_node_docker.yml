@@ -1,13 +1,13 @@
 # Based on https://github.com/docker/build-push-action
 
-name: 'Dendrite_docker'
+name: 'Towns_node_docker'
 
 on:
     push:
         branches:
             - main
         paths:
-            - 'servers/dendrite/**'
+            - 'casablanca/node/**'
     workflow_dispatch: # A build was manually requested
     workflow_call: # Another pipeline called us
         secrets:
@@ -23,7 +23,7 @@ env:
 
 jobs:
     monolith:
-        name: Monolith image
+        name: Build docker image
         runs-on: ubuntu-latest-8-cores
         permissions:
             contents: write
@@ -46,21 +46,20 @@ jobs:
                   username: ${{ secrets.DOCKER_HUB_USERNAME }}
                   password: ${{ secrets.DOCKER_HUB_TOKEN }}
 
-            - name: Build monolith image
-              id: docker_build_monolith
+            - name: Build towns
               uses: docker/build-push-action@v4
               with:
                   cache-from: type=gha
                   cache-to: type=gha,mode=max
-                  context: ./servers/dendrite
-                  file: ./servers/dendrite/build/docker/Dockerfile.monolith
+                  context: ./casablanca/node
+                  file: ./casablanca/node/Dockerfile
                   platforms: ${{ env.PLATFORMS }}
                   push: true
                   build-args: |
                       RELEASE_VERSION=${{ env.RELEASE_VERSION }}
                   tags: |
-                      ${{ env.DOCKER_NAMESPACE }}/dendrite-monolith:latest
-                      ${{ env.DOCKER_NAMESPACE }}/dendrite-monolith:${{ env.RELEASE_VERSION }}
+                      ${{ env.DOCKER_NAMESPACE }}/towns-node:latest
+                      ${{ env.DOCKER_NAMESPACE }}/towns-node:${{ env.RELEASE_VERSION }}
 
             # If action failed, we send a slack notification
             - name: Slack notification
@@ -72,4 +71,4 @@ jobs:
                   SLACK_USERNAME: 'CI'
                   SLACK_ICON_EMOJI: ':boom:'
                   SLACK_COLOR: '#FF0000'
-                  SLACK_MESSAGE: 'Dendrite Docker Failed on ${{ github.repository }}'
+                  SLACK_MESSAGE: 'Towns Node Docker Failed on ${{ github.repository }}'
