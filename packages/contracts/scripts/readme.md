@@ -43,6 +43,11 @@ This makes it easy to:
 - save deployments to version control (addresses atm)
 - import existing deployments
 
+## Flags
+
+- `OVERRIDE_DEPLOYMENTS=1`: It will redeploy a version of the contracts even if there's a cache in deployments assigned, be very careful when using this
+- `SAVE_DEPLOYMENTS=1`: It will save a cached address of deployments to `packages/contracts/deployments/<network>/<contract>.json`
+
 ## How to deploy
 
 ```
@@ -80,4 +85,24 @@ This makes it easy to:
 # next we'll deploy the script UpgradeSpaceImpl without flags
 # This will grab new and existing deployment addresses from our deployments cache and use those to interact with each other
 -> make deploy-anvil contract=UpgradeSpaceImpl
+```
+
+## How to deploy a new space factory implementation, a new space implementation and update space factory to point to both of these?
+
+1. Deploy new Space Factory implementation and `upgrade` current Space Factory proxy contract
+
+```bash
+SAVE_DEPLOYMENTS=1 make deploy-goerli contract=UpgradeSpaceFactoryImpl
+```
+
+2. Deploy new Space implementation, you can either override the current cached address or just change your `versionName()` in the contract to `spaceImplv2` and remove the `OVERRIDE_DEPLOYMENTS=1` flag
+
+```bash
+SAVE_DEPLOYMENTS=1 OVERRIDE_DEPLOYMENTS=1 make deploy-goerli contract=DeploySpaceImpl
+```
+
+3. Update the Space Factory with the new Space Implementation
+
+```bash
+SAVE_DEPLOYMENTS=1 make deploy-goerli contract=UpgradeSpaceImpl
 ```

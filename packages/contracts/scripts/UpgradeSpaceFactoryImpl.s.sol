@@ -14,7 +14,7 @@ import {SpaceFactory} from "contracts/src/core/spaces/SpaceFactory.sol";
 
 contract UpgradeSpaceFactoryImpl is Deployer {
   function versionName() public pure override returns (string memory) {
-    return "spaceFactoryImplv2";
+    return "spaceFactoryImpl";
   }
 
   function __deploy(uint256 deployerPK) public override returns (address) {
