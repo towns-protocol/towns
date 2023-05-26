@@ -7,6 +7,7 @@ import {
     useSpaceMembers,
     useTimelineThread,
 } from 'use-zion-client'
+import { firstBy } from 'thenby'
 import { MessageTimeline } from '@components/MessageTimeline/MessageTimeline'
 import { MessageTimelineWrapper } from '@components/MessageTimeline/MessageTimelineContext'
 import { RichTextEditor } from '@components/RichText/RichTextEditor'
@@ -56,12 +57,13 @@ export const MessageThread = (props: {
     }, [messagesWithParent])
 
     const usernames = useMemo(() => {
-        const names = Object.values(involvedUsers).map((u, m) => {
-            const isYou = u.userId === profile?.userId
-            const displayName = isYou ? 'you' : getPrettyDisplayName(u).name
-            return displayName
-        })
-
+        const names = Object.values(involvedUsers)
+            .map((u) => {
+                const isYou = u.userId === profile?.userId
+                const displayName = isYou ? 'you' : getPrettyDisplayName(u).name
+                return displayName
+            })
+            .sort(firstBy((n) => n === 'you'))
         return names.length > 0
             ? names.reduce(
                   (k, c, index, arr) =>
