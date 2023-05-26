@@ -4,7 +4,6 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 import * as Lib from 'use-zion-client'
 import userEvent from '@testing-library/user-event'
 import * as Router from 'react-router'
-import { Permission } from 'use-zion-client'
 import { TestApp } from 'test/testUtils'
 import { AuthenticatedRoutes } from 'routes/AuthenticatedRoutes'
 import {
