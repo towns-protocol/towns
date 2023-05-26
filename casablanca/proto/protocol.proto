@@ -217,7 +217,8 @@ enum UserSettingOp {
 
 enum ToDeviceOp {
     TDO_UNSPECIFIED = 0;
-    TDO_TO_DEVICE = 1;
+    TDO_KEY_REQUEST = 1;
+    TDO_KEY_RESPONSE = 2;
 }
 
 /**

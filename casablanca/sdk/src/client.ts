@@ -779,7 +779,14 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
         }
     }
 
-    async sendToDevicesMessage(userId: string, event: object): Promise<void[]> {
+    async sendToDevicesMessage(
+        userId: string,
+        event: object,
+        type: ToDeviceOp | string,
+    ): Promise<void[]> {
+        const op: ToDeviceOp =
+            typeof type == 'string' ? ToDeviceOp[type as keyof typeof ToDeviceOp] : type
+        assert(op !== undefined, 'invalid to device op')
         const streamId: string = makeUserStreamId(userId)
         await this.loadExistingForeignUser(userId)
         // retrieve all device_ids of a user
@@ -793,7 +800,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
                 return this.makeEventAndAddToStream(
                     streamId,
                     make_UserPayload_ToDevice({
-                        op: ToDeviceOp.TDO_TO_DEVICE,
+                        op,
                         // todo: this should use client protobuf not JSON
                         value: envelope,
                         deviceId: deviceId,
@@ -804,7 +811,14 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
         )
     }
 
-    async sendToDeviceMessage(userId: string, deviceId: string, event: object): Promise<void> {
+    async sendToDeviceMessage(
+        userId: string,
+        deviceId: string,
+        event: object,
+        type: ToDeviceOp | string,
+    ): Promise<void> {
+        const op: ToDeviceOp =
+            typeof type == 'string' ? ToDeviceOp[type as keyof typeof ToDeviceOp] : type
         const streamId: string = makeUserStreamId(userId)
         await this.loadExistingForeignUser(userId)
         // assert device_id belongs to user
@@ -817,7 +831,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
         return this.makeEventAndAddToStream(
             streamId,
             make_UserPayload_ToDevice({
-                op: ToDeviceOp.TDO_TO_DEVICE,
+                op,
                 value: envelope,
                 deviceId: deviceId,
             }),

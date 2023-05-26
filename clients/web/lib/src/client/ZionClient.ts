@@ -1747,7 +1747,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
             if (!this.canSendToDeviceMessage(userId)) {
                 throw new Error('cannot send to device for user ' + userId)
             }
-            await this.casablancaClient.sendToDevicesMessage(userId, { type, content })
+            await this.casablancaClient.sendToDevicesMessage(userId, { content }, type)
         } else {
             if (!this.matrixClient) {
                 throw new Error('matrix client is undefined')
