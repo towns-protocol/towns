@@ -15,6 +15,7 @@ import { useIsChannelWritable } from 'hooks/useIsChannelWritable'
 import { useSendReply } from 'hooks/useSendReply'
 import { useSpaceChannels } from 'hooks/useSpaceChannels'
 import { FadeInBox } from '@components/Transitions'
+import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 
 export const MessageThread = (props: {
     userId: string
@@ -34,23 +35,34 @@ export const MessageThread = (props: {
     }
 
     const profile = useMyProfile()
-    const usernames = useMemo(() => {
-        const names = Object.values(
-            messages.reduce(
-                (users, m) => {
-                    if (m.content?.kind === ZTEvent.RoomMessage) {
-                        const sender = m.sender
-                        if (sender.id !== profile?.userId) {
-                            users[sender.id] = sender.displayName
-                        }
-                    }
-                    return users
-                },
-                { you: 'you' } as { [key: string]: string },
-            ),
-        )
 
-        return names.length > 1
+    const messagesWithParent = useMemo(
+        () => (parentMessage ? [parentMessage, ...messages] : []),
+        [messages, parentMessage],
+    )
+
+    const involvedUsers = useMemo(() => {
+        return Object.values(
+            messagesWithParent.reduce((users, m) => {
+                if (m.content?.kind === ZTEvent.RoomMessage && m.sender?.id) {
+                    users[m.sender.id] = {
+                        userId: m.sender.id,
+                        displayName: m.sender.displayName,
+                    }
+                }
+                return users
+            }, {} as { [key: string]: { userId: string; displayName: string } }),
+        )
+    }, [messagesWithParent])
+
+    const usernames = useMemo(() => {
+        const names = Object.values(involvedUsers).map((u, m) => {
+            const isYou = u.userId === profile?.userId
+            const displayName = isYou ? 'you' : getPrettyDisplayName(u).name
+            return displayName
+        })
+
+        return names.length > 0
             ? names.reduce(
                   (k, c, index, arr) =>
                       k +
@@ -59,12 +71,7 @@ export const MessageThread = (props: {
                   '',
               )
             : undefined
-    }, [messages, profile?.userId])
-
-    const messagesWithParent = useMemo(
-        () => (parentMessage ? [parentMessage, ...messages] : []),
-        [messages, parentMessage],
-    )
+    }, [involvedUsers, profile?.userId])
 
     const { members } = useSpaceMembers()
     const userId = useMyProfile()?.userId
@@ -72,7 +79,7 @@ export const MessageThread = (props: {
 
     const { isChannelWritable } = useIsChannelWritable(channelId)
 
-    return parentMessage ? (
+    return parentMessage && involvedUsers.length > 1 ? (
         <MessageTimelineWrapper
             events={messagesWithParent}
             spaceId={spaceId}
