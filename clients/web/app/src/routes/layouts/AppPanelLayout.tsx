@@ -45,7 +45,7 @@ export const AppPanelLayout = () => {
         !spacesSettingsRoute && !spacesNewRoute && !!(chainSpace || space) && !homeRoute
 
     return (
-        <Stack horizontal grow position="relative">
+        <Stack horizontal grow borderTop position="relative">
             <Box absoluteFill>
                 <Allotment
                     // proportionalLayout

@@ -2,6 +2,7 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import React, { useRef } from 'react'
 import { Navigate, Outlet, Route, Routes } from 'react-router'
 import { SpaceProtocol, ZionContextProvider } from 'use-zion-client'
+import { Helmet } from 'react-helmet'
 import { Notifications } from '@components/Notifications/Notifications'
 import { PlaygroundRoutes } from '@components/Playground/PlaygroundRoutes'
 import { SentryReportModal } from '@components/SentryErrorReport/SentryErrorReport'
@@ -21,6 +22,7 @@ import { mobileAppClass } from 'ui/styles/globals/utils.css'
 import { FontLoader } from 'ui/utils/FontLoader'
 import { env } from 'utils'
 import { ReloadPrompt } from '@components/ReloadPrompt/ReloadPrompt'
+import { Figma } from 'ui/styles/palette'
 
 const AuthenticatedRoutes = React.lazy(() => import('routes/AuthenticatedRoutes'))
 const InviteLinkLanding = React.lazy(() => import('routes/InviteLinkLanding'))
@@ -32,7 +34,7 @@ const DebugBar = React.lazy(() => import('@components/DebugBar/DebugBar'))
 FontLoader.init()
 
 export const App = () => {
-    useRootTheme({
+    const { theme } = useRootTheme({
         ammendHTMLBody: true,
         useDefaultOSTheme: true,
     })
@@ -52,6 +54,16 @@ export const App = () => {
             chainId={environment.chainId}
         >
             <>
+                <Helmet>
+                    <meta
+                        name="theme-color"
+                        content={
+                            theme === 'dark'
+                                ? Figma.DarkMode.Readability
+                                : Figma.LightMode.Readability
+                        }
+                    />
+                </Helmet>
                 <AnalyticsProvider>
                     <>{env.IS_DEV && <DebugBar {...environment} />}</>
                     <AllRoutes />
