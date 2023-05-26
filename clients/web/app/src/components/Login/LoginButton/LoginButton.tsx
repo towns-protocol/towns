@@ -4,7 +4,7 @@ import { FadeIn, FadeInBox } from '@components/Transitions'
 import { Button } from '@ui'
 import { Icon, IconName } from 'ui/components/Icon'
 import { vars } from 'ui/styles/vars.css'
-import useDebounce from 'hooks/useDebounce'
+import { useDebounce } from 'hooks/useDebounce'
 import { ButtonSpinner } from './Spinner/ButtonSpinner'
 
 export const LoginButton = (props: {

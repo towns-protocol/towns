@@ -18,6 +18,7 @@ import { Box, Divider, Paragraph, VList } from '@ui'
 import { useExperimentsStore } from 'store/experimentsStore'
 import { notUndefined } from 'ui/utils/utils'
 import { MessageTimelineItem } from '@components/MessageTimeIineItem/TimelineItem'
+import { useDebounce } from 'hooks/useDebounce'
 import { MessageTimelineContext, MessageTimelineType } from './MessageTimelineContext'
 import { DateDivider } from '../MessageTimeIineItem/items/DateDivider'
 import { NewDivider } from '../MessageTimeIineItem/items/NewDivider'
@@ -95,7 +96,7 @@ export const MessageTimeline = (props: Props) => {
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     //                                    estimate height of blocks before they get rendered
 
-    const estimateItemHeight = useCallback((r: (typeof listItems)[0]) => {
+    const estimateItemHeight = useCallback((r: (typeof debouncedListItems)[0]) => {
         if (r.type === 'user-messages') {
             const height = r.item.events.reduce((height, item) => {
                 const itemHeight =
@@ -294,6 +295,9 @@ export const MessageTimeline = (props: Props) => {
     const hasUnreadMarker = fullyPersistedRef.current
     const [isUnreadMarkerFaded, setIsUnreadMarkerFaded] = useState(false)
 
+    // discard glitches when consecutive messages are decrypted
+    const debouncedListItems = useDebounce(listItems, 300)
+
     useEffect(() => {
         if (hasUnreadMarker) {
             const timeout = setTimeout(() => {
@@ -307,13 +311,13 @@ export const MessageTimeline = (props: Props) => {
 
     const groupIds = useMemo(
         () =>
-            listItems.reduce((groupIds, item) => {
+            debouncedListItems.reduce((groupIds, item) => {
                 if (item.type === 'group') {
                     groupIds.push(item.id)
                 }
                 return groupIds
             }, [] as string[]),
-        [listItems],
+        [debouncedListItems],
     )
 
     return (
@@ -323,7 +327,7 @@ export const MessageTimeline = (props: Props) => {
             key={channelId?.networkId}
             highlightId={props.highlightId}
             esimtateItemSize={estimateItemHeight}
-            list={listItems}
+            list={debouncedListItems}
             groupIds={groupIds}
             itemRenderer={(r, ref) => {
                 return r.type === 'header' ? (

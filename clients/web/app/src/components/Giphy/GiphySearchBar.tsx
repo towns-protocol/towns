@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef } from 'react'
 import { Search } from '@components/Search'
-import useDebounce from 'hooks/useDebounce'
+import { useDebounce } from 'hooks/useDebounce'
 import { useGiphySearchContext } from './GiphySearchContext'
 
 export const GiphySearchBar = () => {

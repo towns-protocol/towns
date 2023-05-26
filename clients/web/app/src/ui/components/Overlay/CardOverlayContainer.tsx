@@ -1,5 +1,5 @@
 import React, { useMemo, useRef } from 'react'
-import useDebounce from 'hooks/useDebounce'
+import { useDebounce } from 'hooks/useDebounce'
 import { useSize } from 'ui/hooks/useSize'
 
 import { Box } from '../Box/Box'
