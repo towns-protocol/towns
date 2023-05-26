@@ -16,6 +16,7 @@ export const ZLayerProvider = (props: { children: React.ReactNode }) => {
                         position: 'fixed',
                         inset: 0,
                         pointerEvents: 'none',
+                        overscrollBehavior: 'none',
                     } as React.CSSProperties
                 }
             />
