@@ -1023,24 +1023,34 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
     /************************************************
      * isEntitled
      *************************************************/
-    public isEntitled(
+    public async isEntitled(
         spaceId: string,
         channelId: string | undefined,
         user: string,
         permission: Permission,
     ): Promise<boolean> {
-        console.log('[isEntitled] is user entitlted for channel and space for permission', {
-            user: user,
-            spaceId: spaceId,
-            channelId: channelId,
-            permission: permission,
-        })
-
+        let isEntitled = false
         if (channelId) {
-            return this.spaceDapp.isEntitledToChannel(spaceId, channelId, user, permission)
+            isEntitled = await this.spaceDapp.isEntitledToChannel(
+                spaceId,
+                channelId,
+                user,
+                permission,
+            )
         } else {
-            return this.spaceDapp.isEntitledToSpace(spaceId, user, permission)
+            isEntitled = await this.spaceDapp.isEntitledToSpace(spaceId, user, permission)
         }
+        console.log(
+            '[isEntitled] is user entitlted for channel and space for permission',
+            isEntitled,
+            {
+                user: user,
+                spaceId: spaceId,
+                channelId: channelId,
+                permission: permission,
+            },
+        )
+        return isEntitled
     }
 
     /************************************************

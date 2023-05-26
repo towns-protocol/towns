@@ -4,7 +4,7 @@ import { clsx } from 'clsx'
 import { Box, Button, Text } from '@ui'
 import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinner'
 import { buttonStyle } from 'ui/components/Button'
-import { TransactionUIState } from 'hooks/useTransactionStatus'
+import { TransactionUIState } from 'hooks/TransactionUIState'
 import * as styles from './TransactionButton.css'
 
 type Props = {

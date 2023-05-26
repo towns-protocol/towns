@@ -86,7 +86,7 @@ export function useCreateChannelTransaction() {
     )
 
     useEffect(() => {
-        console.log('useCreateChannelTransaction', 'states', {
+        console.log('[useCreateChannelTransaction]', 'states', {
             isLoading,
             data,
             error,

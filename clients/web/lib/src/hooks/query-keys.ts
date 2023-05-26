@@ -4,6 +4,7 @@ export class QueryKeyRoles {
     public static ByChannelId = 'channelIds'
 }
 
-export class QueryKeyChannels {
+export class QuerySyncKey {
     public static SyncEntitledChannels = 'syncEntitledChannels'
+    public static SyncSpaceOwner = 'syncSpaceInfo'
 }

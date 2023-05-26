@@ -1,12 +1,13 @@
 import capitalize from 'lodash/capitalize'
-import React, { useEffect, useMemo } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { Outlet } from 'react-router'
 import { matchPath, useLocation } from 'react-router-dom'
-import { SpaceData } from 'use-zion-client'
+import { Permission, SpaceData, useZionClient } from 'use-zion-client'
 import { PATHS } from 'routes'
 import { useStore } from 'store/store'
 import { useSetDocTitle } from 'hooks/useDocTitle'
 import { useContractAndServerSpaceData } from 'hooks/useContractAndServerSpaceData'
+import { useAuth } from 'hooks/useAuth'
 
 const createSpaceTitle = (spaceName?: string, childLabel?: string) => {
     return [childLabel, spaceName].filter(Boolean).concat('TOWNS').join(' - ')
@@ -21,6 +22,42 @@ export const SpaceOutlet = () => {
 
     const path = useSpaceRouteMatcher(space)
     const spaceName = space?.name || chainSpace?.name
+
+    const { spaceDapp } = useZionClient()
+    const { loggedInWalletAddress } = useAuth()
+    const [isEntitledToSpace, setIsEntitledToSpace] = useState<boolean>(false)
+    useEffect(() => {
+        const fn = async () => {
+            if (space?.id.networkId && loggedInWalletAddress && spaceDapp) {
+                const _isEntitledToSpace = await spaceDapp.isEntitledToSpace(
+                    space.id.networkId,
+                    loggedInWalletAddress,
+                    Permission.Read,
+                )
+                setIsEntitledToSpace(_isEntitledToSpace)
+            }
+        }
+        fn()
+        console.log(
+            '[SpaceOutlet]',
+            'isEntitledToSpace:',
+            isEntitledToSpace,
+            'spaceName:',
+            `"${spaceName}"`,
+            'spaceSlug:',
+            spaceSlug,
+            'path:',
+            path,
+        )
+    }, [
+        isEntitledToSpace,
+        loggedInWalletAddress,
+        path,
+        space?.id.networkId,
+        spaceDapp,
+        spaceName,
+        spaceSlug,
+    ])
 
     useEffect(() => {
         if (!path || !spaceSlug || path.type === 'home') {

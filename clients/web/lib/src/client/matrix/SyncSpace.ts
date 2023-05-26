@@ -1,11 +1,12 @@
-import { ISpaceDapp } from '../web3/ISpaceDapp'
 import { MatrixClient, Room as MatrixRoom } from 'matrix-js-sdk'
+
 import { IHierarchyRoom } from 'matrix-js-sdk/lib/@types/spaces'
-import { RoomHierarchy } from 'matrix-js-sdk/lib/room-hierarchy'
+import { ISpaceDapp } from '../web3/ISpaceDapp'
 import { MatrixRoomIdentifier } from '../../types/room-identifier'
 import { Permission } from '../web3/ContractTypes'
+import { QuerySyncKey } from '../../hooks/query-keys'
+import { RoomHierarchy } from 'matrix-js-sdk/lib/room-hierarchy'
 import { getAccount } from '@wagmi/core'
-import { QueryKeyChannels } from '../../hooks/query-keys'
 import { queryClient } from '../../query/queryClient'
 
 export type MatrixSpaceHierarchy = {
@@ -23,12 +24,21 @@ export async function syncMatrixSpace(
     if (!userId) {
         throw new Error('syncing space error: no userId')
     }
+
     const networkId = spaceId.networkId
     const matrixRoom =
         matrixClient.getRoom(networkId) || new MatrixRoom(networkId, matrixClient, userId)
     const roomHierarchy = new RoomHierarchy(matrixRoom)
 
     const address = walletAddress || getAccount()?.address
+
+    console.log(
+        '[syncMatrixSpace]',
+        'roomId:',
+        spaceId.networkId,
+        'roomName:',
+        `"${matrixRoom.name}"`,
+    )
 
     try {
         while (roomHierarchy.canLoadMore || roomHierarchy.loading) {
@@ -45,7 +55,7 @@ export async function syncMatrixSpace(
         : []
 
     const onChainChannels = await queryClient.fetchQuery(
-        [QueryKeyChannels.SyncEntitledChannels, spaceId.networkId],
+        [QuerySyncKey.SyncEntitledChannels, spaceId.networkId],
         () => getEntitledChannels(children, root, address, spaceDapp),
         {
             // We don't need to check channel entitlements often
@@ -76,13 +86,13 @@ async function getEntitledChannels(
                 }
 
                 try {
-                    const isEntitled = await spaceDapp.isEntitledToChannel(
+                    const isEntitledToChannel = await spaceDapp.isEntitledToChannel(
                         root.room_id,
                         c.room_id,
                         address,
                         Permission.Read,
                     )
-                    if (isEntitled) {
+                    if (isEntitledToChannel) {
                         return c
                     }
                 } catch (e) {
@@ -93,6 +103,7 @@ async function getEntitledChannels(
                         JSON.stringify(e),
                     )
                 }
+                // not entitled to channel
                 return undefined
             }),
         )

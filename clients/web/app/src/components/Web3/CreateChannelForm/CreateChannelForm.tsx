@@ -7,14 +7,15 @@ import {
     useCreateChannelTransaction,
     useCurrentWalletEqualsSignedInAccount,
     useMultipleRoleDetails,
+    useSyncSpace,
 } from 'use-zion-client'
-import React, { useCallback, useMemo } from 'react'
+import React, { useCallback, useEffect, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { useNavigate } from 'react-router'
 import { z } from 'zod'
 import { Box, Button, Checkbox, ErrorMessage, FormRender, Icon, Stack, Text, TextField } from '@ui'
 import { ChannelNameRegExp, isForbiddenError, isRejectionError } from 'ui/utils/utils'
-import { TransactionUIState, useTransactionUIStates } from 'hooks/useTransactionStatus'
+import { TransactionUIState, toTransactionUIStates } from 'hooks/TransactionUIState'
 
 import { ErrorMessageText } from 'ui/components/ErrorMessage/ErrorMessage'
 import { PATHS } from 'routes'
@@ -74,7 +75,19 @@ export const CreateChannelForm = (props: Props) => {
         transactionHash,
         data: channelId,
     } = useCreateChannelTransaction()
-    const transactionUIState = useTransactionUIStates(transactionStatus, Boolean(channelId))
+
+    useEffect(() => {
+        console.log(
+            '[CreateChannelForm]',
+            'createChannelTransaction',
+            'transactionStatus:',
+            transactionStatus,
+            'transactionHash:',
+            transactionHash,
+        )
+    }, [transactionHash, transactionStatus])
+
+    const transactionUIState = toTransactionUIStates(transactionStatus, Boolean(channelId))
     const isAbleToInteract = transactionUIState === TransactionUIState.None
     const { isTransactionNetwork, switchNetwork } = useRequireTransactionNetwork()
     const currentWalletEqualsSignedInAccount = useCurrentWalletEqualsSignedInAccount()
@@ -140,15 +153,18 @@ export const CreateChannelForm = (props: Props) => {
         }
     }, [])
 
+    const { syncSpace } = useSyncSpace()
     const onSuccessfulTransaction = useCallback(() => {
+        console.log('[CreateChannelForm]', 'onSuccessfulTransaction')
         invalidateQuery()
+        syncSpace(props.spaceId) // re-sync the space hierarchy once the transaction is completed
         if (!channelId) {
             return
         }
         setTimeout(() => {
             onCreateChannel(channelId)
         }, 1500)
-    }, [channelId, onCreateChannel, invalidateQuery])
+    }, [invalidateQuery, channelId, syncSpace, props.spaceId, onCreateChannel])
 
     const firstRoleIDWithReadPermission = rolesWithDetails
         ?.find((role) => role.permissions.includes(Permission.Read))

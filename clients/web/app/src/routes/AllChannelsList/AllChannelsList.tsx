@@ -175,7 +175,12 @@ const ChannelItem = ({
             }
         } else {
             try {
-                await client?.joinRoom(channelIdentifier, space.id.networkId)
+                const room = await client?.joinRoom(channelIdentifier, space.id.networkId)
+                if (!room) {
+                    console.error('[AllChannelsList]', 'cannot join channel', room)
+                    throw new Error('cannot join channel')
+                }
+                console.log('[AllChannelsList]', 'joined room', 'room', room)
             } catch (e) {
                 console.warn(
                     '[AllChannelsList]',

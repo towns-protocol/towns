@@ -7,7 +7,7 @@ export enum TransactionUIState {
     Success = 'Success',
 }
 
-export const useTransactionUIStates = (
+export const toTransactionUIStates = (
     transactionStatus: TransactionStatus,
     hasData: boolean,
 ): TransactionUIState => {

@@ -23,6 +23,7 @@ export const useOnTransactionStages = ({
     onCreateRef.current = onCreate
 
     useEffect(() => {
+        console.log('[useOnTransactionStages]', transactionStatus, transactionHash)
         if (!transactionHash) {
             return
         }

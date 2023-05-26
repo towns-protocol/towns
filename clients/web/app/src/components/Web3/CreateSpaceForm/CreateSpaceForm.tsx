@@ -22,7 +22,7 @@ import { ErrorMessageText } from 'ui/components/ErrorMessage/ErrorMessage'
 import { FailedUploadAfterSpaceCreation } from '@components/Notifications/FailedUploadAfterSpaceCreation'
 import { RequireTransactionNetworkMessage } from '@components/RequireTransactionNetworkMessage/RequireTransactionNetworkMessage'
 import { TransactionButton } from '@components/TransactionButton'
-import { TransactionUIState, useTransactionUIStates } from 'hooks/useTransactionStatus'
+import { TransactionUIState, toTransactionUIStates } from 'hooks/TransactionUIState'
 import { Box, Button, Heading, Text } from '@ui'
 import { useDevOnlyQueryParams } from 'hooks/useQueryParam'
 import { useImageStore } from '@components/UploadImage/useImageStore'
@@ -184,7 +184,7 @@ export const CreateSpaceForm = () => {
         }
     }, [error, hasError])
 
-    const transactionUIState = useTransactionUIStates(transactionStatus, Boolean(roomId))
+    const transactionUIState = toTransactionUIStates(transactionStatus, Boolean(roomId))
 
     const {
         goNext,

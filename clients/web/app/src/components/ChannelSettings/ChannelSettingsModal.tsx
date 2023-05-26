@@ -13,7 +13,7 @@ import {
 import React, { useCallback, useMemo, useState } from 'react'
 import { ChannelNameRegExp, isForbiddenError, isRejectionError } from 'ui/utils/utils'
 import { Box, Button, ErrorMessage, FormRender, Heading, Stack, TextField } from '@ui'
-import { TransactionUIState, useTransactionUIStates } from 'hooks/useTransactionStatus'
+import { TransactionUIState, toTransactionUIStates } from 'hooks/TransactionUIState'
 
 import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinner'
 import { ErrorMessageText } from 'ui/components/ErrorMessage/ErrorMessage'
@@ -82,7 +82,7 @@ export function ChannelSettingsForm({
         transactionHash,
     } = useUpdateChannelTransaction()
 
-    const transactionUIState = useTransactionUIStates(transactionStatus, Boolean(channelId))
+    const transactionUIState = toTransactionUIStates(transactionStatus, Boolean(channelId))
 
     const onSuccessfulTransaction = useCallback(() => {
         invalidateQuery()

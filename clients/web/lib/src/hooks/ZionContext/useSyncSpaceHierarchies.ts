@@ -12,7 +12,7 @@ import {
 import { MessageType, SpaceHierarchies } from '../../types/zion-types'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
-import { QueryKeyChannels } from '../query-keys'
+import { QuerySyncKey } from '../query-keys'
 import { RoomIdentifier } from '../../types/room-identifier'
 import { ZionClient } from '../../client/ZionClient'
 import { toZionSpaceChild } from '../../store/use-matrix-store'
@@ -72,7 +72,7 @@ export function useSyncSpaceHierarchies(
         if (!roomIdentifier) {
             throw new Error("can't find roomIdentifier for spaceId")
         }
-        // console.log("!!!!! hierarchies syncing space", spaceId);
+        //console.log('!!!!! hierarchies syncing space', spaceId)
         const inflight = client
             .syncSpace(roomIdentifier)
             .then((hierarchy) => {
@@ -143,7 +143,7 @@ export function useSyncSpaceHierarchies(
             // - we should sync again when this happens
             if (eventType === MatrixEventType.SpaceChild || eventType === MatrixMsgType.Notice) {
                 queryClient.removeQueries({
-                    queryKey: [QueryKeyChannels.SyncEntitledChannels, eventRoomId],
+                    queryKey: [QuerySyncKey.SyncEntitledChannels, eventRoomId],
                 })
                 // console.log("!!!!! hierarchies new space child", eventRoom.roomId);
                 enqueueSpaceId(eventRoomId)
@@ -162,7 +162,7 @@ export function useSyncSpaceHierarchies(
             const parentSpaceId = getParentSpaceId(room, spaceIds)
             if (parentSpaceId) {
                 queryClient.removeQueries({
-                    queryKey: [QueryKeyChannels.SyncEntitledChannels, parentSpaceId],
+                    queryKey: [QuerySyncKey.SyncEntitledChannels, parentSpaceId],
                 })
                 enqueueSpaceId(parentSpaceId)
             }
@@ -184,10 +184,20 @@ export function useSyncSpaceHierarchies(
             const parentSpaceId = getParentSpaceId(room, spaceIds)
             if (parentSpaceId) {
                 queryClient.removeQueries({
-                    queryKey: [QueryKeyChannels.SyncEntitledChannels, parentSpaceId],
+                    queryKey: [QuerySyncKey.SyncEntitledChannels, parentSpaceId],
                 })
                 enqueueSpaceId(parentSpaceId)
             }
+            console.log(
+                '[useSyncSpaceHierarchies]',
+                'onMyMembership',
+                'roomId:',
+                room.roomId,
+                'membership:',
+                membership,
+                'prevMembership:',
+                prevMembership,
+            )
         }
 
         matrixClient?.on(RoomEvent.MyMembership, onMyMembership)

@@ -1,6 +1,6 @@
 import React, { ChangeEvent, useState } from 'react'
 import { z } from 'zod'
-import { TransactionUIState } from 'hooks/useTransactionStatus'
+import { TransactionUIState } from 'hooks/TransactionUIState'
 import { Box, Paragraph, RadioSelect, Stack, Toggle } from '@ui'
 import { TransactionButton } from '../TransactionButton'
 
