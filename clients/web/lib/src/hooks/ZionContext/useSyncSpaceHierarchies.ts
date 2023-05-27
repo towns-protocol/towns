@@ -19,6 +19,15 @@ import { toZionSpaceChild } from '../../store/use-matrix-store'
 import { useQueryClient } from '@tanstack/react-query'
 import { useSpaceIdStore } from './useSpaceIds'
 
+interface SyncInfo {
+    spaceId: string
+    timestamp: number
+}
+
+interface SyncContext {
+    [spaceId: string]: SyncInfo
+}
+
 // the spaces are just tacked on to the matrix design system,
 // child events should be treated like state events, but they are not,
 // so we have to go and fetch them manually
@@ -31,9 +40,9 @@ export function useSyncSpaceHierarchies(
     const { spaceIds } = useSpaceIdStore()
     const [spaceHierarchies, setSpaceHierarchies] = useState<SpaceHierarchies>({})
     const [spaceIdsQueue, setSpaceIdsQueue] = useState<string[]>(spaceIds.map((r) => r.networkId))
-    const [inFlightCurrent, setInflightCurrnet] = useState<Promise<void> | null>(null)
     const seenSpaceIds = useRef<RoomIdentifier[]>(spaceIds)
     const seenInvitedToIds = useRef<RoomIdentifier[]>(invitedToIds)
+    const syncContextRef = useRef<SyncContext>({})
     const queryClient = useQueryClient()
 
     const enqueueSpaceId = (spaceId: string) => {
@@ -58,9 +67,7 @@ export function useSyncSpaceHierarchies(
     // our queue
     useEffect(() => {
         if (!client || !matrixClient) {
-            return
-        }
-        if (inFlightCurrent) {
+            console.error('!!!!! hierarchies client or matrixClient is undefined')
             return
         }
         const spaceId = spaceIdsQueue.shift()
@@ -70,15 +77,24 @@ export function useSyncSpaceHierarchies(
         dequeueSpaceId(spaceId)
         const roomIdentifier = seenSpaceIds.current.find((s) => s.networkId === spaceId)
         if (!roomIdentifier) {
-            throw new Error("can't find roomIdentifier for spaceId")
+            console.error("!!!!! hierarchies can't find roomIdentifier for spaceId")
+            return
         }
-        //console.log('!!!!! hierarchies syncing space', spaceId)
-        const inflight = client
-            .syncSpace(roomIdentifier)
-            .then((hierarchy) => {
-                if (!hierarchy) {
-                    return
-                }
+        const syncTimestamp = Date.now()
+        syncContextRef.current[spaceId] = {
+            spaceId,
+            timestamp: syncTimestamp,
+        }
+        console.log('hierarchies sync started', syncContextRef.current[spaceId])
+        const inflight = async () => {
+            const hierarchy = await client.syncSpace(roomIdentifier)
+            if (!hierarchy) {
+                return
+            }
+            // set state if the timestamp is more recent.
+            // avoids race condition if the inflight() promise completes out of order
+            // because of useEffect re-runs due to dependency array changes
+            if (syncTimestamp >= syncContextRef.current[spaceId].timestamp) {
                 setSpaceHierarchies((prev) => {
                     const spaceHierarchy = {
                         root: toZionSpaceChild(hierarchy.root),
@@ -89,27 +105,27 @@ export function useSyncSpaceHierarchies(
                         [spaceId]: spaceHierarchy,
                     }
                 })
+            }
+        }
+
+        inflight()
+            .catch(() => {
+                console.error('hierarchies error syncing space', spaceId)
             })
             .finally(() => {
-                // console.log("!!!!! hierarchies done syncing space", spaceId);
-                setInflightCurrnet(null)
+                console.log('hierarchies done syncing space', spaceId)
             })
-        setInflightCurrnet(inflight)
-    }, [client, inFlightCurrent, matrixClient, spaceIdsQueue])
+    }, [client, matrixClient, spaceIdsQueue])
     // watch for new or updated space ids
     useEffect(() => {
-        // console.log("!!!!! hierarchies USE EFFECT spaceIds:", spaceIds);
         const newIds = spaceIds.filter((x) => !seenSpaceIds.current.includes(x))
         const removedIds = seenSpaceIds.current.filter((s) => !spaceIds.includes(s))
-        // console.log('!!!!! hierarchies new ids', newIds)
-        // console.log('!!!!! hierarchies removed ids', removedIds)
         newIds.forEach((s) => enqueueSpaceId(s.networkId))
         removedIds.forEach((s) => dequeueSpaceId(s.networkId))
         seenSpaceIds.current = spaceIds
     }, [spaceIds])
     // when we get a new invite, we need to sync all the spaces because we don't know which one it is for yet
     useEffect(() => {
-        // console.log("!!!!! hierarchies USE EFFECT invitedToIds:", invitedToIds);
         const newIds = invitedToIds.filter((x) => !seenInvitedToIds.current.includes(x))
         if (newIds.length > 0) {
             // enqueue all the spaces (we don't know which one it is for yet)
@@ -137,10 +153,6 @@ export function useSyncSpaceHierarchies(
                 return
             }
             const eventType = event.getType()
-
-            // TODO:  ZTEvent.BlockchainTransaction is too broad of an identifier, this is only fired for a create channel transaction. Need to update the event types to be ChannelTransaction, SpaceTransaction, etc.
-            // - a ZTEvent.BlockchainTransaction is fired when a blockchain transaction stored in user's local storage resolves - it's not a Matrix Event
-            // - we should sync again when this happens
             if (eventType === MatrixEventType.SpaceChild || eventType === MatrixMsgType.Notice) {
                 queryClient.removeQueries({
                     queryKey: [QuerySyncKey.SyncEntitledChannels, eventRoomId],
@@ -151,7 +163,6 @@ export function useSyncSpaceHierarchies(
         }
         matrixClient.on(RoomEvent.Timeline, onRoomTimelineEvent)
         return () => {
-            // console.log("!!! REMOVING EVENTS");
             matrixClient.off(RoomEvent.Timeline, onRoomTimelineEvent)
         }
     }, [matrixClient, queryClient, spaceIds])
@@ -188,16 +199,6 @@ export function useSyncSpaceHierarchies(
                 })
                 enqueueSpaceId(parentSpaceId)
             }
-            console.log(
-                '[useSyncSpaceHierarchies]',
-                'onMyMembership',
-                'roomId:',
-                room.roomId,
-                'membership:',
-                membership,
-                'prevMembership:',
-                prevMembership,
-            )
         }
 
         matrixClient?.on(RoomEvent.MyMembership, onMyMembership)
