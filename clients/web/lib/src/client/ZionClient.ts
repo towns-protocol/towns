@@ -332,8 +332,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
         // TODO: init crypto store and load olm prior to initting crypto module
         await this.casablancaClient.initCrypto()
 
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        this.casablancaClient.startSync()
+        await this.casablancaClient.startSync()
 
         return this.casablancaClient
     }

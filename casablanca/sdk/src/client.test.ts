@@ -2,10 +2,39 @@ import debug from 'debug'
 import { Client, IDownloadKeyResponse } from './client'
 import { genId, makeChannelStreamId, makeSpaceStreamId } from './id'
 import { getMessagePayloadContent_Text, getToDeviceMessagePayload, ParsedEvent } from './types'
-import { makeDonePromise, makeTestClient, awaitTimeout } from './util.test'
-import { DeviceKeys, PayloadCaseType, ToDeviceOp } from '@towns/proto'
+import { awaitTimeout, makeDonePromise, makeTestClient } from './util.test'
+import {
+    DeviceKeys,
+    PayloadCaseType,
+    ToDeviceOp,
+    SyncStreamsRequest,
+    SyncStreamsResponse,
+} from '@towns/proto'
+import { PlainMessage } from '@bufbuild/protobuf'
+import { CallOptions } from '@bufbuild/connect'
+// This is needed to get the jest itnerface for using in spyOn
+// eslint-disable-next-line import/no-extraneous-dependencies
+import { jest } from '@jest/globals'
 
 const log = debug('test')
+
+function makeMockSyncResponses(count: number) {
+    const obj = {
+        [Symbol.asyncIterator]:
+            async function* asyncGenerator(): AsyncGenerator<SyncStreamsResponse> {
+                const responses = []
+                for (let i = 0; i < count; i++) {
+                    responses.push(
+                        Promise.resolve(new SyncStreamsResponse({ streams: [{ events: [] }] })),
+                    )
+                }
+                while (responses.length) {
+                    yield await responses.shift()!
+                }
+            },
+    }
+    return obj
+}
 
 describe('clientTest', () => {
     let bobsClient: Client
@@ -23,11 +52,169 @@ describe('clientTest', () => {
 
     test('clientsCanBeClosedNoSync', async () => {})
 
+    test('clientsNotifiedOnSyncFailure', async () => {
+        await expect(alicesClient.createNewUser()).toResolve()
+        const done = makeDonePromise()
+
+        const testError = new Error('test error')
+
+        const spy = jest
+            .spyOn(alicesClient.rpcClient, 'syncStreams')
+            .mockImplementation(
+                (_request: PlainMessage<SyncStreamsRequest>, _options?: CallOptions) => {
+                    log('syncStreams')
+                    throw testError
+                },
+            )
+
+        await alicesClient.startSync({
+            onFailure: (err) => {
+                expect(err).toBe(testError)
+                done.done()
+            },
+        })
+
+        await expect(done.expectToSucceed()).toResolve()
+        const syncError = await alicesClient.stopSync()
+        expect(syncError).toBe(testError)
+        spy.mockRestore()
+    })
+
+    test('clientsRetryOnSyncError', async () => {
+        await expect(alicesClient.createNewUser()).toResolve()
+        const done = makeDonePromise()
+
+        let failureCount = 0
+        const testError = new TypeError('fetch failed')
+        const spy = jest
+            .spyOn(alicesClient.rpcClient, 'syncStreams')
+            .mockImplementation(
+                (
+                    _request: PlainMessage<SyncStreamsRequest>,
+                    _options?: CallOptions,
+                ): AsyncIterable<SyncStreamsResponse> => {
+                    if (failureCount++ < 3) {
+                        throw testError
+                    } else {
+                        done.done()
+                        spy.mockRestore()
+                        return makeMockSyncResponses(2)
+                    }
+                },
+            )
+
+        await alicesClient.startSync()
+
+        await expect(done.expectToSucceed()).toResolve()
+        const syncError = await alicesClient.stopSync()
+        expect(syncError).toBe(undefined)
+    })
+
+    test('clientsGivesUpAfter5SyncError', async () => {
+        await expect(alicesClient.createNewUser()).toResolve()
+        const done = makeDonePromise()
+
+        let failureCount = 0
+        const testError = new TypeError('fetch failed')
+        const spy = jest
+            .spyOn(alicesClient.rpcClient, 'syncStreams')
+            .mockImplementation(
+                (
+                    _request: PlainMessage<SyncStreamsRequest>,
+                    _options?: CallOptions,
+                ): AsyncIterable<SyncStreamsResponse> => {
+                    if (failureCount++ < 5) {
+                        throw testError
+                    } else {
+                        done.done()
+                        throw testError
+                    }
+                },
+            )
+
+        await alicesClient.startSync()
+
+        await expect(done.expectToSucceed()).toResolve()
+        const syncError = await alicesClient.stopSync()
+        expect(syncError).toBe(testError)
+        spy.mockRestore()
+    })
+
+    test('clientsResetsRetryCountAfterSyncSuccess', async () => {
+        await expect(alicesClient.createNewUser()).toResolve()
+        const done = makeDonePromise()
+
+        let failureCount = 0
+        const testError = new TypeError('fetch failed')
+        const spy = jest
+            .spyOn(alicesClient.rpcClient, 'syncStreams')
+            .mockImplementation(
+                (
+                    _request: PlainMessage<SyncStreamsRequest>,
+                    _options?: CallOptions,
+                ): AsyncIterable<SyncStreamsResponse> => {
+                    if (failureCount++ < 4 || (failureCount > 6 && failureCount < 9)) {
+                        throw testError
+                    } else if (failureCount === 5) {
+                        return makeMockSyncResponses(0)
+                    } else {
+                        done.done()
+                        spy.mockRestore()
+                        return makeMockSyncResponses(0)
+                    }
+                },
+            )
+
+        await alicesClient.startSync()
+
+        await expect(done.expectToSucceed()).toResolve()
+        const syncError = await alicesClient.stopSync()
+        expect(syncError).toBe(undefined)
+    })
+
+    test('clientsCanBeStoppedDuringErrorRetry', async () => {
+        await expect(alicesClient.createNewUser()).toResolve()
+        const testError = new Error('test error')
+        const done = makeDonePromise()
+
+        const spy = jest
+            .spyOn(alicesClient.rpcClient, 'syncStreams')
+            .mockImplementation(
+                (_request: PlainMessage<SyncStreamsRequest>, _options?: CallOptions) => {
+                    done.done()
+                    throw testError
+                },
+            )
+
+        await alicesClient.startSync({
+            onFailure: (_err) => {},
+        })
+
+        await expect(done.expectToSucceed()).toResolve()
+        const syncError = await alicesClient.stopSync()
+        expect(syncError).toBe(undefined)
+        spy.mockRestore()
+    })
+
     test('clientsCanBeClosedAfterSync', async () => {
         await expect(bobsClient.createNewUser()).toResolve()
         await expect(alicesClient.createNewUser()).toResolve()
-        bobsClient.startSync(3000)
-        alicesClient.startSync(3000)
+        await bobsClient.startSync()
+        await alicesClient.startSync()
+    })
+
+    test('bobCreatesUnamedSpaceAndStream', async () => {
+        log('bobCreatesUnamedSpace')
+
+        // Bob gets created, creates a space without providing an ID, and a channel without providing an ID.
+        await expect(bobsClient.createNewUser()).toResolve()
+        await bobsClient.startSync()
+
+        const spaceId = bobsClient.createSpace()
+        await expect(spaceId).toResolve()
+        const { streamId } = await spaceId
+        await expect(bobsClient.createChannel(streamId)).toResolve()
+        await expect(bobsClient.stopSync()).toResolve()
     })
 
     const bobCanReconnect = async () => {
@@ -64,11 +251,11 @@ describe('clientTest', () => {
 
         await expect(bobsAnotherClient.loadExistingUser()).toResolve()
 
-        bobsAnotherClient.startSync(1000)
+        await bobsAnotherClient.startSync()
 
         await done.expectToSucceed()
 
-        bobsAnotherClient.stopSync()
+        await bobsAnotherClient.stopSync()
 
         return 'done'
     }
@@ -101,7 +288,7 @@ describe('clientTest', () => {
 
         await expect(bobsClient.createNewUser()).toResolve()
 
-        bobsClient.startSync(5000)
+        await bobsClient.startSync()
 
         const bobsSpaceId = makeSpaceStreamId('bobs-space-' + genId())
         await expect(bobsClient.createSpace(bobsSpaceId)).toResolve()
@@ -112,7 +299,7 @@ describe('clientTest', () => {
 
         await done.expectToSucceed()
 
-        bobsClient.stopSync()
+        await bobsClient.stopSync()
 
         log('pass1 done')
 
@@ -126,7 +313,7 @@ describe('clientTest', () => {
 
         // Bob gets created, creates a space, and creates a channel.
         await expect(bobsClient.createNewUser()).toResolve()
-        bobsClient.startSync(1000)
+        await bobsClient.startSync()
 
         const bobsSpaceId = makeSpaceStreamId('bobs-space-' + genId())
         await expect(bobsClient.createSpace(bobsSpaceId)).toResolve()
@@ -158,7 +345,7 @@ describe('clientTest', () => {
 
         // Bob gets created, creates a space, and creates a channel.
         await expect(bobsClient.createNewUser()).toResolve()
-        bobsClient.startSync(1000)
+        await bobsClient.startSync()
 
         const bobsSpaceId = makeSpaceStreamId('bobs-space-' + genId())
         await expect(bobsClient.createSpace(bobsSpaceId)).toResolve()
@@ -169,7 +356,7 @@ describe('clientTest', () => {
 
         // Alice gest created.
         await expect(alicesClient.createNewUser()).toResolve()
-        alicesClient.startSync(1000)
+        await alicesClient.startSync()
 
         // Bob can send a message.
         const bobSelfHello = makeDonePromise()
@@ -267,13 +454,13 @@ describe('clientTest', () => {
         log('bobSendsAliceToDeviceMessage')
         // Bob gets created, creates a space, and creates a channel.
         await expect(bobsClient.createNewUser()).toResolve()
-        bobsClient.startSync(1000)
+        await bobsClient.startSync()
         // Alice gets created.
         await expect(alicesClient.createNewUser()).toResolve()
         const aliceUserStreamId = alicesClient.userStreamId
         log('aliceUserStreamId', aliceUserStreamId)
         const aliceUserId = alicesClient.userId
-        alicesClient.startSync(1000)
+        await alicesClient.startSync()
 
         const aliceSelfToDevice = makeDonePromise()
         alicesClient.once(
@@ -304,18 +491,69 @@ describe('clientTest', () => {
         await aliceSelfToDevice.expectToSucceed()
     })
 
+    test('bobSendsTwoAliceToDeviceMessage', async () => {
+        log('bobSendsTwoAliceToDeviceMessage')
+        // Bob gets created, creates a space, and creates a channel.
+        await expect(bobsClient.createNewUser()).toResolve()
+        await bobsClient.startSync()
+        // Alice gets created.
+        await expect(alicesClient.createNewUser()).toResolve()
+        const aliceUserStreamId = alicesClient.userStreamId
+        log('aliceUserStreamId', aliceUserStreamId)
+        const aliceUserId = alicesClient.userId
+        await alicesClient.startSync()
+
+        const aliceSelfToDevice = makeDonePromise()
+        alicesClient.once(
+            'toDeviceMessage',
+            (streamId: string, deviceId: string, message: ParsedEvent): void => {
+                const payload = getToDeviceMessagePayload(message)
+                log('toDeviceMessage for Alice', streamId, deviceId, payload?.value)
+                aliceSelfToDevice.runAndDone(() => {
+                    expect(streamId).toBe(aliceUserStreamId)
+                    expect(payload?.value).toBeDefined()
+                    const decoder = new TextDecoder()
+                    const decodedPayload = decoder.decode(payload?.value)
+                    expect(decodedPayload).toContain('Hi Alice!')
+                })
+            },
+        )
+        // bob sends a message to Alice's device.
+        await expect(
+            bobsClient.sendToDeviceMessage(
+                aliceUserId,
+                aliceUserId,
+                {
+                    content: 'Hi Alice!',
+                },
+                ToDeviceOp.TDO_UNSPECIFIED,
+            ),
+        ).toResolve()
+        await expect(
+            bobsClient.sendToDeviceMessage(
+                aliceUserId,
+                aliceUserId,
+                {
+                    content: 'Hi Again Alice!',
+                },
+                ToDeviceOp.TDO_UNSPECIFIED,
+            ),
+        ).toResolve()
+        await aliceSelfToDevice.expectToSucceed()
+    })
+
     test('bobSendsAliceToDevicesMessages', async () => {
         log('bobSendsAliceToDeviceMessages')
         // Bob gets created, creates a space, and creates a channel.
         await expect(bobsClient.createNewUser()).toResolve()
-        bobsClient.startSync(1000)
+        await bobsClient.startSync()
 
         // Alice gets created.
         await expect(alicesClient.createNewUser()).toResolve()
         const aliceUserStreamId = alicesClient.userStreamId
         log('aliceUserStreamId', aliceUserStreamId)
         const aliceUserId = alicesClient.userId
-        alicesClient.startSync(1000)
+        await alicesClient.startSync()
 
         const aliceSelfToDevice = makeDonePromise()
         alicesClient.once(
@@ -349,14 +587,14 @@ describe('clientTest', () => {
         log('bobSendsAliceToDeviceMessages')
         // Bob gets created, creates a space, and creates a channel.
         await expect(bobsClient.createNewUser()).toResolve()
-        bobsClient.startSync(1000)
+        await bobsClient.startSync()
 
         // Alice gets created.
         await expect(alicesClient.createNewUser()).toResolve()
         const aliceUserStreamId = alicesClient.userStreamId
         log('aliceUserStreamId', aliceUserStreamId)
         const aliceUserId = alicesClient.userId
-        alicesClient.startSync(1000)
+        await alicesClient.startSync()
 
         const aliceSelfToDevice = makeDonePromise()
         alicesClient.once(
@@ -391,7 +629,7 @@ describe('clientTest', () => {
         log('bobAndAliceExchangeToDevicetMessages')
         // Bob gets created, creates a space, and creates a channel.
         await expect(bobsClient.createNewUser()).toResolve()
-        bobsClient.startSync(1000)
+        await bobsClient.startSync()
 
         // Alice gets created.
         await expect(alicesClient.createNewUser()).toResolve()
@@ -399,7 +637,7 @@ describe('clientTest', () => {
         const bobUserStreamId = bobsClient.userStreamId
         const aliceUserId = alicesClient.userId
         const bobUserId = bobsClient.userId
-        alicesClient.startSync(1000)
+        await alicesClient.startSync()
 
         const aliceSelfToDevice = makeDonePromise()
         const bobSelfToDevice = makeDonePromise()
@@ -462,7 +700,7 @@ describe('clientTest', () => {
         // Bob gets created, starts syncing, and uploads his device keys.
         await expect(bobsClient.createNewUser()).toResolve()
         await expect(bobsClient.initCrypto()).toResolve()
-        bobsClient.startSync(10000)
+        await bobsClient.startSync()
         const bobsUserId = bobsClient.userId
         const bobSelfToDevice = makeDonePromise()
         bobsClient.once(
@@ -485,7 +723,7 @@ describe('clientTest', () => {
         // Bob gets created, starts syncing, and uploads his device keys.
         await expect(bobsClient.createNewUser()).toResolve()
         await expect(bobsClient.initCrypto()).toResolve()
-        bobsClient.startSync(10000)
+        await bobsClient.startSync()
         const bobsUserId = bobsClient.userId
         const bobSelfToDevice = makeDonePromise()
         bobsClient.once(
@@ -512,8 +750,8 @@ describe('clientTest', () => {
         await expect(bobsClient.initCrypto()).toResolve()
         await expect(alicesClient.createNewUser()).toResolve()
         await expect(alicesClient.initCrypto()).toResolve()
-        bobsClient.startSync(10000)
-        alicesClient.startSync(10000)
+        await bobsClient.startSync()
+        await alicesClient.startSync()
         const alicesUserId = alicesClient.userId
         const alicesSelfToDevice = makeDonePromise()
         alicesClient.once(
@@ -541,8 +779,8 @@ describe('clientTest', () => {
         await expect(bobsClient.initCrypto()).toResolve()
         await expect(alicesClient.createNewUser()).toResolve()
         await expect(alicesClient.initCrypto()).toResolve()
-        bobsClient.startSync(10000)
-        alicesClient.startSync(10000)
+        await bobsClient.startSync()
+        await alicesClient.startSync()
         const bobsUserId = bobsClient.userId
         const alicesUserId = alicesClient.userId
         const bobSelfToDevice = makeDonePromise()

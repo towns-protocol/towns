@@ -18,9 +18,9 @@
         "watch": "tsc --watch"
     },
     "dependencies": {
-        "@bufbuild/connect": "^0.8.4",
-        "@bufbuild/connect-web": "^0.8.4",
-        "@bufbuild/protobuf": "^1.1.1",
+        "@bufbuild/connect": "^0.9.0",
+        "@bufbuild/connect-web": "^0.9.0",
+        "@bufbuild/protobuf": "^1.2.0",
         "@ethereumjs/util": "^8.0.1",
         "@towns/mecholm": "workspace:^",
         "@towns/proto": "workspace:^",
@@ -32,6 +32,7 @@
         "supports-color": "^9.2.3"
     },
     "devDependencies": {
+        "@jest/globals": "^29.5.0",
         "@types/jest": "^29.4.0",
         "@types/lodash": "^4.14.186",
         "@types/node": "^18.14.2",
@@ -52,5 +53,8 @@
     },
     "files": [
         "/dist"
-    ]
+    ],
+    "resolutions": {
+        "jest-worker@^29.5.0": "patch:jest-worker@npm%3A29.5.0#./.yarn/patches/jest-worker-npm-29.5.0-70da3388f1.patch"
+    }
 }

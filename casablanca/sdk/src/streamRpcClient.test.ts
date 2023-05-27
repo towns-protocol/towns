@@ -52,7 +52,6 @@ describe('streamRpcClient', () => {
         const result = await client.info({ debug: 'graffiti' })
         expect(result).toBeDefined()
         expect(result.graffiti).toEqual('Towns.com node welcomes you!')
-        await client.close()
     })
 
     test('error', async () => {
@@ -61,16 +60,14 @@ describe('streamRpcClient', () => {
         await expect(client.info({ debug: 'error' })).rejects.toThrow(
             '[invalid_argument] 1:DEBUG_ERROR: Error requested through Info request',
         )
-        await client.close()
     })
 
     test('panic', async () => {
         const client = makeTestRpcClient()
         expect(client).toBeDefined()
         await expect(client.info({ debug: 'panic' })).rejects.toThrow(
-            '[internal] TypeError: fetch failed',
+            '[unknown] TypeError: fetch failed',
         )
-        await client.close()
     })
 
     test('charlieUsesOldDelegate', async () => {

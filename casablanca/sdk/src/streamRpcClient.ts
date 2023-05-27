@@ -15,7 +15,6 @@ import {
 } from '@bufbuild/protobuf'
 import { StreamService } from '@towns/proto'
 import debug from 'debug'
-import EventTarget, { setMaxListeners } from 'events'
 import { isDefined } from './check'
 
 const log = debug('csb:rpc_client')
@@ -47,9 +46,7 @@ export type PromiseClient<T extends ServiceType> = {
         : never
 }
 
-export type StreamRpcClientType = PromiseClient<typeof StreamService> & {
-    close: () => Promise<void>
-}
+export type StreamRpcClientType = PromiseClient<typeof StreamService>
 
 export function makeStreamRpcClient(
     dest: Transport | string,
@@ -67,18 +64,6 @@ export function makeStreamRpcClient(
 
     const options = isDefined(defaultOptions) ? defaultOptions : {}
 
-    let abortController: AbortController | undefined = undefined
-    if (!isDefined(options.signal)) {
-        abortController = new AbortController()
-        if (abortController.signal instanceof EventTarget) {
-            setMaxListeners(200, abortController.signal)
-        }
-        abortController.signal.addEventListener('abort', () => {
-            log('abortController aborted')
-        })
-        options.signal = abortController.signal
-    }
-
     const client = makeAnyClient(StreamService, (method) => {
         switch (method.kind) {
             case MethodKind.Unary:
@@ -94,13 +79,6 @@ export function makeStreamRpcClient(
         }
     }) as StreamRpcClientType
 
-    client.close = async (): Promise<void> => {
-        log('closing client')
-        if (isDefined(abortController)) {
-            abortController.abort()
-        }
-        log('client closed')
-    }
     return client
 }
 
