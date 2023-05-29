@@ -846,7 +846,7 @@
   },
   "settings": {
     "compilationTarget": {
-      "packages/contracts/src/core/tokens/Member.sol": "Member"
+      "packages/contracts/src/tokens/Member.sol": "Member"
     },
     "evmVersion": "paris",
     "libraries": {},
@@ -979,15 +979,15 @@
         "dweb:/ipfs/Qmct36zWXv3j7LZB83uwbg7TXwnZSN1fqHNDZ93GG98bGz"
       ]
     },
-    "packages/contracts/src/core/tokens/Member.sol": {
-      "keccak256": "0x687b18719bc7fef2c199faa58d84173330c93fa90b10c7a161a615d52f9bc5b4",
+    "packages/contracts/src/tokens/Member.sol": {
+      "keccak256": "0x426e309a6da1f13c6dc1fef7c12385d9f7581b80b5e049ceed8833aff210eb8d",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://288c2ec7d13bf522cccfb86921d0c7483c6a7bb15352fff4815e011275d8e5ee",
-        "dweb:/ipfs/QmeBqf76SWcsaS1kwtp2frVURMJCbBocjvGofuaRByrX66"
+        "bzz-raw://5956b9f4ea0d7da620d792ef6d9fecb1b74bb39e8e5ee26c866f146dd9575520",
+        "dweb:/ipfs/QmfQraMtya8tqeGr6FfHxY6Wi7v1az4hqsizmaTg8zGhY5"
       ]
     },
-    "packages/contracts/src/interfaces/IMember.sol": {
+    "packages/contracts/src/tokens/interfaces/IMember.sol": {
       "keccak256": "0xdb804068d751228ab794835c83722a1b375446a557e61c677f19db5509c3f5e7",
       "license": "Apache-2.0",
       "urls": [

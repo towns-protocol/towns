@@ -7,7 +7,7 @@ pragma solidity ^0.8.0;
 
 //contracts
 import {ScriptUtils} from "./ScriptUtils.sol";
-import {SpaceFactory} from "contracts/src/core/spaces/SpaceFactory.sol";
+import {SpaceFactory} from "contracts/src/spaces/SpaceFactory.sol";
 
 import {console} from "forge-std/console.sol";
 

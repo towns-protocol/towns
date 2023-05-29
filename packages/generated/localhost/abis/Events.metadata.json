@@ -131,7 +131,7 @@
   },
   "settings": {
     "compilationTarget": {
-      "packages/contracts/src/libraries/Events.sol": "Events"
+      "packages/contracts/src/spaces/libraries/Events.sol": "Events"
     },
     "evmVersion": "paris",
     "libraries": {},
@@ -160,7 +160,7 @@
     ]
   },
   "sources": {
-    "packages/contracts/src/libraries/Events.sol": {
+    "packages/contracts/src/spaces/libraries/Events.sol": {
       "keccak256": "0xaab06310ec51a878125595216b6c1b72fa26096859c8297ed4d19cc91b6b4701",
       "license": "Apache-2.0",
       "urls": [

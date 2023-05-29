@@ -6,8 +6,8 @@ import {IERC721} from "openzeppelin-contracts/contracts/token/ERC721/IERC721.sol
 
 // third-party
 import {ERC1967Proxy} from "openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Proxy.sol";
-import {CoreVoting} from "contracts/src/core/governance/base/CoreVoting.sol";
-import {DaoCoreVoting} from "contracts/src/core/governance/base/DaoCoreVoting.sol";
+import {CoreVoting} from "contracts/src/governance/base/CoreVoting.sol";
+import {DaoCoreVoting} from "contracts/src/governance/base/DaoCoreVoting.sol";
 
 // contracts
 import {ScriptUtils} from "contracts/scripts/utils/ScriptUtils.sol";
@@ -15,19 +15,19 @@ import {ScriptUtils} from "contracts/scripts/utils/ScriptUtils.sol";
 import {Timelock} from "council/features/Timelock.sol";
 import {Treasury} from "council/features/Treasury.sol";
 
-import {Dao} from "contracts/src/core/governance/Dao.sol";
-import {Council} from "contracts/src/core/governance/Council.sol";
+import {Dao} from "contracts/src/governance/Dao.sol";
+import {Council} from "contracts/src/governance/Council.sol";
 
 // tokens
-import {Towns} from "contracts/src/core/tokens/Towns.sol";
-import {Member} from "contracts/src/core/tokens/Member.sol";
-import {TownOwner} from "contracts/src/core/tokens/TownOwner.sol";
-import {Operator} from "contracts/src/core/tokens/Operator.sol";
+import {Towns} from "contracts/src/tokens/Towns.sol";
+import {Member} from "contracts/src/tokens/Member.sol";
+import {TownOwner} from "contracts/src/tokens/TownOwner.sol";
+import {Operator} from "contracts/src/tokens/Operator.sol";
 
 // vaults
-import {SimpleProxy} from "contracts/src/misc/SimpleProxy.sol";
-import {CouncilVault} from "contracts/src/core/governance/vaults/CouncilVault.sol";
-import {NFTVault} from "contracts/src/core/governance/vaults/NFTVault.sol";
+import {SimpleProxy} from "contracts/src/utils/SimpleProxy.sol";
+import {CouncilVault} from "contracts/src/governance/vaults/CouncilVault.sol";
+import {NFTVault} from "contracts/src/governance/vaults/NFTVault.sol";
 
 import {console} from "forge-std/console.sol";
 

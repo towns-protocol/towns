@@ -2,17 +2,17 @@
 pragma solidity ^0.8.0;
 
 //interfaces
-import {IERC20Staking} from "contracts/src/misc/interfaces/IERC20Staking.sol";
+import {IERC20Staking} from "contracts/src/utils/interfaces/IERC20Staking.sol";
 
 //libraries
 
 //contracts
 import {TestUtils} from "contracts/test/utils/TestUtils.sol";
-import {MockERC20} from "contracts/src/mocks/MockERC20.sol";
+import {MockERC20} from "contracts/test/mocks/MockERC20.sol";
 import {SpaceBaseSetup} from "contracts/test/spaces/SpaceBaseSetup.sol";
 
-import {StakingVault} from "contracts/src/core/governance/vaults/StakingVault.sol";
-import {IERC20Staking} from "contracts/src/misc/interfaces/IERC20Staking.sol";
+import {StakingVault} from "contracts/src/governance/vaults/StakingVault.sol";
+import {IERC20Staking} from "contracts/src/utils/interfaces/IERC20Staking.sol";
 
 import {console} from "forge-std/console.sol";
 

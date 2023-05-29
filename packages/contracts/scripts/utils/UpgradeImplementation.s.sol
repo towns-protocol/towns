@@ -3,10 +3,10 @@ pragma solidity ^0.8.0;
 
 import {ScriptUtils} from "contracts/scripts/utils/ScriptUtils.sol";
 
-import {Space} from "contracts/src/core/spaces/Space.sol";
-import {SpaceFactory} from "contracts/src/core/spaces/SpaceFactory.sol";
-import {TokenEntitlement} from "contracts/src/core/spaces/entitlements/TokenEntitlement.sol";
-import {UserEntitlement} from "contracts/src/core/spaces/entitlements/UserEntitlement.sol";
+import {Space} from "contracts/src/spaces/Space.sol";
+import {SpaceFactory} from "contracts/src/spaces/SpaceFactory.sol";
+import {TokenEntitlement} from "contracts/src/spaces/entitlements/TokenEntitlement.sol";
+import {UserEntitlement} from "contracts/src/spaces/entitlements/UserEntitlement.sol";
 
 import {console} from "forge-std/console.sol";
 

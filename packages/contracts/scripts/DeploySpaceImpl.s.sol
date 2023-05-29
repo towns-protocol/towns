@@ -2,7 +2,7 @@
 pragma solidity 0.8.19;
 
 import {Deployer} from "./common/Deployer.s.sol";
-import {Space} from "contracts/src/core/spaces/Space.sol";
+import {Space} from "contracts/src/spaces/Space.sol";
 
 contract DeploySpaceImpl is Deployer {
   function versionName() public pure override returns (string memory) {

@@ -1146,7 +1146,7 @@
         "dweb:/ipfs/QmbFZqhgbwe6GbKTuMAK8bPPEmtnyzQMm87ir2F8hYRzzX"
       ]
     },
-    "packages/contracts/src/interfaces/IEntitlement.sol": {
+    "packages/contracts/src/spaces/interfaces/IEntitlement.sol": {
       "keccak256": "0xf2902303ba01ca2f9e5e0e9c947de3958f92f67a3301e54236472862a39388df",
       "license": "Apache-2.0",
       "urls": [
@@ -1162,7 +1162,7 @@
         "dweb:/ipfs/QmNwmqeWkpXkYVPKcpo2CSdTcWLThcnrNHRYoNHnaGY9Uc"
       ]
     },
-    "packages/contracts/src/interfaces/ISpaceFactory.sol": {
+    "packages/contracts/src/spaces/interfaces/ISpaceFactory.sol": {
       "keccak256": "0xfb815354bd0ea4aacd98f0875c7ccfc86403a2a699b62ca579c7cd690f71dfe3",
       "license": "Apache-2.0",
       "urls": [

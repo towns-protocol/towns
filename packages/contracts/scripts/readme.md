@@ -50,7 +50,7 @@ This makes it easy to:
 
 ## How to deploy
 
-```
+```bash
 # say you want to deploy a new ${CONTRACT}
 
 # Provision a new deployer
@@ -75,7 +75,7 @@ This makes it easy to:
 
 ## How to script (interact with deployed contracts through foundry)
 
-```
+```bash
 # say you want to upgrade an implementation of Space inside SpaceFactory
 
 # deploy the same implementation contract you used to deploy SpaceImpl

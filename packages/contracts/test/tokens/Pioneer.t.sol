@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import "forge-std/Test.sol";
 
-import {Pioneer} from "contracts/src/core/tokens/Pioneer.sol";
+import {Pioneer} from "contracts/src/tokens/Pioneer.sol";
 import {ERC721} from "openzeppelin-contracts/contracts/token/ERC721/ERC721.sol";
 import {TestUtils} from "contracts/test/utils/TestUtils.sol";
 

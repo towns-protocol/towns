@@ -688,7 +688,7 @@
   },
   "settings": {
     "compilationTarget": {
-      "packages/contracts/src/core/tokens/Pioneer.sol": "Pioneer"
+      "packages/contracts/src/tokens/Pioneer.sol": "Pioneer"
     },
     "evmVersion": "paris",
     "libraries": {},
@@ -813,7 +813,7 @@
         "dweb:/ipfs/Qmct36zWXv3j7LZB83uwbg7TXwnZSN1fqHNDZ93GG98bGz"
       ]
     },
-    "packages/contracts/src/core/tokens/Pioneer.sol": {
+    "packages/contracts/src/tokens/Pioneer.sol": {
       "keccak256": "0xe9d37ddd074db1d6d22e48ab0736bf0bd8e027add8c6f3e1fe71a5e9edc676f8",
       "license": "Apache-2.0",
       "urls": [

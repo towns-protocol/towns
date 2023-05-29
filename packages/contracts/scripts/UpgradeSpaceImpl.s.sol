@@ -10,7 +10,7 @@ import {Deployer} from "./common/Deployer.s.sol";
 import {DeploySpaceImpl} from "./DeploySpaceImpl.s.sol";
 import {DeploySpaceFactory} from "./DeploySpaceFactory.s.sol";
 
-import {SpaceFactory} from "contracts/src/core/spaces/SpaceFactory.sol";
+import {SpaceFactory} from "contracts/src/spaces/SpaceFactory.sol";
 
 contract UpgradeSpaceImpl is Deployer {
   function versionName() public pure override returns (string memory) {

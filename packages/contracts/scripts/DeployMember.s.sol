@@ -8,7 +8,7 @@ import {MerkleTree} from "contracts/test/utils/MerkleTree.sol";
 
 //contracts
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
-import {Member} from "contracts/src/core/tokens/Member.sol";
+import {Member} from "contracts/src/tokens/Member.sol";
 
 contract DeployMember is Deployer {
   Member private member;

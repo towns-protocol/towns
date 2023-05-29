@@ -2,7 +2,7 @@
 pragma solidity 0.8.19;
 
 import {Deployer} from "./common/Deployer.s.sol";
-import {Pioneer} from "contracts/src/core/tokens/Pioneer.sol";
+import {Pioneer} from "contracts/src/tokens/Pioneer.sol";
 
 contract DeployPioneer is Deployer {
   function versionName() public pure override returns (string memory) {

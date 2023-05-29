@@ -7,7 +7,7 @@ pragma solidity ^0.8.0;
 
 //contracts
 import {ScriptUtils} from "./ScriptUtils.sol";
-import {SimpleFaucet} from "contracts/src/misc/SimpleFaucet.sol";
+import {SimpleFaucet} from "contracts/src/utils/SimpleFaucet.sol";
 
 import {console} from "forge-std/console.sol";
 

@@ -149,7 +149,7 @@
   },
   "settings": {
     "compilationTarget": {
-      "packages/contracts/src/libraries/Errors.sol": "Errors"
+      "packages/contracts/src/spaces/libraries/Errors.sol": "Errors"
     },
     "evmVersion": "paris",
     "libraries": {},
@@ -178,7 +178,7 @@
     ]
   },
   "sources": {
-    "packages/contracts/src/libraries/Errors.sol": {
+    "packages/contracts/src/spaces/libraries/Errors.sol": {
       "keccak256": "0x2d478c9688870f6780a19ea34d73db957f194702cbc3c4f4707f9825ba502cf1",
       "license": "Apache-2.0",
       "urls": [

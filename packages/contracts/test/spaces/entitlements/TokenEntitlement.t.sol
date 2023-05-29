@@ -2,19 +2,19 @@
 pragma solidity ^0.8.0;
 
 // Interfaces
-import {IEntitlement} from "contracts/src/interfaces/IEntitlement.sol";
+import {IEntitlement} from "contracts/src/spaces/interfaces/IEntitlement.sol";
 
 // Libraries
-import {Errors} from "contracts/src/libraries/Errors.sol";
-import {DataTypes} from "contracts/src/libraries/DataTypes.sol";
-import {Permissions} from "contracts/src/libraries/Permissions.sol";
+import {Errors} from "contracts/src/spaces/libraries/Errors.sol";
+import {DataTypes} from "contracts/src/spaces/libraries/DataTypes.sol";
+import {Permissions} from "contracts/src/spaces/libraries/Permissions.sol";
 
 // Contracts
-import {Space} from "contracts/src/core/spaces/Space.sol";
+import {Space} from "contracts/src/spaces/Space.sol";
 import {SpaceBaseSetup} from "contracts/test/spaces/SpaceBaseSetup.sol";
-import {TokenEntitlement} from "contracts/src/core/spaces/entitlements/TokenEntitlement.sol";
+import {TokenEntitlement} from "contracts/src/spaces/entitlements/TokenEntitlement.sol";
 import {ERC1967Proxy} from "openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Proxy.sol";
-import {Mock721, Mock1155, MockERC20} from "contracts/src/mocks/MockToken.sol";
+import {Mock721, Mock1155, MockERC20} from "contracts/test/mocks/MockToken.sol";
 
 contract TokenEntitlementTest is SpaceBaseSetup {
   address internal entitlementAddress;

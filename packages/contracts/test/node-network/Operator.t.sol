@@ -6,9 +6,9 @@ pragma solidity ^0.8.0;
 //libraries
 
 //contracts
-import "../utils/TestUtils.sol";
+import "contracts/test/utils/TestUtils.sol";
 
-import {Operator} from "contracts/src/core/tokens/Operator.sol";
+import {Operator} from "contracts/src/tokens/Operator.sol";
 
 contract OperatorTest is TestUtils {
   Operator private operator;

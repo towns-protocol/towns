@@ -3,8 +3,8 @@ pragma solidity 0.8.19;
 
 import {Deployer} from "./common/Deployer.s.sol";
 
-import {UserEntitlement} from "contracts/src/core/spaces/entitlements/UserEntitlement.sol";
-import {TokenEntitlement} from "contracts/src/core/spaces/entitlements/TokenEntitlement.sol";
+import {UserEntitlement} from "contracts/src/spaces/entitlements/UserEntitlement.sol";
+import {TokenEntitlement} from "contracts/src/spaces/entitlements/TokenEntitlement.sol";
 
 contract DeployTokenImpl is Deployer {
   function versionName() public pure override returns (string memory) {

@@ -2,16 +2,16 @@
 pragma solidity ^0.8.0;
 
 // Interfaces
-import {IEntitlement} from "contracts/src/interfaces/IEntitlement.sol";
+import {IEntitlement} from "contracts/src/spaces/interfaces/IEntitlement.sol";
 
 // Libraries
-import {Errors} from "contracts/src/libraries/Errors.sol";
-import {DataTypes} from "contracts/src/libraries/DataTypes.sol";
+import {Errors} from "contracts/src/spaces/libraries/Errors.sol";
+import {DataTypes} from "contracts/src/spaces/libraries/DataTypes.sol";
 
 // Contracts
-import {Space} from "contracts/src/core/spaces/Space.sol";
+import {Space} from "contracts/src/spaces/Space.sol";
 import {SpaceBaseSetup} from "contracts/test/spaces/SpaceBaseSetup.sol";
-import {UserEntitlement} from "contracts/src/core/spaces/entitlements/UserEntitlement.sol";
+import {UserEntitlement} from "contracts/src/spaces/entitlements/UserEntitlement.sol";
 import {ERC1967Proxy} from "openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
 import {console} from "forge-std/console.sol";

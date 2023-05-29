@@ -6,8 +6,8 @@ pragma solidity ^0.8.0;
 //libraries
 
 //contracts
-import {TestUtils} from "../utils/TestUtils.sol";
-import {Towns} from "contracts/src/core/tokens/Towns.sol";
+import {TestUtils} from "contracts/test/utils/TestUtils.sol";
+import {Towns} from "contracts/src/tokens/Towns.sol";
 
 contract TownsTest is TestUtils {
   Towns internal towns;

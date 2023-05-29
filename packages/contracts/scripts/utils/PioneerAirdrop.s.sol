@@ -7,7 +7,7 @@ pragma solidity ^0.8.0;
 
 //contracts
 import {ScriptUtils} from "./ScriptUtils.sol";
-import {Pioneer} from "contracts/src/core/tokens/Pioneer.sol";
+import {Pioneer} from "contracts/src/tokens/Pioneer.sol";
 
 contract PioneerAirdrop is ScriptUtils {
   Pioneer internal pioneer;

@@ -1,23 +1,23 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.0;
 
-import "../../utils/TestUtils.sol";
+import {TestUtils} from "contracts/test/utils/TestUtils.sol";
 
 /** Interfaces */
-import {IEntitlement} from "contracts/src/interfaces/IEntitlement.sol";
+import {IEntitlement} from "contracts/src/spaces/interfaces/IEntitlement.sol";
 
 /** Libraries */
-import {DataTypes} from "contracts/src/libraries/DataTypes.sol";
-import {Permissions} from "contracts/src/libraries/Permissions.sol";
+import {DataTypes} from "contracts/src/spaces/libraries/DataTypes.sol";
+import {Permissions} from "contracts/src/spaces/libraries/Permissions.sol";
 
 /** Contracts */
 import {ERC1967Proxy} from "openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Proxy.sol";
-import {Space} from "contracts/src/core/spaces/Space.sol";
-import {TownOwner} from "contracts/src/core/tokens/TownOwner.sol";
-import {SpaceFactory} from "contracts/src/core/spaces/SpaceFactory.sol";
-import {UserEntitlement} from "contracts/src/core/spaces/entitlements/UserEntitlement.sol";
-import {TokenEntitlement} from "contracts/src/core/spaces/entitlements/TokenEntitlement.sol";
-import {Pioneer} from "contracts/src/core/tokens/Pioneer.sol";
+import {Space} from "contracts/src/spaces/Space.sol";
+import {TownOwner} from "contracts/src/tokens/TownOwner.sol";
+import {SpaceFactory} from "contracts/src/spaces/SpaceFactory.sol";
+import {UserEntitlement} from "contracts/src/spaces/entitlements/UserEntitlement.sol";
+import {TokenEntitlement} from "contracts/src/spaces/entitlements/TokenEntitlement.sol";
+import {Pioneer} from "contracts/src/tokens/Pioneer.sol";
 
 contract SpaceFactoryTestInitialize is TestUtils {
   SpaceFactory internal _spaceFactory;

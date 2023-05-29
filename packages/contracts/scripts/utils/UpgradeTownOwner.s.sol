@@ -3,8 +3,8 @@ pragma solidity ^0.8.0;
 
 import {ScriptUtils} from "contracts/scripts/utils/ScriptUtils.sol";
 
-import {TownOwner} from "contracts/src/core/tokens/TownOwner.sol";
-import {SpaceFactory} from "contracts/src/core/spaces/SpaceFactory.sol";
+import {TownOwner} from "contracts/src/tokens/TownOwner.sol";
+import {SpaceFactory} from "contracts/src/spaces/SpaceFactory.sol";
 
 import {console} from "forge-std/console.sol";
 

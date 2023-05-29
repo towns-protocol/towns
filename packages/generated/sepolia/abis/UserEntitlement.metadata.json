@@ -807,7 +807,7 @@
         "dweb:/ipfs/Qmco6MA6apyH3pyhAmSPWZ7VUq36kcQvwE9QTYBKZMKFBf"
       ]
     },
-    "packages/contracts/src/interfaces/IEntitlement.sol": {
+    "packages/contracts/src/spaces/interfaces/IEntitlement.sol": {
       "keccak256": "0xf2902303ba01ca2f9e5e0e9c947de3958f92f67a3301e54236472862a39388df",
       "license": "Apache-2.0",
       "urls": [

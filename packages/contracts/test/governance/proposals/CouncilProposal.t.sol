@@ -7,12 +7,12 @@ import {console} from "forge-std/console.sol";
 
 // contracts
 import {DaoBaseSetup} from "contracts/test/governance/DaoBaseSetup.sol";
-import {DaoCoreVoting} from "contracts/src/core/governance/base/DaoCoreVoting.sol";
+import {DaoCoreVoting} from "contracts/src/governance/base/DaoCoreVoting.sol";
 import {SimpleCounter} from "contracts/test/mocks/SimpleCounter.sol";
-import {Member} from "contracts/src/core/tokens/Member.sol";
-import {CouncilVault} from "contracts/src/core/governance/vaults/CouncilVault.sol";
-import {Council} from "contracts/src/core/governance/Council.sol";
-import {CoreVoting} from "contracts/src/core/governance/base/CoreVoting.sol";
+import {Member} from "contracts/src/tokens/Member.sol";
+import {CouncilVault} from "contracts/src/governance/vaults/CouncilVault.sol";
+import {Council} from "contracts/src/governance/Council.sol";
+import {CoreVoting} from "contracts/src/governance/base/CoreVoting.sol";
 
 contract CouncilProposalTest is DaoBaseSetup {
   // target contract

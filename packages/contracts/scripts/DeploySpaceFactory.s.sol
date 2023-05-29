@@ -5,15 +5,15 @@ pragma solidity 0.8.19;
 
 /* Libraries */
 import {Deployer} from "./common/Deployer.s.sol";
-import {Permissions} from "contracts/src/libraries/Permissions.sol";
+import {Permissions} from "contracts/src/spaces/libraries/Permissions.sol";
 
 /* Contracts */
-import {Space} from "contracts/src/core/spaces/Space.sol";
-import {TownOwner} from "contracts/src/core/tokens/TownOwner.sol";
-import {Pioneer} from "contracts/src/core/tokens/Pioneer.sol";
-import {SpaceFactory} from "contracts/src/core/spaces/SpaceFactory.sol";
-import {UserEntitlement} from "contracts/src/core/spaces/entitlements/UserEntitlement.sol";
-import {TokenEntitlement} from "contracts/src/core/spaces/entitlements/TokenEntitlement.sol";
+import {Space} from "contracts/src/spaces/Space.sol";
+import {TownOwner} from "contracts/src/tokens/TownOwner.sol";
+import {Pioneer} from "contracts/src/tokens/Pioneer.sol";
+import {SpaceFactory} from "contracts/src/spaces/SpaceFactory.sol";
+import {UserEntitlement} from "contracts/src/spaces/entitlements/UserEntitlement.sol";
+import {TokenEntitlement} from "contracts/src/spaces/entitlements/TokenEntitlement.sol";
 import {ERC1967Proxy} from "openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
 import {DeployPioneer} from "contracts/scripts/DeployPioneer.s.sol";

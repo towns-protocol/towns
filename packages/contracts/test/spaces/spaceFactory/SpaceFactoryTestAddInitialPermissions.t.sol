@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.0;
 
-import {Errors} from "contracts/src/libraries/Errors.sol";
+import {Errors} from "contracts/src/spaces/libraries/Errors.sol";
 import {SpaceBaseSetup} from "contracts/test/spaces/SpaceBaseSetup.sol";
 
 contract SpaceFactoryTestAddPermissions is SpaceBaseSetup {

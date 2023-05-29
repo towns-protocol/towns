@@ -3,7 +3,7 @@ pragma solidity 0.8.19;
 
 import "./common/Deployer.s.sol";
 
-import {TownOwner} from "contracts/src/core/tokens/TownOwner.sol";
+import {TownOwner} from "contracts/src/tokens/TownOwner.sol";
 
 contract DeployTownOwner is Deployer {
   function versionName() public pure override returns (string memory) {

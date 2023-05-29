@@ -3,8 +3,8 @@ pragma solidity ^0.8.0;
 
 import {TestUtils} from "contracts/test/utils/TestUtils.sol";
 import {ERC721Holder} from "openzeppelin-contracts/contracts/token/ERC721/utils/ERC721Holder.sol";
-import {Errors} from "contracts/src/libraries/Errors.sol";
-import {TownOwner} from "contracts/src/core/tokens/TownOwner.sol";
+import {Errors} from "contracts/src/spaces/libraries/Errors.sol";
+import {TownOwner} from "contracts/src/tokens/TownOwner.sol";
 
 contract TownOwnerTestMintTo is TestUtils, ERC721Holder {
   TownOwner internal townOwner;
