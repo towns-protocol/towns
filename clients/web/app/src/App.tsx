@@ -42,6 +42,7 @@ export const App = () => {
     // aellis april 2023, the two server urls and the chain id should all be considered
     // a single piece of state, PROD, TEST, and LOCAL each should have {matrixUrl, casablancaUrl, chainId}
     const environment = useEnvironment()
+    const { isMobile } = useDevice()
 
     return (
         <ZionContextProvider
@@ -58,7 +59,11 @@ export const App = () => {
                     <meta
                         name="theme-color"
                         content={
-                            theme === 'dark'
+                            isMobile
+                                ? theme === 'dark'
+                                    ? Figma.DarkMode.Level1
+                                    : Figma.LightMode.Level1
+                                : theme === 'dark'
                                 ? Figma.DarkMode.Readability
                                 : Figma.LightMode.Readability
                         }
