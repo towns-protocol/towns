@@ -5,7 +5,7 @@ import { SuspenseLoader } from '@components/Loaders/SuspenseLoader'
 
 export const AppTouchLayout = () => {
     return (
-        <Stack height="100dvh">
+        <Stack height="100%">
             <SuspenseLoader>
                 <Outlet />
             </SuspenseLoader>

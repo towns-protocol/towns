@@ -109,6 +109,7 @@ const root = createGlobalTheme(':root', {
             '100vh': `100vh`,
             '100dvh': `100dvh`,
             '100svh': `100svh`,
+            '100lvh': `100lvh`,
             '25%': `25%`,
             '50%': `50%`,
             '75%': `75%`,

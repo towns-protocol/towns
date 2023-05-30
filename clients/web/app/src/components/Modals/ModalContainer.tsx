@@ -71,8 +71,9 @@ const TouchFullScreenModalContainer = (props: TouchFullScreenModalContainerProps
                         <Stack
                             horizontal
                             borderBottom
+                            paddingY
                             gap="sm"
-                            padding="sm"
+                            paddingX="sm"
                             alignItems="center"
                             paddingTop="safeAreaInsetTop"
                         >

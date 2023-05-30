@@ -76,21 +76,16 @@ const MobilePanel = (props: Props) => {
             <Sheet.Container>
                 <Sheet.Header />
                 <Sheet.Content>
-                    <div
-                        style={{
-                            maxHeight: '100svh',
-                            overflow: 'auto',
-                        }}
-                    >
+                    <Box maxHeight="100svh" overflow="auto" paddingBottom="safeAreaInsetBottom">
                         {props.children}
-                    </div>
+                    </Box>
                 </Sheet.Content>
             </Sheet.Container>
             <Sheet.Backdrop onTap={closeModal} />
         </Sheet>
     ) : (
         // TODO: sort out zIndexes
-        <Stack absoluteFill background="level1" zIndex="tooltips">
+        <Stack absoluteFill background="level1" zIndex="tooltips" height="100svh">
             <Stack
                 horizontal
                 borderBottom
@@ -100,17 +95,12 @@ const MobilePanel = (props: Props) => {
                 color="gray1"
                 position="sticky"
                 background="level1"
-                paddingTop="safeAreaInsetTop"
             >
                 <IconButton icon="back" color="gray2" size="square_sm" onClick={props.onClose} />
                 <Text fontWeight="strong">{props.label}</Text>
             </Stack>
             <Stack scroll>
-                <Box
-                    minHeight="100svh"
-                    paddingTop="safeAreaInsetTop"
-                    paddingBottom="safeAreaInsetBottom"
-                >
+                <Box minHeight="100svh" paddingBottom="safeAreaInsetBottom">
                     {props.children}
                 </Box>
             </Stack>

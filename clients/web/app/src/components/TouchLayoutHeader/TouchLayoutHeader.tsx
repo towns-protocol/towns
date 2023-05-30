@@ -18,47 +18,48 @@ export const TouchLayoutHeader = () => {
     }, [navigateToCurrentSpace])
 
     return (
-        <Stack
-            horizontal
-            borderBottom
-            paddingY="sm"
-            paddingX="lg"
-            width="100%"
-            background="level1"
-            alignItems="center"
-            zIndex="tooltips"
-        >
-            <Avatar size="avatar_x4" userId={userId} onClick={() => setShowOverlay(true)} />
-            <Stack grow />
-            {space && (
-                <Stack
-                    horizontal
-                    border
-                    gap="paragraph"
-                    padding="sm"
-                    background="level2"
-                    rounded="sm"
-                    alignItems="center"
-                    onClick={onTokenClick}
-                >
-                    <SpaceIcon
-                        height="height_md"
-                        width="height_md"
-                        spaceId={space?.id.slug}
-                        firstLetterOfSpaceName=""
-                        overrideBorderRadius="sm"
-                        variant={ImageVariants.thumbnail50}
-                    />
-                    <Text fontWeight="strong" color="default">
-                        {space.name}
-                    </Text>
-                </Stack>
-            )}
-            <Stack grow />
-            <Box background="cta1" width="x3" height="x3" />
-            <AnimatePresence>
-                {showOverlay && <TouchHomeOverlay onClose={() => setShowOverlay(false)} />}
-            </AnimatePresence>
-        </Stack>
+        <Box borderBottom paddingY="sm">
+            <Stack
+                horizontal
+                paddingX="lg"
+                width="100%"
+                background="level1"
+                alignItems="center"
+                zIndex="tooltips"
+                paddingTop="safeAreaInsetTop"
+            >
+                <Avatar size="avatar_x4" userId={userId} onClick={() => setShowOverlay(true)} />
+                <Stack grow />
+                {space && (
+                    <Stack
+                        horizontal
+                        border
+                        gap="paragraph"
+                        padding="sm"
+                        background="level2"
+                        rounded="sm"
+                        alignItems="center"
+                        onClick={onTokenClick}
+                    >
+                        <SpaceIcon
+                            height="height_md"
+                            width="height_md"
+                            spaceId={space?.id.slug}
+                            firstLetterOfSpaceName=""
+                            overrideBorderRadius="sm"
+                            variant={ImageVariants.thumbnail50}
+                        />
+                        <Text fontWeight="strong" color="default">
+                            {space.name}
+                        </Text>
+                    </Stack>
+                )}
+                <Stack grow />
+                <Box background="cta1" width="x3" height="x3" />
+                <AnimatePresence>
+                    {showOverlay && <TouchHomeOverlay onClose={() => setShowOverlay(false)} />}
+                </AnimatePresence>
+            </Stack>
+        </Box>
     )
 }

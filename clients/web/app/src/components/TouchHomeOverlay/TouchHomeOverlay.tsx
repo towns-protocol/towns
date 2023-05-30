@@ -43,13 +43,14 @@ export const TouchHomeOverlay = (props: Props) => {
     }, [link, navigate])
 
     return (
-        <Box absoluteFill insetTop="safeArea">
+        <Box absoluteFill height="100dvh">
             <MotionBox
                 absoluteFill
                 initial={{ opacity: 0 }}
                 exit={{ opacity: 0 }}
                 animate={{ opacity: 0.5 }}
                 background="level1"
+                height="100dvh"
                 onClick={onClose}
             />
             <MotionStack
@@ -61,8 +62,10 @@ export const TouchHomeOverlay = (props: Props) => {
                 animate={{ x: 0, opacity: 1 }}
                 transition={{ duration: 0.33 }}
                 width="75%"
-                height="100%"
+                height="100dvh"
                 background="level1"
+                paddingTop="safeAreaInsetTop"
+                paddingBottom="safeAreaInsetBottom"
             >
                 {user && (
                     <Stack horizontal padding alignItems="center" gap="sm">
@@ -80,21 +83,21 @@ export const TouchHomeOverlay = (props: Props) => {
                         <Icon type="close" color="gray2" onClick={onClose} />
                     </Stack>
                 )}
-
-                <Stack scroll paddingX="sm" height="100%">
-                    {spaces.map((s) => (
-                        <SpaceNavItem
-                            key={s.id.slug}
-                            exact={false}
-                            forceMatch={s.id.networkId === spaceId?.networkId}
-                            id={s.id}
-                            name={s.name}
-                            avatar={s.avatarSrc}
-                            pinned={false}
-                        />
-                    ))}
-                </Stack>
-
+                <Box grow>
+                    <Stack scroll paddingX="sm">
+                        {spaces.map((s) => (
+                            <SpaceNavItem
+                                key={s.id.slug}
+                                exact={false}
+                                forceMatch={s.id.networkId === spaceId?.networkId}
+                                id={s.id}
+                                name={s.name}
+                                avatar={s.avatarSrc}
+                                pinned={false}
+                            />
+                        ))}
+                    </Stack>
+                </Box>
                 <Stack gap borderTop padding="lg">
                     <BottomSectionButton
                         signout={false}

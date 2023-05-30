@@ -9,12 +9,10 @@ export const absoluteFillClass = style({
 })
 
 export const mobileAppClass = style({
-    height: '100svh',
+    height: '100dvh',
     overflowY: 'hidden',
     overscrollBehaviorY: 'contain',
     touchAction: 'none',
-    paddingTop: 'env(safe-area-inset-top)',
-    paddingBottom: 'env(safe-area-inset-bottom)',
 })
 
 export const srOnlyClass = style({

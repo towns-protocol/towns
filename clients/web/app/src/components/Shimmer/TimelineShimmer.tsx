@@ -4,7 +4,7 @@ import { shimmerClass } from 'ui/styles/globals/shimmer.css'
 
 export const TimelineShimmer = (props: { children?: React.ReactNode }) => {
     return (
-        <Box absoluteFill data-testid="timeline-shimmer">
+        <Box absoluteFill data-testid="timeline-shimmer" paddingTop="safeAreaInsetBottom">
             <Stack grow>
                 <Stack gap="lg">
                     <Box

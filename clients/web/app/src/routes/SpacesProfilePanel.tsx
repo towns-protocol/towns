@@ -78,58 +78,60 @@ export const SpaceProfilePanel = (props: { children?: React.ReactNode }) => {
 
     return (
         <Panel label="Profile" onClose={onClose}>
-            {isValid ? (
-                <UserProfile
-                    center
-                    userId={user.userId}
-                    displayName={getPrettyDisplayName(user).name}
-                    userAddress={userAddress}
-                    userBio={userBio}
-                    canEdit={canEdit}
-                />
-            ) : (
-                <Stack padding>
-                    <Paragraph>Profile not found</Paragraph>
-                </Stack>
-            )}
+            <Stack gap>
+                {isValid ? (
+                    <UserProfile
+                        center
+                        userId={user.userId}
+                        displayName={getPrettyDisplayName(user).name}
+                        userAddress={userAddress}
+                        userBio={userBio}
+                        canEdit={canEdit}
+                    />
+                ) : (
+                    <Stack padding>
+                        <Paragraph>Profile not found</Paragraph>
+                    </Stack>
+                )}
 
-            {cameFromSpaceInfoPanel && (
-                <Box centerContent>
-                    <Button
-                        width="auto"
-                        tone="none"
-                        size="button_sm"
-                        style={{
-                            boxShadow: 'none',
-                        }}
-                        onClick={onBack}
-                    >
-                        <Text color="cta1">Back to space info</Text>
-                    </Button>
-                </Box>
-            )}
-            {user?.userId === profileUser?.userId ? (
-                <Stack padding gap paddingBottom="lg">
-                    <PanelButton onClick={onThemeClick}>
-                        <Box
-                            border
-                            centerContent
-                            rounded="sm"
-                            aspectRatio="1/1"
-                            height="height_md"
-                            background="inverted"
+                {cameFromSpaceInfoPanel && (
+                    <Box centerContent>
+                        <Button
+                            width="auto"
+                            tone="none"
+                            size="button_sm"
+                            style={{
+                                boxShadow: 'none',
+                            }}
+                            onClick={onBack}
                         >
-                            {theme === 'dark' ? 'Aa' : 'Aa'}
-                        </Box>
-                        <Paragraph color="default">Switch theme</Paragraph>
-                    </PanelButton>
+                            <Text color="cta1">Back to space info</Text>
+                        </Button>
+                    </Box>
+                )}
+                {user?.userId === profileUser?.userId ? (
+                    <Stack padding gap paddingBottom="lg">
+                        <PanelButton onClick={onThemeClick}>
+                            <Box
+                                border
+                                centerContent
+                                rounded="sm"
+                                aspectRatio="1/1"
+                                height="height_md"
+                                background="inverted"
+                            >
+                                {theme === 'dark' ? 'Aa' : 'Aa'}
+                            </Box>
+                            <Paragraph color="default">Switch theme</Paragraph>
+                        </PanelButton>
 
-                    <PanelButton tone="negative" onClick={onLogoutClick}>
-                        <Icon type="logout" />
-                        <Paragraph>Logout</Paragraph>
-                    </PanelButton>
-                </Stack>
-            ) : undefined}
+                        <PanelButton tone="negative" onClick={onLogoutClick}>
+                            <Icon type="logout" />
+                            <Paragraph>Logout</Paragraph>
+                        </PanelButton>
+                    </Stack>
+                ) : undefined}
+            </Stack>
         </Panel>
     )
 }
