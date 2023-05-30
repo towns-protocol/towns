@@ -1,7 +1,6 @@
 import React, { useState } from 'react'
 import { useSpaceData } from 'use-zion-client'
 import { useEvent } from 'react-use-event-hook'
-
 import { ActionNavItem } from '@components/NavItem/ActionNavItem'
 import { Badge, Box, Stack } from '@ui'
 import { SyncedChannelList } from '@components/SideBars/SpaceSideBar/SyncedChannelList'
@@ -22,7 +21,7 @@ export const TouchLayoutDropdownMenu = (props: Props) => {
     const onHideBrowseChannels = useEvent(() => setVisibleModal(undefined))
 
     return (
-        <Stack scroll paddingTop="lg">
+        <Stack scroll paddingTop="lg" paddingBottom="lg">
             {space && (
                 <Box minHeight="100svh">
                     <ActionNavItem

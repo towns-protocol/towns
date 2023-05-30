@@ -6,8 +6,9 @@ import {
     useSpaceUnreadThreadMentions,
 } from 'use-zion-client'
 import { AnimatePresence, motion } from 'framer-motion'
-import { Box, Icon, IconName, Stack, Text } from '@ui'
+import { Box, Button, Icon, IconName, Stack, Text } from '@ui'
 import { TouchLayoutDropdownMenu } from '@components/TouchLayoutNavigationBar/TouchLayoutDropdownMenu'
+import { usePushNotifications } from 'hooks/usePushNotifications'
 
 type ValueType = Channel | 'threads' | 'mentions'
 type Props = {
@@ -16,7 +17,8 @@ type Props = {
 
 export const TouchLayoutNavigationBar = (props: Props) => {
     const { value } = props
-
+    const { displayNotificationBanner, requestPushPermission, denyPushPermission } =
+        usePushNotifications()
     const [dropDownOpen, setDropDownOpen] = useState(false)
     const unreadThreadsCount = useSpaceThreadRootsUnreadCount()
     const unreadThreadMentions = useSpaceUnreadThreadMentions()
@@ -102,6 +104,32 @@ export const TouchLayoutNavigationBar = (props: Props) => {
             </Stack>
 
             <AnimatePresence>
+                {displayNotificationBanner && (
+                    <MotionStack
+                        centerContent
+                        padding="lg"
+                        gap="lg"
+                        background="level3"
+                        initial={{ opacity: 0 }}
+                        exit={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ ease: 'easeOut', duration: 0.3 }}
+                    >
+                        <Text fontWeight="strong" color="default" textAlign="center">
+                            Turn on desktop notifications for DMs,
+                            <br /> threads and mentions?
+                        </Text>
+                        <Stack horizontal gap>
+                            <Button tone="cta1" size="button_sm" onClick={requestPushPermission}>
+                                Enable
+                            </Button>
+                            <Button tone="level2" size="button_sm" onClick={denyPushPermission}>
+                                No thanks
+                            </Button>
+                        </Stack>
+                    </MotionStack>
+                )}
+
                 {dropDownOpen && (
                     <Box grow absoluteFill height="100svh" overflow="hidden" zIndex="ui" top="x8">
                         <MotionStack
