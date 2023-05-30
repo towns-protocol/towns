@@ -778,6 +778,50 @@ export const TokenIcon = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) =>
     </svg>
 ))
 
+export const TouchSendIcon = forwardRef<SVGSVGElement, React.SVGProps<SVGSVGElement>>(
+    (props, ref) => (
+        <svg
+            width="36"
+            height="36"
+            viewBox="0 0 36 36"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            {...props}
+            ref={ref}
+        >
+            <rect width="36" height="36" rx="18" fill="#21E078" />
+            <path
+                fillRule="evenodd"
+                clipRule="evenodd"
+                d="M24.4232 13.2441C24.7487 13.5695 24.7487 14.0972 24.4232 14.4226L15.5007 23.3452L11.5781 19.4226C11.2526 19.0972 11.2526 18.5695 11.5781 18.2441C11.9035 17.9186 12.4311 17.9186 12.7566 18.2441L15.5007 20.9882L23.2447 13.2441C23.5702 12.9186 24.0978 12.9186 24.4232 13.2441Z"
+                fill="#151418"
+            />
+        </svg>
+    ),
+)
+
+export const TouchCancelIcon = forwardRef<SVGSVGElement, React.SVGProps<SVGSVGElement>>(
+    (props, ref) => (
+        <svg
+            width="36"
+            height="36"
+            viewBox="0 0 36 36"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            {...props}
+            ref={ref}
+        >
+            <rect width="36" height="36" rx="18" fill="#F2693E" />
+            <path
+                fillRule="evenodd"
+                clipRule="evenodd"
+                d="M23.0167 13.5896C23.3421 13.2641 23.3421 12.7365 23.0167 12.4111C22.6913 12.0856 22.1636 12.0856 21.8382 12.4111L17.7134 16.5359L13.5886 12.4111C13.2632 12.0857 12.7355 12.0857 12.4101 12.4111C12.0847 12.7365 12.0847 13.2642 12.4101 13.5896L16.5349 17.7144L12.4101 21.8392C12.0847 22.1646 12.0847 22.6922 12.4101 23.0177C12.7355 23.3431 13.2632 23.3431 13.5886 23.0177L17.7134 18.8929L21.8382 23.0177C22.1636 23.3431 22.6913 23.3431 23.0167 23.0177C23.3421 22.6923 23.3421 22.1646 23.0167 21.8392L18.8919 17.7144L23.0167 13.5896Z"
+                fill="#EAEAEA"
+            />
+        </svg>
+    ),
+)
+
 export const TrendingIcon = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path
@@ -1054,6 +1098,8 @@ const iconMap = {
     tag: TagIcon,
     threads: MessageIcon,
     token: TokenIcon,
+    touchCancel: TouchCancelIcon,
+    touchSend: TouchSendIcon,
     trending: TrendingIcon,
     type: TypeIcon,
     unlock: UnlockIcon,

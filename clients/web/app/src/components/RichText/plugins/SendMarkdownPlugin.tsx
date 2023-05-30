@@ -10,8 +10,9 @@ import {
 } from 'lexical'
 import React, { useCallback, useEffect, useState } from 'react'
 import { Mention } from 'use-zion-client'
-import { Button, Stack } from '@ui'
+import { Button, Icon, Stack } from '@ui'
 import { notUndefined } from 'ui/utils/utils'
+import { useDevice } from 'hooks/useDevice'
 import { $isMentionNode } from '../nodes/MentionNode'
 
 export const SendMarkdownPlugin = (props: {
@@ -82,7 +83,9 @@ export const SendMarkdownPlugin = (props: {
 }
 
 const EditMessageButtons = (props: { onSave?: () => void; onCancel?: () => void }) => {
+    const { isMobile } = useDevice()
     const { onCancel } = props
+
     useEffect(() => {
         if (!onCancel) {
             return
@@ -98,7 +101,12 @@ const EditMessageButtons = (props: { onSave?: () => void; onCancel?: () => void 
         }
     }, [onCancel])
 
-    return (
+    return isMobile ? (
+        <Stack horizontal gap paddingX paddingBottom="md" justifyContent="end">
+            <Icon type="touchCancel" size="square_lg" onClick={props.onCancel} />
+            <Icon type="touchSend" size="square_lg" onClick={props.onSave} />
+        </Stack>
+    ) : (
         <Stack horizontal gap>
             <Button size="button_sm" tone="cta1" onClick={props.onSave}>
                 Save

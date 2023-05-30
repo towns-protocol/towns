@@ -3,6 +3,8 @@ import { MessageType, TimelineEvent, ZTEvent } from 'use-zion-client'
 import { MessageLayout, MessageLayoutProps } from '@components/MessageLayout/MessageLayout'
 import { RatioedBackgroundImage } from '@components/RatioedBackgroundImage'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
+import { useDevice } from 'hooks/useDevice'
+
 import {
     MessageTimelineContext,
     MessageTimelineType,
@@ -24,6 +26,7 @@ type Props = {
 export const MessageItem = (props: Props) => {
     const { itemData, isHighlight } = props
     const event = itemData.event
+    const { isMobile } = useDevice()
 
     const timelineContext = useContext(MessageTimelineContext)
 
@@ -57,12 +60,24 @@ export const MessageItem = (props: Props) => {
                 <TimelineEncryptedContent event={event} displayContext={displayContext} />
             ) : event.content.kind === ZTEvent.RoomMessage ? (
                 isEditing ? (
-                    <TimelineMessageEditor
-                        initialValue={itemData.event.content.body}
-                        eventId={event.eventId}
-                        eventContent={event.content}
-                        channelId={channelId}
-                    />
+                    <>
+                        <TimelineMessageEditor
+                            initialValue={itemData.event.content.body}
+                            eventId={event.eventId}
+                            eventContent={event.content}
+                            channelId={channelId}
+                        />
+
+                        {/* Always show message on touch devices, even while editing also disables onMentionClick. */}
+                        {isMobile && (
+                            <MessageBody
+                                eventContent={event.content}
+                                event={event}
+                                members={members}
+                                channels={channels}
+                            />
+                        )}
+                    </>
                 ) : event.content.msgType === MessageType.Image ? (
                     event.content.content.info?.url ? (
                         // render v2 image format
