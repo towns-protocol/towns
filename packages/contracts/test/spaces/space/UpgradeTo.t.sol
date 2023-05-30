@@ -9,7 +9,7 @@ import {SpaceBaseSetup} from "contracts/test/spaces/SpaceBaseSetup.sol";
 import {Space} from "contracts/src/spaces/Space.sol";
 import {TokenEntitlement} from "contracts/src/spaces/entitlements/TokenEntitlement.sol";
 
-contract UpgradeToTest is SpaceBaseSetup {
+contract SpaceUpgradeToTest is SpaceBaseSetup {
   SpaceV2 public spaceV2;
   TokenV2 public tokenV2;
 
@@ -33,6 +33,16 @@ contract UpgradeToTest is SpaceBaseSetup {
     assertEq(SpaceV2(_space).name(), "zion");
     assertEq(SpaceV2(_space).items(0), _item);
     assertTrue(SpaceV2(_space).isEntitledToSpace(_creator, Permissions.Owner));
+  }
+
+  function testRevertUpgradeTo() external {
+    address _creator = _randomAddress();
+
+    vm.prank(_creator);
+    address _space = createSimpleSpace();
+
+    vm.expectRevert(Errors.NotAllowed.selector);
+    Space(_space).upgradeTo(address(spaceV2));
   }
 
   function testUpgradeTokenEntitlement() external {

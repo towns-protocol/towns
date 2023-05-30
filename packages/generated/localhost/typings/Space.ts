@@ -135,6 +135,7 @@ export interface SpaceInterface extends utils.Interface {
     "setEntitlementModule(address,bool)": FunctionFragment;
     "setOwnerRoleId(uint256)": FunctionFragment;
     "setSpaceAccess(bool)": FunctionFragment;
+    "supportsInterface(bytes4)": FunctionFragment;
     "token()": FunctionFragment;
     "tokenId()": FunctionFragment;
     "updateChannel(string,string)": FunctionFragment;
@@ -188,6 +189,7 @@ export interface SpaceInterface extends utils.Interface {
       | "setEntitlementModule"
       | "setOwnerRoleId"
       | "setSpaceAccess"
+      | "supportsInterface"
       | "token"
       | "tokenId"
       | "updateChannel"
@@ -373,6 +375,10 @@ export interface SpaceInterface extends utils.Interface {
     functionFragment: "setSpaceAccess",
     values: [PromiseOrValue<boolean>]
   ): string;
+  encodeFunctionData(
+    functionFragment: "supportsInterface",
+    values: [PromiseOrValue<BytesLike>]
+  ): string;
   encodeFunctionData(functionFragment: "token", values?: undefined): string;
   encodeFunctionData(functionFragment: "tokenId", values?: undefined): string;
   encodeFunctionData(
@@ -526,6 +532,10 @@ export interface SpaceInterface extends utils.Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "setSpaceAccess",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "supportsInterface",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "token", data: BytesLike): Result;
@@ -842,6 +852,11 @@ export interface Space extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
+    supportsInterface(
+      interfaceId: PromiseOrValue<BytesLike>,
+      overrides?: CallOverrides
+    ): Promise<[boolean]>;
+
     token(overrides?: CallOverrides): Promise<[string]>;
 
     tokenId(overrides?: CallOverrides): Promise<[BigNumber]>;
@@ -1078,6 +1093,11 @@ export interface Space extends BaseContract {
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
+  supportsInterface(
+    interfaceId: PromiseOrValue<BytesLike>,
+    overrides?: CallOverrides
+  ): Promise<boolean>;
+
   token(overrides?: CallOverrides): Promise<string>;
 
   tokenId(overrides?: CallOverrides): Promise<BigNumber>;
@@ -1313,6 +1333,11 @@ export interface Space extends BaseContract {
       _disabled: PromiseOrValue<boolean>,
       overrides?: CallOverrides
     ): Promise<void>;
+
+    supportsInterface(
+      interfaceId: PromiseOrValue<BytesLike>,
+      overrides?: CallOverrides
+    ): Promise<boolean>;
 
     token(overrides?: CallOverrides): Promise<string>;
 
@@ -1578,6 +1603,11 @@ export interface Space extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
+    supportsInterface(
+      interfaceId: PromiseOrValue<BytesLike>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
     token(overrides?: CallOverrides): Promise<BigNumber>;
 
     tokenId(overrides?: CallOverrides): Promise<BigNumber>;
@@ -1805,6 +1835,11 @@ export interface Space extends BaseContract {
     setSpaceAccess(
       _disabled: PromiseOrValue<boolean>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    supportsInterface(
+      interfaceId: PromiseOrValue<BytesLike>,
+      overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
     token(overrides?: CallOverrides): Promise<PopulatedTransaction>;

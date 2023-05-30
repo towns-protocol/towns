@@ -2,8 +2,9 @@
 pragma solidity 0.8.19;
 
 import {DataTypes} from "../libraries/DataTypes.sol";
+import {IERC165} from "openzeppelin-contracts/contracts/utils/introspection/IERC165.sol";
 
-interface ISpace {
+interface ISpace is IERC165 {
   /// ***** Space Management *****
   /// @notice initializes a new Space
   /// @param name the name of the space

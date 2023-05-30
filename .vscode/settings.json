@@ -15,5 +15,6 @@
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
   "solidity.formatter": "prettier",
-  "solidity.linter": "solhint"
+  "solidity.linter": "solhint",
+  "solidity.monoRepoSupport": true
 }

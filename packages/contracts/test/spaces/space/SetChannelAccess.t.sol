@@ -46,10 +46,10 @@ contract SetChannelAccessTest is SpaceBaseSetup {
     Space(_space).setChannelAccess(channelId, true);
   }
 
-  function testSetChannelAccessChannelDoesNotExist(
-    string memory channelId
-  ) external {
+  function testSetChannelAccessChannelDoesNotExist() external {
     address _space = createSimpleSpace();
+
+    string memory channelId = "channelId";
 
     vm.expectRevert(Errors.ChannelDoesNotExist.selector);
     Space(_space).setChannelAccess(channelId, true);
