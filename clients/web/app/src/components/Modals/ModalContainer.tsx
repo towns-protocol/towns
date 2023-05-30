@@ -15,7 +15,7 @@ type Props = {
 
 export const ModalContainer = (props: Props) => {
     const root = useZLayerContext().rootLayerRef?.current
-    const { isMobile } = useDevice()
+    const { isTouch } = useDevice()
     const { onHide, touchTitle } = props
 
     if (!root) {
@@ -24,7 +24,7 @@ export const ModalContainer = (props: Props) => {
     }
 
     return createPortal(
-        isMobile && touchTitle ? (
+        isTouch && touchTitle ? (
             <TouchFullScreenModalContainer title={touchTitle} onHide={onHide}>
                 {props.children}
             </TouchFullScreenModalContainer>
@@ -98,8 +98,8 @@ const TouchFullScreenModalContainer = (props: TouchFullScreenModalContainerProps
 }
 
 const CenteredModalContainer = (props: Props) => {
-    const { isMobile } = useDevice()
-    const minWidth: BoxProps['minWidth'] = isMobile ? '100%' : props.minWidth || '600'
+    const { isTouch } = useDevice()
+    const minWidth: BoxProps['minWidth'] = isTouch ? '100%' : props.minWidth || '600'
 
     return (
         <Box>

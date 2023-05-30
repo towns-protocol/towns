@@ -12,8 +12,8 @@ type Props = {
 }
 
 export const ChannelHeader = (props: Props) => {
-    const { isMobile } = useDevice()
-    return isMobile ? (
+    const { isTouch } = useDevice()
+    return isTouch ? (
         <TouchLayoutNavigationBar value={props.channel} />
     ) : (
         <DesktopChannelHeader {...props} />

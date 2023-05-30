@@ -22,7 +22,7 @@ type Props = {
 }
 
 export const TimelineMessageEditor = (props: Props) => {
-    const { isMobile } = useDevice()
+    const { isTouch } = useDevice()
     const { initialValue, channelId, eventId, eventContent } = props
     const { timelineActions } = useContext(MessageTimelineContext) ?? {}
     const editChannelEvent = useEditMessage(channelId)
@@ -43,7 +43,7 @@ export const TimelineMessageEditor = (props: Props) => {
     const userId = useMyProfile()?.userId
     const channels = useSpaceChannels()
 
-    return isMobile ? (
+    return isTouch ? (
         <TouchEditMessageWrapper onCancel={onCancel}>
             <Box grow />
             <Box padding borderTop background="level1">

@@ -24,7 +24,7 @@ export const SpaceThreads = () => {
     const { userId } = useMatrixCredentials()
     const spaceId = useSpaceId()
     const threadRoots = useSpaceThreadRoots()
-    const { isMobile } = useDevice()
+    const { isTouch } = useDevice()
 
     const threads = usePersistOrder(threadRoots, {
         sorterFn: sortThreads,
@@ -33,9 +33,9 @@ export const SpaceThreads = () => {
 
     return (
         <CentralPanelLayout>
-            {isMobile && <TouchLayoutNavigationBar value="threads" />}
+            {isTouch && <TouchLayoutNavigationBar value="threads" />}
             {userId && spaceId && threads.length > 0 ? (
-                <Stack absoluteFill scroll paddingTop={isMobile ? 'x8' : 'none'}>
+                <Stack absoluteFill scroll paddingTop={isTouch ? 'x8' : 'none'}>
                     <Stack gap="lg" padding="lg" minHeight="100svh">
                         {threads.map(({ thread, channel }) => {
                             return (

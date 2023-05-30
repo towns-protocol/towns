@@ -42,7 +42,7 @@ export const MessageThreadPanel = (props: Props) => {
     const { members } = useSpaceMembers()
     const userId = useMyProfile()?.userId
     const channels = useSpaceChannels()
-    const { isMobile } = useDevice()
+    const { isTouch } = useDevice()
 
     const panelLabel = (
         <Paragraph>
@@ -75,7 +75,7 @@ export const MessageThreadPanel = (props: Props) => {
                 {isChannelWritable && (
                     <Box paddingY="none" paddingX="md" style={{ position: 'sticky', bottom: 0 }}>
                         <RichTextEditor
-                            autoFocus={!isMobile}
+                            autoFocus={!isTouch}
                             editable={!!isChannelWritable}
                             placeholder="Reply..."
                             storageId={`${channelId.networkId}-${messageId}`}

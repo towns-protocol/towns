@@ -23,7 +23,7 @@ export const AllChannelsList = ({
 }) => {
     const space = useSpaceData()
     const { client } = useZionClient()
-    const { isMobile } = useDevice()
+    const { isTouch } = useDevice()
     // matrix doesn't always sync left rooms. For example if you leave a room, and all other members leave it too. And there may be other unexpected cases.
     // matrix sdk .syncLeftRooms() returns empty array
     // so using blockchain data to get all the channels
@@ -56,7 +56,7 @@ export const AllChannelsList = ({
         <Stack>
             {space && !space?.isLoadingChannels && contractChannelsWithJoinedStatus.length > 0 ? (
                 <>
-                    {!isMobile && (
+                    {!isTouch && (
                         <Stack
                             horizontal
                             justifyContent="spaceBetween"

@@ -16,8 +16,8 @@ type Props = {
 }
 
 export const Panel = (props: Props) => {
-    const { isMobile } = useDevice()
-    return isMobile ? MobilePanel(props) : DesktopPanel(props)
+    const { isTouch } = useDevice()
+    return isTouch ? MobilePanel(props) : DesktopPanel(props)
 }
 
 const DesktopPanel = (props: Props) => {

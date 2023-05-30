@@ -53,7 +53,7 @@ const SpaceChannelWrapper = (props: { children: React.ReactElement }) => {
 
 const SpacesChannelComponent = () => {
     const { messageId } = useParams()
-    const { isMobile } = useDevice()
+    const { isTouch } = useDevice()
     const { joinRoom, scrollback, sendMessage, isRoomEncrypted } = useZionClient()
 
     const { spaceId, channelId, channel } = useChannelData()
@@ -190,7 +190,7 @@ const SpacesChannelComponent = () => {
                             background={isChannelWritable ? 'level2' : 'level1'}
                             key={channelId.networkId}
                             storageId={channel.id.networkId}
-                            autoFocus={!hasThreadOpen && !isMobile}
+                            autoFocus={!hasThreadOpen && !isTouch}
                             initialValue=""
                             placeholder={placeholder}
                             channels={channels}

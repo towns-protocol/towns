@@ -76,14 +76,14 @@ export const MessageLayout = (props: Props) => {
     } = props
 
     const ref = useRef<HTMLDivElement>(null)
-    const { isMobile } = useDevice()
+    const { isTouch } = useDevice()
 
     const { isHover, onMouseEnter } = useHover(ref)
     const { isFocused } = useFocused(ref)
 
     const [isModalSheetVisible, setIsModalSheetVisible] = useState(false)
 
-    const isActive = isMobile ? isFocused : isHover
+    const isActive = isTouch ? isFocused : isHover
 
     const date = timestamp
         ? isRelativeDate
@@ -117,7 +117,7 @@ export const MessageLayout = (props: Props) => {
             background="level1"
             {...backgroundProps}
             tabIndex={0}
-            onDoubleClick={!isMobile && canReply ? onDoubleClick : undefined}
+            onDoubleClick={!isTouch && canReply ? onDoubleClick : undefined}
         >
             {/* left / avatar gutter */}
             {/* snippet: center avatar with name row by keeping the size of the containers equal  */}
@@ -188,7 +188,7 @@ export const MessageLayout = (props: Props) => {
                         <Stack grow fontSize="md" color="default" gap="md">
                             {children}
                         </Stack>
-                        {isMobile && (
+                        {isTouch && (
                             <>
                                 <Stack grow />
                                 <IconButton
@@ -225,7 +225,7 @@ export const MessageLayout = (props: Props) => {
                         </Stack>
                     )}
                 </Stack>
-                {!isMobile &&
+                {!isTouch &&
                     isChannelWritable &&
                     spaceId &&
                     channelId &&
@@ -245,7 +245,7 @@ export const MessageLayout = (props: Props) => {
             </Stack>
 
             {isModalSheetVisible &&
-                isMobile &&
+                isTouch &&
                 isChannelWritable &&
                 spaceId &&
                 channelId &&

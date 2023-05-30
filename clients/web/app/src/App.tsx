@@ -42,7 +42,7 @@ export const App = () => {
     // aellis april 2023, the two server urls and the chain id should all be considered
     // a single piece of state, PROD, TEST, and LOCAL each should have {matrixUrl, casablancaUrl, chainId}
     const environment = useEnvironment()
-    const { isMobile } = useDevice()
+    const { isTouch } = useDevice()
 
     return (
         <ZionContextProvider
@@ -59,7 +59,7 @@ export const App = () => {
                     <meta
                         name="theme-color"
                         content={
-                            isMobile
+                            isTouch
                                 ? theme === 'dark'
                                     ? Figma.DarkMode.Level1
                                     : Figma.LightMode.Level1
@@ -147,9 +147,9 @@ const RedirectToLoginWithSavedLocation = () => (
 )
 
 const AppTopLevelLayout = () => {
-    const { isMobile } = useDevice()
+    const { isTouch } = useDevice()
 
-    return isMobile ? (
+    return isTouch ? (
         <Box className={mobileAppClass}>
             <Outlet />
         </Box>

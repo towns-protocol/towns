@@ -22,12 +22,12 @@ import { CentralPanelLayout } from './layouts/CentralPanelLayout'
 export const SpaceMentions = () => {
     const { userId } = useMatrixCredentials()
     const mentions = useSpaceMentions()
-    const { isMobile } = useDevice()
+    const { isTouch } = useDevice()
 
     return (
         <CentralPanelLayout>
-            {isMobile && <TouchLayoutNavigationBar value="mentions" />}
-            <Stack absoluteFill scroll paddingTop={isMobile ? 'x8' : 'none'}>
+            {isTouch && <TouchLayoutNavigationBar value="mentions" />}
+            <Stack absoluteFill scroll paddingTop={isTouch ? 'x8' : 'none'}>
                 {mentions.length ? (
                     <Stack grow minHeight="100svh">
                         <Stack gap padding="lg">

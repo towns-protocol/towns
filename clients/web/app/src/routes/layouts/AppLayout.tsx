@@ -11,7 +11,7 @@ export const AppLayout = () => {
     const spaceRoute = useMatch({ path: `/${PATHS.SPACES}/:spaceSlug`, end: false })
     const needsOnboarding = useNeedsOnboarding() || false
     const spaceId = spaceRoute?.params.spaceSlug ?? ''
-    const { isMobile } = useDevice()
+    const { isTouch } = useDevice()
 
     return needsOnboarding ? (
         <Register />
@@ -19,7 +19,7 @@ export const AppLayout = () => {
         <SpaceContextProvider spaceId={spaceId}>
             <>
                 <AutojoinChannels />
-                {isMobile ? <AppTouchLayout /> : <AppPanelLayout />}
+                {isTouch ? <AppTouchLayout /> : <AppPanelLayout />}
             </>
         </SpaceContextProvider>
     )

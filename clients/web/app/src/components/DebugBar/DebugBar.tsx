@@ -88,7 +88,7 @@ const DebugModal = ({
 }: ModalProps) => {
     const { accounts, provider } = useWeb3Context()
     const { chain: walletChain } = useNetwork()
-    const { isMobile } = useDevice()
+    const { isTouch } = useDevice()
 
     return (
         <ModalContainer onHide={onHide}>
@@ -136,7 +136,7 @@ const DebugModal = ({
 
                         <Divider />
 
-                        <Stack gap horizontal={!isMobile} justifyContent="end">
+                        <Stack gap horizontal={!isTouch} justifyContent="end">
                             {ENVIRONMENTS.map((env) => (
                                 <Button
                                     key={env.name}

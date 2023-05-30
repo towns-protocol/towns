@@ -10,9 +10,9 @@ export const CentralPanelLayout = (props: { children: React.ReactNode }) => {
     const { children } = props
     const { sizes, onSizesChange } = usePersistPanes(['channel', 'right'])
     const outlet = useOutlet()
-    const { isMobile } = useDevice()
+    const { isTouch } = useDevice()
 
-    return isMobile ? (
+    return isTouch ? (
         <>
             <Stack height="100%">
                 <TouchLayoutHeader />

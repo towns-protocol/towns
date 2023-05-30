@@ -83,7 +83,7 @@ export const SendMarkdownPlugin = (props: {
 }
 
 const EditMessageButtons = (props: { onSave?: () => void; onCancel?: () => void }) => {
-    const { isMobile } = useDevice()
+    const { isTouch } = useDevice()
     const { onCancel } = props
 
     useEffect(() => {
@@ -101,7 +101,7 @@ const EditMessageButtons = (props: { onSave?: () => void; onCancel?: () => void 
         }
     }, [onCancel])
 
-    return isMobile ? (
+    return isTouch ? (
         <Stack horizontal gap paddingX paddingBottom="md" justifyContent="end">
             <Icon type="touchCancel" size="square_lg" onClick={props.onCancel} />
             <Icon type="touchSend" size="square_lg" onClick={props.onSave} />

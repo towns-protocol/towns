@@ -26,7 +26,7 @@ type Props = {
 export const MessageItem = (props: Props) => {
     const { itemData, isHighlight } = props
     const event = itemData.event
-    const { isMobile } = useDevice()
+    const { isTouch } = useDevice()
 
     const timelineContext = useContext(MessageTimelineContext)
 
@@ -69,7 +69,7 @@ export const MessageItem = (props: Props) => {
                         />
 
                         {/* Always show message on touch devices, even while editing also disables onMentionClick. */}
-                        {isMobile && (
+                        {isTouch && (
                             <MessageBody
                                 eventContent={event.content}
                                 event={event}
