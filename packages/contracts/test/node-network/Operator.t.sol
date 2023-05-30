@@ -6,7 +6,7 @@ pragma solidity ^0.8.0;
 //libraries
 
 //contracts
-import "contracts/test/utils/TestUtils.sol";
+import {TestUtils} from "contracts/test/utils/TestUtils.sol";
 
 import {Operator} from "contracts/src/tokens/Operator.sol";
 

@@ -1,21 +1,20 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.0;
 
-import "forge-std/Test.sol";
-
 import {Pioneer} from "contracts/src/tokens/Pioneer.sol";
 import {ERC721} from "openzeppelin-contracts/contracts/token/ERC721/ERC721.sol";
 import {TestUtils} from "contracts/test/utils/TestUtils.sol";
+import {StdStorage, stdStorage} from "forge-std/StdStorage.sol";
 
 contract PioneerTest is TestUtils {
   using stdStorage for StdStorage;
 
-  address bob;
-  address alice;
+  address internal bob;
+  address internal alice;
 
   Pioneer private nft;
 
-  uint256 constant INITIAL_CONTRACT_BALANCE = 5 ether;
+  uint256 internal constant INITIAL_CONTRACT_BALANCE = 5 ether;
 
   function setUp() public {
     bob = _randomAddress();

@@ -246,7 +246,7 @@ contract ERC20DropTest is TestUtils {
     address owner = receiver;
     address spender = _randomAddress();
     uint256 value = 1 ether;
-    uint256 deadline = 1000;
+    uint256 deadline = block.timestamp + 1000;
 
     uint256 nonce = _erc20Drop.nonces(owner);
 
@@ -289,7 +289,7 @@ contract ERC20DropTest is TestUtils {
     address owner = receiver;
     address spender = _randomAddress();
     uint256 value = 1 ether;
-    uint256 deadline = 1000;
+    uint256 deadline = block.timestamp + 1000;
 
     uint256 nonce = _erc20Drop.nonces(owner);
 
@@ -322,7 +322,7 @@ contract ERC20DropTest is TestUtils {
     address owner = receiver;
     address spender = _randomAddress();
     uint256 value = 1 ether;
-    uint256 deadline = 1000;
+    uint256 deadline = block.timestamp + 1000;
 
     uint256 nonce = _erc20Drop.nonces(owner);
 
@@ -366,7 +366,7 @@ contract ERC20DropTest is TestUtils {
     address owner = receiver;
     address spender = _randomAddress();
     uint256 value = 1 ether;
-    uint256 deadline = 1000;
+    uint256 deadline = block.timestamp + 1000;
 
     uint256 nonce = _erc20Drop.nonces(owner);
 

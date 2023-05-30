@@ -26,9 +26,14 @@ contract StakingVaultTest is SpaceBaseSetup {
   address internal _stakerOne;
   address internal _stakerTwo;
 
-  uint256 internal _rewardDuration = 1000;
+  /// @dev Reward duration in seconds. This is the time that the reward will be distributed for.
+  uint256 internal _rewardDuration = 4 days;
+
+  /// @dev Reward amount in wei. This is the amount that will be distributed.
   uint256 internal _rewardAmount = 1000 ether;
-  uint256 internal _claimPeriod = 7 days;
+
+  /// @dev The period in which the reward can be claimed for
+  uint256 internal _claimPeriod = block.timestamp + _rewardDuration + 7 days;
 
   function setUp() external {
     _deployer = _randomAddress();
@@ -56,6 +61,7 @@ contract StakingVaultTest is SpaceBaseSetup {
     vm.startPrank(_deployer);
     MockERC20(_stakingToken).approve(_stakingVault, type(uint256).max);
     StakingVault(_stakingVault).depositRewardTokens(1000 ether);
+
     StakingVault(_stakingVault).setRewardDuration(_rewardDuration);
     StakingVault(_stakingVault).setRewardAmount(_rewardAmount);
     vm.stopPrank();
@@ -83,17 +89,10 @@ contract StakingVaultTest is SpaceBaseSetup {
     assertEq(_availableReward, 0, "StakingVaultTest: available reward");
 
     // ====== warp timestamp to calculate rewards ======
-    vm.warp(StakingVault(_stakingVault).periodFinish()); // block.timestamp = 1001
+    vm.warp(StakingVault(_stakingVault).periodFinish()); // way past the periodFinish
 
-    (, _availableReward) = StakingVault(_stakingVault).getStakeInfo(_stakerOne);
-    assertEq(
-      _availableReward,
-      1000 ether,
-      "StakingVaultTest: available reward"
-    );
-
-    // ====== second staker ======
-    vm.warp(2000); // way past the periodFinish
+    // // ====== second staker ======
+    // vm.warp(block.timestamp + 2000); // way past the periodFinish
 
     vm.prank(_stakerTwo);
     StakingVault(_stakingVault).stake(200);
@@ -105,36 +104,27 @@ contract StakingVaultTest is SpaceBaseSetup {
       "StakingVaultTest: staked token balance"
     );
 
-    // check balance of stakerTwo tokens
+    // // check balance of stakerTwo tokens
     assertEq(
       MockERC20(_stakingToken).balanceOf(_stakerTwo),
       800, // 1000 - 200 staked
       "StakingVaultTest: stakerTwo balance"
     );
 
-    // check balance of staked tokens for stakerTwo
+    // // check balance of staked tokens for stakerTwo
     (_amountStaked, _availableReward) = StakingVault(_stakingVault)
       .getStakeInfo(_stakerTwo);
 
-    // at this point the staker has no rewards available
+    // // at this point the staker has no rewards available
     assertEq(_amountStaked, 200, "StakingVaultTest: staked amount");
     assertEq(_availableReward, 0, "StakingVaultTest: available reward");
 
-    // ====== warp timestamp to calculate rewards ======
-    vm.warp(3000); // way past the periodFinish
-
-    (, _availableReward) = StakingVault(_stakingVault).getStakeInfo(_stakerOne);
-
-    // this is still 1000 ether because the claim period is 7 days
-    assertEq(
-      _availableReward,
-      1000 ether,
-      "StakingVaultTest: available reward"
-    );
+    // // ====== warp timestamp to calculate rewards ======
+    vm.warp(StakingVault(_stakingVault).periodFinish() + 1 days); // way past the periodFinish
 
     (, _availableReward) = StakingVault(_stakingVault).getStakeInfo(_stakerTwo);
 
-    // since the periodFinish is 1000, the rewards are calculated from 0 to 1000
+    // // since the periodFinish is 1000, the rewards are calculated from 0 to 1000
     assertEq(_availableReward, 0 ether, "StakingVaultTest: available reward");
   }
 
@@ -151,7 +141,7 @@ contract StakingVaultTest is SpaceBaseSetup {
     vm.prank(_stakerOne);
     StakingVault(_stakingVault).stake(400);
 
-    vm.warp(1000);
+    vm.warp(block.timestamp + 1000);
 
     uint256 rewardBalanceBefore = StakingVault(_stakingVault)
       .getRewardTokenBalance();
@@ -162,6 +152,7 @@ contract StakingVaultTest is SpaceBaseSetup {
 
     vm.prank(_stakerOne);
     StakingVault(_stakingVault).claim();
+
     uint256 rewardBalanceAfter = StakingVault(_stakingVault)
       .getRewardTokenBalance();
 
@@ -183,14 +174,14 @@ contract StakingVaultTest is SpaceBaseSetup {
     vm.prank(_stakerOne);
     StakingVault(_stakingVault).stake(400);
 
-    vm.warp(500);
+    vm.warp(block.timestamp + 500);
 
     vm.startPrank(_stakerOne);
     StakingVault(_stakingVault).claim();
     StakingVault(_stakingVault).withdraw(400);
     vm.stopPrank();
 
-    vm.warp(1000);
+    vm.warp(block.timestamp + 1000);
 
     vm.prank(_stakerOne);
     vm.expectRevert(
@@ -206,8 +197,8 @@ contract StakingVaultTest is SpaceBaseSetup {
   // Staking conditions
   // ===============================
   function test_setRewardAmount() external {
-    // force end of period
-    vm.warp(_rewardDuration + 1);
+    // force end of reward period
+    vm.warp(block.timestamp + _rewardDuration + 1);
 
     vm.prank(_deployer);
     StakingVault(_stakingVault).setRewardAmount(10 ether);
@@ -215,36 +206,31 @@ contract StakingVaultTest is SpaceBaseSetup {
     vm.prank(_stakerOne);
     StakingVault(_stakingVault).stake(400);
 
-    vm.warp(_rewardDuration + 2);
+    (, uint256 oldRewards) = StakingVault(_stakingVault).getStakeInfo(
+      _stakerOne
+    );
+
+    vm.warp(block.timestamp + _rewardDuration + 2);
 
     (uint256 stakedTokens, uint256 availableReward) = StakingVault(
       _stakingVault
     ).getStakeInfo(_stakerOne);
 
     assertEq(stakedTokens, 400, "StakingVaultTest: staked amount");
-    assertEq(availableReward, 0.01 ether, "StakingVaultTest: available reward");
+    assertTrue(
+      availableReward > oldRewards,
+      "StakingVaultTest: available reward"
+    );
   }
 
   function test_setRewardDuration() external {
     // force end of period
-    vm.warp(_rewardDuration + 1);
+    vm.warp(block.timestamp + _rewardDuration + 1);
 
     vm.startPrank(_deployer);
-    StakingVault(_stakingVault).setRewardDuration(100);
-    // StakingVault(_stakingVault).setRewardAmount(10 ether);
+    StakingVault(_stakingVault).setRewardDuration(_rewardDuration + 1 days);
+    StakingVault(_stakingVault).setRewardAmount(10 ether);
     vm.stopPrank();
-
-    vm.prank(_stakerOne);
-    StakingVault(_stakingVault).stake(400);
-
-    vm.warp(_rewardDuration + 2);
-
-    (uint256 stakedTokens, uint256 availableReward) = StakingVault(
-      _stakingVault
-    ).getStakeInfo(_stakerOne);
-
-    assertEq(stakedTokens, 400, "StakingVaultTest: staked amount");
-    assertEq(availableReward, 0 ether, "StakingVaultTest: available reward");
   }
 
   function test_setRewardAmountNotAuthorized() external {

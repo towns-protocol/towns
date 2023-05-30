@@ -25,7 +25,7 @@ contract ERC721SignatureMintTest is TestUtils {
   bytes32 internal domainSeparator;
 
   ISignatureMintERC721.MintRequest private _mintRequest;
-  bytes _signature;
+  bytes internal _signature;
 
   string internal constant NAME = "Test";
   string internal constant SYMBOL = "TST";
@@ -63,9 +63,11 @@ contract ERC721SignatureMintTest is TestUtils {
     vm.deal(receiver, 1_000);
 
     // create typehash for mint request
+    // solhint-disable max-line-length
     typehashMintRequest = keccak256(
       "MintRequest(address to,address royaltyReceiver,uint256 royaltyValue,address primarySaleReceiver,string uri,uint256 quantity,uint256 pricePerToken,address currency,uint128 validityStartTimestamp,uint128 validityEndTimestamp,bytes32 uid)"
     );
+    // solhint-enable max-line-length
 
     // create domain separator
     nameHash = keccak256(bytes("SignatureMintERC721"));

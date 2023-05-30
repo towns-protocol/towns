@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.0;
 
+// solhint-disable-next-line
 import "forge-std/Test.sol";
 
 contract TestUtils is Test {
@@ -17,6 +18,8 @@ contract TestUtils is Test {
 
   constructor() {
     vm.setEnv("TESTING", "true");
+
+    // solhint-disable
     _nonce = uint256(
       keccak256(
         abi.encode(
@@ -29,6 +32,7 @@ contract TestUtils is Test {
         )
       )
     );
+    // solhint-enable
   }
 
   function _bytes32ToString(bytes32 str) internal pure returns (string memory) {

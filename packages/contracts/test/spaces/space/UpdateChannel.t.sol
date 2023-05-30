@@ -47,14 +47,15 @@ contract UpdateChannelTest is SpaceBaseSetup {
     Space(_space).updateChannel(channelId, channelName);
   }
 
-  function testUpdateChannelDoesNotExist(string memory channelName) external {
+  function testUpdateChannelDoesNotExist() external {
     address _space = createSimpleSpace();
     string memory newChannelName = "new-channel-name";
     vm.expectRevert(Errors.ChannelDoesNotExist.selector);
-    Space(_space).updateChannel(channelName, newChannelName);
+    Space(_space).updateChannel("non-existent", newChannelName);
   }
 
-  function testUpdateChannelEmptyString(string memory channelId) external {
+  function testUpdateChannelEmptyString() external {
+    string memory channelId = "channel-id";
     address _space = createSimpleSpace();
     (, , uint256[] memory roleIds) = _createSimpleChannelData();
 

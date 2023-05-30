@@ -10,7 +10,10 @@ contract MerkleTree {
     address[] memory members,
     uint256[] memory claimAmounts
   ) external pure returns (bytes32 root, bytes32[][] memory tree) {
-    require(members.length != 0 && members.length == claimAmounts.length);
+    require(
+      members.length != 0 && members.length == claimAmounts.length,
+      "invalid input"
+    );
     // Determine tree height.
     uint256 height = 0;
     {

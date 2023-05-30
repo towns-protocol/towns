@@ -17,31 +17,32 @@ import {ERC1967Proxy} from "openzeppelin-contracts/contracts/proxy/ERC1967/ERC19
 import {Mock721, Mock1155, MockERC20} from "contracts/test/mocks/MockToken.sol";
 
 contract TokenEntitlementTest is SpaceBaseSetup {
-  address internal entitlementAddress;
-  TokenEntitlement internal implementation;
-  TokenEntitlement internal tokenEntitlement;
-  Mock721 mockToken = new Mock721();
-  Mock1155 mockToken2 = new Mock1155();
-  MockERC20 mockToken3 = new MockERC20();
-  uint256 tokenId;
+  address internal _entitlementAddress;
+  TokenEntitlement internal _implementation;
+  TokenEntitlement internal _tokenEntitlement;
+
+  Mock721 public mockToken = new Mock721();
+  Mock1155 public mockToken2 = new Mock1155();
+  MockERC20 public mockToken3 = new MockERC20();
+  uint256 public tokenId;
 
   function setUp() public {
     tokenId = spaceToken.nextTokenId();
     vm.prank(address(spaceFactory));
     spaceToken.mintTo(address(this), "");
 
-    implementation = new TokenEntitlement();
-    entitlementAddress = address(
+    _implementation = new TokenEntitlement();
+    _entitlementAddress = address(
       new ERC1967Proxy(
-        address(implementation),
+        address(_implementation),
         abi.encodeCall(
           TokenEntitlement.initialize,
           (address(spaceToken), tokenId)
         )
       )
     );
-    tokenEntitlement = TokenEntitlement(entitlementAddress);
-    tokenEntitlement.setSpace(address(this));
+    _tokenEntitlement = TokenEntitlement(_entitlementAddress);
+    _tokenEntitlement.setSpace(address(this));
   }
 
   function testUpgradeTo() external {
@@ -49,28 +50,28 @@ contract TokenEntitlementTest is SpaceBaseSetup {
 
     vm.prank(_randomAddress());
     vm.expectRevert(Errors.NotAllowed.selector);
-    TokenEntitlement(entitlementAddress).upgradeTo(address(implementation2));
+    TokenEntitlement(_entitlementAddress).upgradeTo(address(implementation2));
 
-    TokenEntitlement(entitlementAddress).upgradeTo(address(implementation2));
+    TokenEntitlement(_entitlementAddress).upgradeTo(address(implementation2));
 
     assertEq(
-      TokenEntitlementv2(entitlementAddress).name(),
+      TokenEntitlementv2(_entitlementAddress).name(),
       "Token Entitlement"
     );
   }
 
   function testSupportInterface() external {
     bytes4 interfaceId = type(IEntitlement).interfaceId;
-    assertTrue(tokenEntitlement.supportsInterface(interfaceId));
+    assertTrue(_tokenEntitlement.supportsInterface(interfaceId));
   }
 
   function testGetEntitlementDataByRoleId() external {
     address _space = createSimpleSpace();
-    address _tokenEntitlement = getSpaceTokenEntitlement(_space);
+    address tokenEntitlement = getSpaceTokenEntitlement(_space);
     uint256 _ownerRoleId = Space(_space).ownerRoleId();
     address _spaceToken = spaceFactory.SPACE_TOKEN_ADDRESS();
 
-    bytes[] memory entitlementData = IEntitlement(_tokenEntitlement)
+    bytes[] memory entitlementData = IEntitlement(tokenEntitlement)
       .getEntitlementDataByRoleId(_ownerRoleId);
 
     for (uint256 i = 0; i < entitlementData.length; i++) {
@@ -88,9 +89,9 @@ contract TokenEntitlementTest is SpaceBaseSetup {
     uint256 roleId = _randomUint256();
     string memory channelId = "some-channel";
 
-    tokenEntitlement.addRoleIdToChannel(channelId, roleId);
+    _tokenEntitlement.addRoleIdToChannel(channelId, roleId);
 
-    uint256[] memory _roleIds = tokenEntitlement.getRoleIdsByChannelId(
+    uint256[] memory _roleIds = _tokenEntitlement.getRoleIdsByChannelId(
       channelId
     );
 
@@ -108,10 +109,10 @@ contract TokenEntitlementTest is SpaceBaseSetup {
     uint256 roleId = _randomUint256();
     string memory channelId = "some-channel";
 
-    tokenEntitlement.addRoleIdToChannel(channelId, roleId);
+    _tokenEntitlement.addRoleIdToChannel(channelId, roleId);
 
     vm.expectRevert(Errors.RoleAlreadyExists.selector);
-    tokenEntitlement.addRoleIdToChannel(channelId, roleId);
+    _tokenEntitlement.addRoleIdToChannel(channelId, roleId);
   }
 
   function testRemoveRoleIdFromChannel() external {
@@ -120,10 +121,10 @@ contract TokenEntitlementTest is SpaceBaseSetup {
     uint256 roleId = _randomUint256();
     uint256 roleId2 = _randomUint256();
 
-    tokenEntitlement.addRoleIdToChannel(channelId, roleId);
+    _tokenEntitlement.addRoleIdToChannel(channelId, roleId);
 
-    tokenEntitlement.addRoleIdToChannel(channelId, roleId2);
-    tokenEntitlement.removeRoleIdFromChannel(channelId, roleId2);
+    _tokenEntitlement.addRoleIdToChannel(channelId, roleId2);
+    _tokenEntitlement.removeRoleIdFromChannel(channelId, roleId2);
   }
 
   function testRevertIfNoTokenQuantity() external {
@@ -139,7 +140,7 @@ contract TokenEntitlementTest is SpaceBaseSetup {
     });
 
     vm.expectRevert(Errors.QuantityNotFound.selector);
-    tokenEntitlement.setEntitlement(roleId, abi.encode(tokens));
+    _tokenEntitlement.setEntitlement(roleId, abi.encode(tokens));
   }
 
   function testRevertIfNotContractAddress() external {
@@ -155,14 +156,14 @@ contract TokenEntitlementTest is SpaceBaseSetup {
     });
 
     vm.expectRevert(Errors.AddressNotFound.selector);
-    tokenEntitlement.setEntitlement(roleId, abi.encode(tokens));
+    _tokenEntitlement.setEntitlement(roleId, abi.encode(tokens));
   }
 
   function testRevertIfNoTokensSet() external {
     uint256 roleId = _randomUint256();
 
     vm.expectRevert(Errors.EntitlementNotFound.selector);
-    tokenEntitlement.setEntitlement(
+    _tokenEntitlement.setEntitlement(
       roleId,
       abi.encode(new DataTypes.ExternalToken[](0))
     );
@@ -173,19 +174,20 @@ contract TokenEntitlementTest is SpaceBaseSetup {
 
     vm.prank(_creator);
     address _space = createSimpleSpace();
-    address _tokenEntitlement = getSpaceTokenEntitlement(_space);
+    address tokenEntitlement = getSpaceTokenEntitlement(_space);
 
-    DataTypes.Role[] memory roles = IEntitlement(_tokenEntitlement)
-      .getUserRoles(_creator);
+    DataTypes.Role[] memory roles = IEntitlement(tokenEntitlement).getUserRoles(
+      _creator
+    );
 
     assertEq(roles.length, 1);
   }
 
   function testInvalidRoleIds() external {
     address _space = createSimpleSpace();
-    address _tokenEntitlement = getSpaceTokenEntitlement(_space);
+    address tokenEntitlement = getSpaceTokenEntitlement(_space);
 
-    IEntitlement(_tokenEntitlement).isEntitled(
+    IEntitlement(tokenEntitlement).isEntitled(
       "",
       _randomAddress(),
       bytes32(abi.encodePacked("NonExistentPermission"))
@@ -224,7 +226,7 @@ contract TokenEntitlementTest is SpaceBaseSetup {
 
     address _space = createSpaceWithEntitlements(_entitlementData);
 
-    address _tokenEntitlement = getSpaceTokenEntitlement(_space);
+    address tokenEntitlement = getSpaceTokenEntitlement(_space);
     DataTypes.Role[] memory _roles = Space(_space).getRoles();
 
     // find moderator role
@@ -240,14 +242,14 @@ contract TokenEntitlementTest is SpaceBaseSetup {
 
     tokens[0].contractAddress = address(_mock1155Token);
     DataTypes.Entitlement memory _entitlement = DataTypes.Entitlement(
-      _tokenEntitlement,
+      tokenEntitlement,
       abi.encode(tokens)
     );
 
     Space(_space).addRoleToEntitlement(_moderatorRoleId, _entitlement);
 
     assertTrue(
-      IEntitlement(_tokenEntitlement).isEntitled(
+      IEntitlement(tokenEntitlement).isEntitled(
         "",
         _bob,
         bytes32(abi.encodePacked(Permissions.Read))
@@ -255,7 +257,7 @@ contract TokenEntitlementTest is SpaceBaseSetup {
     );
 
     assertFalse(
-      IEntitlement(_tokenEntitlement).isEntitled(
+      IEntitlement(tokenEntitlement).isEntitled(
         "some-channel",
         _bob,
         bytes32(abi.encodePacked(Permissions.Read))
@@ -311,7 +313,7 @@ contract TokenEntitlementTest is SpaceBaseSetup {
     // collector should be entitled now
     assertTrue(Space(_space).isEntitledToSpace(collector, Permissions.Read));
 
-    address _tokenEntitlement = getSpaceTokenEntitlement(_space);
+    address tknEntitlement = getSpaceTokenEntitlement(_space);
 
     // create another role with the same permission
     DataTypes.ExternalToken[]
@@ -327,7 +329,7 @@ contract TokenEntitlementTest is SpaceBaseSetup {
       1
     );
     _entitlements[0] = DataTypes.Entitlement({
-      module: address(_tokenEntitlement),
+      module: address(tknEntitlement),
       data: abi.encode(_externalTokens)
     });
 
@@ -404,12 +406,12 @@ contract TokenEntitlementTest is SpaceBaseSetup {
       tokenIds: new uint256[](0)
     });
 
-    tokenEntitlement.setEntitlement(roleId, abi.encode(tokens2));
-    tokenEntitlement.setEntitlement(roleId, abi.encode(tokens));
+    _tokenEntitlement.setEntitlement(roleId, abi.encode(tokens2));
+    _tokenEntitlement.setEntitlement(roleId, abi.encode(tokens));
 
-    tokenEntitlement.getEntitlementDataByRoleId(roleId);
+    _tokenEntitlement.getEntitlementDataByRoleId(roleId);
 
-    tokenEntitlement.removeEntitlement(roleId, abi.encode(tokens));
+    _tokenEntitlement.removeEntitlement(roleId, abi.encode(tokens));
   }
 }
 

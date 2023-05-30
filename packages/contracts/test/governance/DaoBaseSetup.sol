@@ -35,19 +35,19 @@ contract DaoBaseSetup is TestUtils {
   address public treasury;
 
   // tokens
-  address towns;
-  address member;
-  address operator;
+  address public towns;
+  address public member;
+  address public operator;
 
   // vaults
-  address councilVault;
-  address memberVault;
-  address operatorVault;
+  address public councilVault;
+  address public memberVault;
+  address public operatorVault;
 
   // operators
-  address[] councilVaults;
-  address[] councilTargets;
-  address[] membershipVaults;
+  address[] public councilVaults;
+  address[] public councilTargets;
+  address[] public membershipVaults;
 
   constructor() {
     address deployer = address(this);

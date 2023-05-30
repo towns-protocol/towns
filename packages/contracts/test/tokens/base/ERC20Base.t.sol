@@ -128,7 +128,7 @@ contract ERC20BaseTest is TestUtils {
     address _owner = receiver;
     address _spender = _randomAddress();
     uint256 _value = 1 ether;
-    uint256 _deadline = 1000;
+    uint256 _deadline = block.timestamp + 1000;
     uint256 _nonce = erc20Base.nonces(_owner);
 
     domainSeparator = keccak256(
@@ -176,7 +176,7 @@ contract ERC20BaseTest is TestUtils {
     address _owner = receiver;
     address _spender = _randomAddress();
     uint256 _value = 1 ether;
-    uint256 _deadline = 1000;
+    uint256 _deadline = block.timestamp + 1000;
     uint256 _nonce = erc20Base.nonces(_owner);
 
     domainSeparator = keccak256(
@@ -214,7 +214,7 @@ contract ERC20BaseTest is TestUtils {
     address _owner = receiver;
     address _spender = _randomAddress();
     uint256 _value = 1 ether;
-    uint256 _deadline = 1000;
+    uint256 _deadline = block.timestamp + 1000;
     uint256 _nonce = erc20Base.nonces(_owner);
 
     domainSeparator = keccak256(
