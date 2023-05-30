@@ -180,6 +180,7 @@ const TableCell = (props: TableCellProps) => {
                 size="square_lg"
                 background="level2"
                 color={isError ? 'error' : 'gray2'}
+                padding="xs"
             />
             <Text color={isError ? 'error' : 'default'}>{text}</Text>
         </Stack>
