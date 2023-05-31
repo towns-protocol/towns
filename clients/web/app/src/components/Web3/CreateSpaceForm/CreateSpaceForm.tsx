@@ -7,32 +7,34 @@ import {
     Permission,
     RoomVisibility,
     SignerUndefinedError,
+    TransactionStatus,
     WalletDoesNotMatchSignedInAccountError,
     useCreateSpaceTransaction,
     useCurrentWalletEqualsSignedInAccount,
     useOnTransactionEmitted,
-    useSyncSpace,
     useZionClient,
 } from 'use-zion-client'
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
-
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { shallow } from 'zustand/shallow'
 import { toast } from 'react-hot-toast/headless'
+import { useNavigate } from 'react-router'
+import { Box, Button, Heading, Text } from '@ui'
+import { TransactionUIState, toTransactionUIStates } from 'hooks/TransactionUIState'
+
 import { ErrorMessageText } from 'ui/components/ErrorMessage/ErrorMessage'
 import { FailedUploadAfterSpaceCreation } from '@components/Notifications/FailedUploadAfterSpaceCreation'
+import { PATHS } from 'routes'
 import { RequireTransactionNetworkMessage } from '@components/RequireTransactionNetworkMessage/RequireTransactionNetworkMessage'
 import { TransactionButton } from '@components/TransactionButton'
-import { TransactionUIState, toTransactionUIStates } from 'hooks/TransactionUIState'
-import { Box, Button, Heading, Text } from '@ui'
 import { useDevOnlyQueryParams } from 'hooks/useQueryParam'
 import { useImageStore } from '@components/UploadImage/useImageStore'
-import { useOnTransactionStages } from 'hooks/useOnTransactionStages'
 import { useRequireTransactionNetwork } from 'hooks/useRequireTransactionNetwork'
 import { useUploadImage } from 'api/lib/uploadImage'
+import { useFormSteps } from '../../../hooks/useFormSteps'
+import { useCreateSpaceFormStore } from './CreateSpaceFormStore'
 import { CreateSpaceStep3 } from './steps/CreateSpaceStep3'
 import { CreateSpaceStep2 } from './steps/CreateSpaceStep2'
 import { CreateSpaceStep1 } from './steps/CreateSpaceStep1'
-import { useFormSteps } from '../../../hooks/useFormSteps'
 import {
     ERROR_INVALID_PARAMETERS,
     ERROR_NAME_CONTAINS_INVALID_CHARACTERS,
@@ -41,7 +43,6 @@ import {
     EVERYONE,
     TOKEN_HOLDERS,
 } from './constants'
-import { useCreateSpaceFormStore } from './CreateSpaceFormStore'
 
 const MotionBox = motion(Box)
 
@@ -128,6 +129,8 @@ export const CreateSpaceForm = () => {
         transactionHash,
         createSpaceTransactionWithRole,
     } = useCreateSpaceTransaction()
+    const navigate = useNavigate()
+    const isCreatingSpace = useRef<boolean>(false)
 
     const [wentBackAfterAttemptingCreation, setWentBackAfterAttemptingCreation] = useState(false)
     const hasError = useMemo(() => {
@@ -214,6 +217,7 @@ export const CreateSpaceForm = () => {
         const { spaceName } = step2
 
         if (!membershipType || !spaceName || !spaceName) {
+            isCreatingSpace.current = false
             return
         }
 
@@ -238,24 +242,38 @@ export const CreateSpaceForm = () => {
     }, [createSpaceTransactionWithRole])
 
     const onSubmit = useCallback(async () => {
-        if (isLast) {
-            setWentBackAfterAttemptingCreation(false)
-            await createSpace()
+        if (isCreatingSpace.current) {
+            // guard against calling this multiple times while awaiting
+            // the completion of the transaction.
             return
         }
-        goNext()
+        isCreatingSpace.current = true
+        try {
+            if (isLast) {
+                setWentBackAfterAttemptingCreation(false)
+                await createSpace()
+            } else {
+                goNext()
+            }
+        } finally {
+            isCreatingSpace.current = false
+        }
     }, [createSpace, goNext, isLast])
 
     const onTransactionCreated = useCallback(() => {
         roomId && useCreateSpaceFormStore.getState().setCreatedSpaceId(roomId.networkId)
+        console.log('[CreateSpaceForm]', 'onTransactionCreated', roomId?.networkId)
     }, [roomId])
 
-    const { syncSpace } = useSyncSpace()
-    const onTransactionSuccessful = useCallback(async () => {
+    const onTransactionSuccessful = useCallback(() => {
+        console.log(
+            '[CreateSpaceForm] onTransactionSuccessful, navigate to ',
+            `/${PATHS.SPACES}/${roomId?.slug}/${PATHS.GETTING_STARTED}`,
+        )
         if (roomId) {
-            await syncSpace(roomId) // re-sync the space hierarchy once the transaction is completed
+            navigate(`/${PATHS.SPACES}/${roomId.slug}/${PATHS.GETTING_STARTED}`)
         }
-    }, [roomId, syncSpace])
+    }, [navigate, roomId])
 
     const { createdSpaceId, setMintedTokenAddress } = useCreateSpaceFormStore(
         (state) => ({
@@ -309,13 +327,17 @@ export const CreateSpaceForm = () => {
         [createdSpaceId, setMintedTokenAddress, spaceDapp, uploadImage],
     )
 
-    // listen for when transaction is created
-    useOnTransactionStages({
-        transactionHash,
-        transactionStatus,
-        onCreate: onTransactionCreated,
-        onSuccess: onTransactionSuccessful,
-    })
+    // listen for when transaction status changes, and handle accordingly.
+    useEffect(() => {
+        if (!transactionHash) {
+            return
+        }
+        if (transactionStatus === TransactionStatus.Success) {
+            onTransactionSuccessful()
+        } else if (transactionStatus === TransactionStatus.Pending) {
+            onTransactionCreated()
+        }
+    }, [transactionStatus, transactionHash, onTransactionSuccessful, onTransactionCreated])
 
     // listen for when transaction is emitted from store
     useOnTransactionEmitted(onTransactionEmitted)

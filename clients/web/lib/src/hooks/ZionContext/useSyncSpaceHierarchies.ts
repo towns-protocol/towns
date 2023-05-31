@@ -9,7 +9,7 @@ import {
     Room,
     RoomEvent,
 } from 'matrix-js-sdk'
-import { MessageType, SpaceHierarchies } from '../../types/zion-types'
+import { SpaceHierarchies } from '../../types/zion-types'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { QuerySyncKey } from '../query-keys'
@@ -27,23 +27,23 @@ export function useSyncSpaceHierarchies(
     client: ZionClient | undefined,
     matrixClient: MatrixClient | undefined,
     invitedToIds: RoomIdentifier[],
-): { spaceHierarchies: SpaceHierarchies; syncSpaceHierarchy: (spaceId: RoomIdentifier) => void } {
+): { spaceHierarchies: SpaceHierarchies; syncSpaceHierarchy: (spaceId: string) => void } {
     const { spaceIds } = useSpaceIdStore()
     const [spaceHierarchies, setSpaceHierarchies] = useState<SpaceHierarchies>({})
     const [spaceIdsQueue, setSpaceIdsQueue] = useState<string[]>(spaceIds.map((r) => r.networkId))
-    const [inFlightCurrent, setInflightCurrnet] = useState<Promise<void> | null>(null)
+    const [currentSpaceId, setCurrentSpaceId] = useState<string | null>(null)
     const seenSpaceIds = useRef<RoomIdentifier[]>(spaceIds)
     const seenInvitedToIds = useRef<RoomIdentifier[]>(invitedToIds)
     const queryClient = useQueryClient()
 
-    const enqueueSpaceId = (spaceId: string) => {
+    const enqueueSpaceId = useCallback((spaceId: string) => {
         setSpaceIdsQueue((prev) => {
             if (prev.includes(spaceId)) {
                 return prev
             }
             return [...prev, spaceId]
         })
-    }
+    }, [])
     const dequeueSpaceId = (spaceId: string) => {
         setSpaceIdsQueue((prev) => {
             if (!prev.includes(spaceId)) {
@@ -52,52 +52,58 @@ export function useSyncSpaceHierarchies(
             return prev.filter((id) => id !== spaceId)
         })
     }
-    const syncSpaceHierarchy = useCallback((spaceId: RoomIdentifier) => {
-        enqueueSpaceId(spaceId.networkId)
-    }, [])
     // our queue
     useEffect(() => {
-        if (!client || !matrixClient) {
-            return
-        }
-        if (inFlightCurrent) {
+        if (
+            !client ||
+            !matrixClient ||
+            currentSpaceId // sync in progress. skip this iteration.
+        ) {
             return
         }
         const spaceId = spaceIdsQueue.shift()
         if (!spaceId) {
             return
         }
-        console.log('[useSyncSpaceHierarchies] syncing space', spaceId)
         dequeueSpaceId(spaceId)
         const roomIdentifier = seenSpaceIds.current.find((s) => s.networkId === spaceId)
         if (!roomIdentifier) {
-            throw new Error("can't find roomIdentifier for spaceId")
+            console.error(
+                "[useSyncSpaceHierarchies] can't find roomIdentifier for spaceId. skipping.",
+                spaceId,
+            )
+            return
         }
-        //console.log('!!!!! hierarchies syncing space', spaceId)
-        const inflight = client
-            .syncSpace(roomIdentifier)
-            .then((hierarchy) => {
-                if (!hierarchy) {
-                    return
+        // start the sync
+        setCurrentSpaceId(spaceId)
+        // define the function that does the actual sync
+        const _syncSpace = async () => {
+            const hierarchy = await client.syncSpace(roomIdentifier)
+            if (!hierarchy) {
+                return
+            }
+            setSpaceHierarchies((prev) => {
+                const spaceHierarchy = {
+                    root: toZionSpaceChild(hierarchy.root),
+                    children: hierarchy.children.map((r) => toZionSpaceChild(r)),
                 }
-                setSpaceHierarchies((prev) => {
-                    const spaceHierarchy = {
-                        root: toZionSpaceChild(hierarchy.root),
-                        children: hierarchy.children.map((r) => toZionSpaceChild(r)),
-                    }
-                    return {
-                        ...prev,
-                        [spaceId]: spaceHierarchy,
-                    }
-                })
+                console.log("[useSyncSpaceHierarchies] sync'ed space hierarchy", spaceHierarchy)
+                return {
+                    ...prev,
+                    [spaceId]: spaceHierarchy,
+                }
+            })
+        }
+        // call the sync function
+        _syncSpace()
+            .catch((e) => {
+                console.error('[useSyncSpaceHierarchies] error syncing space', spaceId, e)
             })
             .finally(() => {
-                // console.log("!!!!! hierarchies done syncing space", spaceId);
-                setInflightCurrnet(null)
+                // reset the current space id so that the next iteration can start
+                setCurrentSpaceId(null)
             })
-        setInflightCurrnet(inflight)
-        console.log('[useSyncSpaceHierarchies] sync space done', spaceId)
-    }, [client, inFlightCurrent, matrixClient, spaceIdsQueue])
+    }, [client, currentSpaceId, matrixClient, spaceIdsQueue])
     // watch for new or updated space ids
     useEffect(() => {
         // console.log("!!!!! hierarchies USE EFFECT spaceIds:", spaceIds);
@@ -108,7 +114,7 @@ export function useSyncSpaceHierarchies(
         newIds.forEach((s) => enqueueSpaceId(s.networkId))
         removedIds.forEach((s) => dequeueSpaceId(s.networkId))
         seenSpaceIds.current = spaceIds
-    }, [spaceIds])
+    }, [enqueueSpaceId, spaceIds])
     // when we get a new invite, we need to sync all the spaces because we don't know which one it is for yet
     useEffect(() => {
         // console.log("!!!!! hierarchies USE EFFECT invitedToIds:", invitedToIds);
@@ -118,7 +124,7 @@ export function useSyncSpaceHierarchies(
             spaceIds.forEach((s) => enqueueSpaceId(s.networkId))
         }
         seenInvitedToIds.current = invitedToIds
-    }, [invitedToIds, spaceIds])
+    }, [enqueueSpaceId, invitedToIds, spaceIds])
     // watch client for space updates
     useEffect(() => {
         if (!matrixClient) {
@@ -152,7 +158,7 @@ export function useSyncSpaceHierarchies(
             // console.log("!!! REMOVING EVENTS");
             matrixClient.off(RoomEvent.Timeline, onRoomTimelineEvent)
         }
-    }, [matrixClient, queryClient, spaceIds])
+    }, [enqueueSpaceId, matrixClient, queryClient, spaceIds])
 
     // watch for when a channel name changes
     useEffect(() => {
@@ -170,7 +176,7 @@ export function useSyncSpaceHierarchies(
         return () => {
             matrixClient?.off(RoomEvent.Name, onNameEvent)
         }
-    }, [matrixClient, queryClient, spaceIds])
+    }, [enqueueSpaceId, matrixClient, queryClient, spaceIds])
 
     // watch for when user joins or leaves a channel
     useEffect(() => {
@@ -188,15 +194,15 @@ export function useSyncSpaceHierarchies(
             }
             console.log(
                 '[useSyncSpaceHierarchies]',
-                'onMyMembership',
-                'parentSpaceId:',
-                parentSpaceId,
+                'Membership changed',
                 'roomId:',
                 room.roomId,
                 'prevMembership:',
                 prevMembership,
                 'membership:',
                 membership,
+                'parentSpaceId:',
+                parentSpaceId,
             )
         }
 
@@ -204,9 +210,9 @@ export function useSyncSpaceHierarchies(
         return () => {
             matrixClient?.off(RoomEvent.MyMembership, onMyMembership)
         }
-    }, [matrixClient, queryClient, spaceIds])
+    }, [enqueueSpaceId, matrixClient, queryClient, spaceIds])
 
-    return { spaceHierarchies, syncSpaceHierarchy }
+    return { spaceHierarchies, syncSpaceHierarchy: enqueueSpaceId }
 }
 
 function getParentSpaceId(room: MatrixRoom, spaceIds: RoomIdentifier[]) {

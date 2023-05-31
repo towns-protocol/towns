@@ -130,9 +130,10 @@ describe('encryptionDecrypt', () => {
         // wait for client to be running
         await waitFor(() => expect(clientRunning).toHaveTextContent('true'))
         // wait for the channel join
-        await waitFor(() => expect(channelMembership).toHaveTextContent(Membership.Join), {
-            timeout: 10000,
-        })
+        await waitFor(
+            () => expect(channelMembership).toHaveTextContent(Membership.Join),
+            TestConstants.DoubleDefaultWaitForTimeout,
+        )
 
         // have bob send a message to jane
         fireEvent.click(sendMessageButton)

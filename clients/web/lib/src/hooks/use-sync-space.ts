@@ -9,8 +9,9 @@ export function useSyncSpace() {
 
     const syncSpace = useCallback(
         (spaceId: RoomIdentifier) => {
+            console.log('[useSyncSpace] sync requested for spaceId', spaceId.networkId)
             removeSyncedEntitleChannelsQueries() // remove cached entries
-            syncSpaceHierarchy(spaceId) // sync the space hierarchy
+            syncSpaceHierarchy(spaceId.networkId) // sync the space hierarchy
         },
         [syncSpaceHierarchy],
     )

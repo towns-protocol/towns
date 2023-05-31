@@ -12,6 +12,7 @@ import { Permission } from '../client/web3/ContractTypes'
 import { RoomIdentifier } from '../types/room-identifier'
 import { SpaceFactoryDataTypes } from '../client/web3/shims/SpaceFactoryShim'
 import { createExternalTokenStruct } from '../client/web3/ContractHelpers'
+import { useSyncSpace } from './use-sync-space'
 import { useTransactionStore } from '../store/use-transactions-store'
 import { useWeb3Context } from '../components/Web3ContextProvider'
 import { useZionClient } from './use-zion-client'
@@ -27,6 +28,7 @@ export function useCreateSpaceTransaction() {
     >(undefined)
     const isTransacting = useRef<boolean>(false)
     const { signer } = useWeb3Context()
+    const { syncSpace } = useSyncSpace()
 
     const { data, isLoading, transactionHash, transactionStatus, error } = useMemo(() => {
         return {
@@ -104,6 +106,9 @@ export function useCreateSpaceTransaction() {
 
                     // Wait for transaction to be mined
                     const rxContext = await waitForCreateSpaceTransaction(txContext)
+                    if (rxContext?.status === TransactionStatus.Success && rxContext?.data) {
+                        syncSpace(rxContext.data)
+                    }
                     setTransactionContext(rxContext)
                 }
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -115,18 +120,9 @@ export function useCreateSpaceTransaction() {
                 isTransacting.current = false
             }
         },
-        [createSpaceTransaction, signer, waitForCreateSpaceTransaction],
+        [createSpaceTransaction, signer, syncSpace, waitForCreateSpaceTransaction],
     )
 
-    /*
-    console.log('useCreateSpaceTransaction', 'states', {
-        isLoading,
-        data,
-        error,
-        transactionStatus,
-        transactionHash,
-    })
-    */
     return {
         isLoading,
         data,

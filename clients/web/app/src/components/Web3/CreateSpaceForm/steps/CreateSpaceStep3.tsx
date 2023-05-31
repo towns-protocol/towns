@@ -1,9 +1,7 @@
-import React, { useCallback, useState } from 'react'
-import { useNavigate } from 'react-router'
+import React, { useState } from 'react'
 import { shallow } from 'zustand/shallow'
 import { Box, FormRender, Paragraph, Toggle } from '@ui'
 import { FormStepProps } from 'hooks/useFormSteps'
-import { PATHS } from 'routes'
 import { InteractiveTownsToken } from '@components/TownsToken/InteractiveTownsToken'
 import { env } from 'utils'
 import { useCreateSpaceFormStore } from '../CreateSpaceFormStore'
@@ -11,8 +9,7 @@ import { useCreateSpaceFormStore } from '../CreateSpaceFormStore'
 const DEBUG = env.IS_DEV && false
 
 export const CreateSpaceStep3 = ({ onSubmit, id }: FormStepProps) => {
-    const navigate = useNavigate()
-    const { mintedTokenAddress, createdSpaceId, name } = useCreateSpaceFormStore(
+    const { mintedTokenAddress, name } = useCreateSpaceFormStore(
         (s) => ({
             mintedTokenAddress: s.mintedTokenAddress,
             createdSpaceId: encodeURIComponent(s.createdSpaceId ?? ''),
@@ -24,12 +21,6 @@ export const CreateSpaceStep3 = ({ onSubmit, id }: FormStepProps) => {
     const [toggled, setToggled] = useState(false)
     const address =
         !DEBUG || !toggled ? mintedTokenAddress : `0x0123456789abcdef0123456789abcdef01234567`
-
-    const onAnimationComplete = useCallback(() => {
-        if (createdSpaceId) {
-            navigate(`/${PATHS.SPACES}/${createdSpaceId}/${PATHS.GETTING_STARTED}`)
-        }
-    }, [navigate, createdSpaceId])
 
     const fullHeight = 360
     const containerHeight = 280
@@ -80,7 +71,6 @@ export const CreateSpaceStep3 = ({ onSubmit, id }: FormStepProps) => {
                                     imageSrc="/townsnft.png"
                                     spaceName={name ?? ''}
                                     address={address ?? undefined}
-                                    onAnimationComplete={onAnimationComplete}
                                 />
                             </Box>
                             {DEBUG && (

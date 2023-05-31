@@ -40,7 +40,7 @@ export interface IZionContext {
     spaceMentions: Record<string, number> // spaceId -> aggregated mentionCount
     spaces: SpaceItem[]
     spaceHierarchies: SpaceHierarchies
-    syncSpaceHierarchy: (spaceId: RoomIdentifier) => void // function to force sync the space hierarchy
+    syncSpaceHierarchy: (spaceId: string) => void // function to force sync the space hierarchy
     matrixOnboardingState: IOnboardingState
     casablancaOnboardingState: IOnboardingState
     syncError?: string
