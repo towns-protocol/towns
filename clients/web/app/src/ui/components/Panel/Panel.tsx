@@ -6,6 +6,7 @@ import { Box, BoxProps } from '../Box/Box'
 import { IconButton } from '../IconButton/IconButton'
 import { Stack } from '../Stack/Stack'
 import { Text } from '../Text/Text'
+import { useZLayerContext } from '../ZLayer/ZLayer'
 
 type Props = {
     children: React.ReactNode
@@ -50,6 +51,7 @@ const DesktopPanel = (props: Props) => {
 
 const MobilePanel = (props: Props) => {
     const { onClose } = props
+    const mountPoint = useZLayerContext().rootLayerRef?.current ?? undefined
     const [modalPresented, setModalPresented] = useState(false)
     const modalPresentable = props.modalPresentable ?? false
 
@@ -70,6 +72,7 @@ const MobilePanel = (props: Props) => {
             className={modalSheetClass}
             isOpen={modalPresented}
             detent="content-height"
+            mountPoint={mountPoint}
             onClose={closeModal}
             onCloseEnd={didCloseModal}
         >

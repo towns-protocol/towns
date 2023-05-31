@@ -391,7 +391,11 @@ export const SpaceInfoPanel = () => {
                 </PanelButton>
 
                 {isBrowseChannelsModalVisible && (
-                    <ModalContainer minWidth="500" onHide={onHideBrowseChannels}>
+                    <ModalContainer
+                        minWidth="500"
+                        touchTitle="Browse channels"
+                        onHide={onHideBrowseChannels}
+                    >
                         <AllChannelsList onHideBrowseChannels={onHideBrowseChannels} />
                     </ModalContainer>
                 )}

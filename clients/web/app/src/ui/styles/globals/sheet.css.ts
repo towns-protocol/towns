@@ -1,6 +1,8 @@
 import { globalStyle, style } from '@vanilla-extract/css'
 import { vars } from 'ui/styles/vars.css'
-export const modalSheetClass = style({})
+export const modalSheetClass = style({
+    zIndex: 'unset!important',
+})
 
 globalStyle(`${modalSheetClass} .react-modal-sheet-backdrop`, {
     // TODO:replace with background.hover

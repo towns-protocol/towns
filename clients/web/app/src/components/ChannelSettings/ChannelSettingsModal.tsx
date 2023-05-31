@@ -333,7 +333,11 @@ export function ChannelSettingsModal({
     }, [onHide, storedTransactions])
 
     return (
-        <ModalContainer key={`${spaceId.networkId}_${channelId.networkId}}`} onHide={_onHide}>
+        <ModalContainer
+            key={`${spaceId.networkId}_${channelId.networkId}}`}
+            touchTitle="Edit Channel"
+            onHide={_onHide}
+        >
             <ChannelSettingsForm
                 spaceId={spaceId}
                 preventCloseMessage={transactionMessage}
