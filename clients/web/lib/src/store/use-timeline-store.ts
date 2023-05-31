@@ -240,7 +240,7 @@ function toReplacedMessageEvent(prev: TimelineEvent, next: TimelineEvent): Timel
     }
     // when we replace an event, we copy the content up to the root event
     // so we keep the prev id, but use the next content
-    const eventId = prev.eventId.startsWith('$') ? prev.eventId : next.eventId
+    const eventId = !prev.isLocalPending ? prev.eventId : next.eventId
     return {
         eventId: eventId,
         status: next.status,
