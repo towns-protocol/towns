@@ -1,12 +1,13 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
-import { RoomMember, createUserIdFromString } from 'use-zion-client'
+import { RoomMember, createUserIdFromString, useSpaceMembers } from 'use-zion-client'
 import { CentralPanelLayout } from 'routes/layouts/CentralPanelLayout'
 import { shortAddress } from 'ui/utils/utils'
 import { Avatar, Grid, Paragraph, Stack } from '@ui'
 import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
 import { useCreateLink } from 'hooks/useCreateLink'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
+import { ModalContainer } from '@components/Modals/ModalContainer'
 
 type Props = {
     members?: RoomMember[]
@@ -33,6 +34,21 @@ export const MembersPage = (props: Props) => {
         </CentralPanelLayout>
     ) : (
         <></>
+    )
+}
+
+export const MembersPageTouchModal = (props: { onHide: () => void }) => {
+    const { members } = useSpaceMembers()
+    return (
+        <ModalContainer touchTitle="Members" onHide={props.onHide}>
+            <Stack grow overflowY="scroll">
+                <Grid padding="lg" columnMinSize="130px">
+                    {members.map((member) => (
+                        <GridProfile member={member} key={member.userId} />
+                    ))}
+                </Grid>
+            </Stack>
+        </ModalContainer>
     )
 }
 

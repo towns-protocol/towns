@@ -41,6 +41,8 @@ import { TextArea } from 'ui/components/TextArea/TextArea'
 import { vars } from 'ui/styles/vars.css'
 import { transitions } from 'ui/transitions/transitions'
 import { shortAddress } from 'ui/utils/utils'
+import { useDevice } from 'hooks/useDevice'
+import { MembersPageTouchModal } from '@components/MembersPage/MembersPage'
 import { useContractSpaceInfo } from '../hooks/useContractSpaceInfo'
 import { useEnvironment } from '../hooks/useEnvironmnet'
 import { env } from '../utils/environment'
@@ -58,6 +60,8 @@ enum InputId {
 
 export const SpaceInfoPanel = () => {
     const space = useSpaceData()
+    const { isTouch } = useDevice()
+
     const { client, chainId, leaveRoom } = useZionClient()
     const channels = useSpaceChannels()
 
@@ -88,10 +92,11 @@ export const SpaceInfoPanel = () => {
     }, [client, data?.owner, matrixUrl, chainId])
 
     const { members } = useSpaceMembers()
-
-    const [isBrowseChannelsModalVisible, setBrowseChannelsModalVisible] = useState(false)
-    const onHideBrowseChannels = useEvent(() => setBrowseChannelsModalVisible(false))
-    const onShowBrowseChannels = useEvent(() => setBrowseChannelsModalVisible(true))
+    const [activeModal, setActiveModal] = useState<'browse-channels' | 'members' | undefined>(
+        undefined,
+    )
+    const onHideBrowseChannels = useEvent(() => setActiveModal(undefined))
+    const onShowBrowseChannels = useEvent(() => setActiveModal('browse-channels'))
 
     const onClose = useEvent(() => {
         navigate('..')
@@ -140,9 +145,13 @@ export const SpaceInfoPanel = () => {
 
     const spaceID = useSpaceId()
 
-    const onMembersClick = useEvent(() => {
-        navigate(`/${PATHS.SPACES}/${spaceID?.slug}/members/info`)
-    })
+    const onMembersClick = useCallback(() => {
+        if (isTouch) {
+            setActiveModal('members')
+        } else {
+            navigate(`/${PATHS.SPACES}/${spaceID?.slug}/members/info`)
+        }
+    }, [isTouch, navigate, spaceID?.slug])
 
     const onSettingsClick = useEvent(() => {
         navigate(`/${PATHS.SPACES}/${spaceID?.slug}/settings`)
@@ -390,16 +399,6 @@ export const SpaceInfoPanel = () => {
                     </Paragraph>
                 </PanelButton>
 
-                {isBrowseChannelsModalVisible && (
-                    <ModalContainer
-                        minWidth="500"
-                        touchTitle="Browse channels"
-                        onHide={onHideBrowseChannels}
-                    >
-                        <AllChannelsList onHideBrowseChannels={onHideBrowseChannels} />
-                    </ModalContainer>
-                )}
-
                 {canEdit && (
                     <PanelButton onClick={onSettingsClick}>
                         <Icon type="settings" />
@@ -416,6 +415,20 @@ export const SpaceInfoPanel = () => {
             <Stack grow padding paddingBottom="lg" justifyContent="end">
                 {/* footer content */}
             </Stack>
+
+            {activeModal === 'browse-channels' && (
+                <ModalContainer
+                    minWidth="500"
+                    touchTitle="Browse channels"
+                    onHide={onHideBrowseChannels}
+                >
+                    <AllChannelsList onHideBrowseChannels={onHideBrowseChannels} />
+                </ModalContainer>
+            )}
+
+            {activeModal === 'members' && (
+                <MembersPageTouchModal onHide={() => setActiveModal(undefined)} />
+            )}
         </Panel>
     )
 }

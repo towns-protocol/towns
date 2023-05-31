@@ -9,6 +9,7 @@ import { RoleSettingsDisplay } from '@components/SpaceSettings/RoleSettings/Role
 import { useIsHolderOfPioneerNFT } from 'api/lib/isHolderOfToken'
 import { env } from 'utils'
 import { SpaceOutlet } from 'routes/SpaceOutlet'
+import { useDevice } from 'hooks/useDevice'
 import { ChannelSettings } from './ChannelSettings'
 import { InvitesIndex } from './InvitesIndex'
 import { SpaceGettingStarted } from './SpaceGettingStarted'
@@ -37,6 +38,7 @@ const CheckRedirect = ({ children }: { children: JSX.Element }) => {
 
 export const AuthenticatedRoutes = () => {
     const { data: isHolderOfPioneerNft } = useIsHolderOfPioneerNFT()
+    const { isTouch } = useDevice()
 
     return (
         <Routes>
@@ -72,11 +74,12 @@ export const AuthenticatedRoutes = () => {
 
                 <Route path="invite" element={<SpacesInvite />} />
 
-                <Route path="members" element={<SpaceMembers />}>
-                    <Route path="profile/:profileId" element={<SpaceProfilePanel />} />
-                    <Route path="info" element={<InfoPanelWrapper />} />
-                </Route>
-
+                {!isTouch && (
+                    <Route path="members" element={<SpaceMembers />}>
+                        <Route path="profile/:profileId" element={<SpaceProfilePanel />} />
+                        <Route path="info" element={<InfoPanelWrapper />} />
+                    </Route>
+                )}
                 <Route element={<SpacesChannelRoute />}>
                     <Route path="channels/:channelSlug/members" element={<ChannelMembers />}>
                         <Route path="profile/:profileId" element={<SpaceProfilePanel />} />
