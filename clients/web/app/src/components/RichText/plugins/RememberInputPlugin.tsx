@@ -13,7 +13,6 @@ export const RememberInputPlugin = (props: Props) => {
     const [editor] = useLexicalComposerContext()
     useEffect(() => {
         if (!storageId) {
-            console.log('no storage')
             return
         }
         let timeout: NodeJS.Timeout

@@ -20,7 +20,7 @@ describe('#RichTextEditor editable', () => {
                 <RichTextEditor initialValue="welcome!" channels={[]} members={[]} />
             </Wrapper>,
         )
-        expect(screen.getByText('welcome!')).toBeTruthy()
+        await screen.findByText('welcome!')
     })
 
     test('it should display placeholder if not editable', async () => {
@@ -72,8 +72,8 @@ describe('#RichTextEditor mention nodes', () => {
                 />
             </Wrapper>,
         )
-        expect(screen.getByTestId('mention-node')).toHaveTextContent('@ben')
-        const node = screen.getByTestId('mention-node')
+        const node = await screen.findByTestId('mention-node')
+        expect(node).toHaveTextContent('@ben')
         expect(node.getAttribute('data-mention-name')).toEqual('@ben')
         expect(node.getAttribute('data-user-id')).toEqual('1')
     })
@@ -97,8 +97,8 @@ describe('#RichTextEditor mention nodes', () => {
                 />
             </Wrapper>,
         )
-        expect(screen.getByTestId('mention-node')).toHaveTextContent(name)
-        const node = screen.getByTestId('mention-node')
+        const node = await screen.findByTestId('mention-node')
+        expect(node).toHaveTextContent(name)
         expect(node.getAttribute('data-mention-name')).toEqual(`@${name}`)
         expect(node.getAttribute('data-user-id')).toEqual('1')
     })
@@ -122,8 +122,8 @@ describe('#RichTextEditor mention nodes', () => {
                 />
             </Wrapper>,
         )
-        expect(screen.getByTestId('mention-node')).toHaveTextContent(name)
-        const node = screen.getByTestId('mention-node')
+        const node = await screen.findByTestId('mention-node')
+        expect(node).toHaveTextContent(name)
         expect(node.getAttribute('data-mention-name')).toEqual(`@${name}`)
         expect(node.getAttribute('data-user-id')).toEqual('1')
     })
