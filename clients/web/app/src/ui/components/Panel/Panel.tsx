@@ -5,8 +5,8 @@ import { useDevice } from 'hooks/useDevice'
 import { Box, BoxProps } from '../Box/Box'
 import { IconButton } from '../IconButton/IconButton'
 import { Stack } from '../Stack/Stack'
-import { Text } from '../Text/Text'
 import { useZLayerContext } from '../ZLayer/ZLayer'
+import { TouchPanelNavigationBar } from '../TouchPanelNavigationBar/TouchPanelNavigationBar'
 
 type Props = {
     children: React.ReactNode
@@ -89,20 +89,7 @@ const MobilePanel = (props: Props) => {
     ) : (
         // TODO: sort out zIndexes
         <Stack absoluteFill background="level1" zIndex="tooltips" height="100svh">
-            <Stack
-                horizontal
-                borderBottom
-                gap="sm"
-                padding="sm"
-                alignItems="center"
-                color="gray1"
-                position="sticky"
-                background="level1"
-                paddingTop="safeAreaInsetTop"
-            >
-                <IconButton icon="back" color="gray2" size="square_sm" onClick={props.onClose} />
-                <Text fontWeight="strong">{props.label}</Text>
-            </Stack>
+            <TouchPanelNavigationBar title={props.label} onBack={onClose} />
             <Stack scroll>
                 <Box minHeight="100svh" paddingBottom="safeAreaInsetBottom">
                     {props.children}

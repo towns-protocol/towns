@@ -1,8 +1,9 @@
 import React, { useCallback, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { AnimatePresence, motion } from 'framer-motion'
-import { Box, BoxProps, Icon, Stack, Text, useZLayerContext } from '@ui'
+import { Box, BoxProps, Stack, useZLayerContext } from '@ui'
 import { useDevice } from 'hooks/useDevice'
+import { TouchPanelNavigationBar } from 'ui/components/TouchPanelNavigationBar/TouchPanelNavigationBar'
 
 type Props = {
     children: React.ReactNode
@@ -68,18 +69,8 @@ const TouchFullScreenModalContainer = (props: TouchFullScreenModalContainerProps
                     zIndex="tooltips"
                 >
                     <Stack>
-                        <Stack
-                            horizontal
-                            borderBottom
-                            paddingY
-                            gap="sm"
-                            paddingX="sm"
-                            alignItems="center"
-                            paddingTop="safeAreaInsetTop"
-                        >
-                            <Icon type="back" color="gray2" size="square_sm" onClick={onClose} />
-                            <Text fontWeight="strong">{title}</Text>
-                        </Stack>
+                        <TouchPanelNavigationBar title={title} onBack={onClose} />
+
                         <Stack
                             scroll
                             paddingX
