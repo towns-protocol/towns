@@ -95,6 +95,7 @@ const MobilePanel = (props: Props) => {
                 color="gray1"
                 position="sticky"
                 background="level1"
+                paddingTop="safeAreaInsetTop"
             >
                 <IconButton icon="back" color="gray2" size="square_sm" onClick={props.onClose} />
                 <Text fontWeight="strong">{props.label}</Text>
