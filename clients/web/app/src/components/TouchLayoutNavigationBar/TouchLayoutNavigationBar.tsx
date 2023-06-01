@@ -61,7 +61,7 @@ export const TouchLayoutNavigationBar = (props: Props) => {
     })(value)
 
     return (
-        <Stack height="auto" background="level1" zIndex="uiAbove">
+        <Stack background="level1" zIndex="uiAbove">
             <Stack
                 horizontal
                 borderBottom
@@ -131,7 +131,7 @@ export const TouchLayoutNavigationBar = (props: Props) => {
                 )}
 
                 {dropDownOpen && (
-                    <Box grow absoluteFill height="100svh" overflow="hidden" zIndex="ui" top="x8">
+                    <Box grow absoluteFill overflow="hidden" zIndex="ui" top="x8">
                         <MotionStack
                             initial={{ y: '-100%' }}
                             exit={{ y: '-100%' }}
@@ -139,7 +139,7 @@ export const TouchLayoutNavigationBar = (props: Props) => {
                             transition={{ ease: 'easeOut', duration: 0.3 }}
                             background="level1"
                             width="100%"
-                            height="100svh"
+                            height="100%"
                         >
                             <TouchLayoutDropdownMenu
                                 unreadThreadMentions={unreadThreadMentions}

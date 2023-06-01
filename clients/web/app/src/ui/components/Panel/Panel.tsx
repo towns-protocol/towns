@@ -70,7 +70,7 @@ const TouchPanel = (props: Props) => {
         setModalPresented(false)
         setTimeout(() => {
             onClose?.()
-        }, 300)
+        }, transitions.panel.duration * 1000)
     }, [onClose])
 
     useEffect(() => {

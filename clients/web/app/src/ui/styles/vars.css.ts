@@ -132,6 +132,7 @@ const root = createGlobalTheme(':root', {
             '1000': `1000px`,
             '1200': `1200px`,
             '1440': `1440px`,
+            forceScroll: '101%',
             tablet: `${breakpoints.tablet}px`,
             desktop: `${breakpoints.desktop}px`,
             wide: `${breakpoints.wide}px`,
