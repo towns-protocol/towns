@@ -20,6 +20,7 @@ export const vitePWAOptions: Partial<VitePWAOptions> = {
 
     manifest: {
         name: 'Towns',
+        short_name: 'Towns',
         icons: [
             {
                 src: 'pwa/rounded_x512.png',
