@@ -43,6 +43,7 @@ import { transitions } from 'ui/transitions/transitions'
 import { shortAddress } from 'ui/utils/utils'
 import { useDevice } from 'hooks/useDevice'
 import { MembersPageTouchModal } from '@components/MembersPage/MembersPage'
+import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { useContractSpaceInfo } from '../hooks/useContractSpaceInfo'
 import { useEnvironment } from '../hooks/useEnvironmnet'
 import { env } from '../utils/environment'
@@ -367,7 +368,8 @@ export const SpaceInfoPanel = () => {
                                             />
                                         )}
                                         <Box justifyContent="spaceBetween">
-                                            {matrixUserOwner && matrixUserOwner.displayName}
+                                            {matrixUserOwner &&
+                                                getPrettyDisplayName(matrixUserOwner).name}
                                             <Paragraph color="gray2">
                                                 {data?.owner ? shortAddress(data.owner) : ''}
                                             </Paragraph>

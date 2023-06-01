@@ -19,7 +19,7 @@ export const Badge = forwardRef<typeof Box, BoxProps & Props>(({ value, ...props
             fontWeight="strong"
             {...props}
         >
-            <Paragraph size="xs">1</Paragraph>
+            <Paragraph size="xs">{value}</Paragraph>
         </Box>
     ),
 )
