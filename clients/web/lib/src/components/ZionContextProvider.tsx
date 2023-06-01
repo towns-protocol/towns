@@ -1,7 +1,10 @@
 import React, { createContext, useContext } from 'react'
 import { ZionClient } from '../client/ZionClient'
 import { ZionOpts } from '../client/ZionClientTypes'
-import { useContentAwareTimelineDiff } from '../hooks/ZionContext/useContentAwareTimelineDiff'
+import {
+    useContentAwareTimelineDiff,
+    useContentAwareTimelineDiffCasablanca,
+} from '../hooks/ZionContext/useContentAwareTimelineDiff'
 import { IOnboardingState } from '../hooks/ZionContext/onboarding/IOnboardingState'
 import {
     useOnboardingState_Casablanca,
@@ -91,6 +94,7 @@ const ContextImpl = (props: Props): JSX.Element => {
     const { client, clientSingleton, matrixClient, casablancaClient } = useZionClientListener(props)
     const { invitedToIds } = useSpacesIds(matrixClient, casablancaClient)
     useContentAwareTimelineDiff(matrixClient)
+    useContentAwareTimelineDiffCasablanca(casablancaClient)
     const { spaces } = useSpaces(matrixClient, casablancaClient)
     const { spaceHierarchies, syncSpaceHierarchy } = useSyncSpaceHierarchies(
         client,

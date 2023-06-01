@@ -7,6 +7,7 @@ import {
     RelationType,
     RoomEvent,
 } from 'matrix-js-sdk'
+import { Client as CasablancaClient, isChannelStreamId, isSpaceStreamId } from '@towns/sdk'
 import { useEffect } from 'react'
 import { FullyReadMarker, TimelineEvent, ZTEvent } from '../../types/timeline-types'
 import { useFullyReadMarkerStore } from '../../store/use-fully-read-marker-store'
@@ -18,7 +19,48 @@ import { isZTimelineEvent } from './useMatrixTimelines'
 type LocalEffectState = {
     encryptedEvents: Record<string, Record<string, number>> // this should be a Map instead of a record
 }
+export function useContentAwareTimelineDiffCasablanca(casablancaClient?: CasablancaClient) {
+    useEffect(() => {
+        if (!casablancaClient) {
+            return
+        }
+        const userId = casablancaClient.userId
+        if (!userId) {
+            // can happen on logout
+            return
+        }
+        // state
+        //let effectState = initOnce(matrixClient, userId)
+        let firstTime = true
+        let effectState: LocalEffectState = {
+            encryptedEvents: {},
+        }
 
+        // listen to the timeine for changes, diff each change, and update the unread counts
+        const onTimelineChange = (timelineState: TimelineStore, prev: TimelineStore) => {
+            if (firstTime) {
+                // todo, init for unreads??
+                // effectState = initOnce(casablancaClient, userId, timelineState)
+                firstTime = false
+            }
+            effectState = diffTimeline(
+                timelineState,
+                prev,
+                effectState,
+                userId,
+                SpaceProtocol.Casablanca,
+            )
+        }
+
+        // subscribe
+        const unsubTimeline = useTimelineStore.subscribe(onTimelineChange)
+
+        // return ability to unsubscribe
+        return () => {
+            unsubTimeline()
+        }
+    }, [casablancaClient])
+}
 export function useContentAwareTimelineDiff(matrixClient?: MatrixClient) {
     useEffect(() => {
         if (!matrixClient) {
@@ -42,7 +84,13 @@ export function useContentAwareTimelineDiff(matrixClient?: MatrixClient) {
                 effectState = initOnce(matrixClient, userId, timelineState)
                 firstTime = false
             }
-            effectState = diffTimeline(timelineState, prev, effectState, userId)
+            effectState = diffTimeline(
+                timelineState,
+                prev,
+                effectState,
+                userId,
+                SpaceProtocol.Matrix,
+            )
         }
 
         const onRoomAccountDataEvent = (
@@ -220,12 +268,13 @@ function diffTimeline(
     prev: TimelineStore,
     effectState: LocalEffectState,
     userId: string,
+    protocol: SpaceProtocol,
 ): LocalEffectState {
     if (Object.keys(prev.timelines).length === 0 || timelineState.timelines === prev.timelines) {
         // noop
         return effectState
     }
-    const roomIds = Object.keys(timelineState.timelines)
+    const roomIds = Object.keys(timelineState.timelines).filter((x) => matchesProtocol(protocol, x))
     roomIds.forEach((roomId) => {
         const prevEvents = prev.timelines[roomId] ?? []
         const events = timelineState.timelines[roomId]
@@ -392,4 +441,15 @@ function _diffTimeline(
         effectState.encryptedEvents[roomId] = encryptedEvents
     }
     return { effectState, didUpdate }
+}
+
+function matchesProtocol(protocol: SpaceProtocol, roomId: string): boolean {
+    switch (protocol) {
+        case SpaceProtocol.Matrix:
+            return roomId.startsWith('!') || roomId.startsWith('#')
+        case SpaceProtocol.Casablanca:
+            return isChannelStreamId(roomId) || isSpaceStreamId(roomId)
+        default:
+            return false
+    }
 }

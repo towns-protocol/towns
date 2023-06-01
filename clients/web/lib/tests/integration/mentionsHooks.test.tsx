@@ -1,6 +1,9 @@
+/* eslint-disable @typescript-eslint/no-floating-promises */
+/* eslint-disable @typescript-eslint/await-thenable */
 /* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-explicit-any */
 /**
  * @group dendrite
+ * @group casablanca
  */
 import { RoomVisibility } from '../../src/types/zion-types'
 import { RoomIdentifier } from '../../src/types/room-identifier'
@@ -10,7 +13,7 @@ import {
     createTestSpaceWithEveryoneRole,
     registerAndStartClients,
 } from './helpers/TestUtils'
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 
 import { ChannelContextProvider } from '../../src/components/ChannelContextProvider'
 import { Permission } from '../../src/client/web3/ContractTypes'
@@ -53,11 +56,6 @@ describe('mentionsHooks', () => {
         await alice.joinRoom(channelId)
         // logout alice
         await alice.logout()
-        // bob send a message to alice
-        await bob.sendMessage(channelId, 'hello world')
-        await bob.sendMessage(channelId, 'hello alice', {
-            mentions: [{ displayName: alice.name, userId: aliceUserId }],
-        })
 
         // create a veiw for alice
         const TestComponent = () => {
@@ -103,18 +101,33 @@ describe('mentionsHooks', () => {
         })
         // wait for the channel join
         await waitFor(() => expect(clientRunning).toHaveTextContent('true'))
+        //
+        // bob send a message to alice
+        await act(() => {
+            bob.sendMessage(channelId, 'hello world')
+        })
+        await act(() => {
+            bob.sendMessage(channelId, 'hello alice', {
+                mentions: [{ displayName: alice.name, userId: aliceUserId }],
+            })
+        })
+
         // expect our message to show
         await waitFor(() => expect(notificationCounts).toHaveTextContent('isUnread:true'))
         await waitFor(() => expect(notificationCounts).toHaveTextContent('mentions:1'))
         // send another mention to make sure it updates
-        await bob.sendMessage(channelId, 'this is important @alice', {
-            mentions: [{ displayName: alice.name, userId: aliceUserId }],
+        await act(() => {
+            bob.sendMessage(channelId, 'this is important @alice', {
+                mentions: [{ displayName: alice.name, userId: aliceUserId }],
+            })
         })
         // expect it to render as well
         await waitFor(() => expect(notificationCounts).toHaveTextContent('mentions:2'))
         await waitFor(() => expect(notificationCounts).toHaveTextContent('isUnread:true'))
         // have bob send a message to jane
-        fireEvent.click(markAsReadButton)
+        await act(() => {
+            fireEvent.click(markAsReadButton)
+        })
         // expect it to render as well
         await waitFor(() => expect(notificationCounts).toHaveTextContent('mentions:0'))
         await waitFor(() => expect(notificationCounts).toHaveTextContent('isUnread:false'))
