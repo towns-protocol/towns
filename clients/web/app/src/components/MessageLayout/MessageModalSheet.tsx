@@ -2,7 +2,7 @@ import React, { useCallback, useContext, useEffect, useState } from 'react'
 import Sheet from 'react-modal-sheet'
 import { RoomIdentifier, useZionClient } from 'use-zion-client'
 import { modalSheetClass } from 'ui/styles/globals/sheet.css'
-import { Icon, IconName, Stack, Text } from '@ui'
+import { Icon, IconName, Stack, Text, useZLayerContext } from '@ui'
 import { MessageTimelineContext } from '@components/MessageTimeline/MessageTimelineContext'
 import { useOpenMessageThread } from 'hooks/useOpenThread'
 import { EmojiPickerContainerMobile } from '@components/EmojiPickerButton/EmojiPickerContainerMobile'
@@ -20,6 +20,8 @@ type Props = {
 
 export const MessageModalSheet = (props: Props) => {
     const timelineContext = useContext(MessageTimelineContext)
+    const mountPoint = useZLayerContext().rootLayerRef?.current ?? undefined
+
     const { onClose, eventId, spaceId, channelId, canReply, canEdit, canReact } = props
     const [isHidden, setIsHidden] = React.useState(false)
     const { redactEvent, sendReaction } = useZionClient()
@@ -100,6 +102,7 @@ export const MessageModalSheet = (props: Props) => {
                 className={modalSheetClass}
                 isOpen={isOpen && !isHidden}
                 detent="content-height"
+                mountPoint={mountPoint}
                 onClose={closeSheet}
             >
                 <Sheet.Container>
