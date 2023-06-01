@@ -1,12 +1,15 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import Sheet from 'react-modal-sheet'
+import { AnimatePresence } from 'framer-motion'
 import { modalSheetClass } from 'ui/styles/globals/sheet.css'
 import { useDevice } from 'hooks/useDevice'
+import { transitions } from 'ui/transitions/transitions'
 import { Box, BoxProps } from '../Box/Box'
 import { IconButton } from '../IconButton/IconButton'
 import { Stack } from '../Stack/Stack'
 import { useZLayerContext } from '../ZLayer/ZLayer'
 import { TouchPanelNavigationBar } from '../TouchPanelNavigationBar/TouchPanelNavigationBar'
+import { MotionStack } from '../Motion/MotionBox'
 
 type Props = {
     children: React.ReactNode
@@ -18,7 +21,7 @@ type Props = {
 
 export const Panel = (props: Props) => {
     const { isTouch } = useDevice()
-    return isTouch ? MobilePanel(props) : DesktopPanel(props)
+    return isTouch ? TouchPanel(props) : DesktopPanel(props)
 }
 
 const DesktopPanel = (props: Props) => {
@@ -49,7 +52,7 @@ const DesktopPanel = (props: Props) => {
     )
 }
 
-const MobilePanel = (props: Props) => {
+const TouchPanel = (props: Props) => {
     const { onClose } = props
     const mountPoint = useZLayerContext().rootLayerRef?.current ?? undefined
     const [modalPresented, setModalPresented] = useState(false)
@@ -61,6 +64,13 @@ const MobilePanel = (props: Props) => {
 
     const didCloseModal = useCallback(() => {
         onClose?.()
+    }, [onClose])
+
+    const closePanel = useCallback(() => {
+        setModalPresented(false)
+        setTimeout(() => {
+            onClose?.()
+        }, 300)
     }, [onClose])
 
     useEffect(() => {
@@ -87,15 +97,27 @@ const MobilePanel = (props: Props) => {
             <Sheet.Backdrop onTap={closeModal} />
         </Sheet>
     ) : (
-        // TODO: sort out zIndexes
-        <Stack absoluteFill background="level1" zIndex="tooltips" height="100svh">
-            <TouchPanelNavigationBar title={props.label} onBack={onClose} />
-            <Stack scroll>
-                <Box minHeight="100svh" paddingBottom="safeAreaInsetBottom">
-                    {props.children}
-                </Box>
-            </Stack>
-        </Stack>
+        <AnimatePresence>
+            {modalPresented && (
+                <MotionStack
+                    absoluteFill
+                    initial={{ x: '100%' }}
+                    animate={{ x: '0%' }}
+                    exit={{ x: '100%' }}
+                    transition={transitions.panel}
+                    background="level1"
+                    zIndex="tooltips"
+                    height="100svh"
+                >
+                    <TouchPanelNavigationBar title={props.label} onBack={closePanel} />
+                    <Stack scroll>
+                        <Box minHeight="100svh" paddingBottom="safeAreaInsetBottom">
+                            {props.children}
+                        </Box>
+                    </Stack>
+                </MotionStack>
+            )}
+        </AnimatePresence>
     )
 }
 
