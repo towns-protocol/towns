@@ -24,6 +24,7 @@ import { useChannelTimeline } from '../../src/hooks/use-channel-timeline'
 import { useChannelNotificationCounts } from '../../src/hooks/use-channel-notification-counts'
 import { useZionClient } from '../../src/hooks/use-zion-client'
 import { useFullyReadMarker } from '../../src/hooks/use-fully-read-marker'
+import { TestConstants } from './helpers/TestConstants'
 
 describe('mentionsHooks', () => {
     test('user can see mentions, and can see mentions after login', async () => {
@@ -114,7 +115,10 @@ describe('mentionsHooks', () => {
 
         // expect our message to show
         await waitFor(() => expect(notificationCounts).toHaveTextContent('isUnread:true'))
-        await waitFor(() => expect(notificationCounts).toHaveTextContent('mentions:1'))
+        await waitFor(
+            () => expect(notificationCounts).toHaveTextContent('mentions:1'),
+            TestConstants.DoubleDefaultWaitForTimeout,
+        )
         // send another mention to make sure it updates
         await act(() => {
             bob.sendMessage(channelId, 'this is important @alice', {

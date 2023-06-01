@@ -11,6 +11,8 @@ const (
 // Define enum for RoomType
 type RoomType int64
 
+const InvalidRoomType RoomType = -1
+
 const (
 	Space RoomType = iota
 	Channel
@@ -31,6 +33,8 @@ func (r RoomType) String() string {
 		return "user_settings"
 	case Unknown:
 		return "unknown"
+	case InvalidRoomType:
+		return "invalid"
 	default:
 		return "unknown"
 	}

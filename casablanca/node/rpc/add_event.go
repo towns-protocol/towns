@@ -173,7 +173,10 @@ func addEventToStorage(s *Service, ctx context.Context, streamId string, envelop
 }
 
 func addChannelMessage(streamEvent *protocol.StreamEvent, s *Service, ctx context.Context, streamId string, view events.StreamView, envelope *protocol.Envelope) ([]byte, error) {
-	user := common.UserIdFromAddress(streamEvent.CreatorAddress)
+	user, err := common.UserIdFromAddress(streamEvent.CreatorAddress)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "AddEvent: invalid user id: %v", err)
+	}
 
 	info, err := events.RoomInfoFromInceptionEvent(view.InceptionEvent(), streamId, user)
 	if err != nil {
@@ -213,9 +216,15 @@ func addChannelMessage(streamEvent *protocol.StreamEvent, s *Service, ctx contex
 }
 
 func addMembershipEvent(membership *protocol.Membership, s *Service, ctx context.Context, streamId string, view events.StreamView, parsedEvent *events.ParsedEvent) ([]byte, error) {
-	creator := common.UserIdFromAddress(parsedEvent.Event.CreatorAddress)
+	creator, err := common.UserIdFromAddress(parsedEvent.Event.CreatorAddress)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "AddEvent: invalid user id: %v", err)
+	}
 	userId := membership.UserId
-	userStreamId := common.UserStreamIdFromId(userId)
+	userStreamId, err := common.UserStreamIdFromId(userId)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "AddEvent: invalid user id %s", userId)
+	}
 
 	// Check if user stream exists
 	userStreamView, err := s.loadStream(ctx, userStreamId)
@@ -265,10 +274,14 @@ func addMembershipEvent(membership *protocol.Membership, s *Service, ctx context
 	}
 
 	log.Debug("AddEvent: ", membership.Op)
+	inviterId, err := common.UserIdFromAddress(parsedEvent.Event.CreatorAddress)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "AddEvent: invalid user id: %v", err)
+	}
 	userStreamEvent, err := s.makeEnvelopeWithPayload(
 		events.Make_UserPayload_Membership(
 			membership.Op,
-			common.UserIdFromAddress(parsedEvent.Event.CreatorAddress),
+			inviterId,
 			streamId,
 			&protocol.EventRef{
 				StreamId:  streamId,

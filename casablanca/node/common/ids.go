@@ -8,11 +8,11 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-func UserIdFromAddress(address []byte) string {
+func UserIdFromAddress(address []byte) (string, error) {
 	if len(address) != 20 {
-		panic(fmt.Sprintf("invalid address length %s len %d", string(address), len(address)))
+		return "", fmt.Errorf("invalid address length %d", len(address))
 	}
-	return common.BytesToAddress(address).Hex()
+	return common.BytesToAddress(address).Hex(), nil
 }
 
 func AddressFromUserId(userId string) ([]byte, error) {
@@ -23,8 +23,12 @@ func AddressFromUserId(userId string) ([]byte, error) {
 	return hex.DecodeString(userId[2:])
 }
 
-func UserStreamIdFromAddress(address []byte) string {
-	return "00-" + UserIdFromAddress(address)
+func UserStreamIdFromAddress(address []byte) (string, error) {
+	userId, err := UserIdFromAddress(address)
+	if err != nil {
+		return "", err
+	}
+	return "00-" + userId, nil
 }
 
 func ValidUserStreamId(id string) bool {
@@ -35,18 +39,18 @@ func ValidUserDeviceKeyStreamId(id string) bool {
 	return len(id) == 45 && strings.HasPrefix(id, "33-0x")
 }
 
-func UserDeviceKeyStreamIdFromId(id string) string {
+func UserDeviceKeyStreamIdFromId(id string) (string, error) {
 	if len(id) != 42 {
-		panic(fmt.Sprintf("invalid id length %s", id))
+		return "", fmt.Errorf("invalid id length %s", id)
 	}
-	return "33-" + id
+	return "33-" + id, nil
 }
 
-func UserStreamIdFromId(id string) string {
+func UserStreamIdFromId(id string) (string, error) {
 	if len(id) != 42 {
-		panic(fmt.Sprintf("invalid id length %s", id))
+		return "", fmt.Errorf("invalid id length %s", id)
 	}
-	return "00-" + id
+	return "00-" + id, nil
 }
 
 func AddressFromUserStreamId(id string) ([]byte, error) {
@@ -75,13 +79,13 @@ func ValidChannelStreamId(id string) bool {
 	return strings.HasPrefix(id, "22-")
 }
 
-func RoomTypeFromStreamId(id string) RoomType {
+func RoomTypeFromStreamId(id string) (RoomType, error) {
 	if ValidSpaceStreamId(id) {
-		return Space
+		return Space, nil
 	} else if ValidChannelStreamId(id) {
-		return Channel
+		return Channel, nil
 	} else  if ValidUserStreamId(id) {
-		return User
+		return User, nil
 	}
-	panic(fmt.Sprintf("invalid room type %s", id))
+	return InvalidRoomType, fmt.Errorf("invalid room type for stream id %s", id)
 }

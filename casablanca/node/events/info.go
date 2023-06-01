@@ -12,7 +12,10 @@ func RoomInfoFromInceptionEvent(e *ParsedEvent, streamId string, userId string) 
 		return nil, fmt.Errorf("no inception payload for stream %s", streamId)
 	}
 
-	creator := common.UserIdFromAddress(e.Event.GetCreatorAddress())
+	creator, error  := common.UserIdFromAddress(e.Event.GetCreatorAddress())
+	if error != nil {
+		return nil, error
+	}
 	switch inception := payload.(type) {
 	case *UserPayload_Inception:
 		return &common.RoomInfo{

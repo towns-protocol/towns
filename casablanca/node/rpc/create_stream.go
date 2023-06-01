@@ -114,7 +114,10 @@ func (s *Service) createStream(ctx context.Context, req *connect_go.Request[prot
 	// Authorization.
 	switch inception := inceptionPayload.(type) {
 	case *protocol.ChannelPayload_Inception:
-		user := common.UserIdFromAddress(inceptionEvent.Event.CreatorAddress)
+		user, err := common.UserIdFromAddress(inceptionEvent.Event.CreatorAddress)
+		if err != nil {
+			return nil, err
+		}
 		spaceInfo, err := events.RoomInfoFromInceptionEvent(spaceView.InceptionEvent(), inception.SpaceId, user)
 		if err != nil {
 			return nil, err
@@ -228,7 +231,10 @@ func validateSpaceJoinEvent(event *events.ParsedEvent) error {
 }
 
 func validateJoinEventPayload(event *events.ParsedEvent, membership *protocol.Membership) error {
-	creatorUserId := common.UserIdFromAddress(event.Event.GetCreatorAddress())
+	creatorUserId, err := common.UserIdFromAddress(event.Event.GetCreatorAddress())
+	if err != nil {
+		return err
+	}
 	if membership.GetOp() != protocol.MembershipOp_SO_JOIN {
 		return RpcErrorf(protocol.Err_BAD_STREAM_CREATION_PARAMS, "CreateStream: bad join op %d", membership.GetOp())
 	}

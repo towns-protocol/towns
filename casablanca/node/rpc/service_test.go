@@ -47,7 +47,10 @@ func TestMain(m *testing.M) {
 }
 
 func createUser(ctx context.Context, wallet *crypto.Wallet, client protocolconnect.StreamServiceClient) ([]byte, []byte, error) {
-	userStreamId := common.UserStreamIdFromAddress(wallet.Address.Bytes())
+	userStreamId, err := common.UserStreamIdFromAddress(wallet.Address.Bytes())
+	if err != nil {
+		return nil, nil, err
+	}
 	inception, err := events.MakeEnvelopeWithPayload(
 		wallet,
 		events.Make_UserPayload_Inception(
@@ -78,11 +81,15 @@ func createSpace(ctx context.Context, wallet *crypto.Wallet, client protocolconn
 	if err != nil {
 		return nil, nil, err
 	}
+	userId, err := common.UserIdFromAddress(wallet.Address.Bytes())
+	if err != nil {
+		return nil, nil, err
+	}
 	joinSpace, err := events.MakeEnvelopeWithPayload(
 		wallet,
 		events.Make_SpacePayload_Membership(
 			protocol.MembershipOp_SO_JOIN,
-			common.UserIdFromAddress(wallet.Address.Bytes()),
+			userId,
 		),
 		[][]byte{space.Hash},
 	)
@@ -113,11 +120,15 @@ func createChannel(ctx context.Context, wallet *crypto.Wallet, client protocolco
 	if err != nil {
 		return nil, nil, err
 	}
+	userId, err := common.UserIdFromAddress(wallet.Address.Bytes())
+	if err != nil {
+		return nil, nil, err
+	}
 	joinChannel, err := events.MakeEnvelopeWithPayload(
 		wallet,
 		events.Make_ChannelPayload_Membership(
 			protocol.MembershipOp_SO_JOIN,
-			common.UserIdFromAddress(wallet.Address.Bytes()),
+			userId,
 		),
 		[][]byte{channel.Hash},
 	)
@@ -213,11 +224,15 @@ func TestMethods(t *testing.T) {
 		}
 
 		// user2 joins channel
+		userId, err := common.UserIdFromAddress(wallet2.Address.Bytes())
+		if err != nil {
+			t.Errorf("error getting user id: %v", err)
+		}
 		join, err := events.MakeEnvelopeWithPayload(
 			wallet2,
 			events.Make_ChannelPayload_Membership(
 				protocol.MembershipOp_SO_JOIN,
-				common.UserIdFromAddress(wallet2.Address.Bytes()),
+				userId,
 			),
 			[][]byte{channelHash},
 		)
@@ -357,11 +372,16 @@ func TestManyUsers(t *testing.T) {
 	for i := 1; i < totalUsers; i++ {
 		// users joins channels
 		for j := 0; j < totalChannels; j++ {
+			userId, err := common.UserIdFromAddress(wallets[i].Address.Bytes())
+			if err != nil {
+				t.Fatalf("error getting user id: %v", err)
+			}
+			
 			join, err := events.MakeEnvelopeWithPayload(
 				wallets[i],
 				events.Make_ChannelPayload_Membership(
 					protocol.MembershipOp_SO_JOIN,
-					common.UserIdFromAddress(wallets[i].Address.Bytes()),
+					userId,
 				),
 				[][]byte{channelHashes[j]},
 			)

@@ -100,6 +100,8 @@ func (za *ChainAuth) IsAllowed(ctx context.Context, args AuthorizationArgs, room
 		fallthrough
 	case common.Unknown:
 		fallthrough
+	case common.InvalidRoomType:
+		fallthrough
 	default:
 		errMsg := fmt.Sprintf("unhandled room type: %s", roomInfo.RoomType)
 		log.Error("IsAllowed", errMsg)
