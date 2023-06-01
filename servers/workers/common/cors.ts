@@ -1,5 +1,6 @@
 const allowedOrigins = [
     'http://localhost:3000',
+    'https://localhost:3000',
     'https://towns.com',
     'https://alpha.towns.com',
     'https://app.towns.com',
@@ -13,6 +14,12 @@ const onRenderOrigin = (origin: string): string | undefined => {
     if (origin.includes('onrender.com') && origin.includes('harmony-web')) {
         return origin
     }
+}
+
+const localDomainOrigin = (origin: string): string | undefined => {
+    // Matches a local domain like https://towns.local:3000
+    const rExp: RegExp = /https:\/\/(\w+).local:3000/
+    return rExp.test(origin) ? origin : undefined
 }
 
 const corsHeaders = (origin: string) => ({
@@ -29,7 +36,8 @@ const checkOrigin = (request: Request) => {
 
     const foundOrigin =
         allowedOrigins.find((allowedOrigin) => allowedOrigin.includes(origin)) ||
-        onRenderOrigin(origin)
+        onRenderOrigin(origin) ||
+        localDomainOrigin(origin)
 
     return foundOrigin ? foundOrigin : allowedOrigins[0]
 }
