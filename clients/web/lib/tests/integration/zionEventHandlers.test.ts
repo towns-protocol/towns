@@ -1,7 +1,12 @@
 /**
  * @group dendrite
+ * @group casablanca
  */
-import { createTestSpaceWithEveryoneRole, registerAndStartClients } from './helpers/TestUtils'
+import {
+    createTestChannelWithSpaceRoles,
+    createTestSpaceWithEveryoneRole,
+    registerAndStartClients,
+} from './helpers/TestUtils'
 import { RoomIdentifier } from '../../src/types/room-identifier'
 import { RoomVisibility } from '../../src/types/zion-types'
 import {
@@ -70,7 +75,7 @@ describe('Zion event handlers test', () => {
         await alice.fundWallet()
 
         // alice creates a room
-        const roomId = await createTestSpaceWithEveryoneRole(
+        const spaceId = await createTestSpaceWithEveryoneRole(
             alice,
             [Permission.Read, Permission.Write],
             {
@@ -79,23 +84,25 @@ describe('Zion event handlers test', () => {
             },
         )
 
-        if (!roomId) {
+        if (!spaceId) {
             throw new Error('roomId is undefined')
         }
 
-        if (!bob.matrixUserId) {
+        const userId = bob.getUserId()
+
+        if (!userId) {
             throw new Error('bob.matrixUserId is undefined')
         }
 
         // alice invites bob to the room
-        await alice.inviteUser(roomId, bob.matrixUserId)
+        await alice.inviteUser(spaceId, userId)
 
-        await waitFor(() => expect(bob.getRoomData(roomId)).toBeDefined())
-        // bob joins the room
-        await bob.joinRoom(roomId)
+        console.log('alice.getRoomData(spaceId)', alice.getRoomData(spaceId))
 
-        expect(eventHandlerResult).toBeDefined()
-        expect(eventHandlerResult?.roomId).toEqual(roomId)
+        await bob.joinRoom(spaceId)
+        await waitFor(() => expect(eventHandlerResult).toBeDefined())
+
+        expect(eventHandlerResult?.roomId).toEqual(spaceId)
     })
 
     test('onSendMessage', async () => {
@@ -117,7 +124,7 @@ describe('Zion event handlers test', () => {
         await alice.fundWallet()
 
         // alice creates a room
-        const roomId = await createTestSpaceWithEveryoneRole(
+        const spaceId = await createTestSpaceWithEveryoneRole(
             alice,
             [Permission.Read, Permission.Write],
             {
@@ -126,15 +133,26 @@ describe('Zion event handlers test', () => {
             },
         )
 
-        if (!roomId) {
+        if (!spaceId) {
             throw new Error('roomId is undefined')
         }
 
-        await alice.sendMessage(roomId, 'Hello World!')
+        const channelId = await createTestChannelWithSpaceRoles(alice, {
+            name: alice.makeUniqueName(),
+            parentSpaceId: spaceId,
+            visibility: RoomVisibility.Private,
+            roleIds: [],
+        })
+
+        if (!channelId) {
+            throw new Error('channelId is undefined')
+        }
+
+        await alice.sendMessage(channelId, 'Hello World!')
 
         expect(eventHandlerResult).toBeDefined()
 
-        expect(eventHandlerResult?.roomId).toEqual(roomId)
+        expect(eventHandlerResult?.roomId).toEqual(channelId)
     })
 
     test('onRegister', async () => {
@@ -219,7 +237,7 @@ describe('Zion event handlers test', () => {
         await alice.fundWallet()
 
         // alice creates a room
-        const roomId = await createTestSpaceWithEveryoneRole(
+        const spaceId = await createTestSpaceWithEveryoneRole(
             alice,
             [Permission.Read, Permission.Write],
             {
@@ -228,11 +246,23 @@ describe('Zion event handlers test', () => {
             },
         )
 
-        if (!roomId) {
+        if (!spaceId) {
             throw new Error('roomId is undefined')
         }
+
+        const channelId = await createTestChannelWithSpaceRoles(alice, {
+            name: alice.makeUniqueName(),
+            parentSpaceId: spaceId,
+            visibility: RoomVisibility.Private,
+            roleIds: [],
+        })
+
+        if (!channelId) {
+            throw new Error('roomId is undefined')
+        }
+
         alice.setEventHandlers(undefined)
-        await alice.sendMessage(roomId, 'Hello World!')
+        await alice.sendMessage(channelId, 'Hello World!')
 
         expect(eventHandlerResult).toBeUndefined()
     })

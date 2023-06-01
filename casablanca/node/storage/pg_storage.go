@@ -500,10 +500,10 @@ func (s *PGEventStore) GetRoomInfo(ctx context.Context, roomId string) (*common.
 	}
 	// TODO implement with real values
 	return &common.RoomInfo{
-		SpaceNetworkId:   roomId,
-		ChannelNetworkId: roomId,
-		RoomType:         common.RoomTypeFromStreamId(roomId),
-		IsOwner:          false,
+		SpaceId:   roomId,
+		ChannelId: roomId,
+		RoomType:  common.RoomTypeFromStreamId(roomId),
+		IsOwner:   false,
 	}, nil
 }
 

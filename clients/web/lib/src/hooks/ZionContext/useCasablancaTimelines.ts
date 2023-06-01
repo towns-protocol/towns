@@ -129,6 +129,42 @@ function toTownsContent(
     const description = `${message.event.payload.case}::${message.event.payload.value.content.case} id: ${eventId}`
 
     switch (message.event.payload.case) {
+        case 'userPayload':
+            {
+                switch (message.event.payload.value.content.case) {
+                    case 'inception': {
+                        return {
+                            content: {
+                                kind: ZTEvent.RoomCreate,
+                                creator: message.creatorUserId,
+                                predecessor: undefined, // todo is this needed?
+                                type: message.event.payload.case,
+                            },
+                        }
+                    }
+                    case 'userMembership': {
+                        const payload = message.event.payload.value.content.value
+                        return {
+                            content: {
+                                kind: ZTEvent.RoomMember,
+                                userId: payload.inviterId,
+                                avatarUrl: undefined, // todo avatarUrl
+                                displayName: '---TODO---', // todo displayName
+                                isDirect: undefined, // todo is this needed?
+                                membership: toMembership(payload.op),
+                                streamId: payload.streamId,
+                            },
+                        }
+                    }
+                    case 'toDevice': {
+                        return { error: `${description} unknown message kind` }
+                    }
+                    default: {
+                        return { error: `${description} unknown message kind` }
+                    }
+                }
+            }
+            break
         case 'channelPayload':
             {
                 switch (message.event.payload.value.content.case) {

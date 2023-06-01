@@ -37,8 +37,8 @@ func (r RoomType) String() string {
 }
 
 type RoomInfo struct {
-	SpaceNetworkId   string
-	ChannelNetworkId string
-	RoomType         RoomType
-	IsOwner          bool
+	SpaceId   string
+	ChannelId string
+	RoomType  RoomType
+	IsOwner   bool
 }

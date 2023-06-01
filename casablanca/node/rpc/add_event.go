@@ -22,7 +22,7 @@ var (
 )
 
 func logAddEvent(l *log.Entry, message string, streamId string, event *events.ParsedEvent, envelope *protocol.Envelope, requestId string, err error) {
-	if err == nil || log.GetLevel() < log.DebugLevel {
+	if err == nil && log.GetLevel() < log.DebugLevel {
 		return
 	}
 	var sb strings.Builder
@@ -213,6 +213,7 @@ func addChannelMessage(streamEvent *protocol.StreamEvent, s *Service, ctx contex
 }
 
 func addMembershipEvent(membership *protocol.Membership, s *Service, ctx context.Context, streamId string, view events.StreamView, parsedEvent *events.ParsedEvent) ([]byte, error) {
+	creator := common.UserIdFromAddress(parsedEvent.Event.CreatorAddress)
 	userId := membership.UserId
 	userStreamId := common.UserStreamIdFromId(userId)
 
@@ -225,6 +226,7 @@ func addMembershipEvent(membership *protocol.Membership, s *Service, ctx context
 	permission := auth.PermissionUndefined
 	switch membership.Op {
 	case protocol.MembershipOp_SO_INVITE:
+		userId = creator
 		permission = auth.PermissionInvite
 	case protocol.MembershipOp_SO_JOIN:
 		permission = auth.PermissionWrite

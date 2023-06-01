@@ -131,6 +131,7 @@ export interface RoomMemberEvent {
     isDirect?: boolean
     membership: Membership
     reason?: string
+    streamId?: string // in a case of an invitation to a channel with a streamId
 }
 
 export interface RoomMessageEvent {

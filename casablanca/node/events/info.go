@@ -16,28 +16,28 @@ func RoomInfoFromInceptionEvent(e *ParsedEvent, streamId string, userId string) 
 	switch inception := payload.(type) {
 	case *UserPayload_Inception:
 		return &common.RoomInfo{
-			SpaceNetworkId: inception.StreamId,
-			RoomType:       common.User,
-			IsOwner:        creator == userId,
+			SpaceId:  inception.StreamId,
+			RoomType: common.User,
+			IsOwner:  creator == userId,
 		}, nil
 	case *ChannelPayload_Inception:
 		return &common.RoomInfo{
-			SpaceNetworkId:   inception.SpaceId,
-			ChannelNetworkId: inception.StreamId,
-			RoomType:         common.Channel,
-			IsOwner:          creator == userId,
+			SpaceId:   inception.SpaceId,
+			ChannelId: inception.StreamId,
+			RoomType:  common.Channel,
+			IsOwner:   creator == userId,
 		}, nil
 	case *SpacePayload_Inception:
 		return &common.RoomInfo{
-			SpaceNetworkId: inception.StreamId,
-			RoomType:       common.Space,
-			IsOwner:        creator == userId,
+			SpaceId:  inception.StreamId,
+			RoomType: common.Space,
+			IsOwner:  creator == userId,
 		}, nil
 	case *UserSettingsPayload_Inception:
 		return &common.RoomInfo{
-			SpaceNetworkId: inception.StreamId,
-			RoomType:       common.UserSettings,
-			IsOwner:        creator == userId,
+			SpaceId:  inception.StreamId,
+			RoomType: common.UserSettings,
+			IsOwner:  creator == userId,
 		}, nil
 	default:
 		return nil, fmt.Errorf("unimplemented stream type %T", inception)

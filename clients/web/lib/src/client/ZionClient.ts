@@ -332,6 +332,10 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
         // TODO: init crypto store and load olm prior to initting crypto module
         await this.casablancaClient.initCrypto()
 
+        this._eventHandlers?.onRegister?.({
+            userId: this.casablancaClient.userId,
+        })
+
         await this.casablancaClient.startSync()
 
         return this.casablancaClient
@@ -1457,7 +1461,11 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
                 })
                 return
             case SpaceProtocol.Casablanca:
-                throw new Error('inviteUser not implemented for Casablanca')
+                if (!this.casablancaClient) {
+                    throw new Error('Casablanca client not initialized')
+                }
+                await this.casablancaClient.inviteUser(roomId.networkId, userId)
+                return
             default:
                 staticAssertNever(roomId)
         }
@@ -1526,6 +1534,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
                     membershipStatus: Membership.Join,
                 })
 
+                // hack to force immediate sync of room state for tests
                 this._eventHandlers?.onJoinRoom?.(zionRoom.id, spaceId)
                 return zionRoom
             }
@@ -1536,6 +1545,11 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
                 }
                 await this.casablancaClient.joinStream(roomId.networkId)
                 const stream = await this.casablancaClient.waitForStream(roomId.networkId)
+                let parentId = roomId
+                if (stream.rollup.parentSpaceId) {
+                    parentId = makeCasablancaStreamIdentifier(stream.rollup.parentSpaceId)
+                }
+                this._eventHandlers?.onJoinRoom?.(roomId, parentId)
                 return toZionRoomFromStream(stream)
             }
             default:
@@ -1634,6 +1648,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
                         default:
                             staticAssertNever(options)
                     }
+                    this._eventHandlers?.onSendMessage?.(roomId, message, options)
                 }
                 break
             default:

@@ -1,5 +1,6 @@
 /**
  * @group dendrite
+ * @group casablanca
  */
 import { Permission } from '../../src/client/web3/ContractTypes'
 import React, { useCallback, useEffect, useMemo } from 'react'
@@ -84,25 +85,25 @@ describe('useRoleDetails', () => {
 
         await waitFor(() => expect(screen.getAllByTestId('rolesElement')).toHaveLength(2))
 
-        const rolesElement = screen.getAllByTestId('rolesElement')
-
+        const rolesElementA = await waitFor(() => screen.getByTestId('role-Role A'))
         /* Assert */
         // verify the role name, permissions, token entitlements for the space.
         // in the test components, each field is tagged with this pattern <roleName>:<field>:<value>.
         // verify the role name.
-        await assertRoleName(rolesElement[0], roleNameA)
+        await assertRoleName(rolesElementA, roleNameA)
         // verify the permissions
-        await assertPermissions(rolesElement[0], roleNameA, permissionsA)
+        await assertPermissions(rolesElementA, roleNameA, permissionsA)
         // verify the token entitlement
-        await assertNft(rolesElement[0], roleNameA, memberNftAddress, 1)
+        await assertNft(rolesElementA, roleNameA, memberNftAddress, 1)
 
         screen.debug(undefined, Infinity)
 
-        await assertRoleName(rolesElement[1], roleNameB)
+        const rolesElementB = await waitFor(() => screen.getByTestId('role-Role B'))
+        await assertRoleName(rolesElementB, roleNameB)
         // verify the permissions
-        await assertPermissions(rolesElement[1], roleNameB, permissionsB)
+        await assertPermissions(rolesElementB, roleNameB, permissionsB)
         // verify the token entitlement
-        await assertNft(rolesElement[1], roleNameB, memberNftAddress, 1)
+        await assertNft(rolesElementB, roleNameB, memberNftAddress, 1)
     }) // end test
 }) // end describe
 
@@ -261,7 +262,10 @@ function printRoleStruct(roles: SpaceDataTypes.RoleStructOutput[] | undefined) {
  */
 async function assertRoleName(htmlElement: HTMLElement, roleName: string) {
     await waitFor(() => expect(htmlElement).toBeInTheDocument())
-    await waitFor(() => expect(htmlElement).toHaveTextContent(`roleName:${roleName}`))
+    await waitFor(
+        () => expect(htmlElement).toHaveTextContent(`roleName:${roleName}`),
+        TestConstants.DoubleDefaultWaitForTimeout,
+    )
 }
 
 async function assertPermissions(

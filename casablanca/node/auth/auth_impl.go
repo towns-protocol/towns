@@ -110,7 +110,7 @@ func (za *ChainAuth) IsAllowed(ctx context.Context, args AuthorizationArgs, room
 func (za *ChainAuth) isEntitledToSpace(roomInfo *common.RoomInfo, user eth.Address, permission Permission) (bool, error) {
 	// space disabled check.
 	log.Infof("Checking if space is disabled: %v %v %v", roomInfo, user, permission)
-	isDisabled, err := za.spaceContract.IsSpaceDisabled(roomInfo.SpaceNetworkId)
+	isDisabled, err := za.spaceContract.IsSpaceDisabled(roomInfo.SpaceId)
 	if err != nil {
 		return false, err
 	} else if isDisabled {
@@ -119,7 +119,7 @@ func (za *ChainAuth) isEntitledToSpace(roomInfo *common.RoomInfo, user eth.Addre
 
 	// space entitlement check.
 	isEntitled, err := za.spaceContract.IsEntitledToSpace(
-		roomInfo.SpaceNetworkId,
+		roomInfo.SpaceId,
 		user,
 		permission,
 	)
@@ -129,7 +129,7 @@ func (za *ChainAuth) isEntitledToSpace(roomInfo *common.RoomInfo, user eth.Addre
 func (za *ChainAuth) isEntitledToChannel(roomInfo *common.RoomInfo, user eth.Address, permission Permission) (bool, error) {
 	// channel disabled check.
 	log.Infof("Checking if channel is disabled: %v %v %v", roomInfo, user, permission)
-	isDisabled, err := za.spaceContract.IsChannelDisabled(roomInfo.SpaceNetworkId, roomInfo.ChannelNetworkId)
+	isDisabled, err := za.spaceContract.IsChannelDisabled(roomInfo.SpaceId, roomInfo.ChannelId)
 	if err != nil {
 		return false, err
 	} else if isDisabled {
@@ -138,8 +138,8 @@ func (za *ChainAuth) isEntitledToChannel(roomInfo *common.RoomInfo, user eth.Add
 
 	// channel entitlement check.
 	isEntitled, err := za.spaceContract.IsEntitledToChannel(
-		roomInfo.SpaceNetworkId,
-		roomInfo.ChannelNetworkId,
+		roomInfo.SpaceId,
+		roomInfo.ChannelId,
 		user,
 		permission,
 	)
