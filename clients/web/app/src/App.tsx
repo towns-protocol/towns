@@ -23,6 +23,7 @@ import { FontLoader } from 'ui/utils/FontLoader'
 import { env } from 'utils'
 import { ReloadPrompt } from '@components/ReloadPrompt/ReloadPrompt'
 import { Figma } from 'ui/styles/palette'
+import { AppBadge, FaviconBadge } from '@components/AppBadges/AppBadges'
 
 const AuthenticatedRoutes = React.lazy(() => import('routes/AuthenticatedRoutes'))
 const InviteLinkLanding = React.lazy(() => import('routes/InviteLinkLanding'))
@@ -55,6 +56,8 @@ export const App = () => {
             chainId={environment.chainId}
         >
             <>
+                <FaviconBadge />
+                <AppBadge />
                 <Helmet>
                     <meta
                         name="theme-color"

@@ -12,7 +12,6 @@ import { useSpaceUnreads } from '../hooks/ZionContext/useSpaceUnreads'
 import { useSpaces } from '../hooks/ZionContext/useSpaces'
 import { useSyncErrorHandler } from '../hooks/ZionContext/useSyncErrorHandler'
 import { useSyncSpaceHierarchies } from '../hooks/ZionContext/useSyncSpaceHierarchies'
-import { useFavIconBadge } from '../hooks/ZionContext/useFavIconBadge'
 import { useMatrixRooms } from '../hooks/ZionContext/useMatrixRooms'
 import { useMatrixTimelines } from '../hooks/ZionContext/useMatrixTimelines'
 import { useZionClientListener } from '../hooks/use-zion-client-listener'
@@ -110,8 +109,6 @@ const ContextImpl = (props: Props): JSX.Element => {
     const matrixOnboardingState = useOnboardingState_Matrix(client, matrixClient)
     const casablancaOnboardingState = useOnboardingState_Casablanca(client, casablancaClient)
     const syncError = useSyncErrorHandler(matrixServerUrl, client, matrixClient)
-
-    useFavIconBadge(invitedToIds, spaceUnreads, spaceMentions)
 
     useTransactionListener(client, matrixServerUrl)
 

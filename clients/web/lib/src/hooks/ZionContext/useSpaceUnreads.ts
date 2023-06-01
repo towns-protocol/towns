@@ -2,8 +2,9 @@ import { useEffect, useState } from 'react'
 import { ZionClient } from '../../client/ZionClient'
 import { SpaceHierarchies } from '../../types/zion-types'
 import { useFullyReadMarkerStore } from '../../store/use-fully-read-marker-store'
-import { useTimelineStore } from '../../store/use-timeline-store'
+import { ThreadStatsMap, useTimelineStore } from '../../store/use-timeline-store'
 import { useSpaceIdStore } from './useSpaceIds'
+import { FullyReadMarker } from 'types/timeline-types'
 
 export function useSpaceUnreads(
     client: ZionClient | undefined,
@@ -17,10 +18,13 @@ export function useSpaceUnreads(
         spaceMentions: Record<string, number>
     }>({ spaceUnreads: {}, spaceMentions: {} })
 
+    const threadsStats = useTimelineStore((state) => state.threadsStats)
+
     useEffect(() => {
         if (!client) {
             return
         }
+
         // gets run every time spaceIds changes
         // console.log("USE SPACE UNREADS::running effect");
         const updateState = (spaceId: string, hasUnread: boolean, mentions: number) => {
@@ -51,7 +55,6 @@ export function useSpaceUnreads(
             // note, okay using timeline store without listening to it because I'm
             // mostly certian it's impossible to update the isParticipating without
             // also updating the fullyReadMarkers
-            const threadStats = useTimelineStore.getState().threadsStats
             spaceIds.forEach((spaceId) => {
                 let hasUnread = false
                 let mentionCount = 0
@@ -68,9 +71,7 @@ export function useSpaceUnreads(
                 Object.values(markers).forEach((marker) => {
                     if (
                         marker.isUnread &&
-                        (!marker.threadParentId ||
-                            threadStats[marker.channelId.networkId]?.[marker.threadParentId]
-                                ?.isParticipating === true) &&
+                        isParticipatingThread(marker, threadsStats) &&
                         childIds.has(marker.channelId.networkId)
                     ) {
                         hasUnread = true
@@ -88,7 +89,23 @@ export function useSpaceUnreads(
         return () => {
             fullyReadUnsub()
         }
-    }, [client, spaceIds, spaceHierarchies, bShowSpaceRootUnreads])
+    }, [client, spaceIds, spaceHierarchies, bShowSpaceRootUnreads, threadsStats])
 
     return state
+}
+
+const isParticipatingThread = (marker: FullyReadMarker, threadStats: ThreadStatsMap) => {
+    // if the thread has no parent, then it's a channel we're participating in
+    if (!marker.threadParentId) {
+        return true
+    }
+
+    const thread = threadStats[marker.channelId.networkId]?.[marker.threadParentId]
+
+    // skip unreads for deleted threads
+    if (!thread?.parentEvent) {
+        return false
+    }
+
+    return thread?.isParticipating
 }
