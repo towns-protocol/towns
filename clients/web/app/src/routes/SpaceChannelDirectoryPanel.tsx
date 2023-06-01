@@ -12,6 +12,7 @@ import { Avatar, Box, Panel, Paragraph, Stack } from '@ui'
 import { atoms } from 'ui/styles/atoms.css'
 import { shortAddress } from 'ui/utils/utils'
 import { useCreateLink } from 'hooks/useCreateLink'
+import { ModalContainer } from '@components/Modals/ModalContainer'
 
 export const ChannelDirectoryPanel = () => {
     const { channel } = useChannelData()
@@ -47,6 +48,14 @@ const ChannelMembers = () => {
                 <ChannelMemberRow key={m.userId} user={m} />
             ))}
         </Stack>
+    )
+}
+
+export const ChannelMembersModal = (props: { onHide: () => void }) => {
+    return (
+        <ModalContainer touchTitle="Members" onHide={props.onHide}>
+            <ChannelMembers />
+        </ModalContainer>
     )
 }
 

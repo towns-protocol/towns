@@ -15,16 +15,21 @@ import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
 import { Icon, Panel, PanelButton, Paragraph, Stack } from '@ui'
 import { useHasPermission } from 'hooks/useHasPermission'
 import { PATHS } from 'routes'
+import { useDevice } from 'hooks/useDevice'
+import { ChannelMembersModal } from './SpaceChannelDirectoryPanel'
+
 export const ChannelInfoPanel = () => {
     const { channel } = useChannelData()
     const { members } = useChannelMembers()
+    const { isTouch } = useDevice()
     const spaceData = useSpaceData()
     const { data: canEditChannel } = useHasPermission(Permission.ModifySpaceSettings)
     const navigate = useNavigate()
     const { isRoomEncrypted, leaveRoom } = useZionClient()
-    const [showChannelSettings, setShowChannelSettings] = useState<boolean>(false)
+
     const isEncrypted = channel && isRoomEncrypted(channel.id)
     const room = useRoom(channel?.id)
+    const [activeModal, setActiveModal] = useState<'members' | 'settings' | undefined>(undefined)
 
     const onClose = useEvent(() => {
         navigate('..')
@@ -38,18 +43,22 @@ export const ChannelInfoPanel = () => {
         navigate(`/${PATHS.SPACES}/${spaceData?.id.slug}`)
     })
 
-    const onMembersClick = useEvent(() => {
-        navigate(
-            `/${PATHS.SPACES}/${spaceData?.id.slug}/${PATHS.CHANNELS}/${channel?.id.slug}/info?directory`,
-        )
-    })
+    const onMembersClick = useCallback(() => {
+        if (isTouch) {
+            setActiveModal('members')
+        } else {
+            navigate(
+                `/${PATHS.SPACES}/${spaceData?.id.slug}/${PATHS.CHANNELS}/${channel?.id.slug}/info?directory`,
+            )
+        }
+    }, [navigate, isTouch, spaceData?.id.slug, channel?.id.slug])
 
     const onShowChannelSettingsPopup = useEvent(() => {
-        setShowChannelSettings(true)
+        setActiveModal('settings')
     })
 
     const onHideChannelSettingsPopup = useEvent(() => {
-        setShowChannelSettings(false)
+        setActiveModal(undefined)
     })
 
     const onUpdatedChannel = useCallback(() => {
@@ -72,14 +81,6 @@ export const ChannelInfoPanel = () => {
 
     return (
         <Panel modalPresentable label="Channel Info" onClose={onClose}>
-            {showChannelSettings && spaceData && channel?.id && (
-                <ChannelSettingsModal
-                    spaceId={spaceData?.id}
-                    channelId={channel?.id}
-                    onHide={onHideChannelSettingsPopup}
-                    onUpdatedChannel={onUpdatedChannel}
-                />
-            )}
             <Stack gap padding="lg">
                 <Stack gap padding background="level2" rounded="sm">
                     <Paragraph strong size="lg">
@@ -113,6 +114,19 @@ export const ChannelInfoPanel = () => {
                     <Paragraph color="error">Leave #{channel?.label}</Paragraph>
                 </PanelButton>
             </Stack>
+
+            {activeModal === 'settings' && spaceData && channel?.id && (
+                <ChannelSettingsModal
+                    spaceId={spaceData?.id}
+                    channelId={channel?.id}
+                    onHide={onHideChannelSettingsPopup}
+                    onUpdatedChannel={onUpdatedChannel}
+                />
+            )}
+
+            {activeModal === 'members' && (
+                <ChannelMembersModal onHide={onHideChannelSettingsPopup} />
+            )}
         </Panel>
     )
 }
