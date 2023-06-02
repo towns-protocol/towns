@@ -32,6 +32,7 @@ export const ClipboardCopy = forwardRef<HTMLDivElement, Props>((props, ref) => {
                 setCopied(copied)
             }
             asyncCopy()
+            e.stopPropagation()
         },
         [copy, props.clipboardContent, props.label],
     )
