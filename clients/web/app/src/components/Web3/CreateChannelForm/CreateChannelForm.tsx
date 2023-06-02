@@ -3,6 +3,7 @@ import {
     RoomIdentifier,
     RoomVisibility,
     SignerUndefinedError,
+    TransactionStatus,
     WalletDoesNotMatchSignedInAccountError,
     useCreateChannelTransaction,
     useCurrentWalletEqualsSignedInAccount,
@@ -24,7 +25,6 @@ import { Spinner } from '@components/Spinner'
 import { TokenCheckboxLabel } from '@components/Tokens/TokenCheckboxLabel'
 import { TransactionButton } from '@components/TransactionButton'
 import { env } from 'utils'
-import { useOnTransactionStages } from 'hooks/useOnTransactionStages'
 import { useRequireTransactionNetwork } from 'hooks/useRequireTransactionNetwork'
 import { useSpaceRoles } from 'hooks/useContractRoles'
 type Props = {
@@ -75,6 +75,7 @@ export const CreateChannelForm = (props: Props) => {
         transactionHash,
         data: channelId,
     } = useCreateChannelTransaction()
+    const { syncSpace } = useSyncSpace()
 
     useEffect(() => {
         console.log(
@@ -153,19 +154,6 @@ export const CreateChannelForm = (props: Props) => {
         }
     }, [])
 
-    const { syncSpace } = useSyncSpace()
-    const onSuccessfulTransaction = useCallback(() => {
-        console.log('[CreateChannelForm]', 'onSuccessfulTransaction')
-        invalidateQuery()
-        syncSpace(props.spaceId) // re-sync the space hierarchy once the transaction is completed
-        if (!channelId) {
-            return
-        }
-        setTimeout(() => {
-            onCreateChannel(channelId)
-        }, 1500)
-    }, [invalidateQuery, channelId, syncSpace, props.spaceId, onCreateChannel])
-
     const firstRoleIDWithReadPermission = rolesWithDetails
         ?.find((role) => role.permissions.includes(Permission.Read))
         ?.id.toString()
@@ -176,12 +164,6 @@ export const CreateChannelForm = (props: Props) => {
             ? [firstRoleIDWithReadPermission]
             : [],
     }
-
-    useOnTransactionStages({
-        transactionStatus,
-        transactionHash,
-        onSuccess: onSuccessfulTransaction,
-    })
 
     return rolesWithDetails ? (
         <FormRender<FormState>
@@ -195,7 +177,16 @@ export const CreateChannelForm = (props: Props) => {
                     parentSpaceId: props.spaceId,
                     roleIds: roleIds.map((roleId) => Number(roleId)),
                 }
-                await createChannelTransaction(channelInfo)
+                const txResult = await createChannelTransaction(channelInfo)
+                console.log('[CreateChannelForm]', 'createChannelTransaction result', txResult)
+                if (txResult?.status === TransactionStatus.Success) {
+                    invalidateQuery()
+                    syncSpace(props.spaceId) // re-sync the space hierarchy once the transaction is completed
+                    const channelId = txResult.data
+                    if (channelId) {
+                        onCreateChannel(channelId)
+                    }
+                }
             }}
         >
             {({ register, formState, setValue, getValues }) => {
@@ -330,6 +321,7 @@ export const CreateChannelFormContainer = ({ spaceId, onHide }: Omit<Props, 'onC
 
     const onCreateChannel = useCallback(
         (roomId: RoomIdentifier) => {
+            console.log('[CreateChannelForm]', 'onCreateChannel', roomId)
             navigate(`/${PATHS.SPACES}/${spaceId?.slug}/${PATHS.CHANNELS}/${roomId.slug}/`)
             onHide()
         },

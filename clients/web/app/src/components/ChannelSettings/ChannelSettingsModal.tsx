@@ -3,6 +3,7 @@ import {
     Permission,
     RoomIdentifier,
     SignerUndefinedError,
+    TransactionStatus,
     UpdateChannelInfo,
     WalletDoesNotMatchSignedInAccountError,
     useCurrentWalletEqualsSignedInAccount,
@@ -20,7 +21,6 @@ import { ErrorMessageText } from 'ui/components/ErrorMessage/ErrorMessage'
 import { RequireTransactionNetworkMessage } from '@components/RequireTransactionNetworkMessage/RequireTransactionNetworkMessage'
 import { TransactionButton } from '@components/TransactionButton'
 import { useAllRoleDetails } from 'hooks/useAllRoleDetails'
-import { useOnTransactionStages } from 'hooks/useOnTransactionStages'
 import { useRequireTransactionNetwork } from 'hooks/useRequireTransactionNetwork'
 import { FormState, FormStateKeys, emptyDefaultValues, schema } from './formConfig'
 import { ModalContainer } from '../Modals/ModalContainer'
@@ -84,19 +84,6 @@ export function ChannelSettingsForm({
 
     const transactionUIState = toTransactionUIStates(transactionStatus, Boolean(channelId))
 
-    const onSuccessfulTransaction = useCallback(() => {
-        invalidateQuery()
-        setTimeout(() => {
-            onUpdatedChannel()
-        }, 1500)
-    }, [invalidateQuery, onUpdatedChannel])
-
-    useOnTransactionStages({
-        transactionStatus,
-        transactionHash,
-        onSuccess: onSuccessfulTransaction,
-    })
-
     const { isTransactionNetwork, switchNetwork } = useRequireTransactionNetwork()
     const currentWalletEqualsSignedInAccount = useCurrentWalletEqualsSignedInAccount()
     const isDisabled = !isTransactionNetwork || !currentWalletEqualsSignedInAccount
@@ -125,10 +112,21 @@ export function ChannelSettingsForm({
                     updatedChannelTopic: description,
                     updatedRoleIds: roleIds.map((roleId) => Number(roleId)),
                 }
-                await updateChannelTransaction(channelInfo)
+                const txResult = await updateChannelTransaction(channelInfo)
+                if (txResult?.status === TransactionStatus.Success) {
+                    invalidateQuery()
+                    onUpdatedChannel()
+                }
             }
         },
-        [channelId, spaceId, transactionUIState, updateChannelTransaction],
+        [
+            channelId,
+            invalidateQuery,
+            onUpdatedChannel,
+            spaceId,
+            transactionUIState,
+            updateChannelTransaction,
+        ],
     )
 
     const onNameKeyDown = useCallback(async (event: React.KeyboardEvent<HTMLInputElement>) => {

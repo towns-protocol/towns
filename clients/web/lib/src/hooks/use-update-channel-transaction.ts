@@ -31,20 +31,23 @@ export function useUpdateChannelTransaction() {
 
     // update role with new permissions, tokens, and users
     const _updateChannelTransaction = useCallback(
-        async function (updateChannelInfo: UpdateChannelInfo) {
+        async function (
+            updateChannelInfo: UpdateChannelInfo,
+        ): Promise<ChannelUpdateTransactionContext | undefined> {
             if (isTransacting.current) {
                 // Transaction already in progress
-                return
+                return undefined
             }
+            let transactionResult: ChannelUpdateTransactionContext | undefined
             if (!signer) {
-                setTransactionContext(
-                    createTransactionContext(
-                        TransactionStatus.Failed,
-                        false,
-                        new SignerUndefinedError(),
-                    ),
+                // cannot sign the transaction. stop processing.
+                transactionResult = createTransactionContext(
+                    TransactionStatus.Failed,
+                    false,
+                    new SignerUndefinedError(),
                 )
-                return
+                setTransactionContext(transactionResult)
+                return transactionResult
             }
             // ok to proceed
             isTransacting.current = true
@@ -69,21 +72,21 @@ export function useUpdateChannelTransaction() {
                         })
                     }
                     // Wait for transaction to be mined
-                    const rxContext = await waitForUpdateChannelTransaction(txContext)
-                    setTransactionContext(rxContext)
+                    transactionResult = await waitForUpdateChannelTransaction(txContext)
+                    setTransactionContext(transactionResult)
                 }
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
             } catch (e: any) {
-                setTransactionContext(
-                    createTransactionContext(
-                        TransactionStatus.Failed,
-                        hasOffChainUpdate,
-                        toError(e),
-                    ),
+                transactionResult = createTransactionContext(
+                    TransactionStatus.Failed,
+                    hasOffChainUpdate,
+                    toError(e),
                 )
+                setTransactionContext(transactionResult)
             } finally {
                 isTransacting.current = false
             }
+            return transactionResult
         },
         [signer, updateChannelTransaction, waitForUpdateChannelTransaction],
     )

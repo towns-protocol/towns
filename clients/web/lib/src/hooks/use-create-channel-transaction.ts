@@ -36,16 +36,22 @@ export function useCreateChannelTransaction() {
     }, [transactionContext])
 
     const _createChannelTransaction = useCallback(
-        async function (createInfo: CreateChannelInfo): Promise<void> {
+        async function (
+            createInfo: CreateChannelInfo,
+        ): Promise<TransactionContext<RoomIdentifier> | undefined> {
             if (isTransacting.current) {
                 // Transaction already in progress
-                return
+                return undefined
             }
+            let transactionResult: TransactionContext<RoomIdentifier> | undefined
             if (!signer) {
-                setTransactionContext(
-                    createTransactionContext(TransactionStatus.Failed, new SignerUndefinedError()),
+                // cannot sign the transaction. stop processing.
+                transactionResult = createTransactionContext(
+                    TransactionStatus.Failed,
+                    new SignerUndefinedError(),
                 )
-                return
+                setTransactionContext(transactionResult)
+                return transactionResult
             }
             // ok to proceed
             isTransacting.current = true
@@ -70,17 +76,17 @@ export function useCreateChannelTransaction() {
                         })
                     }
                     // Wait for transaction to be mined
-                    const rxContext = await waitForCreateChannelTransaction(txContext)
-                    setTransactionContext(rxContext)
+                    transactionResult = await waitForCreateChannelTransaction(txContext)
+                    setTransactionContext(transactionResult)
                 }
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
             } catch (e: any) {
-                setTransactionContext(
-                    createTransactionContext(TransactionStatus.Failed, toError(e)),
-                )
+                transactionResult = createTransactionContext(TransactionStatus.Failed, toError(e))
+                setTransactionContext(transactionResult)
             } finally {
                 isTransacting.current = false
             }
+            return transactionResult
         },
         [createChannelTransaction, signer, waitForCreateChannelTransaction],
     )
