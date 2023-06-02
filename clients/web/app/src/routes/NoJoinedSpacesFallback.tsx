@@ -13,7 +13,7 @@ import { CentralPanelLayout } from './layouts/CentralPanelLayout'
 export const NoJoinedSpacesFallback = () => {
     const navigate = useNavigate()
     const { spaces } = useZionContext()
-    const { client } = useZionClient()
+    const { client, logout } = useZionClient()
     const initialSyncComplete = useWaitForInitialSync()
 
     useEffect(() => {
@@ -50,13 +50,20 @@ export const NoJoinedSpacesFallback = () => {
                         <Text textAlign="center" color="gray2">
                             Apply here:
                         </Text>
+
                         <Box horizontal centerContent>
-                            <Button
-                                tone="cta1"
-                                onClick={() => window.open(env.VITE_TYPEFORM_ALPHA_URL)}
-                            >
-                                Join alpha
-                            </Button>
+                            <Stack gap>
+                                <Button
+                                    tone="cta1"
+                                    onClick={() => window.open(env.VITE_TYPEFORM_ALPHA_URL)}
+                                >
+                                    Join alpha
+                                </Button>
+
+                                <Button tone="level2" onClick={logout}>
+                                    Log out
+                                </Button>
+                            </Stack>
                         </Box>
                     </Stack>
                 </Stack>
