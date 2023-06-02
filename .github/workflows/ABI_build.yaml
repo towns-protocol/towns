@@ -81,6 +81,7 @@ jobs:
               uses: golangci/golangci-lint-action@v3
               with:
                   working-directory: servers/dendrite/zion/contracts/zion_localhost
+                  version: 'v1.52.2'
 
     # should we run lint on packages/generated/localhost/typings ?
 
