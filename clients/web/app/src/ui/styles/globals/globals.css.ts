@@ -10,6 +10,7 @@ globalStyle('html, body', {
     fontSize: vars.fontSize.md,
     touchAction: 'pan-x pan-y',
     backgroundColor: vars.color.background.level1,
+    overscrollBehavior: 'none',
 })
 
 globalStyle('*', {
