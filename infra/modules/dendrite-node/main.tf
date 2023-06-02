@@ -108,12 +108,6 @@ resource "aws_ecs_service" "dendrite-ecs-service" {
     container_port   = 8008
   }
 
-  load_balancer {
-    target_group_arn = var.dendrite_profiler_target_group_arn
-    container_name   = "dendrite"
-    container_port   = 65432
-  }
-
   network_configuration {
     security_groups  = [module.dendrite_internal_sg.security_group_id]
     subnets          = var.dendrite_node_subnets
@@ -129,10 +123,6 @@ data "aws_alb_target_group" "green" {
   arn = var.dendrite_server_green_target_group_arn
 }
 
-resource "aws_codedeploy_app" "dendrite-node-code-deploy-app" {
-  compute_platform = "ECS"
-  name             = "${module.global_constants.environment}-dendrite-${var.dendrite_node_name}-codedeploy-app"
-}
 
 resource "aws_iam_role" "ecs_code_deploy_role" {
   name                = "${module.global_constants.environment}-dendrite-${var.dendrite_node_name}-ecs-code-deploy-role"
@@ -156,6 +146,11 @@ resource "aws_iam_role" "ecs_code_deploy_role" {
   tags = module.global_constants.tags
 }
 
+
+resource "aws_codedeploy_app" "dendrite-node-code-deploy-app" {
+  compute_platform = "ECS"
+  name             = "${module.global_constants.environment}-dendrite-${var.dendrite_node_name}-codedeploy-app"
+}
 
 resource "aws_codedeploy_deployment_group" "codedeploy_deployment_group" {
   app_name               = aws_codedeploy_app.dendrite-node-code-deploy-app.name

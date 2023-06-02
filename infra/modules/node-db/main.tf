@@ -98,6 +98,8 @@ data "aws_rds_engine_version" "postgresql" {
 module "rds_aurora_postgresql" {
   source = "terraform-aws-modules/rds-aurora/aws"
 
+  version = "7.7.0"
+
   name              = "${module.global_constants.environment}-dendrite-${var.dendrite_node_name}-postgresql"
   engine            = "aurora-postgresql"
   engine_mode       = "provisioned"
