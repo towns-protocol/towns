@@ -401,7 +401,7 @@ export const SpaceInfoPanel = () => {
                     </Paragraph>
                 </PanelButton>
 
-                {canEdit && (
+                {canEdit && !isTouch && (
                     <PanelButton onClick={onSettingsClick}>
                         <Icon type="settings" />
                         <Paragraph color="default">Settings</Paragraph>
