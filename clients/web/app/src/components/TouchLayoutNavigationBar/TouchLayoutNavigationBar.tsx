@@ -117,8 +117,7 @@ export const TouchLayoutNavigationBar = (props: Props) => {
                         transition={{ ease: 'easeOut', duration: 0.3 }}
                     >
                         <Text fontWeight="strong" color="default" textAlign="center">
-                            Turn on desktop notifications for DMs,
-                            <br /> threads and mentions?
+                            Turn on notification badges for threads and mentions?
                         </Text>
                         <Stack horizontal gap>
                             <Button tone="cta1" size="button_sm" onClick={requestPushPermission}>

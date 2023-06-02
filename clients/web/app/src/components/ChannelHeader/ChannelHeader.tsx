@@ -39,7 +39,7 @@ const DesktopChannelHeader = (props: Props) => {
                     alignItems="center"
                 >
                     <Text fontWeight="strong" color="default">
-                        Turn on desktop notifications for DMs, threads and mentions?
+                        Turn on notification badges for threads and mentions?
                     </Text>
                     <Box grow />
                     <Button tone="cta1" onClick={requestPushPermission}>

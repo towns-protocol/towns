@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useState } from 'react'
 import { env } from '../utils/environment'
+import { useDevice } from './useDevice'
 
 // always false for now
 const ENABLE_PUSH_NOTIFICATIONS = false
 
 export const usePushNotifications = () => {
+    const { isPWA } = useDevice()
     const [permissionState, setPermissionState] = useState<NotificationPermission | undefined>(
         notificationsSupported() ? Notification.permission : undefined,
     )
@@ -66,7 +68,7 @@ export const usePushNotifications = () => {
     }, [permissionState])
 
     const displayNotificationBanner =
-        ENABLE_PUSH_NOTIFICATIONS &&
+        (ENABLE_PUSH_NOTIFICATIONS || isPWA) &&
         permissionState !== 'granted' &&
         permissionState !== 'denied' &&
         notificationsSupported()
