@@ -2,13 +2,13 @@ import React, { useEffect, useMemo, useRef } from 'react'
 import { Outlet, useNavigate, useParams } from 'react-router'
 import { NavLink } from 'react-router-dom'
 import { useEvent } from 'react-use-event-hook'
-import { Permission } from 'use-zion-client'
+import { Permission, useHasPermission } from 'use-zion-client'
 import { PATHS } from 'routes'
 import { IconButton, Stack, Text } from '@ui'
 import { useSettingsRolesStore } from '@components/SpaceSettings/store/hooks/settingsRolesStore'
-import { useHasPermission } from 'hooks/useHasPermission'
 import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinner'
 import { FadeIn } from '@components/Transitions'
+import { useAuth } from 'hooks/useAuth'
 import { SpaceSettingsNavItem } from '../NavItem/SpaceSettingsNavItem'
 import { useModifiedRoles } from './store/hooks/useModifiedRoles'
 import { useSettingsTransactionsStore } from './store/hooks/settingsTransactionStore'
@@ -21,10 +21,13 @@ export const SpaceSettings = () => {
     const { spaceSlug = '' } = useParams()
     const spaceId = useMemo(() => decodeURIComponent(spaceSlug), [spaceSlug])
     const defaultPath = useDefaultRolePath()
+    const { loggedInWalletAddress } = useAuth()
 
-    const { data: canEditSettings, isLoading: canEditLoading } = useHasPermission(
-        Permission.ModifySpaceSettings,
-    )
+    const { hasPermission: canEditSettings, isLoading: canEditLoading } = useHasPermission({
+        spaceId: spaceId,
+        walletAddress: loggedInWalletAddress ?? '',
+        permission: Permission.ModifySpaceSettings,
+    })
 
     const onClose = useEvent(() => {
         navigate(`/${PATHS.SPACES}/${spaceId}`)

@@ -27,6 +27,7 @@ export { useCurrentWalletEqualsSignedInAccount } from './hooks/use-current-walle
 export { useDeleteRoleTransaction } from './hooks/use-delete-role-transaction'
 export { useFavIconBadge, useAppBadge } from './hooks/ZionContext/useFavIconBadge'
 export { useFullyReadMarker } from './hooks/use-fully-read-marker'
+export { useHasPermission } from './hooks/use-has-permission'
 export { useMatrixCredentials } from './hooks/use-matrix-credentials'
 export { useMember } from './hooks/use-member'
 export { useMembers } from './hooks/use-members'

@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from 'react'
 import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
 
-import { QueryKeyRoles } from './query-keys'
+import { QueryRoleKeys } from './query-keys'
 import { RoleDetails } from '../client/web3/ContractTypes'
 import { useZionContext } from '../components/ZionContextProvider'
 
@@ -31,7 +31,7 @@ export function useRoleDetails(spaceId: string, roleId: number) {
     } = useQuery(
         // unique keys per query so that React Query
         // can manage the cache for us.
-        [QueryKeyRoles.BySpaceId, spaceId, QueryKeyRoles.ByRoleId, roleId],
+        [QueryRoleKeys.FirstBySpaceIds, spaceId, QueryRoleKeys.ThenByRoleIds, roleId],
         // query that does the data fetching.
         () => getRole(spaceId, roleId),
         // options for the query.
@@ -71,11 +71,11 @@ export function useRoleDetailsByChannel(spaceId: string, channelId: string, role
         // unique keys per query so that React Query
         // can manage the cache for us.
         [
-            QueryKeyRoles.BySpaceId,
+            QueryRoleKeys.FirstBySpaceIds,
             spaceId,
-            QueryKeyRoles.ByChannelId,
+            QueryRoleKeys.ThenByChannelIds,
             channelId,
-            QueryKeyRoles.ByRoleId,
+            QueryRoleKeys.ThenByRoleIds,
             roleId,
         ],
         // query that does the data fetching.
@@ -114,7 +114,12 @@ export function useMultipleRoleDetails(spaceId: string, roleIds: number[]) {
     const queryData = useQueries<RoleDetails[]>({
         queries: roleIds.map((roleId) => {
             return {
-                queryKey: [QueryKeyRoles.BySpaceId, spaceId, QueryKeyRoles.ByRoleId, roleId],
+                queryKey: [
+                    QueryRoleKeys.FirstBySpaceIds,
+                    spaceId,
+                    QueryRoleKeys.ThenByRoleIds,
+                    roleId,
+                ],
                 queryFn: () => getRole(spaceId, roleId),
                 enabled: isEnabled,
                 refetchOnWindowFocus: false,
@@ -125,14 +130,17 @@ export function useMultipleRoleDetails(spaceId: string, roleIds: number[]) {
         }),
     })
 
-    return useMemo(() => {
-        const invalidateQuery = () =>
+    const invalidateQuery = useCallback(
+        () =>
             queryClient.invalidateQueries([
-                QueryKeyRoles.BySpaceId,
+                QueryRoleKeys.FirstBySpaceIds,
                 spaceId,
-                QueryKeyRoles.ByRoleId,
-            ])
+                QueryRoleKeys.ThenByRoleIds,
+            ]),
+        [queryClient, spaceId],
+    )
 
+    return useMemo(() => {
         if (!queryData.some((token) => token.isLoading)) {
             return {
                 data: queryData
@@ -148,5 +156,5 @@ export function useMultipleRoleDetails(spaceId: string, roleIds: number[]) {
             isLoading: true,
             invalidateQuery,
         }
-    }, [queryClient, queryData, spaceId])
+    }, [invalidateQuery, queryData])
 }

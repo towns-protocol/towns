@@ -5,6 +5,7 @@ import {
     Permission,
     useChannelData,
     useChannelMembers,
+    useHasPermission,
     useRoom,
     useSpaceData,
     useZionClient,
@@ -13,8 +14,8 @@ import {
 import { ChannelSettingsModal } from '@components/ChannelSettings/ChannelSettingsModal'
 import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
 import { Icon, Panel, PanelButton, Paragraph, Stack } from '@ui'
-import { useHasPermission } from 'hooks/useHasPermission'
 import { PATHS } from 'routes'
+import { useAuth } from 'hooks/useAuth'
 import { useDevice } from 'hooks/useDevice'
 import { ChannelMembersModal } from './SpaceChannelDirectoryPanel'
 
@@ -23,7 +24,13 @@ export const ChannelInfoPanel = () => {
     const { members } = useChannelMembers()
     const { isTouch } = useDevice()
     const spaceData = useSpaceData()
-    const { data: canEditChannel } = useHasPermission(Permission.ModifySpaceSettings)
+    const { loggedInWalletAddress } = useAuth()
+    const { hasPermission: canEditChannel } = useHasPermission({
+        spaceId: spaceData?.id.networkId ?? '',
+        channelId: channel?.id.networkId,
+        walletAddress: loggedInWalletAddress ?? '',
+        permission: Permission.ModifySpaceSettings,
+    })
     const navigate = useNavigate()
     const { isRoomEncrypted, leaveRoom } = useZionClient()
 

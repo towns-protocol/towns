@@ -1,10 +1,15 @@
-export class QueryKeyRoles {
-    public static BySpaceId = 'spaceIds'
-    public static ByRoleId = 'spaceRoleIds'
-    public static ByChannelId = 'channelIds'
+/*
+    Cache keys for roles
+*/
+export class QueryRoleKeys {
+    public static readonly FirstBySpaceIds = 'spaceIds'
+    public static readonly ThenByRoleIds = 'spaceRoleIds'
+    public static readonly ThenByChannelIds = 'channelIds'
 }
 
-export class QuerySyncKey {
-    public static SyncEntitledChannels = 'syncEntitledChannels'
-    public static SyncSpaceOwner = 'syncSpaceInfo'
+/*
+    Cache keys for sync'ing SpaceHieraries
+*/
+export class QueryKeys {
+    public static readonly SyncEntitledChannels = 'syncEntitledChannels'
 }

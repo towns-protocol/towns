@@ -93,5 +93,7 @@ describe('channel update', () => {
         expect(bobJoinError.data).toHaveProperty('errcode', MAXTRIX_ERROR.M_FORBIDDEN)
         // bob was able to join the space after the channel was updated
         expect(bobJoinedRoom?.id.networkId).toBeTruthy()
+        await alice.logout()
+        await bob.logout()
     })
 })

@@ -1,7 +1,7 @@
 import { useCallback, useEffect } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 
-import { QueryKeyRoles } from './query-keys'
+import { QueryRoleKeys } from './query-keys'
 import { getFilteredRolesFromSpace } from '../client/web3/ContractHelpers'
 import { useZionContext } from '../components/ZionContextProvider'
 
@@ -29,7 +29,7 @@ export function useRoles(_spaceId: string | undefined) {
             const prefetchRoles = async function () {
                 if (spaceId) {
                     await queryClient.prefetchQuery({
-                        queryKey: [QueryKeyRoles.BySpaceId, spaceId],
+                        queryKey: [QueryRoleKeys.FirstBySpaceIds, spaceId],
                         queryFn: () => getRolesFromSpace(spaceId),
                         staleTime: 10 * 1000, // only prefetch if older than 10 seconds
                     })
@@ -47,7 +47,7 @@ export function useRoles(_spaceId: string | undefined) {
     } = useQuery(
         // unique key per query so that React Query
         // can manage the cache for us.
-        [QueryKeyRoles.BySpaceId, spaceId],
+        [QueryRoleKeys.FirstBySpaceIds, spaceId],
         // query function that does the data fetching.
         () => getRolesFromSpace(spaceId),
         // options for the query.

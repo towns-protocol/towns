@@ -88,10 +88,10 @@ const SpacesChannelComponent = () => {
         useDisplayEncryptionProgress(channelMessages)
 
     const { members } = useSpaceMembers()
-    const { userId } = useMatrixCredentials()
+    const { userId, loggedInWalletAddress } = useMatrixCredentials()
     const channels = useSpaceChannels()
 
-    const { isChannelWritable } = useIsChannelWritable(channelId)
+    const { isChannelWritable } = useIsChannelWritable(spaceId, channelId, loggedInWalletAddress)
 
     const placeholder = isChannelWritable
         ? `Send a message to #${channel?.label}`

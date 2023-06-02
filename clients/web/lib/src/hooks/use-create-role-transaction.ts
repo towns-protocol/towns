@@ -8,7 +8,7 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { Permission } from '../client/web3/ContractTypes'
-import { QueryKeyRoles } from './query-keys'
+import { QueryRoleKeys } from './query-keys'
 import { createExternalTokenStruct } from '../client/web3/ContractHelpers'
 import { useQueryClient } from '@tanstack/react-query'
 import { useTransactionStore } from '../store/use-transactions-store'
@@ -85,7 +85,7 @@ export function useCreateRoleTransaction() {
                     setTransactionContext(rxContext)
                     if (rxContext?.status === TransactionStatus.Success) {
                         await queryClient.invalidateQueries([
-                            QueryKeyRoles.BySpaceId,
+                            QueryRoleKeys.FirstBySpaceIds,
                             spaceNetworkId,
                         ])
                     }

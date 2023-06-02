@@ -5,7 +5,6 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 import * as Lib from 'use-zion-client'
 import * as Router from 'react-router'
 import { TestApp, getWalletAddress } from 'test/testUtils'
-import * as useHasPermission from 'hooks/useHasPermission'
 import * as useContractSpaceInfoHook from 'hooks/useContractSpaceInfo'
 import { SpaceInfoPanel } from './SpaceInfoPanel'
 
@@ -107,8 +106,10 @@ describe('<SpaceHome />', () => {
         const { roomIdentifier, spaceData, onChainSpaceInfo } = generateSpaceData('no-topic')
 
         // @ts-ignore
-        vi.spyOn(useHasPermission, 'useHasPermission').mockReturnValue({
-            data: false,
+        vi.spyOn(Lib, 'useHasPermission').mockReturnValue({
+            isLoading: false,
+            hasPermission: false,
+            error: undefined,
         })
         vi.spyOn(Lib, 'useZionClient').mockReturnValue({
             // @ts-ignore
@@ -134,8 +135,10 @@ describe('<SpaceHome />', () => {
         const { roomIdentifier, spaceData, onChainSpaceInfo } = generateSpaceData('no-topic')
 
         // @ts-ignore
-        vi.spyOn(useHasPermission, 'useHasPermission').mockReturnValue({
-            data: true,
+        vi.spyOn(Lib, 'useHasPermission').mockReturnValue({
+            isLoading: false,
+            hasPermission: true,
+            error: undefined,
         })
         vi.spyOn(Lib, 'useZionClient').mockReturnValue({
             // @ts-ignore
@@ -160,8 +163,10 @@ describe('<SpaceHome />', () => {
         const { roomIdentifier, spaceData, onChainSpaceInfo } = generateSpaceData('abcd')
 
         // @ts-ignore
-        vi.spyOn(useHasPermission, 'useHasPermission').mockReturnValue({
-            data: false,
+        vi.spyOn(Lib, 'useHasPermission').mockReturnValue({
+            isLoading: false,
+            hasPermission: false,
+            error: undefined,
         })
         vi.spyOn(Lib, 'useZionClient').mockReturnValue({
             // @ts-ignore
@@ -185,8 +190,10 @@ describe('<SpaceHome />', () => {
         const { roomIdentifier, spaceData, onChainSpaceInfo } = generateSpaceData('abcd')
 
         // @ts-ignore
-        vi.spyOn(useHasPermission, 'useHasPermission').mockReturnValue({
-            data: true,
+        vi.spyOn(Lib, 'useHasPermission').mockReturnValue({
+            isLoading: false,
+            hasPermission: true,
+            error: undefined,
         })
         vi.spyOn(Lib, 'useZionClient').mockReturnValue({
             // @ts-ignore
@@ -208,8 +215,10 @@ describe('<SpaceHome />', () => {
     test('user with permission is able to edit and submit description', async () => {
         const { roomIdentifier, spaceData, onChainSpaceInfo } = generateSpaceData('abcd')
         // @ts-ignore
-        vi.spyOn(useHasPermission, 'useHasPermission').mockReturnValue({
-            data: true,
+        vi.spyOn(Lib, 'useHasPermission').mockReturnValue({
+            isLoading: false,
+            hasPermission: true,
+            error: undefined,
         })
 
         vi.spyOn(Lib, 'useZionClient').mockReturnValue({

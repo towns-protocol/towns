@@ -4,6 +4,7 @@ import {
     Membership,
     Permission,
     SpaceData,
+    useHasPermission,
     useMyMembership,
     useSpaceMentions,
     useSpaceThreadRootsUnreadCount,
@@ -16,7 +17,6 @@ import { ModalContainer } from '@components/Modals/ModalContainer'
 import { ActionNavItem } from '@components/NavItem/ActionNavItem'
 import { CreateChannelFormContainer } from '@components/Web3/CreateChannelForm'
 import { Badge, Box, Button, Icon, Stack } from '@ui'
-import { useHasPermission } from 'hooks/useHasPermission'
 import { PATHS } from 'routes'
 import { useStore } from 'store/store'
 import { SentryReportModal } from '@components/SentryErrorReport/SentryErrorReport'
@@ -26,6 +26,7 @@ import {
 } from 'hooks/useContractChannels'
 import { AllChannelsList } from 'routes/AllChannelsList/AllChannelsList'
 import { useSpaceChannels } from 'hooks/useSpaceChannels'
+import { useAuth } from 'hooks/useAuth'
 import { SideBar } from '../_SideBar'
 import * as styles from './SpaceSideBar.css'
 import { SyncedChannelList } from './SyncedChannelList'
@@ -73,10 +74,15 @@ function useInvalidateChannelsQueryOnNewChannelCreation(space: SpaceData) {
 export const SpaceSideBar = (props: Props) => {
     const { space } = props
     const { client } = useZionClient()
+    const { loggedInWalletAddress } = useAuth()
 
     const unreadThreadsCount = useSpaceThreadRootsUnreadCount()
     const membership = useMyMembership(space?.id)
-    const { data: isOwner } = useHasPermission(Permission.Owner)
+    const { hasPermission: isOwner } = useHasPermission({
+        spaceId: space.id.networkId,
+        walletAddress: loggedInWalletAddress ?? '',
+        permission: Permission.Owner,
+    })
     const setDismissedGettingStarted = useStore((state) => state.setDismissedGettingStarted)
     const dismissedGettingStartedMap = useStore((state) => state.dismissedGettingStartedMap)
     const { data: contractChannels } = useContractChannels(props.space.id.networkId)
@@ -93,7 +99,11 @@ export const SpaceSideBar = (props: Props) => {
     const mentions = useSpaceMentions()
     const unreadThreadMentions = useSpaceUnreadThreadMentions()
 
-    const { data: canCreateChannel } = useHasPermission(Permission.AddRemoveChannels)
+    const { hasPermission: canCreateChannel } = useHasPermission({
+        spaceId: space.id.networkId,
+        walletAddress: loggedInWalletAddress ?? '',
+        permission: Permission.AddRemoveChannels,
+    })
 
     const onRemoveGettingStarted = useCallback(
         (e: React.MouseEvent) => {

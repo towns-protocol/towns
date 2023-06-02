@@ -1,11 +1,11 @@
-import { Permission, RoomIdentifier, useZionClient } from 'use-zion-client'
+import { Permission, RoomIdentifier, useHasPermission, useZionClient } from 'use-zion-client'
 
 import React from 'react'
 import { useEvent } from 'react-use-event-hook'
 import { useNavigate } from 'react-router'
 import { PATHS } from 'routes'
 import { Box, Card } from '@ui'
-import { useHasPermission } from 'hooks/useHasPermission'
+import { useAuth } from 'hooks/useAuth'
 import { MenuItem } from './MenuItem'
 
 type Props = {
@@ -17,7 +17,13 @@ type Props = {
 
 export const ChannelSettingsCard = (props: Props) => {
     const { channelId, spaceId, channelName } = props
-    const { data: canEditChannel } = useHasPermission(Permission.ModifySpaceSettings)
+    const { loggedInWalletAddress } = useAuth()
+    const { hasPermission: canEditChannel } = useHasPermission({
+        spaceId: spaceId.networkId,
+        channelId: channelId.networkId,
+        walletAddress: loggedInWalletAddress ?? '',
+        permission: Permission.ModifySpaceSettings,
+    })
     const navigate = useNavigate()
 
     const { leaveRoom } = useZionClient()

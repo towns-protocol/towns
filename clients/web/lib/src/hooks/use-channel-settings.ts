@@ -1,5 +1,5 @@
 import { Permission } from 'client/web3/ContractTypes'
-import { QueryKeyRoles } from './query-keys'
+import { QueryRoleKeys } from './query-keys'
 import { useCallback } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useZionClient } from './use-zion-client'
@@ -32,7 +32,7 @@ export function useChannelSettings(spaceId: string, channelId: string) {
     } = useQuery(
         // unique keys per query so that React Query
         // can manage the cache for us.
-        [QueryKeyRoles.BySpaceId, spaceId, QueryKeyRoles.ByChannelId, channelId],
+        [QueryRoleKeys.FirstBySpaceIds, spaceId, QueryRoleKeys.ThenByChannelIds, channelId],
         // query that does the data fetching.
         () => getChannelSettings(spaceId, channelId),
         // options for the query.

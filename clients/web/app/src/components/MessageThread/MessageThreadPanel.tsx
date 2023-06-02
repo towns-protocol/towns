@@ -16,6 +16,7 @@ import { useSendReply } from 'hooks/useSendReply'
 import { useSpaceChannels } from 'hooks/useSpaceChannels'
 import { atoms } from 'ui/styles/atoms.css'
 import { useDevice } from 'hooks/useDevice'
+import { useAuth } from 'hooks/useAuth'
 
 type Props = {
     messageId: string
@@ -41,6 +42,7 @@ export const MessageThreadPanel = (props: Props) => {
     }
     const { members } = useSpaceMembers()
     const userId = useMyProfile()?.userId
+    const { loggedInWalletAddress } = useAuth()
     const channels = useSpaceChannels()
     const { isTouch } = useDevice()
 
@@ -55,7 +57,7 @@ export const MessageThreadPanel = (props: Props) => {
         </Paragraph>
     )
 
-    const { isChannelWritable } = useIsChannelWritable(channelId)
+    const { isChannelWritable } = useIsChannelWritable(spaceId, channelId, loggedInWalletAddress)
 
     return (
         <Panel label={panelLabel} onClose={props.onClose}>

@@ -17,6 +17,7 @@ import { useSendReply } from 'hooks/useSendReply'
 import { useSpaceChannels } from 'hooks/useSpaceChannels'
 import { FadeInBox } from '@components/Transitions'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
+import { useAuth } from 'hooks/useAuth'
 
 export const MessageThread = (props: {
     userId: string
@@ -77,9 +78,10 @@ export const MessageThread = (props: {
 
     const { members } = useSpaceMembers()
     const userId = useMyProfile()?.userId
+    const { loggedInWalletAddress } = useAuth()
     const channels = useSpaceChannels()
 
-    const { isChannelWritable } = useIsChannelWritable(channelId)
+    const { isChannelWritable } = useIsChannelWritable(spaceId, channelId, loggedInWalletAddress)
 
     return parentMessage && involvedUsers.length > 1 ? (
         <MessageTimelineWrapper

@@ -4,7 +4,7 @@ import { IHierarchyRoom } from 'matrix-js-sdk/lib/@types/spaces'
 import { ISpaceDapp } from '../web3/ISpaceDapp'
 import { MatrixRoomIdentifier } from '../../types/room-identifier'
 import { Permission } from '../web3/ContractTypes'
-import { QuerySyncKey } from '../../hooks/query-keys'
+import { QueryKeys } from '../../hooks/query-keys'
 import { RoomHierarchy } from 'matrix-js-sdk/lib/room-hierarchy'
 import { getAccount } from '@wagmi/core'
 import { queryClient } from '../../query/queryClient'
@@ -55,7 +55,7 @@ export async function syncMatrixSpace(
         : []
 
     const onChainChannels = await queryClient.fetchQuery(
-        [QuerySyncKey.SyncEntitledChannels, spaceId.networkId],
+        [QueryKeys.SyncEntitledChannels, spaceId.networkId],
         () => getEntitledChannels(children, root, address, spaceDapp),
         {
             // We don't need to check channel entitlements often

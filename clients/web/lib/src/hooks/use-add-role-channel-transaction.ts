@@ -5,7 +5,7 @@ import {
 } from '../client/ZionClientTypes'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
-import { QueryKeyRoles } from './query-keys'
+import { QueryRoleKeys } from './query-keys'
 import { toError } from '../types/error-types'
 import { useQueryClient } from '@tanstack/react-query'
 import { useWeb3Context } from '../components/Web3ContextProvider'
@@ -65,11 +65,11 @@ export function useAddRoleToChannelTransaction() {
                     setTransactionContext(rxContext)
                     if (rxContext?.status === TransactionStatus.Success) {
                         await queryClient.invalidateQueries([
-                            QueryKeyRoles.BySpaceId,
+                            QueryRoleKeys.FirstBySpaceIds,
                             spaceNetworkId,
-                            QueryKeyRoles.ByRoleId,
+                            QueryRoleKeys.ThenByRoleIds,
                             roleId,
-                            QueryKeyRoles.ByChannelId,
+                            QueryRoleKeys.ThenByChannelIds,
                             channelNetworkId,
                         ])
                     }

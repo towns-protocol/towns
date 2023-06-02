@@ -1,15 +1,20 @@
 import React, { useEffect } from 'react'
-import { Permission, useSpaceData } from 'use-zion-client'
+import { Permission, useHasPermission, useSpaceData } from 'use-zion-client'
 import { useNavigate } from 'react-router'
 import { Stack } from '@ui'
 import { SpaceOwnerLanding } from '@components/SpaceOwnerLanding'
 import { PATHS } from 'routes'
-import { useHasPermission } from 'hooks/useHasPermission'
+import { useAuth } from 'hooks/useAuth'
 import { CentralPanelLayout } from './layouts/CentralPanelLayout'
 
 export const SpaceGettingStarted = () => {
     const space = useSpaceData()
-    const { data: owner, isLoading } = useHasPermission(Permission.Owner)
+    const { loggedInWalletAddress } = useAuth()
+    const { hasPermission: owner, isLoading } = useHasPermission({
+        spaceId: space?.id?.networkId ?? '',
+        walletAddress: loggedInWalletAddress ?? '',
+        permission: Permission.Owner,
+    })
     const navigate = useNavigate()
 
     //  temporary auth hack

@@ -188,6 +188,11 @@ function checkChangesInProgressToastVisible() {
 
 describe('SpaceSettings', () => {
     test("should show the first role's permission tab when settings is loaded", async () => {
+        vi.spyOn(Lib, 'useHasPermission').mockReturnValue({
+            isLoading: false,
+            hasPermission: true,
+            error: undefined,
+        })
         render(<Wrapper />)
         await waitForScreenToBeLoaded()
         const roleSettingsPermissions = screen.getByTestId('role-settings-permissions-content')
@@ -198,6 +203,11 @@ describe('SpaceSettings', () => {
     })
 
     test('should show the correct state for everyone role on member and display tabs', async () => {
+        vi.spyOn(Lib, 'useHasPermission').mockReturnValue({
+            isLoading: false,
+            hasPermission: true,
+            error: undefined,
+        })
         render(<Wrapper />)
         await waitForScreenToBeLoaded()
         const { membersTab, displayTab } = getTabs()
@@ -218,6 +228,11 @@ describe('SpaceSettings', () => {
     })
 
     test('should prompt toast when change is made to permissions', async () => {
+        vi.spyOn(Lib, 'useHasPermission').mockReturnValue({
+            isLoading: false,
+            hasPermission: true,
+            error: undefined,
+        })
         render(<Wrapper />)
         await waitForScreenToBeLoaded()
         const roleSettingsPermissions = screen.getByTestId('role-settings-permissions-content')
@@ -232,6 +247,11 @@ describe('SpaceSettings', () => {
     })
 
     test('should update role name in sidebar and prompt toast when change is made to display name', async () => {
+        vi.spyOn(Lib, 'useHasPermission').mockReturnValue({
+            isLoading: false,
+            hasPermission: true,
+            error: undefined,
+        })
         render(<Wrapper />)
         await waitForScreenToBeLoaded()
         const { membersTab, displayTab } = getTabs()
@@ -264,6 +284,11 @@ describe('SpaceSettings', () => {
     })
 
     test('should prompt toast when change is made to members', async () => {
+        vi.spyOn(Lib, 'useHasPermission').mockReturnValue({
+            isLoading: false,
+            hasPermission: true,
+            error: undefined,
+        })
         render(<Wrapper />)
         await waitForScreenToBeLoaded()
         const { membersTab } = getTabs()
@@ -294,6 +319,11 @@ describe('SpaceSettings', () => {
     })
 
     test('should remove toast when state is set back to intitial state', async () => {
+        vi.spyOn(Lib, 'useHasPermission').mockReturnValue({
+            isLoading: false,
+            hasPermission: true,
+            error: undefined,
+        })
         render(<Wrapper />)
         await waitForScreenToBeLoaded()
         const roleSettingsPermissions = screen.getByTestId('role-settings-permissions-content')
@@ -312,6 +342,11 @@ describe('SpaceSettings', () => {
     })
 
     test('should move to another role and prompt toast when choosing to delete role', async () => {
+        vi.spyOn(Lib, 'useHasPermission').mockReturnValue({
+            isLoading: false,
+            hasPermission: true,
+            error: undefined,
+        })
         render(<Wrapper />)
         await waitForScreenToBeLoaded()
         const rolesNav = screen.getByTestId('space-settings-roles-nav')
@@ -329,6 +364,11 @@ describe('SpaceSettings', () => {
     })
 
     test('should navigate to new role and prompt toast when new role button clicked', async () => {
+        vi.spyOn(Lib, 'useHasPermission').mockReturnValue({
+            isLoading: false,
+            hasPermission: true,
+            error: undefined,
+        })
         render(<Wrapper />)
         await waitForScreenToBeLoaded()
         const newRoleButton = screen.getByText(/create new role/gi)
@@ -344,6 +384,11 @@ describe('SpaceSettings', () => {
     test('saving multiple changes should result in multiple transactions called with the correct arguments', async () => {
         vi.spyOn(Lib, 'useCreateRoleTransaction').mockImplementation(useMockedCreateRoleTransaction)
         vi.spyOn(Lib, 'useUpdateRoleTransaction').mockImplementation(useMockedUpdateRoleTransaction)
+        vi.spyOn(Lib, 'useHasPermission').mockReturnValue({
+            isLoading: false,
+            hasPermission: true,
+            error: undefined,
+        })
 
         render(<Wrapper />)
         await waitForScreenToBeLoaded()
@@ -437,6 +482,11 @@ describe('SpaceSettings', () => {
 
     test('deleting a role and saving should create a delete role transaction with correct arguments', async () => {
         vi.spyOn(Lib, 'useDeleteRoleTransaction').mockImplementation(useMockedDeleteRoleTransaction)
+        vi.spyOn(Lib, 'useHasPermission').mockReturnValue({
+            isLoading: false,
+            hasPermission: true,
+            error: undefined,
+        })
 
         render(<Wrapper />)
         await waitForScreenToBeLoaded()

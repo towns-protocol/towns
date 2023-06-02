@@ -22,14 +22,18 @@ describe('historyVisibility', () => {
         //
         await bob.fundWallet()
         // bob creates a room
-        const spaceId = (await createTestSpaceWithEveryoneRole(
+        const spaceId = await createTestSpaceWithEveryoneRole(
             bob,
             [Permission.Read, Permission.Write],
             {
                 name: makeUniqueName('bobsroom'),
                 visibility: RoomVisibility.Public,
             },
-        ))!
+        )
+
+        if (!spaceId) {
+            throw new Error('spaceId is undefined')
+        }
 
         const roomId = await createTestChannelWithSpaceRoles(bob, {
             parentSpaceId: spaceId,
@@ -118,7 +122,7 @@ describe('historyVisibility', () => {
         await john.logout()
 
         // have alice log into yet another client, see if she will share keys with herself
-        const alice3 = new ZionTestClient(alice.chainId, 'alice2', alice.props, alice.wallet)
+        const alice3 = new ZionTestClient(alice.chainId, 'alice3', alice.props, alice.wallet)
 
         await alice3.loginWalletAndStartClient()
 
@@ -134,5 +138,9 @@ describe('historyVisibility', () => {
         await waitFor(() => expect(alice3.getMessages(roomId)).toContain("I'm John!"))
 
         await waitFor(() => expect(alice3.getMessages(roomId)).toContain("I'm Alice!"))
+        await alice.logout()
+        await alice2.logout()
+        await alice3.logout()
+        await john.logout()
     }, 120000) // slow test that takes more than 60 seconds occasionally
 })

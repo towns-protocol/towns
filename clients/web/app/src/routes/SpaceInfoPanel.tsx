@@ -6,6 +6,7 @@ import { useEvent } from 'react-use-event-hook'
 import {
     Permission,
     createUserIdFromEthereumAddress,
+    useHasPermission,
     useSpaceData,
     useSpaceId,
     useSpaceMembers,
@@ -33,7 +34,6 @@ import {
     TextField,
 } from '@ui'
 import { errorHasInvalidCookieResponseHeader } from 'api/apiClient'
-import { useHasPermission } from 'hooks/useHasPermission'
 import { useSpaceChannels } from 'hooks/useSpaceChannels'
 import { useGetSpaceTopic, useSetSpaceTopic } from 'hooks/useSpaceTopic'
 import { PATHS } from 'routes'
@@ -44,6 +44,7 @@ import { shortAddress } from 'ui/utils/utils'
 import { useDevice } from 'hooks/useDevice'
 import { MembersPageTouchModal } from '@components/MembersPage/MembersPage'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
+import { useAuth } from 'hooks/useAuth'
 import { useContractSpaceInfo } from '../hooks/useContractSpaceInfo'
 import { useEnvironment } from '../hooks/useEnvironmnet'
 import { env } from '../utils/environment'
@@ -65,11 +66,16 @@ export const SpaceInfoPanel = () => {
 
     const { client, chainId, leaveRoom } = useZionClient()
     const channels = useSpaceChannels()
+    const { loggedInWalletAddress } = useAuth()
 
     const { data } = useContractSpaceInfo(space?.id?.networkId)
     const address = data?.address ?? ''
     const navigate = useNavigate()
-    const { data: canEdit } = useHasPermission(Permission.ModifySpaceSettings)
+    const { hasPermission: canEdit } = useHasPermission({
+        spaceId: space?.id.networkId ?? '',
+        walletAddress: loggedInWalletAddress ?? '',
+        permission: Permission.ModifySpaceSettings,
+    })
 
     const { matrixUrl } = useEnvironment()
     const [isEdit, setIsEdit] = useState(false)

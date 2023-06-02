@@ -2,7 +2,7 @@ import React, { createContext, useCallback, useContext, useEffect, useState } fr
 import * as amplitudeLib from '@amplitude/analytics-browser'
 import isEqual from 'lodash/isEqual'
 import { RoomIdentifier, SendMessageOptions, ZionContext } from 'use-zion-client'
-import { getUrls } from 'utils/ztevent_util'
+import { getUrls } from '../utils/ztevent_util'
 import { env } from '../utils/environment'
 
 interface Analytics {

@@ -62,5 +62,7 @@ describe('sendThreadedMessage', () => {
             expect(e?.content?.body).toEqual('Hello Bob!')
             expect(e?.content?.inReplyTo).toEqual(event?.eventId)
         })
+        await alice.logout()
+        await bob.logout()
     }) // end test
 }) // end describe

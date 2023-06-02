@@ -6,7 +6,7 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { BlockchainTransactionType } from '../types/web3-types'
-import { QueryKeyRoles } from './query-keys'
+import { QueryRoleKeys } from './query-keys'
 import { SignerUndefinedError, toError } from '../types/error-types'
 import { useQueryClient } from '@tanstack/react-query'
 import { useTransactionStore } from '../store/use-transactions-store'
@@ -70,7 +70,7 @@ export function useDeleteRoleTransaction() {
                     setTransactionContext(rxContext)
                     if (rxContext?.status === TransactionStatus.Success) {
                         await queryClient.invalidateQueries([
-                            QueryKeyRoles.BySpaceId,
+                            QueryRoleKeys.FirstBySpaceIds,
                             spaceNetworkId,
                         ])
                     }
