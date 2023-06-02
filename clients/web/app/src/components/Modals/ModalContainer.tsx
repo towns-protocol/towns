@@ -97,6 +97,19 @@ const TouchFullScreenModalContainer = (props: TouchFullScreenModalContainerProps
 const CenteredModalContainer = (props: Props) => {
     const { isTouch } = useDevice()
     const minWidth: BoxProps['minWidth'] = isTouch ? '100%' : props.minWidth || '600'
+    const { onHide } = props
+
+    useEffect(() => {
+        function handleKeyDown(event: KeyboardEvent) {
+            if (event.key === 'Escape') {
+                onHide()
+            }
+        }
+        window.addEventListener('keydown', handleKeyDown)
+        return () => {
+            window.removeEventListener('keydown', handleKeyDown)
+        }
+    }, [onHide])
 
     return (
         <Box>
