@@ -102,10 +102,5 @@ const isParticipatingThread = (marker: FullyReadMarker, threadStats: ThreadStats
 
     const thread = threadStats[marker.channelId.networkId]?.[marker.threadParentId]
 
-    // skip unreads for deleted threads
-    if (!thread?.parentEvent) {
-        return false
-    }
-
     return thread?.isParticipating
 }

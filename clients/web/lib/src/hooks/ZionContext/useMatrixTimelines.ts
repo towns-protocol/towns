@@ -216,6 +216,7 @@ export function toEvent(event: MatrixEvent, userId: string): TimelineEvent {
         threadParentId: getThreadParentId(content),
         reactionParentId: getReactionParentId(content),
         isMentioned: getIsMentioned(content, userId),
+        isRedacted: event.isRedacted(),
         sender,
     }
 }
@@ -470,7 +471,7 @@ function toTimelineEvents(room: MatrixRoom, userId: string) {
 }
 
 export function isZTimelineEvent(event: MatrixEvent): boolean {
-    return !event.isRelation(RelationType.Replace) && !event.isRedacted()
+    return !event.isRelation(RelationType.Replace)
 }
 
 /// using custom function to get reply event id becauset the matrix version breaks when replacing a message

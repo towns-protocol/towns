@@ -26,11 +26,13 @@ import {
     EncryptedMessageRenderEvent,
     FullyReadRenderEvent,
     MessageRenderEvent,
+    RedactedMessageRenderEvent,
     RenderEvent,
     RenderEventType,
     ThreadUpdateRenderEvent,
     UserMessagesRenderEvent,
     getEventsByDate,
+    isRedactedRoomMessage,
     isRoomMessage,
 } from './util/getEventsByDate'
 
@@ -43,6 +45,7 @@ type Props = {
 
 export const MessageTimeline = (props: Props) => {
     const timelineContext = useContext(MessageTimelineContext)
+    const repliesMap = timelineContext?.messageRepliesMap
     const channelId = timelineContext?.channelId
     const isChannelEncrypted = timelineContext?.isChannelEncrypted
     const channelName = timelineContext?.channels.find((c) => c.id.slug === channelId?.slug)?.label
@@ -100,6 +103,7 @@ export const MessageTimeline = (props: Props) => {
         if (r.type === 'user-messages') {
             const height = r.item.events.reduce((height, item) => {
                 const itemHeight =
+                    !item.isRedacted &&
                     item.content.kind === ZTEvent.RoomMessage &&
                     item.content.msgType === MessageType.Image
                         ? 400
@@ -151,7 +155,10 @@ export const MessageTimeline = (props: Props) => {
             | {
                   id: string
                   type: 'message'
-                  item: MessageRenderEvent | EncryptedMessageRenderEvent
+                  item:
+                      | MessageRenderEvent
+                      | EncryptedMessageRenderEvent
+                      | RedactedMessageRenderEvent
               }
             | { id: string; type: 'thread-update'; item: ThreadUpdateRenderEvent }
             | {
@@ -168,9 +175,10 @@ export const MessageTimeline = (props: Props) => {
                     // if all consecutive messages are encrypted, we can group them
                     const displayEncrypted = e.events.every(
                         (e) =>
-                            (e.content.kind === ZTEvent.RoomMessage &&
+                            !e.isRedacted &&
+                            ((e.content.kind === ZTEvent.RoomMessage &&
                                 e.content.msgType === 'm.bad.encrypted') ||
-                            e.content.kind === ZTEvent.RoomMessageEncrypted,
+                                e.content.kind === ZTEvent.RoomMessageEncrypted),
                     )
                     // only picks 3 messages (first and last ones) when
                     // decrypted content is showing
@@ -178,41 +186,67 @@ export const MessageTimeline = (props: Props) => {
                         ? e.events.filter((e, i, events) => i === 0 || i > events.length - 3)
                         : e.events
 
-                    return filtered.map((event, index, events) => {
-                        let item: MessageRenderEvent | EncryptedMessageRenderEvent
+                    return filtered
+                        .map((event, index, events) => {
+                            let item:
+                                | null
+                                | MessageRenderEvent
+                                | EncryptedMessageRenderEvent
+                                | RedactedMessageRenderEvent
 
-                        // this occurs when a users has mixed encrypted and unencrypted messages
-                        const messageDisplayEncrypted =
-                            (event.content.kind === ZTEvent.RoomMessage &&
-                                event.content.msgType === 'm.bad.encrypted') ||
-                            event.content.kind === ZTEvent.RoomMessageEncrypted
+                            // this occurs when a users has mixed encrypted and unencrypted messages
+                            const messageDisplayEncrypted =
+                                !event.isRedacted &&
+                                ((event.content.kind === ZTEvent.RoomMessage &&
+                                    event.content.msgType === 'm.bad.encrypted') ||
+                                    event.content.kind === ZTEvent.RoomMessageEncrypted)
 
-                        if (isRoomMessage(event)) {
-                            item = {
-                                type: RenderEventType.Message,
-                                key: event.eventId,
-                                event,
-                                displayEncrypted: displayEncrypted || messageDisplayEncrypted,
-                                displayContext:
-                                    index > 0 ? 'tail' : events.length > 1 ? 'head' : 'single',
+                            if (isRoomMessage(event)) {
+                                item = {
+                                    type: RenderEventType.Message,
+                                    key: event.eventId,
+                                    event,
+                                    displayEncrypted: displayEncrypted || messageDisplayEncrypted,
+                                    displayContext:
+                                        index > 0 ? 'tail' : events.length > 1 ? 'head' : 'single',
+                                }
+                            } else if (isRedactedRoomMessage(event)) {
+                                if (repliesMap?.[event.eventId]) {
+                                    item = {
+                                        type: RenderEventType.RedactedMessage,
+                                        key: event.eventId,
+                                        event,
+                                        displayEncrypted: false,
+                                        displayContext:
+                                            index > 0
+                                                ? 'tail'
+                                                : events.length > 1
+                                                ? 'head'
+                                                : 'single',
+                                    }
+                                } else {
+                                    item = null
+                                }
+                            } else {
+                                item = {
+                                    type: RenderEventType.EncryptedMessage,
+                                    key: event.eventId,
+                                    event,
+                                    displayEncrypted: true,
+                                    displayContext:
+                                        index > 0 ? 'tail' : events.length > 1 ? 'head' : 'single',
+                                }
                             }
-                        } else {
-                            item = {
-                                type: RenderEventType.EncryptedMessage,
-                                key: event.eventId,
-                                event,
-                                displayEncrypted: true,
-                                displayContext:
-                                    index > 0 ? 'tail' : events.length > 1 ? 'head' : 'single',
-                            }
-                        }
 
-                        return {
-                            id: event.eventId,
-                            type: 'message',
-                            item,
-                        } as const
-                    })
+                            return item
+                                ? ({
+                                      id: event.eventId,
+                                      type: 'message',
+                                      item,
+                                  } as const)
+                                : undefined
+                        })
+                        .filter(notUndefined)
                 }
                 return e.type === 'group' && groupByDate
                     ? ({ id: e.key, type: 'group', date: e.date, isNew: e.isNew } as const)
@@ -227,7 +261,7 @@ export const MessageTimeline = (props: Props) => {
             .filter(notUndefined)
 
         return listItems
-    }, [flatGroups, timelineContext?.type])
+    }, [flatGroups, repliesMap, timelineContext?.type])
 
     const { listItems, numHidden } = useMemo(() => {
         const isThreadOrigin =
@@ -256,7 +290,8 @@ export const MessageTimeline = (props: Props) => {
                         // count if user changed
                         userId !== prev.lastUserId ||
                         // count if message is an image
-                        (curr.item.event.content.kind === ZTEvent.RoomMessage &&
+                        (!isRedactedRoomMessage(curr.item.event) &&
+                            curr.item.event.content.kind === ZTEvent.RoomMessage &&
                             curr.item.event.content.msgType === MessageType.Image)
                     ) {
                         prev.chunkCount++

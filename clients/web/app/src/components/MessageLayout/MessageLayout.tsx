@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom'
 import { ProfileHoverCard } from '@components/ProfileHoverCard/ProfileHoverCard'
 import { Reactions } from '@components/Reactions/Reactions'
 import { RepliesButton } from '@components/Replies/MessageReplies'
-import { Avatar, Box, BoxProps, ButtonText, IconButton, Paragraph, Stack, Text } from '@ui'
+import { Avatar, Box, BoxProps, ButtonText, Icon, IconButton, Paragraph, Stack, Text } from '@ui'
 import { useHover } from 'hooks/useHover'
 import { useOpenMessageThread } from 'hooks/useOpenThread'
 import { useHandleReaction } from 'hooks/useReactions'
@@ -14,6 +14,7 @@ import { AvatarAtoms } from 'ui/components/Avatar/Avatar.css'
 import { useCreateLink } from 'hooks/useCreateLink'
 import { useDevice } from 'hooks/useDevice'
 import { useFocused } from 'hooks/useFocused'
+import { ZRoomMessageRedactedEvent } from '@components/MessageTimeline/util/getEventsByDate'
 import { MessageContextMenu } from './MessageContextMenu'
 import { MessageModalSheet } from './MessageModalSheet'
 
@@ -261,6 +262,42 @@ export const MessageLayout = (props: Props) => {
                         onClose={() => setIsModalSheetVisible(false)}
                     />
                 )}
+        </Stack>
+    )
+}
+
+export const RedactedMessageLayout = (props: {
+    event: ZRoomMessageRedactedEvent
+    replies?: ThreadStats
+}) => {
+    const { event, replies } = props
+    return (
+        <Stack horizontal hoverable gap="md" paddingLeft="lg" paddingY="md" background="level1">
+            <Box centerContent rounded="full" height="x6" width="x6" background="level2">
+                <Icon type="delete" color="gray2" padding="xs" />
+            </Box>
+            <Box>
+                <Stack gap>
+                    <Box
+                        padding
+                        horizontal
+                        border
+                        gap="sm"
+                        alignItems="center"
+                        color="gray2"
+                        background="level1"
+                        height="x6"
+                        rounded="sm"
+                    >
+                        <Paragraph>This message was deleted</Paragraph>
+                    </Box>
+                    {replies && event.eventId && (
+                        <Box justifySelf="start">
+                            <RepliesButton eventId={event.eventId} threadStats={replies} />
+                        </Box>
+                    )}
+                </Stack>
+            </Box>
         </Stack>
     )
 }

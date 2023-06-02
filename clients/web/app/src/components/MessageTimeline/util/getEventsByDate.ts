@@ -15,6 +15,7 @@ export enum RenderEventType {
     UserMessages = 'UserMessages',
     Message = 'Message',
     EncryptedMessage = 'EncryptedMessage',
+    RedactedMessage = 'RedactedMessage',
     RoomMember = 'RoomMember',
     AccumulatedRoomMembers = 'AccumulatedRoomMembers',
     RoomCreate = 'RoomCreate',
@@ -28,10 +29,16 @@ interface BaseEvent {
 
 export type ZRoomMessageEvent = Omit<TimelineEvent, 'content'> & {
     content: RoomMessageEvent
+    isRedacted: false
 }
 
 export type ZRoomMessageEncryptedEvent = Omit<TimelineEvent, 'content'> & {
     content: RoomMessageEncryptedEvent
+    isRedacted: false
+}
+
+export type ZRoomMessageRedactedEvent = Omit<TimelineEvent, 'content'> & {
+    isRedacted: true
 }
 
 export type ZRoomMemberEvent = Omit<TimelineEvent, 'content'> & { content: RoomMemberEvent }
@@ -41,7 +48,7 @@ export type ZRoomCreateEvent = Omit<TimelineEvent, 'content'> & { content: RoomC
 export interface UserMessagesRenderEvent extends BaseEvent {
     type: RenderEventType.UserMessages
     key: string
-    events: (ZRoomMessageEvent | ZRoomMessageEncryptedEvent)[]
+    events: (ZRoomMessageEvent | ZRoomMessageEncryptedEvent | ZRoomMessageRedactedEvent)[]
 }
 
 export interface MessageRenderEvent extends BaseEvent {
@@ -57,6 +64,14 @@ export interface EncryptedMessageRenderEvent extends BaseEvent {
     type: RenderEventType.EncryptedMessage
     key: string
     event: ZRoomMessageEncryptedEvent
+    displayEncrypted: boolean
+    displayContext: 'tail' | 'single' | 'head'
+}
+
+export interface RedactedMessageRenderEvent extends BaseEvent {
+    type: RenderEventType.RedactedMessage
+    key: string
+    event: ZRoomMessageRedactedEvent
     displayEncrypted: boolean
     displayContext: 'tail' | 'single' | 'head'
 }
@@ -101,6 +116,10 @@ export const isRoomMessage = (event: TimelineEvent): event is ZRoomMessageEvent 
     return event.content?.kind === ZTEvent.RoomMessage
 }
 
+export const isRedactedRoomMessage = (event: TimelineEvent): event is ZRoomMessageRedactedEvent => {
+    return event.isRedacted
+}
+
 export const isEncryptedRoomMessage = (
     event: TimelineEvent,
 ): event is ZRoomMessageEncryptedEvent => {
@@ -132,6 +151,7 @@ export type RenderEvent =
     | MessageRenderEvent
     | ThreadUpdateRenderEvent
     | EncryptedMessageRenderEvent
+    | RedactedMessageRenderEvent
 
 const DEBUG_NO_GROUP_BY_USER = false
 
@@ -198,7 +218,8 @@ export const getEventsByDate = (
                         !renderEvents.some(
                             (r) =>
                                 r.type === RenderEventType.UserMessages ||
-                                r.type === RenderEventType.Message,
+                                r.type === RenderEventType.Message ||
+                                r.type === RenderEventType.RedactedMessage,
                         )
                     ) {
                         // show date as "new" since first message appears to be unread
@@ -235,8 +256,11 @@ export const getEventsByDate = (
                 } else if (
                     groupByUser &&
                     prevEvent &&
+                    // keep messages grouped id they are from the same user
                     prevEvent.type === RenderEventType.UserMessages &&
                     prevEvent.events[0].sender.id === event.sender.id &&
+                    // start new group if previous event is redacted
+                    !prevEvent.events.at(prevEvent.events.length - 1)?.isRedacted &&
                     (index > 1 || !isThread)
                 ) {
                     // - - - - - - - - - - - - - - -  add event to previous group

@@ -106,6 +106,7 @@ export function toEvent(message: ParsedEvent, userId: string): TimelineEvent {
         threadParentId: getThreadParentId(content),
         reactionParentId: getReactionParentId(content),
         isMentioned: getIsMentioned(content, userId),
+        isRedacted: content?.kind === ZTEvent.RoomRedaction,
         sender,
     }
 }

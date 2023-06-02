@@ -39,6 +39,7 @@ function generateMessageRenderEvent(messageContent: MessageContent): MessageRend
             fallbackContent: '',
             isLocalPending: false,
             isMentioned: false,
+            isRedacted: false,
             content: generateRoomMessageEvent(messageContent),
             sender: {
                 id: 'sender-id',

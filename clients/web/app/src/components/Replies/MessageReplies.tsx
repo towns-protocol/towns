@@ -26,6 +26,7 @@ export const RepliesButton = (props: { threadStats: ThreadStats; eventId: string
             paddingX="sm"
             rounded="sm"
             background="level2"
+            alignSelf="start"
         >
             <Box shrink centerContent horizontal gap="sm" cursor="pointer" onClick={onClick}>
                 <Stack horizontal gap="xs">

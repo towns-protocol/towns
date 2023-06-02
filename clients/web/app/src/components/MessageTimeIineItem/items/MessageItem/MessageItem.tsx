@@ -1,6 +1,10 @@
 import React, { useContext } from 'react'
-import { MessageType, TimelineEvent, ZTEvent } from 'use-zion-client'
-import { MessageLayout, MessageLayoutProps } from '@components/MessageLayout/MessageLayout'
+import { MessageType, ThreadStats, TimelineEvent, ZTEvent } from 'use-zion-client'
+import {
+    MessageLayout,
+    MessageLayoutProps,
+    RedactedMessageLayout,
+} from '@components/MessageLayout/MessageLayout'
 import { RatioedBackgroundImage } from '@components/RatioedBackgroundImage'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { useDevice } from 'hooks/useDevice'
@@ -13,13 +17,15 @@ import { TimelineMessageEditor } from '../MessageEditor'
 import {
     EncryptedMessageRenderEvent,
     MessageRenderEvent,
+    RedactedMessageRenderEvent,
     RenderEventType,
+    isRedactedRoomMessage,
 } from '../../../MessageTimeline/util/getEventsByDate'
 import { TimelineEncryptedContent } from './EncryptedMessageBody/EncryptedMessageBody'
 import { MessageBody } from './MessageBody/MessageBody'
 
 type Props = {
-    itemData: MessageRenderEvent | EncryptedMessageRenderEvent
+    itemData: MessageRenderEvent | EncryptedMessageRenderEvent | RedactedMessageRenderEvent
     isHighlight?: boolean
 }
 
@@ -34,10 +40,13 @@ export const MessageItem = (props: Props) => {
         return <></>
     }
 
-    const { channels, members, channelId, onMentionClick, timelineActions } = timelineContext
+    const { channels, members, channelId, onMentionClick, timelineActions, messageRepliesMap } =
+        timelineContext
 
     const isMessage = itemData.type === RenderEventType.Message
     const isEncryptedMessage = itemData.type === RenderEventType.EncryptedMessage
+
+    const isRedacted = isRedactedRoomMessage(event)
 
     const displayEncrypted =
         itemData.type === RenderEventType.EncryptedMessage || itemData.displayEncrypted
@@ -48,12 +57,30 @@ export const MessageItem = (props: Props) => {
 
     const msgTypeKey = isMessage ? itemData.event.content.msgType ?? '' : ''
 
+    // replies are only shown for channel messages (two levels only)
+    const replies =
+        timelineContext.type === MessageTimelineType.Channel
+            ? messageRepliesMap?.[event.eventId]
+            : undefined
+
+    const isThreadParent = !!messageRepliesMap?.[event.eventId]
+
+    if (isRedacted && (replies || isThreadParent)) {
+        // display specific layout for redacted threads
+        return <RedactedMessageLayout replies={replies} event={event} />
+    } else if (isRedacted) {
+        // deleted messages that are not threads are removed before getting here
+        // this is merely as safety check + to make TS happy
+        return null
+    }
+
     return (
         <MessageWrapper
             highlight={isHighlight}
             event={event}
             selectable={isSelectable}
             displayContext={displayContext}
+            replies={replies}
             key={`${event.eventId}${event.updatedServerTs ?? event.originServerTs}${msgTypeKey}`}
         >
             {displayEncrypted ? (
@@ -62,7 +89,7 @@ export const MessageItem = (props: Props) => {
                 isEditing ? (
                     <>
                         <TimelineMessageEditor
-                            initialValue={itemData.event.content.body}
+                            initialValue={event.content.body}
                             eventId={event.eventId}
                             eventContent={event.content}
                             channelId={channelId}
@@ -119,10 +146,11 @@ type MessageWrapperProps = {
     highlight?: boolean
     selectable?: boolean
     children: React.ReactNode
+    replies?: ThreadStats
 }
 
 const MessageWrapper = React.memo((props: MessageWrapperProps) => {
-    const { event, displayContext, selectable } = props
+    const { event, displayContext, selectable, replies } = props
     const { sender } = event
 
     const timelineContext = useContext(MessageTimelineContext)
@@ -138,7 +166,6 @@ const MessageWrapper = React.memo((props: MessageWrapperProps) => {
         spaceId,
         handleReaction,
         type,
-        messageRepliesMap,
         messageReactionsMap,
         isChannelWritable,
     } = timelineContext
@@ -149,12 +176,6 @@ const MessageWrapper = React.memo((props: MessageWrapperProps) => {
     const isOwn = event.content?.kind == ZTEvent.RoomMessage && sender.id === userId
 
     const isRelativeDate = type === MessageTimelineType.Thread
-
-    // hide replies in threads
-    const replyCount =
-        timelineContext.type === MessageTimelineType.Channel
-            ? messageRepliesMap?.[event.eventId]
-            : undefined
 
     const reactions = messageReactionsMap[event.eventId]
     const isEditing = event.eventId === timelineContext.timelineActions.editingMessageId
@@ -181,7 +202,7 @@ const MessageWrapper = React.memo((props: MessageWrapperProps) => {
             spaceId={spaceId}
             reactions={reactions}
             relativeDate={isRelativeDate}
-            replies={replyCount}
+            replies={replies}
             onReaction={handleReaction}
         >
             {props.children}

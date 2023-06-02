@@ -255,6 +255,7 @@ function toReplacedMessageEvent(prev: TimelineEvent, next: TimelineEvent): Timel
         threadParentId: prev.threadParentId,
         reactionParentId: prev.reactionParentId,
         isMentioned: next.isMentioned,
+        isRedacted: next.isRedacted,
         sender: prev.sender,
     }
 }

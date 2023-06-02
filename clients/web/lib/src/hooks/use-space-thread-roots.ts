@@ -18,7 +18,7 @@ export function useSpaceThreadRoots(): ThreadResult[] {
                 threadsStats[channel.id.networkId] || {}
 
             const channelThreads = Object.values(channelThreadStats)
-                .filter((thread) => thread.isParticipating && thread.parentMessageContent)
+                .filter((thread) => thread.isParticipating)
                 .map((thread) => ({
                     type: 'thread' as const,
                     isNew: isNew(unreadMarkers[thread.parentId]),

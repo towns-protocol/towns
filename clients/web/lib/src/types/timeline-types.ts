@@ -188,6 +188,7 @@ export interface TimelineEvent {
     threadParentId?: string
     reactionParentId?: string
     isMentioned: boolean
+    isRedacted: boolean
     sender: {
         displayName: string
         avatarUrl?: string

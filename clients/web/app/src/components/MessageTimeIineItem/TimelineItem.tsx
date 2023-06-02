@@ -18,6 +18,7 @@ export const MessageTimelineItem = (props: {
 
     switch (itemData.type) {
         case RenderEventType.EncryptedMessage:
+        case RenderEventType.RedactedMessage:
         case RenderEventType.Message: {
             return <MessageItem itemData={itemData} key={itemData.key} isHighlight={isHighlight} />
         }
