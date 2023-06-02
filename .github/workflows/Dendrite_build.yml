@@ -31,7 +31,6 @@ jobs:
               uses: golangci/golangci-lint-action@v3
               with:
                   working-directory: servers/dendrite
-                  version: 'v1.52.2'
                   args: --path-prefix=.
 
     # run go test with different go versions
