@@ -126,6 +126,15 @@ contract Space is
     ownerRoleId = _roleId;
   }
 
+  function getSpaceInfo() external view returns (SpaceInfo memory spaceInfo) {
+    spaceInfo = SpaceInfo({
+      spaceAddress: address(this),
+      owner: IERC721(token).ownerOf(tokenId),
+      spaceId: networkId,
+      disabled: disabled
+    });
+  }
+
   /// ***** Channel Management *****
 
   /// @inheritdoc ISpace

@@ -904,11 +904,11 @@
       ]
     },
     "packages/contracts/src/spaces/interfaces/ISpace.sol": {
-      "keccak256": "0x977aa1fb9262fdafcbee07cda44c439176e7d29cd9101860297f6cb375b872e7",
+      "keccak256": "0x0bdb9b18973fc1dac67acb973916b937c3ad7886ef71f9ff372b3a6dc1109d36",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://9a123fcbcd366a5155f1bf83a135abc0bf321a1179e34e8ab31ce771dd2196d1",
-        "dweb:/ipfs/Qmdwp8n6aSeY845sErV7jFUhUTXZFpwfeyMe3Kc6HR488R"
+        "bzz-raw://19b626957a6319cace1bc948f7b74c6bfae6bb1320749e5895f5b6c449009af6",
+        "dweb:/ipfs/QmVkvbATWVLCP5E4g94KDMWHeiCia9qtt6GDidiMnvvjHr"
       ]
     },
     "packages/contracts/src/spaces/libraries/DataTypes.sol": {

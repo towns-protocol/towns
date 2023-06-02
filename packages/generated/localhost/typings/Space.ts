@@ -91,6 +91,22 @@ export declare namespace DataTypes {
   };
 }
 
+export declare namespace ISpace {
+  export type SpaceInfoStruct = {
+    spaceAddress: PromiseOrValue<string>;
+    owner: PromiseOrValue<string>;
+    spaceId: PromiseOrValue<string>;
+    disabled: PromiseOrValue<boolean>;
+  };
+
+  export type SpaceInfoStructOutput = [string, string, string, boolean] & {
+    spaceAddress: string;
+    owner: string;
+    spaceId: string;
+    disabled: boolean;
+  };
+}
+
 export interface SpaceInterface extends utils.Interface {
   functions: {
     "MODULE_TYPE()": FunctionFragment;
@@ -114,6 +130,7 @@ export interface SpaceInterface extends utils.Interface {
     "getPermissionsByRoleId(uint256)": FunctionFragment;
     "getRoleById(uint256)": FunctionFragment;
     "getRoles()": FunctionFragment;
+    "getSpaceInfo()": FunctionFragment;
     "hasEntitlement(address)": FunctionFragment;
     "initialize(string,string,address,uint256,address[])": FunctionFragment;
     "isEntitledToChannel(string,address,string)": FunctionFragment;
@@ -168,6 +185,7 @@ export interface SpaceInterface extends utils.Interface {
       | "getPermissionsByRoleId"
       | "getRoleById"
       | "getRoles"
+      | "getSpaceInfo"
       | "hasEntitlement"
       | "initialize"
       | "isEntitledToChannel"
@@ -289,6 +307,10 @@ export interface SpaceInterface extends utils.Interface {
     values: [PromiseOrValue<BigNumberish>]
   ): string;
   encodeFunctionData(functionFragment: "getRoles", values?: undefined): string;
+  encodeFunctionData(
+    functionFragment: "getSpaceInfo",
+    values?: undefined
+  ): string;
   encodeFunctionData(
     functionFragment: "hasEntitlement",
     values: [PromiseOrValue<string>]
@@ -474,6 +496,10 @@ export interface SpaceInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "getRoles", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "getSpaceInfo",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "hasEntitlement",
     data: BytesLike
@@ -752,6 +778,14 @@ export interface Space extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[DataTypes.RoleStructOutput[]]>;
 
+    getSpaceInfo(
+      overrides?: CallOverrides
+    ): Promise<
+      [ISpace.SpaceInfoStructOutput] & {
+        spaceInfo: ISpace.SpaceInfoStructOutput;
+      }
+    >;
+
     hasEntitlement(
       arg0: PromiseOrValue<string>,
       overrides?: CallOverrides
@@ -993,6 +1027,10 @@ export interface Space extends BaseContract {
 
   getRoles(overrides?: CallOverrides): Promise<DataTypes.RoleStructOutput[]>;
 
+  getSpaceInfo(
+    overrides?: CallOverrides
+  ): Promise<ISpace.SpaceInfoStructOutput>;
+
   hasEntitlement(
     arg0: PromiseOrValue<string>,
     overrides?: CallOverrides
@@ -1233,6 +1271,10 @@ export interface Space extends BaseContract {
     ): Promise<DataTypes.RoleStructOutput>;
 
     getRoles(overrides?: CallOverrides): Promise<DataTypes.RoleStructOutput[]>;
+
+    getSpaceInfo(
+      overrides?: CallOverrides
+    ): Promise<ISpace.SpaceInfoStructOutput>;
 
     hasEntitlement(
       arg0: PromiseOrValue<string>,
@@ -1503,6 +1545,8 @@ export interface Space extends BaseContract {
 
     getRoles(overrides?: CallOverrides): Promise<BigNumber>;
 
+    getSpaceInfo(overrides?: CallOverrides): Promise<BigNumber>;
+
     hasEntitlement(
       arg0: PromiseOrValue<string>,
       overrides?: CallOverrides
@@ -1736,6 +1780,8 @@ export interface Space extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     getRoles(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    getSpaceInfo(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     hasEntitlement(
       arg0: PromiseOrValue<string>,
