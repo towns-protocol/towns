@@ -1,10 +1,12 @@
 import { Allotment } from 'allotment'
 import { useOutlet } from 'react-router'
 import React from 'react'
+import { ErrorBoundary } from '@sentry/react'
 import { Box, Stack } from '@ui'
 import { usePersistPanes } from 'hooks/usePersistPanes'
 import { useDevice } from 'hooks/useDevice'
 import { TouchLayoutHeader } from '@components/TouchLayoutHeader/TouchLayoutHeader'
+import { SomethingWentWrong } from '@components/Errors/SomethingWentWrong'
 
 export const CentralPanelLayout = (props: { children: React.ReactNode }) => {
     const { children } = props
@@ -17,7 +19,9 @@ export const CentralPanelLayout = (props: { children: React.ReactNode }) => {
             <Stack height="100%">
                 <TouchLayoutHeader />
                 <Box grow centerContent position="relative">
-                    <Box absoluteFill>{children}</Box>
+                    <ErrorBoundary fallback={ErrorFallbackComponent}>
+                        <Box absoluteFill>{children}</Box>
+                    </ErrorBoundary>
                 </Box>
             </Stack>
             {outlet && outlet}
@@ -26,16 +30,26 @@ export const CentralPanelLayout = (props: { children: React.ReactNode }) => {
         <Stack minHeight="100%">
             <Allotment onChange={onSizesChange}>
                 <Allotment.Pane minSize={550}>
-                    <Box absoluteFill background="level1">
-                        {children}
-                    </Box>
+                    <ErrorBoundary fallback={ErrorFallbackComponent}>
+                        <Box absoluteFill background="level1">
+                            {children}
+                        </Box>
+                    </ErrorBoundary>
                 </Allotment.Pane>
                 {outlet && (
                     <Allotment.Pane minSize={300} preferredSize={sizes[1] || 840}>
-                        {outlet}
+                        <ErrorBoundary fallback={ErrorFallbackComponent}>{outlet}</ErrorBoundary>
                     </Allotment.Pane>
                 )}
             </Allotment>
         </Stack>
+    )
+}
+
+const ErrorFallbackComponent = (props: { error: Error }) => {
+    return (
+        <Box centerContent absoluteFill>
+            <SomethingWentWrong error={props.error} />
+        </Box>
     )
 }

@@ -8,7 +8,7 @@ import { RoomIdentifier } from '../types/room-identifier'
  */
 export function useMembers(roomId?: RoomIdentifier): {
     members: RoomMember[]
-    membersMap: { [userId: string]: RoomMember }
+    membersMap: { [userId: string]: RoomMember | undefined }
 } {
     const room = useRoom(roomId)
     return useMemo(() => {

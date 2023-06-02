@@ -100,8 +100,8 @@ const MentionBox = (props: { mention: MentionResult; userId?: string }) => {
                         mention.thread ? `Thread in` : ``
                     } #${mention.channel.label.toLowerCase()}`}
                     timestamp={mention.event.originServerTs}
-                    userId={sender.userId}
-                    senderId={sender.userId}
+                    userId={sender?.userId}
+                    senderId={sender?.userId}
                     name={getPrettyDisplayName(sender).name}
                 >
                     <RichTextPreview
