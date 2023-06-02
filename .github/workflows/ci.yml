@@ -315,6 +315,7 @@ jobs:
               uses: golangci/golangci-lint-action@v3
               with:
                   working-directory: casablanca/node
+                  version: 'v1.52.2'
 
             - name: Casablanca create db
               run: psql -h localhost -p 5433 -U postgres -f scripts/sql/create_db.sql
