@@ -9,6 +9,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { Box, Button, Icon, IconName, Stack, Text } from '@ui'
 import { TouchLayoutDropdownMenu } from '@components/TouchLayoutNavigationBar/TouchLayoutDropdownMenu'
 import { usePushNotifications } from 'hooks/usePushNotifications'
+import { transitions } from 'ui/transitions/transitions'
 
 type ValueType = Channel | 'threads' | 'mentions'
 type Props = {
@@ -133,14 +134,25 @@ export const TouchLayoutNavigationBar = (props: Props) => {
                 {dropDownOpen && (
                     <Box grow absoluteFill overflow="hidden" zIndex="ui" top="x8">
                         <MotionStack
-                            initial={{ y: '-100%' }}
-                            exit={{ y: '-100%' }}
-                            animate={{ y: 0 }}
-                            transition={{ ease: 'easeOut', duration: 0.3 }}
+                            initial={{ y: '-100%', opacity: 0 }}
+                            exit={{ y: '-100%', opacity: 0 }}
+                            animate={{ y: 0, opacity: 1 }}
+                            transition={transitions.panel}
                             background="level1"
                             width="100%"
                             height="100%"
                         >
+                            {/* this box makes sure the UI below doesn't bleed through while spring animating */}
+                            <Box
+                                background="level1"
+                                style={{
+                                    position: 'absolute',
+                                    right: 0,
+                                    top: -100,
+                                    left: 0,
+                                    height: 100,
+                                }}
+                            />
                             <TouchLayoutDropdownMenu
                                 unreadThreadMentions={unreadThreadMentions}
                                 unreadThreadsCount={unreadThreadsCount}

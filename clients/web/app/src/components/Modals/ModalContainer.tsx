@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { Box, BoxProps, Stack, useZLayerContext } from '@ui'
 import { useDevice } from 'hooks/useDevice'
 import { TouchPanelNavigationBar } from 'ui/components/TouchPanelNavigationBar/TouchPanelNavigationBar'
+import { transitions } from 'ui/transitions/transitions'
 
 type Props = {
     children: React.ReactNode
@@ -60,14 +61,19 @@ const TouchFullScreenModalContainer = (props: TouchFullScreenModalContainerProps
             {contentVisible && (
                 <MotionBox
                     absoluteFill
-                    initial={{ x: '100%' }}
-                    animate={{ x: '0%' }}
-                    exit={{ x: '100%' }}
-                    transition={{ ease: 'easeOut', duration: 0.3 }}
+                    initial={{ x: '100%', opacity: 0 }}
+                    animate={{ x: '0%', opacity: 1 }}
+                    exit={{ x: '100%', opacity: 0 }}
+                    transition={transitions.panel}
                     background="level1"
                     pointerEvents="auto"
                     zIndex="tooltips"
                 >
+                    {/* this box makes sure the UI below doesn't bleed through while spring animating */}
+                    <Box
+                        background="level1"
+                        style={{ position: 'absolute', right: -100, top: 0, bottom: 0, width: 100 }}
+                    />
                     <Stack>
                         <TouchPanelNavigationBar title={title} onBack={onClose} />
 

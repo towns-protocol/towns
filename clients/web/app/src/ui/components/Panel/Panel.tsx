@@ -70,7 +70,7 @@ const TouchPanel = (props: Props) => {
         setModalPresented(false)
         setTimeout(() => {
             onClose?.()
-        }, transitions.panel.duration * 1000)
+        }, transitions.panelAnimationDuration * 1000)
     }, [onClose])
 
     useEffect(() => {
@@ -101,14 +101,19 @@ const TouchPanel = (props: Props) => {
             {modalPresented && (
                 <MotionStack
                     absoluteFill
-                    initial={{ x: '100%' }}
-                    animate={{ x: '0%' }}
-                    exit={{ x: '100%' }}
+                    initial={{ x: '100%', opacity: 0 }}
+                    animate={{ x: '0%', opacity: 1 }}
+                    exit={{ x: '100%', opacity: 0 }}
                     transition={transitions.panel}
                     background="level1"
                     zIndex="tooltips"
                     height="100svh"
                 >
+                    {/* this box makes sure the UI below doesn't bleed through while spring animating */}
+                    <Box
+                        background="level1"
+                        style={{ position: 'absolute', right: -100, top: 0, bottom: 0, width: 100 }}
+                    />
                     <TouchPanelNavigationBar title={props.label} onBack={closePanel} />
                     <Stack scroll>
                         <Box minHeight="100svh" paddingBottom="safeAreaInsetBottom">

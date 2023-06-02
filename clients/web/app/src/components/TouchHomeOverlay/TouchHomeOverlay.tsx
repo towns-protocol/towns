@@ -15,6 +15,7 @@ import { useCreateLink } from 'hooks/useCreateLink'
 import { useAuth } from 'hooks/useAuth'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { SentryErrorReportForm } from '@components/SentryErrorReport/SentryErrorReport'
+import { transitions } from 'ui/transitions/transitions'
 
 type Props = {
     onClose: () => void
@@ -60,13 +61,17 @@ export const TouchHomeOverlay = (props: Props) => {
                 initial={{ x: '-75%', opacity: 0 }}
                 exit={{ x: '-75%', opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
-                transition={{ duration: 0.33 }}
+                transition={transitions.panel}
                 width="75%"
                 height="100dvh"
                 background="level1"
                 paddingTop="safeAreaInsetTop"
                 paddingBottom="safeAreaInsetBottom"
             >
+                <Box
+                    background="level1"
+                    style={{ position: 'absolute', left: -100, top: 0, bottom: 0, width: 100 }}
+                />
                 {user && (
                     <Stack horizontal padding alignItems="center" gap="sm">
                         <Avatar
