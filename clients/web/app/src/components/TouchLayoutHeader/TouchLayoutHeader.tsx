@@ -59,7 +59,7 @@ export const TouchLayoutHeader = () => {
                             height="height_md"
                             width="height_md"
                             spaceId={space?.id.slug}
-                            firstLetterOfSpaceName=""
+                            firstLetterOfSpaceName={space?.name[0]}
                             overrideBorderRadius="sm"
                             variant={ImageVariants.thumbnail50}
                         />
