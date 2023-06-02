@@ -1100,11 +1100,11 @@
       ]
     },
     "packages/contracts/src/spaces/Space.sol": {
-      "keccak256": "0xb5fa07e0a4ef90a7d6f9dc2856160f953bdbdaebfae8e7bc3443d699d38ee7e8",
+      "keccak256": "0x781244991b3b277f8b8a2e1bf8041a7b7910736d5ddc1f9f871ea51bef49b6e8",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://eac91b91b31c16f0f60713143de62cbcd8937054374e6deb30b769d7ba37f125",
-        "dweb:/ipfs/QmSjQ3LnPF4k9xb8vkUE5mafkZmCz6LSeJKwwtSCkvFH48"
+        "bzz-raw://8bd14fae07c2fad10389e06f00fd561009855424d6b7a3a63a891c91ab39cd62",
+        "dweb:/ipfs/Qme2wqZWVjrPtV3Z7B7ZzAwFmtwR66i4r2kdHC2pVsCL6T"
       ]
     },
     "packages/contracts/src/spaces/SpaceFactory.sol": {
@@ -1140,11 +1140,11 @@
       ]
     },
     "packages/contracts/src/spaces/interfaces/ISpace.sol": {
-      "keccak256": "0x0bdb9b18973fc1dac67acb973916b937c3ad7886ef71f9ff372b3a6dc1109d36",
+      "keccak256": "0x876e9f03a2763f510e2512399f87b1ab9b03fb2ecab7902ad8c9f38adae44fac",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://19b626957a6319cace1bc948f7b74c6bfae6bb1320749e5895f5b6c449009af6",
-        "dweb:/ipfs/QmVkvbATWVLCP5E4g94KDMWHeiCia9qtt6GDidiMnvvjHr"
+        "bzz-raw://31e8390ba729ac0255ec7e2ac5dc2c08eec86bed3ad2a8ce4e7e7a72d5a12e4f",
+        "dweb:/ipfs/QmYPVA2RTgBZ45AevDBh4JxgPJ617rTwgReE7jE2GbqghA"
       ]
     },
     "packages/contracts/src/spaces/interfaces/ISpaceFactory.sol": {

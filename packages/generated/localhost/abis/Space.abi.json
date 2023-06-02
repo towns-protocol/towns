@@ -487,6 +487,47 @@
     "type": "function"
   },
   {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "channelId",
+        "type": "string"
+      }
+    ],
+    "name": "getChannelInfo",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "bytes32",
+            "name": "channelHash",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "string",
+            "name": "channelId",
+            "type": "string"
+          },
+          {
+            "internalType": "string",
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "internalType": "bool",
+            "name": "disabled",
+            "type": "bool"
+          }
+        ],
+        "internalType": "struct ISpace.ChannelInfo",
+        "name": "channelInfo",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [],
     "name": "getChannels",
     "outputs": [

@@ -6,10 +6,26 @@ import {IERC165} from "openzeppelin-contracts/contracts/utils/introspection/IERC
 
 interface ISpace is IERC165 {
   /// ***** Space Structs *****
+
+  /// @dev SpaceInfo is a struct for storing information about a space
+  /// @param spaceAddress the address of the space
+  /// @param owner the owner of the space
+  /// @param spaceId the network id of the space linking it to the dendrite/casablanca protocol
+  /// @param disabled whether the space is disabled or not
   struct SpaceInfo {
     address spaceAddress;
     address owner;
     string spaceId;
+    bool disabled;
+  }
+
+  /// @dev ChannelInfo is a struct for storing information about a channel
+  /// @param channelId the network id of the channel linking it to the dendrite/casablanca protocol
+  /// @param disabled whether the channel is disabled or not
+  struct ChannelInfo {
+    bytes32 channelHash;
+    string channelId;
+    string name;
     bool disabled;
   }
 
@@ -38,7 +54,18 @@ interface ISpace is IERC165 {
   /// @param roleId the roleId to be set as the owner role id
   function setOwnerRoleId(uint256 roleId) external;
 
+  /// @notice fetches the Space information
+  /// @return spaceInfo the Space information
+  function getSpaceInfo() external view returns (SpaceInfo memory spaceInfo);
+
   /// ***** Channel Management *****
+
+  /// @notice fetches the Channel information by the channelId
+  /// @param channelId the channelId to fetch the information for
+  /// @return channelInfo the Channel information
+  function getChannelInfo(
+    string calldata channelId
+  ) external view returns (ChannelInfo memory channelInfo);
 
   /// @notice fetches the Channel information by the hashed channelId
   /// @param channelHash the hashed channelId

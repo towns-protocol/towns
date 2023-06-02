@@ -92,6 +92,20 @@ export declare namespace DataTypes {
 }
 
 export declare namespace ISpace {
+  export type ChannelInfoStruct = {
+    channelHash: PromiseOrValue<BytesLike>;
+    channelId: PromiseOrValue<string>;
+    name: PromiseOrValue<string>;
+    disabled: PromiseOrValue<boolean>;
+  };
+
+  export type ChannelInfoStructOutput = [string, string, string, boolean] & {
+    channelHash: string;
+    channelId: string;
+    name: string;
+    disabled: boolean;
+  };
+
   export type SpaceInfoStruct = {
     spaceAddress: PromiseOrValue<string>;
     owner: PromiseOrValue<string>;
@@ -123,6 +137,7 @@ export interface SpaceInterface extends utils.Interface {
     "disabled()": FunctionFragment;
     "entitlements(uint256)": FunctionFragment;
     "getChannelByHash(bytes32)": FunctionFragment;
+    "getChannelInfo(string)": FunctionFragment;
     "getChannels()": FunctionFragment;
     "getEntitlementByModuleType(string)": FunctionFragment;
     "getEntitlementIdsByRoleId(uint256)": FunctionFragment;
@@ -178,6 +193,7 @@ export interface SpaceInterface extends utils.Interface {
       | "disabled"
       | "entitlements"
       | "getChannelByHash"
+      | "getChannelInfo"
       | "getChannels"
       | "getEntitlementByModuleType"
       | "getEntitlementIdsByRoleId"
@@ -281,6 +297,10 @@ export interface SpaceInterface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "getChannelByHash",
     values: [PromiseOrValue<BytesLike>]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "getChannelInfo",
+    values: [PromiseOrValue<string>]
   ): string;
   encodeFunctionData(
     functionFragment: "getChannels",
@@ -469,6 +489,10 @@ export interface SpaceInterface extends utils.Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "getChannelByHash",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "getChannelInfo",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -744,6 +768,15 @@ export interface Space extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[DataTypes.ChannelStructOutput]>;
 
+    getChannelInfo(
+      channelId: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<
+      [ISpace.ChannelInfoStructOutput] & {
+        channelInfo: ISpace.ChannelInfoStructOutput;
+      }
+    >;
+
     getChannels(overrides?: CallOverrides): Promise<[string[]]>;
 
     getEntitlementByModuleType(
@@ -999,6 +1032,11 @@ export interface Space extends BaseContract {
     overrides?: CallOverrides
   ): Promise<DataTypes.ChannelStructOutput>;
 
+  getChannelInfo(
+    channelId: PromiseOrValue<string>,
+    overrides?: CallOverrides
+  ): Promise<ISpace.ChannelInfoStructOutput>;
+
   getChannels(overrides?: CallOverrides): Promise<string[]>;
 
   getEntitlementByModuleType(
@@ -1243,6 +1281,11 @@ export interface Space extends BaseContract {
       _channelHash: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
     ): Promise<DataTypes.ChannelStructOutput>;
+
+    getChannelInfo(
+      channelId: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<ISpace.ChannelInfoStructOutput>;
 
     getChannels(overrides?: CallOverrides): Promise<string[]>;
 
@@ -1519,6 +1562,11 @@ export interface Space extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
+    getChannelInfo(
+      channelId: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
     getChannels(overrides?: CallOverrides): Promise<BigNumber>;
 
     getEntitlementByModuleType(
@@ -1750,6 +1798,11 @@ export interface Space extends BaseContract {
 
     getChannelByHash(
       _channelHash: PromiseOrValue<BytesLike>,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    getChannelInfo(
+      channelId: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 

@@ -11,14 +11,19 @@ import {ISpace} from "contracts/src/spaces/interfaces/ISpace.sol";
 
 import {console} from "forge-std/console.sol";
 
-contract GetSpaceInfoTest is SpaceBaseSetup {
-  function test_getSpaceInfo() external {
+contract GetChannelInfoTest is SpaceBaseSetup {
+  function test_getChannelInfo() external {
     address space = createSimpleSpace();
 
-    ISpace.SpaceInfo memory spaceInfo = Space(space).getSpaceInfo();
+    Space(space).createChannel("random", "random-id", new uint256[](0));
 
-    assertEq(spaceInfo.spaceAddress, space);
-    assertEq(spaceInfo.owner, address(this));
-    assertEq(spaceInfo.disabled, false);
+    ISpace.ChannelInfo memory channelInfo = Space(space).getChannelInfo(
+      "random-id"
+    );
+
+    assertEq(channelInfo.channelHash, keccak256(abi.encodePacked("random-id")));
+    assertEq(channelInfo.channelId, "random-id");
+    assertEq(channelInfo.name, "random");
+    assertEq(channelInfo.disabled, false);
   }
 }

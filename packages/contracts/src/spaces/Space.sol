@@ -126,6 +126,7 @@ contract Space is
     ownerRoleId = _roleId;
   }
 
+  /// @inheritdoc ISpace
   function getSpaceInfo() external view returns (SpaceInfo memory spaceInfo) {
     spaceInfo = SpaceInfo({
       spaceAddress: address(this),
@@ -142,6 +143,20 @@ contract Space is
     bytes32 _channelHash
   ) external view returns (DataTypes.Channel memory) {
     return channelsByHash[_channelHash];
+  }
+
+  /// @inheritdoc ISpace
+  function getChannelInfo(
+    string calldata channelId
+  ) external view returns (ChannelInfo memory channelInfo) {
+    bytes32 channelHash = keccak256(abi.encodePacked(channelId));
+
+    channelInfo = ChannelInfo({
+      channelHash: channelHash,
+      channelId: channelId,
+      name: channelsByHash[channelHash].name,
+      disabled: channelsByHash[channelHash].disabled
+    });
   }
 
   /// @inheritdoc ISpace
