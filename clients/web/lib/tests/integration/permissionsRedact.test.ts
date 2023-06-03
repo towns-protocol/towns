@@ -97,10 +97,10 @@ describe('redact messages', () => {
             throw new Error('channelId is undefined')
         }
         // invite user to join the channel
-        if (!bob.matrixUserId) {
+        if (!bob.getUserId()) {
             throw new Error('Failed to get bob matrix user id')
         }
-        await alice.inviteUser(channelId, bob.matrixUserId)
+        await alice.inviteUser(channelId, bob.getUserId() as string)
         await bob.joinRoom(channelId)
 
         /** Act */
@@ -173,10 +173,10 @@ describe('redact messages', () => {
             throw new Error('channelId is undefined')
         }
         // invite user to join the channel
-        if (!bob.matrixUserId) {
+        if (!bob.getUserId()) {
             throw new Error('Failed to get bob matrix user id')
         }
-        await alice.inviteUser(channelId, bob.matrixUserId)
+        await alice.inviteUser(channelId, bob.getUserId() as string)
         await bob.joinRoom(channelId)
 
         /** Act */
