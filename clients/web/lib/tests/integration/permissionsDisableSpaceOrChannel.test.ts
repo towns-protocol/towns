@@ -114,12 +114,12 @@ describe('disable channel', () => {
         if (roomId === undefined) {
             throw new Error('roomId should be defined')
         }
-        if (tokenGrantedUser.getUserId() === undefined) {
-            throw new Error('alice.getUserId() should be defined')
+        if (tokenGrantedUser.matrixUserId === undefined) {
+            throw new Error('alice.matrixUserId should be defined')
         }
 
         // invite user to join the space by first checking if they can read.
-        await bob.inviteUser(roomId, tokenGrantedUser.getUserId() as string)
+        await bob.inviteUser(roomId, tokenGrantedUser.matrixUserId)
         await tokenGrantedUser.joinRoom(roomId)
 
         /** Act */
@@ -163,13 +163,13 @@ describe('disable channel', () => {
         if (roomId === undefined) {
             throw new Error('roomId should be defined')
         }
-        if (alice.getUserId() === undefined) {
-            throw new Error('alice.getUserId() should be defined')
+        if (alice.matrixUserId === undefined) {
+            throw new Error('alice.matrixUserId should be defined')
         }
 
         /** Act */
 
-        await bob.inviteUser(roomId, alice.getUserId() as string)
+        await bob.inviteUser(roomId, alice.matrixUserId)
         await alice.joinRoom(roomId)
 
         // set space access off, disabling space in ZionSpaceManager
@@ -189,7 +189,7 @@ describe('disable channel', () => {
         await bob.setSpaceAccess(roomId.networkId, false, bob.provider.wallet)
 
         /** Assert */
-        await bob.inviteUser(roomId, alice.getUserId() as string)
+        await bob.inviteUser(roomId, alice.matrixUserId)
         await waitFor(
             () => expect(alice.joinRoom(roomId)).resolves.toBeDefined(),
             TestConstants.DoubleDefaultWaitForTimeout,
