@@ -205,7 +205,7 @@ describe('update role', () => {
                     // this is the role we are updating
                     // assert that they have been updated
                     assertRoleEquals(actual, newModeratorRole)
-                } else if (role.name === 'Everyone') {
+                } else if (role.name === 'Everyone' || role.name == 'Upgrade') {
                     // ignore it
                     // this is a role that is created by default with every space
                 } else {
@@ -298,7 +298,7 @@ describe('update role', () => {
                     // this is the role we are updating
                     // assert that they have been updated
                     assertRoleEquals(actual, newModeratorRole)
-                } else if (role.name === 'Everyone') {
+                } else if (role.name === 'Everyone' || role.name == 'Upgrade') {
                     // ignore it
                     // this is a role that is created by default with every space
                 } else {

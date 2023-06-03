@@ -8,7 +8,8 @@ interface ISpaceFactory {
     address space,
     address tokenEntitlement,
     address userEntitlement,
-    address _gateToken
+    address gateToken,
+    address spaceUpgrades
   ) external;
 
   /// @notice Creates a new space

@@ -65,6 +65,16 @@ contract Space is
   }
 
   /// @inheritdoc ISpace
+  function contractType() external pure virtual override returns (bytes32) {
+    return bytes32("Space");
+  }
+
+  /// @inheritdoc ISpace
+  function contractVersion() external pure virtual override returns (uint8) {
+    return uint8(MODULE_VERSION);
+  }
+
+  /// @inheritdoc ISpace
   function initialize(
     string memory _name,
     string memory _networkId,

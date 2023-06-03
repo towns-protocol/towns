@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity 0.8.19;
 
-import {DataTypes} from "../libraries/DataTypes.sol";
+import {DataTypes} from "contracts/src/spaces/libraries/DataTypes.sol";
 import {IERC165} from "openzeppelin-contracts/contracts/utils/introspection/IERC165.sol";
 
 interface ISpace is IERC165 {
@@ -28,6 +28,14 @@ interface ISpace is IERC165 {
     string name;
     bool disabled;
   }
+
+  /// ***** Contract Logic *****
+
+  /// @dev Returns the type of the contract.
+  function contractType() external pure returns (bytes32);
+
+  /// @dev Returns the version of the contract.
+  function contractVersion() external pure returns (uint8);
 
   /// ***** Space Management *****
   /// @notice initializes a new Space

@@ -5,4 +5,4 @@ set -a
 . .env.localhost
 set +a
 make deploy-anvil contract=DeployMember
-make deploy-anvil contract=DeploySpaceFactory
+make deploy-anvil contract=DeploySpaceUpgrades

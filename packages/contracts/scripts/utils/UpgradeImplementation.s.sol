@@ -32,6 +32,7 @@ contract UpgradeImplementation is ScriptUtils {
       address(space),
       address(0),
       address(0),
+      address(0),
       address(0)
     );
 

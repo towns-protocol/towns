@@ -21,6 +21,7 @@ contract SpaceFactoryTestCreateSpace is SpaceBaseSetup {
     address tokenEntitlement = _randomAddress();
     address userEntitlement = _randomAddress();
     address gateToken = _randomAddress();
+    address spaceUpgrade = _randomAddress();
 
     spaceFactory.setPaused(true);
 
@@ -28,7 +29,8 @@ contract SpaceFactoryTestCreateSpace is SpaceBaseSetup {
       space,
       tokenEntitlement,
       userEntitlement,
-      gateToken
+      gateToken,
+      spaceUpgrade
     );
 
     assertEq(spaceFactory.SPACE_IMPLEMENTATION_ADDRESS(), space);
@@ -114,6 +116,12 @@ contract SpaceFactoryTestCreateSpace is SpaceBaseSetup {
     address space2 = createSpaceWithEntitlements(_entitlementData);
 
     assertTrue(Space(space2).isEntitledToSpace(spaceOwner2, Permissions.Owner));
+    assertTrue(
+      Space(space2).isEntitledToSpace(
+        address(spaceUpgrades),
+        Permissions.Upgrade
+      )
+    );
     assertFalse(
       Space(space2).isEntitledToSpace(spaceOwner1, Permissions.Owner)
     );
@@ -341,6 +349,20 @@ contract SpaceFactoryTestCreateSpace is SpaceBaseSetup {
     assertFalse(Space(spaceAddress).isEntitledToSpace(bob, Permissions.Write));
     assertFalse(
       Space(spaceAddress).isEntitledToSpace(alice, Permissions.Write)
+    );
+  }
+
+  function testUpgradeEntitlement() external {
+    address creator = _randomAddress();
+
+    vm.prank(creator);
+    address spaceAddress = createSimpleSpace();
+
+    assertTrue(
+      Space(spaceAddress).isEntitledToSpace(
+        address(spaceUpgrades),
+        Permissions.Upgrade
+      )
     );
   }
 

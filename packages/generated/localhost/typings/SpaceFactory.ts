@@ -95,6 +95,7 @@ export interface SpaceFactoryInterface extends utils.Interface {
     "GATE_TOKEN_ADDRESS()": FunctionFragment;
     "SPACE_IMPLEMENTATION_ADDRESS()": FunctionFragment;
     "SPACE_TOKEN_ADDRESS()": FunctionFragment;
+    "SPACE_UPGRADES_ADDRESS()": FunctionFragment;
     "TOKEN_IMPLEMENTATION_ADDRESS()": FunctionFragment;
     "USER_IMPLEMENTATION_ADDRESS()": FunctionFragment;
     "addOwnerPermissions(string[])": FunctionFragment;
@@ -116,7 +117,7 @@ export interface SpaceFactoryInterface extends utils.Interface {
     "spaceByHash(bytes32)": FunctionFragment;
     "tokenByHash(bytes32)": FunctionFragment;
     "transferOwnership(address)": FunctionFragment;
-    "updateImplementations(address,address,address,address)": FunctionFragment;
+    "updateImplementations(address,address,address,address,address)": FunctionFragment;
     "upgradeTo(address)": FunctionFragment;
     "upgradeToAndCall(address,bytes)": FunctionFragment;
   };
@@ -126,6 +127,7 @@ export interface SpaceFactoryInterface extends utils.Interface {
       | "GATE_TOKEN_ADDRESS"
       | "SPACE_IMPLEMENTATION_ADDRESS"
       | "SPACE_TOKEN_ADDRESS"
+      | "SPACE_UPGRADES_ADDRESS"
       | "TOKEN_IMPLEMENTATION_ADDRESS"
       | "USER_IMPLEMENTATION_ADDRESS"
       | "addOwnerPermissions"
@@ -162,6 +164,10 @@ export interface SpaceFactoryInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "SPACE_TOKEN_ADDRESS",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "SPACE_UPGRADES_ADDRESS",
     values?: undefined
   ): string;
   encodeFunctionData(
@@ -264,6 +270,7 @@ export interface SpaceFactoryInterface extends utils.Interface {
       PromiseOrValue<string>,
       PromiseOrValue<string>,
       PromiseOrValue<string>,
+      PromiseOrValue<string>,
       PromiseOrValue<string>
     ]
   ): string;
@@ -286,6 +293,10 @@ export interface SpaceFactoryInterface extends utils.Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "SPACE_TOKEN_ADDRESS",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "SPACE_UPGRADES_ADDRESS",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -483,6 +494,8 @@ export interface SpaceFactory extends BaseContract {
 
     SPACE_TOKEN_ADDRESS(overrides?: CallOverrides): Promise<[string]>;
 
+    SPACE_UPGRADES_ADDRESS(overrides?: CallOverrides): Promise<[string]>;
+
     TOKEN_IMPLEMENTATION_ADDRESS(overrides?: CallOverrides): Promise<[string]>;
 
     USER_IMPLEMENTATION_ADDRESS(overrides?: CallOverrides): Promise<[string]>;
@@ -581,6 +594,7 @@ export interface SpaceFactory extends BaseContract {
       _tokenEntitlement: PromiseOrValue<string>,
       _userEntitlement: PromiseOrValue<string>,
       _gateToken: PromiseOrValue<string>,
+      _spaceUpgrades: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
@@ -601,6 +615,8 @@ export interface SpaceFactory extends BaseContract {
   SPACE_IMPLEMENTATION_ADDRESS(overrides?: CallOverrides): Promise<string>;
 
   SPACE_TOKEN_ADDRESS(overrides?: CallOverrides): Promise<string>;
+
+  SPACE_UPGRADES_ADDRESS(overrides?: CallOverrides): Promise<string>;
 
   TOKEN_IMPLEMENTATION_ADDRESS(overrides?: CallOverrides): Promise<string>;
 
@@ -700,6 +716,7 @@ export interface SpaceFactory extends BaseContract {
     _tokenEntitlement: PromiseOrValue<string>,
     _userEntitlement: PromiseOrValue<string>,
     _gateToken: PromiseOrValue<string>,
+    _spaceUpgrades: PromiseOrValue<string>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
@@ -720,6 +737,8 @@ export interface SpaceFactory extends BaseContract {
     SPACE_IMPLEMENTATION_ADDRESS(overrides?: CallOverrides): Promise<string>;
 
     SPACE_TOKEN_ADDRESS(overrides?: CallOverrides): Promise<string>;
+
+    SPACE_UPGRADES_ADDRESS(overrides?: CallOverrides): Promise<string>;
 
     TOKEN_IMPLEMENTATION_ADDRESS(overrides?: CallOverrides): Promise<string>;
 
@@ -817,6 +836,7 @@ export interface SpaceFactory extends BaseContract {
       _tokenEntitlement: PromiseOrValue<string>,
       _userEntitlement: PromiseOrValue<string>,
       _gateToken: PromiseOrValue<string>,
+      _spaceUpgrades: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -881,6 +901,8 @@ export interface SpaceFactory extends BaseContract {
     SPACE_IMPLEMENTATION_ADDRESS(overrides?: CallOverrides): Promise<BigNumber>;
 
     SPACE_TOKEN_ADDRESS(overrides?: CallOverrides): Promise<BigNumber>;
+
+    SPACE_UPGRADES_ADDRESS(overrides?: CallOverrides): Promise<BigNumber>;
 
     TOKEN_IMPLEMENTATION_ADDRESS(overrides?: CallOverrides): Promise<BigNumber>;
 
@@ -980,6 +1002,7 @@ export interface SpaceFactory extends BaseContract {
       _tokenEntitlement: PromiseOrValue<string>,
       _userEntitlement: PromiseOrValue<string>,
       _gateToken: PromiseOrValue<string>,
+      _spaceUpgrades: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
@@ -1005,6 +1028,10 @@ export interface SpaceFactory extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     SPACE_TOKEN_ADDRESS(
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    SPACE_UPGRADES_ADDRESS(
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
@@ -1112,6 +1139,7 @@ export interface SpaceFactory extends BaseContract {
       _tokenEntitlement: PromiseOrValue<string>,
       _userEntitlement: PromiseOrValue<string>,
       _gateToken: PromiseOrValue<string>,
+      _spaceUpgrades: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 

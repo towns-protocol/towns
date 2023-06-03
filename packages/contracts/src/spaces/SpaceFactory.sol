@@ -5,6 +5,7 @@ pragma solidity 0.8.19;
 import {ISpaceFactory} from "contracts/src/spaces/interfaces/ISpaceFactory.sol";
 import {IEntitlement} from "contracts/src/spaces/interfaces/IEntitlement.sol";
 import {IERC721} from "openzeppelin-contracts/contracts/token/ERC721/IERC721.sol";
+import {ISpaceUpgrades} from "contracts/src/spaces/interfaces/ISpaceUpgrades.sol";
 
 /** Libraries */
 import {Permissions} from "contracts/src/spaces/libraries/Permissions.sol";
@@ -36,8 +37,8 @@ contract SpaceFactory is
   UUPSUpgradeable,
   ISpaceFactory
 {
-  string internal constant everyoneRoleName = "Everyone";
-  string internal constant ownerRoleName = "Owner";
+  string internal constant _everyoneRoleName = "Everyone";
+  string internal constant _ownerRoleName = "Owner";
 
   address public SPACE_IMPLEMENTATION_ADDRESS;
   address public TOKEN_IMPLEMENTATION_ADDRESS;
@@ -49,6 +50,8 @@ contract SpaceFactory is
   string[] public ownerPermissions;
   mapping(bytes32 => address) public spaceByHash;
   mapping(bytes32 => uint256) public tokenByHash;
+
+  address public SPACE_UPGRADES_ADDRESS;
 
   /// @custom:oz-upgrades-unsafe-allow constructor
   constructor() {
@@ -86,7 +89,8 @@ contract SpaceFactory is
     address _space,
     address _tokenEntitlement,
     address _userEntitlement,
-    address _gateToken
+    address _gateToken,
+    address _spaceUpgrades
   ) external onlyOwner whenPaused {
     if (_space != address(0)) SPACE_IMPLEMENTATION_ADDRESS = _space;
     if (_tokenEntitlement != address(0))
@@ -94,6 +98,7 @@ contract SpaceFactory is
     if (_userEntitlement != address(0))
       USER_IMPLEMENTATION_ADDRESS = _userEntitlement;
     if (_gateToken != address(0)) GATE_TOKEN_ADDRESS = _gateToken;
+    if (_spaceUpgrades != address(0)) SPACE_UPGRADES_ADDRESS = _spaceUpgrades;
   }
 
   /// @inheritdoc ISpaceFactory
@@ -199,6 +204,13 @@ contract SpaceFactory is
       _spaceData.channelId
     );
 
+    _createUpgradesEntitlement(_spaceAddress, _userEntitlement);
+
+    ISpaceUpgrades(SPACE_UPGRADES_ADDRESS).register(
+      _spaceAddress,
+      SPACE_IMPLEMENTATION_ADDRESS
+    );
+
     TownOwner(SPACE_TOKEN_ADDRESS).safeTransferFrom(
       address(this),
       _msgSender(),
@@ -287,6 +299,30 @@ contract SpaceFactory is
   /// ****************************
   /// Internal functions
   /// ****************************
+  function _createUpgradesEntitlement(
+    address _spaceAddress,
+    address _userEntitlementAddress
+  ) internal {
+    if (SPACE_UPGRADES_ADDRESS == address(0)) return;
+
+    DataTypes.Entitlement[] memory _entitlements = new DataTypes.Entitlement[](
+      1
+    );
+
+    address[] memory users = new address[](1);
+    users[0] = SPACE_UPGRADES_ADDRESS;
+
+    _entitlements[0] = DataTypes.Entitlement({
+      module: _userEntitlementAddress,
+      data: abi.encode(users)
+    });
+
+    string[] memory _permissions = new string[](1);
+    _permissions[0] = Permissions.Upgrade;
+
+    Space(_spaceAddress).createRole("Upgrade", _permissions, _entitlements);
+  }
+
   function _createExtraEntitlements(
     address spaceAddress,
     address tokenAddress,
@@ -352,7 +388,7 @@ contract SpaceFactory is
 
     // create owner role with all permissions
     ownerRoleId = Space(spaceAddress).createRole(
-      ownerRoleName,
+      _ownerRoleName,
       ownerPermissions,
       _entitlements
     );
@@ -378,7 +414,7 @@ contract SpaceFactory is
     });
 
     everyoneRoleId = Space(spaceAddress).createRole(
-      everyoneRoleName,
+      _everyoneRoleName,
       _permissions,
       _entitlements
     );

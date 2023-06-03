@@ -130,7 +130,9 @@ export interface SpaceInterface extends utils.Interface {
     "addRoleToEntitlement(uint256,(address,bytes))": FunctionFragment;
     "channels(uint256)": FunctionFragment;
     "channelsByHash(bytes32)": FunctionFragment;
+    "contractType()": FunctionFragment;
     "contractURI()": FunctionFragment;
+    "contractVersion()": FunctionFragment;
     "createChannel(string,string,uint256[])": FunctionFragment;
     "createRole(string,string[],(address,bytes)[])": FunctionFragment;
     "defaultEntitlements(address)": FunctionFragment;
@@ -186,7 +188,9 @@ export interface SpaceInterface extends utils.Interface {
       | "addRoleToEntitlement"
       | "channels"
       | "channelsByHash"
+      | "contractType"
       | "contractURI"
+      | "contractVersion"
       | "createChannel"
       | "createRole"
       | "defaultEntitlements"
@@ -266,7 +270,15 @@ export interface SpaceInterface extends utils.Interface {
     values: [PromiseOrValue<BytesLike>]
   ): string;
   encodeFunctionData(
+    functionFragment: "contractType",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
     functionFragment: "contractURI",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "contractVersion",
     values?: undefined
   ): string;
   encodeFunctionData(
@@ -470,7 +482,15 @@ export interface SpaceInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
+    functionFragment: "contractType",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "contractURI",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "contractVersion",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -735,7 +755,11 @@ export interface Space extends BaseContract {
       }
     >;
 
+    contractType(overrides?: CallOverrides): Promise<[string]>;
+
     contractURI(overrides?: CallOverrides): Promise<[string]>;
+
+    contractVersion(overrides?: CallOverrides): Promise<[number]>;
 
     createChannel(
       channelName: PromiseOrValue<string>,
@@ -999,7 +1023,11 @@ export interface Space extends BaseContract {
     }
   >;
 
+  contractType(overrides?: CallOverrides): Promise<string>;
+
   contractURI(overrides?: CallOverrides): Promise<string>;
+
+  contractVersion(overrides?: CallOverrides): Promise<number>;
 
   createChannel(
     channelName: PromiseOrValue<string>,
@@ -1249,7 +1277,11 @@ export interface Space extends BaseContract {
       }
     >;
 
+    contractType(overrides?: CallOverrides): Promise<string>;
+
     contractURI(overrides?: CallOverrides): Promise<string>;
+
+    contractVersion(overrides?: CallOverrides): Promise<number>;
 
     createChannel(
       channelName: PromiseOrValue<string>,
@@ -1529,7 +1561,11 @@ export interface Space extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
+    contractType(overrides?: CallOverrides): Promise<BigNumber>;
+
     contractURI(overrides?: CallOverrides): Promise<BigNumber>;
+
+    contractVersion(overrides?: CallOverrides): Promise<BigNumber>;
 
     createChannel(
       channelName: PromiseOrValue<string>,
@@ -1768,7 +1804,11 @@ export interface Space extends BaseContract {
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
+    contractType(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
     contractURI(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    contractVersion(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     createChannel(
       channelName: PromiseOrValue<string>,

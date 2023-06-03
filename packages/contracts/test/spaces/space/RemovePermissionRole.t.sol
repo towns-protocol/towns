@@ -57,7 +57,7 @@ contract RemovePermissionRoleTest is SpaceBaseSetup {
     permissions[0] = Permissions.Ban;
 
     vm.expectRevert(Errors.RoleDoesNotExist.selector);
-    Space(_space).removePermissionsFromRole(_moderatorRoleId + 1, permissions);
+    Space(_space).removePermissionsFromRole(_moderatorRoleId + 5, permissions);
   }
 
   function testRevertIfNotAllowedToremovePermissionsFromRole() external {

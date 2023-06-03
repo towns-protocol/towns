@@ -19,15 +19,18 @@ import {SpaceFactory} from "contracts/src/spaces/SpaceFactory.sol";
 import {Pioneer} from "contracts/src/tokens/Pioneer.sol";
 import {UserEntitlement} from "contracts/src/spaces/entitlements/UserEntitlement.sol";
 import {TokenEntitlement} from "contracts/src/spaces/entitlements/TokenEntitlement.sol";
+import {SpaceUpgrades} from "contracts/src/spaces/SpaceUpgrades.sol";
 
 contract SpaceBaseSetup is TestUtils, ERC721Holder {
-  SpaceFactory internal spaceFactory;
-  Space internal spaceImplementation;
-  TokenEntitlement internal tokenImplementation;
-  UserEntitlement internal userImplementation;
-  TownOwner internal spaceToken;
-  Pioneer internal pioneer;
+  SpaceFactory public spaceFactory;
+  Space public spaceImplementation;
+  TokenEntitlement public tokenImplementation;
+  UserEntitlement public userImplementation;
+  TownOwner public spaceToken;
+  Pioneer public pioneer;
+  SpaceUpgrades public spaceUpgrades;
   string[] public initialPermissions;
+  uint256 public upgradeDelayPeriod = block.timestamp;
 
   // to receive eth from pioneer contract
   receive() external payable {}
@@ -39,6 +42,7 @@ contract SpaceBaseSetup is TestUtils, ERC721Holder {
     tokenImplementation = new TokenEntitlement();
     userImplementation = new UserEntitlement();
     spaceFactory = new SpaceFactory();
+    spaceUpgrades = new SpaceUpgrades();
 
     _createInitialOwnerPermissions();
 
@@ -65,6 +69,29 @@ contract SpaceBaseSetup is TestUtils, ERC721Holder {
     vm.deal(address(pioneer), 1 ether);
 
     spaceFactory = SpaceFactory(spaceFactoryAddress);
+
+    // start space upgrades
+    address spaceUpgradesAddress = address(
+      new ERC1967Proxy(
+        address(spaceUpgrades),
+        abi.encodeCall(
+          spaceUpgrades.initialize,
+          (address(spaceFactory), upgradeDelayPeriod)
+        )
+      )
+    );
+
+    spaceUpgrades = SpaceUpgrades(spaceUpgradesAddress);
+
+    spaceFactory.setPaused(true);
+    spaceFactory.updateImplementations(
+      address(0),
+      address(0),
+      address(0),
+      address(0),
+      address(spaceUpgrades)
+    );
+    spaceFactory.setPaused(false);
   }
 
   function _createInitialOwnerPermissions() internal {
@@ -81,7 +108,7 @@ contract SpaceBaseSetup is TestUtils, ERC721Holder {
     initialPermissions.push(Permissions.Upgrade);
   }
 
-  function createSimpleChannel(address _space) internal returns (bytes32) {
+  function createSimpleChannel(address _space) public returns (bytes32) {
     (
       string memory channelName,
       string memory channelId,
@@ -96,7 +123,7 @@ contract SpaceBaseSetup is TestUtils, ERC721Holder {
     string memory _spaceMetadata,
     string memory _channelName,
     string memory _channelId
-  ) internal returns (address) {
+  ) public returns (address) {
     DataTypes.CreateSpaceExtraEntitlements memory _entitlementData = DataTypes
       .CreateSpaceExtraEntitlements({
         roleName: "",
@@ -122,7 +149,7 @@ contract SpaceBaseSetup is TestUtils, ERC721Holder {
     return space;
   }
 
-  function createSimpleSpace() internal returns (address) {
+  function createSimpleSpace() public returns (address) {
     DataTypes.CreateSpaceExtraEntitlements memory _entitlementData = DataTypes
       .CreateSpaceExtraEntitlements({
         roleName: "",
@@ -149,7 +176,7 @@ contract SpaceBaseSetup is TestUtils, ERC721Holder {
 
   function createSpaceWithEveryonePermissions(
     string[] memory _permissions
-  ) internal returns (address) {
+  ) public returns (address) {
     DataTypes.CreateSpaceExtraEntitlements memory _entitlementData = DataTypes
       .CreateSpaceExtraEntitlements({
         roleName: "",
@@ -175,7 +202,7 @@ contract SpaceBaseSetup is TestUtils, ERC721Holder {
 
   function createSpaceWithEntitlements(
     DataTypes.CreateSpaceExtraEntitlements memory _entitlementData
-  ) internal returns (address) {
+  ) public returns (address) {
     string[] memory _permissions = new string[](0);
 
     address space = spaceFactory.createSpace(
@@ -194,7 +221,7 @@ contract SpaceBaseSetup is TestUtils, ERC721Holder {
   }
 
   function createSpaceWithModeratorEntitlements()
-    internal
+    public
     returns (address _space, address _moderator, uint256 _moderatorRoleId)
   {
     _moderator = _randomAddress();
@@ -238,7 +265,7 @@ contract SpaceBaseSetup is TestUtils, ERC721Holder {
 
   function createSimpleRoleWithPermission(
     address _space
-  ) internal returns (uint256 _roleId) {
+  ) public returns (uint256 _roleId) {
     string memory _roleName = "member";
 
     string[] memory _permissions = new string[](1);
@@ -254,7 +281,7 @@ contract SpaceBaseSetup is TestUtils, ERC721Holder {
 
   function getSpaceUserEntitlement(
     address _space
-  ) internal view returns (address) {
+  ) public view returns (address) {
     DataTypes.EntitlementModule[] memory entitlements = Space(_space)
       .getEntitlementModules();
 
@@ -270,7 +297,7 @@ contract SpaceBaseSetup is TestUtils, ERC721Holder {
 
   function getSpaceTokenEntitlement(
     address _space
-  ) internal view returns (address) {
+  ) public view returns (address) {
     DataTypes.EntitlementModule[] memory entitlements = Space(_space)
       .getEntitlementModules();
 

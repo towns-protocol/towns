@@ -34,6 +34,7 @@ contract DeploySpacesUpgrade is ScriptUtils {
       address(newSpace),
       address(0),
       address(0),
+      address(0),
       address(0)
     );
 

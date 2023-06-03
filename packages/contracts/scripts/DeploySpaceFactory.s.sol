@@ -82,6 +82,8 @@ contract DeploySpaceFactory is Deployer {
     spaceToken.setFactory(spaceFactoryAddress);
     vm.stopBroadcast();
 
+    // set space upgrades
+
     return spaceFactoryAddress;
   }
 

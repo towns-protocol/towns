@@ -173,6 +173,19 @@ export default [
   },
   {
     "inputs": [],
+    "name": "SPACE_UPGRADES_ADDRESS",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "TOKEN_IMPLEMENTATION_ADDRESS",
     "outputs": [
       {
@@ -621,6 +634,11 @@ export default [
       {
         "internalType": "address",
         "name": "_gateToken",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_spaceUpgrades",
         "type": "address"
       }
     ],

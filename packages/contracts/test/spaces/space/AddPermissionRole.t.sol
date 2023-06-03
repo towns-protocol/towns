@@ -32,7 +32,7 @@ contract AddPermissionRoleTest is SpaceBaseSetup {
     Space(_space).addPermissionsToRole(_moderatorRoleId, _permissions);
   }
 
-  function testRevertIfTryingaddPermissionsToRolele() external {
+  function testRevertIfTryingaddPermissionsToRole() external {
     (
       address _space,
       ,
@@ -44,7 +44,7 @@ contract AddPermissionRoleTest is SpaceBaseSetup {
     _permissions[1] = Permissions.Ping;
 
     vm.expectRevert(Errors.RoleDoesNotExist.selector);
-    Space(_space).addPermissionsToRole(_moderatorRoleId + 1, _permissions);
+    Space(_space).addPermissionsToRole(_moderatorRoleId + 5, _permissions);
   }
 
   function testRevertIfTryingToAddOwnerPermission() external {

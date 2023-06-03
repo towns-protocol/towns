@@ -314,6 +314,19 @@
       },
       {
         "inputs": [],
+        "name": "contractType",
+        "outputs": [
+          {
+            "internalType": "bytes32",
+            "name": "",
+            "type": "bytes32"
+          }
+        ],
+        "stateMutability": "pure",
+        "type": "function"
+      },
+      {
+        "inputs": [],
         "name": "contractURI",
         "outputs": [
           {
@@ -323,6 +336,19 @@
           }
         ],
         "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "contractVersion",
+        "outputs": [
+          {
+            "internalType": "uint8",
+            "name": "",
+            "type": "uint8"
+          }
+        ],
+        "stateMutability": "pure",
         "type": "function"
       },
       {
@@ -1287,6 +1313,12 @@
         "constructor": {
           "custom:oz-upgrades-unsafe-allow": "constructor"
         },
+        "contractType()": {
+          "details": "Returns the type of the contract."
+        },
+        "contractVersion()": {
+          "details": "Returns the version of the contract."
+        },
         "createChannel(string,string,uint256[])": {
           "params": {
             "channelId": "the network id of the channel linking it to the dendrite/casablanca protocol",
@@ -1688,11 +1720,11 @@
       ]
     },
     "packages/contracts/src/spaces/Space.sol": {
-      "keccak256": "0x781244991b3b277f8b8a2e1bf8041a7b7910736d5ddc1f9f871ea51bef49b6e8",
+      "keccak256": "0x91adf2a7c8879db1a7b584d6e87b0b9c24c8b21e10501fb3d845fd7c97fdcc5d",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://8bd14fae07c2fad10389e06f00fd561009855424d6b7a3a63a891c91ab39cd62",
-        "dweb:/ipfs/Qme2wqZWVjrPtV3Z7B7ZzAwFmtwR66i4r2kdHC2pVsCL6T"
+        "bzz-raw://73fb64602bdeaac7c6b00a395214a5c77578cfbcc3dc13fca877e94c1ed47b1f",
+        "dweb:/ipfs/QmWiwEQSwEo3Sz8X3xehvjcpw1nruCWihPy5wpRicEKev6"
       ]
     },
     "packages/contracts/src/spaces/interfaces/IEntitlement.sol": {
@@ -1704,11 +1736,11 @@
       ]
     },
     "packages/contracts/src/spaces/interfaces/ISpace.sol": {
-      "keccak256": "0x876e9f03a2763f510e2512399f87b1ab9b03fb2ecab7902ad8c9f38adae44fac",
+      "keccak256": "0x557b17357eae78c5fe3179a34ba623ee4f2fbba04b3e5c1ccbf455e2cbeba458",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://31e8390ba729ac0255ec7e2ac5dc2c08eec86bed3ad2a8ce4e7e7a72d5a12e4f",
-        "dweb:/ipfs/QmYPVA2RTgBZ45AevDBh4JxgPJ617rTwgReE7jE2GbqghA"
+        "bzz-raw://13051ad86f83d4c78eeb89243b7b2bc60d883dbaec54cbdc7c28b42abc84ae45",
+        "dweb:/ipfs/QmT7fkaGzXFQAooFhSs7Fnkm7fpuj4FU9RqWg84orynfP5"
       ]
     },
     "packages/contracts/src/spaces/libraries/DataTypes.sol": {
