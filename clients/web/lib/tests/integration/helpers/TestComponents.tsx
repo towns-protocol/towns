@@ -77,7 +77,16 @@ export const RegisterWallet = () => {
 
 export const LoginWithWallet = () => {
     const { walletStatus, isConnected } = useWeb3Context()
-    const { loginStatus, loginError } = useMatrixStore()
+    const matrixCredentials = useMatrixCredentials()
+    const riverCridentials = useCasablancaCredentials()
+    const loginStatus =
+        getPrimaryProtocol() === SpaceProtocol.Matrix
+            ? matrixCredentials.loginStatus
+            : riverCridentials.loginStatus
+    const loginError =
+        getPrimaryProtocol() === SpaceProtocol.Matrix
+            ? matrixCredentials.loginError
+            : riverCridentials.loginError
     const { clientRunning, loginWithWalletToMatrix, loginWithWalletToCasablanca } = useZionClient()
     const logingInWithWallet = useRef(false)
 
