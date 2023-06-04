@@ -10,6 +10,7 @@ import (
 )
 
 type StreamView interface {
+	StreamId() string
 	Events() []*ParsedEvent
 	EventsByHash() map[string]*ParsedEvent
 	HasEvent(hash string) bool
@@ -41,6 +42,7 @@ func degugLogEvents(events []*ParsedEvent, markEvent string, problem error) {
 }
 
 func topologicalSort(events []*ParsedEvent, eventsByHash map[string]*ParsedEvent) (sorted []*ParsedEvent, err error) {
+	sorted = make([]*ParsedEvent, 0, len(events))
 	visited := make(map[string]bool)
 
 	for _, e := range events {
@@ -84,7 +86,10 @@ func MakeStreamView(envelopes []*Envelope) (*streamViewImpl, error) {
 	if err != nil {
 		return nil, err
 	}
+	return MakeStreamViewFromParsedEvents(unsortedEvents)
+}
 
+func MakeStreamViewFromParsedEvents(unsortedEvents []*ParsedEvent) (*streamViewImpl, error) {
 	if len(unsortedEvents) <= 0 {
 		return nil, fmt.Errorf("MakeStreamView: No events")
 	}
@@ -94,7 +99,7 @@ func MakeStreamView(envelopes []*Envelope) (*streamViewImpl, error) {
 		if _, ok := eventsByHash[e.HashStr]; !ok {
 			eventsByHash[e.HashStr] = e
 		} else {
-			err = fmt.Errorf("MakeStreamView: Duplicate event hash, event=%s", e.ShortDebugStr())
+			err := fmt.Errorf("MakeStreamView: Duplicate event hash, event=%s", e.ShortDebugStr())
 			if DebugCorruptionPrint() {
 				degugLogEvents(unsortedEvents, e.HashStr, err)
 			}
@@ -126,17 +131,49 @@ func MakeStreamView(envelopes []*Envelope) (*streamViewImpl, error) {
 		return nil, fmt.Errorf("MakeStreamView: No leaf events, stream_id=%s", streamId)
 	}
 
+	envelopes := make([]*Envelope, len(events))
+	for i, e := range events {
+		envelopes[i] = e.Envelope
+	}
 	return &streamViewImpl{
+		streamId:     streamId,
 		events:       events,
+		envelopes:    envelopes,
 		eventsByHash: eventsByHash,
 		leafEvents:   leafEvents,
 	}, nil
 }
 
 type streamViewImpl struct {
+	streamId     string
 	events       []*ParsedEvent
+	envelopes    []*Envelope
 	eventsByHash map[string]*ParsedEvent
 	leafEvents   map[string]*ParsedEvent
+}
+
+func (r *streamViewImpl) addEvent(event *ParsedEvent) error {
+	if _, ok := r.eventsByHash[event.HashStr]; ok {
+		return fmt.Errorf("streamViewImpl: event already exists, stream=%s, event=%s", r.streamId, event.ShortDebugStr())
+	}
+	for _, prev := range event.PrevEventStrs {
+		if _, ok := r.eventsByHash[prev]; !ok {
+			return fmt.Errorf("streamViewImpl: prev event not found, stream=%s, prev_event=%s, event=%s", r.streamId, FormatHashFromString(prev), event.ShortDebugStr())
+		}
+	}
+
+	r.events = append(r.events, event)
+	r.envelopes = append(r.envelopes, event.Envelope)
+	r.eventsByHash[event.HashStr] = event
+	r.leafEvents[event.HashStr] = event
+	for _, prev := range event.PrevEventStrs {
+		delete(r.leafEvents, prev)
+	}
+	return nil
+}
+
+func (r *streamViewImpl) StreamId() string {
+	return r.streamId
 }
 
 func (r *streamViewImpl) Events() []*ParsedEvent {
@@ -206,9 +243,26 @@ func (r *streamViewImpl) LeafEvents() map[string]*ParsedEvent {
 }
 
 func (r *streamViewImpl) Envelopes() []*Envelope {
-	envelopes := make([]*Envelope, 0, len(r.events))
-	for _, e := range r.events {
-		envelopes = append(envelopes, e.Envelope)
+	return r.envelopes
+}
+
+func copyMap(originalMap map[string]*ParsedEvent) map[string]*ParsedEvent {
+	newMap := make(map[string]*ParsedEvent, len(originalMap))
+	for k, v := range originalMap {
+		newMap[k] = v
 	}
-	return envelopes
+	return newMap
+}
+
+func (sv *streamViewImpl) copy() *streamViewImpl {
+	newSv := &streamViewImpl{
+		streamId:     sv.streamId,
+		events:       make([]*ParsedEvent, len(sv.events)),
+		envelopes:    make([]*Envelope, len(sv.envelopes)),
+		eventsByHash: copyMap(sv.eventsByHash),
+		leafEvents:   copyMap(sv.leafEvents),
+	}
+	copy(newSv.events, sv.events)
+	copy(newSv.envelopes, sv.envelopes)
+	return newSv
 }

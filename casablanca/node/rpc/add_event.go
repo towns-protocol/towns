@@ -12,16 +12,16 @@ import (
 	"casablanca/node/auth"
 	. "casablanca/node/base"
 	"casablanca/node/common"
-	"casablanca/node/events"
+	. "casablanca/node/events"
 	"casablanca/node/infra"
-	"casablanca/node/protocol"
+	. "casablanca/node/protocol"
 )
 
 var (
 	addEventRequests = infra.NewSuccessMetrics("add_event_requests", serviceRequests)
 )
 
-func logAddEvent(l *log.Entry, message string, streamId string, event *events.ParsedEvent, envelope *protocol.Envelope, requestId string, err error) {
+func logAddEvent(l *log.Entry, message string, streamId string, event *ParsedEvent, envelope *Envelope, requestId string, err error) {
 	if err == nil && log.GetLevel() < log.DebugLevel {
 		return
 	}
@@ -36,7 +36,7 @@ func logAddEvent(l *log.Entry, message string, streamId string, event *events.Pa
 		sb.WriteString(event.ShortDebugStr())
 		if log.GetLevel() == log.TraceLevel {
 			sb.WriteString(" event_details=\n")
-			events.FormatEventToJsonSB(&sb, event)
+			FormatEventToJsonSB(&sb, event)
 			sb.WriteString("\n")
 		}
 	} else {
@@ -55,10 +55,10 @@ func logAddEvent(l *log.Entry, message string, streamId string, event *events.Pa
 	}
 }
 
-func (s *Service) AddEvent(ctx context.Context, req *connect_go.Request[protocol.AddEventRequest]) (*connect_go.Response[protocol.AddEventResponse], error) {
+func (s *Service) AddEvent(ctx context.Context, req *connect_go.Request[AddEventRequest]) (*connect_go.Response[AddEventResponse], error) {
 	ctx, log, requestId := infra.SetLoggerWithRequestId(ctx)
 
-	parsedEvent, err := events.ParseEvent(req.Msg.Event)
+	parsedEvent, err := ParseEvent(req.Msg.Event)
 	if err != nil {
 		logAddEvent(log, "ERROR parsing event", req.Msg.StreamId, nil, req.Msg.Event, requestId, err)
 		return nil, err
@@ -66,11 +66,11 @@ func (s *Service) AddEvent(ctx context.Context, req *connect_go.Request[protocol
 
 	logAddEvent(log, "ENTER", req.Msg.StreamId, parsedEvent, nil, requestId, nil)
 
-	_, err = s.addParsedEvent(ctx, req.Msg.StreamId, parsedEvent)
+	err = s.addParsedEvent(ctx, req.Msg.StreamId, parsedEvent)
 	if err == nil {
 		logAddEvent(log, "LEAVE", req.Msg.StreamId, parsedEvent, nil, requestId, nil)
 		addEventRequests.Pass()
-		return connect_go.NewResponse(&protocol.AddEventResponse{}), nil
+		return connect_go.NewResponse(&AddEventResponse{}), nil
 	} else {
 		logAddEvent(log, "ERROR", req.Msg.StreamId, parsedEvent, nil, requestId, err)
 		addEventRequests.Fail()
@@ -78,20 +78,21 @@ func (s *Service) AddEvent(ctx context.Context, req *connect_go.Request[protocol
 	}
 }
 
-func (s *Service) addParsedEvent(ctx context.Context, streamId string, parsedEvent *events.ParsedEvent) ([]byte, error) {
+func (s *Service) addParsedEvent(ctx context.Context, streamId string, parsedEvent *ParsedEvent) error {
 	if len(parsedEvent.Event.PrevEvents) == 0 {
-		return nil, status.Errorf(codes.InvalidArgument, "AddEvent: event has no prev events")
+		return status.Errorf(codes.InvalidArgument, "AddEvent: event has no prev events")
 	}
 
-	streamView, err := s.loadStream(ctx, streamId)
+	stream, err := s.cache.GetStream(ctx, streamId)
 	if err != nil {
-		return nil, err
+		return err
 	}
+	streamView := stream.GetView()
 
 	// check if previous event's hashes match
 	for _, prevEvent := range parsedEvent.PrevEventStrs {
 		if !streamView.HasEvent(prevEvent) {
-			return nil, status.Errorf(codes.InvalidArgument, "AddEvent: prev event not found")
+			return status.Errorf(codes.InvalidArgument, "AddEvent: prev event not found")
 		}
 	}
 
@@ -101,86 +102,81 @@ func (s *Service) addParsedEvent(ctx context.Context, streamId string, parsedEve
 	// make sure the stream event is of the same type as the inception event
 	err = streamEvent.VerifyPayloadTypeMatchesStreamType(streamView.InceptionPayload())
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "AddEvent: %v", err)
+		return status.Errorf(codes.InvalidArgument, "AddEvent: %v", err)
 	}
 
 	// custom business logic...
 	switch payload := streamEvent.Payload.(type) {
-	case *protocol.StreamEvent_ChannelPayload:
+	case *StreamEvent_ChannelPayload:
 		switch channelPayload := payload.ChannelPayload.Content.(type) {
-		case *protocol.ChannelPayload_Inception_:
-			return nil, status.Errorf(codes.InvalidArgument, "AddEvent: event is an inception event")
-		case *protocol.ChannelPayload_Membership:
+		case *ChannelPayload_Inception_:
+			return status.Errorf(codes.InvalidArgument, "AddEvent: event is an inception event")
+		case *ChannelPayload_Membership:
 			membership := channelPayload.Membership
-			return addMembershipEvent(membership, s, ctx, streamId, streamView, parsedEvent)
-		case *protocol.ChannelPayload_Message_:
-			return addChannelMessage(streamEvent, s, ctx, streamId, streamView, parsedEvent.Envelope)
+			return s.addMembershipEvent(ctx, stream, streamView, parsedEvent, membership)
+		case *ChannelPayload_Message_:
+			return s.addChannelMessage(ctx, stream, streamView, parsedEvent)
 		default:
-			return nil, status.Errorf(codes.InvalidArgument, "AddEvent: Channel event has no valid payload for type %T", payload.ChannelPayload.Content)
+			return status.Errorf(codes.InvalidArgument, "AddEvent: Channel event has no valid payload for type %T", payload.ChannelPayload.Content)
 		}
-	case *protocol.StreamEvent_SpacePayload:
+	case *StreamEvent_SpacePayload:
 		switch spacePayload := payload.SpacePayload.Content.(type) {
-		case *protocol.SpacePayload_Inception_:
-			return nil, status.Errorf(codes.InvalidArgument, "AddEvent: event is an inception event")
-		case *protocol.SpacePayload_Membership:
+		case *SpacePayload_Inception_:
+			return status.Errorf(codes.InvalidArgument, "AddEvent: event is an inception event")
+		case *SpacePayload_Membership:
 			membership := spacePayload.Membership
-			return addMembershipEvent(membership, s, ctx, streamId, streamView, parsedEvent)
-		case *protocol.SpacePayload_Channel_:
-			return nil, status.Errorf(codes.InvalidArgument, "AddEvent: adding channels is unimplemented")
+			return s.addMembershipEvent(ctx, stream, streamView, parsedEvent, membership)
+		case *SpacePayload_Channel_:
+			return status.Errorf(codes.InvalidArgument, "AddEvent: adding channels is unimplemented")
 		default:
-			return nil, status.Errorf(codes.InvalidArgument, "AddEvent: Space event has no valid payload for type %T", payload.SpacePayload.Content)
+			return status.Errorf(codes.InvalidArgument, "AddEvent: Space event has no valid payload for type %T", payload.SpacePayload.Content)
 		}
-	case *protocol.StreamEvent_UserPayload:
+	case *StreamEvent_UserPayload:
 		switch payload.UserPayload.Content.(type) {
-		case *protocol.UserPayload_Inception_:
-			return nil, status.Errorf(codes.InvalidArgument, "AddEvent: event is an inception event")
-		case *protocol.UserPayload_UserMembership_:
-			return nil, status.Errorf(codes.InvalidArgument, "AddEvent: adding UserMembership is unimplemented")
-		case *protocol.UserPayload_ToDevice_:
-			return addEventToStorage(s, ctx, streamId, parsedEvent.Envelope)
+		case *UserPayload_Inception_:
+			return status.Errorf(codes.InvalidArgument, "AddEvent: event is an inception event")
+		case *UserPayload_UserMembership_:
+			return status.Errorf(codes.InvalidArgument, "AddEvent: adding UserMembership is unimplemented")
+		case *UserPayload_ToDevice_:
+			_, err = stream.AddEvent(ctx, parsedEvent)
+			return err
 		default:
-			return nil, status.Errorf(codes.InvalidArgument, "AddEvent: User event has no valid payload for type %T", payload.UserPayload.Content)
+			return status.Errorf(codes.InvalidArgument, "AddEvent: User event has no valid payload for type %T", payload.UserPayload.Content)
 		}
-	case *protocol.StreamEvent_UserDeviceKeyPayload:
+	case *StreamEvent_UserDeviceKeyPayload:
 		switch payload.UserDeviceKeyPayload.Content.(type) {
-		case *protocol.UserDeviceKeyPayload_Inception_:
-			return nil, status.Errorf(codes.InvalidArgument, "AddEvent: event is an inception event")
-		case *protocol.UserDeviceKeyPayload_UserDeviceKey_:
-			return addEventToStorage(s, ctx, streamId, parsedEvent.Envelope)
+		case *UserDeviceKeyPayload_Inception_:
+			return status.Errorf(codes.InvalidArgument, "AddEvent: event is an inception event")
+		case *UserDeviceKeyPayload_UserDeviceKey_:
+			_, err = stream.AddEvent(ctx, parsedEvent)
+			return err
 		default:
-			return nil, status.Errorf(codes.InvalidArgument, "AddEvent: UserDeviceKey event has no valid payload for type %T", payload.UserDeviceKeyPayload.Content)
+			return status.Errorf(codes.InvalidArgument, "AddEvent: UserDeviceKey event has no valid payload for type %T", payload.UserDeviceKeyPayload.Content)
 		}
-	case *protocol.StreamEvent_UserSettingsPayload:
+	case *StreamEvent_UserSettingsPayload:
 		switch payload.UserSettingsPayload.Content.(type) {
-		case *protocol.UserSettingsPayload_Inception_:
-			return nil, status.Errorf(codes.InvalidArgument, "AddEvent: event is an inception event")
-		case *protocol.UserSettingsPayload_UserSetting_:
-			return nil, status.Errorf(codes.InvalidArgument, "AddEvent: adding UserSetting is unimplemented")
+		case *UserSettingsPayload_Inception_:
+			return status.Errorf(codes.InvalidArgument, "AddEvent: event is an inception event")
+		case *UserSettingsPayload_UserSetting_:
+			return status.Errorf(codes.InvalidArgument, "AddEvent: adding UserSetting is unimplemented")
 		default:
-			return nil, status.Errorf(codes.InvalidArgument, "AddEvent: UserSettings event has no valid payload for type %T", payload.UserSettingsPayload.Content)
+			return status.Errorf(codes.InvalidArgument, "AddEvent: UserSettings event has no valid payload for type %T", payload.UserSettingsPayload.Content)
 		}
 	default:
-		return nil, status.Errorf(codes.InvalidArgument, "AddEvent: event has no valid payload for type %T", streamEvent.Payload)
+		return status.Errorf(codes.InvalidArgument, "AddEvent: event has no valid payload for type %T", streamEvent.Payload)
 	}
 }
 
-func addEventToStorage(s *Service, ctx context.Context, streamId string, envelope *protocol.Envelope) ([]byte, error) {
-	cookie, err := s.Storage.AddEvent(ctx, streamId, envelope)
+func (s *Service) addChannelMessage(ctx context.Context, stream *Stream, view StreamView, parsedEvent *ParsedEvent) error {
+	streamId := view.StreamId()
+	user, err := common.UserIdFromAddress(parsedEvent.Event.CreatorAddress)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "AddEvent: error adding event to storage: %v", err)
-	}
-	return cookie, nil
-}
-
-func addChannelMessage(streamEvent *protocol.StreamEvent, s *Service, ctx context.Context, streamId string, view events.StreamView, envelope *protocol.Envelope) ([]byte, error) {
-	user, err := common.UserIdFromAddress(streamEvent.CreatorAddress)
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "AddEvent: invalid user id: %v", err)
+		return err
 	}
 
-	info, err := events.RoomInfoFromInceptionEvent(view.InceptionEvent(), streamId, user)
+	info, err := RoomInfoFromInceptionEvent(view.InceptionEvent(), streamId, user)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "AddEvent: error getting room info: %v", err)
+		return status.Errorf(codes.Internal, "AddEvent: error getting room info: %v", err)
 	}
 
 	allowed, err := s.Authorization.IsAllowed(
@@ -193,62 +189,62 @@ func addChannelMessage(streamEvent *protocol.StreamEvent, s *Service, ctx contex
 		info,
 	)
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "AddEvent: failed to get permissions: %v", err)
+		return status.Errorf(codes.InvalidArgument, "AddEvent: failed to get permissions: %v", err)
 	}
 	if !allowed {
-		return nil, status.Errorf(codes.PermissionDenied, "AddEvent: user %s is not allowed to write to channel %s", user, streamId)
+		return status.Errorf(codes.PermissionDenied, "AddEvent: user %s is not allowed to write to channel %s", user, streamId)
 	}
 
 	// check if user is a member of the channel
 	members, err := view.JoinedUsers()
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "AddEvent: error getting joined users: %v", err)
+		return status.Errorf(codes.Internal, "AddEvent: error getting joined users: %v", err)
 	}
 	if _, ok := members[user]; !ok {
-		return nil, status.Errorf(codes.InvalidArgument, "AddEvent: user %s is not a member of channel %s", user, streamId)
+		return status.Errorf(codes.InvalidArgument, "AddEvent: user %s is not a member of channel %s", user, streamId)
 	}
 
-	cookie, err := s.Storage.AddEvent(ctx, streamId, envelope)
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "AddEvent: error adding event to storage: %v", err)
-	}
-	return cookie, nil
+	_, err = stream.AddEvent(ctx, parsedEvent)
+	return err
 }
 
-func addMembershipEvent(membership *protocol.Membership, s *Service, ctx context.Context, streamId string, view events.StreamView, parsedEvent *events.ParsedEvent) ([]byte, error) {
+func (s *Service) addMembershipEvent(ctx context.Context, stream *Stream, view StreamView, parsedEvent *ParsedEvent, membership *Membership) error {
+	streamId := view.StreamId()
 	creator, err := common.UserIdFromAddress(parsedEvent.Event.CreatorAddress)
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "AddEvent: invalid user id: %v", err)
+		return status.Errorf(codes.InvalidArgument, "AddEvent: invalid user id: %v", err)
 	}
 	userId := membership.UserId
 	userStreamId, err := common.UserStreamIdFromId(userId)
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "AddEvent: invalid user id %s", userId)
+		return status.Errorf(codes.InvalidArgument, "AddEvent: invalid user id %s", userId)
 	}
 
 	// Check if user stream exists
-	userStreamView, err := s.loadStream(ctx, userStreamId)
+	userStream, err := s.cache.GetStream(ctx, userStreamId)
 	if err != nil {
-		return nil, err
+		return err
 	}
+	userStreamView := userStream.GetView()
+	// TODO: check here if user already a member?
 
 	permission := auth.PermissionUndefined
 	switch membership.Op {
-	case protocol.MembershipOp_SO_INVITE:
+	case MembershipOp_SO_INVITE:
 		userId = creator
 		permission = auth.PermissionInvite
-	case protocol.MembershipOp_SO_JOIN:
+	case MembershipOp_SO_JOIN:
 		permission = auth.PermissionWrite
-	case protocol.MembershipOp_SO_LEAVE:
+	case MembershipOp_SO_LEAVE:
 		permission = auth.PermissionWrite
-	case protocol.MembershipOp_SO_UNSPECIFIED:
+	case MembershipOp_SO_UNSPECIFIED:
 		permission = auth.PermissionUndefined
 	}
 
 	if permission != auth.PermissionUndefined {
-		info, err := events.RoomInfoFromInceptionEvent(view.InceptionEvent(), streamId, userId)
+		info, err := RoomInfoFromInceptionEvent(view.InceptionEvent(), streamId, userId)
 		if err != nil {
-			return nil, status.Errorf(codes.Internal, "AddEvent: error getting room info: %v", err)
+			return status.Errorf(codes.Internal, "AddEvent: error getting room info: %v", err)
 		}
 
 		allowed, err := s.Authorization.IsAllowed(
@@ -261,43 +257,44 @@ func addMembershipEvent(membership *protocol.Membership, s *Service, ctx context
 			info,
 		)
 		if err != nil {
-			return nil, status.Errorf(codes.InvalidArgument, "AddEvent: failed to get permissions: %v", err)
+			return status.Errorf(codes.InvalidArgument, "AddEvent: failed to get permissions: %v", err)
 		}
 		if !allowed {
-			return nil, status.Errorf(codes.PermissionDenied, "AddEvent: user %s is not allowed to write to stream %s", userId, streamId)
+			return status.Errorf(codes.PermissionDenied, "AddEvent: user %s is not allowed to write to stream %s", userId, streamId)
 		}
 	}
 
-	cookie, err := s.Storage.AddEvent(ctx, streamId, parsedEvent.Envelope)
+	_, err = stream.AddEvent(ctx, parsedEvent)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "AddEvent: error adding event to storage: %v", err)
+		return status.Errorf(codes.Internal, "AddEvent: error adding event to storage: %v", err)
 	}
 
-	log.Debug("AddEvent: ", membership.Op)
-	inviterId, err := common.UserIdFromAddress(parsedEvent.Event.CreatorAddress)
+	return s.addDerivedMembershipEventToUserStream(ctx, userStream, userStreamView, streamId, parsedEvent, membership.Op)
+}
+
+func (s *Service) addDerivedMembershipEventToUserStream(ctx context.Context, userStream *Stream, userStreamView StreamView, originStreamId string, originEvent *ParsedEvent, op MembershipOp) error {
+	inviterId, err := common.UserIdFromAddress(originEvent.Event.CreatorAddress)
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "AddEvent: invalid user id: %v", err)
+		return err
 	}
-	userStreamEvent, err := s.makeEnvelopeWithPayload(
-		events.Make_UserPayload_Membership(
-			membership.Op,
+
+	userStreamEvent, err := MakeParsedEventWithPayload(
+		s.wallet,
+		Make_UserPayload_Membership(
+			op,
 			inviterId,
-			streamId,
-			&protocol.EventRef{
-				StreamId:  streamId,
-				Hash:      parsedEvent.Envelope.Hash,
-				Signature: parsedEvent.Envelope.Signature,
+			originStreamId,
+			&EventRef{
+				StreamId:  originStreamId,
+				Hash:      originEvent.Envelope.Hash,
+				Signature: originEvent.Envelope.Signature,
 			},
 		),
 		userStreamView.LeafEventHashes(),
 	)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	_, err = s.Storage.AddEvent(ctx, userStreamId, userStreamEvent)
-	if err != nil {
-		return nil, err
-	}
-
-	return cookie, nil
+	_, err = userStream.AddEvent(ctx, userStreamEvent)
+	return err
 }

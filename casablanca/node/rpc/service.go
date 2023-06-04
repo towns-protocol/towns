@@ -12,7 +12,6 @@ import (
 	"casablanca/node/crypto"
 	"casablanca/node/events"
 	"casablanca/node/infra"
-	"casablanca/node/protocol"
 	"casablanca/node/protocol/protocolconnect"
 	"casablanca/node/storage"
 )
@@ -22,7 +21,7 @@ var (
 )
 
 type Service struct {
-	Storage       storage.Storage
+	cache         events.StreamCache
 	Authorization auth.Authorization
 	wallet        *crypto.Wallet
 }
@@ -52,23 +51,10 @@ func MakeServiceHandler(ctx context.Context, dbUrl string, chainConfig *config.C
 
 	return protocolconnect.NewStreamServiceHandler(
 		&Service{
-			Storage:       store,
+			cache:         events.NewStreamCache(store),
 			Authorization: authorization,
 			wallet:        wallet,
 		},
 		opts...,
 	)
-}
-
-func (s *Service) makeEnvelopeWithPayload(payload protocol.IsStreamEvent_Payload, prevHashes [][]byte) (*protocol.Envelope, error) {
-	return events.MakeEnvelopeWithPayload(s.wallet, payload, prevHashes)
-}
-
-func (s *Service) loadStream(ctx context.Context, streamId string) (events.StreamView, error) {
-	_, envelopes, err := s.Storage.GetStream(ctx, streamId)
-	if err != nil {
-		return nil, err
-	}
-
-	return events.MakeStreamView(envelopes)
 }

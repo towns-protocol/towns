@@ -14,6 +14,7 @@ import {
     UserPayload_ToDevice,
     SpacePayload_Channel,
     ChannelPayload_Message,
+    UserPayload_UserMembership,
 } from '@towns/proto'
 import {
     bytesToHex,
@@ -228,6 +229,40 @@ export const make_SpacePayload_Channel = (
             },
         },
     }
+}
+
+export const getSpaceOrChannelPayload_Membership = (
+    event: ParsedEvent | StreamEvent | undefined,
+): Membership | undefined => {
+    if (!isDefined(event)) {
+        return undefined
+    }
+    if ('event' in event) {
+        event = event.event as unknown as StreamEvent
+    }
+    if (event.payload?.case === 'spacePayload' || event.payload?.case === 'channelPayload') {
+        if (event.payload.value.content.case === 'membership') {
+            return event.payload.value.content.value
+        }
+    }
+    return undefined
+}
+
+export const getUserPayload_Membership = (
+    event: ParsedEvent | StreamEvent | undefined,
+): UserPayload_UserMembership | undefined => {
+    if (!isDefined(event)) {
+        return undefined
+    }
+    if ('event' in event) {
+        event = event.event as unknown as StreamEvent
+    }
+    if (event.payload?.case === 'userPayload') {
+        if (event.payload.value.content.case === 'userMembership') {
+            return event.payload.value.content.value
+        }
+    }
+    return undefined
 }
 
 export const getChannelPayload = (

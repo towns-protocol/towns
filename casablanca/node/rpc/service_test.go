@@ -376,7 +376,7 @@ func TestManyUsers(t *testing.T) {
 			if err != nil {
 				t.Fatalf("error getting user id: %v", err)
 			}
-			
+
 			join, err := events.MakeEnvelopeWithPayload(
 				wallets[i],
 				events.Make_ChannelPayload_Membership(
@@ -510,8 +510,6 @@ func TestManyUsers(t *testing.T) {
 			for streamIdx := range msg.Streams {
 				for syncPosStrem := range syncPos {
 					if syncPos[syncPosStrem].StreamId == msg.Streams[streamIdx].StreamId {
-						// check if cookie's stream matches
-						assert.Equal(t, syncPos[syncPosStrem].SyncCookie[8:], msg.Streams[streamIdx].NextSyncCookie[8:])
 						syncPos[syncPosStrem].SyncCookie = msg.Streams[streamIdx].NextSyncCookie
 					}
 				}

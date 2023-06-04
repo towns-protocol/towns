@@ -19,3 +19,9 @@ https://connect.build/docs/go/getting-started/#install-tools:
 
     brew install golangci-lint
     golangci-lint run
+
+# Tests & Docker
+
+If you get Docker errors when running tests:
+
+    sudo ln -s ~/Library/Containers/com.docker.docker/Data/docker.raw.sock /var/run/docker.sock

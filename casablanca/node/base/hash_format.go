@@ -1,6 +1,9 @@
 package base
 
-import "strings"
+import (
+	"casablanca/node/protocol"
+	"strings"
+)
 
 const (
 	hextable = "0123456789abcdef"
@@ -21,6 +24,7 @@ func encodeHexFromString(dst *strings.Builder, src string) {
 	}
 }
 
+// TODO: rename to FormatShortHashXXX
 func FormatHashFromBytesToSB(dst *strings.Builder, src []byte) {
 	if len(src) <= 5 {
 		encodeHexFromBytes(dst, src)
@@ -54,5 +58,39 @@ func FormatHashFromString(src string) string {
 	var dst strings.Builder
 	dst.Grow(10)
 	FormatHashFromStringToSB(&dst, src)
+	return dst.String()
+}
+
+func FormatEnvelopeHashes(envelopes []*protocol.Envelope) string {
+	var dst strings.Builder
+	dst.Grow(11 * len(envelopes))
+	for i, e := range envelopes {
+		if i > 0 {
+			dst.WriteByte(' ')
+		}
+		FormatHashFromBytesToSB(&dst, e.Hash)
+	}
+	return dst.String()
+}
+
+func FormatFullHashFromBytesToSB(dst *strings.Builder, src []byte) {
+	encodeHexFromBytes(dst, src)
+}
+
+func FormatFullHashFromStringToSB(dst *strings.Builder, src string) {
+	encodeHexFromString(dst, src)
+}
+
+func FormatFullHashFromBytes(src []byte) string {
+	var dst strings.Builder
+	dst.Grow(64)
+	FormatFullHashFromBytesToSB(&dst, src)
+	return dst.String()
+}
+
+func FormatFullHashFromString(src string) string {
+	var dst strings.Builder
+	dst.Grow(64)
+	FormatFullHashFromStringToSB(&dst, src)
 	return dst.String()
 }

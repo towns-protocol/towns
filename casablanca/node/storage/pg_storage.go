@@ -14,8 +14,8 @@ import (
 
 	"strings"
 
+	"casablanca/node/base"
 	"casablanca/node/common"
-	"casablanca/node/events"
 	"casablanca/node/infra"
 	"casablanca/node/protocol"
 
@@ -175,7 +175,7 @@ func addEvents(ctx context.Context, pool *pgxpool.Pool, streamId string, envelop
 		}
 	}()
 
-	parsedEvents := events.FormatEventsToJson(envelopes)
+	parsedEvents := base.FormatEnvelopeHashes(envelopes)
 
 	if logger.Logger.GetLevel() >= log.DebugLevel {
 		addDebugEventEntry(streamId, parsedEvents)
@@ -294,7 +294,7 @@ func (s *PGEventStore) AddEvent(ctx context.Context, streamId string, event *pro
 	}
 
 	log := infra.GetLogger(ctx)
-	eventsAsString := events.FormatEventsToJson([]*protocol.Envelope{event})
+	eventsAsString := base.FormatHashFromBytes(event.Hash)
 	log.Debugf("Storage: AddEvent streamId: %s event %s", streamId, eventsAsString)
 	tx, err := startTx(ctx, s.pool)
 	if err != nil {
@@ -644,10 +644,10 @@ func formatSyncResults(streams map[string]StreamEventsBlock) string {
 		hashes.WriteString("\",\"events\":")
 		hashes.WriteString("[")
 		for idx, event := range block.Events {
-			hashes.WriteString(events.FormatEventsToJson([]*protocol.Envelope{event}))
-			if idx < len(block.Events)-1 {
+			if idx > 0 {
 				hashes.WriteString(",")
 			}
+			base.FormatHashFromBytesToSB(&hashes, event.Hash)
 		}
 		hashes.WriteString("]")
 		if streamIdx < len(streams)-1 {

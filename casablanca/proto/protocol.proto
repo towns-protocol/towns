@@ -341,4 +341,7 @@ enum Err {
     BAD_PAYLOAD = 19;
     BAD_HEX_STRING = 20;
     BAD_EVENT_HASH = 21;
+    BAD_ARGS = 22;
+    BAD_SYNC_COOKIE = 23;
+    INTERNAL_ERROR = 24;
 }

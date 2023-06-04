@@ -148,7 +148,7 @@ function toTownsContent(
                         return {
                             content: {
                                 kind: ZTEvent.RoomMember,
-                                userId: payload.inviterId,
+                                userId: payload.inviterId, // TODO: this is incorrect, userId should be set to the owner of the stream. Somebody else could have invited the user.
                                 avatarUrl: undefined, // todo avatarUrl
                                 displayName: '---TODO---', // todo displayName
                                 isDirect: undefined, // todo is this needed?

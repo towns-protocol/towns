@@ -44,6 +44,28 @@ func MakeEnvelopeWithPayload(wallet *crypto.Wallet, payload protocol.IsStreamEve
 	return MakeEnvelopeWithEvent(wallet, streamEvent)
 }
 
+func MakeParsedEventWithPayload(wallet *crypto.Wallet, payload protocol.IsStreamEvent_Payload, prevHashes [][]byte) (*ParsedEvent, error) {
+	streamEvent := MakeStreamEvent(wallet, payload, prevHashes)
+
+	envelope, err := MakeEnvelopeWithEvent(wallet, streamEvent)
+	if err != nil {
+		return nil, err
+	}
+
+	prevEventStrs := make([]string, len(streamEvent.PrevEvents))
+	for i, prevEvent := range streamEvent.PrevEvents {
+		prevEventStrs[i] = string(prevEvent)
+	}
+
+	return &ParsedEvent{
+		Event:         streamEvent,
+		Envelope:      envelope,
+		Hash:          envelope.Hash,
+		HashStr:       string(envelope.Hash),
+		PrevEventStrs: prevEventStrs,
+	}, nil
+}
+
 func Make_UserPayload_Inception(streamId string) *StreamEvent_UserPayload {
 	return &StreamEvent_UserPayload{
 		UserPayload: &UserPayload{
