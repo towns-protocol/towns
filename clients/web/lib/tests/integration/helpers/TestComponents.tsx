@@ -7,6 +7,7 @@ import { getUsernameFromId } from '../../../src/types/user-identifier'
 import { useCredentialStore } from '../../../src/store/use-credential-store'
 import { useMatrixStore } from '../../../src/store/use-matrix-store'
 import { useMatrixCredentials } from '../../../src/hooks/use-matrix-credentials'
+import { useCasablancaCredentials } from '../../../src/hooks/use-casablanca-credentials'
 import { useMyMembership } from '../../../src/hooks/use-my-membership'
 import { useZionClient } from '../../../src/hooks/use-zion-client'
 import { useWeb3Context } from '../../../src/components/Web3ContextProvider'
@@ -24,7 +25,21 @@ import { staticAssertNever } from '../../../src/utils/zion-utils'
 
 export const RegisterWallet = () => {
     const { walletStatus, isConnected } = useWeb3Context()
-    const { loginStatus, loginError, userId } = useMatrixCredentials()
+    const matrixCredentials = useMatrixCredentials()
+    const riverCridentials = useCasablancaCredentials()
+    const loginStatus =
+        getPrimaryProtocol() === SpaceProtocol.Matrix
+            ? matrixCredentials.loginStatus
+            : riverCridentials.loginStatus
+    const loginError =
+        getPrimaryProtocol() === SpaceProtocol.Matrix
+            ? matrixCredentials.loginError
+            : riverCridentials.loginError
+    const userId =
+        getPrimaryProtocol() === SpaceProtocol.Matrix
+            ? matrixCredentials.userId
+            : riverCridentials.userId
+
     const { clientRunning, registerWalletWithMatrix, registerWalletWithCasablanca } =
         useZionClient()
     const registeringWallet = useRef(false)
