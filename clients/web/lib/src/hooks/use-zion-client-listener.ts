@@ -85,7 +85,8 @@ export const useZionClientListener = (opts: ZionOpts) => {
         }
 
         const client = clientSingleton.current
-        if (casablancaCredentials.privateKey === client.signerContext?.signerPrivateKey()) {
+        const pk = casablancaCredentials.privateKey.slice(2)
+        if (pk === client.signerContext?.signerPrivateKey()) {
             console.log('startCasablancaClient: called again with same access token')
             return
         }
@@ -95,7 +96,6 @@ export const useZionClientListener = (opts: ZionOpts) => {
         // start it up!
         // TODO(HNT-1380): transition to final signing model
         try {
-            const pk = casablancaCredentials.privateKey.slice(2)
             const context: SignerContext = {
                 signerPrivateKey: () => pk,
                 creatorAddress: bin_fromHexString(casablancaCredentials.creatorAddress),
