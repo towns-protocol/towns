@@ -22,7 +22,7 @@ export const InlineToolbar = (props: {
         | undefined
         | {
               top: number
-              left: number
+              left: number | string
           }
 }) => {
     const [editor] = useLexicalComposerContext()
@@ -162,6 +162,8 @@ export const InlineToolbar = (props: {
             width="auto"
             color="gray2"
             ref={tooltipRef}
+            justifyContent="center"
+            zIndex="tooltips"
         >
             <IconButton opaque active={isItalic} icon="italic" onMouseDown={onItalicClick} />
             <IconButton opaque active={isBold} icon="bold" onClick={onBoldClick} />

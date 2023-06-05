@@ -16,6 +16,7 @@ import { GiphyEntry } from '@components/Giphy/GiphyEntry'
 import { EmojiPickerButton } from '@components/EmojiPickerButton'
 import { FadeInBox } from '@components/Transitions'
 import { useNetworkStatus } from 'hooks/useNetworkStatus'
+import { useDevice } from 'hooks/useDevice'
 import { $createEmojiNode } from '../nodes/EmojiNode'
 import { InlineToolbar } from './InlineToolbar'
 import { AddLinkModal } from './LinkModal'
@@ -32,6 +33,7 @@ type Props = {
 export const RichTextUI = (props: Props) => {
     const { background = 'level2' } = props
     const [editor] = useLexicalComposerContext()
+    const { isTouch } = useDevice()
 
     const onSelectEmoji = useCallback(
         (data: EmojiPickerSelection) => {
@@ -64,7 +66,7 @@ export const RichTextUI = (props: Props) => {
     })
     const [toolbarPosition, setToolbarPosition] = useState<{
         top: number
-        left: number
+        left: number | string
     }>()
 
     const updateToolbarPosition = useCallback(() => {
@@ -100,10 +102,10 @@ export const RichTextUI = (props: Props) => {
 
             setToolbarPosition({
                 top: rect.top - parentBounds.top,
-                left: rect.left - parentBounds.left,
+                left: isTouch ? '50%' : rect.left - parentBounds.left,
             })
         }
-    }, [editor])
+    }, [editor, isTouch])
 
     const onCloseToolbar = useEvent(() => {
         setToolbarPosition(undefined)
