@@ -13,7 +13,13 @@ import EventEmitter from 'events'
 import TypedEmitter from 'typed-emitter'
 import { OlmMegolmDelegate } from '@towns/mecholm'
 import { Err } from '@towns/proto'
-import { bin_fromHexString, IDeviceKeys, ISignatures, recursiveMapToObject } from './types'
+import {
+    bin_fromHexString,
+    IDeviceKeys,
+    IFallbackKey,
+    ISignatures,
+    recursiveMapToObject,
+} from './types'
 import { ethers } from 'ethers'
 
 // Create hash header as Uint8Array from string 'CSBLANCA'
@@ -258,6 +264,8 @@ export class Crypto
     implements CryptoBackend
 {
     private deviceKeys: Record<string, string> = {}
+    // device_id -> map ( algo_key_id: { key, signatures: { key: sig}})
+    private fallbackKeys: Record<string, Record<string, IFallbackKey>> = {}
     private olmDelegate: OlmMegolmDelegate | undefined
 
     public readonly supportedAlgorithms: string[]
@@ -295,11 +303,19 @@ export class Crypto
             user_id: this.userId,
         }
 
+        // todo: create fallback keys during device initialization
+        const fallbackKeys = this.fallbackKeys[this.deviceId] || {
+            [this.deviceId]: {
+                key: this.deviceKeys['curve25519:' + this.deviceId],
+            },
+        }
+
         return this.signObject(deviceKeys).then(() => {
             return this.client.uploadKeysRequest({
                 user_id: this.userId,
                 device_id: this.deviceId,
                 device_keys: deviceKeys as unknown as Required<IDeviceKeys>,
+                fallback_keys: fallbackKeys,
             })
         })
     }

@@ -15,6 +15,8 @@ import {
     ChannelMessage_Redaction,
     StreamEvent,
     UserDeviceKeyPayload_UserDeviceKey,
+    FallbackKeys,
+    Key,
 } from '@towns/proto'
 import { Crypto } from './crypto'
 import debug from 'debug'
@@ -48,6 +50,7 @@ import {
     make_SpacePayload_Membership,
     make_UserPayload_Inception,
     make_UserPayload_ToDevice,
+    IDeviceKeySignatures,
 } from './types'
 
 const log = debug('csb:client')
@@ -891,31 +894,54 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
         // const deviceIds = this.getStoredDevicesForUser(userId)
         // TODO: check for fallbackKeys in arguments and ensure upload
         // of actual keys, algorithms.
+        let fallbackKeys: Record<string, PlainMessage<Key>> = {}
+        if (content?.fallback_keys) {
+            fallbackKeys = Object.fromEntries(
+                Object.entries(content.fallback_keys).map(([key, value]) => {
+                    const newValue = {
+                        key: value.key,
+                        signatures: value.signatures as IDeviceKeySignatures,
+                    }
+                    return [key, newValue]
+                }),
+            )
+        }
         return this.makeEventAndAddToStream(
             streamId,
             make_UserDeviceKeyPayload_UserDeviceKey({
                 userId: userId,
-                deviceKeys: { deviceId: deviceId, algorithms: [], keys: {}, signatures: {} },
-                fallbackKeys: { algoKeyId: {} },
+                deviceKeys: {
+                    deviceId: deviceId,
+                    algorithms: content.device_keys?.algorithms ?? [],
+                    keys: content.device_keys?.keys ?? {},
+                    signatures: content.device_keys?.signatures ?? {},
+                },
+                fallbackKeys: { algoKeyId: fallbackKeys },
             }),
             'userDeviceKey',
         )
     }
+
     /**
      * Download device keys for a list of users asynchronously.
      *
-     * @param userIds - list of userIds to sync userDeviceKey streams for deviceKeys
+     * @param userIds - map of userIds to deviceIds to algorithms to download keys for.
+     * If deviceIds are empty, all device keys for a user will be downloaded.
+     * @param downloadFallbackKeys - whether to download fallback keys associated with a user's devices.
      * @returns a promise that resolves to a map from userId to a map from deviceId to deviceInfo.
      * Additionally, returns map of userIds to error for
      */
-    async downloadKeysForUsers(userIds: string[]): Promise<IDownloadKeyResponse> {
-        const streamIds: { [userId: string]: string } = userIds.reduce(
-            (map: { [userId: string]: string }, userId) => {
-                map[userId] = makeUserDeviceKeyStreamId(userId)
-                return map
-            },
-            {},
-        )
+    async downloadKeysForUsers(
+        request: IDownloadKeyRequest,
+        returnFallbackKeys?: boolean,
+    ): Promise<IDownloadKeyResponse> {
+        // derive map of user device key streamIds corresponding to each userId in the map.
+        const streamIds: { [userId: string]: string } = (
+            Object.keys(request) as Array<keyof IDownloadKeyRequest>
+        ).reduce((map: Record<string, string>, userId) => {
+            map[userId] = makeUserDeviceKeyStreamId(userId as string)
+            return map
+        }, {})
         // streams have either already been added to client or should be fetched/added from rpcServer
         const promises: Promise<IDownloadKeyResponse>[] = []
         Object.keys(streamIds).forEach((userId: string) => {
@@ -928,25 +954,51 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
                         // if it's initting for the first time ?
                         // build response
                         const stream: Stream | undefined = this.streams.get(streamId)
+                        assert(stream !== undefined, 'stream must be defined')
                         const response: IDownloadKeyResponse = {
                             device_keys: {},
+                            fallback_keys: {},
                         }
-                        const userDeviceKeyPaylaod: UserDeviceKeyPayload_UserDeviceKey[] =
-                            Array.from((stream as Stream).rollup.uploadedDeviceKeys.values())[0]
-                        const deviceKeys: DeviceKeys[] = userDeviceKeyPaylaod
-                            .filter(
-                                (v): v is UserDeviceKeyPayload_UserDeviceKey =>
-                                    v.deviceKeys !== undefined,
-                            )
-                            .map((v) => v.deviceKeys as unknown as DeviceKeys)
-                        // push all known device keys for all devices of user
-                        response.device_keys[userId] = deviceKeys
+                        // 06/02/23 note: for now there's a one to one mapping between userIds - deviceIds, which is why
+                        // we return the latest UserDeviceKey event for each user from their stream. This won't hold in the future
+                        // as user's will eventually have multiple devices per user.
+                        const payload: UserDeviceKeyPayload_UserDeviceKey[] = Array.from(
+                            stream.rollup.uploadedDeviceKeys.values(),
+                        )[0]
+
+                        if (!returnFallbackKeys) {
+                            const deviceKeys: DeviceKeys[] = payload
+                                .filter((v): v is UserDeviceKeyPayload_UserDeviceKey =>
+                                    isDefined(v),
+                                )
+                                .map((v) => v.deviceKeys as unknown as DeviceKeys)
+                            // push all known device keys for all devices of user
+                            response.device_keys[userId] = deviceKeys
+                        } else {
+                            const fallbackKeys: FallbackKeyResponse[] = payload
+                                .filter((v): v is UserDeviceKeyPayload_UserDeviceKey =>
+                                    isDefined(v),
+                                )
+                                .map((v) => {
+                                    const entry = [
+                                        [v.deviceKeys?.deviceId, v.fallbackKeys as FallbackKeys],
+                                    ]
+                                    return Object.fromEntries(entry) as FallbackKeyResponse
+                                })
+                            // push all known device keys for all devices of user
+                            if (fallbackKeys.length > 0) {
+                                if (response.fallback_keys) {
+                                    response.fallback_keys[userId] = fallbackKeys
+                                }
+                            }
+                        }
                         return Promise.resolve(response)
                     } catch (e) {
                         // return error in response
                         const response: IDownloadKeyResponse = {
                             failures: { [userId]: { error: e } },
                             device_keys: {},
+                            fallback_keys: {},
                         }
                         return Promise.resolve(response)
                     }
@@ -959,9 +1011,10 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
                 return {
                     failures: { ...acc.failures, ...currentResult.failures },
                     device_keys: { ...acc.device_keys, ...currentResult.device_keys },
+                    fallback_keys: { ...acc.fallback_keys, ...currentResult.fallback_keys },
                 }
             },
-            { failures: {}, device_keys: {} },
+            { failures: {}, device_keys: {}, fallback_keys: {} },
         )
         return mergedResults
     }
@@ -1040,9 +1093,23 @@ export interface DeviceKeys {
     }
 }
 
+export interface FallbackKeyResponse {
+    [deviceId: string]: FallbackKeys
+}
+
+// deviceId: algorithm
+export interface IDeviceKeyRequest {
+    [deviceId: string]: string
+}
+
+export interface IDownloadKeyRequest {
+    [userId: string]: IDeviceKeyRequest
+}
+
 export interface IDownloadKeyResponse {
-    failures?: { [userId: string]: object }
-    device_keys: { [userId: string]: DeviceKeys[] }
+    failures?: Record<string, object>
+    device_keys: Record<string, DeviceKeys[]>
+    fallback_keys?: Record<string, FallbackKeyResponse[]>
 }
 
 export interface IKeysUploadResponse {

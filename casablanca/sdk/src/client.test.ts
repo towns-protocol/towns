@@ -1,7 +1,12 @@
 import debug from 'debug'
 import { Client, IDownloadKeyResponse } from './client'
 import { genId, makeChannelStreamId, makeSpaceStreamId } from './id'
-import { getMessagePayloadContent_Text, getToDeviceMessagePayload, ParsedEvent } from './types'
+import {
+    getMessagePayloadContent_Text,
+    getToDeviceMessagePayload,
+    IFallbackKey,
+    ParsedEvent,
+} from './types'
 import { awaitTimeout, makeDonePromise, makeTestClient } from './util.test'
 import {
     DeviceKeys,
@@ -739,7 +744,9 @@ describe('clientTest', () => {
         )
         const bobUserDeviceKeyStreamId = bobsClient.userDeviceKeyStreamId
         await bobSelfToDevice.expectToSucceed()
-        const deviceKeys: IDownloadKeyResponse = await bobsClient.downloadKeysForUsers([bobsUserId])
+        const deviceKeys: IDownloadKeyResponse = await bobsClient.downloadKeysForUsers({
+            [bobsUserId]: {},
+        })
         expect(deviceKeys.device_keys[bobsUserId]).toBeDefined()
     })
 
@@ -766,9 +773,9 @@ describe('clientTest', () => {
             },
         )
         const aliceUserDeviceKeyStreamId = alicesClient.userDeviceKeyStreamId
-        const deviceKeys: IDownloadKeyResponse = await bobsClient.downloadKeysForUsers([
-            alicesUserId,
-        ])
+        const deviceKeys: IDownloadKeyResponse = await bobsClient.downloadKeysForUsers({
+            [alicesUserId]: {},
+        })
         expect(deviceKeys.device_keys[alicesUserId]).toBeDefined()
     })
 
@@ -802,12 +809,106 @@ describe('clientTest', () => {
         const bobUserDeviceKeyStreamId = bobsClient.userDeviceKeyStreamId
         // give the state sync a chance to run for both deviceKeys
         await awaitTimeout(10000)
-        const deviceKeys: IDownloadKeyResponse = await bobsClient.downloadKeysForUsers([
-            alicesUserId,
-            bobsUserId,
-        ])
+        const deviceKeys: IDownloadKeyResponse = await bobsClient.downloadKeysForUsers({
+            [alicesUserId]: {},
+            [bobsUserId]: {},
+        })
         expect(Object.keys(deviceKeys.device_keys).length).toEqual(2)
         expect(deviceKeys.device_keys[alicesUserId]).toBeDefined()
         expect(deviceKeys.device_keys[bobsUserId]).toBeDefined()
+    })
+
+    test('bobDownloadsAlicesAndOwnFallbackKeys', async () => {
+        log('bobDownloadsAlicesAndOwnFallbackKeys')
+        // Bob, Alice get created, starts syncing, and uploads respective device keys, including
+        // fallback keys.
+        await expect(bobsClient.createNewUser()).toResolve()
+        await expect(bobsClient.initCrypto()).toResolve()
+        await expect(alicesClient.createNewUser()).toResolve()
+        await expect(alicesClient.initCrypto()).toResolve()
+        await bobsClient.startSync()
+        await alicesClient.startSync()
+        const bobsUserId = bobsClient.userId
+        const alicesUserId = alicesClient.userId
+        const bobSelfToDevice = makeDonePromise()
+        // bobs client should sync userDeviceKeyMessage twice (once for alice, once for bob)
+        bobsClient.on(
+            'userDeviceKeyMessage',
+            (streamId: string, userId: string, deviceKeys: DeviceKeys, fallbackKeys): void => {
+                log('userDeviceKeyMessage', streamId, userId, deviceKeys, fallbackKeys)
+                bobSelfToDevice.runAndDone(() => {
+                    expect([bobUserDeviceKeyStreamId, aliceUserDeviceKeyStreamId]).toContain(
+                        streamId,
+                    )
+                    expect([bobsUserId, alicesUserId]).toContain(userId)
+                    expect(deviceKeys?.deviceId).toBeDefined()
+                })
+            },
+        )
+        const aliceUserDeviceKeyStreamId = alicesClient.userDeviceKeyStreamId
+        const bobUserDeviceKeyStreamId = bobsClient.userDeviceKeyStreamId
+        // give the state sync a chance to run for both deviceKeys
+        await awaitTimeout(10000)
+        const fallbackKeys: IDownloadKeyResponse = await bobsClient.downloadKeysForUsers(
+            {
+                [alicesUserId]: {},
+                [bobsUserId]: {},
+            },
+            true,
+        )
+        expect(fallbackKeys.fallback_keys).toBeDefined()
+        expect(Object.keys(fallbackKeys.fallback_keys ?? {}).length).toEqual(2)
+    })
+
+    test('bobDownloadsAlicesFallbackKeys', async () => {
+        log('bobDownloadsAlicesFallbackKeys')
+        // Bob, Alice get created, starts syncing, and uploads respective device keys, including
+        // fallback keys.
+        await expect(bobsClient.createNewUser()).toResolve()
+        await expect(bobsClient.initCrypto()).toResolve()
+        await expect(alicesClient.createNewUser()).toResolve()
+        await expect(alicesClient.initCrypto()).toResolve()
+        await bobsClient.startSync()
+        await alicesClient.startSync()
+        const alicesUserId = alicesClient.userId
+        expect(alicesClient.deviceId).toBeDefined()
+        const aliceFallbackKeys: Record<string, IFallbackKey> = {
+            [alicesClient.deviceId as string]: {
+                key: 'alice-fallback-key',
+                signatures: {
+                    [`curve25519: ${alicesClient.deviceId}`]: 'alice-fallback-key-signature',
+                },
+            },
+        }
+        await alicesClient.uploadKeysRequest({
+            user_id: alicesClient.userId,
+            device_id: alicesClient.deviceId as string,
+            fallback_keys: aliceFallbackKeys,
+        })
+
+        // give the state sync a chance to run for both deviceKeys
+        await awaitTimeout(10000)
+        const fallbackKeys: IDownloadKeyResponse = await bobsClient.downloadKeysForUsers(
+            {
+                [alicesUserId]: {},
+            },
+            true,
+        )
+
+        expect(fallbackKeys.fallback_keys).toBeDefined()
+        expect(Object.keys(fallbackKeys.fallback_keys ?? {})).toContain(alicesUserId)
+        expect(Object.keys(fallbackKeys.fallback_keys ?? {}).length).toEqual(1)
+        if (fallbackKeys.fallback_keys) {
+            const keys: string[] = []
+            Object.values(fallbackKeys.fallback_keys[alicesUserId]).map((value) => {
+                Object.keys(value).map((keyId) => {
+                    const key = value[keyId].algoKeyId[keyId].key
+                    if (key) {
+                        keys.push(key)
+                    }
+                })
+            })
+            expect(keys).toContain('alice-fallback-key')
+        }
     })
 })

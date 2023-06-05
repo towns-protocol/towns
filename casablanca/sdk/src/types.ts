@@ -39,6 +39,10 @@ export interface ISignatures {
     }
 }
 
+export interface IDeviceKeySignatures {
+    [keyId: string]: string
+}
+
 export interface ISigned {
     signatures?: ISignatures
 }
@@ -46,12 +50,12 @@ export interface ISigned {
 export interface IDeviceKeys {
     algorithms: Array<string>
     keys: Record<string, string>
-    signatures?: ISignatures
+    signatures?: IDeviceKeySignatures
 }
 export interface IFallbackKey {
     key: string
     fallback?: boolean
-    signatures?: ISignatures
+    signatures?: IDeviceKeySignatures
 }
 
 export const bin_fromBase64 = (base64String: string): Uint8Array => {
