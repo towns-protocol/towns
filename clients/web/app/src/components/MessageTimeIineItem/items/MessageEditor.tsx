@@ -92,8 +92,8 @@ export const TouchEditMessageWrapper = (props: {
 
     return createPortal(
         <Box background="cta1" border="quote" zIndex="tooltips" pointerEvents="auto">
-            <Box absoluteFill>
-                <Box absoluteFill onClick={props.onCancel} />
+            <Box absoluteFill onClick={props.onCancel} />
+            <Box position="absolute" bottom="none" right="none" left="none">
                 {props.children}
             </Box>
         </Box>,
