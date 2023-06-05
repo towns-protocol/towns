@@ -15,13 +15,12 @@ export const TouchLayoutHeader = () => {
     const { navigateToCurrentSpace } = useNavigateToCurrentSpaceInfo()
     const { spaces, spaceUnreads, spaceMentions } = useZionContext()
     const hasUnread = useMemo(() => {
-        const unreadCount = spaces.some((space) => {
-            if (space.id === currentSpaceId) {
+        return spaces.some((space) => {
+            if (space.id.networkId === currentSpaceId?.networkId) {
                 return false
             }
             return spaceUnreads[space.id.networkId] || spaceMentions[space.id.networkId]
         }, 0)
-        return unreadCount
     }, [spaceUnreads, spaceMentions, currentSpaceId, spaces])
 
     const onTokenClick = useCallback(() => {

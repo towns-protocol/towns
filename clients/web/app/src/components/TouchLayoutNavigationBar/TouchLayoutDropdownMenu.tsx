@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { useSpaceData } from 'use-zion-client'
+import { useSpaceData, useSpaceMentions } from 'use-zion-client'
 import { useEvent } from 'react-use-event-hook'
 import { ActionNavItem } from '@components/NavItem/ActionNavItem'
 import { Badge, Box, Stack } from '@ui'
@@ -15,6 +15,7 @@ type Props = {
 
 export const TouchLayoutDropdownMenu = (props: Props) => {
     const space = useSpaceData()
+    const mentions = useSpaceMentions()
     const { unreadThreadMentions, unreadThreadsCount } = props
     const [visibleModal, setVisibleModal] = useState<'browse' | undefined>(undefined)
     const onShowBrowseChannels = useEvent(() => setVisibleModal('browse'))
@@ -42,7 +43,7 @@ export const TouchLayoutDropdownMenu = (props: Props) => {
                     <SyncedChannelList
                         canCreateChannel={false}
                         space={space}
-                        mentions={[]}
+                        mentions={mentions}
                         onShowCreateChannel={() => {
                             /* noop */
                         }}
