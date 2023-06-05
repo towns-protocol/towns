@@ -189,7 +189,7 @@ export const MessageLayout = (props: Props) => {
                         <Stack grow fontSize="md" color="default" gap="md">
                             {children}
                         </Stack>
-                        {isTouch && (
+                        {isTouch && isSelectable && (
                             <>
                                 <Stack grow />
                                 <IconButton
