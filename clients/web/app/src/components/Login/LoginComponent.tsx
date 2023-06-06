@@ -22,7 +22,6 @@ export const LoginComponent = () => {
         connect,
         pendingConnector,
         connectError,
-        connectLoading,
         userOnWrongNetworkForSignIn,
         isConnected,
     } = useAuth()
@@ -35,14 +34,12 @@ export const LoginComponent = () => {
             loggedInWalletAddress,
             walletStatus,
             error: connectError,
-            isLoading: connectLoading,
             pendingConnector,
             loginError,
         })
     }, [
         activeWalletAddress,
         connectError,
-        connectLoading,
         loggedInWalletAddress,
         loginError,
         pendingConnector,

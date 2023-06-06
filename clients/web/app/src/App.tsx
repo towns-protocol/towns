@@ -1,5 +1,5 @@
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
-import React, { useRef } from 'react'
+import React from 'react'
 import { Navigate, Outlet, Route, Routes } from 'react-router'
 import { SpaceProtocol, ZionContextProvider } from 'use-zion-client'
 import { Helmet } from 'react-helmet'
@@ -14,7 +14,6 @@ import { useEnvironment } from 'hooks/useEnvironmnet'
 import { useRootTheme } from 'hooks/useRootTheme'
 import { useWindowListener } from 'hooks/useWindowListener'
 import { PATHS } from 'routes'
-import { LoadingScreen } from 'routes/LoadingScreen'
 import { Register } from 'routes/Register'
 import { Welcome } from 'routes/Welcome'
 import { AppLayout } from 'routes/layouts/AppLayout'
@@ -85,16 +84,9 @@ export const App = () => {
 }
 
 const AllRoutes = () => {
-    const { isAuthenticatedAndConnected, connectLoading } = useAuth()
-    const connectedOnce = useRef(false)
+    const { isAuthenticatedAndConnected } = useAuth()
 
     useWindowListener()
-
-    // only show the loading screen on first load, and not if user swaps wallet
-    if (connectLoading && !connectedOnce.current) {
-        return <LoadingScreen />
-    }
-    connectedOnce.current = true
 
     return (
         <>

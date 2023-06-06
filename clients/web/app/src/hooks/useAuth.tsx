@@ -38,9 +38,9 @@ export function useAuth() {
 
     const { disconnect } = useDisconnect()
 
-    // useWeb3Context().walletStatus sometimes hangs at 'reconnecting' on first load (cannot reproduce locally) - why?? - which causes our app to hang in the loading/login screen
-    // reusing useAccount() here to get the wallet status in more directly, maybe that will fix it
-    const { status } = useAccount()
+    // Something to note: there seems to be a race condition that can appear within Wagmi - status can be stuck at "reconnecting" when first loading the app in a new tab.
+    // Even though status === 'reconnecting' (and isReconnecting === true), simultaneously isConnected === true.
+    const { status, isConnected } = useAccount()
 
     const connector = useMemo(() => {
         return connectors.length > 0 ? connectors[0] : undefined
@@ -64,17 +64,9 @@ export function useAuth() {
         await _logout()
     }, [_logout])
 
-    const isConnected = useMemo(() => {
-        return status === WalletStatus.Connected
-    }, [status])
-
     const isAuthenticatedAndConnected = useMemo(() => {
         return isAuthenticated && isConnected
     }, [isAuthenticated, isConnected])
-
-    const connectLoading = useMemo(() => {
-        return status === WalletStatus.Reconnecting || status === WalletStatus.Connecting
-    }, [status])
 
     return {
         connect,
@@ -85,7 +77,6 @@ export function useAuth() {
         activeWalletAddress,
         loggedInWalletAddress,
         connectError,
-        connectLoading,
         pendingConnector,
         isAuthenticated, // matrix status
         isAuthenticatedAndConnected, // matrix + wallet
