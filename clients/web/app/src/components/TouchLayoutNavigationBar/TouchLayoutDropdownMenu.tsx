@@ -22,7 +22,7 @@ export const TouchLayoutDropdownMenu = (props: Props) => {
     const onHideBrowseChannels = useEvent(() => setVisibleModal(undefined))
 
     return (
-        <Stack scroll paddingY="lg">
+        <Stack scroll paddingBottom="lg">
             {space && (
                 <Box minHeight="forceScroll">
                     <ActionNavItem

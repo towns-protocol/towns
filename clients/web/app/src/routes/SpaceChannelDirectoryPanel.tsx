@@ -43,7 +43,7 @@ const ChannelMembers = () => {
     const { members } = useChannelMembers()
 
     return (
-        <Stack grow height="100%" overflow="scroll" paddingY="md">
+        <Stack paddingY="md">
             {members.map((m) => (
                 <ChannelMemberRow key={m.userId} user={m} />
             ))}

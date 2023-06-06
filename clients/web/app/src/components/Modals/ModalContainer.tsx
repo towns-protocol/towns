@@ -74,18 +74,11 @@ const TouchFullScreenModalContainer = (props: TouchFullScreenModalContainerProps
                         background="level1"
                         style={{ position: 'absolute', right: -100, top: 0, bottom: 0, width: 100 }}
                     />
-                    <Stack>
+                    <Stack height="100%">
                         <TouchPanelNavigationBar title={title} onBack={onClose} />
 
-                        <Stack
-                            scroll
-                            paddingX
-                            paddingTop="md"
-                            paddingBottom="safeAreaInsetBottom"
-                            height="100svh"
-                        >
-                            {/* Hack to force bounce scroll */}
-                            <Box style={{ minHeight: '101svh' }}>{children}</Box>
+                        <Stack scroll paddingX>
+                            {children}
                         </Stack>
                     </Stack>
                 </MotionBox>
