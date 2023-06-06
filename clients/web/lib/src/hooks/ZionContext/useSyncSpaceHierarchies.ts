@@ -27,7 +27,7 @@ export function useSyncSpaceHierarchies(
     client: ZionClient | undefined,
     matrixClient: MatrixClient | undefined,
     invitedToIds: RoomIdentifier[],
-): { spaceHierarchies: SpaceHierarchies; syncSpaceHierarchy: (spaceId: string) => void } {
+): { matrixSpaceHierarchies: SpaceHierarchies; syncSpaceHierarchy: (spaceId: string) => void } {
     const { spaceIds } = useSpaceIdStore()
     const [spaceHierarchies, setSpaceHierarchies] = useState<SpaceHierarchies>({})
     const [spaceIdsQueue, setSpaceIdsQueue] = useState<string[]>(spaceIds.map((r) => r.networkId))
@@ -212,7 +212,7 @@ export function useSyncSpaceHierarchies(
         }
     }, [enqueueSpaceId, matrixClient, queryClient, spaceIds])
 
-    return { spaceHierarchies, syncSpaceHierarchy: enqueueSpaceId }
+    return { matrixSpaceHierarchies: spaceHierarchies, syncSpaceHierarchy: enqueueSpaceId }
 }
 
 function getParentSpaceId(room: MatrixRoom, spaceIds: RoomIdentifier[]) {

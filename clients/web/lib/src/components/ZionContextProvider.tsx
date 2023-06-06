@@ -14,6 +14,7 @@ import { useSpacesIds } from '../hooks/ZionContext/useSpaceIds'
 import { useSpaceUnreads } from '../hooks/ZionContext/useSpaceUnreads'
 import { useSpaces } from '../hooks/ZionContext/useSpaces'
 import { useSyncErrorHandler } from '../hooks/ZionContext/useSyncErrorHandler'
+import { useCasablancaSpaceHierarchies } from '../hooks/ZionContext/useCasablancaSpaceHierarchies'
 import { useSyncSpaceHierarchies } from '../hooks/ZionContext/useSyncSpaceHierarchies'
 import { useMatrixRooms } from '../hooks/ZionContext/useMatrixRooms'
 import { useMatrixTimelines } from '../hooks/ZionContext/useMatrixTimelines'
@@ -27,6 +28,7 @@ import { MatrixClient } from 'matrix-js-sdk'
 import { Client as CasablancaClient } from '@towns/sdk'
 import { useCasablancaTimelines } from '../hooks/ZionContext/useCasablancaTimelines'
 import { ethers } from 'ethers'
+import merge from 'lodash/merge'
 
 export interface IZionContext {
     homeServerUrl: string
@@ -96,11 +98,13 @@ const ContextImpl = (props: Props): JSX.Element => {
     useContentAwareTimelineDiff(matrixClient)
     useContentAwareTimelineDiffCasablanca(casablancaClient)
     const { spaces } = useSpaces(matrixClient, casablancaClient)
-    const { spaceHierarchies, syncSpaceHierarchy } = useSyncSpaceHierarchies(
+    const { matrixSpaceHierarchies, syncSpaceHierarchy } = useSyncSpaceHierarchies(
         client,
         matrixClient,
         invitedToIds,
     )
+    const casablancaSpaceHierarchies = useCasablancaSpaceHierarchies(casablancaClient)
+    const spaceHierarchies = merge(matrixSpaceHierarchies, casablancaSpaceHierarchies)
     const { spaceUnreads, spaceMentions } = useSpaceUnreads(
         client,
         spaceHierarchies,
