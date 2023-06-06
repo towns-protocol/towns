@@ -18,9 +18,9 @@
         "watch": "tsc --watch"
     },
     "dependencies": {
-        "@bufbuild/connect": "^0.9.0",
-        "@bufbuild/connect-web": "^0.9.0",
-        "@bufbuild/protobuf": "^1.2.0",
+        "@bufbuild/connect": "^0.9.1",
+        "@bufbuild/connect-web": "^0.9.1",
+        "@bufbuild/protobuf": "^1.2.1",
         "@ethereumjs/util": "^8.0.1",
         "@towns/mecholm": "workspace:^",
         "@towns/proto": "workspace:^",
