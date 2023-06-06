@@ -17,12 +17,41 @@ import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { TouchLayoutNavigationBar } from '@components/TouchLayoutNavigationBar/TouchLayoutNavigationBar'
 import { useDevice } from 'hooks/useDevice'
 import { FadeInBox } from '@components/Transitions'
+import { useHasJoinedChannels } from 'hooks/useHasJoinedChannels'
+import { NoJoinedChannelsFallback } from '@components/NoJoinedChannelsFallback'
+import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinner'
 import { CentralPanelLayout } from './layouts/CentralPanelLayout'
 
 export const SpaceMentions = () => {
     const { userId } = useMatrixCredentials()
     const mentions = useSpaceMentions()
     const { isTouch } = useDevice()
+    const { loadingChannels, hasJoinedChannels } = useHasJoinedChannels()
+
+    const renderContent = () => {
+        if (loadingChannels) {
+            return (
+                <>
+                    <ButtonSpinner /> Loading...
+                </>
+            )
+        }
+        if (hasJoinedChannels) {
+            return (
+                <>
+                    <Box padding="md" color="gray2" background="level2" rounded="sm">
+                        <Icon type="at" size="square_sm" />
+                    </Box>
+                    <Heading level={3}>No mentions yet</Heading>
+                    <Paragraph textAlign="center" color="gray2">
+                        {`Whenever someone "@" mentions you, it'll show up here.`}
+                    </Paragraph>
+                </>
+            )
+        }
+
+        return <NoJoinedChannelsFallback />
+    }
 
     return (
         <CentralPanelLayout>
@@ -47,13 +76,7 @@ export const SpaceMentions = () => {
                 ) : (
                     <Stack centerContent grow absoluteFill scroll>
                         <Stack centerContent gap="lg" width="250" minHeight="100svh">
-                            <Box padding="md" color="gray2" background="level2" rounded="sm">
-                                <Icon type="at" size="square_sm" />
-                            </Box>
-                            <Heading level={3}>No mentions yet</Heading>
-                            <Paragraph textAlign="center" color="gray2">
-                                {`Whenever someone "@" mentions you, it'll show up here.`}
-                            </Paragraph>
+                            {renderContent()}
                         </Stack>
                     </Stack>
                 )}

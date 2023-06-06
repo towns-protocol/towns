@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router'
 import { PATHS } from 'routes'
 import { Box, Card } from '@ui'
 import { useAuth } from 'hooks/useAuth'
+import { useStore } from 'store/store'
 import { MenuItem } from './MenuItem'
 
 type Props = {
@@ -25,10 +26,12 @@ export const ChannelSettingsCard = (props: Props) => {
         permission: Permission.ModifySpaceSettings,
     })
     const navigate = useNavigate()
+    const setTownRouteBookmark = useStore((s) => s.setTownRouteBookmark)
 
     const { leaveRoom } = useZionClient()
 
     const onLeaveClick = useEvent(async () => {
+        setTownRouteBookmark(spaceId.slug, '')
         await leaveRoom(channelId)
         navigate(`/${PATHS.SPACES}/${spaceId.slug}`)
     })

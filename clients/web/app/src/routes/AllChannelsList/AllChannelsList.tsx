@@ -15,6 +15,7 @@ import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinn
 import { PATHS } from 'routes'
 import { useChannelIdFromPathname } from 'hooks/useChannelIdFromPathname'
 import { useDevice } from 'hooks/useDevice'
+import { useStore } from 'store/store'
 
 export const AllChannelsList = ({
     onHideBrowseChannels,
@@ -134,6 +135,7 @@ const ChannelItem = ({
 
     const [syncingSpace, setSyncingSpace] = React.useState(false)
     const [joinFailed, setJoinFailed] = React.useState(false)
+    const setTownRouteBookmark = useStore((s) => s.setTownRouteBookmark)
 
     const onClick = useEvent(async () => {
         setSyncingSpace(true)
@@ -154,6 +156,7 @@ const ChannelItem = ({
             if (currentChannelId === channelIdentifier.networkId) {
                 // leaving the last channel
                 if (joinedChannels.length === 1) {
+                    setTownRouteBookmark(space.id.slug, '')
                     navigate(`/${PATHS.SPACES}/${space.id.slug}`)
                 }
                 // go to the next channel
