@@ -1,7 +1,7 @@
 port: 5157
 dburl: postgres://postgres:postgres@localhost:5433/casablanca?sslmode=disable&pool_max_conns=1000
 address:
-authorization: false
+authorization: true
 chain:
     chainId: 31337
     networkUrl: 'http://127.0.0.1:8545'
@@ -9,5 +9,5 @@ log:
     file: logs/dev.log
     level: info
 metrics:
-    enabled: false
+    enabled: true
     port: 8081

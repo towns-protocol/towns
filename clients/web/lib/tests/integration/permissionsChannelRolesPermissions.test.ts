@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 /**
  * @group dendrite
+ * @group casablanca
  */
 import { RoomVisibility } from 'use-zion-client/src/types/zion-types'
 import { RoomIdentifier } from '../../src/types/room-identifier'
@@ -24,7 +25,7 @@ describe('channel with roles and permissions', () => {
             'tokenGrantedUser',
             TestConstants.getWalletWithMemberNft(),
         )
-        const tokenGrantedUserId = tokenGrantedUser.matrixUserId as string
+        const tokenGrantedUserId = tokenGrantedUser.getUserId() as string
         const { alice } = await registerAndStartClients(['alice'])
         // create a space with token entitlement to read & write
         await alice.fundWallet()
@@ -88,7 +89,7 @@ describe('channel with roles and permissions', () => {
 
         // create all the users for the test
         const { alice, bob } = await registerAndStartClients(['alice', 'bob'])
-        const bobUserId = bob.matrixUserId as string
+        const bobUserId = bob.getUserId() as string
         // create a space with token entitlement to read & write
         await alice.fundWallet()
         const spaceId = (await createTestSpaceWithZionMemberRole(
@@ -110,6 +111,8 @@ describe('channel with roles and permissions', () => {
         /** Act & Assert */
 
         // join the channel
-        await expect(bob.joinRoom(channelId)).rejects.toThrow('Unauthorised')
+        await expect(bob.joinRoom(channelId)).rejects.toThrow(
+            new RegExp('Unauthorized|PermissionDenied'),
+        )
     }) // end test
 })
