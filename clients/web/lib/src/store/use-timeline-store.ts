@@ -600,7 +600,13 @@ export function getReactionParentId(content: TimelineEvent_OneOf | undefined): s
 }
 
 export function getIsMentioned(content: TimelineEvent_OneOf | undefined, userId: string): boolean {
+    //TODO: comparison below should be changed as soon as this HNT-1576 will be resolved
     return content?.kind === ZTEvent.RoomMessage
-        ? content.mentions.findIndex((x) => x.userId === userId) >= 0
+        ? content.mentions.findIndex(
+              (x) =>
+                  x.userId
+                      .toLowerCase()
+                      .localeCompare(userId.toLowerCase(), undefined, { sensitivity: 'base' }) == 0,
+          ) >= 0
         : false
 }

@@ -1,6 +1,7 @@
 import { useZionContext } from '../components/ZionContextProvider'
 import { useCasablancaStore } from '../store/use-casablanca-store'
 import { useCredentialStore } from '../store/use-credential-store'
+import { ethers } from 'ethers'
 
 /// combines the matrix credentials and login status into a single hook
 /// credentials are stored in local storage
@@ -14,11 +15,26 @@ export function useCasablancaCredentials() {
     const isAuthenticated = credentials?.delegateSig !== undefined
 
     return {
-        userId: credentials?.creatorAddress,
+        //Our flow assumes that userId can be empty in some cases, so we need to handle it
+        userId: credentials?.creatorAddress
+            ? prepareAndValidateAddress(credentials?.creatorAddress)
+            : credentials?.creatorAddress,
         deviceId: credentials?.deviceId,
         loggedInWalletAddress: credentials?.loggedInWalletAddress,
         isAuthenticated,
         loginStatus,
         loginError,
     }
+}
+
+//Should be changed to checksum address when HNT-1576 will be done
+function prepareAndValidateAddress(address: string | undefined) {
+    if (!address) {
+        return
+    }
+    address = (address.length == 40 ? '0x' + address : address).toLowerCase()
+    if (!ethers.utils.isAddress(address)) {
+        throw new Error('invalid address')
+    }
+    return address
 }

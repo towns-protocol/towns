@@ -19,8 +19,6 @@ export function useCasablancaSpaceHierarchies(casablancaClient?: CasablancaClien
         //1.Add proper support for worldReadable, guestCanJoin, numjoinedMembers
         // (not critical for Unreads bur definitely required for consistency and absence of surprises)
         //2.Consider refactoring code using reduce (if it will be more readable)
-
-        console.log('MEOW spaceIds: ', JSON.stringify(spaceIds))
         const children: SpaceChild[] = []
 
         const result: SpaceHierarchies = {}
@@ -50,7 +48,6 @@ export function useCasablancaSpaceHierarchies(casablancaClient?: CasablancaClien
                 children: children,
             }
         })
-        console.log('MEOW person: ', JSON.stringify(result))
         return result
-    }, [casablancaClient, spaceIds])
+    }, [spaceIds, casablancaClient])
 }
