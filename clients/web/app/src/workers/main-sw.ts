@@ -6,7 +6,6 @@ import {
 import { NavigationRoute, registerRoute } from 'workbox-routing'
 
 console.log('main-sw: script')
-console.log('main-sw: test-bump')
 
 declare let self: ServiceWorkerGlobalScope
 
