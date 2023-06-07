@@ -52,5 +52,5 @@ export function useCasablancaSpaceHierarchies(casablancaClient?: CasablancaClien
         })
         console.log('MEOW person: ', JSON.stringify(result))
         return result
-    }, [spaces, casablancaClient])
+    }, [casablancaClient, spaceIds])
 }

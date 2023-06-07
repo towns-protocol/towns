@@ -37,38 +37,44 @@ export function useDeleteRoleTransaction() {
 
     // update role with new permissions, tokens, and users
     const _deleteRoleTransaction = useCallback(
-        async function (spaceNetworkId: string, roleId: number) {
+        async function (
+            spaceNetworkId: string,
+            roleId: number,
+        ): Promise<TransactionContext<void> | undefined> {
             if (isTransacting.current) {
-                // Transaction already in progress
-                return
+                console.warn('deleteRoleTransaction', 'transaction already in progress')
+                return undefined
             }
+            let transactionResult: TransactionContext<void> | undefined
             if (!signer) {
-                setTransactionContext(
-                    createTransactionContext(TransactionStatus.Failed, new SignerUndefinedError()),
-                )
-                return
+                transactionResult = createTransactionContext({
+                    status: TransactionStatus.Failed,
+                    error: new SignerUndefinedError(),
+                })
+                setTransactionContext(transactionResult)
+                return transactionResult
             }
             // ok to proceed
             isTransacting.current = true
             try {
-                const loading: TransactionContext<void> = createTransactionContext(
-                    TransactionStatus.Pending,
-                )
-                setTransactionContext(loading)
-                const txContext = await deleteRoleTransaction(spaceNetworkId, roleId, signer)
-                setTransactionContext(txContext)
-                if (txContext?.status === TransactionStatus.Pending) {
-                    if (txContext.transaction?.hash) {
+                transactionResult = createTransactionContext({
+                    status: TransactionStatus.Pending,
+                })
+                setTransactionContext(transactionResult)
+                transactionResult = await deleteRoleTransaction(spaceNetworkId, roleId, signer)
+                setTransactionContext(transactionResult)
+                if (transactionResult?.status === TransactionStatus.Pending) {
+                    if (transactionResult.transaction?.hash) {
                         // todo: add necessary contextual data
                         useTransactionStore.getState().storeTransaction({
-                            hash: txContext.transaction?.hash as `0x${string}`,
+                            hash: transactionResult.transaction?.hash as `0x${string}`,
                             type: BlockchainTransactionType.DeleteRole,
                         })
                     }
                     // Wait for transaction to be mined
-                    const rxContext = await waitForDeleteRoleTransaction(txContext)
-                    setTransactionContext(rxContext)
-                    if (rxContext?.status === TransactionStatus.Success) {
+                    transactionResult = await waitForDeleteRoleTransaction(transactionResult)
+                    setTransactionContext(transactionResult)
+                    if (transactionResult?.status === TransactionStatus.Success) {
                         await queryClient.invalidateQueries([
                             QueryRoleKeys.FirstBySpaceIds,
                             spaceNetworkId,
@@ -77,12 +83,16 @@ export function useDeleteRoleTransaction() {
                 }
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
             } catch (e: any) {
-                setTransactionContext(
-                    createTransactionContext(TransactionStatus.Failed, toError(e)),
-                )
+                console.error('deleteRoleTransaction', e)
+                transactionResult = createTransactionContext({
+                    status: TransactionStatus.Failed,
+                    error: toError(e),
+                })
+                setTransactionContext(transactionResult)
             } finally {
                 isTransacting.current = false
             }
+            return transactionResult
         },
         [deleteRoleTransaction, queryClient, signer, waitForDeleteRoleTransaction],
     )

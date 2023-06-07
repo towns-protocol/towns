@@ -1,9 +1,9 @@
-import { SignerUndefinedError, toError } from '../types/error-types'
 import {
     TransactionContext,
     TransactionStatus,
     createTransactionContext,
 } from '../client/ZionClientTypes'
+import { SignerUndefinedError, toError } from '../types/error-types'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { BlockchainTransactionType } from '../types/web3-types'
@@ -46,28 +46,29 @@ export function useUpdateRoleTransaction() {
             permissions: Permission[],
             tokens: string[],
             users: string[],
-        ) {
+        ): Promise<TransactionContext<void> | undefined> {
             if (isTransacting.current) {
                 console.warn('useUpdateRoleTransaction', 'Transaction already in progress')
-                // Transaction already in progress
-                return
+                return undefined
             }
+            let transactionResult: TransactionContext<void> | undefined
             if (!signer) {
-                console.error('useUpdateRoleTransaction', 'Transaction has no signer')
-
-                setTransactionContext(
-                    createTransactionContext(TransactionStatus.Failed, new SignerUndefinedError()),
-                )
-                return
+                console.error('useUpdateRoleTransaction', 'Signer is undefined')
+                transactionResult = createTransactionContext({
+                    status: TransactionStatus.Failed,
+                    error: new SignerUndefinedError(),
+                })
+                setTransactionContext(transactionResult)
+                return transactionResult
             }
             // ok to proceed
             isTransacting.current = true
             try {
-                const loading: TransactionContext<void> = createTransactionContext(
-                    TransactionStatus.Pending,
-                )
-                setTransactionContext(loading)
-                const txContext = await updateRoleTransaction(
+                transactionResult = createTransactionContext({
+                    status: TransactionStatus.Pending,
+                })
+                setTransactionContext(transactionResult)
+                transactionResult = await updateRoleTransaction(
                     spaceNetworkId,
                     roleId,
                     roleName,
@@ -76,19 +77,19 @@ export function useUpdateRoleTransaction() {
                     users,
                     signer,
                 )
-                setTransactionContext(txContext)
-                if (txContext?.status === TransactionStatus.Pending) {
-                    if (txContext.transaction?.hash) {
+                setTransactionContext(transactionResult)
+                if (transactionResult?.status === TransactionStatus.Pending) {
+                    if (transactionResult.transaction?.hash) {
                         // todo: add necessary contextual data
                         useTransactionStore.getState().storeTransaction({
-                            hash: txContext.transaction?.hash as `0x${string}`,
+                            hash: transactionResult.transaction?.hash as `0x${string}`,
                             type: BlockchainTransactionType.UpdateRole,
                         })
                     }
                     // Wait for transaction to be mined
-                    const rxContext = await waitForUpdateRoleTransaction(txContext)
-                    setTransactionContext(rxContext)
-                    if (rxContext?.status === TransactionStatus.Success) {
+                    transactionResult = await waitForUpdateRoleTransaction(transactionResult)
+                    setTransactionContext(transactionResult)
+                    if (transactionResult?.status === TransactionStatus.Success) {
                         await queryClient.invalidateQueries([
                             QueryRoleKeys.FirstBySpaceIds,
                             spaceNetworkId,
@@ -100,12 +101,15 @@ export function useUpdateRoleTransaction() {
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
             } catch (e: any) {
                 console.error('useUpdateRoleTransaction', 'Transaction failed', e)
-                setTransactionContext(
-                    createTransactionContext(TransactionStatus.Failed, toError(e)),
-                )
+                transactionResult = createTransactionContext({
+                    status: TransactionStatus.Failed,
+                    error: toError(e),
+                })
+                setTransactionContext(transactionResult)
             } finally {
                 isTransacting.current = false
             }
+            return transactionResult
         },
         [queryClient, signer, updateRoleTransaction, waitForUpdateRoleTransaction],
     )

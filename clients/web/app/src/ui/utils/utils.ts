@@ -20,8 +20,9 @@ export const shortAddress = (address: string) => {
     return `${start}...${end}`
 }
 
-export const isRejectionError = (error: Error): boolean => {
-    return error.name === 'ACTION_REJECTED'
+export function isRejectionError(err: unknown): boolean {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return err !== undefined && (err as any).message?.code === 'ACTION_REJECTED'
 }
 
 export const isForbiddenError = (error: Error): boolean => {

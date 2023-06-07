@@ -9,7 +9,7 @@ export function useChannelSettings(spaceId: string, channelId: string) {
     const isEnabled = spaceId.length > 0 && channelId.length > 0
 
     const getChannelSettings = useCallback(
-        async (spaceId: string, channelId: string) => {
+        async function () {
             if (spaceDapp) {
                 const channelDetails = await spaceDapp.getChannelDetails(spaceId, channelId)
                 if (channelDetails) {
@@ -22,7 +22,7 @@ export function useChannelSettings(spaceId: string, channelId: string) {
             }
             return null
         },
-        [spaceDapp],
+        [channelId, spaceDapp, spaceId],
     )
 
     const {
@@ -30,11 +30,8 @@ export function useChannelSettings(spaceId: string, channelId: string) {
         data: channelSettings,
         error,
     } = useQuery(
-        // unique keys per query so that React Query
-        // can manage the cache for us.
         [QueryRoleKeys.FirstBySpaceIds, spaceId, QueryRoleKeys.ThenByChannelIds, channelId],
-        // query that does the data fetching.
-        () => getChannelSettings(spaceId, channelId),
+        getChannelSettings,
         // options for the query.
         {
             // query will not execute until the flag is true.

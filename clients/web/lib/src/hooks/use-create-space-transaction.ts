@@ -47,24 +47,26 @@ export function useCreateSpaceTransaction() {
             tokenAddresses: string[],
             memberPermissions: Permission[],
             everyonePermissions: Permission[] = [],
-        ): Promise<void> {
+        ): Promise<TransactionContext<RoomIdentifier> | undefined> {
             if (isTransacting.current) {
                 // Transaction already in progress
-                return
+                return undefined
             }
+            let transactionResult: TransactionContext<RoomIdentifier> | undefined
             if (!signer) {
-                setTransactionContext(
-                    createTransactionContext(TransactionStatus.Failed, new SignerUndefinedError()),
-                )
-                return
+                // cannot sign the transaction. stop processing.
+                transactionResult = createTransactionContext({
+                    status: TransactionStatus.Failed,
+                    error: new SignerUndefinedError(),
+                })
+                setTransactionContext(transactionResult)
+                return transactionResult
             }
             // ok to proceed
             isTransacting.current = true
             try {
-                const loading: TransactionContext<RoomIdentifier> = createTransactionContext(
-                    TransactionStatus.Pending,
-                )
-                setTransactionContext(loading)
+                transactionResult = createTransactionContext({ status: TransactionStatus.Pending })
+                setTransactionContext(transactionResult)
                 let tokenEntitlement: SpaceFactoryDataTypes.CreateSpaceExtraEntitlementsStruct
                 if (tokenAddresses.length) {
                     tokenEntitlement = {
@@ -82,43 +84,49 @@ export function useCreateSpaceTransaction() {
                     }
                 }
 
-                const txContext = await createSpaceTransaction(
+                transactionResult = await createSpaceTransaction(
                     createInfo,
                     tokenEntitlement,
                     everyonePermissions,
                     signer,
                 )
 
-                setTransactionContext(txContext)
+                setTransactionContext(transactionResult)
 
-                if (txContext?.status === TransactionStatus.Pending) {
+                if (transactionResult?.status === TransactionStatus.Pending) {
                     // No error and transaction is pending
                     // Save it to local storage so we can track it
-                    if (txContext.transaction && txContext.data) {
+                    if (transactionResult.transaction && transactionResult.data) {
                         useTransactionStore.getState().storeTransaction({
-                            hash: txContext.transaction?.hash as `0x${string}`,
+                            hash: transactionResult.transaction?.hash as `0x${string}`,
                             type: BlockchainTransactionType.CreateSpace,
                             data: {
-                                spaceId: txContext.data,
+                                spaceId: transactionResult.data,
                             },
                         })
                     }
 
                     // Wait for transaction to be mined
-                    const rxContext = await waitForCreateSpaceTransaction(txContext)
-                    if (rxContext?.status === TransactionStatus.Success && rxContext?.data) {
-                        syncSpace(rxContext.data)
+                    transactionResult = await waitForCreateSpaceTransaction(transactionResult)
+                    if (
+                        transactionResult?.status === TransactionStatus.Success &&
+                        transactionResult?.data
+                    ) {
+                        syncSpace(transactionResult.data)
                     }
-                    setTransactionContext(rxContext)
+                    setTransactionContext(transactionResult)
                 }
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
             } catch (e: any) {
-                setTransactionContext(
-                    createTransactionContext(TransactionStatus.Failed, toError(e)),
-                )
+                transactionResult = createTransactionContext({
+                    status: TransactionStatus.Failed,
+                    error: toError(e),
+                })
+                setTransactionContext(transactionResult)
             } finally {
                 isTransacting.current = false
             }
+            return transactionResult
         },
         [createSpaceTransaction, signer, syncSpace, waitForCreateSpaceTransaction],
     )

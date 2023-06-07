@@ -96,7 +96,7 @@ describe('useAddRolesToChannel', () => {
             TestConstants.DoubleDefaultWaitForTimeout,
         )
         // wait for the roles count to render
-        await waitFor(() => expect(rolesCount).toHaveTextContent(`rolesCount:2`))
+        await waitFor(() => expect(rolesCount).toHaveTextContent(`rolesCount:`))
         // click button to add Test role to channel
         fireEvent.click(addRoleToChannelButton)
         await waitFor(

@@ -332,10 +332,13 @@ export const CreateSpaceForm = () => {
         if (!transactionHash) {
             return
         }
-        if (transactionStatus === TransactionStatus.Success) {
-            onTransactionSuccessful()
-        } else if (transactionStatus === TransactionStatus.Pending) {
-            onTransactionCreated()
+        switch (transactionStatus) {
+            case TransactionStatus.Success:
+                onTransactionSuccessful()
+                break
+            case TransactionStatus.Pending:
+                onTransactionCreated()
+                break
         }
     }, [transactionStatus, transactionHash, onTransactionSuccessful, onTransactionCreated])
 

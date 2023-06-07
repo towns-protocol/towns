@@ -1,10 +1,16 @@
-import { ChannelUpdateTransactionContext, TransactionStatus } from '../client/ZionClientTypes'
+import {
+    ChannelUpdateTransactionContext,
+    TransactionStatus,
+    createChannelUpdateTransactionContext,
+} from '../client/ZionClientTypes'
 import { SignerUndefinedError, toError } from '../types/error-types'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { BlockchainTransactionType } from '../types/web3-types'
+import { QueryRoleKeys } from './query-keys'
 import { UpdateChannelInfo } from 'types/zion-types'
 import { removeSyncedEntitleChannelsQueries } from '../query/removeSyncedEntitledChannelQueries'
+import { useQueryClient } from '@tanstack/react-query'
 import { useTransactionStore } from '../store/use-transactions-store'
 import { useWeb3Context } from '../components/Web3ContextProvider'
 import { useZionClient } from './use-zion-client'
@@ -19,6 +25,8 @@ export function useUpdateChannelTransaction() {
     const isTransacting = useRef<boolean>(false)
     const { updateChannelTransaction, waitForUpdateChannelTransaction } = useZionClient()
     const { signer } = useWeb3Context()
+    const queryClient = useQueryClient()
+
     const { data, isLoading, transactionHash, transactionStatus, error } = useMemo(() => {
         return {
             data: transactionContext?.data,
@@ -35,60 +43,67 @@ export function useUpdateChannelTransaction() {
             updateChannelInfo: UpdateChannelInfo,
         ): Promise<ChannelUpdateTransactionContext | undefined> {
             if (isTransacting.current) {
-                // Transaction already in progress
+                console.warn('useUpdateChannelTransaction', 'Transaction already in progress')
                 return undefined
             }
             let transactionResult: ChannelUpdateTransactionContext | undefined
+            const hasOffChainUpdate = updateChannelInfo.updatedChannelTopic !== undefined
             if (!signer) {
                 // cannot sign the transaction. stop processing.
-                transactionResult = createTransactionContext(
-                    TransactionStatus.Failed,
-                    false,
-                    new SignerUndefinedError(),
-                )
+                transactionResult = createChannelUpdateTransactionContext({
+                    status: TransactionStatus.Failed,
+                    hasOffChainUpdate,
+                    error: new SignerUndefinedError(),
+                })
                 setTransactionContext(transactionResult)
                 return transactionResult
             }
             // ok to proceed
             isTransacting.current = true
-            const hasOffChainUpdate = updateChannelInfo.updatedChannelTopic !== undefined
-            const loading: ChannelUpdateTransactionContext = createTransactionContext(
-                TransactionStatus.Pending,
+            transactionResult = createChannelUpdateTransactionContext({
+                status: TransactionStatus.Pending,
                 hasOffChainUpdate,
-            )
-            setTransactionContext(loading)
-
+            })
+            setTransactionContext(transactionResult)
             removeSyncedEntitleChannelsQueries()
-
             try {
-                const txContext = await updateChannelTransaction(updateChannelInfo, signer)
-                setTransactionContext(txContext)
-                if (txContext?.status === TransactionStatus.Pending) {
+                transactionResult = await updateChannelTransaction(updateChannelInfo, signer)
+                setTransactionContext(transactionResult)
+                if (transactionResult?.status === TransactionStatus.Pending) {
                     // save it to local storage so we can track it
-                    if (txContext.transaction && txContext.data) {
+                    if (transactionResult.transaction && transactionResult.data) {
                         useTransactionStore.getState().storeTransaction({
-                            hash: txContext.transaction?.hash as `0x${string}`,
+                            hash: transactionResult.transaction?.hash as `0x${string}`,
                             type: BlockchainTransactionType.EditChannel,
                         })
                     }
                     // Wait for transaction to be mined
-                    transactionResult = await waitForUpdateChannelTransaction(txContext)
+                    transactionResult = await waitForUpdateChannelTransaction(transactionResult)
                     setTransactionContext(transactionResult)
+                    if (transactionResult?.status === TransactionStatus.Success) {
+                        await queryClient.invalidateQueries([
+                            QueryRoleKeys.FirstBySpaceIds,
+                            updateChannelInfo.parentSpaceId.networkId,
+                            QueryRoleKeys.ThenByChannelIds,
+                            updateChannelInfo.channelId.networkId,
+                        ])
+                    }
                 }
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
             } catch (e: any) {
-                transactionResult = createTransactionContext(
-                    TransactionStatus.Failed,
+                console.error('useUpdateChannelTransaction', e)
+                transactionResult = createChannelUpdateTransactionContext({
+                    status: TransactionStatus.Failed,
                     hasOffChainUpdate,
-                    toError(e),
-                )
+                    error: toError(e),
+                })
                 setTransactionContext(transactionResult)
             } finally {
                 isTransacting.current = false
             }
             return transactionResult
         },
-        [signer, updateChannelTransaction, waitForUpdateChannelTransaction],
+        [queryClient, signer, updateChannelTransaction, waitForUpdateChannelTransaction],
     )
 
     useEffect(() => {
@@ -108,20 +123,5 @@ export function useUpdateChannelTransaction() {
         transactionHash,
         transactionStatus,
         updateChannelTransaction: _updateChannelTransaction,
-    }
-}
-
-function createTransactionContext(
-    status: TransactionStatus,
-    hasOffChainUpdate: boolean,
-    error?: Error,
-): ChannelUpdateTransactionContext {
-    return {
-        status,
-        transaction: undefined,
-        receipt: undefined,
-        data: undefined,
-        hasOffChainUpdate,
-        error,
     }
 }

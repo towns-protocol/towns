@@ -15,13 +15,13 @@ export function useRoles(_spaceId: string | undefined) {
 
     // function to get the roles for any space.
     const getRolesFromSpace = useCallback(
-        async function (spaceNetworkId: string) {
-            if (!client || !spaceNetworkId) {
+        async function () {
+            if (!client || !spaceId) {
                 return undefined
             }
-            return await getFilteredRolesFromSpace(client, spaceNetworkId)
+            return await getFilteredRolesFromSpace(client, spaceId)
         },
-        [client],
+        [client, spaceId],
     )
 
     useEffect(
@@ -30,8 +30,8 @@ export function useRoles(_spaceId: string | undefined) {
                 if (spaceId) {
                     await queryClient.prefetchQuery({
                         queryKey: [QueryRoleKeys.FirstBySpaceIds, spaceId],
-                        queryFn: () => getRolesFromSpace(spaceId),
-                        staleTime: 10 * 1000, // only prefetch if older than 10 seconds
+                        queryFn: getRolesFromSpace,
+                        staleTime: 15 * 1000, // only prefetch if older than 15 seconds
                     })
                 }
             }
@@ -45,11 +45,8 @@ export function useRoles(_spaceId: string | undefined) {
         data: spaceRoles,
         error,
     } = useQuery(
-        // unique key per query so that React Query
-        // can manage the cache for us.
         [QueryRoleKeys.FirstBySpaceIds, spaceId],
-        // query function that does the data fetching.
-        () => getRolesFromSpace(spaceId),
+        getRolesFromSpace,
         // options for the query.
         // query will not execute until the spaceId is defined.
         { enabled: spaceId.length > 0 },

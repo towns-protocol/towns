@@ -1,8 +1,8 @@
-import { useCallback, useMemo } from 'react'
-import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 
 import { QueryRoleKeys } from './query-keys'
 import { RoleDetails } from '../client/web3/ContractTypes'
+import { useCallback } from 'react'
 import { useZionContext } from '../components/ZionContextProvider'
 
 /**
@@ -11,17 +11,17 @@ import { useZionContext } from '../components/ZionContextProvider'
 
 export function useRoleDetails(spaceId: string, roleId: number) {
     const { client } = useZionContext()
-    const isEnabled = spaceId.length > 0 && roleId > 0
+    const isEnabled = spaceId.length > 0 && roleId >= 0
 
     const getRole = useCallback(
-        async function (spaceId: string, roleId: number) {
+        async function () {
             if (!client || !isEnabled) {
                 return undefined
             }
             const role = await client.spaceDapp.getRole(spaceId, roleId)
             return role
         },
-        [client, isEnabled],
+        [client, isEnabled, roleId, spaceId],
     )
 
     const {
@@ -29,60 +29,10 @@ export function useRoleDetails(spaceId: string, roleId: number) {
         data: roleDetails,
         error,
     } = useQuery(
-        // unique keys per query so that React Query
-        // can manage the cache for us.
         [QueryRoleKeys.FirstBySpaceIds, spaceId, QueryRoleKeys.ThenByRoleIds, roleId],
-        // query that does the data fetching.
-        () => getRole(spaceId, roleId),
+        getRole,
         // options for the query.
         {
-            // query will not execute until the flag is true.
-            enabled: isEnabled,
-        },
-    )
-
-    return {
-        isLoading,
-        roleDetails,
-        error,
-    }
-}
-
-export function useRoleDetailsByChannel(spaceId: string, channelId: string, roleId: number) {
-    const { client } = useZionContext()
-    const isEnabled = spaceId.length > 0 && roleId > 0 && channelId.length > 0
-
-    const getRole = useCallback(
-        async function (spaceId: string, roleId: number) {
-            if (!client || !isEnabled) {
-                return undefined
-            }
-            const role = await client.spaceDapp.getRole(spaceId, roleId)
-            return role
-        },
-        [client, isEnabled],
-    )
-
-    const {
-        isLoading,
-        data: roleDetails,
-        error,
-    } = useQuery(
-        // unique keys per query so that React Query
-        // can manage the cache for us.
-        [
-            QueryRoleKeys.FirstBySpaceIds,
-            spaceId,
-            QueryRoleKeys.ThenByChannelIds,
-            channelId,
-            QueryRoleKeys.ThenByRoleIds,
-            roleId,
-        ],
-        // query that does the data fetching.
-        () => getRole(spaceId, roleId),
-        // options for the query.
-        {
-            // query will not execute until the flag is true.
             enabled: isEnabled,
         },
     )
@@ -99,36 +49,30 @@ export function useMultipleRoleDetails(spaceId: string, roleIds: number[]) {
     const { client } = useZionContext()
     const isEnabled = client && spaceId.length > 0 && roleIds.length > 0
 
-    const getRole = useCallback(
-        async function (spaceId: string, roleId: number) {
+    const getRoles = useCallback(
+        async function (): Promise<RoleDetails[]> {
             if (!client) {
-                return undefined
+                return []
             }
 
-            const role = await client.spaceDapp.getRole(spaceId, roleId)
-            return role
+            const getRolePromises: Promise<RoleDetails | null>[] = []
+            for (const roleId of roleIds) {
+                getRolePromises.push(client.spaceDapp.getRole(spaceId, roleId))
+            }
+            const roles = await Promise.all(getRolePromises)
+            return roles.filter((role) => role !== null) as RoleDetails[]
         },
-        [client],
+        [client, roleIds, spaceId],
     )
 
-    const queryData = useQueries<RoleDetails[]>({
-        queries: roleIds.map((roleId) => {
-            return {
-                queryKey: [
-                    QueryRoleKeys.FirstBySpaceIds,
-                    spaceId,
-                    QueryRoleKeys.ThenByRoleIds,
-                    roleId,
-                ],
-                queryFn: () => getRole(spaceId, roleId),
-                enabled: isEnabled,
-                refetchOnWindowFocus: false,
-                staleTime: 1000 * 60 * 5,
-                cacheTime: 1000 * 60 * 10,
-                retry: false,
-            }
-        }),
-    })
+    const queryData = useQuery<RoleDetails[]>(
+        [QueryRoleKeys.FirstBySpaceIds, spaceId, QueryRoleKeys.ThenByRoleIds, roleIds],
+        getRoles,
+        // options for the query.
+        {
+            enabled: isEnabled,
+        },
+    )
 
     const invalidateQuery = useCallback(
         () =>
@@ -140,21 +84,9 @@ export function useMultipleRoleDetails(spaceId: string, roleIds: number[]) {
         [queryClient, spaceId],
     )
 
-    return useMemo(() => {
-        if (!queryData.some((token) => token.isLoading)) {
-            return {
-                data: queryData
-                    .map((token) => token.data)
-                    .filter((data): data is RoleDetails => !!data),
-                isLoading: false,
-                invalidateQuery,
-            }
-        }
-
-        return {
-            data: undefined,
-            isLoading: true,
-            invalidateQuery,
-        }
-    }, [invalidateQuery, queryData])
+    return {
+        data: queryData.data,
+        isLoading: queryData.isLoading,
+        invalidateQuery,
+    }
 }

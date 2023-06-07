@@ -67,8 +67,6 @@ export function useAddRoleToChannelTransaction() {
                         await queryClient.invalidateQueries([
                             QueryRoleKeys.FirstBySpaceIds,
                             spaceNetworkId,
-                            QueryRoleKeys.ThenByRoleIds,
-                            roleId,
                             QueryRoleKeys.ThenByChannelIds,
                             channelNetworkId,
                         ])
@@ -77,7 +75,10 @@ export function useAddRoleToChannelTransaction() {
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
             } catch (e: any) {
                 setTransactionContext(
-                    createTransactionContext(TransactionStatus.Failed, toError(e)),
+                    createTransactionContext({
+                        status: TransactionStatus.Failed,
+                        error: toError(e),
+                    }),
                 )
             } finally {
                 isTransacting.current = false

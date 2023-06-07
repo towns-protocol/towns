@@ -25,7 +25,6 @@ import { FullyReadMarker, RoomMessageEvent } from '../types/timeline-types'
 import { ISpaceDapp } from 'client/web3/ISpaceDapp'
 import { MatrixSpaceHierarchy } from '../client/matrix/SyncSpace'
 import { Permission } from '../client/web3/ContractTypes'
-import { RoleIdentifier } from 'types/web3-types'
 import { RoomIdentifier } from '../types/room-identifier'
 import { DataTypes as SpaceFactoryDataTypes } from '@harmony/generated/localhost/typings/SpaceFactory'
 import { ZionClient } from '../client/ZionClient'
@@ -73,7 +72,7 @@ interface ZionClientImpl {
     ) => Promise<ChannelTransactionContext | undefined>
     waitForCreateChannelTransaction: (
         context: ChannelTransactionContext | undefined,
-    ) => Promise<TransactionContext<RoomIdentifier> | undefined>
+    ) => Promise<ChannelTransactionContext | undefined>
     updateChannelTransaction: (
         updateChannelInfo: UpdateChannelInfo,
         signer: ethers.Signer | undefined,
@@ -100,7 +99,7 @@ interface ZionClientImpl {
     ) => Promise<TransactionContext<void> | undefined>
     waitForCreateRoleTransaction: (
         context: RoleTransactionContext | undefined,
-    ) => Promise<TransactionContext<RoleIdentifier> | undefined>
+    ) => Promise<RoleTransactionContext | undefined>
     updateRoleTransaction: (
         spaceNetworkId: string,
         roleId: number,

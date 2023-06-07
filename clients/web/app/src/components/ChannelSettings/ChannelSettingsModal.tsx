@@ -113,6 +113,7 @@ export function ChannelSettingsForm({
                     updatedRoleIds: roleIds.map((roleId) => Number(roleId)),
                 }
                 const txResult = await updateChannelTransaction(channelInfo)
+                console.log('[ChannelSettingsModal] txResult', txResult)
                 if (txResult?.status === TransactionStatus.Success) {
                     invalidateQuery()
                     onUpdatedChannel()

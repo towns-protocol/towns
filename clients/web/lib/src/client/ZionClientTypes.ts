@@ -109,15 +109,72 @@ export type ZionClientEventHandlers = {
     onRegister?: (auth: { userId: string }) => void
 }
 
-export function createTransactionContext<T>(
-    status: TransactionStatus,
-    error?: Error,
-): TransactionContext<T> {
+export function createTransactionContext<T>(props: {
+    status: TransactionStatus
+    data?: T
+    transaction?: ContractTransaction
+    receipt?: ContractReceipt
+    error?: Error
+}): TransactionContext<T> {
     return {
-        status,
-        transaction: undefined,
-        receipt: undefined,
-        data: undefined,
-        error,
+        status: props.status,
+        data: props.data,
+        transaction: props.transaction,
+        receipt: props.receipt,
+        error: props.error,
+    }
+}
+
+export function createChannelTransactionContext(props: {
+    status: TransactionStatus
+    parentSpaceId?: string
+    data?: RoomIdentifier
+    transaction?: ContractTransaction
+    receipt?: ContractReceipt
+    error?: Error
+}): ChannelTransactionContext {
+    return {
+        status: props.status,
+        parentSpaceId: props.parentSpaceId,
+        data: props.data,
+        transaction: props.transaction,
+        receipt: props.receipt,
+        error: props.error,
+    }
+}
+
+export function createChannelUpdateTransactionContext(props: {
+    status: TransactionStatus
+    hasOffChainUpdate: boolean
+    data?: UpdateChannelInfo
+    transaction?: ContractTransaction
+    receipt?: ContractReceipt
+    error?: Error
+}): ChannelUpdateTransactionContext {
+    return {
+        status: props.status,
+        hasOffChainUpdate: props.hasOffChainUpdate,
+        data: props.data,
+        transaction: props.transaction,
+        receipt: props.receipt,
+        error: props.error,
+    }
+}
+
+export function createRoleTransactionContext(props: {
+    status: TransactionStatus
+    data?: RoleIdentifier
+    spaceNetworkId?: string
+    transaction?: ContractTransaction
+    receipt?: ContractReceipt
+    error?: Error
+}): RoleTransactionContext {
+    return {
+        status: props.status,
+        data: props.data,
+        spaceNetworkId: props.spaceNetworkId,
+        transaction: props.transaction,
+        receipt: props.receipt,
+        error: props.error,
     }
 }
