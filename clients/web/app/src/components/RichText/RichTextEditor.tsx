@@ -65,7 +65,7 @@ type Props = {
     editing?: boolean
     placeholder?: string
     initialValue?: string
-    displayButtons?: boolean
+    displayButtons?: 'always' | 'never' | 'on-focus'
     container?: (props: { children: React.ReactNode }) => JSX.Element
     tabIndex?: number
     storageId?: string
@@ -248,49 +248,53 @@ const RichTextEditorWithoutBoundary = (props: Props) => {
     }
 
     return (
-        <LexicalComposer initialConfig={initialConfig}>
-            <RichTextUI
-                focused={focused}
-                editing={isEditing}
-                background={props.background}
-                attemptingToSend={isAttemptingSend}
-                threadId={props.threadId}
-                threadPreview={props.threadPreview}
-            >
-                <RichTextPlugin
-                    contentEditable={
-                        <ContentEditable className={inputClassName} tabIndex={tabIndex} />
-                    }
-                    placeholder={<RichTextPlaceholder placeholder={placeholder} />}
-                    ErrorBoundary={LexicalErrorBoundary}
+        <Box background="level2" rounded="sm">
+            <LexicalComposer initialConfig={initialConfig}>
+                <RichTextUI
+                    focused={focused}
+                    editing={isEditing}
+                    background={props.background}
+                    attemptingToSend={isAttemptingSend}
+                    threadId={props.threadId}
+                    threadPreview={props.threadPreview}
+                >
+                    <RichTextPlugin
+                        contentEditable={
+                            <ContentEditable className={inputClassName} tabIndex={tabIndex} />
+                        }
+                        placeholder={<RichTextPlaceholder placeholder={placeholder} />}
+                        ErrorBoundary={LexicalErrorBoundary}
+                    />
+                </RichTextUI>
+                <OnFocusPlugin autoFocus={props.autoFocus} onFocusChange={onFocusChange} />
+                <ClearEditorPlugin />
+                <MarkdownShortcutPlugin transformers={transformers} />
+                <HistoryPlugin />
+                <LinkPlugin />
+                <EmojiReplacePlugin />
+                <MentionsPlugin members={members} userId={userId} />
+                <EmojiShortcutPlugin />
+                <ListMaxIndentLevelPlugin maxDepth={4} />
+                <ListPlugin />
+                <CheckListPlugin />
+                <SendMarkdownPlugin
+                    displayButtons={props.displayButtons ?? 'never'}
+                    disabled={isOffline}
+                    focused={focused}
+                    isEditing={isEditing ?? false}
+                    onSend={onSendCb}
+                    onSendAttemptWhileDisabled={onSendAttemptWhileDisabled}
+                    onCancel={props.onCancel}
                 />
-            </RichTextUI>
-            <OnFocusPlugin autoFocus={props.autoFocus} onFocusChange={onFocusChange} />
-            <ClearEditorPlugin />
-            <MarkdownShortcutPlugin transformers={transformers} />
-            <HistoryPlugin />
-            <LinkPlugin />
-            <EmojiReplacePlugin />
-            <MentionsPlugin members={members} userId={userId} />
-            <EmojiShortcutPlugin />
-            <ListMaxIndentLevelPlugin maxDepth={4} />
-            <ListPlugin />
-            <CheckListPlugin />
-            <SendMarkdownPlugin
-                displayButtons={props.displayButtons}
-                disabled={isOffline}
-                onSend={onSendCb}
-                onSendAttemptWhileDisabled={onSendAttemptWhileDisabled}
-                onCancel={props.onCancel}
-            />
-            {props.autoFocus ? <AutoFocusPlugin /> : <></>}
-            <AutoLinkMatcherPlugin />
-            <ChannelMentionPlugin channels={channels} />
-            <TabThroughPlugin />
-            <RememberInputPlugin storageId={props.storageId} />
-            <CodeHighlightPlugin />
-            <TabIndentationPlugin />
-        </LexicalComposer>
+                {props.autoFocus ? <AutoFocusPlugin /> : <></>}
+                <AutoLinkMatcherPlugin />
+                <ChannelMentionPlugin channels={channels} />
+                <TabThroughPlugin />
+                <RememberInputPlugin storageId={props.storageId} />
+                <CodeHighlightPlugin />
+                <TabIndentationPlugin />
+            </LexicalComposer>
+        </Box>
     )
 }
 

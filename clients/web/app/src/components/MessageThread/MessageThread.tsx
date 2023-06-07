@@ -18,6 +18,7 @@ import { useSpaceChannels } from 'hooks/useSpaceChannels'
 import { FadeInBox } from '@components/Transitions'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { useAuth } from 'hooks/useAuth'
+import { useDevice } from 'hooks/useDevice'
 
 export const MessageThread = (props: {
     userId: string
@@ -29,6 +30,7 @@ export const MessageThread = (props: {
     const { parentId, spaceId, channelId, channelLabel } = props
     const { parent, messages } = useTimelineThread(channelId, parentId)
     const parentMessage = parent?.parentEvent
+    const { isTouch } = useDevice()
 
     const { sendReply } = useSendReply(parentId, parentMessage?.fallbackContent)
 
@@ -104,6 +106,7 @@ export const MessageThread = (props: {
                             <RichTextEditor
                                 editable={!!isChannelWritable}
                                 threadId={parentId}
+                                displayButtons={isTouch ? 'on-focus' : 'never'}
                                 threadPreview={parentMessage?.fallbackContent}
                                 storageId={`${channelId.networkId}-${parentId}`}
                                 autoFocus={false}

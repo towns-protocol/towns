@@ -52,7 +52,7 @@ export const TimelineMessageEditor = (props: Props) => {
                         autoFocus
                         editable
                         editing
-                        displayButtons
+                        displayButtons="always"
                         initialValue={initialValue}
                         channels={channels}
                         members={members}
@@ -68,7 +68,7 @@ export const TimelineMessageEditor = (props: Props) => {
             <RichTextEditor
                 editable
                 editing
-                displayButtons
+                displayButtons="always"
                 initialValue={initialValue}
                 channels={channels}
                 members={members}

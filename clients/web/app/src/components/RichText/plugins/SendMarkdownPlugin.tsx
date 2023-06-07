@@ -3,6 +3,7 @@ import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext
 import { mergeRegister } from '@lexical/utils'
 import {
     $getRoot,
+    $isParagraphNode,
     CLEAR_EDITOR_COMMAND,
     COMMAND_PRIORITY_LOW,
     INSERT_PARAGRAPH_COMMAND,
@@ -10,22 +11,26 @@ import {
 } from 'lexical'
 import React, { useCallback, useEffect, useState } from 'react'
 import { Mention } from 'use-zion-client'
-import { Button, Icon, Stack } from '@ui'
+import { AnimatePresence } from 'framer-motion'
+import { Button, Icon, MotionBox, Stack } from '@ui'
 import { notUndefined } from 'ui/utils/utils'
 import { useDevice } from 'hooks/useDevice'
 import { $isMentionNode } from '../nodes/MentionNode'
 
 export const SendMarkdownPlugin = (props: {
     disabled?: boolean
-    displayButtons?: boolean
+    displayButtons: 'always' | 'never' | 'on-focus'
+    focused: boolean
+    isEditing: boolean
     onSend?: (value: string, mentions: Mention[]) => void
     onSendAttemptWhileDisabled?: () => void
     onCancel?: () => void
 }) => {
     const { disabled, onSend, onSendAttemptWhileDisabled } = props
     const [editor] = useLexicalComposerContext()
-
+    const [isEditorEmpty, setIsEditorEmpty] = useState(true)
     const { parseMarkdown } = useParseMarkdown(onSend)
+    const { isTouch } = useDevice()
 
     // the following is hack makes the command fire last in the queue of
     // LOW_PRIORITY_COMMANDS allowing commands on the same priority to fire
@@ -44,7 +49,30 @@ export const SendMarkdownPlugin = (props: {
     }, [])
 
     useEffect(() => {
+        return editor.registerUpdateListener(({ dirtyElements, prevEditorState, tags }) => {
+            editor.getEditorState().read(() => {
+                const root = $getRoot()
+                const children = root.getChildren()
+
+                if (children.length > 1) {
+                    setIsEditorEmpty(false)
+                } else {
+                    if ($isParagraphNode(children[0])) {
+                        const paragraphChildren = children[0].getChildren()
+                        setIsEditorEmpty(paragraphChildren.length === 0)
+                    } else {
+                        setIsEditorEmpty(false)
+                    }
+                }
+            })
+        })
+    }, [editor])
+
+    useEffect(() => {
         // keep depency in order to register when updated
+        if (isTouch) {
+            return
+        }
         registerCommandCount
         return mergeRegister(
             editor.registerCommand(
@@ -70,21 +98,44 @@ export const SendMarkdownPlugin = (props: {
                 COMMAND_PRIORITY_LOW,
             ),
         )
-    }, [editor, parseMarkdown, disabled, registerCommandCount, onSendAttemptWhileDisabled])
+    }, [editor, parseMarkdown, disabled, registerCommandCount, onSendAttemptWhileDisabled, isTouch])
 
     const sendMessage = useCallback(() => {
         parseMarkdown()
         editor.dispatchCommand(CLEAR_EDITOR_COMMAND, undefined)
     }, [editor, parseMarkdown])
 
-    return props.displayButtons ? (
-        <EditMessageButtons onCancel={props.onCancel} onSave={sendMessage} />
-    ) : null
+    const shouldDisplayButtons =
+        props.displayButtons === 'always' || (props.displayButtons === 'on-focus' && props.focused)
+
+    return (
+        <AnimatePresence>
+            {shouldDisplayButtons && (
+                <MotionBox
+                    initial={{ height: 0, opacity: 0 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                >
+                    <EditMessageButtons
+                        isEditing={props.isEditing}
+                        isEditorEmpty={isEditorEmpty}
+                        onCancel={props.onCancel}
+                        onSave={sendMessage}
+                    />
+                </MotionBox>
+            )}
+        </AnimatePresence>
+    )
 }
 
-const EditMessageButtons = (props: { onSave?: () => void; onCancel?: () => void }) => {
+const EditMessageButtons = (props: {
+    onSave?: () => void
+    onCancel?: () => void
+    isEditing: boolean
+    isEditorEmpty: boolean
+}) => {
     const { isTouch } = useDevice()
-    const { onCancel } = props
+    const { onCancel, isEditing, isEditorEmpty } = props
 
     useEffect(() => {
         if (!onCancel) {
@@ -102,10 +153,20 @@ const EditMessageButtons = (props: { onSave?: () => void; onCancel?: () => void 
     }, [onCancel])
 
     return isTouch ? (
-        <Stack horizontal gap paddingX paddingBottom="md" justifyContent="end">
-            <Icon type="touchCancel" size="square_lg" onClick={props.onCancel} />
-            <Icon type="touchSend" size="square_lg" onClick={props.onSave} />
-        </Stack>
+        isEditing ? (
+            <Stack horizontal gap paddingX paddingBottom="md" justifyContent="start">
+                <Icon type="touchEditingCancel" size="square_lg" onClick={props.onCancel} />
+                <Icon type="touchEditingSend" size="square_lg" onClick={props.onSave} />
+            </Stack>
+        ) : (
+            <Stack horizontal gap paddingX paddingBottom="md" justifyContent="end">
+                <Icon
+                    type={isEditorEmpty ? 'touchSendDisabled' : 'touchSendEnabled'}
+                    size="square_lg"
+                    onClick={isEditorEmpty ? props.onCancel : props.onSave}
+                />
+            </Stack>
+        )
     ) : (
         <Stack horizontal gap>
             <Button size="button_sm" tone="cta1" onClick={props.onSave}>

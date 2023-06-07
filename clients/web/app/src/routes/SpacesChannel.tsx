@@ -188,6 +188,7 @@ const SpacesChannelComponent = () => {
                         <RichTextEditor
                             editable={!!isChannelWritable}
                             background={isChannelWritable ? 'level2' : 'level1'}
+                            displayButtons={isTouch ? 'on-focus' : 'never'}
                             key={channelId.networkId}
                             storageId={channel.id.networkId}
                             autoFocus={!hasThreadOpen && !isTouch}

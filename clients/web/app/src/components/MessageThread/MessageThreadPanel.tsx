@@ -79,6 +79,7 @@ export const MessageThreadPanel = (props: Props) => {
                         <RichTextEditor
                             autoFocus={!isTouch}
                             editable={!!isChannelWritable}
+                            displayButtons={isTouch ? 'on-focus' : 'never'}
                             placeholder="Reply..."
                             storageId={`${channelId.networkId}-${messageId}`}
                             threadId={messageId}

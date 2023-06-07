@@ -778,7 +778,7 @@ export const TokenIcon = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) =>
     </svg>
 ))
 
-export const TouchSendIcon = forwardRef<SVGSVGElement, React.SVGProps<SVGSVGElement>>(
+export const TouchEditingSendIcon = forwardRef<SVGSVGElement, React.SVGProps<SVGSVGElement>>(
     (props, ref) => (
         <svg
             width="36"
@@ -800,7 +800,7 @@ export const TouchSendIcon = forwardRef<SVGSVGElement, React.SVGProps<SVGSVGElem
     ),
 )
 
-export const TouchCancelIcon = forwardRef<SVGSVGElement, React.SVGProps<SVGSVGElement>>(
+export const TouchEditingCancelIcon = forwardRef<SVGSVGElement, React.SVGProps<SVGSVGElement>>(
     (props, ref) => (
         <svg
             width="36"
@@ -818,6 +818,75 @@ export const TouchCancelIcon = forwardRef<SVGSVGElement, React.SVGProps<SVGSVGEl
                 d="M23.0167 13.5896C23.3421 13.2641 23.3421 12.7365 23.0167 12.4111C22.6913 12.0856 22.1636 12.0856 21.8382 12.4111L17.7134 16.5359L13.5886 12.4111C13.2632 12.0857 12.7355 12.0857 12.4101 12.4111C12.0847 12.7365 12.0847 13.2642 12.4101 13.5896L16.5349 17.7144L12.4101 21.8392C12.0847 22.1646 12.0847 22.6922 12.4101 23.0177C12.7355 23.3431 13.2632 23.3431 13.5886 23.0177L17.7134 18.8929L21.8382 23.0177C22.1636 23.3431 22.6913 23.3431 23.0167 23.0177C23.3421 22.6923 23.3421 22.1646 23.0167 21.8392L18.8919 17.7144L23.0167 13.5896Z"
                 fill="#EAEAEA"
             />
+        </svg>
+    ),
+)
+
+export const TouchSendEnabledIcon = forwardRef<SVGSVGElement, React.SVGProps<SVGSVGElement>>(
+    (props, ref) => (
+        <svg
+            width="36"
+            height="36"
+            viewBox="0 0 36 36"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            {...props}
+            ref={ref}
+        >
+            <rect width="36" height="36" rx="18" fill="url(#paint0_linear_10999_392164)" />
+            <g clipPath="url(#clip0_10999_392164)">
+                <path
+                    fillRule="evenodd"
+                    clipRule="evenodd"
+                    d="M27.1138 9.95923C27.0734 10.0674 27.0096 10.1689 26.9226 10.256L16.9226 20.256C16.9144 20.2642 16.9061 20.2721 16.8976 20.2799L19.7385 26.6718C19.8772 26.9841 20.1926 27.1799 20.534 27.166C20.8754 27.1521 21.1737 26.9312 21.2865 26.6087L27.1138 9.95923ZM15.7201 19.1024L9.3282 16.2615C9.01597 16.1228 8.82008 15.8075 8.83401 15.4661C8.84794 15.1247 9.06886 14.8264 9.39136 14.7135L26.0407 8.88623C25.9325 8.92671 25.8311 8.99046 25.7441 9.07745L15.7441 19.0775C15.7359 19.0856 15.7279 19.094 15.7201 19.1024ZM27.1639 9.59929C27.1684 9.65423 27.1674 9.70953 27.1609 9.76432C27.1674 9.70923 27.1684 9.65396 27.1639 9.59929Z"
+                    fill="#151418"
+                />
+            </g>
+            <defs>
+                <linearGradient
+                    id="paint0_linear_10999_392164"
+                    x1="-1.3411e-07"
+                    y1="18"
+                    x2="36"
+                    y2="18"
+                    gradientUnits="userSpaceOnUse"
+                >
+                    <stop stopColor="#21E078" />
+                    <stop offset="1" stopColor="#1FDBF1" />
+                </linearGradient>
+                <clipPath id="clip0_10999_392164">
+                    <rect width="20" height="20" fill="white" transform="translate(8 8)" />
+                </clipPath>
+            </defs>
+        </svg>
+    ),
+)
+
+export const TouchSendDisabledIcon = forwardRef<SVGSVGElement, React.SVGProps<SVGSVGElement>>(
+    (props, ref) => (
+        <svg
+            width="36"
+            height="36"
+            viewBox="0 0 36 36"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            {...props}
+            ref={ref}
+        >
+            <rect width="36" height="36" rx="18" fill="#494651" />
+            <g clipPath="url(#clip0_10999_391659)">
+                <path
+                    fillRule="evenodd"
+                    clipRule="evenodd"
+                    d="M27.1139 9.95923C27.0734 10.0674 27.0097 10.1689 26.9226 10.256L16.9226 20.256C16.9144 20.2642 16.9061 20.2721 16.8977 20.2799L19.7385 26.6718C19.8773 26.9841 20.1926 27.1799 20.534 27.166C20.8754 27.1521 21.1737 26.9312 21.2866 26.6087L27.1139 9.95923ZM15.7202 19.1024L9.32826 16.2615C9.01603 16.1228 8.82014 15.8075 8.83407 15.4661C8.848 15.1247 9.06892 14.8264 9.39142 14.7135L26.0407 8.88623C25.9326 8.92671 25.8311 8.99046 25.7441 9.07745L15.7441 19.0775C15.7359 19.0856 15.7279 19.094 15.7202 19.1024ZM27.164 9.59929C27.1684 9.65423 27.1674 9.70953 27.161 9.76432C27.1675 9.70923 27.1684 9.65396 27.164 9.59929Z"
+                    fill="#8A8791"
+                />
+            </g>
+            <defs>
+                <clipPath id="clip0_10999_391659">
+                    <rect width="20" height="20" fill="white" transform="translate(8 8)" />
+                </clipPath>
+            </defs>
         </svg>
     ),
 )
@@ -1098,8 +1167,10 @@ const iconMap = {
     tag: TagIcon,
     threads: MessageIcon,
     token: TokenIcon,
-    touchCancel: TouchCancelIcon,
-    touchSend: TouchSendIcon,
+    touchEditingCancel: TouchEditingCancelIcon,
+    touchEditingSend: TouchEditingSendIcon,
+    touchSendDisabled: TouchSendDisabledIcon,
+    touchSendEnabled: TouchSendEnabledIcon,
     trending: TrendingIcon,
     type: TypeIcon,
     unlock: UnlockIcon,
