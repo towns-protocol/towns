@@ -83,7 +83,7 @@ describe('On-chain channel creation tests', () => {
             Permission.ModifySpaceSettings,
         ])) as RoomIdentifier
 
-        await alice.inviteUser(roomId, tokenGrantedUser.matrixUserId as string)
+        await alice.inviteUser(roomId, tokenGrantedUser.getUserId() as string)
         await tokenGrantedUser.joinRoom(roomId)
 
         /* Act */

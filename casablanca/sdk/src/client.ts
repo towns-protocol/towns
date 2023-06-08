@@ -495,6 +495,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
                         this.logSync('started syncStreams', syncPos)
                         const syncedStreams = []
                         for await (const syncedStream of sync) {
+                            this.logSync('got syncStreams', syncedStream)
                             syncedStreams.push(syncedStream)
                         }
                         this.logSync('finished syncStreams', syncPos)
@@ -820,6 +821,31 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
                     userId: this.userId,
                 }),
                 'joinSpace',
+            )
+        } else {
+            throw new Error('invalid streamId')
+        }
+    }
+
+    async leaveStream(streamId: string): Promise<void> {
+        this.logCall('leaveStream', streamId)
+        if (isChannelStreamId(streamId)) {
+            return this.makeEventAndAddToStream(
+                streamId,
+                make_ChannelPayload_Membership({
+                    op: MembershipOp.SO_LEAVE,
+                    userId: this.userId,
+                }),
+                'leaveChannel',
+            )
+        } else if (isSpaceStreamId(streamId)) {
+            return this.makeEventAndAddToStream(
+                streamId,
+                make_SpacePayload_Membership({
+                    op: MembershipOp.SO_LEAVE,
+                    userId: this.userId,
+                }),
+                'leaveSpace',
             )
         } else {
             throw new Error('invalid streamId')

@@ -687,7 +687,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
             console.error('[createChannelTransaction] error', err)
             error = await this.onErrorLeaveChannelRoomAndDecodeError(
                 createChannelInfo.parentSpaceId.networkId,
-                roomId,
+                undefined,
                 err,
             )
         }
@@ -1481,7 +1481,11 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
                 break
             }
             case SpaceProtocol.Casablanca:
-                throw new Error('leave not implemented for Casablanca')
+                if (!this.casablancaClient) {
+                    throw new Error('Casablanca client not initialized')
+                }
+                await this.casablancaClient.leaveStream(roomId.networkId)
+                break
             default:
                 staticAssertNever(roomId)
         }

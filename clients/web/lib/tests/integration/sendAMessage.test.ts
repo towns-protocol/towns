@@ -84,11 +84,11 @@ describe('sendAMessage', () => {
         for (let i = 1; i < numClients; i++) {
             console.log(`!!!!!! client ${i} sends a message`)
             const client = clients[`client_${i}`]
-            await client.sendMessage(channelId, `Hello Bob! from ${client.matrixUserId!}`)
+            await client.sendMessage(channelId, `Hello Bob! from ${client.getUserId()!}`)
             // bob should receive the message
             await waitFor(async () => {
                 const event = await bob.getLatestEvent<RoomMessageEvent>(channelId)
-                expect(event?.content?.body).toEqual(`Hello Bob! from ${client.matrixUserId!}`)
+                expect(event?.content?.body).toEqual(`Hello Bob! from ${client.getUserId()!}`)
             })
         }
     }) // end test
