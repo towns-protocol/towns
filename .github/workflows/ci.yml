@@ -244,7 +244,7 @@ jobs:
                   PGPASSWORD: postgres
 
             - name: Run Casablanca node (without auth)
-              run: yarn csb:start --config dev.yaml &
+              run: yarn csb:start --config dev-no-auth.yaml &
 
             - name: Wait for Casablanca node to be up
               run: yarn csb:wait

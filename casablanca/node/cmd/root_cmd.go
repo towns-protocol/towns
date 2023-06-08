@@ -108,7 +108,7 @@ func initConfigAndLog() {
 
 func init() {
 	cobra.OnInitialize(initConfigAndLog)
-	rootCmd.PersistentFlags().StringVarP(&configFile, "config", "c", "dev.yaml", "Path to the configuration file")
+	rootCmd.PersistentFlags().StringVarP(&configFile, "config", "c", "dev-auth.yaml", "Path to the configuration file")
 	rootCmd.PersistentFlags().StringVarP(&logLevelOverride, "log_level", "l", "", "Override log level (options: trace, debug, info, warn, error, panic, fatal)")
 	rootCmd.PersistentFlags().StringVar(&logFileOverride, "log_file", "default", "Override log file ('default' to use the one specified in the config file, 'none' to disable logging to file)")
 	rootCmd.PersistentFlags().StringVar(&eventsFileOverride, "events_file", "none", "Override log event file for debug mode ('none' to disable logging to file, it is default setting)")

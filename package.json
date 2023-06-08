@@ -22,6 +22,7 @@
         "csb:prettier:check": "prettier --check ./casablanca",
         "csb:prettier:fix": "prettier --write ./casablanca",
         "csb:start": "./casablanca/scripts/start_node.sh",
+        "csb:start-no-auth": "./casablanca/scripts/start_node.sh --config dev-no-auth.yaml",
         "csb:stop": "./casablanca/scripts/stop.sh",
         "csb:storage": "./casablanca/scripts/launch_storage.sh",
         "csb:test": "yarn csb:command run test && echo ALL GOOD || (echo NOT PASSED; exit 1)",
