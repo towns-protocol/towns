@@ -2092,15 +2092,15 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
      * getUser
      ************************************************/
     public getUser(userId: string): User | undefined {
-        if (isCasablancaUserStreamId(userId)) {
-            // todo casablanca look for user in casablanca
-            throw new Error('not implemented')
-        } else {
-            if (!this.matrixClient) {
-                throw new Error('matrix client is undefined')
+        switch (this.opts.primaryProtocol) {
+            case SpaceProtocol.Matrix: {
+                const matrixUser = this.matrixClient?.getUser(userId)
+                return matrixUser ? toZionUser(matrixUser) : undefined
             }
-            const matrixUser = this.matrixClient.getUser(userId)
-            return matrixUser ? toZionUser(matrixUser) : undefined
+            case SpaceProtocol.Casablanca:
+                throw new Error('not implemented')
+            default:
+                throw new Error('Unexpected primary protocol')
         }
     }
 
