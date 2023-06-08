@@ -1,4 +1,3 @@
-import sourcemaps from 'rollup-plugin-sourcemaps'
 import { vanillaExtractPlugin } from '@vanilla-extract/vite-plugin'
 import react from '@vitejs/plugin-react'
 import { defineConfig, loadEnv, UserConfigExport, PluginOption, UserConfig } from 'vite'
@@ -63,7 +62,6 @@ export default ({ mode }: { mode: string }) => {
             react(),
             tsconfigPaths(),
             vanillaExtractPlugin(),
-            sourcemaps({ exclude: '**/@sentry/**/*.js' }),
         ].concat(mode === 'development' ? devPlugins : prodPlugins) as PluginOption[],
         server: {
             port: 3000,
