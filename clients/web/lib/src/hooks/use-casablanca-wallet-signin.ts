@@ -38,7 +38,9 @@ export function useCasablancaWalletSignIn() {
                 )
                 setCasablancaCredentials(clientSingleton.opts.casablancaServerUrl, {
                     privateKey: delegateWallet.privateKey,
-                    creatorAddress: bin_toHexString(casablancaContext.creatorAddress),
+                    creatorAddress: ethers.utils.getAddress(
+                        bin_toHexString(casablancaContext.creatorAddress),
+                    ),
                     delegateSig: casablancaContext.delegateSig
                         ? bin_toHexString(casablancaContext.delegateSig)
                         : undefined,
