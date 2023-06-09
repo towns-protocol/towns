@@ -5,11 +5,12 @@
 	"author": "author",
 	"license": "MIT OR Apache-2.0",
 	"scripts": {
-		"dev": "wrangler dev",
-		"dev:local": "wrangler dev --local",
+		"dev": "echo use dev:local for now - see wrangler.toml",
+		"dev:local": "npx wrangler dev",
+		"dev:remote": "npx wrangler dev --remote",
 		"lint": "eslint .",
-		"publish:prod": "wrangler publish --env production",
-		"publish:test": "wrangler publish --env test",
+		"publish:prod": "npx wrangler deploy --env production",
+		"publish:test": "npx wrangler deploy --env test",
 		"test": "jest"
 	},
 	"devDependencies": {
@@ -24,6 +25,6 @@
 		"prettier": "^2.8.8",
 		"ts-jest": "^29.1.0",
 		"typescript": "^5.0.4",
-		"wrangler": "^2.19.0"
+		"wrangler": "^3.1.0"
 	}
 }
