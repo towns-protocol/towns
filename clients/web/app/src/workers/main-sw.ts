@@ -4,6 +4,7 @@ import {
     precacheAndRoute,
 } from 'workbox-precaching'
 import { NavigationRoute, registerRoute } from 'workbox-routing'
+import { handleNotifications } from './notifications'
 
 console.log('main-sw: script')
 
@@ -15,6 +16,8 @@ self.addEventListener('message', (event) => {
         self.skipWaiting()
     }
 })
+
+handleNotifications(self)
 
 // self.__WB_MANIFEST is default injection point
 precacheAndRoute(self.__WB_MANIFEST)

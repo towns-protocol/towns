@@ -23,6 +23,7 @@ import { env } from 'utils'
 import { ReloadPrompt } from '@components/ReloadPrompt/ReloadPrompt'
 import { Figma } from 'ui/styles/palette'
 import { AppBadge, FaviconBadge } from '@components/AppBadges/AppBadges'
+import { AppNotifications } from '@components/AppNotifications/AppNotifications'
 
 const AuthenticatedRoutes = React.lazy(() => import('routes/AuthenticatedRoutes'))
 const InviteLinkLanding = React.lazy(() => import('routes/InviteLinkLanding'))
@@ -57,6 +58,7 @@ export const App = () => {
             <>
                 <FaviconBadge />
                 <AppBadge />
+                <AppNotifications />
                 <Helmet>
                     <meta
                         name="theme-color"
