@@ -71,7 +71,7 @@ jobs:
 
             - uses: actions/setup-node@v3
               with:
-                  node-version: '18.13'
+                  node-version: '20'
                   cache: 'yarn'
 
             - name: Install node dependencies
@@ -204,7 +204,7 @@ jobs:
 
             - uses: actions/setup-node@v3
               with:
-                  node-version: '18.13.0'
+                  node-version: '20'
                   cache: 'yarn'
 
             - name: Print versions
