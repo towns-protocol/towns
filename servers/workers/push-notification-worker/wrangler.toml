@@ -1,0 +1,21 @@
+name = "push-notification-worker-dev"
+main = "src/worker.ts"
+compatibility_date = "2023-05-18"
+
+d1_databases = [
+  { binding = "DB", database_name = "PushSubscription", database_id = "1a2abc1f-acd0-4de7-bf1e-1ba3335a0e3b" }
+]
+
+[vars]
+ENVIRONMENT = "development"
+
+[env.production]
+name = "push-notification-worker-production"
+d1_databases = [
+  { binding = "DB", database_name = "PushSubscription", database_id = "41e2c89e-1d22-41c3-b5e5-d936d9c67af7"}
+]
+[env.production.vars]
+ENVIRONMENT = "production"
+
+# [env.shared]
+# SHARED_VARIABLE = "shared_value"

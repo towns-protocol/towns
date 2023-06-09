@@ -100,6 +100,15 @@
         ],
         "versionGroups": [
             {
+                "label": "push-notification-worker needs Wrangler 3. All other workers should be in sync on Wrangler 2. See HNT-1596",
+                "dependencies": [
+                    "wrangler"
+                ],
+                "packages": [
+                    "push-notification-worker"
+                ]
+            },
+            {
                 "label": "Different versions in worker & client - need v2.x in workers, which breaks client",
                 "dependencies": [
                     "siwe"
