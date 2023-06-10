@@ -78,7 +78,7 @@ describe('userProfileOnAcceptInviteHooks', () => {
             },
         )) as RoomIdentifier
         // bob invites alice to the room
-        await bob.inviteUser(roomId, alice.matrixUserId!)
+        await bob.inviteUser(roomId, alice.getUserId()!)
         // wait for the invite to show (this will transition back to 0 after the invite is accepted)
         await waitFor(() => expect(invitesCount).toHaveTextContent('1'))
         // click the accept button

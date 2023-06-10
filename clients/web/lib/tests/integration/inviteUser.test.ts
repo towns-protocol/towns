@@ -25,7 +25,7 @@ describe('inviteUser', () => {
             },
         ))!
         // bob invites alice to the room
-        await bob.inviteUser(roomId, alice.matrixUserId!)
+        await bob.inviteUser(roomId, alice.getUserId()!)
         await waitFor(() => expect(bob.getRoomData(roomId)?.members.length == 1))
         // alice should expect an invite to the room
         await waitFor(() => expect(alice.getRoomData(roomId)).toBeDefined())

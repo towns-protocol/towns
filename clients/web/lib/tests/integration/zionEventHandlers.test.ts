@@ -91,7 +91,7 @@ describe('Zion event handlers test', () => {
         const userId = bob.getUserId()
 
         if (!userId) {
-            throw new Error('bob.matrixUserId is undefined')
+            throw new Error('bob.getUserId() is undefined')
         }
 
         // alice invites bob to the room

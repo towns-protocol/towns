@@ -48,7 +48,7 @@ describe('presence', () => {
         )
         // expect bob to see alice as online
         await waitFor(() => {
-            const bobsViewOfAlice = bob.getUser(alice.matrixUserId!)
+            const bobsViewOfAlice = bob.getUser(alice.getUserId()!)
             expect(bobsViewOfAlice).toBeDefined()
             expect(bobsViewOfAlice?.currentlyActive).toEqual(true)
         })

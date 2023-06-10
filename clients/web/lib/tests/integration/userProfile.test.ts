@@ -37,16 +37,16 @@ describe('userProfile', () => {
         await alice.joinRoom(roomId)
         // alice should see bob's user name
         await waitFor(() =>
-            expect(alice.getRoomMember(roomId, bob.matrixUserId!)?.name).toBe("Bob's your uncle"),
+            expect(alice.getRoomMember(roomId, bob.getUserId()!)?.name).toBe("Bob's your uncle"),
         )
         // alice should see bob's profile photo
         await waitFor(() =>
-            expect(alice.getRoomMember(roomId, bob.matrixUserId!)?.avatarUrl).toBe(
+            expect(alice.getRoomMember(roomId, bob.getUserId()!)?.avatarUrl).toBe(
                 'https://example.com/bob.png',
             ),
         )
         // log alice's view of bob
-        const alicesViewOfBob = alice.getRoomMember(roomId, bob.matrixUserId!)
+        const alicesViewOfBob = alice.getRoomMember(roomId, bob.getUserId()!)
         console.log('alice sees bob as', {
             name: alicesViewOfBob?.name,
             disambiguate: alicesViewOfBob?.disambiguate,
@@ -54,7 +54,7 @@ describe('userProfile', () => {
             avatarUrl: alicesViewOfBob?.avatarUrl,
         })
         // log bob's view of alice
-        const bobsViewOfAlice = bob.getRoomMember(roomId, alice.matrixUserId!)
+        const bobsViewOfAlice = bob.getRoomMember(roomId, alice.getUserId()!)
         console.log('bob sees alice as', {
             name: bobsViewOfAlice?.name,
             disambiguate: bobsViewOfAlice?.disambiguate,
@@ -68,11 +68,11 @@ describe('userProfile', () => {
         })
         // bob should see alices new user name
         await waitFor(() =>
-            expect(bob.getRoomMember(roomId, alice.matrixUserId!)?.name).toBe("Alice's your aunt"),
+            expect(bob.getRoomMember(roomId, alice.getUserId()!)?.name).toBe("Alice's your aunt"),
         )
         // alice should see bob's profile photo
         await waitFor(() =>
-            expect(bob.getRoomMember(roomId, alice.matrixUserId!)?.avatarUrl).toBe(
+            expect(bob.getRoomMember(roomId, alice.getUserId()!)?.avatarUrl).toBe(
                 'https://example.com/alice.png',
             ),
         )

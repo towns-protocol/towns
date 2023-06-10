@@ -110,9 +110,9 @@ describe('unreadMessageCount', () => {
         await stopAlice()
 
         // bob invites alice to the room
-        await bob.inviteUser(spaceId, alice.matrixUserId!)
-        await bob.inviteUser(channel_1, alice.matrixUserId!)
-        await bob.inviteUser(channel_2, alice.matrixUserId!)
+        await bob.inviteUser(spaceId, alice.getUserId()!)
+        await bob.inviteUser(channel_1, alice.getUserId()!)
+        await bob.inviteUser(channel_2, alice.getUserId()!)
 
         ////// Start alice /////
         await startAlice()

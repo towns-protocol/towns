@@ -1,8 +1,9 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 /**
  * @group dendrite
+ * @group casablanca
  */
-import { MAXTRIX_ERROR, MatrixError, NoThrownError, getError } from './helpers/ErrorUtils'
+import { MAXTRIX_ERROR, MatrixError, NoThrownError } from './helpers/ErrorUtils'
 import {
     createTestSpaceWithZionMemberRole,
     registerAndStartClients,
@@ -32,13 +33,14 @@ describe('space invite', () => {
         /** Act */
         // invite users to join the space.
         try {
-            if (roomId && einstein.matrixUserId) {
+            const einsteinUserId = einstein.getUserId()
+            if (roomId && einsteinUserId) {
                 // TODO: add an assertion on inviteUser by typing return value
-                await alice.inviteUser(roomId, einstein.matrixUserId)
+                await alice.inviteUser(roomId, einsteinUserId)
             }
         } catch (e) {
             /** Assert */
-            expect((e as Error).message).toContain('Inviter not allowed')
+            expect((e as Error).message).toMatch(new RegExp('Inviter not allowed|PermissionDenied'))
             return
         }
         expect(true).toEqual(false)
@@ -71,8 +73,8 @@ describe('space invite', () => {
         )
         /** Act */
         // invite user to join the space by first checking if they can read.
-        if (roomId && alice.matrixUserId) {
-            !isEntitledRead && (await bob.inviteUser(roomId, alice.matrixUserId))
+        if (roomId && alice.getUserId()) {
+            !isEntitledRead && (await bob.inviteUser(roomId, alice.getUserId()!))
         }
         /** Assert */
         expect(isEntitledRead).toBe(false)
@@ -114,8 +116,8 @@ describe('space invite', () => {
         )
         /** Act */
         // invite user to join the space by first checking if they can read.
-        if (roomId && tokenGrantedUser.matrixUserId) {
-            isEntitledRead && (await bob.inviteUser(roomId, tokenGrantedUser.matrixUserId))
+        if (roomId && tokenGrantedUser.getUserId()) {
+            isEntitledRead && (await bob.inviteUser(roomId, tokenGrantedUser.getUserId()!))
         }
         /** Assert */
         expect(isEntitledRead).toBe(true)
@@ -139,8 +141,10 @@ describe('space invite', () => {
 
         // invite users to join the space.
         if (roomId) {
-            tokenGrantedUser.matrixUserId &&
-                (await bob.inviteUser(roomId, tokenGrantedUser.matrixUserId))
+            const tokenGrantedUserId = tokenGrantedUser.getUserId()
+            if (tokenGrantedUserId) {
+                await bob.inviteUser(roomId, tokenGrantedUserId)
+            }
         }
         /** Act */
         let actualJoin: Room | undefined
@@ -165,21 +169,30 @@ describe('space invite', () => {
 
         // invite users to join the space.
         if (roomId) {
-            alice.matrixUserId && (await bob.inviteUser(roomId, alice.matrixUserId))
+            const aliceUserId = alice.getUserId()
+            if (aliceUserId) {
+                await bob.inviteUser(roomId, aliceUserId)
+            }
         }
 
         /** Act */
-        const error = await getError<MatrixError>(async function () {
+        try {
             if (roomId) {
                 await alice.joinRoom(roomId)
             }
-        })
-
-        /** Assert */
-        // check that the returned error wasn't that no error was thrown.
-        expect(error).not.toBeInstanceOf(NoThrownError)
-        // Forbidden exception because the user does not have Read permission
-        expect(error.data).toHaveProperty('errcode', MAXTRIX_ERROR.M_FORBIDDEN)
+        } catch (e) {
+            const error = e as MatrixError
+            /** Assert */
+            // check that the returned error wasn't that no error was thrown.
+            if (error.data) {
+                expect(error).not.toBeInstanceOf(NoThrownError)
+                // Forbidden exception because the user does not have Read permission
+                expect(error.data).toHaveProperty('errcode', MAXTRIX_ERROR.M_FORBIDDEN)
+            } else {
+                // Casablanca
+                expect((e as Error).message).toMatch(new RegExp('PermissionDenied'))
+            }
+        }
     }) // end test
 
     // this test is dependent on member_cap in dendrite_local_test/dendrite.yaml,

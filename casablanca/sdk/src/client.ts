@@ -778,6 +778,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
     }
 
     async inviteUser(streamId: string, userId: string): Promise<void> {
+        await this.initStream(streamId)
         if (isSpaceStreamId(streamId)) {
             return this.makeEventAndAddToStream(
                 streamId,

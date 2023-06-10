@@ -1,8 +1,9 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 /**
  * @group dendrite
+ * @group casablanca
  */
-import { MAXTRIX_ERROR, MatrixError, NoThrownError, getError } from './helpers/ErrorUtils'
+import { MAXTRIX_ERROR, NoThrownError, getError } from './helpers/ErrorUtils'
 import { Room, RoomVisibility } from '../../src/types/zion-types'
 import {
     createExternalTokenStruct,
@@ -100,7 +101,7 @@ describe('delete role', () => {
         }
         // bob tries to join the room again
         // expect that bob cannot join the room
-        const error = await getError<MatrixError>(async function () {
+        const error = await getError<Error>(async function () {
             rejoinedRoom = await bobWithNft.joinRoom(channel, spaceId)
         })
 
@@ -118,7 +119,13 @@ describe('delete role', () => {
         expect(rejoinedRoom).toBeUndefined()
         // verify error was thrown.
         expect(error).not.toBeInstanceOf(NoThrownError)
-        expect(error).toHaveProperty('name', MAXTRIX_ERROR.M_FORBIDDEN)
+        // check if error has property name
+        if (error.name == 'ConnectError') {
+            // Casablanca
+            expect(error.message).toContain('PermissionDenied')
+        } else {
+            expect(error).toHaveProperty('name', MAXTRIX_ERROR.M_FORBIDDEN)
+        }
         // verify role is deleted
         const actual = await alice.spaceDapp.getRole(spaceId, roleId)
         expect(actual).toBeNull()
@@ -215,7 +222,7 @@ describe('delete role', () => {
         }
         // bob tries to join the room again
         // expect that bob cannot join the room
-        const error = await getError<MatrixError>(async function () {
+        const error = await getError<Error>(async function () {
             rejoinedRoom = await bob.joinRoom(channel, spaceId)
         })
 
@@ -233,7 +240,12 @@ describe('delete role', () => {
         expect(rejoinedRoom).toBeUndefined()
         // verify error was thrown.
         expect(error).not.toBeInstanceOf(NoThrownError)
-        expect(error).toHaveProperty('name', MAXTRIX_ERROR.M_FORBIDDEN)
+        if (error.name == 'ConnectError') {
+            // Casablanca
+            expect(error.message).toContain('PermissionDenied')
+        } else {
+            expect(error).toHaveProperty('name', MAXTRIX_ERROR.M_FORBIDDEN)
+        }
         // verify role is deleted
         const actual = await alice.spaceDapp.getRole(spaceId, roleId)
         expect(actual).toBeNull()

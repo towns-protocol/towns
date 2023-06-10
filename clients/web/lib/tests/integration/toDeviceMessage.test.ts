@@ -37,9 +37,9 @@ describe('toDeviceMessage', () => {
             throw new Error('not implemented')
         }
 
-        await waitFor(() => expect(alice.canSendToDeviceMessage(bob.matrixUserId!)).toEqual(true))
+        await waitFor(() => expect(alice.canSendToDeviceMessage(bob.getUserId()!)).toEqual(true))
 
-        await alice.sendToDeviceMessage(bob.matrixUserId!, 'm.zion.foo', { foo: 'bar' })
+        await alice.sendToDeviceMessage(bob.getUserId()!, 'm.zion.foo', { foo: 'bar' })
 
         await waitFor(() =>
             expect(bobsRecievedMessages.find((e) => e.getType() === 'm.zion.foo')).toBeDefined(),

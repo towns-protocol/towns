@@ -64,9 +64,6 @@ export class ZionTestClient extends ZionClient {
         return this.provider.wallet
     }
     public delegateWallet: ethers.Wallet
-    public get matrixUserId(): string | undefined {
-        return this.auth?.userId
-    }
     public get walletAddress(): string | undefined {
         return this.userIdentifier?.accountAddress
     }

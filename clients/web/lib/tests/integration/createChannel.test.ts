@@ -1,5 +1,6 @@
 /**
  * @group dendrite
+ * @grouo casablanca
  */
 import { CONTRACT_ERROR, NoThrownError, getError } from './helpers/ErrorUtils'
 import { createTestSpaceWithZionMemberRole, registerAndStartClients } from './helpers/TestUtils'

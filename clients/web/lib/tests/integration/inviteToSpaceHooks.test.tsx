@@ -30,7 +30,7 @@ describe.skip('inviteToSpace', () => {
         const { jane, bob } = await registerAndStartClients(['jane', 'bob'])
         // create a wallet for bob
         const bobProvider = bob.provider
-        const bobUserId = bob.matrixUserId!
+        const bobUserId = bob.getUserId()!
         // create a space
         // jane needs funds to create a space
         await jane.fundWallet()
