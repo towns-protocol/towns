@@ -36,18 +36,20 @@ export function useBadgeStatus() {
 export function useAppBadge(): void {
     const { hasUnread, mentions } = useBadgeStatus()
     useEffect(() => {
-        if (
-            typeof navigator?.setAppBadge === 'function' &&
-            typeof navigator?.clearAppBadge === 'function'
-        ) {
-            if (mentions > 0) {
-                navigator.setAppBadge?.(mentions)
-            } else if (hasUnread) {
-                navigator.setAppBadge?.()
-            } else {
-                navigator.clearAppBadge?.()
+        void (async () => {
+            if (
+                typeof navigator?.setAppBadge === 'function' &&
+                typeof navigator?.clearAppBadge === 'function'
+            ) {
+                if (mentions > 0) {
+                    await navigator.setAppBadge?.(mentions)
+                } else if (hasUnread) {
+                    await navigator.setAppBadge?.()
+                } else {
+                    await navigator.clearAppBadge?.()
+                }
             }
-        }
+        })()
     }, [hasUnread, mentions])
 }
 

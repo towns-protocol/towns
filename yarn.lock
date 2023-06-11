@@ -2516,14 +2516,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@bufbuild/protobuf@npm:1.2.0, @bufbuild/protobuf@npm:^1.2.0":
-  version: 1.2.0
-  resolution: "@bufbuild/protobuf@npm:1.2.0"
-  checksum: f97f28423a166784d84de42c2eb6a07347c81ab5db019a94fbe98206b2169de0bab37d5b3214a0352ee86555e41d8b26141af10fa02806de06deb988ce525085
-  languageName: node
-  linkType: hard
-
-"@bufbuild/protobuf@npm:1.2.1, @bufbuild/protobuf@npm:^1.2.1":
+"@bufbuild/protobuf@npm:1.2.1, @bufbuild/protobuf@npm:^1.2.0, @bufbuild/protobuf@npm:^1.2.1":
   version: 1.2.1
   resolution: "@bufbuild/protobuf@npm:1.2.1"
   checksum: c1258de903b04b38e151fa3ce4b7e9b81875a561f413b16646ffc11dd1d5b1daf367538e7163e0c888ec2fc79b71692b9c02314509bf7bbe278a9238ce1f2dcd
@@ -2566,7 +2559,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@bufbuild/protoplugin@npm:1.2.1":
+"@bufbuild/protoplugin@npm:1.2.1, @bufbuild/protoplugin@npm:^1.2.0":
   version: 1.2.1
   resolution: "@bufbuild/protoplugin@npm:1.2.1"
   dependencies:
@@ -2574,17 +2567,6 @@ __metadata:
     "@typescript/vfs": ^1.4.0
     typescript: 4.5.2
   checksum: 888e191f333d5461b8615f4e88489db67d42cb9074828df1670c90101ecd4db2104e892d972732cb19966a80e64e355becd984f311a555c6da54d0a3cb3ef72b
-  languageName: node
-  linkType: hard
-
-"@bufbuild/protoplugin@npm:^1.2.0":
-  version: 1.2.0
-  resolution: "@bufbuild/protoplugin@npm:1.2.0"
-  dependencies:
-    "@bufbuild/protobuf": 1.2.0
-    "@typescript/vfs": ^1.4.0
-    typescript: 4.5.2
-  checksum: 53de78a1b894785b4623044e0dcb16c8c15c6880aadd1e69e9b0c6d37e819695e8baa66389189bd2ff544e3bcf36474be456f1d49ac27b748a17e35591b5c334
   languageName: node
   linkType: hard
 
@@ -4745,10 +4727,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@matrix-org/olm@npm:^3.2.14":
-  version: 3.2.14
-  resolution: "@matrix-org/olm@npm:3.2.14::__archiveUrl=https%3A%2F%2Fgitlab.matrix.org%2Fapi%2Fv4%2Fprojects%2F27%2Fpackages%2Fnpm%2F%40matrix-org%2Folm%2F-%2F%40matrix-org%2Folm-3.2.14.tgz"
-  checksum: f007b5b8ea5decba8ae159cb09e26a6b8fad9b79c8a90fd2f8809a62697f4020b80d2b8084b933c26735744780f1dd88ed39f5d26ca86ba293487ae4248c3404
+"@matrix-org/olm@npm:^3.2.15":
+  version: 3.2.15
+  resolution: "@matrix-org/olm@npm:3.2.15::__archiveUrl=https%3A%2F%2Fgitlab.matrix.org%2Fapi%2Fv4%2Fprojects%2F27%2Fpackages%2Fnpm%2F%40matrix-org%2Folm%2F-%2F%40matrix-org%2Folm-3.2.15.tgz"
+  checksum: 57b70cc9b7fa6ed839761e254eaa180e74895d347076507a3f181cd92f97dea10530d5305f239254d5ec7aea55e87504f55cf4730773d76e135fc166570f9cae
   languageName: node
   linkType: hard
 
@@ -6071,35 +6053,35 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@sentry-internal/tracing@npm:7.49.0":
-  version: 7.49.0
-  resolution: "@sentry-internal/tracing@npm:7.49.0"
+"@sentry-internal/tracing@npm:7.54.0":
+  version: 7.54.0
+  resolution: "@sentry-internal/tracing@npm:7.54.0"
   dependencies:
-    "@sentry/core": 7.49.0
-    "@sentry/types": 7.49.0
-    "@sentry/utils": 7.49.0
+    "@sentry/core": 7.54.0
+    "@sentry/types": 7.54.0
+    "@sentry/utils": 7.54.0
     tslib: ^1.9.3
-  checksum: 765e15b26e5074acb49f7b18f1eac9171cd00f19d9c7b311af1da05d5a8f8e114ee99512deeb9a85e2759ffea521a392da5edda529485abe5d519a3047ca02bf
+  checksum: 4adc923c7ab33465b5fdf3413699954d6091c6aa053e9bf2d3e799fa5ded753c1798d0d328fd65d1d49fadd1840ed4a7797b77f5714636dee3ee8526aafb90cc
   languageName: node
   linkType: hard
 
-"@sentry/browser@npm:7.49.0":
-  version: 7.49.0
-  resolution: "@sentry/browser@npm:7.49.0"
+"@sentry/browser@npm:7.54.0":
+  version: 7.54.0
+  resolution: "@sentry/browser@npm:7.54.0"
   dependencies:
-    "@sentry-internal/tracing": 7.49.0
-    "@sentry/core": 7.49.0
-    "@sentry/replay": 7.49.0
-    "@sentry/types": 7.49.0
-    "@sentry/utils": 7.49.0
+    "@sentry-internal/tracing": 7.54.0
+    "@sentry/core": 7.54.0
+    "@sentry/replay": 7.54.0
+    "@sentry/types": 7.54.0
+    "@sentry/utils": 7.54.0
     tslib: ^1.9.3
-  checksum: 4a7ff0cf566937b59f892d52453895dea0e9b689f6fa0f725909171afc9d2e692ccb767cd277b325355fb4406dc17bbd1398ed9b3a291cd1d83a67e9377335b8
+  checksum: b466c069954b61aefd6b165937c0fc2055ac4dcb80e739b4f600224b008139232948dd1e1a67f4f660fa04b8c0fe29b33574709302ef825945721286b81da52a
   languageName: node
   linkType: hard
 
-"@sentry/cli@npm:^2.17.4":
-  version: 2.17.4
-  resolution: "@sentry/cli@npm:2.17.4"
+"@sentry/cli@npm:^2.18.1":
+  version: 2.18.1
+  resolution: "@sentry/cli@npm:2.18.1"
   dependencies:
     https-proxy-agent: ^5.0.0
     node-fetch: ^2.6.7
@@ -6108,70 +6090,70 @@ __metadata:
     which: ^2.0.2
   bin:
     sentry-cli: bin/sentry-cli
-  checksum: e6632de7ec233fcc7d4950d51c04a2f892ff825e721e4a459bf46ffdd3403ff74a6e7306aac7bce6d0a6e08e664909d6268e04a12749b7373f3e8f0b2ddb8a40
+  checksum: 4e62548734f3507d2caadba0bfdf39a0aa891f2a3fa149c310325bf627edd7e337aab666a05ec495dc10694d0852ea87a77a13cfb75516f35eebf5ba2a16e1c1
   languageName: node
   linkType: hard
 
-"@sentry/core@npm:7.49.0":
-  version: 7.49.0
-  resolution: "@sentry/core@npm:7.49.0"
+"@sentry/core@npm:7.54.0":
+  version: 7.54.0
+  resolution: "@sentry/core@npm:7.54.0"
   dependencies:
-    "@sentry/types": 7.49.0
-    "@sentry/utils": 7.49.0
+    "@sentry/types": 7.54.0
+    "@sentry/utils": 7.54.0
     tslib: ^1.9.3
-  checksum: b1222afd09d219c990e2a8df136c6e540bd13f26616331f3d4e143182b6b4b550426b165dafc52e504a4bff111b634c756202656b383557e4cb3f2ff58022e1b
+  checksum: c80839ff98c1dce97d793531475d8223d4dc10f0eab34a76cef815467c73773162d5bb52ad043d5bcc19200206dbd41f87bc4e46cde7693884651c4c4cde3ad6
   languageName: node
   linkType: hard
 
-"@sentry/react@npm:^7.49.0":
-  version: 7.49.0
-  resolution: "@sentry/react@npm:7.49.0"
+"@sentry/react@npm:^7.54.0":
+  version: 7.54.0
+  resolution: "@sentry/react@npm:7.54.0"
   dependencies:
-    "@sentry/browser": 7.49.0
-    "@sentry/types": 7.49.0
-    "@sentry/utils": 7.49.0
+    "@sentry/browser": 7.54.0
+    "@sentry/types": 7.54.0
+    "@sentry/utils": 7.54.0
     hoist-non-react-statics: ^3.3.2
     tslib: ^1.9.3
   peerDependencies:
     react: 15.x || 16.x || 17.x || 18.x
-  checksum: 73cdef3362c9263c04ecdfa677f7a7b39109d6247737f2592b21e17fdfcfcd0fda3ac3a2fafcd1db8b2fe34a5d1882e7062fe931c590fbb8cb290149f71b24f0
+  checksum: fa5ed9ec4e583f060ea099759ee5f4cdaa676ab1578d897e91a19a39cd1706a800fdd7db6169c182e51b711c798311ac104e35f324f9f8ed265693f25d0f327e
   languageName: node
   linkType: hard
 
-"@sentry/replay@npm:7.49.0":
-  version: 7.49.0
-  resolution: "@sentry/replay@npm:7.49.0"
+"@sentry/replay@npm:7.54.0":
+  version: 7.54.0
+  resolution: "@sentry/replay@npm:7.54.0"
   dependencies:
-    "@sentry/core": 7.49.0
-    "@sentry/types": 7.49.0
-    "@sentry/utils": 7.49.0
-  checksum: 0789ead51e2284fcf6871ba11c4b022de608b31354aa1c1fc30bb26811bad3e353a80dfb2a1517b1567c39be80e263e67f4d5d1efb0747048ee173d855daa308
+    "@sentry/core": 7.54.0
+    "@sentry/types": 7.54.0
+    "@sentry/utils": 7.54.0
+  checksum: ae6537fbe3a47993d247a92291ea0b70e53ee2289c648fef9ca1aca0c7cd841d2308240b9eb7df6f8e411eb602693e90b4f945f8e985c5f1e8047471cf2c3dfe
   languageName: node
   linkType: hard
 
-"@sentry/tracing@npm:^7.49.0":
-  version: 7.49.0
-  resolution: "@sentry/tracing@npm:7.49.0"
+"@sentry/tracing@npm:^7.54.0":
+  version: 7.54.0
+  resolution: "@sentry/tracing@npm:7.54.0"
   dependencies:
-    "@sentry-internal/tracing": 7.49.0
-  checksum: 47c609e18ba8abb3876335b3368545a91fc4bc80d3882ab1c05fd7ba4c7ad88fdef177d3eb3e590372d6ad55a3f734298bd3e66f72c0f8572cf1ae49e0ac75fa
+    "@sentry-internal/tracing": 7.54.0
+  checksum: 8e35d3e6216139dc93638df85a65bb135993f04388f3d366a49e52c85d3fb12c7941993f94e3556ec2e03f01a3e6e3be0885e2eb775d9e9df6378a2673484f6e
   languageName: node
   linkType: hard
 
-"@sentry/types@npm:7.49.0":
-  version: 7.49.0
-  resolution: "@sentry/types@npm:7.49.0"
-  checksum: c6665e5ea14aa0288a44daf0ccbf8ab3134ec7ab61a6cda57e233c865a9c1ca3a9e45b5ab75705d2d3506c357e08cc500a550794fe6e888d363e0254b46c057b
+"@sentry/types@npm:7.54.0":
+  version: 7.54.0
+  resolution: "@sentry/types@npm:7.54.0"
+  checksum: a2f37a9fcc283e6b9c27ec12163bbeded0e6c34d9e55ca6d3d96f5ce270cb287fa308c19358dda6ab8fa6f8bba3dabdbf58cc6ed31219d712a3306e5005e8a14
   languageName: node
   linkType: hard
 
-"@sentry/utils@npm:7.49.0":
-  version: 7.49.0
-  resolution: "@sentry/utils@npm:7.49.0"
+"@sentry/utils@npm:7.54.0":
+  version: 7.54.0
+  resolution: "@sentry/utils@npm:7.54.0"
   dependencies:
-    "@sentry/types": 7.49.0
+    "@sentry/types": 7.54.0
     tslib: ^1.9.3
-  checksum: b3382418fbc98a685c3c01571ef24217d8cbcb283f8e12e2e44a518d9697e9fadcaa48c24e31063ecad6a13f3fc7b0caf0dcb8e7c0097bc2613e8f465de5d0be
+  checksum: 8daadba6b0cbe3dc4c42284dbc14ada730f3dd75a050cb3827ef7e173a9f7e06cdbe52ab1e20941841320c6c4cc3d8c969f0da78650e8426e161707450087717
   languageName: node
   linkType: hard
 
@@ -6640,7 +6622,7 @@ __metadata:
   dependencies:
     "@towns/sdk": "workspace:^"
     ts-node: ^10.9.1
-    typescript: ^5.0.4
+    typescript: ^5.1.3
     vite: ^4.3.8
   languageName: unknown
   linkType: soft
@@ -6649,7 +6631,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@towns/mecholm@workspace:casablanca/mecholm"
   dependencies:
-    "@matrix-org/olm": ^3.2.14
+    "@matrix-org/olm": ^3.2.15
     "@types/jest": ^29.4.0
     "@types/lodash": ^4.14.186
     "@types/node": ^18.14.2
@@ -6664,7 +6646,7 @@ __metadata:
     ts-jest: ^29.1.0
     ts-node: ^10.9.1
     typed-emitter: ^2.1.0
-    typescript: ^5.0.4
+    typescript: ^5.1.3
   languageName: unknown
   linkType: soft
 
@@ -6684,7 +6666,7 @@ __metadata:
     lodash.debounce: ^4.0.8
     ts-jest: ^29.1.0
     ts-node: ^10.9.1
-    typescript: ^5.0.4
+    typescript: ^5.1.3
   languageName: unknown
   linkType: soft
 
@@ -6721,7 +6703,7 @@ __metadata:
     ts-jest: ^29.1.0
     ts-node: ^10.9.1
     typed-emitter: ^2.1.0
-    typescript: ^5.0.4
+    typescript: ^5.1.3
   languageName: unknown
   linkType: soft
 
@@ -8452,7 +8434,7 @@ __metadata:
     prettier: ^2.8.8
     ts-jest: ^29.1.0
     ts-loader: ^9.4.2
-    typescript: ^5.0.4
+    typescript: ^5.1.3
     wait-on: ^7.0.1
     wrangler: ^3.1.0
   languageName: unknown
@@ -12916,7 +12898,7 @@ __metadata:
     miniflare: ^2.13.0
     prettier: ^2.8.8
     ts-jest: ^29.1.0
-    typescript: ^5.0.4
+    typescript: ^5.1.3
     wrangler: ^3.1.0
   languageName: unknown
   linkType: soft
@@ -13216,7 +13198,7 @@ __metadata:
     "@vitejs/plugin-react": ^4.0.0
     react: ^18.2.0
     react-dom: ^18.2.0
-    typescript: ^5.0.4
+    typescript: ^5.1.3
     vite: ^4.3.8
   languageName: unknown
   linkType: soft
@@ -13277,9 +13259,9 @@ __metadata:
     solidity-docgen: ^0.6.0-beta.29
     syncpack: ^9.8.4
     ts-node: ^10.9.1
-    turbo: 1.9.3
+    turbo: 1.10.3
     typechain: ^8.1.1
-    typescript: ^5.0.4
+    typescript: ^5.1.3
     wait-on: ^7.0.1
   languageName: unknown
   linkType: soft
@@ -13309,9 +13291,9 @@ __metadata:
     "@ngneat/falso": ^6.1.0
     "@rainbow-me/rainbowkit": 0.12.14
     "@react-hook/resize-observer": ^1.2.6
-    "@sentry/cli": ^2.17.4
-    "@sentry/react": ^7.49.0
-    "@sentry/tracing": ^7.49.0
+    "@sentry/cli": ^2.18.1
+    "@sentry/react": ^7.54.0
+    "@sentry/tracing": ^7.54.0
     "@tanstack/react-query": ^4.14.3
     "@tanstack/react-query-devtools": ^4.24.10
     "@testing-library/jest-dom": ^5.16.5
@@ -13376,7 +13358,7 @@ __metadata:
     siwe: ^1.1.6
     thenby: ^1.3.4
     throttle-debounce: ^5.0.0
-    typescript: ^5.0.4
+    typescript: ^5.1.3
     ua-parser-js: ^1.0.33
     use-zion-client: "workspace:^"
     vanilla-classnames: ^0.1.0
@@ -18089,7 +18071,7 @@ __metadata:
     better-sqlite3: ^8.4.0
     eslint: ^8.39.0
     prettier: ^2.8.8
-    typescript: ^5.0.4
+    typescript: ^5.1.3
     wrangler: ^3.1.0
   languageName: unknown
   linkType: soft
@@ -19197,7 +19179,7 @@ __metadata:
     rollup-plugin-polyfill-node: ^0.12.0
     rollup-plugin-visualizer: ^5.9.0
     siwe: ^1.1.6
-    typescript: ^5.0.4
+    typescript: ^5.1.3
     url: ^0.11.0
     use-zion-client: "workspace:^"
     vite: ^4.3.8
@@ -19480,7 +19462,7 @@ __metadata:
     siwe: ^2.1.3
     ts-jest: ^29.1.0
     ts-loader: ^9.4.2
-    typescript: ^5.0.4
+    typescript: ^5.1.3
     use-zion-client: "workspace:^"
     wrangler: ^3.1.0
   languageName: unknown
@@ -20590,7 +20572,7 @@ __metadata:
     miniflare: ^2.13.0
     prettier: ^2.8.8
     ts-jest: ^29.1.0
-    typescript: ^5.0.4
+    typescript: ^5.1.3
     wrangler: ^3.1.0
   languageName: unknown
   linkType: soft
@@ -20823,14 +20805,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"tslib@npm:^2.0.0, tslib@npm:^2.1.0, tslib@npm:^2.3.1, tslib@npm:^2.4.0, tslib@npm:^2.4.1, tslib@npm:^2.5.0":
-  version: 2.5.0
-  resolution: "tslib@npm:2.5.0"
-  checksum: ae3ed5f9ce29932d049908ebfdf21b3a003a85653a9a140d614da6b767a93ef94f460e52c3d787f0e4f383546981713f165037dc2274df212ea9f8a4541004e1
-  languageName: node
-  linkType: hard
-
-"tslib@npm:^2.2.0":
+"tslib@npm:^2.0.0, tslib@npm:^2.1.0, tslib@npm:^2.2.0, tslib@npm:^2.3.1, tslib@npm:^2.4.0, tslib@npm:^2.4.1, tslib@npm:^2.5.0":
   version: 2.5.3
   resolution: "tslib@npm:2.5.3"
   checksum: 88902b309afaf83259131c1e13da1dceb0ad1682a213143a1346a649143924d78cf3760c448b84d796938fd76127183894f8d85cbb3bf9c4fddbfcc140c0003c
@@ -20864,58 +20839,58 @@ __metadata:
   languageName: node
   linkType: hard
 
-"turbo-darwin-64@npm:1.9.3":
-  version: 1.9.3
-  resolution: "turbo-darwin-64@npm:1.9.3"
+"turbo-darwin-64@npm:1.10.3":
+  version: 1.10.3
+  resolution: "turbo-darwin-64@npm:1.10.3"
   conditions: os=darwin & cpu=x64
   languageName: node
   linkType: hard
 
-"turbo-darwin-arm64@npm:1.9.3":
-  version: 1.9.3
-  resolution: "turbo-darwin-arm64@npm:1.9.3"
+"turbo-darwin-arm64@npm:1.10.3":
+  version: 1.10.3
+  resolution: "turbo-darwin-arm64@npm:1.10.3"
   conditions: os=darwin & cpu=arm64
   languageName: node
   linkType: hard
 
-"turbo-linux-64@npm:1.9.3":
-  version: 1.9.3
-  resolution: "turbo-linux-64@npm:1.9.3"
+"turbo-linux-64@npm:1.10.3":
+  version: 1.10.3
+  resolution: "turbo-linux-64@npm:1.10.3"
   conditions: os=linux & cpu=x64
   languageName: node
   linkType: hard
 
-"turbo-linux-arm64@npm:1.9.3":
-  version: 1.9.3
-  resolution: "turbo-linux-arm64@npm:1.9.3"
+"turbo-linux-arm64@npm:1.10.3":
+  version: 1.10.3
+  resolution: "turbo-linux-arm64@npm:1.10.3"
   conditions: os=linux & cpu=arm64
   languageName: node
   linkType: hard
 
-"turbo-windows-64@npm:1.9.3":
-  version: 1.9.3
-  resolution: "turbo-windows-64@npm:1.9.3"
+"turbo-windows-64@npm:1.10.3":
+  version: 1.10.3
+  resolution: "turbo-windows-64@npm:1.10.3"
   conditions: os=win32 & cpu=x64
   languageName: node
   linkType: hard
 
-"turbo-windows-arm64@npm:1.9.3":
-  version: 1.9.3
-  resolution: "turbo-windows-arm64@npm:1.9.3"
+"turbo-windows-arm64@npm:1.10.3":
+  version: 1.10.3
+  resolution: "turbo-windows-arm64@npm:1.10.3"
   conditions: os=win32 & cpu=arm64
   languageName: node
   linkType: hard
 
-"turbo@npm:1.9.3":
-  version: 1.9.3
-  resolution: "turbo@npm:1.9.3"
+"turbo@npm:1.10.3":
+  version: 1.10.3
+  resolution: "turbo@npm:1.10.3"
   dependencies:
-    turbo-darwin-64: 1.9.3
-    turbo-darwin-arm64: 1.9.3
-    turbo-linux-64: 1.9.3
-    turbo-linux-arm64: 1.9.3
-    turbo-windows-64: 1.9.3
-    turbo-windows-arm64: 1.9.3
+    turbo-darwin-64: 1.10.3
+    turbo-darwin-arm64: 1.10.3
+    turbo-linux-64: 1.10.3
+    turbo-linux-arm64: 1.10.3
+    turbo-windows-64: 1.10.3
+    turbo-windows-arm64: 1.10.3
   dependenciesMeta:
     turbo-darwin-64:
       optional: true
@@ -20931,7 +20906,7 @@ __metadata:
       optional: true
   bin:
     turbo: bin/turbo
-  checksum: ebf06d3b9b1401a5baabace238cd1e0d8fc1dc062b4f7bd577f644298c555f326d15f331144641c0b43a60ae8058769bcbd9d1660874fa9927ec64b5be8ee9dc
+  checksum: 38a11c8f1548408e6c8576d13ed78e2b0a232577e64a1cb6623faa39437cdc28012eb388f77d53af1b1853c521000aae0467cb5d91aa169b0883be976edfbdb1
   languageName: node
   linkType: hard
 
@@ -21066,13 +21041,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typescript@npm:^5.0.4":
-  version: 5.0.4
-  resolution: "typescript@npm:5.0.4"
+"typescript@npm:^5.1.3":
+  version: 5.1.3
+  resolution: "typescript@npm:5.1.3"
   bin:
     tsc: bin/tsc
     tsserver: bin/tsserver
-  checksum: 82b94da3f4604a8946da585f7d6c3025fff8410779e5bde2855ab130d05e4fd08938b9e593b6ebed165bda6ad9292b230984f10952cf82f0a0ca07bbeaa08172
+  checksum: d9d51862d98efa46534f2800a1071a613751b1585dc78884807d0c179bcd93d6e9d4012a508e276742f5f33c480adefc52ffcafaf9e0e00ab641a14cde9a31c7
   languageName: node
   linkType: hard
 
@@ -21086,13 +21061,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typescript@patch:typescript@^5.0.4#~builtin<compat/typescript>":
-  version: 5.0.4
-  resolution: "typescript@patch:typescript@npm%3A5.0.4#~builtin<compat/typescript>::version=5.0.4&hash=b5f058"
+"typescript@patch:typescript@^5.1.3#~builtin<compat/typescript>":
+  version: 5.1.3
+  resolution: "typescript@patch:typescript@npm%3A5.1.3#~builtin<compat/typescript>::version=5.1.3&hash=77c9e2"
   bin:
     tsc: bin/tsc
     tsserver: bin/tsserver
-  checksum: d26b6ba97b6d163c55dbdffd9bbb4c211667ebebc743accfeb2c8c0154aace7afd097b51165a72a5bad2cf65a4612259344ff60f8e642362aa1695c760d303ac
+  checksum: 32a25b2e128a4616f999d4ee502aabb1525d5647bc8955e6edf05d7fbc53af8aa98252e2f6ba80bcedfc0260c982b885f3c09cfac8bb65d2924f3133ad1e1e62
   languageName: node
   linkType: hard
 
@@ -21204,7 +21179,7 @@ __metadata:
     jest-environment-miniflare: ^2.13.0
     miniflare: ^2.13.0
     ts-jest: ^29.1.0
-    typescript: ^5.0.4
+    typescript: ^5.1.3
     unfurl.js: "https://github.com/HereNotThere/unfurl"
     wrangler: ^3.1.0
   languageName: unknown
@@ -21522,7 +21497,7 @@ __metadata:
   resolution: "use-zion-client@workspace:clients/web/lib"
   dependencies:
     "@harmony/generated": "workspace:^"
-    "@matrix-org/olm": ^3.2.14
+    "@matrix-org/olm": ^3.2.15
     "@rainbow-me/rainbowkit": 0.12.14
     "@tanstack/react-query": ^4.14.3
     "@testing-library/dom": ^9.0.0
@@ -21555,7 +21530,7 @@ __metadata:
     react-dom: ^18.2.0
     siwe: ^1.1.6
     ts-jest: ^29.1.0
-    typescript: ^5.0.4
+    typescript: ^5.1.3
     wagmi: 0.12.11
     zustand: ^4.3.3
   languageName: unknown
@@ -22603,7 +22578,7 @@ __metadata:
     miniflare: ^2.13.0
     prettier: ^2.8.8
     ts-jest: ^29.1.0
-    typescript: ^5.0.4
+    typescript: ^5.1.3
     wrangler: ^3.1.0
   languageName: unknown
   linkType: soft

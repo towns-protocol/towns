@@ -447,7 +447,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
         this.logSync('sync START')
         assert(this.userStreamId !== undefined, 'streamId must be set')
 
-        this.syncLoop = (async () => {
+        this.syncLoop = (async (): Promise<undefined | unknown> => {
             this.logSync('sync syncLoop started')
             try {
                 let iteration = 0
@@ -588,6 +588,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
                 onFailure?.(err)
                 return err
             }
+            return undefined
         })()
         this.logSync('sync END')
     }
