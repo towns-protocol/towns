@@ -129,6 +129,16 @@ const SpacesChannelComponent = () => {
         }
     }, [])
 
+    // https://linear.app/hnt-labs/issue/HNT-1594/app-hanging-and-not-loading-on-desktop
+    useEffect(() => {
+        console.log('<SpacesChannel /> debug: ', {
+            channel,
+            channelId,
+            displayDecryptionProgress,
+            myMembership,
+        })
+    }, [channel, channelId, displayDecryptionProgress, myMembership])
+
     return (
         <CentralPanelLayout>
             {!channel || !channelId || displayDecryptionProgress || !myMembership ? (

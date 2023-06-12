@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react'
+import React, { useCallback, useEffect, useMemo } from 'react'
 import { Channel, Membership, MentionResult, SpaceData, useZionClient } from 'use-zion-client'
 import { ChannelNavGroup } from '@components/NavItem/ChannelNavGroup'
 import { ChannelNavItem } from '@components/NavItem/ChannelNavItem'
@@ -46,6 +46,14 @@ export const SyncedChannelList = (props: {
             }
         })
     }, [filterUnjoinedChannels, space.channelGroups])
+
+    // https://linear.app/hnt-labs/issue/HNT-1594/app-hanging-and-not-loading-on-desktop
+    useEffect(() => {
+        console.log('<SyncedChannelList /> debug: ', {
+            space,
+            channelGroups,
+        })
+    }, [channelGroups, space])
 
     return (
         <>

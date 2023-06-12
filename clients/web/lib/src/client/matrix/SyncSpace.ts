@@ -65,6 +65,14 @@ export async function syncMatrixSpace(
         },
     )
 
+    // https://linear.app/hnt-labs/issue/HNT-1594/app-hanging-and-not-loading-on-desktop
+    // is entitled call filtering out channels?
+    console.log('[syncMatrixSpace] children', {
+        spaceId,
+        matrixChildren: children,
+        filteredChildren: onChainChannels,
+    })
+
     if (!root) {
         console.error('syncing space error', networkId, 'no root', roomHierarchy)
         return undefined

@@ -67,7 +67,7 @@ describe('<AutojoinChannels />', () => {
 
         const MembersComponent = ({ roomId }: { roomId: RoomIdentifier }) => {
             const { members } = useMembers(roomId)
-            const match = members?.find((member) => member.userId === bob.matrixUserId)
+            const match = members?.find((member) => member.userId === bob.getUserId())
             return <>{match && <div data-testid="bob-joined">'bob joined'</div>}</>
         }
 
