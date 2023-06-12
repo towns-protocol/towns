@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 /**
  * @group dendrite
+ * @group casablanca
  */
 import { CONTRACT_ERROR, NoThrownError, getError } from './helpers/ErrorUtils'
 import {
@@ -96,6 +97,11 @@ describe('disable channel', () => {
     })
 
     test('Channel member cant sync disabled room messages', async () => {
+        if (process.env.PRIMARY_PROTOCOL === 'casablanca') {
+            // Casablanca always allows users to sync messages from disabled rooms
+            console.log('Skipping test for Casablanca')
+            return
+        }
         /** Arrange */
 
         // create all the users for the test
@@ -147,6 +153,11 @@ describe('disable channel', () => {
     })
 
     test('Channel member needs to rejoin server that was re-enabled', async () => {
+        if (process.env.PRIMARY_PROTOCOL === 'casablanca') {
+            // Casablanca ignores enabling/disabling room
+            console.log('Skipping test for Casablanca')
+            return
+        }
         /** Arrange */
 
         // create all the users for the test
