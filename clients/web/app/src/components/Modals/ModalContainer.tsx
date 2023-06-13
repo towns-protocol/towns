@@ -13,12 +13,13 @@ type Props = {
     stableTopAlignment?: boolean
     /** with touchTitle present, the modal will be presented full screen on touch screens */
     touchTitle?: string
+    rightBarButton?: React.ReactNode
 }
 
 export const ModalContainer = (props: Props) => {
     const root = useZLayerContext().rootLayerRef?.current
     const { isTouch } = useDevice()
-    const { onHide, touchTitle } = props
+    const { onHide, touchTitle, rightBarButton } = props
 
     if (!root) {
         console.error(`no root context declared for use of modal`)
@@ -27,7 +28,11 @@ export const ModalContainer = (props: Props) => {
 
     return createPortal(
         isTouch && touchTitle ? (
-            <TouchFullScreenModalContainer title={touchTitle} onHide={onHide}>
+            <TouchFullScreenModalContainer
+                title={touchTitle}
+                rightBarButton={rightBarButton}
+                onHide={onHide}
+            >
                 {props.children}
             </TouchFullScreenModalContainer>
         ) : (
@@ -41,10 +46,11 @@ type TouchFullScreenModalContainerProps = {
     children: React.ReactNode
     title: string
     onHide: () => void
+    rightBarButton?: React.ReactNode
 }
 
 const TouchFullScreenModalContainer = (props: TouchFullScreenModalContainerProps) => {
-    const { children, title, onHide } = props
+    const { children, title, rightBarButton, onHide } = props
     const [contentVisible, setContentVisible] = React.useState(false)
 
     useEffect(() => {
@@ -75,7 +81,11 @@ const TouchFullScreenModalContainer = (props: TouchFullScreenModalContainerProps
                         style={{ position: 'absolute', right: -100, top: 0, bottom: 0, width: 100 }}
                     />
                     <Stack height="100%">
-                        <TouchPanelNavigationBar title={title} onBack={onClose} />
+                        <TouchPanelNavigationBar
+                            title={title}
+                            rightBarButton={rightBarButton}
+                            onBack={onClose}
+                        />
 
                         <Stack scroll paddingX>
                             {children}

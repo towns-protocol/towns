@@ -12,4 +12,5 @@ export const PATHS = {
     LOGIN: 'login',
     VERSIONS: 'versions',
     ROLES: 'roles',
+    MESSAGES: 'messages',
 } as const

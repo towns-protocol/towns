@@ -1,19 +1,25 @@
 import React, { useCallback, useMemo, useState } from 'react'
 import { useMyProfile, useSpaceData, useZionContext } from 'use-zion-client'
 import { AnimatePresence } from 'framer-motion'
-import { Avatar, Box, Dot, Stack, Text } from '@ui'
+
+import { Avatar, Box, Dot, Icon, Stack, Text } from '@ui'
 import { ImageVariants } from '@components/UploadImage/useImageSource'
 import { SpaceIcon } from '@components/SpaceIcon'
 import { TouchHomeOverlay } from '@components/TouchHomeOverlay/TouchHomeOverlay'
 import { useNavigateToCurrentSpaceInfo } from 'hooks/useNavigateToCurrentSpaceInfo'
+import { DirectMessagesModal } from '@components/DirectMessages/DirectMessagesModal'
 
 export const TouchLayoutHeader = () => {
     const userId = useMyProfile()?.userId
     const space = useSpaceData()
     const currentSpaceId = space?.id
-    const [showOverlay, setShowOverlay] = useState(false)
+    const [activeOverlay, setActiveOverlay] = useState<
+        'main-panel' | 'direct-messages' | undefined
+    >(undefined)
+
     const { navigateToCurrentSpace } = useNavigateToCurrentSpaceInfo()
     const { spaces, spaceUnreads, spaceMentions } = useZionContext()
+
     const hasUnread = useMemo(() => {
         return spaces.some((space) => {
             if (space.id.networkId === currentSpaceId?.networkId) {
@@ -39,7 +45,11 @@ export const TouchLayoutHeader = () => {
                 paddingTop="safeAreaInsetTop"
             >
                 <Box position="relative">
-                    <Avatar size="avatar_x4" userId={userId} onClick={() => setShowOverlay(true)} />
+                    <Avatar
+                        size="avatar_x4"
+                        userId={userId}
+                        onClick={() => setActiveOverlay('main-panel')}
+                    />
                     {hasUnread && <Dot />}
                 </Box>
                 <Stack grow />
@@ -68,9 +78,18 @@ export const TouchLayoutHeader = () => {
                     </Stack>
                 )}
                 <Stack grow />
-                <Box background="cta1" width="x3" height="x3" />
+                <Icon
+                    type="dm"
+                    size="square_lg"
+                    onClick={() => setActiveOverlay('direct-messages')}
+                />
                 <AnimatePresence>
-                    {showOverlay && <TouchHomeOverlay onClose={() => setShowOverlay(false)} />}
+                    {activeOverlay === 'main-panel' && (
+                        <TouchHomeOverlay onClose={() => setActiveOverlay(undefined)} />
+                    )}
+                    {activeOverlay === 'direct-messages' && (
+                        <DirectMessagesModal onHide={() => setActiveOverlay(undefined)} />
+                    )}
                 </AnimatePresence>
             </Stack>
         </Box>

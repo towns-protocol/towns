@@ -1,5 +1,5 @@
 import { Allotment, AllotmentHandle } from 'allotment'
-import React, { useEffect, useRef } from 'react'
+import React, { useRef } from 'react'
 import { Outlet, useMatch } from 'react-router'
 import { useEvent } from 'react-use-event-hook'
 import { PATHS } from 'routes'
@@ -10,11 +10,12 @@ import { usePersistPanes } from 'hooks/usePersistPanes'
 import { atoms } from 'ui/styles/atoms.css'
 import { ChannelsShimmer } from '@components/Shimmer'
 import { useContractAndServerSpaceData } from 'hooks/useContractAndServerSpaceData'
+import { DirectMessages } from '@components/DirectMessages/DirectMessages'
 import * as styles from './AppPanelLayout.css'
 
 export const AppPanelLayout = () => {
     const allotemntRef = useRef<AllotmentHandle>(null)
-    const messageRoute = useMatch({ path: '/messages', end: false })
+    const messageRoute = useMatch({ path: `/${PATHS.MESSAGES}`, end: false })
     const homeRoute = useMatch({ path: '/home', end: true })
     const spacesNewRoute = useMatch({ path: `/${PATHS.SPACES}/new`, end: true })
     const spacesSettingsRoute = useMatch({ path: `/${PATHS.SPACES}/:space/settings`, end: false })
@@ -22,12 +23,6 @@ export const AppPanelLayout = () => {
     const { serverSpace: space, chainSpace } = useContractAndServerSpaceData()
     const config = ['spaces', 'primary-menu', 'secondary-menu', 'content']
     const { onSizesChange, sizes } = usePersistPanes(config)
-
-    const isSecondarySidebarActive = !!messageRoute
-
-    useEffect(() => {
-        allotemntRef.current?.reset()
-    }, [isSecondarySidebarActive])
 
     const isSpacesExpanded = sizes[0] > 120
 
@@ -43,6 +38,7 @@ export const AppPanelLayout = () => {
 
     const displaySpacePanel =
         !spacesSettingsRoute && !spacesNewRoute && !!(chainSpace || space) && !homeRoute
+    const isMessagesRoute = !!messageRoute
 
     return (
         <Stack horizontal grow borderTop position="relative">
@@ -63,9 +59,11 @@ export const AppPanelLayout = () => {
                         minSize={180}
                         maxSize={320}
                         preferredSize={sizes[1] || 320}
-                        visible={displaySpacePanel}
+                        visible={displaySpacePanel || isMessagesRoute}
                     >
-                        {space ? (
+                        {isMessagesRoute ? (
+                            <DirectMessages />
+                        ) : space ? (
                             <SpaceSideBar
                                 space={space}
                                 className={styles.allotmentResizeBorderPadding}

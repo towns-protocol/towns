@@ -10,6 +10,8 @@ import { useIsHolderOfPioneerNFT } from 'api/lib/isHolderOfToken'
 import { env } from 'utils'
 import { SpaceOutlet } from 'routes/SpaceOutlet'
 import { useDevice } from 'hooks/useDevice'
+import { DirectMessageIndex } from '@components/DirectMessages/DirectMessageIndex'
+import { DirectMessageThread } from '@components/DirectMessages/DirectMessageThread'
 import { ChannelSettings } from './ChannelSettings'
 import { InvitesIndex } from './InvitesIndex'
 import { SpaceGettingStarted } from './SpaceGettingStarted'
@@ -100,6 +102,10 @@ export const AuthenticatedRoutes = () => {
                     <Route path="channels/:channelSlug/settings" element={<ChannelSettings />} />
                 </Route>
             </Route>
+
+            <Route path="messages" element={<DirectMessageIndex />} />
+            <Route path="messages/:messageId" element={<DirectMessageThread />} />
+
             <Route
                 path="*"
                 element={

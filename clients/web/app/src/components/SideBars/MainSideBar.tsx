@@ -8,6 +8,7 @@ import { Stack } from '@ui'
 import { useIsHolderOfPioneerNFT } from 'api/lib/isHolderOfToken'
 import { PATHS } from 'routes'
 import { env } from 'utils'
+import { DMSNavItem } from '@components/NavItem/DMSNavItem'
 
 type Props = {
     expanded: boolean
@@ -25,6 +26,7 @@ export const MainSideBar = (props: Props) => {
         <SideBar elevateReadability paddingY="sm">
             <Stack grow>
                 <ProfileCardButton expanded={isExpanded} />
+                <DMSNavItem />
                 {spaces.map((s) => (
                     <SpaceNavItem
                         key={s.id.slug}

@@ -16,6 +16,7 @@ type Props = {
     label?: React.ReactNode | string
     paddingX?: BoxProps['padding']
     modalPresentable?: boolean
+    rightBarButton?: React.ReactNode
     onClose?: () => void
 }
 
@@ -46,6 +47,8 @@ const DesktopPanel = (props: Props) => {
                 <Stack>
                     {props.onClose && <IconButton icon="close" onClick={props.onClose} />}
                 </Stack>
+                <Stack grow />
+                {props.rightBarButton}
             </Stack>
             {props.children}
         </Stack>
@@ -53,7 +56,7 @@ const DesktopPanel = (props: Props) => {
 }
 
 const TouchPanel = (props: Props) => {
-    const { onClose } = props
+    const { onClose, rightBarButton } = props
     const mountPoint = useZLayerContext().rootLayerRef?.current ?? undefined
     const [modalPresented, setModalPresented] = useState(false)
     const modalPresentable = props.modalPresentable ?? false
@@ -114,7 +117,11 @@ const TouchPanel = (props: Props) => {
                         background="level1"
                         style={{ position: 'absolute', right: -100, top: 0, bottom: 0, width: 100 }}
                     />
-                    <TouchPanelNavigationBar title={props.label} onBack={closePanel} />
+                    <TouchPanelNavigationBar
+                        title={props.label}
+                        rightBarButton={rightBarButton}
+                        onBack={closePanel}
+                    />
                     <Stack scroll>
                         <Box minHeight="100svh" paddingBottom="safeAreaInsetBottom">
                             {props.children}

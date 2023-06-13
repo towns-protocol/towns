@@ -5,6 +5,7 @@ import { IconButton } from '../IconButton/IconButton'
 
 type Props = {
     title: string | React.ReactNode
+    rightBarButton?: React.ReactNode
     onBack?: () => void
 }
 export const TouchPanelNavigationBar = (props: Props) => {
@@ -12,8 +13,8 @@ export const TouchPanelNavigationBar = (props: Props) => {
         <Stack
             horizontal
             borderBottom
+            padding
             gap="sm"
-            padding="sm"
             alignItems="center"
             color="gray1"
             position="sticky"
@@ -24,6 +25,8 @@ export const TouchPanelNavigationBar = (props: Props) => {
             <Text fontWeight="strong" color="default">
                 {props.title}
             </Text>
+            <Stack grow />
+            {props.rightBarButton}
         </Stack>
     )
 }
