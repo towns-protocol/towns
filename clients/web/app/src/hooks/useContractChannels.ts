@@ -11,7 +11,7 @@ async function getChannels(spaceId: string | undefined, spaceDapp: ISpaceDapp | 
     }
 }
 
-export const queryKey = 'spaceDappGetChannels'
+const queryKey = 'spaceDappGetChannels'
 
 export const useContractChannels = (spaceId: string | undefined) => {
     const { provider } = useWeb3Context()
@@ -29,8 +29,8 @@ export const useContractChannels = (spaceId: string | undefined) => {
         },
         {
             enabled: !!spaceId,
-            staleTime: 1000 * 60 * 30,
-            cacheTime: 1000 * 60 * 35,
+            staleTime: 1000 * 15,
+            cacheTime: 1000 * 20,
         },
     )
 }

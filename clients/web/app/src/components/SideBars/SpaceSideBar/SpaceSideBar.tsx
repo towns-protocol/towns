@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useMemo, useRef, useState } from 'react'
 import { useEvent } from 'react-use-event-hook'
 import {
     Membership,
@@ -11,7 +11,6 @@ import {
     useSpaceUnreadThreadMentions,
     useZionClient,
 } from 'use-zion-client'
-import { useQueryClient } from '@tanstack/react-query'
 import { clsx } from 'clsx'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { ActionNavItem } from '@components/NavItem/ActionNavItem'
@@ -20,10 +19,7 @@ import { Badge, Box, Button, Icon, Stack } from '@ui'
 import { PATHS } from 'routes'
 import { useStore } from 'store/store'
 import { SentryReportModal } from '@components/SentryErrorReport/SentryErrorReport'
-import {
-    useContractChannels,
-    queryKey as useContractChannelsQueryKey,
-} from 'hooks/useContractChannels'
+
 import { AllChannelsList } from 'routes/AllChannelsList/AllChannelsList'
 import { useSpaceChannels } from 'hooks/useSpaceChannels'
 import { useAuth } from 'hooks/useAuth'
@@ -35,40 +31,6 @@ import { SpaceSideBarHeader } from './SpaceSideBarHeader'
 type Props = {
     space: SpaceData
     className?: string
-}
-
-function useInvalidateChannelsQueryOnNewChannelCreation(space: SpaceData) {
-    const queryClient = useQueryClient()
-
-    const flatChannels = useMemo(
-        () => space.channelGroups.flatMap((g) => g.channels),
-        [space.channelGroups],
-    )
-
-    const numChannelsAddedInSession = useRef<undefined | number>(undefined)
-
-    // TODO: a better spot for this is proabably a wrapper component around space routes
-    useEffect(() => {
-        if (space.isLoadingChannels) {
-            return
-        }
-
-        if (
-            // new load or navigated to different space
-            numChannelsAddedInSession.current === undefined ||
-            // new channels were added - this happens when user creates a channel or is auto-joined by another user creating a channel
-            flatChannels.length > numChannelsAddedInSession.current
-        ) {
-            queryClient.invalidateQueries([useContractChannelsQueryKey, space.id.networkId])
-            numChannelsAddedInSession.current = flatChannels.length
-        }
-    }, [flatChannels.length, queryClient, space.id.networkId, space.isLoadingChannels])
-
-    // refetch and reset the channelsAddedDuringSession when space changes
-    useEffect(() => {
-        queryClient.invalidateQueries([useContractChannelsQueryKey, space.id.networkId])
-        numChannelsAddedInSession.current = undefined
-    }, [queryClient, space.id.networkId])
 }
 
 export const SpaceSideBar = (props: Props) => {
@@ -85,7 +47,6 @@ export const SpaceSideBar = (props: Props) => {
     })
     const setDismissedGettingStarted = useStore((state) => state.setDismissedGettingStarted)
     const dismissedGettingStartedMap = useStore((state) => state.dismissedGettingStartedMap)
-    const { data: contractChannels } = useContractChannels(props.space.id.networkId)
     const channels = useSpaceChannels()
 
     const [isCreateChannelModalVisible, setCreateChannelModalVisible] = useState(false)
@@ -134,10 +95,6 @@ export const SpaceSideBar = (props: Props) => {
             return roomData?.membership === Membership.Join
         })
     }, [client, channels])
-
-    const hasContractChannels = contractChannels && contractChannels.length > 0
-
-    useInvalidateChannelsQueryOnNewChannelCreation(space)
 
     return (
         <SideBar data-testid="space-sidebar" height="100vh" onScroll={onScroll}>
@@ -210,7 +167,7 @@ export const SpaceSideBar = (props: Props) => {
                                 <AllChannelsList onHideBrowseChannels={onHideBrowseChannels} />
                             </ModalContainer>
                         )}
-                        {!space.isLoadingChannels && hasContractChannels && (
+                        {!space.isLoadingChannels && (
                             <ActionNavItem
                                 icon="search"
                                 id="browseChannels"
