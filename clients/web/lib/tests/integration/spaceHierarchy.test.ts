@@ -18,7 +18,7 @@ import { TestConstants } from './helpers/TestConstants'
 
 describe('spaceHierarchy', () => {
     // TODO: https://linear.app/hnt-labs/issue/HNT-1614/testsintegrationspacehierarchytestts
-    test.skip('create a public space and a public room, have user join space and search for space childs', async () => {
+    test('create a public space and a public room, have user join space and search for space childs', async () => {
         // create clients
         // alice needs to have a valid nft in order to join bob's space / channel
         const alice = await registerAndStartClient('alice', TestConstants.getWalletWithMemberNft())
