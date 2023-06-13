@@ -10,7 +10,7 @@
         "test:unit": {
             "dependsOn": ["build"]
         },
-        "test:e2e": {
+        "test:dendrite:e2e": {
             "dependsOn": ["build"]
         },
         "build": {

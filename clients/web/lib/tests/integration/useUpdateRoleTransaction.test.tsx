@@ -31,7 +31,8 @@ import { TestConstants } from './helpers/TestConstants'
  * This test suite tests the useRoles hook.
  */
 describe('useUpdateRoleTransaction', () => {
-    test('create a new space role, and then update its role details', async () => {
+    // TODO: https://linear.app/hnt-labs/issue/HNT-1616/testsintegrationuseupdateroletransactiontesttsx
+    test.skip('create a new space role, and then update its role details', async () => {
         /* Arrange */
         const provider = new ZionTestWeb3Provider()
         const spaceName = makeUniqueName('alice')

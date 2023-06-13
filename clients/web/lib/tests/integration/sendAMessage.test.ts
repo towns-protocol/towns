@@ -12,6 +12,7 @@ import {
     createTestChannelWithSpaceRoles,
     createTestSpaceWithEveryoneRole,
     registerAndStartClients,
+    waitForJoiningChannelImmediatelyAfterCreation,
 } from './helpers/TestUtils'
 
 import { Permission } from '../../src/client/web3/ContractTypes'
@@ -64,7 +65,7 @@ describe('sendAMessage', () => {
         for (let i = 1; i < numClients; i++) {
             console.log(`!!!!!! client ${i} joins room`)
             const client = clients[`client_${i}`]
-            await client.joinRoom(channelId)
+            await waitForJoiningChannelImmediatelyAfterCreation(() => client.joinRoom(channelId))
         }
 
         // bob sends a message to the room

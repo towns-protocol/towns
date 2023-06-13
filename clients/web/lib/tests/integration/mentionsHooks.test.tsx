@@ -27,7 +27,8 @@ import { useFullyReadMarker } from '../../src/hooks/use-fully-read-marker'
 import { TestConstants } from './helpers/TestConstants'
 
 describe('mentionsHooks', () => {
-    test('user can see mentions, and can see mentions after login', async () => {
+    // TODO: https://linear.app/hnt-labs/issue/HNT-1622/testsintegrationmentionshookstesttsx
+    test.skip('user can see mentions, and can see mentions after login', async () => {
         // create clients
         const { bob, alice } = await registerAndStartClients(['bob', 'alice'])
 

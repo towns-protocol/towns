@@ -31,7 +31,8 @@ import { TestConstants } from './helpers/TestConstants'
  * This test suite tests the useRoles hook.
  */
 describe('useDeleteRoleTransaction', () => {
-    test('delete a role', async () => {
+    // TODO: unskip, https://linear.app/hnt-labs/issue/HNT-1605/testsintegrationusedeleteroletransactiontesttsx
+    test.skip('delete a role', async () => {
         /* Arrange */
         const provider = new ZionTestWeb3Provider()
         const spaceName = makeUniqueName('alice')

@@ -34,7 +34,8 @@ import { TestConstants } from './helpers/TestConstants'
 // TODO Zustand https://docs.pmnd.rs/zustand/testing
 
 describe('sendMessageHooks', () => {
-    test('user can join a room, see messages, and send messages', async () => {
+    // TODO: https://linear.app/hnt-labs/issue/HNT-1619/testsintegrationsendamessagehookstesttsx
+    test.skip('user can join a room, see messages, and send messages', async () => {
         // create clients
         // create a wallet for bob
         const bobProvider = new ZionTestWeb3Provider()

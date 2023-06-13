@@ -272,7 +272,7 @@ const useWithCatch = <T extends Array<unknown>, U>(
                 if (fn && client) {
                     let retryCount = 0
                     // Loop until success, or MatrixScheduler.RETRY_BACKOFF_RATELIMIT returns -1
-                    // MatrixScheduler.RETRY_BACKOFF_RATELIMIT returns -1 when retryCount > 4
+                    // MatrixScheduler.RETRY_BACKOFF_RATELIMIT returns -1 when retryCount > 4 or httpStatus is 400, 401 or 403
                     // eslint-disable-next-line no-constant-condition
                     while (true) {
                         try {
@@ -286,11 +286,18 @@ const useWithCatch = <T extends Array<unknown>, U>(
                             return value
                         } catch (err) {
                             if (isMatrixError(err)) {
-                                const retryDelay = MatrixScheduler.RETRY_BACKOFF_RATELIMIT(
-                                    dummyMatrixEvent,
-                                    retryCount,
-                                    err,
-                                )
+                                let retryDelay: number
+                                // RETRY_BACKOFF_RATELIMIT returns -1 for 401s, so we need to handle that ourselves
+                                // retry 401 2 times - there are instances in tests where it still failed with a single retry
+                                if (err.httpStatus === 401) {
+                                    retryDelay = retryCount < 2 ? 3000 : -1
+                                } else {
+                                    retryDelay = MatrixScheduler.RETRY_BACKOFF_RATELIMIT(
+                                        dummyMatrixEvent,
+                                        retryCount,
+                                        err,
+                                    )
+                                }
                                 if (retryDelay >= 0) {
                                     console.log(`MatrixError`, { retryDelay, err })
                                     await new Promise((resolve) => setTimeout(resolve, retryDelay))

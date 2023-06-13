@@ -8,6 +8,7 @@ import {
     createTestSpaceWithZionMemberRole,
     registerAndStartClients,
     registerAndStartClient,
+    waitForJoiningChannelImmediatelyAfterCreation,
 } from './helpers/TestUtils'
 
 import { Permission } from '../../src/client/web3/ContractTypes'
@@ -126,8 +127,8 @@ describe('unreadMessageCount', () => {
 
         // alice joins the room
         await alice.joinRoom(spaceId)
-        await alice.joinRoom(channel_1)
-        await alice.joinRoom(channel_2)
+        await waitForJoiningChannelImmediatelyAfterCreation(() => alice.joinRoom(channel_1))
+        await waitForJoiningChannelImmediatelyAfterCreation(() => alice.joinRoom(channel_2))
         // expect our membership to be join
         await waitFor(() => expect(alice.getRoomData(spaceId)?.membership).toBe('join'))
         await waitFor(() => expect(alice.getRoomData(channel_1)?.membership).toBe('join'))

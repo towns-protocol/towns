@@ -64,7 +64,6 @@ describe('useRoleDetails', () => {
         }
         // get our test elements
         const spaceElement = screen.getByTestId('spacesElement')
-        const rolesElement = screen.getByTestId('rolesElement')
         const createSpaceButton = screen.getByRole('button', {
             name: 'Create Space',
         })
@@ -79,6 +78,7 @@ describe('useRoleDetails', () => {
             TestConstants.DoubleDefaultWaitForTimeout,
         )
 
+        const rolesElement = screen.getByTestId('rolesElement')
         /* Assert */
         // verify the role name, permissions, token entitlements for the space.
         // in the test components, each field is tagged with this pattern <roleName>:<field>:<value>.
@@ -101,6 +101,8 @@ function TestComponent(args: {
     const spaceTransaction = useCreateSpaceTransaction()
     const { createSpaceTransactionWithRole, data: spaceId } = spaceTransaction
     const spaceNetworkId = spaceId ? spaceId.networkId : ''
+    const { spaces } = useSpacesFromContract()
+
     // handle click to create a space
     const onClickCreateSpace = useCallback(() => {
         const handleClick = async () => {
@@ -130,23 +132,15 @@ function TestComponent(args: {
             <TransactionInfo for={spaceTransaction} label="spaceTransaction" />
             <SpaceContextProvider spaceId={spaceId}>
                 <>
-                    <SpacesComponent />
-                    <RolesComponent spaceNetworkId={spaceNetworkId} />
+                    <div data-testid="spacesElement">
+                        {spaces.map((element) => (
+                            <div key={element.key}>{element.name}</div>
+                        ))}
+                    </div>
+                    {spaces.length > 0 && <RolesComponent spaceNetworkId={spaceNetworkId} />}
                 </>
             </SpaceContextProvider>
         </>
-    )
-}
-
-function SpacesComponent(): JSX.Element {
-    // spaces
-    const { spaces } = useSpacesFromContract()
-    return (
-        <div data-testid="spacesElement">
-            {spaces.map((element) => (
-                <div key={element.key}>{element.name}</div>
-            ))}
-        </div>
     )
 }
 
@@ -255,7 +249,10 @@ function printRoleStruct(roles: SpaceDataTypes.RoleStructOutput[] | undefined) {
  * Assert helper functions
  */
 async function assertRoleName(htmlElement: HTMLElement, roleName: string) {
-    await waitFor(() => expect(htmlElement).toHaveTextContent(`roleName:${roleName}`))
+    await waitFor(
+        () => expect(htmlElement).toHaveTextContent(`roleName:${roleName}`),
+        TestConstants.DoubleDefaultWaitForTimeout,
+    )
 }
 
 async function assertPermissions(

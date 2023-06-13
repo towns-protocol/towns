@@ -1,6 +1,7 @@
 import {
     CreateChannelInfo,
     CreateSpaceInfo,
+    Room,
     RoomVisibility,
 } from 'use-zion-client/src/types/zion-types'
 import { Permission, RoleDetails } from '../../../src/client/web3/ContractTypes'
@@ -19,6 +20,7 @@ import { SpaceFactoryDataTypes } from '../../../src/client/web3/shims/SpaceFacto
 import { SpaceProtocol } from '../../../src/client/ZionClientTypes'
 import { ZionTestWeb3Provider } from './ZionTestWeb3Provider'
 import { ZionClient } from '../../../src/client/ZionClient'
+import { waitFor } from '@testing-library/dom'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function assert(condition: any, msg?: string): asserts condition {
@@ -228,4 +230,22 @@ export function assertRoleEquals(actual: RoleDetails, expected: RoleDetails) {
     expect(actualTokenAddresses).toEqual(expect.arrayContaining(expectedTokenAddresses))
     expect(actual.users.length).toEqual(expected.users.length)
     expect(actual.users).toEqual(expect.arrayContaining(expected.users))
+}
+
+// joining a channel immediately after creation can 401, so we need to retry
+// wrapping in expect will tell us exactly where it failed
+export async function waitForJoiningChannelImmediatelyAfterCreation(
+    joinRoomCb: () => Promise<Room>,
+) {
+    async function _join() {
+        try {
+            return joinRoomCb()
+        } catch (error) {
+            return false
+        }
+    }
+    await waitFor(async () => expect(await _join()).toBeTruthy(), {
+        interval: 3000,
+        timeout: 10000,
+    })
 }

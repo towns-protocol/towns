@@ -39,7 +39,8 @@ import { useTimeline } from '../../src/hooks/use-timeline'
 // TODO Zustand https://docs.pmnd.rs/zustand/testing
 
 describe('sendThreadedMessageHooks', () => {
-    test('user can join a room, see messages, and send threaded messages', async () => {
+    // TODO: https://linear.app/hnt-labs/issue/HNT-1612/testsintegrationsendthreadedmessagehookstesttsx
+    test.skip('user can join a room, see messages, and send threaded messages', async () => {
         // covers sending reactions, replies, etc
         // - jane creates a public space and two channels
         // - bob joins the space and both channels

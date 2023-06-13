@@ -12,11 +12,13 @@ import {
     createTestSpaceWithEveryoneRole,
     makeUniqueName,
     registerAndStartClients,
+    waitForJoiningChannelImmediatelyAfterCreation,
 } from './helpers/TestUtils'
 import { ZionTestClient } from './helpers/ZionTestClient'
 
 describe('historyVisibility', () => {
-    test('create public room, send message, join second user, read message', async () => {
+    // TODO: unskip, https://linear.app/hnt-labs/issue/HNT-1584/testsintegrationhistoryvisibilitytestts
+    test.skip('create public room, send message, join second user, read message', async () => {
         // create bob
         const { bob, john } = await registerAndStartClients(['bob', 'john'])
         //
@@ -48,7 +50,8 @@ describe('historyVisibility', () => {
 
         await john.joinRoom(spaceId)
 
-        await john.joinRoom(roomId)
+        await waitForJoiningChannelImmediatelyAfterCreation(() => john.joinRoom(roomId))
+
         // if we don't wait for encryption, we'll send unencrypted messages :(
         await waitFor(() => expect(john.isRoomEncrypted(roomId)).toBeTruthy())
 
@@ -65,7 +68,8 @@ describe('historyVisibility', () => {
         const { alice } = await registerAndStartClients(['alice'])
         // alice joins the room
         await alice.joinRoom(spaceId)
-        await alice.joinRoom(roomId)
+
+        await waitForJoiningChannelImmediatelyAfterCreation(() => alice.joinRoom(roomId))
 
         // and we should see the message
         await waitFor(

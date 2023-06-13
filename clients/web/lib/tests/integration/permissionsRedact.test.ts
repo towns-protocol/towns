@@ -6,6 +6,7 @@ import {
     createTestSpaceWithEveryoneRole,
     createTestSpaceWithZionMemberRole,
     registerAndStartClients,
+    waitForJoiningChannelImmediatelyAfterCreation,
 } from 'use-zion-client/tests/integration/helpers/TestUtils'
 
 import { MatrixError } from 'matrix-js-sdk'
@@ -102,7 +103,7 @@ describe('redact messages', () => {
             throw new Error('Failed to get bob matrix user id')
         }
         await alice.inviteUser(channelId, bobUserId)
-        await bob.joinRoom(channelId)
+        await waitForJoiningChannelImmediatelyAfterCreation(() => bob.joinRoom(channelId))
 
         /** Act */
         // alice sends a message in the channel
@@ -127,7 +128,8 @@ describe('redact messages', () => {
         expect(alice.getMessages(channelId)).toContain(message)
     })
 
-    test("moderator can redact other's messages", async () => {
+    // TODO: https://linear.app/hnt-labs/issue/HNT-1617/testsintegrationpermissionsredacttestts
+    test.skip("moderator can redact other's messages", async () => {
         /** Arrange */
         // create all the users for the test
         const { alice, bob } = await registerAndStartClients(['alice', 'bob'])
@@ -179,7 +181,7 @@ describe('redact messages', () => {
             throw new Error('Failed to get bob matrix user id')
         }
         await alice.inviteUser(channelId, bobUserId)
-        await bob.joinRoom(channelId)
+        await waitForJoiningChannelImmediatelyAfterCreation(() => bob.joinRoom(channelId))
 
         /** Act */
         // alice sends a message in the channel

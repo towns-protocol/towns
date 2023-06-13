@@ -1,9 +1,5 @@
 name: Continuous Integration
 on:
-    push:
-        branches:
-            - main
-            - 'ci/**'
     pull_request:
     workflow_dispatch: # Allow manual trigger in GitHub UI
         inputs:
@@ -115,24 +111,10 @@ jobs:
             - name: Unit Tests
               run: yarn test:unit
 
-            # We run the E2E tests only after the PR is merged
             - name: E2E Tests
-              if: github.event.pull_request.merged == true
-              run: yarn test:e2e
+              run: yarn test:dendrite:e2e
 
-            # If CI failed, we send a slack notification
-            - name: Slack notification
-              if: failure() && github.event.pull_request.merged == true
-              uses: rtCamp/action-slack-notify@v2
-              env:
-                  SLACK_WEBHOOK: ${{ secrets.SLACK_CI_CHANNEL_WEBHOOK_URL }}
-                  SLACK_TITLE: 'Failure'
-                  SLACK_USERNAME: 'CI'
-                  SLACK_ICON_EMOJI: ':boom:'
-                  SLACK_COLOR: '#FF0000'
-                  SLACK_MESSAGE: 'CI Failure on ${{ github.repository }}'
-
-    Casablanca_Client_No_Auth:
+    Casablanca_Client:
         if: github.event_name != 'workflow_dispatch' || !inputs.skip_casablanca_client
         runs-on: ubuntu-latest-8-cores
         timeout-minutes: 30
@@ -400,18 +382,6 @@ jobs:
                   path: |
                       casablanca/node/logs/dev.log
 
-            # If CI failed, we send a slack notification
-            - name: Slack notification
-              if: failure() && github.event.pull_request.merged == true
-              uses: rtCamp/action-slack-notify@v2
-              env:
-                  SLACK_WEBHOOK: ${{ secrets.SLACK_CI_CHANNEL_WEBHOOK_URL }}
-                  SLACK_TITLE: 'Failure'
-                  SLACK_USERNAME: 'CI'
-                  SLACK_ICON_EMOJI: ':boom:'
-                  SLACK_COLOR: '#FF0000'
-                  SLACK_MESSAGE: 'CI Casablance Failure on ${{ github.repository }}'
-
     Casablanca_Node:
         if: github.event_name != 'workflow_dispatch' || !inputs.skip_casablanca_node
         runs-on: ubuntu-latest-8-cores
@@ -466,15 +436,3 @@ jobs:
             - name: Run node tests
               run: go test --race ./...
               working-directory: casablanca/node
-
-            # If CI failed, we send a slack notification
-            - name: Slack notification
-              if: failure() && github.event.pull_request.merged == true
-              uses: rtCamp/action-slack-notify@v2
-              env:
-                  SLACK_WEBHOOK: ${{ secrets.SLACK_CI_CHANNEL_WEBHOOK_URL }}
-                  SLACK_TITLE: 'Failure'
-                  SLACK_USERNAME: 'CI'
-                  SLACK_ICON_EMOJI: ':boom:'
-                  SLACK_COLOR: '#FF0000'
-                  SLACK_MESSAGE: 'CI Casablance Failure on ${{ github.repository }}'

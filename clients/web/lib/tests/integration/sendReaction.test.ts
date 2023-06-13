@@ -14,6 +14,7 @@ import {
     createTestChannelWithSpaceRoles,
     createTestSpaceWithEveryoneRole,
     registerAndStartClients,
+    waitForJoiningChannelImmediatelyAfterCreation,
 } from './helpers/TestUtils'
 
 import { Permission } from '../../src/client/web3/ContractTypes'
@@ -46,7 +47,7 @@ describe('sendReaction', () => {
 
         console.log("bob's spaceId", { spaceId, channelId })
 
-        await alice.joinRoom(channelId)
+        await waitForJoiningChannelImmediatelyAfterCreation(() => alice.joinRoom(channelId))
 
         // bob sends a message to the room
         await bob.sendMessage(channelId, 'Hello, world from Bob!')

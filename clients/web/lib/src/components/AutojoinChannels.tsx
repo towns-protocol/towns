@@ -3,23 +3,22 @@ import { Channel } from '../types/zion-types'
 import { useZionContext } from './ZionContextProvider'
 import { useSpaceData } from '../hooks/use-space-data'
 import { useAsyncTaskQueue } from '../utils/useAsyncTaskQueue'
+import { useZionClient } from '../hooks/use-zion-client'
 
 // When the space changes, join all eligible channels
 export const AutojoinChannels = () => {
     const space = useSpaceData()
     const channels = useMemo(() => space?.channelGroups.flatMap((cg) => cg.channels) || [], [space])
     const { client } = useZionContext()
+    const { joinRoom } = useZionClient()
     const { enqueueTask, clearQueue } = useAsyncTaskQueue()
     const checkedChannels = useRef<Record<string, boolean>>({})
 
     const _joinRoom = useCallback(
         (channel: Channel) => {
             return async () => {
-                if (!client) {
-                    return
-                }
                 try {
-                    await client.joinRoom(channel.id, space?.id.networkId)
+                    await joinRoom(channel.id, space?.id.networkId)
                 } catch (error) {
                     console.warn(
                         '[AutoJoinChannels] cannot auto join channel',
@@ -29,7 +28,7 @@ export const AutojoinChannels = () => {
                 }
             }
         },
-        [client, space?.id.networkId],
+        [joinRoom, space?.id.networkId],
     )
 
     // we want a list of only brand new channels user has never joined before

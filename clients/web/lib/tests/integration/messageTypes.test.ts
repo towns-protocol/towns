@@ -16,6 +16,7 @@ import {
     registerAndStartClients,
     registerAndStartClient,
     createTestChannelWithSpaceRoles,
+    waitForJoiningChannelImmediatelyAfterCreation,
 } from './helpers/TestUtils'
 
 import { Permission } from '../../src/client/web3/ContractTypes'
@@ -49,7 +50,8 @@ describe('messageTypes', () => {
         }))!
 
         // alice joins the room
-        await alice.joinRoom(channelId)
+        await waitForJoiningChannelImmediatelyAfterCreation(() => alice.joinRoom(channelId))
+
         // alice sends a gm message
         await alice.sendMessage(channelId, 'GM', {
             messageType: MessageType.GM,
@@ -106,7 +108,7 @@ describe('messageTypes', () => {
         }))!
 
         // alice joins the room
-        await alice.joinRoom(channelId)
+        await waitForJoiningChannelImmediatelyAfterCreation(() => alice.joinRoom(channelId))
         // alice sends a image message
         await alice.sendMessage(channelId, 'what.jpg', IMAGE_MSG_CONTENT)
 

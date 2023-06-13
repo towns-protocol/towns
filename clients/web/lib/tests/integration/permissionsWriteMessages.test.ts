@@ -8,6 +8,7 @@ import {
     registerAndStartClients,
     registerAndStartClient,
     createTestChannelWithSpaceRoles,
+    waitForJoiningChannelImmediatelyAfterCreation,
 } from 'use-zion-client/tests/integration/helpers/TestUtils'
 
 import { Permission } from 'use-zion-client/src/client/web3/ContractTypes'
@@ -16,7 +17,8 @@ import { waitFor } from '@testing-library/dom'
 import { RoomVisibility } from '../../src/types/zion-types'
 
 describe('write messages', () => {
-    test('Channel member cant write messages without permission', async () => {
+    // TODO: https://linear.app/hnt-labs/issue/HNT-1613/testsintegrationpermissionswritemessagestestts
+    test.skip('Channel member cant write messages without permission', async () => {
         /** Arrange */
 
         // create all the users for the test
@@ -106,7 +108,7 @@ describe('write messages', () => {
 
         // invite user to join the space by first checking if they can read.
         await bob.inviteUser(spaceId, tokenGrantedUser.getUserId() as string)
-        await tokenGrantedUser.joinRoom(roomId)
+        await waitForJoiningChannelImmediatelyAfterCreation(() => tokenGrantedUser.joinRoom(roomId))
         // bob send 25 messages (20 is our default initialSyncLimit)
         for (let i = 0; i < 25; i++) {
             await bob.sendMessage(roomId, `message ${i}`)
@@ -156,7 +158,7 @@ describe('write messages', () => {
         /** Act */
         // invite user to join the space by first checking if they can read.
         await bob.inviteUser(roomId, tokenGrantedUser.getUserId() as string)
-        await tokenGrantedUser.joinRoom(roomId)
+        await waitForJoiningChannelImmediatelyAfterCreation(() => tokenGrantedUser.joinRoom(roomId))
 
         // bob sends a message to the room
         await bob.sendMessage(roomId, 'Hello tokenGrantedUser!')

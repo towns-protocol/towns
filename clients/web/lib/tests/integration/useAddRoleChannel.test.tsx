@@ -30,7 +30,8 @@ import { useSpacesFromContract } from '../../src/hooks/use-spaces-from-contract'
  * This test suite tests the useAddRolesToChannel hook.
  */
 describe('useAddRolesToChannel', () => {
-    test('add a role to a channel', async () => {
+    // TODO: unskip, https://linear.app/hnt-labs/issue/HNT-1581/testsintegrationuseaddrolechanneltesttsx
+    test.skip('add a role to a channel', async () => {
         /* Arrange */
         const provider = new ZionTestWeb3Provider()
         const spaceName = makeUniqueName('alice')

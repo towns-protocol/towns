@@ -10,6 +10,7 @@ import {
     createTestChannelWithSpaceRoles,
     createTestSpaceWithEveryoneRole,
     registerAndStartClients,
+    waitForJoiningChannelImmediatelyAfterCreation,
 } from './helpers/TestUtils'
 
 describe('mentions', () => {
@@ -37,7 +38,7 @@ describe('mentions', () => {
 
         console.log("bob's spaceId", { spaceId, channelId })
 
-        await alice.joinRoom(channelId)
+        await waitForJoiningChannelImmediatelyAfterCreation(() => alice.joinRoom(channelId))
         const bobDisplayName = bob.getUser(bob.getUserId()!)?.displayName ?? 'bob'
         // alice sends a message
         await alice.sendMessage(channelId, 'Hi @bob', {

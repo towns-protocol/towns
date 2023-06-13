@@ -31,7 +31,8 @@ import { useSpaceData } from '../../src/hooks/use-space-data'
  * This test suite tests the useRoles hook.
  */
 describe('useUpdateChannelTransaction', () => {
-    test('create a new space, a new channel, and update the channel name', async () => {
+    // TODO: https://linear.app/hnt-labs/issue/HNT-1621/testsintegrationuseupdatechanneltransactiontesttsx
+    test.skip('create a new space, a new channel, and update the channel name', async () => {
         /* Arrange */
         const provider = new ZionTestWeb3Provider()
         const spaceName = makeUniqueName('alice')

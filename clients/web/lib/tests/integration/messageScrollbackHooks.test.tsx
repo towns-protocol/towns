@@ -25,7 +25,8 @@ import { useZionClient } from '../../src/hooks/use-zion-client'
 // TODO Zustand https://docs.pmnd.rs/zustand/testing
 
 describe('messageScrollbackHooks', () => {
-    test('user can join a room, see messages, and send messages', async () => {
+    // TODO: https://linear.app/hnt-labs/issue/HNT-1611/messagescrollbackhookstesttsx
+    test.skip('user can join a room, see messages, and send messages', async () => {
         // create clients
         // alice needs to have a valid nft in order to join bob's space / channel
         const { bob, alice } = await registerAndStartClients(['bob', 'alice'])

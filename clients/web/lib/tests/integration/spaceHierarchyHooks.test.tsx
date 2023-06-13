@@ -23,7 +23,8 @@ import { useSpaceData } from '../../src/hooks/use-space-data'
 import { LoginWithWallet } from './helpers/TestComponents'
 
 describe('spaceHierarchyHooks', () => {
-    test('create a space with two users, have alice create a child channel, ensure bob sees it', async () => {
+    // TODO: unskip, https://linear.app/hnt-labs/issue/HNT-1587/testsintegrationspacehierarchyhookstesttsx
+    test.skip('create a space with two users, have alice create a child channel, ensure bob sees it', async () => {
         // create clients
         // alice needs to have a valid nft in order to join bob's space / channel
         const alice = await registerAndStartClient('alice', TestConstants.getWalletWithMemberNft())

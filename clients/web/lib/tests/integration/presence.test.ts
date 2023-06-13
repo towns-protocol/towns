@@ -6,6 +6,7 @@ import {
     createTestChannelWithSpaceRoles,
     createTestSpaceWithEveryoneRole,
     registerAndStartClients,
+    waitForJoiningChannelImmediatelyAfterCreation,
 } from './helpers/TestUtils'
 import { Permission } from '../../src/client/web3/ContractTypes'
 import { RoomVisibility } from '../../src/types/zion-types'
@@ -37,7 +38,7 @@ describe('presence', () => {
 
         console.log("bob's spaceId", { spaceId, channelId })
 
-        await alice.joinRoom(channelId)
+        await waitForJoiningChannelImmediatelyAfterCreation(() => alice.joinRoom(channelId))
 
         await alice.sendMessage(channelId, 'Hi @bob')
 

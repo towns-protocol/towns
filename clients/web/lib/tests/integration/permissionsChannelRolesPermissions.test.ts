@@ -11,6 +11,7 @@ import {
     createTestSpaceWithZionMemberRole,
     registerAndStartClients,
     registerAndStartClient,
+    waitForJoiningChannelImmediatelyAfterCreation,
 } from 'use-zion-client/tests/integration/helpers/TestUtils'
 
 import { Permission } from 'use-zion-client/src/client/web3/ContractTypes'
@@ -49,10 +50,9 @@ describe('channel with roles and permissions', () => {
         /** Act */
 
         // join the channel
-        const room = await tokenGrantedUser.joinRoom(channelId)
-
-        /** Assert */
-        expect(room.id.networkId).toBeTruthy()
+        await waitForJoiningChannelImmediatelyAfterCreation(() =>
+            tokenGrantedUser.joinRoom(channelId),
+        )
     }) // end test
 
     test('join Everyone channel', async () => {
@@ -78,10 +78,7 @@ describe('channel with roles and permissions', () => {
         /** Act */
 
         // join the channel
-        const room = await bob.joinRoom(channelId)
-
-        /** Assert */
-        expect(room.id.networkId).toBeTruthy()
+        await waitForJoiningChannelImmediatelyAfterCreation(() => bob.joinRoom(channelId))
     }) // end test
 
     test('denied access to token-gated channel', async () => {
@@ -112,7 +109,7 @@ describe('channel with roles and permissions', () => {
 
         // join the channel
         await expect(bob.joinRoom(channelId)).rejects.toThrow(
-            new RegExp('Unauthorized|PermissionDenied'),
+            new RegExp('Unauthorised|PermissionDenied'),
         )
     }) // end test
 })
