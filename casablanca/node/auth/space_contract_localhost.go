@@ -3,6 +3,7 @@ package auth
 import (
 	"casablanca/node/auth/contracts/localhost_space"
 	"casablanca/node/auth/contracts/localhost_space_factory"
+	"sync"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -13,6 +14,7 @@ type SpaceContractLocalhost struct {
 	ethClient    *ethclient.Client
 	spaceFactory *localhost_space_factory.LocalhostSpaceFactory
 	spaces       map[string]*localhost_space.LocalhostSpace
+	spacesLock   sync.Mutex
 }
 
 func NewSpaceContractLocalhost(ethClient *ethclient.Client) (*SpaceContractLocalhost, error) {
@@ -96,6 +98,8 @@ func (za *SpaceContractLocalhost) IsChannelDisabled(spaceNetworkId string, chann
 }
 
 func (za *SpaceContractLocalhost) getSpace(networkId string) (*localhost_space.LocalhostSpace, error) {
+	za.spacesLock.Lock()
+	defer za.spacesLock.Unlock()
 	if za.spaces[networkId] == nil {
 		// convert the networkId to keccak256 spaceIdHash
 		spaceIdHash := NetworkIdToHash(networkId)
