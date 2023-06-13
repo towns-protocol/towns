@@ -83,11 +83,10 @@ func (s *Service) addParsedEvent(ctx context.Context, streamId string, parsedEve
 		return status.Errorf(codes.InvalidArgument, "AddEvent: event has no prev events")
 	}
 
-	stream, err := s.cache.GetStream(ctx, streamId)
+	stream, streamView, err := s.cache.GetStream(ctx, streamId)
 	if err != nil {
 		return err
 	}
-	streamView := stream.GetView()
 
 	// check if previous event's hashes match
 	for _, prevEvent := range parsedEvent.PrevEventStrs {
@@ -221,11 +220,10 @@ func (s *Service) addMembershipEvent(ctx context.Context, stream *Stream, view S
 	}
 
 	// Check if user stream exists
-	userStream, err := s.cache.GetStream(ctx, userStreamId)
+	userStream, userStreamView, err := s.cache.GetStream(ctx, userStreamId)
 	if err != nil {
 		return err
 	}
-	userStreamView := userStream.GetView()
 	// TODO: check here if user already a member?
 
 	permission := auth.PermissionUndefined

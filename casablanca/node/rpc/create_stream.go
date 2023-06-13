@@ -91,18 +91,16 @@ func (s *Service) createStream(ctx context.Context, req *connect_go.Request[prot
 		}
 
 		// Load space. Check if it exists. Used later for auth and to add the channel to the space.
-		spaceStream, err = s.cache.GetStream(ctx, inception.SpaceId)
+		spaceStream, spaceView, err = s.cache.GetStream(ctx, inception.SpaceId)
 		if err != nil {
 			return nil, err
 		}
-		spaceView = spaceStream.GetView()
 
 		// Load user.
-		userStream, err = s.cache.GetStream(ctx, creatorUserId)
+		userStream, userView, err = s.cache.GetStream(ctx, creatorUserId)
 		if err != nil {
 			return nil, err
 		}
-		userView = userStream.GetView()
 
 	case *protocol.SpacePayload_Inception:
 		if !common.ValidSpaceStreamId(inception.StreamId) {
@@ -116,11 +114,10 @@ func (s *Service) createStream(ctx context.Context, req *connect_go.Request[prot
 		}
 
 		// Load user.
-		userStream, err = s.cache.GetStream(ctx, creatorUserId)
+		userStream, userView, err = s.cache.GetStream(ctx, creatorUserId)
 		if err != nil {
 			return nil, err
 		}
-		userView = userStream.GetView()
 
 	case *protocol.UserPayload_Inception:
 		if !common.ValidUserStreamId(inception.StreamId) {
@@ -181,10 +178,11 @@ func (s *Service) createStream(ctx context.Context, req *connect_go.Request[prot
 	// Storage.CreateStream should work fine with two events (although side-effects need to be processed separately in this case).
 	streamId := inceptionPayload.GetStreamId()
 	log.Infof("CreateStream: calling storage %s", streamId)
-	stream, cookie, err := s.cache.CreateStream(ctx, streamId, parsedEvents[0:1])
+	stream, streamView, err := s.cache.CreateStream(ctx, streamId, parsedEvents[0:1])
 	if err != nil {
 		return nil, err
 	}
+	cookie := streamView.SyncCookie()
 	// TODO(HNT-1355): technically this is a race: somebody else can add event to the stream between CreateStream and AddEvent calls.
 	if secondEvent != nil {
 		cookie, err = stream.AddEvent(ctx, secondEvent)
@@ -230,7 +228,7 @@ func (s *Service) createStream(ctx context.Context, req *connect_go.Request[prot
 	}
 
 	return connect_go.NewResponse(&protocol.CreateStreamResponse{
-		SyncCookie: []byte(cookie),
+		SyncCookie: cookie,
 	}), nil
 }
 

@@ -258,10 +258,23 @@ message Key {
     map<string, string> signatures = 2;
 }
 
+message SyncCookie  {
+    string stream_id = 1;
+    int64 miniblock_num = 2;
+    bytes miniblock_hash = 3;
+
+    // minipool_instance is a unique identifier of a cookie generator. 
+    // minipool_slots are not necessary consistent across instances or even restarts.
+    // If minipool_instance is mismatching, then minipool_slot is ignored and stream is synced from the end of the referenced miniblock_num.
+    // This is responsibility of the client to ignore duplicate events.
+    string minipool_instance = 4;
+    int64 minipool_slot = 5;
+}
+
 message StreamAndCookie {
     repeated Envelope events = 1;
-    bytes next_sync_cookie = 2;
-    bytes original_sync_cookie = 3;
+    SyncCookie next_sync_cookie = 2;
+    SyncCookie original_sync_cookie = 3;
     string stream_id = 4;
 }
 
@@ -270,7 +283,7 @@ message CreateStreamRequest {
 }
 
 message CreateStreamResponse {
-    bytes sync_cookie = 1;
+    SyncCookie sync_cookie = 1;
 }
 
 message GetStreamRequest {
@@ -288,13 +301,8 @@ message AddEventRequest {
 
 message AddEventResponse {}
 
-message SyncPos {
-    string stream_id = 1;
-    bytes sync_cookie = 2;
-}
-
 message SyncStreamsRequest {
-    repeated SyncPos sync_pos = 1;
+    repeated SyncCookie sync_pos = 1;
     uint32 timeout_ms = 2;
 }
 

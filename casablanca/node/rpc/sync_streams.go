@@ -29,7 +29,7 @@ func (s *Service) SyncStreams(ctx context.Context, req *connect_go.Request[SyncS
 
 	log.Infof("SyncStreams: ENTER timeout_ms=%d, len=%d", req.Msg.TimeoutMs, len(req.Msg.SyncPos))
 	for _, pos := range req.Msg.SyncPos {
-		log.Infof("SyncStreams: pos %s %s", pos.StreamId, string(pos.SyncCookie))
+		log.Infof("SyncStreams: pos %v", pos)
 	}
 	log.Infof("SyncStreams: buf=%v", req.Msg)
 
@@ -66,19 +66,17 @@ func (s *Service) syncStreams(ctx context.Context, req *connect_go.Request[SyncS
 
 	var initialUpdates []*StreamAndCookie
 	for _, pos := range req.Msg.SyncPos {
-		if len(pos.StreamId) <= 0 {
-			return RpcError(Err_BAD_ARGS, "SyncStreams: StreamId is empty")
-		}
-		if len(pos.SyncCookie) <= 0 {
-			return RpcError(Err_BAD_ARGS, "SyncStreams: SyncCookie is empty")
+		err := SyncCookieValidate(pos)
+		if err != nil {
+			return nil
 		}
 
-		stream, err := s.cache.GetStream(ctx, pos.StreamId)
+		stream, _, err := s.cache.GetStream(ctx, pos.StreamId)
 		if err != nil {
 			return err
 		}
 
-		update, err := stream.Sub(string(pos.SyncCookie), receiver)
+		update, err := stream.Sub(ctx, pos, receiver)
 		if err != nil {
 			return err
 		}
@@ -105,7 +103,7 @@ func (s *Service) syncStreams(ctx context.Context, req *connect_go.Request[SyncS
 		select {
 		case update := <-receiver:
 			if update != nil {
-				log.Infof("SyncStreams: SENDING update streamId=%s cookie=%s", update.StreamId, string(update.NextSyncCookie))
+				log.Infof("SyncStreams: SENDING update streamId=%s cookie=%v", update.StreamId, update.NextSyncCookie)
 
 				updates := []*StreamAndCookie{update}
 				addUpdatesToCounter(updates)

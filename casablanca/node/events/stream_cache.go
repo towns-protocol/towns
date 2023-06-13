@@ -5,19 +5,16 @@ import (
 	"context"
 	"fmt"
 	"sync"
-
-	"golang.org/x/sync/singleflight"
 )
 
 type StreamCache interface {
-	GetStream(ctx context.Context, streamId string) (*Stream, error)
-	CreateStream(ctx context.Context, streamId string, events []*ParsedEvent) (*Stream, string, error)
+	GetStream(ctx context.Context, streamId string) (*Stream, StreamView, error)
+	CreateStream(ctx context.Context, streamId string, events []*ParsedEvent) (*Stream, StreamView, error)
 }
 
 type streamCacheImpl struct {
 	storage storage.Storage
 	cache   sync.Map
-	group   singleflight.Group
 }
 
 func NewStreamCache(storage storage.Storage) *streamCacheImpl {
@@ -26,41 +23,44 @@ func NewStreamCache(storage storage.Storage) *streamCacheImpl {
 	}
 }
 
-func (s *streamCacheImpl) GetStream(ctx context.Context, streamId string) (*Stream, error) {
-	if stream, ok := s.cache.Load(streamId); ok {
-		return stream.(*Stream), nil
+func (s *streamCacheImpl) GetStream(ctx context.Context, streamId string) (*Stream, StreamView, error) {
+	entry, _ := s.cache.Load(streamId)
+	if entry == nil {
+		entry, _ = s.cache.LoadOrStore(streamId, &Stream{
+			storage:  s.storage,
+			streamId: streamId,
+		})
 	}
+	stream := entry.(*Stream)
 
-	result, err, _ := s.group.Do(streamId, func() (interface{}, error) {
-		if stream, ok := s.cache.Load(streamId); ok {
-			return stream, nil
-		}
-		stream, err := loadStream(ctx, s.storage, streamId)
-		if err == nil {
-			s.cache.Store(streamId, stream)
-			return stream, nil
-		} else {
-			return nil, err
-		}
-	})
-	if err != nil {
-		return nil, err
+	streamView, err := stream.GetView(ctx)
+
+	if err == nil {
+		return stream, streamView, nil
+	} else {
+		// Ditching the stream from the cache here will trigger a reload on the next call to GetStream.
+		// TODO: it's not cool to drop streams if there are any subs.
+		// Flush subs if load fails?
+		s.cache.CompareAndDelete(streamId, stream)
+		return nil, nil, err
 	}
-	return result.(*Stream), nil
 }
 
-func (s *streamCacheImpl) CreateStream(ctx context.Context, streamId string, events []*ParsedEvent) (*Stream, string, error) {
-	if _, ok := s.cache.Load(streamId); ok {
-		return nil, "", fmt.Errorf("stream already exists, %s", streamId)
+func (s *streamCacheImpl) CreateStream(ctx context.Context, streamId string, events []*ParsedEvent) (*Stream, StreamView, error) {
+	if existing, _ := s.cache.Load(streamId); existing != nil {
+		return nil, nil, fmt.Errorf("stream already exists, %s", streamId)
 	}
 
-	stream, cookie, err := createStream(ctx, s.storage, streamId, events)
+	stream, view, err := createStream(ctx, s.storage, streamId, events)
 	if err != nil {
-		return nil, "", err
+		return nil, nil, err
 	}
+
 	_, loaded := s.cache.LoadOrStore(streamId, stream)
-	if loaded {
-		return nil, "", fmt.Errorf("another stream create in parallel, %s", streamId)
+	if !loaded {
+		return stream, view, nil
+	} else {
+		// Assume that parallel GetStream created cache entry, fallback to it to retrieve winning cache entry.
+		return s.GetStream(ctx, streamId)
 	}
-	return stream, cookie, nil
 }

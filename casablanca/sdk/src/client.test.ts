@@ -291,7 +291,7 @@ describe('clientTest', () => {
         }
         bobsClient.on('streamInitialized', onStreamInitialized)
 
-        await expect(bobsClient.createNewUser()).toResolve()
+        await expect(bobsClient.createNewUser()).resolves.toBeUndefined()
 
         await bobsClient.startSync()
 

@@ -3,7 +3,6 @@ import {
     StreamAndCookie,
     MembershipOp,
     ToDeviceOp,
-    SyncPos,
     ChannelMessage_Post_Mention,
     ChannelMessage,
     ChannelMessage_Post,
@@ -15,6 +14,7 @@ import {
     ChannelMessage_Redaction,
     StreamEvent,
     UserDeviceKeyPayload_UserDeviceKey,
+    SyncCookie,
     FallbackKeys,
     Key,
 } from '@towns/proto'
@@ -37,8 +37,6 @@ import { StreamRpcClientType } from './streamRpcClient'
 import { StreamEvents, StreamStateView } from './streams'
 import {
     ParsedEvent,
-    bin_equal,
-    bin_toBase64,
     IDeviceKeys,
     IFallbackKey,
     make_UserDeviceKeyPayload_UserDeviceKey,
@@ -52,6 +50,7 @@ import {
     make_UserPayload_ToDevice,
     IDeviceKeySignatures,
 } from './types'
+import _ from 'lodash'
 
 const log = debug('csb:client')
 
@@ -62,13 +61,15 @@ function assert(condition: boolean, message: string): asserts condition {
     }
 }
 
+const isCookieEqual = (a?: SyncCookie, b?: SyncCookie): boolean => _.isEqual(a, b)
+
 export class Stream extends (EventEmitter as new () => TypedEmitter<StreamEvents>) {
     readonly streamId: string
     readonly clientEmitter: TypedEmitter<StreamEvents>
     readonly logEmitFromStream: debug.Debugger
     readonly rollup: StreamStateView
     readonly foreignUserStream: boolean
-    syncCookie?: Uint8Array
+    syncCookie?: SyncCookie
 
     constructor(
         streamId: string,
@@ -94,8 +95,8 @@ export class Stream extends (EventEmitter as new () => TypedEmitter<StreamEvents
     addEvents(streamAndCookie: StreamAndCookie, init?: boolean): void {
         // TODO: perhaps here save rollup and emit events only if rollup is successful
         assert(
-            bin_equal(this.syncCookie, streamAndCookie.originalSyncCookie),
-            'syncCookie mismatch',
+            isCookieEqual(this.syncCookie, streamAndCookie.originalSyncCookie),
+            `syncCookie mismatch: ${this.syncCookie?.toJsonString()} vs ${streamAndCookie.originalSyncCookie?.toJsonString()}`,
         )
         const events = unpackEnvelopes(streamAndCookie.events)
         this.rollup.addEvents(events, this, init)
@@ -458,23 +459,20 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
                     this.syncAbort = abortController
 
                     this.logSync('sync ITERATION start', iteration++)
-                    const syncPos: PlainMessage<SyncPos>[] = []
+                    const syncPos: PlainMessage<SyncCookie>[] = []
                     this.streams.forEach((stream: Stream) => {
                         // TODO: jterzis as an optimization in the future,
                         // prune foreign user streams that are created to send
                         // to_device messages.
                         const syncCookie = stream.syncCookie
                         if (syncCookie !== undefined) {
-                            syncPos.push({
-                                streamId: stream.streamId,
-                                syncCookie,
-                            })
+                            syncPos.push(syncCookie)
                             this.logSync(
                                 'sync CALL',
                                 'stream=',
                                 stream.streamId,
                                 'syncCookie=',
-                                bin_toBase64(syncCookie),
+                                syncCookie,
                             )
                         }
                     })
@@ -509,11 +507,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
                             this.logSync(
                                 'sync RESULTS for stream empty',
                                 'originalSyncCookies=',
-                                syncPos
-                                    .map((s) =>
-                                        s.syncCookie ? bin_toBase64(s.syncCookie) : '[undefined]',
-                                    )
-                                    .join(', '),
+                                syncPos, // TODO: logging
                             )
                         } else {
                             syncedStreams.forEach((sync) =>
@@ -525,9 +519,9 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
                                         'events=',
                                         streamAndCookie.events.length,
                                         'nextSyncCookie=',
-                                        bin_toBase64(streamAndCookie.nextSyncCookie),
+                                        streamAndCookie.nextSyncCookie,
                                         'originalSyncCookie=',
-                                        bin_toBase64(streamAndCookie.originalSyncCookie),
+                                        streamAndCookie.originalSyncCookie,
                                     )
                                     const stream = this.streams.get(streamId)
                                     if (stream === undefined) {
@@ -1074,22 +1068,6 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
             streamId,
             event,
         })
-    }
-
-    async getStreamSyncCookie(
-        streamId: string,
-    ): Promise<{ eventCount: number; syncCookie: Uint8Array }> {
-        this.logCall('getStreamSyncCookie', streamId)
-        try {
-            const streamContent = await this.rpcClient.getStream({ streamId })
-            return {
-                eventCount: streamContent.stream?.events?.length ?? 0,
-                syncCookie: streamContent.stream?.nextSyncCookie ?? new Uint8Array(8),
-            }
-        } catch (e) {
-            this.logCall('getStreamSyncCookie', streamId, 'ERROR', e)
-            throw e
-        }
     }
 
     async initCrypto(): Promise<void> {

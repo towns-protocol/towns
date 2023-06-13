@@ -46,7 +46,7 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
-func createUser(ctx context.Context, wallet *crypto.Wallet, client protocolconnect.StreamServiceClient) ([]byte, []byte, error) {
+func createUser(ctx context.Context, wallet *crypto.Wallet, client protocolconnect.StreamServiceClient) (*protocol.SyncCookie, []byte, error) {
 	userStreamId, err := common.UserStreamIdFromAddress(wallet.Address.Bytes())
 	if err != nil {
 		return nil, nil, err
@@ -70,7 +70,7 @@ func createUser(ctx context.Context, wallet *crypto.Wallet, client protocolconne
 	return res.Msg.SyncCookie, inception.Hash, nil
 }
 
-func createSpace(ctx context.Context, wallet *crypto.Wallet, client protocolconnect.StreamServiceClient, spaceId string) ([]byte, []byte, error) {
+func createSpace(ctx context.Context, wallet *crypto.Wallet, client protocolconnect.StreamServiceClient, spaceId string) (*protocol.SyncCookie, []byte, error) {
 	space, err := events.MakeEnvelopeWithPayload(
 		wallet,
 		events.Make_SpacePayload_Inception(
@@ -108,7 +108,7 @@ func createSpace(ctx context.Context, wallet *crypto.Wallet, client protocolconn
 	return resspace.Msg.SyncCookie, joinSpace.Hash, nil
 }
 
-func createChannel(ctx context.Context, wallet *crypto.Wallet, client protocolconnect.StreamServiceClient, spaceId string, channelId string) ([]byte, []byte, error) {
+func createChannel(ctx context.Context, wallet *crypto.Wallet, client protocolconnect.StreamServiceClient, spaceId string, channelId string) (*protocol.SyncCookie, []byte, error) {
 	channel, err := events.MakeEnvelopeWithPayload(
 		wallet,
 		events.Make_ChannelPayload_Inception(
@@ -278,11 +278,8 @@ func TestMethods(t *testing.T) {
 			ctx,
 			connect.NewRequest(
 				&protocol.SyncStreamsRequest{
-					SyncPos: []*protocol.SyncPos{
-						{
-							StreamId:   common.ChannelStreamIdFromName("channel1"),
-							SyncCookie: channel,
-						},
+					SyncPos: []*protocol.SyncCookie{
+						channel,
 					},
 					TimeoutMs: 1000,
 				},
@@ -356,7 +353,7 @@ func TestManyUsers(t *testing.T) {
 
 	// create channels
 	var channelHashes [][]byte
-	var channels [][]byte
+	var channels []*protocol.SyncCookie
 	for i := 0; i < totalChannels; i++ {
 		channel, channelHash, err := createChannel(ctx, wallets[0], client, common.SpaceStreamIdFromName("test"), fmt.Sprintf("channel-%d", i))
 		if err != nil {
@@ -419,15 +416,8 @@ func TestManyUsers(t *testing.T) {
 		}
 	}
 
-	syncPos := []*protocol.SyncPos{}
-	for i := 0; i < totalChannels; i++ {
-		syncPos = append(syncPos, &protocol.SyncPos{
-			StreamId:   common.ChannelStreamIdFromName(fmt.Sprintf("channel-%d", i)),
-			SyncCookie: channels[i],
-		})
-	}
 	syncRes, err := client.SyncStreams(ctx, connect.NewRequest(&protocol.SyncStreamsRequest{
-		SyncPos:   syncPos,
+		SyncPos:   channels,
 		TimeoutMs: 1000,
 	}))
 	if err != nil {
@@ -444,9 +434,9 @@ func TestManyUsers(t *testing.T) {
 			if len(msg.Streams[i].Events) != (totalUsers-1)*2 {
 				t.Fatalf("expected %d event, got %d", (totalUsers-1)*2, len(msg.Streams[0].Events))
 			}
-			for syncPosIdx := range syncPos {
-				if syncPos[syncPosIdx].StreamId == msg.Streams[i].StreamId {
-					syncPos[syncPosIdx].SyncCookie = msg.Streams[i].NextSyncCookie
+			for syncPosIdx := range channels {
+				if channels[syncPosIdx].StreamId == msg.Streams[i].StreamId {
+					channels[syncPosIdx] = msg.Streams[i].NextSyncCookie
 				}
 			}
 		}
@@ -497,7 +487,7 @@ func TestManyUsers(t *testing.T) {
 
 		received := 0
 		syncRes, err = client.SyncStreams(ctx, connect.NewRequest(&protocol.SyncStreamsRequest{
-			SyncPos:   syncPos,
+			SyncPos:   channels,
 			TimeoutMs: 1000,
 		}))
 		if err != nil {
@@ -508,9 +498,9 @@ func TestManyUsers(t *testing.T) {
 			assert.NoError(t, err)
 			stats[len(msg.Streams)]++
 			for streamIdx := range msg.Streams {
-				for syncPosStrem := range syncPos {
-					if syncPos[syncPosStrem].StreamId == msg.Streams[streamIdx].StreamId {
-						syncPos[syncPosStrem].SyncCookie = msg.Streams[streamIdx].NextSyncCookie
+				for syncPosStrem := range channels {
+					if channels[syncPosStrem].StreamId == msg.Streams[streamIdx].StreamId {
+						channels[syncPosStrem] = msg.Streams[streamIdx].NextSyncCookie
 					}
 				}
 				received += len(msg.Streams[streamIdx].Events)

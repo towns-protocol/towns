@@ -20,6 +20,7 @@ type StreamView interface {
 	LeafEventHashes() [][]byte
 	LeafEvents() map[string]*ParsedEvent
 	Envelopes() []*Envelope
+	SyncCookie() *SyncCookie
 }
 
 var debugLogMutex = &sync.Mutex{}
@@ -141,6 +142,13 @@ func MakeStreamViewFromParsedEvents(unsortedEvents []*ParsedEvent) (*streamViewI
 		envelopes:    envelopes,
 		eventsByHash: eventsByHash,
 		leafEvents:   leafEvents,
+		syncCookie: &SyncCookie{
+			StreamId:         streamId,
+			MiniblockNum:     0,
+			MiniblockHash:    []byte{0, 0},
+			MinipoolInstance: GenNanoid(),
+			MinipoolSlot:     int64(len(events)),
+		},
 	}, nil
 }
 
@@ -150,18 +158,20 @@ type streamViewImpl struct {
 	envelopes    []*Envelope
 	eventsByHash map[string]*ParsedEvent
 	leafEvents   map[string]*ParsedEvent
+	syncCookie   *SyncCookie
 }
 
-func (r *streamViewImpl) addEvent(event *ParsedEvent) error {
+func (r *streamViewImpl) copyAndAddEvent(event *ParsedEvent) (*streamViewImpl, error) {
 	if _, ok := r.eventsByHash[event.HashStr]; ok {
-		return fmt.Errorf("streamViewImpl: event already exists, stream=%s, event=%s", r.streamId, event.ShortDebugStr())
+		return nil, fmt.Errorf("streamViewImpl: event already exists, stream=%s, event=%s", r.streamId, event.ShortDebugStr())
 	}
 	for _, prev := range event.PrevEventStrs {
 		if _, ok := r.eventsByHash[prev]; !ok {
-			return fmt.Errorf("streamViewImpl: prev event not found, stream=%s, prev_event=%s, event=%s", r.streamId, FormatHashFromString(prev), event.ShortDebugStr())
+			return nil, fmt.Errorf("streamViewImpl: prev event not found, stream=%s, prev_event=%s, event=%s", r.streamId, FormatHashFromString(prev), event.ShortDebugStr())
 		}
 	}
 
+	r = r.copy(1)
 	r.events = append(r.events, event)
 	r.envelopes = append(r.envelopes, event.Envelope)
 	r.eventsByHash[event.HashStr] = event
@@ -169,7 +179,8 @@ func (r *streamViewImpl) addEvent(event *ParsedEvent) error {
 	for _, prev := range event.PrevEventStrs {
 		delete(r.leafEvents, prev)
 	}
-	return nil
+	r.syncCookie.MinipoolSlot = int64(len(r.events))
+	return r, nil
 }
 
 func (r *streamViewImpl) StreamId() string {
@@ -254,15 +265,17 @@ func copyMap(originalMap map[string]*ParsedEvent) map[string]*ParsedEvent {
 	return newMap
 }
 
-func (sv *streamViewImpl) copy() *streamViewImpl {
-	newSv := &streamViewImpl{
+func (sv *streamViewImpl) copy(extraCapacity int) *streamViewImpl {
+	return &streamViewImpl{
 		streamId:     sv.streamId,
-		events:       make([]*ParsedEvent, len(sv.events)),
-		envelopes:    make([]*Envelope, len(sv.envelopes)),
+		events:       append(make([]*ParsedEvent, 0, len(sv.events)+extraCapacity), sv.events...),
+		envelopes:    append(make([]*Envelope, 0, len(sv.envelopes)+extraCapacity), sv.envelopes...),
 		eventsByHash: copyMap(sv.eventsByHash),
 		leafEvents:   copyMap(sv.leafEvents),
+		syncCookie:   SyncCookieCopy(sv.syncCookie),
 	}
-	copy(newSv.events, sv.events)
-	copy(newSv.envelopes, sv.envelopes)
-	return newSv
+}
+
+func (r *streamViewImpl) SyncCookie() *SyncCookie {
+	return r.syncCookie
 }

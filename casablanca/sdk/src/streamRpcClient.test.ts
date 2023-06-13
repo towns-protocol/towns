@@ -6,6 +6,7 @@ import {
     SyncStreamsResponse,
     UserPayload_UserMembership,
     ChannelPayload_Message,
+    SyncCookie,
 } from '@towns/proto'
 import debug from 'debug'
 import {
@@ -32,10 +33,13 @@ import {
     make_SpacePayload_Membership,
     make_UserPayload_Inception,
 } from './types'
+import { inspect } from 'util'
 
 const log = debug('test:streamRpcClient')
 
 const makeTestRpcClient = () => makeStreamRpcClient(TEST_URL)
+
+const objFmt = (o: any): string => inspect(o, { depth: 6, colors: true })
 
 describe('streamRpcClient', () => {
     let bobsContext: SignerContext
@@ -187,12 +191,15 @@ describe('streamRpcClient', () => {
             }),
             [channelInceptionEvent.hash],
         )
+        const channelEvents = [channelInceptionEvent, channelJoinEvent]
+        log('bobTalksToHimself creating channel with events=', objFmt(channelEvents))
         await bob.createStream({
-            events: [channelInceptionEvent, channelJoinEvent],
+            events: channelEvents,
         })
         log('bobTalksToHimself Bob created channel, reads it back')
         const channel = await bob.getStream({ streamId: channelId })
         expect(channel).toBeDefined()
+        expect(channel.stream).toBeDefined()
         expect(channel.stream?.streamId).toEqual(channelId)
 
         // Now there must be "channel created" event in the space stream.
@@ -204,15 +211,13 @@ describe('streamRpcClient', () => {
         expect(channelCreatePayload?.channelId).toEqual(channelId)
 
         // Bob starts sync on the channel
+        log(
+            'bobTalksToHimself Starting sync on channel with sync cookie=',
+            channel.stream?.nextSyncCookie,
+        )
         let syncResult: SyncStreamsResponse | null = null
-        if (!channel.stream) throw new Error('channel.stream is null')
         const bodSyncStream = bob.syncStreams({
-            syncPos: [
-                {
-                    streamId: channelId,
-                    syncCookie: channel.stream.nextSyncCookie,
-                },
-            ],
+            syncPos: [channel.stream!.nextSyncCookie!],
             timeoutMs: 4000,
         })
         // Bob succesdfully posts a message
@@ -234,6 +239,7 @@ describe('streamRpcClient', () => {
         log('bobTalksToHimself Bob starts sync')
         for await (const result of bodSyncStream) {
             syncResult = result
+            log('bobTalksToHimself Bob got sync result', objFmt(syncResult))
         }
 
         expect(syncResult).toBeDefined()
@@ -387,12 +393,7 @@ describe('streamRpcClient', () => {
         let aliceSyncCookie = userAlice.stream.nextSyncCookie
         let aliceSyncResult: SyncStreamsResponse | null = null
         const aliceSyncStreams = alice.syncStreams({
-            syncPos: [
-                {
-                    streamId: alicesUserStreamId,
-                    syncCookie: aliceSyncCookie,
-                },
-            ],
+            syncPos: [aliceSyncCookie!],
             timeoutMs: 29000,
         })
 
@@ -430,12 +431,7 @@ describe('streamRpcClient', () => {
         // Alice syncs her user stream again
         aliceSyncResult = null
         const userSyncStream = alice.syncStreams({
-            syncPos: [
-                {
-                    streamId: alicesUserStreamId,
-                    syncCookie: aliceSyncCookie,
-                },
-            ],
+            syncPos: [aliceSyncCookie],
             timeoutMs: 29000,
         })
 
@@ -486,16 +482,7 @@ describe('streamRpcClient', () => {
         // Alice syncs both her user stream and the channel
         aliceSyncResult = null
         const userAndChannelStreamSync = alice.syncStreams({
-            syncPos: [
-                {
-                    streamId: alicesUserStreamId,
-                    syncCookie: aliceSyncCookie,
-                },
-                {
-                    streamId: channelId,
-                    syncCookie: channel.stream.nextSyncCookie,
-                },
-            ],
+            syncPos: [aliceSyncCookie, channel.stream.nextSyncCookie!],
             timeoutMs: 29000,
         })
 
@@ -800,7 +787,7 @@ const expectEvent = (
     streamId: string,
     streamKind: PayloadCaseType,
     validator: (payload: any) => void,
-): Uint8Array => {
+): SyncCookie => {
     expect(resp).toBeDefined()
     resp = resp!
     expect(resp.streams).toHaveLength(1)
@@ -812,5 +799,5 @@ const expectEvent = (
     validator(e.payload?.value?.content.value)
 
     expect(resp.streams[0].nextSyncCookie).toBeDefined()
-    return resp.streams[0].nextSyncCookie
+    return resp.streams[0].nextSyncCookie!
 }

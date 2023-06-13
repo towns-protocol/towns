@@ -7,15 +7,6 @@ import { makeUniqueChannelStreamId, makeUniqueSpaceStreamId } from './id'
 
 const log = debug('test:aliceAndFriends')
 
-function bytesToNumber(byteArray: Uint8Array) {
-    let result = 0
-    for (let i = byteArray.length - 1; i >= 0; i--) {
-        result = result * 256 + byteArray[i]
-    }
-
-    return result
-}
-
 class TestDriver {
     readonly client: Client
     readonly num: number
@@ -247,8 +238,6 @@ export const converse = async (conversation: string[][], testName: string): Prom
 
         await Promise.all(drivers.map((d) => d.stop()))
         log(`${testName} drivers stopped`)
-        const { eventCount, syncCookie } = await alice.client.getStreamSyncCookie(channelId)
-        log(`${testName} drivers stopped`, eventCount, bytesToNumber(syncCookie.slice(0, 8)))
         return 'success'
     } catch (e) {
         log(`${testName} converse ERROR`, e)
