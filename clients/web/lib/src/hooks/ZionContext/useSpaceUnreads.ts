@@ -55,8 +55,6 @@ export function useSpaceUnreads(
             // note, okay using timeline store without listening to it because I'm
             // mostly certian it's impossible to update the isParticipating without
             // also updating the fullyReadMarkers
-            console.log('MEOW useSpaceUnreads: spaceIds', JSON.stringify(spaceIds))
-            console.log('MEOW useSpaceUnreads: spaceHierarchies', JSON.stringify(spaceHierarchies))
             spaceIds.forEach((spaceId) => {
                 let hasUnread = false
                 let mentionCount = 0

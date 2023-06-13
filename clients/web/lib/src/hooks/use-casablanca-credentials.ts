@@ -13,7 +13,6 @@ export function useCasablancaCredentials() {
     )
     const { loginStatus, loginError } = useCasablancaStore()
     const isAuthenticated = credentials?.delegateSig !== undefined
-
     return {
         //Our flow assumes that userId can be empty in some cases, so we need to handle it
         userId: credentials?.creatorAddress
