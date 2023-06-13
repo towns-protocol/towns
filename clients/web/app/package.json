@@ -1,6 +1,6 @@
 {
     "name": "harmonyweb",
-    "version": "0.0.1",
+    "version": "0.0.2",
     "private": true,
     "type": "module",
     "scripts": {
@@ -118,11 +118,11 @@
         "vite-plugin-checker": "^0.6.0",
         "vite-plugin-eslint": "^1.8.1",
         "vite-plugin-mkcert": "^1.15.0",
-        "vite-plugin-pwa": "^0.14.7",
+        "vite-plugin-pwa": "^0.16.4",
         "vite-tsconfig-paths": "^4.2.0",
         "vitest": "^0.30.1",
         "vitest-canvas-mock": "^0.2.2",
-        "workbox-window": "^6.5.4"
+        "workbox-window": "^7.0.0"
     },
     "msw": {
         "workerDirectory": "public"

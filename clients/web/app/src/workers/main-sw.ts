@@ -4,9 +4,9 @@ import {
     precacheAndRoute,
 } from 'workbox-precaching'
 import { NavigationRoute, registerRoute } from 'workbox-routing'
-import { handleNotifications } from './notifications'
+// import { handleNotifications } from './notifications'
 
-console.log('main-sw: script')
+console.log('main-sw: script 2')
 
 declare let self: ServiceWorkerGlobalScope
 
@@ -17,7 +17,7 @@ self.addEventListener('message', (event) => {
     }
 })
 
-handleNotifications(self)
+// handleNotifications(self)
 
 // self.__WB_MANIFEST is default injection point
 precacheAndRoute(self.__WB_MANIFEST)
