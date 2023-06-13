@@ -10,6 +10,7 @@ import {
     createTestSpaceWithEveryoneRole,
     makeUniqueName,
     registerAndStartClients,
+    waitForJoiningChannelImmediatelyAfterCreation,
 } from './helpers/TestUtils'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 
@@ -50,7 +51,7 @@ describe('messageScrollbackHooks', () => {
         })) as RoomIdentifier
         //
         await alice.joinRoom(spaceId)
-        await alice.joinRoom(channelId)
+        await waitForJoiningChannelImmediatelyAfterCreation(() => alice.joinRoom(channelId))
         // send 25 messages (20 is our default initialSyncLimit)
         for (let i = 0; i < 25; i++) {
             await bob.sendMessage(channelId, `message ${i}`)

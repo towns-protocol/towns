@@ -19,7 +19,7 @@
         "postinstall": "tsc",
         "preinstall": "yarn run --top-level csb:build",
         "prepack": "tsc",
-        "test": "yarn test:e2e",
+        "test": "yarn test:dendrite:e2e",
         "test-load": "NUM_CLIENTS=25 yarn my-jest --group=integration/load --testTimeout=600000",
         "test:ci": "yarn csb:test-web-lib-done --silent",
         "test:ci-todo": "yarn csb:test-web-lib-todo --silent",

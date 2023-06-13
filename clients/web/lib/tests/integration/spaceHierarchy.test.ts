@@ -8,6 +8,7 @@ import {
     makeUniqueName,
     registerAndStartClients,
     registerAndStartClient,
+    waitForJoiningChannelImmediatelyAfterCreation,
 } from './helpers/TestUtils'
 
 import { Permission } from '../../src/client/web3/ContractTypes'
@@ -54,8 +55,9 @@ describe('spaceHierarchy', () => {
         expect(alice_spaceInfo?.children.length).toEqual(2)
 
         // can she join it?
-        const alice_roomInfo = await alice.joinRoom(roomId)
-        expect(alice_roomInfo.id.networkId).toEqual(roomId.networkId)
+        await waitForJoiningChannelImmediatelyAfterCreation(() => alice.joinRoom(roomId))
+        const alice_roomInfo = alice.getRoomData(roomId)
+        expect(alice_roomInfo?.id.networkId).toEqual(roomId.networkId)
     })
     test('create a private space and a public room, have user join space and search for space childs', async () => {
         // create clients
@@ -104,7 +106,8 @@ describe('spaceHierarchy', () => {
         expect(alice_spaceInfo?.children.length).toEqual(2)
 
         // can she join it?
-        const alice_roomInfo = await alice.joinRoom(roomId)
-        expect(alice_roomInfo.id.networkId).toEqual(roomId.networkId)
+        await waitForJoiningChannelImmediatelyAfterCreation(() => alice.joinRoom(roomId))
+        const alice_roomInfo = alice.getRoomData(roomId)
+        expect(alice_roomInfo?.id.networkId).toEqual(roomId.networkId)
     })
 })
