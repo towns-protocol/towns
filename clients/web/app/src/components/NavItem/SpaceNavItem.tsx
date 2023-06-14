@@ -5,6 +5,7 @@ import { Badge, Box, ButtonText, Dot, Icon } from '@ui'
 import { IconName } from 'ui/components/Icon'
 import { useSizeContext } from 'ui/hooks/useSizeContext'
 import { SpaceIcon } from '@components/SpaceIcon'
+import { useDevice } from 'hooks/useDevice'
 import { NavItem } from './_NavItem'
 
 type Props = {
@@ -25,7 +26,7 @@ type Props = {
 
 export const SpaceNavItem = (props: Props) => {
     const { id, forceMatch, highlight, avatar, exact, icon, name, pinned, isInvite } = props
-
+    const { isTouch } = useDevice()
     const notificationCounts = useSpaceNotificationCounts(id)
     const mentions = notificationCounts.mentions
     const newMessages = notificationCounts.isUnread
@@ -39,7 +40,7 @@ export const SpaceNavItem = (props: Props) => {
             to={isInvite ? `/invites/${id.slug}/` : `/${PATHS.SPACES}/${id.slug}/`}
             exact={exact}
             forceMatch={forceMatch}
-            activeBackground="level3"
+            activeBackground={isTouch ? 'level2' : 'level3'}
             highlight={highlight}
             tooltip={props.name}
             tooltipOptions={{

@@ -73,7 +73,14 @@ export const TouchHomeOverlay = (props: Props) => {
                     style={{ position: 'absolute', left: -100, top: 0, bottom: 0, width: 100 }}
                 />
                 {user && (
-                    <Stack horizontal padding alignItems="center" gap="sm">
+                    <Stack
+                        horizontal
+                        paddingX="lg"
+                        paddingTop="lg"
+                        paddingBottom="sm"
+                        alignItems="center"
+                        gap="sm"
+                    >
                         <Avatar
                             size="avatar_x4"
                             userId={user.userId}

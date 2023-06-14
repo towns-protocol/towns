@@ -76,8 +76,7 @@ export const TouchLayoutNavigationBar = (props: Props) => {
                 horizontal
                 borderBottom
                 gap="sm"
-                paddingLeft="md"
-                paddingRight="md"
+                paddingX="lg"
                 background="level1"
                 alignItems="center"
                 height="x8"
