@@ -8,6 +8,7 @@ import { env } from 'utils'
 import { useWaitForInitialSync } from 'hooks/useWaitForInitialSync'
 import { SentryReportModal } from '@components/SentryErrorReport/SentryErrorReport'
 
+import { useStore } from 'store/store'
 import { CentralPanelLayout } from './layouts/CentralPanelLayout'
 
 export const NoJoinedSpacesFallback = () => {
@@ -15,6 +16,9 @@ export const NoJoinedSpacesFallback = () => {
     const { spaces } = useZionContext()
     const { client, logout } = useZionClient()
     const initialSyncComplete = useWaitForInitialSync()
+    const spaceIdBookmark = useStore((s) => {
+        return s.spaceIdBookmark
+    })
 
     useEffect(() => {
         if (!initialSyncComplete) {
@@ -24,13 +28,15 @@ export const NoJoinedSpacesFallback = () => {
             return
         }
         if (spaces.length) {
-            const firstSpaceId = spaces[0].id
+            const firstSpaceId =
+                spaces.find((space) => space.id.slug === spaceIdBookmark)?.id ?? spaces[0].id
+
             const firstSpace = client.getRoomData(firstSpaceId)
             if (firstSpace?.membership === Membership.Join) {
                 navigate(`/${PATHS.SPACES}/${firstSpaceId.slug}`)
             }
         }
-    }, [spaces, navigate, initialSyncComplete, client])
+    }, [spaces, navigate, initialSyncComplete, client, spaceIdBookmark])
 
     if (!initialSyncComplete) {
         return <TimelineShimmer />

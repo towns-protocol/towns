@@ -14,6 +14,7 @@ interface AppState {
     setDismissedGettingStarted: (spaceId: string) => void
     setTownRouteBookmark: (spaceId: string, route: string) => void
     townRouteBookmarks: { [spaceId: string]: string }
+    spaceIdBookmark?: string
 }
 
 export const useStore = create(
@@ -24,9 +25,12 @@ export const useStore = create(
                 set(() => ({ theme }))
             },
 
+            spaceIdBookmark: undefined,
             townRouteBookmarks: {},
             setTownRouteBookmark: (spaceId, route) => {
                 set(() => ({
+                    // also set the spaceIdBookmark when setting the town route
+                    spaceIdBookmark: spaceId,
                     townRouteBookmarks: { ...get().townRouteBookmarks, [spaceId]: route },
                 }))
             },
