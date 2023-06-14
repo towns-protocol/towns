@@ -1,4 +1,4 @@
-import { withCorsHeaders } from '../../../../common'
+import { Environment, withCorsHeaders } from '../../../../common'
 import { throwCustomError } from '../../router'
 import {
     GetCollectionsForOwnerInfuraResponse,
@@ -34,7 +34,7 @@ const fetchCollections = async (
     }
 }
 
-export const getCollectionsForOwner = async (request: TokenProviderRequest) => {
+export const getCollectionsForOwner = async (request: TokenProviderRequest, env: Environment) => {
     const { rpcUrl, authHeader, params } = request
 
     if (!authHeader) {
@@ -63,6 +63,6 @@ export const getCollectionsForOwner = async (request: TokenProviderRequest) => {
 
     const body = JSON.stringify(collectionResponseForClient)
 
-    const headers = { 'Content-type': 'application/json', ...withCorsHeaders(request) }
+    const headers = { 'Content-type': 'application/json', ...withCorsHeaders(request, env) }
     return new Response(body, { headers })
 }

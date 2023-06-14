@@ -1,4 +1,10 @@
-import { withCorsHeaders, AuthEnv, isOptionsRequest, getOptionsResponse } from '../../common'
+import {
+    withCorsHeaders,
+    AuthEnv,
+    isOptionsRequest,
+    getOptionsResponse,
+    Environment,
+} from '../../common'
 
 // Note: this assumes fetch is made from JS sdk.
 // For using Amplitude http api use https://api2.amplitude.com/2/httpapi
@@ -15,21 +21,21 @@ export interface Env extends AuthEnv {
     //
     // Example binding to R2. Learn more at https://developers.cloudflare.com/workers/runtime-apis/r2/
     // MY_BUCKET: R2Bucket
-    ENVIRONMENT: string
+    ENVIRONMENT: Environment
 }
 
 const worker: ExportedHandler<Env> = {
     // eslint-disable-next-line  @typescript-eslint/no-unused-vars
     async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
         if (isOptionsRequest(request)) {
-            return getOptionsResponse(request)
+            return getOptionsResponse(request, env.ENVIRONMENT)
         }
         if (request.method === 'GET' && new URL(request.url).pathname === '/health') {
             return new Response('OK', {
                 status: 200,
                 headers: {
                     'content-type': 'application/json;charset=UTF-8',
-                    ...withCorsHeaders(request),
+                    ...withCorsHeaders(request, env.ENVIRONMENT),
                 },
             })
         }
@@ -41,7 +47,7 @@ const worker: ExportedHandler<Env> = {
                 status: 500,
                 headers: {
                     'content-type': 'application/json;charset=UTF-8',
-                    ...withCorsHeaders(request),
+                    ...withCorsHeaders(request, env.ENVIRONMENT),
                 },
             })
         }

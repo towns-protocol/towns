@@ -6,7 +6,34 @@
  * Learn more at https://developers.cloudflare.com/workers/
  */
 
-import { getPushSubscriptions } from './subscription_handler'
+import {
+  Environment,
+  getOptionsResponse,
+  withCorsHeaders,
+  appendCorsHeaders,
+  isAllowedOrigin,
+} from '../../common'
+
+import apiRouter from './router'
+
+export interface Env {
+  ENVIRONMENT: Environment
+  DB: D1Database
+  // Example binding to KV. Learn more at https://developers.cloudflare.com/workers/runtime-apis/kv/
+  // MY_KV_NAMESPACE: KVNamespace;
+  //
+  // Example binding to Durable Object. Learn more at https://developers.cloudflare.com/workers/runtime-apis/durable-objects/
+  // MY_DURABLE_OBJECT: DurableObjectNamespace;
+  //
+  // Example binding to R2. Learn more at https://developers.cloudflare.com/workers/runtime-apis/r2/
+  // MY_BUCKET: R2Bucket;
+  //
+  // Example binding to a Service. Learn more at https://developers.cloudflare.com/workers/runtime-apis/service-bindings/
+  // MY_SERVICE: Fetcher;
+  //
+  // Example binding to a Queue. Learn more at https://developers.cloudflare.com/queues/javascript-apis/
+  // MY_QUEUE: Queue;
+}
 
 // Export a default object containing event handlers
 export default {
@@ -17,20 +44,53 @@ export default {
     env: Env,
     ctx: ExecutionContext,
   ): Promise<Response> {
-    // You'll find it helpful to parse the request.url string into a URL object. Learn more at https://developer.mozilla.org/en-US/docs/Web/API/URL
-    const url = new URL(request.url)
-
-    switch (url.pathname) {
-      case '/api/push_subscriptions':
-        return getPushSubscriptions(request, env)
+    switch (request.method) {
+      case 'OPTIONS':
+        return getOptionsResponse(request, env.ENVIRONMENT)
+      case 'GET':
+      case 'POST':
+        try {
+          if (isAllowedOrigin(request, env.ENVIRONMENT)) {
+            // handle the request
+            const response = (await apiRouter.handle(
+              request,
+              env,
+              ctx,
+            )) as Response
+            // add CORS headers
+            return appendCorsHeaders(
+              response,
+              withCorsHeaders(request, env.ENVIRONMENT),
+            )
+          } else {
+            return new Response('Not allowed', {
+              status: 403, // Forbidden
+              headers: withCorsHeaders(request, env.ENVIRONMENT),
+            })
+          }
+        } catch (e) {
+          console.error(e)
+          let errMsg = ''
+          switch (env.ENVIRONMENT) {
+            case 'production':
+              // hide detail message for production
+              errMsg =
+                'Oh oh... our server has an issue. Please try again later.'
+              break
+            default:
+              errMsg = JSON.stringify(e)
+              break
+          }
+          return new Response(errMsg, {
+            status: 500, // Internal Server Error
+            headers: withCorsHeaders(request, env.ENVIRONMENT),
+          })
+        }
+      default:
+        return new Response('Method not allowed', {
+          status: 405, // Method Not Allowed
+          headers: withCorsHeaders(request, env.ENVIRONMENT),
+        })
     }
-
-    return new Response(
-      `Now: ${new Date()}
-			<ul>
-      <li><code><a href="/api/push_subscriptions">/api/push_subscriptions/</a></code></li>
-			</ul>`,
-      { headers: { 'Content-Type': 'text/html' } },
-    )
   },
 }

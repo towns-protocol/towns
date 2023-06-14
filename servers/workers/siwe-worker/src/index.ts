@@ -4,6 +4,7 @@ import {
 	isAuthedRequest,
 	isOptionsRequest,
 	getOptionsResponse,
+	Environment,
 } from '../../common'
 
 // These initial Types are based on bindings that don't exist in the project yet,
@@ -19,7 +20,7 @@ export interface Env extends AuthEnv {
 	// Example binding to R2. Learn more at https://developers.cloudflare.com/workers/runtime-apis/r2/
 	// MY_BUCKET: R2Bucket
 	INFURA_API_KEY: string
-	ENVIRONMENT: string
+	ENVIRONMENT: Environment
 	VERIFY: string
 }
 
@@ -38,17 +39,20 @@ export const worker = {
 		// https://github.com/cloudflare/wrangler2/issues/2152
 		const { verifySiweMessage } = require('./siwe/handler')
 		if (isOptionsRequest(request)) {
-			return getOptionsResponse(request)
+			return getOptionsResponse(request, env.ENVIRONMENT)
 		}
 
 		if (!isAuthedRequest(request, env)) {
-			return new Response('Unauthorised', { status: 401, headers: withCorsHeaders(request) })
+			return new Response('Unauthorised', {
+				status: 401,
+				headers: withCorsHeaders(request, env.ENVIRONMENT),
+			})
 		}
 
 		if (request.method !== 'POST') {
 			return new Response('Method not allowed', {
 				status: 405,
-				headers: withCorsHeaders(request),
+				headers: withCorsHeaders(request, env.ENVIRONMENT),
 			})
 		}
 
@@ -74,7 +78,7 @@ export const worker = {
 				status: 401,
 				headers: {
 					'content-type': 'application/json;charset=UTF-8',
-					...withCorsHeaders(request),
+					...withCorsHeaders(request, env.ENVIRONMENT),
 				},
 			})
 		}

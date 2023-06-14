@@ -4,6 +4,7 @@ import {
     isAuthedRequest,
     isOptionsRequest,
     getOptionsResponse,
+    Environment,
 } from '../../common'
 import { handleRequest } from './handler'
 
@@ -32,6 +33,7 @@ export interface Env extends AuthEnv {
     API_TOKEN: string
     CF_API: string
     ACCOUNT_ID: string
+    ENVIRONMENT: Environment
 }
 
 // have to use module syntax to gain access to env which contains secret variables for local dev
@@ -44,14 +46,17 @@ export default {
 export const worker = {
     async fetch(request: FetchEvent['request'], env: Env): Promise<Response> {
         if (isOptionsRequest(request)) {
-            return getOptionsResponse(request)
+            return getOptionsResponse(request, env.ENVIRONMENT)
         }
 
         if (!isAuthedRequest(request, env)) {
-            return new Response('Unauthorised', { status: 401, headers: withCorsHeaders(request) })
+            return new Response('Unauthorised', {
+                status: 401,
+                headers: withCorsHeaders(request, env.ENVIRONMENT),
+            })
         }
         console.log(`request: ${JSON.stringify(request)}`)
-        const corsHeaders = withCorsHeaders(request)
+        const corsHeaders = withCorsHeaders(request, env.ENVIRONMENT)
         const resp = await handleRequest(request, env)
         const clone = new Response(resp.body, resp)
         for (const [key, value] of Object.entries(corsHeaders)) {

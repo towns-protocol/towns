@@ -2,6 +2,7 @@ import { withCorsHeaders } from '../../../../common'
 import { throwCustomError } from '../../router'
 import {
     ContractMetadata,
+    Env,
     GetCollectionMetadataInfuraResponse,
     TokenProviderRequest,
 } from '../../types'
@@ -30,7 +31,7 @@ const fetchContractMetadata = async (
     return removeNullCollectionValues(json)
 }
 
-export const getCollectionMetadata = async (request: TokenProviderRequest) => {
+export const getCollectionMetadata = async (request: TokenProviderRequest, env: Env) => {
     const { rpcUrl, query, authHeader } = request
 
     if (!authHeader) {
@@ -50,7 +51,10 @@ export const getCollectionMetadata = async (request: TokenProviderRequest) => {
 
     const body = JSON.stringify(toContractMetadata(json))
 
-    const headers = { 'Content-type': 'application/json', ...withCorsHeaders(request) }
+    const headers = {
+        'Content-type': 'application/json',
+        ...withCorsHeaders(request, env.ENVIROMENT),
+    }
     return new Response(body, { headers })
 }
 

@@ -1,4 +1,4 @@
-import { withCorsHeaders } from '../../../../common'
+import { Environment, withCorsHeaders } from '../../../../common'
 import { throwCustomError } from '../../router'
 import {
     GetCollectionsForOwnerResponse,
@@ -37,7 +37,7 @@ const fetchAlchemyNfts = async (
     }
 }
 
-export const getCollectionsForOwner = async (request: TokenProviderRequest) => {
+export const getCollectionsForOwner = async (request: TokenProviderRequest, env: Environment) => {
     const { rpcUrl, params, query } = request
 
     const { wallet } = params || {}
@@ -60,7 +60,7 @@ export const getCollectionsForOwner = async (request: TokenProviderRequest) => {
 
         const body = JSON.stringify(collectionResponseForClient)
 
-        const headers = { 'Content-type': 'application/json', ...withCorsHeaders(request) }
+        const headers = { 'Content-type': 'application/json', ...withCorsHeaders(request, env) }
         return new Response(body, { headers })
     } catch (error) {
         return new Response(`Error ${JSON.stringify(error)}`, { status: 500 })

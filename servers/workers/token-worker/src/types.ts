@@ -6,9 +6,10 @@ import {
     OpenSeaCollectionMetadata,
     GetContractsForOwnerResponse,
 } from 'alchemy-sdk'
-import { AuthEnv } from '../../common'
+import { AuthEnv, Environment } from '../../common'
 
 export interface Env extends AuthEnv {
+    ENVIROMENT: Environment
     ALCHEMY_API_KEY: string
     INFURA_API_KEY: string
     INFURA_API_SECRET: string

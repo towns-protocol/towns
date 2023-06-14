@@ -1,4 +1,3 @@
-import { checkPrimeSync } from 'crypto'
 import { Env, worker } from '../src/index'
 
 const mockIsEntitled = jest.fn()

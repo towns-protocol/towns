@@ -8,10 +8,10 @@ export function throwCustomError(message: string, status: number) {
     throw _err
 }
 
-const errorHandler = (error: IError, request: Request) => {
+const errorHandler = (error: IError, request: Request, env: Env) => {
     return new Response(error.message || 'Server Error', {
         status: error.status || 500,
-        headers: withCorsHeaders(request),
+        headers: withCorsHeaders(request, env.ENVIROMENT),
     })
 }
 
@@ -20,7 +20,7 @@ const ThrowableRouter = (options = {}) =>
         get: (obj: Router, prop: string) => {
             return (...args: [request: Request, env: Env]) => {
                 return prop === 'handle'
-                    ? obj[prop](...args).catch((e) => errorHandler(e, args[0]))
+                    ? obj[prop](...args).catch((e) => errorHandler(e, args[0], args[1]))
                     : // this is wrong typing
                       obj[prop](...(args as unknown as [string]))
             }

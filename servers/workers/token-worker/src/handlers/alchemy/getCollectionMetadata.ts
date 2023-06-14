@@ -1,4 +1,4 @@
-import { withCorsHeaders } from '../../../../common'
+import { Environment, withCorsHeaders } from '../../../../common'
 import { throwCustomError } from '../../router'
 import {
     ContractMetadata,
@@ -20,7 +20,7 @@ const fetchContractMetadata = async (
     return response.json()
 }
 
-export const getCollectionMetadata = async (request: TokenProviderRequest) => {
+export const getCollectionMetadata = async (request: TokenProviderRequest, env: Environment) => {
     const { rpcUrl, query } = request
 
     const { contractAddress } = query || {}
@@ -34,7 +34,7 @@ export const getCollectionMetadata = async (request: TokenProviderRequest) => {
 
     const body = JSON.stringify(toContractMetadata(json))
 
-    const headers = { 'Content-type': 'application/json', ...withCorsHeaders(request) }
+    const headers = { 'Content-type': 'application/json', ...withCorsHeaders(request, env) }
     return new Response(body, { headers })
 }
 

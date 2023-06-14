@@ -1,9 +1,13 @@
+import { Environment } from './environment'
 import { withCorsHeaders } from './cors'
 
-export const isOptionsRequest = (request: Request) => request.method === 'OPTIONS'
+export function isOptionsRequest(request: Request): boolean {
+    return request.method === 'OPTIONS'
+}
 
-export const getOptionsResponse = (request: Request) =>
-    new Response(null, {
+export function getOptionsResponse(request: Request, env: Environment): Response {
+    return new Response(null, {
         status: 204,
-        headers: withCorsHeaders(request),
+        headers: withCorsHeaders(request, env),
     })
+}

@@ -114,11 +114,14 @@
                 ]
             },
             {
+                "label": "token-worker uses an old version of itty-router, which requires refactoring to use the latest version. HNT-1601",
                 "dependencies": [
                     "itty-router"
                 ],
                 "packages": [
-                    "gateway-worker"
+                    "gateway-worker",
+                    "token-worker",
+                    "push-notifications-worker"
                 ],
                 "dependencyTypes": [
                     "prod",

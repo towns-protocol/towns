@@ -4,6 +4,7 @@ import {
     isAuthedRequest,
     isOptionsRequest,
     getOptionsResponse,
+    Environment,
 } from '../../common'
 
 import { isUrl } from './utils/isUrl'
@@ -15,6 +16,7 @@ import { formattedUnfurlJSData } from './unfurler'
 // you can follow the links to learn how to implement them.
 
 export interface Env extends AuthEnv {
+    ENVIRONMENT: Environment
     TWITTER_BEARER: string
     // Example binding to KV. Learn more at https://developers.cloudflare.com/workers/runtime-apis/kv/
     // MY_KV_NAMESPACE: KVNamespace
@@ -30,17 +32,20 @@ export interface Env extends AuthEnv {
 export default {
     fetch(request: Request, env: Env, ctx: ExecutionContext) {
         if (isOptionsRequest(request)) {
-            return getOptionsResponse(request)
+            return getOptionsResponse(request, env.ENVIRONMENT)
         }
 
         if (!isAuthedRequest(request, env)) {
-            return new Response('Unauthorized', { status: 401, headers: withCorsHeaders(request) })
+            return new Response('Unauthorized', {
+                status: 401,
+                headers: withCorsHeaders(request, env.ENVIRONMENT),
+            })
         }
 
         if (request.method !== 'GET') {
             return new Response('Method not allowed', {
                 status: 405,
-                headers: withCorsHeaders(request),
+                headers: withCorsHeaders(request, env.ENVIRONMENT),
             })
         }
         return worker.fetch(request, env, ctx)
@@ -118,7 +123,7 @@ export const worker = {
             headers: {
                 'cache-control': 'public, max-age=14400',
                 'content-type': 'application/json;charset=UTF-8',
-                ...withCorsHeaders(request),
+                ...withCorsHeaders(request, env.ENVIRONMENT),
             },
         })
 
