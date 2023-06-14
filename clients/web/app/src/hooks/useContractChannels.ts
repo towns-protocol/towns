@@ -29,8 +29,9 @@ export const useContractChannels = (spaceId: string | undefined) => {
         },
         {
             enabled: !!spaceId,
+            refetchOnWindowFocus: false,
+            refetchOnReconnect: false,
             staleTime: 1000 * 15,
-            cacheTime: 1000 * 20,
         },
     )
 }
