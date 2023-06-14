@@ -13,6 +13,7 @@ import { Permission } from 'use-zion-client/src/client/web3/ContractTypes'
 import { RoomVisibility } from '../../src/types/zion-types'
 
 describe.skip('channel update', () => {
+    // https://linear.app/hnt-labs/issue/HNT-1641/testsintegrationchannelupdatetestts
     test('Update the channel with multicall', async () => {
         /** Arrange */
         const { alice, bob } = await registerAndStartClients(['alice', 'bob'])
