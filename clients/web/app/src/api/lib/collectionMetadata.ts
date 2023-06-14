@@ -1,6 +1,4 @@
-import { useQueries, useQuery } from '@tanstack/react-query'
-import { RoomIdentifier } from 'use-zion-client'
-import { useMemo } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { ContractMetadata } from '@token-worker/types'
 import { ethers } from 'ethers'
 import { env } from 'utils'
@@ -45,39 +43,4 @@ export function useTokenMetadata(tokenAddress: string) {
         cacheTime: 1000 * 60 * 10,
         enabled: ethers.utils.isAddress(_address) && !failedMetadataCalls.has(_address),
     })
-}
-
-export function useRoleTokensMetatdata(spaceId: RoomIdentifier, tokenAddresses: string[]) {
-    const nftNetwork = useNetworkForNftApi()
-
-    const queryData = useQueries({
-        queries: tokenAddresses.map((address) => {
-            return {
-                queryKey: [queryKey, spaceId, address],
-                queryFn: () => {
-                    return getCollectionMetadata(address, nftNetwork)
-                },
-                staleTime: 1000 * 60 * 5,
-                enabled: ethers.utils.isAddress(address),
-            }
-        }),
-    })
-
-    return useMemo(() => {
-        const errors = queryData.map((token) => token.error).filter((error) => !!error)
-
-        if (queryData.every((token) => token.isFetched)) {
-            return {
-                data: queryData.map((token) => token.data).filter((data) => !!data),
-                errors,
-                isLoading: false,
-            }
-        }
-
-        return {
-            data: undefined,
-            errors,
-            isLoading: true,
-        }
-    }, [queryData])
 }
