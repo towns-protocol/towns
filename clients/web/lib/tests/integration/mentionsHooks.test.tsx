@@ -12,6 +12,7 @@ import {
     createTestChannelWithSpaceRoles,
     createTestSpaceWithEveryoneRole,
     registerAndStartClients,
+    waitForJoiningChannelImmediatelyAfterCreation,
 } from './helpers/TestUtils'
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 
@@ -27,8 +28,7 @@ import { useFullyReadMarker } from '../../src/hooks/use-fully-read-marker'
 import { TestConstants } from './helpers/TestConstants'
 
 describe('mentionsHooks', () => {
-    // TODO: https://linear.app/hnt-labs/issue/HNT-1622/testsintegrationmentionshookstesttsx
-    test.skip('user can see mentions, and can see mentions after login', async () => {
+    test('user can see mentions, and can see mentions after login', async () => {
         // create clients
         const { bob, alice } = await registerAndStartClients(['bob', 'alice'])
 
@@ -55,7 +55,7 @@ describe('mentionsHooks', () => {
         expect(channelId).toBeDefined()
         // alice join space and channel
         await alice.joinRoom(spaceId)
-        await alice.joinRoom(channelId)
+        await waitForJoiningChannelImmediatelyAfterCreation(() => alice.joinRoom(channelId))
         // logout alice
         await alice.logout()
 
