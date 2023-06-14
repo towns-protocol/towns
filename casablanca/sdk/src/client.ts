@@ -69,6 +69,7 @@ export class Stream extends (EventEmitter as new () => TypedEmitter<StreamEvents
     readonly logEmitFromStream: debug.Debugger
     readonly rollup: StreamStateView
     readonly foreignUserStream: boolean
+    readonly streamType: 'user' | 'space' | 'channel' | 'userDevice'
     syncCookie?: SyncCookie
 
     constructor(
@@ -84,6 +85,27 @@ export class Stream extends (EventEmitter as new () => TypedEmitter<StreamEvents
         this.logEmitFromStream = logEmitFromStream
         this.rollup = new StreamStateView(streamId, inceptionEvent)
         this.foreignUserStream = foreignUserStream ?? false
+        switch (streamId.substring(0, 2)) {
+            case '00': {
+                this.streamType = 'user'
+                break
+            }
+            case '11': {
+                this.streamType = 'space'
+                break
+            }
+            case '22': {
+                this.streamType = 'channel'
+                break
+            }
+            case '33': {
+                this.streamType = 'userDevice'
+                break
+            }
+            default: {
+                throw Error(`unknown stream type: ${streamId}`)
+            }
+        }
     }
 
     /**
