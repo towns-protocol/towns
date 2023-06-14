@@ -1,5 +1,6 @@
 name = "push-notification-worker-dev"
-main = "src/worker.ts"
+main = "src/index.ts"
+compatibility_flags = [ "nodejs_compat" ]
 compatibility_date = "2023-05-18"
 
 d1_databases = [
@@ -8,6 +9,18 @@ d1_databases = [
 
 [vars]
 ENVIRONMENT = "development"
+
+# The necessary secrets are:
+# AUTH_SECRET
+#
+# for local development, you can add these in .dev.vars
+#
+# For production, you can add these in the Cloudflare dashboard or run
+# `echo <VALUE> | wrangler secret put <NAME>` for each of these
+# for production, the secrets must be deployed behind the production flag
+# `echo <VALUE> | wrangler secret put <NAME> --env production`
+# OR
+# Run `echo <VALUE> | wrangler secret put <NAME>` for each of these
 
 [env.production]
 name = "push-notification-worker-production"
