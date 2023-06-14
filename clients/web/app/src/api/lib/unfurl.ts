@@ -25,5 +25,6 @@ export function useUnfurlContent({
         refetchOnWindowFocus: false,
         refetchOnReconnect: false,
         staleTime: 1000 * 60 * 60 * 24,
+        cacheTime: 1000 * 60 * 60 * 24,
     })
 }
