@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import {
     Channel,
     useSpaceThreadRootsUnreadCount,
@@ -24,6 +24,7 @@ export const TouchLayoutNavigationBar = (props: Props) => {
     const unreadThreadsCount = useSpaceThreadRootsUnreadCount()
     const unreadThreadMentions = useSpaceUnreadThreadMentions()
     const hasUnreadCount = unreadThreadsCount + unreadThreadMentions > 0
+    const navigate = useNavigate()
 
     const toggleDropDown = useCallback(() => {
         setDropDownOpen(!dropDownOpen)
@@ -61,6 +62,14 @@ export const TouchLayoutNavigationBar = (props: Props) => {
         return 'tag'
     })(value)
 
+    const infoIconClicked = useCallback(
+        (event: React.MouseEvent<HTMLElement>) => {
+            navigate('info?channel')
+            event.stopPropagation()
+        },
+        [navigate],
+    )
+
     return (
         <Stack background="level1" zIndex="uiAbove">
             <Stack
@@ -75,6 +84,7 @@ export const TouchLayoutNavigationBar = (props: Props) => {
                 color="gray1"
                 overflow="hidden"
                 shrink={false}
+                onClick={toggleDropDown}
             >
                 <Icon
                     size="square_lg"
@@ -89,16 +99,18 @@ export const TouchLayoutNavigationBar = (props: Props) => {
                 <Stack grow />
                 <Stack horizontal gap="lg" padding="none" alignItems="center">
                     {shouldDisplayChannelInfoButton && (
-                        <Link to="info?channel">
-                            <Icon type="info" size="square_sm" color="default" />
-                        </Link>
+                        <Icon
+                            type="info"
+                            size="square_sm"
+                            color="default"
+                            onClick={infoIconClicked}
+                        />
                     )}
                     <motion.div animate={{ rotate: dropDownOpen ? -180 : 0 }}>
                         <Icon
                             type={hasUnreadCount ? 'arrowDownActive' : 'arrowDown'}
                             size="square_sm"
                             color="default"
-                            onClick={toggleDropDown}
                         />
                     </motion.div>
                 </Stack>
