@@ -1,17 +1,10 @@
-import { createPromiseClient } from '@bufbuild/connect'
 import { createConnectTransport, createGrpcWebTransport } from '@bufbuild/connect-web'
-import { StreamService } from './gen/protocol_connect'
 import { InfoRequest, InfoResponse } from './gen/protocol_pb'
+import { makeStreamRpcClient } from './makeStreamRpcClient'
 
 describe('protocol', () => {
     test.each([createConnectTransport, createGrpcWebTransport])('info', async (transportFunc) => {
-        const transport = transportFunc({
-            baseUrl: 'http://localhost:5157',
-            useBinaryFormat: true,
-        })
-        expect(transport).toBeDefined()
-
-        const client = createPromiseClient(StreamService, transport)
+        const client = makeStreamRpcClient('http://localhost:5157')
         expect(client).toBeDefined()
 
         const abortController = new AbortController()

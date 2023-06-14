@@ -4,7 +4,6 @@ import (
 	"casablanca/node/infra"
 	. "casablanca/node/protocol"
 	"context"
-	"time"
 
 	. "casablanca/node/base"
 	. "casablanca/node/events"
@@ -27,7 +26,6 @@ func addUpdatesToCounter(updates []*StreamAndCookie) {
 func (s *Service) SyncStreams(ctx context.Context, req *connect_go.Request[SyncStreamsRequest], stream *connect_go.ServerStream[SyncStreamsResponse]) error {
 	ctx, log, requestId := infra.SetLoggerWithRequestId(ctx)
 
-	log.Infof("SyncStreams: ENTER timeout_ms=%d, len=%d", req.Msg.TimeoutMs, len(req.Msg.SyncPos))
 	for _, pos := range req.Msg.SyncPos {
 		log.Infof("SyncStreams: pos %v", pos)
 	}
@@ -47,10 +45,6 @@ func (s *Service) SyncStreams(ctx context.Context, req *connect_go.Request[SyncS
 }
 
 func (s *Service) syncStreams(ctx context.Context, req *connect_go.Request[SyncStreamsRequest], stream *connect_go.ServerStream[SyncStreamsResponse], log *logrus.Entry) error {
-	// TODO: set req.Msg.TimeoutMs + epsilon in context
-	timeout := time.After(time.Duration(req.Msg.TimeoutMs) * time.Millisecond)
-	//timeout := time.After(1000 * time.Millisecond)
-
 	if len(req.Msg.SyncPos) <= 0 {
 		return RpcError(Err_BAD_ARGS, "SyncStreams: SyncPos is empty")
 	}
@@ -64,46 +58,44 @@ func (s *Service) syncStreams(ctx context.Context, req *connect_go.Request[SyncS
 		close(receiver)
 	}()
 
-	var initialUpdates []*StreamAndCookie
 	for _, pos := range req.Msg.SyncPos {
 		err := SyncCookieValidate(pos)
 		if err != nil {
 			return nil
 		}
 
-		stream, _, err := s.cache.GetStream(ctx, pos.StreamId)
+		streamSub, _, err := s.cache.GetStream(ctx, pos.StreamId)
 		if err != nil {
 			return err
 		}
 
-		update, err := stream.Sub(ctx, pos, receiver)
+		update, err := streamSub.Sub(ctx, pos, receiver)
 		if err != nil {
 			return err
 		}
-		subs = append(subs, stream)
-
+		subs = append(subs, streamSub)
 		if update != nil {
-			initialUpdates = append(initialUpdates, update)
-		}
-	}
+			log.Infof("SyncStreams: SENDING initial update streamId=%s cookie=%v", update.StreamId, update.NextSyncCookie)
 
-	if len(initialUpdates) > 0 {
-		addUpdatesToCounter(initialUpdates)
-		err := stream.Send(&SyncStreamsResponse{
-			Streams: initialUpdates,
-		})
-		if err != nil {
-			return err
+			updates := []*StreamAndCookie{update}
+			addUpdatesToCounter(updates)
+			err = stream.Send(&SyncStreamsResponse{
+				Streams: updates,
+			})
+
+			if err != nil {
+				return err
+			}
+		} else {
+			log.Infof("SyncStreams: NO initial update streamId=%s", pos.StreamId)
 		}
-		// TODO: remove to enable streaming
-		return nil
 	}
 
 	for {
 		select {
 		case update := <-receiver:
 			if update != nil {
-				log.Infof("SyncStreams: SENDING update streamId=%s cookie=%v", update.StreamId, update.NextSyncCookie)
+				log.Infof("SyncStreams: SENDING received update streamId=%s cookie=%v", update.StreamId, update.NextSyncCookie)
 
 				updates := []*StreamAndCookie{update}
 				addUpdatesToCounter(updates)
@@ -113,13 +105,11 @@ func (s *Service) syncStreams(ctx context.Context, req *connect_go.Request[SyncS
 				if err != nil {
 					return err
 				}
-				// TODO: remove to enable streaming
-				return nil
 			} else {
 				return RpcError(Err_INTERNAL_ERROR, "SyncStreams: channel unexpectedly closed")
 			}
-		case <-timeout:
-			log.Info("SyncStreams: TIMEOUT")
+		case <-ctx.Done():
+			log.Infof("SyncStreams: context done for %v", req.Msg.SyncPos)
 			return nil
 		}
 	}

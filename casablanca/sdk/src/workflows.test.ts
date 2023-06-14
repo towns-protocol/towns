@@ -1,8 +1,7 @@
 import { makeEvent, SignerContext, unpackEnvelopes } from './sign'
-import { MembershipOp } from '@towns/proto'
+import { MembershipOp, makeStreamRpcClient } from '@towns/proto'
 import debug from 'debug'
 import { makeRandomUserContext, TEST_URL } from './util.test'
-import { makeStreamRpcClient } from './streamRpcClient'
 import _ from 'lodash'
 import {
     genId,

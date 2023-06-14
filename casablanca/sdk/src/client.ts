@@ -17,6 +17,7 @@ import {
     SyncCookie,
     FallbackKeys,
     Key,
+    makeStreamRpcClient,
 } from '@towns/proto'
 import { Crypto } from './crypto'
 import debug from 'debug'
@@ -33,7 +34,6 @@ import {
     userIdFromAddress,
 } from './id'
 import { SignerContext, makeEvent, unpackEnvelope, unpackEnvelopes } from './sign'
-import { StreamRpcClientType } from './streamRpcClient'
 import { StreamEvents, StreamStateView } from './streams'
 import {
     ParsedEvent,
@@ -136,6 +136,8 @@ const enum AbortReason {
     SHUTDOWN = 'SHUTDOWN',
     BLIP = 'BLIP',
 }
+
+type StreamRpcClientType = ReturnType<typeof makeStreamRpcClient>
 
 export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents>) {
     readonly signerContext: SignerContext
@@ -506,54 +508,35 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
                         const sync = this.rpcClient.syncStreams(
                             {
                                 syncPos,
-                                timeoutMs: 29000, // TODO: from config
                             },
                             {
                                 signal: abortController.signal,
                             },
                         )
                         this.logSync('started syncStreams', syncPos)
-                        const syncedStreams = []
                         for await (const syncedStream of sync) {
                             this.logSync('got syncStreams', syncedStream)
-                            syncedStreams.push(syncedStream)
+                            syncedStream.streams.forEach((streamAndCookie) => {
+                                const streamId = streamAndCookie.streamId
+                                this.logSync(
+                                    'sync RESULTS for stream',
+                                    streamId,
+                                    'events=',
+                                    streamAndCookie.events.length,
+                                    'nextSyncCookie=',
+                                    streamAndCookie.nextSyncCookie,
+                                    'originalSyncCookie=',
+                                    streamAndCookie.originalSyncCookie,
+                                )
+                                const stream = this.streams.get(streamId)
+                                if (stream === undefined) {
+                                    this.logSync('sync got stream', streamId, 'NOT FOUND')
+                                    throwWithCode("Sync got stream that wasn't requested")
+                                }
+                                stream.addEvents(streamAndCookie)
+                            })
                         }
                         this.logSync('finished syncStreams', syncPos)
-                        if (
-                            syncedStreams.length === 0 ||
-                            syncedStreams.reduce(
-                                (prevTotal, stream) => stream.streams.length + prevTotal,
-                                0,
-                            ) === 0
-                        ) {
-                            this.logSync(
-                                'sync RESULTS for stream empty',
-                                'originalSyncCookies=',
-                                syncPos, // TODO: logging
-                            )
-                        } else {
-                            syncedStreams.forEach((sync) =>
-                                sync.streams.forEach((streamAndCookie) => {
-                                    const streamId = streamAndCookie.streamId
-                                    this.logSync(
-                                        'sync RESULTS for stream',
-                                        streamId,
-                                        'events=',
-                                        streamAndCookie.events.length,
-                                        'nextSyncCookie=',
-                                        streamAndCookie.nextSyncCookie,
-                                        'originalSyncCookie=',
-                                        streamAndCookie.originalSyncCookie,
-                                    )
-                                    const stream = this.streams.get(streamId)
-                                    if (stream === undefined) {
-                                        this.logSync('sync got stream', streamId, 'NOT FOUND')
-                                        throwWithCode("Sync got stream that wasn't requested")
-                                    }
-                                    stream.addEvents(streamAndCookie)
-                                }),
-                            )
-                        }
                         // On sucessful sync, reset retryCount
                         retryCount = 0
                         this.syncAbort = undefined

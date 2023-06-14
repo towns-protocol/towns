@@ -274,14 +274,14 @@ func TestMethods(t *testing.T) {
 			t.Fatalf("error calling AddEvent: %v", err)
 		}
 
+		syncCtx, syncCancel := context.WithCancel(context.Background())
 		syncRes, err := client.SyncStreams(
-			ctx,
+			syncCtx,
 			connect.NewRequest(
 				&protocol.SyncStreamsRequest{
 					SyncPos: []*protocol.SyncCookie{
 						channel,
 					},
-					TimeoutMs: 1000,
 				},
 			),
 		)
@@ -289,33 +289,33 @@ func TestMethods(t *testing.T) {
 			t.Fatalf("error calling SyncStreams: %v", err)
 		}
 
-		for syncRes.Receive() {
-			msg := syncRes.Msg()
+		syncRes.Receive()
+		msg := syncRes.Msg()
+		syncCancel()
 
-			if len(msg.Streams) != 1 {
-				t.Errorf("expected 1 stream, got %d", len(msg.Streams))
-			}
-			if len(msg.Streams[0].Events) != 2 {
-				t.Errorf("expected 2 events, got %d", len(msg.Streams[0].Events))
-			}
+		if len(msg.Streams) != 1 {
+			t.Errorf("expected 1 stream, got %d", len(msg.Streams))
+		}
+		if len(msg.Streams[0].Events) != 2 {
+			t.Errorf("expected 2 events, got %d", len(msg.Streams[0].Events))
+		}
 
-			var payload protocol.StreamEvent
-			err = proto.Unmarshal(msg.Streams[0].Events[1].Event, &payload)
-			if err != nil {
-				t.Errorf("error unmarshaling event: %v", err)
-			}
-			switch p := payload.Payload.(type) {
-			case *protocol.StreamEvent_ChannelPayload:
+		var payload protocol.StreamEvent
+		err = proto.Unmarshal(msg.Streams[0].Events[1].Event, &payload)
+		if err != nil {
+			t.Errorf("error unmarshaling event: %v", err)
+		}
+		switch p := payload.Payload.(type) {
+		case *protocol.StreamEvent_ChannelPayload:
+			// ok
+			switch p.ChannelPayload.Content.(type) {
+			case *protocol.ChannelPayload_Message_:
 				// ok
-				switch p.ChannelPayload.Content.(type) {
-				case *protocol.ChannelPayload_Message_:
-					// ok
-				default:
-					t.Fatalf("expected message event, got %v", p.ChannelPayload.Content)
-				}
 			default:
-				t.Fatalf("expected channel event, got %v", payload.Payload)
+				t.Fatalf("expected message event, got %v", p.ChannelPayload.Content)
 			}
+		default:
+			t.Fatalf("expected channel event, got %v", payload.Payload)
 		}
 	}
 }
@@ -416,28 +416,34 @@ func TestManyUsers(t *testing.T) {
 		}
 	}
 
-	syncRes, err := client.SyncStreams(ctx, connect.NewRequest(&protocol.SyncStreamsRequest{
-		SyncPos:   channels,
-		TimeoutMs: 1000,
+	syncCtx, syncCancel := context.WithCancel(ctx)
+	defer syncCancel()
+	syncRes, err := client.SyncStreams(syncCtx, connect.NewRequest(&protocol.SyncStreamsRequest{
+		SyncPos: channels,
 	}))
 	if err != nil {
 		t.Fatalf("error calling SyncStreams: %v", err)
 	}
 
+	streams := make([]*protocol.StreamAndCookie, 0)
 	for syncRes.Receive() {
 		msg := syncRes.Msg()
-
-		if len(msg.Streams) != totalChannels {
-			t.Fatalf("expected %d stream, got %d", totalChannels, len(msg.Streams))
+		streams = append(streams, msg.Streams...)
+		if len(streams) == totalChannels {
+			syncCancel()
 		}
-		for i := 0; i < totalChannels; i++ {
-			if len(msg.Streams[i].Events) != (totalUsers-1)*2 {
-				t.Fatalf("expected %d event, got %d", (totalUsers-1)*2, len(msg.Streams[0].Events))
-			}
-			for syncPosIdx := range channels {
-				if channels[syncPosIdx].StreamId == msg.Streams[i].StreamId {
-					channels[syncPosIdx] = msg.Streams[i].NextSyncCookie
-				}
+	}
+
+	if len(streams) != totalChannels {
+		t.Fatalf("expected %d stream, got %d", totalChannels, len(streams))
+	}
+	for i := 0; i < totalChannels; i++ {
+		if len(streams[i].Events) != (totalUsers-1)*2 {
+			t.Fatalf("expected %d event, got %d", (totalUsers-1)*2, len(streams[0].Events))
+		}
+		for syncPosIdx := range channels {
+			if channels[syncPosIdx].StreamId == streams[i].StreamId {
+				channels[syncPosIdx] = streams[i].NextSyncCookie
 			}
 		}
 	}
@@ -451,49 +457,56 @@ func TestManyUsers(t *testing.T) {
 	s1 := rand.NewSource(time.Now().UnixNano())
 	r1 := rand.New(s1)
 
+	messagesSent := make(chan struct{})
+
 	msgId := atomic.Int32{}
 	generateMessages := func() {
-		for i := 0; i < selectedUsers; i++ {
+		go func() {
+			for i := 0; i < selectedUsers; i++ {
 
-			user := r1.Intn(totalUsers)
+				user := r1.Intn(totalUsers)
 
-			for i := 0; i < selectedChannels; i++ {
+				for i := 0; i < selectedChannels; i++ {
 
-				channel := r1.Intn(totalChannels)
+					channel := r1.Intn(totalChannels)
 
-				message, err := events.MakeEnvelopeWithPayload(
-					wallets[user],
-					events.Make_ChannelPayload_Message(fmt.Sprintf("%d hello from %d", msgId.Add(1)-1, user)),
-					[][]byte{channelHashes[channel]},
-				)
-				assert.NoError(t, err)
+					message, err := events.MakeEnvelopeWithPayload(
+						wallets[user],
+						events.Make_ChannelPayload_Message(fmt.Sprintf("%d hello from %d", msgId.Add(1)-1, user)),
+						[][]byte{channelHashes[channel]},
+					)
+					assert.NoError(t, err)
 
-				_, err = client.AddEvent(ctx, connect.NewRequest(&protocol.AddEventRequest{
-					StreamId: common.ChannelStreamIdFromName(fmt.Sprintf("channel-%d", channel)),
-					Event:    message,
-				},
-				))
-				assert.NoError(t, err)
-				waitForMessages.Done()
+					_, err = client.AddEvent(ctx, connect.NewRequest(&protocol.AddEventRequest{
+						StreamId: common.ChannelStreamIdFromName(fmt.Sprintf("channel-%d", channel)),
+						Event:    message,
+					},
+					))
+					assert.NoError(t, err)
+					waitForMessages.Done()
+				}
 			}
-		}
+			waitForMessages.Wait()
+			close(messagesSent)
+		}()
 	}
-	go generateMessages()
 
-	rcvMessages := atomic.Int32{}
-	msgTable := make([]int, selectedUsers*selectedChannels)
-	stats := make(map[int]int)
-	updateSyncPos := func() int {
+	syncCount := make(chan int)
+
+	updateSyncPos := func() {
+		msgTable := make([]int, selectedUsers*selectedChannels)
+		stats := make(map[int]int)
+
+		syncCtx, syncCancel := context.WithCancel(ctx)
+		defer syncCancel()
 
 		received := 0
-		syncRes, err = client.SyncStreams(ctx, connect.NewRequest(&protocol.SyncStreamsRequest{
-			SyncPos:   channels,
-			TimeoutMs: 1000,
+		syncRes, err = client.SyncStreams(syncCtx, connect.NewRequest(&protocol.SyncStreamsRequest{
+			SyncPos: channels,
 		}))
-		if err != nil {
-			t.Fatalf("error calling SyncStreams: %v", err)
-		}
+		assert.NoError(t, err)
 		for syncRes.Receive() {
+			err := syncRes.Err()
 			msg := syncRes.Msg()
 			assert.NoError(t, err)
 			stats[len(msg.Streams)]++
@@ -517,17 +530,20 @@ func TestManyUsers(t *testing.T) {
 					assert.Equal(t, 1, msgTable[id])
 				}
 			}
-			rcvMessages.Add(int32(received))
+			if received >= selectedUsers*selectedChannels {
+				syncCancel()
+			}
 		}
-		return received
+		syncCount <- received
 	}
 
-	for int(rcvMessages.Load()) < selectedUsers*selectedChannels {
-		if updateSyncPos() > 0 {
-			// sleep for a while to let the other goroutine generate more messages
-			time.Sleep(100 * time.Millisecond)
-		}
-	}
-	assert.Equal(t, selectedUsers*selectedChannels, int(rcvMessages.Load()))
-	log.Info("stats ", stats)
+	go updateSyncPos()
+	go generateMessages()
+
+	rcvMessages := <-syncCount
+	log.Info("syncCount reached", rcvMessages)
+	msg2 := <-messagesSent
+	fmt.Println("messagesSent", msg2)
+
+	assert.GreaterOrEqual(t, rcvMessages, selectedUsers*selectedChannels)
 }

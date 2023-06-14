@@ -15,7 +15,7 @@ import {
     SyncStreamsRequest,
     SyncStreamsResponse,
 } from '@towns/proto'
-import { PlainMessage } from '@bufbuild/protobuf'
+import { PartialMessage } from '@bufbuild/protobuf'
 import { CallOptions } from '@bufbuild/connect'
 // This is needed to get the jest itnerface for using in spyOn
 // eslint-disable-next-line import/no-extraneous-dependencies
@@ -66,7 +66,7 @@ describe('clientTest', () => {
         const spy = jest
             .spyOn(alicesClient.rpcClient, 'syncStreams')
             .mockImplementation(
-                (_request: PlainMessage<SyncStreamsRequest>, _options?: CallOptions) => {
+                (_request: PartialMessage<SyncStreamsRequest>, _options?: CallOptions) => {
                     log('syncStreams')
                     throw testError
                 },
@@ -95,7 +95,7 @@ describe('clientTest', () => {
             .spyOn(alicesClient.rpcClient, 'syncStreams')
             .mockImplementation(
                 (
-                    _request: PlainMessage<SyncStreamsRequest>,
+                    _request: PartialMessage<SyncStreamsRequest>,
                     _options?: CallOptions,
                 ): AsyncIterable<SyncStreamsResponse> => {
                     if (failureCount++ < 3) {
@@ -125,7 +125,7 @@ describe('clientTest', () => {
             .spyOn(alicesClient.rpcClient, 'syncStreams')
             .mockImplementation(
                 (
-                    _request: PlainMessage<SyncStreamsRequest>,
+                    _request: PartialMessage<SyncStreamsRequest>,
                     _options?: CallOptions,
                 ): AsyncIterable<SyncStreamsResponse> => {
                     if (failureCount++ < 5) {
@@ -155,7 +155,7 @@ describe('clientTest', () => {
             .spyOn(alicesClient.rpcClient, 'syncStreams')
             .mockImplementation(
                 (
-                    _request: PlainMessage<SyncStreamsRequest>,
+                    _request: PartialMessage<SyncStreamsRequest>,
                     _options?: CallOptions,
                 ): AsyncIterable<SyncStreamsResponse> => {
                     if (failureCount++ < 4 || (failureCount > 6 && failureCount < 9)) {
@@ -185,7 +185,7 @@ describe('clientTest', () => {
         const spy = jest
             .spyOn(alicesClient.rpcClient, 'syncStreams')
             .mockImplementation(
-                (_request: PlainMessage<SyncStreamsRequest>, _options?: CallOptions) => {
+                (_request: PartialMessage<SyncStreamsRequest>, _options?: CallOptions) => {
                     done.done()
                     throw testError
                 },
@@ -900,7 +900,7 @@ describe('clientTest', () => {
         expect(Object.keys(fallbackKeys.fallback_keys ?? {}).length).toEqual(1)
         if (fallbackKeys.fallback_keys) {
             const keys: string[] = []
-            Object.values(fallbackKeys.fallback_keys[alicesUserId]).map((value) => {
+            Object.values(fallbackKeys.fallback_keys[alicesUserId] ?? []).map((value) => {
                 Object.keys(value).map((keyId) => {
                     const key = value[keyId].algoKeyId[keyId].key
                     if (key) {

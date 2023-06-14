@@ -321,7 +321,7 @@ export class Crypto
     }
 
     public async signObject<T extends ISignableObject & object>(obj: T): Promise<void> {
-        const sigs = new Map(Object.entries(obj.signatures || {}))
+        const sigs = new Map(Object.entries(obj.signatures ?? {}))
         const unsigned = obj.unsigned
 
         delete obj.signatures

@@ -303,7 +303,6 @@ message AddEventResponse {}
 
 message SyncStreamsRequest {
     repeated SyncCookie sync_pos = 1;
-    uint32 timeout_ms = 2;
 }
 
 message SyncStreamsResponse {

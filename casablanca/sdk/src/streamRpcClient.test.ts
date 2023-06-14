@@ -6,6 +6,7 @@ import {
     SyncStreamsResponse,
     UserPayload_UserMembership,
     ChannelPayload_Message,
+    makeStreamRpcClient,
     SyncCookie,
 } from '@towns/proto'
 import debug from 'debug'
@@ -15,7 +16,6 @@ import {
     makeRandomUserContextWithOldDelegate,
     TEST_URL,
 } from './util.test'
-import { makeStreamRpcClient } from './streamRpcClient'
 import _ from 'lodash'
 import {
     genId,
@@ -215,11 +215,16 @@ describe('streamRpcClient', () => {
             'bobTalksToHimself Starting sync on channel with sync cookie=',
             channel.stream?.nextSyncCookie,
         )
-        let syncResult: SyncStreamsResponse | null = null
-        const bodSyncStream = bob.syncStreams({
-            syncPos: [channel.stream!.nextSyncCookie!],
-            timeoutMs: 4000,
-        })
+        const abortController = new AbortController()
+
+        const bobSyncStream = bob.syncStreams(
+            {
+                syncPos: [channel.stream!.nextSyncCookie!],
+            },
+            {
+                signal: abortController.signal,
+            },
+        )
         // Bob succesdfully posts a message
         log('bobTalksToHimself Bob posts a message')
 
@@ -237,10 +242,13 @@ describe('streamRpcClient', () => {
         log('bobTalksToHimself Bob waits for sync to complete')
 
         log('bobTalksToHimself Bob starts sync')
-        for await (const result of bodSyncStream) {
-            syncResult = result
-            log('bobTalksToHimself Bob got sync result', objFmt(syncResult))
-        }
+        const syncResult = await (async () => {
+            for await (const result of bobSyncStream) {
+                log('bobTalksToHimself Bob got sync result', objFmt(result))
+                return result
+            }
+            return undefined
+        })()
 
         expect(syncResult).toBeDefined()
 
@@ -276,6 +284,7 @@ describe('streamRpcClient', () => {
         ).rejects.toThrow()
 
         log('stopping client')
+        abortController.abort()
         log('bobTalksToHimself done')
     })
 
@@ -391,11 +400,15 @@ describe('streamRpcClient', () => {
         })
         if (!userAlice.stream) throw new Error('userAlice stream not found')
         let aliceSyncCookie = userAlice.stream.nextSyncCookie
-        let aliceSyncResult: SyncStreamsResponse | null = null
-        const aliceSyncStreams = alice.syncStreams({
-            syncPos: [aliceSyncCookie!],
-            timeoutMs: 29000,
-        })
+        const aliceAbortController = new AbortController()
+        const aliceSyncStreams = alice.syncStreams(
+            {
+                syncPos: [aliceSyncCookie!],
+            },
+            {
+                signal: aliceAbortController.signal,
+            },
+        )
 
         // Bob invites Alice to the channel
         event = await makeEvent(
@@ -411,11 +424,16 @@ describe('streamRpcClient', () => {
             event,
         })
 
-        for await (const result of aliceSyncStreams) {
-            aliceSyncResult = result
-        }
+        const aliceSyncResult = await (async () => {
+            for await (const result of aliceSyncStreams) {
+                return result
+            }
+            return undefined
+        })()
 
         expect(aliceSyncResult).toBeDefined()
+
+        aliceAbortController.abort()
 
         aliceSyncCookie = expectEvent(
             aliceSyncResult,
@@ -428,12 +446,17 @@ describe('streamRpcClient', () => {
             },
         )
 
+        const aliceAbortControllerUserStream = new AbortController()
+
         // Alice syncs her user stream again
-        aliceSyncResult = null
-        const userSyncStream = alice.syncStreams({
-            syncPos: [aliceSyncCookie],
-            timeoutMs: 29000,
-        })
+        const userSyncStream = alice.syncStreams(
+            {
+                syncPos: [aliceSyncCookie],
+            },
+            {
+                signal: aliceAbortControllerUserStream.signal,
+            },
+        )
 
         // Alice joins the channel
         event = await makeEvent(
@@ -449,15 +472,20 @@ describe('streamRpcClient', () => {
             event,
         })
 
-        for await (const stream of userSyncStream) {
-            aliceSyncResult = stream
-        }
+        const aliceSyncResultUserStream = await (async () => {
+            for await (const result of userSyncStream) {
+                return result
+            }
+            return undefined
+        })()
 
-        expect(aliceSyncResult).toBeDefined()
+        expect(aliceSyncResultUserStream).toBeDefined()
+
+        aliceAbortControllerUserStream.abort()
 
         // Alice sees derived join event in her user stream
         aliceSyncCookie = expectEvent(
-            aliceSyncResult,
+            aliceSyncResultUserStream,
             alicesUserStreamId,
             'userPayload',
             (p: UserPayload_UserMembership) => {
@@ -479,12 +507,16 @@ describe('streamRpcClient', () => {
         })
         expect(messageCount).toEqual(1)
 
-        // Alice syncs both her user stream and the channel
-        aliceSyncResult = null
-        const userAndChannelStreamSync = alice.syncStreams({
-            syncPos: [aliceSyncCookie, channel.stream.nextSyncCookie!],
-            timeoutMs: 29000,
-        })
+        const aliceAbortControllerMultipleStreams = new AbortController()
+
+        const userAndChannelStreamSync = alice.syncStreams(
+            {
+                syncPos: [aliceSyncCookie, channel.stream.nextSyncCookie!],
+            },
+            {
+                signal: aliceAbortControllerMultipleStreams.signal,
+            },
+        )
 
         // Bob posts another message
         event = await makeEvent(
@@ -499,15 +531,20 @@ describe('streamRpcClient', () => {
             event,
         })
 
-        // Alice sees the message in sync result
-        for await (const stream of userAndChannelStreamSync) {
-            aliceSyncResult = stream
-        }
+        const aliceSyncResultMultipleStreams = await (async () => {
+            // Alice sees the message in sync result
+            for await (const stream of userAndChannelStreamSync) {
+                return stream
+            }
+            return undefined
+        })()
 
-        expect(aliceSyncResult).toBeDefined()
+        aliceAbortControllerMultipleStreams.abort()
+
+        expect(aliceSyncResultMultipleStreams).toBeDefined()
 
         aliceSyncCookie = expectEvent(
-            aliceSyncResult,
+            aliceSyncResultMultipleStreams,
             channelId,
             'channelPayload',
             (p: ChannelPayload_Message) => {
