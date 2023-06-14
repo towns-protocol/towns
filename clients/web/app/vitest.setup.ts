@@ -26,6 +26,11 @@ vi.mock('zustand', async () => {
 
 beforeAll(() => {
     globalThis.ResizeObserver = ResizeObserver
+    // for @coinbase/wallet-sdk via rainbowkit from lib, throws errors when no network connection
+    globalThis.WebSocket = class extends WebSocket {
+        onclose: ((this: WebSocket, ev: CloseEvent) => any) | null
+    }
+
     server.listen()
 })
 

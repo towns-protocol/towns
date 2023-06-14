@@ -58,4 +58,9 @@ export const testHandlers = [
         const data = unfurl(urls)
         return res(ctx.status(200), ctx.json(data))
     }),
+
+    // @coinbase/wallet-sdk via rainbowkit, not necessary, just reducing noise in logs
+    rest.get('https://www.walletlink.org/rpc', (_req, res, ctx) => {
+        return res(ctx.status(200), ctx.json('empty'))
+    }),
 ]
