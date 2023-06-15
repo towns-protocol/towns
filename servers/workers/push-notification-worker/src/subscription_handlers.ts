@@ -1,24 +1,22 @@
-import { AddSubscriptionRequestParams } from './subscription_types'
-import { Env } from '.'
+import {
+  AddChannelSubscriptionRequestParams,
+  AddSubscriptionRequestParams,
+} from './subscription_types'
 import { Environment } from '../../common'
 
 class SqlStatements {
   static selectPushSubscriptionsLimited =
-    'SELECT * FROM PushSubscription LIMIT 20'
+    'SELECT * FROM PushSubscription LIMIT 20;'
   static insertIntoPushSubscription = `
 INSERT INTO PushSubscription (
-  SpaceId,
-  ChannelId,
   UserId,
-  PushType,
   PushSubscription
 ) VALUES (
   ?1,
   ?2,
-  ?3,
-  ?4,
-  ?5
-)`
+) ON CONFLICT (PushSubscription) DO
+UPDATE SET
+  UserId=excluded.UserId;`
 }
 
 export async function getPushSubscriptions(env: Environment, db: D1Database) {
@@ -46,14 +44,7 @@ export async function addPushSubscription(
 ) {
   const info = await db
     .prepare(SqlStatements.insertIntoPushSubscription)
-    .bind(
-      params.spaceId,
-      params.channelId,
-      params.userId,
-      params.pushType,
-      params.pushSubscription,
-    )
+    .bind(params.userId, params.pushSubscription)
     .run()
-  console.log('[subscription_handler] addPushSubscription', 'info', info)
   return new Response('', { status: 204 })
 }

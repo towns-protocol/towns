@@ -11,12 +11,10 @@ import { isAuthedRequest } from '../../common'
 // now let's create a router (note the lack of "new")
 const router = Router()
 
-// GET collection
 router.get('/api/get-subscriptions', (request: Request, env: Env) => {
   return getPushSubscriptions(env.ENVIRONMENT, env.DB)
 })
 
-// POST to the collection (we'll use async here)
 router.post('/api/add-subscription', async (request: Request, env: Env) => {
   if (!isAuthedRequest(request, env)) {
     return new Response('Unauthorized', {

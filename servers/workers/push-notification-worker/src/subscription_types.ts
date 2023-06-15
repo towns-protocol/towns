@@ -12,15 +12,32 @@ export interface PushSubscription {
 }
 
 export interface AddSubscriptionRequestParams {
-  spaceId: string
-  channelId?: string
   userId: string
   pushSubscription: PushSubscription
-  pushType?: PushType
+}
+
+export interface AddChannelSubscriptionRequestParams {
+  userId: string
+  pushSubscription: PushSubscription
 }
 
 export function isAddSubscriptionRequestParams(
   params: any,
 ): params is AddSubscriptionRequestParams {
-  return params.spaceId && params.userId && params.pushSubscription
+  return (
+    params.userId &&
+    params.pushSubscription &&
+    isPushSubscription(params.pushSubscription)
+  )
+}
+
+function isPushSubscription(
+  subscription: any,
+): subscription is PushSubscription {
+  return (
+    subscription.endpoint &&
+    subscription.keys &&
+    subscription.keys.auth &&
+    subscription.keys.p256dh
+  )
 }

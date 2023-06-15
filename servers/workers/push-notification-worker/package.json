@@ -9,6 +9,8 @@
     "dev": "NO_D1_WARNING=true && wrangler dev",
     "lint": "eslint .",
     "lint:fix": "yarn lint --fix",
+    "prettier:check": "prettier --check .",
+    "prettier:fix": "prettier --write .",
     "sqlcreate:local": "NO_D1_WARNING=true && wrangler d1 execute PushSubscription --local --file=./sql/create-schema-local.sql",
     "sqlverify:local": "NO_D1_WARNING=true && wrangler d1 execute PushSubscription --local --command='select * from PushSubscription limit 20'",
     "test": "yarn test:unit --watch",
