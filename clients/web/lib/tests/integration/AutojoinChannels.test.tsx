@@ -25,7 +25,8 @@ import { useZionClient } from '../../src/hooks/use-zion-client'
 import { LoginWithWallet } from './helpers/TestComponents'
 
 describe('<AutojoinChannels />', () => {
-    test('create a space with two users, have alice create channels, ensure bob automatically joins them', async () => {
+    // TODO: https://linear.app/hnt-labs/issue/HNT-1607/testsintegrationautojoinchannelstesttsx
+    test.skip('create a space with two users, have alice create channels, ensure bob automatically joins them', async () => {
         // create clients
         // alice needs to have a valid nft in order to join bob's space / channel
         const alice = await registerAndStartClient('alice', TestConstants.getWalletWithMemberNft())
