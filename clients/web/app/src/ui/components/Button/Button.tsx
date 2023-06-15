@@ -14,6 +14,7 @@ type Props = {
     minWidth?: BoxProps['minWidth']
     width?: BoxProps['width']
     animate?: boolean
+    type?: 'button' | 'submit' | 'reset'
     onClick?: (e: React.MouseEvent) => void
 } & Omit<
     ButtonHTMLAttributes<HTMLButtonElement>,
@@ -34,6 +35,7 @@ export const Button = forwardRef<HTMLButtonElement, Props>(
             disabled,
             hoverEffect,
             tone = 'level3',
+            type = 'button',
             icon,
             children,
             onClick,
@@ -47,6 +49,7 @@ export const Button = forwardRef<HTMLButtonElement, Props>(
             layout={animate}
             aspectRatio={aspectRatio}
             as="button"
+            type={type}
             cursor={disabled ? 'default' : 'pointer'}
             className={buttonStyle({
                 size,
