@@ -1,8 +1,8 @@
-import React, { ComponentProps, HTMLAttributes, forwardRef, useContext } from 'react'
+import React, { ComponentProps, HTMLAttributes, forwardRef } from 'react'
 import { useMatch, useResolvedPath } from 'react-router'
 import { NavLink } from 'react-router-dom'
 import { Box, BoxProps, Stack } from '@ui'
-import { SidebarContext } from '@components/SideBars/_SideBar'
+import { navItemBackgroundStyle, navItemLinkStyle } from './_NavItem.css'
 
 type NavLinkProps = {
     to?: string
@@ -28,40 +28,16 @@ export const NavItem = forwardRef<
                 path: resolved.pathname || '/',
                 end: to === '/' || exact,
             }) || forceMatch
-
-        const { activeItem, setActiveItem } = useContext(SidebarContext)
-
-        const onMouseEnter = (e: React.MouseEvent<HTMLDivElement>) => {
-            // relays event to custom NavItem implementation (e.g. used by tooltips)
-            props.onMouseEnter && props.onMouseEnter(e)
-            if (setActiveItem && id) {
-                setActiveItem(id)
-            }
-        }
-
-        const onMouseLeave = (e: React.MouseEvent<HTMLDivElement>) => {
-            props.onMouseLeave && props.onMouseLeave(e)
-            if (setActiveItem && id && activeItem === id) {
-                setActiveItem(null)
-            }
-        }
-
-        const isHovered = activeItem === id
+        const selected = !!match
 
         return (
-            <ConditionalNavLink to={to}>
-                <Box onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
+            <ConditionalNavLink to={to} className={navItemLinkStyle}>
+                <Box hoverable pointerEvents="all">
                     <Stack position="relative" paddingX="sm" paddingY="xs" {...props} ref={ref}>
-                        {/* background fill to highlight element */}
-                        <NavItemHighlight
-                            selected={!!match}
-                            hovered={isHovered}
-                            activeBackground={activeBackground}
-                            paddingY="xs"
-                        />
                         <Stack
                             horizontal
                             grow
+                            background={selected ? activeBackground ?? 'level2' : undefined}
                             position="relative"
                             rounded="xs"
                             alignItems="center"
@@ -69,6 +45,7 @@ export const NavItem = forwardRef<
                             minHeight="x6"
                             paddingX="sm"
                             color={isHighlight || match ? undefined : 'gray2'}
+                            className={navItemBackgroundStyle}
                         >
                             {children}
                         </Stack>
@@ -78,28 +55,6 @@ export const NavItem = forwardRef<
         )
     },
 )
-
-/**
- * Highlights selected or hovered item
- */
-
-type HighlightProps = {
-    selected: boolean
-    hovered: boolean
-    activeBackground?: BoxProps['background']
-} & BoxProps
-
-const NavItemHighlight = (props: HighlightProps) => {
-    const { selected, hovered, activeBackground = 'level2', ...boxProps } = props
-
-    const isActive = selected || hovered
-
-    return (
-        <Box absoluteFill paddingX="sm" {...boxProps}>
-            <Box grow rounded="sm" background={isActive ? activeBackground : undefined} />
-        </Box>
-    )
-}
 
 /**
  * allows `to` prop to be undefined returning children

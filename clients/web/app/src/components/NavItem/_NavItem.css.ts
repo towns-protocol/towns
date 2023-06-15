@@ -1,15 +1,21 @@
-import { style } from '@vanilla-extract/css'
-import { atoms } from 'ui/styles/atoms.css'
+import { globalStyle, style } from '@vanilla-extract/css'
+import { vars } from 'ui/styles/vars.css'
 
-export const inactive = atoms({
-    rounded: 'sm',
+export const navItemLinkStyle = style({
+    ':focus-visible': {
+        outline: 'unset',
+    },
 })
 
-export const active = atoms({
-    rounded: 'sm',
-    background: 'level2',
+export const navItemBackgroundStyle = style({
+    ':hover': {
+        backgroundColor: vars.color.background.level1Hover,
+    },
+    ':active': {
+        backgroundColor: vars.color.background.level1Hover,
+    },
 })
 
-export const transition = style({
-    transition: `all 320ms ease`,
+globalStyle(`${navItemLinkStyle}:focus-visible ${navItemBackgroundStyle}`, {
+    boxShadow: `0 0 0 1px ${vars.color.foreground.accent}`,
 })

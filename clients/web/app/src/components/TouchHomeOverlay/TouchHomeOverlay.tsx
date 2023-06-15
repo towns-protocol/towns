@@ -16,6 +16,7 @@ import { useAuth } from 'hooks/useAuth'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { SentryErrorReportForm } from '@components/SentryErrorReport/SentryErrorReport'
 import { transitions } from 'ui/transitions/transitions'
+import { NavItem } from '@components/NavItem/_NavItem'
 
 type Props = {
     onClose: () => void
@@ -110,7 +111,7 @@ export const TouchHomeOverlay = (props: Props) => {
                         ))}
                     </Stack>
                 </Box>
-                <Stack gap borderTop padding="lg">
+                <Stack borderTop padding="sm">
                     <BottomSectionButton
                         signout={false}
                         label="View profile"
@@ -143,7 +144,7 @@ const BottomSectionButton = (props: {
     signout: boolean
 }) => {
     return (
-        <Stack horizontal gap="sm" alignItems="center" onClick={props.onClick}>
+        <NavItem id={props.label} onClick={props.onClick}>
             <Box padding="sm" background="level2" rounded="sm">
                 <Icon
                     color={props.signout ? 'error' : 'gray2'}
@@ -152,7 +153,7 @@ const BottomSectionButton = (props: {
                 />
             </Box>
             <Text color={props.signout ? 'error' : 'default'}>{props.label}</Text>
-        </Stack>
+        </NavItem>
     )
 }
 
