@@ -6,7 +6,6 @@
     "baseUrl": "./src",
     "declaration": true,
     "declarationMap": true,
-    "checkJs": true /* Enable error reporting in type-checked JavaScript files. */,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "isolatedModules": true,

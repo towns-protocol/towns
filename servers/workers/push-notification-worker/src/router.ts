@@ -1,11 +1,15 @@
 import {
   addPushSubscription,
   getPushSubscriptions,
+  removePushSubscription,
 } from './subscription_handlers'
+import {
+  isAddSubscriptionRequestParams,
+  isRemoveSubscriptionRequestParams,
+} from './subscription_types'
 
 import { Env } from '.'
 import { Router } from 'itty-router'
-import { isAddSubscriptionRequestParams } from './subscription_types'
 import { isAuthedRequest } from '../../common'
 
 // now let's create a router (note the lack of "new")
@@ -21,10 +25,22 @@ router.post('/api/add-subscription', async (request: Request, env: Env) => {
       status: 401,
     })
   }
-
   const content = await request.json()
   if (isAddSubscriptionRequestParams(content)) {
     return addPushSubscription(content, env.DB)
+  }
+  return new Response('Invalid request', { status: 400 })
+})
+
+router.post('/api/remove-subscription', async (request: Request, env: Env) => {
+  if (!isAuthedRequest(request, env)) {
+    return new Response('Unauthorized', {
+      status: 401,
+    })
+  }
+  const content = await request.json()
+  if (isRemoveSubscriptionRequestParams(content)) {
+    return removePushSubscription(content, env.DB)
   }
   return new Response('Invalid request', { status: 400 })
 })

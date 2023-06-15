@@ -1,13 +1,15 @@
 import {
-  AddChannelSubscriptionRequestParams,
   AddSubscriptionRequestParams,
+  RemoveSubscriptionRequestParams,
 } from './subscription_types'
+
 import { Environment } from '../../common'
 
-class SqlStatements {
-  static selectPushSubscriptionsLimited =
+class SqlStatement {
+  static SelectPushSubscriptionsLimited =
     'SELECT * FROM PushSubscription LIMIT 20;'
-  static insertIntoPushSubscription = `
+
+  static InsertIntoPushSubscription = `
 INSERT INTO PushSubscription (
   UserId,
   PushSubscription
@@ -17,6 +19,12 @@ INSERT INTO PushSubscription (
 ) ON CONFLICT (PushSubscription) DO
 UPDATE SET
   UserId=excluded.UserId;`
+
+  static DeleteFromPushSubscription = `
+DELETE FROM PushSubscription
+WHERE
+  UserId=?1 AND
+  PushSubscription=?2;`
 }
 
 export async function getPushSubscriptions(env: Environment, db: D1Database) {
@@ -25,7 +33,7 @@ export async function getPushSubscriptions(env: Environment, db: D1Database) {
     case 'development':
     case 'test': {
       const { results } = await db
-        .prepare(SqlStatements.selectPushSubscriptionsLimited)
+        .prepare(SqlStatement.SelectPushSubscriptionsLimited)
         .all()
       return Response.json(results)
     }
@@ -43,7 +51,18 @@ export async function addPushSubscription(
   db: D1Database,
 ) {
   const info = await db
-    .prepare(SqlStatements.insertIntoPushSubscription)
+    .prepare(SqlStatement.InsertIntoPushSubscription)
+    .bind(params.userId, params.pushSubscription)
+    .run()
+  return new Response('', { status: 204 })
+}
+
+export async function removePushSubscription(
+  params: RemoveSubscriptionRequestParams,
+  db: D1Database,
+) {
+  const info = await db
+    .prepare(SqlStatement.DeleteFromPushSubscription)
     .bind(params.userId, params.pushSubscription)
     .run()
   return new Response('', { status: 204 })

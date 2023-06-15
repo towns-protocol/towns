@@ -11,12 +11,18 @@ export interface PushSubscription {
   keys: PushSubscriptionKeys
 }
 
-export interface AddSubscriptionRequestParams {
-  userId: string
-  pushSubscription: PushSubscription
+function isPushSubscription(
+  subscription: any,
+): subscription is PushSubscription {
+  return (
+    subscription.endpoint &&
+    subscription.keys &&
+    subscription.keys.auth &&
+    subscription.keys.p256dh
+  )
 }
 
-export interface AddChannelSubscriptionRequestParams {
+export interface AddSubscriptionRequestParams {
   userId: string
   pushSubscription: PushSubscription
 }
@@ -31,13 +37,17 @@ export function isAddSubscriptionRequestParams(
   )
 }
 
-function isPushSubscription(
-  subscription: any,
-): subscription is PushSubscription {
+export interface RemoveSubscriptionRequestParams {
+  userId: string
+  pushSubscription: PushSubscription
+}
+
+export function isRemoveSubscriptionRequestParams(
+  params: any,
+): params is RemoveSubscriptionRequestParams {
   return (
-    subscription.endpoint &&
-    subscription.keys &&
-    subscription.keys.auth &&
-    subscription.keys.p256dh
+    params.userId &&
+    params.pushSubscription &&
+    isPushSubscription(params.pushSubscription)
   )
 }

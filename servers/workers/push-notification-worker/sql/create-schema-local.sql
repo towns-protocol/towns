@@ -36,3 +36,8 @@ INSERT INTO PushSubscription (
 ) ON CONFLICT (PushSubscription) DO
 UPDATE SET
   UserId=excluded.UserId;
+-- test delete
+DELETE FROM PushSubscription
+WHERE
+  UserId='0x3333' AND
+  PushSubscription='{"endpoint": "https://some-push-service.com/unique-0x2222", "keys": { "p256dh": "2222", "auth":"2222" }}';

@@ -10,34 +10,47 @@ export interface TestMocks {
   ctx: ExecutionContext
 }
 
-interface CreateMocksProps {
+interface CreateRequestProps {
   route: string
   method?: string
   headers?: HeadersInit
-  body?: BodyInit
   includeBearerToken?: boolean
+  body?: BodyInit
 }
 
 export function createTestMocks({
   route,
   method = 'GET',
   headers = {},
-  includeBearerToken,
+  includeBearerToken = true,
   body,
-}: CreateMocksProps): TestMocks {
-  const url = `http://localhost:8787/${route}` // some dummy url
+}: CreateRequestProps): TestMocks {
   const env = getMiniflareBindings() as Env
   const ctx = mock<ExecutionContext>()
   const DB = createMockD1Database()
   env.DB = DB
-  headers = modifyHeaders(headers, env, includeBearerToken)
-  const request = new Request(url, { method, headers, body })
+  const request = createRequest(env, { route, method, headers, body })
   return {
     request,
     env,
     DB,
     ctx,
   }
+}
+
+export function createRequest(
+  env: Env,
+  {
+    route,
+    method = 'GET',
+    headers = {},
+    includeBearerToken = true,
+    body,
+  }: CreateRequestProps,
+): Request {
+  const url = `http://localhost:8787/${route}` // some dummy url
+  headers = modifyHeaders(headers, env, includeBearerToken)
+  return new Request(url, { method, headers, body })
 }
 
 function modifyHeaders(
