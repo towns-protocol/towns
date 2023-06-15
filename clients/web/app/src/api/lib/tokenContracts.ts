@@ -39,7 +39,6 @@ const zSchema: z.ZodType<GetCollectionsForOwnerResponse> = z.object({
 })
 
 // Get the tokens in a user's wallet
-// If the `all` flag is set, it will return all tokens, otherwise it will return a paginated list
 export function useCollectionsForOwner({
     wallet,
     zionTokenAddress,
@@ -55,6 +54,7 @@ export function useCollectionsForOwner({
                 ? getLocalHostTokens(wallet, zionTokenAddress, alchmeyNetwork)
                 : getTokenContractsForAddress(wallet, zionTokenAddress, alchmeyNetwork),
         {
+            staleTime: 1000 * 15,
             refetchOnMount: false,
             refetchOnWindowFocus: false,
             refetchOnReconnect: false,
