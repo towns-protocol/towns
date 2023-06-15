@@ -100,7 +100,7 @@ describe('CreateChannelForm', () => {
             switchNetwork: () => null,
         })
 
-        vi.spyOn(useContractRoles, 'useSpaceRoles').mockImplementation(
+        vi.spyOn(useContractRoles, 'useContractRoles').mockImplementation(
             (_spaceNetworkId: string | undefined) => {
                 return {
                     data: [
@@ -111,7 +111,7 @@ describe('CreateChannelForm', () => {
                             ...memberRole,
                         },
                     ],
-                } as unknown as ReturnType<typeof useContractRoles.useSpaceRoles>
+                } as unknown as ReturnType<typeof useContractRoles.useContractRoles>
             },
         )
 
@@ -162,7 +162,7 @@ describe('CreateChannelForm', () => {
             useMockedUpdateChannelTransaction,
         )
 
-        vi.spyOn(useContractRoles, 'useSpaceRoles').mockImplementation(
+        vi.spyOn(useContractRoles, 'useContractRoles').mockImplementation(
             (_spaceNetworkId: string | undefined) => {
                 return {
                     data: [
@@ -173,7 +173,7 @@ describe('CreateChannelForm', () => {
                             ...memberRole,
                         },
                     ],
-                } as unknown as ReturnType<typeof useContractRoles.useSpaceRoles>
+                } as unknown as ReturnType<typeof useContractRoles.useContractRoles>
             },
         )
 
@@ -213,7 +213,7 @@ describe('CreateChannelForm', () => {
             useMockedUpdateChannelTransaction,
         )
 
-        vi.spyOn(useContractRoles, 'useSpaceRoles').mockImplementation(
+        vi.spyOn(useContractRoles, 'useContractRoles').mockImplementation(
             (_spaceNetworkId: string | undefined) => {
                 return {
                     data: [
@@ -224,7 +224,7 @@ describe('CreateChannelForm', () => {
                             ...memberRole,
                         },
                     ],
-                } as unknown as ReturnType<typeof useContractRoles.useSpaceRoles>
+                } as unknown as ReturnType<typeof useContractRoles.useContractRoles>
             },
         )
 

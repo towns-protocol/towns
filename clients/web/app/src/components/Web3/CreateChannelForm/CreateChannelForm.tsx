@@ -26,7 +26,7 @@ import { TokenCheckboxLabel } from '@components/Tokens/TokenCheckboxLabel'
 import { TransactionButton } from '@components/TransactionButton'
 import { env } from 'utils'
 import { useRequireTransactionNetwork } from 'hooks/useRequireTransactionNetwork'
-import { useSpaceRoles } from 'hooks/useContractRoles'
+import { useContractRoles } from 'hooks/useContractRoles'
 type Props = {
     spaceId: RoomIdentifier
     onCreateChannel: (roomId: RoomIdentifier) => void
@@ -50,7 +50,7 @@ const schema = z.object({
 
 export const CreateChannelForm = (props: Props) => {
     const { onCreateChannel, onHide } = props
-    const { data: roles } = useSpaceRoles(props.spaceId.networkId)
+    const { data: roles } = useContractRoles(props.spaceId.networkId)
     const roledIds = useMemo(() => roles?.map((r) => r.roleId?.toNumber()) ?? [], [roles])
     const { data: _rolesDetails, invalidateQuery } = useMultipleRoleDetails(
         props.spaceId.networkId,

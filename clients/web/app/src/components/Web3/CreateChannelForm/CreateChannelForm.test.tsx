@@ -89,7 +89,7 @@ describe('CreateChannelForm', () => {
             switchNetwork: () => null,
         })
 
-        vi.spyOn(useContractRoles, 'useSpaceRoles').mockImplementation(
+        vi.spyOn(useContractRoles, 'useContractRoles').mockImplementation(
             (_spaceNetworkId: string | undefined) => {
                 return {
                     data: [
@@ -100,7 +100,7 @@ describe('CreateChannelForm', () => {
                             ...memberRole,
                         },
                     ],
-                } as unknown as ReturnType<typeof useContractRoles.useSpaceRoles>
+                } as unknown as ReturnType<typeof useContractRoles.useContractRoles>
             },
         )
 
@@ -129,7 +129,7 @@ describe('CreateChannelForm', () => {
             name: 'Goerli',
             switchNetwork: () => null,
         })
-        vi.spyOn(useContractRoles, 'useSpaceRoles').mockImplementation(
+        vi.spyOn(useContractRoles, 'useContractRoles').mockImplementation(
             (_spaceNetworkId: string | undefined) => {
                 return {
                     data: [
@@ -137,7 +137,7 @@ describe('CreateChannelForm', () => {
                             ...everyoneRole,
                         },
                     ],
-                } as unknown as ReturnType<typeof useContractRoles.useSpaceRoles>
+                } as unknown as ReturnType<typeof useContractRoles.useContractRoles>
             },
         )
 
@@ -166,7 +166,7 @@ describe('CreateChannelForm', () => {
             name: 'Goerli',
             switchNetwork: () => null,
         })
-        vi.spyOn(useContractRoles, 'useSpaceRoles').mockImplementation(
+        vi.spyOn(useContractRoles, 'useContractRoles').mockImplementation(
             (_spaceNetworkId: string | undefined) => {
                 return {
                     data: [
@@ -174,7 +174,7 @@ describe('CreateChannelForm', () => {
                             ...everyoneRole,
                         },
                     ],
-                } as unknown as ReturnType<typeof useContractRoles.useSpaceRoles>
+                } as unknown as ReturnType<typeof useContractRoles.useContractRoles>
             },
         )
 
@@ -197,7 +197,7 @@ describe('CreateChannelForm', () => {
             useMockedCreateChannelTransaction,
         )
 
-        vi.spyOn(useContractRoles, 'useSpaceRoles').mockImplementation(
+        vi.spyOn(useContractRoles, 'useContractRoles').mockImplementation(
             (_spaceNetworkId: string | undefined) => {
                 return {
                     data: [
@@ -208,7 +208,7 @@ describe('CreateChannelForm', () => {
                             ...memberRole,
                         },
                     ],
-                } as unknown as ReturnType<typeof useContractRoles.useSpaceRoles>
+                } as unknown as ReturnType<typeof useContractRoles.useContractRoles>
             },
         )
 
@@ -229,7 +229,7 @@ describe('CreateChannelForm', () => {
             useMockedCreateChannelTransaction,
         )
 
-        vi.spyOn(useContractRoles, 'useSpaceRoles').mockImplementation(
+        vi.spyOn(useContractRoles, 'useContractRoles').mockImplementation(
             (_spaceNetworkId: string | undefined) => {
                 return {
                     data: [
@@ -240,7 +240,7 @@ describe('CreateChannelForm', () => {
                             ...memberRole,
                         },
                     ],
-                } as unknown as ReturnType<typeof useContractRoles.useSpaceRoles>
+                } as unknown as ReturnType<typeof useContractRoles.useContractRoles>
             },
         )
 
@@ -285,7 +285,7 @@ describe('CreateChannelForm', () => {
             useMockedCreateChannelTransaction('failedWithTransactionContext'),
         )
 
-        vi.spyOn(useContractRoles, 'useSpaceRoles').mockImplementation(
+        vi.spyOn(useContractRoles, 'useContractRoles').mockImplementation(
             (_spaceNetworkId: string | undefined) => {
                 return {
                     data: [
@@ -296,7 +296,7 @@ describe('CreateChannelForm', () => {
                             ...memberRole,
                         },
                     ],
-                } as unknown as ReturnType<typeof useContractRoles.useSpaceRoles>
+                } as unknown as ReturnType<typeof useContractRoles.useContractRoles>
             },
         )
 
@@ -332,7 +332,7 @@ describe('CreateChannelForm', () => {
             useMockedCreateChannelTransaction('failedWithMatrixPermissionContext'),
         )
 
-        vi.spyOn(useContractRoles, 'useSpaceRoles').mockImplementation(
+        vi.spyOn(useContractRoles, 'useContractRoles').mockImplementation(
             (_spaceNetworkId: string | undefined) => {
                 return {
                     data: [
@@ -343,7 +343,7 @@ describe('CreateChannelForm', () => {
                             ...memberRole,
                         },
                     ],
-                } as unknown as ReturnType<typeof useContractRoles.useSpaceRoles>
+                } as unknown as ReturnType<typeof useContractRoles.useContractRoles>
             },
         )
 
