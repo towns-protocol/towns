@@ -80,7 +80,7 @@ export const AllChannelsList = ({
                             )}
                         </Stack>
                     )}
-                    <Stack gap="lg" maxHeight="400" overflow="auto" padding="sm">
+                    <Stack scroll scrollbars gap="lg" maxHeight="400" padding="sm">
                         {contractChannelsWithJoinedStatus?.map((channel) => (
                             <Stack key={channel.channelNetworkId}>
                                 <ChannelItem
@@ -94,7 +94,7 @@ export const AllChannelsList = ({
                     </Stack>
                 </>
             ) : (
-                <Stack absoluteFill centerContent gap="md">
+                <Stack centerContent padding gap="md">
                     <Text>Loading channels</Text>
                     <ButtonSpinner />
                 </Stack>

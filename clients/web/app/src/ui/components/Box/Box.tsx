@@ -1,6 +1,6 @@
 import { clsx } from 'clsx'
 import React, { AllHTMLAttributes, createElement, forwardRef, useMemo } from 'react'
-import { scrollContainerClass } from 'ui/styles/globals/scrollcontainer.css'
+import { scrollContainerClass, scrollbarsClass } from 'ui/styles/globals/scrollcontainer.css'
 import { AtomNames, Atoms, atoms, boxClass, containerWithGapClass } from 'ui/styles/atoms.css'
 import { debugClass } from 'ui/styles/globals/debug.css'
 import { vars } from 'ui/styles/vars.css'
@@ -49,6 +49,7 @@ type BaseProps = {
     className?: string
     debug?: boolean
     scroll?: boolean
+    scrollbars?: boolean
     style?: React.CSSProperties
 }
 
@@ -91,7 +92,7 @@ type Props = HTMLProps &
 export type BoxProps = Props
 
 export const Box = forwardRef<HTMLElement, Props>((props: Props, ref) => {
-    const { as = 'div', className, children, debug, scroll, ...restProps } = props
+    const { as = 'div', className, children, debug, scroll, scrollbars, ...restProps } = props
 
     const atomShorthands = useMemo(() => {
         return (Object.entries(shorthands) as Entries<typeof shorthands>).reduce((keep, [s, v]) => {
@@ -142,6 +143,7 @@ export const Box = forwardRef<HTMLElement, Props>((props: Props, ref) => {
             [elevateReadabilityClass]: props.elevateReadability,
             [containerWithGapClass]: props.gap && props.gap !== vars.space.none,
             [scrollContainerClass]: scroll,
+            [scrollbarsClass]: scrollbars,
             [debugClass]: debug,
         },
         className,
