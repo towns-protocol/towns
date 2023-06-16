@@ -13,11 +13,11 @@ import {
     ChannelMessage_Reaction,
     ChannelMessage_Redaction,
     StreamEvent,
-    UserDeviceKeyPayload_UserDeviceKey,
     SyncCookie,
     FallbackKeys,
     Key,
     makeStreamRpcClient,
+    DeviceKeys,
 } from '@towns/proto'
 import { Crypto } from './crypto'
 import debug from 'debug'
@@ -425,6 +425,27 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
             throw new Error(`Stream ${streamId} not found after waiting`)
         }
         return stream
+    }
+
+    private async getStream(streamId: string): Promise<Stream | undefined> {
+        try {
+            this.logCall('getStream', streamId)
+            const streamContent = await this.rpcClient.getStream({ streamId })
+            assert(streamContent.stream !== undefined, 'got bad stream')
+            this.logCall('getStream', streamContent.stream)
+            const stream = new Stream(
+                streamId,
+                unpackEnvelope(streamContent.stream.events[0]), // TODO: minor optimization: unpacks first event twice: here and then wwe have to slice below to avoid that
+                this,
+                this.logEmitFromStream,
+            )
+            streamContent.stream.events = streamContent.stream.events.slice(1)
+            stream.addEvents(streamContent.stream, true)
+            return stream
+        } catch (err) {
+            this.logCall('getStream', streamId, 'ERROR', err)
+            throw err
+        }
     }
 
     private async initStream(streamId: string): Promise<void> {
@@ -962,75 +983,56 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
         request: IDownloadKeyRequest,
         returnFallbackKeys?: boolean,
     ): Promise<IDownloadKeyResponse> {
-        // derive map of user device key streamIds corresponding to each userId in the map.
-        const streamIds: { [userId: string]: string } = (
-            Object.keys(request) as Array<keyof IDownloadKeyRequest>
-        ).reduce((map: Record<string, string>, userId) => {
-            map[userId] = makeUserDeviceKeyStreamId(userId as string)
-            return map
-        }, {})
         // streams have either already been added to client or should be fetched/added from rpcServer
-        const promises: Promise<IDownloadKeyResponse>[] = []
-        Object.keys(streamIds).forEach((userId: string) => {
-            const streamId: string = streamIds[userId]
-            promises.push(
-                (async (): Promise<IDownloadKeyResponse> => {
-                    try {
-                        await this.initStream(streamId)
-                        // jterzis: should we add a wait timeout here to allow the stateView to be built from stream events
-                        // if it's initting for the first time ?
-                        // build response
-                        const stream: Stream | undefined = this.streams.get(streamId)
-                        assert(stream !== undefined, 'stream must be defined')
-                        const response: IDownloadKeyResponse = {
-                            device_keys: {},
-                            fallback_keys: {},
-                        }
-                        // 06/02/23 note: for now there's a one to one mapping between userIds - deviceIds, which is why
-                        // we return the latest UserDeviceKey event for each user from their stream. This won't hold in the future
-                        // as user's will eventually have multiple devices per user.
-                        const payload: UserDeviceKeyPayload_UserDeviceKey[] = Array.from(
-                            stream.rollup.uploadedDeviceKeys.values(),
-                        )[0]
+        const promises = Object.keys(request).map((userId) => {
+            const streamId: string = makeUserDeviceKeyStreamId(userId)
+            return (async () => {
+                try {
+                    const stream = await this.getStream(streamId)
+                    assert(stream !== undefined, 'stream must be defined')
+                    const response: IDownloadKeyResponse = {
+                        device_keys: {},
+                        fallback_keys: {},
+                    }
+                    // 06/02/23 note: for now there's a one to one mapping between userIds - deviceIds, which is why
+                    // we return the latest UserDeviceKey event for each user from their stream. This won't hold in the future
+                    // as user's will eventually have multiple devices per user.
+                    const payload = Array.from(stream.rollup.uploadedDeviceKeys.values())[0]
 
-                        if (!returnFallbackKeys) {
-                            const deviceKeys: DeviceKeys[] = payload
-                                .filter((v): v is UserDeviceKeyPayload_UserDeviceKey =>
-                                    isDefined(v),
-                                )
-                                .map((v) => v.deviceKeys as unknown as DeviceKeys)
-                            // push all known device keys for all devices of user
-                            response.device_keys[userId] = deviceKeys
-                        } else {
-                            const fallbackKeys: FallbackKeyResponse[] = payload
-                                .filter((v): v is UserDeviceKeyPayload_UserDeviceKey =>
-                                    isDefined(v),
-                                )
-                                .map((v) => {
-                                    const entry = [
-                                        [v.deviceKeys?.deviceId, v.fallbackKeys as FallbackKeys],
-                                    ]
-                                    return Object.fromEntries(entry) as FallbackKeyResponse
-                                })
-                            // push all known device keys for all devices of user
-                            if (fallbackKeys.length > 0) {
-                                if (response.fallback_keys) {
-                                    response.fallback_keys[userId] = fallbackKeys
+                    if (!returnFallbackKeys) {
+                        const deviceKeys = payload.map((v) => v.deviceKeys).filter(isDefined)
+                        // push all known device keys for all devices of user
+                        response.device_keys[userId] = deviceKeys
+                    } else {
+                        const fallbackKeys = payload
+                            .map((v) => {
+                                if (v.deviceKeys?.deviceId && v.fallbackKeys) {
+                                    const entry: FallbackKeyResponse = {
+                                        [v.deviceKeys.deviceId]: v.fallbackKeys,
+                                    }
+                                    return entry
                                 }
+                                return undefined
+                            })
+                            .filter(isDefined)
+                        // push all known device keys for all devices of user
+                        if (fallbackKeys.length > 0) {
+                            if (response.fallback_keys) {
+                                response.fallback_keys[userId] = fallbackKeys
                             }
                         }
-                        return Promise.resolve(response)
-                    } catch (e) {
-                        // return error in response
-                        const response: IDownloadKeyResponse = {
-                            failures: { [userId]: { error: e } },
-                            device_keys: {},
-                            fallback_keys: {},
-                        }
-                        return Promise.resolve(response)
                     }
-                })(),
-            )
+                    return response
+                } catch (e) {
+                    // return error in response
+                    const response: IDownloadKeyResponse = {
+                        failures: { [userId]: { error: e } },
+                        device_keys: {},
+                        fallback_keys: {},
+                    }
+                    return response
+                }
+            })()
         })
         const results = await Promise.all(promises)
         const mergedResults: IDownloadKeyResponse = results.reduce(
@@ -1093,14 +1095,6 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
         // TODO: register event handlers once crypto module is successfully initiatilized
         this.logCall('initCrypto:: uploading device keys...')
         return this.cryptoBackend.uploadDeviceKeys()
-    }
-}
-
-export interface DeviceKeys {
-    [deviceId: string]: IDeviceKeys & {
-        unsigned?: {
-            device_display_name: string
-        }
     }
 }
 

@@ -7,7 +7,7 @@ import {
     IFallbackKey,
     ParsedEvent,
 } from './types'
-import { awaitTimeout, makeDonePromise, makeTestClient } from './util.test'
+import { makeDonePromise, makeTestClient } from './util.test'
 import {
     DeviceKeys,
     PayloadCaseType,
@@ -807,8 +807,6 @@ describe('clientTest', () => {
         )
         const aliceUserDeviceKeyStreamId = alicesClient.userDeviceKeyStreamId
         const bobUserDeviceKeyStreamId = bobsClient.userDeviceKeyStreamId
-        // give the state sync a chance to run for both deviceKeys
-        await awaitTimeout(10000)
         const deviceKeys: IDownloadKeyResponse = await bobsClient.downloadKeysForUsers({
             [alicesUserId]: {},
             [bobsUserId]: {},
@@ -847,8 +845,6 @@ describe('clientTest', () => {
         )
         const aliceUserDeviceKeyStreamId = alicesClient.userDeviceKeyStreamId
         const bobUserDeviceKeyStreamId = bobsClient.userDeviceKeyStreamId
-        // give the state sync a chance to run for both deviceKeys
-        await awaitTimeout(10000)
         const fallbackKeys: IDownloadKeyResponse = await bobsClient.downloadKeysForUsers(
             {
                 [alicesUserId]: {},
@@ -886,8 +882,6 @@ describe('clientTest', () => {
             fallback_keys: aliceFallbackKeys,
         })
 
-        // give the state sync a chance to run for both deviceKeys
-        await awaitTimeout(10000)
         const fallbackKeys: IDownloadKeyResponse = await bobsClient.downloadKeysForUsers(
             {
                 [alicesUserId]: {},
