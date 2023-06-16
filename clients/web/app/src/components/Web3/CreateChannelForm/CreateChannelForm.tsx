@@ -22,11 +22,13 @@ import { ErrorMessageText } from 'ui/components/ErrorMessage/ErrorMessage'
 import { PATHS } from 'routes'
 import { RequireTransactionNetworkMessage } from '@components/RequireTransactionNetworkMessage/RequireTransactionNetworkMessage'
 import { Spinner } from '@components/Spinner'
+import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinner'
 import { TokenCheckboxLabel } from '@components/Tokens/TokenCheckboxLabel'
 import { TransactionButton } from '@components/TransactionButton'
 import { env } from 'utils'
 import { useRequireTransactionNetwork } from 'hooks/useRequireTransactionNetwork'
 import { useContractRoles } from 'hooks/useContractRoles'
+
 type Props = {
     spaceId: RoomIdentifier
     onCreateChannel: (roomId: RoomIdentifier) => void
@@ -312,7 +314,7 @@ export const CreateChannelForm = (props: Props) => {
             }}
         </FormRender>
     ) : (
-        <></>
+        <ButtonSpinner />
     )
 }
 
