@@ -5,6 +5,7 @@ import { Box, BoxProps, Stack, useZLayerContext } from '@ui'
 import { useDevice } from 'hooks/useDevice'
 import { TouchPanelNavigationBar } from 'ui/components/TouchPanelNavigationBar/TouchPanelNavigationBar'
 import { transitions } from 'ui/transitions/transitions'
+import { useSafeEscapeKeyCancellation } from 'hooks/useSafeEscapeKeyCancellation'
 
 type Props = {
     children: React.ReactNode
@@ -102,17 +103,7 @@ const CenteredModalContainer = (props: Props) => {
     const minWidth: BoxProps['minWidth'] = isTouch ? '100%' : props.minWidth || '600'
     const { onHide } = props
 
-    useEffect(() => {
-        function handleKeyDown(event: KeyboardEvent) {
-            if (event.key === 'Escape') {
-                onHide()
-            }
-        }
-        window.addEventListener('keydown', handleKeyDown)
-        return () => {
-            window.removeEventListener('keydown', handleKeyDown)
-        }
-    }, [onHide])
+    useSafeEscapeKeyCancellation({ onEscape: onHide, capture: true })
 
     return (
         <Box>

@@ -4,6 +4,7 @@ import { AnimatePresence } from 'framer-motion'
 import { modalSheetClass } from 'ui/styles/globals/sheet.css'
 import { useDevice } from 'hooks/useDevice'
 import { transitions } from 'ui/transitions/transitions'
+import { useSafeEscapeKeyCancellation } from 'hooks/useSafeEscapeKeyCancellation'
 import { Box, BoxProps } from '../Box/Box'
 import { IconButton } from '../IconButton/IconButton'
 import { Stack } from '../Stack/Stack'
@@ -26,7 +27,9 @@ export const Panel = (props: Props) => {
 }
 
 const DesktopPanel = (props: Props) => {
-    const { paddingX = 'md', rightBarButton } = props
+    const { paddingX = 'md', onClose, rightBarButton } = props
+    useSafeEscapeKeyCancellation({ onEscape: onClose, capture: false })
+
     return (
         <Stack height="100%" background="level1">
             <Stack
