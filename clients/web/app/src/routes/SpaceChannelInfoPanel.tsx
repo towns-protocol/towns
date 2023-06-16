@@ -104,7 +104,7 @@ export const ChannelInfoPanel = () => {
                     ))}
 
                 <PanelButton onClick={onMembersClick}>
-                    <Icon type="people" />
+                    <Icon type="people" size="square_sm" color="gray2" />
                     <Paragraph color="default">
                         {`${members.length} member${members.length > 1 ? `s` : ``}`}
                     </Paragraph>
@@ -112,12 +112,12 @@ export const ChannelInfoPanel = () => {
 
                 {canEditChannel && (
                     <PanelButton onClick={onShowChannelSettingsPopup}>
-                        <Icon type="edit" />
+                        <Icon type="edit" size="square_sm" color="gray2" />
                         <Paragraph color="default">Edit channel</Paragraph>
                     </PanelButton>
                 )}
                 <PanelButton tone="negative" onClick={onLeaveClick}>
-                    <Icon type="logout" />
+                    <Icon type="logout" size="square_sm" />
                     <Paragraph color="error">Leave #{channel?.label}</Paragraph>
                 </PanelButton>
             </Stack>

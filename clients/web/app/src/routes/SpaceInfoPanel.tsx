@@ -394,14 +394,14 @@ export const SpaceInfoPanel = () => {
                 </MdGap>
 
                 <PanelButton onClick={onMembersClick}>
-                    <Icon type="people" />
+                    <Icon type="people" size="square_sm" color="gray2" />
                     <Paragraph color="default">
                         {`${members.length} member${members.length > 1 ? `s` : ``}`}
                     </Paragraph>
                 </PanelButton>
 
                 <PanelButton disabled={channels.length === 0} onClick={onShowBrowseChannels}>
-                    <Icon type="tag" />
+                    <Icon type="tag" size="square_sm" color="gray2" />
                     <Paragraph color="default" fontWeight="medium">
                         {`${channels.length} channel${channels.length != 1 ? `s` : ``}`}
                     </Paragraph>
@@ -409,13 +409,13 @@ export const SpaceInfoPanel = () => {
 
                 {canEdit && !isTouch && (
                     <PanelButton onClick={onSettingsClick}>
-                        <Icon type="settings" />
+                        <Icon type="settings" size="square_sm" color="gray2" />
                         <Paragraph color="default">Settings</Paragraph>
                     </PanelButton>
                 )}
 
                 <PanelButton tone="negative" onClick={onLeaveClick}>
-                    <Icon type="logout" />
+                    <Icon type="logout" size="square_sm" />
                     <Paragraph color="error">Leave {space?.name}</Paragraph>
                 </PanelButton>
             </Stack>

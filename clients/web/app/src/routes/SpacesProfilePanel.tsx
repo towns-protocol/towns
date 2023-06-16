@@ -120,13 +120,13 @@ export const SpaceProfilePanel = (props: { children?: React.ReactNode }) => {
                                 height="height_md"
                                 background="inverted"
                             >
-                                {theme === 'dark' ? 'Aa' : 'Aa'}
+                                Aa
                             </Box>
                             <Paragraph color="default">Switch theme</Paragraph>
                         </PanelButton>
 
                         <PanelButton tone="negative" onClick={onLogoutClick}>
-                            <Icon type="logout" />
+                            <Icon type="logout" size="square_sm" />
                             <Paragraph>Logout</Paragraph>
                         </PanelButton>
                     </Stack>
