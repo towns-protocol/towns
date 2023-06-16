@@ -1,6 +1,6 @@
 import React, { useCallback, useState } from 'react'
 import { useNavigate } from 'react-router'
-import { RoomIdentifier, SpaceProtocol, useZionClient } from 'use-zion-client'
+import { RoomIdentifier, SpaceProtocol, makeRoomIdentifier, useZionClient } from 'use-zion-client'
 import { useAccount } from 'wagmi'
 import { Box, Button, Heading, Icon, Paragraph, Stack, Text } from '@ui'
 import { ModalContainer } from '@components/Modals/ModalContainer'
@@ -190,14 +190,7 @@ export const SpaceJoin = (props: Props) => {
             return
         }
         if (joinData?.networkId) {
-            const roomIdentifier: RoomIdentifier = {
-                protocol:
-                    env.VITE_PRIMARY_PROTOCOL === 'river'
-                        ? SpaceProtocol.Casablanca
-                        : SpaceProtocol.Matrix,
-                slug: encodeURIComponent(joinData.networkId),
-                networkId: joinData.networkId,
-            }
+            const roomIdentifier: RoomIdentifier = makeRoomIdentifier(joinData.networkId)
 
             try {
                 // use client.joinRoom b/c it will throw an error, not the joinRoom wrapped in useWithCatch()

@@ -1940,7 +1940,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
                 }
                 return this.matrixClient.isRoomEncrypted(roomId.networkId)
             case SpaceProtocol.Casablanca:
-                throw new Error('not implemented')
+                return true
             default:
                 staticAssertNever(roomId)
         }
