@@ -45,6 +45,7 @@ import { useDevice } from 'hooks/useDevice'
 import { MembersPageTouchModal } from '@components/MembersPage/MembersPage'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { useAuth } from 'hooks/useAuth'
+import { useStore } from 'store/store'
 import { useContractSpaceInfo } from '../hooks/useContractSpaceInfo'
 import { useEnvironment } from '../hooks/useEnvironmnet'
 import { env } from '../utils/environment'
@@ -151,6 +152,16 @@ export const SpaceInfoPanel = () => {
     })
 
     const spaceID = useSpaceId()
+
+    const { mutedSpaces, setSpaceMuted } = useStore()
+    const spaceIsMuted = spaceID ? mutedSpaces[spaceID.slug] : false
+
+    const onToggleSpaceMuted = useCallback(() => {
+        if (!spaceID) {
+            return
+        }
+        setSpaceMuted(spaceID.slug, !spaceIsMuted)
+    }, [spaceID, setSpaceMuted, spaceIsMuted])
 
     const onMembersClick = useCallback(() => {
         if (isTouch) {
@@ -399,6 +410,19 @@ export const SpaceInfoPanel = () => {
                         {`${members.length} member${members.length > 1 ? `s` : ``}`}
                     </Paragraph>
                 </PanelButton>
+
+                {space?.name && (
+                    <PanelButton onClick={onToggleSpaceMuted}>
+                        <Icon
+                            type={spaceIsMuted ? 'muteActive' : 'muteInactive'}
+                            size="square_sm"
+                            color="gray2"
+                        />
+                        <Paragraph color="default">
+                            {spaceIsMuted ? 'Unmute' : 'Mute'} #{space.name}
+                        </Paragraph>
+                    </PanelButton>
+                )}
 
                 <PanelButton disabled={channels.length === 0} onClick={onShowBrowseChannels}>
                     <Icon type="tag" size="square_sm" color="gray2" />

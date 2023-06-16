@@ -15,6 +15,10 @@ interface AppState {
     setTownRouteBookmark: (spaceId: string, route: string) => void
     townRouteBookmarks: { [spaceId: string]: string }
     spaceIdBookmark?: string
+    mutedChannels: { [channelId: string]: boolean }
+    setChannelMuted: (channelId: string, isMuted: boolean) => void
+    mutedSpaces: { [spaceId: string]: boolean }
+    setSpaceMuted: (spaceId: string, isMuted: boolean) => void
 }
 
 export const useStore = create(
@@ -63,6 +67,18 @@ export const useStore = create(
                         },
                     }
                 }),
+            mutedChannels: {},
+            setChannelMuted: (channelId, isMuted) => {
+                set((state) => {
+                    return { mutedChannels: { ...state.mutedChannels, [channelId]: isMuted } }
+                })
+            },
+            mutedSpaces: {},
+            setSpaceMuted(spaceId, isMuted) {
+                set((state) => {
+                    return { mutedSpaces: { ...state.mutedSpaces, [spaceId]: isMuted } }
+                })
+            },
         }),
         { name: 'zionstate' },
     ),

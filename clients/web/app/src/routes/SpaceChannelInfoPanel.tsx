@@ -17,6 +17,7 @@ import { Icon, Panel, PanelButton, Paragraph, Stack } from '@ui'
 import { PATHS } from 'routes'
 import { useAuth } from 'hooks/useAuth'
 import { useDevice } from 'hooks/useDevice'
+import { useStore } from 'store/store'
 import { ChannelMembersModal } from './SpaceChannelDirectoryPanel'
 
 export const ChannelInfoPanel = () => {
@@ -72,6 +73,16 @@ export const ChannelInfoPanel = () => {
         onHideChannelSettingsPopup()
     }, [onHideChannelSettingsPopup])
 
+    const { mutedChannels, setChannelMuted } = useStore()
+    const channelIsMuted = channel?.id ? mutedChannels[channel.id.slug] : false
+
+    const onToggleChannelMuted = useCallback(() => {
+        if (!channel) {
+            return
+        }
+        setChannelMuted(channel.id.slug, !channelIsMuted)
+    }, [channel, setChannelMuted, channelIsMuted])
+
     const info = useMemo(
         () => [
             {
@@ -109,6 +120,19 @@ export const ChannelInfoPanel = () => {
                         {`${members.length} member${members.length > 1 ? `s` : ``}`}
                     </Paragraph>
                 </PanelButton>
+
+                {channel && (
+                    <PanelButton onClick={onToggleChannelMuted}>
+                        <Icon
+                            type={channelIsMuted ? 'muteActive' : 'muteInactive'}
+                            size="square_sm"
+                            color="gray2"
+                        />
+                        <Paragraph color="default">
+                            {channelIsMuted ? 'Unmute' : 'Mute'} #{channel?.label}
+                        </Paragraph>
+                    </PanelButton>
+                )}
 
                 {canEditChannel && (
                     <PanelButton onClick={onShowChannelSettingsPopup}>
