@@ -1982,8 +1982,35 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
                 }
                 return {}
             }
-            case SpaceProtocol.Casablanca:
-                throw new Error('not implemented')
+            case SpaceProtocol.Casablanca: {
+                const userStreamId = this.casablancaClient?.userStreamId
+                if (!userStreamId) {
+                    throw new Error('User stream is not defined')
+                }
+
+                const memberships: Record<string, Membership> = {}
+
+                const userStreamRollup = this.casablancaClient?.streams.get(userStreamId)?.rollup
+
+                if (userStreamRollup === undefined) {
+                    return memberships
+                }
+
+                const spaceStream = this.casablancaClient?.streams.get(roomId.networkId)
+                const spaceChannels = spaceStream?.rollup?.spaceChannels
+
+                //We go through all the channels in the space and check if the user is invited or joined
+                spaceChannels?.forEach((channel) => {
+                    if (userStreamRollup?.userInvitedStreams.has(channel)) {
+                        memberships[channel] = Membership.Invite
+                    }
+                    if (userStreamRollup?.userJoinedStreams.has(channel)) {
+                        memberships[channel] = Membership.Join
+                    }
+                })
+
+                return memberships
+            }
             default:
                 staticAssertNever(roomId)
         }
