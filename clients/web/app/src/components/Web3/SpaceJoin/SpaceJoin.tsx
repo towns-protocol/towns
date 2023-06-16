@@ -8,6 +8,7 @@ import { InteractiveSpaceIcon } from '@components/SpaceIcon'
 import { useAuth } from 'hooks/useAuth'
 import { useWaitForInitialSync } from 'hooks/useWaitForInitialSync'
 import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinner'
+import { env } from 'utils'
 
 export type JoinData = {
     name: string
@@ -190,7 +191,10 @@ export const SpaceJoin = (props: Props) => {
         }
         if (joinData?.networkId) {
             const roomIdentifier: RoomIdentifier = {
-                protocol: SpaceProtocol.Matrix,
+                protocol:
+                    env.VITE_PRIMARY_PROTOCOL === 'river'
+                        ? SpaceProtocol.Casablanca
+                        : SpaceProtocol.Matrix,
                 slug: encodeURIComponent(joinData.networkId),
                 networkId: joinData.networkId,
             }
