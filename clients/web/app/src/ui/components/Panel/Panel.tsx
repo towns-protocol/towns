@@ -26,7 +26,7 @@ export const Panel = (props: Props) => {
 }
 
 const DesktopPanel = (props: Props) => {
-    const { paddingX = 'md' } = props
+    const { paddingX = 'md', rightBarButton } = props
     return (
         <Stack overflow="scroll" height="100%" background="level1">
             <Stack
@@ -47,8 +47,12 @@ const DesktopPanel = (props: Props) => {
                 <Stack>
                     {props.onClose && <IconButton icon="close" onClick={props.onClose} />}
                 </Stack>
-                <Stack grow />
-                {props.rightBarButton}
+                {rightBarButton && (
+                    <>
+                        <Stack grow />
+                        {rightBarButton}
+                    </>
+                )}
             </Stack>
             {props.children}
         </Stack>
