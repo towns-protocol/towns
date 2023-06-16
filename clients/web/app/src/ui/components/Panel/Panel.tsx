@@ -28,7 +28,7 @@ export const Panel = (props: Props) => {
 const DesktopPanel = (props: Props) => {
     const { paddingX = 'md', rightBarButton } = props
     return (
-        <Stack overflow="scroll" height="100%" background="level1">
+        <Stack height="100%" background="level1">
             <Stack
                 horizontal
                 hoverable
@@ -54,7 +54,7 @@ const DesktopPanel = (props: Props) => {
                     </>
                 )}
             </Stack>
-            {props.children}
+            <Stack scroll>{props.children}</Stack>
         </Stack>
     )
 }
@@ -126,10 +126,8 @@ const TouchPanel = (props: Props) => {
                         rightBarButton={rightBarButton}
                         onBack={closePanel}
                     />
-                    <Stack scroll>
-                        <Box minHeight="100svh" paddingBottom="safeAreaInsetBottom">
-                            {props.children}
-                        </Box>
+                    <Stack scroll scrollbars>
+                        <Box paddingBottom="safeAreaInsetBottom">{props.children}</Box>
                     </Stack>
                 </MotionStack>
             )}

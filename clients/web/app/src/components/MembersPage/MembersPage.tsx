@@ -41,7 +41,7 @@ export const MembersPageTouchModal = (props: { onHide: () => void }) => {
     const { members } = useSpaceMembers()
     return (
         <ModalContainer touchTitle="Members" onHide={props.onHide}>
-            <Stack grow overflowY="scroll">
+            <Stack grow>
                 <Grid padding="lg" columnMinSize="130px">
                     {members.map((member) => (
                         <GridProfile member={member} key={member.userId} />

@@ -54,7 +54,7 @@ export const AllChannelsList = ({
     }, [client, contractChannels, matrixSyncedChannels, space?.isLoadingChannels])
 
     return (
-        <Stack>
+        <Stack height="100%">
             {space && !space?.isLoadingChannels && contractChannelsWithJoinedStatus.length > 0 ? (
                 <>
                     {!isTouch && (
@@ -80,7 +80,14 @@ export const AllChannelsList = ({
                             )}
                         </Stack>
                     )}
-                    <Stack scroll scrollbars gap="lg" maxHeight="400" padding="sm">
+                    <Stack
+                        scroll
+                        scrollbars
+                        gap="lg"
+                        maxHeight={isTouch ? undefined : '400'}
+                        minHeight={isTouch ? 'forceScroll' : undefined}
+                        padding="sm"
+                    >
                         {contractChannelsWithJoinedStatus?.map((channel) => (
                             <Stack key={channel.channelNetworkId}>
                                 <ChannelItem
