@@ -1,6 +1,6 @@
 import React, { useCallback, useState } from 'react'
 import { useNavigate } from 'react-router'
-import { RoomIdentifier, SpaceProtocol, makeRoomIdentifier, useZionClient } from 'use-zion-client'
+import { RoomIdentifier, makeRoomIdentifier, useZionClient } from 'use-zion-client'
 import { useAccount } from 'wagmi'
 import { Box, Button, Heading, Icon, Paragraph, Stack, Text } from '@ui'
 import { ModalContainer } from '@components/Modals/ModalContainer'
@@ -8,7 +8,6 @@ import { InteractiveSpaceIcon } from '@components/SpaceIcon'
 import { useAuth } from 'hooks/useAuth'
 import { useWaitForInitialSync } from 'hooks/useWaitForInitialSync'
 import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinner'
-import { env } from 'utils'
 
 export type JoinData = {
     name: string
