@@ -1,5 +1,5 @@
 import * as z from 'zod'
-import { PATHS } from 'routes'
+import { PATHS } from '../routes'
 import { AppNotification, AppNotificationType } from './types.d'
 
 // this is obviously a bit overkill for now, but I think it can
