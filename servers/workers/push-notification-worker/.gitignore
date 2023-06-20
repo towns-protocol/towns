@@ -1,2 +1,4 @@
 # wrangler work files
 .wrangler/
+# keys
+.keys/

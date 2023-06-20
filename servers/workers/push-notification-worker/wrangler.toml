@@ -1,17 +1,20 @@
-name = "push-notification-worker-dev"
+name = "push-notification-worker"
 main = "src/index.ts"
 compatibility_flags = [ "nodejs_compat" ]
 compatibility_date = "2023-05-18"
 
 d1_databases = [
-  { binding = "DB", database_name = "PushSubscription", database_id = "1a2abc1f-acd0-4de7-bf1e-1ba3335a0e3b" }
+  { binding = "DB", database_name = "PushSubscription", database_id = "local" }
 ]
 
 [vars]
 ENVIRONMENT = "development"
+VAPID_SUBJECT = "mailto:test@test.test"
 
 # The necessary secrets are:
 # AUTH_SECRET
+# VAPID_PUBLIC_KEY
+# VAPID_PRIVATE_KEY
 #
 # for local development, you can add these in .dev.vars
 #
@@ -22,13 +25,19 @@ ENVIRONMENT = "development"
 # OR
 # Run `echo <VALUE> | wrangler secret put <NAME>` for each of these
 
+[env.test]
+name = "push-notification-worker-production"
+d1_databases = [
+  { binding = "DB", database_name = "PushSubscription_test", database_id = "e6cdffba-1799-407f-af82-cda4a7c3da27"}
+]
+vars = { ENVIRONMENT = "test", VAPID_SUBJECT = "mailto:test@towns.com" }
+
 [env.production]
 name = "push-notification-worker-production"
 d1_databases = [
   { binding = "DB", database_name = "PushSubscription", database_id = "41e2c89e-1d22-41c3-b5e5-d936d9c67af7"}
 ]
-[env.production.vars]
-ENVIRONMENT = "production"
+vars = { ENVIRONMENT = "production", VAPID_SUBJECT = "mailto:support@towns.com" }
 
 # [env.shared]
 # SHARED_VARIABLE = "shared_value"

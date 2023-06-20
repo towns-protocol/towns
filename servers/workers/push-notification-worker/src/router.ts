@@ -46,12 +46,15 @@ router.post('/api/remove-subscription', async (request: Request, env: Env) => {
 })
 
 // show test route for anything else
-router.all('*', async (request: Request) => {
+router.all('*', async (request: Request, env: Env) => {
   const html = `
 <!DOCTYPE html>
 <html>
 <body>
   <p>Now: ${new Date()}</p>
+  <p>VAPID public key: ${env.VAPID_PUBLIC_KEY}</p>
+  <p>VAPID private key: ${env.VAPID_PRIVATE_KEY}</p>
+  <p>VAPID subject: ${env.VAPID_SUBJECT}</p>
   <ul>
     <li><code><a href="/api/get-subscriptions">/api/get-subscriptions/</a></code></li>
   </ul>

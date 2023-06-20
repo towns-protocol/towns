@@ -20,6 +20,9 @@ import apiRouter from './router'
 export interface Env extends AuthEnv {
   ENVIRONMENT: Environment
   DB: D1Database
+  VAPID_PUBLIC_KEY: string
+  VAPID_PRIVATE_KEY: string
+  VAPID_SUBJECT: string
   // Example binding to KV. Learn more at https://developers.cloudflare.com/workers/runtime-apis/kv/
   // MY_KV_NAMESPACE: KVNamespace;
   //
