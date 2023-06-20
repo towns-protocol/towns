@@ -7,6 +7,7 @@ import {
     SendMessageOptions,
     TimelineEvent,
     ZTEvent,
+    useCasablancaCredentials,
     useChannelData,
     useChannelTimeline,
     useMatrixCredentials,
@@ -25,6 +26,7 @@ import { Box, Button, Stack } from '@ui'
 import { useIsChannelWritable } from 'hooks/useIsChannelWritable'
 import { useSpaceChannels } from 'hooks/useSpaceChannels'
 import { useDevice } from 'hooks/useDevice'
+import { env } from 'utils'
 import { CentralPanelLayout } from './layouts/CentralPanelLayout'
 
 export const SpacesChannel = () => {
@@ -88,7 +90,17 @@ const SpacesChannelComponent = () => {
         useDisplayEncryptionProgress(channelMessages)
 
     const { members } = useSpaceMembers()
-    const { userId, loggedInWalletAddress } = useMatrixCredentials()
+    const matrixCredentials = useMatrixCredentials()
+    const riverCridentials = useCasablancaCredentials()
+
+    const loginWithRiver = env.VITE_PRIMARY_PROTOCOL === 'casablanca' ? true : false
+
+    const loggedInWalletAddress = loginWithRiver
+        ? riverCridentials.loggedInWalletAddress
+        : matrixCredentials.loggedInWalletAddress
+
+    const userId = loginWithRiver ? riverCridentials.userId : matrixCredentials.userId
+
     const channels = useSpaceChannels()
 
     const { isChannelWritable } = useIsChannelWritable(spaceId, channelId, loggedInWalletAddress)
