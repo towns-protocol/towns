@@ -6,5 +6,13 @@ export function useCasablancaUser(userId?: string, client?: CasablancaClient): U
     if (!userId || !client) {
         return undefined
     }
-    return undefined
+    //TODO: We need to add support of displayName, lastPresenceTs and currentlyActive on River level
+    //or get rid of it completely.
+    const currentUser: User = {
+        userId: userId,
+        displayName: userId,
+        lastPresenceTs: 0,
+        currentlyActive: true,
+    }
+    return currentUser
 }
