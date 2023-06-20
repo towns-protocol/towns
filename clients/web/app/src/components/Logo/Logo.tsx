@@ -20,18 +20,28 @@ export const Logo = forwardRef<SVGSVGElement, HTMLAttributes<SVGSVGElement>>((pr
             fill="url(#paint0_linear_9353_287531)"
         />
         <defs>
-            <linearGradient
+            <motion.linearGradient
                 id="paint0_linear_9353_287531"
                 x1="-0.138776"
                 y1="30.7292"
                 x2="250.062"
                 y2="30.7293"
                 gradientUnits="userSpaceOnUse"
+                animate={{
+                    // 125, 31 is the center coordinate
+                    gradientTransform: ['rotate(0, 125, 31)', 'rotate(360, 125, 31)'],
+                }}
+                transition={{
+                    duration: 4,
+                    repeat: Infinity,
+                    repeatType: 'loop',
+                    ease: 'linear',
+                }}
             >
                 <stop stopColor="#17DCF7" />
                 <stop offset="0.552083" stopColor="#FFAA29" />
                 <stop offset="1" stopColor="#FF25E9" />
-            </linearGradient>
+            </motion.linearGradient>
         </defs>
     </svg>
 ))
