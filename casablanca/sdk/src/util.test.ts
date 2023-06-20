@@ -2,8 +2,8 @@ import { normailizeHashes, SignerContext, _impl_makeEvent_impl_ } from './sign'
 
 //import { Worker } from 'worker_threads'
 
-import debug from 'debug'
-import { Envelope, StreamEvent, makeStreamRpcClient } from '@towns/proto'
+import { dlog } from './dlog'
+import { Envelope, StreamEvent } from '@towns/proto'
 import { PlainMessage } from '@bufbuild/protobuf'
 import { Client } from './client'
 import { userIdFromAddress } from './id'
@@ -11,8 +11,9 @@ import { bin_fromHexString, bin_toHexString, takeKeccakFingerprintInHex } from '
 import { getPublicKey, utils } from 'ethereum-cryptography/secp256k1'
 import { makeTownsDelegateSig, makeOldTownsDelegateSig, publicKeyToAddress } from './crypto'
 import { ethers } from 'ethers'
+import { makeStreamRpcClient } from './makeStreamRpcClient'
 
-const log = debug('csb:test:util')
+const log = dlog('csb:test:util')
 
 export const TEST_URL = 'http://localhost:5157'
 

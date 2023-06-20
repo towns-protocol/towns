@@ -1,6 +1,6 @@
 import { makeEvent, SignerContext, unpackEnvelopes } from './sign'
-import { MembershipOp, makeStreamRpcClient } from '@towns/proto'
-import debug from 'debug'
+import { MembershipOp } from '@towns/proto'
+import { dlog } from './dlog'
 import { makeRandomUserContext, TEST_URL } from './util.test'
 import _ from 'lodash'
 import {
@@ -19,8 +19,9 @@ import {
     make_SpacePayload_Membership,
     make_UserPayload_Inception,
 } from './types'
+import { makeStreamRpcClient } from './makeStreamRpcClient'
 
-const base_log = debug('test:workflows')
+const base_log = dlog('test:workflows')
 
 const makeTestRpcClient = () => makeStreamRpcClient(TEST_URL)
 

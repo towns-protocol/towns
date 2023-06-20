@@ -12,7 +12,7 @@
         "build": "buf generate --path protocol.proto && buf generate --path payloads.proto && tsc ",
         "cb": "yarn clean && yarn build",
         "clean": "rm -rf ./dist",
-        "my-jest": "yarn node -r ../../scripts/node-no-warn.js --experimental-vm-modules $(yarn bin jest)",
+        "my-jest": "yarn node -r ../../scripts/node-no-warn.js --experimental-vm-modules $(yarn bin jest) --passWithNoTests",
         "postinstall": "yarn build",
         "test": "yarn my-jest",
         "test:ci": "yarn my-jest",

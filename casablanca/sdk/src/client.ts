@@ -16,11 +16,10 @@ import {
     SyncCookie,
     FallbackKeys,
     Key,
-    makeStreamRpcClient,
     DeviceKeys,
 } from '@towns/proto'
 import { Crypto } from './crypto'
-import debug from 'debug'
+import { DLogger, dlog } from './dlog'
 import EventEmitter from 'events'
 import TypedEmitter from 'typed-emitter'
 import { isDefined, throwWithCode } from './check'
@@ -49,10 +48,13 @@ import {
     make_UserPayload_Inception,
     make_UserPayload_ToDevice,
     IDeviceKeySignatures,
+    shortenHexString,
 } from './types'
 import _ from 'lodash'
+import debug from 'debug'
+import { makeStreamRpcClient } from './makeStreamRpcClient'
 
-const log = debug('csb:client')
+const log = dlog('csb:client')
 
 function assert(condition: boolean, message: string): asserts condition {
     if (!condition) {
@@ -66,7 +68,7 @@ const isCookieEqual = (a?: SyncCookie, b?: SyncCookie): boolean => _.isEqual(a, 
 export class Stream extends (EventEmitter as new () => TypedEmitter<StreamEvents>) {
     readonly streamId: string
     readonly clientEmitter: TypedEmitter<StreamEvents>
-    readonly logEmitFromStream: debug.Debugger
+    readonly logEmitFromStream: DLogger
     readonly rollup: StreamStateView
     readonly foreignUserStream: boolean
     readonly streamType: 'user' | 'space' | 'channel' | 'userDevice'
@@ -76,7 +78,7 @@ export class Stream extends (EventEmitter as new () => TypedEmitter<StreamEvents
         streamId: string,
         inceptionEvent: ParsedEvent | undefined,
         clientEmitter: TypedEmitter<StreamEvents>,
-        logEmitFromStream: debug.Debugger,
+        logEmitFromStream: DLogger,
         foreignUserStream?: boolean,
     ) {
         super()
@@ -148,11 +150,11 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
     userDeviceKeyStreamId?: string
     readonly streams: Map<string, Stream> = new Map()
 
-    private readonly logCall: debug.Debugger
-    private readonly logSync: debug.Debugger
-    private readonly logEmitFromStream: debug.Debugger
-    private readonly logEmitFromClient: debug.Debugger
-    private readonly logEvent: debug.Debugger
+    private readonly logCall: DLogger
+    private readonly logSync: DLogger
+    private readonly logEmitFromStream: DLogger
+    private readonly logEmitFromClient: DLogger
+    private readonly logEvent: DLogger
 
     private cryptoBackend?: Crypto
     private syncLoop?: Promise<undefined | unknown>
@@ -181,11 +183,15 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
         this.userId = userIdFromAddress(signerContext.creatorAddress)
         // TODO: tighten deviceId type and validate as we do with userId
         this.deviceId = signerContext.deviceId
-        this.logCall = debug('csb:client:call').extend(this.userId)
-        this.logSync = debug('csb:client:sync').extend(this.userId)
-        this.logEmitFromStream = debug('csb:client:emit:stream').extend(this.userId)
-        this.logEmitFromClient = debug('csb:client:emit:client').extend(this.userId)
-        this.logEvent = debug('csb:client:event').extend(this.userId)
+
+        const shortId = shortenHexString(
+            this.userId.startsWith('0x') ? this.userId.slice(2) : this.userId,
+        )
+        this.logCall = dlog('csb:cl:call').extend(shortId)
+        this.logSync = dlog('csb:cl:sync').extend(shortId)
+        this.logEmitFromStream = dlog('csb:cl:stream').extend(shortId)
+        this.logEmitFromClient = dlog('csb:cl:emit').extend(shortId)
+        this.logEvent = dlog('csb:cl:event').extend(shortId)
 
         this.logCall('new Client')
     }

@@ -9,14 +9,7 @@ import {
     publicKeyToUint8Array,
 } from './crypto'
 import { genIdBlob, userIdFromAddress } from './id'
-import {
-    bin_equal,
-    bin_fromHexString,
-    bin_toBase64,
-    bin_toHexString,
-    ParsedEvent,
-    stringify,
-} from './types'
+import { bin_equal, bin_fromHexString, bin_toHexString, ParsedEvent, stringify } from './types'
 import { ecrecover, fromRpcSig, hashPersonalMessage } from '@ethereumjs/util'
 
 /**
@@ -203,7 +196,7 @@ export const unpackEnvelope = (envelope: Envelope, _prevEventHash?: Uint8Array):
     return {
         event,
         envelope,
-        hashStr: bin_toBase64(envelope.hash),
+        hashStr: bin_toHexString(envelope.hash),
         creatorUserId: userIdFromAddress(e.creatorAddress),
     }
 }

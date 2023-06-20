@@ -1,10 +1,10 @@
 import { Interceptor, PromiseClient, Transport, createPromiseClient } from '@bufbuild/connect'
 
 import { createConnectTransport } from '@bufbuild/connect-web'
-import debug from 'debug'
-import { StreamService } from './gen/protocol_connect'
+import { StreamService } from '@towns/proto'
+import { dlog } from './dlog'
 
-const logProtos = debug('csb:rpc_client:protos')
+const logProtos = dlog('csb:rpc:protos')
 
 const logger: Interceptor = (next) => async (req) => {
     let localRes = req
@@ -39,14 +39,14 @@ const logger: Interceptor = (next) => async (req) => {
 
 async function* logEachRequest(stream: AsyncIterable<any>) {
     for await (const m of stream) {
-        logProtos('request received:', m)
+        logProtos('streaming request:', m)
         yield m
     }
 }
 
 async function* logEachResponse(stream: AsyncIterable<any>) {
     for await (const m of stream) {
-        logProtos('response received:', m)
+        logProtos('streaming response:', m)
         yield m
     }
 }

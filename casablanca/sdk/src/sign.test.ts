@@ -1,7 +1,7 @@
 import _ from 'lodash'
 import { checkDelegateSig, unpackEnvelope, makeEvent, SignerContext } from './sign'
 import { bin_fromHexString, bin_toHexString, make_UserPayload_Inception } from './types'
-import debug from 'debug'
+import { dlog } from './dlog'
 import { PlainMessage } from '@bufbuild/protobuf'
 import { makeUserStreamId } from './id'
 import { makeTownsDelegateSig, makeOldTownsDelegateSig, publicKeyToAddress } from './crypto'
@@ -9,7 +9,7 @@ import { getPublicKey } from 'ethereum-cryptography/secp256k1'
 import { ethers } from 'ethers'
 import { ChannelPayload_Message, StreamEvent } from '@towns/proto'
 
-const log = debug('test:sign')
+const log = dlog('test:sign')
 
 describe('sign', () => {
     const keys = [

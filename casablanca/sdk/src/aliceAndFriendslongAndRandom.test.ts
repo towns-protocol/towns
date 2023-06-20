@@ -1,8 +1,8 @@
-import debug from 'debug'
+import { dlog } from './dlog'
 import seedrandom from 'seedrandom'
 import { converse } from './testDriver'
 
-const log = debug('test:aliceAndFriends')
+const log = dlog('test:aliceAndFriends')
 
 describe('aliceAndBobAndFriendslongAndRandom', () => {
     test('longAndRandom', async () => {

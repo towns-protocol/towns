@@ -81,6 +81,21 @@ export const bin_toString = (buf: Uint8Array): string => {
     return bytesToUtf8(buf)
 }
 
+export const shortenHexString = (s: string): string => {
+    if (s.startsWith('0x')) {
+        return s.length > 12 ? s.slice(0, 6) + '..' + s.slice(-4) : s
+    } else {
+        return s.length > 10 ? s.slice(0, 4) + '..' + s.slice(-4) : s
+    }
+}
+
+export const isHexString = (value: string): boolean => {
+    if (value.length === 0 || (value.length & 1) !== 0) {
+        return false
+    }
+    return /^(0x)?[0-9a-fA-F]+$/.test(value)
+}
+
 export const takeKeccakFingerprintInHex = (buf: Uint8Array, n: number): string => {
     const hash = bin_toHexString(keccak256(buf))
     return hash.slice(0, n)
@@ -433,9 +448,9 @@ export const stringify = <T extends Message<T>>(message: T): Stringify<T> => {
 
         if (field.kind === 'scalar' && field.T === ScalarType.BYTES) {
             if (repeated) {
-                ret[`${localName}Strs`] = (value as Uint8Array[]).map((v) => bin_toBase64(v))
+                ret[`${localName}Strs`] = (value as Uint8Array[]).map((v) => bin_toHexString(v))
             } else {
-                ret[`${localName}Str`] = bin_toBase64(value as Uint8Array)
+                ret[`${localName}Str`] = bin_toHexString(value as Uint8Array)
             }
         } else if (field.kind === 'message') {
             if (repeated) {
@@ -448,7 +463,7 @@ export const stringify = <T extends Message<T>>(message: T): Stringify<T> => {
         } else if (field.kind === 'map') {
             if (field.V.kind === 'scalar' && field.V.T === ScalarType.BYTES) {
                 for (const [key, val] of Object.entries(value)) {
-                    ret[`${localName}Strs`][key] = bin_toBase64(val as Uint8Array)
+                    ret[`${localName}Strs`][key] = bin_toHexString(val as Uint8Array)
                 }
             } else if (field.V.kind === 'message') {
                 for (const [_key, val] of Object.entries(value)) {

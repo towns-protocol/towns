@@ -1,7 +1,7 @@
-import debug from 'debug'
+import { dlog } from './dlog'
 import { converse } from './testDriver'
 
-const log = debug('test:aliceAndFriends')
+const log = dlog('test:aliceAndFriends')
 
 describe('aliceAndBobAndFriends3for8', () => {
     test('aliceAndBobAndFriends3for8', async () => {

@@ -1,16 +1,16 @@
 import { Client } from './client'
-import debug from 'debug'
+import { DLogger, dlog } from './dlog'
 import { makeTestClient } from './util.test'
 import { ParsedEvent, getMessagePayloadContent_Text } from './types'
 import { StreamEventKeys } from './streams'
 import { makeUniqueChannelStreamId, makeUniqueSpaceStreamId } from './id'
 
-const log = debug('test:aliceAndFriends')
+const log = dlog('test:aliceAndFriends')
 
 class TestDriver {
     readonly client: Client
     readonly num: number
-    private log: debug.Debugger
+    private log: DLogger
     private stepNum?: number
 
     expected?: Set<string>
@@ -20,7 +20,7 @@ class TestDriver {
     constructor(client: Client, num: number) {
         this.client = client
         this.num = num
-        this.log = debug(`test:aliceBobAndFriends:client:${this.num}:step:${this.stepNum}`)
+        this.log = dlog(`test:aliceBobAndFriends:client:${this.num}:step:${this.stepNum}`)
     }
 
     async start(): Promise<void> {
@@ -94,7 +94,7 @@ class TestDriver {
         message: string,
     ): Promise<void> {
         this.stepNum = stepNum
-        this.log = debug(`test:client:${this.num}:step:${this.stepNum}`)
+        this.log = dlog(`test:client:${this.num}:step:${this.stepNum}`)
 
         this.log(`step start`, message)
 
@@ -114,7 +114,7 @@ class TestDriver {
         this.badMessageReceived = undefined
         this.log(`step end`, message)
         this.stepNum = undefined
-        this.log = debug(`test:client:${this.num}:step:${this.stepNum}`)
+        this.log = dlog(`test:client:${this.num}:step:${this.stepNum}`)
     }
 
     async waitFor(event: StreamEventKeys): Promise<void> {

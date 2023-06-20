@@ -1,4 +1,4 @@
-import debug from 'debug'
+import { dlog } from './dlog'
 import { Client, IDownloadKeyResponse } from './client'
 import { genId, makeChannelStreamId, makeSpaceStreamId } from './id'
 import {
@@ -21,7 +21,7 @@ import { CallOptions } from '@bufbuild/connect'
 // eslint-disable-next-line import/no-extraneous-dependencies
 import { jest } from '@jest/globals'
 
-const log = debug('test')
+const log = dlog('test')
 
 function makeMockSyncResponses(count: number) {
     const obj = {

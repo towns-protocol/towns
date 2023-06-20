@@ -2,10 +2,10 @@ import { StreamEvent, MembershipOp } from '@towns/proto'
 import { makeUserStreamId } from './id'
 import {
     bin_fromHexString,
-    bin_toBase64,
     bin_fromBase64,
     stringify,
     make_SpacePayload_Membership,
+    isHexString,
 } from './types'
 
 describe('types', () => {
@@ -21,11 +21,8 @@ describe('types', () => {
         const s = stringify(msg)
         // console.dir(msg, { depth: null })
         // console.dir(s, { depth: null })
-        expect(s.creatorAddressStr).toEqual(bin_toBase64(bin_fromHexString('0123456789abcdef')))
-        expect(s.prevEventsStrs).toEqual([
-            bin_toBase64(bin_fromHexString('0123456789abcdef')),
-            bin_toBase64(bin_fromHexString('0123456789')),
-        ])
+        expect(s.creatorAddressStr).toEqual('0123456789abcdef')
+        expect(s.prevEventsStrs).toEqual(['0123456789abcdef', '0123456789'])
         expect(s.delegateSigStr).toEqual('')
         expect(s.payload).toBeDefined()
         expect(
@@ -53,6 +50,7 @@ describe('types', () => {
         expect(() => bin_fromHexString('001')).toThrow()
         expect(() => bin_fromHexString('11223')).toThrow()
     })
+
     test('bin_fromBase64String', () => {
         const expected = new Uint8Array([1, 2, 3, 4, 5, 6, 7, 8, 9])
         const expected2 = new Uint8Array([1, 2, 3, 4, 5, 6, 7, 8, 9, 1, 2, 3, 4, 5, 6, 7, 8, 9])
@@ -60,5 +58,23 @@ describe('types', () => {
         expect(bin_fromBase64('AQIDBAUGBwgJAQIDBAUGBwgJ')).toEqual(expected2)
         expect(bin_fromBase64('')).toEqual(new Uint8Array([]))
         expect(bin_fromBase64('AA==')).toEqual(new Uint8Array([0]))
+    })
+
+    test('isHexString', () => {
+        expect(isHexString('0123456789abcdef')).toBeTruthy()
+        expect(isHexString('0123456789ABCDEF')).toBeTruthy()
+        expect(isHexString('0x0123456789abcdef')).toBeTruthy()
+        expect(isHexString('00')).toBeTruthy()
+        expect(isHexString('01')).toBeTruthy()
+        expect(isHexString('0a')).toBeTruthy()
+        expect(isHexString('0000')).toBeTruthy()
+        expect(isHexString('0001')).toBeTruthy()
+
+        expect(isHexString('')).toBeFalsy()
+        expect(isHexString('0x')).toBeFalsy()
+        expect(isHexString('0')).toBeFalsy()
+        expect(isHexString('0x0')).toBeFalsy()
+        expect(isHexString('001')).toBeFalsy()
+        expect(isHexString('11223')).toBeFalsy()
     })
 })

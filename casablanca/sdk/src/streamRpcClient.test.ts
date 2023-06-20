@@ -6,10 +6,9 @@ import {
     SyncStreamsResponse,
     UserPayload_UserMembership,
     ChannelPayload_Message,
-    makeStreamRpcClient,
     SyncCookie,
 } from '@towns/proto'
-import debug from 'debug'
+import { dlog } from './dlog'
 import {
     makeEvent_test,
     makeRandomUserContext,
@@ -34,8 +33,9 @@ import {
     make_UserPayload_Inception,
 } from './types'
 import { inspect } from 'util'
+import { makeStreamRpcClient } from './makeStreamRpcClient'
 
-const log = debug('test:streamRpcClient')
+const log = dlog('test:streamRpcClient')
 
 const makeTestRpcClient = () => makeStreamRpcClient(TEST_URL)
 

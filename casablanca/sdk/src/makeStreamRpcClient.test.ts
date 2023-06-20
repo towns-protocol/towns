@@ -1,9 +1,8 @@
-import { createConnectTransport, createGrpcWebTransport } from '@bufbuild/connect-web'
-import { InfoRequest, InfoResponse } from './gen/protocol_pb'
 import { makeStreamRpcClient } from './makeStreamRpcClient'
+import { InfoRequest, InfoResponse } from '@towns/proto'
 
 describe('protocol', () => {
-    test.each([createConnectTransport, createGrpcWebTransport])('info', async (transportFunc) => {
+    test('info', async () => {
         const client = makeStreamRpcClient('http://localhost:5157')
         expect(client).toBeDefined()
 
