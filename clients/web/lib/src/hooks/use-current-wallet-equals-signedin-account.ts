@@ -2,7 +2,7 @@
   Assert login wallet and the active wallet are the same.
 */
 
-import { createUserIdFromString } from '../types/user-identifier'
+import { getAccountAddress } from '../types/user-identifier'
 import { useAccount } from 'wagmi'
 import { useMemo } from 'react'
 import { useMyProfile } from './use-my-profile'
@@ -12,7 +12,7 @@ export function useCurrentWalletEqualsSignedInAccount(): boolean | undefined {
     const user = useMyProfile()
     const userId = user?.userId
     const signedInWalletAddress = useMemo(() => {
-        return userId ? createUserIdFromString(userId)?.accountAddress : undefined
+        return userId ? getAccountAddress(userId) : undefined
     }, [userId])
 
     return useMemo(
