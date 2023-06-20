@@ -1543,7 +1543,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
                     parentId = makeCasablancaStreamIdentifier(stream.rollup.parentSpaceId)
                 }
                 this._eventHandlers?.onJoinRoom?.(roomId, parentId)
-                return toZionRoomFromStream(stream)
+                return toZionRoomFromStream(stream, this.casablancaClient.userId)
             }
             default:
                 staticAssertNever(roomId)
@@ -2104,7 +2104,9 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
                     throw new Error('casablanca client is undefined')
                 }
                 const stream = this.casablancaClient.stream(roomId.networkId)
-                return stream ? toZionRoomFromStream(stream) : undefined
+                return stream
+                    ? toZionRoomFromStream(stream, this.casablancaClient.userId)
+                    : undefined
             }
             default:
                 staticAssertNever(roomId)
