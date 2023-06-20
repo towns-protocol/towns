@@ -29,6 +29,7 @@ import { Client as CasablancaClient } from '@towns/sdk'
 import { useCasablancaTimelines } from '../hooks/ZionContext/useCasablancaTimelines'
 import { ethers } from 'ethers'
 import merge from 'lodash/merge'
+import { useLoggedInWalletAddress } from '../hooks/use-logged-in-wallet-address'
 
 export interface IZionContext {
     homeServerUrl: string
@@ -99,10 +100,17 @@ const ContextImpl = (props: Props): JSX.Element => {
     useContentAwareTimelineDiff(matrixClient)
     useContentAwareTimelineDiffCasablanca(casablancaClient)
     const { spaces } = useSpaces(matrixClient, casablancaClient)
+    const loggedInWalletAddress = useLoggedInWalletAddress({
+        matrixServerUrl,
+        casablancaServerUrl,
+        primaryProtocol,
+    })
+
     const { matrixSpaceHierarchies, syncSpaceHierarchy } = useSyncSpaceHierarchies(
         client,
         matrixClient,
         invitedToIds,
+        loggedInWalletAddress,
     )
     const casablancaSpaceHierarchies = useCasablancaSpaceHierarchies(casablancaClient)
     const spaceHierarchies = merge(matrixSpaceHierarchies, casablancaSpaceHierarchies)

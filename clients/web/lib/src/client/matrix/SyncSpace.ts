@@ -6,7 +6,6 @@ import { MatrixRoomIdentifier } from '../../types/room-identifier'
 import { Permission } from '../web3/ContractTypes'
 import { QueryKeys } from '../../hooks/query-keys'
 import { RoomHierarchy } from 'matrix-js-sdk/lib/room-hierarchy'
-import { getAccount } from '@wagmi/core'
 import { queryClient } from '../../query/queryClient'
 
 export type MatrixSpaceHierarchy = {
@@ -18,7 +17,7 @@ export async function syncMatrixSpace(
     matrixClient: MatrixClient,
     spaceDapp: ISpaceDapp,
     spaceId: MatrixRoomIdentifier,
-    walletAddress?: string,
+    walletAddress: string,
 ): Promise<MatrixSpaceHierarchy | undefined> {
     const userId = matrixClient.getUserId()
     if (!userId) {
@@ -30,14 +29,14 @@ export async function syncMatrixSpace(
         matrixClient.getRoom(networkId) || new MatrixRoom(networkId, matrixClient, userId)
     const roomHierarchy = new RoomHierarchy(matrixRoom)
 
-    const address = walletAddress || getAccount()?.address
-
     console.log(
         '[syncMatrixSpace]',
         'roomId:',
         spaceId.networkId,
         'roomName:',
         `"${matrixRoom.name}"`,
+        'walletAddress:',
+        walletAddress,
     )
 
     try {
@@ -56,7 +55,7 @@ export async function syncMatrixSpace(
 
     const onChainChannels = await queryClient.fetchQuery(
         [QueryKeys.SyncEntitledChannels, spaceId.networkId],
-        () => getEntitledChannels(children, root, address, spaceDapp),
+        () => getEntitledChannels(children, root, walletAddress, spaceDapp),
         {
             // We don't need to check channel entitlements often
             // when someone joins/creates a channel, this query is removed and the entitlements for the space are refetched
@@ -83,13 +82,13 @@ export async function syncMatrixSpace(
 async function getEntitledChannels(
     children: IHierarchyRoom[],
     root: IHierarchyRoom | undefined,
-    address: string | undefined,
+    walletAddress: string,
     spaceDapp: ISpaceDapp,
 ) {
     return (
         await Promise.all(
             children.map(async (c) => {
-                if (!root || !address) {
+                if (!root) {
                     return undefined
                 }
 
@@ -97,7 +96,7 @@ async function getEntitledChannels(
                     const isEntitledToChannel = await spaceDapp.isEntitledToChannel(
                         root.room_id,
                         c.room_id,
-                        address,
+                        walletAddress,
                         Permission.Read,
                     )
                     if (isEntitledToChannel) {

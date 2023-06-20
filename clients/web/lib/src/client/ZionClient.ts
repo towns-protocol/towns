@@ -1850,7 +1850,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
     /************************************************
      * syncSpace
      *************************************************/
-    public async syncSpace(spaceId: RoomIdentifier, walletAddress?: string) {
+    public async syncSpace(spaceId: RoomIdentifier, walletAddress: string) {
         switch (spaceId.protocol) {
             case SpaceProtocol.Matrix:
                 if (!this.matrixClient) {

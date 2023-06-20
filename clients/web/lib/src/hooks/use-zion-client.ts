@@ -159,7 +159,10 @@ interface ZionClientImpl {
     setRoomName: (roomId: RoomIdentifier, roomName: string) => Promise<void>
     setRoomTopic: (roomId: RoomIdentifier, roomTopic: string) => Promise<void>
     getRoomTopic: (roomId: RoomIdentifier) => Promise<string | undefined>
-    syncSpace: (spaceId: RoomIdentifier) => Promise<MatrixSpaceHierarchy | undefined>
+    syncSpace: (
+        spaceId: RoomIdentifier,
+        walletAddress: string,
+    ) => Promise<MatrixSpaceHierarchy | undefined>
     userOnWrongNetworkForSignIn: boolean
 }
 

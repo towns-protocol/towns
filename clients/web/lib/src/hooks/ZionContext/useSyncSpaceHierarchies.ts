@@ -27,6 +27,7 @@ export function useSyncSpaceHierarchies(
     client: ZionClient | undefined,
     matrixClient: MatrixClient | undefined,
     invitedToIds: RoomIdentifier[],
+    loggedInWalletAddress: string | undefined,
 ): { matrixSpaceHierarchies: SpaceHierarchies; syncSpaceHierarchy: (spaceId: string) => void } {
     const { spaceIds } = useSpaceIdStore()
     const [spaceHierarchies, setSpaceHierarchies] = useState<SpaceHierarchies>({})
@@ -74,11 +75,17 @@ export function useSyncSpaceHierarchies(
             )
             return
         }
+
+        if (!loggedInWalletAddress) {
+            console.error('[useSyncSpaceHierarchies] no saved wallet for user. skipping sync.')
+            return
+        }
+
         // start the sync
         setCurrentSpaceId(spaceId)
         // define the function that does the actual sync
         const _syncSpace = async () => {
-            const hierarchy = await client.syncSpace(roomIdentifier)
+            const hierarchy = await client.syncSpace(roomIdentifier, loggedInWalletAddress)
             if (!hierarchy) {
                 return
             }
@@ -103,7 +110,7 @@ export function useSyncSpaceHierarchies(
                 // reset the current space id so that the next iteration can start
                 setCurrentSpaceId(null)
             })
-    }, [client, currentSpaceId, matrixClient, spaceIdsQueue])
+    }, [client, currentSpaceId, matrixClient, spaceIdsQueue, loggedInWalletAddress])
     // watch for new or updated space ids
     useEffect(() => {
         // console.log("!!!!! hierarchies USE EFFECT spaceIds:", spaceIds);
