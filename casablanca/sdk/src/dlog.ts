@@ -1,9 +1,11 @@
 import debug, { Debugger } from 'debug'
 import { bin_toHexString, isHexString, shortenHexString } from './types'
 
-/* eslint-disable @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument */
+const hasOwnProperty = <Y extends PropertyKey>(obj: object, prop: Y): obj is Record<Y, unknown> => {
+    return Object.prototype.hasOwnProperty.call(obj, prop)
+}
 
-const cloneAndFormat = (obj: any): any => {
+const cloneAndFormat = (obj: unknown): unknown | unknown[] => {
     if (typeof obj === 'string') {
         return isHexString(obj) ? shortenHexString(obj) : obj
     }
@@ -17,13 +19,15 @@ const cloneAndFormat = (obj: any): any => {
     }
 
     if (typeof obj === 'object' && obj !== null) {
-        const newObj: any = {}
+        const newObj: Record<PropertyKey, unknown> = {}
         for (const key in obj) {
             let newKey = key
             if (typeof key === 'string' && isHexString(key)) {
                 newKey = shortenHexString(key)
             }
-            newObj[newKey] = cloneAndFormat(obj[key])
+            if (hasOwnProperty(obj, key)) {
+                newObj[newKey] = cloneAndFormat(obj[key])
+            }
         }
         return newObj
     }
@@ -32,7 +36,7 @@ const cloneAndFormat = (obj: any): any => {
 }
 
 export interface DLogger {
-    (...args: any[]): void
+    (...args: unknown[]): void
 
     enabled: boolean
     namespace: string
@@ -41,13 +45,13 @@ export interface DLogger {
 }
 
 const makeDlog = (d: Debugger): DLogger => {
-    const dlog: any = (...args: any[]): void => {
+    const dlog = (...args: unknown[]): void => {
         if (!d.enabled || args.length === 0) {
             return
         }
 
         const fmt: string[] = []
-        const newArgs: any[] = []
+        const newArgs: unknown[] = []
 
         for (let i = 0; i < args.length; i++) {
             let c = args[i]
@@ -81,7 +85,7 @@ const makeDlog = (d: Debugger): DLogger => {
         enumerable: true,
         configurable: false,
         get: () => d.enabled,
-        set: (v) => (d.enabled = v),
+        set: (v: boolean) => (d.enabled = v),
     })
 
     return dlog as DLogger

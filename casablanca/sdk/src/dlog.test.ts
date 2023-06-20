@@ -46,6 +46,11 @@ describe('dlogTest', () => {
 
         log('longHex =', longHex)
         log('\n\n\n')
+        log('shortenedHexKey =', { '0x0102030405060708090a0b0c0d0e0f101112131415161718191a': true })
+        log('shortenedHexValue =', '0x0102030405060708090a0b0c0d0e0f101112131415161718191a')
+        log('shortenedHexValue =', {
+            key: '0x0102030405060708090a0b0c0d0e0f101112131415161718191a',
+        })
     })
 
     test('extend', () => {
@@ -53,7 +58,7 @@ describe('dlogTest', () => {
         const log = base_log.extend('extend')
         log('extend')
         log(22)
-        log('33 =', 22)
+        log('33 =', 33)
         log('gonna print more', '44 =', 44)
     })
 
