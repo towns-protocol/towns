@@ -24,6 +24,7 @@ export { useCreateChannelTransaction } from './hooks/use-create-channel-transact
 export { useCreateRoleTransaction } from './hooks/use-create-role-transaction'
 export { useCreateSpaceTransaction } from './hooks/use-create-space-transaction'
 export { useCurrentWalletEqualsSignedInAccount } from './hooks/use-current-wallet-equals-signedin-account'
+export { useConnectivity } from './hooks/use-connectivity'
 export { useDeleteRoleTransaction } from './hooks/use-delete-role-transaction'
 export { useFavIconBadge, useAppBadge } from './hooks/ZionContext/useFavIconBadge'
 export { useFullyReadMarker } from './hooks/use-fully-read-marker'

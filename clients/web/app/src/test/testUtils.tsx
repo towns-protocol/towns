@@ -69,20 +69,17 @@ export function mockNodePropsOnRef<T>(htmlNodeProps: T): void {
     })
 }
 
-export function mockUseMatrixCredentials(
-    args: {
-        loginStatus?: Lib.LoginStatus
-        loginError?: Error
-        loggedInWalletAddress?: string
-        isAuthenticated?: boolean
-    } = {},
-) {
+export function mockUseConnectivity(): ReturnType<typeof Lib.useConnectivity> {
     return {
-        isAuthenticated: true,
-        loginStatus: Lib.LoginStatus.LoggedIn,
-        loginError: undefined,
+        login: () => Promise.resolve(),
+        logout: () => Promise.resolve(),
+        register: () => Promise.resolve(),
+        activeWalletAddress: '0x6789',
         loggedInWalletAddress: '0x1234',
-        ...args,
+        isAuthenticated: true, // matrix status
+        loginStatus: Lib.LoginStatus.LoggedIn,
+        loginError: null,
+        userOnWrongNetworkForSignIn: false,
     }
 }
 

@@ -7,7 +7,7 @@ import * as zionClient from 'use-zion-client'
 import * as router from 'react-router'
 import userEvent from '@testing-library/user-event'
 import { PATHS } from 'routes'
-import { TestApp, getWalletAddress, mockUseMatrixCredentials } from 'test/testUtils'
+import { TestApp, getWalletAddress, mockUseConnectivity } from 'test/testUtils'
 import { SpacesNew } from 'routes/SpacesNew'
 import { UseMockCreateSpaceReturn, mockCreateTransactionWithSpy } from 'test/transactionHookMock'
 import * as useRequireTransactionNetwork from 'hooks/useRequireTransactionNetwork'
@@ -66,8 +66,8 @@ vi.mock('use-zion-client', async () => {
             })
         },
         // useAuth deps
-        useMatrixCredentials: () => mockUseMatrixCredentials(),
         useCurrentWalletEqualsSignedInAccount: () => true,
+        useConnectivity: () => mockUseConnectivity(),
     }
 })
 

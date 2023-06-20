@@ -1,9 +1,8 @@
-import { WalletStatus } from 'use-zion-client'
+import { WalletStatus, useConnectivity } from 'use-zion-client'
 import { useAccount, useConnect, useDisconnect } from 'wagmi'
 import { useCallback, useMemo } from 'react'
 
 import { keccak256 } from 'ethers/lib/utils.js'
-import { useConnectivity } from 'api/lib/connectivity'
 import { useAnalytics } from './useAnalytics'
 
 export const registerWalletMsgToSign = `Click to register and accept the Towns Terms of Service.`

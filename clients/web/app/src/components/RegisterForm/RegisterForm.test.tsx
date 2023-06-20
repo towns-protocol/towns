@@ -8,7 +8,7 @@ import * as Zion from 'use-zion-client'
 import { BrowserRouter } from 'react-router-dom'
 import matchers from '@testing-library/jest-dom/matchers'
 import * as router from 'react-router'
-import { mockUseMatrixCredentials } from 'test/testUtils'
+import { mockUseConnectivity } from 'test/testUtils'
 import { RegisterForm } from './RegisterForm'
 
 expect.extend(matchers)
@@ -23,7 +23,7 @@ vi.mock('react-router', async () => {
 vi.mock('use-zion-client', async () => {
     return {
         ...((await vi.importActual('use-zion-client')) as any),
-        useMatrixCredentials: () => mockUseMatrixCredentials(),
+        useConnectivity: () => mockUseConnectivity(),
     }
 })
 

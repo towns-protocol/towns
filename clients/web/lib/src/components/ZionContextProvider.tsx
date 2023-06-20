@@ -1,6 +1,6 @@
 import React, { createContext, useContext } from 'react'
 import { ZionClient } from '../client/ZionClient'
-import { ZionOpts } from '../client/ZionClientTypes'
+import { SpaceProtocol, ZionOpts } from '../client/ZionClientTypes'
 import {
     useContentAwareTimelineDiff,
     useContentAwareTimelineDiffCasablanca,
@@ -38,6 +38,7 @@ export interface IZionContext {
     clientSingleton?: ZionClient /// always set, can be use for matrix, this duplication can be removed once we transition to casablanca
     matrixClient?: MatrixClient /// set if we're logged in and matrix client is started
     casablancaClient?: CasablancaClient /// set if we're logged in and casablanca client is started
+    primaryProtocol: SpaceProtocol
     rooms: Record<string, Room | undefined>
     invitedToIds: RoomIdentifier[] // ordered list of invites (spaces and channels)
     spaceUnreads: Record<string, boolean> // spaceId -> aggregated hasUnread
@@ -91,7 +92,7 @@ export function ZionContextProvider({
 
 /// the zion client needs to be nested inside a Web3 provider, hence the need for this component
 const ContextImpl = (props: Props): JSX.Element => {
-    const { casablancaServerUrl, matrixServerUrl, enableSpaceRootUnreads } = props
+    const { casablancaServerUrl, matrixServerUrl, enableSpaceRootUnreads, primaryProtocol } = props
 
     const { client, clientSingleton, matrixClient, casablancaClient } = useZionClientListener(props)
     const { invitedToIds } = useSpacesIds(matrixClient, casablancaClient)
@@ -126,6 +127,7 @@ const ContextImpl = (props: Props): JSX.Element => {
                 client,
                 clientSingleton,
                 appChainId: props.chainId,
+                primaryProtocol,
                 matrixClient,
                 casablancaClient,
                 rooms,

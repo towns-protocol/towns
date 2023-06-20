@@ -48,7 +48,7 @@ export const App = () => {
     return (
         <ZionContextProvider
             alchemyKey={env.VITE_ALCHEMY_API_KEY}
-            primaryProtocol={SpaceProtocol.Matrix}
+            primaryProtocol={env.VITE_PRIMARY_PROTOCOL as SpaceProtocol}
             casablancaServerUrl={environment.casablancaUrl}
             matrixServerUrl={environment.matrixUrl}
             onboardingOpts={{ skipAvatar: true }}

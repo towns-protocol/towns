@@ -1,31 +1,31 @@
-import {
-    useCasablancaCredentials,
-    useMatrixCredentials,
-    useWeb3Context,
-    useZionClient,
-} from 'use-zion-client'
 import { useCallback } from 'react'
-
-import { env } from 'utils'
+import { useZionClient } from './use-zion-client'
+import { useWeb3Context } from '../components/Web3ContextProvider'
+import { useMatrixCredentials } from './use-matrix-credentials'
+import { useCasablancaCredentials } from './use-casablanca-credentials'
+import { useZionContext } from '../components/ZionContextProvider'
+import { SpaceProtocol } from '../client/ZionClientTypes'
 
 const loginMsgToSign = `Click to sign in and accept the Towns Terms of Service.`
 export const registerWalletMsgToSign = `Click to register and accept the Towns Terms of Service.`
 
 export function useConnectivity() {
-    const loginWithRiver = env.VITE_PRIMARY_PROTOCOL === 'river' ? true : false
-
+    const { primaryProtocol } = useZionContext()
+    const loginWithCasablanca = primaryProtocol === SpaceProtocol.Casablanca
     const matrixCredentials = useMatrixCredentials()
-    const riverCridentials = useCasablancaCredentials()
+    const casablancaCredentials = useCasablancaCredentials()
 
-    const isAuthenticated = loginWithRiver
-        ? riverCridentials.isAuthenticated
+    const isAuthenticated = loginWithCasablanca
+        ? casablancaCredentials.isAuthenticated
         : matrixCredentials.isAuthenticated
-    const loginStatus = loginWithRiver
-        ? riverCridentials.loginStatus
+    const loginStatus = loginWithCasablanca
+        ? casablancaCredentials.loginStatus
         : matrixCredentials.loginStatus
-    const loginError = loginWithRiver ? riverCridentials.loginError : matrixCredentials.loginError
-    const loggedInWalletAddress = loginWithRiver
-        ? riverCridentials.loggedInWalletAddress
+    const loginError = loginWithCasablanca
+        ? casablancaCredentials.loginError
+        : matrixCredentials.loginError
+    const loggedInWalletAddress = loginWithCasablanca
+        ? casablancaCredentials.loggedInWalletAddress
         : matrixCredentials.loggedInWalletAddress
 
     const {
@@ -54,8 +54,8 @@ export function useConnectivity() {
         await registerWalletWithCasablanca(registerWalletMsgToSign)
     }, [registerWalletWithCasablanca])
 
-    const login = loginWithRiver ? riverLogin : matrixLogin
-    const register = loginWithRiver ? riverRegister : matrixRegister
+    const login = loginWithCasablanca ? riverLogin : matrixLogin
+    const register = loginWithCasablanca ? riverRegister : matrixRegister
 
     const logout = useCallback(async () => {
         await _logout()
