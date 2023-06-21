@@ -7,7 +7,7 @@ import { FadeIn } from '@components/Transitions'
 
 // shared structure w/ WelcomeLayout so logo position is consistent
 export const LoadingScreen = () => (
-    <Stack absoluteFill centerContent>
+    <Stack absoluteFill centerContent background="level1">
         <Stack centerContent grow height="100%" gap="lg">
             <NavLink to={`/${PATHS.REGISTER}`}>
                 <TransitionLogo />

@@ -11,7 +11,6 @@ import { AnalyticsProvider } from 'hooks/useAnalytics'
 import { useAuth } from 'hooks/useAuth'
 import { useDevice } from 'hooks/useDevice'
 import { useEnvironment } from 'hooks/useEnvironmnet'
-import { useRootTheme } from 'hooks/useRootTheme'
 import { useWindowListener } from 'hooks/useWindowListener'
 import { PATHS } from 'routes'
 import { Register } from 'routes/Register'
@@ -24,6 +23,7 @@ import { ReloadPrompt } from '@components/ReloadPrompt/ReloadPrompt'
 import { Figma } from 'ui/styles/palette'
 import { AppBadge, FaviconBadge } from '@components/AppBadges/AppBadges'
 import { AppNotifications } from '@components/AppNotifications/AppNotifications'
+import { useStore } from 'store/store'
 
 const AuthenticatedRoutes = React.lazy(() => import('routes/AuthenticatedRoutes'))
 const InviteLinkLanding = React.lazy(() => import('routes/InviteLinkLanding'))
@@ -35,10 +35,9 @@ const DebugBar = React.lazy(() => import('@components/DebugBar/DebugBar'))
 FontLoader.init()
 
 export const App = () => {
-    const { theme } = useRootTheme({
-        ammendHTMLBody: true,
-        useDefaultOSTheme: true,
-    })
+    const { theme } = useStore((state) => ({
+        theme: state.theme,
+    }))
 
     // aellis april 2023, the two server urls and the chain id should all be considered
     // a single piece of state, PROD, TEST, and LOCAL each should have {matrixUrl, casablancaUrl, chainId}
