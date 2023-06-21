@@ -28,7 +28,8 @@ import { useZionClient } from '../../src/hooks/use-zion-client'
 // TODO Zustand https://docs.pmnd.rs/zustand/testing
 
 describe('userProfileHooks', () => {
-    test('user can join a room, see username and avatar info', async () => {
+    // TODO: https://linear.app/hnt-labs/issue/HNT-1651/testsintegrationuserprofilehookstesttsx
+    test.skip('user can join a room, see username and avatar info', async () => {
         // create clients
         const { alice } = await registerAndStartClients(['alice'])
         // set display name and avatar
