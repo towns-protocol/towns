@@ -55,7 +55,7 @@ describe('subscription handlers', () => {
       expect.stringContaining('INSERT INTO PushSubscription'),
     )
     // verify that arguments are binded to the sql statement in the expected order.
-    expect(bindSpy).toBeCalledWith(userId, pushSubscription)
+    expect(bindSpy).toBeCalledWith(userId, JSON.stringify(pushSubscription))
   })
 
   test('api/add-subscription', async () => {
@@ -90,7 +90,7 @@ describe('subscription handlers', () => {
       expect.stringContaining('INSERT INTO PushSubscription'),
     )
     // verify that arguments are binded to the sql statement in the expected order.
-    expect(bindSpy).toBeCalledWith(userId, pushSubscription)
+    expect(bindSpy).toBeCalledWith(userId, JSON.stringify(pushSubscription))
   })
 
   test('api/remove-subscription', async () => {
@@ -124,6 +124,6 @@ describe('subscription handlers', () => {
       expect.stringContaining('DELETE FROM PushSubscription'),
     )
     // verify that arguments are binded to the sql statement in the expected order.
-    expect(bindSpy).toBeCalledWith(userId, pushSubscription)
+    expect(bindSpy).toBeCalledWith(userId, JSON.stringify(pushSubscription))
   })
 })

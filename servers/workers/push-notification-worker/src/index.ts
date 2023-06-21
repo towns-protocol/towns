@@ -65,8 +65,8 @@ export async function handleRequest(
             withCorsHeaders(request, env.ENVIRONMENT),
           )
         } else {
-          return new Response('Not allowed', {
-            status: 403, // Forbidden
+          return new Response('Forbidden', {
+            status: 403,
             headers: withCorsHeaders(request, env.ENVIRONMENT),
           })
         }

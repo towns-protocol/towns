@@ -4,8 +4,9 @@ export interface AuthEnv {
 
 export const isAuthedRequest = (request: Request, env: AuthEnv) => {
     const authToken = request.headers.get('Authorization')?.split(' ')[1]
-
-    if (!authToken) return false
+    if (!authToken) {
+        return false
+    }
     // use atob, Buffer isn't available in workers by default
     try {
         return atob(authToken) === env.AUTH_SECRET

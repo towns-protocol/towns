@@ -13,6 +13,7 @@ function getAllowedOrigins(env: Environment): string[] {
                 'https://harmony-web-pr-*.onrender.com',
                 'http://localhost:3000',
                 'https://localhost:3000',
+                'http://127.0.0.1:8787',
                 'https://test-harmony-web-pr-*.onrender.com',
             ]
         case 'staging': // Stay as close to production as possible.

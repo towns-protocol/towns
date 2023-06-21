@@ -5,5 +5,6 @@ export function createFakePushSubscription() {
       auth: 'auth',
       p256dh: 'p256dh',
     },
+    expirationTime: null,
   }
 }

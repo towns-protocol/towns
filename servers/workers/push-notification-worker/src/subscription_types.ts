@@ -9,16 +9,19 @@ export interface PushSubscriptionKeys {
 export interface PushSubscription {
   endpoint: string
   keys: PushSubscriptionKeys
+  expirationTime: number | null
 }
 
 function isPushSubscription(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   subscription: any,
 ): subscription is PushSubscription {
   return (
     subscription.endpoint &&
     subscription.keys &&
     subscription.keys.auth &&
-    subscription.keys.p256dh
+    subscription.keys.p256dh &&
+    subscription.expirationTime !== undefined
   )
 }
 
@@ -28,6 +31,7 @@ export interface AddSubscriptionRequestParams {
 }
 
 export function isAddSubscriptionRequestParams(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   params: any,
 ): params is AddSubscriptionRequestParams {
   return (
@@ -43,6 +47,7 @@ export interface RemoveSubscriptionRequestParams {
 }
 
 export function isRemoveSubscriptionRequestParams(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   params: any,
 ): params is RemoveSubscriptionRequestParams {
   return (

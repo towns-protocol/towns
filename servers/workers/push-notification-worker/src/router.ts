@@ -1,8 +1,12 @@
 import {
   addPushSubscription,
-  getPushSubscriptions,
   removePushSubscription,
 } from './subscription_handlers'
+import {
+  getDefaultRouteDev,
+  getPushSubscriptionsDev,
+  getServiceWorkerJsDev,
+} from './subscription_handlers.dev'
 import {
   isAddSubscriptionRequestParams,
   isRemoveSubscriptionRequestParams,
@@ -16,11 +20,12 @@ import { isAuthedRequest } from '../../common'
 const router = Router()
 
 router.get('/api/get-subscriptions', (request: Request, env: Env) => {
-  return getPushSubscriptions(env.ENVIRONMENT, env.DB)
+  return getPushSubscriptionsDev(env.ENVIRONMENT, env.DB)
 })
 
 router.post('/api/add-subscription', async (request: Request, env: Env) => {
   if (!isAuthedRequest(request, env)) {
+    console.error('add-subscription', 'Unauthorized')
     return new Response('Unauthorized', {
       status: 401,
     })
@@ -29,11 +34,13 @@ router.post('/api/add-subscription', async (request: Request, env: Env) => {
   if (isAddSubscriptionRequestParams(content)) {
     return addPushSubscription(content, env.DB)
   }
-  return new Response('Invalid request', { status: 400 })
+  console.error('add-subscription', 'Bad request', content)
+  return new Response('Bad request', { status: 400 })
 })
 
 router.post('/api/remove-subscription', async (request: Request, env: Env) => {
   if (!isAuthedRequest(request, env)) {
+    console.error('remove-subscription', 'Unauthorized')
     return new Response('Unauthorized', {
       status: 401,
     })
@@ -42,25 +49,19 @@ router.post('/api/remove-subscription', async (request: Request, env: Env) => {
   if (isRemoveSubscriptionRequestParams(content)) {
     return removePushSubscription(content, env.DB)
   }
-  return new Response('Invalid request', { status: 400 })
+  console.error('remove-subscription', 'Bad request', content)
+  return new Response('Bad request', { status: 400 })
 })
 
-// show test route for anything else
-router.all('*', async (request: Request, env: Env) => {
-  const html = `
-<!DOCTYPE html>
-<html>
-<body>
-  <p>Now: ${new Date()}</p>
-  <p>VAPID public key: ${env.VAPID_PUBLIC_KEY}</p>
-  <p>VAPID private key: ${env.VAPID_PRIVATE_KEY}</p>
-  <p>VAPID subject: ${env.VAPID_SUBJECT}</p>
-  <ul>
-    <li><code><a href="/api/get-subscriptions">/api/get-subscriptions/</a></code></li>
-  </ul>
-</body>
-</html>`
-  return new Response(html, { headers: { 'Content-Type': 'text/html' } })
-})
+/**  dev routes start here */
+router.get('/service-worker.js', async (request: Request, env: Env) =>
+  getServiceWorkerJsDev(env.ENVIRONMENT),
+)
+
+// show dev route for anything else
+router.all('*', async (request: Request, env: Env) =>
+  getDefaultRouteDev(request, env),
+)
+/** dest routes ends here */
 
 export default router

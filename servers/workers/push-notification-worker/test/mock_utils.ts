@@ -29,7 +29,13 @@ export function createTestMocks({
   const ctx = mock<ExecutionContext>()
   const DB = createMockD1Database()
   env.DB = DB
-  const request = createRequest(env, { route, method, headers, body })
+  const request = createRequest(env, {
+    route,
+    method,
+    headers,
+    includeBearerToken,
+    body,
+  })
   return {
     request,
     env,
@@ -90,6 +96,7 @@ export function createMockPreparedStatement(): MockProxy<D1PreparedStatement> {
     success: true,
     meta: {},
   })
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   mockStatement.bind.mockImplementation((args: any[]) => {
     return mockStatement
   })
