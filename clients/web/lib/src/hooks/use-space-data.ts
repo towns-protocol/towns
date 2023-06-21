@@ -31,7 +31,9 @@ export function useSpaceData(inSpaceId?: RoomIdentifier): SpaceData | undefined 
     const casablancaSpaceData = useSpaceRollup(spaceId?.networkId)
 
     return useMemo(() => {
-        if (spaceRoom || spaceHierarchy) {
+        if (casablancaSpaceData) {
+            return casablancaSpaceData
+        } else if (spaceRoom || spaceHierarchy) {
             return formatSpace(
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 spaceRoom ?? spaceHierarchy!.root,
@@ -39,8 +41,6 @@ export function useSpaceData(inSpaceId?: RoomIdentifier): SpaceData | undefined 
                 spaceRoom?.membership ?? '',
                 '/placeholders/nft_29.png',
             )
-        } else if (casablancaSpaceData) {
-            return casablancaSpaceData
         }
         return undefined
     }, [spaceHierarchy, spaceRoom, casablancaSpaceData])
