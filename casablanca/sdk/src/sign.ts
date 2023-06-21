@@ -9,7 +9,7 @@ import {
     publicKeyToUint8Array,
 } from './crypto'
 import { genIdBlob, userIdFromAddress } from './id'
-import { bin_equal, bin_fromHexString, bin_toHexString, ParsedEvent, stringify } from './types'
+import { bin_equal, bin_fromHexString, bin_toHexString, ParsedEvent } from './types'
 import { ecrecover, fromRpcSig, hashPersonalMessage } from '@ethereumjs/util'
 
 /**
@@ -170,20 +170,20 @@ export const unpackEnvelope = (envelope: Envelope, _prevEventHash?: Uint8Array):
 
     const recoveredPubKey = townsRecoverPubKey(hash, envelope.signature)
 
-    const e = StreamEvent.fromBinary(envelope.event)
-    if (!hasElements(e.delegateSig)) {
+    const event = StreamEvent.fromBinary(envelope.event)
+    if (!hasElements(event.delegateSig)) {
         const address = publicKeyToAddress(recoveredPubKey)
         check(
-            bin_equal(address, e.creatorAddress),
+            bin_equal(address, event.creatorAddress),
             'Event signature is not valid',
             Err.BAD_EVENT_SIGNATURE,
         )
     } else {
-        checkDelegateSig(recoveredPubKey, e.creatorAddress, e.delegateSig)
+        checkDelegateSig(recoveredPubKey, event.creatorAddress, event.delegateSig)
     }
 
-    if (e.payload?.value?.content.case !== 'inception') {
-        check(e.prevEvents.length > 0, "prevEvents can't be empty", Err.BAD_PREV_EVENTS)
+    if (event.payload?.value?.content.case !== 'inception') {
+        check(event.prevEvents.length > 0, "prevEvents can't be empty", Err.BAD_PREV_EVENTS)
         // TODO replace with a proper check
         // check(
         //     bin_equal(e.prevEvents[0], prevEventHash),
@@ -192,12 +192,12 @@ export const unpackEnvelope = (envelope: Envelope, _prevEventHash?: Uint8Array):
         // )
     }
 
-    const event = stringify(e)
     return {
         event,
         envelope,
         hashStr: bin_toHexString(envelope.hash),
-        creatorUserId: userIdFromAddress(e.creatorAddress),
+        prevEventsStrs: event.prevEvents.map((e) => bin_toHexString(e)),
+        creatorUserId: userIdFromAddress(event.creatorAddress),
     }
 }
 

@@ -1,4 +1,4 @@
-import { AnyMessage, Message, PlainMessage, ScalarType, protoBase64 } from '@bufbuild/protobuf'
+import { PlainMessage, protoBase64 } from '@bufbuild/protobuf'
 import {
     StreamEvent,
     Envelope,
@@ -27,9 +27,10 @@ import { keccak256 } from 'ethereum-cryptography/keccak'
 import { isDefined } from './check'
 
 export interface ParsedEvent {
-    event: Stringify<StreamEvent>
+    event: StreamEvent
     envelope: Envelope
     hashStr: string
+    prevEventsStrs: string[]
     creatorUserId: string
 }
 
@@ -390,90 +391,6 @@ export const getMessagePayloadContent_Text = (
         throw new Error('Expected text message')
     }
     return content.payload.value.content.value
-}
-
-type OneofSelectedMessage<K extends string, M extends Message<M>> = {
-    case: K
-    value: M
-}
-type Stringify1<T extends Message<T>> = {
-    [P in keyof T as T[P] extends Uint8Array ? `${string & P}Str` : never]: string
-}
-type Stringify2<T extends Message<T>> = {
-    [P in keyof T as T[P] extends Uint8Array[] ? `${string & P}Strs` : never]: string[]
-}
-type Stringify3<T extends Message<T>> = {
-    [P in keyof T]: StringifyField<T[P]>
-}
-type StringifyField<F> = F extends Message<infer U>
-    ? Stringify<U>
-    : F extends OneofSelectedMessage<infer C, infer V>
-    ? {
-          case: C
-          value: Stringify<V>
-      }
-    : F extends {
-          [key: string | number]: Message<infer U>
-      }
-    ? {
-          [key: string | number]: Stringify<U>
-      }
-    : F
-
-export type Stringify<T extends Message<T>> = Stringify1<T> & Stringify2<T> & Stringify3<T>
-
-// Adds xxxStr field to the message for each xxx field of type Uint8Array
-// and xxxStrs field to the message for each xxx field of type Uint8Array[]
-// It makes it easier to work with the message in the TS code, where strings can be used
-// as keys for maps/sets and be directly compared.
-export const stringify = <T extends Message<T>>(message: T): Stringify<T> => {
-    const ret = message as any
-    const type = message.getType()
-    /* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument */
-
-    for (const field of type.fields.byNumber()) {
-        let value: any // this will be our field value, whether it is member of a oneof or regular field
-        const repeated = field.repeated
-        const localName = field.localName
-
-        if (field.oneof) {
-            const oneof: any = (message as AnyMessage)[field.oneof.localName]
-            if (oneof.case !== localName) {
-                continue // field is not selected, skip
-            }
-            value = oneof.value
-        } else {
-            value = (message as AnyMessage)[localName]
-        }
-
-        if (field.kind === 'scalar' && field.T === ScalarType.BYTES) {
-            if (repeated) {
-                ret[`${localName}Strs`] = (value as Uint8Array[]).map((v) => bin_toHexString(v))
-            } else {
-                ret[`${localName}Str`] = bin_toHexString(value as Uint8Array)
-            }
-        } else if (field.kind === 'message') {
-            if (repeated) {
-                for (const item of value as AnyMessage[]) {
-                    stringify(item)
-                }
-            } else {
-                stringify(value as AnyMessage)
-            }
-        } else if (field.kind === 'map') {
-            if (field.V.kind === 'scalar' && field.V.T === ScalarType.BYTES) {
-                for (const [key, val] of Object.entries(value)) {
-                    ret[`${localName}Strs`][key] = bin_toHexString(val as Uint8Array)
-                }
-            } else if (field.V.kind === 'message') {
-                for (const [_key, val] of Object.entries(value)) {
-                    stringify(val as AnyMessage)
-                }
-            }
-        }
-    }
-    /* eslint-enable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument */
-    return ret as Stringify<T>
 }
 
 function processMapToObjectValue(value: any): any {

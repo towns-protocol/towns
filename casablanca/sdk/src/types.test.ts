@@ -1,37 +1,6 @@
-import { StreamEvent, MembershipOp } from '@towns/proto'
-import { makeUserStreamId } from './id'
-import {
-    bin_fromHexString,
-    bin_fromBase64,
-    stringify,
-    make_SpacePayload_Membership,
-    isHexString,
-} from './types'
+import { bin_fromHexString, bin_fromBase64, isHexString } from './types'
 
 describe('types', () => {
-    test('stringify', () => {
-        const msg = new StreamEvent({
-            creatorAddress: bin_fromHexString('0123456789abcdef'),
-            prevEvents: [bin_fromHexString('0123456789abcdef'), bin_fromHexString('0123456789')],
-            payload: make_SpacePayload_Membership({
-                op: MembershipOp.SO_JOIN,
-                userId: makeUserStreamId('0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'),
-            }),
-        })
-        const s = stringify(msg)
-        // console.dir(msg, { depth: null })
-        // console.dir(s, { depth: null })
-        expect(s.creatorAddressStr).toEqual('0123456789abcdef')
-        expect(s.prevEventsStrs).toEqual(['0123456789abcdef', '0123456789'])
-        expect(s.delegateSigStr).toEqual('')
-        expect(s.payload).toBeDefined()
-        expect(
-            s.payload.case === 'spacePayload' && s.payload.value.content.case === 'membership'
-                ? s.payload.value.content.value.userId
-                : '',
-        ).toEqual('00-0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa')
-    })
-
     test('bin_fromHexString', () => {
         const expected = new Uint8Array([1, 35, 69, 103, 137, 171, 205, 239])
         expect(bin_fromHexString('0123456789abcdef')).toEqual(expected)

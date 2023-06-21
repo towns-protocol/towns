@@ -17,14 +17,14 @@ import {
 } from '@towns/proto'
 import TypedEmitter from 'typed-emitter'
 import { check, checkNever, isDefined, throwWithCode } from './check'
-import { ParsedEvent, Stringify } from './types'
+import { ParsedEvent } from './types'
 
 export const findLeafEventHashes = (streamId: string, events: ParsedEvent[]): string[] => {
     check(events.length > 0, `Stream is empty ${streamId}`, Err.STREAM_BAD_HASHES)
     const hashes = new Set<string>()
     for (const event of events) {
         hashes.add(event.hashStr)
-        for (const prev of event.event.prevEventsStrs) {
+        for (const prev of event.prevEventsStrs) {
             hashes.delete(prev)
         }
     }
@@ -33,31 +33,31 @@ export const findLeafEventHashes = (streamId: string, events: ParsedEvent[]): st
 }
 
 export type StreamEvents = {
-    streamInception: (streamId: string, event: Stringify<StreamEvent>) => void
+    streamInception: (streamId: string, event: StreamEvent) => void
     spaceInception: (
         streamId: string,
-        event: Stringify<StreamEvent>,
-        inceptionEvent: Stringify<SpacePayload_Inception>,
+        event: StreamEvent,
+        inceptionEvent: SpacePayload_Inception,
     ) => void
     channelInception: (
         streamId: string,
-        event: Stringify<StreamEvent>,
-        inceptionEvent: Stringify<ChannelPayload_Inception>,
+        event: StreamEvent,
+        inceptionEvent: ChannelPayload_Inception,
     ) => void
     userInception: (
         streamId: string,
-        event: Stringify<StreamEvent>,
-        inceptionEvent: Stringify<UserPayload_Inception>,
+        event: StreamEvent,
+        inceptionEvent: UserPayload_Inception,
     ) => void
     userSettingsInception: (
         streamId: string,
-        event: Stringify<StreamEvent>,
-        inceptionEvent: Stringify<UserSettingsPayload_Inception>,
+        event: StreamEvent,
+        inceptionEvent: UserSettingsPayload_Inception,
     ) => void
     userDeviceKeyInception: (
         streamId: string,
-        event: Stringify<StreamEvent>,
-        inceptionEvent: Stringify<UserDeviceKeyPayload_Inception>,
+        event: StreamEvent,
+        inceptionEvent: UserDeviceKeyPayload_Inception,
     ) => void
     streamNewUserJoined: (streamId: string, userId: string) => void
     streamNewUserInvited: (streamId: string, userId: string) => void
@@ -152,7 +152,7 @@ export class StreamStateView {
         this.timeline.push(event)
         this.events.set(event.hashStr, event)
         this.leafEventHashes.set(event.hashStr, event.envelope.hash)
-        for (const prev of event.event.prevEventsStrs ?? []) {
+        for (const prev of event.prevEventsStrs ?? []) {
             this.leafEventHashes.delete(prev)
         }
 
@@ -279,8 +279,7 @@ export class StreamStateView {
                                 if (deviceKeys?.deviceId !== undefined) {
                                     this.uploadedDeviceKeys.set(deviceKeys.deviceId, [
                                         ...(this.uploadedDeviceKeys.get(deviceKeys.deviceId) || []),
-                                        payload.value.content
-                                            .value as UserDeviceKeyPayload_UserDeviceKey,
+                                        payload.value.content.value,
                                     ])
                                 }
                             }
@@ -302,10 +301,7 @@ export class StreamStateView {
         }
     }
 
-    addChannelEvent(
-        payload: Stringify<SpacePayload_Channel>,
-        emitter?: TypedEmitter<StreamEvents>,
-    ): void {
+    addChannelEvent(payload: SpacePayload_Channel, emitter?: TypedEmitter<StreamEvents>): void {
         const { op, channelId } = payload
         switch (op) {
             case ChannelOp.CO_CREATED:
@@ -322,7 +318,7 @@ export class StreamStateView {
     }
 
     addUserMembershipEvent(
-        payload: Stringify<UserPayload_UserMembership>,
+        payload: UserPayload_UserMembership,
         emitter?: TypedEmitter<StreamEvents>,
     ): void {
         const { op, streamId } = payload
@@ -346,7 +342,7 @@ export class StreamStateView {
         }
     }
 
-    addMembershipEvent(payload: Stringify<Membership>, emitter?: TypedEmitter<StreamEvents>): void {
+    addMembershipEvent(payload: Membership, emitter?: TypedEmitter<StreamEvents>): void {
         const { op, userId } = payload
         switch (op) {
             case MembershipOp.SO_INVITE:
