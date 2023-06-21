@@ -5,13 +5,13 @@ import { useSpaceData } from '../hooks/use-space-data'
 import { useAsyncTaskQueue } from '../utils/useAsyncTaskQueue'
 import { useZionClient } from '../hooks/use-zion-client'
 
-// When the space changes, join all eligible channels
+// When loading a space, join all eligible channels
 export const AutojoinChannels = () => {
     const space = useSpaceData()
     const channels = useMemo(() => space?.channelGroups.flatMap((cg) => cg.channels) || [], [space])
     const { client } = useZionContext()
     const { joinRoom } = useZionClient()
-    const { enqueueTask, clearQueue } = useAsyncTaskQueue()
+    const { enqueueTask } = useAsyncTaskQueue()
     const checkedChannels = useRef<Record<string, boolean>>({})
 
     const _joinRoom = useCallback(
@@ -54,18 +54,13 @@ export const AutojoinChannels = () => {
     // watch eligible channels to join
     useEffect(() => {
         channelsToJoin.forEach((channel) => {
-            // add to queue a single time
+            // add to queue a single time. let them run in background, even if user navigates away
             if (!checkedChannels.current[channel.id.networkId]) {
                 checkedChannels.current[channel.id.networkId] = true
                 enqueueTask(_joinRoom(channel))
             }
         })
-        return () => {
-            // this can be optional. we could have a peristent checkedChannels cache and not clear these so that channels are enqueued once and continue running in background even if user changes space
-            clearQueue()
-            checkedChannels.current = {}
-        }
-    }, [_joinRoom, enqueueTask, clearQueue, channelsToJoin])
+    }, [_joinRoom, enqueueTask, channelsToJoin])
 
     return null
 }
