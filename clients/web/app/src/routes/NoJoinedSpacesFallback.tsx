@@ -38,7 +38,7 @@ export const NoJoinedSpacesFallback = () => {
         }
     }, [spaces, navigate, initialSyncComplete, client, spaceIdBookmark])
 
-    if (!initialSyncComplete) {
+    if (!initialSyncComplete || spaces.length) {
         return <TimelineShimmer />
     }
 
