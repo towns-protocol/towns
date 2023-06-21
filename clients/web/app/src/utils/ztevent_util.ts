@@ -22,13 +22,13 @@ export const getIsReactionContent = (e?: TimelineEvent): ReactionEvent | undefin
 export const getMessageBody = (eventId: string, message: RoomMessageEvent): string => {
     switch (message.msgType) {
         case MessageType.GM:
-            return `${message.content.body} 
+            return `${message.body} 
       ${eventId}
       `
         case MessageType.Text:
-            return message.content.body
+            return message.body
         default:
-            return `${message.content.body}\n*Unsupported message type* **${message.msgType}**`
+            return `${message.body}\n*Unsupported message type* **${message.msgType}**`
     }
 }
 
