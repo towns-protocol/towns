@@ -75,8 +75,8 @@ export const TouchLayoutNavigationBar = (props: Props) => {
             <Stack
                 horizontal
                 borderBottom
-                gap="sm"
-                paddingX="lg"
+                gap="md"
+                paddingX="md"
                 background="level1"
                 alignItems="center"
                 height="x8"

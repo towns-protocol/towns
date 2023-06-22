@@ -122,7 +122,7 @@ export const MessageLayout = (props: Props) => {
         >
             {/* left / avatar gutter */}
             {/* snippet: center avatar with name row by keeping the size of the containers equal  */}
-            <Box minWidth="x8">
+            <Box minWidth={isTouch ? 'x6' : 'x8'}>
                 {displayContext !== 'tail' ? (
                     senderId ? (
                         <AvatarComponent
@@ -271,9 +271,17 @@ export const RedactedMessageLayout = (props: {
     replies?: ThreadStats
 }) => {
     const { event, replies } = props
+    const { isTouch } = useDevice()
+
     return (
         <Stack horizontal hoverable gap="md" paddingLeft="lg" paddingY="md" background="level1">
-            <Box centerContent rounded="full" height="x6" width="x6" background="level2">
+            <Box
+                centerContent
+                rounded="full"
+                height={isTouch ? 'x4' : 'x6'}
+                width={isTouch ? 'x4' : 'x6'}
+                background="level2"
+            >
                 <Icon type="delete" color="gray2" padding="xs" />
             </Box>
             <Box>

@@ -1,8 +1,11 @@
 import React from 'react'
 import { Box, Stack } from '@ui'
 import { shimmerClass } from 'ui/styles/globals/shimmer.css'
+import { useDevice } from 'hooks/useDevice'
 
 export const TimelineShimmer = (props: { children?: React.ReactNode }) => {
+    const { isTouch } = useDevice()
+
     return (
         <Box absoluteFill data-testid="timeline-shimmer" paddingTop="safeAreaInsetBottom">
             <Stack grow>
@@ -12,14 +15,14 @@ export const TimelineShimmer = (props: { children?: React.ReactNode }) => {
                         horizontal
                         borderBottom
                         height="x8"
-                        paddingX="lg"
-                        gap="lg"
+                        paddingX={isTouch ? 'md' : 'lg'}
+                        gap={isTouch ? 'md' : 'lg'}
                         alignItems="center"
                     >
                         <Box square="square_lg" height="x1" className={shimmerClass} rounded="xs" />
                         <Box width="200" height="x2" className={shimmerClass} rounded="xs" />
                     </Box>
-                    <Stack gap padding="lg">
+                    <Stack gap padding={isTouch ? 'md' : 'lg'}>
                         {Array(10)
                             .fill(undefined)
                             .map((_, i) => i)
@@ -32,8 +35,8 @@ export const TimelineShimmer = (props: { children?: React.ReactNode }) => {
                                     >
                                         <Stack horizontal gap>
                                             <Box
-                                                width="x6"
-                                                height="x6"
+                                                width={isTouch ? 'x4' : 'x6'}
+                                                height={isTouch ? 'x4' : 'x6'}
                                                 aspectRatio="1/1"
                                                 rounded="full"
                                                 className={shimmerClass}

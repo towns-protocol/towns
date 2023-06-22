@@ -154,6 +154,7 @@ const MessageWrapper = React.memo((props: MessageWrapperProps) => {
     const { sender } = event
 
     const timelineContext = useContext(MessageTimelineContext)
+    const { isTouch } = useDevice()
 
     if (!timelineContext) {
         return <></>
@@ -182,6 +183,7 @@ const MessageWrapper = React.memo((props: MessageWrapperProps) => {
 
     return !event ? null : (
         <MessageLayout
+            avatarSize={isTouch ? 'avatar_x4' : 'avatar_md'}
             editing={isEditing}
             id={`event-${event.eventId}`}
             highlight={props.highlight}
@@ -198,7 +200,7 @@ const MessageWrapper = React.memo((props: MessageWrapperProps) => {
             name={displayName}
             paddingY={displayContext === 'tail' ? 'sm' : 'md'}
             paddingBottom={displayContext === 'head' ? 'sm' : undefined}
-            paddingX="lg"
+            paddingX={isTouch ? 'md' : 'lg'}
             spaceId={spaceId}
             reactions={reactions}
             relativeDate={isRelativeDate}

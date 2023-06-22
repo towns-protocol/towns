@@ -2,6 +2,7 @@ import React, { ComponentProps, HTMLAttributes, forwardRef } from 'react'
 import { useMatch, useResolvedPath } from 'react-router'
 import { NavLink } from 'react-router-dom'
 import { Box, BoxProps, Stack } from '@ui'
+import { useDevice } from 'hooks/useDevice'
 import { navItemBackgroundStyle, navItemLinkStyle } from './_NavItem.css'
 
 type NavLinkProps = {
@@ -22,6 +23,7 @@ export const NavItem = forwardRef<
         ref,
     ) => {
         const resolved = useResolvedPath(`/${to === '/' ? '' : to}`)
+        const { isTouch } = useDevice()
 
         const match =
             useMatch({
@@ -41,7 +43,7 @@ export const NavItem = forwardRef<
                             position="relative"
                             rounded="xs"
                             alignItems="center"
-                            gap="sm"
+                            gap={isTouch ? 'md' : 'sm'}
                             minHeight="x6"
                             paddingX="sm"
                             color={isHighlight || match ? undefined : 'gray2'}

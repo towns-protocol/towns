@@ -37,7 +37,7 @@ export const TouchLayoutHeader = () => {
         <Box borderBottom paddingY="sm">
             <Stack
                 horizontal
-                paddingX="lg"
+                paddingX="md"
                 width="100%"
                 background="level1"
                 alignItems="center"
