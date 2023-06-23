@@ -8,6 +8,7 @@ import {
   createTestMocks,
 } from './mock-utils'
 
+import { WebPushSubscription } from 'web-push/web-push-types'
 import { createFakeWebPushSubscription } from './fake-data'
 import { handleRequest } from '../src'
 
@@ -97,6 +98,8 @@ describe('subscription handlers', () => {
 
   test('api/notify-users', async () => {
     // Arrange
+    const fetchMock = getMiniflareFetchMock()
+    fetchMock.disableNetConnect()
     const userId = `0xAlice${Date.now()}`
     const subscriptionObject = createFakeWebPushSubscription()
     const addParams: AddSubscriptionRequestParams = {
@@ -121,7 +124,6 @@ describe('subscription handlers', () => {
     const mockStatement = createMockPreparedStatement()
     DB.prepare.mockImplementation((query: string) => mockStatement)
     const bindSpy = jest.spyOn(mockStatement, 'bind')
-    //jest.fn
 
     // Act
     // create the request to notify the user
@@ -136,17 +138,29 @@ describe('subscription handlers', () => {
       payload: JSON.stringify(payload),
       title: payload.title,
     }
+    // create the notification request
     const notifyRequest = createRequest(env, {
       route: 'api/notify-users',
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(notifyParams),
     })
+    // mock the response from the web push server
+    const fakeSubscription =
+      createFakeWebPushSubscription() as WebPushSubscription
+    const fakeServerUrl = new URL(fakeSubscription.endpoint)
+    const endpoint = fetchMock.get(fakeServerUrl.origin)
+    endpoint
+      .intercept({ method: 'POST', path: fakeServerUrl.pathname })
+      .reply(201, 'OK')
+
     // send the notification request
     const response = await handleRequest(notifyRequest, env, ctx)
 
     // Assert
     expect(bindSpy).toBeCalledWith(userId)
     expect(response.status).toBe(200)
+    const notificationsSentCount = await response.text()
+    expect(notificationsSentCount).toBe('1')
   })
 })

@@ -60,8 +60,8 @@ export async function sendNotificationViaWebPush(
 
     // create the request to send to the push service
     const request = await createRequest(pushOptions, subscription)
+    console.log('request url', request.url)
 
-    console.log(`sending WebPush request to ${userId}...`)
     const response = await fetch(request)
     const status = response.status
     console.log('response', {

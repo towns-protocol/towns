@@ -3,7 +3,7 @@ import { WebPushSubscription } from '../src/web-push/web-push-types'
 
 export function createFakeWebPushSubscription(): SubscriptionObject {
   const pushSubscription: WebPushSubscription = {
-    endpoint: 'https://fcm.googleapis.com/fcm/send/0000000000_0000000000',
+    endpoint: 'https://test.com/webpush/user/1234',
     keys: {
       auth: '-FQZjYtoXi3goOATytC1wQ',
       p256dh:
