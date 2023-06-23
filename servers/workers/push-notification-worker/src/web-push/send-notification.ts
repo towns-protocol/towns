@@ -57,23 +57,23 @@ export async function sendNotificationViaWebPush(
       ttl,
       urgency: params.urgency ?? 'normal',
     }
-    console.log('pushOptions', pushOptions)
-    const request = await createRequest(pushOptions, subscription)
-    const requestUrl = request.url
 
-    console.log('sending notification request to', requestUrl)
+    // create the request to send to the push service
+    const request = await createRequest(pushOptions, subscription)
+
+    console.log(`sending WebPush request to ${userId}...`)
     const response = await fetch(request)
     const status = response.status
-    const responseText = await response.text()
-    console.log('response.status', response.status, requestUrl)
-    console.log('response.body', responseText)
+    console.log('response', {
+      status: response.status,
+      userId,
+    })
 
     return {
       status:
         status >= 200 && status <= 204
           ? SendPushStatus.Success
           : SendPushStatus.Error,
-      message: responseText,
       userId,
       pushSubscription: subscribed.pushSubscription,
     }

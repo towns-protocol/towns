@@ -39,13 +39,14 @@ export function getServiceWorkerJsDev(env: Env) {
       function handlePushNotification(event) {
         console.log('handlePushNotification', event)
         let title = 'No title'
-        const options = {
+        let options = {
           body: 'no body',
         }
         try {
           const notification = event.data.json()
-          title = notification.title ?? title
-          options.body = notification.body ?? options.body
+          console.log('notification', notification)
+          title = notification.title
+          options = notification.options
         } catch (e) {
           console.error('handlePushNotification', e)
           title = 'Error'
