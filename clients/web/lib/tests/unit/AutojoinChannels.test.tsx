@@ -1,5 +1,6 @@
 /**
  * @group dendrite
+ * @group casablanca
  */
 
 import { jest } from '@jest/globals'
