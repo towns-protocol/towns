@@ -1,4 +1,3 @@
-
 [vars]
 AUTH_SECRET="foo"
 ENVIRONMENT="development"

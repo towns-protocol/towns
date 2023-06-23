@@ -7075,6 +7075,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/jsonwebtoken@npm:^9.0.2":
+  version: 9.0.2
+  resolution: "@types/jsonwebtoken@npm:9.0.2"
+  dependencies:
+    "@types/node": "*"
+  checksum: 3bb8d40e78d7eb53e427db6e9f0f22e0890cfee80965dcf741d08341814913afb211306de6e9847c6d241cc8e36f8a59090cbfdcc510ab7c81af9d650c5afe0e
+  languageName: node
+  linkType: hard
+
 "@types/lodash@npm:^4.14.186":
   version: 4.14.191
   resolution: "@types/lodash@npm:4.14.191"
@@ -8410,6 +8419,15 @@ __metadata:
   dependencies:
     debug: 4
   checksum: f52b6872cc96fd5f622071b71ef200e01c7c4c454ee68bc9accca90c98cfb39f2810e3e9aa330435835eedc8c23f4f8a15267f67c6e245d2b33757575bdac49d
+  languageName: node
+  linkType: hard
+
+"agent-base@npm:^7.0.2":
+  version: 7.1.0
+  resolution: "agent-base@npm:7.1.0"
+  dependencies:
+    debug: ^4.3.4
+  checksum: f7828f991470a0cc22cb579c86a18cbae83d8a3cbed39992ab34fc7217c4d126017f1c74d0ab66be87f71455318a8ea3e757d6a37881b8d0f2a2c6aa55e5418f
   languageName: node
   linkType: hard
 
@@ -13742,6 +13760,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"https-proxy-agent@npm:^7.0.0":
+  version: 7.0.0
+  resolution: "https-proxy-agent@npm:7.0.0"
+  dependencies:
+    agent-base: ^7.0.2
+    debug: 4
+  checksum: c1365f5202b6a9c5c5fb1e6718e941254c2782bc51e8c57b1a7cacdccf1017278224434c963dfcdbdd4a3147a29c97d782316fabeef4e099968a627049de3347
+  languageName: node
+  linkType: hard
+
 "human-signals@npm:^2.1.0":
   version: 2.1.0
   resolution: "human-signals@npm:2.1.0"
@@ -15481,6 +15509,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"jsonwebtoken@npm:^9.0.0":
+  version: 9.0.0
+  resolution: "jsonwebtoken@npm:9.0.0"
+  dependencies:
+    jws: ^3.2.2
+    lodash: ^4.17.21
+    ms: ^2.1.1
+    semver: ^7.3.8
+  checksum: b9181cecf9df99f1dc0253f91ba000a1aa4d91f5816d1608c0dba61a5623726a0bfe200b51df25de18c1a6000825d231ad7ce2788aa54fd48dcb760ad9eb9514
+  languageName: node
+  linkType: hard
+
 "jss-plugin-camel-case@npm:^10.10.0":
   version: 10.10.0
   resolution: "jss-plugin-camel-case@npm:10.10.0"
@@ -15577,6 +15617,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"jwa@npm:^1.4.1":
+  version: 1.4.1
+  resolution: "jwa@npm:1.4.1"
+  dependencies:
+    buffer-equal-constant-time: 1.0.1
+    ecdsa-sig-formatter: 1.0.11
+    safe-buffer: ^5.0.1
+  checksum: ff30ea7c2dcc61f3ed2098d868bf89d43701605090c5b21b5544b512843ec6fd9e028381a4dda466cbcdb885c2d1150f7c62e7168394ee07941b4098e1035e2f
+  languageName: node
+  linkType: hard
+
 "jwa@npm:^2.0.0":
   version: 2.0.0
   resolution: "jwa@npm:2.0.0"
@@ -15585,6 +15636,16 @@ __metadata:
     ecdsa-sig-formatter: 1.0.11
     safe-buffer: ^5.0.1
   checksum: 8f00b71ad5fe94cb55006d0d19202f8f56889109caada2f7eeb63ca81755769ce87f4f48101967f398462e3b8ae4faebfbd5a0269cb755dead5d63c77ba4d2f1
+  languageName: node
+  linkType: hard
+
+"jws@npm:^3.2.2":
+  version: 3.2.2
+  resolution: "jws@npm:3.2.2"
+  dependencies:
+    jwa: ^1.4.1
+    safe-buffer: ^5.0.1
+  checksum: f0213fe5b79344c56cd443428d8f65c16bf842dc8cb8f5aed693e1e91d79c20741663ad6eff07a6d2c433d1831acc9814e8d7bada6a0471fbb91d09ceb2bf5c2
   languageName: node
   linkType: hard
 
@@ -18376,6 +18437,7 @@ __metadata:
   dependencies:
     "@cloudflare/workers-types": ^4.20230419.0
     "@types/jest": ^29.4.0
+    "@types/jsonwebtoken": ^9.0.2
     "@types/node": ^20.3.0
     "@typescript-eslint/eslint-plugin": ^5.59.9
     "@typescript-eslint/parser": ^5.59.9
@@ -18385,11 +18447,12 @@ __metadata:
     jest: ^29.5.0
     jest-environment-miniflare: ^2.13.0
     jest-mock-extended: ^3.0.4
+    jsonwebtoken: ^9.0.0
     miniflare: ^2.13.0
     prettier: ^2.8.8
     ts-jest: ^29.1.0
     typescript: ^5.1.3
-    web-push: ^3.6.2
+    web-push: ^3.6.3
     wrangler: ^3.1.0
   languageName: unknown
   linkType: soft
@@ -22572,18 +22635,18 @@ __metadata:
   languageName: node
   linkType: hard
 
-"web-push@npm:^3.6.2":
-  version: 3.6.2
-  resolution: "web-push@npm:3.6.2"
+"web-push@npm:^3.6.3":
+  version: 3.6.3
+  resolution: "web-push@npm:3.6.3"
   dependencies:
     asn1.js: ^5.3.0
     http_ece: 1.1.0
-    https-proxy-agent: ^5.0.0
+    https-proxy-agent: ^7.0.0
     jws: ^4.0.0
     minimist: ^1.2.5
   bin:
     web-push: src/cli.js
-  checksum: 569f79e1c2e083d8c0fb64f88ae2408ba8236f6b7681e2aa68fddef81bfcbab5a91a9c77fb292f894eaaef5e4b454adb52c2a5461c08fa1040d513c361e974f7
+  checksum: 3f86ce3f10986189f9aad9fb02cc7b7d6445f9dd4cca16a522e2fb757ac8d88a871eb3d6de9feee8a2c6ae634b3ef13a48908b9f68793e826fc93404e906ac6a
   languageName: node
   linkType: hard
 

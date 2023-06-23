@@ -1,5 +1,4 @@
 import { Env } from 'index'
-import { Environment } from '../../common'
 
 /*
 dev functions to test push notifications
@@ -9,17 +8,14 @@ class SqlStatement {
     'SELECT * FROM PushSubscription LIMIT 20;'
 }
 
-export async function getPushSubscriptionsDev(
-  env: Environment,
-  db: D1Database,
-) {
+export async function getPushSubscriptionsDev(env: Env) {
   // for development and testing only. should be disabled in prod
-  switch (env) {
+  switch (env.ENVIRONMENT) {
     case 'development':
     case 'test': {
-      const { results } = await db
-        .prepare(SqlStatement.SelectPushSubscriptionsLimited)
-        .all()
+      const { results } = await env.DB.prepare(
+        SqlStatement.SelectPushSubscriptionsLimited,
+      ).all()
       return Response.json(results)
     }
     default: {
@@ -32,8 +28,8 @@ export async function getPushSubscriptionsDev(
   }
 }
 
-export function getServiceWorkerJsDev(env: Environment) {
-  switch (env) {
+export function getServiceWorkerJsDev(env: Env) {
+  switch (env.ENVIRONMENT) {
     case 'development':
     case 'test': {
       return new Response(
@@ -41,11 +37,24 @@ export function getServiceWorkerJsDev(env: Environment) {
       self.addEventListener('push', handlePushNotification)
 
       function handlePushNotification(event) {
-        const notification = event.data.json()
+        console.log('handlePushNotification', event)
+        let title = 'No title'
+        const options = {
+          body: 'no body',
+        }
+        try {
+          const notification = event.data.json()
+          title = notification.title ?? title
+          options.body = notification.body ?? options.body
+        } catch (e) {
+          console.error('handlePushNotification', e)
+          title = 'Error'
+          options.body = e.message
+        }
         self.registration.showNotification(
-          notification.title,
-          notification.options
-        )
+          title,
+          options,
+        )  
       }`,
         {
           status: 200,
@@ -89,7 +98,7 @@ export function getDefaultRouteDev(request: Request, env: Env) {
       textarea {
         display: block;
         height: 320px;
-        width: 480px;
+        width: 520px;
       }
       button {
         margin-right: 10px;
@@ -135,7 +144,7 @@ export function getDefaultRouteDev(request: Request, env: Env) {
       });
       console.log('Subscribed to push notifications.');
       console.log('Sending subscription to server...');
-      await postToServer('/api/add-subscription', { pushSubscription: subscription, userId: FAKE_USER_ID });
+      await postToServer('/api/add-subscription', { subscriptionObject: subscription, userId: FAKE_USER_ID });
       console.log('Sent subscription to server.');
     } catch (e) {
       console.error('Subscription to push notifications failed ', e);
@@ -149,7 +158,7 @@ export function getDefaultRouteDev(request: Request, env: Env) {
       const registration = await navigator.serviceWorker.getRegistration();
       const subscription = await registration.pushManager.getSubscription();
       console.log('Sending unsubscribe request to server...');
-      postToServer('/api/remove-subscription', { pushSubscription: subscription, userId: FAKE_USER_ID });
+      await postToServer('/api/remove-subscription', { subscriptionObject: subscription, userId: FAKE_USER_ID });
       console.log('Sent unsubscribe request to server.');
       console.log('Unsubscribing from push notifications...')
       await subscription.unsubscribe();
@@ -160,8 +169,22 @@ export function getDefaultRouteDev(request: Request, env: Env) {
     await updateUI();
   }
 
-  function notify() {
-    alert('Not yet implemented');
+  async function notify() {
+    const payload = JSON.stringify({
+      title: "Hello, Notifications!",
+      options: {
+        body: 'ID: ${Math.floor(Math.random() * 100)}',
+      }
+    });
+    try {
+      console.log('Sending notification to server...');
+      await postToServer('/api/notify-users', { payload, users: [FAKE_USER_ID] });
+      console.log('Sent notification to server.');
+      const output = document.getElementById('output');
+      output.textContent += '\\n' + 'Notification sent:' + '\\n' + payload;
+    } catch (e) {
+      console.error('Sending notification to server failed ', e);
+    }
   }
 
   async function updateUI() {

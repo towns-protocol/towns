@@ -1,7 +1,7 @@
 name = "push-notification-worker"
 main = "src/index.ts"
-compatibility_flags = [ "nodejs_compat" ]
 compatibility_date = "2023-05-18"
+compatibility_flags = [ "nodejs_compat" ]
 
 d1_databases = [
   { binding = "DB", database_name = "PushSubscription", database_id = "local" }

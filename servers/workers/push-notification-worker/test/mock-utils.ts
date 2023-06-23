@@ -1,7 +1,8 @@
 import { MockProxy, mock } from 'jest-mock-extended'
 
 import { Env } from '../src'
-import { createFakePushSubscription } from './fake_data'
+import { QueryResultSubscription } from '../src/query-interfaces'
+import { createFakeWebPushSubscription } from './fake-data'
 
 export interface TestMocks {
   request: Request
@@ -10,22 +11,22 @@ export interface TestMocks {
   ctx: ExecutionContext
 }
 
-interface CreateRequestProps {
+export interface MockOptions {
   route: string
   method?: string
   headers?: HeadersInit
-  includeBearerToken?: boolean
   body?: BodyInit
+  includeBearerToken?: boolean
 }
 
 export function createTestMocks({
   route,
   method = 'GET',
   headers = {},
-  includeBearerToken = true,
   body,
-}: CreateRequestProps): TestMocks {
-  const env = getMiniflareBindings() as Env
+  includeBearerToken = true, // include the bearer token
+}: MockOptions): TestMocks {
+  const env = createEnv()
   const ctx = mock<ExecutionContext>()
   const DB = createMockD1Database()
   env.DB = DB
@@ -44,6 +45,16 @@ export function createTestMocks({
   }
 }
 
+function createEnv(): Env {
+  const env = getMiniflareBindings() as Env
+  // keys generated with the cmd:
+  //     npx web-push generate-vapid-keys --json
+  env.VAPID_PRIVATE_KEY = '81lZZqxeQu7Lok5HLyWpckVlJ7H7UTi8AGYpVrVEPCM'
+  env.VAPID_PUBLIC_KEY =
+    'BAWR-i6Bw7Wu4DczXL4R0qOzStqKkyFr-9UC-YpdyhoKE5wNgoFzDLgFVjHOPai4zvY3F3swmLnCAy80tSVnAQo'
+  return env
+}
+
 export function createRequest(
   env: Env,
   {
@@ -52,7 +63,7 @@ export function createRequest(
     headers = {},
     includeBearerToken = true,
     body,
-  }: CreateRequestProps,
+  }: MockOptions,
 ): Request {
   const url = `http://localhost:8787/${route}` // some dummy url
   headers = modifyHeaders(headers, env, includeBearerToken)
@@ -80,17 +91,13 @@ export function createMockD1Database(): MockProxy<D1Database> {
 
 export function createMockPreparedStatement(): MockProxy<D1PreparedStatement> {
   const mockStatement = mock<D1PreparedStatement>()
-  const fakeSubscription = JSON.stringify(createFakePushSubscription())
-  const result = {
-    SpaceId: '!space-id_1:towns.com',
-    ChannelId: null,
-    PushType: 'web-push',
-    UserId: '0x1111',
-    PushSubscription: fakeSubscription,
+  const fakeSubscription = JSON.stringify(createFakeWebPushSubscription())
+  const result: QueryResultSubscription = {
+    pushType: 'web-push',
+    userId: '0x1111',
+    pushSubscription: fakeSubscription,
   }
-  const rawResult = [
-    ['!space-id_1:towns.com', '', 'web-push', '0x1111', fakeSubscription],
-  ]
+  const rawResult = [['web-push', '0x1111', fakeSubscription]]
   mockStatement.all.mockResolvedValue({
     results: [result],
     success: true,
