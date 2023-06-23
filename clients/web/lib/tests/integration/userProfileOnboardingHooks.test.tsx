@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-explicit-any */
 /**
  * @group dendrite
+ * @group casablanca
  */
 import React from 'react'
 import { render, screen, waitFor } from '@testing-library/react'
@@ -47,10 +48,16 @@ describe('userProfileOnboardingHooks', () => {
         await waitFor(() => expect(loginStatus).toHaveTextContent(LoginStatus.LoggedIn))
 
         // verify alice userid is rendering
-        await waitFor(() =>
-            expect(myProfileName).toHaveTextContent(
-                `eip155=3a${chainId}=3a${aliceProvider.wallet.address.toLowerCase()}`, // hmmm....
-            ),
-        )
+        if (process.env.PRIMARY_PROTOCOL === 'casablanca') {
+            await waitFor(() =>
+                expect(myProfileName).toHaveTextContent(aliceProvider.wallet.address),
+            )
+        } else {
+            await waitFor(() =>
+                expect(myProfileName).toHaveTextContent(
+                    `eip155=3a${chainId}=3a${aliceProvider.wallet.address.toLowerCase()}`, // hmmm....
+                ),
+            )
+        }
     }) // end test
 }) // end describe
