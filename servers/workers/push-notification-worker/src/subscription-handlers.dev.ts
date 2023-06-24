@@ -98,8 +98,8 @@ export function getDefaultRouteDev(request: Request, env: Env) {
     <style>
       textarea {
         display: block;
-        height: 320px;
-        width: 520px;
+        height: 240px;
+        width: 480px;
       }
       button {
         margin-right: 10px;
@@ -171,10 +171,12 @@ export function getDefaultRouteDev(request: Request, env: Env) {
   }
 
   async function notify() {
+    const titleText = document.getElementById('notificationTitle');
+    const bodyText = document.getElementById('notificationBody');
     const payload = JSON.stringify({
-      title: "Hello, Notifications!",
+      title: titleText.value,
       options: {
-        body: 'ID: ${Math.floor(Math.random() * 100)}',
+        body: bodyText.value,
       }
     });
     try {
@@ -271,18 +273,33 @@ export function getDefaultRouteDev(request: Request, env: Env) {
     <h3>Environment variables:</h3>
     <p>
     <ul>
-      <li><code>VAPID public key: VAPID_PUBLIC_KEY</code><.li>
+      <li><code>VAPID public key: ${env.VAPID_PUBLIC_KEY}</code></li>
     </ul>
-    <h3>Test options:</h3>
+    <h3>D1Database</h3>
     <ul>
       <li><code><a href="/api/get-subscriptions">/api/get-subscriptions/</a></code></li>
+    </ul>
+    <h3>Register / unregister Service Worker</h3>
+    <ul>
       <li><button id="register" type="button" onclick="registerServiceWorker()">Register Service Worker</button></li>
       <li><button id="unregister" type="button" onclick="unregisterServiceWorker()">Unregister Service Worker</button></li>
+    </ul>
+    <h3>Subscribe to / unsubscribe from Push notification</h3>
+    <ul>
       <li><button id="subscribe" type="button" onclick="subscribeToPush()">Subscribe to Push Notifications</button></li>
       <li><button id="unsubscribe" type="button" onclick="unsubscribeFromPush()">Unsubscribe from Push Notifications</button></li>
-      <li><button id="notify" type="button" onclick="notify()">Trigger Push Notification</button></li>      
     </ul>
-    <h3>Output:</h3>
+    <h3>Trigger Push Notification</h3>
+      <label for="title">Title:</label>
+      <input type="text" id="notificationTitle" size="40" value="Hello Notifications!">
+      <br><label for="notificationBody">Body:</label>
+      <br><textarea id="notificationBody">{ spaceId: '!spaceid_${Math.floor(
+        Math.random() * 100,
+      )}', channelId: '!channelid_${Math.floor(
+    Math.random() * 100,
+  )}' }</textarea>
+      <p><button id="notify" type="button" onclick="notify()">Trigger Push Notification</button></p>
+    <h3>Output</h3>
     <textarea id="output" readonly></textarea>
   </body>
   </html>`
