@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-explicit-any */
 /**
  * @group dendrite
+ * @group casablanca
  */
 import { CreateChannelInfo, RoomVisibility } from 'use-zion-client/src/types/zion-types'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
@@ -12,7 +13,7 @@ import { RegisterWallet, TransactionInfo } from './helpers/TestComponents'
 import { RoomIdentifier } from '../../src/types/room-identifier'
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
 import { TestConstants } from './helpers/TestConstants'
-import { TransactionStatus } from '../../src/client/ZionClientTypes'
+import { SpaceProtocol, TransactionStatus } from '../../src/client/ZionClientTypes'
 import { ZionTestApp } from './helpers/ZionTestApp'
 import { ZionTestWeb3Provider } from './helpers/ZionTestWeb3Provider'
 import { getMemberNftAddress } from '../../src/client/web3/ContractHelpers'
@@ -38,6 +39,7 @@ describe('useCreateChannelTransactionHook', () => {
         const memberNftAddress = getMemberNftAddress(chainId)
         const spaceName = makeUniqueName('alice')
         const channelName = 'test channel'
+        let casablancaChannelInfo: RoomIdentifier | undefined
         await provider.fundWallet()
         // create a view for alice
         const SpacesComponent = () => {
@@ -147,7 +149,9 @@ describe('useCreateChannelTransactionHook', () => {
                         parentSpaceId,
                         roleIds,
                     }
-                    await createChannelTransaction(createRoomInfo)
+                    const channelInfo = await createChannelTransaction(createRoomInfo)
+                    console.log(channelInfo)
+                    casablancaChannelInfo = channelInfo?.data
                 }
 
                 if (spaceId) {
@@ -243,13 +247,19 @@ describe('useCreateChannelTransactionHook', () => {
             () => expect(transactionsNumber).toHaveTextContent('2'),
             TestConstants.DoubleDefaultWaitForTimeout,
         )
-        await waitFor(() => expect(transactions).toHaveTextContent('0'))
-        await waitFor(() => expect(blockchainEvents).toHaveTextContent('1'))
+        if (process.env.PRIMARY_PROTOCOL === SpaceProtocol.Matrix) {
+            await waitFor(() => expect(transactions).toHaveTextContent('0'))
+            await waitFor(() => expect(blockchainEvents).toHaveTextContent('1'))
 
-        /* Assert */
-        await waitFor(
-            () => expect(channelElement).toHaveTextContent(channelName),
-            TestConstants.DoubleDefaultWaitForTimeout,
-        )
+            /* Assert */
+            await waitFor(
+                () => expect(channelElement).toHaveTextContent(channelName),
+                TestConstants.DoubleDefaultWaitForTimeout,
+            )
+        } else {
+            await waitFor(() => {
+                expect(channelElement).toHaveTextContent(casablancaChannelInfo?.networkId || '')
+            })
+        }
     }) // end test
 }) // end describe
