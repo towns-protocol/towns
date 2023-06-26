@@ -1,10 +1,11 @@
 import { QueryClient } from '@tanstack/react-query'
+import { isTestEnv } from '../utils/zion-utils'
 
 // queryClient is imported in non React contexts (where we would normally useQueryClient)
 // test query client should be the same instance as the queryClient used in lib code, hence we export it here
 let config
 
-if (process.env.JEST_WORKER_ID) {
+if (isTestEnv()) {
     config = {
         logger: {
             log: console.log,

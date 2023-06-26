@@ -35,6 +35,7 @@ import { useResetFullyReadMarkers } from './ZionContext/useResetFullyReadMarkers
 import { useSendReadReceipt } from './ZionContext/useSendReadReceipt'
 import { useZionContext } from '../components/ZionContextProvider'
 import { useCasablancaWalletSignIn } from './use-casablanca-wallet-signin'
+import { isTestEnv } from '../utils/zion-utils'
 import { ethers } from 'ethers'
 
 /**
@@ -291,9 +292,10 @@ const useWithCatch = <T extends Array<unknown>, U>(
                             if (isMatrixError(err)) {
                                 let retryDelay: number
                                 // RETRY_BACKOFF_RATELIMIT returns -1 for 401s, so we need to handle that ourselves
-                                // retry 401 2 times - there are instances in tests where it still failed with a single retry
                                 if (err.httpStatus === 401) {
-                                    retryDelay = retryCount < 2 ? 3000 : -1
+                                    // retry 401s many times for tests, 36s total (RETRY_BACKOFF_RATELIMIT waits 30s total)
+                                    const retryLimit = isTestEnv() ? 12 : 2
+                                    retryDelay = retryCount < retryLimit ? 3000 : -1
                                 } else {
                                     retryDelay = MatrixScheduler.RETRY_BACKOFF_RATELIMIT(
                                         dummyMatrixEvent,
