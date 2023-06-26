@@ -67,7 +67,8 @@
           "Casablanca DebugApp",
           "UnfurlWorker",
           "TokenWorker",
-          "GatewayWorker"
+          "GatewayWorker",
+          "PushNotificationsWorker"
         ],
         "group": {
           "kind": "build",
@@ -319,6 +320,16 @@
         "label": "GatewayWorker",
         "type": "shell",
         "command": "sleep 3 && cd servers/workers/gateway-worker && yarn dev:local",
+        "isBackground": true,
+        "problemMatcher": [],
+        "presentation": {
+          "group": "local-workers"
+        }
+      },
+      {
+        "label": "PushNotificationsWorker",
+        "type": "shell",
+        "command": "sleep 3 && cd servers/workers/push-notification-worker && ./scripts/start-local-push-worker.sh",
         "isBackground": true,
         "problemMatcher": [],
         "presentation": {
