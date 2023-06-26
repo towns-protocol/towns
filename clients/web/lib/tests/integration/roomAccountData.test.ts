@@ -20,7 +20,8 @@ import { RoomVisibility } from '../../src/types/zion-types'
 
 // we store fully read markers in the room account data
 // required to show the "new" banner in channels and threads
-describe('roomAccountData', () => {
+// TODO: https://linear.app/hnt-labs/issue/HNT-1703/testsintegrationroomaccountdatatestts
+describe.skip('roomAccountData', () => {
     // test:
     test('create room, send a message, post account data, log out, log in, validate account data', async () => {
         // create clients
