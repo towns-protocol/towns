@@ -1,3 +1,3 @@
 #!/usr/bin/env bash
 
-yarn run --top-level csb:dev
+yarn run --top-level csb:dev-no-auth
