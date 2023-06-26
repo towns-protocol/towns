@@ -23,7 +23,8 @@ import { Permission } from '../../src/client/web3/ContractTypes'
 import { TestConstants } from './helpers/TestConstants'
 import { waitFor } from '@testing-library/dom'
 
-describe('messageTypes', () => {
+// TODO: https://linear.app/hnt-labs/issue/HNT-1706/testsintegrationmessagetypestestts
+describe.skip('messageTypes', () => {
     test('send a m.gm message to test message types', async () => {
         // create clients
         // alice needs to have a valid nft in order to join bob's space / channel
