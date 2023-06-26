@@ -1,7 +1,8 @@
 name: Continuous Integration
 on:
     schedule:
-        - cron: '0 * * * *' # run every hour
+        # run every 30 minutes
+        - cron: '*/30 * * * *'
     pull_request:
     workflow_dispatch: # Allow manual trigger in GitHub UI
         inputs:
@@ -41,6 +42,12 @@ jobs:
                     --health-retries 5
 
         steps:
+            - name: Cancel previous runs
+              if: github.event_name != 'schedule'
+              uses: styfle/cancel-workflow-action@0.11.0
+              with:
+                  access_token: ${{ github.token }}
+
             - name: Checkout code
               uses: actions/checkout@v3
 
@@ -53,11 +60,6 @@ jobs:
                   go-version: '1.20'
                   cache: true
                   cache-dependency-path: 'servers/**/go.sum'
-
-            - name: Cancel previous runs
-              uses: styfle/cancel-workflow-action@0.11.0
-              with:
-                  access_token: ${{ github.token }}
 
             - name: Install Foundry
               uses: foundry-rs/foundry-toolchain@v1
@@ -149,6 +151,12 @@ jobs:
                     --name casablanca_postgres_container
 
         steps:
+            - name: Cancel previous runs
+              if: github.event_name != 'schedule'
+              uses: styfle/cancel-workflow-action@0.11.0
+              with:
+                  access_token: ${{ github.token }}
+
             - name: Show PostgreSQL max_connections
               run: psql -h localhost -p 5433 -U postgres -c 'SHOW max_connections;'
               env:
@@ -184,11 +192,6 @@ jobs:
                   cache-dependency-path: |
                       servers/**/go.sum
                       casablanca/node/go.sum
-
-            - name: Cancel previous runs
-              uses: styfle/cancel-workflow-action@0.11.0
-              with:
-                  access_token: ${{ github.token }}
 
             - name: Install Foundry
               uses: foundry-rs/foundry-toolchain@v1
@@ -289,6 +292,12 @@ jobs:
                     --name casablanca_postgres_container
 
         steps:
+            - name: Cancel previous runs
+              if: github.event_name != 'schedule'
+              uses: styfle/cancel-workflow-action@0.11.0
+              with:
+                  access_token: ${{ github.token }}
+
             - name: Show PostgreSQL max_connections
               run: psql -h localhost -p 5433 -U postgres -c 'SHOW max_connections;'
               env:
@@ -324,11 +333,6 @@ jobs:
                   cache-dependency-path: |
                       servers/**/go.sum
                       casablanca/node/go.sum
-
-            - name: Cancel previous runs
-              uses: styfle/cancel-workflow-action@0.11.0
-              with:
-                  access_token: ${{ github.token }}
 
             - name: Install Foundry
               uses: foundry-rs/foundry-toolchain@v1
@@ -428,6 +432,12 @@ jobs:
                     --health-retries 5
 
         steps:
+            - name: Cancel previous runs
+              if: github.event_name != 'schedule'
+              uses: styfle/cancel-workflow-action@0.11.0
+              with:
+                  access_token: ${{ github.token }}
+
             - name: Checkout code
               uses: actions/checkout@v3
 
@@ -441,11 +451,6 @@ jobs:
                   cache: true
                   cache-dependency-path: |
                       casablanca/node/go.sum
-
-            - name: Cancel previous runs
-              uses: styfle/cancel-workflow-action@0.11.0
-              with:
-                  access_token: ${{ github.token }}
 
             - name: Linting
               uses: golangci/golangci-lint-action@v3
