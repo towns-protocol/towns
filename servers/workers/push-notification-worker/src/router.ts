@@ -5,7 +5,6 @@ import {
 } from './subscription-handlers'
 import {
   getDefaultRouteDev,
-  getPushSubscriptionsDev,
   getServiceWorkerJsDev,
 } from './subscription-handlers.dev'
 import {
@@ -67,10 +66,6 @@ router.post('/api/notify-users', async (request: Request, env: Env) => {
 })
 
 /**  dev routes start here */
-router.get('/api/get-subscriptions', (request: Request, env: Env) => {
-  return getPushSubscriptionsDev(env)
-})
-
 router.get('/service-worker.js', async (request: Request, env: Env) =>
   getServiceWorkerJsDev(env),
 )

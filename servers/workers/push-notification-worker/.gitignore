@@ -2,3 +2,5 @@
 .wrangler/
 # keys
 .keys/
+.dev.vars.production
+.dev.vars.test

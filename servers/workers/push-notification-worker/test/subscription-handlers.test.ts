@@ -13,18 +13,6 @@ import { createFakeWebPushSubscription } from './fake-data'
 import { handleRequest } from '../src'
 
 describe('subscription handlers', () => {
-  test('api/get-subscriptions', async () => {
-    // Arrange
-    const { request, env, ctx } = createTestMocks({
-      route: 'api/get-subscriptions',
-    })
-    // Act
-    const response = await handleRequest(request, env, ctx)
-    // Assert
-    // expect the mock result created in createMockD1Database() to be returned
-    expect(await response.text()).toContain('0x1111')
-  })
-
   test('api/add-subscription', async () => {
     // Arrange
     const userId = `0xAlice${Date.now()}`

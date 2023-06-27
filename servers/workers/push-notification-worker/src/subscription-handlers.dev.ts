@@ -3,30 +3,6 @@ import { Env } from 'index'
 /*
 dev functions to test push notifications
 */
-class SqlStatement {
-  static SelectPushSubscriptionsLimited =
-    'SELECT * FROM PushSubscription LIMIT 20;'
-}
-
-export async function getPushSubscriptionsDev(env: Env) {
-  // for development and testing only. should be disabled in prod
-  switch (env.ENVIRONMENT) {
-    case 'development':
-    case 'test': {
-      const { results } = await env.DB.prepare(
-        SqlStatement.SelectPushSubscriptionsLimited,
-      ).all()
-      return Response.json(results)
-    }
-    default: {
-      console.error(
-        '[getPushSubscriptionsDev] Dev function is not allowed for environment',
-        env,
-      )
-      return new Response('Forbidden', { status: 403 })
-    }
-  }
-}
 
 export function getServiceWorkerJsDev(env: Env) {
   switch (env.ENVIRONMENT) {
@@ -275,10 +251,6 @@ export function getDefaultRouteDev(request: Request, env: Env) {
     <ul>
       <li><code>VAPID public key: ${env.VAPID_PUBLIC_KEY}</code></li>
     </ul>
-    <h3>D1Database</h3>
-    <ul>
-      <li><code><a href="/api/get-subscriptions">/api/get-subscriptions/</a></code></li>
-    </ul>
     <h3>Register / unregister Service Worker</h3>
     <ul>
       <li><button id="register" type="button" onclick="registerServiceWorker()">Register Service Worker</button></li>
@@ -292,13 +264,13 @@ export function getDefaultRouteDev(request: Request, env: Env) {
     <h3>Trigger Push Notification</h3>
       <label for="title">Title:</label>
       <input type="text" id="notificationTitle" size="40" value="Hello Notifications!">
+      <button id="notify" type="button" onclick="notify()">Trigger Push Notification</button>
       <br><label for="notificationBody">Body:</label>
       <br><textarea id="notificationBody">{ spaceId: '!spaceid_${Math.floor(
         Math.random() * 100,
       )}', channelId: '!channelid_${Math.floor(
     Math.random() * 100,
   )}' }</textarea>
-      <p><button id="notify" type="button" onclick="notify()">Trigger Push Notification</button></p>
     <h3>Output</h3>
     <textarea id="output" readonly></textarea>
   </body>
