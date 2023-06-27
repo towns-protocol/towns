@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import {
     Channel,
     useSpaceThreadRootsUnreadCount,
+    useSpaceUnread,
     useSpaceUnreadThreadMentions,
 } from 'use-zion-client'
 import { AnimatePresence, motion } from 'framer-motion'
@@ -21,9 +22,10 @@ export const TouchLayoutNavigationBar = (props: Props) => {
     const { displayNotificationBanner, requestPushPermission, denyPushPermission } =
         usePushNotifications()
     const [dropDownOpen, setDropDownOpen] = useState(false)
+    const hasSpaceUnread = useSpaceUnread()
     const unreadThreadsCount = useSpaceThreadRootsUnreadCount()
     const unreadThreadMentions = useSpaceUnreadThreadMentions()
-    const hasUnreadCount = unreadThreadsCount + unreadThreadMentions > 0
+    const hasUnreadCount = unreadThreadsCount + unreadThreadMentions > 0 || hasSpaceUnread
     const navigate = useNavigate()
 
     const toggleDropDown = useCallback(() => {
