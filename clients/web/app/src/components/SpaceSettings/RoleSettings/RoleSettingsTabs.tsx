@@ -14,8 +14,8 @@ export const RoleSettingsTabs = () => {
             >
                 Permissions
             </RoleSettingsTabItem>
-            <RoleSettingsTabItem data-testid="role-settings-members-tab" to="members">
-                Members
+            <RoleSettingsTabItem data-testid="role-settings-gating-tab" to="gating">
+                Gating
             </RoleSettingsTabItem>
             <RoleSettingsTabItem data-testid="role-settings-display-tab" to="display">
                 Display

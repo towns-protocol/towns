@@ -165,11 +165,11 @@ beforeEach(() => {
 
 function getTabs() {
     const permissionsTab = screen.getByTestId('role-settings-permissions-tab')
-    const membersTab = screen.getByTestId('role-settings-members-tab')
+    const gatingTab = screen.getByTestId('role-settings-gating-tab')
     const displayTab = screen.getByTestId('role-settings-display-tab')
     return {
         permissionsTab,
-        membersTab,
+        gatingTab,
         displayTab,
     }
 }
@@ -210,11 +210,11 @@ describe('SpaceSettings', () => {
         })
         render(<Wrapper />)
         await waitForScreenToBeLoaded()
-        const { membersTab, displayTab } = getTabs()
-        fireEvent.click(membersTab)
-        const roleSettingsMembers = screen.getByTestId('role-settings-members-content')
+        const { gatingTab, displayTab } = getTabs()
+        fireEvent.click(gatingTab)
+        const roleSettingsMembers = screen.getByTestId('role-settings-gating-content')
         const userGatedSection = within(roleSettingsMembers).getByTestId(
-            'role-settings-members-user-gated',
+            'role-settings-gating-user-gated',
         )
         await within(userGatedSection).findByText(/all wallet addresses/gi)
 
@@ -254,11 +254,11 @@ describe('SpaceSettings', () => {
         })
         render(<Wrapper />)
         await waitForScreenToBeLoaded()
-        const { membersTab, displayTab } = getTabs()
-        fireEvent.click(membersTab)
-        const roleSettingsMembers = screen.getByTestId('role-settings-members-content')
+        const { gatingTab, displayTab } = getTabs()
+        fireEvent.click(gatingTab)
+        const roleSettingsMembers = screen.getByTestId('role-settings-gating-content')
         const userGatedSection = within(roleSettingsMembers).getByTestId(
-            'role-settings-members-user-gated',
+            'role-settings-gating-user-gated',
         )
         await within(userGatedSection).findByText(/all wallet addresses/gi)
 
@@ -291,18 +291,18 @@ describe('SpaceSettings', () => {
         })
         render(<Wrapper />)
         await waitForScreenToBeLoaded()
-        const { membersTab } = getTabs()
-        fireEvent.click(membersTab)
-        const roleSettingsMembers = screen.getByTestId('role-settings-members-content')
+        const { gatingTab } = getTabs()
+        fireEvent.click(gatingTab)
+        const roleSettingsMembers = screen.getByTestId('role-settings-gating-content')
         const userGatedSection = within(roleSettingsMembers).getByTestId(
-            'role-settings-members-user-gated',
+            'role-settings-gating-user-gated',
         )
         const addButton = await within(userGatedSection).findByRole('button', {
             name: /add users/gi,
         })
         userEvent.click(addButton)
 
-        const memberListModal = await screen.findByTestId('role-settings-members-modal')
+        const memberListModal = await screen.findByTestId('role-settings-gating-modal')
         const members = await within(memberListModal).findAllByRole('checkbox')
         const saveButton = await within(memberListModal).findByRole('button', {
             name: /update/gi,
@@ -412,7 +412,7 @@ describe('SpaceSettings', () => {
         const newRoleButton = screen.getByText(/create new role/gi)
         await userEvent.click(newRoleButton)
 
-        const membersButton = screen.getAllByText(/members/gi)[0]
+        const membersButton = screen.getAllByText(/gating/gi)[0]
         await userEvent.click(membersButton)
 
         const userGatedButton = screen.getByText(/Add users/)

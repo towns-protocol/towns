@@ -13,7 +13,7 @@ import { EVERYONE_ADDRESS } from 'utils'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { MemberListModal, TokenListModal } from './GatingModals'
 
-export const RoleSettingsMembers = () => {
+export const RoleSettingsGating = () => {
     const { role: roleId } = useParams()
     const { loggedInWalletAddress } = useAuth()
     const role = useSettingsRolesStore(({ getRole }) => (roleId ? getRole(roleId) : undefined))
@@ -34,9 +34,9 @@ export const RoleSettingsMembers = () => {
         return <>Undefined role {roleId}</>
     }
     return (
-        <Stack data-testid="role-settings-members-content">
+        <Stack data-testid="role-settings-gating-content">
             <Box gap="lg">
-                <Stack gap data-testid="role-settings-members-token-gated">
+                <Stack gap data-testid="role-settings-gating-token-gated">
                     <Paragraph strong>Token gated</Paragraph>
                     <Paragraph color="gray2">
                         Users must hold ALL of the following tokens to get access to this role.
@@ -50,7 +50,7 @@ export const RoleSettingsMembers = () => {
                     />
                 </Stack>
                 <Divider />
-                <Stack gap data-testid="role-settings-members-user-gated">
+                <Stack gap data-testid="role-settings-gating-user-gated">
                     <Paragraph strong>User gated</Paragraph>
                     <Paragraph color="gray2">Add the following users to this role:</Paragraph>
                     <TokenSelector

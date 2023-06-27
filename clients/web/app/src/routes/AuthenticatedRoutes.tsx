@@ -4,7 +4,7 @@ import { SpaceSettings } from '@components/SpaceSettings/SpaceSettings'
 import { PATHS } from 'routes'
 import { RoleSettings } from '@components/SpaceSettings/RoleSettings/RoleSettings'
 import { RoleSettingsPermissions } from '@components/SpaceSettings/RoleSettings/RoleSettingsPermissions'
-import { RoleSettingsMembers } from '@components/SpaceSettings/RoleSettings/RoleSettingsMembers'
+import { RoleSettingsGating } from '@components/SpaceSettings/RoleSettings/RoleSettingsGating'
 import { RoleSettingsDisplay } from '@components/SpaceSettings/RoleSettings/RoleSettingsDisplay'
 import { useIsHolderOfPioneerNFT } from 'api/lib/isHolderOfToken'
 import { env } from 'utils'
@@ -69,7 +69,7 @@ export const AuthenticatedRoutes = () => {
                 <Route path="settings" element={<SpaceSettings />}>
                     <Route path="roles/:role" element={<RoleSettings />}>
                         <Route index path="permissions" element={<RoleSettingsPermissions />} />
-                        <Route path="members" element={<RoleSettingsMembers />} />
+                        <Route path="gating" element={<RoleSettingsGating />} />
                         <Route path="display" element={<RoleSettingsDisplay />} />
                     </Route>
                 </Route>
