@@ -1,5 +1,11 @@
 import { Client as CasablancaClient, ParsedEvent } from '@towns/sdk'
-import { MembershipOp, ChannelMessage, ChannelMessage_Post, PayloadCaseType } from '@towns/proto'
+import {
+    MembershipOp,
+    ChannelMessage,
+    ChannelMessage_Post,
+    PayloadCaseType,
+    ToDeviceOp,
+} from '@towns/proto'
 import { useEffect } from 'react'
 import { Membership, MessageType } from '../../types/zion-types'
 import {
@@ -169,6 +175,18 @@ function toTownsContent(
         case 'channelPayload':
             {
                 switch (message.event.payload.value.content.case) {
+                    case 'receipt': {
+                        return {
+                            content: {
+                                kind: ZTEvent.Receipt,
+                                originOp:
+                                    ToDeviceOp[message.event.payload.value.content.value.originOp],
+                                originEventHash:
+                                    '0x' +
+                                    message.event.payload.value.content.value.originHash.toString(),
+                            },
+                        }
+                    }
                     case 'inception': {
                         const payload = message.event.payload.value.content.value
                         return {

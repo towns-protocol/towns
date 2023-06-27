@@ -73,3 +73,52 @@ message ChannelMessage {
         Redaction redaction = 4;
     }
 }
+
+message ToDeviceMessage {
+    message KeyRequest {
+        string space_id = 1;
+        string channel_id = 2;
+        string algorithm = 3;
+        string sender_key = 4;
+        string session_id = 5;
+    }
+
+    message KeyResponse {
+        string space_id = 1;
+        optional string channel_id = 2;
+        repeated MegolmSession sessions = 3;
+        KeyResponseKind kind = 4;
+    }
+
+    oneof payload {
+        KeyRequest request = 1;
+        KeyResponse response = 2;
+    }
+
+}
+
+/** Exported Megolm session data.
+*/
+message MegolmSession {
+    /** Sender's Curve25519 device key. */
+    string sender_key = 1;
+    /** Devices which forwarded this session to us (usually empty) */
+    repeated string forwarding_curve25519_key_chain = 2;
+    /** Space this session is used for */
+    string space_id = 4;
+    /** Channel this session is used for */
+    optional string channel_id = 5;
+    /** Unique id for this session */
+    string session_id = 6;
+    /** Base64-encoded megolm session key data */
+    string session_key = 7;
+    optional string algorithm = 8;
+    optional string untrusted = 9;
+}
+
+enum KeyResponseKind {
+    UNDEFINED = 0;
+    KEYS_FOUND = 1;
+    KEYS_NOT_FOUND = 2;
+    CHANNEL_NOT_FOUND = 3;
+}

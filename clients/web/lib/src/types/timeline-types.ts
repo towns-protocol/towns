@@ -33,6 +33,7 @@ export enum ZTEvent {
     BlockchainTransaction = 'blockchain.transaction',
     Notice = 'm.notice',
     Reaction = 'm.reaction',
+    Receipt = 'm.receipt',
     RoomAvatar = 'm.room.avatar',
     RoomCanonicalAlias = 'm.room.canonical_alias',
     RoomCreate = 'm.room.create',
@@ -54,6 +55,7 @@ export enum ZTEvent {
 export type TimelineEvent_OneOf =
     | NoticeEvent
     | ReactionEvent
+    | ReceiptEvent
     | RoomCanonicalAliasEvent
     | RoomEncryptionEvent
     | RoomHistoryVisibilityEvent
@@ -72,6 +74,12 @@ export type TimelineEvent_OneOf =
 
 // NOTE this is an inexhaustive list, see https://spec.matrix.org/v1.2/client-server-api/#server-behaviour-16
 // and https://spec.matrix.org/v1.2/client-server-api/#stripped-state
+
+export interface ReceiptEvent {
+    kind: ZTEvent.Receipt
+    originOp: string
+    originEventHash: string
+}
 
 export interface ReactionEvent {
     kind: ZTEvent.Reaction
@@ -314,6 +322,8 @@ export function getFallbackContent(
             return `Notice: { msgType: ${content.contentKind ?? 'unknown'}, message: ${
                 content.message
             } }`
+        case ZTEvent.Receipt:
+            return `Receipt: { originOp: ${content.originOp}, originEventHash: ${content.originEventHash} }`
         default:
             staticAssertNever(content)
     }

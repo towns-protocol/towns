@@ -470,9 +470,15 @@ describe('clientTest', () => {
         const aliceSelfToDevice = makeDonePromise()
         alicesClient.once(
             'toDeviceMessage',
-            (streamId: string, deviceId: string, message: ParsedEvent): void => {
+            (
+                streamId: string,
+                senderKey: string,
+                deviceKey: string,
+                op: ToDeviceOp,
+                message: ParsedEvent,
+            ): void => {
                 const payload = getToDeviceMessagePayload(message)
-                log('toDeviceMessage for Alice', streamId, deviceId, payload?.value)
+                log('toDeviceMessage for Alice', streamId, senderKey, deviceKey, payload?.value)
                 aliceSelfToDevice.runAndDone(() => {
                     expect(streamId).toBe(aliceUserStreamId)
                     expect(payload?.value).toBeDefined()
@@ -511,9 +517,15 @@ describe('clientTest', () => {
         const aliceSelfToDevice = makeDonePromise()
         alicesClient.once(
             'toDeviceMessage',
-            (streamId: string, deviceId: string, message: ParsedEvent): void => {
+            (
+                streamId: string,
+                senderKey: string,
+                deviceKey: string,
+                op: ToDeviceOp,
+                message: ParsedEvent,
+            ): void => {
                 const payload = getToDeviceMessagePayload(message)
-                log('toDeviceMessage for Alice', streamId, deviceId, payload?.value)
+                log('toDeviceMessage for Alice', streamId, senderKey, deviceKey, payload?.value)
                 aliceSelfToDevice.runAndDone(() => {
                     expect(streamId).toBe(aliceUserStreamId)
                     expect(payload?.value).toBeDefined()
@@ -563,9 +575,15 @@ describe('clientTest', () => {
         const aliceSelfToDevice = makeDonePromise()
         alicesClient.once(
             'toDeviceMessage',
-            (streamId: string, deviceId: string, message: ParsedEvent): void => {
+            (
+                streamId: string,
+                senderKey: string,
+                deviceKey: string,
+                op: ToDeviceOp,
+                message: ParsedEvent,
+            ): void => {
                 const payload = getToDeviceMessagePayload(message)
-                log('toDeviceMessage for Alice', streamId, deviceId, payload?.value)
+                log('toDeviceMessage for Alice', streamId, senderKey, deviceKey, payload?.value)
                 aliceSelfToDevice.runAndDone(() => {
                     expect(streamId).toBe(aliceUserStreamId)
                     expect(payload?.value).toBeDefined()
@@ -604,9 +622,15 @@ describe('clientTest', () => {
         const aliceSelfToDevice = makeDonePromise()
         alicesClient.once(
             'toDeviceMessage',
-            (streamId: string, deviceId: string, message: ParsedEvent): void => {
+            (
+                streamId: string,
+                senderKey: string,
+                deviceKey: string,
+                op: ToDeviceOp,
+                message: ParsedEvent,
+            ): void => {
                 const payload = getToDeviceMessagePayload(message)
-                log('toDeviceMessage for Alice', streamId, deviceId, payload?.value)
+                log('toDeviceMessage for Alice', streamId, senderKey, deviceKey, payload?.value)
                 aliceSelfToDevice.runAndDone(() => {
                     expect(streamId).toBe(aliceUserStreamId)
                     expect(payload?.value).toBeDefined()
@@ -648,9 +672,15 @@ describe('clientTest', () => {
         const bobSelfToDevice = makeDonePromise()
         alicesClient.once(
             'toDeviceMessage',
-            (streamId: string, deviceId: string, message: ParsedEvent): void => {
+            (
+                streamId: string,
+                senderKey: string,
+                deviceKey: string,
+                op: ToDeviceOp,
+                message: ParsedEvent,
+            ): void => {
                 const payload = getToDeviceMessagePayload(message)
-                log('toDeviceMessage for Alice', streamId, deviceId, payload?.value)
+                log('toDeviceMessage for Alice', streamId, senderKey, deviceKey, payload?.value)
                 aliceSelfToDevice.runAndDoneAsync(async () => {
                     expect(streamId).toBe(aliceUserStreamId)
                     expect(payload?.value).toBeDefined()
@@ -673,9 +703,15 @@ describe('clientTest', () => {
 
         bobsClient.once(
             'toDeviceMessage',
-            (streamId: string, deviceId: string, message: ParsedEvent): void => {
+            (
+                streamId: string,
+                senderKey: string,
+                deviceKey: string,
+                op: ToDeviceOp,
+                message: ParsedEvent,
+            ): void => {
                 const payload = getToDeviceMessagePayload(message)
-                log('toDeviceMessage for Bob', streamId, deviceId, payload?.value)
+                log('toDeviceMessage for Bob', streamId, senderKey, deviceKey, payload?.value)
                 bobSelfToDevice.runAndDone(() => {
                     expect(streamId).toBe(bobUserStreamId)
                     expect(payload?.value).toBeDefined()

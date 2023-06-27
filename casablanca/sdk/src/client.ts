@@ -904,7 +904,8 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
                         op,
                         // todo: this should use client protobuf not JSON
                         value: envelope,
-                        deviceId: deviceId,
+                        deviceKey: '',
+                        senderKey: '',
                     }),
                     'toDevice',
                 )
@@ -934,7 +935,8 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
             make_UserPayload_ToDevice({
                 op,
                 value: envelope,
-                deviceId: deviceId,
+                deviceKey: '',
+                senderKey: '',
             }),
             'toDevice',
         )

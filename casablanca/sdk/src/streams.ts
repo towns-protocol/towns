@@ -12,6 +12,7 @@ import {
     PayloadCaseType,
     Membership,
     SpacePayload_Channel,
+    ToDeviceOp,
     UserPayload_UserMembership,
     UserDeviceKeyPayload_UserDeviceKey,
 } from '@towns/proto'
@@ -68,7 +69,13 @@ export type StreamEvents = {
     spaceNewChannelCreated: (spaceId: string, channelId: string) => void
     spaceChannelDeleted: (spaceId: string, channelId: string) => void
     channelNewMessage: (channelId: string, message: ParsedEvent) => void
-    toDeviceMessage: (streamId: string, deviceId: string, value: ParsedEvent) => void
+    toDeviceMessage: (
+        streamId: string,
+        senderKey: string,
+        deviceKey: string,
+        op: ToDeviceOp,
+        event: ParsedEvent,
+    ) => void
     userDeviceKeyMessage: (
         streamId: string,
         userId: string,
@@ -96,6 +103,7 @@ export class StreamStateView {
     readonly invitedUsers = new Set<string>()
 
     readonly messages = new Map<string, ParsedEvent>()
+    readonly receipts = new Map<string, ParsedEvent>()
 
     readonly spaceChannels = new Set<string>()
     readonly parentSpaceId?: string
@@ -182,6 +190,9 @@ export class StreamStateView {
                         case 'membership':
                             this.addMembershipEvent(payload.value.content.value, emitter)
                             break
+                        case 'receipt':
+                            this.receipts.set(event.hashStr, event)
+                            break
                         case undefined:
                             break
                         default:
@@ -225,8 +236,15 @@ export class StreamStateView {
                             break
                         case 'toDevice':
                             {
-                                const { deviceId } = payload.value.content.value
-                                emitter?.emit('toDeviceMessage', this.streamId, deviceId, event)
+                                const { deviceKey, senderKey, op } = payload.value.content.value
+                                emitter?.emit(
+                                    'toDeviceMessage',
+                                    this.streamId,
+                                    senderKey,
+                                    deviceKey,
+                                    op,
+                                    event,
+                                )
                                 // TODO: filter by deviceId and only store current deviceId's events
                                 this.toDeviceMessages.push(event)
                             }
