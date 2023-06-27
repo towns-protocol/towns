@@ -1,7 +1,8 @@
 /**
  * @group dendrite
+ * @group casablanca
  */
-import { MAXTRIX_ERROR, NoThrownError, getError } from './helpers/ErrorUtils'
+import { NoThrownError, getError } from './helpers/ErrorUtils'
 import {
     createTestSpaceWithEveryoneRole,
     createTestSpaceWithZionMemberRole,
@@ -9,7 +10,6 @@ import {
     waitForJoiningChannelImmediatelyAfterCreation,
 } from 'use-zion-client/tests/integration/helpers/TestUtils'
 
-import { MatrixError } from 'matrix-js-sdk'
 import { Permission } from 'use-zion-client/src/client/web3/ContractTypes'
 import { RoomVisibility } from '../../src/types/zion-types'
 import { ZTEvent } from '../../src/types/timeline-types'
@@ -117,13 +117,13 @@ describe('redact messages', () => {
             throw new Error(`Failed to get message event ${bob.getEventsDescription(channelId)}`)
         }
         // bob tries to redact alice's message
-        const error = await getError<MatrixError>(async function () {
+        const error = await getError<Error>(async function () {
             await bob.redactEvent(channelId, messageEvent.eventId)
         })
 
         /** Assert */
         // verify that error was thrown for redaction
-        expect(error.data).toHaveProperty('errcode', MAXTRIX_ERROR.M_FORBIDDEN)
+        expect(error.message).toMatch(new RegExp('Unauthorised|PermissionDenied'))
         // verify that the message is NOT redacted
         expect(alice.getMessages(channelId)).toContain(message)
     })

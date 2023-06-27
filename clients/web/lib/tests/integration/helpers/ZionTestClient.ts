@@ -7,6 +7,7 @@ import {
 } from '../../../src/hooks/login'
 import {
     RoomMessageEvent,
+    RoomRedactionEvent,
     TimelineEvent,
     TimelineEvent_OneOf,
     ZTEvent,
@@ -474,7 +475,13 @@ export class ZionTestClient extends ZionClient {
     }
 
     public getMessages(roomId: RoomIdentifier): string[] {
-        return this.getEvents_TypedRoomMessage(roomId).map((e) => e.content.body)
+        const messages = this.getEvents_Typed<RoomMessageEvent>(roomId, ZTEvent.RoomMessage)
+        const redactions = new Set(
+            this.getEvents_Typed<RoomRedactionEvent>(roomId, ZTEvent.RoomRedaction)
+                .map((e) => e.content.inReplyTo)
+                .filter((e) => e),
+        )
+        return messages.filter((e) => !redactions.has(e.eventId)).map((e) => e.content.body)
     }
 
     public async getLatestEvent<T extends TimelineEvent_OneOf>(

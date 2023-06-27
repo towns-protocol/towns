@@ -767,6 +767,20 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
         streamId: string,
         payload: PlainMessage<ChannelMessage_Redaction>,
     ): Promise<void> {
+        const stream = this.stream(streamId)
+        if (!stream) {
+            throw new Error(`stream not found: ${streamId}`)
+        }
+        const ref = stream.rollup.events.get(payload.refEventId)
+        if (!ref) {
+            throw new Error(`ref event not found: ${payload.refEventId}`)
+        }
+        // River doesn't support redacting checks, the client has to always check if redaction is allowed
+        if (ref.creatorUserId != this.userId) {
+            throw new Error(
+                `Unauthorised: ref event not created by this user: ${payload.refEventId}`,
+            )
+        }
         return this.sendChannelMessage(streamId, {
             case: 'redaction',
             value: new ChannelMessage_Redaction(payload),
