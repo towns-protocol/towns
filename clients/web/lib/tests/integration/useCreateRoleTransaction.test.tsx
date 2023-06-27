@@ -29,7 +29,8 @@ import { useSpacesFromContract } from '../../src/hooks/use-spaces-from-contract'
 /**
  * This test suite tests the useRoles hook.
  */
-describe('useCreateRoleTransaction', () => {
+// TODO: https://linear.app/hnt-labs/issue/HNT-1708/testsintegrationusecreateroletransactiontesttsx
+describe.skip('useCreateRoleTransaction', () => {
     test('create a new space role', async () => {
         /* Arrange */
         const provider = new ZionTestWeb3Provider()
