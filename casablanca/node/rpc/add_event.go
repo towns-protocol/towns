@@ -235,7 +235,7 @@ func (s *Service) addMembershipEvent(ctx context.Context, stream *Stream, view S
 		// join event should be allowed for read only users
 		permission = auth.PermissionRead
 	case MembershipOp_SO_LEAVE:
-		permission = auth.PermissionWrite
+		permission = auth.PermissionRead
 	case MembershipOp_SO_UNSPECIFIED:
 		permission = auth.PermissionUndefined
 	}
