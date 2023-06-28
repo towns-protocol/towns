@@ -1,4 +1,8 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { useMyProfile } from 'use-zion-client'
+import { useEvent } from 'react-use-event-hook'
+import { axiosClient } from 'api/apiClient'
+import { useStore } from 'store/store'
 import { env } from '../utils/environment'
 import { useDevice } from './useDevice'
 
@@ -7,12 +11,13 @@ const ENABLE_PUSH_NOTIFICATIONS = false
 
 export const usePushNotifications = () => {
     const { isPWA } = useDevice()
+    const user = useMyProfile()
+    const { activePushSubscription, setActivePushSubscription } = useStore()
+    const didNotifyWorker = useRef<boolean>(false)
+
     const [permissionState, setPermissionState] = useState<NotificationPermission | undefined>(
         notificationsSupported() ? Notification.permission : undefined,
     )
-
-    const [pushSubscriptionInfo, setPushSubscriptionInfo] = useState<string | undefined>(undefined)
-
     const requestPushPermission = useCallback(async () => {
         const permission = await Notification.requestPermission()
         setPermissionState(permission)
@@ -22,50 +27,41 @@ export const usePushNotifications = () => {
         setPermissionState('denied')
     }, [])
 
+    const registerForPushSubscription = useEvent(async (userId: string) => {
+        const subscription = await getOrRegisterPushSubscription()
+        if (!subscription) {
+            return
+        }
+        // the user id can change, so can the push subscription returned from the browser
+        // so we need to use a key that is unique to the user and the subscription
+        const subscriptionKey = JSON.stringify(pushSubscriptionPostData(subscription, userId))
+        if (subscriptionKey === activePushSubscription) {
+            return
+        }
+        await notifyPushNotificationsWorker(subscription, userId)
+        setActivePushSubscription(subscriptionKey)
+    })
+
+    // register for push notifications on changes to userId or permissionState
     useEffect(() => {
-        console.log('PUSH', permissionState)
-        if (permissionState !== 'granted') {
+        if (!notificationsSupported() || permissionState !== 'granted' || !user?.userId) {
             return
         }
 
-        function handlePushSubscription(subscription: PushSubscription) {
-            const stringifiedSubscription = JSON.stringify(subscription)
-            setPushSubscriptionInfo(stringifiedSubscription)
+        const register = async (userId: string) => {
+            await registerForPushSubscription(userId)
         }
 
-        async function updateSubscription() {
-            const registration = await navigator.serviceWorker.ready
-            const subscription = await registration.pushManager
-                .getSubscription()
-                .then((subscription) => {
-                    console.log('PUSH: subscription', subscription)
-                    if (subscription) {
-                        console.log('PUSH: already subscribed')
-                        return subscription
-                    }
-
-                    console.log('PUSH: creating new subscription')
-                    const applicationServerKey = env.VITE_WEB_PUSH_APPLICATION_SERVER_KEY
-                    if (!applicationServerKey) {
-                        console.warn('PUSH: VITE_WEB_PUSH_APPLICATION_SERVER_KEY not set')
-                        return
-                    }
-                    return registration.pushManager.subscribe({
-                        userVisibleOnly: true,
-                        applicationServerKey: urlB64ToUint8Array(
-                            env.VITE_WEB_PUSH_APPLICATION_SERVER_KEY ?? '',
-                        ),
-                    })
+        if (!didNotifyWorker.current) {
+            register(user.userId)
+                .then(() => {
+                    didNotifyWorker.current = true
                 })
-
-            if (subscription) {
-                console.log('PUSH: Subscribed')
-                handlePushSubscription(subscription)
-            }
+                .catch((e) => {
+                    didNotifyWorker.current = false
+                })
         }
-
-        updateSubscription()
-    }, [permissionState])
+    }, [user?.userId, permissionState, registerForPushSubscription])
 
     const displayNotificationBanner =
         (ENABLE_PUSH_NOTIFICATIONS || isPWA) &&
@@ -73,7 +69,6 @@ export const usePushNotifications = () => {
         permissionState !== 'denied' &&
         notificationsSupported()
     return {
-        pushSubscriptionInfo,
         requestPushPermission,
         denyPushPermission,
         permissionState,
@@ -94,4 +89,36 @@ function urlB64ToUint8Array(base64String: string) {
 
 function notificationsSupported(): boolean {
     return typeof Notification !== 'undefined'
+}
+
+async function notifyPushNotificationsWorker(subscription: PushSubscription, userId: string) {
+    const data = pushSubscriptionPostData(subscription, userId)
+    const url = env.VITE_WEB_PUSH_WORKER_URL
+    if (!url) {
+        console.error('PUSH: env.VITE_WEB_PUSH_WORKER_URL not set')
+        return
+    }
+    await axiosClient.post(`${url}/api/add-subscription`, data)
+}
+
+async function getOrRegisterPushSubscription() {
+    const registration = await navigator.serviceWorker.ready
+    const subscription = await registration.pushManager.getSubscription()
+    if (subscription) {
+        return subscription
+    }
+
+    const applicationServerKey = env.VITE_WEB_PUSH_APPLICATION_SERVER_KEY
+    if (!applicationServerKey) {
+        console.warn('PUSH: VITE_WEB_PUSH_APPLICATION_SERVER_KEY not set')
+        return
+    }
+    return await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlB64ToUint8Array(applicationServerKey),
+    })
+}
+
+function pushSubscriptionPostData(subscription: PushSubscription, userId: string) {
+    return { subscriptionObject: subscription, userId: userId }
 }

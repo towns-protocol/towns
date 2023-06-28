@@ -19,6 +19,8 @@ interface AppState {
     setChannelMuted: (channelId: string, isMuted: boolean) => void
     mutedSpaces: { [spaceId: string]: boolean }
     setSpaceMuted: (spaceId: string, isMuted: boolean) => void
+    setActivePushSubscription: (subscription: string) => void
+    activePushSubscription: string
 }
 
 export const useStore = create(
@@ -78,6 +80,10 @@ export const useStore = create(
                 set((state) => {
                     return { mutedSpaces: { ...state.mutedSpaces, [spaceId]: isMuted } }
                 })
+            },
+            activePushSubscription: '',
+            setActivePushSubscription(subscription) {
+                set(() => ({ activePushSubscription: subscription }))
             },
         }),
         { name: 'zionstate' },
