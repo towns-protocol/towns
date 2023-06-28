@@ -3,13 +3,16 @@ import React from 'react'
 import { Navigate, Outlet, Route, Routes } from 'react-router'
 import { SpaceProtocol, ZionContextProvider } from 'use-zion-client'
 import { Helmet } from 'react-helmet'
+import { getDefaultWallets } from '@rainbow-me/rainbowkit'
+import { Chain } from 'wagmi'
+import { WalletConnectConnector } from 'wagmi/connectors/walletConnect'
 import { Notifications } from '@components/Notifications/Notifications'
 import { PlaygroundRoutes } from '@components/Playground/PlaygroundRoutes'
 import { SentryReportModal } from '@components/SentryErrorReport/SentryErrorReport'
 import { Box, Stack } from '@ui'
 import { AnalyticsProvider } from 'hooks/useAnalytics'
 import { useAuth } from 'hooks/useAuth'
-import { useDevice } from 'hooks/useDevice'
+import { isTouch, useDevice } from 'hooks/useDevice'
 import { useEnvironment } from 'hooks/useEnvironmnet'
 import { useWindowListener } from 'hooks/useWindowListener'
 import { PATHS } from 'routes'
@@ -34,6 +37,25 @@ const DebugBar = React.lazy(() => import('@components/DebugBar/DebugBar'))
 
 FontLoader.init()
 
+const walletConnectors = ({ chains }: { chains: Chain[] }) => {
+    const { connectors: rainbowKitConnectors } = getDefaultWallets({
+        appName: 'Towns',
+        chains,
+        projectId: env.VITE_WALLET_CONNECT_PROJECT_ID,
+    })
+
+    return isTouch()
+        ? [
+              new WalletConnectConnector({
+                  chains,
+                  options: {
+                      projectId: env.VITE_WALLET_CONNECT_PROJECT_ID,
+                  },
+              }),
+          ]
+        : rainbowKitConnectors()
+}
+
 export const App = () => {
     const { theme } = useStore((state) => ({
         theme: state.theme,
@@ -43,7 +65,6 @@ export const App = () => {
     // a single piece of state, PROD, TEST, and LOCAL each should have {matrixUrl, casablancaUrl, chainId}
     const environment = useEnvironment()
     const { isTouch } = useDevice()
-
     return (
         <ZionContextProvider
             alchemyKey={env.VITE_ALCHEMY_API_KEY}
@@ -52,6 +73,7 @@ export const App = () => {
             matrixServerUrl={environment.matrixUrl}
             onboardingOpts={{ skipAvatar: true }}
             initialSyncLimit={100}
+            connectors={walletConnectors}
             chainId={environment.chainId}
         >
             <>

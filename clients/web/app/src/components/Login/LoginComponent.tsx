@@ -1,16 +1,22 @@
 import React, { useEffect } from 'react'
 import { AnimatePresence } from 'framer-motion'
+import { RainbowKitProvider } from '@rainbow-me/rainbowkit'
+import { useWeb3Context } from 'use-zion-client'
 import { useAuth } from 'hooks/useAuth'
 import { SignupButtonStatus, useSignupButton } from 'hooks/useSignupButton'
-import { Box, Stack, Text } from '@ui'
+import { Box, Icon, Stack, Text } from '@ui'
 import { RequireTransactionNetworkMessage } from '@components/RequireTransactionNetworkMessage/RequireTransactionNetworkMessage'
 import { useRequireTransactionNetwork } from 'hooks/useRequireTransactionNetwork'
 import { FadeIn } from '@components/Transitions'
+import { useDevice } from 'hooks/useDevice'
+import { useEnvironment } from 'hooks/useEnvironmnet'
 import { LoginButton } from './LoginButton/LoginButton'
+import { WalletConnectButton } from './WalletConnectButton'
 import { RainbowKitLoginButton } from './RainbowKitLoginButton'
-import '@rainbow-me/rainbowkit/styles.css'
 
 export const LoginComponent = () => {
+    const { chains } = useWeb3Context()
+
     const {
         activeWalletAddress,
         loggedInWalletAddress,
@@ -27,6 +33,7 @@ export const LoginComponent = () => {
     } = useAuth()
 
     const { switchNetwork } = useRequireTransactionNetwork()
+    const { chainName } = useEnvironment()
 
     useEffect(() => {
         console.log('LoginComponent wagmi info:', {
@@ -61,41 +68,75 @@ export const LoginComponent = () => {
     const buttonLabel = getButtonLabel(status)
     const errorMessage = loginError ? loginError.message : getErrorMessage(status)
 
+    const { isTouch } = useDevice()
+
+    const loginButtonContent = () => {
+        // on mobile devices, if they aren't on the right network, don't show the login button - they have to go to the wallet and switch, then come back to the app
+        if (isConnected) {
+            if (isTouch && userOnWrongNetworkForSignIn) {
+                return null
+            }
+            return (
+                <LoginButton
+                    isConnected={isConnected}
+                    userOnWrongNetworkForSignIn={userOnWrongNetworkForSignIn}
+                    label={buttonLabel}
+                    loading={isSpinning}
+                    icon="wallet"
+                    onClick={onButtonClick}
+                />
+            )
+        }
+        return null
+    }
+
     return (
-        <Box centerContent gap="md">
-            <Stack gap>
-                {isConnected && (
-                    <LoginButton
-                        isConnected={isConnected}
-                        userOnWrongNetworkForSignIn={userOnWrongNetworkForSignIn}
-                        label={buttonLabel}
-                        loading={isSpinning}
-                        icon="wallet"
-                        onClick={onButtonClick}
-                    />
+        <RainbowKitProvider chains={chains}>
+            <Box centerContent gap="md">
+                {isConnected && isTouch && userOnWrongNetworkForSignIn && (
+                    <Box
+                        gap
+                        rounded="sm"
+                        flexDirection="row"
+                        justifyContent="end"
+                        padding="md"
+                        background="level2"
+                        maxWidth="300"
+                    >
+                        <Icon type="alert" color="error" />
+                        <Text>{`Please switch to ${chainName} in your wallet, and then come back to continue.`}</Text>
+                    </Box>
                 )}
-                <RainbowKitLoginButton isConnected={isConnected} />
-            </Stack>
+                <Stack gap>
+                    {loginButtonContent()}
 
-            {isConnected && userOnWrongNetworkForSignIn && (
-                <Box paddingTop="md" flexDirection="row" justifyContent="end">
-                    <RequireTransactionNetworkMessage
-                        postCta="to sign in."
-                        switchNetwork={switchNetwork}
-                    />
-                </Box>
-            )}
+                    {isTouch ? (
+                        <WalletConnectButton isConnected={isConnected} />
+                    ) : (
+                        <RainbowKitLoginButton isConnected={isConnected} />
+                    )}
+                </Stack>
 
-            <AnimatePresence>
-                {errorMessage && (
-                    <FadeIn>
-                        <Text color="negative" size="sm">
-                            {errorMessage}
-                        </Text>
-                    </FadeIn>
+                {isConnected && userOnWrongNetworkForSignIn && !isTouch && (
+                    <Box paddingTop="md" flexDirection="row" justifyContent="end">
+                        <RequireTransactionNetworkMessage
+                            postCta="to sign in."
+                            switchNetwork={switchNetwork}
+                        />
+                    </Box>
                 )}
-            </AnimatePresence>
-        </Box>
+
+                <AnimatePresence>
+                    {errorMessage && (
+                        <FadeIn>
+                            <Text color="negative" size="sm">
+                                {errorMessage}
+                            </Text>
+                        </FadeIn>
+                    )}
+                </AnimatePresence>
+            </Box>
+        </RainbowKitProvider>
     )
 }
 

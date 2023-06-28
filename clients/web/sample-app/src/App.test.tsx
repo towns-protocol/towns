@@ -10,7 +10,7 @@ describe('Accordion test', () => {
         render(
             <React.StrictMode>
                 <BrowserRouter>
-                    <App />
+                    <App withRainbowConnectors={false} />
                 </BrowserRouter>
             </React.StrictMode>,
         )

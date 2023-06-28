@@ -1,5 +1,6 @@
-import { Address, useProvider } from 'wagmi'
+import { Address, Chain, Connector } from 'wagmi'
 import { RoomIdentifier } from './room-identifier'
+import { useEthersProvider } from '../hooks/Web3Context/useEthersProvider'
 
 export const NULL_ADDRESS: Address = '0x0000000000000000000000000000000000000000'
 
@@ -19,7 +20,7 @@ export interface RoleIdentifier {
     spaceNetworkId: string
 }
 
-export type TProvider = ReturnType<typeof useProvider>
+export type TProvider = ReturnType<typeof useEthersProvider>
 
 export enum BlockchainTransactionType {
     CreateSpace = 'createSpace',
@@ -38,3 +39,5 @@ export type BlockchainTransaction = {
     }
     type: BlockchainTransactionType
 }
+
+export type Connectors = (args: { chains: Chain[] }) => Connector[]

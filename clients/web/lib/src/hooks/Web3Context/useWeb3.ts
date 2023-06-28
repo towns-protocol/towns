@@ -1,9 +1,11 @@
-import { Chain, useAccount, useNetwork, useProvider, useSigner } from 'wagmi'
+import { Chain, useAccount, useNetwork } from 'wagmi'
 import { WalletStatus } from '../../types/web3-types'
 import { useEffect, useMemo } from 'react'
 
 import { IWeb3Context } from '../../components/Web3ContextProvider'
 import { ethers } from 'ethers'
+import { useEthersProvider } from './useEthersProvider'
+import { useEthersSigner } from './useEthersSigner'
 
 /// web3 components, pass chain to lock to a specific chain, pass signer to override the default signer (usefull for tests)
 export function useWeb3(chainId: number, chain?: Chain, web3Signer?: ethers.Signer): IWeb3Context {
@@ -19,7 +21,7 @@ export function useWeb3(chainId: number, chain?: Chain, web3Signer?: ethers.Sign
     // they are able to login w/out swapping networks
     // we still need guards for transactions
     const activeChain = useMemo(() => chain || walletChain, [chain, walletChain])
-    const provider = useProvider({ chainId: activeChain?.id })
+    const provider = useEthersProvider({ chainId: activeChain?.id })
 
     useEffect(() => {
         console.log('use web3 ##', {
@@ -46,7 +48,7 @@ export function useWeb3(chainId: number, chain?: Chain, web3Signer?: ethers.Sign
 }
 
 function useAppSigner(appChainId: number, web3Signer?: ethers.Signer) {
-    const { data: wagmiSigner } = useSigner({
+    const wagmiSigner = useEthersSigner({
         chainId: appChainId,
     })
     if (web3Signer) {

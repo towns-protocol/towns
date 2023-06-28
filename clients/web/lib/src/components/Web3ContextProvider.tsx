@@ -1,13 +1,12 @@
-import { Address, Chain, WagmiConfig, configureChains, createClient } from 'wagmi'
+import { Address, Chain, WagmiConfig, configureChains, createConfig } from 'wagmi'
 import React, { createContext, useContext, useMemo } from 'react'
-import { TProvider, WalletStatus } from '../types/web3-types'
+import { Connectors, TProvider, WalletStatus } from '../types/web3-types'
 import { foundry, goerli, localhost, sepolia } from '@wagmi/core/chains'
 import { alchemyProvider } from 'wagmi/providers/alchemy'
 import { ethers } from 'ethers'
 import { publicProvider } from 'wagmi/providers/public'
 import { useWeb3 } from '../hooks/Web3Context/useWeb3'
-import { getDefaultWallets, RainbowKitProvider } from '@rainbow-me/rainbowkit'
-import { InjectedConnector } from '@wagmi/connectors/injected'
+import { InjectedConnector } from 'wagmi/connectors/injected'
 
 export interface IWeb3Context {
     provider?: TProvider
@@ -37,44 +36,39 @@ interface Props {
     chainId: number
     alchemyKey?: string
     web3Signer?: ethers.Signer // sometimes, like during testing, it makes sense to inject a signer
+    connectors?: Connectors // optional connectors to use instead of the default injected connector
 }
 
 const SUPPORTED_CHAINS = [goerli, localhost, foundry, sepolia]
 
 export function Web3ContextProvider(props: Props): JSX.Element {
+    const { alchemyKey, connectors } = props
     // Note: this is a hack to get the provider to be created only once
     // If the useMemo is not here, the provider would be created on every render
     // If the memo ever discards the state, the provider will be recreated
     // and the user will be disconnected from the wallet which is not too bad
 
-    const { client, chains } = useMemo(() => {
-        const { chains, provider, webSocketProvider } = configureChains(
+    const { config } = useMemo(() => {
+        const { chains, publicClient, webSocketPublicClient } = configureChains(
             SUPPORTED_CHAINS,
-            props.alchemyKey
-                ? [
-                      alchemyProvider({ apiKey: props.alchemyKey, priority: 0 }),
-                      publicProvider({ priority: 1 }),
-                  ]
+            alchemyKey
+                ? [alchemyProvider({ apiKey: alchemyKey }), publicProvider()]
                 : [publicProvider()],
         )
 
-        const { connectors } = getDefaultWallets({ appName: 'Towns', chains: chains })
-
-        const client = createClient({
+        const config = createConfig({
             autoConnect: true,
-            connectors: [new InjectedConnector({ chains })].concat(connectors()),
-            provider,
-            webSocketProvider,
+            connectors: connectors?.({ chains }) ?? [new InjectedConnector({ chains })],
+            publicClient,
+            webSocketPublicClient,
         })
 
-        return { client, chains }
-    }, [props.alchemyKey])
+        return { config }
+    }, [alchemyKey, connectors])
 
     return (
-        <WagmiConfig client={client}>
-            <RainbowKitProvider chains={chains}>
-                <ContextImpl {...props} />
-            </RainbowKitProvider>
+        <WagmiConfig config={config}>
+            <ContextImpl {...props} />
         </WagmiConfig>
     )
 }

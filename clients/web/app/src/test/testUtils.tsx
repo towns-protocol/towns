@@ -32,6 +32,7 @@ export const TestApp = (props: TestAppProps) => {
             },
         },
     })
+
     return (
         <ZLayerProvider>
             <QueryClientProvider client={queryClient}>
@@ -40,6 +41,10 @@ export const TestApp = (props: TestAppProps) => {
                     matrixServerUrl=""
                     casablancaServerUrl=""
                     chainId={0}
+                    // TODO: fix this
+                    // Intenionally omitting, something within wagmi/walletconnect/rainbowkit is throwing errors during tests
+                    // Instead, we'll use the default injected connector provided by the ContextProvider, which is fine for testing
+                    // connectors={rainbowConnectors}
                     {...props.zionContextProviderProps}
                 >
                     <Router initialEntries={props.initialEntries}>{props.children}</Router>

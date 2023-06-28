@@ -2,6 +2,7 @@ import React, { useCallback } from 'react'
 import { useConnectModal } from '@rainbow-me/rainbowkit'
 import { Button } from '@ui'
 import { useAuth } from 'hooks/useAuth'
+import '@rainbow-me/rainbowkit/styles.css'
 
 type Props = {
     isConnected: boolean

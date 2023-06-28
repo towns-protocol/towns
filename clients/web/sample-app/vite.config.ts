@@ -22,6 +22,10 @@ export default defineConfig({
                         // Lodash is used in many chunks, split it into one bundle
                     } else if (id.includes('lodash')) {
                         return 'lodash'
+                    } else if (id.includes('matrix-sdk-crypto')) {
+                        return 'matrix-sdk-crypto'
+                    } else if (id.includes('matrix')) {
+                        return 'matrix-rest'
                     }
                 },
                 sourcemapIgnoreList: (relativeSourcePath) => {

@@ -371,8 +371,8 @@ function WalletInfo() {
 
 function ENSInfo(props: { address: `0x${string}` | undefined }): JSX.Element {
     const { address } = props
-    const { data: ensAvatar } = useEnsAvatar({ address })
     const { data: ensName } = useEnsName({ address })
+    const { data: ensAvatar } = useEnsAvatar({ name: ensName })
 
     return (
         <>

@@ -30,6 +30,7 @@ import { useCasablancaTimelines } from '../hooks/ZionContext/useCasablancaTimeli
 import { ethers } from 'ethers'
 import merge from 'lodash/merge'
 import { useLoggedInWalletAddress } from '../hooks/use-logged-in-wallet-address'
+import { Connectors } from '../types/web3-types'
 
 export interface IZionContext {
     homeServerUrl: string
@@ -69,6 +70,7 @@ interface Props extends ZionOpts {
     enableSpaceRootUnreads?: boolean
     children: JSX.Element
     alchemyKey?: string
+    connectors?: Connectors // optional connectors to use instead of default injected connector
     web3Signer?: ethers.Signer
     QueryClientProvider?: React.ElementType<{ children: JSX.Element }>
 }
@@ -77,11 +79,12 @@ export function ZionContextProvider({
     QueryClientProvider = QueryProvider,
     ...props
 }: Props): JSX.Element {
-    const { alchemyKey, web3Signer, ...contextProps } = props
+    const { alchemyKey, web3Signer, connectors, ...contextProps } = props
     return (
         <QueryClientProvider>
             <Web3ContextProvider
                 alchemyKey={alchemyKey}
+                connectors={connectors}
                 chainId={contextProps.chainId}
                 web3Signer={web3Signer}
             >

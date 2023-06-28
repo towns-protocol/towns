@@ -1,4 +1,5 @@
 import { ethers } from 'ethers'
+import { Address } from 'viem'
 
 export interface UserIdentifier {
     readonly namespace: string
@@ -14,7 +15,7 @@ export function createUserIdFromEthereumAddress(
     accountAddress: string,
     chainId: number,
 ): UserIdentifier {
-    const checksumAddress = ethers.utils.getAddress(accountAddress)
+    const checksumAddress = ethers.utils.getAddress(accountAddress) as Address
     return {
         namespace: 'eip155',
         accountAddress: checksumAddress,
@@ -44,7 +45,9 @@ export function createUserIdFromString(matrixUserId: string): UserIdentifier | u
                 try {
                     chainId = match.groups?.chainId ? parseInt(match.groups?.chainId) : undefined
                     const address = match.groups?.accountAddress
-                    accountAddress = address ? ethers.utils.getAddress(address) : undefined
+                    accountAddress = address
+                        ? (ethers.utils.getAddress(address) as Address)
+                        : undefined
                     serverName = match.groups?.serverName
                 } catch (e) {
                     console.error('createServerName failed WithError', e)

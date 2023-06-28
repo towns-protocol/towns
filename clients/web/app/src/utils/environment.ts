@@ -44,6 +44,7 @@ const envSchema = z.object({
     VITE_WEB_PUSH_WORKER_URL: z.string().optional(),
     VITE_AMP_WORKER_URL: z.string().url().optional(),
     VITE_TOWNS_TOKEN_URL: z.string().url().optional(),
+    VITE_WALLET_CONNECT_PROJECT_ID: z.string().default('stringtopreventerror'),
 })
 
 const parsed = envSchema.safeParse(import.meta.env)
