@@ -8,7 +8,7 @@ import {
     registerAndStartClients,
     registerAndStartClient,
     createTestChannelWithSpaceRoles,
-    waitForJoiningChannelImmediatelyAfterCreation,
+    waitForRandom401ErrorsForAction,
 } from 'use-zion-client/tests/integration/helpers/TestUtils'
 
 import { Permission } from 'use-zion-client/src/client/web3/ContractTypes'
@@ -17,8 +17,7 @@ import { waitFor } from '@testing-library/dom'
 import { RoomVisibility } from '../../src/types/zion-types'
 
 describe('write messages', () => {
-    // TODO: https://linear.app/hnt-labs/issue/HNT-1613/testsintegrationpermissionswritemessagestestts
-    test.skip('Channel member cant write messages without permission', async () => {
+    test('Channel member cant write messages without permission', async () => {
         /** Arrange */
 
         // create all the users for the test
@@ -51,22 +50,25 @@ describe('write messages', () => {
 
         // // invite user to join the space by first checking if they can read.
         await bob.inviteUser(roomId, alice.getUserId() as string)
+
+        await waitForRandom401ErrorsForAction(() => alice.joinRoom(roomId))
+        // bob sends a message to the room
+        await bob.sendMessage(roomId, 'Hello tokenGrantedUser!')
+
         // TODO check why on Casablanca the error does not show in the console
         // const consoleErrorSpy = jest.spyOn(global.console, 'error')
         /** Assert */
         // user sends a message to the room
         try {
-            await alice.joinRoom(roomId)
-
-            // bob sends a message to the room
-            await bob.sendMessage(roomId, 'Hello tokenGrantedUser!')
-
             await alice.sendMessage(roomId, 'Hello Bob!')
         } catch (e) {
             expect((e as Error).message).toMatch(new RegExp('Unauthorised|PermissionDenied'))
         }
         //expect(consoleErrorSpy).toHaveBeenCalled()
-        await waitFor(() => expect(alice.getMessages(roomId)).toContain('Hello tokenGrantedUser!'))
+        await waitFor(
+            () => expect(alice.getMessages(roomId)).toContain('Hello tokenGrantedUser!'),
+            TestConstants.DoubleDefaultWaitForTimeout,
+        )
 
         // bob should not receive the message
         expect(bob.getMessages(roomId)).not.toContain('Hello Bob!')
@@ -108,7 +110,7 @@ describe('write messages', () => {
 
         // invite user to join the space by first checking if they can read.
         await bob.inviteUser(spaceId, tokenGrantedUser.getUserId() as string)
-        await waitForJoiningChannelImmediatelyAfterCreation(() => tokenGrantedUser.joinRoom(roomId))
+        await waitForRandom401ErrorsForAction(() => tokenGrantedUser.joinRoom(roomId))
         // bob send 25 messages (20 is our default initialSyncLimit)
         for (let i = 0; i < 25; i++) {
             await bob.sendMessage(roomId, `message ${i}`)
@@ -158,13 +160,15 @@ describe('write messages', () => {
         /** Act */
         // invite user to join the space by first checking if they can read.
         await bob.inviteUser(roomId, tokenGrantedUser.getUserId() as string)
-        await waitForJoiningChannelImmediatelyAfterCreation(() => tokenGrantedUser.joinRoom(roomId))
+        await waitForRandom401ErrorsForAction(() => tokenGrantedUser.joinRoom(roomId))
 
         // bob sends a message to the room
         await bob.sendMessage(roomId, 'Hello tokenGrantedUser!')
 
         // user sends a message to the room
-        await tokenGrantedUser.sendMessage(roomId, 'Hello Bob!')
+        await waitForRandom401ErrorsForAction(() =>
+            tokenGrantedUser.sendMessage(roomId, 'Hello Bob!'),
+        )
 
         /** Assert */
 

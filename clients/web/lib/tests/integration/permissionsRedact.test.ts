@@ -7,7 +7,7 @@ import {
     createTestSpaceWithEveryoneRole,
     createTestSpaceWithZionMemberRole,
     registerAndStartClients,
-    waitForJoiningChannelImmediatelyAfterCreation,
+    waitForRandom401ErrorsForAction,
 } from 'use-zion-client/tests/integration/helpers/TestUtils'
 
 import { Permission } from 'use-zion-client/src/client/web3/ContractTypes'
@@ -103,7 +103,7 @@ describe('redact messages', () => {
             throw new Error('Failed to get bob matrix user id')
         }
         await alice.inviteUser(channelId, bobUserId)
-        await waitForJoiningChannelImmediatelyAfterCreation(() => bob.joinRoom(channelId))
+        await waitForRandom401ErrorsForAction(() => bob.joinRoom(channelId))
 
         /** Act */
         // alice sends a message in the channel
@@ -181,7 +181,7 @@ describe('redact messages', () => {
             throw new Error('Failed to get bob matrix user id')
         }
         await alice.inviteUser(channelId, bobUserId)
-        await waitForJoiningChannelImmediatelyAfterCreation(() => bob.joinRoom(channelId))
+        await waitForRandom401ErrorsForAction(() => bob.joinRoom(channelId))
 
         /** Act */
         // alice sends a message in the channel

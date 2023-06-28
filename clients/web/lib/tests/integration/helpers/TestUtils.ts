@@ -1,7 +1,6 @@
 import {
     CreateChannelInfo,
     CreateSpaceInfo,
-    Room,
     RoomVisibility,
 } from 'use-zion-client/src/types/zion-types'
 import { Permission, RoleDetails } from '../../../src/client/web3/ContractTypes'
@@ -232,19 +231,20 @@ export function assertRoleEquals(actual: RoleDetails, expected: RoleDetails) {
     expect(actual.users).toEqual(expect.arrayContaining(expected.users))
 }
 
-// joining a channel immediately after creation can 401, so we need to retry
-// wrapping in expect will tell us exactly where it failed
-export async function waitForJoiningChannelImmediatelyAfterCreation(
-    joinRoomCb: () => Promise<Room>,
-) {
-    async function _join() {
+// some test actions result in 401s before resulting in success, so we need to retry
+// most often this happens when joining a channel immediately after creation
+export async function waitForRandom401ErrorsForAction<T>(action: () => Promise<T>) {
+    const failMessage = `waitForRandom401ErrorsForAction() Failed action: ${action.toString()}`
+    async function _action() {
         try {
-            return joinRoomCb()
+            return action()
         } catch (error) {
-            return false
+            console.error(failMessage, error)
+            return failMessage
         }
     }
-    await waitFor(async () => expect(await _join()).toBeTruthy(), {
+    // compare with failMessage for easier debugging while running --silent flag
+    await waitFor(async () => expect(await _action()).not.toBe(failMessage), {
         interval: 3000,
         timeout: 10000,
     })

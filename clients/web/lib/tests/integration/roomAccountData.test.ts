@@ -9,7 +9,7 @@ import {
     registerAndStartClients,
     registerAndStartClient,
     createTestChannelWithSpaceRoles,
-    waitForJoiningChannelImmediatelyAfterCreation,
+    waitForRandom401ErrorsForAction,
 } from './helpers/TestUtils'
 
 import { FullyReadMarker } from '../../src/types/timeline-types'
@@ -45,7 +45,7 @@ describe('roomAccountData', () => {
         await alice.joinRoom(spaceId)
 
         // alice joins the channel
-        await waitForJoiningChannelImmediatelyAfterCreation(() => alice.joinRoom(channelId))
+        await waitForRandom401ErrorsForAction(() => alice.joinRoom(channelId))
 
         // alice sends a message
         await alice.sendMessage(channelId, 'GM Bob')

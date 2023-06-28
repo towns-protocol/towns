@@ -12,7 +12,7 @@ import {
     createTestChannelWithSpaceRoles,
     createTestSpaceWithEveryoneRole,
     registerAndStartClients,
-    waitForJoiningChannelImmediatelyAfterCreation,
+    waitForRandom401ErrorsForAction,
 } from './helpers/TestUtils'
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 
@@ -55,7 +55,7 @@ describe('mentionsHooks', () => {
         expect(channelId).toBeDefined()
         // alice join space and channel
         await alice.joinRoom(spaceId)
-        await waitForJoiningChannelImmediatelyAfterCreation(() => alice.joinRoom(channelId))
+        await waitForRandom401ErrorsForAction(() => alice.joinRoom(channelId))
         // logout alice
         await alice.logout()
 

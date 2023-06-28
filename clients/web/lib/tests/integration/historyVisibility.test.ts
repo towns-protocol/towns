@@ -12,7 +12,7 @@ import {
     createTestSpaceWithEveryoneRole,
     makeUniqueName,
     registerAndStartClients,
-    waitForJoiningChannelImmediatelyAfterCreation,
+    waitForRandom401ErrorsForAction,
 } from './helpers/TestUtils'
 import { ZionTestClient } from './helpers/ZionTestClient'
 
@@ -50,7 +50,7 @@ describe('historyVisibility', () => {
 
         await john.joinRoom(spaceId)
 
-        await waitForJoiningChannelImmediatelyAfterCreation(() => john.joinRoom(roomId))
+        await waitForRandom401ErrorsForAction(() => john.joinRoom(roomId))
 
         // if we don't wait for encryption, we'll send unencrypted messages :(
         await waitFor(() => expect(john.isRoomEncrypted(roomId)).toBeTruthy())
@@ -69,7 +69,7 @@ describe('historyVisibility', () => {
         // alice joins the room
         await alice.joinRoom(spaceId)
 
-        await waitForJoiningChannelImmediatelyAfterCreation(() => alice.joinRoom(roomId))
+        await waitForRandom401ErrorsForAction(() => alice.joinRoom(roomId))
 
         // and we should see the message
         await waitFor(

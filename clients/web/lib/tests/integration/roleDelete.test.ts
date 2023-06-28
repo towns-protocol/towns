@@ -13,7 +13,7 @@ import {
     createTestSpaceWithZionMemberRole,
     registerAndStartClients,
     registerAndStartClient,
-    waitForJoiningChannelImmediatelyAfterCreation,
+    waitForRandom401ErrorsForAction,
 } from 'use-zion-client/tests/integration/helpers/TestUtils'
 
 import { ContractReceipt } from 'ethers'
@@ -76,9 +76,7 @@ describe('delete role', () => {
             throw new Error('channel is undefined')
         }
         // sanity check: bob joins the space successfully
-        await waitForJoiningChannelImmediatelyAfterCreation(() =>
-            bobWithNft.joinRoom(channel, spaceId),
-        )
+        await waitForRandom401ErrorsForAction(() => bobWithNft.joinRoom(channel, spaceId))
         // bob leaves the room so that we can delete the role, and test
         // that bob can no longer join the room
         await bobWithNft.leave(channel, spaceId)
@@ -199,7 +197,7 @@ describe('delete role', () => {
             throw new Error('channel is undefined')
         }
         // sanity check: bob joins the space successfully
-        await waitForJoiningChannelImmediatelyAfterCreation(() => bob.joinRoom(channel, spaceId))
+        await waitForRandom401ErrorsForAction(() => bob.joinRoom(channel, spaceId))
         // bob leaves the room so that we can delete the role, and test
         // that bob can no longer join the room
         await bob.leave(channel, spaceId)

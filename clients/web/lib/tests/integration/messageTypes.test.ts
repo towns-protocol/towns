@@ -16,7 +16,7 @@ import {
     registerAndStartClients,
     registerAndStartClient,
     createTestChannelWithSpaceRoles,
-    waitForJoiningChannelImmediatelyAfterCreation,
+    waitForRandom401ErrorsForAction,
 } from './helpers/TestUtils'
 
 import { Permission } from '../../src/client/web3/ContractTypes'
@@ -51,7 +51,7 @@ describe.skip('messageTypes', () => {
         }))!
 
         // alice joins the room
-        await waitForJoiningChannelImmediatelyAfterCreation(() => alice.joinRoom(channelId))
+        await waitForRandom401ErrorsForAction(() => alice.joinRoom(channelId))
 
         // alice sends a gm message
         await alice.sendMessage(channelId, 'GM', {
@@ -109,7 +109,7 @@ describe.skip('messageTypes', () => {
         }))!
 
         // alice joins the room
-        await waitForJoiningChannelImmediatelyAfterCreation(() => alice.joinRoom(channelId))
+        await waitForRandom401ErrorsForAction(() => alice.joinRoom(channelId))
         // alice sends a image message
         await alice.sendMessage(channelId, 'what.jpg', IMAGE_MSG_CONTENT)
 

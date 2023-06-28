@@ -8,7 +8,7 @@ import {
     registerAndStartClients,
     registerAndStartClient,
     createTestChannelWithSpaceRoles,
-    waitForJoiningChannelImmediatelyAfterCreation,
+    waitForRandom401ErrorsForAction,
 } from './helpers/TestUtils'
 import { Permission } from '../../src/client/web3/ContractTypes'
 import { RoomIdentifier } from '../../src/types/room-identifier'
@@ -39,7 +39,7 @@ describe('messageThreads', () => {
         }))!
 
         // alice joins the room
-        await waitForJoiningChannelImmediatelyAfterCreation(() => alice.joinRoom(channelId))
+        await waitForRandom401ErrorsForAction(() => alice.joinRoom(channelId))
 
         // alice sends a message
         await alice.sendMessage(channelId, 'hi Bob!')
