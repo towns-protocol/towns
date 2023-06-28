@@ -134,7 +134,7 @@ export const ChannelInfoPanel = () => {
                     </PanelButton>
                 )}
 
-                {canEditChannel && (
+                {canEditChannel && !isTouch && (
                     <PanelButton onClick={onShowChannelSettingsPopup}>
                         <Icon type="edit" size="square_sm" color="gray2" />
                         <Paragraph color="default">Edit channel</Paragraph>
