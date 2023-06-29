@@ -137,6 +137,27 @@ self.addEventListener('fetch', function (event) {
     )
 })
 
+self.addEventListener('push', handlePushNotification)
+
+function handlePushNotification(event) {
+    console.log('handlePushNotification', event)
+    let title = 'No title'
+    let options = {
+        body: 'no body',
+    }
+    try {
+        const notification = event.data.json()
+        console.log('notification', notification)
+        title = notification.title
+        options.body = JSON.stringify(notification.options.body)
+    } catch (e) {
+        console.error('handlePushNotification', e)
+        title = 'Error'
+        options.body = e.message
+    }
+    self.registration.showNotification(title, options)
+}
+
 async function handleRequest(event, requestId) {
     const client = await resolveMainClient(event)
     const response = await getResponse(event, client, requestId)

@@ -103,12 +103,8 @@ async function createRequest(
     ['deriveBits'],
   )) as CryptoKeyPair
 
-  const encryptedPayload = await encrypt(
-    options.payload,
-    target,
-    salt,
-    localKeys,
-  )
+  const payload = JSON.stringify(options.payload)
+  const encryptedPayload = await encrypt(payload, target, salt, localKeys)
 
   const headers = await createHeaders(
     options,

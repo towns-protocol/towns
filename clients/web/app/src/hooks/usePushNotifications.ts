@@ -7,7 +7,7 @@ import { env } from '../utils/environment'
 import { useDevice } from './useDevice'
 
 // always false for now
-const ENABLE_PUSH_NOTIFICATIONS = false
+const ENABLE_PUSH_NOTIFICATIONS = true
 
 export const usePushNotifications = () => {
     const { isPWA } = useDevice()
@@ -38,7 +38,7 @@ export const usePushNotifications = () => {
         if (subscriptionKey === activePushSubscription) {
             return
         }
-        await notifyPushNotificationsWorker(subscription, userId)
+        await addSubscriptionToPushNotificationWorker(subscription, userId)
         setActivePushSubscription(subscriptionKey)
     })
 
@@ -53,12 +53,15 @@ export const usePushNotifications = () => {
         }
 
         if (!didNotifyWorker.current) {
+            console.log('registering for push notifications')
             register(user.userId)
                 .then(() => {
                     didNotifyWorker.current = true
+                    console.log('registered for push notifications')
                 })
                 .catch((e) => {
                     didNotifyWorker.current = false
+                    console.log('failed to register for push notifications', e)
                 })
         }
     }, [user?.userId, permissionState, registerForPushSubscription])
@@ -91,14 +94,17 @@ function notificationsSupported(): boolean {
     return typeof Notification !== 'undefined'
 }
 
-async function notifyPushNotificationsWorker(subscription: PushSubscription, userId: string) {
+async function addSubscriptionToPushNotificationWorker(
+    subscription: PushSubscription,
+    userId: string,
+) {
     const data = pushSubscriptionPostData(subscription, userId)
     const url = env.VITE_WEB_PUSH_WORKER_URL
     if (!url) {
         console.error('PUSH: env.VITE_WEB_PUSH_WORKER_URL not set')
         return
     }
-    await axiosClient.post(`${url}/api/add-subscription`, data)
+    return await axiosClient.post(`${url}/api/add-subscription`, JSON.stringify(data))
 }
 
 async function getOrRegisterPushSubscription() {

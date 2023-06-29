@@ -41,8 +41,9 @@ export function isRemoveSubscriptionRequestParams(
 }
 
 export interface NotifyRequestParams {
+  sender: string
   users: string[]
-  payload: string
+  payload: object
   title?: string
   /* push options */
   urgency?: Urgency
@@ -53,9 +54,11 @@ export function isNotifyRequestParams(
   params: any,
 ): params is NotifyRequestParams {
   return (
+    typeof params.sender === 'string' &&
     Array.isArray(params.users) &&
     params.users.every((user: unknown) => isUserId(user)) &&
-    typeof params.payload === 'string' &&
+    (typeof params.payload === 'string' ||
+      typeof params.payload === 'object') &&
     /* optional parameters */
     (typeof params.title === 'string' || params.title === undefined) &&
     (isUrgency(params.urgency) || params.urgency === undefined)

@@ -10,7 +10,7 @@ export interface VapidDetails {
 export interface WebPushOptions {
   vapidDetails: VapidDetails
   jwtData: JwtData
-  payload: string
+  payload: object
   ttl: number
   topic?: string
   urgency?: Urgency

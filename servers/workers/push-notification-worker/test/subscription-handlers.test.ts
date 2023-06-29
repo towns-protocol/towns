@@ -88,10 +88,11 @@ describe('subscription handlers', () => {
     // Arrange
     const fetchMock = getMiniflareFetchMock()
     fetchMock.disableNetConnect()
-    const userId = `0xAlice${Date.now()}`
+    const sender = `0xAlice${Date.now()}`
+    const recipient = `0xBob${Date.now()}`
     const subscriptionObject = createFakeWebPushSubscription()
     const addParams: AddSubscriptionRequestParams = {
-      userId,
+      userId: sender,
       subscriptionObject,
     }
     // create the request
@@ -122,8 +123,9 @@ describe('subscription handlers', () => {
       },
     }
     const notifyParams: NotifyRequestParams = {
-      users: [userId],
-      payload: JSON.stringify(payload),
+      sender,
+      users: [recipient],
+      payload,
       title: payload.title,
     }
     // create the notification request
@@ -146,7 +148,7 @@ describe('subscription handlers', () => {
     const response = await handleRequest(notifyRequest, env, ctx)
 
     // Assert
-    expect(bindSpy).toBeCalledWith(userId)
+    expect(bindSpy).toBeCalledWith(recipient)
     expect(response.status).toBe(200)
     const notificationsSentCount = await response.text()
     expect(notificationsSentCount).toBe('1')

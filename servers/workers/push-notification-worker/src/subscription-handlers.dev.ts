@@ -10,29 +10,29 @@ export function getServiceWorkerJsDev(env: Env) {
     case 'test': {
       return new Response(
         `
-      self.addEventListener('push', handlePushNotification)
-
-      function handlePushNotification(event) {
-        console.log('handlePushNotification', event)
-        let title = 'No title'
-        let options = {
-          body: 'no body',
-        }
-        try {
-          const notification = event.data.json()
-          console.log('notification', notification)
-          title = notification.title
-          options = notification.options
-        } catch (e) {
-          console.error('handlePushNotification', e)
-          title = 'Error'
-          options.body = e.message
-        }
-        self.registration.showNotification(
-          title,
-          options,
-        )  
-      }`,
+        self.addEventListener('push', handlePushNotification);
+        
+        function handlePushNotification(event) {
+          console.log('handlePushNotification', event);
+          let title = 'No title';
+          let options = {
+            body: 'no body',
+          };
+          try {
+            const notification = event.data.json();
+            console.log('notification', notification);
+            title = notification.title;
+            options.body = JSON.stringify(notification.options.body);
+          } catch (e) {
+            console.error('handlePushNotification', e);
+            title = 'Error';
+            options.body = e.message;
+          }
+          self.registration.showNotification(
+            title,
+            options,
+          );
+        }`,
         {
           status: 200,
           headers: {
@@ -85,13 +85,13 @@ export function getDefaultRouteDev(request: Request, env: Env) {
       }
   </style>  
   <script>
-  const VAPID_PUBLIC_KEY = '${env.VAPID_PUBLIC_KEY}'
-  const FAKE_USER_ID = 'fake-user-id'
+  const VAPID_PUBLIC_KEY = '${env.VAPID_PUBLIC_KEY}';
+  const ALICE_ID = 'alice-id';
   /* Push notification logic */
   async function registerServiceWorker() {
     try {
       console.log('Registering service worker...');
-      await navigator.serviceWorker.register('./service-worker.js')
+      await navigator.serviceWorker.register('./service-worker.js');
       console.log('Service worker registered');
     } catch (e) {
       console.error('Service worker registration failed ', e);
@@ -121,7 +121,7 @@ export function getDefaultRouteDev(request: Request, env: Env) {
       });
       console.log('Subscribed to push notifications.');
       console.log('Sending subscription to server...');
-      await postToServer('/api/add-subscription', { subscriptionObject: subscription, userId: FAKE_USER_ID });
+      await postToServer('/api/add-subscription', { subscriptionObject: subscription, userId: ALICE_ID });
       console.log('Sent subscription to server.');
     } catch (e) {
       console.error('Subscription to push notifications failed ', e);
@@ -135,7 +135,7 @@ export function getDefaultRouteDev(request: Request, env: Env) {
       const registration = await navigator.serviceWorker.getRegistration();
       const subscription = await registration.pushManager.getSubscription();
       console.log('Sending unsubscribe request to server...');
-      await postToServer('/api/remove-subscription', { subscriptionObject: subscription, userId: FAKE_USER_ID });
+      await postToServer('/api/remove-subscription', { subscriptionObject: subscription, userId: ALICE_ID });
       console.log('Sent unsubscribe request to server.');
       console.log('Unsubscribing from push notifications...')
       await subscription.unsubscribe();
@@ -149,15 +149,15 @@ export function getDefaultRouteDev(request: Request, env: Env) {
   async function notify() {
     const titleText = document.getElementById('notificationTitle');
     const bodyText = document.getElementById('notificationBody');
-    const payload = JSON.stringify({
+    const payload = {
       title: titleText.value,
       options: {
         body: bodyText.value,
       }
-    });
+    };
     try {
       console.log('Sending notification to server...');
-      await postToServer('/api/notify-users', { payload, users: [FAKE_USER_ID] });
+      await postToServer('/api/notify-users', { payload, sender: ALICE_ID, users: [ALICE_ID] });
       console.log('Sent notification to server.');
       const output = document.getElementById('output');
       output.textContent += '\\n' + 'Notification sent:' + '\\n' + payload;
@@ -232,7 +232,7 @@ export function getDefaultRouteDev(request: Request, env: Env) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + bearerToken
+        Authorization: 'Bearer ' + bearerToken
       },
       body: JSON.stringify(data)
     });

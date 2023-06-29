@@ -1,7 +1,6 @@
 # for local development: make a copy of this file, and rename it .dev.vars
 #
 # add your secret variables here for local development
-# for public variables, add them in wrangler.toml
 AUTH_SECRET=foo
 
 # create the VAPID public and private keys by running this script:
@@ -14,7 +13,8 @@ AUTH_SECRET=foo
 VAPID_PUBLIC_KEY=""
 VAPID_PRIVATE_KEY=""
 
+# for public variables, add them in wrangler.toml
+#
 # for cloud deployment: 
-# wrangler secret put <NAME> --env test
-# wrangler secret put <NAME> --env production
-
+# npx wrangler secret put <NAME> --env test
+# npx wrangler secret put <NAME> --env production

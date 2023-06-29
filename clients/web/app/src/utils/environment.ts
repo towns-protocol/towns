@@ -41,7 +41,7 @@ const envSchema = z.object({
     VITE_AMPLITUDE_KEY: z.string().nullish(), // making this optional since we want to allow local development without it
     VITE_GLEAP_API_KEY: z.string().optional(), // making this optional since we want to allow local development without it
     VITE_WEB_PUSH_APPLICATION_SERVER_KEY: z.string().optional(), // making this optional since we want to allow local development without it
-    VITE_WEB_PUSH_WORKER_URL: z.string().optional(),
+    VITE_WEB_PUSH_WORKER_URL: z.string().optional(), // url to the web push worker
     VITE_AMP_WORKER_URL: z.string().url().optional(),
     VITE_TOWNS_TOKEN_URL: z.string().url().optional(),
     VITE_WALLET_CONNECT_PROJECT_ID: z.string().default('stringtopreventerror'),

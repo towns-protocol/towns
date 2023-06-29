@@ -3,7 +3,7 @@
 usage()
 {
 cat << EOF
-usage: $0 PARAM [-wpp|--with-postgres-persist] [-was|--with-appservice] [-h|--help]
+usage: $0 PARAM [-wpp|--with-postgres-persist] [-was|--with-appservice] [-wpn|--with-push-notification] [-h|--help]
 
 This script does foo.
 
@@ -11,6 +11,7 @@ OPTIONS:
    PARAM        The param
    -h|--help    Show this message
    -wpp|--with-postgres-persist   Start Dendrite with persistent postgres
+   -wpn|--with-push-notification  Start Dendrite with push notification enabled
    -spg|--skip-postgres   Dont start postgres at all
    -dco|--docker-compose-only  Start dendrite from docker-compose instead of source
 EOF
@@ -22,6 +23,7 @@ LOCAL_TEST_DIR=${SCRIPT_DIR}/servers/dendrite_local_test
 
 # Parse command line arguments
 WITH_POSTGRES_PERSIST=""
+WITH_PUSH_NOTIFICATION=""
 SKIP_POSTGRES=""
 DOCKER_COMPOSE_ONLY=""
 export DENDRITE_TRACE_INTERNAL="1"
@@ -30,6 +32,9 @@ while [ "$1" != "" ]; do
     case $1 in
         -wpp | --with-postgres-persist )  
             WITH_POSTGRES_PERSIST="with-postgres-persist"
+            ;;
+        -wpn | --with-push-notification )  
+            WITH_PUSH_NOTIFICATION="with-push-notification"
             ;;
         -spg | --skip-postgres )  
             SKIP_POSTGRES="skip-postgres"
@@ -85,6 +90,16 @@ else
     sleep 1
   done
   echo >&2 "$(date +%Y%m%dt%H%M%S) Postgres is up"
+fi
+
+if [ "${WITH_PUSH_NOTIFICATION}" == "with-push-notification" ]; then
+  echo "Enabling Push Notification by exporting env vars"
+  export PUSH_NOTIFICATION_AUTH_TOKEN="foo"
+  export PUSH_NOTIFICATION_URL="http://127.0.0.1:8787"
+else
+  echo "Push Notification disabled"
+  export PUSH_NOTIFICATION_AUTH_TOKEN=""
+  export PUSH_NOTIFICATION_URL=""
 fi
 
 if [ "${DOCKER_COMPOSE_ONLY}" == "docker-compose-only" ]; then

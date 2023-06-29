@@ -21,49 +21,81 @@ import { isAuthedRequest } from '../../common'
 const router = Router()
 
 router.post('/api/add-subscription', async (request: Request, env: Env) => {
+  // check auth before doing work
   if (!isAuthedRequest(request, env)) {
-    console.error('add-subscription', 'Unauthorized')
-    return new Response('Unauthorized', {
-      status: 401,
-    })
+    return create401Response('add-subscription')
   }
-  const content = await request.json()
-  if (isAddSubscriptionRequestParams(content)) {
-    return addPushSubscription(content, env)
+
+  // get the content of the request as json
+  const content = await getContentAsJson(request)
+  if (!content || !isAddSubscriptionRequestParams(content)) {
+    console.error(
+      'add-subscription',
+      'Bad request with invalid params',
+      content,
+    )
+    return new Response('Bad request', { status: 400 })
   }
-  console.error('add-subscription', 'Bad request', content)
-  return new Response('Bad request', { status: 400 })
+
+  // handle a proper request
+  return addPushSubscription(content, env)
 })
 
 router.post('/api/remove-subscription', async (request: Request, env: Env) => {
+  // check auth before doing work
   if (!isAuthedRequest(request, env)) {
-    console.error('remove-subscription', 'Unauthorized')
-    return new Response('Unauthorized', {
-      status: 401,
-    })
+    return create401Response('remove-subscription')
   }
-  const content = await request.json()
-  if (isRemoveSubscriptionRequestParams(content)) {
-    return removePushSubscription(content, env)
+
+  // get the content of the request as json
+  const content = await getContentAsJson(request)
+  if (!content || !isRemoveSubscriptionRequestParams(content)) {
+    console.error(
+      'remove-subscription',
+      'Bad request with invalid params',
+      content,
+    )
+    return new Response('Bad request', { status: 400 })
   }
-  console.error('remove-subscription', 'Bad request', content)
-  return new Response('Bad request', { status: 400 })
+
+  // handle a proper request
+  return removePushSubscription(content, env)
 })
 
 router.post('/api/notify-users', async (request: Request, env: Env) => {
+  // check auth before doing work
   if (!isAuthedRequest(request, env)) {
-    console.error('notify-users', 'Unauthorized')
-    return new Response('Unauthorized', {
-      status: 401,
-    })
+    return create401Response('notify-users')
   }
-  const content = await request.json()
-  if (isNotifyRequestParams(content)) {
-    return notifyUsers(content, env)
+
+  // get the content of the request as json
+  const content = await getContentAsJson(request)
+  if (!content || !isNotifyRequestParams(content)) {
+    console.error('notify-users', 'Bad request with invalid params', content)
+    return new Response('Bad request', { status: 400 })
   }
-  console.error('notify-users', 'Bad request', content)
-  return new Response('Bad request', { status: 400 })
+
+  // handle a proper request
+  return notifyUsers(content, env)
 })
+
+function create401Response(msg: string) {
+  console.error(msg, 'Unauthorized')
+  return new Response('Unauthorized', {
+    status: 401,
+  })
+}
+
+async function getContentAsJson(request: Request): Promise<object | null> {
+  let content = {}
+  try {
+    content = await request.json()
+    return content
+  } catch (e) {
+    console.error('Bad request with non-json content', e)
+  }
+  return null
+}
 
 /**  dev routes start here */
 router.get('/service-worker.js', async (request: Request, env: Env) =>
