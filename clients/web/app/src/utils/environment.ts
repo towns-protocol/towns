@@ -40,6 +40,8 @@ const envSchema = z.object({
     VITE_SENTRY_BEARER_TOKEN: z.string().optional(),
     VITE_AMPLITUDE_KEY: z.string().nullish(), // making this optional since we want to allow local development without it
     VITE_GLEAP_API_KEY: z.string().optional(), // making this optional since we want to allow local development without it
+    VITE_MOCK_SERVICE_WORKER_ENABLED: z.string().optional(), // making this optional since we want to allow local development with / without it
+    VITE_PUSH_NOTIFICATION_ENABLED: z.string().optional(), // making this optional since we want to allow local development with / without it
     VITE_WEB_PUSH_APPLICATION_SERVER_KEY: z.string().optional(), // making this optional since we want to allow local development without it
     VITE_WEB_PUSH_WORKER_URL: z.string().optional(), // url to the web push worker
     VITE_AMP_WORKER_URL: z.string().url().optional(),

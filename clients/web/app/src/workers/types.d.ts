@@ -18,6 +18,7 @@ export type AppNotificationMention = {
 
 export type AppNotification = {
     spaceID: string
+    title: string
     content: AppNotificationMessage | AppNotificationMention
 }
 

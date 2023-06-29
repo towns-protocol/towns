@@ -12,19 +12,22 @@ export function handleNotifications(worker: ServiceWorkerGlobalScope) {
 
         const jsonString = event.data.text() || '{}'
         const notification = appNotificationFromPushEvent(jsonString)
+        console.log('sw: Received a push event', notification)
         if (!notification) {
             console.log("sw: Couldn't parse notification")
             return
         }
 
+        console.log('sw: Showing notification')
         event.waitUntil(
             worker.registration.showNotification('Towns', {
-                body: 'You have a new message',
+                body: notification.title,
                 silent: false,
                 icon: '/pwa/maskable_icon_x192.png',
                 data: event.data.text(),
             }),
         )
+        console.log('sw: Notification shown')
     })
 
     worker.addEventListener('notificationclick', (event) => {

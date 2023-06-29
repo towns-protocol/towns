@@ -57,7 +57,11 @@ export default ({ mode }: { mode: string }) => {
         },
         assetsInclude: ['**/*.png', '**/*.svg'],
         plugins: [
-            VitePWA(vitePWAOptions),
+            VitePWA(
+                vitePWAOptions({
+                    enablePushNotification: Boolean(env.VITE_PUSH_NOTIFICATION_ENABLED),
+                }),
+            ),
             polyfillNode(),
             react(),
             tsconfigPaths(),

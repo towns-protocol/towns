@@ -60,15 +60,20 @@ const node = document.getElementById('root')
 
 if (node) {
     if (env.IS_DEV) {
-        import(`../mocks/browser`)
-            .then(({ worker }) => {
-                worker.start({
-                    onUnhandledRequest: 'bypass',
+        if (env.VITE_MOCK_SERVICE_WORKER_ENABLED === 'false') {
+            // skip the mock service worker
+            createRoot(node).render(<Main />)
+        } else {
+            import(`../mocks/browser`)
+                .then(({ worker }) => {
+                    worker.start({
+                        onUnhandledRequest: 'bypass',
+                    })
                 })
-            })
-            .then(() => {
-                createRoot(node).render(<Main />)
-            })
+                .then(() => {
+                    createRoot(node).render(<Main />)
+                })
+        }
     } else {
         createRoot(node).render(<Main />)
     }

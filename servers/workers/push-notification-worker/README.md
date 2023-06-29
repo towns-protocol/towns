@@ -10,8 +10,18 @@ See the instructions in `.dev.vars-sample`
 
 Step 3: In `.dev.vars`, update the VAPID keys with the generated ones in `./keys`
 
-Step 4: In `clients/web/app/.env.local`, set
-`VITE_WEB_PUSH_APPLICATION_SERVER_KEY`=<VAPID_PUBLIC_KEY>
+Step 4: In `clients/web/app/.env.local`:
+
+- `VITE_WEB_PUSH_APPLICATION_SERVER_KEY`=<VAPID_PUBLIC_KEY>
+
+## How to enable Push Notification on the client app
+
+In `clients/web/app/.env.local`:
+
+```bash
+VITE_MOCK_SERVICE_WORKER_ENABLED=false # set to false to use the real Service Worker for push notifications
+VITE_PUSH_NOTIFICATION_ENABLED=true # feature flag: set to true to enable push notifications
+```
 
 ## How to run the Push Notification Worker
 
@@ -43,3 +53,5 @@ these env variables in the file:
 export PUSH_NOTIFICATION_AUTH_TOKEN="foo" # same as .dev.vars
 export PUSH_NOTIFICATION_URL="http://127.0.0.1:8787" # your push worker URL
 ```
+
+## How to enable Push Notification on the client

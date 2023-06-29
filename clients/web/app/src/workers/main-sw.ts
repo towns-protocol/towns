@@ -1,9 +1,11 @@
+import { NavigationRoute, registerRoute } from 'workbox-routing'
 import {
     cleanupOutdatedCaches,
     createHandlerBoundToURL,
     precacheAndRoute,
 } from 'workbox-precaching'
-import { NavigationRoute, registerRoute } from 'workbox-routing'
+
+import { env } from '../utils/environment'
 import { handleNotifications } from './notifications'
 
 console.log('main-sw: script 2')
@@ -26,4 +28,6 @@ precacheAndRoute(self.__WB_MANIFEST)
 cleanupOutdatedCaches()
 
 // to allow work offline
-registerRoute(new NavigationRoute(createHandlerBoundToURL('index.html')))
+if (env.VITE_MOCK_SERVICE_WORKER_ENABLED === 'false') {
+    registerRoute(new NavigationRoute(createHandlerBoundToURL('index.html')))
+}

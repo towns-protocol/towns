@@ -2,42 +2,55 @@ import * as z from 'zod'
 import { PATHS } from '../routes'
 import { AppNotification, AppNotificationType } from './types.d'
 
+const body = z.object({
+    channelId: z.string(),
+    spaceId: z.string(),
+    threadId: z.string().optional(),
+    eventId: z.string().optional(),
+})
+
+const options = z.object({
+    body: body,
+})
+
 // this is obviously a bit overkill for now, but I think it can
 // be helpful as we add more notification types
 const notificationSchema = z
     .union([
         z.object({
-            notification_type: z.literal(AppNotificationType.NewMessage),
-            space_id: z.string(),
-            channel_id: z.string(),
-            thread_id: z.string().optional(),
+            notificationType: z.literal(AppNotificationType.NewMessage),
+            title: z.string(),
+            options: options,
         }),
         z.object({
-            notification_type: z.literal(AppNotificationType.Mention),
-            space_id: z.string(),
-            channel_id: z.string(),
-            thread_id: z.string().optional(),
-            event_id: z.string(),
+            notificationType: z.literal(AppNotificationType.Mention),
+            title: z.string(),
+            options: options,
         }),
     ])
     .transform((data): AppNotification | undefined => {
-        if (data.notification_type === AppNotificationType.NewMessage) {
+        if (data.notificationType === AppNotificationType.NewMessage) {
             return {
-                spaceID: data.space_id,
+                title: data.title,
+                spaceID: data.options.body.spaceId,
                 content: {
                     notificationType: AppNotificationType.NewMessage,
-                    channelID: data.channel_id,
-                    threadID: data.thread_id,
+                    channelID: data.options.body.channelId,
+                    threadID: data.options.body.threadId,
                 },
             }
-        } else if (data.notification_type === AppNotificationType.Mention) {
+        } else if (
+            data.notificationType === AppNotificationType.Mention &&
+            data.options.body.eventId
+        ) {
             return {
-                spaceID: data.space_id,
+                title: data.title,
+                spaceID: data.options.body.spaceId,
                 content: {
                     notificationType: AppNotificationType.Mention,
-                    channelID: data.channel_id,
-                    threadID: data.thread_id,
-                    eventID: data.event_id,
+                    channelID: data.options.body.channelId,
+                    threadID: data.options.body.threadId,
+                    eventID: data.options.body.eventId,
                 },
             }
         }
