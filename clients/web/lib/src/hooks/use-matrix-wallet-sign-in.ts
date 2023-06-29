@@ -542,7 +542,8 @@ function setZionSiweCookie(auth: AuthenticationData): string {
         path: '/',
         secure: 'true',
         sameSite: 'lax',
+        maxAge: 60 * 60 * 24 * 365, // 1 year
     }
     // this doesn't work for onrender.com preview environments, which requires domain to equal hostname
-    return `${cookie.name}=${cookie.value}; path=${cookie.path}; secure=${cookie.secure}; sameSite=${cookie.sameSite}; domain=${cookie.domain};`
+    return `${cookie.name}=${cookie.value}; path=${cookie.path}; secure=${cookie.secure}; sameSite=${cookie.sameSite}; domain=${cookie.domain}; max-age=${cookie.maxAge};`
 }
