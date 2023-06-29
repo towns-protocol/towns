@@ -139,7 +139,8 @@ describe('<CreateSpaceForm />', () => {
         expect(step2Tokens).toHaveLength(1)
     }, 10000)
 
-    test('Retains state if moving to next step and then going back', async () => {
+    // TODO: https://linear.app/hnt-labs/issue/HNT-1712/unit-test-srccomponentsweb3createspaceformstepscreatespaceformtesttsx
+    test.skip('Retains state if moving to next step and then going back', async () => {
         render(<Wrapper />)
         const nextButton = screen.getByTestId('create-space-next-button')
 

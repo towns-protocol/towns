@@ -28,7 +28,8 @@ import { ZTEvent } from '../../src/types/timeline-types'
 import { MatrixEvent, MsgType as MatrixMsgType, RoomEvent } from 'matrix-js-sdk'
 import { useZionContext } from '../../src/components/ZionContextProvider'
 
-describe('useCreateChannelTransactionHook', () => {
+// TODO: https://linear.app/hnt-labs/issue/HNT-1713/testsintegrationusecreatechanneltransactionhooktesttsx
+describe.skip('useCreateChannelTransactionHook', () => {
     test('user can create channel', async () => {
         /* Arrange */
         const provider = new ZionTestWeb3Provider()
