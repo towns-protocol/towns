@@ -8,7 +8,7 @@ import { InteractiveSpaceIcon } from '@components/SpaceIcon'
 import { useAuth } from 'hooks/useAuth'
 import { useWaitForInitialSync } from 'hooks/useWaitForInitialSync'
 import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinner'
-import '@wagmi/core/window'
+import 'wagmi/window'
 
 export type JoinData = {
     name: string

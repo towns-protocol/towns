@@ -10,11 +10,11 @@ describe('Accordion test', () => {
         render(
             <React.StrictMode>
                 <BrowserRouter>
-                    <App withRainbowConnectors={false} />
+                    <App />
                 </BrowserRouter>
             </React.StrictMode>,
         )
 
-        expect(screen.getByText(/Connect wallet/i)).toBeDefined()
+        expect(screen.getByText(/Injected/i)).toBeDefined()
     })
 })

@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from 'react'
 import { Chain } from 'wagmi'
-import { foundry, goerli, sepolia } from '@wagmi/chains'
+import { foundry, goerli, sepolia } from 'wagmi/chains'
 import { getChainName } from 'use-zion-client'
 import { env } from 'utils'
 

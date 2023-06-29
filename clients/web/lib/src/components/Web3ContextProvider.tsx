@@ -1,7 +1,7 @@
 import { Address, Chain, WagmiConfig, configureChains, createConfig } from 'wagmi'
 import React, { createContext, useContext, useMemo } from 'react'
 import { Connectors, TProvider, WalletStatus } from '../types/web3-types'
-import { foundry, goerli, localhost, sepolia } from '@wagmi/core/chains'
+import { foundry, goerli, localhost, sepolia } from 'wagmi/chains'
 import { alchemyProvider } from 'wagmi/providers/alchemy'
 import { ethers } from 'ethers'
 import { publicProvider } from 'wagmi/providers/public'
