@@ -49,7 +49,7 @@ export async function addPushSubscription(
     .bind(params.userId, JSON.stringify(params.subscriptionObject), pushType)
     .run()
 
-  //printDbResultInfo('addPushSubscription', info)
+  printDbResultInfo('addPushSubscription', info)
   return new Response(null, { status: 204 })
 }
 
@@ -62,7 +62,7 @@ export async function removePushSubscription(
     params.userId,
     JSON.stringify(params.subscriptionObject),
   )
-  //printDbResultInfo('removePushSubscription', info)
+  printDbResultInfo('removePushSubscription', info)
   return new Response(null, { status: 204 })
 }
 
@@ -129,6 +129,7 @@ export async function notifyUsers(params: NotifyRequestParams, env: Env) {
       console.log('failed to send notification', result.reason)
     }
   }
+  console.log('notificationsSentCount', notificationsSentCount)
   return new Response(notificationsSentCount.toString(), { status: 200 })
 }
 

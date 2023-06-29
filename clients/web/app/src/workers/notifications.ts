@@ -12,7 +12,7 @@ export function handleNotifications(worker: ServiceWorkerGlobalScope) {
 
         const jsonString = event.data.text() || '{}'
         const notification = appNotificationFromPushEvent(jsonString)
-        console.log('sw: Received a push event', notification)
+        console.log('sw: Received a push notification event', notification)
         if (!notification) {
             console.log("sw: Couldn't parse notification")
             return

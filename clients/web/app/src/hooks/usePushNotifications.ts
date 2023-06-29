@@ -30,10 +30,12 @@ export const usePushNotifications = () => {
     const registerForPushSubscription = useEvent(async (userId: string) => {
         const subscription = await getOrRegisterPushSubscription()
         if (!subscription) {
+            console.log('did not subscribe to notification')
             return
         }
         // the user id can change, so can the push subscription returned from the browser
         // so we need to use a key that is unique to the user and the subscription
+        console.log(`${userId} registered for push notifications`)
         const subscriptionKey = JSON.stringify(pushSubscriptionPostData(subscription, userId))
         if (subscriptionKey === activePushSubscription) {
             return
@@ -53,7 +55,7 @@ export const usePushNotifications = () => {
         }
 
         if (!didNotifyWorker.current) {
-            console.log('registering for push notifications')
+            console.log(`registering for push notifications with "${env.VITE_WEB_PUSH_WORKER_URL}"`)
             register(user.userId)
                 .then(() => {
                     didNotifyWorker.current = true
@@ -104,6 +106,7 @@ async function addSubscriptionToPushNotificationWorker(
         console.error('PUSH: env.VITE_WEB_PUSH_WORKER_URL not set')
         return
     }
+    console.log('PUSH: sending subscription to Push Notification Worker', data)
     return await axiosClient.post(`${url}/api/add-subscription`, JSON.stringify(data))
 }
 
