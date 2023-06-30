@@ -10,6 +10,7 @@ import { useRequireTransactionNetwork } from 'hooks/useRequireTransactionNetwork
 import { FadeIn } from '@components/Transitions'
 import { useDevice } from 'hooks/useDevice'
 import { useEnvironment } from 'hooks/useEnvironmnet'
+import { shouldUseWalletConnect } from 'hooks/useShouldUseWalletConnect'
 import { LoginButton } from './LoginButton/LoginButton'
 import { WalletConnectButton } from './WalletConnectButton'
 import { RainbowKitLoginButton } from './RainbowKitLoginButton'
@@ -110,7 +111,7 @@ export const LoginComponent = () => {
                 <Stack gap>
                     {loginButtonContent()}
 
-                    {isTouch ? (
+                    {shouldUseWalletConnect() ? (
                         <WalletConnectButton isConnected={isConnected} />
                     ) : (
                         <RainbowKitLoginButton isConnected={isConnected} />

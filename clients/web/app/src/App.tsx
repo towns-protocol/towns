@@ -12,7 +12,7 @@ import { SentryReportModal } from '@components/SentryErrorReport/SentryErrorRepo
 import { Box, Stack } from '@ui'
 import { AnalyticsProvider } from 'hooks/useAnalytics'
 import { useAuth } from 'hooks/useAuth'
-import { isTouch, useDevice } from 'hooks/useDevice'
+import { useDevice } from 'hooks/useDevice'
 import { useEnvironment } from 'hooks/useEnvironmnet'
 import { useWindowListener } from 'hooks/useWindowListener'
 import { PATHS } from 'routes'
@@ -27,6 +27,7 @@ import { Figma } from 'ui/styles/palette'
 import { AppBadge, FaviconBadge } from '@components/AppBadges/AppBadges'
 import { AppNotifications } from '@components/AppNotifications/AppNotifications'
 import { useStore } from 'store/store'
+import { shouldUseWalletConnect } from 'hooks/useShouldUseWalletConnect'
 
 const AuthenticatedRoutes = React.lazy(() => import('routes/AuthenticatedRoutes'))
 const InviteLinkLanding = React.lazy(() => import('routes/InviteLinkLanding'))
@@ -44,7 +45,7 @@ const walletConnectors = ({ chains }: { chains: Chain[] }) => {
         projectId: env.VITE_WALLET_CONNECT_PROJECT_ID,
     })
 
-    return isTouch()
+    return shouldUseWalletConnect()
         ? [
               new WalletConnectConnector({
                   chains,
