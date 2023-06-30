@@ -13,8 +13,7 @@ import {
     waitForRandom401ErrorsForAction,
 } from './helpers/TestUtils'
 
-// TODO: https://linear.app/hnt-labs/issue/HNT-1718/testsintegrationmentionstestts
-describe.skip('mentions', () => {
+describe('mentions', () => {
     test('send and receive a mention', async () => {
         // create clients
         const { bob, alice } = await registerAndStartClients(['bob', 'alice'])
