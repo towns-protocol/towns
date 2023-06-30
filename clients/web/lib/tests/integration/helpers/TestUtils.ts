@@ -244,6 +244,7 @@ export async function waitForRandom401ErrorsForAction<T>(action: () => Promise<T
     } catch (error) {
         failMessage = `waitForRandom401ErrorsForAction() Failed action: ${action.toString()} because of error: ${JSON.stringify(
             error,
+            Object.getOwnPropertyNames(error),
         )}`
         console.error(failMessage, error)
     }

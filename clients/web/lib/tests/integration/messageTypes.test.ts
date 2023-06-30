@@ -23,8 +23,7 @@ import { Permission } from '../../src/client/web3/ContractTypes'
 import { TestConstants } from './helpers/TestConstants'
 import { waitFor } from '@testing-library/dom'
 
-// TODO: https://linear.app/hnt-labs/issue/HNT-1706/testsintegrationmessagetypestestts
-describe.skip('messageTypes', () => {
+describe('messageTypes', () => {
     test('send a m.gm message to test message types', async () => {
         // create clients
         // alice needs to have a valid nft in order to join bob's space / channel
@@ -54,9 +53,11 @@ describe.skip('messageTypes', () => {
         await waitForRandom401ErrorsForAction(() => alice.joinRoom(channelId))
 
         // alice sends a gm message
-        await alice.sendMessage(channelId, 'GM', {
-            messageType: MessageType.GM,
-        })
+        await waitForRandom401ErrorsForAction(() =>
+            alice.sendMessage(channelId, 'GM', {
+                messageType: MessageType.GM,
+            }),
+        )
         // bob should receive the message
         await waitFor(() => expect(bob.getMessages(channelId)).toContain('GM'))
         expect(
@@ -111,7 +112,9 @@ describe.skip('messageTypes', () => {
         // alice joins the room
         await waitForRandom401ErrorsForAction(() => alice.joinRoom(channelId))
         // alice sends a image message
-        await alice.sendMessage(channelId, 'what.jpg', IMAGE_MSG_CONTENT)
+        await waitForRandom401ErrorsForAction(() =>
+            alice.sendMessage(channelId, 'what.jpg', IMAGE_MSG_CONTENT),
+        )
 
         await waitFor(() => {
             expect(bob.getMessages(channelId)).toContain('what.jpg')
