@@ -104,15 +104,16 @@ export const TooltipRenderer = (props: Props) => {
         }
     }, [active, immediate])
 
-    return !children ? null : (
+    return (
         <>
-            {children({
-                triggerProps: {
-                    ref: triggerRef,
-                    onMouseEnter,
-                    onMouseLeave,
-                },
-            })}
+            {children &&
+                children({
+                    triggerProps: {
+                        ref: triggerRef,
+                        onMouseEnter,
+                        onMouseLeave,
+                    },
+                })}
 
             {keepAlive &&
                 root &&

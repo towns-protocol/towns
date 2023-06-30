@@ -1,4 +1,4 @@
-import React, { useContext } from 'react'
+import React, { useContext, useRef, useState } from 'react'
 import { MessageType, ThreadStats, TimelineEvent, ZTEvent } from 'use-zion-client'
 import {
     MessageLayout,
@@ -8,7 +8,8 @@ import {
 import { RatioedBackgroundImage } from '@components/RatioedBackgroundImage'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { useDevice } from 'hooks/useDevice'
-
+import { TooltipRenderer } from '@ui'
+import { ProfileHoverCard } from '@components/ProfileHoverCard/ProfileHoverCard'
 import {
     MessageTimelineContext,
     MessageTimelineType,
@@ -33,6 +34,8 @@ export const MessageItem = (props: Props) => {
     const { itemData, isHighlight } = props
     const event = itemData.event
     const { isTouch } = useDevice()
+    const messageTooltipRef = useRef<HTMLElement | null>(null)
+    const [hoveredMentionUserId, setHoveredMentionUserId] = useState<string | undefined>(undefined)
 
     const timelineContext = useContext(MessageTimelineContext)
 
@@ -125,13 +128,26 @@ export const MessageItem = (props: Props) => {
                         />
                     )
                 ) : (
-                    <MessageBody
-                        eventContent={event.content}
-                        event={event}
-                        members={members}
-                        channels={channels}
-                        onMentionClick={onMentionClick}
-                    />
+                    <>
+                        <MessageBody
+                            eventContent={event.content}
+                            event={event}
+                            members={members}
+                            channels={channels}
+                            onMentionClick={onMentionClick}
+                            onMentionHover={(ref, userId) => {
+                                messageTooltipRef.current = ref ?? null
+                                setHoveredMentionUserId(userId)
+                            }}
+                        />
+                        {hoveredMentionUserId && messageTooltipRef.current && (
+                            <TooltipRenderer
+                                active
+                                alignRef={messageTooltipRef}
+                                tooltip={<ProfileHoverCard userId={hoveredMentionUserId} />}
+                            />
+                        )}
+                    </>
                 )
             ) : (
                 <>not a message</>

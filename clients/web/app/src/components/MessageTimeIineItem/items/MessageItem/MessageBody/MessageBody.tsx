@@ -17,6 +17,7 @@ type Props = {
     members: RoomMember[]
     channels: Channel[]
     onMentionClick?: (mentionName: string) => void
+    onMentionHover?: (element?: HTMLElement, userId?: string) => void
 }
 
 function ErrorFallback({ error, resetErrorBoundary }: FallbackProps) {
@@ -43,7 +44,14 @@ const UnfurlBlock = (props: UnfurlData) => {
     return <UnfurledGenericBlock {...props} />
 }
 
-export const MessageBody = ({ eventContent, event, members, channels, onMentionClick }: Props) => {
+export const MessageBody = ({
+    eventContent,
+    event,
+    members,
+    channels,
+    onMentionClick,
+    onMentionHover,
+}: Props) => {
     const body = getMessageBody(event.eventId, eventContent)
     const urls = getUrls(body)
 
@@ -69,6 +77,7 @@ export const MessageBody = ({ eventContent, event, members, channels, onMentionC
                 members={members}
                 channels={channels}
                 onMentionClick={onMentionClick}
+                onMentionHover={onMentionHover}
             />
 
             {invalidContent

@@ -55,6 +55,7 @@ import { TabThroughPlugin } from './plugins/TabThroughPlugin'
 import { RememberInputPlugin } from './plugins/RememberInputPlugin'
 import CodeHighlightPlugin from './plugins/CodeHighlightPlugin'
 import { TabIndentationPlugin } from './plugins/TabIndentationPlugin'
+import { MentionHoverPlugin } from './plugins/MentionHoverPlugin'
 
 type Props = {
     onSend?: (value: string, options: SendTextMessageOptions | undefined) => void
@@ -127,8 +128,15 @@ export const RichTextPreview = React.memo(
         members?: RoomMember[]
         channels?: Channel[]
         onMentionClick?: (mentionName: string) => void
+        onMentionHover?: (element?: HTMLElement, userId?: string) => void
     }) => {
-        const { statusAnnotation, onMentionClick, channels = [], members = [] } = props
+        const {
+            statusAnnotation,
+            onMentionClick,
+            onMentionHover,
+            channels = [],
+            members = [],
+        } = props
         // note: unnecessary repetition here, could be optimised by handling above
         // inside e.g. space context or timeline
 
@@ -156,6 +164,12 @@ export const RichTextPreview = React.memo(
                     ) : (
                         <></>
                     )}
+                    {onMentionHover ? (
+                        <MentionHoverPlugin onMentionHover={onMentionHover} />
+                    ) : (
+                        <> </>
+                    )}
+
                     <RichTextPlugin
                         ErrorBoundary={LexicalErrorBoundary}
                         contentEditable={<ContentEditable className={fieldClassName} />}

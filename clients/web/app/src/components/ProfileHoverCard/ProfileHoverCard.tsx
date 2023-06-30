@@ -20,7 +20,7 @@ export const ProfileHoverCard = (props: Props) => {
     const userAddress = createUserIdFromString(userId)?.accountAddress
     const { data: userBio } = useGetUserBio(userAddress)
 
-    return (
+    return user ? (
         <Tooltip gap padding maxWidth="300">
             <Stack horizontal gap>
                 <Stack
@@ -56,5 +56,7 @@ export const ProfileHoverCard = (props: Props) => {
                 )}
             </Stack>
         </Tooltip>
+    ) : (
+        <Tooltip>User info not available</Tooltip>
     )
 }
