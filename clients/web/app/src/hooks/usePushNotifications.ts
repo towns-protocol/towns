@@ -33,6 +33,8 @@ export const usePushNotifications = () => {
             console.log('did not subscribe to notification')
             return
         }
+        // force register the subscription each time.
+        await addSubscriptionToPushNotificationWorker(subscription, userId)
         // the user id can change, so can the push subscription returned from the browser
         // so we need to use a key that is unique to the user and the subscription
         console.log(`${userId} registered for push notifications`)
@@ -40,7 +42,7 @@ export const usePushNotifications = () => {
         if (subscriptionKey === activePushSubscription) {
             return
         }
-        await addSubscriptionToPushNotificationWorker(subscription, userId)
+        //await addSubscriptionToPushNotificationWorker(subscription, userId)
         setActivePushSubscription(subscriptionKey)
     })
 
@@ -100,14 +102,18 @@ async function addSubscriptionToPushNotificationWorker(
     subscription: PushSubscription,
     userId: string,
 ) {
-    const data = pushSubscriptionPostData(subscription, userId)
+    const data = pushSubscriptionPostData(subscription.toJSON(), userId)
     const url = env.VITE_WEB_PUSH_WORKER_URL
     if (!url) {
         console.error('PUSH: env.VITE_WEB_PUSH_WORKER_URL not set')
         return
     }
-    console.log('PUSH: sending subscription to Push Notification Worker', data)
-    return await axiosClient.post(`${url}/api/add-subscription`, JSON.stringify(data))
+    console.log(
+        'PUSH: sending subscription to Push Notification Worker',
+        data.userId,
+        data.subscriptionObject.endpoint,
+    )
+    return await axiosClient.post(`${url}/api/add-subscription`, data)
 }
 
 async function getOrRegisterPushSubscription() {
@@ -128,6 +134,6 @@ async function getOrRegisterPushSubscription() {
     })
 }
 
-function pushSubscriptionPostData(subscription: PushSubscription, userId: string) {
+function pushSubscriptionPostData(subscription: PushSubscriptionJSON, userId: string) {
     return { subscriptionObject: subscription, userId: userId }
 }
