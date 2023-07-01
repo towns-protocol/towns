@@ -14,6 +14,10 @@ import {
     UserPayload_ToDevice,
     SpacePayload_Channel,
     ChannelPayload_Message,
+    ToDeviceMessage,
+    ToDeviceOp,
+    ToDeviceMessage_KeyRequest,
+    ToDeviceMessage_KeyResponse,
     UserPayload_UserMembership,
 } from '@towns/proto'
 import {
@@ -25,6 +29,7 @@ import {
 } from 'ethereum-cryptography/utils'
 import { keccak256 } from 'ethereum-cryptography/keccak'
 import { isDefined } from './check'
+import { ISignatures } from './crypto/deviceInfo'
 
 export interface ParsedEvent {
     event: StreamEvent
@@ -32,12 +37,6 @@ export interface ParsedEvent {
     hashStr: string
     prevEventsStrs: string[]
     creatorUserId: string
-}
-
-export interface ISignatures {
-    [entity: string]: {
-        [keyId: string]: string
-    }
 }
 
 export interface IDeviceKeySignatures {
@@ -82,6 +81,11 @@ export const bin_toString = (buf: Uint8Array): string => {
     return bytesToUtf8(buf)
 }
 
+export const takeKeccakFingerprintInHex = (buf: Uint8Array, n: number): string => {
+    const hash = bin_toHexString(keccak256(buf))
+    return hash.slice(0, n)
+}
+
 export const shortenHexString = (s: string): string => {
     if (s.startsWith('0x')) {
         return s.length > 12 ? s.slice(0, 6) + '..' + s.slice(-4) : s
@@ -95,11 +99,6 @@ export const isHexString = (value: string): boolean => {
         return false
     }
     return /^(0x)?[0-9a-fA-F]+$/.test(value)
-}
-
-export const takeKeccakFingerprintInHex = (buf: Uint8Array, n: number): string => {
-    const hash = bin_toHexString(keccak256(buf))
-    return hash.slice(0, n)
 }
 
 export const bin_equal = (
@@ -331,6 +330,43 @@ export const getMessagePayload = (
         }
     }
     return undefined
+}
+
+export const getToDevicePayloadContent = (
+    payload: UserPayload_ToDevice,
+): ToDeviceMessage_KeyRequest | ToDeviceMessage_KeyResponse | undefined => {
+    const decoder = new TextDecoder()
+    const decodedPayload = decoder.decode(payload?.value)
+    let content: ToDeviceMessage_KeyRequest | ToDeviceMessage_KeyResponse | undefined = undefined
+    switch (ToDeviceOp[payload.op]) {
+        case ToDeviceOp[ToDeviceOp.TDO_KEY_REQUEST]: {
+            content = ToDeviceMessage_KeyRequest.fromJsonString(decodedPayload)
+            return content
+        }
+        case ToDeviceOp[ToDeviceOp.TDO_KEY_RESPONSE]: {
+            content = ToDeviceMessage_KeyRequest.fromJsonString(decodedPayload)
+            return content
+        }
+        default:
+            break
+    }
+    return content
+}
+
+export const getToDevicePayloadContentFromEvent = (
+    event: ParsedEvent | StreamEvent | undefined,
+): ToDeviceMessage | undefined => {
+    const payload = getToDeviceMessagePayload(event)
+    if (!payload) {
+        return undefined
+    }
+    return ToDeviceMessage.fromBinary(payload.value)
+}
+
+export const getToDevicePayloadContentFromJsonString = (
+    payload: string,
+): ToDeviceMessage | undefined => {
+    return ToDeviceMessage.fromJsonString(payload)
 }
 
 export const getToDeviceMessagePayload = (

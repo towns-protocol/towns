@@ -1,6 +1,6 @@
-import { dlog } from './dlog'
-import { townsHash, townsRecoverPubKey, townsSign, townsVerifySignature } from './crypto/crypto'
-import { bin_fromHexString, bin_toHexString } from './types'
+import { dlog } from '../dlog'
+import { townsHash, townsRecoverPubKey, townsSign, townsVerifySignature } from './crypto'
+import { bin_fromHexString, bin_toHexString } from '../types'
 import { getPublicKey, utils } from 'ethereum-cryptography/secp256k1'
 import { readFileSync, writeFileSync } from 'fs'
 
@@ -62,7 +62,7 @@ describe('crypto', () => {
             .map((x) => x.split(',').map(bin_fromHexString))
 
         test('keys', () => {
-            log('Loaded keys, num =', keys.length)
+            log('Loaded %d keys', keys.length)
             keys.forEach(([pr, pu]) => {
                 expect(getPublicKey(pr)).toEqual(pu)
             })
@@ -73,13 +73,13 @@ describe('crypto', () => {
             .split('\n')
             .filter((x) => x)
 
-        log('Loaded data, lines =', data.length)
+        log('Loaded %d data lines', data.length)
 
         const SHARDS = 16
         // Limit to just 2 shards for time sake.
         // Should be run with 16 shards to get full coverage.
         const SHARDS_LIMIT = +(process.env.SHARDS_LIMIT ?? '2')
-        log('Limiting shards for time sake, limit =', SHARDS_LIMIT)
+        log('Limiting to %d shards for time sake.', SHARDS_LIMIT)
         for (let shard = 0; shard < SHARDS_LIMIT; ++shard) {
             const s = shard.toString().padStart(2, '0')
             test(`checkData_Shard_${s}_of_${SHARDS}`, async () => {

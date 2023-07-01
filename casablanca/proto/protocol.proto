@@ -170,6 +170,11 @@ message ChannelPayload {
         optional string session_id = 5;
     }
 
+    /**
+    * Receipt is used to acknowledge that the event depicted by origin_op and hash 
+    * was responded to by a device. Used to prevent spurious processing of to-device events
+    * by multiple requested users' devices.
+    */
     message Receipt {
         ToDeviceOp origin_op = 1;
         bytes origin_hash = 2;

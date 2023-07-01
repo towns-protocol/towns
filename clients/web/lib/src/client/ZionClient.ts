@@ -11,6 +11,8 @@ import {
     makeOldTownsDelegateSig,
     makeStreamRpcClient,
     takeKeccakFingerprintInHex,
+    RiverDbManager,
+    userIdFromAddress,
 } from '@towns/sdk'
 import {
     ChannelTransactionContext,
@@ -125,6 +127,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
     public matrixDecryptionExtension?: MatrixDecryptionExtension
     protected casablancaClient?: CasablancaClient
     private dbManager: MatrixDbManager
+    private riverDbManager: RiverDbManager
     private _auth?: MatrixAuth
     private _signerContext?: SignerContext
     protected _eventHandlers?: ZionClientEventHandlers
@@ -134,6 +137,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
         this.name = name || ''
         console.log('~~~ new ZionClient ~~~', this.name, this.opts)
         this.dbManager = new MatrixDbManager()
+        this.riverDbManager = new RiverDbManager()
         this.spaceDapp = new SpaceDapp(opts.chainId, opts.web3Provider)
         this.pioneerNFT = new PioneerNFT(opts.chainId, opts.web3Provider)
         this._eventHandlers = opts.eventHandlers
@@ -320,10 +324,16 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
         }
         this._signerContext = context
         const rpcClient = makeStreamRpcClient(this.opts.casablancaServerUrl)
+        // get storage
+        // todo jterzis 06/15/23: add client store here
+        // crypto store
+        const userId = userIdFromAddress(context.creatorAddress)
+        const cryptoStore = this.riverDbManager.getCryptoDb(userId)
         this.casablancaClient = new CasablancaClient(
             context,
             rpcClient,
             this.opts.logNamespaceFilter,
+            cryptoStore,
         )
         // TODO - long-term the app should already know if user exists via cookie
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
@@ -1731,7 +1741,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
                 throw new Error('Casablanca client not initialized')
             }
             const devices = this.casablancaClient.getStoredDevicesForUser(userId)
-            return devices.length > 0
+            return Object.keys(devices).length > 0
         } else {
             if (!this.matrixClient) {
                 throw new Error('matrix client is undefined')

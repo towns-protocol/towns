@@ -1,10 +1,9 @@
 import Olm from '@matrix-org/olm'
-
 type OlmLib = typeof Olm
 
 export class OlmMegolmDelegate {
     readonly delegate: OlmLib
-    private initialized = false
+    public initialized = false
 
     constructor(olmLib?: OlmLib) {
         if (olmLib == undefined) {
@@ -23,56 +22,56 @@ export class OlmMegolmDelegate {
         this.initialized = typeof this.delegate.get_library_version === 'function'
     }
 
-    public async createAccount(): Promise<Olm.Account> {
+    public createAccount(): Olm.Account {
         if (!this.initialized) {
             throw new Error('olm not initialized')
         }
         return new this.delegate.Account()
     }
 
-    public async createSession(): Promise<Olm.Session> {
+    public createSession(): Olm.Session {
         if (!this.initialized) {
             throw new Error('olm not initialized')
         }
         return new this.delegate.Session()
     }
 
-    public async createInboundGroupSession(): Promise<Olm.InboundGroupSession> {
+    public createInboundGroupSession(): Olm.InboundGroupSession {
         if (!this.initialized) {
             throw new Error('olm not initialized')
         }
         return new this.delegate.InboundGroupSession()
     }
 
-    public async createOutboundGroupSession(): Promise<Olm.OutboundGroupSession> {
+    public createOutboundGroupSession(): Olm.OutboundGroupSession {
         if (!this.initialized) {
             throw new Error('olm not initialized')
         }
         return new this.delegate.OutboundGroupSession()
     }
 
-    public async createPkEncryption(): Promise<Olm.PkEncryption> {
+    public createPkEncryption(): Olm.PkEncryption {
         if (!this.initialized) {
             throw new Error('olm not initialized')
         }
         return new this.delegate.PkEncryption()
     }
 
-    public async createPkDecryption(): Promise<Olm.PkDecryption> {
+    public createPkDecryption(): Olm.PkDecryption {
         if (!this.initialized) {
             throw new Error('olm not initialized')
         }
         return new this.delegate.PkDecryption()
     }
 
-    public async createPkSigning(): Promise<Olm.PkSigning> {
+    public createPkSigning(): Olm.PkSigning {
         if (!this.initialized) {
             throw new Error('olm not initialized')
         }
         return new this.delegate.PkSigning()
     }
 
-    public async createOlmUtil(): Promise<Olm.Utility> {
+    public createOlmUtil(): Olm.Utility {
         if (!this.initialized) {
             throw new Error('olm not initialized')
         }

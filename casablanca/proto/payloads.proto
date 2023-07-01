@@ -117,8 +117,8 @@ message MegolmSession {
 }
 
 enum KeyResponseKind {
-    UNDEFINED = 0;
-    KEYS_FOUND = 1;
-    KEYS_NOT_FOUND = 2;
-    CHANNEL_NOT_FOUND = 3;
+    KRK_UNDEFINED = 0;
+    KRK_KEYS_FOUND = 1;
+    KRK_KEYS_NOT_FOUND = 2;
+    KRK_CHANNEL_NOT_FOUND = 3;
 }

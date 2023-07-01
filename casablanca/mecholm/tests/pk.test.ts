@@ -13,10 +13,10 @@ describe('Pk Signing and Encryption', () => {
         OlmDelegate = new OlmMegolmDelegate()
         await OlmDelegate.init()
         // create a key pair for encryption
-        encryption = await OlmDelegate.createPkEncryption()
+        encryption = OlmDelegate.createPkEncryption()
         // create a key pair for decryption
-        decryption = await OlmDelegate.createPkDecryption()
-        signing = await OlmDelegate.createPkSigning()
+        decryption = OlmDelegate.createPkDecryption()
+        signing = OlmDelegate.createPkSigning()
     })
 
     afterEach(async () => {
@@ -78,7 +78,7 @@ describe('Pk Signing and Encryption', () => {
         let PICKLE_KEY = 'secret_key'
         let pickle = decryption.pickle(PICKLE_KEY)
 
-        let new_decryption = await OlmDelegate.createPkDecryption()
+        let new_decryption = OlmDelegate.createPkDecryption()
         let new_pubkey = new_decryption.unpickle(PICKLE_KEY, pickle)
         expect(new_pubkey).toEqual(pubkey)
         let decrypted = new_decryption.decrypt(
@@ -103,7 +103,7 @@ describe('Pk Signing and Encryption', () => {
         const TEST_TEXT = 'I am attesting to this text'
         const pubkey = signing.init_with_seed(seed)
         const sig = signing.sign(TEST_TEXT)
-        const util = await OlmDelegate.createOlmUtil()
+        const util = OlmDelegate.createOlmUtil()
         util.ed25519_verify(pubkey, TEST_TEXT, sig)
         let verifyFailure = null
         try {

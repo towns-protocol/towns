@@ -13,19 +13,27 @@ import {
     ChannelMessage_Reaction,
     ChannelMessage_Redaction,
     StreamEvent,
-    SyncCookie,
+    MegolmSession,
     FallbackKeys,
     Key,
+    SyncCookie,
     DeviceKeys,
+    UserPayload_ToDevice,
 } from '@towns/proto'
-import { Crypto } from './crypto'
+
+import { Crypto } from './crypto/crypto'
+import { OlmDevice, IExportedDevice as IExportedOlmDevice } from './crypto/olmDevice'
+import { DeviceInfoMap, DeviceList, IOlmDevice } from './crypto/deviceList'
 import { DLogger, dlog } from './dlog'
+import { makeStreamRpcClient } from './makeStreamRpcClient'
 import EventEmitter from 'events'
 import TypedEmitter from 'typed-emitter'
 import { isDefined, throwWithCode } from './check'
 import {
+    StreamPrefix,
     isChannelStreamId,
     isSpaceStreamId,
+    isUserStreamId,
     makeUniqueChannelStreamId,
     makeUniqueSpaceStreamId,
     makeUserDeviceKeyStreamId,
@@ -50,9 +58,12 @@ import {
     IDeviceKeySignatures,
     shortenHexString,
 } from './types'
+import { CryptoStore } from './crypto/store/base'
+import { DeviceInfo } from './crypto/deviceInfo'
+import { IContent, IDecryptOptions, RiverEvent } from './event'
 import _ from 'lodash'
 import debug from 'debug'
-import { makeStreamRpcClient } from './makeStreamRpcClient'
+import { OLM_ALGORITHM } from './crypto/olmLib'
 
 const log = dlog('csb:client')
 
@@ -139,6 +150,11 @@ const enum AbortReason {
     BLIP = 'BLIP',
 }
 
+interface IExportedDevice {
+    olmDevice: IExportedOlmDevice
+    userId: string
+    deviceId: string
+}
 type StreamRpcClientType = ReturnType<typeof makeStreamRpcClient>
 
 export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents>) {
@@ -156,6 +172,9 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
     private readonly logEmitFromClient: DLogger
     private readonly logEvent: DLogger
 
+    protected exportedOlmDeviceToImport?: IExportedOlmDevice
+    public pickleKey?: string
+    protected cryptoStore?: CryptoStore
     private cryptoBackend?: Crypto
     private syncLoop?: Promise<undefined | unknown>
     private syncAbort?: AbortController
@@ -164,6 +183,9 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
         signerContext: SignerContext,
         rpcClient: StreamRpcClientType,
         logNamespaceFilter?: string,
+        cryptoStore?: CryptoStore,
+        olmDeviceToImport?: IExportedDevice,
+        pickleKey?: string,
     ) {
         super()
         if (logNamespaceFilter) {
@@ -180,10 +202,19 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
         )
         this.signerContext = signerContext
         this.rpcClient = rpcClient
-        this.userId = userIdFromAddress(signerContext.creatorAddress)
-        // TODO: tighten deviceId type and validate as we do with userId
-        this.deviceId = signerContext.deviceId
-
+        if (olmDeviceToImport) {
+            this.deviceId = olmDeviceToImport.deviceId
+            this.userId = olmDeviceToImport.userId
+            // will be used during crypto async init
+            this.exportedOlmDeviceToImport = olmDeviceToImport.olmDevice
+        } else {
+            this.userId = userIdFromAddress(signerContext.creatorAddress)
+            // TODO: tighten deviceId type and validate as we do with userId
+            this.deviceId = signerContext.deviceId
+            if (pickleKey) {
+                this.pickleKey = pickleKey
+            }
+        }
         const shortId = shortenHexString(
             this.userId.startsWith('0x') ? this.userId.slice(2) : this.userId,
         )
@@ -193,7 +224,19 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
         this.logEmitFromClient = dlog('csb:cl:emit').extend(shortId)
         this.logEvent = dlog('csb:cl:event').extend(shortId)
 
+        this.cryptoStore = cryptoStore
         this.logCall('new Client')
+    }
+
+    get cryptoEnabled(): boolean {
+        return this.cryptoBackend !== undefined
+    }
+
+    get olmDevice(): OlmDevice {
+        if (!this.cryptoBackend) {
+            throw new Error('cryptoBackend not initialized')
+        }
+        return this.cryptoBackend.olmDevice
     }
 
     async stop(): Promise<void> {
@@ -902,55 +945,90 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
         const op: ToDeviceOp =
             typeof type == 'string' ? ToDeviceOp[type as keyof typeof ToDeviceOp] : type
         assert(op !== undefined, 'invalid to device op')
+        if (isUserStreamId(userId)) {
+            userId = userId.slice(StreamPrefix.User.length)
+        }
+        const senderKey = this.cryptoBackend?.deviceKeys[`curve25519:${this.deviceId}`]
+        if (!senderKey) {
+            this.logCall('no sender key')
+        }
         const streamId: string = makeUserStreamId(userId)
         await this.loadExistingForeignUser(userId)
-        // retrieve all device_ids of a user
-        const deviceIds = this.getStoredDevicesForUser(userId)
-        // todo: this should use client protobuf not JSON and be encrypted
-        const encoder = new TextEncoder()
-        const envelope = encoder.encode(JSON.stringify(event))
-        return Promise.all(
-            deviceIds.map((deviceId) => {
+        // retrieve all device keys of a user
+        const deviceInfoMap = await this.getStoredDevicesForUser(userId)
+        // encrypt event contents and encode ciphertext
+        const envelope = await this.createEncryptedCipherFromEvent(event, userId)
+        const promiseArray = Array.from(deviceInfoMap.keys()).map((userId) => {
+            const devicesForUser = deviceInfoMap.get(userId)
+            if (!devicesForUser) {
+                this.logCall(`no devices for user ${userId}`)
+                return
+            }
+            Array.from(devicesForUser.keys()).map((deviceId) => {
+                const curve25519deviceKeyArr = DeviceInfo.getCurve25519KeyFromUserId(
+                    userId,
+                    deviceInfoMap,
+                    false,
+                    deviceId,
+                )
+                if (!curve25519deviceKeyArr || curve25519deviceKeyArr?.length == 0) {
+                    this.logCall(`no device key for user ${userId}`)
+                    return
+                }
                 this.logCall(`toDevice ${deviceId}, streamId ${streamId}, userId ${userId}`)
                 return this.makeEventAndAddToStream(
                     streamId,
                     make_UserPayload_ToDevice({
+                        // key request or response
                         op,
-                        // todo: this should use client protobuf not JSON
+                        // todo: this should be encrypted with olm session
                         value: envelope,
-                        deviceKey: '',
-                        senderKey: '',
+                        // deviceKey is curve25519 id key of recipient device
+                        deviceKey: curve25519deviceKeyArr[0].key,
+                        // senderKey is curve25519 id key of sender device
+                        senderKey: senderKey ?? '',
                     }),
                     'toDevice',
                 )
-            }),
-        )
+            })
+        })
+        return Promise.all(promiseArray.flat())
     }
 
     async sendToDeviceMessage(
         userId: string,
-        deviceId: string,
         event: object,
         type: ToDeviceOp | string,
     ): Promise<void> {
         const op: ToDeviceOp =
             typeof type == 'string' ? ToDeviceOp[type as keyof typeof ToDeviceOp] : type
+        const senderKey = this.cryptoBackend?.deviceKeys[`curve25519:${this.deviceId}`]
+        assert(senderKey !== undefined, 'no sender key')
         const streamId: string = makeUserStreamId(userId)
         await this.loadExistingForeignUser(userId)
         // assert device_id belongs to user
-        const deviceIds = this.getStoredDevicesForUser(userId)
-        assert(deviceIds.includes(deviceId), 'deviceId must belong to user')
-        this.logCall(`toDevice ${deviceId}, streamId ${streamId}, userId ${userId}`)
-        // todo: this should use client protobuf not JSON and be encrypted
-        const encoder = new TextEncoder()
-        const envelope = encoder.encode(JSON.stringify(event))
+        const deviceInfoMap = await this.getStoredDevicesForUser(userId)
+        const deviceKeyArr = DeviceInfo.getCurve25519KeyFromUserId(userId, deviceInfoMap)
+        if (!deviceKeyArr || deviceKeyArr.length == 0) {
+            throw new Error('no device keys found for target to-device user ' + userId)
+        }
+        // by default we retrieve the first curve25519 match when sending to a single device
+        // of a user
+        const deviceKey = deviceKeyArr[0]
+        this.logCall(`toDevice ${deviceKey.deviceId}, streamId ${streamId}, userId ${userId}`)
+        // encrypt event contents and encode ciphertext
+        const envelope = await this.createEncryptedCipherFromEvent(event, userId)
         return this.makeEventAndAddToStream(
             streamId,
             make_UserPayload_ToDevice({
+                // key request or response
                 op,
                 value: envelope,
-                deviceKey: '',
-                senderKey: '',
+                // deviceKey is curve25519 id key of recipient device
+                deviceKey: deviceKey.key,
+                // senderKey is curve25519 id key of sender device
+                senderKey: senderKey ?? '',
+                // todo: point to origin event for key responses
             }),
             'toDevice',
         )
@@ -1070,10 +1148,17 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
         return mergedResults
     }
 
-    public getStoredDevicesForUser(userId: string): string[] {
+    public async getStoredDevicesForUser(userId: string): Promise<DeviceInfoMap> {
         this.logCall('getStoredDevicesForUser', userId)
-        // TODO: Implement
-        return [userId]
+        try {
+            const response = await this.downloadKeys([userId])
+            if (response) {
+                return response
+            }
+        } catch (e) {
+            this.logCall('error downloading keys for user', userId, e)
+        }
+        return new Map<string, Map<string, DeviceInfo>>()
     }
 
     async makeEventAndAddToStream(
@@ -1102,8 +1187,19 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
     async initCrypto(): Promise<void> {
         this.logCall('initCrypto')
         if (this.cryptoBackend) {
-            console.warn('Attempt to re-init crypto backend, ignoring')
+            this.logCall('Attempt to re-init crypto backend, ignoring')
             return
+        }
+
+        if (!this.cryptoStore) {
+            throw new Error('cryptoStore must be set to init crypto')
+        }
+
+        this.logCall('Crypto: starting up crypto store.')
+        await this.cryptoStore.startup()
+
+        if (this.userId == undefined) {
+            throw new Error('userId must be set to init crypto')
         }
 
         // TODO: for now this just creates crypto module and uploads deviceKeys.
@@ -1112,14 +1208,152 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
             throw new Error('deviceId must be set to init crypto')
         }
 
-        const crypto = new Crypto(this, this.userId, this.deviceId)
+        const crypto = new Crypto(this, this.userId, this.deviceId, this.cryptoStore)
+        await crypto.init({
+            exportedOlmDevice: this.exportedOlmDeviceToImport,
+            pickleKey: this.pickleKey,
+        })
+        delete this.exportedOlmDeviceToImport
+        // todo set olmVersion
+
+        // todo: register event handlers
+
         this.cryptoBackend = crypto
         // TODO: register event handlers once crypto module is successfully initiatilized
         this.logCall('initCrypto:: uploading device keys...')
         return this.cryptoBackend.uploadDeviceKeys()
     }
-}
 
+    /**
+     * Creates an Event from a toDevice payload and attempts to decrypt it.
+     */
+    public async createDecryptToDeviceEvent(
+        payload: UserPayload_ToDevice,
+        senderUserId: string,
+    ): Promise<RiverEvent> {
+        const decoder = new TextDecoder()
+        // parse decoded ciphertext from bytes
+        const ciphertext = JSON.parse(decoder.decode(payload?.value))
+        const toDevicePayload = make_UserPayload_ToDevice({
+            deviceKey: payload.deviceKey,
+            senderKey: payload.senderKey,
+            op: payload.op,
+            value: ciphertext,
+        })
+
+        const event = new RiverEvent({
+            payload: {
+                parsed_event: toDevicePayload,
+                creator_user_id: senderUserId,
+            },
+        })
+        try {
+            await this.decryptEventIfNeeded(event)
+        } catch (e) {
+            this.logCall('error decrypting to-device event', e)
+        }
+        return event
+    }
+
+    /**
+     * Create encrypted event from an object using Olm algorithm for each user's devices
+     * and return ciphertext.
+     *
+     */
+    public async createEncryptedCipherFromEvent(
+        event: object,
+        recipientUserId: string,
+    ): Promise<Uint8Array> {
+        // encrypt event contents and encode ciphertext
+        const content: IContent = {
+            ['payload']: {
+                sender: this.userId,
+                content: event,
+            },
+            ['algorithm']: OLM_ALGORITHM,
+        }
+        const riverEvent = new RiverEvent({ content: content, sender: this.userId })
+        try {
+            await this.encryptEvent(riverEvent, [recipientUserId])
+        } catch (e) {
+            this.logCall('createEncryptedCipherFromEvent: ERROR', e)
+            throw e
+        }
+        const ciphertext: object = riverEvent.getWireContent().ciphertext
+        const encoder = new TextEncoder()
+        const envelope = encoder.encode(JSON.stringify(ciphertext))
+        return envelope
+    }
+
+    /**
+     * Attempts to decrypt an event
+     */
+    public async decryptEventIfNeeded(event: RiverEvent, options?: IDecryptOptions): Promise<void> {
+        if (event.shouldAttemptDecryption() || options?.forceRedecryptIfUntrusted) {
+            if (!this.cryptoBackend) {
+                throw new Error('crypto backend not initialized')
+            }
+            await event.attemptDecryption(this.cryptoBackend, options)
+        }
+
+        if (event.isBeingDecrypted()) {
+            const promise = event.getDecryptionPromise()
+            if (promise) {
+                return promise
+            }
+        }
+        return Promise.resolve()
+    }
+
+    public hasInboundSessionKeys(
+        channelId: string,
+        senderKey: string,
+        sessionId: string,
+    ): Promise<boolean> {
+        return this.cryptoBackend?.olmDevice?.hasInboundSessionKeys(
+            channelId,
+            senderKey,
+            sessionId,
+        ) as Promise<boolean>
+    }
+
+    public importRoomKeys(_keys: MegolmSession[], _opts?: object): Promise<void> | undefined {
+        // todo: implement on crypto module
+        return
+    }
+
+    public downloadKeys(
+        userIds: string[],
+        forceDownload?: boolean,
+    ): Promise<DeviceInfoMap> | undefined {
+        return this.cryptoBackend?.deviceList.downloadKeys(userIds, !!forceDownload)
+    }
+
+    get deviceList(): DeviceList | undefined {
+        return this.cryptoBackend?.deviceList
+    }
+
+    /**
+     * Encrypts and sends a given object via Olm to-device messages to a given set of devices.
+     */
+    public encryptAndSendToDevices(
+        userDeviceInfoArr: IOlmDevice[],
+        payload: object,
+        type?: ToDeviceOp,
+    ): Promise<void> {
+        if (!this.cryptoBackend) {
+            throw new Error('crypto backend not initialized')
+        }
+        return this.cryptoBackend.encryptAndSendToDevices(userDeviceInfoArr, payload, type)
+    }
+
+    public encryptEvent(event: RiverEvent, userIds: string[]): Promise<void> {
+        if (!this.cryptoBackend) {
+            throw new Error('crypto backend not initialized')
+        }
+        return this.cryptoBackend.encryptEvent(event, userIds)
+    }
+}
 export interface FallbackKeyResponse {
     [deviceId: string]: FallbackKeys
 }

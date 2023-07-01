@@ -1,7 +1,5 @@
 import { normailizeHashes, SignerContext, _impl_makeEvent_impl_ } from './sign'
 
-//import { Worker } from 'worker_threads'
-
 import { dlog } from './dlog'
 import { Envelope, StreamEvent } from '@towns/proto'
 import { PlainMessage } from '@bufbuild/protobuf'
@@ -9,8 +7,9 @@ import { Client } from './client'
 import { userIdFromAddress } from './id'
 import { bin_fromHexString, bin_toHexString, takeKeccakFingerprintInHex } from './types'
 import { getPublicKey, utils } from 'ethereum-cryptography/secp256k1'
-import { makeTownsDelegateSig, makeOldTownsDelegateSig, publicKeyToAddress } from './crypto'
+import { makeTownsDelegateSig, makeOldTownsDelegateSig, publicKeyToAddress } from './crypto/crypto'
 import { ethers } from 'ethers'
+import { RiverDbManager } from './riverDbManager'
 import { makeStreamRpcClient } from './makeStreamRpcClient'
 
 const log = dlog('csb:test:util')
@@ -77,7 +76,10 @@ export const makeTestClient = async (url?: string, context?: SignerContext): Pro
     if (context === undefined) {
         context = await makeRandomUserContext()
     }
-    return new Client(context, makeStreamRpcClient(url))
+    // create a new client with store(s)
+    const db = new RiverDbManager()
+    const cryptoStore = db.getCryptoDb(userIdFromAddress(context.creatorAddress))
+    return new Client(context, makeStreamRpcClient(url), undefined, cryptoStore)
 }
 
 class DonePromise {

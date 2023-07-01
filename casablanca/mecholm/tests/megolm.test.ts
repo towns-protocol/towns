@@ -28,7 +28,7 @@ describe('Megolm Encryption Protocol', () => {
     test('noInitShouldFail', async () => {
         const OlmDelegate = new OlmMegolmDelegate()
         try {
-            aliceSession = await OlmDelegate.createOutboundGroupSession()
+            aliceSession = OlmDelegate.createOutboundGroupSession()
         } catch (e) {
             expect((e as Error).message).toEqual('olm not initialized')
         }
@@ -38,9 +38,9 @@ describe('Megolm Encryption Protocol', () => {
     test('shouldEncryptAndDecryptGroup', async () => {
         const OlmDelegate = new OlmMegolmDelegate()
         await OlmDelegate.init()
-        aliceSession = await OlmDelegate.createOutboundGroupSession()
-        bobSession = await OlmDelegate.createInboundGroupSession()
-        eveSession = await OlmDelegate.createInboundGroupSession()
+        aliceSession = OlmDelegate.createOutboundGroupSession()
+        bobSession = OlmDelegate.createInboundGroupSession()
+        eveSession = OlmDelegate.createInboundGroupSession()
 
         aliceSession.create()
         expect(aliceSession.message_index()).toEqual(0)
@@ -77,9 +77,9 @@ describe('Megolm Encryption Protocol', () => {
     test('shouldEncryptAndDecryptGroupMultipleInit', async () => {
         const OlmDelegate = new OlmMegolmDelegate()
         await OlmDelegate.init()
-        aliceSession = await OlmDelegate.createOutboundGroupSession()
-        bobSession = await OlmDelegate.createInboundGroupSession()
-        eveSession = await OlmDelegate.createInboundGroupSession()
+        aliceSession = OlmDelegate.createOutboundGroupSession()
+        bobSession = OlmDelegate.createInboundGroupSession()
+        eveSession = OlmDelegate.createInboundGroupSession()
 
         aliceSession.create()
         expect(aliceSession.message_index()).toEqual(0)

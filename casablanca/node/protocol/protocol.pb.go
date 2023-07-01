@@ -2434,6 +2434,10 @@ func (x *ChannelPayload_Message) GetSessionId() string {
 	return ""
 }
 
+// *
+// Receipt is used to acknowledge that the event depicted by origin_op and hash
+// was responded to by a device. Used to prevent spurious processing of to-device events
+// by multiple requested users' devices.
 type ChannelPayload_Receipt struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache

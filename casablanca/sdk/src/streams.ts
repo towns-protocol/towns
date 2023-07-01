@@ -1,3 +1,4 @@
+import { dlog } from './dlog'
 import {
     ChannelOp,
     DeviceKeys,
@@ -12,13 +13,16 @@ import {
     PayloadCaseType,
     Membership,
     SpacePayload_Channel,
-    ToDeviceOp,
     UserPayload_UserMembership,
     UserDeviceKeyPayload_UserDeviceKey,
+    UserPayload_ToDevice,
 } from '@towns/proto'
 import TypedEmitter from 'typed-emitter'
 import { check, checkNever, isDefined, throwWithCode } from './check'
 import { ParsedEvent } from './types'
+import { userIdFromAddress } from './id'
+
+const log = dlog('csb:streams')
 
 export const findLeafEventHashes = (streamId: string, events: ParsedEvent[]): string[] => {
     check(events.length > 0, `Stream is empty ${streamId}`, Err.STREAM_BAD_HASHES)
@@ -69,13 +73,7 @@ export type StreamEvents = {
     spaceNewChannelCreated: (spaceId: string, channelId: string) => void
     spaceChannelDeleted: (spaceId: string, channelId: string) => void
     channelNewMessage: (channelId: string, message: ParsedEvent) => void
-    toDeviceMessage: (
-        streamId: string,
-        senderKey: string,
-        deviceKey: string,
-        op: ToDeviceOp,
-        event: ParsedEvent,
-    ) => void
+    toDeviceMessage: (streamId: string, event: UserPayload_ToDevice, senderUserId: string) => void
     userDeviceKeyMessage: (
         streamId: string,
         userId: string,
@@ -236,14 +234,12 @@ export class StreamStateView {
                             break
                         case 'toDevice':
                             {
-                                const { deviceKey, senderKey, op } = payload.value.content.value
+                                const content = payload.value.content.value
                                 emitter?.emit(
                                     'toDeviceMessage',
                                     this.streamId,
-                                    senderKey,
-                                    deviceKey,
-                                    op,
-                                    event,
+                                    content,
+                                    userIdFromAddress(event.event.creatorAddress),
                                 )
                                 // TODO: filter by deviceId and only store current deviceId's events
                                 this.toDeviceMessages.push(event)
@@ -314,8 +310,7 @@ export class StreamStateView {
                     checkNever(payload)
             }
         } catch (e) {
-            console.error(`Error processing event ${event.hashStr}`, e)
-            // throwWithCode(`Error processing event`, Err.STREAM_BAD_EVENT) // todo the old code threw, but it's client side parsing, so why?
+            log(`Error processing event ${event.hashStr}`, e)
         }
     }
 

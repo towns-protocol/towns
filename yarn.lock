@@ -6668,11 +6668,13 @@ __metadata:
   resolution: "@towns/mecholm@workspace:casablanca/mecholm"
   dependencies:
     "@matrix-org/olm": ^3.2.15
+    "@towns/proto": "workspace:^"
     "@types/jest": ^29.4.0
     "@types/lodash": ^4.14.186
     "@types/node": ^20.3.0
     "@typescript-eslint/eslint-plugin": ^5.59.9
     "@typescript-eslint/parser": ^5.59.9
+    debug: ^4.3.4
     eslint: ^8.42.0
     eslint-import-resolver-typescript: ^3.5.5
     eslint-plugin-import: ^2.27.5
