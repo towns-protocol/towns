@@ -1,52 +1,97 @@
 package infra
 
 import (
-	"context"
-	"errors"
+	"casablanca/node/config"
+	"casablanca/node/dlog"
+	"fmt"
+	"os"
 
-	"github.com/google/uuid"
-	log "github.com/sirupsen/logrus"
+	"golang.org/x/exp/slog"
 )
 
-type ContextKey string
+var (
+	fileLogLevel    slog.LevelVar
+	consoleLogLevel slog.LevelVar
+)
 
-var townsLoggerKey = ContextKey("townsLogger")
-var EventsLogger = log.New()
-
-func NewRequestId() string {
-	return uuid.NewString()
-}
-
-func SetLoggerWithRequestId(ctx context.Context) (context.Context, *log.Entry, string) {
-	requestId := NewRequestId()
-	log := log.WithFields(log.Fields{
-		"requestId": requestId,
-	})
-	return context.WithValue(ctx, townsLoggerKey, log), log, requestId
-}
-
-func SetLoggerWithProcess(ctx context.Context, name string) (context.Context, *log.Entry) {
-	log := log.WithFields(log.Fields{
-		"requestId": name,
-	})
-	return context.WithValue(ctx, townsLoggerKey, log), log
-}
-
-func GetLogger(ctx context.Context) *log.Entry {
-	if ctx.Value(townsLoggerKey) == nil {
-		return log.WithFields(log.Fields{})
+func InitLogFromConfig(c *config.LogConfig) {
+	commonLevel := slog.LevelInfo
+	if c.Level != "" {
+		err := commonLevel.UnmarshalText([]byte(c.Level))
+		if err != nil {
+			fmt.Printf("Failed to parse log level, level=%s, error=%v\n", c.Level, err)
+		}
 	}
-	return ctx.Value(townsLoggerKey).(*log.Entry)
-}
 
-func EnsureRequestId(ctx context.Context) error {
-	if ctx.Value(townsLoggerKey) == nil {
-		return errors.New("no requestId")
+	if c.ConsoleLevel != "" {
+		err := consoleLogLevel.UnmarshalText([]byte(c.ConsoleLevel))
+		if err != nil {
+			fmt.Printf("Failed to parse console log level, level=%s, error=%v\n", c.ConsoleLevel, err)
+			consoleLogLevel.Set(commonLevel)
+		}
+	} else {
+		consoleLogLevel.Set(commonLevel)
 	}
-	return nil
-}
 
-func GetRequestId(ctx context.Context) string {
-	// fails hard
-	return ctx.Value(townsLoggerKey).(*log.Entry).Data["requestId"].(string)
+	if c.FileLevel != "" {
+		err := fileLogLevel.UnmarshalText([]byte(c.FileLevel))
+		if err != nil {
+			fmt.Printf("Failed to parse file log level, level=%s, error=%v\n", c.FileLevel, err)
+			fileLogLevel.Set(commonLevel)
+		}
+	} else {
+		fileLogLevel.Set(commonLevel)
+	}
+
+	var consoleColors dlog.ColorMap
+	if c.NoColor {
+		consoleColors = dlog.ColorMap_Disabled
+	} else {
+		consoleColors = dlog.ColorMap_Enabled
+	}
+
+	var slogHandlers []slog.Handler
+	if c.Console {
+		slogHandlers = append(
+			slogHandlers,
+			dlog.NewPrettyTextHandler(
+				os.Stderr,
+				&dlog.PrettyHandlerOptions{
+					Level:  &consoleLogLevel,
+					Colors: consoleColors,
+				},
+			),
+		)
+	}
+
+	if c.File != "" {
+		file, err := os.OpenFile(c.File, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+		if err == nil {
+			slogHandlers = append(
+				slogHandlers,
+				dlog.NewPrettyTextHandler(
+					file,
+					&dlog.PrettyHandlerOptions{
+						Level:  &fileLogLevel,
+						Colors: dlog.ColorMap_Disabled,
+					},
+				),
+			)
+			// TODO: close file when program exits
+		} else {
+			fmt.Printf("Failed to open log file, file=%s, error=%v\n", c.FileLevel, err)
+		}
+	}
+
+	var slogHandler slog.Handler
+	if len(slogHandlers) > 1 {
+		slogHandler = dlog.NewMultiHandler(slogHandlers...)
+	} else if len(slogHandlers) == 1 {
+		slogHandler = slogHandlers[0]
+	} else {
+		slogHandler = &dlog.NullHandler{}
+		fmt.Println("No log handlers configured")
+	}
+
+	slog.SetDefault(slog.New(slogHandler))
 }

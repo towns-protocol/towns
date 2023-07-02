@@ -8,6 +8,7 @@ chain:
 log:
     file: logs/dev.log
     level: info
+    console: true
 metrics:
     enabled: true
     port: 8081

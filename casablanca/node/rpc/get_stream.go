@@ -4,12 +4,7 @@ import (
 	"context"
 
 	connect_go "github.com/bufbuild/connect-go"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/encoding/protojson"
 
-	. "casablanca/node/base"
-	. "casablanca/node/events"
 	"casablanca/node/infra"
 	. "casablanca/node/protocol"
 )
@@ -19,18 +14,18 @@ var (
 )
 
 func (s *Service) GetStream(ctx context.Context, req *connect_go.Request[GetStreamRequest]) (*connect_go.Response[GetStreamResponse], error) {
-	ctx, log, requestId := infra.SetLoggerWithRequestId(ctx)
-	log.Debugf("GetStream: request %s", protojson.Format((req.Msg)))
+	ctx, log := ctxAndLogForRequest(ctx, req)
+
+	log.Debug("GetStream ENTER", "streamId", req.Msg.StreamId)
 
 	res, err := s.getStream(ctx, req)
 	if err != nil {
-		log.Errorf("GetStream error: %v", err)
+		log.Error("GetStream WARN", "error", err)
 		getStreamRequests.Fail()
-		return nil, RpcAddRequestId(err, requestId)
+		return nil, err
 	}
 
-	parsedEvents := FormatEventsToJson(res.Msg.Stream.Events)
-	log.Debugf("GetStream: response %s %s", protojson.Format((res.Msg)), parsedEvents)
+	log.Debug("GetStream LEAVE", "response", res.Msg)
 	getStreamRequests.Pass()
 
 	return res, nil
@@ -41,7 +36,7 @@ func (s *Service) getStream(ctx context.Context, req *connect_go.Request[GetStre
 
 	_, streamView, err := s.cache.GetStream(ctx, streamId)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "GetStream: error getting stream: %v", err)
+		return nil, err
 	}
 
 	resp := &GetStreamResponse{

@@ -13,10 +13,8 @@ import (
 	"strings"
 
 	"casablanca/node/base"
-	"casablanca/node/infra"
+	"casablanca/node/dlog"
 	"casablanca/node/protocol"
-
-	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -43,7 +41,7 @@ const (
 
 // NewPGEventStore creates a new PGEventStore
 func NewPGEventStore(ctx context.Context, database_url string, clean bool) (*PGEventStore, error) {
-	log := infra.GetLogger(ctx)
+	log := dlog.CtxLog(ctx)
 
 	pool_conf, err := pgxpool.ParseConfig(database_url)
 	if err != nil {
@@ -77,26 +75,17 @@ func NewPGEventStore(ctx context.Context, database_url string, clean bool) (*PGE
 				return
 			case <-time.After(PG_REPORT_INTERVAL):
 				stats := pool.Stat()
-				log.Debugf("PG pool stats: %d, %d, %d, %d", stats.AcquireCount(), stats.AcquiredConns(), stats.IdleConns(), stats.TotalConns())
+				log.Debug("PG pool stats",
+					"acquireCount", stats.AcquireCount(),
+					"acquiredConns", stats.AcquiredConns(),
+					"idleConns", stats.IdleConns(),
+					"totalConns", stats.TotalConns(),
+				)
 			}
 		}
 	}()
 
 	store := &PGEventStore{pool: pool, debugCtl: make(chan struct{})}
-
-	go func() {
-		ctx, log := infra.SetLoggerWithProcess(ctx, "debug-events-loop")
-		for {
-			select {
-			case <-ctx.Done():
-				log.Debug("Debug events dump: context done")
-				return
-			case <-store.debugCtl:
-				log.Debug("Debug events stop")
-				return
-			}
-		}
-	}()
 
 	return store, nil
 }
@@ -143,7 +132,7 @@ func lockTable(ctx context.Context, tx pgx.Tx, tableName string) error {
 }
 
 func addEvents(ctx context.Context, pool *pgxpool.Pool, streamId string, envelopes []*protocol.Envelope) (int64, error) {
-	logger := infra.GetLogger(ctx)
+	log := dlog.CtxLog(ctx)
 
 	tx, err := startTx(ctx, pool)
 	if err != nil {
@@ -154,16 +143,12 @@ func addEvents(ctx context.Context, pool *pgxpool.Pool, streamId string, envelop
 		if !commited {
 			err := tx.Rollback(ctx)
 			if err != nil {
-				log.Errorf("Rollback: %v", err)
+				log.Error("addEvents Rollback", "error", err)
 			}
 		}
 	}()
 
 	parsedEvents := base.FormatEnvelopeHashes(envelopes)
-
-	if logger.Logger.GetLevel() >= log.DebugLevel {
-		addDebugEventEntry(streamId, parsedEvents)
-	}
 
 	sb := strings.Builder{}
 	params := make([]interface{}, 0, len(envelopes)*4)
@@ -194,27 +179,18 @@ func addEvents(ctx context.Context, pool *pgxpool.Pool, streamId string, envelop
 	}
 	err = tx.Commit(ctx)
 	if err != nil {
-		logger.Error("Commit error: ", err)
+		log.Error("Commit error: ", err)
 		return -1, err
 	}
 	commited = true
-	logger.Debugf("inserted int streamId: %s message with seq_num: %d for events: %s", streamId, seqNum, parsedEvents)
+	log.Debug("PGEventStore.addEvents", "streamId", streamId, "seqNum", seqNum, "parsedEvents", parsedEvents)
 	return seqNum, nil
-}
-
-func addDebugEventEntry(streamId string, parsedEvent string) {
-	infra.EventsLogger.Debugf("stream: %s, event: %s", streamId, parsedEvent)
 }
 
 // CreateStream creates a new event stream
 func (s *PGEventStore) CreateStream(ctx context.Context, streamID string, inceptionEvents []*protocol.Envelope) error {
-	err := infra.EnsureRequestId(ctx)
-	if err != nil {
-		return err
-	}
+	log := dlog.CtxLog(ctx)
 
-	log := infra.GetLogger(ctx)
-	log.Debug("CreateStream creating stream: ", streamID)
 	tx, err := startTx(ctx, s.pool)
 	if err != nil {
 		log.Debug("CreateStream startTx error ", err)
@@ -268,25 +244,17 @@ func (s *PGEventStore) CreateStream(ctx context.Context, streamID string, incept
 	}
 
 	// add the inception events
-	seqNum, err := addEvents(ctx, s.pool, streamID, inceptionEvents)
+	_, err = addEvents(ctx, s.pool, streamID, inceptionEvents)
 	if err != nil {
 		log.Error("CreateStream addEvents error ", err)
 		return err
 
 	}
-	log.Debug("committed stream: ", streamID, " with seq_num: ", seqNum)
 	return nil
 }
 
 func (s *PGEventStore) AddEvent(ctx context.Context, streamId string, event *protocol.Envelope) error {
-	err := infra.EnsureRequestId(ctx)
-	if err != nil {
-		return err
-	}
-
-	log := infra.GetLogger(ctx)
-	eventsAsString := base.FormatHashFromBytes(event.Hash)
-	log.Debugf("Storage: AddEvent streamId: %s event %s", streamId, eventsAsString)
+	log := dlog.CtxLog(ctx)
 	tx, err := startTx(ctx, s.pool)
 	if err != nil {
 		return err
@@ -327,11 +295,6 @@ func (s *PGEventStore) AddEvent(ctx context.Context, streamId string, event *pro
 
 // GetStreams returns a list of all event streams
 func (s *PGEventStore) GetStreams(ctx context.Context) ([]string, error) {
-	err := infra.EnsureRequestId(ctx)
-	if err != nil {
-		return nil, err
-	}
-
 	streams := []string{}
 	rows, err := s.pool.Query(ctx, "SELECT name FROM es")
 	if err != nil {
@@ -369,10 +332,7 @@ func checkStream(ctx context.Context, tx pgx.Tx, streamId string) (bool, error) 
 }
 
 func (s *PGEventStore) GetStream(ctx context.Context, streamId string) ([]*protocol.Envelope, error) {
-	err := infra.EnsureRequestId(ctx)
-	if err != nil {
-		return nil, err
-	}
+	log := dlog.CtxLog(ctx)
 
 	tx, err := startTx(ctx, s.pool)
 	if err != nil {
@@ -417,11 +377,6 @@ func (s *PGEventStore) GetStream(ctx context.Context, streamId string) ([]*proto
 
 // DeleteStream deletes an event stream
 func (s *PGEventStore) DeleteStream(ctx context.Context, streamID string) error {
-	err := infra.EnsureRequestId(ctx)
-	if err != nil {
-		return err
-	}
-
 	tx, err := startTx(ctx, s.pool)
 	if err != nil {
 		return err
@@ -442,11 +397,6 @@ func (s *PGEventStore) DeleteStream(ctx context.Context, streamID string) error 
 
 // DeleteAllStreams deletes all event streams
 func (s *PGEventStore) DeleteAllStreams(ctx context.Context) error {
-	err := infra.EnsureRequestId(ctx)
-	if err != nil {
-		return err
-	}
-
 	streams, err := s.GetStreams(ctx)
 	if err != nil {
 		return err
@@ -471,7 +421,7 @@ func (s *PGEventStore) DeleteAllStreams(ctx context.Context) error {
  * @returns {error} - any error
  */
 func fetchMessages(ctx context.Context, tx pgx.Tx, positions []StreamPos, maxCount int) (map[string][]*protocol.Envelope, map[string]int64, error) {
-	log := infra.GetLogger(ctx)
+	log := dlog.CtxLog(ctx)
 
 	log.Debug("fetchMessages: ", len(positions))
 
@@ -551,6 +501,8 @@ func fetchMessages(ctx context.Context, tx pgx.Tx, positions []StreamPos, maxCou
 var schema string
 
 func initStorage(ctx context.Context, pool *pgxpool.Pool) error {
+	log := dlog.CtxLog(ctx)
+
 	tx, err := pool.Begin(ctx)
 	if err != nil {
 		return err
@@ -563,7 +515,7 @@ func initStorage(ctx context.Context, pool *pgxpool.Pool) error {
 				if errors.Is(err, pgx.ErrTxClosed) {
 					return
 				}
-				log.Errorf("InitStorage: Failed to rollback transaction: %s", err)
+				log.Error("InitStorage: Failed to rollback transaction", "error", err)
 			}
 		}
 	}()
@@ -575,7 +527,7 @@ func initStorage(ctx context.Context, pool *pgxpool.Pool) error {
 
 	err = tx.Commit(ctx)
 	if err != nil {
-		log.Errorf("Failed to commit transaction: %s", err)
+		log.Error("InitStorage: Failed to commit transaction", "error", err)
 		return err
 	}
 	committed = true
@@ -583,6 +535,8 @@ func initStorage(ctx context.Context, pool *pgxpool.Pool) error {
 }
 
 func cleanStorage(ctx context.Context, pool *pgxpool.Pool) error {
+	log := dlog.CtxLog(ctx)
+
 	tx, err := pool.Begin(ctx)
 	if err != nil {
 		return err
@@ -595,24 +549,24 @@ func cleanStorage(ctx context.Context, pool *pgxpool.Pool) error {
 				if errors.Is(err, pgx.ErrTxClosed) {
 					return
 				}
-				log.Errorf("CleanStorage: Failed to rollback transaction: %s", err)
+				log.Error("CleanStorage: Failed to rollback transaction: %s", err)
 			}
 		}
 	}()
 
-	_, err = tx.Exec(context.Background(), "DROP SCHEMA public CASCADE")
+	_, err = tx.Exec(ctx, "DROP SCHEMA public CASCADE")
 	if err != nil {
 		return err
 	}
 
-	_, err = tx.Exec(context.Background(), "CREATE SCHEMA public")
+	_, err = tx.Exec(ctx, "CREATE SCHEMA public")
 	if err != nil {
 		return err
 	}
 
 	err = tx.Commit(ctx)
 	if err != nil {
-		log.Errorf("Failed to commit transaction: %s", err)
+		log.Error("Failed to commit transaction: %s", err)
 		return err
 	}
 	committed = true

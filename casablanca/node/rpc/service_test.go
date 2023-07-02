@@ -23,7 +23,6 @@ import (
 	"casablanca/node/testutils"
 
 	"github.com/bufbuild/connect-go"
-	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/protobuf/proto"
 )
@@ -31,11 +30,10 @@ import (
 var testDatabaseUrl string
 
 func TestMain(m *testing.M) {
-	log.SetLevel(log.DebugLevel)
 
 	db, closer, err := testutils.StartDB(context.Background())
 	if err != nil {
-		log.Fatalf("Could not connect to docker: %s", err)
+		panic(err)
 	}
 	defer closer()
 	testDatabaseUrl = db
@@ -158,7 +156,10 @@ func testServerAndClient(ctx context.Context, dbUrl string) (protocolconnect.Str
 		DbUrl:   dbUrl,
 	}
 
-	closer, port := rpc.StartServer(ctx, cfg)
+	closer, port, err := rpc.StartServer(ctx, cfg)
+	if err != nil {
+		panic(err)
+	}
 
 	client := protocolconnect.NewStreamServiceClient(
 		http.DefaultClient,
@@ -171,8 +172,8 @@ func testServerAndClient(ctx context.Context, dbUrl string) (protocolconnect.Str
 func TestMethods(t *testing.T) {
 	ctx := context.Background()
 	client, closer := testServerAndClient(ctx, testDatabaseUrl)
-	wallet1, _ := crypto.NewWallet()
-	wallet2, _ := crypto.NewWallet()
+	wallet1, _ := crypto.NewWallet(ctx)
+	wallet2, _ := crypto.NewWallet(ctx)
 	defer closer()
 	{
 		response, err := client.Info(ctx, connect.NewRequest(&protocol.InfoRequest{}))
@@ -330,7 +331,7 @@ func TestManyUsers(t *testing.T) {
 
 	wallets := []*crypto.Wallet{}
 	for i := 0; i < totalUsers; i++ {
-		wallet, _ := crypto.NewWallet()
+		wallet, _ := crypto.NewWallet(ctx)
 		wallets = append(wallets, wallet)
 
 		res, _, err := createUser(ctx, wallet, client)
@@ -541,7 +542,7 @@ func TestManyUsers(t *testing.T) {
 	go generateMessages()
 
 	rcvMessages := <-syncCount
-	log.Info("syncCount reached", rcvMessages)
+	fmt.Println("syncCount reached", rcvMessages)
 	msg2 := <-messagesSent
 	fmt.Println("messagesSent", msg2)
 

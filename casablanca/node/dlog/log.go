@@ -1,0 +1,42 @@
+package dlog
+
+import (
+	"context"
+	"os"
+
+	"golang.org/x/exp/slog"
+)
+
+var defaultLogger *slog.Logger = slog.New(NewPrettyTextHandler(os.Stderr, &PrettyHandlerOptions{}))
+
+// Log is the default logger.
+func Log() *slog.Logger {
+	return defaultLogger
+}
+
+func SetLog(l *slog.Logger) {
+	defaultLogger = l
+}
+
+func LogWith(args ...any) *slog.Logger {
+	return Log().With(args...)
+}
+
+type dlogCtxKeyType int
+
+const dlogCtxKey dlogCtxKeyType = 77
+
+func CtxWithLog(ctx context.Context, l *slog.Logger) context.Context {
+	return context.WithValue(ctx, dlogCtxKey, l)
+}
+
+func CtxWithLogValues(ctx context.Context, args ...any) context.Context {
+	return context.WithValue(ctx, dlogCtxKey, LogWith(args...))
+}
+
+func CtxLog(ctx context.Context) *slog.Logger {
+	if l, ok := ctx.Value(dlogCtxKey).(*slog.Logger); ok {
+		return l
+	}
+	return slog.Default()
+}

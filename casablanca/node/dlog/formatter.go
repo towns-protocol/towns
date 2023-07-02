@@ -143,7 +143,10 @@ func (p *printer) catchPanic(v reflect.Value, method string) {
 	}
 }
 
-var durationType = reflect.TypeOf(time.Duration(0))
+var (
+	durationType = reflect.TypeOf(time.Duration(0))
+	errorType    = reflect.TypeOf((*error)(nil)).Elem()
+)
 
 func (p *printer) printValue(v reflect.Value, showType, quote bool, key bool) {
 	if p.depth > 10 {
@@ -199,28 +202,36 @@ func (p *printer) printValue(v reflect.Value, showType, quote bool, key bool) {
 		p.printStruct(v, showType)
 
 	case reflect.Interface:
-		switch e := v.Elem(); {
-		case e.Kind() == reflect.Invalid:
-			p.printNil("")
-		case e.IsValid():
-			pp := *p
-			pp.depth++
-			pp.printValue(e, showType, true, key)
-		default:
-			p.printNil(v.Type().String())
+		if v.Type().Implements(errorType) {
+			p.printError(v.Interface().(error))
+		} else {
+			switch e := v.Elem(); {
+			case e.Kind() == reflect.Invalid:
+				p.printNil("")
+			case e.IsValid():
+				pp := *p
+				pp.depth++
+				pp.printValue(e, showType, true, key)
+			default:
+				p.printNil(v.Type().String())
+			}
 		}
 
 	case reflect.Array, reflect.Slice:
 		p.printArray(v, showType)
 
 	case reflect.Ptr:
-		e := v.Elem()
-		if !e.IsValid() {
-			p.printNil(v.Type().String())
+		if v.Type().Implements(errorType) {
+			p.printError(v.Interface().(error))
 		} else {
-			pp := *p
-			pp.depth++
-			pp.printValue(e, p.opts.PrintType, true, key)
+			e := v.Elem()
+			if !e.IsValid() {
+				p.printNil(v.Type().String())
+			} else {
+				pp := *p
+				pp.depth++
+				pp.printValue(e, p.opts.PrintType, true, key)
+			}
 		}
 
 	case reflect.Chan:
@@ -243,6 +254,16 @@ func (p *printer) printValue(v reflect.Value, showType, quote bool, key bool) {
 	case reflect.Invalid:
 		p.printNil("")
 	}
+}
+
+func (p *printer) printError(err error) {
+	str := err.Error()
+	if str == "" {
+		str = "(empty error)"
+	}
+	OpenColor(p.Writer, p.opts.Colors[ColorMap_ErrorText])
+	p.writeString(str)
+	CloseColor(p.Writer, p.opts.Colors[ColorMap_ErrorText])
 }
 
 func (p *printer) printNil(t string) {
@@ -303,7 +324,7 @@ func (p *printer) printArray(v reflect.Value, showType bool) {
 	}
 
 	OpenColor(p.Writer, p.opts.Colors[ColorMap_Brace])
-	writeByte(p, '{')
+	writeByte(p, '[')
 	CloseColor(p.Writer, p.opts.Colors[ColorMap_Brace])
 	expand := !canInline(v.Type())
 	pp := p
@@ -324,12 +345,28 @@ func (p *printer) printArray(v reflect.Value, showType bool) {
 		pp.tw.Flush()
 	}
 	OpenColor(p.Writer, p.opts.Colors[ColorMap_Brace])
-	writeByte(p, '}')
+	writeByte(p, ']')
 	CloseColor(p.Writer, p.opts.Colors[ColorMap_Brace])
+}
+
+func isProto(v reflect.Value) bool {
+	f, ok := v.Type().FieldByName("state")
+	if !ok {
+		return false
+	}
+	return f.Type.PkgPath() == "google.golang.org/protobuf/internal/impl"
 }
 
 func (p *printer) printStruct(v reflect.Value, showType bool) {
 	t := v.Type()
+
+	if t.Implements(errorType) {
+		p.printError(v.Interface().(error))
+		return
+	}
+
+	isProto := isProto(v)
+
 	if v.CanAddr() {
 		addr := v.UnsafeAddr()
 		vis := visit{addr, t}
@@ -355,34 +392,43 @@ func (p *printer) printStruct(v reflect.Value, showType bool) {
 		}
 		prevPrinted := false
 		for i := 0; i < v.NumField(); i++ {
-
 			field := t.Field(i)
 			value := getField(v, i)
 
-			if !p.opts.SkipNilAndEmpty || Nonzero(value) || field.Type.Kind() == reflect.Bool {
-				if !expand && prevPrinted {
-					pp.writeString(", ")
-				}
+			if p.opts.SkipNilAndEmpty && !Nonzero(value) && field.Type.Kind() != reflect.Bool {
+				continue
+			}
 
-				showTypeInStruct := true
-				if field.Name != "" {
-					OpenColor(pp.Writer, p.opts.Colors[ColorMap_FieldName])
-					pp.writeString(field.Name)
-					CloseColor(pp.Writer, p.opts.Colors[ColorMap_FieldName])
-					OpenColor(pp.Writer, p.opts.Colors[ColorMap_Colon])
-					writeByte(pp, ':')
-					CloseColor(pp.Writer, p.opts.Colors[ColorMap_Colon])
-					if expand {
-						writeByte(pp, '\t')
-					}
-					showTypeInStruct = labelType(field.Type)
-				}
-				pp.printValue(value, showTypeInStruct, true, false)
-				prevPrinted = true
+			if isProto && (field.Name == "sizeCache" || field.Name == "unknownFields" || field.Name == "state") {
+				continue
+			}
 
+			if field.Tag.Get("dlog") == "omit" {
+				continue
+			}
+
+			if !expand && prevPrinted {
+				pp.writeString(", ")
+			}
+
+			showTypeInStruct := true
+			if field.Name != "" {
+				OpenColor(pp.Writer, p.opts.Colors[ColorMap_FieldName])
+				pp.writeString(field.Name)
+				CloseColor(pp.Writer, p.opts.Colors[ColorMap_FieldName])
+				OpenColor(pp.Writer, p.opts.Colors[ColorMap_Colon])
+				writeByte(pp, ':')
+				CloseColor(pp.Writer, p.opts.Colors[ColorMap_Colon])
 				if expand {
-					pp.writeString(",\n")
+					writeByte(pp, '\t')
 				}
+				showTypeInStruct = labelType(field.Type)
+			}
+			pp.printValue(value, showTypeInStruct, true, false)
+			prevPrinted = true
+
+			if expand {
+				pp.writeString(",\n")
 			}
 		}
 		if expand {

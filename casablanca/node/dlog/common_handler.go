@@ -13,15 +13,15 @@ import (
 
 	"golang.org/x/exp/slices"
 
-	. "golang.org/x/exp/slog"
+	"golang.org/x/exp/slog"
 
 	buffer "casablanca/node/dlog/buffer"
 )
 
 type PrettyHandlerOptions struct {
 	AddSource        bool
-	Level            Leveler
-	ReplaceAttr      func(groups []string, a Attr) Attr
+	Level            slog.Leveler
+	ReplaceAttr      func(groups []string, a slog.Attr) slog.Attr
 	PrintLongTime    bool
 	DisableMultiline bool
 	DisableShortHex  bool
@@ -54,15 +54,15 @@ func (h *commonHandler) clone() *commonHandler {
 
 // enabled reports whether l is greater than or equal to the
 // minimum level.
-func (h *commonHandler) enabled(l Level) bool {
-	minLevel := LevelInfo
+func (h *commonHandler) enabled(l slog.Level) bool {
+	minLevel := slog.LevelInfo
 	if h.opts.Level != nil {
 		minLevel = h.opts.Level.Level()
 	}
 	return l >= minLevel
 }
 
-func (h *commonHandler) withAttrs(as []Attr) *commonHandler {
+func (h *commonHandler) withAttrs(as []slog.Attr) *commonHandler {
 	h2 := h.clone()
 	// Pre-format the attributes as an optimization.
 	prefix := buffer.New()
@@ -94,7 +94,7 @@ func (h *commonHandler) withGroup(name string) *commonHandler {
 	return h2
 }
 
-func (h *commonHandler) handle(r Record) error {
+func (h *commonHandler) handle(r slog.Record) error {
 	state := h.newHandleState(buffer.New(), true, "", nil)
 	defer state.free()
 	if h.json {
@@ -114,7 +114,7 @@ func (h *commonHandler) handle(r Record) error {
 	return err
 }
 
-func (s *handleState) appendNonBuiltIns(r Record) {
+func (s *handleState) appendNonBuiltIns(r slog.Record) {
 	s.sep = s.h.attrSep()
 
 	// preformatted Attrs
@@ -127,7 +127,7 @@ func (s *handleState) appendNonBuiltIns(r Record) {
 	defer s.prefix.Free()
 	s.prefix.WriteString(s.h.groupPrefix)
 	s.openGroups()
-	r.Attrs(func(a Attr) bool {
+	r.Attrs(func(a slog.Attr) bool {
 		s.appendAttr(a)
 		return true
 	})
@@ -234,15 +234,15 @@ func (s *handleState) closeGroup(name string) {
 }
 
 // TODO: implement
-func IsAttrEmpty(a Attr) bool {
+func IsAttrEmpty(a slog.Attr) bool {
 	return a.Key == "" // && a.Value.num == 0 && a.Value.any == nil
 }
 
 // appendAttr appends the Attr's key and value using app.
 // It handles replacement and checking for an empty key.
 // after replacement).
-func (s *handleState) appendAttr(a Attr) {
-	if rep := s.h.opts.ReplaceAttr; rep != nil && a.Value.Kind() != KindGroup {
+func (s *handleState) appendAttr(a slog.Attr) {
+	if rep := s.h.opts.ReplaceAttr; rep != nil && a.Value.Kind() != slog.KindGroup {
 		var gs []string
 		if s.groups != nil {
 			gs = *s.groups
@@ -257,18 +257,18 @@ func (s *handleState) appendAttr(a Attr) {
 		return
 	}
 	// Special case: Source.
-	if v := a.Value; v.Kind() == KindAny {
-		if src, ok := v.Any().(*Source); ok {
+	if v := a.Value; v.Kind() == slog.KindAny {
+		if src, ok := v.Any().(*slog.Source); ok {
 			if s.h.json {
 				// TODO:
 				// a.Value = src.group()
 			} else {
-				a.Value = StringValue(fmt.Sprintf("%s:%d", src.File, src.Line))
+				a.Value = slog.StringValue(fmt.Sprintf("%s:%d", src.File, src.Line))
 			}
 		}
 	}
 
-	if a.Value.Kind() == KindGroup {
+	if a.Value.Kind() == slog.KindGroup {
 		attrs := a.Value.Group()
 		// Output only non-empty groups.
 		if len(attrs) > 0 {
@@ -326,7 +326,7 @@ func (s *handleState) appendString(str string) {
 	}
 }
 
-func (s *handleState) appendValue(v Value) {
+func (s *handleState) appendValue(v slog.Value) {
 	var err error
 	if s.h.json {
 		err = appendJSONValue(s, v)

@@ -4,13 +4,14 @@ import (
 	"casablanca/node/crypto"
 	"casablanca/node/events"
 	"casablanca/node/protocol"
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
 func TestLoad(t *testing.T) {
-	wallet, _ := crypto.NewWallet()
+	wallet, _ := crypto.NewWallet(context.Background())
 	inception, err := events.MakeEnvelopeWithPayload(
 		wallet,
 		events.Make_UserPayload_Inception("streamid$1"),

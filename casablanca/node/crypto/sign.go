@@ -1,6 +1,8 @@
 package crypto
 
 import (
+	"casablanca/node/dlog"
+	"context"
 	"crypto/ecdsa"
 	"encoding/binary"
 	"io"
@@ -10,8 +12,6 @@ import (
 	"github.com/ethereum/go-ethereum/crypto/secp256k1"
 
 	"golang.org/x/crypto/sha3"
-
-	log "github.com/sirupsen/logrus"
 )
 
 // String 'CSBLANCA' as bytes.
@@ -52,14 +52,16 @@ type Wallet struct {
 }
 
 // TODO: stop generating and load from file
-func NewWallet() (*Wallet, error) {
+func NewWallet(ctx context.Context) (*Wallet, error) {
+	log := dlog.CtxLog(ctx)
+
 	key, err := crypto.GenerateKey()
 	if err != nil {
 		return nil, err
 	}
 	address := crypto.PubkeyToAddress(key.PublicKey)
 
-	log.Debugf("New wallet generated: %s %v", address.Hex(), crypto.FromECDSAPub(&key.PublicKey))
+	log.Info("New wallet generated.", "address", address.Hex(), "publicKey", crypto.FromECDSAPub(&key.PublicKey))
 	return &Wallet{
 			PrivateKeyStruct: key,
 			PrivateKey:       crypto.FromECDSA(key),

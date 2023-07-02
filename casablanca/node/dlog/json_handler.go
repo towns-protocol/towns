@@ -15,7 +15,7 @@ import (
 	"time"
 	"unicode/utf8"
 
-	. "golang.org/x/exp/slog"
+	"golang.org/x/exp/slog"
 
 	buffer "casablanca/node/dlog/buffer"
 )
@@ -44,17 +44,17 @@ func NewPrettyJSONHandler(w io.Writer, opts *PrettyHandlerOptions) *PrettyJSONHa
 
 // Enabled reports whether the handler handles records at the given level.
 // The handler ignores records whose level is lower.
-func (h *PrettyJSONHandler) Enabled(_ context.Context, level Level) bool {
+func (h *PrettyJSONHandler) Enabled(_ context.Context, level slog.Level) bool {
 	return h.commonHandler.enabled(level)
 }
 
 // WithAttrs returns a new PrettyJSONHandler whose attributes consists
 // of h's attributes followed by attrs.
-func (h *PrettyJSONHandler) WithAttrs(attrs []Attr) Handler {
+func (h *PrettyJSONHandler) WithAttrs(attrs []slog.Attr) slog.Handler {
 	return &PrettyJSONHandler{commonHandler: h.commonHandler.withAttrs(attrs)}
 }
 
-func (h *PrettyJSONHandler) WithGroup(name string) Handler {
+func (h *PrettyJSONHandler) WithGroup(name string) slog.Handler {
 	return &PrettyJSONHandler{commonHandler: h.commonHandler.withGroup(name)}
 }
 
@@ -89,21 +89,21 @@ func (h *PrettyJSONHandler) WithGroup(name string) Handler {
 // Instead, the error message is formatted as a string.
 //
 // Each call to Handle results in a single serialized call to io.Writer.Write.
-func (h *PrettyJSONHandler) Handle(_ context.Context, r Record) error {
+func (h *PrettyJSONHandler) Handle(_ context.Context, r slog.Record) error {
 	return h.commonHandler.handle(r)
 }
 
-func appendJSONBuiltIns(state *handleState, r Record) {
+func appendJSONBuiltIns(state *handleState, r slog.Record) {
 	// time
 	if !r.Time.IsZero() {
-		key := TimeKey
+		key := slog.TimeKey
 		val := r.Time.Round(0) // strip monotonic to match Attr behavior
 		state.appendKey(key)
 		state.appendTime(val)
 	}
 
 	// level
-	state.appendKey(LevelKey)
+	state.appendKey(slog.LevelKey)
 	state.appendString(r.Level.String())
 
 	// TODO: source is not availabe for external package.
@@ -113,7 +113,7 @@ func appendJSONBuiltIns(state *handleState, r Record) {
 	// }
 
 	// message
-	state.appendKey(MessageKey)
+	state.appendKey(slog.MessageKey)
 	state.appendString(r.Message)
 }
 
@@ -129,30 +129,30 @@ func appendJSONTime(s *handleState, t time.Time) {
 	s.buf.WriteByte('"')
 }
 
-func appendJSONValue(s *handleState, v Value) error {
+func appendJSONValue(s *handleState, v slog.Value) error {
 	// nolint:exhaustive
 	switch v.Kind() {
-	case KindString:
+	case slog.KindString:
 		s.appendString(v.String())
-	case KindInt64:
+	case slog.KindInt64:
 		*s.buf = strconv.AppendInt(*s.buf, v.Int64(), 10)
-	case KindUint64:
+	case slog.KindUint64:
 		*s.buf = strconv.AppendUint(*s.buf, v.Uint64(), 10)
-	case KindFloat64:
+	case slog.KindFloat64:
 		// json.Marshal is funny about floats; it doesn't
 		// always match strconv.AppendFloat. So just call it.
 		// That's expensive, but floats are rare.
 		if err := appendJSONMarshal(s.buf, v.Float64()); err != nil {
 			return err
 		}
-	case KindBool:
+	case slog.KindBool:
 		*s.buf = strconv.AppendBool(*s.buf, v.Bool())
-	case KindDuration:
+	case slog.KindDuration:
 		// Do what json.Marshal does.
 		*s.buf = strconv.AppendInt(*s.buf, int64(v.Duration()), 10)
-	case KindTime:
+	case slog.KindTime:
 		s.appendTime(v.Time())
-	case KindAny:
+	case slog.KindAny:
 		a := v.Any()
 		_, jm := a.(json.Marshaler)
 		if err, ok := a.(error); ok && !jm {

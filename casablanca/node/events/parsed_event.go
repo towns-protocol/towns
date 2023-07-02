@@ -16,8 +16,8 @@ type ParsedEvent struct {
 	Event         *StreamEvent
 	Envelope      *Envelope
 	Hash          []byte
-	HashStr       string // strangely Go can't have key maps of type []byte...
-	PrevEventStrs []string
+	HashStr       string   `dlog:"omit"` // strangely Go can't have key maps of type []byte...
+	PrevEventStrs []string `dlog:"omit"`
 	shortDebugStr string
 }
 

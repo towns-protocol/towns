@@ -13,6 +13,7 @@ const (
 	ColorMap_Brace
 	ColorMap_Colon
 	ColorMap_Nil
+	ColorMap_ErrorText
 
 	// Log constructs.
 	ColorMap_Level_Debug
@@ -41,6 +42,7 @@ var ColorMap_Enabled ColorMap = func() ColorMap {
 	c[ColorMap_Brace] = FgHiCyan
 	c[ColorMap_Colon] = FgHiCyan
 	c[ColorMap_Nil] = FgMagenta
+	c[ColorMap_ErrorText] = FgHiRed
 	c[ColorMap_Level_Debug] = FgHiGreen
 	c[ColorMap_Level_Info] = FgHiBlue
 	c[ColorMap_Level_Warn] = FgHiYellow

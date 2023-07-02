@@ -10,9 +10,9 @@ import (
 	"context"
 
 	connect_go "github.com/bufbuild/connect-go"
+	"golang.org/x/exp/slog"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/encoding/protojson"
 
 	. "casablanca/node/base"
 )
@@ -22,24 +22,20 @@ var (
 )
 
 func (s *Service) CreateStream(ctx context.Context, req *connect_go.Request[protocol.CreateStreamRequest]) (*connect_go.Response[protocol.CreateStreamResponse], error) {
-	ctx, log, requestId := infra.SetLoggerWithRequestId(ctx)
-	parsedEvent := FormatEventsToJson(req.Msg.Events)
+	ctx, log := ctxAndLogForRequest(ctx, req)
 
-	log.Debugf("CreateStream: request %s events: %s", protojson.Format((req.Msg)), parsedEvent)
-
-	res, err := s.createStream(ctx, req)
+	res, err := s.createStream(ctx, log, req)
 	if err != nil {
-		log.Errorf("CreateStream error: %v", err)
+		log.Warn("CreateStream ERROR", "error", err)
 		createStreamRequests.Fail()
-		return nil, RpcAddRequestId(err, requestId)
+		return nil, err
 	}
-	log.Debugf("CreateStream: response %s", protojson.Format((res.Msg)))
+	log.Debug("CreateStream: DONE", "response", res.Msg)
 	createStreamRequests.Pass()
 	return res, nil
 }
 
-func (s *Service) createStream(ctx context.Context, req *connect_go.Request[protocol.CreateStreamRequest]) (*connect_go.Response[protocol.CreateStreamResponse], error) {
-	log := infra.GetLogger(ctx)
+func (s *Service) createStream(ctx context.Context, log *slog.Logger, req *connect_go.Request[protocol.CreateStreamRequest]) (*connect_go.Response[protocol.CreateStreamResponse], error) {
 	if len(req.Msg.Events) == 0 {
 		return nil, RpcErrorf(protocol.Err_BAD_STREAM_CREATION_PARAMS, "CreateStream: no events")
 	}
@@ -48,6 +44,8 @@ func (s *Service) createStream(ctx context.Context, req *connect_go.Request[prot
 	if err != nil {
 		return nil, RpcErrorf(protocol.Err_BAD_STREAM_CREATION_PARAMS, "CreateStream: error parsing events: %v", err)
 	}
+
+	log.Debug("CreateStream", "request", req.Msg, "events", parsedEvents)
 
 	inceptionEvent := parsedEvents[0]
 	inceptionPayload := inceptionEvent.Event.GetInceptionPayload()
@@ -177,7 +175,6 @@ func (s *Service) createStream(ctx context.Context, req *connect_go.Request[prot
 	// TODO(HNT-1355): this needs to be fixed: there is no need to load stream back and append second event through separate call
 	// Storage.CreateStream should work fine with two events (although side-effects need to be processed separately in this case).
 	streamId := inceptionPayload.GetStreamId()
-	log.Infof("CreateStream: calling storage %s", streamId)
 	stream, streamView, err := s.cache.CreateStream(ctx, streamId, parsedEvents[0:1])
 	if err != nil {
 		return nil, err

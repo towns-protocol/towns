@@ -1,6 +1,7 @@
 package crypto
 
 import (
+	"context"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/accounts"
@@ -9,10 +10,10 @@ import (
 )
 
 func TestDelegate(t *testing.T) {
-	primaryWallet, err := NewWallet()
+	primaryWallet, err := NewWallet(context.Background())
 	assert.NoError(t, err)
 
-	deviceWallet, err := NewWallet()
+	deviceWallet, err := NewWallet(context.Background())
 	assert.NoError(t, err)
 	devicePubKey := eth_crypto.FromECDSAPub(&deviceWallet.PrivateKeyStruct.PublicKey)
 
@@ -24,10 +25,10 @@ func TestDelegate(t *testing.T) {
 }
 
 func TestDelegateOld(t *testing.T) {
-	primaryWallet, err := NewWallet()
+	primaryWallet, err := NewWallet(context.Background())
 	assert.NoError(t, err)
 
-	deviceWallet, err := NewWallet()
+	deviceWallet, err := NewWallet(context.Background())
 	assert.NoError(t, err)
 	devicePubKey := eth_crypto.FromECDSAPub(&deviceWallet.PrivateKeyStruct.PublicKey)
 

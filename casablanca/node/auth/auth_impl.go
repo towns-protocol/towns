@@ -3,6 +3,7 @@ package auth
 import (
 	"casablanca/node/common"
 	"casablanca/node/config"
+	"casablanca/node/dlog"
 	"context"
 	_ "embed"
 	"errors"
@@ -10,8 +11,7 @@ import (
 
 	eth "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
-
-	log "github.com/sirupsen/logrus"
+	"golang.org/x/exp/slog"
 )
 
 type AuthorizationArgs struct {
@@ -44,12 +44,12 @@ func NewChainAuth(cfg *config.ChainConfig) (Authorization, error) {
 	chainId := cfg.ChainId
 	// initialise the eth client.
 	if cfg.NetworkUrl == "" {
-		log.Errorf("No blockchain network url specified in config\n")
-		return nil, nil
+		slog.Error("No blockchain network url specified in config")
+		return nil, nil // TODO: is this a bug? Error should be returned?
 	}
 	ethClient, err := GetEthClient(cfg.NetworkUrl)
 	if err != nil {
-		log.Errorf("Cannot connect to eth client %v\n", cfg.NetworkUrl)
+		slog.Error("Cannot connect to eth client", "url", cfg.NetworkUrl, "error", err)
 		return nil, err
 	}
 
@@ -61,16 +61,15 @@ func NewChainAuth(cfg *config.ChainConfig) (Authorization, error) {
 	case 1337, 31337:
 		localhost, err := NewSpaceContractLocalhost(za.ethClient)
 		if err != nil {
-			log.Errorf("error instantiating SpaceContractLocalhost. Error: %v", err)
+			slog.Error("error instantiating SpaceContractLocalhost", "error", err)
 			return nil, err
 		}
 		za.spaceContract = localhost
 	default:
-		errMsg := fmt.Sprintf("unsupported chain id: %d", za.chainId)
-		log.Error(errMsg)
-		return nil, errors.New(errMsg)
+		slog.Error("Bad chain id", "id", za.chainId)
+		return nil, fmt.Errorf("unsupported chain id: %d", za.chainId)
 	}
-	log.Infof("Successfully initialised %s for chain id: %d", cfg.NetworkUrl, za.chainId)
+	slog.Info("Successfully initialised %s for chain id: %d", cfg.NetworkUrl, za.chainId)
 	// no errors.
 	return za, nil
 }
@@ -80,19 +79,20 @@ func (za *PassthroughAuth) IsAllowed(ctx context.Context, args AuthorizationArgs
 }
 
 func (za *ChainAuth) IsAllowed(ctx context.Context, args AuthorizationArgs, roomInfo *common.RoomInfo) (bool, error) {
-	userIdentifier := CreateUserIdentifier(args.UserId)
-	log.Debugf("IsAllowed: %v %v", args, userIdentifier)
+	log := dlog.CtxLog(ctx)
 
-	log.Debugf("roomInfo: %v", roomInfo)
+	userIdentifier := CreateUserIdentifier(args.UserId)
+	log.Debug("IsAllowed", "args", args, "user", userIdentifier, "roomInfo", roomInfo)
+
 	// Check if user is entitled to space / channel.
 	switch roomInfo.RoomType {
 	case common.Space:
 		isEntitled, err := za.isEntitledToSpace(roomInfo, userIdentifier.AccountAddress, args.Permission)
-		log.Debugf("isEntitled: %v %v", isEntitled, err)
+		log.Debug("IsAllowed result", "isEntitledToSpace", isEntitled, "err", err)
 		return isEntitled, err
 	case common.Channel:
 		isEntitled, err := za.isEntitledToChannel(roomInfo, userIdentifier.AccountAddress, args.Permission)
-		log.Debugf("isEntitled: %v %v", isEntitled, err)
+		log.Debug("IsAllowed result", "isEntitledToChannel", isEntitled, "err", err)
 		return isEntitled, err
 	case common.User:
 		fallthrough
@@ -103,15 +103,12 @@ func (za *ChainAuth) IsAllowed(ctx context.Context, args AuthorizationArgs, room
 	case common.InvalidRoomType:
 		fallthrough
 	default:
-		errMsg := fmt.Sprintf("unhandled room type: %s", roomInfo.RoomType)
-		log.Error("IsAllowed", errMsg)
-		return false, errors.New(errMsg)
+		return false, fmt.Errorf("unhandled room type: %s", roomInfo.RoomType)
 	}
 }
 
 func (za *ChainAuth) isEntitledToSpace(roomInfo *common.RoomInfo, user eth.Address, permission Permission) (bool, error) {
 	// space disabled check.
-	log.Infof("Checking if space is disabled: %v %v %v", roomInfo, user, permission)
 	isDisabled, err := za.spaceContract.IsSpaceDisabled(roomInfo.SpaceId)
 	if err != nil {
 		return false, err
@@ -130,7 +127,6 @@ func (za *ChainAuth) isEntitledToSpace(roomInfo *common.RoomInfo, user eth.Addre
 
 func (za *ChainAuth) isEntitledToChannel(roomInfo *common.RoomInfo, user eth.Address, permission Permission) (bool, error) {
 	// channel disabled check.
-	log.Infof("Checking if channel is disabled: %v %v %v", roomInfo, user, permission)
 	isDisabled, err := za.spaceContract.IsChannelDisabled(roomInfo.SpaceId, roomInfo.ChannelId)
 	if err != nil {
 		return false, err

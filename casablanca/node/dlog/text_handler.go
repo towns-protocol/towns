@@ -13,7 +13,7 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	. "golang.org/x/exp/slog"
+	"golang.org/x/exp/slog"
 )
 
 // PrettyTextHandler is a Handler that writes Records to an io.Writer as a
@@ -43,17 +43,17 @@ func NewPrettyTextHandler(w io.Writer, opts *PrettyHandlerOptions) *PrettyTextHa
 
 // Enabled reports whether the handler handles records at the given level.
 // The handler ignores records whose level is lower.
-func (h *PrettyTextHandler) Enabled(_ context.Context, level Level) bool {
+func (h *PrettyTextHandler) Enabled(_ context.Context, level slog.Level) bool {
 	return h.commonHandler.enabled(level)
 }
 
 // WithAttrs returns a new PrettyTextHandler whose attributes consists
 // of h's attributes followed by attrs.
-func (h *PrettyTextHandler) WithAttrs(attrs []Attr) Handler {
+func (h *PrettyTextHandler) WithAttrs(attrs []slog.Attr) slog.Handler {
 	return &PrettyTextHandler{commonHandler: h.commonHandler.withAttrs(attrs)}
 }
 
-func (h *PrettyTextHandler) WithGroup(name string) Handler {
+func (h *PrettyTextHandler) WithGroup(name string) slog.Handler {
 	return &PrettyTextHandler{commonHandler: h.commonHandler.withGroup(name)}
 }
 
@@ -93,7 +93,7 @@ func (h *PrettyTextHandler) WithGroup(name string) Handler {
 //
 // Each call to Handle results in a single serialized call to
 // io.Writer.Write.
-func (h *PrettyTextHandler) Handle(_ context.Context, r Record) error {
+func (h *PrettyTextHandler) Handle(_ context.Context, r slog.Record) error {
 	return h.commonHandler.handle(r)
 }
 
@@ -105,6 +105,11 @@ func appendTextAny(s *handleState, a any, inline bool) error {
 		}
 		s.appendString(string(data))
 		return nil
+	}
+
+	// Print errors inline.
+	if _, ok := a.(error); ok {
+		inline = true
 	}
 
 	v := reflect.ValueOf(a)
@@ -126,21 +131,21 @@ func appendTextAny(s *handleState, a any, inline bool) error {
 	return nil
 }
 
-func appendTextValue(s *handleState, v Value) error {
+func appendTextValue(s *handleState, v slog.Value) error {
 	switch v.Kind() {
-	case KindString, KindInt64, KindUint64, KindBool, KindFloat64, KindDuration:
+	case slog.KindString, slog.KindInt64, slog.KindUint64, slog.KindBool, slog.KindFloat64, slog.KindDuration:
 		return appendTextAny(s, v.Any(), true)
 
-	case KindAny:
+	case slog.KindAny:
 		return appendTextAny(s, v.Any(), false)
 
-	case KindTime:
+	case slog.KindTime:
 		s.appendTime(v.Time())
 
-	case KindGroup:
+	case slog.KindGroup:
 		*s.buf = fmt.Append(*s.buf, v.Group())
 
-	case KindLogValuer:
+	case slog.KindLogValuer:
 		*s.buf = fmt.Append(*s.buf, v.LogValuer())
 
 	default:
@@ -149,19 +154,19 @@ func appendTextValue(s *handleState, v Value) error {
 	return nil
 }
 
-func levelColor(s *handleState, level Level) ColorCode {
-	if level >= LevelError {
+func levelColor(s *handleState, level slog.Level) ColorCode {
+	if level >= slog.LevelError {
 		return s.h.opts.Colors[ColorMap_Level_Error]
-	} else if level >= LevelWarn {
+	} else if level >= slog.LevelWarn {
 		return s.h.opts.Colors[ColorMap_Level_Warn]
-	} else if level >= LevelInfo {
+	} else if level >= slog.LevelInfo {
 		return s.h.opts.Colors[ColorMap_Level_Info]
 	} else {
 		return s.h.opts.Colors[ColorMap_Level_Debug]
 	}
 }
 
-func appendTextBuiltIns(s *handleState, r Record) {
+func appendTextBuiltIns(s *handleState, r slog.Record) {
 	// level
 	levelColor := levelColor(s, r.Level)
 	OpenColor(s.buf, levelColor)

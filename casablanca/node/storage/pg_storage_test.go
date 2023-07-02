@@ -6,11 +6,9 @@ import (
 	"testing"
 
 	_ "github.com/lib/pq"
-	log "github.com/sirupsen/logrus"
 
 	"casablanca/node/crypto"
 	"casablanca/node/events"
-	"casablanca/node/infra"
 	"casablanca/node/protocol"
 	"casablanca/node/storage"
 	"casablanca/node/testutils"
@@ -19,11 +17,9 @@ import (
 var testDatabaseUrl string
 
 func TestMain(m *testing.M) {
-	log.SetLevel(log.DebugLevel)
-
 	dbUrl, closer, err := testutils.StartDB(context.Background())
 	if err != nil {
-		log.Fatalf("Could not connect to docker: %s", err)
+		panic("Could not connect to docker" + err.Error())
 	}
 	defer closer()
 	testDatabaseUrl = dbUrl
@@ -37,7 +33,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestPGEventStore(t *testing.T) {
-	ctx, _, _ := infra.SetLoggerWithRequestId(context.Background())
+	ctx := context.Background()
 	// Create a new PGEventStore
 	pgEventStore, err := storage.NewPGEventStore(ctx, testDatabaseUrl, true)
 	if err != nil {
@@ -47,7 +43,7 @@ func TestPGEventStore(t *testing.T) {
 
 	streamId := "streamid1"
 
-	wallet, _ := crypto.NewWallet()
+	wallet, _ := crypto.NewWallet(ctx)
 	inceptionEvent, err := events.MakeEnvelopeWithPayload(
 		wallet,
 		events.Make_UserPayload_Inception(streamId),

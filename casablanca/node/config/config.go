@@ -8,12 +8,16 @@ type Config struct {
 	Metrics       MetricsConfig
 	Chain         ChainConfig
 	Authorization bool
+	Log           LogConfig
+}
 
-	Log struct {
-		Level  string
-		File   string
-		Events string
-	}
+type LogConfig struct {
+	Level        string // Used for both file and console if their levels not set explicitly
+	File         string // Path to log file
+	FileLevel    string // If not set, use Level
+	Console      bool   // Log to sederr if true
+	ConsoleLevel string // If not set, use Level
+	NoColor      bool
 }
 
 type MetricsConfig struct {

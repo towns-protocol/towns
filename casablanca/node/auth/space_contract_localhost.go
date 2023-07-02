@@ -7,7 +7,6 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
-	log "github.com/sirupsen/logrus"
 )
 
 type SpaceContractLocalhost struct {
@@ -20,13 +19,11 @@ type SpaceContractLocalhost struct {
 func NewSpaceContractLocalhost(ethClient *ethclient.Client) (*SpaceContractLocalhost, error) {
 	jsonAddress, err := loadSpaceFactoryAddress(31337)
 	if err != nil {
-		log.Errorf("error parsing localhost space factory contract address %v. Error: %v", jsonAddress, err)
 		return nil, err
 	}
 	address := common.HexToAddress(jsonAddress.SpaceFactory)
 	spaceFactory, err := localhost_space_factory.NewLocalhostSpaceFactory(address, ethClient)
 	if err != nil {
-		log.Errorf("error fetching localhost space factory contract with address %v. Error: %v", jsonAddress, err)
 		return nil, err
 	}
 	// no errors.

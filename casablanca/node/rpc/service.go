@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	connect_go "github.com/bufbuild/connect-go"
-	log "github.com/sirupsen/logrus"
+	"golang.org/x/exp/slog"
 
 	"casablanca/node/auth"
 	"casablanca/node/config"
@@ -24,37 +24,43 @@ type Service struct {
 	cache         events.StreamCache
 	Authorization auth.Authorization
 	wallet        *crypto.Wallet
+	log           *slog.Logger
 }
 
-func MakeServiceHandler(ctx context.Context, dbUrl string, chainConfig *config.ChainConfig, opts ...connect_go.HandlerOption) (string, http.Handler) {
+func MakeServiceHandler(ctx context.Context, log *slog.Logger, dbUrl string, chainConfig *config.ChainConfig, opts ...connect_go.HandlerOption) (string, http.Handler, error) {
 	store, err := storage.NewPGEventStore(ctx, dbUrl, false)
 	if err != nil {
-		log.Fatalf("failed to create storage: %v", err)
+		log.Error("failed to create storage", "error", err)
+		return "", nil, err
 	}
 
-	wallet, err := crypto.NewWallet()
+	wallet, err := crypto.NewWallet(ctx)
 	if err != nil {
-		log.Fatalf("failed to create wallet: %v", err)
+		log.Error("failed to create wallet", "error", err)
+		return "", nil, err
 	}
 
 	var authorization auth.Authorization
 	if chainConfig == nil {
-		log.Infof("Using passthrough auth")
+		log.Warn("Using passthrough auth")
 		authorization = auth.NewPassthroughAuth()
 	} else {
-		log.Infof("Using casablanca auth with chain config: %v", chainConfig)
+		log.Info("Using casablanca auth", "chain_config", chainConfig)
 		authorization, err = auth.NewChainAuth(chainConfig)
 		if err != nil {
-			log.Fatalf("failed to create auth: %v", err)
+			log.Error("failed to create auth", "error", err)
+			return "", nil, err
 		}
 	}
 
-	return protocolconnect.NewStreamServiceHandler(
+	s, h := protocolconnect.NewStreamServiceHandler(
 		&Service{
 			cache:         events.NewStreamCache(store),
 			Authorization: authorization,
 			wallet:        wallet,
+			log:           log,
 		},
 		opts...,
 	)
+	return s, h, nil
 }

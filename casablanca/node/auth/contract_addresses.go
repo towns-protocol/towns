@@ -5,8 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-
-	log "github.com/sirupsen/logrus"
 )
 
 //go:embed contracts/addresses.json
@@ -41,7 +39,6 @@ func loadSpaceFactoryAddress(chainId int) (*ContractAddresses, error) {
 		address.SpaceFactory = allAddresses.Sepolia.SpaceFactory
 	default:
 		errMsg := fmt.Sprintf("unsupported chainId: %d", chainId)
-		log.Error("loadSpaceFactoryAddress", errMsg)
 		return nil, errors.New(errMsg)
 	}
 	return &address, nil

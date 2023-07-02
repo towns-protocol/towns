@@ -1,15 +1,16 @@
 package infra
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	log "github.com/sirupsen/logrus"
 
 	"casablanca/node/config"
+	"casablanca/node/dlog"
 )
 
 type SuccessMetrics struct {
@@ -31,11 +32,11 @@ func NewSuccessMetrics(name string, parent *SuccessMetrics) *SuccessMetrics {
 	})
 	err := registry.Register(success)
 	if err != nil {
-		log.Fatalf("Failed to register %s: %s", success, err)
+		panic(err)
 	}
 	err = registry.Register(total)
 	if err != nil {
-		log.Fatalf("Failed to register %s: %s", total, err)
+		panic(err)
 	}
 
 	return &SuccessMetrics{
@@ -52,7 +53,7 @@ func NewCounter(name string, help string) prometheus.Counter {
 	})
 	err := registry.Register(counter)
 	if err != nil {
-		log.Fatalf("Failed to register %s: %s", counter, err)
+		panic(err)
 	}
 	return counter
 }
@@ -72,13 +73,16 @@ func (m *SuccessMetrics) Fail() {
 	}
 }
 
-func StartMetricsService(config config.MetricsConfig) {
+func StartMetricsService(ctx context.Context, config config.MetricsConfig) {
+	log := dlog.CtxLog(ctx)
+
 	r := mux.NewRouter()
 
 	r.Handle("/metrics", promhttp.Handler())
-	log.Infof("Starting metrics HTTP server on %s:%d", config.Interface, config.Port)
-	err := http.ListenAndServe(fmt.Sprintf("%s:%d", config.Interface, config.Port), r)
+	addr := fmt.Sprintf("%s:%d", config.Interface, config.Port)
+	log.Info("Starting metrics HTTP server", "addr", addr)
+	err := http.ListenAndServe(addr, r)
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 }

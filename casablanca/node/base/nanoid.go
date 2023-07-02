@@ -7,3 +7,7 @@ import (
 func GenNanoid() string {
 	return gonanoid.MustID(21)
 }
+
+func GenShortNanoid() string {
+	return gonanoid.MustID(12)
+}

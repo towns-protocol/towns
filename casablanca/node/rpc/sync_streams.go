@@ -9,7 +9,7 @@ import (
 	. "casablanca/node/events"
 
 	connect_go "github.com/bufbuild/connect-go"
-	"github.com/sirupsen/logrus"
+	"golang.org/x/exp/slog"
 )
 
 var (
@@ -24,27 +24,24 @@ func addUpdatesToCounter(updates []*StreamAndCookie) {
 }
 
 func (s *Service) SyncStreams(ctx context.Context, req *connect_go.Request[SyncStreamsRequest], stream *connect_go.ServerStream[SyncStreamsResponse]) error {
-	ctx, log, requestId := infra.SetLoggerWithRequestId(ctx)
+	ctx, log := ctxAndLogForRequest(ctx, req)
 
-	for _, pos := range req.Msg.SyncPos {
-		log.Infof("SyncStreams: pos %v", pos)
-	}
-	log.Infof("SyncStreams: buf=%v", req.Msg)
+	log.Debug("SyncStreams ENTER", "request", req.Msg)
 
-	err := s.syncStreams(ctx, req, stream, log)
+	err := s.syncStreams(ctx, log, req, stream)
 
 	if err != nil {
-		log.Errorf("SyncStreams ERROR: %v", err)
+		log.Warn("SyncStreams ERRO", "error", err)
 		syncStreamsRequests.Fail()
-		return RpcAddRequestId(err, requestId)
+		return err
 	}
 
-	log.Info("SyncStreams: LEAVE")
+	log.Debug("SyncStreams LEAVE")
 	syncStreamsRequests.Pass()
-	return err
+	return nil
 }
 
-func (s *Service) syncStreams(ctx context.Context, req *connect_go.Request[SyncStreamsRequest], stream *connect_go.ServerStream[SyncStreamsResponse], log *logrus.Entry) error {
+func (s *Service) syncStreams(ctx context.Context, log *slog.Logger, req *connect_go.Request[SyncStreamsRequest], stream *connect_go.ServerStream[SyncStreamsResponse]) error {
 	if len(req.Msg.SyncPos) <= 0 {
 		return RpcError(Err_BAD_ARGS, "SyncStreams: SyncPos is empty")
 	}
@@ -75,7 +72,7 @@ func (s *Service) syncStreams(ctx context.Context, req *connect_go.Request[SyncS
 		}
 		subs = append(subs, streamSub)
 		if update != nil {
-			log.Infof("SyncStreams: SENDING initial update streamId=%s cookie=%v", update.StreamId, update.NextSyncCookie)
+			log.Debug("SyncStreams: SENDING initial update", "streamId", update.StreamId, "cookie", update.NextSyncCookie)
 
 			updates := []*StreamAndCookie{update}
 			addUpdatesToCounter(updates)
@@ -87,7 +84,7 @@ func (s *Service) syncStreams(ctx context.Context, req *connect_go.Request[SyncS
 				return err
 			}
 		} else {
-			log.Infof("SyncStreams: NO initial update streamId=%s", pos.StreamId)
+			log.Debug("SyncStreams: NO initial update", "streamId", pos.StreamId)
 		}
 	}
 
@@ -95,7 +92,7 @@ func (s *Service) syncStreams(ctx context.Context, req *connect_go.Request[SyncS
 		select {
 		case update := <-receiver:
 			if update != nil {
-				log.Infof("SyncStreams: SENDING received update streamId=%s cookie=%v", update.StreamId, update.NextSyncCookie)
+				log.Debug("SyncStreams: SENDING received update", "streamId", update.StreamId, "cookie", update.NextSyncCookie)
 
 				updates := []*StreamAndCookie{update}
 				addUpdatesToCounter(updates)
@@ -109,7 +106,7 @@ func (s *Service) syncStreams(ctx context.Context, req *connect_go.Request[SyncS
 				return RpcError(Err_INTERNAL_ERROR, "SyncStreams: channel unexpectedly closed")
 			}
 		case <-ctx.Done():
-			log.Infof("SyncStreams: context done for %v", req.Msg.SyncPos)
+			log.Debug("SyncStreams: context done", "syncPos", req.Msg.SyncPos)
 			return nil
 		}
 	}

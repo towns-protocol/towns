@@ -1,13 +1,14 @@
 package crypto
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
 func TestSign(t *testing.T) {
-	wallet, err := NewWallet()
+	wallet, err := NewWallet(context.Background())
 	if err != nil {
 		return
 	}

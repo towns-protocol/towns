@@ -2,15 +2,12 @@ package rpc
 
 import (
 	"context"
-	"strings"
 
 	connect_go "github.com/bufbuild/connect-go"
-	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
 	"casablanca/node/auth"
-	. "casablanca/node/base"
 	"casablanca/node/common"
 	. "casablanca/node/events"
 	"casablanca/node/infra"
@@ -21,60 +18,27 @@ var (
 	addEventRequests = infra.NewSuccessMetrics("add_event_requests", serviceRequests)
 )
 
-func logAddEvent(l *log.Entry, message string, streamId string, event *ParsedEvent, envelope *Envelope, requestId string, err error) {
-	if err == nil && log.GetLevel() < log.DebugLevel {
-		return
-	}
-	var sb strings.Builder
-	sb.Grow(160)
-	sb.WriteString("AddEvent: ")
-	sb.WriteString(message)
-	sb.WriteString(" streamId=")
-	sb.WriteString(streamId)
-	if event != nil {
-		sb.WriteString(" event=")
-		sb.WriteString(event.ShortDebugStr())
-		if log.GetLevel() == log.TraceLevel {
-			sb.WriteString(" event_details=\n")
-			FormatEventToJsonSB(&sb, event)
-			sb.WriteString("\n")
-		}
-	} else {
-		sb.WriteString(" envelope_hash=")
-		FormatHashFromBytesToSB(&sb, envelope.Hash)
-	}
-	sb.WriteString(" request_id=")
-	sb.WriteString(requestId)
-
-	if err != nil {
-		sb.WriteString(" error=")
-		sb.WriteString(err.Error())
-		l.Error(sb.String())
-	} else {
-		l.Debug(sb.String())
-	}
-}
-
 func (s *Service) AddEvent(ctx context.Context, req *connect_go.Request[AddEventRequest]) (*connect_go.Response[AddEventResponse], error) {
-	ctx, log, requestId := infra.SetLoggerWithRequestId(ctx)
+	ctx, log := ctxAndLogForRequest(ctx, req)
 
 	parsedEvent, err := ParseEvent(req.Msg.Event)
 	if err != nil {
-		logAddEvent(log, "ERROR parsing event", req.Msg.StreamId, nil, req.Msg.Event, requestId, err)
+		log.Warn("AddEvent ERROR: failed to parse events", "request", req.Msg, "error", err)
+		addEventRequests.Fail()
 		return nil, err
 	}
 
-	logAddEvent(log, "ENTER", req.Msg.StreamId, parsedEvent, nil, requestId, nil)
+	log.Debug("AddEvent ENTER", "streamId", req.Msg.StreamId, "event", parsedEvent)
 
 	err = s.addParsedEvent(ctx, req.Msg.StreamId, parsedEvent)
 	if err == nil {
-		logAddEvent(log, "LEAVE", req.Msg.StreamId, parsedEvent, nil, requestId, nil)
+		log.Debug("AddEvent LEAVE", "streamId", req.Msg.StreamId)
 		addEventRequests.Pass()
 		return connect_go.NewResponse(&AddEventResponse{}), nil
 	} else {
-		logAddEvent(log, "ERROR", req.Msg.StreamId, parsedEvent, nil, requestId, err)
 		addEventRequests.Fail()
-		return nil, RpcAddRequestId(err, requestId)
+		log.Warn("AddEvent ERROR", "streamId", req.Msg.StreamId, "error", err)
+		return nil, err
 	}
 }
 

@@ -2,6 +2,7 @@ package rpc
 
 import (
 	"casablanca/node/config"
+	"casablanca/node/dlog"
 
 	"context"
 	"fmt"
@@ -12,39 +13,45 @@ import (
 	"syscall"
 
 	"github.com/rs/cors"
-	log "github.com/sirupsen/logrus"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
 )
 
-func StartServer(ctx context.Context, cfg *config.Config) (closer func(), actualPort int) {
+func StartServer(ctx context.Context, cfg *config.Config) (func(), int, error) {
+	log := dlog.CtxLog(ctx)
+
 	var chainConfig *config.ChainConfig
 	if cfg.Authorization {
 		chainConfig = &cfg.Chain
 	}
 
-	pattern, handler := MakeServiceHandler(context.Background(), cfg.DbUrl, chainConfig)
+	pattern, handler, err := MakeServiceHandler(context.Background(), log, cfg.DbUrl, chainConfig)
+	if err != nil {
+		return nil, 0, err
+	}
+
 	mux := http.NewServeMux()
-	log.Info("Registering handler for ", pattern)
+	log.Info("Registering handler", "pattern", pattern)
 	mux.Handle(pattern, handler)
 
 	mux.HandleFunc("/info", func(w http.ResponseWriter, r *http.Request) {
 		// TODO: reply with graffiti from config and with node version
-		log.Tracef("Got request for /info %v", *r)
+		log.Debug("Got request for /info", "request", *r)
 		w.Header().Set("Content-Type", "text/plain")
 		w.WriteHeader(http.StatusOK)
 		_, err := w.Write([]byte("All good in the Towns land!\n"))
 		if err != nil {
-			log.Warnf("Failed to write response: %v\nfor request: %v", err, *r)
+			log.Warn("Failed to write response", "error", err, "request", *r)
 		}
 	})
 
 	address := fmt.Sprintf("%s:%d", cfg.Address, cfg.Port)
 	httpListener, err := net.Listen("tcp", address)
 	if err != nil {
-		log.Fatalf("failed to listen: %v", err)
+		log.Error("failed to listen", "error", err)
+		return nil, 0, err
 	}
-	actualPort = httpListener.Addr().(*net.TCPAddr).Port
+	actualPort := httpListener.Addr().(*net.TCPAddr).Port
 
 	corsMiddleware := cors.New(cors.Options{
 		AllowCredentials: false,
@@ -59,26 +66,32 @@ func StartServer(ctx context.Context, cfg *config.Config) (closer func(), actual
 	srv := &http.Server{Handler: h2c.NewHandler(corsMiddleware.Handler(mux), &http2.Server{})}
 	go func() {
 		err := srv.Serve(httpListener)
-		log.Infof("Server stopped: %v", err)
+		log.Info("Server stopped", "reason", err)
 	}()
-	closer = func() {
+	closer := func() {
 		log.Info("closing server")
 		err := srv.Shutdown(ctx)
 		if err != nil {
-			log.Fatalf("failed to shutdown server: %v", err)
+			log.Error("failed to shutdown server", "error", err)
+			panic(err)
 		}
 	}
 
-	log.Printf("Listening on %s%s", address, pattern)
-	log.Printf("Using DB at %s", cfg.DbUrl)
-	return
+	log.Info("Listening", "addr", address+pattern)
+	log.Info("Using DB", "url", cfg.DbUrl)
+	return closer, actualPort, nil
 }
 
-func RunServer(config *config.Config) {
-	closer, _ := StartServer(context.Background(), config)
+func RunServer(ctx context.Context, config *config.Config) error {
+	closer, _, error := StartServer(ctx, config)
+	if error != nil {
+		return error
+	}
 	defer closer()
 
 	exitSignal := make(chan os.Signal, 1)
 	signal.Notify(exitSignal, syscall.SIGINT, syscall.SIGTERM)
 	<-exitSignal
+
+	return nil
 }

@@ -4,26 +4,26 @@ import (
 	"casablanca/node/config"
 	"casablanca/node/infra"
 	"casablanca/node/rpc"
+	"context"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
-func run(cfg *config.Config) {
+func run(cfg *config.Config) error {
+	ctx := context.Background()
 	if cfg.Metrics.Enabled {
-		go infra.StartMetricsService(cfg.Metrics)
+		go infra.StartMetricsService(ctx, cfg.Metrics)
 	}
 
-	rpc.RunServer(cfg)
-	log.Print("Goodbye")
+	return rpc.RunServer(ctx, cfg)
 }
 
 func init() {
 	cmd := &cobra.Command{
 		Use:   "run",
 		Short: "Runs the node",
-		Run: func(cmd *cobra.Command, args []string) {
-			run(cmdConfig)
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return run(cmdConfig)
 		},
 	}
 
