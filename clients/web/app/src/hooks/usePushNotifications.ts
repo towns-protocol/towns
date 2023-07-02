@@ -33,8 +33,7 @@ export const usePushNotifications = () => {
             console.log('did not subscribe to notification')
             return
         }
-        // force register the subscription each time.
-        await addSubscriptionToPushNotificationWorker(subscription, userId)
+
         // the user id can change, so can the push subscription returned from the browser
         // so we need to use a key that is unique to the user and the subscription
         console.log(`${userId} registered for push notifications`)
@@ -42,7 +41,7 @@ export const usePushNotifications = () => {
         if (subscriptionKey === activePushSubscription) {
             return
         }
-        //await addSubscriptionToPushNotificationWorker(subscription, userId)
+        await addSubscriptionToPushNotificationWorker(subscription, userId)
         setActivePushSubscription(subscriptionKey)
     })
 
@@ -57,11 +56,9 @@ export const usePushNotifications = () => {
         }
 
         if (!didNotifyWorker.current) {
-            console.log(`registering for push notifications with "${env.VITE_WEB_PUSH_WORKER_URL}"`)
             register(user.userId)
                 .then(() => {
                     didNotifyWorker.current = true
-                    console.log('registered for push notifications')
                 })
                 .catch((e) => {
                     didNotifyWorker.current = false
