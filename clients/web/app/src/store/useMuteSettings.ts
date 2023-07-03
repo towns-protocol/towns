@@ -31,7 +31,7 @@ const idbStorage: PersistStorage<MuteSettings> = {
 }
 
 const storage: PersistStorage<MuteSettings> | undefined =
-    window.indexedDB !== undefined ? idbStorage : undefined
+    typeof IDBDatabase !== 'undefined' ? idbStorage : undefined
 
 const storeBase = persist(
     immer(
