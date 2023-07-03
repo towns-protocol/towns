@@ -11,29 +11,26 @@ import {IERC173} from "./extensions/ownable/IERC173.sol";
 // libraries
 
 // contracts
-import {DiamondUpgradeable} from "./DiamondUpgradeable.sol";
+import {DiamondController} from "./DiamondController.sol";
 import {DiamondCut} from "./extensions/cut/DiamondCut.sol";
 import {DiamondLoupe} from "./extensions/loupe/DiamondLoupe.sol";
 import {Ownable} from "./extensions/ownable/Ownable.sol";
 
 abstract contract Diamond is
   IDiamond,
-  DiamondUpgradeable,
+  DiamondController,
   DiamondCut,
   DiamondLoupe,
   Ownable
 {
   constructor() {
-    __Introspection_init();
-    __DiamondCutUpgradeable_init();
-    __DiamondLoupe_init();
-    __Ownable_init();
-
     bytes4[] memory selectors = new bytes4[](8);
     uint256 selectorIndex;
 
     // Register the diamondCut external function
     selectors[selectorIndex++] = IDiamondCut.diamondCut.selector;
+
+    _addInterface(type(IDiamondCut).interfaceId);
 
     // Register the diamondLoupe external functions
     selectors[selectorIndex++] = IDiamondLoupe.facets.selector;
@@ -42,9 +39,14 @@ abstract contract Diamond is
     selectors[selectorIndex++] = IDiamondLoupe.facetAddresses.selector;
     selectors[selectorIndex++] = IERC165.supportsInterface.selector;
 
+    _addInterface(type(IDiamondLoupe).interfaceId);
+    _addInterface(type(IERC165).interfaceId);
+
     // Register the ownable external functions
     selectors[selectorIndex++] = IERC173.owner.selector;
     selectors[selectorIndex++] = IERC173.transferOwnership.selector;
+
+    _addInterface(type(IERC173).interfaceId);
 
     FacetCut[] memory facetCuts = new FacetCut[](1);
 

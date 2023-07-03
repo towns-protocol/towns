@@ -7,22 +7,24 @@ import {IDiamondCut, IDiamondCutEvents} from "contracts/src/diamond/extensions/c
 import {IERC165} from "contracts/src/diamond/extensions/introspection/IERC165.sol";
 
 // libraries
-import {console} from "forge-std/console.sol";
 
 // contracts
-import {DiamondBaseSetup} from "contracts/test/diamond/DiamondBaseSetup.sol";
+import {FacetTest} from "contracts/test/diamond/Facet.t.sol";
 import {MockFacet, IMockFacet} from "contracts/test/mocks/MockFacet.sol";
 
 // errors
 // solhint-disable-next-line max-line-length
 import {DiamondCut_InvalidSelector, DiamondCut_FunctionFromSameFacetAlreadyExists, DiamondCut_FunctionAlreadyExists, DiamondCut_InvalidFacetRemoval, DiamondCut_FunctionDoesNotExist, DiamondCut_InvalidFacetCutAction, DiamondCut_InvalidFacet, DiamondCut_InvalidFacetSelectors, DiamondCut_ImmutableFacet, DiamondCut_InvalidContract} from "contracts/src/diamond/extensions/cut/DiamondCutService.sol";
 
-contract DiamondCutTest is DiamondBaseSetup, IDiamondCutEvents {
+import {Ownable__NotOwner} from "contracts/src/diamond/extensions/ownable/OwnableService.sol";
+
+contract DiamondCutTest is FacetTest, IDiamondCutEvents {
   IDiamondCut internal diamondCut;
   IDiamond.FacetCut[] internal facetCuts;
   MockFacet internal mockFacet;
 
-  function setUp() external {
+  function setUp() public override {
+    super.setUp();
     diamondCut = IDiamondCut(diamond);
     mockFacet = new MockFacet();
   }
@@ -56,7 +58,29 @@ contract DiamondCutTest is DiamondBaseSetup, IDiamondCutEvents {
     assertEq(IMockFacet(diamond).mockFunction(), 42);
   }
 
-  function test_revertsWhenInitIsNotContract() external {
+  function test_diamondCut_reverts_when_not_owner() external {
+    vm.stopPrank();
+
+    // create facet selectors
+    bytes4[] memory facetSelectors = new bytes4[](1);
+    facetSelectors[0] = mockFacet.mockFunction.selector;
+
+    // create facet cuts
+    IDiamond.FacetCut[] memory extensions = new IDiamond.FacetCut[](1);
+    extensions[0] = IDiamond.FacetCut({
+      facetAddress: address(mockFacet),
+      action: IDiamond.FacetCutAction.Add,
+      functionSelectors: facetSelectors
+    });
+
+    address caller = _randomAddress();
+
+    vm.expectRevert(abi.encodeWithSelector(Ownable__NotOwner.selector, caller));
+    vm.prank(caller);
+    diamondCut.diamondCut(extensions, address(0), "");
+  }
+
+  function test_reverts_when_init_not_contract() external {
     address init = _randomAddress();
 
     // create facet selectors

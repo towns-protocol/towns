@@ -4,12 +4,18 @@ pragma solidity 0.8.19;
 import {IEntitlement} from "contracts/src/spaces/interfaces/IEntitlement.sol";
 import {IERC721} from "openzeppelin-contracts/contracts/token/ERC721/IERC721.sol";
 
+import {MockEntitlementStorage} from "./MockEntitlementStorage.sol";
+import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+
 import {DataTypes} from "contracts/src/spaces/libraries/DataTypes.sol";
 
 import {ERC165Upgradeable} from "openzeppelin-contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol";
 import {Initializable} from "openzeppelin-contracts-upgradeable/proxy/utils/Initializable.sol";
 import {ContextUpgradeable} from "openzeppelin-contracts-upgradeable/utils/ContextUpgradeable.sol";
 import {UUPSUpgradeable} from "openzeppelin-contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+
+// debuggging
+import {console} from "forge-std/console.sol";
 
 contract MockEntitlement is
   Initializable,
@@ -18,6 +24,9 @@ contract MockEntitlement is
   UUPSUpgradeable,
   IEntitlement
 {
+  using EnumerableSet for EnumerableSet.Bytes32Set;
+  using MockEntitlementStorage for MockEntitlementStorage.Layout;
+
   string public constant name = "Mock Entitlement";
   string public constant description = "Entitlement for kicks";
   string public constant moduleType = "MockEntitlement";
@@ -77,16 +86,33 @@ contract MockEntitlement is
 
   function setEntitlement(
     uint256 roleId,
-    bytes calldata entitlementData
-  ) external pure returns (bytes32 entitlementId) {
-    return keccak256(abi.encodePacked(roleId, entitlementData));
+    bytes memory entitlementData
+  ) external returns (bytes32 entitlementId) {
+    entitlementId = keccak256(abi.encodePacked(roleId, entitlementData));
+
+    MockEntitlementStorage.Layout storage ds = MockEntitlementStorage.layout();
+
+    ds.entitlementIds.add(entitlementId);
+    ds.entitlementIdsByRoleId[roleId].add(entitlementId);
+    ds.entitlementsById[entitlementId] = MockEntitlementStorage.Entitlement({
+      roleId: roleId,
+      data: entitlementData
+    });
   }
 
   function removeEntitlement(
     uint256 roleId,
     bytes calldata entitlementData
-  ) external pure returns (bytes32 entitlementId) {
-    return keccak256(abi.encodePacked(roleId, entitlementData));
+  ) external returns (bytes32 entitlementId) {
+    entitlementId = keccak256(abi.encodePacked(roleId, entitlementData));
+
+    MockEntitlementStorage.Layout storage ds = MockEntitlementStorage.layout();
+
+    ds.entitlementIds.remove(entitlementId);
+    ds.entitlementIdsByRoleId[roleId].remove(entitlementId);
+    delete ds.entitlementsById[entitlementId];
+
+    return entitlementId;
   }
 
   function addRoleIdToChannel(string calldata, uint256) external pure {
@@ -104,9 +130,22 @@ contract MockEntitlement is
   }
 
   function getEntitlementDataByRoleId(
-    uint256
-  ) external pure returns (bytes[] memory) {
-    bytes[] memory entitlementData = new bytes[](0);
+    uint256 roleId
+  ) external view returns (bytes[] memory) {
+    MockEntitlementStorage.Layout storage ds = MockEntitlementStorage.layout();
+
+    uint256 length = ds.entitlementIdsByRoleId[roleId].length();
+
+    console.log("length: %s", length);
+
+    bytes[] memory entitlementData = new bytes[](length);
+
+    for (uint256 i = 0; i < length; i++) {
+      entitlementData[i] = ds
+        .entitlementsById[ds.entitlementIdsByRoleId[roleId].at(i)]
+        .data;
+    }
+
     return entitlementData;
   }
 

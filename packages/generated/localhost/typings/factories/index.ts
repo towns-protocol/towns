@@ -2,10 +2,13 @@
 /* tslint:disable */
 /* eslint-disable */
 export * as mockTokenSol from "./MockToken.sol";
+export * as entitlements from "./entitlements";
+export * as interfaces from "./interfaces";
+export * as token from "./token";
+export * as user from "./user";
 export { CouncilStaking__factory } from "./CouncilStaking__factory";
 export { Errors__factory } from "./Errors__factory";
 export { Events__factory } from "./Events__factory";
-export { IEntitlement__factory } from "./IEntitlement__factory";
 export { Member__factory } from "./Member__factory";
 export { Pioneer__factory } from "./Pioneer__factory";
 export { Space__factory } from "./Space__factory";

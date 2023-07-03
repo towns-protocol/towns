@@ -8,8 +8,8 @@ import {PausableStorage} from "./PausableStorage.sol";
 
 // contracts
 
-error Pausable_NotPaused();
-error Pausable_Paused();
+error Pausable__NotPaused();
+error Pausable__Paused();
 
 library PausableService {
   function pause() internal {
@@ -26,13 +26,13 @@ library PausableService {
 
   function requireNotPaused() internal view {
     if (paused()) {
-      revert Pausable_Paused();
+      revert Pausable__Paused();
     }
   }
 
   function requirePaused() internal view {
     if (!paused()) {
-      revert Pausable_NotPaused();
+      revert Pausable__NotPaused();
     }
   }
 }

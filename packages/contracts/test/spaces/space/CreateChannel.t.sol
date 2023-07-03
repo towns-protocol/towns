@@ -8,8 +8,6 @@ import {Permissions} from "contracts/src/spaces/libraries/Permissions.sol";
 import {SpaceBaseSetup} from "contracts/test/spaces/SpaceBaseSetup.sol";
 import {Space} from "contracts/src/spaces/Space.sol";
 
-import {console} from "forge-std/console.sol";
-
 contract CreateChannelTest is SpaceBaseSetup {
   function setUp() external {}
 

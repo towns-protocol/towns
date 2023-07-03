@@ -5,7 +5,6 @@ pragma solidity 0.8.19;
 
 // libraries
 import {Address} from "openzeppelin-contracts/contracts/utils/Address.sol";
-import {IDiamond} from "../IDiamond.sol";
 
 // contracts
 

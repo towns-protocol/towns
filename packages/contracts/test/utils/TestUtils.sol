@@ -2,9 +2,11 @@
 pragma solidity ^0.8.0;
 
 // solhint-disable-next-line
-import "forge-std/Test.sol";
 
-contract TestUtils is Test {
+import {PRBTest} from "@prb/test/PRBTest.sol";
+import {StdCheats} from "forge-std/StdCheats.sol";
+
+contract TestUtils is PRBTest, StdCheats {
   uint256 private immutable _nonce;
 
   address public constant NATIVE_TOKEN =

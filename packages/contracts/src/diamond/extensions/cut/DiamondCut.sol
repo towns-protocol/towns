@@ -8,22 +8,21 @@ import {IDiamondCut} from "./IDiamondCut.sol";
 // libraries
 
 // contracts
-import {DiamondCutUpgradeable} from "./DiamondCutUpgradeable.sol";
-import {OwnableService} from "contracts/src/diamond/extensions/ownable/OwnableService.sol";
+import {DiamondCutController} from "./DiamondCutController.sol";
+import {OwnableService, Ownable__NotOwner} from "contracts/src/diamond/extensions/ownable/OwnableService.sol";
 
-contract DiamondCut is IDiamondCut, DiamondCutUpgradeable {
+contract DiamondCut is IDiamondCut, DiamondCutController {
   /// @inheritdoc IDiamondCut
   function diamondCut(
     IDiamond.FacetCut[] memory facetCuts,
     address init,
     bytes memory initPayload
   ) external {
-    if (!_canSetExtension()) revert DiamondCut_CannotSetExtension();
+    if (!_checkDiamondCut()) revert Ownable__NotOwner(msg.sender);
     _diamondCut(facetCuts, init, initPayload);
   }
 
-  /// @dev Returns true if the extension can be set.
-  function _canSetExtension() internal view virtual returns (bool) {
+  function _checkDiamondCut() internal view virtual returns (bool) {
     return OwnableService.owner() == msg.sender;
   }
 }

@@ -8,8 +8,8 @@ import {OwnableStorage} from "./OwnableStorage.sol";
 
 // contracts
 
-error Ownable_ZeroAddress();
-error Ownable_NotOwner(address account);
+error Ownable__ZeroAddress();
+error Ownable__NotOwner(address account);
 
 library OwnableService {
   function owner() internal view returns (address) {
@@ -18,12 +18,12 @@ library OwnableService {
 
   function checkOwner() internal view {
     if (msg.sender != owner()) {
-      revert Ownable_NotOwner(msg.sender);
+      revert Ownable__NotOwner(msg.sender);
     }
   }
 
   function transferOwnership(address newOwner) internal {
-    if (newOwner == address(0)) revert Ownable_ZeroAddress();
+    if (newOwner == address(0)) revert Ownable__ZeroAddress();
     OwnableStorage.layout().owner = newOwner;
   }
 

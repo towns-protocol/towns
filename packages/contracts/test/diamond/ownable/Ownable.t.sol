@@ -8,16 +8,25 @@ import {IERC165} from "contracts/src/diamond/extensions/introspection/IERC165.so
 //libraries
 
 //contracts
-import {DiamondBaseSetup} from "contracts/test/diamond/DiamondBaseSetup.sol";
+import {FacetTest} from "contracts/test/diamond/Facet.t.sol";
+import {Ownable} from "contracts/src/diamond/extensions/ownable/Ownable.sol";
+import {MockOwnable} from "contracts/test/mocks/MockOwnable.sol";
 
 // errors
-import {Ownable_ZeroAddress, Ownable_NotOwner} from "contracts/src/diamond/extensions/ownable/OwnableService.sol";
+import {Ownable__ZeroAddress, Ownable__NotOwner} from "contracts/src/diamond/extensions/ownable/OwnableService.sol";
 
-contract OwnableTest is DiamondBaseSetup, IERC173Events {
+contract OwnableTest is FacetTest, IERC173Events {
   IERC173 internal ownable;
 
-  function setUp() external {
+  function setUp() public override {
+    super.setUp();
     ownable = IERC173(diamond);
+  }
+
+  function test_init() external {
+    MockOwnable mock = new MockOwnable();
+    mock.init();
+    assertEq(mock.owner(), address(deployer));
   }
 
   function test_supportsInterface() external {
@@ -30,7 +39,7 @@ contract OwnableTest is DiamondBaseSetup, IERC173Events {
     address newOwner = _randomAddress();
 
     vm.expectRevert(
-      abi.encodeWithSelector(Ownable_NotOwner.selector, newOwner)
+      abi.encodeWithSelector(Ownable__NotOwner.selector, newOwner)
     );
 
     vm.prank(newOwner);
@@ -38,7 +47,7 @@ contract OwnableTest is DiamondBaseSetup, IERC173Events {
   }
 
   function test_revertIZeroAddress() external {
-    vm.expectRevert(Ownable_ZeroAddress.selector);
+    vm.expectRevert(Ownable__ZeroAddress.selector);
 
     ownable.transferOwnership(address(0));
   }
@@ -57,5 +66,18 @@ contract OwnableTest is DiamondBaseSetup, IERC173Events {
     ownable.transferOwnership(newOwner);
 
     assertEq(ownable.owner(), newOwner);
+  }
+
+  function test_renounceOwnership() external {
+    OwnableV2 ownableV2 = new OwnableV2();
+    ownableV2.renounceOwnership();
+
+    assertEq(ownableV2.owner(), address(0));
+  }
+}
+
+contract OwnableV2 is Ownable {
+  function renounceOwnership() external {
+    _renounceOwnership();
   }
 }

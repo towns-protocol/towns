@@ -14,9 +14,7 @@ import {SpaceBaseSetup} from "contracts/test/spaces/SpaceBaseSetup.sol";
 import {UserEntitlement} from "contracts/src/spaces/entitlements/UserEntitlement.sol";
 import {ERC1967Proxy} from "openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
-import {console} from "forge-std/console.sol";
-
-contract UserEntitlementTest is SpaceBaseSetup {
+contract UserEntitlementSpaceTest is SpaceBaseSetup {
   address internal _entitlementAddress;
   UserEntitlement internal _implementation;
   UserEntitlement internal _userEntitlement;

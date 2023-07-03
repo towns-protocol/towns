@@ -2,7 +2,6 @@
 pragma solidity 0.8.19;
 
 // interfaces
-import {IERC165} from "openzeppelin-contracts/contracts/utils/introspection/IERC165.sol";
 import {IERC2981} from "openzeppelin-contracts/contracts/interfaces/IERC2981.sol";
 
 // libraries

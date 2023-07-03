@@ -9,6 +9,8 @@ import {StdStorage, stdStorage} from "forge-std/StdStorage.sol";
 contract PioneerTest is TestUtils {
   using stdStorage for StdStorage;
 
+  StdStorage private stdstore;
+
   address internal bob;
   address internal alice;
 

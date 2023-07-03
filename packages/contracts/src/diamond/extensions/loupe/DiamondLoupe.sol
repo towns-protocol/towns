@@ -8,14 +8,14 @@ import {IDiamondLoupe} from "./IDiamondLoupe.sol";
 // libraries
 
 // contracts
-import {IntrospectionUpgradeable} from "../introspection/IntrospectionUpgradeable.sol";
-import {DiamondLoupeUpgradeable} from "./DiamondLoupeUpgradeable.sol";
+import {IntrospectionController} from "../introspection/IntrospectionController.sol";
+import {DiamondLoupeController} from "./DiamondLoupeController.sol";
 
 contract DiamondLoupe is
   IDiamondLoupe,
   IERC165,
-  DiamondLoupeUpgradeable,
-  IntrospectionUpgradeable
+  DiamondLoupeController,
+  IntrospectionController
 {
   /// @inheritdoc IDiamondLoupe
   function facets() external view override returns (Facet[] memory) {

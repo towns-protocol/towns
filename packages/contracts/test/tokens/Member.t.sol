@@ -16,6 +16,8 @@ import {StdStorage, stdStorage} from "forge-std/StdStorage.sol";
 contract MemberTest is TestUtils {
   using stdStorage for StdStorage;
 
+  StdStorage private stdstore;
+
   Member private _nft;
   MerkleTree private _merkle;
 

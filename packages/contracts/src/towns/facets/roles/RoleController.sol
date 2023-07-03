@@ -1,0 +1,315 @@
+// SPDX-License-Identifier: Apache-2.0
+pragma solidity ^0.8.19;
+
+// interfaces
+import {IRoleStructs} from "./IRole.sol";
+
+// libraries
+import {Permissions} from "contracts/src/spaces/libraries/Permissions.sol";
+import {Validator} from "contracts/src/utils/Validator.sol";
+
+// services
+import {EntitlementsService} from "contracts/src/towns/facets/entitlements/EntitlementsService.sol";
+import {ChannelService} from "contracts/src/towns/facets/channels/ChannelService.sol";
+import {RoleService} from "./RoleService.sol";
+
+// contracts
+
+abstract contract RoleController is IRoleStructs {
+  // =============================================================
+  //                         Role Management
+  // =============================================================
+  function _createRole(
+    string calldata roleName,
+    string[] memory permissions,
+    CreateEntitlement[] memory entitlements
+  ) internal returns (uint256 roleId) {
+    EntitlementsService.validatePermission(Permissions.ModifySpaceSettings);
+
+    Validator.checkLength(roleName, 2);
+
+    uint256 entitlementsLen = entitlements.length;
+
+    address[] memory entitlementAddresses = new address[](entitlementsLen);
+
+    for (uint256 i = 0; i < entitlementsLen; ) {
+      EntitlementsService.validateEntitlement(entitlements[i].module);
+      EntitlementsService.checkEntitlement(entitlements[i].module);
+      entitlementAddresses[i] = entitlements[i].module;
+      unchecked {
+        i++;
+      }
+    }
+
+    roleId = RoleService.addRole(
+      roleName,
+      false,
+      permissions,
+      entitlementAddresses
+    );
+
+    for (uint256 i = 0; i < entitlementsLen; ) {
+      // check for empty address or data
+      Validator.checkByteLength(entitlements[i].data);
+
+      EntitlementsService.proxyAddRoleToEntitlement(
+        entitlements[i].module,
+        roleId,
+        entitlements[i].data
+      );
+      unchecked {
+        i++;
+      }
+    }
+
+    RoleService.checkRoleExists(roleId);
+  }
+
+  function _getRoles() internal view returns (Role[] memory roles) {
+    uint256[] memory roleIds = RoleService.getRoleIds();
+    uint256 roleIdLen = roleIds.length;
+
+    roles = new Role[](roleIdLen);
+
+    for (uint256 i = 0; i < roleIdLen; ) {
+      (
+        string memory name,
+        bool isImmutable,
+        string[] memory permissions,
+        address[] memory entitlements
+      ) = RoleService.getRole(roleIds[i]);
+
+      roles[i] = Role({
+        id: roleIds[i],
+        name: name,
+        disabled: isImmutable,
+        permissions: permissions,
+        entitlements: entitlements
+      });
+
+      unchecked {
+        i++;
+      }
+    }
+  }
+
+  function _getRoleById(
+    uint256 roleId
+  ) internal view returns (Role memory role) {
+    (
+      string memory name,
+      bool isImmutable,
+      string[] memory permissions,
+      address[] memory entitlements
+    ) = RoleService.getRole(roleId);
+
+    return
+      Role({
+        id: roleId,
+        name: name,
+        disabled: isImmutable,
+        permissions: permissions,
+        entitlements: entitlements
+      });
+  }
+
+  // make nonreentrant
+  function _updateRole(
+    uint256 roleId,
+    string calldata roleName,
+    string[] memory permissions,
+    CreateEntitlement[] memory entitlements
+  ) internal {
+    EntitlementsService.validatePermission(Permissions.ModifySpaceSettings);
+    RoleService.checkRoleExists(roleId);
+
+    // get current entitlements before updating them
+    address[] memory currentEntitlements = RoleService.getEntitlementsByRole(
+      roleId
+    );
+    uint256 currentEntitlementsLen = currentEntitlements.length;
+
+    uint256 entitlementsLen = entitlements.length;
+    address[] memory entitlementAddresses = new address[](entitlementsLen);
+
+    for (uint256 i = 0; i < entitlementsLen; ) {
+      EntitlementsService.validateEntitlement(entitlements[i].module);
+      EntitlementsService.checkEntitlement(entitlements[i].module);
+      entitlementAddresses[i] = entitlements[i].module;
+      unchecked {
+        i++;
+      }
+    }
+
+    RoleService.updateRole(roleId, roleName, permissions, entitlementAddresses);
+
+    if (entitlementsLen == 0) {
+      return;
+    }
+
+    // loop through old entitlements and remove them
+    for (uint256 i = 0; i < currentEntitlementsLen; ) {
+      bytes[] memory entitlementData = EntitlementsService
+        .proxyGetEntitlementDataByRole(currentEntitlements[i], roleId);
+      uint256 entitlementDataLen = entitlementData.length;
+
+      for (uint256 j = 0; j < entitlementDataLen; ) {
+        EntitlementsService.proxyRemoveRoleFromEntitlement(
+          currentEntitlements[i],
+          roleId,
+          entitlementData[j]
+        );
+
+        unchecked {
+          j++;
+        }
+      }
+
+      unchecked {
+        i++;
+      }
+    }
+
+    for (uint256 i = 0; i < entitlementsLen; ) {
+      // check for empty address or data
+      Validator.checkByteLength(entitlements[i].data);
+
+      EntitlementsService.proxyAddRoleToEntitlement(
+        entitlements[i].module,
+        roleId,
+        entitlements[i].data
+      );
+
+      unchecked {
+        i++;
+      }
+    }
+  }
+
+  function _removeRole(uint256 roleId) internal {
+    EntitlementsService.validatePermission(Permissions.ModifySpaceSettings);
+
+    // get current entitlements
+    address[] memory currentEntitlements = RoleService.getEntitlementsByRole(
+      roleId
+    );
+    uint256 currentEntitlementsLen = currentEntitlements.length;
+
+    RoleService.removeRole(roleId);
+
+    string[] memory channelIds = ChannelService.getChannelIds();
+    uint256 channelIdsLen = channelIds.length;
+
+    // remove role from channels
+    for (uint256 i = 0; i < channelIdsLen; ) {
+      ChannelService.removeRoleFromChannel(channelIds[i], roleId);
+      unchecked {
+        i++;
+      }
+    }
+
+    // remove role from entitlements
+    for (uint256 i = 0; i < currentEntitlementsLen; ) {
+      bytes[] memory entitlementData = EntitlementsService
+        .proxyGetEntitlementDataByRole(currentEntitlements[i], roleId);
+      uint256 entitlementDataLen = entitlementData.length;
+
+      for (uint256 j = 0; j < entitlementDataLen; j++) {
+        EntitlementsService.proxyRemoveRoleFromEntitlement(
+          currentEntitlements[i],
+          roleId,
+          entitlementData[j]
+        );
+      }
+
+      unchecked {
+        i++;
+      }
+    }
+  }
+
+  // =============================================================
+  //                    Permission Management
+  // =============================================================
+  function _addPermissionsToRole(
+    uint256 roleId,
+    string[] memory permissions
+  ) internal {
+    EntitlementsService.validatePermission(Permissions.ModifySpaceSettings);
+
+    // check role exists
+    RoleService.checkRole(roleId);
+
+    // check permissions
+    RoleService.addPermissionsToRole(roleId, permissions);
+  }
+
+  function _removePermissionsFromRole(
+    uint256 roleId,
+    string[] memory permissions
+  ) internal {
+    EntitlementsService.validatePermission(Permissions.ModifySpaceSettings);
+
+    // check role exists
+    RoleService.checkRole(roleId);
+
+    // check permissions
+    RoleService.removePermissionsFromRole(roleId, permissions);
+  }
+
+  function _getPermissionsByRoleId(
+    uint256 roleId
+  ) internal view returns (string[] memory permissions) {
+    (, , permissions, ) = RoleService.getRole(roleId);
+  }
+
+  // =============================================================
+  //                  Role - Entitlement Management
+  // =============================================================
+
+  function _addRoleToEntitlement(
+    uint256 roleId,
+    CreateEntitlement memory entitlement
+  ) internal {
+    EntitlementsService.validatePermission(Permissions.ModifySpaceSettings);
+
+    // check role exists
+    RoleService.checkRole(roleId);
+
+    // check entitlements exists
+    EntitlementsService.checkEntitlement(entitlement.module);
+
+    // add entitlement to role
+    RoleService.addEntitlementToRole(roleId, entitlement.module);
+
+    // set entitlement to role
+    EntitlementsService.proxyAddRoleToEntitlement(
+      entitlement.module,
+      roleId,
+      entitlement.data
+    );
+  }
+
+  function _removeRoleFromEntitlement(
+    uint256 roleId,
+    CreateEntitlement memory entitlement
+  ) internal {
+    EntitlementsService.validatePermission(Permissions.ModifySpaceSettings);
+
+    // check role exists
+    RoleService.checkRole(roleId);
+
+    // check entitlements exists
+    EntitlementsService.checkEntitlement(entitlement.module);
+
+    // remove entitlement from role
+    RoleService.removeEntitlementFromRole(roleId, entitlement.module);
+
+    // set entitlement to role
+    EntitlementsService.proxyRemoveRoleFromEntitlement(
+      entitlement.module,
+      roleId,
+      entitlement.data
+    );
+  }
+}

@@ -702,6 +702,7 @@
     },
     "remappings": [
       ":@openzeppelin/=lib/openzeppelin-contracts/",
+      ":@prb/test/=lib/prb-test/src/",
       ":@towns/=node_modules/@towns/",
       ":ERC721A/=lib/ERC721A/contracts/",
       ":contracts/=packages/contracts/",
@@ -713,6 +714,7 @@
       ":openzeppelin-contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/",
       ":openzeppelin-contracts/=lib/openzeppelin-contracts/",
       ":operator-filter-registry/=lib/operator-filter-registry/",
+      ":prb-test/=lib/prb-test/src/",
       ":solmate/=lib/solmate/src/",
       ":weird-erc20/=lib/solmate/lib/weird-erc20/src/"
     ]

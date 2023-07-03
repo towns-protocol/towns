@@ -1623,6 +1623,7 @@
     },
     "remappings": [
       ":@openzeppelin/=lib/openzeppelin-contracts/",
+      ":@prb/test/=lib/prb-test/src/",
       ":@towns/=node_modules/@towns/",
       ":ERC721A/=lib/ERC721A/contracts/",
       ":contracts/=packages/contracts/",
@@ -1634,6 +1635,7 @@
       ":openzeppelin-contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/",
       ":openzeppelin-contracts/=lib/openzeppelin-contracts/",
       ":operator-filter-registry/=lib/operator-filter-registry/",
+      ":prb-test/=lib/prb-test/src/",
       ":solmate/=lib/solmate/src/",
       ":weird-erc20/=lib/solmate/lib/weird-erc20/src/"
     ]
@@ -1776,11 +1778,11 @@
       ]
     },
     "packages/contracts/src/spaces/libraries/Utils.sol": {
-      "keccak256": "0xf97297476d7fb903873593803aa8d4be3e300c02b83bb707e5a99e07d60786f0",
+      "keccak256": "0xf5dd9f5582ecd01f01a80b59bc664c13b142682f504de39e6f0551703df79ab6",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://71a549a9281a0a60e37f221d4ae0fdb6da9a8994d9c5a274b343585c88916af9",
-        "dweb:/ipfs/QmTr6J7qqkF8xiZkJSt8e812r4srdmXQetZk6jTgJbcasJ"
+        "bzz-raw://489bbb9d14e6c6689ef8e4191ec913a6f6f6697644bbf39e800b99aafe9cfa87",
+        "dweb:/ipfs/QmR3UndgcK8VbtvGHksEQAXWHe7Q4L1HSop617346UuUE7"
       ]
     },
     "packages/contracts/src/utils/Metadata.sol": {

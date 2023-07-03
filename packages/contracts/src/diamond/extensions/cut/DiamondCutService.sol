@@ -36,8 +36,10 @@ library DiamondCutService {
     // add facet to diamond storage
     if (!ds.facets.contains(facet)) ds.facets.add(facet);
 
+    uint256 selectorCount = selectors.length;
+
     // add selectors to diamond storage
-    for (uint256 i; i < selectors.length; i++) {
+    for (uint256 i; i < selectorCount; ) {
       bytes4 selector = selectors[i];
 
       if (selector == bytes4(0)) {
@@ -50,6 +52,10 @@ library DiamondCutService {
 
       ds.facetBySelector[selector] = facet;
       ds.selectorsByFacet[facet].add(selector);
+
+      unchecked {
+        i++;
+      }
     }
   }
 
@@ -90,7 +96,9 @@ library DiamondCutService {
 
     if (!ds.facets.contains(facet)) ds.facets.add(facet);
 
-    for (uint256 i; i < selectors.length; i++) {
+    uint256 selectorCount = selectors.length;
+
+    for (uint256 i; i < selectorCount; ) {
       bytes4 selector = selectors[i];
 
       if (selector == bytes4(0)) {
@@ -116,6 +124,10 @@ library DiamondCutService {
 
       if (ds.selectorsByFacet[oldFacet].length() == 0) {
         ds.facets.remove(oldFacet);
+      }
+
+      unchecked {
+        i++;
       }
     }
   }

@@ -21,8 +21,6 @@ interface IDiamondCutEvents {
 }
 
 interface IDiamondCut is IDiamondCutEvents {
-  error DiamondCut_CannotSetExtension();
-
   /// @notice Add/replace/remove any number of functions and optionally execute a function with delegatecall
   /// @param facetCuts Facet addresses and function selectors.
   /// @param init Address of contract or facet to execute initPayload.

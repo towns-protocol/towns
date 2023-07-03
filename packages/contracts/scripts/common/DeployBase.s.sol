@@ -38,6 +38,14 @@ contract DeployBase is Script {
     console2.log(string.concat("[INFO]: ", message), arg);
   }
 
+  function info(string memory message, address arg) internal view {
+    console2.log(string.concat("[INFO]: ", unicode"✅ ", message), arg);
+  }
+
+  function warn(string memory message, address arg) internal view {
+    console2.log(string.concat("[WARN]: ", unicode"⚠️ ", message), arg);
+  }
+
   // =============================================================
   //                       FFI HELPERS
   // =============================================================

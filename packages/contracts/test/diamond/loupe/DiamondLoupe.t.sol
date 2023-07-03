@@ -8,19 +8,20 @@ import {IDiamondLoupe} from "contracts/src/diamond/extensions/loupe/IDiamondLoup
 import {IERC165} from "contracts/src/diamond/extensions/introspection/IERC165.sol";
 
 //libraries
-import {console} from "forge-std/console.sol";
 
 //contracts
-import {DiamondBaseSetup} from "contracts/test/diamond/DiamondBaseSetup.sol";
-import {MockFacetHelper, MockFacet} from "contracts/test/mocks/MockFacet.sol";
+import {FacetTest} from "contracts/test/diamond/Facet.t.sol";
+import {MockFacetHelper} from "contracts/test/mocks/MockFacet.sol";
+import {MockFacet} from "contracts/test/mocks/MockFacet.sol";
 
-contract DiamondLoupeTest is DiamondBaseSetup {
+contract DiamondLoupeTest is FacetTest {
   IDiamondLoupe internal diamondLoupe;
   IDiamondCut internal diamondCut;
   IDiamond.FacetCut[] internal facetCuts;
   MockFacetHelper internal mockFacetHelper = new MockFacetHelper();
 
-  function setUp() external {
+  function setUp() public override {
+    super.setUp();
     diamondLoupe = IDiamondLoupe(diamond);
     diamondCut = IDiamondCut(diamond);
   }

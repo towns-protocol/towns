@@ -16,7 +16,7 @@ import {TokenEntitlement} from "contracts/src/spaces/entitlements/TokenEntitleme
 import {ERC1967Proxy} from "openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import {Mock721, Mock1155, MockERC20} from "contracts/test/mocks/MockToken.sol";
 
-contract TokenEntitlementTest is SpaceBaseSetup {
+contract TokenEntitlementSpaceTest is SpaceBaseSetup {
   address internal _entitlementAddress;
   TokenEntitlement internal _implementation;
   TokenEntitlement internal _tokenEntitlement;

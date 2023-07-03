@@ -797,6 +797,7 @@
     },
     "remappings": [
       ":@openzeppelin/=lib/openzeppelin-contracts/",
+      ":@prb/test/=lib/prb-test/src/",
       ":@towns/=node_modules/@towns/",
       ":ERC721A/=lib/ERC721A/contracts/",
       ":contracts/=packages/contracts/",
@@ -808,6 +809,7 @@
       ":openzeppelin-contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/",
       ":openzeppelin-contracts/=lib/openzeppelin-contracts/",
       ":operator-filter-registry/=lib/operator-filter-registry/",
+      ":prb-test/=lib/prb-test/src/",
       ":solmate/=lib/solmate/src/",
       ":weird-erc20/=lib/solmate/lib/weird-erc20/src/"
     ]
@@ -1214,27 +1216,27 @@
       ]
     },
     "packages/contracts/src/spaces/libraries/Utils.sol": {
-      "keccak256": "0xf97297476d7fb903873593803aa8d4be3e300c02b83bb707e5a99e07d60786f0",
+      "keccak256": "0xf5dd9f5582ecd01f01a80b59bc664c13b142682f504de39e6f0551703df79ab6",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://71a549a9281a0a60e37f221d4ae0fdb6da9a8994d9c5a274b343585c88916af9",
-        "dweb:/ipfs/QmTr6J7qqkF8xiZkJSt8e812r4srdmXQetZk6jTgJbcasJ"
+        "bzz-raw://489bbb9d14e6c6689ef8e4191ec913a6f6f6697644bbf39e800b99aafe9cfa87",
+        "dweb:/ipfs/QmR3UndgcK8VbtvGHksEQAXWHe7Q4L1HSop617346UuUE7"
       ]
     },
     "packages/contracts/src/tokens/TownOwner.sol": {
-      "keccak256": "0x57bfda78445e7662e7a536b6943bb306019e13601395dd96ad09d80cb192d1cb",
+      "keccak256": "0x7aa651df82d13dea61c8e04d4276e27c17d596d80d59946d3e4bf2c13b390798",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://0d86fbb2e186f5fd2a7f38f58789f9b53393fd7d11b3f1b4dbf35b707ffd9111",
-        "dweb:/ipfs/Qmd4bBo5EvwGjpSwNoGrzVgXJBk9ZJu5WnzDjssvgNZ2LN"
+        "bzz-raw://c270645bcbdca5ce38235e33dd90719ed7f5446634bc04c5a8bbf919fdd27736",
+        "dweb:/ipfs/QmeZ7ReUGzFDR8dfPAhdFLZJZeEheSQwmf2hfSPd4ytq7h"
       ]
     },
     "packages/contracts/src/tokens/base/ERC721Base.sol": {
-      "keccak256": "0x5f89d3cb650eb9a5558b237b2b5ee8eb0c78b7f1eb3095340bb4c7fc4a71fa98",
+      "keccak256": "0x6d0f9985e0c3d5ecd5827472856485ee5fac738554aec05ed3b6992f179243be",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://f9575fbd3b0bd1ce9f2b630d88da549ac1f61f95f425d15c4c871c1800699228",
-        "dweb:/ipfs/QmWc3Djdhj5cZ5K8espNWAyELgoXwxEo1NFfJrpqbELa7Q"
+        "bzz-raw://fc5ed6cb326f30ab7760eeed6f261d8a77a9c4fe726ac06ddd922c6aa02d9c16",
+        "dweb:/ipfs/QmcbNjaH9U8xFfDENcURSA6a3iDQEQC7yRaTGr5YUi8B8R"
       ]
     },
     "packages/contracts/src/utils/BatchMintMetadata.sol": {

@@ -8,9 +8,6 @@ import {InitializableStorage} from "./InitializableStorage.sol";
 
 // contracts
 error Initializable_AlreadyInitialized();
-error Initializable_ReAlreadyInitialized(uint8 version);
-error Initializable_NotInInitializingState();
-error Initializable_InInitializingState();
 
 abstract contract Initializable {
   using InitializableStorage for InitializableStorage.Layout;

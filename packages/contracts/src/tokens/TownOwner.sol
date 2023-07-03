@@ -8,7 +8,13 @@ pragma solidity 0.8.19;
 // contracts
 import {ERC721Base} from "contracts/src/tokens/base/ERC721Base.sol";
 
-contract TownOwner is ERC721Base {
+interface ITownOwner {
+  function setFactory(address _factory) external;
+
+  function setTokenURI(uint256 _tokenId, string memory _tokenURI) external;
+}
+
+contract TownOwner is ERC721Base, ITownOwner {
   address public FACTORY_ADDRESS;
 
   constructor(

@@ -2,7 +2,6 @@
 pragma solidity ^0.8.19;
 
 // interfaces
-import {IDiamondLoupe} from "./IDiamondLoupe.sol";
 
 // libraries
 import {EnumerableSet} from "openzeppelin-contracts/contracts/utils/structs/EnumerableSet.sol";
