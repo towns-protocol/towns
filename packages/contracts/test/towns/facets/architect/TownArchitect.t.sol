@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.20;
 
 // interfaces
 import {ITownArchitectEvents} from "contracts/src/towns/facets/architect/ITownArchitect.sol";

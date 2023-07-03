@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.20;
 
 //interfaces
 import {IERC173, IERC173Events} from "contracts/src/diamond/extensions/ownable/IERC173.sol";

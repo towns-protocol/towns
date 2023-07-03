@@ -1,6 +1,6 @@
 {
   "compiler": {
-    "version": "0.8.19+commit.7dd6d404"
+    "version": "0.8.20+commit.a1b79de6"
   },
   "language": "Solidity",
   "output": {
@@ -868,13 +868,10 @@
       ":ds-test/=lib/ds-test/src/",
       ":erc4626-tests/=lib/operator-filter-registry/lib/openzeppelin-contracts/lib/erc4626-tests/",
       ":forge-std/=lib/forge-std/src/",
-      ":murky/=lib/murky/src/",
       ":openzeppelin-contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/",
       ":openzeppelin-contracts/=lib/openzeppelin-contracts/",
       ":operator-filter-registry/=lib/operator-filter-registry/",
-      ":prb-test/=lib/prb-test/src/",
-      ":solmate/=lib/solmate/src/",
-      ":weird-erc20/=lib/solmate/lib/weird-erc20/src/"
+      ":prb-test/=lib/prb-test/src/"
     ]
   },
   "sources": {
@@ -983,19 +980,19 @@
       ]
     },
     "packages/contracts/src/tokens/Member.sol": {
-      "keccak256": "0x426e309a6da1f13c6dc1fef7c12385d9f7581b80b5e049ceed8833aff210eb8d",
+      "keccak256": "0x2527dca5799dd7ad1695db22f22c9cc35f170c8bd8def82f40e9d3f6c844ee12",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://5956b9f4ea0d7da620d792ef6d9fecb1b74bb39e8e5ee26c866f146dd9575520",
-        "dweb:/ipfs/QmfQraMtya8tqeGr6FfHxY6Wi7v1az4hqsizmaTg8zGhY5"
+        "bzz-raw://aed81863f971934a9b06b1e1166e2615c9d61f4d23a4c08ee3abd504347ab7e1",
+        "dweb:/ipfs/QmbxUTnQD6hFWsTxiyEoE9r4xtvY2bNrUpuEPg3iiDmdot"
       ]
     },
     "packages/contracts/src/tokens/interfaces/IMember.sol": {
-      "keccak256": "0xdb804068d751228ab794835c83722a1b375446a557e61c677f19db5509c3f5e7",
+      "keccak256": "0x2537c536bab012221427ba91c86628aa03bd37c9382a474e4e982c3a183d63c2",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://1ad9711c5c822b4240883d167e9e1dfedeadfcf4edaab450d7d9bddac824cb4b",
-        "dweb:/ipfs/QmRYrQxesU39iBitpSVe6MRFv9nzV1vGF48A4Veyc8823D"
+        "bzz-raw://73415f6a6da57bfa138032ca2fbf0ba385ba495910fb27ed186e3e9aa0a2398c",
+        "dweb:/ipfs/QmY9DaoQBivrSpigaHkRmacmMyqZNxGQ63sHCRLAaopNCX"
       ]
     }
   },

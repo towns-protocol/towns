@@ -1,13 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-pragma solidity 0.8.19;
-
-// interfaces
-import {IERC721} from "openzeppelin-contracts/contracts/token/ERC721/IERC721.sol";
-
-// third-party
-import {ERC1967Proxy} from "openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Proxy.sol";
-import {CoreVoting} from "contracts/src/governance/base/CoreVoting.sol";
-import {DaoCoreVoting} from "contracts/src/governance/base/DaoCoreVoting.sol";
+pragma solidity 0.8.20;
 
 // contracts
 import {ScriptUtils} from "contracts/scripts/utils/ScriptUtils.sol";
@@ -28,8 +20,6 @@ import {Operator} from "contracts/src/tokens/Operator.sol";
 import {SimpleProxy} from "contracts/src/utils/SimpleProxy.sol";
 import {CouncilVault} from "contracts/src/governance/vaults/CouncilVault.sol";
 import {NFTVault} from "contracts/src/governance/vaults/NFTVault.sol";
-
-import {console} from "forge-std/console.sol";
 
 contract DeployDAO is ScriptUtils {
   address public dao;

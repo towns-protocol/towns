@@ -387,6 +387,7 @@ export interface SpaceFactoryInterface extends utils.Interface {
     "Initialized(uint8)": EventFragment;
     "OwnershipTransferred(address,address)": EventFragment;
     "Paused(address)": EventFragment;
+    "SpaceCreated(address,address,string)": EventFragment;
     "Unpaused(address)": EventFragment;
     "Upgraded(address)": EventFragment;
   };
@@ -396,6 +397,7 @@ export interface SpaceFactoryInterface extends utils.Interface {
   getEvent(nameOrSignatureOrTopic: "Initialized"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "OwnershipTransferred"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "Paused"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "SpaceCreated"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "Unpaused"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "Upgraded"): EventFragment;
 }
@@ -446,6 +448,18 @@ export interface PausedEventObject {
 export type PausedEvent = TypedEvent<[string], PausedEventObject>;
 
 export type PausedEventFilter = TypedEventFilter<PausedEvent>;
+
+export interface SpaceCreatedEventObject {
+  spaceAddress: string;
+  ownerAddress: string;
+  networkId: string;
+}
+export type SpaceCreatedEvent = TypedEvent<
+  [string, string, string],
+  SpaceCreatedEventObject
+>;
+
+export type SpaceCreatedEventFilter = TypedEventFilter<SpaceCreatedEvent>;
 
 export interface UnpausedEventObject {
   account: string;
@@ -883,6 +897,17 @@ export interface SpaceFactory extends BaseContract {
 
     "Paused(address)"(account?: null): PausedEventFilter;
     Paused(account?: null): PausedEventFilter;
+
+    "SpaceCreated(address,address,string)"(
+      spaceAddress?: PromiseOrValue<string> | null,
+      ownerAddress?: PromiseOrValue<string> | null,
+      networkId?: null
+    ): SpaceCreatedEventFilter;
+    SpaceCreated(
+      spaceAddress?: PromiseOrValue<string> | null,
+      ownerAddress?: PromiseOrValue<string> | null,
+      networkId?: null
+    ): SpaceCreatedEventFilter;
 
     "Unpaused(address)"(account?: null): UnpausedEventFilter;
     Unpaused(account?: null): UnpausedEventFilter;

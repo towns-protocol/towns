@@ -1,6 +1,6 @@
 {
   "compiler": {
-    "version": "0.8.19+commit.7dd6d404"
+    "version": "0.8.20+commit.a1b79de6"
   },
   "language": "Solidity",
   "output": {
@@ -710,13 +710,10 @@
       ":ds-test/=lib/ds-test/src/",
       ":erc4626-tests/=lib/operator-filter-registry/lib/openzeppelin-contracts/lib/erc4626-tests/",
       ":forge-std/=lib/forge-std/src/",
-      ":murky/=lib/murky/src/",
       ":openzeppelin-contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/",
       ":openzeppelin-contracts/=lib/openzeppelin-contracts/",
       ":operator-filter-registry/=lib/operator-filter-registry/",
-      ":prb-test/=lib/prb-test/src/",
-      ":solmate/=lib/solmate/src/",
-      ":weird-erc20/=lib/solmate/lib/weird-erc20/src/"
+      ":prb-test/=lib/prb-test/src/"
     ]
   },
   "sources": {
@@ -817,11 +814,11 @@
       ]
     },
     "packages/contracts/src/tokens/Pioneer.sol": {
-      "keccak256": "0xe9d37ddd074db1d6d22e48ab0736bf0bd8e027add8c6f3e1fe71a5e9edc676f8",
+      "keccak256": "0xceaacf2c3717974a715873628214a137af7d6f66506dc04b4aa699424a3ba1d8",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://0964c8f7ddf7a9710e5ed6f61a8ec4abf50f4fca24764c6000e79a8e4df9ae15",
-        "dweb:/ipfs/QmVGbenDTMdFQ32yFEkLSCbBLzwXmEQhK8jiQ8nDQpJetD"
+        "bzz-raw://3885cbc24807a482c4bc8b48634d9f8876c81ff9f411bba17c4579f8cbcba4fe",
+        "dweb:/ipfs/QmPtRiKTUfwneCSx14MSBkPSQLPvCTtbA7iramm1QzKpdj"
       ]
     }
   },

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-pragma solidity 0.8.19;
+pragma solidity 0.8.20;
 
 import {IVotingVault} from "council/interfaces/IVotingVault.sol";
 import {Authorizable} from "council/libraries/Authorizable.sol";

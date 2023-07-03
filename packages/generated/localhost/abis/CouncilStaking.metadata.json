@@ -1,6 +1,6 @@
 {
   "compiler": {
-    "version": "0.8.19+commit.7dd6d404"
+    "version": "0.8.20+commit.a1b79de6"
   },
   "language": "Solidity",
   "output": {
@@ -422,13 +422,10 @@
       ":ds-test/=lib/ds-test/src/",
       ":erc4626-tests/=lib/operator-filter-registry/lib/openzeppelin-contracts/lib/erc4626-tests/",
       ":forge-std/=lib/forge-std/src/",
-      ":murky/=lib/murky/src/",
       ":openzeppelin-contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/",
       ":openzeppelin-contracts/=lib/openzeppelin-contracts/",
       ":operator-filter-registry/=lib/operator-filter-registry/",
-      ":prb-test/=lib/prb-test/src/",
-      ":solmate/=lib/solmate/src/",
-      ":weird-erc20/=lib/solmate/lib/weird-erc20/src/"
+      ":prb-test/=lib/prb-test/src/"
     ]
   },
   "sources": {
@@ -481,11 +478,11 @@
       ]
     },
     "packages/contracts/src/governance/staking/CouncilStaking.sol": {
-      "keccak256": "0x90cffbd84e5e36dfa0cf18aae6fb54f83cc2b78b163ce9f0a6f04a64a488bded",
+      "keccak256": "0x138420e3ec8df9487ee09c14db69839f16647a91793e6f25af4c9420c0505492",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://d3db4a99b4e9c72e75f96aeeaaca70bd1025c919ce6ec9e04500cacad5481d81",
-        "dweb:/ipfs/Qma4okLPw2Xw9SDtuU7aUB2MvDb1ogSNNuX93BBH2YEJx7"
+        "bzz-raw://408e23c5eb212a9594b2d97992cece815957370cb73e8eb3ca90e563204c78d3",
+        "dweb:/ipfs/QmT7R7s9dVLvPAhqmeFETz5nK2kj3FQFFFrbbeen4N2QjC"
       ]
     }
   },

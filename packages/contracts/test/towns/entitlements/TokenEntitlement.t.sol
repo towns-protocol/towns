@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.20;
 
 // utils
 import {FacetTest} from "contracts/test/diamond/Facet.t.sol";

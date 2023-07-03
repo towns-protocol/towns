@@ -630,6 +630,9 @@ export interface SpaceInterface extends utils.Interface {
     "BeaconUpgraded(address)": EventFragment;
     "ContractURIUpdated(string,string)": EventFragment;
     "Initialized(uint8)": EventFragment;
+    "RoleCreated(address,uint256,string,string)": EventFragment;
+    "RoleRemoved(address,uint256,string)": EventFragment;
+    "RoleUpdated(address,uint256,string,string)": EventFragment;
     "Upgraded(address)": EventFragment;
   };
 
@@ -637,6 +640,9 @@ export interface SpaceInterface extends utils.Interface {
   getEvent(nameOrSignatureOrTopic: "BeaconUpgraded"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "ContractURIUpdated"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "Initialized"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "RoleCreated"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "RoleRemoved"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "RoleUpdated"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "Upgraded"): EventFragment;
 }
 
@@ -679,6 +685,44 @@ export interface InitializedEventObject {
 export type InitializedEvent = TypedEvent<[number], InitializedEventObject>;
 
 export type InitializedEventFilter = TypedEventFilter<InitializedEvent>;
+
+export interface RoleCreatedEventObject {
+  caller: string;
+  roleId: BigNumber;
+  roleName: string;
+  networkId: string;
+}
+export type RoleCreatedEvent = TypedEvent<
+  [string, BigNumber, string, string],
+  RoleCreatedEventObject
+>;
+
+export type RoleCreatedEventFilter = TypedEventFilter<RoleCreatedEvent>;
+
+export interface RoleRemovedEventObject {
+  caller: string;
+  roleId: BigNumber;
+  networkId: string;
+}
+export type RoleRemovedEvent = TypedEvent<
+  [string, BigNumber, string],
+  RoleRemovedEventObject
+>;
+
+export type RoleRemovedEventFilter = TypedEventFilter<RoleRemovedEvent>;
+
+export interface RoleUpdatedEventObject {
+  caller: string;
+  roleId: BigNumber;
+  roleName: string;
+  networkId: string;
+}
+export type RoleUpdatedEvent = TypedEvent<
+  [string, BigNumber, string, string],
+  RoleUpdatedEventObject
+>;
+
+export type RoleUpdatedEventFilter = TypedEventFilter<RoleUpdatedEvent>;
 
 export interface UpgradedEventObject {
   implementation: string;
@@ -1518,6 +1562,43 @@ export interface Space extends BaseContract {
 
     "Initialized(uint8)"(version?: null): InitializedEventFilter;
     Initialized(version?: null): InitializedEventFilter;
+
+    "RoleCreated(address,uint256,string,string)"(
+      caller?: PromiseOrValue<string> | null,
+      roleId?: PromiseOrValue<BigNumberish> | null,
+      roleName?: null,
+      networkId?: null
+    ): RoleCreatedEventFilter;
+    RoleCreated(
+      caller?: PromiseOrValue<string> | null,
+      roleId?: PromiseOrValue<BigNumberish> | null,
+      roleName?: null,
+      networkId?: null
+    ): RoleCreatedEventFilter;
+
+    "RoleRemoved(address,uint256,string)"(
+      caller?: PromiseOrValue<string> | null,
+      roleId?: PromiseOrValue<BigNumberish> | null,
+      networkId?: null
+    ): RoleRemovedEventFilter;
+    RoleRemoved(
+      caller?: PromiseOrValue<string> | null,
+      roleId?: PromiseOrValue<BigNumberish> | null,
+      networkId?: null
+    ): RoleRemovedEventFilter;
+
+    "RoleUpdated(address,uint256,string,string)"(
+      caller?: PromiseOrValue<string> | null,
+      roleId?: PromiseOrValue<BigNumberish> | null,
+      roleName?: null,
+      networkId?: null
+    ): RoleUpdatedEventFilter;
+    RoleUpdated(
+      caller?: PromiseOrValue<string> | null,
+      roleId?: PromiseOrValue<BigNumberish> | null,
+      roleName?: null,
+      networkId?: null
+    ): RoleUpdatedEventFilter;
 
     "Upgraded(address)"(
       implementation?: PromiseOrValue<string> | null

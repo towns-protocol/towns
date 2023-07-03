@@ -9,7 +9,7 @@ For each contract being deployed, we create a script that will:
 
 ```solidity
 // SPDX-License-Identifier: Apache-2.0
-pragma solidity 0.8.19;
+pragma solidity 0.8.20;
 
 import { Deployer } from "./common/Deployer.s.sol";
 import { Pioneer } from "contracts/src/core/tokens/Pioneer.sol";
