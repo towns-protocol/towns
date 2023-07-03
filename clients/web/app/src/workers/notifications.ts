@@ -1,38 +1,48 @@
-import { APP_NOTIFICATIONS_BROADCAST_CHANNEL } from './types.d'
+import { WEB_PUSH_NAVIGATION_CHANNEL } from './types.d'
 import { appNotificationFromPushEvent } from './notificationParsers'
+import { getServiceWorkerMuteSettings } from '../store/useMuteSettings'
 
 export function handleNotifications(worker: ServiceWorkerGlobalScope) {
-    const broadcastChannel = new BroadcastChannel(APP_NOTIFICATIONS_BROADCAST_CHANNEL)
+    const navigationChannel = new BroadcastChannel(WEB_PUSH_NAVIGATION_CHANNEL)
 
-    worker.addEventListener('push', (event) => {
+    worker.addEventListener('push', async (event) => {
         if (!event.data) {
             console.log('sw: push event contains no data')
             return
         }
-
         const jsonString = event.data.text() || '{}'
         const notification = appNotificationFromPushEvent(jsonString)
-        console.log('sw: Received a push notification event', notification)
+
         if (!notification) {
             console.log("sw: Couldn't parse notification")
             return
         }
 
-        console.log('sw: Showing notification')
-        event.waitUntil(
-            worker.registration.showNotification('Towns', {
-                body: notification.title,
-                silent: false,
-                icon: '/pwa/maskable_icon_x192.png',
-                data: event.data.text(),
-            }),
-        )
+        const { mutedChannels, mutedSpaces } = await getServiceWorkerMuteSettings()
+
+        if (mutedSpaces[notification.spaceID]) {
+            console.log('sw: Space is muted, not showing notification')
+            return
+        }
+
+        if (mutedChannels[notification.content.channelID]) {
+            console.log('sw: Channel is muted, not showing notification')
+            return
+        }
+
+        worker.registration.showNotification('Towns', {
+            body: notification.title,
+            silent: false,
+            icon: '/pwa/maskable_icon_x192.png',
+            data: event.data.text(),
+        })
+
         console.log('sw: Notification shown')
     })
 
     worker.addEventListener('notificationclick', (event) => {
         console.log('sw: Clicked on a notification', event)
-        broadcastChannel.postMessage(event.notification.data)
+        navigationChannel.postMessage(event.notification.data)
         event.notification.close()
     })
 }

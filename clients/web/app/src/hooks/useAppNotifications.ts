@@ -1,13 +1,13 @@
 import { useEffect } from 'react'
 import { useNavigate } from 'react-router'
-import { APP_NOTIFICATIONS_BROADCAST_CHANNEL } from 'workers/types.d'
+import { WEB_PUSH_NAVIGATION_CHANNEL } from 'workers/types.d'
 import { appNotificationFromPushEvent, pathFromAppNotification } from 'workers/notificationParsers'
 
 export const useAppNotifications = () => {
     const navigate = useNavigate()
 
     useEffect(() => {
-        const broadcastChannel = new BroadcastChannel(APP_NOTIFICATIONS_BROADCAST_CHANNEL)
+        const broadcastChannel = new BroadcastChannel(WEB_PUSH_NAVIGATION_CHANNEL)
         broadcastChannel.onmessage = (event) => {
             const notification = appNotificationFromPushEvent(event.data)
             if (!notification) {

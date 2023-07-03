@@ -17,7 +17,7 @@ import { Icon, Panel, PanelButton, Paragraph, Stack } from '@ui'
 import { PATHS } from 'routes'
 import { useAuth } from 'hooks/useAuth'
 import { useDevice } from 'hooks/useDevice'
-import { useStore } from 'store/store'
+import { useMuteSettings } from 'store/useMuteSettings'
 import { ChannelMembersModal } from './SpaceChannelDirectoryPanel'
 
 export const ChannelInfoPanel = () => {
@@ -73,7 +73,7 @@ export const ChannelInfoPanel = () => {
         onHideChannelSettingsPopup()
     }, [onHideChannelSettingsPopup])
 
-    const { mutedChannels, setChannelMuted } = useStore()
+    const { mutedChannels, setChannelMuted } = useMuteSettings()
     const channelIsMuted = channel?.id ? mutedChannels[channel.id.slug] : false
 
     const onToggleChannelMuted = useCallback(() => {

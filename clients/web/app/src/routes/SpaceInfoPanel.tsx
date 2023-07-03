@@ -45,7 +45,7 @@ import { useDevice } from 'hooks/useDevice'
 import { MembersPageTouchModal } from '@components/MembersPage/MembersPage'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { useAuth } from 'hooks/useAuth'
-import { useStore } from 'store/store'
+import { useMuteSettings } from 'store/useMuteSettings'
 import { useContractSpaceInfo } from '../hooks/useContractSpaceInfo'
 import { useEnvironment } from '../hooks/useEnvironmnet'
 import { env } from '../utils/environment'
@@ -153,7 +153,7 @@ export const SpaceInfoPanel = () => {
 
     const spaceID = useSpaceId()
 
-    const { mutedSpaces, setSpaceMuted } = useStore()
+    const { mutedSpaces, setSpaceMuted } = useMuteSettings()
     const spaceIsMuted = spaceID ? mutedSpaces[spaceID.slug] : false
 
     const onToggleSpaceMuted = useCallback(() => {

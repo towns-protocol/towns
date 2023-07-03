@@ -22,4 +22,4 @@ export type AppNotification = {
     content: AppNotificationMessage | AppNotificationMention
 }
 
-export const APP_NOTIFICATIONS_BROADCAST_CHANNEL = 'app-notifications-broadcast-channel'
+export const WEB_PUSH_NAVIGATION_CHANNEL = 'web-push-navigation-channel'
