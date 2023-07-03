@@ -329,7 +329,7 @@
       {
         "label": "PushNotificationsWorker",
         "type": "shell",
-        "command": "sleep 3 && cd servers/workers/push-notification-worker && ./scripts/start-local-push-worker.sh",
+        "command": "sleep 4 && cd servers/workers/push-notification-worker && ./scripts/start-local-push-worker.sh",
         "isBackground": true,
         "problemMatcher": [],
         "presentation": {
