@@ -74,13 +74,13 @@ export const ChannelInfoPanel = () => {
     }, [onHideChannelSettingsPopup])
 
     const { mutedChannels, setChannelMuted } = useMuteSettings()
-    const channelIsMuted = channel?.id ? mutedChannels[channel.id.slug] : false
+    const channelIsMuted = channel?.id ? mutedChannels[channel.id.networkId] : false
 
     const onToggleChannelMuted = useCallback(() => {
         if (!channel) {
             return
         }
-        setChannelMuted(channel.id.slug, !channelIsMuted)
+        setChannelMuted(channel.id.networkId, !channelIsMuted)
     }, [channel, setChannelMuted, channelIsMuted])
 
     const info = useMemo(

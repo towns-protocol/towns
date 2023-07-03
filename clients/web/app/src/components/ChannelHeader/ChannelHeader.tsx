@@ -28,7 +28,7 @@ const DesktopChannelHeader = (props: Props) => {
         usePushNotifications()
     const topic = useRoom(channel?.id)?.topic
     const { mutedChannels, mutedSpaces } = useMuteSettings()
-    const isMuted = mutedChannels[channel.id.slug] || mutedSpaces[spaceId.slug]
+    const isMuted = mutedChannels[channel.id.networkId] || mutedSpaces[spaceId.networkId]
 
     return (
         <Stack gap>

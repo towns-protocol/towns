@@ -152,15 +152,14 @@ export const SpaceInfoPanel = () => {
     })
 
     const spaceID = useSpaceId()
-
     const { mutedSpaces, setSpaceMuted } = useMuteSettings()
-    const spaceIsMuted = spaceID ? mutedSpaces[spaceID.slug] : false
+    const spaceIsMuted = spaceID ? mutedSpaces[spaceID.networkId] : false
 
     const onToggleSpaceMuted = useCallback(() => {
         if (!spaceID) {
             return
         }
-        setSpaceMuted(spaceID.slug, !spaceIsMuted)
+        setSpaceMuted(spaceID.networkId, !spaceIsMuted)
     }, [spaceID, setSpaceMuted, spaceIsMuted])
 
     const onMembersClick = useCallback(() => {
