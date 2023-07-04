@@ -10,6 +10,7 @@ import { useRequireTransactionNetwork } from 'hooks/useRequireTransactionNetwork
 import { FadeIn } from '@components/Transitions'
 import { useDevice } from 'hooks/useDevice'
 import { useEnvironment } from 'hooks/useEnvironmnet'
+import { useAddSepoliaToWallet } from 'hooks/useAddSepoliaToWallet'
 import { shouldUseWalletConnect } from 'hooks/useShouldUseWalletConnect'
 import { LoginButton } from './LoginButton/LoginButton'
 import { WalletConnectButton } from './WalletConnectButton'
@@ -17,6 +18,7 @@ import { RainbowKitLoginButton } from './RainbowKitLoginButton'
 
 export const LoginComponent = () => {
     const { chains } = useWeb3Context()
+    const { shouldDisplaySepoliaPrompt, addSepoliaToWallet } = useAddSepoliaToWallet()
 
     const {
         activeWalletAddress,
@@ -124,6 +126,19 @@ export const LoginComponent = () => {
                             postCta="to sign in."
                             switchNetwork={switchNetwork}
                         />
+                    </Box>
+                )}
+
+                {shouldDisplaySepoliaPrompt && (
+                    <Box
+                        display="inline"
+                        as="span"
+                        cursor="pointer"
+                        fontSize="sm"
+                        color="cta1"
+                        onClick={addSepoliaToWallet}
+                    >
+                        Click here to add the Sepolia network to your wallet
                     </Box>
                 )}
 
