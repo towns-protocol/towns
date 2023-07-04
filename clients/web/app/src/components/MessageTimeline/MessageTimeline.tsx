@@ -92,8 +92,8 @@ export const MessageTimeline = (props: Props) => {
     const isThread = timelineContext?.type === MessageTimelineType.Thread
 
     const dateGroups = useMemo(
-        () => getEventsByDate(events, fullyReadPersisted, isThread, experiments),
-        [events, fullyReadPersisted, isThread, experiments],
+        () => getEventsByDate(events, fullyReadPersisted, isThread, repliesMap, experiments),
+        [events, fullyReadPersisted, isThread, repliesMap, experiments],
     )
 
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

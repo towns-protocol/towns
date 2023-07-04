@@ -6,6 +6,7 @@ import {
     RoomMemberEvent,
     RoomMessageEncryptedEvent,
     RoomMessageEvent,
+    ThreadStats,
     TimelineEvent,
     ZTEvent,
 } from 'use-zion-client'
@@ -178,6 +179,7 @@ export const getEventsByDate = (
     events: TimelineEvent[],
     fullyReadMarker?: FullyReadMarker,
     isThread?: boolean,
+    replyMap?: Record<string, ThreadStats>,
     experiments?: ExperimentsState,
 ) => {
     const { getRelativeDays } = createRelativeDateUtil()
@@ -310,7 +312,17 @@ export const getEventsByDate = (
         },
     )
 
-    result.dateGroups = result.dateGroups.filter((g) => !!g.events.length)
+    result.dateGroups = result.dateGroups.filter(
+        (g) =>
+            !!g.events.length &&
+            // remove date groups that don't contain any messages (or only redacted messages)
+            g.events.some(
+                (e) =>
+                    e.type === RenderEventType.UserMessages &&
+                    // keep redacted messages with replies
+                    !e.events.every((e) => e.isRedacted && !replyMap?.[e.eventId]),
+            ),
+    )
 
     // let status events always display right under the date for clarity
     // another model would be to group accumulate consecutive events for a very
