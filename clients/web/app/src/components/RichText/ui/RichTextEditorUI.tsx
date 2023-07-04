@@ -58,7 +58,12 @@ export const RichTextUI = (props: Props) => {
     })
 
     const onLinkClick = useEvent(() => {
-        setLinkModal(true)
+        if (isTouch) {
+            const text = prompt('Add Link', 'https://')
+            onSaveLink(text || '')
+        } else {
+            setLinkModal(true)
+        }
     })
 
     const onSaveLink = useEvent((url: string) => {
