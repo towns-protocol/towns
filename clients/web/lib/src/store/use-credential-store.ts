@@ -37,6 +37,8 @@ type MyPersist = (
     options: PersistOptions<CredentialStoreStates>,
 ) => StateCreator<CredentialStoreStates>
 
+export const CREDENTIAL_STORE_NAME = 'towns/credentials'
+
 export const useCredentialStore = create<CredentialStoreStates>(
     // John: This is a mere workaround (hack) typing the persist API to avoid
     // issue https://github.com/pmndrs/zustand/issues/650
@@ -68,8 +70,9 @@ export const useCredentialStore = create<CredentialStoreStates>(
                 })),
         }),
         {
-            name: 'credential-store',
+            name: CREDENTIAL_STORE_NAME,
             storage: createJSONStorage(() => localStorage),
+            version: 1,
         },
     ),
 )

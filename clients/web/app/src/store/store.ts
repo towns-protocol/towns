@@ -19,6 +19,8 @@ interface AppState {
     activePushSubscription: string
 }
 
+export const GLOBAL_STORE_NAME = 'towns/global'
+
 export const useStore = create(
     persist<AppState>(
         (set, get) => ({
@@ -70,6 +72,9 @@ export const useStore = create(
                 set(() => ({ activePushSubscription: subscription }))
             },
         }),
-        { name: 'zionstate' },
+        {
+            name: GLOBAL_STORE_NAME,
+            version: 1,
+        },
     ),
 )

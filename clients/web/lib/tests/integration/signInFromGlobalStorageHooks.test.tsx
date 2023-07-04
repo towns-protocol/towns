@@ -19,6 +19,7 @@ import { useMatrixStore } from '../../src/store/use-matrix-store'
 import { useZionClient } from '../../src/hooks/use-zion-client'
 import { sleep } from '../../src/utils/zion-utils'
 import { useMatrixCredentials } from '../../src/hooks/use-matrix-credentials'
+import { CREDENTIAL_STORE_NAME } from '../../src/store/use-credential-store'
 
 const initialMatrixStoreState = useMatrixStore.getState()
 
@@ -70,9 +71,11 @@ describe('signInFromGlobalStorageHooks', () => {
     test('test reading prior auth objects and logged in state from localStorage', async () => {
         const hs = process.env.HOMESERVER!
         const credentialSessionStore = JSON.parse(
-            global.sessionStorage.getItem('credential-store') || '{}',
+            global.sessionStorage.getItem(CREDENTIAL_STORE_NAME) || '{}',
         )
-        const credentialStore = JSON.parse(global.localStorage.getItem('credential-store') || '{}')
+        const credentialStore = JSON.parse(
+            global.localStorage.getItem(CREDENTIAL_STORE_NAME) || '{}',
+        )
         await waitFor(() =>
             expect(credentialStore.state.matrixCredentialsMap[hs]).toHaveProperty('accessToken'),
         )
@@ -82,7 +85,9 @@ describe('signInFromGlobalStorageHooks', () => {
 
     test('test logging in again using stored auth from localStorage', async () => {
         const hs = process.env.HOMESERVER!
-        const credentialStore = JSON.parse(global.localStorage.getItem('credential-store') || '{}')
+        const credentialStore = JSON.parse(
+            global.localStorage.getItem(CREDENTIAL_STORE_NAME) || '{}',
+        )
         expect(Object.keys(credentialStore.state).length).toBeGreaterThan(0)
         const dummyProvider = new ZionTestWeb3Provider()
 
@@ -132,7 +137,9 @@ describe('signInFromGlobalStorageHooks', () => {
     })
     test('test stores are cleared after logout', async () => {
         const hs = process.env.HOMESERVER!
-        const credentialStore = JSON.parse(global.localStorage.getItem('credential-store') || '{}')
+        const credentialStore = JSON.parse(
+            global.localStorage.getItem(CREDENTIAL_STORE_NAME) || '{}',
+        )
         expect(credentialStore.state.matrixCredentialsMap[hs]).toBeNull()
         const dummyProvider = new ZionTestWeb3Provider()
 

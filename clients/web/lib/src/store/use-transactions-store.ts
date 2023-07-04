@@ -16,6 +16,8 @@ interface TransactionsState {
     deleteAndEmitTransaction: (hash: string, isSuccess: boolean) => void
 }
 
+export const TRANSACTIONS_STORE_NAME = 'towns/transactions'
+
 export const useTransactionStore = create(
     persist<TransactionsState>(
         (set) => ({
@@ -37,7 +39,8 @@ export const useTransactionStore = create(
                 }),
         }),
         {
-            name: 'zion/transactions',
+            name: TRANSACTIONS_STORE_NAME,
+            version: 1,
         },
     ),
 )

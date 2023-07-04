@@ -79,7 +79,7 @@ export const App = () => {
             casablancaServerUrl={environment.casablancaUrl}
             matrixServerUrl={environment.matrixUrl}
             onboardingOpts={{ skipAvatar: true }}
-            initialSyncLimit={100}
+            initialSyncLimit={20}
             connectors={walletConnectors}
             chainId={environment.chainId}
         >

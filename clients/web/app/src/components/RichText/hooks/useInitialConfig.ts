@@ -17,7 +17,7 @@ function onError(error: Error) {
 }
 
 const initialConfig = {
-    namespace: 'zion',
+    namespace: 'towns',
     theme,
     onError,
 }

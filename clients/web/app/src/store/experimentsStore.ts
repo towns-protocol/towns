@@ -7,6 +7,8 @@ export interface ExperimentsState {
     setState: (partial: Partial<ExperimentsState>) => void
 }
 
+export const EXPERIMENTAL_STORE_NAME = 'towns/experimental-settings'
+
 export const useExperimentsStore = create(
     persist<ExperimentsState>(
         (set) => ({
@@ -20,7 +22,8 @@ export const useExperimentsStore = create(
                 }),
         }),
         {
-            name: 'zion/experiments-store',
+            name: EXPERIMENTAL_STORE_NAME,
+            version: 1,
         },
     ),
 )
