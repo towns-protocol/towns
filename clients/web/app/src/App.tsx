@@ -51,6 +51,12 @@ const walletConnectors = ({ chains }: { chains: Chain[] }) => {
                   chains,
                   options: {
                       projectId: env.VITE_WALLET_CONNECT_PROJECT_ID,
+                      metadata: {
+                          name: 'Towns',
+                          url: 'https://towns.com',
+                          description: 'Towns',
+                          icons: [],
+                      },
                   },
               }),
           ]
