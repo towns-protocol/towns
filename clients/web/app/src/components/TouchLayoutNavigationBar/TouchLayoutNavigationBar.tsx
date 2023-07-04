@@ -2,6 +2,8 @@ import React, { useCallback, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
     Channel,
+    useChannelId,
+    useSpaceId,
     useSpaceThreadRootsUnreadCount,
     useSpaceUnread,
     useSpaceUnreadThreadMentions,
@@ -11,6 +13,7 @@ import { Box, Button, Icon, IconName, Stack, Text } from '@ui'
 import { TouchLayoutDropdownMenu } from '@components/TouchLayoutNavigationBar/TouchLayoutDropdownMenu'
 import { usePushNotifications } from 'hooks/usePushNotifications'
 import { transitions } from 'ui/transitions/transitions'
+import { useMuteSettings } from 'store/useMuteSettings'
 
 type ValueType = Channel | 'threads' | 'mentions'
 type Props = {
@@ -22,6 +25,12 @@ export const TouchLayoutNavigationBar = (props: Props) => {
     const { displayNotificationBanner, requestPushPermission, denyPushPermission } =
         usePushNotifications()
     const [dropDownOpen, setDropDownOpen] = useState(false)
+    const channelId = useChannelId()
+    const spaceId = useSpaceId()
+
+    const { mutedChannels, mutedSpaces } = useMuteSettings()
+    const isMuted = mutedChannels[channelId.networkId] || mutedSpaces[spaceId?.networkId ?? '']
+
     const hasSpaceUnread = useSpaceUnread()
     const unreadThreadsCount = useSpaceThreadRootsUnreadCount()
     const unreadThreadMentions = useSpaceUnreadThreadMentions()
@@ -96,6 +105,7 @@ export const TouchLayoutNavigationBar = (props: Props) => {
                 />
 
                 <Text color="default">{labelText}</Text>
+                {isMuted && <Icon size="square_xs" type="muteActive" color="gray2" />}
 
                 <Stack grow />
                 <Stack horizontal gap="lg" padding="none" alignItems="center">

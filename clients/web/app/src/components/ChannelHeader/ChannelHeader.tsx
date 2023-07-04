@@ -80,7 +80,7 @@ const DesktopChannelHeader = (props: Props) => {
                         <Paragraph fontWeight="strong" color="default">
                             {channel.label}
                         </Paragraph>
-                        {isMuted && <Icon type="muteInactive" size="square_sm" color="gray2" />}
+                        {isMuted && <Icon type="muteActive" size="square_sm" color="gray2" />}
                     </Stack>
                 </Link>
                 {topic && <Paragraph color="gray2">{topic}</Paragraph>}
