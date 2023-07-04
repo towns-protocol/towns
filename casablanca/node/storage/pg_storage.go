@@ -36,7 +36,7 @@ type PGEventNotificationEntry struct {
 }
 
 const (
-	PG_REPORT_INTERVAL = 20 * time.Second
+	PG_REPORT_INTERVAL = 3 * time.Minute
 )
 
 // NewPGEventStore creates a new PGEventStore
@@ -423,8 +423,6 @@ func (s *PGEventStore) DeleteAllStreams(ctx context.Context) error {
 func fetchMessages(ctx context.Context, tx pgx.Tx, positions []StreamPos, maxCount int) (map[string][]*protocol.Envelope, map[string]int64, error) {
 	log := dlog.CtxLog(ctx)
 
-	log.Debug("fetchMessages: ", len(positions))
-
 	nextSeqNums := make(map[string]int64)
 
 	sql := strings.Builder{}
@@ -442,8 +440,6 @@ func fetchMessages(ctx context.Context, tx pgx.Tx, positions []StreamPos, maxCou
 	if maxCount > 0 {
 		sql.WriteString(fmt.Sprintf(" LIMIT %d", maxCount))
 	}
-
-	log.Debug("sql: ", sql.String())
 
 	rows, err := tx.Query(ctx, sql.String())
 	if err != nil {
@@ -493,7 +489,6 @@ func fetchMessages(ctx context.Context, tx pgx.Tx, positions []StreamPos, maxCou
 	if currName != "" {
 		nextSeqNums[currName] = currLastSeqNum
 	}
-	log.Debug("events(", count, "): ", seqNums.String(), " lastSeqNum: ", nextSeqNums)
 	return events, nextSeqNums, nil
 }
 

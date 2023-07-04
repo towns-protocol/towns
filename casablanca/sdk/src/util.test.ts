@@ -10,7 +10,8 @@ import { getPublicKey, utils } from 'ethereum-cryptography/secp256k1'
 import { makeTownsDelegateSig, makeOldTownsDelegateSig, publicKeyToAddress } from './crypto/crypto'
 import { ethers } from 'ethers'
 import { RiverDbManager } from './riverDbManager'
-import { makeStreamRpcClient } from './makeStreamRpcClient'
+import { StreamRpcClientType, makeStreamRpcClient } from './makeStreamRpcClient'
+import assert from 'assert'
 
 const log = dlog('csb:test:util')
 
@@ -31,13 +32,11 @@ export const makeEvent_test = async (
  * Done using a worker thread to avoid blocking the main thread
  */
 export const makeRandomUserContext = async (): Promise<SignerContext> => {
-    log('makeRandomUserContext start')
     const userPrivateKey = utils.randomPrivateKey()
     const devicePrivateKey = utils.randomPrivateKey()
     const devicePrivateKeyStr = bin_toHexString(devicePrivateKey)
 
     const creatorAddress = publicKeyToAddress(getPublicKey(userPrivateKey, false))
-    log('makeRandomUserContext', userIdFromAddress(creatorAddress))
     const ret: SignerContext = {
         signerPrivateKey: () => devicePrivateKeyStr,
         creatorAddress,
@@ -47,7 +46,7 @@ export const makeRandomUserContext = async (): Promise<SignerContext> => {
         ),
         deviceId: takeKeccakFingerprintInHex(creatorAddress, 16),
     }
-    log('makeRandomUserContext end', bin_toHexString(creatorAddress))
+    log('makeRandomUserContext', creatorAddress)
     return ret
 }
 
@@ -153,4 +152,9 @@ export const makeDonePromise = (): DonePromise => {
 
 export const awaitTimeout = (milliseconds: number) => {
     return new Promise((resolve) => setTimeout(resolve, milliseconds))
+}
+
+export const sendFlush = async (client: StreamRpcClientType): Promise<void> => {
+    const r = await client.info({ debug: 'flush_cache' })
+    assert(r.graffiti === 'cache flushed')
 }

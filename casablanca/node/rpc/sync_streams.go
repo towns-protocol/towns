@@ -46,7 +46,7 @@ func (s *Service) syncStreams(ctx context.Context, log *slog.Logger, req *connec
 		return RpcError(Err_BAD_ARGS, "SyncStreams: SyncPos is empty")
 	}
 
-	receiver := make(chan *StreamAndCookie, 128) // TODO: setting
+	receiver := make(chan *StreamAndCookie, 128) // TODO: setting, also may be proportional to number of requested streams.
 	subs := make([]*Stream, 0, len(req.Msg.SyncPos))
 	defer func() {
 		for _, sub := range subs {
@@ -92,15 +92,20 @@ func (s *Service) syncStreams(ctx context.Context, log *slog.Logger, req *connec
 		select {
 		case update := <-receiver:
 			if update != nil {
-				log.Debug("SyncStreams: SENDING received update", "streamId", update.StreamId, "cookie", update.NextSyncCookie)
+				if update.Events != nil && len(update.Events) > 0 {
+					log.Debug("SyncStreams: SENDING received update", "streamId", update.StreamId, "cookie", update.NextSyncCookie)
 
-				updates := []*StreamAndCookie{update}
-				addUpdatesToCounter(updates)
-				err := stream.Send(&SyncStreamsResponse{
-					Streams: updates,
-				})
-				if err != nil {
-					return err
+					updates := []*StreamAndCookie{update}
+					addUpdatesToCounter(updates)
+					err := stream.Send(&SyncStreamsResponse{
+						Streams: updates,
+					})
+					if err != nil {
+						return err
+					}
+				} else {
+					log.Debug("SyncStreams: SYNC FLUSHED", "streamId", update.StreamId)
+					return nil // TODO: error code to initiate sync backoff?
 				}
 			} else {
 				return RpcError(Err_INTERNAL_ERROR, "SyncStreams: channel unexpectedly closed")

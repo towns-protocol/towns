@@ -14,41 +14,49 @@ const logger: Interceptor = (next) => async (req) => {
             // the AsynchronousIterable with a generator function
             localRes = {
                 ...req,
-                message: logEachRequest(req.message),
+                message: logEachRequest(req.method.name, req.message),
             }
         } else {
-            logProtos('request:', req.message)
+            logProtos(req.method.name, 'REQUEST', req.message)
         }
     }
 
-    const res = await next(localRes)
-    if (logProtos.enabled) {
-        if (res.stream) {
-            // to intercept streaming response messages, we wrap
-            // the AsynchronousIterable with a generator function
-            return {
-                ...res,
-                message: logEachResponse(res.message),
+    try {
+        const res = await next(localRes)
+
+        if (logProtos.enabled) {
+            if (res.stream) {
+                // to intercept streaming response messages, we wrap
+                // the AsynchronousIterable with a generator function
+                return {
+                    ...res,
+                    message: logEachResponse(res.method.name, res.message),
+                }
+            } else {
+                logProtos(res.method.name, 'RESPONSE', res.message)
             }
-        } else {
-            logProtos('response:', res.message)
         }
-    }
-    return res
-}
-
-async function* logEachRequest(stream: AsyncIterable<any>) {
-    for await (const m of stream) {
-        logProtos('streaming request:', m)
-        yield m
+        return res
+    } catch (e) {
+        logProtos(req.method.name, 'ERROR', e)
+        throw e
     }
 }
 
-async function* logEachResponse(stream: AsyncIterable<any>) {
+async function* logEachRequest(name: string, stream: AsyncIterable<any>) {
     for await (const m of stream) {
-        logProtos('streaming response:', m)
+        logProtos(name, 'STREAMING REQUEST', m)
         yield m
     }
+    logProtos(name, 'STEAMING DONE')
+}
+
+async function* logEachResponse(name: string, stream: AsyncIterable<any>) {
+    for await (const m of stream) {
+        logProtos(name, 'STEAMING RESPONSE', m)
+        yield m
+    }
+    logProtos(name, 'STEAMING DONE')
 }
 
 export function makeStreamRpcClient(dest: Transport | string): PromiseClient<typeof StreamService> {
@@ -65,3 +73,5 @@ export function makeStreamRpcClient(dest: Transport | string): PromiseClient<typ
 
     return createPromiseClient(StreamService, transport)
 }
+
+export type StreamRpcClientType = ReturnType<typeof makeStreamRpcClient>

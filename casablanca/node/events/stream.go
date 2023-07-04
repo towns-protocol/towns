@@ -140,6 +140,7 @@ func (s *Stream) Sub(ctx context.Context, cookie *SyncCookie, receiver chan<- *S
 		slot = 0
 		prevSyncCookie = SyncCookieCopy(cookie)
 		prevSyncCookie.MinipoolSlot = 0
+		prevSyncCookie.MinipoolInstance = s.view.syncCookie.MinipoolInstance
 	} else {
 		prevSyncCookie = cookie
 	}
@@ -165,8 +166,31 @@ func (s *Stream) Sub(ctx context.Context, cookie *SyncCookie, receiver chan<- *S
 	}
 }
 
+// It's ok to unsub non-existing receiver.
+// Such situation arises during ForceFlush.
 func (s *Stream) Unsub(receiver chan<- *StreamAndCookie) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	delete(s.receivers, receiver)
+	if s.receivers != nil {
+		delete(s.receivers, receiver)
+	}
+}
+
+// ForceFlush transitions Stream object to unloaded state.
+// All subbed receivers will receive empty response and must
+// terminate corresponding sync loop.
+func (s *Stream) ForceFlush(ctx context.Context) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.view = nil
+	s.loadError = nil
+	if s.receivers != nil && len(s.receivers) > 0 {
+		empty := &StreamAndCookie{
+			StreamId: s.streamId,
+		}
+		for r := range s.receivers {
+			r <- empty
+		}
+	}
+	s.receivers = nil
 }

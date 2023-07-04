@@ -40,6 +40,12 @@ func (s *Service) info(ctx context.Context, log *slog.Logger, request *connect_g
 		// TODO: flag
 		log.Error("panic requested through Info request")
 		panic("panic requested through Info request")
+	} else if request.Msg.Debug == "flush_cache" {
+		log.Info("FLUSHING CACHE")
+		s.cache.ForceFlushAll(ctx)
+		return connect_go.NewResponse(&protocol.InfoResponse{
+			Graffiti: "cache flushed",
+		}), nil
 	} else {
 		// TODO: set graffiti in config
 		// TODO: return version

@@ -25,7 +25,7 @@ import { Crypto } from './crypto/crypto'
 import { OlmDevice, IExportedDevice as IExportedOlmDevice } from './crypto/olmDevice'
 import { DeviceInfoMap, DeviceList, IOlmDevice } from './crypto/deviceList'
 import { DLogger, dlog } from './dlog'
-import { makeStreamRpcClient } from './makeStreamRpcClient'
+import { StreamRpcClientType } from './makeStreamRpcClient'
 import EventEmitter from 'events'
 import TypedEmitter from 'typed-emitter'
 import { isDefined, throwWithCode } from './check'
@@ -155,7 +155,6 @@ interface IExportedDevice {
     userId: string
     deviceId: string
 }
-type StreamRpcClientType = ReturnType<typeof makeStreamRpcClient>
 
 export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents>) {
     readonly signerContext: SignerContext

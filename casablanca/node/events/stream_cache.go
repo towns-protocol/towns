@@ -10,6 +10,7 @@ import (
 type StreamCache interface {
 	GetStream(ctx context.Context, streamId string) (*Stream, StreamView, error)
 	CreateStream(ctx context.Context, streamId string, events []*ParsedEvent) (*Stream, StreamView, error)
+	ForceFlushAll(ctx context.Context)
 }
 
 type streamCacheImpl struct {
@@ -63,4 +64,12 @@ func (s *streamCacheImpl) CreateStream(ctx context.Context, streamId string, eve
 		// Assume that parallel GetStream created cache entry, fallback to it to retrieve winning cache entry.
 		return s.GetStream(ctx, streamId)
 	}
+}
+
+func (s *streamCacheImpl) ForceFlushAll(ctx context.Context) {
+	s.cache.Range(func(key, value interface{}) bool {
+		stream := value.(*Stream)
+		stream.ForceFlush(ctx)
+		return true
+	})
 }
