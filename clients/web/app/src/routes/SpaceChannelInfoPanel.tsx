@@ -73,8 +73,9 @@ export const ChannelInfoPanel = () => {
         onHideChannelSettingsPopup()
     }, [onHideChannelSettingsPopup])
 
-    const { mutedChannels, setChannelMuted } = useMuteSettings()
+    const { mutedChannels, setChannelMuted, mutedSpaces } = useMuteSettings()
     const channelIsMuted = channel?.id ? mutedChannels[channel.id.networkId] : false
+    const townIsMuted = spaceData?.id ? mutedSpaces[spaceData.id.networkId] : false
 
     const onToggleChannelMuted = useCallback(() => {
         if (!channel) {
@@ -122,16 +123,30 @@ export const ChannelInfoPanel = () => {
                 </PanelButton>
 
                 {channel && (
-                    <PanelButton onClick={onToggleChannelMuted}>
-                        <Icon
-                            type={channelIsMuted ? 'muteActive' : 'muteInactive'}
-                            size="square_sm"
-                            color="gray2"
-                        />
-                        <Paragraph color="default">
-                            {channelIsMuted ? 'Unmute' : 'Mute'} #{channel?.label}
-                        </Paragraph>
-                    </PanelButton>
+                    <>
+                        <PanelButton
+                            disabled={townIsMuted}
+                            opacity={townIsMuted ? '0.5' : 'opaque'}
+                            onClick={onToggleChannelMuted}
+                        >
+                            <Icon
+                                type={channelIsMuted ? 'muteActive' : 'muteInactive'}
+                                size="square_sm"
+                                color="gray2"
+                            />
+                            <Stack gap="sm">
+                                <Paragraph color="default">
+                                    {townIsMuted ? (
+                                        spaceData?.name && <>{spaceData?.name} is muted</>
+                                    ) : (
+                                        <>
+                                            {channelIsMuted ? 'Unmute' : 'Mute'} #{channel?.label}
+                                        </>
+                                    )}
+                                </Paragraph>
+                            </Stack>
+                        </PanelButton>
+                    </>
                 )}
 
                 {canEditChannel && !isTouch && (
