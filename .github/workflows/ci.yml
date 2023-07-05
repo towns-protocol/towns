@@ -11,8 +11,13 @@ on:
                 required: false
                 default: false
                 type: boolean
-            skip_casablanca_client:
-                description: Skip Casablanca Client Tests
+            skip_casablanca_client_noauth:
+                description: Skip Casablanca Client Tests without Auth
+                required: false
+                default: false
+                type: boolean
+            skip_casablanca_client_auth:
+                description: Skip Casablanca Client Tests with Auth
                 required: false
                 default: false
                 type: boolean
@@ -130,8 +135,8 @@ jobs:
                   SLACK_COLOR: '#FF0000'
                   SLACK_MESSAGE: 'CI Failure on ${{ github.repository }}'
 
-    Casablanca_Client:
-        if: github.event_name != 'workflow_dispatch' || !inputs.skip_casablanca_client
+    Casablanca_Client_NoAuth:
+        if: github.event_name != 'workflow_dispatch' || !inputs.skip_casablanca_client_noauth
         runs-on: ubuntu-latest-8-cores
         timeout-minutes: 30
         services:
@@ -251,6 +256,9 @@ jobs:
             - name: Run SDK Tests (without auth)
               run: yarn run turbo run build test:ci --filter=@towns/sdk
 
+            - name: Run Node Flush Tests (without auth)
+              run: yarn workspace @towns/sdk run test:node-minipool-flush
+
             - name: Archive Casablanca log
               if: always()
               uses: actions/upload-artifact@v3
@@ -272,7 +280,7 @@ jobs:
                   SLACK_MESSAGE: 'CI Failure on ${{ github.repository }}'
 
     Casablanca_Client_Auth:
-        if: github.event_name != 'workflow_dispatch' || !inputs.skip_casablanca_client
+        if: github.event_name != 'workflow_dispatch' || !inputs.skip_casablanca_client_auth
         runs-on: ubuntu-latest-8-cores
         timeout-minutes: 30
         services:

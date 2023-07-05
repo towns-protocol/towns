@@ -17,6 +17,8 @@ const log = dlog('csb:test:util')
 
 export const TEST_URL = 'http://localhost:5157'
 
+export const makeTestRpcClient = () => makeStreamRpcClient(TEST_URL)
+
 export const makeEvent_test = async (
     context: SignerContext,
     payload: PlainMessage<StreamEvent>['payload'],

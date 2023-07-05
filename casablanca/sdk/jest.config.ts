@@ -7,6 +7,7 @@ const config: JestConfigWithTsJest = {
         browsers: ['chrome', 'firefox', 'safari'],
         url: 'http://localhost:5157',
     },
+    runner: 'groups',
     verbose: true,
     testTimeout: 60000,
     modulePathIgnorePatterns: ['/dist/'],

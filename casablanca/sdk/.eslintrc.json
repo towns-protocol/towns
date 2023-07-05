@@ -51,7 +51,7 @@
     },
     "overrides": [
         {
-            "files": ["**/*.test.*"],
+            "files": ["**/*.test.*", "**/*.test_util.*"],
             "rules": {
                 "jest/no-standalone-expect": "off",
                 "jest/expect-expect": "off",
