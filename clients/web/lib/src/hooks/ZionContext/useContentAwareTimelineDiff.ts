@@ -24,25 +24,19 @@ export function useContentAwareTimelineDiffCasablanca(casablancaClient?: Casabla
         if (!casablancaClient) {
             return
         }
+
         const userId = casablancaClient.userId
         if (!userId) {
             // can happen on logout
             return
         }
-        // state
-        //let effectState = initOnce(matrixClient, userId)
-        let firstTime = true
+
         let effectState: LocalEffectState = {
             encryptedEvents: {},
         }
 
         // listen to the timeine for changes, diff each change, and update the unread counts
         const onTimelineChange = (timelineState: TimelineStore, prev: TimelineStore) => {
-            if (firstTime) {
-                // todo, init for unreads??
-                // effectState = initOnce(casablancaClient, userId, timelineState)
-                firstTime = false
-            }
             effectState = diffTimeline(
                 timelineState,
                 prev,

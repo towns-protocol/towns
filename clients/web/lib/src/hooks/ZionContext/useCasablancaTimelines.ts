@@ -9,6 +9,7 @@ import {
 import { useEffect } from 'react'
 import { Membership, MessageType } from '../../types/zion-types'
 import {
+    TimelineStoreInterface,
     getIsMentioned,
     getReactionParentId,
     getRedactsId,
@@ -42,16 +43,7 @@ export function useCasablancaTimelines(casablancaClient: CasablancaClient | unde
 
         const onStreamEvents = (streamId: string, timelineEvents: TimelineEvent[]) => {
             timelineEvents.forEach((event) => {
-                const replacedEventId = getReplacedId(event.content)
-                const redactsEventId = getRedactsId(event.content)
-                if (redactsEventId) {
-                    setState.removeEvent(streamId, redactsEventId)
-                    setState.appendEvent(userId, streamId, event)
-                } else if (replacedEventId) {
-                    setState.replaceEvent(userId, streamId, replacedEventId, event)
-                } else {
-                    setState.appendEvent(userId, streamId, event)
-                }
+                processEvent(event, userId, streamId, setState)
             })
         }
 
@@ -79,6 +71,23 @@ export function useCasablancaTimelines(casablancaClient: CasablancaClient | unde
                 onStreamEvents(streamId, timelineEvents)
             }
         }
+
+        //TODO: this should be discussed with the team - if there is a chance for duplicates/lost events
+        const timelineEvents: Map<string, TimelineEvent[]> = new Map()
+        //Step 1: get all the events which are already in the river before listeners started
+        casablancaClient?.streams.forEach((stream) => {
+            timelineEvents.set(stream.streamId, [])
+            stream.rollup.timeline.forEach((event) => {
+                const parsedEvent = toEvent(event, casablancaClient.userId)
+                timelineEvents.get(stream.streamId)?.push(parsedEvent)
+            })
+        })
+        //Step 2: add them into the timeline
+        timelineEvents.forEach((events, streamId) => {
+            events.forEach((event) => {
+                processEvent(event, userId, streamId, setState)
+            })
+        })
 
         casablancaClient.on('streamInitialized', onStreamInitialized)
         casablancaClient.on('streamUpdated', onStreamUpdated)
@@ -395,4 +404,22 @@ function toMembership(op: MembershipOp): Membership {
             return Membership.Invite
     }
     return Membership.None
+}
+
+function processEvent(
+    event: TimelineEvent,
+    userId: string,
+    streamId: string,
+    setState: TimelineStoreInterface,
+) {
+    const replacedEventId = getReplacedId(event.content)
+    const redactsEventId = getRedactsId(event.content)
+    if (redactsEventId) {
+        setState.removeEvent(streamId, redactsEventId)
+        setState.appendEvent(userId, streamId, event)
+    } else if (replacedEventId) {
+        setState.replaceEvent(userId, streamId, replacedEventId, event)
+    } else {
+        setState.appendEvent(userId, streamId, event)
+    }
 }

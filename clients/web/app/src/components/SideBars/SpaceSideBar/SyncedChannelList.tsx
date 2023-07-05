@@ -19,6 +19,7 @@ export const SyncedChannelList = (props: {
 
     // channels that you leave, but other members are still a part of, will still sync (partially?) and show up in this list
     // but we don't want that, since all channels are listed in the "Browse Channels" section
+    //TODO: HNT-1716
     const filterUnjoinedChannels = useCallback(
         (channels: Channel[]) => {
             if (!client) {
