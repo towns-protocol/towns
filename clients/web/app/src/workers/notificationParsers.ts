@@ -75,9 +75,9 @@ export function pathFromAppNotification(notification: AppNotification) {
             return (
                 [
                     PATHS.SPACES,
-                    notification.spaceID,
+                    encodeURIComponent(notification.spaceID),
                     PATHS.CHANNELS,
-                    notification.content.channelID,
+                    encodeURIComponent(notification.content.channelID),
                 ].join('/') + '/'
             )
 
@@ -87,9 +87,9 @@ export function pathFromAppNotification(notification: AppNotification) {
             return (
                 [
                     PATHS.SPACES,
-                    notification.spaceID,
+                    encodeURIComponent(notification.spaceID),
                     PATHS.CHANNELS,
-                    notification.content.channelID,
+                    encodeURIComponent(notification.content.channelID),
                 ].join('/') + '/'
             )
     }
