@@ -6,7 +6,7 @@ pragma solidity ^0.8.20;
 // libraries
 
 // contracts
-import {Ownable} from "contracts/src/diamond/extensions/ownable/Ownable.sol";
+import {Ownable} from "contracts/src/diamond/facets/ownable/Ownable.sol";
 
 contract MockOwnable is Ownable {
   function init() external {

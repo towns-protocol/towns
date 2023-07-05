@@ -7,7 +7,7 @@ pragma solidity ^0.8.20;
 
 // contracts
 import {ManagedProxyController} from "contracts/src/diamond/proxy/managed/ManagedProxyController.sol";
-import {OwnableService} from "contracts/src/diamond/extensions/ownable/OwnableService.sol";
+import {OwnableService} from "contracts/src/diamond/facets/ownable/OwnableService.sol";
 
 contract MockManagedProxy is ManagedProxyController {
   constructor(bytes4 selector, address manager) {

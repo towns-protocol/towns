@@ -8,8 +8,8 @@ pragma solidity ^0.8.20;
 // contracts
 import {TownProxyController} from "./TownProxyController.sol";
 import {ManagedProxyController} from "contracts/src/diamond/proxy/managed/ManagedProxyController.sol";
-import {TokenOwnable} from "contracts/src/diamond/extensions/ownable/token/TokenOwnable.sol";
-import {TokenPausable} from "contracts/src/diamond/extensions/pausable/token/TokenPausable.sol";
+import {TokenOwnable} from "contracts/src/diamond/facets/ownable/token/TokenOwnable.sol";
+import {TokenPausable} from "contracts/src/diamond/facets/pausable/token/TokenPausable.sol";
 import {Multicall} from "contracts/src/diamond/utils/multicall/Multicall.sol";
 
 contract TownProxy is

@@ -2,18 +2,18 @@
 pragma solidity ^0.8.20;
 
 //interfaces
-import {IERC173, IERC173Events} from "contracts/src/diamond/extensions/ownable/IERC173.sol";
-import {IERC165} from "contracts/src/diamond/extensions/introspection/IERC165.sol";
+import {IERC173, IERC173Events} from "contracts/src/diamond/facets/ownable/IERC173.sol";
+import {IERC165} from "contracts/src/diamond/facets/introspection/IERC165.sol";
 
 //libraries
 
 //contracts
 import {FacetTest} from "contracts/test/diamond/Facet.t.sol";
-import {Ownable} from "contracts/src/diamond/extensions/ownable/Ownable.sol";
+import {Ownable} from "contracts/src/diamond/facets/ownable/Ownable.sol";
 import {MockOwnable} from "contracts/test/mocks/MockOwnable.sol";
 
 // errors
-import {Ownable__ZeroAddress, Ownable__NotOwner} from "contracts/src/diamond/extensions/ownable/OwnableService.sol";
+import {Ownable__ZeroAddress, Ownable__NotOwner} from "contracts/src/diamond/facets/ownable/OwnableService.sol";
 
 contract OwnableTest is FacetTest, IERC173Events {
   IERC173 internal ownable;

@@ -8,7 +8,7 @@ pragma solidity ^0.8.20;
 // contracts
 import {ProxyManagerService} from "contracts/src/diamond/proxy/manager/ProxyManagerService.sol";
 import {TownArchitectService} from "contracts/src/towns/facets/architect/TownArchitectService.sol";
-import {Initializable} from "contracts/src/diamond/extensions/initializable/Initializable.sol";
+import {Initializable} from "contracts/src/diamond/facets/initializable/Initializable.sol";
 
 contract TownFactoryInit is Initializable {
   struct Args {

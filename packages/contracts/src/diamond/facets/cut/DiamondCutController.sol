@@ -2,7 +2,7 @@
 pragma solidity 0.8.20;
 
 // interfaces
-import {IDiamondCutEvents, IDiamondCut} from "contracts/src/diamond/extensions/cut/IDiamondCut.sol";
+import {IDiamondCutEvents, IDiamondCut} from "contracts/src/diamond/facets/cut/IDiamondCut.sol";
 import {IDiamond} from "contracts/src/diamond/IDiamond.sol";
 
 // libraries

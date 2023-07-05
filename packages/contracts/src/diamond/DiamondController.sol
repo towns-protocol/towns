@@ -5,7 +5,7 @@ pragma solidity ^0.8.20;
 
 // libraries
 import {Proxy} from "./proxy/Proxy.sol";
-import {DiamondLoupeService} from "./extensions/loupe/DiamondLoupeService.sol";
+import {DiamondLoupeService} from "./facets/loupe/DiamondLoupeService.sol";
 
 // contracts
 

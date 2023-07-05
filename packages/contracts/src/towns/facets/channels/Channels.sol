@@ -8,7 +8,7 @@ import {IChannel} from "./IChannel.sol";
 
 // contracts
 import {ChannelController} from "./ChannelController.sol";
-import {Initializable} from "contracts/src/diamond/extensions/initializable/Initializable.sol";
+import {Initializable} from "contracts/src/diamond/facets/initializable/Initializable.sol";
 
 contract Channels is ChannelController, Initializable, IChannel {
   function createChannel(

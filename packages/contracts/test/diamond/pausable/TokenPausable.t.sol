@@ -9,7 +9,7 @@ import {TestUtils} from "contracts/test/utils/TestUtils.sol";
 //libraries
 
 //contracts
-import {TokenPausable} from "contracts/src/diamond/extensions/pausable/token/TokenPausable.sol";
+import {TokenPausable} from "contracts/src/diamond/facets/pausable/token/TokenPausable.sol";
 import {MockERC721} from "contracts/test/mocks/MockERC721.sol";
 
 contract TokenPausableTest is TestUtils {

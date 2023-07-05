@@ -5,7 +5,7 @@ pragma solidity ^0.8.20;
 import {TestUtils} from "contracts/test/utils/TestUtils.sol";
 
 // interfaces
-import {IDiamondCut} from "contracts/src/diamond/extensions/cut/IDiamondCut.sol";
+import {IDiamondCut} from "contracts/src/diamond/facets/cut/IDiamondCut.sol";
 import {IDiamond} from "contracts/src/diamond/IDiamond.sol";
 import {IEntitlements} from "contracts/src/towns/facets/entitlements/IEntitlements.sol";
 

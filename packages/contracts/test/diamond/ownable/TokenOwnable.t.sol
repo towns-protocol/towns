@@ -9,7 +9,7 @@ import {TestUtils} from "contracts/test/utils/TestUtils.sol";
 //libraries
 
 //contracts
-import {TokenOwnableController} from "contracts/src/diamond/extensions/ownable/token/TokenOwnableController.sol";
+import {TokenOwnableController} from "contracts/src/diamond/facets/ownable/token/TokenOwnableController.sol";
 import {MockERC721} from "contracts/test/mocks/MockERC721.sol";
 
 contract TokenOwnableTest is TestUtils {

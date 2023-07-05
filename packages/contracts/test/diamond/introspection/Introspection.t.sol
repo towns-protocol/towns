@@ -7,7 +7,7 @@ pragma solidity ^0.8.20;
 
 // contracts
 import {TestUtils} from "contracts/test/utils/TestUtils.sol";
-import {IntrospectionController} from "contracts/src/diamond/extensions/introspection/IntrospectionController.sol";
+import {IntrospectionController} from "contracts/src/diamond/facets/introspection/IntrospectionController.sol";
 
 contract IntrospectionTest is TestUtils {
   address internal deployer;

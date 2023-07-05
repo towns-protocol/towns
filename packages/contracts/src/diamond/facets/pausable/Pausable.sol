@@ -8,7 +8,7 @@ import {IPausable} from "./IPausable.sol";
 
 // contracts
 import {PausableController} from "./PausableController.sol";
-import {OwnableController} from "contracts/src/diamond/extensions/ownable/OwnableController.sol";
+import {OwnableController} from "contracts/src/diamond/facets/ownable/OwnableController.sol";
 
 contract Pausable is IPausable, PausableController, OwnableController {
   function paused() external view returns (bool) {

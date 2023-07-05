@@ -7,8 +7,8 @@ pragma solidity ^0.8.20;
 
 // contracts
 import {TownProxyService} from "contracts/src/towns/facets/proxy/TownProxyService.sol";
-import {TokenOwnableService} from "contracts/src/diamond/extensions/ownable/token/TokenOwnableService.sol";
-import {Initializable} from "contracts/src/diamond/extensions/initializable/Initializable.sol";
+import {TokenOwnableService} from "contracts/src/diamond/facets/ownable/token/TokenOwnableService.sol";
+import {Initializable} from "contracts/src/diamond/facets/initializable/Initializable.sol";
 
 /// @notice This contract is used to initialize the Town contract in testing
 contract TownInit is Initializable {

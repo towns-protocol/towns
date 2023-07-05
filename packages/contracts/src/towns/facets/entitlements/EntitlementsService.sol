@@ -3,14 +3,14 @@ pragma solidity ^0.8.20;
 
 // interfaces
 import {IEntitlement} from "contracts/src/towns/entitlements/IEntitlement.sol";
-import {IERC165} from "contracts/src/diamond/extensions/introspection/IERC165.sol";
+import {IERC165} from "contracts/src/diamond/facets/introspection/IERC165.sol";
 
 // libraries
 import {EnumerableSet} from "openzeppelin-contracts/contracts/utils/structs/EnumerableSet.sol";
 import {EntitlementsStorage} from "./EntitlementsStorage.sol";
 
-import {PausableService} from "contracts/src/diamond/extensions/pausable/PausableService.sol";
-import {TokenOwnableService} from "contracts/src/diamond/extensions/ownable/token/TokenOwnableService.sol";
+import {PausableService} from "contracts/src/diamond/facets/pausable/PausableService.sol";
+import {TokenOwnableService} from "contracts/src/diamond/facets/ownable/token/TokenOwnableService.sol";
 
 // contracts
 error EntitlementsService__InvalidEntitlementAddress();

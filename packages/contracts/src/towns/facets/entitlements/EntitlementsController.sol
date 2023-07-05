@@ -6,7 +6,7 @@ import {IEntitlementsStructs} from "./IEntitlements.sol";
 
 // libraries
 import {EntitlementsService} from "contracts/src/towns/facets/entitlements/EntitlementsService.sol";
-import {TokenOwnableService} from "contracts/src/diamond/extensions/ownable/token/TokenOwnableService.sol";
+import {TokenOwnableService} from "contracts/src/diamond/facets/ownable/token/TokenOwnableService.sol";
 
 // contracts
 

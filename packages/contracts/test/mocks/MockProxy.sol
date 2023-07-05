@@ -2,11 +2,11 @@
 pragma solidity ^0.8.20;
 
 // interfaces
-import {IDiamondLoupe} from "contracts/src/diamond/extensions/loupe/IDiamondLoupe.sol";
+import {IDiamondLoupe} from "contracts/src/diamond/facets/loupe/IDiamondLoupe.sol";
 
 // contracts
 import {Proxy} from "contracts/src/diamond/proxy/Proxy.sol";
-import {OwnableController} from "contracts/src/diamond/extensions/ownable/OwnableController.sol";
+import {OwnableController} from "contracts/src/diamond/facets/ownable/OwnableController.sol";
 
 contract MockProxy is OwnableController, Proxy {
   address internal immutable _implementation;

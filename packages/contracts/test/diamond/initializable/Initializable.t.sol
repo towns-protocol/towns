@@ -7,7 +7,7 @@ pragma solidity ^0.8.20;
 
 // contracts
 import {TestUtils} from "contracts/test/utils/TestUtils.sol";
-import {Initializable} from "contracts/src/diamond/extensions/initializable/Initializable.sol";
+import {Initializable} from "contracts/src/diamond/facets/initializable/Initializable.sol";
 
 contract Mock is Initializable {
   uint256 public value;

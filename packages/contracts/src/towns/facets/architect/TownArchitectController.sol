@@ -13,7 +13,7 @@ import {IProxyManager} from "contracts/src/diamond/proxy/manager/IProxyManager.s
 // libraries
 import {TownArchitectStorage} from "./TownArchitectStorage.sol";
 import {TownArchitectService} from "./TownArchitectService.sol";
-import {PausableService} from "contracts/src/diamond/extensions/pausable/PausableService.sol";
+import {PausableService} from "contracts/src/diamond/facets/pausable/PausableService.sol";
 
 // contracts
 import {Factory} from "contracts/src/utils/Factory.sol";

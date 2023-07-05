@@ -3,7 +3,7 @@ pragma solidity 0.8.20;
 
 // interface
 import {IDiamond} from "contracts/src/diamond/IDiamond.sol";
-import {IDiamondCut} from "contracts/src/diamond/extensions/cut/IDiamondCut.sol";
+import {IDiamondCut} from "contracts/src/diamond/facets/cut/IDiamondCut.sol";
 
 // libraries
 

@@ -2,13 +2,13 @@
 pragma solidity ^0.8.20;
 
 // interfaces
-import {IPausable} from "contracts/src/diamond/extensions/pausable/IPausable.sol";
+import {IPausable} from "contracts/src/diamond/facets/pausable/IPausable.sol";
 
 // libraries
 
 // contracts
-import {PausableController} from "contracts/src/diamond/extensions/pausable/PausableController.sol";
-import {TokenOwnableController} from "contracts/src/diamond/extensions/ownable/token/TokenOwnableController.sol";
+import {PausableController} from "contracts/src/diamond/facets/pausable/PausableController.sol";
+import {TokenOwnableController} from "contracts/src/diamond/facets/ownable/token/TokenOwnableController.sol";
 
 contract TokenPausable is
   IPausable,

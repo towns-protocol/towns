@@ -4,7 +4,7 @@ pragma solidity ^0.8.20;
 // interfaces
 import {ITownArchitectEvents} from "contracts/src/towns/facets/architect/ITownArchitect.sol";
 import {ITownArchitect} from "contracts/src/towns/facets/architect/ITownArchitect.sol";
-import {IPausable} from "contracts/src/diamond/extensions/pausable/IPausable.sol";
+import {IPausable} from "contracts/src/diamond/facets/pausable/IPausable.sol";
 import {IEntitlements} from "contracts/src/towns/facets/entitlements/IEntitlements.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
@@ -14,8 +14,8 @@ import {Permissions} from "contracts/src/spaces/libraries/Permissions.sol";
 // contracts
 import {TownArchitectService__InvalidStringLength, TownArchitectService__InvalidNetworkId} from "contracts/src/towns/facets/architect/TownArchitectService.sol";
 
-import {Pausable__Paused} from "contracts/src/diamond/extensions/pausable/PausableService.sol";
-import {Ownable__NotOwner} from "contracts/src/diamond/extensions/ownable/OwnableService.sol";
+import {Pausable__Paused} from "contracts/src/diamond/facets/pausable/PausableService.sol";
+import {Ownable__NotOwner} from "contracts/src/diamond/facets/ownable/OwnableService.sol";
 import {GateFacetService__NotAllowed} from "contracts/src/towns/facets/gate/GateService.sol";
 
 import {MockDiamond} from "contracts/test/mocks/MockDiamond.sol";

@@ -3,14 +3,14 @@ pragma solidity ^0.8.20;
 
 // interfaces
 import {IDiamond} from "contracts/src/diamond/IDiamond.sol";
-import {IDiamondCut} from "contracts/src/diamond/extensions/cut/IDiamondCut.sol";
+import {IDiamondCut} from "contracts/src/diamond/facets/cut/IDiamondCut.sol";
 
 // libraries
 
 // contracts
 import {TownOwner} from "contracts/src/tokens/TownOwner.sol";
 import {ProxyManager} from "contracts/src/diamond/proxy/manager/ProxyManager.sol";
-import {Pausable} from "contracts/src/diamond/extensions/pausable/Pausable.sol";
+import {Pausable} from "contracts/src/diamond/facets/pausable/Pausable.sol";
 import {ERC721Holder} from "openzeppelin-contracts/contracts/token/ERC721/utils/ERC721Holder.sol";
 import {TownArchitect} from "contracts/src/towns/facets/architect/TownArchitect.sol";
 import {TownFactoryInit} from "contracts/src/towns/initializers/TownFactoryInit.sol";

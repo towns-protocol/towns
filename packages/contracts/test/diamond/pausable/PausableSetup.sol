@@ -3,13 +3,13 @@ pragma solidity ^0.8.20;
 
 // interfaces
 import {IDiamond} from "contracts/src/diamond/IDiamond.sol";
-import {IDiamondCut} from "contracts/src/diamond/extensions/cut/IDiamondCut.sol";
+import {IDiamondCut} from "contracts/src/diamond/facets/cut/IDiamondCut.sol";
 
 // libraries
 
 // contracts
 import {FacetHelper, FacetTest} from "contracts/test/diamond/Facet.t.sol";
-import {Pausable} from "contracts/src/diamond/extensions/pausable/Pausable.sol";
+import {Pausable} from "contracts/src/diamond/facets/pausable/Pausable.sol";
 
 abstract contract PausableSetup is FacetTest {
   PausableHelper internal pausableHelper;

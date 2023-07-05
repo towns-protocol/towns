@@ -6,8 +6,8 @@ import {IProxyManager} from "./IProxyManager.sol";
 
 // libraries
 import {ProxyManagerController} from "./ProxyManagerController.sol";
-import {OwnableController} from "contracts/src/diamond/extensions/ownable/OwnableController.sol";
-import {Initializable} from "contracts/src/diamond/extensions/initializable/Initializable.sol";
+import {OwnableController} from "contracts/src/diamond/facets/ownable/OwnableController.sol";
+import {Initializable} from "contracts/src/diamond/facets/initializable/Initializable.sol";
 
 // contracts
 

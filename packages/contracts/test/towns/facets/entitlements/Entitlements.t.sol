@@ -13,7 +13,7 @@ import {MockUserEntitlement} from "contracts/test/mocks/MockUserEntitlement.sol"
 
 // solhint-disable-next-line max-line-length
 import {EntitlementsService__InvalidEntitlementAddress, EntitlementsService__InvalidEntitlementInterface, EntitlementsService__ImmutableEntitlement, EntitlementsService__EntitlementDoesNotExist, EntitlementsService__EntitlementAlreadyExists} from "contracts/src/towns/facets/entitlements/EntitlementsService.sol";
-import {TokenOwnable__NotOwner} from "contracts/src/diamond/extensions/ownable/token/TokenOwnableService.sol";
+import {TokenOwnable__NotOwner} from "contracts/src/diamond/facets/ownable/token/TokenOwnableService.sol";
 
 contract EntitlementsTest is TownTest, IEntitlementsStructs {
   IEntitlements internal entitlements;

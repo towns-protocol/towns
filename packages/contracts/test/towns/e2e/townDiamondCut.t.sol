@@ -3,12 +3,12 @@ pragma solidity ^0.8.20;
 
 //interfaces
 import {ITownArchitect} from "contracts/src/towns/facets/architect/ITownArchitect.sol";
-import {IDiamondCut} from "contracts/src/diamond/extensions/cut/IDiamondCut.sol";
+import {IDiamondCut} from "contracts/src/diamond/facets/cut/IDiamondCut.sol";
 import {IDiamond} from "contracts/src/diamond/IDiamond.sol";
 import {IMockFacet} from "contracts/test/mocks/MockFacet.sol";
 
 //libraries
-import {Ownable__NotOwner} from "contracts/src/diamond/extensions/ownable/OwnableService.sol";
+import {Ownable__NotOwner} from "contracts/src/diamond/facets/ownable/OwnableService.sol";
 
 //contracts
 import {MockFacetHelper} from "contracts/test/mocks/MockFacet.sol";

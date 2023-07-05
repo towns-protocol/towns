@@ -3,9 +3,9 @@ pragma solidity ^0.8.20;
 
 //interfaces
 import {IDiamond} from "contracts/src/diamond/IDiamond.sol";
-import {IDiamondCut} from "contracts/src/diamond/extensions/cut/IDiamondCut.sol";
-import {IDiamondLoupe} from "contracts/src/diamond/extensions/loupe/IDiamondLoupe.sol";
-import {IERC165} from "contracts/src/diamond/extensions/introspection/IERC165.sol";
+import {IDiamondCut} from "contracts/src/diamond/facets/cut/IDiamondCut.sol";
+import {IDiamondLoupe} from "contracts/src/diamond/facets/loupe/IDiamondLoupe.sol";
+import {IERC165} from "contracts/src/diamond/facets/introspection/IERC165.sol";
 
 //libraries
 

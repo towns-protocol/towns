@@ -6,7 +6,7 @@ pragma solidity ^0.8.20;
 // libraries
 
 // contracts
-import {Pausable} from "contracts/src/diamond/extensions/pausable/Pausable.sol";
+import {Pausable} from "contracts/src/diamond/facets/pausable/Pausable.sol";
 
 contract MockPausable is Pausable {
   function init() external {

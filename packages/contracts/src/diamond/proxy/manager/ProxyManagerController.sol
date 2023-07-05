@@ -2,7 +2,7 @@
 pragma solidity ^0.8.20;
 
 // interfaces
-import {IDiamondLoupe} from "contracts/src/diamond/extensions/loupe/IDiamondLoupe.sol";
+import {IDiamondLoupe} from "contracts/src/diamond/facets/loupe/IDiamondLoupe.sol";
 
 // libraries
 import {ProxyManagerService} from "./ProxyManagerService.sol";

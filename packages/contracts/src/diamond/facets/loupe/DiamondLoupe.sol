@@ -2,21 +2,14 @@
 pragma solidity ^0.8.20;
 
 // interfaces
-import {IERC165} from "../introspection/IERC165.sol";
 import {IDiamondLoupe} from "./IDiamondLoupe.sol";
 
 // libraries
 
 // contracts
-import {IntrospectionController} from "../introspection/IntrospectionController.sol";
 import {DiamondLoupeController} from "./DiamondLoupeController.sol";
 
-contract DiamondLoupe is
-  IDiamondLoupe,
-  IERC165,
-  DiamondLoupeController,
-  IntrospectionController
-{
+contract DiamondLoupe is IDiamondLoupe, DiamondLoupeController {
   /// @inheritdoc IDiamondLoupe
   function facets() external view override returns (Facet[] memory) {
     return _facets();
@@ -39,12 +32,5 @@ contract DiamondLoupe is
     bytes4 selector
   ) external view override returns (address) {
     return _facetAddress(selector);
-  }
-
-  /// @inheritdoc IERC165
-  function supportsInterface(
-    bytes4 interfaceId
-  ) public view virtual override returns (bool) {
-    return _supportsInterface(interfaceId);
   }
 }

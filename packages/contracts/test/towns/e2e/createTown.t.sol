@@ -5,7 +5,7 @@ pragma solidity ^0.8.20;
 import {ITownArchitectStructs, ITownArchitectEvents} from "contracts/src/towns/facets/architect/ITownArchitect.sol";
 import {ITownArchitect} from "contracts/src/towns/facets/architect/ITownArchitect.sol";
 import {IDiamond} from "contracts/src/diamond/IDiamond.sol";
-import {IDiamondCut} from "contracts/src/diamond/extensions/cut/IDiamondCut.sol";
+import {IDiamondCut} from "contracts/src/diamond/facets/cut/IDiamondCut.sol";
 
 import {ITokenEntitlement} from "contracts/src/towns/entitlements/token/ITokenEntitlement.sol";
 import {IChannel} from "contracts/src/towns/facets/channels/IChannel.sol";
@@ -17,7 +17,7 @@ import {IRoleStructs} from "contracts/src/towns/facets/roles/IRole.sol";
 import {Permissions} from "contracts/src/spaces/libraries/Permissions.sol";
 
 // contracts
-import {Initializable_AlreadyInitialized} from "contracts/src/diamond/extensions/initializable/Initializable.sol";
+import {Initializable_AlreadyInitialized} from "contracts/src/diamond/facets/initializable/Initializable.sol";
 
 import {MockFacetHelper} from "contracts/test/mocks/MockFacet.sol";
 import {TownFactory} from "contracts/src/towns/TownFactory.sol";

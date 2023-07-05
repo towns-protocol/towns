@@ -9,7 +9,7 @@ import {IDiamondCut} from "./IDiamondCut.sol";
 
 // contracts
 import {DiamondCutController} from "./DiamondCutController.sol";
-import {OwnableService, Ownable__NotOwner} from "contracts/src/diamond/extensions/ownable/OwnableService.sol";
+import {OwnableService, Ownable__NotOwner} from "contracts/src/diamond/facets/ownable/OwnableService.sol";
 
 contract DiamondCut is IDiamondCut, DiamondCutController {
   /// @inheritdoc IDiamondCut

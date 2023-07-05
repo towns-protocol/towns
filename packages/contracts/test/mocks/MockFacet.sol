@@ -7,7 +7,7 @@ pragma solidity ^0.8.20;
 
 // contracts
 import {FacetHelper} from "contracts/test/diamond/Facet.t.sol";
-import {TokenOwnableController} from "contracts/src/diamond/extensions/ownable/token/TokenOwnableController.sol";
+import {TokenOwnableController} from "contracts/src/diamond/facets/ownable/token/TokenOwnableController.sol";
 
 interface IMockFacet {
   function mockFunction() external pure returns (uint256);

@@ -3,8 +3,8 @@ pragma solidity ^0.8.20;
 
 // interfaces
 import {IDiamond} from "contracts/src/diamond/IDiamond.sol";
-import {IDiamondCut, IDiamondCutEvents} from "contracts/src/diamond/extensions/cut/IDiamondCut.sol";
-import {IERC165} from "contracts/src/diamond/extensions/introspection/IERC165.sol";
+import {IDiamondCut, IDiamondCutEvents} from "contracts/src/diamond/facets/cut/IDiamondCut.sol";
+import {IERC165} from "contracts/src/diamond/facets/introspection/IERC165.sol";
 
 // libraries
 
@@ -14,9 +14,9 @@ import {MockFacet, IMockFacet} from "contracts/test/mocks/MockFacet.sol";
 
 // errors
 // solhint-disable-next-line max-line-length
-import {DiamondCut_InvalidSelector, DiamondCut_FunctionFromSameFacetAlreadyExists, DiamondCut_FunctionAlreadyExists, DiamondCut_InvalidFacetRemoval, DiamondCut_FunctionDoesNotExist, DiamondCut_InvalidFacetCutAction, DiamondCut_InvalidFacet, DiamondCut_InvalidFacetSelectors, DiamondCut_ImmutableFacet, DiamondCut_InvalidContract} from "contracts/src/diamond/extensions/cut/DiamondCutService.sol";
+import {DiamondCut_InvalidSelector, DiamondCut_FunctionFromSameFacetAlreadyExists, DiamondCut_FunctionAlreadyExists, DiamondCut_InvalidFacetRemoval, DiamondCut_FunctionDoesNotExist, DiamondCut_InvalidFacetCutAction, DiamondCut_InvalidFacet, DiamondCut_InvalidFacetSelectors, DiamondCut_ImmutableFacet, DiamondCut_InvalidContract} from "contracts/src/diamond/facets/cut/DiamondCutService.sol";
 
-import {Ownable__NotOwner} from "contracts/src/diamond/extensions/ownable/OwnableService.sol";
+import {Ownable__NotOwner} from "contracts/src/diamond/facets/ownable/OwnableService.sol";
 
 contract DiamondCutTest is FacetTest, IDiamondCutEvents {
   IDiamondCut internal diamondCut;
