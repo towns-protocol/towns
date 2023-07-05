@@ -25,6 +25,8 @@ const config: JestConfigWithTsJest = {
         'bn.js': 'bn.js',
         'hash.js': 'hash.js',
         '(.+)\\.js': '$1',
+        // need for mecholm/olm
+        '\\.(wasm)$': require.resolve('./tests/mock-wasm-file.js'),
     },
     collectCoverage: true,
     coverageReporters: ['json', 'html'],
