@@ -7,9 +7,9 @@ import {IEntitlements} from "./IEntitlements.sol";
 // libraries
 
 // contracts
-import {EntitlementsController} from "./EntitlementsController.sol";
+import {EntitlementsBase} from "./EntitlementsBase.sol";
 
-contract Entitlements is EntitlementsController, IEntitlements {
+contract Entitlements is EntitlementsBase, IEntitlements {
   function addImmutableEntitlements(address[] memory entitlements) external {
     _addImmutableEntitlements(entitlements);
   }

@@ -2,7 +2,7 @@
 pragma solidity 0.8.20;
 
 import {IEntitlement} from "contracts/src/towns/entitlements/IEntitlement.sol";
-import {IRole} from "contracts/src/towns/facets/roles/IRole.sol";
+import {IRoles} from "contracts/src/towns/facets/roles/IRoles.sol";
 
 import {Errors} from "contracts/src/spaces/libraries/Errors.sol";
 import {MockUserEntitlementStorage} from "./MockUserEntitlementStorage.sol";
@@ -153,8 +153,8 @@ contract MockUserEntitlement is
     return entitlementData;
   }
 
-  function getUserRoles(address) external pure returns (IRole.Role[] memory) {
-    IRole.Role[] memory roles = new IRole.Role[](0);
+  function getUserRoles(address) external pure returns (IRoles.Role[] memory) {
+    IRoles.Role[] memory roles = new IRoles.Role[](0);
     return roles;
   }
 }

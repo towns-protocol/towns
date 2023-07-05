@@ -14,7 +14,7 @@ import {Proxy} from "../Proxy.sol";
  * @title Proxy with externally controlled implementation
  * @dev implementation fetched using immutable function selector
  */
-abstract contract ManagedProxyController is IManagedProxy, Proxy {
+abstract contract ManagedProxyBase is IManagedProxy, Proxy {
   /**
    * @param managerSelector function selector used to fetch implementation from manager
    */

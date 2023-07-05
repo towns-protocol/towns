@@ -8,7 +8,7 @@ import {GateService} from "./GateService.sol";
 
 // contracts
 
-abstract contract GateController {
+abstract contract GateBase {
   function _gateByToken(address token, uint256 quantity) internal {
     GateService.createGate(token, quantity);
   }

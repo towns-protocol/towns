@@ -2,14 +2,14 @@
 pragma solidity ^0.8.20;
 
 // interfaces
-import {IRole} from "./IRole.sol";
+import {IRoles} from "./IRoles.sol";
 
 // libraries
 
 // contracts
-import {RoleController} from "./RoleController.sol";
+import {RolesBase} from "./RolesBase.sol";
 
-contract Roles is RoleController, IRole {
+contract Roles is RolesBase, IRoles {
   function createRole(
     string calldata roleName,
     string[] memory permissions,

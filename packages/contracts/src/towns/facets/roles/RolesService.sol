@@ -6,23 +6,23 @@ pragma solidity ^0.8.20;
 // libraries
 import {EnumerableSet} from "openzeppelin-contracts/contracts/utils/structs/EnumerableSet.sol";
 import {StringSet} from "contracts/src/utils/StringSet.sol";
-import {RoleStorage} from "./RoleStorage.sol";
+import {RolesStorage} from "./RolesStorage.sol";
 
 // contracts
-error RoleService__RoleDoesNotExist();
-error RoleService__EntitlementAlreadyExists();
-error RoleService__EntitlementDoesNotExist();
-error RoleService__InvalidPermission();
-error RoleService__InvalidEntitlementAddress();
-error RoleService__PermissionAlreadyExists();
-error RoleService__PermissionDoesNotExist();
+error RolesService__RoleDoesNotExist();
+error RolesService__EntitlementAlreadyExists();
+error RolesService__EntitlementDoesNotExist();
+error RolesService__InvalidPermission();
+error RolesService__InvalidEntitlementAddress();
+error RolesService__PermissionAlreadyExists();
+error RolesService__PermissionDoesNotExist();
 
-library RoleService {
+library RolesService {
   using StringSet for StringSet.Set;
   using EnumerableSet for EnumerableSet.UintSet;
   using EnumerableSet for EnumerableSet.Bytes32Set;
   using EnumerableSet for EnumerableSet.AddressSet;
-  using RoleStorage for RoleStorage.Layout;
+  using RolesStorage for RolesStorage.Layout;
 
   function addRole(
     string memory roleName,
@@ -30,7 +30,7 @@ library RoleService {
     string[] memory permissions,
     address[] memory entitlements
   ) internal returns (uint256 roleId) {
-    RoleStorage.Layout storage rs = RoleStorage.layout();
+    RolesStorage.Layout storage rs = RolesStorage.layout();
 
     roleId = ++rs.roleCount;
 
@@ -43,7 +43,7 @@ library RoleService {
     for (uint256 i = 0; i < entitlements.length; i++) {
       // if entitlement is empty, skip
       if (entitlements[i] == address(0)) {
-        revert RoleService__InvalidEntitlementAddress();
+        revert RolesService__InvalidEntitlementAddress();
       }
 
       rs.roleById[roleId].entitlements.add(entitlements[i]);
@@ -55,7 +55,7 @@ library RoleService {
   ) internal view returns (address[] memory entitlements) {
     checkRole(roleId);
 
-    entitlements = RoleStorage.layout().roleById[roleId].entitlements.values();
+    entitlements = RolesStorage.layout().roleById[roleId].entitlements.values();
   }
 
   function getRole(
@@ -72,7 +72,7 @@ library RoleService {
   {
     checkRole(roleId);
 
-    RoleStorage.Role storage role = RoleStorage.layout().roleById[roleId];
+    RolesStorage.Role storage role = RolesStorage.layout().roleById[roleId];
 
     name = role.name;
     isImmutable = role.isImmutable;
@@ -89,13 +89,13 @@ library RoleService {
   ) internal {
     // Update the role name
     if (bytes(roleName).length > 0) {
-      RoleStorage.layout().roleById[roleId].name = roleName;
+      RolesStorage.layout().roleById[roleId].name = roleName;
     }
 
     // Update permissions
 
     if (permissions.length > 0) {
-      string[] memory currentPermissions = RoleStorage
+      string[] memory currentPermissions = RolesStorage
         .layout()
         .roleById[roleId]
         .permissions
@@ -112,7 +112,7 @@ library RoleService {
       uint256 entitlementsLen = entitlements.length;
 
       // Remove all the entitlements
-      address[] memory currentEntitlements = RoleStorage
+      address[] memory currentEntitlements = RolesStorage
         .layout()
         .roleById[roleId]
         .entitlements
@@ -137,7 +137,7 @@ library RoleService {
   }
 
   function removeRole(uint256 roleId) internal {
-    RoleStorage.Layout storage rs = RoleStorage.layout();
+    RolesStorage.Layout storage rs = RolesStorage.layout();
 
     rs.roles.remove(roleId);
     delete rs.roleById[roleId];
@@ -168,7 +168,7 @@ library RoleService {
   }
 
   function getRoleIds() internal view returns (uint256[] memory roleIds) {
-    return RoleStorage.layout().roles.values();
+    return RolesStorage.layout().roles.values();
   }
 
   // =============================================================
@@ -179,7 +179,7 @@ library RoleService {
     uint256 roleId,
     string[] memory permissions
   ) internal {
-    RoleStorage.Layout storage rs = RoleStorage.layout();
+    RolesStorage.Layout storage rs = RolesStorage.layout();
 
     uint256 permissionLen = permissions.length;
 
@@ -189,7 +189,7 @@ library RoleService {
 
       // if permission already exists, revert
       if (rs.roleById[roleId].permissions.contains(permissions[i])) {
-        revert RoleService__PermissionAlreadyExists();
+        revert RolesService__PermissionAlreadyExists();
       }
 
       rs.roleById[roleId].permissions.add(permissions[i]);
@@ -204,7 +204,7 @@ library RoleService {
     uint256 roleId,
     string[] memory permissions
   ) internal {
-    RoleStorage.Layout storage rs = RoleStorage.layout();
+    RolesStorage.Layout storage rs = RolesStorage.layout();
 
     uint256 permissionLen = permissions.length;
 
@@ -213,7 +213,7 @@ library RoleService {
       checkEmptyString(permissions[i]);
 
       if (!rs.roleById[roleId].permissions.contains(permissions[i])) {
-        revert RoleService__PermissionDoesNotExist();
+        revert RolesService__PermissionDoesNotExist();
       }
 
       rs.roleById[roleId].permissions.remove(permissions[i]);
@@ -228,10 +228,10 @@ library RoleService {
   //                           Entitlements
   // =============================================================
   function addEntitlementToRole(uint256 roleId, address entitlement) internal {
-    RoleStorage.Layout storage rs = RoleStorage.layout();
+    RolesStorage.Layout storage rs = RolesStorage.layout();
 
     if (rs.roleById[roleId].entitlements.contains(entitlement)) {
-      revert RoleService__EntitlementAlreadyExists();
+      revert RolesService__EntitlementAlreadyExists();
     }
 
     rs.roleById[roleId].entitlements.add(entitlement);
@@ -241,10 +241,10 @@ library RoleService {
     uint256 roleId,
     address entitlement
   ) internal {
-    RoleStorage.Layout storage rs = RoleStorage.layout();
+    RolesStorage.Layout storage rs = RolesStorage.layout();
 
     if (!rs.roleById[roleId].entitlements.contains(entitlement)) {
-      revert RoleService__EntitlementDoesNotExist();
+      revert RolesService__EntitlementDoesNotExist();
     }
 
     rs.roleById[roleId].entitlements.remove(entitlement);
@@ -255,20 +255,20 @@ library RoleService {
   // =============================================================
   function checkEmptyString(string memory str) internal pure {
     if (bytes(str).length == 0) {
-      revert RoleService__InvalidPermission();
+      revert RolesService__InvalidPermission();
     }
   }
 
   function checkRoleExists(uint256 roleId) internal view {
-    if (!RoleStorage.layout().roles.contains(roleId)) {
-      revert RoleService__RoleDoesNotExist();
+    if (!RolesStorage.layout().roles.contains(roleId)) {
+      revert RolesService__RoleDoesNotExist();
     }
   }
 
   function checkRole(uint256 roleId) internal view {
     // check that role exists
-    if (!RoleStorage.layout().roles.contains(roleId)) {
-      revert RoleService__RoleDoesNotExist();
+    if (!RolesStorage.layout().roles.contains(roleId)) {
+      revert RolesService__RoleDoesNotExist();
     }
   }
 }

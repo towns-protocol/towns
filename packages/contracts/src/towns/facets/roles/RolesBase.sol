@@ -2,7 +2,7 @@
 pragma solidity ^0.8.20;
 
 // interfaces
-import {IRoleStructs} from "./IRole.sol";
+import {IRolesStructs} from "./IRoles.sol";
 
 // libraries
 import {Permissions} from "contracts/src/spaces/libraries/Permissions.sol";
@@ -11,11 +11,11 @@ import {Validator} from "contracts/src/utils/Validator.sol";
 // services
 import {EntitlementsService} from "contracts/src/towns/facets/entitlements/EntitlementsService.sol";
 import {ChannelService} from "contracts/src/towns/facets/channels/ChannelService.sol";
-import {RoleService} from "./RoleService.sol";
+import {RolesService} from "./RolesService.sol";
 
 // contracts
 
-abstract contract RoleController is IRoleStructs {
+abstract contract RolesBase is IRolesStructs {
   // =============================================================
   //                         Role Management
   // =============================================================
@@ -41,7 +41,7 @@ abstract contract RoleController is IRoleStructs {
       }
     }
 
-    roleId = RoleService.addRole(
+    roleId = RolesService.addRole(
       roleName,
       false,
       permissions,
@@ -62,11 +62,11 @@ abstract contract RoleController is IRoleStructs {
       }
     }
 
-    RoleService.checkRoleExists(roleId);
+    RolesService.checkRoleExists(roleId);
   }
 
   function _getRoles() internal view returns (Role[] memory roles) {
-    uint256[] memory roleIds = RoleService.getRoleIds();
+    uint256[] memory roleIds = RolesService.getRoleIds();
     uint256 roleIdLen = roleIds.length;
 
     roles = new Role[](roleIdLen);
@@ -77,7 +77,7 @@ abstract contract RoleController is IRoleStructs {
         bool isImmutable,
         string[] memory permissions,
         address[] memory entitlements
-      ) = RoleService.getRole(roleIds[i]);
+      ) = RolesService.getRole(roleIds[i]);
 
       roles[i] = Role({
         id: roleIds[i],
@@ -101,7 +101,7 @@ abstract contract RoleController is IRoleStructs {
       bool isImmutable,
       string[] memory permissions,
       address[] memory entitlements
-    ) = RoleService.getRole(roleId);
+    ) = RolesService.getRole(roleId);
 
     return
       Role({
@@ -121,10 +121,10 @@ abstract contract RoleController is IRoleStructs {
     CreateEntitlement[] memory entitlements
   ) internal {
     EntitlementsService.validatePermission(Permissions.ModifySpaceSettings);
-    RoleService.checkRoleExists(roleId);
+    RolesService.checkRoleExists(roleId);
 
     // get current entitlements before updating them
-    address[] memory currentEntitlements = RoleService.getEntitlementsByRole(
+    address[] memory currentEntitlements = RolesService.getEntitlementsByRole(
       roleId
     );
     uint256 currentEntitlementsLen = currentEntitlements.length;
@@ -141,7 +141,12 @@ abstract contract RoleController is IRoleStructs {
       }
     }
 
-    RoleService.updateRole(roleId, roleName, permissions, entitlementAddresses);
+    RolesService.updateRole(
+      roleId,
+      roleName,
+      permissions,
+      entitlementAddresses
+    );
 
     if (entitlementsLen == 0) {
       return;
@@ -190,12 +195,12 @@ abstract contract RoleController is IRoleStructs {
     EntitlementsService.validatePermission(Permissions.ModifySpaceSettings);
 
     // get current entitlements
-    address[] memory currentEntitlements = RoleService.getEntitlementsByRole(
+    address[] memory currentEntitlements = RolesService.getEntitlementsByRole(
       roleId
     );
     uint256 currentEntitlementsLen = currentEntitlements.length;
 
-    RoleService.removeRole(roleId);
+    RolesService.removeRole(roleId);
 
     string[] memory channelIds = ChannelService.getChannelIds();
     uint256 channelIdsLen = channelIds.length;
@@ -238,10 +243,10 @@ abstract contract RoleController is IRoleStructs {
     EntitlementsService.validatePermission(Permissions.ModifySpaceSettings);
 
     // check role exists
-    RoleService.checkRole(roleId);
+    RolesService.checkRole(roleId);
 
     // check permissions
-    RoleService.addPermissionsToRole(roleId, permissions);
+    RolesService.addPermissionsToRole(roleId, permissions);
   }
 
   function _removePermissionsFromRole(
@@ -251,16 +256,16 @@ abstract contract RoleController is IRoleStructs {
     EntitlementsService.validatePermission(Permissions.ModifySpaceSettings);
 
     // check role exists
-    RoleService.checkRole(roleId);
+    RolesService.checkRole(roleId);
 
     // check permissions
-    RoleService.removePermissionsFromRole(roleId, permissions);
+    RolesService.removePermissionsFromRole(roleId, permissions);
   }
 
   function _getPermissionsByRoleId(
     uint256 roleId
   ) internal view returns (string[] memory permissions) {
-    (, , permissions, ) = RoleService.getRole(roleId);
+    (, , permissions, ) = RolesService.getRole(roleId);
   }
 
   // =============================================================
@@ -274,13 +279,13 @@ abstract contract RoleController is IRoleStructs {
     EntitlementsService.validatePermission(Permissions.ModifySpaceSettings);
 
     // check role exists
-    RoleService.checkRole(roleId);
+    RolesService.checkRole(roleId);
 
     // check entitlements exists
     EntitlementsService.checkEntitlement(entitlement.module);
 
     // add entitlement to role
-    RoleService.addEntitlementToRole(roleId, entitlement.module);
+    RolesService.addEntitlementToRole(roleId, entitlement.module);
 
     // set entitlement to role
     EntitlementsService.proxyAddRoleToEntitlement(
@@ -297,13 +302,13 @@ abstract contract RoleController is IRoleStructs {
     EntitlementsService.validatePermission(Permissions.ModifySpaceSettings);
 
     // check role exists
-    RoleService.checkRole(roleId);
+    RolesService.checkRole(roleId);
 
     // check entitlements exists
     EntitlementsService.checkEntitlement(entitlement.module);
 
     // remove entitlement from role
-    RoleService.removeEntitlementFromRole(roleId, entitlement.module);
+    RolesService.removeEntitlementFromRole(roleId, entitlement.module);
 
     // set entitlement to role
     EntitlementsService.proxyRemoveRoleFromEntitlement(

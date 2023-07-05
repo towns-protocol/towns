@@ -7,9 +7,9 @@ import {IDiamondLoupe} from "./IDiamondLoupe.sol";
 // libraries
 
 // contracts
-import {DiamondLoupeController} from "./DiamondLoupeController.sol";
+import {DiamondLoupeBase} from "./DiamondLoupeBase.sol";
 
-contract DiamondLoupe is IDiamondLoupe, DiamondLoupeController {
+contract DiamondLoupe is IDiamondLoupe, DiamondLoupeBase {
   /// @inheritdoc IDiamondLoupe
   function facets() external view override returns (Facet[] memory) {
     return _facets();

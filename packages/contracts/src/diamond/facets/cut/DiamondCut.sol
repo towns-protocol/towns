@@ -8,10 +8,10 @@ import {IDiamondCut} from "./IDiamondCut.sol";
 // libraries
 
 // contracts
-import {DiamondCutController} from "./DiamondCutController.sol";
+import {DiamondCutBase} from "./DiamondCutBase.sol";
 import {OwnableService, Ownable__NotOwner} from "contracts/src/diamond/facets/ownable/OwnableService.sol";
 
-contract DiamondCut is IDiamondCut, DiamondCutController {
+contract DiamondCut is IDiamondCut, DiamondCutBase {
   /// @inheritdoc IDiamondCut
   function diamondCut(
     IDiamond.FacetCut[] memory facetCuts,

@@ -9,7 +9,7 @@ import {ProxyManagerService} from "./ProxyManagerService.sol";
 
 // contracts
 
-abstract contract ProxyManagerController {
+abstract contract ProxyManagerBase {
   function __ProxyManagerUpgradeable_init(address implementation) internal {
     ProxyManagerService.setImplementation(implementation);
   }

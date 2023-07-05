@@ -4,7 +4,7 @@ pragma solidity ^0.8.20;
 // interfaces
 import {ITownArchitect, ITownArchitectStructs, ITownArchitectEvents} from "./ITownArchitect.sol";
 import {IEntitlement} from "contracts/src/towns/entitlements/IEntitlement.sol";
-import {IRole, IRoleStructs} from "contracts/src/towns/facets/roles/IRole.sol";
+import {IRoles, IRolesStructs} from "contracts/src/towns/facets/roles/IRoles.sol";
 import {IChannel} from "contracts/src/towns/facets/channels/IChannel.sol";
 import {IEntitlements} from "contracts/src/towns/facets/entitlements/IEntitlements.sol";
 
@@ -26,7 +26,7 @@ import {UserEntitlement} from "contracts/src/towns/entitlements/user/UserEntitle
 import {TokenEntitlement} from "contracts/src/towns/entitlements/token/TokenEntitlement.sol";
 import {ERC1967Proxy} from "openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
-abstract contract TownArchitectController is
+abstract contract TownArchitectBase is
   Factory,
   ITownArchitectEvents,
   ITownArchitectStructs
@@ -176,10 +176,10 @@ abstract contract TownArchitectController is
     MemberEntitlement memory member
   ) internal returns (uint256 roleId) {
     // create role with no entitlements
-    roleId = IRole(town).createRole(
+    roleId = IRoles(town).createRole(
       member.role.name,
       member.role.permissions,
-      new IRoleStructs.CreateEntitlement[](0)
+      new IRolesStructs.CreateEntitlement[](0)
     );
 
     if (member.users.length != 0) {
@@ -188,9 +188,9 @@ abstract contract TownArchitectController is
         TownArchitectService.checkAddress(member.users[i]);
       }
 
-      IRole(town).addRoleToEntitlement(
+      IRoles(town).addRoleToEntitlement(
         roleId,
-        IRoleStructs.CreateEntitlement({
+        IRolesStructs.CreateEntitlement({
           module: userEntitlement,
           data: abi.encode(member.users)
         })
@@ -199,9 +199,9 @@ abstract contract TownArchitectController is
 
     if (member.tokens.length == 0) return roleId;
 
-    IRole(town).addRoleToEntitlement(
+    IRoles(town).addRoleToEntitlement(
       roleId,
-      IRoleStructs.CreateEntitlement({
+      IRolesStructs.CreateEntitlement({
         module: tokenEntitlement,
         data: abi.encode(member.tokens)
       })
@@ -213,18 +213,18 @@ abstract contract TownArchitectController is
     address userEntitlement,
     RoleInfo memory everyone
   ) internal returns (uint256 roleId) {
-    IRoleStructs.CreateEntitlement[]
-      memory entitlements = new IRoleStructs.CreateEntitlement[](1);
+    IRolesStructs.CreateEntitlement[]
+      memory entitlements = new IRolesStructs.CreateEntitlement[](1);
 
     address[] memory users = new address[](1);
     users[0] = TownArchitectService.EVERYONE_ADDRESS;
 
-    entitlements[0] = IRoleStructs.CreateEntitlement({
+    entitlements[0] = IRolesStructs.CreateEntitlement({
       module: userEntitlement,
       data: abi.encode(users)
     });
 
-    roleId = IRole(town).createRole(
+    roleId = IRoles(town).createRole(
       everyone.name,
       everyone.permissions,
       entitlements

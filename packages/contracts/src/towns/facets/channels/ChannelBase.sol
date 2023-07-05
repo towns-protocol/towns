@@ -13,7 +13,7 @@ import {ChannelService} from "./ChannelService.sol";
 
 import {Validator} from "contracts/src/utils/Validator.sol";
 
-abstract contract ChannelController is IChannelStructs {
+abstract contract ChannelBase is IChannelStructs {
   function _createChannel(
     string memory channelId,
     string memory metadata,

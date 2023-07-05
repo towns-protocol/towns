@@ -7,7 +7,7 @@ pragma solidity ^0.8.20;
 
 // contracts
 import {FacetHelper} from "contracts/test/diamond/Facet.t.sol";
-import {TokenOwnableController} from "contracts/src/diamond/facets/ownable/token/TokenOwnableController.sol";
+import {TokenOwnableBase} from "contracts/src/diamond/facets/ownable/token/TokenOwnableBase.sol";
 
 interface IMockFacet {
   function mockFunction() external pure returns (uint256);
@@ -35,7 +35,7 @@ library MockFacetStorage {
   }
 }
 
-contract MockFacet is IMockFacet, TokenOwnableController {
+contract MockFacet is IMockFacet, TokenOwnableBase {
   using MockFacetStorage for MockFacetStorage.Layout;
 
   function mockFunction() external pure override returns (uint256) {

@@ -11,7 +11,7 @@ import {IERC173} from "./facets/ownable/IERC173.sol";
 // libraries
 
 // contracts
-import {DiamondController} from "./DiamondController.sol";
+import {DiamondBase} from "./DiamondBase.sol";
 import {DiamondCut} from "./facets/cut/DiamondCut.sol";
 import {DiamondLoupe} from "./facets/loupe/DiamondLoupe.sol";
 import {Ownable} from "./facets/ownable/Ownable.sol";
@@ -19,7 +19,7 @@ import {ERC165} from "./facets/introspection/ERC165.sol";
 
 abstract contract Diamond is
   IDiamond,
-  DiamondController,
+  DiamondBase,
   DiamondCut,
   DiamondLoupe,
   Ownable,

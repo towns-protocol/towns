@@ -8,7 +8,7 @@ import {TownProxyService} from "./TownProxyService.sol";
 
 // contracts
 
-abstract contract TownProxyController {
+abstract contract TownProxyBase {
   function __TownProxy_init(string memory networkId) internal {
     TownProxyService.setNetworkId(networkId);
   }

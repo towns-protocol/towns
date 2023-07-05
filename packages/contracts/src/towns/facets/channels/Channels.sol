@@ -7,10 +7,10 @@ import {IChannel} from "./IChannel.sol";
 // libraries
 
 // contracts
-import {ChannelController} from "./ChannelController.sol";
+import {ChannelBase} from "./ChannelBase.sol";
 import {Initializable} from "contracts/src/diamond/facets/initializable/Initializable.sol";
 
-contract Channels is ChannelController, Initializable, IChannel {
+contract Channels is ChannelBase, Initializable, IChannel {
   function createChannel(
     string memory channelId,
     string memory metadata,

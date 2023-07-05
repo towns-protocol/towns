@@ -5,15 +5,15 @@ pragma solidity ^0.8.20;
 import {IProxyManager} from "./IProxyManager.sol";
 
 // libraries
-import {ProxyManagerController} from "./ProxyManagerController.sol";
-import {OwnableController} from "contracts/src/diamond/facets/ownable/OwnableController.sol";
+import {ProxyManagerBase} from "./ProxyManagerBase.sol";
+import {OwnableBase} from "contracts/src/diamond/facets/ownable/OwnableBase.sol";
 import {Initializable} from "contracts/src/diamond/facets/initializable/Initializable.sol";
 
 // contracts
 
 contract ProxyManager is
-  ProxyManagerController,
-  OwnableController,
+  ProxyManagerBase,
+  OwnableBase,
   Initializable,
   IProxyManager
 {

@@ -8,17 +8,17 @@ import {ITownArchitect} from "contracts/src/towns/facets/architect/ITownArchitec
 
 // contracts
 import {Diamond} from "contracts/src/diamond/Diamond.sol";
-import {TownArchitectController} from "./TownArchitectController.sol";
-import {GateController} from "contracts/src/towns/facets/gate/GateController.sol";
-import {OwnableController} from "contracts/src/diamond/facets/ownable/OwnableController.sol";
+import {TownArchitectBase} from "./TownArchitectBase.sol";
+import {GateBase} from "contracts/src/towns/facets/gate/GateBase.sol";
+import {OwnableBase} from "contracts/src/diamond/facets/ownable/OwnableBase.sol";
 import {ReentrancyGuard} from "contracts/src/diamond/facets/reentrancy/ReentrancyGuard.sol";
-import {PausableController} from "contracts/src/diamond/facets/pausable/PausableController.sol";
+import {PausableBase} from "contracts/src/diamond/facets/pausable/PausableBase.sol";
 
 contract TownArchitect is
-  TownArchitectController,
-  OwnableController,
-  GateController,
-  PausableController,
+  TownArchitectBase,
+  OwnableBase,
+  GateBase,
+  PausableBase,
   ReentrancyGuard,
   ITownArchitect
 {

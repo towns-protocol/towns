@@ -6,10 +6,10 @@ pragma solidity ^0.8.20;
 // libraries
 
 // contracts
-import {ManagedProxyController} from "contracts/src/diamond/proxy/managed/ManagedProxyController.sol";
+import {ManagedProxyBase} from "contracts/src/diamond/proxy/managed/ManagedProxyBase.sol";
 import {OwnableService} from "contracts/src/diamond/facets/ownable/OwnableService.sol";
 
-contract MockManagedProxy is ManagedProxyController {
+contract MockManagedProxy is ManagedProxyBase {
   constructor(bytes4 selector, address manager) {
     __ManagedProxy_init(selector, manager);
     OwnableService.transferOwnership(msg.sender);

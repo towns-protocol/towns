@@ -7,7 +7,7 @@ pragma solidity ^0.8.20;
 
 // contracts
 import {TestUtils} from "contracts/test/utils/TestUtils.sol";
-import {IntrospectionController} from "contracts/src/diamond/facets/introspection/IntrospectionController.sol";
+import {IntrospectionBase} from "contracts/src/diamond/facets/introspection/IntrospectionBase.sol";
 
 contract IntrospectionTest is TestUtils {
   address internal deployer;
@@ -37,7 +37,7 @@ contract IntrospectionTest is TestUtils {
   }
 }
 
-contract MockIntrospection is IntrospectionController {
+contract MockIntrospection is IntrospectionBase {
   function supportsInterface(bytes4 interfaceId) external view returns (bool) {
     return _supportsInterface(interfaceId);
   }

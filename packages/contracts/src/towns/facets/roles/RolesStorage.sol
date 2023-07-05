@@ -9,9 +9,9 @@ import {StringSet} from "contracts/src/utils/StringSet.sol";
 
 // contracts
 
-library RoleStorage {
+library RolesStorage {
   bytes32 internal constant STORAGE_SLOT =
-    keccak256("towns.contracts.storage.Role");
+    keccak256("towns.contracts.storage.Roles");
 
   struct Role {
     string name;

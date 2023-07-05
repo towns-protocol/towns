@@ -3,8 +3,8 @@ pragma solidity ^0.8.20;
 
 // interfaces
 import {IChannel} from "contracts/src/towns/facets/channels/IChannel.sol";
-import {IRole} from "contracts/src/towns/facets/roles/IRole.sol";
-import {IRoleStructs} from "contracts/src/towns/facets/roles/IRole.sol";
+import {IRoles} from "contracts/src/towns/facets/roles/IRoles.sol";
+import {IRolesStructs} from "contracts/src/towns/facets/roles/IRoles.sol";
 import {IEntitlements} from "contracts/src/towns/facets/entitlements/IEntitlements.sol";
 
 // libraries
@@ -50,17 +50,17 @@ contract ChannelsTest is TownTest {
     permissions[0] = "Write";
 
     vm.prank(townOwner);
-    uint256 roleId = IRole(town).createRole(
+    uint256 roleId = IRoles(town).createRole(
       "Member",
       permissions,
-      new IRoleStructs.CreateEntitlement[](0)
+      new IRolesStructs.CreateEntitlement[](0)
     );
 
     vm.prank(townOwner);
-    uint256 roleId2 = IRole(town).createRole(
+    uint256 roleId2 = IRoles(town).createRole(
       "AnotherMember",
       permissions,
-      new IRoleStructs.CreateEntitlement[](0)
+      new IRolesStructs.CreateEntitlement[](0)
     );
 
     uint256[] memory roleIds = new uint256[](2);
@@ -112,10 +112,10 @@ contract ChannelsTest is TownTest {
     vm.assume(bytes(channelId).length > 2);
 
     vm.prank(townOwner);
-    uint256 roleId = IRole(town).createRole(
+    uint256 roleId = IRoles(town).createRole(
       "Member",
       new string[](0),
-      new IRoleStructs.CreateEntitlement[](0)
+      new IRolesStructs.CreateEntitlement[](0)
     );
 
     uint256[] memory roleIds = new uint256[](1);

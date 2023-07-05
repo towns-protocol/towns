@@ -13,7 +13,7 @@ import {TestUtils} from "contracts/test/utils/TestUtils.sol";
 import {Town} from "contracts/src/towns/Town.sol";
 import {ProxyManager} from "contracts/src/diamond/proxy/manager/ProxyManager.sol";
 import {TownProxy} from "contracts/src/towns/facets/proxy/TownProxy.sol";
-import {TownProxyController} from "contracts/src/towns/facets/proxy/TownProxyController.sol";
+import {TownProxyBase} from "contracts/src/towns/facets/proxy/TownProxyBase.sol";
 
 // mocks
 import {MockERC721} from "contracts/test/mocks/MockERC721.sol";
@@ -100,7 +100,7 @@ contract TownProxyTest is TestUtils {
   }
 }
 
-contract TownProxyV2 is TownProxyController {
+contract TownProxyV2 is TownProxyBase {
   function init() external {
     __TownProxy_init("test");
   }

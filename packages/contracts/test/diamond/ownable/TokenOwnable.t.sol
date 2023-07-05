@@ -9,7 +9,7 @@ import {TestUtils} from "contracts/test/utils/TestUtils.sol";
 //libraries
 
 //contracts
-import {TokenOwnableController} from "contracts/src/diamond/facets/ownable/token/TokenOwnableController.sol";
+import {TokenOwnableBase} from "contracts/src/diamond/facets/ownable/token/TokenOwnableBase.sol";
 import {MockERC721} from "contracts/test/mocks/MockERC721.sol";
 
 contract TokenOwnableTest is TestUtils {
@@ -35,7 +35,7 @@ contract TokenOwnableTest is TestUtils {
   }
 }
 
-contract MockTokenOwnable is TokenOwnableController {
+contract MockTokenOwnable is TokenOwnableBase {
   function init(address collection, uint256 tokenId) external {
     __Ownable_init(collection, tokenId);
   }

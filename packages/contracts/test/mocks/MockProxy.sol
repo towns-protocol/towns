@@ -6,9 +6,9 @@ import {IDiamondLoupe} from "contracts/src/diamond/facets/loupe/IDiamondLoupe.so
 
 // contracts
 import {Proxy} from "contracts/src/diamond/proxy/Proxy.sol";
-import {OwnableController} from "contracts/src/diamond/facets/ownable/OwnableController.sol";
+import {OwnableBase} from "contracts/src/diamond/facets/ownable/OwnableBase.sol";
 
-contract MockProxy is OwnableController, Proxy {
+contract MockProxy is OwnableBase, Proxy {
   address internal immutable _implementation;
 
   constructor(address implementation_) {

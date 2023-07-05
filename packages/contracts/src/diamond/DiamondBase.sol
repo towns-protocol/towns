@@ -9,7 +9,7 @@ import {DiamondLoupeService} from "./facets/loupe/DiamondLoupeService.sol";
 
 // contracts
 
-abstract contract DiamondController is Proxy {
+abstract contract DiamondBase is Proxy {
   function _getImplementation()
     internal
     view

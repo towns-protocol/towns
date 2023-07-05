@@ -7,9 +7,9 @@ import {IERC173} from "../IERC173.sol";
 // libraries
 
 // contracts
-import {TokenOwnableController} from "./TokenOwnableController.sol";
+import {TokenOwnableBase} from "./TokenOwnableBase.sol";
 
-contract TokenOwnable is IERC173, TokenOwnableController {
+contract TokenOwnable is IERC173, TokenOwnableBase {
   /// @inheritdoc IERC173
   function owner() external view returns (address) {
     return _owner();

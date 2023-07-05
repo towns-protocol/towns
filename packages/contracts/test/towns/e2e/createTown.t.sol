@@ -10,8 +10,8 @@ import {IDiamondCut} from "contracts/src/diamond/facets/cut/IDiamondCut.sol";
 import {ITokenEntitlement} from "contracts/src/towns/entitlements/token/ITokenEntitlement.sol";
 import {IChannel} from "contracts/src/towns/facets/channels/IChannel.sol";
 import {IEntitlements} from "contracts/src/towns/facets/entitlements/IEntitlements.sol";
-import {IRole} from "contracts/src/towns/facets/roles/IRole.sol";
-import {IRoleStructs} from "contracts/src/towns/facets/roles/IRole.sol";
+import {IRoles} from "contracts/src/towns/facets/roles/IRoles.sol";
+import {IRolesStructs} from "contracts/src/towns/facets/roles/IRoles.sol";
 
 // libraries
 import {Permissions} from "contracts/src/spaces/libraries/Permissions.sol";
@@ -89,18 +89,18 @@ contract CreateTownTest is TownFactoryTest, ITownArchitectEvents {
     address[] memory users = new address[](1);
     users[0] = member;
 
-    IRoleStructs.CreateEntitlement[]
-      memory roleEntitlements = new IRoleStructs.CreateEntitlement[](1);
+    IRolesStructs.CreateEntitlement[]
+      memory roleEntitlements = new IRolesStructs.CreateEntitlement[](1);
 
     // create entitlement adding users and user entitlement
-    roleEntitlements[0] = IRoleStructs.CreateEntitlement({
+    roleEntitlements[0] = IRolesStructs.CreateEntitlement({
       module: userEntitlement,
       data: abi.encode(users)
     });
 
     // create role with permissions and entitlements attached to it
     vm.prank(founder);
-    uint256 roleId = IRole(newTown).createRole(
+    uint256 roleId = IRoles(newTown).createRole(
       "Member",
       permissions,
       roleEntitlements

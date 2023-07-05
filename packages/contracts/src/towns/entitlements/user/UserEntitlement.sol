@@ -3,7 +3,7 @@ pragma solidity 0.8.20;
 
 // interfaces
 import {IEntitlement} from "../IEntitlement.sol";
-import {IRole} from "contracts/src/towns/facets/roles/IRole.sol";
+import {IRoles} from "contracts/src/towns/facets/roles/IRoles.sol";
 import {IChannel} from "contracts/src/towns/facets/channels/IChannel.sol";
 
 // libraries
@@ -252,7 +252,7 @@ contract UserEntitlement is
     uint256 roleId,
     bytes32 permission
   ) internal view returns (bool) {
-    string[] memory permissions = IRole(TOWN_ADDRESS).getPermissionsByRoleId(
+    string[] memory permissions = IRoles(TOWN_ADDRESS).getPermissionsByRoleId(
       roleId
     );
     uint256 permissionLen = permissions.length;

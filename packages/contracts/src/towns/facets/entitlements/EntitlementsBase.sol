@@ -10,7 +10,7 @@ import {TokenOwnableService} from "contracts/src/diamond/facets/ownable/token/To
 
 // contracts
 
-contract EntitlementsController is IEntitlementsStructs {
+contract EntitlementsBase is IEntitlementsStructs {
   function _isEntitledToTown(
     address user,
     string calldata permission

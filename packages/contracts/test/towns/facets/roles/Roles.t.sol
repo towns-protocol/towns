@@ -2,8 +2,8 @@
 pragma solidity ^0.8.20;
 
 // interfaces
-import {IRole} from "contracts/src/towns/facets/roles/IRole.sol";
-import {IRoleStructs} from "contracts/src/towns/facets/roles/IRole.sol";
+import {IRoles} from "contracts/src/towns/facets/roles/IRoles.sol";
+import {IRolesStructs} from "contracts/src/towns/facets/roles/IRoles.sol";
 import {IEntitlements} from "contracts/src/towns/facets/entitlements/IEntitlements.sol";
 import {IChannel} from "contracts/src/towns/facets/channels/IChannel.sol";
 
@@ -21,15 +21,15 @@ import {EntitlementsService__NotAllowed, EntitlementsService__InvalidEntitlement
 // solhint-disable-next-line max-line-length
 import {Validator__InvalidStringLength, Validator__InvalidByteLength} from "contracts/src/utils/Validator.sol";
 // solhint-disable-next-line max-line-length
-import {RoleService__InvalidPermission, RoleService__RoleDoesNotExist, RoleService__PermissionAlreadyExists, RoleService__PermissionDoesNotExist, RoleService__EntitlementAlreadyExists, RoleService__EntitlementDoesNotExist} from "contracts/src/towns/facets/roles/RoleService.sol";
+import {RolesService__InvalidPermission, RolesService__RoleDoesNotExist, RolesService__PermissionAlreadyExists, RolesService__PermissionDoesNotExist, RolesService__EntitlementAlreadyExists, RolesService__EntitlementDoesNotExist} from "contracts/src/towns/facets/roles/RolesService.sol";
 
 contract RolesTest is TownTest, StdUtils {
-  IRole internal role;
+  IRoles internal role;
   MockUserEntitlement internal mockEntitlement;
 
   function setUp() public override {
     super.setUp();
-    role = IRole(town);
+    role = IRoles(town);
     mockEntitlement = new MockUserEntitlement();
     mockEntitlement.initialize(town);
   }
@@ -48,10 +48,10 @@ contract RolesTest is TownTest, StdUtils {
     vm.prank(townOwner);
     IEntitlements(town).addEntitlement(address(mockEntitlement));
 
-    IRole.CreateEntitlement[]
-      memory entitlements = new IRole.CreateEntitlement[](1);
+    IRoles.CreateEntitlement[]
+      memory entitlements = new IRoles.CreateEntitlement[](1);
 
-    entitlements[0] = IRoleStructs.CreateEntitlement({
+    entitlements[0] = IRolesStructs.CreateEntitlement({
       module: address(mockEntitlement),
       data: data
     });
@@ -60,7 +60,7 @@ contract RolesTest is TownTest, StdUtils {
     uint256 roleId = role.createRole(roleName, permissions, entitlements);
 
     // check role
-    IRole.Role memory roleData = role.getRoleById(roleId);
+    IRoles.Role memory roleData = role.getRoleById(roleId);
     assertEq(roleData.id, roleId);
     assertEq(roleData.name, roleName);
     assertEq(roleData.permissions.length, permissions.length);
@@ -76,19 +76,19 @@ contract RolesTest is TownTest, StdUtils {
     uint256 roleId1 = role.createRole(
       role1,
       new string[](0),
-      new IRole.CreateEntitlement[](0)
+      new IRoles.CreateEntitlement[](0)
     );
 
     uint256 roleId2 = role.createRole(
       role2,
       new string[](0),
-      new IRole.CreateEntitlement[](0)
+      new IRoles.CreateEntitlement[](0)
     );
 
     uint256 roleId3 = role.createRole(
       role3,
       new string[](0),
-      new IRole.CreateEntitlement[](0)
+      new IRoles.CreateEntitlement[](0)
     );
 
     assertEq(roleId1, 1);
@@ -100,12 +100,12 @@ contract RolesTest is TownTest, StdUtils {
     uint256 roleId4 = role.createRole(
       role2,
       new string[](0),
-      new IRole.CreateEntitlement[](0)
+      new IRoles.CreateEntitlement[](0)
     );
 
     assertEq(roleId4, 4);
 
-    IRole.Role memory roleData = role.getRoleById(roleId3);
+    IRoles.Role memory roleData = role.getRoleById(roleId3);
 
     assertEq(roleData.id, roleId3);
 
@@ -126,11 +126,11 @@ contract RolesTest is TownTest, StdUtils {
     uint256 roleId = role.createRole(
       roleName,
       permissions,
-      new IRole.CreateEntitlement[](0)
+      new IRoles.CreateEntitlement[](0)
     );
 
     // check role
-    IRole.Role memory roleData = role.getRoleById(roleId);
+    IRoles.Role memory roleData = role.getRoleById(roleId);
     assertEq(roleData.id, roleId);
     assertEq(roleData.name, roleName);
     assertEq(roleData.permissions.length, permissions.length);
@@ -146,8 +146,8 @@ contract RolesTest is TownTest, StdUtils {
     permissions[0] = "";
 
     vm.prank(townOwner);
-    vm.expectRevert(RoleService__InvalidPermission.selector);
-    role.createRole(roleName, permissions, new IRole.CreateEntitlement[](0));
+    vm.expectRevert(RolesService__InvalidPermission.selector);
+    role.createRole(roleName, permissions, new IRoles.CreateEntitlement[](0));
   }
 
   function test_createRole_revert_when_not_entitled(
@@ -162,14 +162,14 @@ contract RolesTest is TownTest, StdUtils {
     role.createRole(
       roleName,
       new string[](0),
-      new IRole.CreateEntitlement[](0)
+      new IRoles.CreateEntitlement[](0)
     );
   }
 
   function test_createRole_revert_when_empty_name() external {
     vm.prank(townOwner);
     vm.expectRevert(Validator__InvalidStringLength.selector);
-    role.createRole("", new string[](0), new IRole.CreateEntitlement[](0));
+    role.createRole("", new string[](0), new IRoles.CreateEntitlement[](0));
   }
 
   function test_createRole_revert_when_invalid_entitlement_address(
@@ -181,7 +181,7 @@ contract RolesTest is TownTest, StdUtils {
     role.createRole(
       roleName,
       new string[](0),
-      new IRole.CreateEntitlement[](1)
+      new IRoles.CreateEntitlement[](1)
     );
   }
 
@@ -191,10 +191,10 @@ contract RolesTest is TownTest, StdUtils {
   ) external {
     vm.assume(bytes(roleName).length > 2);
 
-    IRole.CreateEntitlement[]
-      memory entitlements = new IRole.CreateEntitlement[](1);
+    IRoles.CreateEntitlement[]
+      memory entitlements = new IRoles.CreateEntitlement[](1);
 
-    entitlements[0] = IRoleStructs.CreateEntitlement({
+    entitlements[0] = IRolesStructs.CreateEntitlement({
       module: address(mockEntitlement),
       data: data
     });
@@ -217,10 +217,10 @@ contract RolesTest is TownTest, StdUtils {
     vm.prank(townOwner);
     IEntitlements(town).addEntitlement(address(mockEntitlement));
 
-    IRole.CreateEntitlement[]
-      memory entitlements = new IRole.CreateEntitlement[](1);
+    IRoles.CreateEntitlement[]
+      memory entitlements = new IRoles.CreateEntitlement[](1);
 
-    entitlements[0] = IRoleStructs.CreateEntitlement({
+    entitlements[0] = IRolesStructs.CreateEntitlement({
       module: address(mockEntitlement),
       data: ""
     });
@@ -244,17 +244,17 @@ contract RolesTest is TownTest, StdUtils {
     uint256 roleId1 = role.createRole(
       roleName1,
       new string[](0),
-      new IRole.CreateEntitlement[](0)
+      new IRoles.CreateEntitlement[](0)
     );
 
     vm.prank(townOwner);
     uint256 roleId2 = role.createRole(
       roleName2,
       new string[](0),
-      new IRole.CreateEntitlement[](0)
+      new IRoles.CreateEntitlement[](0)
     );
 
-    IRole.Role[] memory roles = role.getRoles();
+    IRoles.Role[] memory roles = role.getRoles();
 
     assertEq(roles.length, 2);
     assertEq(roles[0].name, roleName1);
@@ -264,7 +264,7 @@ contract RolesTest is TownTest, StdUtils {
   }
 
   function test_getRoles_when_no_roles() external {
-    IRole.Role[] memory roles = role.getRoles();
+    IRoles.Role[] memory roles = role.getRoles();
     assertEq(roles.length, 0);
   }
 
@@ -279,10 +279,10 @@ contract RolesTest is TownTest, StdUtils {
     uint256 roleId = role.createRole(
       roleName,
       new string[](0),
-      new IRole.CreateEntitlement[](0)
+      new IRoles.CreateEntitlement[](0)
     );
 
-    IRole.Role memory roleData = role.getRoleById(roleId);
+    IRoles.Role memory roleData = role.getRoleById(roleId);
 
     assertEq(roleData.name, roleName);
     assertEq(roleData.id, roleId);
@@ -290,7 +290,7 @@ contract RolesTest is TownTest, StdUtils {
 
   function test_getRoleById_revert_when_role_does_not_exist() external {
     vm.prank(townOwner);
-    vm.expectRevert(RoleService__RoleDoesNotExist.selector);
+    vm.expectRevert(RolesService__RoleDoesNotExist.selector);
     role.getRoleById(0);
   }
 
@@ -324,17 +324,17 @@ contract RolesTest is TownTest, StdUtils {
     newPermissions[0] = Permissions.Ping;
 
     // create an initial set of entitlements
-    IRole.CreateEntitlement[]
-      memory entitlements = new IRole.CreateEntitlement[](1);
-    entitlements[0] = IRoleStructs.CreateEntitlement({
+    IRoles.CreateEntitlement[]
+      memory entitlements = new IRoles.CreateEntitlement[](1);
+    entitlements[0] = IRolesStructs.CreateEntitlement({
       module: address(mockEntitlement),
       data: abi.encodePacked("test")
     });
 
     // create a new set of entitlements to update to
-    IRole.CreateEntitlement[]
-      memory newEntitlements = new IRole.CreateEntitlement[](1);
-    newEntitlements[0] = IRoleStructs.CreateEntitlement({
+    IRoles.CreateEntitlement[]
+      memory newEntitlements = new IRoles.CreateEntitlement[](1);
+    newEntitlements[0] = IRolesStructs.CreateEntitlement({
       module: address(newMockEntitlement),
       data: abi.encodePacked("test")
     });
@@ -348,7 +348,7 @@ contract RolesTest is TownTest, StdUtils {
     role.updateRole(roleId, newRoleName, newPermissions, newEntitlements);
 
     // get the role data
-    IRole.Role memory roleData = role.getRoleById(roleId);
+    IRoles.Role memory roleData = role.getRoleById(roleId);
 
     assertEq(roleData.name, newRoleName);
     assertEq(roleData.id, roleId);
@@ -379,7 +379,7 @@ contract RolesTest is TownTest, StdUtils {
     uint256 roleId = role.createRole(
       roleName,
       permissions,
-      new IRole.CreateEntitlement[](0)
+      new IRoles.CreateEntitlement[](0)
     );
 
     // update the role with the new permissions no entitlements
@@ -388,11 +388,11 @@ contract RolesTest is TownTest, StdUtils {
       roleId,
       newRoleName,
       newPermissions,
-      new IRole.CreateEntitlement[](0)
+      new IRoles.CreateEntitlement[](0)
     );
 
     // get the role data
-    IRole.Role memory roleData = role.getRoleById(roleId);
+    IRoles.Role memory roleData = role.getRoleById(roleId);
 
     assertEq(roleData.name, newRoleName);
     assertEq(roleData.id, roleId);
@@ -407,12 +407,12 @@ contract RolesTest is TownTest, StdUtils {
     vm.assume(bytes(roleName).length > 2);
 
     vm.prank(townOwner);
-    vm.expectRevert(RoleService__RoleDoesNotExist.selector);
+    vm.expectRevert(RolesService__RoleDoesNotExist.selector);
     role.updateRole(
       0,
       roleName,
       new string[](0),
-      new IRole.CreateEntitlement[](0)
+      new IRoles.CreateEntitlement[](0)
     );
   }
 
@@ -425,16 +425,16 @@ contract RolesTest is TownTest, StdUtils {
     uint256 roleId = role.createRole(
       roleName,
       new string[](0),
-      new IRole.CreateEntitlement[](0)
+      new IRoles.CreateEntitlement[](0)
     );
 
     vm.prank(townOwner);
-    vm.expectRevert(RoleService__InvalidPermission.selector);
+    vm.expectRevert(RolesService__InvalidPermission.selector);
     role.updateRole(
       roleId,
       roleName,
       new string[](3),
-      new IRole.CreateEntitlement[](0)
+      new IRoles.CreateEntitlement[](0)
     );
   }
 
@@ -447,7 +447,7 @@ contract RolesTest is TownTest, StdUtils {
     uint256 roleId = role.createRole(
       roleName,
       new string[](0),
-      new IRole.CreateEntitlement[](0)
+      new IRoles.CreateEntitlement[](0)
     );
 
     vm.prank(townOwner);
@@ -456,7 +456,7 @@ contract RolesTest is TownTest, StdUtils {
       roleId,
       roleName,
       new string[](0),
-      new IRole.CreateEntitlement[](1)
+      new IRoles.CreateEntitlement[](1)
     );
   }
 
@@ -469,13 +469,13 @@ contract RolesTest is TownTest, StdUtils {
     uint256 roleId = role.createRole(
       roleName,
       new string[](0),
-      new IRole.CreateEntitlement[](0)
+      new IRoles.CreateEntitlement[](0)
     );
 
-    IRole.CreateEntitlement[]
-      memory entitlements = new IRole.CreateEntitlement[](1);
+    IRoles.CreateEntitlement[]
+      memory entitlements = new IRoles.CreateEntitlement[](1);
 
-    entitlements[0] = IRoleStructs.CreateEntitlement({
+    entitlements[0] = IRolesStructs.CreateEntitlement({
       module: address(this),
       data: abi.encodePacked("test")
     });
@@ -496,20 +496,20 @@ contract RolesTest is TownTest, StdUtils {
     uint256 roleId = role.createRole(
       roleName,
       new string[](0),
-      new IRole.CreateEntitlement[](0)
+      new IRoles.CreateEntitlement[](0)
     );
 
     vm.prank(townOwner);
     role.removeRole(roleId);
 
     vm.prank(townOwner);
-    vm.expectRevert(RoleService__RoleDoesNotExist.selector);
+    vm.expectRevert(RolesService__RoleDoesNotExist.selector);
     role.getRoleById(roleId);
   }
 
   function test_removeRole_revert_when_invalid_role() external {
     vm.prank(townOwner);
-    vm.expectRevert(RoleService__RoleDoesNotExist.selector);
+    vm.expectRevert(RolesService__RoleDoesNotExist.selector);
     role.removeRole(0);
   }
 
@@ -525,7 +525,7 @@ contract RolesTest is TownTest, StdUtils {
     uint256 roleId = role.createRole(
       roleName,
       new string[](0),
-      new IRole.CreateEntitlement[](0)
+      new IRoles.CreateEntitlement[](0)
     );
 
     // create a channel
@@ -550,7 +550,7 @@ contract RolesTest is TownTest, StdUtils {
 
     assertEq(channel.roleIds.length, 0);
 
-    vm.expectRevert(RoleService__RoleDoesNotExist.selector);
+    vm.expectRevert(RolesService__RoleDoesNotExist.selector);
     role.getRoleById(roleId);
   }
 
@@ -560,10 +560,10 @@ contract RolesTest is TownTest, StdUtils {
     vm.prank(townOwner);
     IEntitlements(town).addEntitlement(address(mockEntitlement));
 
-    IRole.CreateEntitlement[]
-      memory entitlements = new IRole.CreateEntitlement[](1);
+    IRoles.CreateEntitlement[]
+      memory entitlements = new IRoles.CreateEntitlement[](1);
 
-    entitlements[0] = IRoleStructs.CreateEntitlement({
+    entitlements[0] = IRolesStructs.CreateEntitlement({
       module: address(mockEntitlement),
       data: abi.encode("test")
     });
@@ -580,7 +580,7 @@ contract RolesTest is TownTest, StdUtils {
     IChannel(town).createChannel("test", "test", roleIds);
 
     // get the role data
-    IRole.Role memory roleData = role.getRoleById(roleId);
+    IRoles.Role memory roleData = role.getRoleById(roleId);
 
     assertEq(roleData.entitlements.length, 1);
     assertEq(roleData.entitlements[0], address(mockEntitlement));
@@ -589,7 +589,7 @@ contract RolesTest is TownTest, StdUtils {
     vm.prank(townOwner);
     role.removeRole(roleId);
 
-    vm.expectRevert(RoleService__RoleDoesNotExist.selector);
+    vm.expectRevert(RolesService__RoleDoesNotExist.selector);
     role.getRoleById(roleId);
   }
 
@@ -608,7 +608,7 @@ contract RolesTest is TownTest, StdUtils {
     uint256 roleId = role.createRole(
       roleName,
       permissions,
-      new IRole.CreateEntitlement[](0)
+      new IRoles.CreateEntitlement[](0)
     );
 
     permissions[0] = Permissions.Read;
@@ -618,7 +618,7 @@ contract RolesTest is TownTest, StdUtils {
     role.addPermissionsToRole(roleId, permissions);
 
     // get the role data
-    IRole.Role memory roleData = role.getRoleById(roleId);
+    IRoles.Role memory roleData = role.getRoleById(roleId);
 
     assertEq(roleData.permissions.length, 2);
     assertEq(roleData.permissions[0], Permissions.Write);
@@ -638,12 +638,12 @@ contract RolesTest is TownTest, StdUtils {
     uint256 roleId = role.createRole(
       "test",
       permissions,
-      new IRole.CreateEntitlement[](0)
+      new IRoles.CreateEntitlement[](0)
     );
 
     // add permissions to the role
     vm.prank(townOwner);
-    vm.expectRevert(RoleService__PermissionAlreadyExists.selector);
+    vm.expectRevert(RolesService__PermissionAlreadyExists.selector);
     role.addPermissionsToRole(roleId, permissions);
   }
 
@@ -659,7 +659,7 @@ contract RolesTest is TownTest, StdUtils {
     permissions[1] = permission2;
 
     vm.prank(townOwner);
-    vm.expectRevert(RoleService__RoleDoesNotExist.selector);
+    vm.expectRevert(RolesService__RoleDoesNotExist.selector);
     role.addPermissionsToRole(0, permissions);
   }
 
@@ -679,7 +679,7 @@ contract RolesTest is TownTest, StdUtils {
     uint256 roleId = role.createRole(
       roleName,
       permissions,
-      new IRole.CreateEntitlement[](0)
+      new IRoles.CreateEntitlement[](0)
     );
 
     // remove permissions from the role
@@ -687,7 +687,7 @@ contract RolesTest is TownTest, StdUtils {
     role.removePermissionsFromRole(roleId, permissions);
 
     // get the role data
-    IRole.Role memory roleData = role.getRoleById(roleId);
+    IRoles.Role memory roleData = role.getRoleById(roleId);
 
     assertEq(roleData.permissions.length, 0);
   }
@@ -705,14 +705,14 @@ contract RolesTest is TownTest, StdUtils {
     uint256 roleId = role.createRole(
       "test",
       permissions,
-      new IRole.CreateEntitlement[](0)
+      new IRoles.CreateEntitlement[](0)
     );
 
     permissions[0] = "invalid";
 
     // remove permissions from the role
     vm.prank(townOwner);
-    vm.expectRevert(RoleService__PermissionDoesNotExist.selector);
+    vm.expectRevert(RolesService__PermissionDoesNotExist.selector);
     role.removePermissionsFromRole(roleId, permissions);
   }
 
@@ -725,7 +725,7 @@ contract RolesTest is TownTest, StdUtils {
     permissions[0] = permission;
 
     vm.prank(townOwner);
-    vm.expectRevert(RoleService__RoleDoesNotExist.selector);
+    vm.expectRevert(RolesService__RoleDoesNotExist.selector);
     role.removePermissionsFromRole(0, permissions);
   }
 
@@ -744,10 +744,10 @@ contract RolesTest is TownTest, StdUtils {
     uint256 roleId = role.createRole(
       roleName,
       new string[](0),
-      new IRole.CreateEntitlement[](0)
+      new IRoles.CreateEntitlement[](0)
     );
 
-    IRole.CreateEntitlement memory entitlement = IRoleStructs
+    IRoles.CreateEntitlement memory entitlement = IRolesStructs
       .CreateEntitlement({
         module: address(mockEntitlement),
         data: abi.encode("test")
@@ -758,7 +758,7 @@ contract RolesTest is TownTest, StdUtils {
     role.addRoleToEntitlement(roleId, entitlement);
 
     // get the role
-    IRole.Role memory roleData = role.getRoleById(roleId);
+    IRoles.Role memory roleData = role.getRoleById(roleId);
 
     assertEq(roleData.entitlements.length, 1);
     assertEq(roleData.entitlements[0], address(mockEntitlement));
@@ -768,7 +768,7 @@ contract RolesTest is TownTest, StdUtils {
     vm.prank(townOwner);
     IEntitlements(town).addEntitlement(address(mockEntitlement));
 
-    IRole.CreateEntitlement memory entitlement = IRoleStructs
+    IRoles.CreateEntitlement memory entitlement = IRolesStructs
       .CreateEntitlement({
         module: address(mockEntitlement),
         data: abi.encode("test")
@@ -776,7 +776,7 @@ contract RolesTest is TownTest, StdUtils {
 
     // add role to entitlement
     vm.prank(townOwner);
-    vm.expectRevert(RoleService__RoleDoesNotExist.selector);
+    vm.expectRevert(RolesService__RoleDoesNotExist.selector);
     role.addRoleToEntitlement(0, entitlement);
   }
 
@@ -788,10 +788,10 @@ contract RolesTest is TownTest, StdUtils {
     uint256 roleId = role.createRole(
       "test",
       new string[](0),
-      new IRole.CreateEntitlement[](0)
+      new IRoles.CreateEntitlement[](0)
     );
 
-    IRole.CreateEntitlement memory entitlement = IRoleStructs
+    IRoles.CreateEntitlement memory entitlement = IRolesStructs
       .CreateEntitlement({
         module: address(mockEntitlement),
         data: abi.encode("test")
@@ -816,10 +816,10 @@ contract RolesTest is TownTest, StdUtils {
     uint256 roleId = role.createRole(
       roleName,
       new string[](0),
-      new IRole.CreateEntitlement[](0)
+      new IRoles.CreateEntitlement[](0)
     );
 
-    IRole.CreateEntitlement memory entitlement = IRoleStructs
+    IRoles.CreateEntitlement memory entitlement = IRolesStructs
       .CreateEntitlement({
         module: address(mockEntitlement),
         data: abi.encode("test")
@@ -831,7 +831,7 @@ contract RolesTest is TownTest, StdUtils {
 
     // add role to entitlement
     vm.prank(townOwner);
-    vm.expectRevert(RoleService__EntitlementAlreadyExists.selector);
+    vm.expectRevert(RolesService__EntitlementAlreadyExists.selector);
     role.addRoleToEntitlement(roleId, entitlement);
   }
 
@@ -850,10 +850,10 @@ contract RolesTest is TownTest, StdUtils {
     uint256 roleId = role.createRole(
       roleName,
       new string[](0),
-      new IRole.CreateEntitlement[](0)
+      new IRoles.CreateEntitlement[](0)
     );
 
-    IRole.CreateEntitlement memory entitlement = IRoleStructs
+    IRoles.CreateEntitlement memory entitlement = IRolesStructs
       .CreateEntitlement({
         module: address(mockEntitlement),
         data: abi.encode("test")
@@ -864,7 +864,7 @@ contract RolesTest is TownTest, StdUtils {
     role.addRoleToEntitlement(roleId, entitlement);
 
     // get the role
-    IRole.Role memory roleData = role.getRoleById(roleId);
+    IRoles.Role memory roleData = role.getRoleById(roleId);
 
     assertEq(roleData.entitlements.length, 1);
 
@@ -882,7 +882,7 @@ contract RolesTest is TownTest, StdUtils {
     vm.prank(townOwner);
     IEntitlements(town).addEntitlement(address(mockEntitlement));
 
-    IRole.CreateEntitlement memory entitlement = IRoleStructs
+    IRoles.CreateEntitlement memory entitlement = IRolesStructs
       .CreateEntitlement({
         module: address(mockEntitlement),
         data: abi.encode("test")
@@ -890,7 +890,7 @@ contract RolesTest is TownTest, StdUtils {
 
     // remove role from entitlement
     vm.prank(townOwner);
-    vm.expectRevert(RoleService__RoleDoesNotExist.selector);
+    vm.expectRevert(RolesService__RoleDoesNotExist.selector);
     role.removeRoleFromEntitlement(0, entitlement);
   }
 
@@ -902,10 +902,10 @@ contract RolesTest is TownTest, StdUtils {
     uint256 roleId = role.createRole(
       "test",
       new string[](0),
-      new IRole.CreateEntitlement[](0)
+      new IRoles.CreateEntitlement[](0)
     );
 
-    IRole.CreateEntitlement memory entitlement = IRoleStructs
+    IRoles.CreateEntitlement memory entitlement = IRolesStructs
       .CreateEntitlement({
         module: address(mockEntitlement),
         data: abi.encode("test")
@@ -930,10 +930,10 @@ contract RolesTest is TownTest, StdUtils {
     uint256 roleId = role.createRole(
       roleName,
       new string[](0),
-      new IRole.CreateEntitlement[](0)
+      new IRoles.CreateEntitlement[](0)
     );
 
-    IRole.CreateEntitlement memory entitlement = IRoleStructs
+    IRoles.CreateEntitlement memory entitlement = IRolesStructs
       .CreateEntitlement({
         module: address(mockEntitlement),
         data: abi.encode("test")
@@ -941,7 +941,7 @@ contract RolesTest is TownTest, StdUtils {
 
     // remove role from entitlement
     vm.prank(townOwner);
-    vm.expectRevert(RoleService__EntitlementDoesNotExist.selector);
+    vm.expectRevert(RolesService__EntitlementDoesNotExist.selector);
     role.removeRoleFromEntitlement(roleId, entitlement);
   }
 }
