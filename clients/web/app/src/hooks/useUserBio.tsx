@@ -44,8 +44,6 @@ export const useGetUserBio = (walletAddress: string | undefined) => {
 
     return useQuery([queryKey, walletAddress], _getUserBio, {
         enabled: !!walletAddress,
-        retry: 3,
-        retryDelay: 1000,
         refetchOnMount: false,
         refetchOnWindowFocus: false,
         refetchOnReconnect: false,

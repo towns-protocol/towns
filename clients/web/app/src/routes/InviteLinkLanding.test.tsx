@@ -63,7 +63,7 @@ describe('<InviteLinkLanding />', () => {
         getSpaceInfoMock = Promise.resolve(undefined)
         render(<Wrapper />)
         await waitFor(() => {
-            expect(screen.getByTestId('town-info')).toBeInTheDocument()
+            expect(screen.getByTestId('not-found')).toBeInTheDocument()
         })
     })
 })

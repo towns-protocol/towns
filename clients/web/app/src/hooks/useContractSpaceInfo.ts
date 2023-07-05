@@ -29,6 +29,10 @@ export const useContractSpaceInfo = (
         },
         {
             enabled: !!spaceId,
+            staleTime: 1000 * 15,
+            refetchOnMount: false,
+            refetchOnWindowFocus: false,
+            refetchOnReconnect: false,
         },
     )
 }

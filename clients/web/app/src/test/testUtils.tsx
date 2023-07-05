@@ -35,21 +35,21 @@ export const TestApp = (props: TestAppProps) => {
 
     return (
         <ZLayerProvider>
-            <QueryClientProvider client={queryClient}>
-                <Lib.ZionContextProvider
-                    primaryProtocol={Lib.SpaceProtocol.Matrix}
-                    matrixServerUrl=""
-                    casablancaServerUrl=""
-                    chainId={0}
-                    // TODO: fix this
-                    // Intenionally omitting, something within wagmi/walletconnect/rainbowkit is throwing errors during tests
-                    // Instead, we'll use the default injected connector provided by the ContextProvider, which is fine for testing
-                    // connectors={rainbowConnectors}
-                    {...props.zionContextProviderProps}
-                >
+            <Lib.ZionContextProvider
+                primaryProtocol={Lib.SpaceProtocol.Matrix}
+                matrixServerUrl=""
+                casablancaServerUrl=""
+                chainId={0}
+                // TODO: fix this
+                // Intenionally omitting, something within wagmi/walletconnect/rainbowkit is throwing errors during tests
+                // Instead, we'll use the default injected connector provided by the ContextProvider, which is fine for testing
+                // connectors={rainbowConnectors}
+                {...props.zionContextProviderProps}
+            >
+                <QueryClientProvider client={queryClient}>
                     <Router initialEntries={props.initialEntries}>{props.children}</Router>
-                </Lib.ZionContextProvider>
-            </QueryClientProvider>
+                </QueryClientProvider>
+            </Lib.ZionContextProvider>
         </ZLayerProvider>
     )
 }

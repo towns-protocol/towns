@@ -45,7 +45,6 @@ export const useGetSpaceTopic = (networkId: string | undefined) => {
 
     return useQuery([queryKey, networkId], _getSpaceTopic, {
         enabled: !!networkId,
-        retry: false,
         refetchOnMount: false,
         refetchOnWindowFocus: false,
         refetchOnReconnect: false,
