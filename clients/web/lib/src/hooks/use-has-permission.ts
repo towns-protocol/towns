@@ -59,8 +59,10 @@ export function useHasPermission(props: Props) {
             // client side caching of permissions is only for UX purposes.
             // default of staleTime is 0. i.e. data is immediately stale.
             // test the UX for stale time and cache time before setting them.
-            staleTime: 15000,
-            //cacheTime: 60000,
+            staleTime: 1000 * 15,
+            refetchOnMount: false,
+            refetchOnWindowFocus: false,
+            refetchOnReconnect: false,
         },
     )
 
