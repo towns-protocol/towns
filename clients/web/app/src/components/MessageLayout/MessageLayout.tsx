@@ -130,7 +130,7 @@ export const MessageLayout = (props: Props) => {
                             insetY="xxs"
                             userId={senderId}
                             link={profileLink}
-                            tooltip={<ProfileHoverCard userId={senderId} />}
+                            tooltip={isTouch ? undefined : <ProfileHoverCard userId={senderId} />}
                         />
                     ) : (
                         <></>
