@@ -3,12 +3,15 @@ import React, { useCallback, useEffect, useState } from 'react'
 import { useRegisterSW } from 'virtual:pwa-register/react'
 
 import { AnimatePresence } from 'framer-motion'
+import { debug } from 'debug'
 import { Box, Button, Card, Paragraph } from '@ui'
 import { FadeInBox } from '@components/Transitions'
 import { Spinner } from '@components/Spinner'
 
 const UPDATE_STARTUP_MS = 10 * 1000
 const UPDATE_INTERVAL_MS = 5 * 60 * 1000
+
+const log = debug('app:ReloadPrompt')
 
 export const ReloadPrompt = () => {
     const {
@@ -17,12 +20,12 @@ export const ReloadPrompt = () => {
         updateServiceWorker,
     } = useRegisterSW({
         onRegisteredSW(swUrl, r) {
-            console.log('sw: registered: ' + r)
+            log('registered: ' + r)
             if (r) {
                 const checkInterval = () => {
-                    console.log('sw: checking for updates...')
+                    log('checking for updates...')
                     if (!(!r.installing && navigator)) {
-                        console.log('sw: already installing')
+                        log('already installing')
                         return
                     }
                     if ('connection' in navigator && !navigator.onLine) {
@@ -37,7 +40,7 @@ export const ReloadPrompt = () => {
                             },
                         })
                         if (resp?.status === 200) {
-                            console.log('sw: status 200, updating...')
+                            log('status 200, updating...')
                             await r.update()
                         }
                     }
@@ -49,15 +52,15 @@ export const ReloadPrompt = () => {
         },
 
         onNeedRefresh() {
-            console.log('sw: need update...')
+            log('need update...')
         },
 
         onOfflineReady() {
-            console.log('sw; offline ready...', offlineReady)
+            log('offline ready...', offlineReady)
         },
 
         onRegisterError(error) {
-            console.log('sw: registration error', error)
+            log('registration error', error)
         },
     })
 

@@ -13573,6 +13573,7 @@ __metadata:
     axios: ^1.2.6
     clsx: ^1.2.1
     date-fns: ^2.29.3
+    debug: ^4.3.4
     emoji-mart: ^5.5.2
     eslint: ^8.42.0
     eslint-config-react-app: ^7.0.1

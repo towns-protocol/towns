@@ -3,6 +3,7 @@ import { Address, useBalance, useNetwork, useSwitchNetwork } from 'wagmi'
 import { useEvent } from 'react-use-event-hook'
 import { ethers, providers } from 'ethers'
 import { useWeb3Context } from 'use-zion-client'
+import { debug } from 'debug'
 import { Box, Button, Divider, Stack, Text } from '@ui'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { shortAddress } from 'ui/utils/utils'
@@ -15,6 +16,8 @@ import {
     UseEnvironmentReturn,
 } from 'hooks/useEnvironmnet'
 import { useAuth } from 'hooks/useAuth'
+
+const log = debug('app:DebugBar')
 
 type Props = UseEnvironmentReturn
 
@@ -51,12 +54,11 @@ async function fundWallet({ accountId, provider, chainId }: FundProps) {
             gasLimit: 1000000,
             chainId: chainId,
         }
-
-        console.log('fundWallet tx', tx)
+        log('fundWallet tx', tx)
         const result = await wallet.sendTransaction(tx)
-        console.log('fundWallet result', result)
+        log('fundWallet result', result)
         const receipt = await result.wait()
-        console.log('fundWallet receipt', receipt)
+        log('fundWallet receipt', receipt)
     } catch (e) {
         console.error('fundWallet error', e)
     }
@@ -172,17 +174,17 @@ const useAsyncSwitchNetwork = () => {
     const rejectRef = useRef<(error: Error) => void>()
 
     if (!promiseRef.current) {
-        console.log('useSwitchNetwork creating promise')
+        log('useSwitchNetwork creating promise')
         promiseRef.current = new Promise<number>((resolve, reject) => {
             resolveRef.current = resolve
             rejectRef.current = reject
         })
-        console.log('useSwitchNetwork promise created', promiseRef.current)
+        log('useSwitchNetwork promise created', promiseRef.current)
     }
 
     const { switchNetwork } = useSwitchNetwork({
         onSuccess: (chain) => {
-            console.log('switched network to', chain.name)
+            log('switched network to', chain.name)
             resolveRef.current?.(chain.id)
         },
         onError: (error) => {
@@ -190,27 +192,27 @@ const useAsyncSwitchNetwork = () => {
             rejectRef.current?.(error)
         },
         onMutate: () => {
-            console.log('switching network onMutate')
+            log('switching network onMutate')
         },
         onSettled: () => {
-            console.log('switching network onSettled')
+            log('switching network onSettled')
         },
     })
     const executor = useCallback(
         async (chainId: number) => {
-            console.log('useSwitchNetwork calling switchNetwork with chainId: ', {
+            log('useSwitchNetwork calling switchNetwork with chainId: ', {
                 chainId,
                 promise: promiseRef.current,
             })
             switchNetwork?.(chainId)
             try {
-                console.log('useSwitchNetwork waiting for promise', promiseRef.current)
+                log('useSwitchNetwork waiting for promise', promiseRef.current)
                 const chainId = await promiseRef.current
-                console.log('useSwitchNetwork promise resolved with chainId: ', chainId)
+                log('useSwitchNetwork promise resolved with chainId: ', chainId)
                 return chainId
             } finally {
                 // skip the catch, because we want to reject if things fail, but always reset
-                console.log('useSwitchNetwork resetting promise')
+                log('useSwitchNetwork resetting promise')
                 promiseRef.current = new Promise<number>((resolve, reject) => {
                     resolveRef.current = resolve
                     rejectRef.current = reject
@@ -240,16 +242,16 @@ const DebugBar = ({
 
     const onSwitchEnvironment = useCallback(
         async (env: TownsEnvironmentInfo) => {
-            console.log('onSwitchEnvironment', { env })
+            log('onSwitchEnvironment', { env })
             if (env.chainId !== chain?.id) {
-                console.log('onSwitchEnvironment switching chain')
+                log('onSwitchEnvironment switching chain')
                 const newChainId = await switchNetwork?.(env.chainId)
-                console.log('onSwitchEnvironment switched chain', { newChainId })
+                log('onSwitchEnvironment switched chain', { newChainId })
             }
             if (env.id !== environment) {
-                console.log('onSwitchEnvironment logging out')
+                log('onSwitchEnvironment logging out')
                 await logout()
-                console.log('onSwitchEnvironment updating environment')
+                log('onSwitchEnvironment updating environment')
                 setEnvironment(env.id)
                 window.location.href = 'http://localhost:3000'
             }

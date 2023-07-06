@@ -69,7 +69,8 @@
         "ignoreDeclarationSort": true,
         "ignoreMemberSort": false
       }
-    ]
+    ],
+    "testing-library/no-debugging-utils": "off"
   },
   "overrides": [
     {
