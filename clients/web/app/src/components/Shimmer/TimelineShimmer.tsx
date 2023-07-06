@@ -1,81 +1,97 @@
 import React from 'react'
 import { Box, Stack } from '@ui'
-import { shimmerClass } from 'ui/styles/globals/shimmer.css'
+import { shimmerClass, shimmerGradientTopClass } from 'ui/styles/globals/shimmer.css'
 import { useDevice } from 'hooks/useDevice'
 
-export const TimelineShimmer = (props: { children?: React.ReactNode }) => {
-    const { isTouch } = useDevice()
+export const ChannelHeaderShimmer = () =>
+    useDevice().isTouch ? <ChannelHeaderMobileShimmer /> : <ChannelHeaderDesktopShimmer />
 
-    return (
-        <Box absoluteFill data-testid="timeline-shimmer" paddingTop="safeAreaInsetBottom">
-            <Stack grow>
-                <Stack gap="lg">
-                    <Box
-                        grow
-                        horizontal
-                        borderBottom
-                        height="x8"
-                        paddingX={isTouch ? 'md' : 'lg'}
-                        gap={isTouch ? 'md' : 'lg'}
-                        alignItems="center"
-                    >
-                        <Box square="square_lg" height="x1" className={shimmerClass} rounded="xs" />
-                        <Box width="200" height="x2" className={shimmerClass} rounded="xs" />
-                    </Box>
-                    <Stack gap padding={isTouch ? 'md' : 'lg'}>
-                        {Array(10)
-                            .fill(undefined)
-                            .map((_, i) => i)
-                            .map((k, _, a) => {
-                                return (
-                                    <Stack
-                                        gap
-                                        key={`${k}`}
-                                        style={{ opacity: 1 - (1 / a.length) * k }}
-                                    >
-                                        <Stack horizontal gap>
-                                            <Box
-                                                width={isTouch ? 'x4' : 'x6'}
-                                                height={isTouch ? 'x4' : 'x6'}
-                                                aspectRatio="1/1"
-                                                rounded="full"
-                                                className={shimmerClass}
-                                            />
-                                            <Stack grow gap="sm">
-                                                <Stack
-                                                    width="200"
-                                                    height="x2"
-                                                    className={shimmerClass}
-                                                    rounded="xs"
-                                                />
-                                                <Stack
-                                                    height="x2"
-                                                    className={shimmerClass}
-                                                    rounded="xs"
-                                                />
-                                                <Stack
-                                                    height="x2"
-                                                    className={shimmerClass}
-                                                    rounded="xs"
-                                                />
-                                                <Stack
-                                                    height="x2"
-                                                    className={shimmerClass}
-                                                    rounded="xs"
-                                                />
-                                                <Stack className={shimmerClass} rounded="xs" />
-                                            </Stack>
-                                        </Stack>
+const ChannelHeaderDesktopShimmer = () => (
+    <Box
+        horizontal
+        borderBottom
+        height="x8"
+        padding="lg"
+        gap="lg"
+        alignItems="center"
+        justifyContent="spaceBetween"
+    >
+        <Box height="x4" width="200" className={shimmerClass} rounded="xs" />
+        <Box height="x4" width="100" className={shimmerClass} rounded="xs" />
+    </Box>
+)
+
+const ChannelHeaderMobileShimmer = () => (
+    <Box
+        horizontal
+        borderBottom
+        padding
+        gap="lg"
+        height="x8"
+        alignItems="center"
+        justifyContent="start"
+    >
+        <Box square="square_lg" className={shimmerClass} rounded="xs" />
+        <Box grow height="x2" className={shimmerClass} rounded="xs" />
+    </Box>
+)
+
+export const TimelineShimmer = (props: { children?: React.ReactNode }) => (
+    <Box grow data-testid="timeline-shimmer" paddingTop="safeAreaInsetBottom">
+        <Stack
+            grow
+            justifyContent="end"
+            position="relative"
+            overflow="hidden"
+            className={shimmerGradientTopClass}
+        >
+            <Stack
+                gap="x4"
+                position="bottomLeft"
+                padding={{ touch: 'md', default: 'lg' }}
+                width="100%"
+            >
+                {Array(8)
+                    .fill(undefined)
+                    .map((_, i) => i)
+                    .map((k, _, a) => {
+                        return (
+                            <Stack gap key={`${k}`}>
+                                <Stack horizontal gap>
+                                    <Box
+                                        width={{ touch: 'x4', default: 'x6' }}
+                                        height={{ touch: 'x4', default: 'x6' }}
+                                        aspectRatio="1/1"
+                                        rounded="full"
+                                        className={shimmerClass}
+                                    />
+                                    <Stack grow gap="sm">
+                                        <Stack
+                                            width="200"
+                                            height="x2"
+                                            className={shimmerClass}
+                                            rounded="xs"
+                                        />
+
+                                        {/* <Stack height="x2" className={shimmerClass} rounded="xs" /> */}
+                                        {/* <Stack height="x2" className={shimmerClass} rounded="xs" /> */}
+                                        <Stack />
+                                        <Stack
+                                            height="x8"
+                                            width="100%"
+                                            className={shimmerClass}
+                                            rounded="xs"
+                                        />
                                     </Stack>
-                                )
-                            })}
-                    </Stack>
-                </Stack>
-                <Stack grow bottom left padding="lg" position="absolute" width="100%">
+                                </Stack>
+                            </Stack>
+                        )
+                    })}{' '}
+                <Stack grow width="100%" background="level1">
                     <Box grow className={shimmerClass} height="x6" rounded="sm" />
                 </Stack>
             </Stack>
-            {props.children}
-        </Box>
-    )
-}
+        </Stack>
+        {props.children}
+    </Box>
+)

@@ -11,22 +11,22 @@ import {
     useSpaceUnreadThreadMentions,
     useZionClient,
 } from 'use-zion-client'
-import { clsx } from 'clsx'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { ActionNavItem } from '@components/NavItem/ActionNavItem'
+import { SentryReportModal } from '@components/SentryErrorReport/SentryErrorReport'
 import { CreateChannelFormContainer } from '@components/Web3/CreateChannelForm'
 import { Badge, Box, Button, Icon, Stack } from '@ui'
 import { PATHS } from 'routes'
 import { useStore } from 'store/store'
-import { SentryReportModal } from '@components/SentryErrorReport/SentryErrorReport'
-
-import { AllChannelsList } from 'routes/AllChannelsList/AllChannelsList'
-import { useSpaceChannels } from 'hooks/useSpaceChannels'
+import { FadeIn, FadeInBox } from '@components/Transitions'
 import { useAuth } from 'hooks/useAuth'
+import { useSpaceChannels } from 'hooks/useSpaceChannels'
+import { AllChannelsList } from 'routes/AllChannelsList/AllChannelsList'
 import { SideBar } from '../_SideBar'
 import * as styles from './SpaceSideBar.css'
-import { SyncedChannelList } from './SyncedChannelList'
 import { SpaceSideBarHeader } from './SpaceSideBarHeader'
+import { SidebarLoadingAnimation } from './SpaceSideBarLoading'
+import { SyncedChannelList } from './SyncedChannelList'
 
 type Props = {
     space: SpaceData
@@ -98,10 +98,10 @@ export const SpaceSideBar = (props: Props) => {
 
     return (
         <SideBar data-testid="space-sidebar" height="100vh" onScroll={onScroll}>
-            <Box grow elevateReadability className={props.className}>
+            <FadeInBox grow elevateReadability className={props.className}>
                 <Stack
                     position="absolute"
-                    className={clsx([styles.gradientBackground])}
+                    className={styles.gradientBackground}
                     width="100%"
                     height="200"
                 />
@@ -132,7 +132,12 @@ export const SpaceSideBar = (props: Props) => {
                                     </ActionNavItem>
                                 </Box>
                             )}
-
+                        </>
+                    )}
+                    {space.isLoadingChannels ? (
+                        <SidebarLoadingAnimation />
+                    ) : (
+                        <FadeIn>
                             <ActionNavItem
                                 highlight={unreadThreadsCount > 0}
                                 icon="threads"
@@ -151,53 +156,45 @@ export const SpaceSideBar = (props: Props) => {
                                 label="Mentions"
                                 link={`/${PATHS.SPACES}/${space.id.slug}/mentions`}
                             />
-                        </>
-                    )}
-
-                    <>
-                        <SyncedChannelList
-                            space={space}
-                            mentions={mentions}
-                            canCreateChannel={canCreateChannel}
-                            onShowCreateChannel={onShowCreateChannel}
-                        />
-
-                        {isBrowseChannelsModalVisible && (
-                            <ModalContainer minWidth="500" onHide={onHideBrowseChannels}>
-                                <AllChannelsList onHideBrowseChannels={onHideBrowseChannels} />
-                            </ModalContainer>
-                        )}
-                        {!space.isLoadingChannels && (
+                            <SyncedChannelList
+                                key={space.id.networkId}
+                                space={space}
+                                mentions={mentions}
+                                canCreateChannel={canCreateChannel}
+                                onShowCreateChannel={onShowCreateChannel}
+                            />
                             <ActionNavItem
                                 icon="search"
                                 id="browseChannels"
                                 label="Browse channels"
                                 onClick={onShowBrowseChannels}
                             />
-                        )}
-
-                        {isCreateChannelModalVisible && (
-                            <ModalContainer onHide={onHideCreateChannel}>
-                                <CreateChannelFormContainer
-                                    spaceId={space.id}
-                                    onHide={onHideCreateChannel}
+                            {!isMemberOfAnyChannel && canCreateChannel && (
+                                <ActionNavItem
+                                    icon="plus"
+                                    id="newChannel"
+                                    label="Create channel"
+                                    onClick={onShowCreateChannel}
                                 />
-                            </ModalContainer>
-                        )}
-                        {!space.isLoadingChannels && !isMemberOfAnyChannel && canCreateChannel && (
-                            <ActionNavItem
-                                icon="plus"
-                                id="newChannel"
-                                label="Create channel"
-                                onClick={onShowCreateChannel}
-                            />
-                        )}
-                    </>
+                            )}
+                        </FadeIn>
+                    )}
                 </Stack>
                 <Box grow paddingX="sm" paddingY="lg" justifyContent="end">
                     <SentryReportModal />
                 </Box>
-            </Box>
+            </FadeInBox>
+            {isBrowseChannelsModalVisible ? (
+                <ModalContainer minWidth="500" onHide={onHideBrowseChannels}>
+                    <AllChannelsList onHideBrowseChannels={onHideBrowseChannels} />
+                </ModalContainer>
+            ) : isCreateChannelModalVisible ? (
+                <ModalContainer onHide={onHideCreateChannel}>
+                    <CreateChannelFormContainer spaceId={space.id} onHide={onHideCreateChannel} />
+                </ModalContainer>
+            ) : (
+                <></>
+            )}
         </SideBar>
     )
 }

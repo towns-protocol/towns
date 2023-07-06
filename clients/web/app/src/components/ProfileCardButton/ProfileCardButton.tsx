@@ -5,17 +5,12 @@ import { Avatar, Box } from '@ui'
 import { useAuth } from 'hooks/useAuth'
 import { useCreateLink } from 'hooks/useCreateLink'
 
-type Props = {
-    expanded?: boolean
-}
-
-export const ProfileCardButton = (props: Props) => {
+export const ProfileCardButton = () => {
     const myProfile = useMyProfile()
     const userId = myProfile?.userId
 
     const { isAuthenticated } = useAuth()
 
-    // const { expanded: isExpanded } = props
     const navigate = useNavigate()
 
     const { createLink: createProfileLink } = useCreateLink()
@@ -28,8 +23,10 @@ export const ProfileCardButton = (props: Props) => {
         }
     }, [link, navigate])
 
-    return !isAuthenticated || !userId ? null : (
-        <Box centerContent padding="sm">
+    const hasAvatar = isAuthenticated && userId
+
+    return (
+        <Box centerContent paddingBottom="sm">
             <Box
                 hoverable
                 cursor="pointer"
@@ -38,9 +35,13 @@ export const ProfileCardButton = (props: Props) => {
                 rounded="sm"
                 tooltip="Profile Info"
                 tooltipOptions={{ placement: 'horizontal' }}
-                onClick={onClick}
+                onClick={hasAvatar ? onClick : undefined}
             >
-                <Avatar size="avatar_x4" userId={userId} />
+                {hasAvatar ? (
+                    <Avatar size="avatar_x4" userId={userId} />
+                ) : (
+                    <Box square="square_lg" background="level2" rounded="full" />
+                )}
             </Box>
         </Box>
     )

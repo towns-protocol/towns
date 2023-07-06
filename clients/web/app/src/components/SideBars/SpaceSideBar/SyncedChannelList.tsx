@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo } from 'react'
 import { Channel, Membership, MentionResult, SpaceData, useZionClient } from 'use-zion-client'
 import { ChannelNavGroup } from '@components/NavItem/ChannelNavGroup'
 import { ChannelNavItem } from '@components/NavItem/ChannelNavItem'
-import { Box, IconButton, Stack } from '@ui'
+import { Box, IconButton, MotionStack, Stack } from '@ui'
 import { useSizeContext } from 'ui/hooks/useSizeContext'
 
 // This is a list of the synced, joined Matrix channels
@@ -59,25 +59,12 @@ export const SyncedChannelList = (props: {
     return (
         <>
             {channelGroups.map((group) => (
-                <Stack key={group.label} display={isSmall ? 'none' : 'flex'}>
-                    <Stack
-                        horizontal
-                        alignItems="center"
-                        justifyContent="spaceBetween"
-                        paddingRight="sm"
-                        height="height_lg"
-                    >
-                        <Box
-                            style={{
-                                transform: 'translateY(2px)',
-                            }}
-                        >
-                            <ChannelNavGroup>{group.label}</ChannelNavGroup>
-                        </Box>
+                <MotionStack key={group.label} display={isSmall ? 'none' : 'flex'}>
+                    <ChannelGroupHeader label={group.label}>
                         {canCreateChannel && (
                             <IconButton icon="plus" onClick={onShowCreateChannel} />
                         )}
-                    </Stack>
+                    </ChannelGroupHeader>
                     {group.channels?.map((channel) => {
                         const key = `${group.label}/${channel.id.slug}`
                         // only unread mentions at the channel root
@@ -98,8 +85,23 @@ export const SyncedChannelList = (props: {
                             />
                         )
                     })}
-                </Stack>
+                </MotionStack>
             ))}
         </>
     )
 }
+
+const ChannelGroupHeader = (props: { label: string; children?: React.ReactNode }) => (
+    <Stack
+        horizontal
+        alignItems="center"
+        justifyContent="spaceBetween"
+        paddingRight="sm"
+        height="height_lg"
+    >
+        <Box style={{ transform: 'translateY(2px)' }}>
+            <ChannelNavGroup>{props.label}</ChannelNavGroup>
+        </Box>
+        {props.children}
+    </Stack>
+)

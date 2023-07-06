@@ -22,10 +22,11 @@ import { MessageTimelineWrapper } from '@components/MessageTimeline/MessageTimel
 import { RichTextEditor } from '@components/RichText/RichTextEditor'
 import { TimelineShimmer } from '@components/Shimmer'
 import { DecryptingCard } from '@components/Shimmer/DecryptingCard'
+import { ChannelHeaderShimmer } from '@components/Shimmer/TimelineShimmer'
 import { Box, Button, Stack } from '@ui'
+import { useDevice } from 'hooks/useDevice'
 import { useIsChannelWritable } from 'hooks/useIsChannelWritable'
 import { useSpaceChannels } from 'hooks/useSpaceChannels'
-import { useDevice } from 'hooks/useDevice'
 import { env } from 'utils'
 import { CentralPanelLayout } from './layouts/CentralPanelLayout'
 
@@ -150,21 +151,27 @@ const SpacesChannelComponent = () => {
             myMembership,
         })
     }, [channel, channelId, displayDecryptionProgress, myMembership])
-
     return (
         <CentralPanelLayout>
             {!channel || !channelId || displayDecryptionProgress || !myMembership ? (
-                debounceShimmer ? (
-                    <></>
-                ) : (
-                    <TimelineShimmer>
-                        {displayDecryptionProgress && (
-                            <Stack absoluteFill centerContent>
-                                <DecryptingCard progress={decryptionProgress} />
-                            </Stack>
-                        )}
-                    </TimelineShimmer>
-                )
+                <>
+                    {channel ? (
+                        <ChannelHeader channel={channel} spaceId={spaceId} />
+                    ) : (
+                        <ChannelHeaderShimmer />
+                    )}
+                    {debounceShimmer ? (
+                        <Box grow width="100%" />
+                    ) : (
+                        <TimelineShimmer>
+                            {displayDecryptionProgress && (
+                                <Stack absoluteFill centerContent>
+                                    <DecryptingCard progress={decryptionProgress} />
+                                </Stack>
+                            )}
+                        </TimelineShimmer>
+                    )}
+                </>
             ) : myMembership !== Membership.Join ? (
                 <Box absoluteFill centerContent>
                     <Button key={channelId.slug} size="button_lg" onClick={onJoinChannel}>

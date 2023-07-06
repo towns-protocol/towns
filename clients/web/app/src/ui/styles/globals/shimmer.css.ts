@@ -14,9 +14,21 @@ const shimmerKeyframes = keyframes({
 })
 
 export const shimmerClass = style({
-    animation: `${shimmerKeyframes} 2s infinite ease-in`,
+    animation: `${shimmerKeyframes} 5s infinite ease-in`,
     background: `linear-gradient(
-       to right, ${vars.color.background.level2} 0px, ${vars.color.background.level3} 300px, ${vars.color.background.level2} 1000px
+       to right, ${vars.color.background.level2} 0px, ${vars.color.background.level2Hover} 300px, ${vars.color.background.level2} 1000px
     )`,
     backgroundSize: `3000px 100%`,
+})
+
+export const shimmerGradientTopClass = style({
+    selectors: {
+        '&:after': {
+            content: ``,
+            position: `absolute`,
+            inset: 0,
+            height: `200px`,
+            background: `linear-gradient(180deg, ${vars.color.background.level1} 0%, transparent 100%)`,
+        },
+    },
 })

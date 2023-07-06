@@ -31,6 +31,8 @@ export const aspectRatio = {
 export const flexDirection = {
     row: 'row',
     column: 'column',
+    rowRevserse: 'row-reverse',
+    columnReverse: 'column-reverse',
 } as const
 
 export const flexAlignment = {
@@ -74,6 +76,7 @@ export const boxProperties = defineProperties({
         ...responsivePropertiesMixin.conditions,
         hover: { selector: `&:hover` },
         active: { selector: `&:active` },
+        touch: { '@media': '(hover: none)' },
         default: { selector: `&` },
     },
     properties: {

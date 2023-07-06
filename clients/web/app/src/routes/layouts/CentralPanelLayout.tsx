@@ -37,7 +37,7 @@ export const CentralPanelLayout = (props: { children: React.ReactNode }) => {
                     </ErrorBoundary>
                 </Allotment.Pane>
                 {outlet && (
-                    <Allotment.Pane minSize={300} preferredSize={sizes[1] || 840}>
+                    <Allotment.Pane minSize={300} preferredSize={sizes[1] || 450}>
                         <ErrorBoundary fallback={ErrorFallbackComponent}>{outlet}</ErrorBoundary>
                     </Allotment.Pane>
                 )}

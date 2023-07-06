@@ -186,40 +186,36 @@ export const SpaceSideBarHeader = (props: {
                 </Stack>
             </Stack>
 
-            {(hasMembers || hasAddress) && (
-                <>
-                    <Stack paddingX="md" gap="sm" insetX="xs">
-                        {hasMembers && (
-                            <SidebarPill
-                                icon="people"
-                                label="Members"
-                                labelRight={membersCount}
-                                onClick={onMembersClick}
-                            />
-                        )}
-                        {hasAddress && (
-                            <Box
-                                tooltip={<OpenInEtherscan />}
-                                tooltipOptions={{ placement: 'horizontal', align: 'end' }}
-                            >
-                                <SidebarPill
-                                    icon="document"
-                                    label="Address"
-                                    labelRight={
-                                        isSmall
-                                            ? `${spaceInfo?.address.slice(
-                                                  0,
-                                                  4,
-                                              )}..${spaceInfo?.address.slice(-2)}`
-                                            : shortAddress(spaceInfo?.address)
-                                    }
-                                    onClick={onAddressClick}
-                                />
-                            </Box>
-                        )}
-                    </Stack>
-                </>
-            )}
+            <>
+                <Stack paddingX="md" gap="sm" insetX="xs">
+                    <SidebarPill
+                        icon="people"
+                        label="Members"
+                        labelRight={hasMembers ? membersCount : 'fetching...'}
+                        onClick={onMembersClick}
+                    />
+                    <Box
+                        tooltip={<OpenInEtherscan />}
+                        tooltipOptions={{ placement: 'horizontal', align: 'end' }}
+                    >
+                        <SidebarPill
+                            icon="document"
+                            label="Address"
+                            labelRight={
+                                !hasAddress
+                                    ? `fetching...`
+                                    : isSmall
+                                    ? `${spaceInfo?.address.slice(
+                                          0,
+                                          4,
+                                      )}..${spaceInfo?.address.slice(-2)}`
+                                    : shortAddress(spaceInfo?.address)
+                            }
+                            onClick={onAddressClick}
+                        />
+                    </Box>
+                </Stack>
+            </>
         </>
     )
 }
