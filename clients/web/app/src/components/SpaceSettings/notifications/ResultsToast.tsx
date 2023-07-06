@@ -90,7 +90,7 @@ export const ResultsToast = (props: {
                                     </Button>
                                     <Button
                                         tone="cta1"
-                                        onClick={() => navigate(`/${PATHS.SPACES}/${spaceId}`)}
+                                        onClick={() => navigate(`/${PATHS.SPACES}/${spaceId}/`)}
                                     >
                                         Close Settings
                                     </Button>

@@ -89,7 +89,7 @@ describe('<SpaceHome />', () => {
 
         await waitFor(
             () => {
-                expect(navigateSpy).toHaveBeenCalledWith(`/${PATHS.SPACES}/123`)
+                expect(navigateSpy).toHaveBeenCalledWith(`/${PATHS.SPACES}/123/`)
             },
             {
                 timeout: 5000,

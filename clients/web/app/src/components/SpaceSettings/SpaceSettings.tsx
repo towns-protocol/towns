@@ -30,7 +30,7 @@ export const SpaceSettings = () => {
     })
 
     const onClose = useEvent(() => {
-        navigate(`/${PATHS.SPACES}/${spaceId}`)
+        navigate(`/${PATHS.SPACES}/${spaceId}/`)
     })
 
     const hasNavigated = useRef(false)

@@ -164,7 +164,7 @@ const ChannelItem = ({
                 // leaving the last channel
                 if (joinedChannels.length === 1) {
                     setTownRouteBookmark(space.id.slug, '')
-                    navigate(`/${PATHS.SPACES}/${space.id.slug}`)
+                    navigate(`/${PATHS.SPACES}/${space.id.slug}/`)
                 }
                 // go to the next channel
                 else if (indexOfThisChannel === 0) {

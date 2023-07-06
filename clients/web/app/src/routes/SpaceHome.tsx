@@ -53,7 +53,7 @@ export const SpaceHome = () => {
                 // the worst case is that user is navigated to the threads page,
                 // and has to click on a channel once it loads in
                 // TODO: probably we should have replace this with "Space Home" or something when that is implemented/designed
-                route = `/${PATHS.SPACES}/${spaceId?.slug}/${PATHS.THREADS}`
+                route = `/${PATHS.SPACES}/${spaceId?.slug}/${PATHS.THREADS}/`
             } else {
                 route = `/${PATHS.SPACES}/${spaceId?.slug}/${PATHS.CHANNELS}/${firstChannelId.slug}/`
             }

@@ -24,7 +24,7 @@ export const CentralPanelLayout = (props: { children: React.ReactNode }) => {
                     </ErrorBoundary>
                 </Box>
             </Stack>
-            {outlet && outlet}
+            {outlet}
         </>
     ) : (
         <Stack minHeight="100%">

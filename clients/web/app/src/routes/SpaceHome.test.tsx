@@ -128,7 +128,7 @@ describe('<SpaceHome />', () => {
 
         await waitFor(
             () => {
-                expect(navigateSpy).toHaveBeenCalledWith(`/${PATHS.SPACES}/some-slug/threads`)
+                expect(navigateSpy).toHaveBeenCalledWith(`/${PATHS.SPACES}/some-slug/threads/`)
             },
             {
                 timeout: 4000,
