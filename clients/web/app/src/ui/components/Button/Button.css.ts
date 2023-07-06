@@ -4,6 +4,7 @@ import { vars } from 'ui/styles/vars.css'
 
 export const buttonStyle = recipe({
     base: {
+        transition: 'background 1s',
         border: 'none',
         whiteSpace: 'nowrap',
         borderRadius: vars.borderRadius.xs,

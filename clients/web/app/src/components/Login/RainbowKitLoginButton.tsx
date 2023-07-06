@@ -1,28 +1,17 @@
-import React, { useCallback } from 'react'
 import { useConnectModal } from '@rainbow-me/rainbowkit'
-import { Button } from '@ui'
-import { useAuth } from 'hooks/useAuth'
 import '@rainbow-me/rainbowkit/styles.css'
+import React, { useCallback } from 'react'
+import { FancyButton } from 'ui/components/Button/FancyButton'
 
-type Props = {
-    isConnected: boolean
-}
-
-export const RainbowKitLoginButton = (props: Props) => {
+export const RainbowKitLoginButton = () => {
     const { openConnectModal } = useConnectModal()
-    const { isConnected } = props
-    const { disconnect } = useAuth()
     const buttonClicked = useCallback(() => {
-        if (isConnected) {
-            disconnect()
-        } else {
-            openConnectModal?.()
-        }
-    }, [isConnected, disconnect, openConnectModal])
+        openConnectModal?.()
+    }, [openConnectModal])
 
     return (
-        <Button animate tone={isConnected ? 'level2' : 'cta1'} onClick={buttonClicked}>
-            {isConnected ? 'Disconnect Wallet' : 'Connect Wallet'}
-        </Button>
+        <FancyButton cta icon="wallet" key="fancy-button" onClick={buttonClicked}>
+            Connect Wallet
+        </FancyButton>
     )
 }

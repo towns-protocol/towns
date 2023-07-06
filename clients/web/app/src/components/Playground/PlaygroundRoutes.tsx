@@ -8,6 +8,7 @@ import { VListPlayground } from './pages/VListPlayground'
 import { PageColors } from './pages/PageColors'
 import { PageTooltips } from './pages/PageTooltips'
 import { PageTransactionButton } from './pages/PageTransactionButton'
+import { PageButtons } from './pages/PageButtons'
 
 export const PlaygroundRoutes = () => {
     return (
@@ -18,6 +19,7 @@ export const PlaygroundRoutes = () => {
                 <Route path="vlist" element={<VListPlayground />} />
                 <Route path="colors" element={<PageColors />} />
                 <Route path="tooltips" element={<PageTooltips />} />
+                <Route path="buttons" element={<PageButtons />} />
                 {env.IS_DEV && <Route path="upload" element={<UploadImageDebugger />} />}
             </Route>
         </Routes>

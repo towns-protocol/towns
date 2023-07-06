@@ -28,8 +28,9 @@ export const Dropdown = (props: Props) => {
                     <Stack
                         horizontal
                         as="select"
+                        cursor="pointer"
                         className={clsx(className, styles.dropdown)}
-                        paddingRight="lg"
+                        paddingRight="x4"
                         onChange={onChange}
                         {...inputProps}
                         defaultValue={defaultValue}

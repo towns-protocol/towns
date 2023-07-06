@@ -1,22 +1,30 @@
-import React, { useEffect } from 'react'
+import React, { useCallback, useEffect, useMemo } from 'react'
 import { AnimatePresence } from 'framer-motion'
-import { RainbowKitProvider } from '@rainbow-me/rainbowkit'
+import { RainbowKitProvider, darkTheme, lightTheme } from '@rainbow-me/rainbowkit'
 import { useWeb3Context } from 'use-zion-client'
+import { ThemeOptions } from '@rainbow-me/rainbowkit/dist/themes/baseTheme'
 import { useAuth } from 'hooks/useAuth'
 import { SignupButtonStatus, useSignupButton } from 'hooks/useSignupButton'
-import { Box, Icon, Stack, Text } from '@ui'
+import { Box, FancyButton, Icon, Paragraph, Text } from '@ui'
 import { RequireTransactionNetworkMessage } from '@components/RequireTransactionNetworkMessage/RequireTransactionNetworkMessage'
 import { useRequireTransactionNetwork } from 'hooks/useRequireTransactionNetwork'
-import { FadeIn } from '@components/Transitions'
+import { FadeIn, FadeInBox } from '@components/Transitions'
 import { useDevice } from 'hooks/useDevice'
 import { useEnvironment } from 'hooks/useEnvironmnet'
 import { useAddSepoliaToWallet } from 'hooks/useAddSepoliaToWallet'
 import { shouldUseWalletConnect } from 'hooks/useShouldUseWalletConnect'
-import { LoginButton } from './LoginButton/LoginButton'
+import { useStore } from 'store/store'
+import { Figma } from 'ui/styles/palette'
+import { useDebounce } from 'hooks/useDebounce'
+import { shortAddress } from 'ui/utils/utils'
+import { atoms } from 'ui/styles/atoms.css'
 import { WalletConnectButton } from './WalletConnectButton'
 import { RainbowKitLoginButton } from './RainbowKitLoginButton'
 
 export const LoginComponent = () => {
+    const { theme } = useStore((state) => ({
+        theme: state.theme,
+    }))
     const { chains } = useWeb3Context()
     const { shouldDisplaySepoliaPrompt, addSepoliaToWallet } = useAddSepoliaToWallet()
 
@@ -58,7 +66,7 @@ export const LoginComponent = () => {
 
     const {
         status,
-        onClick: onButtonClick,
+        onClick: onLoginClick,
         isSpinning,
     } = useSignupButton({
         walletStatus,
@@ -68,34 +76,33 @@ export const LoginComponent = () => {
         login,
     })
 
-    const buttonLabel = getButtonLabel(status)
     const errorMessage = loginError ? loginError.message : getErrorMessage(status)
 
     const { isTouch } = useDevice()
 
-    const loginButtonContent = () => {
-        // on mobile devices, if they aren't on the right network, don't show the login button - they have to go to the wallet and switch, then come back to the app
-        if (isConnected) {
-            if (isTouch && userOnWrongNetworkForSignIn) {
-                return null
-            }
-            return (
-                <LoginButton
-                    isConnected={isConnected}
-                    userOnWrongNetworkForSignIn={userOnWrongNetworkForSignIn}
-                    label={buttonLabel}
-                    loading={isSpinning}
-                    icon="wallet"
-                    onClick={onButtonClick}
-                />
-            )
+    const rainbowTheme = useMemo(() => {
+        const customTheme: ThemeOptions = {
+            fontStack: 'system',
+            accentColor: Figma.Colors.Blue,
+            borderRadius: 'medium',
         }
-        return null
-    }
+        return theme === 'dark' ? darkTheme(customTheme) : lightTheme(customTheme)
+    }, [theme])
+
+    // on mobile devices, if they aren't on the right network, don't show the
+    // login button - they have to go to the wallet and switch, then come back
+    // to the app
+
+    const disableLogin = isTouch && userOnWrongNetworkForSignIn
 
     return (
-        <RainbowKitProvider chains={chains}>
-            <Box centerContent gap="md">
+        <RainbowKitProvider chains={chains} theme={rainbowTheme}>
+            <Box centerContent gap="lg">
+                {!isConnected && (
+                    <FadeIn delay>
+                        <Text>Connect your wallet to continue</Text>
+                    </FadeIn>
+                )}
                 {isConnected && isTouch && userOnWrongNetworkForSignIn && (
                     <Box
                         gap
@@ -110,15 +117,16 @@ export const LoginComponent = () => {
                         <Text>{`Please switch to ${chainName} in your wallet, and then come back to continue.`}</Text>
                     </Box>
                 )}
-                <Stack gap>
-                    {loginButtonContent()}
-
-                    {shouldUseWalletConnect() ? (
-                        <WalletConnectButton isConnected={isConnected} />
-                    ) : (
-                        <RainbowKitLoginButton isConnected={isConnected} />
-                    )}
-                </Stack>
+                {isConnected ? (
+                    <ConnectedState
+                        status={status}
+                        disableLogin={disableLogin}
+                        isSpinning={isSpinning}
+                        onLoginClick={onLoginClick}
+                    />
+                ) : (
+                    <DisconnectedState />
+                )}
 
                 {isConnected && userOnWrongNetworkForSignIn && !isTouch && (
                     <Box paddingTop="md" flexDirection="row" justifyContent="end">
@@ -153,6 +161,60 @@ export const LoginComponent = () => {
                 </AnimatePresence>
             </Box>
         </RainbowKitProvider>
+    )
+}
+
+const DisconnectedState = () => {
+    return shouldUseWalletConnect() ? <WalletConnectButton /> : <RainbowKitLoginButton />
+}
+
+const ConnectedState = (props: {
+    status: SignupButtonStatus
+    disableLogin: boolean
+    onLoginClick: () => void
+    isSpinning: boolean
+}) => {
+    const buttonLabel = useDebounce(getButtonLabel(props.status), 500)
+
+    return (
+        <>
+            {!props.disableLogin && (
+                <FancyButton
+                    cta
+                    spinner={props.isSpinning}
+                    icon="wallet"
+                    disabled={props.isSpinning}
+                    onClick={props.onLoginClick}
+                >
+                    {buttonLabel ?? 'Login'}
+                </FancyButton>
+            )}
+            <DisconnectButton />
+        </>
+    )
+}
+
+const DisconnectButton = () => {
+    const { disconnect, activeWalletAddress } = useAuth()
+    const onClick = useCallback(() => {
+        disconnect()
+    }, [disconnect])
+
+    return (
+        <FadeInBox
+            hoverable
+            background="level1"
+            rounded="xs"
+            layout="position"
+            cursor="pointer"
+            padding="sm"
+            onClick={onClick}
+        >
+            <Paragraph color="gray1" size="sm">
+                <span className={atoms({ color: 'cta1' })}>Disconnect Wallet</span>
+                {activeWalletAddress ? ` (${shortAddress(activeWalletAddress)})` : ``}
+            </Paragraph>
+        </FadeInBox>
     )
 }
 

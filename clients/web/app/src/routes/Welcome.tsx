@@ -1,10 +1,8 @@
 import React, { Suspense } from 'react'
 import { NavLink } from 'react-router-dom'
-import { motion } from 'framer-motion'
-
 import { TransitionLogo } from '@components/Logo/Logo'
 import { FadeIn } from '@components/Transitions'
-import { Stack, Text } from '@ui'
+import { Stack } from '@ui'
 import { PATHS } from 'routes'
 
 const LoginComponent = React.lazy(() => import('@components/Login/LoginComponent'))
@@ -12,19 +10,10 @@ const LoginComponent = React.lazy(() => import('@components/Login/LoginComponent
 export const Welcome = () => (
     <WelcomeLayout>
         <>
-            <FadeIn delay>
-                <Text strong>Connect your wallet to continue</Text>
-            </FadeIn>
             <Suspense>
-                <motion.div
-                    initial={{
-                        height: 0,
-                        opacity: 0,
-                    }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                >
+                <FadeIn>
                     <LoginComponent />
-                </motion.div>
+                </FadeIn>
             </Suspense>
         </>
     </WelcomeLayout>
