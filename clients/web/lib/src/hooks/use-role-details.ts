@@ -34,6 +34,9 @@ export function useRoleDetails(spaceId: string, roleId: number) {
         // options for the query.
         {
             enabled: isEnabled,
+            staleTime: 1000 * 15,
+            refetchOnReconnect: false,
+            refetchOnWindowFocus: false,
         },
     )
 
@@ -71,6 +74,9 @@ export function useMultipleRoleDetails(spaceId: string, roleIds: number[]) {
         // options for the query.
         {
             enabled: isEnabled,
+            staleTime: 1000 * 15,
+            refetchOnReconnect: false,
+            refetchOnWindowFocus: false,
         },
     )
 

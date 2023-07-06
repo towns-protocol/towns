@@ -49,7 +49,12 @@ export function useRoles(_spaceId: string | undefined) {
         getRolesFromSpace,
         // options for the query.
         // query will not execute until the spaceId is defined.
-        { enabled: spaceId.length > 0 },
+        {
+            enabled: spaceId.length > 0,
+            staleTime: 1000 * 15,
+            refetchOnReconnect: false,
+            refetchOnWindowFocus: false,
+        },
     )
 
     return {
