@@ -18,7 +18,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { shallow } from 'zustand/shallow'
 import { toast } from 'react-hot-toast/headless'
 import { useNavigate } from 'react-router'
-import { Box, Button, Heading, Text } from '@ui'
+import { Box, Button, Heading, MotionBox, Text } from '@ui'
 import { TransactionUIState, toTransactionUIStates } from 'hooks/TransactionUIState'
 
 import { ErrorMessageText } from 'ui/components/ErrorMessage/ErrorMessage'
@@ -43,8 +43,6 @@ import {
     EVERYONE,
     TOKEN_HOLDERS,
 } from './constants'
-
-const MotionBox = motion(Box)
 
 type HeaderProps = {
     formId: string

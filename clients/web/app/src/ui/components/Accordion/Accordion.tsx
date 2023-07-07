@@ -1,8 +1,8 @@
 import * as React from 'react'
 import { useState } from 'react'
-import { AnimatePresence, motion } from 'framer-motion'
+import { AnimatePresence } from 'framer-motion'
 import { Box, BoxProps } from '../Box/Box'
-import { Icon } from '../Icon'
+import { MotionBox, MotionIcon } from '../Motion/MotionComponents'
 import { Text } from '../Text/Text'
 
 type HeaderProps = {
@@ -24,9 +24,6 @@ type Props<T extends number | boolean> = {
     activeIndex?: T extends number ? number : never
     setActiveIndex?: T extends number ? (arg: number) => void : never
 } & BaseProps
-
-const MotionBox = motion(Box)
-const MotionIcon = motion(Icon)
 
 const Header = ({
     title,

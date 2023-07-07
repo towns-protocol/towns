@@ -1,10 +1,9 @@
 import React from 'react'
-import { motion } from 'framer-motion'
 import { useCurrentWalletEqualsSignedInAccount } from 'use-zion-client'
 import { useEvent } from 'react-use-event-hook'
 import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinner'
 import { RequireTransactionNetworkMessage } from '@components/RequireTransactionNetworkMessage/RequireTransactionNetworkMessage'
-import { Box, Button, Heading, Icon, Stack, Text } from '@ui'
+import { Box, Button, Heading, Icon, MotionIcon, Stack, Text } from '@ui'
 import { AccordionGroup, AccordionGroupProps } from 'ui/components/Accordion/Accordion'
 import { useRequireTransactionNetwork } from 'hooks/useRequireTransactionNetwork'
 import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
@@ -14,8 +13,6 @@ import {
     useSettingsTransactionsStore,
 } from '../store/hooks/settingsTransactionStore'
 import { ModifiedRole, ModifiedRoleType } from '../store/hooks/useModifiedRoles'
-
-const MotionIcon = motion(Icon)
 
 export const CheckoutModal = (props: {
     onCancel: () => void

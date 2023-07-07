@@ -1,8 +1,18 @@
 import React, { useCallback, useRef } from 'react'
 import * as z from 'zod'
 import { UseFormReturn } from 'react-hook-form'
-import { AnimatePresence, motion } from 'framer-motion'
-import { Box, ErrorMessage, FormRender, Heading, Paragraph, Stack, Text, TextField } from '@ui'
+import { AnimatePresence } from 'framer-motion'
+import {
+    Box,
+    ErrorMessage,
+    FormRender,
+    Heading,
+    MotionBox,
+    Paragraph,
+    Stack,
+    Text,
+    TextField,
+} from '@ui'
 import { useCachedTokensForWallet } from 'api/lib/tokenContracts'
 import { useAuth } from 'hooks/useAuth'
 import { FadeInBox } from '@components/Transitions'
@@ -204,5 +214,3 @@ export const CreateSpaceStep2 = ({ onSubmit, id }: FormStepProps) => {
         </FormRender>
     )
 }
-
-const MotionBox = motion(Box)

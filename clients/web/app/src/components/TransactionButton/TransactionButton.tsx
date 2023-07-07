@@ -1,7 +1,7 @@
 import React from 'react'
-import { AnimatePresence, motion } from 'framer-motion'
+import { AnimatePresence } from 'framer-motion'
 import { clsx } from 'clsx'
-import { Box, Button, Text } from '@ui'
+import { Button, MotionBox, Text } from '@ui'
 import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinner'
 import { buttonStyle } from 'ui/components/Button'
 import { TransactionUIState } from 'hooks/TransactionUIState'
@@ -151,5 +151,3 @@ export const TransactionButton = (props: Props) => {
         </MotionBox>
     )
 }
-
-const MotionBox = motion(Box)

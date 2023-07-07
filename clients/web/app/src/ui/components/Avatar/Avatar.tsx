@@ -13,7 +13,7 @@ import {
     avatarToggleClasses,
 } from './Avatar.css'
 import { Icon, IconProps } from '../Icon'
-import { MotionBox } from '../Motion/MotionBox'
+import { MotionBox } from '../Motion/MotionComponents'
 
 type Props = {
     src?: string

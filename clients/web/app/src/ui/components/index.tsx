@@ -29,7 +29,13 @@ export { VList } from './VList'
 export { TypeaheadMenu, TypeaheadMenuItem } from './Typeahead'
 export * from './Toggle'
 export * from './Panel/Panel'
-export { MotionBox, MotionStack } from './Motion/MotionBox'
+export {
+    MotionBox,
+    MotionStack,
+    MotionIcon,
+    MotionParagraph,
+    MotionText,
+} from './Motion/MotionComponents'
 export { CardOpener } from './Overlay/CardOpener'
 export * from './ZLayer/ZLayer'
 export { ZLayerProvider } from './ZLayer/ZLayerProvider'

@@ -1,9 +1,8 @@
-import { AnimatePresence, motion } from 'framer-motion'
+import { AnimatePresence } from 'framer-motion'
 import React, { useCallback, useEffect, useState } from 'react'
 import { Box, BoxProps } from '../Box/Box'
 import { Icon, IconName } from '../Icon'
-import { MotionBox, MotionStack } from '../Motion/MotionBox'
-import { Paragraph } from '../Text/Paragraph'
+import { MotionBox, MotionParagraph, MotionStack } from '../Motion/MotionComponents'
 import { ButtonSpinner } from '../Spinner/ButtonSpinner'
 import * as fancyButtonStyle from './FancyButton.css'
 
@@ -169,8 +168,6 @@ export const FancyButton = (props: FancyButtonProps) => {
         </MotionBox>
     )
 }
-
-const MotionParagraph = motion(Paragraph)
 
 const Background = (props: { tone: BoxProps['background'] }) => {
     const { tone } = props

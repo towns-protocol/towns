@@ -2,9 +2,7 @@ import React, { useCallback, useEffect, useMemo } from 'react'
 import { useForm } from 'react-hook-form'
 import { matchPath, useNavigate } from 'react-router'
 import { LoginStatus, useMatrixStore, useMyProfile, useZionClient } from 'use-zion-client'
-
-import { motion } from 'framer-motion'
-import { Box, Button, ErrorMessage, Icon, Paragraph, Stack, TextField } from '@ui'
+import { Button, ErrorMessage, Icon, MotionBox, Paragraph, Stack, TextField } from '@ui'
 import { useAuth } from 'hooks/useAuth'
 import { PATHS } from 'routes'
 import { useUploadImage } from 'api/lib/uploadImage'
@@ -214,5 +212,3 @@ export const RegisterForm = ({ isEdit }: { isEdit: boolean }) => {
         </Stack>
     )
 }
-
-const MotionBox = motion(Box)

@@ -9,7 +9,7 @@ import {
     useSpaceUnreadThreadMentions,
 } from 'use-zion-client'
 import { AnimatePresence, motion } from 'framer-motion'
-import { Box, Button, Icon, IconName, Stack, Text } from '@ui'
+import { Box, Button, Icon, IconName, MotionStack, Stack, Text } from '@ui'
 import { TouchLayoutDropdownMenu } from '@components/TouchLayoutNavigationBar/TouchLayoutDropdownMenu'
 import { usePushNotifications } from 'hooks/usePushNotifications'
 import { transitions } from 'ui/transitions/transitions'
@@ -186,5 +186,3 @@ export const TouchLayoutNavigationBar = (props: Props) => {
         </Stack>
     )
 }
-
-const MotionStack = motion(Stack)

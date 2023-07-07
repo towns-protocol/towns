@@ -1,9 +1,7 @@
 import React from 'react'
 import { Toast, useToaster } from 'react-hot-toast/headless'
-import { AnimatePresence, motion } from 'framer-motion'
-import { Box } from '@ui'
-
-const MotionBox = motion(Box)
+import { AnimatePresence } from 'framer-motion'
+import { Box, MotionBox } from '@ui'
 
 export const Notifications = () => {
     const { toasts, handlers } = useToaster()

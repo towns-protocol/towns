@@ -1,8 +1,7 @@
-import { motion } from 'framer-motion'
 import React from 'react'
 import { NavLink, useMatch } from 'react-router-dom'
 import { PATHS } from 'routes'
-import { Box, BoxProps, Stack } from '@ui'
+import { Box, BoxProps, MotionBox, Stack } from '@ui'
 
 export const RoleSettingsTabs = () => {
     return (
@@ -45,5 +44,3 @@ const RoleSettingsTabItem = (props: { selected?: boolean; to: string } & BoxProp
         </NavLink>
     )
 }
-
-const MotionBox = motion(Box)

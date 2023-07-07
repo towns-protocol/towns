@@ -1,8 +1,7 @@
 import React, { useCallback, useContext, useEffect, useRef } from 'react'
 import { RoomIdentifier, useZionClient } from 'use-zion-client'
-import { motion } from 'framer-motion'
 import { EmojiPickerButton } from '@components/EmojiPickerButton'
-import { Box, IconButton, Stack } from '@ui'
+import { Box, IconButton, MotionStack, Stack } from '@ui'
 import { useOpenMessageThread } from 'hooks/useOpenThread'
 import { vars } from 'ui/styles/vars.css'
 import { MessageTimelineContext } from '@components/MessageTimeline/MessageTimelineContext'
@@ -161,5 +160,3 @@ const animation = {
         },
     },
 } as const
-
-const MotionStack = motion(Stack)

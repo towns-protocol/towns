@@ -1,5 +1,4 @@
 import React, { useCallback, useState } from 'react'
-import { motion } from 'framer-motion'
 import {
     createUserIdFromString,
     useMyProfile,
@@ -8,7 +7,7 @@ import {
 } from 'use-zion-client'
 import { useNavigate } from 'react-router'
 import { useEvent } from 'react-use-event-hook'
-import { Avatar, Box, Icon, IconName, Stack, Text } from '@ui'
+import { Avatar, Box, Icon, IconName, MotionBox, MotionStack, Stack, Text } from '@ui'
 import { shortAddress } from 'ui/utils/utils'
 import { SpaceNavItem } from '@components/NavItem/SpaceNavItem'
 import { useCreateLink } from 'hooks/useCreateLink'
@@ -156,6 +155,3 @@ const BottomSectionButton = (props: {
         </NavItem>
     )
 }
-
-const MotionBox = motion(Box)
-const MotionStack = motion(Stack)

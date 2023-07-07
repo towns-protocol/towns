@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect } from 'react'
 import { createPortal } from 'react-dom'
-import { AnimatePresence, motion } from 'framer-motion'
-import { Box, BoxProps, Stack, useZLayerContext } from '@ui'
+import { AnimatePresence } from 'framer-motion'
+import { Box, BoxProps, MotionBox, Stack, useZLayerContext } from '@ui'
 import { useDevice } from 'hooks/useDevice'
 import { TouchPanelNavigationBar } from 'ui/components/TouchPanelNavigationBar/TouchPanelNavigationBar'
 import { transitions } from 'ui/transitions/transitions'
@@ -143,5 +143,3 @@ const CenteredModalContainer = (props: Props) => {
         </Box>
     )
 }
-
-const MotionBox = motion(Box)

@@ -1,6 +1,6 @@
 import React from 'react'
-import { AnimatePresence, motion } from 'framer-motion'
-import { Box, BoxProps, Text } from '@ui'
+import { AnimatePresence } from 'framer-motion'
+import { Box, BoxProps, MotionBox, Text } from '@ui'
 import { InteractiveTownsToken } from '@components/TownsToken/InteractiveTownsToken'
 import { TownsTokenProps } from '@components/TownsToken/TownsToken'
 import { ImageVariant, ImageVariants, useImageSource } from '@components/UploadImage/useImageSource'
@@ -15,8 +15,6 @@ type Props = {
     overrideSrc?: string
     overrideBorderRadius?: BoxProps['borderRadius']
 } & BoxProps
-
-const MotionBox = motion(Box)
 
 // Primitive for grabbing a space icon image with a fallback to first letter of space name
 export const SpaceIcon = (props: Props) => {

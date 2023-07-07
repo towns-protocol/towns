@@ -2,8 +2,17 @@ import { createUserIdFromString, useZionClient } from 'use-zion-client'
 import React, { useEffect, useMemo, useState } from 'react'
 import { useEvent } from 'react-use-event-hook'
 import { toast } from 'react-hot-toast/headless'
-import { motion } from 'framer-motion'
-import { Avatar, Box, Button, ButtonProps, FormRender, Paragraph, Stack, TextField } from '@ui'
+import {
+    Avatar,
+    Box,
+    Button,
+    ButtonProps,
+    FormRender,
+    MotionStack,
+    Paragraph,
+    Stack,
+    TextField,
+} from '@ui'
 import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
 import { useSetUserBio } from 'hooks/useUserBio'
 import { shortAddress } from 'ui/utils/utils'
@@ -425,5 +434,3 @@ export const TextButton = ({
         </Button>
     )
 }
-
-const MotionStack = motion(Stack)

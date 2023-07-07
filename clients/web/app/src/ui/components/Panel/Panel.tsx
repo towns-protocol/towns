@@ -10,7 +10,7 @@ import { IconButton } from '../IconButton/IconButton'
 import { Stack } from '../Stack/Stack'
 import { useZLayerContext } from '../ZLayer/ZLayer'
 import { TouchPanelNavigationBar } from '../TouchPanelNavigationBar/TouchPanelNavigationBar'
-import { MotionStack } from '../Motion/MotionBox'
+import { MotionStack } from '../Motion/MotionComponents'
 
 type Props = {
     children: React.ReactNode

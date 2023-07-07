@@ -1,6 +1,5 @@
-import { motion } from 'framer-motion'
 import React from 'react'
-import { Box, Card, Paragraph } from '@ui'
+import { Box, Card, MotionBox, Paragraph } from '@ui'
 
 export const DecryptingCard = (props: { progress: number }) => {
     return (
@@ -26,5 +25,3 @@ export const DecryptingCard = (props: { progress: number }) => {
         </Card>
     )
 }
-
-const MotionBox = motion(Box)

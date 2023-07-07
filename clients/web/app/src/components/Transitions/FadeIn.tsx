@@ -1,6 +1,6 @@
 import React, { forwardRef } from 'react'
 import { HTMLMotionProps, motion } from 'framer-motion'
-import { Box, BoxProps } from '@ui'
+import { BoxProps, MotionBox } from '@ui'
 
 type Props = {
     children: React.ReactNode
@@ -34,8 +34,6 @@ export const FadeInBox = forwardRef<HTMLDivElement, BoxProps & Props & HTMLMotio
         )
     },
 )
-
-const MotionBox = motion(Box)
 
 const presets = {
     fade: {
