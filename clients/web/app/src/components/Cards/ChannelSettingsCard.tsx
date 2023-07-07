@@ -7,6 +7,7 @@ import { PATHS } from 'routes'
 import { Box, Card } from '@ui'
 import { useAuth } from 'hooks/useAuth'
 import { useStore } from 'store/store'
+import { useCardOpenerContext } from 'ui/components/Overlay/CardOpenerContext'
 import { MenuItem } from './MenuItem'
 
 type Props = {
@@ -27,6 +28,7 @@ export const ChannelSettingsCard = (props: Props) => {
     })
     const navigate = useNavigate()
     const setTownRouteBookmark = useStore((s) => s.setTownRouteBookmark)
+    const { closeCard } = useCardOpenerContext()
 
     const { leaveRoom } = useZionClient()
 
@@ -41,6 +43,7 @@ export const ChannelSettingsCard = (props: Props) => {
     })
 
     const onEditClick = useEvent(() => {
+        closeCard() // close the nav item card
         props.onShowChannelSettingsPopup()
     })
 
