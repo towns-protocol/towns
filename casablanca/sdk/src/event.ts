@@ -21,6 +21,15 @@ export interface IPlainContent {
     payload: Record<string, string>
 }
 
+export type IBodyContent = IBodyPostContent & IBodyTextContent
+export interface IBodyPostContent {
+    post: { text: { body: string } }
+}
+
+export interface IBodyTextContent {
+    text: { body: string }
+}
+
 export interface IClearEvent {
     space_id?: string
     channel_id?: string
@@ -488,10 +497,34 @@ export class RiverEvent extends (EventEmitter as new () => TypedEmitter<RiverEve
         }
     }
 
-    public getPlainContent<T extends IPlainContent>(): T {
+    public getPlainContent(): Record<string, string> {
         const content = this.getContent()
-        const plainObject = { ...content } as T
-        return plainObject
+        const result: Record<string, string> = {}
+
+        for (const key in content) {
+            if (typeof content[key] === 'string') {
+                result[key] = content[key]
+            } else {
+                result[key] = JSON.stringify(content[key])
+            }
+        }
+        return result
+    }
+
+    public getChannelMessageBody(): string | undefined {
+        if (this.streamType === EncryptedEventStreamTypes.Channel) {
+            if (this.clearEvent) {
+                return (
+                    JSON.parse(
+                        (this.clearEvent.content as unknown as Record<string, string>)['post'],
+                    ) as IBodyContent
+                ).text.body
+            } else {
+                return (JSON.parse(this.getPlainContent()['ciphertext']) as IBodyContent).post.text
+                    .body
+            }
+        }
+        return undefined
     }
 
     public getOriginalContent<T = IContent>(): T {

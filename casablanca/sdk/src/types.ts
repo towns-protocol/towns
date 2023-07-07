@@ -19,6 +19,7 @@ import {
     ToDeviceMessage_KeyRequest,
     ToDeviceMessage_KeyResponse,
     UserPayload_UserMembership,
+    ToDeviceMessage_Ciphertext,
 } from '@towns/proto'
 import { keccak256 } from 'ethereum-cryptography/keccak'
 import { isDefined } from './check'
@@ -278,10 +279,25 @@ export const getMessagePayload = (
 
 export const getToDevicePayloadContent = (
     payload: UserPayload_ToDevice,
-): ToDeviceMessage_KeyRequest | ToDeviceMessage_KeyResponse | undefined => {
+):
+    | ToDeviceMessage_KeyRequest
+    | ToDeviceMessage_KeyResponse
+    | Record<string, { type: number; body: string }>
+    | undefined => {
     const decoder = new TextDecoder()
     const decodedPayload = decoder.decode(payload?.value)
-    let content: ToDeviceMessage_KeyRequest | ToDeviceMessage_KeyResponse | undefined = undefined
+    let content:
+        | ToDeviceMessage_KeyRequest
+        | ToDeviceMessage_KeyResponse
+        | ToDeviceMessage_Ciphertext
+        | undefined = undefined
+    const fieldRegex = /"type":\s*(\d+),\s*"body":\s*"([^"]+)"/g
+    const isCipher = fieldRegex.test(decodedPayload)
+    if (isCipher) {
+        content = ToDeviceMessage_Ciphertext.fromJson({ envelope: JSON.parse(decodedPayload) })
+        // return envelope stripping away envelope field added by protobuf
+        return { ...content.envelope }
+    }
     switch (ToDeviceOp[payload.op]) {
         case ToDeviceOp[ToDeviceOp.TDO_KEY_REQUEST]: {
             content = ToDeviceMessage_KeyRequest.fromJsonString(decodedPayload)

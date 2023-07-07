@@ -1,7 +1,7 @@
 import { dlog } from './dlog'
 import { Client, IDownloadKeyResponse } from './client'
 import { genId, makeChannelStreamId, makeSpaceStreamId } from './id'
-import { getMessagePayloadContent_Text, IFallbackKey, ParsedEvent } from './types'
+import { getMessagePayloadContent_Text, IFallbackKey } from './types'
 import { makeDonePromise, makeTestClient } from './util.test'
 import { DeviceKeys, PayloadCaseType, SyncStreamsRequest, SyncStreamsResponse } from '@towns/proto'
 import { PartialMessage } from '@bufbuild/protobuf'
@@ -9,6 +9,7 @@ import { CallOptions } from '@bufbuild/connect'
 // This is needed to get the jest itnerface for using in spyOn
 // eslint-disable-next-line import/no-extraneous-dependencies
 import { jest } from '@jest/globals'
+import { RiverEvent } from './event'
 
 const log = dlog('test')
 
@@ -218,11 +219,12 @@ describe('clientTest', () => {
 
         const done = makeDonePromise()
 
-        const onChannelNewMessage = (channelId: string, message: ParsedEvent): void => {
+        const onChannelNewMessage = (channelId: string, message: RiverEvent): void => {
             log('channelNewMessage', channelId)
             log(message)
             done.runAndDone(() => {
-                expect(getMessagePayloadContent_Text(message)?.body).toBe('Hello, again!')
+                const content = message.getChannelMessageBody()
+                expect(content).toBe('Hello, again!')
             })
         }
 
@@ -259,11 +261,12 @@ describe('clientTest', () => {
     test('bobTalksToHimself', async () => {
         const done = makeDonePromise()
 
-        const onChannelNewMessage = (channelId: string, message: ParsedEvent): void => {
+        const onChannelNewMessage = (channelId: string, message: RiverEvent): void => {
             log('channelNewMessage', channelId)
             log(message)
             done.runAndDone(() => {
-                expect(getMessagePayloadContent_Text(message)?.body).toBe('Hello, world!')
+                const content = message.getChannelMessageBody()
+                expect(content).toBe('Hello, world!')
             })
         }
 
@@ -332,13 +335,12 @@ describe('clientTest', () => {
 
         // Bob can send a message.
         const bobSelfHello = makeDonePromise()
-        bobsClient.once('channelNewMessage', (channelId: string, message: ParsedEvent): void => {
-            const payload = getMessagePayloadContent_Text(message)
-            log('channelNewMessage', 'Bob Initial Message', channelId, payload?.body)
+        bobsClient.once('channelNewMessage', (channelId: string, message: RiverEvent): void => {
+            const content = message.getChannelMessageBody()
+            log('channelNewMessage', 'Bob Initial Message', channelId, content)
             bobSelfHello.runAndDone(() => {
-                // TODO: why 'Hello, world from Bob!' can be received here?
                 expect(channelId).toBe(bobsChannelId)
-                expect(payload?.body).toBe('Hello, world from Bob!')
+                expect(content).toBe('Hello, world from Bob!')
             })
         })
 
@@ -373,13 +375,13 @@ describe('clientTest', () => {
 
         // Bob can send a message.
         const bobSelfHello = makeDonePromise()
-        bobsClient.once('channelNewMessage', (channelId: string, message: ParsedEvent): void => {
-            const payload = getMessagePayloadContent_Text(message)
-            log('channelNewMessage', 'Bob Initial Message', channelId, payload?.body)
+        bobsClient.once('channelNewMessage', (channelId: string, message: RiverEvent): void => {
+            const content = message.getChannelMessageBody()
+            log('channelNewMessage', 'Bob Initial Message', channelId, content)
             bobSelfHello.runAndDone(() => {
                 // TODO: why 'Hello, world from Bob!' can be received here?
                 expect(channelId).toBe(bobsChannelId)
-                expect(payload?.body).toBe('Hello, world from Bob!')
+                expect(content).toBe('Hello, world from Bob!')
             })
         })
 
@@ -419,36 +421,36 @@ describe('clientTest', () => {
             'Both!',
         ]
 
-        alicesClient.on('channelNewMessage', (channelId: string, message: ParsedEvent): void => {
-            const payload = getMessagePayloadContent_Text(message)!
-            log('channelNewMessage', 'Alice', channelId, payload.body)
+        alicesClient.on('channelNewMessage', (channelId: string, message: RiverEvent): void => {
+            const content = message.getChannelMessageBody()
+            log('channelNewMessage', 'Alice', channelId, content)
             aliceGetsMessage.run(() => {
                 expect(channelId).toBe(bobsChannelId)
                 // @ts-ignore
-                expect(payload.body).toBeOneOf(conversation)
-                if (payload.body === 'Hello, Alice!') {
+                expect(content).toBeOneOf(conversation)
+                if (content === 'Hello, Alice!') {
                     alicesClient.sendMessage(channelId, 'Hello, Bob!')
-                } else if (payload.body === 'Weather nice?') {
+                } else if (content === 'Weather nice?') {
                     alicesClient.sendMessage(channelId, 'Sun and rain!')
-                } else if (payload.body === 'Coffee or tea?') {
+                } else if (content === 'Coffee or tea?') {
                     alicesClient.sendMessage(channelId, 'Both!')
                     aliceGetsMessage.done()
                 }
             })
         })
 
-        bobsClient.on('channelNewMessage', (channelId: string, message: ParsedEvent): void => {
-            const payload = getMessagePayloadContent_Text(message)!
-            log('channelNewMessage', 'Bob', channelId, payload.body)
+        bobsClient.on('channelNewMessage', (channelId: string, message: RiverEvent): void => {
+            const content = message.getChannelMessageBody()
+            log('channelNewMessage', 'Bob', channelId, content)
             bobGetsMessage.run(() => {
                 expect(channelId).toBe(bobsChannelId)
                 // @ts-ignore
-                expect(payload.body).toBeOneOf(conversation)
-                if (payload.body === 'Hello, Bob!') {
+                expect(content).toBeOneOf(conversation)
+                if (content === 'Hello, Bob!') {
                     bobsClient.sendMessage(channelId, 'Weather nice?')
-                } else if (payload.body === 'Sun and rain!') {
+                } else if (content === 'Sun and rain!') {
                     bobsClient.sendMessage(channelId, 'Coffee or tea?')
-                } else if (payload.body === 'Both!') {
+                } else if (content === 'Both!') {
                     bobGetsMessage.done()
                 }
             })

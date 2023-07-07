@@ -1,9 +1,9 @@
 import { Client } from './client'
 import { DLogger, dlog } from './dlog'
 import { makeTestClient } from './util.test'
-import { ParsedEvent, getMessagePayloadContent_Text } from './types'
 import { StreamEventKeys } from './streams'
 import { makeUniqueChannelStreamId, makeUniqueSpaceStreamId } from './id'
+import { RiverEvent } from './event'
 
 const log = dlog('test:aliceAndFriends')
 
@@ -51,21 +51,21 @@ class TestDriver {
         this.log(`userJoinedStream streamId=${streamId}`)
     }
 
-    channelNewMessage(channelId: string, message: ParsedEvent): void {
-        const content = getMessagePayloadContent_Text(message)
+    channelNewMessage(channelId: string, event: RiverEvent): void {
+        const content = event.getChannelMessageBody()
         if (!content) {
-            throw new Error(`Expected text message, got=${message.event.toJsonString()}`)
+            throw new Error(`Expected text message, got=${content}`)
         }
-        this.log(`channelNewMessage channelId=${channelId} message=${content.body}`, this.expected)
-        if (this.expected?.delete(content.body)) {
-            this.log(`channelNewMessage expected message Received, text=${content.body}`)
+        this.log(`channelNewMessage channelId=${channelId} message=${content}`, this.expected)
+        if (this.expected?.delete(content)) {
+            this.log(`channelNewMessage expected message Received, text=${content}`)
 
             if (this.expected.size === 0) {
                 this.expected = undefined
                 if (this.allExpectedReceived === undefined) {
                     throw new Error('allExpectedReceived is undefined')
                 }
-                this.log(`channelNewMessage all expected messages Received, text=${content.body}`)
+                this.log(`channelNewMessage all expected messages Received, text=${content}`)
                 this.allExpectedReceived()
             } else {
                 this.log(`channelNewMessage still expecting messages`, this.expected)
@@ -75,12 +75,12 @@ class TestDriver {
                 throw new Error('badMessageReceived is undefined')
             }
             this.log(
-                `channelNewMessage badMessageReceived text=${content.body}, expected=${Array.from(
+                `channelNewMessage badMessageReceived text=${content}, expected=${Array.from(
                     this.expected?.values() ?? [],
                 ).join(', ')}`,
             )
             this.badMessageReceived(
-                `badMessageReceived text=${content.body}, expected=${Array.from(
+                `badMessageReceived text=${content}, expected=${Array.from(
                     this.expected?.values() ?? [],
                 ).join(', ')}`,
             )

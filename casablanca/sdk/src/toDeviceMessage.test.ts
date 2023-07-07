@@ -1,7 +1,8 @@
 import { dlog } from './dlog'
 import { Client } from './client'
 import { makeDonePromise, makeTestClient } from './util.test'
-import { ToDeviceOp, UserPayload_ToDevice } from '@towns/proto'
+import { ToDeviceOp } from '@towns/proto'
+import { RiverEvent } from './event'
 
 const log = dlog('test')
 
@@ -34,24 +35,18 @@ describe('toDeviceMessageTest', () => {
         await alicesClient.startSync()
 
         const aliceSelfToDevice = makeDonePromise()
-        alicesClient.once(
-            'toDeviceMessage',
-            (streamId: string, payload: UserPayload_ToDevice, senderUserId: string): void => {
-                const { senderKey, deviceKey } = payload
-                log('toDeviceMessage for Alice', streamId, senderKey, deviceKey, payload.value)
-                aliceSelfToDevice.runAndDoneAsync(async () => {
-                    expect(streamId).toBe(aliceUserStreamId)
-                    expect(payload?.value).toBeDefined()
-                    const encryptedEvent = await alicesClient.createDecryptToDeviceEvent(
-                        payload,
-                        senderUserId,
-                    )
-                    expect(
-                        Object.values(encryptedEvent.getPlainContent().payload.content),
-                    ).toContain('Hi Alice!')
-                })
-            },
-        )
+        alicesClient.once('toDeviceMessage', (streamId: string, event: RiverEvent): void => {
+            const content = event.getPlainContent()
+            const senderKey = content['sender_key']
+            const deviceKey = content['device_key']
+            log('toDeviceMessage for Alice', streamId, senderKey, deviceKey, content)
+            aliceSelfToDevice.runAndDoneAsync(async () => {
+                expect(streamId).toBe(aliceUserStreamId)
+                expect(content).toBeDefined()
+                await alicesClient.decryptEventIfNeeded(event)
+                expect(event.getPlainContent().payload).toContain('Hi Alice!')
+            })
+        })
         // bob sends a message to Alice's device.
         await expect(
             bobsClient.sendToDeviceMessage(
@@ -80,25 +75,19 @@ describe('toDeviceMessageTest', () => {
         await alicesClient.startSync()
 
         const aliceSelfToDevice = makeDonePromise()
-        alicesClient.once(
-            'toDeviceMessage',
-            (streamId: string, payload: UserPayload_ToDevice, senderUserId: string): void => {
-                const { senderKey, deviceKey } = payload
-                log('toDeviceMessage for Alice', streamId, senderKey, deviceKey, payload?.value)
-                aliceSelfToDevice.runAndDoneAsync(async () => {
-                    expect(streamId).toBe(aliceUserStreamId)
-                    expect(payload?.value).toBeDefined()
-                    const encryptedEvent = await alicesClient.createDecryptToDeviceEvent(
-                        payload,
-                        senderUserId,
-                    )
-                    expect(encryptedEvent.getWireContent().op).toEqual('TDO_KEY_REQUEST')
-                    expect(
-                        Object.values(encryptedEvent.getPlainContent().payload.content),
-                    ).toContain('Hi Alice!')
-                })
-            },
-        )
+        alicesClient.once('toDeviceMessage', (streamId: string, event: RiverEvent): void => {
+            const content = event.getPlainContent()
+            const senderKey = content['sender_key']
+            const deviceKey = content['device_key']
+            log('toDeviceMessage for Alice', streamId, senderKey, deviceKey, content)
+            aliceSelfToDevice.runAndDoneAsync(async () => {
+                expect(streamId).toBe(aliceUserStreamId)
+                expect(content).toBeDefined()
+                await alicesClient.decryptEventIfNeeded(event)
+                expect(event.getWireContent().op).toEqual('TDO_KEY_REQUEST')
+                expect(event.getPlainContent().payload).toContain('Hi Alice!')
+            })
+        })
         // bob sends a message to Alice's device.
         await expect(
             bobsClient.sendToDeviceMessage(
@@ -137,24 +126,18 @@ describe('toDeviceMessageTest', () => {
         await alicesClient.startSync()
 
         const aliceSelfToDevice = makeDonePromise()
-        alicesClient.once(
-            'toDeviceMessage',
-            (streamId: string, payload: UserPayload_ToDevice, senderUserId: string): void => {
-                const { senderKey, deviceKey } = payload
-                log('toDeviceMessage for Alice', streamId, senderKey, deviceKey, payload?.value)
-                aliceSelfToDevice.runAndDoneAsync(async () => {
-                    expect(streamId).toBe(aliceUserStreamId)
-                    expect(payload?.value).toBeDefined()
-                    const encryptedEvent = await alicesClient.createDecryptToDeviceEvent(
-                        payload,
-                        senderUserId,
-                    )
-                    expect(
-                        Object.values(encryptedEvent.getPlainContent().payload.content),
-                    ).toContain('Hi Alice!')
-                })
-            },
-        )
+        alicesClient.once('toDeviceMessage', (streamId: string, event: RiverEvent): void => {
+            const content = event.getPlainContent()
+            const senderKey = content['sender_key']
+            const deviceKey = content['device_key']
+            log('toDeviceMessage for Alice', streamId, senderKey, deviceKey, content)
+            aliceSelfToDevice.runAndDoneAsync(async () => {
+                expect(streamId).toBe(aliceUserStreamId)
+                expect(content).toBeDefined()
+                await alicesClient.decryptEventIfNeeded(event)
+                expect(event.getPlainContent().payload).toContain('Hi Alice!')
+            })
+        })
         // bob sends a message to all Alice's devices.
         await expect(
             bobsClient.sendToDevicesMessage(
@@ -184,25 +167,18 @@ describe('toDeviceMessageTest', () => {
         await alicesClient.startSync()
 
         const aliceSelfToDevice = makeDonePromise()
-        alicesClient.once(
-            'toDeviceMessage',
-            (streamId: string, payload: UserPayload_ToDevice, senderUserId: string): void => {
-                const { senderKey, deviceKey } = payload
-                log('toDeviceMessage for Alice', streamId, senderKey, deviceKey, payload?.value)
-                aliceSelfToDevice.runAndDoneAsync(async () => {
-                    expect(streamId).toBe(aliceUserStreamId)
-                    expect(payload?.value).toBeDefined()
-                    expect(payload?.op).toBe(ToDeviceOp.TDO_KEY_REQUEST)
-                    const encryptedEvent = await alicesClient.createDecryptToDeviceEvent(
-                        payload,
-                        senderUserId,
-                    )
-                    expect(
-                        Object.values(encryptedEvent.getPlainContent().payload.content),
-                    ).toContain('Hi Alice!')
-                })
-            },
-        )
+        alicesClient.once('toDeviceMessage', (streamId: string, event: RiverEvent): void => {
+            const content = event.getPlainContent()
+            const senderKey = content['sender_key']
+            const deviceKey = content['device_key']
+            log('toDeviceMessage for Alice', streamId, senderKey, deviceKey, content)
+            aliceSelfToDevice.runAndDoneAsync(async () => {
+                expect(streamId).toBe(aliceUserStreamId)
+                expect(content).toBeDefined()
+                await alicesClient.decryptEventIfNeeded(event)
+                expect(event.getPlainContent().payload).toContain('Hi Alice!')
+            })
+        })
         // bob sends a key request message to all Alice's devices.
         await expect(
             bobsClient.sendToDevicesMessage(
@@ -234,55 +210,43 @@ describe('toDeviceMessageTest', () => {
 
         const aliceSelfToDevice = makeDonePromise()
         const bobSelfToDevice = makeDonePromise()
-        alicesClient.once(
-            'toDeviceMessage',
-            (streamId: string, payload: UserPayload_ToDevice, senderUserId: string): void => {
-                const { senderKey, deviceKey } = payload
-                log('toDeviceMessage for Alice', streamId, senderKey, deviceKey, payload?.value)
-                aliceSelfToDevice.runAndDoneAsync(async () => {
-                    expect(streamId).toBe(aliceUserStreamId)
-                    expect(payload?.value).toBeDefined()
-                    expect(payload?.op).toBe(ToDeviceOp.TDO_KEY_REQUEST)
-                    const encryptedEvent = await alicesClient.createDecryptToDeviceEvent(
-                        payload,
-                        senderUserId,
-                    )
-                    expect(
-                        Object.values(encryptedEvent.getPlainContent().payload.content),
-                    ).toContain('Hi Alice, can I get a key?')
-                    await expect(
-                        alicesClient.sendToDevicesMessage(
-                            bobUserId,
-                            {
-                                content: 'Hi Bob, certainly!',
-                            },
-                            ToDeviceOp.TDO_KEY_RESPONSE,
-                        ),
-                    ).toResolve()
-                })
-            },
-        )
+        alicesClient.once('toDeviceMessage', (streamId: string, event: RiverEvent): void => {
+            const content = event.getPlainContent()
+            const senderKey = content['sender_key']
+            const deviceKey = content['device_key']
+            log('toDeviceMessage for Alice', streamId, senderKey, deviceKey, content)
+            aliceSelfToDevice.runAndDoneAsync(async () => {
+                expect(streamId).toBe(aliceUserStreamId)
+                expect(content).toBeDefined()
+                expect(content['op']).toBe(ToDeviceOp[ToDeviceOp.TDO_KEY_REQUEST])
+                await alicesClient.decryptEventIfNeeded(event)
+                expect(event.getPlainContent().payload).toContain('Hi Alice, can I get a key?')
+                await expect(
+                    alicesClient.sendToDevicesMessage(
+                        bobUserId,
+                        {
+                            content: 'Hi Bob, certainly!',
+                        },
+                        ToDeviceOp.TDO_KEY_RESPONSE,
+                    ),
+                ).toResolve()
+            })
+        })
 
-        bobsClient.on(
-            'toDeviceMessage',
-            (streamId: string, payload: UserPayload_ToDevice, senderUserId: string): void => {
-                const { deviceKey } = payload
-                log('toDeviceMessage for Bob', streamId, deviceKey, payload?.value)
-                if (streamId == bobUserStreamId) {
-                    bobSelfToDevice.runAndDoneAsync(async () => {
-                        expect(payload?.value).toBeDefined()
-                        expect(payload?.op).toBe(ToDeviceOp.TDO_KEY_RESPONSE)
-                        const encryptedEvent = await bobsClient.createDecryptToDeviceEvent(
-                            payload,
-                            senderUserId,
-                        )
-                        expect(
-                            Object.values(encryptedEvent.getPlainContent().payload.content),
-                        ).toContain('Hi Bob, certainly!')
-                    })
-                }
-            },
-        )
+        bobsClient.on('toDeviceMessage', (streamId: string, event: RiverEvent): void => {
+            const content = event.getPlainContent()
+            const senderKey = content['sender_key']
+            const deviceKey = content['device_key']
+            log('toDeviceMessage for Alice', streamId, senderKey, deviceKey, content)
+            if (streamId == bobUserStreamId) {
+                bobSelfToDevice.runAndDoneAsync(async () => {
+                    expect(content).toBeDefined()
+                    expect(content['op']).toBe(ToDeviceOp[ToDeviceOp.TDO_KEY_RESPONSE])
+                    await bobsClient.decryptEventIfNeeded(event)
+                    expect(event.getPlainContent().payload).toContain('Hi Bob, certainly!')
+                })
+            }
+        })
         // bob sends a key request message to all Alice's devices.
         await expect(
             bobsClient.sendToDevicesMessage(

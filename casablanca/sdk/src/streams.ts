@@ -15,12 +15,17 @@ import {
     SpacePayload_Channel,
     UserPayload_UserMembership,
     UserDeviceKeyPayload_UserDeviceKey,
-    UserPayload_ToDevice,
 } from '@towns/proto'
 import TypedEmitter from 'typed-emitter'
 import { check, checkNever, isDefined, throwWithCode } from './check'
-import { ParsedEvent } from './types'
+import {
+    ParsedEvent,
+    getToDevicePayloadContent,
+    make_ChannelPayload_Message,
+    make_UserPayload_ToDevice,
+} from './types'
 import { userIdFromAddress } from './id'
+import { RiverEvent } from './event'
 
 const log = dlog('csb:streams')
 
@@ -72,8 +77,8 @@ export type StreamEvents = {
     userLeftStream: (streamId: string) => void
     spaceNewChannelCreated: (spaceId: string, channelId: string) => void
     spaceChannelDeleted: (spaceId: string, channelId: string) => void
-    channelNewMessage: (channelId: string, message: ParsedEvent) => void
-    toDeviceMessage: (streamId: string, event: UserPayload_ToDevice, senderUserId: string) => void
+    channelNewMessage: (channelId: string, message: RiverEvent) => void
+    toDeviceMessage: (streamId: string, event: RiverEvent) => void
     userDeviceKeyMessage: (
         streamId: string,
         userId: string,
@@ -195,8 +200,20 @@ export class StreamStateView {
                             )
                             break
                         case 'message':
-                            this.messages.set(event.hashStr, event)
-                            emitter?.emit('channelNewMessage', this.streamId, event)
+                            {
+                                this.messages.set(event.hashStr, event)
+                                const riverEvent = new RiverEvent({
+                                    payload: {
+                                        parsed_event: make_ChannelPayload_Message(
+                                            payload.value.content.value,
+                                        ),
+                                        creator_user_id: userIdFromAddress(
+                                            event.event.creatorAddress,
+                                        ),
+                                    },
+                                })
+                                emitter?.emit('channelNewMessage', this.streamId, riverEvent)
+                            }
                             break
                         case 'membership':
                             this.addMembershipEvent(payload.value.content.value, emitter)
@@ -247,13 +264,25 @@ export class StreamStateView {
                             break
                         case 'toDevice':
                             {
-                                const content = payload.value.content.value
-                                emitter?.emit(
-                                    'toDeviceMessage',
-                                    this.streamId,
-                                    content,
-                                    userIdFromAddress(event.event.creatorAddress),
-                                )
+                                const payload_todevice = payload.value.content.value
+                                // get ciphertext payload object
+                                const content = getToDevicePayloadContent(payload_todevice)
+
+                                const toDevicePayload = make_UserPayload_ToDevice({
+                                    deviceKey: payload_todevice.deviceKey,
+                                    senderKey: payload_todevice.senderKey,
+                                    op: payload_todevice.op,
+                                    value: JSON.parse(JSON.stringify(content)),
+                                })
+                                const riverEvent = new RiverEvent({
+                                    payload: {
+                                        parsed_event: toDevicePayload,
+                                        creator_user_id: userIdFromAddress(
+                                            event.event.creatorAddress,
+                                        ),
+                                    },
+                                })
+                                emitter?.emit('toDeviceMessage', this.streamId, riverEvent)
                                 // TODO: filter by deviceId and only store current deviceId's events
                                 this.toDeviceMessages.push(event)
                             }

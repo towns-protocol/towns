@@ -56,6 +56,7 @@ import {
     make_UserPayload_Inception,
     make_UserPayload_ToDevice,
     IDeviceKeySignatures,
+    getToDevicePayloadContent,
 } from './types'
 import { shortenHexString } from './binary'
 import { CryptoStore } from './crypto/store/base'
@@ -1234,14 +1235,12 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
         payload: UserPayload_ToDevice,
         senderUserId: string,
     ): Promise<RiverEvent> {
-        const decoder = new TextDecoder()
-        // parse decoded ciphertext from bytes
-        const ciphertext = JSON.parse(decoder.decode(payload?.value))
+        const content = getToDevicePayloadContent(payload)
         const toDevicePayload = make_UserPayload_ToDevice({
             deviceKey: payload.deviceKey,
             senderKey: payload.senderKey,
             op: payload.op,
-            value: ciphertext,
+            value: JSON.parse(JSON.stringify(content)),
         })
 
         const event = new RiverEvent({

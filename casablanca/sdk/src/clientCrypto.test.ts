@@ -76,7 +76,7 @@ describe('clientCryptoTest', () => {
         await expect(
             bobsClient.decryptEventIfNeeded(event, { forceRedecryptIfUntrusted: true }),
         ).toResolve()
-        expect(event.getPlainContent().payload.content).toEqual('First secret encrypted message!')
+        expect(event.getPlainContent().payload).toContain('First secret encrypted message!')
     })
 
     test('clientCanEncryptDecryptToDeviceEvent', async () => {
@@ -127,7 +127,7 @@ describe('clientCryptoTest', () => {
         expect(encryptedEvent?.event?.content?.ciphertext).toBeDefined()
         expect(encryptedEvent.getPlainContent().payload).toBeUndefined()
         await expect(bobsClient.decryptEventIfNeeded(encryptedEvent)).toResolve()
-        expect(encryptedEvent.getPlainContent().payload.content).toEqual(
+        expect(encryptedEvent.getPlainContent().payload).toContain(
             'First secret encrypted message!',
         )
     })
@@ -183,7 +183,7 @@ describe('clientCryptoTest', () => {
         expect(encryptedEvent?.event?.content?.ciphertext).toBeDefined()
         expect(encryptedEvent.getContent().payload).toBeUndefined()
         await expect(bobsClient.decryptEventIfNeeded(encryptedEvent)).toResolve()
-        expect(Object.values(encryptedEvent.getPlainContent().payload.content)).toContain(
+        expect(encryptedEvent.getPlainContent().payload).toContain(
             'First secret encrypted message!',
         )
     })
@@ -247,9 +247,7 @@ describe('clientCryptoTest', () => {
             expect(encryptedEvent?.event?.content?.ciphertext).toBeDefined()
             expect(encryptedEvent.getContent().payload).toBeUndefined()
             await expect(bobsClient.decryptEventIfNeeded(encryptedEvent)).toResolve()
-            expect(Object.values(encryptedEvent.getPlainContent().payload.content)).toContain(
-                values[i],
-            )
+            expect(encryptedEvent.getPlainContent().payload).toContain(values[i])
         }
     })
 
@@ -300,7 +298,7 @@ describe('clientCryptoTest', () => {
         expect(encryptedEvent?.event?.content?.ciphertext).toBeDefined()
         expect(encryptedEvent.getPlainContent().payload).toBeUndefined()
         await expect(bobsClient.decryptEventIfNeeded(encryptedEvent)).toResolve()
-        expect(encryptedEvent.getPlainContent().payload.content).toEqual(
+        expect(encryptedEvent.getPlainContent().payload).toContain(
             'First secret encrypted message!',
         )
     })
