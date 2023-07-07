@@ -9,3 +9,9 @@ export function removeSyncedEntitleChannelsQueries() {
         queryKey: blockchainKeys.entitledChannels(),
     })
 }
+
+export function removeSyncedEntitleChannelsQueriesForSpace(spaceId: string) {
+    queryClient.removeQueries({
+        queryKey: blockchainKeys.entitledChannels(spaceId),
+    })
+}

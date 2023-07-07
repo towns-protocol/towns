@@ -12,7 +12,7 @@ import {
 import { SpaceHierarchies } from '../../types/zion-types'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
-import { blockchainKeys } from '../../query/query-keys'
+import { removeSyncedEntitleChannelsQueriesForSpace } from '../../query/removeSyncedEntitledChannelQueries'
 import { RoomIdentifier } from '../../types/room-identifier'
 import { ZionClient } from '../../client/ZionClient'
 import { toZionSpaceChild } from '../../store/use-matrix-store'
@@ -153,9 +153,7 @@ export function useSyncSpaceHierarchies(
             }
             const eventType = event.getType()
             if (eventType === MatrixEventType.SpaceChild || eventType === MatrixMsgType.Notice) {
-                queryClient.removeQueries({
-                    queryKey: blockchainKeys.entitledChannels(eventRoomId),
-                })
+                removeSyncedEntitleChannelsQueriesForSpace(eventRoomId)
                 // console.log("!!!!! hierarchies new space child", eventRoom.roomId);
                 enqueueSpaceId(eventRoomId)
             }
@@ -172,9 +170,7 @@ export function useSyncSpaceHierarchies(
         const onNameEvent = (room: MatrixRoom) => {
             const parentSpaceId = getParentSpaceId(room, spaceIds)
             if (parentSpaceId) {
-                queryClient.removeQueries({
-                    queryKey: blockchainKeys.entitledChannels(parentSpaceId),
-                })
+                removeSyncedEntitleChannelsQueriesForSpace(parentSpaceId)
                 enqueueSpaceId(parentSpaceId)
             }
         }
@@ -194,9 +190,7 @@ export function useSyncSpaceHierarchies(
         ) {
             const parentSpaceId = getParentSpaceId(room, spaceIds)
             if (parentSpaceId) {
-                queryClient.removeQueries({
-                    queryKey: blockchainKeys.entitledChannels(parentSpaceId),
-                })
+                removeSyncedEntitleChannelsQueriesForSpace(parentSpaceId)
                 enqueueSpaceId(parentSpaceId)
             }
             console.log(
