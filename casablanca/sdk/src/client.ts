@@ -412,7 +412,12 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
         return { streamId: streamId }
     }
 
-    async createChannel(spaceId: string, channelId?: string): Promise<{ streamId: string }> {
+    async createChannel(
+        spaceId: string,
+        channelName: string,
+        channelTopic: string,
+        channelId?: string,
+    ): Promise<{ streamId: string }> {
         channelId = channelId ?? makeUniqueChannelStreamId()
         this.logCall('createChannel', channelId, spaceId)
         assert(this.userStreamId !== undefined, 'userStreamId must be set')
@@ -424,6 +429,8 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
             make_ChannelPayload_Inception({
                 streamId: channelId,
                 spaceId,
+                channelName: channelName,
+                channelTopic: channelTopic,
             }),
             [],
         )

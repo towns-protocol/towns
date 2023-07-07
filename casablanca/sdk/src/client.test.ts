@@ -207,7 +207,9 @@ describe('clientTest', () => {
         const spaceId = bobsClient.createSpace()
         await expect(spaceId).toResolve()
         const { streamId } = await spaceId
-        await expect(bobsClient.createChannel(streamId)).toResolve()
+        const channelName = 'Bobs channel'
+        const channelTopic = 'Bobs channel topic'
+        await expect(bobsClient.createChannel(streamId, channelName, channelTopic)).toResolve()
         await expect(bobsClient.stopSync()).toResolve()
     })
 
@@ -285,10 +287,17 @@ describe('clientTest', () => {
         await bobsClient.startSync()
 
         const bobsSpaceId = makeSpaceStreamId('bobs-space-' + genId())
+        const bobsChannelName = 'Bobs channel'
+        const bobsChannelTopic = 'Bobs channel topic'
         await expect(bobsClient.createSpace(bobsSpaceId)).toResolve()
 
         await expect(
-            bobsClient.createChannel(bobsSpaceId, makeChannelStreamId('bobs-channel-' + genId())),
+            bobsClient.createChannel(
+                bobsSpaceId,
+                bobsChannelName,
+                bobsChannelTopic,
+                makeChannelStreamId('bobs-channel-' + genId()),
+            ),
         ).toResolve()
 
         await done.expectToSucceed()
@@ -313,7 +322,12 @@ describe('clientTest', () => {
         await expect(bobsClient.createSpace(bobsSpaceId)).toResolve()
 
         const bobsChannelId = makeChannelStreamId('bobs-channel-' + genId())
-        await expect(bobsClient.createChannel(bobsSpaceId, bobsChannelId)).toResolve()
+        const bobsChannelName = 'Bobs channel'
+        const bobsChannelTopic = 'Bobs channel topic'
+
+        await expect(
+            bobsClient.createChannel(bobsSpaceId, bobsChannelName, bobsChannelTopic, bobsChannelId),
+        ).toResolve()
         await expect(bobsClient.waitForStream(bobsChannelId)).toResolve()
 
         // Bob can send a message.
@@ -345,7 +359,12 @@ describe('clientTest', () => {
         await expect(bobsClient.createSpace(bobsSpaceId)).toResolve()
 
         const bobsChannelId = makeChannelStreamId('bobs-channel-' + genId())
-        await expect(bobsClient.createChannel(bobsSpaceId, bobsChannelId)).toResolve()
+        const bobsChannelName = 'Bobs channel'
+        const bobsChannelTopic = 'Bobs channel topic'
+
+        await expect(
+            bobsClient.createChannel(bobsSpaceId, bobsChannelName, bobsChannelTopic, bobsChannelId),
+        ).toResolve()
         await expect(bobsClient.waitForStream(bobsChannelId)).toResolve()
 
         // Alice gest created.

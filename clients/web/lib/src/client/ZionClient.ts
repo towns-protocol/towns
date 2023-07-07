@@ -653,6 +653,8 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
                 return createCasablancaChannel(
                     this.casablancaClient,
                     createInfo.parentSpaceId,
+                    createInfo.name,
+                    createInfo.topic ? createInfo.topic : '',
                     networkId,
                 )
             default:

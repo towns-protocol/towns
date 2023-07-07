@@ -190,7 +190,10 @@ export const converse = async (conversation: string[][], testName: string): Prom
 
         log(`${testName} creating channel`)
         const channelId = makeUniqueChannelStreamId()
-        await alice.client.createChannel(spaceId, channelId)
+        const channelName = 'Alica channel'
+        const channelTopic = 'Alica channel topic'
+
+        await alice.client.createChannel(spaceId, channelName, channelTopic, channelId)
         await alice.client.waitForStream(channelId)
 
         // Invite and join channel.

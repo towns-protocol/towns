@@ -193,11 +193,16 @@ describe('streamRpcClient', () => {
 
         // Bob creates channel
         const channelId = makeChannelStreamId('bobs-channel-' + genId())
+        const channelName = 'Bobs channel'
+        const channelTopic = 'Bobs channel topic'
+
         const channelInceptionEvent = await makeEvent(
             bobsContext,
             make_ChannelPayload_Inception({
                 streamId: channelId,
                 spaceId: spaceId,
+                channelName: channelName,
+                channelTopic: channelTopic,
             }),
             [],
         )
@@ -459,9 +464,14 @@ describe('streamRpcClient', () => {
         log('Bob created space, about to create channel')
 
         const channelId = makeChannelStreamId('bobs-channel-' + genId())
+        const channelName = 'Bobs channel'
+        const channelTopic = 'Bobs channel topic'
+
         const channelEvents = await makeEvents(bobsContext, [
             make_ChannelPayload_Inception({
                 streamId: channelId,
+                channelName: channelName,
+                channelTopic: channelTopic,
                 spaceId: spacedStreamId,
             }),
             make_ChannelPayload_Membership({
@@ -476,11 +486,15 @@ describe('streamRpcClient', () => {
 
         log('Bob fails to create channel with badly chained initial events, hash empty')
         const channelId2 = makeChannelStreamId('bobs-channel2-' + genId())
+        const channelName2 = 'Bobs channel2'
+        const channelTopic2 = 'Bobs channel topic2'
         const channelEvent2_0 = await makeEvent(
             bobsContext,
             make_ChannelPayload_Inception({
                 streamId: channelId2,
                 spaceId: spacedStreamId,
+                channelName: channelName2,
+                channelTopic: channelTopic2,
             }),
         )
         const channelEvent2_1 = await makeEvent_test(
@@ -616,10 +630,15 @@ describe('streamRpcClient', () => {
         log('Bob created space, about to create channel')
 
         const channelId = makeChannelStreamId('bobs-channel-' + genId())
+        const channelName = 'Bobs channel'
+        const channelTopic = 'Bobs channel topic'
+
         const channelEvents = await makeEvents(bobsContext, [
             make_ChannelPayload_Inception({
                 streamId: channelId,
                 spaceId: spacedStreamId,
+                channelName: channelName,
+                channelTopic: channelTopic,
             }),
             make_ChannelPayload_Membership({
                 userId: bobsUserId,

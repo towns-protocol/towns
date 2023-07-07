@@ -71,10 +71,17 @@ describe('riverEventTest', () => {
         await bobsClient.startSync()
 
         const bobsSpaceId = makeSpaceStreamId('bobs-space-' + genId())
+        const bobsChannelName = 'Bobs channel'
+        const bobsChannelTopic = 'Bobs channel topic'
         await expect(bobsClient.createSpace(bobsSpaceId)).toResolve()
 
         await expect(
-            bobsClient.createChannel(bobsSpaceId, makeChannelStreamId('bobs-channel-' + genId())),
+            bobsClient.createChannel(
+                bobsSpaceId,
+                bobsChannelName,
+                bobsChannelTopic,
+                makeChannelStreamId('bobs-channel-' + genId()),
+            ),
         ).toResolve()
 
         await done.expectToSucceed()

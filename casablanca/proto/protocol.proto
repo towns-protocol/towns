@@ -135,6 +135,8 @@ message SpacePayload {
         ChannelOp op = 1;
         string channel_id = 2;
         EventRef origin_event = 3;
+        string channel_name = 4;
+        string channel_topic = 5;
     }
 
     oneof content {
@@ -148,6 +150,8 @@ message ChannelPayload {
     message Inception {
         string stream_id = 1;
         string space_id = 3;
+        string channel_name = 4;
+        string channel_topic = 5;
     }
 
     message Message {
@@ -236,6 +240,7 @@ enum ChannelOp {
     CO_UNSPECIFIED = 0;
     CO_CREATED = 1;
     CO_DELETED = 2;
+    CO_UPDATED = 4;
 }
 
 enum UserSettingOp {

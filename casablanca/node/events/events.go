@@ -156,14 +156,16 @@ func Make_UserPayload_Membership(op protocol.MembershipOp, inviterId string, str
 	}
 }
 
-func Make_SpacePayload_Channel(op ChannelOp, channelId string, originEvent *protocol.EventRef) *StreamEvent_SpacePayload {
+func Make_SpacePayload_Channel(op ChannelOp, channelId string, channelName string, channelTopic string, originEvent *protocol.EventRef) *StreamEvent_SpacePayload {
 	return &StreamEvent_SpacePayload{
 		SpacePayload: &SpacePayload{
 			Content: &protocol.SpacePayload_Channel_{
 				Channel: &SpacePayload_Channel{
-					Op:          op,
-					ChannelId:   channelId,
-					OriginEvent: originEvent,
+					Op:           op,
+					ChannelId:    channelId,
+					OriginEvent:  originEvent,
+					ChannelName:  channelName,
+					ChannelTopic: channelTopic,
 				},
 			},
 		},
