@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { Stream } from '@towns/sdk'
-import { Room } from '../../types/zion-types'
+import { Room, RoomMember } from '../../types/zion-types'
 import { makeCasablancaStreamIdentifier } from '../../types/room-identifier'
 import { Membership } from '../../types/zion-types'
 
@@ -16,13 +16,26 @@ export function toZionRoomFromStream(stream: Stream, userId: string): Room {
         membership = Membership.Join
     }
 
+    const members: RoomMember[] = Array.from(stream.rollup.joinedUsers, (userId) => ({
+        userId: userId,
+        membership: Membership.Join,
+        name: '',
+        rawDisplayName: '',
+        disambiguate: false,
+    }))
+
+    const memberMap = members.reduce((acc, member) => {
+        acc[member.userId] = member
+        return acc
+    }, {} as Record<string, RoomMember>)
+
     return {
         id: makeCasablancaStreamIdentifier(stream.streamId),
         name: '',
         membership: membership,
         inviter: '',
-        members: [],
-        membersMap: {},
+        members: members,
+        membersMap: memberMap,
         isSpaceRoom: false,
     }
 }
