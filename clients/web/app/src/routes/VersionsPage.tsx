@@ -1,12 +1,9 @@
 import React from 'react'
-import { NavLink } from 'react-router-dom'
 
 import { useServerVersions } from 'use-zion-client'
-import { TransitionLogo } from '@components/Logo/Logo'
-import { FadeIn } from '@components/Transitions'
-import { Stack } from '@ui'
-import { PATHS } from 'routes'
 import { useEnvironment } from 'hooks/useEnvironmnet'
+import { Box } from '@ui'
+import { WelcomeLayout } from './layouts/WelcomeLayout'
 
 export const VersionsPage = () => {
     const { matrixUrl } = useEnvironment()
@@ -16,31 +13,25 @@ export const VersionsPage = () => {
     })
 
     return (
-        <VersionsPageLayout>
-            <div data-testid="isFetched">{`isFetched: ${JSON.stringify(isFetched)}`}</div>
-            <div data-testid="isSuccess">{`isSuccess: ${JSON.stringify(isSuccess)}`}</div>
-            <div data-testid="isError">{`isError: ${JSON.stringify(isError)}`}</div>
-            <div data-testid="release_version">{`release_version: ${JSON.stringify(
-                serverVersions,
-            )}`}</div>
-        </VersionsPageLayout>
+        <WelcomeLayout>
+            <Box grow horizontal elevateReadability width="600" borderRadius="sm">
+                <Box
+                    padding
+                    style={{ whiteSpace: 'pre-wrap', fontFamily: 'monospace' }}
+                    fontSize="sm"
+                >
+                    <div data-testid="isFetched">{`isFetched: ${JSON.stringify(isFetched)}`}</div>
+                    <div data-testid="isSuccess">{`isSuccess: ${JSON.stringify(isSuccess)}`}</div>
+                    <div data-testid="isError">{`isError: ${JSON.stringify(isError)}`}</div>
+                    <div data-testid="release_version">{`release_version: ${JSON.stringify(
+                        serverVersions,
+                        null,
+                        2,
+                    )}`}</div>
+                </Box>
+            </Box>
+        </WelcomeLayout>
     )
 }
-
-/**
- * Structure shared between home and loading to keep logo position consistent
- */
-export const VersionsPageLayout = (props: { children?: React.ReactNode }) => (
-    <Stack centerContent grow height="100%" gap="lg">
-        <NavLink to={`/${PATHS.REGISTER}`}>
-            <TransitionLogo />
-        </NavLink>
-        <FadeIn>
-            <Stack centerContent minHeight="height_xl" gap="lg">
-                {props.children}
-            </Stack>
-        </FadeIn>
-    </Stack>
-)
 
 export default VersionsPage

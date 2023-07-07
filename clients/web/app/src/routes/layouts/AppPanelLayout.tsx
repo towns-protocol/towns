@@ -1,16 +1,17 @@
 import { Allotment, AllotmentHandle } from 'allotment'
 import React, { useRef } from 'react'
 import { Outlet, useMatch } from 'react-router'
-import { PATHS } from 'routes'
+import { DirectMessages } from '@components/DirectMessages/DirectMessages'
 import { SuspenseLoader } from '@components/Loaders/SuspenseLoader'
 import { MainSideBar, SpaceSideBar } from '@components/SideBars'
-import { Box, Stack } from '@ui'
-import { usePersistPanes } from 'hooks/usePersistPanes'
-import { atoms } from 'ui/styles/atoms.css'
-import { useContractAndServerSpaceData } from 'hooks/useContractAndServerSpaceData'
-import { DirectMessages } from '@components/DirectMessages/DirectMessages'
 import { SpaceSidebarLoadingPlaceholder } from '@components/SideBars/SpaceSideBar/SpaceSideBarLoading'
+import { Box, Stack } from '@ui'
+import { useContractAndServerSpaceData } from 'hooks/useContractAndServerSpaceData'
+import { usePersistPanes } from 'hooks/usePersistPanes'
+import { PATHS } from 'routes'
+import { atoms } from 'ui/styles/atoms.css'
 import * as styles from './AppPanelLayout.css'
+import { PersistAndFadeWelcomeLogo } from './WelcomeLayout'
 
 export const AppPanelLayout = () => {
     const allotemntRef = useRef<AllotmentHandle>(null)
@@ -27,6 +28,7 @@ export const AppPanelLayout = () => {
 
     const displaySpacePanel =
         !(spacesSettingsRoute && !spacesNewRoute && !homeRoute) || isMessagesRoute
+
     return (
         <Stack horizontal grow borderTop position="relative">
             <Box absoluteFill>
@@ -70,6 +72,7 @@ export const AppPanelLayout = () => {
                     </Allotment.Pane>
                 </Allotment>
             </Box>
+            <PersistAndFadeWelcomeLogo />
         </Stack>
     )
 }

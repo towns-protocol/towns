@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion'
 import React, { HTMLAttributes, forwardRef } from 'react'
-import { Box } from '@ui'
+import { MotionBox } from '@ui'
 import { atoms } from 'ui/styles/atoms.css'
 
 export const Logo = forwardRef<SVGSVGElement, HTMLAttributes<SVGSVGElement>>((props, ref) => (
@@ -47,12 +47,26 @@ export const Logo = forwardRef<SVGSVGElement, HTMLAttributes<SVGSVGElement>>((pr
 ))
 
 export const TransitionLogo = () => (
-    <MotionBox layout="position" layoutId="logo">
+    <MotionBox
+        layout="position"
+        layoutId="logo"
+        initial={false}
+        exit={{
+            opacity: 0,
+            scale: 0.95,
+            transition: {
+                ease: 'easeIn',
+                delay: 0.4,
+                duration: 0.4,
+                layout: {
+                    type: 'spring',
+                },
+            },
+        }}
+    >
         <Logo className={atoms({ height: 'x8' })} />
     </MotionBox>
 )
-
-const MotionBox = motion(Box)
 
 export const MinimalLogo = forwardRef<SVGSVGElement, HTMLAttributes<SVGSVGElement>>(
     (props, ref) => (

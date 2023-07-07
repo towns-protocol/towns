@@ -17,7 +17,7 @@ import { useEnvironment } from 'hooks/useEnvironmnet'
 import { useWindowListener } from 'hooks/useWindowListener'
 import { PATHS } from 'routes'
 import { Register } from 'routes/Register'
-import { Welcome } from 'routes/Welcome'
+import { WelcomeRoute } from 'routes/Welcome'
 import { AppLayout } from 'routes/layouts/AppLayout'
 import { mobileAppClass } from 'ui/styles/globals/utils.css'
 import { FontLoader } from 'ui/utils/FontLoader'
@@ -117,7 +117,6 @@ const AllRoutes = () => {
     const { isAuthenticatedAndConnected } = useAuth()
 
     useWindowListener()
-
     return (
         <>
             {!isAuthenticatedAndConnected && (
@@ -132,8 +131,8 @@ const AllRoutes = () => {
                             <Route path={PATHS.VERSIONS} element={<VersionsPage />} />
                             {!isAuthenticatedAndConnected && (
                                 <>
-                                    <Route path={PATHS.REGISTER} element={<Welcome />} />
-                                    <Route path={PATHS.LOGIN} element={<Welcome />} />
+                                    <Route path={PATHS.REGISTER} element={<WelcomeRoute />} />
+                                    <Route path={PATHS.LOGIN} element={<WelcomeRoute />} />
                                     <Route
                                         path={`${PATHS.SPACES}/:spaceSlug`}
                                         element={<InviteLinkLanding />}

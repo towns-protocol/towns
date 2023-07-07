@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react'
-import { TransitionLogo } from '@components/Logo/Logo'
-import { Stack, Text } from '@ui'
+import { Box, Icon, Paragraph, Stack } from '@ui'
+import { WelcomeLayout } from 'routes/layouts/WelcomeLayout'
 
 function setWithExpiry(key: string, value: string, ttl: number) {
     const item = {
@@ -49,12 +49,27 @@ export function AppErrorFallback({ error }: FallbackRender) {
     }, [isDynamicImportError])
 
     return (
-        <Stack centerContent gap="lg" height="100vh">
-            <TransitionLogo />
-            <Text size="lg">
-                We&apos;re sorry, we&apos;re having some technical issues right now.
-            </Text>
-            <Text size="lg">Please try again later.</Text>
-        </Stack>
+        <WelcomeLayout>
+            <Box />
+            <Box
+                horizontal
+                border
+                background="level2"
+                color="gray1"
+                padding="lg"
+                rounded="sm"
+                gap="md"
+            >
+                <Stack debug justifyContent="start">
+                    <Icon type="alert" />
+                </Stack>
+                <Stack>
+                    <Paragraph>
+                        We&apos;re sorry, we&apos;re having some technical issues right now.
+                    </Paragraph>
+                    <Paragraph>Please try again later.</Paragraph>
+                </Stack>
+            </Box>
+        </WelcomeLayout>
     )
 }
