@@ -2,7 +2,7 @@ import React, { useCallback, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
     Channel,
-    useChannelId,
+    useOptionalChannelId,
     useSpaceId,
     useSpaceThreadRootsUnreadCount,
     useSpaceUnread,
@@ -25,11 +25,12 @@ export const TouchLayoutNavigationBar = (props: Props) => {
     const { displayNotificationBanner, requestPushPermission, denyPushPermission } =
         usePushNotifications()
     const [dropDownOpen, setDropDownOpen] = useState(false)
-    const channelId = useChannelId()
+    const channelId = useOptionalChannelId()
     const spaceId = useSpaceId()
 
     const { mutedChannels, mutedSpaces } = useMuteSettings()
-    const isMuted = mutedChannels[channelId.networkId] || mutedSpaces[spaceId?.networkId ?? '']
+    const isMuted =
+        mutedChannels[channelId?.networkId ?? ''] || mutedSpaces[spaceId?.networkId ?? '']
 
     const hasSpaceUnread = useSpaceUnread()
     const unreadThreadsCount = useSpaceThreadRootsUnreadCount()
