@@ -9,11 +9,15 @@ import { PageColors } from './pages/PageColors'
 import { PageTooltips } from './pages/PageTooltips'
 import { PageTransactionButton } from './pages/PageTransactionButton'
 import { PageButtons } from './pages/PageButtons'
+import { PageText } from './pages/PageText'
+import { Playground } from './Playground'
 
 export const PlaygroundRoutes = () => {
     return (
         <Routes>
             <Route element={<PlaygroundMenuLayout />}>
+                <Route index element={<Playground />} />
+                <Route path="text" element={<PageText />} />
                 <Route path="token" element={<PageToken />} />
                 <Route path="transaction-button" element={<PageTransactionButton />} />
                 <Route path="vlist" element={<VListPlayground />} />
@@ -28,10 +32,10 @@ export const PlaygroundRoutes = () => {
 
 const PlaygroundMenuLayout = () => {
     return (
-        <Stack horizontal grow>
-            <Stack grow>
-                <Outlet />
-            </Stack>
+        <Stack overflowY="scroll" overflowX="hidden">
+            <Outlet />
         </Stack>
     )
 }
+
+export default PlaygroundRoutes

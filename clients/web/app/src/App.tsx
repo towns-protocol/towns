@@ -7,7 +7,6 @@ import { getDefaultWallets } from '@rainbow-me/rainbowkit'
 import { Chain } from 'wagmi'
 import { WalletConnectConnector } from 'wagmi/connectors/walletConnect'
 import { Notifications } from '@components/Notifications/Notifications'
-import { PlaygroundRoutes } from '@components/Playground/PlaygroundRoutes'
 import { SentryReportModal } from '@components/SentryErrorReport/SentryErrorReport'
 import { Box, Stack } from '@ui'
 import { AnalyticsProvider } from 'hooks/useAnalytics'
@@ -33,7 +32,7 @@ const AuthenticatedRoutes = React.lazy(() => import('routes/AuthenticatedRoutes'
 const InviteLinkLanding = React.lazy(() => import('routes/InviteLinkLanding'))
 const VersionsPage = React.lazy(() => import('routes/VersionsPage'))
 
-const Playground = React.lazy(() => import('@components/Playground'))
+const PlaygroundRoutes = React.lazy(() => import('@components/Playground/PlaygroundRoutes'))
 const DebugBar = React.lazy(() => import('@components/DebugBar/DebugBar'))
 
 FontLoader.init()
@@ -158,7 +157,7 @@ const AllRoutes = () => {
                             )}
                         </>
                     </Route>
-                    <Route path="/playground" element={<Playground />} />
+
                     <Route path="/playground/*" element={<PlaygroundRoutes />} />
                 </Route>
             </Routes>

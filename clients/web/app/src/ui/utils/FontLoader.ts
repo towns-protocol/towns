@@ -12,12 +12,15 @@ const BodyFontStyles = {
 const fontConfig = {
     BodyFont: {
         lineHeight: 19 / 15,
+        // a bit arbitrary trying to find a compromise for big/small + mobile
+        // webkit (hnt-1690) - need to integrate capssize the right way at some point
+
         fontMetrics: {
-            ascent: 970,
-            descent: -240,
+            ascent: 1150,
+            descent: -350,
             lineGap: 0,
             unitsPerEm: 1000,
-            capHeight: 700,
+            capHeight: 670,
         },
     },
     TitleFont: {

@@ -3,8 +3,9 @@ import React, { useEffect, useState } from 'react'
 import { toast } from 'react-hot-toast/headless'
 
 import { AddressPill } from '@components/AddressPill'
-import { richText } from '@components/RichText/RichTextEditor.css'
+import { InvalidCookieNotification } from '@components/Notifications/InvalidCookieNotification'
 import { TextFieldWithPill } from '@components/TextFieldWithPill'
+import { TownsTokenExample } from '@components/TownsToken/example/TownTokenExample'
 import {
     Avatar,
     Box,
@@ -14,11 +15,9 @@ import {
     Dropdown,
     Form,
     Grid,
-    Heading,
     Icon,
     IconLabelButton,
     IconName,
-    Paragraph,
     Pill,
     RadioCard,
     RadioSelect,
@@ -27,15 +26,14 @@ import {
     TooltipRenderer,
     iconTypes,
 } from '@ui'
+import { Accordion, AccordionGroup } from 'ui/components/Accordion/Accordion'
 import { FormRender } from 'ui/components/Form/Form'
 import { vars } from 'ui/styles/vars.css'
 import { env } from 'utils'
-import { Accordion, AccordionGroup } from 'ui/components/Accordion/Accordion'
-import { TownsTokenExample } from '@components/TownsToken/example/TownTokenExample'
-import { InvalidCookieNotification } from '@components/Notifications/InvalidCookieNotification'
 import { VListExample } from '../../ui/components/VList/example/VListExample'
-import { PageColors } from './pages/PageColors'
 import { Container } from './components/PlaygroundContainer'
+import { PageColors } from './pages/PageColors'
+import { PageText } from './pages/PageText'
 
 const A3 = Array(3)
     .fill(undefined)
@@ -50,6 +48,7 @@ export const Playground = () => {
     }, [])
     return (
         <Stack position="relative">
+            <PageText />
             <Container label="Notification">
                 <Button
                     onClick={() =>
@@ -120,80 +119,6 @@ export const Playground = () => {
             </Container>
             <Container label="Mock Data">
                 <p>{mockData?.data.name}</p>
-            </Container>
-            <Container label="Paragraph">
-                <Grid columns={2}>
-                    <Stack>
-                        <Paragraph size="lg">Paragraph large</Paragraph>
-                        <Paragraph>Paragraph medium</Paragraph>
-                        <Paragraph size="sm">Paragraph small</Paragraph>
-                    </Stack>
-                    <Stack>
-                        <Paragraph size="lg" fontWeight="strong">
-                            Paragraph large
-                        </Paragraph>
-                        <Paragraph fontWeight="strong">Paragraph medium</Paragraph>
-                        <Paragraph size="sm" fontWeight="strong">
-                            Paragraph small
-                        </Paragraph>
-                    </Stack>
-                </Grid>
-            </Container>
-            <Container label="Headings">
-                <Heading level={1}>Heading 1</Heading>
-                <Heading level={2}>Heading 2</Heading>
-                <Heading level={3}>Heading 3</Heading>
-            </Container>
-            <Container label="Text Content">
-                <Box debug className={richText}>
-                    <h2>Heading</h2>
-                    <h2>
-                        Heading with
-                        <br />
-                        two lines
-                    </h2>
-                    <Paragraph>Paragraph</Paragraph>
-                    <p>
-                        Litecoin threw away lots of robust instamine behind a algorithm, nor Basic
-                        Attention Token thinking many burned behind the stale block!
-                        <br />
-                        reinvested ledger for few peer-to-peer network! Tezos rejoins a node because
-                        Binance Coin sharded a cryptocurrency.
-                    </p>
-                    <p>
-                        ICO thought lots of minimum dapp, but Ethereum threw away lots of
-                        deterministic wallet. EOS thought the chain behind the transaction fee, or
-                        SHA 256 returns a zero confirmation transaction! Although Bitcoin Cash did a
-                        minimum dapp, Waves cost many instant gas.
-                    </p>
-                    <ul>
-                        <li>Message 1</li>
-                        <li>Message 2</li>
-                        <li>Message 3</li>
-                    </ul>
-                    <ul>
-                        <li>
-                            For few peer-to-peer network! Tezos rejoins a node because Binance Coin
-                            sharded a cryptocurrency.
-                        </li>
-                        <li>Message 2</li>
-                        <li>
-                            For few peer-to-peer network! Tezos rejoins a node because Binance Coin
-                            sharded a cryptocurrency.
-                        </li>
-                    </ul>
-                    <ol>
-                        <li>first</li>
-                        <li>
-                            <ol>
-                                <li>second 1</li>
-                                <li>second 2</li>
-                                <li>second 3</li>
-                            </ol>
-                        </li>
-                        <li>third</li>
-                    </ol>
-                </Box>
             </Container>
 
             <PageColors />

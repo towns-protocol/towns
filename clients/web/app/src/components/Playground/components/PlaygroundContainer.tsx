@@ -8,7 +8,7 @@ export const Container = ({
     darkOnly,
     ...boxProps
 }: { label: string; darkOnly?: boolean } & BoxProps) => (
-    <Stack horizontal>
+    <Stack direction={{ touch: 'column', default: 'row' }}>
         {[darkClass, lightClass]
             .filter((c) => !darkOnly || c === darkClass)
             .map((c) => (

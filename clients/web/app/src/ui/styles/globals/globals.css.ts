@@ -20,6 +20,7 @@ globalStyle('*', {
     boxSizing: 'border-box',
     verticalAlign: 'baseline',
     WebkitTapHighlightColor: 'transparent',
+    textSizeAdjust: 'none',
 })
 
 globalStyle('ul, ol', {
