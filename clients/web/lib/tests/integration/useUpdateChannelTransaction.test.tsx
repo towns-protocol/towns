@@ -31,8 +31,7 @@ import { useSpaceData } from '../../src/hooks/use-space-data'
  * This test suite tests the useRoles hook.
  */
 describe('useUpdateChannelTransaction', () => {
-    // TODO: https://linear.app/hnt-labs/issue/HNT-1621/testsintegrationuseupdatechanneltransactiontesttsx
-    test.skip('create a new space, a new channel, and update the channel name', async () => {
+    test('create a new space, a new channel, and update the channel name', async () => {
         /* Arrange */
         const provider = new ZionTestWeb3Provider()
         const spaceName = makeUniqueName('alice')
@@ -75,9 +74,6 @@ describe('useUpdateChannelTransaction', () => {
             throw new Error('councilNftAddress is undefined')
         }
         // get our test elements
-        const spaceElement = screen.getByTestId('spacesElement')
-        const channelElement = screen.getByTestId('channelElement')
-        const SpaceHierachyElement = screen.getByTestId('spaceHierachyElement')
         const createSpaceButton = screen.getByRole('button', {
             name: 'Create Space',
         })
@@ -93,6 +89,15 @@ describe('useUpdateChannelTransaction', () => {
         // click button to create the space
         // this will create the space with a member role
         fireEvent.click(createSpaceButton)
+
+        // wait for space to be created
+        const spaceElement = await waitFor(
+            () => screen.getByTestId('spacesElement'),
+            TestConstants.DecaDefaultWaitForTimeout,
+        )
+        const channelElement = screen.getByTestId('channelElement')
+        const SpaceHierachyElement = screen.getByTestId('spaceHierachyElement')
+
         await waitFor(
             () => expect(createSpaceTxStatus).toHaveTextContent('Success'),
             TestConstants.DecaDefaultWaitForTimeout,
@@ -105,7 +110,10 @@ describe('useUpdateChannelTransaction', () => {
             () => expect(createChannelTransactionStatus).toHaveTextContent('Success'),
             TestConstants.DecaDefaultWaitForTimeout,
         )
-        await waitFor(() => expect(channelElement).toHaveTextContent(`channelName:${channelName}`))
+        await waitFor(
+            () => expect(channelElement).toHaveTextContent(`channelName:${channelName}`),
+            TestConstants.DecaDefaultWaitForTimeout,
+        )
         await waitFor(() => expect(SpaceHierachyElement).toHaveTextContent(channelName))
 
         /* Act */
@@ -246,19 +254,22 @@ function TestComponent(args: {
             <TransactionInfo for={spaceTransaction} label="spaceTransaction" />
             <TransactionInfo for={channelTransaction} label="channelTransaction" />
             <TransactionInfo for={updateChannelTransactionInfo} label="updateChannelTransaction" />
-            <SpaceContextProvider spaceId={spaceId}>
-                <>
-                    <SpaceHierachy />
-                    <SpacesComponent />
-                    <div data-testid="channelElement">
-                        {channelId && (
-                            <ChannelContextProvider channelId={channelId}>
-                                <ChannelComponent />
-                            </ChannelContextProvider>
-                        )}
-                    </div>
-                </>
-            </SpaceContextProvider>
+            {createSpaceTxStatus === TransactionStatus.Success && (
+                <SpaceContextProvider spaceId={spaceId}>
+                    <>
+                        <SpaceHierachy />
+                        <SpacesComponent />
+                        <div data-testid="channelElement">
+                            {createChannelTransactionStatus === TransactionStatus.Success &&
+                                channelId && (
+                                    <ChannelContextProvider channelId={channelId}>
+                                        <ChannelComponent />
+                                    </ChannelContextProvider>
+                                )}
+                        </div>
+                    </>
+                </SpaceContextProvider>
+            )}
         </>
     )
 }

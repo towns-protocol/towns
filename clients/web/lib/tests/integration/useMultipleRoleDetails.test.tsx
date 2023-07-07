@@ -20,6 +20,7 @@ import { useMultipleRoleDetails } from '../../src/hooks/use-role-details'
 import { useRoles } from '../../src/hooks/use-roles'
 import { useSpacesFromContract } from '../../src/hooks/use-spaces-from-contract'
 import { TestConstants } from './helpers/TestConstants'
+import { TransactionStatus } from '../../src/client/ZionClientTypes'
 
 /**
  * This test suite tests the useRoles hook.
@@ -64,7 +65,6 @@ describe('useRoleDetails', () => {
             throw new Error('councilNftAddress is undefined')
         }
         // get our test elements
-        const spaceElement = screen.getByTestId('spacesElement')
         const createSpaceButton = screen.getByRole('button', {
             name: 'Create Space',
         })
@@ -73,6 +73,13 @@ describe('useRoleDetails', () => {
         // click button to create the space
         // this will create 2 spaces with a member role
         fireEvent.click(createSpaceButton)
+
+        // wait for space to be created
+        const spaceElement = await waitFor(
+            () => screen.getByTestId('spacesElement'),
+            TestConstants.DecaDefaultWaitForTimeout,
+        )
+
         // wait for the space name to render
         await waitFor(
             () => expect(spaceElement).toHaveTextContent(spaceNameA),
@@ -115,7 +122,7 @@ function TestComponentMultiple(args: {
     councilNftAddress: string
 }): JSX.Element {
     const spaceTransaction = useCreateSpaceTransaction()
-    const { createSpaceTransactionWithRole, data: spaceId } = spaceTransaction
+    const { createSpaceTransactionWithRole, data: spaceId, transactionStatus } = spaceTransaction
     // handle click to create a space
     const onClickCreateSpace = useCallback(() => {
         const handleClick = async () => {
@@ -153,11 +160,13 @@ function TestComponentMultiple(args: {
         <>
             <button onClick={onClickCreateSpace}>Create Space</button>
             <TransactionInfo for={spaceTransaction} label="spaceTransaction" />
-            <SpaceContextProvider spaceId={spaceId}>
-                <>
-                    <SpacesComponent />
-                </>
-            </SpaceContextProvider>
+            {transactionStatus === TransactionStatus.Success && (
+                <SpaceContextProvider spaceId={spaceId}>
+                    <>
+                        <SpacesComponent />
+                    </>
+                </SpaceContextProvider>
+            )}
         </>
     )
 }

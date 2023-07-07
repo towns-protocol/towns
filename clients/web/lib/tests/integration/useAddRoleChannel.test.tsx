@@ -1,5 +1,6 @@
 /**
  * @group dendrite
+ * @group evan
  */
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
@@ -30,8 +31,7 @@ import { useSpacesFromContract } from '../../src/hooks/use-spaces-from-contract'
  * This test suite tests the useAddRolesToChannel hook.
  */
 describe('useAddRolesToChannel', () => {
-    // TODO: unskip, https://linear.app/hnt-labs/issue/HNT-1581/testsintegrationuseaddrolechanneltesttsx
-    test.skip('add a role to a channel', async () => {
+    test('add a role to a channel', async () => {
         /* Arrange */
         const provider = new ZionTestWeb3Provider()
         const spaceName = makeUniqueName('alice')
@@ -66,12 +66,7 @@ describe('useAddRolesToChannel', () => {
         if (!memberNftAddress) {
             throw new Error('councilNftAddress is undefined')
         }
-        // get our test elements
-        const spaceElement = screen.getByTestId('spacesElement')
-        const channelElement = screen.getByTestId('channelElement')
-        const rolesElement = screen.getByTestId('rolesElement')
-        const rolesCount = screen.getByTestId('rolesCount')
-        const addedRoleToChannelElement = screen.getByTestId('added-role-transaction')
+
         const createSpaceButton = screen.getByRole('button', {
             name: 'Create Space',
         })
@@ -85,19 +80,41 @@ describe('useAddRolesToChannel', () => {
         // click button to create the space
         // this will create the space with no roles
         fireEvent.click(createSpaceButton)
+
+        // wait for space to be created
+        const spaceElement = await waitFor(
+            () => screen.getByTestId('spacesElement'),
+            TestConstants.DecaDefaultWaitForTimeout,
+        )
+
         // wait for the space name to render
         await waitFor(
             () => expect(spaceElement).toHaveTextContent(spaceName),
             TestConstants.DecaDefaultWaitForTimeout,
         )
+
+        // now we can grab these rendered elements
+        const channelElement = screen.getByTestId('channelElement')
+        const rolesCount = screen.getByTestId('rolesCount')
+        const addedRoleToChannelElement = screen.getByTestId('added-role-transaction')
+        const rolesElement = screen.getByTestId('rolesElement')
+
+        // wait for the roles count to render
+        await waitFor(() => expect(rolesCount).toHaveTextContent(`rolesCount:3`))
+
         fireEvent.click(createChannelButton)
+
+        await waitFor(
+            () => expect(screen.getByTestId('channelTransaction')).toHaveTextContent(`Success`),
+            TestConstants.DoubleDefaultWaitForTimeout,
+        )
+
         // wait for the channel name to render
         await waitFor(
             () => expect(channelElement).toHaveTextContent(`channelName:${channelName}`),
             TestConstants.DoubleDefaultWaitForTimeout,
         )
-        // wait for the roles count to render
-        await waitFor(() => expect(rolesCount).toHaveTextContent(`rolesCount:`))
+
         // click button to add Test role to channel
         fireEvent.click(addRoleToChannelButton)
         await waitFor(
@@ -232,25 +249,31 @@ function TestComponent(args: {
             <TransactionInfo for={spaceTransaction} label="spaceTransaction" />
             <TransactionInfo for={channelTransaction} label="channelTransaction" />
             <TransactionInfo for={addRoleTransaction} label="addRoleTransaction" />
-            <SpaceContextProvider spaceId={spaceId}>
-                <>
-                    <SpacesComponent />
-                    <div data-testid="channelElement">
-                        {channelId && (
-                            <ChannelContextProvider channelId={channelId}>
-                                <ChannelComponent channelId={channelId} />
-                            </ChannelContextProvider>
-                        )}
-                    </div>
-                    <div data-testid="added-role-transaction">
-                        addedRoleToChannel:{addedRoleToChannel.toString()}
-                    </div>
-                    <div data-testid="rolesCount">rolesCount:{roleIds.length}</div>
-                    <div>
-                        <RolesComponent spaceNetworkId={spaceNetworkId} />
-                    </div>
-                </>
-            </SpaceContextProvider>
+            {createSpaceTxStatus === TransactionStatus.Success && (
+                <SpaceContextProvider spaceId={spaceId}>
+                    <>
+                        <SpacesComponent />
+                        <>
+                            <div data-testid="channelElement">
+                                {createChannelTxStatus === TransactionStatus.Success &&
+                                    channelId && (
+                                        <ChannelContextProvider channelId={channelId}>
+                                            <ChannelComponent channelId={channelId} />
+                                        </ChannelContextProvider>
+                                    )}
+                            </div>
+                            <div data-testid="added-role-transaction">
+                                addedRoleToChannel:{addedRoleToChannel.toString()}
+                            </div>
+                        </>
+
+                        <div data-testid="rolesCount">rolesCount:{roleIds.length}</div>
+                        <div>
+                            <RolesComponent spaceNetworkId={spaceNetworkId} />
+                        </div>
+                    </>
+                </SpaceContextProvider>
+            )}
         </>
     )
 }

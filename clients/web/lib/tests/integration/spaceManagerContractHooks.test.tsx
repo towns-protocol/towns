@@ -136,7 +136,7 @@ describe('spaceManagerContractHooks', () => {
         // did the button complete
         await waitFor(
             () => expect(createdSpace).toHaveTextContent('true'),
-            TestConstants.DoubleDefaultWaitForTimeout,
+            TestConstants.DecaDefaultWaitForTimeout,
         )
 
         // did we make a space?
@@ -149,7 +149,7 @@ describe('spaceManagerContractHooks', () => {
         // did the button complete
         await waitFor(
             () => expect(spaceWithZionMemberRole).toHaveTextContent('true'),
-            TestConstants.DoubleDefaultWaitForTimeout,
+            TestConstants.DecaDefaultWaitForTimeout,
         )
 
         // did we make a space?

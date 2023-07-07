@@ -23,7 +23,7 @@
         "test-load": "NUM_CLIENTS=25 yarn my-jest --group=integration/load --testTimeout=600000",
         "test:ci": "yarn csb:test-web-lib-done --silent",
         "test:ci-todo": "yarn csb:test-web-lib-todo --silent",
-        "test:dendrite:e2e": "yarn my-jest --group=dendrite --maxWorkers=5",
+        "test:dendrite:e2e": "yarn my-jest --group=dendrite --maxWorkers=2",
         "watch": "tsc --watch"
     },
     "dependencies": {

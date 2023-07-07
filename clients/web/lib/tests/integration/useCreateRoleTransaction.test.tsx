@@ -4,7 +4,6 @@
  * // https://www.npmjs.com/package/jest-runner-groups
  * @group casablanca
  * @group dendrite
- *
  */
 import { Permission } from '../../src/client/web3/ContractTypes'
 import React, { useCallback, useEffect } from 'react'
@@ -25,12 +24,12 @@ import { useCreateSpaceTransaction } from '../../src/hooks/use-create-space-tran
 import { useRoleDetails } from '../../src/hooks/use-role-details'
 import { useRoles } from '../../src/hooks/use-roles'
 import { useSpacesFromContract } from '../../src/hooks/use-spaces-from-contract'
+import { TransactionStatus } from '../../src/client/ZionClientTypes'
 
 /**
  * This test suite tests the useRoles hook.
  */
-// TODO: https://linear.app/hnt-labs/issue/HNT-1708/testsintegrationusecreateroletransactiontesttsx
-describe.skip('useCreateRoleTransaction', () => {
+describe('useCreateRoleTransaction', () => {
     test('create a new space role', async () => {
         /* Arrange */
         const provider = new ZionTestWeb3Provider()
@@ -76,8 +75,7 @@ describe.skip('useCreateRoleTransaction', () => {
             throw new Error('councilNftAddress is undefined')
         }
         // get our test elements
-        const spaceElement = screen.getByTestId('spacesElement')
-        const rolesElement = screen.getByTestId('rolesElement')
+
         const createSpaceButton = screen.getByRole('button', {
             name: 'Create Space',
         })
@@ -89,6 +87,11 @@ describe.skip('useCreateRoleTransaction', () => {
         // click button to create the space
         // this will create the space with a member role
         fireEvent.click(createSpaceButton)
+        const spaceElement = await waitFor(
+            () => screen.getByTestId('spacesElement'),
+            TestConstants.DecaDefaultWaitForTimeout,
+        )
+        const rolesElement = screen.getByTestId('rolesElement')
         // wait for the space name to render
         await waitFor(
             () => expect(spaceElement).toHaveTextContent(spaceName),
@@ -121,7 +124,7 @@ function TestComponent(args: {
     newRoleUsers: string[]
 }): JSX.Element {
     const spaceTransaction = useCreateSpaceTransaction()
-    const { createSpaceTransactionWithRole, data: spaceId } = spaceTransaction
+    const { createSpaceTransactionWithRole, data: spaceId, transactionStatus } = spaceTransaction
     const roleTransaction = useCreateRoleTransaction()
     const { createRoleTransaction } = roleTransaction
     const spaceNetworkId = spaceId ? spaceId.networkId : ''
@@ -175,12 +178,14 @@ function TestComponent(args: {
             <button onClick={onClickCreateRole}>Create Role</button>
             <TransactionInfo for={spaceTransaction} label="spaceTransaction" />
             <TransactionInfo for={roleTransaction} label="roleTransaction" />
-            <SpaceContextProvider spaceId={spaceId}>
-                <>
-                    <SpacesComponent />
-                    <RolesComponent spaceNetworkId={spaceNetworkId} />
-                </>
-            </SpaceContextProvider>
+            {transactionStatus === TransactionStatus.Success && (
+                <SpaceContextProvider spaceId={spaceId}>
+                    <>
+                        <SpacesComponent />
+                        <RolesComponent spaceNetworkId={spaceNetworkId} />
+                    </>
+                </SpaceContextProvider>
+            )}
         </>
     )
 }

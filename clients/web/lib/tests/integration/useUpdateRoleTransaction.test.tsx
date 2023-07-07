@@ -4,7 +4,6 @@
  * // https://www.npmjs.com/package/jest-runner-groups
  * @group casablanca
  * @group dendrite
- *
  */
 import { Permission } from '../../src/client/web3/ContractTypes'
 import React, { useCallback, useEffect, useMemo } from 'react'
@@ -26,13 +25,13 @@ import { useRoles } from '../../src/hooks/use-roles'
 import { useSpacesFromContract } from '../../src/hooks/use-spaces-from-contract'
 import { useUpdateRoleTransaction } from '../../src/hooks/use-update-role-transaction'
 import { TestConstants } from './helpers/TestConstants'
+import { TransactionStatus } from '../../src/client/ZionClientTypes'
 
 /**
  * This test suite tests the useRoles hook.
  */
 describe('useUpdateRoleTransaction', () => {
-    // TODO: https://linear.app/hnt-labs/issue/HNT-1616/testsintegrationuseupdateroletransactiontesttsx
-    test.skip('create a new space role, and then update its role details', async () => {
+    test('create a new space role, and then update its role details', async () => {
         /* Arrange */
         const provider = new ZionTestWeb3Provider()
         const spaceName = makeUniqueName('alice')
@@ -89,8 +88,6 @@ describe('useUpdateRoleTransaction', () => {
             throw new Error('councilNftAddress is undefined')
         }
         // get our test elements
-        const spaceElement = screen.getByTestId('spacesElement')
-        const rolesElement = screen.getByTestId('rolesElement')
         const createSpaceButton = screen.getByRole('button', {
             name: 'Create Space',
         })
@@ -103,6 +100,15 @@ describe('useUpdateRoleTransaction', () => {
         // click button to create the space
         // this will create the space with a member role
         fireEvent.click(createSpaceButton)
+
+        // wait for space to be created
+        const spaceElement = await waitFor(
+            () => screen.getByTestId('spacesElement'),
+            TestConstants.DecaDefaultWaitForTimeout,
+        )
+
+        const rolesElement = screen.getByTestId('rolesElement')
+
         // wait for the space name to render
         await waitFor(
             () => expect(spaceElement).toHaveTextContent(spaceName),
@@ -147,7 +153,11 @@ function TestComponent(args: {
     updatedRoleUsers: string[]
 }): JSX.Element {
     const spaceTransaction = useCreateSpaceTransaction()
-    const { createSpaceTransactionWithRole, data: spaceId } = spaceTransaction
+    const {
+        createSpaceTransactionWithRole,
+        data: spaceId,
+        transactionStatus: spaceTransactionStatus,
+    } = spaceTransaction
     const createRoleTransactionInfo = useCreateRoleTransaction()
     const { createRoleTransaction, data: roleIdentifier } = createRoleTransactionInfo
     const updateRoleTransactionInfo = useUpdateRoleTransaction()
@@ -218,12 +228,14 @@ function TestComponent(args: {
             <TransactionInfo for={spaceTransaction} label="spaceTransaction" />
             <TransactionInfo for={createRoleTransactionInfo} label="createRoleTransaction" />
             <TransactionInfo for={updateRoleTransactionInfo} label="updateRoleTransaction" />
-            <SpaceContextProvider spaceId={spaceId}>
-                <>
-                    <SpacesComponent />
-                    <RolesComponent spaceNetworkId={spaceNetworkId} />
-                </>
-            </SpaceContextProvider>
+            {spaceTransactionStatus === TransactionStatus.Success && (
+                <SpaceContextProvider spaceId={spaceId}>
+                    <>
+                        <SpacesComponent />
+                        <RolesComponent spaceNetworkId={spaceNetworkId} />
+                    </>
+                </SpaceContextProvider>
+            )}
         </>
     )
 }

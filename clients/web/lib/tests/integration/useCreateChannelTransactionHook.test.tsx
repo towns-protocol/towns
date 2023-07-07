@@ -28,8 +28,7 @@ import { ZTEvent } from '../../src/types/timeline-types'
 import { MatrixEvent, MsgType as MatrixMsgType, RoomEvent } from 'matrix-js-sdk'
 import { useZionContext } from '../../src/components/ZionContextProvider'
 
-// TODO: https://linear.app/hnt-labs/issue/HNT-1713/testsintegrationusecreatechanneltransactionhooktesttsx
-describe.skip('useCreateChannelTransactionHook', () => {
+describe('useCreateChannelTransactionHook', () => {
     test('user can create channel', async () => {
         /* Arrange */
         const provider = new ZionTestWeb3Provider()
@@ -183,25 +182,30 @@ describe.skip('useCreateChannelTransactionHook', () => {
                     <button onClick={onClickCreateChannel}>Create Channel</button>
                     <TransactionInfo for={spaceTransaction} label="spaceTransaction" />
                     <TransactionInfo for={channelTransaction} label="channelTransaction" />
-                    <SpaceContextProvider spaceId={spaceId}>
-                        <>
-                            <SpacesComponent />
-                            <div data-testid="channel">
-                                {channelId && (
-                                    <ChannelContextProvider channelId={channelId}>
-                                        <ChannelComponent />
-                                    </ChannelContextProvider>
-                                )}
-                            </div>
-                            <div data-testid="transactions">{Object.keys(transactions).length}</div>
-                            <div data-testid="seen-transactions">
-                                {Object.keys(seenTransactions).length}
-                            </div>
-                            <div data-testid="channel-blockchain-events">
-                                {numberOfChannelBlockchainEvents}
-                            </div>
-                        </>
-                    </SpaceContextProvider>
+                    {createSpaceTxStatus === TransactionStatus.Success && (
+                        <SpaceContextProvider spaceId={spaceId}>
+                            <>
+                                <SpacesComponent />
+                                <div data-testid="channel">
+                                    {createChannelTxHash === TransactionStatus.Success &&
+                                        channelId && (
+                                            <ChannelContextProvider channelId={channelId}>
+                                                <ChannelComponent />
+                                            </ChannelContextProvider>
+                                        )}
+                                </div>
+                                <div data-testid="transactions">
+                                    {Object.keys(transactions).length}
+                                </div>
+                                <div data-testid="seen-transactions">
+                                    {Object.keys(seenTransactions).length}
+                                </div>
+                                <div data-testid="channel-blockchain-events">
+                                    {numberOfChannelBlockchainEvents}
+                                </div>
+                            </>
+                        </SpaceContextProvider>
+                    )}
                 </>
             )
         }
@@ -216,11 +220,6 @@ describe.skip('useCreateChannelTransactionHook', () => {
         )
         // get our test elements
         const clientRunning = screen.getByTestId('clientRunning')
-        const spaceElement = screen.getByTestId('spaces')
-        const channelElement = screen.getByTestId('channel')
-        const transactions = screen.getByTestId('transactions')
-        const transactionsNumber = screen.getByTestId('seen-transactions')
-        const blockchainEvents = screen.getByTestId('channel-blockchain-events')
         const createSpaceButton = screen.getByRole('button', {
             name: 'Create Space',
         })
@@ -231,6 +230,15 @@ describe.skip('useCreateChannelTransactionHook', () => {
         await waitFor(() => expect(clientRunning).toHaveTextContent('true'))
         // click button to create the space
         fireEvent.click(createSpaceButton)
+
+        const spaceElement = await waitFor(
+            () => screen.getByTestId('spaces'),
+            TestConstants.DecaDefaultWaitForTimeout,
+        )
+        const channelElement = screen.getByTestId('channel')
+        const transactions = screen.getByTestId('transactions')
+        const transactionsNumber = screen.getByTestId('seen-transactions')
+        const blockchainEvents = screen.getByTestId('channel-blockchain-events')
         await waitFor(
             () => expect(transactionsNumber).toHaveTextContent('1'),
             TestConstants.DecaDefaultWaitForTimeout,
