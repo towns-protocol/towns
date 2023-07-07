@@ -1,6 +1,6 @@
 import { dlog } from '../dlog'
 import { townsHash, townsRecoverPubKey, townsSign, townsVerifySignature } from './crypto'
-import { bin_fromHexString, bin_toHexString } from '../types'
+import { bin_fromHexString, bin_toHexString } from '../binary'
 import { getPublicKey, utils } from 'ethereum-cryptography/secp256k1'
 import { readFileSync, writeFileSync } from 'fs'
 

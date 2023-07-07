@@ -28,7 +28,7 @@ import { DLogger, dlog } from './dlog'
 import { StreamRpcClientType } from './makeStreamRpcClient'
 import EventEmitter from 'events'
 import TypedEmitter from 'typed-emitter'
-import { isDefined, throwWithCode } from './check'
+import { check, hasElements, isDefined, throwWithCode } from './check'
 import {
     StreamPrefix,
     isChannelStreamId,
@@ -56,8 +56,8 @@ import {
     make_UserPayload_Inception,
     make_UserPayload_ToDevice,
     IDeviceKeySignatures,
-    shortenHexString,
 } from './types'
+import { shortenHexString } from './binary'
 import { CryptoStore } from './crypto/store/base'
 import { DeviceInfo } from './crypto/deviceInfo'
 import { IContent, IDecryptOptions, RiverEvent } from './event'
@@ -128,14 +128,14 @@ export class Stream extends (EventEmitter as new () => TypedEmitter<StreamEvents
      * @param emitter
      */
     addEvents(streamAndCookie: StreamAndCookie, init?: boolean): void {
-        // TODO: perhaps here save rollup and emit events only if rollup is successful
-        assert(
-            isCookieEqual(this.syncCookie, streamAndCookie.originalSyncCookie),
-            `syncCookie mismatch: ${this.syncCookie?.toJsonString()} vs ${streamAndCookie.originalSyncCookie?.toJsonString()}`,
-        )
         const events = unpackEnvelopes(streamAndCookie.events)
-        this.rollup.addEvents(events, this, init)
-        this.syncCookie = streamAndCookie.nextSyncCookie
+        if (init || isCookieEqual(this.syncCookie, streamAndCookie.originalSyncCookie)) {
+            // If this sync is from the same minipool instance, just reply all received events.
+            this.rollup.addEvents(events, this, init)
+            this.syncCookie = streamAndCookie.nextSyncCookie
+        } else {
+            check(false, 'TODO')
+        }
     }
 
     emit<E extends keyof StreamEvents>(event: E, ...args: Parameters<StreamEvents[E]>): boolean {
@@ -482,20 +482,18 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
         return stream
     }
 
-    private async getStream(streamId: string): Promise<Stream | undefined> {
+    private async getStream(streamId: string): Promise<StreamStateView> {
         try {
             this.logCall('getStream', streamId)
             const streamContent = await this.rpcClient.getStream({ streamId })
-            assert(streamContent.stream !== undefined, 'got bad stream')
             this.logCall('getStream', streamContent.stream)
-            const stream = new Stream(
-                streamId,
-                unpackEnvelope(streamContent.stream.events[0]), // TODO: minor optimization: unpacks first event twice: here and then wwe have to slice below to avoid that
-                this,
-                this.logEmitFromStream,
+            check(
+                isDefined(streamContent.stream) && hasElements(streamContent.stream?.events),
+                'got bad stream',
             )
-            streamContent.stream.events = streamContent.stream.events.slice(1)
-            stream.addEvents(streamContent.stream, true)
+            const events = unpackEnvelopes(streamContent.stream.events)
+            const stream = new StreamStateView(streamId, events[0])
+            stream.addEvents(events)
             return stream
         } catch (err) {
             this.logCall('getStream', streamId, 'ERROR', err)
@@ -1095,7 +1093,6 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
             return (async () => {
                 try {
                     const stream = await this.getStream(streamId)
-                    assert(stream !== undefined, 'stream must be defined')
                     const response: IDownloadKeyResponse = {
                         device_keys: {},
                         fallback_keys: {},
@@ -1103,7 +1100,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
                     // 06/02/23 note: for now there's a one to one mapping between userIds - deviceIds, which is why
                     // we return the latest UserDeviceKey event for each user from their stream. This won't hold in the future
                     // as user's will eventually have multiple devices per user.
-                    const payload = Array.from(stream.rollup.uploadedDeviceKeys.values())[0]
+                    const payload = Array.from(stream.uploadedDeviceKeys.values())[0]
 
                     if (!returnFallbackKeys) {
                         const deviceKeys = payload.map((v) => v.deviceKeys).filter(isDefined)

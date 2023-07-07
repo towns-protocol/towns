@@ -1,5 +1,5 @@
 import debug, { Debugger } from 'debug'
-import { bin_toHexString, isHexString, shortenHexString } from './types'
+import { isHexString, shortenHexString, bin_toHexString } from './binary'
 
 const hasOwnProperty = <Y extends PropertyKey>(obj: object, prop: Y): obj is Record<Y, unknown> => {
     return Object.prototype.hasOwnProperty.call(obj, prop)

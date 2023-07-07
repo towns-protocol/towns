@@ -1,5 +1,5 @@
 import { dlog } from './dlog'
-import { bin_fromHexString } from './types'
+import { bin_fromHexString } from './binary'
 
 describe('dlogTest', () => {
     test('basic', () => {

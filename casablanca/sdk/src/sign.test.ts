@@ -1,6 +1,7 @@
 import _ from 'lodash'
 import { checkDelegateSig, unpackEnvelope, makeEvent, SignerContext } from './sign'
-import { bin_fromHexString, bin_toHexString, make_UserPayload_Inception } from './types'
+import { make_UserPayload_Inception } from './types'
+import { bin_fromHexString, bin_toHexString } from './binary'
 import { dlog } from './dlog'
 import { PlainMessage } from '@bufbuild/protobuf'
 import { makeUserStreamId } from './id'

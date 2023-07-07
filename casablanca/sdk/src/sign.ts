@@ -9,7 +9,8 @@ import {
     publicKeyToUint8Array,
 } from './crypto/crypto'
 import { genIdBlob, userIdFromAddress } from './id'
-import { bin_equal, bin_fromHexString, bin_toHexString, ParsedEvent } from './types'
+import { ParsedEvent } from './types'
+import { bin_equal, bin_fromHexString, bin_toHexString } from './binary'
 import { ecrecover, fromRpcSig, hashPersonalMessage } from '@ethereumjs/util'
 
 /**

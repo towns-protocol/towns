@@ -1,4 +1,7 @@
 import { Err } from '@towns/proto'
+import { dlog } from './dlog'
+
+const log = dlog('csb:error')
 
 export class CodeException extends Error {
     code: number
@@ -11,7 +14,9 @@ export class CodeException extends Error {
 }
 
 export function throwWithCode(message?: string, code?: Err, data?: any): never {
-    throw new CodeException(message ?? 'Unknown', code ?? Err.ERR_UNSPECIFIED, data)
+    const e = new CodeException(message ?? 'Unknown', code ?? Err.ERR_UNSPECIFIED, data)
+    log('throwWithCode', e.message, e.stack)
+    throw e
 }
 
 /**

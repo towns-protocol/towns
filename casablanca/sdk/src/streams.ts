@@ -116,7 +116,7 @@ export class StreamStateView {
     readonly leafEventHashes = new Map<string, Uint8Array>()
 
     constructor(streamId: string, inceptionEvent: ParsedEvent | undefined) {
-        check(inceptionEvent !== undefined, `Stream is empty ${streamId}`, Err.STREAM_EMPTY)
+        check(isDefined(inceptionEvent), `Stream is empty ${streamId}`, Err.STREAM_EMPTY)
         check(
             inceptionEvent.event.payload?.value?.content.case === 'inception',
             `First event is not inception ${streamId}`,
@@ -154,7 +154,20 @@ export class StreamStateView {
     }
 
     private addEvent(event: ParsedEvent, emitter?: TypedEmitter<StreamEvents>): void {
-        // TODO: is there need to check event validity and chaining here?
+        check(
+            !this.events.has(event.hashStr),
+            `Can't add same event twice, hash=${event.hashStr}, stream=${this.streamId}`,
+            Err.STREAM_BAD_EVENT,
+        )
+
+        for (const prev of event.prevEventsStrs ?? []) {
+            check(
+                this.events.has(prev),
+                `Can't add event with unknown prevEvent ${prev}, hash=${event.hashStr}, stream=${this.streamId}`,
+                Err.STREAM_BAD_EVENT,
+            )
+        }
+
         this.timeline.push(event)
         this.events.set(event.hashStr, event)
         this.leafEventHashes.set(event.hashStr, event.envelope.hash)
