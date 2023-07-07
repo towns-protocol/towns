@@ -12,11 +12,11 @@ import {
 import { SpaceHierarchies } from '../../types/zion-types'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
-import { QueryKeys } from '../query-keys'
+import { blockchainKeys } from '../../query/query-keys'
 import { RoomIdentifier } from '../../types/room-identifier'
 import { ZionClient } from '../../client/ZionClient'
 import { toZionSpaceChild } from '../../store/use-matrix-store'
-import { useQueryClient } from '@tanstack/react-query'
+import { useQueryClient } from '../../query/queryClient'
 import { useSpaceIdStore } from './useSpaceIds'
 
 // the spaces are just tacked on to the matrix design system,
@@ -154,7 +154,7 @@ export function useSyncSpaceHierarchies(
             const eventType = event.getType()
             if (eventType === MatrixEventType.SpaceChild || eventType === MatrixMsgType.Notice) {
                 queryClient.removeQueries({
-                    queryKey: [QueryKeys.SyncEntitledChannels, eventRoomId],
+                    queryKey: blockchainKeys.entitledChannels(eventRoomId),
                 })
                 // console.log("!!!!! hierarchies new space child", eventRoom.roomId);
                 enqueueSpaceId(eventRoomId)
@@ -173,7 +173,7 @@ export function useSyncSpaceHierarchies(
             const parentSpaceId = getParentSpaceId(room, spaceIds)
             if (parentSpaceId) {
                 queryClient.removeQueries({
-                    queryKey: [QueryKeys.SyncEntitledChannels, parentSpaceId],
+                    queryKey: blockchainKeys.entitledChannels(parentSpaceId),
                 })
                 enqueueSpaceId(parentSpaceId)
             }
@@ -195,7 +195,7 @@ export function useSyncSpaceHierarchies(
             const parentSpaceId = getParentSpaceId(room, spaceIds)
             if (parentSpaceId) {
                 queryClient.removeQueries({
-                    queryKey: [QueryKeys.SyncEntitledChannels, parentSpaceId],
+                    queryKey: blockchainKeys.entitledChannels(parentSpaceId),
                 })
                 enqueueSpaceId(parentSpaceId)
             }

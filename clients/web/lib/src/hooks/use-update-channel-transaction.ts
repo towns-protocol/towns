@@ -7,10 +7,10 @@ import { SignerUndefinedError, toError } from '../types/error-types'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { BlockchainTransactionType } from '../types/web3-types'
-import { QueryRoleKeys } from './query-keys'
+import { blockchainKeys } from '../query/query-keys'
 import { UpdateChannelInfo } from 'types/zion-types'
 import { removeSyncedEntitleChannelsQueries } from '../query/removeSyncedEntitledChannelQueries'
-import { useQueryClient } from '@tanstack/react-query'
+import { useQueryClient } from '../query/queryClient'
 import { useTransactionStore } from '../store/use-transactions-store'
 import { useWeb3Context } from '../components/Web3ContextProvider'
 import { useZionClient } from './use-zion-client'
@@ -81,12 +81,12 @@ export function useUpdateChannelTransaction() {
                     transactionResult = await waitForUpdateChannelTransaction(transactionResult)
                     setTransactionContext(transactionResult)
                     if (transactionResult?.status === TransactionStatus.Success) {
-                        await queryClient.invalidateQueries([
-                            QueryRoleKeys.FirstBySpaceIds,
-                            updateChannelInfo.parentSpaceId.networkId,
-                            QueryRoleKeys.ThenByChannelIds,
-                            updateChannelInfo.channelId.networkId,
-                        ])
+                        await queryClient.invalidateQueries(
+                            blockchainKeys.spaceAndChannel(
+                                updateChannelInfo.parentSpaceId.networkId,
+                                updateChannelInfo.channelId.networkId,
+                            ),
+                        )
                     }
                 }
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any

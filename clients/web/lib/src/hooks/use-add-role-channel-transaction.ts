@@ -5,9 +5,9 @@ import {
 } from '../client/ZionClientTypes'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
-import { QueryRoleKeys } from './query-keys'
+import { blockchainKeys } from '../query/query-keys'
 import { toError } from '../types/error-types'
-import { useQueryClient } from '@tanstack/react-query'
+import { useQueryClient } from '../query/queryClient'
 import { useWeb3Context } from '../components/Web3ContextProvider'
 import { useZionClient } from './use-zion-client'
 
@@ -64,12 +64,9 @@ export function useAddRoleToChannelTransaction() {
                     const rxContext = await waitForAddRoleToChannelTransaction(txContext)
                     setTransactionContext(rxContext)
                     if (rxContext?.status === TransactionStatus.Success) {
-                        await queryClient.invalidateQueries([
-                            QueryRoleKeys.FirstBySpaceIds,
-                            spaceNetworkId,
-                            QueryRoleKeys.ThenByChannelIds,
-                            channelNetworkId,
-                        ])
+                        await queryClient.invalidateQueries(
+                            blockchainKeys.spaceAndChannel(spaceNetworkId, channelNetworkId),
+                        )
                     }
                 }
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any

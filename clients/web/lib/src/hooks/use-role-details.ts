@@ -1,6 +1,6 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '../query/queryClient'
 
-import { QueryRoleKeys } from './query-keys'
+import { blockchainKeys } from '../query/query-keys'
 import { RoleDetails } from '../client/web3/ContractTypes'
 import { useCallback } from 'react'
 import { useZionContext } from '../components/ZionContextProvider'
@@ -29,14 +29,12 @@ export function useRoleDetails(spaceId: string, roleId: number) {
         data: roleDetails,
         error,
     } = useQuery(
-        [QueryRoleKeys.FirstBySpaceIds, spaceId, QueryRoleKeys.ThenByRoleIds, roleId],
+        blockchainKeys.roleDetails(spaceId, roleId),
         getRole,
         // options for the query.
         {
             enabled: isEnabled,
-            staleTime: 1000 * 15,
-            refetchOnReconnect: false,
-            refetchOnWindowFocus: false,
+            refetchOnMount: true,
         },
     )
 
@@ -69,24 +67,17 @@ export function useMultipleRoleDetails(spaceId: string, roleIds: number[]) {
     )
 
     const queryData = useQuery<RoleDetails[]>(
-        [QueryRoleKeys.FirstBySpaceIds, spaceId, QueryRoleKeys.ThenByRoleIds, roleIds],
+        blockchainKeys.multipleRoleDetails(spaceId, roleIds),
         getRoles,
         // options for the query.
         {
             enabled: isEnabled,
-            staleTime: 1000 * 15,
-            refetchOnReconnect: false,
-            refetchOnWindowFocus: false,
+            refetchOnMount: true,
         },
     )
 
     const invalidateQuery = useCallback(
-        () =>
-            queryClient.invalidateQueries([
-                QueryRoleKeys.FirstBySpaceIds,
-                spaceId,
-                QueryRoleKeys.ThenByRoleIds,
-            ]),
+        () => queryClient.invalidateQueries(blockchainKeys.multipleRoleDetails(spaceId)),
         [queryClient, spaceId],
     )
 

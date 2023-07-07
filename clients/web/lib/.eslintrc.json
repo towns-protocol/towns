@@ -31,6 +31,10 @@
             {
                 "patterns": [
                     {
+                        "group": ["@tanstack/react-query"],
+                        "message": "Please use react-query exports from query/queryClient instead"
+                    },
+                    {
                         "group": ["@harmony/contracts"],
                         "message": "Please use import { Foo } from client/web3/shims/... instead"
                     }

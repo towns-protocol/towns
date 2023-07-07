@@ -8,9 +8,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { BlockchainTransactionType } from '../types/web3-types'
 import { Permission } from '../client/web3/ContractTypes'
-import { QueryRoleKeys } from './query-keys'
+import { blockchainKeys } from '../query/query-keys'
 import { createExternalTokenStruct } from '../client/web3/ContractHelpers'
-import { useQueryClient } from '@tanstack/react-query'
+import { useQueryClient } from '../query/queryClient'
 import { useTransactionStore } from '../store/use-transactions-store'
 import { useWeb3Context } from '../components/Web3ContextProvider'
 import { useZionClient } from './use-zion-client'
@@ -87,10 +87,7 @@ export function useCreateRoleTransaction() {
                     transactionResult = await waitForCreateRoleTransaction(transactionResult)
                     setTransactionContext(transactionResult)
                     if (transactionResult?.status === TransactionStatus.Success) {
-                        await queryClient.invalidateQueries([
-                            QueryRoleKeys.FirstBySpaceIds,
-                            spaceNetworkId,
-                        ])
+                        await queryClient.invalidateQueries(blockchainKeys.roles(spaceNetworkId))
                     }
                 }
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any

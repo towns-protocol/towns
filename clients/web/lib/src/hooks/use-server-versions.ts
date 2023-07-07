@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query'
+import { useQuery } from '../query/queryClient'
 import { IZionServerVersions } from 'client/ZionClientTypes'
 import { useEffect } from 'react'
 

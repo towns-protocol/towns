@@ -1,7 +1,7 @@
 import { useCallback, useEffect } from 'react'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '../query/queryClient'
 
-import { QueryRoleKeys } from './query-keys'
+import { blockchainKeys } from '../query/query-keys'
 import { getFilteredRolesFromSpace } from '../client/web3/ContractHelpers'
 import { useZionContext } from '../components/ZionContextProvider'
 
@@ -29,7 +29,7 @@ export function useRoles(_spaceId: string | undefined) {
             const prefetchRoles = async function () {
                 if (spaceId) {
                     await queryClient.prefetchQuery({
-                        queryKey: [QueryRoleKeys.FirstBySpaceIds, spaceId],
+                        queryKey: blockchainKeys.roles(spaceId),
                         queryFn: getRolesFromSpace,
                         staleTime: 15 * 1000, // only prefetch if older than 15 seconds
                     })
@@ -45,15 +45,13 @@ export function useRoles(_spaceId: string | undefined) {
         data: spaceRoles,
         error,
     } = useQuery(
-        [QueryRoleKeys.FirstBySpaceIds, spaceId],
+        blockchainKeys.roles(spaceId),
         getRolesFromSpace,
         // options for the query.
         // query will not execute until the spaceId is defined.
         {
             enabled: spaceId.length > 0,
-            staleTime: 1000 * 15,
-            refetchOnReconnect: false,
-            refetchOnWindowFocus: false,
+            refetchOnMount: true,
         },
     )
 

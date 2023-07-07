@@ -1,8 +1,9 @@
 import { useCallback } from 'react'
 
 import { Permission } from '../client/web3/ContractTypes'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery } from '../query/queryClient'
 import { useZionClient } from './use-zion-client'
+import { blockchainKeys } from '../query/query-keys'
 
 interface Props {
     spaceId: string
@@ -48,21 +49,18 @@ export function useHasPermission(props: Props) {
     } = useQuery(
         // unique key per query so that React Query
         // can manage the cache for us.
-        [props],
+        blockchainKeys.hasPermission(props),
         // query function that does the data fetching.
         getHasPermission,
         // options for the query.
         // query will not execute until the client is defined.
         {
             enabled: client !== undefined,
+            refetchOnMount: true,
+            // inherits default staleTime of 15 secs
             // server strictly enforces permissions in real time.
             // client side caching of permissions is only for UX purposes.
-            // default of staleTime is 0. i.e. data is immediately stale.
             // test the UX for stale time and cache time before setting them.
-            staleTime: 1000 * 15,
-            refetchOnMount: false,
-            refetchOnWindowFocus: false,
-            refetchOnReconnect: false,
         },
     )
 

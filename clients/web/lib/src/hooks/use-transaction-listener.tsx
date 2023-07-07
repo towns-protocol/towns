@@ -4,8 +4,8 @@ import { BlockchainTransactionEvent, ZTEvent } from '../types/timeline-types'
 import { ZionClient } from '../client/ZionClient'
 import { makeRoomIdentifier } from '../types/room-identifier'
 import { useCredentialStore } from '../store/use-credential-store'
-import { useQueries } from '@tanstack/react-query'
 import { useTransactionStore } from '../store/use-transactions-store'
+import { useQueries } from '../query/queryClient'
 import { waitForTransaction } from 'wagmi/actions'
 
 export const useTransactionListener = (client: ZionClient | undefined, homeServerUrl: string) => {
