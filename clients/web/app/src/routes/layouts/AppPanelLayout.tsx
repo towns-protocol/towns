@@ -27,7 +27,7 @@ export const AppPanelLayout = () => {
     const isMessagesRoute = !!messageRoute
 
     const displaySpacePanel =
-        !(spacesSettingsRoute && !spacesNewRoute && !homeRoute) || isMessagesRoute
+        !(spacesSettingsRoute || spacesNewRoute || homeRoute) || isMessagesRoute
 
     return (
         <Stack horizontal grow borderTop position="relative">
