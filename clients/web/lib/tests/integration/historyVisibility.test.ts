@@ -17,8 +17,7 @@ import {
 import { ZionTestClient } from './helpers/ZionTestClient'
 
 describe('historyVisibility', () => {
-    // TODO: unskip, https://linear.app/hnt-labs/issue/HNT-1584/testsintegrationhistoryvisibilitytestts
-    test.skip('create public room, send message, join second user, read message', async () => {
+    test('create public room, send message, join second user, read message', async () => {
         // create bob
         const { bob, john } = await registerAndStartClients(['bob', 'john'])
         //
@@ -55,7 +54,7 @@ describe('historyVisibility', () => {
         // if we don't wait for encryption, we'll send unencrypted messages :(
         await waitFor(() => expect(john.isRoomEncrypted(roomId)).toBeTruthy())
 
-        await john.sendMessage(roomId, "I'm John!")
+        await waitForRandom401ErrorsForAction(() => john.sendMessage(roomId, "I'm John!"))
 
         await waitFor(() => expect(bob.getMessages(roomId)).toContain("I'm John!"))
 
@@ -79,7 +78,7 @@ describe('historyVisibility', () => {
 
         await waitFor(() => expect(alice.getMessages(roomId)).toContain("I'm John!"))
 
-        await alice.sendMessage(roomId, "I'm Alice!")
+        await waitForRandom401ErrorsForAction(() => alice.sendMessage(roomId, "I'm Alice!"))
 
         await waitFor(() => expect(bob.getMessages(roomId)).toContain("I'm Alice!"))
 

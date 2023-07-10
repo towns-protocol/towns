@@ -40,7 +40,7 @@ describe('presence', () => {
 
         await waitForRandom401ErrorsForAction(() => alice.joinRoom(channelId))
 
-        await alice.sendMessage(channelId, 'Hi @bob')
+        await waitForRandom401ErrorsForAction(() => alice.sendMessage(channelId, 'Hi @bob'))
 
         await waitFor(() =>
             expect(bob.getEvents_TypedRoomMessage(channelId).at(-1)?.content?.body).toEqual(
