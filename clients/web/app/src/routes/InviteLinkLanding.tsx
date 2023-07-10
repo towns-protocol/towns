@@ -39,7 +39,7 @@ const InviteLinkLanding = () => {
     const isInvite = searchParams.get('invite') != undefined
     const { data, isLoading } = useContractSpaceInfo(spaceId)
     const setTitle = useSetDocTitle()
-    const { data: roomTopic, isLoading: isLoadingRoomTopic } = useGetSpaceTopic(spaceId)
+    const { data: roomTopic } = useGetSpaceTopic(spaceId)
     const url = new URL(window.location.href)
     const { address: currentWallet } = useAccount()
     const invalidWallet = url.searchParams.get('invalidWallet')
@@ -98,7 +98,7 @@ const InviteLinkLanding = () => {
             maxWidth="420"
             alignItems="center"
         >
-            {data && !isLoadingRoomTopic ? (
+            {data ? (
                 <>
                     <InteractiveSpaceIcon
                         spaceId={data.networkId}
