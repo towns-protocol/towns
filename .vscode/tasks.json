@@ -20,6 +20,7 @@
         // and use the artifacts of the contracts in their builds
         "label": "~Start Local Dev~",
         "dependsOn": [
+          "CheckNodeVersion",
           "YarnInstall",
           "Stage 1"
         ],
@@ -110,6 +111,16 @@
         "label": "FoundryUp",
         "type": "shell",
         "command": "foundryup",
+        "isBackground": true,
+        "problemMatcher": [],
+        "presentation": {
+          "group": "ephemeral"
+        }
+      },
+      {
+        "label": "CheckNodeVersion",
+        "type": "shell",
+        "command": "./scripts/check-node-version.sh",
         "isBackground": true,
         "problemMatcher": [],
         "presentation": {
