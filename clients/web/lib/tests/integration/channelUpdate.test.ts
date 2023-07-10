@@ -6,14 +6,14 @@ import {
     createTestSpaceWithZionMemberRole,
     findRoleByName,
     registerAndStartClients,
+    waitForRandom401ErrorsForAction,
 } from 'use-zion-client/tests/integration/helpers/TestUtils'
 
 import { ContractReceipt } from 'ethers'
 import { Permission } from 'use-zion-client/src/client/web3/ContractTypes'
-import { RoomVisibility } from '../../src/types/zion-types'
+import { Room, RoomVisibility } from '../../src/types/zion-types'
 
-describe.skip('channel update', () => {
-    // https://linear.app/hnt-labs/issue/HNT-1641/testsintegrationchannelupdatetestts
+describe('channel update', () => {
     test('Update the channel with multicall', async () => {
         /** Arrange */
         const { alice, bob } = await registerAndStartClients(['alice', 'bob'])
@@ -84,7 +84,9 @@ describe.skip('channel update', () => {
             throw e
         }
         // bob tries to join the space and succeeds because he is a member of the new role
-        const bobJoinedRoom = await bob.joinRoom(channelId, spaceId.networkId)
+        const bobJoinedRoom = await waitForRandom401ErrorsForAction<Room>(() =>
+            bob.joinRoom(channelId, spaceId.networkId),
+        )
 
         /** Assert */
         // verify the transaction succeeded
@@ -94,7 +96,12 @@ describe.skip('channel update', () => {
         expect(bobJoinError.data).toHaveProperty('errcode', MAXTRIX_ERROR.M_FORBIDDEN)
         // bob was able to join the space after the channel was updated
         expect(bobJoinedRoom?.id.networkId).toBeTruthy()
-        await alice.logout()
-        await bob.logout()
+
+        try {
+            await alice.logout()
+            await bob.logout()
+        } catch (error) {
+            console.error(error)
+        }
     })
 })

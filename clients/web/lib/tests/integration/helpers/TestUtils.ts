@@ -235,9 +235,10 @@ export function assertRoleEquals(actual: RoleDetails, expected: RoleDetails) {
 // most often this happens when joining a channel immediately after creation
 export async function waitForRandom401ErrorsForAction<T>(action: () => Promise<T>) {
     let failMessage = ''
+    let result: T | undefined
 
     try {
-        await waitFor(async () => action(), {
+        result = await waitFor(async () => action(), {
             interval: 1000 * 3,
             timeout: 1000 * 20,
         })
@@ -250,4 +251,6 @@ export async function waitForRandom401ErrorsForAction<T>(action: () => Promise<T
     }
     // compare with failMessage for easier debugging while running --silent flag
     expect(failMessage).toBe('')
+
+    return result
 }
