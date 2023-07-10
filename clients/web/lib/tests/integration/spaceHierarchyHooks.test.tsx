@@ -23,8 +23,7 @@ import { useSpaceData } from '../../src/hooks/use-space-data'
 import { LoginWithWallet } from './helpers/TestComponents'
 
 describe('spaceHierarchyHooks', () => {
-    // TODO: unskip, https://linear.app/hnt-labs/issue/HNT-1587/testsintegrationspacehierarchyhookstesttsx
-    test.skip('create a space with two users, have alice create a child channel, ensure bob sees it', async () => {
+    test('create a space with two users, have alice create a child channel, ensure bob sees it', async () => {
         // create clients
         // alice needs to have a valid nft in order to join bob's space / channel
         const alice = await registerAndStartClient('alice', TestConstants.getWalletWithMemberNft())
@@ -85,7 +84,10 @@ describe('spaceHierarchyHooks', () => {
         // wait for registration
         await waitFor(() => expect(loginStatus).toHaveTextContent(LoginStatus.LoggedIn))
         // expect the initial space child count to include the channel bob created and the default channel
-        await waitFor(() => expect(spaceChildCount).toHaveTextContent('2'))
+        await waitFor(
+            () => expect(spaceChildCount).toHaveTextContent('2'),
+            TestConstants.DoubleDefaultWaitForTimeout,
+        )
         // have alice create a channel
         await createTestChannelWithSpaceRoles(alice, {
             name: 'alices channel',
@@ -94,8 +96,9 @@ describe('spaceHierarchyHooks', () => {
             roleIds: [],
         })
         // wait for the space child count to change
-        await waitFor(() => expect(spaceChildCount).toHaveTextContent('3'), {
-            timeout: 3000,
-        })
+        await waitFor(
+            () => expect(spaceChildCount).toHaveTextContent('3'),
+            TestConstants.DoubleDefaultWaitForTimeout,
+        )
     })
 })
