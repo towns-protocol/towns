@@ -21,7 +21,7 @@ func StartServer(ctx context.Context, cfg *config.Config) (func(), int, error) {
 	log := dlog.CtxLog(ctx)
 
 	var chainConfig *config.ChainConfig
-	if cfg.Authorization {
+	if cfg.UseContract {
 		chainConfig = &cfg.Chain
 	}
 

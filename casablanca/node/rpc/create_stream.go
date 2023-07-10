@@ -151,7 +151,7 @@ func (s *Service) createStream(ctx context.Context, log *slog.Logger, req *conne
 		}
 
 		// check permissions
-		allowed, err := s.Authorization.IsAllowed(
+		allowed, err := s.townsContract.IsAllowed(
 			ctx,
 			auth.AuthorizationArgs{
 				RoomId:     inception.SpaceId,

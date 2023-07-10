@@ -142,7 +142,7 @@ func (s *Service) addChannelMessage(ctx context.Context, stream *Stream, view St
 		return status.Errorf(codes.Internal, "AddEvent: error getting room info: %v", err)
 	}
 
-	allowed, err := s.Authorization.IsAllowed(
+	allowed, err := s.townsContract.IsAllowed(
 		ctx,
 		auth.AuthorizationArgs{
 			RoomId:     streamId,
@@ -210,7 +210,7 @@ func (s *Service) addMembershipEvent(ctx context.Context, stream *Stream, view S
 			return status.Errorf(codes.Internal, "AddEvent: error getting room info: %v", err)
 		}
 
-		allowed, err := s.Authorization.IsAllowed(
+		allowed, err := s.townsContract.IsAllowed(
 			ctx,
 			auth.AuthorizationArgs{
 				RoomId:     streamId,

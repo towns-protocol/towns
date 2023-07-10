@@ -146,7 +146,7 @@ func createChannel(ctx context.Context, wallet *crypto.Wallet, client protocolco
 func testServerAndClient(ctx context.Context, dbUrl string) (protocolconnect.StreamServiceClient, func()) {
 
 	cfg := &config.Config{
-		Authorization: false,
+		UseContract: false,
 		Chain: config.ChainConfig{
 			ChainId:    31337,
 			NetworkUrl: "http://localhost:8545",

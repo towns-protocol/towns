@@ -8,6 +8,13 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
+const (
+	STREAM_USER_PREFIX            = "00"
+	STREAM_SPACE_PREFIX           = "11"
+	STREAM_CHANNEL_PREFIX         = "22"
+	STREAM_USER_DEVICE_KEY_PREFIX = "33"
+)
+
 func UserIdFromAddress(address []byte) (string, error) {
 	if len(address) != 20 {
 		return "", fmt.Errorf("invalid address length %d", len(address))
@@ -28,55 +35,45 @@ func UserStreamIdFromAddress(address []byte) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return "00-" + userId, nil
+	return STREAM_USER_PREFIX + "-" + userId, nil
 }
 
 func ValidUserStreamId(id string) bool {
-	return len(id) == 45 && strings.HasPrefix(id, "00-0x")
+	return len(id) == 45 && strings.HasPrefix(id, STREAM_USER_PREFIX+"-0x")
 }
 
 func ValidUserDeviceKeyStreamId(id string) bool {
-	return len(id) == 45 && strings.HasPrefix(id, "33-0x")
+	return len(id) == 45 && strings.HasPrefix(id, STREAM_USER_DEVICE_KEY_PREFIX+"-0x")
 }
 
 func UserDeviceKeyStreamIdFromId(id string) (string, error) {
 	if len(id) != 42 {
 		return "", fmt.Errorf("invalid id length %s", id)
 	}
-	return "33-" + id, nil
+	return STREAM_USER_DEVICE_KEY_PREFIX + "-" + id, nil
 }
 
 func UserStreamIdFromId(id string) (string, error) {
 	if len(id) != 42 {
 		return "", fmt.Errorf("invalid id length %s", id)
 	}
-	return "00-" + id, nil
-}
-
-func AddressFromUserStreamId(id string) ([]byte, error) {
-	if len(id) != 42 {
-		return nil, fmt.Errorf("invalid id length %s", id)
-	}
-	if !strings.HasPrefix(id, "00-") {
-		return nil, fmt.Errorf("invalid id %s", id)
-	}
-	return AddressFromUserId(id[3:])
+	return STREAM_USER_PREFIX + "-" + id, nil
 }
 
 func SpaceStreamIdFromName(space string) string {
-	return "11-" + space
+	return STREAM_SPACE_PREFIX + "-" + space
 }
 
 func ChannelStreamIdFromName(channel string) string {
-	return "22-" + channel
+	return STREAM_CHANNEL_PREFIX + "-" + channel
 }
 
 func ValidSpaceStreamId(id string) bool {
-	return strings.HasPrefix(id, "11-")
+	return strings.HasPrefix(id, STREAM_SPACE_PREFIX+"-")
 }
 
 func ValidChannelStreamId(id string) bool {
-	return strings.HasPrefix(id, "22-")
+	return strings.HasPrefix(id, STREAM_CHANNEL_PREFIX+"-")
 }
 
 func RoomTypeFromStreamId(id string) (RoomType, error) {
@@ -84,7 +81,7 @@ func RoomTypeFromStreamId(id string) (RoomType, error) {
 		return Space, nil
 	} else if ValidChannelStreamId(id) {
 		return Channel, nil
-	} else  if ValidUserStreamId(id) {
+	} else if ValidUserStreamId(id) {
 		return User, nil
 	}
 	return InvalidRoomType, fmt.Errorf("invalid room type for stream id %s", id)

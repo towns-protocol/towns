@@ -22,7 +22,7 @@ var (
 
 type Service struct {
 	cache         events.StreamCache
-	Authorization auth.Authorization
+	townsContract auth.TownsContract
 	wallet        *crypto.Wallet
 	log           *slog.Logger
 }
@@ -40,13 +40,13 @@ func MakeServiceHandler(ctx context.Context, log *slog.Logger, dbUrl string, cha
 		return "", nil, err
 	}
 
-	var authorization auth.Authorization
+	var contract auth.TownsContract
 	if chainConfig == nil {
 		log.Warn("Using passthrough auth")
-		authorization = auth.NewPassthroughAuth()
+		contract = auth.NewTownsPassThrough()
 	} else {
 		log.Info("Using casablanca auth", "chain_config", chainConfig)
-		authorization, err = auth.NewChainAuth(chainConfig)
+		contract, err = auth.NewTownsContract(chainConfig)
 		if err != nil {
 			log.Error("failed to create auth", "error", err)
 			return "", nil, err
@@ -56,7 +56,7 @@ func MakeServiceHandler(ctx context.Context, log *slog.Logger, dbUrl string, cha
 	s, h := protocolconnect.NewStreamServiceHandler(
 		&Service{
 			cache:         events.NewStreamCache(store),
-			Authorization: authorization,
+			townsContract: contract,
 			wallet:        wallet,
 			log:           log,
 		},

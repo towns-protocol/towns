@@ -2,13 +2,13 @@ package config
 
 // Viper uses mapstructure module to marshal settings into config struct.
 type Config struct {
-	Port          int
-	Address       string
-	DbUrl         string
-	Metrics       MetricsConfig
-	Chain         ChainConfig
-	Authorization bool
-	Log           LogConfig
+	Port        int
+	Address     string
+	DbUrl       string
+	Metrics     MetricsConfig
+	Chain       ChainConfig
+	UseContract bool
+	Log         LogConfig
 }
 
 type LogConfig struct {

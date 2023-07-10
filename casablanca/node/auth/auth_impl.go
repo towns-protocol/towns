@@ -20,32 +20,32 @@ type AuthorizationArgs struct {
 	Permission Permission
 }
 
-type Authorization interface {
+type TownsContract interface {
 	IsAllowed(ctx context.Context, args AuthorizationArgs, info *common.RoomInfo) (bool, error)
+	GetUserId(ctx context.Context, townsKey string) (string, error)
 }
 
 var ErrSpaceDisabled = errors.New("space disabled")
 var ErrChannelDisabled = errors.New("channel disabled")
 
-// PassthroughAuth is an authorization implementation that allows all requests.
-type PassthroughAuth struct{}
+// TownsPassThrough is an authorization implementation that allows all requests.
+type TownsPassThrough struct{}
 type ChainAuth struct {
 	chainId       int
 	ethClient     *ethclient.Client
 	spaceContract SpaceContract
 }
 
-func NewPassthroughAuth() Authorization {
-	return &PassthroughAuth{}
+func NewTownsPassThrough() TownsContract {
+	return &TownsPassThrough{}
 }
 
-func NewChainAuth(cfg *config.ChainConfig) (Authorization, error) {
-	// create the authorization states
+func NewTownsContract(cfg *config.ChainConfig) (TownsContract, error) {
 	chainId := cfg.ChainId
 	// initialise the eth client.
 	if cfg.NetworkUrl == "" {
 		slog.Error("No blockchain network url specified in config")
-		return nil, nil // TODO: is this a bug? Error should be returned?
+		return nil, fmt.Errorf("no blockchain network url specified in config")
 	}
 	ethClient, err := GetEthClient(cfg.NetworkUrl)
 	if err != nil {
@@ -74,8 +74,13 @@ func NewChainAuth(cfg *config.ChainConfig) (Authorization, error) {
 	return za, nil
 }
 
-func (za *PassthroughAuth) IsAllowed(ctx context.Context, args AuthorizationArgs, info *common.RoomInfo) (bool, error) {
+func (za *TownsPassThrough) IsAllowed(ctx context.Context, args AuthorizationArgs, info *common.RoomInfo) (bool, error) {
 	return true, nil
+}
+
+func (za *TownsPassThrough) GetUserId(ctx context.Context, townsKey string) (string, error) {
+	// In passthrough towns key is the user id.
+	return townsKey, nil
 }
 
 func (za *ChainAuth) IsAllowed(ctx context.Context, args AuthorizationArgs, roomInfo *common.RoomInfo) (bool, error) {
@@ -105,6 +110,11 @@ func (za *ChainAuth) IsAllowed(ctx context.Context, args AuthorizationArgs, room
 	default:
 		return false, fmt.Errorf("unhandled room type: %s", roomInfo.RoomType)
 	}
+}
+
+func (za *ChainAuth) GetUserId(ctx context.Context, townsKey string) (string, error) {
+	// TODO: implement this.
+	return townsKey, nil
 }
 
 func (za *ChainAuth) isEntitledToSpace(roomInfo *common.RoomInfo, user eth.Address, permission Permission) (bool, error) {
