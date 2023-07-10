@@ -1,27 +1,21 @@
 /*
-Stream types
+Stream types for interacting with the blockchain layer.
 */
 package common
 
-const (
-	ConstSpaceChildEventType  = "m.space.child"
-	ConstSpaceParentEventType = "m.space.parent"
-)
+type StreamType int64
 
-// Define enum for RoomType
-type RoomType int64
-
-const InvalidRoomType RoomType = -1
+const InvalidStreamType StreamType = -1
 
 const (
-	Space RoomType = iota
+	Space StreamType = iota
 	Channel
 	User
 	UserSettings
 	Unknown
 )
 
-func (r RoomType) String() string {
+func (r StreamType) String() string {
 	switch r {
 	case Space:
 		return "space"
@@ -33,16 +27,16 @@ func (r RoomType) String() string {
 		return "user_settings"
 	case Unknown:
 		return "unknown"
-	case InvalidRoomType:
+	case InvalidStreamType:
 		return "invalid"
 	default:
 		return "unknown"
 	}
 }
 
-type RoomInfo struct {
-	SpaceId   string
-	ChannelId string
-	RoomType  RoomType
-	IsOwner   bool
+type StreamInfo struct {
+	SpaceId    string
+	ChannelId  string
+	StreamType StreamType
+	IsOwner    bool
 }

@@ -76,13 +76,3 @@ func ValidChannelStreamId(id string) bool {
 	return strings.HasPrefix(id, STREAM_CHANNEL_PREFIX+"-")
 }
 
-func RoomTypeFromStreamId(id string) (RoomType, error) {
-	if ValidSpaceStreamId(id) {
-		return Space, nil
-	} else if ValidChannelStreamId(id) {
-		return Channel, nil
-	} else if ValidUserStreamId(id) {
-		return User, nil
-	}
-	return InvalidRoomType, fmt.Errorf("invalid room type for stream id %s", id)
-}

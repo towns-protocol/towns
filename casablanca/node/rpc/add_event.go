@@ -137,15 +137,15 @@ func (s *Service) addChannelMessage(ctx context.Context, stream *Stream, view St
 		return err
 	}
 
-	info, err := RoomInfoFromInceptionEvent(view.InceptionEvent(), streamId, user)
+	info, err := StreamInfoFromInceptionEvent(view.InceptionEvent(), streamId, user)
 	if err != nil {
-		return status.Errorf(codes.Internal, "AddEvent: error getting room info: %v", err)
+		return status.Errorf(codes.Internal, "AddEvent: error getting stream info: %v", err)
 	}
 
 	allowed, err := s.townsContract.IsAllowed(
 		ctx,
 		auth.AuthorizationArgs{
-			RoomId:     streamId,
+			StreamId:   streamId,
 			UserId:     user,
 			Permission: auth.PermissionWrite,
 		},
@@ -205,15 +205,15 @@ func (s *Service) addMembershipEvent(ctx context.Context, stream *Stream, view S
 	}
 
 	if permission != auth.PermissionUndefined {
-		info, err := RoomInfoFromInceptionEvent(view.InceptionEvent(), streamId, userId)
+		info, err := StreamInfoFromInceptionEvent(view.InceptionEvent(), streamId, userId)
 		if err != nil {
-			return status.Errorf(codes.Internal, "AddEvent: error getting room info: %v", err)
+			return status.Errorf(codes.Internal, "AddEvent: error getting stream info: %v", err)
 		}
 
 		allowed, err := s.townsContract.IsAllowed(
 			ctx,
 			auth.AuthorizationArgs{
-				RoomId:     streamId,
+				StreamId:   streamId,
 				UserId:     userId,
 				Permission: permission,
 			},

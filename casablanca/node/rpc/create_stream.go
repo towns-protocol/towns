@@ -145,7 +145,7 @@ func (s *Service) createStream(ctx context.Context, log *slog.Logger, req *conne
 		if err != nil {
 			return nil, err
 		}
-		spaceInfo, err := RoomInfoFromInceptionEvent(spaceView.InceptionEvent(), inception.SpaceId, user)
+		spaceInfo, err := StreamInfoFromInceptionEvent(spaceView.InceptionEvent(), inception.SpaceId, user)
 		if err != nil {
 			return nil, err
 		}
@@ -154,7 +154,7 @@ func (s *Service) createStream(ctx context.Context, log *slog.Logger, req *conne
 		allowed, err := s.townsContract.IsAllowed(
 			ctx,
 			auth.AuthorizationArgs{
-				RoomId:     inception.SpaceId,
+				StreamId:   inception.SpaceId,
 				UserId:     user,
 				Permission: auth.PermissionAddRemoveChannels,
 			},

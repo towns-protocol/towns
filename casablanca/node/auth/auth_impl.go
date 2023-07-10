@@ -15,13 +15,13 @@ import (
 )
 
 type AuthorizationArgs struct {
-	RoomId     string
+	StreamId   string
 	UserId     string
 	Permission Permission
 }
 
 type TownsContract interface {
-	IsAllowed(ctx context.Context, args AuthorizationArgs, info *common.RoomInfo) (bool, error)
+	IsAllowed(ctx context.Context, args AuthorizationArgs, info *common.StreamInfo) (bool, error)
 	GetUserId(ctx context.Context, townsKey string) (string, error)
 }
 
@@ -74,7 +74,7 @@ func NewTownsContract(cfg *config.ChainConfig) (TownsContract, error) {
 	return za, nil
 }
 
-func (za *TownsPassThrough) IsAllowed(ctx context.Context, args AuthorizationArgs, info *common.RoomInfo) (bool, error) {
+func (za *TownsPassThrough) IsAllowed(ctx context.Context, args AuthorizationArgs, info *common.StreamInfo) (bool, error) {
 	return true, nil
 }
 
@@ -83,20 +83,20 @@ func (za *TownsPassThrough) GetUserId(ctx context.Context, townsKey string) (str
 	return townsKey, nil
 }
 
-func (za *ChainAuth) IsAllowed(ctx context.Context, args AuthorizationArgs, roomInfo *common.RoomInfo) (bool, error) {
+func (za *ChainAuth) IsAllowed(ctx context.Context, args AuthorizationArgs, streamInfo *common.StreamInfo) (bool, error) {
 	log := dlog.CtxLog(ctx)
 
 	userIdentifier := CreateUserIdentifier(args.UserId)
-	log.Debug("IsAllowed", "args", args, "user", userIdentifier, "roomInfo", roomInfo)
+	log.Debug("IsAllowed", "args", args, "user", userIdentifier, "streamInfo", streamInfo)
 
 	// Check if user is entitled to space / channel.
-	switch roomInfo.RoomType {
+	switch streamInfo.StreamType {
 	case common.Space:
-		isEntitled, err := za.isEntitledToSpace(roomInfo, userIdentifier.AccountAddress, args.Permission)
+		isEntitled, err := za.isEntitledToSpace(streamInfo, userIdentifier.AccountAddress, args.Permission)
 		log.Debug("IsAllowed result", "isEntitledToSpace", isEntitled, "err", err)
 		return isEntitled, err
 	case common.Channel:
-		isEntitled, err := za.isEntitledToChannel(roomInfo, userIdentifier.AccountAddress, args.Permission)
+		isEntitled, err := za.isEntitledToChannel(streamInfo, userIdentifier.AccountAddress, args.Permission)
 		log.Debug("IsAllowed result", "isEntitledToChannel", isEntitled, "err", err)
 		return isEntitled, err
 	case common.User:
@@ -105,10 +105,10 @@ func (za *ChainAuth) IsAllowed(ctx context.Context, args AuthorizationArgs, room
 		fallthrough
 	case common.Unknown:
 		fallthrough
-	case common.InvalidRoomType:
+	case common.InvalidStreamType:
 		fallthrough
 	default:
-		return false, fmt.Errorf("unhandled room type: %s", roomInfo.RoomType)
+		return false, fmt.Errorf("unhandled stream type: %s", streamInfo.StreamType)
 	}
 }
 
@@ -117,9 +117,9 @@ func (za *ChainAuth) GetUserId(ctx context.Context, townsKey string) (string, er
 	return townsKey, nil
 }
 
-func (za *ChainAuth) isEntitledToSpace(roomInfo *common.RoomInfo, user eth.Address, permission Permission) (bool, error) {
+func (za *ChainAuth) isEntitledToSpace(streamInfo *common.StreamInfo, user eth.Address, permission Permission) (bool, error) {
 	// space disabled check.
-	isDisabled, err := za.spaceContract.IsSpaceDisabled(roomInfo.SpaceId)
+	isDisabled, err := za.spaceContract.IsSpaceDisabled(streamInfo.SpaceId)
 	if err != nil {
 		return false, err
 	} else if isDisabled {
@@ -128,16 +128,16 @@ func (za *ChainAuth) isEntitledToSpace(roomInfo *common.RoomInfo, user eth.Addre
 
 	// space entitlement check.
 	isEntitled, err := za.spaceContract.IsEntitledToSpace(
-		roomInfo.SpaceId,
+		streamInfo.SpaceId,
 		user,
 		permission,
 	)
 	return isEntitled, err
 }
 
-func (za *ChainAuth) isEntitledToChannel(roomInfo *common.RoomInfo, user eth.Address, permission Permission) (bool, error) {
+func (za *ChainAuth) isEntitledToChannel(streamInfo *common.StreamInfo, user eth.Address, permission Permission) (bool, error) {
 	// channel disabled check.
-	isDisabled, err := za.spaceContract.IsChannelDisabled(roomInfo.SpaceId, roomInfo.ChannelId)
+	isDisabled, err := za.spaceContract.IsChannelDisabled(streamInfo.SpaceId, streamInfo.ChannelId)
 	if err != nil {
 		return false, err
 	} else if isDisabled {
@@ -146,8 +146,8 @@ func (za *ChainAuth) isEntitledToChannel(roomInfo *common.RoomInfo, user eth.Add
 
 	// channel entitlement check.
 	isEntitled, err := za.spaceContract.IsEntitledToChannel(
-		roomInfo.SpaceId,
-		roomInfo.ChannelId,
+		streamInfo.SpaceId,
+		streamInfo.ChannelId,
 		user,
 		permission,
 	)
