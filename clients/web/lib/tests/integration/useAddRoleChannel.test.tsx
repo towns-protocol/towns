@@ -9,7 +9,6 @@ import { BigNumber } from 'ethers'
 import { ChannelContextProvider } from '../../src/components/ChannelContextProvider'
 import { Permission } from '../../src/client/web3/ContractTypes'
 import { RegisterWallet, TransactionInfo } from './helpers/TestComponents'
-import { RoomIdentifier } from '../../dist'
 import { RoomVisibility } from 'use-zion-client/src/types/zion-types'
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
 import { SpaceDataTypes } from '../../src/client/web3/shims/SpaceShim'
@@ -26,6 +25,8 @@ import { useCreateSpaceTransaction } from '../../src/hooks/use-create-space-tran
 import { useRoleDetails } from '../../src/hooks/use-role-details'
 import { useRoles } from '../../src/hooks/use-roles'
 import { useSpacesFromContract } from '../../src/hooks/use-spaces-from-contract'
+import { useSpaceData } from '../../src/hooks/use-space-data'
+import { RoomIdentifier } from '../../src/types/room-identifier'
 
 /**
  * This test suite tests the useAddRolesToChannel hook.
@@ -291,9 +292,10 @@ function SpacesComponent(): JSX.Element {
 }
 
 function ChannelComponent({ channelId }: { channelId: RoomIdentifier }): JSX.Element {
+    const space = useSpaceData()
     // channel data
     const { channel } = useChannelData()
-    return (
+    return space?.channelGroups && space?.channelGroups.length > 0 ? (
         <div data-testid="channel">
             {channel && (
                 <ChannelContextProvider channelId={channelId}>
@@ -303,6 +305,8 @@ function ChannelComponent({ channelId }: { channelId: RoomIdentifier }): JSX.Ele
                 </ChannelContextProvider>
             )}
         </div>
+    ) : (
+        <></>
     )
 }
 
