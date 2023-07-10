@@ -99,6 +99,8 @@ export class StreamStateView {
     readonly streamId: string
     readonly payloadKind: PayloadCaseType
 
+    readonly streamCustomProperties = new Map<string, string>()
+
     readonly timeline: ParsedEvent[] = []
     readonly events = new Map<string, ParsedEvent>()
 
