@@ -1,17 +1,13 @@
 import { blockchainKeys } from './query-keys'
 import { queryClient } from './queryClient'
 
-// query will only be scoped to a space, not a channel, but it's simpler to just clear them all and let them be refetched when necessary b/c
+// clear the query for the entitled channels for a space so that when a space syncs, it will refetch the on chain channels
 // - actions that require this query to be removed should be rare - joining a room, updating a channel, etc
-// - more reliable for situations that can occur in tests
-export function removeSyncedEntitleChannelsQueries() {
-    queryClient.removeQueries({
-        queryKey: blockchainKeys.entitledChannels(),
-    })
-}
-
-export function removeSyncedEntitleChannelsQueriesForSpace(spaceId: string) {
-    queryClient.removeQueries({
-        queryKey: blockchainKeys.entitledChannels(spaceId),
-    })
+export function removeSyncedEntitledChannelsQueriesForSpace(spaceId: string) {
+    const state = queryClient.getQueryState(blockchainKeys.entitledChannels(spaceId))
+    if (!state?.fetchStatus || state?.fetchStatus === 'idle') {
+        queryClient.removeQueries({
+            queryKey: blockchainKeys.entitledChannels(spaceId),
+        })
+    }
 }

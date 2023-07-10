@@ -35,12 +35,12 @@ import { useSpaceThreadRoots } from '../../src/hooks/use-space-thread-roots'
 import { useTimelineThread } from '../../src/hooks/use-timeline-thread'
 import { useZionClient } from '../../src/hooks/use-zion-client'
 import { useTimeline } from '../../src/hooks/use-timeline'
+import { TestConstants } from './helpers/TestConstants'
 
 // TODO Zustand https://docs.pmnd.rs/zustand/testing
 
 describe('sendThreadedMessageHooks', () => {
-    // TODO: https://linear.app/hnt-labs/issue/HNT-1612/testsintegrationsendthreadedmessagehookstesttsx
-    test.skip('user can join a room, see messages, and send threaded messages', async () => {
+    test('user can join a room, see messages, and send threaded messages', async () => {
         // covers sending reactions, replies, etc
         // - jane creates a public space and two channels
         // - bob joins the space and both channels
@@ -85,6 +85,13 @@ describe('sendThreadedMessageHooks', () => {
             visibility: RoomVisibility.Public,
             roleIds: [],
         })) as RoomIdentifier
+
+        // 3 chnannels should exist b/c of default channel
+        await waitFor(
+            async () =>
+                expect((await jane.spaceDapp.getChannels(spaceId.networkId)).length).toBe(3),
+            TestConstants.DoubleDefaultWaitForTimeout,
+        )
 
         // render bob's app
         const TestChannelComponent = () => {
@@ -242,7 +249,7 @@ describe('sendThreadedMessageHooks', () => {
                     </div>
                     <div data-testid="channel_2_messages">
                         {channel_2_timeline
-                            .map((event, i) => `message-${i} ${formatMessage(event)}`)
+                            .map((event, i) => `message-${i} ${formatMessage(event, 'short')}`)
                             .join('\n')}
                     </div>
                     <div data-testid="channelThreadStats">
@@ -268,6 +275,7 @@ describe('sendThreadedMessageHooks', () => {
         const clientRunning = screen.getByTestId('clientRunning')
         const joinComplete = screen.getByTestId('joinComplete')
         const channelMessages = screen.getByTestId('channelMessages')
+        const channel_2_messages = screen.getByTestId('channel_2_messages')
         const channel2ThreadParent = screen.getByTestId('channel2ThreadParent')
         const channel2ThreadMessages = screen.getByTestId('channel2ThreadMessages')
         const spaceNotifications = screen.getByTestId('spaceNotifications')
@@ -285,7 +293,10 @@ describe('sendThreadedMessageHooks', () => {
 
         // - bob joins the space and both channels
         await waitFor(() => expect(clientRunning).toHaveTextContent('true'))
-        await waitFor(() => expect(joinComplete).toHaveTextContent('true'))
+        await waitFor(
+            () => expect(joinComplete).toHaveTextContent('true'),
+            TestConstants.DoubleDefaultWaitForTimeout,
+        )
         const unreadInProgress = screen.getByTestId('unreadInProgress')
 
         // - bob renders channel_1
@@ -293,6 +304,15 @@ describe('sendThreadedMessageHooks', () => {
 
         // - bob sends a message in each channel
         fireEvent.click(sendInitialMessagesButton)
+        // wait for bob's messages to appear in the timeline in the case that it took multiple retries
+        await waitFor(
+            () => expect(channelMessages).toHaveTextContent('hello jane in channel_1'),
+            TestConstants.DecaDefaultWaitForTimeout,
+        )
+        await waitFor(
+            () => expect(channel_2_messages).toHaveTextContent('hello jane in channel_2'),
+            TestConstants.DecaDefaultWaitForTimeout,
+        )
 
         // - jane sends messages
         await act(async () => {
@@ -329,8 +349,9 @@ describe('sendThreadedMessageHooks', () => {
             expect(channelMessages).toHaveTextContent('hello channel_1 (replyCount:2)'),
         )
         // - jane replies to bobs's message in channel_2 creating channel_2.thread
-        await waitFor(() =>
-            expect(jane.getMessages(channel_2)).toContain('hello jane in channel_2'),
+        await waitFor(
+            () => expect(jane.getMessages(channel_2)).toContain('hello jane in channel_2'),
+            TestConstants.DoubleDefaultWaitForTimeout,
         )
         const channel_2_message_1 = jane
             .getEvents_TypedRoomMessage(channel_2)!
@@ -351,7 +372,10 @@ describe('sendThreadedMessageHooks', () => {
         // -- bob should not see the channel_1.thread in his thread list
         await waitFor(() => expect(threadRoots).not.toHaveTextContent(`channel: (channel_1)`))
         // -- bob should see the thread root message in is thread list
-        await waitFor(() => expect(threadRoots).toHaveTextContent(`hello jane in channel_2`))
+        await waitFor(
+            () => expect(threadRoots).toHaveTextContent(`hello jane in channel_2`),
+            TestConstants.DoubleDefaultWaitForTimeout,
+        )
         // -- bob edits is message in channel_2
         fireEvent.click(editChannel2Message1)
         // -- bob sees thread root updated
@@ -409,6 +433,10 @@ describe('sendThreadedMessageHooks', () => {
         await waitFor(() => expect(unreadInProgress).toHaveTextContent('0'))
 
         // get our threaded message...
+        await waitFor(
+            async () => expect(await jane.getLatestEvent<RoomMessageEvent>(channel_2)).toBeTruthy(),
+            TestConstants.DoubleDefaultWaitForTimeout,
+        )
         let event = await jane.getLatestEvent<RoomMessageEvent>(channel_2)
         expect(event?.threadParentId).toBe(channel_2_message_1.eventId)
         expect(event?.content.body).toContain('whats up bob!')
@@ -446,5 +474,5 @@ describe('sendThreadedMessageHooks', () => {
         })
         // what does bob see?
         await waitFor(() => expect(channel2ThreadMessages).not.toHaveTextContent('Im a turtle!'))
-    })
+    }, 240_000)
 })

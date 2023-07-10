@@ -9,7 +9,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { BlockchainTransactionType } from '../types/web3-types'
 import { blockchainKeys } from '../query/query-keys'
 import { UpdateChannelInfo } from 'types/zion-types'
-import { removeSyncedEntitleChannelsQueries } from '../query/removeSyncedEntitledChannelQueries'
+import { removeSyncedEntitledChannelsQueriesForSpace } from '../query/removeSyncedEntitledChannelQueries'
 import { useQueryClient } from '../query/queryClient'
 import { useTransactionStore } from '../store/use-transactions-store'
 import { useWeb3Context } from '../components/Web3ContextProvider'
@@ -65,7 +65,7 @@ export function useUpdateChannelTransaction() {
                 hasOffChainUpdate,
             })
             setTransactionContext(transactionResult)
-            removeSyncedEntitleChannelsQueries()
+            removeSyncedEntitledChannelsQueriesForSpace(updateChannelInfo.parentSpaceId.networkId)
             try {
                 transactionResult = await updateChannelTransaction(updateChannelInfo, signer)
                 setTransactionContext(transactionResult)

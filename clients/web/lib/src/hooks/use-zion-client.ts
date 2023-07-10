@@ -304,7 +304,7 @@ const useWithCatch = <T extends Array<unknown>, U>(
                                     )
                                 }
                                 if (retryDelay >= 0) {
-                                    console.log(`MatrixError`, { retryDelay, err })
+                                    console.log(`MatrixError`, { retryDelay, err, retryCount })
                                     await new Promise((resolve) => setTimeout(resolve, retryDelay))
                                     retryCount++
                                     continue

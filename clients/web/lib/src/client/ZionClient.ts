@@ -1517,6 +1517,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
                 const matrixRoom = await joinMatrixRoom({
                     matrixClient: this.matrixClient,
                     roomId,
+                    parentNetworkId,
                 })
                 const zionRoom = toZionRoom(matrixRoom)
 

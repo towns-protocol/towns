@@ -1,5 +1,5 @@
 import { RoomIdentifier } from '../types/room-identifier'
-import { removeSyncedEntitleChannelsQueries } from '../query/removeSyncedEntitledChannelQueries'
+import { removeSyncedEntitledChannelsQueriesForSpace } from '../query/removeSyncedEntitledChannelQueries'
 import { useCallback } from 'react'
 import { useZionContext } from '../components/ZionContextProvider'
 
@@ -10,7 +10,7 @@ export function useSyncSpace() {
     const syncSpace = useCallback(
         (spaceId: RoomIdentifier) => {
             console.log('[useSyncSpace] sync requested for spaceId', spaceId.networkId)
-            removeSyncedEntitleChannelsQueries() // remove cached entries
+            removeSyncedEntitledChannelsQueriesForSpace(spaceId.networkId) // remove cached entries
             syncSpaceHierarchy(spaceId.networkId) // sync the space hierarchy
         },
         [syncSpaceHierarchy],

@@ -12,7 +12,7 @@ import {
 import { SpaceHierarchies } from '../../types/zion-types'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
-import { removeSyncedEntitleChannelsQueriesForSpace } from '../../query/removeSyncedEntitledChannelQueries'
+import { removeSyncedEntitledChannelsQueriesForSpace } from '../../query/removeSyncedEntitledChannelQueries'
 import { RoomIdentifier } from '../../types/room-identifier'
 import { ZionClient } from '../../client/ZionClient'
 import { toZionSpaceChild } from '../../store/use-matrix-store'
@@ -153,7 +153,7 @@ export function useSyncSpaceHierarchies(
             }
             const eventType = event.getType()
             if (eventType === MatrixEventType.SpaceChild || eventType === MatrixMsgType.Notice) {
-                removeSyncedEntitleChannelsQueriesForSpace(eventRoomId)
+                removeSyncedEntitledChannelsQueriesForSpace(eventRoomId)
                 // console.log("!!!!! hierarchies new space child", eventRoom.roomId);
                 enqueueSpaceId(eventRoomId)
             }
@@ -170,7 +170,7 @@ export function useSyncSpaceHierarchies(
         const onNameEvent = (room: MatrixRoom) => {
             const parentSpaceId = getParentSpaceId(room, spaceIds)
             if (parentSpaceId) {
-                removeSyncedEntitleChannelsQueriesForSpace(parentSpaceId)
+                removeSyncedEntitledChannelsQueriesForSpace(parentSpaceId)
                 enqueueSpaceId(parentSpaceId)
             }
         }
@@ -190,7 +190,7 @@ export function useSyncSpaceHierarchies(
         ) {
             const parentSpaceId = getParentSpaceId(room, spaceIds)
             if (parentSpaceId) {
-                removeSyncedEntitleChannelsQueriesForSpace(parentSpaceId)
+                removeSyncedEntitledChannelsQueriesForSpace(parentSpaceId)
                 enqueueSpaceId(parentSpaceId)
             }
             console.log(
