@@ -2,6 +2,7 @@ package events
 
 import (
 	"google.golang.org/protobuf/proto"
+	"crypto/rand"
 
 	"casablanca/node/crypto"
 	"casablanca/node/protocol"
@@ -9,9 +10,16 @@ import (
 )
 
 func MakeStreamEvent(wallet *crypto.Wallet, payload protocol.IsStreamEvent_Payload, prevHashes [][]byte) *StreamEvent {
+
+	salt := make([]byte, 32)
+	_, err := rand.Read(salt)
+	if err != nil {
+		panic(err)
+	}
+
 	event := &StreamEvent{
 		CreatorAddress: wallet.Address.Bytes(),
-		Salt:           []byte("salt"), //TODO: do we really need salt in non-inception events? If needed, randomize it
+		Salt:           salt,
 		PrevEvents:     prevHashes,
 		Payload:        payload,
 	}
