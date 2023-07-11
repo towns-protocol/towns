@@ -33,19 +33,6 @@ import { unpackEnvelopes } from './sign'
 
 const log = dlog('csb:streams')
 
-export const findLeafEventHashes = (streamId: string, events: ParsedEvent[]): string[] => {
-    check(events.length > 0, `Stream is empty ${streamId}`, Err.STREAM_BAD_HASHES)
-    const hashes = new Set<string>()
-    for (const event of events) {
-        hashes.add(event.hashStr)
-        for (const prev of event.prevEventsStrs) {
-            hashes.delete(prev)
-        }
-    }
-    check(hashes.size > 0, `No leaf event found in ${streamId}`, Err.STREAM_BAD_HASHES)
-    return [...hashes]
-}
-
 export type StreamEvents = {
     streamInception: (streamId: string, event: StreamEvent) => void
     spaceInception: (
