@@ -128,8 +128,7 @@ describe('redact messages', () => {
         expect(alice.getMessages(channelId)).toContain(message)
     })
 
-    // TODO: https://linear.app/hnt-labs/issue/HNT-1617/testsintegrationpermissionsredacttestts
-    test.skip("moderator can redact other's messages", async () => {
+    test("moderator can redact other's messages", async () => {
         /** Arrange */
         // create all the users for the test
         const { alice, bob } = await registerAndStartClients(['alice', 'bob'])
@@ -195,14 +194,12 @@ describe('redact messages', () => {
         if (!messageEvent) {
             throw new Error(`Failed to get message event: ${bob.getEventsDescription(channelId)}`)
         }
-        // bob tries to redact alice's message
-        const error = await getError<Error>(async function () {
-            await bob.redactEvent(channelId, messageEvent.eventId)
-        })
 
         /** Assert */
         // verify that NO error was thrown for redaction
-        expect(error).toBeInstanceOf(NoThrownError)
+        await waitForRandom401ErrorsForAction(async () =>
+            bob.redactEvent(channelId, messageEvent.eventId),
+        )
         // verify that the message is redacted
         await waitFor(() => expect(alice.getMessages(channelId)).not.toContain(message))
     })
