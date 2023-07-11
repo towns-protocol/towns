@@ -143,20 +143,8 @@ export class StreamStateView {
 
         this.streamId = streamId
         this.payloadKind = inceptionEvent.event.payload.case
-
-        switch (inceptionEvent.event.payload.case) {
-            case 'channelPayload':
-                this.parentSpaceId = (inceptionPayload as ChannelPayload_Inception).spaceId
-                break
-            case 'spacePayload':
-            case 'userPayload':
-            case 'userSettingsPayload':
-            case 'userDeviceKeyPayload':
-            case undefined:
-                this.parentSpaceId = undefined
-                break
-            default:
-                checkNever(inceptionEvent.event.payload)
+        if (this.payloadKind === 'channelPayload') {
+            this.parentSpaceId = (inceptionPayload as ChannelPayload_Inception).spaceId
         }
     }
 
