@@ -15,7 +15,7 @@
         "my-node": "yarn node -r ../../scripts/node-no-warn.js --loader ts-node/esm --experimental-specifier-resolution=node --experimental-vm-modules",
         "test": "yarn my-jest --group=-node-minipool-flush",
         "test:ci": "yarn my-jest --testTimeout=180000 --group=-node-minipool-flush",
-        "test:node-minipool-flush": "yarn my-jest --group=node-minipool-flush",
+        "test:node-minipool-flush": "yarn my-jest --group=node-minipool-flush --numWorkers=1",
         "watch": "tsc --watch"
     },
     "dependencies": {

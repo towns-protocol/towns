@@ -11,7 +11,7 @@ import { CallOptions } from '@bufbuild/connect'
 import { jest } from '@jest/globals'
 import { RiverEvent } from './event'
 
-const log = dlog('test')
+const log = dlog('csb:test')
 
 function makeMockSyncResponses(count: number) {
     const obj = {
@@ -258,7 +258,7 @@ describe('clientTest', () => {
         return 'done'
     }
 
-    test('bobTalksToHimself', async () => {
+    test('bobTalksToHimself-noflush', async () => {
         const done = makeDonePromise()
 
         const onChannelNewMessage = (channelId: string, message: RiverEvent): void => {

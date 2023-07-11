@@ -129,6 +129,7 @@ export class StreamStateView {
     readonly leafEventHashes = new Map<string, Uint8Array>()
 
     syncCookie?: SyncCookie
+    maxOldInstanceBlockNumber = -1n
 
     constructor(streamId: string, inceptionEvent: ParsedEvent | undefined) {
         check(isDefined(inceptionEvent), `Stream is empty ${streamId}`, Err.STREAM_EMPTY)
@@ -156,12 +157,21 @@ export class StreamStateView {
         }
     }
 
-    private addEvent(event: ParsedEvent, emitter?: TypedEmitter<StreamEvents>): void {
-        check(
-            !this.events.has(event.hashStr),
-            `Can't add same event twice, hash=${event.hashStr}, stream=${this.streamId}`,
-            Err.STREAM_BAD_EVENT,
-        )
+    private addEvent(
+        event: ParsedEvent,
+        ignoreExisting: boolean,
+        emitter?: TypedEmitter<StreamEvents>,
+    ): void {
+        if (this.events.has(event.hashStr)) {
+            if (ignoreExisting) {
+                return
+            } else {
+                throwWithCode(
+                    `Can't add same event twice, hash=${event.hashStr}, stream=${this.streamId}`,
+                    Err.STREAM_BAD_EVENT,
+                )
+            }
+        }
 
         for (const prev of event.prevEventsStrs ?? []) {
             check(
@@ -428,15 +438,25 @@ export class StreamStateView {
     ): void {
         const events = unpackEnvelopes(streamAndCookie.events)
 
-        if (init || isCookieEqual(this.syncCookie, streamAndCookie.originalSyncCookie)) {
-            // If this sync is from the same minipool instance, just add all received events.
-            for (const event of events) {
-                this.addEvent(event, emitter)
+        let ignoreExisting = false
+
+        if (!init) {
+            if (isCookieEqual(this.syncCookie, streamAndCookie.originalSyncCookie)) {
+                ignoreExisting =
+                    streamAndCookie.nextSyncCookie!.miniblockNum <= this.maxOldInstanceBlockNumber
+            } else {
+                // Minipool instance changed, duplicate events are possible.
+                ignoreExisting = true
+                if (streamAndCookie.nextSyncCookie!.miniblockNum > this.maxOldInstanceBlockNumber) {
+                    this.maxOldInstanceBlockNumber = streamAndCookie.nextSyncCookie!.miniblockNum
+                }
             }
-            this.syncCookie = streamAndCookie.nextSyncCookie
-        } else {
-            check(false, 'TODO')
         }
+
+        for (const event of events) {
+            this.addEvent(event, ignoreExisting, emitter)
+        }
+        this.syncCookie = streamAndCookie.nextSyncCookie
 
         if (emitter !== undefined) {
             if (init ?? false) {
