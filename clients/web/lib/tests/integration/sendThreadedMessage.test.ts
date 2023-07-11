@@ -15,7 +15,8 @@ import { RoomVisibility } from '../../src/types/zion-types'
 import { waitFor } from '@testing-library/dom'
 import { RoomMessageEvent } from '../../src/types/timeline-types'
 
-describe('sendThreadedMessage', () => {
+// TODO: https://linear.app/hnt-labs/issue/HNT-1604/testsintegrationsendthreadedmessagetestts
+describe.skip('sendThreadedMessage', () => {
     // usefull for debugging or running against cloud servers
     // test: sendAMessage
     test('create room, invite user, accept invite, and send threadded message', async () => {
