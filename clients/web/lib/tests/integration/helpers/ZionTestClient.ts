@@ -446,7 +446,7 @@ export class ZionTestClient extends ZionClient {
                 }
                 const stream = this.casablancaClient.stream(roomId.networkId)
                 const userId = this.casablancaClient.userId
-                const events = Array.from(stream?.rollup.events.values() ?? []).map((e) =>
+                const events = Array.from(stream?.view.events.values() ?? []).map((e) =>
                     toEventFromCasablancaEvent(e, userId),
                 )
                 return events

@@ -234,9 +234,9 @@ describe('clientTest', () => {
                 if (streamKind === 'channelPayload') {
                     const channel = bobsAnotherClient.stream(streamId)!
                     log('channel content')
-                    log(channel.rollup)
+                    log(channel.view)
 
-                    const messages = Array.from(channel.rollup.messages.values())
+                    const messages = Array.from(channel.view.messages.values())
                     expect(messages).toHaveLength(1)
                     expect(getMessagePayloadContent_Text(messages[0])?.body).toBe('Hello, world!')
 
@@ -276,7 +276,7 @@ describe('clientTest', () => {
                 if (streamKind === 'channelPayload') {
                     const channel = bobsClient.stream(streamId)!
                     log('channel content')
-                    log(channel.rollup)
+                    log(channel.view)
 
                     channel.on('channelNewMessage', onChannelNewMessage)
                     bobsClient.sendMessage(streamId, 'Hello, world!')

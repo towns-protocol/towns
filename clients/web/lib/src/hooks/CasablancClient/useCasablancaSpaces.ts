@@ -15,13 +15,13 @@ export function useCasablancaSpaces(casablancaClient?: CasablancaClient): SpaceI
 
         const updateSpaces = () => {
             const streams = Array.from(casablancaClient.streams.values())
-                .filter((stream: Stream) => stream.rollup.payloadKind === 'spacePayload')
-                .sort((a: Stream, b: Stream) => a.rollup.streamId.localeCompare(b.rollup.streamId))
+                .filter((stream: Stream) => stream.view.payloadKind === 'spacePayload')
+                .sort((a: Stream, b: Stream) => a.view.streamId.localeCompare(b.view.streamId))
                 .map(
                     (stream: Stream) =>
                         ({
-                            id: makeRoomIdentifier(stream.rollup.streamId),
-                            name: stream.rollup.streamId, // todo real name
+                            id: makeRoomIdentifier(stream.view.streamId),
+                            name: stream.view.streamId, // todo real name
                             avatarSrc: '',
                         } satisfies SpaceItem),
                 )

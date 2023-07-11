@@ -179,7 +179,7 @@ function useSpaceRollup(streamId: string | undefined): SpaceData | undefined {
 
         const getChannels = () => {
             return Array.from(casablancaClient.streams.values()).filter(
-                (s) => s.rollup.parentSpaceId === stream.rollup.streamId,
+                (s) => s.view.parentSpaceId === stream.view.streamId,
             )
         }
 
@@ -208,24 +208,24 @@ function useSpaceRollup(streamId: string | undefined): SpaceData | undefined {
 }
 
 function rollupSpace(stream: Stream, userId: string, channels: Stream[]): SpaceData | undefined {
-    if (stream.rollup.payloadKind !== 'spacePayload') {
+    if (stream.view.payloadKind !== 'spacePayload') {
         throw new Error('stream is not a space')
     }
 
-    const membership = stream.rollup.userJoinedStreams.has(userId)
+    const membership = stream.view.userJoinedStreams.has(userId)
         ? Membership.Join
-        : stream.rollup.userInvitedStreams.has(userId)
+        : stream.view.userInvitedStreams.has(userId)
         ? Membership.Invite
         : Membership.None
 
     return {
-        id: makeRoomIdentifier(stream.rollup.streamId),
-        name: stream.rollup.streamId,
+        id: makeRoomIdentifier(stream.view.streamId),
+        name: stream.view.streamId,
         avatarSrc: '',
         channelGroups: [
             {
                 label: 'Channels',
-                // channels: Array.from(stream.rollup.spaceChannels)
+                // channels: Array.from(stream.view.spaceChannels)
                 //     .sort()
                 //     .map((c) => ({
                 //         id: makeRoomIdentifier(c),
@@ -235,10 +235,10 @@ function rollupSpace(stream: Stream, userId: string, channels: Stream[]): SpaceD
                 //         topic: '',
                 //     })),
                 channels: channels
-                    .sort((a, b) => a.rollup.streamId.localeCompare(b.rollup.streamId))
+                    .sort((a, b) => a.view.streamId.localeCompare(b.view.streamId))
                     .map((c) => ({
-                        id: makeRoomIdentifier(c.rollup.streamId),
-                        label: c.rollup.streamId,
+                        id: makeRoomIdentifier(c.view.streamId),
+                        label: c.view.streamId,
                         private: false,
                         highlight: false,
                         topic: '',

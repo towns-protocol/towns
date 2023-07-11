@@ -49,7 +49,7 @@ describe('riverEventTest', () => {
                 if (streamKind === 'channelPayload') {
                     const channel = bobsClient.stream(streamId)!
                     log('channel content')
-                    log(channel.rollup)
+                    log(channel.view)
 
                     channel.on('channelNewMessage', onChannelNewMessage)
                     bobsClient.sendMessage(streamId, 'Hello, world!')

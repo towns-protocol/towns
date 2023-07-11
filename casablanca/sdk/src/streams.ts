@@ -358,7 +358,10 @@ export class StreamStateView {
         }
     }
 
-    addChannelEvent(payload: SpacePayload_Channel, emitter?: TypedEmitter<StreamEvents>): void {
+    private addChannelEvent(
+        payload: SpacePayload_Channel,
+        emitter?: TypedEmitter<StreamEvents>,
+    ): void {
         const { op, channelId } = payload
         switch (op) {
             case ChannelOp.CO_CREATED:
@@ -374,7 +377,7 @@ export class StreamStateView {
         }
     }
 
-    addUserMembershipEvent(
+    private addUserMembershipEvent(
         payload: UserPayload_UserMembership,
         emitter?: TypedEmitter<StreamEvents>,
     ): void {
@@ -399,7 +402,7 @@ export class StreamStateView {
         }
     }
 
-    addMembershipEvent(payload: Membership, emitter?: TypedEmitter<StreamEvents>): void {
+    private addMembershipEvent(payload: Membership, emitter?: TypedEmitter<StreamEvents>): void {
         const { op, userId } = payload
         switch (op) {
             case MembershipOp.SO_INVITE:

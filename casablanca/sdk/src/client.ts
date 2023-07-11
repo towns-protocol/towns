@@ -81,7 +81,7 @@ export class Stream extends (EventEmitter as new () => TypedEmitter<StreamEvents
     readonly streamId: string
     readonly clientEmitter: TypedEmitter<StreamEvents>
     readonly logEmitFromStream: DLogger
-    readonly rollup: StreamStateView
+    readonly view: StreamStateView
     readonly foreignUserStream: boolean
     readonly streamType: 'user' | 'space' | 'channel' | 'userDevice'
     syncCookie?: SyncCookie
@@ -97,7 +97,7 @@ export class Stream extends (EventEmitter as new () => TypedEmitter<StreamEvents
         this.streamId = streamId
         this.clientEmitter = clientEmitter
         this.logEmitFromStream = logEmitFromStream
-        this.rollup = new StreamStateView(streamId, inceptionEvent)
+        this.view = new StreamStateView(streamId, inceptionEvent)
         this.foreignUserStream = foreignUserStream ?? false
         switch (streamId.substring(0, 2)) {
             case '00': {
@@ -132,7 +132,7 @@ export class Stream extends (EventEmitter as new () => TypedEmitter<StreamEvents
         const events = unpackEnvelopes(streamAndCookie.events)
         if (init || isCookieEqual(this.syncCookie, streamAndCookie.originalSyncCookie)) {
             // If this sync is from the same minipool instance, just reply all received events.
-            this.rollup.addEvents(events, this, init)
+            this.view.addEvents(events, this, init)
             this.syncCookie = streamAndCookie.nextSyncCookie
         } else {
             check(false, 'TODO')
@@ -268,9 +268,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
         stream.on('userLeftStream', (s) => void this.onLeftStream(s))
 
         return Promise.all(
-            Array.from(stream.rollup.userJoinedStreams).map((streamId) =>
-                this.initStream(streamId),
-            ),
+            Array.from(stream.view.userJoinedStreams).map((streamId) => this.initStream(streamId)),
         ).then(() => {})
     }
 
@@ -819,7 +817,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
         if (!stream) {
             throw new Error(`stream not found: ${streamId}`)
         }
-        const ref = stream.rollup.events.get(payload.refEventId)
+        const ref = stream.view.events.get(payload.refEventId)
         if (!ref) {
             throw new Error(`ref event not found: ${payload.refEventId}`)
         }
@@ -1177,7 +1175,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
         const stream = this.streams.get(streamId)
         assert(stream !== undefined, 'unknown stream ' + streamId)
 
-        const prevHashes = Array.from(stream.rollup.leafEventHashes.values())
+        const prevHashes = Array.from(stream.view.leafEventHashes.values())
         assert(prevHashes.length > 0, 'no prev hashes for stream ' + streamId)
         // TODO: should rollup now reference this event's hash?
         const event = await makeEvent(this.signerContext, payload, prevHashes)

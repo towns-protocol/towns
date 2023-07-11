@@ -10,13 +10,13 @@ export function toZionRoomFromStream(stream: Stream, userId: string): Room {
     // todo casablanca: implement this to the end
     let membership = ''
 
-    if (stream.rollup.invitedUsers.has(userId)) {
+    if (stream.view.invitedUsers.has(userId)) {
         membership = Membership.Invite
-    } else if (stream.rollup.joinedUsers.has(userId)) {
+    } else if (stream.view.joinedUsers.has(userId)) {
         membership = Membership.Join
     }
 
-    const members: RoomMember[] = Array.from(stream.rollup.joinedUsers, (userId) => ({
+    const members: RoomMember[] = Array.from(stream.view.joinedUsers, (userId) => ({
         userId: userId,
         membership: Membership.Join,
         name: '',

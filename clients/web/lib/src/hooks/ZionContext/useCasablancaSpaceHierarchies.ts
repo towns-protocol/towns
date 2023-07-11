@@ -23,7 +23,7 @@ export function useCasablancaSpaceHierarchies(casablancaClient?: CasablancaClien
 
         const result: SpaceHierarchies = {}
         spaceIds.forEach((spaceId) => {
-            casablancaClient.stream(spaceId.networkId)?.rollup.spaceChannels.forEach((channel) => {
+            casablancaClient.stream(spaceId.networkId)?.view.spaceChannels.forEach((channel) => {
                 console.log(channel)
                 children.push({
                     id: makeRoomIdentifier(channel),

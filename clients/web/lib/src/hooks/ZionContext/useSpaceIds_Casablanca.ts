@@ -24,16 +24,16 @@ export function useSpacesIds_Casablanca(casablancaClient: CasablancaClient | und
 
         const updateSpaces = () => {
             const streams = Array.from(casablancaClient.streams.values())
-                .filter((stream) => stream.rollup.payloadKind === 'spacePayload')
-                .sort((a, b) => a.rollup.streamId.localeCompare(b.rollup.streamId))
+                .filter((stream) => stream.view.payloadKind === 'spacePayload')
+                .sort((a, b) => a.view.streamId.localeCompare(b.view.streamId))
             //TODO: HNT-1550 - commented line below is a temporary fix for HNT-1550
             const joined = streams
-                //.filter((stream) => stream.rollup.userJoinedStreams.has(userId))
-                .map((stream) => makeRoomIdentifier(stream.rollup.streamId))
+                //.filter((stream) => stream.view.userJoinedStreams.has(userId))
+                .map((stream) => makeRoomIdentifier(stream.view.streamId))
 
             const invited = streams
-                .filter((stream) => stream.rollup.userInvitedStreams.has(userId))
-                .map((stream) => makeRoomIdentifier(stream.rollup.streamId))
+                .filter((stream) => stream.view.userInvitedStreams.has(userId))
+                .map((stream) => makeRoomIdentifier(stream.view.streamId))
 
             setSpaceIds((prev) => {
                 if (isEqual(prev, joined)) {

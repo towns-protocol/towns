@@ -77,7 +77,7 @@ export function useCasablancaTimelines(casablancaClient: CasablancaClient | unde
         //Step 1: get all the events which are already in the river before listeners started
         casablancaClient?.streams.forEach((stream) => {
             timelineEvents.set(stream.streamId, [])
-            stream.rollup.timeline.forEach((event) => {
+            stream.view.timeline.forEach((event) => {
                 const parsedEvent = toEvent(event, casablancaClient.userId)
                 timelineEvents.get(stream.streamId)?.push(parsedEvent)
             })
