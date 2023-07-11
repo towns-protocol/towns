@@ -119,6 +119,9 @@ export const bobTalksToHimself = async (
     )
     expect(channelCreatePayload).toBeDefined()
     expect(channelCreatePayload?.channelId).toEqual(channelId)
+    expect(channelCreatePayload?.channelName).toEqual(channelName)
+    expect(channelCreatePayload?.channelTopic).toEqual(channelTopic)
+
     await maybeFlush()
 
     let presyncEvent: Envelope | undefined = undefined

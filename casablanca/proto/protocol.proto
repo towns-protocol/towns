@@ -150,6 +150,11 @@ message ChannelPayload {
     message Inception {
         string stream_id = 1;
         string space_id = 3;
+        /**
+        * channel_name and channel_topic from this payload will be used to 
+        * create associated with that channel space event for stream as we agreed
+        * that channel names and topics will be delivered using space stream
+        */
         string channel_name = 4;
         string channel_topic = 5;
     }

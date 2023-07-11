@@ -395,8 +395,8 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
             make_ChannelPayload_Inception({
                 streamId: channelId,
                 spaceId,
-                channelName: channelName,
-                channelTopic: channelTopic,
+                channelName,
+                channelTopic,
             }),
             [],
         )
