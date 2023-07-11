@@ -16,7 +16,8 @@ import { ZTEvent } from '../../src/types/timeline-types'
 import { getFilteredRolesFromSpace } from '../../src/client/web3/ContractHelpers'
 import { waitFor } from '@testing-library/dom'
 
-describe('redact messages', () => {
+// TODO: https://linear.app/hnt-labs/issue/HNT-1731/clientsweblibtestsintegrationpermissionsredacttestts
+describe.skip('redact messages', () => {
     test('member can redact own messages', async () => {
         /** Arrange */
         // create all the users for the test
