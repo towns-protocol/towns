@@ -15,6 +15,8 @@ import {
     SpacePayload_Channel,
     UserPayload_UserMembership,
     UserDeviceKeyPayload_UserDeviceKey,
+    SyncCookie,
+    StreamAndCookie,
 } from '@towns/proto'
 import TypedEmitter from 'typed-emitter'
 import { check, checkNever, isDefined, throwWithCode } from './check'
@@ -26,6 +28,8 @@ import {
 } from './types'
 import { userIdFromAddress } from './id'
 import { RiverEvent } from './event'
+import _ from 'lodash'
+import { unpackEnvelopes } from './sign'
 
 const log = dlog('csb:streams')
 
@@ -93,6 +97,8 @@ export type StreamEvents = {
     streamUpdated: (streamId: string, payloadKind: PayloadCaseType, events: ParsedEvent[]) => void
 }
 
+const isCookieEqual = (a?: SyncCookie, b?: SyncCookie): boolean => _.isEqual(a, b)
+
 export type StreamEventKeys = keyof StreamEvents
 
 export class StreamStateView {
@@ -121,6 +127,8 @@ export class StreamStateView {
     readonly uploadedDeviceKeys = new Map<string, UserDeviceKeyPayload_UserDeviceKey[]>()
 
     readonly leafEventHashes = new Map<string, Uint8Array>()
+
+    syncCookie?: SyncCookie
 
     constructor(streamId: string, inceptionEvent: ParsedEvent | undefined) {
         check(isDefined(inceptionEvent), `Stream is empty ${streamId}`, Err.STREAM_EMPTY)
@@ -413,10 +421,23 @@ export class StreamStateView {
         }
     }
 
-    addEvents(events: ParsedEvent[], emitter?: TypedEmitter<StreamEvents>, init?: boolean): void {
-        for (const event of events) {
-            this.addEvent(event, emitter)
+    update(
+        streamAndCookie: StreamAndCookie,
+        emitter?: TypedEmitter<StreamEvents>,
+        init?: boolean,
+    ): void {
+        const events = unpackEnvelopes(streamAndCookie.events)
+
+        if (init || isCookieEqual(this.syncCookie, streamAndCookie.originalSyncCookie)) {
+            // If this sync is from the same minipool instance, just add all received events.
+            for (const event of events) {
+                this.addEvent(event, emitter)
+            }
+            this.syncCookie = streamAndCookie.nextSyncCookie
+        } else {
+            check(false, 'TODO')
         }
+
         if (emitter !== undefined) {
             if (init ?? false) {
                 emitter.emit('streamInitialized', this.streamId, this.payloadKind, events)
@@ -425,14 +446,4 @@ export class StreamStateView {
             }
         }
     }
-}
-
-export const rollupStream = (
-    streamId: string,
-    events: ParsedEvent[],
-    emitter?: TypedEmitter<StreamEvents>,
-): StreamStateView => {
-    const ret = new StreamStateView(streamId, events[0])
-    ret.addEvents(events, emitter, true)
-    return ret
 }

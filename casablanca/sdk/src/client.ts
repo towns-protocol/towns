@@ -40,7 +40,7 @@ import {
     makeUserStreamId,
     userIdFromAddress,
 } from './id'
-import { SignerContext, makeEvent, unpackEnvelope, unpackEnvelopes } from './sign'
+import { SignerContext, makeEvent, unpackEnvelope } from './sign'
 import { StreamEvents, StreamStateView } from './streams'
 import {
     ParsedEvent,
@@ -62,7 +62,6 @@ import { shortenHexString } from './binary'
 import { CryptoStore } from './crypto/store/base'
 import { DeviceInfo } from './crypto/deviceInfo'
 import { IContent, IDecryptOptions, RiverEvent } from './event'
-import _ from 'lodash'
 import debug from 'debug'
 import { OLM_ALGORITHM } from './crypto/olmLib'
 
@@ -75,15 +74,11 @@ function assert(condition: boolean, message: string): asserts condition {
     }
 }
 
-const isCookieEqual = (a?: SyncCookie, b?: SyncCookie): boolean => _.isEqual(a, b)
-
 export class Stream extends (EventEmitter as new () => TypedEmitter<StreamEvents>) {
-    readonly streamId: string
     readonly clientEmitter: TypedEmitter<StreamEvents>
     readonly logEmitFromStream: DLogger
     readonly view: StreamStateView
     readonly foreignUserStream: boolean
-    syncCookie?: SyncCookie
 
     constructor(
         streamId: string,
@@ -93,28 +88,22 @@ export class Stream extends (EventEmitter as new () => TypedEmitter<StreamEvents
         foreignUserStream?: boolean,
     ) {
         super()
-        this.streamId = streamId
         this.clientEmitter = clientEmitter
         this.logEmitFromStream = logEmitFromStream
         this.view = new StreamStateView(streamId, inceptionEvent)
         this.foreignUserStream = foreignUserStream ?? false
     }
 
+    get streamId(): string {
+        return this.view.streamId
+    }
+
     /**
      * NOTE: Separating initial rollup from the constructor allows consumer to subscribe to events
      * on the new stream event and still access this object through Client.streams.
-     * @param events
-     * @param emitter
      */
-    addEvents(streamAndCookie: StreamAndCookie, init?: boolean): void {
-        const events = unpackEnvelopes(streamAndCookie.events)
-        if (init || isCookieEqual(this.syncCookie, streamAndCookie.originalSyncCookie)) {
-            // If this sync is from the same minipool instance, just reply all received events.
-            this.view.addEvents(events, this, init)
-            this.syncCookie = streamAndCookie.nextSyncCookie
-        } else {
-            check(false, 'TODO')
-        }
+    update(streamAndCookie: StreamAndCookie, init?: boolean): void {
+        this.view.update(streamAndCookie, this, init)
     }
 
     emit<E extends keyof StreamEvents>(event: E, ...args: Parameters<StreamEvents[E]>): boolean {
@@ -240,7 +229,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
             this.logEmitFromStream,
         )
         this.streams.set(userStreamId, stream)
-        stream.addEvents(streamAndCookie, true)
+        stream.update(streamAndCookie, true)
 
         stream.on('userJoinedStream', (s) => void this.onJoinedStream(s))
         stream.on('userLeftStream', (s) => void this.onLeftStream(s))
@@ -264,7 +253,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
             this.logEmitFromStream,
         )
         this.streams.set(userDeviceKeyStreamId, stream)
-        stream.addEvents(streamAndCookie, true)
+        stream.update(streamAndCookie, true)
     }
 
     async createNewUser(): Promise<void> {
@@ -355,7 +344,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
         )
         this.streams.set(streamId, stream)
         // add init events
-        stream.addEvents(streamAndCookie, true)
+        stream.update(streamAndCookie, true)
     }
 
     async createSpace(spaceId?: string): Promise<{ streamId: string }> {
@@ -468,9 +457,9 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
                 isDefined(streamContent.stream) && hasElements(streamContent.stream?.events),
                 'got bad stream',
             )
-            const events = unpackEnvelopes(streamContent.stream.events)
-            const stream = new StreamStateView(streamId, events[0])
-            stream.addEvents(events)
+            const inception = unpackEnvelope(streamContent.stream.events[0])
+            const stream = new StreamStateView(streamId, inception)
+            stream.update(streamContent.stream)
             return stream
         } catch (err) {
             this.logCall('getStream', streamId, 'ERROR', err)
@@ -493,7 +482,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
                         this.logEmitFromStream,
                     )
                     this.streams.set(streamId, stream)
-                    stream.addEvents(streamContent.stream, true)
+                    stream.update(streamContent.stream, true)
                     // Blip sync here to make sure it also monitors new stream
                     this.blipSync()
                 } else {
@@ -539,7 +528,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
                         // TODO: jterzis as an optimization in the future,
                         // prune foreign user streams that are created to send
                         // to_device messages.
-                        const syncCookie = stream.syncCookie
+                        const syncCookie = stream.view.syncCookie
                         if (syncCookie !== undefined) {
                             syncPos.push(syncCookie)
                             this.logSync(
@@ -584,7 +573,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
                                     this.logSync('sync got stream', streamId, 'NOT FOUND')
                                     throwWithCode("Sync got stream that wasn't requested")
                                 }
-                                stream.addEvents(streamAndCookie)
+                                stream.update(streamAndCookie)
                             })
                         }
                         this.logSync('finished syncStreams', syncPos)
