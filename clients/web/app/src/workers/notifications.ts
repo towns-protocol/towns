@@ -30,11 +30,13 @@ export function handleNotifications(worker: ServiceWorkerGlobalScope) {
             return
         }
 
+        const data = event.data.text()
+        console.log('sw: received notification data', data)
         worker.registration.showNotification('Towns', {
             body: notification.title,
             silent: false,
             icon: '/pwa/maskable_icon_x192.png',
-            data: event.data.text(),
+            data,
         })
 
         console.log('sw: Notification shown')

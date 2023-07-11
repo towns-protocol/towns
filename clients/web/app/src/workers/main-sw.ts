@@ -29,5 +29,9 @@ cleanupOutdatedCaches()
 
 // to allow work offline
 if (env.VITE_MOCK_SERVICE_WORKER_ENABLED === 'false') {
-    registerRoute(new NavigationRoute(createHandlerBoundToURL('index.html')))
+    try {
+        registerRoute(new NavigationRoute(createHandlerBoundToURL('/index.html')))
+    } catch (e) {
+        console.error('main-sw: failed to register route', e)
+    }
 }

@@ -76,7 +76,6 @@ router.post('/api/notify-users', async (request: Request, env: Env) => {
   }
 
   // handle a proper request
-  console.log('tak:', 'notifyUsers', 'before calling notifyUsers')
   return notifyUsers(content, env)
 })
 

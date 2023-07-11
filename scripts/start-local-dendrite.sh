@@ -94,7 +94,7 @@ fi
 
 if [ "${WITH_PUSH_NOTIFICATION}" == "with-push-notification" ]; then
   echo "Enabling Push Notification by exporting env vars"
-  export PUSH_NOTIFICATION_AUTH_TOKEN="foo"
+  export PUSH_NOTIFICATION_AUTH_TOKEN="Zm9v"
   export PUSH_NOTIFICATION_URL="http://127.0.0.1:8787"
 else
   echo "Push Notification disabled"
