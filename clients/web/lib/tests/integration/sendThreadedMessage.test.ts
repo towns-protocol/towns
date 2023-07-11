@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 /**
  * @group casablanca
- * @group dendrite
  */
+// group dendrite TODO: https://linear.app/hnt-labs/issue/HNT-1604/testsintegrationsendthreadedmessagetestts
 import {
     createTestChannelWithSpaceRoles,
     createTestSpaceWithEveryoneRole,
@@ -15,8 +15,7 @@ import { RoomVisibility } from '../../src/types/zion-types'
 import { waitFor } from '@testing-library/dom'
 import { RoomMessageEvent } from '../../src/types/timeline-types'
 
-// TODO: https://linear.app/hnt-labs/issue/HNT-1604/testsintegrationsendthreadedmessagetestts
-describe.skip('sendThreadedMessage', () => {
+describe('sendThreadedMessage', () => {
     // usefull for debugging or running against cloud servers
     // test: sendAMessage
     test('create room, invite user, accept invite, and send threadded message', async () => {
