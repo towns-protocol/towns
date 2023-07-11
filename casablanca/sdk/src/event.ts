@@ -76,14 +76,6 @@ export enum EventStatus {
     CANCELLED = 'cancelled',
 }
 
-export enum ThreadEvent {
-    New = 'Thread.new',
-    Update = 'Thread.update',
-    NewReply = 'Thread.newReply',
-    ViewThread = 'Thread.viewThread',
-    Delete = 'Thread.delete',
-}
-
 export enum RiverEventType {
     // Room state events
     RoomCreate = 'r.room.create',
