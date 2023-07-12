@@ -159,11 +159,12 @@ func (s *Service) addChannelMessage(ctx context.Context, stream *Stream, view St
 	}
 
 	// check if user is a member of the channel
-	members, err := view.JoinedUsers()
+	member, err := s.checkMembership(ctx, view, user)
 	if err != nil {
 		return status.Errorf(codes.Internal, "AddEvent: error getting joined users: %v", err)
 	}
-	if _, ok := members[user]; !ok {
+	if !member {
+	
 		return status.Errorf(codes.InvalidArgument, "AddEvent: user %s is not a member of channel %s", user, streamId)
 	}
 
@@ -171,12 +172,17 @@ func (s *Service) addChannelMessage(ctx context.Context, stream *Stream, view St
 	return err
 }
 
+func (s *Service) checkMembership(ctx context.Context, view StreamView, userId string) (bool, error) {
+	members, err := view.JoinedUsers()
+	if err != nil {
+		return false, status.Errorf(codes.Internal, "AddEvent: error getting joined users: %v", err)
+	}
+	_, ok := members[userId]
+	return ok, nil
+}
+
 func (s *Service) addMembershipEvent(ctx context.Context, stream *Stream, view StreamView, parsedEvent *ParsedEvent, membership *Membership) error {
 	streamId := view.StreamId()
-	creator, err := common.UserIdFromAddress(parsedEvent.Event.CreatorAddress)
-	if err != nil {
-		return status.Errorf(codes.InvalidArgument, "AddEvent: invalid user id: %v", err)
-	}
 	userId := membership.UserId
 	userStreamId, err := common.UserStreamIdFromId(userId)
 	if err != nil {
@@ -188,17 +194,38 @@ func (s *Service) addMembershipEvent(ctx context.Context, stream *Stream, view S
 	if err != nil {
 		return err
 	}
-	// TODO: check here if user already a member?
-
+	// Check if user is a member of the channel
+	member, err := s.checkMembership(ctx, view, userId)
+	if err != nil {
+		return status.Errorf(codes.Internal, "AddEvent: error getting joined users: %v", err)
+	}
 	permission := auth.PermissionUndefined
 	switch membership.Op {
 	case MembershipOp_SO_INVITE:
-		userId = creator
+		{
+			if member {
+				return status.Errorf(codes.InvalidArgument, "AddEvent: user %s is already a member of channel %s", userId, streamId)
+			}
+			creator, err := common.UserIdFromAddress(parsedEvent.Event.CreatorAddress)
+			if err != nil {
+				return status.Errorf(codes.InvalidArgument, "AddEvent: invalid user id: %v", err)
+			}
+			userId, err = s.townsContract.GetUserId(ctx, creator)
+			if err != nil {
+				return status.Errorf(codes.InvalidArgument, "AddEvent: failed to get user id: %v", err)
+			}
 		permission = auth.PermissionInvite
+		}
 	case MembershipOp_SO_JOIN:
+		if member {
+			return status.Errorf(codes.InvalidArgument, "AddEvent: user %s is already a member of channel %s", userId, streamId)
+		}
 		// join event should be allowed for read only users
 		permission = auth.PermissionRead
 	case MembershipOp_SO_LEAVE:
+		if !member {
+			return status.Errorf(codes.InvalidArgument, "AddEvent: user %s is not a member of channel %s", userId, streamId)
+		}
 		permission = auth.PermissionRead
 	case MembershipOp_SO_UNSPECIFIED:
 		permission = auth.PermissionUndefined
