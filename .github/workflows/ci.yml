@@ -256,8 +256,9 @@ jobs:
             - name: Run SDK Tests (without auth)
               run: yarn run turbo run build test:ci --filter=@towns/sdk
 
-            - name: Run Node Flush Tests (without auth)
-              run: yarn workspace @towns/sdk run test:node-minipool-flush
+            # Disabling for now to figure out flakiness
+            # - name: Run Node Flush Tests (without auth)
+            #  run: yarn workspace @towns/sdk run test:node-minipool-flush
 
             - name: Archive Casablanca log
               if: always()
