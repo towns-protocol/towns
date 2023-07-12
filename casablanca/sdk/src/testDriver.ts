@@ -1,7 +1,7 @@
 import { Client } from './client'
 import { DLogger, dlog } from './dlog'
 import { makeTestClient } from './util.test'
-import { StreamEventKeys } from './streams'
+import { StreamEventKeys } from './streamEvents'
 import { makeUniqueChannelStreamId, makeUniqueSpaceStreamId } from './id'
 import { RiverEvent } from './event'
 
