@@ -154,7 +154,7 @@ export class StreamStateView {
                             }
                             break
                         case 'membership':
-                            this.addMembershipEvent(payload.value.content.value, emitter)
+                            this.addChannelPayload_Membership(payload.value.content.value, emitter)
                             break
                         case 'receipt':
                             this.receipts.set(event.hashStr, event)
@@ -176,10 +176,10 @@ export class StreamStateView {
                             )
                             break
                         case 'channel':
-                            this.addChannelEvent(payload.value.content.value, emitter)
+                            this.addSpacePayload_Channel(payload.value.content.value, emitter)
                             break
                         case 'membership':
-                            this.addMembershipEvent(payload.value.content.value, emitter)
+                            this.addSpacePayload_Membership(payload.value.content.value, emitter)
                             break
                         case undefined:
                             break
@@ -198,7 +198,7 @@ export class StreamStateView {
                             )
                             break
                         case 'userMembership':
-                            this.addUserMembershipEvent(payload.value.content.value, emitter)
+                            this.addUserPayload_userMembership(payload.value.content.value, emitter)
                             break
                         case 'toDevice':
                             {
@@ -294,7 +294,7 @@ export class StreamStateView {
         }
     }
 
-    private addChannelEvent(
+    private addSpacePayload_Channel(
         payload: SpacePayload_Channel,
         emitter?: TypedEmitter<StreamEvents>,
     ): void {
@@ -341,7 +341,7 @@ export class StreamStateView {
         }
     }
 
-    private addUserMembershipEvent(
+    private addUserPayload_userMembership(
         payload: UserPayload_UserMembership,
         emitter?: TypedEmitter<StreamEvents>,
     ): void {
@@ -364,6 +364,20 @@ export class StreamStateView {
             default:
                 checkNever(op)
         }
+    }
+
+    private addSpacePayload_Membership(
+        payload: Membership,
+        emitter?: TypedEmitter<StreamEvents>,
+    ): void {
+        this.addMembershipEvent(payload, emitter)
+    }
+
+    private addChannelPayload_Membership(
+        payload: Membership,
+        emitter?: TypedEmitter<StreamEvents>,
+    ): void {
+        this.addMembershipEvent(payload, emitter)
     }
 
     private addMembershipEvent(payload: Membership, emitter?: TypedEmitter<StreamEvents>): void {
