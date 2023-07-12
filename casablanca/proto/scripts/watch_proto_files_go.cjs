@@ -12,7 +12,7 @@ const handleFileChange = debounce((eventType, filename) => {
     if (error) {
       console.error(`Error: ${error.message}`);
     } else if (stderr) {
-      console.error(`Stderr: ${stderr}`);
+      console.error(`stderr:\n${stderr}\nstdout:\n${stdout}`);
     } else if (stdout) {
       console.log(`Stdout: ${stdout}`);
     }
