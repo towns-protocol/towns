@@ -44,7 +44,18 @@ export type StreamEvents = {
     userJoinedStream: (streamId: string) => void
     userInvitedToStream: (streamId: string) => void
     userLeftStream: (streamId: string) => void
-    spaceNewChannelCreated: (spaceId: string, channelId: string) => void
+    spaceNewChannelCreated: (
+        spaceId: string,
+        channelId: string,
+        channelName: string,
+        channelTopic: string,
+    ) => void
+    spaceChannelUpdated: (
+        spaceId: string,
+        channelId: string,
+        channelName: string,
+        channelTopic: string,
+    ) => void
     spaceChannelDeleted: (spaceId: string, channelId: string) => void
     channelNewMessage: (channelId: string, message: RiverEvent) => void
     toDeviceMessage: (streamId: string, event: RiverEvent) => void

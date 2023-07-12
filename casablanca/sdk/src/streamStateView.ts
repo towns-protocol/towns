@@ -46,7 +46,7 @@ export class StreamStateView {
     readonly messages = new Map<string, ParsedEvent>()
     readonly receipts = new Map<string, ParsedEvent>()
 
-    readonly spaceChannels = new Set<string>()
+    readonly spaceChannelsMetadata = new Map<string, ChannelMetadata>()
     readonly parentSpaceId?: string
 
     readonly userInvitedStreams = new Set<string>()
@@ -298,16 +298,44 @@ export class StreamStateView {
         payload: SpacePayload_Channel,
         emitter?: TypedEmitter<StreamEvents>,
     ): void {
-        const { op, channelId } = payload
+        const { op, channelId, channelName, channelTopic } = payload
         switch (op) {
             case ChannelOp.CO_CREATED:
-                this.spaceChannels.add(channelId)
-                emitter?.emit('spaceNewChannelCreated', this.streamId, channelId)
+                this.spaceChannelsMetadata.set(channelId, {
+                    channelName: channelName,
+                    channelTopic: channelTopic,
+                })
+                emitter?.emit(
+                    'spaceNewChannelCreated',
+                    this.streamId,
+                    channelId,
+                    channelName,
+                    channelTopic,
+                )
                 break
             case ChannelOp.CO_DELETED:
                 emitter?.emit('spaceChannelDeleted', this.streamId, channelId)
-                this.spaceChannels.delete(channelId)
+                this.spaceChannelsMetadata.delete(channelId)
                 break
+            case ChannelOp.CO_UPDATED: {
+                const channelSpaceMetadata = this.spaceChannelsMetadata.get(channelId)
+                if (channelSpaceMetadata != undefined) {
+                    if (channelName != null) {
+                        channelSpaceMetadata.channelName = channelName
+                    }
+                    if (channelTopic != null) {
+                        channelSpaceMetadata.channelTopic = channelTopic
+                    }
+                }
+                emitter?.emit(
+                    'spaceChannelUpdated',
+                    this.streamId,
+                    channelId,
+                    channelName,
+                    channelTopic,
+                )
+                break
+            }
             default:
                 throwWithCode(`Unknown channel ${op}`, Err.STREAM_BAD_EVENT)
         }
@@ -396,4 +424,9 @@ export class StreamStateView {
             }
         }
     }
+}
+
+export type ChannelMetadata = {
+    channelName: string
+    channelTopic: string
 }

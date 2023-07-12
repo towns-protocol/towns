@@ -2002,7 +2002,9 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
                 }
 
                 const spaceStream = this.casablancaClient?.streams.get(roomId.networkId)
-                const spaceChannels = spaceStream?.view?.spaceChannels
+                const spaceChannels = Array.from(
+                    spaceStream?.view?.spaceChannelsMetadata.keys() || [],
+                )
 
                 //We go through all the channels in the space and check if the user is invited or joined
                 spaceChannels?.forEach((channel) => {

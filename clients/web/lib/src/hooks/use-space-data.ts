@@ -177,14 +177,30 @@ function useSpaceRollup(streamId: string | undefined): SpaceData | undefined {
         }
         const userId = casablancaClient.userId
 
-        const getChannels = () => {
-            return Array.from(casablancaClient.streams.values()).filter(
-                (s) => s.view.parentSpaceId === stream.view.streamId,
+        const getChannelsIds = (spaceId: string | undefined): string[] => {
+            if (!spaceId) {
+                return []
+            }
+            return Array.from(
+                casablancaClient.streams.get(spaceId)?.view.spaceChannelsMetadata.keys() || [],
             )
         }
 
-        const onStreamUpdate = () => {
-            const newSpace = rollupSpace(stream, userId, getChannels())
+        const onStreamInitialized = (streamId: string) => {
+            if (casablancaClient.streams.get(streamId)?.view.payloadKind === 'channelPayload') {
+                const spaceId = casablancaClient.streams.get(streamId)?.view.parentSpaceId
+                const newSpace = rollupSpace(stream, userId, getChannelsIds(spaceId))
+                setSpace((prev) => {
+                    if (isEqual(prev, newSpace)) {
+                        return prev
+                    }
+                    return newSpace
+                })
+            }
+        }
+
+        const onSpaceChannelUpdated = (spaceId: string) => {
+            const newSpace = rollupSpace(stream, userId, getChannelsIds(spaceId))
             setSpace((prev) => {
                 if (isEqual(prev, newSpace)) {
                     return prev
@@ -193,21 +209,20 @@ function useSpaceRollup(streamId: string | undefined): SpaceData | undefined {
             })
         }
 
-        setSpace(rollupSpace(stream, userId, getChannels()))
-
-        stream.on('streamInitialized', onStreamUpdate)
-        stream.on('streamUpdated', onStreamUpdate)
+        setSpace(rollupSpace(stream, userId, getChannelsIds(streamId)))
+        casablancaClient.on('streamInitialized', onStreamInitialized)
+        casablancaClient.on('spaceChannelUpdated', onSpaceChannelUpdated)
 
         return () => {
-            stream.off('streamInitialized', onStreamUpdate)
-            stream.off('streamUpdated', onStreamUpdate)
+            casablancaClient.off('streamInitialized', onStreamInitialized)
+            casablancaClient.off('spaceChannelUpdated', onSpaceChannelUpdated)
             setSpace(undefined)
         }
     }, [casablancaClient, stream])
     return space
 }
 
-function rollupSpace(stream: Stream, userId: string, channels: Stream[]): SpaceData | undefined {
+function rollupSpace(stream: Stream, userId: string, channels: string[]): SpaceData | undefined {
     if (stream.view.payloadKind !== 'spacePayload') {
         throw new Error('stream is not a space')
     }
@@ -235,13 +250,13 @@ function rollupSpace(stream: Stream, userId: string, channels: Stream[]): SpaceD
                 //         topic: '',
                 //     })),
                 channels: channels
-                    .sort((a, b) => a.view.streamId.localeCompare(b.view.streamId))
+                    .sort((a, b) => a.localeCompare(b))
                     .map((c) => ({
-                        id: makeRoomIdentifier(c.view.streamId),
-                        label: c.view.streamId,
+                        id: makeRoomIdentifier(c),
+                        label: stream.view.spaceChannelsMetadata.get(c)?.channelName ?? c,
                         private: false,
                         highlight: false,
-                        topic: '',
+                        topic: stream.view.spaceChannelsMetadata.get(c)?.channelTopic ?? '',
                     })),
             },
         ],
