@@ -12,35 +12,27 @@ func StreamInfoFromInceptionEvent(e *ParsedEvent, streamId string, userId string
 		return nil, fmt.Errorf("no inception payload for stream %s", streamId)
 	}
 
-	creator, error := common.UserIdFromAddress(e.Event.GetCreatorAddress())
-	if error != nil {
-		return nil, error
-	}
 	switch inception := payload.(type) {
 	case *UserPayload_Inception:
 		return &common.StreamInfo{
 			SpaceId:    inception.StreamId,
 			StreamType: common.User,
-			IsOwner:    creator == userId,
 		}, nil
 	case *ChannelPayload_Inception:
 		return &common.StreamInfo{
 			SpaceId:    inception.SpaceId,
 			ChannelId:  inception.StreamId,
 			StreamType: common.Channel,
-			IsOwner:    creator == userId,
 		}, nil
 	case *SpacePayload_Inception:
 		return &common.StreamInfo{
 			SpaceId:    inception.StreamId,
 			StreamType: common.Space,
-			IsOwner:    creator == userId,
 		}, nil
 	case *UserSettingsPayload_Inception:
 		return &common.StreamInfo{
 			SpaceId:    inception.StreamId,
 			StreamType: common.UserSettings,
-			IsOwner:    creator == userId,
 		}, nil
 	default:
 		return nil, fmt.Errorf("unimplemented stream type %T", inception)

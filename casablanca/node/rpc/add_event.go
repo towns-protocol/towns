@@ -132,7 +132,7 @@ func (s *Service) addParsedEvent(ctx context.Context, streamId string, parsedEve
 
 func (s *Service) addChannelMessage(ctx context.Context, stream *Stream, view StreamView, parsedEvent *ParsedEvent) error {
 	streamId := view.StreamId()
-	user, err := common.UserIdFromAddress(parsedEvent.Event.CreatorAddress)
+	user, err := common.AddressHex(parsedEvent.Event.CreatorAddress)
 	if err != nil {
 		return err
 	}
@@ -206,7 +206,7 @@ func (s *Service) addMembershipEvent(ctx context.Context, stream *Stream, view S
 			if member {
 				return status.Errorf(codes.InvalidArgument, "AddEvent: user %s is already a member of channel %s", userId, streamId)
 			}
-			creator, err := common.UserIdFromAddress(parsedEvent.Event.CreatorAddress)
+			creator, err := common.AddressHex(parsedEvent.Event.CreatorAddress)
 			if err != nil {
 				return status.Errorf(codes.InvalidArgument, "AddEvent: invalid user id: %v", err)
 			}
@@ -263,7 +263,7 @@ func (s *Service) addMembershipEvent(ctx context.Context, stream *Stream, view S
 }
 
 func (s *Service) addDerivedMembershipEventToUserStream(ctx context.Context, userStream *Stream, userStreamView StreamView, originStreamId string, originEvent *ParsedEvent, op MembershipOp) error {
-	inviterId, err := common.UserIdFromAddress(originEvent.Event.CreatorAddress)
+	inviterId, err := common.AddressHex(originEvent.Event.CreatorAddress)
 	if err != nil {
 		return err
 	}

@@ -79,7 +79,7 @@ func createSpace(ctx context.Context, wallet *crypto.Wallet, client protocolconn
 	if err != nil {
 		return nil, nil, err
 	}
-	userId, err := common.UserIdFromAddress(wallet.Address.Bytes())
+	userId, err := common.AddressHex(wallet.Address.Bytes())
 	if err != nil {
 		return nil, nil, err
 	}
@@ -118,7 +118,7 @@ func createChannel(ctx context.Context, wallet *crypto.Wallet, client protocolco
 	if err != nil {
 		return nil, nil, err
 	}
-	userId, err := common.UserIdFromAddress(wallet.Address.Bytes())
+	userId, err := common.AddressHex(wallet.Address.Bytes())
 	if err != nil {
 		return nil, nil, err
 	}
@@ -225,7 +225,7 @@ func TestMethods(t *testing.T) {
 		}
 
 		// user2 joins channel
-		userId, err := common.UserIdFromAddress(wallet2.Address.Bytes())
+		userId, err := common.AddressHex(wallet2.Address.Bytes())
 		if err != nil {
 			t.Errorf("error getting user id: %v", err)
 		}
@@ -370,7 +370,7 @@ func TestManyUsers(t *testing.T) {
 	for i := 1; i < totalUsers; i++ {
 		// users joins channels
 		for j := 0; j < totalChannels; j++ {
-			userId, err := common.UserIdFromAddress(wallets[i].Address.Bytes())
+			userId, err := common.AddressHex(wallets[i].Address.Bytes())
 			if err != nil {
 				t.Fatalf("error getting user id: %v", err)
 			}

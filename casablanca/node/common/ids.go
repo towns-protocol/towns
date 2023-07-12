@@ -15,7 +15,7 @@ const (
 	STREAM_USER_DEVICE_KEY_PREFIX = "33"
 )
 
-func UserIdFromAddress(address []byte) (string, error) {
+func AddressHex(address []byte) (string, error) {
 	if len(address) != 20 {
 		return "", fmt.Errorf("invalid address length %d", len(address))
 	}
@@ -31,7 +31,7 @@ func AddressFromUserId(userId string) ([]byte, error) {
 }
 
 func UserStreamIdFromAddress(address []byte) (string, error) {
-	userId, err := UserIdFromAddress(address)
+	userId, err := AddressHex(address)
 	if err != nil {
 		return "", err
 	}
@@ -75,4 +75,3 @@ func ValidSpaceStreamId(id string) bool {
 func ValidChannelStreamId(id string) bool {
 	return strings.HasPrefix(id, STREAM_CHANNEL_PREFIX+"-")
 }
-

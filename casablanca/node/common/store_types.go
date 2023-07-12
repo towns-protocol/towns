@@ -38,5 +38,4 @@ type StreamInfo struct {
 	SpaceId    string
 	ChannelId  string
 	StreamType StreamType
-	IsOwner    bool
 }

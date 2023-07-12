@@ -141,7 +141,7 @@ func (s *Service) createStream(ctx context.Context, log *slog.Logger, req *conne
 	// Authorization.
 	switch inception := inceptionPayload.(type) {
 	case *protocol.ChannelPayload_Inception:
-		user, err := common.UserIdFromAddress(inceptionEvent.Event.CreatorAddress)
+		user, err := common.AddressHex(inceptionEvent.Event.CreatorAddress)
 		if err != nil {
 			return nil, err
 		}
@@ -269,7 +269,7 @@ func validateSpaceJoinEvent(event *ParsedEvent) error {
 }
 
 func validateJoinEventPayload(event *ParsedEvent, membership *protocol.Membership) error {
-	creatorUserId, err := common.UserIdFromAddress(event.Event.GetCreatorAddress())
+	creatorUserId, err := common.AddressHex(event.Event.GetCreatorAddress())
 	if err != nil {
 		return err
 	}

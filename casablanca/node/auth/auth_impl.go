@@ -69,7 +69,7 @@ func NewTownsContract(cfg *config.ChainConfig) (TownsContract, error) {
 		slog.Error("Bad chain id", "id", za.chainId)
 		return nil, fmt.Errorf("unsupported chain id: %d", za.chainId)
 	}
-	slog.Info("Successfully initialised %s for chain id: %d", cfg.NetworkUrl, za.chainId)
+	slog.Info("Successfully initialised", "network", cfg.NetworkUrl, "id", za.chainId)
 	// no errors.
 	return za, nil
 }
@@ -87,7 +87,7 @@ func (za *ChainAuth) IsAllowed(ctx context.Context, args AuthorizationArgs, stre
 	log := dlog.CtxLog(ctx)
 
 	userIdentifier := CreateUserIdentifier(args.UserId)
-	log.Debug("IsAllowed", "args", args, "user", userIdentifier, "streamInfo", streamInfo)
+	log.Debug("IsAllowed", "args", args, "user", userIdentifier.AccountAddress.Hex(), "streamInfo", streamInfo)
 
 	// Check if user is entitled to space / channel.
 	switch streamInfo.StreamType {
