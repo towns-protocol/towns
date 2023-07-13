@@ -44,7 +44,7 @@ export interface NotifyRequestParams {
   sender: string
   users: string[]
   payload: object
-  title?: string
+  topic?: string
   /* push options */
   urgency?: Urgency
 }
@@ -60,7 +60,7 @@ export function isNotifyRequestParams(
     (typeof params.payload === 'string' ||
       typeof params.payload === 'object') &&
     /* optional parameters */
-    (typeof params.title === 'string' || params.title === undefined) &&
+    (typeof params.topic === 'string' || params.topic === undefined) &&
     (isUrgency(params.urgency) || params.urgency === undefined)
   )
 }

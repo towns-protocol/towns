@@ -5,21 +5,24 @@ export enum AppNotificationType {
 
 export type AppNotificationMessage = {
     notificationType: AppNotificationType.NewMessage
-    channelID: string
-    threadID?: string
+    topic?: string
+    content: {
+        spaceId: string
+        channelId: string
+        senderId: string
+    }
 }
 
 export type AppNotificationMention = {
     notificationType: AppNotificationType.Mention
-    channelID: string
-    eventID: string
-    threadID?: string
+    topic?: string
+    content: {
+        spaceId: string
+        channelId: string
+        senderId: string
+    }
 }
 
-export type AppNotification = {
-    spaceID: string
-    title: string
-    content: AppNotificationMessage | AppNotificationMention
-}
+export type AppNotification = AppNotificationMessage | AppNotificationMention
 
 export const WEB_PUSH_NAVIGATION_CHANNEL = 'web-push-navigation-channel'

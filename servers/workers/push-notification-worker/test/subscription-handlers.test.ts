@@ -117,7 +117,7 @@ describe('subscription handlers', () => {
     // Act
     // create the request to notify the user
     const payload = {
-      title: 'Hello, Notifications!',
+      topic: 'Hello, Notifications!',
       options: {
         body: `ID: ${Math.floor(Math.random() * 100)}`,
       },
@@ -126,7 +126,7 @@ describe('subscription handlers', () => {
       sender,
       users: [recipient],
       payload,
-      title: payload.title,
+      topic: payload.topic,
     }
     // create the notification request
     const notifyRequest = createRequest(env, {

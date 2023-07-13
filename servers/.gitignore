@@ -13,6 +13,7 @@
 **/cache
 **/.DS_Store
 **/.dev.vars
+**/.wrangler/*
 
 # Debug
 **/__debug_bin

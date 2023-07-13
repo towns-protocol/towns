@@ -2,55 +2,39 @@ import * as z from 'zod'
 import { PATHS } from '../routes'
 import { AppNotification, AppNotificationType } from './types.d'
 
-const body = z.object({
-    channelId: z.string(),
+const content = z.object({
     spaceId: z.string(),
-    threadId: z.string().optional(),
-    eventId: z.string().optional(),
-})
-
-const options = z.object({
-    body: body,
+    channelId: z.string(),
+    senderId: z.string(),
 })
 
 // this is obviously a bit overkill for now, but I think it can
 // be helpful as we add more notification types
 const notificationSchema = z
-    .union([
-        z.object({
-            notificationType: z.literal(AppNotificationType.NewMessage),
-            title: z.string(),
-            options: options,
-        }),
-        z.object({
-            notificationType: z.literal(AppNotificationType.Mention),
-            title: z.string(),
-            options: options,
-        }),
-    ])
+    .object({
+        notificationType: z.enum([AppNotificationType.NewMessage, AppNotificationType.Mention]),
+        content: content,
+        topic: z.string().optional(),
+    })
     .transform((data): AppNotification | undefined => {
         if (data.notificationType === AppNotificationType.NewMessage) {
             return {
-                title: data.title,
-                spaceID: data.options.body.spaceId,
+                topic: data.topic,
+                notificationType: AppNotificationType.NewMessage,
                 content: {
-                    notificationType: AppNotificationType.NewMessage,
-                    channelID: data.options.body.channelId,
-                    threadID: data.options.body.threadId,
+                    spaceId: data.content.spaceId,
+                    channelId: data.content.channelId,
+                    senderId: data.content.senderId,
                 },
             }
-        } else if (
-            data.notificationType === AppNotificationType.Mention &&
-            data.options.body.eventId
-        ) {
+        } else if (data.notificationType === AppNotificationType.Mention) {
             return {
-                title: data.title,
-                spaceID: data.options.body.spaceId,
+                topic: data.topic,
+                notificationType: AppNotificationType.Mention,
                 content: {
-                    notificationType: AppNotificationType.Mention,
-                    channelID: data.options.body.channelId,
-                    threadID: data.options.body.threadId,
-                    eventID: data.options.body.eventId,
+                    spaceId: data.content.spaceId,
+                    channelId: data.content.channelId,
+                    senderId: data.content.senderId,
                 },
             }
         }
@@ -70,14 +54,14 @@ export function appNotificationFromPushEvent(raw: string): AppNotification | und
 }
 
 export function pathFromAppNotification(notification: AppNotification) {
-    switch (notification.content.notificationType) {
+    switch (notification.notificationType) {
         case AppNotificationType.NewMessage:
             return (
                 [
                     PATHS.SPACES,
-                    encodeURIComponent(notification.spaceID),
+                    encodeURIComponent(notification.content.spaceId),
                     PATHS.CHANNELS,
-                    encodeURIComponent(notification.content.channelID),
+                    encodeURIComponent(notification.content.channelId),
                 ].join('/') + '/'
             )
 
@@ -87,10 +71,12 @@ export function pathFromAppNotification(notification: AppNotification) {
             return (
                 [
                     PATHS.SPACES,
-                    encodeURIComponent(notification.spaceID),
+                    encodeURIComponent(notification.content.spaceId),
                     PATHS.CHANNELS,
-                    encodeURIComponent(notification.content.channelID),
+                    encodeURIComponent(notification.content.channelId),
                 ].join('/') + '/'
             )
+        default:
+            return '/'
     }
 }

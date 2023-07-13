@@ -53,7 +53,7 @@ export async function sendNotificationViaWebPush(
       vapidDetails,
       jwtData,
       payload: params.payload,
-      topic: params.title,
+      topic: params.topic,
       ttl,
       urgency: params.urgency ?? 'normal',
     }
