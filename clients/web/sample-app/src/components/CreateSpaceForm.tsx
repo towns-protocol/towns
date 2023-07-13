@@ -90,52 +90,6 @@ export const CreateSpaceForm = (props: Props) => {
         },
         [],
     )
-    const txInProgress = useRef(false)
-
-    const onClickFundLocalHostWallet = useCallback((accountId: string) => {
-        if (!txInProgress.current) {
-            const fundWallet = async () => {
-                try {
-                    txInProgress.current = true
-                    // We're on Anvil, so we can use the anvil_setBalance RPC
-                    const getWsProvider = () => {
-                        return new ethers.providers.WebSocketProvider('ws://127.0.0.1:8545')
-                    }
-
-                    const provider = getWsProvider()
-                    const amount = ethers.BigNumber.from(10).pow(18).toHexString()
-
-                    const result = provider.send('anvil_setBalance', [accountId, amount])
-
-                    console.log('fundWallet tx', result, amount, accountId)
-                    const receipt = await result
-                    console.log('fundWallet receipt', receipt)
-                    {
-                        const result = provider.send('anvil_nodeInfo')
-
-                        console.log('anvil_nodeInfo tx', result, amount, accountId)
-                        const receipt = await result
-                        console.log('anvil_nodeInfo receipt', receipt)
-                    }
-                    {
-                        const result = provider.send('eth_getBalance', [accountId, 'latest'])
-
-                        console.log('eth_getBalance tx', result, amount, accountId)
-                        const receipt = await result
-                        const newBalance = ethers.BigNumber.from(receipt).toString()
-                        console.log('eth_getBalance newBalance', newBalance)
-                    }
-                } catch (error) {
-                    console.error('fundWallet failed', error)
-                } finally {
-                    txInProgress.current = false
-                }
-            }
-            fundWallet()
-        } else {
-            console.log('fundWallet in progress')
-        }
-    }, [])
 
     const onChangeVisibility = useCallback((event: SelectChangeEvent) => {
         setVisibility(event.target.value as RoomVisibility)
@@ -317,23 +271,72 @@ export const CreateSpaceForm = (props: Props) => {
                     chain?.id === foundry.id ||
                     chain?.id === hardhat.id) &&
                     accounts.map((accountId) => (
-                        <LocalhostWalletInfo
-                            accountId={accountId}
-                            key={accountId}
-                            onClickFundWallet={onClickFundLocalHostWallet}
-                        />
+                        <LocalhostWalletInfo accountId={accountId} key={accountId} />
                     ))}
             </Box>
         </Box>
     )
 }
 
-const LocalhostWalletInfo = (props: {
-    accountId: Address
-    onClickFundWallet: (accountId: string) => void
-}) => {
-    const { accountId, onClickFundWallet } = props
-    const balance = useBalance({ address: accountId, watch: true })
+const LocalhostWalletInfo = (props: { accountId: Address }) => {
+    const { accountId } = props
+    const balance = useBalance({
+        address: accountId,
+        watch: true,
+        onError: (error) => {
+            console.log('Error', error)
+        },
+    })
+    const txInProgress = useRef(false)
+
+    const onClickFundWallet = useCallback(
+        (accountId: string) => {
+            if (!txInProgress.current) {
+                const fundWallet = async () => {
+                    try {
+                        txInProgress.current = true
+                        // We're on Anvil, so we can use the anvil_setBalance RPC
+                        const getWsProvider = () => {
+                            return new ethers.providers.WebSocketProvider('ws://127.0.0.1:8545')
+                        }
+
+                        const provider = getWsProvider()
+                        const amount = ethers.BigNumber.from(10).pow(18).toHexString()
+
+                        const result = provider.send('anvil_setBalance', [accountId, amount])
+
+                        console.log('fundWallet tx', result, amount, accountId)
+                        const receipt = await result
+                        console.log('fundWallet receipt', receipt)
+                        {
+                            const result = provider.send('anvil_nodeInfo')
+
+                            console.log('anvil_nodeInfo tx', result, amount, accountId)
+                            const receipt = await result
+                            console.log('anvil_nodeInfo receipt', receipt)
+                        }
+                        {
+                            const result = provider.send('eth_getBalance', [accountId, 'latest'])
+
+                            console.log('eth_getBalance tx', result, amount, accountId)
+                            const receipt = await result
+                            const newBalance = ethers.BigNumber.from(receipt).toString()
+                            console.log('eth_getBalance newBalance', newBalance)
+                        }
+                    } catch (error) {
+                        console.error('fundWallet failed', error)
+                    } finally {
+                        txInProgress.current = false
+                        balance.refetch()
+                    }
+                }
+                fundWallet()
+            } else {
+                console.log('fundWallet in progress')
+            }
+        },
+        [balance],
+    )
     return (
         <Box display="grid" flexDirection="column" alignItems="center" marginTop="20px">
             <Chip
