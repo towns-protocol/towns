@@ -6,7 +6,6 @@ import { useStore } from 'store/store'
 import { env } from '../utils/environment'
 import { useDevice } from './useDevice'
 
-// always false for now
 const ENABLE_PUSH_NOTIFICATIONS = env.VITE_PUSH_NOTIFICATION_ENABLED
 
 export const usePushNotifications = () => {

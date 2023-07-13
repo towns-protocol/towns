@@ -19,7 +19,6 @@ Step 4: In `clients/web/app/.env.local`:
 In `clients/web/app/.env.local`:
 
 ```bash
-VITE_MOCK_SERVICE_WORKER_ENABLED=false # set to false to use the real Service Worker for push notifications
 VITE_PUSH_NOTIFICATION_ENABLED=true # feature flag: set to true to enable push notifications
 ```
 

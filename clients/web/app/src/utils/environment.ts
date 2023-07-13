@@ -11,11 +11,13 @@ const boolish = z.union([
     z.literal(''),
     z.literal(0),
     z.literal(1),
+    z.literal('true'),
+    z.literal('false'),
     z.boolean(),
 ])
 
 const coerceBoolish = (value: z.TypeOf<typeof boolish>) => {
-    return value === '1' || value === true || value === 1
+    return value === '1' || value === true || value === 'true' || value === 1
 }
 
 const envSchema = z.object({
@@ -40,8 +42,9 @@ const envSchema = z.object({
     VITE_SENTRY_BEARER_TOKEN: z.string().optional(),
     VITE_AMPLITUDE_KEY: z.string().nullish(), // making this optional since we want to allow local development without it
     VITE_GLEAP_API_KEY: z.string().optional(), // making this optional since we want to allow local development without it
-    VITE_MOCK_SERVICE_WORKER_ENABLED: z.string().optional(), // making this optional since we want to allow local development with / without it
-    VITE_PUSH_NOTIFICATION_ENABLED: z.string().optional(), // making this optional since we want to allow local development with / without it
+
+    VITE_PUSH_NOTIFICATION_ENABLED: boolish.transform(coerceBoolish).default(false), // making this optional since we want to allow local development with / without it
+
     VITE_WEB_PUSH_APPLICATION_SERVER_KEY: z.string().optional(), // making this optional since we want to allow local development without it
     VITE_WEB_PUSH_WORKER_URL: z.string().optional(), // url to the web push worker
     VITE_AMP_WORKER_URL: z.string().url().optional(),

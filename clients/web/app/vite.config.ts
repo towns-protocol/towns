@@ -1,6 +1,6 @@
 import { vanillaExtractPlugin } from '@vanilla-extract/vite-plugin'
 import react from '@vitejs/plugin-react'
-import { defineConfig, loadEnv, UserConfigExport, PluginOption, UserConfig } from 'vite'
+import { defineConfig, loadEnv, PluginOption, UserConfig } from 'vite'
 import checker from 'vite-plugin-checker'
 import tsconfigPaths from 'vite-tsconfig-paths'
 import { visualizer } from 'rollup-plugin-visualizer'
@@ -15,6 +15,7 @@ const commitHash = execSync('git rev-parse --short HEAD').toString().trim()
 
 // https://vitejs.dev/config/
 export default ({ mode }: { mode: string }) => {
+    console.log('viteconfig:mode', mode)
     const env = loadEnv(mode, process.cwd(), '')
 
     const devPlugins: PluginOption[] = [
@@ -58,9 +59,26 @@ export default ({ mode }: { mode: string }) => {
         assetsInclude: ['**/*.png', '**/*.svg'],
         plugins: [
             VitePWA(
-                vitePWAOptions({
-                    enablePushNotification: Boolean(env.VITE_PUSH_NOTIFICATION_ENABLED),
-                }),
+                vitePWAOptions(
+                    // TODO: once VITE_PUSH_NOTIFICATION_ENABLED is no longer a flag, we can change the env var to something more generic like VITE_DEV_ONLY_SW_ENABLED
+                    mode === 'development' && env.VITE_PUSH_NOTIFICATION_ENABLED === 'true'
+                        ? {
+                              filename: 'dev-only-sw.ts',
+                              devOptions: {
+                                  enabled: true,
+                                  type: 'module',
+                              },
+                          }
+                        : mode === 'development'
+                        ? {
+                              // this combo of options allows for auto removing any dev-only service workers
+                              devOptions: {
+                                  enabled: true,
+                              },
+                              selfDestroying: true,
+                          }
+                        : undefined,
+                ),
             ),
             polyfillNode(),
             react(),

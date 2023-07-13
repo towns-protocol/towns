@@ -58,23 +58,9 @@ if (env.IS_DEV) {
 
 const node = document.getElementById('root')
 
-if (node) {
-    if (env.IS_DEV) {
-        if (env.VITE_MOCK_SERVICE_WORKER_ENABLED === 'false') {
-            // skip the mock service worker
-            createRoot(node).render(<Main />)
-        } else {
-            import(`../mocks/browser`)
-                .then(({ worker }) => {
-                    worker.start({
-                        onUnhandledRequest: 'bypass',
-                    })
-                })
-                .then(() => {
-                    createRoot(node).render(<Main />)
-                })
-        }
-    } else {
-        createRoot(node).render(<Main />)
-    }
+if (!node) {
+    // this would happen if HTML is malformed or absent
+    throw new Error('no root node enable')
 }
+
+createRoot(node).render(<Main />)

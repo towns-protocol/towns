@@ -1,12 +1,11 @@
 import React, { useCallback, useEffect, useState } from 'react'
-
 import { useRegisterSW } from 'virtual:pwa-register/react'
-
 import { AnimatePresence } from 'framer-motion'
 import { debug } from 'debug'
 import { Box, Button, Card, Paragraph } from '@ui'
 import { FadeInBox } from '@components/Transitions'
 import { Spinner } from '@components/Spinner'
+import { env } from 'utils'
 
 const UPDATE_STARTUP_MS = 10 * 1000
 const UPDATE_INTERVAL_MS = 5 * 60 * 1000
@@ -14,13 +13,19 @@ const UPDATE_INTERVAL_MS = 5 * 60 * 1000
 const log = debug('app:ReloadPrompt')
 
 export const ReloadPrompt = () => {
+    useAddDevOnlyHelpersToWindow()
+
     const {
         offlineReady: [offlineReady, setOfflineReady],
         needRefresh: [needRefresh, setNeedRefresh],
         updateServiceWorker,
     } = useRegisterSW({
         onRegisteredSW(swUrl, r) {
-            log('registered: ' + r)
+            log('registered:' + r)
+            if (import.meta.env.DEV) {
+                console.log('sw: dev - skipping updater')
+                return
+            }
             if (r) {
                 const checkInterval = () => {
                     log('checking for updates...')
@@ -161,4 +166,20 @@ export const ReloadPrompt = () => {
             </AnimatePresence>
         </Box>
     )
+}
+
+function useAddDevOnlyHelpersToWindow() {
+    useEffect(() => {
+        if (env.IS_DEV) {
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+            // @ts-ignore
+            window.clearAllWorkers = () => {
+                navigator.serviceWorker.getRegistrations().then((registrations) => {
+                    for (const registration of registrations) {
+                        registration.unregister()
+                    }
+                })
+            }
+        }
+    }, [])
 }

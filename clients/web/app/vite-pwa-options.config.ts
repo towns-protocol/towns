@@ -1,21 +1,11 @@
-import { DevOptions, VitePWAOptions } from 'vite-plugin-pwa'
+import { VitePWAOptions } from 'vite-plugin-pwa'
 
 export interface AppPwaDevOptions {
     enablePushNotification?: boolean
 }
 
-export function vitePWAOptions(appOptions?: AppPwaDevOptions): Partial<VitePWAOptions> {
-    let devOptions: DevOptions = {
-        enabled: false,
-    }
-    if (appOptions?.enablePushNotification === true) {
-        devOptions = {
-            enabled: true,
-            type: 'module',
-        }
-    }
+export function vitePWAOptions(options: Partial<VitePWAOptions> = {}): Partial<VitePWAOptions> {
     return {
-        devOptions,
         strategies: 'injectManifest',
         srcDir: 'src/workers',
         filename: 'main-sw.ts',
@@ -27,7 +17,6 @@ export function vitePWAOptions(appOptions?: AppPwaDevOptions): Partial<VitePWAOp
         workbox: {
             sourcemap: true,
         },
-
         includeAssets: ['favicon.svg', 'favicon.png', 'apple-touch-icon.png', 'masked-icon.svg'],
 
         manifest: {
@@ -60,5 +49,6 @@ export function vitePWAOptions(appOptions?: AppPwaDevOptions): Partial<VitePWAOp
             start_url: '/',
             orientation: 'portrait',
         },
+        ...options,
     }
 }
