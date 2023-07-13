@@ -146,6 +146,26 @@ message SpacePayload {
     }
 }
 
+message EncryptedData {
+    string text = 1;
+    /**
+    * Encryption algorithm  used to encrypt this event.
+    */
+    optional string algorithm = 2;
+    /**
+    * Sender device public key identifying the sender's device.
+    */
+    optional string sender_key = 3;
+    /**
+    * Sender's device id.
+    */
+    optional string device_id = 4;
+    /**
+    * The ID of the session used to encrypt the message.
+    */
+    optional string session_id = 5;
+}
+
 message ChannelPayload {
     message Inception {
         string stream_id = 1;
@@ -157,26 +177,6 @@ message ChannelPayload {
         */
         string channel_name = 4;
         string channel_topic = 5;
-    }
-
-    message Message {
-        string text = 1;
-        /**
-        * Encryption algorithm  used to encrypt this event.
-        */
-        optional string algorithm = 2;
-        /**
-        * Sender device public key identifying the sender's device.
-        */
-        optional string sender_key = 3;
-        /**
-        * Sender's device id.
-        */
-        optional string device_id = 4;
-        /**
-        * The ID of the session used to encrypt the message.
-        */
-        optional string session_id = 5;
     }
 
     /**
@@ -191,7 +191,7 @@ message ChannelPayload {
 
     oneof content {
         Inception inception = 1;
-        Message message = 2;
+        EncryptedData message = 2;
         Membership membership = 3;
         Receipt receipt = 4;
     }

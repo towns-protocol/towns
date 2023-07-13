@@ -310,7 +310,7 @@ func TestMethods(t *testing.T) {
 		case *protocol.StreamEvent_ChannelPayload:
 			// ok
 			switch p.ChannelPayload.Content.(type) {
-			case *protocol.ChannelPayload_Message_:
+			case *protocol.ChannelPayload_Message:
 				// ok
 			default:
 				t.Fatalf("expected message event, got %v", p.ChannelPayload.Content)
@@ -523,7 +523,7 @@ func TestManyUsers(t *testing.T) {
 					assert.NoError(t, err)
 					msg := e.GetChannelMessage()
 					assert.NotNil(t, msg)
-					tokens := strings.Split(msg.Text, " ")
+					tokens := strings.Split(msg.Message.Text, " ")
 					assert.Equal(t, 4, len(tokens))
 					id, err := strconv.Atoi(tokens[0])
 					assert.NoError(t, err)

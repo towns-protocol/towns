@@ -129,8 +129,8 @@ func (e *ParsedEvent) GetChannelMessage() *ChannelPayload_Message {
 	switch payload := e.Event.Payload.(type) {
 	case *StreamEvent_ChannelPayload:
 		switch cp := payload.ChannelPayload.Content.(type) {
-		case *ChannelPayload_Message_:
-			return cp.Message
+		case *ChannelPayload_Message:
+			return cp
 		}
 	}
 	return nil

@@ -13,7 +13,7 @@ import {
     Membership,
     UserPayload_ToDevice,
     SpacePayload_Channel,
-    ChannelPayload_Message,
+    EncryptedData,
     ToDeviceMessage,
     ToDeviceOp,
     ToDeviceMessage_KeyRequest,
@@ -247,7 +247,7 @@ export const getChannelPayload = (
 }
 
 export const make_ChannelPayload_Message = (
-    value: PlainMessage<ChannelPayload_Message>,
+    value: PlainMessage<EncryptedData>,
 ): PlainMessage<StreamEvent>['payload'] => {
     return {
         case: 'channelPayload',
@@ -262,7 +262,7 @@ export const make_ChannelPayload_Message = (
 
 export const getMessagePayload = (
     event: ParsedEvent | StreamEvent | undefined,
-): ChannelPayload_Message | undefined => {
+): EncryptedData | undefined => {
     if (!isDefined(event)) {
         return undefined
     }

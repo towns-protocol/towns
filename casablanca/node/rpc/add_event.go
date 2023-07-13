@@ -77,7 +77,7 @@ func (s *Service) addParsedEvent(ctx context.Context, streamId string, parsedEve
 		case *ChannelPayload_Membership:
 			membership := channelPayload.Membership
 			return s.addMembershipEvent(ctx, stream, streamView, parsedEvent, membership)
-		case *ChannelPayload_Message_:
+		case *ChannelPayload_Message:
 			return s.addChannelMessage(ctx, stream, streamView, parsedEvent)
 		default:
 			return status.Errorf(codes.InvalidArgument, "AddEvent: Channel event has no valid payload for type %T", payload.ChannelPayload.Content)
@@ -164,7 +164,7 @@ func (s *Service) addChannelMessage(ctx context.Context, stream *Stream, view St
 		return status.Errorf(codes.Internal, "AddEvent: error getting joined users: %v", err)
 	}
 	if !member {
-	
+
 		return status.Errorf(codes.InvalidArgument, "AddEvent: user %s is not a member of channel %s", user, streamId)
 	}
 
@@ -214,7 +214,7 @@ func (s *Service) addMembershipEvent(ctx context.Context, stream *Stream, view S
 			if err != nil {
 				return status.Errorf(codes.InvalidArgument, "AddEvent: failed to get user id: %v", err)
 			}
-		permission = auth.PermissionInvite
+			permission = auth.PermissionInvite
 		}
 	case MembershipOp_SO_JOIN:
 		if member {

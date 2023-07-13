@@ -5,7 +5,7 @@ import {
     MembershipOp,
     SyncStreamsResponse,
     UserPayload_UserMembership,
-    ChannelPayload_Message,
+    EncryptedData,
     SyncCookie,
 } from '@towns/proto'
 import { dlog } from './dlog'
@@ -121,7 +121,7 @@ describe('streamRpcClient', () => {
         })
 
         await expect(promise).rejects.toThrow(
-            'inception type mismatch: *protocol.StreamEvent_ChannelPayload::*protocol.ChannelPayload_Message_ vs *protocol.UserPayload_Inception',
+            'inception type mismatch: *protocol.StreamEvent_ChannelPayload::*protocol.ChannelPayload_Message vs *protocol.UserPayload_Inception',
         )
 
         log('bobSendsMismatchedPayloadCase', 'done')
@@ -398,7 +398,7 @@ describe('streamRpcClient', () => {
             aliceSyncResultMultipleStreams,
             channelId,
             'channelPayload',
-            (p: ChannelPayload_Message) => {
+            (p: EncryptedData) => {
                 expect(p.text).toEqual('Hello, Alice!')
             },
         )

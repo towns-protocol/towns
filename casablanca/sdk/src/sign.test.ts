@@ -8,7 +8,7 @@ import { makeUserStreamId } from './id'
 import { makeTownsDelegateSig, makeOldTownsDelegateSig, publicKeyToAddress } from './crypto/crypto'
 import { getPublicKey } from 'ethereum-cryptography/secp256k1'
 import { ethers } from 'ethers'
-import { ChannelPayload_Message, StreamEvent } from '@towns/proto'
+import { EncryptedData, StreamEvent } from '@towns/proto'
 
 const log = dlog('test:sign')
 
@@ -111,7 +111,7 @@ describe('sign', () => {
             const context = await c()
             const context2 = await c2()
 
-            const message: PlainMessage<ChannelPayload_Message> = {
+            const message: PlainMessage<EncryptedData> = {
                 text: 'Hello, World!',
             }
             const payload: PlainMessage<StreamEvent>['payload'] = {

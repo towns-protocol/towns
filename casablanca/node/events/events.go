@@ -1,8 +1,9 @@
 package events
 
 import (
-	"google.golang.org/protobuf/proto"
 	"crypto/rand"
+
+	"google.golang.org/protobuf/proto"
 
 	"casablanca/node/crypto"
 	"casablanca/node/protocol"
@@ -183,8 +184,8 @@ func Make_SpacePayload_Channel(op ChannelOp, channelId string, channelName strin
 func Make_ChannelPayload_Message(content string) *StreamEvent_ChannelPayload {
 	return &StreamEvent_ChannelPayload{
 		ChannelPayload: &ChannelPayload{
-			Content: &ChannelPayload_Message_{
-				Message: &protocol.ChannelPayload_Message{
+			Content: &ChannelPayload_Message{
+				Message: &protocol.EncryptedData{
 					Text: content,
 				},
 			},
