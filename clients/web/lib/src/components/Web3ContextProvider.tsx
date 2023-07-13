@@ -40,6 +40,7 @@ interface Props {
 }
 
 const SUPPORTED_CHAINS = [goerli, localhost, foundry, sepolia]
+export type SupportedChains = (typeof SUPPORTED_CHAINS)[number]
 
 export function Web3ContextProvider(props: Props): JSX.Element {
     const { alchemyKey, connectors } = props
@@ -74,10 +75,16 @@ export function Web3ContextProvider(props: Props): JSX.Element {
 }
 
 export function ContextImpl(props: Props): JSX.Element {
+    const { chainId, web3Signer, alchemyKey } = props
     const chain = SUPPORTED_CHAINS.find((c) => c.id === props.chainId)
     if (!chain) {
         console.error('Unsupported chain for Towns', props.chainId)
     }
-    const web3 = useWeb3(props.chainId, chain, props.web3Signer)
+    const web3 = useWeb3({
+        chainId,
+        web3Signer,
+        alchemyKey,
+        chain,
+    })
     return <Web3Context.Provider value={web3}>{props.children}</Web3Context.Provider>
 }
