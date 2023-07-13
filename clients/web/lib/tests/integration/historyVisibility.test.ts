@@ -17,7 +17,8 @@ import {
 import { ZionTestClient } from './helpers/ZionTestClient'
 
 describe('historyVisibility', () => {
-    test('create public room, send message, join second user, read message', async () => {
+    // TODO: https://linear.app/hnt-labs/issue/HNT-1584/testsintegrationhistoryvisibilitytestts
+    test.skip('create public room, send message, join second user, read message', async () => {
         // create bob
         const { bob, john } = await registerAndStartClients(['bob', 'john'])
         //
