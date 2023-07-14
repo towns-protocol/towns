@@ -35,8 +35,8 @@ export function useSpacesFromContract(): UseSpaceFromContractReturn {
 
 export function useCasablancaSpacesFromContract(): UseSpaceFromContractReturn {
     const { loggedInWalletAddress } = useCasablancaCredentials()
-    const matrixSpaces = useSpacesFromContractWithAddress(loggedInWalletAddress)
-    return matrixSpaces
+    const spaces = useSpacesFromContractWithAddress(loggedInWalletAddress)
+    return spaces
 }
 
 export function useMatrixSpacesFromContract(): UseSpaceFromContractReturn {

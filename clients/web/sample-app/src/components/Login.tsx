@@ -30,6 +30,7 @@ import {
 } from 'wagmi'
 import { useEnvironment } from 'hooks/use-environment'
 import { EnvironmentSelect } from './EnvironmentSelect'
+import { ChainSwitchingButton } from './Buttons/ChainSwitchingButton'
 
 const loginMsgToSign = `Click to sign in and accept the Harmony Terms of Service.`
 const registerWalletMsgToSign = `Click to register and accept the Harmony Terms of Service.`
@@ -136,14 +137,14 @@ function NetworkInfo(props: { walletRegisteredWithMatrix: boolean }) {
                 return <CircularProgress size={56} />
             } else if (matrixLoginStatus === LoginStatus.LoggedOut) {
                 return (
-                    <Button
+                    <ChainSwitchingButton
                         variant="contained"
                         color="primary"
                         sx={{ margin: '20px' }}
                         onClick={onRegisterNewWallet}
                     >
                         Register new wallet (matrix)
-                    </Button>
+                    </ChainSwitchingButton>
                 )
             } else {
                 return (
@@ -162,14 +163,14 @@ function NetworkInfo(props: { walletRegisteredWithMatrix: boolean }) {
                 return <CircularProgress size={56} />
             } else if (casablancaLoginStatus === LoginStatus.LoggedOut) {
                 return (
-                    <Button
+                    <ChainSwitchingButton
                         variant="contained"
                         color="primary"
                         sx={{ margin: '20px' }}
                         onClick={onLoginCasablanca}
                     >
                         Login (casablanca)
-                    </Button>
+                    </ChainSwitchingButton>
                 )
             } else {
                 return (
@@ -188,14 +189,14 @@ function NetworkInfo(props: { walletRegisteredWithMatrix: boolean }) {
                 return <CircularProgress size={56} />
             } else if (matrixLoginStatus === LoginStatus.LoggedOut) {
                 return (
-                    <Button
+                    <ChainSwitchingButton
                         variant="contained"
                         color="primary"
                         sx={{ margin: '20px' }}
                         onClick={onLoginWithWallet}
                     >
                         Sign in with wallet
-                    </Button>
+                    </ChainSwitchingButton>
                 )
             } else {
                 return (

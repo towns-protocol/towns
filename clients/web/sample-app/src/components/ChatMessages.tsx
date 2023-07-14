@@ -84,15 +84,7 @@ export function ChatMessages(props: Props): JSX.Element {
                             </Typography>
                         )}
                         {timeline.map((m: TimelineEvent, index: number) => (
-                            <Typography
-                                key={m.eventId}
-                                display="block"
-                                variant="body1"
-                                component="span"
-                                sx={messageStyle}
-                            >
-                                {`${formatEvent(m)}`}
-                            </Typography>
+                            <ChatMessage event={m} key={m.eventId} />
                         ))}
                         {hasUnread && (
                             <Typography
@@ -157,6 +149,17 @@ const MissingMembershipInfo = (props: { onJoinRoom: () => void }) => (
     </>
 )
 
+function ChatMessage(props: { event: TimelineEvent }) {
+    const { event } = props
+    const date = new Date(event.originServerTs)
+    return (
+        <Typography display="block" variant="body1" component="span" sx={messageStyle}>
+            <p style={dateStyle}>{date.toLocaleString()}</p>
+            {formatEvent(event)}
+        </Typography>
+    )
+}
+
 function formatEvent(event: TimelineEvent): string {
     switch (event.content?.kind) {
         case ZTEvent.RoomMessage:
@@ -174,4 +177,11 @@ const messageStyle = {
 const buttonStyle = {
     padding: (theme: Theme) => theme.spacing(0),
     gap: (theme: Theme) => theme.spacing(0),
+}
+
+const dateStyle = {
+    color: 'gray',
+    fontSize: '14px',
+    paddingBottom: '0px',
+    marginBottom: '5px',
 }
