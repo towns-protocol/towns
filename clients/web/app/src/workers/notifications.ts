@@ -31,11 +31,11 @@ export function handleNotifications(worker: ServiceWorkerGlobalScope) {
             return
         }
 
-        const title = getNotificationTitle(notification)
+        const { title, body } = getNotificationContent(notification)
         const data = event.data.text()
         console.log('sw: received notification data', data)
-        worker.registration.showNotification('Towns', {
-            body: title,
+        await worker.registration.showNotification(title, {
+            body,
             silent: false,
             icon: '/pwa/maskable_icon_x192.png',
             data,
@@ -51,14 +51,25 @@ export function handleNotifications(worker: ServiceWorkerGlobalScope) {
     })
 }
 
-function getNotificationTitle(notification: AppNotification): string {
+function getNotificationContent(notification: AppNotification): { title: string; body: string } {
     // todo: fetch the name of the channel/space from the store / cache
+    const townName = notification.content.spaceId
+    const channelName = notification.content.channelId
     switch (notification.notificationType) {
         case 'new_message':
-            return 'New Message'
+            return {
+                title: townName,
+                body: `New encrypted message in ${channelName}`,
+            }
         case 'mention':
-            return 'New Mention'
+            return {
+                title: townName,
+                body: `You were mentioned in ${channelName}`,
+            }
         default:
-            return 'New Notification'
+            return {
+                title: 'Town',
+                body: 'New Notification',
+            }
     }
 }

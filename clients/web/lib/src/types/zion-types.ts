@@ -242,3 +242,24 @@ export function getIdForMatrixEvent(event: MatrixEvent): string {
     // for things to run, so we'll use the local timestamp and a random number
     return `UnknownId_${event.localTimestamp}_${Math.floor(Math.random() * 4095).toString(16)}`
 }
+
+export function isMentionedTextMessageOption(
+    options: SendMessageOptions,
+): options is SendTextMessageOptions & SpaceIdOptions {
+    return (
+        'messageType' in options &&
+        options.messageType === MessageType.Text &&
+        'mentions' in options &&
+        Array.isArray(options.mentions) &&
+        options.mentions.length > 0
+    )
+}
+
+export function isSpaceIdOptions(options: SendMessageOptions): options is SpaceIdOptions {
+    return (
+        'parentSpaceId' in options &&
+        options.parentSpaceId !== undefined &&
+        'networkId' in options.parentSpaceId &&
+        options.parentSpaceId.networkId.length > 0
+    )
+}

@@ -81,6 +81,8 @@ export const App = () => {
             initialSyncLimit={20}
             connectors={walletConnectors}
             chainId={environment.chainId}
+            pushNotificationAuthToken={env.VITE_AUTH_WORKER_HEADER_SECRET}
+            pushNotificationWorkerUrl={env.VITE_WEB_PUSH_WORKER_URL}
         >
             <>
                 <FaviconBadge />

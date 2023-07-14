@@ -7,11 +7,11 @@ import {
 } from '../types/timeline-types'
 import {
     Client as CasablancaClient,
+    RiverDbManager,
     bin_fromHexString,
     makeOldTownsDelegateSig,
     makeStreamRpcClient,
     takeKeccakFingerprintInHex,
-    RiverDbManager,
     userIdFromAddress,
 } from '@towns/sdk'
 import {
@@ -77,6 +77,7 @@ import { ISpaceDapp } from './web3/ISpaceDapp'
 import { MatrixDbManager } from './matrix/MatrixDbManager'
 import { Permission } from './web3/ContractTypes'
 import { PioneerNFT } from './web3/PioneerNFT'
+import { PushNotificationClient } from './PushNotificationClient'
 import { RoleIdentifier } from '../types/web3-types'
 import { SignerUndefinedError } from '../types/error-types'
 import { SpaceDapp } from './web3/SpaceDapp'
@@ -131,6 +132,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
     private _auth?: MatrixAuth
     private _signerContext?: SignerContext
     protected _eventHandlers?: ZionClientEventHandlers
+    private pushNotificationClient?: PushNotificationClient
 
     constructor(opts: ZionOpts, name?: string) {
         this.opts = opts
@@ -141,6 +143,12 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
         this.spaceDapp = new SpaceDapp(opts.chainId, opts.web3Provider)
         this.pioneerNFT = new PioneerNFT(opts.chainId, opts.web3Provider)
         this._eventHandlers = opts.eventHandlers
+        if (opts.pushNotificationWorkerUrl && opts.pushNotificationAuthToken) {
+            this.pushNotificationClient = new PushNotificationClient({
+                url: opts.pushNotificationWorkerUrl,
+                authToken: opts.pushNotificationAuthToken,
+            })
+        }
     }
 
     public get auth(): MatrixAuth | undefined {
@@ -1659,6 +1667,11 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
                 break
             default:
                 staticAssertNever(roomId)
+        }
+        if (this.pushNotificationClient) {
+            await this.pushNotificationClient.sendMentionedNotifications(roomId.networkId, options)
+        } else {
+            //console.log('No notification sent because the pushNotificationClient is undefined')
         }
     }
 

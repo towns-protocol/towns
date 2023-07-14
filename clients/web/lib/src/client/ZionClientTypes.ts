@@ -22,6 +22,8 @@ export interface ZionOpts {
     web3Provider?: TProvider
     eventHandlers?: ZionClientEventHandlers
     logNamespaceFilter?: string
+    pushNotificationWorkerUrl?: string
+    pushNotificationAuthToken?: string
 }
 
 export interface MatrixAuth {
