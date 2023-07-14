@@ -68,7 +68,7 @@ import {
     makeCasablancaStreamIdentifier,
     makeMatrixRoomIdentifier,
 } from '../types/room-identifier'
-import { SignerContext, isUserStreamId as isCasablancaUserStreamId } from '@towns/sdk'
+import { SignerContext } from '@towns/sdk'
 import { sendMatrixMessage, sendMatrixNotice } from './matrix/SendMessage'
 import { toZionRoom, toZionUser } from '../store/use-matrix-store'
 
@@ -351,9 +351,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
             console.log('user does not exist, creating new user', (e as Error).message)
             await this.casablancaClient.createNewUser()
         }
-        // TODO: init crypto store and load olm prior to initting crypto module
         await this.casablancaClient.initCrypto()
-
         this._eventHandlers?.onRegister?.({
             userId: this.casablancaClient.userId,
         })
@@ -1751,20 +1749,25 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
     /************************************************
      * canSendToDevice
      *************************************************/
-    public canSendToDeviceMessage(userId: string) {
-        if (isCasablancaUserStreamId(userId)) {
-            if (!this.casablancaClient) {
-                throw new Error('Casablanca client not initialized')
+    public async canSendToDeviceMessage(userId: string): Promise<boolean> {
+        switch (this.opts.primaryProtocol) {
+            case SpaceProtocol.Casablanca: {
+                if (!this.casablancaClient) {
+                    throw new Error('Casablanca client not initialized')
+                }
+                const devices = await this.casablancaClient.getStoredDevicesForUser(userId)
+                return devices.size > 0
             }
-            const devices = this.casablancaClient.getStoredDevicesForUser(userId)
-            return Object.keys(devices).length > 0
-        } else {
-            if (!this.matrixClient) {
-                throw new Error('matrix client is undefined')
-            }
+            case SpaceProtocol.Matrix: {
+                if (!this.matrixClient) {
+                    throw new Error('matrix client is undefined')
+                }
 
-            const devices = this.matrixClient.getStoredDevicesForUser(userId)
-            return devices.length > 0
+                const devices = this.matrixClient.getStoredDevicesForUser(userId)
+                return devices.length > 0
+            }
+            default:
+                return false
         }
     }
 
@@ -1772,26 +1775,34 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
      * sendToDevice
      *************************************************/
     public async sendToDeviceMessage(userId: string, type: string, content: object) {
-        if (isCasablancaUserStreamId(userId)) {
-            // todo casablanca look for user in casablanca
-            if (!this.casablancaClient) {
-                throw new Error('Casablanca client not initialized')
+        switch (this.opts.primaryProtocol) {
+            case SpaceProtocol.Casablanca: {
+                // todo casablanca look for user in casablanca
+                if (!this.casablancaClient) {
+                    throw new Error('Casablanca client not initialized')
+                }
+                const canSend = await this.canSendToDeviceMessage(userId)
+                if (!canSend) {
+                    throw new Error('cannot send to device for user ' + userId)
+                }
+                await this.casablancaClient.sendToDevicesMessage(userId, { content }, type)
+                return
             }
-            if (!this.canSendToDeviceMessage(userId)) {
-                throw new Error('cannot send to device for user ' + userId)
-            }
-            await this.casablancaClient.sendToDevicesMessage(userId, { content }, type)
-        } else {
-            if (!this.matrixClient) {
-                throw new Error('matrix client is undefined')
-            }
+            case SpaceProtocol.Matrix: {
+                if (!this.matrixClient) {
+                    throw new Error('matrix client is undefined')
+                }
 
-            const devices = this.matrixClient.getStoredDevicesForUser(userId)
-            const devicesInfo = devices.map((d) => ({ userId: userId, deviceInfo: d }))
-            await this.matrixClient.encryptAndSendToDevices(devicesInfo, {
-                type,
-                content,
-            })
+                const devices = this.matrixClient.getStoredDevicesForUser(userId)
+                const devicesInfo = devices.map((d) => ({ userId: userId, deviceInfo: d }))
+                await this.matrixClient.encryptAndSendToDevices(devicesInfo, {
+                    type,
+                    content,
+                })
+                return
+            }
+            default:
+                return
         }
     }
     /************************************************

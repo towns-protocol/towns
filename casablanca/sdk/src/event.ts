@@ -113,10 +113,10 @@ export enum RiverEventType {
 }
 
 enum RiverEventEvents {
-    Decrypted = 'Event.decrypted',
-    BeforeRedaction = 'Event.beforeRedaction',
-    Status = 'Event.status',
-    Replaced = 'Event.replaced',
+    Decrypted = 'eventDecrypted',
+    BeforeRedaction = 'eventBeforeRedaction',
+    Status = 'eventStatus',
+    Replaced = 'eventReplaced',
 }
 
 // store known stream payload types that can be encrypted
@@ -129,10 +129,10 @@ export enum EncryptedEventStreamTypes {
 type RiverEventEmittedEventHandlerMap = {
     // these should really be RiverEvent but typescript comaplains
     // that RiverEvent is circularly referenced in base class, hence the use of object
-    [RiverEventEvents.Decrypted]: (event: object, err?: Error) => void
-    [RiverEventEvents.BeforeRedaction]: (event: object, redactionEvent: object) => void
-    [RiverEventEvents.Status]: (event: object, status: EventStatus | undefined, err?: Error) => void
-    [RiverEventEvents.Replaced]: (event: object) => void
+    eventDecrypted: (event: object, err?: Error) => void
+    eventBeforeRedaction: (event: object, redactionEvent: object) => void
+    eventStatus: (event: object, status: EventStatus | undefined, err?: Error) => void
+    eventReplaced: (event: object) => void
 }
 
 export class RiverEvent extends (EventEmitter as new () => TypedEmitter<RiverEventEmittedEventHandlerMap>) {
