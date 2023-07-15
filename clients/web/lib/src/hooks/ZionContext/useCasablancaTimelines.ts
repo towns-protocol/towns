@@ -5,6 +5,10 @@ import {
     ChannelMessage_Post,
     PayloadCaseType,
     ToDeviceOp,
+    UserPayload,
+    ChannelPayload,
+    EncryptedData,
+    SpacePayload,
 } from '@towns/proto'
 import { useEffect } from 'react'
 import { Membership, MessageType } from '../../types/zion-types'
@@ -30,6 +34,18 @@ import {
 import { BlockchainTransactionType } from '../../types/web3-types'
 import { Address } from 'wagmi'
 import { staticAssertNever } from '../../utils/zion-utils'
+
+type SuccessResult = {
+    content: TimelineEvent_OneOf
+    error?: never
+}
+
+type ErrorResult = {
+    content?: never
+    error: string
+}
+
+type TownsContentResult = SuccessResult | ErrorResult
 
 export function useCasablancaTimelines(casablancaClient: CasablancaClient | undefined) {
     const setState = useTimelineStore((s) => s.setState)
@@ -134,13 +150,7 @@ export function toEvent(message: ParsedEvent, userId: string): TimelineEvent {
     }
 }
 
-function toTownsContent(
-    eventId: string,
-    message: ParsedEvent,
-): {
-    content?: TimelineEvent_OneOf
-    error?: string
-} {
+function toTownsContent(eventId: string, message: ParsedEvent): TownsContentResult {
     if (!message.event.payload || !message.event.payload.value) {
         return { error: 'payloadless payload' }
     }
@@ -154,188 +164,228 @@ function toTownsContent(
 
     switch (message.event.payload.case) {
         case 'userPayload':
-            {
-                switch (message.event.payload.value.content.case) {
-                    case 'inception': {
-                        return {
-                            content: {
-                                kind: ZTEvent.RoomCreate,
-                                creator: message.creatorUserId,
-                                predecessor: undefined, // todo is this needed?
-                                type: message.event.payload.case,
-                            },
-                        }
-                    }
-                    case 'userMembership': {
-                        const payload = message.event.payload.value.content.value
-                        return {
-                            content: {
-                                kind: ZTEvent.RoomMember,
-                                userId: payload.inviterId, // TODO: this is incorrect, userId should be set to the owner of the stream. Somebody else could have invited the user.
-                                avatarUrl: undefined, // todo avatarUrl
-                                displayName: '---TODO---', // todo displayName
-                                isDirect: undefined, // todo is this needed?
-                                membership: toMembership(payload.op),
-                                streamId: payload.streamId,
-                            },
-                        }
-                    }
-                    case 'toDevice': {
-                        return { error: `${description} unknown message kind` }
-                    }
-                    default: {
-                        return { error: `${description} unknown message kind` }
-                    }
-                }
-            }
-            break
+            return toTownsContent_UserPayload(
+                eventId,
+                message,
+                message.event.payload.value,
+                description,
+            )
         case 'channelPayload':
-            {
-                switch (message.event.payload.value.content.case) {
-                    case 'receipt': {
-                        return {
-                            content: {
-                                kind: ZTEvent.Receipt,
-                                originOp:
-                                    ToDeviceOp[message.event.payload.value.content.value.originOp],
-                                originEventHash:
-                                    '0x' +
-                                    message.event.payload.value.content.value.originHash.toString(),
-                            },
-                        }
-                    }
-                    case 'inception': {
-                        const payload = message.event.payload.value.content.value
-                        return {
-                            content: {
-                                kind: ZTEvent.RoomCreate,
-                                creator: message.creatorUserId,
-                                predecessor: undefined, // todo is this needed?
-                                type: message.event.payload.case,
-                                spaceId: payload.spaceId,
-                            },
-                        }
-                    }
-                    case 'membership': {
-                        const payload = message.event.payload.value.content.value
-                        return {
-                            content: {
-                                kind: ZTEvent.RoomMember,
-                                userId: payload.userId,
-                                avatarUrl: undefined, // todo avatarUrl
-                                displayName: payload.userId, // todo displayName
-                                isDirect: undefined, // todo is this needed?
-                                membership: toMembership(payload.op),
-                                reason: undefined, // todo is this needed?
-                            },
-                        }
-                    }
-                    case 'message': {
-                        const payload = message.event.payload.value.content.value
-                        if (!payload.text) {
-                            return { error: `${description} no text in message` }
-                        }
-                        // todo type this out in the protobuf
-                        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-                        const channelMessage = ChannelMessage.fromJsonString(payload.text)
-                        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-
-                        switch (channelMessage.payload.case) {
-                            case 'post':
-                                return (
-                                    toEvent_ChannelMessagePost(channelMessage.payload.value) ?? {
-                                        error: `${description} unknown message type`,
-                                    }
-                                )
-                            case 'reaction':
-                                return {
-                                    content: {
-                                        kind: ZTEvent.Reaction,
-                                        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-                                        reaction: channelMessage.payload.value.reaction,
-                                        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-                                        targetEventId: channelMessage.payload.value.refEventId,
-                                    } satisfies ReactionEvent,
-                                }
-                            case 'redaction':
-                                return {
-                                    content: {
-                                        kind: ZTEvent.RoomRedaction,
-                                        inReplyTo: channelMessage.payload.value.refEventId,
-                                        content: {},
-                                    } satisfies RoomRedactionEvent,
-                                }
-                            case 'edit': {
-                                const newPost = channelMessage.payload.value.post
-                                if (!newPost) {
-                                    return { error: `${description} no post in edit` }
-                                }
-                                const newContent = toEvent_ChannelMessagePost(
-                                    newPost,
-                                    channelMessage.payload.value.refEventId,
-                                )
-                                return newContent ?? { error: `${description} no content in edit` }
-                            }
-                        }
-                        return { error: `${description} unknown message kind` }
-                    }
-                    default:
-                        staticAssertNever(message.event.payload.value.content)
-                }
-            }
-            break
+            return toTownsContent_ChannelPayload(
+                eventId,
+                message,
+                message.event.payload.value,
+                description,
+            )
         case 'spacePayload':
-            {
-                switch (message.event.payload.value.content.case) {
-                    case 'inception': {
-                        return {
-                            content: {
-                                kind: ZTEvent.RoomCreate,
-                                creator: message.creatorUserId,
-                                predecessor: undefined, // todo is this needed?
-                                type: message.event.payload.case,
-                            },
-                        }
-                    }
-                    case 'channel': {
-                        const payload = message.event.payload.value.content.value
-                        const childId = payload.channelId
-                        return {
-                            content: {
-                                kind: ZTEvent.SpaceChild,
-                                childId: childId,
-                                channelOp: payload.op,
-                            },
-                        }
-                    }
-                    case 'membership': {
-                        const payload = message.event.payload.value.content.value
-                        return {
-                            content: {
-                                kind: ZTEvent.RoomMember,
-                                userId: payload.userId,
-                                avatarUrl: undefined, // todo avatarUrl
-                                displayName: payload.userId, // todo displayName
-                                isDirect: undefined, // todo is this needed?
-                                membership: toMembership(payload.op),
-                                reason: undefined, // todo is this needed?
-                            },
-                        }
-                    }
-                    default:
-                        staticAssertNever(message.event.payload.value.content)
-                }
+            return toTownsContent_SpacePayload(
+                eventId,
+                message,
+                message.event.payload.value,
+                description,
+            )
+        case 'userDeviceKeyPayload':
+            return {
+                error: `${description} userDeviceKeyPayload not supported?`,
             }
             break
+        case 'userSettingsPayload':
+            return {
+                error: `${description} userSettingsPayload not supported?`,
+            }
         default:
-            console.error('$$$ useCasablancaTimelines unknown case', {
-                payload: message.event.payload,
-            })
-            return { error: `unknown payload case ${message.event.payload.case}` }
+            try {
+                staticAssertNever(message.event.payload)
+            } catch (e) {
+                console.error('$$$ useCasablancaTimelines unknown case', {
+                    payload: message.event.payload,
+                })
+                // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
+                return { error: `unknown payload case ${message.event.payload}` }
+            }
     }
 }
 
-function toEvent_ChannelMessagePost(value: ChannelMessage_Post, replacedMsgId?: string) {
+function toTownsContent_UserPayload(
+    eventId: string,
+    message: ParsedEvent,
+    value: UserPayload,
+    description: string,
+): TownsContentResult {
+    switch (value.content.case) {
+        case 'inception': {
+            return {
+                content: {
+                    kind: ZTEvent.RoomCreate,
+                    creator: message.creatorUserId,
+                    predecessor: undefined, // todo is this needed?
+                    type: message.event.payload.case,
+                },
+            }
+        }
+        case 'userMembership': {
+            const payload = value.content.value
+            return {
+                content: {
+                    kind: ZTEvent.RoomMember,
+                    userId: payload.inviterId, // TODO: this is incorrect, userId should be set to the owner of the stream. Somebody else could have invited the user.
+                    avatarUrl: undefined, // todo avatarUrl
+                    displayName: '---TODO---', // todo displayName
+                    isDirect: undefined, // todo is this needed?
+                    membership: toMembership(payload.op),
+                    streamId: payload.streamId,
+                },
+            }
+        }
+        case 'toDevice': {
+            return { error: `${description} unknown message kind` }
+        }
+        case undefined: {
+            return { error: `${description} unknown message kind` }
+        }
+        default: {
+            try {
+                staticAssertNever(value.content)
+            } catch (e) {
+                return {
+                    // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
+                    error: `${description} unknown message kind`,
+                }
+            }
+        }
+    }
+}
+
+function toTownsContent_ChannelPayload(
+    eventId: string,
+    message: ParsedEvent,
+    value: ChannelPayload,
+    description: string,
+): TownsContentResult {
+    switch (value.content.case) {
+        case 'receipt': {
+            return {
+                content: {
+                    kind: ZTEvent.Receipt,
+                    originOp: ToDeviceOp[value.content.value.originOp],
+                    originEventHash: '0x' + value.content.value.originHash.toString(),
+                },
+            }
+        }
+        case 'inception': {
+            const payload = value.content.value
+            return {
+                content: {
+                    kind: ZTEvent.RoomCreate,
+                    creator: message.creatorUserId,
+                    predecessor: undefined, // todo is this needed?
+                    type: message.event.payload.case,
+                    spaceId: payload.spaceId,
+                },
+            }
+        }
+        case 'membership': {
+            const payload = value.content.value
+            return {
+                content: {
+                    kind: ZTEvent.RoomMember,
+                    userId: payload.userId,
+                    avatarUrl: undefined, // todo avatarUrl
+                    displayName: payload.userId, // todo displayName
+                    isDirect: undefined, // todo is this needed?
+                    membership: toMembership(payload.op),
+                    reason: undefined, // todo is this needed?
+                },
+            }
+        }
+        case 'message': {
+            const payload = value.content.value
+            return toTownsContent_ChannelPayload_Message(
+                eventId,
+                message,
+                value,
+                payload,
+                description,
+            )
+        }
+        case undefined: {
+            return { error: `${description} undefined message kind` }
+        }
+        default:
+            try {
+                staticAssertNever(value.content)
+            } catch (e) {
+                return { error: `${description} unknown payload case` }
+            }
+    }
+}
+
+function toTownsContent_ChannelPayload_Message(
+    eventId: string,
+    message: ParsedEvent,
+    value: ChannelPayload,
+    payload: EncryptedData,
+    description: string,
+): TownsContentResult {
+    if (!payload.text) {
+        return { error: `${description} no text in message` }
+    }
+    const channelMessage = ChannelMessage.fromJsonString(payload.text)
+
+    switch (channelMessage.payload.case) {
+        case 'post':
+            return (
+                toTownsContent_ChannelPayload_Message_Post(channelMessage.payload.value) ?? {
+                    error: `${description} unknown message type`,
+                }
+            )
+        case 'reaction':
+            return {
+                content: {
+                    kind: ZTEvent.Reaction,
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+                    reaction: channelMessage.payload.value.reaction,
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+                    targetEventId: channelMessage.payload.value.refEventId,
+                } satisfies ReactionEvent,
+            }
+        case 'redaction':
+            return {
+                content: {
+                    kind: ZTEvent.RoomRedaction,
+                    inReplyTo: channelMessage.payload.value.refEventId,
+                    content: {},
+                } satisfies RoomRedactionEvent,
+            }
+        case 'edit': {
+            const newPost = channelMessage.payload.value.post
+            if (!newPost) {
+                return { error: `${description} no post in edit` }
+            }
+            const newContent = toTownsContent_ChannelPayload_Message_Post(
+                newPost,
+                channelMessage.payload.value.refEventId,
+            )
+            return newContent ?? { error: `${description} no content in edit` }
+        }
+        case undefined:
+            return { error: `${description} undefined message kind` }
+        default: {
+            try {
+                staticAssertNever(channelMessage.payload)
+            } catch (e) {
+                return {
+                    error: `${description} unknown message kind`,
+                }
+            }
+        }
+    }
+}
+
+function toTownsContent_ChannelPayload_Message_Post(
+    value: ChannelMessage_Post,
+    replacedMsgId?: string,
+) {
     switch (value.content.case) {
         case 'text':
             return {
@@ -399,6 +449,59 @@ function toEvent_ChannelMessagePost(value: ChannelMessage_Post, replacedMsgId?: 
             }
         default:
             return undefined
+    }
+}
+
+function toTownsContent_SpacePayload(
+    eventId: string,
+    message: ParsedEvent,
+    value: SpacePayload,
+    description: string,
+): TownsContentResult {
+    switch (value.content.case) {
+        case 'inception': {
+            return {
+                content: {
+                    kind: ZTEvent.RoomCreate,
+                    creator: message.creatorUserId,
+                    predecessor: undefined, // todo is this needed?
+                    type: message.event.payload.case,
+                },
+            }
+        }
+        case 'channel': {
+            const payload = value.content.value
+            const childId = payload.channelId
+            return {
+                content: {
+                    kind: ZTEvent.SpaceChild,
+                    childId: childId,
+                    channelOp: payload.op,
+                },
+            }
+        }
+        case 'membership': {
+            const payload = value.content.value
+            return {
+                content: {
+                    kind: ZTEvent.RoomMember,
+                    userId: payload.userId,
+                    avatarUrl: undefined, // todo avatarUrl
+                    displayName: payload.userId, // todo displayName
+                    isDirect: undefined, // todo is this needed?
+                    membership: toMembership(payload.op),
+                    reason: undefined, // todo is this needed?
+                },
+            }
+        }
+        case undefined:
+            return { error: `${description} undefined payload case` }
+        default:
+            try {
+                staticAssertNever(value.content)
+            } catch (e) {
+                return { error: `${description} unknown payload case` }
+            }
     }
 }
 
