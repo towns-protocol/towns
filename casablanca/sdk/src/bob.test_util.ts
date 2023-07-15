@@ -126,7 +126,7 @@ export const bobTalksToHimself = async (
 
     let presyncEvent: Envelope | undefined = undefined
     if (presync) {
-        log('adding event before sync, so it shoudl be first in the sync stream')
+        log('adding event before sync, so it should be the first event in the sync stream')
         presyncEvent = await makeEvent(
             bobsContext,
             make_ChannelPayload_Message({
@@ -157,7 +157,36 @@ export const bobTalksToHimself = async (
     const bobSyncStream = bobSyncStreamIterable[Symbol.asyncIterator]()
     // Next bit is tricky. Iterator needs to be started before AddEvent
     // for sync to hit the wire.
-    const syncResultPromise = bobSyncStream.next()
+    let syncResultPromise = bobSyncStream.next()
+
+    if (flush || presync) {
+        log('Flush or presync, wait for sync to return initial events')
+        const syncResultI = await syncResultPromise
+
+        const syncResult = syncResultI.value as SyncStreamsResponse
+        expect(syncResult).toBeDefined()
+        expect(syncResult.streams).toHaveLength(1)
+        expect(syncResult.streams[0].streamId).toEqual(channelId)
+
+        // If we flushed, the sync cookie instance is different,
+        // and first two events in the channel are returned immediately.
+        // If presync event is posted as well, it is returned as well.
+        if (flush) {
+            expect(syncResult.streams[0].originalSyncCookie?.minipoolInstance).not.toEqual(
+                syncCookie.minipoolInstance,
+            )
+
+            expect(syncResult.streams[0].events).toEqual(
+                presync ? [...channelEvents, presyncEvent] : channelEvents,
+            )
+        } else {
+            expect(syncResult.streams[0].originalSyncCookie).toEqual(syncCookie)
+            expect(syncResult.streams[0].events).toEqual([presyncEvent])
+        }
+
+        syncCookie = syncResult.streams[0].nextSyncCookie!
+        syncResultPromise = bobSyncStream.next()
+    }
 
     // Bob succesdfully posts a message
     log('Bob posts a message')
@@ -176,34 +205,8 @@ export const bobTalksToHimself = async (
         event: helloEvent,
     })
 
-    let [syncResultI] = await Promise.all([syncResultPromise, addEventPromise])
+    const [syncResultI] = await Promise.all([syncResultPromise, addEventPromise])
     log('Bob waits for sync to complete')
-
-    if (flush || presync) {
-        // Since we flushed, the sync cookie instance is different,
-        // and first two events in the channel are returned immediately.
-        // If presync event is posted as well, it is returned as well.
-        const syncResult = syncResultI.value as SyncStreamsResponse
-        expect(syncResult).toBeDefined()
-        expect(syncResult.streams).toHaveLength(1)
-        expect(syncResult.streams[0].streamId).toEqual(channelId)
-
-        if (flush) {
-            expect(syncResult.streams[0].originalSyncCookie?.minipoolInstance).not.toEqual(
-                syncCookie.minipoolInstance,
-            )
-
-            expect(syncResult.streams[0].events).toEqual(
-                presync ? [...channelEvents, presyncEvent] : channelEvents,
-            )
-        } else {
-            expect(syncResult.streams[0].originalSyncCookie).toEqual(syncCookie)
-            expect(syncResult.streams[0].events).toEqual([presyncEvent])
-        }
-
-        syncCookie = syncResult.streams[0].nextSyncCookie!
-        syncResultI = await bobSyncStream.next()
-    }
 
     const syncResult = syncResultI.value as SyncStreamsResponse
     expect(syncResult).toBeDefined()
