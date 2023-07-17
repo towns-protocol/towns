@@ -34,8 +34,7 @@ import { useZionClient } from '../../src/hooks/use-zion-client'
 // TODO Zustand https://docs.pmnd.rs/zustand/testing
 
 describe('sendReactionHooks', () => {
-    // TODO: https://linear.app/hnt-labs/issue/HNT-1649/testssendreactionhookstesttsx
-    test.skip('user can join a room, see messages, and send messages', async () => {
+    test('user can join a room, see messages, and send messages', async () => {
         // create clients
         const { jane } = await registerAndStartClients(['jane'])
         // create a wallet for bob
