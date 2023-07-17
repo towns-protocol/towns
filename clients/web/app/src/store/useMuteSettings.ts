@@ -1,32 +1,30 @@
 import { create } from 'zustand'
-import { PersistStorage, StorageValue, combine, persist } from 'zustand/middleware'
-import { del, get, set } from 'idb-keyval'
+import { PersistStorage, combine, persist } from 'zustand/middleware'
 import { immer } from 'zustand/middleware/immer'
+import { MuteStoreKeys, muteSettings } from '../idb/muteSettings'
+const { get, set, del } = muteSettings
 
 interface MuteSettings {
     mutedChannels: { [channelId: string]: boolean }
     mutedSpaces: { [spaceId: string]: boolean }
 }
 
-const MUTED_CHANNELS_KEY = 'mutedChannels'
-const MUTED_SPACES_KEY = 'mutedSpaces'
-
 const idbStorage: PersistStorage<MuteSettings> = {
-    getItem: async (name: string) => {
+    getItem: async () => {
         const result = {
             mutedChannels: {},
             mutedSpaces: {},
         } as MuteSettings
-        result.mutedChannels = (await get(MUTED_CHANNELS_KEY)) ?? {}
-        result.mutedSpaces = (await get(MUTED_SPACES_KEY)) ?? {}
+        result.mutedChannels = (await get(MuteStoreKeys.mutedChannels)) ?? {}
+        result.mutedSpaces = (await get(MuteStoreKeys.mutedSpaces)) ?? {}
         return { state: result, version: 0 }
     },
-    setItem: async (name: string, value: StorageValue<MuteSettings>) => {
-        await set(MUTED_CHANNELS_KEY, value.state.mutedChannels)
-        await set(MUTED_SPACES_KEY, value.state.mutedSpaces)
+    setItem: async (_, value) => {
+        await set(value.state.mutedChannels, MuteStoreKeys.mutedChannels)
+        await set(value.state.mutedSpaces, MuteStoreKeys.mutedSpaces)
     },
-    removeItem: async (name: string): Promise<void> => {
-        await del(name)
+    removeItem: async (name): Promise<void> => {
+        await del(name as MuteStoreKeys)
     },
 }
 
@@ -70,6 +68,7 @@ const storeBase = persist(
 
 export const useMuteSettings = create(storeBase)
 
+// TODO: this is only used in service worker. mute settings can be grabbed directly from idb? why do we go through zustand?
 export const getServiceWorkerMuteSettings = async () => {
     await useMuteSettings.persist.rehydrate()
     const state = useMuteSettings.getState()

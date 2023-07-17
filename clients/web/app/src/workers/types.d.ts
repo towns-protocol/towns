@@ -26,3 +26,7 @@ export type AppNotificationMention = {
 export type AppNotification = AppNotificationMessage | AppNotificationMention
 
 export const WEB_PUSH_NAVIGATION_CHANNEL = 'web-push-navigation-channel'
+
+export enum ServiceWorkerMessageType {
+    SpaceMetadata = 'space_metadata',
+}

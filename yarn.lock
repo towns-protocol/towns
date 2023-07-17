@@ -13587,10 +13587,11 @@ __metadata:
     eslint-plugin-testing-library: ^5.11.0
     eslint-plugin-unused-imports: ^2.0.0
     ethers: ^5.7.2
+    fake-indexeddb: ^4.0.1
     framer-motion: ^10.12.4
     fuzzysort: ^2.0.1
     http-status-codes: ^2.2.0
-    idb-keyval: ^6.2.1
+    idb: ^7.1.1
     immer: ^10.0.1
     jsdom: ^21.1.0
     lexical: ^0.10.0
@@ -13927,14 +13928,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"idb-keyval@npm:^6.2.1":
-  version: 6.2.1
-  resolution: "idb-keyval@npm:6.2.1"
-  checksum: 7c0836f832096086e99258167740181132a71dd2694c8b8454a4f5ec69114ba6d70983115153306f0b6de1c8d3bad04f67eed3dff8f50c96815b9985d6d78470
-  languageName: node
-  linkType: hard
-
-"idb@npm:^7.0.1":
+"idb@npm:^7.0.1, idb@npm:^7.1.1":
   version: 7.1.1
   resolution: "idb@npm:7.1.1"
   checksum: 1973c28d53c784b177bdef9f527ec89ec239ec7cf5fcbd987dae75a16c03f5b7dfcc8c6d3285716fd0309dd57739805390bd9f98ce23b1b7d8849a3b52de8d56

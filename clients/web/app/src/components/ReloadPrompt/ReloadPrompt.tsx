@@ -24,6 +24,10 @@ export const ReloadPrompt = () => {
             log('registered:' + r)
             if (import.meta.env.DEV) {
                 console.log('sw: dev - skipping updater')
+                if (env.VITE_PUSH_NOTIFICATION_ENABLED) {
+                    // doesn't seem to update the service worker in dev mode without this
+                    updateServiceWorker(true)
+                }
                 return
             }
             if (r) {
