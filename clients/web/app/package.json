@@ -116,7 +116,7 @@
         "rollup-plugin-sourcemaps": "https://github.com/HereNotThere/rollup-plugin-sourcemaps.git",
         "rollup-plugin-visualizer": "^5.9.0",
         "typescript": "^5.1.3",
-        "vite": "^4.4.4",
+        "vite": "^4.3.8",
         "vite-plugin-checker": "^0.6.0",
         "vite-plugin-eslint": "^1.8.1",
         "vite-plugin-mkcert": "^1.15.0",
