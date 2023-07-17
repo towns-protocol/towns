@@ -48,7 +48,7 @@ export const CreateSpaceForm = (props: Props) => {
     const { loginStatus: casablancaLoginStatus } = useCasablancaStore()
     const [spaceName, setSpaceName] = useState<string>('')
     const [visibility, setVisibility] = useState<RoomVisibility>(RoomVisibility.Public)
-    const [protocol, setProtocol] = useState<SpaceProtocol>(SpaceProtocol.Matrix)
+    const [protocol, setProtocol] = useState<SpaceProtocol>(SpaceProtocol.Casablanca)
 
     const [membershipRequirement, setMembershipRequirement] = useState<MembershipRequirement>(
         MembershipRequirement.Everyone,
