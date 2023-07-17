@@ -175,32 +175,18 @@ function useSpaceRollup(streamId: string | undefined): SpaceData | undefined {
         if (!stream || !casablancaClient) {
             return
         }
+        if (stream.view.payloadKind !== 'spacePayload') {
+            console.error('useSpaceRollup called with non-space stream')
+            return
+        }
+
         const userId = casablancaClient.userId
 
-        const getChannelsIds = (spaceId: string | undefined): string[] => {
-            if (!spaceId) {
-                return []
-            }
-            return Array.from(
-                casablancaClient.streams.get(spaceId)?.view.spaceChannelsMetadata.keys() || [],
-            )
-        }
-
-        const onStreamInitialized = (streamId: string) => {
-            if (casablancaClient.streams.get(streamId)?.view.payloadKind === 'channelPayload') {
-                const spaceId = casablancaClient.streams.get(streamId)?.view.parentSpaceId
-                const newSpace = rollupSpace(stream, userId, getChannelsIds(spaceId))
-                setSpace((prev) => {
-                    if (isEqual(prev, newSpace)) {
-                        return prev
-                    }
-                    return newSpace
-                })
-            }
-        }
-
-        const onSpaceChannelUpdated = (spaceId: string) => {
-            const newSpace = rollupSpace(stream, userId, getChannelsIds(spaceId))
+        // wrap the update op, we get the channel ids and
+        // rollup the space channels into a space
+        const update = () => {
+            const channelIds = Array.from(stream.view.spaceChannelsMetadata.keys())
+            const newSpace = rollupSpace(stream, userId, channelIds)
             setSpace((prev) => {
                 if (isEqual(prev, newSpace)) {
                     return prev
@@ -209,12 +195,23 @@ function useSpaceRollup(streamId: string | undefined): SpaceData | undefined {
             })
         }
 
-        setSpace(rollupSpace(stream, userId, getChannelsIds(streamId)))
-        casablancaClient.on('streamInitialized', onStreamInitialized)
+        // if any channel is updated in this stream, update it
+        const onSpaceChannelUpdated = (spaceId: string) => {
+            if (spaceId === stream.streamId) {
+                update()
+            }
+        }
+
+        // run the first update
+        update()
+
+        // add listeners
+        casablancaClient.on('spaceChannelCreated', onSpaceChannelUpdated)
         casablancaClient.on('spaceChannelUpdated', onSpaceChannelUpdated)
 
         return () => {
-            casablancaClient.off('streamInitialized', onStreamInitialized)
+            // remove lsiteners and clear state when the effect stops
+            casablancaClient.off('spaceChannelCreated', onSpaceChannelUpdated)
             casablancaClient.off('spaceChannelUpdated', onSpaceChannelUpdated)
             setSpace(undefined)
         }

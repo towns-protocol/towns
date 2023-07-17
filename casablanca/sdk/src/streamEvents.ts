@@ -44,7 +44,7 @@ export type StreamEvents = {
     userJoinedStream: (streamId: string) => void
     userInvitedToStream: (streamId: string) => void
     userLeftStream: (streamId: string) => void
-    spaceNewChannelCreated: (
+    spaceChannelCreated: (
         spaceId: string,
         channelId: string,
         channelName: string,

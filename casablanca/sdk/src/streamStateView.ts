@@ -306,7 +306,7 @@ export class StreamStateView {
                     channelTopic: channelTopic,
                 })
                 emitter?.emit(
-                    'spaceNewChannelCreated',
+                    'spaceChannelCreated',
                     this.streamId,
                     channelId,
                     channelName,
