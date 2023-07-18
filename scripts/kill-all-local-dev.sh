@@ -1,11 +1,51 @@
-#!/usr/bin/env zsh
+#!/bin/bash
 
 ##
 ## If visual studio crashes after running ~start local dev~ 
 ## it will leave lots of things running in the background
 ## this script will kill all the processes that are running on your local machine.
+## it will also clean up casablanca/river docker containers
+##
+## usage: ./kill-all-local-dev.sh -y
 ##
 
+
+# Argument parsing
+while getopts "yf" arg; do
+  case $arg in
+    y)
+        skip_prompt=1
+        ;;
+    f)
+        skip_prompt=1
+        force_kill="-9"
+        ;;
+    *)
+      echo "Invalid argument"
+      exit 1
+      ;;
+  esac
+done
+
+# Function to handle user prompts
+prompt() {
+    local message=$1
+
+    # Check if we should skip prompts
+    if [[ $skip_prompt -eq 1 ]]
+    then
+        echo "$message -y"
+        return 0
+    else
+        read -p "$message" b_continue
+        if [[ "$b_continue" == "y" ]]
+        then
+            return 0
+        else
+            return 1
+        fi
+    fi
+}
 
 function do_killl() {
     echo ""
@@ -20,28 +60,31 @@ function do_killl() {
         ps -ax | grep "$term"
         echo ""
 
-        if [[ "$2" == "-y" ]]
+        if prompt 'Kill these processes?:y/n '
         then
-            b_continue="y"
-        else
-            read b_continue'?Kill these processes?:y/n/f '
-        fi
-
-        if [[ "$b_continue" == "f" ]]
-        then
-            kill -9 $(ps -ax | grep "$term" | awk '{print $1}')
-        elif [[ "$b_continue" == "y" ]]
-        then
-            kill $(ps -ax | grep "$term" | awk '{print $1}')
+            kill $force_kill $(ps -ax | grep "$term" | awk '{print $1}')
         fi
     else
         echo "no results found"
     fi
 }
 
+echo ""
+if prompt 'Stop Casbablanca?:y/n '
+then
+    ./casablanca/scripts/stop_node.sh 
+fi
 
 do_killl dendrite "$1"
 do_killl yarn "$1"
 do_killl anvil "$1"
 do_killl wrangler "$1"
 do_killl mitmweb "$1"
+
+echo ""
+if prompt 'Remove Casbablanca Docker Containers?:y/n '
+then
+    ./casablanca/scripts/stop_storage.sh 
+fi
+
+
