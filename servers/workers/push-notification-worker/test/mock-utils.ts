@@ -92,14 +92,14 @@ export function createMockD1Database(): MockProxy<D1Database> {
 export function createMockPreparedStatement(): MockProxy<D1PreparedStatement> {
   const mockStatement = mock<D1PreparedStatement>()
   const fakeSubscription = JSON.stringify(createFakeWebPushSubscription())
-  const result: QueryResultSubscription = {
+  const result: Record<string, unknown> = {
     pushType: 'web-push',
     userId: '0x1111',
     pushSubscription: fakeSubscription,
   }
   const rawResult = [['web-push', '0x1111', fakeSubscription]]
   mockStatement.all.mockResolvedValue({
-    results: [result],
+    results: [result] as unknown as string[][],
     success: true,
     meta: {},
   })
@@ -110,6 +110,7 @@ export function createMockPreparedStatement(): MockProxy<D1PreparedStatement> {
   mockStatement.first.mockResolvedValue(result)
   mockStatement.raw.mockResolvedValue(rawResult)
   mockStatement.run.mockResolvedValue({
+    results: [result],
     success: true,
     meta: {},
   })

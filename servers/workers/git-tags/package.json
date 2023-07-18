@@ -5,17 +5,17 @@
     "author": "brian@hntlabs.com",
     "license": "MIT OR Apache-2.0",
     "scripts": {
-        "deploy": "npx wrangler deploy",
-        "start": "npx wrangler dev",
+        "deploy": "wrangler deploy",
+        "start": "wrangler dev",
         "test": "vitest"
     },
     "dependencies": {
         "zod": "^3.21.4"
     },
     "devDependencies": {
-        "miniflare": "^2.13.0",
+        "miniflare": "^3.20230710.0",
         "vitest": "^0.30.1",
-        "vitest-environment-miniflare": "^2.13.0",
-        "wrangler": "^3.1.0"
+        "vitest-environment-miniflare": "^2.14.0",
+        "wrangler": "^3.2.0"
     }
 }

@@ -2,8 +2,8 @@ import { unstable_dev } from 'wrangler'
 import { describe, expect, it } from 'vitest'
 import { MiniflareEnvironmentUtilities } from '@miniflare/shared-test-environment'
 
-import worker, { Env, TagsUrl } from './index'
-import { before } from 'node:test'
+import worker, { Env } from './index'
+import { TagsUrl } from './const'
 
 declare global {
     function getMiniflareFetchMock(): ReturnType<
@@ -21,11 +21,12 @@ describe('Wrangler', () => {
         const worker = await unstable_dev('src/index.ts', {
             experimental: { disableExperimentalWarning: true },
         })
-        const resp = await worker.fetch()
+
+        const resp = await worker.fetch('/status')
         if (resp) {
             const text = await resp.text()
-            console.log(text)
-            expect(text).toMatchInlineSnapshot('"sha param not found"')
+            expect(resp.status).toBe(200)
+            expect(text).toMatchInlineSnapshot('"OK"')
         }
         await worker.stop()
     })

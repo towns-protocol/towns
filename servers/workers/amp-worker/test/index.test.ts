@@ -34,9 +34,9 @@ describe('amp-worker handler', () => {
             },
         })
 
-        expect(result?.status).toBe(200)
         const text = await result?.text()
         expect(text).toContain('Mocked response!')
+        expect(result?.status).toBe(200)
     })
     test('return 500 response from upstream 500', async () => {
         const url = `${FAKE_SERVER_URL}${'/'}`

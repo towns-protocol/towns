@@ -144,6 +144,7 @@ describe('subscription handlers', () => {
       .intercept({ method: 'POST', path: fakeServerUrl.pathname })
       .reply(201, 'OK')
 
+    console.log('notifyRequest', notifyRequest)
     // send the notification request
     const response = await handleRequest(notifyRequest, env, ctx)
 
@@ -151,6 +152,7 @@ describe('subscription handlers', () => {
     expect(bindSpy).toBeCalledWith(recipient)
     expect(response.status).toBe(200)
     const notificationsSentCount = await response.text()
+    console.log('notificationsSentCount', notificationsSentCount)
     expect(notificationsSentCount).toBe('1')
   })
 })

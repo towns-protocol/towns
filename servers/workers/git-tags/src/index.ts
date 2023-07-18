@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { TagsUrl } from './const'
 
 const tags = z.array(
     z.object({
@@ -13,11 +14,13 @@ export interface Env {
     GITHUB_TOKEN: string
 }
 
-export const TagsUrl = 'https://api.github.com/repos/HereNotThere/harmony/tags'
-
-export default {
-    async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
+const handler: ExportedHandler<Env> = {
+    async fetch(request, env, ctx): Promise<Response> {
         try {
+            const url = new URL(request.url)
+            if (url.pathname == '/status') {
+                return new Response('OK', { status: 200 })
+            }
             const requestInit = {
                 method: 'GET',
                 headers: {
@@ -28,6 +31,13 @@ export default {
                 },
             } as const
             const resp = await fetch(TagsUrl, requestInit)
+            if (resp.status === 401) {
+                return new Response(resp.statusText, {
+                    status: resp.status,
+                    headers: resp.headers,
+                })
+            }
+
             const json = await resp.json()
             const tag = tags.parse(json)
             const hashToTagMap = tag.reduce((sha, tag) => {
@@ -52,10 +62,11 @@ export default {
                 return new Response('sha param not found', { status: 400 })
             }
         } catch (e) {
-            console.error(e)
+            console.error(`error`, e)
             return new Response('Internal Server Error', {
                 status: 500,
             })
         }
     },
 }
+export default handler
