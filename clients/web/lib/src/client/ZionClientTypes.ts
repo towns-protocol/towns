@@ -24,6 +24,7 @@ export interface ZionOpts {
     logNamespaceFilter?: string
     pushNotificationWorkerUrl?: string
     pushNotificationAuthToken?: string
+    verbose?: boolean
 }
 
 export interface MatrixAuth {

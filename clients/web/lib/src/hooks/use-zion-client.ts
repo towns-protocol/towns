@@ -37,6 +37,20 @@ import { useZionContext } from '../components/ZionContextProvider'
 import { useCasablancaWalletSignIn } from './use-casablanca-wallet-signin'
 import { isTestEnv } from '../utils/zion-utils'
 import { ethers } from 'ethers'
+import { create } from 'zustand'
+
+export type ZionErrorStoreState = {
+    errors: string[]
+    appendError: (error: string) => void
+}
+
+export const useZionErrorStore = create<ZionErrorStoreState>((set) => ({
+    errors: [],
+    appendError: (error: string) =>
+        set((state) => ({
+            errors: [...state.errors, error],
+        })),
+}))
 
 /**
  * Matrix client API to interact with the Matrix server.
@@ -269,6 +283,7 @@ const useWithCatch = <T extends Array<unknown>, U>(
     event: ZionClientEvent | undefined = undefined,
 ): ((...args: T) => Promise<U | undefined>) => {
     const { triggerZionClientEvent } = useMatrixStore()
+    const { appendError } = useZionErrorStore()
     const client = useZionContext().client
     return useMemo(
         () =>
@@ -289,6 +304,9 @@ const useWithCatch = <T extends Array<unknown>, U>(
                             }
                             return value
                         } catch (err) {
+                            if (client.opts.verbose === true) {
+                                appendError(formatError<T, U>(err, retryCount, fn, args))
+                            }
                             if (isMatrixError(err)) {
                                 let retryDelay: number
                                 // RETRY_BACKOFF_RATELIMIT returns -1 for 401s, so we need to handle that ourselves
@@ -326,6 +344,22 @@ const useWithCatch = <T extends Array<unknown>, U>(
                     console.log('useZionClient: Not logged in')
                 }
             },
-        [fn, client, event, triggerZionClientEvent],
+        [fn, client, event, triggerZionClientEvent, appendError],
     )
+}
+
+function formatError<T extends Array<unknown>, U>(
+    err: unknown,
+    retryCount: number,
+    fn: (...args: T) => Promise<U | undefined>,
+    args: T,
+): string {
+    try {
+        return `ERROR: ${JSON.stringify(err as Error)} retryCount: ${retryCount} isMatrixError: ${
+            isMatrixError(err) ? 'true' : 'false'
+        } fn: ${fn.name} args: ${JSON.stringify(args)}`
+    } catch (e) {
+        // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
+        return `unformattable ERROR: ${e}`
+    }
 }

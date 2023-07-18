@@ -8,6 +8,7 @@ import { ZionTestWeb3Provider } from './ZionTestWeb3Provider'
 import { foundry } from 'wagmi/chains'
 import { useConnect } from 'wagmi'
 import { getPrimaryProtocol } from './TestUtils'
+import { useZionErrorStore } from '../../../src/hooks/use-zion-client'
 
 interface Props {
     provider: ZionTestWeb3Provider
@@ -55,18 +56,18 @@ export const ZionTestApp = (props: Props) => {
             logNamespaceFilter="" // "csb:*" A bit too much for tests, better way to set?
             web3Signer={provider.wallet}
         >
-            <ZionWalletAutoConnect children={children} />
+            <>
+                <ZionWalletAutoConnect />
+                {children}
+                <ZionErrors />
+            </>
         </ZionContextProvider>
     )
 }
 
-interface AutoConnectProps {
-    children: JSX.Element
-}
-
 /// in the tests we make a custom provider that wraps our random wallet
 /// go ahead and connect to the wallet automatically, so we don't have to do it in every test
-const ZionWalletAutoConnect = (props: AutoConnectProps) => {
+const ZionWalletAutoConnect = () => {
     const { connect, connectors, error, status, data } = useConnect()
     const connected = useRef(false)
     // automatically connect to the wallet if it's available
@@ -85,5 +86,16 @@ const ZionWalletAutoConnect = (props: AutoConnectProps) => {
             data,
         })
     }, [error, status, data])
-    return <>{props.children}</>
+    return <>{error && `WalletAutoConnect Error: ${JSON.stringify(error)}`}</>
+}
+
+const ZionErrors = () => {
+    const { errors } = useZionErrorStore()
+    return (
+        <div data-testid="captured-errors">
+            {errors.map((e, i) => (
+                <div key={i}>{e}</div>
+            ))}
+        </div>
+    )
 }

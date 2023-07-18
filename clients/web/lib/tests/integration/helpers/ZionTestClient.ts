@@ -86,6 +86,7 @@ export class ZionTestClient extends ZionClient {
                 initialSyncLimit: 20,
                 web3Provider: provider,
                 eventHandlers: props?.eventHandlers,
+                verbose: true,
             },
             name,
         )
