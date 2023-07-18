@@ -196,16 +196,21 @@ export const RegisterAndJoinSpace = (props: RegisterAndJoinSpaceProps) => {
 
 export const RegisterAndJoin = (props: { roomIds: RoomIdentifier[] }) => {
     const { roomIds } = props
+    const joinedRoomIds = useRef<string[]>([])
     const { clientRunning, joinRoom } = useZionClient()
     const [joinComplete, setJoinComplete] = React.useState(false)
-    const joiningRooms = useRef(false)
+
     useEffect(() => {
-        if (clientRunning && !joiningRooms.current) {
-            joiningRooms.current = true
+        if (clientRunning) {
+            const toJoin = roomIds.filter(
+                (roomId) => !joinedRoomIds.current.includes(roomId.networkId),
+            )
+            joinedRoomIds.current = joinedRoomIds.current.concat(
+                toJoin.map((roomId) => roomId.networkId),
+            )
             void (async () => {
-                await Promise.all(roomIds.map(async (roomId) => joinRoom(roomId)))
+                await Promise.all(toJoin.map(async (roomId) => joinRoom(roomId)))
                 setJoinComplete(true)
-                joiningRooms.current = false
             })()
         }
     }, [clientRunning, joinRoom, roomIds])

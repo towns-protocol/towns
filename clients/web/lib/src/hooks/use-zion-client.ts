@@ -317,7 +317,7 @@ const useWithCatch = <T extends Array<unknown>, U>(
                                 )
                             } else {
                                 // Not a MatrixError, just give up
-                                console.error('Not a MatrixError', err)
+                                console.error('Not a retryable error', err)
                             }
                             return
                         }

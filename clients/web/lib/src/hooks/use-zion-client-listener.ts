@@ -186,7 +186,7 @@ async function startMatrixClientWithRetries(
                 }
             } else {
                 // Not a MatrixError, just give up
-                console.error('Not a MatrixError', err)
+                console.error('Not a retryable startup error', err)
                 throw err
             }
         }
