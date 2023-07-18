@@ -284,6 +284,10 @@ export class StreamStateView {
                             checkNever(payload.value.content)
                     }
                     break
+
+                case 'block':
+                    break
+
                 case undefined:
                     break
                 default:

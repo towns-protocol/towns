@@ -77,7 +77,7 @@ describe('workflows', () => {
         // Now there must be "joined space" event in the user stream.
         let userResponse = await bob.getStream({ streamId: bobsUserStreamId })
         expect(userResponse.stream).toBeDefined()
-        expect(userResponse.stream!.events.length).toEqual(2)
+        expect(userResponse.stream!.events.length).toEqual(3)
         let joinPayload = getUserPayload_Membership(
             _.last(unpackEnvelopes(userResponse.stream!.events)),
         )
@@ -115,7 +115,7 @@ describe('workflows', () => {
         // Now there must be "joined channel" event in the user stream.
         userResponse = await bob.getStream({ streamId: bobsUserStreamId })
         expect(userResponse.stream).toBeDefined()
-        expect(userResponse.stream!.events.length).toEqual(3)
+        expect(userResponse.stream!.events.length).toEqual(4)
         joinPayload = getUserPayload_Membership(
             _.last(unpackEnvelopes(userResponse.stream!.events)),
         )
@@ -126,7 +126,7 @@ describe('workflows', () => {
         // Not there must be "channel created" event in the space stream.
         const spaceResponse = await bob.getStream({ streamId: spacedStreamId })
         expect(spaceResponse.stream).toBeDefined()
-        expect(spaceResponse.stream!.events.length).toEqual(3)
+        expect(spaceResponse.stream!.events.length).toEqual(4)
         const channelCreatePayload = getChannelPayload(
             _.last(unpackEnvelopes(spaceResponse.stream!.events)),
         )

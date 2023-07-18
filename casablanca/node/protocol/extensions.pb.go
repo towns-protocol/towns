@@ -3,6 +3,7 @@ package protocol
 import "fmt"
 
 type IsStreamEvent_Payload = isStreamEvent_Payload
+type IsBlockHeader_Content = isBlockHeader_Content
 type IsUserPayload_Content = isUserPayload_Content
 type IsSpacePayload_Content = isSpacePayload_Content
 type IsChannelPayload_Content = isChannelPayload_Content

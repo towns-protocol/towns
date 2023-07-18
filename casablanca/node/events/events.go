@@ -11,7 +11,6 @@ import (
 )
 
 func MakeStreamEvent(wallet *crypto.Wallet, payload protocol.IsStreamEvent_Payload, prevHashes [][]byte) *StreamEvent {
-
 	salt := make([]byte, 32)
 	_, err := rand.Read(salt)
 	if err != nil {
@@ -190,5 +189,11 @@ func Make_ChannelPayload_Message(content string) *StreamEvent_ChannelPayload {
 				},
 			},
 		},
+	}
+}
+
+func Make_BlockPayload(block *BlockHeader) *StreamEvent_Block {
+	return &StreamEvent_Block{
+		Block: block,
 	}
 }

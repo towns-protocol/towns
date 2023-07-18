@@ -233,7 +233,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
                 [],
             ),
         ]
-        const { syncCookie: userSyncCookie } = await this.rpcClient.createStream({
+        const userResponse = await this.rpcClient.createStream({
             events: userEvents,
         })
 
@@ -248,22 +248,13 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
             ),
         ]
 
-        const { syncCookie: userDeviceKeySyncCookie } = await this.rpcClient.createStream({
+        const deviceResponse = await this.rpcClient.createStream({
             events: userDeviceKeyEvents,
         })
 
-        await this.initUserDeviceKeyStream(
-            userDeviceKeyStreamId,
-            new StreamAndCookie({
-                events: userDeviceKeyEvents,
-                nextSyncCookie: userDeviceKeySyncCookie,
-            }),
-        )
+        await this.initUserDeviceKeyStream(userDeviceKeyStreamId, deviceResponse.stream!)
 
-        return this.initUserStream(
-            userStreamId,
-            new StreamAndCookie({ events: userEvents, nextSyncCookie: userSyncCookie }),
-        )
+        return this.initUserStream(userStreamId, userResponse.stream!)
     }
 
     async loadExistingUser(): Promise<void> {

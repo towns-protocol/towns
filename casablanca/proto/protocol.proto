@@ -1,5 +1,6 @@
 syntax = "proto3";
 package casablanca;
+import "google/protobuf/timestamp.proto";
 option go_package = "casablanca/node/protocol";
 
 // TODO: fix comments
@@ -71,11 +72,41 @@ message StreamEvent {
       * - payloads can't violate previous type recursively to inception payload
     */
     oneof payload {
-        SpacePayload space_payload = 100;
-        ChannelPayload channel_payload = 101;
-        UserPayload user_payload = 102;
-        UserSettingsPayload user_settings_payload = 103;
-        UserDeviceKeyPayload user_device_key_payload = 104;
+        BlockHeader block = 100;
+        SpacePayload space_payload = 101;
+        ChannelPayload channel_payload = 102;
+        UserPayload user_payload = 103;
+        UserSettingsPayload user_settings_payload = 104;
+        UserDeviceKeyPayload user_device_key_payload = 105;
+        
+    }
+}
+
+message SpaceSnapshot {
+}
+
+// Represents a block header.
+// Block header is a special event that forms a block from set of the stream evetns.
+// Hash of the serialized StreamEvent containing BlockHeader is used as a block hash.
+message BlockHeader {
+    // Block number.
+    // 0 for genesis block.
+    // Must be 1 greater than the previous block number.
+    int64 miniblock_num = 1;
+
+    // Hash of the previous block.
+    bytes prev_miniblock_hash = 2;
+
+    // Timestamp of the block.
+    // Must be greater than the previous block timestamp.
+    google.protobuf.Timestamp timestamp = 3;
+
+    // Hashes of the events included in the block.
+    repeated bytes event_hashes = 4;
+
+    // Snapshot data specific for each stream type.
+    oneof content {
+        SpaceSnapshot space_snapshot = 100;
     }
 }
 
@@ -321,7 +352,7 @@ message CreateStreamRequest {
 }
 
 message CreateStreamResponse {
-    SyncCookie sync_cookie = 1;
+    StreamAndCookie stream = 1;
 }
 
 message GetStreamRequest {

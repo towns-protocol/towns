@@ -188,10 +188,13 @@ function toTownsContent(eventId: string, message: ParsedEvent): TownsContentResu
             return {
                 error: `${description} userDeviceKeyPayload not supported?`,
             }
-            break
         case 'userSettingsPayload':
             return {
                 error: `${description} userSettingsPayload not supported?`,
+            }
+        case 'block':
+            return {
+                error: `${description} block payload not supported?`,
             }
         default:
             try {

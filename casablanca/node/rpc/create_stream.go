@@ -6,7 +6,7 @@ import (
 	"casablanca/node/common"
 	. "casablanca/node/events"
 	"casablanca/node/infra"
-	"casablanca/node/protocol"
+	. "casablanca/node/protocol"
 	"context"
 
 	connect_go "github.com/bufbuild/connect-go"
@@ -21,7 +21,7 @@ var (
 	createStreamRequests = infra.NewSuccessMetrics("create_stream_requests", serviceRequests)
 )
 
-func (s *Service) CreateStream(ctx context.Context, req *connect_go.Request[protocol.CreateStreamRequest]) (*connect_go.Response[protocol.CreateStreamResponse], error) {
+func (s *Service) CreateStream(ctx context.Context, req *connect_go.Request[CreateStreamRequest]) (*connect_go.Response[CreateStreamResponse], error) {
 	ctx, log := ctxAndLogForRequest(ctx, req)
 
 	res, err := s.createStream(ctx, log, req)
@@ -35,14 +35,14 @@ func (s *Service) CreateStream(ctx context.Context, req *connect_go.Request[prot
 	return res, nil
 }
 
-func (s *Service) createStream(ctx context.Context, log *slog.Logger, req *connect_go.Request[protocol.CreateStreamRequest]) (*connect_go.Response[protocol.CreateStreamResponse], error) {
+func (s *Service) createStream(ctx context.Context, log *slog.Logger, req *connect_go.Request[CreateStreamRequest]) (*connect_go.Response[CreateStreamResponse], error) {
 	if len(req.Msg.Events) == 0 {
-		return nil, RpcErrorf(protocol.Err_BAD_STREAM_CREATION_PARAMS, "CreateStream: no events")
+		return nil, RpcErrorf(Err_BAD_STREAM_CREATION_PARAMS, "CreateStream: no events")
 	}
 
 	parsedEvents, err := ParseEvents(req.Msg.Events)
 	if err != nil {
-		return nil, RpcErrorf(protocol.Err_BAD_STREAM_CREATION_PARAMS, "CreateStream: error parsing events: %v", err)
+		return nil, RpcErrorf(Err_BAD_STREAM_CREATION_PARAMS, "CreateStream: error parsing events: %v", err)
 	}
 
 	log.Debug("CreateStream", "request", req.Msg, "events", parsedEvents)
@@ -50,7 +50,7 @@ func (s *Service) createStream(ctx context.Context, log *slog.Logger, req *conne
 	inceptionEvent := parsedEvents[0]
 	inceptionPayload := inceptionEvent.Event.GetInceptionPayload()
 	if inceptionPayload == nil {
-		return nil, RpcErrorf(protocol.Err_BAD_STREAM_CREATION_PARAMS, "CreateStream: first event is not an inception event")
+		return nil, RpcErrorf(Err_BAD_STREAM_CREATION_PARAMS, "CreateStream: first event is not an inception event")
 	}
 	creatorUserId, err := common.UserStreamIdFromAddress(inceptionEvent.Event.CreatorAddress)
 	if err != nil {
@@ -74,15 +74,15 @@ func (s *Service) createStream(ctx context.Context, log *slog.Logger, req *conne
 
 	// Validation of creation params.
 	switch inception := inceptionPayload.(type) {
-	case *protocol.ChannelPayload_Inception:
+	case *ChannelPayload_Inception:
 		if !common.ValidChannelStreamId(inception.StreamId) {
-			return nil, RpcErrorf(protocol.Err_BAD_STREAM_ID, "CreateStream: invalid channel stream id '%s'", inception.StreamId)
+			return nil, RpcErrorf(Err_BAD_STREAM_ID, "CreateStream: invalid channel stream id '%s'", inception.StreamId)
 		}
 		if inception.SpaceId == "" {
-			return nil, RpcErrorf(protocol.Err_BAD_STREAM_CREATION_PARAMS, "CreateStream: space id must not be empty for channel stream")
+			return nil, RpcErrorf(Err_BAD_STREAM_CREATION_PARAMS, "CreateStream: space id must not be empty for channel stream")
 		}
 		if len(parsedEvents) != 2 {
-			return nil, RpcErrorf(protocol.Err_BAD_STREAM_CREATION_PARAMS, "CreateStream: channel stream must have exactly two events")
+			return nil, RpcErrorf(Err_BAD_STREAM_CREATION_PARAMS, "CreateStream: channel stream must have exactly two events")
 		}
 		if err := validateChannelJoinEvent(secondEvent); err != nil {
 			return nil, err
@@ -100,12 +100,12 @@ func (s *Service) createStream(ctx context.Context, log *slog.Logger, req *conne
 			return nil, err
 		}
 
-	case *protocol.SpacePayload_Inception:
+	case *SpacePayload_Inception:
 		if !common.ValidSpaceStreamId(inception.StreamId) {
-			return nil, RpcErrorf(protocol.Err_BAD_STREAM_ID, "CreateStream: invalid space stream id '%s'", inception.StreamId)
+			return nil, RpcErrorf(Err_BAD_STREAM_ID, "CreateStream: invalid space stream id '%s'", inception.StreamId)
 		}
 		if len(parsedEvents) != 2 {
-			return nil, RpcErrorf(protocol.Err_BAD_STREAM_CREATION_PARAMS, "CreateStream: space stream must have exactly two events")
+			return nil, RpcErrorf(Err_BAD_STREAM_CREATION_PARAMS, "CreateStream: space stream must have exactly two events")
 		}
 		if err := validateSpaceJoinEvent(secondEvent); err != nil {
 			return nil, err
@@ -117,30 +117,30 @@ func (s *Service) createStream(ctx context.Context, log *slog.Logger, req *conne
 			return nil, err
 		}
 
-	case *protocol.UserPayload_Inception:
+	case *UserPayload_Inception:
 		if !common.ValidUserStreamId(inception.StreamId) {
-			return nil, RpcErrorf(protocol.Err_BAD_STREAM_ID, "CreateStream: invalid user stream id '%s'", inception.StreamId)
+			return nil, RpcErrorf(Err_BAD_STREAM_ID, "CreateStream: invalid user stream id '%s'", inception.StreamId)
 		}
 		if len(parsedEvents) != 1 {
-			return nil, RpcErrorf(protocol.Err_BAD_STREAM_CREATION_PARAMS, "CreateStream: user stream must have only one event")
+			return nil, RpcErrorf(Err_BAD_STREAM_CREATION_PARAMS, "CreateStream: user stream must have only one event")
 		}
 
-	case *protocol.UserDeviceKeyPayload_Inception:
+	case *UserDeviceKeyPayload_Inception:
 		if !common.ValidUserDeviceKeyStreamId(inception.StreamId) {
-			return nil, RpcErrorf(protocol.Err_BAD_STREAM_ID, "CreateStream: invalid user device key stream id '%s'", inception.StreamId)
+			return nil, RpcErrorf(Err_BAD_STREAM_ID, "CreateStream: invalid user device key stream id '%s'", inception.StreamId)
 		}
 		if len(parsedEvents) != 1 {
-			return nil, RpcErrorf(protocol.Err_BAD_STREAM_CREATION_PARAMS, "CreateStream: user device key stream must have only one event")
+			return nil, RpcErrorf(Err_BAD_STREAM_CREATION_PARAMS, "CreateStream: user device key stream must have only one event")
 		}
 
-	case *protocol.UserSettingsPayload_Inception:
+	case *UserSettingsPayload_Inception:
 	default:
-		return nil, RpcErrorf(protocol.Err_BAD_STREAM_CREATION_PARAMS, "CreateStream: invalid stream kind %T", inception)
+		return nil, RpcErrorf(Err_BAD_STREAM_CREATION_PARAMS, "CreateStream: invalid stream kind %T", inception)
 	}
 
 	// Authorization.
 	switch inception := inceptionPayload.(type) {
-	case *protocol.ChannelPayload_Inception:
+	case *ChannelPayload_Inception:
 		user, err := common.AddressHex(inceptionEvent.Event.CreatorAddress)
 		if err != nil {
 			return nil, err
@@ -172,34 +172,45 @@ func (s *Service) createStream(ctx context.Context, log *slog.Logger, req *conne
 		break
 	}
 
-	// TODO(HNT-1355): this needs to be fixed: there is no need to load stream back and append second event through separate call
-	// Storage.CreateStream should work fine with two events (although side-effects need to be processed separately in this case).
-	streamId := inceptionPayload.GetStreamId()
-	stream, streamView, err := s.cache.CreateStream(ctx, streamId, parsedEvents[0:1])
+	// Make genesis block header and add to the stream.
+	eventHashes := make([][]byte, len(parsedEvents))
+	for i, event := range parsedEvents {
+		eventHashes[i] = event.Hash
+	}
+
+	block := &BlockHeader{
+		MiniblockNum: 0,
+		Timestamp:    NextBlockTimestamp(nil),
+		EventHashes:  eventHashes,
+	}
+
+	blockEvent, err := MakeParsedEventWithPayload(
+		s.wallet,
+		Make_BlockPayload(block),
+		eventHashes[len(eventHashes)-1:],
+	)
 	if err != nil {
 		return nil, err
 	}
-	cookie := streamView.SyncCookie()
-	// TODO(HNT-1355): technically this is a race: somebody else can add event to the stream between CreateStream and AddEvent calls.
-	if secondEvent != nil {
-		cookie, err = stream.AddEvent(ctx, secondEvent)
-		if err != nil {
-			// TODO: s.Storage.DeleteStream(ctx, streamId)
-			return nil, err
-		}
+	parsedEvents = append(parsedEvents, blockEvent)
+
+	streamId := inceptionPayload.GetStreamId()
+	_, streamView, err := s.cache.CreateStream(ctx, streamId, parsedEvents)
+	if err != nil {
+		return nil, err
 	}
 
 	// side effects
 	switch inception := inceptionPayload.(type) {
-	case *protocol.ChannelPayload_Inception:
+	case *ChannelPayload_Inception:
 		spaceStreamEvent, err := MakeParsedEventWithPayload(
 			s.wallet,
 			Make_SpacePayload_Channel(
-				protocol.ChannelOp_CO_CREATED,
+				ChannelOp_CO_CREATED,
 				inception.StreamId,
 				inception.ChannelName,
 				inception.ChannelTopic,
-				&protocol.EventRef{
+				&EventRef{
 					StreamId:  streamId,
 					Hash:      inceptionEvent.Envelope.Hash,
 					Signature: inceptionEvent.Envelope.Signature,
@@ -220,15 +231,21 @@ func (s *Service) createStream(ctx context.Context, log *slog.Logger, req *conne
 	}
 
 	if secondEvent != nil {
-		err = s.addDerivedMembershipEventToUserStream(ctx, userStream, userView, streamId, secondEvent, protocol.MembershipOp_SO_JOIN)
+		err = s.addDerivedMembershipEventToUserStream(ctx, userStream, userView, streamId, secondEvent, MembershipOp_SO_JOIN)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	return connect_go.NewResponse(&protocol.CreateStreamResponse{
-		SyncCookie: cookie,
-	}), nil
+	return connect_go.NewResponse(
+		&CreateStreamResponse{
+			Stream: &StreamAndCookie{
+				Events:         streamView.Envelopes(),
+				StreamId:       streamView.StreamId(),
+				NextSyncCookie: streamView.SyncCookie(),
+			},
+		},
+	), nil
 }
 
 func validateHashes(events []*ParsedEvent) error {
@@ -237,47 +254,47 @@ func validateHashes(events []*ParsedEvent) error {
 			continue
 		}
 		if len(event.Event.PrevEvents) != 1 || !bytes.Equal(event.Event.PrevEvents[0], events[i-1].Hash) {
-			return RpcErrorf(protocol.Err_BAD_STREAM_CREATION_PARAMS, "CreateStream: bad hash on event index: %d", i)
+			return RpcErrorf(Err_BAD_STREAM_CREATION_PARAMS, "CreateStream: bad hash on event index: %d", i)
 		}
 	}
 	return nil
 }
 
 func validateChannelJoinEvent(event *ParsedEvent) error {
-	payload, ok := event.Event.GetPayload().(*protocol.StreamEvent_ChannelPayload)
+	payload, ok := event.Event.GetPayload().(*StreamEvent_ChannelPayload)
 	if !ok {
-		return RpcErrorf(protocol.Err_BAD_STREAM_CREATION_PARAMS, "CreateStream: second event is not a channel payload")
+		return RpcErrorf(Err_BAD_STREAM_CREATION_PARAMS, "CreateStream: second event is not a channel payload")
 	}
-	membershipPayload, ok := payload.ChannelPayload.GetContent().(*protocol.ChannelPayload_Membership)
+	membershipPayload, ok := payload.ChannelPayload.GetContent().(*ChannelPayload_Membership)
 	if !ok {
-		return RpcErrorf(protocol.Err_BAD_STREAM_CREATION_PARAMS, "CreateStream: second event is not a channel join event")
+		return RpcErrorf(Err_BAD_STREAM_CREATION_PARAMS, "CreateStream: second event is not a channel join event")
 	}
 	return validateJoinEventPayload(event, membershipPayload.Membership)
 }
 
 func validateSpaceJoinEvent(event *ParsedEvent) error {
-	payload, ok := event.Event.GetPayload().(*protocol.StreamEvent_SpacePayload)
+	payload, ok := event.Event.GetPayload().(*StreamEvent_SpacePayload)
 	if !ok {
-		return RpcErrorf(protocol.Err_BAD_STREAM_CREATION_PARAMS, "CreateStream: second event is not a channel payload")
+		return RpcErrorf(Err_BAD_STREAM_CREATION_PARAMS, "CreateStream: second event is not a channel payload")
 	}
-	membershipPayload, ok := payload.SpacePayload.GetContent().(*protocol.SpacePayload_Membership)
+	membershipPayload, ok := payload.SpacePayload.GetContent().(*SpacePayload_Membership)
 	if !ok {
-		return RpcErrorf(protocol.Err_BAD_STREAM_CREATION_PARAMS, "CreateStream: second event is not a channel join event")
+		return RpcErrorf(Err_BAD_STREAM_CREATION_PARAMS, "CreateStream: second event is not a channel join event")
 	}
 	return validateJoinEventPayload(event, membershipPayload.Membership)
 
 }
 
-func validateJoinEventPayload(event *ParsedEvent, membership *protocol.Membership) error {
+func validateJoinEventPayload(event *ParsedEvent, membership *Membership) error {
 	creatorUserId, err := common.AddressHex(event.Event.GetCreatorAddress())
 	if err != nil {
 		return err
 	}
-	if membership.GetOp() != protocol.MembershipOp_SO_JOIN {
-		return RpcErrorf(protocol.Err_BAD_STREAM_CREATION_PARAMS, "CreateStream: bad join op %d", membership.GetOp())
+	if membership.GetOp() != MembershipOp_SO_JOIN {
+		return RpcErrorf(Err_BAD_STREAM_CREATION_PARAMS, "CreateStream: bad join op %d", membership.GetOp())
 	}
 	if membership.UserId != creatorUserId {
-		return RpcErrorf(protocol.Err_BAD_STREAM_CREATION_PARAMS, "CreateStream: bad join user id '%s', created by '%s'", membership.UserId, creatorUserId)
+		return RpcErrorf(Err_BAD_STREAM_CREATION_PARAMS, "CreateStream: bad join user id '%s', created by '%s'", membership.UserId, creatorUserId)
 	}
 	return nil
 }

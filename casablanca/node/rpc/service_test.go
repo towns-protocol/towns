@@ -65,7 +65,7 @@ func createUser(ctx context.Context, wallet *crypto.Wallet, client protocolconne
 	if err != nil {
 		return nil, nil, err
 	}
-	return res.Msg.SyncCookie, inception.Hash, nil
+	return res.Msg.Stream.NextSyncCookie, inception.Hash, nil
 }
 
 func createSpace(ctx context.Context, wallet *crypto.Wallet, client protocolconnect.StreamServiceClient, spaceId string) (*protocol.SyncCookie, []byte, error) {
@@ -103,7 +103,7 @@ func createSpace(ctx context.Context, wallet *crypto.Wallet, client protocolconn
 		return nil, nil, err
 	}
 
-	return resspace.Msg.SyncCookie, joinSpace.Hash, nil
+	return resspace.Msg.Stream.NextSyncCookie, joinSpace.Hash, nil
 }
 
 func createChannel(ctx context.Context, wallet *crypto.Wallet, client protocolconnect.StreamServiceClient, spaceId string, channelId string) (*protocol.SyncCookie, []byte, error) {
@@ -140,7 +140,7 @@ func createChannel(ctx context.Context, wallet *crypto.Wallet, client protocolco
 	if err != nil {
 		return nil, nil, err
 	}
-	return reschannel.Msg.SyncCookie, joinChannel.Hash, nil
+	return reschannel.Msg.Stream.NextSyncCookie, joinChannel.Hash, nil
 }
 
 func testServerAndClient(ctx context.Context, dbUrl string) (protocolconnect.StreamServiceClient, func()) {
