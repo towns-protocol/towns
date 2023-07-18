@@ -29,4 +29,5 @@ export const WEB_PUSH_NAVIGATION_CHANNEL = 'web-push-navigation-channel'
 
 export enum ServiceWorkerMessageType {
     SpaceMetadata = 'space_metadata',
+    SpaceMembers = 'space_members',
 }

@@ -246,13 +246,7 @@ export function getIdForMatrixEvent(event: MatrixEvent): string {
 export function isMentionedTextMessageOption(
     options: SendMessageOptions,
 ): options is SendTextMessageOptions & SpaceIdOptions {
-    return (
-        'messageType' in options &&
-        options.messageType === MessageType.Text &&
-        'mentions' in options &&
-        Array.isArray(options.mentions) &&
-        options.mentions.length > 0
-    )
+    return 'mentions' in options && Array.isArray(options.mentions) && options.mentions.length > 0
 }
 
 export function isSpaceIdOptions(options: SendMessageOptions): options is SpaceIdOptions {

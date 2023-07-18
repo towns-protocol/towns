@@ -2,7 +2,11 @@ import { RoomMember, SpaceData } from 'use-zion-client'
 import { AppNotification, ServiceWorkerMessageType, WEB_PUSH_NAVIGATION_CHANNEL } from './types.d'
 import { appNotificationFromPushEvent } from './notificationParsers'
 import { getServiceWorkerMuteSettings } from '../store/useMuteSettings'
-import { channels as idbChannels, spaces as idbSpaces } from '../idb/notificationsMeta'
+import {
+    channels as idbChannels,
+    spaces as idbSpaces,
+    users as idbUsers,
+} from '../idb/notificationsMeta'
 
 export function handleNotifications(worker: ServiceWorkerGlobalScope) {
     const navigationChannel = new BroadcastChannel(WEB_PUSH_NAVIGATION_CHANNEL)
@@ -27,6 +31,22 @@ export function handleNotifications(worker: ServiceWorkerGlobalScope) {
                         await addChannelsToIdb(space)
                     } catch (error) {
                         console.error('sw: error adding channels to idb', space, error)
+                    }
+                }
+                break
+            case ServiceWorkerMessageType.SpaceMembers:
+                if (data.membersMap) {
+                    try {
+                        addUsersToIdb(data.membersMap)
+                    } catch (error) {
+                        console.error(
+                            'sw: error adding users to idb',
+                            {
+                                space: data.space,
+                                membersMap: data.membersMap,
+                            },
+                            error,
+                        )
                     }
                 }
                 break
@@ -108,8 +128,17 @@ async function getNotificationContent(notification: AppNotification): Promise<{
     switch (notification.notificationType) {
         case 'new_message':
             return generateMessage(townName, channelName)
-        case 'mention':
-            return generateMessage(townName, channelName)
+        case 'mention': {
+            const { senderId } = notification.content
+            const senderName = senderId ? (await idbUsers.get(senderId))?.name : undefined
+            const genericMessage = generateMessage(townName, channelName)
+            return {
+                title: genericMessage.title,
+                body: senderName
+                    ? `@${senderName} mentioned you in #${channelName}`
+                    : `You got mentioned in #${channelName}`,
+            }
+        }
         default:
             return {
                 title: 'Town',
@@ -158,6 +187,28 @@ async function addChannelsToIdb(space: SpaceData) {
                     parentSpaceId: space.id.networkId,
                 }),
             ),
+            tx.done,
+        ])
+    }
+}
+
+async function addUsersToIdb(membersMap: { [userId: string]: RoomMember | undefined }) {
+    const allIdbUsers = await idbUsers.getAll()
+
+    const missingMembers = Object.values(membersMap).filter(
+        (member): member is RoomMember =>
+            member !== undefined && !allIdbUsers.some((idbUser) => idbUser.id === member.userId),
+    )
+    if (missingMembers.length) {
+        const tx = await idbUsers.transaction('readwrite')
+        const store = tx.store
+        await Promise.all([
+            ...missingMembers.map(async (member) => {
+                await store.put?.({
+                    name: member.name,
+                    id: member.userId,
+                })
+            }),
             tx.done,
         ])
     }

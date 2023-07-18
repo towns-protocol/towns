@@ -13,7 +13,7 @@ type Channel = {
 }
 
 type User = {
-    id: never
+    id: string
     name: string
 }
 
@@ -36,26 +36,32 @@ interface CacheDB extends DBSchema {
     [StoreNames.users]: {
         key: string
         value: User
+        indexes: { bySpace: string }
     }
 }
 
 const CACHE_DB = 'towns/notifications-meta'
-const VERSION = 1
+const VERSION = 2
 
 const dbPromise = openDB<CacheDB>(CACHE_DB, VERSION, {
-    upgrade(db) {
-        db.createObjectStore(StoreNames.spaces, {
-            keyPath: 'id',
-        })
-        const channelStore = db.createObjectStore(StoreNames.channels, {
-            keyPath: 'id',
-        })
-        channelStore.createIndex('bySpace', 'parentSpaceId')
-        db.createObjectStore(StoreNames.users, {
-            keyPath: 'id',
-        })
+    upgrade(db, oldVersion, _newVersion, transaction) {
+        switch (oldVersion) {
+            case 0: {
+                db.createObjectStore(StoreNames.spaces, {
+                    keyPath: 'id',
+                })
+                const channelStore = db.createObjectStore(StoreNames.channels, {
+                    keyPath: 'id',
+                })
+                channelStore.createIndex('bySpace', 'parentSpaceId')
+                db.createObjectStore(StoreNames.users, {
+                    keyPath: 'id',
+                })
+            }
+        }
     },
 })
 
 export const channels = idbMethodsFactory(dbPromise, StoreNames.channels)
 export const spaces = idbMethodsFactory(dbPromise, StoreNames.spaces)
+export const users = idbMethodsFactory(dbPromise, StoreNames.users)

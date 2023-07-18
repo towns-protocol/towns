@@ -123,9 +123,9 @@ function SpaceServiceWorkerMessenger({ space }: { space: SpaceData }) {
 
     useEffect(() => {
         navigator.serviceWorker.controller?.postMessage({
-            type: ServiceWorkerMessageType.SpaceMetadata,
-            memebers: members.membersMap,
+            type: ServiceWorkerMessageType.SpaceMembers,
+            membersMap: members.membersMap,
         })
-    }, [members.membersMap])
+    }, [members.membersMap, space])
     return null
 }
