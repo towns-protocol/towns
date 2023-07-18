@@ -3,31 +3,36 @@ import { useZionContext } from '../../components/ZionContextProvider'
 import { useEffect, useState } from 'react'
 
 export function useCasablancaStream(streamId?: string): Stream | undefined {
-    const [stream, setStream] = useState<Stream>()
     const { casablancaClient } = useZionContext()
-
+    const [stream, setStream] = useState<Stream | undefined>(() =>
+        streamId ? casablancaClient?.stream(streamId) : undefined,
+    )
     useEffect(() => {
+        // initial conditions
         if (!casablancaClient || !streamId) {
             return
         }
-
-        const updateStream = (stream?: Stream) => {
+        // fetch stream first time the effect runs, if it was previously set
+        // to the same reference, it shouldn't trigger any re-render according to documentation
+        const stream = casablancaClient.stream(streamId)
+        // if it exists now (in the time it took for the effect to run) we're done!
+        if (stream) {
             setStream(stream)
+            return
         }
-
-        let canceled = false
-
-        const waitForStream = async () => {
-            const stream = await casablancaClient.waitForStream(streamId)
-            if (!canceled) {
-                updateStream(stream)
+        // callback for when stream is initialized
+        const onStreamInitialized = (inStreamId: string) => {
+            if (inStreamId === streamId) {
+                const stream = casablancaClient.stream(streamId)
+                setStream(stream)
+                casablancaClient.off('streamInitialized', onStreamInitialized)
             }
         }
-
-        void waitForStream()
-
+        // wait for it to be initialized
+        casablancaClient.on('streamInitialized', onStreamInitialized)
+        // clean up listeners
         return () => {
-            canceled = true
+            casablancaClient.off('streamInitialized', onStreamInitialized)
         }
     }, [casablancaClient, streamId])
 
