@@ -1983,13 +1983,19 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
         roomId: RoomIdentifier,
         content: Record<string, FullyReadMarker>,
     ) {
-        return this.matrixOnly(async (matrixClient) => {
-            return matrixClient.setRoomAccountData(
-                roomId.networkId,
-                ZionAccountDataType.FullyRead,
-                content,
-            )
-        })
+        switch (roomId.protocol) {
+            case SpaceProtocol.Matrix:
+                if (!this.matrixClient) {
+                    throw new Error('matrix client is undefined')
+                }
+                return this.matrixClient.setRoomAccountData(
+                    roomId.networkId,
+                    ZionAccountDataType.FullyRead,
+                    content,
+                )
+            case SpaceProtocol.Casablanca:
+                throw new Error('not implemented for casablanca')
+        }
     }
 
     private getAllChannelMembershipsFromSpace(roomId: RoomIdentifier): Record<string, Membership> {
@@ -2224,10 +2230,16 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
      * setRoomTopic
      ************************************************/
     public async setRoomTopic(roomId: RoomIdentifier, name: string): Promise<void> {
-        // todo casablanca display name
-        return this.matrixOnly(async (matrixClient) => {
-            await matrixClient.setRoomTopic(roomId.networkId, name)
-        })
+        switch (roomId.protocol) {
+            case SpaceProtocol.Matrix:
+                if (!this.matrixClient) {
+                    throw new Error('matrix client is undefined')
+                }
+                await this.matrixClient.setRoomTopic(roomId.networkId, name)
+                break
+            case SpaceProtocol.Casablanca:
+                throw new Error('not implemented for casablanca')
+        }
     }
 
     /************************************************
@@ -2235,38 +2247,61 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
      ************************************************/
     public async setRoomName(roomId: RoomIdentifier, name: string): Promise<void> {
         // todo casablanca display name
-        return this.matrixOnly(async () => {
-            await this.matrixClient?.setRoomName(roomId.networkId, name)
-        })
+        switch (roomId.protocol) {
+            case SpaceProtocol.Matrix:
+                if (!this.matrixClient) {
+                    throw new Error('matrix client is undefined')
+                }
+                await this.matrixClient?.setRoomName(roomId.networkId, name)
+                break
+            case SpaceProtocol.Casablanca:
+                throw new Error('not implemented for casablanca')
+        }
     }
 
     /************************************************
      * getRoomTopic
      ************************************************/
     public async getRoomTopic(roomId: RoomIdentifier): Promise<string> {
-        // todo casablanca display name
-        return this.matrixOnly(async (matrixClient) => {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const topic: Record<string, any> = await matrixClient.getStateEvent(
-                roomId.networkId,
-                'm.room.topic',
-                '',
-            )
-            return (topic?.topic as string) ?? ''
-        })
+        switch (roomId.protocol) {
+            case SpaceProtocol.Matrix: {
+                if (!this.matrixClient) {
+                    throw new Error('matrix client is undefined')
+                }
+
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const topic: Record<string, any> = await this.matrixClient.getStateEvent(
+                    roomId.networkId,
+                    'm.room.topic',
+                    '',
+                )
+                return (topic?.topic as string) ?? ''
+            }
+            case SpaceProtocol.Casablanca:
+                throw new Error('not implemented for casablanca')
+        }
     }
 
     /************************************************
      * scrollback
      ************************************************/
     public async scrollback(roomId: RoomIdentifier, limit?: number): Promise<void> {
-        return this.matrixOnly(async (matrixClient) => {
-            const room = matrixClient.getRoom(roomId.networkId)
-            if (!room) {
-                throw new Error('room not found')
-            }
-            await matrixClient.scrollback(room, limit)
-        })
+        switch (roomId.protocol) {
+            case SpaceProtocol.Matrix:
+                {
+                    if (!this.matrixClient) {
+                        throw new Error('matrix client is undefined')
+                    }
+                    const room = this.matrixClient.getRoom(roomId.networkId)
+                    if (!room) {
+                        throw new Error('room not found')
+                    }
+                    await this.matrixClient.scrollback(room, limit)
+                }
+                break
+            case SpaceProtocol.Casablanca:
+                throw new Error('not implemented for casablanca')
+        }
     }
 
     /************************************************
@@ -2278,22 +2313,32 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         eventId: string | undefined = undefined,
     ): Promise<void> {
-        return this.matrixOnly(async (matrixClient) => {
-            const room = matrixClient.getRoom(roomId.networkId)
-            if (!room) {
-                throw new Error(`room with id ${roomId.networkId} not found`)
+        switch (roomId.protocol) {
+            case SpaceProtocol.Matrix: {
+                if (!this.matrixClient) {
+                    throw new Error('matrix client is undefined')
+                }
+                const room = this.matrixClient.getRoom(roomId.networkId)
+                if (!room) {
+                    throw new Error(`room with id ${roomId.networkId} not found`)
+                }
+                const event = eventId
+                    ? room.findEventById(eventId)
+                    : room.getLiveTimeline().getEvents().at(-1)
+                if (!event) {
+                    throw new Error(
+                        `event for room ${roomId.networkId} eventId: ${
+                            eventId ?? 'at(-1)'
+                        } not found`,
+                    )
+                }
+                const result = await this.matrixClient.sendReadReceipt(event)
+                this.log('read receipt sent', result)
+                break
             }
-            const event = eventId
-                ? room.findEventById(eventId)
-                : room.getLiveTimeline().getEvents().at(-1)
-            if (!event) {
-                throw new Error(
-                    `event for room ${roomId.networkId} eventId: ${eventId ?? 'at(-1)'} not found`,
-                )
-            }
-            const result = await matrixClient.sendReadReceipt(event)
-            this.log('read receipt sent', result)
-        })
+            case SpaceProtocol.Casablanca:
+                throw new Error('not implemented for casablanca')
+        }
     }
 
     /************************************************
