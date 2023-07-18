@@ -58,7 +58,7 @@
         "lint-staged": "^13.1.2",
         "prettier": "^2.8.8",
         "solidity-docgen": "^0.6.0-beta.29",
-        "syncpack": "^9.8.4",
+        "syncpack": "^10.7.3",
         "ts-node": "^10.9.1",
         "turbo": "1.10.3",
         "typechain": "^8.1.1",
@@ -82,9 +82,11 @@
         "jest-worker@^29.5.0": "patch:jest-worker@npm%3A29.5.0#./.yarn/patches/jest-worker-npm-29.5.0-70da3388f1.patch"
     },
     "syncpack": {
-        "dev": true,
-        "prod": true,
-        "peer": true,
+        "dependencyTypes": [
+            "dev",
+            "prod",
+            "peer"
+        ],
         "indent": "    ",
         "sortFirst": [
             "name",
@@ -114,8 +116,7 @@
                     "peer"
                 ]
             }
-        ],
-        "workspace": false
+        ]
     },
     "workspaces": [
         "casablanca/*",
