@@ -17,7 +17,7 @@ FROZEN="${2:-}"
 yarn typechain --target=ethers-v5 "packages/contracts/out/**/?(Events|Errors|Member|CouncilStaking|IEntitlement|TokenEntitlement|UserEntitlement|Space|SpaceFactory|Pioneer|Mock721).json" --out-dir "packages/generated/${CHAIN}/typings"
 
 # Move abis to the packages folder
-mkdir -p $ABI_DIR && cp -a packages/contracts/out/{Events,Errors,Member,CouncilStaking,IEntitlement,TokenEntitlement,UserEntitlement,Space,SpaceFactory,Pioneer}.sol/* "packages/generated/${CHAIN}/abis"
+mkdir -p $ABI_DIR && cp -a packages/contracts/out/{Events,Errors,Member,CouncilStaking,entitlements/IEntitlement,TokenEntitlement,UserEntitlement,Space,SpaceFactory,Pioneer}.sol/* "packages/generated/${CHAIN}/abis"
 
 # Copy the json abis to TS files for type inference
 for file in $ABI_DIR/*.abi.json; do

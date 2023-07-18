@@ -1,27 +1,24 @@
 {
   "compiler": {
-    "version": "0.8.19+commit.7dd6d404"
+    "version": "0.8.20+commit.a1b79de6"
   },
   "language": "Solidity",
   "output": {
     "abi": [
       {
-        "inputs": [
-          {
-            "internalType": "string",
-            "name": "channelId",
-            "type": "string"
-          },
-          {
-            "internalType": "uint256",
-            "name": "roleId",
-            "type": "uint256"
-          }
-        ],
-        "name": "addRoleIdToChannel",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
+        "inputs": [],
+        "name": "Entitlement__InvalidValue",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "Entitlement__NotAllowed",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "Entitlement__ValueAlreadyExists",
+        "type": "error"
       },
       {
         "inputs": [],
@@ -58,64 +55,9 @@
       {
         "inputs": [
           {
-            "internalType": "string",
-            "name": "channelId",
-            "type": "string"
-          }
-        ],
-        "name": "getRoleIdsByChannelId",
-        "outputs": [
-          {
-            "internalType": "uint256[]",
-            "name": "",
-            "type": "uint256[]"
-          }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-      },
-      {
-        "inputs": [
-          {
             "internalType": "address",
-            "name": "user",
+            "name": "space",
             "type": "address"
-          }
-        ],
-        "name": "getUserRoles",
-        "outputs": [
-          {
-            "components": [
-              {
-                "internalType": "uint256",
-                "name": "roleId",
-                "type": "uint256"
-              },
-              {
-                "internalType": "string",
-                "name": "name",
-                "type": "string"
-              }
-            ],
-            "internalType": "struct DataTypes.Role[]",
-            "name": "",
-            "type": "tuple[]"
-          }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-      },
-      {
-        "inputs": [
-          {
-            "internalType": "address",
-            "name": "_tokenAddress",
-            "type": "address"
-          },
-          {
-            "internalType": "uint256",
-            "name": "_tokenId",
-            "type": "uint256"
           }
         ],
         "name": "initialize",
@@ -205,24 +147,6 @@
       {
         "inputs": [
           {
-            "internalType": "string",
-            "name": "channelId",
-            "type": "string"
-          },
-          {
-            "internalType": "uint256",
-            "name": "roleId",
-            "type": "uint256"
-          }
-        ],
-        "name": "removeRoleIdFromChannel",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-      },
-      {
-        "inputs": [
-          {
             "internalType": "uint256",
             "name": "roleId",
             "type": "uint256"
@@ -243,52 +167,17 @@
         ],
         "stateMutability": "nonpayable",
         "type": "function"
-      },
-      {
-        "inputs": [
-          {
-            "internalType": "address",
-            "name": "_space",
-            "type": "address"
-          }
-        ],
-        "name": "setSpace",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
       }
     ],
     "devdoc": {
       "kind": "dev",
       "methods": {
-        "addRoleIdToChannel(string,uint256)": {
-          "params": {
-            "channelId": "id of the channel to add the role to",
-            "roleId": "id of the role to add"
-          }
-        },
         "getEntitlementDataByRoleId(uint256)": {
           "params": {
             "roleId": "the roleId to fetch the entitlement data for"
           },
           "returns": {
             "_0": "entitlementData array for the role"
-          }
-        },
-        "getRoleIdsByChannelId(string)": {
-          "params": {
-            "channelId": "the channel to fetch the roleIds for"
-          },
-          "returns": {
-            "_0": "roleIds array of all the roleIds for the channel"
-          }
-        },
-        "getUserRoles(address)": {
-          "params": {
-            "user": "the user to fetch the roles for"
-          },
-          "returns": {
-            "_0": "roles array of all the roles for the user"
           }
         },
         "isEntitled(string,address,bytes32)": {
@@ -310,12 +199,6 @@
             "_0": "entitlementId the id that was removed"
           }
         },
-        "removeRoleIdFromChannel(string,uint256)": {
-          "params": {
-            "channelId": "id of the channel to remove the role from",
-            "roleId": "id of the role to remove"
-          }
-        },
         "setEntitlement(uint256,bytes)": {
           "params": {
             "entitlementData": "abi encoded array of data necessary to set the entitlement",
@@ -324,11 +207,6 @@
           "returns": {
             "_0": "entitlementId the id that was set"
           }
-        },
-        "setSpace(address)": {
-          "params": {
-            "_space": "address of the space"
-          }
         }
       },
       "version": 1
@@ -336,20 +214,14 @@
     "userdoc": {
       "kind": "user",
       "methods": {
-        "addRoleIdToChannel(string,uint256)": {
-          "notice": "adds a role to a channel"
-        },
         "description()": {
           "notice": "The description of the entitlement module"
         },
         "getEntitlementDataByRoleId(uint256)": {
           "notice": "fetches the entitlement data for a roleId"
         },
-        "getRoleIdsByChannelId(string)": {
-          "notice": "fetches the roleIds for a given channel"
-        },
-        "getUserRoles(address)": {
-          "notice": "fetches the roles for a given user in the space"
+        "initialize(address)": {
+          "notice": "initializes the entitlement module"
         },
         "isEntitled(string,address,bytes32)": {
           "notice": "checks whether a user is has a given permission for a channel or a space"
@@ -363,14 +235,8 @@
         "removeEntitlement(uint256,bytes)": {
           "notice": "removes an entitlement"
         },
-        "removeRoleIdFromChannel(string,uint256)": {
-          "notice": "removes a role from a channel"
-        },
         "setEntitlement(uint256,bytes)": {
           "notice": "sets a new entitlement"
-        },
-        "setSpace(address)": {
-          "notice": "sets the address for the space that controls this entitlement"
         }
       },
       "version": 1
@@ -378,7 +244,7 @@
   },
   "settings": {
     "compilationTarget": {
-      "packages/contracts/src/spaces/interfaces/IEntitlement.sol": "IEntitlement"
+      "packages/contracts/src/towns/entitlements/IEntitlement.sol": "IEntitlement"
     },
     "evmVersion": "paris",
     "libraries": {},
@@ -392,6 +258,7 @@
     },
     "remappings": [
       ":@openzeppelin/=lib/openzeppelin-contracts/",
+      ":@prb/test/=lib/prb-test/src/",
       ":@towns/=node_modules/@towns/",
       ":ERC721A/=lib/ERC721A/contracts/",
       ":contracts/=packages/contracts/",
@@ -399,29 +266,19 @@
       ":ds-test/=lib/ds-test/src/",
       ":erc4626-tests/=lib/operator-filter-registry/lib/openzeppelin-contracts/lib/erc4626-tests/",
       ":forge-std/=lib/forge-std/src/",
-      ":murky/=lib/murky/src/",
       ":openzeppelin-contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/",
       ":openzeppelin-contracts/=lib/openzeppelin-contracts/",
       ":operator-filter-registry/=lib/operator-filter-registry/",
-      ":solmate/=lib/solmate/src/",
-      ":weird-erc20/=lib/solmate/lib/weird-erc20/src/"
+      ":prb-test/=lib/prb-test/src/"
     ]
   },
   "sources": {
-    "packages/contracts/src/spaces/interfaces/IEntitlement.sol": {
-      "keccak256": "0x5e07133041017bbb2a1bd594781c8050822980921581a1c22435dd97054cfc93",
+    "packages/contracts/src/towns/entitlements/IEntitlement.sol": {
+      "keccak256": "0x3f9ece409fddb53843218cb1a742face8577de97e9e9257f882d40c556ce0263",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://a5b08462a94b5eba11746da38032f51b30c279b00f377c7e80d24fcdf4c23d73",
-        "dweb:/ipfs/QmcchLJn2YRAPhnRCQx46LCqyvL6gUvaiJbeWvXbQyXZz6"
-      ]
-    },
-    "packages/contracts/src/spaces/libraries/DataTypes.sol": {
-      "keccak256": "0x59127dc6905dcf95782e379c0cadabaaed7514799dc85c29b9db7d3faaa26fcc",
-      "license": "Apache-20",
-      "urls": [
-        "bzz-raw://6d7c7aa13983d09bcec7aad416a5b1077c81765664386c519d3dad43a19cd5eb",
-        "dweb:/ipfs/Qmbu3S4RVybAQPNU5f7jhMxG1eFZhBypgbYVLpPhGDpNen"
+        "bzz-raw://3e0c6972be5a1b9f13bead1486f33e1264560cd5e70e44a2f225924846b47541",
+        "dweb:/ipfs/Qmcqoufht7VmmUxpKTdZ9aHcs4sC6us45pirBaUqnL1VtH"
       ]
     }
   },
