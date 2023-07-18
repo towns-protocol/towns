@@ -198,14 +198,6 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
             } catch (error) {
                 this.log("caught error while trying to logout, but we're going to ignore it", error)
             }
-            try {
-                await matrixClient.clearStores()
-            } catch (error) {
-                this.log(
-                    "caught error while trying to clearStores, but we're going to ignore it",
-                    error,
-                )
-            }
         }
 
         this._eventHandlers?.onLogout?.({
