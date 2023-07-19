@@ -355,11 +355,24 @@ function formatError<T extends Array<unknown>, U>(
     args: T,
 ): string {
     try {
-        return `ERROR: ${JSON.stringify(err as Error)} retryCount: ${retryCount} isMatrixError: ${
+        return `ERROR: ${errorToString(err)} retryCount: ${retryCount} isMatrixError: ${
             isMatrixError(err) ? 'true' : 'false'
         } fn: ${fn.name} args: ${JSON.stringify(args)}`
     } catch (e) {
         // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
         return `unformattable ERROR: ${e}`
+    }
+}
+
+function errorToString(err: unknown): string {
+    try {
+        const attempt1 = JSON.stringify(err)
+        if (!attempt1 || attempt1 === '{}') {
+            return String(err) //err.message
+        } else {
+            return attempt1
+        }
+    } catch (e) {
+        return `unformattable ERROR: ${String(e)}`
     }
 }

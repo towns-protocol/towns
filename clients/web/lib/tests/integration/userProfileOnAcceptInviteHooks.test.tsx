@@ -86,6 +86,6 @@ describe('userProfileOnAcceptInviteHooks', () => {
         // wait for the room to be joined
         await waitFor(() => expect(myMembership).toHaveTextContent(Membership.Join))
         // verify alice name is rendering
-        expect(myProfileName).toHaveTextContent("Alice's your aunt")
+        await waitFor(() => expect(myProfileName).toHaveTextContent("Alice's your aunt"))
     }) // end test
 }) // end describe

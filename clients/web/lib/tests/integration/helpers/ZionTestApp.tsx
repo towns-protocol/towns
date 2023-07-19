@@ -55,6 +55,7 @@ export const ZionTestApp = (props: Props) => {
             QueryClientProvider={TestQueryClientProvider}
             logNamespaceFilter="" // "csb:*" A bit too much for tests, better way to set?
             web3Signer={provider.wallet}
+            verbose={true}
         >
             <>
                 <ZionWalletAutoConnect />

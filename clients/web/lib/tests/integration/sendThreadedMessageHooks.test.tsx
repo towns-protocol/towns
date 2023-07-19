@@ -103,9 +103,16 @@ describe('sendThreadedMessageHooks', () => {
             const spaceNotifications = useSpaceNotificationCounts(spaceId)
             const channel_1_fullyRead = useFullyReadMarker(channel_1)
             const channel_2_fullyRead = useFullyReadMarker(channel_2)
-            const [unreadInProgress, setUnreadInProgress] = React.useState(0)
-            const [sendInitialMessageInProgress, setSendInitialMessageInProgress] =
-                React.useState(0)
+            const [unreadInProgress, setUnreadInProgress] = React.useState({
+                semaphore: 0,
+                started: 0,
+                completed: 0,
+            })
+            const [sendInitialMessageInProgress, setSendInitialMessageInProgress] = React.useState({
+                semaphore: 0,
+                started: 0,
+                completed: 0,
+            })
 
             const channel_2_threadRoot = useMemo(
                 () => Object.values(threadRoots).at(0),
@@ -123,10 +130,20 @@ describe('sendThreadedMessageHooks', () => {
 
             const sendInitialMessages = useCallback(() => {
                 void (async () => {
-                    setSendInitialMessageInProgress((prev) => prev + 1)
+                    setSendInitialMessageInProgress((prev) => ({
+                        ...prev,
+                        semaphore: prev.semaphore + 1,
+                        started: prev.started + 1,
+                    }))
+
                     await sendMessage(channel_1, 'hello jane in channel_1')
                     await sendMessage(channel_2, 'hello jane in channel_2')
-                    setSendInitialMessageInProgress((prev) => prev - 1)
+
+                    setSendInitialMessageInProgress((prev) => ({
+                        ...prev,
+                        semaphore: prev.semaphore - 1,
+                        completed: prev.completed + 1,
+                    }))
                     console.log(`sendInitialMessages finished`)
                 })()
             }, [sendMessage])
@@ -155,11 +172,21 @@ describe('sendThreadedMessageHooks', () => {
             const markAllAsRead = useCallback(() => {
                 console.log(`markAllAsRead started`)
                 void (async () => {
-                    setUnreadInProgress((prev) => prev + 1)
+                    setUnreadInProgress((prev) => ({
+                        ...prev,
+                        semaphore: prev.semaphore + 1,
+                        started: prev.started + 1,
+                    }))
+
                     await sendReadReceipt(channel_1_fullyRead!)
                     await sendReadReceipt(channel_2_fullyRead!)
                     await sendReadReceipt(channel_2_thread_fullyRead!)
-                    setUnreadInProgress((prev) => prev - 1)
+
+                    setUnreadInProgress((prev) => ({
+                        ...prev,
+                        semaphore: prev.semaphore - 1,
+                        completed: prev.completed + 1,
+                    }))
                     console.log(`markAllAsRead done`)
                 })()
             }, [
@@ -262,9 +289,9 @@ describe('sendThreadedMessageHooks', () => {
                             .map((kv) => formatThreadStats(kv[0], kv[1]))
                             .join('\n')}
                     </div>
-                    <div data-testid="unreadInProgress">{unreadInProgress}</div>
+                    <div data-testid="unreadInProgress">{JSON.stringify(unreadInProgress)}</div>
                     <div data-testid="sendInitialMessageInProgress">
-                        {sendInitialMessageInProgress}
+                        {JSON.stringify(sendInitialMessageInProgress)}
                     </div>
                 </>
             )
