@@ -90,6 +90,10 @@ export {
     getFilteredRolesFromSpace,
     getPioneerNftAddress,
 } from './client/web3/ContractHelpers'
+export {
+    signMessageAbortController,
+    signMessageAbortListener,
+} from './client/SignMessageAbortController'
 
 export * from './types/error-types'
 export * from './utils/zion-utils'

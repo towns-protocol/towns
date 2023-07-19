@@ -23,6 +23,7 @@ import { useCredentialStore } from '../store/use-credential-store'
 import { useMatrixStore } from '../store/use-matrix-store'
 import { newMatrixLoginSession, newMatrixRegisterSession } from './session'
 import { useNetwork } from 'wagmi'
+import { signMessageAbortListener } from '../client/SignMessageAbortController'
 
 interface SignedAuthenticationData {
     signature: string
@@ -182,7 +183,11 @@ export function useMatrixWalletSignIn() {
                     console.log(`[createAndSignAuthData] no userIdentifier`)
                     return undefined
                 }
-                const signedAuthenticationData = await signMessage(args.statement)
+
+                const signedAuthenticationData = await Promise.race([
+                    signMessageAbortListener(),
+                    signMessage(args.statement),
+                ])
                 if (!signedAuthenticationData) {
                     console.log(`[createAndSignAuthData] undefined signedAuthenticationData`)
                     return undefined
