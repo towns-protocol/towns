@@ -22,7 +22,6 @@ type AuthorizationArgs struct {
 
 type TownsContract interface {
 	IsAllowed(ctx context.Context, args AuthorizationArgs, info *common.StreamInfo) (bool, error)
-	GetUserId(ctx context.Context, townsKey string) (string, error)
 }
 
 var ErrSpaceDisabled = errors.New("space disabled")
@@ -78,11 +77,6 @@ func (za *TownsPassThrough) IsAllowed(ctx context.Context, args AuthorizationArg
 	return true, nil
 }
 
-func (za *TownsPassThrough) GetUserId(ctx context.Context, townsKey string) (string, error) {
-	// In passthrough towns key is the user id.
-	return townsKey, nil
-}
-
 func (za *ChainAuth) IsAllowed(ctx context.Context, args AuthorizationArgs, streamInfo *common.StreamInfo) (bool, error) {
 	log := dlog.CtxLog(ctx)
 
@@ -110,11 +104,6 @@ func (za *ChainAuth) IsAllowed(ctx context.Context, args AuthorizationArgs, stre
 	default:
 		return false, fmt.Errorf("unhandled stream type: %s", streamInfo.StreamType)
 	}
-}
-
-func (za *ChainAuth) GetUserId(ctx context.Context, townsKey string) (string, error) {
-	// TODO: implement this.
-	return townsKey, nil
 }
 
 func (za *ChainAuth) isEntitledToSpace(streamInfo *common.StreamInfo, user eth.Address, permission Permission) (bool, error) {

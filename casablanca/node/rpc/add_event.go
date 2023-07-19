@@ -199,6 +199,11 @@ func (s *Service) addMembershipEvent(ctx context.Context, stream *Stream, view S
 	if err != nil {
 		return status.Errorf(codes.Internal, "AddEvent: error getting joined users: %v", err)
 	}
+	creator, err := common.AddressHex(parsedEvent.Event.CreatorAddress)
+	if err != nil {
+		return status.Errorf(codes.InvalidArgument, "AddEvent: invalid user id: %v", err)
+	}
+	
 	permission := auth.PermissionUndefined
 	switch membership.Op {
 	case MembershipOp_SO_INVITE:
@@ -206,23 +211,21 @@ func (s *Service) addMembershipEvent(ctx context.Context, stream *Stream, view S
 			if member {
 				return status.Errorf(codes.InvalidArgument, "AddEvent: user %s is already a member of channel %s", userId, streamId)
 			}
-			creator, err := common.AddressHex(parsedEvent.Event.CreatorAddress)
-			if err != nil {
-				return status.Errorf(codes.InvalidArgument, "AddEvent: invalid user id: %v", err)
-			}
-			userId, err = s.townsContract.GetUserId(ctx, creator)
-			if err != nil {
-				return status.Errorf(codes.InvalidArgument, "AddEvent: failed to get user id: %v", err)
-			}
+
+			userId = creator
 			permission = auth.PermissionInvite
 		}
 	case MembershipOp_SO_JOIN:
+		if userId != creator {
+			return status.Errorf(codes.InvalidArgument, "AddEvent: user %s must join themselves, channel %s", userId, streamId)
+		}
 		if member {
 			return status.Errorf(codes.InvalidArgument, "AddEvent: user %s is already a member of channel %s", userId, streamId)
 		}
 		// join event should be allowed for read only users
 		permission = auth.PermissionRead
 	case MembershipOp_SO_LEAVE:
+		// TODO-ENT: add check that the creator is either the user or the admin
 		if !member {
 			return status.Errorf(codes.InvalidArgument, "AddEvent: user %s is not a member of channel %s", userId, streamId)
 		}
