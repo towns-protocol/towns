@@ -8,6 +8,18 @@
 # run git clean -d -x --dry-run to see what didn't get deleted
 
 pushd "$(git rev-parse --show-toplevel)"
+
+# Check for untracked files
+UNTRACKED_FILES=$(git ls-files --others --exclude-standard)
+if [ -n "$UNTRACKED_FILES" ]; then
+    echo
+    echo "There are untracked files. Please add or ignore them before running this script."
+    echo
+    echo "$(tput setaf 9)$UNTRACKED_FILES$(tput sgr0)"
+    echo
+    exit 1
+fi
+
 echo "cleaning node"
 
 yarn cache clean
