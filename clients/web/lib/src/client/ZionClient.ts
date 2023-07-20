@@ -1994,7 +1994,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
                     content,
                 )
             case SpaceProtocol.Casablanca:
-                throw new Error('not implemented for casablanca')
+                console.error('not implemented for casablanca')
         }
     }
 
@@ -2238,7 +2238,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
                 await this.matrixClient.setRoomTopic(roomId.networkId, name)
                 break
             case SpaceProtocol.Casablanca:
-                throw new Error('not implemented for casablanca')
+                console.error('not implemented for casablanca')
         }
     }
 
@@ -2255,7 +2255,8 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
                 await this.matrixClient?.setRoomName(roomId.networkId, name)
                 break
             case SpaceProtocol.Casablanca:
-                throw new Error('not implemented for casablanca')
+                console.error('not implemented for casablanca')
+                break
         }
     }
 
@@ -2278,7 +2279,8 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
                 return (topic?.topic as string) ?? ''
             }
             case SpaceProtocol.Casablanca:
-                throw new Error('not implemented for casablanca')
+                console.error('not implemented for casablanca')
+                return ''
         }
     }
 
@@ -2300,7 +2302,8 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
                 }
                 break
             case SpaceProtocol.Casablanca:
-                throw new Error('not implemented for casablanca')
+                console.error('not implemented for casablanca')
+                break
         }
     }
 
@@ -2337,7 +2340,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
                 break
             }
             case SpaceProtocol.Casablanca:
-                throw new Error('not implemented for casablanca')
+                console.error('not implemented for casablanca')
         }
     }
 
