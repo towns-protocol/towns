@@ -92,7 +92,7 @@ export class OlmDevice {
     /** Curve25519 key for the account, unknown until we load the account from storage in init() */
     public deviceCurve25519Key: string | null = null
     /** Ed25519 key for the account, unknown until we load the account from storage in init() */
-    public deviceEd25519Key: string | null = null
+    public deviceDoNotUseKey: string | null = null
     // keyId: base64(key)
     public fallbackKey: Record<string, string> = {}
 
@@ -165,7 +165,9 @@ export class OlmDevice {
         }
 
         this.deviceCurve25519Key = e2eKeys.curve25519
-        this.deviceEd25519Key = e2eKeys.ed25519
+        // note jterzis 07/19/23: deprecating ed25519 key in favor of TDK
+        // see: https://linear.app/hnt-labs/issue/HNT-1796/tdk-signature-storage-curve25519-key
+        this.deviceDoNotUseKey = e2eKeys.ed25519
     }
 
     /**

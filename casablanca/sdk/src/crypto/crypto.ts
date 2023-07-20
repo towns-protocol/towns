@@ -180,7 +180,7 @@ export interface IEventDecryptionResult {
      */
     clearEvent: IClearEvent
     /**
-     * List of curve25519 keys involved in telling us about the senderCurve25519Key and claimedEd25519Key.
+     * List of curve25519 keys involved in telling us about the senderCurve25519Key and claimedDoNotUseKey.
      */
     forwardingCurve25519KeyChain?: string[]
     /**
@@ -188,9 +188,9 @@ export interface IEventDecryptionResult {
      */
     senderCurve25519Key?: string
     /**
-     * ed25519 key claimed by the sender of this event.
+     * signing key claimed by the sender of this event.
      */
-    claimedEd25519Key?: string
+    claimedDoNotUseKey?: string
     /**
      * The sender doesn't authorize the unverified devices to decrypt his messages
      */
@@ -350,10 +350,10 @@ export class Crypto
         //await this.deviceList.load()
 
         // build device keys to upload
-        if (!this.olmDevice.deviceCurve25519Key || !this.olmDevice.deviceEd25519Key) {
+        if (!this.olmDevice.deviceCurve25519Key || !this.olmDevice.deviceDoNotUseKey) {
             log('device keys not initialized, cannot encrypt event')
         }
-        this.deviceKeys['ed25519:' + this.deviceId] = this.olmDevice.deviceEd25519Key ?? ''
+        this.deviceKeys['donotuse:' + this.deviceId] = this.olmDevice.deviceDoNotUseKey ?? ''
         this.deviceKeys['curve25519:' + this.deviceId] = this.olmDevice.deviceCurve25519Key ?? ''
 
         // todo: create fallback keys here
@@ -422,8 +422,9 @@ export class Crypto
 
         const userSignatures = sigs.get(this.userId) || {}
         sigs.set(this.userId, userSignatures)
-        // todo: implement olmDevice sign
-        userSignatures['ed25519:' + this.deviceId] = ''
+        // todo: implement olmDevice sign using TDK as signing key
+        // https://linear.app/hnt-labs/issue/HNT-1796/tdk-signature-storage-curve25519-key
+        userSignatures['donotuse:' + this.deviceId] = ''
         obj.signatures = recursiveMapToObject(sigs)
         if (unsigned !== undefined) {
             obj.unsigned = unsigned
@@ -480,7 +481,7 @@ export class Crypto
         }
         if (
             this.olmDevice.deviceCurve25519Key === null ||
-            this.olmDevice.deviceEd25519Key === null
+            this.olmDevice.deviceDoNotUseKey === null
         ) {
             throw new Error('device keys not initialized, cannot encrypt event')
         }
@@ -488,7 +489,7 @@ export class Crypto
             'r.room.encrypted',
             encryptedContent,
             this.olmDevice.deviceCurve25519Key,
-            this.olmDevice.deviceEd25519Key,
+            this.olmDevice.deviceDoNotUseKey,
         )
     }
 

@@ -177,13 +177,13 @@ export class OlmDecryption extends DecryptionAlgorithm {
             )
         }
 
-        if (payload.recipient_keys.ed25519 != this.olmDevice.deviceEd25519Key) {
+        if (payload.recipient_keys.donotuse != this.olmDevice.deviceDoNotUseKey) {
             throw new DecryptionError(
                 'OLM_BAD_RECIPIENT_KEY',
                 'Message not intended for this device',
                 {
-                    intended: payload.recipient_keys.ed25519,
-                    our_key: this.olmDevice.deviceEd25519Key!,
+                    intended: payload.recipient_keys.donotuse,
+                    our_key: this.olmDevice.deviceDoNotUseKey!,
                 },
             )
         }
@@ -236,7 +236,7 @@ export class OlmDecryption extends DecryptionAlgorithm {
         return {
             clearEvent: payload,
             senderCurve25519Key: deviceKey,
-            claimedEd25519Key: claimedKeys.ed25519 || null,
+            claimedDoNotUseKey: claimedKeys.donotuse || null,
         }
     }
 

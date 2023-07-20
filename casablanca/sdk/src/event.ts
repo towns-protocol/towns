@@ -169,9 +169,13 @@ export class RiverEvent extends (EventEmitter as new () => TypedEmitter<RiverEve
      */
     public senderCurve25519Key: string | undefined = undefined
     /**
-     * ed25519 key the sender of this event or creator claims to own.
+     * donotuse key the sender of this event or creator claims to own.
+     *
+     * Note jterzis 07/19/23: The ed25519 signing key is deprecated and should not be used.
+     * Instead TDK will in the future sign the curve25519 to establish chain of trust to identity.
+     * See: https://linear.app/hnt-labs/issue/HNT-1767/tdk-implementation
      */
-    public claimedEd25519Key: string | undefined = undefined
+    public claimedDoNotUseKey: string | undefined = undefined
 
     constructor(public event: Partial<IEvent> = {}) {
         super()
@@ -265,24 +269,21 @@ export class RiverEvent extends (EventEmitter as new () => TypedEmitter<RiverEve
      *
      * @internal
      *
-     * @param cryptoType - type of the encrypted event - typically
-     * <tt>"r.room.encrypted"</tt>
+     * @param cryptoType - type of the encrypted event
      *
      * @param cryptoContent - raw 'content' for the encrypted event.
      *
      * @param senderCurve25519Key - curve25519 key to record for the
      *   sender of this event.
-     *   See {@link MatrixEvent#getSenderKey}.
      *
-     * @param claimedEd25519Key - claimed ed25519 key to record for the
+     * @param claimedDoNotUseKey - claimed ed25519 key to record for the
      *   sender if this event.
-     *   See {@link MatrixEvent#getClaimedEd25519Key}
      */
     public makeEncrypted(
         cryptoType: string,
         cryptoContent: object,
         senderCurve25519Key: string,
-        claimedEd25519Key: string,
+        claimedDoNotUseKey: string,
     ): void {
         // keep the plain-text data for 'view source'
         this.clearEvent = {
@@ -292,11 +293,11 @@ export class RiverEvent extends (EventEmitter as new () => TypedEmitter<RiverEve
         this.event.type = cryptoType
         this.event.content = cryptoContent
         this.senderCurve25519Key = senderCurve25519Key
-        this.claimedEd25519Key = claimedEd25519Key
+        this.claimedDoNotUseKey = claimedDoNotUseKey
     }
 
-    public getClaimedEd25519Key(): string | undefined {
-        return this.claimedEd25519Key
+    public getClaimedDoNotUseKey(): string | undefined {
+        return this.claimedDoNotUseKey
     }
 
     public isDecryptionFailure(): boolean {
@@ -465,7 +466,7 @@ export class RiverEvent extends (EventEmitter as new () => TypedEmitter<RiverEve
     public setClearData(decryptionResult: IEventDecryptionResult): void {
         this.clearEvent = decryptionResult.clearEvent
         this.senderCurve25519Key = decryptionResult.senderCurve25519Key
-        this.claimedEd25519Key = decryptionResult.claimedEd25519Key
+        this.claimedDoNotUseKey = decryptionResult.claimedDoNotUseKey
     }
 
     /**

@@ -301,7 +301,6 @@ async function _verifyKeyAndStartSession(
     try {
         await verifySignature(olmDevice, fallbackKey, userId, deviceId, deviceInfo.getFingerprint())
     } catch (e) {
-        // todo: publish ed25519 sig and verify before proceeding
         log(
             'Unable to verify signature on fallback key for device ' +
                 userId +
@@ -326,7 +325,9 @@ async function _verifyKeyAndStartSession(
 }
 
 /**
- * Verify the signature on an object
+ * Verify the signature on an object using signing key.
+ * Note: ed25519 key is deprecated. We should use TDK to sign
+ * and verify objects and fallback key here.
  *
  * @param olmDevice - olm wrapper to use for verify op
  *
@@ -348,7 +349,9 @@ export async function verifySignature(
     signingDeviceId: string,
     signingKey: string,
 ): Promise<void> {
-    const signKeyId = 'ed25519:' + signingDeviceId
+    // todo: replace with TDK as signing key
+    // https://linear.app/hnt-labs/issue/HNT-1796/tdk-signature-storage-curve25519-key
+    const signKeyId = 'donotuse:' + signingDeviceId
     const signatures = obj.signatures || {}
     const userSigs = signatures[signingUserId] || {}
     const signature = userSigs[signKeyId]
@@ -365,6 +368,9 @@ export async function verifySignature(
     // jterzis: do we need to use anotherjson lib here instead ?
     const json = JSON.stringify(mangledObj)
 
+    // todo: replace olm based verification that verifies signature originating
+    // from now deprecated ed25519 key with TDK based signature verification
+    // https://linear.app/hnt-labs/issue/HNT-1796/tdk-signature-storage-curve25519-key
     olmDevice.verifySignature(signingKey, json, signature)
 }
 
@@ -419,7 +425,7 @@ export async function encryptMessageForDevice(
         // the curve25519 key and the ed25519 key are owned by
         // the same device.
         keys: {
-            ed25519: olmDevice.deviceEd25519Key,
+            donotuse: olmDevice.deviceDoNotUseKey,
         },
 
         // include the recipient device details in the payload,
@@ -427,7 +433,7 @@ export async function encryptMessageForDevice(
         // https://github.com/vector-im/vector-web/issues/2483
         recipient: recipientUserId,
         recipient_keys: {
-            ed25519: recipientDevice.getFingerprint(),
+            donotuse: recipientDevice.getFingerprint(),
         },
         ...payloadFields,
     }

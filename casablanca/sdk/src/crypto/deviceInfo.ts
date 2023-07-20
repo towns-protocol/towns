@@ -141,7 +141,7 @@ export class DeviceInfo {
      * returns base64-encoded fingerprint of this device
      */
     public getFingerprint(): string {
-        return this.keys['ed25519:' + this.deviceId]
+        return this.keys['donotuse:' + this.deviceId]
     }
 
     /**
