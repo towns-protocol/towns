@@ -2111,7 +2111,8 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
                 return
             }
             case SpaceProtocol.Casablanca:
-                throw new Error('not implemented')
+                // in casablanca, events are appended to the user stream, so this shouldn't be necessary
+                break
             default:
                 staticAssertNever(spaceId)
         }

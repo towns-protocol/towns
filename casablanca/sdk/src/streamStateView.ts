@@ -241,7 +241,7 @@ export class StreamStateView {
                                 payload.value.content.value,
                             )
                             break
-                        case 'userSetting':
+                        case 'fullyReadMarker':
                             break
                         case undefined:
                             break

@@ -234,16 +234,14 @@ message UserSettingsPayload {
         string space_id = 3;
     }
 
-    message UserSetting {
-        UserSettingOp op = 1;
-        bytes value = 2;
-        optional string channel_id = 3;
-        optional EventRef origin_event = 4;
+    message FullyReadMarker {
+        string channel_id = 1;
+        EncryptedData content = 2;
     }
 
     oneof content {
         Inception inception = 1;
-        UserSetting user_setting = 2;
+        FullyReadMarker fully_read_marker = 2;
     }
 }
 
@@ -265,6 +263,7 @@ message UserDeviceKeyPayload {
     }
 }
 
+
 enum MembershipOp {
     SO_UNSPECIFIED = 0;
     SO_INVITE = 1;
@@ -277,11 +276,6 @@ enum ChannelOp {
     CO_CREATED = 1;
     CO_DELETED = 2;
     CO_UPDATED = 4;
-}
-
-enum UserSettingOp {
-    USO_UNSPECIFIED = 0;
-    USO_FULLY_READ = 1;
 }
 
 enum ToDeviceOp {
