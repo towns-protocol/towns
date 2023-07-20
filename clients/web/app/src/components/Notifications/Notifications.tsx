@@ -9,6 +9,7 @@ export const Notifications = () => {
     return (
         <Box
             position="fixed"
+            zIndex="tooltipsAbove"
             right="lg"
             bottom="lg"
             display="block"

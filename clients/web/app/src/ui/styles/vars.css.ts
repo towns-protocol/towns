@@ -288,6 +288,7 @@ const root = createGlobalTheme(':root', {
         ui: '100',
         uiAbove: '101',
         tooltips: '10000',
+        tooltipsAbove: '10001',
     } as const,
 })
 

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { AnimatePresence } from 'framer-motion'
 import { RainbowKitProvider, darkTheme, lightTheme } from '@rainbow-me/rainbowkit'
 import { useWeb3Context } from 'use-zion-client'
@@ -20,6 +20,7 @@ import { shortAddress } from 'ui/utils/utils'
 import { atoms } from 'ui/styles/atoms.css'
 import { WalletConnectButton } from './WalletConnectButton'
 import { RainbowKitLoginButton } from './RainbowKitLoginButton'
+import { RequireTransactionNetworkModal } from './RequireTransactionNetworkModal'
 
 export const LoginComponent = () => {
     const { theme } = useStore((state) => ({
@@ -89,12 +90,6 @@ export const LoginComponent = () => {
         return theme === 'dark' ? darkTheme(customTheme) : lightTheme(customTheme)
     }, [theme])
 
-    // on mobile devices, if they aren't on the right network, don't show the
-    // login button - they have to go to the wallet and switch, then come back
-    // to the app
-
-    const disableLogin = isTouch && userOnWrongNetworkForSignIn
-
     return (
         <RainbowKitProvider chains={chains} theme={rainbowTheme}>
             <Box centerContent gap="lg">
@@ -113,14 +108,13 @@ export const LoginComponent = () => {
                         background="level2"
                         maxWidth="300"
                     >
-                        <Icon type="alert" color="error" />
-                        <Text>{`Please switch to ${chainName} in your wallet, and then come back to continue.`}</Text>
+                        <Icon type="alert" color="error" size="square_sm" />
+                        <Text size="sm">{`Please switch to ${chainName} in your wallet, and then come back to continue.`}</Text>
                     </Box>
                 )}
                 {isConnected ? (
                     <ConnectedState
                         status={status}
-                        disableLogin={disableLogin}
                         isSpinning={isSpinning}
                         onLoginClick={onLoginClick}
                     />
@@ -170,25 +164,46 @@ const DisconnectedState = () => {
 
 const ConnectedState = (props: {
     status: SignupButtonStatus
-    disableLogin: boolean
     onLoginClick: () => void
     isSpinning: boolean
 }) => {
     const buttonLabel = useDebounce(getButtonLabel(props.status), 500)
+    const [showMetaMaskWarning, setShowMetaMaskWarning] = useState(false)
+
+    const isWalletConnectWithMetaMask = shouldUseWalletConnect()
+        ? JSON.parse(
+              localStorage.getItem('WALLETCONNECT_DEEPLINK_CHOICE') ?? '{}',
+          )?.name?.toLowerCase() === 'metamask'
+        : false
+
+    // Metamask + WC is just busted and we can't ensure that the user is on the right network so we have to show more info
+    if (isWalletConnectWithMetaMask) {
+        return (
+            <>
+                {showMetaMaskWarning && (
+                    <RequireTransactionNetworkModal
+                        {...props}
+                        onHide={() => setShowMetaMaskWarning(false)}
+                    />
+                )}
+                <FancyButton cta icon="wallet" onClick={() => setShowMetaMaskWarning(true)}>
+                    {buttonLabel ?? 'Login'}
+                </FancyButton>
+            </>
+        )
+    }
 
     return (
         <>
-            {!props.disableLogin && (
-                <FancyButton
-                    cta
-                    spinner={props.isSpinning}
-                    icon="wallet"
-                    disabled={props.isSpinning}
-                    onClick={props.onLoginClick}
-                >
-                    {buttonLabel ?? 'Login'}
-                </FancyButton>
-            )}
+            <FancyButton
+                cta
+                spinner={props.isSpinning}
+                icon="wallet"
+                disabled={props.isSpinning}
+                onClick={props.onLoginClick}
+            >
+                {buttonLabel ?? 'Login'}
+            </FancyButton>
             <DisconnectButton />
         </>
     )

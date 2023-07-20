@@ -2,9 +2,13 @@ import React, { useCallback } from 'react'
 import { useConnect } from 'wagmi'
 import { WalletConnectConnector } from 'wagmi/connectors/walletConnect'
 import { FancyButton } from 'ui/components/Button/FancyButton'
+import { useEnvironment } from 'hooks/useEnvironmnet'
 
 export const WalletConnectButton = () => {
-    const { connect, connectors } = useConnect()
+    const { chainId } = useEnvironment()
+    const { connect, connectors } = useConnect({
+        chainId,
+    })
 
     const walletConnect = connectors?.find((c) => c instanceof WalletConnectConnector)
 
