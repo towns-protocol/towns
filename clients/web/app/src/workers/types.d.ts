@@ -9,7 +9,7 @@ export type AppNotificationMessage = {
     content: {
         spaceId: string
         channelId: string
-        senderId?: string
+        senderId: string
     }
 }
 
@@ -19,7 +19,7 @@ export type AppNotificationMention = {
     content: {
         spaceId: string
         channelId: string
-        senderId?: string
+        senderId: string
     }
 }
 

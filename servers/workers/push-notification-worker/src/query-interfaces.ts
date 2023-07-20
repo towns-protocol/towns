@@ -1,4 +1,4 @@
-import { PushType, UserId, isPushType, isUserId } from './type-aliases'
+import { PushType, UserId, isPushType, isUserId } from './types'
 
 export interface QueryResultSubscription {
   userId: UserId
@@ -15,4 +15,9 @@ export function isQueryResultSubscription(
     typeof result.pushSubscription === 'string' &&
     isPushType(result.pushType)
   )
+}
+
+export interface QueryResultMentionedUser {
+  channelId: string
+  userId: UserId
 }

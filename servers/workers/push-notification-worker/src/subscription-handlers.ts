@@ -1,14 +1,23 @@
 import {
   AddSubscriptionRequestParams,
+  MentionRequestParams,
   NotifyRequestParams,
   RemoveSubscriptionRequestParams,
 } from './request-interfaces'
+import {
+  QueryResultMentionedUser,
+  isQueryResultSubscription,
+} from './query-interfaces'
 import { SendPushResponse, SendPushStatus } from './send-push-interfaces'
 
 import { Env } from 'index'
-import { PushType } from './type-aliases'
-import { isQueryResultSubscription } from './query-interfaces'
+import { NotificationType, PushType } from './types'
 import { sendNotificationViaWebPush } from './web-push/send-notification'
+
+interface CurrentChannelContext {
+  channelId: string
+  mentionedUsers: string[]
+}
 
 class SqlStatement {
   static SelectPushSubscriptions = `
@@ -38,6 +47,27 @@ class SqlStatement {
   WHERE
     UserId=?1 AND
     PushSubscription=?2;`
+
+  static InsertIntoMentionedUser = `
+  INSERT INTO MentionedUser (
+    ChannelId,
+    UserId
+  ) VALUES (
+    ?1,
+    ?2
+  ) ON CONFLICT (ChannelId, UserId) DO NOTHING;`
+
+  static SelectMentionedUsersInChannel = `
+  SELECT
+    UserId AS userId
+  FROM MentionedUser
+  WHERE
+    ChannelId=?1;`
+
+  static DeleteMentionedUsersInChannel = `
+    DELETE FROM MentionedUser
+    WHERE
+      ChannelId=?1;`
 }
 
 export async function addPushSubscription(
@@ -68,8 +98,10 @@ export async function removePushSubscription(
 
 export async function notifyUsers(params: NotifyRequestParams, env: Env) {
   const allNotificationRequests: Promise<SendPushResponse>[] = []
+  const context = await getCurrentChannelContext(params.topic, env.DB)
   // gather all the notification requests into a single promise
   for (const user of params.users) {
+    const userParams = createUserSpecificParams(context, params, user)
     const stmt = env.DB.prepare(SqlStatement.SelectPushSubscriptions).bind(user)
     const pushSubscriptions = await stmt.all()
     if (pushSubscriptions.results) {
@@ -78,7 +110,7 @@ export async function notifyUsers(params: NotifyRequestParams, env: Env) {
           switch (subscription.pushType) {
             case 'web-push':
               allNotificationRequests.push(
-                sendNotificationViaWebPush(user, params, subscription, env),
+                sendNotificationViaWebPush(user, userParams, subscription, env),
               )
               break
             default:
@@ -133,6 +165,21 @@ export async function notifyUsers(params: NotifyRequestParams, env: Env) {
   return new Response(notificationsSentCount.toString(), { status: 200 })
 }
 
+export async function mentionUsers(params: MentionRequestParams, env: Env) {
+  const prepStatement = env.DB.prepare(SqlStatement.InsertIntoMentionedUser)
+  const bindedStatements = params.userIds.map((user) =>
+    prepStatement.bind(params.channelId, user),
+  )
+  const rows = await env.DB.batch(bindedStatements)
+  if (rows.length > 0) {
+    console.log('mentionUsers', rows[0].success)
+    //printDbResultInfo('mentionUsers', rows[0])
+  } else {
+    console.log('mentionUsers', 'no rows')
+  }
+  return new Response(null, { status: 204 })
+}
+
 function printDbResultInfo(message: string, info: D1Result<unknown>) {
   console.log(
     message,
@@ -154,4 +201,50 @@ async function deletePushSubscription(
     .prepare(SqlStatement.DeleteFromPushSubscription)
     .bind(userId, subscriptionObject)
     .run()
+}
+
+function createUserSpecificParams(
+  context: CurrentChannelContext,
+  params: NotifyRequestParams,
+  userId: string,
+): NotifyRequestParams {
+  const userParams = { ...params }
+  if (context.mentionedUsers.includes(userId)) {
+    userParams.payload.notificationType = NotificationType.Mention
+  }
+  return userParams
+}
+
+async function getCurrentChannelContext(
+  channelId: string,
+  DB: D1Database,
+): Promise<CurrentChannelContext> {
+  // select the mentioned users
+  const selectMentionedUsers = DB.prepare(
+    SqlStatement.SelectMentionedUsersInChannel,
+  ).bind(channelId)
+
+  // delete the mentioned users after reading them
+  const deleteUsers = DB.prepare(
+    SqlStatement.DeleteMentionedUsersInChannel,
+  ).bind(channelId)
+
+  // get the mentioned users from the DB for this channel
+  const rows = await DB.batch([selectMentionedUsers, deleteUsers])
+  if (rows && rows.length > 0) {
+    const userIds: string[] =
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      rows[0].results?.map((row) => (row as any).userId) ?? []
+    const mentionedUsers: string[] = userIds
+    return {
+      channelId,
+      mentionedUsers,
+    }
+  }
+
+  // nothing specific for the channel
+  return {
+    channelId,
+    mentionedUsers: [],
+  }
 }

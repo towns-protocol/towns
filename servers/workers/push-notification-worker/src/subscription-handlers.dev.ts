@@ -19,7 +19,8 @@ export function getServiceWorkerJsDev(env: Env) {
             body: 'no body',
           };
           try {
-            const notification = event.data.json();
+            const data = event.data.json();
+            const notification = data.content
             console.log('notification', notification);
             title = notification.title;
             options.body = JSON.stringify(notification.options.body);
@@ -150,10 +151,13 @@ export function getDefaultRouteDev(request: Request, env: Env) {
     const titleText = document.getElementById('notificationTitle');
     const bodyText = document.getElementById('notificationBody');
     const payload = {
-      title: titleText.value,
-      options: {
-        body: bodyText.value,
-      }
+      notificationType: 'new_message',
+      content: {
+        title: titleText.value,
+        options: {
+          body: bodyText.value,
+        }
+      },
     };
     try {
       console.log('Sending notification to server...');

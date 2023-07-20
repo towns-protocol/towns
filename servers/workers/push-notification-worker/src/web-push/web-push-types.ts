@@ -1,4 +1,4 @@
-import { SubscriptionObject, Urgency } from '../type-aliases'
+import { SubscriptionObject, Urgency } from '../types'
 import { JwtData } from './jwt'
 
 export interface VapidDetails {

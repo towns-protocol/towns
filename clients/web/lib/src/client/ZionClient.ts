@@ -1599,6 +1599,9 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
         message: string,
         options?: SendMessageOptions,
     ) {
+        if (this.pushNotificationClient) {
+            await this.pushNotificationClient.mentionUsersIfAny(roomId.networkId, options)
+        }
         switch (roomId.protocol) {
             case SpaceProtocol.Matrix:
                 if (!this.matrixClient) {
@@ -1658,11 +1661,6 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
                 break
             default:
                 staticAssertNever(roomId)
-        }
-        if (this.pushNotificationClient) {
-            await this.pushNotificationClient.sendMentionedNotifications(roomId.networkId, options)
-        } else {
-            //console.log('No notification sent because the pushNotificationClient is undefined')
         }
     }
 

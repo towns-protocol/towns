@@ -1,4 +1,4 @@
-import { SubscriptionObject } from 'type-aliases'
+import { SubscriptionObject } from '../src/types'
 import { WebPushSubscription } from '../src/web-push/web-push-types'
 
 export function createFakeWebPushSubscription(): SubscriptionObject {

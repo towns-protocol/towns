@@ -33,5 +33,28 @@ export function isUserId(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   args: any,
 ): args is UserId {
-  return typeof args === 'string'
+  return typeof args === 'string' && args.length > 0
+}
+
+export enum NotificationType {
+  Mention = 'mention',
+  NewMessage = 'new_message',
+}
+
+export type NotificationContent = object
+
+export interface NotificationPayload {
+  notificationType: NotificationType
+  content: NotificationContent
+}
+
+export function isNotificationPayload(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  args: any,
+): args is NotificationPayload {
+  return (
+    typeof args === 'object' &&
+    Object.values(NotificationType).includes(args.notificationType) &&
+    typeof args.content === 'object'
+  )
 }

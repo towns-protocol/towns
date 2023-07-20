@@ -5,7 +5,7 @@ import { AppNotification, AppNotificationType } from './types.d'
 const content = z.object({
     spaceId: z.string(),
     channelId: z.string(),
-    senderId: z.string().optional(),
+    senderId: z.string(),
 })
 
 // this is obviously a bit overkill for now, but I think it can

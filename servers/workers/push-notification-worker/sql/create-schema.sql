@@ -10,3 +10,9 @@ CREATE TABLE IF NOT EXISTS PushSubscription (
 
 CREATE INDEX idx_user_id
 ON PushSubscription (UserId);
+
+CREATE TABLE IF NOT EXISTS MentionedUser (
+  ChannelId VARCHAR(255) NOT NULL,
+  UserId VARCHAR(255) NOT NULL,
+  CONSTRAINT MentionsUsers_PK PRIMARY KEY (ChannelId, UserId)
+);

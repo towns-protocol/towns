@@ -1,13 +1,15 @@
 import {
+  NotificationPayload,
   PushType,
   SubscriptionObject,
   Urgency,
   UserId,
+  isNotificationPayload,
   isPushType,
   isSubscriptionObject,
   isUrgency,
   isUserId,
-} from './type-aliases'
+} from './types'
 
 export interface AddSubscriptionRequestParams {
   userId: UserId
@@ -43,8 +45,8 @@ export function isRemoveSubscriptionRequestParams(
 export interface NotifyRequestParams {
   sender: string
   users: string[]
-  payload: object
-  topic?: string
+  payload: NotificationPayload
+  topic: string // channelId
   /* push options */
   urgency?: Urgency
 }
@@ -54,13 +56,29 @@ export function isNotifyRequestParams(
   params: any,
 ): params is NotifyRequestParams {
   return (
+    typeof params.topic === 'string' &&
     typeof params.sender === 'string' &&
     Array.isArray(params.users) &&
+    params.users?.length > 0 &&
     params.users.every((user: unknown) => isUserId(user)) &&
-    (typeof params.payload === 'string' ||
-      typeof params.payload === 'object') &&
+    isNotificationPayload(params.payload) &&
     /* optional parameters */
-    (typeof params.topic === 'string' || params.topic === undefined) &&
     (isUrgency(params.urgency) || params.urgency === undefined)
+  )
+}
+
+export interface MentionRequestParams {
+  channelId: string
+  userIds: string[]
+}
+
+export function isMentionRequestParams(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  params: any,
+): params is MentionRequestParams {
+  return (
+    typeof params.channelId === 'string' &&
+    Array.isArray(params.userIds) &&
+    params.userIds.every((user: unknown) => isUserId(user))
   )
 }

@@ -1,5 +1,6 @@
 import {
   addPushSubscription,
+  mentionUsers,
   notifyUsers,
   removePushSubscription,
 } from './subscription-handlers'
@@ -9,6 +10,7 @@ import {
 } from './subscription-handlers.dev'
 import {
   isAddSubscriptionRequestParams,
+  isMentionRequestParams,
   isNotifyRequestParams,
   isRemoveSubscriptionRequestParams,
 } from './request-interfaces'
@@ -23,18 +25,13 @@ const router = Router()
 router.post('/api/add-subscription', async (request: Request, env: Env) => {
   // check auth before doing work
   if (!isAuthedRequest(request, env)) {
-    return create401Response('add-subscription')
+    return create401Response('/api/add-subscription')
   }
 
   // get the content of the request as json
   const content = await getContentAsJson(request)
   if (!content || !isAddSubscriptionRequestParams(content)) {
-    console.error(
-      'add-subscription',
-      'Bad request with invalid params',
-      content,
-    )
-    return new Response('Bad request', { status: 400 })
+    return create401Response('/api/add-subscription')
   }
 
   // handle a proper request
@@ -44,18 +41,13 @@ router.post('/api/add-subscription', async (request: Request, env: Env) => {
 router.post('/api/remove-subscription', async (request: Request, env: Env) => {
   // check auth before doing work
   if (!isAuthedRequest(request, env)) {
-    return create401Response('remove-subscription')
+    return create401Response('/api/remove-subscription')
   }
 
   // get the content of the request as json
   const content = await getContentAsJson(request)
   if (!content || !isRemoveSubscriptionRequestParams(content)) {
-    console.error(
-      'remove-subscription',
-      'Bad request with invalid params',
-      content,
-    )
-    return new Response('Bad request', { status: 400 })
+    return create401Response('/api/remove-subscription')
   }
 
   // handle a proper request
@@ -65,22 +57,44 @@ router.post('/api/remove-subscription', async (request: Request, env: Env) => {
 router.post('/api/notify-users', async (request: Request, env: Env) => {
   // check auth before doing work
   if (!isAuthedRequest(request, env)) {
-    return create401Response('notify-users')
+    return create401Response('/api/notify-users')
   }
 
   // get the content of the request as json
   const content = await getContentAsJson(request)
   if (!content || !isNotifyRequestParams(content)) {
-    console.error('notify-users', 'Bad request with invalid params', content)
-    return new Response('Bad request', { status: 400 })
+    return create400Response('/api/notify-users', content)
   }
 
   // handle a proper request
   return notifyUsers(content, env)
 })
 
-function create401Response(msg: string) {
-  console.error(msg, 'Unauthorized')
+router.post('/api/mention-users', async (request: Request, env: Env) => {
+  // check auth before doing work
+  if (!isAuthedRequest(request, env)) {
+    return create401Response('/api/mention-users')
+  }
+
+  // get the content of the request as json
+  const content = await getContentAsJson(request)
+  if (!content || !isMentionRequestParams(content)) {
+    return create400Response('/api/mention-users', content)
+  }
+
+  // handle a proper request
+  return mentionUsers(content, env)
+})
+
+function create400Response(path: string, content: object | null) {
+  console.error(path, 'Bad request', content)
+  return new Response('Bad request', {
+    status: 400,
+  })
+}
+
+function create401Response(path: string) {
+  console.error(path, 'Unauthorized')
   return new Response('Unauthorized', {
     status: 401,
   })

@@ -3,18 +3,13 @@ export enum NotificationType {
     NewMessage = 'new_message',
 }
 
-export interface MentionNotificationContent {
-    spaceId: string
-    channelId: string
-}
-
 export interface NewMessageNotificationContent {
     spaceId: string
     channelId: string
     senderId: string
 }
 
-export type NotificationContent = MentionNotificationContent | NewMessageNotificationContent
+export type NotificationContent = NewMessageNotificationContent // | add other content types here
 
 export interface NotificationPayload {
     notificationType: NotificationType
@@ -26,4 +21,9 @@ export interface NotificationRequestParams {
     payload: NotificationPayload
     sender: string
     users: string[]
+}
+
+export interface MentionUsersRequestParams {
+    channelId: string
+    userIds: string[]
 }

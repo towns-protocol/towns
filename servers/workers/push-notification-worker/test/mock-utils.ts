@@ -1,7 +1,10 @@
 import { MockProxy, mock } from 'jest-mock-extended'
 
 import { Env } from '../src'
-import { QueryResultSubscription } from '../src/query-interfaces'
+import {
+  QueryResultMentionedUser,
+  QueryResultSubscription,
+} from '../src/query-interfaces'
 import { createFakeWebPushSubscription } from './fake-data'
 
 export interface TestMocks {
@@ -28,7 +31,7 @@ export function createTestMocks({
 }: MockOptions): TestMocks {
   const env = createEnv()
   const ctx = mock<ExecutionContext>()
-  const DB = createMockD1Database()
+  const DB = mock<D1Database>()
   env.DB = DB
   const request = createRequest(env, {
     route,
@@ -82,14 +85,69 @@ function modifyHeaders(
   return headers
 }
 
-export function createMockD1Database(): MockProxy<D1Database> {
-  const mockD1 = mock<D1Database>()
-  const mockStatement = createMockPreparedStatement()
-  mockD1.prepare.mockImplementation((query: string) => mockStatement)
-  return mockD1
+export function mockPreparedStatements(DB: MockProxy<D1Database>) {
+  const mockStatement = mockDummyStatement()
+  const insertIntoPushSubscriptionStatement = mockDummyStatement()
+  const deleteFromPushSubscriptionStatement = mockDummyStatement()
+  const selectFromPushSubscriptionStatement =
+    mockSelectFromPushSubscriptionStatement()
+  const insertIntoMentionedUserStatement = mockDummyStatement()
+  const deleteMentionedUsersStatement = mockDummyStatement()
+  const selectMentionedUsersStatement = mockSelectFromMentionedUserStatement()
+
+  DB.prepare.mockImplementation((query: string) => {
+    if (query.includes('SELECT') && query.includes('FROM PushSubscription')) {
+      return selectFromPushSubscriptionStatement
+    } else if (query.includes('INSERT INTO PushSubscription')) {
+      return insertIntoPushSubscriptionStatement
+    } else if (query.includes('DELETE FROM PushSubscription')) {
+      return deleteFromPushSubscriptionStatement
+    } else if (
+      query.includes('SELECT') &&
+      query.includes('FROM MentionedUser')
+    ) {
+      return selectMentionedUsersStatement
+    } else if (query.includes('INSERT INTO MentionedUser')) {
+      return insertIntoMentionedUserStatement
+    } else if (query.includes('DELETE FROM MentionedUser')) {
+      return deleteMentionedUsersStatement
+    }
+    return mockStatement
+  })
+
+  DB.batch.mockImplementation(
+    (statements: D1PreparedStatement[]): Promise<D1Result<unknown>[]> => {
+      const results: D1Result<unknown>[] = []
+      for (const statement of statements) {
+        if (statement === selectMentionedUsersStatement) {
+          selectMentionedUsersStatement.all().then((r) => {
+            results.push(r)
+          })
+        } else {
+          const r: D1Result<unknown> = {
+            results: [],
+            success: true,
+            meta: {},
+          }
+          results.push(r)
+        }
+      }
+      return new Promise((resolve) => resolve(results))
+    },
+  )
+
+  return {
+    insertIntoPushSubscriptionStatement,
+    deleteFromPushSubscriptionStatement,
+    selectFromPushSubscriptionStatement,
+    insertIntoMentionedUserStatement,
+    selectMentionedUsersStatement,
+    deleteMentionedUsersStatement,
+    mockStatement,
+  }
 }
 
-export function createMockPreparedStatement(): MockProxy<D1PreparedStatement> {
+function mockSelectFromPushSubscriptionStatement(): MockProxy<D1PreparedStatement> {
   const mockStatement = mock<D1PreparedStatement>()
   const fakeSubscription = JSON.stringify(createFakeWebPushSubscription())
   const result: Record<string, unknown> = {
@@ -103,14 +161,53 @@ export function createMockPreparedStatement(): MockProxy<D1PreparedStatement> {
     success: true,
     meta: {},
   })
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  mockStatement.bind.mockImplementation((args: any[]) => {
+  mockStatement.bind.mockImplementation(() => {
     return mockStatement
   })
   mockStatement.first.mockResolvedValue(result)
   mockStatement.raw.mockResolvedValue(rawResult)
   mockStatement.run.mockResolvedValue({
     results: [result],
+    success: true,
+    meta: {},
+  })
+  return mockStatement
+}
+
+function mockDummyStatement(): MockProxy<D1PreparedStatement> {
+  const mockStatement = mock<D1PreparedStatement>()
+  const rawResult = [[]]
+  const result = {}
+  mockStatement.all.mockResolvedValue({
+    results: [result] as unknown[][],
+    success: true,
+    meta: {},
+  })
+  mockStatement.bind.mockImplementation(() => {
+    return mockStatement
+  })
+  mockStatement.first.mockResolvedValue(result)
+  mockStatement.raw.mockResolvedValue(rawResult)
+  mockStatement.run.mockResolvedValue({
+    results: [result],
+    success: true,
+    meta: {},
+  })
+  return mockStatement
+}
+
+function mockSelectFromMentionedUserStatement(): MockProxy<D1PreparedStatement> {
+  const mockStatement = mock<D1PreparedStatement>()
+  const result: QueryResultMentionedUser[] = []
+  mockStatement.bind.mockImplementation((channelId: string, userId: string) => {
+    result.push({
+      channelId,
+      userId,
+    })
+    return mockStatement
+  })
+  mockStatement.all.mockResolvedValue({
+    results: [result] as unknown as QueryResultMentionedUser[][],
     success: true,
     meta: {},
   })

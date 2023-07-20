@@ -1,14 +1,16 @@
 import {
   AddSubscriptionRequestParams,
+  MentionRequestParams,
   NotifyRequestParams,
 } from '../src/request-interfaces'
 import {
-  createMockPreparedStatement,
   createRequest,
   createTestMocks,
+  mockPreparedStatements,
 } from './mock-utils'
 
-import { WebPushSubscription } from 'web-push/web-push-types'
+import { NotificationType } from '../src/types'
+import { WebPushSubscription } from '../src/web-push/web-push-types'
 import { createFakeWebPushSubscription } from './fake-data'
 import { handleRequest } from '../src'
 
@@ -29,8 +31,8 @@ describe('subscription handlers', () => {
       body: JSON.stringify(params),
     })
     // replace with my own mocks to spy on
-    const mockStatement = createMockPreparedStatement()
-    DB.prepare.mockImplementation((query: string) => mockStatement)
+    const { insertIntoPushSubscriptionStatement: mockStatement } =
+      mockPreparedStatements(DB)
     const prepareSpy = jest.spyOn(DB, 'prepare')
     const bindSpy = jest.spyOn(mockStatement, 'bind')
 
@@ -66,8 +68,8 @@ describe('subscription handlers', () => {
       body: JSON.stringify(params),
     })
     // replace with mocks to spy on
-    const mockStatement = createMockPreparedStatement()
-    DB.prepare.mockImplementation((query: string) => mockStatement)
+    const { deleteFromPushSubscriptionStatement: mockStatement } =
+      mockPreparedStatements(DB)
     const prepareSpy = jest.spyOn(DB, 'prepare')
     const bindSpy = jest.spyOn(mockStatement, 'bind')
 
@@ -107,26 +109,26 @@ describe('subscription handlers', () => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(addParams),
     })
+    mockPreparedStatements(DB)
     // add the subscription
     await handleRequest(addRequest, env, ctx)
-    // replace with mocks
-    const mockStatement = createMockPreparedStatement()
-    DB.prepare.mockImplementation((query: string) => mockStatement)
-    const bindSpy = jest.spyOn(mockStatement, 'bind')
 
     // Act
     // create the request to notify the user
     const payload = {
-      topic: 'Hello, Notifications!',
-      options: {
-        body: `ID: ${Math.floor(Math.random() * 100)}`,
+      notificationType: NotificationType.NewMessage,
+      content: {
+        topic: `!channelId${Date.now()}`,
+        options: {
+          body: `ID: ${Math.floor(Math.random() * 100)}`,
+        },
       },
     }
     const notifyParams: NotifyRequestParams = {
       sender,
       users: [recipient],
       payload,
-      topic: payload.topic,
+      topic: payload.content.topic,
     }
     // create the notification request
     const notifyRequest = createRequest(env, {
@@ -144,15 +146,49 @@ describe('subscription handlers', () => {
       .intercept({ method: 'POST', path: fakeServerUrl.pathname })
       .reply(201, 'OK')
 
-    console.log('notifyRequest', notifyRequest)
     // send the notification request
     const response = await handleRequest(notifyRequest, env, ctx)
 
     // Assert
-    expect(bindSpy).toBeCalledWith(recipient)
     expect(response.status).toBe(200)
     const notificationsSentCount = await response.text()
     console.log('notificationsSentCount', notificationsSentCount)
     expect(notificationsSentCount).toBe('1')
+  })
+
+  test('api/mention-users', async () => {
+    // Arrange
+    const mentionedUsers = [`0xAlice${Date.now()}`, `0xBob${Date.now()}`]
+    const channelId = `Channel${Date.now()}`
+    const params: MentionRequestParams = {
+      channelId,
+      userIds: mentionedUsers,
+    }
+    // create the request
+    const { request, env, DB, ctx } = createTestMocks({
+      route: 'api/mention-users',
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(params),
+    })
+    // replace with my own mocks to spy on
+    const { insertIntoMentionedUserStatement: mockStatement } =
+      mockPreparedStatements(DB)
+    const prepareSpy = jest.spyOn(DB, 'prepare')
+    const bindSpy = jest.spyOn(mockStatement, 'bind')
+
+    // Act
+    const response = await handleRequest(request, env, ctx)
+
+    // Assert
+    expect(response.status).toBe(204)
+    expect(prepareSpy).toBeCalledWith(
+      expect.stringContaining('INSERT INTO MentionedUser'),
+    )
+    // verify that arguments are binded to the sql statement in the expected order.
+    expect(bindSpy).toBeCalledTimes(2)
+    for (const userId of mentionedUsers) {
+      expect(bindSpy).toBeCalledWith(channelId, userId)
+    }
   })
 })

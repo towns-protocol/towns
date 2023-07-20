@@ -1,4 +1,4 @@
-import { RoomMember, SpaceData } from 'use-zion-client'
+import { RoomMember, SpaceData, UserIdToMember } from 'use-zion-client'
 import { AppNotification, ServiceWorkerMessageType, WEB_PUSH_NAVIGATION_CHANNEL } from './types.d'
 import { appNotificationFromPushEvent } from './notificationParsers'
 import { getServiceWorkerMuteSettings } from '../store/useMuteSettings'
@@ -15,7 +15,7 @@ export function handleNotifications(worker: ServiceWorkerGlobalScope) {
         const data: {
             type?: ServiceWorkerMessageType
             space?: SpaceData
-            membersMap?: { [userId: string]: RoomMember | undefined }
+            membersMap?: UserIdToMember
         } = event.data
 
         switch (data.type) {
@@ -84,7 +84,6 @@ export function handleNotifications(worker: ServiceWorkerGlobalScope) {
 
         const { title, body } = await getNotificationContent(notification)
         const data = event.data.text()
-        console.log('sw: received notification data', data)
         await worker.registration.showNotification(title, {
             body,
             silent: false,
@@ -102,10 +101,41 @@ export function handleNotifications(worker: ServiceWorkerGlobalScope) {
     })
 }
 
-function generateMessage(townName: string | undefined, channelName: string | undefined) {
+function generateNewNotificationMessage(
+    townName: string | undefined,
+    channelName: string | undefined,
+) {
     return {
         title: townName ?? 'Town',
-        body: channelName ? `New encrypted message in #${channelName}` : `New encrypted message`,
+        body: channelName
+            ? `You've received a new encrypted message in #${channelName}`
+            : `You've received a new encrypted message`,
+    }
+}
+
+function generateMentionedMessage(
+    townName: string | undefined,
+    channelName: string | undefined,
+    sender: string | undefined,
+) {
+    let body = ''
+    switch (true) {
+        case stringHasValue(channelName) && stringHasValue(sender):
+            body = `@${sender} mentioned you in #${channelName}`
+            break
+        case stringHasValue(channelName) && !stringHasValue(sender):
+            body = `You were mentioned in #${channelName}`
+            break
+        case !stringHasValue(channelName) && stringHasValue(sender):
+            body = `@${sender} mentioned you`
+            break
+        default:
+            body = 'You were mentioned'
+            break
+    }
+    return {
+        title: townName ?? 'Town',
+        body,
     }
 }
 
@@ -115,30 +145,25 @@ async function getNotificationContent(notification: AppNotification): Promise<{
 }> {
     let townName: string | undefined = undefined
     let channelName: string | undefined = undefined
+    let senderName: string | undefined = undefined
 
     try {
         const space = await idbSpaces.get(notification.content.spaceId)
         const channel = await idbChannels.get(notification.content.channelId)
+        const sender = await idbUsers.get(notification.content.senderId)
+
         townName = space?.name
         channelName = channel?.name
+        senderName = sender?.name
     } catch (error) {
         console.error('sw: error fetching space/channel name from idb', error)
     }
 
     switch (notification.notificationType) {
         case 'new_message':
-            return generateMessage(townName, channelName)
-        case 'mention': {
-            const { senderId } = notification.content
-            const senderName = senderId ? (await idbUsers.get(senderId))?.name : undefined
-            const genericMessage = generateMessage(townName, channelName)
-            return {
-                title: genericMessage.title,
-                body: senderName
-                    ? `@${senderName} mentioned you in #${channelName}`
-                    : `You got mentioned in #${channelName}`,
-            }
-        }
+            return generateNewNotificationMessage(townName, channelName)
+        case 'mention':
+            return generateMentionedMessage(townName, channelName, senderName)
         default:
             return {
                 title: 'Town',
@@ -212,4 +237,8 @@ async function addUsersToIdb(membersMap: { [userId: string]: RoomMember | undefi
             tx.done,
         ])
     }
+}
+
+function stringHasValue(s: string | undefined): boolean {
+    return s !== undefined && s.length > 0
 }

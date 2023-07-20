@@ -114,6 +114,10 @@ export interface RoomMember {
     avatarUrl?: string
 }
 
+export interface UserIdToMember {
+    [userId: string]: RoomMember | undefined
+}
+
 export interface CreateSpaceInfo {
     name: string
     visibility: RoomVisibility
@@ -247,13 +251,4 @@ export function isMentionedTextMessageOption(
     options: SendMessageOptions,
 ): options is SendTextMessageOptions & SpaceIdOptions {
     return 'mentions' in options && Array.isArray(options.mentions) && options.mentions.length > 0
-}
-
-export function isSpaceIdOptions(options: SendMessageOptions): options is SpaceIdOptions {
-    return (
-        'parentSpaceId' in options &&
-        options.parentSpaceId !== undefined &&
-        'networkId' in options.parentSpaceId &&
-        options.parentSpaceId.networkId.length > 0
-    )
 }
