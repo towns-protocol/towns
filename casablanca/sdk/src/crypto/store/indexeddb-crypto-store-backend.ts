@@ -1,6 +1,5 @@
 // todo: fix lint issues and remove exception see: https://linear.app/hnt-labs/issue/HNT-1721/address-linter-overrides-in-matrix-encryption-code-from-sdk
 /* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/restrict-template-expressions, @typescript-eslint/no-unused-vars */
-import * as utils from '../../utils'
 import {
     CryptoStore,
     IDeviceData,
@@ -16,6 +15,7 @@ import { IRoomKeyRequestBody, IRoomKeyRequestRecipient } from '../crypto'
 import { IOlmDevice } from '../../crypto/deviceList'
 import { InboundGroupSessionData } from '../../crypto/olmDevice'
 import { dlog } from '../../dlog'
+import isEqual from 'lodash/isEqual'
 
 const log = dlog('csb:indexeddb-crypto-store-backend')
 const PROFILE_TRANSACTIONS = false
@@ -146,7 +146,7 @@ export class Backend implements CryptoStore {
 
             const existing = cursor.value
 
-            if (utils.deepCompare(existing.requestBody, requestBody)) {
+            if (isEqual(existing.requestBody, requestBody)) {
                 // got a match
                 callback(existing)
                 return

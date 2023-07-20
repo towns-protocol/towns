@@ -12,7 +12,8 @@ import {
 import { IRoomKeyRequestBody } from '../crypto'
 import { IOlmDevice } from '../deviceList'
 import { InboundGroupSessionData } from '../olmDevice'
-import { safeSet, promiseTry, deepCompare } from '../../utils'
+import { safeSet, promiseTry } from '../../utils'
+import isEqual from 'lodash/isEqual'
 
 /**
  * Internal module. in-memory storage for e2e.
@@ -111,7 +112,7 @@ export class MemoryCryptoStore implements CryptoStore {
         requestBody: IRoomKeyRequestBody,
     ): OutgoingRoomKeyRequest | null {
         for (const existing of this.outgoingRoomKeyRequests) {
-            if (deepCompare(existing.requestBody, requestBody)) {
+            if (isEqual(existing.requestBody, requestBody)) {
                 return existing
             }
         }
