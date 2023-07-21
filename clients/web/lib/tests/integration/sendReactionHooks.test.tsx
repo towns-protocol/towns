@@ -30,6 +30,7 @@ import { useChannelId } from '../../src/hooks/use-channel-id'
 import { useChannelReactions } from '../../src/hooks/use-channel-reactions'
 import { useChannelTimeline } from '../../src/hooks/use-channel-timeline'
 import { useZionClient } from '../../src/hooks/use-zion-client'
+import { TestConstants } from './helpers/TestConstants'
 
 // TODO Zustand https://docs.pmnd.rs/zustand/testing
 
@@ -130,8 +131,10 @@ describe('sendReactionHooks', () => {
         // expect the reaction to show in the message
         await waitFor(() => expect(message0).toHaveTextContent('reactions: (👍)'))
         // expect jane to recieve the message
-        await waitFor(() =>
-            expect(jane.getEvents(janesChannelId).at(-1)?.content?.kind).toBe(ZTEvent.Reaction),
+        await waitFor(
+            () =>
+                expect(jane.getEvents(janesChannelId).at(-1)?.content?.kind).toBe(ZTEvent.Reaction),
+            TestConstants.DecaDefaultWaitForTimeout,
         )
     })
 })
