@@ -232,7 +232,7 @@ function rollupSpace(stream: Stream, userId: string, channels: string[]): SpaceD
 
     return {
         id: makeRoomIdentifier(stream.view.streamId),
-        name: stream.view.streamId,
+        name: stream.view.name ?? stream.view.streamId,
         avatarSrc: '',
         channelGroups: [
             {
