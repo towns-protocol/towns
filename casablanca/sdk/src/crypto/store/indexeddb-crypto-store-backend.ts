@@ -4,17 +4,18 @@ import {
     CryptoStore,
     IDeviceData,
     IProblem,
+    IRoomEncryption,
     ISession,
     ISessionInfo,
     IWithheld,
     Mode,
     OutgoingRoomKeyRequest,
-    IRoomEncryption,
 } from './base'
 import { IRoomKeyRequestBody, IRoomKeyRequestRecipient } from '../crypto'
 import { IOlmDevice } from '../../crypto/deviceList'
 import { InboundGroupSessionData } from '../../crypto/olmDevice'
 import { dlog } from '../../dlog'
+import { RDK, RK } from '../rk'
 import isEqual from 'lodash/isEqual'
 
 const log = dlog('csb:indexeddb-crypto-store-backend')
@@ -890,6 +891,50 @@ export class Backend implements CryptoStore {
             return result
         })
     }
+
+    // rk storage
+    public getRK(txn: IDBTransaction): Promise<RK | null> {
+        const objectStore = txn.objectStore('keys')
+        const getReq = objectStore.get('rk')
+        return new Promise((resolve, reject) => {
+            getReq.onsuccess = (): void => {
+                const result = getReq.result
+                if (result) {
+                    resolve(new RK(result))
+                } else {
+                    resolve(null)
+                }
+            }
+            getReq.onerror = reject
+        })
+    }
+    public getRDK(txn: IDBTransaction): Promise<RDK | null> {
+        const objectStore = txn.objectStore('keys')
+        const getReq = objectStore.get('rdk')
+        return new Promise((resolve, reject) => {
+            getReq.onsuccess = (): void => {
+                const { key, sig } = getReq.result
+                resolve(RDK.from(key, sig))
+            }
+            getReq.onerror = reject
+        })
+    }
+
+    public storeRK(txn: IDBTransaction, rk: RK): void {
+        const objectStore = txn.objectStore('keys')
+        objectStore.put(rk.key.privateKey, 'rk')
+    }
+
+    public storeRDK(txn: IDBTransaction, rdk: RDK): void {
+        const objectStore = txn.objectStore('keys')
+        objectStore.put(
+            {
+                key: rdk.privateKey(),
+                sig: rdk.delegateSig,
+            },
+            'rdk',
+        )
+    }
 }
 
 type DbMigration = (db: IDBDatabase) => void
@@ -945,6 +990,11 @@ const DB_MIGRATIONS: DbMigration[] = [
     (db): void => {
         db.createObjectStore('parked_shared_history', {
             keyPath: ['roomId'],
+        })
+    },
+    (db): void => {
+        db.createObjectStore('keys', {
+            keyPath: 'type',
         })
     },
     // Expand as needed.

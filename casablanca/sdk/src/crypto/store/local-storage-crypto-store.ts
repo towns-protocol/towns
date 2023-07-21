@@ -11,6 +11,8 @@ import {
 import { IOlmDevice } from '../deviceList'
 import { InboundGroupSessionData } from '../olmDevice'
 import { safeSet } from '../../utils'
+import { RK, RDK } from '../rk'
+import { bin_fromHexString, bin_toHexString } from '../../binary'
 
 /**
  * Internal module. Partial localStorage backed storage for e2e.
@@ -394,6 +396,42 @@ export class LocalStorageCryptoStore extends MemoryCryptoStore {
 
     public doTxn<T>(mode: Mode, stores: Iterable<string>, func: (txn: unknown) => T): Promise<T> {
         return Promise.resolve(func(null))
+    }
+
+    // RK storage
+    public getRK(txn: unknown): Promise<RK | null> {
+        const rk = this.store.getItem('rk')
+        if (rk) {
+            return Promise.resolve(new RK(bin_fromHexString(rk)))
+        } else {
+            return Promise.reject()
+        }
+    }
+
+    public getRDK(txn: unknown): Promise<RDK | null> {
+        const rdk = this.store.getItem('rdk')
+        if (rdk) {
+            const { key, sig } = JSON.parse(rdk)
+            return Promise.resolve(
+                RDK.from(bin_fromHexString(key as string), bin_fromHexString(sig as string)),
+            )
+        } else {
+            return Promise.reject()
+        }
+    }
+
+    public storeRK(txn: unknown, rk: RK) {
+        this.store.setItem('rk', bin_toHexString(rk.privateKey()))
+    }
+
+    public storeRDK(txn: unknown, rdk: RDK) {
+        this.store.setItem(
+            'rdk',
+            JSON.stringify({
+                key: bin_toHexString(rdk.privateKey()),
+                sig: bin_toHexString(rdk.delegateSig!),
+            }),
+        )
     }
 }
 

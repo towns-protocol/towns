@@ -13,6 +13,7 @@ import { IRoomKeyRequestBody } from '../crypto'
 import { IOlmDevice } from '../deviceList'
 import { InboundGroupSessionData } from '../olmDevice'
 import { safeSet, promiseTry } from '../../utils'
+import { RDK, RK } from '../rk'
 import isEqual from 'lodash/isEqual'
 
 /**
@@ -38,6 +39,8 @@ export class MemoryCryptoStore implements CryptoStore {
     private sharedHistoryInboundGroupSessions: {
         [roomId: string]: [senderKey: string, sessionId: string][]
     } = {}
+    private rk: RK | null = null
+    private rdk: RDK | null = null
 
     /**
      * Ensure the database exists and is up-to-date.
@@ -495,5 +498,22 @@ export class MemoryCryptoStore implements CryptoStore {
 
     public doTxn<T>(mode: Mode, stores: Iterable<string>, func: (txn?: unknown) => T): Promise<T> {
         return Promise.resolve(func(null))
+    }
+
+    // rk storage
+    getRK(txn: unknown): Promise<RK | null> {
+        return Promise.resolve(this.rk)
+    }
+
+    getRDK(txn: unknown): Promise<RDK | null> {
+        return Promise.resolve(this.rdk)
+    }
+
+    public storeRK(txn: unknown, rk: RK): void {
+        this.rk = rk
+    }
+
+    public storeRDK(txn: unknown, rdk: RDK): void {
+        this.rdk = rdk
     }
 }

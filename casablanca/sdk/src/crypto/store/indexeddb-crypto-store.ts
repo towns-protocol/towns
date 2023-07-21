@@ -16,6 +16,7 @@ import { InboundGroupSessionData } from '../olmDevice'
 import { LocalStorageCryptoStore } from './local-storage-crypto-store'
 import { MemoryCryptoStore } from './memory-crypto-store'
 import * as IndexedDBCryptoStoreBackend from './indexeddb-crypto-store-backend'
+import { RK, RDK } from '../rk'
 
 const log = dlog('csb:indexeddb-crypto-store')
 
@@ -566,6 +567,23 @@ export class IndexedDBCryptoStore implements CryptoStore {
         log?: any,
     ): Promise<T> {
         return this.backend!.doTxn<T>(mode, stores, func as (txn: unknown) => T, log)
+    }
+
+    // rk storage
+
+    public getRK(txn: IDBTransaction): Promise<RK | null> {
+        return this.backend!.getRK(txn)
+    }
+
+    public getRDK(txn: IDBTransaction): Promise<RDK | null> {
+        return this.backend!.getRDK(txn)
+    }
+
+    public storeRK(txn: IDBTransaction, rk: RK): void {
+        this.backend!.storeRK(txn, rk)
+    }
+    public storeRDK(txn: IDBTransaction, rdk: RDK): void {
+        this.backend!.storeRDK(txn, rdk)
     }
 }
 

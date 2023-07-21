@@ -2,6 +2,7 @@ import { IRoomKeyRequestBody, IRoomKeyRequestRecipient, RoomKeyRequestState } fr
 import { IOlmDevice, TrackingStatus } from '../deviceList'
 import { InboundGroupSessionData } from '../olmDevice'
 import { IDevice } from '../deviceInfo'
+import { RK, RDK } from '../rk'
 //import { RiverEvent } from '../../event'
 
 /**
@@ -112,6 +113,12 @@ export interface CryptoStore {
 
     // Session key backups
     doTxn<T>(mode: Mode, stores: Iterable<string>, func: (txn: unknown) => T, log?: any): Promise<T>
+
+    // RK storage
+    getRK(txn: unknown): Promise<RK | null>
+    getRDK(txn: unknown): Promise<RDK | null>
+    storeRK(txn: unknown, rk: RK): void
+    storeRDK(txn: unknown, rdk: RDK): void
 }
 
 export type Mode = 'readonly' | 'readwrite'
