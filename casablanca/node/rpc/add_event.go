@@ -90,7 +90,7 @@ func (s *Service) addParsedEvent(ctx context.Context, streamId string, parsedEve
 			membership := spacePayload.Membership
 			return s.addMembershipEvent(ctx, stream, streamView, parsedEvent, membership)
 		case *SpacePayload_Channel_:
-			return status.Errorf(codes.InvalidArgument, "AddEvent: adding channels is unimplemented")
+			return s.updateChannel(ctx, stream, streamView, parsedEvent)
 		default:
 			return status.Errorf(codes.InvalidArgument, "AddEvent: Space event has no valid payload for type %T", payload.SpacePayload.Content)
 		}
@@ -181,6 +181,17 @@ func (s *Service) checkMembership(ctx context.Context, view StreamView, userId s
 	return ok, nil
 }
 
+func (s *Service) updateChannel(ctx context.Context, stream *Stream, view StreamView, parsedEvent *ParsedEvent) error {
+	if (parsedEvent.Event.GetSpacePayload() == nil) || (parsedEvent.Event.GetSpacePayload().GetChannel() == nil) {
+		return status.Error(codes.InvalidArgument, "AddEvent: invalid channel update event")
+	}
+	if parsedEvent.Event.GetSpacePayload().GetChannel().Op != ChannelOp_CO_UPDATED {
+		return status.Errorf(codes.InvalidArgument, "AddEvent: only update channel is supported at this point. Received channel op %v", parsedEvent.Event.GetSpacePayload().GetChannel().Op)
+	}
+	_, err := stream.AddEvent(ctx, parsedEvent)
+	return err
+}
+
 func (s *Service) addMembershipEvent(ctx context.Context, stream *Stream, view StreamView, parsedEvent *ParsedEvent, membership *Membership) error {
 	streamId := view.StreamId()
 	userId := membership.UserId
@@ -203,7 +214,7 @@ func (s *Service) addMembershipEvent(ctx context.Context, stream *Stream, view S
 	if err != nil {
 		return status.Errorf(codes.InvalidArgument, "AddEvent: invalid user id: %v", err)
 	}
-	
+
 	permission := auth.PermissionUndefined
 	switch membership.Op {
 	case MembershipOp_SO_INVITE:

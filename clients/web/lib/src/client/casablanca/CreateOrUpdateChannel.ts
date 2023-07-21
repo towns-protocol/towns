@@ -20,3 +20,13 @@ export async function createCasablancaChannel(
     await client.waitForStream(streamId)
     return makeCasablancaStreamIdentifier(streamId)
 }
+
+export async function updateCasablancaChannel(
+    client: CasablancaClient,
+    spaceId: string,
+    channelName: string,
+    channelTopic: string,
+    networkId: string,
+) {
+    await client.updateChannel(spaceId, networkId, channelName, channelTopic)
+}

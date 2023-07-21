@@ -250,10 +250,10 @@ function rollupSpace(stream: Stream, userId: string, channels: string[]): SpaceD
                     .sort((a, b) => a.localeCompare(b))
                     .map((c) => ({
                         id: makeRoomIdentifier(c),
-                        label: stream.view.spaceChannelsMetadata.get(c)?.channelName ?? c,
+                        label: stream.view.spaceChannelsMetadata.get(c)?.name ?? c,
                         private: false,
                         highlight: false,
-                        topic: stream.view.spaceChannelsMetadata.get(c)?.channelTopic ?? '',
+                        topic: stream.view.spaceChannelsMetadata.get(c)?.topic ?? '',
                     })),
             },
         ],

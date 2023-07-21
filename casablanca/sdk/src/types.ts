@@ -8,6 +8,7 @@ import {
     UserDeviceKeyPayload_UserDeviceKey,
     UserPayload_Inception,
     SpacePayload_Inception,
+    ChannelProperties,
     ChannelPayload_Inception,
     UserSettingsPayload_Inception,
     Membership,
@@ -84,6 +85,14 @@ export const make_SpacePayload_Inception = (
         },
     }
 }
+
+export const make_ChannelProperties = (
+    channelName: string,
+    channelTopic: string,
+): ChannelProperties => {
+    return new ChannelProperties({ name: channelName, topic: channelTopic })
+}
+
 export const make_ChannelPayload_Inception = (
     value: PlainMessage<ChannelPayload_Inception>,
 ): PlainMessage<StreamEvent>['payload'] => {

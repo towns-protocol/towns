@@ -84,7 +84,10 @@ import { SpaceDapp } from './web3/SpaceDapp'
 import { SpaceFactoryDataTypes } from './web3/shims/SpaceFactoryShim'
 import { SpaceInfo } from './web3/SpaceInfo'
 import { SyncState } from 'matrix-js-sdk/lib/sync'
-import { createCasablancaChannel } from './casablanca/CreateChannel'
+import {
+    createCasablancaChannel,
+    updateCasablancaChannel,
+} from './casablanca/CreateOrUpdateChannel'
 import { createCasablancaSpace } from './casablanca/CreateSpace'
 import { createMatrixChannel } from './matrix/CreateChannel'
 import { createMatrixSpace } from './matrix/CreateSpace'
@@ -1020,7 +1023,23 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
                 }
                 break
             case SpaceProtocol.Casablanca:
-                throw new Error('Casablanca not supported yet')
+                if (!this.casablancaClient) {
+                    throw new Error("updatedChannel: Casablanca client doesn't exist")
+                }
+                if (updateChannelInfo.channelId === undefined) {
+                    throw new Error('updateChannel: channelId is undefined')
+                }
+                if (!updateChannelInfo.updatedChannelName) {
+                    throw new Error('updateChannel: channelName cannot be empty')
+                }
+                await updateCasablancaChannel(
+                    this.casablancaClient,
+                    updateChannelInfo.parentSpaceId.networkId,
+                    updateChannelInfo.updatedChannelName,
+                    updateChannelInfo.updatedChannelTopic ?? '',
+                    updateChannelInfo.channelId.networkId,
+                )
+                break
             default:
                 staticAssertNever(updateChannelInfo.channelId)
         }

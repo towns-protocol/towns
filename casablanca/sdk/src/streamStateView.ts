@@ -12,6 +12,8 @@ import {
     UserDeviceKeyPayload_UserDeviceKey,
     SyncCookie,
     StreamAndCookie,
+    ChannelProperties,
+    EncryptedData,
 } from '@towns/proto'
 import TypedEmitter from 'typed-emitter'
 import { check, checkNever, isDefined, throwWithCode } from './check'
@@ -46,7 +48,7 @@ export class StreamStateView {
     readonly messages = new Map<string, ParsedEvent>()
     readonly receipts = new Map<string, ParsedEvent>()
 
-    readonly spaceChannelsMetadata = new Map<string, ChannelMetadata>()
+    readonly spaceChannelsMetadata = new Map<string, ChannelProperties>()
     readonly parentSpaceId?: string
 
     readonly userInvitedStreams = new Set<string>()
@@ -298,45 +300,52 @@ export class StreamStateView {
         }
     }
 
+    private channelPropertiesFromEncryptedData(
+        encryptedData: EncryptedData | undefined,
+    ): ChannelProperties {
+        //TODO: We need to support decryption once encryption is enabled for Channel EncryptedData events
+        let channelProperties = ChannelProperties.fromJsonString(encryptedData?.text ?? '')
+        if (!isDefined(channelProperties)) {
+            channelProperties = new ChannelProperties()
+        }
+        return channelProperties
+    }
+
     private addSpacePayload_Channel(
         payload: SpacePayload_Channel,
         emitter?: TypedEmitter<StreamEvents>,
     ): void {
-        const { op, channelId, channelName, channelTopic } = payload
+        const { op, channelId, channelProperties } = payload
         switch (op) {
-            case ChannelOp.CO_CREATED:
-                this.spaceChannelsMetadata.set(channelId, {
-                    channelName: channelName,
-                    channelTopic: channelTopic,
-                })
+            case ChannelOp.CO_CREATED: {
+                const emittedChannelProperties =
+                    this.channelPropertiesFromEncryptedData(channelProperties)
+
+                this.spaceChannelsMetadata.set(channelId, emittedChannelProperties)
+
                 emitter?.emit(
                     'spaceChannelCreated',
                     this.streamId,
                     channelId,
-                    channelName,
-                    channelTopic,
+                    emittedChannelProperties,
                 )
                 break
+            }
             case ChannelOp.CO_DELETED:
                 emitter?.emit('spaceChannelDeleted', this.streamId, channelId)
                 this.spaceChannelsMetadata.delete(channelId)
                 break
             case ChannelOp.CO_UPDATED: {
-                const channelSpaceMetadata = this.spaceChannelsMetadata.get(channelId)
-                if (channelSpaceMetadata != undefined) {
-                    if (channelName != null) {
-                        channelSpaceMetadata.channelName = channelName
-                    }
-                    if (channelTopic != null) {
-                        channelSpaceMetadata.channelTopic = channelTopic
-                    }
-                }
+                const emittedChannelProperties =
+                    this.channelPropertiesFromEncryptedData(channelProperties)
+
+                this.spaceChannelsMetadata.set(channelId, emittedChannelProperties)
+
                 emitter?.emit(
                     'spaceChannelUpdated',
                     this.streamId,
                     channelId,
-                    channelName,
-                    channelTopic,
+                    emittedChannelProperties,
                 )
                 break
             }
@@ -442,9 +451,4 @@ export class StreamStateView {
             }
         }
     }
-}
-
-export type ChannelMetadata = {
-    channelName: string
-    channelTopic: string
 }

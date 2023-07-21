@@ -7,10 +7,10 @@ import {
     UserSettingsPayload_Inception,
     UserPayload_Inception,
     PayloadCaseType,
+    ChannelProperties,
 } from '@towns/proto'
 import { ParsedEvent } from './types'
 import { RiverEvent } from './event'
-
 export type StreamEvents = {
     streamInception: (streamId: string, event: StreamEvent) => void
     spaceInception: (
@@ -47,14 +47,12 @@ export type StreamEvents = {
     spaceChannelCreated: (
         spaceId: string,
         channelId: string,
-        channelName: string,
-        channelTopic: string,
+        channelProperties: ChannelProperties,
     ) => void
     spaceChannelUpdated: (
         spaceId: string,
         channelId: string,
-        channelName: string,
-        channelTopic: string,
+        channelProperties: ChannelProperties,
     ) => void
     spaceChannelDeleted: (spaceId: string, channelId: string) => void
     channelNewMessage: (channelId: string, message: RiverEvent) => void

@@ -107,11 +107,15 @@ func createSpace(ctx context.Context, wallet *crypto.Wallet, client protocolconn
 }
 
 func createChannel(ctx context.Context, wallet *crypto.Wallet, client protocolconnect.StreamServiceClient, spaceId string, channelId string) (*protocol.SyncCookie, []byte, error) {
+	var channelProperties protocol.EncryptedData
+	channelProperties.Text = "encrypted text supposed to be here"
 	channel, err := events.MakeEnvelopeWithPayload(
 		wallet,
 		events.Make_ChannelPayload_Inception(
 			common.ChannelStreamIdFromName(channelId),
 			spaceId,
+			//TODO: add channel settings
+			&channelProperties,
 		),
 		nil,
 	)
@@ -216,6 +220,7 @@ func TestMethods(t *testing.T) {
 		}
 
 		// create channel
+		//TODO: add channel setting instead of "channel1"
 		channel, channelHash, err := createChannel(ctx, wallet1, client, common.SpaceStreamIdFromName("test"), "channel1")
 		if err != nil {
 			t.Fatalf("error calling CreateStream: %v", err)
@@ -356,6 +361,7 @@ func TestManyUsers(t *testing.T) {
 	var channelHashes [][]byte
 	var channels []*protocol.SyncCookie
 	for i := 0; i < totalChannels; i++ {
+		//TODO: add channel setting instead of "channel1"
 		channel, channelHash, err := createChannel(ctx, wallets[0], client, common.SpaceStreamIdFromName("test"), fmt.Sprintf("channel-%d", i))
 		if err != nil {
 			t.Fatalf("error calling CreateStream: %v", err)

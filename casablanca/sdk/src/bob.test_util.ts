@@ -78,16 +78,14 @@ export const bobTalksToHimself = async (
     await maybeFlush()
 
     const channelId = makeChannelStreamId('bobs-channel-' + genId())
-    const channelName = 'Bobs channel'
-    const channelTopic = 'Bobs channel topic'
+    const channelProperties = 'Bobs channel properties'
 
     const channelInceptionEvent = await makeEvent(
         bobsContext,
         make_ChannelPayload_Inception({
             streamId: channelId,
             spaceId: spacedStreamId,
-            channelName: channelName,
-            channelTopic: channelTopic,
+            channelProperties: { text: channelProperties },
         }),
         [],
     )
@@ -119,8 +117,7 @@ export const bobTalksToHimself = async (
     )
     expect(channelCreatePayload).toBeDefined()
     expect(channelCreatePayload?.channelId).toEqual(channelId)
-    expect(channelCreatePayload?.channelName).toEqual(channelName)
-    expect(channelCreatePayload?.channelTopic).toEqual(channelTopic)
+    expect(channelCreatePayload?.channelProperties?.text).toEqual(channelProperties)
 
     await maybeFlush()
 

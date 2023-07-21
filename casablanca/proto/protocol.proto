@@ -166,8 +166,7 @@ message SpacePayload {
         ChannelOp op = 1;
         string channel_id = 2;
         EventRef origin_event = 3;
-        string channel_name = 4;
-        string channel_topic = 5;
+        EncryptedData channel_properties = 4;
     }
 
     oneof content {
@@ -197,6 +196,7 @@ message EncryptedData {
     optional string session_id = 5;
 }
 
+
 message ChannelPayload {
     message Inception {
         string stream_id = 1;
@@ -206,8 +206,7 @@ message ChannelPayload {
         * create associated with that channel space event for stream as we agreed
         * that channel names and topics will be delivered using space stream
         */
-        string channel_name = 4;
-        string channel_topic = 5;
+        EncryptedData channel_properties = 4;
     }
 
     /**

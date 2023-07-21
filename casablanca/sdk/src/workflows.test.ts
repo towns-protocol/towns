@@ -87,16 +87,14 @@ describe('workflows', () => {
 
         log('Bob created space, about to create channel')
         const channelId = makeChannelStreamId('bobs-channel-' + genId())
-        const channelName = 'Bobs channel'
-        const channelTopic = 'Bobs channel topic'
+        const channelProperties = 'Bobs channel properties'
 
         const channelInceptionEvent = await makeEvent(
             bobsContext,
             make_ChannelPayload_Inception({
                 streamId: channelId,
                 spaceId: spacedStreamId,
-                channelName: channelName,
-                channelTopic: channelTopic,
+                channelProperties: { text: channelProperties },
             }),
             [],
         )

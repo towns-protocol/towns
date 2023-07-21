@@ -86,13 +86,14 @@ func Make_UserPayload_Inception(streamId string) *StreamEvent_UserPayload {
 	}
 }
 
-func Make_ChannelPayload_Inception(streamId string, spaceId string) *StreamEvent_ChannelPayload {
+func Make_ChannelPayload_Inception(streamId string, spaceId string, channelProperties *EncryptedData) *StreamEvent_ChannelPayload {
 	return &StreamEvent_ChannelPayload{
 		ChannelPayload: &ChannelPayload{
 			Content: &ChannelPayload_Inception_{
 				Inception: &ChannelPayload_Inception{
-					StreamId: streamId,
-					SpaceId:  spaceId,
+					StreamId:          streamId,
+					SpaceId:           spaceId,
+					ChannelProperties: channelProperties,
 				},
 			},
 		},
@@ -164,16 +165,15 @@ func Make_UserPayload_Membership(op protocol.MembershipOp, inviterId string, str
 	}
 }
 
-func Make_SpacePayload_Channel(op ChannelOp, channelId string, channelName string, channelTopic string, originEvent *protocol.EventRef) *StreamEvent_SpacePayload {
+func Make_SpacePayload_Channel(op ChannelOp, channelId string, channelProperties *EncryptedData, originEvent *protocol.EventRef) *StreamEvent_SpacePayload {
 	return &StreamEvent_SpacePayload{
 		SpacePayload: &SpacePayload{
 			Content: &protocol.SpacePayload_Channel_{
 				Channel: &SpacePayload_Channel{
-					Op:           op,
-					ChannelId:    channelId,
-					OriginEvent:  originEvent,
-					ChannelName:  channelName,
-					ChannelTopic: channelTopic,
+					Op:                op,
+					ChannelId:         channelId,
+					OriginEvent:       originEvent,
+					ChannelProperties: channelProperties,
 				},
 			},
 		},

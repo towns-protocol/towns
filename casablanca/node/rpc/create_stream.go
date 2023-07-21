@@ -208,8 +208,7 @@ func (s *Service) createStream(ctx context.Context, log *slog.Logger, req *conne
 			Make_SpacePayload_Channel(
 				ChannelOp_CO_CREATED,
 				inception.StreamId,
-				inception.ChannelName,
-				inception.ChannelTopic,
+				inception.ChannelProperties,
 				&EventRef{
 					StreamId:  streamId,
 					Hash:      inceptionEvent.Envelope.Hash,

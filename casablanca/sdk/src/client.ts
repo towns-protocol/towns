@@ -3,6 +3,7 @@ import {
     StreamAndCookie,
     MembershipOp,
     ToDeviceOp,
+    ChannelOp,
     ChannelMessage_Post_Mention,
     ChannelMessage,
     ChannelMessage_Post,
@@ -49,6 +50,7 @@ import {
     make_UserDeviceKeyPayload_UserDeviceKey,
     make_UserDeviceKeyPayload_Inception,
     make_ChannelPayload_Inception,
+    make_ChannelProperties,
     make_ChannelPayload_Membership,
     make_ChannelPayload_Message,
     make_SpacePayload_Inception,
@@ -57,6 +59,7 @@ import {
     make_UserPayload_ToDevice,
     IDeviceKeySignatures,
     getToDevicePayloadContent,
+    make_SpacePayload_Channel,
 } from './types'
 import { shortenHexString } from './binary'
 import { CryptoStore } from './crypto/store/base'
@@ -348,8 +351,9 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
             make_ChannelPayload_Inception({
                 streamId: channelId,
                 spaceId,
-                channelName,
-                channelTopic,
+                channelProperties: {
+                    text: make_ChannelProperties(channelName, channelTopic).toJsonString(),
+                },
             }),
             [],
         )
@@ -367,6 +371,34 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
         })
 
         return { streamId: channelId }
+    }
+
+    async updateChannel(
+        spaceId: string,
+        channelId: string,
+        channelName: string,
+        channelTopic: string,
+    ) {
+        this.logCall('updateChannel', channelId, spaceId, channelName, channelTopic)
+        assert(isSpaceStreamId(spaceId), 'spaceId must be a valid streamId')
+        assert(isChannelStreamId(channelId), 'channelId must be a valid streamId')
+
+        const channelPropertiesToUpdate = {
+            text: make_ChannelProperties(channelName, channelTopic).toJsonString(),
+            algorithm: '',
+            senderKey: '',
+            deviceId: '',
+        }
+
+        return this.makeEventAndAddToStream(
+            spaceId, // we send events to the stream of the space where updated channel belongs to
+            make_SpacePayload_Channel({
+                op: ChannelOp.CO_UPDATED,
+                channelId: channelId,
+                channelProperties: channelPropertiesToUpdate,
+            }),
+            'updateChannel',
+        )
     }
 
     async waitForStream(streamId: string): Promise<Stream> {

@@ -74,6 +74,11 @@ message ChannelMessage {
     }
 }
 
+message ChannelProperties {
+    string name = 1;
+    string topic = 2;
+}
+
 // value field of a ToDeviceMessage, which is either
 // a) ciphertext encrypted for a specific device (identified by curve25519 key)
 // b) a key request
