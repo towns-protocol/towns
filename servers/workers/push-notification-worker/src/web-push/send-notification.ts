@@ -1,4 +1,4 @@
-import { SendPushResponse, SendPushStatus } from '../send-push-interfaces'
+import { SendPushResponse, SendPushStatus } from '../notify-users-handlers'
 import {
   VapidDetails,
   WebPushOptions,
@@ -14,7 +14,7 @@ import {
 import { Env } from 'index'
 import { JwtData } from './jwt'
 import { NotifyRequestParams } from '../request-interfaces'
-import { QueryResultSubscription } from '../query-interfaces'
+import { QueryResultSubscription } from '../subscription-handlers'
 import { base64ToUrlEncoding } from './utils'
 
 export async function sendNotificationViaWebPush(

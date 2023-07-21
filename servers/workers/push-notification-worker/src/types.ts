@@ -59,3 +59,24 @@ export function isNotificationPayload(
     typeof args.content === 'object'
   )
 }
+
+export interface MuteSettings {
+  mutedChannels: { [channelId: string]: boolean }
+  mutedSpaces: { [spaceId: string]: boolean }
+}
+
+export interface NotificationSettings {
+  muteSettings: MuteSettings
+}
+
+export function isNotificationSettings(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  args: any,
+): args is NotificationSettings {
+  return (
+    typeof args === 'object' &&
+    typeof args.muteSettings === 'object' &&
+    typeof args.muteSettings.mutedChannels === 'object' &&
+    typeof args.muteSettings.mutedSpaces === 'object'
+  )
+}

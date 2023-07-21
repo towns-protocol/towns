@@ -1,7 +1,7 @@
 import { MockProxy, mock } from 'jest-mock-extended'
 
 import { Env } from '../src'
-import { QueryResultNotificationTag } from '../src/query-interfaces'
+import { QueryResultNotificationTag } from '../src/tag-handlers'
 import { createFakeWebPushSubscription } from './fake-data'
 
 export interface TestMocks {

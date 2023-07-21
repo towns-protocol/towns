@@ -1,9 +1,6 @@
 import {
   addPushSubscription,
-  notifyUsers,
   removePushSubscription,
-  tagMentionUsers,
-  tagReplyToUser,
 } from './subscription-handlers'
 import { create400Response, create401Response } from './http-responses'
 import {
@@ -17,10 +14,12 @@ import {
   isRemoveSubscriptionRequestParams,
   isReplyToRequestParams,
 } from './request-interfaces'
+import { tagMentionUsers, tagReplyToUser } from './tag-handlers'
 
 import { Env } from '.'
 import { Router } from 'itty-router'
 import { isAuthedRequest } from '../../common'
+import { notifyUsers } from './notify-users-handlers'
 
 // now let's create a router (note the lack of "new")
 const router = Router()
