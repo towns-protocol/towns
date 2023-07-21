@@ -11,8 +11,11 @@ CREATE TABLE IF NOT EXISTS PushSubscription (
 CREATE INDEX idx_user_id
 ON PushSubscription (UserId);
 
-CREATE TABLE IF NOT EXISTS MentionedUser (
+-- Tags for push notifications so that the Worker has
+-- additional context to format the notification message
+CREATE TABLE IF NOT EXISTS NotificationTag (
   ChannelId VARCHAR(255) NOT NULL,
   UserId VARCHAR(255) NOT NULL,
+  Tag VARCHAR(128) NOT NULL,
   CONSTRAINT MentionsUsers_PK PRIMARY KEY (ChannelId, UserId)
 );

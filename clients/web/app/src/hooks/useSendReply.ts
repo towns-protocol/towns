@@ -6,13 +6,19 @@ export const useSendReply = (threadId?: string, threadPreview?: string) => {
     const { spaceId } = useChannelData()
 
     const sendReply = useCallback(
-        (value: string, channelId: RoomIdentifier, options: SendMessageOptions | undefined) => {
+        (
+            value: string,
+            channelId: RoomIdentifier,
+            options: SendMessageOptions | undefined,
+            threadParticipants?: Set<string>,
+        ) => {
             if (value && spaceId) {
                 sendMessage(channelId, value, {
                     ...options,
                     parentSpaceId: spaceId,
                     threadId,
                     threadPreview,
+                    threadParticipants,
                 })
             } else if (value) {
                 sendMessage(channelId, value, { ...options, threadId, threadPreview })

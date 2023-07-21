@@ -1,6 +1,11 @@
-import { Mention, SendMessageOptions, isMentionedTextMessageOption } from '../types/zion-types'
+import {
+    Mention,
+    SendMessageOptions,
+    isMentionedTextMessageOptions,
+    isThreadIdOptions,
+} from '../types/zion-types'
 
-import { MentionUsersRequestParams } from '../types/notification-types'
+import { MentionUsersRequestParams, ReplyToUsersRequestParams } from '../types/notification-types'
 
 interface PushNotificationClientOptions {
     url: string // push notification worker's url
@@ -14,37 +19,69 @@ export class PushNotificationClient {
         this.options = options
     }
 
-    public async mentionUsersIfAny(
+    public async sendNotificationTagIfAny(
         channelId: string,
         options?: SendMessageOptions,
-    ): Promise<Response | undefined> {
+    ): Promise<void> {
         if (!options) {
             return
         }
         if (
-            isMentionedTextMessageOption(options) &&
+            isMentionedTextMessageOptions(options) &&
             options.mentions // don't do any extra work unless there are mentions
         ) {
-            const headers = this.createHttpHeaders()
-            const body = this.createMentionNotificationParams({
-                channelId,
-                mentions: options.mentions,
+            return this.sendMentionNotificationToWorker(channelId, options.mentions)
+        } else if (
+            isThreadIdOptions(options) &&
+            options.threadParticipants // don't do any extra work unless there are thread participants
+        ) {
+            return this.sendThreadNotificationToWorker(channelId, options.threadParticipants)
+        }
+    }
+
+    private async sendMentionNotificationToWorker(
+        channelId: string,
+        mentions: Mention[],
+    ): Promise<void> {
+        const headers = this.createHttpHeaders()
+        const body = this.createMentionNotificationParams({
+            channelId,
+            mentions,
+        })
+        const url = `${this.options.url}/api/tag-mention-users`
+        console.log('PUSH: sending @mention tag to Push Notification Worker ...', url, body)
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers,
+                body: JSON.stringify(body),
             })
-            const url = `${this.options.url}/api/mention-users`
-            console.log('PUSH: sending @mention to Push Notification Worker ...', url, body)
-            try {
-                const response = await fetch(url, {
-                    method: 'POST',
-                    headers,
-                    body: JSON.stringify(body),
-                })
-                console.log('PUSH: sent @mention to Push Notification Worker', response.status)
-            } catch (error) {
-                console.error('PUSH: error sending @mention to Push Notification Worker', error)
-            }
-        } else {
-            // no mention-specific notification
-            console.log('PUSH: no @mention to send')
+            console.log('PUSH: sent @mention tag to Push Notification Worker', response.status)
+        } catch (error) {
+            console.error('PUSH: error sending @mention tag to Push Notification Worker', error)
+        }
+    }
+
+    private async sendThreadNotificationToWorker(
+        channelId: string,
+        participants: Set<string>,
+    ): Promise<void> {
+        const headers = this.createHttpHeaders()
+        const body = this.createReplyToNotificationParams({
+            channelId,
+            participants,
+        })
+        const url = `${this.options.url}/api/tag-reply-to-users`
+        console.log('PUSH: sending reply_to tags to Push Notification Worker ...', url, body)
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers,
+                body: JSON.stringify(body),
+            })
+            console.log('PUSH: sent reply_to tags to Push Notification Worker', response.status)
+        } catch (error) {
+            console.error('PUSH: error sending reply_to tags to Push Notification Worker', error)
         }
     }
 
@@ -59,6 +96,24 @@ export class PushNotificationClient {
         // https://www.notion.so/herenottherelabs/RFC-Notification-system-architecture-20aae4a6608640539838bafe24a0e48c?pvs=4#ab2259d34c5c4c649133a779b216b6b7
         const userIds = mentions.map((mention) => mention.userId)
         const params: MentionUsersRequestParams = {
+            channelId,
+            userIds,
+        }
+        return params
+    }
+
+    private createReplyToNotificationParams({
+        channelId,
+        participants,
+    }: {
+        channelId: string
+        participants: Set<string>
+    }): ReplyToUsersRequestParams {
+        const userIds: string[] = []
+        for (const u of participants) {
+            userIds.push(u)
+        }
+        const params: ReplyToUsersRequestParams = {
             channelId,
             userIds,
         }

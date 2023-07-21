@@ -1,5 +1,10 @@
 import { RoomMember, SpaceData, UserIdToMember } from 'use-zion-client'
-import { AppNotification, ServiceWorkerMessageType, WEB_PUSH_NAVIGATION_CHANNEL } from './types.d'
+import {
+    AppNotification,
+    AppNotificationType,
+    ServiceWorkerMessageType,
+    WEB_PUSH_NAVIGATION_CHANNEL,
+} from './types.d'
 import { appNotificationFromPushEvent } from './notificationParsers'
 import { getServiceWorkerMuteSettings } from '../store/useMuteSettings'
 import {
@@ -66,7 +71,7 @@ export function handleNotifications(worker: ServiceWorkerGlobalScope) {
         const notification = appNotificationFromPushEvent(jsonString)
 
         if (!notification) {
-            console.log("sw: Couldn't parse notification")
+            console.log("sw: ''worker couldn't parse notification")
             return
         }
 
@@ -139,6 +144,32 @@ function generateMentionedMessage(
     }
 }
 
+function generateReplyToMessage(
+    townName: string | undefined,
+    channelName: string | undefined,
+    sender: string | undefined,
+) {
+    let body = ''
+    switch (true) {
+        case stringHasValue(channelName) && stringHasValue(sender):
+            body = `@${sender} replied to your post in #${channelName}`
+            break
+        case stringHasValue(channelName) && !stringHasValue(sender):
+            body = `Your post was replied to in #${channelName}`
+            break
+        case !stringHasValue(channelName) && stringHasValue(sender):
+            body = `@${sender} replied to your post`
+            break
+        default:
+            body = 'Your post was replied to'
+            break
+    }
+    return {
+        title: townName ?? 'Town',
+        body,
+    }
+}
+
 async function getNotificationContent(notification: AppNotification): Promise<{
     title: string
     body: string
@@ -160,10 +191,12 @@ async function getNotificationContent(notification: AppNotification): Promise<{
     }
 
     switch (notification.notificationType) {
-        case 'new_message':
+        case AppNotificationType.NewMessage:
             return generateNewNotificationMessage(townName, channelName)
-        case 'mention':
+        case AppNotificationType.Mention:
             return generateMentionedMessage(townName, channelName, senderName)
+        case AppNotificationType.ReplyTo:
+            return generateReplyToMessage(townName, channelName, senderName)
         default:
             return {
                 title: 'Town',

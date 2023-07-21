@@ -38,7 +38,7 @@ export const MessageThreadPanel = (props: Props) => {
     const { sendReply } = useSendReply(messageId)
 
     const onSend = (value: string, options: SendMessageOptions | undefined) => {
-        sendReply(value, channelId, options)
+        sendReply(value, channelId, options, parent?.userIds)
     }
     const { members } = useSpaceMembers()
     const userId = useMyProfile()?.userId

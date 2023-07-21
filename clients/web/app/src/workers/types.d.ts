@@ -1,6 +1,7 @@
 export enum AppNotificationType {
     NewMessage = 'new_message',
     Mention = 'mention',
+    ReplyTo = 'reply_to',
 }
 
 export type AppNotificationMessage = {
@@ -23,7 +24,20 @@ export type AppNotificationMention = {
     }
 }
 
-export type AppNotification = AppNotificationMessage | AppNotificationMention
+export type AppNotificationReplyTo = {
+    notificationType: AppNotificationType.ReplyTo
+    topic?: string
+    content: {
+        spaceId: string
+        channelId: string
+        senderId: string
+    }
+}
+
+export type AppNotification =
+    | AppNotificationMessage
+    | AppNotificationMention
+    | AppNotificationReplyTo
 
 export const WEB_PUSH_NAVIGATION_CHANNEL = 'web-push-navigation-channel'
 

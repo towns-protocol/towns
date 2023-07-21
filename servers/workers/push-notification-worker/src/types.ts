@@ -39,6 +39,7 @@ export function isUserId(
 export enum NotificationType {
   Mention = 'mention',
   NewMessage = 'new_message',
+  ReplyTo = 'reply_to',
 }
 
 export type NotificationContent = object

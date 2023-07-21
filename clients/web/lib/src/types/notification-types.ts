@@ -27,3 +27,8 @@ export interface MentionUsersRequestParams {
     channelId: string
     userIds: string[]
 }
+
+export interface ReplyToUsersRequestParams {
+    channelId: string
+    userIds: string[]
+}

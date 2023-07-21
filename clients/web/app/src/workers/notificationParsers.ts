@@ -12,33 +12,49 @@ const content = z.object({
 // be helpful as we add more notification types
 const notificationSchema = z
     .object({
-        notificationType: z.enum([AppNotificationType.NewMessage, AppNotificationType.Mention]),
+        notificationType: z.enum([
+            AppNotificationType.NewMessage,
+            AppNotificationType.Mention,
+            AppNotificationType.ReplyTo,
+        ]),
         content: content,
         topic: z.string().optional(),
     })
     .transform((data): AppNotification | undefined => {
-        if (data.notificationType === AppNotificationType.NewMessage) {
-            return {
-                topic: data.topic,
-                notificationType: AppNotificationType.NewMessage,
-                content: {
-                    spaceId: data.content.spaceId,
-                    channelId: data.content.channelId,
-                    senderId: data.content.senderId,
-                },
-            }
-        } else if (data.notificationType === AppNotificationType.Mention) {
-            return {
-                topic: data.topic,
-                notificationType: AppNotificationType.Mention,
-                content: {
-                    spaceId: data.content.spaceId,
-                    channelId: data.content.channelId,
-                    senderId: data.content.senderId,
-                },
-            }
+        switch (data.notificationType) {
+            case AppNotificationType.NewMessage:
+                return {
+                    topic: data.topic,
+                    notificationType: AppNotificationType.NewMessage,
+                    content: {
+                        spaceId: data.content.spaceId,
+                        channelId: data.content.channelId,
+                        senderId: data.content.senderId,
+                    },
+                }
+            case AppNotificationType.Mention:
+                return {
+                    topic: data.topic,
+                    notificationType: AppNotificationType.Mention,
+                    content: {
+                        spaceId: data.content.spaceId,
+                        channelId: data.content.channelId,
+                        senderId: data.content.senderId,
+                    },
+                }
+            case AppNotificationType.ReplyTo:
+                return {
+                    topic: data.topic,
+                    notificationType: AppNotificationType.ReplyTo,
+                    content: {
+                        spaceId: data.content.spaceId,
+                        channelId: data.content.channelId,
+                        senderId: data.content.senderId,
+                    },
+                }
+            default:
+                return undefined
         }
-        return undefined
     })
 
 export function appNotificationFromPushEvent(raw: string): AppNotification | undefined {

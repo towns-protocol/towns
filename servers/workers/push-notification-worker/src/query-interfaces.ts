@@ -17,7 +17,8 @@ export function isQueryResultSubscription(
   )
 }
 
-export interface QueryResultMentionedUser {
+export interface QueryResultNotificationTag {
   channelId: string
   userId: UserId
+  tag: string
 }

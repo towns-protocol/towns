@@ -3,20 +3,23 @@ import {
   MentionRequestParams,
   NotifyRequestParams,
   RemoveSubscriptionRequestParams,
+  ReplyToRequestParams,
 } from './request-interfaces'
+import { NotificationType, PushType } from './types'
 import {
-  QueryResultMentionedUser,
+  QueryResultNotificationTag,
   isQueryResultSubscription,
 } from './query-interfaces'
 import { SendPushResponse, SendPushStatus } from './send-push-interfaces'
+import { create204Response, create422Response } from './http-responses'
 
 import { Env } from 'index'
-import { NotificationType, PushType } from './types'
 import { sendNotificationViaWebPush } from './web-push/send-notification'
 
-interface CurrentChannelContext {
+interface TaggedUsers {
   channelId: string
   mentionedUsers: string[]
+  replyToUsers: string[]
 }
 
 class SqlStatement {
@@ -48,24 +51,30 @@ class SqlStatement {
     UserId=?1 AND
     PushSubscription=?2;`
 
-  static InsertIntoMentionedUser = `
-  INSERT INTO MentionedUser (
+  static InsertIntoNotificationTag = `
+  INSERT INTO NotificationTag (
     ChannelId,
-    UserId
+    UserId,
+    Tag
   ) VALUES (
     ?1,
-    ?2
-  ) ON CONFLICT (ChannelId, UserId) DO NOTHING;`
+    ?2,
+    ?3
+  ) ON CONFLICT (ChannelId, UserId)
+  DO UPDATE SET
+    Tag = excluded.Tag;`
 
-  static SelectMentionedUsersInChannel = `
+  static SelectFromNotificationTag = `
   SELECT
-    UserId AS userId
-  FROM MentionedUser
+    ChannelId AS channelId,
+    UserId AS userId,
+    Tag AS tag
+  FROM NotificationTag
   WHERE
     ChannelId=?1;`
 
-  static DeleteMentionedUsersInChannel = `
-    DELETE FROM MentionedUser
+  static DeleteNotificationTag = `
+    DELETE FROM NotificationTag
     WHERE
       ChannelId=?1;`
 }
@@ -80,7 +89,7 @@ export async function addPushSubscription(
     .run()
 
   printDbResultInfo('addPushSubscription', info)
-  return new Response(null, { status: 204 })
+  return create204Response()
 }
 
 export async function removePushSubscription(
@@ -93,15 +102,15 @@ export async function removePushSubscription(
     JSON.stringify(params.subscriptionObject),
   )
   printDbResultInfo('removePushSubscription', info)
-  return new Response(null, { status: 204 })
+  return create204Response()
 }
 
 export async function notifyUsers(params: NotifyRequestParams, env: Env) {
   const allNotificationRequests: Promise<SendPushResponse>[] = []
-  const context = await getCurrentChannelContext(params.topic, env.DB)
+  const taggedUsers = await getNotificationTags(params.topic, env.DB)
   // gather all the notification requests into a single promise
   for (const user of params.users) {
-    const userParams = createUserSpecificParams(context, params, user)
+    const userParams = createUserSpecificParams(taggedUsers, params, user)
     const stmt = env.DB.prepare(SqlStatement.SelectPushSubscriptions).bind(user)
     const pushSubscriptions = await stmt.all()
     if (pushSubscriptions.results) {
@@ -165,19 +174,44 @@ export async function notifyUsers(params: NotifyRequestParams, env: Env) {
   return new Response(notificationsSentCount.toString(), { status: 200 })
 }
 
-export async function mentionUsers(params: MentionRequestParams, env: Env) {
-  const prepStatement = env.DB.prepare(SqlStatement.InsertIntoMentionedUser)
+export async function tagMentionUsers(
+  db: D1Database,
+  params: MentionRequestParams,
+) {
+  const prepStatement = db.prepare(SqlStatement.InsertIntoNotificationTag)
   const bindedStatements = params.userIds.map((user) =>
-    prepStatement.bind(params.channelId, user),
+    prepStatement.bind(params.channelId, user, NotificationType.Mention),
   )
-  const rows = await env.DB.batch(bindedStatements)
+  const rows = await db.batch(bindedStatements)
+  // create the http response
+  let response: Response = create204Response()
   if (rows.length > 0) {
-    console.log('mentionUsers', rows[0].success)
-    //printDbResultInfo('mentionUsers', rows[0])
-  } else {
-    console.log('mentionUsers', 'no rows')
+    //printDbResultInfo('tagMentionUsers', rows[0])
+    if (!rows[0].success) {
+      response = create422Response()
+    }
   }
-  return new Response(null, { status: 204 })
+  return response
+}
+
+export async function tagReplyToUser(
+  db: D1Database,
+  params: ReplyToRequestParams,
+) {
+  const prepStatement = db.prepare(SqlStatement.InsertIntoNotificationTag)
+  const bindedStatements = params.userIds.map((user) =>
+    prepStatement.bind(params.channelId, user, NotificationType.ReplyTo),
+  )
+  const rows = await db.batch(bindedStatements)
+  // create the http response
+  let response: Response = create204Response()
+  if (rows.length > 0) {
+    //printDbResultInfo('tagReplyToUser', rows[0])
+    if (!rows[0].success) {
+      response = create422Response()
+    }
+  }
+  return response
 }
 
 function printDbResultInfo(message: string, info: D1Result<unknown>) {
@@ -204,47 +238,57 @@ async function deletePushSubscription(
 }
 
 function createUserSpecificParams(
-  context: CurrentChannelContext,
+  taggedUsers: TaggedUsers,
   params: NotifyRequestParams,
   userId: string,
 ): NotifyRequestParams {
   const userParams = { ...params }
-  if (context.mentionedUsers.includes(userId)) {
+  if (taggedUsers.mentionedUsers.includes(userId)) {
     userParams.payload.notificationType = NotificationType.Mention
+  } else if (taggedUsers.replyToUsers.includes(userId)) {
+    userParams.payload.notificationType = NotificationType.ReplyTo
   }
   return userParams
 }
 
-async function getCurrentChannelContext(
+async function getNotificationTags(
   channelId: string,
   DB: D1Database,
-): Promise<CurrentChannelContext> {
-  // select the mentioned users
-  const selectMentionedUsers = DB.prepare(
-    SqlStatement.SelectMentionedUsersInChannel,
+): Promise<TaggedUsers> {
+  // select the tagged users
+  const selectTaggedUsers = DB.prepare(
+    SqlStatement.SelectFromNotificationTag,
   ).bind(channelId)
 
-  // delete the mentioned users after reading them
-  const deleteUsers = DB.prepare(
-    SqlStatement.DeleteMentionedUsersInChannel,
-  ).bind(channelId)
+  // delete the tagged users after reading them
+  const deleteUsers = DB.prepare(SqlStatement.DeleteNotificationTag).bind(
+    channelId,
+  )
 
-  // get the mentioned users from the DB for this channel
-  const rows = await DB.batch([selectMentionedUsers, deleteUsers])
+  // get the tagged users from the DB for this channel
+  const mentionedUsers: string[] = []
+  const replyToUsers: string[] = []
+  const rows = await DB.batch([selectTaggedUsers, deleteUsers])
   if (rows && rows.length > 0) {
-    const userIds: string[] =
+    const results = rows[0].results
+    for (const row of results) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      rows[0].results?.map((row) => (row as any).userId) ?? []
-    const mentionedUsers: string[] = userIds
-    return {
-      channelId,
-      mentionedUsers,
+      const r = row as QueryResultNotificationTag
+      switch (r.tag) {
+        case NotificationType.Mention:
+          mentionedUsers.push(r.userId)
+          break
+        case NotificationType.ReplyTo:
+          replyToUsers.push(r.userId)
+          break
+      }
     }
   }
 
   // nothing specific for the channel
   return {
     channelId,
-    mentionedUsers: [],
+    mentionedUsers,
+    replyToUsers,
   }
 }

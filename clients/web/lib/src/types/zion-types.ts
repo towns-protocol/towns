@@ -154,6 +154,7 @@ export enum MessageType {
 export interface ThreadIdOptions {
     threadId?: string
     threadPreview?: string
+    threadParticipants?: Set<string>
 }
 
 export type SendTextMessageOptions = ThreadIdOptions & {
@@ -247,8 +248,12 @@ export function getIdForMatrixEvent(event: MatrixEvent): string {
     return `UnknownId_${event.localTimestamp}_${Math.floor(Math.random() * 4095).toString(16)}`
 }
 
-export function isMentionedTextMessageOption(
+export function isMentionedTextMessageOptions(
     options: SendMessageOptions,
-): options is SendTextMessageOptions & SpaceIdOptions {
+): options is SendTextMessageOptions {
     return 'mentions' in options && Array.isArray(options.mentions) && options.mentions.length > 0
+}
+
+export function isThreadIdOptions(options: SendMessageOptions): options is ThreadIdOptions {
+    return 'threadId' in options && typeof options.threadId === 'string'
 }

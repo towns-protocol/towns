@@ -1,10 +1,7 @@
 import { MockProxy, mock } from 'jest-mock-extended'
 
 import { Env } from '../src'
-import {
-  QueryResultMentionedUser,
-  QueryResultSubscription,
-} from '../src/query-interfaces'
+import { QueryResultNotificationTag } from '../src/query-interfaces'
 import { createFakeWebPushSubscription } from './fake-data'
 
 export interface TestMocks {
@@ -91,9 +88,10 @@ export function mockPreparedStatements(DB: MockProxy<D1Database>) {
   const deleteFromPushSubscriptionStatement = mockDummyStatement()
   const selectFromPushSubscriptionStatement =
     mockSelectFromPushSubscriptionStatement()
-  const insertIntoMentionedUserStatement = mockDummyStatement()
-  const deleteMentionedUsersStatement = mockDummyStatement()
-  const selectMentionedUsersStatement = mockSelectFromMentionedUserStatement()
+  const insertIntoNotificationTagStatement = mockDummyStatement()
+  const deleteNotificationTagStatement = mockDummyStatement()
+  const selectNotificationTagStatement =
+    mockSelectFromNotificationTagStatement()
 
   DB.prepare.mockImplementation((query: string) => {
     if (query.includes('SELECT') && query.includes('FROM PushSubscription')) {
@@ -104,13 +102,13 @@ export function mockPreparedStatements(DB: MockProxy<D1Database>) {
       return deleteFromPushSubscriptionStatement
     } else if (
       query.includes('SELECT') &&
-      query.includes('FROM MentionedUser')
+      query.includes('FROM NotificationTag')
     ) {
-      return selectMentionedUsersStatement
-    } else if (query.includes('INSERT INTO MentionedUser')) {
-      return insertIntoMentionedUserStatement
-    } else if (query.includes('DELETE FROM MentionedUser')) {
-      return deleteMentionedUsersStatement
+      return selectNotificationTagStatement
+    } else if (query.includes('INSERT INTO NotificationTag')) {
+      return insertIntoNotificationTagStatement
+    } else if (query.includes('DELETE FROM NotificationTag')) {
+      return deleteNotificationTagStatement
     }
     return mockStatement
   })
@@ -119,8 +117,8 @@ export function mockPreparedStatements(DB: MockProxy<D1Database>) {
     (statements: D1PreparedStatement[]): Promise<D1Result<unknown>[]> => {
       const results: D1Result<unknown>[] = []
       for (const statement of statements) {
-        if (statement === selectMentionedUsersStatement) {
-          selectMentionedUsersStatement.all().then((r) => {
+        if (statement === selectNotificationTagStatement) {
+          selectNotificationTagStatement.all().then((r) => {
             results.push(r)
           })
         } else {
@@ -140,9 +138,9 @@ export function mockPreparedStatements(DB: MockProxy<D1Database>) {
     insertIntoPushSubscriptionStatement,
     deleteFromPushSubscriptionStatement,
     selectFromPushSubscriptionStatement,
-    insertIntoMentionedUserStatement,
-    selectMentionedUsersStatement,
-    deleteMentionedUsersStatement,
+    insertIntoNotificationTagStatement,
+    selectNotificationTagStatement,
+    deleteNotificationTagStatement,
     mockStatement,
   }
 }
@@ -196,18 +194,21 @@ function mockDummyStatement(): MockProxy<D1PreparedStatement> {
   return mockStatement
 }
 
-function mockSelectFromMentionedUserStatement(): MockProxy<D1PreparedStatement> {
+function mockSelectFromNotificationTagStatement(): MockProxy<D1PreparedStatement> {
   const mockStatement = mock<D1PreparedStatement>()
-  const result: QueryResultMentionedUser[] = []
-  mockStatement.bind.mockImplementation((channelId: string, userId: string) => {
-    result.push({
-      channelId,
-      userId,
-    })
-    return mockStatement
-  })
+  const result: QueryResultNotificationTag[] = []
+  mockStatement.bind.mockImplementation(
+    (channelId: string, userId: string, tag: string) => {
+      result.push({
+        channelId,
+        userId,
+        tag,
+      })
+      return mockStatement
+    },
+  )
   mockStatement.all.mockResolvedValue({
-    results: [result] as unknown as QueryResultMentionedUser[][],
+    results: [result] as unknown as QueryResultNotificationTag[][],
     success: true,
     meta: {},
   })

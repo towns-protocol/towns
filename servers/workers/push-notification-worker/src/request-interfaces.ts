@@ -78,6 +78,24 @@ export function isMentionRequestParams(
 ): params is MentionRequestParams {
   return (
     typeof params.channelId === 'string' &&
+    params.channelId.length > 0 && // channelId is required
+    Array.isArray(params.userIds) &&
+    params.userIds.every((user: unknown) => isUserId(user))
+  )
+}
+
+export interface ReplyToRequestParams {
+  channelId: string
+  userIds: string[]
+}
+
+export function isReplyToRequestParams(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  params: any,
+): params is ReplyToRequestParams {
+  return (
+    typeof params.channelId === 'string' &&
+    params.channelId.length > 0 && // channelId is required
     Array.isArray(params.userIds) &&
     params.userIds.every((user: unknown) => isUserId(user))
   )

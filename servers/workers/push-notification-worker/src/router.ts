@@ -1,9 +1,11 @@
 import {
   addPushSubscription,
-  mentionUsers,
   notifyUsers,
   removePushSubscription,
+  tagMentionUsers,
+  tagReplyToUser,
 } from './subscription-handlers'
+import { create400Response, create401Response } from './http-responses'
 import {
   getDefaultRouteDev,
   getServiceWorkerJsDev,
@@ -13,6 +15,7 @@ import {
   isMentionRequestParams,
   isNotifyRequestParams,
   isRemoveSubscriptionRequestParams,
+  isReplyToRequestParams,
 } from './request-interfaces'
 
 import { Env } from '.'
@@ -70,35 +73,37 @@ router.post('/api/notify-users', async (request: Request, env: Env) => {
   return notifyUsers(content, env)
 })
 
-router.post('/api/mention-users', async (request: Request, env: Env) => {
+router.post('/api/tag-mention-users', async (request: Request, env: Env) => {
   // check auth before doing work
   if (!isAuthedRequest(request, env)) {
-    return create401Response('/api/mention-users')
+    return create401Response('/api/tag-mention-users')
   }
 
   // get the content of the request as json
   const content = await getContentAsJson(request)
   if (!content || !isMentionRequestParams(content)) {
-    return create400Response('/api/mention-users', content)
+    return create400Response('/api/tag-mention-users', content)
   }
 
   // handle a proper request
-  return mentionUsers(content, env)
+  return tagMentionUsers(env.DB, content)
 })
 
-function create400Response(path: string, content: object | null) {
-  console.error(path, 'Bad request', content)
-  return new Response('Bad request', {
-    status: 400,
-  })
-}
+router.post('/api/tag-reply-to-users', async (request: Request, env: Env) => {
+  // check auth before doing work
+  if (!isAuthedRequest(request, env)) {
+    return create401Response('/api/tag-reply-to-users')
+  }
 
-function create401Response(path: string) {
-  console.error(path, 'Unauthorized')
-  return new Response('Unauthorized', {
-    status: 401,
-  })
-}
+  // get the content of the request as json
+  const content = await getContentAsJson(request)
+  if (!content || !isReplyToRequestParams(content)) {
+    return create400Response('/api/tag-reply-to-users', content)
+  }
+
+  // handle a proper request
+  return tagReplyToUser(env.DB, content)
+})
 
 async function getContentAsJson(request: Request): Promise<object | null> {
   let content = {}

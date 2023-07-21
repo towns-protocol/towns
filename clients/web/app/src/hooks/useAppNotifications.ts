@@ -11,7 +11,7 @@ export const useAppNotifications = () => {
         broadcastChannel.onmessage = (event) => {
             const notification = appNotificationFromPushEvent(event.data)
             if (!notification) {
-                console.log("sw: couldn't parse notification")
+                console.log("sw: hook couldn't parse notification")
                 return
             }
 
