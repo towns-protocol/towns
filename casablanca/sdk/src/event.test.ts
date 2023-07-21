@@ -65,7 +65,7 @@ describe('riverEventTest', () => {
         const bobsSpaceId = makeSpaceStreamId('bobs-space-' + genId())
         const bobsChannelName = 'Bobs channel'
         const bobsChannelTopic = 'Bobs channel topic'
-        await expect(bobsClient.createSpace(bobsSpaceId)).toResolve()
+        await expect(bobsClient.createSpace(bobsSpaceId, { name: "Bob's Space" })).toResolve()
 
         await expect(
             bobsClient.createChannel(

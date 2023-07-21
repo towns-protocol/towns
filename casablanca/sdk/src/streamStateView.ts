@@ -14,6 +14,7 @@ import {
     StreamAndCookie,
     ChannelProperties,
     EncryptedData,
+    SpacePayload_Inception,
 } from '@towns/proto'
 import TypedEmitter from 'typed-emitter'
 import { check, checkNever, isDefined, throwWithCode } from './check'
@@ -35,6 +36,7 @@ const isCookieEqual = (a?: SyncCookie, b?: SyncCookie): boolean => isEqual(a, b)
 
 export class StreamStateView {
     readonly streamId: string
+    readonly name?: string
     readonly payloadKind: PayloadCaseType
 
     readonly streamCustomProperties = new Map<string, string>()
@@ -86,6 +88,8 @@ export class StreamStateView {
         this.payloadKind = inceptionEvent.event.payload.case
         if (this.payloadKind === 'channelPayload') {
             this.parentSpaceId = (inceptionPayload as ChannelPayload_Inception).spaceId
+        } else if (this.payloadKind === 'spacePayload') {
+            this.name = (inceptionPayload as SpacePayload_Inception).name
         }
     }
 

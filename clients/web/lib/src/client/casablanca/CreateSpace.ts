@@ -14,7 +14,7 @@ export async function createCasablancaSpace(
     if (createSpaceInfo.spaceProtocol !== SpaceProtocol.Casablanca) {
         throw new Error("Can't create a casablanca space with a non-casablanca protocol")
     }
-    const result = await casablancaClient.createSpace(networkId)
+    const result = await casablancaClient.createSpace(networkId, { name: createSpaceInfo.name })
     await casablancaClient.waitForStream(result.streamId)
     return makeCasablancaStreamIdentifier(result.streamId)
 }

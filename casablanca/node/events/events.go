@@ -100,12 +100,13 @@ func Make_ChannelPayload_Inception(streamId string, spaceId string, channelPrope
 	}
 }
 
-func Make_SpacePayload_Inception(streamId string) *StreamEvent_SpacePayload {
+func Make_SpacePayload_Inception(streamId string, name string) *StreamEvent_SpacePayload {
 	return &StreamEvent_SpacePayload{
 		SpacePayload: &SpacePayload{
 			Content: &SpacePayload_Inception_{
 				Inception: &SpacePayload_Inception{
 					StreamId: streamId,
+					Name: name,
 				},
 			},
 		},

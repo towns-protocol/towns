@@ -160,6 +160,7 @@ message UserPayload {
 message SpacePayload {
     message Inception {
         string stream_id = 1;
+        string name = 2; // todo encrypt "name" HNT-1802
     }
 
     message Channel {

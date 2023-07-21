@@ -176,6 +176,7 @@ describe('streamRpcClient', () => {
             bobsContext,
             make_SpacePayload_Inception({
                 streamId: spaceId,
+                name: 'Bobs space',
             }),
             [],
         )
@@ -450,6 +451,7 @@ describe('streamRpcClient', () => {
         const spaceEvents = await makeEvents(bobsContext, [
             make_SpacePayload_Inception({
                 streamId: spacedStreamId,
+                name: 'Bobs space',
             }),
             make_SpacePayload_Membership({
                 userId: bobsUserId,
@@ -612,6 +614,7 @@ describe('streamRpcClient', () => {
         const spaceEvents = await makeEvents(bobsContext, [
             make_SpacePayload_Inception({
                 streamId: spacedStreamId,
+                name: 'Bobs space',
             }),
             make_SpacePayload_Membership({
                 userId: bobsUserId,
