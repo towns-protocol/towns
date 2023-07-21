@@ -1,6 +1,9 @@
+import {
+  DeleteSettingsRequestParams,
+  SaveSettingsRequestParams,
+} from './request-interfaces'
 import { create204Response, create422Response } from './http-responses'
 
-import { SettingsRequestParams } from './request-interfaces'
 import { printDbResultInfo } from './sql'
 
 class SettingsSqlStatement {
@@ -31,7 +34,7 @@ class SettingsSqlStatement {
 
 export async function saveSettings(
   db: D1Database,
-  params: SettingsRequestParams,
+  params: SaveSettingsRequestParams,
 ) {
   const result = await db
     .prepare(SettingsSqlStatement.InsertIntoNotificationSettings)
@@ -40,6 +43,22 @@ export async function saveSettings(
   let response: Response = create204Response()
   if (!result.success) {
     printDbResultInfo('saveSettings sql error', result)
+    response = create422Response()
+  }
+  return create204Response()
+}
+
+export async function deleteSettings(
+  db: D1Database,
+  params: DeleteSettingsRequestParams,
+) {
+  const result = await db
+    .prepare(SettingsSqlStatement.DeleteFromNotificationSettings)
+    .bind(params.userId)
+    .run()
+  let response: Response = create204Response()
+  if (!result.success) {
+    printDbResultInfo('deleteSettings sql error', result)
     response = create422Response()
   }
   return create204Response()

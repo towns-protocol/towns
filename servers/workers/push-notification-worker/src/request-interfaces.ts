@@ -102,18 +102,31 @@ export function isReplyToRequestParams(
   )
 }
 
-export interface SettingsRequestParams {
+export interface SaveSettingsRequestParams {
   userId: string
   settings: NotificationSettings
 }
 
-export function isSettingsRequestParams(
+export function isSaveSettingsRequestParams(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   params: any,
-): params is SettingsRequestParams {
+): params is SaveSettingsRequestParams {
   return (
     typeof params.userId === 'string' &&
     params.userId.length > 0 && // userId is required
     typeof params.settings === 'object'
+  )
+}
+
+export interface DeleteSettingsRequestParams {
+  userId: string
+}
+
+export function isDeleteSettingsRequestParams(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  params: any,
+): params is DeleteSettingsRequestParams {
+  return (
+    typeof params.userId === 'string' && params.userId.length > 0 // userId is required
   )
 }

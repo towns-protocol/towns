@@ -3,17 +3,19 @@ import {
   removePushSubscription,
 } from './subscription-handlers'
 import { create400Response, create401Response } from './http-responses'
+import { deleteSettings, saveSettings } from './settings-handlers'
 import {
   getDefaultRouteDev,
   getServiceWorkerJsDev,
 } from './subscription-handlers.dev'
 import {
   isAddSubscriptionRequestParams,
+  isDeleteSettingsRequestParams,
   isMentionRequestParams,
   isNotifyRequestParams,
   isRemoveSubscriptionRequestParams,
   isReplyToRequestParams,
-  isSettingsRequestParams,
+  isSaveSettingsRequestParams,
 } from './request-interfaces'
 import { tagMentionUsers, tagReplyToUser } from './tag-handlers'
 
@@ -21,7 +23,6 @@ import { Env } from '.'
 import { Router } from 'itty-router'
 import { isAuthedRequest } from '../../common'
 import { notifyUsers } from './notify-users-handlers'
-import { saveSettings } from './settings-handlers'
 
 // now let's create a router (note the lack of "new")
 const router = Router()
@@ -114,13 +115,32 @@ router.put('/api/notification-settings', async (request: Request, env: Env) => {
 
   // get the content of the request as json
   const content = await getContentAsJson(request)
-  if (!content || !isSettingsRequestParams(content)) {
+  if (!content || !isSaveSettingsRequestParams(content)) {
     return create400Response('/api/notification-settings', content)
   }
 
   // handle a proper request
   return saveSettings(env.DB, content)
 })
+
+router.delete(
+  '/api/notification-settings',
+  async (request: Request, env: Env) => {
+    // check auth before doing work
+    if (!isAuthedRequest(request, env)) {
+      return create401Response('/api/notification-settings')
+    }
+
+    // get the content of the request as json
+    const content = await getContentAsJson(request)
+    if (!content || !isDeleteSettingsRequestParams(content)) {
+      return create400Response('/api/notification-settings', content)
+    }
+
+    // handle a proper request
+    return deleteSettings(env.DB, content)
+  },
+)
 
 async function getContentAsJson(request: Request): Promise<object | null> {
   let content = {}
