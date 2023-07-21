@@ -57,8 +57,6 @@
       {
         "label": "Stage 3",
         "dependsOn": [
-          "Dendrite (from source)",
-          "Casablanca",
           "WatchSharedLib",
           "WatchCasablancaSdk",
           "WatchCasablancaMechOlm",
@@ -69,7 +67,9 @@
           "UnfurlWorker",
           "TokenWorker",
           "GatewayWorker",
-          "PushNotificationsWorker"
+          "PushNotificationsWorker",
+          "Dendrite (from source)",
+          "Casablanca"
         ],
         "group": {
           "kind": "build",
