@@ -8,7 +8,7 @@ import { NotificationType } from '../src/types'
 import { handleRequest } from '../src'
 
 describe('tag-handlers', () => {
-  test('api/tag-mention-users', async () => {
+  test('/api/tag-mention-users', async () => {
     // Arrange
     const mentionedUsers = [`0xAlice${Date.now()}`, `0xBob${Date.now()}`]
     const channelId = `Channel${Date.now()}`
@@ -18,13 +18,13 @@ describe('tag-handlers', () => {
     }
     // create the request
     const { request, env, DB, ctx } = createTestMocks({
-      route: 'api/tag-mention-users',
+      route: '/api/tag-mention-users',
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(params),
     })
     // replace with my own mocks to spy on
-    const { insertIntoNotificationTagStatement: mockStatement } =
+    const { insertIntoNotificationTag: mockStatement } =
       mockPreparedStatements(DB)
     const prepareSpy = jest.spyOn(DB, 'prepare')
     const bindSpy = jest.spyOn(mockStatement, 'bind')
@@ -48,7 +48,7 @@ describe('tag-handlers', () => {
     }
   })
 
-  test('api/tag-reply-to-users', async () => {
+  test('/api/tag-reply-to-users', async () => {
     // Arrange
     const replyToUsers = [`0xAlice${Date.now()}`, `0xBob${Date.now()}`]
     const channelId = `Channel${Date.now()}`
@@ -58,13 +58,13 @@ describe('tag-handlers', () => {
     }
     // create the request
     const { request, env, DB, ctx } = createTestMocks({
-      route: 'api/tag-reply-to-users',
+      route: '/api/tag-reply-to-users',
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(params),
     })
     // replace with my own mocks to spy on
-    const { insertIntoNotificationTagStatement: mockStatement } =
+    const { insertIntoNotificationTag: mockStatement } =
       mockPreparedStatements(DB)
     const prepareSpy = jest.spyOn(DB, 'prepare')
     const bindSpy = jest.spyOn(mockStatement, 'bind')

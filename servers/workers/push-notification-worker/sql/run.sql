@@ -1,0 +1,2 @@
+-- for debugging. Run any sql statement.
+drop table if exists NotificationSettings;

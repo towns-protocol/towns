@@ -65,7 +65,7 @@ export function createRequest(
     body,
   }: MockOptions,
 ): Request {
-  const url = `http://localhost:8787/${route}` // some dummy url
+  const url = `http://localhost:8787${route}` // some dummy url
   headers = modifyHeaders(headers, env, includeBearerToken)
   return new Request(url, { method, headers, body })
 }
@@ -84,31 +84,35 @@ function modifyHeaders(
 
 export function mockPreparedStatements(DB: MockProxy<D1Database>) {
   const mockStatement = mockDummyStatement()
-  const insertIntoPushSubscriptionStatement = mockDummyStatement()
-  const deleteFromPushSubscriptionStatement = mockDummyStatement()
-  const selectFromPushSubscriptionStatement =
-    mockSelectFromPushSubscriptionStatement()
-  const insertIntoNotificationTagStatement = mockDummyStatement()
-  const deleteNotificationTagStatement = mockDummyStatement()
-  const selectNotificationTagStatement =
-    mockSelectFromNotificationTagStatement()
+  const insertIntoPushSubscription = mockDummyStatement()
+  const deleteFromPushSubscription = mockDummyStatement()
+  const selectFromPushSubscription = mockSelectFromPushSubscriptionStatement()
+  const insertIntoNotificationTag = mockDummyStatement()
+  const deleteFromNotificationTag = mockDummyStatement()
+  const selectNotificationTag = mockSelectFromNotificationTagStatement()
+  const insertIntoNotificationSettings = mockDummyStatement()
+  const deleteFromNotificationSettings = mockDummyStatement()
 
   DB.prepare.mockImplementation((query: string) => {
     if (query.includes('SELECT') && query.includes('FROM PushSubscription')) {
-      return selectFromPushSubscriptionStatement
+      return selectFromPushSubscription
     } else if (query.includes('INSERT INTO PushSubscription')) {
-      return insertIntoPushSubscriptionStatement
+      return insertIntoPushSubscription
     } else if (query.includes('DELETE FROM PushSubscription')) {
-      return deleteFromPushSubscriptionStatement
+      return deleteFromPushSubscription
     } else if (
       query.includes('SELECT') &&
       query.includes('FROM NotificationTag')
     ) {
-      return selectNotificationTagStatement
+      return selectNotificationTag
     } else if (query.includes('INSERT INTO NotificationTag')) {
-      return insertIntoNotificationTagStatement
+      return insertIntoNotificationTag
     } else if (query.includes('DELETE FROM NotificationTag')) {
-      return deleteNotificationTagStatement
+      return deleteFromNotificationTag
+    } else if (query.includes('INSERT INTO NotificationSettings')) {
+      return insertIntoNotificationSettings
+    } else if (query.includes('DELETE FROM NotificationSettings')) {
+      return deleteFromNotificationSettings
     }
     return mockStatement
   })
@@ -117,8 +121,8 @@ export function mockPreparedStatements(DB: MockProxy<D1Database>) {
     (statements: D1PreparedStatement[]): Promise<D1Result<unknown>[]> => {
       const results: D1Result<unknown>[] = []
       for (const statement of statements) {
-        if (statement === selectNotificationTagStatement) {
-          selectNotificationTagStatement.all().then((r) => {
+        if (statement === selectNotificationTag) {
+          selectNotificationTag.all().then((r) => {
             results.push(r)
           })
         } else {
@@ -135,12 +139,14 @@ export function mockPreparedStatements(DB: MockProxy<D1Database>) {
   )
 
   return {
-    insertIntoPushSubscriptionStatement,
-    deleteFromPushSubscriptionStatement,
-    selectFromPushSubscriptionStatement,
-    insertIntoNotificationTagStatement,
-    selectNotificationTagStatement,
-    deleteNotificationTagStatement,
+    insertIntoPushSubscription,
+    deleteFromPushSubscription,
+    selectFromPushSubscription,
+    insertIntoNotificationTag,
+    selectNotificationTag,
+    deleteFromNotificationTag,
+    insertIntoNotificationSettings,
+    deleteFromNotificationSettings,
     mockStatement,
   }
 }

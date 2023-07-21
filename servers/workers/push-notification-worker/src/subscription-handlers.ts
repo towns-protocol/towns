@@ -5,7 +5,7 @@ import {
 import { PushType, UserId, isPushType, isUserId } from './types'
 
 import { Env } from 'index'
-import { create204Response } from './http-responses'
+import { create204Response, create422Response } from './http-responses'
 import { printDbResultInfo } from './sql'
 
 export class PushSubscriptionSqlStatement {
@@ -60,13 +60,17 @@ export async function addPushSubscription(
   env: Env,
 ) {
   const pushType: PushType = params.pushType ?? 'web-push' // default
-  const info = await env.DB.prepare(
+  const result = await env.DB.prepare(
     PushSubscriptionSqlStatement.InsertIntoPushSubscription,
   )
     .bind(params.userId, JSON.stringify(params.subscriptionObject), pushType)
     .run()
 
-  printDbResultInfo('addPushSubscription', info)
+  let response: Response = create204Response()
+  if (!result.success) {
+    printDbResultInfo('addPushSubscription sql error', result)
+    response = create422Response()
+  }
   return create204Response()
 }
 
@@ -74,12 +78,16 @@ export async function removePushSubscription(
   params: RemoveSubscriptionRequestParams,
   env: Env,
 ) {
-  const info = await deletePushSubscription(
+  const result = await deletePushSubscription(
     env.DB,
     params.userId,
     JSON.stringify(params.subscriptionObject),
   )
-  printDbResultInfo('removePushSubscription', info)
+  let response: Response = create204Response()
+  if (!result.success) {
+    printDbResultInfo('removePushSubscription sql error', result)
+    response = create422Response()
+  }
   return create204Response()
 }
 

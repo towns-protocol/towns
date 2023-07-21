@@ -1,5 +1,6 @@
 import {
   NotificationPayload,
+  NotificationSettings,
   PushType,
   SubscriptionObject,
   Urgency,
@@ -98,5 +99,21 @@ export function isReplyToRequestParams(
     params.channelId.length > 0 && // channelId is required
     Array.isArray(params.userIds) &&
     params.userIds.every((user: unknown) => isUserId(user))
+  )
+}
+
+export interface SettingsRequestParams {
+  userId: string
+  settings: NotificationSettings
+}
+
+export function isSettingsRequestParams(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  params: any,
+): params is SettingsRequestParams {
+  return (
+    typeof params.userId === 'string' &&
+    params.userId.length > 0 && // userId is required
+    typeof params.settings === 'object'
   )
 }

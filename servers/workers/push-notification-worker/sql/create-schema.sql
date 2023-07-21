@@ -17,5 +17,11 @@ CREATE TABLE IF NOT EXISTS NotificationTag (
   ChannelId VARCHAR(255) NOT NULL,
   UserId VARCHAR(255) NOT NULL,
   Tag VARCHAR(128) NOT NULL,
-  CONSTRAINT MentionsUsers_PK PRIMARY KEY (ChannelId, UserId)
+  CONSTRAINT NotificationTag_PK PRIMARY KEY (ChannelId, UserId)
+);
+
+CREATE TABLE IF NOT EXISTS NotificationSettings (
+  UserId VARCHAR(255) NOT NULL,
+  Settings VARCHAR(1024) NOT NULL,
+  CONSTRAINT NotificationSettings_PK PRIMARY KEY (UserId)
 );

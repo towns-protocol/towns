@@ -13,8 +13,8 @@ import { WebPushSubscription } from '../src/web-push/web-push-types'
 import { createFakeWebPushSubscription } from './fake-data'
 import { handleRequest } from '../src'
 
-describe('send-notifications-handlers', () => {
-  test('api/notify-users', async () => {
+describe('notify-users-handlers', () => {
+  test('/api/notify-users', async () => {
     // Arrange
     const fetchMock = getMiniflareFetchMock()
     fetchMock.disableNetConnect()
@@ -32,7 +32,7 @@ describe('send-notifications-handlers', () => {
       DB,
       ctx,
     } = createTestMocks({
-      route: 'api/add-subscription',
+      route: '/api/add-subscription',
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(addParams),
@@ -60,7 +60,7 @@ describe('send-notifications-handlers', () => {
     }
     // create the notification request
     const notifyRequest = createRequest(env, {
-      route: 'api/notify-users',
+      route: '/api/notify-users',
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(notifyParams),

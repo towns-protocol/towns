@@ -4,8 +4,8 @@ import { AddSubscriptionRequestParams } from '../src/request-interfaces'
 import { createFakeWebPushSubscription } from './fake-data'
 import { handleRequest } from '../src'
 
-describe('subscription handlers', () => {
-  test('api/add-subscription', async () => {
+describe('subscription-handlers', () => {
+  test('/api/add-subscription', async () => {
     // Arrange
     const userId = `0xAlice${Date.now()}`
     const subscriptionObject = createFakeWebPushSubscription()
@@ -15,13 +15,13 @@ describe('subscription handlers', () => {
     }
     // create the request
     const { request, env, DB, ctx } = createTestMocks({
-      route: 'api/add-subscription',
+      route: '/api/add-subscription',
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(params),
     })
     // replace with my own mocks to spy on
-    const { insertIntoPushSubscriptionStatement: mockStatement } =
+    const { insertIntoPushSubscription: mockStatement } =
       mockPreparedStatements(DB)
     const prepareSpy = jest.spyOn(DB, 'prepare')
     const bindSpy = jest.spyOn(mockStatement, 'bind')
@@ -42,7 +42,7 @@ describe('subscription handlers', () => {
     )
   })
 
-  test('api/remove-subscription', async () => {
+  test('/api/remove-subscription', async () => {
     // Arrange
     const userId = `0xAlice${Date.now()}`
     const subscriptionObject = createFakeWebPushSubscription()
@@ -52,13 +52,13 @@ describe('subscription handlers', () => {
     }
     // create the request to remove the subscription
     const { request, env, DB, ctx } = createTestMocks({
-      route: 'api/remove-subscription',
+      route: '/api/remove-subscription',
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(params),
     })
     // replace with mocks to spy on
-    const { deleteFromPushSubscriptionStatement: mockStatement } =
+    const { deleteFromPushSubscription: mockStatement } =
       mockPreparedStatements(DB)
     const prepareSpy = jest.spyOn(DB, 'prepare')
     const bindSpy = jest.spyOn(mockStatement, 'bind')

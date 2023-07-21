@@ -51,6 +51,8 @@ export async function handleRequest(
       return getOptionsResponse(request, env.ENVIRONMENT)
     case 'GET':
     case 'POST':
+    case 'PUT':
+    case 'DELETE':
       try {
         if (isAllowedOrigin(request, env.ENVIRONMENT)) {
           // handle the request

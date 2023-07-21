@@ -5,7 +5,9 @@ import {
 import { NotificationType, UserId } from './types'
 import { create204Response, create422Response } from './http-responses'
 
-class NotificationTagSqlStatement {
+import { printDbResultInfo } from './sql'
+
+class TagSqlStatement {
   static InsertIntoNotificationTag = `
   INSERT INTO NotificationTag (
     ChannelId,
@@ -28,7 +30,7 @@ class NotificationTagSqlStatement {
   WHERE
     ChannelId=?1;`
 
-  static DeleteNotificationTag = `
+  static DeleteFromNotificationTag = `
     DELETE FROM NotificationTag
     WHERE
       ChannelId=?1;`
@@ -50,9 +52,7 @@ export async function tagMentionUsers(
   db: D1Database,
   params: MentionRequestParams,
 ) {
-  const prepStatement = db.prepare(
-    NotificationTagSqlStatement.InsertIntoNotificationTag,
-  )
+  const prepStatement = db.prepare(TagSqlStatement.InsertIntoNotificationTag)
   const bindedStatements = params.userIds.map((user) =>
     prepStatement.bind(params.channelId, user, NotificationType.Mention),
   )
@@ -60,8 +60,8 @@ export async function tagMentionUsers(
   // create the http response
   let response: Response = create204Response()
   if (rows.length > 0) {
-    //printDbResultInfo('tagMentionUsers', rows[0])
     if (!rows[0].success) {
+      printDbResultInfo('tagMentionUsers sql error', rows[0])
       response = create422Response()
     }
   }
@@ -72,9 +72,7 @@ export async function tagReplyToUser(
   db: D1Database,
   params: ReplyToRequestParams,
 ) {
-  const prepStatement = db.prepare(
-    NotificationTagSqlStatement.InsertIntoNotificationTag,
-  )
+  const prepStatement = db.prepare(TagSqlStatement.InsertIntoNotificationTag)
   const bindedStatements = params.userIds.map((user) =>
     prepStatement.bind(params.channelId, user, NotificationType.ReplyTo),
   )
@@ -82,8 +80,8 @@ export async function tagReplyToUser(
   // create the http response
   let response: Response = create204Response()
   if (rows.length > 0) {
-    //printDbResultInfo('tagReplyToUser', rows[0])
     if (!rows[0].success) {
+      printDbResultInfo('tagReplyToUser sql error', rows[0])
       response = create422Response()
     }
   }
@@ -96,12 +94,12 @@ export async function getNotificationTags(
 ): Promise<TaggedUsers> {
   // select the tagged users
   const selectTaggedUsers = DB.prepare(
-    NotificationTagSqlStatement.SelectFromNotificationTag,
+    TagSqlStatement.SelectFromNotificationTag,
   ).bind(channelId)
 
   // delete the tagged users after reading them
   const deleteUsers = DB.prepare(
-    NotificationTagSqlStatement.DeleteNotificationTag,
+    TagSqlStatement.DeleteFromNotificationTag,
   ).bind(channelId)
 
   // get the tagged users from the DB for this channel
