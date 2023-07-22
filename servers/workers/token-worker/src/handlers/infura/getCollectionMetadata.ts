@@ -53,7 +53,7 @@ export const getCollectionMetadata = async (request: TokenProviderRequest, env: 
 
     const headers = {
         'Content-type': 'application/json',
-        ...withCorsHeaders(request, env.ENVIROMENT),
+        ...withCorsHeaders(request, env.ENVIRONMENT),
     }
     return new Response(body, { headers })
 }

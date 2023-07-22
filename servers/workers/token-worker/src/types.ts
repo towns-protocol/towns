@@ -9,7 +9,7 @@ import {
 import { AuthEnv, Environment } from '../../common'
 
 export interface Env extends AuthEnv {
-    ENVIROMENT: Environment
+    ENVIRONMENT: Environment
     ALCHEMY_API_KEY: string
     INFURA_API_KEY: string
     INFURA_API_SECRET: string

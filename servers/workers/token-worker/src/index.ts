@@ -108,9 +108,9 @@ router
         withInfuraAuthHeader,
         (request: TokenProviderRequest, env: Env) => {
             if (request.params?.provider === ProviderAlias.Infura) {
-                return getCollectionsForOwnerInfura(request, env.ENVIROMENT)
+                return getCollectionsForOwnerInfura(request, env.ENVIRONMENT)
             } else {
-                return getCollectionsForOwnerAlchemy(request, env.ENVIROMENT)
+                return getCollectionsForOwnerAlchemy(request, env.ENVIRONMENT)
             }
         },
     )
@@ -134,7 +134,7 @@ router
             if (request.params?.provider === ProviderAlias.Infura) {
                 return getCollectionMetadataInfura(request, env)
             } else {
-                return getCollectionMetadataAlchemy(request, env.ENVIROMENT)
+                return getCollectionMetadataAlchemy(request, env.ENVIRONMENT)
             }
         },
     )
@@ -150,12 +150,12 @@ export const worker = {
 export default {
     fetch(request: Request, env: Env) {
         if (isOptionsRequest(request)) {
-            return getOptionsResponse(request, env.ENVIROMENT)
+            return getOptionsResponse(request, env.ENVIRONMENT)
         }
         if (!isAuthedRequest(request, env)) {
             return new Response('Unauthorized', {
                 status: 401,
-                headers: withCorsHeaders(request, env.ENVIROMENT),
+                headers: withCorsHeaders(request, env.ENVIRONMENT),
             })
         }
         return worker.fetch(request, env)

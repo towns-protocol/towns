@@ -1,7 +1,7 @@
 /* eslint-disable  @typescript-eslint/no-explicit-any */
 import { Env } from '.'
 
-export const upsertImage = async (getUrl: URL, apiUrl: URL, id: string, request: any, env: Env) => {
+export const upsertImage = async (getUrl: URL, apiUrl: URL, request: any, env: Env) => {
     const getRequestInit = {
         method: 'GET',
         headers: {
@@ -35,7 +35,6 @@ export const upsertImage = async (getUrl: URL, apiUrl: URL, id: string, request:
     cfFormData.append('id', formData.get('id') ?? '')
     cfFormData.append('file', formData.get('file') ?? '')
 
-    // proxy POST request to images.zion.xyz
     try {
         const resp = await fetch(
             new URL([env.CF_API, env.ACCOUNT_ID, 'images/v1'].join('/')).toString(),

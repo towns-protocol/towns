@@ -11,7 +11,7 @@ export function throwCustomError(message: string, status: number) {
 const errorHandler = (error: IError, request: Request, env: Env) => {
     return new Response(error.message || 'Server Error', {
         status: error.status || 500,
-        headers: withCorsHeaders(request, env.ENVIROMENT),
+        headers: withCorsHeaders(request, env.ENVIRONMENT),
     })
 }
 

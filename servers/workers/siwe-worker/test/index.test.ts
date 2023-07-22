@@ -25,7 +25,7 @@ const GOOD_SIWE_MSG = {
 	issuedAt: '2023-01-13T00:15:43.293Z',
 }
 
-const SPACE_ID = '!D0VFbAuDoMFGpn0T:node1.zion.xyz'
+const SPACE_ID = '!D0VFbAuDoMFGpn0T:node1.towns.com'
 const CHAIN_ID = 5
 
 const BAD_SIG =

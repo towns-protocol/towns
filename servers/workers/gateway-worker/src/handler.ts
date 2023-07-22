@@ -6,11 +6,9 @@ import { sendSnsTopic } from './snsClient'
 import { handleCookie, invalidCookieResponse } from './cookie'
 import { fetchLocalAuthz } from './fetchLocalAuthz'
 
-const CDN_CGI_PATH = 'cdn-cgi/image'
-const CDN_CGI_PATH_ID = 'cdn-cgi/imagedelivery'
 const IMAGE_OPTIONS_REGEX = '(=|,)+'
 const DEFAULT_OPTIONS = 'width=1920,fit=scale-down'
-const IMAGE_DELIVERY_SERVICE = 'https://imagedelivery.net'
+export const IMAGE_DELIVERY_SERVICE = 'https://imagedelivery.net'
 const CACHE_TTL = 5
 const BIO_MAX_SIZE = 280
 
@@ -81,18 +79,8 @@ router.get('/space-icon/:id+', async (request: WorkerRequest, env) => {
     }
     // redirect url
     const destinationURL = new URL(
-        [
-            env.IMAGE_SERVICE,
-            CDN_CGI_PATH,
-            options,
-            env.IMAGE_SERVICE,
-            CDN_CGI_PATH_ID,
-            env.IMAGE_HASH,
-            spaceId,
-            'public',
-        ].join('/'),
+        [IMAGE_DELIVERY_SERVICE, env.IMAGE_HASH, spaceId, 'public'].join('/'),
     )
-
     const newRequest: Request = new Request(destinationURL, new Request(request.clone()))
     try {
         // cache this fetch for max of CACHE_TTL seconds before revalidation
@@ -165,19 +153,8 @@ router.post('/space-icon/:id', async (request: WorkerRequest, env) => {
 
     const destinationURL = new URL([env.CF_API, env.ACCOUNT_ID, 'images/v1', spaceId].join('/'))
     // upsert
-    const getUrl = new URL(
-        [
-            env.IMAGE_SERVICE,
-            CDN_CGI_PATH,
-            DEFAULT_OPTIONS,
-            env.IMAGE_SERVICE,
-            CDN_CGI_PATH_ID,
-            env.IMAGE_HASH,
-            spaceId,
-            'public',
-        ].join('/'),
-    )
-    return await upsertImage(getUrl, destinationURL, spaceId, request, env)
+    const getUrl = new URL([IMAGE_DELIVERY_SERVICE, env.IMAGE_HASH, spaceId, 'public'].join('/'))
+    return await upsertImage(getUrl, destinationURL, request, env)
 })
 
 router.post('/user/:id/avatar', async (request: WorkerRequest, env) => {
@@ -232,19 +209,8 @@ router.post('/user/:id/avatar', async (request: WorkerRequest, env) => {
 
     const destinationURL = new URL([env.CF_API, env.ACCOUNT_ID, 'images/v1', userId].join('/'))
     // upsert
-    const getUrl = new URL(
-        [
-            env.IMAGE_SERVICE,
-            CDN_CGI_PATH,
-            DEFAULT_OPTIONS,
-            env.IMAGE_SERVICE,
-            CDN_CGI_PATH_ID,
-            env.IMAGE_HASH,
-            userId,
-            'public',
-        ].join('/'),
-    )
-    return await upsertImage(getUrl, destinationURL, userId, request, env)
+    const getUrl = new URL([IMAGE_DELIVERY_SERVICE, env.IMAGE_HASH, userId, 'public'].join('/'))
+    return await upsertImage(getUrl, destinationURL, request, env)
 })
 
 // /user/<user_id>/avatar/<IMAGE_OPTIONS>
@@ -264,16 +230,7 @@ router.get('/user/:id/avatar', async (request: WorkerRequest, env) => {
     }
     // redirect url
     const destinationURL = new URL(
-        [
-            env.IMAGE_SERVICE,
-            CDN_CGI_PATH,
-            options,
-            env.IMAGE_SERVICE,
-            CDN_CGI_PATH_ID,
-            env.IMAGE_HASH,
-            userId,
-            'public',
-        ].join('/'),
+        [IMAGE_DELIVERY_SERVICE, env.IMAGE_HASH, userId, 'public'].join('/'),
     )
     const newRequest: Request = new Request(destinationURL, new Request(request.clone()))
     try {

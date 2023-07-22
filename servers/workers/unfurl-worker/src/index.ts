@@ -102,10 +102,14 @@ export const worker = {
 
         let response
         const cache = caches.default
-        response = await cache.match(cacheKey)
-
-        if (response) {
-            return response
+        try {
+            // note: if you want access to KV store locally, you have to run worker with --remote flag
+            response = await cache.match(cacheKey)
+            if (response) {
+                return response
+            }
+        } catch (error) {
+            console.error('error getting response from cache', error)
         }
 
         const { searchParams } = url

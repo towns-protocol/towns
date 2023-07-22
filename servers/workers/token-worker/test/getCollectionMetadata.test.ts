@@ -36,7 +36,7 @@ describe('getCollectionMetadata()', () => {
                 AUTH_SECRET: 'fake_secret',
                 INFURA_API_KEY: 'fake_key',
                 INFURA_API_SECRET: 'fake_secret',
-                ENVIROMENT: 'test',
+                ENVIRONMENT: 'test',
             },
         )
 
@@ -66,7 +66,7 @@ describe('getCollectionMetadata()', () => {
                 AUTH_SECRET: 'fake_secret',
                 INFURA_API_KEY: 'fake_key',
                 INFURA_API_SECRET: 'fake_secret',
-                ENVIROMENT: 'test',
+                ENVIRONMENT: 'test',
             },
         )
 

@@ -16,13 +16,12 @@ local_protocol = "http"
 [vars]
 ENVIRONMENT = "development"
 CF_API = "https://api.cloudflare.com/client/v4/accounts"
-IMAGE_SERVICE = "https://images.zion.xyz"
 ACCOUNT_ID="9840f8a36a817b103e00e29a0e2bad6f"
 
 # The necessary secrets are:
 # AUTH_SECRET
 # IMAGE_HASH - cloudflare images account hash
-# API_TOKEN - images api token
+# API_TOKEN - images api token obtained from CF dashboard
 # AWS_SECRET_ACCESS_KEY
 # AWS_ACCESS_KEY_ID
 # for local development, you can add these in .dev.vars
@@ -39,8 +38,8 @@ ACCOUNT_ID="9840f8a36a817b103e00e29a0e2bad6f"
 # production routes
 # yarn publish:prod
 [env.production]
-routes = [{ pattern = "gateway-worker.zion.xyz", custom_domain = true }, { pattern = "gateway-worker.towns.com", custom_domain = true }]
-vars = { ENVIRONMENT = "production", CF_API = "https://api.cloudflare.com/client/v4/accounts", IMAGE_SERVICE = "https://images.zion.xyz", ACCOUNT_ID="9840f8a36a817b103e00e29a0e2bad6f"} # [vars] access, not secrets
+routes = [{ pattern = "gateway-worker.towns.com", custom_domain = true }]
+vars = { ENVIRONMENT = "production", CF_API = "https://api.cloudflare.com/client/v4/accounts",  ACCOUNT_ID="9840f8a36a817b103e00e29a0e2bad6f"} # [vars] access, not secrets
 services = [ {binding = "authz", service = "siwe-worker-production", environment = "production"} ]
 # created with wrangler kv:namespace create "USER" --env production
 # created with wrangler kv:namespace create "SPACE" --env production
@@ -50,7 +49,7 @@ kv_namespaces = [{ binding = "USER", id = "8b1f2abcf4ca4e56855b7d3774d23612" }, 
 # yarn publish:test
 [env.test]
 routes = [{ pattern = "gateway-worker-test.towns.com", custom_domain = true }]
-vars = { ENVIRONMENT = "test", CF_API = "https://api.cloudflare.com/client/v4/accounts", IMAGE_SERVICE = "https://images.zion.xyz", ACCOUNT_ID="9840f8a36a817b103e00e29a0e2bad6f"} # [vars] access, not secrets
+vars = { ENVIRONMENT = "test", CF_API = "https://api.cloudflare.com/client/v4/accounts", ACCOUNT_ID="9840f8a36a817b103e00e29a0e2bad6f"} # [vars] access, not secrets
 services = [ {binding = "authz", service = "siwe-worker-test", environment = "production"} ]
 # created with wrangler kv:namespace create "USER" --env test
 # created with wrangler kv:namespace create "SPACE" --env test

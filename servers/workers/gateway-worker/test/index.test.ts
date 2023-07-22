@@ -1,6 +1,8 @@
+import { IMAGE_DELIVERY_SERVICE } from '../src/handler'
 import { Env, worker } from '../src/index'
 
 const FAKE_SERVER_URL = 'http://fakeserver.com'
+const FAKE_IMAGE_HASH = 'bar' // wrangler.test.toml
 const AUTH_TOKEN = 'Zm9v'
 
 function generateRequest(
@@ -27,8 +29,18 @@ describe('http router', () => {
         expect(text).toBe('Not Found')
     })
 
-    // skip until the worker is mocked
-    test.skip('error get user avatar', async () => {
+    test('error get user avatar', async () => {
+        const fetchMock = getMiniflareFetchMock()
+        fetchMock.disableNetConnect()
+        const origin = fetchMock.get(IMAGE_DELIVERY_SERVICE)
+
+        origin
+            .intercept({
+                method: 'GET',
+                path: `/${FAKE_IMAGE_HASH}/1/public`, // user 1, public image variant
+            })
+            .reply(400, 'Could not fetch the image')
+
         const result = await worker.fetch(
             ...generateRequest('user/1/avatar', 'GET', {
                 Authorization: `Bearer ${AUTH_TOKEN}`,
@@ -43,9 +55,15 @@ describe('http router', () => {
 
     test('error post user avatar', async () => {
         const result = await worker.fetch(
-            ...generateRequest('user/1/avatar', 'POST', {
-                Authorization: `Bearer ${AUTH_TOKEN}`,
-            }),
+            ...generateRequest(
+                'user/1/avatar',
+                'POST',
+                {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    Authorization: `Bearer ${AUTH_TOKEN}`,
+                },
+                'id=1&file=',
+            ),
         )
 
         expect(result.status).toBe(400)
