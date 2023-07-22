@@ -3,7 +3,7 @@ import {
   removePushSubscription,
 } from './subscription-handlers'
 import { create400Response, create401Response } from './http-responses'
-import { deleteSettings, saveSettings } from './settings-handlers'
+import { deleteSettings, getSettings, saveSettings } from './settings-handlers'
 import {
   getDefaultRouteDev,
   getServiceWorkerJsDev,
@@ -11,6 +11,7 @@ import {
 import {
   isAddSubscriptionRequestParams,
   isDeleteSettingsRequestParams,
+  isGetSettingsRequestParams,
   isMentionRequestParams,
   isNotifyRequestParams,
   isRemoveSubscriptionRequestParams,
@@ -139,6 +140,25 @@ router.delete(
 
     // handle a proper request
     return deleteSettings(env.DB, content)
+  },
+)
+
+router.post(
+  '/api/get-notification-settings',
+  async (request: Request, env: Env) => {
+    // check auth before doing work
+    if (!isAuthedRequest(request, env)) {
+      return create401Response('/api/get-notification-settings')
+    }
+
+    // get the content of the request as json
+    const content = await getContentAsJson(request)
+    if (!content || !isGetSettingsRequestParams(content)) {
+      return create400Response('/api/get-notification-settings', content)
+    }
+
+    // handle a proper request
+    return getSettings(env.DB, content)
   },
 )
 

@@ -1,6 +1,8 @@
 import { MockProxy, mock } from 'jest-mock-extended'
 
 import { Env } from '../src'
+import { NotificationSettings } from '../src/types'
+import { QueryResultNotificationSettings } from '../src/settings-handlers'
 import { QueryResultNotificationTag } from '../src/tag-handlers'
 import { createFakeWebPushSubscription } from './fake-data'
 
@@ -86,12 +88,13 @@ export function mockPreparedStatements(DB: MockProxy<D1Database>) {
   const mockStatement = mockDummyStatement()
   const insertIntoPushSubscription = mockDummyStatement()
   const deleteFromPushSubscription = mockDummyStatement()
-  const selectFromPushSubscription = mockSelectFromPushSubscriptionStatement()
+  const selectFromPushSubscription = mockSelectFromPushSubscription()
   const insertIntoNotificationTag = mockDummyStatement()
   const deleteFromNotificationTag = mockDummyStatement()
-  const selectNotificationTag = mockSelectFromNotificationTagStatement()
+  const selectFromNotificationTag = mockSelectFromNotificationTag()
   const insertIntoNotificationSettings = mockDummyStatement()
   const deleteFromNotificationSettings = mockDummyStatement()
+  const selectFromNotificationSettings = mockSelectFromNotificationSettings()
 
   DB.prepare.mockImplementation((query: string) => {
     if (query.includes('SELECT') && query.includes('FROM PushSubscription')) {
@@ -104,7 +107,7 @@ export function mockPreparedStatements(DB: MockProxy<D1Database>) {
       query.includes('SELECT') &&
       query.includes('FROM NotificationTag')
     ) {
-      return selectNotificationTag
+      return selectFromNotificationTag
     } else if (query.includes('INSERT INTO NotificationTag')) {
       return insertIntoNotificationTag
     } else if (query.includes('DELETE FROM NotificationTag')) {
@@ -113,6 +116,11 @@ export function mockPreparedStatements(DB: MockProxy<D1Database>) {
       return insertIntoNotificationSettings
     } else if (query.includes('DELETE FROM NotificationSettings')) {
       return deleteFromNotificationSettings
+    } else if (
+      query.includes('SELECT') &&
+      query.includes('FROM NotificationSettings')
+    ) {
+      return selectFromNotificationSettings
     }
     return mockStatement
   })
@@ -121,8 +129,8 @@ export function mockPreparedStatements(DB: MockProxy<D1Database>) {
     (statements: D1PreparedStatement[]): Promise<D1Result<unknown>[]> => {
       const results: D1Result<unknown>[] = []
       for (const statement of statements) {
-        if (statement === selectNotificationTag) {
-          selectNotificationTag.all().then((r) => {
+        if (statement === selectFromNotificationTag) {
+          selectFromNotificationTag.all().then((r) => {
             results.push(r)
           })
         } else {
@@ -143,15 +151,16 @@ export function mockPreparedStatements(DB: MockProxy<D1Database>) {
     deleteFromPushSubscription,
     selectFromPushSubscription,
     insertIntoNotificationTag,
-    selectNotificationTag,
+    selectFromNotificationTag,
     deleteFromNotificationTag,
     insertIntoNotificationSettings,
     deleteFromNotificationSettings,
+    selectFromNotificationSettings,
     mockStatement,
   }
 }
 
-function mockSelectFromPushSubscriptionStatement(): MockProxy<D1PreparedStatement> {
+function mockSelectFromPushSubscription(): MockProxy<D1PreparedStatement> {
   const mockStatement = mock<D1PreparedStatement>()
   const fakeSubscription = JSON.stringify(createFakeWebPushSubscription())
   const result: Record<string, unknown> = {
@@ -165,15 +174,15 @@ function mockSelectFromPushSubscriptionStatement(): MockProxy<D1PreparedStatemen
     success: true,
     meta: {},
   })
-  mockStatement.bind.mockImplementation(() => {
-    return mockStatement
-  })
   mockStatement.first.mockResolvedValue(result)
   mockStatement.raw.mockResolvedValue(rawResult)
   mockStatement.run.mockResolvedValue({
     results: [result],
     success: true,
     meta: {},
+  })
+  mockStatement.bind.mockImplementation(() => {
+    return mockStatement
   })
   return mockStatement
 }
@@ -200,7 +209,7 @@ function mockDummyStatement(): MockProxy<D1PreparedStatement> {
   return mockStatement
 }
 
-function mockSelectFromNotificationTagStatement(): MockProxy<D1PreparedStatement> {
+function mockSelectFromNotificationTag(): MockProxy<D1PreparedStatement> {
   const mockStatement = mock<D1PreparedStatement>()
   const result: QueryResultNotificationTag[] = []
   mockStatement.bind.mockImplementation(
@@ -215,6 +224,30 @@ function mockSelectFromNotificationTagStatement(): MockProxy<D1PreparedStatement
   )
   mockStatement.all.mockResolvedValue({
     results: [result] as unknown as QueryResultNotificationTag[][],
+    success: true,
+    meta: {},
+  })
+  return mockStatement
+}
+
+function mockSelectFromNotificationSettings(): MockProxy<D1PreparedStatement> {
+  const mockStatement = mock<D1PreparedStatement>()
+  const results: QueryResultNotificationSettings[] = []
+  const settings: NotificationSettings = {
+    muteSettings: {
+      mutedChannels: {},
+      mutedSpaces: {},
+    },
+  }
+  mockStatement.bind.mockImplementation((userId: string) => {
+    results.push({
+      userId,
+      settings: JSON.stringify(settings),
+    })
+    return mockStatement
+  })
+  mockStatement.run.mockResolvedValue({
+    results: [results] as unknown as QueryResultNotificationSettings[][],
     success: true,
     meta: {},
   })

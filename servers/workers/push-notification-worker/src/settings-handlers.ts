@@ -1,9 +1,11 @@
 import {
   DeleteSettingsRequestParams,
+  GetSettingsRequestParams,
   SaveSettingsRequestParams,
 } from './request-interfaces'
 import { create204Response, create422Response } from './http-responses'
 
+import { UserId } from './types'
 import { printDbResultInfo } from './sql'
 
 class SettingsSqlStatement {
@@ -30,6 +32,11 @@ class SettingsSqlStatement {
     DELETE FROM NotificationSettings
     WHERE
       UserId=?1;`
+}
+
+export interface QueryResultNotificationSettings {
+  userId: UserId
+  settings: string
 }
 
 export async function saveSettings(
@@ -59,6 +66,22 @@ export async function deleteSettings(
   let response: Response = create204Response()
   if (!result.success) {
     printDbResultInfo('deleteSettings sql error', result)
+    response = create422Response()
+  }
+  return create204Response()
+}
+
+export async function getSettings(
+  db: D1Database,
+  params: GetSettingsRequestParams,
+) {
+  const result = await db
+    .prepare(SettingsSqlStatement.SelectFromNotificationSettings)
+    .bind(params.userId)
+    .run()
+  let response: Response = create204Response()
+  if (!result.success) {
+    printDbResultInfo('getSettings sql error', result)
     response = create422Response()
   }
   return create204Response()

@@ -130,3 +130,16 @@ export function isDeleteSettingsRequestParams(
     typeof params.userId === 'string' && params.userId.length > 0 // userId is required
   )
 }
+
+export interface GetSettingsRequestParams {
+  userId: string
+}
+
+export function isGetSettingsRequestParams(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  params: any,
+): params is DeleteSettingsRequestParams {
+  return (
+    typeof params.userId === 'string' && params.userId.length > 0 // userId is required
+  )
+}
