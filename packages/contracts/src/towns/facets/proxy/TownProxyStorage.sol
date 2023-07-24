@@ -14,6 +14,7 @@ library TownProxyStorage {
 
   struct Layout {
     string networkId;
+    uint256 createdAt;
   }
 
   function layout() internal pure returns (Layout storage ds) {

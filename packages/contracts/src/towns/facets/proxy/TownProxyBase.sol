@@ -11,5 +11,6 @@ import {TownProxyService} from "./TownProxyService.sol";
 abstract contract TownProxyBase {
   function __TownProxy_init(string memory networkId) internal {
     TownProxyService.setNetworkId(networkId);
+    TownProxyService.setCreatedAt();
   }
 }

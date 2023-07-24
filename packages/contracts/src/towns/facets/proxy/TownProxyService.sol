@@ -14,4 +14,8 @@ library TownProxyService {
   function setNetworkId(string memory networkId) internal {
     TownProxyStorage.layout().networkId = networkId;
   }
+
+  function setCreatedAt() internal {
+    TownProxyStorage.layout().createdAt = block.timestamp;
+  }
 }
