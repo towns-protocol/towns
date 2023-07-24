@@ -160,7 +160,7 @@ export const RichTextUI = (props: Props) => {
                     {!props.editing ? (
                         <GiphyEntry threadId={props.threadId} threadPreview={props.threadPreview} />
                     ) : null}
-                    <EmojiPickerButton onSelectEmoji={onSelectEmoji} />
+                    {!isTouch && <EmojiPickerButton onSelectEmoji={onSelectEmoji} />}
                 </Stack>
                 {rootLayerRef?.current &&
                     createPortal(
