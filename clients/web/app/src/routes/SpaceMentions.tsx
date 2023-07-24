@@ -59,7 +59,7 @@ export const SpaceMentions = () => {
             <Stack absoluteFill scroll paddingTop={isTouch ? 'x8' : 'none'}>
                 {mentions.length ? (
                     <Stack grow minHeight="100svh">
-                        <Stack gap padding="lg">
+                        <Stack gap padding={isTouch ? 'md' : 'lg'}>
                             {mentions.map((m, index, mentions) => {
                                 return (
                                     m.type === 'mention' && (
@@ -87,6 +87,7 @@ export const SpaceMentions = () => {
 
 const MentionBox = (props: { mention: MentionResult; userId?: string }) => {
     const { mention } = props
+    const { isTouch } = useDevice()
     const { slug: spaceSlug } = useSpaceId() ?? {}
     const { slug: channelSlug } = mention.channel.id
 
@@ -117,6 +118,7 @@ const MentionBox = (props: { mention: MentionResult; userId?: string }) => {
             >
                 <Message
                     relativeDate
+                    avatarSize={isTouch ? 'avatar_x4' : 'avatar_md'}
                     padding="lg"
                     key={mention.event.eventId}
                     messageSourceAnnotation={`${
