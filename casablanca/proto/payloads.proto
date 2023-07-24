@@ -1,5 +1,6 @@
 syntax = "proto3";
 package casablancapayloads;
+import "google/protobuf/timestamp.proto";
 option go_package = "casablanca/payloads";
 
 
@@ -77,6 +78,20 @@ message ChannelMessage {
 message ChannelProperties {
     string name = 1;
     string topic = 2;
+}
+
+//value field of a FullyReadMarker message which contains details about 
+//unreads and mentions in the specific channel - related channel_id is set
+//in UserSettingsPayload
+
+message FullyReadMarkerContent {
+    optional string thread_parent_id = 1;
+    string event_id = 2;
+    optional google.protobuf.Timestamp event_origin_server_ts = 3;
+    bool is_unread = 4;
+    google.protobuf.Timestamp marked_read_at_ts = 5;
+    google.protobuf.Timestamp marked_unread_at_ts = 6;
+    optional int32 mentions = 7;
 }
 
 // value field of a ToDeviceMessage, which is either

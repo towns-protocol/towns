@@ -257,7 +257,7 @@ message UserSettingsPayload {
     }
 
     message FullyReadMarker {
-        string channel_id = 1;
+        string stream_id = 1;
         EncryptedData content = 2;
     }
 
