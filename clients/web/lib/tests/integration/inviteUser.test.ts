@@ -3,7 +3,11 @@
  * @group dendrite
  * @group casablanca
  */
-import { createTestSpaceWithEveryoneRole, registerAndStartClients } from './helpers/TestUtils'
+import {
+    createTestSpaceWithEveryoneRole,
+    getPrimaryProtocol,
+    registerAndStartClients,
+} from './helpers/TestUtils'
 
 import { Permission } from '../../src/client/web3/ContractTypes'
 import { waitFor } from '@testing-library/dom'
@@ -29,7 +33,7 @@ describe('inviteUser', () => {
         // bob invites alice to the room
         await bob.inviteUser(roomId, alice.getUserId()!)
         await waitFor(() => expect(bob.getRoomData(roomId)?.members.length == 1))
-        if (process.env.PRIMARY_PROTOCOL === SpaceProtocol.Matrix) {
+        if (getPrimaryProtocol() === SpaceProtocol.Matrix) {
             // alice should expect an invite to the room
             await waitFor(() => expect(alice.getRoomData(roomId)).toBeDefined())
         }

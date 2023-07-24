@@ -9,12 +9,14 @@ import {
     createTestSpaceWithZionMemberRole,
     registerAndStartClients,
     registerAndStartClient,
+    getPrimaryProtocol,
 } from 'use-zion-client/tests/integration/helpers/TestUtils'
 
 import { Permission } from 'use-zion-client/src/client/web3/ContractTypes'
 import { RoomVisibility } from 'use-zion-client/src/types/zion-types'
 import { TestConstants } from './helpers/TestConstants'
 import { waitFor } from '@testing-library/react'
+import { SpaceProtocol } from '../../src/client/ZionClientTypes'
 
 describe('disable channel', () => {
     test('Space owner is allowed to disable space access', async () => {
@@ -97,7 +99,7 @@ describe('disable channel', () => {
     })
 
     test('Channel member cant sync disabled room messages', async () => {
-        if (process.env.PRIMARY_PROTOCOL === 'casablanca') {
+        if (getPrimaryProtocol() === SpaceProtocol.Casablanca) {
             // Casablanca always allows users to sync messages from disabled rooms
             console.log('Skipping test for Casablanca')
             return
@@ -153,7 +155,7 @@ describe('disable channel', () => {
     })
 
     test('Channel member needs to rejoin server that was re-enabled', async () => {
-        if (process.env.PRIMARY_PROTOCOL === 'casablanca') {
+        if (getPrimaryProtocol() === SpaceProtocol.Casablanca) {
             // Casablanca ignores enabling/disabling room
             console.log('Skipping test for Casablanca')
             return

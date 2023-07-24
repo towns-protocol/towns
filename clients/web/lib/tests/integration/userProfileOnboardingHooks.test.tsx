@@ -11,6 +11,8 @@ import { RegisterWallet } from './helpers/TestComponents'
 import { LoginStatus } from '../../src/hooks/login'
 import { ZionTestWeb3Provider } from './helpers/ZionTestWeb3Provider'
 import { TestConstants } from './helpers/TestConstants'
+import { getPrimaryProtocol } from './helpers/TestUtils'
+import { SpaceProtocol } from '../../src/client/ZionClientTypes'
 
 // TODO Zustand https://docs.pmnd.rs/zustand/testing
 
@@ -48,7 +50,7 @@ describe('userProfileOnboardingHooks', () => {
         await waitFor(() => expect(loginStatus).toHaveTextContent(LoginStatus.LoggedIn))
 
         // verify alice userid is rendering
-        if (process.env.PRIMARY_PROTOCOL === 'casablanca') {
+        if (getPrimaryProtocol() === SpaceProtocol.Casablanca) {
             await waitFor(() =>
                 expect(myProfileName).toHaveTextContent(aliceProvider.wallet.address),
             )

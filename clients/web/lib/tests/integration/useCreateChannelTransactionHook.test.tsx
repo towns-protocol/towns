@@ -17,7 +17,7 @@ import { SpaceProtocol, TransactionStatus } from '../../src/client/ZionClientTyp
 import { ZionTestApp } from './helpers/ZionTestApp'
 import { ZionTestWeb3Provider } from './helpers/ZionTestWeb3Provider'
 import { getMemberNftAddress } from '../../src/client/web3/ContractHelpers'
-import { makeUniqueName } from './helpers/TestUtils'
+import { getPrimaryProtocol, makeUniqueName } from './helpers/TestUtils'
 import { useChannelData } from '../../src/hooks/use-channel-data'
 import { useCreateChannelTransaction } from '../../src/hooks/use-create-channel-transaction'
 import { useCreateSpaceTransaction } from '../../src/hooks/use-create-space-transaction'
@@ -256,7 +256,7 @@ describe('useCreateChannelTransactionHook', () => {
             () => expect(transactionsNumber).toHaveTextContent('2'),
             TestConstants.DoubleDefaultWaitForTimeout,
         )
-        if (process.env.PRIMARY_PROTOCOL === SpaceProtocol.Matrix) {
+        if (getPrimaryProtocol() === SpaceProtocol.Matrix) {
             await waitFor(() => expect(transactions).toHaveTextContent('0'))
             await waitFor(() => expect(blockchainEvents).toHaveTextContent('1'))
 
