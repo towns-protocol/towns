@@ -1,8 +1,9 @@
 import { dlog } from './dlog'
 import { Client } from './client'
 import { makeDonePromise, makeTestClient } from './util.test'
-import { ToDeviceOp } from '@towns/proto'
+import { ToDeviceMessage_KeyRequest, ToDeviceOp } from '@towns/proto'
 import { RiverEvent } from './event'
+import { getToDevicePayloadContent } from './types'
 
 const log = dlog('test')
 
@@ -220,7 +221,16 @@ describe('toDeviceMessageTest', () => {
                 expect(content).toBeDefined()
                 expect(content['op']).toBe(ToDeviceOp[ToDeviceOp.TDO_KEY_REQUEST])
                 await alicesClient.decryptEventIfNeeded(event)
-                expect(event.getPlainContent().payload).toContain('Hi Alice, can I get a key?')
+                const rawContent = JSON.stringify(
+                    // todo: HNT-1800 tighten types in RiverEvent such that proto type is returned not any.
+                    (JSON.parse(event.getPlainContent().payload) as { content: object }).content,
+                )
+                const op = event.event.content?.op
+                // test payload protobuf
+                const toDevicePayload = getToDevicePayloadContent(rawContent, op as string)
+                expect(toDevicePayload).toBeDefined()
+                expect(toDevicePayload instanceof ToDeviceMessage_KeyRequest).toBe(true)
+                expect(event.getPlainContent().payload).toContain('alice sender key')
                 await expect(
                     alicesClient.sendToDevicesMessage(
                         bobUserId,
@@ -252,7 +262,11 @@ describe('toDeviceMessageTest', () => {
             bobsClient.sendToDevicesMessage(
                 aliceUserId,
                 {
-                    content: 'Hi Alice, can I get a key?',
+                    space_id: '100',
+                    channel_id: '200',
+                    algorithm: 'OLM',
+                    sender_key: 'alice sender key',
+                    session_id: '300',
                 },
                 ToDeviceOp.TDO_KEY_REQUEST,
             ),

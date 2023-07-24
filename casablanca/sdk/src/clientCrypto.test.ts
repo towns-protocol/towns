@@ -42,7 +42,7 @@ describe('clientCryptoTest', () => {
         expect(event.event.content).toBeDefined()
         expect(event.shouldAttemptDecryption()).toBe(true)
         await expect(alicesClient.encryptEvent(event, [bobsUserId])).toResolve()
-        expect(event?.event?.content?.ciphertext).toBeDefined()
+        expect(event.getWireContent().ciphertext).toBeDefined()
         expect(event.shouldAttemptDecryption()).toBe(false)
     })
 
@@ -110,11 +110,12 @@ describe('clientCryptoTest', () => {
         }
 
         // create a toDevice event from the encrypted event
+        const ciphertext = event?.getWireContent().ciphertext
         const toDevicePayload = make_UserPayload_ToDevice({
             deviceKey: '', // ok to omit as we already encrypted the payload for bob's device
             senderKey: senderKey,
             op: ToDeviceOp.TDO_UNSPECIFIED,
-            value: event?.getWireContent().ciphertext,
+            message: { ciphertext },
         })
 
         const encryptedEvent = new RiverEvent({
@@ -124,7 +125,7 @@ describe('clientCryptoTest', () => {
             },
         })
         expect(encryptedEvent.shouldAttemptDecryption()).toBe(true)
-        expect(encryptedEvent?.event?.content?.ciphertext).toBeDefined()
+        expect(encryptedEvent.getWireContent().ciphertext).toBeDefined()
         expect(encryptedEvent.getPlainContent().payload).toBeUndefined()
         await expect(bobsClient.decryptEventIfNeeded(encryptedEvent)).toResolve()
         expect(encryptedEvent.getPlainContent().payload).toContain(
@@ -159,7 +160,7 @@ describe('clientCryptoTest', () => {
         expect(event.event.content).toBeDefined()
         await expect(alicesClient.encryptEvent(event, [bobsUserId])).toResolve()
         expect(event.shouldAttemptDecryption()).toBe(false)
-        expect(event?.event?.content?.ciphertext).toBeDefined()
+        expect(event.getWireContent().ciphertext).toBeDefined()
         const senderKey = alicesClient.olmDevice.deviceCurve25519Key
         if (!senderKey) {
             throw new Error('Sender key not found')
@@ -170,7 +171,7 @@ describe('clientCryptoTest', () => {
             deviceKey: '', // ok to omit as we already encrypted the payload for bob's device
             senderKey: senderKey,
             op: ToDeviceOp.TDO_UNSPECIFIED,
-            value: ciphertext,
+            message: { ciphertext },
         })
 
         const encryptedEvent = new RiverEvent({
@@ -180,7 +181,7 @@ describe('clientCryptoTest', () => {
             },
         })
         expect(encryptedEvent.shouldAttemptDecryption()).toBe(true)
-        expect(encryptedEvent?.event?.content?.ciphertext).toBeDefined()
+        expect(encryptedEvent.getWireContent().ciphertext).toBeDefined()
         expect(encryptedEvent.getContent().payload).toBeUndefined()
         await expect(bobsClient.decryptEventIfNeeded(encryptedEvent)).toResolve()
         expect(encryptedEvent.getPlainContent().payload).toContain(
@@ -223,18 +224,18 @@ describe('clientCryptoTest', () => {
             expect(event.event.content).toBeDefined()
             await expect(alicesClient.encryptEvent(event, [bobsUserId])).toResolve()
             expect(event.shouldAttemptDecryption()).toBe(false)
-            expect(event?.event?.content?.ciphertext).toBeDefined()
+            const ciphertext = event.getWireContent().ciphertext
+            expect(ciphertext).toBeDefined()
             const senderKey = alicesClient.olmDevice.deviceCurve25519Key
             if (!senderKey) {
                 throw new Error('Sender key not found')
             }
-            const ciphertext = event?.getWireContent().ciphertext
             // create a toDevice event from the encrypted event
             const toDevicePayload = make_UserPayload_ToDevice({
                 deviceKey: '', // ok to omit as we already encrypted the payload for bob's device
                 senderKey: senderKey,
                 op: ToDeviceOp.TDO_UNSPECIFIED,
-                value: ciphertext,
+                message: { ciphertext },
             })
 
             const encryptedEvent = new RiverEvent({
@@ -244,7 +245,7 @@ describe('clientCryptoTest', () => {
                 },
             })
             expect(encryptedEvent.shouldAttemptDecryption()).toBe(true)
-            expect(encryptedEvent?.event?.content?.ciphertext).toBeDefined()
+            expect(encryptedEvent.getWireContent().ciphertext).toBeDefined()
             expect(encryptedEvent.getContent().payload).toBeUndefined()
             await expect(bobsClient.decryptEventIfNeeded(encryptedEvent)).toResolve()
             expect(encryptedEvent.getPlainContent().payload).toContain(values[i])
@@ -275,7 +276,7 @@ describe('clientCryptoTest', () => {
         expect(event.event.content).toBeDefined()
         await expect(alicesClient.encryptEvent(event, [bobsUserId])).toResolve()
         expect(event.shouldAttemptDecryption()).toBe(false)
-        expect(event?.event?.content?.ciphertext).toBeDefined()
+        expect(event.getWireContent().ciphertext).toBeDefined()
         const senderKey = alicesClient.olmDevice.deviceCurve25519Key
         if (!senderKey) {
             throw new Error('Sender key not found')
@@ -285,7 +286,7 @@ describe('clientCryptoTest', () => {
         const messagePayload = make_ChannelPayload_Message({
             senderKey: senderKey,
             algorithm: OLM_ALGORITHM,
-            text: event?.getWireContent().ciphertext,
+            text: event.getWireContent().ciphertext,
         })
 
         const encryptedEvent = new RiverEvent({
@@ -295,7 +296,7 @@ describe('clientCryptoTest', () => {
             },
         })
         expect(encryptedEvent.shouldAttemptDecryption()).toBe(true)
-        expect(encryptedEvent?.event?.content?.ciphertext).toBeDefined()
+        expect(encryptedEvent.getWireContent().ciphertext).toBeDefined()
         expect(encryptedEvent.getPlainContent().payload).toBeUndefined()
         await expect(bobsClient.decryptEventIfNeeded(encryptedEvent)).toResolve()
         expect(encryptedEvent.getPlainContent().payload).toContain(

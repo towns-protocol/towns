@@ -20,12 +20,12 @@ import {
     ToDeviceMessage_KeyRequest,
     ToDeviceMessage_KeyResponse,
     UserPayload_UserMembership,
-    ToDeviceMessage_Ciphertext,
 } from '@towns/proto'
 import { keccak256 } from 'ethereum-cryptography/keccak'
 import { isDefined } from './check'
 import { ISignatures } from './crypto/deviceInfo'
 import { bin_toHexString } from './binary'
+import { IMessage, IOlmEncryptedContent, OLM_ALGORITHM } from './crypto/olmLib'
 
 export interface ParsedEvent {
     event: StreamEvent
@@ -286,34 +286,33 @@ export const getMessagePayload = (
     return undefined
 }
 
-export const getToDevicePayloadContent = (
+export const getToDeviceWirePayloadContent = (
     payload: UserPayload_ToDevice,
-):
-    | ToDeviceMessage_KeyRequest
-    | ToDeviceMessage_KeyResponse
-    | Record<string, { type: number; body: string }>
-    | undefined => {
-    const decoder = new TextDecoder()
-    const decodedPayload = decoder.decode(payload?.value)
-    let content:
-        | ToDeviceMessage_KeyRequest
-        | ToDeviceMessage_KeyResponse
-        | ToDeviceMessage_Ciphertext
-        | undefined = undefined
-    const fieldRegex = /"type":\s*(\d+),\s*"body":\s*"([^"]+)"/g
-    const isCipher = fieldRegex.test(decodedPayload)
-    if (isCipher) {
-        content = ToDeviceMessage_Ciphertext.fromJson({ envelope: JSON.parse(decodedPayload) })
-        // return envelope stripping away envelope field added by protobuf
-        return { ...content.envelope }
+): IOlmEncryptedContent => {
+    let cipher: Record<string, IMessage> = {}
+    if (payload.message !== undefined) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        cipher = payload?.message.ciphertext
     }
-    switch (ToDeviceOp[payload.op]) {
+    return {
+        ciphertext: cipher,
+        sender_key: payload.senderKey,
+        algorithm: OLM_ALGORITHM,
+    }
+}
+
+export const getToDevicePayloadContent = (
+    payload: string,
+    op: string,
+): ToDeviceMessage_KeyRequest | ToDeviceMessage_KeyResponse | undefined => {
+    let content: ToDeviceMessage_KeyRequest | ToDeviceMessage_KeyResponse | undefined = undefined
+    switch (op) {
         case ToDeviceOp[ToDeviceOp.TDO_KEY_REQUEST]: {
-            content = ToDeviceMessage_KeyRequest.fromJsonString(decodedPayload)
+            content = ToDeviceMessage_KeyRequest.fromJsonString(payload)
             return content
         }
         case ToDeviceOp[ToDeviceOp.TDO_KEY_RESPONSE]: {
-            content = ToDeviceMessage_KeyRequest.fromJsonString(decodedPayload)
+            content = ToDeviceMessage_KeyRequest.fromJsonString(payload)
             return content
         }
         default:
@@ -329,7 +328,11 @@ export const getToDevicePayloadContentFromEvent = (
     if (!payload) {
         return undefined
     }
-    return ToDeviceMessage.fromBinary(payload.value)
+    // todo: fix this
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+    const body = payload.message?.ciphertext?.body.toJsonString()
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+    return ToDeviceMessage.fromJsonString(body as string)
 }
 
 export const getToDevicePayloadContentFromJsonString = (

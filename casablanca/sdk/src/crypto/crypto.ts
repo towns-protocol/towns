@@ -6,7 +6,7 @@ import { assertBytes } from 'ethereum-cryptography/utils'
 import { keccak256 } from 'ethereum-cryptography/keccak'
 import { recoverPublicKey, signSync, verify } from 'ethereum-cryptography/secp256k1'
 import { check } from '../check'
-import { RiverEvent, IContent, IClearEvent, EncryptedEventStreamTypes } from '../event'
+import { RiverEvent, IClearEvent, EncryptedEventStreamTypes } from '../event'
 import { Client } from '../client'
 import EventEmitter from 'events'
 import TypedEmitter from 'typed-emitter'
@@ -459,26 +459,10 @@ export class Crypto
 
         // todo: wait for all the room devices to be loaded
         // await this.trackRoomDevicesImpl(room)
+        const content = event.getContent()
 
-        let content = event.getContent()
-        // If event has an m.relates_to then we need
-        // to put this on the wrapping event instead
-        const mRelatesTo = content['r.relates_to']
-        if (mRelatesTo) {
-            // Clone content here so we don't remove `r.relates_to` from the local-echo
-            content = Object.assign({}, content)
-            delete content['r.relates_to']
-        }
+        const encryptedContent = await alg.encryptMessage(userIds, event.getType() ?? '', content)
 
-        const encryptedContent = (await alg.encryptMessage(
-            userIds,
-            event.getType() ?? '',
-            content,
-        )) as IContent
-
-        if (mRelatesTo) {
-            encryptedContent['m.relates_to'] = mRelatesTo
-        }
         if (
             this.olmDevice.deviceCurve25519Key === null ||
             this.olmDevice.deviceDoNotUseKey === null

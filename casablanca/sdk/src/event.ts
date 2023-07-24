@@ -3,7 +3,7 @@ import { CryptoBackend, IEventDecryptionResult, Crypto } from './crypto/crypto'
 import { StreamEvent, ToDeviceOp } from '@towns/proto'
 import EventEmitter from 'events'
 import TypedEmitter from 'typed-emitter'
-import { OLM_ALGORITHM } from './crypto/olmLib'
+import { IEncryptedContent, OLM_ALGORITHM } from './crypto/olmLib'
 import { PlainMessage } from '@bufbuild/protobuf'
 
 const log = dlog('csb:event')
@@ -219,7 +219,8 @@ export class RiverEvent extends (EventEmitter as new () => TypedEmitter<RiverEve
                 switch (payload.value.content.case) {
                     case 'toDevice': {
                         const content = payload.value.content.value
-                        event.content['ciphertext'] = content.value
+                        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+                        event.content['ciphertext'] = content.message?.ciphertext
                         event.content['algorithm'] = OLM_ALGORITHM
                         event.content['sender_key'] = content.senderKey
                         event.content['device_key'] = content.deviceKey
@@ -281,7 +282,7 @@ export class RiverEvent extends (EventEmitter as new () => TypedEmitter<RiverEve
      */
     public makeEncrypted(
         cryptoType: string,
-        cryptoContent: object,
+        cryptoContent: IEncryptedContent,
         senderCurve25519Key: string,
         claimedDoNotUseKey: string,
     ): void {

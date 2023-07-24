@@ -20,7 +20,7 @@ import TypedEmitter from 'typed-emitter'
 import { check, checkNever, isDefined, throwWithCode } from './check'
 import {
     ParsedEvent,
-    getToDevicePayloadContent,
+    getToDeviceWirePayloadContent,
     make_ChannelPayload_Message,
     make_UserPayload_ToDevice,
 } from './types'
@@ -210,13 +210,13 @@ export class StreamStateView {
                             {
                                 const payload_todevice = payload.value.content.value
                                 // get ciphertext payload object
-                                const content = getToDevicePayloadContent(payload_todevice)
+                                const content = getToDeviceWirePayloadContent(payload_todevice)
 
                                 const toDevicePayload = make_UserPayload_ToDevice({
                                     deviceKey: payload_todevice.deviceKey,
                                     senderKey: payload_todevice.senderKey,
                                     op: payload_todevice.op,
-                                    value: JSON.parse(JSON.stringify(content)),
+                                    message: content,
                                 })
                                 const riverEvent = new RiverEvent({
                                     payload: {

@@ -99,21 +99,11 @@ message ToDeviceMessage {
         KeyResponseKind kind = 4;
     }
 
-    message Ciphertext {
-        map<string, ToDeviceEnvelope> envelope = 1;
-    }
-
     oneof payload {
         KeyRequest request = 1;
         KeyResponse response = 2;
-        Ciphertext ciphertext = 3;
     }
 
-}
-
-message ToDeviceEnvelope {
-    int32 type = 1;
-    string body = 2;
 }
 
 /** Exported Megolm session data.

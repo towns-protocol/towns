@@ -144,7 +144,7 @@ message UserPayload {
     
     message ToDevice {
         ToDeviceOp op = 1;
-        bytes value = 2;
+        EncryptedDeviceData message = 2;
         string device_key = 3;
         string sender_key = 4;
     }
@@ -178,6 +178,9 @@ message SpacePayload {
 }
 
 message EncryptedData {
+    /**
+    * Ciphertext of the encryption envelope.
+    */
     string text = 1;
     /**
     * Encryption algorithm  used to encrypt this event.
@@ -195,6 +198,25 @@ message EncryptedData {
     * The ID of the session used to encrypt the message.
     */
     optional string session_id = 5;
+}
+
+message EncryptedDeviceData {
+    /**
+    * Mapping from device identifier to encryption envelope.
+    */
+    map<string, EncryptedMessageEnvelope> ciphertext = 1;
+    /**
+    * Encryption algorithm  used to encrypt this event.
+    */
+    optional string algorithm = 2;
+}
+
+message EncryptedMessageEnvelope {
+    optional int32 type = 1;
+    /**
+    * Ciphertext of the encryption envelope.
+    */
+    string body = 2;
 }
 
 
