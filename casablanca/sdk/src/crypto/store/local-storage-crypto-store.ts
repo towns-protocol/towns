@@ -70,7 +70,7 @@ export class LocalStorageCryptoStore extends MemoryCryptoStore {
 
     // Olm Sessions
 
-    public countEndToEndSessions(txn: unknown, func: (count: number) => void): void {
+    public countEndToEndSessions(txn: null, func: (count: number) => void): void {
         let count = 0
         for (let i = 0; i < this.store.length; ++i) {
             if (this.store.key(i)?.startsWith(keyEndToEndSessions(''))) ++count
@@ -100,7 +100,7 @@ export class LocalStorageCryptoStore extends MemoryCryptoStore {
     public getEndToEndSession(
         deviceKey: string,
         sessionId: string,
-        txn: unknown,
+        txn: null,
         func: (session: ISessionInfo) => void,
     ): void {
         const sessions = this._getEndToEndSessions(deviceKey)
@@ -109,13 +109,13 @@ export class LocalStorageCryptoStore extends MemoryCryptoStore {
 
     public getEndToEndSessions(
         deviceKey: string,
-        txn: unknown,
+        txn: null,
         func: (sessions: { [sessionId: string]: ISessionInfo }) => void,
     ): void {
         func(this._getEndToEndSessions(deviceKey) || {})
     }
 
-    public getAllEndToEndSessions(txn: unknown, func: (session: ISessionInfo) => void): void {
+    public getAllEndToEndSessions(txn: null, func: (session: ISessionInfo) => void): void {
         for (let i = 0; i < this.store.length; ++i) {
             if (this.store.key(i)?.startsWith(keyEndToEndSessions(''))) {
                 const deviceKey = this.store.key(i)!.split('/')[1]
@@ -130,7 +130,7 @@ export class LocalStorageCryptoStore extends MemoryCryptoStore {
         deviceKey: string,
         sessionId: string,
         sessionInfo: ISessionInfo,
-        txn: unknown,
+        txn: null,
     ): void {
         const sessions = this._getEndToEndSessions(deviceKey) || {}
         sessions[sessionId] = sessionInfo
@@ -204,7 +204,7 @@ export class LocalStorageCryptoStore extends MemoryCryptoStore {
     public getEndToEndInboundGroupSession(
         senderCurve25519Key: string,
         sessionId: string,
-        txn: unknown,
+        txn: null,
         func: (
             groupSession: InboundGroupSessionData | null,
             groupSessionWithheld: IWithheld | null,
@@ -220,7 +220,7 @@ export class LocalStorageCryptoStore extends MemoryCryptoStore {
     }
 
     public getAllEndToEndInboundGroupSessions(
-        txn: unknown,
+        txn: null,
         func: (session: ISession | null) => void,
     ): void {
         for (let i = 0; i < this.store.length; ++i) {
@@ -248,7 +248,7 @@ export class LocalStorageCryptoStore extends MemoryCryptoStore {
         senderCurve25519Key: string,
         sessionId: string,
         sessionData: InboundGroupSessionData,
-        txn: unknown,
+        txn: null,
     ): void {
         const existing = getJsonItem(
             this.store,
@@ -263,7 +263,7 @@ export class LocalStorageCryptoStore extends MemoryCryptoStore {
         senderCurve25519Key: string,
         sessionId: string,
         sessionData: InboundGroupSessionData,
-        txn: unknown,
+        txn: null,
     ): void {
         setJsonItem(
             this.store,
@@ -276,7 +276,7 @@ export class LocalStorageCryptoStore extends MemoryCryptoStore {
         senderCurve25519Key: string,
         sessionId: string,
         sessionData: IWithheld,
-        txn: unknown,
+        txn: null,
     ): void {
         setJsonItem(
             this.store,
@@ -285,23 +285,20 @@ export class LocalStorageCryptoStore extends MemoryCryptoStore {
         )
     }
 
-    public getEndToEndDeviceData(
-        txn: unknown,
-        func: (deviceData: IDeviceData | null) => void,
-    ): void {
+    public getEndToEndDeviceData(txn: null, func: (deviceData: IDeviceData | null) => void): void {
         func(getJsonItem(this.store, KEY_DEVICE_DATA))
     }
 
-    public storeEndToEndDeviceData(deviceData: IDeviceData, txn: unknown): void {
+    public storeEndToEndDeviceData(deviceData: IDeviceData, txn: null): void {
         setJsonItem(this.store, KEY_DEVICE_DATA, deviceData)
     }
 
-    public storeEndToEndRoom(roomId: string, roomInfo: IRoomEncryption, txn: unknown): void {
+    public storeEndToEndRoom(roomId: string, roomInfo: IRoomEncryption, txn: null): void {
         setJsonItem(this.store, keyEndToEndRoomsPrefix(roomId), roomInfo)
     }
 
     public getEndToEndRooms(
-        txn: unknown,
+        txn: null,
         func: (rooms: Record<string, IRoomEncryption>) => void,
     ): void {
         const result: Record<string, IRoomEncryption> = {}
@@ -382,7 +379,7 @@ export class LocalStorageCryptoStore extends MemoryCryptoStore {
 
     // Olm account
 
-    public getAccount(txn: unknown, func: (accountPickle: string | null) => void): void {
+    public getAccount(txn: null, func: (accountPickle: string | null) => void): void {
         const accountPickle = getJsonItem<string>(
             this.store,
             `${KEY_END_TO_END_ACCOUNT}-${this.userId}`,
@@ -390,11 +387,11 @@ export class LocalStorageCryptoStore extends MemoryCryptoStore {
         func(accountPickle)
     }
 
-    public storeAccount(txn: unknown, accountPickle: string): void {
+    public storeAccount(txn: null, accountPickle: string): void {
         setJsonItem(this.store, `${KEY_END_TO_END_ACCOUNT}-${this.userId}`, accountPickle)
     }
 
-    public doTxn<T>(mode: Mode, stores: Iterable<string>, func: (txn: unknown) => T): Promise<T> {
+    public doTxn<T>(mode: Mode, stores: Iterable<string>, func: (txn: null) => T): Promise<T> {
         return Promise.resolve(func(null))
     }
 

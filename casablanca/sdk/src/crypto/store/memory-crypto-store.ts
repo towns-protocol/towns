@@ -239,24 +239,24 @@ export class MemoryCryptoStore implements CryptoStore {
 
     // Olm Account
 
-    public getAccount(txn: unknown, func: (accountPickle: string | null) => void): void {
+    public getAccount(txn: null, func: (accountPickle: string | null) => void): void {
         func(this.account)
     }
 
-    public storeAccount(txn: unknown, accountPickle: string): void {
+    public storeAccount(txn: null, accountPickle: string): void {
         this.account = accountPickle
     }
 
     // Olm Sessions
 
-    public countEndToEndSessions(txn: unknown, func: (count: number) => void): void {
+    public countEndToEndSessions(txn: null, func: (count: number) => void): void {
         func(Object.keys(this.sessions).length)
     }
 
     public getEndToEndSession(
         deviceKey: string,
         sessionId: string,
-        txn: unknown,
+        txn: null,
         func: (session: ISessionInfo) => void,
     ): void {
         const deviceSessions = this.sessions[deviceKey] || {}
@@ -265,13 +265,13 @@ export class MemoryCryptoStore implements CryptoStore {
 
     public getEndToEndSessions(
         deviceKey: string,
-        txn: unknown,
+        txn: null,
         func: (sessions: { [sessionId: string]: ISessionInfo }) => void,
     ): void {
         func(this.sessions[deviceKey] || {})
     }
 
-    public getAllEndToEndSessions(txn: unknown, func: (session: ISessionInfo) => void): void {
+    public getAllEndToEndSessions(txn: null, func: (session: ISessionInfo) => void): void {
         Object.entries(this.sessions).forEach(([deviceKey, deviceSessions]) => {
             Object.entries(deviceSessions).forEach(([sessionId, session]) => {
                 func({
@@ -287,7 +287,7 @@ export class MemoryCryptoStore implements CryptoStore {
         deviceKey: string,
         sessionId: string,
         sessionInfo: ISessionInfo,
-        txn: unknown,
+        txn: null,
     ): void {
         let deviceSessions = this.sessions[deviceKey]
         if (deviceSessions === undefined) {
@@ -355,7 +355,7 @@ export class MemoryCryptoStore implements CryptoStore {
     public getEndToEndInboundGroupSession(
         senderCurve25519Key: string,
         sessionId: string,
-        txn: unknown,
+        txn: null,
         func: (
             groupSession: InboundGroupSessionData | null,
             groupSessionWithheld: IWithheld | null,
@@ -366,7 +366,7 @@ export class MemoryCryptoStore implements CryptoStore {
     }
 
     public getAllEndToEndInboundGroupSessions(
-        txn: unknown,
+        txn: null,
         func: (session: ISession | null) => void,
     ): void {
         for (const key of Object.keys(this.inboundGroupSessions)) {
@@ -388,7 +388,7 @@ export class MemoryCryptoStore implements CryptoStore {
         senderCurve25519Key: string,
         sessionId: string,
         sessionData: InboundGroupSessionData,
-        txn: unknown,
+        txn: null,
     ): void {
         const k = senderCurve25519Key + '/' + sessionId
         if (this.inboundGroupSessions[k] === undefined) {
@@ -400,7 +400,7 @@ export class MemoryCryptoStore implements CryptoStore {
         senderCurve25519Key: string,
         sessionId: string,
         sessionData: InboundGroupSessionData,
-        txn: unknown,
+        txn: null,
     ): void {
         this.inboundGroupSessions[senderCurve25519Key + '/' + sessionId] = sessionData
     }
@@ -409,7 +409,7 @@ export class MemoryCryptoStore implements CryptoStore {
         senderCurve25519Key: string,
         sessionId: string,
         sessionData: IWithheld,
-        txn: unknown,
+        txn: null,
     ): void {
         const k = senderCurve25519Key + '/' + sessionId
         this.inboundGroupSessionsWithheld[k] = sessionData
@@ -417,25 +417,22 @@ export class MemoryCryptoStore implements CryptoStore {
 
     // Device Data
 
-    public getEndToEndDeviceData(
-        txn: unknown,
-        func: (deviceData: IDeviceData | null) => void,
-    ): void {
+    public getEndToEndDeviceData(txn: null, func: (deviceData: IDeviceData | null) => void): void {
         func(this.deviceData)
     }
 
-    public storeEndToEndDeviceData(deviceData: IDeviceData, txn: unknown): void {
+    public storeEndToEndDeviceData(deviceData: IDeviceData, txn: null): void {
         this.deviceData = deviceData
     }
 
     // E2E rooms
 
-    public storeEndToEndRoom(roomId: string, roomInfo: IRoomEncryption, txn: unknown): void {
+    public storeEndToEndRoom(roomId: string, roomInfo: IRoomEncryption, txn: null): void {
         this.rooms[roomId] = roomInfo
     }
 
     public getEndToEndRooms(
-        txn: unknown,
+        txn: null,
         func: (rooms: Record<string, IRoomEncryption>) => void,
     ): void {
         func(this.rooms)
@@ -496,7 +493,7 @@ export class MemoryCryptoStore implements CryptoStore {
 
     // Session key backups
 
-    public doTxn<T>(mode: Mode, stores: Iterable<string>, func: (txn?: unknown) => T): Promise<T> {
+    public doTxn<T>(mode: Mode, stores: Iterable<string>, func: (txn: null) => T): Promise<T> {
         return Promise.resolve(func(null))
     }
 

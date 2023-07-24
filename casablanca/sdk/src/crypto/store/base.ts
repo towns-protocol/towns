@@ -2,8 +2,11 @@ import { IRoomKeyRequestBody, IRoomKeyRequestRecipient, RoomKeyRequestState } fr
 import { IOlmDevice, TrackingStatus } from '../deviceList'
 import { InboundGroupSessionData } from '../olmDevice'
 import { IDevice } from '../deviceInfo'
+import { DLogger } from '../../dlog'
+
+// transactions are assumed to be IDBTransactions or null for local storage, in-memory.
+export type CryptoTxn = IDBTransaction | null
 import { RK, RDK } from '../rk'
-//import { RiverEvent } from '../../event'
 
 /**
  * Abstraction of artifacts that can store data required for e2e encryption
@@ -34,28 +37,28 @@ export interface CryptoStore {
     ): Promise<OutgoingRoomKeyRequest | null>
 
     // Olm Account
-    getAccount(txn: unknown, func: (accountPickle: string | null) => void): void
-    storeAccount(txn: unknown, accountPickle: string): void
+    getAccount(txn: CryptoTxn, func: (accountPickle: string | null) => void): void
+    storeAccount(txn: CryptoTxn, accountPickle: string): void
 
     // Olm Sessions
-    countEndToEndSessions(txn: unknown, func: (count: number) => void): void
+    countEndToEndSessions(txn: CryptoTxn, func: (count: number) => void): void
     getEndToEndSession(
         deviceKey: string,
         sessionId: string,
-        txn: unknown,
+        txn: CryptoTxn,
         func: (session: ISessionInfo | null) => void,
     ): void
     getEndToEndSessions(
         deviceKey: string,
-        txn: unknown,
+        txn: CryptoTxn,
         func: (sessions: { [sessionId: string]: ISessionInfo }) => void,
     ): void
-    getAllEndToEndSessions(txn: unknown, func: (session: ISessionInfo | null) => void): void
+    getAllEndToEndSessions(txn: CryptoTxn, func: (session: ISessionInfo | null) => void): void
     storeEndToEndSession(
         deviceKey: string,
         sessionId: string,
         sessionInfo: ISessionInfo,
-        txn: unknown,
+        txn: CryptoTxn | undefined,
     ): void
     storeEndToEndSessionProblem(deviceKey: string, type: string, fixed: boolean): Promise<void>
     getEndToEndSessionProblem(deviceKey: string, timestamp: number): Promise<IProblem | null>
@@ -65,54 +68,62 @@ export interface CryptoStore {
     getEndToEndInboundGroupSession(
         senderCurve25519Key: string,
         sessionId: string,
-        txn: unknown,
+        txn: CryptoTxn,
         func: (
             groupSession: InboundGroupSessionData | null,
             groupSessionWithheld: IWithheld | null,
         ) => void,
     ): void
-    getAllEndToEndInboundGroupSessions(txn: unknown, func: (session: ISession | null) => void): void
+    getAllEndToEndInboundGroupSessions(
+        txn: CryptoTxn,
+        func: (session: ISession | null) => void,
+    ): void
     addEndToEndInboundGroupSession(
         senderCurve25519Key: string,
         sessionId: string,
         sessionData: InboundGroupSessionData,
-        txn: unknown,
+        txn: CryptoTxn,
     ): void
     storeEndToEndInboundGroupSession(
         senderCurve25519Key: string,
         sessionId: string,
         sessionData: InboundGroupSessionData,
-        txn: unknown,
+        txn: CryptoTxn,
     ): void
     storeEndToEndInboundGroupSessionWithheld(
         senderCurve25519Key: string,
         sessionId: string,
         sessionData: IWithheld,
-        txn: unknown,
+        txn: CryptoTxn,
     ): void
 
     // Device Data
-    getEndToEndDeviceData(txn: unknown, func: (deviceData: IDeviceData | null) => void): void
-    storeEndToEndDeviceData(deviceData: IDeviceData, txn: unknown): void
-    storeEndToEndRoom(roomId: string, roomInfo: IRoomEncryption, txn: unknown): void
-    getEndToEndRooms(txn: unknown, func: (rooms: Record<string, IRoomEncryption>) => void): void
+    getEndToEndDeviceData(txn: CryptoTxn, func: (deviceData: IDeviceData | null) => void): void
+    storeEndToEndDeviceData(deviceData: IDeviceData, txn: CryptoTxn | undefined): void
+    storeEndToEndRoom(roomId: string, roomInfo: IRoomEncryption, txn: CryptoTxn): void
+    getEndToEndRooms(txn: CryptoTxn, func: (rooms: Record<string, IRoomEncryption>) => void): void
     getSessionsNeedingBackup(limit: number): Promise<ISession[]>
-    countSessionsNeedingBackup(txn?: unknown): Promise<number>
-    unmarkSessionsNeedingBackup(sessions: ISession[], txn?: unknown): Promise<void>
-    markSessionsNeedingBackup(sessions: ISession[], txn?: unknown): Promise<void>
+    countSessionsNeedingBackup(txn?: CryptoTxn): Promise<number>
+    unmarkSessionsNeedingBackup(sessions: ISession[], txn?: CryptoTxn): Promise<void>
+    markSessionsNeedingBackup(sessions: ISession[], txn?: CryptoTxn): Promise<void>
     addSharedHistoryInboundGroupSession(
         roomId: string,
         senderKey: string,
         sessionId: string,
-        txn?: unknown,
+        txn?: CryptoTxn,
     ): void
     getSharedHistoryInboundGroupSessions(
         roomId: string,
-        txn?: unknown,
+        txn?: CryptoTxn,
     ): Promise<[senderKey: string, sessionId: string][]>
 
     // Session key backups
-    doTxn<T>(mode: Mode, stores: Iterable<string>, func: (txn: unknown) => T, log?: any): Promise<T>
+    doTxn<T>(
+        mode: Mode,
+        stores: Iterable<string>,
+        func: (txn: CryptoTxn) => T,
+        log?: DLogger,
+    ): Promise<T>
 
     // RK storage
     getRK(txn: unknown): Promise<RK | null>

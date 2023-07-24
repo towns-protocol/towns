@@ -4,7 +4,7 @@
 import { dlog } from '../dlog'
 import { MegolmSession } from '@towns/proto'
 import { IndexedDBCryptoStore } from './store/indexeddb-crypto-store'
-import { CryptoStore, ISessionInfo } from './store/base'
+import { CryptoStore, CryptoTxn, ISessionInfo } from './store/base'
 import { IMessage } from './olmLib'
 import { OlmMegolmDelegate, Account, Utility, Session } from '@towns/mecholm'
 
@@ -234,7 +234,7 @@ export class OlmDevice {
      * @param txn - Opaque transaction object from cryptoStore.doTxn()
      * @internal
      */
-    private getAccount(txn: unknown, func: (account: Account) => void): void {
+    private getAccount(txn: CryptoTxn, func: (account: Account) => void): void {
         this.cryptoStore.getAccount(txn, (pickledAccount: string | null) => {
             const account = this.olmDelegate.createAccount()
             try {
@@ -255,7 +255,7 @@ export class OlmDevice {
      * @param Olm.Account object
      * @internal
      */
-    private storeAccount(txn: unknown, account: Account): void {
+    private storeAccount(txn: CryptoTxn, account: Account): void {
         this.cryptoStore.storeAccount(txn, account.pickle(this.pickleKey))
     }
 
@@ -301,7 +301,7 @@ export class OlmDevice {
     private getSession(
         deviceKey: string,
         sessionId: string,
-        txn: unknown,
+        txn: CryptoTxn,
         func: (unpickledSessionInfo: IUnpickledSessionInfo) => void,
     ): void {
         this.cryptoStore.getEndToEndSession(
@@ -345,7 +345,11 @@ export class OlmDevice {
      * @param txn - Opaque transaction object from cryptoStore.doTxn()
      * @internal
      */
-    private saveSession(deviceKey: string, sessionInfo: IUnpickledSessionInfo, txn: unknown): void {
+    private saveSession(
+        deviceKey: string,
+        sessionInfo: IUnpickledSessionInfo,
+        txn: CryptoTxn,
+    ): void {
         const sessionId = sessionInfo.session.session_id()
         log(
             `Saving Olm session ${sessionId} with device ${deviceKey}: ${sessionInfo.session.describe()}`,

@@ -9,7 +9,7 @@ import {
     Mode,
     OutgoingRoomKeyRequest,
 } from './base'
-import { dlog } from '../../dlog'
+import { DLogger, dlog } from '../../dlog'
 import { IRoomKeyRequestBody } from '../crypto'
 import { IOlmDevice } from '../deviceList'
 import { InboundGroupSessionData } from '../olmDevice'
@@ -564,7 +564,7 @@ export class IndexedDBCryptoStore implements CryptoStore {
         mode: Mode,
         stores: Iterable<string>,
         func: (txn: IDBTransaction) => T,
-        log?: any,
+        log?: DLogger,
     ): Promise<T> {
         return this.backend!.doTxn<T>(mode, stores, func as (txn: unknown) => T, log)
     }
