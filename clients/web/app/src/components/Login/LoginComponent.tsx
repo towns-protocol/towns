@@ -189,6 +189,7 @@ const ConnectedState = (props: {
                 <FancyButton cta icon="wallet" onClick={() => setShowMetaMaskWarning(true)}>
                     {buttonLabel ?? 'Login'}
                 </FancyButton>
+                <DisconnectButton />
             </>
         )
     }
