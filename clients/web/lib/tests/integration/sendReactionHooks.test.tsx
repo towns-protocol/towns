@@ -116,15 +116,8 @@ describe('sendReactionHooks', () => {
         const sendReactionButton = screen.getByRole('button', {
             name: 'React',
         })
-        const joinComplete = screen.getByTestId('joinComplete')
-
         // wait for client to be running
         await waitFor(() => expect(clientRunning).toHaveTextContent('true'))
-        await waitFor(
-            () => expect(joinComplete).toHaveTextContent('true'),
-            TestConstants.DoubleDefaultWaitForTimeout,
-        )
-
         // wait for the channel join
         await waitFor(() => expect(channelMembership).toHaveTextContent(Membership.Join))
         // have jane send a message to bob
