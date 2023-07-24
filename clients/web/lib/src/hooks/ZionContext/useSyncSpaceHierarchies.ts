@@ -19,6 +19,8 @@ import { toZionSpaceChild } from '../../store/use-matrix-store'
 import { useQueryClient } from '../../query/queryClient'
 import { useSpaceIdStore } from './useSpaceIds'
 
+export type InitialSyncSortPredicate = (a: RoomIdentifier, b: RoomIdentifier) => number
+
 // the spaces are just tacked on to the matrix design system,
 // child events should be treated like state events, but they are not,
 // so we have to go and fetch them manually
@@ -28,6 +30,8 @@ export function useSyncSpaceHierarchies(
     matrixClient: MatrixClient | undefined,
     invitedToIds: RoomIdentifier[],
     loggedInWalletAddress: string | undefined,
+    sortPredicate?: InitialSyncSortPredicate,
+    timeBetweenSyncingSpaces?: number,
 ): { matrixSpaceHierarchies: SpaceHierarchies; syncSpaceHierarchy: (spaceId: string) => void } {
     const { spaceIds } = useSpaceIdStore()
     const [spaceHierarchies, setSpaceHierarchies] = useState<SpaceHierarchies>({})
@@ -36,6 +40,7 @@ export function useSyncSpaceHierarchies(
     const seenSpaceIds = useRef<RoomIdentifier[]>(spaceIds)
     const seenInvitedToIds = useRef<RoomIdentifier[]>(invitedToIds)
     const queryClient = useQueryClient()
+    const sortPredicateRef = useRef(sortPredicate)
 
     const enqueueSpaceId = useCallback((spaceId: string) => {
         setSpaceIdsQueue((prev) => {
@@ -108,9 +113,19 @@ export function useSyncSpaceHierarchies(
             })
             .finally(() => {
                 // reset the current space id so that the next iteration can start
-                setCurrentSpaceId(null)
+                setTimeout(() => {
+                    setCurrentSpaceId(null)
+                }, timeBetweenSyncingSpaces ?? 0)
             })
-    }, [client, currentSpaceId, matrixClient, spaceIdsQueue, loggedInWalletAddress])
+    }, [
+        client,
+        currentSpaceId,
+        matrixClient,
+        spaceIdsQueue,
+        loggedInWalletAddress,
+        timeBetweenSyncingSpaces,
+    ])
+
     // watch for new or updated space ids
     useEffect(() => {
         // console.log("!!!!! hierarchies USE EFFECT spaceIds:", spaceIds);
@@ -118,10 +133,16 @@ export function useSyncSpaceHierarchies(
         const removedIds = seenSpaceIds.current.filter((s) => !spaceIds.includes(s))
         // console.log('!!!!! hierarchies new ids', newIds)
         // console.log('!!!!! hierarchies removed ids', removedIds)
-        newIds.forEach((s) => enqueueSpaceId(s.networkId))
+        // on first load, sort the spaces if applicable
+        if (seenSpaceIds.current.length === 0 && newIds.length > 0 && sortPredicateRef.current) {
+            newIds.sort(sortPredicateRef.current).forEach((s) => enqueueSpaceId(s.networkId))
+        } else {
+            newIds.forEach((s) => enqueueSpaceId(s.networkId))
+        }
         removedIds.forEach((s) => dequeueSpaceId(s.networkId))
         seenSpaceIds.current = spaceIds
     }, [enqueueSpaceId, spaceIds])
+
     // when we get a new invite, we need to sync all the spaces because we don't know which one it is for yet
     useEffect(() => {
         // console.log("!!!!! hierarchies USE EFFECT invitedToIds:", invitedToIds);
@@ -132,7 +153,8 @@ export function useSyncSpaceHierarchies(
         }
         seenInvitedToIds.current = invitedToIds
     }, [enqueueSpaceId, invitedToIds, spaceIds])
-    // watch client for space updates
+
+    // watch client for channel creation
     useEffect(() => {
         if (!matrixClient) {
             return
@@ -181,7 +203,7 @@ export function useSyncSpaceHierarchies(
         }
     }, [enqueueSpaceId, matrixClient, queryClient, spaceIds])
 
-    // watch for when user joins or leaves a channel
+    // watch for when current user joins or leaves a channel
     useEffect(() => {
         function onMyMembership(
             room: Room,

@@ -1,7 +1,7 @@
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
-import React from 'react'
-import { Navigate, Outlet, Route, Routes } from 'react-router'
-import { SpaceProtocol, ZionContextProvider } from 'use-zion-client'
+import React, { useCallback, useMemo, useRef } from 'react'
+import { Navigate, Outlet, Route, Routes, useLocation } from 'react-router'
+import { InitialSyncSortPredicate, SpaceProtocol, ZionContextProvider } from 'use-zion-client'
 import { Helmet } from 'react-helmet'
 import { getDefaultWallets } from '@rainbow-me/rainbowkit'
 import { Chain } from 'wagmi'
@@ -71,6 +71,23 @@ export const App = () => {
     // a single piece of state, PROD, TEST, and LOCAL each should have {matrixUrl, casablancaUrl, chainId}
     const environment = useEnvironment()
     const { isTouch } = useDevice()
+    const location = useLocation()
+    const routeOnLoad = useRef(location.pathname)
+    const initalSyncSortPredicate: InitialSyncSortPredicate = useCallback((a, b) => {
+        const bookmark = useStore.getState().spaceIdBookmark
+        // if directly navigating to a space, prioritize it
+        if (routeOnLoad.current.includes(a.slug)) {
+            return -1
+        }
+        // if there's a bookmark, prioritize it, as long as there's not also a direct navigation
+        if (bookmark === a.slug && !routeOnLoad.current.includes(b.slug)) {
+            return -1
+        }
+        return 1
+    }, [])
+
+    const timeBetweenSyncingSpaces = useMemo(() => (isTouch ? 2_000 : 0), [isTouch])
+
     return (
         <ZionContextProvider
             alchemyKey={env.VITE_ALCHEMY_API_KEY}
@@ -81,6 +98,8 @@ export const App = () => {
             initialSyncLimit={20}
             connectors={walletConnectors}
             chainId={environment.chainId}
+            initalSyncSortPredicate={initalSyncSortPredicate}
+            timeBetweenSyncingSpaces={timeBetweenSyncingSpaces}
             pushNotificationAuthToken={env.VITE_AUTH_WORKER_HEADER_SECRET}
             pushNotificationWorkerUrl={env.VITE_WEB_PUSH_WORKER_URL}
         >

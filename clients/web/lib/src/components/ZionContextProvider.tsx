@@ -15,7 +15,10 @@ import { useSpaceUnreads } from '../hooks/ZionContext/useSpaceUnreads'
 import { useSpaces } from '../hooks/ZionContext/useSpaces'
 import { useSyncErrorHandler } from '../hooks/ZionContext/useSyncErrorHandler'
 import { useCasablancaSpaceHierarchies } from '../hooks/ZionContext/useCasablancaSpaceHierarchies'
-import { useSyncSpaceHierarchies } from '../hooks/ZionContext/useSyncSpaceHierarchies'
+import {
+    useSyncSpaceHierarchies,
+    InitialSyncSortPredicate,
+} from '../hooks/ZionContext/useSyncSpaceHierarchies'
 import { useMatrixRooms } from '../hooks/ZionContext/useMatrixRooms'
 import { useMatrixTimelines } from '../hooks/ZionContext/useMatrixTimelines'
 import { useZionClientListener } from '../hooks/use-zion-client-listener'
@@ -72,6 +75,8 @@ interface Props extends ZionOpts {
     alchemyKey?: string
     connectors?: Connectors // optional connectors to use instead of default injected connector
     web3Signer?: ethers.Signer
+    initalSyncSortPredicate?: InitialSyncSortPredicate
+    timeBetweenSyncingSpaces?: number
     QueryClientProvider?: React.ElementType<{ children: JSX.Element }>
 }
 
@@ -96,7 +101,14 @@ export function ZionContextProvider({
 
 /// the zion client needs to be nested inside a Web3 provider, hence the need for this component
 const ContextImpl = (props: Props): JSX.Element => {
-    const { casablancaServerUrl, matrixServerUrl, enableSpaceRootUnreads, primaryProtocol } = props
+    const {
+        casablancaServerUrl,
+        matrixServerUrl,
+        enableSpaceRootUnreads,
+        primaryProtocol,
+        initalSyncSortPredicate,
+        timeBetweenSyncingSpaces,
+    } = props
 
     const { client, clientSingleton, matrixClient, casablancaClient } = useZionClientListener(props)
     const { invitedToIds } = useSpacesIds(matrixClient, casablancaClient)
@@ -114,6 +126,8 @@ const ContextImpl = (props: Props): JSX.Element => {
         matrixClient,
         invitedToIds,
         loggedInWalletAddress,
+        initalSyncSortPredicate,
+        timeBetweenSyncingSpaces,
     )
     const casablancaSpaceHierarchies = useCasablancaSpaceHierarchies(casablancaClient)
     const spaceHierarchies = merge(matrixSpaceHierarchies, casablancaSpaceHierarchies)
