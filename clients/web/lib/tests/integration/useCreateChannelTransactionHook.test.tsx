@@ -39,7 +39,6 @@ describe('useCreateChannelTransactionHook', () => {
         const memberNftAddress = getMemberNftAddress(chainId)
         const spaceName = makeUniqueName('alice')
         const channelName = 'test channel'
-        let casablancaChannelInfo: RoomIdentifier | undefined
         await provider.fundWallet()
         // create a view for alice
         const SpacesComponent = () => {
@@ -56,7 +55,7 @@ describe('useCreateChannelTransactionHook', () => {
 
         const ChannelComponent = () => {
             const { channel } = useChannelData()
-            return <div>{channel?.label}</div>
+            return <div data-testid="channelcomponent">{channel?.label}</div>
         }
 
         const TestComponent = () => {
@@ -151,7 +150,6 @@ describe('useCreateChannelTransactionHook', () => {
                     }
                     const channelInfo = await createChannelTransaction(createRoomInfo)
                     console.log(channelInfo)
-                    casablancaChannelInfo = channelInfo?.data
                 }
 
                 if (spaceId) {
@@ -186,8 +184,11 @@ describe('useCreateChannelTransactionHook', () => {
                         <SpaceContextProvider spaceId={spaceId}>
                             <>
                                 <SpacesComponent />
+                                <div data-testid="channelInfo">{`channelId: ${
+                                    channelId ? JSON.stringify(channelId) : 'undefined'
+                                } createChannelTxStatus ${createChannelTxStatus}`}</div>
                                 <div data-testid="channel">
-                                    {createChannelTxHash === TransactionStatus.Success &&
+                                    {createChannelTxStatus === TransactionStatus.Success &&
                                         channelId && (
                                             <ChannelContextProvider channelId={channelId}>
                                                 <ChannelComponent />
@@ -237,10 +238,10 @@ describe('useCreateChannelTransactionHook', () => {
         )
         const channelElement = screen.getByTestId('channel')
         const transactions = screen.getByTestId('transactions')
-        const transactionsNumber = screen.getByTestId('seen-transactions')
+        const seenTransactions = screen.getByTestId('seen-transactions')
         const blockchainEvents = screen.getByTestId('channel-blockchain-events')
         await waitFor(
-            () => expect(transactionsNumber).toHaveTextContent('1'),
+            () => expect(seenTransactions).toHaveTextContent('1'),
             TestConstants.DecaDefaultWaitForTimeout,
         )
         // wait for the space name to render
@@ -253,22 +254,22 @@ describe('useCreateChannelTransactionHook', () => {
         // click button to create the channel
         fireEvent.click(createChannelButton)
         await waitFor(
-            () => expect(transactionsNumber).toHaveTextContent('2'),
+            () => expect(seenTransactions).toHaveTextContent('2'),
             TestConstants.DoubleDefaultWaitForTimeout,
         )
-        if (getPrimaryProtocol() === SpaceProtocol.Matrix) {
-            await waitFor(() => expect(transactions).toHaveTextContent('0'))
-            await waitFor(() => expect(blockchainEvents).toHaveTextContent('1'))
 
-            /* Assert */
-            await waitFor(
-                () => expect(channelElement).toHaveTextContent(channelName),
-                TestConstants.DoubleDefaultWaitForTimeout,
-            )
-        } else {
-            await waitFor(() => {
-                expect(channelElement).toHaveTextContent(casablancaChannelInfo?.networkId || '')
-            })
+        // the transaction listener should clear this transaction, and the number should go back to 0
+        await waitFor(() => expect(transactions).toHaveTextContent('0'))
+
+        if (getPrimaryProtocol() === SpaceProtocol.Matrix) {
+            // todo: evan, figure out if we need this for casablanca/river
+            await waitFor(() => expect(blockchainEvents).toHaveTextContent('1'))
         }
+
+        /* Assert */
+        await waitFor(
+            () => expect(channelElement).toHaveTextContent(channelName),
+            TestConstants.DoubleDefaultWaitForTimeout,
+        )
     }) // end test
 }) // end describe

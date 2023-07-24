@@ -144,7 +144,7 @@ const ContextImpl = (props: Props): JSX.Element => {
     const casablancaOnboardingState = useOnboardingState_Casablanca(client, casablancaClient)
     const syncError = useSyncErrorHandler(matrixServerUrl, client, matrixClient)
 
-    useTransactionListener(client, matrixServerUrl)
+    useTransactionListener(client, matrixServerUrl, casablancaServerUrl)
 
     return (
         <ZionContext.Provider

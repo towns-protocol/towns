@@ -3,18 +3,26 @@ import { BlockchainTransactionEvent, ZTEvent } from '../types/timeline-types'
 
 import { ZionClient } from '../client/ZionClient'
 import { makeRoomIdentifier } from '../types/room-identifier'
-import { useCredentialStore } from '../store/use-credential-store'
 import { useTransactionStore } from '../store/use-transactions-store'
 import { useQueries } from '../query/queryClient'
 import { waitForTransaction } from 'wagmi/actions'
+import { useCredentialStore } from '../store/use-credential-store'
 
-export const useTransactionListener = (client: ZionClient | undefined, homeServerUrl: string) => {
+export const useTransactionListener = (
+    client: ZionClient | undefined,
+    homeServerUrl: string,
+    casablancaServerUrl: string | undefined,
+) => {
     const transactions = useTransactionStore((state) => state.transactions)
     const deleteAndEmitTransaction = useTransactionStore((state) => state.deleteAndEmitTransaction)
-    const credentials = useCredentialStore(
+    const credentialsM = useCredentialStore(
         (state) => state.matrixCredentialsMap[homeServerUrl] ?? undefined,
     )
-    const isAuthenticated = credentials?.accessToken !== undefined
+    const credentialsC = useCredentialStore(
+        (state) => state.casablancaCredentialsMap[casablancaServerUrl ?? ''] ?? undefined,
+    )
+
+    const isAuthenticated = credentialsM !== undefined || credentialsC !== undefined
 
     useQueries({
         queries: Object.values(transactions).map((transaction) => {
