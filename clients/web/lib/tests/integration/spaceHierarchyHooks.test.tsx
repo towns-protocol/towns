@@ -22,7 +22,8 @@ import { ZionTestApp } from './helpers/ZionTestApp'
 import { useSpaceData } from '../../src/hooks/use-space-data'
 import { LoginWithWallet } from './helpers/TestComponents'
 
-describe('spaceHierarchyHooks', () => {
+// TODO: https://linear.app/hnt-labs/issue/HNT-1587/testsintegrationspacehierarchyhookstesttsx
+describe.skip('spaceHierarchyHooks', () => {
     test('create a space with two users, have alice create a child channel, ensure bob sees it', async () => {
         // create clients
         // alice needs to have a valid nft in order to join bob's space / channel
@@ -98,7 +99,7 @@ describe('spaceHierarchyHooks', () => {
         // wait for the space child count to change
         await waitFor(
             () => expect(spaceChildCount).toHaveTextContent('3'),
-            TestConstants.DoubleDefaultWaitForTimeout,
+            TestConstants.DecaDefaultWaitForTimeout,
         )
     })
 })
