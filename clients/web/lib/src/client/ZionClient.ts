@@ -48,8 +48,6 @@ import {
     CreateSpaceInfo,
     Membership,
     MessageType,
-    PowerLevel,
-    PowerLevels,
     Room,
     RoomMember,
     RoomVisibility,
@@ -92,13 +90,11 @@ import { createCasablancaSpace } from './casablanca/CreateSpace'
 import { createMatrixChannel } from './matrix/CreateChannel'
 import { createMatrixSpace } from './matrix/CreateSpace'
 import { editZionMessage } from './matrix/EditMessage'
-import { enrichPowerLevels } from './matrix/PowerLevels'
 import { inviteMatrixUser } from './matrix/InviteUser'
 import { joinMatrixRoom } from './matrix/Join'
 import { loadOlm } from './loadOlm'
 import { makeUniqueChannelStreamId } from '@towns/sdk'
 import { makeUniqueSpaceStreamId } from '@towns/sdk'
-import { setMatrixPowerLevel } from './matrix/SetPowerLevels'
 import { staticAssertNever } from '../utils/zion-utils'
 import { syncMatrixSpace } from './matrix/SyncSpace'
 import { toUtf8String } from 'ethers/lib/utils.js'
@@ -1909,70 +1905,6 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
                 throw new Error('not implemented')
             default:
                 staticAssertNever(spaceId)
-        }
-    }
-
-    /************************************************
-     * getPowerLevel
-     ************************************************/
-    public getPowerLevel(roomId: RoomIdentifier, key: string): PowerLevel | undefined {
-        return this.getPowerLevels(roomId).levels.find((x) => x.definition.key === key)
-    }
-    /************************************************
-     * getPowerLevels
-     ************************************************/
-    public getPowerLevels(roomId: RoomIdentifier): PowerLevels {
-        switch (roomId.protocol) {
-            case SpaceProtocol.Matrix: {
-                const room = this.matrixClient?.getRoom(roomId.networkId)
-                if (!room) {
-                    throw new Error(`Room ${roomId.networkId} not found`)
-                }
-                const powerLevelsEvent = room.currentState.getStateEvents(
-                    EventType.RoomPowerLevels,
-                    '',
-                )
-                const powerLevels = powerLevelsEvent ? powerLevelsEvent.getContent() : {}
-                return enrichPowerLevels(powerLevels)
-            }
-            case SpaceProtocol.Casablanca: {
-                throw new Error('not implemented')
-            }
-            default:
-                staticAssertNever(roomId)
-        }
-    }
-
-    /************************************************
-     * setPowerLevel
-     ************************************************/
-    public async setPowerLevel(roomId: RoomIdentifier, key: string | PowerLevel, newValue: number) {
-        const current = typeof key == 'string' ? this.getPowerLevel(roomId, key) : key
-        if (!current) {
-            throw new Error(`Power level ${key as string} not found`)
-        }
-        switch (roomId.protocol) {
-            case SpaceProtocol.Matrix:
-                {
-                    if (!this.matrixClient) {
-                        throw new Error('matrix client is undefined')
-                    }
-                    const response = await setMatrixPowerLevel(
-                        this.matrixClient,
-                        roomId,
-                        current,
-                        newValue,
-                    )
-                    this.log(
-                        `updted power level ${current.definition.key} for room[${roomId.networkId}] from ${current.value} to ${newValue}`,
-                        response,
-                    )
-                }
-                break
-            case SpaceProtocol.Casablanca:
-                throw new Error('not implemented')
-            default:
-                staticAssertNever(roomId)
         }
     }
 

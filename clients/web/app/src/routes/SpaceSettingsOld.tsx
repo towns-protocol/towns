@@ -1,6 +1,6 @@
 import React, { useCallback } from 'react'
-import { PowerLevel, usePowerLevels, useSpaceId, useZionClient } from 'use-zion-client'
-import { Box, Button, Divider, Heading, Paragraph, Stack, TextField, Toggle } from '@ui'
+import { useZionClient } from 'use-zion-client'
+import { Box, Button, Divider, Heading, Paragraph, Stack, Toggle } from '@ui'
 import { useExperimentsStore } from 'store/experimentsStore'
 
 interface ExperimentView {
@@ -11,18 +11,7 @@ interface ExperimentView {
 }
 
 export const SpacesSettingsOld = () => {
-    const { resetFullyReadMarkers, setPowerLevel } = useZionClient()
-    const spaceId = useSpaceId()
-    const powerLevels = usePowerLevels(spaceId)
-
-    const onLevelChanged = useCallback(
-        (level: PowerLevel, newValue: number) => {
-            if (spaceId) {
-                setPowerLevel(spaceId, level, newValue)
-            }
-        },
-        [setPowerLevel, spaceId],
-    )
+    const { resetFullyReadMarkers } = useZionClient()
 
     const experimentsState = useExperimentsStore()
     //const [experimentsState, setExperimentsState] = React.useState<Record<string, boolean>>({})
@@ -49,14 +38,6 @@ export const SpacesSettingsOld = () => {
                 <Button onClick={resetFullyReadMarkers}>Mark All As Read</Button>
 
                 <Divider />
-                {powerLevels.levels.map((level: PowerLevel) => (
-                    <PowerLevelView
-                        key={level.definition.key}
-                        level={level}
-                        onLevelChanged={onLevelChanged}
-                    />
-                ))}
-                <Divider />
                 <Heading>Experiments</Heading>
 
                 {experiments.map((e) => (
@@ -75,31 +56,5 @@ export const SpacesSettingsOld = () => {
                 ))}
             </Box>
         </Stack>
-    )
-}
-
-const PowerLevelView = (props: {
-    level: PowerLevel
-    onLevelChanged: (level: PowerLevel, newValue: number) => void
-}) => {
-    const { level, onLevelChanged } = props
-    const onTextFieldChanged = useCallback(
-        (event: React.ChangeEvent<HTMLInputElement>) => {
-            const newValue = parseInt(event.target.value)
-            onLevelChanged(level, newValue)
-        },
-        [level, onLevelChanged],
-    )
-
-    return (
-        <Box>
-            <b>{level.definition.name}:</b> {level.definition.description}
-            <TextField
-                id={level.definition.key}
-                value={level.value}
-                onChange={onTextFieldChanged}
-            />
-            <br />
-        </Box>
     )
 }

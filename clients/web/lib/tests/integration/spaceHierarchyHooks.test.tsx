@@ -49,7 +49,6 @@ describe('spaceHierarchyHooks', () => {
             roleIds: [],
         })
         // set the space child prop on the room to 0 so that anyone can make channels
-        await bob.setPowerLevel(spaceId, 'm.space.child', 0)
         // stop bob, we'll be using him in the react component
         await bob.stopClients()
         // alice joins the room

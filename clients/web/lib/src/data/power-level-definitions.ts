@@ -1,5 +1,3 @@
-import { PowerLevelDefinition } from '../types/zion-types'
-
 /*
     Our app uses smart contracts isEntitled functions to check if user has
     permission to perform an action. We do not use dendrite's power levels.
@@ -39,7 +37,7 @@ export const DefaultSpacePowerLevels = {
     },
 }
 
-export const powerLevelDefinitions: PowerLevelDefinition[] = [
+export const powerLevelDefinitions = [
     {
         key: 'users_default',
         name: 'Users Default',

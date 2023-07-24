@@ -1,19 +1,11 @@
-import React, { useCallback } from 'react'
-import { Divider, TextField } from '@mui/material'
+import React from 'react'
+import { Divider } from '@mui/material'
 import { useParams } from 'react-router-dom'
-import {
-    PowerLevel,
-    makeRoomIdentifier,
-    usePowerLevels,
-    useRoom,
-    useZionClient,
-    useZionContext,
-} from 'use-zion-client'
+import { makeRoomIdentifier, useRoom, useZionContext } from 'use-zion-client'
 
 export const RoomSettings = () => {
     const { spaceSlug, channelSlug } = useParams()
     const { matrixClient } = useZionContext()
-    const { setPowerLevel } = useZionClient()
     // if we have a room id, use it, otherwise pull up the space id
     const targetId = channelSlug || spaceSlug
     const roomId = targetId ? makeRoomIdentifier(targetId) : undefined
@@ -21,15 +13,6 @@ export const RoomSettings = () => {
     const matrixRoom = roomId ? matrixClient?.getRoom(roomId.networkId) : undefined
     const joinRule = matrixRoom ? matrixRoom.getJoinRule() : 'unknown'
 
-    const powerLevels = usePowerLevels(room?.id)
-    const onLevelChanged = useCallback(
-        (level: PowerLevel, newValue: number) => {
-            if (room?.id) {
-                setPowerLevel(room?.id, level, newValue)
-            }
-        },
-        [setPowerLevel, room?.id],
-    )
     return room ? (
         <>
             <h2>Settings</h2>
@@ -46,46 +29,10 @@ export const RoomSettings = () => {
                 <b>Join Rule:</b> {joinRule}
             </p>
             <Divider />
-            <h4>Power Levels</h4>
-            <ul>
-                {powerLevels.levels.map((level) => (
-                    <PowerLevelView
-                        key={level.definition.key}
-                        level={level}
-                        onLevelChanged={onLevelChanged}
-                    />
-                ))}
-            </ul>
         </>
     ) : (
         <div>
             <h2>Room Not Found</h2>
         </div>
-    )
-}
-
-const PowerLevelView = (props: {
-    level: PowerLevel
-    onLevelChanged: (level: PowerLevel, newValue: number) => void
-}) => {
-    const { level, onLevelChanged } = props
-    const onTextFieldChanged = useCallback(
-        (event: React.ChangeEvent<HTMLInputElement>) => {
-            const newValue = parseInt(event.target.value)
-            onLevelChanged(level, newValue)
-        },
-        [level, onLevelChanged],
-    )
-
-    return (
-        <li>
-            <b>{level.definition.name}:</b> {level.definition.description}
-            <TextField
-                id={level.definition.key}
-                value={level.value}
-                onChange={onTextFieldChanged}
-            />
-            <br />
-        </li>
     )
 }

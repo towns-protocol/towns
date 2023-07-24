@@ -12,7 +12,6 @@ import {
 import {
     CreateChannelInfo,
     CreateSpaceInfo,
-    PowerLevel,
     Room,
     SendMessageOptions,
     SendTextMessageOptions,
@@ -164,11 +163,6 @@ interface ZionClientImpl {
     ) => Promise<void>
     sendReaction: (roomId: RoomIdentifier, eventId: string, reaction: string) => Promise<void>
     sendReadReceipt: (marker: FullyReadMarker) => Promise<void>
-    setPowerLevel: (
-        roomId: RoomIdentifier,
-        current: string | PowerLevel,
-        newValue: number,
-    ) => Promise<void>
     setAvatarUrl: (ravatarUrl: string) => Promise<void>
     setDisplayName: (displayName: string) => Promise<void>
     setRoomName: (roomId: RoomIdentifier, roomName: string) => Promise<void>
@@ -255,7 +249,6 @@ export function useZionClient(): ZionClientImpl {
         sendMessage: useWithCatch(client?.sendMessage),
         sendReaction: useWithCatch(client?.sendReaction),
         sendReadReceipt: useWithCatch(sendReadReceipt),
-        setPowerLevel: useWithCatch(client?.setPowerLevel),
         syncSpace: useWithCatch(client?.syncSpace),
         setDisplayName: useWithCatch(client?.setDisplayName),
         setRoomName: useWithCatch(client?.setRoomName),

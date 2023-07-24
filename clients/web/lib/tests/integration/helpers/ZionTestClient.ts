@@ -385,12 +385,6 @@ export class ZionTestClient extends ZionClient {
         }
     }
 
-    /// set the room invite level
-    public async setRoomInviteLevel(roomId: RoomIdentifier, level: number) {
-        const response = await this.setPowerLevel(roomId, 'invite', level)
-        console.log('setRoomInviteLevel', response)
-    }
-
     public async isUserRegistered(): Promise<boolean> {
         switch (this.opts.primaryProtocol) {
             case SpaceProtocol.Matrix: {
