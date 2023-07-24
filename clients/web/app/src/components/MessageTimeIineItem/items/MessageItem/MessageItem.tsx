@@ -140,7 +140,7 @@ export const MessageItem = (props: Props) => {
                                 setHoveredMentionUserId(userId)
                             }}
                         />
-                        {hoveredMentionUserId && messageTooltipRef.current && (
+                        {hoveredMentionUserId && messageTooltipRef.current && !isTouch && (
                             <TooltipRenderer
                                 active
                                 alignRef={messageTooltipRef}
