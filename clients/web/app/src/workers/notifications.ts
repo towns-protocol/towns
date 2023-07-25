@@ -109,12 +109,26 @@ export function handleNotifications(worker: ServiceWorkerGlobalScope) {
 function generateNewNotificationMessage(
     townName: string | undefined,
     channelName: string | undefined,
+    sender: string | undefined,
 ) {
+    let body = ''
+    switch (true) {
+        case stringHasValue(channelName) && stringHasValue(sender):
+            body = `@${sender} posted a new encrypted message in #${channelName}`
+            break
+        case stringHasValue(channelName) && !stringHasValue(sender):
+            body = `You've received a new encrypted message in #${channelName}`
+            break
+        case !stringHasValue(channelName) && stringHasValue(sender):
+            body = `@${sender} posted a new encrypted message`
+            break
+        default:
+            body = `You've received a new encrypted message`
+            break
+    }
     return {
         title: townName ?? 'Town',
-        body: channelName
-            ? `You've received a new encrypted message in #${channelName}`
-            : `You've received a new encrypted message`,
+        body,
     }
 }
 
@@ -152,16 +166,16 @@ function generateReplyToMessage(
     let body = ''
     switch (true) {
         case stringHasValue(channelName) && stringHasValue(sender):
-            body = `@${sender} replied to your post in #${channelName}`
+            body = `@${sender} replied to a thread in #${channelName} that you are participating in`
             break
         case stringHasValue(channelName) && !stringHasValue(sender):
-            body = `Your post was replied to in #${channelName}`
+            body = `A thread in #${channelName} that you are participating in has a new reply`
             break
         case !stringHasValue(channelName) && stringHasValue(sender):
-            body = `@${sender} replied to your post`
+            body = `@${sender} replied to a thread that you are participating in`
             break
         default:
-            body = 'Your post was replied to'
+            body = 'A thread you are participating in has a new reply'
             break
     }
     return {
@@ -192,7 +206,7 @@ async function getNotificationContent(notification: AppNotification): Promise<{
 
     switch (notification.notificationType) {
         case AppNotificationType.NewMessage:
-            return generateNewNotificationMessage(townName, channelName)
+            return generateNewNotificationMessage(townName, channelName, senderName)
         case AppNotificationType.Mention:
             return generateMentionedMessage(townName, channelName, senderName)
         case AppNotificationType.ReplyTo:
