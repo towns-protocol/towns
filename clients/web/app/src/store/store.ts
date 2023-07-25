@@ -15,8 +15,6 @@ interface AppState {
     setTownRouteBookmark: (spaceId: string, route: string) => void
     townRouteBookmarks: { [spaceId: string]: string }
     spaceIdBookmark?: string
-    setActivePushSubscription: (subscription: string) => void
-    activePushSubscription: string
 }
 
 export const GLOBAL_STORE_NAME = 'towns/global'
@@ -67,10 +65,6 @@ export const useStore = create(
                         },
                     }
                 }),
-            activePushSubscription: '',
-            setActivePushSubscription(subscription) {
-                set(() => ({ activePushSubscription: subscription }))
-            },
         }),
         {
             name: GLOBAL_STORE_NAME,

@@ -27,6 +27,7 @@ import { AppBadge, FaviconBadge } from '@components/AppBadges/AppBadges'
 import { AppNotifications } from '@components/AppNotifications/AppNotifications'
 import { useStore } from 'store/store'
 import { shouldUseWalletConnect } from 'hooks/useShouldUseWalletConnect'
+import { RegisterPushSubscription } from '@components/RegisterPushSubscription/RegisterPushSubscription'
 
 const AuthenticatedRoutes = React.lazy(() => import('routes/AuthenticatedRoutes'))
 const InviteLinkLanding = React.lazy(() => import('routes/InviteLinkLanding'))
@@ -107,6 +108,7 @@ export const App = () => {
                 <FaviconBadge />
                 <AppBadge />
                 <AppNotifications />
+                <RegisterPushSubscription />
                 <Helmet>
                     <meta
                         name="theme-color"
