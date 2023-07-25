@@ -33,7 +33,7 @@ export function useSpaceData(inSpaceId?: RoomIdentifier): SpaceData | undefined 
     )
     const spaceRoomNames = useRoomNames(spaceHierarchy?.children.map((c) => c.id) ?? [])
     // casablanca is much simpler, just get the data from the stream
-    const casablancaSpaceData = useSpaceRollup(spaceId?.networkId)
+    const casablancaSpaceData = useSpaceRollup(spaceId)
 
     return useMemo(() => {
         if (casablancaSpaceData) {
@@ -181,7 +181,7 @@ function toChannelGroups(
     return [toChannelGroup('Channels', children, roomNames)]
 }
 
-function useSpaceRollup(streamId: string | undefined): SpaceData | undefined {
+function useSpaceRollup(streamId: RoomIdentifier | undefined): SpaceData | undefined {
     const { casablancaClient } = useZionContext()
     const stream = useCasablancaStream(streamId)
     const [space, setSpace] = useState<SpaceData | undefined>(undefined)

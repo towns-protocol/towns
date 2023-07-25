@@ -9,7 +9,7 @@ export function useCasablancaStreamMember(
     roomId?: RoomIdentifier,
     userId?: string,
 ): RoomMember | undefined {
-    const channelStream = useCasablancaStream(roomId?.networkId)
+    const channelStream = useCasablancaStream(roomId)
     const [roomMember, setRoomMember] = useState<RoomMember>()
 
     useEffect(() => {

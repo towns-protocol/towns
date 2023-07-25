@@ -1,20 +1,24 @@
 import { Stream } from '@towns/sdk'
 import { useZionContext } from '../../components/ZionContextProvider'
 import { useEffect, useState } from 'react'
+import { RoomIdentifier } from '../../types/room-identifier'
+import { SpaceProtocol } from '../../client/ZionClientTypes'
 
-export function useCasablancaStream(streamId?: string): Stream | undefined {
+export function useCasablancaStream(streamId?: RoomIdentifier): Stream | undefined {
     const { casablancaClient } = useZionContext()
     const [stream, setStream] = useState<Stream | undefined>(() =>
-        streamId ? casablancaClient?.stream(streamId) : undefined,
+        streamId && streamId.protocol === SpaceProtocol.Casablanca
+            ? casablancaClient?.stream(streamId.networkId)
+            : undefined,
     )
     useEffect(() => {
         // initial conditions
-        if (!casablancaClient || !streamId) {
+        if (!casablancaClient || !streamId || streamId.protocol !== SpaceProtocol.Casablanca) {
             return
         }
         // fetch stream first time the effect runs, if it was previously set
         // to the same reference, it shouldn't trigger any re-render according to documentation
-        const stream = casablancaClient.stream(streamId)
+        const stream = casablancaClient.stream(streamId.networkId)
         // if it exists now (in the time it took for the effect to run) we're done!
         if (stream) {
             setStream(stream)
@@ -22,8 +26,8 @@ export function useCasablancaStream(streamId?: string): Stream | undefined {
         }
         // callback for when stream is initialized
         const onStreamInitialized = (inStreamId: string) => {
-            if (inStreamId === streamId) {
-                const stream = casablancaClient.stream(streamId)
+            if (inStreamId === streamId.networkId) {
+                const stream = casablancaClient.stream(streamId.networkId)
                 setStream(stream)
                 casablancaClient.off('streamInitialized', onStreamInitialized)
             }
