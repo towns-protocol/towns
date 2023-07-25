@@ -27,6 +27,7 @@ import { useTransactionStore } from '../../src/store/use-transactions-store'
 import { ZTEvent } from '../../src/types/timeline-types'
 import { MatrixEvent, MsgType as MatrixMsgType, RoomEvent } from 'matrix-js-sdk'
 import { useZionContext } from '../../src/components/ZionContextProvider'
+import { useSpaceData } from '../../src/hooks/use-space-data'
 
 describe('useCreateChannelTransactionHook', () => {
     test('user can create channel', async () => {
@@ -44,18 +45,27 @@ describe('useCreateChannelTransactionHook', () => {
         const SpacesComponent = () => {
             // spaces
             const { spaces } = useSpacesFromContract()
+            const spaceData = useSpaceData()
             return (
-                <div data-testid="spaces">
-                    {spaces.map((element) => (
-                        <div key={element.key}>{element.name}</div>
-                    ))}
-                </div>
+                <>
+                    <div data-testid="spaces">
+                        {spaces.map((element) => (
+                            <div key={element.key}>{element.name}</div>
+                        ))}
+                    </div>
+                    <div data-testid="spaceData">{JSON.stringify(spaceData)}</div>
+                </>
             )
         }
 
         const ChannelComponent = () => {
             const { channel } = useChannelData()
-            return <div data-testid="channelcomponent">{channel?.label}</div>
+            return (
+                <>
+                    <div data-testid="useChannelData-data">{JSON.stringify(channel)}</div>
+                    <div data-testid="channelLabel">{channel?.label}</div>
+                </>
+            )
         }
 
         const TestComponent = () => {
@@ -269,7 +279,7 @@ describe('useCreateChannelTransactionHook', () => {
         /* Assert */
         await waitFor(
             () => expect(channelElement).toHaveTextContent(channelName),
-            TestConstants.DoubleDefaultWaitForTimeout,
+            TestConstants.DecaDefaultWaitForTimeout,
         )
     }) // end test
 }) // end describe
