@@ -1,8 +1,7 @@
 import React, { useCallback, useMemo, useState } from 'react'
 import { useMyProfile, useSpaceData, useZionContext } from 'use-zion-client'
 import { AnimatePresence } from 'framer-motion'
-
-import { Avatar, Box, Dot, Icon, Stack, Text } from '@ui'
+import { Avatar, Box, Dot, Stack, Text } from '@ui'
 import { ImageVariants } from '@components/UploadImage/useImageSource'
 import { SpaceIcon } from '@components/SpaceIcon'
 import { TouchHomeOverlay } from '@components/TouchHomeOverlay/TouchHomeOverlay'
@@ -78,11 +77,7 @@ export const TouchLayoutHeader = () => {
                     </Stack>
                 )}
                 <Stack grow />
-                <Icon
-                    type="dm"
-                    size="square_lg"
-                    onClick={() => setActiveOverlay('direct-messages')}
-                />
+                <Box width="x4" />
                 <AnimatePresence>
                     {activeOverlay === 'main-panel' && (
                         <TouchHomeOverlay onClose={() => setActiveOverlay(undefined)} />

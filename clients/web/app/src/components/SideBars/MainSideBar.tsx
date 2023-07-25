@@ -2,7 +2,6 @@ import { motion } from 'framer-motion'
 import React, { forwardRef } from 'react'
 import { useInvites, useSpaceContext, useZionContext } from 'use-zion-client'
 import { ActionNavItem } from '@components/NavItem/ActionNavItem'
-import { DMSNavItem } from '@components/NavItem/DMSNavItem'
 import { SpaceNavItem } from '@components/NavItem/SpaceNavItem'
 import { ProfileCardButton } from '@components/ProfileCardButton/ProfileCardButton'
 import { SideBar } from '@components/SideBars/_SideBar'
@@ -23,9 +22,6 @@ export const MainSideBar = () => {
                 <ProfileCardButton />
             </TransitionItem>
             <Box borderBottom="faint" height="1" />
-            <TransitionItem key="dms">
-                <DMSNavItem />
-            </TransitionItem>
             {spaces.map((s) => (
                 <TransitionItem key={s.id.slug}>
                     <SpaceNavItem
