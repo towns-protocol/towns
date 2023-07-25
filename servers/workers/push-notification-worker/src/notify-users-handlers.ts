@@ -26,6 +26,7 @@ export interface SendPushResponse {
 export async function notifyUsers(params: NotifyRequestParams, env: Env) {
   const allNotificationRequests: Promise<SendPushResponse>[] = []
   const taggedUsers = await getNotificationTags(params.topic, env.DB)
+  patchToEnsureSpecCompliance(params)
   // gather all the notification requests into a single promise
   for (const user of params.users) {
     const userParams = createUserSpecificParams(taggedUsers, params, user)
@@ -92,6 +93,21 @@ export async function notifyUsers(params: NotifyRequestParams, env: Env) {
   }
   console.log('notificationsSentCount', notificationsSentCount)
   return new Response(notificationsSentCount.toString(), { status: 200 })
+}
+
+function patchToEnsureSpecCompliance(params: NotifyRequestParams) {
+  // https://developer.apple.com/documentation/usernotifications/sending_web_push_notifications_in_web_apps_safari_and_other_browsers
+  const MAX_LENGTH = 32
+  const base64EncodedTopicWithMaxLength = btoa(params.topic).substring(
+    0,
+    MAX_LENGTH,
+  )
+  /*
+  console.log(
+    `patch topic "${params.topic}" -> ${base64EncodedTopicWithMaxLength}`,
+  )
+  */
+  params.topic = base64EncodedTopicWithMaxLength
 }
 
 function createUserSpecificParams(

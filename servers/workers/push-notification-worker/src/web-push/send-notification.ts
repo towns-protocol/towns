@@ -67,7 +67,7 @@ export async function sendNotificationViaWebPush(
     console.log('sendNotificationViaWebPush response', {
       requestUrl: request.url,
       status: response.status,
-      message: response.text(),
+      message: await response.text(),
       userId,
     })
 
