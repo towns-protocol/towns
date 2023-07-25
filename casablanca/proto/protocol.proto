@@ -253,7 +253,6 @@ message ChannelPayload {
 message UserSettingsPayload {
     message Inception {
         string stream_id = 1;
-        string space_id = 3;
     }
 
     message FullyReadMarker {

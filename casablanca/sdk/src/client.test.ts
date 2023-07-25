@@ -1,6 +1,13 @@
 import { dlog } from './dlog'
 import { Client, IDownloadKeyResponse } from './client'
-import { genId, makeChannelStreamId, makeSpaceStreamId } from './id'
+import {
+    genId,
+    makeChannelStreamId,
+    makeSpaceStreamId,
+    makeUserStreamId,
+    makeUserSettingsStreamId,
+    makeUserDeviceKeyStreamId,
+} from './id'
 import { getMessagePayloadContent_Text, IFallbackKey } from './types'
 import { makeDonePromise, makeTestClient } from './util.test'
 import { DeviceKeys, PayloadCaseType, SyncStreamsRequest, SyncStreamsResponse } from '@towns/proto'
@@ -196,6 +203,28 @@ describe('clientTest', () => {
         await expect(alicesClient.createNewUser()).toResolve()
         await bobsClient.startSync()
         await alicesClient.startSync()
+    })
+
+    test('clientCreatesStreamsForNewUser', async () => {
+        await expect(bobsClient.createNewUser()).toResolve()
+        expect(bobsClient.streams.size).toEqual(3)
+        expect(bobsClient.streams.get(makeUserSettingsStreamId(bobsClient.userId))).toBeDefined()
+        expect(bobsClient.streams.get(makeUserStreamId(bobsClient.userId))).toBeDefined()
+        expect(bobsClient.streams.get(makeUserDeviceKeyStreamId(bobsClient.userId))).toBeDefined()
+    })
+
+    test('clientCreatesStreamsForExistingUser', async () => {
+        await expect(bobsClient.createNewUser()).toResolve()
+        const bobsAnotherClient = await makeTestClient(undefined, bobsClient.signerContext)
+        await expect(bobsAnotherClient.loadExistingUser()).toResolve()
+        expect(bobsAnotherClient.streams.size).toEqual(3)
+        expect(
+            bobsAnotherClient.streams.get(makeUserSettingsStreamId(bobsClient.userId)),
+        ).toBeDefined()
+        expect(bobsAnotherClient.streams.get(makeUserStreamId(bobsClient.userId))).toBeDefined()
+        expect(
+            bobsAnotherClient.streams.get(makeUserDeviceKeyStreamId(bobsClient.userId)),
+        ).toBeDefined()
     })
 
     test('bobCreatesUnamedSpaceAndStream', async () => {

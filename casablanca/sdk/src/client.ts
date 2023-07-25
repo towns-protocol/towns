@@ -40,6 +40,7 @@ import {
     makeUniqueChannelStreamId,
     makeUniqueSpaceStreamId,
     makeUserDeviceKeyStreamId,
+    makeUserSettingsStreamId,
     makeUserStreamId,
     userIdFromAddress,
 } from './id'
@@ -62,6 +63,7 @@ import {
     IDeviceKeySignatures,
     make_SpacePayload_Channel,
     getToDeviceWirePayloadContent,
+    make_UserSettingsPayload_Inception,
 } from './types'
 import { shortenHexString } from './binary'
 import { CryptoStore } from './crypto/store/base'
@@ -97,6 +99,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
     readonly userId: string
     readonly deviceId: string | undefined
     userStreamId?: string
+    userSettingsStreamId?: string
     userDeviceKeyStreamId?: string
     readonly streams: Map<string, Stream> = new Map()
 
@@ -206,6 +209,23 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
         ).then(() => {})
     }
 
+    private async initUserSettingsStream(
+        userSettingsStreamId: string,
+        streamAndCookie: StreamAndCookie,
+    ): Promise<void> {
+        assert(this.userSettingsStreamId === undefined, 'streamId must not be set')
+        this.userSettingsStreamId = userSettingsStreamId
+
+        const stream = new Stream(
+            userSettingsStreamId,
+            unpackEnvelope(streamAndCookie.events[0]),
+            this,
+            this.logEmitFromStream,
+        )
+        this.streams.set(userSettingsStreamId, stream)
+        stream.update(streamAndCookie, true)
+    }
+
     private async initUserDeviceKeyStream(
         userDeviceKeyStreamId: string,
         streamAndCookie: StreamAndCookie,
@@ -228,6 +248,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
         assert(this.userStreamId === undefined, 'streamId must not be set')
         const userStreamId = makeUserStreamId(this.userId)
         const userDeviceKeyStreamId = makeUserDeviceKeyStreamId(this.userId)
+        const userSettingsStreamId = makeUserSettingsStreamId(this.userId)
 
         const userEvents = [
             await makeEvent(
@@ -257,9 +278,37 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
             events: userDeviceKeyEvents,
         })
 
-        await this.initUserDeviceKeyStream(userDeviceKeyStreamId, deviceResponse.stream!)
+        const userSettingsEvents = [
+            await makeEvent(
+                this.signerContext,
+                make_UserSettingsPayload_Inception({
+                    streamId: userSettingsStreamId,
+                }),
+                [],
+            ),
+        ]
 
-        return this.initUserStream(userStreamId, userResponse.stream!)
+        const userSettingResponse = await this.rpcClient.createStream({
+            events: userSettingsEvents,
+        })
+
+        if (deviceResponse.stream) {
+            await this.initUserDeviceKeyStream(userDeviceKeyStreamId, deviceResponse.stream)
+        } else {
+            throw new Error('deviceResponse.stream is undefined')
+        }
+
+        if (userSettingResponse.stream) {
+            await this.initUserSettingsStream(userSettingsStreamId, userSettingResponse.stream)
+        } else {
+            throw new Error('userSettingResponse.stream is undefined')
+        }
+
+        if (userResponse.stream) {
+            return this.initUserStream(userStreamId, userResponse.stream)
+        } else {
+            throw new Error('userResponse.stream is undefined')
+        }
     }
 
     async loadExistingUser(): Promise<void> {
@@ -267,6 +316,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
         assert(this.userStreamId === undefined, 'streamId must not be set')
         const userStreamId = makeUserStreamId(this.userId)
         const userDeviceKeyStreamId = makeUserDeviceKeyStreamId(this.userId)
+        const userSettingsStreamId = makeUserSettingsStreamId(this.userId)
 
         // init userDeviceKeyStream
         const userDeviceKeyStream = await this.rpcClient.getStream({
@@ -278,6 +328,13 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
         // init userStream
         const userStream = await this.rpcClient.getStream({ streamId: userStreamId })
         assert(userStream.stream !== undefined, 'got bad user stream')
+
+        const userSettingsStream = await this.rpcClient.getStream({
+            streamId: userSettingsStreamId,
+        })
+        assert(userSettingsStream.stream !== undefined, 'got bad user settings stream')
+        await this.initUserSettingsStream(userSettingsStreamId, userSettingsStream.stream)
+
         return this.initUserStream(userStreamId, userStream.stream)
     }
 
