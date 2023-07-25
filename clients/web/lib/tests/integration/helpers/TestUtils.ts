@@ -16,10 +16,13 @@ import { EventTimeline } from 'matrix-js-sdk'
 import { RoomIdentifier } from 'use-zion-client/src/types/room-identifier'
 import { SpaceDataTypes } from '../../../src/client/web3/shims/SpaceShim'
 import { SpaceFactoryDataTypes } from '../../../src/client/web3/shims/SpaceFactoryShim'
-import { SpaceProtocol } from '../../../src/client/ZionClientTypes'
+import { SpaceProtocol, TransactionStatus } from '../../../src/client/ZionClientTypes'
 import { ZionTestWeb3Provider } from './ZionTestWeb3Provider'
 import { ZionClient } from '../../../src/client/ZionClient'
 import { waitFor } from '@testing-library/dom'
+import { SignerUndefinedError } from '../../../src/types/error-types'
+import { useTransactionStore } from '../../../src/store/use-transactions-store'
+import { BlockchainTransactionType } from '../../../src/types/web3-types'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function assert(condition: any, msg?: string): asserts condition {
@@ -197,7 +200,35 @@ export async function createTestChannelWithSpaceRoles(
         }
     }
 
-    return client.createChannel(createChannelInfo, client.provider.wallet)
+    const signer = client.provider.wallet
+    if (!signer) {
+        throw new SignerUndefinedError()
+    }
+    // Important for Matrix:
+    // Our tests use this to create channels in both React and non-React tests.
+    // But if it's a React test, we have to include the same transaction listener logic as use-create-channel-transaction hook
+    // otherwise, any space data referenced in the React context - i.e. useSpaceData, which relies on spaceHierarchies - can be out of sync with matrix - matrix will have the data, the blockchain won't
+    const txContext = await client.createChannelTransaction(createChannelInfo, signer)
+    if (txContext.error) {
+        throw txContext.error
+    }
+    if (txContext.data) {
+        useTransactionStore.getState().storeTransaction({
+            hash: txContext.transaction?.hash as `0x${string}`,
+            type: BlockchainTransactionType.CreateChannel,
+            data: {
+                parentSpaceId: txContext.parentSpaceId,
+                spaceId: txContext.data,
+            },
+        })
+    }
+
+    if (txContext.status === TransactionStatus.Pending) {
+        const rxContext = await client.waitForCreateChannelTransaction(txContext)
+        return rxContext?.data
+    }
+    // Something went wrong. Don't return a room identifier.
+    return undefined
 }
 
 export async function findRoleByName(

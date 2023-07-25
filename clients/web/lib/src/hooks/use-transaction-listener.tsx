@@ -61,6 +61,9 @@ async function onSuccessfulTransaction(client: ZionClient, transaction: Blockcha
 
             try {
                 const content: BlockchainTransactionEvent['content'] = transaction
+                // Important for matrix:
+                // on a successful blockchain transaction, resync the space, so that the user will get the latest channels
+                // For casablanca it works differently and this probably is potentially not needed
                 await client.sendBlockTxn(makeRoomIdentifier(transaction.data.parentSpaceId), {
                     kind: ZTEvent.BlockchainTransaction,
                     content,
@@ -68,20 +71,6 @@ async function onSuccessfulTransaction(client: ZionClient, transaction: Blockcha
             } catch (error) {
                 console.error('Error sending state BlockchainTransaction event', error)
             }
-
-            // TBD: This is backup if the above state event proves unreliable
-            // this is a reliable way to send this event to other connected clients, but it's not an accurate event type
-            // - sendEvent() encrypts messages by default and doesn't allow for specifying way to bypass encryption but Event.Reaction and EventType.RoomRedaction are not encrypted
-            // - for this to be effective, need to include EventType.Reaction in the useSyncSpaceHierarchies onRoomTimelineEvent listener
-            // void client.matrixClient?.sendEvent(
-            //     transaction.data.parentSpaceId.networkId,
-            //     EventType.Reaction, // or EventType.RoomRedaction to bypass encryption
-            //     {
-            //         transactionId: transaction.hash,
-            //         roomId: transaction.data.parentSpaceId.networkId,
-            //     },
-            // )
-
             return
         default:
             return

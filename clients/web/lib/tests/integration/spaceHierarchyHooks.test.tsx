@@ -22,6 +22,7 @@ import { ZionTestApp } from './helpers/ZionTestApp'
 import { useSpaceData } from '../../src/hooks/use-space-data'
 import { LoginWithWallet } from './helpers/TestComponents'
 
+// TODO: https://linear.app/hnt-labs/issue/HNT-1587/testsintegrationspacehierarchyhookstesttsx
 describe('spaceHierarchyHooks', () => {
     test('create a space with two users, have alice create a child channel, ensure bob sees it', async () => {
         // create clients
@@ -61,6 +62,16 @@ describe('spaceHierarchyHooks', () => {
                 <>
                     <LoginWithWallet />
                     <div data-testid="spaceId">{space?.id.networkId}</div>
+                    <div>
+                        <div>SPACE INFO:</div>
+                        {JSON.stringify(
+                            {
+                                space,
+                            },
+                            null,
+                            2,
+                        )}
+                    </div>
                     <div data-testid="spaceChildCount">
                         {space?.channelGroups && space?.channelGroups?.length > 0
                             ? space?.channelGroups[0].channels.length.toString()
@@ -94,7 +105,13 @@ describe('spaceHierarchyHooks', () => {
             visibility: RoomVisibility.Public,
             roleIds: [],
         })
+        await waitFor(
+            async () =>
+                expect((await alice.spaceDapp.getChannels(spaceId.networkId)).length).toBe(3),
+            TestConstants.DoubleDefaultWaitForTimeout,
+        )
         // wait for the space child count to change
+        screen.debug(undefined, Infinity)
         await waitFor(
             () => expect(spaceChildCount).toHaveTextContent('3'),
             TestConstants.DoubleDefaultWaitForTimeout,
