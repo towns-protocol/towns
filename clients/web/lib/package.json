@@ -10,7 +10,7 @@
         "build": "tsc",
         "cb": "yarn clean && yarn build",
         "clean": "rm -rf dist",
-        "csb:test-web-lib": "PRIMARY_PROTOCOL=casablanca yarn my-jest --maxWorkers=1",
+        "csb:test-web-lib": "PRIMARY_PROTOCOL=casablanca yarn my-jest --maxWorkers=5",
         "csb:test-web-lib-done": "yarn csb:test-web-lib --group=casablanca",
         "csb:test-web-lib-todo": "yarn csb:test-web-lib --group=-casablanca",
         "lint": "eslint .",
@@ -23,7 +23,7 @@
         "test-load": "NUM_CLIENTS=25 yarn my-jest --group=integration/load --testTimeout=600000",
         "test:ci": "yarn csb:test-web-lib-done --silent",
         "test:ci-todo": "yarn csb:test-web-lib-todo --silent",
-        "test:dendrite:e2e": "yarn my-jest --group=dendrite --maxWorkers=2",
+        "test:dendrite:e2e": "yarn my-jest --group=dendrite --maxWorkers=5",
         "test:all": "yarn my-jest --maxWorkers=10",
         "test:all-csb": "PRIMARY_PROTOCOL=casablanca yarn test:all",
         "watch": "tsc --watch"
