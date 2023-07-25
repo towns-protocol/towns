@@ -64,8 +64,10 @@ export async function sendNotificationViaWebPush(
 
     const response = await fetch(request)
     const status = response.status
-    console.log('response', {
+    console.log('sendNotificationViaWebPush response', {
+      requestUrl: request.url,
       status: response.status,
+      message: response.text(),
       userId,
     })
 
