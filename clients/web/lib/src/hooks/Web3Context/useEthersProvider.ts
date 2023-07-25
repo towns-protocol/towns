@@ -30,18 +30,19 @@ const alchemyRpcUrls = (
     },
 })
 
-// ethers v5 has an AlchemyProvider, but it doesn't support sepolia, so we have to use the JsonRpcProvider with Alchemy's urls
+// ethers v5 has an AlchemyProvider, but it doesn't support sepolia, so we have to use the StaticJsonRpcProvider with Alchemy's urls
+// StaticJsonRpcProvider wont call chainId for every request, which is OK because the chainId each environment is static. For now at least
 function newEthersProvider(url: string | undefined, network: Network, alchemyKey?: string) {
     const id = network.chainId
 
     if (!url || id === 1337 || id === 31337 || !alchemyKey) {
-        return new providers.JsonRpcProvider(url, network)
+        return new providers.StaticJsonRpcProvider(url, network)
     }
 
     const alchemyUrls = alchemyRpcUrls(alchemyKey ?? '')
     const rpcUrl = url.includes('wss') ? alchemyUrls[id].wss : alchemyUrls[id].https
 
-    return new providers.JsonRpcProvider(rpcUrl, network)
+    return new providers.StaticJsonRpcProvider(rpcUrl, network)
 }
 
 export function publicClientToProvider(publicClient: PClient, alchemyKey?: string) {
