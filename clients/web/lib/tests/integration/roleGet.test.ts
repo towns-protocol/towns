@@ -242,10 +242,10 @@ describe('get role details', () => {
         // create new role in space
         const permissions = [Permission.Read, Permission.Write]
         const tokens: SpaceFactoryDataTypes.ExternalTokenStruct[] = []
-        const users: string[] = [
-            '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
-            '0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65',
-        ]
+
+        const mod1 = await TestConstants.getWalletWithMemberNft()
+        const mod2 = await TestConstants.getWalletWithMemberNft()
+        const users: string[] = [mod1.address, mod2.address]
         const roleName = 'newRole1'
         const roleId: RoleIdentifier | undefined = await alice.createRole(
             roomId.networkId,

@@ -40,7 +40,8 @@ describe('useDeleteRoleTransaction', () => {
         const toBeDeletedRoleName = 'to-be-deleted-role'
         const toBeDeletedPermissions = [Permission.Read, Permission.Write]
         const toBeDeletedTokens: string[] = []
-        const toBeDeletedUsers = ['0x70997970C51812dc3A010C7d01b50e0d17dc79C8']
+        const mod1 = await TestConstants.getWalletWithMemberNft()
+        const toBeDeletedUsers = [mod1.address]
         const chainId = (await provider.getNetwork()).chainId
         if (!chainId) {
             throw new Error('chainId is undefined')

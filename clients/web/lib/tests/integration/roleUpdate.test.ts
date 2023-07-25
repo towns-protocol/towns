@@ -18,6 +18,7 @@ import {
 
 import { ContractReceipt } from 'ethers'
 import { TokenDataTypes } from '../../src/client/web3/shims/TokenEntitlementShim'
+import { TestConstants } from './helpers/TestConstants'
 
 describe('update role', () => {
     test('Update Everyone role with multicall', async () => {
@@ -137,7 +138,8 @@ describe('update role', () => {
         const moderatorPermissions = [Permission.Read, Permission.Write, Permission.Ban]
         const moderatorTokens: TokenDataTypes.ExternalTokenStruct[] = []
         // replace the current moderator with this user
-        const moderatorUsers: string[] = ['0x70997970C51812dc3A010C7d01b50e0d17dc79C8']
+        const mod1 = await TestConstants.getWalletWithMemberNft()
+        const moderatorUsers: string[] = [mod1.address]
         const moderatorRoleName = 'Moderator'
         const moderatorRoleId = await alice.createRole(
             roomId.networkId,
@@ -159,7 +161,8 @@ describe('update role', () => {
 
         /** Act */
         // add a moderator
-        const newModeratorUsers = [...moderatorUsers, '0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65']
+        const mod2 = await TestConstants.getWalletWithMemberNft()
+        const newModeratorUsers = [...moderatorUsers, mod2.address]
         const newModeratorRole: RoleDetails = {
             id: moderatorRoleId.roleId,
             name: moderatorRoleName,
@@ -230,7 +233,8 @@ describe('update role', () => {
         const moderatorPermissions = [Permission.Read, Permission.Write, Permission.Ban]
         const moderatorTokens: TokenDataTypes.ExternalTokenStruct[] = []
         // replace the current moderator with this user
-        const moderatorUsers: string[] = ['0x70997970C51812dc3A010C7d01b50e0d17dc79C8']
+        const mod1 = await TestConstants.getWalletWithMemberNft()
+        const moderatorUsers: string[] = [mod1.address]
         const moderatorRoleName = 'Moderator'
         const moderatorRoleId = await alice.createRole(
             roomId.networkId,
@@ -252,7 +256,8 @@ describe('update role', () => {
 
         /** Act */
         // add a moderator
-        const newModeratorUsers = ['0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65']
+        const mod2 = await TestConstants.getWalletWithMemberNft()
+        const newModeratorUsers = [mod2.address]
         const newModeratorRole: RoleDetails = {
             id: moderatorRoleId.roleId,
             name: moderatorRoleName,

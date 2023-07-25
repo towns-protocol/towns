@@ -40,11 +40,10 @@ describe('useUpdateRoleTransaction', () => {
         const moderatorRoleName = 'Moderator'
         const moderatorPermissions = [Permission.Read, Permission.Write, Permission.Ban]
         const moderatorTokens: string[] = []
-        const moderatorUsers = ['0x70997970C51812dc3A010C7d01b50e0d17dc79C8']
-        const updatedModeratorUsers = [
-            '0x70997970C51812dc3A010C7d01b50e0d17dc79C8',
-            '0x90F79bf6EB2c4f870365E785982E1f101E93b906',
-        ]
+        const mod1 = await TestConstants.getWalletWithMemberNft()
+        const mod2 = await TestConstants.getWalletWithMemberNft()
+        const moderatorUsers = [mod1.address]
+        const updatedModeratorUsers = [mod1.address, mod2.address]
         const updatedModeratorPermissions = [
             Permission.Read,
             Permission.Write,

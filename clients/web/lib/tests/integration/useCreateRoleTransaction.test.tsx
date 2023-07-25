@@ -39,7 +39,8 @@ describe('useCreateRoleTransaction', () => {
         const moderatorRoleName = 'Moderator'
         const moderatorPermissions = [Permission.Read, Permission.Write, Permission.Ban]
         const moderatorTokens: string[] = []
-        const moderatorUsers = ['0x70997970C51812dc3A010C7d01b50e0d17dc79C8']
+        const mod1 = await TestConstants.getWalletWithMemberNft()
+        const moderatorUsers = [mod1.address]
         const chainId = (await provider.getNetwork()).chainId
         if (!chainId) {
             throw new Error('chainId is undefined')
