@@ -67,6 +67,10 @@ export async function handleRequest(
             withCorsHeaders(request, env.ENVIRONMENT),
           )
         } else {
+          const origin = request.headers.get('Origin')
+          console.error(
+            `Origin "${origin}" is not allowed in Env: ${env.ENVIRONMENT})`,
+          )
           return new Response('Forbidden', {
             status: 403,
             headers: withCorsHeaders(request, env.ENVIRONMENT),

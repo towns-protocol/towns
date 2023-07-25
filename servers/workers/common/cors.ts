@@ -81,6 +81,7 @@ function getOriginForCors(request: Request, env: Environment): string {
 export function isAllowedOrigin(request: Request, env: Environment): boolean {
     const corsOrigin = getOriginForCors(request, env)
     switch (env) {
+        case 'production':
         case 'development':
         case 'test': {
             const origin = request.headers.get('Origin')

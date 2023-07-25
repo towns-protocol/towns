@@ -17,7 +17,9 @@
     "sqlquery:local": "NO_D1_WARNING=true && wrangler d1 execute PushSubscription_test --local  --file=./sql/query.sql",
     "sqlrun:local": "NO_D1_WARNING=true && wrangler d1 execute PushSubscription_test --local  --file=./sql/run.sql",
     "sqlcreate:test": "NO_D1_WARNING=true && wrangler d1 execute PushSubscription_test --env test --file=./sql/create-schema.sql",
+    "sqlquery:test": "NO_D1_WARNING=true && wrangler d1 execute PushSubscription_test --env test  --file=./sql/query.sql",
     "sqlcreate:prod": "NO_D1_WARNING=true && wrangler d1 execute PushSubscription --env production --file=./sql/create-schema.sql",
+    "sqlquery:prod": "NO_D1_WARNING=true && wrangler d1 execute PushSubscription --env production --file=./sql/query.sql",
     "test": "yarn test:unit --watch",
     "test:unit": "jest"
   },
