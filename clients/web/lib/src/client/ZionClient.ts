@@ -535,8 +535,21 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
             error = await this.onErrorLeaveSpaceRoomAndDecodeError(spaceId, err)
         }
 
-        await this.createSpaceRoom(createSpaceInfo, spaceId.networkId)
-        console.log('[createCasablancaSpaceTransaction] Space created', spaceId)
+        if (!error) {
+            try {
+                await this.createSpaceRoom(createSpaceInfo, spaceId.networkId)
+                console.log('[createCasablancaSpaceTransaction] Space created', spaceId)
+
+                await this.createSpaceDefaultChannelRoom(spaceId, 'general', channelId)
+                console.log('[createCasablancaSpaceTransaction] default channel created', channelId)
+            } catch (err) {
+                console.error(
+                    '[createCasablancaSpaceTransaction] default channel creation failed',
+                    err,
+                )
+                error = err as Error
+            }
+        }
 
         return {
             transaction,
@@ -663,6 +676,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
     private async createSpaceDefaultChannelRoom(
         parentSpaceId: RoomIdentifier,
         channelName?: string,
+        channelId?: RoomIdentifier,
     ): Promise<RoomIdentifier> {
         const channelInfo: CreateChannelInfo = {
             name: channelName ?? 'general',
@@ -670,7 +684,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
             parentSpaceId,
             roleIds: [],
         }
-        return await this.createChannelRoom(channelInfo)
+        return await this.createChannelRoom(channelInfo, channelId?.networkId)
     }
 
     private async createCasablancaChannelTransaction(
