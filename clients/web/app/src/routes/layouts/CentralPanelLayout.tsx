@@ -5,7 +5,6 @@ import { ErrorBoundary } from '@sentry/react'
 import { Box, Stack } from '@ui'
 import { usePersistPanes } from 'hooks/usePersistPanes'
 import { useDevice } from 'hooks/useDevice'
-import { TouchLayoutHeader } from '@components/TouchLayoutHeader/TouchLayoutHeader'
 import { SomethingWentWrong } from '@components/Errors/SomethingWentWrong'
 
 export const CentralPanelLayout = (props: { children: React.ReactNode }) => {
@@ -17,7 +16,6 @@ export const CentralPanelLayout = (props: { children: React.ReactNode }) => {
     return isTouch ? (
         <>
             <Stack height="100%">
-                <TouchLayoutHeader />
                 <Box grow centerContent position="relative">
                     <ErrorBoundary fallback={ErrorFallbackComponent}>
                         <Box absoluteFill>{children}</Box>

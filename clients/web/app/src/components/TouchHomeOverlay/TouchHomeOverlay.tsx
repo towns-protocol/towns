@@ -106,6 +106,7 @@ export const TouchHomeOverlay = (props: Props) => {
                                 name={s.name}
                                 avatar={s.avatarSrc}
                                 pinned={false}
+                                onClick={onClose}
                             />
                         ))}
                     </Stack>

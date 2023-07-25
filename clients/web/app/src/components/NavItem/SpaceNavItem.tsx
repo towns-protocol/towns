@@ -22,10 +22,12 @@ type Props = {
     onSettings?: (id: RoomIdentifier) => void
     exact?: boolean
     isInvite?: boolean
+    onClick?: () => void
 }
 
 export const SpaceNavItem = (props: Props) => {
-    const { id, forceMatch, highlight, avatar, exact, icon, name, pinned, isInvite } = props
+    const { id, forceMatch, highlight, avatar, exact, icon, name, pinned, isInvite, onClick } =
+        props
     const { isTouch } = useDevice()
     const notificationCounts = useSpaceNotificationCounts(id)
     const mentions = notificationCounts.mentions
@@ -42,11 +44,12 @@ export const SpaceNavItem = (props: Props) => {
             forceMatch={forceMatch}
             activeBackground={isTouch ? 'level2' : 'level3'}
             highlight={highlight}
-            tooltip={props.name}
+            tooltip={isTouch ? undefined : props.name}
             tooltipOptions={{
                 placement: 'horizontal',
                 immediate: true,
             }}
+            onClick={onClick}
         >
             {avatar && (
                 <Box position="relative">
