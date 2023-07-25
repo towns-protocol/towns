@@ -13,6 +13,22 @@ import { execSync } from 'child_process'
 
 const commitHash = execSync('git rev-parse --short HEAD').toString().trim()
 
+function differMatrixSourcemapsPlugins(): PluginOption {
+    const matrixPackages = ['node_modules/matrix', 'node_modules/@matrix-org']
+
+    return {
+        name: 'differ-matrix-sourcemap',
+        transform(code: string, id: string) {
+            if (matrixPackages.some((pkg) => id.includes(pkg))) {
+                return {
+                    code: code,
+                    map: { mappings: '' },
+                }
+            }
+        },
+    }
+}
+
 // https://vitejs.dev/config/
 export default ({ mode }: { mode: string }) => {
     console.log('viteconfig:mode', mode)
@@ -27,7 +43,7 @@ export default ({ mode }: { mode: string }) => {
         }) as PluginOption,
         visualizer({ filename: 'dist/stats.html', template: 'treemap' }) as PluginOption,
     ]
-    const prodPlugins: PluginOption[] = []
+    const prodPlugins: PluginOption[] = [differMatrixSourcemapsPlugins()]
 
     let config: UserConfig = {
         build: {
