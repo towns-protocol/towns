@@ -11,7 +11,7 @@ import {
     SpaceHierarchy,
 } from '../types/zion-types'
 import { RoomIdentifier, makeRoomIdentifier } from '../types/room-identifier'
-import { useRoom } from './use-room'
+import { useRoom, useRoomNames } from './use-room'
 import { useZionContext } from '../components/ZionContextProvider'
 import { useSpaceContext } from '../components/SpaceContextProvider'
 import { useCasablancaStream } from './CasablancClient/useCasablancaStream'
@@ -23,11 +23,16 @@ export function useSpaceData(inSpaceId?: RoomIdentifier): SpaceData | undefined 
     const { spaceHierarchies } = useZionContext()
     const { spaceId: contextSpaceId } = useSpaceContext()
     const spaceId = inSpaceId ?? contextSpaceId
+    // this madness is for matrix. the space holds the channel ids, but
+    // we don't sync the channels until after joining, so blend the hierarchy data
+    // with local data and hope the channel names come out right.
     const spaceRoom = useRoom(spaceId)
     const spaceHierarchy = useMemo(
         () => (spaceId?.networkId ? spaceHierarchies[spaceId.networkId] : undefined),
         [spaceId?.networkId, spaceHierarchies],
     )
+    const spaceRoomNames = useRoomNames(spaceHierarchy?.children.map((c) => c.id) ?? [])
+    // casablanca is much simpler, just get the data from the stream
     const casablancaSpaceData = useSpaceRollup(spaceId?.networkId)
 
     return useMemo(() => {
@@ -40,10 +45,11 @@ export function useSpaceData(inSpaceId?: RoomIdentifier): SpaceData | undefined 
                 spaceHierarchy,
                 spaceRoom?.membership ?? '',
                 '/placeholders/nft_29.png',
+                spaceRoomNames,
             )
         }
         return undefined
-    }, [spaceHierarchy, spaceRoom, casablancaSpaceData])
+    }, [casablancaSpaceData, spaceRoom, spaceHierarchy, spaceRoomNames])
 }
 
 export function useInvites(): InviteData[] {
@@ -98,12 +104,13 @@ function formatSpace(
     spaceHierarchy: SpaceHierarchy | undefined,
     membership: string,
     avatarSrc: string,
+    roomNames: Record<string, string>,
 ): SpaceData {
     return formatRoom(
         root,
         membership,
         avatarSrc,
-        toChannelGroups(spaceHierarchy?.children ?? []),
+        toChannelGroups(spaceHierarchy?.children ?? [], roomNames),
         spaceHierarchy,
     )
 }
@@ -141,29 +148,37 @@ function formatInvite(
     }
 }
 
-function formatChannel(spaceChild: SpaceChild): Channel {
+function formatChannel(spaceChild: SpaceChild, roomNames: Record<string, string>): Channel {
+    const roomName = roomNames[spaceChild.id.networkId]
     return {
         id: spaceChild.id,
-        label: spaceChild.name ?? '',
+        label: roomName ?? spaceChild.name ?? '',
         private: !spaceChild.worldReadable,
         highlight: false,
         topic: spaceChild.topic,
     }
 }
 
-function toChannelGroup(label: string, channels: SpaceChild[]): ChannelGroup {
+function toChannelGroup(
+    label: string,
+    channels: SpaceChild[],
+    roomNames: Record<string, string>,
+): ChannelGroup {
     return {
         label: label,
-        channels: channels.map(formatChannel),
+        channels: channels.map((c) => formatChannel(c, roomNames)),
     }
 }
 
-function toChannelGroups(children: SpaceChild[]): ChannelGroup[] {
+function toChannelGroups(
+    children: SpaceChild[],
+    roomNames: Record<string, string>,
+): ChannelGroup[] {
     if (children.length === 0) {
         return []
     }
     // the backend doesn't yet support tags, just return all channels in the "Channels" group
-    return [toChannelGroup('Channels', children)]
+    return [toChannelGroup('Channels', children, roomNames)]
 }
 
 function useSpaceRollup(streamId: string | undefined): SpaceData | undefined {

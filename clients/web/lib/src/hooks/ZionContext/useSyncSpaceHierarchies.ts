@@ -187,22 +187,6 @@ export function useSyncSpaceHierarchies(
         }
     }, [enqueueSpaceId, matrixClient, queryClient, spaceIds])
 
-    // watch for when a channel name changes
-    useEffect(() => {
-        const onNameEvent = (room: MatrixRoom) => {
-            const parentSpaceId = getParentSpaceId(room, spaceIds)
-            if (parentSpaceId) {
-                removeSyncedEntitledChannelsQueriesForSpace(parentSpaceId)
-                enqueueSpaceId(parentSpaceId)
-            }
-        }
-
-        matrixClient?.on(RoomEvent.Name, onNameEvent)
-        return () => {
-            matrixClient?.off(RoomEvent.Name, onNameEvent)
-        }
-    }, [enqueueSpaceId, matrixClient, queryClient, spaceIds])
-
     // watch for when current user joins or leaves a channel
     useEffect(() => {
         function onMyMembership(
