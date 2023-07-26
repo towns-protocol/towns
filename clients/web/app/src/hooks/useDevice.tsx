@@ -1,5 +1,10 @@
+import UAParser from 'ua-parser-js'
+
+const UserAgentInstance = new UAParser(window.navigator.userAgent)
+
 export function isTouch() {
-    return matchMedia !== undefined && matchMedia('(hover: none)').matches
+    const device = UserAgentInstance.getDevice()
+    return device.type === 'mobile' || device.type === 'tablet'
 }
 
 export function useDevice() {
