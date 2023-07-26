@@ -1,8 +1,7 @@
-package events_test
+package events
 
 import (
 	"casablanca/node/crypto"
-	"casablanca/node/events"
 	"casablanca/node/protocol"
 	"context"
 	"testing"
@@ -12,15 +11,15 @@ import (
 
 func TestLoad(t *testing.T) {
 	wallet, _ := crypto.NewWallet(context.Background())
-	inception, err := events.MakeEnvelopeWithPayload(
+	inception, err := MakeEnvelopeWithPayload(
 		wallet,
-		events.Make_UserPayload_Inception("streamid$1"),
+		Make_UserPayload_Inception("streamid$1"),
 		nil,
 	)
 	assert.NoError(t, err)
-	join, err := events.MakeEnvelopeWithPayload(
+	join, err := MakeEnvelopeWithPayload(
 		wallet,
-		events.Make_UserPayload_Membership(protocol.MembershipOp_SO_JOIN, "userid$1", "streamid$1", nil),
+		Make_UserPayload_Membership(protocol.MembershipOp_SO_JOIN, "userid$1", "streamid$1", nil),
 		[][]byte{inception.Hash},
 	)
 	assert.NoError(t, err)
@@ -29,7 +28,7 @@ func TestLoad(t *testing.T) {
 		inception,
 		join,
 	}
-	view, err := events.MakeStreamView(envelopes)
+	view, err := MakeStreamView(envelopes)
 	assert.NoError(t, err)
 
 	assert.Equal(t, 2, len(view.Events()))

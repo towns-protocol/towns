@@ -1,12 +1,10 @@
-package events_test
+package events
 
 import (
+	. "casablanca/node/protocol"
 	"testing"
 
 	"github.com/stretchr/testify/require"
-
-	. "casablanca/node/events"
-	. "casablanca/node/protocol"
 )
 
 func TestEqualAndCopy(t *testing.T) {
