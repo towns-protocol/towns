@@ -40,7 +40,7 @@ const KEY_REQUEST_TIMEOUT_MS = 3000
 /// how many events to include in the same to-device message
 const MAX_EVENTS_PER_REQUEST = 64
 /// time betwen debounced calls to look for keys
-const TIME_BETWEEN_LOOKING_FOR_KEYS_MS = 250
+const TIME_BETWEEN_LOOKING_FOR_KEYS_MS = 500
 /// time before we bug a user again for keys
 const TIME_BETWEEN_USER_KEY_REQUESTS_MS = 1000 * 60 * 5
 /// time between processing to-device events

@@ -55,6 +55,7 @@ export function Web3ContextProvider(props: Props): JSX.Element {
             alchemyKey
                 ? [alchemyProvider({ apiKey: alchemyKey }), publicProvider()]
                 : [publicProvider()],
+            { retryCount: 5 },
         )
 
         const config = createConfig({
