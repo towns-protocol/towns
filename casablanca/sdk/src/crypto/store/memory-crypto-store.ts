@@ -493,17 +493,21 @@ export class MemoryCryptoStore implements CryptoStore {
 
     // Session key backups
 
-    public doTxn<T>(mode: Mode, stores: Iterable<string>, func: (txn: null) => T): Promise<T> {
+    public doTxn<T>(
+        mode: Mode,
+        stores: Iterable<string>,
+        func: (txn: null) => T | Promise<T>,
+    ): Promise<T> {
         return Promise.resolve(func(null))
     }
 
     // rk storage
-    getRK(txn: unknown): Promise<RK | null> {
-        return Promise.resolve(this.rk)
+    getRK<T>(txn: unknown, func: (rk: RK | null) => T): Promise<T> {
+        return Promise.resolve(func(this.rk))
     }
 
-    getRDK(txn: unknown): Promise<RDK | null> {
-        return Promise.resolve(this.rdk)
+    getRDK<T>(txn: unknown, func: (rdk: RDK | null) => T): Promise<T> {
+        return Promise.resolve(func(this.rdk))
     }
 
     public storeRK(txn: unknown, rk: RK): void {

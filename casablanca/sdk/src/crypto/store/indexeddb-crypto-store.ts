@@ -40,6 +40,7 @@ export class IndexedDBCryptoStore implements CryptoStore {
     public static STORE_DEVICE_DATA = 'device_data'
     public static STORE_ROOMS = 'rooms'
     public static STORE_BACKUP = 'sessions_needing_backup'
+    public static STORE_RK = 'river_keys'
 
     public static exists(indexedDB: IDBFactory, dbName: string): Promise<boolean> {
         return exists(indexedDB, dbName)
@@ -53,11 +54,11 @@ export class IndexedDBCryptoStore implements CryptoStore {
      *
      */
     public constructor(
-        private readonly indexedDB: IDBFactory,
+        private readonly indexedDB: IDBFactory | null,
         private readonly dbName: string,
         private readonly userId: string,
     ) {
-        console.log('csb:sdk:store:indexeddb')
+        log('csb:sdk:store:indexeddb')
     }
 
     /**
@@ -103,7 +104,8 @@ export class IndexedDBCryptoStore implements CryptoStore {
                 const db = req.result
 
                 log(`connected to indexeddb ${this.dbName}`)
-                resolve(new IndexedDBCryptoStoreBackend.Backend(db))
+                const backend = new IndexedDBCryptoStoreBackend.Backend(db)
+                resolve(backend)
             }
         })
             .then((backend) => {
@@ -148,6 +150,10 @@ export class IndexedDBCryptoStore implements CryptoStore {
             })
 
         return this.backendPromise
+    }
+
+    public cryptoStoreType(): string | undefined {
+        return this.backend?.constructor.name
     }
 
     public deleteAllData(): Promise<void> {
@@ -563,7 +569,7 @@ export class IndexedDBCryptoStore implements CryptoStore {
     public doTxn<T>(
         mode: Mode,
         stores: Iterable<string>,
-        func: (txn: IDBTransaction) => T,
+        func: (txn: IDBTransaction) => T | Promise<T>,
         log?: DLogger,
     ): Promise<T> {
         return this.backend!.doTxn<T>(mode, stores, func as (txn: unknown) => T, log)
@@ -571,12 +577,12 @@ export class IndexedDBCryptoStore implements CryptoStore {
 
     // rk storage
 
-    public getRK(txn: IDBTransaction): Promise<RK | null> {
-        return this.backend!.getRK(txn)
+    public getRK<T>(txn: IDBTransaction, func: (rk: RK | null) => T): Promise<T> {
+        return this.backend!.getRK(txn, func)
     }
 
-    public getRDK(txn: IDBTransaction): Promise<RDK | null> {
-        return this.backend!.getRDK(txn)
+    public getRDK<T>(txn: IDBTransaction, func: (rdk: RDK | null) => T): Promise<T> {
+        return this.backend!.getRDK(txn, func)
     }
 
     public storeRK(txn: IDBTransaction, rk: RK): void {

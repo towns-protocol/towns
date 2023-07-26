@@ -17,6 +17,8 @@ import { InboundGroupSessionData } from '../../crypto/olmDevice'
 import { dlog } from '../../dlog'
 import { RDK, RK } from '../rk'
 import isEqual from 'lodash/isEqual'
+import { IndexedDBCryptoStore } from './indexeddb-crypto-store'
+import { result } from 'lodash'
 
 const log = dlog('csb:indexeddb-crypto-store-backend')
 const PROFILE_TRANSACTIONS = false
@@ -46,6 +48,7 @@ export class Backend implements CryptoStore {
         // by passing us a ready IDBDatabase instance
         return this
     }
+
     public async deleteAllData(): Promise<void> {
         throw Error('This is not implemented, call IDBFactory::deleteDatabase(dbName) instead.')
     }
@@ -862,7 +865,7 @@ export class Backend implements CryptoStore {
     public doTxn<T>(
         mode: Mode,
         stores: string | string[],
-        func: (txn: IDBTransaction) => T,
+        func: (txn: IDBTransaction) => T | Promise<T>,
     ): Promise<T> {
         let startTime: number
         let description: string
@@ -873,60 +876,68 @@ export class Backend implements CryptoStore {
             log(`Starting ${description}`)
         }
         const txn = this.db.transaction(stores, mode)
-        const promise = promiseifyTxn(txn)
-        const result = func(txn)
-        if (PROFILE_TRANSACTIONS) {
-            promise.then(
-                () => {
-                    const elapsedTime = Date.now() - startTime
-                    log(`Finished ${description}, took ${elapsedTime} ms`)
-                },
-                () => {
-                    const elapsedTime = Date.now() - startTime
-                    log(`Failed ${description}, took ${elapsedTime} ms`)
-                },
-            )
+        const txPromise = promiseifyTxn(txn)
+        let result = func(txn)
+        if (!(result instanceof Promise)) {
+            result = Promise.resolve(result)
         }
-        return promise.then(() => {
-            return result
+        return result.then((result) => {
+            if (PROFILE_TRANSACTIONS) {
+                txPromise.then(
+                    () => {
+                        const elapsedTime = Date.now() - startTime
+                        log('Finished', 'description', description, 'time in ms', elapsedTime)
+                    },
+                    () => {
+                        const elapsedTime = Date.now() - startTime
+                        log('Failed', 'description', description, 'time in ms', elapsedTime)
+                    },
+                )
+            }
+            return txPromise.then(() => result)
         })
     }
 
     // rk storage
-    public getRK(txn: IDBTransaction): Promise<RK | null> {
-        const objectStore = txn.objectStore('keys')
+    public getRK<T>(txn: IDBTransaction, func: (rk: RK | null) => T): Promise<T> {
+        const objectStore = txn.objectStore(IndexedDBCryptoStore.STORE_RK)
         const getReq = objectStore.get('rk')
         return new Promise((resolve, reject) => {
             getReq.onsuccess = (): void => {
-                const result = getReq.result
-                if (result) {
-                    resolve(new RK(result))
+                if (getReq.result) {
+                    resolve(func(new RK(getReq.result)))
                 } else {
-                    resolve(null)
+                    resolve(func(null))
                 }
             }
             getReq.onerror = reject
         })
     }
-    public getRDK(txn: IDBTransaction): Promise<RDK | null> {
-        const objectStore = txn.objectStore('keys')
+
+    public getRDK<T>(txn: IDBTransaction, func: (rdk: RDK | null) => T): Promise<T> {
+        const objectStore = txn.objectStore(IndexedDBCryptoStore.STORE_RK)
         const getReq = objectStore.get('rdk')
+
         return new Promise((resolve, reject) => {
             getReq.onsuccess = (): void => {
-                const { key, sig } = getReq.result
-                resolve(RDK.from(key, sig))
+                if (getReq.result) {
+                    const { key, sig } = getReq.result
+                    resolve(func(RDK.from(key, sig)))
+                } else {
+                    resolve(func(null))
+                }
             }
             getReq.onerror = reject
         })
     }
 
     public storeRK(txn: IDBTransaction, rk: RK): void {
-        const objectStore = txn.objectStore('keys')
+        const objectStore = txn.objectStore(IndexedDBCryptoStore.STORE_RK)
         objectStore.put(rk.key.privateKey, 'rk')
     }
 
     public storeRDK(txn: IDBTransaction, rdk: RDK): void {
-        const objectStore = txn.objectStore('keys')
+        const objectStore = txn.objectStore(IndexedDBCryptoStore.STORE_RK)
         objectStore.put(
             {
                 key: rdk.privateKey(),
@@ -993,9 +1004,11 @@ const DB_MIGRATIONS: DbMigration[] = [
         })
     },
     (db): void => {
-        db.createObjectStore('keys', {
-            keyPath: 'type',
-        })
+        log('Creating room_keys store')
+        db.createObjectStore('river_keys'),
+            {
+                keyPath: ['type'],
+            }
     },
     // Expand as needed.
 ]

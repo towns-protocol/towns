@@ -36,6 +36,7 @@ import {
     registerAlgorithm,
 } from './algorithms/base'
 import { OlmDecryption, OlmEncryption } from './algorithms/olm'
+import { Auth } from './store/auth'
 
 const log = dlog('csb:crypto')
 
@@ -288,6 +289,9 @@ export class Crypto
     // device_id -> map ( algo_key_id: { key, signatures: { key: sig}})
     private fallbackKeys: Record<string, Record<string, IFallbackKey>> = {}
 
+    // River root and device key management
+    private readonly auth: Auth
+
     public constructor(
         public readonly client: Client,
         public readonly userId: string,
@@ -332,6 +336,8 @@ export class Crypto
         // crossSigningInfo
         // SecretStorage
         // dehydrationManager
+
+        this.auth = new Auth(this.cryptoStore)
     }
 
     /** stop background processes */

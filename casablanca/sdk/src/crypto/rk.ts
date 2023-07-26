@@ -2,6 +2,9 @@ import { townsHash, townsRecoverPubKey, townsSign } from './crypto'
 import { bin_fromHexString, bin_toHexString } from '../binary'
 import { SigningKey } from 'ethers/lib/utils'
 import { ethers } from 'ethers'
+import { dlog } from '../dlog'
+
+const log = dlog('csb:rk')
 
 /* River public key for signing and verifying */
 export interface RiverPublicKey {
@@ -43,6 +46,10 @@ export class RDK extends RiverKey {
      */
     delegateSig?: Uint8Array
 
+    public isSigned(): boolean {
+        return this.delegateSig !== undefined
+    }
+
     static from(privateKey: Uint8Array, delegateSig?: Uint8Array): RDK {
         const rdk = new RDK(privateKey)
         rdk.delegateSig = delegateSig
@@ -50,6 +57,7 @@ export class RDK extends RiverKey {
     }
 
     static createRandom(): RDK {
+        log('createRandom RDK')
         return new RDK(bin_fromHexString(ethers.Wallet.createRandom().privateKey))
     }
 }
@@ -62,14 +70,18 @@ export class RDK extends RiverKey {
  *  - sign user Wallet (the public part)
  */
 export class RK extends RiverKey {
-    public async signRdk(rdk: RDK): Promise<Uint8Array> {
+    public async signRdk(rdk: RDK): Promise<RDK> {
+        if (rdk.isSigned()) {
+            throw new Error('RDK is already signed')
+        }
         const hash = townsHash(rdk.publicKey().bytes)
         rdk.delegateSig = await townsSign(hash, bin_fromHexString(this.key.privateKey))
-        return rdk.delegateSig
+        return rdk
     }
 
     public verifyRdk(rdk: RDK): boolean {
         if (!rdk.delegateSig) {
+            log('rdk.delegateSig is not set')
             return false
         }
         const hash = townsHash(rdk.publicKey().bytes)
@@ -78,6 +90,7 @@ export class RK extends RiverKey {
     }
 
     public static createRandom(): RK {
+        log('createRandom RK')
         return new RK(bin_fromHexString(ethers.Wallet.createRandom().privateKey))
     }
 }

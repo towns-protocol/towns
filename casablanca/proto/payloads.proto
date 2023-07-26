@@ -146,3 +146,12 @@ enum KeyResponseKind {
     KRK_KEYS_NOT_FOUND = 2;
     KRK_CHANNEL_NOT_FOUND = 3;
 }
+
+/** 
+* RiverKey is used to store private part of River Root Key (RK) or River Device Key (RDK), and (optionally) signature for RDK.
+* The signature is always a ECDSA signature by RK of the public part of RDK.
+**/ 
+message RiverKey {
+    bytes private_key = 1;
+    bytes signature = 2;
+}

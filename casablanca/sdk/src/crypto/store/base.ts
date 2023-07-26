@@ -121,15 +121,15 @@ export interface CryptoStore {
     doTxn<T>(
         mode: Mode,
         stores: Iterable<string>,
-        func: (txn: CryptoTxn) => T,
+        func: (txn: CryptoTxn) => T | Promise<T>,
         log?: DLogger,
     ): Promise<T>
 
     // RK storage
-    getRK(txn: unknown): Promise<RK | null>
-    getRDK(txn: unknown): Promise<RDK | null>
-    storeRK(txn: unknown, rk: RK): void
-    storeRDK(txn: unknown, rdk: RDK): void
+    getRK<T>(txn: CryptoTxn, func: (rk: RK | null) => T): Promise<T>
+    getRDK<T>(txn: CryptoTxn, func: (rdk: RDK | null) => T): Promise<T>
+    storeRK(txn: CryptoTxn, rk: RK): void
+    storeRDK(txn: CryptoTxn, rdk: RDK): void
 }
 
 export type Mode = 'readonly' | 'readwrite'
