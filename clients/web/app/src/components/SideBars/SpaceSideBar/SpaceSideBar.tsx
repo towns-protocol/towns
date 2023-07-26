@@ -15,7 +15,7 @@ import { ModalContainer } from '@components/Modals/ModalContainer'
 import { ActionNavItem } from '@components/NavItem/ActionNavItem'
 import { SentryReportModal } from '@components/SentryErrorReport/SentryErrorReport'
 import { CreateChannelFormContainer } from '@components/Web3/CreateChannelForm'
-import { Badge, Box, Button, Icon, Stack } from '@ui'
+import { Badge, Box, Button, Icon, Stack, Text } from '@ui'
 import { PATHS } from 'routes'
 import { useStore } from 'store/store'
 import { FadeIn, FadeInBox } from '@components/Transitions'
@@ -182,6 +182,11 @@ export const SpaceSideBar = (props: Props) => {
                 </Stack>
                 <Box grow paddingX="sm" paddingY="lg" justifyContent="end">
                     <SentryReportModal />
+                    <Box paddingTop="md">
+                        <Text textAlign="center" color="gray2" fontSize="sm">
+                            Towns {APP_VERSION} ({APP_COMMIT_HASH})
+                        </Text>
+                    </Box>
                 </Box>
             </FadeInBox>
             {isBrowseChannelsModalVisible ? (

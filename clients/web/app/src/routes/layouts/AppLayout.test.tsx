@@ -65,6 +65,36 @@ describe('<AppPanelLayout />', () => {
         })
     })
 
+    test('renders app version and commit hash in SpaceSideBar', async () => {
+        vi.spyOn(
+            useContractAndServerSpaceDataHook,
+            'useContractAndServerSpaceData',
+        ).mockImplementation(() => {
+            return {
+                chainSpace: undefined,
+                chainSpaceLoading: false,
+                serverSpace: {
+                    id: {
+                        protocol: Lib.SpaceProtocol.Matrix,
+                        slug: 'some-slug',
+                        networkId: 'some-network',
+                    },
+                    name: 'test',
+                    avatarSrc: 'test',
+                    channelGroups: [],
+                    membership: '',
+                    isLoadingChannels: false,
+                },
+            }
+        })
+        render(<Wrapper />)
+
+        await waitFor(() => {
+            screen.getByText(/1.2.3/gi)
+            screen.getByText(/aabbccdd/gi)
+        })
+    })
+
     test('renders channel shimmer when a server space does not exist', async () => {
         vi.spyOn(
             useContractAndServerSpaceDataHook,

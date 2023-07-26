@@ -125,6 +125,11 @@ export const TouchHomeOverlay = (props: Props) => {
                         onClick={showSentryModal}
                     />
                     <BottomSectionButton signout label="Log out" icon="logout" onClick={logout} />
+                    <Box paddingTop="md" paddingBottom="lg">
+                        <Text textAlign="center" color="gray2" fontSize="sm">
+                            Towns {APP_VERSION} ({APP_COMMIT_HASH})
+                        </Text>
+                    </Box>
                 </Stack>
 
                 {isSentryModalVisible && (

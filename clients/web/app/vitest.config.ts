@@ -24,4 +24,8 @@ export default defineConfig({
         },
     },
     plugins: [tsconfigPaths(), vanillaExtractPlugin(), VitePWA()] as any,
+    define: {
+        APP_VERSION: JSON.stringify('1.2.3'),
+        APP_COMMIT_HASH: JSON.stringify('aabbccdd'),
+    },
 })
