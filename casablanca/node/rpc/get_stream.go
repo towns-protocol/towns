@@ -20,7 +20,7 @@ func (s *Service) GetStream(ctx context.Context, req *connect_go.Request[GetStre
 
 	res, err := s.getStream(ctx, req)
 	if err != nil {
-		log.Error("GetStream WARN", "error", err)
+		log.Warn("GetStream WARN", "error", err)
 		getStreamRequests.Fail()
 		return nil, err
 	}

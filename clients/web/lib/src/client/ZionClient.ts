@@ -335,8 +335,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
             cryptoStore,
         )
         this.casablancaClient.setMaxListeners(100)
-        // TODO - long-term the app should already know if user exists via cookie
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
+        // TODO HNT-1829 - long-term the app should already know if user exists
         try {
             await this.casablancaClient.loadExistingUser()
         } catch (e) {

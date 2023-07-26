@@ -248,7 +248,8 @@ export class ZionTestClient extends ZionClient {
         return auth
     }
 
-    /// helper function to get a test client up and running
+    // Helper function to get a test client up and running.
+    // Registers a new user and starts the client.
     public async registerWalletAndStartClient() {
         console.log('registerWalletAndStartClient', this.name, this.opts)
 
