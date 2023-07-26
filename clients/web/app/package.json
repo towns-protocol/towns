@@ -5,6 +5,7 @@
     "type": "module",
     "scripts": {
         "build": "tsc && NODE_OPTIONS=--max_old_space_size=32768 vite build",
+        "build-preview": "yarn build && yarn preview --port 3002",
         "coverage": "vitest run --coverage",
         "dev": "vite",
         "lint": "eslint .",

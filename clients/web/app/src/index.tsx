@@ -36,7 +36,7 @@ if (env.IS_DEV) {
     }
     window.addEventListener('error', showErrorOverlay)
     window.addEventListener('unhandledrejection', ({ reason }) => showErrorOverlay(reason))
-} else {
+} else if (!env.VITE_DISABLE_SENTRY) {
     SentryInit({
         dsn:
             env.VITE_SENTRY_DSN ||

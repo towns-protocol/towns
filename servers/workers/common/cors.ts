@@ -12,6 +12,7 @@ function getAllowedOrigins(env: Environment): string[] {
                 'https://app-test.towns.com',
                 'https://harmony-web-pr-*.onrender.com',
                 'http://localhost:3000',
+                'http://localhost:3002', // local app prod builds
                 'https://localhost:3000',
                 'http://127.0.0.1:8787',
                 'https://push-notification-worker-test.johnhntlabs.workers.dev',
@@ -56,7 +57,7 @@ function getLocalDomainOrigin(origin: string, env: Environment): string | undefi
 function getCorsHeaders(origin: string): HeadersInit {
     return {
         'Access-Control-Allow-Headers':
-            'Origin, Accept, X-Requested-With, Content-Type, Access-Control-Request-Method, Access-Control-Request-Headers, Authorization, Cache-Control',
+            'Origin, Accept, X-Requested-With, Content-Type, Access-Control-Request-Method, Access-Control-Request-Headers, Authorization, Cache-Control, Baggage, Sentry-Trace',
         'Access-Control-Allow-Methods': 'GET, OPTIONS, POST, PUT',
         'Access-Control-Allow-Origin': origin,
         'Access-Control-Allow-Credentials': 'true',

@@ -373,6 +373,8 @@ logging:
 allowed_origins:
   # app
   - http://localhost:3000
+  # app production builds
+  - http://localhost:3002
   # sample app
   - http://localhost:3001
   # tests
