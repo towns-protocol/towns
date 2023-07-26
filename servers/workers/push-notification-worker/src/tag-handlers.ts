@@ -10,7 +10,7 @@ import { printDbResultInfo } from './sql'
 class TagSqlStatement {
   static InsertIntoNotificationTag = `
   INSERT INTO NotificationTag (
-    TownId,
+    SpaceId,
     ChannelId,
     UserId,
     Tag
@@ -25,7 +25,7 @@ class TagSqlStatement {
 
   static SelectFromNotificationTag = `
   SELECT
-    TownId As townId,
+    SpaceId As spaceId,
     ChannelId AS channelId,
     UserId AS userId,
     Tag AS tag
@@ -40,7 +40,7 @@ class TagSqlStatement {
 }
 
 export interface QueryResultNotificationTag {
-  townId: string
+  spaceId: string
   channelId: string
   userId: UserId
   tag: string
@@ -59,7 +59,7 @@ export async function tagMentionUsers(
   const prepStatement = db.prepare(TagSqlStatement.InsertIntoNotificationTag)
   const bindedStatements = params.userIds.map((user) =>
     prepStatement.bind(
-      params.townId,
+      params.spaceId,
       params.channelId,
       user,
       NotificationType.Mention,
@@ -84,7 +84,7 @@ export async function tagReplyToUser(
   const prepStatement = db.prepare(TagSqlStatement.InsertIntoNotificationTag)
   const bindedStatements = params.userIds.map((user) =>
     prepStatement.bind(
-      params.townId,
+      params.spaceId,
       params.channelId,
       user,
       NotificationType.ReplyTo,

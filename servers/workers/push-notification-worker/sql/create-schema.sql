@@ -11,12 +11,11 @@ CREATE TABLE IF NOT EXISTS PushSubscription (
 CREATE INDEX idx_user_id
 ON PushSubscription (UserId);
 
--- drop table NotificationTag;
-
 -- Tags for push notifications so that the Worker has
 -- additional context to format the notification message
+-- drop table NotificationTag;
 CREATE TABLE IF NOT EXISTS NotificationTag (
-  TownId VARCHAR(255) NOT NULL,
+  SpaceId VARCHAR(255) NOT NULL,
   ChannelId VARCHAR(255) NOT NULL,
   UserId VARCHAR(255) NOT NULL,
   Tag VARCHAR(128) NOT NULL,
@@ -29,11 +28,10 @@ CREATE TABLE IF NOT EXISTS UserSettings (
   CONSTRAINT NotificationSettings_PK PRIMARY KEY (UserId)
 );
 
-CREATE TABLE IF NOT EXISTS UserSettingsTownChannel (
-  TownId VARCHAR(255) NOT NULL,
-  ChannelId VARCHAR(255) NOT NULL,
+--drop table UserSettingsSpace;
+CREATE TABLE IF NOT EXISTS UserSettingsSpace (
+  SpaceId VARCHAR(255) NOT NULL,
   UserId VARCHAR(255) NOT NULL,
-  TownMuteSetting VARCHAR(32) NOT NULL,
-  ChannelMuteSetting VARCHAR(32) NOT NULL,
-  CONSTRAINT TownChannelUserSettings_PK PRIMARY KEY (TownId, ChannelId, UserId)
+  Mute VARCHAR(32) NOT NULL,
+  CONSTRAINT UserSettingsSpace_PK PRIMARY KEY (SpaceId, UserId)
 );

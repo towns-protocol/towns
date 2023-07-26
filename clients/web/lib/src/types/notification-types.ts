@@ -24,13 +24,13 @@ export interface NotificationRequestParams {
 }
 
 export interface MentionUsersRequestParams {
-    townId: string
+    spaceId: string
     channelId: string
     userIds: string[]
 }
 
 export interface ReplyToUsersRequestParams {
-    townId: string
+    spaceId: string
     channelId: string
     userIds: string[]
 }

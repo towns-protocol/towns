@@ -47,7 +47,7 @@ export interface NotifyRequestParams {
   sender: string
   users: string[]
   payload: NotificationPayload
-  townId: string
+  spaceId: string
   channelId: string // channelId
   /* push options */
   urgency?: Urgency
@@ -58,7 +58,7 @@ export function isNotifyRequestParams(
   params: any,
 ): params is NotifyRequestParams {
   return (
-    typeof params.townId === 'string' &&
+    typeof params.spaceId === 'string' &&
     typeof params.channelId === 'string' &&
     typeof params.sender === 'string' &&
     Array.isArray(params.users) &&
@@ -71,7 +71,7 @@ export function isNotifyRequestParams(
 }
 
 export interface MentionRequestParams {
-  townId: string
+  spaceId: string
   channelId: string
   userIds: string[]
 }
@@ -81,7 +81,7 @@ export function isMentionRequestParams(
   params: any,
 ): params is MentionRequestParams {
   return (
-    typeof params.townId === 'string' &&
+    typeof params.spaceId === 'string' &&
     typeof params.channelId === 'string' &&
     params.channelId.length > 0 && // channelId is required
     Array.isArray(params.userIds) &&
@@ -90,7 +90,7 @@ export function isMentionRequestParams(
 }
 
 export interface ReplyToRequestParams {
-  townId: string
+  spaceId: string
   channelId: string
   userIds: string[]
 }
@@ -100,7 +100,7 @@ export function isReplyToRequestParams(
   params: any,
 ): params is ReplyToRequestParams {
   return (
-    typeof params.townId === 'string' &&
+    typeof params.spaceId === 'string' &&
     typeof params.channelId === 'string' &&
     params.channelId.length > 0 && // channelId is required
     Array.isArray(params.userIds) &&
