@@ -22,6 +22,7 @@ import {
     UserPayload_ToDevice,
     EncryptedDeviceData,
     EncryptedMessageEnvelope,
+    FullyReadMarkerContent,
 } from '@towns/proto'
 
 import { Crypto } from './crypto/crypto'
@@ -63,6 +64,7 @@ import {
     IDeviceKeySignatures,
     make_SpacePayload_Channel,
     getToDeviceWirePayloadContent,
+    make_UserSettingsPayload_FullyReadMarker,
     make_UserSettingsPayload_Inception,
 } from './types'
 import { shortenHexString } from './binary'
@@ -461,6 +463,25 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
                 channelProperties: channelPropertiesToUpdate,
             }),
             'updateChannel',
+        )
+    }
+
+    async sendFullyReadMarker(channelId: string, fullyReadMarkerContent: FullyReadMarkerContent) {
+        this.logCall('sendFullyReadMarker', channelId, fullyReadMarkerContent)
+
+        if (!isDefined(this.userSettingsStreamId)) {
+            throw Error('userSettingsStreamId is not defined')
+        }
+
+        return this.makeEventAndAddToStream(
+            this.userSettingsStreamId,
+            make_UserSettingsPayload_FullyReadMarker({
+                channelStreamId: channelId,
+                content: {
+                    text: fullyReadMarkerContent.toJsonString(),
+                },
+            }),
+            'sendFullyReadMarker',
         )
     }
 
