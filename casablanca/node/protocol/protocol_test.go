@@ -45,7 +45,7 @@ func TestInceptionPayload(t *testing.T) {
 		},
 	}).GetInceptionPayload())
 
-	assert.Nil(t, (&StreamEvent{
+	spaceMembership := StreamEvent{
 		Payload: &StreamEvent_SpacePayload{
 			SpacePayload: &SpacePayload{
 				Content: &SpacePayload_Membership{
@@ -53,5 +53,9 @@ func TestInceptionPayload(t *testing.T) {
 				},
 			},
 		},
-	}).GetInceptionPayload())
+	}
+	// pro tip, if you cast nil to an interface type, it's still nil
+	assert.Nil(t, spaceMembership.GetInceptionPayload())
+	// but it's not equal to nil! this is a test to make sure we don't regress see: https://github.com/HereNotThere/harmony/pull/2808
+	assert.True(t, spaceMembership.GetInceptionPayload() == nil)
 }

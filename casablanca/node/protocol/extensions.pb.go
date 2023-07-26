@@ -23,20 +23,39 @@ func (*UserDeviceKeyPayload_Inception) isInceptionPayload() {}
 func (e *StreamEvent) GetInceptionPayload() IsInceptionPayload {
 	switch e.Payload.(type) {
 	case *StreamEvent_UserPayload:
-		return e.Payload.(*StreamEvent_UserPayload).UserPayload.GetInception()
+		r := e.Payload.(*StreamEvent_UserPayload).UserPayload.GetInception()
+		if r == nil {
+			return nil
+		}
+		return r
 	case *StreamEvent_SpacePayload:
-		return e.Payload.(*StreamEvent_SpacePayload).SpacePayload.GetInception()
+		r := e.Payload.(*StreamEvent_SpacePayload).SpacePayload.GetInception()
+		if r == nil {
+			return nil
+		}
+		return r
 	case *StreamEvent_ChannelPayload:
-		return e.Payload.(*StreamEvent_ChannelPayload).ChannelPayload.GetInception()
+		r := e.Payload.(*StreamEvent_ChannelPayload).ChannelPayload.GetInception()
+		if r == nil {
+			return nil
+		}
+		return r
 	case *StreamEvent_UserSettingsPayload:
-		return e.Payload.(*StreamEvent_UserSettingsPayload).UserSettingsPayload.GetInception()
+		r := e.Payload.(*StreamEvent_UserSettingsPayload).UserSettingsPayload.GetInception()
+		if r == nil {
+			return nil
+		}
+		return r
 	case *StreamEvent_UserDeviceKeyPayload:
-		return e.Payload.(*StreamEvent_UserDeviceKeyPayload).UserDeviceKeyPayload.GetInception()
+		r := e.Payload.(*StreamEvent_UserDeviceKeyPayload).UserDeviceKeyPayload.GetInception()
+		if r == nil {
+			return nil
+		}
+		return r
 	default:
 		return nil
 	}
 }
-
 
 func (e *StreamEvent) VerifyPayloadTypeMatchesStreamType(i IsInceptionPayload) error {
 	switch e.Payload.(type) {

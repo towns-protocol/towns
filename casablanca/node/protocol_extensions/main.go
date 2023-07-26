@@ -136,7 +136,11 @@ func (e *StreamEvent) GetInceptionPayload() IsInceptionPayload {
 	getterCase := func() string {
 		return `
 	case *StreamEvent_%s:
-		return e.Payload.(*StreamEvent_%s).%s.GetInception()`
+		r := e.Payload.(*StreamEvent_%s).%s.GetInception()
+		if r == nil {
+			return nil
+		}
+		return r`
 	}
 	getterEnd := func() string {
 		return `
@@ -149,7 +153,6 @@ func (e *StreamEvent) GetInceptionPayload() IsInceptionPayload {
 
 	validatorStart := func() string {
 		return `
-
 func (e *StreamEvent) VerifyPayloadTypeMatchesStreamType(i IsInceptionPayload) error {
 	switch e.Payload.(type) {`
 	}
@@ -175,13 +178,14 @@ func (e *StreamEvent) VerifyPayloadTypeMatchesStreamType(i IsInceptionPayload) e
 	for _, inceptionTypeName := range inceptionTypes {
 		outputFile.WriteString2(fmt.Sprintf(conformance(), inceptionTypeName))
 	}
+
 	outputFile.WriteString2(getterStart())
 	for _, inceptionTypeName := range inceptionTypes {
 		inceptionTypeBase := strings.Split(inceptionTypeName, "_")[0]
 		outputFile.WriteString2(fmt.Sprintf(getterCase(), inceptionTypeBase, inceptionTypeBase, inceptionTypeBase))
 	}
-
 	outputFile.WriteString2(getterEnd())
+
 	outputFile.WriteString2(validatorStart())
 	for _, inceptionTypeName := range inceptionTypes {
 		inceptionTypeBase := strings.Split(inceptionTypeName, "_")[0]
