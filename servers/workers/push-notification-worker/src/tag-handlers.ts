@@ -10,19 +10,22 @@ import { printDbResultInfo } from './sql'
 class TagSqlStatement {
   static InsertIntoNotificationTag = `
   INSERT INTO NotificationTag (
+    TownId,
     ChannelId,
     UserId,
     Tag
   ) VALUES (
     ?1,
     ?2,
-    ?3
+    ?3,
+    ?4
   ) ON CONFLICT (ChannelId, UserId)
   DO UPDATE SET
     Tag = excluded.Tag;`
 
   static SelectFromNotificationTag = `
   SELECT
+    TownId As townId,
     ChannelId AS channelId,
     UserId AS userId,
     Tag AS tag
@@ -37,6 +40,7 @@ class TagSqlStatement {
 }
 
 export interface QueryResultNotificationTag {
+  townId: string
   channelId: string
   userId: UserId
   tag: string
@@ -54,7 +58,12 @@ export async function tagMentionUsers(
 ) {
   const prepStatement = db.prepare(TagSqlStatement.InsertIntoNotificationTag)
   const bindedStatements = params.userIds.map((user) =>
-    prepStatement.bind(params.channelId, user, NotificationType.Mention),
+    prepStatement.bind(
+      params.townId,
+      params.channelId,
+      user,
+      NotificationType.Mention,
+    ),
   )
   const rows = await db.batch(bindedStatements)
   // create the http response
@@ -74,7 +83,12 @@ export async function tagReplyToUser(
 ) {
   const prepStatement = db.prepare(TagSqlStatement.InsertIntoNotificationTag)
   const bindedStatements = params.userIds.map((user) =>
-    prepStatement.bind(params.channelId, user, NotificationType.ReplyTo),
+    prepStatement.bind(
+      params.townId,
+      params.channelId,
+      user,
+      NotificationType.ReplyTo,
+    ),
   )
   const rows = await db.batch(bindedStatements)
   // create the http response

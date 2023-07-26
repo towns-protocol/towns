@@ -11,8 +11,10 @@ describe('tag-handlers', () => {
   test('/api/tag-mention-users', async () => {
     // Arrange
     const mentionedUsers = [`0xAlice${Date.now()}`, `0xBob${Date.now()}`]
+    const townId = `Town${Date.now()}`
     const channelId = `Channel${Date.now()}`
     const params: MentionRequestParams = {
+      townId,
       channelId,
       userIds: mentionedUsers,
     }
@@ -41,6 +43,7 @@ describe('tag-handlers', () => {
     expect(bindSpy).toBeCalledTimes(2)
     for (const userId of mentionedUsers) {
       expect(bindSpy).toBeCalledWith(
+        townId,
         channelId,
         userId,
         NotificationType.Mention,
@@ -51,8 +54,10 @@ describe('tag-handlers', () => {
   test('/api/tag-reply-to-users', async () => {
     // Arrange
     const replyToUsers = [`0xAlice${Date.now()}`, `0xBob${Date.now()}`]
+    const townId = `Town${Date.now()}`
     const channelId = `Channel${Date.now()}`
     const params: ReplyToRequestParams = {
+      townId,
       channelId,
       userIds: replyToUsers,
     }
@@ -81,6 +86,7 @@ describe('tag-handlers', () => {
     expect(bindSpy).toBeCalledTimes(2)
     for (const userId of replyToUsers) {
       expect(bindSpy).toBeCalledWith(
+        townId,
         channelId,
         userId,
         NotificationType.ReplyTo,

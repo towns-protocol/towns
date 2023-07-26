@@ -18,6 +18,7 @@ describe('notify-users-handlers', () => {
     // Arrange
     const fetchMock = getMiniflareFetchMock()
     fetchMock.disableNetConnect()
+    const townId = `Town${Date.now()}`
     const sender = `0xAlice${Date.now()}`
     const recipient = `0xBob${Date.now()}`
     const subscriptionObject = createFakeWebPushSubscription()
@@ -56,7 +57,8 @@ describe('notify-users-handlers', () => {
       sender,
       users: [recipient],
       payload,
-      topic: payload.content.topic,
+      townId,
+      channelId: payload.content.topic,
     }
     // create the notification request
     const notifyRequest = createRequest(env, {

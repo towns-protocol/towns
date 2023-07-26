@@ -1627,8 +1627,12 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
         message: string,
         options?: SendMessageOptions,
     ) {
-        if (this.pushNotificationClient) {
-            await this.pushNotificationClient.sendNotificationTagIfAny(roomId.networkId, options)
+        if (this.pushNotificationClient && options?.parentSpaceId) {
+            await this.pushNotificationClient.sendNotificationTagIfAny(
+                options.parentSpaceId.networkId,
+                roomId.networkId,
+                options,
+            )
         }
         switch (roomId.protocol) {
             case SpaceProtocol.Matrix:

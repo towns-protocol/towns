@@ -4,7 +4,7 @@ export enum NotificationType {
 }
 
 export interface NewMessageNotificationContent {
-    spaceId: string
+    townId: string
     channelId: string
     senderId: string
 }
@@ -24,11 +24,13 @@ export interface NotificationRequestParams {
 }
 
 export interface MentionUsersRequestParams {
+    townId: string
     channelId: string
     userIds: string[]
 }
 
 export interface ReplyToUsersRequestParams {
+    townId: string
     channelId: string
     userIds: string[]
 }

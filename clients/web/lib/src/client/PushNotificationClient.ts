@@ -20,6 +20,7 @@ export class PushNotificationClient {
     }
 
     public async sendNotificationTagIfAny(
+        townId: string,
         channelId: string,
         options?: SendMessageOptions,
     ): Promise<void> {
@@ -30,21 +31,27 @@ export class PushNotificationClient {
             isMentionedTextMessageOptions(options) &&
             options.mentions // don't do any extra work unless there are mentions
         ) {
-            return this.sendMentionNotificationToWorker(channelId, options.mentions)
+            return this.sendMentionNotificationToWorker(townId, channelId, options.mentions)
         } else if (
             isThreadIdOptions(options) &&
             options.threadParticipants // don't do any extra work unless there are thread participants
         ) {
-            return this.sendThreadNotificationToWorker(channelId, options.threadParticipants)
+            return this.sendThreadNotificationToWorker(
+                townId,
+                channelId,
+                options.threadParticipants,
+            )
         }
     }
 
     private async sendMentionNotificationToWorker(
+        townId: string,
         channelId: string,
         mentions: Mention[],
     ): Promise<void> {
         const headers = this.createHttpHeaders()
         const body = this.createMentionNotificationParams({
+            townId,
             channelId,
             mentions,
         })
@@ -63,11 +70,13 @@ export class PushNotificationClient {
     }
 
     private async sendThreadNotificationToWorker(
+        townId: string,
         channelId: string,
         participants: Set<string>,
     ): Promise<void> {
         const headers = this.createHttpHeaders()
         const body = this.createReplyToNotificationParams({
+            townId,
             channelId,
             participants,
         })
@@ -86,9 +95,11 @@ export class PushNotificationClient {
     }
 
     private createMentionNotificationParams({
+        townId,
         channelId,
         mentions,
     }: {
+        townId: string
         channelId: string
         mentions: Mention[]
     }): MentionUsersRequestParams {
@@ -96,6 +107,7 @@ export class PushNotificationClient {
         // https://www.notion.so/herenottherelabs/RFC-Notification-system-architecture-20aae4a6608640539838bafe24a0e48c?pvs=4#ab2259d34c5c4c649133a779b216b6b7
         const userIds = mentions.map((mention) => mention.userId)
         const params: MentionUsersRequestParams = {
+            townId,
             channelId,
             userIds,
         }
@@ -103,9 +115,11 @@ export class PushNotificationClient {
     }
 
     private createReplyToNotificationParams({
+        townId,
         channelId,
         participants,
     }: {
+        townId: string
         channelId: string
         participants: Set<string>
     }): ReplyToUsersRequestParams {
@@ -114,6 +128,7 @@ export class PushNotificationClient {
             userIds.push(u)
         }
         const params: ReplyToUsersRequestParams = {
+            townId,
             channelId,
             userIds,
         }

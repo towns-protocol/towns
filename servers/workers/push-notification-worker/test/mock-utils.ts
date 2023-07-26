@@ -213,8 +213,9 @@ function mockSelectFromNotificationTag(): MockProxy<D1PreparedStatement> {
   const mockStatement = mock<D1PreparedStatement>()
   const result: QueryResultNotificationTag[] = []
   mockStatement.bind.mockImplementation(
-    (channelId: string, userId: string, tag: string) => {
+    (townId: string, channelId: string, userId: string, tag: string) => {
       result.push({
+        townId,
         channelId,
         userId,
         tag,
