@@ -8,6 +8,7 @@ import {
     UserPayload_Inception,
     PayloadCaseType,
     ChannelProperties,
+    FullyReadMarkerContent,
 } from '@towns/proto'
 import { ParsedEvent } from './types'
 import { RiverEvent } from './event'
@@ -56,6 +57,10 @@ export type StreamEvents = {
     ) => void
     spaceChannelDeleted: (spaceId: string, channelId: string) => void
     channelNewMessage: (channelId: string, message: RiverEvent) => void
+    channelUnreadMarkerUpdated: (
+        channelStreamId: string,
+        fullyReadMarkerContent: FullyReadMarkerContent,
+    ) => void
     toDeviceMessage: (streamId: string, event: RiverEvent) => void
     userDeviceKeyMessage: (
         streamId: string,

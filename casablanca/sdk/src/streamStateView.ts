@@ -15,6 +15,8 @@ import {
     ChannelProperties,
     EncryptedData,
     SpacePayload_Inception,
+    FullyReadMarkerContent,
+    UserSettingsPayload_FullyReadMarker,
 } from '@towns/proto'
 import TypedEmitter from 'typed-emitter'
 import { check, checkNever, isDefined, throwWithCode } from './check'
@@ -248,6 +250,7 @@ export class StreamStateView {
                             )
                             break
                         case 'fullyReadMarker':
+                            this.fullyReadMarkerUpdate(payload.value.content.value, emitter)
                             break
                         case undefined:
                             break
@@ -418,6 +421,33 @@ export class StreamStateView {
             default:
                 checkNever(op)
         }
+    }
+
+    private fullyReadMarkerContentFromEncryptedData(
+        encryptedData: EncryptedData | undefined,
+    ): FullyReadMarkerContent {
+        //TODO: We need to support decryption once encryption is enabled for Channel EncryptedData events
+        if (!isDefined(encryptedData?.text)) {
+            throw new Error('EncryptedData is undefined')
+        } else {
+            const fullyReadMarkerData = FullyReadMarkerContent.fromJsonString(
+                encryptedData?.text ?? '',
+            )
+            return fullyReadMarkerData
+        }
+    }
+
+    private fullyReadMarkerUpdate(
+        payload: UserSettingsPayload_FullyReadMarker,
+        emitter?: TypedEmitter<StreamEvents>,
+    ): void {
+        const { channelStreamId, content } = payload
+
+        emitter?.emit(
+            'channelUnreadMarkerUpdated',
+            channelStreamId,
+            this.fullyReadMarkerContentFromEncryptedData(content),
+        )
     }
 
     update(
