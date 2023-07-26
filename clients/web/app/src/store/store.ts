@@ -15,6 +15,8 @@ interface AppState {
     setTownRouteBookmark: (spaceId: string, route: string) => void
     townRouteBookmarks: { [spaceId: string]: string }
     spaceIdBookmark?: string
+    pushNotificationsPromptClosed: boolean
+    setPushNotificationsPromptClosed: { (denied: boolean): void }
 }
 
 export const GLOBAL_STORE_NAME = 'towns/global'
@@ -65,6 +67,10 @@ export const useStore = create(
                         },
                     }
                 }),
+            pushNotificationsPromptClosed: false,
+            setPushNotificationsPromptClosed: (denied) => {
+                set(() => ({ pushNotificationsPromptClosed: denied }))
+            },
         }),
         {
             name: GLOBAL_STORE_NAME,

@@ -1,33 +1,41 @@
-import { useCallback, useState } from 'react'
+import { useCallback } from 'react'
+import { useStore } from 'store/store'
 import { env } from '../utils/environment'
 import { useDevice } from './useDevice'
-
 const ENABLE_PUSH_NOTIFICATIONS = env.VITE_PUSH_NOTIFICATION_ENABLED
 
 export const usePushNotifications = () => {
     const { isPWA } = useDevice()
+    const { pushNotificationsPromptClosed, setPushNotificationsPromptClosed } = useStore()
+    const permissionState = notificationsSupported() ? Notification.permission : undefined
 
-    const [permissionState, setPermissionState] = useState<NotificationPermission | undefined>(
-        notificationsSupported() ? Notification.permission : undefined,
-    )
     const requestPushPermission = useCallback(async () => {
-        const permission = await Notification.requestPermission()
-        setPermissionState(permission)
-    }, [])
+        await Notification.requestPermission()
+        setPushNotificationsPromptClosed(false)
+    }, [setPushNotificationsPromptClosed])
 
     const denyPushPermission = useCallback(() => {
-        setPermissionState('denied')
-    }, [])
+        setPushNotificationsPromptClosed(true)
+    }, [setPushNotificationsPromptClosed])
+
+    const simplifiedPermissionState: 'granted' | 'soft-denied' | 'hard-denied' | 'default' =
+        permissionState === 'granted'
+            ? 'granted'
+            : permissionState === 'denied'
+            ? 'hard-denied'
+            : pushNotificationsPromptClosed
+            ? 'soft-denied'
+            : 'default'
 
     const displayNotificationBanner =
         (ENABLE_PUSH_NOTIFICATIONS || isPWA) &&
-        permissionState !== 'granted' &&
-        permissionState !== 'denied' &&
+        simplifiedPermissionState === 'default' &&
         notificationsSupported()
+
     return {
         requestPushPermission,
         denyPushPermission,
-        permissionState,
+        simplifiedPermissionState,
         displayNotificationBanner,
     }
 }

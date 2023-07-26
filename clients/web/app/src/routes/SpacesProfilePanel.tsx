@@ -14,11 +14,13 @@ import { UserProfile } from '@components/UserProfile/UserProfile'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { useAuth } from 'hooks/useAuth'
 import { useStore } from 'store/store'
+import { usePushNotifications } from 'hooks/usePushNotifications'
 
 export const SpaceProfilePanel = (props: { children?: React.ReactNode }) => {
     const [search] = useSearchParams()
     const cameFromSpaceInfoPanel = search.get('spaceInfo') !== null
     const { profileId } = useParams()
+    const { requestPushPermission, simplifiedPermissionState } = usePushNotifications()
 
     const navigate = useNavigate()
 
@@ -111,6 +113,41 @@ export const SpaceProfilePanel = (props: { children?: React.ReactNode }) => {
                 )}
                 {user?.userId === profileUser?.userId ? (
                     <Stack padding gap paddingBottom="lg">
+                        {simplifiedPermissionState === 'soft-denied' && (
+                            <>
+                                <PanelButton onClick={requestPushPermission}>
+                                    <Box width="height_md" alignItems="center">
+                                        <Icon type="bell" size="square_sm" />
+                                    </Box>
+                                    <Paragraph>Enable push notifications</Paragraph>
+                                </PanelButton>
+                            </>
+                        )}
+
+                        {simplifiedPermissionState === 'hard-denied' && (
+                            <PanelButton height="auto" onClick={requestPushPermission}>
+                                <Stack horizontal gap="sm" alignItems="center">
+                                    <Box width="height_md" alignItems="center">
+                                        <Icon type="bell" size="square_sm" />
+                                    </Box>
+                                    <Stack>
+                                        <Paragraph fontWeight="strong" size="md">
+                                            Enable Push Notifications
+                                        </Paragraph>
+
+                                        <Paragraph size="md">
+                                            Look for the padlock or <strong>Secure</strong> sign in
+                                            the address bar.
+                                            <br />
+                                            Click on it, and a menu will appear.
+                                            <br />
+                                            Find <strong>Notifications</strong> and choose{' '}
+                                            <strong>Enable</strong>
+                                        </Paragraph>
+                                    </Stack>
+                                </Stack>
+                            </PanelButton>
+                        )}
                         <PanelButton onClick={onThemeClick}>
                             <Box
                                 border
@@ -119,6 +156,7 @@ export const SpaceProfilePanel = (props: { children?: React.ReactNode }) => {
                                 aspectRatio="1/1"
                                 height="height_md"
                                 background="inverted"
+                                alignItems="center"
                             >
                                 Aa
                             </Box>
@@ -126,7 +164,9 @@ export const SpaceProfilePanel = (props: { children?: React.ReactNode }) => {
                         </PanelButton>
 
                         <PanelButton tone="negative" onClick={onLogoutClick}>
-                            <Icon type="logout" size="square_sm" />
+                            <Box width="height_md" alignItems="center">
+                                <Icon type="logout" size="square_sm" />
+                            </Box>
                             <Paragraph>Logout</Paragraph>
                         </PanelButton>
                     </Stack>
