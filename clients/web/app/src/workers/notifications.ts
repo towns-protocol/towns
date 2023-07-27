@@ -5,7 +5,9 @@ import {
     ServiceWorkerMessageType,
     WEB_PUSH_NAVIGATION_CHANNEL,
 } from './types.d'
+
 import { appNotificationFromPushEvent } from './notificationParsers'
+import { env } from '../utils/environment'
 import { getServiceWorkerMuteSettings } from '../store/useMuteSettings'
 import { startDB } from '../idb/notificationsMeta'
 
@@ -25,14 +27,38 @@ function startDBWithTerminationListener() {
 }
 
 export function handleNotifications(worker: ServiceWorkerGlobalScope) {
+    const prod = !env.IS_DEV
+    if (prod) {
+        console.log(`sw: handleNotifications() was called.`)
+    }
     const navigationChannel = new BroadcastChannel(WEB_PUSH_NAVIGATION_CHANNEL)
+
+    if (prod) {
+        // print the various lifecyle / event hooks for debugging
+        worker.addEventListener('install', () => {
+            console.log('sw: "install" event')
+        })
+
+        worker.addEventListener('pushsubscriptionchange', () => {
+            console.log('sw: "pushsubscriptionchange" event')
+        })
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        worker.addEventListener('sync', (event: any) => {
+            // returns true if the user agent will not make further
+            // synchronization attempts after the current attempt.
+            console.log('sw: "sync" event, lastChance:', event.lastChance)
+        })
+    }
 
     // `activate` fires once old service worker is gone and new one has taken control
     worker.addEventListener('activate', () => {
+        console.log('sw: "activate" event')
         startDBWithTerminationListener()
     })
 
     worker.addEventListener('message', async (event) => {
+        console.log('sw: "message" event')
         const data: {
             type?: ServiceWorkerMessageType
             space?: SpaceData
@@ -78,6 +104,7 @@ export function handleNotifications(worker: ServiceWorkerGlobalScope) {
     })
 
     worker.addEventListener('push', async (event) => {
+        console.log('sw: "push" event')
         if (!event.data) {
             console.log('sw: push event contains no data')
             return
