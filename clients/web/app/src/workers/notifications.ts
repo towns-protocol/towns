@@ -7,14 +7,30 @@ import {
 } from './types.d'
 import { appNotificationFromPushEvent } from './notificationParsers'
 import { getServiceWorkerMuteSettings } from '../store/useMuteSettings'
-import {
-    channels as idbChannels,
-    spaces as idbSpaces,
-    users as idbUsers,
-} from '../idb/notificationsMeta'
+import { startDB } from '../idb/notificationsMeta'
+
+let idbChannels: ReturnType<typeof startDB>['idbChannels'] | undefined = undefined
+let idbSpaces: ReturnType<typeof startDB>['idbSpaces'] | undefined = undefined
+let idbUsers: ReturnType<typeof startDB>['idbUsers'] | undefined = undefined
+
+function startDBWithTerminationListener() {
+    return startDB({
+        onTerminated: () => {
+            // if terminated, we need to reset the idb stores so that the next action that involves one will re-establish a connection
+            idbChannels = undefined
+            idbUsers = undefined
+            idbSpaces = undefined
+        },
+    })
+}
 
 export function handleNotifications(worker: ServiceWorkerGlobalScope) {
     const navigationChannel = new BroadcastChannel(WEB_PUSH_NAVIGATION_CHANNEL)
+
+    // `activate` fires once old service worker is gone and new one has taken control
+    worker.addEventListener('activate', () => {
+        startDBWithTerminationListener()
+    })
 
     worker.addEventListener('message', async (event) => {
         const data: {
@@ -42,7 +58,7 @@ export function handleNotifications(worker: ServiceWorkerGlobalScope) {
             case ServiceWorkerMessageType.SpaceMembers:
                 if (data.membersMap) {
                     try {
-                        addUsersToIdb(data.membersMap)
+                        await addUsersToIdb(data.membersMap)
                     } catch (error) {
                         console.error(
                             'sw: error adding users to idb',
@@ -192,6 +208,10 @@ async function getNotificationContent(notification: AppNotification): Promise<{
     let channelName: string | undefined = undefined
     let senderName: string | undefined = undefined
 
+    if (!idbSpaces || !idbChannels || !idbUsers) {
+        ;({ idbChannels, idbUsers, idbSpaces } = startDBWithTerminationListener())
+    }
+
     try {
         const space = await idbSpaces.get(notification.content.spaceId)
         const channel = await idbChannels.get(notification.content.channelId)
@@ -220,6 +240,9 @@ async function getNotificationContent(notification: AppNotification): Promise<{
 }
 
 async function addSpaceToIdb(space: SpaceData) {
+    if (!idbSpaces) {
+        ;({ idbChannels, idbUsers, idbSpaces } = startDBWithTerminationListener())
+    }
     const spaceId = space.id.networkId
     const cacheSpace = await idbSpaces.get(spaceId)
 
@@ -233,6 +256,9 @@ async function addSpaceToIdb(space: SpaceData) {
 }
 
 async function addChannelsToIdb(space: SpaceData) {
+    if (!idbChannels) {
+        ;({ idbChannels, idbUsers, idbSpaces } = startDBWithTerminationListener())
+    }
     const channels = space.channelGroups.flatMap((cg) => cg.channels)
     const allIdbChannelsForSpace = await idbChannels.getAllFromIndex('bySpace', space.id.networkId)
 
@@ -265,6 +291,9 @@ async function addChannelsToIdb(space: SpaceData) {
 }
 
 async function addUsersToIdb(membersMap: { [userId: string]: RoomMember | undefined }) {
+    if (!idbUsers) {
+        ;({ idbChannels, idbUsers, idbSpaces } = startDBWithTerminationListener())
+    }
     const allIdbUsers = await idbUsers.getAll()
 
     const missingMembers = Object.values(membersMap).filter(
