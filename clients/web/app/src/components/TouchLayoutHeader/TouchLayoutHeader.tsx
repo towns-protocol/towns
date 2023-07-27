@@ -1,12 +1,13 @@
 import React, { useCallback, useMemo, useState } from 'react'
 import { useMyProfile, useSpaceData, useZionContext } from 'use-zion-client'
 import { AnimatePresence } from 'framer-motion'
-import { Avatar, Box, Dot, Stack, Text } from '@ui'
+import { Avatar, Box, Dot, IconButton, Stack, Text } from '@ui'
 import { ImageVariants } from '@components/UploadImage/useImageSource'
 import { SpaceIcon } from '@components/SpaceIcon'
 import { TouchHomeOverlay } from '@components/TouchHomeOverlay/TouchHomeOverlay'
 import { useNavigateToCurrentSpaceInfo } from 'hooks/useNavigateToCurrentSpaceInfo'
 import { DirectMessagesModal } from '@components/DirectMessages/DirectMessagesModal'
+import { useInstallPWAPrompt } from 'hooks/useInstallPWAPrompt'
 
 export const TouchLayoutHeader = () => {
     const userId = useMyProfile()?.userId
@@ -18,6 +19,7 @@ export const TouchLayoutHeader = () => {
 
     const { navigateToCurrentSpace } = useNavigateToCurrentSpaceInfo()
     const { spaces, spaceUnreads, spaceMentions } = useZionContext()
+    const { shouldDisplayPWAPrompt, closePWAPrompt } = useInstallPWAPrompt()
 
     const hasUnread = useMemo(() => {
         return spaces.some((space) => {
@@ -33,7 +35,18 @@ export const TouchLayoutHeader = () => {
     }, [navigateToCurrentSpace])
 
     return (
-        <Box borderBottom paddingY="sm">
+        <Box borderBottom paddingTop={shouldDisplayPWAPrompt ? 'none' : 'sm'}>
+            {shouldDisplayPWAPrompt && (
+                <Box paddingBottom="sm">
+                    <Stack horizontal centerContent padding="md" gap="lg" background="level3">
+                        <Text fontWeight="strong" color="default" textAlign="center">
+                            To use the Towns app, open in <strong>Safari</strong>, tap{' '}
+                            <strong>Share</strong> &#8594; <strong>Add to Home Screen</strong>.
+                        </Text>
+                        <IconButton icon="close" onClick={closePWAPrompt} />
+                    </Stack>
+                </Box>
+            )}
             <Stack
                 horizontal
                 paddingX="md"
@@ -42,6 +55,7 @@ export const TouchLayoutHeader = () => {
                 alignItems="center"
                 zIndex="tooltips"
                 paddingTop="safeAreaInsetTop"
+                paddingY="sm"
             >
                 <Box position="relative">
                     <Avatar

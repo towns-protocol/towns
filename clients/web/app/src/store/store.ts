@@ -15,6 +15,8 @@ interface AppState {
     setTownRouteBookmark: (spaceId: string, route: string) => void
     townRouteBookmarks: { [spaceId: string]: string }
     spaceIdBookmark?: string
+    didClosePWAPrompt: boolean
+    setDidClosePWAPrompt: (didClosePWAPrompt: boolean) => void
     pushNotificationsPromptClosed: boolean
     setPushNotificationsPromptClosed: { (denied: boolean): void }
 }
@@ -67,6 +69,10 @@ export const useStore = create(
                         },
                     }
                 }),
+            didClosePWAPrompt: false,
+            setDidClosePWAPrompt: (didClosePWAPrompt) => {
+                set(() => ({ didClosePWAPrompt }))
+            },
             pushNotificationsPromptClosed: false,
             setPushNotificationsPromptClosed: (denied) => {
                 set(() => ({ pushNotificationsPromptClosed: denied }))
