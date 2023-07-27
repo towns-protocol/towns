@@ -55,7 +55,7 @@ export async function sendNotificationViaWebPush(
       payload: params.payload,
       topic: params.channelId,
       ttl,
-      urgency: params.urgency ?? 'normal',
+      urgency: params.urgency ?? 'high',
     }
 
     // create the request to send to the push service
