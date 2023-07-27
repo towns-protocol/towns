@@ -9,6 +9,7 @@ import { useCardOpenerContext } from 'ui/components/Overlay/CardOpenerContext'
 import { atoms } from 'ui/styles/atoms.css'
 import { themes } from 'ui/styles/themes'
 import { baseline } from 'ui/styles/vars.css'
+import { useDevice } from 'hooks/useDevice'
 import { GiphySearchBar } from './GiphySearchBar'
 import { useGiphySearchContext } from './GiphySearchContext'
 import { GiphyTrendingContainer } from './GiphyTrendingPill'
@@ -28,18 +29,29 @@ type Props = {
     threadPreview?: string
 }
 
+type GiphyPickerCardProps = Props & {
+    closeCard: () => void
+}
+
 export const GiphyPicker = (props: Props) => {
+    const { closeCard } = useCardOpenerContext()
+    return <GiphyPickerCard {...props} closeCard={closeCard} />
+}
+
+export const GiphyPickerCard = (props: GiphyPickerCardProps) => {
     const { theme } = useStore()
-    const { threadId, threadPreview } = props
+    const { isTouch } = useDevice()
+    const { closeCard, threadId, threadPreview } = props
 
     const { fetchGifs, query, isFetching } = useGiphySearchContext()
     const { sendMessage } = useZionClient()
 
     const isInReplyThread = !!props.threadId
     const channelId = useChannelId()
-    const { closeCard } = useCardOpenerContext()
     const gutterWidth = baseline * 0.75
-    const width = 350
+
+    // small hack with "-2px" on mobile to get rid of horizontal scrollbar
+    const width = isTouch ? window.innerWidth - 2 : 350
     const gridWidth = width - gutterWidth
 
     // giphy api can return string or number for size
@@ -89,8 +101,14 @@ export const GiphyPicker = (props: Props) => {
     }
 
     return (
-        <Box height="420">
-            <Box width={`${width}`} padding="sm" height="400" background="level2" borderRadius="sm">
+        <Box height={isTouch ? '100svh' : '420'}>
+            <Box
+                padding="sm"
+                height={isTouch ? '100%' : '400'}
+                background={isTouch ? 'level1' : 'level2'}
+                borderRadius="sm"
+                style={{ width: width }}
+            >
                 <Box>
                     <GiphySearchBar />
                     <GiphyTrendingContainer />

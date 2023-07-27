@@ -1,9 +1,11 @@
 import React, { useCallback, useEffect, useRef } from 'react'
 import { Search } from '@components/Search'
 import { useDebounce } from 'hooks/useDebounce'
+import { useDevice } from 'hooks/useDevice'
 import { useGiphySearchContext } from './GiphySearchContext'
 
 export const GiphySearchBar = () => {
+    const { isTouch } = useDevice()
     const { setQuery, setIsFetching, inputValue, setInputValue } = useGiphySearchContext()
     const debouncedValue = useDebounce<string>(inputValue, 500)
     const ref = useRef<HTMLInputElement>(null)
@@ -23,8 +25,10 @@ export const GiphySearchBar = () => {
     }, [debouncedValue, setQuery, setIsFetching])
 
     useEffect(() => {
-        ref?.current?.focus()
-    }, [])
+        if (!isTouch) {
+            ref?.current?.focus()
+        }
+    }, [isTouch])
 
     return (
         <Search

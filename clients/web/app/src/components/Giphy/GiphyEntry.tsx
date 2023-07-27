@@ -1,7 +1,10 @@
 import React, { ComponentProps, useCallback } from 'react'
-import { IconButton } from '@ui'
+import Sheet from 'react-modal-sheet'
+import { Box, IconButton, useZLayerContext } from '@ui'
 import { CardOpener } from 'ui/components/Overlay/CardOpener'
-import { GiphyPicker } from './GiphyPicker'
+import { useDevice } from 'hooks/useDevice'
+import { modalSheetClass } from 'ui/styles/globals/sheet.css'
+import { GiphyPicker, GiphyPickerCard } from './GiphyPicker'
 import { GiphySearchContextProvider, useGiphySearchContext } from './GiphySearchContext'
 
 type Props = ComponentProps<typeof GiphyPicker>
@@ -10,6 +13,51 @@ type Props = ComponentProps<typeof GiphyPicker>
 // const LazyGiphy = React.lazy(() => import('./GiphyPicker'))
 
 export const GiphyContainer = (props: Props) => {
+    const { isTouch } = useDevice()
+    return isTouch ? <GiphySheet {...props} /> : <GiphyCardOpener {...props} />
+}
+
+const GiphySheet = (props: Props) => {
+    const { setIsFetching, setOptedIn, setInputValue } = useGiphySearchContext()
+    const [sheetVisible, setSheetVisible] = React.useState(false)
+    const mountPoint = useZLayerContext().rootLayerRef?.current ?? undefined
+
+    const onClick = useCallback(() => {
+        setIsFetching(true)
+        setSheetVisible(true)
+        setOptedIn(true)
+    }, [setIsFetching, setSheetVisible, setOptedIn])
+
+    const onCardClose = useCallback(() => {
+        setInputValue('')
+        setSheetVisible(false)
+    }, [setInputValue, setSheetVisible])
+
+    return (
+        <>
+            <IconButton icon="gif" alignSelf="start" onClick={onClick} />
+
+            <Sheet
+                className={modalSheetClass}
+                mountPoint={mountPoint}
+                isOpen={sheetVisible}
+                onClose={onCardClose}
+            >
+                <Sheet.Container>
+                    <Sheet.Header />
+                    <Sheet.Content>
+                        <Box maxHeight="100svh" overflow="auto" paddingBottom="safeAreaInsetBottom">
+                            <GiphyPickerCard {...props} closeCard={onCardClose} />
+                        </Box>
+                    </Sheet.Content>
+                </Sheet.Container>
+                <Sheet.Backdrop onTap={onCardClose} />
+            </Sheet>
+        </>
+    )
+}
+
+const GiphyCardOpener = (props: Props) => {
     const { setIsFetching, setOptedIn, setInputValue } = useGiphySearchContext()
     const onClick = (
         e: React.MouseEvent,
