@@ -75,7 +75,7 @@ export const ChannelInfoPanel = () => {
 
     const { mutedChannels, setChannelMuted, mutedSpaces } = useMuteSettings()
     const channelIsMuted = channel?.id ? mutedChannels[channel.id.networkId] : false
-    const townIsMuted = spaceData?.id ? mutedSpaces[spaceData.id.networkId] : false
+    const spaceIsMuted = spaceData?.id ? mutedSpaces[spaceData.id.networkId] : false
 
     const onToggleChannelMuted = useCallback(() => {
         if (!channel) {
@@ -125,8 +125,8 @@ export const ChannelInfoPanel = () => {
                 {channel && (
                     <>
                         <PanelButton
-                            disabled={townIsMuted}
-                            opacity={townIsMuted ? '0.5' : 'opaque'}
+                            disabled={spaceIsMuted}
+                            opacity={spaceIsMuted ? '0.5' : 'opaque'}
                             onClick={onToggleChannelMuted}
                         >
                             <Icon
@@ -136,7 +136,7 @@ export const ChannelInfoPanel = () => {
                             />
                             <Stack gap="sm">
                                 <Paragraph color="default">
-                                    {townIsMuted ? (
+                                    {spaceIsMuted ? (
                                         spaceData?.name && <>{spaceData?.name} is muted</>
                                     ) : (
                                         <>
