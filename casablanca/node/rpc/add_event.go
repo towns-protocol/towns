@@ -119,9 +119,11 @@ func (s *Service) addParsedEvent(ctx context.Context, streamId string, parsedEve
 	case *StreamEvent_UserSettingsPayload:
 		switch payload.UserSettingsPayload.Content.(type) {
 		case *UserSettingsPayload_Inception_:
-			return status.Errorf(codes.InvalidArgument, "AddEvent: event is an inception event")
+			_, err = stream.AddEvent(ctx, parsedEvent)
+			return err
 		case *UserSettingsPayload_FullyReadMarker_:
-			return status.Errorf(codes.InvalidArgument, "AddEvent: adding UserSetting is unimplemented")
+			_, err = stream.AddEvent(ctx, parsedEvent)
+			return err
 		default:
 			return status.Errorf(codes.InvalidArgument, "AddEvent: UserSettings event has no valid payload for type %T", payload.UserSettingsPayload.Content)
 		}
