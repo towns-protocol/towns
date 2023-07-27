@@ -130,16 +130,16 @@ function generateNewNotificationMessage(
     let body = ''
     switch (true) {
         case stringHasValue(channelName) && stringHasValue(sender):
-            body = `@${sender} posted a new encrypted message in #${channelName}`
+            body = `@${sender} posted a new message in #${channelName}`
             break
         case stringHasValue(channelName) && !stringHasValue(sender):
-            body = `You've received a new encrypted message in #${channelName}`
+            body = `You've received a new message in #${channelName}`
             break
         case !stringHasValue(channelName) && stringHasValue(sender):
-            body = `@${sender} posted a new encrypted message`
+            body = `@${sender} posted a new message`
             break
         default:
-            body = `You've received a new encrypted message`
+            body = `You've received a new message`
             break
     }
     return {
