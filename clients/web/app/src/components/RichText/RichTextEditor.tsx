@@ -296,7 +296,7 @@ const RichTextEditorWithoutBoundary = (props: Props) => {
                 <ListPlugin />
                 <CheckListPlugin />
 
-                <Stack horizontal gap="xs" paddingX="sm" paddingBottom="sm" alignContent="center">
+                <Stack horizontal gap="xs" paddingX="sm" alignContent="center">
                     {showTouchMessageToolbar && (
                         <RichTextTouchToolbar
                             threadId={props.threadId}
