@@ -255,14 +255,14 @@ message UserSettingsPayload {
         string stream_id = 1;
     }
 
-    message FullyReadMarker {
+    message FullyReadMarkers {
         string channel_stream_id = 1;
         EncryptedData content = 2;
     }
 
     oneof content {
         Inception inception = 1;
-        FullyReadMarker fully_read_marker = 2;
+        FullyReadMarkers fully_read_markers = 2;
     }
 }
 

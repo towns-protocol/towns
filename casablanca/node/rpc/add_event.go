@@ -121,7 +121,7 @@ func (s *Service) addParsedEvent(ctx context.Context, streamId string, parsedEve
 		case *UserSettingsPayload_Inception_:
 			_, err = stream.AddEvent(ctx, parsedEvent)
 			return err
-		case *UserSettingsPayload_FullyReadMarker_:
+		case *UserSettingsPayload_FullyReadMarkers_:
 			_, err = stream.AddEvent(ctx, parsedEvent)
 			return err
 		default:

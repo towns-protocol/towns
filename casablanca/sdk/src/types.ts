@@ -20,7 +20,7 @@ import {
     ToDeviceMessage_KeyRequest,
     ToDeviceMessage_KeyResponse,
     UserPayload_UserMembership,
-    UserSettingsPayload_FullyReadMarker,
+    UserSettingsPayload_FullyReadMarkers,
 } from '@towns/proto'
 import { keccak256 } from 'ethereum-cryptography/keccak'
 import { isDefined } from './check'
@@ -122,14 +122,14 @@ export const make_UserSettingsPayload_Inception = (
     }
 }
 
-export const make_UserSettingsPayload_FullyReadMarker = (
-    value: PlainMessage<UserSettingsPayload_FullyReadMarker>,
+export const make_UserSettingsPayload_FullyReadMarkers = (
+    value: PlainMessage<UserSettingsPayload_FullyReadMarkers>,
 ): PlainMessage<StreamEvent>['payload'] => {
     return {
         case: 'userSettingsPayload',
         value: {
             content: {
-                case: 'fullyReadMarker',
+                case: 'fullyReadMarkers',
                 value,
             },
         },

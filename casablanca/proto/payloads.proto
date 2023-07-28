@@ -85,13 +85,18 @@ message ChannelProperties {
 //in UserSettingsPayload
 
 message FullyReadMarkerContent {
-    optional string thread_parent_id = 1;
-    string event_id = 2;
-    optional google.protobuf.Timestamp event_origin_server_ts = 3;
-    bool is_unread = 4;
-    google.protobuf.Timestamp marked_read_at_ts = 5;
-    google.protobuf.Timestamp marked_unread_at_ts = 6;
-    optional int32 mentions = 7;
+    string channel_id = 1;
+    optional string thread_parent_id = 2;
+    string event_id = 3;
+    optional google.protobuf.Timestamp event_origin_server_ts = 4;
+    bool is_unread = 5;
+    google.protobuf.Timestamp marked_read_at_ts = 6;
+    google.protobuf.Timestamp marked_unread_at_ts = 7;
+    optional int32 mentions = 8;
+}
+
+message FullyReadMarkersContent {
+    map<string, FullyReadMarkerContent> markers = 1;
 }
 
 // value field of a ToDeviceMessage, which is either

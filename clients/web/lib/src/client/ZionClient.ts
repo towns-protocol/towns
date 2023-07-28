@@ -99,6 +99,7 @@ import { staticAssertNever } from '../utils/zion-utils'
 import { syncMatrixSpace } from './matrix/SyncSpace'
 import { toUtf8String } from 'ethers/lib/utils.js'
 import { toZionRoomFromStream } from './casablanca/CasablancaUtils'
+import { sendFullyReadMarkers } from './casablanca/SendFullyReadMarkers'
 
 /***
  * Zion Client
@@ -1961,6 +1962,11 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
                 )
             case SpaceProtocol.Casablanca:
                 console.error('not implemented for casablanca')
+                if (!this.casablancaClient) {
+                    throw new Error('Casablanca client is undefined')
+                } else {
+                    await sendFullyReadMarkers(this.casablancaClient, roomId.networkId, content)
+                }
         }
     }
 

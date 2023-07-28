@@ -16,7 +16,8 @@ import {
     EncryptedData,
     SpacePayload_Inception,
     FullyReadMarkerContent,
-    UserSettingsPayload_FullyReadMarker,
+    FullyReadMarkersContent,
+    UserSettingsPayload_FullyReadMarkers,
 } from '@towns/proto'
 import TypedEmitter from 'typed-emitter'
 import { check, checkNever, isDefined, throwWithCode } from './check'
@@ -249,7 +250,7 @@ export class StreamStateView {
                                 payload.value.content.value,
                             )
                             break
-                        case 'fullyReadMarker':
+                        case 'fullyReadMarkers':
                             this.fullyReadMarkerUpdate(payload.value.content.value, emitter)
                             break
                         case undefined:
@@ -438,16 +439,24 @@ export class StreamStateView {
     }
 
     private fullyReadMarkerUpdate(
-        payload: UserSettingsPayload_FullyReadMarker,
+        payload: UserSettingsPayload_FullyReadMarkers,
         emitter?: TypedEmitter<StreamEvents>,
     ): void {
         const { channelStreamId, content } = payload
+        if (content === undefined) {
+            throw Error('Content with FullyReadMarkers is undefined')
+        } else {
+            const fullyReadMarkers: Record<string, FullyReadMarkerContent> = {}
 
-        emitter?.emit(
-            'channelUnreadMarkerUpdated',
-            channelStreamId,
-            this.fullyReadMarkerContentFromEncryptedData(content),
-        )
+            const fullyReadMarkersContent: FullyReadMarkersContent =
+                FullyReadMarkersContent.fromJsonString(content.text)
+
+            for (const [threadRoot, fullyReadMarker] of Object.entries(fullyReadMarkersContent)) {
+                fullyReadMarkers[threadRoot] = fullyReadMarker
+            }
+
+            emitter?.emit('channelUnreadMarkerUpdated', channelStreamId, fullyReadMarkers)
+        }
     }
 
     update(

@@ -23,6 +23,7 @@ import {
     EncryptedDeviceData,
     EncryptedMessageEnvelope,
     FullyReadMarkerContent,
+    FullyReadMarkersContent,
 } from '@towns/proto'
 
 import { Crypto } from './crypto/crypto'
@@ -64,7 +65,7 @@ import {
     IDeviceKeySignatures,
     make_SpacePayload_Channel,
     getToDeviceWirePayloadContent,
-    make_UserSettingsPayload_FullyReadMarker,
+    make_UserSettingsPayload_FullyReadMarkers,
     make_UserSettingsPayload_Inception,
 } from './types'
 import { shortenHexString } from './binary'
@@ -466,19 +467,28 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
         )
     }
 
-    async sendFullyReadMarker(channelId: string, fullyReadMarkerContent: FullyReadMarkerContent) {
-        this.logCall('sendFullyReadMarker', channelId, fullyReadMarkerContent)
+    async sendFullyReadMarkers(
+        channelId: string,
+        fullyReadMarkers: Record<string, FullyReadMarkerContent>,
+    ) {
+        this.logCall('sendFullyReadMarker', fullyReadMarkers)
 
         if (!isDefined(this.userSettingsStreamId)) {
             throw Error('userSettingsStreamId is not defined')
         }
 
+        const fullyReadMarkersContent: FullyReadMarkersContent = new FullyReadMarkersContent()
+
+        for (const [threadRoot, fullyReadMarkerContent] of Object.entries(fullyReadMarkers)) {
+            fullyReadMarkersContent.markers[threadRoot] = fullyReadMarkerContent
+        }
+
         return this.makeEventAndAddToStream(
             this.userSettingsStreamId,
-            make_UserSettingsPayload_FullyReadMarker({
+            make_UserSettingsPayload_FullyReadMarkers({
                 channelStreamId: channelId,
                 content: {
-                    text: fullyReadMarkerContent.toJsonString(),
+                    text: fullyReadMarkersContent.toJsonString(),
                 },
             }),
             'sendFullyReadMarker',
