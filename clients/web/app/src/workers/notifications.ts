@@ -58,48 +58,52 @@ export function handleNotifications(worker: ServiceWorkerGlobalScope) {
     })
 
     worker.addEventListener('message', async (event) => {
-        console.log('sw: "message" event')
+        console.log('sw: "message" event', event)
         const data: {
             type?: ServiceWorkerMessageType
             space?: SpaceData
             membersMap?: UserIdToMember
         } = event.data
 
-        switch (data.type) {
-            case ServiceWorkerMessageType.SpaceMetadata:
-                if (data.space) {
-                    const space = data.space
-                    try {
-                        await addSpaceToIdb(space)
-                    } catch (error) {
-                        console.error('sw: error adding space to idb', space, error)
+        event.waitUntil(addData())
+
+        async function addData() {
+            switch (data.type) {
+                case ServiceWorkerMessageType.SpaceMetadata:
+                    if (data.space) {
+                        const space = data.space
+                        try {
+                            await addSpaceToIdb(space)
+                        } catch (error) {
+                            console.error('sw: error adding space to idb', space, error)
+                        }
+                        try {
+                            await addChannelsToIdb(space)
+                        } catch (error) {
+                            console.error('sw: error adding channels to idb', space, error)
+                        }
                     }
-                    try {
-                        await addChannelsToIdb(space)
-                    } catch (error) {
-                        console.error('sw: error adding channels to idb', space, error)
+                    break
+                case ServiceWorkerMessageType.SpaceMembers:
+                    if (data.membersMap) {
+                        try {
+                            await addUsersToIdb(data.membersMap)
+                        } catch (error) {
+                            console.error(
+                                'sw: error adding users to idb',
+                                {
+                                    space: data.space,
+                                    membersMap: data.membersMap,
+                                },
+                                error,
+                            )
+                        }
                     }
-                }
-                break
-            case ServiceWorkerMessageType.SpaceMembers:
-                if (data.membersMap) {
-                    try {
-                        await addUsersToIdb(data.membersMap)
-                    } catch (error) {
-                        console.error(
-                            'sw: error adding users to idb',
-                            {
-                                space: data.space,
-                                membersMap: data.membersMap,
-                            },
-                            error,
-                        )
-                    }
-                }
-                break
-            default:
-                console.log('sw: received unknown message type', data.type)
-                break
+                    break
+                default:
+                    console.log('sw: received unknown message type', data.type)
+                    break
+            }
         }
     })
 
