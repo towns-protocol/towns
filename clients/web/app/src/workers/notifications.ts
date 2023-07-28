@@ -103,44 +103,46 @@ export function handleNotifications(worker: ServiceWorkerGlobalScope) {
         }
     })
 
-    worker.addEventListener('push', async (event) => {
-        console.log('sw: "push" event')
-        if (!event.data) {
-            console.log('sw: push event contains no data')
-            return
+    worker.addEventListener('push', (event) => {
+        async function handleEvent(event: PushEvent) {
+            console.log('sw: "push" event')
+            if (!event.data) {
+                console.log('sw: push event contains no data')
+                return
+            }
+            const data = event.data.text() || '{}'
+            console.log('sw: received notification', data)
+            const notification = appNotificationFromPushEvent(data)
+
+            if (!notification) {
+                console.log("sw: ''worker couldn't parse notification")
+                return
+            }
+
+            const { mutedChannels, mutedSpaces } = await getServiceWorkerMuteSettings()
+
+            if (mutedSpaces[notification.content.spaceId]) {
+                console.log('sw: Space is muted, not showing notification')
+                return
+            }
+
+            if (mutedChannels[notification.content.channelId]) {
+                console.log('sw: Channel is muted, not showing notification')
+                return
+            }
+
+            const { title, body } = await getNotificationContent(notification)
+            // options: https://developer.mozilla.org/en-US/docs/Web/API/Notification
+            const options: NotificationOptions = {
+                body,
+                silent: false,
+                icon: '/pwa/maskable_icon_x192.png',
+                data,
+                tag: notification.content.channelId,
+            }
+            await worker.registration.showNotification(title, options)
         }
-        const data = event.data.text() || '{}'
-        console.log('sw: received notification', data)
-        const notification = appNotificationFromPushEvent(data)
-
-        if (!notification) {
-            console.log("sw: ''worker couldn't parse notification")
-            return
-        }
-
-        const { mutedChannels, mutedSpaces } = await getServiceWorkerMuteSettings()
-
-        if (mutedSpaces[notification.content.spaceId]) {
-            console.log('sw: Space is muted, not showing notification')
-            return
-        }
-
-        if (mutedChannels[notification.content.channelId]) {
-            console.log('sw: Channel is muted, not showing notification')
-            return
-        }
-
-        const { title, body } = await getNotificationContent(notification)
-        // options: https://developer.mozilla.org/en-US/docs/Web/API/Notification
-        const options: NotificationOptions = {
-            body,
-            silent: false,
-            icon: '/pwa/maskable_icon_x192.png',
-            data,
-            tag: notification.content.channelId,
-        }
-        await worker.registration.showNotification(title, options)
-
+        event.waitUntil(handleEvent(event))
         console.log('sw: Notification shown')
     })
 
