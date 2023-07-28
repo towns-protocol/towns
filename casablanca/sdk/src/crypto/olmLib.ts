@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 // todo: fix lint issues and remove exception see: https://linear.app/hnt-labs/issue/HNT-1721/address-linter-overrides-in-matrix-encryption-code-from-sdk
 /* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-misused-promises, @typescript-eslint/restrict-plus-operands, @typescript-eslint/no-unused-vars, @typescript-eslint/no-unsafe-argument*/
 
@@ -10,6 +12,7 @@ import { DeviceInfo, ISignatures } from './deviceInfo'
 import { Client, FallbackKeyResponse, IDownloadKeyRequest, IDownloadKeyResponse } from '../client'
 import { FallbackKeys, Key } from '@towns/proto'
 import { IFallbackKey } from '../types'
+import { RiverEvent, RiverEventType } from '../event'
 
 const log = dlog('csb:olmLib')
 
@@ -34,6 +37,16 @@ export interface IMessage {
     type?: number
     body: string
 }
+
+export type OlmSessionsAllByUserDevice = {
+    // userId -> []deviceInfo (devices without sessions)
+    devicesWithoutSessions: Map<string, DeviceInfo[]>
+    // userId -> deviceId -> IExistingOlmSession
+    devicesWithSessions: Map<string, Map<string, IExistingOlmSession>>
+}
+
+// userId -> deviceId -> OlmSessionResult
+export type OlmSessionsExistingByUsers = Map<string, Map<string, IOlmSessionResult>>
 
 export interface IOlmEncryptedContent {
     algorithm: typeof OLM_ALGORITHM
@@ -88,7 +101,7 @@ export async function ensureOlmSessionsForDevices(
     baseApis: Client,
     devicesByUser: Map<string, DeviceInfo[]>,
     force = false,
-): Promise<Map<string, Map<string, IOlmSessionResult>>> {
+): Promise<OlmSessionsExistingByUsers> {
     const devicesWithoutSession: [string, string][] = [
         // [userId, deviceId], ...
     ]
@@ -448,4 +461,75 @@ export async function encryptMessageForDevice(
         sessionId,
         JSON.stringify(payload),
     )
+}
+
+/**
+ * Get the existing olm sessions for the given devices, and the devices that
+ * don't have olm sessions.
+ *
+ * @param devicesByUser - map from userid to list of devices to ensure sessions for
+ *
+ * @returns resolves to an array.  The first element of the array is a
+ *    a map of user IDs to arrays of deviceInfo, representing the devices that
+ *    don't have established olm sessions.  The second element of the array is
+ *    a map from userId to deviceId to {@link OlmSessionResult}
+ */
+export async function getExistingOlmSessions(
+    olmDevice: OlmDevice,
+    devicesByUser: Record<string, DeviceInfo[]>,
+): Promise<OlmSessionsAllByUserDevice> {
+    // map user Id → DeviceInfo[]
+    const devicesWithoutSessions: Map<string, DeviceInfo[]> = new Map()
+    // map user Id → device Id → IExistingOlmSession
+    const devicesWithSessions: Map<string, Map<string, IExistingOlmSession>> = new Map()
+
+    const promises: Promise<void>[] = []
+
+    for (const [userId, devices] of Object.entries(devicesByUser)) {
+        for (const deviceInfo of devices) {
+            const deviceId = deviceInfo.deviceId
+            const key = deviceInfo.getIdentityKey()
+            promises.push(
+                (async (): Promise<void> => {
+                    const sessionId = await olmDevice.getSessionIdForDevice(key, true)
+                    if (sessionId === null) {
+                        const devicesMap = devicesWithoutSessions.get(userId)
+                        if (devicesMap !== undefined) {
+                            devicesMap.push(deviceInfo)
+                        }
+                    } else {
+                        const sessionsMap = devicesWithSessions.get(userId)
+                        if (sessionsMap !== undefined) {
+                            sessionsMap.set(deviceId, {
+                                device: deviceInfo,
+                                sessionId: sessionId,
+                            })
+                        }
+                    }
+                })(),
+            )
+        }
+    }
+
+    await Promise.all(promises)
+
+    return { devicesWithoutSessions, devicesWithSessions }
+}
+
+/**
+ * Check that an event was encrypted using olm.
+ */
+export function isOlmEncrypted(event: RiverEvent): boolean {
+    if (!event.getSenderKey()) {
+        dlog('Event has no sender key (not encrypted?)')
+        return false
+    }
+    if (
+        event.getWireType() !== RiverEventType.Encrypted ||
+        ![OLM_ALGORITHM].includes(event.getWireContent().algorithm)
+    ) {
+        dlog('Event was not encrypted using an appropriate algorithm')
+        return false
+    }
+    return true
 }

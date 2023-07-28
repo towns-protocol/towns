@@ -6,7 +6,7 @@ import { assertBytes } from 'ethereum-cryptography/utils'
 import { keccak256 } from 'ethereum-cryptography/keccak'
 import { recoverPublicKey, signSync, verify } from 'ethereum-cryptography/secp256k1'
 import { check } from '../check'
-import { RiverEvent, IClearEvent, EncryptedEventStreamTypes } from '../event'
+import { RiverEvent, IClearEvent, EncryptedEventStreamTypes, RiverEventType } from '../event'
 import { Client } from '../client'
 import EventEmitter from 'events'
 import TypedEmitter from 'typed-emitter'
@@ -20,7 +20,7 @@ import {
 } from './olmLib'
 import { OlmMegolmDelegate } from '@towns/mecholm'
 import { DeviceInfo, ISignatures, ToDeviceBatch } from './deviceInfo'
-import { OlmDevice, IInitOpts } from './olmDevice'
+import { OlmDevice, IInitOpts, IMegolmSessionData } from './olmDevice'
 import { Err, ToDeviceOp } from '@towns/proto'
 import { IFallbackKey, recursiveMapToObject } from '../types'
 import { bin_fromHexString } from '../binary'
@@ -36,6 +36,7 @@ import {
     registerAlgorithm,
 } from './algorithms/base'
 import { OlmDecryption, OlmEncryption } from './algorithms/olm'
+import { MegolmDecryption, MegolmEncryption } from './algorithms/megolm'
 import { Auth } from './store/auth'
 
 const log = dlog('csb:crypto')
@@ -198,6 +199,20 @@ export interface IEventDecryptionResult {
     encryptedDisabledForUnverifiedDevices?: boolean
 }
 
+export interface IEncryptionUserTarget {
+    userIds: string[]
+}
+
+export interface IEncryptionRoomTarget {
+    roomId: string
+}
+
+export type EncryptionTarget = IEncryptionUserTarget | IEncryptionRoomTarget
+
+function isUserTarget(target: EncryptionTarget): target is IEncryptionUserTarget {
+    return 'userIds' in target
+}
+
 interface IRoomKey {
     room_id: string
     algorithm: string
@@ -220,6 +235,20 @@ export enum CryptoEvent {
     DeviceVerificationChanged = 'deviceVerificationChanged',
     WillUpdateDevices = 'crypto.willUpdateDevices',
     DevicesUpdated = 'crypto.devicesUpdated',
+}
+
+export interface IImportOpts {
+    stage: string // TODO: Enum
+    successes: number
+    failures: number
+    total: number
+}
+
+export interface IImportRoomKeysOpts {
+    /** called with an object that has a "stage" param */
+    progressCallback?: (stage: IImportOpts) => void
+    untrusted?: boolean
+    source?: string // TODO: Enum
 }
 
 export type CryptoEventHandlerMap = {
@@ -251,12 +280,12 @@ export interface CryptoBackend {
 
     /**
      * @param event -  event to be sent
-     * @param userIds - destination userId to encrypt messages for each of their devices
+     * @param target - encryption target (either userIds or roomId)
      *
      * @returns Promise which resolves when the event has been
      *     encrypted, or null if nothing was needed
      */
-    encryptEvent(event: RiverEvent, userIds: string[]): Promise<void>
+    encryptEvent(event: RiverEvent, target: EncryptionTarget): Promise<void>
 
     /**
      * Decrypt a received event
@@ -286,6 +315,8 @@ export class Crypto
     public readonly streamEncryptors = new Map<string, EncryptionAlgorithm>()
     public readonly decryptors = new Map<string, DecryptionAlgorithm>()
 
+    public globalBlacklistUnverifiedDevices = false
+    public globalErrorOnUnknownDevices = true
     // device_id -> map ( algo_key_id: { key, signatures: { key: sig}})
     private fallbackKeys: Record<string, Record<string, IFallbackKey>> = {}
 
@@ -311,10 +342,15 @@ export class Crypto
         this.olmDevice = new OlmDevice(cryptoStore, this.olmDelegate)
         this.deviceList = new DeviceList(this.client, cryptoStore, this.olmDevice)
         registerAlgorithm(OLM_ALGORITHM, OlmEncryption, OlmDecryption)
+        registerAlgorithm(MEGOLM_ALGORITHM, MegolmEncryption, MegolmDecryption)
         this.supportedAlgorithms = [OLM_ALGORITHM, MEGOLM_ALGORITHM]
         const olmAlgo = ENCRYPTION_CLASSES.get(OLM_ALGORITHM)
+        const megolmAlgo = ENCRYPTION_CLASSES.get(MEGOLM_ALGORITHM)
         if (!olmAlgo) {
             throw new Error('olm algorithm not supported for encryption')
+        }
+        if (!megolmAlgo) {
+            throw new Error('megolm algorithm not supported for encryption')
         }
         const alg: EncryptionAlgorithm = new olmAlgo({
             userId: this.userId,
@@ -324,8 +360,15 @@ export class Crypto
             baseApis: this.client,
             config: { algorithm: OLM_ALGORITHM },
         })
-        // todo: channel encryption to Megolm
-        this.streamEncryptors.set(EncryptedEventStreamTypes.Channel, alg)
+        const megolmAlg: EncryptionAlgorithm = new megolmAlgo({
+            userId: this.userId,
+            deviceId: this.deviceId,
+            crypto: this,
+            olmDevice: this.olmDevice,
+            baseApis: this.client,
+            config: { algorithm: OLM_ALGORITHM },
+        })
+        this.streamEncryptors.set(EncryptedEventStreamTypes.Channel, megolmAlg)
         this.streamEncryptors.set(EncryptedEventStreamTypes.ToDevice, alg)
         this.streamEncryptors.set(EncryptedEventStreamTypes.Uknown, alg)
 
@@ -452,12 +495,13 @@ export class Crypto
      * @returns Promise which resolves when the event has been
      *     encrypted, or null if nothing was needed
      */
-    public async encryptEvent(event: RiverEvent, userIds: string[]): Promise<void> {
-        const alg = this.streamEncryptors.get(event.streamType ?? 'to_device')
+    public async encryptEvent(event: RiverEvent, target: EncryptionTarget): Promise<void> {
+        const streamType = event.getStreamType() ?? EncryptedEventStreamTypes.ToDevice
+        const alg = this.streamEncryptors.get(streamType)
         if (!alg) {
             throw new Error(
                 'Event for stream type ' +
-                    event.streamType +
+                    streamType +
                     ' was previously configured to use encryption, but is ' +
                     'no longer.',
             )
@@ -466,8 +510,17 @@ export class Crypto
         // todo: wait for all the room devices to be loaded
         // await this.trackRoomDevicesImpl(room)
         const content = event.getContent()
-
-        const encryptedContent = await alg.encryptMessage(userIds, event.getType() ?? '', content)
+        let encryptionTarget: string[] | string
+        if (isUserTarget(target)) {
+            encryptionTarget = target.userIds
+        } else {
+            encryptionTarget = target.roomId
+        }
+        const encryptedContent = await alg.encryptMessage(
+            encryptionTarget,
+            event.getType() ?? '',
+            content,
+        )
 
         if (
             this.olmDevice.deviceCurve25519Key === null ||
@@ -476,7 +529,7 @@ export class Crypto
             throw new Error('device keys not initialized, cannot encrypt event')
         }
         event.makeEncrypted(
-            'r.room.encrypted',
+            RiverEventType.Encrypted,
             encryptedContent,
             this.olmDevice.deviceCurve25519Key,
             this.olmDevice.deviceDoNotUseKey,
@@ -533,6 +586,21 @@ export class Crypto
             this.decryptors.set(algorithm, alg)
         }
         return alg
+    }
+
+    /**
+     * Get the stored keys for a single device
+     *
+     *
+     * @returns device, or undefined
+     * if we don't know about this device
+     */
+    public getStoredDevice(userId: string, deviceId: string): DeviceInfo | undefined {
+        const devices = this.deviceList.getStoredDevice(userId, deviceId)
+        if (devices) {
+            return devices
+        }
+        return
     }
 
     /**
@@ -656,6 +724,55 @@ export class Crypto
             log('sendToDeviceFailed promises failed', e)
             throw e
         }
+    }
+
+    /**
+     * Import a list of room keys previously exported by exportRoomKeys
+     *
+     * @param keys - a list of session export objects
+     * @returns a promise which resolves once the keys have been imported
+     */
+    public async importRoomKeys(
+        keys: IMegolmSessionData[],
+        opts: IImportRoomKeysOpts = {},
+    ): Promise<void> {
+        let successes = 0
+        let failures = 0
+        const total = keys.length
+
+        function updateProgress(): void {
+            opts.progressCallback?.({
+                stage: 'load_keys',
+                successes,
+                failures,
+                total,
+            })
+        }
+
+        await Promise.all(
+            keys.map(async (key) => {
+                if (!key.room_id || !key.algorithm) {
+                    dlog('ignoring room key entry with missing fields')
+                    failures++
+                    if (opts.progressCallback) {
+                        updateProgress()
+                    }
+                    return null
+                }
+
+                const alg = this.getDecryptor(key.algorithm)
+                try {
+                    await alg.importRoomKey(key, opts)
+                } catch {
+                    dlog(`failed to import key`)
+                }
+                successes++
+                if (opts.progressCallback) {
+                    updateProgress()
+                }
+                return
+            }),
+        )
     }
 }
 

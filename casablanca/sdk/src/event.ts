@@ -33,7 +33,7 @@ export interface IBodyTextContent {
 export interface IClearEvent {
     space_id?: string
     channel_id?: string
-    type?: string
+    type?: RiverEventType
     // omit any fields that don't need to appear in clear event from decrypted content here
     content: IContent
 }
@@ -56,10 +56,11 @@ interface StreamEventPayload {
 
 export interface IEvent {
     event_id: string
-    type: string
+    type: RiverEventType
     content: IContent
     payload: StreamEventPayload
     sender: string // user_id of sender
+    stream_type: EncryptedEventStreamTypes
     room_id?: string
     origin_server_ts: number
     txn_id?: string
@@ -101,6 +102,9 @@ export enum RiverEventType {
     // Room ephemeral events
     Typing = 'r.typing',
     Receipt = 'r.receipt',
+
+    // Room encrypted event
+    Encrypted = 'r.room.encrypted',
 
     // todo: implement
     // FullyRead = "r.fully_read",
@@ -153,9 +157,7 @@ export class RiverEvent extends (EventEmitter as new () => TypedEmitter<RiverEve
     /**
      * Unique identifier for event, which is stable across syncs.
      */
-    private _txnId?: string
-
-    public readonly streamType: EncryptedEventStreamTypes = EncryptedEventStreamTypes.Uknown
+    private txnId?: string
 
     /**
      * Set an appropriate timestamp on the event relative to the local clock.
@@ -182,7 +184,7 @@ export class RiverEvent extends (EventEmitter as new () => TypedEmitter<RiverEve
 
         const { parsed_event, hash_str, creator_user_id } = event?.payload || {}
 
-        this._txnId = hash_str
+        this.txnId = hash_str
         this.localTimestamp = Date.now()
         if (creator_user_id) {
             this.event.sender = creator_user_id
@@ -208,7 +210,7 @@ export class RiverEvent extends (EventEmitter as new () => TypedEmitter<RiverEve
                         // typically should be MEGOLM but not necessarily
                         event.content['algorithm'] = content.algorithm
                         event.content['sender_key'] = content.senderKey
-                        this.streamType = EncryptedEventStreamTypes.Channel
+                        event.stream_type = EncryptedEventStreamTypes.Channel
                         break
                     }
                     default:
@@ -225,7 +227,7 @@ export class RiverEvent extends (EventEmitter as new () => TypedEmitter<RiverEve
                         event.content['sender_key'] = content.senderKey
                         event.content['device_key'] = content.deviceKey
                         event.content['op'] = ToDeviceOp[content.op]
-                        this.streamType = EncryptedEventStreamTypes.ToDevice
+                        event.stream_type = EncryptedEventStreamTypes.ToDevice
                         break
                     }
                     default:
@@ -243,8 +245,12 @@ export class RiverEvent extends (EventEmitter as new () => TypedEmitter<RiverEve
         return this.event.room_id
     }
 
-    public getId(): string | undefined {
-        throw new Error('Method not implemented')
+    public getStreamType(): string | undefined {
+        return this.event.stream_type
+    }
+
+    public getId(): string {
+        return this.txnId ?? ''
     }
 
     public getSender(): string {
@@ -253,11 +259,26 @@ export class RiverEvent extends (EventEmitter as new () => TypedEmitter<RiverEve
     }
 
     /**
+     * The curve25519 key for the device that we think sent this event
+     *
+     * For an Olm-encrypted event, this is inferred directly from the DH
+     * exchange at the start of the session: the curve25519 key is involved in
+     * the DH exchange, so only a device which holds the private part of that
+     * key can establish such a session.
+     *
+     * For a megolm-encrypted event, it is inferred from the Olm message which
+     * established the megolm session
+     */
+    public getSenderKey(): string | null {
+        return this.senderCurve25519Key ? this.senderCurve25519Key : null
+    }
+
+    /**
      * Get the (decrypted, if necessary) type of event.
      *
      * @returns The event type, e.g. `r.room.message`
      */
-    public getType(): RiverEventType | string | undefined {
+    public getType(): RiverEventType | undefined {
         if (this.clearEvent) {
             return this.clearEvent.type
         }
@@ -281,7 +302,7 @@ export class RiverEvent extends (EventEmitter as new () => TypedEmitter<RiverEve
      *   sender if this event.
      */
     public makeEncrypted(
-        cryptoType: string,
+        cryptoType: RiverEventType,
         cryptoContent: IEncryptedContent,
         senderCurve25519Key: string,
         claimedDoNotUseKey: string,
@@ -506,7 +527,7 @@ export class RiverEvent extends (EventEmitter as new () => TypedEmitter<RiverEve
     }
 
     public getChannelMessageBody(): string | undefined {
-        if (this.streamType === EncryptedEventStreamTypes.Channel) {
+        if (this.getStreamType() === EncryptedEventStreamTypes.Channel) {
             if (this.clearEvent) {
                 return (
                     JSON.parse(
@@ -545,11 +566,11 @@ export class RiverEvent extends (EventEmitter as new () => TypedEmitter<RiverEve
      *
      * @returns The event type.
      */
-    public getWireType(): RiverEventType | string {
+    public getWireType(): RiverEventType | undefined {
         if (this.event?.type) {
             return this.event.type
         }
-        return ''
+        return
     }
 
     /**

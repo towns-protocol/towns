@@ -61,6 +61,13 @@ export class MemoryCryptoStore implements CryptoStore {
         return Promise.resolve()
     }
 
+    public deleteInboundGroupSessions(
+        _senderCurve25519Key: string,
+        _sessionId: string,
+    ): Promise<void> {
+        return Promise.resolve()
+    }
+
     /**
      * Look for an existing outgoing room key request, and if none is found,
      * add a new one

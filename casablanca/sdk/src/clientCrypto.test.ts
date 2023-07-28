@@ -41,7 +41,7 @@ describe('clientCryptoTest', () => {
         })
         expect(event.event.content).toBeDefined()
         expect(event.shouldAttemptDecryption()).toBe(true)
-        await expect(alicesClient.encryptEvent(event, [bobsUserId])).toResolve()
+        await expect(alicesClient.encryptEvent(event, { userIds: [bobsUserId] })).toResolve()
         expect(event.getWireContent().ciphertext).toBeDefined()
         expect(event.shouldAttemptDecryption()).toBe(false)
     })
@@ -69,7 +69,7 @@ describe('clientCryptoTest', () => {
         // ensure olm session with bob
         expect(event.event.content).toBeDefined()
         expect(event.shouldAttemptDecryption()).toBe(true)
-        await expect(alicesClient.encryptEvent(event, [bobsUserId])).toResolve()
+        await expect(alicesClient.encryptEvent(event, { userIds: [bobsUserId] })).toResolve()
         expect(event?.event?.content?.ciphertext).toBeDefined()
         event.setClearData({ clearEvent: { content: {} } })
         expect(event.getContent().payload).toBeUndefined()
@@ -101,7 +101,7 @@ describe('clientCryptoTest', () => {
         })
         // ensure olm session with bob
         expect(event.event.content).toBeDefined()
-        await expect(alicesClient.encryptEvent(event, [bobsUserId])).toResolve()
+        await expect(alicesClient.encryptEvent(event, { userIds: [bobsUserId] })).toResolve()
         expect(event.shouldAttemptDecryption()).toBe(false)
         expect(event?.event?.content?.ciphertext).toBeDefined()
         const senderKey = alicesClient.olmDevice.deviceCurve25519Key
@@ -158,7 +158,7 @@ describe('clientCryptoTest', () => {
         })
         // ensure olm session with bob
         expect(event.event.content).toBeDefined()
-        await expect(alicesClient.encryptEvent(event, [bobsUserId])).toResolve()
+        await expect(alicesClient.encryptEvent(event, { userIds: [bobsUserId] })).toResolve()
         expect(event.shouldAttemptDecryption()).toBe(false)
         expect(event.getWireContent().ciphertext).toBeDefined()
         const senderKey = alicesClient.olmDevice.deviceCurve25519Key
@@ -222,7 +222,7 @@ describe('clientCryptoTest', () => {
             })
             // ensure olm session with bob
             expect(event.event.content).toBeDefined()
-            await expect(alicesClient.encryptEvent(event, [bobsUserId])).toResolve()
+            await expect(alicesClient.encryptEvent(event, { userIds: [bobsUserId] })).toResolve()
             expect(event.shouldAttemptDecryption()).toBe(false)
             const ciphertext = event.getWireContent().ciphertext
             expect(ciphertext).toBeDefined()
@@ -274,7 +274,7 @@ describe('clientCryptoTest', () => {
         })
         // ensure olm session with bob
         expect(event.event.content).toBeDefined()
-        await expect(alicesClient.encryptEvent(event, [bobsUserId])).toResolve()
+        await expect(alicesClient.encryptEvent(event, { userIds: [bobsUserId] })).toResolve()
         expect(event.shouldAttemptDecryption()).toBe(false)
         expect(event.getWireContent().ciphertext).toBeDefined()
         const senderKey = alicesClient.olmDevice.deviceCurve25519Key

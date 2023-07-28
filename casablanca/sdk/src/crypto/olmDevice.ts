@@ -1,12 +1,21 @@
 // todo: fix lint issues and remove exception see: https://linear.app/hnt-labs/issue/HNT-1721/address-linter-overrides-in-matrix-encryption-code-from-sdk
-/* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unused-vars, @typescript-eslint/no-unsafe-argument*/
+/* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unused-vars, @typescript-eslint/no-unsafe-argument*/
 
 import { dlog } from '../dlog'
-import { MegolmSession } from '@towns/proto'
 import { IndexedDBCryptoStore } from './store/indexeddb-crypto-store'
-import { CryptoStore, CryptoTxn, ISessionInfo } from './store/base'
+import { CryptoStore, CryptoTxn, ISessionInfo, IWithheld } from './store/base'
 import { IMessage } from './olmLib'
-import { OlmMegolmDelegate, Account, Utility, Session } from '@towns/mecholm'
+import {
+    OlmMegolmDelegate,
+    Account,
+    InboundGroupSession,
+    OutboundGroupSession,
+    Utility,
+    Session,
+} from '@towns/mecholm'
+import { DecryptionError } from './algorithms/base'
+import { WITHHELD_MESSAGES } from '../event'
+import { IOutboundGroupSessionKey } from './algorithms/megolm'
 
 const log = dlog('csb:olmDevice')
 
@@ -20,12 +29,8 @@ export interface InboundGroupSessionData {
     /** pickled Olm.InboundGroupSession */
     session: string
     keysClaimed: Record<string, string>
-    /** Devices involved in forwarding this session to us (normally empty). */
-    forwardingCurve25519KeyChain: string[]
     /** whether this session is untrusted. */
     untrusted?: boolean
-    /** whether this session exists during the room being set to shared history. */
-    sharedHistory?: boolean
 }
 
 function checkPayloadLength(payloadString: string): void {
@@ -42,6 +47,26 @@ function checkPayloadLength(payloadString: string): void {
                 `The maximum for an encrypted message is ${MAX_PLAINTEXT_LENGTH} bytes.`,
         )
     }
+}
+
+export interface IDecryptedGroupMessage {
+    result: string
+    keysClaimed: Record<string, string>
+    senderKey: string
+    untrusted: boolean
+}
+
+export type OlmGroupSessionExtraData = {
+    untrusted?: boolean
+}
+
+interface IInboundGroupSessionKey {
+    chain_index: number
+    key: string
+    forwarding_curve25519_key_chain: string[]
+    sender_claimed_ed25519_key: string | null
+    shared_history: boolean
+    untrusted?: boolean
 }
 
 export interface IInboundSession {
@@ -70,12 +95,9 @@ interface Extensible {
 export interface IMegolmSessionData extends Extensible {
     /** Sender's Curve25519 device key */
     sender_key: string
-    /** Devices which forwarded this session to us (normally empty). */
-    forwarding_curve25519_key_chain: string[]
     /** Other keys the sender claims. */
     sender_claimed_keys: Record<string, string>
-    space_id: string
-    channel_id?: string
+    room_id: string
     /** Unique id for the session */
     session_id: string
     /** Base64'ed key data */
@@ -104,6 +126,17 @@ export class OlmDevice {
     // todo: ensure we need this to serialize prekey message given we're using fallback keys
     // not one time keys, which suffer a race condition and expire once used.
     public olmPrekeyPromise: Promise<any> = Promise.resolve() // set by consumers
+
+    private outboundGroupSessionStore: Record<string, string> = {}
+
+    // Store a set of decrypted message indexes for each group session.
+    // This partially mitigates a replay attack where a MITM resends a group
+    // message into the room.
+    //
+    // Keys are strings of form "<senderKey>|<session_id>|<message_index>"
+    // Values are objects of the form "{id: <event id>, timestamp: <ts>}"
+    private inboundGroupSessionMessageIndexes: Record<string, { id: string; timestamp: number }> =
+        {}
 
     public constructor(
         private readonly cryptoStore: CryptoStore,
@@ -437,6 +470,468 @@ export class OlmDevice {
                 account.forget_old_fallback_key()
                 this.storeAccount(txn, account)
             })
+        })
+    }
+
+    // Outbound group session
+    // ======================
+
+    /**
+     * Store an OutboundGroupSession in outboundSessionStore
+     *
+     */
+    private saveOutboundGroupSession(session: OutboundGroupSession): void {
+        this.outboundGroupSessionStore[session.session_id()] = session.pickle(this.pickleKey)
+    }
+
+    /**
+     * Extract OutboundGroupSession from the session store and call given fn.
+     */
+    private getOutboundGroupSession<T>(
+        sessionId: string,
+        func: (session: OutboundGroupSession) => T,
+    ): T {
+        const pickled = this.outboundGroupSessionStore[sessionId]
+        if (!pickled) {
+            throw new Error(`Unknown outbound group session ${sessionId}`)
+        }
+
+        const session = this.olmDelegate.createOutboundGroupSession()
+        try {
+            session.unpickle(this.pickleKey, pickled)
+            return func(session)
+        } finally {
+            session.free()
+        }
+    }
+
+    /**
+     * Get the session keys for an outbound group session
+     *
+     * @param sessionId -  the id of the outbound group session
+     *
+     * @returns current chain index, and
+     *     base64-encoded secret key.
+     */
+    public getOutboundGroupSessionKey(sessionId: string): IOutboundGroupSessionKey {
+        return this.getOutboundGroupSession(sessionId, function (session: OutboundGroupSession) {
+            return {
+                chain_index: session.message_index(),
+                key: session.session_key(),
+            }
+        })
+    }
+
+    /**
+     * Generate a new outbound group session
+     *
+     */
+    public createOutboundGroupSession(): string {
+        const session = this.olmDelegate.createOutboundGroupSession()
+        try {
+            session.create()
+            this.saveOutboundGroupSession(session)
+            return session.session_id()
+        } finally {
+            session.free()
+        }
+    }
+
+    // Inbound group session
+    // =====================
+
+    /**
+     * Unpickle a session from a sessionData object and invoke the given function.
+     * The session is valid only until func returns.
+     *
+     * @param sessionData - Object describing the session.
+     * @param func - Invoked with the unpickled session
+     * @returns result of func
+     */
+    private unpickleInboundGroupSession<T>(
+        sessionData: InboundGroupSessionData,
+        func: (session: InboundGroupSession) => T,
+    ): T {
+        const session = this.olmDelegate.createInboundGroupSession()
+        try {
+            session.unpickle(this.pickleKey, sessionData.session)
+            return func(session)
+        } finally {
+            session.free()
+        }
+    }
+
+    /**
+     * Extract an InboundGroupSession from the crypto store and call the given function
+     *
+     * @param roomId - The room ID to extract the session for, or null to fetch
+     *     sessions for any room.
+     * @param txn - Opaque transaction object from cryptoStore.doTxn()
+     * @param func - function to call.
+     *
+     * @internal
+     */
+    private getInboundGroupSession(
+        roomId: string,
+        senderKey: string,
+        sessionId: string,
+        txn: CryptoTxn,
+        func: (
+            session: InboundGroupSession | null,
+            data: InboundGroupSessionData | null,
+            withheld: IWithheld | null,
+        ) => void,
+    ): void {
+        this.cryptoStore.getEndToEndInboundGroupSession(
+            senderKey,
+            sessionId,
+            txn,
+            (sessionData: InboundGroupSessionData | null, withheld: IWithheld | null) => {
+                if (sessionData === null) {
+                    func(null, null, withheld)
+                    return
+                }
+
+                // if we were given a room ID, check that the it matches the original one for the session. This stops
+                // the HS pretending a message was targeting a different room.
+                if (roomId !== null && roomId !== sessionData.room_id) {
+                    throw new Error(
+                        'Mismatched room_id for inbound group session (expected ' +
+                            sessionData.room_id +
+                            ', was ' +
+                            roomId +
+                            ')',
+                    )
+                }
+
+                this.unpickleInboundGroupSession(sessionData, (session: InboundGroupSession) => {
+                    func(session, sessionData, withheld)
+                })
+            },
+        )
+    }
+
+    /**
+     * Add an inbound group session to the session store
+     *
+     * @param roomId -     room in which this session will be used
+     * @param senderKey -  base64-encoded curve25519 key of the sender
+     * @param forwardingCurve25519KeyChain -  Devices involved in forwarding
+     *     this session to us.
+     * @param sessionId -  session identifier
+     * @param sessionKey - base64-encoded secret key
+     * @param keysClaimed - Other keys the sender claims.
+     * @param exportFormat - true if the megolm keys are in export format
+     *    (ie, they lack an ed25519 signature)
+     * @param extraSessionData - any other data to be include with the session
+     */
+    public async addInboundGroupSession(
+        roomId: string,
+        senderKey: string,
+        forwardingCurve25519KeyChain: string[],
+        sessionId: string,
+        sessionKey: string,
+        keysClaimed: Record<string, string>,
+        exportFormat: boolean,
+        extraSessionData: OlmGroupSessionExtraData = {},
+    ): Promise<void> {
+        await this.cryptoStore.doTxn(
+            'readwrite',
+            [
+                IndexedDBCryptoStore.STORE_INBOUND_GROUP_SESSIONS,
+                IndexedDBCryptoStore.STORE_INBOUND_GROUP_SESSIONS_WITHHELD,
+                IndexedDBCryptoStore.STORE_SHARED_HISTORY_INBOUND_GROUP_SESSIONS,
+            ],
+            (txn) => {
+                /* if we already have this session, consider updating it */
+                this.getInboundGroupSession(
+                    roomId,
+                    senderKey,
+                    sessionId,
+                    txn,
+                    (
+                        existingSession: InboundGroupSession | null,
+                        existingSessionData: InboundGroupSessionData | null,
+                    ) => {
+                        // new session.
+                        const session = new global.Olm.InboundGroupSession()
+                        try {
+                            if (exportFormat) {
+                                session.import_session(sessionKey)
+                            } else {
+                                session.create(sessionKey)
+                            }
+                            if (sessionId != session.session_id()) {
+                                throw new Error(
+                                    'Mismatched group session ID from senderKey: ' + senderKey,
+                                )
+                            }
+
+                            if (existingSession) {
+                                log(`Update for megolm session ${senderKey}|${sessionId}`)
+                                if (
+                                    existingSession.first_known_index() <=
+                                    session.first_known_index()
+                                ) {
+                                    if (
+                                        !existingSessionData!.untrusted ||
+                                        extraSessionData.untrusted
+                                    ) {
+                                        // existing session has less-than-or-equal index
+                                        // (i.e. can decrypt at least as much), and the
+                                        // new session's trust does not win over the old
+                                        // session's trust, so keep it
+                                        log(
+                                            `Keeping existing megolm session ${senderKey}|${sessionId}`,
+                                        )
+                                        return
+                                    }
+                                    if (
+                                        existingSession.first_known_index() <
+                                        session.first_known_index()
+                                    ) {
+                                        // We want to upgrade the existing session's trust,
+                                        // but we can't just use the new session because we'll
+                                        // lose the lower index. Check that the sessions connect
+                                        // properly, and then manually set the existing session
+                                        // as trusted.
+                                        if (
+                                            existingSession.export_session(
+                                                session.first_known_index(),
+                                            ) ===
+                                            session.export_session(session.first_known_index())
+                                        ) {
+                                            log(
+                                                'Upgrading trust of existing megolm session ' +
+                                                    `${senderKey}|${sessionId} based on newly-received trusted session`,
+                                            )
+                                            existingSessionData!.untrusted = false
+                                            this.cryptoStore.storeEndToEndInboundGroupSession(
+                                                senderKey,
+                                                sessionId,
+                                                existingSessionData!,
+                                                txn,
+                                            )
+                                        } else {
+                                            log(
+                                                `Newly-received megolm session ${senderKey}|$sessionId}` +
+                                                    ' does not match existing session! Keeping existing session',
+                                            )
+                                        }
+                                        return
+                                    }
+                                    // If the sessions have the same index, go ahead and store the new trusted one.
+                                }
+                            }
+
+                            log(
+                                `Storing megolm session ${senderKey}|${sessionId} with first index ${session.first_known_index()}`,
+                            )
+
+                            const sessionData = Object.assign({}, extraSessionData, {
+                                room_id: roomId,
+                                session: session.pickle(this.pickleKey),
+                                keysClaimed: keysClaimed,
+                                forwardingCurve25519KeyChain: forwardingCurve25519KeyChain,
+                            })
+
+                            this.cryptoStore.storeEndToEndInboundGroupSession(
+                                senderKey,
+                                sessionId,
+                                sessionData,
+                                txn,
+                            )
+
+                            if (!existingSession) {
+                                this.cryptoStore.addSharedHistoryInboundGroupSession(
+                                    roomId,
+                                    senderKey,
+                                    sessionId,
+                                    txn,
+                                )
+                            }
+                        } finally {
+                            session.free()
+                        }
+                    },
+                )
+            },
+        )
+    }
+
+    /**
+     * Record in the data store why an inbound group session was withheld.
+     *
+     * @param roomId -     room that the session belongs to
+     * @param senderKey -  base64-encoded curve25519 key of the sender
+     * @param sessionId -  session identifier
+     * @param code -       reason code
+     * @param reason -     human-readable version of `code`
+     */
+    public async addInboundGroupSessionWithheld(
+        roomId: string,
+        senderKey: string,
+        sessionId: string,
+        code: string,
+        reason: string,
+    ): Promise<void> {
+        await this.cryptoStore.doTxn(
+            'readwrite',
+            [IndexedDBCryptoStore.STORE_INBOUND_GROUP_SESSIONS_WITHHELD],
+            (txn) => {
+                this.cryptoStore.storeEndToEndInboundGroupSessionWithheld(
+                    senderKey,
+                    sessionId,
+                    {
+                        room_id: roomId,
+                        code: code,
+                        reason: reason,
+                    },
+                    txn,
+                )
+            },
+        )
+    }
+
+    /**
+     * Decrypt a received message with an inbound group session
+     *
+     * @param roomId -    room in which the message was received
+     * @param senderKey - base64-encoded curve25519 key of the sender
+     * @param sessionId - session identifier
+     * @param body -      base64-encoded body of the encrypted message
+     * @param eventId -   ID of the event being decrypted
+     * @param timestamp - timestamp of the event being decrypted
+     *
+     * @returns null if the sessionId is unknown
+     */
+    public async decryptGroupMessage(
+        roomId: string,
+        senderKey: string,
+        sessionId: string,
+        body: string,
+        eventId: string,
+        timestamp?: number,
+    ): Promise<IDecryptedGroupMessage | null> {
+        let result: IDecryptedGroupMessage | null = null
+        // when the localstorage crypto store is used as an indexeddb backend,
+        // exceptions thrown from within the inner function are not passed through
+        // to the top level, so we store exceptions in a variable and raise them at
+        // the end
+        let error: Error
+
+        await this.cryptoStore.doTxn(
+            'readwrite',
+            [
+                IndexedDBCryptoStore.STORE_INBOUND_GROUP_SESSIONS,
+                IndexedDBCryptoStore.STORE_INBOUND_GROUP_SESSIONS_WITHHELD,
+            ],
+            (txn) => {
+                this.getInboundGroupSession(
+                    roomId,
+                    senderKey,
+                    sessionId,
+                    txn,
+                    (session, sessionData, withheld) => {
+                        if (session === null || sessionData === null) {
+                            if (withheld) {
+                                error = new DecryptionError(
+                                    'MEGOLM_UNKNOWN_INBOUND_SESSION_ID',
+                                    calculateWithheldMessage(withheld),
+                                    {
+                                        session: senderKey + '|' + sessionId,
+                                    },
+                                )
+                            }
+                            result = null
+                            return
+                        }
+                        let res: ReturnType<InboundGroupSession['decrypt']>
+                        try {
+                            res = session.decrypt(body)
+                        } catch (e) {
+                            if ((<Error>e)?.message === 'OLM.UNKNOWN_MESSAGE_INDEX' && withheld) {
+                                error = new DecryptionError(
+                                    'MEGOLM_UNKNOWN_INBOUND_SESSION_ID',
+                                    calculateWithheldMessage(withheld),
+                                    {
+                                        session: senderKey + '|' + sessionId,
+                                    },
+                                )
+                            } else {
+                                error = <Error>e
+                            }
+                            return
+                        }
+
+                        let plaintext: string = res.plaintext
+                        if (plaintext === undefined) {
+                            // @ts-ignore - Compatibility for older olm versions.
+                            plaintext = res as string
+                        } else {
+                            // Check if we have seen this message index before to detect replay attacks.
+                            // If the event ID and timestamp are specified, and the match the event ID
+                            // and timestamp from the last time we used this message index, then we
+                            // don't consider it a replay attack.
+                            const messageIndexKey = `${senderKey}|${sessionId}|${res.message_index}`
+                            if (messageIndexKey in this.inboundGroupSessionMessageIndexes) {
+                                const msgInfo =
+                                    this.inboundGroupSessionMessageIndexes[messageIndexKey]
+                                if (msgInfo.id !== eventId || msgInfo.timestamp !== timestamp) {
+                                    error = new Error(
+                                        'Duplicate message index, possible replay attack: ' +
+                                            messageIndexKey,
+                                    )
+                                    return
+                                }
+                            }
+                            this.inboundGroupSessionMessageIndexes[messageIndexKey] = {
+                                id: eventId,
+                                timestamp: timestamp!,
+                            }
+                        }
+
+                        sessionData.session = session.pickle(this.pickleKey)
+                        this.cryptoStore.storeEndToEndInboundGroupSession(
+                            senderKey,
+                            sessionId,
+                            sessionData,
+                            txn,
+                        )
+                        result = {
+                            result: plaintext,
+                            keysClaimed: sessionData.keysClaimed || {},
+                            senderKey: senderKey,
+                            untrusted: !!sessionData.untrusted,
+                        }
+                    },
+                )
+            },
+        )
+
+        if (error!) {
+            throw error
+        }
+        return result
+    }
+
+    /**
+     * Encrypt an outgoing message with an outbound group session
+     *
+     * @param sessionId - this id of the session
+     * @param payloadString - payload to be encrypted
+     *
+     * @returns ciphertext
+     */
+    public encryptGroupMessage(sessionId: string, payloadString: string): string {
+        log(`encrypting msg with megolm session ${sessionId}`)
+
+        checkPayloadLength(payloadString)
+
+        return this.getOutboundGroupSession(sessionId, (session: OutboundGroupSession) => {
+            const res = session.encrypt(payloadString)
+            this.saveOutboundGroupSession(session)
+            return res
         })
     }
 
@@ -822,26 +1317,180 @@ export class OlmDevice {
     // Group Sessions
 
     public async getSharedHistoryInboundGroupSessions(
-        _roomId: string,
+        roomId: string,
     ): Promise<[senderKey: string, sessionId: string][]> {
-        return []
-        // todo: implement
-    }
-    public async hasInboundSessionKeys(
-        _roomId: string,
-        _senderKey: string,
-        _sessionId: string,
-    ): Promise<boolean> {
-        // todo: implement
-        return false
+        let result: Promise<[senderKey: string, sessionId: string][]>
+        await this.cryptoStore.doTxn(
+            'readonly',
+            [IndexedDBCryptoStore.STORE_SHARED_HISTORY_INBOUND_GROUP_SESSIONS],
+            (txn) => {
+                result = this.cryptoStore.getSharedHistoryInboundGroupSessions(roomId, txn)
+            },
+        )
+        return result!
     }
 
+    /**
+     * Determine if we have the keys for a given megolm session
+     *
+     * @param roomId - room in which the message was received
+     * @param senderKey - base64-encoded curve25519 key of the sender
+     * @param sessionId - session identifier
+     */
+    public async hasInboundSessionKeys(
+        roomId: string,
+        senderKey: string,
+        sessionId: string,
+    ): Promise<boolean> {
+        let result: boolean
+        await this.cryptoStore.doTxn(
+            'readonly',
+            [
+                IndexedDBCryptoStore.STORE_INBOUND_GROUP_SESSIONS,
+                IndexedDBCryptoStore.STORE_INBOUND_GROUP_SESSIONS_WITHHELD,
+            ],
+            (txn) => {
+                this.cryptoStore.getEndToEndInboundGroupSession(
+                    senderKey,
+                    sessionId,
+                    txn,
+                    (sessionData) => {
+                        if (sessionData === null) {
+                            result = false
+                            return
+                        }
+
+                        if (roomId !== sessionData.room_id) {
+                            log(
+                                `[hasInboundSessionKey]: requested keys for inbound group session ${senderKey}|` +
+                                    `${sessionId}, with incorrect room_id ` +
+                                    `(expected ${sessionData.room_id}, ` +
+                                    `was ${roomId})`,
+                            )
+                            result = false
+                        } else {
+                            result = true
+                        }
+                    },
+                )
+            },
+        )
+
+        return result!
+    }
+
+    /**
+     * Extract the keys to a given megolm session, for sharing
+     *
+     * @param roomId - room in which the message was received
+     * @param senderKey - base64-encoded curve25519 key of the sender
+     * @param sessionId - session identifier
+     * @param chainIndex - the chain index at which to export the session.
+     *      If omitted, export at the first index we know about.
+     *
+     * @returns - details of the session key. The key is a base64-encoded megolm key
+     * in export format.
+     */
+    public async getInboundGroupSessionKey(
+        roomId: string,
+        senderKey: string,
+        sessionId: string,
+        chainIndex?: number,
+    ): Promise<IInboundGroupSessionKey | null> {
+        let result: IInboundGroupSessionKey | null = null
+        await this.cryptoStore.doTxn(
+            'readonly',
+            [
+                IndexedDBCryptoStore.STORE_INBOUND_GROUP_SESSIONS,
+                IndexedDBCryptoStore.STORE_INBOUND_GROUP_SESSIONS_WITHHELD,
+            ],
+            (txn) => {
+                this.getInboundGroupSession(
+                    roomId,
+                    senderKey,
+                    sessionId,
+                    txn,
+                    (session, sessionData) => {
+                        if (session === null || sessionData === null) {
+                            result = null
+                            return
+                        }
+
+                        if (chainIndex === undefined) {
+                            chainIndex = session.first_known_index()
+                        }
+
+                        const exportedSession = session.export_session(chainIndex)
+
+                        const claimedKeys = sessionData.keysClaimed || {}
+                        const senderEd25519Key = claimedKeys.ed25519 || null
+
+                        // older forwarded keys didn't set the "untrusted"
+                        // property, but can be identified by having a
+                        // non-empty forwarding key chain.  These keys should
+                        // be marked as untrusted since we don't know that they
+                        // can be trusted
+                        // todo jterzis 07/23: trusted check on forwarding keys not yet implemented
+                        // as trust model is not yet defined
+
+                        result = {
+                            chain_index: chainIndex,
+                            key: exportedSession,
+                            forwarding_curve25519_key_chain: [],
+                            sender_claimed_ed25519_key: senderEd25519Key,
+                            shared_history: false,
+                            untrusted: false,
+                        }
+                    },
+                )
+            },
+        )
+
+        return result
+    }
+
+    /**
+     * Export an inbound group session
+     *
+     * @param senderKey - base64-encoded curve25519 key of the sender
+     * @param sessionId  - session identifier
+     * @param sessionData - the session object from the store
+     */
     public exportInboundGroupSession(
-        _senderKey: string,
-        _sessionId: string,
-        _sessionData: InboundGroupSessionData,
-    ): MegolmSession {
-        // todo: implement
-        return new MegolmSession()
+        senderKey: string,
+        sessionId: string,
+        sessionData: InboundGroupSessionData,
+    ): IMegolmSessionData {
+        return this.unpickleInboundGroupSession(sessionData, (session) => {
+            const messageIndex = session.first_known_index()
+
+            return {
+                sender_key: senderKey,
+                sender_claimed_keys: sessionData.keysClaimed,
+                room_id: sessionData.room_id,
+                session_id: sessionId,
+                session_key: session.export_session(messageIndex),
+                first_known_index: session.first_known_index(),
+            }
+        })
+    }
+}
+
+/**
+ * Calculate the message to use for the exception when a session key is withheld.
+ *
+ * @param withheld -  An object that describes why the key was withheld.
+ *
+ * @returns the message
+ *
+ * @internal
+ */
+function calculateWithheldMessage(withheld: IWithheld): string {
+    if (withheld.code && withheld.code in WITHHELD_MESSAGES) {
+        return WITHHELD_MESSAGES[withheld.code]
+    } else if (withheld.reason) {
+        return withheld.reason
+    } else {
+        return 'decryption key withheld'
     }
 }

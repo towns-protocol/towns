@@ -52,6 +52,12 @@ export class Backend implements CryptoStore {
     public async deleteAllData(): Promise<void> {
         throw Error('This is not implemented, call IDBFactory::deleteDatabase(dbName) instead.')
     }
+    public deleteInboundGroupSessions(
+        _senderCurve25519Key: string,
+        _sessionId: string,
+    ): Promise<void> {
+        throw Error('This is not implemented.')
+    }
 
     /**
      * Look for an existing outgoing room key request, and if none is found,

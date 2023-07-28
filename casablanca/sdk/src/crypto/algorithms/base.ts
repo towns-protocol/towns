@@ -1,5 +1,5 @@
 import { Client } from '../../client'
-import { OlmDevice } from '../olmDevice'
+import { IMegolmSessionData, OlmDevice } from '../olmDevice'
 import { IEventDecryptionResult, Crypto, IncomingRoomKeyRequest } from '../crypto'
 import { DeviceInfo } from '../deviceInfo'
 import { DeviceInfoMap } from '../deviceList'
@@ -31,7 +31,7 @@ export interface IParams {
     crypto: Crypto
     /** olm.js wrapper */
     olmDevice: OlmDevice
-    /** base matrix api interface */
+    /** base api interface */
     baseApis: Client
     /** The ID of the room we will be sending to */
     roomId?: string
@@ -63,7 +63,7 @@ export abstract class EncryptionAlgorithm {
     }
 
     /**
-     * Encrypt a message event for a set of users
+     * Encrypt a message event for a set of users or a room
      *
      * @public
      *
@@ -72,7 +72,7 @@ export abstract class EncryptionAlgorithm {
      * @returns Promise which resolves to the new event body
      */
     public abstract encryptMessage(
-        users: string[], // jterzis: changed this from Room to encrypt messages for a list of users
+        usersOrRoom: string[] | string,
         eventType: string,
         content: IContent,
     ): Promise<IEncryptedContent>
@@ -92,6 +92,7 @@ export abstract class EncryptionAlgorithm {
         senderKey: string,
         sessionId: string,
         userId: string,
+        roomId: string,
         device: DeviceInfo,
     ): Promise<void>
 
@@ -139,15 +140,12 @@ export abstract class DecryptionAlgorithm {
     /**
      * Import a room key
      *
-     * @param opts - object
+     * @param _opts - object
      */
 
-    // todo: implement
-    /*
-    public async importRoomKey(session: IMegolmSessionData, opts: object): Promise<void> {
+    public async importRoomKey(_session: IMegolmSessionData, _opts: object): Promise<void> {
         // ignore by default
     }
-    */
 
     /**
      * Determine if we have the keys necessary to respond to a room key request
@@ -180,6 +178,7 @@ export abstract class DecryptionAlgorithm {
 
     public onRoomKeyWithheldEvent?(event: RiverEvent): Promise<void>
     public sendSharedHistoryInboundSessions?(
+        roomId: string,
         devicesByUser: Map<string, DeviceInfo[]>,
     ): Promise<void>
 }

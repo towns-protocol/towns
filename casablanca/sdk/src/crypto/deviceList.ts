@@ -202,6 +202,21 @@ export class DeviceList extends (EventEmitter as new () => TypedEmitter<CryptoEv
     }
 
     /**
+     * Get the stored keys for a single device
+     *
+     *
+     * @returns device, or undefined
+     * if we don't know about this device
+     */
+    public getStoredDevice(userId: string, deviceId: string): DeviceInfo | undefined {
+        const devs = this.devices[userId]
+        if (!devs?.[deviceId]) {
+            return undefined
+        }
+        return DeviceInfo.fromStorage(devs[deviceId], deviceId)
+    }
+
+    /**
      * Get a user ID by one of their device's curve25519 identity key.
      */
     public getUserByIdentityKey(algorithm: string, senderKey: string): string | undefined {

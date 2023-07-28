@@ -15,6 +15,7 @@ import { RK, RDK } from '../rk'
 export interface CryptoStore {
     startup(): Promise<CryptoStore>
     deleteAllData(): Promise<void>
+    deleteInboundGroupSessions(senderCurve25519Key: string, sessionId: string): Promise<void>
     getOrAddOutgoingRoomKeyRequest(request: OutgoingRoomKeyRequest): Promise<OutgoingRoomKeyRequest>
     getOutgoingRoomKeyRequest(
         requestBody: IRoomKeyRequestBody,

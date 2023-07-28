@@ -379,6 +379,23 @@ export class LocalStorageCryptoStore extends MemoryCryptoStore {
         return Promise.resolve()
     }
 
+    public deleteInboundGroupSessions(
+        senderCurve25519Key: string,
+        sessionId: string,
+    ): Promise<void> {
+        setJsonItem(
+            this.store,
+            keyEndToEndInboundGroupSessionWithheld(senderCurve25519Key, sessionId),
+            null,
+        )
+        setJsonItem(
+            this.store,
+            keyEndToEndInboundGroupSession(senderCurve25519Key, sessionId),
+            null,
+        )
+        return Promise.resolve()
+    }
+
     // Olm account
 
     public getAccount(txn: null, func: (accountPickle: string | null) => void): void {

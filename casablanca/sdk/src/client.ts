@@ -26,7 +26,7 @@ import {
     FullyReadMarkersContent,
 } from '@towns/proto'
 
-import { Crypto } from './crypto/crypto'
+import { Crypto, EncryptionTarget } from './crypto/crypto'
 import { OlmDevice, IExportedDevice as IExportedOlmDevice } from './crypto/olmDevice'
 import { DeviceInfoMap, DeviceList, IOlmDevice } from './crypto/deviceList'
 import { DLogger, dlog } from './dlog'
@@ -114,7 +114,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
 
     protected exportedOlmDeviceToImport?: IExportedOlmDevice
     public pickleKey?: string
-    protected cryptoStore?: CryptoStore
+    public cryptoStore?: CryptoStore
     private cryptoBackend?: Crypto
     private syncLoop?: Promise<undefined | unknown>
     private syncAbort?: AbortController
@@ -1042,6 +1042,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
         userId: string,
         event: object,
         type: ToDeviceOp | string,
+        encrypt = true,
     ): Promise<void> {
         const op: ToDeviceOp =
             typeof type == 'string' ? ToDeviceOp[type as keyof typeof ToDeviceOp] : type
@@ -1057,10 +1058,21 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
         }
         // by default we retrieve the first curve25519 match when sending to a single device
         // of a user
+        // todo: this will change when we support multiple devices per user
+        // see: https://linear.app/hnt-labs/issue/HNT-1839/multi-device-support-in-todevice-transport
         const deviceKey = deviceKeyArr[0]
         this.logCall(`toDevice ${deviceKey.deviceId}, streamId ${streamId}, userId ${userId}`)
+        // todo: tighten event type to a PlainMessage
+        const isValidEncrypted = (event: object): event is PlainMessage<EncryptedDeviceData> => {
+            return 'ciphertext' in event && typeof event.ciphertext === 'object'
+        }
+        if (!encrypt && !isValidEncrypted(event)) {
+            throw Error('event is not encrypted')
+        }
         // encrypt event contents and encode ciphertext
-        const envelope = await this.createOlmEncryptedCipherFromEvent(event, userId)
+        const envelope = encrypt
+            ? await this.createOlmEncryptedCipherFromEvent(event, userId)
+            : (event as PlainMessage<EncryptedDeviceData>)
         return this.makeEventAndAddToStream(
             streamId,
             make_UserPayload_ToDevice({
@@ -1314,7 +1326,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
         }
         const riverEvent = new RiverEvent({ content: content, sender: this.userId })
         try {
-            await this.encryptEvent(riverEvent, [recipientUserId])
+            await this.encryptEvent(riverEvent, { userIds: [recipientUserId] })
         } catch (e) {
             this.logCall('createEncryptedCipherFromEvent: ERROR', e)
             throw e
@@ -1388,11 +1400,11 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
         return this.cryptoBackend.encryptAndSendToDevices(userDeviceInfoArr, payload, type)
     }
 
-    public encryptEvent(event: RiverEvent, userIds: string[]): Promise<void> {
+    public encryptEvent(event: RiverEvent, target: EncryptionTarget): Promise<void> {
         if (!this.cryptoBackend) {
             throw new Error('crypto backend not initialized')
         }
-        return this.cryptoBackend.encryptEvent(event, userIds)
+        return this.cryptoBackend.encryptEvent(event, target)
     }
 }
 export interface FallbackKeyResponse {

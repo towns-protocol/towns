@@ -184,6 +184,13 @@ export class IndexedDBCryptoStore implements CryptoStore {
         })
     }
 
+    public deleteInboundGroupSessions(
+        senderCurve25519Key: string,
+        sessionId: string,
+    ): Promise<void> {
+        return this.backend!.deleteInboundGroupSessions(senderCurve25519Key, sessionId)
+    }
+
     /**
      * Look for an existing outgoing room key request and if none is found,
      * add a new one.
