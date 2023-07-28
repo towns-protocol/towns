@@ -192,7 +192,7 @@ function toTownsContent(eventId: string, message: ParsedEvent): TownsContentResu
             return {
                 error: `${description} userSettingsPayload not supported?`,
             }
-        case 'block':
+        case 'miniblockHeader':
             return {
                 error: `${description} block payload not supported?`,
             }

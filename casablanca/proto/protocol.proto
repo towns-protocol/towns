@@ -72,7 +72,7 @@ message StreamEvent {
       * - payloads can't violate previous type recursively to inception payload
     */
     oneof payload {
-        BlockHeader block = 100;
+        MiniblockHeader miniblock_header = 100;
         SpacePayload space_payload = 101;
         ChannelPayload channel_payload = 102;
         UserPayload user_payload = 103;
@@ -85,11 +85,11 @@ message StreamEvent {
 message SpaceSnapshot {
 }
 
-// Represents a block header.
-// Block header is a special event that forms a block from set of the stream evetns.
-// Hash of the serialized StreamEvent containing BlockHeader is used as a block hash.
-message BlockHeader {
-    // Block number.
+// Represents a miniblock header.
+// MiniblockHeader is a special event that forms a block from set of the stream events.
+// Hash of the serialized StreamEvent containing MiniblockHeader is used as a block hash.
+message MiniblockHeader {
+    // Miniblock number.
     // 0 for genesis block.
     // Must be 1 greater than the previous block number.
     int64 miniblock_num = 1;

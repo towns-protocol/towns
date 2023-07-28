@@ -4,7 +4,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-func NextBlockTimestamp(prevBlockTimestamp *timestamppb.Timestamp) *timestamppb.Timestamp {
+func NextMiniblockTimestamp(prevBlockTimestamp *timestamppb.Timestamp) *timestamppb.Timestamp {
 	now := timestamppb.Now()
 
 	if prevBlockTimestamp != nil {

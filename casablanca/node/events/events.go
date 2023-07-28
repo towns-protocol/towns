@@ -193,8 +193,8 @@ func Make_UserSettingsPayload_Inception(streamId string) *StreamEvent_UserSettin
 	}
 }
 
-func Make_BlockPayload(block *BlockHeader) *StreamEvent_Block {
-	return &StreamEvent_Block{
-		Block: block,
+func Make_MiniblockHeader(miniblockHeader *MiniblockHeader) *StreamEvent_MiniblockHeader {
+	return &StreamEvent_MiniblockHeader{
+		MiniblockHeader: miniblockHeader,
 	}
 }

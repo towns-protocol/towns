@@ -295,7 +295,7 @@ export class StreamStateView {
                     }
                     break
 
-                case 'block':
+                case 'miniblockHeader':
                     break
 
                 case undefined:

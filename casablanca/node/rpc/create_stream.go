@@ -178,15 +178,15 @@ func (s *Service) createStream(ctx context.Context, log *slog.Logger, req *conne
 		eventHashes[i] = event.Hash
 	}
 
-	block := &BlockHeader{
+	block := &MiniblockHeader{
 		MiniblockNum: 0,
-		Timestamp:    NextBlockTimestamp(nil),
+		Timestamp:    NextMiniblockTimestamp(nil),
 		EventHashes:  eventHashes,
 	}
 
 	blockEvent, err := MakeParsedEventWithPayload(
 		s.wallet,
-		Make_BlockPayload(block),
+		Make_MiniblockHeader(block),
 		eventHashes[len(eventHashes)-1:],
 	)
 	if err != nil {
