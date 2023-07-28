@@ -1,6 +1,5 @@
 syntax = "proto3";
 package casablancapayloads;
-import "google/protobuf/timestamp.proto";
 option go_package = "casablanca/payloads";
 
 
@@ -88,10 +87,10 @@ message FullyReadMarkerContent {
     string channel_id = 1;
     optional string thread_parent_id = 2;
     string event_id = 3;
-    optional google.protobuf.Timestamp event_origin_server_ts = 4;
+    int64 event_origin_server_ts_epoch_ms = 4;
     bool is_unread = 5;
-    google.protobuf.Timestamp marked_read_at_ts = 6;
-    google.protobuf.Timestamp marked_unread_at_ts = 7;
+    int64 marked_read_at_ts_epoch_ms = 6;
+    int64 marked_unread_at_ts_epoch_ms = 7;
     optional int32 mentions = 8;
 }
 

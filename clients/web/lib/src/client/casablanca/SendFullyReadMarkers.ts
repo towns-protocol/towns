@@ -1,6 +1,5 @@
 import { Client as CasablancaClient } from '@towns/sdk'
 import { FullyReadMarkerContent } from '@towns/proto'
-import { Timestamp } from '@bufbuild/protobuf'
 import { FullyReadMarker } from 'types/timeline-types'
 
 export async function sendFullyReadMarkers(
@@ -14,12 +13,12 @@ export async function sendFullyReadMarkers(
             channelId: fullyReadMarker.channelId.networkId,
             threadParentId: fullyReadMarker.threadParentId,
             eventId: fullyReadMarker.eventId,
-            eventOriginServerTs: fullyReadMarker.eventOriginServerTs
-                ? Timestamp.fromDate(new Date(fullyReadMarker.markedReadAtTs))
+            eventOriginServerTsEpochMs: fullyReadMarker.eventOriginServerTs
+                ? BigInt(fullyReadMarker.markedReadAtTs)
                 : undefined,
             isUnread: fullyReadMarker.isUnread,
-            markedReadAtTs: Timestamp.fromDate(new Date(fullyReadMarker.markedReadAtTs)),
-            markedUnreadAtTs: Timestamp.fromDate(new Date(fullyReadMarker.markedUnreadAtTs)),
+            markedReadAtTsEpochMs: BigInt(fullyReadMarker.markedReadAtTs),
+            markedUnreadAtTsEpochMs: BigInt(fullyReadMarker.markedUnreadAtTs),
             mentions: fullyReadMarker.mentions,
         })
 
