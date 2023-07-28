@@ -21,6 +21,7 @@ import { TextArea } from 'ui/components/TextArea/TextArea'
 import { axiosClient } from 'api/apiClient'
 import { env } from 'utils'
 import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinner'
+import { useDevice } from 'hooks/useDevice'
 
 const FormStateKeys = {
     name: 'name',
@@ -121,7 +122,7 @@ export const SentryReportModal = () => {
 export const SentryErrorReportForm = (props: { onHide: () => void }) => {
     const [success, setSuccess] = useState(false)
     const [errorMessage, setErrorMessage] = useState('')
-
+    const { isTouch } = useDevice()
     const { mutate: doCustomError, isLoading } = useMutation(postCustomError)
 
     if (success) {
@@ -136,7 +137,7 @@ export const SentryErrorReportForm = (props: { onHide: () => void }) => {
     }
 
     return (
-        <Stack gap="lg">
+        <Stack padding={isTouch ? 'md' : 'none'} gap="lg">
             <FormRender<FormState>
                 defaultValues={defaultValues}
                 schema={schema}

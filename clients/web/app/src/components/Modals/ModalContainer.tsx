@@ -88,7 +88,7 @@ const TouchFullScreenModalContainer = (props: TouchFullScreenModalContainerProps
                             onBack={onClose}
                         />
 
-                        <Stack scroll scrollbars padding height="100%">
+                        <Stack scroll scrollbars height="100%">
                             {children}
                         </Stack>
                     </Stack>

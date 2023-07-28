@@ -42,7 +42,7 @@ export const MembersPageTouchModal = (props: { onHide: () => void }) => {
     return (
         <ModalContainer touchTitle="Members" onHide={props.onHide}>
             <Stack grow>
-                <Grid padding="lg" columnMinSize="130px">
+                <Grid columnMinSize="130px">
                     {members.map((member) => (
                         <GridProfile member={member} key={member.userId} />
                     ))}
