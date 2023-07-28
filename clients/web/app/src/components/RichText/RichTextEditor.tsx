@@ -28,10 +28,11 @@ import {
 import * as fieldStyles from 'ui/components/_internal/Field/Field.css'
 import { notUndefined } from 'ui/utils/utils'
 import { useStore } from 'store/store'
-import { Box, BoxProps } from '@ui'
+import { Box, BoxProps, Stack } from '@ui'
 import { useNetworkStatus } from 'hooks/useNetworkStatus'
 import { SomethingWentWrong } from '@components/Errors/SomethingWentWrong'
 import { atoms } from 'ui/styles/atoms.css'
+import { useDevice } from 'hooks/useDevice'
 import { MessageStatusAnnotation, useInitialConfig } from './hooks/useInitialConfig'
 import { AnnotationNode } from './nodes/AnnotationNode'
 import { ChannelLinkNode, createChannelLinkTransformer } from './nodes/ChannelLinkNode'
@@ -56,6 +57,7 @@ import { RememberInputPlugin } from './plugins/RememberInputPlugin'
 import CodeHighlightPlugin from './plugins/CodeHighlightPlugin'
 import { TabIndentationPlugin } from './plugins/TabIndentationPlugin'
 import { MentionHoverPlugin } from './plugins/MentionHoverPlugin'
+import { RichTextTouchToolbar } from './RichTextTouchToolbar'
 
 type Props = {
     onSend?: (value: string, options: SendTextMessageOptions | undefined) => void
@@ -221,6 +223,8 @@ const RichTextEditorWithoutBoundary = (props: Props) => {
     } = props
 
     const { transformers } = useTransformers({ members, channels })
+    const { isTouch } = useDevice()
+    const showTouchMessageToolbar = isTouch && !isEditing
 
     const userInput = useStore((state) =>
         props.storageId ? state.channelMessageInputMap[props.storageId] : undefined,
@@ -291,15 +295,27 @@ const RichTextEditorWithoutBoundary = (props: Props) => {
                 <ListMaxIndentLevelPlugin maxDepth={4} />
                 <ListPlugin />
                 <CheckListPlugin />
-                <SendMarkdownPlugin
-                    displayButtons={props.displayButtons ?? 'never'}
-                    disabled={isOffline}
-                    focused={focused}
-                    isEditing={isEditing ?? false}
-                    onSend={onSendCb}
-                    onSendAttemptWhileDisabled={onSendAttemptWhileDisabled}
-                    onCancel={props.onCancel}
-                />
+
+                <Stack horizontal gap="xs" paddingX="sm" paddingBottom="sm" alignContent="center">
+                    {showTouchMessageToolbar && (
+                        <RichTextTouchToolbar
+                            threadId={props.threadId}
+                            threadPreview={props.threadPreview}
+                            visible={focused}
+                        />
+                    )}
+                    <Box grow />
+                    <SendMarkdownPlugin
+                        displayButtons={props.displayButtons ?? 'never'}
+                        disabled={isOffline}
+                        focused={focused}
+                        isEditing={isEditing ?? false}
+                        onSend={onSendCb}
+                        onSendAttemptWhileDisabled={onSendAttemptWhileDisabled}
+                        onCancel={props.onCancel}
+                    />
+                </Stack>
+
                 {props.autoFocus ? <AutoFocusPlugin /> : <></>}
                 <AutoLinkMatcherPlugin />
                 <ChannelMentionPlugin channels={channels} />

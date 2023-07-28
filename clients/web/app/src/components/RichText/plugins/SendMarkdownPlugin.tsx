@@ -154,18 +154,16 @@ const EditMessageButtons = (props: {
 
     return isTouch ? (
         isEditing ? (
-            <Stack horizontal gap paddingX paddingBottom="md" justifyContent="start">
+            <Stack horizontal gap justifyContent="start">
                 <Icon type="touchEditingCancel" size="square_lg" onClick={props.onCancel} />
                 <Icon type="touchEditingSend" size="square_lg" onClick={props.onSave} />
             </Stack>
         ) : (
-            <Stack horizontal gap paddingX paddingBottom="md" justifyContent="end">
-                <Icon
-                    type={isEditorEmpty ? 'touchSendDisabled' : 'touchSendEnabled'}
-                    size="square_lg"
-                    onClick={isEditorEmpty ? props.onCancel : props.onSave}
-                />
-            </Stack>
+            <Icon
+                type={isEditorEmpty ? 'touchSendDisabled' : 'touchSendEnabled'}
+                size="square_lg"
+                onClick={isEditorEmpty ? props.onCancel : props.onSave}
+            />
         )
     ) : (
         <Stack horizontal gap>

@@ -12,7 +12,7 @@ import { TOGGLE_LINK_COMMAND } from '@lexical/link'
 import { createPortal } from 'react-dom'
 import { AnimatePresence } from 'framer-motion'
 import { Box, BoxProps, Icon, Paragraph, Stack, useZLayerContext } from '@ui'
-import { GiphyEntry } from '@components/Giphy/GiphyEntry'
+import { GiphyEntryDesktop } from '@components/Giphy/GiphyEntry'
 import { EmojiPickerButton } from '@components/EmojiPickerButton'
 import { FadeInBox } from '@components/Transitions'
 import { useNetworkStatus } from 'hooks/useNetworkStatus'
@@ -28,7 +28,7 @@ type Props = {
     readOnly?: boolean
     background?: BoxProps['background']
     attemptingToSend?: boolean
-} & ComponentProps<typeof GiphyEntry>
+} & ComponentProps<typeof GiphyEntryDesktop>
 
 export const RichTextUI = (props: Props) => {
     const { background = 'level2' } = props
@@ -157,10 +157,17 @@ export const RichTextUI = (props: Props) => {
             <Stack horizontal alignItems="center" gap="lg" paddingX="md">
                 <Box grow>{props.children}</Box>
                 <Stack horizontal gap="xs" color="gray2" alignItems="start" paddingY="sm">
-                    {!props.editing ? (
-                        <GiphyEntry threadId={props.threadId} threadPreview={props.threadPreview} />
-                    ) : null}
-                    {!isTouch && <EmojiPickerButton onSelectEmoji={onSelectEmoji} />}
+                    {!isTouch && (
+                        <>
+                            {!props.editing ? (
+                                <GiphyEntryDesktop
+                                    threadId={props.threadId}
+                                    threadPreview={props.threadPreview}
+                                />
+                            ) : null}
+                            <EmojiPickerButton onSelectEmoji={onSelectEmoji} />
+                        </>
+                    )}
                 </Stack>
                 {rootLayerRef?.current &&
                     createPortal(

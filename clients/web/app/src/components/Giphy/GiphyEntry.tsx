@@ -2,8 +2,8 @@ import React, { ComponentProps, useCallback } from 'react'
 import Sheet from 'react-modal-sheet'
 import { Box, IconButton, useZLayerContext } from '@ui'
 import { CardOpener } from 'ui/components/Overlay/CardOpener'
-import { useDevice } from 'hooks/useDevice'
 import { modalSheetClass } from 'ui/styles/globals/sheet.css'
+import { MotionIconButton } from 'ui/components/Motion/MotionComponents'
 import { GiphyPicker, GiphyPickerCard } from './GiphyPicker'
 import { GiphySearchContextProvider, useGiphySearchContext } from './GiphySearchContext'
 
@@ -12,12 +12,7 @@ type Props = ComponentProps<typeof GiphyPicker>
 // TODO: not sure why this causes whole Timeline to rerender
 // const LazyGiphy = React.lazy(() => import('./GiphyPicker'))
 
-export const GiphyContainer = (props: Props) => {
-    const { isTouch } = useDevice()
-    return isTouch ? <GiphySheet {...props} /> : <GiphyCardOpener {...props} />
-}
-
-const GiphySheet = (props: Props) => {
+export const GiphySheet = (props: Props & { showButton: boolean }) => {
     const { setIsFetching, setOptedIn, setInputValue } = useGiphySearchContext()
     const [sheetVisible, setSheetVisible] = React.useState(false)
     const mountPoint = useZLayerContext().rootLayerRef?.current ?? undefined
@@ -35,7 +30,16 @@ const GiphySheet = (props: Props) => {
 
     return (
         <>
-            <IconButton icon="gif" alignSelf="start" onClick={onClick} />
+            {props.showButton && (
+                <MotionIconButton
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    icon="gif"
+                    alignSelf="start"
+                    onClick={onClick}
+                />
+            )}
 
             <Sheet
                 className={modalSheetClass}
@@ -86,10 +90,18 @@ const GiphyCardOpener = (props: Props) => {
     )
 }
 
-export const GiphyEntry = (props: Props) => {
+export const GiphyEntryDesktop = (props: Props) => {
     return (
         <GiphySearchContextProvider>
-            <GiphyContainer {...props} />
+            <GiphyCardOpener {...props} />
+        </GiphySearchContextProvider>
+    )
+}
+
+export const GiphyEntryTouch = (props: Props & { showButton: boolean }) => {
+    return (
+        <GiphySearchContextProvider>
+            <GiphySheet {...props} />
         </GiphySearchContextProvider>
     )
 }
