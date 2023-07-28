@@ -109,9 +109,9 @@ export function handleNotifications(worker: ServiceWorkerGlobalScope) {
             console.log('sw: push event contains no data')
             return
         }
-        const jsonString = event.data.text() || '{}'
-        console.log('sw: received notification', jsonString)
-        const notification = appNotificationFromPushEvent(jsonString)
+        const data = event.data.text() || '{}'
+        console.log('sw: received notification', data)
+        const notification = appNotificationFromPushEvent(data)
 
         if (!notification) {
             console.log("sw: ''worker couldn't parse notification")
@@ -131,13 +131,15 @@ export function handleNotifications(worker: ServiceWorkerGlobalScope) {
         }
 
         const { title, body } = await getNotificationContent(notification)
-        const data = event.data.text()
-        await worker.registration.showNotification(title, {
+        // options: https://developer.mozilla.org/en-US/docs/Web/API/Notification
+        const options: NotificationOptions = {
             body,
             silent: false,
             icon: '/pwa/maskable_icon_x192.png',
             data,
-        })
+            tag: notification.content.channelId,
+        }
+        await worker.registration.showNotification(title, options)
 
         console.log('sw: Notification shown')
     })
