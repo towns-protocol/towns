@@ -13,8 +13,6 @@ const UPDATE_INTERVAL_MS = 5 * 60 * 1000
 const log = debug('app:ReloadPrompt')
 
 export const ReloadPrompt = () => {
-    useAddDevOnlyHelpersToWindow()
-
     const {
         offlineReady: [offlineReady, setOfflineReady],
         needRefresh: [needRefresh, setNeedRefresh],
@@ -23,7 +21,6 @@ export const ReloadPrompt = () => {
         onRegisteredSW(swUrl, r) {
             log('registered:' + r)
             if (import.meta.env.DEV) {
-                console.log('sw: dev - skipping updater')
                 if (env.VITE_PUSH_NOTIFICATION_ENABLED) {
                     // doesn't seem to update the service worker in dev mode without this
                     updateServiceWorker(true)
@@ -96,6 +93,13 @@ export const ReloadPrompt = () => {
             if (isUpdating) {
                 return
             }
+
+            // start a timer to clear all workers and force a reload if the vite-pwa update somehow fails
+            const timerId = setTimeout(async () => {
+                await clearAllWorkers()
+                window.location.reload()
+            }, 5000)
+
             // for safety, currently some of our URLs only work in SPA mode but
             // fail upon hard-refresh because of invalid chars
             const isCleanUrl = window.location.href.match(/\/$/)
@@ -103,7 +107,13 @@ export const ReloadPrompt = () => {
                 window.location.replace(`${window.location.href}${isCleanUrl ? '' : '/'}`)
             }
             // triggers update and immediate reload
-            await updateServiceWorker(true)
+            try {
+                await updateServiceWorker(true)
+                clearTimeout(timerId)
+            } catch (error) {
+                await clearAllWorkers()
+                window.location.reload()
+            }
         }
         asyncUpdate()
     }, [isUpdating, updateServiceWorker])
@@ -132,8 +142,9 @@ export const ReloadPrompt = () => {
                             {!isUpdating ? (
                                 <>
                                     <Box maxWidth="250">
-                                        <Paragraph>
-                                            A new version of the app is available.
+                                        <Paragraph textAlign="center">
+                                            An update is available. For the best experience, please
+                                            update now.
                                         </Paragraph>
                                     </Box>
                                     <Box gap horizontal alignSelf="center">
@@ -172,18 +183,15 @@ export const ReloadPrompt = () => {
     )
 }
 
-function useAddDevOnlyHelpersToWindow() {
-    useEffect(() => {
-        if (env.IS_DEV) {
-            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-            // @ts-ignore
-            window.clearAllWorkers = () => {
-                navigator.serviceWorker.getRegistrations().then((registrations) => {
-                    for (const registration of registrations) {
-                        registration.unregister()
-                    }
-                })
-            }
-        }
-    }, [])
+async function clearAllWorkers() {
+    const registrations = await navigator.serviceWorker.getRegistrations()
+    for (const registration of registrations) {
+        registration.unregister()
+    }
+}
+
+if (env.IS_DEV) {
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    window.clearAllWorkers = () => clearAllWorkers().then(window.location.reload)
 }
