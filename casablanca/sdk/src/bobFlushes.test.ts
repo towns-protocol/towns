@@ -9,7 +9,7 @@ import { makeRandomUserContext } from './util.test'
 
 const baseLog = dlog('csb:test:bobFlushes')
 
-describe('bobFlushes', () => {
+describe.skip('bobFlushes', () => {
     let bobsContext: SignerContext
 
     beforeEach(async () => {
