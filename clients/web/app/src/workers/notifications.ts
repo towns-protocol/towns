@@ -6,7 +6,7 @@ import {
     WEB_PUSH_NAVIGATION_CHANNEL,
 } from './types.d'
 
-import { appNotificationFromPushEvent } from './notificationParsers'
+import { appNotificationFromPushEvent, pathFromAppNotification } from './notificationParsers'
 import { env } from '../utils/environment'
 import { getServiceWorkerMuteSettings } from '../store/useMuteSettings'
 import { startDB } from '../idb/notificationsMeta'
@@ -144,8 +144,31 @@ export function handleNotifications(worker: ServiceWorkerGlobalScope) {
 
     worker.addEventListener('notificationclick', (event) => {
         console.log('sw: Clicked on a notification', event)
-        navigationChannel.postMessage(event.notification.data)
         event.notification.close()
+        event.waitUntil(
+            worker.clients.matchAll({ type: 'window' }).then(async (clientsArr) => {
+                const data = appNotificationFromPushEvent(event.notification.data)
+                if (!data) {
+                    console.log('sw: worker could not parse notification data')
+                    return
+                }
+                const url = new URL(worker.location.origin)
+                url.pathname = pathFromAppNotification(data)
+
+                const hadWindowToFocus = clientsArr.find((windowClient) =>
+                    windowClient.url.includes(worker.location.origin),
+                )
+
+                if (hadWindowToFocus) {
+                    await hadWindowToFocus.focus()
+                    // avoid reloading the page
+                    navigationChannel.postMessage(event.notification.data)
+                } else {
+                    const window = await worker.clients.openWindow(url.toString())
+                    await window?.focus()
+                }
+            }),
+        )
     })
 }
 
