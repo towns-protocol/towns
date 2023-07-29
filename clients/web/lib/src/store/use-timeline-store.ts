@@ -604,7 +604,7 @@ export function getIsMentioned(content: TimelineEvent_OneOf | undefined, userId:
     return content?.kind === ZTEvent.RoomMessage
         ? content.mentions.findIndex(
               (x) =>
-                  x.userId
+                  (x.userId ?? '')
                       .toLowerCase()
                       .localeCompare(userId.toLowerCase(), undefined, { sensitivity: 'base' }) == 0,
           ) >= 0

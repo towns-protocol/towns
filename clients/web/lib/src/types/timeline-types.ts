@@ -142,13 +142,17 @@ export interface RoomMemberEvent {
     streamId?: string // in a case of an invitation to a channel with a streamId
 }
 
+// mentions should always have a user id, but it's data over the wire
+// and we can't guarantee that it will be there (we have issues in prod as i write this)
+export type OTWMention = Omit<Mention, 'userId'> & { userId?: string }
+
 export interface RoomMessageEvent {
     kind: ZTEvent.RoomMessage
     inReplyTo?: string
     threadPreview?: string
     body: string
     msgType: string
-    mentions: Mention[]
+    mentions: OTWMention[]
     replacedMsgId?: string
     content: IContent // room messages have lots of representations
     wireContent: IContent
