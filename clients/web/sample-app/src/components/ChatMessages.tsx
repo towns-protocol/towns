@@ -8,7 +8,6 @@ import {
     useZionClient,
 } from 'use-zion-client'
 import React, { useCallback, useState } from 'react'
-
 import { AcceptInvitation } from './AcceptInvitation'
 
 interface Props {
@@ -87,16 +86,21 @@ export function ChatMessages(props: Props): JSX.Element {
                             <ChatMessage event={m} key={m.eventId} />
                         ))}
                         {hasUnread && (
-                            <Typography
-                                key={timeline.length}
-                                display="block"
-                                variant="body1"
-                                component="button"
-                                sx={buttonStyle}
-                                onClick={onClickMarkAsRead}
-                            >
-                                Mark as Read
-                            </Typography>
+                            <>
+                                <p style={{ ...smallStyle, alignSelf: 'center' }}>
+                                    Unread Event: {truncateEventId(unreadMarker?.eventId ?? '')}
+                                </p>
+                                <Typography
+                                    key={timeline.length}
+                                    display="block"
+                                    variant="body1"
+                                    component="button"
+                                    sx={buttonStyle}
+                                    onClick={onClickMarkAsRead}
+                                >
+                                    Mark as Read
+                                </Typography>
+                            </>
                         )}
                     </>
                 )
@@ -154,7 +158,9 @@ function ChatMessage(props: { event: TimelineEvent }) {
     const date = new Date(event.originServerTs)
     return (
         <Typography display="block" variant="body1" component="span" sx={messageStyle}>
-            <p style={dateStyle}>{date.toLocaleString()}</p>
+            <p style={dateStyle}>
+                {date.toLocaleString()} ({truncateEventId(event.eventId)})
+            </p>
             {formatEvent(event)}
         </Typography>
     )
@@ -169,6 +175,18 @@ function formatEvent(event: TimelineEvent): string {
     }
 }
 
+function truncateEventId(text: string) {
+    if (text.length < 10) {
+        return text
+    }
+    const startChars = 6
+    const endChars = 6
+    const mid = '...'
+    const start = text.substring(0, startChars)
+    const end = text.substring(text.length - endChars, text.length)
+    return start + mid + end
+}
+
 const messageStyle = {
     padding: (theme: Theme) => theme.spacing(1),
     gap: (theme: Theme) => theme.spacing(1),
@@ -179,9 +197,11 @@ const buttonStyle = {
     gap: (theme: Theme) => theme.spacing(0),
 }
 
-const dateStyle = {
+const smallStyle = {
     color: 'gray',
     fontSize: '14px',
     paddingBottom: '0px',
     marginBottom: '5px',
 }
+
+const dateStyle = smallStyle
