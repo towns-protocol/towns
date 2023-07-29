@@ -451,7 +451,9 @@ export class StreamStateView {
             const fullyReadMarkersContent: FullyReadMarkersContent =
                 FullyReadMarkersContent.fromJsonString(content.text)
 
-            for (const [threadRoot, fullyReadMarker] of Object.entries(fullyReadMarkersContent)) {
+            for (const [threadRoot, fullyReadMarker] of Object.entries(
+                fullyReadMarkersContent.markers,
+            )) {
                 fullyReadMarkers[threadRoot] = fullyReadMarker
             }
 
