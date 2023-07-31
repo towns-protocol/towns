@@ -2284,16 +2284,16 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
      * send read receipt
      * no need to send for every message, matrix uses an "up to" algorithm
      ************************************************/
+    //TODO: remove this function with Matrix cleanup as it is not required for River
     public async sendReadReceipt(
         roomId: RoomIdentifier,
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         eventId: string | undefined = undefined,
     ): Promise<void> {
-        switch (roomId.protocol) {
-            case SpaceProtocol.Matrix: {
-                if (!this.matrixClient) {
-                    throw new Error('matrix client is undefined')
-                }
+        if (roomId.protocol === SpaceProtocol.Matrix) {
+            if (!this.matrixClient) {
+                throw new Error('matrix client is undefined')
+            } else {
                 const room = this.matrixClient.getRoom(roomId.networkId)
                 if (!room) {
                     throw new Error(`room with id ${roomId.networkId} not found`)
@@ -2310,10 +2310,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
                 }
                 const result = await this.matrixClient.sendReadReceipt(event)
                 this.log('read receipt sent', result)
-                break
             }
-            case SpaceProtocol.Casablanca:
-                console.error('not implemented for casablanca')
         }
     }
 
