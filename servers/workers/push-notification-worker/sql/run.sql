@@ -1,2 +1,3 @@
 -- for debugging. Run any sql statement.
--- drop table if exists NotificationTag;
+--drop table if exists NotificationTag;
+--drop table if exists UserSettings;

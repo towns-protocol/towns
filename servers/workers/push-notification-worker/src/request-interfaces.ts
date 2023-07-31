@@ -1,6 +1,6 @@
 import {
   NotificationPayload,
-  NotificationSettings,
+  UserSettings,
   PushType,
   SubscriptionObject,
   Urgency,
@@ -10,6 +10,7 @@ import {
   isSubscriptionObject,
   isUrgency,
   isUserId,
+  isUserSettings,
 } from './types'
 
 export interface AddSubscriptionRequestParams {
@@ -109,8 +110,7 @@ export function isReplyToRequestParams(
 }
 
 export interface SaveSettingsRequestParams {
-  userId: string
-  settings: NotificationSettings
+  userSettings: UserSettings
 }
 
 export function isSaveSettingsRequestParams(
@@ -118,9 +118,8 @@ export function isSaveSettingsRequestParams(
   params: any,
 ): params is SaveSettingsRequestParams {
   return (
-    typeof params.userId === 'string' &&
-    params.userId.length > 0 && // userId is required
-    typeof params.settings === 'object'
+    typeof params.userSettings === 'object' &&
+    isUserSettings(params.userSettings)
   )
 }
 

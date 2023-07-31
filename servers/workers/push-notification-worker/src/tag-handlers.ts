@@ -123,7 +123,6 @@ export async function getNotificationTags(
   if (rows && rows.length > 0) {
     const results = rows[0].results
     for (const row of results) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const r = row as QueryResultNotificationTag
       switch (r.tag) {
         case NotificationType.Mention:

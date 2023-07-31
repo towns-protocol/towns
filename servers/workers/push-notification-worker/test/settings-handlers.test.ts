@@ -1,26 +1,41 @@
-import { createTestMocks, mockPreparedStatements } from './mock-utils'
-
-import { NotificationSettings } from '../src/types'
 import {
   DeleteSettingsRequestParams,
   GetSettingsRequestParams,
   SaveSettingsRequestParams,
 } from '../src/request-interfaces'
+import {
+  Membership,
+  Mute,
+  UserSettings,
+  UserSettingsChannel,
+  UserSettingsSpace,
+} from '../src/types'
+import { createTestMocks, mockPreparedStatements } from './mock-utils'
+
 import { handleRequest } from '../src'
 
 describe('settings-handlers', () => {
-  test('PUT /api/notification-settings', async () => {
+  test('PUT /api/notification-settings -> saveSettings', async () => {
     // Arrange
     const userId = `0xAlice${Date.now()}`
-    const settings: NotificationSettings = {
-      muteSettings: {
-        mutedChannels: {},
-        mutedSpaces: {},
-      },
+    const spaceSettings: UserSettingsSpace = {
+      spaceId: `0xSpace${Date.now()}`,
+      spaceMembership: Membership.Joined,
+      spaceMute: Mute.Default,
+    }
+    const channelSettings: UserSettingsChannel = {
+      spaceId: `0xSpace${Date.now()}`,
+      channelId: `0xChannel${Date.now()}`,
+      channelMembership: Membership.Joined,
+      channelMute: Mute.Default,
+    }
+    const userSettings: UserSettings = {
+      userId,
+      spaceSettings: [spaceSettings],
+      channelSettings: [channelSettings],
     }
     const params: SaveSettingsRequestParams = {
-      userId,
-      settings,
+      userSettings,
     }
     // create the request
     const { request, env, DB, ctx } = createTestMocks({
@@ -30,10 +45,14 @@ describe('settings-handlers', () => {
       body: JSON.stringify(params),
     })
     // replace with my own mocks to spy on
-    const { insertIntoNotificationSettings: mockStatement } =
+    const { insertIntoUserSettingsSpace, insertIntoUserSettingsChannel } =
       mockPreparedStatements(DB)
     const prepareSpy = jest.spyOn(DB, 'prepare')
-    const bindSpy = jest.spyOn(mockStatement, 'bind')
+    const bindInsertSpaceSpy = jest.spyOn(insertIntoUserSettingsSpace, 'bind')
+    const bindInsertChannelSpy = jest.spyOn(
+      insertIntoUserSettingsChannel,
+      'bind',
+    )
 
     // Act
     const response = await handleRequest(request, env, ctx)
@@ -41,10 +60,25 @@ describe('settings-handlers', () => {
     // Assert
     expect(response.status).toBe(204)
     expect(prepareSpy).toBeCalledWith(
-      expect.stringContaining('INSERT INTO NotificationSettings'),
+      expect.stringContaining(
+        'INSERT INTO UserSettingsSpace' ||
+          expect.stringContaining('INSERT INTO UserSettingsChannel'),
+      ),
     )
     // verify that arguments are binded to the sql statement in the expected order.
-    expect(bindSpy).toBeCalledWith(userId, JSON.stringify(params.settings))
+    expect(bindInsertSpaceSpy).toBeCalledWith(
+      spaceSettings.spaceId,
+      userId,
+      spaceSettings.spaceMembership,
+      spaceSettings.spaceMute,
+    )
+    expect(bindInsertChannelSpy).toBeCalledWith(
+      channelSettings.spaceId,
+      channelSettings.channelId,
+      userId,
+      channelSettings.channelMembership,
+      channelSettings.channelMute,
+    )
   })
 
   test('DELETE /api/notification-settings', async () => {
@@ -61,8 +95,7 @@ describe('settings-handlers', () => {
       body: JSON.stringify(params),
     })
     // replace with my own mocks to spy on
-    const { deleteFromNotificationSettings: mockStatement } =
-      mockPreparedStatements(DB)
+    const { deleteFromUserSettings: mockStatement } = mockPreparedStatements(DB)
     const prepareSpy = jest.spyOn(DB, 'prepare')
     const bindSpy = jest.spyOn(mockStatement, 'bind')
 
@@ -72,13 +105,13 @@ describe('settings-handlers', () => {
     // Assert
     expect(response.status).toBe(204)
     expect(prepareSpy).toBeCalledWith(
-      expect.stringContaining('DELETE FROM NotificationSettings'),
+      expect.stringContaining('DELETE FROM UserSettings'),
     )
     // verify that arguments are binded to the sql statement in the expected order.
     expect(bindSpy).toBeCalledWith(userId)
   })
 
-  test('POST /api/notification-settings', async () => {
+  test('POST /api/notification-settings -> getSettings', async () => {
     // Arrange
     const userId = `0xAlice${Date.now()}`
     const params: GetSettingsRequestParams = {
@@ -92,8 +125,7 @@ describe('settings-handlers', () => {
       body: JSON.stringify(params),
     })
     // replace with my own mocks to spy on
-    const { selectFromNotificationSettings: mockStatement } =
-      mockPreparedStatements(DB)
+    const { selectFromUserSettings: mockStatement } = mockPreparedStatements(DB)
     const prepareSpy = jest.spyOn(DB, 'prepare')
     const bindSpy = jest.spyOn(mockStatement, 'bind')
 
@@ -101,10 +133,10 @@ describe('settings-handlers', () => {
     const response = await handleRequest(request, env, ctx)
 
     // Assert
-    expect(response.status).toBe(204)
+    expect(response.status).toBe(200)
     expect(prepareSpy).toBeCalledWith(
       expect.stringContaining('SELECT') &&
-        expect.stringContaining('FROM NotificationSettings'),
+        expect.stringContaining('FROM UserSettings'),
     )
     // verify that arguments are binded to the sql statement in the expected order.
     expect(bindSpy).toBeCalledWith(userId)

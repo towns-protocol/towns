@@ -13,7 +13,7 @@ ON PushSubscription (UserId);
 
 -- Tags for push notifications so that the Worker has
 -- additional context to format the notification message
--- drop table NotificationTag;
+--drop table NotificationTag;
 CREATE TABLE IF NOT EXISTS NotificationTag (
   SpaceId VARCHAR(255) NOT NULL,
   ChannelId VARCHAR(255) NOT NULL,
@@ -22,16 +22,22 @@ CREATE TABLE IF NOT EXISTS NotificationTag (
   CONSTRAINT NotificationTag_PK PRIMARY KEY (ChannelId, UserId)
 );
 
-CREATE TABLE IF NOT EXISTS UserSettings (
-  UserId VARCHAR(255) NOT NULL,
-  Settings VARCHAR(1024) NOT NULL,
-  CONSTRAINT NotificationSettings_PK PRIMARY KEY (UserId)
-);
-
 --drop table UserSettingsSpace;
 CREATE TABLE IF NOT EXISTS UserSettingsSpace (
   SpaceId VARCHAR(255) NOT NULL,
   UserId VARCHAR(255) NOT NULL,
-  Mute VARCHAR(32) NOT NULL,
+  SpaceMembership VARCHAR(32), -- not-set, joined, left, banned, etc
+  SpaceMute VARCHAR(32) NOT NULL DEFAULT 'default', -- mute, unmute, default
   CONSTRAINT UserSettingsSpace_PK PRIMARY KEY (SpaceId, UserId)
+);
+
+--drop table UserSettingsChannel;
+CREATE TABLE IF NOT EXISTS UserSettingsChannel (
+  SpaceId VARCHAR(255) NOT NULL,
+  ChannelId VARCHAR(255) NOT NULL,
+  UserId VARCHAR(255) NOT NULL,
+  ChannelMembership VARCHAR(32), -- not-set, joined, left, banned, etc
+  ChannelMute VARCHAR(32) NOT NULL DEFAULT 'default', -- mute, unmute, default
+  FOREIGN KEY(SpaceId) REFERENCES UserSettingsSpace(SpaceId),
+  CONSTRAINT UserSettingsChannel_PK PRIMARY KEY (ChannelId, UserId)
 );

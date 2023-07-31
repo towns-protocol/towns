@@ -1,9 +1,13 @@
 import { MockProxy, mock } from 'jest-mock-extended'
+import {
+  QueryResultUserSettings,
+  QueryResultUserSettingsChannel,
+  QueryResultUserSettingsSpace,
+} from '../src/settings-handlers'
 
 import { Env } from '../src'
-import { NotificationSettings } from '../src/types'
-import { QueryResultNotificationSettings } from '../src/settings-handlers'
 import { QueryResultNotificationTag } from '../src/tag-handlers'
+import { Membership, Mute, UserSettings } from '../src/types'
 import { createFakeWebPushSubscription } from './fake-data'
 
 export interface TestMocks {
@@ -92,9 +96,10 @@ export function mockPreparedStatements(DB: MockProxy<D1Database>) {
   const insertIntoNotificationTag = mockDummyStatement()
   const deleteFromNotificationTag = mockDummyStatement()
   const selectFromNotificationTag = mockSelectFromNotificationTag()
-  const insertIntoNotificationSettings = mockDummyStatement()
-  const deleteFromNotificationSettings = mockDummyStatement()
-  const selectFromNotificationSettings = mockSelectFromNotificationSettings()
+  const insertIntoUserSettingsSpace = mockDummyStatement()
+  const insertIntoUserSettingsChannel = mockDummyStatement()
+  const deleteFromUserSettings = mockDummyStatement()
+  const selectFromUserSettings = mockSelectFromUserSettings()
 
   DB.prepare.mockImplementation((query: string) => {
     if (query.includes('SELECT') && query.includes('FROM PushSubscription')) {
@@ -112,15 +117,17 @@ export function mockPreparedStatements(DB: MockProxy<D1Database>) {
       return insertIntoNotificationTag
     } else if (query.includes('DELETE FROM NotificationTag')) {
       return deleteFromNotificationTag
-    } else if (query.includes('INSERT INTO NotificationSettings')) {
-      return insertIntoNotificationSettings
-    } else if (query.includes('DELETE FROM NotificationSettings')) {
-      return deleteFromNotificationSettings
+    } else if (query.includes('INSERT INTO UserSettingsSpace')) {
+      return insertIntoUserSettingsSpace
+    } else if (query.includes('INSERT INTO UserSettingsChannel')) {
+      return insertIntoUserSettingsChannel
+    } else if (query.includes('DELETE FROM UserSettings')) {
+      return deleteFromUserSettings
     } else if (
       query.includes('SELECT') &&
-      query.includes('FROM NotificationSettings')
+      query.includes('FROM UserSettings')
     ) {
-      return selectFromNotificationSettings
+      return selectFromUserSettings
     }
     return mockStatement
   })
@@ -153,9 +160,10 @@ export function mockPreparedStatements(DB: MockProxy<D1Database>) {
     insertIntoNotificationTag,
     selectFromNotificationTag,
     deleteFromNotificationTag,
-    insertIntoNotificationSettings,
-    deleteFromNotificationSettings,
-    selectFromNotificationSettings,
+    insertIntoUserSettingsSpace,
+    insertIntoUserSettingsChannel,
+    deleteFromUserSettings,
+    selectFromUserSettings,
     mockStatement,
   }
 }
@@ -231,24 +239,28 @@ function mockSelectFromNotificationTag(): MockProxy<D1PreparedStatement> {
   return mockStatement
 }
 
-function mockSelectFromNotificationSettings(): MockProxy<D1PreparedStatement> {
+function mockSelectFromUserSettings(): MockProxy<D1PreparedStatement> {
   const mockStatement = mock<D1PreparedStatement>()
-  const results: QueryResultNotificationSettings[] = []
-  const settings: NotificationSettings = {
-    muteSettings: {
-      mutedChannels: {},
-      mutedSpaces: {},
-    },
-  }
+  const results: QueryResultUserSettings[][] = []
   mockStatement.bind.mockImplementation((userId: string) => {
-    results.push({
+    const spaceSettings: QueryResultUserSettingsSpace = {
       userId,
-      settings: JSON.stringify(settings),
-    })
+      spaceId: '',
+      spaceMembership: Membership.Joined,
+      spaceMute: Mute.Default,
+    }
+    const channelSettings: QueryResultUserSettingsChannel = {
+      userId,
+      spaceId: '',
+      channelId: '',
+      channelMembership: Membership.Joined,
+      channelMute: Mute.Default,
+    }
+    results.push([spaceSettings], [channelSettings])
     return mockStatement
   })
   mockStatement.run.mockResolvedValue({
-    results: [results] as unknown as QueryResultNotificationSettings[][],
+    results: results as unknown as QueryResultUserSettings[],
     success: true,
     meta: {},
   })
