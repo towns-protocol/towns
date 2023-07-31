@@ -1,9 +1,9 @@
 syntax = "proto3";
 package casablanca;
 import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
 option go_package = "casablanca/node/protocol";
 
-// TODO: fix comments
 
 /**
  * Envelope contains serialized event, and its hash and signature.
@@ -82,8 +82,6 @@ message StreamEvent {
     }
 }
 
-message SpaceSnapshot {
-}
 
 // Represents a miniblock header.
 // MiniblockHeader is a special event that forms a block from set of the stream events.
@@ -106,7 +104,12 @@ message MiniblockHeader {
 
     // Snapshot data specific for each stream type.
     oneof content {
-        SpaceSnapshot space_snapshot = 100;
+        google.protobuf.Empty none = 100;
+        SpacePayload.Snapshot space_content = 101;
+        ChannelPayload.Snapshot channel_content = 102;
+        UserPayload.Snapshot user_content = 103;
+        UserSettingsPayload.Snapshot user_settings_content = 104;
+        UserDeviceKeyPayload.Snapshot user_device_key_content = 105;
     }
 }
 
@@ -131,6 +134,13 @@ message Membership {
 
 
 message UserPayload {
+    message Snapshot {
+        // inception
+        Inception inception = 1;
+        // streamId: UserMembership
+        map<string, UserMembership> memberships = 2;
+    }
+
     message Inception {
         string stream_id = 1;
     }
@@ -158,6 +168,15 @@ message UserPayload {
 
 
 message SpacePayload {
+    message Snapshot {
+        // inception
+        Inception inception = 1;
+        // streamId: Channel
+        map<string, Channel> channels = 2;
+        // userId: Membership
+        map<string, Membership> memberships = 3;
+    }
+    
     message Inception {
         string stream_id = 1;
         string name = 2; // todo encrypt "name" HNT-1802
@@ -221,6 +240,13 @@ message EncryptedMessageEnvelope {
 
 
 message ChannelPayload {
+    message Snapshot {
+        // inception
+        Inception inception = 1;
+        // userId: Membership
+        map<string, Membership> memberships = 2;
+    }
+    
     message Inception {
         string stream_id = 1;
         string space_id = 3;
@@ -251,6 +277,13 @@ message ChannelPayload {
 }
 
 message UserSettingsPayload {
+    message Snapshot {
+        // inception
+        Inception inception = 1;
+        // channelId: FullyReadMarker
+        map<string, FullyReadMarkers> fully_read_markers = 2;
+    }
+
     message Inception {
         string stream_id = 1;
     }
@@ -267,6 +300,13 @@ message UserSettingsPayload {
 }
 
 message UserDeviceKeyPayload {
+    message Snapshot {
+        // inception
+        Inception inception = 1;
+        // deviceId: UserDeviceKey
+        map<string, UserDeviceKey> user_device_keys = 2;
+    }
+
     message Inception {
         string stream_id = 1;
         string user_id = 2;
