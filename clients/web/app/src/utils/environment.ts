@@ -25,6 +25,7 @@ const envSchema = z.object({
     DEV: boolish,
     PROD: boolish,
     BASE_URL: baseUrlSchema,
+    DESTROY_PROD_SERVICE_WORKER: boolish.transform(coerceBoolish).default(false),
     VITE_TYPEFORM_ALPHA_URL: z.string().optional(),
     VITE_IGNORE_IS_DEV_CHECKS: z.string().optional(),
     VITE_TOKEN_SERVER_URL: z.string().url(),

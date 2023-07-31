@@ -74,28 +74,7 @@ export default ({ mode }: { mode: string }) => {
         },
         assetsInclude: ['**/*.png', '**/*.svg'],
         plugins: [
-            VitePWA(
-                vitePWAOptions(
-                    // TODO: once VITE_PUSH_NOTIFICATION_ENABLED is no longer a flag, we can change the env var to something more generic like VITE_DEV_ONLY_SW_ENABLED
-                    mode === 'development' && env.VITE_PUSH_NOTIFICATION_ENABLED === 'true'
-                        ? {
-                              filename: 'dev-only-sw.ts',
-                              devOptions: {
-                                  enabled: true,
-                                  type: 'module',
-                              },
-                          }
-                        : mode === 'development'
-                        ? {
-                              // this combo of options allows for auto removing any dev-only service workers
-                              devOptions: {
-                                  enabled: true,
-                              },
-                              selfDestroying: true,
-                          }
-                        : undefined,
-                ),
-            ),
+            VitePWA(vitePWAOptions(mode, env)),
             polyfillNode(),
             react(),
             tsconfigPaths(),

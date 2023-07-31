@@ -38,16 +38,20 @@ export const ReloadPrompt = () => {
                         return
                     }
                     const asyncUpdate = async () => {
-                        const resp = await fetch(swUrl, {
-                            cache: 'no-store',
-                            headers: {
+                        try {
+                            const resp = await fetch(swUrl, {
                                 cache: 'no-store',
-                                'cache-control': 'no-cache',
-                            },
-                        })
-                        if (resp?.status === 200) {
-                            log('status 200, updating...')
-                            await r.update()
+                                headers: {
+                                    cache: 'no-store',
+                                    'cache-control': 'no-cache',
+                                },
+                            })
+                            if (resp?.status === 200) {
+                                log('status 200, updating...')
+                                await r.update()
+                            }
+                        } catch (error) {
+                            console.error('sw: reload prompt, error checking for update', error)
                         }
                     }
                     asyncUpdate()
@@ -88,14 +92,16 @@ export const ReloadPrompt = () => {
     }, [])
 
     const onUpdateClick = useCallback(() => {
-        setIsUpdating(true)
         const asyncUpdate = async () => {
             if (isUpdating) {
                 return
             }
+            setIsUpdating(true)
 
             // start a timer to clear all workers and force a reload if the vite-pwa update somehow fails
-            const timerId = setTimeout(async () => {
+            // we're not clearing this timeout because this should only happen once
+            // and updateServiceWorker() doesn't throw an error if it doesn't work, so we don't want to clear the timeout immediately
+            setTimeout(async () => {
                 await clearAllWorkers()
                 window.location.reload()
             }, 5000)
@@ -107,13 +113,7 @@ export const ReloadPrompt = () => {
                 window.location.replace(`${window.location.href}${isCleanUrl ? '' : '/'}`)
             }
             // triggers update and immediate reload
-            try {
-                await updateServiceWorker(true)
-                clearTimeout(timerId)
-            } catch (error) {
-                await clearAllWorkers()
-                window.location.reload()
-            }
+            await updateServiceWorker(true)
         }
         asyncUpdate()
     }, [isUpdating, updateServiceWorker])
