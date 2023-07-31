@@ -13,6 +13,7 @@ export const EmojiPickerContainerMobile = (props: {
     const onEmojiSelect = useCallback(
         (data: EmojiPickerSelection) => {
             props.onEmojiSelect(data)
+            props.onCancel()
         },
         [props],
     )
