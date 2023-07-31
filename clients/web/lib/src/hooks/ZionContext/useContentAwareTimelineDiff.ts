@@ -8,6 +8,7 @@ import {
     RoomEvent,
 } from 'matrix-js-sdk'
 import { Client as CasablancaClient, isChannelStreamId, isSpaceStreamId } from '@towns/sdk'
+import { FullyReadMarkerContent } from '@towns/proto'
 import { useEffect } from 'react'
 import { FullyReadMarker, TimelineEvent, ZTEvent } from '../../types/timeline-types'
 import { useFullyReadMarkerStore } from '../../store/use-fully-read-marker-store'
@@ -46,12 +47,50 @@ export function useContentAwareTimelineDiffCasablanca(casablancaClient?: Casabla
             )
         }
 
+        const onChannelUnreadMarkerUpdated = (
+            fullyReadMarkers: Record<string, FullyReadMarkerContent>,
+        ) => {
+            if (fullyReadMarkers) {
+                useFullyReadMarkerStore.setState((state) => {
+                    let didUpdate = false
+                    const updated = { ...state.markers }
+                    for (const [key, value] of Object.entries(fullyReadMarkers)) {
+                        //TODO: refactor fully read marker createion when we will get rid of Matrix
+                        const marker: FullyReadMarker = {
+                            channelId: toCasablancaRoomId(value.channelId),
+                            threadParentId: value.threadParentId,
+                            eventId: value.eventId,
+                            eventOriginServerTs: Number(value.eventOriginServerTsEpochMs),
+                            isUnread: value.isUnread,
+                            markedUnreadAtTs: Number(value.markedUnreadAtTsEpochMs),
+                            markedReadAtTs: Number(value.markedReadAtTsEpochMs),
+                            mentions: value.mentions ? value.mentions : 0,
+                        }
+                        if (!updated[key] || updated[key].markedReadAtTs < marker.markedReadAtTs) {
+                            console.log('onRoomAccountDataEvent: setting marker for', {
+                                key,
+                                marker,
+                            })
+                            updated[key] = marker
+                            didUpdate = true
+                        }
+                    }
+                    if (didUpdate) {
+                        return { markers: updated }
+                    } else {
+                        return state
+                    }
+                })
+            }
+        }
+
         // subscribe
         const unsubTimeline = useTimelineStore.subscribe(onTimelineChange)
-
+        casablancaClient.on('channelUnreadMarkerUpdated', onChannelUnreadMarkerUpdated)
         // return ability to unsubscribe
         return () => {
             unsubTimeline()
+            casablancaClient.off('channelUnreadMarkerUpdated', onChannelUnreadMarkerUpdated)
         }
     }, [casablancaClient])
 }
@@ -137,6 +176,17 @@ function isEncryptedZTEvent(event: TimelineEvent): boolean {
         return event.content?.msgType === 'm.bad.encrypted'
     }
     return event.content?.kind === ZTEvent.RoomMessageEncrypted
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function toCasablancaRoomId(value: any): RoomIdentifier {
+    /* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment */
+    return {
+        protocol: SpaceProtocol.Casablanca,
+        networkId: value.networkId,
+        slug: value.slug,
+    }
+    /* eslint-enable */
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

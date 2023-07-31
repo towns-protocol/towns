@@ -442,7 +442,7 @@ export class StreamStateView {
         payload: UserSettingsPayload_FullyReadMarkers,
         emitter?: TypedEmitter<StreamEvents>,
     ): void {
-        const { channelStreamId, content } = payload
+        const { content } = payload
         if (content === undefined) {
             throw Error('Content with FullyReadMarkers is undefined')
         } else {
@@ -457,7 +457,7 @@ export class StreamStateView {
                 fullyReadMarkers[threadRoot] = fullyReadMarker
             }
 
-            emitter?.emit('channelUnreadMarkerUpdated', channelStreamId, fullyReadMarkers)
+            emitter?.emit('channelUnreadMarkerUpdated', fullyReadMarkers)
         }
     }
 
