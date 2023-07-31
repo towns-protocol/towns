@@ -84,6 +84,7 @@ export const TouchLayoutHeader = () => {
                             firstLetterOfSpaceName={space?.name[0]}
                             overrideBorderRadius="sm"
                             variant={ImageVariants.thumbnail50}
+                            fadeIn={false}
                         />
                         <Text fontWeight="strong" color="default">
                             {space.name}

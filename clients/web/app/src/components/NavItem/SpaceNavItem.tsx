@@ -55,6 +55,7 @@ export const SpaceNavItem = (props: Props) => {
                 <Box position="relative">
                     <SpaceIcon
                         border
+                        fadeIn
                         width="x4"
                         minWidth="x4"
                         aspectRatio="1/1"

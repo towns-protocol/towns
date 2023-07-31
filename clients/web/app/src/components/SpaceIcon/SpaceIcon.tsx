@@ -14,6 +14,7 @@ type Props = {
     /* used to toggle official NFT image - may remove in the future */
     overrideSrc?: string
     overrideBorderRadius?: BoxProps['borderRadius']
+    fadeIn: boolean
 } & BoxProps
 
 // Primitive for grabbing a space icon image with a fallback to first letter of space name
@@ -25,6 +26,7 @@ export const SpaceIcon = (props: Props) => {
         overrideSrc,
         overrideBorderRadius,
         variant = ImageVariants.thumbnail300,
+        fadeIn,
         ...boxProps
     } = props
 
@@ -55,9 +57,9 @@ export const SpaceIcon = (props: Props) => {
                             src={overrideSrc ?? imageSrc}
                             fit="full"
                             objectFit="cover"
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: imageLoaded ? 1 : 0 }}
-                            exit={{ opacity: 0 }}
+                            initial={{ opacity: fadeIn ? 0 : 1 }}
+                            animate={{ opacity: imageLoaded || !fadeIn ? 1 : 0 }}
+                            exit={{ opacity: fadeIn ? 0 : 1 }}
                             onLoad={onLoad}
                             onError={onError}
                         />
