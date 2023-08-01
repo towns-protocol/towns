@@ -98,7 +98,7 @@ const TouchFullScreenModalContainer = (props: TouchFullScreenModalContainerProps
     )
 }
 
-const CenteredModalContainer = (props: Props) => {
+export const CenteredModalContainer = (props: Props) => {
     const { isTouch } = useDevice()
     const minWidth: BoxProps['minWidth'] = isTouch ? '100%' : props.minWidth || '600'
     const { onHide } = props
