@@ -5,7 +5,7 @@ pragma solidity ^0.8.20;
 import {IManagedProxy} from "./IManagedProxy.sol";
 
 // libraries
-import {ManagedProxyStorage} from "./ManagedProxyStorage.sol";
+import {ManagedProxyService} from "./ManagedProxyService.sol";
 
 // contracts
 import {Proxy} from "../Proxy.sol";
@@ -36,7 +36,7 @@ abstract contract ManagedProxyBase is IManagedProxy, Proxy {
     override
     returns (address)
   {
-    bytes4 managerSelector = ManagedProxyStorage.layout().managerSelector;
+    bytes4 managerSelector = ManagedProxyService.managerSelector();
 
     (bool success, bytes memory data) = _getManager().staticcall(
       abi.encodeWithSelector(managerSelector, msg.sig)
@@ -51,7 +51,7 @@ abstract contract ManagedProxyBase is IManagedProxy, Proxy {
    * @return manager address
    */
   function _getManager() internal view virtual returns (address) {
-    return ManagedProxyStorage.layout().manager;
+    return ManagedProxyService.manager();
   }
 
   /**
@@ -59,7 +59,7 @@ abstract contract ManagedProxyBase is IManagedProxy, Proxy {
    * @param manager address
    */
   function _setManager(address manager) internal virtual {
-    ManagedProxyStorage.layout().manager = manager;
+    ManagedProxyService.setManager(manager);
   }
 
   /**
@@ -67,6 +67,6 @@ abstract contract ManagedProxyBase is IManagedProxy, Proxy {
    * @param managerSelector function selector used to fetch implementation from manager
    */
   function _setManagerSelector(bytes4 managerSelector) internal virtual {
-    ManagedProxyStorage.layout().managerSelector = managerSelector;
+    ManagedProxyService.setManagerSelector(managerSelector);
   }
 }
