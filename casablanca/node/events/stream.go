@@ -1,16 +1,18 @@
 package events
 
 import (
-	"casablanca/node/storage"
+	"casablanca/node/dlog"
 	"context"
 	"sync"
+	"time"
 
 	. "casablanca/node/base"
 	. "casablanca/node/protocol"
 )
 
 type Stream struct {
-	storage  storage.Storage
+	params *StreamCacheParams
+
 	streamId string
 
 	// Mutex protects fields below
@@ -22,6 +24,10 @@ type Stream struct {
 	view      *streamViewImpl
 	loadError error
 	receivers map[chan<- *StreamAndCookie]bool
+
+	miniblockTicker           *time.Ticker
+	miniblockTickerContext    context.Context
+	miniblockTickerCancelFunc context.CancelFunc
 }
 
 // Should be called with lock held
@@ -30,7 +36,7 @@ func (s *Stream) loadInternal(ctx context.Context) {
 	if s.view != nil || s.loadError != nil {
 		return
 	}
-	events, err := s.storage.GetStream(ctx, s.streamId)
+	events, err := s.params.Storage.GetStream(ctx, s.streamId)
 	if err != nil {
 		s.loadError = err
 		return
@@ -42,14 +48,90 @@ func (s *Stream) loadInternal(ctx context.Context) {
 	} else {
 		s.view = view
 	}
+
+	s.startTicker()
 }
 
-func createStream(ctx context.Context, storage storage.Storage, streamId string, events []*ParsedEvent) (*Stream, *streamViewImpl, error) {
+func (s *Stream) startTicker() {
+	s.miniblockTickerContext, s.miniblockTickerCancelFunc = context.WithCancel(s.params.DefaultCtx)
+	s.miniblockTicker = time.NewTicker(4 * time.Second) // TODO: make configurable
+	go s.miniblockTick(s.miniblockTickerContext)
+}
+
+func (s *Stream) miniblockTick(ctx context.Context) {
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-s.miniblockTicker.C:
+			s.maybeMakeMiniblock(ctx)
+		}
+	}
+}
+
+func (s *Stream) stopTicker() {
+	// Should be called under lock.
+	if s.miniblockTicker == nil {
+		s.miniblockTicker.Stop()
+		s.miniblockTicker = nil
+	}
+	if s.miniblockTickerCancelFunc != nil {
+		s.miniblockTickerCancelFunc()
+		s.miniblockTickerCancelFunc = nil
+	}
+	s.miniblockTickerContext = nil
+}
+
+func (s *Stream) maybeMakeMiniblock(ctx context.Context) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	// Do nothing if not loaded since it's possible for tick to arrive after stream is unloaded.
+	if s.view == nil {
+		return
+	}
+
+	viewInitialLen := s.view.minipool.events.Len()
+	if viewInitialLen > 0 {
+		log := dlog.CtxLog(ctx)
+
+		block := s.view.makeBlock()
+
+		prevHashes := [][]byte{s.view.LastEvent().Hash}
+		event, err := MakeParsedEventWithPayload(s.params.Wallet, Make_MiniblockHeader(block), prevHashes)
+		if err == nil {
+			_, err = s.addEventImpl(ctx, event)
+		}
+
+		if err != nil {
+			log.Error("Failed to add miniblock event",
+				"error", err,
+				"streamId", s.streamId,
+				"blockNum", block.MiniblockNum,
+				"blockHash", event.Hash,
+				"blockLen", len(block.EventHashes),
+				"numEventsInInitialMinipool", viewInitialLen,
+			)
+			return
+		}
+
+		log.Debug("Made miniblock",
+			"streamId", s.streamId,
+			"blockNum", block.MiniblockNum,
+			"blockHash", event.Hash,
+			"blockLen", len(block.EventHashes),
+			"numEventsInInitialMinipool", viewInitialLen,
+			"numEventsInNewMinipool", s.view.minipool.events.Len(),
+		)
+	}
+}
+
+func createStream(ctx context.Context, params *StreamCacheParams, streamId string, events []*ParsedEvent) (*Stream, *streamViewImpl, error) {
 	envelopes := make([]*Envelope, 0, len(events))
 	for _, e := range events {
 		envelopes = append(envelopes, e.Envelope)
 	}
-	err := storage.CreateStream(ctx, streamId, envelopes)
+	err := params.Storage.CreateStream(ctx, streamId, envelopes)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -60,7 +142,7 @@ func createStream(ctx context.Context, storage storage.Storage, streamId string,
 	}
 
 	stream := &Stream{
-		storage:  storage,
+		params:   params,
 		streamId: streamId,
 		view:     view,
 	}
@@ -90,7 +172,12 @@ func (s *Stream) AddEvent(ctx context.Context, event *ParsedEvent) (*SyncCookie,
 		return nil, s.loadError
 	}
 
-	err := s.storage.AddEvent(ctx, s.streamId, event.Envelope)
+	return s.addEventImpl(ctx, event)
+}
+
+// Lock must be taken.
+func (s *Stream) addEventImpl(ctx context.Context, event *ParsedEvent) (*SyncCookie, error) {
+	err := s.params.Storage.AddEvent(ctx, s.streamId, event.Envelope)
 	// TODO: for some classes of errors, it's not clear if event was added or not
 	// for those, perhaps entire Stream structure should be scrapped and reloaded
 	if err != nil {
@@ -135,34 +222,59 @@ func (s *Stream) Sub(ctx context.Context, cookie *SyncCookie, receiver chan<- *S
 		return nil, s.loadError
 	}
 
-	var prevSyncCookie *SyncCookie
-	if cookie.MinipoolInstance != s.view.syncCookie.MinipoolInstance {
-		slot = 0
-		prevSyncCookie = SyncCookieCopy(cookie)
-		prevSyncCookie.MinipoolSlot = 0
-		prevSyncCookie.MinipoolInstance = s.view.syncCookie.MinipoolInstance
+	if cookie.MinipoolInstance == s.view.minipool.instance {
+		if slot > int64(s.view.minipool.events.Len()) {
+			return nil, RpcErrorf(Err_BAD_SYNC_COOKIE, "Stream.Sub: bad slot")
+		}
+
+		if s.receivers == nil {
+			s.receivers = make(map[chan<- *StreamAndCookie]bool)
+		}
+		s.receivers[receiver] = true
+
+		if slot < int64(s.view.minipool.events.Len()) {
+			envelopes := make([]*Envelope, 0, s.view.minipool.events.Len()-int(slot))
+			for _, e := range s.view.minipool.events.A[slot:] {
+				envelopes = append(envelopes, e.Envelope)
+			}
+			return &StreamAndCookie{
+				StreamId:           s.streamId,
+				Events:             envelopes,
+				NextSyncCookie:     s.view.SyncCookie(),
+				OriginalSyncCookie: cookie,
+			}, nil
+		} else {
+			return nil, nil
+		}
 	} else {
-		prevSyncCookie = cookie
-	}
+		if s.receivers == nil {
+			s.receivers = make(map[chan<- *StreamAndCookie]bool)
+		}
+		s.receivers[receiver] = true
 
-	if slot > int64(len(s.view.events)) {
-		return nil, RpcErrorf(Err_BAD_SYNC_COOKIE, "Stream.Sub: bad slot, cookie.MinipoolSlot=%d, len(s.view.events)=%d", slot, len(s.view.events))
-	}
+		envelopes := make([]*Envelope, 0, 16)
+		err := s.view.forEachEvent(int(cookie.MiniblockNum), func(e *ParsedEvent) (bool, error) {
+			envelopes = append(envelopes, e.Envelope)
+			return true, nil
+		})
+		if err != nil {
+			return nil, err
+		}
 
-	if s.receivers == nil {
-		s.receivers = make(map[chan<- *StreamAndCookie]bool)
-	}
-	s.receivers[receiver] = true
-
-	if slot < int64(len(s.view.events)) {
-		return &StreamAndCookie{
-			StreamId:           s.streamId,
-			Events:             s.view.envelopes[slot:],
-			NextSyncCookie:     s.view.syncCookie,
-			OriginalSyncCookie: prevSyncCookie,
-		}, nil
-	} else {
-		return nil, nil
+		if len(envelopes) > 0 {
+			return &StreamAndCookie{
+				StreamId:       s.streamId,
+				Events:         envelopes,
+				NextSyncCookie: s.view.SyncCookie(),
+				OriginalSyncCookie: &SyncCookie{
+					StreamId:     s.streamId,
+					MiniblockNum: cookie.MiniblockNum,
+					MinipoolSlot: 0,
+				},
+			}, nil
+		} else {
+			return nil, nil
+		}
 	}
 }
 
@@ -193,4 +305,6 @@ func (s *Stream) ForceFlush(ctx context.Context) {
 		}
 	}
 	s.receivers = nil
+
+	s.stopTicker()
 }

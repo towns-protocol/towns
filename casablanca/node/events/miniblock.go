@@ -1,6 +1,8 @@
 package events
 
 import (
+	. "casablanca/node/protocol"
+
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -16,4 +18,35 @@ func NextMiniblockTimestamp(prevBlockTimestamp *timestamppb.Timestamp) *timestam
 	}
 
 	return now
+}
+
+type miniblockInfo struct {
+	headerEvent *ParsedEvent
+	events      []*ParsedEvent
+}
+
+func (b *miniblockInfo) header() *MiniblockHeader {
+	return b.headerEvent.Event.GetMiniblockHeader()
+}
+
+func (b *miniblockInfo) lastEvent() *ParsedEvent {
+	if len(b.events) > 0 {
+		return b.events[len(b.events)-1]
+	} else {
+		return nil
+	}
+}
+
+func (b *miniblockInfo) forEachEvent(op func(e *ParsedEvent) (bool, error)) error {
+	for _, event := range b.events {
+		c, err := op(event)
+		if !c {
+			return err
+		}
+	}
+	c, err := op(b.headerEvent)
+	if !c {
+		return err
+	}
+	return nil
 }

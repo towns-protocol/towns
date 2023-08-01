@@ -203,6 +203,7 @@ func (s *Service) createStream(ctx context.Context, log *slog.Logger, req *conne
 	// side effects
 	switch inception := inceptionPayload.(type) {
 	case *ChannelPayload_Inception:
+		prevHashes := [][]byte{spaceView.LastEvent().Hash}
 		spaceStreamEvent, err := MakeParsedEventWithPayload(
 			s.wallet,
 			Make_SpacePayload_Channel(
@@ -215,7 +216,7 @@ func (s *Service) createStream(ctx context.Context, log *slog.Logger, req *conne
 					Signature: inceptionEvent.Envelope.Signature,
 				},
 			),
-			spaceView.LeafEventHashes(),
+			prevHashes,
 		)
 		if err != nil {
 			return nil, err

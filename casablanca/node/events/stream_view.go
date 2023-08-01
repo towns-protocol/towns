@@ -1,8 +1,10 @@
 package events
 
 import (
+	"bytes"
 	. "casablanca/node/base"
 	. "casablanca/node/protocol"
+	. "casablanca/node/utils"
 	"fmt"
 	"os"
 	"runtime/debug"
@@ -11,14 +13,10 @@ import (
 
 type StreamView interface {
 	StreamId() string
-	Events() []*ParsedEvent
-	EventsByHash() map[string]*ParsedEvent
-	HasEvent(hash string) bool
 	InceptionEvent() *ParsedEvent
 	InceptionPayload() IsInceptionPayload
 	JoinedUsers() (map[string]struct{}, error)
-	LeafEventHashes() [][]byte
-	LeafEvents() map[string]*ParsedEvent
+	LastEvent() *ParsedEvent
 	Envelopes() []*Envelope
 	SyncCookie() *SyncCookie
 }
@@ -64,7 +62,7 @@ func dfs(e *ParsedEvent, visited map[string]bool, events []*ParsedEvent, eventsB
 		if !visited[p] {
 			pe := eventsByHash[p]
 			if pe == nil {
-				err := fmt.Errorf("MakeStreamView: prev event not found, prev_event_hash=%s, event=%s", FormatHashFromString(p), e.ShortDebugStr())
+				err := RpcErrorf(Err_BAD_EVENT, "MakeStreamView: prev event not found, prev_event_hash=%s, event=%s", FormatHashFromString(p), e.ShortDebugStr())
 				if DebugCorruptionPrint() {
 					fmt.Printf("%d\n", len(eventsByHash))
 					degugLogEvents(events, e.HashStr, err)
@@ -91,22 +89,30 @@ func MakeStreamView(envelopes []*Envelope) (*streamViewImpl, error) {
 }
 
 func MakeStreamViewFromParsedEvents(unsortedEvents []*ParsedEvent) (*streamViewImpl, error) {
+	// TODO: HNT-1854: Change storage to be block-aware.
+	//
+	// Currently this function reconstructs blocks from flat events, since this is what current
+	// storage implemntation returns. In the future storage will be updated to represent blocks
+	// and minipool directly, and this function will be updated to use them.
+	//
+	// Currently storage returns events in non-append order, so we need to sort them.
+
 	if len(unsortedEvents) <= 0 {
-		return nil, fmt.Errorf("MakeStreamView: No events")
+		return nil, RpcErrorf(Err_STREAM_EMPTY, "MakeStreamView: No events")
 	}
 
 	eventsByHash := make(map[string]*ParsedEvent)
+
 	for _, e := range unsortedEvents {
 		if _, ok := eventsByHash[e.HashStr]; !ok {
 			eventsByHash[e.HashStr] = e
 		} else {
-			err := fmt.Errorf("MakeStreamView: Duplicate event hash, event=%s", e.ShortDebugStr())
+			err := RpcErrorf(Err_DUPLICATE_EVENT, "MakeStreamView: Duplicate event hash, event=%s", e.ShortDebugStr())
 			if DebugCorruptionPrint() {
 				degugLogEvents(unsortedEvents, e.HashStr, err)
 			}
 			return nil, err
 		}
-
 	}
 
 	events, err := topologicalSort(unsortedEvents, eventsByHash)
@@ -115,102 +121,198 @@ func MakeStreamViewFromParsedEvents(unsortedEvents []*ParsedEvent) (*streamViewI
 	}
 
 	if events[0].Event.GetInceptionPayload() == nil {
-		return nil, fmt.Errorf("MakeStreamView: First event is not inception")
+		return nil, RpcErrorf(Err_BAD_EVENT, "MakeStreamView: First event is not inception")
 	}
 
 	streamId := events[0].Event.GetInceptionPayload().GetStreamId()
 
-	leafEvents := make(map[string]*ParsedEvent)
+	blocks := make([]*miniblockInfo, 0, len(events)/8)
 	for _, event := range events {
-		leafEvents[event.HashStr] = event
-		for _, prev := range event.PrevEventStrs {
-			delete(leafEvents, prev)
+		header := event.Event.GetMiniblockHeader()
+		if header != nil {
+			if header.MiniblockNum != int64(len(blocks)) {
+				return nil, RpcErrorf(Err_BAD_BLOCK, "MakeStreamView: block number mismatch, expected=%d, actual=%d", len(blocks), header.MiniblockNum)
+			}
+
+			if len(blocks) > 0 {
+				if header.PrevMiniblockHash == nil {
+					return nil, RpcErrorf(Err_BAD_BLOCK, "MakeStreamView: block hash is nil, block=%s", event.ShortDebugStr())
+				}
+				if !bytes.Equal(blocks[len(blocks)-1].headerEvent.Hash, header.PrevMiniblockHash) {
+					return nil, RpcErrorf(Err_BAD_BLOCK, "MakeStreamView: block hash mismatch, block=%s", event.ShortDebugStr())
+				}
+			} else {
+				if header.PrevMiniblockHash != nil {
+					return nil, RpcErrorf(Err_BAD_BLOCK, "MakeStreamView: block hash is not nil, block=%s", event.ShortDebugStr())
+				}
+			}
+
+			delete(eventsByHash, event.HashStr)
+
+			blockEvents := make([]*ParsedEvent, 0, len(header.EventHashes))
+			for _, hash := range header.EventHashes {
+				eventHashStr := string(hash)
+				e := eventsByHash[eventHashStr]
+				if e == nil {
+					return nil, RpcErrorf(Err_BAD_BLOCK, "MakeStreamView: block event not found, block=%s, event_hash=%s", e.ShortDebugStr(), FormatHashFromString(eventHashStr))
+				}
+				delete(eventsByHash, eventHashStr)
+				blockEvents = append(blockEvents, e)
+			}
+
+			blocks = append(blocks, &miniblockInfo{
+				headerEvent: event,
+				events:      blockEvents,
+			})
 		}
 	}
 
-	if len(leafEvents) == 0 {
-		return nil, fmt.Errorf("MakeStreamView: No leaf events, stream_id=%s", streamId)
+	if len(blocks) <= 0 {
+		return nil, RpcErrorf(Err_BAD_BLOCK, "MakeStreamView: No blocks")
 	}
 
-	envelopes := make([]*Envelope, len(events))
-	for i, e := range events {
-		envelopes[i] = e.Envelope
+	// Now eventsByHash contains events that are not in any block, and thus are part of the minipool.
+	minipoolEvents := NewOrderedMap[string, *ParsedEvent](len(eventsByHash))
+	for _, e := range events {
+		if _, ok := eventsByHash[e.HashStr]; ok {
+			minipoolEvents.Set(e.HashStr, e)
+		}
 	}
+
 	return &streamViewImpl{
-		streamId:     streamId,
-		events:       events,
-		envelopes:    envelopes,
-		eventsByHash: eventsByHash,
-		leafEvents:   leafEvents,
-		syncCookie: &SyncCookie{
-			StreamId:         streamId,
-			MiniblockNum:     0,
-			MiniblockHash:    []byte{0, 0},
-			MinipoolInstance: GenNanoid(),
-			MinipoolSlot:     int64(len(events)),
-		},
+		streamId: streamId,
+		blocks:   blocks,
+		minipool: newMiniPoolInstance(minipoolEvents),
 	}, nil
 }
 
 type streamViewImpl struct {
-	streamId     string
-	events       []*ParsedEvent
-	envelopes    []*Envelope
-	eventsByHash map[string]*ParsedEvent
-	leafEvents   map[string]*ParsedEvent
-	syncCookie   *SyncCookie
+	streamId string
+
+	blocks   []*miniblockInfo
+	minipool *minipoolInstance
 }
 
 func (r *streamViewImpl) copyAndAddEvent(event *ParsedEvent) (*streamViewImpl, error) {
-	if _, ok := r.eventsByHash[event.HashStr]; ok {
-		return nil, fmt.Errorf("streamViewImpl: event already exists, stream=%s, event=%s", r.streamId, event.ShortDebugStr())
+	if event.Event.GetMiniblockHeader() != nil {
+		return r.copyAndApplyBlock(event)
 	}
-	for _, prev := range event.PrevEventStrs {
-		if _, ok := r.eventsByHash[prev]; !ok {
-			return nil, fmt.Errorf("streamViewImpl: prev event not found, stream=%s, prev_event=%s, event=%s", r.streamId, FormatHashFromString(prev), event.ShortDebugStr())
+
+	// TODO: HNT-1843: Re-enable block-aware event duplicate checks
+	// There is a need to reject duplicate events, but there is no efficient way to do it without scanning
+	// all blocks (and minipool). Also, this doesn't work in presense of snapshots.
+	// The fix for this is to allow events to be added only if they reference "recent" block and
+	// to check only recent blocks for duplicates.
+
+	r = &streamViewImpl{
+		streamId: r.streamId,
+		blocks:   r.blocks,
+		minipool: r.minipool.copyAndAddEvent(event),
+	}
+	return r, nil
+}
+
+func (r *streamViewImpl) lastBlock() *miniblockInfo {
+	return r.blocks[len(r.blocks)-1]
+}
+
+func (r *streamViewImpl) makeBlock() *MiniblockHeader {
+	hashes := make([][]byte, 0, r.minipool.events.Len())
+	_ = r.minipool.forEachEvent(func(e *ParsedEvent) (bool, error) {
+		hashes = append(hashes, e.Hash)
+		return true, nil
+	})
+	last := r.lastBlock()
+	return &MiniblockHeader{
+		MiniblockNum:      last.header().MiniblockNum + 1,
+		Timestamp:         NextMiniblockTimestamp(last.header().Timestamp),
+		EventHashes:       hashes,
+		PrevMiniblockHash: last.headerEvent.Hash,
+	}
+}
+
+// In 1.21 there is built-in max! (facepalm)
+func MaxInt_(a, b int) int {
+	if a > b {
+		return a
+	}
+	return b
+}
+
+func (r *streamViewImpl) copyAndApplyBlock(headerEvent *ParsedEvent) (*streamViewImpl, error) {
+	header := headerEvent.Event.GetMiniblockHeader()
+	if header == nil {
+		return nil, RpcErrorf(Err_INTERNAL_ERROR, "streamViewImpl: non block event not allowed, stream=%s, event=%s", r.streamId, headerEvent.ShortDebugStr())
+	}
+
+	lastBlock := r.lastBlock()
+	if header.MiniblockNum != lastBlock.header().MiniblockNum+1 {
+		return nil, RpcErrorf(Err_BAD_BLOCK, "streamViewImpl: block number mismatch, expected=%d, actual=%d", lastBlock.header().MiniblockNum+1, header.MiniblockNum)
+	}
+	if !bytes.Equal(lastBlock.headerEvent.Hash, header.PrevMiniblockHash) {
+		return nil, RpcErrorf(Err_BAD_BLOCK, "streamViewImpl: block hash mismatch, expected=%s, actual=%s", FormatHashFromString(string(lastBlock.headerEvent.Hash)), FormatHashFromString(string(header.PrevMiniblockHash)))
+	}
+
+	remaining := make(map[string]*ParsedEvent, MaxInt_(r.minipool.events.Len()-len(header.EventHashes), 0))
+	for k, v := range r.minipool.events.M {
+		remaining[k] = v
+	}
+
+	eventsInBlock := make([]*ParsedEvent, 0, len(header.EventHashes))
+	for _, hash := range header.EventHashes {
+		eventHashStr := string(hash)
+		if e, ok := remaining[eventHashStr]; ok {
+			eventsInBlock = append(eventsInBlock, e)
+			delete(remaining, eventHashStr)
+		} else {
+			return nil, RpcErrorf(Err_BAD_BLOCK, "streamViewImpl: block event not found, stream=%s, event_hash=%s", r.streamId, FormatHashFromString(eventHashStr))
 		}
 	}
 
-	r = r.copy(1)
-	r.events = append(r.events, event)
-	r.envelopes = append(r.envelopes, event.Envelope)
-	r.eventsByHash[event.HashStr] = event
-	r.leafEvents[event.HashStr] = event
-	for _, prev := range event.PrevEventStrs {
-		delete(r.leafEvents, prev)
+	minipoolEvents := NewOrderedMap[string, *ParsedEvent](len(remaining))
+	for _, e := range r.minipool.events.A {
+		if _, ok := remaining[e.HashStr]; ok {
+			minipoolEvents.Set(e.HashStr, e)
+		}
 	}
-	r.syncCookie.MinipoolSlot = int64(len(r.events))
-	return r, nil
+
+	return &streamViewImpl{
+		streamId: r.streamId,
+		blocks:   append(r.blocks, &miniblockInfo{headerEvent: headerEvent, events: eventsInBlock}),
+		minipool: newMiniPoolInstance(minipoolEvents),
+	}, nil
 }
 
 func (r *streamViewImpl) StreamId() string {
 	return r.streamId
 }
 
-func (r *streamViewImpl) Events() []*ParsedEvent {
-	return r.events
-}
-
-func (r *streamViewImpl) EventsByHash() map[string]*ParsedEvent {
-	return r.eventsByHash
-}
-
-func (r *streamViewImpl) HasEvent(hash string) bool {
-	_, ok := r.eventsByHash[hash]
-	return ok
-}
-
 func (r *streamViewImpl) InceptionEvent() *ParsedEvent {
-	return r.events[0]
+	return r.blocks[0].events[0]
 }
 
 func (r *streamViewImpl) InceptionPayload() IsInceptionPayload {
 	return r.InceptionEvent().Event.GetInceptionPayload()
 }
 
+func (r *streamViewImpl) forEachEvent(startBlock int, op func(e *ParsedEvent) (bool, error)) error {
+	if startBlock < 0 || startBlock > len(r.blocks) {
+		return RpcErrorf(Err_BAD_ARGS, "iterateEvents: bad startBlock, startBlock=%d", startBlock)
+	}
+
+	for i := startBlock; i < len(r.blocks); i++ {
+		err := r.blocks[i].forEachEvent(op)
+		if err != nil {
+			return err
+		}
+	}
+	return r.minipool.forEachEvent(op)
+}
+
 func (r *streamViewImpl) JoinedUsers() (map[string]struct{}, error) {
 	users := make(map[string]struct{})
-	for _, e := range r.events {
+
+	_ = r.forEachEvent(0, func(e *ParsedEvent) (bool, error) {
 		switch payload := e.Event.Payload.(type) {
 		case *StreamEvent_SpacePayload:
 			switch spacePayload := payload.SpacePayload.Content.(type) {
@@ -237,45 +339,45 @@ func (r *streamViewImpl) JoinedUsers() (map[string]struct{}, error) {
 				break
 			}
 		}
-	}
+		return true, nil
+	})
+
 	return users, nil
 }
 
-func (r *streamViewImpl) LeafEventHashes() [][]byte {
-	hashes := make([][]byte, 0, len(r.leafEvents))
-	for _, e := range r.leafEvents {
-		hashes = append(hashes, e.Hash)
+func (r *streamViewImpl) LastEvent() *ParsedEvent {
+	lastEvent := r.minipool.lastEvent()
+	if lastEvent != nil {
+		return lastEvent
 	}
-	return hashes
-}
 
-func (r *streamViewImpl) LeafEvents() map[string]*ParsedEvent {
-	return r.leafEvents
+	// Iterate over blocks in reverse order to find non-empty block and return last event from it.
+	for i := len(r.blocks) - 1; i >= 0; i-- {
+		lastEvent := r.blocks[i].lastEvent()
+		if lastEvent != nil {
+			return lastEvent
+		}
+	}
+	return nil
 }
 
 func (r *streamViewImpl) Envelopes() []*Envelope {
-	return r.envelopes
-}
-
-func copyMap(originalMap map[string]*ParsedEvent) map[string]*ParsedEvent {
-	newMap := make(map[string]*ParsedEvent, len(originalMap))
-	for k, v := range originalMap {
-		newMap[k] = v
-	}
-	return newMap
-}
-
-func (sv *streamViewImpl) copy(extraCapacity int) *streamViewImpl {
-	return &streamViewImpl{
-		streamId:     sv.streamId,
-		events:       append(make([]*ParsedEvent, 0, len(sv.events)+extraCapacity), sv.events...),
-		envelopes:    append(make([]*Envelope, 0, len(sv.envelopes)+extraCapacity), sv.envelopes...),
-		eventsByHash: copyMap(sv.eventsByHash),
-		leafEvents:   copyMap(sv.leafEvents),
-		syncCookie:   SyncCookieCopy(sv.syncCookie),
-	}
+	envelopes := make([]*Envelope, 0, len(r.blocks)*8)
+	_ = r.forEachEvent(0, func(e *ParsedEvent) (bool, error) {
+		envelopes = append(envelopes, e.Envelope)
+		return true, nil
+	})
+	return envelopes
 }
 
 func (r *streamViewImpl) SyncCookie() *SyncCookie {
-	return r.syncCookie
+	// TODO: create once and re-use.
+	return &SyncCookie{
+		StreamId:         r.streamId,
+		MiniblockNum:     int64(len(r.blocks)),
+		MiniblockHash:    r.lastBlock().headerEvent.Hash,
+		MinipoolInstance: r.minipool.instance,
+		MinipoolSlot:     int64(r.minipool.events.Len()),
+	}
+
 }

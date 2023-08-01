@@ -1,19 +1,12 @@
-import { makeEvent, makeEvents, SignerContext, unpackEnvelope, unpackEnvelopes } from './sign'
-import {
-    Err,
-    PayloadCaseType,
-    MembershipOp,
-    SyncStreamsResponse,
-    UserPayload_UserMembership,
-    EncryptedData,
-    SyncCookie,
-} from '@towns/proto'
+import { makeEvent, makeEvents, SignerContext, unpackEnvelopes } from './sign'
+import { Err, MembershipOp, SyncStreamsResponse, SyncCookie } from '@towns/proto'
 import { dlog } from './dlog'
 import {
     makeEvent_test,
     makeRandomUserContext,
     makeRandomUserContextWithOldDelegate,
     makeTestRpcClient,
+    timeoutIterable,
 } from './util.test'
 import _ from 'lodash'
 import {
@@ -30,6 +23,7 @@ import {
     make_SpacePayload_Inception,
     make_SpacePayload_Membership,
     make_UserPayload_Inception,
+    ParsedEvent,
 } from './types'
 import { makeStreamRpcClient } from './makeStreamRpcClient'
 import { bobTalksToHimself } from './bob.test_util'
@@ -274,27 +268,18 @@ describe('streamRpcClient', () => {
             event,
         })
 
-        const aliceSyncResult = await (async () => {
-            for await (const result of aliceSyncStreams) {
-                return result
-            }
-            return undefined
-        })()
-
-        expect(aliceSyncResult).toBeDefined()
+        aliceSyncCookie = await waitForEvent(
+            aliceSyncStreams,
+            alicesUserStreamId,
+            (e) =>
+                e.event.payload?.case === 'userPayload' &&
+                e.event.payload?.value.content.case === 'userMembership' &&
+                e.event.payload?.value.content.value.op === MembershipOp.SO_INVITE &&
+                e.event.payload?.value.content.value.streamId === channelId &&
+                e.event.payload?.value.content.value.inviterId === bobsUserId,
+        )
 
         aliceAbortController.abort()
-
-        aliceSyncCookie = expectEvent(
-            aliceSyncResult,
-            alicesUserStreamId,
-            'userPayload',
-            (p: UserPayload_UserMembership) => {
-                expect(p.op).toEqual(MembershipOp.SO_INVITE)
-                expect(p.inviterId).toEqual(bobsUserId)
-                expect(p.streamId).toEqual(channelId)
-            },
-        )
 
         const aliceAbortControllerUserStream = new AbortController()
 
@@ -322,27 +307,18 @@ describe('streamRpcClient', () => {
             event,
         })
 
-        const aliceSyncResultUserStream = await (async () => {
-            for await (const result of userSyncStream) {
-                return result
-            }
-            return undefined
-        })()
-
-        expect(aliceSyncResultUserStream).toBeDefined()
+        // Alice sees derived join event in her user stream
+        aliceSyncCookie = await waitForEvent(
+            userSyncStream,
+            alicesUserStreamId,
+            (e) =>
+                e.event.payload?.case === 'userPayload' &&
+                e.event.payload?.value.content.case === 'userMembership' &&
+                e.event.payload?.value.content.value.op === MembershipOp.SO_JOIN &&
+                e.event.payload?.value.content.value.streamId === channelId,
+        )
 
         aliceAbortControllerUserStream.abort()
-
-        // Alice sees derived join event in her user stream
-        aliceSyncCookie = expectEvent(
-            aliceSyncResultUserStream,
-            alicesUserStreamId,
-            'userPayload',
-            (p: UserPayload_UserMembership) => {
-                expect(p.op).toEqual(MembershipOp.SO_JOIN)
-                expect(p.streamId).toEqual(channelId)
-            },
-        )
 
         // Alice reads previouse messages from the channel
         const channel = await alice.getStream({ streamId: channelId })
@@ -381,26 +357,19 @@ describe('streamRpcClient', () => {
             event,
         })
 
-        const aliceSyncResultMultipleStreams = await (async () => {
-            // Alice sees the message in sync result
-            for await (const stream of userAndChannelStreamSync) {
-                return stream
-            }
-            return undefined
-        })()
+        // Alice sees the message in the channel stream
+        await expect(
+            waitForEvent(
+                userAndChannelStreamSync,
+                channelId,
+                (e) =>
+                    e.event.payload?.case === 'channelPayload' &&
+                    e.event.payload?.value.content.case === 'message' &&
+                    e.event.payload?.value.content.value.text === 'Hello, Alice!',
+            ),
+        ).toResolve()
 
         aliceAbortControllerMultipleStreams.abort()
-
-        expect(aliceSyncResultMultipleStreams).toBeDefined()
-
-        aliceSyncCookie = expectEvent(
-            aliceSyncResultMultipleStreams,
-            channelId,
-            'channelPayload',
-            (p: EncryptedData) => {
-                expect(p.text).toEqual('Hello, Alice!')
-            },
-        )
     })
 
     // TODO: harden stream creation and enable this test
@@ -569,25 +538,26 @@ describe('streamRpcClient', () => {
             }),
         )
 
-        log('Bob fails to add event with wrong hash')
-        await expect(
-            bob.addEvent({
-                streamId: channelId,
-                event: await makeEvent(
-                    bobsContext,
-                    make_ChannelPayload_Message({
-                        text: 'Hello, World!',
-                    }),
-                    [channelEvent2_0.hash],
-                ),
-            }),
-        ).rejects.toThrow(
-            expect.objectContaining({
-                message: expect.stringContaining(
-                    '[unknown] rpc error: code = InvalidArgument desc = AddEvent: prev event',
-                ),
-            }),
-        )
+        // TODO: HNT-1843: Re-enable block-aware event duplicate checks
+        // log('Bob fails to add event with wrong prev event hash')
+        // await expect(
+        //     bob.addEvent({
+        //         streamId: channelId,
+        //         event: await makeEvent(
+        //             bobsContext,
+        //             make_ChannelPayload_Message({
+        //                 text: 'Hello, World!',
+        //             }),
+        //             [channelEvent2_0.hash],
+        //         ),
+        //     }),
+        // ).rejects.toThrow(
+        //     expect.objectContaining({
+        //         message: expect.stringContaining(
+        //             '[unknown] rpc error: code = InvalidArgument desc = AddEvent: prev event',
+        //         ),
+        //     }),
+        // )
     })
 
     test('cantAddWithBadSignature', async () => {
@@ -679,22 +649,22 @@ describe('streamRpcClient', () => {
     })
 })
 
-const expectEvent = (
-    resp: SyncStreamsResponse | null | undefined,
+const waitForEvent = async (
+    syncStream: AsyncIterable<SyncStreamsResponse>,
     streamId: string,
-    streamKind: PayloadCaseType,
-    validator: (payload: any) => void,
-): SyncCookie => {
-    expect(resp).toBeDefined()
-    resp = resp!
-    expect(resp.streams).toHaveLength(1)
-    expect(resp.streams[0].streamId).toEqual(streamId)
-    expect(resp.streams[0].events).toHaveLength(1)
-
-    const e = unpackEnvelope(resp.streams[0].events[0]).event
-    expect(e.payload?.case).toEqual(streamKind)
-    validator(e.payload?.value?.content.value)
-
-    expect(resp.streams[0].nextSyncCookie).toBeDefined()
-    return resp.streams[0].nextSyncCookie!
+    matcher: (e: ParsedEvent) => boolean,
+): Promise<SyncCookie> => {
+    for await (const res of timeoutIterable(syncStream, 2000)) {
+        for (const stream of res.streams) {
+            if (stream.streamId === streamId) {
+                const events = unpackEnvelopes(stream.events)
+                for (const e of events) {
+                    if (matcher(e)) {
+                        return stream.nextSyncCookie!
+                    }
+                }
+            }
+        }
+    }
+    throw new Error('waitForEvent: timeout')
 }

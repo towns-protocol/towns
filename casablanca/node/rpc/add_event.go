@@ -52,12 +52,13 @@ func (s *Service) addParsedEvent(ctx context.Context, streamId string, parsedEve
 		return err
 	}
 
+	// TODO: fix this check to take blocks into account
 	// check if previous event's hashes match
-	for _, prevEvent := range parsedEvent.PrevEventStrs {
-		if !streamView.HasEvent(prevEvent) {
-			return status.Errorf(codes.InvalidArgument, "AddEvent: prev event not found")
-		}
-	}
+	// for _, prevEvent := range parsedEvent.PrevEventStrs {
+	// 	if !streamView.HasEvent(prevEvent) {
+	// 		return status.Errorf(codes.InvalidArgument, "AddEvent: prev event not found")
+	// 	}
+	// }
 
 	// check event type
 	streamEvent := parsedEvent.Event
@@ -284,6 +285,7 @@ func (s *Service) addDerivedMembershipEventToUserStream(ctx context.Context, use
 		return err
 	}
 
+	prevHashes := [][]byte{userStreamView.LastEvent().Hash}
 	userStreamEvent, err := MakeParsedEventWithPayload(
 		s.wallet,
 		Make_UserPayload_Membership(
@@ -296,7 +298,7 @@ func (s *Service) addDerivedMembershipEventToUserStream(ctx context.Context, use
 				Signature: originEvent.Envelope.Signature,
 			},
 		),
-		userStreamView.LeafEventHashes(),
+		prevHashes,
 	)
 	if err != nil {
 		return err

@@ -1,8 +1,7 @@
 import { makeEvent, SignerContext, unpackEnvelopes } from './sign'
 import { MembershipOp } from '@towns/proto'
 import { dlog } from './dlog'
-import { makeRandomUserContext, TEST_URL } from './util.test'
-import _ from 'lodash'
+import { lastEventFiltered, makeRandomUserContext, TEST_URL } from './util.test'
 import {
     genId,
     makeChannelStreamId,
@@ -78,9 +77,9 @@ describe('workflows', () => {
         // Now there must be "joined space" event in the user stream.
         let userResponse = await bob.getStream({ streamId: bobsUserStreamId })
         expect(userResponse.stream).toBeDefined()
-        expect(userResponse.stream!.events.length).toEqual(3)
-        let joinPayload = getUserPayload_Membership(
-            _.last(unpackEnvelopes(userResponse.stream!.events)),
+        let joinPayload = lastEventFiltered(
+            unpackEnvelopes(userResponse.stream!.events),
+            getUserPayload_Membership,
         )
         expect(joinPayload).toBeDefined()
         expect(joinPayload?.op).toEqual(MembershipOp.SO_JOIN)
@@ -114,10 +113,11 @@ describe('workflows', () => {
         // Now there must be "joined channel" event in the user stream.
         userResponse = await bob.getStream({ streamId: bobsUserStreamId })
         expect(userResponse.stream).toBeDefined()
-        expect(userResponse.stream!.events.length).toEqual(4)
-        joinPayload = getUserPayload_Membership(
-            _.last(unpackEnvelopes(userResponse.stream!.events)),
+        joinPayload = lastEventFiltered(
+            unpackEnvelopes(userResponse.stream!.events),
+            getUserPayload_Membership,
         )
+
         expect(joinPayload).toBeDefined()
         expect(joinPayload?.op).toEqual(MembershipOp.SO_JOIN)
         expect(joinPayload?.streamId).toEqual(channelId)
@@ -125,9 +125,9 @@ describe('workflows', () => {
         // Not there must be "channel created" event in the space stream.
         const spaceResponse = await bob.getStream({ streamId: spacedStreamId })
         expect(spaceResponse.stream).toBeDefined()
-        expect(spaceResponse.stream!.events.length).toEqual(4)
-        const channelCreatePayload = getChannelPayload(
-            _.last(unpackEnvelopes(spaceResponse.stream!.events)),
+        const channelCreatePayload = lastEventFiltered(
+            unpackEnvelopes(spaceResponse.stream!.events),
+            getChannelPayload,
         )
         expect(channelCreatePayload).toBeDefined()
         expect(channelCreatePayload?.channelId).toEqual(channelId)

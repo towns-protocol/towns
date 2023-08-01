@@ -5,7 +5,7 @@ import { Envelope, StreamEvent } from '@towns/proto'
 import { PlainMessage } from '@bufbuild/protobuf'
 import { Client } from './client'
 import { userIdFromAddress } from './id'
-import { takeKeccakFingerprintInHex } from './types'
+import { ParsedEvent, takeKeccakFingerprintInHex } from './types'
 import { bin_fromHexString, bin_toHexString } from './binary'
 import { getPublicKey, utils } from 'ethereum-cryptography/secp256k1'
 import { makeTownsDelegateSig, makeOldTownsDelegateSig, publicKeyToAddress } from './crypto/crypto'
@@ -13,6 +13,8 @@ import { ethers } from 'ethers'
 import { RiverDbManager } from './riverDbManager'
 import { StreamRpcClientType, makeStreamRpcClient } from './makeStreamRpcClient'
 import assert from 'assert'
+import { setTimeout } from 'timers/promises'
+import _ from 'lodash'
 
 const log = dlog('csb:test:util')
 
@@ -153,11 +155,57 @@ export const makeDonePromise = (): DonePromise => {
     return new DonePromise()
 }
 
-export const awaitTimeout = (milliseconds: number) => {
-    return new Promise((resolve) => setTimeout(resolve, milliseconds))
-}
-
 export const sendFlush = async (client: StreamRpcClientType): Promise<void> => {
     const r = await client.info({ debug: 'flush_cache' })
     assert(r.graffiti === 'cache flushed')
+}
+
+export async function* timeoutIterable<T>(
+    iterable: AsyncIterable<T>,
+    timeoutMs: number,
+): AsyncGenerator<T, void, unknown> {
+    const iterator = iterable[Symbol.asyncIterator]()
+    const controller = new AbortController()
+
+    while (true) {
+        const result = await Promise.race([
+            iterator.next(),
+            setTimeout(timeoutMs, 'timeout', { signal: controller.signal }),
+        ])
+
+        if (typeof result === 'string') {
+            return
+        }
+
+        if (result.done) {
+            controller.abort()
+            return
+        }
+
+        yield result.value
+    }
+}
+
+// For example, use like this:
+//
+//    joinPayload = lastEventFiltered(
+//        unpackEnvelopes(userResponse.stream!.events),
+//        getUserPayload_Membership,
+//    )
+//
+// to get user memebrship payload from a last event containing it, or undefined if not found.
+export const lastEventFiltered = <T extends (a: ParsedEvent) => any | undefined>(
+    events: ParsedEvent[],
+    f: T,
+): ReturnType<T> | undefined => {
+    let ret: ReturnType<T> | undefined = undefined
+    _.forEachRight(events, (v): boolean => {
+        const r = f(v)
+        if (r !== undefined) {
+            ret = r
+            return false
+        }
+        return true
+    })
+    return ret
 }

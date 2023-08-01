@@ -1,11 +1,19 @@
 package events
 
 import (
+	. "casablanca/node/base"
+	"casablanca/node/crypto"
+	. "casablanca/node/protocol"
 	"casablanca/node/storage"
 	"context"
-	"fmt"
 	"sync"
 )
+
+type StreamCacheParams struct {
+	Storage    storage.Storage
+	Wallet     *crypto.Wallet
+	DefaultCtx context.Context
+}
 
 type StreamCache interface {
 	GetStream(ctx context.Context, streamId string) (*Stream, StreamView, error)
@@ -14,13 +22,13 @@ type StreamCache interface {
 }
 
 type streamCacheImpl struct {
-	storage storage.Storage
-	cache   sync.Map
+	params *StreamCacheParams
+	cache  sync.Map
 }
 
-func NewStreamCache(storage storage.Storage) *streamCacheImpl {
+func NewStreamCache(params *StreamCacheParams) *streamCacheImpl {
 	return &streamCacheImpl{
-		storage: storage,
+		params: params,
 	}
 }
 
@@ -28,7 +36,7 @@ func (s *streamCacheImpl) GetStream(ctx context.Context, streamId string) (*Stre
 	entry, _ := s.cache.Load(streamId)
 	if entry == nil {
 		entry, _ = s.cache.LoadOrStore(streamId, &Stream{
-			storage:  s.storage,
+			params:   s.params,
 			streamId: streamId,
 		})
 	}
@@ -49,16 +57,17 @@ func (s *streamCacheImpl) GetStream(ctx context.Context, streamId string) (*Stre
 
 func (s *streamCacheImpl) CreateStream(ctx context.Context, streamId string, events []*ParsedEvent) (*Stream, StreamView, error) {
 	if existing, _ := s.cache.Load(streamId); existing != nil {
-		return nil, nil, fmt.Errorf("stream already exists, %s", streamId)
+		return nil, nil, RpcErrorf(Err_STREAM_ALREADY_EXISTS, "stream already exists, %s", streamId)
 	}
 
-	stream, view, err := createStream(ctx, s.storage, streamId, events)
+	stream, view, err := createStream(ctx, s.params, streamId, events)
 	if err != nil {
 		return nil, nil, err
 	}
 
 	_, loaded := s.cache.LoadOrStore(streamId, stream)
 	if !loaded {
+		stream.startTicker()
 		return stream, view, nil
 	} else {
 		// Assume that parallel GetStream created cache entry, fallback to it to retrieve winning cache entry.

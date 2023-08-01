@@ -1,15 +1,15 @@
 package events
 
 import (
+	. "casablanca/node/base"
 	"casablanca/node/common"
 	. "casablanca/node/protocol"
-	"fmt"
 )
 
 func StreamInfoFromInceptionEvent(e *ParsedEvent, streamId string, userId string) (*common.StreamInfo, error) {
 	payload := e.Event.GetInceptionPayload()
 	if payload == nil {
-		return nil, fmt.Errorf("no inception payload for stream %s", streamId)
+		return nil, RpcErrorf(Err_STREAM_NO_INCEPTION_EVENT, "no inception payload for stream %s", streamId)
 	}
 
 	switch inception := payload.(type) {
@@ -35,6 +35,6 @@ func StreamInfoFromInceptionEvent(e *ParsedEvent, streamId string, userId string
 			StreamType: common.UserSettings,
 		}, nil
 	default:
-		return nil, fmt.Errorf("unimplemented stream type %T", inception)
+		return nil, RpcErrorf(Err_STREAM_BAD_EVENT, "unimplemented stream type %T", inception)
 	}
 }

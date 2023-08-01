@@ -25,28 +25,6 @@ const (
 	StreamServiceName = "casablanca.StreamService"
 )
 
-// These constants are the fully-qualified names of the RPCs defined in this package. They're
-// exposed at runtime as Spec.Procedure and as the final two segments of the HTTP route.
-//
-// Note that these are different from the fully-qualified method names used by
-// google.golang.org/protobuf/reflect/protoreflect. To convert from these constants to
-// reflection-formatted method names, remove the leading slash and convert the remaining slash to a
-// period.
-const (
-	// StreamServiceCreateStreamProcedure is the fully-qualified name of the StreamService's
-	// CreateStream RPC.
-	StreamServiceCreateStreamProcedure = "/casablanca.StreamService/CreateStream"
-	// StreamServiceGetStreamProcedure is the fully-qualified name of the StreamService's GetStream RPC.
-	StreamServiceGetStreamProcedure = "/casablanca.StreamService/GetStream"
-	// StreamServiceAddEventProcedure is the fully-qualified name of the StreamService's AddEvent RPC.
-	StreamServiceAddEventProcedure = "/casablanca.StreamService/AddEvent"
-	// StreamServiceSyncStreamsProcedure is the fully-qualified name of the StreamService's SyncStreams
-	// RPC.
-	StreamServiceSyncStreamsProcedure = "/casablanca.StreamService/SyncStreams"
-	// StreamServiceInfoProcedure is the fully-qualified name of the StreamService's Info RPC.
-	StreamServiceInfoProcedure = "/casablanca.StreamService/Info"
-)
-
 // StreamServiceClient is a client for the casablanca.StreamService service.
 type StreamServiceClient interface {
 	CreateStream(context.Context, *connect_go.Request[protocol.CreateStreamRequest]) (*connect_go.Response[protocol.CreateStreamResponse], error)
@@ -68,27 +46,27 @@ func NewStreamServiceClient(httpClient connect_go.HTTPClient, baseURL string, op
 	return &streamServiceClient{
 		createStream: connect_go.NewClient[protocol.CreateStreamRequest, protocol.CreateStreamResponse](
 			httpClient,
-			baseURL+StreamServiceCreateStreamProcedure,
+			baseURL+"/casablanca.StreamService/CreateStream",
 			opts...,
 		),
 		getStream: connect_go.NewClient[protocol.GetStreamRequest, protocol.GetStreamResponse](
 			httpClient,
-			baseURL+StreamServiceGetStreamProcedure,
+			baseURL+"/casablanca.StreamService/GetStream",
 			opts...,
 		),
 		addEvent: connect_go.NewClient[protocol.AddEventRequest, protocol.AddEventResponse](
 			httpClient,
-			baseURL+StreamServiceAddEventProcedure,
+			baseURL+"/casablanca.StreamService/AddEvent",
 			opts...,
 		),
 		syncStreams: connect_go.NewClient[protocol.SyncStreamsRequest, protocol.SyncStreamsResponse](
 			httpClient,
-			baseURL+StreamServiceSyncStreamsProcedure,
+			baseURL+"/casablanca.StreamService/SyncStreams",
 			opts...,
 		),
 		info: connect_go.NewClient[protocol.InfoRequest, protocol.InfoResponse](
 			httpClient,
-			baseURL+StreamServiceInfoProcedure,
+			baseURL+"/casablanca.StreamService/Info",
 			opts...,
 		),
 	}
@@ -143,47 +121,33 @@ type StreamServiceHandler interface {
 // By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
 // and JSON codecs. They also support gzip compression.
 func NewStreamServiceHandler(svc StreamServiceHandler, opts ...connect_go.HandlerOption) (string, http.Handler) {
-	streamServiceCreateStreamHandler := connect_go.NewUnaryHandler(
-		StreamServiceCreateStreamProcedure,
+	mux := http.NewServeMux()
+	mux.Handle("/casablanca.StreamService/CreateStream", connect_go.NewUnaryHandler(
+		"/casablanca.StreamService/CreateStream",
 		svc.CreateStream,
 		opts...,
-	)
-	streamServiceGetStreamHandler := connect_go.NewUnaryHandler(
-		StreamServiceGetStreamProcedure,
+	))
+	mux.Handle("/casablanca.StreamService/GetStream", connect_go.NewUnaryHandler(
+		"/casablanca.StreamService/GetStream",
 		svc.GetStream,
 		opts...,
-	)
-	streamServiceAddEventHandler := connect_go.NewUnaryHandler(
-		StreamServiceAddEventProcedure,
+	))
+	mux.Handle("/casablanca.StreamService/AddEvent", connect_go.NewUnaryHandler(
+		"/casablanca.StreamService/AddEvent",
 		svc.AddEvent,
 		opts...,
-	)
-	streamServiceSyncStreamsHandler := connect_go.NewServerStreamHandler(
-		StreamServiceSyncStreamsProcedure,
+	))
+	mux.Handle("/casablanca.StreamService/SyncStreams", connect_go.NewServerStreamHandler(
+		"/casablanca.StreamService/SyncStreams",
 		svc.SyncStreams,
 		opts...,
-	)
-	streamServiceInfoHandler := connect_go.NewUnaryHandler(
-		StreamServiceInfoProcedure,
+	))
+	mux.Handle("/casablanca.StreamService/Info", connect_go.NewUnaryHandler(
+		"/casablanca.StreamService/Info",
 		svc.Info,
 		opts...,
-	)
-	return "/casablanca.StreamService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		switch r.URL.Path {
-		case StreamServiceCreateStreamProcedure:
-			streamServiceCreateStreamHandler.ServeHTTP(w, r)
-		case StreamServiceGetStreamProcedure:
-			streamServiceGetStreamHandler.ServeHTTP(w, r)
-		case StreamServiceAddEventProcedure:
-			streamServiceAddEventHandler.ServeHTTP(w, r)
-		case StreamServiceSyncStreamsProcedure:
-			streamServiceSyncStreamsHandler.ServeHTTP(w, r)
-		case StreamServiceInfoProcedure:
-			streamServiceInfoHandler.ServeHTTP(w, r)
-		default:
-			http.NotFound(w, r)
-		}
-	})
+	))
+	return "/casablanca.StreamService/", mux
 }
 
 // UnimplementedStreamServiceHandler returns CodeUnimplemented from all methods.

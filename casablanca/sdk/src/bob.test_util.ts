@@ -1,8 +1,7 @@
 import { makeEvent, SignerContext, unpackEnvelopes } from './sign'
 import { MembershipOp, SyncStreamsResponse, Envelope } from '@towns/proto'
 import { DLogger } from './dlog'
-import { makeEvent_test, makeTestRpcClient, sendFlush } from './util.test'
-import _ from 'lodash'
+import { lastEventFiltered, makeEvent_test, makeTestRpcClient, sendFlush } from './util.test'
 import {
     genId,
     makeChannelStreamId,
@@ -113,8 +112,9 @@ export const bobTalksToHimself = async (
 
     // Now there must be "channel created" event in the space stream.
     const spaceResponse = await bob.getStream({ streamId: spacedStreamId })
-    const channelCreatePayload = getChannelPayload(
-        _.last(unpackEnvelopes(spaceResponse.stream!.events)),
+    const channelCreatePayload = lastEventFiltered(
+        unpackEnvelopes(spaceResponse.stream!.events),
+        getChannelPayload,
     )
     expect(channelCreatePayload).toBeDefined()
     expect(channelCreatePayload?.channelId).toEqual(channelId)
@@ -233,18 +233,19 @@ export const bobTalksToHimself = async (
         }),
     ).rejects.toThrow()
 
-    await maybeFlush()
-    const badEvent1 = await makeEvent_test(
-        bobsContext,
-        make_ChannelPayload_Message({ text: 'hello' }),
-        [badEvent.hash],
-    )
-    await expect(
-        bob.addEvent({
-            streamId: channelId,
-            event: badEvent1,
-        }),
-    ).rejects.toThrow()
+    // TODO: HNT-1843: Re-enable block-aware event duplicate checks
+    // await maybeFlush()
+    // const badEvent1 = await makeEvent_test(
+    //     bobsContext,
+    //     make_ChannelPayload_Message({ text: 'hello' }),
+    //     [badEvent.hash],
+    // )
+    // await expect(
+    //     bob.addEvent({
+    //         streamId: channelId,
+    //         event: badEvent1,
+    //     }),
+    // ).rejects.toThrow()
 
     log('done')
 }

@@ -385,6 +385,7 @@ message Key {
 message SyncCookie  {
     string stream_id = 1;
     int64 miniblock_num = 2;
+    // TODO: change to prev_miniblock_hash
     bytes miniblock_hash = 3;
 
     // minipool_instance is a unique identifier of a cookie generator. 
@@ -398,7 +399,7 @@ message SyncCookie  {
 message StreamAndCookie {
     repeated Envelope events = 1;
     SyncCookie next_sync_cookie = 2;
-    SyncCookie original_sync_cookie = 3;
+    SyncCookie original_sync_cookie = 3;  // TODO: rename to start_sync_cookie
     string stream_id = 4;
 }
 
@@ -475,4 +476,7 @@ enum Err {
     BAD_ARGS = 22;
     BAD_SYNC_COOKIE = 23;
     INTERNAL_ERROR = 24;
+    DUPLICATE_EVENT = 25;
+    BAD_BLOCK = 26;
+    STREAM_NO_INCEPTION_EVENT = 27;
 }

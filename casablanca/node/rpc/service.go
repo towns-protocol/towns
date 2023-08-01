@@ -55,7 +55,7 @@ func MakeServiceHandler(ctx context.Context, log *slog.Logger, dbUrl string, cha
 
 	s, h := protocolconnect.NewStreamServiceHandler(
 		&Service{
-			cache:         events.NewStreamCache(store),
+			cache:         events.NewStreamCache(&events.StreamCacheParams{Storage: store, Wallet: wallet, DefaultCtx: ctx}),
 			townsContract: contract,
 			wallet:        wallet,
 			log:           log,

@@ -23,18 +23,55 @@ func TestLoad(t *testing.T) {
 		[][]byte{inception.Hash},
 	)
 	assert.NoError(t, err)
+	block, err := MakeEnvelopeWithPayload(
+		wallet,
+		Make_MiniblockHeader(&protocol.MiniblockHeader{
+			MiniblockNum: 0,
+			Timestamp:    NextMiniblockTimestamp(nil),
+			EventHashes:  [][]byte{inception.Hash, join.Hash},
+		}),
+		[][]byte{join.Hash},
+	)
+	assert.NoError(t, err)
 
 	envelopes := []*protocol.Envelope{
 		inception,
 		join,
+		block,
 	}
 	view, err := MakeStreamView(envelopes)
 	assert.NoError(t, err)
 
-	assert.Equal(t, 2, len(view.Events()))
-	assert.Equal(t, 2, len(view.EventsByHash()))
-	assert.Equal(t, 1, len(view.LeafEvents()))
-	assert.Equal(t, 1, len(view.LeafEventHashes()))
+	assert.Equal(t, "streamid$1", view.StreamId())
+
+	i := view.InceptionEvent()
+	assert.NotNil(t, i)
+	assert.Equal(t, inception.Hash, i.Hash)
+
+	ip := view.InceptionPayload()
+	assert.NotNil(t, ip)
+	assert.Equal(t, "streamid$1", ip.GetStreamId())
+
+	users, err := view.JoinedUsers()
+	assert.NoError(t, err)
+	assert.NotNil(t, users["userid$1"])
+
+	last := view.LastEvent()
+	assert.NotNil(t, last)
+	assert.Equal(t, join.Hash, last.Hash)
+
+	newEnvelopes := view.Envelopes()
+	assert.Equal(t, 3, len(newEnvelopes))
+	assert.Equal(t, envelopes, newEnvelopes)
+
+	cookie := view.SyncCookie()
+	assert.NotNil(t, cookie)
+	assert.Equal(t, "streamid$1", cookie.StreamId)
+	assert.Equal(t, int64(1), cookie.MiniblockNum)
+	assert.Equal(t, int64(0), cookie.MinipoolSlot)
+
+	// Check minipool, should be empty
+	assert.Equal(t, 0, len(view.minipool.events.A))
 }
 
 // TODO: add negative tests
