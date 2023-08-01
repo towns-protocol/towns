@@ -22,7 +22,7 @@ export function getServiceWorkerJsDev(env: Env) {
             const data = event.data.json();
             const notification = data.content
             console.log('notification', notification);
-            title = notification.title;
+            title = notification.topic;
             options.body = JSON.stringify(notification.options.body);
           } catch (e) {
             console.error('handlePushNotification', e);
@@ -67,27 +67,36 @@ export function getDefaultRouteDev(request: Request, env: Env) {
     }
   }
 
+  const ALICE_ID = '0xAlice'
+  const SPACE_ID = '!spaceId-1'
+  const CHANNEL_ID = '!channelId-1'
   const html = `
   <!DOCTYPE html>
   <html lang="en">
   <head>
     <title>Push notifications client</title>
     <style>
+      h3 {
+        padding-top: 10px;
+        padding-bottom: 0px;
+        margin: 5px;
+      }
       textarea {
         display: block;
         height: 240px;
-        width: 480px;
+        width: 640px;
+        margin: 5px;
       }
       button {
         margin-right: 10px;
-        margin-top: 10px;
+        margin-top: 5px;
+        margin-bottom: 5px;
         min-width: 32px;
         min-height: 32px;
       }
   </style>  
   <script>
   const VAPID_PUBLIC_KEY = '${env.VAPID_PUBLIC_KEY}';
-  const ALICE_ID = 'alice-id';
   /* Push notification logic */
   async function registerServiceWorker() {
     try {
@@ -122,7 +131,7 @@ export function getDefaultRouteDev(request: Request, env: Env) {
       });
       console.log('Subscribed to push notifications.');
       console.log('Sending subscription to server...');
-      await postToServer('/api/add-subscription', { subscriptionObject: subscription, userId: ALICE_ID });
+      await sendToServer('/api/add-subscription', 'POST', { subscriptionObject: subscription, userId: '${ALICE_ID}' });
       console.log('Sent subscription to server.');
     } catch (e) {
       console.error('Subscription to push notifications failed ', e);
@@ -136,7 +145,7 @@ export function getDefaultRouteDev(request: Request, env: Env) {
       const registration = await navigator.serviceWorker.getRegistration();
       const subscription = await registration.pushManager.getSubscription();
       console.log('Sending unsubscribe request to server...');
-      await postToServer('/api/remove-subscription', { subscriptionObject: subscription, userId: ALICE_ID });
+      await sendToServer('/api/remove-subscription', 'POST', { subscriptionObject: subscription, userId: '${ALICE_ID}' });
       console.log('Sent unsubscribe request to server.');
       console.log('Unsubscribing from push notifications...')
       await subscription.unsubscribe();
@@ -148,25 +157,108 @@ export function getDefaultRouteDev(request: Request, env: Env) {
   }
 
   async function notify() {
+    const output = document.getElementById('output');
     const titleText = document.getElementById('notificationTitle');
     const bodyText = document.getElementById('notificationBody');
     const payload = {
       notificationType: 'new_message',
       content: {
-        title: titleText.value,
+        topic: titleText.value,
         options: {
           body: bodyText.value,
         }
       },
     };
+    const notifyParams = {
+      sender: '${ALICE_ID}',
+      users: ['${ALICE_ID}'], // send to self
+      payload,
+      spaceId: '${SPACE_ID}',
+      channelId: payload.content.topic,
+    };
     try {
       console.log('Sending notification to server...');
-      await postToServer('/api/notify-users', { payload, sender: ALICE_ID, users: [ALICE_ID] });
+      await sendToServer('/api/notify-users', 'POST', notifyParams);
       console.log('Sent notification to server.');
-      const output = document.getElementById('output');
       output.textContent += '\\n' + 'Notification sent:' + '\\n' + payload;
     } catch (e) {
       console.error('Sending notification to server failed ', e);
+    }
+  }
+
+  async function saveSettings() {
+    const output = document.getElementById('output');
+    const settingsText = document.getElementById('notificationSettingsBody');
+    const saveSettingsParams = toJsonFromString(settingsText.value);
+    if (!saveSettingsParams) {
+      output.textContent += '\\n' + 'Invalid JSON:\\n' + settingsText.value + '\\n';
+      return;
+    }
+    try {
+      console.log('Saving notification settings...');
+      const response = await sendToServer('/api/notification-settings', 'PUT', saveSettingsParams);
+      console.log('saveSettings response', response)
+      if (response.status >= 200 && response.status < 300) {
+        console.log('Saved notification settings.');
+        output.textContent += '\\nNotification settings saved.\\n';
+      } else {
+        console.error('Saving notification settings failed ', response);
+        output.textContent += '\\nSaving notification settings failed:\\n' + '{ status: ' + response.status + ', text: ' + response.statusText + ' }\\n';
+      }
+    } catch (e) {
+      console.error('Saving notfication settings failed ', e);
+    }
+  }
+
+  async function getSettings() {
+    const output = document.getElementById('output');
+    const getSettingsParams = {
+      userId: '${ALICE_ID}',
+    }
+    try {
+      console.log('Getting notification settings for ${ALICE_ID}...');
+      const response = await sendToServer('/api/get-notification-settings', 'POST', getSettingsParams);
+      console.log('getSettings response', response)
+      if (response.status >= 200 && response.status < 300) {
+        console.log('Got notification settings for ${ALICE_ID}');
+        const settings = await response.json();
+        output.textContent = 'Notification settings for ${ALICE_ID}:\\n' + JSON.stringify(settings, null, 2) + '\\n';
+      } else {
+        console.error('Getting notification settings failed ', response);
+        output.textContent += '\\nGetting notification settings failed:\\n' + '{ status: ' + response.status + ', text: ' + response.statusText + ' }\\n';
+      }
+    } catch (e) {
+      console.error('Attempt to get notfication settings failed ', e);
+    }
+  }
+
+  async function deleteSettings() {
+    const output = document.getElementById('output');
+    const deleteSettingsParams = {
+      userId: '${ALICE_ID}',
+    }
+    try {
+      console.log('Deleting notification settings for ${ALICE_ID}...');
+      const response = await sendToServer('/api/notification-settings', 'DELETE', deleteSettingsParams);
+      console.log('deleteSettings response', response)
+      if (response.status >= 200 && response.status < 300) {
+        console.log('Deleted notification settings for ${ALICE_ID}');
+        output.textContent = 'Deleted notification settings for ${ALICE_ID}\\n';
+      } else {
+        console.error('Deleting notification settings failed ', response);
+        output.textContent += '\\nDeleting notification settings failed:\\n' + '{ status: ' + response.status + ', text: ' + response.statusText + ' }\\n';
+      }
+    } catch (e) {
+      console.error('Attempt to delete notfication settings failed ', e);
+    }
+  }
+
+  function toJsonFromString(str) {
+    try {
+      return JSON.parse(str);
+    } catch (e) {
+      console.error('Parsing JSON failed ', e);
+      return null;
     }
   }
 
@@ -203,7 +295,7 @@ export function getDefaultRouteDev(request: Request, env: Env) {
     if (!subscription) {
       subscribeButton.disabled = false;
       unregisterButton.disabled = false;
-      output.textContent += 'Ready to subscribe this client to push.';
+      console.log('Ready to subscribe this client to push.');
       return;
     }
     // service worker is registered and subscribed for push
@@ -230,16 +322,22 @@ export function getDefaultRouteDev(request: Request, env: Env) {
     return outputArray; 
   }
 
-  async function postToServer(url, data) {
+  async function sendToServer(url, method, data) {
     const bearerToken = btoa('${env.AUTH_SECRET}')
     const response = await fetch(url, {
-      method: 'POST',
+      method,
       headers: {
         'Content-Type': 'application/json',
         Authorization: 'Bearer ' + bearerToken
       },
       body: JSON.stringify(data)
     });
+    return response;
+  }
+
+  function clearOutput() {
+    const output = document.getElementById('output');
+    output.textContent = '';
   }
 
   window.onload = updateUI;
@@ -249,22 +347,17 @@ export function getDefaultRouteDev(request: Request, env: Env) {
     <noscript>
       <p>Your JavaScript is disabled. This page requires JavaScript to work.</p>
     </noscript>
-    <p>Now: ${new Date()}</p>
-    <h3>Environment variables:</h3>
-    <p>
+    Now: ${new Date()}
+    <h3 padding-bottom='1em'>Environment variables:</h3>
     <ul>
       <li><code>VAPID public key: ${env.VAPID_PUBLIC_KEY}</code></li>
     </ul>
     <h3>Register / unregister Service Worker</h3>
-    <ul>
-      <li><button id="register" type="button" onclick="registerServiceWorker()">Register Service Worker</button></li>
-      <li><button id="unregister" type="button" onclick="unregisterServiceWorker()">Unregister Service Worker</button></li>
-    </ul>
+    <button id="register" type="button" onclick="registerServiceWorker()">Register Service Worker</button>
+    <button id="unregister" type="button" onclick="unregisterServiceWorker()">Unregister Service Worker</button>
     <h3>Subscribe to / unsubscribe from Push notification</h3>
-    <ul>
-      <li><button id="subscribe" type="button" onclick="subscribeToPush()">Subscribe to Push Notifications</button></li>
-      <li><button id="unsubscribe" type="button" onclick="unsubscribeFromPush()">Unsubscribe from Push Notifications</button></li>
-    </ul>
+    <button id="subscribe" type="button" onclick="subscribeToPush()">Subscribe to Push Notifications</button>
+    <button id="unsubscribe" type="button" onclick="unsubscribeFromPush()">Unsubscribe from Push Notifications</button>
     <h3>Trigger Push Notification</h3>
       <label for="title">Title:</label>
       <input type="text" id="notificationTitle" size="40" value="Hello Notifications!">
@@ -275,7 +368,25 @@ export function getDefaultRouteDev(request: Request, env: Env) {
       )}', channelId: '!channelid_${Math.floor(
     Math.random() * 100,
   )}' }</textarea>
+    <h3>Settings test area</h3>
+    <button id="saveSettings" type="button" onclick="saveSettings()">Save Settings</button>
+    <button id="getSettings" type="button" onclick="getSettings()">Get Settings</button>
+    <button id="deleteSettings" type="button" onclick="deleteSettings()">Delete Settings</button>
+    <br><textarea id="notificationSettingsBody">
+{
+  "userSettings": {
+    "userId": "${ALICE_ID}",
+    "spaceSettings": [
+      { "spaceId": "${SPACE_ID}", "spaceMembership": "joined", "spaceMute": "muted" }
+    ],
+    "channelSettings": [
+      { "spaceId": "${SPACE_ID}", "channelId": "${CHANNEL_ID}", "channelMembership": "joined", "channelMute": "muted" }
+    ]
+  }
+}    
+    </textarea>
     <h3>Output</h3>
+    <button id="clearOutput" type="button" onclick="clearOutput()">Clear</button>
     <textarea id="output" readonly></textarea>
   </body>
   </html>`

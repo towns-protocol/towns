@@ -38,6 +38,5 @@ CREATE TABLE IF NOT EXISTS UserSettingsChannel (
   UserId VARCHAR(255) NOT NULL,
   ChannelMembership VARCHAR(32), -- not-set, joined, left, banned, etc
   ChannelMute VARCHAR(32) NOT NULL DEFAULT 'default', -- mute, unmute, default
-  FOREIGN KEY(SpaceId) REFERENCES UserSettingsSpace(SpaceId),
   CONSTRAINT UserSettingsChannel_PK PRIMARY KEY (ChannelId, UserId)
 );

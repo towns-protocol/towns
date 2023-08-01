@@ -42,9 +42,9 @@ class SettingsSqlStatement {
       UserId=?1;`
 
   static DeleteUserSettingsChannel = `
-      DELETE FROM UserSettingsChannel
-      WHERE
-        UserId=?1;`
+    DELETE FROM UserSettingsChannel
+    WHERE
+      UserId=?1;`
 
   static InsertIntoUserSettingsSpace = `
     INSERT INTO UserSettingsSpace (
@@ -106,6 +106,8 @@ export async function saveSettings(
   db: D1Database,
   params: SaveSettingsRequestParams,
 ): Promise<Response> {
+  // default to success
+  let success = true
   const preparedStatements: D1PreparedStatement[] = []
   // add the prepared statements for updating the space settings
   addPreparedSpaceSettings(
@@ -121,79 +123,37 @@ export async function saveSettings(
     params.userSettings.userId,
     params.userSettings.channelSettings,
   )
-  // execute the prepared statements
-  const rows = await db.batch(preparedStatements)
-  // create the http response
-  let response: Response = create204Response()
-  if (rows.length > 0) {
-    if (
-      !rows.every((r) => {
-        if (!r.success) {
-          printDbResultInfo('saveSettings sql error', r)
-        }
-        return r.success
-      })
-    ) {
-      console.error('saveSettings every sql statements failed')
-      response = create422Response()
+  try {
+    // execute the prepared statements
+    const rows = await db.batch(preparedStatements)
+    // print debug info on error
+    if (rows.length > 0) {
+      if (
+        !rows.every((r) => {
+          if (!r.success) {
+            printDbResultInfo('saveSettings sql error', r)
+          }
+          return r.success
+        })
+      ) {
+        console.error('saveSettings one or more sql statements failed')
+        success = false
+      }
     }
+  } catch (e) {
+    console.error('saveSettings error', e)
+    success = false
   }
-  return response
-}
-
-function addPreparedSpaceSettings(
-  preparedStatements: D1PreparedStatement[],
-  db: D1Database,
-  userId: string,
-  spaceSettings: UserSettingsSpace[],
-) {
-  // first delete the existing space settings
-  const preparedDeleteSettings = preparedDeleteSettingsSpace(db, userId)
-  preparedStatements.push(preparedDeleteSettings)
-  // then insert the new space settings
-  const insertSettings = db.prepare(
-    SettingsSqlStatement.InsertIntoUserSettingsSpace,
-  )
-  for (const s of spaceSettings) {
-    const bindedNewSettings = insertSettings.bind(
-      s.spaceId,
-      userId,
-      s.spaceMembership,
-      s.spaceMute,
-    )
-    preparedStatements.push(bindedNewSettings)
-  }
-}
-
-function addPreparedChannelSettings(
-  preparedStatements: D1PreparedStatement[],
-  db: D1Database,
-  userId: string,
-  channelSettings: UserSettingsChannel[],
-) {
-  // first delete the existing channel settings
-  const preparedDeleteSettings = preparedDeleteSettingsChannel(db, userId)
-  preparedStatements.push(preparedDeleteSettings)
-  // then insert the new channel settings
-  const insertSettings = db.prepare(
-    SettingsSqlStatement.InsertIntoUserSettingsChannel,
-  )
-  for (const s of channelSettings) {
-    const bindedNewSettings = insertSettings.bind(
-      s.spaceId,
-      s.channelId,
-      userId,
-      s.channelMembership,
-      s.channelMute,
-    )
-    preparedStatements.push(bindedNewSettings)
-  }
+  // http response
+  return success ? create204Response() : create422Response()
 }
 
 export async function deleteSettings(
   db: D1Database,
   params: DeleteSettingsRequestParams,
 ): Promise<Response> {
+  // default to success
+  let success = true
   const preparedStatements: D1PreparedStatement[] = []
   const preparedDeleteSettingSpace = preparedDeleteSettingsSpace(
     db,
@@ -205,53 +165,35 @@ export async function deleteSettings(
   )
   preparedStatements.push(preparedDeleteSettingSpace)
   preparedStatements.push(preparedDeleteSettingChannel)
-  // execute the prepared statements
-  const rows = await db.batch(preparedStatements)
-  // create the http response
-  let response: Response = create204Response()
-  if (rows.length > 0) {
-    if (!rows[0].success) {
-      printDbResultInfo('deleteSettings sql error', rows[0])
-      response = create422Response()
+  try {
+    // execute the prepared statements
+    const rows = await db.batch(preparedStatements)
+    // print debug info on error
+    if (rows.length > 0) {
+      if (!rows[0].success) {
+        printDbResultInfo('deleteSettings rows[0] sql error', rows[0])
+        success = false
+      }
     }
+    if (rows.length > 1) {
+      if (!rows[1].success) {
+        printDbResultInfo('deleteSettings rows[1] sql error', rows[1])
+        success = false
+      }
+    }
+  } catch (e) {
+    console.error('deleteSettings error', e)
+    success = false
   }
-  return response
-}
-
-function preparedDeleteSettingsSpace(
-  db: D1Database,
-  userId: string,
-): D1PreparedStatement {
-  const preparedStatment = db.prepare(
-    SettingsSqlStatement.DeleteUserSettingsSpace,
-  )
-  return preparedStatment.bind(userId)
-}
-
-function preparedDeleteSettingsChannel(
-  db: D1Database,
-  userId: string,
-): D1PreparedStatement {
-  const preparedStatment = db.prepare(
-    SettingsSqlStatement.DeleteUserSettingsChannel,
-  )
-  return preparedStatment.bind(userId)
+  // http response
+  return success ? create204Response() : create422Response()
 }
 
 export async function getSettings(
   db: D1Database,
   params: GetSettingsRequestParams,
 ): Promise<Response> {
-  const preparedStatements: D1PreparedStatement[] = []
-  const preparedGetSettingSpace = preparedGetSettingsSpace(db, params.userId)
-  const preparedGetSettingChannel = preparedGetSettingsChannel(
-    db,
-    params.userId,
-  )
-  preparedStatements.push(preparedGetSettingSpace)
-  preparedStatements.push(preparedGetSettingChannel)
-  // execute the prepared statements
-  const rows = await db.batch(preparedStatements)
+  console.log(`getSettings params "${params.userId}"`)
   // create the default http response
   let success = true
   const userSettings: UserSettings = {
@@ -260,47 +202,61 @@ export async function getSettings(
     channelSettings: [],
   }
 
-  // get the space settings
-  if (rows.length > 0) {
-    if (rows[0].success) {
-      console.log('getSettings sql rows[0] success', rows[0])
-      userSettings.spaceSettings = rows[0].results.map(
-        (r): UserSettingsSpace => {
-          const queryResult = r as QueryResultUserSettingsSpace
-          return {
-            spaceId: queryResult.spaceId,
-            spaceMembership: queryResult.spaceMembership,
-            spaceMute: queryResult.spaceMute,
-          }
-        },
-      )
-    } else {
-      printDbResultInfo('getSettings sql rows[0] error', rows[0])
-      success = false
+  const preparedStatements: D1PreparedStatement[] = []
+  const preparedGetSettingSpace = preparedGetSettingsSpace(db, params.userId)
+  const preparedGetSettingChannel = preparedGetSettingsChannel(
+    db,
+    params.userId,
+  )
+  preparedStatements.push(preparedGetSettingSpace)
+  preparedStatements.push(preparedGetSettingChannel)
+  try {
+    // execute the prepared statements
+    const rows = await db.batch(preparedStatements)
+    // get the space settings
+    if (rows.length > 0) {
+      console.log('tak: rows[0]', rows[0].success, rows[0].results)
+      if (rows[0].success) {
+        userSettings.spaceSettings = rows[0].results.map(
+          (r): UserSettingsSpace => {
+            const queryResult = r as QueryResultUserSettingsSpace
+            return {
+              spaceId: queryResult.spaceId,
+              spaceMembership: queryResult.spaceMembership,
+              spaceMute: queryResult.spaceMute,
+            }
+          },
+        )
+      } else {
+        printDbResultInfo('getSettings rows[0] sql error', rows[0])
+        success = false
+      }
     }
-  }
-
-  // get the channel settings
-  if (rows.length > 1) {
-    if (rows[1].success) {
-      console.log('getSettings sql rows[1] success', rows[1])
-      userSettings.channelSettings = rows[0].results.map(
-        (r): UserSettingsChannel => {
-          const queryResult = r as QueryResultUserSettingsChannel
-          return {
-            spaceId: queryResult.spaceId,
-            channelId: queryResult.channelId,
-            channelMembership: queryResult.channelMembership,
-            channelMute: queryResult.channelMute,
-          }
-        },
-      )
-    } else {
-      printDbResultInfo('getSettings sql rows[1] error', rows[1])
-      success = false
+    // get the channel settings
+    if (rows.length > 1) {
+      console.log('tak: rows[1]', rows[1].success, rows[1].results)
+      if (rows[1].success) {
+        userSettings.channelSettings = rows[1].results.map(
+          (r): UserSettingsChannel => {
+            const queryResult = r as QueryResultUserSettingsChannel
+            return {
+              spaceId: queryResult.spaceId,
+              channelId: queryResult.channelId,
+              channelMembership: queryResult.channelMembership,
+              channelMute: queryResult.channelMute,
+            }
+          },
+        )
+      } else {
+        printDbResultInfo('getSettings rows[1] sql error', rows[1])
+        success = false
+      }
     }
+  } catch (e) {
+    console.error('getSettings error', e)
+    success = false
   }
-
+  // http response
   if (success) {
     return new Response(JSON.stringify(userSettings), {
       status: 200,
@@ -326,6 +282,77 @@ function preparedGetSettingsChannel(
 ): D1PreparedStatement {
   const preparedStatment = db.prepare(
     SettingsSqlStatement.SelectUserSettingsChannel,
+  )
+  return preparedStatment.bind(userId)
+}
+
+function addPreparedSpaceSettings(
+  preparedStatements: D1PreparedStatement[],
+  db: D1Database,
+  userId: string,
+  spaceSettings: UserSettingsSpace[],
+) {
+  if (spaceSettings.length === 0) {
+    // nothing to change.
+    return
+  }
+  // insert the new space settings
+  const insertSettings = db.prepare(
+    SettingsSqlStatement.InsertIntoUserSettingsSpace,
+  )
+  for (const s of spaceSettings) {
+    const bindedNewSettings = insertSettings.bind(
+      s.spaceId,
+      userId,
+      s.spaceMembership,
+      s.spaceMute,
+    )
+    preparedStatements.push(bindedNewSettings)
+  }
+}
+
+function addPreparedChannelSettings(
+  preparedStatements: D1PreparedStatement[],
+  db: D1Database,
+  userId: string,
+  channelSettings: UserSettingsChannel[],
+) {
+  if (channelSettings.length === 0) {
+    // nothing to change.
+    return
+  }
+  // insert the new channel settings
+  const insertSettings = db.prepare(
+    SettingsSqlStatement.InsertIntoUserSettingsChannel,
+  )
+  for (const s of channelSettings) {
+    const bindedNewSettings = insertSettings.bind(
+      s.spaceId,
+      s.channelId,
+      userId,
+      s.channelMembership,
+      s.channelMute,
+    )
+    preparedStatements.push(bindedNewSettings)
+  }
+}
+
+function preparedDeleteSettingsSpace(
+  db: D1Database,
+  userId: string,
+): D1PreparedStatement {
+  const preparedStatment = db.prepare(
+    SettingsSqlStatement.DeleteUserSettingsSpace,
+  )
+  return preparedStatment.bind(userId)
+}
+
+function preparedDeleteSettingsChannel(
+  db: D1Database,
+  userId: string,
+): D1PreparedStatement {
+  const preparedStatment = db.prepare(
+    SettingsSqlStatement.DeleteUserSettingsChannel,
   )
   return preparedStatment.bind(userId)
 }
