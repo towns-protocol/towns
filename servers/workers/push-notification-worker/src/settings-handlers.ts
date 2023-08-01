@@ -193,7 +193,6 @@ export async function getSettings(
   db: D1Database,
   params: GetSettingsRequestParams,
 ): Promise<Response> {
-  console.log(`getSettings params "${params.userId}"`)
   // create the default http response
   let success = true
   const userSettings: UserSettings = {
@@ -215,7 +214,6 @@ export async function getSettings(
     const rows = await db.batch(preparedStatements)
     // get the space settings
     if (rows.length > 0) {
-      console.log('tak: rows[0]', rows[0].success, rows[0].results)
       if (rows[0].success) {
         userSettings.spaceSettings = rows[0].results.map(
           (r): UserSettingsSpace => {
@@ -234,7 +232,6 @@ export async function getSettings(
     }
     // get the channel settings
     if (rows.length > 1) {
-      console.log('tak: rows[1]', rows[1].success, rows[1].results)
       if (rows[1].success) {
         userSettings.channelSettings = rows[1].results.map(
           (r): UserSettingsChannel => {

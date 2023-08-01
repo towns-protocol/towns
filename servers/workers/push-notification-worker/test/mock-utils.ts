@@ -100,6 +100,7 @@ export function mockPreparedStatements(DB: MockProxy<D1Database>) {
   const insertIntoUserSettingsChannel = mockDummyStatement()
   const deleteFromUserSettings = mockDummyStatement()
   const selectFromUserSettings = mockSelectFromUserSettings()
+  const selectUsersToNotify = mockDummyStatement()
 
   DB.prepare.mockImplementation((query: string) => {
     if (query.includes('SELECT') && query.includes('FROM PushSubscription')) {
@@ -128,6 +129,8 @@ export function mockPreparedStatements(DB: MockProxy<D1Database>) {
       query.includes('FROM UserSettings')
     ) {
       return selectFromUserSettings
+    } else if (query.includes('users to notify')) {
+      return selectUsersToNotify
     }
     return mockStatement
   })
@@ -154,6 +157,7 @@ export function mockPreparedStatements(DB: MockProxy<D1Database>) {
   )
 
   return {
+    mockStatement,
     insertIntoPushSubscription,
     deleteFromPushSubscription,
     selectFromPushSubscription,
@@ -164,7 +168,7 @@ export function mockPreparedStatements(DB: MockProxy<D1Database>) {
     insertIntoUserSettingsChannel,
     deleteFromUserSettings,
     selectFromUserSettings,
-    mockStatement,
+    selectUsersToNotify,
   }
 }
 

@@ -1,3 +1,5 @@
+import { Membership, Mute } from './types'
+
 import { Env } from 'index'
 
 /*
@@ -174,7 +176,7 @@ export function getDefaultRouteDev(request: Request, env: Env) {
       users: ['${ALICE_ID}'], // send to self
       payload,
       spaceId: '${SPACE_ID}',
-      channelId: payload.content.topic,
+      channelId: '${CHANNEL_ID}',
     };
     try {
       console.log('Sending notification to server...');
@@ -363,11 +365,7 @@ export function getDefaultRouteDev(request: Request, env: Env) {
       <input type="text" id="notificationTitle" size="40" value="Hello Notifications!">
       <button id="notify" type="button" onclick="notify()">Trigger Push Notification</button>
       <br><label for="notificationBody">Body:</label>
-      <br><textarea id="notificationBody">{ spaceId: '!spaceid_${Math.floor(
-        Math.random() * 100,
-      )}', channelId: '!channelid_${Math.floor(
-    Math.random() * 100,
-  )}' }</textarea>
+      <br><textarea id="notificationBody">{ spaceId: '${SPACE_ID}', channelId: '${CHANNEL_ID}' }' }</textarea>
     <h3>Settings test area</h3>
     <button id="saveSettings" type="button" onclick="saveSettings()">Save Settings</button>
     <button id="getSettings" type="button" onclick="getSettings()">Get Settings</button>
@@ -377,10 +375,14 @@ export function getDefaultRouteDev(request: Request, env: Env) {
   "userSettings": {
     "userId": "${ALICE_ID}",
     "spaceSettings": [
-      { "spaceId": "${SPACE_ID}", "spaceMembership": "joined", "spaceMute": "muted" }
+      { "spaceId": "${SPACE_ID}", "spaceMembership": "${
+    Membership.Joined
+  }", "spaceMute": "${Mute.Default}" }
     ],
     "channelSettings": [
-      { "spaceId": "${SPACE_ID}", "channelId": "${CHANNEL_ID}", "channelMembership": "joined", "channelMute": "muted" }
+      { "spaceId": "${SPACE_ID}", "channelId": "${CHANNEL_ID}", "channelMembership": "${
+    Membership.Joined
+  }", "channelMute": "${Mute.Default}" }
     ]
   }
 }    

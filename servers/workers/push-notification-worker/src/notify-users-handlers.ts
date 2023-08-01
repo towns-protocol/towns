@@ -5,10 +5,35 @@ import {
 import { TaggedUsers, getNotificationTags } from './tag-handlers'
 
 import { Env } from 'index'
-import { NotificationType } from './types'
+import { Mute, NotificationType } from './types'
 import { NotifyRequestParams } from './request-interfaces'
 import { isQueryResultSubscription } from './subscription-handlers'
 import { sendNotificationViaWebPush } from './web-push/send-notification'
+
+class NotifySqlStatement {
+  static SelectUsersToNotify = `
+    SELECT
+      DISTINCT c.UserId AS userId,
+      'users to notify' AS info
+    FROM
+      UserSettingsSpace s INNER JOIN UserSettingsChannel c
+      ON s.SpaceId = c.SpaceId AND s.UserId = c.UserId
+    WHERE
+      s.SpaceId = ?1 AND
+      c.ChannelId = ?2 AND
+      (
+        c.ChannelMute = '${Mute.Unmuted}' OR
+        (
+          s.SpaceMute <> '${Mute.Muted}' AND
+          c.ChannelMute <> '${Mute.Muted}'
+        )
+      );`
+}
+
+export interface QueryResultsUsersToNotify {
+  userId: string
+  info: string
+}
 
 export enum SendPushStatus {
   Success = 'success',
@@ -26,9 +51,9 @@ export interface SendPushResponse {
 export async function notifyUsers(params: NotifyRequestParams, env: Env) {
   const allNotificationRequests: Promise<SendPushResponse>[] = []
   const taggedUsers = await getNotificationTags(params.channelId, env.DB)
-  patchToEnsureSpecCompliance(params)
+  const usersToNotify = await getUsersToNotify(env.DB, taggedUsers, params)
   // gather all the notification requests into a single promise
-  for (const user of params.users) {
+  for (const user of usersToNotify) {
     const userParams = createUserSpecificParams(taggedUsers, params, user)
     const stmt = env.DB.prepare(
       PushSubscriptionSqlStatement.SelectPushSubscriptions,
@@ -95,16 +120,6 @@ export async function notifyUsers(params: NotifyRequestParams, env: Env) {
   return new Response(notificationsSentCount.toString(), { status: 200 })
 }
 
-function patchToEnsureSpecCompliance(params: NotifyRequestParams) {
-  // https://developer.apple.com/documentation/usernotifications/sending_web_push_notifications_in_web_apps_safari_and_other_browsers
-  const MAX_LENGTH = 32
-  const base64EncodedTopicWithMaxLength = btoa(params.channelId).substring(
-    0,
-    MAX_LENGTH,
-  )
-  params.channelId = base64EncodedTopicWithMaxLength
-}
-
 function createUserSpecificParams(
   taggedUsers: TaggedUsers,
   params: NotifyRequestParams,
@@ -117,4 +132,39 @@ function createUserSpecificParams(
     userParams.payload.notificationType = NotificationType.ReplyTo
   }
   return userParams
+}
+
+async function getUsersToNotify(
+  db: D1Database,
+  taggedUsers: TaggedUsers,
+  params: NotifyRequestParams,
+): Promise<string[]> {
+  // Notify users according to the following rules:
+  // 1. If the user is mentioned, notify them
+  // 2. If the user is participating in  a reply-to thread, notify them
+  // 3. If the user explicitly unmuted a channel, notify them
+  // 4. If the user is subscribed to the channel and neither the channel nor
+  // its parent is muted, notify them
+  const notifyUsers = new Set<string>()
+  params.users.forEach((user) => {
+    // Rules 1 and 2
+    if (
+      taggedUsers.mentionedUsers.includes(user) ||
+      taggedUsers.replyToUsers.includes(user)
+    ) {
+      notifyUsers.add(user)
+    }
+  })
+  // Rule 3 and 4 is captured in the sql query
+  const stmt = db
+    .prepare(NotifySqlStatement.SelectUsersToNotify)
+    .bind(params.spaceId, params.channelId)
+  const { results } = await stmt.all()
+  for (const result of results) {
+    const r = result as unknown as QueryResultsUsersToNotify
+    if (r.userId) {
+      notifyUsers.add(r.userId)
+    }
+  }
+  return Array.from(notifyUsers)
 }

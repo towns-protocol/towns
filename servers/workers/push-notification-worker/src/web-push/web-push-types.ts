@@ -12,7 +12,8 @@ export interface WebPushOptions {
   jwtData: JwtData
   payload: object
   ttl: number
-  topic?: string
+  channelId: string
+  topic: string
   urgency?: Urgency
 }
 

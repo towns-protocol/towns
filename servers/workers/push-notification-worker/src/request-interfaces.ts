@@ -49,7 +49,7 @@ export interface NotifyRequestParams {
   users: string[]
   payload: NotificationPayload
   spaceId: string
-  channelId: string // channelId
+  channelId: string
   /* push options */
   urgency?: Urgency
 }

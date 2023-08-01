@@ -53,7 +53,8 @@ export async function sendNotificationViaWebPush(
       vapidDetails,
       jwtData,
       payload: params.payload,
-      topic: params.channelId,
+      channelId: params.channelId,
+      topic: patchTopicToEnsureSpecCompliance(params.channelId),
       ttl,
       urgency: params.urgency ?? 'high',
     }
@@ -89,6 +90,13 @@ export async function sendNotificationViaWebPush(
       pushSubscription: subscribed.pushSubscription,
     }
   }
+}
+
+export function patchTopicToEnsureSpecCompliance(topic: string): string {
+  // https://developer.apple.com/documentation/usernotifications/sending_web_push_notifications_in_web_apps_safari_and_other_browsers
+  const MAX_LENGTH = 32
+  const base64EncodedTopicWithMaxLength = btoa(topic).substring(0, MAX_LENGTH)
+  return base64EncodedTopicWithMaxLength
 }
 
 async function createRequest(
