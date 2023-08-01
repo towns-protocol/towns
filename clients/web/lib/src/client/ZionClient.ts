@@ -69,6 +69,7 @@ import {
 import { SignerContext } from '@towns/sdk'
 import { sendMatrixMessage, sendMatrixNotice } from './matrix/SendMessage'
 import { toZionRoom, toZionUser } from '../store/use-matrix-store'
+import { toZionCasablancaUser } from '../store/use-casablanca-store'
 
 import { CryptoStore } from 'matrix-js-sdk/lib/crypto/store/base'
 import { ISpaceDapp } from './web3/ISpaceDapp'
@@ -2133,8 +2134,11 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
                 const matrixUser = this.matrixClient?.getUser(userId)
                 return matrixUser ? toZionUser(matrixUser) : undefined
             }
-            case SpaceProtocol.Casablanca:
-                throw new Error('not implemented')
+            case SpaceProtocol.Casablanca: {
+                //TODO: Make real implementation when user profile support will be implemented
+                const casablancaUser = this.casablancaClient?.userId
+                return toZionCasablancaUser(casablancaUser)
+            }
             default:
                 throw new Error('Unexpected primary protocol')
         }
