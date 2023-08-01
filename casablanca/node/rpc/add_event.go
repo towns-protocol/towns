@@ -120,8 +120,7 @@ func (s *Service) addParsedEvent(ctx context.Context, streamId string, parsedEve
 	case *StreamEvent_UserSettingsPayload:
 		switch payload.UserSettingsPayload.Content.(type) {
 		case *UserSettingsPayload_Inception_:
-			_, err = stream.AddEvent(ctx, parsedEvent)
-			return err
+			return status.Errorf(codes.InvalidArgument, "AddEvent: event is an inception event")
 		case *UserSettingsPayload_FullyReadMarkers_:
 			_, err = stream.AddEvent(ctx, parsedEvent)
 			return err
