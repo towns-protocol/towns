@@ -77,6 +77,7 @@ type Props = {
     channels: Channel[]
     members: RoomMember[]
     userId?: string
+    isFullWidthOnTouch?: boolean
 } & Pick<BoxProps, 'background'>
 
 const fieldClassName = clsx([fieldStyles.field, styles.richText])
@@ -220,6 +221,7 @@ const RichTextEditorWithoutBoundary = (props: Props) => {
         editing: isEditing,
         onSend,
         tabIndex,
+        isFullWidthOnTouch,
     } = props
 
     const { transformers } = useTransformers({ members, channels })
@@ -266,7 +268,12 @@ const RichTextEditorWithoutBoundary = (props: Props) => {
     }
 
     return (
-        <Box background="level2" rounded="sm">
+        <Box
+            background="level2"
+            rounded={{ default: 'sm', touch: isFullWidthOnTouch ? 'none' : 'sm' }}
+            borderTop={{ default: 'none', touch: isFullWidthOnTouch ? 'default' : 'none' }}
+            insetBottom={isTouch ? 'safeArea' : 'none'}
+        >
             <LexicalComposer initialConfig={initialConfig}>
                 <RichTextUI
                     focused={focused}

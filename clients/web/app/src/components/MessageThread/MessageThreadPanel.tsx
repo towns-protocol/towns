@@ -75,7 +75,7 @@ export const MessageThreadPanel = (props: Props) => {
                 </MessageTimelineWrapper>
 
                 {isChannelWritable && (
-                    <Box paddingY="none" paddingX="md" style={{ position: 'sticky', bottom: 0 }}>
+                    <Box paddingX="md" position="sticky" bottom={isTouch ? 'sm' : 'none'}>
                         <RichTextEditor
                             autoFocus={!isTouch}
                             editable={!!isChannelWritable}

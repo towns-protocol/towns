@@ -213,8 +213,13 @@ const SpacesChannelComponent = () => {
                             highlightId={messageId || highlightId}
                         />
                     </MessageTimelineWrapper>
-                    <Box gap paddingBottom="lg" paddingX={isTouch ? 'md' : 'lg'}>
+                    <Box
+                        gap
+                        paddingBottom={isTouch ? 'none' : 'lg'}
+                        paddingX={isTouch ? 'none' : 'lg'}
+                    >
                         <RichTextEditor
+                            isFullWidthOnTouch
                             editable={!!isChannelWritable}
                             background={isChannelWritable ? 'level2' : 'level1'}
                             displayButtons={isTouch ? 'on-focus' : 'never'}

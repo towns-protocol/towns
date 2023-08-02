@@ -118,6 +118,7 @@ const TouchPanel = (props: Props) => {
                     background="level1"
                     zIndex="tooltips"
                     height="100svh"
+                    overflowX="hidden"
                 >
                     {/* this box makes sure the UI below doesn't bleed through while spring animating */}
                     <Box
