@@ -622,7 +622,9 @@ contract CreateTownTest is TownFactoryTest, ITownArchitectEvents {
     (address initAddress, bytes memory initPayload) = _makeFactoryInitData();
 
     vm.prank(deployer);
-    vm.expectRevert(Initializable_AlreadyInitialized.selector);
+    vm.expectRevert(
+      abi.encodeWithSelector(Initializable_AlreadyInitialized.selector, 1)
+    );
     IDiamondCut(townFactory).diamondCut(cuts, initAddress, initPayload);
   }
 }

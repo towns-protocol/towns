@@ -13,6 +13,7 @@ library InitializableStorage {
 
   struct Layout {
     uint8 initialized;
+    bool initializing;
   }
 
   function layout() internal pure returns (Layout storage s) {
