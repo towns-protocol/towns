@@ -1,7 +1,10 @@
 import { create } from 'zustand'
 
 import { AuthenticationError, LoginStatus } from '../hooks/login'
-import { User } from '../types/zion-types'
+import { User, RoomMember, Room, Membership } from '../types/zion-types'
+import { makeRoomIdentifier } from '../types/room-identifier'
+
+import { Client as CasablancaClient, isSpaceStreamId, isChannelStreamId } from '@towns/sdk'
 
 export type CasablancaStoreStates = {
     loginStatus: LoginStatus
@@ -29,6 +32,7 @@ export const useCasablancaStore = create<CasablancaStoreStates>((set) => ({
     setLoginError: (error: AuthenticationError | undefined) => set({ loginError: error ?? null }),
 }))
 
+//TODO: implement in a proper way with all fields assigned correctly
 export function toZionCasablancaUser(theUser: string | undefined): User {
     return {
         userId: theUser ?? '',
@@ -38,4 +42,140 @@ export function toZionCasablancaUser(theUser: string | undefined): User {
         lastPresenceTs: 0,
         currentlyActive: true,
     }
+}
+
+/**
+ * Get room entity filled with data for specific stream. Applicable for Channels and Spaces stream only.
+ * @param streamId - The streamId of the channel or space.
+ * @param client - The Casablanca client.
+ * @returns Room entity filled with data for specific stream. Throw error if membership is not valid or streamId is not associated with a channel or space.
+ */
+export function toZionCasablancaRoom(streamId: string, client: CasablancaClient): Room {
+    //reject if client is not defined
+    if (!client) {
+        throw new Error('Client not defined')
+    }
+
+    //reject if streamId is not associated with a channel or space
+    if (!isSpaceStreamId(streamId) && !isChannelStreamId(streamId)) {
+        throw new Error('Invalid streamId: ' + streamId)
+    }
+
+    const { members, membersMap } = toZionMembers(streamId, client)
+
+    //Room topic is available only for channels
+    let topic: string | undefined = undefined
+    let name: string
+    if (isChannelStreamId(streamId)) {
+        const parentSpace = client.streams.get(streamId)?.view.parentSpaceId
+        if (parentSpace === undefined) {
+            throw new Error('Parent space not found for streamId: ' + streamId)
+        }
+        name = client.streams.get(parentSpace)?.view.spaceChannelsMetadata.get(streamId)?.name ?? ''
+        topic = client.streams.get(parentSpace)?.view.spaceChannelsMetadata.get(streamId)?.topic
+    } else {
+        name = client.streams.get(streamId)?.view.name ?? ''
+    }
+
+    return {
+        id: makeRoomIdentifier(streamId),
+        name: name,
+        membership: Membership.Join,
+        inviter: undefined,
+        members: members,
+        membersMap: membersMap,
+        isSpaceRoom: isSpaceStreamId(streamId),
+        topic: topic,
+    }
+}
+
+/**
+ * Get a list of joined members for specific channel or space. Applicable for Channels and Spaces stream only.
+ * @param streamId - The streamId of the channel or space.
+ * @param client - The Casablanca client.
+ * @returns A list of members joined space or channel. Throw error if membership is not valid or streamId is not associated with a channel or space.
+ */
+function toZionMembers(
+    streamId: string,
+    client: CasablancaClient,
+): {
+    members: RoomMember[]
+    membersMap: { [userId: string]: RoomMember }
+} {
+    //reject if client is not defined
+    if (!client) {
+        throw new Error('Client not defined')
+    }
+
+    //reject if streamId is not associated with a channel or space
+    if (!isSpaceStreamId(streamId) && !isChannelStreamId(streamId)) {
+        throw new Error('Invalid streamId: ' + streamId)
+    }
+
+    const members: RoomMember[] = getMembersWithMembership(Membership.Join, streamId, client)
+
+    const membersMap = members.reduce((result, x) => {
+        result[x.userId] = x
+        return result
+    }, {} as { [userId: string]: RoomMember })
+    return { members, membersMap }
+}
+
+/**
+ * Get a list of members with given membership state. Applicable for Channels and Spaces stream only.
+ * @param membership - The membership state.
+ * @param streamId - The streamId of the channel or space.
+ * @param client - The Casablanca client.
+ * @returns A list of members with the given membership state. Throw error if membership is not valid or streamId is not associated with a channel or space.
+ */
+
+function getMembersWithMembership(
+    membership: Membership,
+    streamId: string,
+    client: CasablancaClient,
+): RoomMember[] {
+    //reject if client is not defined
+    if (!client) {
+        throw new Error('Client not defined')
+    }
+    //reject if streamId is not associated with a channel or space
+    if (!isSpaceStreamId(streamId) && !isChannelStreamId(streamId)) {
+        throw new Error('Invalid streamId: ' + streamId)
+    }
+
+    const members: RoomMember[] = []
+
+    let users: Set<string>
+
+    const stream = client.streams.get(streamId)
+    if (!stream) {
+        throw new Error('Stream not found')
+    } else {
+        switch (membership) {
+            case Membership.Join: {
+                users = stream.view.joinedUsers
+                break
+            }
+            case Membership.Invite: {
+                users = stream.view.invitedUsers
+                break
+            }
+            default: {
+                throw new Error('Invalid membership type: ' + membership)
+            }
+        }
+    }
+
+    //TODO: construct roommembers from userId in a proper way
+    users.forEach((userId) => {
+        members.push({
+            userId: userId,
+            name: userId,
+            rawDisplayName: userId,
+            membership: membership,
+            disambiguate: false,
+            avatarUrl: '',
+        })
+    })
+    return members
 }
