@@ -2,12 +2,6 @@ import {
   AddSubscriptionRequestParams,
   NotifyRequestParams,
 } from '../src/request-interfaces'
-import { Membership, Mute, NotificationType } from '../src/types'
-import {
-  QueryResultUserSettings,
-  QueryResultUserSettingsChannel,
-  QueryResultUserSettingsSpace,
-} from '../src/settings-handlers'
 import {
   createRequest,
   createTestMocks,
@@ -15,7 +9,8 @@ import {
 } from './mock-utils'
 
 import { MockProxy } from 'jest-mock-extended'
-import { QueryResultsUsersToNotify } from '../src/notify-users-handlers'
+import { NotificationType } from '../src/types'
+import { QueryResultsMutedUsers } from '../src/notify-users-handlers'
 import { WebPushSubscription } from '../src/web-push/web-push-types'
 import { createFakeWebPushSubscription } from './fake-data'
 import { handleRequest } from '../src'
@@ -46,18 +41,11 @@ describe('notify-users-handlers', () => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(addParams),
     })
-    const { selectUsersToNotify: mockStatement } = mockPreparedStatements(DB)
+    const { selectMutedUsers: mockStatement } = mockPreparedStatements(DB)
     // add the subscription
     await handleRequest(addRequest, env, ctx)
     // mock the query results for the user settings
-    // notify the user
-    const usersToNotify: QueryResultsUsersToNotify[] = [
-      {
-        userId: recipient,
-        info: '',
-      },
-    ]
-    mockSelectUsersToNotify(mockStatement, usersToNotify)
+    mockMutedUsers(mockStatement, [])
     const bindSpy = jest.spyOn(mockStatement, 'bind')
 
     // Act
@@ -132,13 +120,12 @@ describe('notify-users-handlers', () => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(addParams),
     })
-    const { selectUsersToNotify: mockStatement } = mockPreparedStatements(DB)
+    const { selectMutedUsers: mockStatement } = mockPreparedStatements(DB)
     // add the subscription
     await handleRequest(addRequest, env, ctx)
     // mock the query results for the user settings
     // notification is muted. No users to notify.
-    const usersToNotify: QueryResultsUsersToNotify[] = []
-    mockSelectUsersToNotify(mockStatement, usersToNotify)
+    mockMutedUsers(mockStatement, [recipient])
     const bindSpy = jest.spyOn(mockStatement, 'bind')
 
     // Act
@@ -189,19 +176,22 @@ describe('notify-users-handlers', () => {
   })
 })
 
-function mockSelectUsersToNotify(
+function mockMutedUsers(
   mockStatement: MockProxy<D1PreparedStatement>,
-  queryResults: QueryResultsUsersToNotify[],
+  mutedUsers: string[],
 ): MockProxy<D1PreparedStatement> {
-  const results: QueryResultsUsersToNotify[] = []
+  const results: QueryResultsMutedUsers[] = []
   mockStatement.bind.mockImplementation(() => {
-    queryResults.forEach((r) => {
-      results.push(r)
+    mutedUsers.forEach((r) => {
+      results.push({
+        userId: r,
+        info: 'muted users',
+      })
     })
     return mockStatement
   })
   mockStatement.all.mockResolvedValue({
-    results: results as unknown as QueryResultsUsersToNotify[][],
+    results: results as unknown as QueryResultsMutedUsers[][],
     success: true,
     meta: {},
   })

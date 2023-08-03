@@ -11,26 +11,26 @@ import { isQueryResultSubscription } from './subscription-handlers'
 import { sendNotificationViaWebPush } from './web-push/send-notification'
 
 class NotifySqlStatement {
-  static SelectUsersToNotify = `
+  // select all the users that have muted the town or channel
+  static SelectMutedUsers = `
     SELECT
-      DISTINCT c.UserId AS userId,
-      'users to notify' AS info
+      DISTINCT UserId AS userId,
+      'muted users' AS info
     FROM
-      UserSettingsSpace s INNER JOIN UserSettingsChannel c
-      ON s.SpaceId = c.SpaceId AND s.UserId = c.UserId
+      UserSettingsSpace
     WHERE
-      s.SpaceId = ?1 AND
-      c.ChannelId = ?2 AND
-      (
-        c.ChannelMute = '${Mute.Unmuted}' OR
-        (
-          s.SpaceMute <> '${Mute.Muted}' AND
-          c.ChannelMute <> '${Mute.Muted}'
-        )
-      );`
+      SpaceId = ?1 AND SpaceMute = '${Mute.Muted}'
+    UNION
+    SELECT
+      DISTINCT UserId AS userId,
+      'muted users' AS info
+    FROM
+      UserSettingsChannel
+    WHERE
+      SpaceId = ?1 AND ChannelId = ?2 AND ChannelMute = '${Mute.Muted}';`
 }
 
-export interface QueryResultsUsersToNotify {
+export interface QueryResultsMutedUsers {
   userId: string
   info: string
 }
@@ -141,11 +141,14 @@ async function getUsersToNotify(
 ): Promise<string[]> {
   // Notify users according to the following rules:
   // 1. If the user is mentioned, notify them
-  // 2. If the user is participating in  a reply-to thread, notify them
-  // 3. If the user explicitly unmuted a channel, notify them
-  // 4. If the user is subscribed to the channel and neither the channel nor
-  // its parent is muted, notify them
+  // 2. If the user is participating in a reply-to thread, notify them
+  // 3. If the user muted the town or channel, do not notify them
   const notifyUsers = new Set<string>()
+  const stmt = db
+    .prepare(NotifySqlStatement.SelectMutedUsers)
+    .bind(params.spaceId, params.channelId)
+  const { results } = await stmt.all()
+  const mutedUsers = results as unknown[] as QueryResultsMutedUsers[]
   params.users.forEach((user) => {
     // Rules 1 and 2
     if (
@@ -154,17 +157,10 @@ async function getUsersToNotify(
     ) {
       notifyUsers.add(user)
     }
-  })
-  // Rule 3 and 4 is captured in the sql query
-  const stmt = db
-    .prepare(NotifySqlStatement.SelectUsersToNotify)
-    .bind(params.spaceId, params.channelId)
-  const { results } = await stmt.all()
-  for (const result of results) {
-    const r = result as unknown as QueryResultsUsersToNotify
-    if (r.userId) {
-      notifyUsers.add(r.userId)
+    // Rule 3
+    if (!mutedUsers.some((mutedUser) => mutedUser.userId === user)) {
+      notifyUsers.add(user)
     }
-  }
+  })
   return Array.from(notifyUsers)
 }
