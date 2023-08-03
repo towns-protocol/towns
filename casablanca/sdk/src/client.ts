@@ -10,7 +10,6 @@ import {
     ChannelMessage_Post_Content_Text,
     ChannelMessage_Post_Content_Image,
     ChannelMessage_Post_Content_GM,
-    ChannelMessage_Post_Content_BlockTxn,
     ChannelMessage_Reaction,
     ChannelMessage_Redaction,
     StreamEvent,
@@ -820,25 +819,6 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
                 ...options,
                 content: {
                     case: 'gm',
-                    value: content,
-                },
-            },
-        })
-    }
-
-    async sendChannelMessage_BlockTxn(
-        streamId: string,
-        payload: Omit<PlainMessage<ChannelMessage_Post>, 'content'> & {
-            content: PlainMessage<ChannelMessage_Post_Content_BlockTxn>
-        },
-    ): Promise<void> {
-        const { content, ...options } = payload
-        return this.sendChannelMessage(streamId, {
-            case: 'post',
-            value: {
-                ...options,
-                content: {
-                    case: 'blockTxn',
                     value: content,
                 },
             },

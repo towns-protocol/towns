@@ -272,7 +272,7 @@ describe('useCreateChannelTransactionHook', () => {
         await waitFor(() => expect(transactions).toHaveTextContent('0'))
 
         if (getPrimaryProtocol() === SpaceProtocol.Matrix) {
-            // todo: evan, figure out if we need this for casablanca/river
+            // we don't we need this for casablanca/river
             await waitFor(() => expect(blockchainEvents).toHaveTextContent('1'))
         }
 

@@ -22,7 +22,6 @@ import {
     useTimelineStore,
 } from '../../store/use-timeline-store'
 import {
-    BlockchainTransactionEvent,
     getFallbackContent,
     ReactionEvent,
     RoomMessageEvent,
@@ -31,8 +30,6 @@ import {
     TimelineEvent_OneOf,
     ZTEvent,
 } from '../../types/timeline-types'
-import { BlockchainTransactionType } from '../../types/web3-types'
-import { Address } from 'wagmi'
 import { staticAssertNever } from '../../utils/zion-utils'
 
 type SuccessResult = {
@@ -422,18 +419,6 @@ function toTownsContent_ChannelPayload_Message_Post(
                 } satisfies RoomMessageEvent,
             }
 
-        case 'blockTxn':
-            return {
-                content: {
-                    kind: ZTEvent.BlockchainTransaction,
-                    inReplyTo: value.threadId,
-                    threadPreview: value.threadPreview,
-                    content: {
-                        hash: value.content.value.hash as Address,
-                        type: value.content.value.type as BlockchainTransactionType,
-                    },
-                } satisfies BlockchainTransactionEvent,
-            }
         case 'gm':
             return {
                 content: {

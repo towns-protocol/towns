@@ -53,7 +53,6 @@ import {
     RoomVisibility,
     SendMessageOptions,
     SendTextMessageOptions,
-    ThreadIdOptions,
     UpdateChannelInfo,
     User,
 } from '../types/zion-types'
@@ -1698,11 +1697,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
         }
     }
 
-    public async sendBlockTxn(
-        roomId: RoomIdentifier,
-        txn: BlockchainTransactionEvent,
-        threadIdOptions?: ThreadIdOptions,
-    ) {
+    public async sendBlockTxn(roomId: RoomIdentifier, txn: BlockchainTransactionEvent) {
         switch (roomId.protocol) {
             case SpaceProtocol.Matrix:
                 if (!this.matrixClient) {
@@ -1711,17 +1706,8 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
                 await sendMatrixNotice(this.matrixClient, roomId, txn)
                 break
             case SpaceProtocol.Casablanca:
-                if (!this.casablancaClient) {
-                    throw new Error('Casablanca client not initialized')
-                }
-
-                await this.casablancaClient.sendChannelMessage_BlockTxn(roomId.networkId, {
-                    ...threadIdOptions,
-                    content: {
-                        type: txn.content.type,
-                        hash: txn.content.hash,
-                    },
-                })
+                // blockchain transactions are not necessary, we can
+                // just listen for channel events in the space stream
                 break
             default:
                 staticAssertNever(roomId)
