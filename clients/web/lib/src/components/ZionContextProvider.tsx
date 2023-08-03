@@ -30,6 +30,7 @@ import { QueryProvider } from './QueryProvider'
 import { MatrixClient } from 'matrix-js-sdk'
 import { Client as CasablancaClient } from '@towns/sdk'
 import { useCasablancaTimelines } from '../hooks/ZionContext/useCasablancaTimelines'
+import { useCasablancaRooms } from '../hooks/ZionContext/useCasablancaRooms'
 import { ethers } from 'ethers'
 import merge from 'lodash/merge'
 import { useLoggedInWalletAddress } from '../hooks/use-logged-in-wallet-address'
@@ -137,7 +138,13 @@ const ContextImpl = (props: Props): JSX.Element => {
         enableSpaceRootUnreads === true,
     )
 
-    const rooms = useMatrixRooms(matrixClient)
+    const matrixRooms = useMatrixRooms(matrixClient)
+    const casablancaRooms = useCasablancaRooms(casablancaClient)
+    const rooms: Record<string, Room | undefined> = {
+        ...matrixRooms,
+        ...casablancaRooms,
+    }
+
     useMatrixTimelines(matrixClient)
     useCasablancaTimelines(casablancaClient)
     const matrixOnboardingState = useOnboardingState_Matrix(client, matrixClient)
