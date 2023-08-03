@@ -66,7 +66,7 @@ func (s *Service) addParsedEvent(ctx context.Context, streamId string, parsedEve
 	// make sure the stream event is of the same type as the inception event
 	err = streamEvent.VerifyPayloadTypeMatchesStreamType(streamView.InceptionPayload())
 	if err != nil {
-		return status.Errorf(codes.InvalidArgument, "AddEvent: %v", err)
+		return status.Errorf(codes.InvalidArgument, "streamId: %s AddEvent: %v", streamId, err)
 	}
 
 	// custom business logic...
