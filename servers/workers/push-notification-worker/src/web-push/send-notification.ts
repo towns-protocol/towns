@@ -13,13 +13,12 @@ import {
 
 import { Env } from 'index'
 import { JwtData } from './jwt'
-import { NotifyRequestParams } from '../request-interfaces'
+import { PushOptions } from '../types'
 import { QueryResultSubscription } from '../subscription-handlers'
 import { base64ToUrlEncoding } from './utils'
 
 export async function sendNotificationViaWebPush(
-  userId: string,
-  params: NotifyRequestParams,
+  options: PushOptions,
   subscribed: QueryResultSubscription,
   env: Env,
 ): Promise<SendPushResponse> {
@@ -37,7 +36,7 @@ export async function sendNotificationViaWebPush(
       return {
         status: SendPushStatus.Error,
         message: 'cannot parse subscription',
-        userId,
+        userId: options.userId,
         pushSubscription: subscribed.pushSubscription,
       }
     }
@@ -52,11 +51,11 @@ export async function sendNotificationViaWebPush(
     const pushOptions: WebPushOptions = {
       vapidDetails,
       jwtData,
-      payload: params.payload,
-      channelId: params.channelId,
-      topic: patchTopicToEnsureSpecCompliance(params.channelId),
+      payload: options.payload,
+      channelId: options.channelId,
+      topic: patchTopicToEnsureSpecCompliance(options.channelId),
       ttl,
-      urgency: params.urgency ?? 'high',
+      urgency: options.urgency ?? 'high',
     }
 
     // create the request to send to the push service
@@ -69,7 +68,7 @@ export async function sendNotificationViaWebPush(
       requestUrl: request.url,
       status: response.status,
       message: await response.text(),
-      userId,
+      userId: options.userId,
     })
 
     return {
@@ -77,7 +76,7 @@ export async function sendNotificationViaWebPush(
         status >= 200 && status <= 204
           ? SendPushStatus.Success
           : SendPushStatus.Error,
-      userId,
+      userId: options.userId,
       pushSubscription: subscribed.pushSubscription,
     }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -86,7 +85,7 @@ export async function sendNotificationViaWebPush(
     return {
       status: SendPushStatus.Error,
       message: e.message,
-      userId,
+      userId: options.userId,
       pushSubscription: subscribed.pushSubscription,
     }
   }

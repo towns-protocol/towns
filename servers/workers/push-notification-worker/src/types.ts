@@ -141,3 +141,10 @@ function isUserSettingsChannelArray(args: any): args is UserSettingsChannel[] {
     Array.isArray(args) && args.every((item) => isUserSettingsChannel(item))
   )
 }
+
+export interface PushOptions {
+  userId: string // recipient
+  channelId: string
+  payload: NotificationPayload
+  urgency?: Urgency
+}

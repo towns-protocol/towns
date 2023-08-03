@@ -1,3 +1,4 @@
+import { Mute, NotificationType, PushOptions } from './types'
 import {
   PushSubscriptionSqlStatement,
   deletePushSubscription,
@@ -5,7 +6,6 @@ import {
 import { TaggedUsers, getNotificationTags } from './tag-handlers'
 
 import { Env } from 'index'
-import { Mute, NotificationType } from './types'
 import { NotifyRequestParams } from './request-interfaces'
 import { isQueryResultSubscription } from './subscription-handlers'
 import { sendNotificationViaWebPush } from './web-push/send-notification'
@@ -54,7 +54,7 @@ export async function notifyUsers(params: NotifyRequestParams, env: Env) {
   const usersToNotify = await getUsersToNotify(env.DB, taggedUsers, params)
   // gather all the notification requests into a single promise
   for (const user of usersToNotify) {
-    const userParams = createUserSpecificParams(taggedUsers, params, user)
+    const userOptions = createUserSpecificParams(taggedUsers, params, user)
     const stmt = env.DB.prepare(
       PushSubscriptionSqlStatement.SelectPushSubscriptions,
     ).bind(user)
@@ -65,7 +65,7 @@ export async function notifyUsers(params: NotifyRequestParams, env: Env) {
           switch (subscription.pushType) {
             case 'web-push':
               allNotificationRequests.push(
-                sendNotificationViaWebPush(user, userParams, subscription, env),
+                sendNotificationViaWebPush(userOptions, subscription, env),
               )
               break
             default:
@@ -124,14 +124,19 @@ function createUserSpecificParams(
   taggedUsers: TaggedUsers,
   params: NotifyRequestParams,
   userId: string,
-): NotifyRequestParams {
-  const userParams = { ...params }
-  if (taggedUsers.mentionedUsers.includes(userId)) {
-    userParams.payload.notificationType = NotificationType.Mention
-  } else if (taggedUsers.replyToUsers.includes(userId)) {
-    userParams.payload.notificationType = NotificationType.ReplyTo
+): PushOptions {
+  const userOptions: PushOptions = {
+    userId,
+    channelId: params.channelId,
+    payload: { ...params.payload },
+    urgency: params.urgency,
   }
-  return userParams
+  if (taggedUsers.mentionedUsers.includes(userId)) {
+    userOptions.payload.notificationType = NotificationType.Mention
+  } else if (taggedUsers.replyToUsers.includes(userId)) {
+    userOptions.payload.notificationType = NotificationType.ReplyTo
+  }
+  return userOptions
 }
 
 async function getUsersToNotify(
