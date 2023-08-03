@@ -29,6 +29,7 @@ on:
 
 jobs:
     Dendrite:
+        permissions: write-all
         if: github.event_name != 'workflow_dispatch' || !inputs.skip_dendrite
         runs-on: ubuntu-latest-8-cores
         timeout-minutes: 30
@@ -136,6 +137,7 @@ jobs:
                   SLACK_MESSAGE: 'CI Failure on ${{ github.repository }}'
 
     Casablanca_Client_NoAuth:
+        permissions: write-all
         if: github.event_name != 'workflow_dispatch' || !inputs.skip_casablanca_client_noauth
         runs-on: ubuntu-latest-8-cores
         timeout-minutes: 30
@@ -280,6 +282,7 @@ jobs:
                   SLACK_MESSAGE: 'CI Failure on ${{ github.repository }}'
 
     Casablanca_Client_Auth:
+        permissions: write-all
         if: github.event_name != 'workflow_dispatch' || !inputs.skip_casablanca_client_auth
         runs-on: ubuntu-latest-8-cores
         timeout-minutes: 30
@@ -421,6 +424,7 @@ jobs:
                   SLACK_MESSAGE: 'CI Failure on ${{ github.repository }}'
 
     Casablanca_Node:
+        permissions: write-all
         if: github.event_name != 'workflow_dispatch' || !inputs.skip_casablanca_node
         runs-on: ubuntu-latest-8-cores
         timeout-minutes: 30
