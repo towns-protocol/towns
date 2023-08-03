@@ -2,7 +2,6 @@ import React, { useCallback, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
     Channel,
-    useOptionalChannelId,
     useSpaceId,
     useSpaceThreadRootsUnreadCount,
     useSpaceUnread,
@@ -13,7 +12,8 @@ import { Box, Button, Icon, IconName, MotionStack, Stack, Text } from '@ui'
 import { TouchLayoutDropdownMenu } from '@components/TouchLayoutNavigationBar/TouchLayoutDropdownMenu'
 import { usePushNotifications } from 'hooks/usePushNotifications'
 import { transitions } from 'ui/transitions/transitions'
-import { useMuteSettings } from 'store/useMuteSettings'
+import { useMuteSettings } from 'api/lib/notificationSettings'
+import { useChannelIdFromPathname } from 'hooks/useChannelIdFromPathname'
 
 type ValueType = Channel | 'threads' | 'mentions'
 type Props = {
@@ -25,12 +25,13 @@ export const TouchLayoutNavigationBar = (props: Props) => {
     const { displayNotificationBanner, requestPushPermission, denyPushPermission } =
         usePushNotifications()
     const [dropDownOpen, setDropDownOpen] = useState(false)
-    const channelId = useOptionalChannelId()
     const spaceId = useSpaceId()
 
-    const { mutedChannels, mutedSpaces } = useMuteSettings()
-    const isMuted =
-        mutedChannels[channelId?.networkId ?? ''] || mutedSpaces[spaceId?.networkId ?? '']
+    const { channelIsMuted, spaceIsMuted } = useMuteSettings({
+        spaceId: spaceId?.networkId,
+        channelId: useChannelIdFromPathname(),
+    })
+    const isMuted = channelIsMuted || spaceIsMuted
 
     const hasSpaceUnread = useSpaceUnread()
     const unreadThreadsCount = useSpaceThreadRootsUnreadCount()

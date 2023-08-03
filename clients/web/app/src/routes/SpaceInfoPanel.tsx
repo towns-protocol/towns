@@ -45,7 +45,11 @@ import { useDevice } from 'hooks/useDevice'
 import { MembersPageTouchModal } from '@components/MembersPage/MembersPage'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { useAuth } from 'hooks/useAuth'
-import { useMuteSettings } from 'store/useMuteSettings'
+import {
+    toggleMuteSetting,
+    useMuteSettings,
+    useSetMuteSettingForChannelOrSpace,
+} from 'api/lib/notificationSettings'
 import { useContractSpaceInfo } from '../hooks/useContractSpaceInfo'
 import { useEnvironment } from '../hooks/useEnvironmnet'
 import { env } from '../utils/environment'
@@ -152,15 +156,21 @@ export const SpaceInfoPanel = () => {
     })
 
     const spaceID = useSpaceId()
-    const { mutedSpaces, setSpaceMuted } = useMuteSettings()
-    const spaceIsMuted = spaceID ? mutedSpaces[spaceID.networkId] : false
+    const { spaceIsMuted, spaceMuteSetting } = useMuteSettings({
+        spaceId: spaceID?.networkId,
+    })
+    const { mutate: mutateNotificationSettings } = useSetMuteSettingForChannelOrSpace()
 
     const onToggleSpaceMuted = useCallback(() => {
         if (!spaceID) {
             return
         }
-        setSpaceMuted(spaceID.networkId, !spaceIsMuted)
-    }, [spaceID, setSpaceMuted, spaceIsMuted])
+        // setSpaceMuted(spaceID.networkId, !spaceIsMuted)
+        mutateNotificationSettings({
+            spaceId: spaceID.networkId,
+            muteSetting: toggleMuteSetting(spaceMuteSetting),
+        })
+    }, [spaceID, mutateNotificationSettings, spaceMuteSetting])
 
     const onMembersClick = useCallback(() => {
         if (isTouch) {

@@ -17,7 +17,11 @@ import { Icon, Panel, PanelButton, Paragraph, Stack } from '@ui'
 import { PATHS } from 'routes'
 import { useAuth } from 'hooks/useAuth'
 import { useDevice } from 'hooks/useDevice'
-import { useMuteSettings } from 'store/useMuteSettings'
+import {
+    toggleMuteSetting,
+    useMuteSettings,
+    useSetMuteSettingForChannelOrSpace,
+} from 'api/lib/notificationSettings'
 import { ChannelMembersModal } from './SpaceChannelDirectoryPanel'
 
 export const ChannelInfoPanel = () => {
@@ -44,10 +48,10 @@ export const ChannelInfoPanel = () => {
     })
 
     const onLeaveClick = useEvent(async () => {
-        if (!channel) {
+        if (!channel || !spaceData) {
             return
         }
-        await leaveRoom(channel?.id)
+        await leaveRoom(channel.id, spaceData.id.networkId)
         navigate(`/${PATHS.SPACES}/${spaceData?.id.slug}`)
     })
 
@@ -72,17 +76,23 @@ export const ChannelInfoPanel = () => {
     const onUpdatedChannel = useCallback(() => {
         onHideChannelSettingsPopup()
     }, [onHideChannelSettingsPopup])
+    const { mutate: mutateNotificationSettings } = useSetMuteSettingForChannelOrSpace()
 
-    const { mutedChannels, setChannelMuted, mutedSpaces } = useMuteSettings()
-    const channelIsMuted = channel?.id ? mutedChannels[channel.id.networkId] : false
-    const spaceIsMuted = spaceData?.id ? mutedSpaces[spaceData.id.networkId] : false
+    const { channelIsMuted, spaceIsMuted, channelMuteSetting } = useMuteSettings({
+        spaceId: spaceData?.id.networkId,
+        channelId: channel?.id.networkId,
+    })
 
     const onToggleChannelMuted = useCallback(() => {
-        if (!channel) {
+        if (!spaceData || !channel) {
             return
         }
-        setChannelMuted(channel.id.networkId, !channelIsMuted)
-    }, [channel, setChannelMuted, channelIsMuted])
+        mutateNotificationSettings({
+            spaceId: spaceData.id.networkId,
+            channelId: channel.id.networkId,
+            muteSetting: toggleMuteSetting(channelMuteSetting),
+        })
+    }, [channel, channelMuteSetting, mutateNotificationSettings, spaceData])
 
     const info = useMemo(
         () => [
@@ -126,6 +136,7 @@ export const ChannelInfoPanel = () => {
                     <>
                         <PanelButton
                             disabled={spaceIsMuted}
+                            cursor={spaceIsMuted ? 'default' : 'pointer'}
                             opacity={spaceIsMuted ? '0.5' : 'opaque'}
                             onClick={onToggleChannelMuted}
                         >

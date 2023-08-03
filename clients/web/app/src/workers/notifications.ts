@@ -8,7 +8,6 @@ import {
 
 import { appNotificationFromPushEvent, pathFromAppNotification } from './notificationParsers'
 import { env } from '../utils/environment'
-import { getServiceWorkerMuteSettings } from '../store/useMuteSettings'
 import { startDB } from '../idb/notificationsMeta'
 
 let idbChannels: ReturnType<typeof startDB>['idbChannels'] | undefined = undefined
@@ -120,18 +119,6 @@ export function handleNotifications(worker: ServiceWorkerGlobalScope) {
 
             if (!notification) {
                 console.log("sw: ''worker couldn't parse notification")
-                return
-            }
-
-            const { mutedChannels, mutedSpaces } = await getServiceWorkerMuteSettings()
-
-            if (mutedSpaces[notification.content.spaceId]) {
-                console.log('sw: Space is muted, not showing notification')
-                return
-            }
-
-            if (mutedChannels[notification.content.channelId]) {
-                console.log('sw: Channel is muted, not showing notification')
                 return
             }
 

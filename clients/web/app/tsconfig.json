@@ -16,7 +16,10 @@
             "@components/*": ["components/*"],
             "@ui": ["ui/components"],
             "@unfurl-worker/types": ["../../../../servers/workers/unfurl-worker/src/types"],
-            "@token-worker/types": ["../../../../servers/workers/token-worker/src/types"]
+            "@token-worker/types": ["../../../../servers/workers/token-worker/src/types"],
+            "@push-notification-worker/*": [
+                "../../../../servers/workers/push-notification-worker/src/*"
+            ]
         },
         "resolveJsonModule": true,
         "skipLibCheck": true,

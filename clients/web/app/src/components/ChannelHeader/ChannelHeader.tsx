@@ -6,7 +6,7 @@ import { Box, Button, Icon, Paragraph, Stack, Text } from '@ui'
 import { useDevice } from 'hooks/useDevice'
 import { TouchLayoutNavigationBar } from '@components/TouchLayoutNavigationBar/TouchLayoutNavigationBar'
 import { usePushNotifications } from 'hooks/usePushNotifications'
-import { useMuteSettings } from 'store/useMuteSettings'
+import { useMuteSettings } from 'api/lib/notificationSettings'
 
 type Props = {
     channel: Channel
@@ -26,9 +26,13 @@ const DesktopChannelHeader = (props: Props) => {
     const { channel, spaceId } = props
     const { displayNotificationBanner, requestPushPermission, denyPushPermission } =
         usePushNotifications()
-    const topic = useRoom(channel?.id)?.topic
-    const { mutedChannels, mutedSpaces } = useMuteSettings()
-    const isMuted = mutedChannels[channel.id.networkId] || mutedSpaces[spaceId.networkId]
+    const topic = useRoom(channel.id)?.topic
+
+    const { channelIsMuted, spaceIsMuted } = useMuteSettings({
+        spaceId: spaceId.networkId,
+        channelId: channel.id.networkId,
+    })
+    const isMuted = channelIsMuted || spaceIsMuted
 
     return (
         <Stack gap>
