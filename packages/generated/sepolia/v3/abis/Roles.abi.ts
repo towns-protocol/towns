@@ -1,0 +1,377 @@
+export default [
+  {
+    "inputs": [],
+    "name": "ChannelService__ChannelDisabled",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "ChannelService__ChannelDoesNotExist",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "ChannelService__RoleDoesNotExist",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "EntitlementsService__EntitlementDoesNotExist",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "EntitlementsService__InvalidEntitlementAddress",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "EntitlementsService__InvalidEntitlementInterface",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "EntitlementsService__NotAllowed",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "RolesService__EntitlementAlreadyExists",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "RolesService__EntitlementDoesNotExist",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "RolesService__InvalidEntitlementAddress",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "RolesService__InvalidPermission",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "RolesService__PermissionAlreadyExists",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "RolesService__PermissionDoesNotExist",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "RolesService__RoleDoesNotExist",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "Validator__InvalidByteLength",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "Validator__InvalidStringLength",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "roleId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "string[]",
+        "name": "permissions",
+        "type": "string[]"
+      }
+    ],
+    "name": "addPermissionsToRole",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "roleId",
+        "type": "uint256"
+      },
+      {
+        "components": [
+          {
+            "internalType": "address",
+            "name": "module",
+            "type": "address"
+          },
+          {
+            "internalType": "bytes",
+            "name": "data",
+            "type": "bytes"
+          }
+        ],
+        "internalType": "struct IRolesStructs.CreateEntitlement",
+        "name": "entitlement",
+        "type": "tuple"
+      }
+    ],
+    "name": "addRoleToEntitlement",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "roleName",
+        "type": "string"
+      },
+      {
+        "internalType": "string[]",
+        "name": "permissions",
+        "type": "string[]"
+      },
+      {
+        "components": [
+          {
+            "internalType": "address",
+            "name": "module",
+            "type": "address"
+          },
+          {
+            "internalType": "bytes",
+            "name": "data",
+            "type": "bytes"
+          }
+        ],
+        "internalType": "struct IRolesStructs.CreateEntitlement[]",
+        "name": "entitlements",
+        "type": "tuple[]"
+      }
+    ],
+    "name": "createRole",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "roleId",
+        "type": "uint256"
+      }
+    ],
+    "name": "getPermissionsByRoleId",
+    "outputs": [
+      {
+        "internalType": "string[]",
+        "name": "permissions",
+        "type": "string[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "roleId",
+        "type": "uint256"
+      }
+    ],
+    "name": "getRoleById",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "id",
+            "type": "uint256"
+          },
+          {
+            "internalType": "string",
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "internalType": "bool",
+            "name": "disabled",
+            "type": "bool"
+          },
+          {
+            "internalType": "string[]",
+            "name": "permissions",
+            "type": "string[]"
+          },
+          {
+            "internalType": "address[]",
+            "name": "entitlements",
+            "type": "address[]"
+          }
+        ],
+        "internalType": "struct IRolesStructs.Role",
+        "name": "",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getRoles",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "id",
+            "type": "uint256"
+          },
+          {
+            "internalType": "string",
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "internalType": "bool",
+            "name": "disabled",
+            "type": "bool"
+          },
+          {
+            "internalType": "string[]",
+            "name": "permissions",
+            "type": "string[]"
+          },
+          {
+            "internalType": "address[]",
+            "name": "entitlements",
+            "type": "address[]"
+          }
+        ],
+        "internalType": "struct IRolesStructs.Role[]",
+        "name": "",
+        "type": "tuple[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "roleId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "string[]",
+        "name": "permissions",
+        "type": "string[]"
+      }
+    ],
+    "name": "removePermissionsFromRole",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "roleId",
+        "type": "uint256"
+      }
+    ],
+    "name": "removeRole",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "roleId",
+        "type": "uint256"
+      },
+      {
+        "components": [
+          {
+            "internalType": "address",
+            "name": "module",
+            "type": "address"
+          },
+          {
+            "internalType": "bytes",
+            "name": "data",
+            "type": "bytes"
+          }
+        ],
+        "internalType": "struct IRolesStructs.CreateEntitlement",
+        "name": "entitlement",
+        "type": "tuple"
+      }
+    ],
+    "name": "removeRoleFromEntitlement",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "roleId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "string",
+        "name": "roleName",
+        "type": "string"
+      },
+      {
+        "internalType": "string[]",
+        "name": "permissions",
+        "type": "string[]"
+      },
+      {
+        "components": [
+          {
+            "internalType": "address",
+            "name": "module",
+            "type": "address"
+          },
+          {
+            "internalType": "bytes",
+            "name": "data",
+            "type": "bytes"
+          }
+        ],
+        "internalType": "struct IRolesStructs.CreateEntitlement[]",
+        "name": "entitlements",
+        "type": "tuple[]"
+      }
+    ],
+    "name": "updateRole",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  }
+] as const

@@ -1,0 +1,511 @@
+{
+  "compiler": {
+    "version": "0.8.20+commit.a1b79de6"
+  },
+  "language": "Solidity",
+  "output": {
+    "abi": [
+      {
+        "inputs": [],
+        "name": "ChannelService__ChannelAlreadyExists",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "ChannelService__ChannelDisabled",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "ChannelService__ChannelDoesNotExist",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "ChannelService__RoleAlreadyExists",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "ChannelService__RoleDoesNotExist",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "EntitlementsService__NotAllowed",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "Validator__InvalidStringLength",
+        "type": "error"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": false,
+            "internalType": "uint8",
+            "name": "version",
+            "type": "uint8"
+          }
+        ],
+        "name": "Initialized",
+        "type": "event"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "string",
+            "name": "channelId",
+            "type": "string"
+          },
+          {
+            "internalType": "uint256",
+            "name": "roleId",
+            "type": "uint256"
+          }
+        ],
+        "name": "addRoleToChannel",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "string",
+            "name": "channelId",
+            "type": "string"
+          },
+          {
+            "internalType": "string",
+            "name": "metadata",
+            "type": "string"
+          },
+          {
+            "internalType": "uint256[]",
+            "name": "roleIds",
+            "type": "uint256[]"
+          }
+        ],
+        "name": "createChannel",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "string",
+            "name": "channelId",
+            "type": "string"
+          }
+        ],
+        "name": "getChannel",
+        "outputs": [
+          {
+            "components": [
+              {
+                "internalType": "string",
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "internalType": "bool",
+                "name": "disabled",
+                "type": "bool"
+              },
+              {
+                "internalType": "string",
+                "name": "metadata",
+                "type": "string"
+              },
+              {
+                "internalType": "uint256[]",
+                "name": "roleIds",
+                "type": "uint256[]"
+              }
+            ],
+            "internalType": "struct IChannelStructs.Channel",
+            "name": "channel",
+            "type": "tuple"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "getChannels",
+        "outputs": [
+          {
+            "components": [
+              {
+                "internalType": "string",
+                "name": "id",
+                "type": "string"
+              },
+              {
+                "internalType": "bool",
+                "name": "disabled",
+                "type": "bool"
+              },
+              {
+                "internalType": "string",
+                "name": "metadata",
+                "type": "string"
+              },
+              {
+                "internalType": "uint256[]",
+                "name": "roleIds",
+                "type": "uint256[]"
+              }
+            ],
+            "internalType": "struct IChannelStructs.Channel[]",
+            "name": "channels",
+            "type": "tuple[]"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "string",
+            "name": "channelId",
+            "type": "string"
+          }
+        ],
+        "name": "removeChannel",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "string",
+            "name": "channelId",
+            "type": "string"
+          },
+          {
+            "internalType": "uint256",
+            "name": "roleId",
+            "type": "uint256"
+          }
+        ],
+        "name": "removeRoleFromChannel",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "string",
+            "name": "channelId",
+            "type": "string"
+          },
+          {
+            "internalType": "string",
+            "name": "metadata",
+            "type": "string"
+          },
+          {
+            "internalType": "bool",
+            "name": "disabled",
+            "type": "bool"
+          }
+        ],
+        "name": "updateChannel",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      }
+    ],
+    "devdoc": {
+      "kind": "dev",
+      "methods": {
+        "addRoleToChannel(string,uint256)": {
+          "params": {
+            "roleId": "the roleId to add to the channel"
+          }
+        },
+        "createChannel(string,string,uint256[])": {
+          "params": {
+            "channelId": "the channelId of the channel",
+            "metadata": "the metadata of the channel",
+            "roleIds": "the roleIds to add to the channel"
+          }
+        },
+        "getChannel(string)": {
+          "params": {
+            "channelId": "the channelId to get"
+          },
+          "returns": {
+            "channel": "the channel"
+          }
+        },
+        "getChannels()": {
+          "returns": {
+            "channels": "an array of all channels"
+          }
+        },
+        "removeChannel(string)": {
+          "params": {
+            "channelId": "the channelId to remove"
+          }
+        },
+        "removeRoleFromChannel(string,uint256)": {
+          "params": {
+            "channelId": "the channelId to remove the role from",
+            "roleId": "the roleId to remove from the channel"
+          }
+        },
+        "updateChannel(string,string,bool)": {
+          "params": {
+            "channelId": "the channelId to update",
+            "disabled": "whether or not the channel is disabled",
+            "metadata": "the new metadata of the channel"
+          }
+        }
+      },
+      "version": 1
+    },
+    "userdoc": {
+      "kind": "user",
+      "methods": {
+        "createChannel(string,string,uint256[])": {
+          "notice": "creates a channel"
+        },
+        "getChannel(string)": {
+          "notice": "gets a channel"
+        },
+        "getChannels()": {
+          "notice": "gets all channels"
+        },
+        "removeChannel(string)": {
+          "notice": "removes a channel"
+        },
+        "removeRoleFromChannel(string,uint256)": {
+          "notice": "removes a role from a channel"
+        },
+        "updateChannel(string,string,bool)": {
+          "notice": "updates a channel"
+        }
+      },
+      "version": 1
+    }
+  },
+  "settings": {
+    "compilationTarget": {
+      "packages/contracts/src/towns/facets/channels/Channels.sol": "Channels"
+    },
+    "evmVersion": "paris",
+    "libraries": {},
+    "metadata": {
+      "appendCBOR": false,
+      "bytecodeHash": "none"
+    },
+    "optimizer": {
+      "enabled": true,
+      "runs": 200
+    },
+    "remappings": [
+      ":@openzeppelin/=lib/openzeppelin-contracts/",
+      ":@prb/test/=lib/prb-test/src/",
+      ":@towns/=node_modules/@towns/",
+      ":ERC721A/=lib/ERC721A/contracts/",
+      ":contracts/=packages/contracts/",
+      ":council/=lib/council/contracts/",
+      ":ds-test/=lib/ds-test/src/",
+      ":erc4626-tests/=lib/operator-filter-registry/lib/openzeppelin-contracts/lib/erc4626-tests/",
+      ":forge-std/=lib/forge-std/src/",
+      ":openzeppelin-contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/",
+      ":openzeppelin-contracts/=lib/openzeppelin-contracts/",
+      ":operator-filter-registry/=lib/operator-filter-registry/",
+      ":prb-test/=lib/prb-test/src/"
+    ]
+  },
+  "sources": {
+    "lib/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol": {
+      "keccak256": "0xab28a56179c1db258c9bf5235b382698cb650debecb51b23d12be9e241374b68",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://daae589a9d6fa7e55f99f86c0a16796ca490f243fb3693632c3711c0646c1d56",
+        "dweb:/ipfs/QmR3zpd7wNw3rcUdekwiv6FYHJqksuTCXLVioTxu6Fbxk3"
+      ]
+    },
+    "lib/openzeppelin-contracts/contracts/utils/Address.sol": {
+      "keccak256": "0xf96f969e24029d43d0df89e59d365f277021dac62b48e1c1e3ebe0acdd7f1ca1",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://ec772b45a624be516f1c81970caa8a2e144301e9d0921cbc1a2789fef39a1269",
+        "dweb:/ipfs/QmNyjwxCrGhQMyzLD93oUobJXVe9ceJvRvfXwbEtuxPiEj"
+      ]
+    },
+    "lib/openzeppelin-contracts/contracts/utils/introspection/IERC165.sol": {
+      "keccak256": "0x447a5f3ddc18419d41ff92b3773fb86471b1db25773e07f877f548918a185bf1",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://be161e54f24e5c6fae81a12db1a8ae87bc5ae1b0ddc805d82a1440a68455088f",
+        "dweb:/ipfs/QmP7C3CHdY9urF4dEMb9wmsp1wMxHF6nhA2yQE5SKiPAdy"
+      ]
+    },
+    "lib/openzeppelin-contracts/contracts/utils/structs/EnumerableSet.sol": {
+      "keccak256": "0xc3ff3f5c4584e1d9a483ad7ced51ab64523201f4e3d3c65293e4ca8aeb77a961",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://d7d3dd6067a994690471b5fc71b6f81fac3847798b37d404f74db00b4d3c3d0e",
+        "dweb:/ipfs/QmRHF1RarifjNi93RttouNPkYZGyu6CD926PgRDzD5iL35"
+      ]
+    },
+    "packages/contracts/src/diamond/facets/initializable/Initializable.sol": {
+      "keccak256": "0x0f23dfef4c7e54cd01d3d46b2c8226b93c1d4715132f1df1ce76b349b97dfd90",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://8dee642217f0e4bfa06cbcfbdfedfb30dc021aaa091a4bbc86abbe719babb442",
+        "dweb:/ipfs/QmQb6UEnUGVYDPbEB9VX2SwifCspdyEE8dxTTbtwT7Nbqk"
+      ]
+    },
+    "packages/contracts/src/diamond/facets/initializable/InitializableStorage.sol": {
+      "keccak256": "0x45ee66345f1a03f553d96f182e5dc4b5f04364cf79dd593813c33b4455cbc1dd",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://436bb9360939f0658ec75f2048b778c695f7c0a943c27f5e54aac2ec9898bb67",
+        "dweb:/ipfs/QmZpEcRjWSF42ptNbNf3JckuMxcmgsK5xmnEAXVer6f6Dp"
+      ]
+    },
+    "packages/contracts/src/diamond/facets/introspection/IERC165.sol": {
+      "keccak256": "0x58edff5c7238d9d543c9611a4446c50128cb74f469d143d0f7828b9e22d278e7",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://90c2ce08be09894c3ffc8ebdbb4c78d4c14e00fdcc2f6ccf12ea6b6ab067ad1f",
+        "dweb:/ipfs/QmVg7hTxFt9Wt3ghGcY9ZxQuYPd99ujG1f9o7BnvhR15TZ"
+      ]
+    },
+    "packages/contracts/src/diamond/facets/ownable/token/TokenOwnableService.sol": {
+      "keccak256": "0x2c7c3a8dab7a2df427d8e2308479bda133ae087cad424f57158c2f80e4f6b002",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://8c5aaebaf78cb9f0123c9b3c06a5ccdb36db5154afec9e58d69266ac2371d3d2",
+        "dweb:/ipfs/QmaeK8XXgTNztuvK7forU3irLxCV7yjZTmx1Ms4zKP8RqB"
+      ]
+    },
+    "packages/contracts/src/diamond/facets/ownable/token/TokenOwnableStorage.sol": {
+      "keccak256": "0x2b2faf5bcef525168a81dae1dee57bb1bfc528eb9a0bacb1b3254947d309be53",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://688eebe7a7c0979410684bba7e8b141264bfc5a06464e49d87916be51447aee3",
+        "dweb:/ipfs/QmbPHUGMG9tRrnRfRPE8LWySd1pgjb8c7G6mMzTS7VuRCY"
+      ]
+    },
+    "packages/contracts/src/diamond/facets/pausable/PausableService.sol": {
+      "keccak256": "0x52fcddf400039ee33960f3296578a31f420a5f689e45ce8f550058cbb5065346",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://965b0df3ccf92fbd2e9d8324ce0b7258c73d6b9a7ca4517d78f64bb838de4197",
+        "dweb:/ipfs/QmZkcT61oD8xxYeMXF1dCK3mfHh5iHRow8URJfgvci4kXY"
+      ]
+    },
+    "packages/contracts/src/diamond/facets/pausable/PausableStorage.sol": {
+      "keccak256": "0x3a165ce6df5c2f3a4d02fb3feca8121cc697f418fb935520d5c6198141d9b44f",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://a53c0be8eb3bf4d4312c0f3a93c33772fef87ace9302320a881a810f3d04abfe",
+        "dweb:/ipfs/QmUGj6BkHSHDVWP5DELc9tLP57myr5JbR7wm6dTqLb2jMA"
+      ]
+    },
+    "packages/contracts/src/spaces/libraries/Permissions.sol": {
+      "keccak256": "0xa5c44d5d9ffdd2edacd86eff2a9a1f75f54d7fd907135871331b1bfeb13dae00",
+      "license": "UNLICENSED",
+      "urls": [
+        "bzz-raw://7d55d07d1f4dd34458e949b3378c57c84cacb258047c2569fabeec6ae9e1258f",
+        "dweb:/ipfs/QmRFUtyD1LWdtxvobZ1f6kF7DcaJVpPvafbzUVzv4grjtE"
+      ]
+    },
+    "packages/contracts/src/towns/entitlements/IEntitlement.sol": {
+      "keccak256": "0x3f9ece409fddb53843218cb1a742face8577de97e9e9257f882d40c556ce0263",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://3e0c6972be5a1b9f13bead1486f33e1264560cd5e70e44a2f225924846b47541",
+        "dweb:/ipfs/Qmcqoufht7VmmUxpKTdZ9aHcs4sC6us45pirBaUqnL1VtH"
+      ]
+    },
+    "packages/contracts/src/towns/facets/channels/ChannelBase.sol": {
+      "keccak256": "0xa5309111031efc9482c013d7eda235e588da8ba0010f57813210d357e1c6bc1b",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://2965bae91308a05a582afd9a7b126d738fef75b56320d3da827d459f38da9acc",
+        "dweb:/ipfs/QmR89Zdmd4hkWtx4dpCb8UJJFn8LK1CeTPqtK4EqLqrmXw"
+      ]
+    },
+    "packages/contracts/src/towns/facets/channels/ChannelService.sol": {
+      "keccak256": "0x98f8d61536db55698d19d594f60af6eb4ffa3b3aa83a92a10d6accc7a6d0fdb1",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://9ea48b97f1faef8e245b13ef801e97196db173cb9b820167b069e3e7ac0e55c7",
+        "dweb:/ipfs/QmeZjsYZxCXtQ3M7QFbiwcJC7KZxtHfvhdWwYrBhceyJVY"
+      ]
+    },
+    "packages/contracts/src/towns/facets/channels/ChannelStorage.sol": {
+      "keccak256": "0x4e27eb0ae6252a8ab1bf0e168412ea03c70f7f03ac4bf13990447524921bf3db",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://d909c6bfb5b9ab46639b070e479da3968e338d60fbf768f449d6ee517bc26337",
+        "dweb:/ipfs/QmP2FxnUzgCG6iK5gZw6opdFVCTSaP1ZeeedHrSt3ZbPYg"
+      ]
+    },
+    "packages/contracts/src/towns/facets/channels/Channels.sol": {
+      "keccak256": "0x9489df98a553aac7e39c046d7184af35b357ea1299f34069926093bc968923ba",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://316a90917393c07ba35e8292a3a08c506a4fb70d4b0db7edd9ac65be66f59bb8",
+        "dweb:/ipfs/QmX9EKmLyEyg8nL1BALJm58hdCaAdpD6AvBopjab8e5osP"
+      ]
+    },
+    "packages/contracts/src/towns/facets/channels/IChannel.sol": {
+      "keccak256": "0x6da27a2752fe01f9c303e4c0d4416e13c47b58150f31dc16dbd7349be5fb58b6",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://eefacbe131f470cafa4b78ca28c0e98e46f6177e6466467de558462165a09321",
+        "dweb:/ipfs/Qmd1EquyaYAmRTNgdnwqftG2LGWp1ZX6qB9JaPKTvCfUUh"
+      ]
+    },
+    "packages/contracts/src/towns/facets/entitlements/EntitlementsService.sol": {
+      "keccak256": "0x438ea6c27084f09c737e027e42643debb64bddc8a3a06bf2ceb0341406dc98e6",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://21d883948be017290dcd5235d400db352c301c96c6e887e6f9a13316c4e11656",
+        "dweb:/ipfs/QmdPQh7YvEFiFhFbC59n5ziSaYMeZVPEE5xh1mQEfhEcPc"
+      ]
+    },
+    "packages/contracts/src/towns/facets/entitlements/EntitlementsStorage.sol": {
+      "keccak256": "0x6a8cd3a19ff1c836849d48be28f94b08f2864b4f26823a3af3e5741ff106a2a1",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://3950f0448e01b6dbe94b4e3ea84ff8c5bc5d3da4966c1e848da5d40738b0a647",
+        "dweb:/ipfs/QmbTtp8PdYYZbsuuseRVJeUVQHUKJwfwDXWqtFQRDz9yDp"
+      ]
+    },
+    "packages/contracts/src/utils/StringSet.sol": {
+      "keccak256": "0x47235bcc7b60e9d244156cdd2d0defe4c1a8eb6d078f4426b4fb8c094dd41781",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://07d0eee74639221183100bb2aedaea7d6e8b0ebe31608e6cb86b135a89240c66",
+        "dweb:/ipfs/QmbSLb1uhWVz7bVrBJTiTk9dWjD7xBmUiRJECdnaGWVVcR"
+      ]
+    },
+    "packages/contracts/src/utils/Validator.sol": {
+      "keccak256": "0x806988095e2fe434c31c594b3595ccb49b420688f2427920a1d4769ed01c8558",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://74376c4b19ab8e8e62bfae4fdd7f89dab8849c3da9229475968f27888f828dba",
+        "dweb:/ipfs/QmW5wJzVbUCYy8JJU2XpH31kLYx53aoTYDEDHNMySWLk37"
+      ]
+    }
+  },
+  "version": 1
+}

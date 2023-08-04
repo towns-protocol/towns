@@ -1,0 +1,3718 @@
+{
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "bytes4",
+          "name": "selector",
+          "type": "bytes4"
+        }
+      ],
+      "name": "DiamondCut_FunctionAlreadyExists",
+      "type": "error"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "facet",
+          "type": "address"
+        }
+      ],
+      "name": "DiamondCut_FunctionDoesNotExist",
+      "type": "error"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes4",
+          "name": "selector",
+          "type": "bytes4"
+        }
+      ],
+      "name": "DiamondCut_FunctionFromSameFacetAlreadyExists",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "DiamondCut_ImmutableFacet",
+      "type": "error"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "init",
+          "type": "address"
+        }
+      ],
+      "name": "DiamondCut_InvalidContract",
+      "type": "error"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "facet",
+          "type": "address"
+        }
+      ],
+      "name": "DiamondCut_InvalidFacet",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "DiamondCut_InvalidFacetCutAction",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "DiamondCut_InvalidFacetCutLength",
+      "type": "error"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "facet",
+          "type": "address"
+        },
+        {
+          "internalType": "bytes4",
+          "name": "selector",
+          "type": "bytes4"
+        }
+      ],
+      "name": "DiamondCut_InvalidFacetRemoval",
+      "type": "error"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "facet",
+          "type": "address"
+        }
+      ],
+      "name": "DiamondCut_InvalidFacetSelectors",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "DiamondCut_InvalidSelector",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "Introspection_AlreadySupported",
+      "type": "error"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "account",
+          "type": "address"
+        }
+      ],
+      "name": "Ownable__NotOwner",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "Ownable__ZeroAddress",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "Proxy__ImplementationIsNotContract",
+      "type": "error"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "components": [
+            {
+              "internalType": "address",
+              "name": "facetAddress",
+              "type": "address"
+            },
+            {
+              "internalType": "enum IDiamond.FacetCutAction",
+              "name": "action",
+              "type": "uint8"
+            },
+            {
+              "internalType": "bytes4[]",
+              "name": "functionSelectors",
+              "type": "bytes4[]"
+            }
+          ],
+          "indexed": false,
+          "internalType": "struct IDiamond.FacetCut[]",
+          "name": "facetCuts",
+          "type": "tuple[]"
+        },
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "init",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "bytes",
+          "name": "initPayload",
+          "type": "bytes"
+        }
+      ],
+      "name": "DiamondCut",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "bytes4",
+          "name": "interfaceId",
+          "type": "bytes4"
+        }
+      ],
+      "name": "InterfaceAdded",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "bytes4",
+          "name": "interfaceId",
+          "type": "bytes4"
+        }
+      ],
+      "name": "InterfaceRemoved",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "previousOwner",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "newOwner",
+          "type": "address"
+        }
+      ],
+      "name": "OwnershipTransferred",
+      "type": "event"
+    },
+    {
+      "stateMutability": "payable",
+      "type": "fallback"
+    },
+    {
+      "inputs": [
+        {
+          "components": [
+            {
+              "internalType": "address",
+              "name": "facetAddress",
+              "type": "address"
+            },
+            {
+              "internalType": "enum IDiamond.FacetCutAction",
+              "name": "action",
+              "type": "uint8"
+            },
+            {
+              "internalType": "bytes4[]",
+              "name": "functionSelectors",
+              "type": "bytes4[]"
+            }
+          ],
+          "internalType": "struct IDiamond.FacetCut[]",
+          "name": "facetCuts",
+          "type": "tuple[]"
+        },
+        {
+          "internalType": "address",
+          "name": "init",
+          "type": "address"
+        },
+        {
+          "internalType": "bytes",
+          "name": "initPayload",
+          "type": "bytes"
+        }
+      ],
+      "name": "diamondCut",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes4",
+          "name": "selector",
+          "type": "bytes4"
+        }
+      ],
+      "name": "facetAddress",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "facetAddresses",
+      "outputs": [
+        {
+          "internalType": "address[]",
+          "name": "",
+          "type": "address[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "facet",
+          "type": "address"
+        }
+      ],
+      "name": "facetFunctionSelectors",
+      "outputs": [
+        {
+          "internalType": "bytes4[]",
+          "name": "",
+          "type": "bytes4[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "facets",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "address",
+              "name": "facet",
+              "type": "address"
+            },
+            {
+              "internalType": "bytes4[]",
+              "name": "selectors",
+              "type": "bytes4[]"
+            }
+          ],
+          "internalType": "struct IDiamondLoupeStructs.Facet[]",
+          "name": "",
+          "type": "tuple[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "owner",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes4",
+          "name": "interfaceId",
+          "type": "bytes4"
+        }
+      ],
+      "name": "supportsInterface",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "newOwner",
+          "type": "address"
+        }
+      ],
+      "name": "transferOwnership",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "stateMutability": "payable",
+      "type": "receive"
+    }
+  ],
+  "bytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "deployedBytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "methodIdentifiers": {
+    "diamondCut((address,uint8,bytes4[])[],address,bytes)": "1f931c1c",
+    "facetAddress(bytes4)": "cdffacc6",
+    "facetAddresses()": "52ef6b2c",
+    "facetFunctionSelectors(address)": "adfca15e",
+    "facets()": "7a0ed627",
+    "owner()": "8da5cb5b",
+    "supportsInterface(bytes4)": "01ffc9a7",
+    "transferOwnership(address)": "f2fde38b"
+  },
+  "rawMetadata": "{\"compiler\":{\"version\":\"0.8.20+commit.a1b79de6\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[{\"internalType\":\"bytes4\",\"name\":\"selector\",\"type\":\"bytes4\"}],\"name\":\"DiamondCut_FunctionAlreadyExists\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"facet\",\"type\":\"address\"}],\"name\":\"DiamondCut_FunctionDoesNotExist\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"bytes4\",\"name\":\"selector\",\"type\":\"bytes4\"}],\"name\":\"DiamondCut_FunctionFromSameFacetAlreadyExists\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"DiamondCut_ImmutableFacet\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"init\",\"type\":\"address\"}],\"name\":\"DiamondCut_InvalidContract\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"facet\",\"type\":\"address\"}],\"name\":\"DiamondCut_InvalidFacet\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"DiamondCut_InvalidFacetCutAction\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"DiamondCut_InvalidFacetCutLength\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"facet\",\"type\":\"address\"},{\"internalType\":\"bytes4\",\"name\":\"selector\",\"type\":\"bytes4\"}],\"name\":\"DiamondCut_InvalidFacetRemoval\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"facet\",\"type\":\"address\"}],\"name\":\"DiamondCut_InvalidFacetSelectors\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"DiamondCut_InvalidSelector\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"Introspection_AlreadySupported\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"}],\"name\":\"Ownable__NotOwner\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"Ownable__ZeroAddress\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"Proxy__ImplementationIsNotContract\",\"type\":\"error\"},{\"anonymous\":false,\"inputs\":[{\"components\":[{\"internalType\":\"address\",\"name\":\"facetAddress\",\"type\":\"address\"},{\"internalType\":\"enum IDiamond.FacetCutAction\",\"name\":\"action\",\"type\":\"uint8\"},{\"internalType\":\"bytes4[]\",\"name\":\"functionSelectors\",\"type\":\"bytes4[]\"}],\"indexed\":false,\"internalType\":\"struct IDiamond.FacetCut[]\",\"name\":\"facetCuts\",\"type\":\"tuple[]\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"init\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"bytes\",\"name\":\"initPayload\",\"type\":\"bytes\"}],\"name\":\"DiamondCut\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"bytes4\",\"name\":\"interfaceId\",\"type\":\"bytes4\"}],\"name\":\"InterfaceAdded\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"bytes4\",\"name\":\"interfaceId\",\"type\":\"bytes4\"}],\"name\":\"InterfaceRemoved\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"previousOwner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"OwnershipTransferred\",\"type\":\"event\"},{\"stateMutability\":\"payable\",\"type\":\"fallback\"},{\"inputs\":[{\"components\":[{\"internalType\":\"address\",\"name\":\"facetAddress\",\"type\":\"address\"},{\"internalType\":\"enum IDiamond.FacetCutAction\",\"name\":\"action\",\"type\":\"uint8\"},{\"internalType\":\"bytes4[]\",\"name\":\"functionSelectors\",\"type\":\"bytes4[]\"}],\"internalType\":\"struct IDiamond.FacetCut[]\",\"name\":\"facetCuts\",\"type\":\"tuple[]\"},{\"internalType\":\"address\",\"name\":\"init\",\"type\":\"address\"},{\"internalType\":\"bytes\",\"name\":\"initPayload\",\"type\":\"bytes\"}],\"name\":\"diamondCut\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes4\",\"name\":\"selector\",\"type\":\"bytes4\"}],\"name\":\"facetAddress\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"facetAddresses\",\"outputs\":[{\"internalType\":\"address[]\",\"name\":\"\",\"type\":\"address[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"facet\",\"type\":\"address\"}],\"name\":\"facetFunctionSelectors\",\"outputs\":[{\"internalType\":\"bytes4[]\",\"name\":\"\",\"type\":\"bytes4[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"facets\",\"outputs\":[{\"components\":[{\"internalType\":\"address\",\"name\":\"facet\",\"type\":\"address\"},{\"internalType\":\"bytes4[]\",\"name\":\"selectors\",\"type\":\"bytes4[]\"}],\"internalType\":\"struct IDiamondLoupeStructs.Facet[]\",\"name\":\"\",\"type\":\"tuple[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes4\",\"name\":\"interfaceId\",\"type\":\"bytes4\"}],\"name\":\"supportsInterface\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"transferOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"stateMutability\":\"payable\",\"type\":\"receive\"}],\"devdoc\":{\"events\":{\"DiamondCut((address,uint8,bytes4[])[],address,bytes)\":{\"params\":{\"facetCuts\":\"Facet addresses and function selectors.\",\"init\":\"Address of contract or facet to execute initPayload.\",\"initPayload\":\"A function call, including function selector and arguments.\"}},\"OwnershipTransferred(address,address)\":{\"details\":\"This emits when ownership of a contract changes.\"}},\"kind\":\"dev\",\"methods\":{\"diamondCut((address,uint8,bytes4[])[],address,bytes)\":{\"params\":{\"facetCuts\":\"Facet addresses and function selectors.\",\"init\":\"Address of contract or facet to execute initPayload.\",\"initPayload\":\"A function call, including function selector and arguments. Executed with delegatecall on init address.\"}},\"facetAddress(bytes4)\":{\"details\":\"If facet is not found return address(0).\",\"params\":{\"selector\":\"The function selector.\"},\"returns\":{\"_0\":\"facetAddress The facet address.\"}},\"facetAddresses()\":{\"returns\":{\"_0\":\"facets The facet addresses.\"}},\"facetFunctionSelectors(address)\":{\"params\":{\"facet\":\"The facet address.\"},\"returns\":{\"_0\":\"selectors An array of function selectors.\"}},\"facets()\":{\"returns\":{\"_0\":\"facetInfo An array of Facet structs.\"}},\"owner()\":{\"returns\":{\"_0\":\"The address of the owner.\"}},\"supportsInterface(bytes4)\":{\"details\":\"Has to be manually set by a facet at initialization.\",\"params\":{\"interfaceId\":\"The 4 bytes interface identifier, as specified in ERC-165\"}},\"transferOwnership(address)\":{\"details\":\"Set _newOwner to address(0) to renounce any ownership.\",\"params\":{\"_newOwner\":\"The address of the new owner of the contract\"}}},\"version\":1},\"userdoc\":{\"events\":{\"DiamondCut((address,uint8,bytes4[])[],address,bytes)\":{\"notice\":\"Event emitted when facets are added/removed/replaced\"},\"InterfaceAdded(bytes4)\":{\"notice\":\"Emitted when an interface is added to the contract via `_addInterface`.\"},\"InterfaceRemoved(bytes4)\":{\"notice\":\"Emitted when an interface is removed from the contract via `_removeInterface`.\"}},\"kind\":\"user\",\"methods\":{\"diamondCut((address,uint8,bytes4[])[],address,bytes)\":{\"notice\":\"Add/replace/remove any number of functions and optionally execute a function with delegatecall\"},\"facetAddress(bytes4)\":{\"notice\":\"Gets the facet that supports the given selector.\"},\"facetAddresses()\":{\"notice\":\"Get all the facet addresses used by a diamond.\"},\"facetFunctionSelectors(address)\":{\"notice\":\"Gets all the function selectors supported by a specific facet.\"},\"facets()\":{\"notice\":\"Gets all facet addresses and the selectors of supported functions.\"},\"owner()\":{\"notice\":\"Get the address of the owner\"},\"supportsInterface(bytes4)\":{\"notice\":\"Returns true if this contract implements the interface\"},\"transferOwnership(address)\":{\"notice\":\"Set the address of the new owner of the contract\"}},\"version\":1}},\"settings\":{\"compilationTarget\":{\"packages/contracts/src/diamond/Diamond.sol\":\"Diamond\"},\"evmVersion\":\"paris\",\"libraries\":{},\"metadata\":{\"appendCBOR\":false,\"bytecodeHash\":\"none\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[\":@openzeppelin/=lib/openzeppelin-contracts/\",\":@prb/test/=lib/prb-test/src/\",\":@towns/=node_modules/@towns/\",\":ERC721A/=lib/ERC721A/contracts/\",\":contracts/=packages/contracts/\",\":council/=lib/council/contracts/\",\":ds-test/=lib/ds-test/src/\",\":erc4626-tests/=lib/operator-filter-registry/lib/openzeppelin-contracts/lib/erc4626-tests/\",\":forge-std/=lib/forge-std/src/\",\":openzeppelin-contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/\",\":openzeppelin-contracts/=lib/openzeppelin-contracts/\",\":operator-filter-registry/=lib/operator-filter-registry/\",\":prb-test/=lib/prb-test/src/\"]},\"sources\":{\"lib/openzeppelin-contracts/contracts/utils/Address.sol\":{\"keccak256\":\"0xf96f969e24029d43d0df89e59d365f277021dac62b48e1c1e3ebe0acdd7f1ca1\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://ec772b45a624be516f1c81970caa8a2e144301e9d0921cbc1a2789fef39a1269\",\"dweb:/ipfs/QmNyjwxCrGhQMyzLD93oUobJXVe9ceJvRvfXwbEtuxPiEj\"]},\"lib/openzeppelin-contracts/contracts/utils/structs/EnumerableSet.sol\":{\"keccak256\":\"0xc3ff3f5c4584e1d9a483ad7ced51ab64523201f4e3d3c65293e4ca8aeb77a961\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://d7d3dd6067a994690471b5fc71b6f81fac3847798b37d404f74db00b4d3c3d0e\",\"dweb:/ipfs/QmRHF1RarifjNi93RttouNPkYZGyu6CD926PgRDzD5iL35\"]},\"packages/contracts/src/diamond/Diamond.sol\":{\"keccak256\":\"0x9c554f7e1ceb1d77981191a3970b68ad549e3b5f32e4025fb39444ff7b2465f2\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://650c9f6258bf46dae853eea9a9a2175255e0e661987c0703d45e25d96760e98c\",\"dweb:/ipfs/QmduJzC42GHmTXFQxMzUu6caC7HPr8dKZZreKCymfAv77D\"]},\"packages/contracts/src/diamond/DiamondBase.sol\":{\"keccak256\":\"0xdfb58b54938b65dbccd0e32bd8a1ceb2feb7b2e5e53b22840331e240ac26824f\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://f8821c889ff2dc150fd2d6997d371df14082c78516dde4f8a61fc5c89dc9bf2e\",\"dweb:/ipfs/QmQJ91bU5FEtArLg2uBSUvd5wLhhj3ApyeUSXR7CsHSyK9\"]},\"packages/contracts/src/diamond/IDiamond.sol\":{\"keccak256\":\"0x0c42a7a49bd97b80da729467d943c19a3f859068f38504ab6acb7e90fc88be64\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://c7417201588ddb0c7682a3d46e972a8fdb433f792484e042cd1ffe1268ddca2a\",\"dweb:/ipfs/QmRrpJX1PiGm214AhocX8C4fGQA9po9pUzrdHwDEJSWp9T\"]},\"packages/contracts/src/diamond/facets/cut/DiamondCut.sol\":{\"keccak256\":\"0xf20dcad9c44dd05172617b1ca70b5c48528a5b75a950ce5579efebafc55034f9\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://39c93c9ab065ac67655a699f20db41d5934c93039929207539dc87dac1d8a7d6\",\"dweb:/ipfs/QmWzM3FDLF4u45hyME3sBHRzGHKoggo4RBqTaiQHVK8A3k\"]},\"packages/contracts/src/diamond/facets/cut/DiamondCutBase.sol\":{\"keccak256\":\"0x7de925593fcf9cc691e173ba7cc6657734278805c42a38b03cab113b7265b425\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://2ca0e8cd7cb727ebf50c835b83d215fc11fbd30878ec1cf0748b4bd59e990011\",\"dweb:/ipfs/QmeZJx3yeKDnxVmVhcvVS59FQWDyvNev6gMhvz3w1ytmeF\"]},\"packages/contracts/src/diamond/facets/cut/DiamondCutService.sol\":{\"keccak256\":\"0x7b29f14ee2aef63e35bee47cf99f81caff05f9bf0d20a05c9e8a18ce66c7faf1\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://fddf8fa31f3f3365f62184ace7e7ef4701aa7c0ae330688b676743f48a1eedf8\",\"dweb:/ipfs/QmXHcAjrKsuiswyDbrGMDSLd69bgMLeB6iFFu5uDhHMuPR\"]},\"packages/contracts/src/diamond/facets/cut/DiamondCutStorage.sol\":{\"keccak256\":\"0x3cf36b6969ab8d7e6d5e5c1a8f3c11e11e816e33c613d7348688905978696038\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://721c6299b843700935a816ffb8683e4c229a031fec4f2080d8329088f16f6b19\",\"dweb:/ipfs/QmU24KkiiZEk9o6WaSABLcrvrSxS96yZyHjGpwWr1jy5bU\"]},\"packages/contracts/src/diamond/facets/cut/IDiamondCut.sol\":{\"keccak256\":\"0xa021842fac782d0a630ce55190bd623a3c1c590ec7495530539505e390002717\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://6273de44f89673c53a1c8a7bb97aafb0bb68a3b2752c973e1511fe937f0a32b6\",\"dweb:/ipfs/QmPfJx17gye1NLHgJnKBKN5LEnZs7mhfBkyQ9H8xayfvcw\"]},\"packages/contracts/src/diamond/facets/introspection/ERC165.sol\":{\"keccak256\":\"0x8887dd5af85db2c2f4c8d49bedfbb51e5f99e13cb827ab515225862a2f560ab0\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://e8b29a31fd974b4d6c3018dd5f4189e98ef32f24e0ed1b9509c60436b92b4126\",\"dweb:/ipfs/QmeoG6qJC5Cqczb6N1mM9NqwisSEZuREEMxP5tbLy9xYe4\"]},\"packages/contracts/src/diamond/facets/introspection/IERC165.sol\":{\"keccak256\":\"0x58edff5c7238d9d543c9611a4446c50128cb74f469d143d0f7828b9e22d278e7\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://90c2ce08be09894c3ffc8ebdbb4c78d4c14e00fdcc2f6ccf12ea6b6ab067ad1f\",\"dweb:/ipfs/QmVg7hTxFt9Wt3ghGcY9ZxQuYPd99ujG1f9o7BnvhR15TZ\"]},\"packages/contracts/src/diamond/facets/introspection/IntrospectionBase.sol\":{\"keccak256\":\"0x72914be58159f9ec8faa5a7c8709810a1f7bda462fb4a6df32bedee0cd34b53c\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://b83bb448fa26f3c93cdc4c2fd7eee40bdc7d8c7ad75e3dba7657b17d5f907e72\",\"dweb:/ipfs/QmVJPtFisvjynPovjNLh592tYA4zKzjZhe1uwpQXqScfcb\"]},\"packages/contracts/src/diamond/facets/introspection/IntrospectionService.sol\":{\"keccak256\":\"0x70b3ae424e9897ded848cd25c851680d28625ef9ec25406e2d3d340ac72d9574\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://d74acc7a30e548cc5b8c9fbb63eb3f806a6fa0dc8f96bc97672c5390ba36ce43\",\"dweb:/ipfs/QmQbFHy7w15Dm74emLiJTKTRnJKKVLrHN3e8b13XbfrMW5\"]},\"packages/contracts/src/diamond/facets/introspection/IntrospectionStorage.sol\":{\"keccak256\":\"0x08fb9c05b623a2f6ee8e3098a7d0e9b19e25eacb9735f66fa311ced1afafc121\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://8a4b34a66b154861a60820ab9a7f225d043eb36e2f90234197146bbc4b5f191f\",\"dweb:/ipfs/QmSoYyPg2d1XsBeCsx1X9dvhBacjhZcqqgx8WDPJ3nYmB2\"]},\"packages/contracts/src/diamond/facets/loupe/DiamondLoupe.sol\":{\"keccak256\":\"0x8255c2562cd52359313043a8fbfa673cea3dc2e714e64fc819f54bcf1eb301b7\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://8fb4c3f3878c01b07dfa6e298810324110c487bdd2cd7dbb0c2ba7b4cbb7d7ad\",\"dweb:/ipfs/QmaALM6PB48ZsWCSjPHkixqMfQc4NvhHQmsDb83rCquNyX\"]},\"packages/contracts/src/diamond/facets/loupe/DiamondLoupeBase.sol\":{\"keccak256\":\"0x92ea62133dd367edf7489d27993bfa333d722200da79cc0a5b1ead7f76df69b3\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://681aa06df382a55b07dd66d60e726a5b7740509554c73adc45288ebb7ff4e48e\",\"dweb:/ipfs/QmdKTs7pRQfd1US1PeA2SHcYDGeKATSp6Qd2BRpkBHXxsx\"]},\"packages/contracts/src/diamond/facets/loupe/DiamondLoupeService.sol\":{\"keccak256\":\"0x7dee5edd983ccf195ba2b62e0305896901959d7a789afd4244f6147555da90e9\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://0a486767c33347fb45046bc35332f78ec3d1c0d603bdea205270073dd17413fb\",\"dweb:/ipfs/QmY9EPt74DPRWUxWGHAsGuU77En51dx8twPPadQ6bzQazL\"]},\"packages/contracts/src/diamond/facets/loupe/IDiamondLoupe.sol\":{\"keccak256\":\"0xe69840ad83771a18ac0ed0745f1f9484dc1b6395d37b5d52eaf9d6d0b08c5144\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://ab90f64a3b96a65fc3045fe699e0beb95bcb8ef95d698a9f2de01196a439a0b8\",\"dweb:/ipfs/QmZgMYdB8qc4q5axSDAqKY3Daog2yK2mjfWexM4C57RxFj\"]},\"packages/contracts/src/diamond/facets/ownable/IERC173.sol\":{\"keccak256\":\"0x181f9f571d19ceabaeeb7982b10db95a2065a98f5baa511942a8ebfc20938aa2\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://812d0ab1d77cc3b2c76314a5ff0c65a85ed6725380d50260863fbdb1049486fb\",\"dweb:/ipfs/QmWEreGaA8i3XeSaFRzKHV5Ux7ELR4EyeVT3c11pywreky\"]},\"packages/contracts/src/diamond/facets/ownable/Ownable.sol\":{\"keccak256\":\"0x3608150d7013c863f4d29f05e0abe8974d6706f2b793a81fda3adec88d805cd9\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://b0f75337d40c2be77ae02c1ee0ee285602692183cfc23e19ddad6fb47e3531c7\",\"dweb:/ipfs/QmTfBsKu4CDnVviiiXeJmWfztnU87fkpZcp1BEsA1thb98\"]},\"packages/contracts/src/diamond/facets/ownable/OwnableBase.sol\":{\"keccak256\":\"0x60a28fea492bc100f389f832f42b54981a87ad141f66c3ead4f800768ca9278f\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://736f15f33a090c8ef190f0ed0e58c4422d2557efcd71c63701e5d472c0f4ed5c\",\"dweb:/ipfs/QmdCtV2gBNrtKxEwAqzWRdUYLG5L1VDboUvwJzduFwBL4k\"]},\"packages/contracts/src/diamond/facets/ownable/OwnableService.sol\":{\"keccak256\":\"0xc96ea2c75519d986a75fb86a1c3ec08794fee823c5303da8c03869bfb505185d\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://b19857cd8fe0c892052300a78ba670ae98048a42fc69f0d2da946c03dc671900\",\"dweb:/ipfs/QmVecFwkx6zhcn6MiCFoisMVWs6Y6t94n4H4Xwf5tSgdto\"]},\"packages/contracts/src/diamond/facets/ownable/OwnableStorage.sol\":{\"keccak256\":\"0xf37c305730d5f4c38242252303efcf273a4e81554637e2346db593e45d6cd551\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://b78ac1b163b9d8a9f39d47f86f3ec562398038c1ea217bdece38dbcd90b07a22\",\"dweb:/ipfs/QmQB25TBF1VSNtpfHBzfs8FLANeGoGfj7Zz5hQmzaE7zFH\"]},\"packages/contracts/src/diamond/proxy/IProxy.sol\":{\"keccak256\":\"0x56c8fafe5e06a8ad2a80f19d0eb8ac68c8cd42fc00d8501cb65201849fb62799\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://2767795c4790a270e44e882e237ceb68afbcb75d811a94a5f9c32c7e16cf8e4d\",\"dweb:/ipfs/QmSWLUpnNk2G7x1PscxecJD3mWbnXo2R7kAkF2qjjquW91\"]},\"packages/contracts/src/diamond/proxy/Proxy.sol\":{\"keccak256\":\"0x633c279137c71720b2134030c8c9843adb5b34c90587c8c29b60d32ec9ba5353\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://d73f89f3198fe2a65890d28648d64377ecee50caf2cd62a787c00aafe5b21708\",\"dweb:/ipfs/QmZnHjDoZBnmCqod18WPSm7jdREwy1f7yhuq7Z3RJmE6Jh\"]}},\"version\":1}",
+  "metadata": {
+    "compiler": {
+      "version": "0.8.20+commit.a1b79de6"
+    },
+    "language": "Solidity",
+    "output": {
+      "abi": [
+        {
+          "inputs": [
+            {
+              "internalType": "bytes4",
+              "name": "selector",
+              "type": "bytes4"
+            }
+          ],
+          "type": "error",
+          "name": "DiamondCut_FunctionAlreadyExists"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "facet",
+              "type": "address"
+            }
+          ],
+          "type": "error",
+          "name": "DiamondCut_FunctionDoesNotExist"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "bytes4",
+              "name": "selector",
+              "type": "bytes4"
+            }
+          ],
+          "type": "error",
+          "name": "DiamondCut_FunctionFromSameFacetAlreadyExists"
+        },
+        {
+          "inputs": [],
+          "type": "error",
+          "name": "DiamondCut_ImmutableFacet"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "init",
+              "type": "address"
+            }
+          ],
+          "type": "error",
+          "name": "DiamondCut_InvalidContract"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "facet",
+              "type": "address"
+            }
+          ],
+          "type": "error",
+          "name": "DiamondCut_InvalidFacet"
+        },
+        {
+          "inputs": [],
+          "type": "error",
+          "name": "DiamondCut_InvalidFacetCutAction"
+        },
+        {
+          "inputs": [],
+          "type": "error",
+          "name": "DiamondCut_InvalidFacetCutLength"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "facet",
+              "type": "address"
+            },
+            {
+              "internalType": "bytes4",
+              "name": "selector",
+              "type": "bytes4"
+            }
+          ],
+          "type": "error",
+          "name": "DiamondCut_InvalidFacetRemoval"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "facet",
+              "type": "address"
+            }
+          ],
+          "type": "error",
+          "name": "DiamondCut_InvalidFacetSelectors"
+        },
+        {
+          "inputs": [],
+          "type": "error",
+          "name": "DiamondCut_InvalidSelector"
+        },
+        {
+          "inputs": [],
+          "type": "error",
+          "name": "Introspection_AlreadySupported"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "account",
+              "type": "address"
+            }
+          ],
+          "type": "error",
+          "name": "Ownable__NotOwner"
+        },
+        {
+          "inputs": [],
+          "type": "error",
+          "name": "Ownable__ZeroAddress"
+        },
+        {
+          "inputs": [],
+          "type": "error",
+          "name": "Proxy__ImplementationIsNotContract"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "struct IDiamond.FacetCut[]",
+              "name": "facetCuts",
+              "type": "tuple[]",
+              "components": [
+                {
+                  "internalType": "address",
+                  "name": "facetAddress",
+                  "type": "address"
+                },
+                {
+                  "internalType": "enum IDiamond.FacetCutAction",
+                  "name": "action",
+                  "type": "uint8"
+                },
+                {
+                  "internalType": "bytes4[]",
+                  "name": "functionSelectors",
+                  "type": "bytes4[]"
+                }
+              ],
+              "indexed": false
+            },
+            {
+              "internalType": "address",
+              "name": "init",
+              "type": "address",
+              "indexed": false
+            },
+            {
+              "internalType": "bytes",
+              "name": "initPayload",
+              "type": "bytes",
+              "indexed": false
+            }
+          ],
+          "type": "event",
+          "name": "DiamondCut",
+          "anonymous": false
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "bytes4",
+              "name": "interfaceId",
+              "type": "bytes4",
+              "indexed": true
+            }
+          ],
+          "type": "event",
+          "name": "InterfaceAdded",
+          "anonymous": false
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "bytes4",
+              "name": "interfaceId",
+              "type": "bytes4",
+              "indexed": true
+            }
+          ],
+          "type": "event",
+          "name": "InterfaceRemoved",
+          "anonymous": false
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "previousOwner",
+              "type": "address",
+              "indexed": true
+            },
+            {
+              "internalType": "address",
+              "name": "newOwner",
+              "type": "address",
+              "indexed": true
+            }
+          ],
+          "type": "event",
+          "name": "OwnershipTransferred",
+          "anonymous": false
+        },
+        {
+          "inputs": [],
+          "stateMutability": "payable",
+          "type": "fallback"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "struct IDiamond.FacetCut[]",
+              "name": "facetCuts",
+              "type": "tuple[]",
+              "components": [
+                {
+                  "internalType": "address",
+                  "name": "facetAddress",
+                  "type": "address"
+                },
+                {
+                  "internalType": "enum IDiamond.FacetCutAction",
+                  "name": "action",
+                  "type": "uint8"
+                },
+                {
+                  "internalType": "bytes4[]",
+                  "name": "functionSelectors",
+                  "type": "bytes4[]"
+                }
+              ]
+            },
+            {
+              "internalType": "address",
+              "name": "init",
+              "type": "address"
+            },
+            {
+              "internalType": "bytes",
+              "name": "initPayload",
+              "type": "bytes"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "diamondCut"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "bytes4",
+              "name": "selector",
+              "type": "bytes4"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "facetAddress",
+          "outputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "facetAddresses",
+          "outputs": [
+            {
+              "internalType": "address[]",
+              "name": "",
+              "type": "address[]"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "facet",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "facetFunctionSelectors",
+          "outputs": [
+            {
+              "internalType": "bytes4[]",
+              "name": "",
+              "type": "bytes4[]"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "facets",
+          "outputs": [
+            {
+              "internalType": "struct IDiamondLoupeStructs.Facet[]",
+              "name": "",
+              "type": "tuple[]",
+              "components": [
+                {
+                  "internalType": "address",
+                  "name": "facet",
+                  "type": "address"
+                },
+                {
+                  "internalType": "bytes4[]",
+                  "name": "selectors",
+                  "type": "bytes4[]"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "owner",
+          "outputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "bytes4",
+              "name": "interfaceId",
+              "type": "bytes4"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function",
+          "name": "supportsInterface",
+          "outputs": [
+            {
+              "internalType": "bool",
+              "name": "",
+              "type": "bool"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "newOwner",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "transferOwnership"
+        },
+        {
+          "inputs": [],
+          "stateMutability": "payable",
+          "type": "receive"
+        }
+      ],
+      "devdoc": {
+        "kind": "dev",
+        "methods": {
+          "diamondCut((address,uint8,bytes4[])[],address,bytes)": {
+            "params": {
+              "facetCuts": "Facet addresses and function selectors.",
+              "init": "Address of contract or facet to execute initPayload.",
+              "initPayload": "A function call, including function selector and arguments. Executed with delegatecall on init address."
+            }
+          },
+          "facetAddress(bytes4)": {
+            "details": "If facet is not found return address(0).",
+            "params": {
+              "selector": "The function selector."
+            },
+            "returns": {
+              "_0": "facetAddress The facet address."
+            }
+          },
+          "facetAddresses()": {
+            "returns": {
+              "_0": "facets The facet addresses."
+            }
+          },
+          "facetFunctionSelectors(address)": {
+            "params": {
+              "facet": "The facet address."
+            },
+            "returns": {
+              "_0": "selectors An array of function selectors."
+            }
+          },
+          "facets()": {
+            "returns": {
+              "_0": "facetInfo An array of Facet structs."
+            }
+          },
+          "owner()": {
+            "returns": {
+              "_0": "The address of the owner."
+            }
+          },
+          "supportsInterface(bytes4)": {
+            "details": "Has to be manually set by a facet at initialization.",
+            "params": {
+              "interfaceId": "The 4 bytes interface identifier, as specified in ERC-165"
+            }
+          },
+          "transferOwnership(address)": {
+            "details": "Set _newOwner to address(0) to renounce any ownership.",
+            "params": {
+              "_newOwner": "The address of the new owner of the contract"
+            }
+          }
+        },
+        "version": 1
+      },
+      "userdoc": {
+        "kind": "user",
+        "methods": {
+          "diamondCut((address,uint8,bytes4[])[],address,bytes)": {
+            "notice": "Add/replace/remove any number of functions and optionally execute a function with delegatecall"
+          },
+          "facetAddress(bytes4)": {
+            "notice": "Gets the facet that supports the given selector."
+          },
+          "facetAddresses()": {
+            "notice": "Get all the facet addresses used by a diamond."
+          },
+          "facetFunctionSelectors(address)": {
+            "notice": "Gets all the function selectors supported by a specific facet."
+          },
+          "facets()": {
+            "notice": "Gets all facet addresses and the selectors of supported functions."
+          },
+          "owner()": {
+            "notice": "Get the address of the owner"
+          },
+          "supportsInterface(bytes4)": {
+            "notice": "Returns true if this contract implements the interface"
+          },
+          "transferOwnership(address)": {
+            "notice": "Set the address of the new owner of the contract"
+          }
+        },
+        "version": 1
+      }
+    },
+    "settings": {
+      "remappings": [
+        "@openzeppelin/=lib/openzeppelin-contracts/",
+        "@prb/test/=lib/prb-test/src/",
+        "@towns/=node_modules/@towns/",
+        "ERC721A/=lib/ERC721A/contracts/",
+        "contracts/=packages/contracts/",
+        "council/=lib/council/contracts/",
+        "ds-test/=lib/ds-test/src/",
+        "erc4626-tests/=lib/operator-filter-registry/lib/openzeppelin-contracts/lib/erc4626-tests/",
+        "forge-std/=lib/forge-std/src/",
+        "openzeppelin-contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/",
+        "openzeppelin-contracts/=lib/openzeppelin-contracts/",
+        "operator-filter-registry/=lib/operator-filter-registry/",
+        "prb-test/=lib/prb-test/src/"
+      ],
+      "optimizer": {
+        "enabled": true,
+        "runs": 200
+      },
+      "metadata": {
+        "bytecodeHash": "none",
+        "appendCBOR": false
+      },
+      "compilationTarget": {
+        "packages/contracts/src/diamond/Diamond.sol": "Diamond"
+      },
+      "libraries": {}
+    },
+    "sources": {
+      "lib/openzeppelin-contracts/contracts/utils/Address.sol": {
+        "keccak256": "0xf96f969e24029d43d0df89e59d365f277021dac62b48e1c1e3ebe0acdd7f1ca1",
+        "urls": [
+          "bzz-raw://ec772b45a624be516f1c81970caa8a2e144301e9d0921cbc1a2789fef39a1269",
+          "dweb:/ipfs/QmNyjwxCrGhQMyzLD93oUobJXVe9ceJvRvfXwbEtuxPiEj"
+        ],
+        "license": "MIT"
+      },
+      "lib/openzeppelin-contracts/contracts/utils/structs/EnumerableSet.sol": {
+        "keccak256": "0xc3ff3f5c4584e1d9a483ad7ced51ab64523201f4e3d3c65293e4ca8aeb77a961",
+        "urls": [
+          "bzz-raw://d7d3dd6067a994690471b5fc71b6f81fac3847798b37d404f74db00b4d3c3d0e",
+          "dweb:/ipfs/QmRHF1RarifjNi93RttouNPkYZGyu6CD926PgRDzD5iL35"
+        ],
+        "license": "MIT"
+      },
+      "packages/contracts/src/diamond/Diamond.sol": {
+        "keccak256": "0x9c554f7e1ceb1d77981191a3970b68ad549e3b5f32e4025fb39444ff7b2465f2",
+        "urls": [
+          "bzz-raw://650c9f6258bf46dae853eea9a9a2175255e0e661987c0703d45e25d96760e98c",
+          "dweb:/ipfs/QmduJzC42GHmTXFQxMzUu6caC7HPr8dKZZreKCymfAv77D"
+        ],
+        "license": "Apache-2.0"
+      },
+      "packages/contracts/src/diamond/DiamondBase.sol": {
+        "keccak256": "0xdfb58b54938b65dbccd0e32bd8a1ceb2feb7b2e5e53b22840331e240ac26824f",
+        "urls": [
+          "bzz-raw://f8821c889ff2dc150fd2d6997d371df14082c78516dde4f8a61fc5c89dc9bf2e",
+          "dweb:/ipfs/QmQJ91bU5FEtArLg2uBSUvd5wLhhj3ApyeUSXR7CsHSyK9"
+        ],
+        "license": "Apache-2.0"
+      },
+      "packages/contracts/src/diamond/IDiamond.sol": {
+        "keccak256": "0x0c42a7a49bd97b80da729467d943c19a3f859068f38504ab6acb7e90fc88be64",
+        "urls": [
+          "bzz-raw://c7417201588ddb0c7682a3d46e972a8fdb433f792484e042cd1ffe1268ddca2a",
+          "dweb:/ipfs/QmRrpJX1PiGm214AhocX8C4fGQA9po9pUzrdHwDEJSWp9T"
+        ],
+        "license": "Apache-2.0"
+      },
+      "packages/contracts/src/diamond/facets/cut/DiamondCut.sol": {
+        "keccak256": "0xf20dcad9c44dd05172617b1ca70b5c48528a5b75a950ce5579efebafc55034f9",
+        "urls": [
+          "bzz-raw://39c93c9ab065ac67655a699f20db41d5934c93039929207539dc87dac1d8a7d6",
+          "dweb:/ipfs/QmWzM3FDLF4u45hyME3sBHRzGHKoggo4RBqTaiQHVK8A3k"
+        ],
+        "license": "Apache-2.0"
+      },
+      "packages/contracts/src/diamond/facets/cut/DiamondCutBase.sol": {
+        "keccak256": "0x7de925593fcf9cc691e173ba7cc6657734278805c42a38b03cab113b7265b425",
+        "urls": [
+          "bzz-raw://2ca0e8cd7cb727ebf50c835b83d215fc11fbd30878ec1cf0748b4bd59e990011",
+          "dweb:/ipfs/QmeZJx3yeKDnxVmVhcvVS59FQWDyvNev6gMhvz3w1ytmeF"
+        ],
+        "license": "Apache-2.0"
+      },
+      "packages/contracts/src/diamond/facets/cut/DiamondCutService.sol": {
+        "keccak256": "0x7b29f14ee2aef63e35bee47cf99f81caff05f9bf0d20a05c9e8a18ce66c7faf1",
+        "urls": [
+          "bzz-raw://fddf8fa31f3f3365f62184ace7e7ef4701aa7c0ae330688b676743f48a1eedf8",
+          "dweb:/ipfs/QmXHcAjrKsuiswyDbrGMDSLd69bgMLeB6iFFu5uDhHMuPR"
+        ],
+        "license": "Apache-2.0"
+      },
+      "packages/contracts/src/diamond/facets/cut/DiamondCutStorage.sol": {
+        "keccak256": "0x3cf36b6969ab8d7e6d5e5c1a8f3c11e11e816e33c613d7348688905978696038",
+        "urls": [
+          "bzz-raw://721c6299b843700935a816ffb8683e4c229a031fec4f2080d8329088f16f6b19",
+          "dweb:/ipfs/QmU24KkiiZEk9o6WaSABLcrvrSxS96yZyHjGpwWr1jy5bU"
+        ],
+        "license": "Apache-2.0"
+      },
+      "packages/contracts/src/diamond/facets/cut/IDiamondCut.sol": {
+        "keccak256": "0xa021842fac782d0a630ce55190bd623a3c1c590ec7495530539505e390002717",
+        "urls": [
+          "bzz-raw://6273de44f89673c53a1c8a7bb97aafb0bb68a3b2752c973e1511fe937f0a32b6",
+          "dweb:/ipfs/QmPfJx17gye1NLHgJnKBKN5LEnZs7mhfBkyQ9H8xayfvcw"
+        ],
+        "license": "Apache-2.0"
+      },
+      "packages/contracts/src/diamond/facets/introspection/ERC165.sol": {
+        "keccak256": "0x8887dd5af85db2c2f4c8d49bedfbb51e5f99e13cb827ab515225862a2f560ab0",
+        "urls": [
+          "bzz-raw://e8b29a31fd974b4d6c3018dd5f4189e98ef32f24e0ed1b9509c60436b92b4126",
+          "dweb:/ipfs/QmeoG6qJC5Cqczb6N1mM9NqwisSEZuREEMxP5tbLy9xYe4"
+        ],
+        "license": "Apache-2.0"
+      },
+      "packages/contracts/src/diamond/facets/introspection/IERC165.sol": {
+        "keccak256": "0x58edff5c7238d9d543c9611a4446c50128cb74f469d143d0f7828b9e22d278e7",
+        "urls": [
+          "bzz-raw://90c2ce08be09894c3ffc8ebdbb4c78d4c14e00fdcc2f6ccf12ea6b6ab067ad1f",
+          "dweb:/ipfs/QmVg7hTxFt9Wt3ghGcY9ZxQuYPd99ujG1f9o7BnvhR15TZ"
+        ],
+        "license": "Apache-2.0"
+      },
+      "packages/contracts/src/diamond/facets/introspection/IntrospectionBase.sol": {
+        "keccak256": "0x72914be58159f9ec8faa5a7c8709810a1f7bda462fb4a6df32bedee0cd34b53c",
+        "urls": [
+          "bzz-raw://b83bb448fa26f3c93cdc4c2fd7eee40bdc7d8c7ad75e3dba7657b17d5f907e72",
+          "dweb:/ipfs/QmVJPtFisvjynPovjNLh592tYA4zKzjZhe1uwpQXqScfcb"
+        ],
+        "license": "Apache-2.0"
+      },
+      "packages/contracts/src/diamond/facets/introspection/IntrospectionService.sol": {
+        "keccak256": "0x70b3ae424e9897ded848cd25c851680d28625ef9ec25406e2d3d340ac72d9574",
+        "urls": [
+          "bzz-raw://d74acc7a30e548cc5b8c9fbb63eb3f806a6fa0dc8f96bc97672c5390ba36ce43",
+          "dweb:/ipfs/QmQbFHy7w15Dm74emLiJTKTRnJKKVLrHN3e8b13XbfrMW5"
+        ],
+        "license": "Apache-2.0"
+      },
+      "packages/contracts/src/diamond/facets/introspection/IntrospectionStorage.sol": {
+        "keccak256": "0x08fb9c05b623a2f6ee8e3098a7d0e9b19e25eacb9735f66fa311ced1afafc121",
+        "urls": [
+          "bzz-raw://8a4b34a66b154861a60820ab9a7f225d043eb36e2f90234197146bbc4b5f191f",
+          "dweb:/ipfs/QmSoYyPg2d1XsBeCsx1X9dvhBacjhZcqqgx8WDPJ3nYmB2"
+        ],
+        "license": "Apache-2.0"
+      },
+      "packages/contracts/src/diamond/facets/loupe/DiamondLoupe.sol": {
+        "keccak256": "0x8255c2562cd52359313043a8fbfa673cea3dc2e714e64fc819f54bcf1eb301b7",
+        "urls": [
+          "bzz-raw://8fb4c3f3878c01b07dfa6e298810324110c487bdd2cd7dbb0c2ba7b4cbb7d7ad",
+          "dweb:/ipfs/QmaALM6PB48ZsWCSjPHkixqMfQc4NvhHQmsDb83rCquNyX"
+        ],
+        "license": "Apache-2.0"
+      },
+      "packages/contracts/src/diamond/facets/loupe/DiamondLoupeBase.sol": {
+        "keccak256": "0x92ea62133dd367edf7489d27993bfa333d722200da79cc0a5b1ead7f76df69b3",
+        "urls": [
+          "bzz-raw://681aa06df382a55b07dd66d60e726a5b7740509554c73adc45288ebb7ff4e48e",
+          "dweb:/ipfs/QmdKTs7pRQfd1US1PeA2SHcYDGeKATSp6Qd2BRpkBHXxsx"
+        ],
+        "license": "Apache-2.0"
+      },
+      "packages/contracts/src/diamond/facets/loupe/DiamondLoupeService.sol": {
+        "keccak256": "0x7dee5edd983ccf195ba2b62e0305896901959d7a789afd4244f6147555da90e9",
+        "urls": [
+          "bzz-raw://0a486767c33347fb45046bc35332f78ec3d1c0d603bdea205270073dd17413fb",
+          "dweb:/ipfs/QmY9EPt74DPRWUxWGHAsGuU77En51dx8twPPadQ6bzQazL"
+        ],
+        "license": "Apache-2.0"
+      },
+      "packages/contracts/src/diamond/facets/loupe/IDiamondLoupe.sol": {
+        "keccak256": "0xe69840ad83771a18ac0ed0745f1f9484dc1b6395d37b5d52eaf9d6d0b08c5144",
+        "urls": [
+          "bzz-raw://ab90f64a3b96a65fc3045fe699e0beb95bcb8ef95d698a9f2de01196a439a0b8",
+          "dweb:/ipfs/QmZgMYdB8qc4q5axSDAqKY3Daog2yK2mjfWexM4C57RxFj"
+        ],
+        "license": "Apache-2.0"
+      },
+      "packages/contracts/src/diamond/facets/ownable/IERC173.sol": {
+        "keccak256": "0x181f9f571d19ceabaeeb7982b10db95a2065a98f5baa511942a8ebfc20938aa2",
+        "urls": [
+          "bzz-raw://812d0ab1d77cc3b2c76314a5ff0c65a85ed6725380d50260863fbdb1049486fb",
+          "dweb:/ipfs/QmWEreGaA8i3XeSaFRzKHV5Ux7ELR4EyeVT3c11pywreky"
+        ],
+        "license": "Apache-2.0"
+      },
+      "packages/contracts/src/diamond/facets/ownable/Ownable.sol": {
+        "keccak256": "0x3608150d7013c863f4d29f05e0abe8974d6706f2b793a81fda3adec88d805cd9",
+        "urls": [
+          "bzz-raw://b0f75337d40c2be77ae02c1ee0ee285602692183cfc23e19ddad6fb47e3531c7",
+          "dweb:/ipfs/QmTfBsKu4CDnVviiiXeJmWfztnU87fkpZcp1BEsA1thb98"
+        ],
+        "license": "Apache-2.0"
+      },
+      "packages/contracts/src/diamond/facets/ownable/OwnableBase.sol": {
+        "keccak256": "0x60a28fea492bc100f389f832f42b54981a87ad141f66c3ead4f800768ca9278f",
+        "urls": [
+          "bzz-raw://736f15f33a090c8ef190f0ed0e58c4422d2557efcd71c63701e5d472c0f4ed5c",
+          "dweb:/ipfs/QmdCtV2gBNrtKxEwAqzWRdUYLG5L1VDboUvwJzduFwBL4k"
+        ],
+        "license": "Apache-2.0"
+      },
+      "packages/contracts/src/diamond/facets/ownable/OwnableService.sol": {
+        "keccak256": "0xc96ea2c75519d986a75fb86a1c3ec08794fee823c5303da8c03869bfb505185d",
+        "urls": [
+          "bzz-raw://b19857cd8fe0c892052300a78ba670ae98048a42fc69f0d2da946c03dc671900",
+          "dweb:/ipfs/QmVecFwkx6zhcn6MiCFoisMVWs6Y6t94n4H4Xwf5tSgdto"
+        ],
+        "license": "Apache-2.0"
+      },
+      "packages/contracts/src/diamond/facets/ownable/OwnableStorage.sol": {
+        "keccak256": "0xf37c305730d5f4c38242252303efcf273a4e81554637e2346db593e45d6cd551",
+        "urls": [
+          "bzz-raw://b78ac1b163b9d8a9f39d47f86f3ec562398038c1ea217bdece38dbcd90b07a22",
+          "dweb:/ipfs/QmQB25TBF1VSNtpfHBzfs8FLANeGoGfj7Zz5hQmzaE7zFH"
+        ],
+        "license": "Apache-2.0"
+      },
+      "packages/contracts/src/diamond/proxy/IProxy.sol": {
+        "keccak256": "0x56c8fafe5e06a8ad2a80f19d0eb8ac68c8cd42fc00d8501cb65201849fb62799",
+        "urls": [
+          "bzz-raw://2767795c4790a270e44e882e237ceb68afbcb75d811a94a5f9c32c7e16cf8e4d",
+          "dweb:/ipfs/QmSWLUpnNk2G7x1PscxecJD3mWbnXo2R7kAkF2qjjquW91"
+        ],
+        "license": "Apache-2.0"
+      },
+      "packages/contracts/src/diamond/proxy/Proxy.sol": {
+        "keccak256": "0x633c279137c71720b2134030c8c9843adb5b34c90587c8c29b60d32ec9ba5353",
+        "urls": [
+          "bzz-raw://d73f89f3198fe2a65890d28648d64377ecee50caf2cd62a787c00aafe5b21708",
+          "dweb:/ipfs/QmZnHjDoZBnmCqod18WPSm7jdREwy1f7yhuq7Z3RJmE6Jh"
+        ],
+        "license": "Apache-2.0"
+      }
+    },
+    "version": 1
+  },
+  "ast": {
+    "absolutePath": "packages/contracts/src/diamond/Diamond.sol",
+    "id": 47617,
+    "exportedSymbols": {
+      "Diamond": [
+        47616
+      ],
+      "DiamondBase": [
+        47638
+      ],
+      "DiamondCut": [
+        47713
+      ],
+      "DiamondLoupe": [
+        49206
+      ],
+      "ERC165": [
+        48906
+      ],
+      "IDiamond": [
+        47656
+      ],
+      "IDiamondCut": [
+        48637
+      ],
+      "IDiamondLoupe": [
+        49581
+      ],
+      "IERC165": [
+        48931
+      ],
+      "IERC173": [
+        49606
+      ],
+      "Ownable": [
+        49642
+      ]
+    },
+    "nodeType": "SourceUnit",
+    "src": "39:2123:112",
+    "nodes": [
+      {
+        "id": 47421,
+        "nodeType": "PragmaDirective",
+        "src": "39:24:112",
+        "nodes": [],
+        "literals": [
+          "solidity",
+          "^",
+          "0.8",
+          ".20"
+        ]
+      },
+      {
+        "id": 47423,
+        "nodeType": "ImportDirective",
+        "src": "79:40:112",
+        "nodes": [],
+        "absolutePath": "packages/contracts/src/diamond/IDiamond.sol",
+        "file": "./IDiamond.sol",
+        "nameLocation": "-1:-1:-1",
+        "scope": 47617,
+        "sourceUnit": 47657,
+        "symbolAliases": [
+          {
+            "foreign": {
+              "id": 47422,
+              "name": "IDiamond",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "referencedDeclaration": 47656,
+              "src": "87:8:112",
+              "typeDescriptions": {}
+            },
+            "nameLocation": "-1:-1:-1"
+          }
+        ],
+        "unitAlias": ""
+      },
+      {
+        "id": 47425,
+        "nodeType": "ImportDirective",
+        "src": "120:57:112",
+        "nodes": [],
+        "absolutePath": "packages/contracts/src/diamond/facets/cut/IDiamondCut.sol",
+        "file": "./facets/cut/IDiamondCut.sol",
+        "nameLocation": "-1:-1:-1",
+        "scope": 47617,
+        "sourceUnit": 48638,
+        "symbolAliases": [
+          {
+            "foreign": {
+              "id": 47424,
+              "name": "IDiamondCut",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "referencedDeclaration": 48637,
+              "src": "128:11:112",
+              "typeDescriptions": {}
+            },
+            "nameLocation": "-1:-1:-1"
+          }
+        ],
+        "unitAlias": ""
+      },
+      {
+        "id": 47427,
+        "nodeType": "ImportDirective",
+        "src": "178:63:112",
+        "nodes": [],
+        "absolutePath": "packages/contracts/src/diamond/facets/loupe/IDiamondLoupe.sol",
+        "file": "./facets/loupe/IDiamondLoupe.sol",
+        "nameLocation": "-1:-1:-1",
+        "scope": 47617,
+        "sourceUnit": 49582,
+        "symbolAliases": [
+          {
+            "foreign": {
+              "id": 47426,
+              "name": "IDiamondLoupe",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "referencedDeclaration": 49581,
+              "src": "186:13:112",
+              "typeDescriptions": {}
+            },
+            "nameLocation": "-1:-1:-1"
+          }
+        ],
+        "unitAlias": ""
+      },
+      {
+        "id": 47429,
+        "nodeType": "ImportDirective",
+        "src": "242:59:112",
+        "nodes": [],
+        "absolutePath": "packages/contracts/src/diamond/facets/introspection/IERC165.sol",
+        "file": "./facets/introspection/IERC165.sol",
+        "nameLocation": "-1:-1:-1",
+        "scope": 47617,
+        "sourceUnit": 48932,
+        "symbolAliases": [
+          {
+            "foreign": {
+              "id": 47428,
+              "name": "IERC165",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "referencedDeclaration": 48931,
+              "src": "250:7:112",
+              "typeDescriptions": {}
+            },
+            "nameLocation": "-1:-1:-1"
+          }
+        ],
+        "unitAlias": ""
+      },
+      {
+        "id": 47431,
+        "nodeType": "ImportDirective",
+        "src": "302:53:112",
+        "nodes": [],
+        "absolutePath": "packages/contracts/src/diamond/facets/ownable/IERC173.sol",
+        "file": "./facets/ownable/IERC173.sol",
+        "nameLocation": "-1:-1:-1",
+        "scope": 47617,
+        "sourceUnit": 49607,
+        "symbolAliases": [
+          {
+            "foreign": {
+              "id": 47430,
+              "name": "IERC173",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "referencedDeclaration": 49606,
+              "src": "310:7:112",
+              "typeDescriptions": {}
+            },
+            "nameLocation": "-1:-1:-1"
+          }
+        ],
+        "unitAlias": ""
+      },
+      {
+        "id": 47433,
+        "nodeType": "ImportDirective",
+        "src": "384:46:112",
+        "nodes": [],
+        "absolutePath": "packages/contracts/src/diamond/DiamondBase.sol",
+        "file": "./DiamondBase.sol",
+        "nameLocation": "-1:-1:-1",
+        "scope": 47617,
+        "sourceUnit": 47639,
+        "symbolAliases": [
+          {
+            "foreign": {
+              "id": 47432,
+              "name": "DiamondBase",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "referencedDeclaration": 47638,
+              "src": "392:11:112",
+              "typeDescriptions": {}
+            },
+            "nameLocation": "-1:-1:-1"
+          }
+        ],
+        "unitAlias": ""
+      },
+      {
+        "id": 47435,
+        "nodeType": "ImportDirective",
+        "src": "431:55:112",
+        "nodes": [],
+        "absolutePath": "packages/contracts/src/diamond/facets/cut/DiamondCut.sol",
+        "file": "./facets/cut/DiamondCut.sol",
+        "nameLocation": "-1:-1:-1",
+        "scope": 47617,
+        "sourceUnit": 47714,
+        "symbolAliases": [
+          {
+            "foreign": {
+              "id": 47434,
+              "name": "DiamondCut",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "referencedDeclaration": 47713,
+              "src": "439:10:112",
+              "typeDescriptions": {}
+            },
+            "nameLocation": "-1:-1:-1"
+          }
+        ],
+        "unitAlias": ""
+      },
+      {
+        "id": 47437,
+        "nodeType": "ImportDirective",
+        "src": "487:61:112",
+        "nodes": [],
+        "absolutePath": "packages/contracts/src/diamond/facets/loupe/DiamondLoupe.sol",
+        "file": "./facets/loupe/DiamondLoupe.sol",
+        "nameLocation": "-1:-1:-1",
+        "scope": 47617,
+        "sourceUnit": 49207,
+        "symbolAliases": [
+          {
+            "foreign": {
+              "id": 47436,
+              "name": "DiamondLoupe",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "referencedDeclaration": 49206,
+              "src": "495:12:112",
+              "typeDescriptions": {}
+            },
+            "nameLocation": "-1:-1:-1"
+          }
+        ],
+        "unitAlias": ""
+      },
+      {
+        "id": 47439,
+        "nodeType": "ImportDirective",
+        "src": "549:53:112",
+        "nodes": [],
+        "absolutePath": "packages/contracts/src/diamond/facets/ownable/Ownable.sol",
+        "file": "./facets/ownable/Ownable.sol",
+        "nameLocation": "-1:-1:-1",
+        "scope": 47617,
+        "sourceUnit": 49643,
+        "symbolAliases": [
+          {
+            "foreign": {
+              "id": 47438,
+              "name": "Ownable",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "referencedDeclaration": 49642,
+              "src": "557:7:112",
+              "typeDescriptions": {}
+            },
+            "nameLocation": "-1:-1:-1"
+          }
+        ],
+        "unitAlias": ""
+      },
+      {
+        "id": 47441,
+        "nodeType": "ImportDirective",
+        "src": "603:57:112",
+        "nodes": [],
+        "absolutePath": "packages/contracts/src/diamond/facets/introspection/ERC165.sol",
+        "file": "./facets/introspection/ERC165.sol",
+        "nameLocation": "-1:-1:-1",
+        "scope": 47617,
+        "sourceUnit": 48907,
+        "symbolAliases": [
+          {
+            "foreign": {
+              "id": 47440,
+              "name": "ERC165",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "referencedDeclaration": 48906,
+              "src": "611:6:112",
+              "typeDescriptions": {}
+            },
+            "nameLocation": "-1:-1:-1"
+          }
+        ],
+        "unitAlias": ""
+      },
+      {
+        "id": 47616,
+        "nodeType": "ContractDefinition",
+        "src": "662:1499:112",
+        "nodes": [
+          {
+            "id": 47611,
+            "nodeType": "FunctionDefinition",
+            "src": "772:1307:112",
+            "nodes": [],
+            "body": {
+              "id": 47610,
+              "nodeType": "Block",
+              "src": "786:1293:112",
+              "nodes": [],
+              "statements": [
+                {
+                  "assignments": [
+                    47460
+                  ],
+                  "declarations": [
+                    {
+                      "constant": false,
+                      "id": 47460,
+                      "mutability": "mutable",
+                      "name": "selectors",
+                      "nameLocation": "808:9:112",
+                      "nodeType": "VariableDeclaration",
+                      "scope": 47610,
+                      "src": "792:25:112",
+                      "stateVariable": false,
+                      "storageLocation": "memory",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_array$_t_bytes4_$dyn_memory_ptr",
+                        "typeString": "bytes4[]"
+                      },
+                      "typeName": {
+                        "baseType": {
+                          "id": 47458,
+                          "name": "bytes4",
+                          "nodeType": "ElementaryTypeName",
+                          "src": "792:6:112",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_bytes4",
+                            "typeString": "bytes4"
+                          }
+                        },
+                        "id": 47459,
+                        "nodeType": "ArrayTypeName",
+                        "src": "792:8:112",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_array$_t_bytes4_$dyn_storage_ptr",
+                          "typeString": "bytes4[]"
+                        }
+                      },
+                      "visibility": "internal"
+                    }
+                  ],
+                  "id": 47466,
+                  "initialValue": {
+                    "arguments": [
+                      {
+                        "hexValue": "38",
+                        "id": 47464,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": true,
+                        "kind": "number",
+                        "lValueRequested": false,
+                        "nodeType": "Literal",
+                        "src": "833:1:112",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_rational_8_by_1",
+                          "typeString": "int_const 8"
+                        },
+                        "value": "8"
+                      }
+                    ],
+                    "expression": {
+                      "argumentTypes": [
+                        {
+                          "typeIdentifier": "t_rational_8_by_1",
+                          "typeString": "int_const 8"
+                        }
+                      ],
+                      "id": 47463,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": true,
+                      "lValueRequested": false,
+                      "nodeType": "NewExpression",
+                      "src": "820:12:112",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_function_objectcreation_pure$_t_uint256_$returns$_t_array$_t_bytes4_$dyn_memory_ptr_$",
+                        "typeString": "function (uint256) pure returns (bytes4[] memory)"
+                      },
+                      "typeName": {
+                        "baseType": {
+                          "id": 47461,
+                          "name": "bytes4",
+                          "nodeType": "ElementaryTypeName",
+                          "src": "824:6:112",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_bytes4",
+                            "typeString": "bytes4"
+                          }
+                        },
+                        "id": 47462,
+                        "nodeType": "ArrayTypeName",
+                        "src": "824:8:112",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_array$_t_bytes4_$dyn_storage_ptr",
+                          "typeString": "bytes4[]"
+                        }
+                      }
+                    },
+                    "id": 47465,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": true,
+                    "kind": "functionCall",
+                    "lValueRequested": false,
+                    "nameLocations": [],
+                    "names": [],
+                    "nodeType": "FunctionCall",
+                    "src": "820:15:112",
+                    "tryCall": false,
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_array$_t_bytes4_$dyn_memory_ptr",
+                      "typeString": "bytes4[] memory"
+                    }
+                  },
+                  "nodeType": "VariableDeclarationStatement",
+                  "src": "792:43:112"
+                },
+                {
+                  "assignments": [
+                    47468
+                  ],
+                  "declarations": [
+                    {
+                      "constant": false,
+                      "id": 47468,
+                      "mutability": "mutable",
+                      "name": "selectorIndex",
+                      "nameLocation": "849:13:112",
+                      "nodeType": "VariableDeclaration",
+                      "scope": 47610,
+                      "src": "841:21:112",
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_uint256",
+                        "typeString": "uint256"
+                      },
+                      "typeName": {
+                        "id": 47467,
+                        "name": "uint256",
+                        "nodeType": "ElementaryTypeName",
+                        "src": "841:7:112",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_uint256",
+                          "typeString": "uint256"
+                        }
+                      },
+                      "visibility": "internal"
+                    }
+                  ],
+                  "id": 47469,
+                  "nodeType": "VariableDeclarationStatement",
+                  "src": "841:21:112"
+                },
+                {
+                  "expression": {
+                    "id": 47477,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "leftHandSide": {
+                      "baseExpression": {
+                        "id": 47470,
+                        "name": "selectors",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 47460,
+                        "src": "918:9:112",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_array$_t_bytes4_$dyn_memory_ptr",
+                          "typeString": "bytes4[] memory"
+                        }
+                      },
+                      "id": 47473,
+                      "indexExpression": {
+                        "id": 47472,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": false,
+                        "lValueRequested": false,
+                        "nodeType": "UnaryOperation",
+                        "operator": "++",
+                        "prefix": false,
+                        "src": "928:15:112",
+                        "subExpression": {
+                          "id": 47471,
+                          "name": "selectorIndex",
+                          "nodeType": "Identifier",
+                          "overloadedDeclarations": [],
+                          "referencedDeclaration": 47468,
+                          "src": "928:13:112",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_uint256",
+                            "typeString": "uint256"
+                          }
+                        },
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_uint256",
+                          "typeString": "uint256"
+                        }
+                      },
+                      "isConstant": false,
+                      "isLValue": true,
+                      "isPure": false,
+                      "lValueRequested": true,
+                      "nodeType": "IndexAccess",
+                      "src": "918:26:112",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_bytes4",
+                        "typeString": "bytes4"
+                      }
+                    },
+                    "nodeType": "Assignment",
+                    "operator": "=",
+                    "rightHandSide": {
+                      "expression": {
+                        "expression": {
+                          "id": 47474,
+                          "name": "IDiamondCut",
+                          "nodeType": "Identifier",
+                          "overloadedDeclarations": [],
+                          "referencedDeclaration": 48637,
+                          "src": "947:11:112",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_type$_t_contract$_IDiamondCut_$48637_$",
+                            "typeString": "type(contract IDiamondCut)"
+                          }
+                        },
+                        "id": 47475,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": true,
+                        "lValueRequested": false,
+                        "memberLocation": "959:10:112",
+                        "memberName": "diamondCut",
+                        "nodeType": "MemberAccess",
+                        "referencedDeclaration": 48636,
+                        "src": "947:22:112",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_function_declaration_nonpayable$_t_array$_t_struct$_FacetCut_$47655_calldata_ptr_$dyn_calldata_ptr_$_t_address_$_t_bytes_calldata_ptr_$returns$__$",
+                          "typeString": "function IDiamondCut.diamondCut(struct IDiamond.FacetCut calldata[] calldata,address,bytes calldata)"
+                        }
+                      },
+                      "id": 47476,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": true,
+                      "lValueRequested": false,
+                      "memberLocation": "970:8:112",
+                      "memberName": "selector",
+                      "nodeType": "MemberAccess",
+                      "src": "947:31:112",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_bytes4",
+                        "typeString": "bytes4"
+                      }
+                    },
+                    "src": "918:60:112",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bytes4",
+                      "typeString": "bytes4"
+                    }
+                  },
+                  "id": 47478,
+                  "nodeType": "ExpressionStatement",
+                  "src": "918:60:112"
+                },
+                {
+                  "expression": {
+                    "arguments": [
+                      {
+                        "expression": {
+                          "arguments": [
+                            {
+                              "id": 47481,
+                              "name": "IDiamondCut",
+                              "nodeType": "Identifier",
+                              "overloadedDeclarations": [],
+                              "referencedDeclaration": 48637,
+                              "src": "1004:11:112",
+                              "typeDescriptions": {
+                                "typeIdentifier": "t_type$_t_contract$_IDiamondCut_$48637_$",
+                                "typeString": "type(contract IDiamondCut)"
+                              }
+                            }
+                          ],
+                          "expression": {
+                            "argumentTypes": [
+                              {
+                                "typeIdentifier": "t_type$_t_contract$_IDiamondCut_$48637_$",
+                                "typeString": "type(contract IDiamondCut)"
+                              }
+                            ],
+                            "id": 47480,
+                            "name": "type",
+                            "nodeType": "Identifier",
+                            "overloadedDeclarations": [],
+                            "referencedDeclaration": -27,
+                            "src": "999:4:112",
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_function_metatype_pure$__$returns$__$",
+                              "typeString": "function () pure"
+                            }
+                          },
+                          "id": 47482,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": true,
+                          "kind": "functionCall",
+                          "lValueRequested": false,
+                          "nameLocations": [],
+                          "names": [],
+                          "nodeType": "FunctionCall",
+                          "src": "999:17:112",
+                          "tryCall": false,
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_magic_meta_type_t_contract$_IDiamondCut_$48637",
+                            "typeString": "type(contract IDiamondCut)"
+                          }
+                        },
+                        "id": 47483,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": true,
+                        "lValueRequested": false,
+                        "memberLocation": "1017:11:112",
+                        "memberName": "interfaceId",
+                        "nodeType": "MemberAccess",
+                        "src": "999:29:112",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_bytes4",
+                          "typeString": "bytes4"
+                        }
+                      }
+                    ],
+                    "expression": {
+                      "argumentTypes": [
+                        {
+                          "typeIdentifier": "t_bytes4",
+                          "typeString": "bytes4"
+                        }
+                      ],
+                      "id": 47479,
+                      "name": "_addInterface",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 48955,
+                      "src": "985:13:112",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_function_internal_nonpayable$_t_bytes4_$returns$__$",
+                        "typeString": "function (bytes4)"
+                      }
+                    },
+                    "id": 47484,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "kind": "functionCall",
+                    "lValueRequested": false,
+                    "nameLocations": [],
+                    "names": [],
+                    "nodeType": "FunctionCall",
+                    "src": "985:44:112",
+                    "tryCall": false,
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_tuple$__$",
+                      "typeString": "tuple()"
+                    }
+                  },
+                  "id": 47485,
+                  "nodeType": "ExpressionStatement",
+                  "src": "985:44:112"
+                },
+                {
+                  "expression": {
+                    "id": 47493,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "leftHandSide": {
+                      "baseExpression": {
+                        "id": 47486,
+                        "name": "selectors",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 47460,
+                        "src": "1088:9:112",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_array$_t_bytes4_$dyn_memory_ptr",
+                          "typeString": "bytes4[] memory"
+                        }
+                      },
+                      "id": 47489,
+                      "indexExpression": {
+                        "id": 47488,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": false,
+                        "lValueRequested": false,
+                        "nodeType": "UnaryOperation",
+                        "operator": "++",
+                        "prefix": false,
+                        "src": "1098:15:112",
+                        "subExpression": {
+                          "id": 47487,
+                          "name": "selectorIndex",
+                          "nodeType": "Identifier",
+                          "overloadedDeclarations": [],
+                          "referencedDeclaration": 47468,
+                          "src": "1098:13:112",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_uint256",
+                            "typeString": "uint256"
+                          }
+                        },
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_uint256",
+                          "typeString": "uint256"
+                        }
+                      },
+                      "isConstant": false,
+                      "isLValue": true,
+                      "isPure": false,
+                      "lValueRequested": true,
+                      "nodeType": "IndexAccess",
+                      "src": "1088:26:112",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_bytes4",
+                        "typeString": "bytes4"
+                      }
+                    },
+                    "nodeType": "Assignment",
+                    "operator": "=",
+                    "rightHandSide": {
+                      "expression": {
+                        "expression": {
+                          "id": 47490,
+                          "name": "IDiamondLoupe",
+                          "nodeType": "Identifier",
+                          "overloadedDeclarations": [],
+                          "referencedDeclaration": 49581,
+                          "src": "1117:13:112",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_type$_t_contract$_IDiamondLoupe_$49581_$",
+                            "typeString": "type(contract IDiamondLoupe)"
+                          }
+                        },
+                        "id": 47491,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": true,
+                        "lValueRequested": false,
+                        "memberLocation": "1131:6:112",
+                        "memberName": "facets",
+                        "nodeType": "MemberAccess",
+                        "referencedDeclaration": 49556,
+                        "src": "1117:20:112",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_function_declaration_view$__$returns$_t_array$_t_struct$_Facet_$49544_memory_ptr_$dyn_memory_ptr_$",
+                          "typeString": "function IDiamondLoupe.facets() view returns (struct IDiamondLoupeStructs.Facet memory[] memory)"
+                        }
+                      },
+                      "id": 47492,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": true,
+                      "lValueRequested": false,
+                      "memberLocation": "1138:8:112",
+                      "memberName": "selector",
+                      "nodeType": "MemberAccess",
+                      "src": "1117:29:112",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_bytes4",
+                        "typeString": "bytes4"
+                      }
+                    },
+                    "src": "1088:58:112",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bytes4",
+                      "typeString": "bytes4"
+                    }
+                  },
+                  "id": 47494,
+                  "nodeType": "ExpressionStatement",
+                  "src": "1088:58:112"
+                },
+                {
+                  "expression": {
+                    "id": 47502,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "leftHandSide": {
+                      "baseExpression": {
+                        "id": 47495,
+                        "name": "selectors",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 47460,
+                        "src": "1152:9:112",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_array$_t_bytes4_$dyn_memory_ptr",
+                          "typeString": "bytes4[] memory"
+                        }
+                      },
+                      "id": 47498,
+                      "indexExpression": {
+                        "id": 47497,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": false,
+                        "lValueRequested": false,
+                        "nodeType": "UnaryOperation",
+                        "operator": "++",
+                        "prefix": false,
+                        "src": "1162:15:112",
+                        "subExpression": {
+                          "id": 47496,
+                          "name": "selectorIndex",
+                          "nodeType": "Identifier",
+                          "overloadedDeclarations": [],
+                          "referencedDeclaration": 47468,
+                          "src": "1162:13:112",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_uint256",
+                            "typeString": "uint256"
+                          }
+                        },
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_uint256",
+                          "typeString": "uint256"
+                        }
+                      },
+                      "isConstant": false,
+                      "isLValue": true,
+                      "isPure": false,
+                      "lValueRequested": true,
+                      "nodeType": "IndexAccess",
+                      "src": "1152:26:112",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_bytes4",
+                        "typeString": "bytes4"
+                      }
+                    },
+                    "nodeType": "Assignment",
+                    "operator": "=",
+                    "rightHandSide": {
+                      "expression": {
+                        "expression": {
+                          "id": 47499,
+                          "name": "IDiamondLoupe",
+                          "nodeType": "Identifier",
+                          "overloadedDeclarations": [],
+                          "referencedDeclaration": 49581,
+                          "src": "1181:13:112",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_type$_t_contract$_IDiamondLoupe_$49581_$",
+                            "typeString": "type(contract IDiamondLoupe)"
+                          }
+                        },
+                        "id": 47500,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": true,
+                        "lValueRequested": false,
+                        "memberLocation": "1195:22:112",
+                        "memberName": "facetFunctionSelectors",
+                        "nodeType": "MemberAccess",
+                        "referencedDeclaration": 49565,
+                        "src": "1181:36:112",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_function_declaration_view$_t_address_$returns$_t_array$_t_bytes4_$dyn_memory_ptr_$",
+                          "typeString": "function IDiamondLoupe.facetFunctionSelectors(address) view returns (bytes4[] memory)"
+                        }
+                      },
+                      "id": 47501,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": true,
+                      "lValueRequested": false,
+                      "memberLocation": "1218:8:112",
+                      "memberName": "selector",
+                      "nodeType": "MemberAccess",
+                      "src": "1181:45:112",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_bytes4",
+                        "typeString": "bytes4"
+                      }
+                    },
+                    "src": "1152:74:112",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bytes4",
+                      "typeString": "bytes4"
+                    }
+                  },
+                  "id": 47503,
+                  "nodeType": "ExpressionStatement",
+                  "src": "1152:74:112"
+                },
+                {
+                  "expression": {
+                    "id": 47511,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "leftHandSide": {
+                      "baseExpression": {
+                        "id": 47504,
+                        "name": "selectors",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 47460,
+                        "src": "1232:9:112",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_array$_t_bytes4_$dyn_memory_ptr",
+                          "typeString": "bytes4[] memory"
+                        }
+                      },
+                      "id": 47507,
+                      "indexExpression": {
+                        "id": 47506,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": false,
+                        "lValueRequested": false,
+                        "nodeType": "UnaryOperation",
+                        "operator": "++",
+                        "prefix": false,
+                        "src": "1242:15:112",
+                        "subExpression": {
+                          "id": 47505,
+                          "name": "selectorIndex",
+                          "nodeType": "Identifier",
+                          "overloadedDeclarations": [],
+                          "referencedDeclaration": 47468,
+                          "src": "1242:13:112",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_uint256",
+                            "typeString": "uint256"
+                          }
+                        },
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_uint256",
+                          "typeString": "uint256"
+                        }
+                      },
+                      "isConstant": false,
+                      "isLValue": true,
+                      "isPure": false,
+                      "lValueRequested": true,
+                      "nodeType": "IndexAccess",
+                      "src": "1232:26:112",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_bytes4",
+                        "typeString": "bytes4"
+                      }
+                    },
+                    "nodeType": "Assignment",
+                    "operator": "=",
+                    "rightHandSide": {
+                      "expression": {
+                        "expression": {
+                          "id": 47508,
+                          "name": "IDiamondLoupe",
+                          "nodeType": "Identifier",
+                          "overloadedDeclarations": [],
+                          "referencedDeclaration": 49581,
+                          "src": "1261:13:112",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_type$_t_contract$_IDiamondLoupe_$49581_$",
+                            "typeString": "type(contract IDiamondLoupe)"
+                          }
+                        },
+                        "id": 47509,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": true,
+                        "lValueRequested": false,
+                        "memberLocation": "1275:12:112",
+                        "memberName": "facetAddress",
+                        "nodeType": "MemberAccess",
+                        "referencedDeclaration": 49580,
+                        "src": "1261:26:112",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_function_declaration_view$_t_bytes4_$returns$_t_address_$",
+                          "typeString": "function IDiamondLoupe.facetAddress(bytes4) view returns (address)"
+                        }
+                      },
+                      "id": 47510,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": true,
+                      "lValueRequested": false,
+                      "memberLocation": "1288:8:112",
+                      "memberName": "selector",
+                      "nodeType": "MemberAccess",
+                      "src": "1261:35:112",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_bytes4",
+                        "typeString": "bytes4"
+                      }
+                    },
+                    "src": "1232:64:112",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bytes4",
+                      "typeString": "bytes4"
+                    }
+                  },
+                  "id": 47512,
+                  "nodeType": "ExpressionStatement",
+                  "src": "1232:64:112"
+                },
+                {
+                  "expression": {
+                    "id": 47520,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "leftHandSide": {
+                      "baseExpression": {
+                        "id": 47513,
+                        "name": "selectors",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 47460,
+                        "src": "1302:9:112",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_array$_t_bytes4_$dyn_memory_ptr",
+                          "typeString": "bytes4[] memory"
+                        }
+                      },
+                      "id": 47516,
+                      "indexExpression": {
+                        "id": 47515,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": false,
+                        "lValueRequested": false,
+                        "nodeType": "UnaryOperation",
+                        "operator": "++",
+                        "prefix": false,
+                        "src": "1312:15:112",
+                        "subExpression": {
+                          "id": 47514,
+                          "name": "selectorIndex",
+                          "nodeType": "Identifier",
+                          "overloadedDeclarations": [],
+                          "referencedDeclaration": 47468,
+                          "src": "1312:13:112",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_uint256",
+                            "typeString": "uint256"
+                          }
+                        },
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_uint256",
+                          "typeString": "uint256"
+                        }
+                      },
+                      "isConstant": false,
+                      "isLValue": true,
+                      "isPure": false,
+                      "lValueRequested": true,
+                      "nodeType": "IndexAccess",
+                      "src": "1302:26:112",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_bytes4",
+                        "typeString": "bytes4"
+                      }
+                    },
+                    "nodeType": "Assignment",
+                    "operator": "=",
+                    "rightHandSide": {
+                      "expression": {
+                        "expression": {
+                          "id": 47517,
+                          "name": "IDiamondLoupe",
+                          "nodeType": "Identifier",
+                          "overloadedDeclarations": [],
+                          "referencedDeclaration": 49581,
+                          "src": "1331:13:112",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_type$_t_contract$_IDiamondLoupe_$49581_$",
+                            "typeString": "type(contract IDiamondLoupe)"
+                          }
+                        },
+                        "id": 47518,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": true,
+                        "lValueRequested": false,
+                        "memberLocation": "1345:14:112",
+                        "memberName": "facetAddresses",
+                        "nodeType": "MemberAccess",
+                        "referencedDeclaration": 49572,
+                        "src": "1331:28:112",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_function_declaration_view$__$returns$_t_array$_t_address_$dyn_memory_ptr_$",
+                          "typeString": "function IDiamondLoupe.facetAddresses() view returns (address[] memory)"
+                        }
+                      },
+                      "id": 47519,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": true,
+                      "lValueRequested": false,
+                      "memberLocation": "1360:8:112",
+                      "memberName": "selector",
+                      "nodeType": "MemberAccess",
+                      "src": "1331:37:112",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_bytes4",
+                        "typeString": "bytes4"
+                      }
+                    },
+                    "src": "1302:66:112",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bytes4",
+                      "typeString": "bytes4"
+                    }
+                  },
+                  "id": 47521,
+                  "nodeType": "ExpressionStatement",
+                  "src": "1302:66:112"
+                },
+                {
+                  "expression": {
+                    "arguments": [
+                      {
+                        "expression": {
+                          "arguments": [
+                            {
+                              "id": 47524,
+                              "name": "IDiamondLoupe",
+                              "nodeType": "Identifier",
+                              "overloadedDeclarations": [],
+                              "referencedDeclaration": 49581,
+                              "src": "1394:13:112",
+                              "typeDescriptions": {
+                                "typeIdentifier": "t_type$_t_contract$_IDiamondLoupe_$49581_$",
+                                "typeString": "type(contract IDiamondLoupe)"
+                              }
+                            }
+                          ],
+                          "expression": {
+                            "argumentTypes": [
+                              {
+                                "typeIdentifier": "t_type$_t_contract$_IDiamondLoupe_$49581_$",
+                                "typeString": "type(contract IDiamondLoupe)"
+                              }
+                            ],
+                            "id": 47523,
+                            "name": "type",
+                            "nodeType": "Identifier",
+                            "overloadedDeclarations": [],
+                            "referencedDeclaration": -27,
+                            "src": "1389:4:112",
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_function_metatype_pure$__$returns$__$",
+                              "typeString": "function () pure"
+                            }
+                          },
+                          "id": 47525,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": true,
+                          "kind": "functionCall",
+                          "lValueRequested": false,
+                          "nameLocations": [],
+                          "names": [],
+                          "nodeType": "FunctionCall",
+                          "src": "1389:19:112",
+                          "tryCall": false,
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_magic_meta_type_t_contract$_IDiamondLoupe_$49581",
+                            "typeString": "type(contract IDiamondLoupe)"
+                          }
+                        },
+                        "id": 47526,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": true,
+                        "lValueRequested": false,
+                        "memberLocation": "1409:11:112",
+                        "memberName": "interfaceId",
+                        "nodeType": "MemberAccess",
+                        "src": "1389:31:112",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_bytes4",
+                          "typeString": "bytes4"
+                        }
+                      }
+                    ],
+                    "expression": {
+                      "argumentTypes": [
+                        {
+                          "typeIdentifier": "t_bytes4",
+                          "typeString": "bytes4"
+                        }
+                      ],
+                      "id": 47522,
+                      "name": "_addInterface",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 48955,
+                      "src": "1375:13:112",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_function_internal_nonpayable$_t_bytes4_$returns$__$",
+                        "typeString": "function (bytes4)"
+                      }
+                    },
+                    "id": 47527,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "kind": "functionCall",
+                    "lValueRequested": false,
+                    "nameLocations": [],
+                    "names": [],
+                    "nodeType": "FunctionCall",
+                    "src": "1375:46:112",
+                    "tryCall": false,
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_tuple$__$",
+                      "typeString": "tuple()"
+                    }
+                  },
+                  "id": 47528,
+                  "nodeType": "ExpressionStatement",
+                  "src": "1375:46:112"
+                },
+                {
+                  "expression": {
+                    "id": 47536,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "leftHandSide": {
+                      "baseExpression": {
+                        "id": 47529,
+                        "name": "selectors",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 47460,
+                        "src": "1470:9:112",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_array$_t_bytes4_$dyn_memory_ptr",
+                          "typeString": "bytes4[] memory"
+                        }
+                      },
+                      "id": 47532,
+                      "indexExpression": {
+                        "id": 47531,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": false,
+                        "lValueRequested": false,
+                        "nodeType": "UnaryOperation",
+                        "operator": "++",
+                        "prefix": false,
+                        "src": "1480:15:112",
+                        "subExpression": {
+                          "id": 47530,
+                          "name": "selectorIndex",
+                          "nodeType": "Identifier",
+                          "overloadedDeclarations": [],
+                          "referencedDeclaration": 47468,
+                          "src": "1480:13:112",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_uint256",
+                            "typeString": "uint256"
+                          }
+                        },
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_uint256",
+                          "typeString": "uint256"
+                        }
+                      },
+                      "isConstant": false,
+                      "isLValue": true,
+                      "isPure": false,
+                      "lValueRequested": true,
+                      "nodeType": "IndexAccess",
+                      "src": "1470:26:112",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_bytes4",
+                        "typeString": "bytes4"
+                      }
+                    },
+                    "nodeType": "Assignment",
+                    "operator": "=",
+                    "rightHandSide": {
+                      "expression": {
+                        "expression": {
+                          "id": 47533,
+                          "name": "IERC165",
+                          "nodeType": "Identifier",
+                          "overloadedDeclarations": [],
+                          "referencedDeclaration": 48931,
+                          "src": "1499:7:112",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_type$_t_contract$_IERC165_$48931_$",
+                            "typeString": "type(contract IERC165)"
+                          }
+                        },
+                        "id": 47534,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": true,
+                        "lValueRequested": false,
+                        "memberLocation": "1507:17:112",
+                        "memberName": "supportsInterface",
+                        "nodeType": "MemberAccess",
+                        "referencedDeclaration": 48930,
+                        "src": "1499:25:112",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_function_declaration_view$_t_bytes4_$returns$_t_bool_$",
+                          "typeString": "function IERC165.supportsInterface(bytes4) view returns (bool)"
+                        }
+                      },
+                      "id": 47535,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": true,
+                      "lValueRequested": false,
+                      "memberLocation": "1525:8:112",
+                      "memberName": "selector",
+                      "nodeType": "MemberAccess",
+                      "src": "1499:34:112",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_bytes4",
+                        "typeString": "bytes4"
+                      }
+                    },
+                    "src": "1470:63:112",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bytes4",
+                      "typeString": "bytes4"
+                    }
+                  },
+                  "id": 47537,
+                  "nodeType": "ExpressionStatement",
+                  "src": "1470:63:112"
+                },
+                {
+                  "expression": {
+                    "arguments": [
+                      {
+                        "expression": {
+                          "arguments": [
+                            {
+                              "id": 47540,
+                              "name": "IERC165",
+                              "nodeType": "Identifier",
+                              "overloadedDeclarations": [],
+                              "referencedDeclaration": 48931,
+                              "src": "1558:7:112",
+                              "typeDescriptions": {
+                                "typeIdentifier": "t_type$_t_contract$_IERC165_$48931_$",
+                                "typeString": "type(contract IERC165)"
+                              }
+                            }
+                          ],
+                          "expression": {
+                            "argumentTypes": [
+                              {
+                                "typeIdentifier": "t_type$_t_contract$_IERC165_$48931_$",
+                                "typeString": "type(contract IERC165)"
+                              }
+                            ],
+                            "id": 47539,
+                            "name": "type",
+                            "nodeType": "Identifier",
+                            "overloadedDeclarations": [],
+                            "referencedDeclaration": -27,
+                            "src": "1553:4:112",
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_function_metatype_pure$__$returns$__$",
+                              "typeString": "function () pure"
+                            }
+                          },
+                          "id": 47541,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": true,
+                          "kind": "functionCall",
+                          "lValueRequested": false,
+                          "nameLocations": [],
+                          "names": [],
+                          "nodeType": "FunctionCall",
+                          "src": "1553:13:112",
+                          "tryCall": false,
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_magic_meta_type_t_contract$_IERC165_$48931",
+                            "typeString": "type(contract IERC165)"
+                          }
+                        },
+                        "id": 47542,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": true,
+                        "lValueRequested": false,
+                        "memberLocation": "1567:11:112",
+                        "memberName": "interfaceId",
+                        "nodeType": "MemberAccess",
+                        "src": "1553:25:112",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_bytes4",
+                          "typeString": "bytes4"
+                        }
+                      }
+                    ],
+                    "expression": {
+                      "argumentTypes": [
+                        {
+                          "typeIdentifier": "t_bytes4",
+                          "typeString": "bytes4"
+                        }
+                      ],
+                      "id": 47538,
+                      "name": "_addInterface",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 48955,
+                      "src": "1539:13:112",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_function_internal_nonpayable$_t_bytes4_$returns$__$",
+                        "typeString": "function (bytes4)"
+                      }
+                    },
+                    "id": 47543,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "kind": "functionCall",
+                    "lValueRequested": false,
+                    "nameLocations": [],
+                    "names": [],
+                    "nodeType": "FunctionCall",
+                    "src": "1539:40:112",
+                    "tryCall": false,
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_tuple$__$",
+                      "typeString": "tuple()"
+                    }
+                  },
+                  "id": 47544,
+                  "nodeType": "ExpressionStatement",
+                  "src": "1539:40:112"
+                },
+                {
+                  "expression": {
+                    "id": 47552,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "leftHandSide": {
+                      "baseExpression": {
+                        "id": 47545,
+                        "name": "selectors",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 47460,
+                        "src": "1629:9:112",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_array$_t_bytes4_$dyn_memory_ptr",
+                          "typeString": "bytes4[] memory"
+                        }
+                      },
+                      "id": 47548,
+                      "indexExpression": {
+                        "id": 47547,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": false,
+                        "lValueRequested": false,
+                        "nodeType": "UnaryOperation",
+                        "operator": "++",
+                        "prefix": false,
+                        "src": "1639:15:112",
+                        "subExpression": {
+                          "id": 47546,
+                          "name": "selectorIndex",
+                          "nodeType": "Identifier",
+                          "overloadedDeclarations": [],
+                          "referencedDeclaration": 47468,
+                          "src": "1639:13:112",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_uint256",
+                            "typeString": "uint256"
+                          }
+                        },
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_uint256",
+                          "typeString": "uint256"
+                        }
+                      },
+                      "isConstant": false,
+                      "isLValue": true,
+                      "isPure": false,
+                      "lValueRequested": true,
+                      "nodeType": "IndexAccess",
+                      "src": "1629:26:112",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_bytes4",
+                        "typeString": "bytes4"
+                      }
+                    },
+                    "nodeType": "Assignment",
+                    "operator": "=",
+                    "rightHandSide": {
+                      "expression": {
+                        "expression": {
+                          "id": 47549,
+                          "name": "IERC173",
+                          "nodeType": "Identifier",
+                          "overloadedDeclarations": [],
+                          "referencedDeclaration": 49606,
+                          "src": "1658:7:112",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_type$_t_contract$_IERC173_$49606_$",
+                            "typeString": "type(contract IERC173)"
+                          }
+                        },
+                        "id": 47550,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": true,
+                        "lValueRequested": false,
+                        "memberLocation": "1666:5:112",
+                        "memberName": "owner",
+                        "nodeType": "MemberAccess",
+                        "referencedDeclaration": 49599,
+                        "src": "1658:13:112",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_function_declaration_view$__$returns$_t_address_$",
+                          "typeString": "function IERC173.owner() view returns (address)"
+                        }
+                      },
+                      "id": 47551,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": true,
+                      "lValueRequested": false,
+                      "memberLocation": "1672:8:112",
+                      "memberName": "selector",
+                      "nodeType": "MemberAccess",
+                      "src": "1658:22:112",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_bytes4",
+                        "typeString": "bytes4"
+                      }
+                    },
+                    "src": "1629:51:112",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bytes4",
+                      "typeString": "bytes4"
+                    }
+                  },
+                  "id": 47553,
+                  "nodeType": "ExpressionStatement",
+                  "src": "1629:51:112"
+                },
+                {
+                  "expression": {
+                    "id": 47561,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "leftHandSide": {
+                      "baseExpression": {
+                        "id": 47554,
+                        "name": "selectors",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 47460,
+                        "src": "1686:9:112",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_array$_t_bytes4_$dyn_memory_ptr",
+                          "typeString": "bytes4[] memory"
+                        }
+                      },
+                      "id": 47557,
+                      "indexExpression": {
+                        "id": 47556,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": false,
+                        "lValueRequested": false,
+                        "nodeType": "UnaryOperation",
+                        "operator": "++",
+                        "prefix": false,
+                        "src": "1696:15:112",
+                        "subExpression": {
+                          "id": 47555,
+                          "name": "selectorIndex",
+                          "nodeType": "Identifier",
+                          "overloadedDeclarations": [],
+                          "referencedDeclaration": 47468,
+                          "src": "1696:13:112",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_uint256",
+                            "typeString": "uint256"
+                          }
+                        },
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_uint256",
+                          "typeString": "uint256"
+                        }
+                      },
+                      "isConstant": false,
+                      "isLValue": true,
+                      "isPure": false,
+                      "lValueRequested": true,
+                      "nodeType": "IndexAccess",
+                      "src": "1686:26:112",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_bytes4",
+                        "typeString": "bytes4"
+                      }
+                    },
+                    "nodeType": "Assignment",
+                    "operator": "=",
+                    "rightHandSide": {
+                      "expression": {
+                        "expression": {
+                          "id": 47558,
+                          "name": "IERC173",
+                          "nodeType": "Identifier",
+                          "overloadedDeclarations": [],
+                          "referencedDeclaration": 49606,
+                          "src": "1715:7:112",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_type$_t_contract$_IERC173_$49606_$",
+                            "typeString": "type(contract IERC173)"
+                          }
+                        },
+                        "id": 47559,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": true,
+                        "lValueRequested": false,
+                        "memberLocation": "1723:17:112",
+                        "memberName": "transferOwnership",
+                        "nodeType": "MemberAccess",
+                        "referencedDeclaration": 49605,
+                        "src": "1715:25:112",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_function_declaration_nonpayable$_t_address_$returns$__$",
+                          "typeString": "function IERC173.transferOwnership(address)"
+                        }
+                      },
+                      "id": 47560,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": true,
+                      "lValueRequested": false,
+                      "memberLocation": "1741:8:112",
+                      "memberName": "selector",
+                      "nodeType": "MemberAccess",
+                      "src": "1715:34:112",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_bytes4",
+                        "typeString": "bytes4"
+                      }
+                    },
+                    "src": "1686:63:112",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bytes4",
+                      "typeString": "bytes4"
+                    }
+                  },
+                  "id": 47562,
+                  "nodeType": "ExpressionStatement",
+                  "src": "1686:63:112"
+                },
+                {
+                  "expression": {
+                    "arguments": [
+                      {
+                        "expression": {
+                          "arguments": [
+                            {
+                              "id": 47565,
+                              "name": "IERC173",
+                              "nodeType": "Identifier",
+                              "overloadedDeclarations": [],
+                              "referencedDeclaration": 49606,
+                              "src": "1775:7:112",
+                              "typeDescriptions": {
+                                "typeIdentifier": "t_type$_t_contract$_IERC173_$49606_$",
+                                "typeString": "type(contract IERC173)"
+                              }
+                            }
+                          ],
+                          "expression": {
+                            "argumentTypes": [
+                              {
+                                "typeIdentifier": "t_type$_t_contract$_IERC173_$49606_$",
+                                "typeString": "type(contract IERC173)"
+                              }
+                            ],
+                            "id": 47564,
+                            "name": "type",
+                            "nodeType": "Identifier",
+                            "overloadedDeclarations": [],
+                            "referencedDeclaration": -27,
+                            "src": "1770:4:112",
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_function_metatype_pure$__$returns$__$",
+                              "typeString": "function () pure"
+                            }
+                          },
+                          "id": 47566,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": true,
+                          "kind": "functionCall",
+                          "lValueRequested": false,
+                          "nameLocations": [],
+                          "names": [],
+                          "nodeType": "FunctionCall",
+                          "src": "1770:13:112",
+                          "tryCall": false,
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_magic_meta_type_t_contract$_IERC173_$49606",
+                            "typeString": "type(contract IERC173)"
+                          }
+                        },
+                        "id": 47567,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": true,
+                        "lValueRequested": false,
+                        "memberLocation": "1784:11:112",
+                        "memberName": "interfaceId",
+                        "nodeType": "MemberAccess",
+                        "src": "1770:25:112",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_bytes4",
+                          "typeString": "bytes4"
+                        }
+                      }
+                    ],
+                    "expression": {
+                      "argumentTypes": [
+                        {
+                          "typeIdentifier": "t_bytes4",
+                          "typeString": "bytes4"
+                        }
+                      ],
+                      "id": 47563,
+                      "name": "_addInterface",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 48955,
+                      "src": "1756:13:112",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_function_internal_nonpayable$_t_bytes4_$returns$__$",
+                        "typeString": "function (bytes4)"
+                      }
+                    },
+                    "id": 47568,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "kind": "functionCall",
+                    "lValueRequested": false,
+                    "nameLocations": [],
+                    "names": [],
+                    "nodeType": "FunctionCall",
+                    "src": "1756:40:112",
+                    "tryCall": false,
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_tuple$__$",
+                      "typeString": "tuple()"
+                    }
+                  },
+                  "id": 47569,
+                  "nodeType": "ExpressionStatement",
+                  "src": "1756:40:112"
+                },
+                {
+                  "assignments": [
+                    47574
+                  ],
+                  "declarations": [
+                    {
+                      "constant": false,
+                      "id": 47574,
+                      "mutability": "mutable",
+                      "name": "facetCuts",
+                      "nameLocation": "1821:9:112",
+                      "nodeType": "VariableDeclaration",
+                      "scope": 47610,
+                      "src": "1803:27:112",
+                      "stateVariable": false,
+                      "storageLocation": "memory",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_array$_t_struct$_FacetCut_$47655_memory_ptr_$dyn_memory_ptr",
+                        "typeString": "struct IDiamond.FacetCut[]"
+                      },
+                      "typeName": {
+                        "baseType": {
+                          "id": 47572,
+                          "nodeType": "UserDefinedTypeName",
+                          "pathNode": {
+                            "id": 47571,
+                            "name": "FacetCut",
+                            "nameLocations": [
+                              "1803:8:112"
+                            ],
+                            "nodeType": "IdentifierPath",
+                            "referencedDeclaration": 47655,
+                            "src": "1803:8:112"
+                          },
+                          "referencedDeclaration": 47655,
+                          "src": "1803:8:112",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_struct$_FacetCut_$47655_storage_ptr",
+                            "typeString": "struct IDiamond.FacetCut"
+                          }
+                        },
+                        "id": 47573,
+                        "nodeType": "ArrayTypeName",
+                        "src": "1803:10:112",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_array$_t_struct$_FacetCut_$47655_storage_$dyn_storage_ptr",
+                          "typeString": "struct IDiamond.FacetCut[]"
+                        }
+                      },
+                      "visibility": "internal"
+                    }
+                  ],
+                  "id": 47581,
+                  "initialValue": {
+                    "arguments": [
+                      {
+                        "hexValue": "31",
+                        "id": 47579,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": true,
+                        "kind": "number",
+                        "lValueRequested": false,
+                        "nodeType": "Literal",
+                        "src": "1848:1:112",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_rational_1_by_1",
+                          "typeString": "int_const 1"
+                        },
+                        "value": "1"
+                      }
+                    ],
+                    "expression": {
+                      "argumentTypes": [
+                        {
+                          "typeIdentifier": "t_rational_1_by_1",
+                          "typeString": "int_const 1"
+                        }
+                      ],
+                      "id": 47578,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": true,
+                      "lValueRequested": false,
+                      "nodeType": "NewExpression",
+                      "src": "1833:14:112",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_function_objectcreation_pure$_t_uint256_$returns$_t_array$_t_struct$_FacetCut_$47655_memory_ptr_$dyn_memory_ptr_$",
+                        "typeString": "function (uint256) pure returns (struct IDiamond.FacetCut memory[] memory)"
+                      },
+                      "typeName": {
+                        "baseType": {
+                          "id": 47576,
+                          "nodeType": "UserDefinedTypeName",
+                          "pathNode": {
+                            "id": 47575,
+                            "name": "FacetCut",
+                            "nameLocations": [
+                              "1837:8:112"
+                            ],
+                            "nodeType": "IdentifierPath",
+                            "referencedDeclaration": 47655,
+                            "src": "1837:8:112"
+                          },
+                          "referencedDeclaration": 47655,
+                          "src": "1837:8:112",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_struct$_FacetCut_$47655_storage_ptr",
+                            "typeString": "struct IDiamond.FacetCut"
+                          }
+                        },
+                        "id": 47577,
+                        "nodeType": "ArrayTypeName",
+                        "src": "1837:10:112",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_array$_t_struct$_FacetCut_$47655_storage_$dyn_storage_ptr",
+                          "typeString": "struct IDiamond.FacetCut[]"
+                        }
+                      }
+                    },
+                    "id": 47580,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": true,
+                    "kind": "functionCall",
+                    "lValueRequested": false,
+                    "nameLocations": [],
+                    "names": [],
+                    "nodeType": "FunctionCall",
+                    "src": "1833:17:112",
+                    "tryCall": false,
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_array$_t_struct$_FacetCut_$47655_memory_ptr_$dyn_memory_ptr",
+                      "typeString": "struct IDiamond.FacetCut memory[] memory"
+                    }
+                  },
+                  "nodeType": "VariableDeclarationStatement",
+                  "src": "1803:47:112"
+                },
+                {
+                  "expression": {
+                    "id": 47594,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "leftHandSide": {
+                      "baseExpression": {
+                        "id": 47582,
+                        "name": "facetCuts",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 47574,
+                        "src": "1857:9:112",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_array$_t_struct$_FacetCut_$47655_memory_ptr_$dyn_memory_ptr",
+                          "typeString": "struct IDiamond.FacetCut memory[] memory"
+                        }
+                      },
+                      "id": 47584,
+                      "indexExpression": {
+                        "hexValue": "30",
+                        "id": 47583,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": true,
+                        "kind": "number",
+                        "lValueRequested": false,
+                        "nodeType": "Literal",
+                        "src": "1867:1:112",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_rational_0_by_1",
+                          "typeString": "int_const 0"
+                        },
+                        "value": "0"
+                      },
+                      "isConstant": false,
+                      "isLValue": true,
+                      "isPure": false,
+                      "lValueRequested": true,
+                      "nodeType": "IndexAccess",
+                      "src": "1857:12:112",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_struct$_FacetCut_$47655_memory_ptr",
+                        "typeString": "struct IDiamond.FacetCut memory"
+                      }
+                    },
+                    "nodeType": "Assignment",
+                    "operator": "=",
+                    "rightHandSide": {
+                      "arguments": [
+                        {
+                          "arguments": [
+                            {
+                              "id": 47588,
+                              "name": "this",
+                              "nodeType": "Identifier",
+                              "overloadedDeclarations": [],
+                              "referencedDeclaration": -28,
+                              "src": "1911:4:112",
+                              "typeDescriptions": {
+                                "typeIdentifier": "t_contract$_Diamond_$47616",
+                                "typeString": "contract Diamond"
+                              }
+                            }
+                          ],
+                          "expression": {
+                            "argumentTypes": [
+                              {
+                                "typeIdentifier": "t_contract$_Diamond_$47616",
+                                "typeString": "contract Diamond"
+                              }
+                            ],
+                            "id": 47587,
+                            "isConstant": false,
+                            "isLValue": false,
+                            "isPure": true,
+                            "lValueRequested": false,
+                            "nodeType": "ElementaryTypeNameExpression",
+                            "src": "1903:7:112",
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_type$_t_address_$",
+                              "typeString": "type(address)"
+                            },
+                            "typeName": {
+                              "id": 47586,
+                              "name": "address",
+                              "nodeType": "ElementaryTypeName",
+                              "src": "1903:7:112",
+                              "typeDescriptions": {}
+                            }
+                          },
+                          "id": 47589,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": false,
+                          "kind": "typeConversion",
+                          "lValueRequested": false,
+                          "nameLocations": [],
+                          "names": [],
+                          "nodeType": "FunctionCall",
+                          "src": "1903:13:112",
+                          "tryCall": false,
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_address",
+                            "typeString": "address"
+                          }
+                        },
+                        {
+                          "expression": {
+                            "id": 47590,
+                            "name": "FacetCutAction",
+                            "nodeType": "Identifier",
+                            "overloadedDeclarations": [],
+                            "referencedDeclaration": 47645,
+                            "src": "1932:14:112",
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_type$_t_enum$_FacetCutAction_$47645_$",
+                              "typeString": "type(enum IDiamond.FacetCutAction)"
+                            }
+                          },
+                          "id": 47591,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": true,
+                          "lValueRequested": false,
+                          "memberLocation": "1947:3:112",
+                          "memberName": "Add",
+                          "nodeType": "MemberAccess",
+                          "referencedDeclaration": 47642,
+                          "src": "1932:18:112",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_enum$_FacetCutAction_$47645",
+                            "typeString": "enum IDiamond.FacetCutAction"
+                          }
+                        },
+                        {
+                          "id": 47592,
+                          "name": "selectors",
+                          "nodeType": "Identifier",
+                          "overloadedDeclarations": [],
+                          "referencedDeclaration": 47460,
+                          "src": "1977:9:112",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_array$_t_bytes4_$dyn_memory_ptr",
+                            "typeString": "bytes4[] memory"
+                          }
+                        }
+                      ],
+                      "expression": {
+                        "argumentTypes": [
+                          {
+                            "typeIdentifier": "t_address",
+                            "typeString": "address"
+                          },
+                          {
+                            "typeIdentifier": "t_enum$_FacetCutAction_$47645",
+                            "typeString": "enum IDiamond.FacetCutAction"
+                          },
+                          {
+                            "typeIdentifier": "t_array$_t_bytes4_$dyn_memory_ptr",
+                            "typeString": "bytes4[] memory"
+                          }
+                        ],
+                        "id": 47585,
+                        "name": "FacetCut",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 47655,
+                        "src": "1872:8:112",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_type$_t_struct$_FacetCut_$47655_storage_ptr_$",
+                          "typeString": "type(struct IDiamond.FacetCut storage pointer)"
+                        }
+                      },
+                      "id": 47593,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": false,
+                      "kind": "structConstructorCall",
+                      "lValueRequested": false,
+                      "nameLocations": [
+                        "1889:12:112",
+                        "1924:6:112",
+                        "1958:17:112"
+                      ],
+                      "names": [
+                        "facetAddress",
+                        "action",
+                        "functionSelectors"
+                      ],
+                      "nodeType": "FunctionCall",
+                      "src": "1872:121:112",
+                      "tryCall": false,
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_struct$_FacetCut_$47655_memory_ptr",
+                        "typeString": "struct IDiamond.FacetCut memory"
+                      }
+                    },
+                    "src": "1857:136:112",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_struct$_FacetCut_$47655_memory_ptr",
+                      "typeString": "struct IDiamond.FacetCut memory"
+                    }
+                  },
+                  "id": 47595,
+                  "nodeType": "ExpressionStatement",
+                  "src": "1857:136:112"
+                },
+                {
+                  "expression": {
+                    "arguments": [
+                      {
+                        "id": 47597,
+                        "name": "facetCuts",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 47574,
+                        "src": "2012:9:112",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_array$_t_struct$_FacetCut_$47655_memory_ptr_$dyn_memory_ptr",
+                          "typeString": "struct IDiamond.FacetCut memory[] memory"
+                        }
+                      },
+                      {
+                        "arguments": [
+                          {
+                            "hexValue": "30",
+                            "id": 47600,
+                            "isConstant": false,
+                            "isLValue": false,
+                            "isPure": true,
+                            "kind": "number",
+                            "lValueRequested": false,
+                            "nodeType": "Literal",
+                            "src": "2031:1:112",
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_rational_0_by_1",
+                              "typeString": "int_const 0"
+                            },
+                            "value": "0"
+                          }
+                        ],
+                        "expression": {
+                          "argumentTypes": [
+                            {
+                              "typeIdentifier": "t_rational_0_by_1",
+                              "typeString": "int_const 0"
+                            }
+                          ],
+                          "id": 47599,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": true,
+                          "lValueRequested": false,
+                          "nodeType": "ElementaryTypeNameExpression",
+                          "src": "2023:7:112",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_type$_t_address_$",
+                            "typeString": "type(address)"
+                          },
+                          "typeName": {
+                            "id": 47598,
+                            "name": "address",
+                            "nodeType": "ElementaryTypeName",
+                            "src": "2023:7:112",
+                            "typeDescriptions": {}
+                          }
+                        },
+                        "id": 47601,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": true,
+                        "kind": "typeConversion",
+                        "lValueRequested": false,
+                        "nameLocations": [],
+                        "names": [],
+                        "nodeType": "FunctionCall",
+                        "src": "2023:10:112",
+                        "tryCall": false,
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        }
+                      },
+                      {
+                        "hexValue": "",
+                        "id": 47602,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": true,
+                        "kind": "string",
+                        "lValueRequested": false,
+                        "nodeType": "Literal",
+                        "src": "2035:2:112",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_stringliteral_c5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+                          "typeString": "literal_string \"\""
+                        },
+                        "value": ""
+                      }
+                    ],
+                    "expression": {
+                      "argumentTypes": [
+                        {
+                          "typeIdentifier": "t_array$_t_struct$_FacetCut_$47655_memory_ptr_$dyn_memory_ptr",
+                          "typeString": "struct IDiamond.FacetCut memory[] memory"
+                        },
+                        {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        },
+                        {
+                          "typeIdentifier": "t_stringliteral_c5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+                          "typeString": "literal_string \"\""
+                        }
+                      ],
+                      "id": 47596,
+                      "name": "_diamondCut",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 47849,
+                      "src": "2000:11:112",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_function_internal_nonpayable$_t_array$_t_struct$_FacetCut_$47655_memory_ptr_$dyn_memory_ptr_$_t_address_$_t_bytes_memory_ptr_$returns$__$",
+                        "typeString": "function (struct IDiamond.FacetCut memory[] memory,address,bytes memory)"
+                      }
+                    },
+                    "id": 47603,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "kind": "functionCall",
+                    "lValueRequested": false,
+                    "nameLocations": [],
+                    "names": [],
+                    "nodeType": "FunctionCall",
+                    "src": "2000:38:112",
+                    "tryCall": false,
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_tuple$__$",
+                      "typeString": "tuple()"
+                    }
+                  },
+                  "id": 47604,
+                  "nodeType": "ExpressionStatement",
+                  "src": "2000:38:112"
+                },
+                {
+                  "expression": {
+                    "arguments": [
+                      {
+                        "expression": {
+                          "id": 47606,
+                          "name": "msg",
+                          "nodeType": "Identifier",
+                          "overloadedDeclarations": [],
+                          "referencedDeclaration": -15,
+                          "src": "2063:3:112",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_magic_message",
+                            "typeString": "msg"
+                          }
+                        },
+                        "id": 47607,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": false,
+                        "lValueRequested": false,
+                        "memberLocation": "2067:6:112",
+                        "memberName": "sender",
+                        "nodeType": "MemberAccess",
+                        "src": "2063:10:112",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        }
+                      }
+                    ],
+                    "expression": {
+                      "argumentTypes": [
+                        {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        }
+                      ],
+                      "id": 47605,
+                      "name": "_transferOwnership",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 49706,
+                      "src": "2044:18:112",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_function_internal_nonpayable$_t_address_$returns$__$",
+                        "typeString": "function (address)"
+                      }
+                    },
+                    "id": 47608,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "kind": "functionCall",
+                    "lValueRequested": false,
+                    "nameLocations": [],
+                    "names": [],
+                    "nodeType": "FunctionCall",
+                    "src": "2044:30:112",
+                    "tryCall": false,
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_tuple$__$",
+                      "typeString": "tuple()"
+                    }
+                  },
+                  "id": 47609,
+                  "nodeType": "ExpressionStatement",
+                  "src": "2044:30:112"
+                }
+              ]
+            },
+            "implemented": true,
+            "kind": "constructor",
+            "modifiers": [],
+            "name": "",
+            "nameLocation": "-1:-1:-1",
+            "parameters": {
+              "id": 47454,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "783:2:112"
+            },
+            "returnParameters": {
+              "id": 47455,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "786:0:112"
+            },
+            "scope": 47616,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "internal"
+          },
+          {
+            "id": 47615,
+            "nodeType": "FunctionDefinition",
+            "src": "2130:29:112",
+            "nodes": [],
+            "body": {
+              "id": 47614,
+              "nodeType": "Block",
+              "src": "2157:2:112",
+              "nodes": [],
+              "statements": []
+            },
+            "implemented": true,
+            "kind": "receive",
+            "modifiers": [],
+            "name": "",
+            "nameLocation": "-1:-1:-1",
+            "parameters": {
+              "id": 47612,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "2137:2:112"
+            },
+            "returnParameters": {
+              "id": 47613,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "2157:0:112"
+            },
+            "scope": 47616,
+            "stateMutability": "payable",
+            "virtual": false,
+            "visibility": "external"
+          }
+        ],
+        "abstract": true,
+        "baseContracts": [
+          {
+            "baseName": {
+              "id": 47442,
+              "name": "IDiamond",
+              "nameLocations": [
+                "693:8:112"
+              ],
+              "nodeType": "IdentifierPath",
+              "referencedDeclaration": 47656,
+              "src": "693:8:112"
+            },
+            "id": 47443,
+            "nodeType": "InheritanceSpecifier",
+            "src": "693:8:112"
+          },
+          {
+            "baseName": {
+              "id": 47444,
+              "name": "DiamondBase",
+              "nameLocations": [
+                "705:11:112"
+              ],
+              "nodeType": "IdentifierPath",
+              "referencedDeclaration": 47638,
+              "src": "705:11:112"
+            },
+            "id": 47445,
+            "nodeType": "InheritanceSpecifier",
+            "src": "705:11:112"
+          },
+          {
+            "baseName": {
+              "id": 47446,
+              "name": "DiamondCut",
+              "nameLocations": [
+                "720:10:112"
+              ],
+              "nodeType": "IdentifierPath",
+              "referencedDeclaration": 47713,
+              "src": "720:10:112"
+            },
+            "id": 47447,
+            "nodeType": "InheritanceSpecifier",
+            "src": "720:10:112"
+          },
+          {
+            "baseName": {
+              "id": 47448,
+              "name": "DiamondLoupe",
+              "nameLocations": [
+                "734:12:112"
+              ],
+              "nodeType": "IdentifierPath",
+              "referencedDeclaration": 49206,
+              "src": "734:12:112"
+            },
+            "id": 47449,
+            "nodeType": "InheritanceSpecifier",
+            "src": "734:12:112"
+          },
+          {
+            "baseName": {
+              "id": 47450,
+              "name": "Ownable",
+              "nameLocations": [
+                "750:7:112"
+              ],
+              "nodeType": "IdentifierPath",
+              "referencedDeclaration": 49642,
+              "src": "750:7:112"
+            },
+            "id": 47451,
+            "nodeType": "InheritanceSpecifier",
+            "src": "750:7:112"
+          },
+          {
+            "baseName": {
+              "id": 47452,
+              "name": "ERC165",
+              "nameLocations": [
+                "761:6:112"
+              ],
+              "nodeType": "IdentifierPath",
+              "referencedDeclaration": 48906,
+              "src": "761:6:112"
+            },
+            "id": 47453,
+            "nodeType": "InheritanceSpecifier",
+            "src": "761:6:112"
+          }
+        ],
+        "canonicalName": "Diamond",
+        "contractDependencies": [],
+        "contractKind": "contract",
+        "fullyImplemented": true,
+        "linearizedBaseContracts": [
+          47616,
+          48906,
+          48931,
+          48985,
+          48919,
+          49642,
+          49729,
+          49606,
+          49591,
+          49206,
+          49320,
+          49581,
+          49545,
+          47713,
+          47867,
+          48637,
+          48622,
+          47638,
+          52903,
+          52863,
+          47656
+        ],
+        "name": "Diamond",
+        "nameLocation": "680:7:112",
+        "scope": 47617,
+        "usedErrors": [
+          48033,
+          48035,
+          48039,
+          48043,
+          48049,
+          48053,
+          48055,
+          48059,
+          48063,
+          48065,
+          48069,
+          49045,
+          49822,
+          49826,
+          52859
+        ],
+        "usedEvents": [
+          48621,
+          48913,
+          48918,
+          49590
+        ]
+      }
+    ],
+    "license": "Apache-2.0"
+  },
+  "id": 112
+}
