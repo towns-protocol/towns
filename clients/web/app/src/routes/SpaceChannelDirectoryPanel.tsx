@@ -62,7 +62,14 @@ export const ChannelMembersModal = (props: { onHide: () => void }) => {
 const ChannelMemberRow = ({ user }: { user: RoomMember }) => {
     const isValid = !!user?.userId
     const link = useCreateLink().createLink({ profileId: user.userId })
-    const userAddress = isValid ? createUserIdFromString(user.userId)?.accountAddress : undefined
+    let userAddress
+    if (isValid) {
+        userAddress = createUserIdFromString(user.userId)?.accountAddress
+        //TODO: createUserIdFromString is tuned for Matrix - when we will substitute it with River version we should remove the if-statement below
+        if (!userAddress) {
+            userAddress = user.userId
+        }
+    }
 
     const navigate = useNavigate()
     const onNavigateClick = useCallback(() => {
