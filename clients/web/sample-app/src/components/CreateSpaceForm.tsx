@@ -100,15 +100,6 @@ export const CreateSpaceForm = (props: Props) => {
     }, [])
 
     const onClickCreateSpace = useCallback(async () => {
-        if (!councilNftAddress) {
-            console.error('Cannot create space. No council NFT address.')
-            return undefined
-        }
-        if (!pioneerNftAddress) {
-            console.error('Cannot create space. No Pioneer NFT address.')
-            return undefined
-        }
-
         let tokenAddresses: string[] = []
         let tokenGrantedPermissions: Permission[] = []
         let everyonePermissions: Permission[] = []
@@ -117,10 +108,18 @@ export const CreateSpaceForm = (props: Props) => {
                 everyonePermissions = [Permission.Read, Permission.Write]
                 break
             case MembershipRequirement.MemberNFT:
+                if (!councilNftAddress) {
+                    console.error('Cannot create space. No council NFT address.')
+                    return undefined
+                }
                 tokenAddresses = [councilNftAddress]
                 tokenGrantedPermissions = [Permission.Read, Permission.Write]
                 break
             case MembershipRequirement.PioneerNFT:
+                if (!pioneerNftAddress) {
+                    console.error('Cannot create space. No Pioneer NFT address.')
+                    return undefined
+                }
                 tokenAddresses = [pioneerNftAddress]
                 tokenGrantedPermissions = [Permission.Read, Permission.Write]
                 break
@@ -162,6 +161,10 @@ export const CreateSpaceForm = (props: Props) => {
         error,
         transactionHash,
         transactionStatus,
+        chainId,
+        councilNftAddress,
+        pioneerNftAddress,
+        MembershipRequirement,
     })
 
     return (
