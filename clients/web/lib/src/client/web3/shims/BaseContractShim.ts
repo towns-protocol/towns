@@ -3,10 +3,6 @@
 import { BytesLike, ethers } from 'ethers'
 import { GOERLI, LOCALHOST_CHAIN_ID, SEPOLIA } from '../Web3Constants'
 
-import GoerliEventsAbi from '@harmony/generated/goerli/abis/Events.abi.json' assert { type: 'json' }
-import LocalhostEventsAbi from '@harmony/generated/localhost/abis/Events.abi.json' assert { type: 'json' }
-import SepoliaEventsAbi from '@harmony/generated/sepolia/abis/Events.abi.json' assert { type: 'json' }
-
 export type PromiseOrValue<T> = T | Promise<T>
 
 // V2 smart contract shim
@@ -50,36 +46,6 @@ export class BaseContractShim<
                 return this.contractInterface as unknown as T_GOERLI_INTERFACE
             case SEPOLIA:
                 return this.contractInterface as unknown as T_SEPOLIA_INTERFACE
-            default:
-                throw new Error(`Unsupported chainId ${this.chainId}`)
-        }
-    }
-
-    public get eventsAbi(): ethers.ContractInterface {
-        switch (this.chainId) {
-            case LOCALHOST_CHAIN_ID:
-                return LocalhostEventsAbi
-            case GOERLI:
-                return GoerliEventsAbi
-            case SEPOLIA:
-                return SepoliaEventsAbi
-            default:
-                throw new Error(`Unsupported chainId ${this.chainId}`)
-        }
-    }
-
-    public get events(): T_LOCALHOST_CONTRACT | T_GOERLI_CONTRACT | T_SEPOLIA_CONTRACT {
-        // lazy create an instance if it is not already cached
-        if (!this.eventsContract) {
-            this.eventsContract = this.createEventsContractInstance()
-        }
-        switch (this.chainId) {
-            case LOCALHOST_CHAIN_ID:
-                return this.eventsContract as unknown as T_LOCALHOST_CONTRACT
-            case GOERLI:
-                return this.eventsContract as unknown as T_GOERLI_CONTRACT
-            case SEPOLIA:
-                return this.eventsContract as unknown as T_SEPOLIA_CONTRACT
             default:
                 throw new Error(`Unsupported chainId ${this.chainId}`)
         }
@@ -195,13 +161,6 @@ export class BaseContractShim<
             errorData,
             errorMessage,
         }
-    }
-
-    private createEventsContractInstance(): ethers.Contract {
-        if (!this.provider) {
-            throw new Error('No provider')
-        }
-        return new ethers.Contract(this.address, this.eventsAbi, this.provider)
     }
 
     private createReadContractInstance(): ethers.Contract {
