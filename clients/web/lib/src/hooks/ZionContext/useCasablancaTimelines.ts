@@ -155,7 +155,7 @@ function toTownsContent(eventId: string, message: ParsedEvent): TownsContentResu
         return { error: 'caseless payload' }
     }
     if (!message.event.payload.value.content.case) {
-        return { error: 'caseless payload content' }
+        return { error: `${message.event.payload.case} - caseless payload content` }
     }
     const description = `${message.event.payload.case}::${message.event.payload.value.content.case} id: ${eventId}`
 
