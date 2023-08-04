@@ -30,7 +30,6 @@ export function handleNotifications(worker: ServiceWorkerGlobalScope) {
     if (prod) {
         console.log(`sw: handleNotifications() was called.`)
     }
-    const navigationChannel = new BroadcastChannel(WEB_PUSH_NAVIGATION_CHANNEL)
 
     if (prod) {
         // print the various lifecyle / event hooks for debugging
@@ -147,8 +146,7 @@ export function handleNotifications(worker: ServiceWorkerGlobalScope) {
                     console.log('sw: worker could not parse notification data')
                     return
                 }
-                const url = new URL(worker.location.origin)
-                url.pathname = pathFromAppNotification(data)
+                const pathToNavigateTo = pathFromAppNotification(data)
 
                 const hadWindowToFocus = clientsArr.find((windowClient) =>
                     windowClient.url.includes(worker.location.origin),
@@ -156,9 +154,12 @@ export function handleNotifications(worker: ServiceWorkerGlobalScope) {
 
                 if (hadWindowToFocus) {
                     await hadWindowToFocus.focus()
+                    const navigationChannel = new BroadcastChannel(WEB_PUSH_NAVIGATION_CHANNEL)
                     // avoid reloading the page
-                    navigationChannel.postMessage(event.notification.data)
+                    navigationChannel.postMessage({ path: pathToNavigateTo })
                 } else {
+                    const url = new URL(worker.location.origin)
+                    url.pathname = pathToNavigateTo
                     const window = await worker.clients.openWindow(url.toString())
                     await window?.focus()
                 }

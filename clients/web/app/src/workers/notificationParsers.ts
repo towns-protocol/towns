@@ -72,18 +72,8 @@ export function appNotificationFromPushEvent(raw: string): AppNotification | und
 export function pathFromAppNotification(notification: AppNotification) {
     switch (notification.notificationType) {
         case AppNotificationType.NewMessage:
-            return (
-                [
-                    PATHS.SPACES,
-                    encodeURIComponent(notification.content.spaceId),
-                    PATHS.CHANNELS,
-                    encodeURIComponent(notification.content.channelId),
-                ].join('/') + '/'
-            )
-
-        // this path isn't correct at the time being. let's work out IF we want to link to
-        // the event, and if so, how we want to do it
-        case AppNotificationType.Mention:
+        case AppNotificationType.Mention: // TODO: this should maybe go to message
+        case AppNotificationType.ReplyTo: // TODO: this should go to thread (need threadId)
             return (
                 [
                     PATHS.SPACES,
