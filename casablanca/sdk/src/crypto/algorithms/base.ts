@@ -5,7 +5,7 @@ import { DeviceInfo } from '../deviceInfo'
 import { DeviceInfoMap } from '../deviceList'
 import { IRoomEncryption } from '../store/base'
 import { IEncryptedContent } from '../olmLib'
-import { RiverEvent, IContent } from '../../event'
+import { RiverEvent, IClearContent } from '../../event'
 
 /**
  * Map of registered encryption algorithm classes. A map from string to {@link EncryptionAlgorithm} class
@@ -74,7 +74,7 @@ export abstract class EncryptionAlgorithm {
     public abstract encryptMessage(
         usersOrRoom: string[] | string,
         eventType: string,
-        content: IContent,
+        content: IClearContent,
     ): Promise<IEncryptedContent>
 
     /**

@@ -1,4 +1,6 @@
+import { PlainMessage } from '@bufbuild/protobuf'
 import { DeviceInfoMap } from './deviceList'
+import { UserPayload_ToDevice } from '@towns/proto'
 
 export interface ISignatures {
     [entity: string]: {
@@ -20,7 +22,7 @@ enum DeviceVerification {
     Verified = 1,
 }
 
-export type ToDevicePayload = Record<string, any>
+export type ToDevicePayload = PlainMessage<UserPayload_ToDevice>['message']
 
 export interface ToDeviceMessage {
     userId: string

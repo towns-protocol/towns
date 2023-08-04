@@ -10,9 +10,10 @@ import { dlog } from '../dlog'
 import { OlmDevice } from './olmDevice'
 import { DeviceInfo, ISignatures } from './deviceInfo'
 import { Client, FallbackKeyResponse, IDownloadKeyRequest, IDownloadKeyResponse } from '../client'
-import { FallbackKeys, Key } from '@towns/proto'
+import { EncryptedData, EncryptedDeviceData, FallbackKeys, Key } from '@towns/proto'
 import { IFallbackKey } from '../types'
 import { RiverEvent, RiverEventType } from '../event'
+import { PlainMessage } from '@bufbuild/protobuf'
 
 const log = dlog('csb:olmLib')
 
@@ -51,7 +52,8 @@ export type OlmSessionsExistingByUsers = Map<string, Map<string, IOlmSessionResu
 export interface IOlmEncryptedContent {
     algorithm: typeof OLM_ALGORITHM
     sender_key: string
-    ciphertext: Record<string, IMessage>
+    ciphertext: PlainMessage<EncryptedDeviceData>['ciphertext']
+    //ciphertext: Record<string, IMessage>
 }
 
 export interface IMegolmEncryptedContent {
@@ -59,7 +61,7 @@ export interface IMegolmEncryptedContent {
     sender_key: string
     session_id: string
     device_id: string
-    ciphertext: string
+    ciphertext: PlainMessage<EncryptedData>['text']
 }
 
 export interface IOlmSessionResult {
@@ -400,7 +402,7 @@ export async function verifySignature(
  *    has been encrypted into `resultsObject`
  */
 export async function encryptMessageForDevice(
-    resultsObject: Record<string, IMessage>,
+    resultsObject: PlainMessage<EncryptedDeviceData>['ciphertext'],
     ourUserId: string,
     ourDeviceId: string | undefined,
     olmDevice: OlmDevice,
@@ -520,13 +522,14 @@ export async function getExistingOlmSessions(
  * Check that an event was encrypted using olm.
  */
 export function isOlmEncrypted(event: RiverEvent): boolean {
+    const algorithm = event.getWireContent().content?.algorithm
     if (!event.getSenderKey()) {
         dlog('Event has no sender key (not encrypted?)')
         return false
     }
     if (
         event.getWireType() !== RiverEventType.Encrypted ||
-        ![OLM_ALGORITHM].includes(event.getWireContent().algorithm)
+        ![OLM_ALGORITHM].includes(algorithm as Algorithm)
     ) {
         dlog('Event was not encrypted using an appropriate algorithm')
         return false

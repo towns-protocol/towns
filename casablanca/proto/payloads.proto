@@ -103,6 +103,7 @@ message ToDeviceMessage {
         string algorithm = 3;
         string sender_key = 4;
         string session_id = 5;
+        optional string content = 6;
     }
 
     message KeyResponse {
@@ -110,6 +111,7 @@ message ToDeviceMessage {
         optional string channel_id = 2;
         repeated MegolmSession sessions = 3;
         KeyResponseKind kind = 4;
+        optional string content = 5;
     }
 
     oneof payload {
@@ -124,12 +126,10 @@ message ToDeviceMessage {
 message MegolmSession {
     /** Sender's Curve25519 device key. */
     string sender_key = 1;
-    /** Devices which forwarded this session to us (usually empty) */
-    repeated string forwarding_curve25519_key_chain = 2;
     /** Space this session is used for */
     string space_id = 4;
     /** Channel this session is used for */
-    optional string channel_id = 5;
+    string channel_id = 5;
     /** Unique id for this session */
     string session_id = 6;
     /** Base64-encoded megolm session key data */

@@ -13,15 +13,15 @@ import TypedEmitter from 'typed-emitter'
 import {
     OLM_ALGORITHM,
     MEGOLM_ALGORITHM,
-    IEncryptedContent,
     encryptMessageForDevice,
     ensureOlmSessionsForDevices,
     IOlmSessionResult,
+    IOlmEncryptedContent,
 } from './olmLib'
 import { OlmMegolmDelegate } from '@towns/mecholm'
 import { DeviceInfo, ISignatures, ToDeviceBatch } from './deviceInfo'
 import { OlmDevice, IInitOpts, IMegolmSessionData } from './olmDevice'
-import { Err, ToDeviceOp } from '@towns/proto'
+import { EncryptedDeviceData, Err, ToDeviceOp, UserPayload_ToDevice } from '@towns/proto'
 import { IFallbackKey, recursiveMapToObject } from '../types'
 import { bin_fromHexString } from '../binary'
 import { DeviceList, IOlmDevice } from './deviceList'
@@ -38,6 +38,7 @@ import {
 import { OlmDecryption, OlmEncryption } from './algorithms/olm'
 import { MegolmDecryption, MegolmEncryption } from './algorithms/megolm'
 import { Auth } from './store/auth'
+import { PlainMessage } from '@bufbuild/protobuf'
 
 const log = dlog('csb:crypto')
 
@@ -97,7 +98,7 @@ export class IncomingRoomKeyRequest {
     public readonly deviceId: string
     /** unique id for the request */
     public readonly requestId: string
-    public readonly requestBody: IRoomKeyRequestBody
+    public readonly requestBody: IRoomKeyRequestBody | undefined
     /**
      * callback which, when called, will ask
      *    the relevant crypto algorithm implementation to share the keys for
@@ -109,9 +110,9 @@ export class IncomingRoomKeyRequest {
         const content = event.getContent()
 
         this.userId = event.getSender()
-        this.deviceId = content.requesting_device_id
-        this.requestId = content.request_id
-        this.requestBody = content.body || {}
+        this.deviceId = content.requesting_device_id ?? ''
+        this.requestId = content.request_id ?? ''
+        this.requestBody = content.request_body
         this.share = (): void => {
             throw new Error("don't know how to share keys for this request yet")
         }
@@ -509,7 +510,10 @@ export class Crypto
 
         // todo: wait for all the room devices to be loaded
         // await this.trackRoomDevicesImpl(room)
-        const content = event.getContent()
+        const content = event.getTypedContent()
+        if (!content) {
+            throw new Error('Event has no content')
+        }
         let encryptionTarget: string[] | string
         if (isUserTarget(target)) {
             encryptionTarget = target.userIds
@@ -519,7 +523,7 @@ export class Crypto
         const encryptedContent = await alg.encryptMessage(
             encryptionTarget,
             event.getType() ?? '',
-            content,
+            content.content,
         )
 
         if (
@@ -545,11 +549,11 @@ export class Crypto
             throw new Error('decryption of redacted events not implemented')
         } else {
             // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-            const content = event.getWireContent()
-            if (!content.algorithm) {
+            const content = event.getWireContent().content
+            if (!content?.algorithm) {
                 throw new Error('Event has no algorithm specified')
             }
-            const alg = this.getDecryptor(content.algorithm as string)
+            const alg = this.getDecryptor(content.algorithm)
             return alg.decryptEvent(event)
         }
     }
@@ -664,11 +668,11 @@ export class Crypto
             await Promise.all(
                 userDeviceInfoArr.map(async ({ userId, deviceInfo }) => {
                     const deviceId = deviceInfo.deviceId
-                    const encryptedContent: IEncryptedContent = {
+                    const encryptedContent: IOlmEncryptedContent = {
                         algorithm: OLM_ALGORITHM,
                         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                         sender_key: this.olmDevice.deviceCurve25519Key!,
-                        ciphertext: {},
+                        ciphertext: {} as PlainMessage<EncryptedDeviceData>['ciphertext'],
                     }
 
                     toDeviceBatch.batch.push({
@@ -700,7 +704,8 @@ export class Crypto
             // Corrollary, is that we don't waste a to-device message on a device that
             // we couldn't encrypt for.
             toDeviceBatch.batch = toDeviceBatch.batch.filter((msg) => {
-                if (Object.keys(msg.payload.ciphertext as object).length > 0) {
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+                if (Object.keys(msg?.payload?.ciphertext as object).length > 0) {
                     return true
                 } else {
                     log(
@@ -713,7 +718,16 @@ export class Crypto
             try {
                 await Promise.all(
                     toDeviceBatch.batch.map(async (msg) => {
-                        await this.client.sendToDevicesMessage(msg.userId, msg.payload, type)
+                        await this.client.sendToDevicesMessage(
+                            msg.userId,
+                            {
+                                algorithm: OLM_ALGORITHM,
+                                // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+                                ciphertext: msg?.payload?.ciphertext,
+                            } as PlainMessage<UserPayload_ToDevice>['message'],
+                            type,
+                            false,
+                        )
                     }),
                 )
             } catch (e) {

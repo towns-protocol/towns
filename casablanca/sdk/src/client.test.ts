@@ -252,8 +252,8 @@ describe('clientTest', () => {
             log('channelNewMessage', channelId)
             log(message)
             done.runAndDone(() => {
-                const content = message.getChannelMessageBody()
-                expect(content).toBe('Hello, again!')
+                const content = message.getWireChannelMessage_Post_Text()
+                expect(content?.body).toBe('Hello, again!')
             })
         }
 
@@ -294,8 +294,8 @@ describe('clientTest', () => {
             log('channelNewMessage', channelId)
             log(message)
             done.runAndDone(() => {
-                const content = message.getChannelMessageBody()
-                expect(content).toBe('Hello, world!')
+                const content = message.getContent().content.ciphertext
+                expect(content).toContain('Hello, world!')
             })
         }
 
@@ -365,11 +365,11 @@ describe('clientTest', () => {
         // Bob can send a message.
         const bobSelfHello = makeDonePromise()
         bobsClient.once('channelNewMessage', (channelId: string, message: RiverEvent): void => {
-            const content = message.getChannelMessageBody()
+            const content = message.getContent().content.ciphertext
             log('channelNewMessage', 'Bob Initial Message', channelId, content)
             bobSelfHello.runAndDone(() => {
                 expect(channelId).toBe(bobsChannelId)
-                expect(content).toBe('Hello, world from Bob!')
+                expect(content).toContain('Hello, world from Bob!')
             })
         })
 
@@ -405,12 +405,12 @@ describe('clientTest', () => {
         // Bob can send a message.
         const bobSelfHello = makeDonePromise()
         bobsClient.once('channelNewMessage', (channelId: string, message: RiverEvent): void => {
-            const content = message.getChannelMessageBody()
+            const content = message.getContent().content.ciphertext
             log('channelNewMessage', 'Bob Initial Message', channelId, content)
             bobSelfHello.runAndDone(() => {
                 // TODO: why 'Hello, world from Bob!' can be received here?
                 expect(channelId).toBe(bobsChannelId)
-                expect(content).toBe('Hello, world from Bob!')
+                expect(content).toContain('Hello, world from Bob!')
             })
         })
 
@@ -451,7 +451,9 @@ describe('clientTest', () => {
         ]
 
         alicesClient.on('channelNewMessage', (channelId: string, message: RiverEvent): void => {
-            const content = message.getChannelMessageBody()
+            const plainContent = message.getWireChannelMessage_Post_Text()
+            expect(plainContent).toBeDefined()
+            const content = plainContent?.body
             log('channelNewMessage', 'Alice', channelId, content)
             aliceGetsMessage.run(() => {
                 expect(channelId).toBe(bobsChannelId)
@@ -469,7 +471,9 @@ describe('clientTest', () => {
         })
 
         bobsClient.on('channelNewMessage', (channelId: string, message: RiverEvent): void => {
-            const content = message.getChannelMessageBody()
+            const plainContent = message.getWireChannelMessage_Post_Text()
+            expect(plainContent).toBeDefined()
+            const content = plainContent?.body
             log('channelNewMessage', 'Bob', channelId, content)
             bobGetsMessage.run(() => {
                 expect(channelId).toBe(bobsChannelId)

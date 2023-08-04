@@ -1,21 +1,154 @@
 import { dlog } from './dlog'
-import { CryptoBackend, IEventDecryptionResult, Crypto } from './crypto/crypto'
-import { StreamEvent, ToDeviceOp } from '@towns/proto'
+import { CryptoBackend, IEventDecryptionResult, Crypto, IRoomKeyRequestBody } from './crypto/crypto'
+import {
+    ChannelMessage,
+    ChannelMessage_Post_Content_Text,
+    EncryptedData,
+    EncryptedDeviceData,
+    StreamEvent,
+    ToDeviceMessage,
+    ToDeviceMessage_KeyRequest,
+    ToDeviceMessage_KeyResponse,
+    ToDeviceOp,
+    UserPayload_ToDevice,
+} from '@towns/proto'
 import EventEmitter from 'events'
 import TypedEmitter from 'typed-emitter'
-import { IEncryptedContent, OLM_ALGORITHM } from './crypto/olmLib'
+import {
+    IMegolmEncryptedContent,
+    IOlmEncryptedContent,
+    MEGOLM_ALGORITHM,
+    OLM_ALGORITHM,
+} from './crypto/olmLib'
 import { PlainMessage } from '@bufbuild/protobuf'
 
 const log = dlog('csb:event')
 
-export interface IContent {
-    [key: string]: any
-    // not returned from the wire, used to store msg status type
+// Type guards for IChannelContent and IToDeviceContent
+function isChannelContent(content: any): content is Partial<IChannelContent> {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    const cipher = content.ciphertext
+    return (
+        'content' in content &&
+        'ciphertext' in content &&
+        'algorithm' in content &&
+        typeof cipher == 'string'
+    )
+}
+
+function isToDeviceContent(content: any): content is Partial<IToDeviceContent> {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    const cipher = content.ciphertext
+    return (
+        'content' in content &&
+        'ciphertext' in content &&
+        'algorithm' in content &&
+        typeof cipher == 'object'
+    )
+}
+
+export function isChannelContentPlainMessage_Post_Text(
+    content: any,
+): content is ChannelMessage_Post_Content_Text {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    return 'case' in content && content.case === 'post' && content.value.content.case === 'text'
+}
+
+// Type guards for IChannelContent['content'] and IToDeviceContent['content']
+function isChannelContentPlainMessage(content: any): content is IChannelContent['content'] {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    const content_case = content.case
+    return (
+        'case' in content &&
+        (content_case === 'post' ||
+            content_case === 'reaction' ||
+            content_case === 'redaction' ||
+            content_case === 'edit') &&
+        'value' in content
+    )
+}
+
+export function isToDevicePlainMessage(content: any): content is IToDeviceContent['content'] {
+    return (
+        'case' in content &&
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        (content.case === 'request' || content.case === 'response') &&
+        'value' in content
+    )
+}
+
+export function isUserPayload_ToDevicePlainMessage(
+    content: any,
+): content is PlainMessage<UserPayload_ToDevice>['message'] {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    return 'ciphertext' in content && typeof content.ciphertext == 'object'
+}
+
+function isClearEvent(content: any): content is IClearEvent {
+    return (
+        'type' in content &&
+        'content' in content &&
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        ('value' in content.content || 'msgtype' in content.content)
+    )
+}
+
+// Type guard for IContentContent
+export function isChannelOrToDeviceContent(
+    content: IContentContent,
+): content is Partial<IChannelContent> | Partial<IToDeviceContent> {
+    return isChannelContent(content) || isToDeviceContent(content)
+}
+
+type IEncryptedContent = IMegolmEncryptedContent | IOlmEncryptedContent
+
+export type IClearContent =
+    | (PlainMessage<ChannelMessage>['payload'] | PlainMessage<ToDeviceMessage>['payload']) &
+          Partial<IContentOpts>
+
+type IContentOpts = {
     msgtype?: string
     membership?: string
     avatar_url?: string
     displayname?: string
+    // used for error messages and generally body messages appending by class
+    body?: string
 }
+
+export interface IChannelContent {
+    content: PlainMessage<ChannelMessage>['payload']
+    ciphertext: PlainMessage<EncryptedData>['text']
+    algorithm: string
+    sender_key: string
+    device_id: string
+    session_id: string
+}
+
+export interface IToDeviceContent {
+    content: PlainMessage<ToDeviceMessage>['payload']
+    ciphertext: PlainMessage<EncryptedDeviceData>['ciphertext']
+    algorithm: string
+    device_key: string
+    sender_key: string
+    op: string
+}
+
+export interface IContent {
+    content: Partial<IChannelContent> | Partial<IToDeviceContent>
+    // used to store msg status type post-decryption attempt
+    msgtype?: string
+    membership?: string
+    avatar_url?: string
+    displayname?: string
+    code?: string
+    reason?: string
+    // note jterzis: used for IncomingRoomKeyRequest, may not need these fields
+    requesting_device_id?: string
+    request_id?: string
+    request_body?: IRoomKeyRequestBody
+}
+
+type IContentContent = IContent['content']
 
 export interface IPlainContent {
     payload: Record<string, string>
@@ -35,7 +168,7 @@ export interface IClearEvent {
     channel_id?: string
     type?: RiverEventType
     // omit any fields that don't need to appear in clear event from decrypted content here
-    content: IContent
+    content: Partial<IClearContent>
 }
 
 export interface IDecryptOptions {
@@ -48,7 +181,12 @@ export interface IDecryptOptions {
 }
 
 interface StreamEventPayload {
-    parsed_event: PlainMessage<StreamEvent>['payload']
+    // parsed_event is a plain message of proto payload defined in protocol.proto or payloads.proto
+    // depending on whether RiverEvent is instantiated with encrypted (server-side) or decrypted (client-side) data.
+    parsed_event:
+        | PlainMessage<StreamEvent>['payload']
+        | PlainMessage<ChannelMessage>['payload']
+        | PlainMessage<ToDeviceMessage>['payload']
     // hash_str, creator_user_id are not available when creating an event, but are when reading one off the wire
     hash_str?: string
     creator_user_id?: string
@@ -141,7 +279,6 @@ type RiverEventEmittedEventHandlerMap = {
 
 export class RiverEvent extends (EventEmitter as new () => TypedEmitter<RiverEventEmittedEventHandlerMap>) {
     private _localRedactionEvent: RiverEvent | null = null
-    private _replacingEvent: RiverEvent | null = null
     private clearEvent?: IClearEvent
 
     /** if we have a process decrypting this event, returns a Promise
@@ -194,22 +331,24 @@ export class RiverEvent extends (EventEmitter as new () => TypedEmitter<RiverEve
             throw new Error('Event must have a sender user id')
         }
 
-        // set content when event is not being created from a StreamEvent
-        if (!event.content) {
-            event.content = {}
-        }
-
         const payload = parsed_event
         switch (payload?.case) {
             case `channelPayload`:
                 switch (payload.value.content.case) {
                     case 'message': {
+                        // encrypted channel contents from protocol.proto
                         const content = payload.value.content.value
-                        event.content['session_id'] = content.sessionId
-                        event.content['ciphertext'] = content.text
-                        // typically should be MEGOLM but not necessarily
-                        event.content['algorithm'] = content.algorithm
-                        event.content['sender_key'] = content.senderKey
+                        if (!event.content) {
+                            event.content = {} as IContent
+                        }
+                        event.content.content = {
+                            session_id: content.sessionId,
+                            ciphertext: content.text,
+                            algorithm: content.algorithm,
+                            sender_key: content.senderKey,
+                            device_id: content.deviceId,
+                            content: {} as PlainMessage<ChannelMessage>['payload'],
+                        }
                         event.stream_type = EncryptedEventStreamTypes.Channel
                         break
                     }
@@ -220,13 +359,24 @@ export class RiverEvent extends (EventEmitter as new () => TypedEmitter<RiverEve
             case `userPayload`:
                 switch (payload.value.content.case) {
                     case 'toDevice': {
+                        // encrypted toDevice contents from protocol.proto
                         const content = payload.value.content.value
-                        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-                        event.content['ciphertext'] = content.message?.ciphertext
-                        event.content['algorithm'] = OLM_ALGORITHM
-                        event.content['sender_key'] = content.senderKey
-                        event.content['device_key'] = content.deviceKey
-                        event.content['op'] = ToDeviceOp[content.op]
+                        if (!event.content) {
+                            event.content = {} as IContent
+                        }
+                        if (!content.message) {
+                            throw new Error('ToDevice message is missing message content')
+                        }
+                        event.content.content = {
+                            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+                            ciphertext: content.message?.ciphertext,
+                            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+                            algorithm: content.message?.algorithm ?? OLM_ALGORITHM,
+                            sender_key: content.senderKey,
+                            device_key: content.deviceKey,
+                            op: ToDeviceOp[content.op],
+                            content: {} as PlainMessage<ToDeviceMessage>['payload'],
+                        }
                         event.stream_type = EncryptedEventStreamTypes.ToDevice
                         break
                     }
@@ -234,6 +384,44 @@ export class RiverEvent extends (EventEmitter as new () => TypedEmitter<RiverEve
                         break
                 }
                 break
+            // decrypted channel contents from payloads.proto
+            case 'post':
+            case 'reaction':
+            case 'edit':
+            case 'redaction': {
+                const content = payload.value
+                if (!event.content) {
+                    event.content = {} as IContent
+                }
+                if (!event.content.content) {
+                    event.content.content = {} as Partial<IChannelContent>
+                }
+                event.content.content.content = {
+                    case: payload.case,
+                    value: content,
+                } as PlainMessage<ChannelMessage>['payload']
+                event.content.content.algorithm = MEGOLM_ALGORITHM
+                break
+            }
+            // decrypted toDevice contents from payloads.proto
+            case 'request':
+            case 'response': {
+                const content = payload.value
+                if (!event.content) {
+                    event.content = {} as IContent
+                }
+                if (!event.content.content) {
+                    event.content.content = {} as Partial<IToDeviceContent>
+                }
+                event.content.content = {
+                    content: {
+                        case: payload.case,
+                        value: content,
+                    } as PlainMessage<ToDeviceMessage>['payload'],
+                }
+                event.content.content.algorithm = OLM_ALGORITHM
+                break
+            }
             default:
                 break
         }
@@ -310,10 +498,21 @@ export class RiverEvent extends (EventEmitter as new () => TypedEmitter<RiverEve
         // keep the plain-text data for 'view source'
         this.clearEvent = {
             type: this.event.type,
-            content: this.event.content || {},
+            content: this.event.content?.content.content || {},
         }
         this.event.type = cryptoType
-        this.event.content = cryptoContent
+        if (!this.event.content) {
+            throw new Error('Event must have content')
+        }
+        this.event.content.content.ciphertext = cryptoContent.ciphertext
+        this.event.content.content.algorithm = cryptoContent.algorithm
+        // todo: fix this!
+        if ((cryptoContent as IMegolmEncryptedContent).session_id !== undefined) {
+            ;(this.event.content.content as Partial<IChannelContent>).session_id = (
+                cryptoContent as IMegolmEncryptedContent
+            ).session_id
+        }
+
         this.senderCurve25519Key = senderCurve25519Key
         this.claimedDoNotUseKey = claimedDoNotUseKey
     }
@@ -338,6 +537,14 @@ export class RiverEvent extends (EventEmitter as new () => TypedEmitter<RiverEve
             return false
         }
         // todo: true once we have decryptionLoop implemented in this class
+        return true
+    }
+
+    public shouldAttemptEncryption(): boolean {
+        const content = this.getWireContent()
+        if (content.content?.ciphertext !== undefined) {
+            return false
+        }
         return true
     }
 
@@ -494,52 +701,215 @@ export class RiverEvent extends (EventEmitter as new () => TypedEmitter<RiverEve
     /**
      *  Get the possible encrypted event content JSON
      */
-    public getWireContent(): IContent {
+    public getWireContent(): Partial<IContent> {
         return this.event.content || {}
+    }
+
+    public getTypedWireContent(): {
+        content: IContentContent
+    } & IContentOpts {
+        const orig_content = this.getWireContent()
+        const { content, ...rest } = orig_content
+        if (!content) {
+            return { content: {} as IContentContent, ...rest }
+        }
+        return { content: content, ...rest }
+    }
+
+    public getWireContentChannel(): { content: Partial<IChannelContent> } & IContentOpts {
+        const { content, ...rest } = this.getTypedWireContent()
+        if (isChannelContent(content)) {
+            return { content, ...rest }
+        }
+        return {} as { content: Partial<IChannelContent> } & IContentOpts
+    }
+
+    public getWireContentToDevice(): { content: Partial<IToDeviceContent> } & IContentOpts {
+        const { content, ...rest } = this.getTypedWireContent()
+        if (isToDeviceContent(content)) {
+            return { content, ...rest }
+        }
+        return {} as { content: Partial<IToDeviceContent> } & IContentOpts
     }
 
     /**
      * Get the (decrypted if possible) content of the event as JSON or an empty object.
      */
     public getContent<T extends IContent = IContent>(): T {
+        // todo: handle replacing events here as well
         if (this._localRedactionEvent) {
             return {} as T
-        } else if (this._replacingEvent) {
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-            return this._replacingEvent.getContent<T>()['r.new_content'] || {}
         } else {
             return this.getOriginalContent()
         }
     }
 
-    public getPlainContent(): Record<string, string> {
+    // get ToDevice clear content from decrypted event or informational/error message
+    public getClearContent_ToDevice():
+        | { content: IToDeviceContent['content'] | undefined; opts: IContentOpts | undefined }
+        | undefined {
         const content = this.getContent()
-        const result: Record<string, string> = {}
-
-        for (const key in content) {
-            if (typeof content[key] === 'string') {
-                result[key] = content[key]
-            } else {
-                result[key] = JSON.stringify(content[key])
+        if (isClearEvent(content)) {
+            if (content.content?.msgtype !== undefined && content.content?.body !== undefined) {
+                // return IContentOpts if msgtype and body are set on clear event
+                return {
+                    opts: { ...content?.content },
+                    content: undefined,
+                }
+            }
+            if (isToDevicePlainMessage(content.content)) {
+                return { content: content.content, opts: undefined }
             }
         }
-        return result
+        return
     }
 
-    public getChannelMessageBody(): string | undefined {
-        if (this.getStreamType() === EncryptedEventStreamTypes.Channel) {
-            if (this.clearEvent) {
-                return (
-                    JSON.parse(
-                        (this.clearEvent.content as unknown as Record<string, string>)['post'],
-                    ) as IBodyContent
-                ).text.body
-            } else {
-                return (JSON.parse(this.getPlainContent()['ciphertext']) as IBodyContent).post.text
-                    .body
+    // Get ChannelMessage clear content from decrypted event or informational/error message
+    public getClearContent_ChannelMessage():
+        | { content: IChannelContent['content'] | undefined; opts: IContentOpts | undefined }
+        | undefined {
+        const content = this.getContent()
+        if (isClearEvent(content)) {
+            if (content.content?.msgtype !== undefined && content.content?.body !== undefined) {
+                // return IContentOpts if msgtype and body are set on clear event
+                return {
+                    opts: { ...content?.content },
+                    content: undefined,
+                }
+            }
+            if (isChannelContentPlainMessage(content.content)) {
+                return { content: content.content, opts: undefined }
             }
         }
-        return undefined
+        return { content: undefined, opts: undefined }
+    }
+
+    // Get ChannelMessage_Post_Text clear content from decrypted event or informational/error message
+    public getClearChannelMessage_Post_Text(): ChannelMessage_Post_Content_Text | undefined {
+        const content = this.getClearContent_ChannelMessage()
+        if (content?.content && content.content?.value) {
+            if (
+                content?.content?.case === 'post' &&
+                content?.content?.value?.content?.case === 'text'
+            ) {
+                return new ChannelMessage_Post_Content_Text(content?.content?.value?.content?.value)
+            }
+        }
+        return
+    }
+
+    // Attempt to marshal wire content into a ChannelMessage_Post_Content_Text
+    // This should return undefined where the event is encrypted to begin with,
+    // but in the cases where it is not and ciphertext store ChannelMessage_Post_Content_Text
+    // then this should return the serialized protobuf from the ciphertext.
+    public getWireChannelMessage_Post_Text(): ChannelMessage_Post_Content_Text | undefined {
+        const plainContent = this.getContent().content.ciphertext
+        if (typeof plainContent !== 'string') {
+            return
+        }
+        const content = ChannelMessage_Post_Content_Text.fromJsonString(
+            JSON.stringify({
+                body: (JSON.parse(plainContent) as IBodyPostContent).post.text.body,
+            }),
+        )
+        return content
+    }
+
+    public getClearToDeviceMessage_KeyResponse(): ToDeviceMessage_KeyResponse | undefined {
+        const content = this.getClearContent_ToDevice()
+        if (content?.content && content.content?.value) {
+            if (content?.content?.case === 'response') {
+                return new ToDeviceMessage_KeyResponse(content?.content.value)
+            }
+        }
+        return
+    }
+
+    public getClearToDeviceMessage_KeyRequest(): ToDeviceMessage_KeyRequest | undefined {
+        const content = this.getClearContent_ToDevice()
+        if (content?.content && content.content?.value) {
+            if (content?.content?.case === 'request') {
+                return new ToDeviceMessage_KeyRequest(content?.content.value)
+            }
+        }
+        return
+    }
+
+    public getContentToDevice(): {
+        content: IToDeviceContent['content'] | undefined
+        clear: Partial<IClearEvent> | undefined
+    } {
+        const content = this.getContent()
+        if (isClearEvent(content)) {
+            const clearContent = content
+            const plainContent = this.event?.content?.content
+            return {
+                content:
+                    plainContent?.content && isToDeviceContent(plainContent)
+                        ? plainContent.content
+                        : undefined,
+                clear: clearContent,
+            }
+        }
+        if (isToDeviceContent(content.content)) {
+            if (content.content.content && Object.keys(content?.content?.content).length > 0) {
+                return { content: content.content.content, clear: undefined }
+            }
+        }
+        if (isToDevicePlainMessage(content.content)) {
+            return { content: content.content, clear: undefined }
+        }
+        return { content: undefined, clear: undefined }
+    }
+
+    public getContentChannel(): {
+        content: IChannelContent['content'] | undefined
+        clear: Partial<IClearEvent> | undefined
+    } {
+        const content = this.getContent()
+        if (isClearEvent(content)) {
+            const clearContent = content
+            const plainContent = this.event?.content?.content
+            return {
+                content:
+                    plainContent?.content && isChannelContent(plainContent)
+                        ? plainContent.content
+                        : undefined,
+                clear: clearContent,
+            }
+        }
+        if (isChannelContent(content.content)) {
+            if (content.content.content && Object.keys(content?.content?.content).length > 0) {
+                return { content: content.content.content, clear: undefined }
+            }
+        }
+        if (isChannelContentPlainMessage(content.content)) {
+            return { content: content.content, clear: undefined }
+        }
+        return { content: undefined, clear: undefined }
+    }
+
+    public getTypedContent():
+        | {
+              content: IChannelContent['content'] | IToDeviceContent['content']
+          }
+        | undefined {
+        const content = this.getContent()
+        if (isClearEvent(content)) {
+            log('getTypedContent: content is clear event')
+            return
+        }
+        if (isChannelContentPlainMessage(content.content.content)) {
+            if (content.content.content) {
+                return { content: content.content.content }
+            }
+        }
+        if (isToDevicePlainMessage(content.content.content)) {
+            if (content.content.content) {
+                return { content: content.content.content }
+            }
+        }
+        return
     }
 
     public getOriginalContent<T = IContent>(): T {
@@ -547,7 +917,7 @@ export class RiverEvent extends (EventEmitter as new () => TypedEmitter<RiverEve
             return {} as T
         }
         if (this.clearEvent) {
-            return (this.clearEvent.content || {}) as T
+            return (this.clearEvent || {}) as T
         }
         return (this.event.content || {}) as T
     }
@@ -556,7 +926,7 @@ export class RiverEvent extends (EventEmitter as new () => TypedEmitter<RiverEve
      *  Get the cleartext content for this event. If the event is not encrypted,
      *  or encryption has not been completed, this will return undefined.
      */
-    public getClearContent(): IContent | undefined {
+    public getClearContent(): Partial<IClearContent> | undefined {
         return this.clearEvent ? this.clearEvent.content : undefined
     }
 
@@ -598,10 +968,10 @@ export class RiverEvent extends (EventEmitter as new () => TypedEmitter<RiverEve
 }
 
 export const WITHHELD_MESSAGES: Record<string, string> = {
-    'm.unverified': 'The sender has disabled encrypting to unverified devices.',
-    'm.blacklisted': 'The sender has blocked you.',
-    'm.unauthorised': 'You are not authorised to read the message.',
-    'm.no_olm': 'Unable to establish a secure channel.',
+    'r.unverified': 'The sender has disabled encrypting to unverified devices.',
+    'r.blacklisted': 'The sender has blocked you.',
+    'r.unauthorised': 'You are not authorised to read the message.',
+    'r.no_olm': 'Unable to establish a secure channel.',
 }
 
 /** Event Mapper types below

@@ -20,9 +20,9 @@ import {
     DeviceKeys,
     UserPayload_ToDevice,
     EncryptedDeviceData,
-    EncryptedMessageEnvelope,
     FullyReadMarkerContent,
     FullyReadMarkersContent,
+    ToDeviceMessage,
 } from '@towns/proto'
 
 import { Crypto, EncryptionTarget } from './crypto/crypto'
@@ -34,10 +34,8 @@ import EventEmitter from 'events'
 import TypedEmitter from 'typed-emitter'
 import { check, hasElements, isDefined, throwWithCode } from './check'
 import {
-    StreamPrefix,
     isChannelStreamId,
     isSpaceStreamId,
-    isUserStreamId,
     makeUniqueChannelStreamId,
     makeUniqueSpaceStreamId,
     makeUserDeviceKeyStreamId,
@@ -962,15 +960,18 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
 
     async sendToDevicesMessage(
         userId: string,
-        event: object,
+        event:
+            | PlainMessage<ToDeviceMessage>['payload']
+            | PlainMessage<UserPayload_ToDevice>['message'],
         type: ToDeviceOp | string,
+        encrypt = true,
     ): Promise<void[]> {
+        const targetEvent = !encrypt
+            ? (event as PlainMessage<ToDeviceMessage>['payload'])
+            : (event as PlainMessage<UserPayload_ToDevice>['message'])
         const op: ToDeviceOp =
             typeof type == 'string' ? ToDeviceOp[type as keyof typeof ToDeviceOp] : type
         assert(op !== undefined, 'invalid to device op')
-        if (isUserStreamId(userId)) {
-            userId = userId.slice(StreamPrefix.User.length)
-        }
         const senderKey = this.cryptoBackend?.deviceKeys[`curve25519:${this.deviceId}`]
         if (!senderKey) {
             this.logCall('no sender key')
@@ -980,7 +981,12 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
         // retrieve all device keys of a user
         const deviceInfoMap = await this.getStoredDevicesForUser(userId)
         // encrypt event contents and encode ciphertext
-        const envelope = await this.createOlmEncryptedCipherFromEvent(event, userId)
+        const envelope = encrypt
+            ? await this.createOlmEncryptedCipherFromEvent(
+                  targetEvent as PlainMessage<ToDeviceMessage>['payload'],
+                  userId,
+              )
+            : (event as unknown as PlainMessage<EncryptedDeviceData>)
         const promiseArray = Array.from(deviceInfoMap.keys()).map((userId) => {
             const devicesForUser = deviceInfoMap.get(userId)
             if (!devicesForUser) {
@@ -1020,10 +1026,15 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
 
     async sendToDeviceMessage(
         userId: string,
-        event: object,
+        event:
+            | PlainMessage<ToDeviceMessage>['payload']
+            | PlainMessage<UserPayload_ToDevice>['message'],
         type: ToDeviceOp | string,
         encrypt = true,
     ): Promise<void> {
+        const targetEvent = !encrypt
+            ? (event as PlainMessage<ToDeviceMessage>['payload'])
+            : (event as PlainMessage<UserPayload_ToDevice>['message'])
         const op: ToDeviceOp =
             typeof type == 'string' ? ToDeviceOp[type as keyof typeof ToDeviceOp] : type
         const senderKey = this.cryptoBackend?.deviceKeys[`curve25519:${this.deviceId}`]
@@ -1042,17 +1053,15 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
         // see: https://linear.app/hnt-labs/issue/HNT-1839/multi-device-support-in-todevice-transport
         const deviceKey = deviceKeyArr[0]
         this.logCall(`toDevice ${deviceKey.deviceId}, streamId ${streamId}, userId ${userId}`)
-        // todo: tighten event type to a PlainMessage
-        const isValidEncrypted = (event: object): event is PlainMessage<EncryptedDeviceData> => {
-            return 'ciphertext' in event && typeof event.ciphertext === 'object'
-        }
-        if (!encrypt && !isValidEncrypted(event)) {
-            throw Error('event is not encrypted')
-        }
         // encrypt event contents and encode ciphertext
         const envelope = encrypt
-            ? await this.createOlmEncryptedCipherFromEvent(event, userId)
-            : (event as PlainMessage<EncryptedDeviceData>)
+            ? await this.createOlmEncryptedCipherFromEvent(
+                  targetEvent as PlainMessage<ToDeviceMessage>['payload'],
+                  userId,
+              )
+            : // todo: this is a temporary hack to allow calling this function with an unencrypted payload.
+              // create a new function to create a to-device event from an unencrypted event
+              (event as unknown as PlainMessage<EncryptedDeviceData>)
         return this.makeEventAndAddToStream(
             streamId,
             make_UserPayload_ToDevice({
@@ -1293,29 +1302,23 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
      *
      */
     public async createOlmEncryptedCipherFromEvent(
-        event: object,
+        event: PlainMessage<ToDeviceMessage>['payload'],
         recipientUserId: string,
-    ): Promise<PlainMessage<EncryptedDeviceData>> {
+    ): Promise<PlainMessage<EncryptedDeviceData> | undefined> {
         // encrypt event contents and encode ciphertext
-        const content = {
-            ['payload']: {
-                sender: this.userId,
-                content: event,
-            },
-            ['algorithm']: OLM_ALGORITHM,
-        }
-        const riverEvent = new RiverEvent({ content: content, sender: this.userId })
+        const riverEvent = new RiverEvent({
+            payload: { parsed_event: event },
+            sender: this.userId,
+        })
         try {
             await this.encryptEvent(riverEvent, { userIds: [recipientUserId] })
         } catch (e) {
             this.logCall('createEncryptedCipherFromEvent: ERROR', e)
             throw e
         }
-        // todo: HNT-1800 -  tighted getWireContent to return EncryptedMessageEnvelope
-        // for Olm encrypted messages
-        const ciphertext: { [key: string]: PlainMessage<EncryptedMessageEnvelope> } =
-            riverEvent.getWireContent().ciphertext
-        return { ciphertext: ciphertext }
+        const ciphertext = riverEvent.getWireContentToDevice().content.ciphertext
+        const result = ciphertext ? { ciphertext: ciphertext, algorithm: OLM_ALGORITHM } : undefined
+        return result
     }
 
     /**
@@ -1381,6 +1384,9 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
     }
 
     public encryptEvent(event: RiverEvent, target: EncryptionTarget): Promise<void> {
+        if (!event.shouldAttemptEncryption()) {
+            throw new Error('event is already encrypted')
+        }
         if (!this.cryptoBackend) {
             throw new Error('crypto backend not initialized')
         }

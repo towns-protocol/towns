@@ -1,9 +1,10 @@
 import { dlog } from './dlog'
 import { Client } from './client'
 import { makeDonePromise, makeTestClient } from './util.test'
-import { ToDeviceMessage_KeyRequest, ToDeviceOp } from '@towns/proto'
+import { KeyResponseKind, ToDeviceOp } from '@towns/proto'
 import { RiverEvent } from './event'
-import { getToDevicePayloadContent } from './types'
+import { make_ToDevice_KeyRequest, make_ToDevice_KeyResponse } from './types'
+import { OLM_ALGORITHM } from './crypto/olmLib'
 
 const log = dlog('test')
 
@@ -37,24 +38,31 @@ describe('toDeviceMessageTest', () => {
 
         const aliceSelfToDevice = makeDonePromise()
         alicesClient.once('toDeviceMessage', (streamId: string, event: RiverEvent): void => {
-            const content = event.getPlainContent()
-            const senderKey = content['sender_key']
-            const deviceKey = content['device_key']
+            const content = event.getWireContentToDevice()
+            const senderKey = content.content['sender_key']
+            const deviceKey = content.content['device_key']
             log('toDeviceMessage for Alice', streamId, senderKey, deviceKey, content)
             aliceSelfToDevice.runAndDoneAsync(async () => {
                 expect(streamId).toBe(aliceUserStreamId)
-                expect(content).toBeDefined()
+                expect(content.content).toBeDefined()
                 await alicesClient.decryptEventIfNeeded(event)
-                expect(event.getPlainContent().payload).toContain('Hi Alice!')
+                const clear = event.getClearToDeviceMessage_KeyRequest()
+                expect(clear).toBeDefined()
+                expect(clear?.content).toContain('Hi Alice!')
             })
         })
         // bob sends a message to Alice's device.
         await expect(
             bobsClient.sendToDeviceMessage(
                 aliceUserId,
-                {
+                make_ToDevice_KeyRequest({
+                    spaceId: '100',
+                    channelId: '200',
+                    algorithm: OLM_ALGORITHM,
+                    senderKey: '324523',
+                    sessionId: '300',
                     content: 'Hi Alice!',
-                },
+                }),
                 ToDeviceOp.TDO_UNSPECIFIED,
             ),
         ).toResolve()
@@ -77,7 +85,7 @@ describe('toDeviceMessageTest', () => {
 
         const aliceSelfToDevice = makeDonePromise()
         alicesClient.once('toDeviceMessage', (streamId: string, event: RiverEvent): void => {
-            const content = event.getPlainContent()
+            const { content } = event.getWireContentToDevice()
             const senderKey = content['sender_key']
             const deviceKey = content['device_key']
             log('toDeviceMessage for Alice', streamId, senderKey, deviceKey, content)
@@ -85,27 +93,39 @@ describe('toDeviceMessageTest', () => {
                 expect(streamId).toBe(aliceUserStreamId)
                 expect(content).toBeDefined()
                 await alicesClient.decryptEventIfNeeded(event)
-                expect(event.getWireContent().op).toEqual('TDO_KEY_REQUEST')
-                expect(event.getPlainContent().payload).toContain('Hi Alice!')
+                expect(event.getWireContentToDevice().content?.op).toEqual('TDO_KEY_REQUEST')
+                const clear = event.getClearToDeviceMessage_KeyRequest()
+                expect(clear).toBeDefined()
+                expect(clear?.content).toContain('Hi Alice!')
             })
         })
         // bob sends a message to Alice's device.
         await expect(
             bobsClient.sendToDeviceMessage(
                 aliceUserId,
-                {
+                make_ToDevice_KeyRequest({
+                    spaceId: '100',
+                    channelId: '200',
+                    algorithm: OLM_ALGORITHM,
+                    senderKey: '324523',
+                    sessionId: '300',
                     content: 'Hi Alice!',
-                },
+                }),
                 ToDeviceOp.TDO_KEY_REQUEST,
             ),
         ).toResolve()
         await expect(
             bobsClient.sendToDeviceMessage(
                 aliceUserId,
-                {
-                    content: 'Hi Again Alice!',
-                },
-                ToDeviceOp.TDO_UNSPECIFIED,
+                make_ToDevice_KeyRequest({
+                    spaceId: '100',
+                    channelId: '200',
+                    algorithm: OLM_ALGORITHM,
+                    senderKey: '324523',
+                    sessionId: '300',
+                    content: 'Hi Alice!',
+                }),
+                ToDeviceOp.TDO_KEY_REQUEST,
             ),
         ).toResolve()
         await aliceSelfToDevice.expectToSucceed()
@@ -128,7 +148,7 @@ describe('toDeviceMessageTest', () => {
 
         const aliceSelfToDevice = makeDonePromise()
         alicesClient.once('toDeviceMessage', (streamId: string, event: RiverEvent): void => {
-            const content = event.getPlainContent()
+            const { content } = event.getWireContentToDevice()
             const senderKey = content['sender_key']
             const deviceKey = content['device_key']
             log('toDeviceMessage for Alice', streamId, senderKey, deviceKey, content)
@@ -136,17 +156,24 @@ describe('toDeviceMessageTest', () => {
                 expect(streamId).toBe(aliceUserStreamId)
                 expect(content).toBeDefined()
                 await alicesClient.decryptEventIfNeeded(event)
-                expect(event.getPlainContent().payload).toContain('Hi Alice!')
+                const clear = event.getClearToDeviceMessage_KeyRequest()
+                expect(clear).toBeDefined()
+                expect(clear?.content).toContain('Hi Alice!')
             })
         })
         // bob sends a message to all Alice's devices.
         await expect(
             bobsClient.sendToDevicesMessage(
                 aliceUserId,
-                {
+                make_ToDevice_KeyRequest({
+                    spaceId: '100',
+                    channelId: '200',
+                    algorithm: OLM_ALGORITHM,
+                    senderKey: '324523',
+                    sessionId: '300',
                     content: 'Hi Alice!',
-                },
-                ToDeviceOp.TDO_UNSPECIFIED,
+                }),
+                ToDeviceOp.TDO_KEY_REQUEST,
             ),
         ).toResolve()
         await aliceSelfToDevice.expectToSucceed()
@@ -169,7 +196,7 @@ describe('toDeviceMessageTest', () => {
 
         const aliceSelfToDevice = makeDonePromise()
         alicesClient.once('toDeviceMessage', (streamId: string, event: RiverEvent): void => {
-            const content = event.getPlainContent()
+            const { content } = event.getWireContentToDevice()
             const senderKey = content['sender_key']
             const deviceKey = content['device_key']
             log('toDeviceMessage for Alice', streamId, senderKey, deviceKey, content)
@@ -177,16 +204,23 @@ describe('toDeviceMessageTest', () => {
                 expect(streamId).toBe(aliceUserStreamId)
                 expect(content).toBeDefined()
                 await alicesClient.decryptEventIfNeeded(event)
-                expect(event.getPlainContent().payload).toContain('Hi Alice!')
+                const clear = event.getClearToDeviceMessage_KeyRequest()
+                expect(clear).toBeDefined()
+                expect(clear?.content).toContain('Hi Alice!')
             })
         })
         // bob sends a key request message to all Alice's devices.
         await expect(
             bobsClient.sendToDevicesMessage(
                 aliceUserId,
-                {
+                make_ToDevice_KeyRequest({
+                    spaceId: '100',
+                    channelId: '200',
+                    algorithm: OLM_ALGORITHM,
+                    senderKey: '324523',
+                    sessionId: '300',
                     content: 'Hi Alice!',
-                },
+                }),
                 ToDeviceOp.TDO_KEY_REQUEST,
             ),
         ).toResolve()
@@ -212,7 +246,7 @@ describe('toDeviceMessageTest', () => {
         const aliceSelfToDevice = makeDonePromise()
         const bobSelfToDevice = makeDonePromise()
         alicesClient.once('toDeviceMessage', (streamId: string, event: RiverEvent): void => {
-            const content = event.getPlainContent()
+            const { content } = event.getWireContentToDevice()
             const senderKey = content['sender_key']
             const deviceKey = content['device_key']
             log('toDeviceMessage for Alice', streamId, senderKey, deviceKey, content)
@@ -221,22 +255,27 @@ describe('toDeviceMessageTest', () => {
                 expect(content).toBeDefined()
                 expect(content['op']).toBe(ToDeviceOp[ToDeviceOp.TDO_KEY_REQUEST])
                 await alicesClient.decryptEventIfNeeded(event)
-                const rawContent = JSON.stringify(
-                    // todo: HNT-1800 tighten types in RiverEvent such that proto type is returned not any.
-                    (JSON.parse(event.getPlainContent().payload) as { content: object }).content,
-                )
-                const op = event.event.content?.op
-                // test payload protobuf
-                const toDevicePayload = getToDevicePayloadContent(rawContent, op as string)
-                expect(toDevicePayload).toBeDefined()
-                expect(toDevicePayload instanceof ToDeviceMessage_KeyRequest).toBe(true)
-                expect(event.getPlainContent().payload).toContain('alice sender key')
+                const clear = event.getClearToDeviceMessage_KeyRequest()
+                expect(clear).toBeDefined()
+                expect(clear?.content).toContain('Hi Alice!')
                 await expect(
                     alicesClient.sendToDevicesMessage(
                         bobUserId,
-                        {
+                        make_ToDevice_KeyResponse({
+                            spaceId: '100',
+                            channelId: '200',
+                            sessions: [
+                                {
+                                    senderKey: '23432',
+                                    spaceId: '23432',
+                                    channelId: '23432',
+                                    sessionId: '23432',
+                                    sessionKey: '3423',
+                                },
+                            ],
+                            kind: KeyResponseKind.KRK_KEYS_FOUND,
                             content: 'Hi Bob, certainly!',
-                        },
+                        }),
                         ToDeviceOp.TDO_KEY_RESPONSE,
                     ),
                 ).toResolve()
@@ -244,7 +283,7 @@ describe('toDeviceMessageTest', () => {
         })
 
         bobsClient.on('toDeviceMessage', (streamId: string, event: RiverEvent): void => {
-            const content = event.getPlainContent()
+            const { content } = event.getWireContentToDevice()
             const senderKey = content['sender_key']
             const deviceKey = content['device_key']
             log('toDeviceMessage for Alice', streamId, senderKey, deviceKey, content)
@@ -253,7 +292,9 @@ describe('toDeviceMessageTest', () => {
                     expect(content).toBeDefined()
                     expect(content['op']).toBe(ToDeviceOp[ToDeviceOp.TDO_KEY_RESPONSE])
                     await bobsClient.decryptEventIfNeeded(event)
-                    expect(event.getPlainContent().payload).toContain('Hi Bob, certainly!')
+                    const clearEvent = event.getClearToDeviceMessage_KeyResponse()
+                    expect(clearEvent).toBeDefined()
+                    expect(clearEvent?.content).toContain('Hi Bob, certainly!')
                 })
             }
         })
@@ -261,13 +302,14 @@ describe('toDeviceMessageTest', () => {
         await expect(
             bobsClient.sendToDevicesMessage(
                 aliceUserId,
-                {
-                    space_id: '100',
-                    channel_id: '200',
-                    algorithm: 'OLM',
-                    sender_key: 'alice sender key',
-                    session_id: '300',
-                },
+                make_ToDevice_KeyRequest({
+                    spaceId: '100',
+                    channelId: '200',
+                    algorithm: OLM_ALGORITHM,
+                    senderKey: 'alice sender key',
+                    sessionId: '300',
+                    content: 'Hi Alice!',
+                }),
                 ToDeviceOp.TDO_KEY_REQUEST,
             ),
         ).toResolve()

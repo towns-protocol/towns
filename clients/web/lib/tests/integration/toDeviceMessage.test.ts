@@ -13,7 +13,7 @@ import {
     getPrimaryProtocol,
     registerAndStartClients,
 } from './helpers/TestUtils'
-import { RiverEvent } from '@towns/sdk'
+import { OLM_ALGORITHM, RiverEvent, make_ToDevice_KeyRequest } from '@towns/sdk'
 import { setTimeout } from 'timers/promises'
 import { ToDeviceOp } from '@towns/proto'
 
@@ -67,16 +67,27 @@ describe('toDeviceMessage', () => {
 
         const canSend = await alice.canSendToDeviceMessage(bobUserId)
         expect(canSend).toBe(true)
-
-        await alice.sendToDeviceMessage(bobUserId, ToDeviceOp[ToDeviceOp.TDO_KEY_REQUEST], {
-            content: 'foo',
-        })
+        const payload =
+            primaryProtocol === SpaceProtocol.Matrix
+                ? { content: 'foo' }
+                : make_ToDevice_KeyRequest({
+                      spaceId: spaceId.slug,
+                      channelId: spaceId.slug,
+                      algorithm: OLM_ALGORITHM,
+                      senderKey: 'fakeSenderKey',
+                      sessionId: 'fakeSessionId',
+                      content: 'foo',
+                  })
+        await alice.sendToDeviceMessage(bobUserId, ToDeviceOp[ToDeviceOp.TDO_KEY_REQUEST], payload)
 
         await waitFor(
             () =>
                 expect(
                     bobsRecievedMessages.find(
-                        (e) => (e.getType() || e.getWireContent().op) === 'TDO_KEY_REQUEST',
+                        (e) =>
+                            (e.getType() ||
+                                (<RiverEvent>e).getWireContentToDevice()?.content?.op) ===
+                            'TDO_KEY_REQUEST',
                     ),
                 ).toBeDefined(),
             { timeout: 1000 },

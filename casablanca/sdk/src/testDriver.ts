@@ -52,10 +52,15 @@ class TestDriver {
     }
 
     channelNewMessage(channelId: string, event: RiverEvent): void {
-        const content = event.getChannelMessageBody()
-        if (!content) {
-            throw new Error(`Expected text message, got=${content}`)
+        const wireContent = event.getWireChannelMessage_Post_Text()
+        if (!wireContent || !wireContent.body) {
+            throw new Error(`Expected text message, got=undefined`)
         }
+        // todo jterzis: we need to encrypts events before sending them over transport.
+        // this is therefore temp measure. we need to get the plaintext from the event
+        // not wire content, but that assumes the event has been decrypted,
+        // which requires the event were encrypted in the first place.
+        const content = wireContent.body
         this.log(`channelNewMessage channelId=${channelId} message=${content}`, this.expected)
         if (this.expected?.delete(content)) {
             this.log(`channelNewMessage expected message Received, text=${content}`)

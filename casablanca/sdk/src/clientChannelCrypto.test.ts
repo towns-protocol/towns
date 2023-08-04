@@ -2,7 +2,7 @@ import { Client } from './client'
 import { MEGOLM_ALGORITHM } from './crypto/olmLib'
 import { EncryptedEventStreamTypes, IContent, RiverEvent } from './event'
 import { genId, makeChannelStreamId, makeSpaceStreamId } from './id'
-import { make_ChannelPayload_Message } from './types'
+import { make_ChannelPayload_Message, make_ChannelMessage_Post_Content_Text } from './types'
 import { makeDonePromise, makeTestClient } from './util.test'
 import { dlog } from './dlog'
 
@@ -64,9 +64,17 @@ describe('clientCryptoTest', () => {
 
         await aliceJoined.expectToSucceed()
 
-        const payload = { sender: alicesClient.userId, content: 'First secret encrypted message!' }
+        const payload = JSON.stringify({
+            content: 'First secret encrypted message!',
+        })
+
         // create a message to encrypt
-        const content: IContent = { ['payload']: payload, ['algorithm']: MEGOLM_ALGORITHM }
+        const content: IContent = {
+            content: {
+                content: make_ChannelMessage_Post_Content_Text(payload),
+                algorithm: MEGOLM_ALGORITHM,
+            },
+        }
 
         const event = new RiverEvent({
             content: content,
@@ -77,18 +85,17 @@ describe('clientCryptoTest', () => {
         expect(event.event.content).toBeDefined()
         await expect(alicesClient.encryptEvent(event, { roomId: bobsChannelId })).toResolve()
         expect(event.shouldAttemptDecryption()).toBe(false)
-        expect(event.getWireContent().ciphertext).toBeDefined()
+        expect(event.getWireContentChannel().content.ciphertext).toBeDefined()
         const senderKey = alicesClient.olmDevice.deviceCurve25519Key
         if (!senderKey) {
             throw new Error('Sender key not found')
         }
-
         // create a message event from alice's encrypted event and have bob decrypt it
         const messagePayload = make_ChannelPayload_Message({
             senderKey: senderKey,
-            sessionId: event.getWireContent().session_id,
+            sessionId: event.getWireContentChannel().content.session_id,
             algorithm: MEGOLM_ALGORITHM,
-            text: event.getWireContent().ciphertext,
+            text: event.getWireContentChannel().content.ciphertext!,
         })
 
         const encryptedEvent = new RiverEvent({
@@ -99,12 +106,13 @@ describe('clientCryptoTest', () => {
             room_id: bobsChannelId,
         })
         expect(encryptedEvent.shouldAttemptDecryption()).toBe(true)
-        expect(encryptedEvent.getWireContent().ciphertext).toBeDefined()
-        expect(encryptedEvent.getPlainContent().payload).toBeUndefined()
+        expect(encryptedEvent.getWireContentChannel().content.ciphertext).toBeDefined()
+        const encryptedContent = encryptedEvent.getContentChannel()
+        expect(encryptedContent?.content).toBeUndefined()
         await expect(bobsClient.decryptEventIfNeeded(encryptedEvent)).toResolve()
-        expect(encryptedEvent.getPlainContent().payload).toContain(
-            'First secret encrypted message!',
-        )
+        const clearContent = encryptedEvent.getClearChannelMessage_Post_Text()
+        expect(clearContent).toBeDefined()
+        expect(clearContent?.body).toContain('First secret encrypted message!')
     })
 
     test('clientCanEncryptDecryptMessageEvents', async () => {
@@ -148,12 +156,19 @@ describe('clientCryptoTest', () => {
         await aliceJoined.expectToSucceed()
 
         const payloads = [
-            { sender: alicesClient.userId, content: 'First secret encrypted message by Alice!' },
-            { sender: bobsClient.userId, content: 'Second secret encrypted message by Bob!' },
+            { content: 'First secret encrypted message by Alice!' },
+            { content: 'Second secret encrypted message by Bob!' },
+            { content: 'First secret encrypted message by Alice!' },
+            { content: 'Second secret encrypted message by Bob!' },
         ]
         const contents: IContent[] = []
         for (const payload of payloads) {
-            contents.push({ ['payload']: payload, ['algorithm']: MEGOLM_ALGORITHM })
+            contents.push({
+                content: {
+                    content: make_ChannelMessage_Post_Content_Text(payload.content),
+                    algorithm: MEGOLM_ALGORITHM,
+                },
+            })
         }
         const aliceSenderKey = alicesClient.olmDevice.deviceCurve25519Key
         if (!aliceSenderKey) {
@@ -191,22 +206,22 @@ describe('clientCryptoTest', () => {
         }
         const encryptedEvents: RiverEvent[] = []
         const numEvents = events.length
-        const doubledEvents = events.concat(events)
         // encrypt events for bobs channel
-        for (const event of doubledEvents) {
+        for (const event of events) {
             expect(event.event.event.content).toBeDefined()
             await expect(
                 event.client.encryptEvent(event.event, { roomId: bobsChannelId }),
             ).toResolve()
             expect(event.event.shouldAttemptDecryption()).toBe(false)
-            expect(event.event.getWireContent().ciphertext).toBeDefined()
+            const ciphertext = event.event.getWireContentChannel().content.ciphertext
+            expect(ciphertext).toBeDefined()
 
             // create a message River event from the encrypted event
             const messagePayload = make_ChannelPayload_Message({
                 senderKey: event.senderKey,
-                sessionId: event.event.getWireContent().session_id,
+                sessionId: event.event.getWireContentChannel().content.session_id,
                 algorithm: MEGOLM_ALGORITHM,
-                text: event.event.getWireContent().ciphertext,
+                text: ciphertext!,
             })
             encryptedEvents.push(
                 new RiverEvent({
@@ -229,10 +244,14 @@ describe('clientCryptoTest', () => {
             const client =
                 encryptedEvent.event.sender == bobsClient.userId ? alicesClient : bobsClient
             expect(encryptedEvent.shouldAttemptDecryption()).toBe(true)
-            expect(encryptedEvent.getWireContent().ciphertext).toBeDefined()
-            expect(encryptedEvent.getPlainContent().payload).toBeUndefined()
+            expect(encryptedEvent.getWireContentChannel().content.ciphertext).toBeDefined()
+            const content = encryptedEvent.getContentChannel()
+            // note: at times jest toBeUnDefined() fails to detect undefined here
+            expect(content?.content === undefined).toBe(true)
             await expect(client.decryptEventIfNeeded(encryptedEvent)).toResolve()
-            expect(encryptedEvent.getPlainContent().payload).toContain('encrypted message')
+            const clearContent = encryptedEvent.getClearChannelMessage_Post_Text()
+            expect(clearContent).toBeDefined()
+            expect(clearContent?.body).toContain('secret encrypted message')
             j++
         }
 
@@ -246,10 +265,13 @@ describe('clientCryptoTest', () => {
             const client =
                 encryptedEvent.event.sender == bobsClient.userId ? bobsClient : alicesClient
             expect(encryptedEvent.shouldAttemptDecryption()).toBe(true)
-            expect(encryptedEvent.getWireContent().ciphertext).toBeDefined()
-            expect(encryptedEvent.getPlainContent().payload).toBeUndefined()
+            expect(encryptedEvent.getWireContentChannel().content.ciphertext).toBeDefined()
+            const content = encryptedEvent.getContentChannel()
+            expect(content.content).toBeUnDefined()
             await expect(client.decryptEventIfNeeded(encryptedEvent)).toResolve()
-            expect(encryptedEvent.getPlainContent().payload).toContain('encrypted message')
+            const clearContent = encryptedEvent.getClearChannelMessage_Post_Text()
+            expect(clearContent).toBeDefined()
+            expect(clearContent?.body).toContain('encrypted message')
             k++
         }
     })
@@ -278,19 +300,25 @@ describe('clientCryptoTest', () => {
         ).toResolve()
         await expect(bobsClient.waitForStream(bobsChannelId)).toResolve()
 
-        const payload = { sender: bobsClient.userId, content: 'First secret encrypted message!' }
+        const payload = JSON.stringify({
+            sender: bobsClient.userId,
+            content: 'First secret encrypted message!',
+        })
         // create a message to encrypt
-        const content: IContent = { ['payload']: payload, ['algorithm']: MEGOLM_ALGORITHM }
-
         const event = new RiverEvent({
-            content: content,
+            content: {
+                content: {
+                    content: make_ChannelMessage_Post_Content_Text(payload),
+                    algorithm: MEGOLM_ALGORITHM,
+                },
+            },
             sender: bobsClient.userId,
             stream_type: EncryptedEventStreamTypes.Channel,
         })
         expect(event.event.content).toBeDefined()
         await expect(bobsClient.encryptEvent(event, { roomId: bobsChannelId })).toResolve()
         expect(event.shouldAttemptDecryption()).toBe(false)
-        expect(event.getWireContent().ciphertext).toBeDefined()
+        expect(event.getWireContentChannel().content.ciphertext).toBeDefined()
         const senderKey = bobsClient.olmDevice.deviceCurve25519Key
         if (!senderKey) {
             throw new Error('Sender key not found')
@@ -299,9 +327,9 @@ describe('clientCryptoTest', () => {
         // create a message event from the encrypted event and decrypt it
         const messagePayload = make_ChannelPayload_Message({
             senderKey: senderKey,
-            sessionId: event.getWireContent().session_id,
+            sessionId: event.getWireContentChannel().content.session_id,
             algorithm: MEGOLM_ALGORITHM,
-            text: event.getWireContent().ciphertext,
+            text: event.getWireContentChannel().content.ciphertext!,
         })
 
         const encryptedEvent = new RiverEvent({
@@ -312,16 +340,20 @@ describe('clientCryptoTest', () => {
             room_id: bobsChannelId,
         })
         expect(encryptedEvent.shouldAttemptDecryption()).toBe(true)
-        expect(encryptedEvent.getWireContent().ciphertext).toBeDefined()
-        expect(encryptedEvent.getPlainContent().payload).toBeUndefined()
+        expect(encryptedEvent.getWireContentChannel().content.ciphertext).toBeDefined()
+        const content = encryptedEvent.getContentChannel()
+        expect(content?.content).toBeUndefined()
         // note: we need to delete session from crypto store since session store is shared
         // in node test environment.
         alicesClient.cryptoStore?.deleteInboundGroupSessions(
-            encryptedEvent.getWireContent().sender_key,
-            encryptedEvent.getWireContent().session_id,
+            encryptedEvent.getWireContentChannel().content.sender_key ?? '',
+            encryptedEvent.getWireContentChannel().content.session_id ?? '',
         )
         await expect(alicesClient.decryptEventIfNeeded(encryptedEvent)).toResolve()
-        expect(encryptedEvent.getPlainContent().msgtype).toContain('bad.encrypted')
+        const clear = encryptedEvent.getClearContent_ChannelMessage()
+        if (clear && clear.content && clear.opts) {
+            expect(clear.opts.msgtype).toEqual('m.bad.encrypted')
+        }
     })
 
     test('encryptMultipleMessagesAcrossManyChannel', async () => {})

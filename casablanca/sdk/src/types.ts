@@ -21,6 +21,9 @@ import {
     ToDeviceMessage_KeyResponse,
     UserPayload_UserMembership,
     UserSettingsPayload_FullyReadMarkers,
+    ChannelMessage_Post_Mention,
+    MegolmSession,
+    KeyResponseKind,
 } from '@towns/proto'
 import { keccak256 } from 'ethereum-cryptography/keccak'
 import { isDefined } from './check'
@@ -84,6 +87,52 @@ export const make_SpacePayload_Inception = (
                 value,
             },
         },
+    }
+}
+
+export const make_ChannelMessage_Post_Content_Text = (
+    body: string,
+    mentions?: PlainMessage<ChannelMessage_Post_Mention>[],
+): PlainMessage<ChannelMessage>['payload'] => {
+    const mentionsPayload = mentions !== undefined ? mentions : []
+    return {
+        case: 'post',
+        value: {
+            content: {
+                case: 'text',
+                value: {
+                    body,
+                    mentions: mentionsPayload,
+                },
+            },
+        },
+    }
+}
+
+export const make_ToDevice_KeyRequest = (input: {
+    spaceId: string
+    channelId: string
+    algorithm: string
+    senderKey: string
+    sessionId: string
+    content?: string
+}): PlainMessage<ToDeviceMessage>['payload'] => {
+    return {
+        case: 'request',
+        value: { ...input },
+    }
+}
+
+export const make_ToDevice_KeyResponse = (input: {
+    spaceId: string
+    channelId: string
+    sessions: PlainMessage<MegolmSession>[]
+    kind: KeyResponseKind
+    content?: string
+}): PlainMessage<ToDeviceMessage>['payload'] => {
+    return {
+        case: 'response',
+        value: { ...input },
     }
 }
 

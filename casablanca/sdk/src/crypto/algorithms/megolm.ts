@@ -19,15 +19,22 @@ import {
     getExistingOlmSessions,
     IEncryptedContent,
     IMegolmEncryptedContent,
+    IOlmEncryptedContent,
     IOlmSessionResult,
     MEGOLM_ALGORITHM,
     OLM_ALGORITHM,
 } from '../olmLib'
 import { DeviceInfoMap } from '../deviceList'
-import { MembershipOp, ToDeviceOp } from '@towns/proto'
-import { IContent, RiverEvent } from '../../event'
+import {
+    MembershipOp,
+    ToDeviceMessage_KeyResponse,
+    ToDeviceOp,
+    UserPayload_ToDevice,
+} from '@towns/proto'
+import { IChannelContent, IClearContent, RiverEvent } from '../../event'
 import * as olmLib from '../olmLib'
 import { IEventDecryptionResult, IncomingRoomKeyRequest } from '../crypto'
+import { PlainMessage } from '@bufbuild/protobuf'
 
 export interface IOutboundGroupSessionKey {
     chain_index: number
@@ -59,7 +66,7 @@ export interface IOlmDevice<T = DeviceInfo> {
 const hasCiphertext = (content: IEncryptedContent): boolean => {
     return typeof content.ciphertext === 'string'
         ? !!content.ciphertext.length
-        : !!Object.keys(content.ciphertext).length
+        : !!Object.keys(content as IOlmEncryptedContent).length
 }
 
 // todo jterzis: room -> channel
@@ -907,7 +914,7 @@ export class MegolmEncryption extends EncryptionAlgorithm {
     public async encryptMessage(
         roomId: string,
         eventType: string,
-        content: IContent,
+        content: IClearContent,
     ): Promise<IMegolmEncryptedContent> {
         this.logCall('Starting to encrypt event')
 
@@ -1060,7 +1067,7 @@ export class MegolmDecryption extends DecryptionAlgorithm {
      * problem decrypting the event.
      */
     public async decryptEvent(event: RiverEvent): Promise<IEventDecryptionResult> {
-        const content = event.getWireContent()
+        const content = event.getWireContentChannel().content
 
         if (!content.sender_key || !content.session_id || !content.ciphertext) {
             throw new DecryptionError('MEGOLM_MISSING_FIELDS', 'Missing fields in input')
@@ -1077,9 +1084,9 @@ export class MegolmDecryption extends DecryptionAlgorithm {
         try {
             res = await this.olmDevice.decryptGroupMessage(
                 event.getRoomId()!,
-                content.sender_key as string,
-                content.session_id as string,
-                content.ciphertext as string,
+                content.sender_key,
+                content.session_id,
+                content.ciphertext,
                 event.getId()!,
             )
         } catch (e) {
@@ -1099,7 +1106,7 @@ export class MegolmDecryption extends DecryptionAlgorithm {
                 errorCode,
                 e instanceof Error ? e.message : 'Unknown Error: Error is undefined',
                 {
-                    session: (content.sender_key as string) + '|' + (content.session_id as string),
+                    session: content.sender_key + '|' + content.session_id,
                 },
             )
         }
@@ -1124,7 +1131,7 @@ export class MegolmDecryption extends DecryptionAlgorithm {
                 'MEGOLM_UNKNOWN_INBOUND_SESSION_ID',
                 "The sender's device has not sent us the keys for this message.",
                 {
-                    session: (content.sender_key as string) + '|' + (content.session_id as string),
+                    session: content.sender_key + '|' + content.session_id,
                 },
             )
         }
@@ -1163,9 +1170,13 @@ export class MegolmDecryption extends DecryptionAlgorithm {
      *
      */
     private addEventToPendingList(event: RiverEvent): void {
-        const content = event.getWireContent()
-        const senderKey = content.sender_key as string
-        const sessionId = content.session_id as string
+        const content = event.getWireContentChannel().content
+        const senderKey = content.sender_key
+        const sessionId = content.session_id
+        if (!senderKey || !sessionId) {
+            this.logError('addEventToPendingList called with missing senderKey or sessionId')
+            return
+        }
         if (!this.pendingEvents.has(senderKey)) {
             this.pendingEvents.set(senderKey, new Map<string, Set<RiverEvent>>())
         }
@@ -1183,9 +1194,13 @@ export class MegolmDecryption extends DecryptionAlgorithm {
      *
      */
     private removeEventFromPendingList(event: RiverEvent): void {
-        const content = event.getWireContent()
-        const senderKey = content.sender_key as string
-        const sessionId = content.session_id as string
+        const content = event.getWireContentChannel().content
+        const senderKey = content.sender_key
+        const sessionId = content.session_id
+        if (!senderKey || !sessionId) {
+            this.logError('removeEventToPendingList called with missing senderKey or sessionId')
+            return
+        }
         const senderPendingEvents = this.pendingEvents.get(senderKey)
         const pendingEvents = senderPendingEvents?.get(sessionId)
         if (!pendingEvents) {
@@ -1202,7 +1217,7 @@ export class MegolmDecryption extends DecryptionAlgorithm {
     }
 
     /**
-     * Parse a RoomKey out of an `m.room_key` event.
+     * Parse a RoomKey out of an `r.room_key` event.
      *
      * @param event - the event containing the room key.
      *
@@ -1214,10 +1229,17 @@ export class MegolmDecryption extends DecryptionAlgorithm {
      */
     private roomKeyFromEvent(event: RiverEvent): RoomKey | undefined {
         const senderKey = event.getSenderKey()
-        const content = event.getContent<Partial<IMessage['content']>>()
+        const content = event.getContent()
         const extraSessionData: OlmGroupSessionExtraData = {}
-
-        if (!content.room_id || !content.session_key || !content.session_id || !content.algorithm) {
+        if (content?.content?.content?.case !== 'response') {
+            this.logError('roomKeyFromEvent called with non-response to device type')
+            return
+        }
+        const todevice_content = new ToDeviceMessage_KeyResponse(content.content.content.value)
+        const session_key = todevice_content.sessions[0].sessionKey
+        const session_id = todevice_content.sessions[0].sessionId
+        const algorithm = todevice_content.sessions[0].algorithm
+        if (!event.event.room_id || !session_key || !session_id || !algorithm) {
             this.logError('key event is missing fields')
             return
         }
@@ -1229,12 +1251,12 @@ export class MegolmDecryption extends DecryptionAlgorithm {
 
         const roomKey: RoomKey = {
             senderKey: senderKey!,
-            sessionId: content.session_id,
-            sessionKey: content.session_key,
+            sessionId: session_id,
+            sessionKey: session_key,
             extraSessionData,
             exportFormat: false,
-            roomId: content.room_id,
-            algorithm: content.algorithm,
+            roomId: event.event.room_id,
+            algorithm: algorithm,
         }
 
         return roomKey
@@ -1300,15 +1322,20 @@ export class MegolmDecryption extends DecryptionAlgorithm {
      */
     public async onRoomKeyWithheldEvent(event: RiverEvent): Promise<void> {
         const content = event.getContent()
-        const senderKey = content.sender_key as string
+        const roomContent = content.content as Partial<IChannelContent>
+        const senderKey = content.content.sender_key as string
+        const sessionId = roomContent.session_id
+        if (!sessionId) {
+            this.logError('key event is missing session_id')
+        }
 
-        if (content.code !== 'm.no_olm' || content.code !== 'm.unavailable') {
+        if (content.code !== 'r.no_olm') {
             await this.olmDevice.addInboundGroupSessionWithheld(
-                content.room_id as string,
+                event.event.room_id ?? '',
                 senderKey,
-                content.session_id as string,
-                content.code as string,
-                content.reason as string,
+                sessionId ?? '',
+                content.code ?? '',
+                content.reason ?? '',
             )
         }
 
@@ -1316,8 +1343,8 @@ export class MegolmDecryption extends DecryptionAlgorithm {
         // It's unlikely we'll be able to decrypt sucessfully now, but this will
         // update the error message.
         //
-        if (content.session_id) {
-            await this.retryDecryption(senderKey, content.session_id as string)
+        if (sessionId) {
+            await this.retryDecryption(senderKey, sessionId)
         } else {
             // no_olm messages aren't specific to a given megolm session, so
             // we trigger retrying decryption for all the messages from the sender's
@@ -1329,7 +1356,10 @@ export class MegolmDecryption extends DecryptionAlgorithm {
 
     public hasKeysForKeyRequest(keyRequest: IncomingRoomKeyRequest): Promise<boolean> {
         const body = keyRequest.requestBody
-
+        if (!body) {
+            this.logError('key request is missing requestBody')
+            return Promise.resolve(false)
+        }
         return this.olmDevice.hasInboundSessionKeys(
             body.room_id,
             body.sender_key,
@@ -1548,7 +1578,10 @@ export class MegolmDecryption extends DecryptionAlgorithm {
                 for (const [_deviceId, content] of deviceMessages) {
                     await this.baseApis.sendToDeviceMessage(
                         userId,
-                        content,
+                        {
+                            algorithm: OLM_ALGORITHM,
+                            ciphertext: content.ciphertext,
+                        } as PlainMessage<UserPayload_ToDevice>['message'],
                         ToDeviceOp.TDO_KEY_RESPONSE,
                         false,
                     )

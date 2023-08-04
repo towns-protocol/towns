@@ -4,7 +4,7 @@ import { dlog } from '../../dlog'
 import { IEventDecryptionResult } from '../crypto'
 import { DeviceInfo } from '../deviceInfo'
 import { DecryptionAlgorithm, DecryptionError, EncryptionAlgorithm } from './base'
-import { IContent, RiverEvent } from '../../event'
+import { IClearContent, IContent, RiverEvent } from '../../event'
 import {
     IEncryptedContent,
     IOlmEncryptedContent,
@@ -18,7 +18,7 @@ const log = dlog('csb:olm')
 const DeviceVerification = DeviceInfo.DeviceVerification
 
 export interface IMessage {
-    type: number
+    type?: number
     body: string
 }
 
@@ -62,7 +62,7 @@ export class OlmEncryption extends EncryptionAlgorithm {
     public async encryptMessage(
         users: string[],
         eventType: string,
-        content: IContent,
+        content: IClearContent,
     ): Promise<IOlmEncryptedContent> {
         /* todo: implement once we have a Room model
         const members = await room.getEncryptionTargetMembers()
@@ -137,10 +137,13 @@ export class OlmDecryption extends DecryptionAlgorithm {
      * problem decrypting the event.
      */
     public async decryptEvent(event: RiverEvent): Promise<IEventDecryptionResult> {
-        const content = event.getWireContent()
-        const deviceKey = content.sender_key
-        const ciphertext = content.ciphertext
+        const content = event.getWireContentToDevice()
+        const deviceKey = content.content.sender_key
+        const ciphertext = content.content.ciphertext
 
+        if (!deviceKey) {
+            throw new DecryptionError('OLM_MISSING_SENDER_KEY', 'Missing sender key')
+        }
         if (!ciphertext) {
             throw new DecryptionError('OLM_MISSING_CIPHERTEXT', 'Missing ciphertext')
         }
@@ -271,7 +274,9 @@ export class OlmDecryption extends DecryptionAlgorithm {
         message: IMessage,
     ): Promise<string> {
         const sessionIds = await this.olmDevice.getSessionIdsForDevice(theirDeviceIdentityKey)
-
+        if (message.type === undefined) {
+            log('No type field on encrypted message')
+        }
         // try each session in turn.
         const decryptionErrors: Record<string, string> = {}
         for (const sessionId of sessionIds) {
@@ -279,7 +284,7 @@ export class OlmDecryption extends DecryptionAlgorithm {
                 const payload = await this.olmDevice.decryptMessage(
                     theirDeviceIdentityKey,
                     sessionId,
-                    message.type,
+                    message.type ?? 0,
                     message.body,
                 )
                 log(
@@ -293,7 +298,7 @@ export class OlmDecryption extends DecryptionAlgorithm {
                 const foundSession = await this.olmDevice.matchesSession(
                     theirDeviceIdentityKey,
                     sessionId,
-                    message.type,
+                    message.type ?? 0,
                     message.body,
                 )
 

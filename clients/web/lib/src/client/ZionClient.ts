@@ -13,6 +13,7 @@ import {
     makeStreamRpcClient,
     takeKeccakFingerprintInHex,
     userIdFromAddress,
+    isUserPayload_ToDevicePlainMessage,
 } from '@towns/sdk'
 import {
     ChannelTransactionContext,
@@ -100,6 +101,7 @@ import { syncMatrixSpace } from './matrix/SyncSpace'
 import { toUtf8String } from 'ethers/lib/utils.js'
 import { toZionRoomFromStream } from './casablanca/CasablancaUtils'
 import { sendFullyReadMarkers } from './casablanca/SendFullyReadMarkers'
+import { isToDevicePlainMessage } from '@towns/sdk'
 
 /***
  * Zion Client
@@ -1796,7 +1798,15 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
                 if (!canSend) {
                     throw new Error('cannot send to device for user ' + userId)
                 }
-                await this.casablancaClient.sendToDevicesMessage(userId, { content }, type)
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+                if (isUserPayload_ToDevicePlainMessage(content)) {
+                    await this.casablancaClient.sendToDevicesMessage(userId, content, type)
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+                } else if (isToDevicePlainMessage(content)) {
+                    await this.casablancaClient.sendToDevicesMessage(userId, content, type)
+                } else {
+                    throw new Error('unknown content type for send to device message')
+                }
                 return
             }
             case SpaceProtocol.Matrix: {

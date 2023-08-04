@@ -4,6 +4,7 @@ import { Client } from './client'
 import { RiverEvent } from './event'
 import { PayloadCaseType, ToDeviceOp } from '@towns/proto'
 import { genId, makeChannelStreamId, makeSpaceStreamId } from './id'
+import { make_ToDevice_KeyRequest } from './types'
 
 const log = dlog('test')
 
@@ -26,18 +27,14 @@ describe('riverEventTest', () => {
 
         const onChannelNewMessage = (channelId: string, event: RiverEvent): void => {
             log('channelNewMessage', channelId)
-            /*
-            const payload = getMessagePayload(message) as ChannelPayload_Message
-            const content = make_ChannelPayload_Message(payload)
-            const event = new RiverEvent({
-                payload: { parsed_event: content, creator_user_id: bobsClient.userId },
-            })
-            */
             log(`event: ${JSON.stringify(event)}`)
             done.runAndDone(() => {
-                // this should ultimately be ciphertext not plaintext when we turn on encryption
-                const content = event.getChannelMessageBody()
-                expect(content).toContain('Hello, world!')
+                // event is unencrypted so clear shouldn't be set
+                const content = event.getClearChannelMessage_Post_Text()
+                expect(content === undefined).toBeTrue()
+                const wire = event.getWireContentChannel()
+                expect(wire).toBeDefined()
+                expect(wire.content.ciphertext).toContain('Hello, world!')
                 // this should be undefined until we attempt decrypting the event
                 expect(event.getClearContent()).toBeUndefined()
             })
@@ -96,14 +93,14 @@ describe('riverEventTest', () => {
 
         const aliceSelfToDevice = makeDonePromise()
         alicesClient.once('toDeviceMessage', (streamId: string, payload: RiverEvent): void => {
-            const content = payload.getPlainContent()
+            const { content } = payload.getWireContentToDevice()
             const senderKey = content['sender_key']
             const deviceKey = content['device_key']
             log('toDeviceMessage for Alice', streamId, senderKey, deviceKey, payload)
             aliceSelfToDevice.runAndDone(() => {
                 expect(payload).toBeDefined()
                 log(`payload: ${JSON.stringify(payload)}`)
-                expect(payload.getContent().ciphertext).toBeDefined()
+                expect(content.ciphertext).toBeDefined()
                 // this should be undefined until we attempt decrypting the event
                 expect(payload?.getClearContent()).toBeUndefined()
             })
@@ -112,9 +109,14 @@ describe('riverEventTest', () => {
         await expect(
             bobsClient.sendToDeviceMessage(
                 aliceUserId,
-                {
-                    content: 'Hi Alice!',
-                },
+                make_ToDevice_KeyRequest({
+                    spaceId: '123412',
+                    channelId: '23423',
+                    algorithm: 'OLM',
+                    senderKey: '123412',
+                    sessionId: '123412',
+                    content: 'Hi Alice',
+                }),
                 ToDeviceOp.TDO_UNSPECIFIED,
             ),
         ).toResolve()

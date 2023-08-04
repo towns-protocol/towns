@@ -32,8 +32,8 @@ describe('clientFlushes', () => {
             log('channelNewMessage', channelId)
             log(message)
             done.runAndDone(() => {
-                const content = message.getChannelMessageBody()
-                expect(content).toBe('Hello, world!')
+                const content = message.getContent().content.ciphertext
+                expect(content).toContain('Hello, world!')
             })
         }
 
@@ -99,8 +99,8 @@ describe('clientFlushes', () => {
             log('channelNewMessage', channelId)
             log(message)
             done.runAndDone(() => {
-                const content = message.getChannelMessageBody()
-                expect(content).toBe('Hello, again!')
+                const content = message.getContent().content.ciphertext
+                expect(content).toContain('Hello, again!')
             })
         }
 
