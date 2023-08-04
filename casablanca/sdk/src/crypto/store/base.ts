@@ -6,7 +6,6 @@ import { DLogger } from '../../dlog'
 
 // transactions are assumed to be IDBTransactions or null for local storage, in-memory.
 export type CryptoTxn = IDBTransaction | null
-import { RK, RDK } from '../rk'
 
 /**
  * Abstraction of artifacts that can store data required for e2e encryption
@@ -125,12 +124,6 @@ export interface CryptoStore {
         func: (txn: CryptoTxn) => T | Promise<T>,
         log?: DLogger,
     ): Promise<T>
-
-    // RK storage
-    getRK<T>(txn: CryptoTxn, func: (rk: RK | null) => T): Promise<T>
-    getRDK<T>(txn: CryptoTxn, func: (rdk: RDK | null) => T): Promise<T>
-    storeRK(txn: CryptoTxn, rk: RK): void
-    storeRDK(txn: CryptoTxn, rdk: RDK): void
 }
 
 export type Mode = 'readonly' | 'readwrite'

@@ -6,9 +6,19 @@ import { dlog } from '../dlog'
 
 const log = dlog('csb:rk')
 
+export type SerializedRK = Uint8Array
+
+export type SerializedRDK = {
+    sig: Uint8Array | undefined
+    key: Uint8Array
+}
 /* River public key for signing and verifying */
 export interface RiverPublicKey {
     bytes: Uint8Array
+}
+
+export interface ISerializeable<S> {
+    serialize(): S
 }
 
 /* River Key for signing and verifying identities of users and devices.
@@ -16,7 +26,9 @@ export interface RiverPublicKey {
 */
 export class RiverKey {
     /* ECDSA key pair */
-    key: SigningKey
+    readonly key: SigningKey
+    public readonly address: string
+    public readonly privateKey: Uint8Array
 
     public publicKey(): RiverPublicKey {
         return {
@@ -24,12 +36,10 @@ export class RiverKey {
         }
     }
 
-    public privateKey(): Uint8Array {
-        return bin_fromHexString(this.key.privateKey)
-    }
-
     public constructor(privateKey: Uint8Array) {
+        this.privateKey = privateKey
         this.key = new SigningKey(privateKey)
+        this.address = ethers.utils.computeAddress(this.key.publicKey)
     }
 }
 
@@ -39,7 +49,7 @@ export class RiverKey {
  * the client must provide the delegation signature alongside with the signed event
  * to proof the event's authenticity.
  */
-export class RDK extends RiverKey {
+export class RDK extends RiverKey implements ISerializeable<SerializedRDK> {
     /* Signature of the public key by the RK key.
        populated by RK.signRdk() as secp256k1(keccak256(this.key.publicKey), rk.key.privateKey).
        If not set, the RDK doesn't have an associated RK.
@@ -50,9 +60,19 @@ export class RDK extends RiverKey {
         return this.delegateSig !== undefined
     }
 
-    static from(privateKey: Uint8Array, delegateSig?: Uint8Array): RDK {
-        const rdk = new RDK(privateKey)
-        rdk.delegateSig = delegateSig
+    public serialize(): SerializedRDK {
+        return {
+            sig: this.delegateSig,
+            key: bin_fromHexString(this.key.privateKey),
+        }
+    }
+
+    static from(value: SerializedRDK): RDK {
+        if (!value.key) {
+            throw new Error('RDK key is not set')
+        }
+        const rdk = new RDK(value.key)
+        rdk.delegateSig = value.sig
         return rdk
     }
 
@@ -69,7 +89,7 @@ export class RDK extends RiverKey {
  *  - verify River Device Keys (RDK) (the public part)
  *  - sign user Wallet (the public part)
  */
-export class RK extends RiverKey {
+export class RK extends RiverKey implements ISerializeable<SerializedRK> {
     public async signRdk(rdk: RDK): Promise<RDK> {
         if (rdk.isSigned()) {
             throw new Error('RDK is already signed')
@@ -89,8 +109,19 @@ export class RK extends RiverKey {
         return bin_toHexString(recovered) == this.key.publicKey.substring(2)
     }
 
+    public serialize(): SerializedRK {
+        return bin_fromHexString(this.key.privateKey)
+    }
+
+    static from(value: SerializedRK): RK {
+        return new RK(value)
+    }
+
     public static createRandom(): RK {
         log('createRandom RK')
         return new RK(bin_fromHexString(ethers.Wallet.createRandom().privateKey))
     }
+}
+export function createRandom<T>(keyType: { new (pk: Uint8Array): T }): T {
+    return new keyType(bin_fromHexString(ethers.Wallet.createRandom().privateKey))
 }

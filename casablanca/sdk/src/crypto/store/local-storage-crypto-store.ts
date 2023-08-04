@@ -11,10 +11,6 @@ import {
 import { IOlmDevice } from '../deviceList'
 import { InboundGroupSessionData } from '../olmDevice'
 import { safeSet } from '../../utils'
-import { RK, RDK } from '../rk'
-import { bin_fromHexString, bin_toHexString } from '../../binary'
-import { IndexedDBCryptoStore } from './indexeddb-crypto-store'
-import { RiverKey } from '@river/proto'
 
 /**
  * Internal module. Partial localStorage backed storage for e2e.
@@ -416,46 +412,6 @@ export class LocalStorageCryptoStore extends MemoryCryptoStore {
         func: (txn: null) => T | Promise<T>,
     ): Promise<T> {
         return Promise.resolve(func(null))
-    }
-
-    // RK storage
-    public getRK<T>(txn: unknown, func: (rk: RK | null) => T): Promise<T> {
-        const rk = this.store.getItem(IndexedDBCryptoStore.STORE_RK)
-        return new Promise((resolve) => {
-            if (rk) {
-                resolve(func(new RK(bin_fromHexString(rk))))
-            } else {
-                resolve(func(null))
-            }
-        })
-    }
-
-    public getRDK<T>(txn: unknown, func: (rdk: RDK | null) => T): Promise<T> {
-        const rdk = this.store.getItem('rdk')
-        return new Promise((resolve) => {
-            if (rdk) {
-                const { privateKey, signature } = RiverKey.fromJsonString(rdk)
-                if (signature.length == 0) {
-                    resolve(func(RDK.from(privateKey)))
-                } else {
-                    resolve(func(RDK.from(privateKey, signature)))
-                }
-            } else {
-                resolve(func(null))
-            }
-        })
-    }
-
-    public storeRK(txn: unknown, rk: RK) {
-        this.store.setItem(IndexedDBCryptoStore.STORE_RK, bin_toHexString(rk.privateKey()))
-    }
-
-    public storeRDK(txn: unknown, rdk: RDK) {
-        const riverKey: RiverKey = new RiverKey({
-            privateKey: rdk.privateKey(),
-            signature: rdk.delegateSig!,
-        })
-        this.store.setItem('rdk', riverKey.toJsonString())
     }
 }
 

@@ -4,8 +4,7 @@
 
 import { RK, RDK } from './rk'
 import { indexedDB } from 'fake-indexeddb'
-import { IndexedDBCryptoStore } from './store/indexeddb-crypto-store'
-import { Auth } from './store/auth'
+import { RiverKeysStorage } from './store/river-keys'
 
 describe('rk', () => {
     test('verifyRdk', async () => {
@@ -19,31 +18,19 @@ describe('rk', () => {
     })
 
     test('verifyRdkStorage', async () => {
-        const run = async (store: IndexedDBCryptoStore, expectedStore: string) => {
-            await store.startup()
-            const auth = new Auth(store)
-            const rk = await auth.initializeRK()
-            let rdk = await auth.initializeRDK()
-            rdk = await auth.signRDK()
-            expect(rdk.delegateSig?.length).toBe(65)
-            // verify
-            const recovered = rk.verifyRdk(rdk)
-            expect(recovered).toBe(true)
+        const store = new RiverKeysStorage(indexedDB, `river-sdk:crypto:test`)
+        await store.startup()
+        const rk = await store.withTransaction((tx) => store.initializeRK(tx))
+        let rdk = await store.withTransaction((tx) => store.initializeRDK(tx))
+        expect(rdk.delegateSig?.length).toBe(65)
+        // verify
+        const recovered = rk.verifyRdk(rdk)
+        expect(recovered).toBe(true)
 
-            // check stored rdk
-            rdk = await auth.initializeRDK()
-            expect(rdk.delegateSig?.length).toBe(65)
-            // verify
-            expect(rk.verifyRdk(rdk)).toBe(true)
-            // make sure tests are still running against indexeddb
-            expect(store.cryptoStoreType()).toBe(expectedStore)
-        }
-        // run the test with IndexedDB
-        await run(new IndexedDBCryptoStore(indexedDB, `river-sdk:crypto:test`, 'alice'), 'Backend')
-        // run the test with local storage
-        await run(
-            new IndexedDBCryptoStore(null, `river-sdk:crypto:test`, 'alice'),
-            'LocalStorageCryptoStore',
-        )
+        // check stored rdk
+        rdk = await store.withTransaction((tx) => store.initializeRDK(tx))
+        expect(rdk.delegateSig?.length).toBe(65)
+        // verify
+        expect(rk.verifyRdk(rdk)).toBe(true)
     })
 })

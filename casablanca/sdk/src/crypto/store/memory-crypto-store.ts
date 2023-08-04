@@ -507,21 +507,4 @@ export class MemoryCryptoStore implements CryptoStore {
     ): Promise<T> {
         return Promise.resolve(func(null))
     }
-
-    // rk storage
-    getRK<T>(txn: unknown, func: (rk: RK | null) => T): Promise<T> {
-        return Promise.resolve(func(this.rk))
-    }
-
-    getRDK<T>(txn: unknown, func: (rdk: RDK | null) => T): Promise<T> {
-        return Promise.resolve(func(this.rdk))
-    }
-
-    public storeRK(txn: unknown, rk: RK): void {
-        this.rk = rk
-    }
-
-    public storeRDK(txn: unknown, rdk: RDK): void {
-        this.rdk = rdk
-    }
 }

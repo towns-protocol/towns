@@ -903,55 +903,6 @@ export class Backend implements CryptoStore {
             return txPromise.then(() => result)
         })
     }
-
-    // rk storage
-    public getRK<T>(txn: IDBTransaction, func: (rk: RK | null) => T): Promise<T> {
-        const objectStore = txn.objectStore(IndexedDBCryptoStore.STORE_RK)
-        const getReq = objectStore.get('rk')
-        return new Promise((resolve, reject) => {
-            getReq.onsuccess = (): void => {
-                if (getReq.result) {
-                    resolve(func(new RK(getReq.result)))
-                } else {
-                    resolve(func(null))
-                }
-            }
-            getReq.onerror = reject
-        })
-    }
-
-    public getRDK<T>(txn: IDBTransaction, func: (rdk: RDK | null) => T): Promise<T> {
-        const objectStore = txn.objectStore(IndexedDBCryptoStore.STORE_RK)
-        const getReq = objectStore.get('rdk')
-
-        return new Promise((resolve, reject) => {
-            getReq.onsuccess = (): void => {
-                if (getReq.result) {
-                    const { key, sig } = getReq.result
-                    resolve(func(RDK.from(key, sig)))
-                } else {
-                    resolve(func(null))
-                }
-            }
-            getReq.onerror = reject
-        })
-    }
-
-    public storeRK(txn: IDBTransaction, rk: RK): void {
-        const objectStore = txn.objectStore(IndexedDBCryptoStore.STORE_RK)
-        objectStore.put(rk.key.privateKey, 'rk')
-    }
-
-    public storeRDK(txn: IDBTransaction, rdk: RDK): void {
-        const objectStore = txn.objectStore(IndexedDBCryptoStore.STORE_RK)
-        objectStore.put(
-            {
-                key: rdk.privateKey(),
-                sig: rdk.delegateSig,
-            },
-            'rdk',
-        )
-    }
 }
 
 type DbMigration = (db: IDBDatabase) => void
@@ -1009,13 +960,6 @@ const DB_MIGRATIONS: DbMigration[] = [
             keyPath: ['roomId'],
         })
     },
-    (db): void => {
-        log('Creating room_keys store')
-        db.createObjectStore('river_keys'),
-            {
-                keyPath: ['type'],
-            }
-    },
     // Expand as needed.
 ]
 export const VERSION = DB_MIGRATIONS.length
@@ -1063,7 +1007,7 @@ function abortWithException(txn: IDBTransaction, e: Error): void {
     }
 }
 
-function promiseifyTxn<T>(txn: IDBTransaction): Promise<T | null> {
+export function promiseifyTxn<T>(txn: IDBTransaction): Promise<T | null> {
     return new Promise((resolve, reject) => {
         txn.oncomplete = (): void => {
             if ((txn as IWrappedIDBTransaction)._mx_abortexception !== undefined) {
