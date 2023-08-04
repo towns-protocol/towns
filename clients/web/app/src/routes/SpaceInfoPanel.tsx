@@ -88,7 +88,7 @@ export const SpaceInfoPanel = () => {
     const textAreaRef = useRef<HTMLTextAreaElement>(null)
     const { data: roomTopic, isLoading: isLoadingRoomTopic } = useGetSpaceTopic(space?.id.networkId)
 
-    const { mutate, isLoading } = useSetSpaceTopic(space?.id)
+    const { mutate, isLoading: isSettingSpaceTopic } = useSetSpaceTopic(space?.id)
 
     const matrixUserOwner = useMemo(() => {
         if (!data?.owner || !chainId) {
@@ -159,7 +159,8 @@ export const SpaceInfoPanel = () => {
     const { spaceIsMuted, spaceMuteSetting } = useMuteSettings({
         spaceId: spaceID?.networkId,
     })
-    const { mutate: mutateNotificationSettings } = useSetMuteSettingForChannelOrSpace()
+    const { mutate: mutateNotificationSettings, isLoading: isSettingNotification } =
+        useSetMuteSettingForChannelOrSpace()
 
     const onToggleSpaceMuted = useCallback(() => {
         if (!spaceID) {
@@ -324,19 +325,22 @@ export const SpaceInfoPanel = () => {
                                 {canEdit &&
                                     (isEdit ? (
                                         <Box horizontal gap="sm">
-                                            <TextButton disabled={isLoading} onClick={onCancel}>
+                                            <TextButton
+                                                disabled={isSettingSpaceTopic}
+                                                onClick={onCancel}
+                                            >
                                                 Cancel
                                             </TextButton>
                                             <Box horizontal gap>
                                                 <TextButton
-                                                    disabled={isLoading}
+                                                    disabled={isSettingSpaceTopic}
                                                     color="default"
                                                     data-testid="save-button"
                                                     onClick={onSave}
                                                 >
                                                     Save
                                                 </TextButton>
-                                                {isLoading && <ButtonSpinner />}
+                                                {isSettingSpaceTopic && <ButtonSpinner />}
                                             </Box>
                                         </Box>
                                     ) : (
@@ -421,7 +425,7 @@ export const SpaceInfoPanel = () => {
                 </PanelButton>
 
                 {space?.name && (
-                    <PanelButton onClick={onToggleSpaceMuted}>
+                    <PanelButton disabled={isSettingNotification} onClick={onToggleSpaceMuted}>
                         <Icon
                             type={spaceIsMuted ? 'muteActive' : 'muteInactive'}
                             size="square_sm"

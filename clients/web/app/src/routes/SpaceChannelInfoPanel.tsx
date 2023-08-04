@@ -76,7 +76,8 @@ export const ChannelInfoPanel = () => {
     const onUpdatedChannel = useCallback(() => {
         onHideChannelSettingsPopup()
     }, [onHideChannelSettingsPopup])
-    const { mutate: mutateNotificationSettings } = useSetMuteSettingForChannelOrSpace()
+    const { mutate: mutateNotificationSettings, isLoading: isSettingNotification } =
+        useSetMuteSettingForChannelOrSpace()
 
     const { channelIsMuted, spaceIsMuted, channelMuteSetting } = useMuteSettings({
         spaceId: spaceData?.id.networkId,
@@ -135,7 +136,7 @@ export const ChannelInfoPanel = () => {
                 {channel && (
                     <>
                         <PanelButton
-                            disabled={spaceIsMuted}
+                            disabled={spaceIsMuted || isSettingNotification}
                             cursor={spaceIsMuted ? 'default' : 'pointer'}
                             opacity={spaceIsMuted ? '0.5' : 'opaque'}
                             onClick={onToggleChannelMuted}

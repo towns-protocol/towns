@@ -6,6 +6,7 @@ import { PATHS } from 'routes'
 import { Badge, ButtonText, CardOpener, Icon, Stack } from '@ui'
 import { ChannelSettingsCard } from '@components/Cards/ChannelSettingsCard'
 import { ChannelSettingsModal } from '@components/ChannelSettings/ChannelSettingsModal'
+import { useMuteSettings } from 'api/lib/notificationSettings'
 import { NavItem } from './_NavItem'
 
 type Props = {
@@ -38,6 +39,12 @@ export const ChannelNavItem = (props: Props) => {
         // successfully
         onHideChannelSettingsPopup()
     }, [onHideChannelSettingsPopup])
+
+    const { channelIsMuted, spaceIsMuted } = useMuteSettings({
+        spaceId: space.id.networkId,
+        channelId: channel.id.networkId,
+    })
+    const isMuted = channelIsMuted || spaceIsMuted
 
     return (
         <>
@@ -80,11 +87,14 @@ export const ChannelNavItem = (props: Props) => {
                             >
                                 {channel.label}
                             </ButtonText>
-                            {!!mentionCount && (
-                                <Stack horizontal grow justifyContent="end">
+                            <Stack horizontal grow gap justifyContent="end">
+                                {isMuted && (
+                                    <Icon size="square_xs" type="muteActive" color="gray2" />
+                                )}
+                                {!!mentionCount && (
                                     <Badge value={mentionCount}>{mentionCount}</Badge>
-                                </Stack>
-                            )}
+                                )}
+                            </Stack>
                         </NavItem>
                     )
                 }}

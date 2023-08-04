@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import React from 'react'
 import { MentionResult, SpaceData, useMyChannels } from 'use-zion-client'
 import { ChannelNavGroup } from '@components/NavItem/ChannelNavGroup'
 import { ChannelNavItem } from '@components/NavItem/ChannelNavItem'
@@ -17,14 +17,6 @@ export const SyncedChannelList = (props: {
     const { mentions, space, onShowCreateChannel, canCreateChannel } = props
 
     const channelGroups = useMyChannels(space)
-
-    // https://linear.app/hnt-labs/issue/HNT-1594/app-hanging-and-not-loading-on-desktop
-    useEffect(() => {
-        console.log('<SyncedChannelList /> debug: ', {
-            space,
-            channelGroups,
-        })
-    }, [channelGroups, space])
 
     return (
         <>
