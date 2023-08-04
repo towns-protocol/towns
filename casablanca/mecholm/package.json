@@ -1,5 +1,5 @@
 {
-    "name": "@towns/mecholm",
+    "name": "@river/mecholm",
     "packageManager": "yarn@3.2.3",
     "type": "module",
     "main": "dist/index.js",

@@ -1,4 +1,4 @@
-import { Client as CasablancaClient, ParsedEvent } from '@towns/sdk'
+import { Client as CasablancaClient, ParsedEvent } from '@river/sdk'
 import {
     MembershipOp,
     ChannelMessage,

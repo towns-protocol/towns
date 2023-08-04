@@ -1,5 +1,5 @@
 {
-    "name": "@towns/contracts",
+    "name": "@river/contracts",
     "version": "0.1.0",
     "private": true,
     "packageManager": "yarn@3.2.2",

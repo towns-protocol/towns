@@ -1,4 +1,4 @@
-import { Client as CasablancaClient } from '@towns/sdk'
+import { Client as CasablancaClient } from '@river/sdk'
 import { FullyReadMarkerContent } from '@river/proto'
 import { FullyReadMarker } from 'types/timeline-types'
 

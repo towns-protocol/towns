@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { MatrixClient, MatrixEvent, MatrixScheduler } from 'matrix-js-sdk'
-import { bin_fromHexString, Client as CasablancaClient, SignerContext } from '@towns/sdk'
+import { bin_fromHexString, Client as CasablancaClient, SignerContext } from '@river/sdk'
 import { LoginStatus } from './login'
 import { ZionClient } from '../client/ZionClient'
 import { ZionOpts } from '../client/ZionClientTypes'

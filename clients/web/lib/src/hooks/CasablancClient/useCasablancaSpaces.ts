@@ -1,4 +1,4 @@
-import { Client as CasablancaClient, ParsedEvent, Stream } from '@towns/sdk'
+import { Client as CasablancaClient, ParsedEvent, Stream } from '@river/sdk'
 import { useEffect, useState } from 'react'
 import { makeRoomIdentifier } from '../../types/room-identifier'
 import { SpaceItem } from '../../types/zion-types'

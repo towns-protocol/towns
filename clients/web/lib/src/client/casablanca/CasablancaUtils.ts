@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
-import { Stream } from '@towns/sdk'
+import { Stream } from '@river/sdk'
 import { Room, RoomMember } from '../../types/zion-types'
 import { makeCasablancaStreamIdentifier } from '../../types/room-identifier'
 import { Membership } from '../../types/zion-types'

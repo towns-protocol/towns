@@ -7,7 +7,7 @@ import {
     RelationType,
     RoomEvent,
 } from 'matrix-js-sdk'
-import { Client as CasablancaClient, isChannelStreamId, isSpaceStreamId } from '@towns/sdk'
+import { Client as CasablancaClient, isChannelStreamId, isSpaceStreamId } from '@river/sdk'
 import { FullyReadMarkerContent } from '@river/proto'
 import { useEffect } from 'react'
 import { FullyReadMarker, TimelineEvent, ZTEvent } from '../../types/timeline-types'

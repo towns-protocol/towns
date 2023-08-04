@@ -5,7 +5,7 @@ import { ClientEvent, MatrixClient, Room as MatrixRoom, RoomEvent } from 'matrix
 import isEqual from 'lodash/isEqual'
 import { makeRoomIdentifier, RoomIdentifier } from '../../types/room-identifier'
 import { create } from 'zustand'
-import { Client as CasablancaClient } from '@towns/sdk'
+import { Client as CasablancaClient } from '@river/sdk'
 import { useSpacesIds_Matrix } from './useSpaceIds_Matrix'
 import { useSpacesIds_Casablanca } from './useSpaceIds_Casablanca'
 

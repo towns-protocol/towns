@@ -4,7 +4,7 @@ import { AuthenticationError, LoginStatus } from '../hooks/login'
 import { User, RoomMember, Room, Membership } from '../types/zion-types'
 import { makeRoomIdentifier } from '../types/room-identifier'
 
-import { Client as CasablancaClient, isSpaceStreamId, isChannelStreamId } from '@towns/sdk'
+import { Client as CasablancaClient, isSpaceStreamId, isChannelStreamId } from '@river/sdk'
 
 export type CasablancaStoreStates = {
     loginStatus: LoginStatus

@@ -256,10 +256,10 @@ jobs:
               run: yarn csb:wait
 
             - name: Run SDK Tests (without auth)
-              run: yarn run turbo run build test:ci --filter=@towns/sdk
+              run: yarn run turbo run build test:ci --filter=@river/sdk
 
             - name: Run Node Flush Tests (without auth)
-              run: yarn workspace @towns/sdk run test:node-minipool-flush
+              run: yarn workspace @river/sdk run test:node-minipool-flush
 
             - name: Archive Casablanca log
               if: always()

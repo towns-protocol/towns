@@ -1,5 +1,5 @@
 {
-    "name": "@towns/debug-app",
+    "name": "@river/debug-app",
     "packageManager": "yarn@3.2.3",
     "type": "module",
     "scripts": {
@@ -7,7 +7,7 @@
         "dev": "vite --config vite.config.js"
     },
     "dependencies": {
-        "@towns/sdk": "workspace:^"
+        "@river/sdk": "workspace:^"
     },
     "devDependencies": {
         "ts-node": "^10.9.1",

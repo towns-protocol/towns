@@ -1,4 +1,4 @@
-import { Client as CasablancaClient, isSpaceStreamId, isChannelStreamId } from '@towns/sdk'
+import { Client as CasablancaClient, isSpaceStreamId, isChannelStreamId } from '@river/sdk'
 import { useEffect, useState } from 'react'
 import { toZionCasablancaRoom } from '../../store/use-casablanca-store'
 import { Room } from '../../types/zion-types'

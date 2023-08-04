@@ -15,7 +15,7 @@ import { useRoom, useRoomNames } from './use-room'
 import { useZionContext } from '../components/ZionContextProvider'
 import { useSpaceContext } from '../components/SpaceContextProvider'
 import { useCasablancaStream } from './CasablancClient/useCasablancaStream'
-import { Stream } from '@towns/sdk'
+import { Stream } from '@river/sdk'
 import isEqual from 'lodash/isEqual'
 
 /// returns default space if no space slug is provided

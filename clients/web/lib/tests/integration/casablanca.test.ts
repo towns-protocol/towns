@@ -7,8 +7,8 @@ import {
     Client as CasablancaClient,
     makeOldTownsDelegateSig,
     makeStreamRpcClient,
-} from '@towns/sdk'
-import { bin_fromHexString, SignerContext } from '@towns/sdk'
+} from '@river/sdk'
+import { bin_fromHexString, SignerContext } from '@river/sdk'
 import { ethers } from 'ethers'
 import { Permission } from '../../src/client/web3/ContractTypes'
 import { SpaceProtocol } from '../../src/client/ZionClientTypes'

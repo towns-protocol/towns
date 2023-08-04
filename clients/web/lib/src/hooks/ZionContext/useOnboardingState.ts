@@ -8,7 +8,7 @@ import { OnboardingStep_MatrixUpdateProfile } from './onboarding/OnboardingStep_
 import { OnboardingStep_WelcomeSplash } from './onboarding/OnboardingStep_WelcomeSplash'
 import isEqual from 'lodash/isEqual'
 import { MatrixClient } from 'matrix-js-sdk'
-import { Client as CasablancaClient } from '@towns/sdk'
+import { Client as CasablancaClient } from '@river/sdk'
 import { OnboardingStep_CasablancaLoadProfile } from './onboarding/OnboardingStep_CasablancaLoadProfile'
 import { OnboardingStep_CasablancaUpdateProfile } from './onboarding/OnboardingStep_CasablancaUpdateProfile'
 

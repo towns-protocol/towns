@@ -1,4 +1,4 @@
-import { Client as CasablancaClient } from '@towns/sdk'
+import { Client as CasablancaClient } from '@river/sdk'
 import { CreateSpaceInfo } from '../../types/zion-types'
 import { SpaceProtocol } from '../../client/ZionClientTypes'
 import {

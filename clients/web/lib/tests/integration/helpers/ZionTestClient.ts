@@ -35,7 +35,7 @@ import { toEvent as toEventFromMatrixEvent } from '../../../src/hooks/ZionContex
 import { toEvent as toEventFromCasablancaEvent } from '../../../src/hooks/ZionContext/useCasablancaTimelines'
 import { newMatrixLoginSession, newMatrixRegisterSession } from '../../../src/hooks/session'
 import { MatrixClient } from 'matrix-js-sdk'
-import { Client as CasablancaClient } from '@towns/sdk'
+import { Client as CasablancaClient } from '@river/sdk'
 
 export interface ZionTestClientProps {
     primaryProtocol?: SpaceProtocol

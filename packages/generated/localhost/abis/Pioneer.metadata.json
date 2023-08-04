@@ -703,7 +703,7 @@
     "remappings": [
       ":@openzeppelin/=lib/openzeppelin-contracts/",
       ":@prb/test/=lib/prb-test/src/",
-      ":@towns/=node_modules/@towns/",
+      ":@river/=node_modules/@river/",
       ":ERC721A/=lib/ERC721A/contracts/",
       ":contracts/=packages/contracts/",
       ":council/=lib/council/contracts/",

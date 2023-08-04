@@ -14,7 +14,7 @@ import {
     takeKeccakFingerprintInHex,
     userIdFromAddress,
     isUserPayload_ToDevicePlainMessage,
-} from '@towns/sdk'
+} from '@river/sdk'
 import {
     ChannelTransactionContext,
     ChannelUpdateTransactionContext,
@@ -66,7 +66,7 @@ import {
     makeCasablancaStreamIdentifier,
     makeMatrixRoomIdentifier,
 } from '../types/room-identifier'
-import { SignerContext } from '@towns/sdk'
+import { SignerContext } from '@river/sdk'
 import { sendMatrixMessage, sendMatrixNotice } from './matrix/SendMessage'
 import { toZionRoom, toZionUser } from '../store/use-matrix-store'
 import { toZionCasablancaUser } from '../store/use-casablanca-store'
@@ -94,14 +94,14 @@ import { editZionMessage } from './matrix/EditMessage'
 import { inviteMatrixUser } from './matrix/InviteUser'
 import { joinMatrixRoom } from './matrix/Join'
 import { loadOlm } from './loadOlm'
-import { makeUniqueChannelStreamId } from '@towns/sdk'
-import { makeUniqueSpaceStreamId } from '@towns/sdk'
+import { makeUniqueChannelStreamId } from '@river/sdk'
+import { makeUniqueSpaceStreamId } from '@river/sdk'
 import { staticAssertNever } from '../utils/zion-utils'
 import { syncMatrixSpace } from './matrix/SyncSpace'
 import { toUtf8String } from 'ethers/lib/utils.js'
 import { toZionRoomFromStream } from './casablanca/CasablancaUtils'
 import { sendFullyReadMarkers } from './casablanca/SendFullyReadMarkers'
-import { isToDevicePlainMessage } from '@towns/sdk'
+import { isToDevicePlainMessage } from '@river/sdk'
 
 /***
  * Zion Client

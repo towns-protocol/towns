@@ -12,7 +12,7 @@ import {
     OutboundGroupSession,
     Utility,
     Session,
-} from '@towns/mecholm'
+} from '@river/mecholm'
 import { DecryptionError } from './algorithms/base'
 import { WITHHELD_MESSAGES } from '../event'
 import { IOutboundGroupSessionKey } from './algorithms/megolm'

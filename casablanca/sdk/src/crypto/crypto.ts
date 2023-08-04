@@ -18,7 +18,7 @@ import {
     IOlmSessionResult,
     IOlmEncryptedContent,
 } from './olmLib'
-import { OlmMegolmDelegate } from '@towns/mecholm'
+import { OlmMegolmDelegate } from '@river/mecholm'
 import { DeviceInfo, ISignatures, ToDeviceBatch } from './deviceInfo'
 import { OlmDevice, IInitOpts, IMegolmSessionData } from './olmDevice'
 import { EncryptedDeviceData, Err, ToDeviceOp, UserPayload_ToDevice } from '@river/proto'

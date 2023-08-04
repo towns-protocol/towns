@@ -1,4 +1,4 @@
-import { Stream } from '@towns/sdk'
+import { Stream } from '@river/sdk'
 import { useZionContext } from '../../components/ZionContextProvider'
 import { useEffect, useState } from 'react'
 import { RoomIdentifier } from '../../types/room-identifier'

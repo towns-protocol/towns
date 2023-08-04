@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { useCasablancaSpaces } from '../CasablancClient/useCasablancaSpaces'
-import { Client as CasablancaClient } from '@towns/sdk'
+import { Client as CasablancaClient } from '@river/sdk'
 import { SpaceHierarchies } from 'types/zion-types'
 import { SpaceChild } from 'types/zion-types'
 import { makeRoomIdentifier } from '../../types/room-identifier'
