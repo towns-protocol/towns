@@ -81,6 +81,12 @@ export const useStore = create(
         {
             name: GLOBAL_STORE_NAME,
             version: 1,
+            partialize: (state) => {
+                // probably should not save the isWindowFocused state
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                const { isWindowFocused, ...rest } = state
+                return rest as AppState
+            },
         },
     ),
 )
