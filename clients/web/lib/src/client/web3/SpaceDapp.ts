@@ -8,13 +8,7 @@ import {
     RoleDetails,
     RoleEntitlements,
 } from './ContractTypes'
-import {
-    CreateSpaceParams,
-    EventsContractInfo,
-    ISpaceDapp,
-    UpdateChannelParams,
-    UpdateRoleParams,
-} from './ISpaceDapp'
+import { CreateSpaceParams, ISpaceDapp, UpdateChannelParams, UpdateRoleParams } from './ISpaceDapp'
 import { IStaticContractsInfo, getContractsInfo } from './IStaticContractsInfo'
 import { SpaceDataTypes, SpaceShim } from './shims/SpaceShim'
 import { SpaceFactoryDataTypes, SpaceFactoryShim } from './shims/SpaceFactoryShim'
@@ -296,17 +290,6 @@ export class SpaceDapp implements ISpaceDapp {
             throw new Error(`Space with networkId "${spaceId}" is not found.`)
         }
         return space.getPermissionsByRoleId(roleId)
-    }
-
-    public async getSpaceEventsContractInfo(spaceId: string): Promise<EventsContractInfo> {
-        const space = await this.getSpace(spaceId)
-        if (!space?.eventsAbi) {
-            throw new Error(`events abi for space "${spaceId}" is not found.`)
-        }
-        return {
-            abi: space.eventsAbi,
-            address: space.address,
-        }
     }
 
     public async getSpaceInfo(spaceId: string): Promise<SpaceInfo | undefined> {
