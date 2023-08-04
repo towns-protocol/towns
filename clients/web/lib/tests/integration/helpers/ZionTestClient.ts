@@ -40,6 +40,7 @@ import { Client as CasablancaClient } from '@towns/sdk'
 export interface ZionTestClientProps {
     primaryProtocol?: SpaceProtocol
     eventHandlers?: ZionClientEventHandlers
+    smartContractVersion?: string
 }
 
 export class ZionTestClient extends ZionClient {
@@ -87,6 +88,7 @@ export class ZionTestClient extends ZionClient {
                 web3Provider: provider,
                 eventHandlers: props?.eventHandlers,
                 verbose: true,
+                smartContractVersion: props?.smartContractVersion,
             },
             name,
         )
