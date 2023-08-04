@@ -1,5 +1,5 @@
 import { makeEvent, makeEvents, SignerContext, unpackEnvelopes } from './sign'
-import { Err, MembershipOp, SyncStreamsResponse, SyncCookie } from '@towns/proto'
+import { Err, MembershipOp, SyncStreamsResponse, SyncCookie } from '@river/proto'
 import { dlog } from './dlog'
 import {
     makeEvent_test,
@@ -247,7 +247,7 @@ describe('streamRpcClient', () => {
         const aliceAbortController = new AbortController()
         const aliceSyncStreams = alice.syncStreams(
             {
-                syncPos: [aliceSyncCookie!],
+                syncPos: aliceSyncCookie ? [aliceSyncCookie] : [],
             },
             {
                 signal: aliceAbortController.signal,

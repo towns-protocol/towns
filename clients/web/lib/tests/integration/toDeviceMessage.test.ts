@@ -15,7 +15,7 @@ import {
 } from './helpers/TestUtils'
 import { OLM_ALGORITHM, RiverEvent, make_ToDevice_KeyRequest } from '@towns/sdk'
 import { setTimeout } from 'timers/promises'
-import { ToDeviceOp } from '@towns/proto'
+import { ToDeviceOp } from '@river/proto'
 
 describe('toDeviceMessage', () => {
     test('send toDeviceMessage', async () => {

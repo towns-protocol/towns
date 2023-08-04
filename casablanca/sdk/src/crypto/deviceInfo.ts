@@ -1,6 +1,6 @@
 import { PlainMessage } from '@bufbuild/protobuf'
 import { DeviceInfoMap } from './deviceList'
-import { UserPayload_ToDevice } from '@towns/proto'
+import { UserPayload_ToDevice } from '@river/proto'
 
 export interface ISignatures {
     [entity: string]: {

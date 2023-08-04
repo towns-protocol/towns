@@ -1,7 +1,7 @@
 import { dlog } from './dlog'
 import { Client } from './client'
 import { makeDonePromise, makeTestClient } from './util.test'
-import { KeyResponseKind, ToDeviceOp } from '@towns/proto'
+import { KeyResponseKind, ToDeviceOp } from '@river/proto'
 import { RiverEvent } from './event'
 import { make_ToDevice_KeyRequest, make_ToDevice_KeyResponse } from './types'
 import { OLM_ALGORITHM } from './crypto/olmLib'

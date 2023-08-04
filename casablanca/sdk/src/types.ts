@@ -24,7 +24,7 @@ import {
     ChannelMessage_Post_Mention,
     MegolmSession,
     KeyResponseKind,
-} from '@towns/proto'
+} from '@river/proto'
 import { keccak256 } from 'ethereum-cryptography/keccak'
 import { isDefined } from './check'
 import { ISignatures } from './crypto/deviceInfo'

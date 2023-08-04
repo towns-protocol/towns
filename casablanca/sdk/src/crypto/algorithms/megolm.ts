@@ -30,7 +30,7 @@ import {
     ToDeviceMessage_KeyResponse,
     ToDeviceOp,
     UserPayload_ToDevice,
-} from '@towns/proto'
+} from '@river/proto'
 import { IChannelContent, IClearContent, RiverEvent } from '../../event'
 import * as olmLib from '../olmLib'
 import { IEventDecryptionResult, IncomingRoomKeyRequest } from '../crypto'

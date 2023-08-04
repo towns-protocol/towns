@@ -1,7 +1,7 @@
 import { Interceptor, PromiseClient, Transport, createPromiseClient } from '@bufbuild/connect'
 
 import { createConnectTransport } from '@bufbuild/connect-web'
-import { StreamService } from '@towns/proto'
+import { StreamService } from '@river/proto'
 import { dlog } from './dlog'
 
 const logProtos = dlog('csb:rpc:protos')

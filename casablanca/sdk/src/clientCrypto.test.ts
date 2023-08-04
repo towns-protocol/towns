@@ -7,7 +7,7 @@ import {
     make_UserPayload_ToDevice,
     make_ToDevice_KeyRequest,
 } from './types'
-import { ToDeviceOp } from '@towns/proto'
+import { ToDeviceOp } from '@river/proto'
 
 describe('clientCryptoTest', () => {
     let bobsClient: Client

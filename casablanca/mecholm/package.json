@@ -18,7 +18,7 @@
     },
     "dependencies": {
         "@matrix-org/olm": "^3.2.15",
-        "@towns/proto": "workspace:^"
+        "@river/proto": "workspace:^"
     },
     "devDependencies": {
         "@types/jest": "^29.4.0",

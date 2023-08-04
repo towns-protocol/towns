@@ -1,5 +1,5 @@
 import { makeStreamRpcClient } from './makeStreamRpcClient'
-import { InfoRequest, InfoResponse } from '@towns/proto'
+import { InfoRequest, InfoResponse } from '@river/proto'
 
 describe('protocol', () => {
     test('info', async () => {

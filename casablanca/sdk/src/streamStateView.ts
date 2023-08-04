@@ -18,7 +18,7 @@ import {
     FullyReadMarkerContent,
     FullyReadMarkersContent,
     UserSettingsPayload_FullyReadMarkers,
-} from '@towns/proto'
+} from '@river/proto'
 import TypedEmitter from 'typed-emitter'
 import { check, checkNever, isDefined, throwWithCode } from './check'
 import {

@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { makeRoomIdentifier } from '../../types/room-identifier'
 import { SpaceItem } from '../../types/zion-types'
 import isEqual from 'lodash/isEqual'
-import { PayloadCaseType } from '@towns/proto'
+import { PayloadCaseType } from '@river/proto'
 
 export function useCasablancaSpaces(casablancaClient?: CasablancaClient): SpaceItem[] {
     const [spaces, setSpaces] = useState<SpaceItem[]>([])

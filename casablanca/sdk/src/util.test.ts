@@ -1,7 +1,7 @@
 import { normailizeHashes, SignerContext, _impl_makeEvent_impl_ } from './sign'
 
 import { dlog } from './dlog'
-import { Envelope, StreamEvent } from '@towns/proto'
+import { Envelope, StreamEvent } from '@river/proto'
 import { PlainMessage } from '@bufbuild/protobuf'
 import { Client } from './client'
 import { userIdFromAddress } from './id'

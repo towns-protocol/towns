@@ -9,7 +9,7 @@ import {
     PayloadCaseType,
     ChannelProperties,
     FullyReadMarkerContent,
-} from '@towns/proto'
+} from '@river/proto'
 import { ParsedEvent } from './types'
 import { RiverEvent } from './event'
 export type StreamEvents = {

@@ -2,7 +2,7 @@ import { Client as CasablancaClient, ParsedEvent } from '@towns/sdk'
 import { useEffect, useState } from 'react'
 import { RoomIdentifier, makeRoomIdentifier } from '../../types/room-identifier'
 import isEqual from 'lodash/isEqual'
-import { PayloadCaseType } from '@towns/proto'
+import { PayloadCaseType } from '@river/proto'
 
 export function useSpacesIds_Casablanca(casablancaClient: CasablancaClient | undefined): {
     invitedToIds: RoomIdentifier[]

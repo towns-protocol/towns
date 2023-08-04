@@ -1,7 +1,7 @@
 import debug from 'debug'
 import { Client, IDeviceKeyRequest, IDownloadKeyResponse } from './client'
 import { makeDonePromise, makeTestClient } from './util.test'
-import { DeviceKeys } from '@towns/proto'
+import { DeviceKeys } from '@river/proto'
 
 const log = debug('test')
 

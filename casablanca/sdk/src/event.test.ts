@@ -2,7 +2,7 @@ import { dlog } from './dlog'
 import { makeDonePromise, makeTestClient } from './util.test'
 import { Client } from './client'
 import { RiverEvent } from './event'
-import { PayloadCaseType, ToDeviceOp } from '@towns/proto'
+import { PayloadCaseType, ToDeviceOp } from '@river/proto'
 import { genId, makeChannelStreamId, makeSpaceStreamId } from './id'
 import { make_ToDevice_KeyRequest } from './types'
 

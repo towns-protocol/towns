@@ -1,5 +1,5 @@
 import { PlainMessage } from '@bufbuild/protobuf'
-import { Envelope, EventRef, StreamEvent, Err } from '@towns/proto'
+import { Envelope, EventRef, StreamEvent, Err } from '@river/proto'
 import { check, hasElements, isDefined } from './check'
 import {
     townsHash,

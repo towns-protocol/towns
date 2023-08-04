@@ -14,7 +14,7 @@ import { safeSet } from '../../utils'
 import { RK, RDK } from '../rk'
 import { bin_fromHexString, bin_toHexString } from '../../binary'
 import { IndexedDBCryptoStore } from './indexeddb-crypto-store'
-import { RiverKey } from '@towns/proto'
+import { RiverKey } from '@river/proto'
 
 /**
  * Internal module. Partial localStorage backed storage for e2e.

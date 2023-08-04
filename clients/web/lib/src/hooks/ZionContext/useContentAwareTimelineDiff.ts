@@ -8,7 +8,7 @@ import {
     RoomEvent,
 } from 'matrix-js-sdk'
 import { Client as CasablancaClient, isChannelStreamId, isSpaceStreamId } from '@towns/sdk'
-import { FullyReadMarkerContent } from '@towns/proto'
+import { FullyReadMarkerContent } from '@river/proto'
 import { useEffect } from 'react'
 import { FullyReadMarker, TimelineEvent, ZTEvent } from '../../types/timeline-types'
 import { useFullyReadMarkerStore } from '../../store/use-fully-read-marker-store'

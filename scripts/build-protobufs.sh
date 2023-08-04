@@ -3,7 +3,7 @@
 pushd "$(git rev-parse --show-toplevel)"
 echo "building protobufs"
 
-# typescript: we need to build the protobufs and generate the towns/proto package
+# typescript: we need to build the protobufs and generate the river/proto package
 yarn csb:build
 
 # golang

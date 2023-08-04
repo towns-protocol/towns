@@ -21,7 +21,7 @@ import {
 import { OlmMegolmDelegate } from '@towns/mecholm'
 import { DeviceInfo, ISignatures, ToDeviceBatch } from './deviceInfo'
 import { OlmDevice, IInitOpts, IMegolmSessionData } from './olmDevice'
-import { EncryptedDeviceData, Err, ToDeviceOp, UserPayload_ToDevice } from '@towns/proto'
+import { EncryptedDeviceData, Err, ToDeviceOp, UserPayload_ToDevice } from '@river/proto'
 import { IFallbackKey, recursiveMapToObject } from '../types'
 import { bin_fromHexString } from '../binary'
 import { DeviceList, IOlmDevice } from './deviceList'

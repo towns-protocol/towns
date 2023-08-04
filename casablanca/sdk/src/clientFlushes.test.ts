@@ -2,7 +2,7 @@
  * @group node-minipool-flush
  */
 
-import { PayloadCaseType } from '@towns/proto'
+import { PayloadCaseType } from '@river/proto'
 import { Client } from './client'
 import { DLogger, dlog } from './dlog'
 import { RiverEvent } from './event'

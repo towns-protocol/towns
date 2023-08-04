@@ -1,5 +1,5 @@
 import { Client as CasablancaClient } from '@towns/sdk'
-import { FullyReadMarkerContent } from '@towns/proto'
+import { FullyReadMarkerContent } from '@river/proto'
 import { FullyReadMarker } from 'types/timeline-types'
 
 export async function sendFullyReadMarkers(

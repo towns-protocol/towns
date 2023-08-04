@@ -1,5 +1,5 @@
 {
-    "name": "@towns/proto",
+    "name": "@river/proto",
     "private": true,
     "packageManager": "yarn@3.2.3",
     "type": "module",

@@ -23,7 +23,7 @@ import {
     FullyReadMarkerContent,
     FullyReadMarkersContent,
     ToDeviceMessage,
-} from '@towns/proto'
+} from '@river/proto'
 
 import { Crypto, EncryptionTarget } from './crypto/crypto'
 import { OlmDevice, IExportedDevice as IExportedOlmDevice } from './crypto/olmDevice'

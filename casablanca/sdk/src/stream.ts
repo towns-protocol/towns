@@ -1,4 +1,4 @@
-import { StreamAndCookie } from '@towns/proto'
+import { StreamAndCookie } from '@river/proto'
 
 import { DLogger } from './dlog'
 import EventEmitter from 'events'

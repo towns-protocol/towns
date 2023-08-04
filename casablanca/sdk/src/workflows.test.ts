@@ -1,5 +1,5 @@
 import { makeEvent, SignerContext, unpackEnvelopes } from './sign'
-import { MembershipOp } from '@towns/proto'
+import { MembershipOp } from '@river/proto'
 import { dlog } from './dlog'
 import { lastEventFiltered, makeRandomUserContext, TEST_URL } from './util.test'
 import {

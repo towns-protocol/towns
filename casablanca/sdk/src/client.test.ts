@@ -10,7 +10,7 @@ import {
 } from './id'
 import { getMessagePayloadContent_Text, IFallbackKey } from './types'
 import { makeDonePromise, makeTestClient } from './util.test'
-import { DeviceKeys, PayloadCaseType, SyncStreamsRequest, SyncStreamsResponse } from '@towns/proto'
+import { DeviceKeys, PayloadCaseType, SyncStreamsRequest, SyncStreamsResponse } from '@river/proto'
 import { PartialMessage } from '@bufbuild/protobuf'
 import { CallOptions } from '@bufbuild/connect'
 // This is needed to get the jest itnerface for using in spyOn

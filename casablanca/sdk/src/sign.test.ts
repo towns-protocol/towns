@@ -8,7 +8,7 @@ import { makeUserStreamId } from './id'
 import { makeTownsDelegateSig, makeOldTownsDelegateSig, publicKeyToAddress } from './crypto/crypto'
 import { getPublicKey } from 'ethereum-cryptography/secp256k1'
 import { ethers } from 'ethers'
-import { EncryptedData, StreamEvent } from '@towns/proto'
+import { EncryptedData, StreamEvent } from '@river/proto'
 
 const log = dlog('test:sign')
 

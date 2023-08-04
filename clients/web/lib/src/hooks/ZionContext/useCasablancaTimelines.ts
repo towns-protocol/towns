@@ -9,7 +9,7 @@ import {
     ChannelPayload,
     EncryptedData,
     SpacePayload,
-} from '@towns/proto'
+} from '@river/proto'
 import { useEffect } from 'react'
 import { Membership, MessageType } from '../../types/zion-types'
 import {

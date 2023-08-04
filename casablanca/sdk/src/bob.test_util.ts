@@ -1,5 +1,5 @@
 import { makeEvent, SignerContext, unpackEnvelopes } from './sign'
-import { MembershipOp, SyncStreamsResponse, Envelope } from '@towns/proto'
+import { MembershipOp, SyncStreamsResponse, Envelope } from '@river/proto'
 import { DLogger } from './dlog'
 import { lastEventFiltered, makeEvent_test, makeTestRpcClient, sendFlush } from './util.test'
 import {

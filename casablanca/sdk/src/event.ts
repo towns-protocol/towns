@@ -11,7 +11,7 @@ import {
     ToDeviceMessage_KeyResponse,
     ToDeviceOp,
     UserPayload_ToDevice,
-} from '@towns/proto'
+} from '@river/proto'
 import EventEmitter from 'events'
 import TypedEmitter from 'typed-emitter'
 import {

@@ -3,7 +3,7 @@
 import { CryptoEventHandlerMap } from './crypto'
 import TypedEmitter from 'typed-emitter'
 import EventEmitter from 'events'
-import { DeviceKeys } from '@towns/proto'
+import { DeviceKeys } from '@river/proto'
 import { IDownloadKeyRequest, IDownloadKeyResponse } from '../client'
 import { OLM_ALGORITHM, MEGOLM_ALGORITHM } from './olmLib'
 import { IDevice, DeviceInfo } from './deviceInfo'
