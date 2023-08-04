@@ -298,13 +298,6 @@ export class SpaceDapp implements ISpaceDapp {
         return space.getPermissionsByRoleId(roleId)
     }
 
-    public getSpaceFactoryEventsContractInfo(): EventsContractInfo {
-        return {
-            abi: this.spaceFactory.eventsAbi,
-            address: this.spaceFactory.address,
-        }
-    }
-
     public async getSpaceEventsContractInfo(spaceId: string): Promise<EventsContractInfo> {
         const space = await this.getSpace(spaceId)
         if (!space?.eventsAbi) {
