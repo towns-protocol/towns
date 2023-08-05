@@ -70,7 +70,6 @@ import { SignerContext } from '@river/sdk'
 import { sendMatrixMessage, sendMatrixNotice } from './matrix/SendMessage'
 import { toZionRoom, toZionUser } from '../store/use-matrix-store'
 import { toZionCasablancaUser } from '../store/use-casablanca-store'
-
 import { CryptoStore } from 'matrix-js-sdk/lib/crypto/store/base'
 import { ISpaceDapp } from './web3/ISpaceDapp'
 import { MatrixDbManager } from './matrix/MatrixDbManager'
@@ -79,7 +78,6 @@ import { PioneerNFT } from './web3/PioneerNFT'
 import { PushNotificationClient } from './PushNotificationClient'
 import { RoleIdentifier } from '../types/web3-types'
 import { SignerUndefinedError } from '../types/error-types'
-import { SpaceDapp } from './web3/SpaceDapp'
 import { SpaceFactoryDataTypes } from './web3/shims/SpaceFactoryShim'
 import { SpaceInfo } from './web3/SpaceInfo'
 import { SyncState } from 'matrix-js-sdk/lib/sync'
@@ -102,6 +100,7 @@ import { toUtf8String } from 'ethers/lib/utils.js'
 import { toZionRoomFromStream } from './casablanca/CasablancaUtils'
 import { sendFullyReadMarkers } from './casablanca/SendFullyReadMarkers'
 import { isToDevicePlainMessage } from '@river/sdk'
+import { createSpaceDapp } from './web3/SpaceDappFactory'
 
 /***
  * Zion Client
@@ -142,7 +141,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
         console.log('~~~ new ZionClient ~~~', this.name, this.opts)
         this.dbManager = new MatrixDbManager()
         this.riverDbManager = new RiverDbManager()
-        this.spaceDapp = new SpaceDapp(opts.chainId, opts.web3Provider)
+        this.spaceDapp = createSpaceDapp(opts.chainId, opts.web3Provider, opts.smartContractVersion)
         this.pioneerNFT = new PioneerNFT(opts.chainId, opts.web3Provider)
         this._eventHandlers = opts.eventHandlers
         if (opts.pushNotificationWorkerUrl && opts.pushNotificationAuthToken) {
