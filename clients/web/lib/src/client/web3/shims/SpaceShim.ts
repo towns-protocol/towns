@@ -4,16 +4,16 @@ import { ChannelMetadata, Permission } from '../ContractTypes'
 import {
     Space as GoerliContract,
     SpaceInterface as GoerliInterface,
-} from '@harmony/generated/goerli/typings/Space'
+} from '@towns/generated/goerli/typings/Space'
 import {
     Space as LocalhostContract,
     DataTypes as LocalhostDataTypes,
     SpaceInterface as LocalhostInterface,
-} from '@harmony/generated/localhost/typings/Space'
+} from '@towns/generated/localhost/typings/Space'
 import {
     Space as SepoliaContract,
     SpaceInterface as SepoliaInterface,
-} from '@harmony/generated/sepolia/typings/Space'
+} from '@towns/generated/sepolia/typings/Space'
 
 import { BaseContractShim } from './BaseContractShim'
 

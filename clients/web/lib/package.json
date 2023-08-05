@@ -29,10 +29,10 @@
         "watch": "tsc --watch"
     },
     "dependencies": {
-        "@harmony/generated": "workspace:^",
         "@matrix-org/olm": "^3.2.15",
         "@river/sdk": "workspace:^",
         "@tanstack/react-query": "^4.14.3",
+        "@towns/generated": "workspace:^",
         "@types/node-emoji": "^1.8.2",
         "debug": "^4.3.4",
         "ethers": "^5.7.2",

@@ -1,17 +1,17 @@
 /* eslint-disable no-restricted-imports */
 
-import GoerliIEntitlementModuleAbi from '@harmony/generated/goerli/abis/IEntitlement.abi.json' assert { type: 'json' }
-import GoerliSpaceAbi from '@harmony/generated/goerli/abis/Space.abi.json' assert { type: 'json' }
-import GoerliTokenEntitlementAbi from '@harmony/generated/goerli/abis/TokenEntitlement.abi.json' assert { type: 'json' }
-import GoerliUserEntitlementAbi from '@harmony/generated/goerli/abis/UserEntitlement.abi.json' assert { type: 'json' }
-import LocalhostUserEntitlementAbi from '@harmony/generated/localhost/abis/UserEntitlement.abi.json' assert { type: 'json' }
+import GoerliIEntitlementModuleAbi from '@towns/generated/goerli/abis/IEntitlement.abi.json' assert { type: 'json' }
+import GoerliSpaceAbi from '@towns/generated/goerli/abis/Space.abi.json' assert { type: 'json' }
+import GoerliTokenEntitlementAbi from '@towns/generated/goerli/abis/TokenEntitlement.abi.json' assert { type: 'json' }
+import GoerliUserEntitlementAbi from '@towns/generated/goerli/abis/UserEntitlement.abi.json' assert { type: 'json' }
+import LocalhostUserEntitlementAbi from '@towns/generated/localhost/abis/UserEntitlement.abi.json' assert { type: 'json' }
 import { IEntitlementModuleShim } from './IEntitlementModuleShim'
-import LocalhostIEntitlementModuleAbi from '@harmony/generated/localhost/abis/IEntitlement.abi.json' assert { type: 'json' }
-import LocalhostSpaceAbi from '@harmony/generated/localhost/abis/Space.abi.json' assert { type: 'json' }
-import LocalhostTokenEntitlementAbi from '@harmony/generated/localhost/abis/TokenEntitlement.abi.json' assert { type: 'json' }
-import SepoliaIEntitlementModuleAbi from '@harmony/generated/sepolia/abis/IEntitlement.abi.json' assert { type: 'json' }
-import SepoliaSpaceAbi from '@harmony/generated/sepolia/abis/Space.abi.json' assert { type: 'json' }
-import SepoliaTokenEntitlementAbi from '@harmony/generated/sepolia/abis/TokenEntitlement.abi.json' assert { type: 'json' }
+import LocalhostIEntitlementModuleAbi from '@towns/generated/localhost/abis/IEntitlement.abi.json' assert { type: 'json' }
+import LocalhostSpaceAbi from '@towns/generated/localhost/abis/Space.abi.json' assert { type: 'json' }
+import LocalhostTokenEntitlementAbi from '@towns/generated/localhost/abis/TokenEntitlement.abi.json' assert { type: 'json' }
+import SepoliaIEntitlementModuleAbi from '@towns/generated/sepolia/abis/IEntitlement.abi.json' assert { type: 'json' }
+import SepoliaSpaceAbi from '@towns/generated/sepolia/abis/Space.abi.json' assert { type: 'json' }
+import SepoliaTokenEntitlementAbi from '@towns/generated/sepolia/abis/TokenEntitlement.abi.json' assert { type: 'json' }
 import { TokenEntitlementShim } from './TokenEntitlementShim'
 import { UserEntitlementShim } from './UserEntitlementShim'
 import { ethers } from 'ethers'

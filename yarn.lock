@@ -4119,12 +4119,6 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@harmony/generated@workspace:^, @harmony/generated@workspace:packages/generated":
-  version: 0.0.0-use.local
-  resolution: "@harmony/generated@workspace:packages/generated"
-  languageName: unknown
-  linkType: soft
-
 "@harmony/prettier-config@workspace:^, @harmony/prettier-config@workspace:packages/prettier-config":
   version: 0.0.0-use.local
   resolution: "@harmony/prettier-config@workspace:packages/prettier-config"
@@ -5748,21 +5742,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@river/contracts@workspace:packages/contracts":
-  version: 0.0.0-use.local
-  resolution: "@river/contracts@workspace:packages/contracts"
-  dependencies:
-    "@harmony/eslint-config": 1.0.0
-    "@harmony/prettier-config": "workspace:^"
-    keccak256: ^1.0.6
-    merkletreejs: ^0.3.9
-    prettier: ^2.8.8
-    prettier-plugin-solidity: ^1.1.3
-    solhint: ^3.4.1
-    solhint-plugin-prettier: ^0.0.5
-  languageName: unknown
-  linkType: soft
-
 "@river/debug-app@workspace:casablanca/debug-app":
   version: 0.0.0-use.local
   resolution: "@river/debug-app@workspace:casablanca/debug-app"
@@ -6591,6 +6570,27 @@ __metadata:
   checksum: ad87447820dd3f24825d2d947ebc03072b20a42bfc96cbafec16bff8bbda6c1a81fcb0be56d5b21968560c5359a0af4038a68ba150c3e1694fe4c109a063bed8
   languageName: node
   linkType: hard
+
+"@towns/contracts@workspace:packages/contracts":
+  version: 0.0.0-use.local
+  resolution: "@towns/contracts@workspace:packages/contracts"
+  dependencies:
+    "@harmony/eslint-config": 1.0.0
+    "@harmony/prettier-config": "workspace:^"
+    keccak256: ^1.0.6
+    merkletreejs: ^0.3.9
+    prettier: ^2.8.8
+    prettier-plugin-solidity: ^1.1.3
+    solhint: ^3.4.1
+    solhint-plugin-prettier: ^0.0.5
+  languageName: unknown
+  linkType: soft
+
+"@towns/generated@workspace:^, @towns/generated@workspace:packages/generated":
+  version: 0.0.0-use.local
+  resolution: "@towns/generated@workspace:packages/generated"
+  languageName: unknown
+  linkType: soft
 
 "@tsconfig/node10@npm:^1.0.7":
   version: 1.0.9
@@ -8378,7 +8378,7 @@ __metadata:
   resolution: "amp-worker@workspace:servers/workers/amp-worker"
   dependencies:
     "@cloudflare/workers-types": ^4.20230710.1
-    "@harmony/generated": "workspace:^"
+    "@towns/generated": "workspace:^"
     "@types/jest": ^29.4.0
     "@typescript-eslint/eslint-plugin": ^5.61.0
     "@typescript-eslint/parser": ^5.61.0
@@ -13217,7 +13217,6 @@ __metadata:
     "@emoji-mart/react": ^1.1.1
     "@giphy/js-fetch-api": ^4.4.0
     "@giphy/react-components": ^6.2.0
-    "@harmony/generated": "workspace:^"
     "@harmony/prettier-config": "workspace:^"
     "@hookform/resolvers": ^2.9.10
     "@lexical/clipboard": ^0.10.0
@@ -13240,6 +13239,7 @@ __metadata:
     "@testing-library/jest-dom": ^5.16.5
     "@testing-library/react": ^14.0.0
     "@testing-library/user-event": ^14.4.3
+    "@towns/generated": "workspace:^"
     "@types/emoji-mart": ^3.0.9
     "@types/react": ^18.2.11
     "@types/react-dom": ^18.2.4
@@ -19200,12 +19200,12 @@ __metadata:
   dependencies:
     "@emotion/react": ^11.10.4
     "@emotion/styled": ^11.10.4
-    "@harmony/generated": "workspace:^"
     "@harmony/prettier-config": "workspace:^"
     "@mui/icons-material": ^5.10.9
     "@mui/material": ^5.10.10
     "@mui/styles": ^5.10.10
     "@rollup/plugin-inject": ^5.0.3
+    "@towns/generated": "workspace:^"
     "@types/node": ^20.3.0
     "@types/react": ^18.2.11
     "@types/react-dom": ^18.2.4
@@ -19488,7 +19488,7 @@ __metadata:
   resolution: "siwe-worker@workspace:servers/workers/siwe-worker"
   dependencies:
     "@cloudflare/workers-types": ^4.20230710.1
-    "@harmony/generated": "workspace:^"
+    "@towns/generated": "workspace:^"
     "@types/jest": ^29.4.0
     "@typescript-eslint/eslint-plugin": ^5.61.0
     "@typescript-eslint/parser": ^5.61.0
@@ -21613,7 +21613,6 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "use-zion-client@workspace:clients/web/lib"
   dependencies:
-    "@harmony/generated": "workspace:^"
     "@matrix-org/olm": ^3.2.15
     "@river/sdk": "workspace:^"
     "@tanstack/react-query": ^4.14.3
@@ -21621,6 +21620,7 @@ __metadata:
     "@testing-library/jest-dom": ^5.16.5
     "@testing-library/react": ^14.0.0
     "@testing-library/user-event": ^14.4.3
+    "@towns/generated": "workspace:^"
     "@types/jest": ^29.4.0
     "@types/node-emoji": ^1.8.2
     "@types/node-fetch": ^2.6.4

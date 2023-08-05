@@ -1,4 +1,4 @@
-import { CouncilNFT, ZionSpaceManager } from "@harmony/generated/governance";
+import { CouncilNFT, ZionSpaceManager } from "@towns/generated/governance";
 import { AppserviceConfig } from "./AppserviceConfig";
 import { ZionContractProvider } from "./contracts/ZionContractProvider";
 import { ethers } from "ethers";

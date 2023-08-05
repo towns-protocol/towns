@@ -3,16 +3,16 @@
 import {
     SpaceFactory as GoerliContract,
     SpaceFactoryInterface as GoerliInterface,
-} from '@harmony/generated/goerli/typings/SpaceFactory'
+} from '@towns/generated/goerli/typings/SpaceFactory'
 import {
     SpaceFactory as LocalhostContract,
     DataTypes as LocalhostDataTypes,
     SpaceFactoryInterface as LocalhostInterface,
-} from '@harmony/generated/localhost/typings/SpaceFactory'
+} from '@towns/generated/localhost/typings/SpaceFactory'
 import {
     SpaceFactory as SepoliaContract,
     SpaceFactoryInterface as SepoliaInterface,
-} from '@harmony/generated/sepolia/typings/SpaceFactory'
+} from '@towns/generated/sepolia/typings/SpaceFactory'
 
 import { BaseContractShim } from './BaseContractShim'
 

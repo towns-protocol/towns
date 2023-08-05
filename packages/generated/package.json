@@ -1,5 +1,5 @@
 {
-    "name": "@harmony/generated",
+    "name": "@towns/generated",
     "version": "workspace:^",
     "private": true,
     "packageManager": "yarn@3.2.2"

@@ -1,18 +1,18 @@
 /* eslint-disable no-restricted-imports */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import Addresses from '@harmony/generated/addresses.json' assert { type: 'json' }
+import Addresses from '@towns/generated/addresses.json' assert { type: 'json' }
 
-import GoerliMemberNFTAbi from '@harmony/generated/goerli/abis/Member.abi.json' assert { type: 'json' }
-import GoerliSpaceFactoryAbi from '@harmony/generated/goerli/abis/SpaceFactory.abi.json' assert { type: 'json' }
-import GoerliPioneerNFTAbi from '@harmony/generated/goerli/abis/Pioneer.abi.json' assert { type: 'json' }
+import GoerliMemberNFTAbi from '@towns/generated/goerli/abis/Member.abi.json' assert { type: 'json' }
+import GoerliSpaceFactoryAbi from '@towns/generated/goerli/abis/SpaceFactory.abi.json' assert { type: 'json' }
+import GoerliPioneerNFTAbi from '@towns/generated/goerli/abis/Pioneer.abi.json' assert { type: 'json' }
 
-import LocalhostMemberNFTAbi from '@harmony/generated/localhost/abis/Member.abi.json' assert { type: 'json' }
-import LocalhostSpaceFactoryAbi from '@harmony/generated/localhost/abis/SpaceFactory.abi.json' assert { type: 'json' }
-import LocalhostPioneerNFTAbi from '@harmony/generated/localhost/abis/Pioneer.abi.json' assert { type: 'json' }
+import LocalhostMemberNFTAbi from '@towns/generated/localhost/abis/Member.abi.json' assert { type: 'json' }
+import LocalhostSpaceFactoryAbi from '@towns/generated/localhost/abis/SpaceFactory.abi.json' assert { type: 'json' }
+import LocalhostPioneerNFTAbi from '@towns/generated/localhost/abis/Pioneer.abi.json' assert { type: 'json' }
 
-import SepoliaMemberNFTAbi from '@harmony/generated/sepolia/abis/Member.abi.json' assert { type: 'json' }
-import SepoliaSpaceFactoryAbi from '@harmony/generated/sepolia/abis/SpaceFactory.abi.json' assert { type: 'json' }
-import SepoliaPioneerNFTAbi from '@harmony/generated/sepolia/abis/Pioneer.abi.json' assert { type: 'json' }
+import SepoliaMemberNFTAbi from '@towns/generated/sepolia/abis/Member.abi.json' assert { type: 'json' }
+import SepoliaSpaceFactoryAbi from '@towns/generated/sepolia/abis/SpaceFactory.abi.json' assert { type: 'json' }
+import SepoliaPioneerNFTAbi from '@towns/generated/sepolia/abis/Pioneer.abi.json' assert { type: 'json' }
 
 const goerliContractsInfo: IStaticContractsInfo = {
     memberNft: {

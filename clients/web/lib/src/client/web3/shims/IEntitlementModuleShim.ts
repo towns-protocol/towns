@@ -3,15 +3,15 @@
 import {
     IEntitlement as GoerliContract,
     IEntitlementInterface as GoerliInterface,
-} from '@harmony/generated/goerli/typings/IEntitlement'
+} from '@towns/generated/goerli/typings/IEntitlement'
 import {
     IEntitlement as LocalhostContract,
     IEntitlementInterface as LocalhostInterface,
-} from '@harmony/generated/localhost/typings/IEntitlement'
+} from '@towns/generated/localhost/typings/IEntitlement'
 import {
     IEntitlement as SepoliaContract,
     IEntitlementInterface as SepoliaInterface,
-} from '@harmony/generated/sepolia/typings/IEntitlement'
+} from '@towns/generated/sepolia/typings/IEntitlement'
 
 import { BaseContractShim } from './BaseContractShim'
 

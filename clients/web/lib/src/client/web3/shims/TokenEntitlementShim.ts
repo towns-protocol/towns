@@ -3,16 +3,16 @@
 import {
     TokenEntitlement as GoerliContract,
     TokenEntitlementInterface as GoerliInterface,
-} from '@harmony/generated/goerli/typings/TokenEntitlement'
+} from '@towns/generated/goerli/typings/TokenEntitlement'
 import {
     TokenEntitlement as LocalhostContract,
     DataTypes as LocalhostDataTypes,
     TokenEntitlementInterface as LocalhostInterface,
-} from '@harmony/generated/localhost/typings/TokenEntitlement'
+} from '@towns/generated/localhost/typings/TokenEntitlement'
 import {
     TokenEntitlement as SepoliaContract,
     TokenEntitlementInterface as SepoliaInterface,
-} from '@harmony/generated/sepolia/typings/TokenEntitlement'
+} from '@towns/generated/sepolia/typings/TokenEntitlement'
 
 import { BaseContractShim } from './BaseContractShim'
 

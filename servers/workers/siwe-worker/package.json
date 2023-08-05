@@ -15,7 +15,7 @@
 		"test:unit": "jest"
 	},
 	"dependencies": {
-		"@harmony/generated": "workspace:^",
+		"@towns/generated": "workspace:^",
 		"siwe": "^2.1.3",
 		"ts-loader": "^9.4.2",
 		"use-zion-client": "workspace:^"

@@ -16,7 +16,7 @@
     "watch": "tsc --watch"
   },
   "dependencies": {
-    "@harmony/generated": "workspace:^",
+    "@towns/generated": "workspace:^",
     "dotenv": "^16.0.2",
     "ethers": "^5.7.1",
     "express": "^4.18.1",

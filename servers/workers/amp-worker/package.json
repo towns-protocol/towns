@@ -18,7 +18,7 @@
         "test:wrangler": "concurrently --success command-1 --kill-others --kill-signal=SIGINT \"wrangler dev --local --port 8787\" \"wait-on --timeout 5000 http-get://localhost:8787/health\""
     },
     "dependencies": {
-        "@harmony/generated": "workspace:^",
+        "@towns/generated": "workspace:^",
         "ts-loader": "^9.4.2"
     },
     "devDependencies": {
