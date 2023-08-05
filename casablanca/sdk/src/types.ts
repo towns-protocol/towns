@@ -21,6 +21,7 @@ import {
     ToDeviceMessage_KeyResponse,
     UserPayload_UserMembership,
     UserSettingsPayload_FullyReadMarkers,
+    MiniblockHeader,
     ChannelMessage_Post_Mention,
     MegolmSession,
     KeyResponseKind,
@@ -488,4 +489,19 @@ export function recursiveMapToObject(map: Map<any, any>): Record<any, any> {
     // TODO: tighten this return type
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return Object.fromEntries(targetMap.entries())
+}
+
+export const getMiniblockHeader = (
+    event: ParsedEvent | StreamEvent | undefined,
+): MiniblockHeader | undefined => {
+    if (!isDefined(event)) {
+        return undefined
+    }
+    if ('event' in event) {
+        event = event.event as unknown as StreamEvent
+    }
+    if (event.payload.case === 'miniblockHeader') {
+        return event.payload.value
+    }
+    return undefined
 }

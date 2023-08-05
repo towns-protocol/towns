@@ -67,7 +67,7 @@ func (s *streamCacheImpl) CreateStream(ctx context.Context, streamId string, eve
 
 	_, loaded := s.cache.LoadOrStore(streamId, stream)
 	if !loaded {
-		stream.startTicker()
+		stream.startTicker(view.InceptionPayload().GetSettings().GetMiniblockTimeMs())
 		return stream, view, nil
 	} else {
 		// Assume that parallel GetStream created cache entry, fallback to it to retrieve winning cache entry.

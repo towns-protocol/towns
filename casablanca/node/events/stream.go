@@ -47,14 +47,17 @@ func (s *Stream) loadInternal(ctx context.Context) {
 		s.loadError = err
 	} else {
 		s.view = view
-	}
 
-	s.startTicker()
+		s.startTicker(view.InceptionPayload().GetSettings().GetMiniblockTimeMs())
+	}
 }
 
-func (s *Stream) startTicker() {
+func (s *Stream) startTicker(miniblockTimeMs uint64) {
 	s.miniblockTickerContext, s.miniblockTickerCancelFunc = context.WithCancel(s.params.DefaultCtx)
-	s.miniblockTicker = time.NewTicker(4 * time.Second) // TODO: make configurable
+	if miniblockTimeMs == 0 {
+		miniblockTimeMs = 2000
+	}
+	s.miniblockTicker = time.NewTicker(time.Duration(miniblockTimeMs) * time.Millisecond) // TODO: make configurable, disable setting from client if not test run.
 	go s.miniblockTick(s.miniblockTickerContext)
 }
 

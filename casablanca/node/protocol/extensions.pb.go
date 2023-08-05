@@ -13,6 +13,7 @@ type IsUserDeviceKeyPayload_Content = isUserDeviceKeyPayload_Content
 type IsInceptionPayload interface {
 	isInceptionPayload()
 	GetStreamId() string
+	GetSettings() *StreamSettings
 }
 func (*UserPayload_Inception) isInceptionPayload() {}
 func (*SpacePayload_Inception) isInceptionPayload() {}

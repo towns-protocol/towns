@@ -121,6 +121,7 @@ func genInceptionPayloadImpl(inceptionTypes []string, outputFile *FileHelper) {
 type IsInceptionPayload interface {
 	isInceptionPayload()
 	GetStreamId() string
+	GetSettings() *StreamSettings
 }`
 	}
 	conformance := func() string {

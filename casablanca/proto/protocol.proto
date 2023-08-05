@@ -126,6 +126,15 @@ message EventRef {
     bytes signature = 3;
 }
 
+/**
+ * StreamSettings is a part of inception payload for each stream type.
+ */
+message StreamSettings {
+    // This setting controls block production rate for a given stream.
+    // It is used for testing and is used only by nodes running in test mode.
+    uint64 miniblock_time_ms = 1;
+}
+
 
 message Membership {
     MembershipOp op = 1;
@@ -143,6 +152,7 @@ message UserPayload {
 
     message Inception {
         string stream_id = 1;
+        StreamSettings settings = 2;
     }
     
     message UserMembership {
@@ -180,6 +190,7 @@ message SpacePayload {
     message Inception {
         string stream_id = 1;
         string name = 2; // todo encrypt "name" HNT-1802
+        StreamSettings settings = 3;
     }
 
     message Channel {
@@ -256,6 +267,7 @@ message ChannelPayload {
         * that channel names and topics will be delivered using space stream
         */
         EncryptedData channel_properties = 4;
+        StreamSettings settings = 5;
     }
 
     /**
@@ -286,6 +298,7 @@ message UserSettingsPayload {
 
     message Inception {
         string stream_id = 1;
+        StreamSettings settings = 2;
     }
 
     message FullyReadMarkers {
@@ -310,6 +323,7 @@ message UserDeviceKeyPayload {
     message Inception {
         string stream_id = 1;
         string user_id = 2;
+        StreamSettings settings = 3;
     }
 
     message UserDeviceKey {
