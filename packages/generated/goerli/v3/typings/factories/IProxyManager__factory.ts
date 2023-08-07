@@ -10,6 +10,30 @@ const _abi = [
   {
     inputs: [
       {
+        internalType: "address",
+        name: "implementation",
+        type: "address",
+      },
+    ],
+    name: "ProxyManager__NotContract",
+    type: "error",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: false,
+        internalType: "address",
+        name: "implementation",
+        type: "address",
+      },
+    ],
+    name: "ProxyManager__ImplementationSet",
+    type: "event",
+  },
+  {
+    inputs: [
+      {
         internalType: "bytes4",
         name: "selector",
         type: "bytes4",

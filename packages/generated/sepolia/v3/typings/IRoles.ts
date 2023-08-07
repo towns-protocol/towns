@@ -23,7 +23,7 @@ import type {
   PromiseOrValue,
 } from "./common";
 
-export declare namespace IRolesStructs {
+export declare namespace IRolesBase {
   export type CreateEntitlementStruct = {
     module: PromiseOrValue<string>;
     data: PromiseOrValue<BytesLike>;
@@ -91,17 +91,14 @@ export interface IRolesInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "addRoleToEntitlement",
-    values: [
-      PromiseOrValue<BigNumberish>,
-      IRolesStructs.CreateEntitlementStruct
-    ]
+    values: [PromiseOrValue<BigNumberish>, IRolesBase.CreateEntitlementStruct]
   ): string;
   encodeFunctionData(
     functionFragment: "createRole",
     values: [
       PromiseOrValue<string>,
       PromiseOrValue<string>[],
-      IRolesStructs.CreateEntitlementStruct[]
+      IRolesBase.CreateEntitlementStruct[]
     ]
   ): string;
   encodeFunctionData(
@@ -123,10 +120,7 @@ export interface IRolesInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "removeRoleFromEntitlement",
-    values: [
-      PromiseOrValue<BigNumberish>,
-      IRolesStructs.CreateEntitlementStruct
-    ]
+    values: [PromiseOrValue<BigNumberish>, IRolesBase.CreateEntitlementStruct]
   ): string;
   encodeFunctionData(
     functionFragment: "updateRole",
@@ -134,7 +128,7 @@ export interface IRolesInterface extends utils.Interface {
       PromiseOrValue<BigNumberish>,
       PromiseOrValue<string>,
       PromiseOrValue<string>[],
-      IRolesStructs.CreateEntitlementStruct[]
+      IRolesBase.CreateEntitlementStruct[]
     ]
   ): string;
 
@@ -205,14 +199,14 @@ export interface IRoles extends BaseContract {
 
     addRoleToEntitlement(
       roleId: PromiseOrValue<BigNumberish>,
-      entitlement: IRolesStructs.CreateEntitlementStruct,
+      entitlement: IRolesBase.CreateEntitlementStruct,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
     createRole(
       roleName: PromiseOrValue<string>,
       permissions: PromiseOrValue<string>[],
-      entitlements: IRolesStructs.CreateEntitlementStruct[],
+      entitlements: IRolesBase.CreateEntitlementStruct[],
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
@@ -225,17 +219,13 @@ export interface IRoles extends BaseContract {
       roleId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<
-      [IRolesStructs.RoleStructOutput] & {
-        role: IRolesStructs.RoleStructOutput;
-      }
+      [IRolesBase.RoleStructOutput] & { role: IRolesBase.RoleStructOutput }
     >;
 
     getRoles(
       overrides?: CallOverrides
     ): Promise<
-      [IRolesStructs.RoleStructOutput[]] & {
-        roles: IRolesStructs.RoleStructOutput[];
-      }
+      [IRolesBase.RoleStructOutput[]] & { roles: IRolesBase.RoleStructOutput[] }
     >;
 
     removePermissionsFromRole(
@@ -251,7 +241,7 @@ export interface IRoles extends BaseContract {
 
     removeRoleFromEntitlement(
       roleId: PromiseOrValue<BigNumberish>,
-      entitlement: IRolesStructs.CreateEntitlementStruct,
+      entitlement: IRolesBase.CreateEntitlementStruct,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
@@ -259,7 +249,7 @@ export interface IRoles extends BaseContract {
       roleId: PromiseOrValue<BigNumberish>,
       roleName: PromiseOrValue<string>,
       permissions: PromiseOrValue<string>[],
-      entitlements: IRolesStructs.CreateEntitlementStruct[],
+      entitlements: IRolesBase.CreateEntitlementStruct[],
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
   };
@@ -272,14 +262,14 @@ export interface IRoles extends BaseContract {
 
   addRoleToEntitlement(
     roleId: PromiseOrValue<BigNumberish>,
-    entitlement: IRolesStructs.CreateEntitlementStruct,
+    entitlement: IRolesBase.CreateEntitlementStruct,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
   createRole(
     roleName: PromiseOrValue<string>,
     permissions: PromiseOrValue<string>[],
-    entitlements: IRolesStructs.CreateEntitlementStruct[],
+    entitlements: IRolesBase.CreateEntitlementStruct[],
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
@@ -291,11 +281,9 @@ export interface IRoles extends BaseContract {
   getRoleById(
     roleId: PromiseOrValue<BigNumberish>,
     overrides?: CallOverrides
-  ): Promise<IRolesStructs.RoleStructOutput>;
+  ): Promise<IRolesBase.RoleStructOutput>;
 
-  getRoles(
-    overrides?: CallOverrides
-  ): Promise<IRolesStructs.RoleStructOutput[]>;
+  getRoles(overrides?: CallOverrides): Promise<IRolesBase.RoleStructOutput[]>;
 
   removePermissionsFromRole(
     roleId: PromiseOrValue<BigNumberish>,
@@ -310,7 +298,7 @@ export interface IRoles extends BaseContract {
 
   removeRoleFromEntitlement(
     roleId: PromiseOrValue<BigNumberish>,
-    entitlement: IRolesStructs.CreateEntitlementStruct,
+    entitlement: IRolesBase.CreateEntitlementStruct,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
@@ -318,7 +306,7 @@ export interface IRoles extends BaseContract {
     roleId: PromiseOrValue<BigNumberish>,
     roleName: PromiseOrValue<string>,
     permissions: PromiseOrValue<string>[],
-    entitlements: IRolesStructs.CreateEntitlementStruct[],
+    entitlements: IRolesBase.CreateEntitlementStruct[],
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
@@ -331,14 +319,14 @@ export interface IRoles extends BaseContract {
 
     addRoleToEntitlement(
       roleId: PromiseOrValue<BigNumberish>,
-      entitlement: IRolesStructs.CreateEntitlementStruct,
+      entitlement: IRolesBase.CreateEntitlementStruct,
       overrides?: CallOverrides
     ): Promise<void>;
 
     createRole(
       roleName: PromiseOrValue<string>,
       permissions: PromiseOrValue<string>[],
-      entitlements: IRolesStructs.CreateEntitlementStruct[],
+      entitlements: IRolesBase.CreateEntitlementStruct[],
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
@@ -350,11 +338,9 @@ export interface IRoles extends BaseContract {
     getRoleById(
       roleId: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
-    ): Promise<IRolesStructs.RoleStructOutput>;
+    ): Promise<IRolesBase.RoleStructOutput>;
 
-    getRoles(
-      overrides?: CallOverrides
-    ): Promise<IRolesStructs.RoleStructOutput[]>;
+    getRoles(overrides?: CallOverrides): Promise<IRolesBase.RoleStructOutput[]>;
 
     removePermissionsFromRole(
       roleId: PromiseOrValue<BigNumberish>,
@@ -369,7 +355,7 @@ export interface IRoles extends BaseContract {
 
     removeRoleFromEntitlement(
       roleId: PromiseOrValue<BigNumberish>,
-      entitlement: IRolesStructs.CreateEntitlementStruct,
+      entitlement: IRolesBase.CreateEntitlementStruct,
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -377,7 +363,7 @@ export interface IRoles extends BaseContract {
       roleId: PromiseOrValue<BigNumberish>,
       roleName: PromiseOrValue<string>,
       permissions: PromiseOrValue<string>[],
-      entitlements: IRolesStructs.CreateEntitlementStruct[],
+      entitlements: IRolesBase.CreateEntitlementStruct[],
       overrides?: CallOverrides
     ): Promise<void>;
   };
@@ -393,14 +379,14 @@ export interface IRoles extends BaseContract {
 
     addRoleToEntitlement(
       roleId: PromiseOrValue<BigNumberish>,
-      entitlement: IRolesStructs.CreateEntitlementStruct,
+      entitlement: IRolesBase.CreateEntitlementStruct,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
     createRole(
       roleName: PromiseOrValue<string>,
       permissions: PromiseOrValue<string>[],
-      entitlements: IRolesStructs.CreateEntitlementStruct[],
+      entitlements: IRolesBase.CreateEntitlementStruct[],
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
@@ -429,7 +415,7 @@ export interface IRoles extends BaseContract {
 
     removeRoleFromEntitlement(
       roleId: PromiseOrValue<BigNumberish>,
-      entitlement: IRolesStructs.CreateEntitlementStruct,
+      entitlement: IRolesBase.CreateEntitlementStruct,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
@@ -437,7 +423,7 @@ export interface IRoles extends BaseContract {
       roleId: PromiseOrValue<BigNumberish>,
       roleName: PromiseOrValue<string>,
       permissions: PromiseOrValue<string>[],
-      entitlements: IRolesStructs.CreateEntitlementStruct[],
+      entitlements: IRolesBase.CreateEntitlementStruct[],
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
   };
@@ -451,14 +437,14 @@ export interface IRoles extends BaseContract {
 
     addRoleToEntitlement(
       roleId: PromiseOrValue<BigNumberish>,
-      entitlement: IRolesStructs.CreateEntitlementStruct,
+      entitlement: IRolesBase.CreateEntitlementStruct,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
     createRole(
       roleName: PromiseOrValue<string>,
       permissions: PromiseOrValue<string>[],
-      entitlements: IRolesStructs.CreateEntitlementStruct[],
+      entitlements: IRolesBase.CreateEntitlementStruct[],
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
@@ -487,7 +473,7 @@ export interface IRoles extends BaseContract {
 
     removeRoleFromEntitlement(
       roleId: PromiseOrValue<BigNumberish>,
-      entitlement: IRolesStructs.CreateEntitlementStruct,
+      entitlement: IRolesBase.CreateEntitlementStruct,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
@@ -495,7 +481,7 @@ export interface IRoles extends BaseContract {
       roleId: PromiseOrValue<BigNumberish>,
       roleName: PromiseOrValue<string>,
       permissions: PromiseOrValue<string>[],
-      entitlements: IRolesStructs.CreateEntitlementStruct[],
+      entitlements: IRolesBase.CreateEntitlementStruct[],
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
   };

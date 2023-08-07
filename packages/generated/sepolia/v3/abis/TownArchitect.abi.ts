@@ -10,6 +10,26 @@ export default [
     "type": "error"
   },
   {
+    "inputs": [],
+    "name": "Initializable_InInitializingState",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "Initializable_NotInInitializingState",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "Introspection_AlreadySupported",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "Introspection_NotSupported",
+    "type": "error"
+  },
+  {
     "inputs": [
       {
         "internalType": "address",
@@ -18,6 +38,16 @@ export default [
       }
     ],
     "name": "Ownable__NotOwner",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "Ownable__ZeroAddress",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "Pausable__NotPaused",
     "type": "error"
   },
   {
@@ -49,6 +79,45 @@ export default [
     "inputs": [],
     "name": "TownArchitectService__NotContract",
     "type": "error"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "uint32",
+        "name": "version",
+        "type": "uint32"
+      }
+    ],
+    "name": "Initialized",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "bytes4",
+        "name": "interfaceId",
+        "type": "bytes4"
+      }
+    ],
+    "name": "InterfaceAdded",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "bytes4",
+        "name": "interfaceId",
+        "type": "bytes4"
+      }
+    ],
+    "name": "InterfaceRemoved",
+    "type": "event"
   },
   {
     "anonymous": false,
@@ -111,6 +180,29 @@ export default [
   {
     "inputs": [
       {
+        "internalType": "address",
+        "name": "townOwner",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "userEntitlementImplementation",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "tokenEntitlementImplementation",
+        "type": "address"
+      }
+    ],
+    "name": "__TownArchitect_init",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
         "internalType": "string",
         "name": "townId",
         "type": "string"
@@ -154,7 +246,7 @@ export default [
                 "type": "string[]"
               }
             ],
-            "internalType": "struct ITownArchitectStructs.RoleInfo",
+            "internalType": "struct ITownArchitectBase.RoleInfo",
             "name": "everyoneEntitlement",
             "type": "tuple"
           },
@@ -173,7 +265,7 @@ export default [
                     "type": "string[]"
                   }
                 ],
-                "internalType": "struct ITownArchitectStructs.RoleInfo",
+                "internalType": "struct ITownArchitectBase.RoleInfo",
                 "name": "role",
                 "type": "tuple"
               },
@@ -210,7 +302,7 @@ export default [
                 "type": "address[]"
               }
             ],
-            "internalType": "struct ITownArchitectStructs.MemberEntitlement",
+            "internalType": "struct ITownArchitectBase.MemberEntitlement",
             "name": "memberEntitlement",
             "type": "tuple"
           },
@@ -227,12 +319,12 @@ export default [
                 "type": "string"
               }
             ],
-            "internalType": "struct ITownArchitectStructs.ChannelInfo",
+            "internalType": "struct ITownArchitectBase.ChannelInfo",
             "name": "channel",
             "type": "tuple"
           }
         ],
-        "internalType": "struct ITownArchitectStructs.TownInfo",
+        "internalType": "struct ITownArchitectBase.TownInfo",
         "name": "townInfo",
         "type": "tuple"
       }

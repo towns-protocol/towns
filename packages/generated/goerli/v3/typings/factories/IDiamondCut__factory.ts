@@ -8,6 +8,108 @@ import type { IDiamondCut, IDiamondCutInterface } from "../IDiamondCut";
 
 const _abi = [
   {
+    inputs: [
+      {
+        internalType: "bytes4",
+        name: "selector",
+        type: "bytes4",
+      },
+    ],
+    name: "DiamondCut_FunctionAlreadyExists",
+    type: "error",
+  },
+  {
+    inputs: [
+      {
+        internalType: "address",
+        name: "facet",
+        type: "address",
+      },
+    ],
+    name: "DiamondCut_FunctionDoesNotExist",
+    type: "error",
+  },
+  {
+    inputs: [
+      {
+        internalType: "bytes4",
+        name: "selector",
+        type: "bytes4",
+      },
+    ],
+    name: "DiamondCut_FunctionFromSameFacetAlreadyExists",
+    type: "error",
+  },
+  {
+    inputs: [],
+    name: "DiamondCut_ImmutableFacet",
+    type: "error",
+  },
+  {
+    inputs: [
+      {
+        internalType: "address",
+        name: "init",
+        type: "address",
+      },
+    ],
+    name: "DiamondCut_InvalidContract",
+    type: "error",
+  },
+  {
+    inputs: [
+      {
+        internalType: "address",
+        name: "facet",
+        type: "address",
+      },
+    ],
+    name: "DiamondCut_InvalidFacet",
+    type: "error",
+  },
+  {
+    inputs: [],
+    name: "DiamondCut_InvalidFacetCutAction",
+    type: "error",
+  },
+  {
+    inputs: [],
+    name: "DiamondCut_InvalidFacetCutLength",
+    type: "error",
+  },
+  {
+    inputs: [
+      {
+        internalType: "address",
+        name: "facet",
+        type: "address",
+      },
+      {
+        internalType: "bytes4",
+        name: "selector",
+        type: "bytes4",
+      },
+    ],
+    name: "DiamondCut_InvalidFacetRemoval",
+    type: "error",
+  },
+  {
+    inputs: [
+      {
+        internalType: "address",
+        name: "facet",
+        type: "address",
+      },
+    ],
+    name: "DiamondCut_InvalidFacetSelectors",
+    type: "error",
+  },
+  {
+    inputs: [],
+    name: "DiamondCut_InvalidSelector",
+    type: "error",
+  },
+  {
     anonymous: false,
     inputs: [
       {

@@ -10,9 +10,9 @@ DENDRITE_TOWNS_ENTITLEMENTS_DIR="${DENDRITE_DIR}/${CHAIN}_towns_entitlements"
 forge clean
 forge build --extra-output-files metadata --extra-output-files abi
 
-yarn typechain --target=ethers-v5 "packages/contracts/out/**/?(IDiamond|IDiamondCut|ITownArchitect|IProxyManager|IPausable|IEntitlements|IChannel|IRoles|ITokenEntitlement|IERC721|Permissions|TownFactory).json" --out-dir "packages/generated/${CHAIN}/v3/typings"
+yarn typechain --target=ethers-v5 "packages/contracts/out/**/?(IDiamond|IDiamondCut|ITownArchitect|IProxyManager|IPausable|IEntitlements|IChannel|IRoles|ITokenEntitlement|IERC721|Permissions).json" --out-dir "packages/generated/${CHAIN}/v3/typings"
 
-mkdir -p $ABI_DIR && cp -a packages/contracts/out/{Diamond,DiamondCut,TownArchitect,ProxyManager,Pausable,Entitlements,Channels,Roles,TokenEntitlement,ERC721,Permissions,TownFactory}.sol/* "$ABI_DIR"
+mkdir -p $ABI_DIR && cp -a packages/contracts/out/{Diamond,DiamondCut,TownArchitect,ProxyManager,Pausable,Entitlements,Channels,Roles,TokenEntitlement,ERC721,Permissions}.sol/* "$ABI_DIR"
 
 # Copy the json abis to TS files for type inference
 for file in $ABI_DIR/*.abi.json; do

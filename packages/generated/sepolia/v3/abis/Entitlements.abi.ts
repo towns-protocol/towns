@@ -1,6 +1,21 @@
 export default [
   {
     "inputs": [],
+    "name": "Entitlement__InvalidValue",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "Entitlement__NotAllowed",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "Entitlement__ValueAlreadyExists",
+    "type": "error"
+  },
+  {
+    "inputs": [],
     "name": "EntitlementsService__EntitlementAlreadyExists",
     "type": "error"
   },
@@ -32,8 +47,68 @@ export default [
         "type": "address"
       }
     ],
-    "name": "TokenOwnable__NotOwner",
+    "name": "Ownable__NotOwner",
     "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "Ownable__ZeroAddress",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "Pausable__NotPaused",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "Pausable__Paused",
+    "type": "error"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "previousOwner",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "newOwner",
+        "type": "address"
+      }
+    ],
+    "name": "OwnershipTransferred",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      }
+    ],
+    "name": "Paused",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      }
+    ],
+    "name": "Unpaused",
+    "type": "event"
   },
   {
     "inputs": [
@@ -94,7 +169,7 @@ export default [
             "type": "bool"
           }
         ],
-        "internalType": "struct IEntitlementsStructs.Entitlement",
+        "internalType": "struct IEntitlementsBase.Entitlement",
         "name": "",
         "type": "tuple"
       }
@@ -129,7 +204,7 @@ export default [
             "type": "bool"
           }
         ],
-        "internalType": "struct IEntitlementsStructs.Entitlement[]",
+        "internalType": "struct IEntitlementsBase.Entitlement[]",
         "name": "",
         "type": "tuple[]"
       }
