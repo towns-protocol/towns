@@ -78,6 +78,10 @@ export class ChannelLinkNode extends DecoratorNode<JSX.Element> {
         return div
     }
 
+    updateDOM(_prevNode: ChannelLinkNode, _dom: HTMLElement, _config: EditorConfig): boolean {
+        return _prevNode.__channel !== this.__channel
+    }
+
     getTextContent(
         _includeInert?: boolean | undefined,
         _includeDirectionless?: false | undefined,
