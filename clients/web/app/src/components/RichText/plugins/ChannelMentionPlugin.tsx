@@ -83,7 +83,7 @@ export const ChannelMentionPlugin = (props: Props) => {
             ) =>
                 anchorElement.current && results.length > 0
                     ? ReactDOM.createPortal(
-                          <TypeaheadMenu>
+                          <TypeaheadMenu zIndex="tooltips">
                               {results.map((option, i: number) => (
                                   <TypeaheadMenuItem
                                       index={i}

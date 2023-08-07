@@ -104,7 +104,7 @@ export const MentionsPlugin = (props: Props) => {
             ) =>
                 anchorElement.current && results.length > 0
                     ? ReactDOM.createPortal(
-                          <TypeaheadMenu>
+                          <TypeaheadMenu zIndex="tooltips">
                               {results.map((option, i, arr) => (
                                   <TypeaheadMenuItem
                                       index={i}
