@@ -13,6 +13,11 @@ export const mobileAppClass = style({
     overflowY: 'hidden',
     overscrollBehaviorY: 'contain',
     touchAction: 'none',
+    '@media': {
+        '(display-mode: standalone)': {
+            height: '100vh',
+        },
+    },
 })
 
 export const srOnlyClass = style({

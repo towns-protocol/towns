@@ -99,7 +99,7 @@ export const MessageThread = (props: {
                     </Paragraph>
                     {usernames && <Paragraph color="gray2">{usernames}</Paragraph>}
                 </Box>
-                <Stack scroll grow elevate rounded="sm" boxShadow="panel">
+                <Stack scroll grow elevate rounded="sm" boxShadow={isTouch ? undefined : 'panel'}>
                     <Stack>
                         <MessageTimeline collapsed />
                         <Box padding>

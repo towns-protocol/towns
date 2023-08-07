@@ -272,7 +272,9 @@ const RichTextEditorWithoutBoundary = (props: Props) => {
             background="level2"
             rounded={{ default: 'sm', touch: isFullWidthOnTouch ? 'none' : 'sm' }}
             borderTop={{ default: 'none', touch: isFullWidthOnTouch ? 'default' : 'none' }}
-            insetBottom={isTouch ? 'safeArea' : 'none'}
+            paddingBottom={{
+                touch: !isFullWidthOnTouch || focused ? 'none' : 'safeAreaInsetBottom',
+            }}
         >
             <LexicalComposer initialConfig={initialConfig}>
                 <RichTextUI
