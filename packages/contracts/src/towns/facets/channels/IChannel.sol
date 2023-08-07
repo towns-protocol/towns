@@ -6,7 +6,7 @@ pragma solidity ^0.8.20;
 // libraries
 
 // contracts
-interface IChannelStructs {
+interface IChannelBase {
   struct Channel {
     string id;
     bool disabled;
@@ -15,7 +15,7 @@ interface IChannelStructs {
   }
 }
 
-interface IChannel is IChannelStructs {
+interface IChannel is IChannelBase {
   /// @notice creates a channel
   /// @param channelId the channelId of the channel
   /// @param metadata the metadata of the channel

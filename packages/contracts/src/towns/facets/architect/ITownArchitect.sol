@@ -7,7 +7,7 @@ pragma solidity ^0.8.20;
 import {ITokenEntitlement} from "contracts/src/towns/entitlements/token/ITokenEntitlement.sol";
 
 // contracts
-interface ITownArchitectStructs {
+interface ITownArchitectBase {
   struct ChannelInfo {
     string id;
     string metadata;
@@ -31,13 +31,11 @@ interface ITownArchitectStructs {
     MemberEntitlement memberEntitlement;
     ChannelInfo channel;
   }
-}
 
-interface ITownArchitectEvents {
   event TownCreated(address indexed town);
 }
 
-interface ITownArchitect is ITownArchitectEvents, ITownArchitectStructs {
+interface ITownArchitect is ITownArchitectBase {
   /// @notice Creates a new town
   /// @param townInfo Town information
   function createTown(TownInfo memory townInfo) external returns (address);

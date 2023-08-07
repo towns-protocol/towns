@@ -17,7 +17,10 @@ contract UpgradeSpaceImpl is Deployer {
     return "upgradeSpaceImpl";
   }
 
-  function __deploy(uint256 deployerPK) public override returns (address) {
+  function __deploy(
+    uint256 deployerPK,
+    address
+  ) public override returns (address) {
     DeploySpaceImpl deploySpaceImpl = new DeploySpaceImpl();
     address spaceImpl = deploySpaceImpl.deploy();
 

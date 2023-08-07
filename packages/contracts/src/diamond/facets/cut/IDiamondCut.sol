@@ -8,7 +8,19 @@ import {IDiamond} from "contracts/src/diamond/IDiamond.sol";
 
 // contracts
 
-interface IDiamondCutEvents {
+interface IDiamondCutBase {
+  error DiamondCut_InvalidSelector();
+  error DiamondCut_InvalidFacetCutLength();
+  error DiamondCut_FunctionAlreadyExists(bytes4 selector);
+  error DiamondCut_FunctionFromSameFacetAlreadyExists(bytes4 selector);
+  error DiamondCut_InvalidFacetRemoval(address facet, bytes4 selector);
+  error DiamondCut_FunctionDoesNotExist(address facet);
+  error DiamondCut_InvalidFacetCutAction();
+  error DiamondCut_InvalidFacet(address facet);
+  error DiamondCut_InvalidFacetSelectors(address facet);
+  error DiamondCut_ImmutableFacet();
+  error DiamondCut_InvalidContract(address init);
+
   /// @notice Event emitted when facets are added/removed/replaced
   /// @param facetCuts Facet addresses and function selectors.
   /// @param init Address of contract or facet to execute initPayload.
@@ -20,7 +32,7 @@ interface IDiamondCutEvents {
   );
 }
 
-interface IDiamondCut is IDiamondCutEvents {
+interface IDiamondCut is IDiamondCutBase {
   /// @notice Add/replace/remove any number of functions and optionally execute a function with delegatecall
   /// @param facetCuts Facet addresses and function selectors.
   /// @param init Address of contract or facet to execute initPayload.

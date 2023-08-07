@@ -2,10 +2,10 @@
 pragma solidity ^0.8.20;
 
 // utils
-import {FacetTest} from "contracts/test/diamond/Facet.t.sol";
+import {TestUtils} from "contracts/test/utils/TestUtils.sol";
 
 //interfaces
-import {IEntitlement} from "contracts/src/towns/entitlements/IEntitlement.sol";
+import {IEntitlement, IEntitlementBase} from "contracts/src/towns/entitlements/IEntitlement.sol";
 
 //libraries
 
@@ -16,20 +16,24 @@ import {ERC1967Proxy} from "openzeppelin-contracts/contracts/proxy/ERC1967/ERC19
 // debuggging
 import {console} from "forge-std/console.sol";
 
-contract UserEntitlementTest is FacetTest {
+contract UserEntitlementTest is TestUtils, IEntitlementBase {
   UserEntitlement internal implementation;
   UserEntitlement internal userEntitlement;
 
   address internal entitlement;
+  address internal town;
+  address internal deployer;
 
-  function setUp() public override {
-    super.setUp();
+  function setUp() public {
+    deployer = _randomAddress();
+    town = _randomAddress();
 
+    vm.startPrank(deployer);
     implementation = new UserEntitlement();
     entitlement = address(
       new ERC1967Proxy(
         address(implementation),
-        abi.encodeCall(UserEntitlement.initialize, (diamond))
+        abi.encodeCall(UserEntitlement.initialize, (town))
       )
     );
 
@@ -45,7 +49,7 @@ contract UserEntitlementTest is FacetTest {
     address[] memory users = new address[](1);
     users[0] = user;
 
-    vm.startPrank(diamond);
+    vm.startPrank(town);
     userEntitlement.setEntitlement(roleId, abi.encode(users));
     vm.stopPrank();
 
@@ -67,14 +71,14 @@ contract UserEntitlementTest is FacetTest {
       }
     }
 
-    console.log(allAddresses.length);
+    assertEq(allAddresses[0], user);
   }
 
   function test_setEntitlement_revert_empty_users(uint256 roleId) external {
     address[] memory users = new address[](0);
 
-    vm.prank(diamond);
-    vm.expectRevert(IEntitlement.Entitlement__InvalidValue.selector);
+    vm.prank(town);
+    vm.expectRevert(Entitlement__InvalidValue.selector);
     userEntitlement.setEntitlement(roleId, abi.encode(users));
   }
 
@@ -82,8 +86,8 @@ contract UserEntitlementTest is FacetTest {
     address[] memory users = new address[](1);
     users[0] = address(0);
 
-    vm.prank(diamond);
-    vm.expectRevert(IEntitlement.Entitlement__InvalidValue.selector);
+    vm.prank(town);
+    vm.expectRevert(Entitlement__InvalidValue.selector);
     userEntitlement.setEntitlement(roleId, abi.encode(users));
   }
 
@@ -95,7 +99,7 @@ contract UserEntitlementTest is FacetTest {
     address[] memory users = new address[](1);
     users[0] = user;
 
-    vm.startPrank(diamond);
+    vm.startPrank(town);
     userEntitlement.setEntitlement(roleId, abi.encode(users));
     userEntitlement.removeEntitlement(roleId, abi.encode(users));
     vm.stopPrank();
@@ -111,12 +115,12 @@ contract UserEntitlementTest is FacetTest {
     address[] memory users = new address[](1);
     users[0] = user;
 
-    vm.startPrank(diamond);
+    vm.startPrank(town);
     userEntitlement.setEntitlement(roleId, abi.encode(users));
 
     users[0] = address(0);
 
-    vm.expectRevert(IEntitlement.Entitlement__InvalidValue.selector);
+    vm.expectRevert(Entitlement__InvalidValue.selector);
     userEntitlement.removeEntitlement(roleId, abi.encode(users));
     vm.stopPrank();
   }

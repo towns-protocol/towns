@@ -6,7 +6,7 @@ import {
 } from '@towns/generated/goerli/v3/typings/IEntitlements'
 import {
     IEntitlements as LocalhostContract,
-    IEntitlementsStructs as LocalhostIEntitlementsStructs,
+    IEntitlementsBase as LocalhostIEntitlementsStructs,
     IEntitlementsInterface as LocalhostInterface,
 } from '@towns/generated/localhost/v3/typings/IEntitlements'
 import {

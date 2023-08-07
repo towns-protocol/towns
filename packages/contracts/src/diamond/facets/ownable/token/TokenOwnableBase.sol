@@ -2,31 +2,40 @@
 pragma solidity ^0.8.20;
 
 // interfaces
-import {IERC173Events} from "../IERC173.sol";
+import {IOwnableBase} from "../IERC173.sol";
 import {IERC173} from "../IERC173.sol";
+import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
 // libraries
-import {TokenOwnableService} from "./TokenOwnableService.sol";
+import {TokenOwnableStorage} from "./TokenOwnableStorage.sol";
 
 // contracts
 
-abstract contract TokenOwnableBase is IERC173Events {
-  function __Ownable_init(address collection, uint256 tokenId) internal {
-    TokenOwnableService.initialize(collection, tokenId);
-  }
-
+abstract contract TokenOwnableBase is IOwnableBase {
   modifier onlyOwner() {
-    TokenOwnableService.checkOwner();
+    if (msg.sender != _owner()) {
+      revert Ownable__NotOwner(msg.sender);
+    }
     _;
   }
 
   function _owner() internal view returns (address owner) {
-    owner = TokenOwnableService.owner();
+    TokenOwnableStorage.Layout memory ds = TokenOwnableStorage.layout();
+    return IERC721(ds.collection).ownerOf(ds.tokenId);
   }
 
   function _transferOwnership(address newOwner) internal {
     address oldOwner = _owner();
-    TokenOwnableService.transferOwnership(newOwner);
+    if (newOwner == address(0)) revert Ownable__ZeroAddress();
+
+    TokenOwnableStorage.Layout memory ds = TokenOwnableStorage.layout();
+
+    IERC721(ds.collection).transferFrom(_owner(), newOwner, ds.tokenId);
     emit OwnershipTransferred(oldOwner, newOwner);
+  }
+
+  function _setOwnership(address collection, uint256 tokenId) internal {
+    TokenOwnableStorage.layout().collection = collection;
+    TokenOwnableStorage.layout().tokenId = tokenId;
   }
 }

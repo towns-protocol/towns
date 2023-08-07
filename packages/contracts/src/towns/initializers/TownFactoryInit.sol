@@ -6,11 +6,11 @@ pragma solidity ^0.8.20;
 // libraries
 
 // contracts
-import {ProxyManagerService} from "contracts/src/diamond/proxy/manager/ProxyManagerService.sol";
+import {ProxyManagerBase} from "contracts/src/diamond/proxy/manager/ProxyManagerBase.sol";
 import {TownArchitectService} from "contracts/src/towns/facets/architect/TownArchitectService.sol";
 import {Initializable} from "contracts/src/diamond/facets/initializable/Initializable.sol";
 
-contract TownFactoryInit is Initializable {
+contract TownFactoryInit is ProxyManagerBase, Initializable {
   struct Args {
     address proxyImplementation;
     address townToken;
@@ -19,7 +19,7 @@ contract TownFactoryInit is Initializable {
   }
 
   function init(Args memory args) external initializer {
-    ProxyManagerService.setImplementation(args.proxyImplementation);
+    _setImplementation(args.proxyImplementation);
     TownArchitectService.setImplementations(
       args.townToken,
       args.userEntitlementImplementation,

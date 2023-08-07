@@ -146,12 +146,12 @@
   ],
   "bytecode": {
     "object": "0x6102c761003a600b82828239805160001a60731461002d57634e487b7160e01b600052600060045260246000fd5b30600052607381538281f3fe73000000000000000000000000000000000000000030146080604052600436106100b35760003560e01c806384b6a2c51161007b57806384b6a2c51461019d57806387416c81146101c657806397deb47b146101eb578063a770741d1461020e578063b4a99a4e14610232578063ca6e822d1461025657600080fd5b806321f21ffc146100b8578063307c8705146100f057806340aae9c5146101155780634c7eb080146101475780636f2d71ce14610177575b600080fd5b6100da604051806040016040528060038152602001622130b760e91b81525081565b6040516100e79190610279565b60405180910390f35b6100da604051806040016040528060068152602001651499591858dd60d21b81525081565b6100da604051806040016040528060138152602001724d6f64696679537061636553657474696e677360681b81525081565b6100da6040518060400160405280601181526020017041646452656d6f76654368616e6e656c7360781b81525081565b6100da604051806040016040528060078152602001665570677261646560c81b81525081565b6100da6040518060400160405280600a81526020016950696e4d65737361676560b01b81525081565b6100da60405180604001604052806006815260200165496e7669746560d01b81525081565b6100da604051806040016040528060048152602001631499585960e21b81525081565b6100da60405180604001604052806005815260200164577269746560d81b81525081565b6100da6040518060400160405280600581526020016427bbb732b960d91b81525081565b6100da6040518060400160405280600481526020016350696e6760e01b81525081565b600060208083528351808285015260005b818110156102a65785810183015185820160400152820161028a565b506000604082860101526040601f19601f830116850101925050509291505056",
-    "sourceMap": "64:547:196:-:0;;;;;;;;;;;;;;;-1:-1:-1;;;64:547:196;;;;;;;;;;;;;;;;;",
+    "sourceMap": "64:547:183:-:0;;;;;;;;;;;;;;;-1:-1:-1;;;64:547:183;;;;;;;;;;;;;;;;;",
     "linkReferences": {}
   },
   "deployedBytecode": {
     "object": "0x73000000000000000000000000000000000000000030146080604052600436106100b35760003560e01c806384b6a2c51161007b57806384b6a2c51461019d57806387416c81146101c657806397deb47b146101eb578063a770741d1461020e578063b4a99a4e14610232578063ca6e822d1461025657600080fd5b806321f21ffc146100b8578063307c8705146100f057806340aae9c5146101155780634c7eb080146101475780636f2d71ce14610177575b600080fd5b6100da604051806040016040528060038152602001622130b760e91b81525081565b6040516100e79190610279565b60405180910390f35b6100da604051806040016040528060068152602001651499591858dd60d21b81525081565b6100da604051806040016040528060138152602001724d6f64696679537061636553657474696e677360681b81525081565b6100da6040518060400160405280601181526020017041646452656d6f76654368616e6e656c7360781b81525081565b6100da604051806040016040528060078152602001665570677261646560c81b81525081565b6100da6040518060400160405280600a81526020016950696e4d65737361676560b01b81525081565b6100da60405180604001604052806006815260200165496e7669746560d01b81525081565b6100da604051806040016040528060048152602001631499585960e21b81525081565b6100da60405180604001604052806005815260200164577269746560d81b81525081565b6100da6040518060400160405280600581526020016427bbb732b960d91b81525081565b6100da6040518060400160405280600481526020016350696e6760e01b81525081565b600060208083528351808285015260005b818110156102a65785810183015185820160400152820161028a565b506000604082860101526040601f19601f830116850101925050509291505056",
-    "sourceMap": "64:547:196:-:0;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;258:34;;;;;;;;;;;;;;;-1:-1:-1;;;258:34:196;;;;;;;;;;;;:::i;:::-;;;;;;;;214:40;;;;;;;;;;;;;;;-1:-1:-1;;;214:40:196;;;;;496:66;;;;;;;;;;;;;;;-1:-1:-1;;;496:66:196;;;;;430:62;;;;;;;;;;;;;;;-1:-1:-1;;;430:62:196;;;;;566:42;;;;;;;;;;;;;;;-1:-1:-1;;;566:42:196;;;;;336:48;;;;;;;;;;;;;;;-1:-1:-1;;;336:48:196;;;;;170:40;;;;;;;;;;;;;;;-1:-1:-1;;;170:40:196;;;;;88:36;;;;;;;;;;;;;;;-1:-1:-1;;;88:36:196;;;;;128:38;;;;;;;;;;;;;;;-1:-1:-1;;;128:38:196;;;;;388;;;;;;;;;;;;;;;-1:-1:-1;;;388:38:196;;;;;296:36;;;;;;;;;;;;;;;-1:-1:-1;;;296:36:196;;;;;14:556:370;134:4;163:2;192;181:9;174:21;224:6;218:13;267:6;262:2;251:9;247:18;240:34;292:1;302:140;316:6;313:1;310:13;302:140;;;411:14;;;407:23;;401:30;377:17;;;396:2;373:26;366:66;331:10;;302:140;;;306:3;491:1;486:2;477:6;466:9;462:22;458:31;451:42;561:2;554;550:7;545:2;537:6;533:15;529:29;518:9;514:45;510:54;502:62;;;;14:556;;;;:::o",
+    "sourceMap": "64:547:183:-:0;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;258:34;;;;;;;;;;;;;;;-1:-1:-1;;;258:34:183;;;;;;;;;;;;:::i;:::-;;;;;;;;214:40;;;;;;;;;;;;;;;-1:-1:-1;;;214:40:183;;;;;496:66;;;;;;;;;;;;;;;-1:-1:-1;;;496:66:183;;;;;430:62;;;;;;;;;;;;;;;-1:-1:-1;;;430:62:183;;;;;566:42;;;;;;;;;;;;;;;-1:-1:-1;;;566:42:183;;;;;336:48;;;;;;;;;;;;;;;-1:-1:-1;;;336:48:183;;;;;170:40;;;;;;;;;;;;;;;-1:-1:-1;;;170:40:183;;;;;88:36;;;;;;;;;;;;;;;-1:-1:-1;;;88:36:183;;;;;128:38;;;;;;;;;;;;;;;-1:-1:-1;;;128:38:183;;;;;388;;;;;;;;;;;;;;;-1:-1:-1;;;388:38:183;;;;;296:36;;;;;;;;;;;;;;;-1:-1:-1;;;296:36:183;;;;;14:556:345;134:4;163:2;192;181:9;174:21;224:6;218:13;267:6;262:2;251:9;247:18;240:34;292:1;302:140;316:6;313:1;310:13;302:140;;;411:14;;;407:23;;401:30;377:17;;;396:2;373:26;366:66;331:10;;302:140;;;306:3;491:1;486:2;477:6;466:9;462:22;458:31;451:42;561:2;554;550:7;545:2;537:6;533:15;529:29;518:9;514:45;510:54;502:62;;;;14:556;;;;:::o",
     "linkReferences": {}
   },
   "methodIdentifiers": {
@@ -332,19 +332,19 @@
     },
     "settings": {
       "remappings": [
-        "@openzeppelin/=lib/openzeppelin-contracts/",
-        "@prb/test/=lib/prb-test/src/",
-        "@towns/=node_modules/@towns/",
-        "ERC721A/=lib/ERC721A/contracts/",
-        "contracts/=packages/contracts/",
-        "council/=lib/council/contracts/",
-        "ds-test/=lib/ds-test/src/",
-        "erc4626-tests/=lib/operator-filter-registry/lib/openzeppelin-contracts/lib/erc4626-tests/",
-        "forge-std/=lib/forge-std/src/",
-        "openzeppelin-contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/",
-        "openzeppelin-contracts/=lib/openzeppelin-contracts/",
-        "operator-filter-registry/=lib/operator-filter-registry/",
-        "prb-test/=lib/prb-test/src/"
+        ":@openzeppelin/=lib/openzeppelin-contracts/",
+        ":@prb/test/=lib/prb-test/src/",
+        ":@towns/=node_modules/@towns/",
+        ":ERC721A/=lib/ERC721A/contracts/",
+        ":contracts/=packages/contracts/",
+        ":council/=lib/council/contracts/",
+        ":ds-test/=lib/ds-test/src/",
+        ":erc4626-tests/=lib/operator-filter-registry/lib/openzeppelin-contracts/lib/erc4626-tests/",
+        ":forge-std/=lib/forge-std/src/",
+        ":openzeppelin-contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/",
+        ":openzeppelin-contracts/=lib/openzeppelin-contracts/",
+        ":operator-filter-registry/=lib/operator-filter-registry/",
+        ":prb-test/=lib/prb-test/src/"
       ],
       "optimizer": {
         "enabled": true,
@@ -373,19 +373,19 @@
   },
   "ast": {
     "absolutePath": "packages/contracts/src/spaces/libraries/Permissions.sol",
-    "id": 65741,
+    "id": 65260,
     "exportedSymbols": {
       "Permissions": [
-        65740
+        65259
       ]
     },
     "nodeType": "SourceUnit",
-    "src": "39:573:196",
+    "src": "39:573:183",
     "nodes": [
       {
-        "id": 65706,
+        "id": 65225,
         "nodeType": "PragmaDirective",
-        "src": "39:23:196",
+        "src": "39:23:183",
         "nodes": [],
         "literals": [
           "solidity",
@@ -394,21 +394,21 @@
         ]
       },
       {
-        "id": 65740,
+        "id": 65259,
         "nodeType": "ContractDefinition",
-        "src": "64:547:196",
+        "src": "64:547:183",
         "nodes": [
           {
-            "id": 65709,
+            "id": 65228,
             "nodeType": "VariableDeclaration",
-            "src": "88:36:196",
+            "src": "88:36:183",
             "nodes": [],
             "constant": true,
             "functionSelector": "97deb47b",
             "mutability": "constant",
             "name": "Read",
-            "nameLocation": "111:4:196",
-            "scope": 65740,
+            "nameLocation": "111:4:183",
+            "scope": 65259,
             "stateVariable": true,
             "storageLocation": "default",
             "typeDescriptions": {
@@ -416,10 +416,10 @@
               "typeString": "string"
             },
             "typeName": {
-              "id": 65707,
+              "id": 65226,
               "name": "string",
               "nodeType": "ElementaryTypeName",
-              "src": "88:6:196",
+              "src": "88:6:183",
               "typeDescriptions": {
                 "typeIdentifier": "t_string_storage_ptr",
                 "typeString": "string"
@@ -427,14 +427,14 @@
             },
             "value": {
               "hexValue": "52656164",
-              "id": 65708,
+              "id": 65227,
               "isConstant": false,
               "isLValue": false,
               "isPure": true,
               "kind": "string",
               "lValueRequested": false,
               "nodeType": "Literal",
-              "src": "118:6:196",
+              "src": "118:6:183",
               "typeDescriptions": {
                 "typeIdentifier": "t_stringliteral_2b3d061cc9a05a241dd71f0a41723b519b0e5797b2389fcc6f98c31433922d4d",
                 "typeString": "literal_string \"Read\""
@@ -444,16 +444,16 @@
             "visibility": "public"
           },
           {
-            "id": 65712,
+            "id": 65231,
             "nodeType": "VariableDeclaration",
-            "src": "128:38:196",
+            "src": "128:38:183",
             "nodes": [],
             "constant": true,
             "functionSelector": "a770741d",
             "mutability": "constant",
             "name": "Write",
-            "nameLocation": "151:5:196",
-            "scope": 65740,
+            "nameLocation": "151:5:183",
+            "scope": 65259,
             "stateVariable": true,
             "storageLocation": "default",
             "typeDescriptions": {
@@ -461,10 +461,10 @@
               "typeString": "string"
             },
             "typeName": {
-              "id": 65710,
+              "id": 65229,
               "name": "string",
               "nodeType": "ElementaryTypeName",
-              "src": "128:6:196",
+              "src": "128:6:183",
               "typeDescriptions": {
                 "typeIdentifier": "t_string_storage_ptr",
                 "typeString": "string"
@@ -472,14 +472,14 @@
             },
             "value": {
               "hexValue": "5772697465",
-              "id": 65711,
+              "id": 65230,
               "isConstant": false,
               "isLValue": false,
               "isPure": true,
               "kind": "string",
               "lValueRequested": false,
               "nodeType": "Literal",
-              "src": "159:7:196",
+              "src": "159:7:183",
               "typeDescriptions": {
                 "typeIdentifier": "t_stringliteral_5e1ebf7ef00b5d94ca7cd3e3f2e1697e11997278d109e3a860ed77b2d718613f",
                 "typeString": "literal_string \"Write\""
@@ -489,16 +489,16 @@
             "visibility": "public"
           },
           {
-            "id": 65715,
+            "id": 65234,
             "nodeType": "VariableDeclaration",
-            "src": "170:40:196",
+            "src": "170:40:183",
             "nodes": [],
             "constant": true,
             "functionSelector": "87416c81",
             "mutability": "constant",
             "name": "Invite",
-            "nameLocation": "193:6:196",
-            "scope": 65740,
+            "nameLocation": "193:6:183",
+            "scope": 65259,
             "stateVariable": true,
             "storageLocation": "default",
             "typeDescriptions": {
@@ -506,10 +506,10 @@
               "typeString": "string"
             },
             "typeName": {
-              "id": 65713,
+              "id": 65232,
               "name": "string",
               "nodeType": "ElementaryTypeName",
-              "src": "170:6:196",
+              "src": "170:6:183",
               "typeDescriptions": {
                 "typeIdentifier": "t_string_storage_ptr",
                 "typeString": "string"
@@ -517,14 +517,14 @@
             },
             "value": {
               "hexValue": "496e76697465",
-              "id": 65714,
+              "id": 65233,
               "isConstant": false,
               "isLValue": false,
               "isPure": true,
               "kind": "string",
               "lValueRequested": false,
               "nodeType": "Literal",
-              "src": "202:8:196",
+              "src": "202:8:183",
               "typeDescriptions": {
                 "typeIdentifier": "t_stringliteral_dcda446a40bfea0a816736c50fa9b888fcb444443181ac01e753463303d51642",
                 "typeString": "literal_string \"Invite\""
@@ -534,16 +534,16 @@
             "visibility": "public"
           },
           {
-            "id": 65718,
+            "id": 65237,
             "nodeType": "VariableDeclaration",
-            "src": "214:40:196",
+            "src": "214:40:183",
             "nodes": [],
             "constant": true,
             "functionSelector": "307c8705",
             "mutability": "constant",
             "name": "Redact",
-            "nameLocation": "237:6:196",
-            "scope": 65740,
+            "nameLocation": "237:6:183",
+            "scope": 65259,
             "stateVariable": true,
             "storageLocation": "default",
             "typeDescriptions": {
@@ -551,10 +551,10 @@
               "typeString": "string"
             },
             "typeName": {
-              "id": 65716,
+              "id": 65235,
               "name": "string",
               "nodeType": "ElementaryTypeName",
-              "src": "214:6:196",
+              "src": "214:6:183",
               "typeDescriptions": {
                 "typeIdentifier": "t_string_storage_ptr",
                 "typeString": "string"
@@ -562,14 +562,14 @@
             },
             "value": {
               "hexValue": "526564616374",
-              "id": 65717,
+              "id": 65236,
               "isConstant": false,
               "isLValue": false,
               "isPure": true,
               "kind": "string",
               "lValueRequested": false,
               "nodeType": "Literal",
-              "src": "246:8:196",
+              "src": "246:8:183",
               "typeDescriptions": {
                 "typeIdentifier": "t_stringliteral_356245e1b9aca65a67c37372b9fccd5aaef2e72b670ef840463f186410aeaf43",
                 "typeString": "literal_string \"Redact\""
@@ -579,16 +579,16 @@
             "visibility": "public"
           },
           {
-            "id": 65721,
+            "id": 65240,
             "nodeType": "VariableDeclaration",
-            "src": "258:34:196",
+            "src": "258:34:183",
             "nodes": [],
             "constant": true,
             "functionSelector": "21f21ffc",
             "mutability": "constant",
             "name": "Ban",
-            "nameLocation": "281:3:196",
-            "scope": 65740,
+            "nameLocation": "281:3:183",
+            "scope": 65259,
             "stateVariable": true,
             "storageLocation": "default",
             "typeDescriptions": {
@@ -596,10 +596,10 @@
               "typeString": "string"
             },
             "typeName": {
-              "id": 65719,
+              "id": 65238,
               "name": "string",
               "nodeType": "ElementaryTypeName",
-              "src": "258:6:196",
+              "src": "258:6:183",
               "typeDescriptions": {
                 "typeIdentifier": "t_string_storage_ptr",
                 "typeString": "string"
@@ -607,14 +607,14 @@
             },
             "value": {
               "hexValue": "42616e",
-              "id": 65720,
+              "id": 65239,
               "isConstant": false,
               "isLValue": false,
               "isPure": true,
               "kind": "string",
               "lValueRequested": false,
               "nodeType": "Literal",
-              "src": "287:5:196",
+              "src": "287:5:183",
               "typeDescriptions": {
                 "typeIdentifier": "t_stringliteral_ba8179c6b92a0dbd4b42e6fd1eb63a255f6be8afef40f91cedc6b93f76b42554",
                 "typeString": "literal_string \"Ban\""
@@ -624,16 +624,16 @@
             "visibility": "public"
           },
           {
-            "id": 65724,
+            "id": 65243,
             "nodeType": "VariableDeclaration",
-            "src": "296:36:196",
+            "src": "296:36:183",
             "nodes": [],
             "constant": true,
             "functionSelector": "ca6e822d",
             "mutability": "constant",
             "name": "Ping",
-            "nameLocation": "319:4:196",
-            "scope": 65740,
+            "nameLocation": "319:4:183",
+            "scope": 65259,
             "stateVariable": true,
             "storageLocation": "default",
             "typeDescriptions": {
@@ -641,10 +641,10 @@
               "typeString": "string"
             },
             "typeName": {
-              "id": 65722,
+              "id": 65241,
               "name": "string",
               "nodeType": "ElementaryTypeName",
-              "src": "296:6:196",
+              "src": "296:6:183",
               "typeDescriptions": {
                 "typeIdentifier": "t_string_storage_ptr",
                 "typeString": "string"
@@ -652,14 +652,14 @@
             },
             "value": {
               "hexValue": "50696e67",
-              "id": 65723,
+              "id": 65242,
               "isConstant": false,
               "isLValue": false,
               "isPure": true,
               "kind": "string",
               "lValueRequested": false,
               "nodeType": "Literal",
-              "src": "326:6:196",
+              "src": "326:6:183",
               "typeDescriptions": {
                 "typeIdentifier": "t_stringliteral_d82b52fab44f1875d8593df3ebdd8213fce8e21b7ad89169e51edeaff11fb7ff",
                 "typeString": "literal_string \"Ping\""
@@ -669,16 +669,16 @@
             "visibility": "public"
           },
           {
-            "id": 65727,
+            "id": 65246,
             "nodeType": "VariableDeclaration",
-            "src": "336:48:196",
+            "src": "336:48:183",
             "nodes": [],
             "constant": true,
             "functionSelector": "84b6a2c5",
             "mutability": "constant",
             "name": "PinMessage",
-            "nameLocation": "359:10:196",
-            "scope": 65740,
+            "nameLocation": "359:10:183",
+            "scope": 65259,
             "stateVariable": true,
             "storageLocation": "default",
             "typeDescriptions": {
@@ -686,10 +686,10 @@
               "typeString": "string"
             },
             "typeName": {
-              "id": 65725,
+              "id": 65244,
               "name": "string",
               "nodeType": "ElementaryTypeName",
-              "src": "336:6:196",
+              "src": "336:6:183",
               "typeDescriptions": {
                 "typeIdentifier": "t_string_storage_ptr",
                 "typeString": "string"
@@ -697,14 +697,14 @@
             },
             "value": {
               "hexValue": "50696e4d657373616765",
-              "id": 65726,
+              "id": 65245,
               "isConstant": false,
               "isLValue": false,
               "isPure": true,
               "kind": "string",
               "lValueRequested": false,
               "nodeType": "Literal",
-              "src": "372:12:196",
+              "src": "372:12:183",
               "typeDescriptions": {
                 "typeIdentifier": "t_stringliteral_dab1ac7820d8a929361d8cb4148251746751d53e6e989b8f2d89b444b3deef13",
                 "typeString": "literal_string \"PinMessage\""
@@ -714,16 +714,16 @@
             "visibility": "public"
           },
           {
-            "id": 65730,
+            "id": 65249,
             "nodeType": "VariableDeclaration",
-            "src": "388:38:196",
+            "src": "388:38:183",
             "nodes": [],
             "constant": true,
             "functionSelector": "b4a99a4e",
             "mutability": "constant",
             "name": "Owner",
-            "nameLocation": "411:5:196",
-            "scope": 65740,
+            "nameLocation": "411:5:183",
+            "scope": 65259,
             "stateVariable": true,
             "storageLocation": "default",
             "typeDescriptions": {
@@ -731,10 +731,10 @@
               "typeString": "string"
             },
             "typeName": {
-              "id": 65728,
+              "id": 65247,
               "name": "string",
               "nodeType": "ElementaryTypeName",
-              "src": "388:6:196",
+              "src": "388:6:183",
               "typeDescriptions": {
                 "typeIdentifier": "t_string_storage_ptr",
                 "typeString": "string"
@@ -742,14 +742,14 @@
             },
             "value": {
               "hexValue": "4f776e6572",
-              "id": 65729,
+              "id": 65248,
               "isConstant": false,
               "isLValue": false,
               "isPure": true,
               "kind": "string",
               "lValueRequested": false,
               "nodeType": "Literal",
-              "src": "419:7:196",
+              "src": "419:7:183",
               "typeDescriptions": {
                 "typeIdentifier": "t_stringliteral_929f3fd6848015f83b9210c89f7744e3941acae1195c8bf9f5798c090dc8f497",
                 "typeString": "literal_string \"Owner\""
@@ -759,16 +759,16 @@
             "visibility": "public"
           },
           {
-            "id": 65733,
+            "id": 65252,
             "nodeType": "VariableDeclaration",
-            "src": "430:62:196",
+            "src": "430:62:183",
             "nodes": [],
             "constant": true,
             "functionSelector": "4c7eb080",
             "mutability": "constant",
             "name": "AddRemoveChannels",
-            "nameLocation": "453:17:196",
-            "scope": 65740,
+            "nameLocation": "453:17:183",
+            "scope": 65259,
             "stateVariable": true,
             "storageLocation": "default",
             "typeDescriptions": {
@@ -776,10 +776,10 @@
               "typeString": "string"
             },
             "typeName": {
-              "id": 65731,
+              "id": 65250,
               "name": "string",
               "nodeType": "ElementaryTypeName",
-              "src": "430:6:196",
+              "src": "430:6:183",
               "typeDescriptions": {
                 "typeIdentifier": "t_string_storage_ptr",
                 "typeString": "string"
@@ -787,14 +787,14 @@
             },
             "value": {
               "hexValue": "41646452656d6f76654368616e6e656c73",
-              "id": 65732,
+              "id": 65251,
               "isConstant": false,
               "isLValue": false,
               "isPure": true,
               "kind": "string",
               "lValueRequested": false,
               "nodeType": "Literal",
-              "src": "473:19:196",
+              "src": "473:19:183",
               "typeDescriptions": {
                 "typeIdentifier": "t_stringliteral_5ef98f1e5b8bd5ee1978908b3f5b2128d59a65f7702f04e6aca3c95aff590be1",
                 "typeString": "literal_string \"AddRemoveChannels\""
@@ -804,16 +804,16 @@
             "visibility": "public"
           },
           {
-            "id": 65736,
+            "id": 65255,
             "nodeType": "VariableDeclaration",
-            "src": "496:66:196",
+            "src": "496:66:183",
             "nodes": [],
             "constant": true,
             "functionSelector": "40aae9c5",
             "mutability": "constant",
             "name": "ModifySpaceSettings",
-            "nameLocation": "519:19:196",
-            "scope": 65740,
+            "nameLocation": "519:19:183",
+            "scope": 65259,
             "stateVariable": true,
             "storageLocation": "default",
             "typeDescriptions": {
@@ -821,10 +821,10 @@
               "typeString": "string"
             },
             "typeName": {
-              "id": 65734,
+              "id": 65253,
               "name": "string",
               "nodeType": "ElementaryTypeName",
-              "src": "496:6:196",
+              "src": "496:6:183",
               "typeDescriptions": {
                 "typeIdentifier": "t_string_storage_ptr",
                 "typeString": "string"
@@ -832,14 +832,14 @@
             },
             "value": {
               "hexValue": "4d6f64696679537061636553657474696e6773",
-              "id": 65735,
+              "id": 65254,
               "isConstant": false,
               "isLValue": false,
               "isPure": true,
               "kind": "string",
               "lValueRequested": false,
               "nodeType": "Literal",
-              "src": "541:21:196",
+              "src": "541:21:183",
               "typeDescriptions": {
                 "typeIdentifier": "t_stringliteral_bde29d9929a87f9ec3de131d7274acde7f2987b72311e7f9556007b420a3c001",
                 "typeString": "literal_string \"ModifySpaceSettings\""
@@ -849,16 +849,16 @@
             "visibility": "public"
           },
           {
-            "id": 65739,
+            "id": 65258,
             "nodeType": "VariableDeclaration",
-            "src": "566:42:196",
+            "src": "566:42:183",
             "nodes": [],
             "constant": true,
             "functionSelector": "6f2d71ce",
             "mutability": "constant",
             "name": "Upgrade",
-            "nameLocation": "589:7:196",
-            "scope": 65740,
+            "nameLocation": "589:7:183",
+            "scope": 65259,
             "stateVariable": true,
             "storageLocation": "default",
             "typeDescriptions": {
@@ -866,10 +866,10 @@
               "typeString": "string"
             },
             "typeName": {
-              "id": 65737,
+              "id": 65256,
               "name": "string",
               "nodeType": "ElementaryTypeName",
-              "src": "566:6:196",
+              "src": "566:6:183",
               "typeDescriptions": {
                 "typeIdentifier": "t_string_storage_ptr",
                 "typeString": "string"
@@ -877,14 +877,14 @@
             },
             "value": {
               "hexValue": "55706772616465",
-              "id": 65738,
+              "id": 65257,
               "isConstant": false,
               "isLValue": false,
               "isPure": true,
               "kind": "string",
               "lValueRequested": false,
               "nodeType": "Literal",
-              "src": "599:9:196",
+              "src": "599:9:183",
               "typeDescriptions": {
                 "typeIdentifier": "t_stringliteral_19add3273ac31967a744b01bbed9306f6881ceaa67df8aea5b8977e6da9b97bc",
                 "typeString": "literal_string \"Upgrade\""
@@ -901,16 +901,16 @@
         "contractKind": "library",
         "fullyImplemented": true,
         "linearizedBaseContracts": [
-          65740
+          65259
         ],
         "name": "Permissions",
-        "nameLocation": "72:11:196",
-        "scope": 65741,
+        "nameLocation": "72:11:183",
+        "scope": 65260,
         "usedErrors": [],
         "usedEvents": []
       }
     ],
     "license": "UNLICENSED"
   },
-  "id": 196
+  "id": 183
 }

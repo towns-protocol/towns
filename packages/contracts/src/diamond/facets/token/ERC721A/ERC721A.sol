@@ -4,8 +4,7 @@ pragma solidity ^0.8.20;
 import {IERC721A} from "./IERC721A.sol";
 import {ERC721AStorage} from "./ERC721AStorage.sol";
 import {ERC721AService} from "./ERC721AService.sol";
-import {Initializable} from "contracts/src/diamond/facets/initializable/Initializable.sol";
-import {IntrospectionService} from "contracts/src/diamond/facets/introspection/IntrospectionService.sol";
+import {Facet} from "contracts/src/diamond/facets/Facet.sol";
 
 /**
  * @dev Interface of ERC721 token receiver.
@@ -34,7 +33,7 @@ interface ERC721A__IERC721ReceiverUpgradeable {
  * - An owner cannot have more than 2**64 - 1 (max value of uint64) of supply.
  * - The maximum token ID cannot exceed 2**256 - 1 (max value of uint256).
  */
-contract ERC721A is Initializable, IERC721A {
+contract ERC721A is IERC721A, Facet {
   using ERC721AStorage for ERC721AStorage.Layout;
 
   // =============================================================
@@ -99,8 +98,8 @@ contract ERC721A is Initializable, IERC721A {
     string memory name_,
     string memory symbol_
   ) internal onlyInitializing {
-    IntrospectionService.addInterface(0x80ac58cd); // ERC165 Interface ID for ERC721
-    IntrospectionService.addInterface(0x5b5e139f); // ERC165 Interface ID for ERC721Metadata
+    _addInterface(0x80ac58cd); // ERC165 Interface ID for ERC721
+    _addInterface(0x5b5e139f); // ERC165 Interface ID for ERC721Metadata
 
     ERC721AService.setName(name_);
     ERC721AService.setSymbol(symbol_);

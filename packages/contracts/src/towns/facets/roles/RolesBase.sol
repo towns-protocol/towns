@@ -2,10 +2,9 @@
 pragma solidity ^0.8.20;
 
 // interfaces
-import {IRolesStructs} from "./IRoles.sol";
+import {IRolesBase} from "./IRoles.sol";
 
 // libraries
-import {Permissions} from "contracts/src/spaces/libraries/Permissions.sol";
 import {Validator} from "contracts/src/utils/Validator.sol";
 
 // services
@@ -15,7 +14,7 @@ import {RolesService} from "./RolesService.sol";
 
 // contracts
 
-abstract contract RolesBase is IRolesStructs {
+abstract contract RolesBase is IRolesBase {
   // =============================================================
   //                         Role Management
   // =============================================================
@@ -24,8 +23,6 @@ abstract contract RolesBase is IRolesStructs {
     string[] memory permissions,
     CreateEntitlement[] memory entitlements
   ) internal returns (uint256 roleId) {
-    EntitlementsService.validatePermission(Permissions.ModifySpaceSettings);
-
     Validator.checkLength(roleName, 2);
 
     uint256 entitlementsLen = entitlements.length;
@@ -120,7 +117,6 @@ abstract contract RolesBase is IRolesStructs {
     string[] memory permissions,
     CreateEntitlement[] memory entitlements
   ) internal {
-    EntitlementsService.validatePermission(Permissions.ModifySpaceSettings);
     RolesService.checkRoleExists(roleId);
 
     // get current entitlements before updating them
@@ -192,8 +188,6 @@ abstract contract RolesBase is IRolesStructs {
   }
 
   function _removeRole(uint256 roleId) internal {
-    EntitlementsService.validatePermission(Permissions.ModifySpaceSettings);
-
     // get current entitlements
     address[] memory currentEntitlements = RolesService.getEntitlementsByRole(
       roleId
@@ -240,8 +234,6 @@ abstract contract RolesBase is IRolesStructs {
     uint256 roleId,
     string[] memory permissions
   ) internal {
-    EntitlementsService.validatePermission(Permissions.ModifySpaceSettings);
-
     // check role exists
     RolesService.checkRole(roleId);
 
@@ -253,8 +245,6 @@ abstract contract RolesBase is IRolesStructs {
     uint256 roleId,
     string[] memory permissions
   ) internal {
-    EntitlementsService.validatePermission(Permissions.ModifySpaceSettings);
-
     // check role exists
     RolesService.checkRole(roleId);
 
@@ -276,8 +266,6 @@ abstract contract RolesBase is IRolesStructs {
     uint256 roleId,
     CreateEntitlement memory entitlement
   ) internal {
-    EntitlementsService.validatePermission(Permissions.ModifySpaceSettings);
-
     // check role exists
     RolesService.checkRole(roleId);
 
@@ -299,8 +287,6 @@ abstract contract RolesBase is IRolesStructs {
     uint256 roleId,
     CreateEntitlement memory entitlement
   ) internal {
-    EntitlementsService.validatePermission(Permissions.ModifySpaceSettings);
-
     // check role exists
     RolesService.checkRole(roleId);
 

@@ -5,27 +5,31 @@ pragma solidity ^0.8.20;
 import {TestUtils} from "contracts/test/utils/TestUtils.sol";
 
 //interfaces
-import {IDiamond} from "contracts/src/diamond/IDiamond.sol";
+import {IDiamond, Diamond} from "contracts/src/diamond/Diamond.sol";
 
 //libraries
 
 //contracts
-import {MockDiamond} from "contracts/test/mocks/MockDiamond.sol";
 
 /// @notice This contract is abstract and must be inherited to be used in tests
-abstract contract FacetTest is TestUtils {
+abstract contract FacetTest is TestUtils, IDiamond {
   address internal deployer;
   address internal diamond;
 
   function setUp() public virtual {
     deployer = _randomAddress();
 
-    vm.startPrank(deployer);
-    diamond = address(new MockDiamond());
+    vm.prank(deployer);
+    diamond = address(new Diamond(diamondInitParams()));
   }
+
+  function diamondInitParams()
+    public
+    virtual
+    returns (Diamond.InitParams memory);
 }
 
-abstract contract FacetHelper {
+abstract contract FacetHelper is IDiamond {
   /// @dev Deploy facet contract in constructor and return address for testing.
   function facet() public view virtual returns (address);
 
@@ -34,10 +38,10 @@ abstract contract FacetHelper {
   function initializer() public view virtual returns (bytes4);
 
   function makeCut(
-    IDiamond.FacetCutAction action
-  ) public view returns (IDiamond.FacetCut memory) {
+    FacetCutAction action
+  ) public view returns (FacetCut memory) {
     return
-      IDiamond.FacetCut({
+      FacetCut({
         action: action,
         facetAddress: facet(),
         functionSelectors: selectors()
@@ -46,10 +50,10 @@ abstract contract FacetHelper {
 
   function makeDeployCut(
     address facetAddress,
-    IDiamond.FacetCutAction action
-  ) public view returns (IDiamond.FacetCut memory) {
+    FacetCutAction action
+  ) public view returns (FacetCut memory) {
     return
-      IDiamond.FacetCut({
+      FacetCut({
         action: action,
         facetAddress: facetAddress,
         functionSelectors: selectors()
@@ -58,7 +62,7 @@ abstract contract FacetHelper {
 
   function makeInitData(
     bytes memory
-  ) public view virtual returns (address, bytes memory data) {
-    return (facet(), abi.encodeWithSelector(initializer()));
+  ) public view virtual returns (bytes memory data) {
+    return abi.encodeWithSelector(initializer());
   }
 }

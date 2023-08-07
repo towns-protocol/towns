@@ -7,21 +7,36 @@ import {ITownArchitect} from "contracts/src/towns/facets/architect/ITownArchitec
 // libraries
 
 // contracts
-import {Diamond} from "contracts/src/diamond/Diamond.sol";
 import {TownArchitectBase} from "./TownArchitectBase.sol";
 import {GateBase} from "contracts/src/towns/facets/gate/GateBase.sol";
 import {OwnableBase} from "contracts/src/diamond/facets/ownable/OwnableBase.sol";
 import {ReentrancyGuard} from "contracts/src/diamond/facets/reentrancy/ReentrancyGuard.sol";
 import {PausableBase} from "contracts/src/diamond/facets/pausable/PausableBase.sol";
+import {ProxyManagerBase} from "contracts/src/diamond/proxy/manager/ProxyManagerBase.sol";
+
+import {Facet} from "contracts/src/diamond/facets/Facet.sol";
 
 contract TownArchitect is
+  ITownArchitect,
   TownArchitectBase,
   OwnableBase,
   GateBase,
   PausableBase,
   ReentrancyGuard,
-  ITownArchitect
+  Facet
 {
+  function __TownArchitect_init(
+    address townOwner,
+    address userEntitlementImplementation,
+    address tokenEntitlementImplementation
+  ) external onlyInitializing {
+    _setImplementations(
+      townOwner,
+      userEntitlementImplementation,
+      tokenEntitlementImplementation
+    );
+  }
+
   function isTokenGated(address token) external view returns (bool) {
     return _isTokenGated(token);
   }

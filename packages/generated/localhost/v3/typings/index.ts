@@ -2,6 +2,7 @@
 /* tslint:disable */
 /* eslint-disable */
 export type { IChannel } from "./IChannel";
+export type { IDiamond } from "./IDiamond";
 export type { IDiamondCut } from "./IDiamondCut";
 export type { IERC721 } from "./IERC721";
 export type { IEntitlements } from "./IEntitlements";
@@ -13,6 +14,7 @@ export type { Permissions } from "./Permissions";
 export type { TownFactory } from "./TownFactory";
 export * as factories from "./factories";
 export { IChannel__factory } from "./factories/IChannel__factory";
+export { IDiamond__factory } from "./factories/IDiamond__factory";
 export { IDiamondCut__factory } from "./factories/IDiamondCut__factory";
 export { IEntitlements__factory } from "./factories/IEntitlements__factory";
 export { IERC721__factory } from "./factories/IERC721__factory";

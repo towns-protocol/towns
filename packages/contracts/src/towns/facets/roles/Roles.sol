@@ -5,16 +5,19 @@ pragma solidity ^0.8.20;
 import {IRoles} from "./IRoles.sol";
 
 // libraries
+import {Permissions} from "contracts/src/spaces/libraries/Permissions.sol";
 
 // contracts
 import {RolesBase} from "./RolesBase.sol";
+import {Entitled} from "../Entitled.sol";
 
-contract Roles is RolesBase, IRoles {
+contract Roles is IRoles, RolesBase, Entitled {
   function createRole(
     string calldata roleName,
     string[] memory permissions,
     CreateEntitlement[] memory entitlements
   ) external override returns (uint256) {
+    _validatePermission(Permissions.ModifySpaceSettings);
     return _createRole(roleName, permissions, entitlements);
   }
 
@@ -34,10 +37,12 @@ contract Roles is RolesBase, IRoles {
     string[] memory permissions,
     CreateEntitlement[] memory entitlements
   ) external override {
+    _validatePermission(Permissions.ModifySpaceSettings);
     _updateRole(roleId, roleName, permissions, entitlements);
   }
 
   function removeRole(uint256 roleId) external override {
+    _validatePermission(Permissions.ModifySpaceSettings);
     _removeRole(roleId);
   }
 
@@ -54,6 +59,7 @@ contract Roles is RolesBase, IRoles {
     uint256 roleId,
     string[] memory permissions
   ) external override {
+    _validatePermission(Permissions.ModifySpaceSettings);
     _removePermissionsFromRole(roleId, permissions);
   }
 
@@ -68,6 +74,7 @@ contract Roles is RolesBase, IRoles {
     uint256 roleId,
     CreateEntitlement memory entitlement
   ) external {
+    _validatePermission(Permissions.ModifySpaceSettings);
     _addRoleToEntitlement(roleId, entitlement);
   }
 
@@ -75,6 +82,7 @@ contract Roles is RolesBase, IRoles {
     uint256 roleId,
     CreateEntitlement memory entitlement
   ) external {
+    _validatePermission(Permissions.ModifySpaceSettings);
     _removeRoleFromEntitlement(roleId, entitlement);
   }
 }

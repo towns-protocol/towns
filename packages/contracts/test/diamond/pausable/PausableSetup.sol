@@ -2,38 +2,66 @@
 pragma solidity ^0.8.20;
 
 // interfaces
-import {IDiamond} from "contracts/src/diamond/IDiamond.sol";
-import {IDiamondCut} from "contracts/src/diamond/facets/cut/IDiamondCut.sol";
+import {IDiamond, Diamond} from "contracts/src/diamond/Diamond.sol";
 
 // libraries
 
 // contracts
 import {FacetHelper, FacetTest} from "contracts/test/diamond/Facet.t.sol";
-import {Pausable} from "contracts/src/diamond/facets/pausable/Pausable.sol";
+import {PausableFacet} from "contracts/src/diamond/facets/pausable/PausableFacet.sol";
+import {OwnableHelper} from "contracts/test/diamond/ownable/OwnableSetup.sol";
+
+import {MultiInit} from "contracts/src/diamond/initializers/MultiInit.sol";
 
 abstract contract PausableSetup is FacetTest {
-  PausableHelper internal pausableHelper;
-  Pausable internal pausable;
+  PausableFacet internal pausable;
 
   function setUp() public override {
     super.setUp();
+    pausable = PausableFacet(diamond);
 
-    pausableHelper = new PausableHelper();
+    vm.startPrank(deployer);
+  }
 
-    IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](1);
+  function diamondInitParams()
+    public
+    override
+    returns (Diamond.InitParams memory)
+  {
+    PausableHelper pausableHelper = new PausableHelper();
+    OwnableHelper ownableHelper = new OwnableHelper();
+    MultiInit multiInit = new MultiInit();
+
+    IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](2);
     cuts[0] = pausableHelper.makeCut(IDiamond.FacetCutAction.Add);
+    cuts[1] = ownableHelper.makeCut(IDiamond.FacetCutAction.Add);
 
-    IDiamondCut(diamond).diamondCut(cuts, address(0), "");
+    address[] memory initAddresses = new address[](2);
+    initAddresses[0] = pausableHelper.facet();
+    initAddresses[1] = ownableHelper.facet();
 
-    pausable = Pausable(diamond);
+    bytes[] memory initDatas = new bytes[](2);
+    initDatas[0] = pausableHelper.makeInitData("");
+    initDatas[1] = ownableHelper.makeInitData(abi.encode(deployer));
+
+    return
+      Diamond.InitParams({
+        baseFacets: cuts,
+        init: address(multiInit),
+        initData: abi.encodeWithSelector(
+          multiInit.multiInit.selector,
+          initAddresses,
+          initDatas
+        )
+      });
   }
 }
 
 contract PausableHelper is FacetHelper {
-  Pausable internal pausable;
+  PausableFacet internal pausable;
 
   constructor() {
-    pausable = new Pausable();
+    pausable = new PausableFacet();
   }
 
   function facet() public view override returns (address) {
@@ -49,17 +77,6 @@ contract PausableHelper is FacetHelper {
   }
 
   function initializer() public pure override returns (bytes4) {
-    return "";
-  }
-
-  function makeInitData(
-    bytes memory initData
-  ) public view override returns (address, bytes memory data) {
-    address proxyImplementation = abi.decode(initData, (address));
-
-    return (
-      facet(),
-      abi.encodeWithSelector(initializer(), proxyImplementation)
-    );
+    return PausableFacet.__Pausable_init.selector;
   }
 }

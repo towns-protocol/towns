@@ -6,7 +6,11 @@ pragma solidity ^0.8.20;
 // libraries
 
 // contracts
+
 interface IDiamond {
+  /// @notice Thrown when calling a function that was not registered in the diamond.
+  error Diamond_UnsupportedFunction();
+
   /// @notice Add/replace/remove any number of functions and optionally execute
   /// @param Add Facets to add functions to.
   /// @param Replace Facets to replace functions in.

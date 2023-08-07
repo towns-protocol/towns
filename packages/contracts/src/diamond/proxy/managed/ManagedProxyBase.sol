@@ -2,10 +2,10 @@
 pragma solidity ^0.8.20;
 
 // interfaces
-import {IManagedProxy} from "./IManagedProxy.sol";
+import {IManagedProxyBase} from "./IManagedProxy.sol";
 
 // libraries
-import {ManagedProxyService} from "./ManagedProxyService.sol";
+import {ManagedProxyStorage} from "contracts/src/diamond/proxy/managed/ManagedProxyStorage.sol";
 
 // contracts
 import {Proxy} from "../Proxy.sol";
@@ -14,18 +14,7 @@ import {Proxy} from "../Proxy.sol";
  * @title Proxy with externally controlled implementation
  * @dev implementation fetched using immutable function selector
  */
-abstract contract ManagedProxyBase is IManagedProxy, Proxy {
-  /**
-   * @param managerSelector function selector used to fetch implementation from manager
-   */
-  function __ManagedProxy_init(
-    bytes4 managerSelector,
-    address manager
-  ) internal {
-    _setManagerSelector(managerSelector);
-    _setManager(manager);
-  }
-
+abstract contract ManagedProxyBase is IManagedProxyBase, Proxy {
   /**
    * @inheritdoc Proxy
    */
@@ -36,7 +25,7 @@ abstract contract ManagedProxyBase is IManagedProxy, Proxy {
     override
     returns (address)
   {
-    bytes4 managerSelector = ManagedProxyService.managerSelector();
+    bytes4 managerSelector = ManagedProxyStorage.layout().managerSelector;
 
     (bool success, bytes memory data) = _getManager().staticcall(
       abi.encodeWithSelector(managerSelector, msg.sig)
@@ -51,7 +40,7 @@ abstract contract ManagedProxyBase is IManagedProxy, Proxy {
    * @return manager address
    */
   function _getManager() internal view virtual returns (address) {
-    return ManagedProxyService.manager();
+    return ManagedProxyStorage.layout().manager;
   }
 
   /**
@@ -59,7 +48,7 @@ abstract contract ManagedProxyBase is IManagedProxy, Proxy {
    * @param manager address
    */
   function _setManager(address manager) internal virtual {
-    ManagedProxyService.setManager(manager);
+    ManagedProxyStorage.layout().manager = manager;
   }
 
   /**
@@ -67,6 +56,6 @@ abstract contract ManagedProxyBase is IManagedProxy, Proxy {
    * @param managerSelector function selector used to fetch implementation from manager
    */
   function _setManagerSelector(bytes4 managerSelector) internal virtual {
-    ManagedProxyService.setManagerSelector(managerSelector);
+    ManagedProxyStorage.layout().managerSelector = managerSelector;
   }
 }

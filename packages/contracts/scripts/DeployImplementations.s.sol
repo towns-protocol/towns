@@ -11,7 +11,10 @@ contract DeployTokenImpl is Deployer {
     return "tokenEntitlementImpl";
   }
 
-  function __deploy(uint256 deployerPK) public override returns (address) {
+  function __deploy(
+    uint256 deployerPK,
+    address
+  ) public override returns (address) {
     vm.broadcast(deployerPK);
     return address(new TokenEntitlement());
   }
@@ -22,7 +25,10 @@ contract DeployUserImpl is Deployer {
     return "userEntitlementImpl";
   }
 
-  function __deploy(uint256 deployerPK) public override returns (address) {
+  function __deploy(
+    uint256 deployerPK,
+    address
+  ) public override returns (address) {
     vm.broadcast(deployerPK);
     return address(new UserEntitlement());
   }

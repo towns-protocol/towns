@@ -6,7 +6,10 @@ pragma solidity ^0.8.20;
 // libraries
 
 // contracts
-interface IERC173Events {
+interface IOwnableBase {
+  error Ownable__ZeroAddress();
+  error Ownable__NotOwner(address account);
+
   /// @dev This emits when ownership of a contract changes.
   event OwnershipTransferred(
     address indexed previousOwner,
@@ -14,7 +17,7 @@ interface IERC173Events {
   );
 }
 
-interface IERC173 is IERC173Events {
+interface IERC173 is IOwnableBase {
   /// @notice Get the address of the owner
   /// @return The address of the owner.
   function owner() external view returns (address);

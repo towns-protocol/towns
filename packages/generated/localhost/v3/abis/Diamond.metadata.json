@@ -8,6 +8,51 @@
       {
         "inputs": [
           {
+            "components": [
+              {
+                "components": [
+                  {
+                    "internalType": "address",
+                    "name": "facetAddress",
+                    "type": "address"
+                  },
+                  {
+                    "internalType": "enum IDiamond.FacetCutAction",
+                    "name": "action",
+                    "type": "uint8"
+                  },
+                  {
+                    "internalType": "bytes4[]",
+                    "name": "functionSelectors",
+                    "type": "bytes4[]"
+                  }
+                ],
+                "internalType": "struct IDiamond.FacetCut[]",
+                "name": "baseFacets",
+                "type": "tuple[]"
+              },
+              {
+                "internalType": "address",
+                "name": "init",
+                "type": "address"
+              },
+              {
+                "internalType": "bytes",
+                "name": "initData",
+                "type": "bytes"
+              }
+            ],
+            "internalType": "struct Diamond.InitParams",
+            "name": "initDiamondCut",
+            "type": "tuple"
+          }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "constructor"
+      },
+      {
+        "inputs": [
+          {
             "internalType": "bytes4",
             "name": "selector",
             "type": "bytes4"
@@ -109,23 +154,28 @@
       },
       {
         "inputs": [],
-        "name": "Introspection_AlreadySupported",
+        "name": "Diamond_UnsupportedFunction",
         "type": "error"
       },
       {
         "inputs": [
           {
-            "internalType": "address",
-            "name": "account",
-            "type": "address"
+            "internalType": "uint32",
+            "name": "version",
+            "type": "uint32"
           }
         ],
-        "name": "Ownable__NotOwner",
+        "name": "Initializable_AlreadyInitialized",
         "type": "error"
       },
       {
         "inputs": [],
-        "name": "Ownable__ZeroAddress",
+        "name": "Introspection_AlreadySupported",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "Introspection_NotSupported",
         "type": "error"
       },
       {
@@ -179,6 +229,19 @@
         "anonymous": false,
         "inputs": [
           {
+            "indexed": false,
+            "internalType": "uint32",
+            "name": "version",
+            "type": "uint32"
+          }
+        ],
+        "name": "Initialized",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
             "indexed": true,
             "internalType": "bytes4",
             "name": "interfaceId",
@@ -202,188 +265,8 @@
         "type": "event"
       },
       {
-        "anonymous": false,
-        "inputs": [
-          {
-            "indexed": true,
-            "internalType": "address",
-            "name": "previousOwner",
-            "type": "address"
-          },
-          {
-            "indexed": true,
-            "internalType": "address",
-            "name": "newOwner",
-            "type": "address"
-          }
-        ],
-        "name": "OwnershipTransferred",
-        "type": "event"
-      },
-      {
         "stateMutability": "payable",
         "type": "fallback"
-      },
-      {
-        "inputs": [
-          {
-            "components": [
-              {
-                "internalType": "address",
-                "name": "facetAddress",
-                "type": "address"
-              },
-              {
-                "internalType": "enum IDiamond.FacetCutAction",
-                "name": "action",
-                "type": "uint8"
-              },
-              {
-                "internalType": "bytes4[]",
-                "name": "functionSelectors",
-                "type": "bytes4[]"
-              }
-            ],
-            "internalType": "struct IDiamond.FacetCut[]",
-            "name": "facetCuts",
-            "type": "tuple[]"
-          },
-          {
-            "internalType": "address",
-            "name": "init",
-            "type": "address"
-          },
-          {
-            "internalType": "bytes",
-            "name": "initPayload",
-            "type": "bytes"
-          }
-        ],
-        "name": "diamondCut",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-      },
-      {
-        "inputs": [
-          {
-            "internalType": "bytes4",
-            "name": "selector",
-            "type": "bytes4"
-          }
-        ],
-        "name": "facetAddress",
-        "outputs": [
-          {
-            "internalType": "address",
-            "name": "",
-            "type": "address"
-          }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-      },
-      {
-        "inputs": [],
-        "name": "facetAddresses",
-        "outputs": [
-          {
-            "internalType": "address[]",
-            "name": "",
-            "type": "address[]"
-          }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-      },
-      {
-        "inputs": [
-          {
-            "internalType": "address",
-            "name": "facet",
-            "type": "address"
-          }
-        ],
-        "name": "facetFunctionSelectors",
-        "outputs": [
-          {
-            "internalType": "bytes4[]",
-            "name": "",
-            "type": "bytes4[]"
-          }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-      },
-      {
-        "inputs": [],
-        "name": "facets",
-        "outputs": [
-          {
-            "components": [
-              {
-                "internalType": "address",
-                "name": "facet",
-                "type": "address"
-              },
-              {
-                "internalType": "bytes4[]",
-                "name": "selectors",
-                "type": "bytes4[]"
-              }
-            ],
-            "internalType": "struct IDiamondLoupeStructs.Facet[]",
-            "name": "",
-            "type": "tuple[]"
-          }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-      },
-      {
-        "inputs": [],
-        "name": "owner",
-        "outputs": [
-          {
-            "internalType": "address",
-            "name": "",
-            "type": "address"
-          }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-      },
-      {
-        "inputs": [
-          {
-            "internalType": "bytes4",
-            "name": "interfaceId",
-            "type": "bytes4"
-          }
-        ],
-        "name": "supportsInterface",
-        "outputs": [
-          {
-            "internalType": "bool",
-            "name": "",
-            "type": "bool"
-          }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-      },
-      {
-        "inputs": [
-          {
-            "internalType": "address",
-            "name": "newOwner",
-            "type": "address"
-          }
-        ],
-        "name": "transferOwnership",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
       },
       {
         "stateMutability": "payable",
@@ -398,68 +281,20 @@
             "init": "Address of contract or facet to execute initPayload.",
             "initPayload": "A function call, including function selector and arguments."
           }
-        },
-        "OwnershipTransferred(address,address)": {
-          "details": "This emits when ownership of a contract changes."
         }
       },
       "kind": "dev",
-      "methods": {
-        "diamondCut((address,uint8,bytes4[])[],address,bytes)": {
-          "params": {
-            "facetCuts": "Facet addresses and function selectors.",
-            "init": "Address of contract or facet to execute initPayload.",
-            "initPayload": "A function call, including function selector and arguments. Executed with delegatecall on init address."
-          }
-        },
-        "facetAddress(bytes4)": {
-          "details": "If facet is not found return address(0).",
-          "params": {
-            "selector": "The function selector."
-          },
-          "returns": {
-            "_0": "facetAddress The facet address."
-          }
-        },
-        "facetAddresses()": {
-          "returns": {
-            "_0": "facets The facet addresses."
-          }
-        },
-        "facetFunctionSelectors(address)": {
-          "params": {
-            "facet": "The facet address."
-          },
-          "returns": {
-            "_0": "selectors An array of function selectors."
-          }
-        },
-        "facets()": {
-          "returns": {
-            "_0": "facetInfo An array of Facet structs."
-          }
-        },
-        "owner()": {
-          "returns": {
-            "_0": "The address of the owner."
-          }
-        },
-        "supportsInterface(bytes4)": {
-          "details": "Has to be manually set by a facet at initialization.",
-          "params": {
-            "interfaceId": "The 4 bytes interface identifier, as specified in ERC-165"
-          }
-        },
-        "transferOwnership(address)": {
-          "details": "Set _newOwner to address(0) to renounce any ownership.",
-          "params": {
-            "_newOwner": "The address of the new owner of the contract"
-          }
-        }
-      },
+      "methods": {},
       "version": 1
     },
     "userdoc": {
+      "errors": {
+        "Diamond_UnsupportedFunction()": [
+          {
+            "notice": "Thrown when calling a function that was not registered in the diamond."
+          }
+        ]
+      },
       "events": {
         "DiamondCut((address,uint8,bytes4[])[],address,bytes)": {
           "notice": "Event emitted when facets are added/removed/replaced"
@@ -472,32 +307,7 @@
         }
       },
       "kind": "user",
-      "methods": {
-        "diamondCut((address,uint8,bytes4[])[],address,bytes)": {
-          "notice": "Add/replace/remove any number of functions and optionally execute a function with delegatecall"
-        },
-        "facetAddress(bytes4)": {
-          "notice": "Gets the facet that supports the given selector."
-        },
-        "facetAddresses()": {
-          "notice": "Get all the facet addresses used by a diamond."
-        },
-        "facetFunctionSelectors(address)": {
-          "notice": "Gets all the function selectors supported by a specific facet."
-        },
-        "facets()": {
-          "notice": "Gets all facet addresses and the selectors of supported functions."
-        },
-        "owner()": {
-          "notice": "Get the address of the owner"
-        },
-        "supportsInterface(bytes4)": {
-          "notice": "Returns true if this contract implements the interface"
-        },
-        "transferOwnership(address)": {
-          "notice": "Set the address of the new owner of the contract"
-        }
-      },
+      "methods": {},
       "version": 1
     }
   },
@@ -549,51 +359,27 @@
       ]
     },
     "packages/contracts/src/diamond/Diamond.sol": {
-      "keccak256": "0x9c554f7e1ceb1d77981191a3970b68ad549e3b5f32e4025fb39444ff7b2465f2",
+      "keccak256": "0x93f6eb168a2c8a848449b40dfbc0cb7efbfab76ce673be7f8cbc957b5041d3de",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://650c9f6258bf46dae853eea9a9a2175255e0e661987c0703d45e25d96760e98c",
-        "dweb:/ipfs/QmduJzC42GHmTXFQxMzUu6caC7HPr8dKZZreKCymfAv77D"
-      ]
-    },
-    "packages/contracts/src/diamond/DiamondBase.sol": {
-      "keccak256": "0xdfb58b54938b65dbccd0e32bd8a1ceb2feb7b2e5e53b22840331e240ac26824f",
-      "license": "Apache-2.0",
-      "urls": [
-        "bzz-raw://f8821c889ff2dc150fd2d6997d371df14082c78516dde4f8a61fc5c89dc9bf2e",
-        "dweb:/ipfs/QmQJ91bU5FEtArLg2uBSUvd5wLhhj3ApyeUSXR7CsHSyK9"
+        "bzz-raw://5c29053363e060da718aa8dded10b6752f9b8430f56fedf8d76a13c4a8236b6b",
+        "dweb:/ipfs/QmQQskCxdK3zyy7ZKoNfSaC2SPTeQpXwn4ViUuvNUeVG1J"
       ]
     },
     "packages/contracts/src/diamond/IDiamond.sol": {
-      "keccak256": "0x0c42a7a49bd97b80da729467d943c19a3f859068f38504ab6acb7e90fc88be64",
+      "keccak256": "0x229b4689e28257d9cbf4812e2bf2e42467107ce1922ffc1c167b72fe8b8e4532",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://c7417201588ddb0c7682a3d46e972a8fdb433f792484e042cd1ffe1268ddca2a",
-        "dweb:/ipfs/QmRrpJX1PiGm214AhocX8C4fGQA9po9pUzrdHwDEJSWp9T"
-      ]
-    },
-    "packages/contracts/src/diamond/facets/cut/DiamondCut.sol": {
-      "keccak256": "0xf20dcad9c44dd05172617b1ca70b5c48528a5b75a950ce5579efebafc55034f9",
-      "license": "Apache-2.0",
-      "urls": [
-        "bzz-raw://39c93c9ab065ac67655a699f20db41d5934c93039929207539dc87dac1d8a7d6",
-        "dweb:/ipfs/QmWzM3FDLF4u45hyME3sBHRzGHKoggo4RBqTaiQHVK8A3k"
+        "bzz-raw://9b1684fd3ebcb86d611495cad57d01002c3a9564975cc4d8d5d3a3afa2e3110e",
+        "dweb:/ipfs/QmVFTX38enoWRiDkU6LVutRoFSsSuaoNuzz6ZVKajQK5VB"
       ]
     },
     "packages/contracts/src/diamond/facets/cut/DiamondCutBase.sol": {
-      "keccak256": "0x7de925593fcf9cc691e173ba7cc6657734278805c42a38b03cab113b7265b425",
+      "keccak256": "0xd822e8e0a70750e1ac20232018d574a2adbc4f13deeb40aa451011e2bc98d368",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://2ca0e8cd7cb727ebf50c835b83d215fc11fbd30878ec1cf0748b4bd59e990011",
-        "dweb:/ipfs/QmeZJx3yeKDnxVmVhcvVS59FQWDyvNev6gMhvz3w1ytmeF"
-      ]
-    },
-    "packages/contracts/src/diamond/facets/cut/DiamondCutService.sol": {
-      "keccak256": "0x7b29f14ee2aef63e35bee47cf99f81caff05f9bf0d20a05c9e8a18ce66c7faf1",
-      "license": "Apache-2.0",
-      "urls": [
-        "bzz-raw://fddf8fa31f3f3365f62184ace7e7ef4701aa7c0ae330688b676743f48a1eedf8",
-        "dweb:/ipfs/QmXHcAjrKsuiswyDbrGMDSLd69bgMLeB6iFFu5uDhHMuPR"
+        "bzz-raw://9b10fe4572910c80f7dc0d8cd0e460cc40a9dd5207d9e85c906a19aff89f9f9d",
+        "dweb:/ipfs/QmYPQCwByW26GYhPPz5KR32Zr8cGk2QiS36tXpKttkgpC2"
       ]
     },
     "packages/contracts/src/diamond/facets/cut/DiamondCutStorage.sol": {
@@ -605,43 +391,43 @@
       ]
     },
     "packages/contracts/src/diamond/facets/cut/IDiamondCut.sol": {
-      "keccak256": "0xa021842fac782d0a630ce55190bd623a3c1c590ec7495530539505e390002717",
+      "keccak256": "0xcdd725c5691ccc750bf8f5fb14bafa525377ed3bad72d94d0abe633c09e8b2aa",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://6273de44f89673c53a1c8a7bb97aafb0bb68a3b2752c973e1511fe937f0a32b6",
-        "dweb:/ipfs/QmPfJx17gye1NLHgJnKBKN5LEnZs7mhfBkyQ9H8xayfvcw"
+        "bzz-raw://024d0f05aef75094de7d104360b68128f48a5ad69e76d79923c71bbddb8eda49",
+        "dweb:/ipfs/QmWRhDE7rZQSAbahYXBnJZZrvo7R2huE6oqRhaPECWGGcw"
       ]
     },
-    "packages/contracts/src/diamond/facets/introspection/ERC165.sol": {
-      "keccak256": "0x8887dd5af85db2c2f4c8d49bedfbb51e5f99e13cb827ab515225862a2f560ab0",
+    "packages/contracts/src/diamond/facets/initializable/Initializable.sol": {
+      "keccak256": "0x2a4f3a99b3b3ac6c2c18431cea80b40774c1d8265ddefac21b26da561e069096",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://36dbba730942b1fd345f242051ea7f33e979f70392fbd929d8522c0c9c6dd367",
+        "dweb:/ipfs/QmYMvYnvg9zQJpDQX9yMHZ1AET9Vx7UXtDenXAs1JhfPpd"
+      ]
+    },
+    "packages/contracts/src/diamond/facets/initializable/InitializableStorage.sol": {
+      "keccak256": "0x4a708b87fe25525bd8b67b7e9541462110e6d2e480ee3253e821528349c04963",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://e8b29a31fd974b4d6c3018dd5f4189e98ef32f24e0ed1b9509c60436b92b4126",
-        "dweb:/ipfs/QmeoG6qJC5Cqczb6N1mM9NqwisSEZuREEMxP5tbLy9xYe4"
+        "bzz-raw://2b16b8575ca43f66ddd4bca6c6785d7fc2eb618568c06153cec1a12a2a6915af",
+        "dweb:/ipfs/QmVXod9CVcw66QrzSt2pjFfMbwXxZRBdW74X4y9JYTp923"
       ]
     },
     "packages/contracts/src/diamond/facets/introspection/IERC165.sol": {
-      "keccak256": "0x58edff5c7238d9d543c9611a4446c50128cb74f469d143d0f7828b9e22d278e7",
+      "keccak256": "0xa1dfa0449031fced106dd105c184823595398c876be53b4bb8d855937a435816",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://90c2ce08be09894c3ffc8ebdbb4c78d4c14e00fdcc2f6ccf12ea6b6ab067ad1f",
-        "dweb:/ipfs/QmVg7hTxFt9Wt3ghGcY9ZxQuYPd99ujG1f9o7BnvhR15TZ"
+        "bzz-raw://e98a9007bca24776e4580c9326cfbb72ffe56334229626c336545be8c2c6e6d2",
+        "dweb:/ipfs/QmdqoQTUoDKqirUR3hscy4zBh4Kn2E1fRta1y9DfA43urV"
       ]
     },
     "packages/contracts/src/diamond/facets/introspection/IntrospectionBase.sol": {
-      "keccak256": "0x72914be58159f9ec8faa5a7c8709810a1f7bda462fb4a6df32bedee0cd34b53c",
+      "keccak256": "0x503b6ce030f8a760e9a877545b35307d05bbb704b501095795ab2168fe40db59",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://b83bb448fa26f3c93cdc4c2fd7eee40bdc7d8c7ad75e3dba7657b17d5f907e72",
-        "dweb:/ipfs/QmVJPtFisvjynPovjNLh592tYA4zKzjZhe1uwpQXqScfcb"
-      ]
-    },
-    "packages/contracts/src/diamond/facets/introspection/IntrospectionService.sol": {
-      "keccak256": "0x70b3ae424e9897ded848cd25c851680d28625ef9ec25406e2d3d340ac72d9574",
-      "license": "Apache-2.0",
-      "urls": [
-        "bzz-raw://d74acc7a30e548cc5b8c9fbb63eb3f806a6fa0dc8f96bc97672c5390ba36ce43",
-        "dweb:/ipfs/QmQbFHy7w15Dm74emLiJTKTRnJKKVLrHN3e8b13XbfrMW5"
+        "bzz-raw://769658fed18c26f67dec9bf4ca18dd595c0343bc8ea21bb3e50595eca3401265",
+        "dweb:/ipfs/QmVuqWH5eKqBJbNEtXzybgZ7ahtjTraMew8CMb4TuVUyo6"
       ]
     },
     "packages/contracts/src/diamond/facets/introspection/IntrospectionStorage.sol": {
@@ -652,76 +438,20 @@
         "dweb:/ipfs/QmSoYyPg2d1XsBeCsx1X9dvhBacjhZcqqgx8WDPJ3nYmB2"
       ]
     },
-    "packages/contracts/src/diamond/facets/loupe/DiamondLoupe.sol": {
-      "keccak256": "0x8255c2562cd52359313043a8fbfa673cea3dc2e714e64fc819f54bcf1eb301b7",
-      "license": "Apache-2.0",
-      "urls": [
-        "bzz-raw://8fb4c3f3878c01b07dfa6e298810324110c487bdd2cd7dbb0c2ba7b4cbb7d7ad",
-        "dweb:/ipfs/QmaALM6PB48ZsWCSjPHkixqMfQc4NvhHQmsDb83rCquNyX"
-      ]
-    },
     "packages/contracts/src/diamond/facets/loupe/DiamondLoupeBase.sol": {
-      "keccak256": "0x92ea62133dd367edf7489d27993bfa333d722200da79cc0a5b1ead7f76df69b3",
+      "keccak256": "0x0ff7de04d4db6dfce7a2cd13678fccf67fd6509183b0435f7ca435da81fdc5d9",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://681aa06df382a55b07dd66d60e726a5b7740509554c73adc45288ebb7ff4e48e",
-        "dweb:/ipfs/QmdKTs7pRQfd1US1PeA2SHcYDGeKATSp6Qd2BRpkBHXxsx"
-      ]
-    },
-    "packages/contracts/src/diamond/facets/loupe/DiamondLoupeService.sol": {
-      "keccak256": "0x7dee5edd983ccf195ba2b62e0305896901959d7a789afd4244f6147555da90e9",
-      "license": "Apache-2.0",
-      "urls": [
-        "bzz-raw://0a486767c33347fb45046bc35332f78ec3d1c0d603bdea205270073dd17413fb",
-        "dweb:/ipfs/QmY9EPt74DPRWUxWGHAsGuU77En51dx8twPPadQ6bzQazL"
+        "bzz-raw://08c8320a0748936eaebe9602995a2f7c97421b25ecd4df0532b24702f376a975",
+        "dweb:/ipfs/QmWgSC2UEER7UgdAcDswQspnew56SsJYv9Jgw5s23cxUJT"
       ]
     },
     "packages/contracts/src/diamond/facets/loupe/IDiamondLoupe.sol": {
-      "keccak256": "0xe69840ad83771a18ac0ed0745f1f9484dc1b6395d37b5d52eaf9d6d0b08c5144",
+      "keccak256": "0x83141e0a7e8f1e9a592ca00bb6365aae7296f61d06080024546350594f076618",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://ab90f64a3b96a65fc3045fe699e0beb95bcb8ef95d698a9f2de01196a439a0b8",
-        "dweb:/ipfs/QmZgMYdB8qc4q5axSDAqKY3Daog2yK2mjfWexM4C57RxFj"
-      ]
-    },
-    "packages/contracts/src/diamond/facets/ownable/IERC173.sol": {
-      "keccak256": "0x181f9f571d19ceabaeeb7982b10db95a2065a98f5baa511942a8ebfc20938aa2",
-      "license": "Apache-2.0",
-      "urls": [
-        "bzz-raw://812d0ab1d77cc3b2c76314a5ff0c65a85ed6725380d50260863fbdb1049486fb",
-        "dweb:/ipfs/QmWEreGaA8i3XeSaFRzKHV5Ux7ELR4EyeVT3c11pywreky"
-      ]
-    },
-    "packages/contracts/src/diamond/facets/ownable/Ownable.sol": {
-      "keccak256": "0x3608150d7013c863f4d29f05e0abe8974d6706f2b793a81fda3adec88d805cd9",
-      "license": "Apache-2.0",
-      "urls": [
-        "bzz-raw://b0f75337d40c2be77ae02c1ee0ee285602692183cfc23e19ddad6fb47e3531c7",
-        "dweb:/ipfs/QmTfBsKu4CDnVviiiXeJmWfztnU87fkpZcp1BEsA1thb98"
-      ]
-    },
-    "packages/contracts/src/diamond/facets/ownable/OwnableBase.sol": {
-      "keccak256": "0x60a28fea492bc100f389f832f42b54981a87ad141f66c3ead4f800768ca9278f",
-      "license": "Apache-2.0",
-      "urls": [
-        "bzz-raw://736f15f33a090c8ef190f0ed0e58c4422d2557efcd71c63701e5d472c0f4ed5c",
-        "dweb:/ipfs/QmdCtV2gBNrtKxEwAqzWRdUYLG5L1VDboUvwJzduFwBL4k"
-      ]
-    },
-    "packages/contracts/src/diamond/facets/ownable/OwnableService.sol": {
-      "keccak256": "0xc96ea2c75519d986a75fb86a1c3ec08794fee823c5303da8c03869bfb505185d",
-      "license": "Apache-2.0",
-      "urls": [
-        "bzz-raw://b19857cd8fe0c892052300a78ba670ae98048a42fc69f0d2da946c03dc671900",
-        "dweb:/ipfs/QmVecFwkx6zhcn6MiCFoisMVWs6Y6t94n4H4Xwf5tSgdto"
-      ]
-    },
-    "packages/contracts/src/diamond/facets/ownable/OwnableStorage.sol": {
-      "keccak256": "0xf37c305730d5f4c38242252303efcf273a4e81554637e2346db593e45d6cd551",
-      "license": "Apache-2.0",
-      "urls": [
-        "bzz-raw://b78ac1b163b9d8a9f39d47f86f3ec562398038c1ea217bdece38dbcd90b07a22",
-        "dweb:/ipfs/QmQB25TBF1VSNtpfHBzfs8FLANeGoGfj7Zz5hQmzaE7zFH"
+        "bzz-raw://f0917399449ea9830cff570d958d28b37b3c83af3a38c5f0a58241264aaf8290",
+        "dweb:/ipfs/QmUbJD4U8Fpf7BiXJWExejkd54vUjiXJrjnxxARUDzrGa8"
       ]
     },
     "packages/contracts/src/diamond/proxy/IProxy.sol": {

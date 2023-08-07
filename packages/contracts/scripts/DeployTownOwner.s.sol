@@ -10,7 +10,10 @@ contract DeployTownOwner is Deployer {
     return "spaceToken";
   }
 
-  function __deploy(uint256 deployerPK) public override returns (address) {
+  function __deploy(
+    uint256 deployerPK,
+    address
+  ) public override returns (address) {
     vm.broadcast(deployerPK);
     return address(new TownOwner("TownOwner", "TOWN", vm.addr(deployerPK), 0));
   }

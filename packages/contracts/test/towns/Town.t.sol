@@ -1,74 +1,45 @@
 // SPDX-License-Identifier: Apache-2.0
-pragma solidity ^0.8.20;
-
-// utils
-import {TestUtils} from "contracts/test/utils/TestUtils.sol";
+pragma solidity ^0.8.19;
 
 // interfaces
-import {IDiamondCut} from "contracts/src/diamond/facets/cut/IDiamondCut.sol";
-import {IDiamond} from "contracts/src/diamond/IDiamond.sol";
-import {IEntitlements} from "contracts/src/towns/facets/entitlements/IEntitlements.sol";
+import {IDiamond, Diamond} from "contracts/src/diamond/Diamond.sol";
 
 // libraries
 
 // contracts
-import {Town} from "contracts/src/towns/Town.sol";
-import {EntitlementsHelper} from "contracts/test/towns/facets/entitlements/EntitlementsSetup.sol";
-import {ChannelsHelper} from "contracts/test/towns/facets/channels/ChannelsSetup.sol";
-import {RolesHelper} from "contracts/test/towns/facets/roles/RolesSetup.sol";
+import {OwnableHelper} from "contracts/test/diamond/ownable/OwnableSetup.sol";
+import {DiamondCutHelper} from "contracts/test/diamond/cut/DiamondCutSetup.sol";
+import {DiamondLoupeHelper} from "contracts/test/diamond/loupe/DiamondLoupeSetup.sol";
+import {EntitlementsHelper} from "contracts/test/towns/entitlements/EntitlementsSetup.sol";
+import {RolesHelper} from "contracts/test/towns/roles/RolesSetup.sol";
+import {ChannelsHelper} from "contracts/test/towns/channels/ChannelsSetup.sol";
 
-import {TownInit} from "contracts/test/towns/initializers/TownInit.sol";
+contract TownHelper {
+  function createImplementation(address owner) external returns (Diamond) {
+    OwnableHelper ownableHelper = new OwnableHelper();
+    DiamondCutHelper diamondCutHelper = new DiamondCutHelper();
+    DiamondLoupeHelper diamondLoupeHelper = new DiamondLoupeHelper();
+    EntitlementsHelper entitlementsHelper = new EntitlementsHelper();
+    RolesHelper rolesHelper = new RolesHelper();
+    ChannelsHelper channelsHelper = new ChannelsHelper();
 
-import {MockERC721} from "contracts/test/mocks/MockERC721.sol";
-import {MockUserEntitlement} from "contracts/test/mocks/MockUserEntitlement.sol";
+    uint256 cutCount = 6;
 
-abstract contract TownTest is TestUtils {
-  address internal townOwnerToken;
-  address internal deployer;
-  address internal town;
-  address internal townOwner;
+    Diamond.FacetCut[] memory cuts = new Diamond.FacetCut[](cutCount);
+    cuts[0] = ownableHelper.makeCut(IDiamond.FacetCutAction.Add);
+    cuts[1] = diamondCutHelper.makeCut(IDiamond.FacetCutAction.Add);
+    cuts[2] = diamondLoupeHelper.makeCut(IDiamond.FacetCutAction.Add);
+    cuts[3] = entitlementsHelper.makeCut(IDiamond.FacetCutAction.Add);
+    cuts[4] = rolesHelper.makeCut(IDiamond.FacetCutAction.Add);
+    cuts[5] = channelsHelper.makeCut(IDiamond.FacetCutAction.Add);
 
-  function setUp() public virtual {
-    deployer = _randomAddress();
-    townOwner = _randomAddress();
-
-    vm.startPrank(deployer);
-    town = address(new Town());
-    townOwnerToken = address(new MockERC721());
-
-    TownInit townInit = new TownInit();
-    EntitlementsHelper entitlements = new EntitlementsHelper();
-    ChannelsHelper channels = new ChannelsHelper();
-    RolesHelper roles = new RolesHelper();
-
-    IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](3);
-    cuts[0] = entitlements.makeCut(IDiamond.FacetCutAction.Add);
-    cuts[1] = channels.makeCut(IDiamond.FacetCutAction.Add);
-    cuts[2] = roles.makeCut(IDiamond.FacetCutAction.Add);
-
-    uint256 tokenId = MockERC721(townOwnerToken).mintTo(townOwner);
-
-    IDiamondCut(town).diamondCut(
-      cuts,
-      address(townInit),
-      abi.encodeWithSelector(
-        TownInit.init.selector,
-        "TEST TOWN",
-        townOwnerToken,
-        tokenId
-      )
-    );
-
-    vm.stopPrank();
-  }
-
-  function addMockEntitlement() internal returns (address) {
-    MockUserEntitlement entitlement = new MockUserEntitlement();
-    entitlement.initialize(town);
-
-    vm.prank(townOwner);
-    IEntitlements(town).addEntitlement(address(entitlement));
-
-    return address(entitlement);
+    return
+      new Diamond(
+        Diamond.InitParams({
+          baseFacets: cuts,
+          init: ownableHelper.facet(),
+          initData: ownableHelper.makeInitData(abi.encode(owner))
+        })
+      );
   }
 }

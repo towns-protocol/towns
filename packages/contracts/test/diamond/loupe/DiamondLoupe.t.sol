@@ -10,21 +10,13 @@ import {IERC165} from "contracts/src/diamond/facets/introspection/IERC165.sol";
 //libraries
 
 //contracts
-import {FacetTest} from "contracts/test/diamond/Facet.t.sol";
+import {DiamondLoupeSetup} from "./DiamondLoupeSetup.sol";
 import {MockFacetHelper} from "contracts/test/mocks/MockFacet.sol";
 import {MockFacet} from "contracts/test/mocks/MockFacet.sol";
 
-contract DiamondLoupeTest is FacetTest {
-  IDiamondLoupe internal diamondLoupe;
-  IDiamondCut internal diamondCut;
+contract DiamondLoupeTest is DiamondLoupeSetup {
   IDiamond.FacetCut[] internal facetCuts;
   MockFacetHelper internal mockFacetHelper = new MockFacetHelper();
-
-  function setUp() public override {
-    super.setUp();
-    diamondLoupe = IDiamondLoupe(diamond);
-    diamondCut = IDiamondCut(diamond);
-  }
 
   function test_supportsInterface() external {
     assertTrue(

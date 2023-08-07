@@ -2,39 +2,59 @@
 pragma solidity ^0.8.20;
 
 // interfaces
-import {IDiamondLoupeStructs, IDiamondLoupe} from "./IDiamondLoupe.sol";
+import {IDiamondLoupeBase, IDiamondLoupe} from "./IDiamondLoupe.sol";
 
 // libraries
-import {DiamondLoupeService} from "./DiamondLoupeService.sol";
+import {EnumerableSet} from "openzeppelin-contracts/contracts/utils/structs/EnumerableSet.sol";
+import {DiamondCutStorage} from "../cut/DiamondCutStorage.sol";
 
 // contracts
 
-abstract contract DiamondLoupeBase is IDiamondLoupeStructs {
+abstract contract DiamondLoupeBase is IDiamondLoupeBase {
+  using EnumerableSet for EnumerableSet.AddressSet;
+  using EnumerableSet for EnumerableSet.Bytes32Set;
+
   function _facetSelectors(
     address facet
-  ) internal view returns (bytes4[] memory) {
-    return DiamondLoupeService.facetSelectors(facet);
+  ) internal view returns (bytes4[] memory selectors) {
+    EnumerableSet.Bytes32Set storage facetSelectors_ = DiamondCutStorage
+      .layout()
+      .selectorsByFacet[facet];
+    uint256 selectorCount = facetSelectors_.length();
+
+    selectors = new bytes4[](selectorCount);
+    for (uint256 i; i < selectorCount; ) {
+      selectors[i] = bytes4(facetSelectors_.at(i));
+
+      unchecked {
+        i++;
+      }
+    }
   }
 
   function _facetAddresses() internal view returns (address[] memory) {
-    return DiamondLoupeService.facetAddresses();
+    return DiamondCutStorage.layout().facets.values();
   }
 
   function _facetAddress(
     bytes4 selector
   ) internal view returns (address facetAddress) {
-    return DiamondLoupeService.facetAddress(selector);
+    return DiamondCutStorage.layout().facetBySelector[selector];
   }
 
   function _facets() internal view returns (Facet[] memory facets) {
-    address[] memory facetAddresses = DiamondLoupeService.facetAddresses();
+    address[] memory facetAddresses = _facetAddresses();
     uint256 facetCount = facetAddresses.length;
     facets = new Facet[](facetCount);
 
-    for (uint256 i; i < facetCount; i++) {
+    for (uint256 i; i < facetCount; ) {
       address facetAddress = facetAddresses[i];
       bytes4[] memory selectors = _facetSelectors(facetAddress);
       facets[i] = Facet({facet: facetAddress, selectors: selectors});
+
+      unchecked {
+        i++;
+      }
     }
   }
 }

@@ -8,17 +8,20 @@ import {IEntitlements} from "./IEntitlements.sol";
 
 // contracts
 import {EntitlementsBase} from "./EntitlementsBase.sol";
+import {Entitled} from "../Entitled.sol";
 
-contract Entitlements is EntitlementsBase, IEntitlements {
-  function addImmutableEntitlements(address[] memory entitlements) external {
+contract Entitlements is IEntitlements, EntitlementsBase, Entitled {
+  function addImmutableEntitlements(
+    address[] memory entitlements
+  ) external onlyOwner {
     _addImmutableEntitlements(entitlements);
   }
 
-  function addEntitlement(address entitlement) external {
+  function addEntitlement(address entitlement) external onlyOwner {
     _addEntitlement(entitlement);
   }
 
-  function removeEntitlement(address entitlement) external {
+  function removeEntitlement(address entitlement) external onlyOwner {
     _removeEntitlement(entitlement);
   }
 

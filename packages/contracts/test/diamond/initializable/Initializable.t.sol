@@ -18,7 +18,7 @@ contract Mock is Initializable {
 
   function reinit() external reinitializer(2) {}
 
-  function getVersion() external view returns (uint8) {
+  function getVersion() external view returns (uint32) {
     return _getInitializedVersion();
   }
 }

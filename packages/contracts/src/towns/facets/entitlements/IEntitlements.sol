@@ -6,7 +6,7 @@ pragma solidity ^0.8.20;
 // libraries
 
 // contracts
-interface IEntitlementsStructs {
+interface IEntitlementsBase {
   struct Entitlement {
     string name;
     address moduleAddress;
@@ -15,7 +15,7 @@ interface IEntitlementsStructs {
   }
 }
 
-interface IEntitlements is IEntitlementsStructs {
+interface IEntitlements is IEntitlementsBase {
   /// @notice Allows the town owner to add immutable entitlements to the town
   /// @param entitlements The entitlements to add
   function addImmutableEntitlements(address[] memory entitlements) external;

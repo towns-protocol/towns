@@ -9,13 +9,10 @@ import {IERC165} from "contracts/src/diamond/facets/introspection/IERC165.sol";
 import {EnumerableSet} from "openzeppelin-contracts/contracts/utils/structs/EnumerableSet.sol";
 import {EntitlementsStorage} from "./EntitlementsStorage.sol";
 
-import {PausableService} from "contracts/src/diamond/facets/pausable/PausableService.sol";
-import {TokenOwnableService} from "contracts/src/diamond/facets/ownable/token/TokenOwnableService.sol";
-
 // contracts
 error EntitlementsService__InvalidEntitlementAddress();
 error EntitlementsService__InvalidEntitlementInterface();
-error EntitlementsService__NotAllowed();
+
 error EntitlementsService__ImmutableEntitlement();
 error EntitlementsService__EntitlementDoesNotExist();
 error EntitlementsService__EntitlementAlreadyExists();
@@ -116,75 +113,6 @@ library EntitlementsService {
     } catch {
       revert EntitlementsService__InvalidEntitlementInterface();
     }
-  }
-
-  function isAllowed(
-    string memory channelId,
-    string memory permission
-  ) internal view returns (bool) {
-    return
-      TokenOwnableService.owner() == msg.sender ||
-      (!PausableService.paused() &&
-        isEntitled(
-          channelId,
-          msg.sender,
-          bytes32(abi.encodePacked(permission))
-        ));
-  }
-
-  function validatePermission(string memory permission) internal view {
-    if (!isAllowed(IN_TOWN, permission)) {
-      revert EntitlementsService__NotAllowed();
-    }
-  }
-
-  function validateChannelPermission(
-    string memory channelId,
-    string memory permission
-  ) internal view {
-    if (!isAllowed(channelId, permission)) {
-      revert EntitlementsService__NotAllowed();
-    }
-  }
-
-  function isEntitled(
-    string memory channelId,
-    address user,
-    bytes32 permission
-  ) internal view returns (bool entitled) {
-    if (user == TokenOwnableService.owner()) return true;
-
-    EntitlementsStorage.Layout storage ds = EntitlementsStorage.layout();
-
-    uint256 entitlementCount = ds.entitlements.length();
-
-    for (uint256 i = 0; i < entitlementCount; i++) {
-      if (
-        IEntitlement(ds.entitlements.at(i)).isEntitled(
-          channelId,
-          user,
-          permission
-        )
-      ) {
-        entitled = true;
-        break;
-      }
-    }
-  }
-
-  function isEntitledToTown(
-    address user,
-    string calldata permission
-  ) internal view returns (bool) {
-    return isEntitled(IN_TOWN, user, bytes32(abi.encodePacked(permission)));
-  }
-
-  function isEntitledToChannel(
-    string memory channelId,
-    address user,
-    string calldata permission
-  ) internal view returns (bool) {
-    return isEntitled(channelId, user, bytes32(abi.encodePacked(permission)));
   }
 
   // =============================================================

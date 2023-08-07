@@ -2,51 +2,15 @@
 pragma solidity ^0.8.20;
 
 // interfaces
+import {IERC165} from "openzeppelin-contracts/contracts/utils/introspection/IERC165.sol";
 
 // libraries
 
 // contracts
-import {TestUtils} from "contracts/test/utils/TestUtils.sol";
-import {IntrospectionBase} from "contracts/src/diamond/facets/introspection/IntrospectionBase.sol";
+import {IntrospectionSetup} from "./IntrospectionSetup.sol";
 
-contract IntrospectionTest is TestUtils {
-  address internal deployer;
-  MockIntrospection internal introspection;
-
-  function setUp() public {
-    deployer = _randomAddress();
-
-    vm.startPrank(deployer);
-    introspection = new MockIntrospection();
-  }
-
-  function test_addInterface(bytes4 interfaceId) external {
-    introspection.addInterface(interfaceId);
-    assertTrue(introspection.supportsInterface(interfaceId));
-  }
-
-  function test_removeInterface(bytes4 interfaceId) external {
-    introspection.addInterface(interfaceId);
-    introspection.removeInterface(interfaceId);
-    assertFalse(introspection.supportsInterface(interfaceId));
-  }
-
-  function test_supportsInterface(bytes4 interfaceId) external {
-    introspection.addInterface(interfaceId);
-    assertTrue(introspection.supportsInterface(interfaceId));
-  }
-}
-
-contract MockIntrospection is IntrospectionBase {
-  function supportsInterface(bytes4 interfaceId) external view returns (bool) {
-    return _supportsInterface(interfaceId);
-  }
-
-  function addInterface(bytes4 interfaceId) external {
-    _addInterface(interfaceId);
-  }
-
-  function removeInterface(bytes4 interfaceId) external {
-    _removeInterface(interfaceId);
+contract IntrospectionTest is IntrospectionSetup {
+  function test_supportsInterface() external {
+    assertTrue(introspection.supportsInterface(type(IERC165).interfaceId));
   }
 }

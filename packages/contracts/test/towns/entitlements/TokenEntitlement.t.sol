@@ -2,10 +2,10 @@
 pragma solidity ^0.8.20;
 
 // utils
-import {FacetTest} from "contracts/test/diamond/Facet.t.sol";
+import {TestUtils} from "contracts/test/utils/TestUtils.sol";
 
 //interfaces
-import {IEntitlement} from "contracts/src/towns/entitlements/IEntitlement.sol";
+import {IEntitlement, IEntitlementBase} from "contracts/src/towns/entitlements/IEntitlement.sol";
 import {ITokenEntitlement} from "contracts/src/towns/entitlements/token/ITokenEntitlement.sol";
 
 //libraries
@@ -15,25 +15,28 @@ import {TokenEntitlement} from "contracts/src/towns/entitlements/token/TokenEnti
 import {ERC1967Proxy} from "openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import {MockERC721} from "contracts/test/mocks/MockERC721.sol";
 
-contract TokenEntitlementTest is FacetTest {
+contract TokenEntitlementTest is TestUtils, IEntitlementBase {
   TokenEntitlement internal implementation;
   TokenEntitlement internal tokenEntitlement;
   MockERC721 internal mockERC721;
 
   address internal entitlement;
+  address internal town;
+  address internal deployer;
 
-  function setUp() public override {
-    super.setUp();
+  function setUp() public {
+    deployer = _randomAddress();
+    town = _randomAddress();
 
+    vm.startPrank(deployer);
     mockERC721 = new MockERC721();
     implementation = new TokenEntitlement();
     entitlement = address(
       new ERC1967Proxy(
         address(implementation),
-        abi.encodeCall(TokenEntitlement.initialize, (diamond))
+        abi.encodeCall(TokenEntitlement.initialize, (town))
       )
     );
-
     tokenEntitlement = TokenEntitlement(entitlement);
     vm.stopPrank();
   }
@@ -56,7 +59,7 @@ contract TokenEntitlementTest is FacetTest {
       tokenIds: tokenIds
     });
 
-    vm.startPrank(diamond);
+    vm.startPrank(town);
     tokenEntitlement.setEntitlement(roleId, abi.encode(tokens));
 
     bytes[] memory entitlementData = tokenEntitlement
@@ -76,8 +79,8 @@ contract TokenEntitlementTest is FacetTest {
   }
 
   function test_setEntitlement_revert_empty_tokens(uint256 roleId) external {
-    vm.prank(diamond);
-    vm.expectRevert(IEntitlement.Entitlement__InvalidValue.selector);
+    vm.prank(town);
+    vm.expectRevert(Entitlement__InvalidValue.selector);
     tokenEntitlement.setEntitlement(
       roleId,
       abi.encode(new ITokenEntitlement.ExternalToken[](0))
@@ -87,8 +90,8 @@ contract TokenEntitlementTest is FacetTest {
   function test_setEntitlement_revert_wrong_token_address(
     uint256 roleId
   ) external {
-    vm.prank(diamond);
-    vm.expectRevert(IEntitlement.Entitlement__InvalidValue.selector);
+    vm.prank(town);
+    vm.expectRevert(Entitlement__InvalidValue.selector);
     tokenEntitlement.setEntitlement(
       roleId,
       abi.encode(new ITokenEntitlement.ExternalToken[](1))
@@ -113,8 +116,8 @@ contract TokenEntitlementTest is FacetTest {
       tokenIds: tokenIds
     });
 
-    vm.prank(diamond);
-    vm.expectRevert(IEntitlement.Entitlement__InvalidValue.selector);
+    vm.prank(town);
+    vm.expectRevert(Entitlement__InvalidValue.selector);
     tokenEntitlement.setEntitlement(roleId, abi.encode(tokens));
   }
 
@@ -136,52 +139,9 @@ contract TokenEntitlementTest is FacetTest {
       tokenIds: tokenIds
     });
 
-    vm.startPrank(diamond);
+    vm.startPrank(town);
     tokenEntitlement.setEntitlement(roleId, abi.encode(tokens));
     tokenEntitlement.removeEntitlement(roleId, abi.encode(tokens));
     vm.stopPrank();
   }
-
-  // function test_setEntitlement_revert_invalid_user(uint256 roleId) external {
-  //   address[] memory users = new address[](1);
-  //   users[0] = address(0);
-
-  //   vm.prank(diamond);
-  //   vm.expectRevert(IEntitlement.Entitlement__InvalidValue.selector);
-  //   tokenEntitlement.setEntitlement(roleId, abi.encode(users));
-  // }
-
-  // function test_removeEntitlement(uint256 roleId) external {
-  //   vm.assume(roleId != 0);
-
-  //   address user = _randomAddress();
-
-  //   address[] memory users = new address[](1);
-  //   users[0] = user;
-
-  //   vm.startPrank(diamond);
-  //   tokenEntitlement.setEntitlement(roleId, abi.encode(users));
-  //   tokenEntitlement.removeEntitlement(roleId, abi.encode(users));
-  //   vm.stopPrank();
-  // }
-
-  // function test_removeEntitlement_revert_invalid_value(
-  //   uint256 roleId
-  // ) external {
-  //   vm.assume(roleId != 0);
-
-  //   address user = _randomAddress();
-
-  //   address[] memory users = new address[](1);
-  //   users[0] = user;
-
-  //   vm.startPrank(diamond);
-  //   tokenEntitlement.setEntitlement(roleId, abi.encode(users));
-
-  //   users[0] = address(0);
-
-  //   vm.expectRevert(IEntitlement.Entitlement__InvalidValue.selector);
-  //   tokenEntitlement.removeEntitlement(roleId, abi.encode(users));
-  //   vm.stopPrank();
-  // }
 }

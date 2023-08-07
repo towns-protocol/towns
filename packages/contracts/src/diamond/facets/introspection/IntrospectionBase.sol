@@ -2,23 +2,32 @@
 pragma solidity ^0.8.20;
 
 // interfaces
-import {IIntrospectionEvents} from "./IERC165.sol";
+import {IIntrospectionBase} from "./IERC165.sol";
 
 // libraries
-import {IntrospectionService} from "./IntrospectionService.sol";
+import {IntrospectionStorage} from "./IntrospectionStorage.sol";
 
-abstract contract IntrospectionBase is IIntrospectionEvents {
+abstract contract IntrospectionBase is IIntrospectionBase {
   function _addInterface(bytes4 interfaceId) internal {
-    IntrospectionService.addInterface(interfaceId);
+    if (!_supportsInterface(interfaceId)) {
+      IntrospectionStorage.layout().supportedInterfaces[interfaceId] = true;
+    } else {
+      revert Introspection_AlreadySupported();
+    }
     emit InterfaceAdded(interfaceId);
   }
 
   function _removeInterface(bytes4 interfaceId) internal {
-    IntrospectionService.removeInterface(interfaceId);
+    if (_supportsInterface(interfaceId)) {
+      IntrospectionStorage.layout().supportedInterfaces[interfaceId] = false;
+    } else {
+      revert Introspection_NotSupported();
+    }
     emit InterfaceRemoved(interfaceId);
   }
 
   function _supportsInterface(bytes4 interfaceId) internal view returns (bool) {
-    return IntrospectionService.supportsInterface(interfaceId);
+    return
+      IntrospectionStorage.layout().supportedInterfaces[interfaceId] == true;
   }
 }

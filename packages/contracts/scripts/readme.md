@@ -19,7 +19,10 @@ contract DeployPioneer is Deployer {
     return "pioneerToken"; // will show up in addresses.json as key
   }
 
-  function __deploy(uint256 deployerPK) public override returns (address) {
+  function __deploy(
+    uint256 deployerPK,
+    address
+  ) public override returns (address) {
     vm.broadcast(deployerPK);
     return address(new Pioneer("Pioneer", "PIONEER", ""));
   }

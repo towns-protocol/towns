@@ -2,33 +2,15 @@
 pragma solidity ^0.8.20;
 
 // interfaces
-import {IEntitlementsStructs} from "./IEntitlements.sol";
+import {IEntitlementsBase} from "./IEntitlements.sol";
 
 // libraries
 import {EntitlementsService} from "contracts/src/towns/facets/entitlements/EntitlementsService.sol";
-import {TokenOwnableService} from "contracts/src/diamond/facets/ownable/token/TokenOwnableService.sol";
 
 // contracts
 
-contract EntitlementsBase is IEntitlementsStructs {
-  function _isEntitledToTown(
-    address user,
-    string calldata permission
-  ) internal view returns (bool) {
-    return EntitlementsService.isEntitledToTown(user, permission);
-  }
-
-  function _isEntitledToChannel(
-    string calldata channelId,
-    address user,
-    string calldata permission
-  ) internal view returns (bool) {
-    return EntitlementsService.isEntitledToChannel(channelId, user, permission);
-  }
-
+contract EntitlementsBase is IEntitlementsBase {
   function _addImmutableEntitlements(address[] memory entitlements) internal {
-    TokenOwnableService.checkOwner();
-
     for (uint256 i = 0; i < entitlements.length; i++) {
       EntitlementsService.validateEntitlement(entitlements[i]);
       EntitlementsService.addEntitlement(entitlements[i], true);
@@ -37,7 +19,6 @@ contract EntitlementsBase is IEntitlementsStructs {
 
   function _addEntitlement(address entitlement) internal {
     // validate permission
-    TokenOwnableService.checkOwner();
 
     // validate entitlement
     EntitlementsService.validateEntitlement(entitlement);
@@ -48,7 +29,6 @@ contract EntitlementsBase is IEntitlementsStructs {
 
   function _removeEntitlement(address entitlement) internal {
     // validate permission
-    TokenOwnableService.checkOwner();
 
     // validate entitlement
     EntitlementsService.validateEntitlement(entitlement);

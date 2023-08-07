@@ -7,6 +7,21 @@
     "abi": [
       {
         "inputs": [],
+        "name": "Entitlement__InvalidValue",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "Entitlement__NotAllowed",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "Entitlement__ValueAlreadyExists",
+        "type": "error"
+      },
+      {
+        "inputs": [],
         "name": "EntitlementsService__EntitlementAlreadyExists",
         "type": "error"
       },
@@ -38,8 +53,68 @@
             "type": "address"
           }
         ],
-        "name": "TokenOwnable__NotOwner",
+        "name": "Ownable__NotOwner",
         "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "Ownable__ZeroAddress",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "Pausable__NotPaused",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "Pausable__Paused",
+        "type": "error"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": true,
+            "internalType": "address",
+            "name": "previousOwner",
+            "type": "address"
+          },
+          {
+            "indexed": true,
+            "internalType": "address",
+            "name": "newOwner",
+            "type": "address"
+          }
+        ],
+        "name": "OwnershipTransferred",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": false,
+            "internalType": "address",
+            "name": "account",
+            "type": "address"
+          }
+        ],
+        "name": "Paused",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": false,
+            "internalType": "address",
+            "name": "account",
+            "type": "address"
+          }
+        ],
+        "name": "Unpaused",
+        "type": "event"
       },
       {
         "inputs": [
@@ -100,7 +175,7 @@
                 "type": "bool"
               }
             ],
-            "internalType": "struct IEntitlementsStructs.Entitlement",
+            "internalType": "struct IEntitlementsBase.Entitlement",
             "name": "",
             "type": "tuple"
           }
@@ -135,7 +210,7 @@
                 "type": "bool"
               }
             ],
-            "internalType": "struct IEntitlementsStructs.Entitlement[]",
+            "internalType": "struct IEntitlementsBase.Entitlement[]",
             "name": "",
             "type": "tuple[]"
           }
@@ -211,6 +286,11 @@
       }
     ],
     "devdoc": {
+      "events": {
+        "OwnershipTransferred(address,address)": {
+          "details": "This emits when ownership of a contract changes."
+        }
+      },
       "kind": "dev",
       "methods": {
         "addEntitlement(address)": {
@@ -347,19 +427,27 @@
       ]
     },
     "packages/contracts/src/diamond/facets/introspection/IERC165.sol": {
-      "keccak256": "0x58edff5c7238d9d543c9611a4446c50128cb74f469d143d0f7828b9e22d278e7",
+      "keccak256": "0xa1dfa0449031fced106dd105c184823595398c876be53b4bb8d855937a435816",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://90c2ce08be09894c3ffc8ebdbb4c78d4c14e00fdcc2f6ccf12ea6b6ab067ad1f",
-        "dweb:/ipfs/QmVg7hTxFt9Wt3ghGcY9ZxQuYPd99ujG1f9o7BnvhR15TZ"
+        "bzz-raw://e98a9007bca24776e4580c9326cfbb72ffe56334229626c336545be8c2c6e6d2",
+        "dweb:/ipfs/QmdqoQTUoDKqirUR3hscy4zBh4Kn2E1fRta1y9DfA43urV"
       ]
     },
-    "packages/contracts/src/diamond/facets/ownable/token/TokenOwnableService.sol": {
-      "keccak256": "0x2c7c3a8dab7a2df427d8e2308479bda133ae087cad424f57158c2f80e4f6b002",
+    "packages/contracts/src/diamond/facets/ownable/IERC173.sol": {
+      "keccak256": "0x76db3de67cf685fd097cba11229f8fcb1ddb25612193a9ced697508706a237fe",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://8c5aaebaf78cb9f0123c9b3c06a5ccdb36db5154afec9e58d69266ac2371d3d2",
-        "dweb:/ipfs/QmaeK8XXgTNztuvK7forU3irLxCV7yjZTmx1Ms4zKP8RqB"
+        "bzz-raw://3f6de17931a0734b33ffa015f207efaba72e71ffe7f5ca3a95178525546de620",
+        "dweb:/ipfs/QmXuw9kx5fAER4jYBHUDLpbB2mQhEkwBrZPa96JgEEY9nD"
+      ]
+    },
+    "packages/contracts/src/diamond/facets/ownable/token/TokenOwnableBase.sol": {
+      "keccak256": "0xbcbc472f917bac57d59fadafaec7bc33bd1e8f4e7e1e381581dbd42fa25e81d8",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://76079f20491ecd4cbfb21a1560616d82f86e650a1607e896e3ea43236a6184cc",
+        "dweb:/ipfs/QmeSYpbqhtegbdvdHrna4GNsgt5HCXHHydQ5k6b9ruLR3i"
       ]
     },
     "packages/contracts/src/diamond/facets/ownable/token/TokenOwnableStorage.sol": {
@@ -370,12 +458,20 @@
         "dweb:/ipfs/QmbPHUGMG9tRrnRfRPE8LWySd1pgjb8c7G6mMzTS7VuRCY"
       ]
     },
-    "packages/contracts/src/diamond/facets/pausable/PausableService.sol": {
-      "keccak256": "0x52fcddf400039ee33960f3296578a31f420a5f689e45ce8f550058cbb5065346",
+    "packages/contracts/src/diamond/facets/pausable/IPausable.sol": {
+      "keccak256": "0x51faf4ca7fa88bc4bf2699bab34692f0a43a316d0b3f95a8d7271935ef243a78",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://965b0df3ccf92fbd2e9d8324ce0b7258c73d6b9a7ca4517d78f64bb838de4197",
-        "dweb:/ipfs/QmZkcT61oD8xxYeMXF1dCK3mfHh5iHRow8URJfgvci4kXY"
+        "bzz-raw://e4ff1050ba7ec1bc7de90f562d8ccf7875f4faea0f12ca5101f22619f2dd6de2",
+        "dweb:/ipfs/QmeczRzWavYXmirfEbwGg5uLeLdXaENtFAzmxxFsggUHsW"
+      ]
+    },
+    "packages/contracts/src/diamond/facets/pausable/PausableBase.sol": {
+      "keccak256": "0xfdeeba59a9f9b6a31203aa45f9244767b5d790dbcf36c920cc0ec5471505e47f",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://72d6eb74b90e658834c9b9f6a9e391722c3eb3992aef2d4694c1a91473b291a1",
+        "dweb:/ipfs/QmXVV8mTt8LmFDhzn3Lm3BMLXNdJTzUMbMrpBjnUaMzm5F"
       ]
     },
     "packages/contracts/src/diamond/facets/pausable/PausableStorage.sol": {
@@ -387,35 +483,43 @@
       ]
     },
     "packages/contracts/src/towns/entitlements/IEntitlement.sol": {
-      "keccak256": "0x3f9ece409fddb53843218cb1a742face8577de97e9e9257f882d40c556ce0263",
+      "keccak256": "0x3c3733f40dcf373c19ea564ec9cbf49b33e96c27a80012e9be6f8d6d24e76c46",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://3e0c6972be5a1b9f13bead1486f33e1264560cd5e70e44a2f225924846b47541",
-        "dweb:/ipfs/Qmcqoufht7VmmUxpKTdZ9aHcs4sC6us45pirBaUqnL1VtH"
+        "bzz-raw://ba0686e15bc8bfac66d59f62e59832eaf6d4c1b636080f9b2367386d5dc72ecb",
+        "dweb:/ipfs/QmemW17L8TkGWG9RHKWTpjq9WBtYX3dmZsiTtzDmYNNXwE"
+      ]
+    },
+    "packages/contracts/src/towns/facets/Entitled.sol": {
+      "keccak256": "0x26b0a5b03f73365001308f4f05931456d354bbb8b12b0235bd8f76611989eb18",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://b1de8bb2927c6506bda38a31f37c49724497eb619ef91e42eed2ca633c903967",
+        "dweb:/ipfs/QmYirM962WpgQHoWz8ycKTCgxDM6VaWyJCqtPyTKh397Vf"
       ]
     },
     "packages/contracts/src/towns/facets/entitlements/Entitlements.sol": {
-      "keccak256": "0xac4ba963d833b579b76b1ad4fbfbc0c3405c194c2e4776b1408f934c1336b364",
+      "keccak256": "0xd6ed8b3d289cade3214d00022aa2138f466b157c1349ce16638010c824ecca46",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://50a666c56c533757b91189c93a5ca7d30cdfec3c6cd790fb628079067075b49a",
-        "dweb:/ipfs/QmXQzeh2KzqB7pCESPYbAX7Maa7Bsx3ZgXLpAG8guM6yVK"
+        "bzz-raw://b212bcf31a7ef43890e07f75a321291e9592b4fe99b0c8fa6e1615faf2288a03",
+        "dweb:/ipfs/QmWcJ4bas5cuwD6fu8Jsh92TaNqeM78URJjNCnDeUMiR7p"
       ]
     },
     "packages/contracts/src/towns/facets/entitlements/EntitlementsBase.sol": {
-      "keccak256": "0x74e24a0eaa41cd10264d0efc0e8850d241f54ec37477675b341a1d30b492c798",
+      "keccak256": "0x5800e907c403e6eacc28911a54c6558247bf00d1223e1f8397849624f53bbc2b",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://3a46e5d6427d8ef5aaaa191fa841338f79a081cf37502215f35827ae13b68c8d",
-        "dweb:/ipfs/QmeZRcLVY5TEFGBJ4zg9y3i7ynA6Lj19wHA6u7ZEXka5ki"
+        "bzz-raw://34973c8bcc43be6168161898c9d942dd7357e33a5417fe949e401db7dd79a140",
+        "dweb:/ipfs/QmUCn4x21VW5JjJK8msFTkj8FRtzswZH3MrLUCGfR1e5CA"
       ]
     },
     "packages/contracts/src/towns/facets/entitlements/EntitlementsService.sol": {
-      "keccak256": "0x438ea6c27084f09c737e027e42643debb64bddc8a3a06bf2ceb0341406dc98e6",
+      "keccak256": "0x312b81aee24b5974d794ee9e60e1accb9b53e1f1ab7a931354523a388d9fd449",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://21d883948be017290dcd5235d400db352c301c96c6e887e6f9a13316c4e11656",
-        "dweb:/ipfs/QmdPQh7YvEFiFhFbC59n5ziSaYMeZVPEE5xh1mQEfhEcPc"
+        "bzz-raw://b43ebad51a275a24244bcec1e9ab4c452d0ff1694802e0f8abe62b9133642037",
+        "dweb:/ipfs/QmWJsMsoQfGKrzSUN3AP1eGGr9v5by2KE4EpoYMDRS4V89"
       ]
     },
     "packages/contracts/src/towns/facets/entitlements/EntitlementsStorage.sol": {
@@ -427,11 +531,11 @@
       ]
     },
     "packages/contracts/src/towns/facets/entitlements/IEntitlements.sol": {
-      "keccak256": "0xda53380106ba136165aecd967565b11d43893adad98961bf5930843e42a0a71e",
+      "keccak256": "0xb466a5f375df71e1db46a8358504688b3a0da95cd93dd63c3a72111b55fd1b18",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://89302f9533f5c357a05a013f510a245de4a078eefb7eef5052a01659b46a02fa",
-        "dweb:/ipfs/Qma2qXeX1NzhruByPEHcwXQ329LnjLp53RrzAGNYd9r2SW"
+        "bzz-raw://8da3d044976e09322b31c4bd9aace156e149dd395052430f69b29b2f38ae1811",
+        "dweb:/ipfs/QmS6deT8YZkTe1CDqdZqnfHw3S1JgumFLNic7GjS3FUZHW"
       ]
     }
   },

@@ -6,7 +6,7 @@ pragma solidity ^0.8.20;
 // libraries
 
 // contracts
-interface IDiamondLoupeStructs {
+interface IDiamondLoupeBase {
   struct Facet {
     address facet;
     bytes4[] selectors;
@@ -18,7 +18,7 @@ interface IDiamondLoupeStructs {
  * @notice A loupe is a small magnifying glass used to look at diamonds.
  *         See [EIP-2535](https://eips.ethereum.org/EIPS/eip-2535).
  */
-interface IDiamondLoupe is IDiamondLoupeStructs {
+interface IDiamondLoupe is IDiamondLoupeBase {
   /**
    * @notice Gets all facet addresses and the selectors of supported functions.
    * @return facetInfo An array of Facet structs.

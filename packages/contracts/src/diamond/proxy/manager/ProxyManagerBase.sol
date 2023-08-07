@@ -3,21 +3,19 @@ pragma solidity ^0.8.20;
 
 // interfaces
 import {IDiamondLoupe} from "contracts/src/diamond/facets/loupe/IDiamondLoupe.sol";
+import {IProxyManagerBase} from "./IProxyManager.sol";
 
 // libraries
-import {ProxyManagerService} from "./ProxyManagerService.sol";
+import {ProxyManagerStorage} from "./ProxyManagerStorage.sol";
+import {Address} from "openzeppelin-contracts/contracts/utils/Address.sol";
 
 // contracts
 
-abstract contract ProxyManagerBase {
-  function __ProxyManagerUpgradeable_init(address implementation) internal {
-    ProxyManagerService.setImplementation(implementation);
-  }
-
+abstract contract ProxyManagerBase is IProxyManagerBase {
   function _getImplementation(
     bytes4 selector
   ) internal view virtual returns (address) {
-    address implementation = ProxyManagerService.getImplementation();
+    address implementation = ProxyManagerStorage.layout().implementation;
 
     address facet = IDiamondLoupe(implementation).facetAddress(selector);
     if (facet == address(0)) return implementation;
@@ -25,6 +23,12 @@ abstract contract ProxyManagerBase {
   }
 
   function _setImplementation(address implementation) internal {
-    ProxyManagerService.setImplementation(implementation);
+    if (!Address.isContract(implementation)) {
+      revert ProxyManager__NotContract(implementation);
+    }
+
+    ProxyManagerStorage.layout().implementation = implementation;
+
+    emit ProxyManager__ImplementationSet(implementation);
   }
 }

@@ -7,7 +7,7 @@ import {
 import {
     IEntitlement as LocalhostContract,
     IEntitlementInterface as LocalhostInterface,
-} from '@towns/generated/localhost/typings/IEntitlement'
+} from '@towns/generated/localhost/typings/entitlements/IEntitlement'
 import {
     IEntitlement as SepoliaContract,
     IEntitlementInterface as SepoliaInterface,

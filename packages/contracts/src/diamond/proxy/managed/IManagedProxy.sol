@@ -8,6 +8,6 @@ import {IProxy} from "../IProxy.sol";
 
 // contracts
 
-interface IManagedProxy is IProxy {
+interface IManagedProxyBase is IProxy {
   error ManagedProxy__FetchImplementationFailed();
 }

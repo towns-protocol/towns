@@ -77,7 +77,7 @@ contract MockUserEntitlement is
   function setEntitlement(
     uint256 roleId,
     bytes memory entitlementData
-  ) external returns (bytes32 entitlementId) {
+  ) external onlyTown returns (bytes32 entitlementId) {
     entitlementId = keccak256(abi.encodePacked(roleId, entitlementData));
 
     MockUserEntitlementStorage.Layout storage ds = MockUserEntitlementStorage

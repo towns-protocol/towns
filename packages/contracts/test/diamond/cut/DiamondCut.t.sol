@@ -2,32 +2,20 @@
 pragma solidity ^0.8.20;
 
 // interfaces
-import {IDiamond} from "contracts/src/diamond/IDiamond.sol";
-import {IDiamondCut, IDiamondCutEvents} from "contracts/src/diamond/facets/cut/IDiamondCut.sol";
-import {IERC165} from "contracts/src/diamond/facets/introspection/IERC165.sol";
+import {IDiamondCutBase} from "contracts/src/diamond/facets/cut/IDiamondCut.sol";
+import {IDiamond, Diamond} from "contracts/src/diamond/Diamond.sol";
+import {IDiamondCut, IDiamondCutBase} from "contracts/src/diamond/facets/cut/IDiamondCut.sol";
+import {IERC165} from "openzeppelin-contracts/contracts/utils/introspection/IERC165.sol";
+import {IMockFacet} from "contracts/test/mocks/MockFacet.sol";
+import {IOwnableBase} from "contracts/src/diamond/facets/ownable/IERC173.sol";
 
 // libraries
 
 // contracts
-import {FacetTest} from "contracts/test/diamond/Facet.t.sol";
-import {MockFacet, IMockFacet} from "contracts/test/mocks/MockFacet.sol";
+import {DiamondCutSetup} from "contracts/test/diamond/cut/DiamondCutSetup.sol";
 
-// errors
-// solhint-disable-next-line max-line-length
-import {DiamondCut_InvalidSelector, DiamondCut_FunctionFromSameFacetAlreadyExists, DiamondCut_FunctionAlreadyExists, DiamondCut_InvalidFacetRemoval, DiamondCut_FunctionDoesNotExist, DiamondCut_InvalidFacetCutAction, DiamondCut_InvalidFacet, DiamondCut_InvalidFacetSelectors, DiamondCut_ImmutableFacet, DiamondCut_InvalidContract} from "contracts/src/diamond/facets/cut/DiamondCutService.sol";
-
-import {Ownable__NotOwner} from "contracts/src/diamond/facets/ownable/OwnableService.sol";
-
-contract DiamondCutTest is FacetTest, IDiamondCutEvents {
-  IDiamondCut internal diamondCut;
+contract DiamondCutTest is DiamondCutSetup, IDiamondCutBase, IOwnableBase {
   IDiamond.FacetCut[] internal facetCuts;
-  MockFacet internal mockFacet;
-
-  function setUp() public override {
-    super.setUp();
-    diamondCut = IDiamondCut(diamond);
-    mockFacet = new MockFacet();
-  }
 
   function test_supportsInterface() external {
     assertTrue(
@@ -39,7 +27,6 @@ contract DiamondCutTest is FacetTest, IDiamondCutEvents {
     // create facet selectors
     bytes4[] memory facetSelectors = new bytes4[](1);
     facetSelectors[0] = mockFacet.mockFunction.selector;
-
     // create facet cuts
     IDiamond.FacetCut[] memory extensions = new IDiamond.FacetCut[](1);
     extensions[0] = IDiamond.FacetCut({
@@ -47,20 +34,16 @@ contract DiamondCutTest is FacetTest, IDiamondCutEvents {
       action: IDiamond.FacetCutAction.Add,
       functionSelectors: facetSelectors
     });
-
     vm.expectEmit(true, true, true, true, diamond);
     emit DiamondCut(extensions, address(0), "");
-
     // cut diamond
     diamondCut.diamondCut(extensions, address(0), "");
-
     // assert facet function is callable
     assertEq(IMockFacet(diamond).mockFunction(), 42);
   }
 
   function test_diamondCut_reverts_when_not_owner() external {
     vm.stopPrank();
-
     // create facet selectors
     bytes4[] memory facetSelectors = new bytes4[](1);
     facetSelectors[0] = mockFacet.mockFunction.selector;
@@ -74,7 +57,6 @@ contract DiamondCutTest is FacetTest, IDiamondCutEvents {
     });
 
     address caller = _randomAddress();
-
     vm.expectRevert(abi.encodeWithSelector(Ownable__NotOwner.selector, caller));
     vm.prank(caller);
     diamondCut.diamondCut(extensions, address(0), "");
@@ -82,11 +64,9 @@ contract DiamondCutTest is FacetTest, IDiamondCutEvents {
 
   function test_reverts_when_init_not_contract() external {
     address init = _randomAddress();
-
     // create facet selectors
     bytes4[] memory facetSelectors = new bytes4[](1);
     facetSelectors[0] = mockFacet.mockFunction.selector;
-
     // create facet cuts
     IDiamond.FacetCut[] memory extensions = new IDiamond.FacetCut[](1);
     extensions[0] = IDiamond.FacetCut({
@@ -94,11 +74,9 @@ contract DiamondCutTest is FacetTest, IDiamondCutEvents {
       action: IDiamond.FacetCutAction.Add,
       functionSelectors: facetSelectors
     });
-
     vm.expectRevert(
       abi.encodeWithSelector(DiamondCut_InvalidContract.selector, init)
     );
-
     diamondCut.diamondCut(extensions, init, "");
   }
 
@@ -110,7 +88,6 @@ contract DiamondCutTest is FacetTest, IDiamondCutEvents {
         functionSelectors: new bytes4[](0)
       })
     );
-
     vm.expectRevert(
       abi.encodeWithSelector(DiamondCut_InvalidFacet.selector, address(0))
     );
@@ -119,7 +96,6 @@ contract DiamondCutTest is FacetTest, IDiamondCutEvents {
 
   function test_revertsWhenFacetIsNotContract() external {
     address facet = _randomAddress();
-
     facetCuts.push(
       IDiamond.FacetCut({
         facetAddress: facet,
@@ -127,7 +103,6 @@ contract DiamondCutTest is FacetTest, IDiamondCutEvents {
         functionSelectors: new bytes4[](0)
       })
     );
-
     vm.expectRevert(
       abi.encodeWithSelector(DiamondCut_InvalidFacet.selector, facet)
     );
@@ -142,7 +117,6 @@ contract DiamondCutTest is FacetTest, IDiamondCutEvents {
         functionSelectors: new bytes4[](0)
       })
     );
-
     vm.expectRevert(
       abi.encodeWithSelector(
         DiamondCut_InvalidFacetSelectors.selector,
@@ -155,11 +129,9 @@ contract DiamondCutTest is FacetTest, IDiamondCutEvents {
   // =============================================================
   //                           Add Facet
   // =============================================================
-
   function test_revertWhenAddingFunctionAlreadyExists() external {
     bytes4[] memory facetSelectors = new bytes4[](1);
     facetSelectors[0] = mockFacet.mockFunction.selector;
-
     facetCuts.push(
       IDiamond.FacetCut({
         facetAddress: address(mockFacet),
@@ -167,9 +139,7 @@ contract DiamondCutTest is FacetTest, IDiamondCutEvents {
         functionSelectors: facetSelectors
       })
     );
-
     diamondCut.diamondCut(facetCuts, address(0), "");
-
     vm.expectRevert(
       abi.encodeWithSelector(
         DiamondCut_FunctionAlreadyExists.selector,
@@ -182,7 +152,6 @@ contract DiamondCutTest is FacetTest, IDiamondCutEvents {
   function test_revertWhenAddingZeroSelector() external {
     bytes4[] memory facetSelectors = new bytes4[](1);
     facetSelectors[0] = bytes4(0);
-
     facetCuts.push(
       IDiamond.FacetCut({
         facetAddress: address(mockFacet),
@@ -190,7 +159,6 @@ contract DiamondCutTest is FacetTest, IDiamondCutEvents {
         functionSelectors: facetSelectors
       })
     );
-
     vm.expectRevert(DiamondCut_InvalidSelector.selector);
     diamondCut.diamondCut(facetCuts, address(0), "");
   }
@@ -198,12 +166,10 @@ contract DiamondCutTest is FacetTest, IDiamondCutEvents {
   // =============================================================
   //                        Remove Facet
   // =============================================================
-
   function test_revertWhenRemovingFromOtherFacet() external {
     // create facet selectors
     bytes4[] memory facetSelectors = new bytes4[](1);
     facetSelectors[0] = mockFacet.mockFunction.selector;
-
     // create facet cuts
     IDiamond.FacetCut[] memory extensions = new IDiamond.FacetCut[](1);
     extensions[0] = IDiamond.FacetCut({
@@ -211,13 +177,10 @@ contract DiamondCutTest is FacetTest, IDiamondCutEvents {
       action: IDiamond.FacetCutAction.Add,
       functionSelectors: facetSelectors
     });
-
     // cut diamond
     diamondCut.diamondCut(extensions, address(0), "");
-
     facetSelectors = new bytes4[](1);
     facetSelectors[0] = 0x12345678;
-
     facetCuts.push(
       IDiamond.FacetCut({
         facetAddress: address(mockFacet),
@@ -225,7 +188,6 @@ contract DiamondCutTest is FacetTest, IDiamondCutEvents {
         functionSelectors: facetSelectors
       })
     );
-
     vm.expectRevert(
       abi.encodeWithSelector(
         DiamondCut_InvalidFacetRemoval.selector,
@@ -240,7 +202,6 @@ contract DiamondCutTest is FacetTest, IDiamondCutEvents {
     // create facet selectors
     bytes4[] memory facetSelectors = new bytes4[](1);
     facetSelectors[0] = mockFacet.mockFunction.selector;
-
     // create facet cuts
     IDiamond.FacetCut[] memory extensions = new IDiamond.FacetCut[](1);
     extensions[0] = IDiamond.FacetCut({
@@ -248,13 +209,10 @@ contract DiamondCutTest is FacetTest, IDiamondCutEvents {
       action: IDiamond.FacetCutAction.Add,
       functionSelectors: facetSelectors
     });
-
     // cut diamond
     diamondCut.diamondCut(extensions, address(0), "");
-
     facetSelectors = new bytes4[](1);
     facetSelectors[0] = bytes4(0);
-
     facetCuts.push(
       IDiamond.FacetCut({
         facetAddress: address(mockFacet),
@@ -262,7 +220,6 @@ contract DiamondCutTest is FacetTest, IDiamondCutEvents {
         functionSelectors: facetSelectors
       })
     );
-
     vm.expectRevert(DiamondCut_InvalidSelector.selector);
     diamondCut.diamondCut(facetCuts, address(0), "");
   }
@@ -275,7 +232,6 @@ contract DiamondCutTest is FacetTest, IDiamondCutEvents {
         functionSelectors: new bytes4[](1)
       })
     );
-
     vm.expectRevert(DiamondCut_ImmutableFacet.selector);
     diamondCut.diamondCut(facetCuts, address(0), "");
   }
@@ -283,11 +239,9 @@ contract DiamondCutTest is FacetTest, IDiamondCutEvents {
   // =============================================================
   //                        Replace Facet
   // =============================================================
-
   function test_revertWhenReplacingZeroSelector() external {
     bytes4[] memory facetSelectors = new bytes4[](1);
     facetSelectors[0] = bytes4(0);
-
     facetCuts.push(
       IDiamond.FacetCut({
         facetAddress: address(mockFacet),
@@ -295,7 +249,6 @@ contract DiamondCutTest is FacetTest, IDiamondCutEvents {
         functionSelectors: facetSelectors
       })
     );
-
     vm.expectRevert(DiamondCut_InvalidSelector.selector);
     diamondCut.diamondCut(facetCuts, address(0), "");
   }
@@ -303,7 +256,6 @@ contract DiamondCutTest is FacetTest, IDiamondCutEvents {
   function test_revertWhenReplacingFunctionFromSameFacet() external {
     bytes4[] memory facetSelectors = new bytes4[](1);
     facetSelectors[0] = mockFacet.mockFunction.selector;
-
     facetCuts.push(
       IDiamond.FacetCut({
         facetAddress: address(mockFacet),
@@ -311,7 +263,6 @@ contract DiamondCutTest is FacetTest, IDiamondCutEvents {
         functionSelectors: facetSelectors
       })
     );
-
     facetCuts.push(
       IDiamond.FacetCut({
         facetAddress: address(mockFacet),
@@ -319,7 +270,6 @@ contract DiamondCutTest is FacetTest, IDiamondCutEvents {
         functionSelectors: facetSelectors
       })
     );
-
     vm.expectRevert(
       abi.encodeWithSelector(
         DiamondCut_FunctionFromSameFacetAlreadyExists.selector,
@@ -332,7 +282,6 @@ contract DiamondCutTest is FacetTest, IDiamondCutEvents {
   function test_revertWhenReplacingImmutableFunction() external {
     bytes4[] memory facetSelectors = new bytes4[](1);
     facetSelectors[0] = mockFacet.mockFunction.selector;
-
     facetCuts.push(
       IDiamond.FacetCut({
         facetAddress: address(diamond),
@@ -340,7 +289,6 @@ contract DiamondCutTest is FacetTest, IDiamondCutEvents {
         functionSelectors: facetSelectors
       })
     );
-
     vm.expectRevert(DiamondCut_ImmutableFacet.selector);
     diamondCut.diamondCut(facetCuts, address(0), "");
   }

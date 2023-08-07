@@ -41,7 +41,10 @@ contract DeploySpaceFactory is Deployer {
     return "spaceFactory";
   }
 
-  function __deploy(uint256 deployerPK) public override returns (address) {
+  function __deploy(
+    uint256 deployerPK,
+    address
+  ) public override returns (address) {
     deployPioneer = new DeployPioneer();
     pioneer = Pioneer(payable(deployPioneer.deploy()));
 

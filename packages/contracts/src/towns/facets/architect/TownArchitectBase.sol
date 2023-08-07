@@ -2,9 +2,9 @@
 pragma solidity ^0.8.20;
 
 // interfaces
-import {ITownArchitect, ITownArchitectStructs, ITownArchitectEvents} from "./ITownArchitect.sol";
+import {ITownArchitect, ITownArchitectBase} from "./ITownArchitect.sol";
 import {IEntitlement} from "contracts/src/towns/entitlements/IEntitlement.sol";
-import {IRoles, IRolesStructs} from "contracts/src/towns/facets/roles/IRoles.sol";
+import {IRoles, IRolesBase} from "contracts/src/towns/facets/roles/IRoles.sol";
 import {IChannel} from "contracts/src/towns/facets/channels/IChannel.sol";
 import {IEntitlements} from "contracts/src/towns/facets/entitlements/IEntitlements.sol";
 
@@ -13,9 +13,9 @@ import {IProxyManager} from "contracts/src/diamond/proxy/manager/IProxyManager.s
 // libraries
 import {TownArchitectStorage} from "./TownArchitectStorage.sol";
 import {TownArchitectService} from "./TownArchitectService.sol";
-import {PausableService} from "contracts/src/diamond/facets/pausable/PausableService.sol";
 
 // contracts
+
 import {Factory} from "contracts/src/utils/Factory.sol";
 import {TownProxy} from "contracts/src/towns/facets/proxy/TownProxy.sol";
 
@@ -26,11 +26,7 @@ import {UserEntitlement} from "contracts/src/towns/entitlements/user/UserEntitle
 import {TokenEntitlement} from "contracts/src/towns/entitlements/token/TokenEntitlement.sol";
 import {ERC1967Proxy} from "openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
-abstract contract TownArchitectBase is
-  Factory,
-  ITownArchitectEvents,
-  ITownArchitectStructs
-{
+abstract contract TownArchitectBase is Factory, ITownArchitectBase {
   function _getTownById(string memory townId) internal view returns (address) {
     return TownArchitectService.getTownById(townId);
   }
@@ -72,9 +68,6 @@ abstract contract TownArchitectBase is
   function _createTown(
     TownInfo memory townInfo
   ) internal returns (address townAddress) {
-    // validate not paused
-    PausableService.requireNotPaused();
-
     // validate id length
     TownArchitectService.checkStringLength(townInfo.id);
 
@@ -179,7 +172,7 @@ abstract contract TownArchitectBase is
     roleId = IRoles(town).createRole(
       member.role.name,
       member.role.permissions,
-      new IRolesStructs.CreateEntitlement[](0)
+      new IRolesBase.CreateEntitlement[](0)
     );
 
     if (member.users.length != 0) {
@@ -190,7 +183,7 @@ abstract contract TownArchitectBase is
 
       IRoles(town).addRoleToEntitlement(
         roleId,
-        IRolesStructs.CreateEntitlement({
+        IRolesBase.CreateEntitlement({
           module: userEntitlement,
           data: abi.encode(member.users)
         })
@@ -201,7 +194,7 @@ abstract contract TownArchitectBase is
 
     IRoles(town).addRoleToEntitlement(
       roleId,
-      IRolesStructs.CreateEntitlement({
+      IRolesBase.CreateEntitlement({
         module: tokenEntitlement,
         data: abi.encode(member.tokens)
       })
@@ -213,13 +206,13 @@ abstract contract TownArchitectBase is
     address userEntitlement,
     RoleInfo memory everyone
   ) internal returns (uint256 roleId) {
-    IRolesStructs.CreateEntitlement[]
-      memory entitlements = new IRolesStructs.CreateEntitlement[](1);
+    IRolesBase.CreateEntitlement[]
+      memory entitlements = new IRolesBase.CreateEntitlement[](1);
 
     address[] memory users = new address[](1);
     users[0] = TownArchitectService.EVERYONE_ADDRESS;
 
-    entitlements[0] = IRolesStructs.CreateEntitlement({
+    entitlements[0] = IRolesBase.CreateEntitlement({
       module: userEntitlement,
       data: abi.encode(users)
     });

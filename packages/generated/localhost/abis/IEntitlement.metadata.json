@@ -274,11 +274,11 @@
   },
   "sources": {
     "packages/contracts/src/towns/entitlements/IEntitlement.sol": {
-      "keccak256": "0x3f9ece409fddb53843218cb1a742face8577de97e9e9257f882d40c556ce0263",
+      "keccak256": "0x3c3733f40dcf373c19ea564ec9cbf49b33e96c27a80012e9be6f8d6d24e76c46",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://3e0c6972be5a1b9f13bead1486f33e1264560cd5e70e44a2f225924846b47541",
-        "dweb:/ipfs/Qmcqoufht7VmmUxpKTdZ9aHcs4sC6us45pirBaUqnL1VtH"
+        "bzz-raw://ba0686e15bc8bfac66d59f62e59832eaf6d4c1b636080f9b2367386d5dc72ecb",
+        "dweb:/ipfs/QmemW17L8TkGWG9RHKWTpjq9WBtYX3dmZsiTtzDmYNNXwE"
       ]
     }
   },

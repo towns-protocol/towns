@@ -7,16 +7,18 @@ import {IProxyManager} from "./IProxyManager.sol";
 // libraries
 import {ProxyManagerBase} from "./ProxyManagerBase.sol";
 import {OwnableBase} from "contracts/src/diamond/facets/ownable/OwnableBase.sol";
-import {Initializable} from "contracts/src/diamond/facets/initializable/Initializable.sol";
+import {Facet} from "contracts/src/diamond/facets/Facet.sol";
 
 // contracts
 
-contract ProxyManager is
-  ProxyManagerBase,
-  OwnableBase,
-  Initializable,
-  IProxyManager
-{
+contract ProxyManager is IProxyManager, ProxyManagerBase, OwnableBase, Facet {
+  function __ProxyManager_init(
+    address implementation
+  ) external onlyInitializing {
+    _setImplementation(implementation);
+    _addInterface(type(IProxyManager).interfaceId);
+  }
+
   function getImplementation(
     bytes4 selector
   ) external view virtual returns (address) {

@@ -1,5 +1,25 @@
 [
   {
+    "inputs": [],
+    "name": "Initializable_InInitializingState",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "Initializable_NotInInitializingState",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "Introspection_AlreadySupported",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "Introspection_NotSupported",
+    "type": "error"
+  },
+  {
     "inputs": [
       {
         "internalType": "address",
@@ -11,6 +31,11 @@
     "type": "error"
   },
   {
+    "inputs": [],
+    "name": "Ownable__ZeroAddress",
+    "type": "error"
+  },
+  {
     "inputs": [
       {
         "internalType": "address",
@@ -18,7 +43,7 @@
         "type": "address"
       }
     ],
-    "name": "ProxyManagerService__NotContract",
+    "name": "ProxyManager__NotContract",
     "type": "error"
   },
   {
@@ -26,12 +51,38 @@
     "inputs": [
       {
         "indexed": false,
-        "internalType": "uint8",
+        "internalType": "uint32",
         "name": "version",
-        "type": "uint8"
+        "type": "uint32"
       }
     ],
     "name": "Initialized",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "bytes4",
+        "name": "interfaceId",
+        "type": "bytes4"
+      }
+    ],
+    "name": "InterfaceAdded",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "bytes4",
+        "name": "interfaceId",
+        "type": "bytes4"
+      }
+    ],
+    "name": "InterfaceRemoved",
     "type": "event"
   },
   {
@@ -52,6 +103,32 @@
     ],
     "name": "OwnershipTransferred",
     "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "implementation",
+        "type": "address"
+      }
+    ],
+    "name": "ProxyManager__ImplementationSet",
+    "type": "event"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "implementation",
+        "type": "address"
+      }
+    ],
+    "name": "__ProxyManager_init",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
   },
   {
     "inputs": [

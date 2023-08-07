@@ -2,25 +2,22 @@
 pragma solidity ^0.8.20;
 
 // interfaces
-import {IChannelStructs} from "./IChannel.sol";
+import {IChannelBase} from "./IChannel.sol";
 
 // libraries
 import {Permissions} from "contracts/src/spaces/libraries/Permissions.sol";
 
 // services
-import {EntitlementsService} from "contracts/src/towns/facets/entitlements/EntitlementsService.sol";
 import {ChannelService} from "./ChannelService.sol";
 
 import {Validator} from "contracts/src/utils/Validator.sol";
 
-abstract contract ChannelBase is IChannelStructs {
+abstract contract ChannelBase is IChannelBase {
   function _createChannel(
     string memory channelId,
     string memory metadata,
     uint256[] memory roleIds
   ) internal {
-    EntitlementsService.validatePermission(Permissions.AddRemoveChannels);
-
     Validator.checkLength(metadata, 0);
     Validator.checkLength(channelId, 2);
     ChannelService.createChannel(channelId, metadata, roleIds);
@@ -73,14 +70,11 @@ abstract contract ChannelBase is IChannelStructs {
     string memory metadata,
     bool disabled
   ) internal {
-    EntitlementsService.validatePermission(Permissions.AddRemoveChannels);
-
     Validator.checkLength(channelId, 2);
     ChannelService.updateChannel(channelId, metadata, disabled);
   }
 
   function _removeChannel(string memory id) internal {
-    EntitlementsService.validatePermission(Permissions.AddRemoveChannels);
     ChannelService.removeChannel(id);
   }
 
@@ -88,11 +82,6 @@ abstract contract ChannelBase is IChannelStructs {
     string calldata channelId,
     uint256 roleId
   ) internal {
-    EntitlementsService.validateChannelPermission(
-      channelId,
-      Permissions.AddRemoveChannels
-    );
-
     ChannelService.addRoleToChannel(channelId, roleId);
   }
 
@@ -100,11 +89,6 @@ abstract contract ChannelBase is IChannelStructs {
     string calldata channelId,
     uint256 roleId
   ) internal {
-    EntitlementsService.validateChannelPermission(
-      channelId,
-      Permissions.AddRemoveChannels
-    );
-
     ChannelService.removeRoleFromChannel(channelId, roleId);
   }
 }

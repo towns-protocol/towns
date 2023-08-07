@@ -9,12 +9,14 @@ import {IDiamondCut} from "contracts/src/diamond/facets/cut/IDiamondCut.sol";
 
 // contracts
 import {TownOwner} from "contracts/src/tokens/TownOwner.sol";
+import {DiamondCutFacet} from "contracts/src/diamond/facets/cut/DiamondCutFacet.sol";
+import {DiamondLoupeFacet} from "contracts/src/diamond/facets/loupe/DiamondLoupeFacet.sol";
+import {OwnableFacet} from "contracts/src/diamond/facets/ownable/OwnableFacet.sol";
 import {ProxyManager} from "contracts/src/diamond/proxy/manager/ProxyManager.sol";
-import {Pausable} from "contracts/src/diamond/facets/pausable/Pausable.sol";
+import {PausableFacet} from "contracts/src/diamond/facets/pausable/PausableFacet.sol";
 import {ERC721Holder} from "openzeppelin-contracts/contracts/token/ERC721/utils/ERC721Holder.sol";
 import {TownArchitect} from "contracts/src/towns/facets/architect/TownArchitect.sol";
-import {TownFactoryInit} from "contracts/src/towns/initializers/TownFactoryInit.sol";
-import {TownFactory} from "contracts/src/towns/TownFactory.sol";
+import {Diamond} from "contracts/src/diamond/Diamond.sol";
 
 // helpers
 import {Deployer} from "./common/Deployer.s.sol";
@@ -23,10 +25,17 @@ import {DeployTownOwner} from "contracts/scripts/DeployTownOwner.s.sol";
 import {DeployTokenEntitlement, DeployUserEntitlement} from "contracts/scripts/DeployEntitlements.s.sol";
 import {DeployTown} from "contracts/scripts/DeployTown.s.sol";
 
-import {ProxyManagerHelper} from "contracts/test/towns/facets/manager/ProxyManagerSetup.sol";
+// helpers
+import {DiamondCutHelper} from "contracts/test/diamond/cut/DiamondCutSetup.sol";
+import {DiamondLoupeHelper} from "contracts/test/diamond/loupe/DiamondLoupeSetup.sol";
+
+import {OwnableHelper} from "contracts/test/diamond/ownable/OwnableSetup.sol";
+import {ProxyManagerHelper} from "contracts/test/diamond/proxy/ProxyManagerSetup.sol";
 import {PausableHelper} from "contracts/test/diamond/pausable/PausableSetup.sol";
-import {ERC721HolderHelper} from "contracts/test/towns/facets/holder/ERC721HolderSetup.sol";
-import {TownArchitectHelper} from "contracts/test/towns/facets/architect/TownArchitectSetup.sol";
+import {ERC721HolderHelper} from "contracts/test/towns/holder/ERC721HolderSetup.sol";
+import {TownArchitectHelper} from "contracts/test/towns/architect/TownArchitectSetup.sol";
+
+import {MultiInit} from "contracts/src/diamond/initializers/MultiInit.sol";
 
 contract DeployTownFactory is Deployer {
   DeployPioneer deployPioneer = new DeployPioneer();
@@ -39,63 +48,118 @@ contract DeployTownFactory is Deployer {
   ProxyManagerHelper proxyManagerHelper = new ProxyManagerHelper();
   PausableHelper pausableHelper = new PausableHelper();
   ERC721HolderHelper holderHelper = new ERC721HolderHelper();
+  OwnableHelper ownableHelper = new OwnableHelper();
+  DiamondCutHelper cutHelper = new DiamondCutHelper();
+  DiamondLoupeHelper loupeHelper = new DiamondLoupeHelper();
+
+  address[] initAddresses = new address[](6);
+  bytes[] initDatas = new bytes[](6);
+
+  address diamondCut;
+  address diamondLoupe;
+  address ownable;
+  address proxyManager;
+  address pausable;
+  address holder;
+  address architect;
+  address multiInit;
 
   function versionName() public pure override returns (string memory) {
     return "townFactory";
   }
 
-  function __deploy(uint256 deployerPK) public override returns (address) {
+  function __deploy(
+    uint256 deployerPK,
+    address deployer
+  ) public override returns (address) {
     address pioneer = deployPioneer.deploy();
     address townToken = deployTownOwner.deploy();
 
     vm.startBroadcast(deployerPK);
-    address proxyManager = address(new ProxyManager());
-    address pausable = address(new Pausable());
-    address holder = address(new ERC721Holder());
-    address architect = address(new TownArchitect());
-    address init = address(new TownFactoryInit());
-    address townFactory = address(new TownFactory());
+    diamondCut = address(new DiamondCutFacet());
+    diamondLoupe = address(new DiamondLoupeFacet());
+    ownable = address(new OwnableFacet());
+    proxyManager = address(new ProxyManager());
+    pausable = address(new PausableFacet());
+    holder = address(new ERC721Holder());
+    architect = address(new TownArchitect());
+    multiInit = address(new MultiInit());
     vm.stopBroadcast();
 
-    info("ProxyManager Facet deployed at", proxyManager);
-    info("Pausable Facet deployed at", pausable);
-    info("ERC721Holder Facet deployed at", holder);
-    info("TownArchitect Facet deployed at", architect);
-    info("TownFactoryInit deployed at", init);
-
-    TownFactoryInit.Args memory args = TownFactoryInit.Args({
-      proxyImplementation: deployTown.deploy(),
-      townToken: townToken,
-      userEntitlementImplementation: deployUserEntitlement.deploy(),
-      tokenEntitlementImplementation: deployTokenEntitlement.deploy()
-    });
-
-    IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](4);
+    IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](7);
     uint256 index;
 
-    cuts[index++] = proxyManagerHelper.makeDeployCut(
-      proxyManager,
+    cuts[index++] = cutHelper.makeDeployCut(
+      diamondCut,
       IDiamond.FacetCutAction.Add
     );
-    cuts[index++] = pausableHelper.makeDeployCut(
-      pausable,
+
+    cuts[index++] = loupeHelper.makeDeployCut(
+      diamondLoupe,
+      IDiamond.FacetCutAction.Add
+    );
+
+    cuts[index++] = townArchitectHelper.makeDeployCut(
+      architect,
+      IDiamond.FacetCutAction.Add
+    );
+    cuts[index++] = proxyManagerHelper.makeDeployCut(
+      proxyManager,
       IDiamond.FacetCutAction.Add
     );
     cuts[index++] = holderHelper.makeDeployCut(
       holder,
       IDiamond.FacetCutAction.Add
     );
-    cuts[index++] = townArchitectHelper.makeDeployCut(
-      architect,
+    cuts[index++] = ownableHelper.makeDeployCut(
+      ownable,
+      IDiamond.FacetCutAction.Add
+    );
+    cuts[index++] = pausableHelper.makeDeployCut(
+      pausable,
       IDiamond.FacetCutAction.Add
     );
 
-    vm.startBroadcast(deployerPK);
-    IDiamondCut(townFactory).diamondCut(
-      cuts,
-      init,
-      abi.encodeWithSelector(TownFactoryInit.init.selector, args)
+    index = 0;
+
+    initAddresses[index++] = diamondCut;
+    initAddresses[index++] = diamondLoupe;
+    initAddresses[index++] = architect;
+    initAddresses[index++] = proxyManager;
+    initAddresses[index++] = ownable;
+    initAddresses[index++] = pausable;
+
+    index = 0;
+
+    initDatas[index++] = cutHelper.makeInitData("");
+    initDatas[index++] = loupeHelper.makeInitData("");
+    initDatas[index++] = abi.encodeWithSelector(
+      townArchitectHelper.initializer(),
+      townToken, // townToken
+      deployUserEntitlement.deploy(), // userEntitlement
+      deployTokenEntitlement.deploy() // tokenEntitlement
     );
+    initDatas[index++] = proxyManagerHelper.makeInitData(
+      abi.encode(deployTown.deploy())
+    );
+    initDatas[index++] = ownableHelper.makeInitData(abi.encode(deployer));
+    initDatas[index++] = pausableHelper.makeInitData("");
+
+    vm.startBroadcast(deployerPK);
+    address townFactory = address(
+      new Diamond(
+        Diamond.InitParams({
+          baseFacets: cuts,
+          init: multiInit,
+          initData: abi.encodeWithSelector(
+            MultiInit.multiInit.selector,
+            initAddresses,
+            initDatas
+          )
+        })
+      )
+    );
+
     TownOwner(townToken).setFactory(address(townFactory));
     TownArchitect(townFactory).gateByToken(pioneer, 1);
     vm.stopBroadcast();

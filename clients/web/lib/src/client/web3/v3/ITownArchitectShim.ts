@@ -6,7 +6,7 @@ import {
 } from '@towns/generated/goerli/v3/typings/ITownArchitect'
 import {
     ITownArchitect as LocalhostContract,
-    ITownArchitectStructs as LocalhostITownArchitectStructs,
+    ITownArchitectBase as LocalhostITownArchitectStructs,
     ITownArchitectInterface as LocalhostInterface,
 } from '@towns/generated/localhost/v3/typings/ITownArchitect'
 import {

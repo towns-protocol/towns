@@ -2,37 +2,42 @@
 pragma solidity ^0.8.20;
 
 // interfaces
-import {IERC173Events} from "./IERC173.sol";
+import {IOwnableBase} from "./IERC173.sol";
 import {IERC173} from "./IERC173.sol";
 
 // libraries
-import {OwnableService} from "./OwnableService.sol";
+import {OwnableStorage} from "./OwnableStorage.sol";
 
 // contracts
 
-abstract contract OwnableBase is IERC173Events {
-  function __Ownable_init() internal {
-    OwnableService.transferOwnership(msg.sender);
-  }
-
+abstract contract OwnableBase is IOwnableBase {
   modifier onlyOwner() {
-    OwnableService.checkOwner();
+    if (msg.sender != _owner()) {
+      revert Ownable__NotOwner(msg.sender);
+    }
     _;
   }
 
+  function _checkOwner(address owner) internal view {
+    if (owner != _owner()) {
+      revert Ownable__NotOwner(owner);
+    }
+  }
+
   function _owner() internal view returns (address owner) {
-    owner = OwnableService.owner();
+    return OwnableStorage.layout().owner;
   }
 
   function _transferOwnership(address newOwner) internal {
     address oldOwner = _owner();
-    OwnableService.transferOwnership(newOwner);
+    if (newOwner == address(0)) revert Ownable__ZeroAddress();
+    OwnableStorage.layout().owner = newOwner;
     emit OwnershipTransferred(oldOwner, newOwner);
   }
 
   function _renounceOwnership() internal {
     address oldOwner = _owner();
-    OwnableService.renounceOwnership();
+    OwnableStorage.layout().owner = address(0);
     emit OwnershipTransferred(oldOwner, address(0));
   }
 }

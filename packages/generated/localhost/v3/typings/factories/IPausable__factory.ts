@@ -9,6 +9,42 @@ import type { IPausable, IPausableInterface } from "../IPausable";
 const _abi = [
   {
     inputs: [],
+    name: "Pausable__NotPaused",
+    type: "error",
+  },
+  {
+    inputs: [],
+    name: "Pausable__Paused",
+    type: "error",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: false,
+        internalType: "address",
+        name: "account",
+        type: "address",
+      },
+    ],
+    name: "Paused",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: false,
+        internalType: "address",
+        name: "account",
+        type: "address",
+      },
+    ],
+    name: "Unpaused",
+    type: "event",
+  },
+  {
+    inputs: [],
     name: "pause",
     outputs: [],
     stateMutability: "nonpayable",

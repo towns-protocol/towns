@@ -21,7 +21,10 @@ contract DeploySpaceUpgrades is Deployer {
     return "spaceUpgrades";
   }
 
-  function __deploy(uint256 deployerPK) public override returns (address) {
+  function __deploy(
+    uint256 deployerPK,
+    address
+  ) public override returns (address) {
     DeploySpaceFactory deploySpaceFactory = new DeploySpaceFactory();
     SpaceFactory spaceFactory = SpaceFactory(deploySpaceFactory.deploy());
 

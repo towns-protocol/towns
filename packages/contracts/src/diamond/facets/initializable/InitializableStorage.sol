@@ -12,7 +12,7 @@ library InitializableStorage {
     keccak256("towns.contracts.diamond.Initializable");
 
   struct Layout {
-    uint8 initialized;
+    uint32 version;
     bool initializing;
   }
 

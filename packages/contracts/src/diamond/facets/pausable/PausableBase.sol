@@ -2,39 +2,39 @@
 pragma solidity ^0.8.20;
 
 // interfaces
-import {IPausableEvents} from "./IPausable.sol";
+import {IPausableBase} from "./IPausable.sol";
 
 // libraries
-import {PausableService} from "./PausableService.sol";
+import {PausableStorage} from "./PausableStorage.sol";
 
 // contracts
 
-abstract contract PausableBase is IPausableEvents {
-  function __Pausable_init() internal {
-    PausableService.unpause();
-  }
-
+abstract contract PausableBase is IPausableBase {
   modifier whenNotPaused() {
-    PausableService.requireNotPaused();
+    if (_paused()) {
+      revert Pausable__Paused();
+    }
     _;
   }
 
   modifier whenPaused() {
-    PausableService.requirePaused();
+    if (!_paused()) {
+      revert Pausable__NotPaused();
+    }
     _;
   }
 
   function _paused() internal view returns (bool) {
-    return PausableService.paused();
+    return PausableStorage.layout().paused;
   }
 
-  function _pause() internal whenNotPaused {
-    PausableService.pause();
+  function _pause() internal {
+    PausableStorage.layout().paused = true;
     emit Paused(msg.sender);
   }
 
-  function _unpause() internal whenPaused {
-    PausableService.unpause();
+  function _unpause() internal {
+    PausableStorage.layout().paused = false;
     emit Unpaused(msg.sender);
   }
 }

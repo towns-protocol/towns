@@ -23,7 +23,7 @@ import type {
   PromiseOrValue,
 } from "./common";
 
-export declare namespace IChannelStructs {
+export declare namespace IChannelBase {
   export type ChannelStruct = {
     id: PromiseOrValue<string>;
     disabled: PromiseOrValue<boolean>;
@@ -171,16 +171,16 @@ export interface IChannel extends BaseContract {
       channelId: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<
-      [IChannelStructs.ChannelStructOutput] & {
-        channel: IChannelStructs.ChannelStructOutput;
+      [IChannelBase.ChannelStructOutput] & {
+        channel: IChannelBase.ChannelStructOutput;
       }
     >;
 
     getChannels(
       overrides?: CallOverrides
     ): Promise<
-      [IChannelStructs.ChannelStructOutput[]] & {
-        channels: IChannelStructs.ChannelStructOutput[];
+      [IChannelBase.ChannelStructOutput[]] & {
+        channels: IChannelBase.ChannelStructOutput[];
       }
     >;
 
@@ -219,11 +219,11 @@ export interface IChannel extends BaseContract {
   getChannel(
     channelId: PromiseOrValue<string>,
     overrides?: CallOverrides
-  ): Promise<IChannelStructs.ChannelStructOutput>;
+  ): Promise<IChannelBase.ChannelStructOutput>;
 
   getChannels(
     overrides?: CallOverrides
-  ): Promise<IChannelStructs.ChannelStructOutput[]>;
+  ): Promise<IChannelBase.ChannelStructOutput[]>;
 
   removeChannel(
     channelId: PromiseOrValue<string>,
@@ -260,11 +260,11 @@ export interface IChannel extends BaseContract {
     getChannel(
       channelId: PromiseOrValue<string>,
       overrides?: CallOverrides
-    ): Promise<IChannelStructs.ChannelStructOutput>;
+    ): Promise<IChannelBase.ChannelStructOutput>;
 
     getChannels(
       overrides?: CallOverrides
-    ): Promise<IChannelStructs.ChannelStructOutput[]>;
+    ): Promise<IChannelBase.ChannelStructOutput[]>;
 
     removeChannel(
       channelId: PromiseOrValue<string>,

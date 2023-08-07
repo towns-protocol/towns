@@ -18,7 +18,10 @@ contract DeployMember is Deployer {
     return "member";
   }
 
-  function __deploy(uint256 deployerPK) public override returns (address) {
+  function __deploy(
+    uint256 deployerPK,
+    address
+  ) public override returns (address) {
     vm.startBroadcast(deployerPK);
     member = new Member(
       "Council Member",

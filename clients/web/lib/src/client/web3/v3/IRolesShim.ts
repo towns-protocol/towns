@@ -6,7 +6,7 @@ import {
 } from '@towns/generated/goerli/v3/typings/IRoles'
 import {
     IRoles as LocalhostContract,
-    IRolesStructs as LocalhostIRolesStructs,
+    IRolesBase as LocalhostIRolesStructs,
     IRolesInterface as LocalhostInterface,
 } from '@towns/generated/localhost/v3/typings/IRoles'
 import {

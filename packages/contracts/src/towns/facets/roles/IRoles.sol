@@ -6,7 +6,7 @@ pragma solidity ^0.8.20;
 // libraries
 
 // contracts
-interface IRolesStructs {
+interface IRolesBase {
   struct Role {
     uint256 id;
     string name;
@@ -21,7 +21,7 @@ interface IRolesStructs {
   }
 }
 
-interface IRoles is IRolesStructs {
+interface IRoles is IRolesBase {
   function createRole(
     string calldata roleName,
     string[] memory permissions,

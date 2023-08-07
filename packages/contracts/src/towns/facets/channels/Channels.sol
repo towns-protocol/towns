@@ -5,17 +5,20 @@ pragma solidity ^0.8.20;
 import {IChannel} from "./IChannel.sol";
 
 // libraries
+import {Permissions} from "contracts/src/spaces/libraries/Permissions.sol";
 
 // contracts
+import {Facet} from "contracts/src/diamond/facets/Facet.sol";
+import {Entitled} from "contracts/src/towns/facets/Entitled.sol";
 import {ChannelBase} from "./ChannelBase.sol";
-import {Initializable} from "contracts/src/diamond/facets/initializable/Initializable.sol";
 
-contract Channels is ChannelBase, Initializable, IChannel {
+contract Channels is IChannel, ChannelBase, Entitled, Facet {
   function createChannel(
     string memory channelId,
     string memory metadata,
     uint256[] memory roleIds
   ) external {
+    _validatePermission(Permissions.AddRemoveChannels);
     _createChannel(channelId, metadata, roleIds);
   }
 
@@ -34,10 +37,12 @@ contract Channels is ChannelBase, Initializable, IChannel {
     string memory metadata,
     bool disabled
   ) external {
+    _validatePermission(Permissions.AddRemoveChannels);
     _updateChannel(channelId, metadata, disabled);
   }
 
   function removeChannel(string memory channelId) external {
+    _validatePermission(Permissions.AddRemoveChannels);
     _removeChannel(channelId);
   }
 
@@ -45,6 +50,7 @@ contract Channels is ChannelBase, Initializable, IChannel {
     string calldata channelId,
     uint256 roleId
   ) external {
+    _validateChannelPermission(channelId, Permissions.AddRemoveChannels);
     _addRoleToChannel(channelId, roleId);
   }
 
@@ -52,6 +58,7 @@ contract Channels is ChannelBase, Initializable, IChannel {
     string calldata channelId,
     uint256 roleId
   ) external {
+    _validateChannelPermission(channelId, Permissions.AddRemoveChannels);
     _removeRoleFromChannel(channelId, roleId);
   }
 }

@@ -19,7 +19,8 @@ abstract contract Deployer is Script, DeployBase {
   // - saving deployments
   // - logging
   function __deploy(
-    uint256 deployerPrivateKey
+    uint256 deployerPrivateKey,
+    address deployer
   ) public virtual returns (address);
 
   // will first try to load existing deployments from `deployments/<network>/<contract>.json`
@@ -56,7 +57,7 @@ abstract contract Deployer is Script, DeployBase {
       vm.toString(deployer)
     );
 
-    deployedAddr = __deploy(pk);
+    deployedAddr = __deploy(pk, deployer);
 
     info(
       string.concat(unicode"✅ ", versionName(), " deployed at"),

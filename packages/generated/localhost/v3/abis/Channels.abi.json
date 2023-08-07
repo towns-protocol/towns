@@ -26,7 +26,58 @@
   },
   {
     "inputs": [],
-    "name": "EntitlementsService__NotAllowed",
+    "name": "Entitlement__InvalidValue",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "Entitlement__NotAllowed",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "Entitlement__ValueAlreadyExists",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "Initializable_InInitializingState",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "Introspection_AlreadySupported",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "Introspection_NotSupported",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      }
+    ],
+    "name": "Ownable__NotOwner",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "Ownable__ZeroAddress",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "Pausable__NotPaused",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "Pausable__Paused",
     "type": "error"
   },
   {
@@ -39,12 +90,83 @@
     "inputs": [
       {
         "indexed": false,
-        "internalType": "uint8",
+        "internalType": "uint32",
         "name": "version",
-        "type": "uint8"
+        "type": "uint32"
       }
     ],
     "name": "Initialized",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "bytes4",
+        "name": "interfaceId",
+        "type": "bytes4"
+      }
+    ],
+    "name": "InterfaceAdded",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "bytes4",
+        "name": "interfaceId",
+        "type": "bytes4"
+      }
+    ],
+    "name": "InterfaceRemoved",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "previousOwner",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "newOwner",
+        "type": "address"
+      }
+    ],
+    "name": "OwnershipTransferred",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      }
+    ],
+    "name": "Paused",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      }
+    ],
+    "name": "Unpaused",
     "type": "event"
   },
   {
@@ -121,7 +243,7 @@
             "type": "uint256[]"
           }
         ],
-        "internalType": "struct IChannelStructs.Channel",
+        "internalType": "struct IChannelBase.Channel",
         "name": "channel",
         "type": "tuple"
       }
@@ -156,7 +278,7 @@
             "type": "uint256[]"
           }
         ],
-        "internalType": "struct IChannelStructs.Channel[]",
+        "internalType": "struct IChannelBase.Channel[]",
         "name": "channels",
         "type": "tuple[]"
       }

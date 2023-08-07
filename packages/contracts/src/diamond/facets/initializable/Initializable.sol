@@ -1,55 +1,44 @@
-// SPDX-License-Identifier: Apache-2.0
-pragma solidity ^0.8.20;
+// SPDX-License-Identifier: MIT
+pragma solidity >=0.8.19;
 
-// interfaces
-
-// libraries
 import {InitializableStorage} from "./InitializableStorage.sol";
-import {Address} from "openzeppelin-contracts/contracts/utils/Address.sol";
+import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 
-// contracts
-error Initializable_AlreadyInitialized(uint8 version);
+error Initializable_AlreadyInitialized(uint32 version);
 error Initializable_NotInInitializingState();
 error Initializable_InInitializingState();
 
 abstract contract Initializable {
-  event Initialized(uint8 version);
+  event Initialized(uint32 version);
 
   modifier initializer() {
-    InitializableStorage.Layout storage ds = InitializableStorage.layout();
+    InitializableStorage.Layout storage s = InitializableStorage.layout();
 
-    bool isTopLevelCall = !ds.initializing;
-
-    if (
-      // check if the contract is already initializing
-      (!isTopLevelCall || ds.initialized >= 1) &&
-      // check if the contract is already initialized
-      (Address.isContract(address(this)) || ds.initialized != 1)
-    ) {
-      revert Initializable_AlreadyInitialized(ds.initialized);
+    bool isTopLevelCall = !s.initializing;
+    if (isTopLevelCall ? s.version >= 1 : _isNotConstructor()) {
+      revert Initializable_AlreadyInitialized(s.version);
     }
-
-    ds.initialized = 1;
-
+    s.version = 1;
     if (isTopLevelCall) {
-      ds.initializing = true;
+      s.initializing = true;
     }
     _;
     if (isTopLevelCall) {
-      ds.initializing = false;
+      s.initializing = false;
       emit Initialized(1);
     }
   }
 
-  modifier reinitializer(uint8 version) {
-    InitializableStorage.Layout storage ds = InitializableStorage.layout();
-    if (ds.initializing || ds.initialized >= version) {
-      revert Initializable_AlreadyInitialized(ds.initialized);
+  modifier reinitializer(uint32 version) {
+    InitializableStorage.Layout storage s = InitializableStorage.layout();
+
+    if (s.initializing || s.version >= version) {
+      revert Initializable_AlreadyInitialized(s.version);
     }
-    ds.initialized = version;
-    ds.initializing = true;
+    s.version = version;
+    s.initializing = true;
     _;
-    ds.initializing = false;
+    s.initializing = false;
     emit Initialized(version);
   }
 
@@ -59,22 +48,30 @@ abstract contract Initializable {
     _;
   }
 
-  function _disableInitializers() internal {
-    InitializableStorage.Layout storage ds = InitializableStorage.layout();
-    if (ds.initializing) revert Initializable_InInitializingState();
-
-    if (ds.initialized < type(uint8).max) {
-      ds.initialized = type(uint8).max;
-      emit Initialized(type(uint8).max);
-    }
-  }
-
   function _getInitializedVersion()
     internal
     view
     virtual
-    returns (uint8 version)
+    returns (uint32 version)
   {
-    version = InitializableStorage.layout().initialized;
+    version = InitializableStorage.layout().version;
+  }
+
+  function _nextVersion() internal view returns (uint32) {
+    return InitializableStorage.layout().version + 1;
+  }
+
+  function _disableInitializers() internal {
+    InitializableStorage.Layout storage s = InitializableStorage.layout();
+    if (s.initializing) revert Initializable_InInitializingState();
+
+    if (s.version < type(uint32).max) {
+      s.version = type(uint32).max;
+      emit Initialized(type(uint32).max);
+    }
+  }
+
+  function _isNotConstructor() private view returns (bool) {
+    return Address.isContract(address(this));
   }
 }

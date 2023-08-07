@@ -27,7 +27,7 @@ import type {
   PromiseOrValue,
 } from "./common";
 
-export declare namespace ITownArchitectStructs {
+export declare namespace ITownArchitectBase {
   export type RoleInfoStruct = {
     name: PromiseOrValue<string>;
     permissions: PromiseOrValue<string>[];
@@ -39,17 +39,17 @@ export declare namespace ITownArchitectStructs {
   };
 
   export type MemberEntitlementStruct = {
-    role: ITownArchitectStructs.RoleInfoStruct;
+    role: ITownArchitectBase.RoleInfoStruct;
     tokens: ITokenEntitlement.ExternalTokenStruct[];
     users: PromiseOrValue<string>[];
   };
 
   export type MemberEntitlementStructOutput = [
-    ITownArchitectStructs.RoleInfoStructOutput,
+    ITownArchitectBase.RoleInfoStructOutput,
     ITokenEntitlement.ExternalTokenStructOutput[],
     string[]
   ] & {
-    role: ITownArchitectStructs.RoleInfoStructOutput;
+    role: ITownArchitectBase.RoleInfoStructOutput;
     tokens: ITokenEntitlement.ExternalTokenStructOutput[];
     users: string[];
   };
@@ -67,23 +67,23 @@ export declare namespace ITownArchitectStructs {
   export type TownInfoStruct = {
     id: PromiseOrValue<string>;
     metadata: PromiseOrValue<string>;
-    everyoneEntitlement: ITownArchitectStructs.RoleInfoStruct;
-    memberEntitlement: ITownArchitectStructs.MemberEntitlementStruct;
-    channel: ITownArchitectStructs.ChannelInfoStruct;
+    everyoneEntitlement: ITownArchitectBase.RoleInfoStruct;
+    memberEntitlement: ITownArchitectBase.MemberEntitlementStruct;
+    channel: ITownArchitectBase.ChannelInfoStruct;
   };
 
   export type TownInfoStructOutput = [
     string,
     string,
-    ITownArchitectStructs.RoleInfoStructOutput,
-    ITownArchitectStructs.MemberEntitlementStructOutput,
-    ITownArchitectStructs.ChannelInfoStructOutput
+    ITownArchitectBase.RoleInfoStructOutput,
+    ITownArchitectBase.MemberEntitlementStructOutput,
+    ITownArchitectBase.ChannelInfoStructOutput
   ] & {
     id: string;
     metadata: string;
-    everyoneEntitlement: ITownArchitectStructs.RoleInfoStructOutput;
-    memberEntitlement: ITownArchitectStructs.MemberEntitlementStructOutput;
-    channel: ITownArchitectStructs.ChannelInfoStructOutput;
+    everyoneEntitlement: ITownArchitectBase.RoleInfoStructOutput;
+    memberEntitlement: ITownArchitectBase.MemberEntitlementStructOutput;
+    channel: ITownArchitectBase.ChannelInfoStructOutput;
   };
 }
 
@@ -140,7 +140,7 @@ export interface ITownArchitectInterface extends utils.Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "createTown",
-    values: [ITownArchitectStructs.TownInfoStruct]
+    values: [ITownArchitectBase.TownInfoStruct]
   ): string;
   encodeFunctionData(
     functionFragment: "gateByToken",
@@ -256,7 +256,7 @@ export interface ITownArchitect extends BaseContract {
     ): Promise<[string]>;
 
     createTown(
-      townInfo: ITownArchitectStructs.TownInfoStruct,
+      townInfo: ITownArchitectBase.TownInfoStruct,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
@@ -310,7 +310,7 @@ export interface ITownArchitect extends BaseContract {
   ): Promise<string>;
 
   createTown(
-    townInfo: ITownArchitectStructs.TownInfoStruct,
+    townInfo: ITownArchitectBase.TownInfoStruct,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
@@ -364,7 +364,7 @@ export interface ITownArchitect extends BaseContract {
     ): Promise<string>;
 
     createTown(
-      townInfo: ITownArchitectStructs.TownInfoStruct,
+      townInfo: ITownArchitectBase.TownInfoStruct,
       overrides?: CallOverrides
     ): Promise<string>;
 
@@ -426,7 +426,7 @@ export interface ITownArchitect extends BaseContract {
     ): Promise<BigNumber>;
 
     createTown(
-      townInfo: ITownArchitectStructs.TownInfoStruct,
+      townInfo: ITownArchitectBase.TownInfoStruct,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
@@ -475,7 +475,7 @@ export interface ITownArchitect extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     createTown(
-      townInfo: ITownArchitectStructs.TownInfoStruct,
+      townInfo: ITownArchitectBase.TownInfoStruct,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 

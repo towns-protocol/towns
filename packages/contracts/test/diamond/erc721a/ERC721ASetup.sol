@@ -2,7 +2,7 @@
 pragma solidity ^0.8.20;
 
 // interfaces
-import {IDiamond} from "contracts/src/diamond/IDiamond.sol";
+import {IDiamond, Diamond} from "contracts/src/diamond/Diamond.sol";
 import {IDiamondCut} from "contracts/src/diamond/facets/cut/IDiamondCut.sol";
 import {IERC721A} from "contracts/src/diamond/facets/token/ERC721A/IERC721A.sol";
 
@@ -10,42 +10,53 @@ import {IERC721A} from "contracts/src/diamond/facets/token/ERC721A/IERC721A.sol"
 
 // contracts
 import {FacetHelper, FacetTest} from "contracts/test/diamond/Facet.t.sol";
-import {DiamondMultiInit} from "contracts/src/diamond/initializers/DiamondMultiInit.sol";
+import {IntrospectionHelper} from "contracts/test/diamond/introspection/IntrospectionSetup.sol";
 
+// mocks
+import {MultiInit} from "contracts/src/diamond/initializers/MultiInit.sol";
 import {MockERC721A} from "contracts/test/mocks/MockERC721A.sol";
 
 contract ERC721ASetup is FacetTest {
-  ERC721AHelper internal erc721aHelper;
-  DiamondMultiInit internal diamondMultiInit;
   MockERC721A internal erc721a;
 
   function setUp() public override {
     super.setUp();
+    erc721a = MockERC721A(diamond);
+  }
 
-    diamondMultiInit = new DiamondMultiInit();
-    erc721aHelper = new ERC721AHelper();
+  function diamondInitParams()
+    public
+    override
+    returns (Diamond.InitParams memory)
+  {
+    ERC721AHelper erc721aHelper = new ERC721AHelper();
+    IntrospectionHelper introspectionHelper = new IntrospectionHelper();
 
-    address[] memory addresses = new address[](1);
-    bytes[] memory payloads = new bytes[](1);
+    MultiInit diamondMultiInit = new MultiInit();
 
-    IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](1);
+    address[] memory addresses = new address[](2);
+    bytes[] memory payloads = new bytes[](2);
+
+    IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](2);
     cuts[0] = erc721aHelper.makeCut(IDiamond.FacetCutAction.Add);
+    cuts[1] = introspectionHelper.makeCut(IDiamond.FacetCutAction.Add);
 
     addresses[0] = address(erc721aHelper.facet());
-    payloads[0] = abi.encodeWithSelector(erc721aHelper.initializer());
+    addresses[1] = address(introspectionHelper.facet());
 
-    IDiamondCut(diamond).diamondCut(
-      cuts,
-      address(diamondMultiInit),
-      abi.encodeWithSelector(
-        diamondMultiInit.multiInit.selector,
-        addresses,
-        payloads
-      )
-    );
-    vm.stopPrank();
+    payloads[0] = erc721aHelper.makeInitData("");
+    payloads[1] = introspectionHelper.makeInitData("");
 
-    erc721a = MockERC721A(diamond);
+    return
+      Diamond.InitParams({
+        baseFacets: cuts,
+        init: address(diamondMultiInit),
+        initData: abi.encodeWithSelector(
+          diamondMultiInit.multiInit.selector,
+          addresses,
+          payloads
+        )
+      });
   }
 }
 

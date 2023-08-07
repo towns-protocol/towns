@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: Apache-2.0
 pragma solidity 0.8.20;
 
-interface IEntitlement {
+interface IEntitlementBase {
   // Caller is not allowed to perform this action
   error Entitlement__NotAllowed();
 
@@ -10,7 +10,9 @@ interface IEntitlement {
 
   // Caller has passed a value that already exists
   error Entitlement__ValueAlreadyExists();
+}
 
+interface IEntitlement is IEntitlementBase {
   /// @notice initializes the entitlement module
   function initialize(address space) external;
 
