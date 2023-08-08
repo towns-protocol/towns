@@ -2,7 +2,7 @@ import { ChannelDetails, ChannelMetadata, Permission, RoleDetails } from '../Con
 import { ContractTransaction, ethers } from 'ethers'
 import { CreateSpaceParams, ISpaceDapp, UpdateChannelParams, UpdateRoleParams } from '../ISpaceDapp'
 import { IStaticContractsInfoV3, getContractsInfoV3 } from './IStaticContractsInfoV3'
-import { ITownArchitectShim, ITownArchitectBase } from './ITownArchitectShim'
+import { ITownArchitectBase, ITownArchitectShim } from './ITownArchitectShim'
 import { SpaceDataTypes, SpaceShim } from '../shims/SpaceShim'
 import {
     fromChannelIdToChannelInfo,
