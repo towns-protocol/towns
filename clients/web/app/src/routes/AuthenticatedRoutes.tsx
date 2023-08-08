@@ -28,6 +28,7 @@ import { SpaceMembers } from './SpaceMembers'
 import { InfoPanelWrapper } from './InfoPanel'
 import { NoJoinedSpacesFallback } from './NoJoinedSpacesFallback'
 import { ChannelMembers } from './ChannelMembers'
+import { TouchHome } from './TouchHome'
 
 const CheckRedirect = ({ children }: { children: JSX.Element }) => {
     const { state } = useLocation()
@@ -82,6 +83,9 @@ export const AuthenticatedRoutes = () => {
                         <Route path="info" element={<InfoPanelWrapper />} />
                     </Route>
                 )}
+
+                {isTouch && <Route path={`${PATHS.HOME}`} element={<TouchHome />} />}
+
                 <Route element={<SpacesChannelRoute />}>
                     <Route path="channels/:channelSlug/members" element={<ChannelMembers />}>
                         <Route path="profile/:profileId" element={<SpaceProfilePanel />} />

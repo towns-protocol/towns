@@ -1,14 +1,29 @@
 import React from 'react'
 import { useMyProfile, useSpaceData } from 'use-zion-client'
+import { useNavigate } from 'react-router'
 import { Avatar, Box, Icon, Stack, Text } from '@ui'
 import { SpaceIcon } from '@components/SpaceIcon'
 import { ImageVariants } from '@components/UploadImage/useImageSource'
+import { PATHS } from 'routes'
 
 export const TouchTabBar = () => {
+    const navigate = useNavigate()
     const space = useSpaceData()
     const userId = useMyProfile()?.userId
     if (!space) {
         return null
+    }
+
+    const homeButtonPressed = () => {
+        navigate(`/${PATHS.SPACES}/${space.id.slug}/home`)
+    }
+
+    const threadsButtonPressed = () => {
+        navigate(`/${PATHS.SPACES}/${space.id.slug}/threads`)
+    }
+
+    const mentionsButtonPressed = () => {
+        navigate(`/${PATHS.SPACES}/${space.id.slug}/mentions`)
     }
 
     return (
@@ -28,16 +43,19 @@ export const TouchTabBar = () => {
                             fadeIn={false}
                         />
                     }
+                    onClick={homeButtonPressed}
                 />
                 <TabBarItem
                     title="Threads"
                     icon={<Icon type="message" size="square_md" />}
                     highlighted={false}
+                    onClick={threadsButtonPressed}
                 />
                 <TabBarItem
                     title="Mentions"
                     icon={<Icon type="at" size="square_md" />}
                     highlighted={false}
+                    onClick={mentionsButtonPressed}
                 />
                 <TabBarItem
                     title="You"
