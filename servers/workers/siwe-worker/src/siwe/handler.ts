@@ -1,9 +1,8 @@
-import { Env } from '..'
-import { ISpaceDapp } from 'use-zion-client/src/client/web3/ISpaceDapp'
-import { Permission } from 'use-zion-client/src/client/web3/ContractTypes'
 import { SiweMessage } from 'siwe'
-import { createSpaceDapp } from 'use-zion-client/src/client/web3/SpaceDappFactory'
+import { SpaceDapp } from 'use-zion-client/src/client/web3/SpaceDapp'
 import { ethers } from 'ethers'
+import { Env } from '..'
+import { Permission } from 'use-zion-client/src/client/web3/ContractTypes'
 
 const GOERLI_RPC_URL = 'https://goerli.infura.io/v3/'
 const LOCALHOST_RPC_URL = 'http://127.0.0.1:8545' // not localhost
@@ -72,7 +71,7 @@ export async function verifySpaceOwner(
 	chainId: number = GOERLI,
 	provider: ethers.providers.StaticJsonRpcProvider,
 ): Promise<boolean> {
-	const spaceDapp: ISpaceDapp = createSpaceDapp(chainId, provider)
+	const spaceDapp = new SpaceDapp(chainId, provider)
 	try {
 		const hasPermission = await spaceDapp.isEntitledToSpace(
 			decodeURIComponent(spaceId),

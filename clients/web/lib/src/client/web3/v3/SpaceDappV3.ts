@@ -1,7 +1,14 @@
 import { ChannelDetails, ChannelMetadata, Permission, RoleDetails } from '../ContractTypes'
 import { ContractTransaction, ethers } from 'ethers'
 import { CreateSpaceParams, ISpaceDapp, UpdateChannelParams, UpdateRoleParams } from '../ISpaceDapp'
+import { IStaticContractsInfoV3, getContractsInfoV3 } from './IStaticContractsInfoV3'
+import { ITownArchitectShim, ITownArchitectBase } from './ITownArchitectShim'
 import { SpaceDataTypes, SpaceShim } from '../shims/SpaceShim'
+import {
+    fromChannelIdToChannelInfo,
+    fromPermisisonsToRoleInfo,
+    fromSpaceEntitlementsToMemberEntitlement,
+} from './ConvertersTownArchitect'
 
 import { SpaceFactoryDataTypes } from '../shims/SpaceFactoryShim'
 import { SpaceInfo } from '../SpaceInfo'
@@ -10,10 +17,19 @@ import { SpaceInfo } from '../SpaceInfo'
 export class SpaceDappV3 implements ISpaceDapp {
     private readonly chainId: number
     private readonly provider: ethers.providers.Provider | undefined
+    private readonly contractsInfo: IStaticContractsInfoV3
+    private readonly townArchitect: ITownArchitectShim
 
     constructor(chainId: number, provider: ethers.providers.Provider | undefined) {
         this.chainId = chainId
         this.provider = provider
+        this.contractsInfo = getContractsInfoV3(chainId)
+        this.townArchitect = new ITownArchitectShim(
+            this.contractsInfo.address,
+            this.contractsInfo.townArchitect.abi,
+            chainId,
+            provider,
+        )
     }
 
     public addRoleToChannel(
@@ -25,11 +41,18 @@ export class SpaceDappV3 implements ISpaceDapp {
         throw new Error('Method not implemented.')
     }
 
-    public createSpace(
+    public async createSpace(
         params: CreateSpaceParams,
         signer: ethers.Signer,
     ): Promise<ContractTransaction> {
-        throw new Error('Method not implemented.')
+        const townInfo: ITownArchitectBase.TownInfoStruct = {
+            id: params.spaceId,
+            metadata: params.spaceMetadata,
+            everyoneEntitlement: fromPermisisonsToRoleInfo('Everyone', params.everyonePermissions),
+            memberEntitlement: fromSpaceEntitlementsToMemberEntitlement(params.memberEntitlements),
+            channel: fromChannelIdToChannelInfo(params.channelId),
+        }
+        return this.townArchitect.write(signer).createTown(townInfo)
     }
 
     public createChannel(
@@ -114,7 +137,10 @@ export class SpaceDappV3 implements ISpaceDapp {
     }
 
     public parseSpaceFactoryError(error: unknown): Error {
-        throw new Error('Method not implemented.')
+        if (!this.townArchitect) {
+            throw new Error('TownArchitect is not deployed properly.')
+        }
+        return this.townArchitect.parseError(error)
     }
 
     public parseSpaceError(spaceId: string, error: unknown): Promise<Error> {

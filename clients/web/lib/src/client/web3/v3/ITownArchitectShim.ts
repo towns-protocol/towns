@@ -6,7 +6,7 @@ import {
 } from '@towns/generated/goerli/v3/typings/ITownArchitect'
 import {
     ITownArchitect as LocalhostContract,
-    ITownArchitectBase as LocalhostITownArchitectStructs,
+    ITownArchitectBase as LocalhostITownArchitectBase,
     ITownArchitectInterface as LocalhostInterface,
 } from '@towns/generated/localhost/v3/typings/ITownArchitect'
 import {
@@ -16,7 +16,7 @@ import {
 
 import { BaseContractShimV3 } from './BaseContractShimV3'
 
-export type { LocalhostITownArchitectStructs as ITownArchitectStructs }
+export type { LocalhostITownArchitectBase as ITownArchitectBase }
 
 export class ITownArchitectShim extends BaseContractShimV3<
     LocalhostContract,

@@ -6,4 +6,4 @@ set -a
 set +a
 make deploy-anvil contract=DeployMember
 make deploy-anvil contract=DeploySpaceUpgrades
-# make deploy-anvil contract=DeployTownFactory
+make deploy-anvil contract=DeployTownFactory
