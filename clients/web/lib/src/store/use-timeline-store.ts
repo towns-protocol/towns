@@ -19,6 +19,8 @@ export type ReactionsMap = Record<string, Record<string, MessageReactions>>
 
 export type TimelineStoreStates = {
     timelines: TimelinesMap
+    deletedEvents: Record<string, TimelineEvent[]>
+    replacedEvents: Record<string, { oldEvent: TimelineEvent; newEvent: TimelineEvent }[]>
     threadsStats: ThreadStatsMap
     threads: ThreadsMap
     reactions: ReactionsMap
@@ -45,6 +47,8 @@ export type TimelineStore = TimelineStoreStates & {
 
 export const useTimelineStore = create<TimelineStore>((set) => ({
     timelines: {},
+    deletedEvents: {},
+    replacedEvents: {},
     threadsStats: {},
     threads: {},
     reactions: {},
@@ -76,6 +80,8 @@ function makeTimelineStoreInterface(
         )
         setState((prev) => ({
             timelines: { ...prev.timelines, ...timelines },
+            deletedEvents: prev.deletedEvents,
+            replacedEvents: prev.replacedEvents,
             threadsStats: { ...prev.threadsStats, ...threadsStats },
             threads: { ...prev.threads, ...threads },
             reactions: { ...prev.reactions, ...reactions },
@@ -85,6 +91,8 @@ function makeTimelineStoreInterface(
         const aggregated = toStatsAndReactions(timelineEvents, userId)
         setState((state) => ({
             timelines: { ...state.timelines, [roomId]: timelineEvents },
+            deletedEvents: state.deletedEvents,
+            replacedEvents: state.replacedEvents,
             threadsStats: {
                 ...state.threadsStats,
                 [roomId]: aggregated.threadStats,
@@ -104,6 +112,8 @@ function makeTimelineStoreInterface(
         setState((prev) => {
             for (const roomId of roomIds) {
                 delete prev.timelines[roomId]
+                delete prev.deletedEvents[roomId]
+                delete prev.replacedEvents[roomId]
                 delete prev.threadsStats[roomId]
                 delete prev.threads[roomId]
                 delete prev.reactions[roomId]
@@ -121,6 +131,8 @@ function makeTimelineStoreInterface(
 
             return {
                 timelines: removeTimelineEvent(roomId, eventIndex, state.timelines),
+                deletedEvents: appendTimelineEvent(roomId, event, state.deletedEvents),
+                replacedEvents: state.replacedEvents,
                 threadsStats: removeThreadStat(roomId, event, state.threadsStats),
                 threads: removeThreadEvent(roomId, event, state.threads),
                 reactions: removeReaction(roomId, event, state.reactions),
@@ -130,6 +142,8 @@ function makeTimelineStoreInterface(
     const appendEvent = (userId: string, roomId: string, timelineEvent: TimelineEvent) => {
         setState((state) => ({
             timelines: appendTimelineEvent(roomId, timelineEvent, state.timelines),
+            deletedEvents: state.deletedEvents,
+            replacedEvents: state.replacedEvents,
             threadsStats: addThreadStats(
                 roomId,
                 timelineEvent,
@@ -144,6 +158,8 @@ function makeTimelineStoreInterface(
     const prependEvent = (userId: string, roomId: string, timelineEvent: TimelineEvent) => {
         setState((state) => ({
             timelines: prependTimelineEvent(roomId, timelineEvent, state.timelines),
+            deletedEvents: state.deletedEvents,
+            replacedEvents: state.replacedEvents,
             threadsStats: addThreadStats(
                 roomId,
                 timelineEvent,
@@ -186,6 +202,11 @@ function makeTimelineStoreInterface(
                     timeline,
                     state.timelines,
                 ),
+                deletedEvents: state.deletedEvents,
+                replacedEvents: {
+                    ...state.replacedEvents,
+                    [roomId]: [...(state.replacedEvents[roomId] ?? []), { oldEvent, newEvent }],
+                },
                 threadsStats: addThreadStats(
                     roomId,
                     newEvent,
