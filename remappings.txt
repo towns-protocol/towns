@@ -1,4 +1,4 @@
-contracts/=packages/contracts
+
 ERC721A/=lib/ERC721A/contracts/
 council/=lib/council/contracts/
 ds-test/=lib/ds-test/src/

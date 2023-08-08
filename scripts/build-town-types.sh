@@ -10,9 +10,9 @@ DENDRITE_TOWNS_ENTITLEMENTS_DIR="${DENDRITE_DIR}/${CHAIN}_towns_entitlements"
 forge clean
 forge build --extra-output-files metadata --extra-output-files abi
 
-yarn typechain --target=ethers-v5 "packages/contracts/out/**/?(IDiamond|IDiamondCut|ITownArchitect|IProxyManager|IPausable|IEntitlements|IChannel|IRoles|ITokenEntitlement|IERC721|Permissions).json" --out-dir "packages/generated/${CHAIN}/v3/typings"
+yarn typechain --target=ethers-v5 "contracts/out/**/?(IDiamond|IDiamondCut|ITownArchitect|IProxyManager|IPausable|IEntitlements|IChannel|IRoles|ITokenEntitlement|IERC721|Permissions).json" --out-dir "packages/generated/${CHAIN}/v3/typings"
 
-mkdir -p $ABI_DIR && cp -a packages/contracts/out/{Diamond,DiamondCut,TownArchitect,ProxyManager,Pausable,Entitlements,Channels,Roles,TokenEntitlement,ERC721,Permissions}.sol/* "$ABI_DIR"
+mkdir -p $ABI_DIR && cp -a contracts/out/{Diamond,DiamondCut,TownArchitect,ProxyManager,Pausable,Entitlements,Channels,Roles,TokenEntitlement,ERC721,Permissions}.sol/* "$ABI_DIR"
 
 # Copy the json abis to TS files for type inference
 for file in $ABI_DIR/*.abi.json; do
@@ -25,10 +25,10 @@ mkdir -p $DENDRITE_TOWNS_ARCHITECT_DIR
 mkdir -p $DENDRITE_TOWNS_ENTITLEMENTS_DIR
 
 # Town Architect typings for Dendrite
-go run github.com/ethereum/go-ethereum/cmd/abigen@v1.10.25 --abi packages/contracts/out/TownArchitect.sol/TownArchitect.abi.json --pkg "${CHAIN}_towns_architect" --type "${CHAIN}_towns_architect" --out "${DENDRITE_TOWNS_ARCHITECT_DIR}/${CHAIN}_towns_architect.go"
+go run github.com/ethereum/go-ethereum/cmd/abigen@v1.10.25 --abi contracts/out/TownArchitect.sol/TownArchitect.abi.json --pkg "${CHAIN}_towns_architect" --type "${CHAIN}_towns_architect" --out "${DENDRITE_TOWNS_ARCHITECT_DIR}/${CHAIN}_towns_architect.go"
 
 # Town Entitlements typings for Dendrite
-go run github.com/ethereum/go-ethereum/cmd/abigen@v1.10.25 --abi packages/contracts/out/Entitlements.sol/Entitlements.abi.json --pkg "${CHAIN}_towns_entitlements" --type "${CHAIN}_towns_entitlements" --out "${DENDRITE_TOWNS_ENTITLEMENTS_DIR}/${CHAIN}_towns_entitlements.go"
+go run github.com/ethereum/go-ethereum/cmd/abigen@v1.10.25 --abi contracts/out/Entitlements.sol/Entitlements.abi.json --pkg "${CHAIN}_towns_entitlements" --type "${CHAIN}_towns_entitlements" --out "${DENDRITE_TOWNS_ENTITLEMENTS_DIR}/${CHAIN}_towns_entitlements.go"
 
 # Using the $FROZEN flag and git diff, we can check if this script generates any new files
 # under the $ABI_DIR or $DENDRITE_DIR directories.

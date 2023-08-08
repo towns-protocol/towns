@@ -131,7 +131,7 @@
   },
   "settings": {
     "compilationTarget": {
-      "packages/contracts/src/spaces/libraries/Events.sol": "Events"
+      "contracts/src/spaces/libraries/Events.sol": "Events"
     },
     "evmVersion": "paris",
     "libraries": {},
@@ -146,9 +146,7 @@
     "remappings": [
       ":@openzeppelin/=lib/openzeppelin-contracts/",
       ":@prb/test/=lib/prb-test/src/",
-      ":@towns/=node_modules/@towns/",
       ":ERC721A/=lib/ERC721A/contracts/",
-      ":contracts/=packages/contracts/",
       ":council/=lib/council/contracts/",
       ":ds-test/=lib/ds-test/src/",
       ":erc4626-tests/=lib/operator-filter-registry/lib/openzeppelin-contracts/lib/erc4626-tests/",
@@ -160,7 +158,7 @@
     ]
   },
   "sources": {
-    "packages/contracts/src/spaces/libraries/Events.sol": {
+    "contracts/src/spaces/libraries/Events.sol": {
       "keccak256": "0x99aaeab8cc78d73bf26c609378a89e6b826105d8bf528c6d2a0e0c2344788f33",
       "license": "Apache-2.0",
       "urls": [

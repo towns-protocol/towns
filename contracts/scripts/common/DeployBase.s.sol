@@ -154,7 +154,7 @@ contract DeployBase is Script {
   function networkDirPath() internal returns (string memory path) {
     path = string.concat(
       vm.projectRoot(),
-      "/packages/contracts/deployments/",
+      "/contracts/deployments/",
       chainAlias()
     );
   }

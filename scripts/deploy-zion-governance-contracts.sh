@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-cd packages/contracts/
+cd contracts/
 # yarn clean
 set -a
 . .env.localhost

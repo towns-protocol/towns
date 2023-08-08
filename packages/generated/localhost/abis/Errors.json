@@ -133,16 +133,16 @@
   ],
   "bytecode": {
     "object": "0x60206037600b82828239805160001a607314602a57634e487b7160e01b600052600060045260246000fd5b30600052607381538281f3fe73000000000000000000000000000000000000000030146080604052600080fd",
-    "sourceMap": "63:863:181:-:0;;;;;;;;;;;;;;;-1:-1:-1;;;63:863:181;;;;;;;;;;;;;;;;;",
+    "sourceMap": "63:863:92:-:0;;;;;;;;;;;;;;;-1:-1:-1;;;63:863:92;;;;;;;;;;;;;;;;;",
     "linkReferences": {}
   },
   "deployedBytecode": {
     "object": "0x73000000000000000000000000000000000000000030146080604052600080fd",
-    "sourceMap": "63:863:181:-:0;;;;;;;;",
+    "sourceMap": "63:863:92:-:0;;;;;;;;",
     "linkReferences": {}
   },
   "methodIdentifiers": {},
-  "rawMetadata": "{\"compiler\":{\"version\":\"0.8.20+commit.a1b79de6\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[],\"name\":\"AddRoleFailed\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"AddressNotFound\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"ChannelAlreadyRegistered\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"ChannelDoesNotExist\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"DefaultEntitlementModuleNotSet\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"DefaultPermissionsManagerNotSet\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"EntitlementAlreadyExists\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"EntitlementAlreadyWhitelisted\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"EntitlementModuleNotSupported\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"EntitlementNotFound\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"EntitlementNotWhitelisted\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"InvalidParameters\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"MissingOwnerPermission\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"NameContainsInvalidCharacters\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"NameLengthInvalid\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"NotAllowed\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"NotSpaceManager\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"NotSpaceOwner\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"PermissionAlreadyExists\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"QuantityNotFound\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"RoleAlreadyExists\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"RoleDoesNotExist\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"RoleIsAssignedToEntitlement\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"SpaceAlreadyRegistered\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"SpaceDoesNotExist\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"SpaceNFTNotSet\",\"type\":\"error\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"packages/contracts/src/spaces/libraries/Errors.sol\":\"Errors\"},\"evmVersion\":\"paris\",\"libraries\":{},\"metadata\":{\"appendCBOR\":false,\"bytecodeHash\":\"none\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[\":@openzeppelin/=lib/openzeppelin-contracts/\",\":@prb/test/=lib/prb-test/src/\",\":@towns/=node_modules/@towns/\",\":ERC721A/=lib/ERC721A/contracts/\",\":contracts/=packages/contracts/\",\":council/=lib/council/contracts/\",\":ds-test/=lib/ds-test/src/\",\":erc4626-tests/=lib/operator-filter-registry/lib/openzeppelin-contracts/lib/erc4626-tests/\",\":forge-std/=lib/forge-std/src/\",\":openzeppelin-contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/\",\":openzeppelin-contracts/=lib/openzeppelin-contracts/\",\":operator-filter-registry/=lib/operator-filter-registry/\",\":prb-test/=lib/prb-test/src/\"]},\"sources\":{\"packages/contracts/src/spaces/libraries/Errors.sol\":{\"keccak256\":\"0xb0a9a538c142afb52002a9ed67fe15f71263406b905ab854f58d0c4bbb168f79\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://f9a27883f35eee16c86c768b5084a1552058f996f72457e7ef624a20e731f4f7\",\"dweb:/ipfs/QmWNJYmVeNmsbq8Q6DAfa5ciBzXg61ARKteprhxFsAF289\"]}},\"version\":1}",
+  "rawMetadata": "{\"compiler\":{\"version\":\"0.8.20+commit.a1b79de6\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[],\"name\":\"AddRoleFailed\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"AddressNotFound\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"ChannelAlreadyRegistered\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"ChannelDoesNotExist\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"DefaultEntitlementModuleNotSet\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"DefaultPermissionsManagerNotSet\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"EntitlementAlreadyExists\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"EntitlementAlreadyWhitelisted\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"EntitlementModuleNotSupported\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"EntitlementNotFound\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"EntitlementNotWhitelisted\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"InvalidParameters\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"MissingOwnerPermission\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"NameContainsInvalidCharacters\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"NameLengthInvalid\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"NotAllowed\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"NotSpaceManager\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"NotSpaceOwner\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"PermissionAlreadyExists\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"QuantityNotFound\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"RoleAlreadyExists\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"RoleDoesNotExist\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"RoleIsAssignedToEntitlement\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"SpaceAlreadyRegistered\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"SpaceDoesNotExist\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"SpaceNFTNotSet\",\"type\":\"error\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"contracts/src/spaces/libraries/Errors.sol\":\"Errors\"},\"evmVersion\":\"paris\",\"libraries\":{},\"metadata\":{\"appendCBOR\":false,\"bytecodeHash\":\"none\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[\":@openzeppelin/=lib/openzeppelin-contracts/\",\":@prb/test/=lib/prb-test/src/\",\":ERC721A/=lib/ERC721A/contracts/\",\":council/=lib/council/contracts/\",\":ds-test/=lib/ds-test/src/\",\":erc4626-tests/=lib/operator-filter-registry/lib/openzeppelin-contracts/lib/erc4626-tests/\",\":forge-std/=lib/forge-std/src/\",\":openzeppelin-contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/\",\":openzeppelin-contracts/=lib/openzeppelin-contracts/\",\":operator-filter-registry/=lib/operator-filter-registry/\",\":prb-test/=lib/prb-test/src/\"]},\"sources\":{\"contracts/src/spaces/libraries/Errors.sol\":{\"keccak256\":\"0xb0a9a538c142afb52002a9ed67fe15f71263406b905ab854f58d0c4bbb168f79\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://f9a27883f35eee16c86c768b5084a1552058f996f72457e7ef624a20e731f4f7\",\"dweb:/ipfs/QmWNJYmVeNmsbq8Q6DAfa5ciBzXg61ARKteprhxFsAF289\"]}},\"version\":1}",
   "metadata": {
     "compiler": {
       "version": "0.8.20+commit.a1b79de6"
@@ -296,9 +296,7 @@
       "remappings": [
         "@openzeppelin/=lib/openzeppelin-contracts/",
         "@prb/test/=lib/prb-test/src/",
-        "@towns/=node_modules/@towns/",
         "ERC721A/=lib/ERC721A/contracts/",
-        "contracts/=packages/contracts/",
         "council/=lib/council/contracts/",
         "ds-test/=lib/ds-test/src/",
         "erc4626-tests/=lib/operator-filter-registry/lib/openzeppelin-contracts/lib/erc4626-tests/",
@@ -317,12 +315,12 @@
         "appendCBOR": false
       },
       "compilationTarget": {
-        "packages/contracts/src/spaces/libraries/Errors.sol": "Errors"
+        "contracts/src/spaces/libraries/Errors.sol": "Errors"
       },
       "libraries": {}
     },
     "sources": {
-      "packages/contracts/src/spaces/libraries/Errors.sol": {
+      "contracts/src/spaces/libraries/Errors.sol": {
         "keccak256": "0xb0a9a538c142afb52002a9ed67fe15f71263406b905ab854f58d0c4bbb168f79",
         "urls": [
           "bzz-raw://f9a27883f35eee16c86c768b5084a1552058f996f72457e7ef624a20e731f4f7",
@@ -334,20 +332,20 @@
     "version": 1
   },
   "ast": {
-    "absolutePath": "packages/contracts/src/spaces/libraries/Errors.sol",
-    "id": 65176,
+    "absolutePath": "contracts/src/spaces/libraries/Errors.sol",
+    "id": 22019,
     "exportedSymbols": {
       "Errors": [
-        65175
+        22018
       ]
     },
     "nodeType": "SourceUnit",
-    "src": "38:889:181",
+    "src": "38:889:92",
     "nodes": [
       {
-        "id": 65122,
+        "id": 21965,
         "nodeType": "PragmaDirective",
-        "src": "38:23:181",
+        "src": "38:23:92",
         "nodes": [],
         "literals": [
           "solidity",
@@ -356,398 +354,398 @@
         ]
       },
       {
-        "id": 65175,
+        "id": 22018,
         "nodeType": "ContractDefinition",
-        "src": "63:863:181",
+        "src": "63:863:92",
         "nodes": [
           {
-            "id": 65124,
+            "id": 21967,
             "nodeType": "ErrorDefinition",
-            "src": "82:26:181",
+            "src": "82:26:92",
             "nodes": [],
             "errorSelector": "e5239090",
             "name": "InvalidParameters",
-            "nameLocation": "88:17:181",
+            "nameLocation": "88:17:92",
             "parameters": {
-              "id": 65123,
+              "id": 21966,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "105:2:181"
+              "src": "105:2:92"
             }
           },
           {
-            "id": 65126,
+            "id": 21969,
             "nodeType": "ErrorDefinition",
-            "src": "111:26:181",
+            "src": "111:26:92",
             "nodes": [],
             "errorSelector": "6a96aade",
             "name": "NameLengthInvalid",
-            "nameLocation": "117:17:181",
+            "nameLocation": "117:17:92",
             "parameters": {
-              "id": 65125,
+              "id": 21968,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "134:2:181"
+              "src": "134:2:92"
             }
           },
           {
-            "id": 65128,
+            "id": 21971,
             "nodeType": "ErrorDefinition",
-            "src": "140:38:181",
+            "src": "140:38:92",
             "nodes": [],
             "errorSelector": "f8fa6597",
             "name": "NameContainsInvalidCharacters",
-            "nameLocation": "146:29:181",
+            "nameLocation": "146:29:92",
             "parameters": {
-              "id": 65127,
+              "id": 21970,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "175:2:181"
+              "src": "175:2:92"
             }
           },
           {
-            "id": 65130,
+            "id": 21973,
             "nodeType": "ErrorDefinition",
-            "src": "181:31:181",
+            "src": "181:31:92",
             "nodes": [],
             "errorSelector": "7102b336",
             "name": "SpaceAlreadyRegistered",
-            "nameLocation": "187:22:181",
+            "nameLocation": "187:22:92",
             "parameters": {
-              "id": 65129,
+              "id": 21972,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "209:2:181"
+              "src": "209:2:92"
             }
           },
           {
-            "id": 65132,
+            "id": 21975,
             "nodeType": "ErrorDefinition",
-            "src": "215:33:181",
+            "src": "215:33:92",
             "nodes": [],
             "errorSelector": "139324b0",
             "name": "ChannelAlreadyRegistered",
-            "nameLocation": "221:24:181",
+            "nameLocation": "221:24:92",
             "parameters": {
-              "id": 65131,
+              "id": 21974,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "245:2:181"
+              "src": "245:2:92"
             }
           },
           {
-            "id": 65134,
+            "id": 21977,
             "nodeType": "ErrorDefinition",
-            "src": "251:22:181",
+            "src": "251:22:92",
             "nodes": [],
             "errorSelector": "8c09e73f",
             "name": "NotSpaceOwner",
-            "nameLocation": "257:13:181",
+            "nameLocation": "257:13:92",
             "parameters": {
-              "id": 65133,
+              "id": 21976,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "270:2:181"
+              "src": "270:2:92"
             }
           },
           {
-            "id": 65136,
+            "id": 21979,
             "nodeType": "ErrorDefinition",
-            "src": "276:24:181",
+            "src": "276:24:92",
             "nodes": [],
             "errorSelector": "2596a42e",
             "name": "NotSpaceManager",
-            "nameLocation": "282:15:181",
+            "nameLocation": "282:15:92",
             "parameters": {
-              "id": 65135,
+              "id": 21978,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "297:2:181"
+              "src": "297:2:92"
             }
           },
           {
-            "id": 65138,
+            "id": 21981,
             "nodeType": "ErrorDefinition",
-            "src": "303:28:181",
+            "src": "303:28:92",
             "nodes": [],
             "errorSelector": "f67923cc",
             "name": "EntitlementNotFound",
-            "nameLocation": "309:19:181",
+            "nameLocation": "309:19:92",
             "parameters": {
-              "id": 65137,
+              "id": 21980,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "328:2:181"
+              "src": "328:2:92"
             }
           },
           {
-            "id": 65140,
+            "id": 21983,
             "nodeType": "ErrorDefinition",
-            "src": "334:24:181",
+            "src": "334:24:92",
             "nodes": [],
             "errorSelector": "6054b469",
             "name": "AddressNotFound",
-            "nameLocation": "340:15:181",
+            "nameLocation": "340:15:92",
             "parameters": {
-              "id": 65139,
+              "id": 21982,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "355:2:181"
+              "src": "355:2:92"
             }
           },
           {
-            "id": 65142,
+            "id": 21985,
             "nodeType": "ErrorDefinition",
-            "src": "361:25:181",
+            "src": "361:25:92",
             "nodes": [],
             "errorSelector": "f2d34be7",
             "name": "QuantityNotFound",
-            "nameLocation": "367:16:181",
+            "nameLocation": "367:16:92",
             "parameters": {
-              "id": 65141,
+              "id": 21984,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "383:2:181"
+              "src": "383:2:92"
             }
           },
           {
-            "id": 65144,
+            "id": 21987,
             "nodeType": "ErrorDefinition",
-            "src": "389:38:181",
+            "src": "389:38:92",
             "nodes": [],
             "errorSelector": "186abc9b",
             "name": "EntitlementAlreadyWhitelisted",
-            "nameLocation": "395:29:181",
+            "nameLocation": "395:29:92",
             "parameters": {
-              "id": 65143,
+              "id": 21986,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "424:2:181"
+              "src": "424:2:92"
             }
           },
           {
-            "id": 65146,
+            "id": 21989,
             "nodeType": "ErrorDefinition",
-            "src": "430:38:181",
+            "src": "430:38:92",
             "nodes": [],
             "errorSelector": "db24a1e2",
             "name": "EntitlementModuleNotSupported",
-            "nameLocation": "436:29:181",
+            "nameLocation": "436:29:92",
             "parameters": {
-              "id": 65145,
+              "id": 21988,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "465:2:181"
+              "src": "465:2:92"
             }
           },
           {
-            "id": 65148,
+            "id": 21991,
             "nodeType": "ErrorDefinition",
-            "src": "471:34:181",
+            "src": "471:34:92",
             "nodes": [],
             "errorSelector": "c1ef36f3",
             "name": "EntitlementNotWhitelisted",
-            "nameLocation": "477:25:181",
+            "nameLocation": "477:25:92",
             "parameters": {
-              "id": 65147,
+              "id": 21990,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "502:2:181"
+              "src": "502:2:92"
             }
           },
           {
-            "id": 65150,
+            "id": 21993,
             "nodeType": "ErrorDefinition",
-            "src": "508:33:181",
+            "src": "508:33:92",
             "nodes": [],
             "errorSelector": "c5c9ad67",
             "name": "EntitlementAlreadyExists",
-            "nameLocation": "514:24:181",
+            "nameLocation": "514:24:92",
             "parameters": {
-              "id": 65149,
+              "id": 21992,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "538:2:181"
+              "src": "538:2:92"
             }
           },
           {
-            "id": 65152,
+            "id": 21995,
             "nodeType": "ErrorDefinition",
-            "src": "544:39:181",
+            "src": "544:39:92",
             "nodes": [],
             "errorSelector": "2ab51add",
             "name": "DefaultEntitlementModuleNotSet",
-            "nameLocation": "550:30:181",
+            "nameLocation": "550:30:92",
             "parameters": {
-              "id": 65151,
+              "id": 21994,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "580:2:181"
+              "src": "580:2:92"
             }
           },
           {
-            "id": 65154,
+            "id": 21997,
             "nodeType": "ErrorDefinition",
-            "src": "586:23:181",
+            "src": "586:23:92",
             "nodes": [],
             "errorSelector": "345d02c0",
             "name": "SpaceNFTNotSet",
-            "nameLocation": "592:14:181",
+            "nameLocation": "592:14:92",
             "parameters": {
-              "id": 65153,
+              "id": 21996,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "606:2:181"
+              "src": "606:2:92"
             }
           },
           {
-            "id": 65156,
+            "id": 21999,
             "nodeType": "ErrorDefinition",
-            "src": "612:36:181",
+            "src": "612:36:92",
             "nodes": [],
             "errorSelector": "6ec880a6",
             "name": "RoleIsAssignedToEntitlement",
-            "nameLocation": "618:27:181",
+            "nameLocation": "618:27:92",
             "parameters": {
-              "id": 65155,
+              "id": 21998,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "645:2:181"
+              "src": "645:2:92"
             }
           },
           {
-            "id": 65158,
+            "id": 22001,
             "nodeType": "ErrorDefinition",
-            "src": "651:40:181",
+            "src": "651:40:92",
             "nodes": [],
             "errorSelector": "361882e3",
             "name": "DefaultPermissionsManagerNotSet",
-            "nameLocation": "657:31:181",
+            "nameLocation": "657:31:92",
             "parameters": {
-              "id": 65157,
+              "id": 22000,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "688:2:181"
+              "src": "688:2:92"
             }
           },
           {
-            "id": 65160,
+            "id": 22003,
             "nodeType": "ErrorDefinition",
-            "src": "694:26:181",
+            "src": "694:26:92",
             "nodes": [],
             "errorSelector": "be340807",
             "name": "SpaceDoesNotExist",
-            "nameLocation": "700:17:181",
+            "nameLocation": "700:17:92",
             "parameters": {
-              "id": 65159,
+              "id": 22002,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "717:2:181"
+              "src": "717:2:92"
             }
           },
           {
-            "id": 65162,
+            "id": 22005,
             "nodeType": "ErrorDefinition",
-            "src": "723:28:181",
+            "src": "723:28:92",
             "nodes": [],
             "errorSelector": "6ddd9da9",
             "name": "ChannelDoesNotExist",
-            "nameLocation": "729:19:181",
+            "nameLocation": "729:19:92",
             "parameters": {
-              "id": 65161,
+              "id": 22004,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "748:2:181"
+              "src": "748:2:92"
             }
           },
           {
-            "id": 65164,
+            "id": 22007,
             "nodeType": "ErrorDefinition",
-            "src": "754:32:181",
+            "src": "754:32:92",
             "nodes": [],
             "errorSelector": "6571d65f",
             "name": "PermissionAlreadyExists",
-            "nameLocation": "760:23:181",
+            "nameLocation": "760:23:92",
             "parameters": {
-              "id": 65163,
+              "id": 22006,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "783:2:181"
+              "src": "783:2:92"
             }
           },
           {
-            "id": 65166,
+            "id": 22009,
             "nodeType": "ErrorDefinition",
-            "src": "789:19:181",
+            "src": "789:19:92",
             "nodes": [],
             "errorSelector": "3d693ada",
             "name": "NotAllowed",
-            "nameLocation": "795:10:181",
+            "nameLocation": "795:10:92",
             "parameters": {
-              "id": 65165,
+              "id": 22008,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "805:2:181"
+              "src": "805:2:92"
             }
           },
           {
-            "id": 65168,
+            "id": 22011,
             "nodeType": "ErrorDefinition",
-            "src": "811:31:181",
+            "src": "811:31:92",
             "nodes": [],
             "errorSelector": "f9d2f58c",
             "name": "MissingOwnerPermission",
-            "nameLocation": "817:22:181",
+            "nameLocation": "817:22:92",
             "parameters": {
-              "id": 65167,
+              "id": 22010,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "839:2:181"
+              "src": "839:2:92"
             }
           },
           {
-            "id": 65170,
+            "id": 22013,
             "nodeType": "ErrorDefinition",
-            "src": "845:25:181",
+            "src": "845:25:92",
             "nodes": [],
             "errorSelector": "b810dc5d",
             "name": "RoleDoesNotExist",
-            "nameLocation": "851:16:181",
+            "nameLocation": "851:16:92",
             "parameters": {
-              "id": 65169,
+              "id": 22012,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "867:2:181"
+              "src": "867:2:92"
             }
           },
           {
-            "id": 65172,
+            "id": 22015,
             "nodeType": "ErrorDefinition",
-            "src": "873:26:181",
+            "src": "873:26:92",
             "nodes": [],
             "errorSelector": "c029db4e",
             "name": "RoleAlreadyExists",
-            "nameLocation": "879:17:181",
+            "nameLocation": "879:17:92",
             "parameters": {
-              "id": 65171,
+              "id": 22014,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "896:2:181"
+              "src": "896:2:92"
             }
           },
           {
-            "id": 65174,
+            "id": 22017,
             "nodeType": "ErrorDefinition",
-            "src": "902:22:181",
+            "src": "902:22:92",
             "nodes": [],
             "errorSelector": "d9afe507",
             "name": "AddRoleFailed",
-            "nameLocation": "908:13:181",
+            "nameLocation": "908:13:92",
             "parameters": {
-              "id": 65173,
+              "id": 22016,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "921:2:181"
+              "src": "921:2:92"
             }
           }
         ],
@@ -758,43 +756,43 @@
         "contractKind": "library",
         "fullyImplemented": true,
         "linearizedBaseContracts": [
-          65175
+          22018
         ],
         "name": "Errors",
-        "nameLocation": "71:6:181",
-        "scope": 65176,
+        "nameLocation": "71:6:92",
+        "scope": 22019,
         "usedErrors": [
-          65124,
-          65126,
-          65128,
-          65130,
-          65132,
-          65134,
-          65136,
-          65138,
-          65140,
-          65142,
-          65144,
-          65146,
-          65148,
-          65150,
-          65152,
-          65154,
-          65156,
-          65158,
-          65160,
-          65162,
-          65164,
-          65166,
-          65168,
-          65170,
-          65172,
-          65174
+          21967,
+          21969,
+          21971,
+          21973,
+          21975,
+          21977,
+          21979,
+          21981,
+          21983,
+          21985,
+          21987,
+          21989,
+          21991,
+          21993,
+          21995,
+          21997,
+          21999,
+          22001,
+          22003,
+          22005,
+          22007,
+          22009,
+          22011,
+          22013,
+          22015,
+          22017
         ],
         "usedEvents": []
       }
     ],
     "license": "Apache-2.0"
   },
-  "id": 181
+  "id": 92
 }

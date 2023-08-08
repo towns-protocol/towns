@@ -10,12 +10,12 @@ servers/workers/**/.keys/*
 casablanca/**/gen/*
 casablanca/**/coverage/*
 casablanca/node/auth/contracts/*
-packages/contracts/cache/*
-packages/contracts/lib/*
-packages/contracts/**/out/*
-packages/contracts/out/*
-packages/contracts/**/types/*
-packages/contracts/docgen/*
+contracts/cache/*
+contracts/lib/*
+contracts/**/out/*
+contracts/out/*
+contracts/**/types/*
+contracts/docgen/*
 packages/contract/out
 
 broadcast/*
