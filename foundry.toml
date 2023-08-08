@@ -9,12 +9,12 @@
   libs = ["node_modules", "lib"] # An array of paths that contain libraries, relative to the root of the project.
   optimizer = true # Whether or not to enable the Solidity optimizer.
   optimizer_runs = 200 # The amount of optimizer runs to perform.
-  out = "packages/contracts/out" # The path to put contract artifacts in, relative to the root of the project.
-  script = "packages/contracts/scripts" # The path to the contract scripts relative to the root of the project.
+  out = "contracts/out" # The path to put contract artifacts in, relative to the root of the project.
+  script = "contracts/scripts" # The path to the contract scripts relative to the root of the project.
   solc_version = "0.8.20" # Uses a single Solidity compiler version for the project
-  src = "packages/contracts" # The path to the contract sources relative to the root of the project.
-  test = "packages/contracts/test" # The path to the test contract sources relative to the root of the project.
-  cache_path = "packages/contracts/cache" # The path to the cache, relative to the root of the project.
+  src = "contracts" # The path to the contract sources relative to the root of the project.
+  test = "contracts/test" # The path to the test contract sources relative to the root of the project.
+  cache_path = "contracts/cache" # The path to the cache, relative to the root of the project.
   verbosity = 3 # The verbosity level to use during tests.
   fs_permissions = [{ access = "read-write", path = "./packages"}, { access = "read-write", path = "./servers/dendrite"}, { access = "read-write", path = "./casablanca/node/auth"}] # Configures permissions for cheatcodes that touch the filesystem
 

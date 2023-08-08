@@ -223,13 +223,14 @@ export class OlmDecryption extends DecryptionAlgorithm {
             )
         }
 
-        // Olm events intended for a room have a room_id.
-        if (payload.room_id && payload.room_id !== event.getRoomId()) {
+        // Olm events intended for a room have a channel_id.
+        // todo: implement support for olm events over space_id's.
+        if (payload.channel_id && payload.channel_id !== event.getChannelId()) {
             throw new DecryptionError(
                 'OLM_BAD_ROOM',
-                `Message intended for room ${payload.room_id}`,
+                `Message intended for room ${payload.channel_id}`,
                 {
-                    reported_room: event.getRoomId() || 'ROOM_ID_UNDEFINED',
+                    reported_room: event.getChannelId() || 'ROOM_ID_UNDEFINED',
                 },
             )
         }

@@ -244,7 +244,7 @@
   },
   "settings": {
     "compilationTarget": {
-      "packages/contracts/src/towns/entitlements/IEntitlement.sol": "IEntitlement"
+      "contracts/src/towns/entitlements/IEntitlement.sol": "IEntitlement"
     },
     "evmVersion": "paris",
     "libraries": {},
@@ -259,9 +259,7 @@
     "remappings": [
       ":@openzeppelin/=lib/openzeppelin-contracts/",
       ":@prb/test/=lib/prb-test/src/",
-      ":@towns/=node_modules/@towns/",
       ":ERC721A/=lib/ERC721A/contracts/",
-      ":contracts/=packages/contracts/",
       ":council/=lib/council/contracts/",
       ":ds-test/=lib/ds-test/src/",
       ":erc4626-tests/=lib/operator-filter-registry/lib/openzeppelin-contracts/lib/erc4626-tests/",
@@ -273,7 +271,7 @@
     ]
   },
   "sources": {
-    "packages/contracts/src/towns/entitlements/IEntitlement.sol": {
+    "contracts/src/towns/entitlements/IEntitlement.sol": {
       "keccak256": "0x3c3733f40dcf373c19ea564ec9cbf49b33e96c27a80012e9be6f8d6d24e76c46",
       "license": "Apache-2.0",
       "urls": [

@@ -16,6 +16,21 @@ export default [
   },
   {
     "inputs": [],
+    "name": "Entitlement__InvalidValue",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "Entitlement__NotAllowed",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "Entitlement__ValueAlreadyExists",
+    "type": "error"
+  },
+  {
+    "inputs": [],
     "name": "EntitlementsService__EntitlementDoesNotExist",
     "type": "error"
   },
@@ -30,8 +45,29 @@ export default [
     "type": "error"
   },
   {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      }
+    ],
+    "name": "Ownable__NotOwner",
+    "type": "error"
+  },
+  {
     "inputs": [],
-    "name": "EntitlementsService__NotAllowed",
+    "name": "Ownable__ZeroAddress",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "Pausable__NotPaused",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "Pausable__Paused",
     "type": "error"
   },
   {
@@ -80,6 +116,51 @@ export default [
     "type": "error"
   },
   {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "previousOwner",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "newOwner",
+        "type": "address"
+      }
+    ],
+    "name": "OwnershipTransferred",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      }
+    ],
+    "name": "Paused",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      }
+    ],
+    "name": "Unpaused",
+    "type": "event"
+  },
+  {
     "inputs": [
       {
         "internalType": "uint256",
@@ -117,7 +198,7 @@ export default [
             "type": "bytes"
           }
         ],
-        "internalType": "struct IRolesStructs.CreateEntitlement",
+        "internalType": "struct IRolesBase.CreateEntitlement",
         "name": "entitlement",
         "type": "tuple"
       }
@@ -152,7 +233,7 @@ export default [
             "type": "bytes"
           }
         ],
-        "internalType": "struct IRolesStructs.CreateEntitlement[]",
+        "internalType": "struct IRolesBase.CreateEntitlement[]",
         "name": "entitlements",
         "type": "tuple[]"
       }
@@ -225,7 +306,7 @@ export default [
             "type": "address[]"
           }
         ],
-        "internalType": "struct IRolesStructs.Role",
+        "internalType": "struct IRolesBase.Role",
         "name": "",
         "type": "tuple"
       }
@@ -265,7 +346,7 @@ export default [
             "type": "address[]"
           }
         ],
-        "internalType": "struct IRolesStructs.Role[]",
+        "internalType": "struct IRolesBase.Role[]",
         "name": "",
         "type": "tuple[]"
       }
@@ -324,7 +405,7 @@ export default [
             "type": "bytes"
           }
         ],
-        "internalType": "struct IRolesStructs.CreateEntitlement",
+        "internalType": "struct IRolesBase.CreateEntitlement",
         "name": "entitlement",
         "type": "tuple"
       }
@@ -364,7 +445,7 @@ export default [
             "type": "bytes"
           }
         ],
-        "internalType": "struct IRolesStructs.CreateEntitlement[]",
+        "internalType": "struct IRolesBase.CreateEntitlement[]",
         "name": "entitlements",
         "type": "tuple[]"
       }

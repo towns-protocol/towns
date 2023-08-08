@@ -34,10 +34,10 @@ export class MemoryCryptoStore implements CryptoStore {
     private inboundGroupSessionsWithheld: Record<string, IWithheld> = {}
     // Opaque device data object
     private deviceData: IDeviceData | null = null
-    private rooms: { [roomId: string]: IRoomEncryption } = {}
+    private rooms: { [channelId: string]: IRoomEncryption } = {}
     private sessionsNeedingBackup: { [sessionKey: string]: boolean } = {}
     private sharedHistoryInboundGroupSessions: {
-        [roomId: string]: [senderKey: string, sessionId: string][]
+        [channelId: string]: [senderKey: string, sessionId: string][]
     } = {}
     private rk: RK | null = null
     private rdk: RDK | null = null
@@ -87,7 +87,7 @@ export class MemoryCryptoStore implements CryptoStore {
                 // this entry matches the request - return it.
                 console.log(
                     `already have key request outstanding for ` +
-                        `${requestBody.room_id} / ${requestBody.session_id}: ` +
+                        `${requestBody.channel_id} / ${requestBody.session_id}: ` +
                         `not sending another`,
                 )
                 return existing
@@ -96,7 +96,7 @@ export class MemoryCryptoStore implements CryptoStore {
             // we got to the end of the list without finding a match
             // - add the new request.
             console.log(
-                `enqueueing key request for ${requestBody.room_id} / ` + requestBody.session_id,
+                `enqueueing key request for ${requestBody.channel_id} / ` + requestBody.session_id,
             )
             this.outgoingRoomKeyRequests.push(request)
             return request
@@ -434,8 +434,8 @@ export class MemoryCryptoStore implements CryptoStore {
 
     // E2E rooms
 
-    public storeEndToEndRoom(roomId: string, roomInfo: IRoomEncryption, txn: null): void {
-        this.rooms[roomId] = roomInfo
+    public storeEndToEndRoom(channelId: string, roomInfo: IRoomEncryption, txn: null): void {
+        this.rooms[channelId] = roomInfo
     }
 
     public getEndToEndRooms(
@@ -483,19 +483,19 @@ export class MemoryCryptoStore implements CryptoStore {
     }
 
     public addSharedHistoryInboundGroupSession(
-        roomId: string,
+        channelId: string,
         senderKey: string,
         sessionId: string,
     ): void {
-        const sessions = this.sharedHistoryInboundGroupSessions[roomId] || []
+        const sessions = this.sharedHistoryInboundGroupSessions[channelId] || []
         sessions.push([senderKey, sessionId])
-        this.sharedHistoryInboundGroupSessions[roomId] = sessions
+        this.sharedHistoryInboundGroupSessions[channelId] = sessions
     }
 
     public getSharedHistoryInboundGroupSessions(
-        roomId: string,
+        channelId: string,
     ): Promise<[senderKey: string, sessionId: string][]> {
-        return Promise.resolve(this.sharedHistoryInboundGroupSessions[roomId] || [])
+        return Promise.resolve(this.sharedHistoryInboundGroupSessions[channelId] || [])
     }
 
     // Session key backups

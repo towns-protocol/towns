@@ -27,7 +27,6 @@ describe('riverEventTest', () => {
 
         const onChannelNewMessage = (channelId: string, event: RiverEvent): void => {
             log('channelNewMessage', channelId)
-            log(`event: ${JSON.stringify(event)}`)
             done.runAndDone(() => {
                 // event is unencrypted so clear shouldn't be set
                 const content = event.getClearChannelMessage_Post_Text()
@@ -99,7 +98,6 @@ describe('riverEventTest', () => {
             log('toDeviceMessage for Alice', streamId, senderKey, deviceKey, payload)
             aliceSelfToDevice.runAndDone(() => {
                 expect(payload).toBeDefined()
-                log(`payload: ${JSON.stringify(payload)}`)
                 expect(content.ciphertext).toBeDefined()
                 // this should be undefined until we attempt decrypting the event
                 expect(payload?.getClearContent()).toBeUndefined()

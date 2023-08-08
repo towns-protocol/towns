@@ -22,7 +22,7 @@ import type {
   PromiseOrValue,
 } from "./common";
 
-export declare namespace IEntitlementsStructs {
+export declare namespace IEntitlementsBase {
   export type EntitlementStruct = {
     name: PromiseOrValue<string>;
     moduleAddress: PromiseOrValue<string>;
@@ -166,16 +166,16 @@ export interface IEntitlements extends BaseContract {
       entitlement: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<
-      [IEntitlementsStructs.EntitlementStructOutput] & {
-        entitlements: IEntitlementsStructs.EntitlementStructOutput;
+      [IEntitlementsBase.EntitlementStructOutput] & {
+        entitlements: IEntitlementsBase.EntitlementStructOutput;
       }
     >;
 
     getEntitlements(
       overrides?: CallOverrides
     ): Promise<
-      [IEntitlementsStructs.EntitlementStructOutput[]] & {
-        entitlements: IEntitlementsStructs.EntitlementStructOutput[];
+      [IEntitlementsBase.EntitlementStructOutput[]] & {
+        entitlements: IEntitlementsBase.EntitlementStructOutput[];
       }
     >;
 
@@ -211,11 +211,11 @@ export interface IEntitlements extends BaseContract {
   getEntitlement(
     entitlement: PromiseOrValue<string>,
     overrides?: CallOverrides
-  ): Promise<IEntitlementsStructs.EntitlementStructOutput>;
+  ): Promise<IEntitlementsBase.EntitlementStructOutput>;
 
   getEntitlements(
     overrides?: CallOverrides
-  ): Promise<IEntitlementsStructs.EntitlementStructOutput[]>;
+  ): Promise<IEntitlementsBase.EntitlementStructOutput[]>;
 
   isEntitledToChannel(
     channelId: PromiseOrValue<string>,
@@ -249,11 +249,11 @@ export interface IEntitlements extends BaseContract {
     getEntitlement(
       entitlement: PromiseOrValue<string>,
       overrides?: CallOverrides
-    ): Promise<IEntitlementsStructs.EntitlementStructOutput>;
+    ): Promise<IEntitlementsBase.EntitlementStructOutput>;
 
     getEntitlements(
       overrides?: CallOverrides
-    ): Promise<IEntitlementsStructs.EntitlementStructOutput[]>;
+    ): Promise<IEntitlementsBase.EntitlementStructOutput[]>;
 
     isEntitledToChannel(
       channelId: PromiseOrValue<string>,

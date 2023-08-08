@@ -1,9 +1,9 @@
 syntax = "proto3";
 package casablanca;
-import "google/protobuf/timestamp.proto";
-import "google/protobuf/empty.proto";
 option go_package = "casablanca/node/protocol";
 
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
 
 /**
  * Envelope contains serialized event, and its hash and signature.
@@ -111,6 +111,13 @@ message MiniblockHeader {
         UserSettingsPayload.Snapshot user_settings_content = 104;
         UserDeviceKeyPayload.Snapshot user_device_key_content = 105;
     }
+}
+
+// Contains all events in the miniblock, and the header event.
+// Events must be in the same order as in the header.
+message Miniblock {
+    repeated Envelope events = 1;
+    Envelope header = 2;
 }
 
 /**

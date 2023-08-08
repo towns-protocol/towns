@@ -99,6 +99,7 @@ import { syncMatrixSpace } from './matrix/SyncSpace'
 import { toUtf8String } from 'ethers/lib/utils.js'
 import { toZionRoomFromStream } from './casablanca/CasablancaUtils'
 import { sendFullyReadMarkers } from './casablanca/SendFullyReadMarkers'
+import { RiverDecryptionExtension } from './casablanca/RiverDecryptionExtensions'
 import { isToDevicePlainMessage } from '@river/sdk'
 import { createSpaceDapp } from './web3/SpaceDappFactory'
 
@@ -128,6 +129,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
     protected matrixClient?: MatrixClient
     public matrixDecryptionExtension?: MatrixDecryptionExtension
     protected casablancaClient?: CasablancaClient
+    public riverDecryptionExtension?: RiverDecryptionExtension
     private dbManager: MatrixDbManager
     private riverDbManager: RiverDbManager
     private _auth?: MatrixAuth
@@ -345,6 +347,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
             await this.casablancaClient.createNewUser()
         }
         await this.casablancaClient.initCrypto()
+        this.riverDecryptionExtension = new RiverDecryptionExtension(this.casablancaClient, this)
         this._eventHandlers?.onRegister?.({
             userId: this.casablancaClient.userId,
         })
@@ -373,6 +376,10 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
      * stopCasablancaClient
      *************************************************/
     public async stopCasablancaClient() {
+        if (this.riverDecryptionExtension) {
+            this.riverDecryptionExtension?.stop()
+            this.riverDecryptionExtension = undefined
+        }
         if (this.casablancaClient) {
             this.log('Stopped casablanca client')
             await this.casablancaClient.stop()
@@ -1664,6 +1671,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
                                             mentions: options?.mentions ?? [],
                                         },
                                     },
+                                    options?.encrypt ? options.encrypt : false,
                                 )
                             }
                             break

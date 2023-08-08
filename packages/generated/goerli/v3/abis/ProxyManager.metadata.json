@@ -6,6 +6,26 @@
   "output": {
     "abi": [
       {
+        "inputs": [],
+        "name": "Initializable_InInitializingState",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "Initializable_NotInInitializingState",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "Introspection_AlreadySupported",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "Introspection_NotSupported",
+        "type": "error"
+      },
+      {
         "inputs": [
           {
             "internalType": "address",
@@ -17,6 +37,11 @@
         "type": "error"
       },
       {
+        "inputs": [],
+        "name": "Ownable__ZeroAddress",
+        "type": "error"
+      },
+      {
         "inputs": [
           {
             "internalType": "address",
@@ -24,7 +49,7 @@
             "type": "address"
           }
         ],
-        "name": "ProxyManagerService__NotContract",
+        "name": "ProxyManager__NotContract",
         "type": "error"
       },
       {
@@ -32,12 +57,38 @@
         "inputs": [
           {
             "indexed": false,
-            "internalType": "uint8",
+            "internalType": "uint32",
             "name": "version",
-            "type": "uint8"
+            "type": "uint32"
           }
         ],
         "name": "Initialized",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": true,
+            "internalType": "bytes4",
+            "name": "interfaceId",
+            "type": "bytes4"
+          }
+        ],
+        "name": "InterfaceAdded",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": true,
+            "internalType": "bytes4",
+            "name": "interfaceId",
+            "type": "bytes4"
+          }
+        ],
+        "name": "InterfaceRemoved",
         "type": "event"
       },
       {
@@ -58,6 +109,32 @@
         ],
         "name": "OwnershipTransferred",
         "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": false,
+            "internalType": "address",
+            "name": "implementation",
+            "type": "address"
+          }
+        ],
+        "name": "ProxyManager__ImplementationSet",
+        "type": "event"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "implementation",
+            "type": "address"
+          }
+        ],
+        "name": "__ProxyManager_init",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
       },
       {
         "inputs": [
@@ -99,12 +176,41 @@
         }
       },
       "kind": "dev",
-      "methods": {},
+      "methods": {
+        "getImplementation(bytes4)": {
+          "params": {
+            "selector": "The selector to get the implementation for"
+          },
+          "returns": {
+            "_0": "The implementation address"
+          }
+        },
+        "setImplementation(address)": {
+          "params": {
+            "implementation": "The implementation address"
+          }
+        }
+      },
       "version": 1
     },
     "userdoc": {
+      "events": {
+        "InterfaceAdded(bytes4)": {
+          "notice": "Emitted when an interface is added to the contract via `_addInterface`."
+        },
+        "InterfaceRemoved(bytes4)": {
+          "notice": "Emitted when an interface is removed from the contract via `_removeInterface`."
+        }
+      },
       "kind": "user",
-      "methods": {},
+      "methods": {
+        "getImplementation(bytes4)": {
+          "notice": "Get the implementation for a given selector"
+        },
+        "setImplementation(address)": {
+          "notice": "Set the implementation"
+        }
+      },
       "version": 1
     }
   },
@@ -147,52 +253,76 @@
         "dweb:/ipfs/QmNyjwxCrGhQMyzLD93oUobJXVe9ceJvRvfXwbEtuxPiEj"
       ]
     },
-    "packages/contracts/src/diamond/facets/initializable/Initializable.sol": {
-      "keccak256": "0x0f23dfef4c7e54cd01d3d46b2c8226b93c1d4715132f1df1ce76b349b97dfd90",
+    "packages/contracts/src/diamond/facets/Facet.sol": {
+      "keccak256": "0x8213b85d1271bc3c2aa9842979c8ad825066c4c9addc55296d53b6747e5198ba",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://8dee642217f0e4bfa06cbcfbdfedfb30dc021aaa091a4bbc86abbe719babb442",
-        "dweb:/ipfs/QmQb6UEnUGVYDPbEB9VX2SwifCspdyEE8dxTTbtwT7Nbqk"
+        "bzz-raw://b4e88e869c99e65f0caeb9d03938e78c578a869783b9f20c05f4ba52e7ca493d",
+        "dweb:/ipfs/QmRqPmg8BYD1V6Cd8kfihCQ7nn2DAsgRjGW2MJvc7Evnjt"
+      ]
+    },
+    "packages/contracts/src/diamond/facets/initializable/Initializable.sol": {
+      "keccak256": "0x2a4f3a99b3b3ac6c2c18431cea80b40774c1d8265ddefac21b26da561e069096",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://36dbba730942b1fd345f242051ea7f33e979f70392fbd929d8522c0c9c6dd367",
+        "dweb:/ipfs/QmYMvYnvg9zQJpDQX9yMHZ1AET9Vx7UXtDenXAs1JhfPpd"
       ]
     },
     "packages/contracts/src/diamond/facets/initializable/InitializableStorage.sol": {
-      "keccak256": "0x45ee66345f1a03f553d96f182e5dc4b5f04364cf79dd593813c33b4455cbc1dd",
+      "keccak256": "0x4a708b87fe25525bd8b67b7e9541462110e6d2e480ee3253e821528349c04963",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://436bb9360939f0658ec75f2048b778c695f7c0a943c27f5e54aac2ec9898bb67",
-        "dweb:/ipfs/QmZpEcRjWSF42ptNbNf3JckuMxcmgsK5xmnEAXVer6f6Dp"
+        "bzz-raw://2b16b8575ca43f66ddd4bca6c6785d7fc2eb618568c06153cec1a12a2a6915af",
+        "dweb:/ipfs/QmVXod9CVcw66QrzSt2pjFfMbwXxZRBdW74X4y9JYTp923"
+      ]
+    },
+    "packages/contracts/src/diamond/facets/introspection/IERC165.sol": {
+      "keccak256": "0xa1dfa0449031fced106dd105c184823595398c876be53b4bb8d855937a435816",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://e98a9007bca24776e4580c9326cfbb72ffe56334229626c336545be8c2c6e6d2",
+        "dweb:/ipfs/QmdqoQTUoDKqirUR3hscy4zBh4Kn2E1fRta1y9DfA43urV"
+      ]
+    },
+    "packages/contracts/src/diamond/facets/introspection/IntrospectionBase.sol": {
+      "keccak256": "0x503b6ce030f8a760e9a877545b35307d05bbb704b501095795ab2168fe40db59",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://769658fed18c26f67dec9bf4ca18dd595c0343bc8ea21bb3e50595eca3401265",
+        "dweb:/ipfs/QmVuqWH5eKqBJbNEtXzybgZ7ahtjTraMew8CMb4TuVUyo6"
+      ]
+    },
+    "packages/contracts/src/diamond/facets/introspection/IntrospectionStorage.sol": {
+      "keccak256": "0x08fb9c05b623a2f6ee8e3098a7d0e9b19e25eacb9735f66fa311ced1afafc121",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://8a4b34a66b154861a60820ab9a7f225d043eb36e2f90234197146bbc4b5f191f",
+        "dweb:/ipfs/QmSoYyPg2d1XsBeCsx1X9dvhBacjhZcqqgx8WDPJ3nYmB2"
       ]
     },
     "packages/contracts/src/diamond/facets/loupe/IDiamondLoupe.sol": {
-      "keccak256": "0xe69840ad83771a18ac0ed0745f1f9484dc1b6395d37b5d52eaf9d6d0b08c5144",
+      "keccak256": "0x83141e0a7e8f1e9a592ca00bb6365aae7296f61d06080024546350594f076618",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://ab90f64a3b96a65fc3045fe699e0beb95bcb8ef95d698a9f2de01196a439a0b8",
-        "dweb:/ipfs/QmZgMYdB8qc4q5axSDAqKY3Daog2yK2mjfWexM4C57RxFj"
+        "bzz-raw://f0917399449ea9830cff570d958d28b37b3c83af3a38c5f0a58241264aaf8290",
+        "dweb:/ipfs/QmUbJD4U8Fpf7BiXJWExejkd54vUjiXJrjnxxARUDzrGa8"
       ]
     },
     "packages/contracts/src/diamond/facets/ownable/IERC173.sol": {
-      "keccak256": "0x181f9f571d19ceabaeeb7982b10db95a2065a98f5baa511942a8ebfc20938aa2",
+      "keccak256": "0x76db3de67cf685fd097cba11229f8fcb1ddb25612193a9ced697508706a237fe",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://812d0ab1d77cc3b2c76314a5ff0c65a85ed6725380d50260863fbdb1049486fb",
-        "dweb:/ipfs/QmWEreGaA8i3XeSaFRzKHV5Ux7ELR4EyeVT3c11pywreky"
+        "bzz-raw://3f6de17931a0734b33ffa015f207efaba72e71ffe7f5ca3a95178525546de620",
+        "dweb:/ipfs/QmXuw9kx5fAER4jYBHUDLpbB2mQhEkwBrZPa96JgEEY9nD"
       ]
     },
     "packages/contracts/src/diamond/facets/ownable/OwnableBase.sol": {
-      "keccak256": "0x60a28fea492bc100f389f832f42b54981a87ad141f66c3ead4f800768ca9278f",
+      "keccak256": "0xba2c89bb2bf6c69ef635bd61785272057e031c1c23cd2cbe47232db9a167ac0c",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://736f15f33a090c8ef190f0ed0e58c4422d2557efcd71c63701e5d472c0f4ed5c",
-        "dweb:/ipfs/QmdCtV2gBNrtKxEwAqzWRdUYLG5L1VDboUvwJzduFwBL4k"
-      ]
-    },
-    "packages/contracts/src/diamond/facets/ownable/OwnableService.sol": {
-      "keccak256": "0xc96ea2c75519d986a75fb86a1c3ec08794fee823c5303da8c03869bfb505185d",
-      "license": "Apache-2.0",
-      "urls": [
-        "bzz-raw://b19857cd8fe0c892052300a78ba670ae98048a42fc69f0d2da946c03dc671900",
-        "dweb:/ipfs/QmVecFwkx6zhcn6MiCFoisMVWs6Y6t94n4H4Xwf5tSgdto"
+        "bzz-raw://f3c0b79147bb035ad0c363d55b0fcb256ac32fda8cde6a0c1f36ba0888be46cf",
+        "dweb:/ipfs/QmbVTmhuESiuAokwPrgmjhTwPfdxU4vJdgFTK1jtKi2K4Y"
       ]
     },
     "packages/contracts/src/diamond/facets/ownable/OwnableStorage.sol": {
@@ -204,35 +334,27 @@
       ]
     },
     "packages/contracts/src/diamond/proxy/manager/IProxyManager.sol": {
-      "keccak256": "0x30c48cba9b5014aeeffe06970a6aa67652f3dd79e459bbf6d2d23b98c49d6530",
+      "keccak256": "0xb819bdc5f86c7cbd5b47e19908b878cc330ad1ca41ca03e59f682a42344a4211",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://3168c89bcf043fda02b222ed6c008c2714d7de7b0a9bf719ae1ee793b22687c7",
-        "dweb:/ipfs/QmVUWZHrQkTiThTs7JxhCpJXBrjhDREua5UohQhaPMHYVT"
+        "bzz-raw://05789a58b582d4a2b0940f5195137aa8a0b49ddfde6bac1351643184a65e088f",
+        "dweb:/ipfs/QmXKh6Axoh1hFQJeNoiGYwwWz2u6pSyzwJG62hfpSEVxCH"
       ]
     },
     "packages/contracts/src/diamond/proxy/manager/ProxyManager.sol": {
-      "keccak256": "0xecdd961d17e198d91e876de7231491d9145de7ffb8946a873ea09ab45b4057aa",
+      "keccak256": "0x1be05c6854894799c669451a27ac7fb3c1c351e1c21be6e62e643fe6f2ac3e71",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://323c97cafc08437dd7236dabc84768a9522693114c2ea4403dc292edae3a4bd8",
-        "dweb:/ipfs/QmR5wssqYSTmAeERTYfrvuNN6wWJanzN6GDk6BAw9HduDp"
+        "bzz-raw://078c83220d17f5569c5002a3fa84c654ce9888085923185b8b5cbaf59f2a60e9",
+        "dweb:/ipfs/QmX47TEVp8HsZ67a8WUTHwH5kfyv42Tiskg8HErkPoPVGY"
       ]
     },
     "packages/contracts/src/diamond/proxy/manager/ProxyManagerBase.sol": {
-      "keccak256": "0x0471501197fe9f4497bef7274e188453ff9a57c951c15cc9fdee0daf3c121d2f",
+      "keccak256": "0x662d0e63c9d3718597aaa2d9186874d549d51048f00a2ffd339c8938d905fc99",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://e46f6325d0b47f9acbfc3f630e03fe5d361dbb8180d03efa83ed989656a40f89",
-        "dweb:/ipfs/Qmcws5jWVJKbPPJppXoBMPP9ZSLPbkCX3f2EkEwvr7uKvP"
-      ]
-    },
-    "packages/contracts/src/diamond/proxy/manager/ProxyManagerService.sol": {
-      "keccak256": "0xbb4f847c32da085c8f7c40b730b1015248e05e09105452dbb7759dc492957081",
-      "license": "Apache-2.0",
-      "urls": [
-        "bzz-raw://b709948e6dbea004a52020fdace667b1e43ca9c9888ea7d3587b8112884bd960",
-        "dweb:/ipfs/QmR2ynvQPDrmXeBwbdogi6r95dzBxWFoxnuN7Wo9Bz4fpa"
+        "bzz-raw://672aa489fcf0864a8c4964ce3daf835626f81211fb9e3833cdf90827e69aace8",
+        "dweb:/ipfs/QmZZkcERsHoDTYzUYH4uRVPvXUjskzVcndgWGztxRtnuFY"
       ]
     },
     "packages/contracts/src/diamond/proxy/manager/ProxyManagerStorage.sol": {

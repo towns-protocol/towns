@@ -688,7 +688,7 @@
   },
   "settings": {
     "compilationTarget": {
-      "packages/contracts/src/tokens/Pioneer.sol": "Pioneer"
+      "contracts/src/tokens/Pioneer.sol": "Pioneer"
     },
     "evmVersion": "paris",
     "libraries": {},
@@ -703,9 +703,7 @@
     "remappings": [
       ":@openzeppelin/=lib/openzeppelin-contracts/",
       ":@prb/test/=lib/prb-test/src/",
-      ":@towns/=node_modules/@towns/",
       ":ERC721A/=lib/ERC721A/contracts/",
-      ":contracts/=packages/contracts/",
       ":council/=lib/council/contracts/",
       ":ds-test/=lib/ds-test/src/",
       ":erc4626-tests/=lib/operator-filter-registry/lib/openzeppelin-contracts/lib/erc4626-tests/",
@@ -717,6 +715,14 @@
     ]
   },
   "sources": {
+    "contracts/src/tokens/Pioneer.sol": {
+      "keccak256": "0xceaacf2c3717974a715873628214a137af7d6f66506dc04b4aa699424a3ba1d8",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://3885cbc24807a482c4bc8b48634d9f8876c81ff9f411bba17c4579f8cbcba4fe",
+        "dweb:/ipfs/QmPtRiKTUfwneCSx14MSBkPSQLPvCTtbA7iramm1QzKpdj"
+      ]
+    },
     "lib/openzeppelin-contracts/contracts/access/Ownable.sol": {
       "keccak256": "0xa94b34880e3c1b0b931662cb1c09e5dfa6662f31cba80e07c5ee71cd135c9673",
       "license": "MIT",
@@ -811,14 +817,6 @@
       "urls": [
         "bzz-raw://33bbf48cc069be677705037ba7520c22b1b622c23b33e1a71495f2d36549d40b",
         "dweb:/ipfs/Qmct36zWXv3j7LZB83uwbg7TXwnZSN1fqHNDZ93GG98bGz"
-      ]
-    },
-    "packages/contracts/src/tokens/Pioneer.sol": {
-      "keccak256": "0xceaacf2c3717974a715873628214a137af7d6f66506dc04b4aa699424a3ba1d8",
-      "license": "Apache-2.0",
-      "urls": [
-        "bzz-raw://3885cbc24807a482c4bc8b48634d9f8876c81ff9f411bba17c4579f8cbcba4fe",
-        "dweb:/ipfs/QmPtRiKTUfwneCSx14MSBkPSQLPvCTtbA7iramm1QzKpdj"
       ]
     }
   },

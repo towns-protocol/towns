@@ -83,7 +83,7 @@ describe('clientCryptoTest', () => {
         })
         // ensure olm session with bob
         expect(event.event.content).toBeDefined()
-        await expect(alicesClient.encryptEvent(event, { roomId: bobsChannelId })).toResolve()
+        await expect(alicesClient.encryptEvent(event, { channelId: bobsChannelId })).toResolve()
         expect(event.shouldAttemptDecryption()).toBe(false)
         expect(event.getWireContentChannel().content.ciphertext).toBeDefined()
         const senderKey = alicesClient.olmDevice.deviceCurve25519Key
@@ -103,7 +103,7 @@ describe('clientCryptoTest', () => {
                 parsed_event: messagePayload,
                 creator_user_id: alicesClient.userId,
             },
-            room_id: bobsChannelId,
+            channel_id: bobsChannelId,
         })
         expect(encryptedEvent.shouldAttemptDecryption()).toBe(true)
         expect(encryptedEvent.getWireContentChannel().content.ciphertext).toBeDefined()
@@ -210,7 +210,7 @@ describe('clientCryptoTest', () => {
         for (const event of events) {
             expect(event.event.event.content).toBeDefined()
             await expect(
-                event.client.encryptEvent(event.event, { roomId: bobsChannelId }),
+                event.client.encryptEvent(event.event, { channelId: bobsChannelId }),
             ).toResolve()
             expect(event.event.shouldAttemptDecryption()).toBe(false)
             const ciphertext = event.event.getWireContentChannel().content.ciphertext
@@ -229,7 +229,7 @@ describe('clientCryptoTest', () => {
                         parsed_event: messagePayload,
                         creator_user_id: event.senderUser,
                     },
-                    room_id: bobsChannelId,
+                    channel_id: bobsChannelId,
                 }),
             )
         }
@@ -316,7 +316,7 @@ describe('clientCryptoTest', () => {
             stream_type: EncryptedEventStreamTypes.Channel,
         })
         expect(event.event.content).toBeDefined()
-        await expect(bobsClient.encryptEvent(event, { roomId: bobsChannelId })).toResolve()
+        await expect(bobsClient.encryptEvent(event, { channelId: bobsChannelId })).toResolve()
         expect(event.shouldAttemptDecryption()).toBe(false)
         expect(event.getWireContentChannel().content.ciphertext).toBeDefined()
         const senderKey = bobsClient.olmDevice.deviceCurve25519Key
@@ -337,7 +337,7 @@ describe('clientCryptoTest', () => {
                 parsed_event: messagePayload,
                 creator_user_id: bobsClient.userId,
             },
-            room_id: bobsChannelId,
+            channel_id: bobsChannelId,
         })
         expect(encryptedEvent.shouldAttemptDecryption()).toBe(true)
         expect(encryptedEvent.getWireContentChannel().content.ciphertext).toBeDefined()
@@ -354,6 +354,153 @@ describe('clientCryptoTest', () => {
         if (clear && clear.content && clear.opts) {
             expect(clear.opts.msgtype).toEqual('m.bad.encrypted')
         }
+    })
+
+    test('encryptDecryptChannelMessageSentOverClient', async () => {
+        await expect(bobsClient.createNewUser()).toResolve()
+        await expect(bobsClient.initCrypto()).toResolve()
+        await bobsClient.startSync()
+        await expect(alicesClient.createNewUser()).toResolve()
+        await expect(alicesClient.initCrypto()).toResolve()
+        expect(
+            alicesClient.olmDevice.deviceCurve25519Key !== bobsClient.olmDevice.deviceCurve25519Key,
+        ).toBe(true)
+        await alicesClient.startSync()
+
+        // bob creates space, channel and invites alice
+        const bobsSpaceId = makeSpaceStreamId('bobs-space-' + genId())
+        await expect(bobsClient.createSpace(bobsSpaceId, { name: "Bob's Space" })).toResolve()
+
+        const bobsChannelId = makeChannelStreamId('bobs-channel-' + genId())
+        const bobsChannelName = 'Bobs channel'
+        const bobsChannelTopic = 'Bobs channel topic'
+        log(`bobUserId', ${bobsClient.userId}`)
+        log(`aliceUserId', ${alicesClient.userId}`)
+
+        await expect(
+            bobsClient.createChannel(bobsSpaceId, bobsChannelName, bobsChannelTopic, bobsChannelId),
+        ).toResolve()
+        await expect(bobsClient.waitForStream(bobsChannelId)).toResolve()
+
+        // alice joins space and channel
+        // Alice waits for invite to Bob's channel.
+        const aliceJoined = makeDonePromise()
+        alicesClient.on('userInvitedToStream', (streamId: string) => {
+            log('userInvitedToStream', 'Alice', streamId)
+            aliceJoined.runAndDoneAsync(async () => {
+                expect(streamId).toBe(bobsChannelId)
+                await expect(alicesClient.joinStream(streamId)).toResolve()
+            })
+        })
+
+        // Bob invites Alice to his channel.
+        await bobsClient.inviteUser(bobsChannelId, alicesClient.userId)
+
+        await aliceJoined.expectToSucceed()
+
+        const bobSelfToDevice = makeDonePromise()
+        bobsClient.on('channelNewMessage', (streamId: string, event: RiverEvent): void => {
+            const { content } = event.getWireContentChannel()
+            const senderKey = content['sender_key']
+            const sessionId = content['session_id']
+            log('channelNewMessage for Alice', streamId, senderKey, sessionId, content)
+            if (streamId == bobsChannelId) {
+                bobSelfToDevice.runAndDoneAsync(async () => {
+                    expect(content).toBeDefined()
+                    await bobsClient.decryptEventIfNeeded(event)
+                    const clearEvent = event.getClearChannelMessage_Post_Text()
+                    expect(clearEvent).toBeDefined()
+                    expect(clearEvent?.body).toContain('First secret encrypted message!')
+                })
+            }
+        })
+
+        // Alices sends message to Bob's channel
+        const payload = 'First secret encrypted message!'
+        await expect(
+            alicesClient.sendChannelMessage(
+                bobsChannelId,
+                make_ChannelMessage_Post_Content_Text(payload),
+                true,
+            ),
+        ).toResolve()
+
+        // Bob listens for message from Alice and attempts to decrypt it
+        await bobSelfToDevice.expectToSucceed()
+    })
+
+    test('unencryptedChannelMessageSentOverClient', async () => {
+        await expect(bobsClient.createNewUser()).toResolve()
+        await expect(bobsClient.initCrypto()).toResolve()
+        await bobsClient.startSync()
+        await expect(alicesClient.createNewUser()).toResolve()
+        await expect(alicesClient.initCrypto()).toResolve()
+        expect(
+            alicesClient.olmDevice.deviceCurve25519Key !== bobsClient.olmDevice.deviceCurve25519Key,
+        ).toBe(true)
+        await alicesClient.startSync()
+
+        // bob creates space, channel and invites alice
+        const bobsSpaceId = makeSpaceStreamId('bobs-space-' + genId())
+        await expect(bobsClient.createSpace(bobsSpaceId, { name: "Bob's Space" })).toResolve()
+
+        const bobsChannelId = makeChannelStreamId('bobs-channel-' + genId())
+        const bobsChannelName = 'Bobs channel'
+        const bobsChannelTopic = 'Bobs channel topic'
+        log(`bobUserId', ${bobsClient.userId}`)
+        log(`aliceUserId', ${alicesClient.userId}`)
+
+        await expect(
+            bobsClient.createChannel(bobsSpaceId, bobsChannelName, bobsChannelTopic, bobsChannelId),
+        ).toResolve()
+        await expect(bobsClient.waitForStream(bobsChannelId)).toResolve()
+
+        // alice joins space and channel
+        // Alice waits for invite to Bob's channel.
+        const aliceJoined = makeDonePromise()
+        alicesClient.on('userInvitedToStream', (streamId: string) => {
+            log('userInvitedToStream', 'Alice', streamId)
+            aliceJoined.runAndDoneAsync(async () => {
+                expect(streamId).toBe(bobsChannelId)
+                await expect(alicesClient.joinStream(streamId)).toResolve()
+            })
+        })
+
+        // Bob invites Alice to his channel.
+        await bobsClient.inviteUser(bobsChannelId, alicesClient.userId)
+
+        await aliceJoined.expectToSucceed()
+
+        const bobSelfToDevice = makeDonePromise()
+        bobsClient.on('channelNewMessage', (streamId: string, event: RiverEvent): void => {
+            const { content } = event.getWireContentChannel()
+            const senderKey = content['sender_key']
+            const sessionId = content['session_id']
+            log('channelNewMessage', streamId, senderKey, sessionId, content)
+            if (streamId == bobsChannelId) {
+                bobSelfToDevice.runAndDoneAsync(async () => {
+                    expect(content).toBeDefined()
+                    await bobsClient.decryptEventIfNeeded(event)
+                    const wireEvent = event.getWireContentChannel().content.ciphertext
+                    expect(wireEvent).toBeDefined()
+                    expect(wireEvent).toContain('First secret encrypted message!')
+                })
+            }
+        })
+
+        // Alices sends message to Bob's channel
+        const encrypt = false
+        const payload = 'First secret encrypted message!'
+        await expect(
+            alicesClient.sendChannelMessage(
+                bobsChannelId,
+                make_ChannelMessage_Post_Content_Text(payload),
+                encrypt,
+            ),
+        ).toResolve()
+
+        // Bob listens for message from Alice and attempts to decrypt it
+        await bobSelfToDevice.expectToSucceed()
     })
 
     test('encryptMultipleMessagesAcrossManyChannel', async () => {})

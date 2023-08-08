@@ -330,55 +330,61 @@ function toTownsContent_ChannelPayload_Message(
     if (!payload.text) {
         return { error: `${description} no text in message` }
     }
-    const channelMessage = ChannelMessage.fromJsonString(payload.text)
+    try {
+        const channelMessage = ChannelMessage.fromJsonString(payload.text)
 
-    switch (channelMessage.payload.case) {
-        case 'post':
-            return (
-                toTownsContent_ChannelPayload_Message_Post(channelMessage.payload.value) ?? {
-                    error: `${description} unknown message type`,
-                }
-            )
-        case 'reaction':
-            return {
-                content: {
-                    kind: ZTEvent.Reaction,
-                    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-                    reaction: channelMessage.payload.value.reaction,
-                    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-                    targetEventId: channelMessage.payload.value.refEventId,
-                } satisfies ReactionEvent,
-            }
-        case 'redaction':
-            return {
-                content: {
-                    kind: ZTEvent.RoomRedaction,
-                    inReplyTo: channelMessage.payload.value.refEventId,
-                    content: {},
-                } satisfies RoomRedactionEvent,
-            }
-        case 'edit': {
-            const newPost = channelMessage.payload.value.post
-            if (!newPost) {
-                return { error: `${description} no post in edit` }
-            }
-            const newContent = toTownsContent_ChannelPayload_Message_Post(
-                newPost,
-                channelMessage.payload.value.refEventId,
-            )
-            return newContent ?? { error: `${description} no content in edit` }
-        }
-        case undefined:
-            return { error: `${description} undefined message kind` }
-        default: {
-            try {
-                staticAssertNever(channelMessage.payload)
-            } catch (e) {
+        switch (channelMessage.payload.case) {
+            case 'post':
+                return (
+                    toTownsContent_ChannelPayload_Message_Post(channelMessage.payload.value) ?? {
+                        error: `${description} unknown message type`,
+                    }
+                )
+            case 'reaction':
                 return {
-                    error: `${description} unknown message kind`,
+                    content: {
+                        kind: ZTEvent.Reaction,
+                        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+                        reaction: channelMessage.payload.value.reaction,
+                        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+                        targetEventId: channelMessage.payload.value.refEventId,
+                    } satisfies ReactionEvent,
+                }
+            case 'redaction':
+                return {
+                    content: {
+                        kind: ZTEvent.RoomRedaction,
+                        inReplyTo: channelMessage.payload.value.refEventId,
+                        content: {},
+                    } satisfies RoomRedactionEvent,
+                }
+            case 'edit': {
+                const newPost = channelMessage.payload.value.post
+                if (!newPost) {
+                    return { error: `${description} no post in edit` }
+                }
+                const newContent = toTownsContent_ChannelPayload_Message_Post(
+                    newPost,
+                    channelMessage.payload.value.refEventId,
+                )
+                return newContent ?? { error: `${description} no content in edit` }
+            }
+            case undefined:
+                return { error: `${description} undefined message kind` }
+            default: {
+                try {
+                    staticAssertNever(channelMessage.payload)
+                } catch (e) {
+                    return {
+                        error: `${description} unknown message kind`,
+                    }
                 }
             }
         }
+    } catch (e) {
+        return payload.algorithm
+            ? { error: `${description} message text encrypted with ${payload.algorithm}` }
+            : { error: `${description} message text invalid channel message` }
     }
 }
 

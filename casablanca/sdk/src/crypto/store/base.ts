@@ -100,20 +100,20 @@ export interface CryptoStore {
     // Device Data
     getEndToEndDeviceData(txn: CryptoTxn, func: (deviceData: IDeviceData | null) => void): void
     storeEndToEndDeviceData(deviceData: IDeviceData, txn: CryptoTxn | undefined): void
-    storeEndToEndRoom(roomId: string, roomInfo: IRoomEncryption, txn: CryptoTxn): void
+    storeEndToEndRoom(channelId: string, roomInfo: IRoomEncryption, txn: CryptoTxn): void
     getEndToEndRooms(txn: CryptoTxn, func: (rooms: Record<string, IRoomEncryption>) => void): void
     getSessionsNeedingBackup(limit: number): Promise<ISession[]>
     countSessionsNeedingBackup(txn?: CryptoTxn): Promise<number>
     unmarkSessionsNeedingBackup(sessions: ISession[], txn?: CryptoTxn): Promise<void>
     markSessionsNeedingBackup(sessions: ISession[], txn?: CryptoTxn): Promise<void>
     addSharedHistoryInboundGroupSession(
-        roomId: string,
+        channelId: string,
         senderKey: string,
         sessionId: string,
         txn?: CryptoTxn,
     ): void
     getSharedHistoryInboundGroupSessions(
-        roomId: string,
+        channelId: string,
         txn?: CryptoTxn,
     ): Promise<[senderKey: string, sessionId: string][]>
 
@@ -154,7 +154,7 @@ export interface ISession {
 }
 
 export interface IWithheld {
-    room_id: string
+    channel_id: string
     code: string
     reason: string
 }

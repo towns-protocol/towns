@@ -101,9 +101,13 @@ message ToDeviceMessage {
         string space_id = 1;
         string channel_id = 2;
         string algorithm = 3;
+        // sender's curve25519 device key
         string sender_key = 4;
+        // request session id
         string session_id = 5;
         optional string content = 6;
+        // known session ids
+        repeated string known_session_ids = 7;
     }
 
     message KeyResponse {

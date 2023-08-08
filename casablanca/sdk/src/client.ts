@@ -23,6 +23,7 @@ import {
     FullyReadMarkerContent,
     FullyReadMarkersContent,
     ToDeviceMessage,
+    EncryptedData,
 } from '@river/proto'
 
 import { Crypto, EncryptionTarget } from './crypto/crypto'
@@ -68,9 +69,14 @@ import {
 import { shortenHexString } from './binary'
 import { CryptoStore } from './crypto/store/base'
 import { DeviceInfo } from './crypto/deviceInfo'
-import { IDecryptOptions, RiverEvent } from './event'
+import {
+    IDecryptOptions,
+    RiverEvent,
+    RiverEvents,
+    isChannelContentPlainMessage_Post_Text,
+} from './event'
 import debug from 'debug'
-import { OLM_ALGORITHM } from './crypto/olmLib'
+import { MEGOLM_ALGORITHM, OLM_ALGORITHM } from './crypto/olmLib'
 import { Stream } from './stream'
 
 const log = dlog('csb:client')
@@ -93,7 +99,9 @@ interface IExportedDevice {
     deviceId: string
 }
 
-export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents>) {
+export type EmittedEvents = StreamEvents & RiverEvents
+
+export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvents>) {
     readonly signerContext: SignerContext
     readonly rpcClient: StreamRpcClientType
     readonly userId: string
@@ -112,7 +120,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
     protected exportedOlmDeviceToImport?: IExportedOlmDevice
     public pickleKey?: string
     public cryptoStore?: CryptoStore
-    private cryptoBackend?: Crypto
+    public cryptoBackend?: Crypto
     private syncLoop?: Promise<undefined | unknown>
     private syncAbort?: AbortController
 
@@ -734,7 +742,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
         this.logSync('sync BLIP DONE')
     }
 
-    emit<E extends keyof StreamEvents>(event: E, ...args: Parameters<StreamEvents[E]>): boolean {
+    emit<E extends keyof EmittedEvents>(event: E, ...args: Parameters<EmittedEvents[E]>): boolean {
         this.logEmitFromClient(event, ...args)
         return super.emit(event, ...args)
     }
@@ -755,7 +763,25 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
     async sendChannelMessage(
         streamId: string,
         payload: PlainMessage<ChannelMessage>['payload'],
+        encrypt?: boolean,
     ): Promise<void> {
+        if (encrypt) {
+            // todo: support encryption for all ChannelMessage payload cases.
+            // Requires type support in event model for all cases.
+            if (isChannelContentPlainMessage_Post_Text(payload)) {
+                const message = await this.createMegolmEncryptedEvent(payload, streamId)
+                if (!message) {
+                    throw new Error('failed to encrypt message')
+                }
+                return this.makeEventAndAddToStream(
+                    streamId,
+                    make_ChannelPayload_Message(message),
+                    'sendMessage',
+                )
+            } else {
+                throw new Error(`encryption not supported for this payload case, ${payload.case}`)
+            }
+        }
         const channelMessage = new ChannelMessage({ payload: payload })
         return this.makeEventAndAddToStream(
             streamId,
@@ -771,18 +797,23 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
         payload: Omit<PlainMessage<ChannelMessage_Post>, 'content'> & {
             content: PlainMessage<ChannelMessage_Post_Content_Text>
         },
+        encrypt?: boolean,
     ): Promise<void> {
         const { content, ...options } = payload
-        return this.sendChannelMessage(streamId, {
-            case: 'post',
-            value: {
-                ...options,
-                content: {
-                    case: 'text',
-                    value: content,
+        return this.sendChannelMessage(
+            streamId,
+            {
+                case: 'post',
+                value: {
+                    ...options,
+                    content: {
+                        case: 'text',
+                        value: content,
+                    },
                 },
             },
-        })
+            encrypt,
+        )
     }
 
     async sendChannelMessage_Image(
@@ -981,12 +1012,13 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
         // retrieve all device keys of a user
         const deviceInfoMap = await this.getStoredDevicesForUser(userId)
         // encrypt event contents and encode ciphertext
+        // todo jterzis: split this function into two: one for encrypted events and one for unencrypted
         const envelope = encrypt
-            ? await this.createOlmEncryptedCipherFromEvent(
+            ? await this.createOlmEncryptedEvent(
                   targetEvent as PlainMessage<ToDeviceMessage>['payload'],
                   userId,
               )
-            : (event as unknown as PlainMessage<EncryptedDeviceData>)
+            : (event as PlainMessage<EncryptedDeviceData>)
         const promiseArray = Array.from(deviceInfoMap.keys()).map((userId) => {
             const devicesForUser = deviceInfoMap.get(userId)
             if (!devicesForUser) {
@@ -1055,7 +1087,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
         this.logCall(`toDevice ${deviceKey.deviceId}, streamId ${streamId}, userId ${userId}`)
         // encrypt event contents and encode ciphertext
         const envelope = encrypt
-            ? await this.createOlmEncryptedCipherFromEvent(
+            ? await this.createOlmEncryptedEvent(
                   targetEvent as PlainMessage<ToDeviceMessage>['payload'],
                   userId,
               )
@@ -1297,11 +1329,47 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
     }
 
     /**
-     * Create encrypted event from an object using Olm algorithm for each user's devices
+     * Create encrypted channel event from a plain message using Megolm algorithm for a session
+     * corresponding to a particular channel.
+     *
+     */
+    private async createMegolmEncryptedEvent(
+        event: PlainMessage<ChannelMessage>['payload'],
+        channelId: string,
+    ): Promise<PlainMessage<EncryptedData> | undefined> {
+        // encrypt event contents and encode ciphertext
+        const riverEvent = new RiverEvent({
+            payload: { parsed_event: event },
+            sender: this.userId,
+        })
+        try {
+            await this.encryptEvent(riverEvent, { channelId: channelId })
+        } catch (e) {
+            this.logCall('createMegolmEncryptedEvent: ERROR', e)
+            throw e
+        }
+        const senderKey = this.olmDevice.deviceCurve25519Key
+        if (!senderKey) {
+            throw new Error('createMegolmEncryptedEvent: no sender key')
+        }
+        const { ciphertext, session_id } = riverEvent.getWireContentChannel().content
+        const result = ciphertext
+            ? {
+                  senderKey,
+                  sessionId: session_id,
+                  text: ciphertext,
+                  algorithm: MEGOLM_ALGORITHM,
+              }
+            : undefined
+        return result
+    }
+
+    /**
+     * Create encrypted to device event from a plain message using Olm algorithm for each user's devices
      * and return ciphertext.
      *
      */
-    public async createOlmEncryptedCipherFromEvent(
+    public async createOlmEncryptedEvent(
         event: PlainMessage<ToDeviceMessage>['payload'],
         recipientUserId: string,
     ): Promise<PlainMessage<EncryptedDeviceData> | undefined> {
@@ -1353,9 +1421,8 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
         ) as Promise<boolean>
     }
 
-    public importRoomKeys(_keys: MegolmSession[], _opts?: object): Promise<void> | undefined {
-        // todo: implement on crypto module
-        return
+    public async importRoomKeys(keys: MegolmSession[], opts?: object): Promise<void> {
+        return this.cryptoBackend?.importRoomKeys(keys, opts)
     }
 
     public downloadKeys(
@@ -1372,7 +1439,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<StreamEvents
     /**
      * Encrypts and sends a given object via Olm to-device messages to a given set of devices.
      */
-    public encryptAndSendToDevices(
+    public async encryptAndSendToDevices(
         userDeviceInfoArr: IOlmDevice[],
         payload: object,
         type?: ToDeviceOp,

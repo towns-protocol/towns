@@ -1,8 +1,4 @@
-import type {
-    IDecryptedGroupMessage,
-    IMegolmSessionData,
-    OlmGroupSessionExtraData,
-} from '../olmDevice'
+import type { IDecryptedGroupMessage, OlmGroupSessionExtraData } from '../olmDevice'
 import { dlog, DLogger } from '../../dlog'
 
 import {
@@ -26,6 +22,7 @@ import {
 } from '../olmLib'
 import { DeviceInfoMap } from '../deviceList'
 import {
+    MegolmSession,
     MembershipOp,
     ToDeviceMessage_KeyResponse,
     ToDeviceOp,
@@ -81,7 +78,7 @@ interface RoomKey {
     sessionId: string
     sessionKey: string
     exportFormat: boolean
-    roomId: string
+    channelId: string
     algorithm: string
     extraSessionData: OlmGroupSessionExtraData
 }
@@ -90,7 +87,7 @@ interface IMessage {
     type: string
     content: {
         algorithm: string
-        room_id: string
+        channel_id: string
         sender_key?: string
         session_id: string
         session_key: string
@@ -101,7 +98,7 @@ interface IMessage {
 interface IPayload extends Partial<IMessage> {
     code?: string
     reason?: string
-    room_id?: string
+    channel_id?: string
     session_id?: string
     algorithm?: string
     sender_key?: string
@@ -221,15 +218,15 @@ export class MegolmEncryption extends EncryptionAlgorithm {
         cancel: () => void
     }
 
-    protected readonly roomId: string
+    protected readonly channelId: string
     private readonly logCall: DLogger
     private readonly logError: DLogger
 
-    public constructor(params: IParams & Required<Pick<IParams, 'roomId'>>) {
+    public constructor(params: IParams & Required<Pick<IParams, 'channelId'>>) {
         super(params)
-        this.roomId = params.roomId
-        this.logCall = dlog('csb:sdk:megolm').extend(`[${this.roomId} encryption]`)
-        this.logError = dlog('csb:sdk:megolm').extend(`[${this.roomId} encryption]:ERROR `)
+        this.channelId = params.channelId
+        this.logCall = dlog('csb:sdk:megolm').extend(`[${this.channelId} encryption]`)
+        this.logError = dlog('csb:sdk:megolm').extend(`[${this.channelId} encryption]:ERROR `)
     }
 
     /**
@@ -260,7 +257,7 @@ export class MegolmEncryption extends EncryptionAlgorithm {
      *    OutboundSessionInfo when setup is complete.
      */
     private async ensureOutboundSession(
-        roomId: string,
+        channelId: string,
         devicesInRoom: DeviceInfoMap,
         singleOlmCreationPhase = false,
     ): Promise<OutboundSessionInfo | null> {
@@ -271,9 +268,9 @@ export class MegolmEncryption extends EncryptionAlgorithm {
         const setup = async (
             oldSession: OutboundSessionInfo | null,
         ): Promise<OutboundSessionInfo> => {
-            const session = await this.prepareSession(roomId, devicesInRoom, oldSession)
+            const session = await this.prepareSession(channelId, devicesInRoom, oldSession)
 
-            await this.shareSession(roomId, devicesInRoom, singleOlmCreationPhase, session)
+            await this.shareSession(channelId, devicesInRoom, singleOlmCreationPhase, session)
 
             return session
         }
@@ -297,7 +294,7 @@ export class MegolmEncryption extends EncryptionAlgorithm {
     }
 
     private async prepareSession(
-        roomId: string,
+        channelId: string,
         devicesInRoom: DeviceInfoMap,
         session: OutboundSessionInfo | null,
     ): Promise<OutboundSessionInfo> {
@@ -312,7 +309,7 @@ export class MegolmEncryption extends EncryptionAlgorithm {
         }
 
         if (!session) {
-            session = await this.prepareNewSession(roomId)
+            session = await this.prepareNewSession(channelId)
             this.logCall(`Started new megolm session ${session.sessionId}`)
             this.outboundSessions[session.sessionId] = session
         }
@@ -321,7 +318,7 @@ export class MegolmEncryption extends EncryptionAlgorithm {
     }
 
     private async shareSession(
-        roomId: string,
+        channelId: string,
         devicesInRoom: DeviceInfoMap,
         singleOlmCreationPhase: boolean,
         session: OutboundSessionInfo,
@@ -349,7 +346,7 @@ export class MegolmEncryption extends EncryptionAlgorithm {
             type: 'r.room.key',
             content: {
                 algorithm: MEGOLM_ALGORITHM,
-                room_id: roomId,
+                channel_id: channelId,
                 session_id: session.sessionId,
                 session_key: key.key,
                 chain_index: key.chain_index,
@@ -484,13 +481,13 @@ export class MegolmEncryption extends EncryptionAlgorithm {
      *
      * @returns session
      */
-    private async prepareNewSession(roomId: string): Promise<OutboundSessionInfo> {
+    private async prepareNewSession(channelId: string): Promise<OutboundSessionInfo> {
         const sessionId = this.olmDevice.createOutboundGroupSession()
         // session key
         const key = this.olmDevice.getOutboundGroupSessionKey(sessionId)
 
         await this.olmDevice.addInboundGroupSession(
-            roomId,
+            channelId,
             this.olmDevice.deviceCurve25519Key!,
             [],
             sessionId,
@@ -646,7 +643,7 @@ export class MegolmEncryption extends EncryptionAlgorithm {
         senderKey: string,
         sessionId: string,
         userId: string,
-        roomId: string,
+        channelId: string,
         device: DeviceInfo,
     ): Promise<void> {
         const obSessionInfo = this.outboundSessions[sessionId]
@@ -683,7 +680,7 @@ export class MegolmEncryption extends EncryptionAlgorithm {
         // get the key from the inbound session: the outbound one will already
         // have been ratcheted to the next chain index.
         const key = await this.olmDevice.getInboundGroupSessionKey(
-            roomId,
+            channelId,
             senderKey,
             sessionId,
             sessionSharedData.messageIndex,
@@ -706,7 +703,7 @@ export class MegolmEncryption extends EncryptionAlgorithm {
             type: 'r.forwarded_room_key',
             content: {
                 algorithm: MEGOLM_ALGORITHM,
-                room_id: roomId,
+                channel_id: channelId,
                 session_id: sessionId,
                 session_key: key.key,
                 chain_index: key.chain_index,
@@ -855,7 +852,7 @@ export class MegolmEncryption extends EncryptionAlgorithm {
      * @param room - the room the event is in
      * @returns A function that, when called, will stop the preparation
      */
-    public prepareToEncrypt(roomId: string): () => void {
+    public prepareToEncrypt(channelId: string): () => void {
         if (this.encryptionPreparation != null) {
             // We're already preparing something, so don't do anything else.
             const elapsedTime = Date.now() - this.encryptionPreparation.startTime
@@ -876,7 +873,7 @@ export class MegolmEncryption extends EncryptionAlgorithm {
                 try {
                     // Attempt to enumerate the devices in room, and gracefully
                     // handle cancellation if it occurs.
-                    const getDevicesResult = await this.getDevicesInRoom(roomId, isCancelled)
+                    const getDevicesResult = await this.getDevicesInRoom(channelId, isCancelled)
                     if (getDevicesResult === null) return
                     const [devicesInRoom] = getDevicesResult
 
@@ -885,7 +882,7 @@ export class MegolmEncryption extends EncryptionAlgorithm {
                     // devices.
 
                     this.logCall('Ensuring outbound megolm session')
-                    await this.ensureOutboundSession(roomId, devicesInRoom, true)
+                    await this.ensureOutboundSession(channelId, devicesInRoom, true)
 
                     this.logCall('Ready to encrypt events')
                 } catch (e) {
@@ -912,7 +909,7 @@ export class MegolmEncryption extends EncryptionAlgorithm {
      * @returns Promise which resolves to the new event body
      */
     public async encryptMessage(
-        roomId: string,
+        channelId: string,
         eventType: string,
         content: IClearContent,
     ): Promise<IMegolmEncryptedContent> {
@@ -932,24 +929,24 @@ export class MegolmEncryption extends EncryptionAlgorithm {
          * When using in-room messages and the room has encryption enabled,
          * clients should ensure that encryption does not hinder the verification.
          */
-        const devicesInRoomList = await this.getDevicesInRoom(roomId, (): boolean => false)
+        const devicesInRoomList = await this.getDevicesInRoom(channelId, (): boolean => false)
         if (devicesInRoomList === null) {
-            throw new Error(`Failed to get devices in room ${roomId}`)
+            throw new Error(`Failed to get devices in room ${channelId}`)
         }
         const [devicesInRoom] = devicesInRoomList
 
         // todo: check if any of these devices are not yet known to the user.
         // if so, warn the user so they can verify or ignore.
 
-        const session = await this.ensureOutboundSession(roomId, devicesInRoom, true)
+        const session = await this.ensureOutboundSession(channelId, devicesInRoom, true)
         const payloadJson = {
-            room_id: roomId,
+            channel_id: channelId,
             type: eventType,
             content: content,
         }
 
         if (session === null) {
-            throw new Error(`No session found for room ${roomId}`)
+            throw new Error(`No session found for room ${channelId}`)
         }
         const ciphertext = this.olmDevice.encryptGroupMessage(
             session.sessionId,
@@ -999,12 +996,12 @@ export class MegolmEncryption extends EncryptionAlgorithm {
      *     If `isCancelled` is not provided, the Promise will never resolve to `null`.
      */
     private async getDevicesInRoom(
-        room_id: string,
+        channel_id: string,
         isCancelled?: () => boolean,
     ): Promise<null | [DeviceInfoMap]> {
-        const stream = this.baseApis.stream(room_id)
+        const stream = this.baseApis.stream(channel_id)
         if (!stream) {
-            this.logError(`stream for room ${room_id} not found`)
+            this.logError(`stream for room ${channel_id} not found`)
             return null
         }
         const members: string[] = Array.from(stream.view.joinedUsers)
@@ -1049,15 +1046,17 @@ export class MegolmDecryption extends DecryptionAlgorithm {
     // this gets stubbed out by the unit tests.
     private olmlib = olmLib
 
-    protected readonly roomId: string
+    protected readonly channelId: string
     private readonly logCall: DLogger
     private readonly logError: DLogger
 
-    public constructor(params: DecryptionClassParams<IParams & Required<Pick<IParams, 'roomId'>>>) {
+    public constructor(
+        params: DecryptionClassParams<IParams & Required<Pick<IParams, 'channelId'>>>,
+    ) {
         super(params)
-        this.roomId = params.roomId
-        this.logCall = dlog('csb:sdk:megolm').extend(`[${this.roomId} decryption]`)
-        this.logError = dlog('csb:sdk:megolm').extend(`[${this.roomId} decryption]:ERROR `)
+        this.channelId = params.channelId
+        this.logCall = dlog('csb:sdk:megolm').extend(`[${this.channelId} decryption]`)
+        this.logError = dlog('csb:sdk:megolm').extend(`[${this.channelId} decryption]:ERROR `)
     }
 
     /**
@@ -1083,7 +1082,7 @@ export class MegolmDecryption extends DecryptionAlgorithm {
         let res: IDecryptedGroupMessage | null
         try {
             res = await this.olmDevice.decryptGroupMessage(
-                event.getRoomId()!,
+                event.getChannelId()!,
                 content.sender_key,
                 content.session_id,
                 content.ciphertext,
@@ -1148,13 +1147,16 @@ export class MegolmDecryption extends DecryptionAlgorithm {
         // todo: tighten event type to avoid this
         // https://linear.app/hnt-labs/issue/HNT-1837/tighten-content-type-of-riverevent
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-        const room_id = payload.room_id as string
+        const channel_id = payload.channel_id as string
 
         // belt-and-braces check that the room id matches that indicated by the HS
         // (this is somewhat redundant, since the megolm session is scoped to the
-        // room, so neither the sender nor a MITM can lie about the room_id).
-        if (room_id !== event.getRoomId()) {
-            throw new DecryptionError('MEGOLM_BAD_ROOM', 'Message intended for room ' + room_id)
+        // room, so neither the sender nor a MITM can lie about the channel_id).
+        if (channel_id !== event.getChannelId()) {
+            throw new DecryptionError(
+                'MEGOLM_BAD_ROOM',
+                'Message intended for channel ' + channel_id,
+            )
         }
 
         return {
@@ -1239,7 +1241,7 @@ export class MegolmDecryption extends DecryptionAlgorithm {
         const session_key = todevice_content.sessions[0].sessionKey
         const session_id = todevice_content.sessions[0].sessionId
         const algorithm = todevice_content.sessions[0].algorithm
-        if (!event.event.room_id || !session_key || !session_id || !algorithm) {
+        if (!event.event.channel_id || !session_key || !session_id || !algorithm) {
             this.logError('key event is missing fields')
             return
         }
@@ -1255,7 +1257,7 @@ export class MegolmDecryption extends DecryptionAlgorithm {
             sessionKey: session_key,
             extraSessionData,
             exportFormat: false,
-            roomId: event.event.room_id,
+            channelId: event.event.channel_id,
             algorithm: algorithm,
         }
 
@@ -1273,7 +1275,7 @@ export class MegolmDecryption extends DecryptionAlgorithm {
     private async addRoomKey(roomKey: RoomKey): Promise<void> {
         try {
             await this.olmDevice.addInboundGroupSession(
-                roomKey.roomId,
+                roomKey.channelId,
                 roomKey.senderKey,
                 [],
                 roomKey.sessionId,
@@ -1331,7 +1333,7 @@ export class MegolmDecryption extends DecryptionAlgorithm {
 
         if (content.code !== 'r.no_olm') {
             await this.olmDevice.addInboundGroupSessionWithheld(
-                event.event.room_id ?? '',
+                event.event.channel_id ?? '',
                 senderKey,
                 sessionId ?? '',
                 content.code ?? '',
@@ -1361,7 +1363,7 @@ export class MegolmDecryption extends DecryptionAlgorithm {
             return Promise.resolve(false)
         }
         return this.olmDevice.hasInboundSessionKeys(
-            body.room_id,
+            body.channel_id,
             body.sender_key,
             body.session_id,
             // TODO: ratchet index
@@ -1373,7 +1375,7 @@ export class MegolmDecryption extends DecryptionAlgorithm {
      * @param source - where the key came from
      */
     public async importRoomKey(
-        session: IMegolmSessionData,
+        session: MegolmSession,
         { untrusted }: { untrusted?: boolean } = {},
     ): Promise<void> {
         const extraSessionData: OlmGroupSessionExtraData = {}
@@ -1382,19 +1384,20 @@ export class MegolmDecryption extends DecryptionAlgorithm {
         }
         try {
             await this.olmDevice.addInboundGroupSession(
-                session.room_id,
-                session.sender_key,
+                session.channelId,
+                session.senderKey,
                 [],
-                session.session_id,
-                session.session_key,
-                session.sender_claimed_keys,
+                session.sessionId,
+                session.sessionKey,
+                // sender claimed keys not yet supported
+                {} as Record<string, string>,
                 true,
                 extraSessionData,
             )
             // have another go at decrypting events sent with this session.
             await this.retryDecryption(
-                session.sender_key,
-                session.session_id,
+                session.senderKey,
+                session.sessionId,
                 !extraSessionData.untrusted,
             )
         } catch (e) {
@@ -1478,17 +1481,17 @@ export class MegolmDecryption extends DecryptionAlgorithm {
     }
 
     private async buildKeyForwardingMessage(
-        roomId: string,
+        channelId: string,
         senderKey: string,
         sessionId: string,
     ): Promise<IKeyForwardingMessage> {
-        const key = await this.olmDevice.getInboundGroupSessionKey(roomId, senderKey, sessionId)
+        const key = await this.olmDevice.getInboundGroupSessionKey(channelId, senderKey, sessionId)
 
         return {
             type: 'm.forwarded_room_key',
             content: {
                 algorithm: MEGOLM_ALGORITHM,
-                room_id: roomId,
+                channel_id: channelId,
                 sender_key: senderKey,
                 session_id: sessionId,
                 session_key: key!.key,
@@ -1498,13 +1501,13 @@ export class MegolmDecryption extends DecryptionAlgorithm {
     }
 
     public async sendSharedHistoryInboundSessions(
-        roomId: string,
+        channelId: string,
         devicesByUser: Map<string, DeviceInfo[]>,
     ): Promise<void> {
         await olmLib.ensureOlmSessionsForDevices(this.olmDevice, this.baseApis, devicesByUser)
 
         const sharedHistorySessions = await this.olmDevice.getSharedHistoryInboundGroupSessions(
-            roomId,
+            channelId,
         )
         this.logCall(
             // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
@@ -1512,7 +1515,11 @@ export class MegolmDecryption extends DecryptionAlgorithm {
             sharedHistorySessions.map(([senderKey, sessionId]) => `${senderKey}|${sessionId}`),
         )
         for (const [senderKey, sessionId] of sharedHistorySessions) {
-            const payload = await this.buildKeyForwardingMessage(this.roomId, senderKey, sessionId)
+            const payload = await this.buildKeyForwardingMessage(
+                this.channelId,
+                senderKey,
+                sessionId,
+            )
 
             // FIXME: use encryptAndSendToDevices() rather than duplicating it here.
             const promises: Promise<unknown>[] = []

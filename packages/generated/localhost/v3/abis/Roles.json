@@ -951,19 +951,19 @@
     },
     "settings": {
       "remappings": [
-        ":@openzeppelin/=lib/openzeppelin-contracts/",
-        ":@prb/test/=lib/prb-test/src/",
-        ":@towns/=node_modules/@towns/",
-        ":ERC721A/=lib/ERC721A/contracts/",
-        ":contracts/=packages/contracts/",
-        ":council/=lib/council/contracts/",
-        ":ds-test/=lib/ds-test/src/",
-        ":erc4626-tests/=lib/operator-filter-registry/lib/openzeppelin-contracts/lib/erc4626-tests/",
-        ":forge-std/=lib/forge-std/src/",
-        ":openzeppelin-contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/",
-        ":openzeppelin-contracts/=lib/openzeppelin-contracts/",
-        ":operator-filter-registry/=lib/operator-filter-registry/",
-        ":prb-test/=lib/prb-test/src/"
+        "@openzeppelin/=lib/openzeppelin-contracts/",
+        "@prb/test/=lib/prb-test/src/",
+        "@towns/=node_modules/@towns/",
+        "ERC721A/=lib/ERC721A/contracts/",
+        "contracts/=packages/contracts/",
+        "council/=lib/council/contracts/",
+        "ds-test/=lib/ds-test/src/",
+        "erc4626-tests/=lib/operator-filter-registry/lib/openzeppelin-contracts/lib/erc4626-tests/",
+        "forge-std/=lib/forge-std/src/",
+        "openzeppelin-contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/",
+        "openzeppelin-contracts/=lib/openzeppelin-contracts/",
+        "operator-filter-registry/=lib/operator-filter-registry/",
+        "prb-test/=lib/prb-test/src/"
       ],
       "optimizer": {
         "enabled": true,

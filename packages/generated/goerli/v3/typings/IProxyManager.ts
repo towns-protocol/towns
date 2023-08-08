@@ -12,7 +12,11 @@ import type {
   Signer,
   utils,
 } from "ethers";
-import type { FunctionFragment, Result } from "@ethersproject/abi";
+import type {
+  FunctionFragment,
+  Result,
+  EventFragment,
+} from "@ethersproject/abi";
 import type { Listener, Provider } from "@ethersproject/providers";
 import type {
   TypedEventFilter,
@@ -50,8 +54,25 @@ export interface IProxyManagerInterface extends utils.Interface {
     data: BytesLike
   ): Result;
 
-  events: {};
+  events: {
+    "ProxyManager__ImplementationSet(address)": EventFragment;
+  };
+
+  getEvent(
+    nameOrSignatureOrTopic: "ProxyManager__ImplementationSet"
+  ): EventFragment;
 }
+
+export interface ProxyManager__ImplementationSetEventObject {
+  implementation: string;
+}
+export type ProxyManager__ImplementationSetEvent = TypedEvent<
+  [string],
+  ProxyManager__ImplementationSetEventObject
+>;
+
+export type ProxyManager__ImplementationSetEventFilter =
+  TypedEventFilter<ProxyManager__ImplementationSetEvent>;
 
 export interface IProxyManager extends BaseContract {
   connect(signerOrProvider: Signer | Provider | string): this;
@@ -113,7 +134,14 @@ export interface IProxyManager extends BaseContract {
     ): Promise<void>;
   };
 
-  filters: {};
+  filters: {
+    "ProxyManager__ImplementationSet(address)"(
+      implementation?: null
+    ): ProxyManager__ImplementationSetEventFilter;
+    ProxyManager__ImplementationSet(
+      implementation?: null
+    ): ProxyManager__ImplementationSetEventFilter;
+  };
 
   estimateGas: {
     getImplementation(

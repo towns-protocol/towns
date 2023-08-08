@@ -22,6 +22,7 @@ coverage.json
 # Contracts
 contracts/.openzeppelin/unknown-*.json
 contracts/docs/coverage
+contracts/.env
 abi/
 
 /docs
@@ -40,6 +41,7 @@ clients/web/app/storybook-static
 casablanca/**/dist/
 
 contracts/deployments/localhost/
+contracts/cache
 .eslintcache
 cache_hardhat
 artifacts_*
