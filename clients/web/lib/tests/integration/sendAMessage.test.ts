@@ -11,6 +11,7 @@
 import {
     createTestChannelWithSpaceRoles,
     createTestSpaceWithEveryoneRole,
+    getPrimaryProtocol,
     registerAndStartClients,
     waitForRandom401ErrorsForAction,
 } from './helpers/TestUtils'
@@ -20,10 +21,12 @@ import { RoomVisibility } from '../../src/types/zion-types'
 import { RoomIdentifier } from '../../src/types/room-identifier'
 import { waitFor } from '@testing-library/dom'
 import { RoomMessageEvent } from '../../src/types/timeline-types'
+import { SpaceProtocol } from '../../src/client/ZionClientTypes'
+import { EncryptedEventStreamTypes, RiverEvent } from '@river/sdk'
 
 describe('sendAMessage', () => {
-    // test:
-    test('create room, invite user, accept invite, and send message', async () => {
+    test('create room, invite user, accept invite, and send encrypted message', async () => {
+        const primaryProtocol = getPrimaryProtocol()
         const numClients = process.env.NUM_CLIENTS ? parseInt(process.env.NUM_CLIENTS, 10) : 2
         expect(numClients).toBeGreaterThanOrEqual(2)
         console.log('sendAMessage', { numClients })
@@ -70,27 +73,80 @@ describe('sendAMessage', () => {
 
         // bob sends a message to the room
         console.log(`!!!!!! bob sends message`)
-        await bob.sendMessage(channelId, 'Hello Alice!')
+        await bob.sendMessage(channelId, 'Hello Alice!', { encrypt: true })
 
+        const clientEvents: RiverEvent[] = []
+        const bobRecievedEvents: RiverEvent[] = []
         // everyone should receive the message
         for (let i = 0; i < numClients; i++) {
             console.log(`!!!!!! client ${i} waits for message`)
             const client = clients[`client_${i}`]
-            await waitFor(async () => {
-                const event = await client.getLatestEvent<RoomMessageEvent>(channelId)
-                expect(event?.content?.body).toEqual('Hello Alice!')
-            })
+            if (primaryProtocol === SpaceProtocol.Casablanca) {
+                client.casablancaClient?.on(
+                    'eventDecrypted',
+                    (riverEvent: object, _err: Error | undefined) => {
+                        const event = riverEvent as RiverEvent
+                        if (
+                            !event.isDecryptionFailure() &&
+                            event.getStreamType() == EncryptedEventStreamTypes.Channel
+                        ) {
+                            clientEvents.push(event)
+                        }
+                    },
+                )
+            } else if (primaryProtocol === SpaceProtocol.Matrix) {
+                await waitFor(async () => {
+                    const event = await client.getLatestEvent<RoomMessageEvent>(channelId)
+                    expect(event?.content?.body).toEqual('Hello Alice!')
+                })
+            }
+        }
+
+        // bob should receive the message
+        if (primaryProtocol === SpaceProtocol.Casablanca) {
+            bob.casablancaClient?.on(
+                'eventDecrypted',
+                (riverEvent: object, _err: Error | undefined) => {
+                    const event = riverEvent as RiverEvent
+                    if (
+                        !event.isDecryptionFailure() &&
+                        event.getStreamType() == EncryptedEventStreamTypes.Channel
+                    ) {
+                        bobRecievedEvents.push(event)
+                    }
+                },
+            )
         }
         // everyone sends a message to the room
         for (let i = 1; i < numClients; i++) {
             console.log(`!!!!!! client ${i} sends a message`)
             const client = clients[`client_${i}`]
-            await client.sendMessage(channelId, `Hello Bob! from ${client.getUserId()!}`)
-            // bob should receive the message
-            await waitFor(async () => {
-                const event = await bob.getLatestEvent<RoomMessageEvent>(channelId)
-                expect(event?.content?.body).toEqual(`Hello Bob! from ${client.getUserId()!}`)
+            await client.sendMessage(channelId, `Hello Bob! from ${client.getUserId()!}`, {
+                encrypt: true,
             })
+            if (primaryProtocol === SpaceProtocol.Matrix) {
+                await waitFor(async () => {
+                    const event = await client.getLatestEvent<RoomMessageEvent>(channelId)
+                    expect(event?.content?.body).toEqual(`Hello Bob! from ${client.getUserId()!}`)
+                })
+            }
+        }
+
+        if (primaryProtocol === SpaceProtocol.Casablanca) {
+            await waitFor(() =>
+                expect(
+                    clientEvents.find(
+                        (e) => e.getClearChannelMessage_Post_Text()?.body === 'Hello Alice!',
+                    ),
+                ).toBeDefined(),
+            )
+            await waitFor(() =>
+                expect(
+                    bobRecievedEvents.find((e) =>
+                        e.getClearChannelMessage_Post_Text()?.body?.includes('Hello Bob!'),
+                    ),
+                ).toBeDefined(),
+            )
         }
     }) // end test
 }) // end describe

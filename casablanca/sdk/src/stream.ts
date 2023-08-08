@@ -3,12 +3,12 @@ import { StreamAndCookie } from '@river/proto'
 import { DLogger } from './dlog'
 import EventEmitter from 'events'
 import TypedEmitter from 'typed-emitter'
-import { StreamEvents } from './streamEvents'
 import { StreamStateView } from './streamStateView'
 import { ParsedEvent } from './types'
+import { EmittedEvents } from './client'
 
-export class Stream extends (EventEmitter as new () => TypedEmitter<StreamEvents>) {
-    readonly clientEmitter: TypedEmitter<StreamEvents>
+export class Stream extends (EventEmitter as new () => TypedEmitter<EmittedEvents>) {
+    readonly clientEmitter: TypedEmitter<EmittedEvents>
     readonly logEmitFromStream: DLogger
     readonly view: StreamStateView
     readonly foreignUserStream: boolean
@@ -16,7 +16,7 @@ export class Stream extends (EventEmitter as new () => TypedEmitter<StreamEvents
     constructor(
         streamId: string,
         inceptionEvent: ParsedEvent | undefined,
-        clientEmitter: TypedEmitter<StreamEvents>,
+        clientEmitter: TypedEmitter<EmittedEvents>,
         logEmitFromStream: DLogger,
         foreignUserStream?: boolean,
     ) {
@@ -39,7 +39,7 @@ export class Stream extends (EventEmitter as new () => TypedEmitter<StreamEvents
         this.view.update(streamAndCookie, this, init)
     }
 
-    emit<E extends keyof StreamEvents>(event: E, ...args: Parameters<StreamEvents[E]>): boolean {
+    emit<E extends keyof EmittedEvents>(event: E, ...args: Parameters<EmittedEvents[E]>): boolean {
         this.logEmitFromStream(event, ...args)
         this.clientEmitter.emit(event, ...args)
         return super.emit(event, ...args)

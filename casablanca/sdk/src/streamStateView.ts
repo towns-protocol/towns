@@ -32,6 +32,7 @@ import { RiverEvent } from './event'
 import isEqual from 'lodash/isEqual'
 import { unpackEnvelopes } from './sign'
 import { StreamEvents } from './streamEvents'
+import { EmittedEvents } from './client'
 
 const log = dlog('csb:streams')
 
@@ -99,7 +100,7 @@ export class StreamStateView {
     private addEvent(
         event: ParsedEvent,
         ignoreExisting: boolean,
-        emitter?: TypedEmitter<StreamEvents>,
+        emitter?: TypedEmitter<EmittedEvents>,
     ): void {
         if (this.events.has(event.hashStr)) {
             if (ignoreExisting) {
@@ -149,16 +150,21 @@ export class StreamStateView {
                         case 'message':
                             {
                                 this.messages.set(event.hashStr, event)
-                                const riverEvent = new RiverEvent({
-                                    payload: {
-                                        parsed_event: make_ChannelPayload_Message(
-                                            payload.value.content.value,
-                                        ),
-                                        creator_user_id: userIdFromAddress(
-                                            event.event.creatorAddress,
-                                        ),
+                                const riverEvent = new RiverEvent(
+                                    {
+                                        channel_id: this.streamId,
+                                        space_id: this.parentSpaceId,
+                                        payload: {
+                                            parsed_event: make_ChannelPayload_Message(
+                                                payload.value.content.value,
+                                            ),
+                                            creator_user_id: userIdFromAddress(
+                                                event.event.creatorAddress,
+                                            ),
+                                        },
                                     },
-                                })
+                                    emitter,
+                                )
                                 emitter?.emit('channelNewMessage', this.streamId, riverEvent)
                             }
                             break
@@ -221,15 +227,21 @@ export class StreamStateView {
                                     op: payload_todevice.op,
                                     message: content,
                                 })
-                                const riverEvent = new RiverEvent({
-                                    payload: {
-                                        parsed_event: toDevicePayload,
-                                        creator_user_id: userIdFromAddress(
-                                            event.event.creatorAddress,
-                                        ),
+                                // todo jterzis: really we should be passing emitter to RiverEvent
+                                // here but it causes a bug in the tests.
+                                const riverEvent = new RiverEvent(
+                                    {
+                                        payload: {
+                                            parsed_event: toDevicePayload,
+                                            creator_user_id: userIdFromAddress(
+                                                event.event.creatorAddress,
+                                            ),
+                                        },
                                     },
-                                })
+                                    emitter,
+                                )
                                 emitter?.emit('toDeviceMessage', this.streamId, riverEvent)
+
                                 // TODO: filter by deviceId and only store current deviceId's events
                                 this.toDeviceMessages.push(event)
                             }
@@ -463,7 +475,7 @@ export class StreamStateView {
 
     update(
         streamAndCookie: StreamAndCookie,
-        emitter?: TypedEmitter<StreamEvents>,
+        emitter?: TypedEmitter<EmittedEvents>,
         init?: boolean,
     ): void {
         const events = unpackEnvelopes(streamAndCookie.events)

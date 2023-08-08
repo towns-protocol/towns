@@ -108,9 +108,9 @@ export interface User {
 export interface RoomMember {
     userId: string
     name: string
-    rawDisplayName: string
+    rawDisplayName?: string
     membership: Membership
-    disambiguate: boolean
+    disambiguate?: boolean
     avatarUrl?: string
 }
 
@@ -155,6 +155,10 @@ export interface ThreadIdOptions {
     threadId?: string
     threadPreview?: string
     threadParticipants?: Set<string>
+}
+
+export type EncryptionOptions = {
+    encrypt?: boolean
 }
 
 export type SendTextMessageOptions = ThreadIdOptions & {
@@ -206,7 +210,7 @@ export type SendMessageOptionsBase =
     | SendGMOptions
     | SendImageMessageOptions
 
-export type SendMessageOptions = SendMessageOptionsBase & SpaceIdOptions
+export type SendMessageOptions = SendMessageOptionsBase & SpaceIdOptions & EncryptionOptions
 
 export type ImageMessageContent = IContent & Omit<SendImageMessageOptions, 'messageType'>
 

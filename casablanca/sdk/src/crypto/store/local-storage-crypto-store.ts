@@ -47,8 +47,8 @@ function keyEndToEndInboundGroupSessionWithheld(senderKey: string, sessionId: st
     return KEY_INBOUND_SESSION_WITHHELD_PREFIX + senderKey + '/' + sessionId
 }
 
-function keyEndToEndRoomsPrefix(roomId: string): string {
-    return KEY_ROOMS_PREFIX + roomId
+function keyEndToEndRoomsPrefix(channelId: string): string {
+    return KEY_ROOMS_PREFIX + channelId
 }
 
 export class LocalStorageCryptoStore extends MemoryCryptoStore {
@@ -291,8 +291,8 @@ export class LocalStorageCryptoStore extends MemoryCryptoStore {
         setJsonItem(this.store, KEY_DEVICE_DATA, deviceData)
     }
 
-    public storeEndToEndRoom(roomId: string, roomInfo: IRoomEncryption, txn: null): void {
-        setJsonItem(this.store, keyEndToEndRoomsPrefix(roomId), roomInfo)
+    public storeEndToEndRoom(channelId: string, roomInfo: IRoomEncryption, txn: null): void {
+        setJsonItem(this.store, keyEndToEndRoomsPrefix(channelId), roomInfo)
     }
 
     public getEndToEndRooms(
@@ -305,8 +305,8 @@ export class LocalStorageCryptoStore extends MemoryCryptoStore {
         for (let i = 0; i < this.store.length; ++i) {
             const key = this.store.key(i)
             if (key?.startsWith(prefix)) {
-                const roomId = key.slice(prefix.length)
-                result[roomId] = getJsonItem(this.store, key)!
+                const channelId = key.slice(prefix.length)
+                result[channelId] = getJsonItem(this.store, key)!
             }
         }
         func(result)

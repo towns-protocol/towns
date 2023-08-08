@@ -1,6 +1,8 @@
 import debug, { Debugger } from 'debug'
 import { isHexString, shortenHexString, bin_toHexString } from './binary'
 
+const MAX_CALL_STACK_SZ = 18
+
 const hasOwnProperty = <Y extends PropertyKey>(obj: object, prop: Y): obj is Record<Y, unknown> => {
     return Object.prototype.hasOwnProperty.call(obj, prop)
 }
@@ -9,6 +11,7 @@ const cloneAndFormat = (obj: unknown): unknown | unknown[] => {
     if (typeof obj === 'string') {
         return isHexString(obj) ? shortenHexString(obj) : obj
     }
+    let i = 0
 
     if (obj instanceof Uint8Array) {
         return shortenHexString(bin_toHexString(obj))
@@ -26,6 +29,11 @@ const cloneAndFormat = (obj: unknown): unknown | unknown[] => {
                 newKey = shortenHexString(key)
             }
             if (hasOwnProperty(obj, key)) {
+                i++
+                // Prevent recursion too deep
+                if (i > MAX_CALL_STACK_SZ) {
+                    break
+                }
                 newObj[newKey] = cloneAndFormat(obj[key])
             }
         }

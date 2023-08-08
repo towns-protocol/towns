@@ -174,6 +174,7 @@ export interface IClearEvent {
 export interface IDecryptOptions {
     // Emits "event.decrypted" if set to true
     emit?: boolean
+    emitter?: TypedEmitter<RiverEvents>
     // True if this is a retry (enables more logging)
     isRetry?: boolean
     // whether the message should be re-decrypted if it was previously successfully decrypted with an untrusted key
@@ -199,7 +200,8 @@ export interface IEvent {
     payload: StreamEventPayload
     sender: string // user_id of sender
     stream_type: EncryptedEventStreamTypes
-    room_id?: string
+    channel_id?: string
+    space_id?: string
     origin_server_ts: number
     txn_id?: string
     membership?: string
@@ -254,13 +256,6 @@ export enum RiverEventType {
     Dummy = 'r.dummy',
 }
 
-enum RiverEventEvents {
-    Decrypted = 'eventDecrypted',
-    BeforeRedaction = 'eventBeforeRedaction',
-    Status = 'eventStatus',
-    Replaced = 'eventReplaced',
-}
-
 // store known stream payload types that can be encrypted
 export enum EncryptedEventStreamTypes {
     Uknown = 'unknown',
@@ -268,8 +263,8 @@ export enum EncryptedEventStreamTypes {
     ToDevice = 'to_device',
 }
 
-type RiverEventEmittedEventHandlerMap = {
-    // these should really be RiverEvent but typescript comaplains
+export type RiverEvents = {
+    // these should really be passed in as RiverEvent but typescript complains
     // that RiverEvent is circularly referenced in base class, hence the use of object
     eventDecrypted: (event: object, err?: Error) => void
     eventBeforeRedaction: (event: object, redactionEvent: object) => void
@@ -277,7 +272,7 @@ type RiverEventEmittedEventHandlerMap = {
     eventReplaced: (event: object) => void
 }
 
-export class RiverEvent extends (EventEmitter as new () => TypedEmitter<RiverEventEmittedEventHandlerMap>) {
+export class RiverEvent extends (EventEmitter as new () => TypedEmitter<RiverEvents>) {
     private _localRedactionEvent: RiverEvent | null = null
     private clearEvent?: IClearEvent
 
@@ -316,7 +311,7 @@ export class RiverEvent extends (EventEmitter as new () => TypedEmitter<RiverEve
      */
     public claimedDoNotUseKey: string | undefined = undefined
 
-    constructor(public event: Partial<IEvent> = {}) {
+    constructor(public event: Partial<IEvent> = {}, private emitter?: TypedEmitter<RiverEvents>) {
         super()
 
         const { parsed_event, hash_str, creator_user_id } = event?.payload || {}
@@ -401,6 +396,7 @@ export class RiverEvent extends (EventEmitter as new () => TypedEmitter<RiverEve
                     value: content,
                 } as PlainMessage<ChannelMessage>['payload']
                 event.content.content.algorithm = MEGOLM_ALGORITHM
+                event.stream_type = EncryptedEventStreamTypes.Channel
                 break
             }
             // decrypted toDevice contents from payloads.proto
@@ -420,6 +416,7 @@ export class RiverEvent extends (EventEmitter as new () => TypedEmitter<RiverEve
                     } as PlainMessage<ToDeviceMessage>['payload'],
                 }
                 event.content.content.algorithm = OLM_ALGORITHM
+                event.stream_type = EncryptedEventStreamTypes.ToDevice
                 break
             }
             default:
@@ -427,18 +424,20 @@ export class RiverEvent extends (EventEmitter as new () => TypedEmitter<RiverEve
         }
     }
 
-    /* Get the room_id for this event.
-     */
-    public getRoomId(): string | undefined {
-        return this.event.room_id
+    public getChannelId(): string | undefined {
+        return this.event.channel_id
+    }
+
+    public getSpaceId(): string | undefined {
+        return this.event.space_id
     }
 
     public getStreamType(): string | undefined {
         return this.event.stream_type
     }
 
-    public getId(): string {
-        return this.txnId ?? ''
+    public getId(): string | undefined {
+        return this.txnId
     }
 
     public getSender(): string {
@@ -551,6 +550,9 @@ export class RiverEvent extends (EventEmitter as new () => TypedEmitter<RiverEve
     public async attemptDecryption(crypto: Crypto, options: IDecryptOptions = {}): Promise<void> {
         const alreadyDecrypted = this.clearEvent && !this.isDecryptionFailure()
         const forceRedecrypt = options.forceRedecryptIfUntrusted
+        if (options?.emit !== false && options.emitter) {
+            this.setEmitter(options.emitter)
+        }
         if (alreadyDecrypted && !forceRedecrypt) {
             // maybe we should throw an error here, but for now just return
             log('attemptDecryption called on already decrypted event')
@@ -654,11 +656,10 @@ export class RiverEvent extends (EventEmitter as new () => TypedEmitter<RiverEve
             // to set the push actions before emitting so that any notification listeners don't
             // pick up the wrong contents.
 
-            // todo: implement push notifications
-            //this.setPushDetails()
+            // todo jterzis: implement push notifications here
 
             if (options.emit !== false) {
-                this.emit(RiverEventEvents.Decrypted, this, err)
+                this.emitter?.emit('eventDecrypted', this, err)
             }
 
             return
@@ -698,6 +699,10 @@ export class RiverEvent extends (EventEmitter as new () => TypedEmitter<RiverEve
         this.claimedDoNotUseKey = decryptionResult.claimedDoNotUseKey
     }
 
+    public setEmitter(emitter: TypedEmitter<RiverEvents>): void {
+        this.emitter = emitter
+    }
+
     /**
      *  Get the possible encrypted event content JSON
      */
@@ -733,7 +738,7 @@ export class RiverEvent extends (EventEmitter as new () => TypedEmitter<RiverEve
     }
 
     /**
-     * Get the (decrypted if possible) content of the event as JSON or an empty object.
+     * Get the (decrypted if available) content of the event as JSON or an empty object.
      */
     public getContent<T extends IContent = IContent>(): T {
         // todo: handle replacing events here as well

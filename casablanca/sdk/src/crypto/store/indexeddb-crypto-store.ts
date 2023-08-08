@@ -484,12 +484,16 @@ export class IndexedDBCryptoStore implements CryptoStore {
     /**
      * Store the end-to-end state for a room.
      */
-    public storeEndToEndRoom(roomId: string, roomInfo: IRoomEncryption, txn: IDBTransaction): void {
-        this.backend!.storeEndToEndRoom(roomId, roomInfo, txn)
+    public storeEndToEndRoom(
+        channelId: string,
+        roomInfo: IRoomEncryption,
+        txn: IDBTransaction,
+    ): void {
+        this.backend!.storeEndToEndRoom(channelId, roomInfo, txn)
     }
 
     /**
-     * Get an object of `roomId->roomInfo` for all e2e rooms in the store
+     * Get an object of `channelId->roomInfo` for all e2e rooms in the store
      */
     public getEndToEndRooms(
         txn: IDBTransaction,
@@ -532,22 +536,22 @@ export class IndexedDBCryptoStore implements CryptoStore {
      * Add a shared-history group session for a room.
      */
     public addSharedHistoryInboundGroupSession(
-        roomId: string,
+        channelId: string,
         senderKey: string,
         sessionId: string,
         txn?: IDBTransaction,
     ): void {
-        this.backend!.addSharedHistoryInboundGroupSession(roomId, senderKey, sessionId, txn)
+        this.backend!.addSharedHistoryInboundGroupSession(channelId, senderKey, sessionId, txn)
     }
 
     /**
      * Get the shared-history group session for a room.
      */
     public getSharedHistoryInboundGroupSessions(
-        roomId: string,
+        channelId: string,
         txn?: IDBTransaction,
     ): Promise<[senderKey: string, sessionId: string][]> {
-        return this.backend!.getSharedHistoryInboundGroupSessions(roomId, txn)
+        return this.backend!.getSharedHistoryInboundGroupSessions(channelId, txn)
     }
 
     /**

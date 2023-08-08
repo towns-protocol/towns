@@ -25,7 +25,7 @@ const MAX_PLAINTEXT_LENGTH = (65536 * 3) / 4
 
 /** data stored in the session store about an inbound group session */
 export interface InboundGroupSessionData {
-    room_id: string // eslint-disable-line camelcase
+    channel_id: string // eslint-disable-line camelcase
     /** pickled Olm.InboundGroupSession */
     session: string
     keysClaimed: Record<string, string>
@@ -97,7 +97,7 @@ export interface IMegolmSessionData extends Extensible {
     sender_key: string
     /** Other keys the sender claims. */
     sender_claimed_keys: Record<string, string>
-    room_id: string
+    channel_id: string
     /** Unique id for the session */
     session_id: string
     /** Base64'ed key data */
@@ -564,7 +564,7 @@ export class OlmDevice {
     /**
      * Extract an InboundGroupSession from the crypto store and call the given function
      *
-     * @param roomId - The room ID to extract the session for, or null to fetch
+     * @param channelId - The room ID to extract the session for, or null to fetch
      *     sessions for any room.
      * @param txn - Opaque transaction object from cryptoStore.doTxn()
      * @param func - function to call.
@@ -572,7 +572,7 @@ export class OlmDevice {
      * @internal
      */
     private getInboundGroupSession(
-        roomId: string,
+        channelId: string,
         senderKey: string,
         sessionId: string,
         txn: CryptoTxn,
@@ -594,12 +594,12 @@ export class OlmDevice {
 
                 // if we were given a room ID, check that the it matches the original one for the session. This stops
                 // the HS pretending a message was targeting a different room.
-                if (roomId !== null && roomId !== sessionData.room_id) {
+                if (channelId !== null && channelId !== sessionData.channel_id) {
                     throw new Error(
-                        'Mismatched room_id for inbound group session (expected ' +
-                            sessionData.room_id +
+                        'Mismatched channel_id for inbound group session (expected ' +
+                            sessionData.channel_id +
                             ', was ' +
-                            roomId +
+                            channelId +
                             ')',
                     )
                 }
@@ -614,7 +614,7 @@ export class OlmDevice {
     /**
      * Add an inbound group session to the session store
      *
-     * @param roomId -     room in which this session will be used
+     * @param channelId -     room in which this session will be used
      * @param senderKey -  base64-encoded curve25519 key of the sender
      * @param forwardingCurve25519KeyChain -  Devices involved in forwarding
      *     this session to us.
@@ -626,7 +626,7 @@ export class OlmDevice {
      * @param extraSessionData - any other data to be include with the session
      */
     public async addInboundGroupSession(
-        roomId: string,
+        channelId: string,
         senderKey: string,
         forwardingCurve25519KeyChain: string[],
         sessionId: string,
@@ -645,7 +645,7 @@ export class OlmDevice {
             (txn) => {
                 /* if we already have this session, consider updating it */
                 this.getInboundGroupSession(
-                    roomId,
+                    channelId,
                     senderKey,
                     sessionId,
                     txn,
@@ -729,7 +729,7 @@ export class OlmDevice {
                             )
 
                             const sessionData = Object.assign({}, extraSessionData, {
-                                room_id: roomId,
+                                channel_id: channelId,
                                 session: session.pickle(this.pickleKey),
                                 keysClaimed: keysClaimed,
                                 forwardingCurve25519KeyChain: forwardingCurve25519KeyChain,
@@ -744,7 +744,7 @@ export class OlmDevice {
 
                             if (!existingSession) {
                                 this.cryptoStore.addSharedHistoryInboundGroupSession(
-                                    roomId,
+                                    channelId,
                                     senderKey,
                                     sessionId,
                                     txn,
@@ -762,14 +762,14 @@ export class OlmDevice {
     /**
      * Record in the data store why an inbound group session was withheld.
      *
-     * @param roomId -     room that the session belongs to
+     * @param channelId -     room that the session belongs to
      * @param senderKey -  base64-encoded curve25519 key of the sender
      * @param sessionId -  session identifier
      * @param code -       reason code
      * @param reason -     human-readable version of `code`
      */
     public async addInboundGroupSessionWithheld(
-        roomId: string,
+        channelId: string,
         senderKey: string,
         sessionId: string,
         code: string,
@@ -783,7 +783,7 @@ export class OlmDevice {
                     senderKey,
                     sessionId,
                     {
-                        room_id: roomId,
+                        channel_id: channelId,
                         code: code,
                         reason: reason,
                     },
@@ -796,7 +796,7 @@ export class OlmDevice {
     /**
      * Decrypt a received message with an inbound group session
      *
-     * @param roomId -    room in which the message was received
+     * @param channelId -    room in which the message was received
      * @param senderKey - base64-encoded curve25519 key of the sender
      * @param sessionId - session identifier
      * @param body -      base64-encoded body of the encrypted message
@@ -806,7 +806,7 @@ export class OlmDevice {
      * @returns null if the sessionId is unknown
      */
     public async decryptGroupMessage(
-        roomId: string,
+        channelId: string,
         senderKey: string,
         sessionId: string,
         body: string,
@@ -828,7 +828,7 @@ export class OlmDevice {
             ],
             (txn) => {
                 this.getInboundGroupSession(
-                    roomId,
+                    channelId,
                     senderKey,
                     sessionId,
                     txn,
@@ -1317,14 +1317,14 @@ export class OlmDevice {
     // Group Sessions
 
     public async getSharedHistoryInboundGroupSessions(
-        roomId: string,
+        channelId: string,
     ): Promise<[senderKey: string, sessionId: string][]> {
         let result: Promise<[senderKey: string, sessionId: string][]>
         await this.cryptoStore.doTxn(
             'readonly',
             [IndexedDBCryptoStore.STORE_SHARED_HISTORY_INBOUND_GROUP_SESSIONS],
             (txn) => {
-                result = this.cryptoStore.getSharedHistoryInboundGroupSessions(roomId, txn)
+                result = this.cryptoStore.getSharedHistoryInboundGroupSessions(channelId, txn)
             },
         )
         return result!
@@ -1333,12 +1333,12 @@ export class OlmDevice {
     /**
      * Determine if we have the keys for a given megolm session
      *
-     * @param roomId - room in which the message was received
+     * @param channelId - room in which the message was received
      * @param senderKey - base64-encoded curve25519 key of the sender
      * @param sessionId - session identifier
      */
     public async hasInboundSessionKeys(
-        roomId: string,
+        channelId: string,
         senderKey: string,
         sessionId: string,
     ): Promise<boolean> {
@@ -1360,12 +1360,12 @@ export class OlmDevice {
                             return
                         }
 
-                        if (roomId !== sessionData.room_id) {
+                        if (channelId !== sessionData.channel_id) {
                             log(
                                 `[hasInboundSessionKey]: requested keys for inbound group session ${senderKey}|` +
-                                    `${sessionId}, with incorrect room_id ` +
-                                    `(expected ${sessionData.room_id}, ` +
-                                    `was ${roomId})`,
+                                    `${sessionId}, with incorrect channel_id ` +
+                                    `(expected ${sessionData.channel_id}, ` +
+                                    `was ${channelId})`,
                             )
                             result = false
                         } else {
@@ -1382,7 +1382,7 @@ export class OlmDevice {
     /**
      * Extract the keys to a given megolm session, for sharing
      *
-     * @param roomId - room in which the message was received
+     * @param channelId - room in which the message was received
      * @param senderKey - base64-encoded curve25519 key of the sender
      * @param sessionId - session identifier
      * @param chainIndex - the chain index at which to export the session.
@@ -1392,7 +1392,7 @@ export class OlmDevice {
      * in export format.
      */
     public async getInboundGroupSessionKey(
-        roomId: string,
+        channelId: string,
         senderKey: string,
         sessionId: string,
         chainIndex?: number,
@@ -1406,7 +1406,7 @@ export class OlmDevice {
             ],
             (txn) => {
                 this.getInboundGroupSession(
-                    roomId,
+                    channelId,
                     senderKey,
                     sessionId,
                     txn,
@@ -1467,7 +1467,7 @@ export class OlmDevice {
             return {
                 sender_key: senderKey,
                 sender_claimed_keys: sessionData.keysClaimed,
-                room_id: sessionData.room_id,
+                channel_id: sessionData.channel_id,
                 session_id: sessionId,
                 session_key: session.export_session(messageIndex),
                 first_known_index: session.first_known_index(),

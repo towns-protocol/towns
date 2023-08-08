@@ -1,11 +1,12 @@
 import { Client } from '../../client'
-import { IMegolmSessionData, OlmDevice } from '../olmDevice'
+import { OlmDevice } from '../olmDevice'
 import { IEventDecryptionResult, Crypto, IncomingRoomKeyRequest } from '../crypto'
 import { DeviceInfo } from '../deviceInfo'
 import { DeviceInfoMap } from '../deviceList'
 import { IRoomEncryption } from '../store/base'
 import { IEncryptedContent } from '../olmLib'
 import { RiverEvent, IClearContent } from '../../event'
+import { MegolmSession } from '@river/proto'
 
 /**
  * Map of registered encryption algorithm classes. A map from string to {@link EncryptionAlgorithm} class
@@ -34,7 +35,7 @@ export interface IParams {
     /** base api interface */
     baseApis: Client
     /** The ID of the room we will be sending to */
-    roomId?: string
+    channelId?: string
     /** The body of the r.room.encryption event */
     config: IRoomEncryption & object
 }
@@ -48,7 +49,7 @@ export abstract class EncryptionAlgorithm {
     protected readonly crypto: Crypto
     protected readonly olmDevice: OlmDevice
     protected readonly baseApis: Client
-    protected readonly roomId?: string
+    protected readonly channelId?: string
 
     /**
      * @param params - parameters
@@ -59,7 +60,7 @@ export abstract class EncryptionAlgorithm {
         this.crypto = params.crypto
         this.olmDevice = params.olmDevice
         this.baseApis = params.baseApis
-        this.roomId = params.roomId
+        this.channelId = params.channelId
     }
 
     /**
@@ -92,7 +93,7 @@ export abstract class EncryptionAlgorithm {
         senderKey: string,
         sessionId: string,
         userId: string,
-        roomId: string,
+        channelId: string,
         device: DeviceInfo,
     ): Promise<void>
 
@@ -107,14 +108,14 @@ export abstract class DecryptionAlgorithm {
     protected readonly crypto: Crypto
     protected readonly olmDevice: OlmDevice
     protected readonly baseApis: Client
-    protected readonly roomId?: string
+    protected readonly channelId?: string
 
     public constructor(params: DecryptionClassParams) {
         this.userId = params.userId
         this.crypto = params.crypto
         this.olmDevice = params.olmDevice
         this.baseApis = params.baseApis
-        this.roomId = params.roomId
+        this.channelId = params.channelId
     }
 
     /**
@@ -143,7 +144,7 @@ export abstract class DecryptionAlgorithm {
      * @param _opts - object
      */
 
-    public async importRoomKey(_session: IMegolmSessionData, _opts: object): Promise<void> {
+    public async importRoomKey(_session: MegolmSession, _opts: object): Promise<void> {
         // ignore by default
     }
 
@@ -178,7 +179,7 @@ export abstract class DecryptionAlgorithm {
 
     public onRoomKeyWithheldEvent?(event: RiverEvent): Promise<void>
     public sendSharedHistoryInboundSessions?(
-        roomId: string,
+        channelId: string,
         devicesByUser: Map<string, DeviceInfo[]>,
     ): Promise<void>
 }

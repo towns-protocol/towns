@@ -36,7 +36,7 @@ describe('clientCryptoTest', () => {
         const bobsUserId = bobsClient.userId
 
         // create a message to encrypt with Bob's devices over Olm
-        const envelope = await alicesClient.createOlmEncryptedCipherFromEvent(
+        const envelope = await alicesClient.createOlmEncryptedEvent(
             make_ToDevice_KeyRequest({
                 spaceId: '100',
                 channelId: '200',
@@ -82,7 +82,7 @@ describe('clientCryptoTest', () => {
         const bobsUserId = bobsClient.userId
 
         // create a message to encrypt with Bob's devices over Olm
-        const envelope = await alicesClient.createOlmEncryptedCipherFromEvent(
+        const envelope = await alicesClient.createOlmEncryptedEvent(
             make_ToDevice_KeyRequest({
                 spaceId: '100',
                 channelId: '200',
@@ -137,7 +137,7 @@ describe('clientCryptoTest', () => {
         const bobsUserId = bobsClient.userId
 
         // create a message to encrypt with Bob's devices over Olm
-        const envelope = await alicesClient.createOlmEncryptedCipherFromEvent(
+        const envelope = await alicesClient.createOlmEncryptedEvent(
             make_ToDevice_KeyRequest({
                 spaceId: '100',
                 channelId: '200',
@@ -192,7 +192,7 @@ describe('clientCryptoTest', () => {
         const bobsUserId = bobsClient.userId
 
         // create a message to encrypt
-        const envelope = await alicesClient.createOlmEncryptedCipherFromEvent(
+        const envelope = await alicesClient.createOlmEncryptedEvent(
             make_ToDevice_KeyRequest({
                 spaceId: '100',
                 channelId: '200',
@@ -263,7 +263,7 @@ describe('clientCryptoTest', () => {
         for (let i = 0; i < payloads.length; i++) {
             const payload = payloads[i]
             // create a message to encrypt
-            const envelope = await alicesClient.createOlmEncryptedCipherFromEvent(
+            const envelope = await alicesClient.createOlmEncryptedEvent(
                 make_ToDevice_KeyRequest({
                     spaceId: '100',
                     channelId: '200',

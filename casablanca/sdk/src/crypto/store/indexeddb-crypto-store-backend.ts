@@ -83,7 +83,7 @@ export class Backend implements CryptoStore {
                     // this entry matches the request - return it.
                     log(
                         `already have key request outstanding for ` +
-                            `${requestBody.room_id} / ${requestBody.session_id}: ` +
+                            `${requestBody.channel_id} / ${requestBody.session_id}: ` +
                             `not sending another`,
                     )
                     resolve(existing)
@@ -92,7 +92,10 @@ export class Backend implements CryptoStore {
 
                 // we got to the end of the list without finding a match
                 // - add the new request.
-                log(`enqueueing key request for ${requestBody.room_id} / ` + requestBody.session_id)
+                log(
+                    `enqueueing key request for ${requestBody.channel_id} / ` +
+                        requestBody.session_id,
+                )
                 txn.oncomplete = (): void => {
                     resolve(request)
                 }
@@ -144,7 +147,7 @@ export class Backend implements CryptoStore {
         const store = txn.objectStore('outgoingRoomKeyRequests')
 
         const idx = store.index('session')
-        const cursorReq = idx.openCursor([requestBody.room_id, requestBody.session_id])
+        const cursorReq = idx.openCursor([requestBody.channel_id, requestBody.session_id])
 
         cursorReq.onsuccess = (): void => {
             const cursor = cursorReq.result
@@ -716,9 +719,13 @@ export class Backend implements CryptoStore {
         objectStore.put(deviceData, '-')
     }
 
-    public storeEndToEndRoom(roomId: string, roomInfo: IRoomEncryption, txn: IDBTransaction): void {
+    public storeEndToEndRoom(
+        channelId: string,
+        roomInfo: IRoomEncryption,
+        txn: IDBTransaction,
+    ): void {
         const objectStore = txn.objectStore('rooms')
-        objectStore.put(roomInfo, roomId)
+        objectStore.put(roomInfo, channelId)
     }
 
     public getEndToEndRooms(
@@ -833,7 +840,7 @@ export class Backend implements CryptoStore {
     }
 
     public addSharedHistoryInboundGroupSession(
-        roomId: string,
+        channelId: string,
         senderKey: string,
         sessionId: string,
         txn?: IDBTransaction,
@@ -842,23 +849,23 @@ export class Backend implements CryptoStore {
             txn = this.db.transaction('shared_history_inbound_group_sessions', 'readwrite')
         }
         const objectStore = txn.objectStore('shared_history_inbound_group_sessions')
-        const req = objectStore.get([roomId])
+        const req = objectStore.get([channelId])
         req.onsuccess = (): void => {
             const { sessions } = req.result || { sessions: [] }
             sessions.push([senderKey, sessionId])
-            objectStore.put({ roomId, sessions })
+            objectStore.put({ channelId, sessions })
         }
     }
 
     public getSharedHistoryInboundGroupSessions(
-        roomId: string,
+        channelId: string,
         txn?: IDBTransaction,
     ): Promise<[senderKey: string, sessionId: string][]> {
         if (!txn) {
             txn = this.db.transaction('shared_history_inbound_group_sessions', 'readonly')
         }
         const objectStore = txn.objectStore('shared_history_inbound_group_sessions')
-        const req = objectStore.get([roomId])
+        const req = objectStore.get([channelId])
         return new Promise((resolve, reject) => {
             req.onsuccess = (): void => {
                 const { sessions } = req.result || { sessions: [] }
@@ -952,12 +959,12 @@ const DB_MIGRATIONS: DbMigration[] = [
     },
     (db): void => {
         db.createObjectStore('shared_history_inbound_group_sessions', {
-            keyPath: ['roomId'],
+            keyPath: ['channelId'],
         })
     },
     (db): void => {
         db.createObjectStore('parked_shared_history', {
-            keyPath: ['roomId'],
+            keyPath: ['channelId'],
         })
     },
     // Expand as needed.
@@ -979,7 +986,7 @@ function createDatabase(db: IDBDatabase): void {
     // we assume that the RoomKeyRequestBody will have room_id and session_id
     // properties, to make the index efficient.
     outgoingRoomKeyRequestsStore.createIndex('session', [
-        'requestBody.room_id',
+        'requestBody.channel_id',
         'requestBody.session_id',
     ])
 

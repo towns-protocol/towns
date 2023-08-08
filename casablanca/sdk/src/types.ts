@@ -117,10 +117,13 @@ export const make_ToDevice_KeyRequest = (input: {
     senderKey: string
     sessionId: string
     content?: string
+    knownSessionIds?: string[]
 }): PlainMessage<ToDeviceMessage>['payload'] => {
+    const { knownSessionIds: possibleKnownSessionIds, ...rest } = input
+    const knownSessionIds = possibleKnownSessionIds ? possibleKnownSessionIds : []
     return {
         case: 'request',
-        value: { ...input },
+        value: { ...rest, knownSessionIds: knownSessionIds },
     }
 }
 

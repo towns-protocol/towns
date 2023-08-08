@@ -20,8 +20,14 @@ import {
 } from './olmLib'
 import { OlmMegolmDelegate } from '@river/mecholm'
 import { DeviceInfo, ISignatures, ToDeviceBatch } from './deviceInfo'
-import { OlmDevice, IInitOpts, IMegolmSessionData } from './olmDevice'
-import { EncryptedDeviceData, Err, ToDeviceOp, UserPayload_ToDevice } from '@river/proto'
+import { OlmDevice, IInitOpts } from './olmDevice'
+import {
+    EncryptedDeviceData,
+    Err,
+    MegolmSession,
+    ToDeviceOp,
+    UserPayload_ToDevice,
+} from '@river/proto'
 import { IFallbackKey, recursiveMapToObject } from '../types'
 import { bin_fromHexString } from '../binary'
 import { DeviceList, IOlmDevice } from './deviceList'
@@ -204,7 +210,7 @@ export interface IEncryptionUserTarget {
 }
 
 export interface IEncryptionRoomTarget {
-    roomId: string
+    channelId: string
 }
 
 export type EncryptionTarget = IEncryptionUserTarget | IEncryptionRoomTarget
@@ -214,7 +220,7 @@ function isUserTarget(target: EncryptionTarget): target is IEncryptionUserTarget
 }
 
 interface IRoomKey {
-    room_id: string
+    channel_id: string
     algorithm: string
 }
 
@@ -512,7 +518,7 @@ export class Crypto
         if (isUserTarget(target)) {
             encryptionTarget = target.userIds
         } else {
-            encryptionTarget = target.roomId
+            encryptionTarget = target.channelId
         }
         const encryptedContent = await alg.encryptMessage(
             encryptionTarget,
@@ -657,6 +663,9 @@ export class Crypto
             batch: [],
         }
 
+        // todo: standardize this payload envelope across all callers of encryptMessageForDevice
+        const payloadFields = { type: type, content: payload }
+
         try {
             // encrypt payload with Olm for each device individually
             await Promise.all(
@@ -689,7 +698,7 @@ export class Crypto
                         this.olmDevice,
                         userId,
                         deviceInfo,
-                        payload,
+                        payloadFields,
                     )
                 }),
             )
@@ -741,7 +750,7 @@ export class Crypto
      * @returns a promise which resolves once the keys have been imported
      */
     public async importRoomKeys(
-        keys: IMegolmSessionData[],
+        keys: MegolmSession[],
         opts: IImportRoomKeysOpts = {},
     ): Promise<void> {
         let successes = 0
@@ -759,7 +768,7 @@ export class Crypto
 
         await Promise.all(
             keys.map(async (key) => {
-                if (!key.room_id || !key.algorithm) {
+                if (!key.channelId || !key.algorithm) {
                     dlog('ignoring room key entry with missing fields')
                     failures++
                     if (opts.progressCallback) {
