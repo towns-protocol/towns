@@ -1,36 +1,22 @@
-import React from 'react'
+import React, { useCallback } from 'react'
 import { useMyProfile, useSpaceData } from 'use-zion-client'
-import { useNavigate } from 'react-router'
+import { useMatch, useNavigate, useResolvedPath } from 'react-router'
 import { Avatar, Box, Icon, Stack, Text } from '@ui'
 import { SpaceIcon } from '@components/SpaceIcon'
 import { ImageVariants } from '@components/UploadImage/useImageSource'
 import { PATHS } from 'routes'
 
 export const TouchTabBar = () => {
-    const navigate = useNavigate()
     const space = useSpaceData()
     const userId = useMyProfile()?.userId
     if (!space) {
         return null
     }
 
-    const homeButtonPressed = () => {
-        navigate(`/${PATHS.SPACES}/${space.id.slug}/home`)
-    }
-
-    const threadsButtonPressed = () => {
-        navigate(`/${PATHS.SPACES}/${space.id.slug}/threads`)
-    }
-
-    const mentionsButtonPressed = () => {
-        navigate(`/${PATHS.SPACES}/${space.id.slug}/mentions`)
-    }
-
     return (
         <Box background="level2" paddingBottom="safeAreaInsetBottom">
             <Stack horizontal width="100%" background="level2" display="flex" paddingY="sm">
                 <TabBarItem
-                    highlighted
                     title="Home"
                     icon={
                         <SpaceIcon
@@ -43,24 +29,22 @@ export const TouchTabBar = () => {
                             fadeIn={false}
                         />
                     }
-                    onClick={homeButtonPressed}
+                    to={`/${PATHS.SPACES}/${space.id.slug}/${PATHS.HOME}`}
                 />
                 <TabBarItem
                     title="Threads"
                     icon={<Icon type="message" size="toolbar_icon" />}
-                    highlighted={false}
-                    onClick={threadsButtonPressed}
+                    to={`/${PATHS.SPACES}/${space.id.slug}/${PATHS.THREADS}`}
                 />
                 <TabBarItem
                     title="Mentions"
                     icon={<Icon type="at" size="toolbar_icon" />}
-                    highlighted={false}
-                    onClick={mentionsButtonPressed}
+                    to={`/${PATHS.SPACES}/${space.id.slug}/${PATHS.MENTIONS}`}
                 />
                 <TabBarItem
                     title="You"
                     icon={<Avatar size="toolbar_icon" userId={userId} />}
-                    highlighted={false}
+                    to="" // profile not implemented yet
                 />
             </Stack>
         </Box>
@@ -69,23 +53,30 @@ export const TouchTabBar = () => {
 
 type TabBarItemProps = {
     title: string
+    to: string
     icon: React.ReactNode
-    highlighted: boolean
-    onClick?: () => void
 }
 
 const TabBarItem = (props: TabBarItemProps) => {
-    const { title, icon, highlighted } = props
+    const { title, icon, to } = props
+    const resolved = useResolvedPath(to)
+    const navigate = useNavigate()
+    const onClick = useCallback(() => {
+        navigate(to)
+    }, [navigate, to])
+
+    const match = useMatch({
+        path: resolved.pathname,
+    })
+    const isHighlighted = !!match
 
     return (
         <Stack
             flexGrow="x1"
             alignItems="center"
-            color={highlighted ? 'default' : 'gray2'}
+            color={isHighlighted ? 'default' : 'gray2'}
             gap="xs"
-            onClick={() => {
-                props.onClick?.()
-            }}
+            onClick={onClick}
         >
             {icon}
             <Text fontSize="xs">{title}</Text>
