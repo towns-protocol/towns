@@ -12,7 +12,7 @@ export const TouchTabBar = () => {
     }
 
     return (
-        <Box background="level2" insetBottom="safeArea">
+        <Box borderTop background="level2" insetBottom="safeArea">
             <Stack horizontal width="100%" background="level2" display="flex" paddingY="sm">
                 <TabBarItem
                     highlighted
