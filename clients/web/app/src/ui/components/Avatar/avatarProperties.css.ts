@@ -48,6 +48,11 @@ export const avatarSizes = {
         height: '100%',
         '--size': '100%',
     },
+    toolbar_icon: {
+        width: vars.dims.toolbar.toolbar_icon,
+        height: vars.dims.toolbar.toolbar_icon,
+        '--size': vars.dims.toolbar.toolbar_icon,
+    },
 } as const
 
 export const avatarProperties = defineProperties({

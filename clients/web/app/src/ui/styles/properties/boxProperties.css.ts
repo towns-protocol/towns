@@ -156,6 +156,7 @@ export const boxProperties = defineProperties({
             ...vars.dims.height,
             ...vars.dims.input,
             ...vars.dims.screen,
+            ...vars.dims.toolbar,
         },
         minHeight: {
             ...vars.dims.baseline,
@@ -169,7 +170,12 @@ export const boxProperties = defineProperties({
             ...vars.dims.input,
             ...vars.dims.screen,
         },
-        width: { ...vars.dims.baseline, ...vars.dims.height, ...vars.dims.screen },
+        width: {
+            ...vars.dims.baseline,
+            ...vars.dims.height,
+            ...vars.dims.screen,
+            ...vars.dims.toolbar,
+        },
         minWidth: {
             ...vars.dims.baseline,
             ...vars.dims.height,

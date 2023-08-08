@@ -27,15 +27,15 @@ export const TouchTabBar = () => {
     }
 
     return (
-        <Box borderTop background="level2" insetBottom="safeArea">
+        <Box background="level2" paddingBottom="safeAreaInsetBottom">
             <Stack horizontal width="100%" background="level2" display="flex" paddingY="sm">
                 <TabBarItem
                     highlighted
                     title="Home"
                     icon={
                         <SpaceIcon
-                            width="x3"
-                            height="x3"
+                            width="toolbar_icon"
+                            height="toolbar_icon"
                             spaceId={space?.id.slug}
                             firstLetterOfSpaceName={space?.name[0]}
                             overrideBorderRadius="sm"
@@ -47,19 +47,19 @@ export const TouchTabBar = () => {
                 />
                 <TabBarItem
                     title="Threads"
-                    icon={<Icon type="message" size="square_md" />}
+                    icon={<Icon type="message" size="toolbar_icon" />}
                     highlighted={false}
                     onClick={threadsButtonPressed}
                 />
                 <TabBarItem
                     title="Mentions"
-                    icon={<Icon type="at" size="square_md" />}
+                    icon={<Icon type="at" size="toolbar_icon" />}
                     highlighted={false}
                     onClick={mentionsButtonPressed}
                 />
                 <TabBarItem
                     title="You"
-                    icon={<Avatar size="avatar_sm" userId={userId} />}
+                    icon={<Avatar size="toolbar_icon" userId={userId} />}
                     highlighted={false}
                 />
             </Stack>

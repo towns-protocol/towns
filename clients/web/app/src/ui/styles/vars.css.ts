@@ -138,6 +138,10 @@ const root = createGlobalTheme(':root', {
             wide: `${breakpoints.wide}px`,
         },
 
+        toolbar: {
+            toolbar_icon: `${baseline * 2.5}px`,
+        },
+
         input: {
             input_sm: `${baseline * 3}px`,
             // drop downs
