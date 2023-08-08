@@ -14,7 +14,7 @@ export const TouchTabBar = () => {
     }
 
     return (
-        <Box background="level2" paddingBottom="safeAreaInsetBottom">
+        <Box borderTop background="level2" paddingBottom="safeAreaInsetBottom">
             <Stack horizontal width="100%" background="level2" display="flex" paddingY="sm">
                 <TabBarItem
                     title="Home"

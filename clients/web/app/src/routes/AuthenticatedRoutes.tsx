@@ -84,7 +84,11 @@ export const AuthenticatedRoutes = () => {
                     </Route>
                 )}
 
-                {isTouch && <Route path={`${PATHS.HOME}`} element={<TouchHome />} />}
+                {isTouch && (
+                    <Route path={`${PATHS.HOME}`} element={<TouchHome />}>
+                        <Route path="info" element={<InfoPanelWrapper />} />
+                    </Route>
+                )}
 
                 <Route element={<SpacesChannelRoute />}>
                     <Route path="channels/:channelSlug/members" element={<ChannelMembers />}>

@@ -14,7 +14,6 @@ import { RichTextPreview } from '@components/RichText/RichTextEditor'
 import { Message } from '@components/MessageLayout'
 import { getIsRoomMessageContent, getMessageBody } from 'utils/ztevent_util'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
-import { TouchLayoutNavigationBar } from '@components/TouchLayoutNavigationBar/TouchLayoutNavigationBar'
 import { useDevice } from 'hooks/useDevice'
 import { FadeInBox } from '@components/Transitions'
 import { useHasJoinedChannels } from 'hooks/useHasJoinedChannels'
@@ -55,7 +54,6 @@ export const SpaceMentions = () => {
 
     return (
         <CentralPanelLayout>
-            {isTouch && <TouchLayoutNavigationBar value="mentions" />}
             <Stack absoluteFill scroll paddingTop={isTouch ? 'x8' : 'none'}>
                 {mentions.length ? (
                     <Stack grow minHeight="100svh">

@@ -1,12 +1,13 @@
-import React from 'react'
-import { Channel, RoomIdentifier, useRoom } from 'use-zion-client'
-import { Link } from 'react-router-dom'
+import React, { useCallback } from 'react'
+import { Channel, RoomIdentifier, useChannelMembers, useRoom } from 'use-zion-client'
+import { Link, useNavigate } from 'react-router-dom'
 import { ChannelUsersPill } from '@components/ChannelUserPill/ChannelUserPill'
-import { Box, Button, Icon, Paragraph, Stack, Text } from '@ui'
+import { Box, Button, Icon, IconButton, Paragraph, Stack, Text } from '@ui'
 import { useDevice } from 'hooks/useDevice'
-import { TouchLayoutNavigationBar } from '@components/TouchLayoutNavigationBar/TouchLayoutNavigationBar'
 import { usePushNotifications } from 'hooks/usePushNotifications'
 import { useMuteSettings } from 'api/lib/notificationSettings'
+import { PATHS } from 'routes'
+import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
 
 type Props = {
     channel: Channel
@@ -15,11 +16,7 @@ type Props = {
 
 export const ChannelHeader = (props: Props) => {
     const { isTouch } = useDevice()
-    return isTouch ? (
-        <TouchLayoutNavigationBar value={props.channel} />
-    ) : (
-        <DesktopChannelHeader {...props} />
-    )
+    return isTouch ? <TouchChannelHeader {...props} /> : <DesktopChannelHeader {...props} />
 }
 
 const DesktopChannelHeader = (props: Props) => {
@@ -92,5 +89,59 @@ const DesktopChannelHeader = (props: Props) => {
                 <ChannelUsersPill channelId={channel.id} spaceId={spaceId} />
             </Stack>
         </Stack>
+    )
+}
+
+const TouchChannelHeader = (props: Props) => {
+    const { channel } = props
+    const navigate = useNavigate()
+    const spaceId = useSpaceIdFromPathname()
+    const { members } = useChannelMembers()
+
+    const { channelIsMuted, spaceIsMuted } = useMuteSettings({
+        spaceId: spaceId,
+        channelId: channel?.id.networkId,
+    })
+
+    const isMuted = channelIsMuted || spaceIsMuted
+
+    const homeButtonPressed = useCallback(() => {
+        navigate(`/${PATHS.SPACES}/${spaceId}/home`)
+    }, [navigate, spaceId])
+
+    const infoButtonPressed = useCallback(() => {
+        navigate(`info?channel`)
+    }, [navigate])
+
+    return (
+        <Box borderBottom paddingTop="safeAreaInsetTop" background="level1">
+            <Stack horizontal alignContent="center" gap="sm" zIndex="uiAbove" padding="sm">
+                <IconButton
+                    icon="back"
+                    size="square_md"
+                    color="default"
+                    onClick={homeButtonPressed}
+                />
+                <Stack gap="sm" onClick={infoButtonPressed}>
+                    <Stack horizontal gap="sm" alignContent="center">
+                        <Text fontWeight="strong" color="default">
+                            #{channel.label}
+                        </Text>
+                        {isMuted && <Icon type="muteActive" size="square_xxs" color="gray2" />}
+                    </Stack>
+                    <Text color="gray2" fontSize="sm">{`${members.length} member${
+                        members.length > 1 ? `s` : ``
+                    }`}</Text>
+                </Stack>
+
+                <Box grow />
+                <IconButton
+                    icon="info"
+                    size="square_sm"
+                    color="default"
+                    onClick={infoButtonPressed}
+                />
+            </Stack>
+        </Box>
     )
 }
