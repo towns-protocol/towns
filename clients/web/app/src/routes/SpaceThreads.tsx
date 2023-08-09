@@ -14,6 +14,7 @@ import { useDevice } from 'hooks/useDevice'
 import { useHasJoinedChannels } from 'hooks/useHasJoinedChannels'
 import { NoJoinedChannelsFallback } from '@components/NoJoinedChannelsFallback'
 import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinner'
+import { TouchNavBar } from '@components/TouchNavBar/TouchNavBar'
 import { CentralPanelLayout } from './layouts/CentralPanelLayout'
 
 function sortThreads(threads: ThreadResult[]) {
@@ -61,9 +62,10 @@ export const SpaceThreads = () => {
 
     return (
         <CentralPanelLayout>
+            {isTouch && <TouchNavBar title="Threads" />}
             {userId && spaceId && threads.length > 0 ? (
-                <Stack absoluteFill scroll paddingTop={isTouch ? 'x8' : 'none'}>
-                    <Stack gap="lg" padding="lg" minHeight="100svh">
+                <Stack scroll>
+                    <Stack gap="lg" padding="lg" minHeight="forceScroll">
                         {threads.map(({ thread, channel }) => {
                             return (
                                 <ChannelContextProvider

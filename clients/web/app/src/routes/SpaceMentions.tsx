@@ -19,6 +19,7 @@ import { FadeInBox } from '@components/Transitions'
 import { useHasJoinedChannels } from 'hooks/useHasJoinedChannels'
 import { NoJoinedChannelsFallback } from '@components/NoJoinedChannelsFallback'
 import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinner'
+import { TouchNavBar } from '@components/TouchNavBar/TouchNavBar'
 import { CentralPanelLayout } from './layouts/CentralPanelLayout'
 
 export const SpaceMentions = () => {
@@ -54,9 +55,10 @@ export const SpaceMentions = () => {
 
     return (
         <CentralPanelLayout>
-            <Stack absoluteFill scroll paddingTop={isTouch ? 'x8' : 'none'}>
+            {isTouch && <TouchNavBar title="Mentions" />}
+            <Stack scroll>
                 {mentions.length ? (
-                    <Stack grow minHeight="100svh">
+                    <Stack minHeight="forceScroll">
                         <Stack gap padding={isTouch ? 'md' : 'lg'}>
                             {mentions.map((m, index, mentions) => {
                                 return (
