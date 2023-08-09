@@ -1,7 +1,7 @@
 import React, { useCallback, useMemo, useState } from 'react'
-import { useMyProfile, useSpaceData, useZionContext } from 'use-zion-client'
+import { useSpaceData, useZionContext } from 'use-zion-client'
 import { AnimatePresence } from 'framer-motion'
-import { Avatar, Box, Dot, IconButton, Stack, Text } from '@ui'
+import { Box, Dot, IconButton, Stack, Text } from '@ui'
 import { ImageVariants } from '@components/UploadImage/useImageSource'
 import { SpaceIcon } from '@components/SpaceIcon'
 import { TouchHomeOverlay } from '@components/TouchHomeOverlay/TouchHomeOverlay'
@@ -10,7 +10,6 @@ import { DirectMessagesModal } from '@components/DirectMessages/DirectMessagesMo
 import { useInstallPWAPrompt } from 'hooks/useInstallPWAPrompt'
 
 export const TouchLayoutHeader = () => {
-    const userId = useMyProfile()?.userId
     const space = useSpaceData()
     const currentSpaceId = space?.id
     const [activeOverlay, setActiveOverlay] = useState<
@@ -58,9 +57,10 @@ export const TouchLayoutHeader = () => {
                 paddingY="sm"
             >
                 <Box position="relative">
-                    <Avatar
-                        size="avatar_x4"
-                        userId={userId}
+                    <IconButton
+                        icon="more"
+                        size="square_md"
+                        color="default"
                         onClick={() => setActiveOverlay('main-panel')}
                     />
                     {hasUnread && <Dot />}
