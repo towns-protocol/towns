@@ -1,8 +1,9 @@
-import React, { useCallback, useState } from 'react'
+import React, { useCallback, useContext, useEffect, useState } from 'react'
 import { useSpaceData, useSpaceMentions } from 'use-zion-client'
 import { Box, Stack } from '@ui'
 import { SyncedChannelList } from '@components/SideBars/SpaceSideBar/SyncedChannelList'
 import { TouchLayoutHeader } from '@components/TouchLayoutHeader/TouchLayoutHeader'
+import { TouchTabBarContext } from '@components/TouchTabBar/TouchTabBarContext'
 import { ActionNavItem } from '@components/NavItem/ActionNavItem'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { CentralPanelLayout } from './layouts/CentralPanelLayout'
@@ -12,6 +13,11 @@ export const TouchHome = () => {
     const space = useSpaceData()
     const mentions = useSpaceMentions()
 
+    const { setTabBarHidden } = useContext(TouchTabBarContext)
+    // Handle the case where the user swipes back from a channel while the keyboard is open.
+    useEffect(() => {
+        setTabBarHidden(false)
+    }, [setTabBarHidden])
     const [visibleModal, setVisibleModal] = useState<'browse' | undefined>(undefined)
     const onShowBrowseChannels = useCallback(() => setVisibleModal('browse'), [setVisibleModal])
     const onHideBrowseChannels = useCallback(() => setVisibleModal(undefined), [setVisibleModal])

@@ -17,7 +17,7 @@ import LexicalErrorBoundary from '@lexical/react/LexicalErrorBoundary'
 import { clsx } from 'clsx'
 import isEqual from 'lodash/isEqual'
 import { ErrorBoundary } from '@sentry/react'
-import React, { useCallback, useMemo, useState } from 'react'
+import React, { useCallback, useContext, useMemo, useState } from 'react'
 import {
     Channel,
     Mention,
@@ -33,6 +33,7 @@ import { useNetworkStatus } from 'hooks/useNetworkStatus'
 import { SomethingWentWrong } from '@components/Errors/SomethingWentWrong'
 import { atoms } from 'ui/styles/atoms.css'
 import { useDevice } from 'hooks/useDevice'
+import { TouchTabBarContext } from '@components/TouchTabBar/TouchTabBarContext'
 import { MessageStatusAnnotation, useInitialConfig } from './hooks/useInitialConfig'
 import { AnnotationNode } from './nodes/AnnotationNode'
 import { ChannelLinkNode, createChannelLinkTransformer } from './nodes/ChannelLinkNode'
@@ -241,10 +242,18 @@ const RichTextEditorWithoutBoundary = (props: Props) => {
         editable,
     )
 
+    const { setTabBarHidden } = useContext(TouchTabBarContext)
+
     const [focused, setFocused] = useState(false)
-    const onFocusChange = (focus: boolean) => {
-        setFocused(focus)
-    }
+    const onFocusChange = useCallback(
+        (focus: boolean) => {
+            setFocused(focus)
+            if (isTouch && isFullWidthOnTouch) {
+                setTabBarHidden(focus)
+            }
+        },
+        [isTouch, setFocused, setTabBarHidden, isFullWidthOnTouch],
+    )
     const { isOffline } = useNetworkStatus()
     const [isAttemptingSend, setIsAttemptingSend] = useState(false)
 
