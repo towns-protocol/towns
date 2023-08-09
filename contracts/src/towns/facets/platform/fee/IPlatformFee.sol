@@ -7,7 +7,6 @@ pragma solidity ^0.8.20;
 
 // contracts
 interface IPlatformFeeBase {
-
   /**
    * @notice Emitted when the platform fee is updated
    * @param recipient The new recipient of the platform fee
@@ -30,7 +29,10 @@ interface IPlatformFee is IPlatformFeeBase {
    * @return bps The basis points of the fee
    * @return flat The flat fee
    */
-  function getPlatformFee() external view returns (address recipient, uint16 bps, uint256 flat);
+  function getPlatformFee()
+    external
+    view
+    returns (address recipient, uint16 bps, uint256 flat);
 
   /**
    * @notice Get the platform fee denominator

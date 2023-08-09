@@ -9,7 +9,7 @@ pragma solidity ^0.8.20;
 
 library PlatformFeeStorage {
   bytes32 internal constant PLATFORM_FEE_STORAGE_POSITION =
-    keccak256("towns.storage.platform.fee");
+    keccak256("towns.facets.platform.fee.storage");
 
   struct Layout {
     address recipient;

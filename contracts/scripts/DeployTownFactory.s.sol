@@ -3,7 +3,6 @@ pragma solidity ^0.8.20;
 
 // interfaces
 import {IDiamond} from "contracts/src/diamond/IDiamond.sol";
-import {IDiamondCut} from "contracts/src/diamond/facets/cut/IDiamondCut.sol";
 
 // libraries
 
@@ -40,12 +39,14 @@ import {PlatformFeeHelper} from "contracts/test/towns/platform/fee/PlatformFeeSe
 import {MultiInit} from "contracts/src/diamond/initializers/MultiInit.sol";
 
 contract DeployTownFactory is Deployer {
+  // dependencies
   DeployPioneer deployPioneer = new DeployPioneer();
   DeployTownOwner deployTownOwner = new DeployTownOwner();
   DeployTokenEntitlement deployTokenEntitlement = new DeployTokenEntitlement();
   DeployUserEntitlement deployUserEntitlement = new DeployUserEntitlement();
   DeployTown deployTown = new DeployTown();
 
+  // helpers
   TownArchitectHelper townArchitectHelper = new TownArchitectHelper();
   ProxyManagerHelper proxyManagerHelper = new ProxyManagerHelper();
   PausableHelper pausableHelper = new PausableHelper();

@@ -2,8 +2,7 @@
 pragma solidity ^0.8.20;
 
 //interfaces
-import {IERC173, IOwnableBase} from "contracts/src/diamond/facets/ownable/IERC173.sol";
-import {IERC165} from "contracts/src/diamond/facets/introspection/IERC165.sol";
+import {IOwnableBase} from "contracts/src/diamond/facets/ownable/IERC173.sol";
 
 //libraries
 

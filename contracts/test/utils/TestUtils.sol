@@ -7,7 +7,7 @@ import {PRBTest} from "@prb/test/PRBTest.sol";
 import {StdCheats} from "forge-std/StdCheats.sol";
 
 contract TestUtils is PRBTest, StdCheats {
-  uint256 private immutable _nonce;
+  uint256 private immutable _NONCE;
 
   address public constant NATIVE_TOKEN =
     address(0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE);
@@ -22,7 +22,7 @@ contract TestUtils is PRBTest, StdCheats {
     vm.setEnv("TESTING", "true");
 
     // solhint-disable
-    _nonce = uint256(
+    _NONCE = uint256(
       keccak256(
         abi.encode(
           tx.origin,
@@ -42,7 +42,7 @@ contract TestUtils is PRBTest, StdCheats {
   }
 
   function _randomBytes32() internal view returns (bytes32) {
-    bytes memory seed = abi.encode(_nonce, block.timestamp, gasleft());
+    bytes memory seed = abi.encode(_NONCE, block.timestamp, gasleft());
     return keccak256(seed);
   }
 

@@ -12,8 +12,6 @@ import {GateBase} from "contracts/src/towns/facets/gate/GateBase.sol";
 import {OwnableBase} from "contracts/src/diamond/facets/ownable/OwnableBase.sol";
 import {ReentrancyGuard} from "contracts/src/diamond/facets/reentrancy/ReentrancyGuard.sol";
 import {PausableBase} from "contracts/src/diamond/facets/pausable/PausableBase.sol";
-import {ProxyManagerBase} from "contracts/src/diamond/proxy/manager/ProxyManagerBase.sol";
-
 import {Facet} from "contracts/src/diamond/facets/Facet.sol";
 
 contract TownArchitect is

@@ -17,6 +17,7 @@ contract PlatformFeeFacet is IPlatformFee, PlatformFeeBase, OwnableBase, Facet {
     uint16 basisPoints,
     uint256 flatFee
   ) external onlyInitializing {
+    _addInterface(type(IPlatformFee).interfaceId);
     _setPlatformFeeRecipient(recipient);
     _setPlatformFee(basisPoints, flatFee);
   }

@@ -3,7 +3,7 @@ pragma solidity ^0.8.20;
 
 // interfaces
 import {IDiamondCutBase} from "contracts/src/diamond/facets/cut/IDiamondCut.sol";
-import {IDiamond, Diamond} from "contracts/src/diamond/Diamond.sol";
+import {IDiamond} from "contracts/src/diamond/Diamond.sol";
 import {IDiamondCut, IDiamondCutBase} from "contracts/src/diamond/facets/cut/IDiamondCut.sol";
 import {IERC165} from "openzeppelin-contracts/contracts/utils/introspection/IERC165.sol";
 import {IMockFacet} from "contracts/test/mocks/MockFacet.sol";
