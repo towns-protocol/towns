@@ -8,6 +8,13 @@ jest.mock('use-zion-client/src/client/web3/SpaceDapp', () => {
 		},
 	}
 })
+jest.mock('use-zion-client/src/client/web3/v3/SpaceDappV3', () => {
+	return {
+		SpaceDapp: class {
+			isEntitledToSpace = mockIsEntitled
+		},
+	}
+})
 
 const FAKE_SERVER_URL = 'http://localhost'
 const AUTH_TOKEN = 'Zm9v'

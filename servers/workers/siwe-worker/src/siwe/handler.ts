@@ -1,5 +1,5 @@
 import { SiweMessage } from 'siwe'
-import { SpaceDapp } from 'use-zion-client/src/client/web3/SpaceDapp'
+import { createSpaceDapp } from 'use-zion-client/src/client/web3/SpaceDappFactory'
 import { ethers } from 'ethers'
 import { Env } from '..'
 import { Permission } from 'use-zion-client/src/client/web3/ContractTypes'
@@ -71,7 +71,7 @@ export async function verifySpaceOwner(
 	chainId: number = GOERLI,
 	provider: ethers.providers.StaticJsonRpcProvider,
 ): Promise<boolean> {
-	const spaceDapp = new SpaceDapp(chainId, provider)
+	const spaceDapp = createSpaceDapp(chainId, provider)
 	try {
 		const hasPermission = await spaceDapp.isEntitledToSpace(
 			decodeURIComponent(spaceId),
