@@ -237,7 +237,7 @@ func (s *Stream) Sub(ctx context.Context, cookie *SyncCookie, receiver chan<- *S
 
 		if slot < int64(s.view.minipool.events.Len()) {
 			envelopes := make([]*Envelope, 0, s.view.minipool.events.Len()-int(slot))
-			for _, e := range s.view.minipool.events.A[slot:] {
+			for _, e := range s.view.minipool.events.Values[slot:] {
 				envelopes = append(envelopes, e.Envelope)
 			}
 			return &StreamAndCookie{

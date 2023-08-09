@@ -254,7 +254,7 @@ func (r *streamViewImpl) copyAndApplyBlock(headerEvent *ParsedEvent) (*streamVie
 	}
 
 	remaining := make(map[string]*ParsedEvent, MaxInt_(r.minipool.events.Len()-len(header.EventHashes), 0))
-	for k, v := range r.minipool.events.M {
+	for k, v := range r.minipool.events.Map {
 		remaining[k] = v
 	}
 
@@ -270,7 +270,7 @@ func (r *streamViewImpl) copyAndApplyBlock(headerEvent *ParsedEvent) (*streamVie
 	}
 
 	minipoolEvents := NewOrderedMap[string, *ParsedEvent](len(remaining))
-	for _, e := range r.minipool.events.A {
+	for _, e := range r.minipool.events.Values {
 		if _, ok := remaining[e.HashStr]; ok {
 			minipoolEvents.Set(e.HashStr, e)
 		}
