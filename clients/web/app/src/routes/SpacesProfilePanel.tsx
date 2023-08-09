@@ -17,16 +17,26 @@ import { useStore } from 'store/store'
 import { usePushNotifications } from 'hooks/usePushNotifications'
 
 export const SpaceProfilePanel = (props: { children?: React.ReactNode }) => {
+    const navigate = useNavigate()
+
+    const onClose = useEvent(() => {
+        navigate('..')
+    })
+
+    return (
+        <Panel label="Profile" onClose={onClose}>
+            <SpaceProfile {...props} />
+        </Panel>
+    )
+}
+
+export const SpaceProfile = (props: { children?: React.ReactNode }) => {
     const [search] = useSearchParams()
     const cameFromSpaceInfoPanel = search.get('spaceInfo') !== null
     const { profileId } = useParams()
     const { requestPushPermission, simplifiedPermissionState } = usePushNotifications()
 
     const navigate = useNavigate()
-
-    const onClose = useEvent(() => {
-        navigate('..')
-    })
 
     const onBack = useEvent(() => {
         navigate(-1)
@@ -79,99 +89,97 @@ export const SpaceProfilePanel = (props: { children?: React.ReactNode }) => {
     }
 
     return (
-        <Panel label="Profile" onClose={onClose}>
-            <Stack gap>
-                {isValid ? (
-                    <UserProfile
-                        center
-                        userId={user.userId}
-                        displayName={getPrettyDisplayName(user).name}
-                        userAddress={userAddress}
-                        userBio={userBio}
-                        canEdit={canEdit}
-                    />
-                ) : (
-                    <Stack padding>
-                        <Paragraph>Profile not found</Paragraph>
-                    </Stack>
-                )}
+        <Stack gap>
+            {isValid ? (
+                <UserProfile
+                    center
+                    userId={user.userId}
+                    displayName={getPrettyDisplayName(user).name}
+                    userAddress={userAddress}
+                    userBio={userBio}
+                    canEdit={canEdit}
+                />
+            ) : (
+                <Stack padding>
+                    <Paragraph>Profile not found</Paragraph>
+                </Stack>
+            )}
 
-                {cameFromSpaceInfoPanel && (
-                    <Box centerContent>
-                        <Button
-                            width="auto"
-                            tone="none"
-                            size="button_sm"
-                            style={{
-                                boxShadow: 'none',
-                            }}
-                            onClick={onBack}
-                        >
-                            <Text color="cta1">Back to space info</Text>
-                        </Button>
-                    </Box>
-                )}
-                {user?.userId === profileUser?.userId ? (
-                    <Stack padding gap paddingBottom="lg">
-                        {simplifiedPermissionState === 'soft-denied' && (
-                            <>
-                                <PanelButton onClick={requestPushPermission}>
-                                    <Box width="height_md" alignItems="center">
-                                        <Icon type="bell" size="square_sm" />
-                                    </Box>
-                                    <Paragraph>Enable push notifications</Paragraph>
-                                </PanelButton>
-                            </>
-                        )}
-
-                        {simplifiedPermissionState === 'hard-denied' && (
-                            <PanelButton height="auto" onClick={requestPushPermission}>
-                                <Stack horizontal gap="sm" alignItems="center">
-                                    <Box width="height_md" alignItems="center">
-                                        <Icon type="bell" size="square_sm" />
-                                    </Box>
-                                    <Stack>
-                                        <Paragraph fontWeight="strong" size="md">
-                                            Enable Push Notifications
-                                        </Paragraph>
-
-                                        <Paragraph size="md">
-                                            Look for the padlock or <strong>Secure</strong> sign in
-                                            the address bar.
-                                            <br />
-                                            Click on it, and a menu will appear.
-                                            <br />
-                                            Find <strong>Notifications</strong> and choose{' '}
-                                            <strong>Enable</strong>
-                                        </Paragraph>
-                                    </Stack>
-                                </Stack>
+            {cameFromSpaceInfoPanel && (
+                <Box centerContent>
+                    <Button
+                        width="auto"
+                        tone="none"
+                        size="button_sm"
+                        style={{
+                            boxShadow: 'none',
+                        }}
+                        onClick={onBack}
+                    >
+                        <Text color="cta1">Back to space info</Text>
+                    </Button>
+                </Box>
+            )}
+            {user?.userId === profileUser?.userId ? (
+                <Stack padding gap paddingBottom="lg">
+                    {simplifiedPermissionState === 'soft-denied' && (
+                        <>
+                            <PanelButton onClick={requestPushPermission}>
+                                <Box width="height_md" alignItems="center">
+                                    <Icon type="bell" size="square_sm" />
+                                </Box>
+                                <Paragraph>Enable push notifications</Paragraph>
                             </PanelButton>
-                        )}
-                        <PanelButton onClick={onThemeClick}>
-                            <Box
-                                border
-                                centerContent
-                                rounded="sm"
-                                aspectRatio="1/1"
-                                height="height_md"
-                                background="inverted"
-                                alignItems="center"
-                            >
-                                Aa
-                            </Box>
-                            <Paragraph color="default">Switch theme</Paragraph>
-                        </PanelButton>
+                        </>
+                    )}
 
-                        <PanelButton tone="negative" onClick={onLogoutClick}>
-                            <Box width="height_md" alignItems="center">
-                                <Icon type="logout" size="square_sm" />
-                            </Box>
-                            <Paragraph>Logout</Paragraph>
+                    {simplifiedPermissionState === 'hard-denied' && (
+                        <PanelButton height="auto" onClick={requestPushPermission}>
+                            <Stack horizontal gap="sm" alignItems="center">
+                                <Box width="height_md" alignItems="center">
+                                    <Icon type="bell" size="square_sm" />
+                                </Box>
+                                <Stack>
+                                    <Paragraph fontWeight="strong" size="md">
+                                        Enable Push Notifications
+                                    </Paragraph>
+
+                                    <Paragraph size="md">
+                                        Look for the padlock or <strong>Secure</strong> sign in the
+                                        address bar.
+                                        <br />
+                                        Click on it, and a menu will appear.
+                                        <br />
+                                        Find <strong>Notifications</strong> and choose{' '}
+                                        <strong>Enable</strong>
+                                    </Paragraph>
+                                </Stack>
+                            </Stack>
                         </PanelButton>
-                    </Stack>
-                ) : undefined}
-            </Stack>
-        </Panel>
+                    )}
+                    <PanelButton onClick={onThemeClick}>
+                        <Box
+                            border
+                            centerContent
+                            rounded="sm"
+                            aspectRatio="1/1"
+                            height="height_md"
+                            background="inverted"
+                            alignItems="center"
+                        >
+                            Aa
+                        </Box>
+                        <Paragraph color="default">Switch theme</Paragraph>
+                    </PanelButton>
+
+                    <PanelButton tone="negative" onClick={onLogoutClick}>
+                        <Box width="height_md" alignItems="center">
+                            <Icon type="logout" size="square_sm" />
+                        </Box>
+                        <Paragraph>Logout</Paragraph>
+                    </PanelButton>
+                </Stack>
+            ) : undefined}
+        </Stack>
     )
 }

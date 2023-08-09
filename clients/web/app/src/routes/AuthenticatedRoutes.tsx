@@ -29,6 +29,7 @@ import { InfoPanelWrapper } from './InfoPanel'
 import { NoJoinedSpacesFallback } from './NoJoinedSpacesFallback'
 import { ChannelMembers } from './ChannelMembers'
 import { TouchHome } from './TouchHome'
+import { TouchProfile } from './TouchProfile'
 
 const CheckRedirect = ({ children }: { children: JSX.Element }) => {
     const { state } = useLocation()
@@ -77,15 +78,16 @@ export const AuthenticatedRoutes = () => {
 
                 <Route path="invite" element={<SpacesInvite />} />
 
-                {!isTouch && (
+                {isTouch ? (
+                    <>
+                        <Route path={`${PATHS.HOME}`} element={<TouchHome />}>
+                            <Route path="info" element={<InfoPanelWrapper />} />
+                        </Route>
+                        <Route path={`${PATHS.PROFILE}/:profileId`} element={<TouchProfile />} />
+                    </>
+                ) : (
                     <Route path="members" element={<SpaceMembers />}>
                         <Route path="profile/:profileId" element={<SpaceProfilePanel />} />
-                        <Route path="info" element={<InfoPanelWrapper />} />
-                    </Route>
-                )}
-
-                {isTouch && (
-                    <Route path={`${PATHS.HOME}`} element={<TouchHome />}>
                         <Route path="info" element={<InfoPanelWrapper />} />
                     </Route>
                 )}
