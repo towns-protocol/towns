@@ -24,12 +24,7 @@ export class SpaceDappV3 implements ISpaceDapp {
         this.chainId = chainId
         this.provider = provider
         this.contractsInfo = getContractsInfoV3(chainId)
-        this.townArchitect = new ITownArchitectShim(
-            this.contractsInfo.address,
-            this.contractsInfo.townArchitect.abi,
-            chainId,
-            provider,
-        )
+        this.townArchitect = new ITownArchitectShim(this.contractsInfo.address, chainId, provider)
     }
 
     public addRoleToChannel(

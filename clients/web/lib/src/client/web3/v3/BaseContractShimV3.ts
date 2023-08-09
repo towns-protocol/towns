@@ -1,9 +1,13 @@
-/* eslint-disable no-restricted-imports */
-
 import { BytesLike, ethers } from 'ethers'
 import { GOERLI, LOCALHOST_CHAIN_ID, SEPOLIA } from '../Web3Constants'
 
 export type PromiseOrValue<T> = T | Promise<T>
+
+interface Abis {
+    readonly localhostAbi: ethers.ContractInterface
+    readonly goerliAbi: ethers.ContractInterface
+    readonly sepoliaAbi: ethers.ContractInterface
+}
 
 // V2 smart contract shim
 // todo: replace BaseContractShim with this when refactoring is done
@@ -17,25 +21,24 @@ export class BaseContractShimV3<
 > {
     public readonly address: string
     public readonly chainId: number
-    public readonly abi: ethers.ContractInterface
     public readonly contractInterface: ethers.utils.Interface
     public readonly provider: ethers.providers.Provider | undefined
     public readonly signer: ethers.Signer | undefined
-    private eventsContract?: ethers.Contract
+    private readonly abi: ethers.ContractInterface
     private readContract?: ethers.Contract
     private writeContract?: ethers.Contract
 
     constructor(
         address: string,
-        abi: ethers.ContractInterface,
         chainId: number,
         provider: ethers.providers.Provider | undefined,
+        abis: Abis,
     ) {
         this.address = address
         this.chainId = chainId
         this.provider = provider
-        this.abi = abi
-        this.contractInterface = new ethers.utils.Interface(abi as string)
+        this.abi = getAbiForChain(chainId, abis)
+        this.contractInterface = new ethers.utils.Interface(this.abi as string)
     }
 
     public get interface(): T_LOCALHOST_INTERFACE | T_GOERLI_INTERFACE | T_SEPOLIA_INTERFACE {
@@ -172,5 +175,18 @@ export class BaseContractShimV3<
 
     private createWriteContractInstance(signer: ethers.Signer): ethers.Contract {
         return new ethers.Contract(this.address, this.abi, signer)
+    }
+}
+
+function getAbiForChain(chainId: number, abis: Abis): ethers.ContractInterface {
+    switch (chainId) {
+        case LOCALHOST_CHAIN_ID:
+            return abis.localhostAbi
+        case GOERLI:
+            return abis.goerliAbi
+        case SEPOLIA:
+            return abis.sepoliaAbi
+        default:
+            throw new Error(`Unsupported chainId ${chainId}`)
     }
 }
