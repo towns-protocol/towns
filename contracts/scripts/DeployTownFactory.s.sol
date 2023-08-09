@@ -16,6 +16,7 @@ import {ProxyManager} from "contracts/src/diamond/proxy/manager/ProxyManager.sol
 import {PausableFacet} from "contracts/src/diamond/facets/pausable/PausableFacet.sol";
 import {ERC721Holder} from "openzeppelin-contracts/contracts/token/ERC721/utils/ERC721Holder.sol";
 import {TownArchitect} from "contracts/src/towns/facets/architect/TownArchitect.sol";
+import {PlatformFeeFacet} from "contracts/src/towns/facets/platform/fee/PlatformFeeFacet.sol";
 import {Diamond} from "contracts/src/diamond/Diamond.sol";
 
 // helpers
@@ -34,6 +35,7 @@ import {ProxyManagerHelper} from "contracts/test/diamond/proxy/ProxyManagerSetup
 import {PausableHelper} from "contracts/test/diamond/pausable/PausableSetup.sol";
 import {ERC721HolderHelper} from "contracts/test/towns/holder/ERC721HolderSetup.sol";
 import {TownArchitectHelper} from "contracts/test/towns/architect/TownArchitectSetup.sol";
+import {PlatformFeeHelper} from "contracts/test/towns/platform/fee/PlatformFeeSetup.sol";
 
 import {MultiInit} from "contracts/src/diamond/initializers/MultiInit.sol";
 
@@ -51,9 +53,13 @@ contract DeployTownFactory is Deployer {
   OwnableHelper ownableHelper = new OwnableHelper();
   DiamondCutHelper cutHelper = new DiamondCutHelper();
   DiamondLoupeHelper loupeHelper = new DiamondLoupeHelper();
+  PlatformFeeHelper platformFeeHelper = new PlatformFeeHelper();
 
-  address[] initAddresses = new address[](6);
-  bytes[] initDatas = new bytes[](6);
+  uint256 totalFacets = 8;
+  uint256 totalInit = 7;
+
+  address[] initAddresses = new address[](totalInit);
+  bytes[] initDatas = new bytes[](totalInit);
 
   address diamondCut;
   address diamondLoupe;
@@ -62,6 +68,7 @@ contract DeployTownFactory is Deployer {
   address pausable;
   address holder;
   address architect;
+  address platformFee;
   address multiInit;
 
   function versionName() public pure override returns (string memory) {
@@ -83,10 +90,11 @@ contract DeployTownFactory is Deployer {
     pausable = address(new PausableFacet());
     holder = address(new ERC721Holder());
     architect = address(new TownArchitect());
+    platformFee = address(new PlatformFeeFacet());
     multiInit = address(new MultiInit());
     vm.stopBroadcast();
 
-    IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](7);
+    IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](totalFacets);
     uint256 index;
 
     cuts[index++] = cutHelper.makeDeployCut(
@@ -120,6 +128,11 @@ contract DeployTownFactory is Deployer {
       IDiamond.FacetCutAction.Add
     );
 
+    cuts[index++] = platformFeeHelper.makeDeployCut(
+      platformFee,
+      IDiamond.FacetCutAction.Add
+    );
+
     index = 0;
 
     initAddresses[index++] = diamondCut;
@@ -128,6 +141,7 @@ contract DeployTownFactory is Deployer {
     initAddresses[index++] = proxyManager;
     initAddresses[index++] = ownable;
     initAddresses[index++] = pausable;
+    initAddresses[index++] = platformFee;
 
     index = 0;
 
@@ -142,8 +156,15 @@ contract DeployTownFactory is Deployer {
     initDatas[index++] = proxyManagerHelper.makeInitData(
       abi.encode(deployTown.deploy())
     );
+
     initDatas[index++] = ownableHelper.makeInitData(abi.encode(deployer));
     initDatas[index++] = pausableHelper.makeInitData("");
+    initDatas[index++] = abi.encodeWithSelector(
+      platformFeeHelper.initializer(),
+      deployer,
+      0,
+      0
+    );
 
     vm.startBroadcast(deployerPK);
     address townFactory = address(

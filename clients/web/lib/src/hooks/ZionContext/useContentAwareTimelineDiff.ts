@@ -36,6 +36,8 @@ export function useContentAwareTimelineDiffCasablanca(casablancaClient?: Casabla
             encryptedEvents: {},
         }
 
+        //TODO: Initialization of unread markers is required here.
+
         // listen to the timeine for changes, diff each change, and update the unread counts
         const onTimelineChange = (timelineState: TimelineStore, prev: TimelineStore) => {
             effectState = diffTimeline(
@@ -404,8 +406,20 @@ function diffTimeline(
                     effectState,
                     updated,
                 )
+                const resultDeleted = _diffDeleted(
+                    roomId,
+                    timelineState.deletedEvents[roomId] ?? [],
+                    prev.deletedEvents[roomId] ?? [],
+                    updated,
+                )
+                const resultReplaced = _diffReplaced(
+                    roomId,
+                    timelineState.replacedEvents[roomId] ?? [],
+                    prev.replacedEvents[roomId] ?? [],
+                    updated,
+                )
                 effectState = result.effectState
-                if (result.didUpdate) {
+                if (result.didUpdate || resultDeleted.didUpdate || resultReplaced.didUpdate) {
                     return { markers: updated }
                 } else {
                     return state
@@ -414,6 +428,64 @@ function diffTimeline(
         }
     })
     return effectState
+}
+
+//TODO: _diffDeleted is not implemented yet
+function _diffDeleted(
+    roomId: string,
+    deletedEvents: TimelineEvent[],
+    prevDeletedEvents: TimelineEvent[],
+    updated: { [key: string]: FullyReadMarker },
+): { didUpdate: boolean } {
+    const diff = deletedEvents.length - prevDeletedEvents.length
+    if (diff > 0) {
+        //TODO: proper logic for handling deleted events is requried here
+        //TODO: console.log below should be removed - it is here to supress linter for a while
+        console.log(updated)
+        return { didUpdate: true }
+    }
+    return { didUpdate: false }
+}
+
+function _diffReplaced(
+    roomId: string,
+    replacedEvents: { oldEvent: TimelineEvent; newEvent: TimelineEvent }[],
+    prevReplacedEvents: { oldEvent: TimelineEvent; newEvent: TimelineEvent }[],
+    updated: { [key: string]: FullyReadMarker },
+): { didUpdate: boolean } {
+    const diff = replacedEvents.length - prevReplacedEvents.length
+    if (diff > 0) {
+        if (updated[roomId]) {
+            for (let i = prevReplacedEvents.length; i < replacedEvents.length; i++) {
+                const event = replacedEvents[i]
+                const originServerTs = event.newEvent.originServerTs
+                const markedReadAtTs = updated[roomId].markedReadAtTs
+                const markedUnreadAtTs = updated[roomId].markedUnreadAtTs
+                if (markedReadAtTs < markedUnreadAtTs && originServerTs > markedReadAtTs) {
+                    const wasMentionedBefore = event.oldEvent.isMentioned
+                    const wasMentionedAfter = event.newEvent.isMentioned
+                    // this check
+                    // !isEncryptedZTEvent(...)
+                    // is required to avoid double counting of mentions if we are replacing
+                    // event after it being decrypted
+                    if (
+                        wasMentionedAfter !== wasMentionedBefore &&
+                        !isEncryptedZTEvent(event.oldEvent)
+                    ) {
+                        if (wasMentionedBefore) {
+                            //case of mention is removed
+                            updated[roomId].mentions -= 1
+                        } else {
+                            //case of mention is added
+                            updated[roomId].mentions += 1
+                        }
+                    }
+                }
+            }
+        }
+        return { didUpdate: true }
+    }
+    return { didUpdate: false }
 }
 
 function _diffTimeline(

@@ -96,6 +96,10 @@ export const MessageLayout = (props: Props) => {
 
     const backgroundProps = useHighlightBackground(isHighlight)
 
+    const onClick = useCallback(() => {
+        setIsModalSheetVisible(true)
+    }, [setIsModalSheetVisible])
+
     const { onOpenMessageThread } = useOpenMessageThread(spaceId, channelId)
     const onDoubleClick = useCallback(() => {
         if (canReply && eventId) {
@@ -119,6 +123,7 @@ export const MessageLayout = (props: Props) => {
             {...backgroundProps}
             tabIndex={0}
             onDoubleClick={!isTouch && canReply ? onDoubleClick : undefined}
+            onClick={isTouch && isSelectable ? onClick : undefined}
         >
             {/* left / avatar gutter */}
             {/* snippet: center avatar with name row by keeping the size of the containers equal  */}
@@ -185,21 +190,8 @@ export const MessageLayout = (props: Props) => {
                     </Stack>
                 )}
                 <Stack gap="md">
-                    <Stack horizontal alignItems="center">
-                        <Stack grow fontSize="md" color="default" gap="md">
-                            {children}
-                        </Stack>
-                        {isTouch && isSelectable && (
-                            <>
-                                <Stack grow />
-                                <IconButton
-                                    visibility={isActive ? 'visible' : 'hidden'}
-                                    icon="more"
-                                    color="gray2"
-                                    onClick={() => setIsModalSheetVisible(true)}
-                                />
-                            </>
-                        )}
+                    <Stack grow fontSize="md" color="default" gap="md">
+                        {children}
                     </Stack>
 
                     {/* channel */}

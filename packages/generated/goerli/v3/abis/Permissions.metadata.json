@@ -162,7 +162,7 @@
   },
   "settings": {
     "compilationTarget": {
-      "packages/contracts/src/spaces/libraries/Permissions.sol": "Permissions"
+      "contracts/src/spaces/libraries/Permissions.sol": "Permissions"
     },
     "evmVersion": "paris",
     "libraries": {},
@@ -177,9 +177,7 @@
     "remappings": [
       ":@openzeppelin/=lib/openzeppelin-contracts/",
       ":@prb/test/=lib/prb-test/src/",
-      ":@towns/=node_modules/@towns/",
       ":ERC721A/=lib/ERC721A/contracts/",
-      ":contracts/=packages/contracts/",
       ":council/=lib/council/contracts/",
       ":ds-test/=lib/ds-test/src/",
       ":erc4626-tests/=lib/operator-filter-registry/lib/openzeppelin-contracts/lib/erc4626-tests/",
@@ -191,7 +189,7 @@
     ]
   },
   "sources": {
-    "packages/contracts/src/spaces/libraries/Permissions.sol": {
+    "contracts/src/spaces/libraries/Permissions.sol": {
       "keccak256": "0xa5c44d5d9ffdd2edacd86eff2a9a1f75f54d7fd907135871331b1bfeb13dae00",
       "license": "UNLICENSED",
       "urls": [

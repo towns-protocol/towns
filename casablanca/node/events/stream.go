@@ -98,7 +98,7 @@ func (s *Stream) maybeMakeMiniblock(ctx context.Context) {
 	if viewInitialLen > 0 {
 		log := dlog.CtxLog(ctx)
 
-		block := s.view.makeBlock()
+		block := s.view.makeMiniblockHeader()
 
 		prevHashes := [][]byte{s.view.LastEvent().Hash}
 		event, err := MakeParsedEventWithPayload(s.params.Wallet, Make_MiniblockHeader(block), prevHashes)

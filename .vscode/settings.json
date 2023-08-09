@@ -12,7 +12,7 @@
     "./clients/web/sample-app",
   ],
   "[solidity]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
+    "editor.defaultFormatter": "NomicFoundation.hardhat-solidity"
   },
   "solidity.formatter": "prettier"
 }

@@ -7,13 +7,13 @@ import {
 import { ZionTestClientProps } from './helpers/ZionTestClient'
 
 describe.skip('ITownArchitect tests', () => {
-    const withV3Props: ZionTestClientProps = {
+    const withTestProps: ZionTestClientProps = {
         smartContractVersion: 'v3', // use v3 for the new TownArchitect. work-in-progress.
     }
 
     test('create a town with Everyone role', async () => {
         /* Arrange */
-        const { alice } = await registerAndStartClients(['alice'], withV3Props)
+        const { alice } = await registerAndStartClients(['alice'], withTestProps)
         await alice.fundWallet()
 
         /* Act */
@@ -26,7 +26,7 @@ describe.skip('ITownArchitect tests', () => {
     test('create a town with token-gated member role', async () => {
         /* Arrange */
         const permissions: Permission[] = [Permission.Read, Permission.Write]
-        const { alice } = await registerAndStartClients(['alice'], withV3Props)
+        const { alice } = await registerAndStartClients(['alice'], withTestProps)
         await alice.fundWallet()
 
         /* Act */
