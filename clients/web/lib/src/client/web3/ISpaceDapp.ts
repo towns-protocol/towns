@@ -1,6 +1,6 @@
 import { ContractTransaction, ethers } from 'ethers'
 import { ChannelDetails, ChannelMetadata, Permission, RoleDetails } from './ContractTypes'
-import { SpaceDataTypes, SpaceShim } from './shims/SpaceShim'
+import { SpaceDataTypes } from './shims/SpaceShim'
 
 import { SpaceFactoryDataTypes } from './shims/SpaceFactoryShim'
 import { SpaceInfo } from './SpaceInfo'
@@ -70,7 +70,6 @@ export interface ISpaceDapp {
         spaceId: string,
         channelNetworkId: string,
     ) => Promise<SpaceDataTypes.RoleStructOutput[]>
-    getSpace: (spaceId: string) => Promise<SpaceShim | undefined>
     getSpaceInfo: (spaceId: string) => Promise<SpaceInfo | undefined>
     isEntitledToSpace: (spaceId: string, user: string, permission: Permission) => Promise<boolean>
     isEntitledToChannel: (

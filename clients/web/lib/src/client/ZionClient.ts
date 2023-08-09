@@ -1209,11 +1209,6 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
         }
         let transaction: ContractTransaction | undefined = undefined
         let error: Error | undefined = undefined
-        // check that entitlement address exists
-        const space = await this.spaceDapp.getSpace(spaceNetworkId)
-        if (!space?.read || !space?.write) {
-            throw new Error(`Space with networkId "${spaceNetworkId}" is not found.`)
-        }
         console.log('[addRoleToChannelTransaction] space', {
             spaceNetworkId,
             channelNetworkId,
