@@ -3,6 +3,8 @@ import { GOERLI, LOCALHOST_CHAIN_ID, SEPOLIA } from '../Web3Constants'
 
 export type PromiseOrValue<T> = T | Promise<T>
 
+export const UNKNOWN_ERROR = 'UNKNOWN_ERROR'
+
 interface Abis {
     readonly localhostAbi: ethers.ContractInterface
     readonly goerliAbi: ethers.ContractInterface
@@ -101,7 +103,7 @@ export class BaseContractShimV3<
         if (!errorData) {
             console.log("don't know how to extract error data")
             return {
-                name: 'unknown',
+                name: UNKNOWN_ERROR,
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
                 message: anyError,
             }
@@ -112,7 +114,7 @@ export class BaseContractShimV3<
         try {
             const errDescription = this.interface.parseError(errorData)
             const decodedError = {
-                name: errDescription?.errorFragment.name ?? 'unknown',
+                name: errDescription?.errorFragment.name ?? UNKNOWN_ERROR,
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                 message: errorMessage,
             }
@@ -123,7 +125,7 @@ export class BaseContractShimV3<
             // Cannot decode error
             console.error('cannot decode error', e)
             return {
-                name: 'unknown',
+                name: UNKNOWN_ERROR,
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
                 message: e.message,
             }

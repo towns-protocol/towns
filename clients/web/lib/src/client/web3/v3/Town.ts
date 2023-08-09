@@ -1,3 +1,4 @@
+import { UNKNOWN_ERROR } from './BaseContractShimV3'
 import { IChannelShim } from './IChannelShim'
 import { IEntitlementsShim } from './IEntitlementsShim'
 import { IPausableShim } from './IPausableShim'
@@ -31,5 +32,26 @@ export class Town {
 
     public get Entitlements(): IEntitlementsShim {
         return this.entitlements
+    }
+
+    public parseError(error: unknown): Error {
+        // try each of the contracts to see who can give the best error message
+        let err = this.channels.parseError(error)
+        if (err?.name !== UNKNOWN_ERROR) {
+            return err
+        }
+        err = this.pausable.parseError(error)
+        if (err?.name !== UNKNOWN_ERROR) {
+            return err
+        }
+        err = this.entitlements.parseError(error)
+        if (err?.name !== UNKNOWN_ERROR) {
+            return err
+        }
+        err = this.roles.parseError(error)
+        if (err?.name !== UNKNOWN_ERROR) {
+            return err
+        }
+        return err
     }
 }

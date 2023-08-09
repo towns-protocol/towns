@@ -135,8 +135,12 @@ export class SpaceDappV3 implements ISpaceDapp {
         return this.townRegistrar.TownArchitect.parseError(error)
     }
 
-    public parseSpaceError(spaceId: string, error: unknown): Promise<Error> {
-        throw new Error('Method not implemented.')
+    public async parseSpaceError(spaceId: string, error: unknown): Promise<Error> {
+        const town = await this.getTown(spaceId)
+        if (!town) {
+            throw new Error(`Town with spaceId "${spaceId}" is not found.`)
+        }
+        return town.parseError(error)
     }
 
     public updateChannel(
