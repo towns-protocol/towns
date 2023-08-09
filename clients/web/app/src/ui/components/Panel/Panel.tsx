@@ -23,7 +23,7 @@ type Props = {
 
 export const Panel = (props: Props) => {
     const { isTouch } = useDevice()
-    return isTouch ? TouchPanel(props) : DesktopPanel(props)
+    return isTouch ? <TouchPanel {...props} /> : <DesktopPanel {...props} />
 }
 
 const DesktopPanel = (props: Props) => {
@@ -57,7 +57,9 @@ const DesktopPanel = (props: Props) => {
                     </>
                 )}
             </Stack>
-            <Stack scroll>{props.children}</Stack>
+            <Stack grow scroll>
+                {props.children}
+            </Stack>
         </Stack>
     )
 }
@@ -111,6 +113,7 @@ const TouchPanel = (props: Props) => {
             {modalPresented && (
                 <MotionStack
                     absoluteFill
+                    grow
                     initial={{ x: '100%', opacity: 0 }}
                     animate={{ x: '0%', opacity: 1 }}
                     exit={{ x: '100%', opacity: 0 }}
@@ -130,8 +133,10 @@ const TouchPanel = (props: Props) => {
                         rightBarButton={rightBarButton}
                         onBack={closePanel}
                     />
-                    <Stack scroll scrollbars>
-                        <Box paddingBottom="safeAreaInsetBottom">{props.children}</Box>
+                    <Stack scroll scrollbars grow>
+                        <Box grow paddingBottom="safeAreaInsetBottom">
+                            {props.children}
+                        </Box>
                     </Stack>
                 </MotionStack>
             )}
