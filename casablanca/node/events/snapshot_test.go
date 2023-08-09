@@ -44,27 +44,19 @@ func TestMakeSnapshot(t *testing.T) {
 	wallet, _ := crypto.NewWallet(context.Background())
 	streamId := "streamid$1"
 	inception := make_User_Inception(wallet, streamId, t)
-	snapshot, err := Make_Snapshot(inception)
+	snapshot, err := Make_Snapshot(inception.Event.GetInceptionPayload())
 	assert.NoError(t, err)
 	assert.Equal(
 		t,
 		streamId,
-		snapshot.(*MiniblockHeader_UserContent).UserContent.Inception.StreamId)
-}
-
-func TestMakeSnapshotFailsIfNotInception(t *testing.T) {
-	wallet, _ := crypto.NewWallet(context.Background())
-	streamId := "streamid$1"
-	membership := make_User_Membership(wallet, MembershipOp_SO_JOIN, streamId, nil, t)
-	_, err := Make_Snapshot(membership)
-	assert.Error(t, err)
+		snapshot.Content.(*Snapshot_UserContent).UserContent.Inception.StreamId)
 }
 
 func TestUpdateMiniblockHeader(t *testing.T) {
 	wallet, _ := crypto.NewWallet(context.Background())
 	streamId := "streamid$1"
 	inception := make_User_Inception(wallet, streamId, t)
-	snapshot, err := Make_Snapshot(inception)
+	snapshot, err := Make_Snapshot(inception.Event.GetInceptionPayload())
 	assert.NoError(t, err)
 
 	membership := make_User_Membership(wallet, MembershipOp_SO_JOIN, streamId, inception.Hash, t)
@@ -73,7 +65,7 @@ func TestUpdateMiniblockHeader(t *testing.T) {
 	assert.Equal(
 		t,
 		MembershipOp_SO_JOIN,
-		snapshot.(*MiniblockHeader_UserContent).UserContent.Memberships[streamId].Op,
+		snapshot.Content.(*Snapshot_UserContent).UserContent.Memberships[streamId].Op,
 	)
 }
 
@@ -81,7 +73,7 @@ func TestUpdateMiniblockHeaderFailsIfInception(t *testing.T) {
 	wallet, _ := crypto.NewWallet(context.Background())
 	streamId := "streamid$1"
 	inception := make_User_Inception(wallet, streamId, t)
-	snapshot, err := Make_Snapshot(inception)
+	snapshot, err := Make_Snapshot(inception.Event.GetInceptionPayload())
 	assert.NoError(t, err)
 
 	err = Update_Snapshot(snapshot, inception)
