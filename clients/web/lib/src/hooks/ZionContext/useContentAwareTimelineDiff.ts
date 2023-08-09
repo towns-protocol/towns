@@ -465,12 +465,12 @@ function _diffReplaced(
                     const wasMentionedBefore = event.oldEvent.isMentioned
                     const wasMentionedAfter = event.newEvent.isMentioned
                     // this check
-                    // event.oldEvent.content?.kind !== ZTEvent.RoomMessageEncrypted
+                    // !isEncryptedZTEvent(...)
                     // is required to avoid double counting of mentions if we are replacing
                     // event after it being decrypted
                     if (
                         wasMentionedAfter !== wasMentionedBefore &&
-                        event.oldEvent.content?.kind !== ZTEvent.RoomMessageEncrypted
+                        !isEncryptedZTEvent(event.oldEvent)
                     ) {
                         if (wasMentionedBefore) {
                             //case of mention is removed
