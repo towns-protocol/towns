@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom'
 import { ProfileHoverCard } from '@components/ProfileHoverCard/ProfileHoverCard'
 import { Reactions } from '@components/Reactions/Reactions'
 import { RepliesButton } from '@components/Replies/MessageReplies'
-import { Avatar, Box, BoxProps, ButtonText, Icon, IconButton, Paragraph, Stack, Text } from '@ui'
+import { Avatar, Box, BoxProps, ButtonText, Icon, Paragraph, Stack, Text } from '@ui'
 import { useHover } from 'hooks/useHover'
 import { useOpenMessageThread } from 'hooks/useOpenThread'
 import { useHandleReaction } from 'hooks/useReactions'
@@ -123,7 +123,6 @@ export const MessageLayout = (props: Props) => {
             {...backgroundProps}
             tabIndex={0}
             onDoubleClick={!isTouch && canReply ? onDoubleClick : undefined}
-            onClick={isTouch && isSelectable ? onClick : undefined}
         >
             {/* left / avatar gutter */}
             {/* snippet: center avatar with name row by keeping the size of the containers equal  */}
@@ -190,7 +189,13 @@ export const MessageLayout = (props: Props) => {
                     </Stack>
                 )}
                 <Stack gap="md">
-                    <Stack grow fontSize="md" color="default" gap="md">
+                    <Stack
+                        grow
+                        fontSize="md"
+                        color="default"
+                        gap="md"
+                        onClick={isTouch && isSelectable ? onClick : undefined}
+                    >
                         {children}
                     </Stack>
 
