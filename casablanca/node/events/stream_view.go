@@ -216,7 +216,7 @@ func (r *streamViewImpl) lastBlock() *miniblockInfo {
 	return r.blocks[len(r.blocks)-1]
 }
 
-func (r *streamViewImpl) makeBlock() *MiniblockHeader {
+func (r *streamViewImpl) makeMiniblockHeader() *MiniblockHeader {
 	hashes := make([][]byte, 0, r.minipool.events.Len())
 	_ = r.minipool.forEachEvent(func(e *ParsedEvent) (bool, error) {
 		hashes = append(hashes, e.Hash)
