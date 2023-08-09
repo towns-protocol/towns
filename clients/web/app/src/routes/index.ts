@@ -14,4 +14,5 @@ export const PATHS = {
     ROLES: 'roles',
     MESSAGES: 'messages',
     HOME: 'home',
+    PROFILE: 'profile',
 } as const

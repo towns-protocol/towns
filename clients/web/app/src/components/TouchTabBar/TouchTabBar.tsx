@@ -44,7 +44,7 @@ export const TouchTabBar = () => {
                 <TabBarItem
                     title="You"
                     icon={<Avatar size="toolbar_icon" userId={userId} />}
-                    to="" // profile not implemented yet
+                    to={`/${PATHS.SPACES}/${space.id.slug}/${PATHS.PROFILE}/me`}
                 />
             </Stack>
         </Box>
