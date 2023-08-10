@@ -4,6 +4,7 @@ import { makeTestClient } from './util.test'
 import { StreamEventKeys } from './streamEvents'
 import { makeUniqueChannelStreamId, makeUniqueSpaceStreamId } from './id'
 import { RiverEvent } from './event'
+import { ChannelMessage } from '@river/proto'
 
 const log = dlog('test:aliceAndFriends')
 
@@ -52,15 +53,18 @@ class TestDriver {
     }
 
     channelNewMessage(channelId: string, event: RiverEvent): void {
-        const wireContent = event.getWireChannelMessage_Post_Text()
-        if (!wireContent || !wireContent.body) {
+        const wireContent = event.getWireContent_fromJsonString<ChannelMessage>(ChannelMessage)
+        if (
+            wireContent?.payload.case !== 'post' ||
+            wireContent?.payload?.value?.content?.case !== 'text'
+        ) {
             throw new Error(`Expected text message, got=undefined`)
         }
         // todo jterzis: we need to encrypts events before sending them over transport.
         // this is therefore temp measure. we need to get the plaintext from the event
         // not wire content, but that assumes the event has been decrypted,
         // which requires the event were encrypted in the first place.
-        const content = wireContent.body
+        const content = wireContent?.payload?.value?.content?.value?.body
         this.log(`channelNewMessage channelId=${channelId} message=${content}`, this.expected)
         if (this.expected?.delete(content)) {
             this.log(`channelNewMessage expected message Received, text=${content}`)

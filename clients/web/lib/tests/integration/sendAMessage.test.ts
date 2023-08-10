@@ -112,7 +112,9 @@ describe('sendAMessage', () => {
                         !event.isDecryptionFailure() &&
                         event.getStreamType() == EncryptedEventStreamTypes.Channel
                     ) {
-                        bobRecievedEvents.push(event)
+                        if (event.getSender() !== bob?.casablancaClient?.userId) {
+                            bobRecievedEvents.push(event)
+                        }
                     }
                 },
             )
@@ -135,16 +137,34 @@ describe('sendAMessage', () => {
         if (primaryProtocol === SpaceProtocol.Casablanca) {
             await waitFor(() =>
                 expect(
-                    clientEvents.find(
-                        (e) => e.getClearChannelMessage_Post_Text()?.body === 'Hello Alice!',
-                    ),
+                    clientEvents.find((e) => {
+                        const content = e.getClearContent_ChannelMessage()
+                        if (
+                            content?.content &&
+                            content?.content?.case === 'post' &&
+                            content?.content?.value?.content?.case === 'text'
+                        ) {
+                            return content?.content?.value?.content?.value.body === 'Hello Alice!'
+                        }
+                        return false
+                    }),
                 ).toBeDefined(),
             )
             await waitFor(() =>
                 expect(
-                    bobRecievedEvents.find((e) =>
-                        e.getClearChannelMessage_Post_Text()?.body?.includes('Hello Bob!'),
-                    ),
+                    bobRecievedEvents.find((e) => {
+                        const content = e.getClearContent_ChannelMessage()
+                        if (
+                            content?.content &&
+                            content?.content?.case === 'post' &&
+                            content?.content?.value?.content?.case === 'text'
+                        ) {
+                            return content?.content?.value?.content?.value.body?.includes(
+                                'Hello Bob!',
+                            )
+                        }
+                        return false
+                    }),
                 ).toBeDefined(),
             )
         }

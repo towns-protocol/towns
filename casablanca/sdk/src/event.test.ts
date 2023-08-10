@@ -29,8 +29,8 @@ describe('riverEventTest', () => {
             log('channelNewMessage', channelId)
             done.runAndDone(() => {
                 // event is unencrypted so clear shouldn't be set
-                const content = event.getClearChannelMessage_Post_Text()
-                expect(content === undefined).toBeTrue()
+                const content = event.getClearContent_ChannelMessage()
+                expect(content?.content === undefined).toBeTrue()
                 const wire = event.getWireContentChannel()
                 expect(wire).toBeDefined()
                 expect(wire.content.ciphertext).toContain('Hello, world!')

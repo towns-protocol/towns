@@ -2,9 +2,19 @@ import { Client } from './client'
 import { MEGOLM_ALGORITHM } from './crypto/olmLib'
 import { EncryptedEventStreamTypes, IContent, RiverEvent } from './event'
 import { genId, makeChannelStreamId, makeSpaceStreamId } from './id'
-import { make_ChannelPayload_Message, make_ChannelMessage_Post_Content_Text } from './types'
+import {
+    make_ChannelPayload_Message,
+    make_ChannelMessage_Post_Content_Text,
+    make_ChannelMessage_Post_Content_Image,
+    make_ChannelMessage_Post_Content_GM,
+    make_ChannelMessage_Reaction,
+    make_ChannelMessage_Edit,
+    make_ChannelMessage_Redaction,
+} from './types'
 import { makeDonePromise, makeTestClient } from './util.test'
 import { dlog } from './dlog'
+import { ChannelMessage_Post } from '@river/proto'
+import { PlainMessage } from '@bufbuild/protobuf'
 
 const log = dlog('csb:test')
 
@@ -24,7 +34,498 @@ describe('clientCryptoTest', () => {
 
     test('clientCanImportExportMegolmSession', async () => {})
 
-    test('clientCanEncryptDecryptMessageEvent', async () => {
+    test('clientCanEncryptDecrypt_Redaction', async () => {
+        await expect(bobsClient.createNewUser()).toResolve()
+        await expect(bobsClient.initCrypto()).toResolve()
+        await bobsClient.startSync()
+        await expect(alicesClient.createNewUser()).toResolve()
+        await expect(alicesClient.initCrypto()).toResolve()
+        expect(
+            alicesClient.olmDevice.deviceCurve25519Key !== bobsClient.olmDevice.deviceCurve25519Key,
+        ).toBe(true)
+        await alicesClient.startSync()
+
+        // bob creates space, channel and invites alice
+        const bobsSpaceId = makeSpaceStreamId('bobs-space-' + genId())
+        await expect(bobsClient.createSpace(bobsSpaceId, { name: "Bob's Space" })).toResolve()
+
+        const bobsChannelId = makeChannelStreamId('bobs-channel-' + genId())
+        const bobsChannelName = 'Bobs channel'
+        const bobsChannelTopic = 'Bobs channel topic'
+
+        await expect(
+            bobsClient.createChannel(bobsSpaceId, bobsChannelName, bobsChannelTopic, bobsChannelId),
+        ).toResolve()
+        await expect(bobsClient.waitForStream(bobsChannelId)).toResolve()
+
+        // alice joins space and channel
+        // Alice waits for invite to Bob's channel.
+        const aliceJoined = makeDonePromise()
+        alicesClient.on('userInvitedToStream', (streamId: string) => {
+            log('userInvitedToStream', 'Alice', streamId)
+            aliceJoined.runAndDoneAsync(async () => {
+                expect(streamId).toBe(bobsChannelId)
+                await expect(alicesClient.joinStream(streamId)).toResolve()
+            })
+        })
+
+        // Bob invites Alice to his channel.
+        await bobsClient.inviteUser(bobsChannelId, alicesClient.userId)
+
+        await aliceJoined.expectToSucceed()
+
+        const payload = {
+            refEventId: 'fake_event_id',
+            reason: 'good reason',
+        }
+
+        // create a message to encrypt
+        const content: IContent = {
+            content: {
+                content: make_ChannelMessage_Redaction(payload.refEventId, payload.reason),
+                algorithm: MEGOLM_ALGORITHM,
+            },
+        }
+
+        const event = new RiverEvent({
+            content: content,
+            sender: alicesClient.userId, // typically creatorUserId is added by event envelope in the server
+            stream_type: EncryptedEventStreamTypes.Channel,
+        })
+        // ensure olm session with bob
+        expect(event.event.content).toBeDefined()
+        await expect(alicesClient.encryptEvent(event, { channelId: bobsChannelId })).toResolve()
+        expect(event.shouldAttemptDecryption()).toBe(false)
+        expect(event.getWireContentChannel().content.ciphertext).toBeDefined()
+        const senderKey = alicesClient.olmDevice.deviceCurve25519Key
+        if (!senderKey) {
+            throw new Error('Sender key not found')
+        }
+        // create a message event from alice's encrypted event and have bob decrypt it
+        const messagePayload = make_ChannelPayload_Message({
+            senderKey: senderKey,
+            sessionId: event.getWireContentChannel().content.session_id,
+            algorithm: MEGOLM_ALGORITHM,
+            text: event.getWireContentChannel().content.ciphertext!,
+        })
+
+        const encryptedEvent = new RiverEvent({
+            payload: {
+                parsed_event: messagePayload,
+                creator_user_id: alicesClient.userId,
+            },
+            channel_id: bobsChannelId,
+        })
+        expect(encryptedEvent.shouldAttemptDecryption()).toBe(true)
+        expect(encryptedEvent.getWireContentChannel().content.ciphertext).toBeDefined()
+        const encryptedContent = encryptedEvent.getContentChannel()
+        expect(encryptedContent?.content).toBeUndefined()
+        await expect(bobsClient.decryptEventIfNeeded(encryptedEvent)).toResolve()
+        const clearContent = encryptedEvent.getClearContent_ChannelMessage()
+        expect(clearContent?.content).toBeDefined()
+        if (clearContent?.content?.case === 'redaction') {
+            expect(clearContent?.content?.value?.refEventId).toEqual('fake_event_id')
+        }
+    })
+
+    test('clientCanEncryptDecrypt_Edit', async () => {
+        await expect(bobsClient.createNewUser()).toResolve()
+        await expect(bobsClient.initCrypto()).toResolve()
+        await bobsClient.startSync()
+        await expect(alicesClient.createNewUser()).toResolve()
+        await expect(alicesClient.initCrypto()).toResolve()
+        expect(
+            alicesClient.olmDevice.deviceCurve25519Key !== bobsClient.olmDevice.deviceCurve25519Key,
+        ).toBe(true)
+        await alicesClient.startSync()
+
+        // bob creates space, channel and invites alice
+        const bobsSpaceId = makeSpaceStreamId('bobs-space-' + genId())
+        await expect(bobsClient.createSpace(bobsSpaceId, { name: "Bob's Space" })).toResolve()
+
+        const bobsChannelId = makeChannelStreamId('bobs-channel-' + genId())
+        const bobsChannelName = 'Bobs channel'
+        const bobsChannelTopic = 'Bobs channel topic'
+
+        await expect(
+            bobsClient.createChannel(bobsSpaceId, bobsChannelName, bobsChannelTopic, bobsChannelId),
+        ).toResolve()
+        await expect(bobsClient.waitForStream(bobsChannelId)).toResolve()
+
+        // alice joins space and channel
+        // Alice waits for invite to Bob's channel.
+        const aliceJoined = makeDonePromise()
+        alicesClient.on('userInvitedToStream', (streamId: string) => {
+            log('userInvitedToStream', 'Alice', streamId)
+            aliceJoined.runAndDoneAsync(async () => {
+                expect(streamId).toBe(bobsChannelId)
+                await expect(alicesClient.joinStream(streamId)).toResolve()
+            })
+        })
+
+        // Bob invites Alice to his channel.
+        await bobsClient.inviteUser(bobsChannelId, alicesClient.userId)
+
+        await aliceJoined.expectToSucceed()
+
+        const post: PlainMessage<ChannelMessage_Post> = {
+            content: {
+                value: { body: 'First secret encrypted message by Alice!', mentions: [] },
+                case: 'text',
+            },
+        }
+        const payload = {
+            refEventId: 'fake_event_id',
+            post: post,
+        }
+
+        // create a message to encrypt
+        const content: IContent = {
+            content: {
+                content: make_ChannelMessage_Edit(payload.refEventId, payload.post),
+                algorithm: MEGOLM_ALGORITHM,
+            },
+        }
+
+        const event = new RiverEvent({
+            content: content,
+            sender: alicesClient.userId, // typically creatorUserId is added by event envelope in the server
+            stream_type: EncryptedEventStreamTypes.Channel,
+        })
+        // ensure olm session with bob
+        expect(event.event.content).toBeDefined()
+        await expect(alicesClient.encryptEvent(event, { channelId: bobsChannelId })).toResolve()
+        expect(event.shouldAttemptDecryption()).toBe(false)
+        expect(event.getWireContentChannel().content.ciphertext).toBeDefined()
+        const senderKey = alicesClient.olmDevice.deviceCurve25519Key
+        if (!senderKey) {
+            throw new Error('Sender key not found')
+        }
+        // create a message event from alice's encrypted event and have bob decrypt it
+        const messagePayload = make_ChannelPayload_Message({
+            senderKey: senderKey,
+            sessionId: event.getWireContentChannel().content.session_id,
+            algorithm: MEGOLM_ALGORITHM,
+            text: event.getWireContentChannel().content.ciphertext!,
+        })
+
+        const encryptedEvent = new RiverEvent({
+            payload: {
+                parsed_event: messagePayload,
+                creator_user_id: alicesClient.userId,
+            },
+            channel_id: bobsChannelId,
+        })
+        expect(encryptedEvent.shouldAttemptDecryption()).toBe(true)
+        expect(encryptedEvent.getWireContentChannel().content.ciphertext).toBeDefined()
+        const encryptedContent = encryptedEvent.getContentChannel()
+        expect(encryptedContent?.content).toBeUndefined()
+        await expect(bobsClient.decryptEventIfNeeded(encryptedEvent)).toResolve()
+        const clearContent = encryptedEvent.getClearContent_ChannelMessage()
+        expect(clearContent?.content).toBeDefined()
+        if (
+            clearContent?.content?.case === 'edit' &&
+            clearContent?.content?.value?.post?.content?.case === 'text'
+        ) {
+            expect(clearContent?.content?.value?.refEventId).toEqual('fake_event_id')
+            expect(clearContent?.content?.value?.post?.content?.value.body).toEqual(
+                'First secret encrypted message by Alice!',
+            )
+        }
+    })
+
+    test('clientCanEncryptDecrypt_Reaction', async () => {
+        await expect(bobsClient.createNewUser()).toResolve()
+        await expect(bobsClient.initCrypto()).toResolve()
+        await bobsClient.startSync()
+        await expect(alicesClient.createNewUser()).toResolve()
+        await expect(alicesClient.initCrypto()).toResolve()
+        expect(
+            alicesClient.olmDevice.deviceCurve25519Key !== bobsClient.olmDevice.deviceCurve25519Key,
+        ).toBe(true)
+        await alicesClient.startSync()
+
+        // bob creates space, channel and invites alice
+        const bobsSpaceId = makeSpaceStreamId('bobs-space-' + genId())
+        await expect(bobsClient.createSpace(bobsSpaceId, { name: "Bob's Space" })).toResolve()
+
+        const bobsChannelId = makeChannelStreamId('bobs-channel-' + genId())
+        const bobsChannelName = 'Bobs channel'
+        const bobsChannelTopic = 'Bobs channel topic'
+
+        await expect(
+            bobsClient.createChannel(bobsSpaceId, bobsChannelName, bobsChannelTopic, bobsChannelId),
+        ).toResolve()
+        await expect(bobsClient.waitForStream(bobsChannelId)).toResolve()
+
+        // alice joins space and channel
+        // Alice waits for invite to Bob's channel.
+        const aliceJoined = makeDonePromise()
+        alicesClient.on('userInvitedToStream', (streamId: string) => {
+            log('userInvitedToStream', 'Alice', streamId)
+            aliceJoined.runAndDoneAsync(async () => {
+                expect(streamId).toBe(bobsChannelId)
+                await expect(alicesClient.joinStream(streamId)).toResolve()
+            })
+        })
+
+        // Bob invites Alice to his channel.
+        await bobsClient.inviteUser(bobsChannelId, alicesClient.userId)
+
+        await aliceJoined.expectToSucceed()
+
+        const payload = {
+            refEventId: 'fake_event_id',
+            reaction: '👍',
+        }
+
+        // create a message to encrypt
+        const content: IContent = {
+            content: {
+                content: make_ChannelMessage_Reaction(payload.refEventId, payload.reaction),
+                algorithm: MEGOLM_ALGORITHM,
+            },
+        }
+
+        const event = new RiverEvent({
+            content: content,
+            sender: alicesClient.userId, // typically creatorUserId is added by event envelope in the server
+            stream_type: EncryptedEventStreamTypes.Channel,
+        })
+        // ensure olm session with bob
+        expect(event.event.content).toBeDefined()
+        await expect(alicesClient.encryptEvent(event, { channelId: bobsChannelId })).toResolve()
+        expect(event.shouldAttemptDecryption()).toBe(false)
+        expect(event.getWireContentChannel().content.ciphertext).toBeDefined()
+        const senderKey = alicesClient.olmDevice.deviceCurve25519Key
+        if (!senderKey) {
+            throw new Error('Sender key not found')
+        }
+        // create a message event from alice's encrypted event and have bob decrypt it
+        const messagePayload = make_ChannelPayload_Message({
+            senderKey: senderKey,
+            sessionId: event.getWireContentChannel().content.session_id,
+            algorithm: MEGOLM_ALGORITHM,
+            text: event.getWireContentChannel().content.ciphertext!,
+        })
+
+        const encryptedEvent = new RiverEvent({
+            payload: {
+                parsed_event: messagePayload,
+                creator_user_id: alicesClient.userId,
+            },
+            channel_id: bobsChannelId,
+        })
+        expect(encryptedEvent.shouldAttemptDecryption()).toBe(true)
+        expect(encryptedEvent.getWireContentChannel().content.ciphertext).toBeDefined()
+        const encryptedContent = encryptedEvent.getContentChannel()
+        expect(encryptedContent?.content).toBeUndefined()
+        await expect(bobsClient.decryptEventIfNeeded(encryptedEvent)).toResolve()
+        const clearContent = encryptedEvent.getClearContent_ChannelMessage()
+        expect(clearContent?.content).toBeDefined()
+        if (clearContent?.content?.case === 'reaction') {
+            expect(clearContent?.content.value.refEventId).toEqual('fake_event_id')
+            expect(clearContent?.content.value.reaction).toEqual('👍')
+        }
+    })
+
+    test('clientCanEncryptDecrypt_PostContentGM_Event', async () => {
+        await expect(bobsClient.createNewUser()).toResolve()
+        await expect(bobsClient.initCrypto()).toResolve()
+        await bobsClient.startSync()
+        await expect(alicesClient.createNewUser()).toResolve()
+        await expect(alicesClient.initCrypto()).toResolve()
+        expect(
+            alicesClient.olmDevice.deviceCurve25519Key !== bobsClient.olmDevice.deviceCurve25519Key,
+        ).toBe(true)
+        await alicesClient.startSync()
+
+        // bob creates space, channel and invites alice
+        const bobsSpaceId = makeSpaceStreamId('bobs-space-' + genId())
+        await expect(bobsClient.createSpace(bobsSpaceId, { name: "Bob's Space" })).toResolve()
+
+        const bobsChannelId = makeChannelStreamId('bobs-channel-' + genId())
+        const bobsChannelName = 'Bobs channel'
+        const bobsChannelTopic = 'Bobs channel topic'
+
+        await expect(
+            bobsClient.createChannel(bobsSpaceId, bobsChannelName, bobsChannelTopic, bobsChannelId),
+        ).toResolve()
+        await expect(bobsClient.waitForStream(bobsChannelId)).toResolve()
+
+        // alice joins space and channel
+        // Alice waits for invite to Bob's channel.
+        const aliceJoined = makeDonePromise()
+        alicesClient.on('userInvitedToStream', (streamId: string) => {
+            log('userInvitedToStream', 'Alice', streamId)
+            aliceJoined.runAndDoneAsync(async () => {
+                expect(streamId).toBe(bobsChannelId)
+                await expect(alicesClient.joinStream(streamId)).toResolve()
+            })
+        })
+
+        // Bob invites Alice to his channel.
+        await bobsClient.inviteUser(bobsChannelId, alicesClient.userId)
+
+        await aliceJoined.expectToSucceed()
+
+        const payload = {
+            typeUrl: 'http://fake_url',
+        }
+
+        // create a message to encrypt
+        const content: IContent = {
+            content: {
+                content: make_ChannelMessage_Post_Content_GM(payload.typeUrl),
+                algorithm: MEGOLM_ALGORITHM,
+            },
+        }
+
+        const event = new RiverEvent({
+            content: content,
+            sender: alicesClient.userId, // typically creatorUserId is added by event envelope in the server
+            stream_type: EncryptedEventStreamTypes.Channel,
+        })
+        // ensure olm session with bob
+        expect(event.event.content).toBeDefined()
+        await expect(alicesClient.encryptEvent(event, { channelId: bobsChannelId })).toResolve()
+        expect(event.shouldAttemptDecryption()).toBe(false)
+        expect(event.getWireContentChannel().content.ciphertext).toBeDefined()
+        const senderKey = alicesClient.olmDevice.deviceCurve25519Key
+        if (!senderKey) {
+            throw new Error('Sender key not found')
+        }
+        // create a message event from alice's encrypted event and have bob decrypt it
+        const messagePayload = make_ChannelPayload_Message({
+            senderKey: senderKey,
+            sessionId: event.getWireContentChannel().content.session_id,
+            algorithm: MEGOLM_ALGORITHM,
+            text: event.getWireContentChannel().content.ciphertext!,
+        })
+
+        const encryptedEvent = new RiverEvent({
+            payload: {
+                parsed_event: messagePayload,
+                creator_user_id: alicesClient.userId,
+            },
+            channel_id: bobsChannelId,
+        })
+        expect(encryptedEvent.shouldAttemptDecryption()).toBe(true)
+        expect(encryptedEvent.getWireContentChannel().content.ciphertext).toBeDefined()
+        const encryptedContent = encryptedEvent.getContentChannel()
+        expect(encryptedContent?.content).toBeUndefined()
+        await expect(bobsClient.decryptEventIfNeeded(encryptedEvent)).toResolve()
+        const clearContent = encryptedEvent.getClearContent_ChannelMessage()
+        expect(clearContent?.content).toBeDefined()
+        if (
+            clearContent?.content?.case === 'post' &&
+            clearContent?.content?.value?.content?.case === 'gm'
+        ) {
+            expect(clearContent?.content.value.content.value.typeUrl).toEqual('http://fake_url')
+        }
+    })
+
+    test('clientCanEncryptDecrypt_PostContentImage_Event', async () => {
+        await expect(bobsClient.createNewUser()).toResolve()
+        await expect(bobsClient.initCrypto()).toResolve()
+        await bobsClient.startSync()
+        await expect(alicesClient.createNewUser()).toResolve()
+        await expect(alicesClient.initCrypto()).toResolve()
+        expect(
+            alicesClient.olmDevice.deviceCurve25519Key !== bobsClient.olmDevice.deviceCurve25519Key,
+        ).toBe(true)
+        await alicesClient.startSync()
+
+        // bob creates space, channel and invites alice
+        const bobsSpaceId = makeSpaceStreamId('bobs-space-' + genId())
+        await expect(bobsClient.createSpace(bobsSpaceId, { name: "Bob's Space" })).toResolve()
+
+        const bobsChannelId = makeChannelStreamId('bobs-channel-' + genId())
+        const bobsChannelName = 'Bobs channel'
+        const bobsChannelTopic = 'Bobs channel topic'
+
+        await expect(
+            bobsClient.createChannel(bobsSpaceId, bobsChannelName, bobsChannelTopic, bobsChannelId),
+        ).toResolve()
+        await expect(bobsClient.waitForStream(bobsChannelId)).toResolve()
+
+        // alice joins space and channel
+        // Alice waits for invite to Bob's channel.
+        const aliceJoined = makeDonePromise()
+        alicesClient.on('userInvitedToStream', (streamId: string) => {
+            log('userInvitedToStream', 'Alice', streamId)
+            aliceJoined.runAndDoneAsync(async () => {
+                expect(streamId).toBe(bobsChannelId)
+                await expect(alicesClient.joinStream(streamId)).toResolve()
+            })
+        })
+
+        // Bob invites Alice to his channel.
+        await bobsClient.inviteUser(bobsChannelId, alicesClient.userId)
+
+        await aliceJoined.expectToSucceed()
+
+        const payload = {
+            title: 'image1',
+            info: { url: 'http://fake_url', mimetype: 'image/png' },
+        }
+
+        // create a message to encrypt
+        const content: IContent = {
+            content: {
+                content: make_ChannelMessage_Post_Content_Image(payload.title, payload.info),
+                algorithm: MEGOLM_ALGORITHM,
+            },
+        }
+
+        const event = new RiverEvent({
+            content: content,
+            sender: alicesClient.userId, // typically creatorUserId is added by event envelope in the server
+            stream_type: EncryptedEventStreamTypes.Channel,
+        })
+        // ensure olm session with bob
+        expect(event.event.content).toBeDefined()
+        await expect(alicesClient.encryptEvent(event, { channelId: bobsChannelId })).toResolve()
+        expect(event.shouldAttemptDecryption()).toBe(false)
+        expect(event.getWireContentChannel().content.ciphertext).toBeDefined()
+        const senderKey = alicesClient.olmDevice.deviceCurve25519Key
+        if (!senderKey) {
+            throw new Error('Sender key not found')
+        }
+        // create a message event from alice's encrypted event and have bob decrypt it
+        const messagePayload = make_ChannelPayload_Message({
+            senderKey: senderKey,
+            sessionId: event.getWireContentChannel().content.session_id,
+            algorithm: MEGOLM_ALGORITHM,
+            text: event.getWireContentChannel().content.ciphertext!,
+        })
+
+        const encryptedEvent = new RiverEvent({
+            payload: {
+                parsed_event: messagePayload,
+                creator_user_id: alicesClient.userId,
+            },
+            channel_id: bobsChannelId,
+        })
+        expect(encryptedEvent.shouldAttemptDecryption()).toBe(true)
+        expect(encryptedEvent.getWireContentChannel().content.ciphertext).toBeDefined()
+        const encryptedContent = encryptedEvent.getContentChannel()
+        expect(encryptedContent?.content).toBeUndefined()
+        await expect(bobsClient.decryptEventIfNeeded(encryptedEvent)).toResolve()
+        const clearContent = encryptedEvent.getClearContent_ChannelMessage()
+        expect(clearContent?.content).toBeDefined()
+        if (
+            clearContent?.content?.case === 'post' &&
+            clearContent?.content?.value?.content?.case === 'image'
+        ) {
+            expect(clearContent?.content?.value?.content?.value?.title).toEqual('image1')
+            expect(clearContent?.content?.value?.content?.value?.info?.url).toEqual(
+                'http://fake_url',
+            )
+        }
+    })
+
+    test('clientCanEncryptDecrypt_PostContentText_Event', async () => {
         await expect(bobsClient.createNewUser()).toResolve()
         await expect(bobsClient.initCrypto()).toResolve()
         await bobsClient.startSync()
@@ -110,9 +611,16 @@ describe('clientCryptoTest', () => {
         const encryptedContent = encryptedEvent.getContentChannel()
         expect(encryptedContent?.content).toBeUndefined()
         await expect(bobsClient.decryptEventIfNeeded(encryptedEvent)).toResolve()
-        const clearContent = encryptedEvent.getClearChannelMessage_Post_Text()
-        expect(clearContent).toBeDefined()
-        expect(clearContent?.body).toContain('First secret encrypted message!')
+        const clearContent = encryptedEvent.getClearContent_ChannelMessage()
+        expect(clearContent?.content).toBeDefined()
+        if (
+            clearContent?.content?.case === 'post' &&
+            clearContent?.content?.value?.content?.case === 'text'
+        ) {
+            expect(clearContent?.content?.value?.content.value?.body).toContain(
+                'First secret encrypted message!',
+            )
+        }
     })
 
     test('clientCanEncryptDecryptMessageEvents', async () => {
@@ -249,9 +757,16 @@ describe('clientCryptoTest', () => {
             // note: at times jest toBeUnDefined() fails to detect undefined here
             expect(content?.content === undefined).toBe(true)
             await expect(client.decryptEventIfNeeded(encryptedEvent)).toResolve()
-            const clearContent = encryptedEvent.getClearChannelMessage_Post_Text()
-            expect(clearContent).toBeDefined()
-            expect(clearContent?.body).toContain('secret encrypted message')
+            const clearContent = encryptedEvent.getClearContent_ChannelMessage()
+            expect(clearContent?.content).toBeDefined()
+            if (
+                clearContent?.content?.case === 'post' &&
+                clearContent?.content?.value?.content?.case === 'text'
+            ) {
+                expect(clearContent?.content?.value?.content.value?.body).toContain(
+                    'secret encrypted message',
+                )
+            }
             j++
         }
 
@@ -269,9 +784,16 @@ describe('clientCryptoTest', () => {
             const content = encryptedEvent.getContentChannel()
             expect(content.content).toBeUnDefined()
             await expect(client.decryptEventIfNeeded(encryptedEvent)).toResolve()
-            const clearContent = encryptedEvent.getClearChannelMessage_Post_Text()
-            expect(clearContent).toBeDefined()
-            expect(clearContent?.body).toContain('encrypted message')
+            const clearContent = encryptedEvent.getClearContent_ChannelMessage()
+            expect(clearContent?.content).toBeDefined()
+            if (
+                clearContent?.content?.case === 'post' &&
+                clearContent?.content?.value?.content?.case === 'text'
+            ) {
+                expect(clearContent?.content?.value?.content.value?.body).toContain(
+                    'encrypted message!',
+                )
+            }
             k++
         }
     })
@@ -408,9 +930,16 @@ describe('clientCryptoTest', () => {
                 bobSelfToDevice.runAndDoneAsync(async () => {
                     expect(content).toBeDefined()
                     await bobsClient.decryptEventIfNeeded(event)
-                    const clearEvent = event.getClearChannelMessage_Post_Text()
-                    expect(clearEvent).toBeDefined()
-                    expect(clearEvent?.body).toContain('First secret encrypted message!')
+                    const clearEvent = event.getClearContent_ChannelMessage()
+                    expect(clearEvent?.content).toBeDefined()
+                    if (
+                        clearEvent?.content?.case === 'post' &&
+                        clearEvent?.content?.value?.content?.case === 'text'
+                    ) {
+                        expect(clearEvent?.content?.value?.content.value?.body).toContain(
+                            'First secret encrypted message!',
+                        )
+                    }
                 })
             }
         })
