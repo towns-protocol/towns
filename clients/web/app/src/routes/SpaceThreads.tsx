@@ -65,7 +65,12 @@ export const SpaceThreads = () => {
             {isTouch && <TouchNavBar title="Threads" />}
             {userId && spaceId && threads.length > 0 ? (
                 <Stack scroll>
-                    <Stack gap="lg" padding="lg" minHeight="forceScroll">
+                    <Stack
+                        gap="lg"
+                        paddingX={isTouch ? 'none' : 'lg'}
+                        paddingY="lg"
+                        minHeight="forceScroll"
+                    >
                         {threads.map(({ thread, channel }) => {
                             return (
                                 <ChannelContextProvider

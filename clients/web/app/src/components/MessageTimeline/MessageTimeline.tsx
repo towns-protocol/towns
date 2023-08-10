@@ -19,6 +19,7 @@ import { useExperimentsStore } from 'store/experimentsStore'
 import { notUndefined } from 'ui/utils/utils'
 import { MessageTimelineItem } from '@components/MessageTimeIineItem/TimelineItem'
 import { useDebounce } from 'hooks/useDebounce'
+import { useDevice } from 'hooks/useDevice'
 import { MessageTimelineContext, MessageTimelineType } from './MessageTimelineContext'
 import { DateDivider } from '../MessageTimeIineItem/items/DateDivider'
 import { NewDivider } from '../MessageTimeIineItem/items/NewDivider'
@@ -50,7 +51,7 @@ export const MessageTimeline = (props: Props) => {
     const isChannelEncrypted = timelineContext?.isChannelEncrypted
     const channelName = timelineContext?.channels.find((c) => c.id.slug === channelId?.slug)?.label
     const userId = timelineContext?.userId
-
+    const { isTouch } = useDevice()
     const [isCollapsed, setCollapsed] = useState(props.collapsed ?? false)
     const onExpandClick = useCallback(() => {
         setCollapsed(false)
@@ -375,7 +376,7 @@ export const MessageTimeline = (props: Props) => {
                         faded={isUnreadMarkerFaded}
                     />
                 ) : r.type === 'divider' ? (
-                    <Box paddingX="md" paddingY="md">
+                    <Box paddingX="md" paddingY="md" display={isTouch ? 'none' : 'flex'}>
                         <Divider space="none" />
                     </Box>
                 ) : r.type === 'expander' ? (
