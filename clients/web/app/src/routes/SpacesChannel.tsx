@@ -131,6 +131,10 @@ const SpacesChannelComponent = () => {
         [onLoadMore],
     )
 
+    useEffect(() => {
+        // load more when opening the channel
+        onLoadMore()
+    }, [onLoadMore])
     const [debounceShimmer, setDebounceShimmer] = useState(true)
 
     useEffect(() => {
@@ -189,13 +193,8 @@ const SpacesChannelComponent = () => {
                     >
                         <ChannelHeader channel={channel} spaceId={spaceId} />
 
-                        {/* 
-                        /!\ keep
-                        spacer allowing the header to always stick to the top 
-                        in case the timeline is smaller than the screen
-                    */}
-                        <Stack grow />
                         <MessageTimeline
+                            align="bottom"
                             containerRef={timelineContainerRef}
                             header={
                                 <>

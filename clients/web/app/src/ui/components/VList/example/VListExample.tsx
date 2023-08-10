@@ -2,9 +2,9 @@ import { randNumber, randParagraph, randUuid, seed } from '@ngneat/falso'
 import React, { useCallback, useState } from 'react'
 import { RichTextPreview } from '@components/RichText/RichTextEditor'
 import { Box, Button, Paragraph, Stack, Toggle } from '@ui'
-import { VList } from 'ui/components/VList/VList'
+import { VList } from 'ui/components/VList2/VList'
 import { ExampleMessage } from './ExampleMessage'
-import { createMessageList } from './helpers/createMessages'
+import { createMessageList, randId } from './helpers/createMessages'
 
 const NUM_MESSAGES = 10
 
@@ -38,12 +38,12 @@ export const VListExample = () => {
     }
 
     const onPrependClick = () => {
-        console.clear()
-        setList([...createMessageList(30), ...list])
+        console.log(`%c\n\n\nvlist::onPreprendClick`, `color:#f60`)
+        setList([...createMessageList(20), ...list])
     }
     const onAppendClick = () => {
-        console.clear()
-        setList([...list, ...createMessageList(30)])
+        console.log(`%c\n\n\nvlist::onAppendClick`, `color:#f60`)
+        setList([...list, ...createMessageList(20)])
     }
 
     const updateMessage = useCallback(
@@ -52,16 +52,16 @@ export const VListExample = () => {
             const index = list.findIndex((l) => l.id === id)
             const item = list.at(index)
 
-            if (item && index) {
+            if (item && typeof index === 'number') {
                 // const another = createMessage(item.timestamp, item.profile, item.color)
                 let newItem = { ...item }
 
                 if (key === 'uid') {
-                    newItem = { ...item, id: Math.random().toString(16) } as const
+                    newItem = { ...item, id: randId() } as const
                 } else {
                     newItem = {
                         ...item,
-                        id: Math.random().toString(16),
+                        id: randId(),
                         message: randParagraph({
                             length: randNumber({ min: 1, max: 7, precision: 1 }),
                         }).join('\r\n'),
@@ -74,42 +74,19 @@ export const VListExample = () => {
         [list],
     )
 
+    // console.table(list)
+
     return (
         <Stack gap height="800">
             <VList
+                getItemKey={(item) => item.id}
+                align="bottom"
                 debug={isDebug}
                 key={`${reset}`}
                 list={list}
-                viewMargin={100}
-                esimtateItemSize={140}
-                itemRenderer={(data) => {
-                    return (
-                        <Stack horizontal>
-                            <Stack style={{ background: data.color }} width="x1" shrink={false} />
-                            <Stack>
-                                <ExampleMessage
-                                    relativeDate
-                                    borderRadius="xs"
-                                    padding="md"
-                                    name={data.profile.name}
-                                    avatar={data.profile.avatarSrc}
-                                    timestamp={data.timestamp}
-                                    onMouseDown={(e: React.MouseEvent) => {
-                                        const key = e.altKey ? 'content' : 'uid'
-                                        updateMessage(data.id, key)
-                                    }}
-                                >
-                                    <Stack gap>
-                                        <Paragraph size="sm" color="cta2">
-                                            {data.id}
-                                        </Paragraph>
-                                        <RichTextPreview content={data.message} />
-                                    </Stack>
-                                </ExampleMessage>
-                            </Stack>
-                        </Stack>
-                    )
-                }}
+                overscan={1}
+                estimateHeight={(s) => 100}
+                itemRenderer={(data) => <TestItem data={data} updateMessage={updateMessage} />}
             />
             <Stack padding gap background="level2" borderRadius="xs">
                 <Stack gap horizontal justifyContent="spaceBetween">
@@ -163,4 +140,45 @@ const Symbol = (props: { children: React.ReactNode }) => (
     >
         {props.children}
     </Box>
+)
+
+const TestItem = React.memo(
+    (props: {
+        data: {
+            id: string
+            message: string
+            color: string
+            timestamp: number
+            profile: { name: string; avatarSrc: string }
+        }
+        updateMessage: (id: string, key: 'content' | 'uid') => void
+    }) => {
+        const { data } = props
+        return (
+            <Stack horizontal background="level1">
+                <Stack style={{ background: data.color }} width="x1" shrink={false} />
+                <Stack>
+                    <ExampleMessage
+                        relativeDate
+                        borderRadius="xs"
+                        padding="md"
+                        name={data.profile.name}
+                        avatar={data.profile.avatarSrc}
+                        timestamp={data.timestamp}
+                        onMouseDown={(e: React.MouseEvent) => {
+                            const key = e.altKey ? 'content' : 'uid'
+                            props.updateMessage(data.id, key)
+                        }}
+                    >
+                        <Stack gap>
+                            <Paragraph size="sm" color="cta2">
+                                {data.id}
+                            </Paragraph>
+                            <RichTextPreview content={data.message} />
+                        </Stack>
+                    </ExampleMessage>
+                </Stack>
+            </Stack>
+        )
+    },
 )

@@ -35,6 +35,10 @@ beforeAll(() => {
 })
 
 beforeEach(() => {
+    window.HTMLElement.prototype.scrollBy = () => {}
+    window.HTMLElement.prototype.scrollTo = () => {}
+    window.HTMLElement.prototype.scrollIntoView = () => {}
+
     server.resetHandlers()
     act(() => storeResetFns.forEach((resetFn) => resetFn()))
 })

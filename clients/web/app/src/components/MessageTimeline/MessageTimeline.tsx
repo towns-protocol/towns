@@ -10,16 +10,18 @@ import React, {
 import {
     FullyReadMarker,
     MessageType,
+    TimelineEvent,
     ZTEvent,
     useFullyReadMarker,
     useZionClient,
 } from 'use-zion-client'
-import { Box, Divider, Paragraph, VList } from '@ui'
+import { debounce } from 'lodash'
+import { Box, Divider, Paragraph } from '@ui'
 import { useExperimentsStore } from 'store/experimentsStore'
 import { notUndefined } from 'ui/utils/utils'
 import { MessageTimelineItem } from '@components/MessageTimeIineItem/TimelineItem'
-import { useDebounce } from 'hooks/useDebounce'
 import { useDevice } from 'hooks/useDevice'
+import { VList } from 'ui/components/VList2/VList'
 import { MessageTimelineContext, MessageTimelineType } from './MessageTimelineContext'
 import { DateDivider } from '../MessageTimeIineItem/items/DateDivider'
 import { NewDivider } from '../MessageTimeIineItem/items/NewDivider'
@@ -37,12 +39,34 @@ import {
     isRoomMessage,
 } from './util/getEventsByDate'
 
+type ListItem =
+    | { id: string; type: 'divider' }
+    | { id: string; type: 'expander' }
+    | { id: string; type: 'header' }
+    | { id: string; type: 'group'; date: string; isNew?: boolean }
+    | { id: string; type: 'user-messages'; item: UserMessagesRenderEvent }
+    | { id: string; type: 'fully-read'; item: FullyReadRenderEvent }
+    | {
+          id: string
+          type: 'message'
+          item: MessageRenderEvent | EncryptedMessageRenderEvent | RedactedMessageRenderEvent
+      }
+    | { id: string; type: 'thread-update'; item: ThreadUpdateRenderEvent }
+    | {
+          id: string
+          type: 'generic'
+          item: RenderEvent
+      }
+
 type Props = {
     header?: JSX.Element
+    align: 'top' | 'bottom'
     highlightId?: string
     collapsed?: boolean
     containerRef?: MutableRefObject<HTMLDivElement | null>
 }
+
+const emptyTimeline: TimelineEvent[] = []
 
 export const MessageTimeline = (props: Props) => {
     const timelineContext = useContext(MessageTimelineContext)
@@ -57,9 +81,22 @@ export const MessageTimeline = (props: Props) => {
         setCollapsed(false)
     }, [])
 
-    const events = useMemo(() => {
+    const _events = useMemo(() => {
         return timelineContext?.events ?? []
     }, [timelineContext?.events])
+
+    const skipDebounce = _events.length < 3
+
+    const debounced = useMemo(
+        () =>
+            debounce((v: TimelineEvent[]) => v, skipDebounce ? 0 : 250, {
+                leading: true,
+                maxWait: 1000,
+            }),
+        [skipDebounce],
+    )
+
+    const events = debounced(_events) ?? emptyTimeline
 
     const fullyReadMarker = useFullyReadMarker(channelId, timelineContext?.threadParentId)
     const experiments = useExperimentsStore()
@@ -100,7 +137,7 @@ export const MessageTimeline = (props: Props) => {
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     //                                    estimate height of blocks before they get rendered
 
-    const estimateItemHeight = useCallback((r: (typeof debouncedListItems)[0]) => {
+    const estimateItemHeight = useCallback((r: ListItem) => {
         if (r.type === 'user-messages') {
             const height = r.item.events.reduce((height, item) => {
                 const itemHeight =
@@ -108,7 +145,7 @@ export const MessageTimeline = (props: Props) => {
                     item.content.kind === ZTEvent.RoomMessage &&
                     item.content.msgType === MessageType.Image
                         ? 400
-                        : 26.5
+                        : 60
                 return height + itemHeight
             }, 0)
             return height
@@ -116,7 +153,7 @@ export const MessageTimeline = (props: Props) => {
         if (r.type === 'message') {
             const height = [r.item.event].reduce((height, item) => {
                 const itemHeight =
-                    isRoomMessage(item) && item.content.msgType === MessageType.Image ? 400 : 26.5
+                    isRoomMessage(item) && item.content.msgType === MessageType.Image ? 400 : 60
                 return height + itemHeight
             }, 0)
             return height
@@ -146,28 +183,6 @@ export const MessageTimeline = (props: Props) => {
     )
 
     const allListItems = useMemo(() => {
-        type ListItem =
-            | { id: string; type: 'divider' }
-            | { id: string; type: 'expander' }
-            | { id: string; type: 'header' }
-            | { id: string; type: 'group'; date: string; isNew?: boolean }
-            | { id: string; type: 'user-messages'; item: UserMessagesRenderEvent }
-            | { id: string; type: 'fully-read'; item: FullyReadRenderEvent }
-            | {
-                  id: string
-                  type: 'message'
-                  item:
-                      | MessageRenderEvent
-                      | EncryptedMessageRenderEvent
-                      | RedactedMessageRenderEvent
-              }
-            | { id: string; type: 'thread-update'; item: ThreadUpdateRenderEvent }
-            | {
-                  id: string
-                  type: 'generic'
-                  item: RenderEvent
-              }
-
         const groupByDate = timelineContext?.type === MessageTimelineType.Channel
 
         const listItems: ListItem[] = flatGroups
@@ -331,9 +346,6 @@ export const MessageTimeline = (props: Props) => {
     const hasUnreadMarker = fullyPersistedRef.current
     const [isUnreadMarkerFaded, setIsUnreadMarkerFaded] = useState(false)
 
-    // discard glitches when consecutive messages are decrypted
-    const debouncedListItems = useDebounce(listItems, 300)
-
     useEffect(() => {
         if (hasUnreadMarker) {
             const timeout = setTimeout(() => {
@@ -347,23 +359,42 @@ export const MessageTimeline = (props: Props) => {
 
     const groupIds = useMemo(
         () =>
-            debouncedListItems.reduce((groupIds, item) => {
+            listItems.reduce((groupIds, item) => {
                 if (item.type === 'group') {
                     groupIds.push(item.id)
                 }
                 return groupIds
             }, [] as string[]),
-        [debouncedListItems],
+        [listItems],
+    )
+
+    const lastKey = listItems[listItems.length - 1]?.id
+
+    const focusItem = useMemo(
+        () =>
+            props.highlightId
+                ? {
+                      key: props.highlightId,
+                      align: 'start' as const,
+                  }
+                : {
+                      key: lastKey,
+                      align: 'end' as const,
+                  },
+        [lastKey, props.highlightId],
     )
 
     return (
         <VList
-            debug={false}
-            containerRef={props.containerRef}
+            align={props.align}
+            list={listItems}
+            padding={16}
+            focusItem={focusItem}
+            estimateHeight={estimateItemHeight}
+            getItemKey={(item) => item?.id}
+            getItemFocusable={(item) => item.type === 'user-messages' || item.type === 'message'}
+            scrollContainerRef={props.containerRef}
             key={channelId?.networkId}
-            highlightId={props.highlightId}
-            esimtateItemSize={estimateItemHeight}
-            list={debouncedListItems}
             groupIds={groupIds}
             itemRenderer={(r, ref) => {
                 return r.type === 'header' ? (

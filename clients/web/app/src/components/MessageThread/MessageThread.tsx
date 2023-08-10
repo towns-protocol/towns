@@ -108,7 +108,7 @@ export const MessageThread = (props: {
                         boxShadow={{ touch: undefined, default: 'panel' }}
                     >
                         <Stack>
-                            <MessageTimeline collapsed />
+                            <MessageTimeline collapsed align="top" />
                             <Box
                                 paddingX
                                 paddingTop={{ touch: 'none', default: 'md' }}
