@@ -137,13 +137,17 @@ export class SpaceDappV3 implements ISpaceDapp {
         return town.Entitlements.read.isEntitledToTown(user, permission)
     }
 
-    public isEntitledToChannel(
+    public async isEntitledToChannel(
         spaceId: string,
         channelId: string,
         user: string,
         permission: Permission,
     ): Promise<boolean> {
-        throw new Error('Method not implemented.')
+        const town = await this.getTown(spaceId)
+        if (!town) {
+            throw new Error(`Town with spaceId "${spaceId}" is not found.`)
+        }
+        return town.Entitlements.read.isEntitledToChannel(channelId, user, permission)
     }
 
     public parseSpaceFactoryError(error: unknown): Error {
