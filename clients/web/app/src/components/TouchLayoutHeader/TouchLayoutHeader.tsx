@@ -8,6 +8,8 @@ import { TouchHomeOverlay } from '@components/TouchHomeOverlay/TouchHomeOverlay'
 import { useNavigateToCurrentSpaceInfo } from 'hooks/useNavigateToCurrentSpaceInfo'
 import { DirectMessagesModal } from '@components/DirectMessages/DirectMessagesModal'
 import { useInstallPWAPrompt } from 'hooks/useInstallPWAPrompt'
+import { AllChannelsList } from 'routes/AllChannelsList/AllChannelsList'
+import { ModalContainer } from '@components/Modals/ModalContainer'
 
 export const TouchLayoutHeader = () => {
     const space = useSpaceData()
@@ -32,6 +34,10 @@ export const TouchLayoutHeader = () => {
     const onTokenClick = useCallback(() => {
         navigateToCurrentSpace()
     }, [navigateToCurrentSpace])
+
+    const [visibleModal, setVisibleModal] = useState<'browse' | undefined>(undefined)
+    const onShowBrowseChannels = useCallback(() => setVisibleModal('browse'), [setVisibleModal])
+    const onHideBrowseChannels = useCallback(() => setVisibleModal(undefined), [setVisibleModal])
 
     return (
         <Box borderBottom paddingTop={shouldDisplayPWAPrompt ? 'none' : 'sm'}>
@@ -61,6 +67,8 @@ export const TouchLayoutHeader = () => {
                         icon="more"
                         size="square_md"
                         color="default"
+                        padding="xs"
+                        background="level2"
                         onClick={() => setActiveOverlay('main-panel')}
                     />
                     {hasUnread && <Dot />}
@@ -92,7 +100,14 @@ export const TouchLayoutHeader = () => {
                     </Stack>
                 )}
                 <Stack grow />
-                <Box width="x4" />
+                <IconButton
+                    icon="search"
+                    background="level2"
+                    size="square_md"
+                    padding="xs"
+                    onClick={onShowBrowseChannels}
+                />
+
                 <AnimatePresence>
                     {activeOverlay === 'main-panel' && (
                         <TouchHomeOverlay onClose={() => setActiveOverlay(undefined)} />
@@ -101,6 +116,12 @@ export const TouchLayoutHeader = () => {
                         <DirectMessagesModal onHide={() => setActiveOverlay(undefined)} />
                     )}
                 </AnimatePresence>
+
+                {visibleModal === 'browse' && (
+                    <ModalContainer touchTitle="Browse channels" onHide={onHideBrowseChannels}>
+                        <AllChannelsList onHideBrowseChannels={onHideBrowseChannels} />
+                    </ModalContainer>
+                )}
             </Stack>
         </Box>
     )
