@@ -60,6 +60,7 @@ abstract contract RolesBase is IRolesBase {
     }
 
     RolesService.checkRoleExists(roleId);
+    emit RoleCreated(msg.sender, roleId);
   }
 
   function _getRoles() internal view returns (Role[] memory roles) {
@@ -185,6 +186,8 @@ abstract contract RolesBase is IRolesBase {
         i++;
       }
     }
+
+    emit RoleUpdated(msg.sender, roleId);
   }
 
   function _removeRole(uint256 roleId) internal {
@@ -225,6 +228,8 @@ abstract contract RolesBase is IRolesBase {
         i++;
       }
     }
+
+    emit RoleRemoved(msg.sender, roleId);
   }
 
   // =============================================================
