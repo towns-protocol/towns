@@ -6,6 +6,7 @@ import {
     createTestSpaceWithZionMemberRole,
     registerAndStartClient,
     registerAndStartClients,
+    waitForRandom401ErrorsForAction,
 } from 'use-zion-client/tests/integration/helpers/TestUtils'
 
 import { Permission } from 'use-zion-client/src/client/web3/ContractTypes'
@@ -21,7 +22,7 @@ describe.skip('isEntitledToSpace and isEntitledToChannel tests', () => {
         smartContractVersion: 'v3', // use v3 for the new TownArchitect. work-in-progress.
     }
 
-    test('server returns isEntitledToSpace true', async () => {
+    test('server checks isEntitledToSpace true', async () => {
         /** Arrange */
         // create all the users for the test
         const bobWithNft = await registerAndStartClient(
@@ -50,7 +51,7 @@ describe.skip('isEntitledToSpace and isEntitledToChannel tests', () => {
         expect(roomId).toBeDefined()
     }) // end test
 
-    test('server returns isEntitledToSpace false', async () => {
+    test('server checks isEntitledToSpace false', async () => {
         /** Arrange */
         // create all the users for the test
         const { alice, bob } = await registerAndStartClients(['alice', 'bob'], withTestProps)
@@ -68,6 +69,93 @@ describe.skip('isEntitledToSpace and isEntitledToChannel tests', () => {
         /** Act */
         /** Assert */
         await expect(bob.joinRoom(spaceId)).rejects.toThrow(
+            new RegExp('Unauthorised|PermissionDenied'),
+        )
+    }) // end test
+
+    test('server checks isEntitledToChannel true', async () => {
+        /** Arrange */
+        // create all the users for the test
+        const { alice } = await registerAndStartClients(['alice'], withTestProps)
+        const bobWithNft = await registerAndStartClient(
+            'bobWithNft',
+            TestConstants.getWalletWithMemberNft(),
+            withTestProps,
+        )
+        // create a space with token entitlement to read & write
+        const permissions = [Permission.Read, Permission.Write]
+        const memberNftAddress = getMemberNftAddress(alice.chainId)
+        const tokens = createExternalTokenStruct([memberNftAddress])
+        const users: string[] = []
+        await alice.fundWallet()
+        const spaceId = (await createTestSpaceWithZionMemberRole(
+            alice,
+            permissions,
+            [],
+        )) as RoomIdentifier
+        // create a channel with token entitlement to read & write
+        const roleId: RoleIdentifier | undefined = (await alice.createRole(
+            spaceId.networkId,
+            `newRole${Date.now()}`,
+            permissions,
+            tokens,
+            users,
+        )) as RoleIdentifier
+        const channelId = (await alice.createChannel(
+            {
+                name: `aliceChannel${Date.now()}`,
+                visibility: RoomVisibility.Public,
+                parentSpaceId: spaceId,
+                roleIds: [roleId.roleId],
+            },
+            alice.provider.wallet,
+        )) as RoomIdentifier
+
+        /** Act */
+        /** Assert */
+        // join the town. let the server enforce the channel entitlement check
+        await waitForRandom401ErrorsForAction(() =>
+            bobWithNft.joinRoom(channelId, spaceId.networkId),
+        )
+    }) // end test
+
+    test('server checks isEntitledToChannel false', async () => {
+        /** Arrange */
+        // create all the users for the test
+        const { alice, bob } = await registerAndStartClients(['alice', 'bob'], withTestProps)
+        // create a space with token entitlement to read & write
+        const permissions = [Permission.Read, Permission.Write]
+        const memberNftAddress = getMemberNftAddress(alice.chainId)
+        const tokens = createExternalTokenStruct([memberNftAddress])
+        const users: string[] = []
+        await alice.fundWallet()
+        const spaceId = (await createTestSpaceWithZionMemberRole(
+            alice,
+            permissions,
+            [],
+        )) as RoomIdentifier
+        // create a channel with token entitlement to read & write
+        const roleId: RoleIdentifier | undefined = (await alice.createRole(
+            spaceId.networkId,
+            `newRole${Date.now()}`,
+            permissions,
+            tokens,
+            users,
+        )) as RoleIdentifier
+        const channelId = (await alice.createChannel(
+            {
+                name: `aliceChannel${Date.now()}`,
+                visibility: RoomVisibility.Public,
+                parentSpaceId: spaceId,
+                roleIds: [roleId.roleId],
+            },
+            alice.provider.wallet,
+        )) as RoomIdentifier
+
+        /** Act */
+        // join the town. let the server enforce the channel entitlement check
+        /** Assert */
+        await expect(bob.joinRoom(channelId, spaceId.networkId)).rejects.toThrow(
             new RegExp('Unauthorised|PermissionDenied'),
         )
     }) // end test
