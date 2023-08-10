@@ -179,12 +179,20 @@ export class SpaceDappV3 implements ISpaceDapp {
         throw new Error('Method not implemented.')
     }
 
-    public setSpaceAccess(
+    public async setSpaceAccess(
         spaceId: string,
         disabled: boolean,
         signer: ethers.Signer,
     ): Promise<ContractTransaction> {
-        throw new Error('Method not implemented.')
+        const town = await this.getTown(spaceId)
+        if (!town) {
+            throw new Error(`Town with spaceId "${spaceId}" is not found.`)
+        }
+        if (disabled) {
+            return town.Pausable.write(signer).pause()
+        } else {
+            return town.Pausable.write(signer).unpause()
+        }
     }
 
     public setChannelAccess(
