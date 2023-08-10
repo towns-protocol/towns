@@ -1,7 +1,7 @@
-import { useCallback, useEffect } from 'react'
+import { useCallback, useEffect, useLayoutEffect } from 'react'
 import { useStore } from 'store/store'
 import { atoms } from 'ui/styles/atoms.css'
-import { darkTheme, lightTheme } from 'ui/styles/vars.css'
+import { darkTheme, globalPreventTransitions, lightTheme } from 'ui/styles/vars.css'
 
 type ThemeSettings = {
     ammendHTMLBody: boolean
@@ -19,7 +19,7 @@ export const useRootTheme = (settings: ThemeSettings) => {
     useEffect(() => {
         if (typeof theme === 'undefined') {
             const defaultDark =
-                !useDefaultOSTheme || window.matchMedia('(prefers-color-scheme: dark)').matches
+                !useDefaultOSTheme || !window.matchMedia('(prefers-color-scheme: light)').matches
 
             setTheme(defaultDark ? 'dark' : 'light')
         }
@@ -31,26 +31,29 @@ export const useRootTheme = (settings: ThemeSettings) => {
 
     const themeClass = theme === 'light' ? lightTheme : darkTheme
 
-    useEffect(() => {
-        if (ammendHTMLBody) {
-            document.body.classList.add(atoms({ color: 'default' }))
-            document.body.classList.add(atoms({ background: 'default' }))
-            return () => {
-                document.body.classList.remove(atoms({ color: 'default' }))
-                document.body.classList.remove(atoms({ background: 'default' }))
-            }
+    useLayoutEffect(() => {
+        if (!ammendHTMLBody) {
+            return
         }
-    }, [ammendHTMLBody])
-
-    useEffect(() => {
-        if (settings.ammendHTMLBody) {
-            document.body.classList.add(themeClass)
-            return () => {
-                document.body.classList.remove(lightTheme)
-                document.body.classList.remove(darkTheme)
-            }
+        document.body.classList.add(
+            globalPreventTransitions,
+            themeClass,
+            atoms({ color: 'default' }),
+            atoms({ background: 'default' }),
+        )
+        const timeout = setTimeout(() => {
+            document.body.classList.remove(globalPreventTransitions)
+        }, 0)
+        return () => {
+            clearTimeout(timeout)
+            document.body.classList.remove(
+                globalPreventTransitions,
+                themeClass,
+                atoms({ color: 'default' }),
+                atoms({ background: 'default' }),
+            )
         }
-    }, [settings.ammendHTMLBody, themeClass])
+    }, [ammendHTMLBody, themeClass])
 
     return { toggleTheme, theme }
 }
