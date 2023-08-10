@@ -24,6 +24,7 @@ export const WalletConnectButton = () => {
     const [modal, setShowModal] = useState(false)
     const showModal = useCallback(() => setShowModal(true), [])
     const hideModal = useCallback(() => setShowModal(false), [])
+    const reloadPage = useCallback(() => window.location.reload(), [])
 
     useCheckWalletConnectIssues({
         walletConnect,
@@ -55,10 +56,12 @@ export const WalletConnectButton = () => {
                                         isPWA ? 'restarting the app' : 'refreshing the page'
                                     }.`}
                                 </Text>
-                                <Button onClick={hideModal}>Dismiss</Button>
                                 <Box horizontal centerContent gap paddingTop="md">
+                                    <Button size="button_sm" onClick={hideModal}>
+                                        Dismiss
+                                    </Button>
                                     {isPWA && (
-                                        <Button tone="cta1" size="button_sm">
+                                        <Button tone="cta1" size="button_sm" onClick={reloadPage}>
                                             Reload now
                                         </Button>
                                     )}
