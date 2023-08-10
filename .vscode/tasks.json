@@ -130,6 +130,16 @@
         }
       },
       {
+        "label": "DummyTask",
+        "type": "shell",
+        "command": "echo 'Dummy task... sometimes this is just needed.'",
+        "isBackground": true,
+        "problemMatcher": [],
+        "presentation": {
+          "group": "ephemeral"
+        }
+      },
+      {
         "label": "YarnInstall",
         "type": "shell",
         "command": "yarn",
@@ -188,6 +198,40 @@
         "presentation": {
           "group": "local-servers"
         }
+      },
+      {
+        "label": "Stop Casablanca",
+        "type": "shell",
+        "command": "./casablanca/scripts/stop_node.sh",
+        "isBackground": true,
+        "problemMatcher": [],
+        "presentation": {
+          "group": "local-servers"
+        }
+      },
+      {
+        "label": "Both Casablancas",
+        "dependsOn": [
+          "Casablanca",
+          "Casablanca-No-Entitlements"
+        ],
+        "group": {
+          "kind": "build",
+        },
+        "problemMatcher": [],
+      },
+      {
+        "label": "Restart Casablanca",
+        "dependsOn": [
+          "Stop Casablanca",
+          "DummyTask",
+          "Both Casablancas"
+        ],
+        "group": {
+          "kind": "build",
+        },
+        "dependsOrder": "sequence",
+        "problemMatcher": [],
       },
       {
         "label": "Anvil",
