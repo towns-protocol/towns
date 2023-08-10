@@ -14,6 +14,10 @@ import (
 	"golang.org/x/crypto/sha3"
 )
 
+const (
+	TOWNS_HASH_SIZE = 32
+)
+
 // String 'CSBLANCA' as bytes.
 var HASH_HEADER = []byte{67, 83, 66, 76, 65, 78, 67, 65}
 

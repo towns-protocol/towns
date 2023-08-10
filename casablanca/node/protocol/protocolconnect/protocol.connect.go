@@ -143,47 +143,33 @@ type StreamServiceHandler interface {
 // By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
 // and JSON codecs. They also support gzip compression.
 func NewStreamServiceHandler(svc StreamServiceHandler, opts ...connect_go.HandlerOption) (string, http.Handler) {
-	streamServiceCreateStreamHandler := connect_go.NewUnaryHandler(
+	mux := http.NewServeMux()
+	mux.Handle(StreamServiceCreateStreamProcedure, connect_go.NewUnaryHandler(
 		StreamServiceCreateStreamProcedure,
 		svc.CreateStream,
 		opts...,
-	)
-	streamServiceGetStreamHandler := connect_go.NewUnaryHandler(
+	))
+	mux.Handle(StreamServiceGetStreamProcedure, connect_go.NewUnaryHandler(
 		StreamServiceGetStreamProcedure,
 		svc.GetStream,
 		opts...,
-	)
-	streamServiceAddEventHandler := connect_go.NewUnaryHandler(
+	))
+	mux.Handle(StreamServiceAddEventProcedure, connect_go.NewUnaryHandler(
 		StreamServiceAddEventProcedure,
 		svc.AddEvent,
 		opts...,
-	)
-	streamServiceSyncStreamsHandler := connect_go.NewServerStreamHandler(
+	))
+	mux.Handle(StreamServiceSyncStreamsProcedure, connect_go.NewServerStreamHandler(
 		StreamServiceSyncStreamsProcedure,
 		svc.SyncStreams,
 		opts...,
-	)
-	streamServiceInfoHandler := connect_go.NewUnaryHandler(
+	))
+	mux.Handle(StreamServiceInfoProcedure, connect_go.NewUnaryHandler(
 		StreamServiceInfoProcedure,
 		svc.Info,
 		opts...,
-	)
-	return "/casablanca.StreamService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		switch r.URL.Path {
-		case StreamServiceCreateStreamProcedure:
-			streamServiceCreateStreamHandler.ServeHTTP(w, r)
-		case StreamServiceGetStreamProcedure:
-			streamServiceGetStreamHandler.ServeHTTP(w, r)
-		case StreamServiceAddEventProcedure:
-			streamServiceAddEventHandler.ServeHTTP(w, r)
-		case StreamServiceSyncStreamsProcedure:
-			streamServiceSyncStreamsHandler.ServeHTTP(w, r)
-		case StreamServiceInfoProcedure:
-			streamServiceInfoHandler.ServeHTTP(w, r)
-		default:
-			http.NotFound(w, r)
-		}
-	})
+	))
+	return "/casablanca.StreamService/", mux
 }
 
 // UnimplementedStreamServiceHandler returns CodeUnimplemented from all methods.

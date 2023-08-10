@@ -107,7 +107,12 @@ func update_Snapshot_UserDeviceKey(iSnapshot *Snapshot, userDeviceKeyPayload *Us
 	case *UserDeviceKeyPayload_Inception_:
 		return errors.New("cannot update blockheader with inception event")
 	case *UserDeviceKeyPayload_UserDeviceKey_:
-		snapshot.UserDeviceKeyContent.UserDeviceKeys[content.UserDeviceKey.DeviceKeys.DeviceId] = content.UserDeviceKey
+		// default for GetRiverKeyOp is RDKO_KEY_REGISTER
+		if content.UserDeviceKey.RiverKeyOp == nil || content.UserDeviceKey.GetRiverKeyOp() == RiverKeyOp_RDKO_KEY_REGISTER {
+			snapshot.UserDeviceKeyContent.UserDeviceKeys[content.UserDeviceKey.DeviceKeys.DeviceId] = content.UserDeviceKey
+		} else {
+			delete(snapshot.UserDeviceKeyContent.UserDeviceKeys, content.UserDeviceKey.DeviceKeys.DeviceId)
+		}
 		return nil
 	default:
 		return fmt.Errorf("unknown user device key payload type %T", userDeviceKeyPayload.Content)
