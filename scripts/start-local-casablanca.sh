@@ -1,4 +1,4 @@
 #!/usr/bin/env bash
 
-yarn run --top-level csb:dev:auth
+yarn run --top-level csb:dev:entitlements
 

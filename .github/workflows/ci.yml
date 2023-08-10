@@ -11,13 +11,13 @@ on:
                 required: false
                 default: false
                 type: boolean
-            skip_casablanca_client_noauth:
-                description: Skip Casablanca Client Tests without Auth
+            skip_casablanca_client_noentitlements:
+                description: Skip Casablanca Client Tests without entitlements
                 required: false
                 default: false
                 type: boolean
-            skip_casablanca_client_auth:
-                description: Skip Casablanca Client Tests with Auth
+            skip_casablanca_client_entitlements:
+                description: Skip Casablanca Client Tests with entitlements
                 required: false
                 default: false
                 type: boolean
@@ -136,9 +136,9 @@ jobs:
                   SLACK_COLOR: '#FF0000'
                   SLACK_MESSAGE: 'CI Failure on ${{ github.repository }}'
 
-    Casablanca_Client_NoAuth:
+    Casablanca_Client_NoEntitlements:
         permissions: write-all
-        if: github.event_name != 'workflow_dispatch' || !inputs.skip_casablanca_client_noauth
+        if: github.event_name != 'workflow_dispatch' || !inputs.skip_casablanca_client_noentitlements
         runs-on: ubuntu-latest-8-cores
         timeout-minutes: 30
         services:
@@ -249,16 +249,16 @@ jobs:
                   POSTGRES_PASSWORD: postgres
                   PGPASSWORD: postgres
 
-            - name: Run Casablanca node (without auth)
-              run: yarn csb:start --config dev-no-auth.yaml &
+            - name: Run Casablanca node (without entitlements)
+              run: yarn csb:start:no-entitlements &
 
-            - name: Wait for Casablanca node to be up
+            - name: Wait for Casablanca (without entitlements) node to be up
               run: yarn csb:wait
 
-            - name: Run SDK Tests (without auth)
+            - name: Run SDK Tests (without entitlements)
               run: yarn run turbo run build test:ci --filter=@river/sdk
 
-            - name: Run Node Flush Tests (without auth)
+            - name: Run Node Flush Tests (without entitlements)
               run: yarn workspace @river/sdk run test:node-minipool-flush
 
             - name: Archive Casablanca log
@@ -281,9 +281,9 @@ jobs:
                   SLACK_COLOR: '#FF0000'
                   SLACK_MESSAGE: 'CI Failure on ${{ github.repository }}'
 
-    Casablanca_Client_Auth:
+    Casablanca_Client_Entitlements:
         permissions: write-all
-        if: github.event_name != 'workflow_dispatch' || !inputs.skip_casablanca_client_auth
+        if: github.event_name != 'workflow_dispatch' || !inputs.skip_casablanca_client_enti
         runs-on: ubuntu-latest-8-cores
         timeout-minutes: 30
         services:
@@ -394,13 +394,13 @@ jobs:
                   POSTGRES_PASSWORD: postgres
                   PGPASSWORD: postgres
 
-            - name: Start Casablanca node with auth
-              run: yarn csb:start --config dev-auth.yaml &
+            - name: Start Casablanca node with entitlements
+              run: yarn csb:start --config dev-entitlements.yaml &
 
-            - name: Wait for Casablanca (with auth) node to be up
+            - name: Wait for Casablanca (with entitlements) node to be up
               run: yarn csb:wait
 
-            - name: Build & Test (with auth)
+            - name: Build & Test (with entitlements)
               run: yarn csb:turbo-no-sdk
 
             - name: Archive Casablanca log

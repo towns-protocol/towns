@@ -10,7 +10,7 @@
             "request": "launch",
             "mode": "debug",
             "program": "${file}",
-            "args": ["run", "--config", "dev-auth.yaml"],
+            "args": ["run", "--config", "dev-entitlements.yaml"],
             "cwd": "${workspaceFolder}"
         }
     ]
