@@ -15,6 +15,10 @@ const paths = [
         replace: `/${PATHS.SPACES}/:spaceId/${PATHS.CHANNELS}/:channelId/profile/:profileId`,
     },
     { path: `/${PATHS.SPACES}/:spaceId/profile?/:profileId?` },
+    {
+        path: `/${PATHS.SPACES}/:spaceId/home/profile?/:profileId?`,
+        replace: `/${PATHS.SPACES}/:spaceId/profile/:profileId`,
+    },
 ]
 
 const linkParams = {

@@ -50,6 +50,7 @@ import {
     useMuteSettings,
     useSetMuteSettingForChannelOrSpace,
 } from 'api/lib/notificationSettings'
+import { useCreateLink } from 'hooks/useCreateLink'
 import { useContractSpaceInfo } from '../hooks/useContractSpaceInfo'
 import { useEnvironment } from '../hooks/useEnvironmnet'
 import { env } from '../utils/environment'
@@ -194,6 +195,11 @@ export const SpaceInfoPanel = () => {
             navigate('/')
         }, 1000)
     }, [leaveRoom, navigate, spaceID])
+
+    const { createLink: createProfileLink } = useCreateLink()
+
+    const ownerProfileLink =
+        matrixUserOwner && createProfileLink({ profileId: matrixUserOwner.userId })
 
     return (
         <Panel modalPresentable label="Town Info" onClose={onClose}>
@@ -387,9 +393,9 @@ export const SpaceInfoPanel = () => {
                         <Paragraph strong color="default">
                             Owner
                         </Paragraph>
-                        {matrixUserOwner ? (
+                        {matrixUserOwner && ownerProfileLink ? (
                             <>
-                                <Link to={`../profile/${matrixUserOwner.userId}?spaceInfo`}>
+                                <Link to={ownerProfileLink + `?spaceInfo`}>
                                     <Box flexDirection="row" gap="sm">
                                         {matrixUserOwner && (
                                             <Avatar
