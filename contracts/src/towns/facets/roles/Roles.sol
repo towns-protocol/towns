@@ -5,7 +5,7 @@ pragma solidity ^0.8.20;
 import {IRoles} from "./IRoles.sol";
 
 // libraries
-import {Permissions} from "contracts/src/spaces/libraries/Permissions.sol";
+import {Permissions} from "contracts/src/towns/facets/Permissions.sol";
 
 // contracts
 import {RolesBase} from "./RolesBase.sol";
@@ -17,7 +17,7 @@ contract Roles is IRoles, RolesBase, Entitled {
     string[] memory permissions,
     CreateEntitlement[] memory entitlements
   ) external override returns (uint256) {
-    _validatePermission(Permissions.ModifySpaceSettings);
+    _validatePermission(Permissions.CreateRole);
     return _createRole(roleName, permissions, entitlements);
   }
 
@@ -37,12 +37,12 @@ contract Roles is IRoles, RolesBase, Entitled {
     string[] memory permissions,
     CreateEntitlement[] memory entitlements
   ) external override {
-    _validatePermission(Permissions.ModifySpaceSettings);
+    _validatePermission(Permissions.UpdateRole);
     _updateRole(roleId, roleName, permissions, entitlements);
   }
 
   function removeRole(uint256 roleId) external override {
-    _validatePermission(Permissions.ModifySpaceSettings);
+    _validatePermission(Permissions.RemoveRole);
     _removeRole(roleId);
   }
 
@@ -59,7 +59,7 @@ contract Roles is IRoles, RolesBase, Entitled {
     uint256 roleId,
     string[] memory permissions
   ) external override {
-    _validatePermission(Permissions.ModifySpaceSettings);
+    _validatePermission(Permissions.RemovePermissionsFromRole);
     _removePermissionsFromRole(roleId, permissions);
   }
 
@@ -74,7 +74,7 @@ contract Roles is IRoles, RolesBase, Entitled {
     uint256 roleId,
     CreateEntitlement memory entitlement
   ) external {
-    _validatePermission(Permissions.ModifySpaceSettings);
+    _validatePermission(Permissions.AddRoleToEntitlement);
     _addRoleToEntitlement(roleId, entitlement);
   }
 
@@ -82,7 +82,7 @@ contract Roles is IRoles, RolesBase, Entitled {
     uint256 roleId,
     CreateEntitlement memory entitlement
   ) external {
-    _validatePermission(Permissions.ModifySpaceSettings);
+    _validatePermission(Permissions.RemoveRoleFromEntitlement);
     _removeRoleFromEntitlement(roleId, entitlement);
   }
 }

@@ -10,9 +10,6 @@ import {IEntitlementsBase} from "contracts/src/towns/facets/entitlements/IEntitl
 // contracts
 import {EntitlementsSetup} from "./EntitlementsSetup.sol";
 
-// mocks
-import {MockUserEntitlement} from "contracts/test/mocks/MockUserEntitlement.sol";
-
 // errors
 
 // solhint-disable-next-line max-line-length

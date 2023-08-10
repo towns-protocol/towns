@@ -8,7 +8,6 @@ import {IEntitlements} from "contracts/src/towns/facets/entitlements/IEntitlemen
 import {IEntitlementBase} from "contracts/src/towns/entitlements/IEntitlement.sol";
 
 // libraries
-import {Permissions} from "contracts/src/spaces/libraries/Permissions.sol";
 
 // contracts
 import {RolesSetup} from "./RolesSetup.sol";
@@ -30,7 +29,7 @@ contract RolesTest is RolesSetup, IRolesBase, IEntitlementBase {
     vm.assume(data.length > 2);
 
     string[] memory permissions = new string[](1);
-    permissions[0] = Permissions.Read;
+    permissions[0] = "Read";
 
     vm.prank(founder);
     IEntitlements(diamond).addEntitlement(address(mockEntitlement));
@@ -303,12 +302,12 @@ contract RolesTest is RolesSetup, IRolesBase, IEntitlementBase {
 
     // create an initial set of permissions
     string[] memory permissions = new string[](2);
-    permissions[0] = Permissions.Read;
-    permissions[1] = Permissions.Write;
+    permissions[0] = "Read";
+    permissions[1] = "Write";
 
     // create a new set of permissions to update to
     string[] memory newPermissions = new string[](1);
-    newPermissions[0] = Permissions.Ping;
+    newPermissions[0] = "Ping";
 
     // create an initial set of entitlements
     IRoles.CreateEntitlement[]
@@ -354,12 +353,12 @@ contract RolesTest is RolesSetup, IRolesBase, IEntitlementBase {
 
     // create an initial set of permissions
     string[] memory permissions = new string[](2);
-    permissions[0] = Permissions.Read;
-    permissions[1] = Permissions.Write;
+    permissions[0] = "Read";
+    permissions[1] = "Write";
 
     // create a new set of permissions to update to
     string[] memory newPermissions = new string[](1);
-    newPermissions[0] = Permissions.Ping;
+    newPermissions[0] = "Ping";
 
     // create the roles with the initial permissions and entitlements
     vm.prank(founder);
@@ -588,7 +587,7 @@ contract RolesTest is RolesSetup, IRolesBase, IEntitlementBase {
     vm.assume(bytes(roleName).length > 2);
 
     string[] memory permissions = new string[](1);
-    permissions[0] = Permissions.Write;
+    permissions[0] = "Write";
 
     // create a roles
     vm.prank(founder);
@@ -598,7 +597,7 @@ contract RolesTest is RolesSetup, IRolesBase, IEntitlementBase {
       new IRoles.CreateEntitlement[](0)
     );
 
-    permissions[0] = Permissions.Read;
+    permissions[0] = "Read";
 
     // add permissions to the roles
     vm.prank(founder);
@@ -608,8 +607,8 @@ contract RolesTest is RolesSetup, IRolesBase, IEntitlementBase {
     IRoles.Role memory roleData = roles.getRoleById(roleId);
 
     assertEq(roleData.permissions.length, 2);
-    assertEq(roleData.permissions[0], Permissions.Write);
-    assertEq(roleData.permissions[1], Permissions.Read);
+    assertEq(roleData.permissions[0], "Write");
+    assertEq(roleData.permissions[1], "Read");
   }
 
   function test_addPermissionsToRole_revert_when_duplicate_permissions(
@@ -658,8 +657,8 @@ contract RolesTest is RolesSetup, IRolesBase, IEntitlementBase {
     vm.assume(bytes(roleName).length > 2);
 
     string[] memory permissions = new string[](2);
-    permissions[0] = Permissions.Write;
-    permissions[1] = Permissions.Read;
+    permissions[0] = "Write";
+    permissions[1] = "Read";
 
     // create a roles
     vm.prank(founder);
