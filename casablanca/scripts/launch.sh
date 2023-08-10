@@ -11,7 +11,10 @@ yarn run --top-level csb:build
 echo 
 echo "To test instance run tests with:"
 echo "  yarn csb:test"
-echo 
+echo ""
+echo " (currently need to run with dev-no-entitlements.yaml for tests to pass)"
+echo ""
+echo ""
 
 if [[ $# -eq 2 && "$1" == "--config" ]]; then
     config_file_name="$2"

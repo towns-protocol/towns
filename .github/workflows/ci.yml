@@ -253,7 +253,7 @@ jobs:
               run: yarn csb:start:no-entitlements &
 
             - name: Wait for Casablanca (without entitlements) node to be up
-              run: yarn csb:wait
+              run: yarn csb:wait:no-entitlements
 
             - name: Run SDK Tests (without entitlements)
               run: yarn run turbo run build test:ci --filter=@river/sdk

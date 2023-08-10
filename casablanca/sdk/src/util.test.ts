@@ -18,7 +18,7 @@ import _ from 'lodash'
 
 const log = dlog('csb:test:util')
 
-export const TEST_URL = 'http://localhost:5157'
+export const TEST_URL = 'http://localhost:5158'
 
 export const makeTestRpcClient = () => makeStreamRpcClient(TEST_URL)
 

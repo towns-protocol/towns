@@ -5,7 +5,7 @@ const config: JestConfigWithTsJest = {
     testEnvironment: './../jest.env.ts',
     testEnvironmentOptions: {
         browsers: ['chrome', 'firefox', 'safari'],
-        url: 'http://localhost:5157',
+        url: 'http://localhost:5158',
     },
     verbose: true,
     modulePathIgnorePatterns: ['/dist/'],
