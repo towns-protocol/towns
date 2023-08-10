@@ -6,6 +6,28 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
+func Make_GenisisMiniblockHeader(parsedEvents []*ParsedEvent) (*MiniblockHeader, error) {
+	snapshot, err := Make_GenisisSnapshot(parsedEvents)
+
+	if err != nil {
+		return nil, err
+	}
+
+	eventHashes := make([][]byte, len(parsedEvents))
+
+	for i, event := range parsedEvents {
+		eventHashes[i] = event.Hash
+	}
+
+	return &MiniblockHeader{
+		MiniblockNum: 0,
+		Timestamp:    NextMiniblockTimestamp(nil),
+		EventHashes:  eventHashes,
+		Snapshot:     snapshot,
+	}, nil
+
+}
+
 func NextMiniblockTimestamp(prevBlockTimestamp *timestamppb.Timestamp) *timestamppb.Timestamp {
 	now := timestamppb.Now()
 

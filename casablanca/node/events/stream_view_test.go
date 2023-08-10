@@ -9,6 +9,14 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func parsedEvent(t *testing.T, envelope *protocol.Envelope) *ParsedEvent {
+	parsed, err := ParseEvent(envelope)
+	if err != nil {
+		assert.NoError(t, err)
+	}
+	return parsed
+}
+
 func TestLoad(t *testing.T) {
 	wallet, _ := crypto.NewWallet(context.Background())
 	inception, err := MakeEnvelopeWithPayload(
@@ -23,13 +31,11 @@ func TestLoad(t *testing.T) {
 		[][]byte{inception.Hash},
 	)
 	assert.NoError(t, err)
+	miniblockHeader, err := Make_GenisisMiniblockHeader([]*ParsedEvent{parsedEvent(t, inception), parsedEvent(t, join)})
+	assert.NoError(t, err)
 	block, err := MakeEnvelopeWithPayload(
 		wallet,
-		Make_MiniblockHeader(&protocol.MiniblockHeader{
-			MiniblockNum: 0,
-			Timestamp:    NextMiniblockTimestamp(nil),
-			EventHashes:  [][]byte{inception.Hash, join.Hash},
-		}),
+		Make_MiniblockHeader(miniblockHeader),
 		[][]byte{join.Hash},
 	)
 	assert.NoError(t, err)

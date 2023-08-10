@@ -6,17 +6,34 @@ import (
 	"fmt"
 )
 
-func Make_Snapshot(iPayload IsInceptionPayload) (*Snapshot, error) {
-	content, err := Make_SnapshotContent(iPayload)
+func Make_GenisisSnapshot(events []*ParsedEvent) (*Snapshot, error) {
+
+	inceptionPayload := events[0].Event.GetInceptionPayload()
+
+	if inceptionPayload == nil {
+		return nil, errors.New("inceptionEvent is not an inception event")
+	}
+
+	content, err := make_SnapshotContent(inceptionPayload)
 	if err != nil {
 		return nil, err
 	}
-	return &Snapshot{
+
+	snapshot := &Snapshot{
 		Content: content,
-	}, nil
+	}
+
+	for _, event := range events[1:] {
+		err = Update_Snapshot(snapshot, event)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return snapshot, nil
 }
 
-func Make_SnapshotContent(iPayload IsInceptionPayload) (IsSnapshot_Content, error) {
+func make_SnapshotContent(iPayload IsInceptionPayload) (IsSnapshot_Content, error) {
 	if iPayload == nil {
 		return nil, errors.New("inceptionEvent is not an inception event")
 	}

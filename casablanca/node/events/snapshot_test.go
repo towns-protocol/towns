@@ -45,7 +45,7 @@ func TestMakeSnapshot(t *testing.T) {
 	wallet, _ := crypto.NewWallet(context.Background())
 	streamId := "streamid$1"
 	inception := make_User_Inception(wallet, streamId, t)
-	snapshot, err := Make_Snapshot(inception.Event.GetInceptionPayload())
+	snapshot, err := Make_GenisisSnapshot([]*ParsedEvent{inception})
 	assert.NoError(t, err)
 	assert.Equal(
 		t,
@@ -57,7 +57,7 @@ func TestUpdateSnapshot(t *testing.T) {
 	wallet, _ := crypto.NewWallet(context.Background())
 	streamId := "streamid$1"
 	inception := make_User_Inception(wallet, streamId, t)
-	snapshot, err := Make_Snapshot(inception.Event.GetInceptionPayload())
+	snapshot, err := Make_GenisisSnapshot([]*ParsedEvent{inception})
 	assert.NoError(t, err)
 
 	membership := make_User_Membership(wallet, MembershipOp_SO_JOIN, streamId, inception.Hash, t)
@@ -74,7 +74,7 @@ func TestCloneAndUpdateSnapshot(t *testing.T) {
 	wallet, _ := crypto.NewWallet(context.Background())
 	streamId := "streamid$1"
 	inception := make_User_Inception(wallet, streamId, t)
-	snapshot1, err := Make_Snapshot(inception.Event.GetInceptionPayload())
+	snapshot1, err := Make_GenisisSnapshot([]*ParsedEvent{inception})
 	assert.NoError(t, err)
 
 	snapshot := proto.Clone(snapshot1).(*Snapshot)
@@ -93,7 +93,7 @@ func TestUpdateSnapshotFailsIfInception(t *testing.T) {
 	wallet, _ := crypto.NewWallet(context.Background())
 	streamId := "streamid$1"
 	inception := make_User_Inception(wallet, streamId, t)
-	snapshot, err := Make_Snapshot(inception.Event.GetInceptionPayload())
+	snapshot, err := Make_GenisisSnapshot([]*ParsedEvent{inception})
 	assert.NoError(t, err)
 
 	err = Update_Snapshot(snapshot, inception)
