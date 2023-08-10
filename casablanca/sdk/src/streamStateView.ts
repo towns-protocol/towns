@@ -65,6 +65,8 @@ export class StreamStateView {
     readonly uploadedDeviceKeys = new Map<string, UserDeviceKeyPayload_UserDeviceKey[]>()
 
     readonly leafEventHashes = new Map<string, Uint8Array>()
+    //this property can be used during the UI part initialization to get initial state of fullyReadMarkers
+    readonly readFullyReadMarkers = new Map<string, EncryptedData>()
 
     syncCookie?: SyncCookie
     maxOldInstanceBlockNumber = -1n
@@ -263,6 +265,12 @@ export class StreamStateView {
                             )
                             break
                         case 'fullyReadMarkers':
+                            if (payload.value.content.value.content) {
+                                this.readFullyReadMarkers.set(
+                                    payload.value.content.value.channelStreamId,
+                                    payload.value.content.value.content,
+                                )
+                            }
                             this.fullyReadMarkerUpdate(payload.value.content.value, emitter)
                             break
                         case undefined:
