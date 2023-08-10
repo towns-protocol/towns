@@ -97,7 +97,8 @@ const TouchChannelHeader = (props: Props) => {
     const navigate = useNavigate()
     const spaceId = useSpaceIdFromPathname()
     const { members } = useChannelMembers()
-
+    const { displayNotificationBanner, requestPushPermission, denyPushPermission } =
+        usePushNotifications()
     const { channelIsMuted, spaceIsMuted } = useMuteSettings({
         spaceId: spaceId,
         channelId: channel?.id.networkId,
@@ -114,34 +115,62 @@ const TouchChannelHeader = (props: Props) => {
     }, [navigate])
 
     return (
-        <Box borderBottom paddingTop="safeAreaInsetTop" background="level1">
-            <Stack horizontal alignContent="center" gap="sm" zIndex="uiAbove" padding="sm">
-                <IconButton
-                    icon="back"
-                    size="square_md"
-                    color="default"
-                    onClick={homeButtonPressed}
-                />
-                <Stack gap="sm" onClick={infoButtonPressed}>
-                    <Stack horizontal gap="sm" alignContent="center">
-                        <Text fontWeight="strong" color="default">
-                            #{channel.label}
-                        </Text>
-                        {isMuted && <Icon type="muteActive" size="square_xxs" color="gray2" />}
+        <Stack gap="sm">
+            <Box borderBottom paddingTop="safeAreaInsetTop" background="level1">
+                <Stack horizontal alignContent="center" gap="sm" zIndex="uiAbove" padding="sm">
+                    <IconButton
+                        icon="back"
+                        size="square_md"
+                        color="default"
+                        onClick={homeButtonPressed}
+                    />
+                    <Stack gap="sm" onClick={infoButtonPressed}>
+                        <Stack horizontal gap="sm" alignContent="center">
+                            <Text fontWeight="strong" color="default">
+                                #{channel.label}
+                            </Text>
+                            {isMuted && <Icon type="muteActive" size="square_xxs" color="gray2" />}
+                        </Stack>
+                        <Text color="gray2" fontSize="sm">{`${members.length} member${
+                            members.length > 1 ? `s` : ``
+                        }`}</Text>
                     </Stack>
-                    <Text color="gray2" fontSize="sm">{`${members.length} member${
-                        members.length > 1 ? `s` : ``
-                    }`}</Text>
-                </Stack>
 
-                <Box grow />
-                <IconButton
-                    icon="info"
-                    size="square_sm"
-                    color="default"
-                    onClick={infoButtonPressed}
-                />
-            </Stack>
-        </Box>
+                    <Box grow />
+                    <IconButton
+                        icon="info"
+                        size="square_sm"
+                        color="default"
+                        onClick={infoButtonPressed}
+                    />
+                </Stack>
+            </Box>
+            {displayNotificationBanner && (
+                <Box paddingX="md">
+                    <Stack
+                        gap
+                        paddingY
+                        border
+                        paddingX="md"
+                        background="level2"
+                        alignItems="start"
+                        rounded="sm"
+                    >
+                        <Text fontWeight="strong" color="default">
+                            Turn on notifications for threads and mentions?
+                        </Text>
+                        <Stack horizontal gap width="100%">
+                            <Button size="button_sm" tone="level3" onClick={denyPushPermission}>
+                                No thanks
+                            </Button>
+
+                            <Button size="button_sm" tone="cta1" onClick={requestPushPermission}>
+                                Enable
+                            </Button>
+                        </Stack>
+                    </Stack>
+                </Box>
+            )}
+        </Stack>
     )
 }
