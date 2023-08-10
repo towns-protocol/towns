@@ -40,7 +40,7 @@ import { PATHS } from 'routes'
 import { TextArea } from 'ui/components/TextArea/TextArea'
 import { vars } from 'ui/styles/vars.css'
 import { transitions } from 'ui/transitions/transitions'
-import { shortAddress } from 'ui/utils/utils'
+import { getInviteUrl, shortAddress } from 'ui/utils/utils'
 import { useDevice } from 'hooks/useDevice'
 import { MembersPageTouchModal } from '@components/MembersPage/MembersPage'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
@@ -156,6 +156,15 @@ export const SpaceInfoPanel = () => {
         }
     })
 
+    const shareButtonEnabled = isTouch && navigator.share
+    const onSharePressed = useEvent(async () => {
+        if (!space) {
+            return
+        }
+        const url = getInviteUrl(space.id)
+        await navigator.share({ title: space.name, url: url })
+    })
+
     const spaceID = useSpaceId()
     const { spaceIsMuted, spaceMuteSetting } = useMuteSettings({
         spaceId: spaceID?.networkId,
@@ -204,7 +213,18 @@ export const SpaceInfoPanel = () => {
     return (
         <Panel modalPresentable label="Town Info" onClose={onClose}>
             {space?.id && (
-                <Stack centerContent gap padding>
+                <Stack centerContent padding>
+                    {shareButtonEnabled && (
+                        <Stack horizontal paddingX="sm" width="100%">
+                            <Box grow />
+                            <Icon
+                                type="share"
+                                size="square_md"
+                                background="level2"
+                                onClick={onSharePressed}
+                            />
+                        </Stack>
+                    )}
                     <FormRender>
                         {({ register, formState, setError, clearErrors }) => (
                             <LargeUploadImageTemplate
