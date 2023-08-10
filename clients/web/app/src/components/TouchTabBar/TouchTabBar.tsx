@@ -18,32 +18,46 @@ export const TouchTabBar = () => {
             <Stack horizontal width="100%" background="level2" display="flex" paddingY="sm">
                 <TabBarItem
                     title="Home"
-                    icon={
-                        <SpaceIcon
-                            width="toolbar_icon"
-                            height="toolbar_icon"
-                            spaceId={space?.id.slug}
-                            firstLetterOfSpaceName={space?.name[0]}
-                            overrideBorderRadius="sm"
-                            variant={ImageVariants.thumbnail50}
-                            fadeIn={false}
-                        />
-                    }
+                    icon={(highlighted: boolean) => (
+                        <Box
+                            background={highlighted ? 'transparentBright' : 'none'}
+                            rounded="sm"
+                            padding="xxs"
+                        >
+                            <SpaceIcon
+                                width="toolbar_icon"
+                                height="toolbar_icon"
+                                spaceId={space?.id.slug}
+                                firstLetterOfSpaceName={space?.name[0]}
+                                overrideBorderRadius="sm"
+                                variant={ImageVariants.thumbnail50}
+                                fadeIn={false}
+                            />
+                        </Box>
+                    )}
                     to={`/${PATHS.SPACES}/${space.id.slug}/${PATHS.HOME}`}
                 />
                 <TabBarItem
                     title="Threads"
-                    icon={<Icon type="message" size="toolbar_icon" />}
+                    icon={() => <Icon type="message" size="toolbar_icon" />}
                     to={`/${PATHS.SPACES}/${space.id.slug}/${PATHS.THREADS}`}
                 />
                 <TabBarItem
                     title="Mentions"
-                    icon={<Icon type="at" size="toolbar_icon" />}
+                    icon={() => <Icon type="at" size="toolbar_icon" />}
                     to={`/${PATHS.SPACES}/${space.id.slug}/${PATHS.MENTIONS}`}
                 />
                 <TabBarItem
                     title="You"
-                    icon={<Avatar size="toolbar_icon" userId={userId} />}
+                    icon={(highlighted) => (
+                        <Box
+                            rounded="full"
+                            background={highlighted ? 'transparentBright' : 'none'}
+                            padding="xxs"
+                        >
+                            <Avatar size="toolbar_icon" userId={userId} />
+                        </Box>
+                    )}
                     to={`/${PATHS.SPACES}/${space.id.slug}/${PATHS.PROFILE}/me`}
                 />
             </Stack>
@@ -54,7 +68,7 @@ export const TouchTabBar = () => {
 type TabBarItemProps = {
     title: string
     to: string
-    icon: React.ReactNode
+    icon: (highlighted: boolean) => React.ReactNode
 }
 
 const TabBarItem = (props: TabBarItemProps) => {
@@ -78,8 +92,12 @@ const TabBarItem = (props: TabBarItemProps) => {
             gap="xs"
             onClick={onClick}
         >
-            {icon}
-            <Text fontSize="xs">{title}</Text>
+            <Box centerContent height="height_md">
+                {icon(isHighlighted)}
+            </Box>
+            <Text fontSize="xs" fontWeight="strong">
+                {title}
+            </Text>
         </Stack>
     )
 }
