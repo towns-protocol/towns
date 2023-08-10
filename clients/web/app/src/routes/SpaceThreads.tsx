@@ -62,7 +62,7 @@ export const SpaceThreads = () => {
 
     return (
         <CentralPanelLayout>
-            {isTouch && <TouchNavBar title="Threads" />}
+            {isTouch && <TouchNavBar>Threads</TouchNavBar>}
             {userId && spaceId && threads.length > 0 ? (
                 <Stack scroll>
                     <Stack

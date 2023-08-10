@@ -26,8 +26,6 @@ import {
     FormRender,
     Icon,
     MotionStack,
-    Panel,
-    PanelButton,
     Paragraph,
     Stack,
     Text,
@@ -51,6 +49,7 @@ import {
     useSetMuteSettingForChannelOrSpace,
 } from 'api/lib/notificationSettings'
 import { useCreateLink } from 'hooks/useCreateLink'
+import { Panel, PanelButton } from '@components/Panel/Panel'
 import { useContractSpaceInfo } from '../hooks/useContractSpaceInfo'
 import { useEnvironment } from '../hooks/useEnvironmnet'
 import { env } from '../utils/environment'

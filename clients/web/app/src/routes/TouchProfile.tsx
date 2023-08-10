@@ -6,7 +6,7 @@ import { SpaceProfile } from './SpacesProfilePanel'
 export const TouchProfile = () => {
     return (
         <Stack height="100%">
-            <TouchNavBar title="You" />
+            <TouchNavBar>You</TouchNavBar>
             <Box grow position="relative">
                 <Box absoluteFill position="relative">
                     <Stack scroll height="100%">

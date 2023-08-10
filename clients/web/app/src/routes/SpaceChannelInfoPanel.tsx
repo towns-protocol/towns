@@ -13,7 +13,7 @@ import {
 
 import { ChannelSettingsModal } from '@components/ChannelSettings/ChannelSettingsModal'
 import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
-import { Icon, Panel, PanelButton, Paragraph, Stack } from '@ui'
+import { Icon, Paragraph, Stack } from '@ui'
 import { PATHS } from 'routes'
 import { useAuth } from 'hooks/useAuth'
 import { useDevice } from 'hooks/useDevice'
@@ -22,6 +22,7 @@ import {
     useMuteSettings,
     useSetMuteSettingForChannelOrSpace,
 } from 'api/lib/notificationSettings'
+import { Panel, PanelButton } from '@components/Panel/Panel'
 import { ChannelMembersModal } from './SpaceChannelDirectoryPanel'
 
 export const ChannelInfoPanel = () => {

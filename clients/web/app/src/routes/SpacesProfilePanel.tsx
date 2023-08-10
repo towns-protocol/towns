@@ -9,12 +9,13 @@ import {
     useSpaceMembers,
 } from 'use-zion-client'
 import { useGetUserBio } from 'hooks/useUserBio'
-import { Box, Button, Icon, Panel, PanelButton, Paragraph, Stack, Text } from '@ui'
+import { Box, Button, Icon, Paragraph, Stack, Text } from '@ui'
 import { UserProfile } from '@components/UserProfile/UserProfile'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { useAuth } from 'hooks/useAuth'
 import { useStore } from 'store/store'
 import { usePushNotifications } from 'hooks/usePushNotifications'
+import { Panel, PanelButton } from '@components/Panel/Panel'
 
 export const SpaceProfilePanel = (props: { children?: React.ReactNode }) => {
     const navigate = useNavigate()

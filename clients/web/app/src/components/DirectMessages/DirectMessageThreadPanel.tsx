@@ -1,7 +1,7 @@
 import React from 'react'
 import { useEvent } from 'react-use-event-hook'
 import { useNavigate } from 'react-router'
-import { Panel } from '@ui'
+import { Panel } from '@components/Panel/Panel'
 import { DirectMessageThread } from './DirectMessageThread'
 
 export const DirectMessageThreadPanel = () => {

@@ -8,6 +8,7 @@ import { usePushNotifications } from 'hooks/usePushNotifications'
 import { useMuteSettings } from 'api/lib/notificationSettings'
 import { PATHS } from 'routes'
 import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
+import { TouchNavBar } from '@components/TouchNavBar/TouchNavBar'
 
 type Props = {
     channel: Channel
@@ -116,35 +117,38 @@ const TouchChannelHeader = (props: Props) => {
 
     return (
         <Stack gap="sm">
-            <Box borderBottom paddingTop="safeAreaInsetTop" background="level1">
-                <Stack horizontal alignContent="center" gap="sm" zIndex="uiAbove" padding="sm">
+            <TouchNavBar
+                contentLeft={
                     <IconButton
                         icon="back"
                         size="square_md"
                         color="default"
                         onClick={homeButtonPressed}
                     />
-                    <Stack gap="sm" onClick={infoButtonPressed}>
-                        <Stack horizontal gap="sm" alignContent="center">
-                            <Text fontWeight="strong" color="default">
-                                #{channel.label}
-                            </Text>
-                            {isMuted && <Icon type="muteActive" size="square_xxs" color="gray2" />}
-                        </Stack>
-                        <Text color="gray2" fontSize="sm">{`${members.length} member${
-                            members.length > 1 ? `s` : ``
-                        }`}</Text>
-                    </Stack>
-
-                    <Box grow />
+                }
+                contentRight={
                     <IconButton
                         icon="info"
                         size="square_sm"
                         color="default"
                         onClick={infoButtonPressed}
                     />
+                }
+            >
+                <Stack gap="sm" onClick={infoButtonPressed}>
+                    <Stack horizontal gap="sm" alignContent="center">
+                        <Paragraph strong color="default">
+                            #{channel.label}
+                        </Paragraph>
+                        {isMuted && <Icon type="muteActive" size="square_xxs" color="gray2" />}
+                    </Stack>
+
+                    <Paragraph truncate color="gray2" size="sm">
+                        {`${members.length} member${members.length > 1 ? `s` : ``}`}
+                        {channel.topic ? ` · ${channel.topic.toLocaleLowerCase()}` : ``}
+                    </Paragraph>
                 </Stack>
-            </Box>
+            </TouchNavBar>
             {displayNotificationBanner && (
                 <Box paddingX="md">
                     <Stack

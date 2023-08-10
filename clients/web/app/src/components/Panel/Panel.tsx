@@ -5,12 +5,12 @@ import { modalSheetClass } from 'ui/styles/globals/sheet.css'
 import { useDevice } from 'hooks/useDevice'
 import { transitions } from 'ui/transitions/transitions'
 import { useSafeEscapeKeyCancellation } from 'hooks/useSafeEscapeKeyCancellation'
-import { Box, BoxProps } from '../Box/Box'
-import { IconButton } from '../IconButton/IconButton'
-import { Stack } from '../Stack/Stack'
-import { useZLayerContext } from '../ZLayer/ZLayer'
-import { TouchPanelNavigationBar } from '../TouchPanelNavigationBar/TouchPanelNavigationBar'
-import { MotionStack } from '../Motion/MotionComponents'
+import { TouchPanelNavigationBar } from '@components/TouchPanelNavigationBar/TouchPanelNavigationBar'
+import { Box, BoxProps } from '../../ui/components/Box/Box'
+import { IconButton } from '../../ui/components/IconButton/IconButton'
+import { Stack } from '../../ui/components/Stack/Stack'
+import { useZLayerContext } from '../../ui/components/ZLayer/ZLayer'
+import { MotionStack } from '../../ui/components/Motion/MotionComponents'
 
 type Props = {
     children: React.ReactNode
