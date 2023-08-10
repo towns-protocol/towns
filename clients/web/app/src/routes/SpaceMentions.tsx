@@ -59,7 +59,10 @@ export const SpaceMentions = () => {
             <Stack scroll>
                 {mentions.length ? (
                     <Stack minHeight="forceScroll">
-                        <Stack gap padding={isTouch ? 'md' : 'lg'}>
+                        <Stack
+                            gap={{ touch: 'none', default: 'md' }}
+                            padding={{ touch: 'none', default: 'lg' }}
+                        >
                             {mentions.map((m, index, mentions) => {
                                 return (
                                     m.type === 'mention' && (
@@ -108,18 +111,18 @@ const MentionBox = (props: { mention: MentionResult; userId?: string }) => {
     return (
         <NavLink to={link}>
             <FadeInBox
-                elevate
                 hoverable
+                elevate={!isTouch}
                 rounded="md"
                 background={mention.unread ? 'level3' : 'level2'}
                 cursor="alias"
-                boxShadow="card"
+                boxShadow={{ touch: undefined, default: 'card' }}
                 overflow="hidden"
             >
                 <Message
                     relativeDate
                     avatarSize={isTouch ? 'avatar_x4' : 'avatar_md'}
-                    padding="lg"
+                    padding={{ touch: 'md', default: 'lg' }}
                     key={mention.event.eventId}
                     messageSourceAnnotation={`${
                         mention.thread ? `Thread in` : ``
