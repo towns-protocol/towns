@@ -8,6 +8,63 @@ import type { IRoles, IRolesInterface } from "../IRoles";
 
 const _abi = [
   {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: true,
+        internalType: "address",
+        name: "creator",
+        type: "address",
+      },
+      {
+        indexed: true,
+        internalType: "uint256",
+        name: "roleId",
+        type: "uint256",
+      },
+    ],
+    name: "RoleCreated",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: true,
+        internalType: "address",
+        name: "remover",
+        type: "address",
+      },
+      {
+        indexed: true,
+        internalType: "uint256",
+        name: "roleId",
+        type: "uint256",
+      },
+    ],
+    name: "RoleRemoved",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: true,
+        internalType: "address",
+        name: "updater",
+        type: "address",
+      },
+      {
+        indexed: true,
+        internalType: "uint256",
+        name: "roleId",
+        type: "uint256",
+      },
+    ],
+    name: "RoleUpdated",
+    type: "event",
+  },
+  {
     inputs: [
       {
         internalType: "uint256",

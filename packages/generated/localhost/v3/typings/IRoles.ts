@@ -13,7 +13,11 @@ import type {
   Signer,
   utils,
 } from "ethers";
-import type { FunctionFragment, Result } from "@ethersproject/abi";
+import type {
+  FunctionFragment,
+  Result,
+  EventFragment,
+} from "@ethersproject/abi";
 import type { Listener, Provider } from "@ethersproject/providers";
 import type {
   TypedEventFilter,
@@ -161,8 +165,49 @@ export interface IRolesInterface extends utils.Interface {
   ): Result;
   decodeFunctionResult(functionFragment: "updateRole", data: BytesLike): Result;
 
-  events: {};
+  events: {
+    "RoleCreated(address,uint256)": EventFragment;
+    "RoleRemoved(address,uint256)": EventFragment;
+    "RoleUpdated(address,uint256)": EventFragment;
+  };
+
+  getEvent(nameOrSignatureOrTopic: "RoleCreated"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "RoleRemoved"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "RoleUpdated"): EventFragment;
 }
+
+export interface RoleCreatedEventObject {
+  creator: string;
+  roleId: BigNumber;
+}
+export type RoleCreatedEvent = TypedEvent<
+  [string, BigNumber],
+  RoleCreatedEventObject
+>;
+
+export type RoleCreatedEventFilter = TypedEventFilter<RoleCreatedEvent>;
+
+export interface RoleRemovedEventObject {
+  remover: string;
+  roleId: BigNumber;
+}
+export type RoleRemovedEvent = TypedEvent<
+  [string, BigNumber],
+  RoleRemovedEventObject
+>;
+
+export type RoleRemovedEventFilter = TypedEventFilter<RoleRemovedEvent>;
+
+export interface RoleUpdatedEventObject {
+  updater: string;
+  roleId: BigNumber;
+}
+export type RoleUpdatedEvent = TypedEvent<
+  [string, BigNumber],
+  RoleUpdatedEventObject
+>;
+
+export type RoleUpdatedEventFilter = TypedEventFilter<RoleUpdatedEvent>;
 
 export interface IRoles extends BaseContract {
   connect(signerOrProvider: Signer | Provider | string): this;
@@ -368,7 +413,34 @@ export interface IRoles extends BaseContract {
     ): Promise<void>;
   };
 
-  filters: {};
+  filters: {
+    "RoleCreated(address,uint256)"(
+      creator?: PromiseOrValue<string> | null,
+      roleId?: PromiseOrValue<BigNumberish> | null
+    ): RoleCreatedEventFilter;
+    RoleCreated(
+      creator?: PromiseOrValue<string> | null,
+      roleId?: PromiseOrValue<BigNumberish> | null
+    ): RoleCreatedEventFilter;
+
+    "RoleRemoved(address,uint256)"(
+      remover?: PromiseOrValue<string> | null,
+      roleId?: PromiseOrValue<BigNumberish> | null
+    ): RoleRemovedEventFilter;
+    RoleRemoved(
+      remover?: PromiseOrValue<string> | null,
+      roleId?: PromiseOrValue<BigNumberish> | null
+    ): RoleRemovedEventFilter;
+
+    "RoleUpdated(address,uint256)"(
+      updater?: PromiseOrValue<string> | null,
+      roleId?: PromiseOrValue<BigNumberish> | null
+    ): RoleUpdatedEventFilter;
+    RoleUpdated(
+      updater?: PromiseOrValue<string> | null,
+      roleId?: PromiseOrValue<BigNumberish> | null
+    ): RoleUpdatedEventFilter;
+  };
 
   estimateGas: {
     addPermissionsToRole(

@@ -585,19 +585,11 @@
       ]
     },
     "contracts/src/diamond/facets/introspection/IntrospectionStorage.sol": {
-      "keccak256": "0x08fb9c05b623a2f6ee8e3098a7d0e9b19e25eacb9735f66fa311ced1afafc121",
+      "keccak256": "0xc98f2cbf7cd8f96907a2b193f984b07955ec22579a5b7691f507f49047972620",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://8a4b34a66b154861a60820ab9a7f225d043eb36e2f90234197146bbc4b5f191f",
-        "dweb:/ipfs/QmSoYyPg2d1XsBeCsx1X9dvhBacjhZcqqgx8WDPJ3nYmB2"
-      ]
-    },
-    "contracts/src/diamond/facets/loupe/IDiamondLoupe.sol": {
-      "keccak256": "0x83141e0a7e8f1e9a592ca00bb6365aae7296f61d06080024546350594f076618",
-      "license": "Apache-2.0",
-      "urls": [
-        "bzz-raw://f0917399449ea9830cff570d958d28b37b3c83af3a38c5f0a58241264aaf8290",
-        "dweb:/ipfs/QmUbJD4U8Fpf7BiXJWExejkd54vUjiXJrjnxxARUDzrGa8"
+        "bzz-raw://5ce646e3e42dd9c8c46af53e04059f93cc141267d6841277ead66070d4bd8055",
+        "dweb:/ipfs/QmdWieFQfJC6tbF2fU2EnFUq4eZnGwbLiRE2CSGgXgy8TJ"
       ]
     },
     "contracts/src/diamond/facets/ownable/IERC173.sol": {
@@ -752,22 +744,6 @@
         "dweb:/ipfs/QmXKh6Axoh1hFQJeNoiGYwwWz2u6pSyzwJG62hfpSEVxCH"
       ]
     },
-    "contracts/src/diamond/proxy/manager/ProxyManagerBase.sol": {
-      "keccak256": "0x662d0e63c9d3718597aaa2d9186874d549d51048f00a2ffd339c8938d905fc99",
-      "license": "Apache-2.0",
-      "urls": [
-        "bzz-raw://672aa489fcf0864a8c4964ce3daf835626f81211fb9e3833cdf90827e69aace8",
-        "dweb:/ipfs/QmZZkcERsHoDTYzUYH4uRVPvXUjskzVcndgWGztxRtnuFY"
-      ]
-    },
-    "contracts/src/diamond/proxy/manager/ProxyManagerStorage.sol": {
-      "keccak256": "0x7c74038d5faa71a6d7f53aa69ce8db6da117f32c33a0058fe27e6882b4a7ccfd",
-      "license": "Apache-2.0",
-      "urls": [
-        "bzz-raw://c3abd00d09d50d52639ad20b901d9134cf499e6d50cd2ec5c93240c686693701",
-        "dweb:/ipfs/QmUE6WmWKcYNAB2rcaYtiBjAYWgDjQx5TCS2YGmyV5oLDt"
-      ]
-    },
     "contracts/src/diamond/utils/multicall/IMulticall.sol": {
       "keccak256": "0x0f1a1884b290dc829323fa6d01e0dedc785ff582e9dbffd52e44e6f2fc7beff6",
       "license": "Apache-2.0",
@@ -841,11 +817,11 @@
       ]
     },
     "contracts/src/towns/facets/architect/TownArchitect.sol": {
-      "keccak256": "0x344edbaf440e131f5f6e17606b611c35bccb7d6f09b0ab45bf9458cd5d00b079",
+      "keccak256": "0x76ddbf166c47596d06693d1241569128b1a250a683847e31a9763a4347484487",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://e818e688855d4f5bf42a477841253415b1d142a97f32d0e609254574c25b5cd2",
-        "dweb:/ipfs/Qmeg18FVF6Kgfvsp7WuZPxHoxc9n3r6e3TSHQgFUbrSFAb"
+        "bzz-raw://472d60eff584f1e4c9de400177a4f2f5b9e5d45ee14217f95bef3edeee7b7df1",
+        "dweb:/ipfs/QmPGfgLGWeELxr5NKYayiHYjXwqzxt6jJbb4yF2paXV6nv"
       ]
     },
     "contracts/src/towns/facets/architect/TownArchitectBase.sol": {
@@ -937,11 +913,11 @@
       ]
     },
     "contracts/src/towns/facets/roles/IRoles.sol": {
-      "keccak256": "0xa189c0e7defb80cb1cf37956ec0e3841a6fa9f60deb24297cd0e2f4f0be0092d",
+      "keccak256": "0xfec96325feceb563e53a45890d5ded1d1cc3618e6e85f940f23d932bd4c8540d",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://77e0130796aceb5e12dd6c2caa8ddd3df42363b15737a32b96706f57ea3203f5",
-        "dweb:/ipfs/QmcWNAD8VS5ZVscDRBV8xZUWKoYj7KZEuofZjNgkHeJh9F"
+        "bzz-raw://f0d02b124125e9da152639212cea23451f3e133488dedcb122bc1fbbefeec1e5",
+        "dweb:/ipfs/QmcZT6KsTTJcAwknCBAMWFBZAV1bn7ntD9jHnWvdGDDKMG"
       ]
     },
     "contracts/src/utils/BatchMintMetadata.sol": {

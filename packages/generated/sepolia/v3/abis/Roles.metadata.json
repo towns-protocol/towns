@@ -157,6 +157,63 @@
         "anonymous": false,
         "inputs": [
           {
+            "indexed": true,
+            "internalType": "address",
+            "name": "creator",
+            "type": "address"
+          },
+          {
+            "indexed": true,
+            "internalType": "uint256",
+            "name": "roleId",
+            "type": "uint256"
+          }
+        ],
+        "name": "RoleCreated",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": true,
+            "internalType": "address",
+            "name": "remover",
+            "type": "address"
+          },
+          {
+            "indexed": true,
+            "internalType": "uint256",
+            "name": "roleId",
+            "type": "uint256"
+          }
+        ],
+        "name": "RoleRemoved",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": true,
+            "internalType": "address",
+            "name": "updater",
+            "type": "address"
+          },
+          {
+            "indexed": true,
+            "internalType": "uint256",
+            "name": "roleId",
+            "type": "uint256"
+          }
+        ],
+        "name": "RoleUpdated",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
             "indexed": false,
             "internalType": "address",
             "name": "account",
@@ -620,11 +677,11 @@
       ]
     },
     "contracts/src/towns/facets/roles/IRoles.sol": {
-      "keccak256": "0xa189c0e7defb80cb1cf37956ec0e3841a6fa9f60deb24297cd0e2f4f0be0092d",
+      "keccak256": "0xfec96325feceb563e53a45890d5ded1d1cc3618e6e85f940f23d932bd4c8540d",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://77e0130796aceb5e12dd6c2caa8ddd3df42363b15737a32b96706f57ea3203f5",
-        "dweb:/ipfs/QmcWNAD8VS5ZVscDRBV8xZUWKoYj7KZEuofZjNgkHeJh9F"
+        "bzz-raw://f0d02b124125e9da152639212cea23451f3e133488dedcb122bc1fbbefeec1e5",
+        "dweb:/ipfs/QmcZT6KsTTJcAwknCBAMWFBZAV1bn7ntD9jHnWvdGDDKMG"
       ]
     },
     "contracts/src/towns/facets/roles/Roles.sol": {
@@ -636,11 +693,11 @@
       ]
     },
     "contracts/src/towns/facets/roles/RolesBase.sol": {
-      "keccak256": "0x105ba70361b6e8dac246d8e192cb4f1f2375da2ec88cff21e94e1a267d28d43a",
+      "keccak256": "0x40ae42c939d1510d7e0ea4dc0e61c282f11a404bed79dde39a96dbdd40a60fc1",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://2918351b56d135c06b7b0494674094304bf4ece4fbecf7070f76d62187f94e3f",
-        "dweb:/ipfs/QmStvLmyiUXz7dKkX5niJ2Jw6vrfFdvB3sDGjqABAMHNdn"
+        "bzz-raw://4d246b740ce1171092a010bec135f560fe265637e19daa1b0c337dfba9588c9f",
+        "dweb:/ipfs/QmQTDUqQxShFurC5JLXDHXQbVna8u5wuJpNoqYZc1tTnU8"
       ]
     },
     "contracts/src/towns/facets/roles/RolesService.sol": {

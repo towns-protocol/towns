@@ -11,3 +11,4 @@ export { IProxyManager__factory } from "./IProxyManager__factory";
 export { IRoles__factory } from "./IRoles__factory";
 export { ITownArchitect__factory } from "./ITownArchitect__factory";
 export { Permissions__factory } from "./Permissions__factory";
+export { TokenPausableFacet__factory } from "./TokenPausableFacet__factory";
