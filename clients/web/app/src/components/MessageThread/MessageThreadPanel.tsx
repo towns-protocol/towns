@@ -61,7 +61,7 @@ export const MessageThreadPanel = (props: Props) => {
 
     return (
         <Panel label={panelLabel} onClose={props.onClose}>
-            <Stack>
+            <Stack grow>
                 <MessageTimelineWrapper
                     spaceId={spaceId}
                     channelId={channelId}

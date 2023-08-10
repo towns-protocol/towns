@@ -124,6 +124,7 @@
         "clients/web/*",
         "clients/governance-ui",
         "packages/*",
-        "servers/workers/*"
+        "servers/workers/*",
+        "contracts"
     ]
 }

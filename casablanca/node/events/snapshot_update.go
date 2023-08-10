@@ -7,7 +7,7 @@ import (
 )
 
 // mutate snapshot with content of event if applicable
-func Update_Snapshot(iSnapshot IsMiniblockHeader_Content, event *ParsedEvent) error {
+func Update_Snapshot(iSnapshot *Snapshot, event *ParsedEvent) error {
 	switch payload := event.Event.Payload.(type) {
 	case *StreamEvent_SpacePayload:
 		return update_Snapshot_Space(iSnapshot, payload.SpacePayload)
@@ -25,8 +25,8 @@ func Update_Snapshot(iSnapshot IsMiniblockHeader_Content, event *ParsedEvent) er
 
 }
 
-func update_Snapshot_Space(iSnapshot IsMiniblockHeader_Content, spacePayload *SpacePayload) error {
-	snapshot := iSnapshot.(*MiniblockHeader_SpaceContent)
+func update_Snapshot_Space(iSnapshot *Snapshot, spacePayload *SpacePayload) error {
+	snapshot := iSnapshot.Content.(*Snapshot_SpaceContent)
 	if snapshot == nil {
 		return errors.New("blockheader snapshot is not a space snapshot")
 	}
@@ -45,8 +45,8 @@ func update_Snapshot_Space(iSnapshot IsMiniblockHeader_Content, spacePayload *Sp
 	}
 }
 
-func update_Snapshot_Channel(iSnapshot IsMiniblockHeader_Content, channelPayload *ChannelPayload) error {
-	snapshot := iSnapshot.(*MiniblockHeader_ChannelContent)
+func update_Snapshot_Channel(iSnapshot *Snapshot, channelPayload *ChannelPayload) error {
+	snapshot := iSnapshot.Content.(*Snapshot_ChannelContent)
 	if snapshot == nil {
 		return errors.New("blockheader snapshot is not a channel snapshot")
 	}
@@ -64,8 +64,8 @@ func update_Snapshot_Channel(iSnapshot IsMiniblockHeader_Content, channelPayload
 	}
 }
 
-func update_Snapshot_User(iSnapshot IsMiniblockHeader_Content, userPayload *UserPayload) error {
-	snapshot := iSnapshot.(*MiniblockHeader_UserContent)
+func update_Snapshot_User(iSnapshot *Snapshot, userPayload *UserPayload) error {
+	snapshot := iSnapshot.Content.(*Snapshot_UserContent)
 	if snapshot == nil {
 		return errors.New("blockheader snapshot is not a user snapshot")
 	}
@@ -82,8 +82,8 @@ func update_Snapshot_User(iSnapshot IsMiniblockHeader_Content, userPayload *User
 	}
 }
 
-func update_Snapshot_UserSettings(iSnapshot IsMiniblockHeader_Content, userSettingsPayload *UserSettingsPayload) error {
-	snapshot := iSnapshot.(*MiniblockHeader_UserSettingsContent)
+func update_Snapshot_UserSettings(iSnapshot *Snapshot, userSettingsPayload *UserSettingsPayload) error {
+	snapshot := iSnapshot.Content.(*Snapshot_UserSettingsContent)
 	if snapshot == nil {
 		return errors.New("blockheader snapshot is not a user settings snapshot")
 	}
@@ -98,8 +98,8 @@ func update_Snapshot_UserSettings(iSnapshot IsMiniblockHeader_Content, userSetti
 	}
 }
 
-func update_Snapshot_UserDeviceKey(iSnapshot IsMiniblockHeader_Content, userDeviceKeyPayload *UserDeviceKeyPayload) error {
-	snapshot := iSnapshot.(*MiniblockHeader_UserDeviceKeyContent)
+func update_Snapshot_UserDeviceKey(iSnapshot *Snapshot, userDeviceKeyPayload *UserDeviceKeyPayload) error {
+	snapshot := iSnapshot.Content.(*Snapshot_UserDeviceKeyContent)
 	if snapshot == nil {
 		return errors.New("blockheader snapshot is not a user device key snapshot")
 	}

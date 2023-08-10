@@ -29,7 +29,7 @@ func (m *minipoolInstance) copyAndAddEvent(event *ParsedEvent) *minipoolInstance
 }
 
 func (m *minipoolInstance) forEachEvent(op func(e *ParsedEvent) (bool, error)) error {
-	for _, e := range m.events.A {
+	for _, e := range m.events.Values {
 		cont, err := op(e)
 		if !cont {
 			return err
@@ -39,8 +39,8 @@ func (m *minipoolInstance) forEachEvent(op func(e *ParsedEvent) (bool, error)) e
 }
 
 func (m *minipoolInstance) lastEvent() *ParsedEvent {
-	if len(m.events.A) > 0 {
-		return m.events.A[len(m.events.A)-1]
+	if len(m.events.Values) > 0 {
+		return m.events.Values[len(m.events.Values)-1]
 	} else {
 		return nil
 	}

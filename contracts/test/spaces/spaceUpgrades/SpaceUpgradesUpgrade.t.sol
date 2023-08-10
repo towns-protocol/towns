@@ -12,8 +12,6 @@ import {Permissions} from "contracts/src/spaces/libraries/Permissions.sol";
 import {SpaceBaseSetup} from "contracts/test/spaces/SpaceBaseSetup.sol";
 import {Space} from "contracts/src/spaces/Space.sol";
 
-import {console} from "forge-std/console.sol";
-
 contract SpaceUpgradesUpgrade is SpaceBaseSetup {
   address internal _owner;
   address internal _spacev2;
@@ -100,7 +98,7 @@ contract SpaceUpgradesUpgrade is SpaceBaseSetup {
 
     DataTypes.Role memory role;
 
-    for (uint i = 0; i < roles.length; i++) {
+    for (uint256 i = 0; i < roles.length; i++) {
       if (_isEqual(roles[i].name, "Upgrade")) {
         role = roles[i];
         break;

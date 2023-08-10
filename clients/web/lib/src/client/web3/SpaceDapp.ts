@@ -141,7 +141,7 @@ export class SpaceDapp implements ISpaceDapp {
         return space.write(signer).createRole(roleName, permissions, entitlements)
     }
 
-    public async getSpace(spaceId: string): Promise<SpaceShim | undefined> {
+    private async getSpace(spaceId: string): Promise<SpaceShim | undefined> {
         if (!this.provider) {
             throw new Error('Provider or signer is not set.')
         }

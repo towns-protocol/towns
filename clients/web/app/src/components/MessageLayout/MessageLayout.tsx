@@ -159,7 +159,11 @@ export const MessageLayout = (props: Props) => {
                     <Stack horizontal grow gap="sm" height="height_sm" alignItems="end">
                         {/* display name with tooltip */}
                         {name && senderId && (
-                            <Box tooltip={<ProfileHoverCard userId={senderId} />}>
+                            <Box
+                                tooltip={
+                                    isTouch ? undefined : <ProfileHoverCard userId={senderId} />
+                                }
+                            >
                                 <Link to={`profile/${senderId}`}>
                                     <Text truncate fontSize="md" color="gray1" as="span">
                                         {name}&nbsp;

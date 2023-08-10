@@ -71,7 +71,7 @@ func TestLoad(t *testing.T) {
 	assert.Equal(t, int64(0), cookie.MinipoolSlot)
 
 	// Check minipool, should be empty
-	assert.Equal(t, 0, len(view.minipool.events.A))
+	assert.Equal(t, 0, len(view.minipool.events.Values))
 }
 
 // TODO: add negative tests

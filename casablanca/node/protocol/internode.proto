@@ -1,0 +1,28 @@
+syntax = "proto3";
+package casablanca;
+option go_package = "casablanca/node/protocol";
+
+import "protocol.proto";
+
+message NewEventReceivedRequest {
+    Envelope event = 1;
+
+    // event.hash signed by node private key.
+    bytes node_sig = 2;
+}
+
+message NewEventReceivedResponse {
+}
+
+message NewEventInPoolRequest {
+    bytes hash = 1;
+}
+
+message NewEventInPoolResponse {
+}
+
+service NodeToNode {
+    rpc NewEventReceived(NewEventReceivedRequest) returns (NewEventReceivedResponse);
+    rpc NewEventInPool(NewEventInPoolRequest) returns (NewEventInPoolResponse);
+}
+

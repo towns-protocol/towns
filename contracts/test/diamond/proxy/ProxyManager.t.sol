@@ -2,7 +2,7 @@
 pragma solidity ^0.8.20;
 
 // interfaces
-import {IDiamond, Diamond} from "contracts/src/diamond/Diamond.sol";
+import {IDiamond} from "contracts/src/diamond/Diamond.sol";
 import {IDiamondCut} from "contracts/src/diamond/facets/cut/IDiamondCut.sol";
 import {IERC173} from "contracts/src/diamond/facets/ownable/IERC173.sol";
 import {IProxyManager} from "contracts/src/diamond/proxy/manager/IProxyManager.sol";

@@ -11,7 +11,7 @@ import {EnumerableSet} from "openzeppelin-contracts/contracts/utils/structs/Enum
 library DiamondCutStorage {
   // solhint-disable-next-line private-vars-leading-underscore
   bytes32 internal constant DIAMOND_CUT_STORAGE_POSITION =
-    keccak256("towns.contracts.storage.DiamondCut");
+    keccak256("towns.diamond.facets.cut.storage");
 
   /// @notice Facet cut struct
   /// @param facet Set of facets

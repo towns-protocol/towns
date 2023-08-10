@@ -17,6 +17,8 @@
         "avoid-low-level-calls": "off",
         "no-console": "off",
         "func-name-mixedcase": "off",
-        "max-states-count": "off"
+        "max-states-count": "off",
+        "func-named-parameters": "off",
+        "no-unused-import": "off"
     }
 }

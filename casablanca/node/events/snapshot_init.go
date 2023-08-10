@@ -4,44 +4,46 @@ import (
 	. "casablanca/node/protocol"
 	"errors"
 	"fmt"
-
-	"google.golang.org/protobuf/types/known/emptypb"
 )
 
-func Make_EmptySnapshot() IsMiniblockHeader_Content {
-	return &MiniblockHeader_None{
-		None: &emptypb.Empty{},
+func Make_Snapshot(iPayload IsInceptionPayload) (*Snapshot, error) {
+	content, err := Make_SnapshotContent(iPayload)
+	if err != nil {
+		return nil, err
 	}
+	return &Snapshot{
+		Content: content,
+	}, nil
 }
 
-func Make_Snapshot(inceptionEvent *ParsedEvent) (IsMiniblockHeader_Content, error) {
-	if inceptionEvent.Event.GetInceptionPayload() == nil {
+func Make_SnapshotContent(iPayload IsInceptionPayload) (IsSnapshot_Content, error) {
+	if iPayload == nil {
 		return nil, errors.New("inceptionEvent is not an inception event")
 	}
 
-	switch payload := inceptionEvent.Event.GetInceptionPayload().(type) {
+	switch payload := iPayload.(type) {
 	case *SpacePayload_Inception:
-		return &MiniblockHeader_SpaceContent{
+		return &Snapshot_SpaceContent{
 			SpaceContent: make_Space_Snapshot(payload),
 		}, nil
 	case *ChannelPayload_Inception:
-		return &MiniblockHeader_ChannelContent{
+		return &Snapshot_ChannelContent{
 			ChannelContent: make_Channel_Snapshot(payload),
 		}, nil
 	case *UserPayload_Inception:
-		return &MiniblockHeader_UserContent{
+		return &Snapshot_UserContent{
 			UserContent: make_User_Snapshot(payload),
 		}, nil
 	case *UserSettingsPayload_Inception:
-		return &MiniblockHeader_UserSettingsContent{
+		return &Snapshot_UserSettingsContent{
 			UserSettingsContent: make_UserSettings_Snapshot(payload),
 		}, nil
 	case *UserDeviceKeyPayload_Inception:
-		return &MiniblockHeader_UserDeviceKeyContent{
+		return &Snapshot_UserDeviceKeyContent{
 			UserDeviceKeyContent: make_UserDeviceKey_Snapshot(payload),
 		}, nil
 	default:
-		return nil, fmt.Errorf("unknown inception payload type %T", inceptionEvent.Event.Payload)
+		return nil, fmt.Errorf("unknown inception payload type %T", iPayload)
 	}
 }
 

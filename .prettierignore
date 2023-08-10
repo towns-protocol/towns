@@ -17,6 +17,7 @@ contracts/out/*
 contracts/**/types/*
 contracts/docgen/*
 packages/contract/out
+contracts/coverage/*
 
 broadcast/*
 cache/*

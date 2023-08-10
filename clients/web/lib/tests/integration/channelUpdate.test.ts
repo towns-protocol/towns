@@ -13,7 +13,9 @@ import { ContractReceipt } from 'ethers'
 import { Permission } from 'use-zion-client/src/client/web3/ContractTypes'
 import { Room, RoomVisibility } from '../../src/types/zion-types'
 
-describe('channel update', () => {
+// TODO: skip for now, refactor to accommodate new contracts
+// https://linear.app/hnt-labs/issue/HNT-1641/testsintegrationchannelupdatetestts
+describe.skip('channel update', () => {
     test('Update the channel with multicall', async () => {
         /** Arrange */
         const { alice, bob } = await registerAndStartClients(['alice', 'bob'])

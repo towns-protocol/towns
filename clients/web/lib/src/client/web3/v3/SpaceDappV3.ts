@@ -1,35 +1,32 @@
 import { ChannelDetails, ChannelMetadata, Permission, RoleDetails } from '../ContractTypes'
 import { ContractTransaction, ethers } from 'ethers'
 import { CreateSpaceParams, ISpaceDapp, UpdateChannelParams, UpdateRoleParams } from '../ISpaceDapp'
-import { IStaticContractsInfoV3, getContractsInfoV3 } from './IStaticContractsInfoV3'
-import { ITownArchitectBase, ITownArchitectShim } from './ITownArchitectShim'
-import { SpaceDataTypes, SpaceShim } from '../shims/SpaceShim'
 import {
     fromChannelIdToChannelInfo,
     fromPermisisonsToRoleInfo,
     fromSpaceEntitlementsToMemberEntitlement,
 } from './ConvertersTownArchitect'
 
+import { ITownArchitectBase } from './ITownArchitectShim'
+import { SpaceDataTypes } from '../shims/SpaceShim'
 import { SpaceFactoryDataTypes } from '../shims/SpaceFactoryShim'
 import { SpaceInfo } from '../SpaceInfo'
+import { Town } from './Town'
+import { TownRegistrar } from './TownRegistrar'
+import { fromCreateRoleStructToCreateEntitlementStruct } from './ConvertersRoles'
+import { getContractsInfoV3 } from './IStaticContractsInfoV3'
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
 export class SpaceDappV3 implements ISpaceDapp {
     private readonly chainId: number
     private readonly provider: ethers.providers.Provider | undefined
-    private readonly contractsInfo: IStaticContractsInfoV3
-    private readonly townArchitect: ITownArchitectShim
+    private readonly townRegistrar: TownRegistrar
 
     constructor(chainId: number, provider: ethers.providers.Provider | undefined) {
         this.chainId = chainId
         this.provider = provider
-        this.contractsInfo = getContractsInfoV3(chainId)
-        this.townArchitect = new ITownArchitectShim(
-            this.contractsInfo.address,
-            this.contractsInfo.townArchitect.abi,
-            chainId,
-            provider,
-        )
+        const contractsInfo = getContractsInfoV3(chainId)
+        this.townRegistrar = new TownRegistrar(contractsInfo.address, chainId, provider)
     }
 
     public addRoleToChannel(
@@ -52,20 +49,24 @@ export class SpaceDappV3 implements ISpaceDapp {
             memberEntitlement: fromSpaceEntitlementsToMemberEntitlement(params.memberEntitlements),
             channel: fromChannelIdToChannelInfo(params.channelId),
         }
-        return this.townArchitect.write(signer).createTown(townInfo)
+        return this.townRegistrar.TownArchitect.write(signer).createTown(townInfo)
     }
 
-    public createChannel(
+    public async createChannel(
         spaceId: string,
         channelName: string,
         channelNetworkId: string,
         roleIds: number[],
         signer: ethers.Signer,
     ): Promise<ContractTransaction> {
-        throw new Error('Method not implemented.')
+        const town = await this.getTown(spaceId)
+        if (!town) {
+            throw new Error(`Town with spaceId "${spaceId}" is not found.`)
+        }
+        return town.Channels.write(signer).createChannel(channelNetworkId, channelName, roleIds)
     }
 
-    public createRole(
+    public async createRole(
         spaceId: string,
         roleName: string,
         permissions: Permission[],
@@ -73,7 +74,16 @@ export class SpaceDappV3 implements ISpaceDapp {
         users: string[],
         signer: ethers.Signer,
     ): Promise<ContractTransaction> {
-        throw new Error('Method not implemented.')
+        const town = await this.getTown(spaceId)
+        if (!town) {
+            throw new Error(`Town with spaceId "${spaceId}" is not found.`)
+        }
+        const entitlements = await fromCreateRoleStructToCreateEntitlementStruct(
+            town,
+            tokens,
+            users,
+        )
+        return town.Roles.write(signer).createRole(roleName, permissions, entitlements)
     }
 
     public deleteRole(
@@ -111,10 +121,6 @@ export class SpaceDappV3 implements ISpaceDapp {
         throw new Error('Method not implemented.')
     }
 
-    public getSpace(spaceId: string): Promise<SpaceShim | undefined> {
-        throw new Error('Method not implemented.')
-    }
-
     public getSpaceInfo(spaceId: string): Promise<SpaceInfo | undefined> {
         throw new Error('Method not implemented.')
     }
@@ -137,14 +143,18 @@ export class SpaceDappV3 implements ISpaceDapp {
     }
 
     public parseSpaceFactoryError(error: unknown): Error {
-        if (!this.townArchitect) {
+        if (!this.townRegistrar.TownArchitect) {
             throw new Error('TownArchitect is not deployed properly.')
         }
-        return this.townArchitect.parseError(error)
+        return this.townRegistrar.TownArchitect.parseError(error)
     }
 
-    public parseSpaceError(spaceId: string, error: unknown): Promise<Error> {
-        throw new Error('Method not implemented.')
+    public async parseSpaceError(spaceId: string, error: unknown): Promise<Error> {
+        const town = await this.getTown(spaceId)
+        if (!town) {
+            throw new Error(`Town with spaceId "${spaceId}" is not found.`)
+        }
+        return town.parseError(error)
     }
 
     public updateChannel(
@@ -176,5 +186,9 @@ export class SpaceDappV3 implements ISpaceDapp {
         signer: ethers.Signer,
     ): Promise<ContractTransaction> {
         throw new Error('Method not implemented.')
+    }
+
+    private async getTown(townId: string): Promise<Town | undefined> {
+        return this.townRegistrar.getTown(townId)
     }
 }
