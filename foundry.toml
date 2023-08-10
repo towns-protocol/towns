@@ -26,6 +26,16 @@
   goerli = { key = "${ETHERSCAN_API_KEY}" }
   sepolia = { key = "${ETHERSCAN_API_KEY}" }
 
+[fmt]
+  bracket_spacing = true
+  int_types = "long"
+  line_length = 120
+  multiline_func_header = "all"
+  number_underscore = "thousands"
+  quote_style = "double"
+  tab_width = 2
+  wrap_comments = true
+
 [rpc_endpoints]
   anvil = "http://127.0.0.1:8545"
   goerli = "${GOERLI_RPC_URL}"
