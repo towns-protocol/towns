@@ -4,7 +4,7 @@ import {
 } from '@towns/generated/goerli/v3/typings/IRoles'
 import {
     IRoles as LocalhostContract,
-    IRolesBase as LocalhostIRolesStructs,
+    IRolesBase as LocalhostIRolesBase,
     IRolesInterface as LocalhostInterface,
 } from '@towns/generated/localhost/v3/typings/IRoles'
 import {
@@ -21,7 +21,7 @@ import LocalhostAbi from '@towns/generated/localhost/v3/abis/Roles.abi.json' ass
 import SepoliaAbi from '@towns/generated/sepolia/v3/abis/Roles.abi.json' assert { type: 'json' }
 import { ethers } from 'ethers'
 
-export type { LocalhostIRolesStructs as IRolesStructs }
+export type { LocalhostIRolesBase as IRolesBase }
 
 export class IRolesShim extends BaseContractShimV3<
     LocalhostContract,

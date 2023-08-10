@@ -13,6 +13,7 @@ import { SpaceFactoryDataTypes } from '../shims/SpaceFactoryShim'
 import { SpaceInfo } from '../SpaceInfo'
 import { Town } from './Town'
 import { TownRegistrar } from './TownRegistrar'
+import { fromCreateRoleStructToCreateEntitlementStruct } from './ConvertersRoles'
 import { getContractsInfoV3 } from './IStaticContractsInfoV3'
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
@@ -65,7 +66,7 @@ export class SpaceDappV3 implements ISpaceDapp {
         return town.Channels.write(signer).createChannel(channelNetworkId, channelName, roleIds)
     }
 
-    public createRole(
+    public async createRole(
         spaceId: string,
         roleName: string,
         permissions: Permission[],
@@ -73,7 +74,16 @@ export class SpaceDappV3 implements ISpaceDapp {
         users: string[],
         signer: ethers.Signer,
     ): Promise<ContractTransaction> {
-        throw new Error('Method not implemented.')
+        const town = await this.getTown(spaceId)
+        if (!town) {
+            throw new Error(`Town with spaceId "${spaceId}" is not found.`)
+        }
+        const entitlements = await fromCreateRoleStructToCreateEntitlementStruct(
+            town,
+            tokens,
+            users,
+        )
+        return town.Roles.write(signer).createRole(roleName, permissions, entitlements)
     }
 
     public deleteRole(

@@ -4,7 +4,7 @@ import {
 } from '@towns/generated/goerli/v3/typings/IEntitlements'
 import {
     IEntitlements as LocalhostContract,
-    IEntitlementsBase as LocalhostIEntitlementsStructs,
+    IEntitlementsBase as LocalhostIEntitlementsBase,
     IEntitlementsInterface as LocalhostInterface,
 } from '@towns/generated/localhost/v3/typings/IEntitlements'
 import {
@@ -21,7 +21,7 @@ import LocalhostAbi from '@towns/generated/localhost/v3/abis/Entitlements.abi.js
 import SepoliaAbi from '@towns/generated/sepolia/v3/abis/Entitlements.abi.json' assert { type: 'json' }
 import { ethers } from 'ethers'
 
-export type { LocalhostIEntitlementsStructs as IEntitlementsStructs }
+export type { LocalhostIEntitlementsBase as IEntitlementsBase }
 
 export class IEntitlementsShim extends BaseContractShimV3<
     LocalhostContract,
