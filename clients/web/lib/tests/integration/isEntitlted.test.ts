@@ -8,6 +8,7 @@ import { Permission } from 'use-zion-client/src/client/web3/ContractTypes'
 import { RoomIdentifier } from '../../src/types/room-identifier'
 import { TestConstants } from './helpers/TestConstants'
 import { ZionTestClientProps } from './helpers/ZionTestClient'
+import { createUserIdFromString } from '../../src/types/user-identifier'
 
 describe.skip('isEntitledToSpace and isEntitledToChannel tests', () => {
     const withTestProps: ZionTestClientProps = {
@@ -63,5 +64,68 @@ describe.skip('isEntitledToSpace and isEntitledToChannel tests', () => {
         await expect(bob.joinRoom(spaceId)).rejects.toThrow(
             new RegExp('Unauthorised|PermissionDenied'),
         )
+    }) // end test
+
+    test('client checks isEntitledToSpace true', async () => {
+        /** Arrange */
+        // create all the users for the test
+        const { alice } = await registerAndStartClients(['alice'], withTestProps)
+        const bobWithNft = await registerAndStartClient(
+            'bobWithNft',
+            TestConstants.getWalletWithMemberNft(),
+            withTestProps,
+        )
+        // convert bob's userId into its wallet address
+        const bobUserId = bobWithNft.getUserId()
+        const bobAccountAddress = createUserIdFromString(bobUserId as string)
+            ?.accountAddress as string
+        // create a space with token entitlement to read & write
+        await alice.fundWallet()
+        const spaceId = (await createTestSpaceWithZionMemberRole(
+            alice,
+            [Permission.Read, Permission.Write],
+            [],
+        )) as RoomIdentifier
+
+        /** Act */
+        // test the user's entitlement to the space
+        const isEntitledToSpace = await bobWithNft.isEntitled(
+            spaceId.networkId,
+            undefined,
+            bobAccountAddress,
+            Permission.Read,
+        )
+
+        /** Assert */
+        expect(isEntitledToSpace).toBe(true)
+    }) // end test
+
+    test('client checks isEntitledToSpace false', async () => {
+        /** Arrange */
+        // create all the users for the test
+        const { alice, bob } = await registerAndStartClients(['alice', 'bob'], withTestProps)
+        // convert bob's userId into its wallet address
+        const bobUserId = bob.getUserId()
+        const bobAccountAddress = createUserIdFromString(bobUserId as string)
+            ?.accountAddress as string
+        // create a space with token entitlement to read & write
+        await alice.fundWallet()
+        const spaceId = (await createTestSpaceWithZionMemberRole(
+            alice,
+            [Permission.Read, Permission.Write],
+            [],
+        )) as RoomIdentifier
+
+        /** Act */
+        // test the user's entitlement to the space
+        const isEntitledToSpace = await bob.isEntitled(
+            spaceId.networkId,
+            undefined,
+            bobAccountAddress,
+            Permission.Read,
+        )
+
+        /** Assert */
+        expect(isEntitledToSpace).toBe(false)
     }) // end test
 })
