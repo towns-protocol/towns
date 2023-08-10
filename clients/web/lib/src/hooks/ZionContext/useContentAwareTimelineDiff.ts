@@ -408,6 +408,8 @@ function diffTimeline(
                 )
                 const resultDeleted = _diffDeleted(
                     roomId,
+                    userId,
+                    events,
                     timelineState.deletedEvents[roomId] ?? [],
                     prev.deletedEvents[roomId] ?? [],
                     updated,
@@ -433,18 +435,74 @@ function diffTimeline(
 //TODO: _diffDeleted is not implemented yet
 function _diffDeleted(
     roomId: string,
+    userId: string,
+    events: TimelineEvent[],
     deletedEvents: TimelineEvent[],
     prevDeletedEvents: TimelineEvent[],
     updated: { [key: string]: FullyReadMarker },
 ): { didUpdate: boolean } {
-    const diff = deletedEvents.length - prevDeletedEvents.length
-    if (diff > 0) {
-        //TODO: proper logic for handling deleted events is requried here
-        //TODO: console.log below should be removed - it is here to supress linter for a while
-        console.log(updated)
-        return { didUpdate: true }
+    if (!updated[roomId]) {
+        return { didUpdate: false }
     }
-    return { didUpdate: false }
+
+    const diff = deletedEvents.length - prevDeletedEvents.length
+    if (diff <= 0) {
+        return { didUpdate: false }
+    }
+    const markedReadAtTs = updated[roomId].markedReadAtTs
+    const markedUnreadAtTs = updated[roomId].markedUnreadAtTs
+
+    //Check is there are any unread messages - if no edits and redactions will not change mentions counts or unread flag
+    if (markedReadAtTs >= markedUnreadAtTs) {
+        return { didUpdate: false }
+    }
+    //We introduce this variable to avoid unnecessary updates of the state - it will be triggered to true only
+    //If below will make changes either in mentions counter or in unread state
+    let updateHappened = false
+
+    //First we process mentions update in the loop below
+    for (let i = deletedEvents.length - 1; i >= prevDeletedEvents.length; i--) {
+        const event = deletedEvents[i]
+        const originServerTs = event.originServerTs
+        //check this if (markedReadAtTs < markedUnreadAtTs && originServerTs > markedReadAtTs)
+        //if this condition below is false - there no updates for channel unread state and mentions count
+        //as currently processed event is in the read section
+        if (originServerTs > markedReadAtTs) {
+            //If event that we are deleting has mention - decrement mentions count for the channel
+            if (event.isMentioned) {
+                updated[roomId].mentions -= 1
+                updateHappened = true
+            }
+        }
+    }
+
+    //Next step is update fullyUnreadMarker for the channel
+    //We need to iterate over current message events backwards and if there are remaining with the timestamp later than markedReadAtTs - keep unread flag on
+    //One of the key factors here is that events array is sorted by timestamp
+    let newIsUnread = false
+    for (let i = events.length - 1; i >= 0; i--) {
+        //if event is not a message from user - skip it
+        if (!isCountedAsUnreadZTEvent(events[i], userId)) {
+            continue
+        }
+        //check this if (originServerTs > markedReadAtTs)
+        //if this condition below is false - there no updates for channel unread state and mentions count
+        //as currently processed event is in the read section
+        if (events[i].originServerTs > updated[roomId].markedReadAtTs) {
+            updated[roomId].eventId = events[i].eventId
+            updated[roomId].eventOriginServerTs = events[i].originServerTs
+            newIsUnread = true
+        } else {
+            //Stop if we are earlier than markedReadAtTs
+            break
+        }
+    }
+    if (updated[roomId].isUnread !== newIsUnread) {
+        updateHappened = true
+        updated[roomId].isUnread = newIsUnread
+    }
+
+    return { didUpdate: updateHappened }
 }
 
 function _diffReplaced(
