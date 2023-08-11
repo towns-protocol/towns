@@ -1,21 +1,21 @@
 import {
-    IChannel as GoerliContract,
-    IChannelInterface as GoerliInterface,
-} from '@towns/generated/goerli/v3/typings/IChannel'
+    OwnableFacet as GoerliContract,
+    OwnableFacetInterface as GoerliInterface,
+} from '@towns/generated/goerli/v3/typings/OwnableFacet'
 import {
     OwnableFacet as LocalhostContract,
     OwnableFacetInterface as LocalhostInterface,
 } from '@towns/generated/localhost/v3/typings/OwnableFacet'
 import {
-    IChannel as SepoliaContract,
-    IChannelInterface as SepoliaInterface,
-} from '@towns/generated/sepolia/v3/typings/IChannel'
+    OwnableFacet as SepoliaContract,
+    OwnableFacetInterface as SepoliaInterface,
+} from '@towns/generated/sepolia/v3/typings/OwnableFacet'
 
-import GoerliAbi from '@towns/generated/goerli/v3/abis/Channels.abi.json' assert { type: 'json' }
+import GoerliAbi from '@towns/generated/goerli/v3/abis/OwnableFacet.abi.json' assert { type: 'json' }
 
-import LocalhostAbi from '@towns/generated/localhost/v3/abis/Channels.abi.json' assert { type: 'json' }
+import LocalhostAbi from '@towns/generated/localhost/v3/abis/OwnableFacet.abi.json' assert { type: 'json' }
 
-import SepoliaAbi from '@towns/generated/sepolia/v3/abis/Channels.abi.json' assert { type: 'json' }
+import SepoliaAbi from '@towns/generated/sepolia/v3/abis/OwnableFacet.abi.json' assert { type: 'json' }
 import { ethers } from 'ethers'
 
 import { BaseContractShimV3 } from './BaseContractShimV3'

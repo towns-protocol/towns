@@ -121,8 +121,22 @@ export class SpaceDappV3 implements ISpaceDapp {
         throw new Error('Method not implemented.')
     }
 
-    public getSpaceInfo(spaceId: string): Promise<SpaceInfo | undefined> {
-        throw new Error('Method not implemented.')
+    public async getSpaceInfo(spaceId: string): Promise<SpaceInfo | undefined> {
+        const town = await this.getTown(spaceId)
+        if (!town) {
+            throw new Error(`Town with spaceId "${spaceId}" is not found.`)
+        }
+        const [owner, disabled] = await Promise.all([
+            town.Ownable.read.owner(),
+            town.Pausable.read.paused(),
+        ])
+        return {
+            address: town.Address,
+            networkId: town.SpaceId,
+            name: '',
+            owner,
+            disabled,
+        }
     }
 
     public async isEntitledToSpace(
