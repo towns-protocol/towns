@@ -79,6 +79,12 @@ func StartServer(ctx context.Context, cfg *config.Config) (func(), int, error) {
 
 	log.Info("Listening", "addr", address+pattern)
 	log.Info("Using DB", "url", cfg.DbUrl)
+	if cfg.UseContract {
+		log.Info("Using chain", "id", cfg.Chain.ChainId)
+	} else {
+		log.Info("Running Without Entitlements")
+	}
+	log.Info("Available on port", "port", actualPort)
 	return closer, actualPort, nil
 }
 
