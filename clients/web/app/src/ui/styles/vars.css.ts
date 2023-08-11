@@ -214,7 +214,7 @@ const root = createGlobalTheme(':root', {
         },
 
         toolbar: {
-            toolbar_icon: `${baseline * 2.5}px`,
+            toolbar_icon: `${baseline * 3}px`,
         },
 
         input: {

@@ -13,6 +13,8 @@ export const border = {
     strongLevel1: `2px solid ${vars.color.background.level1}`,
     inverted: `1px solid ${vars.color.text.inverted}`,
     negative: `0.5px solid ${vars.color.background.negative}`,
+    iconHighlighted: `2px solid ${vars.color.foreground.default}`,
+    iconIdle: `2px solid ${vars.color.foreground.gray2}`,
 } as const
 
 export const aspectRatio = {

@@ -1,7 +1,7 @@
 import React, { useCallback } from 'react'
-import { useMyProfile, useSpaceData } from 'use-zion-client'
+import { useMyProfile, useSpaceData, useSpaceUnread } from 'use-zion-client'
 import { useLocation, useNavigate, useResolvedPath } from 'react-router'
-import { Avatar, Box, Icon, Stack, Text } from '@ui'
+import { Avatar, Box, Dot, Icon, Stack, Text } from '@ui'
 import { SpaceIcon } from '@components/SpaceIcon'
 import { ImageVariants } from '@components/UploadImage/useImageSource'
 import { PATHS } from 'routes'
@@ -9,6 +9,7 @@ import { PATHS } from 'routes'
 export const TouchTabBar = () => {
     const space = useSpaceData()
     const userId = useMyProfile()?.userId
+    const hasUnread = useSpaceUnread()
     if (!space) {
         return null
     }
@@ -19,12 +20,10 @@ export const TouchTabBar = () => {
                 <TabBarItem
                     title="Home"
                     icon={(highlighted: boolean) => (
-                        <Box
-                            background={highlighted ? 'transparentBright' : 'none'}
-                            rounded="sm"
-                            padding="xxs"
-                        >
+                        <Box>
                             <SpaceIcon
+                                border={highlighted ? 'iconHighlighted' : 'iconIdle'}
+                                inset="xxs"
                                 width="toolbar_icon"
                                 height="toolbar_icon"
                                 spaceId={space?.id.slug}
@@ -33,6 +32,7 @@ export const TouchTabBar = () => {
                                 variant={ImageVariants.thumbnail50}
                                 fadeIn={false}
                             />
+                            {hasUnread && <Dot />}
                         </Box>
                     )}
                     to={`/${PATHS.SPACES}/${space.id.slug}/`}
@@ -50,11 +50,7 @@ export const TouchTabBar = () => {
                 <TabBarItem
                     title="You"
                     icon={(highlighted) => (
-                        <Box
-                            rounded="full"
-                            background={highlighted ? 'transparentBright' : 'none'}
-                            padding="xxs"
-                        >
+                        <Box rounded="full" border={highlighted ? 'iconHighlighted' : 'iconIdle'}>
                             <Avatar size="toolbar_icon" userId={userId} />
                         </Box>
                     )}
@@ -92,7 +88,7 @@ const TabBarItem = (props: TabBarItemProps) => {
             gap="xs"
             onClick={onClick}
         >
-            <Box centerContent height="height_md">
+            <Box centerContent height="height_md" width="height_md" position="relative">
                 {icon(isHighlighted)}
             </Box>
             <Text fontSize="xs" fontWeight="strong">
