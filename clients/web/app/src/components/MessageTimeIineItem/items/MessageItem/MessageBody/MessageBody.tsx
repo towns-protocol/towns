@@ -7,6 +7,7 @@ import { getMessageBody, getUrls } from 'utils/ztevent_util'
 import { RatioedBackgroundImage } from '@components/RatioedBackgroundImage'
 import { Paragraph, Stack } from '@ui'
 import { MessageStatusAnnotation } from '@components/RichText/hooks/useInitialConfig'
+import { useDevice } from 'hooks/useDevice'
 import { useUnfurlContent } from '../../../../../api/lib/unfurl'
 import { UnfurledTwitterBlock } from './UnfurledTwitterBlock'
 import { UnfurledGenericBlock } from './UnfurledGenericBlock'
@@ -54,6 +55,7 @@ export const MessageBody = ({
 }: Props) => {
     const body = getMessageBody(event.eventId, eventContent)
     const urls = getUrls(body)
+    const { isTouch } = useDevice()
 
     const { data: unfurledContent, isError } = useUnfurlContent({
         urlsArray: urls,
@@ -77,7 +79,7 @@ export const MessageBody = ({
                 members={members}
                 channels={channels}
                 onMentionClick={onMentionClick}
-                onMentionHover={onMentionHover}
+                onMentionHover={isTouch ? undefined : onMentionHover}
             />
 
             {invalidContent
