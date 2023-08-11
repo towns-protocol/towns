@@ -53,8 +53,9 @@ export const AuthenticatedRoutes = () => {
             <Route path={`${PATHS.SPACES}/:spaceSlug`} element={<SpaceOutlet />}>
                 {isTouch ? (
                     <>
-                        <Route index element={<TouchHome />} />
-                        <Route path="info" element={<InfoPanelWrapper />} />
+                        <Route path="" element={<TouchHome />}>
+                            <Route path="info" element={<InfoPanelWrapper />} />
+                        </Route>
                         <Route path={`${PATHS.PROFILE}/:profileId`} element={<TouchProfile />} />
                     </>
                 ) : (
