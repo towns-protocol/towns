@@ -3,8 +3,10 @@ package events
 import (
 	"bytes"
 	. "casablanca/node/base"
+	. "casablanca/node/crypto"
 	. "casablanca/node/protocol"
 	. "casablanca/node/utils"
+	"encoding/hex"
 	"fmt"
 	"os"
 	"runtime/debug"
@@ -15,10 +17,19 @@ type StreamView interface {
 	StreamId() string
 	InceptionEvent() *ParsedEvent
 	InceptionPayload() IsInceptionPayload
-	JoinedUsers() (map[string]struct{}, error)
 	LastEvent() *ParsedEvent
 	Envelopes() []*Envelope
 	SyncCookie() *SyncCookie
+}
+
+type JoinableStreamView interface {
+	StreamView
+	JoinedUsers() (map[string]struct{}, error)
+}
+
+type UserDeviceStreamView interface {
+	StreamView
+	RiverDeviceKeys() (map[[TOWNS_HASH_SIZE]byte]struct{}, error)
 }
 
 var debugLogMutex = &sync.Mutex{}
@@ -343,6 +354,42 @@ func (r *streamViewImpl) JoinedUsers() (map[string]struct{}, error) {
 	})
 
 	return users, nil
+}
+
+func (r *streamViewImpl) RiverDeviceIds() (map[[TOWNS_HASH_SIZE]byte]interface{}, error) {
+	ids := make(map[[TOWNS_HASH_SIZE]byte]interface{})
+
+	_ = r.forEachEvent(0, func(e *ParsedEvent) (bool, error) {
+		switch payload := e.Event.Payload.(type) {
+		case *StreamEvent_UserDeviceKeyPayload:
+			switch devicePayload := payload.UserDeviceKeyPayload.Content.(type) {
+			case *UserDeviceKeyPayload_UserDeviceKey_:
+				if deviceKeys := devicePayload.UserDeviceKey.GetDeviceKeys(); ids != nil {
+					deviceId, err := hex.DecodeString(deviceKeys.DeviceId)
+					if err != nil {
+						return false, err
+					}
+					if len(deviceId) != TOWNS_HASH_SIZE {
+						return false, RpcErrorf(Err_BAD_ARGS, "riverDeviceIds: bad deviceId, deviceId=%v", deviceId)
+					}
+					rdkId := [TOWNS_HASH_SIZE]byte(deviceId)
+					switch devicePayload.UserDeviceKey.GetRiverKeyOp() {
+					case RiverKeyOp_RDKO_KEY_REGISTER:
+						ids[rdkId] = struct{}{}
+					case RiverKeyOp_RDKO_KEY_REVOKE:
+						delete(ids, rdkId)
+					default:
+						break
+					}
+				}
+			}
+		default:
+			break
+		}
+		return true, nil
+	})
+
+	return ids, nil
 }
 
 func (r *streamViewImpl) LastEvent() *ParsedEvent {

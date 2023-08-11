@@ -2,6 +2,7 @@ package rpc
 
 import (
 	"context"
+	"encoding/hex"
 
 	connect_go "github.com/bufbuild/connect-go"
 	"google.golang.org/grpc/codes"
@@ -9,6 +10,7 @@ import (
 
 	"casablanca/node/auth"
 	"casablanca/node/common"
+	"casablanca/node/crypto"
 	. "casablanca/node/events"
 	"casablanca/node/infra"
 	. "casablanca/node/protocol"
@@ -108,11 +110,17 @@ func (s *Service) addParsedEvent(ctx context.Context, streamId string, parsedEve
 			return status.Errorf(codes.InvalidArgument, "AddEvent: User event has no valid payload for type %T", payload.UserPayload.Content)
 		}
 	case *StreamEvent_UserDeviceKeyPayload:
-		switch payload.UserDeviceKeyPayload.Content.(type) {
+		switch userDevicePayload := payload.UserDeviceKeyPayload.Content.(type) {
 		case *UserDeviceKeyPayload_Inception_:
 			return status.Errorf(codes.InvalidArgument, "AddEvent: event is an inception event")
 		case *UserDeviceKeyPayload_UserDeviceKey_:
-			_, err = stream.AddEvent(ctx, parsedEvent)
+			if userDevicePayload.UserDeviceKey.RiverKeyOp != nil {
+				// RDK registration/revoke has to be done directly by the user
+				if len(parsedEvent.Event.DelegateSig) > 0 {
+					return status.Errorf(codes.InvalidArgument, "AddEvent: RiverDeviceKey event cannot be delegated")
+				}
+			}
+			err = s.addUserDeviceKeyEvent(ctx, stream, streamView, parsedEvent, userDevicePayload.UserDeviceKey)
 			return err
 		default:
 			return status.Errorf(codes.InvalidArgument, "AddEvent: UserDeviceKey event has no valid payload for type %T", payload.UserDeviceKeyPayload.Content)
@@ -174,7 +182,8 @@ func (s *Service) addChannelMessage(ctx context.Context, stream *Stream, view St
 	return err
 }
 
-func (s *Service) checkMembership(ctx context.Context, view StreamView, userId string) (bool, error) {
+func (s *Service) checkMembership(ctx context.Context, streamView StreamView, userId string) (bool, error) {
+	view := streamView.(JoinableStreamView)
 	members, err := view.JoinedUsers()
 	if err != nil {
 		return false, status.Errorf(codes.Internal, "AddEvent: error getting joined users: %v", err)
@@ -303,5 +312,76 @@ func (s *Service) addDerivedMembershipEventToUserStream(ctx context.Context, use
 		return err
 	}
 	_, err = userStream.AddEvent(ctx, userStreamEvent)
+	return err
+}
+
+func (s *Service) checkUserDeviceKeyEvent(ctx context.Context,
+	stream *Stream,
+	streamView StreamView,
+	parsedEvent *ParsedEvent) error {
+	// only creator is allowed to add to user device key stream
+	creator, err := common.AddressHex(parsedEvent.Event.CreatorAddress)
+	if err != nil {
+		return status.Errorf(codes.InvalidArgument, "AddEvent: invalid user id: %v", err)
+	}
+	deviceStreamId, err := common.UserDeviceKeyStreamIdFromId(creator)
+	if err != nil {
+		return status.Errorf(codes.InvalidArgument, "AddEvent: invalid user id: %v", err)
+	}
+	if streamView.StreamId() != deviceStreamId {
+		return status.Errorf(codes.InvalidArgument, "AddEvent: only creator is allowed to add to user device key stream")
+	}
+
+	return err
+}
+
+func (s *Service) checkRiverKeyManagementEvent(ctx context.Context, stream *Stream, streamView StreamView, parsedEvent *ParsedEvent, payload *UserDeviceKeyPayload_UserDeviceKey) error {
+	if payload.RiverKeyOp == nil {
+		return nil
+	}
+	if payload.DeviceKeys == nil {
+		return status.Errorf(codes.InvalidArgument, "AddEvent: river key op requires device keys")
+	}
+	deviceId := payload.GetDeviceKeys().DeviceId
+	rdkId, err := hex.DecodeString(deviceId)
+	if err != nil {
+		return status.Errorf(codes.InvalidArgument, "AddEvent: invalid river device key id: %v", err)
+	}
+	if len(rdkId) != crypto.TOWNS_HASH_SIZE {
+		return status.Errorf(codes.InvalidArgument, "AddEvent: invalid river device key id")
+	}
+
+	view := streamView.(UserDeviceStreamView)
+	switch payload.GetRiverKeyOp() {
+	case RiverKeyOp_RDKO_KEY_REGISTER:
+		{
+			keys, err := view.RiverDeviceKeys()
+			if err != nil {
+				return status.Errorf(codes.Internal, "AddEvent: error getting river device keys: %v", err)
+			}
+			rdkid := [crypto.TOWNS_HASH_SIZE]byte(rdkId)
+			_, ok := keys[rdkid]
+			if ok {
+				return status.Errorf(codes.InvalidArgument, "AddEvent: river device key already registered")
+			}
+		}
+	case RiverKeyOp_RDKO_KEY_REVOKE:
+		{
+			// Allow revoking even if the key is not registered
+		}
+	}
+	return nil
+}
+
+func (s *Service) addUserDeviceKeyEvent(ctx context.Context, stream *Stream, streamView StreamView, parsedEvent *ParsedEvent, payload *UserDeviceKeyPayload_UserDeviceKey) error {
+	err := s.checkUserDeviceKeyEvent(ctx, stream, streamView, parsedEvent)
+	if err != nil {
+		return err
+	}
+	err = s.checkRiverKeyManagementEvent(ctx, stream, streamView, parsedEvent, payload)
+	if err != nil {
+		return err
+	}
+	_, err = stream.AddEvent(ctx, parsedEvent)
 	return err
 }

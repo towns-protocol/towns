@@ -7,22 +7,27 @@ import { CONTRACT_ERROR, NoThrownError, getError } from './helpers/ErrorUtils'
 import {
     createTestSpaceWithEveryoneRole,
     createTestSpaceWithZionMemberRole,
-    registerAndStartClients,
-    registerAndStartClient,
     getPrimaryProtocol,
+    registerAndStartClient,
+    registerAndStartClients,
 } from 'use-zion-client/tests/integration/helpers/TestUtils'
 
 import { Permission } from 'use-zion-client/src/client/web3/ContractTypes'
 import { RoomVisibility } from 'use-zion-client/src/types/zion-types'
-import { TestConstants } from './helpers/TestConstants'
-import { waitFor } from '@testing-library/react'
 import { SpaceProtocol } from '../../src/client/ZionClientTypes'
+import { TestConstants } from './helpers/TestConstants'
+import { ZionTestClientProps } from './helpers/ZionTestClient'
+import { waitFor } from '@testing-library/react'
 
 describe('disable channel', () => {
+    const withTestProps: ZionTestClientProps = {
+        smartContractVersion: '', // use v3 for the new TownArchitect. work-in-progress.
+    }
+
     test('Space owner is allowed to disable space access', async () => {
         /** Arrange */
 
-        const { alice } = await registerAndStartClients(['alice'])
+        const { alice } = await registerAndStartClients(['alice'], withTestProps)
         await alice.fundWallet()
 
         const roomId = await createTestSpaceWithZionMemberRole(alice, [Permission.Read])
@@ -46,7 +51,7 @@ describe('disable channel', () => {
     test('Space owner is allowed to re-enable disabled space access', async () => {
         /** Arrange */
 
-        const { alice } = await registerAndStartClients(['alice'])
+        const { alice } = await registerAndStartClients(['alice'], withTestProps)
         await alice.fundWallet()
 
         const roomId = await createTestSpaceWithZionMemberRole(alice, [Permission.Read])
@@ -79,7 +84,7 @@ describe('disable channel', () => {
     test('Space member is not allowed to disable space access', async () => {
         /** Arrange */
 
-        const { alice, bob } = await registerAndStartClients(['alice', 'bob'])
+        const { alice, bob } = await registerAndStartClients(['alice', 'bob'], withTestProps)
         await alice.fundWallet()
         await bob.fundWallet()
 
@@ -95,7 +100,9 @@ describe('disable channel', () => {
         // check that the returned error wasn't that no error was thrown.
         expect(error).not.toBeInstanceOf(NoThrownError)
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-        expect(error).toHaveProperty('name', CONTRACT_ERROR.NotAllowed)
+        expect(error).toHaveProperty('name')
+        const regEx = new RegExp(`${CONTRACT_ERROR.NotAllowed}|${CONTRACT_ERROR.NotOwner}`)
+        expect(error.name).toMatch(regEx)
     })
 
     test('Channel member cant sync disabled room messages', async () => {
@@ -110,8 +117,9 @@ describe('disable channel', () => {
         const tokenGrantedUser = await registerAndStartClient(
             'tokenGrantedUser',
             TestConstants.getWalletWithMemberNft(),
+            withTestProps,
         )
-        const { bob } = await registerAndStartClients(['bob'])
+        const { bob } = await registerAndStartClients(['bob'], withTestProps)
         await bob.fundWallet()
 
         // create a space with token entitlement to write
@@ -163,7 +171,7 @@ describe('disable channel', () => {
         /** Arrange */
 
         // create all the users for the test
-        const { bob, alice } = await registerAndStartClients(['bob', 'alice'])
+        const { bob, alice } = await registerAndStartClients(['bob', 'alice'], withTestProps)
         await bob.fundWallet()
         const roomId = await createTestSpaceWithEveryoneRole(
             bob,

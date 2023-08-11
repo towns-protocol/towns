@@ -69,7 +69,8 @@
           "GatewayWorker",
           "PushNotificationsWorker",
           "Dendrite (from source)",
-          "Casablanca"
+          "Casablanca",
+          "Casablanca-No-Entitlements"
         ],
         "group": {
           "kind": "build",
@@ -81,6 +82,7 @@
         "label": "~Start Local Dev Casablanca Only~",
         "dependsOn": [
           "Casablanca",
+          "Casablanca-No-Entitlements",
           "Anvil",
           "DeployZionGovernance",
           "WatchCasablancaSdk",
@@ -121,6 +123,16 @@
         "label": "CheckNodeVersion",
         "type": "shell",
         "command": "./scripts/check-node-version.sh",
+        "isBackground": true,
+        "problemMatcher": [],
+        "presentation": {
+          "group": "ephemeral"
+        }
+      },
+      {
+        "label": "DummyTask",
+        "type": "shell",
+        "command": "echo 'Dummy task... sometimes this is just needed.'",
         "isBackground": true,
         "problemMatcher": [],
         "presentation": {
@@ -176,6 +188,50 @@
         "presentation": {
           "group": "local-servers"
         }
+      },
+      {
+        "label": "Casablanca-No-Entitlements",
+        "type": "shell",
+        "command": "./scripts/wait-for-casablanca.sh && yarn run --top-level csb:start:no-entitlements",
+        "isBackground": true,
+        "problemMatcher": [],
+        "presentation": {
+          "group": "local-servers"
+        }
+      },
+      {
+        "label": "Stop Casablanca",
+        "type": "shell",
+        "command": "./casablanca/scripts/stop_node.sh",
+        "isBackground": true,
+        "problemMatcher": [],
+        "presentation": {
+          "group": "local-servers"
+        }
+      },
+      {
+        "label": "Both Casablancas",
+        "dependsOn": [
+          "Casablanca",
+          "Casablanca-No-Entitlements"
+        ],
+        "group": {
+          "kind": "build",
+        },
+        "problemMatcher": [],
+      },
+      {
+        "label": "Restart Casablanca",
+        "dependsOn": [
+          "Stop Casablanca",
+          "DummyTask",
+          "Both Casablancas"
+        ],
+        "group": {
+          "kind": "build",
+        },
+        "dependsOrder": "sequence",
+        "problemMatcher": [],
       },
       {
         "label": "Anvil",

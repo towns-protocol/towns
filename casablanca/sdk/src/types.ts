@@ -25,6 +25,8 @@ import {
     ChannelMessage_Post_Mention,
     MegolmSession,
     KeyResponseKind,
+    ChannelMessage_Post_Content_Image_Info,
+    ChannelMessage_Post,
 } from '@river/proto'
 import { keccak256 } from 'ethereum-cryptography/keccak'
 import { isDefined } from './check'
@@ -106,6 +108,83 @@ export const make_ChannelMessage_Post_Content_Text = (
                     mentions: mentionsPayload,
                 },
             },
+        },
+    }
+}
+
+export const make_ChannelMessage_Post_Content_Image = (
+    title: string,
+    info: PlainMessage<ChannelMessage_Post_Content_Image_Info>,
+    thumbnail?: PlainMessage<ChannelMessage_Post_Content_Image_Info>,
+): PlainMessage<ChannelMessage>['payload'] => {
+    return {
+        case: 'post',
+        value: {
+            content: {
+                case: 'image',
+                value: {
+                    title,
+                    info,
+                    thumbnail,
+                },
+            },
+        },
+    }
+}
+
+export const make_ChannelMessage_Post_Content_GM = (
+    typeUrl: string,
+    value?: Uint8Array,
+): PlainMessage<ChannelMessage>['payload'] => {
+    return {
+        case: 'post',
+        value: {
+            content: {
+                case: 'gm',
+                value: {
+                    typeUrl,
+                    value,
+                },
+            },
+        },
+    }
+}
+
+export const make_ChannelMessage_Reaction = (
+    refEventId: string,
+    reaction: string,
+): PlainMessage<ChannelMessage>['payload'] => {
+    return {
+        case: 'reaction',
+        value: {
+            refEventId,
+            reaction,
+        },
+    }
+}
+
+export const make_ChannelMessage_Edit = (
+    refEventId: string,
+    post: PlainMessage<ChannelMessage_Post>,
+): PlainMessage<ChannelMessage>['payload'] => {
+    return {
+        case: 'edit',
+        value: {
+            refEventId,
+            post,
+        },
+    }
+}
+
+export const make_ChannelMessage_Redaction = (
+    refEventId: string,
+    reason?: string,
+): PlainMessage<ChannelMessage>['payload'] => {
+    return {
+        case: 'redaction',
+        value: {
+            refEventId,
+            reason,
         },
     }
 }

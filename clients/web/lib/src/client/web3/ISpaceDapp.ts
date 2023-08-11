@@ -1,7 +1,13 @@
+import {
+    BasicRoleInfo,
+    ChannelDetails,
+    ChannelMetadata,
+    Permission,
+    RoleDetails,
+} from './ContractTypes'
 import { ContractTransaction, ethers } from 'ethers'
-import { ChannelDetails, ChannelMetadata, Permission, RoleDetails } from './ContractTypes'
-import { SpaceDataTypes } from './shims/SpaceShim'
 
+import { SpaceDataTypes } from './shims/SpaceShim'
 import { SpaceFactoryDataTypes } from './shims/SpaceFactoryShim'
 import { SpaceInfo } from './SpaceInfo'
 import { TokenDataTypes } from './shims/TokenEntitlementShim'
@@ -65,7 +71,7 @@ export interface ISpaceDapp {
     getChannelDetails: (spaceId: string, channelId: string) => Promise<ChannelDetails | null>
     getPermissionsByRoleId: (spaceId: string, roleId: number) => Promise<Permission[]>
     getRole: (spaceId: string, roleId: number) => Promise<RoleDetails | null>
-    getRoles: (spaceId: string) => Promise<SpaceDataTypes.RoleStructOutput[]>
+    getRoles: (spaceId: string) => Promise<BasicRoleInfo[]>
     getRolesByChannel: (
         spaceId: string,
         channelNetworkId: string,

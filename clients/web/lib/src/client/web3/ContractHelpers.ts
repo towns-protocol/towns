@@ -1,3 +1,4 @@
+import { BasicRoleInfo } from './ContractTypes'
 import { SpaceDataTypes } from './shims/SpaceShim'
 import { TokenDataTypes } from './shims/TokenEntitlementShim'
 import { ZionClient } from '../ZionClient'
@@ -61,9 +62,9 @@ export function createUserEntitlementStruct(
 export async function getFilteredRolesFromSpace(
     client: ZionClient,
     spaceNetworkId: string,
-): Promise<SpaceDataTypes.RoleStructOutput[]> {
+): Promise<BasicRoleInfo[]> {
     const spaceRoles = await client.spaceDapp.getRoles(spaceNetworkId)
-    const filteredRoles: SpaceDataTypes.RoleStructOutput[] = []
+    const filteredRoles: BasicRoleInfo[] = []
     // Filter out space roles which won't work when creating a channel
     for (const r of spaceRoles) {
         // Filter out roles which have no permissions & the Owner role

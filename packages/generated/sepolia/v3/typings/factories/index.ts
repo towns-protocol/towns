@@ -4,10 +4,10 @@
 export { IChannel__factory } from "./IChannel__factory";
 export { IDiamond__factory } from "./IDiamond__factory";
 export { IDiamondCut__factory } from "./IDiamondCut__factory";
-export { IERC721__factory } from "./IERC721__factory";
 export { IEntitlements__factory } from "./IEntitlements__factory";
 export { IPausable__factory } from "./IPausable__factory";
 export { IProxyManager__factory } from "./IProxyManager__factory";
 export { IRoles__factory } from "./IRoles__factory";
 export { ITownArchitect__factory } from "./ITownArchitect__factory";
-export { Permissions__factory } from "./Permissions__factory";
+export { OwnableFacet__factory } from "./OwnableFacet__factory";
+export { TokenPausableFacet__factory } from "./TokenPausableFacet__factory";

@@ -1,4 +1,4 @@
-port: 5157
+port: 5158
 dburl: postgres://postgres:postgres@localhost:5433/casablanca?sslmode=disable&pool_max_conns=1000
 address:
 useContract: false

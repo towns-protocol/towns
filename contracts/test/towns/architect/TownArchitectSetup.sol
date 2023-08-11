@@ -3,8 +3,7 @@ pragma solidity ^0.8.20;
 
 // interfaces
 import {IDiamond, Diamond} from "contracts/src/diamond/Diamond.sol";
-import {ITownArchitect, ITownArchitectBase} from "contracts/src/towns/facets/architect/ITownArchitect.sol";
-import {ITokenEntitlement} from "contracts/src/towns/entitlements/token/ITokenEntitlement.sol";
+import {ITownArchitect} from "contracts/src/towns/facets/architect/ITownArchitect.sol";
 
 // contracts
 import {FacetHelper, FacetTest} from "contracts/test/diamond/Facet.t.sol";

@@ -1,4 +1,10 @@
-import { ChannelDetails, ChannelMetadata, Permission, RoleDetails } from '../ContractTypes'
+import {
+    BasicRoleInfo,
+    ChannelDetails,
+    ChannelMetadata,
+    Permission,
+    RoleDetails,
+} from '../ContractTypes'
 import { ContractTransaction, ethers } from 'ethers'
 import { CreateSpaceParams, ISpaceDapp, UpdateChannelParams, UpdateRoleParams } from '../ISpaceDapp'
 import {
@@ -7,6 +13,7 @@ import {
     fromSpaceEntitlementsToMemberEntitlement,
 } from './ConvertersTownArchitect'
 
+import { IRolesBase } from './IRolesShim'
 import { ITownArchitectBase } from './ITownArchitectShim'
 import { SpaceDataTypes } from '../shims/SpaceShim'
 import { SpaceFactoryDataTypes } from '../shims/SpaceFactoryShim'
@@ -110,8 +117,16 @@ export class SpaceDappV3 implements ISpaceDapp {
         throw new Error('Method not implemented.')
     }
 
-    public getRoles(spaceId: string): Promise<SpaceDataTypes.RoleStructOutput[]> {
-        throw new Error('Method not implemented.')
+    public async getRoles(spaceId: string): Promise<BasicRoleInfo[]> {
+        const town = await this.getTown(spaceId)
+        if (!town) {
+            throw new Error(`Town with spaceId "${spaceId}" is not found.`)
+        }
+        const roles: IRolesBase.RoleStructOutput[] = await town.Roles.read.getRoles()
+        return roles.map((role) => ({
+            roleId: role.id,
+            name: role.name,
+        }))
     }
 
     public getRolesByChannel(
@@ -121,25 +136,47 @@ export class SpaceDappV3 implements ISpaceDapp {
         throw new Error('Method not implemented.')
     }
 
-    public getSpaceInfo(spaceId: string): Promise<SpaceInfo | undefined> {
-        throw new Error('Method not implemented.')
+    public async getSpaceInfo(spaceId: string): Promise<SpaceInfo | undefined> {
+        const town = await this.getTown(spaceId)
+        if (!town) {
+            throw new Error(`Town with spaceId "${spaceId}" is not found.`)
+        }
+        const [owner, disabled] = await Promise.all([
+            town.Ownable.read.owner(),
+            town.Pausable.read.paused(),
+        ])
+        return {
+            address: town.Address,
+            networkId: town.SpaceId,
+            name: '',
+            owner,
+            disabled,
+        }
     }
 
-    public isEntitledToSpace(
+    public async isEntitledToSpace(
         spaceId: string,
         user: string,
         permission: Permission,
     ): Promise<boolean> {
-        throw new Error('Method not implemented.')
+        const town = await this.getTown(spaceId)
+        if (!town) {
+            throw new Error(`Town with spaceId "${spaceId}" is not found.`)
+        }
+        return town.Entitlements.read.isEntitledToTown(user, permission)
     }
 
-    public isEntitledToChannel(
+    public async isEntitledToChannel(
         spaceId: string,
         channelId: string,
         user: string,
         permission: Permission,
     ): Promise<boolean> {
-        throw new Error('Method not implemented.')
+        const town = await this.getTown(spaceId)
+        if (!town) {
+            throw new Error(`Town with spaceId "${spaceId}" is not found.`)
+        }
+        return town.Entitlements.read.isEntitledToChannel(channelId, user, permission)
     }
 
     public parseSpaceFactoryError(error: unknown): Error {
@@ -171,21 +208,33 @@ export class SpaceDappV3 implements ISpaceDapp {
         throw new Error('Method not implemented.')
     }
 
-    public setSpaceAccess(
+    public async setSpaceAccess(
         spaceId: string,
         disabled: boolean,
         signer: ethers.Signer,
     ): Promise<ContractTransaction> {
-        throw new Error('Method not implemented.')
+        const town = await this.getTown(spaceId)
+        if (!town) {
+            throw new Error(`Town with spaceId "${spaceId}" is not found.`)
+        }
+        if (disabled) {
+            return town.Pausable.write(signer).pause()
+        } else {
+            return town.Pausable.write(signer).unpause()
+        }
     }
 
-    public setChannelAccess(
+    public async setChannelAccess(
         spaceId: string,
         channelId: string,
         disabled: boolean,
         signer: ethers.Signer,
     ): Promise<ContractTransaction> {
-        throw new Error('Method not implemented.')
+        const town = await this.getTown(spaceId)
+        if (!town) {
+            throw new Error(`Town with spaceId "${spaceId}" is not found.`)
+        }
+        return town.Channels.write(signer).updateChannel(channelId, '', disabled)
     }
 
     private async getTown(townId: string): Promise<Town | undefined> {

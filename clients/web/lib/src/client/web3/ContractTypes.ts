@@ -1,3 +1,4 @@
+import { BigNumber } from 'ethers'
 import { TokenDataTypes } from './shims/TokenEntitlementShim'
 
 /**
@@ -67,4 +68,9 @@ export interface RoleEntitlements {
     permissions: Permission[]
     tokens: TokenDataTypes.ExternalTokenStruct[]
     users: string[]
+}
+
+export interface BasicRoleInfo {
+    roleId: BigNumber
+    name: string
 }

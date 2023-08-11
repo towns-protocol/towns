@@ -176,22 +176,165 @@ describe('unreadMessageCountEdgeCases', () => {
         await waitFor(() => expect(channelFullyReadMarker).toHaveTextContent('mentions:1'))
 
         //Delete the message
-        //TODO: enable tests when redaction is implemented
-        //await jane.redactEvent(channelId, event!.eventId)
+        await jane.redactEvent(channelId, event!.eventId)
 
         //Check that unreads go to false and mentions count goes back to 0
-        //await waitFor(() => expect(spaceHasUnread).toHaveTextContent('false'))
-        //await waitFor(() => expect(channelFullyReadMarker).toHaveTextContent('mentions:0'))
-        //await waitFor(() => expect(channelFullyReadMarker).toHaveTextContent('isUnread:false'))
+        await waitFor(() => expect(spaceHasUnread).toHaveTextContent('false'))
+        await waitFor(() => expect(channelFullyReadMarker).toHaveTextContent('mentions:0'))
+        await waitFor(() => expect(channelFullyReadMarker).toHaveTextContent('isUnread:false'))
 
-        // todo send two messages both with mentions
+        //Send two messages both with mentions
+        await act(() =>
+            jane.sendMessage(
+                channelId,
+                `@${bobName}, it is first message from Jane (I'm going to delete this in a second too)1`,
+                { mentions: [{ displayName: bobName, userId: bobUserId }] },
+            ),
+        )
 
-        // todo delete one of them
+        await act(() =>
+            jane.sendMessage(
+                channelId,
+                `@${bobName}, it is second message from Jane (I'm going to delete this in a second too)2`,
+                { mentions: [{ displayName: bobName, userId: bobUserId }] },
+            ),
+        )
 
-        // todo test that mentions drops to 1, unread stays true
+        const deletedEvent1 = jane
+            .getEvents_Typed<RoomMessageEvent>(channelId, ZTEvent.RoomMessage)
+            .find(
+                (x) =>
+                    x.content.body ===
+                    `@${bobName}, it is first message from Jane (I'm going to delete this in a second too)1`,
+            )
 
-        // todo delete the second one
+        const deletedEvent2 = jane
+            .getEvents_Typed<RoomMessageEvent>(channelId, ZTEvent.RoomMessage)
+            .find(
+                (x) =>
+                    x.content.body ===
+                    `@${bobName}, it is second message from Jane (I'm going to delete this in a second too)2`,
+            )
 
-        // todo test that mentions drops to 0, unread goes to false
+        await waitFor(() => expect(spaceHasUnread).toHaveTextContent('true'))
+        await waitFor(() => expect(channelFullyReadMarker).toHaveTextContent('isUnread:true'))
+        await waitFor(() => expect(channelFullyReadMarker).toHaveTextContent('mentions:2'))
+
+        //Delete first message
+        await jane.redactEvent(channelId, deletedEvent1!.eventId)
+
+        //Test that mentions drops to 1, unread stays true
+        await waitFor(() => expect(spaceHasUnread).toHaveTextContent('true'))
+        await waitFor(() => expect(channelFullyReadMarker).toHaveTextContent('isUnread:true'))
+        await waitFor(() => expect(channelFullyReadMarker).toHaveTextContent('mentions:1'))
+
+        //Delete the second one
+        await jane.redactEvent(channelId, deletedEvent2!.eventId)
+        //Test that mentions drops to 0, unread goes to false
+        await waitFor(() => expect(spaceHasUnread).toHaveTextContent('false'))
+        await waitFor(() => expect(channelFullyReadMarker).toHaveTextContent('isUnread:false'))
+        await waitFor(() => expect(channelFullyReadMarker).toHaveTextContent('mentions:0'))
+
+        //Send two messages - first with mention, second - not
+        await act(() =>
+            jane.sendMessage(
+                channelId,
+                `@${bobName}, it is first message from Jane with mention (I'm going to delete this in a second too)`,
+                { mentions: [{ displayName: bobName, userId: bobUserId }] },
+            ),
+        )
+
+        await act(() =>
+            jane.sendMessage(
+                channelId,
+                `It is second message from Jane without mention (I'm going to delete this in a second too)`,
+            ),
+        )
+
+        const deletedEventWithMention = jane
+            .getEvents_Typed<RoomMessageEvent>(channelId, ZTEvent.RoomMessage)
+            .find(
+                (x) =>
+                    x.content.body ===
+                    `@${bobName}, it is first message from Jane with mention (I'm going to delete this in a second too)`,
+            )
+
+        const deletedEventWithoutMention = jane
+            .getEvents_Typed<RoomMessageEvent>(channelId, ZTEvent.RoomMessage)
+            .find(
+                (x) =>
+                    x.content.body ===
+                    `It is second message from Jane without mention (I'm going to delete this in a second too)`,
+            )
+
+        await waitFor(() => expect(spaceHasUnread).toHaveTextContent('true'))
+        await waitFor(() => expect(channelFullyReadMarker).toHaveTextContent('isUnread:true'))
+        await waitFor(() => expect(channelFullyReadMarker).toHaveTextContent('mentions:1'))
+
+        //Delete first message without mention
+        await jane.redactEvent(channelId, deletedEventWithoutMention!.eventId)
+
+        //Test that mentions stays at 1, unread stays true
+        await waitFor(() => expect(spaceHasUnread).toHaveTextContent('true'))
+        await waitFor(() => expect(channelFullyReadMarker).toHaveTextContent('isUnread:true'))
+        await waitFor(() => expect(channelFullyReadMarker).toHaveTextContent('mentions:1'))
+
+        //Delete the second one with mention
+        await jane.redactEvent(channelId, deletedEventWithMention!.eventId)
+        //Test that mentions drops to 0, unread goes to false
+        await waitFor(() => expect(spaceHasUnread).toHaveTextContent('false'))
+        await waitFor(() => expect(channelFullyReadMarker).toHaveTextContent('isUnread:false'))
+        await waitFor(() => expect(channelFullyReadMarker).toHaveTextContent('mentions:0'))
+
+        //Send two messages - first with mention, second - not
+        await act(() =>
+            jane.sendMessage(
+                channelId,
+                `@${bobName}, it is first message from Jane again with mention (I'm going to delete this in a second too)`,
+                { mentions: [{ displayName: bobName, userId: bobUserId }] },
+            ),
+        )
+
+        await act(() =>
+            jane.sendMessage(
+                channelId,
+                `It is second message from Jane again without mention (I'm going to delete this in a second too)`,
+            ),
+        )
+
+        const deletedEventWithMention2 = jane
+            .getEvents_Typed<RoomMessageEvent>(channelId, ZTEvent.RoomMessage)
+            .find(
+                (x) =>
+                    x.content.body ===
+                    `@${bobName}, it is first message from Jane again with mention (I'm going to delete this in a second too)`,
+            )
+
+        const deletedEventWithoutMention2 = jane
+            .getEvents_Typed<RoomMessageEvent>(channelId, ZTEvent.RoomMessage)
+            .find(
+                (x) =>
+                    x.content.body ===
+                    `It is second message from Jane again without mention (I'm going to delete this in a second too)`,
+            )
+
+        await waitFor(() => expect(spaceHasUnread).toHaveTextContent('true'))
+        await waitFor(() => expect(channelFullyReadMarker).toHaveTextContent('isUnread:true'))
+        await waitFor(() => expect(channelFullyReadMarker).toHaveTextContent('mentions:1'))
+
+        //Delete first message with mention
+        await jane.redactEvent(channelId, deletedEventWithMention2!.eventId)
+
+        //Test that mentions drops to 0, unread stays true
+        await waitFor(() => expect(spaceHasUnread).toHaveTextContent('true'))
+        await waitFor(() => expect(channelFullyReadMarker).toHaveTextContent('isUnread:true'))
+        await waitFor(() => expect(channelFullyReadMarker).toHaveTextContent('mentions:0'))
+
+        //Delete the second one
+        await jane.redactEvent(channelId, deletedEventWithoutMention2!.eventId)
+        //Test that mentions drops to 0, unread goes to false
+        await waitFor(() => expect(spaceHasUnread).toHaveTextContent('false'))
+        await waitFor(() => expect(channelFullyReadMarker).toHaveTextContent('isUnread:false'))
+        await waitFor(() => expect(channelFullyReadMarker).toHaveTextContent('mentions:0'))
     })
 })

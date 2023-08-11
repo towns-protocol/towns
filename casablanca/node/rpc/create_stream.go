@@ -173,25 +173,22 @@ func (s *Service) createStream(ctx context.Context, log *slog.Logger, req *conne
 	}
 
 	// Make genesis block header and add to the stream.
-	eventHashes := make([][]byte, len(parsedEvents))
-	for i, event := range parsedEvents {
-		eventHashes[i] = event.Hash
-	}
+	block, err := Make_GenisisMiniblockHeader(parsedEvents)
 
-	block := &MiniblockHeader{
-		MiniblockNum: 0,
-		Timestamp:    NextMiniblockTimestamp(nil),
-		EventHashes:  eventHashes,
+	if err != nil {
+		return nil, err
 	}
 
 	blockEvent, err := MakeParsedEventWithPayload(
 		s.wallet,
 		Make_MiniblockHeader(block),
-		eventHashes[len(eventHashes)-1:],
+		[][]byte{parsedEvents[len(parsedEvents)-1].Hash},
 	)
+
 	if err != nil {
 		return nil, err
 	}
+
 	parsedEvents = append(parsedEvents, blockEvent)
 
 	streamId := inceptionPayload.GetStreamId()

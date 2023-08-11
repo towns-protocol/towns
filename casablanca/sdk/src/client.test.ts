@@ -10,7 +10,13 @@ import {
 } from './id'
 import { getMessagePayloadContent_Text, IFallbackKey } from './types'
 import { makeDonePromise, makeTestClient } from './util.test'
-import { DeviceKeys, PayloadCaseType, SyncStreamsRequest, SyncStreamsResponse } from '@river/proto'
+import {
+    DeviceKeys,
+    PayloadCaseType,
+    SyncStreamsRequest,
+    ChannelMessage,
+    SyncStreamsResponse,
+} from '@river/proto'
 import { PartialMessage } from '@bufbuild/protobuf'
 import { CallOptions } from '@bufbuild/connect'
 // This is needed to get the jest itnerface for using in spyOn
@@ -252,8 +258,14 @@ describe('clientTest', () => {
             log('channelNewMessage', channelId)
             log(message)
             done.runAndDone(() => {
-                const content = message.getWireChannelMessage_Post_Text()
-                expect(content?.body).toBe('Hello, again!')
+                const content =
+                    message.getWireContent_fromJsonString<ChannelMessage>(ChannelMessage)
+                if (
+                    content?.payload.case === 'post' &&
+                    content?.payload?.value?.content?.case === 'text'
+                ) {
+                    expect(content?.payload?.value?.content?.value?.body).toBe('Hello, again!')
+                }
             })
         }
 
@@ -451,9 +463,16 @@ describe('clientTest', () => {
         ]
 
         alicesClient.on('channelNewMessage', (channelId: string, message: RiverEvent): void => {
-            const plainContent = message.getWireChannelMessage_Post_Text()
+            const plainContent =
+                message.getWireContent_fromJsonString<ChannelMessage>(ChannelMessage)
             expect(plainContent).toBeDefined()
-            const content = plainContent?.body
+            if (
+                plainContent?.payload.case !== 'post' ||
+                plainContent?.payload?.value?.content?.case !== 'text'
+            ) {
+                throw new Error('Unexpected message type')
+            }
+            const content = plainContent?.payload?.value?.content?.value?.body
             log('channelNewMessage', 'Alice', channelId, content)
             aliceGetsMessage.run(() => {
                 expect(channelId).toBe(bobsChannelId)
@@ -471,9 +490,16 @@ describe('clientTest', () => {
         })
 
         bobsClient.on('channelNewMessage', (channelId: string, message: RiverEvent): void => {
-            const plainContent = message.getWireChannelMessage_Post_Text()
+            const plainContent =
+                message.getWireContent_fromJsonString<ChannelMessage>(ChannelMessage)
             expect(plainContent).toBeDefined()
-            const content = plainContent?.body
+            if (
+                plainContent?.payload.case !== 'post' ||
+                plainContent?.payload?.value?.content?.case !== 'text'
+            ) {
+                throw new Error('Unexpected message type')
+            }
+            const content = plainContent?.payload?.value?.content?.value?.body
             log('channelNewMessage', 'Bob', channelId, content)
             bobGetsMessage.run(() => {
                 expect(channelId).toBe(bobsChannelId)

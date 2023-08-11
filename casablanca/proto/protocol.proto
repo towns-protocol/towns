@@ -348,6 +348,7 @@ message UserDeviceKeyPayload {
         string user_id = 1;
         optional DeviceKeys device_keys = 2;
         optional FallbackKeys fallback_keys = 3;
+        optional RiverKeyOp river_key_op = 4;
     }
 
     oneof content {
@@ -377,10 +378,16 @@ enum ToDeviceOp {
     TDO_KEY_RESPONSE = 2;
 }
 
+enum RiverKeyOp {
+    RDKO_KEY_REGISTER = 0;
+    RDKO_KEY_REVOKE = 1;
+}
+
 /**
 * DeviceKeys are used to store public identity keys and signatures for a particular
 * user's device. 
 * 
+* device_id: unique identifier for the device - River hash over RDK public part.
 * algorithms: encryption algorithms supported by the device.
 * keys: public identity keys (signing keys) for the device with property in format <algorithm>:<device_id>.
 *       Keys should be encoded as specified by key algorithm. 

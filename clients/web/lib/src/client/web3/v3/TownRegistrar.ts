@@ -25,7 +25,7 @@ export class TownRegistrar {
     public async getTown(townId: string): Promise<Town | undefined> {
         if (this.towns[townId] === undefined) {
             const townAddress = await this.townArchitect.read.getTownById(townId)
-            this.towns[townId] = new Town(townAddress, this.chainId, this.provider)
+            this.towns[townId] = new Town(townAddress, townId, this.chainId, this.provider)
         }
         return this.towns[townId]
     }

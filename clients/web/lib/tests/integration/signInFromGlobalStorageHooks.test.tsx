@@ -7,7 +7,7 @@
  * @group dendrite
  */
 import React from 'react'
-import { LoginWithAuth } from './helpers/TestComponents'
+import { LoginWithAuth, LoginWithWallet } from './helpers/TestComponents'
 import { fireEvent, render, screen, waitFor, act } from '@testing-library/react'
 import { ZionTestApp } from './helpers/ZionTestApp'
 import { registerAndStartClients } from './helpers/TestUtils'
@@ -20,9 +20,12 @@ import { useZionClient } from '../../src/hooks/use-zion-client'
 import { sleep } from '../../src/utils/zion-utils'
 import { useMatrixCredentials } from '../../src/hooks/use-matrix-credentials'
 import { CREDENTIAL_STORE_NAME } from '../../src/store/use-credential-store'
+import 'fake-indexeddb/auto'
 
 const initialMatrixStoreState = useMatrixStore.getState()
 
+let deviceId: string
+let provider: ZionTestWeb3Provider
 /*
 Note: Jest runs tests serially within the collection,
 which is important because subsequent tests depend
@@ -43,6 +46,9 @@ describe('signInFromGlobalStorageHooks', () => {
         const { alice } = await registerAndStartClients(['alice'])
         // grab the auth
         const aliceAuth = alice.auth!
+        // assign device id for later use
+        deviceId = alice.auth!.deviceId
+        provider = alice.provider
         // stop alice
         await alice.stopClients()
 
@@ -64,6 +70,9 @@ describe('signInFromGlobalStorageHooks', () => {
         // get our test elements
         const isConnected = screen.getByTestId('isConnected')
         const loginStatus = screen.getByTestId('loginStatus')
+        const dbs = await indexedDB.databases()
+        // one for matrix crypto, one for matrix sync
+        expect(dbs.length).toEqual(2)
         await waitFor(() => expect(isConnected).toHaveTextContent(true.toString()))
         await waitFor(() => expect(loginStatus).toHaveTextContent(LoginStatus.LoggedIn))
     }) // end test
@@ -172,5 +181,33 @@ describe('signInFromGlobalStorageHooks', () => {
         await sleep(1000)
         // check that alice does not get logged back in
         await waitFor(() => expect(loginStatus).toHaveTextContent(LoginStatus.LoggedOut))
+    })
+
+    test('test logging back in after logout should have the same deviceId', async () => {
+        render(
+            <ZionTestApp provider={provider}>
+                <LoginWithWallet />
+            </ZionTestApp>,
+        )
+        // get our test elements
+        const isConnected = screen.getByTestId('isConnected')
+        const loginStatus = screen.getByTestId('loginStatus')
+        await waitFor(() => expect(isConnected).toHaveTextContent(true.toString()))
+        await waitFor(() => expect(loginStatus).toHaveTextContent(LoginStatus.LoggedIn))
+
+        const hs = process.env.HOMESERVER!
+        const credentialStore = JSON.parse(
+            global.localStorage.getItem(CREDENTIAL_STORE_NAME) || '{}',
+        )
+
+        const dbs = await indexedDB.databases()
+        // should not create an additional db
+        expect(dbs.length).toEqual(2)
+
+        // we already had a login, so we should have a deviceId
+        // our first login deviceId should match the one from matrix auth reponse
+        await waitFor(() =>
+            expect(deviceId).toBe(credentialStore.state.matrixCredentialsMap[hs].deviceId),
+        )
     })
 }) // end describe

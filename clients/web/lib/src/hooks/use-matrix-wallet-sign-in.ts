@@ -381,11 +381,25 @@ export function useMatrixWalletSignIn() {
                                 if (auth) {
                                     // Send the signed message and auth data to the server.
                                     try {
+                                        // on first login, this is undefined. We need to get the device id from the server response
+                                        // on subsequent logins, the deviceId will always be the same
+                                        // W/O a deviceId, with each subsequent login, we create an additional local matrix IDB store, which never get cleared, since we are not clearing them on logout
+                                        // logging in with the same device id each time, the same IDB store will be reused
+                                        const localDeviceId =
+                                            useCredentialStore.getState().matrixDeviceIdMap?.[
+                                                homeServer
+                                            ] ?? undefined
+
+                                        const authWithDeviceId: AuthenticationData = {
+                                            ...auth,
+                                            device_id: localDeviceId,
+                                        }
+
                                         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
                                         const response = await matrixClient.login(
                                             LoginTypePublicKey,
                                             {
-                                                auth,
+                                                auth: authWithDeviceId,
                                             },
                                         )
 

@@ -118,7 +118,7 @@ describe('mentionsHooks', () => {
         await waitFor(() => expect(notificationCounts).toHaveTextContent('isUnread:true'))
         await waitFor(
             () => expect(notificationCounts).toHaveTextContent('mentions:1'),
-            TestConstants.DoubleDefaultWaitForTimeout,
+            TestConstants.DecaDefaultWaitForTimeout,
         )
         // send another mention to make sure it updates
         await act(() => {

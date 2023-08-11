@@ -331,6 +331,11 @@ function toTownsContent_ChannelPayload_Message(
         return { error: `${description} no text in message` }
     }
     try {
+        // todo jterzis 08/08/23 HNT-1967: when ChannelMessage encryption is turned on by default,
+        // payload.text will always be ciphertext. We'll need to pass in
+        // RiverEvent to this function and extract clear content into ChannelMessage from it,
+        // using event.getClearContent_ChannelMessage. The rest of this
+        // code can stay the same.
         const channelMessage = ChannelMessage.fromJsonString(payload.text)
 
         switch (channelMessage.payload.case) {

@@ -5,7 +5,6 @@ pragma solidity ^0.8.20;
 import {IChannelBase} from "./IChannel.sol";
 
 // libraries
-import {Permissions} from "contracts/src/spaces/libraries/Permissions.sol";
 
 // services
 import {ChannelService} from "./ChannelService.sol";

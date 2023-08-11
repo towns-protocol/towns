@@ -2,7 +2,7 @@
  * @group dendrite
  * @group casablanca
  */
-import { Permission } from '../../src/client/web3/ContractTypes'
+import { BasicRoleInfo, Permission } from '../../src/client/web3/ContractTypes'
 import React, { useCallback, useEffect, useMemo } from 'react'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 
@@ -10,7 +10,6 @@ import { BigNumber } from 'ethers'
 import { RegisterWallet, TransactionInfo } from './helpers/TestComponents'
 import { RoomVisibility } from 'use-zion-client/src/types/zion-types'
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
-import { SpaceDataTypes } from '../../src/client/web3/shims/SpaceShim'
 import { ZionTestApp } from './helpers/ZionTestApp'
 import { ZionTestWeb3Provider } from './helpers/ZionTestWeb3Provider'
 import { getMemberNftAddress } from '../../src/client/web3/ContractHelpers'
@@ -255,7 +254,7 @@ function MultipleRolesComponent({
 /**
  * Print helper functions
  */
-function printRoleStruct(roles: SpaceDataTypes.RoleStructOutput[] | undefined) {
+function printRoleStruct(roles: BasicRoleInfo[] | undefined) {
     if (roles) {
         for (const role of roles) {
             console.log({

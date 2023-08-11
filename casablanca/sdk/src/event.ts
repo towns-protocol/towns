@@ -20,7 +20,7 @@ import {
     MEGOLM_ALGORITHM,
     OLM_ALGORITHM,
 } from './crypto/olmLib'
-import { PlainMessage } from '@bufbuild/protobuf'
+import { Message, PlainMessage } from '@bufbuild/protobuf'
 
 const log = dlog('csb:event')
 
@@ -154,13 +154,8 @@ export interface IPlainContent {
     payload: Record<string, string>
 }
 
-export type IBodyContent = IBodyPostContent & IBodyTextContent
-export interface IBodyPostContent {
+export interface IBodyPostTextContent {
     post: { text: { body: string } }
-}
-
-export interface IBodyTextContent {
-    text: { body: string }
 }
 
 export interface IClearEvent {
@@ -789,35 +784,21 @@ export class RiverEvent extends (EventEmitter as new () => TypedEmitter<RiverEve
         return { content: undefined, opts: undefined }
     }
 
-    // Get ChannelMessage_Post_Text clear content from decrypted event or informational/error message
-    public getClearChannelMessage_Post_Text(): ChannelMessage_Post_Content_Text | undefined {
-        const content = this.getClearContent_ChannelMessage()
-        if (content?.content && content.content?.value) {
-            if (
-                content?.content?.case === 'post' &&
-                content?.content?.value?.content?.case === 'text'
-            ) {
-                return new ChannelMessage_Post_Content_Text(content?.content?.value?.content?.value)
-            }
-        }
-        return
-    }
-
-    // Attempt to marshal wire content into a ChannelMessage_Post_Content_Text
-    // This should return undefined where the event is encrypted to begin with,
-    // but in the cases where it is not and ciphertext store ChannelMessage_Post_Content_Text
-    // then this should return the serialized protobuf from the ciphertext.
-    public getWireChannelMessage_Post_Text(): ChannelMessage_Post_Content_Text | undefined {
+    public getWireContent_fromJsonString<T extends Message<T>>(constructor: {
+        new (): T
+    }): T | undefined {
         const plainContent = this.getContent().content.ciphertext
         if (typeof plainContent !== 'string') {
             return
         }
-        const content = ChannelMessage_Post_Content_Text.fromJsonString(
-            JSON.stringify({
-                body: (JSON.parse(plainContent) as IBodyPostContent).post.text.body,
-            }),
-        )
-        return content
+        try {
+            const newT = new constructor()
+            const content = newT.fromJsonString(plainContent)
+            return content
+        } catch (e) {
+            log(`Error parsing wire content: ${(e as Error).message}`)
+            return
+        }
     }
 
     public getClearToDeviceMessage_KeyResponse(): ToDeviceMessage_KeyResponse | undefined {

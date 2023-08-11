@@ -38,6 +38,7 @@ export interface AuthenticationData {
     session: string
     message: string
     signature: string
+    device_id?: string
 }
 
 export interface RegistrationAuthentication {

@@ -8,6 +8,7 @@ import (
 	. "casablanca/node/protocol"
 
 	"github.com/stretchr/testify/assert"
+	"google.golang.org/protobuf/proto"
 )
 
 func make_User_Inception(wallet *crypto.Wallet, streamId string, t *testing.T) *ParsedEvent {
@@ -44,7 +45,7 @@ func TestMakeSnapshot(t *testing.T) {
 	wallet, _ := crypto.NewWallet(context.Background())
 	streamId := "streamid$1"
 	inception := make_User_Inception(wallet, streamId, t)
-	snapshot, err := Make_Snapshot(inception.Event.GetInceptionPayload())
+	snapshot, err := Make_GenisisSnapshot([]*ParsedEvent{inception})
 	assert.NoError(t, err)
 	assert.Equal(
 		t,
@@ -52,11 +53,11 @@ func TestMakeSnapshot(t *testing.T) {
 		snapshot.Content.(*Snapshot_UserContent).UserContent.Inception.StreamId)
 }
 
-func TestUpdateMiniblockHeader(t *testing.T) {
+func TestUpdateSnapshot(t *testing.T) {
 	wallet, _ := crypto.NewWallet(context.Background())
 	streamId := "streamid$1"
 	inception := make_User_Inception(wallet, streamId, t)
-	snapshot, err := Make_Snapshot(inception.Event.GetInceptionPayload())
+	snapshot, err := Make_GenisisSnapshot([]*ParsedEvent{inception})
 	assert.NoError(t, err)
 
 	membership := make_User_Membership(wallet, MembershipOp_SO_JOIN, streamId, inception.Hash, t)
@@ -69,11 +70,30 @@ func TestUpdateMiniblockHeader(t *testing.T) {
 	)
 }
 
-func TestUpdateMiniblockHeaderFailsIfInception(t *testing.T) {
+func TestCloneAndUpdateSnapshot(t *testing.T) {
 	wallet, _ := crypto.NewWallet(context.Background())
 	streamId := "streamid$1"
 	inception := make_User_Inception(wallet, streamId, t)
-	snapshot, err := Make_Snapshot(inception.Event.GetInceptionPayload())
+	snapshot1, err := Make_GenisisSnapshot([]*ParsedEvent{inception})
+	assert.NoError(t, err)
+
+	snapshot := proto.Clone(snapshot1).(*Snapshot)
+
+	membership := make_User_Membership(wallet, MembershipOp_SO_JOIN, streamId, inception.Hash, t)
+	err = Update_Snapshot(snapshot, membership)
+	assert.NoError(t, err)
+	assert.Equal(
+		t,
+		MembershipOp_SO_JOIN,
+		snapshot.Content.(*Snapshot_UserContent).UserContent.Memberships[streamId].Op,
+	)
+}
+
+func TestUpdateSnapshotFailsIfInception(t *testing.T) {
+	wallet, _ := crypto.NewWallet(context.Background())
+	streamId := "streamid$1"
+	inception := make_User_Inception(wallet, streamId, t)
+	snapshot, err := Make_GenisisSnapshot([]*ParsedEvent{inception})
 	assert.NoError(t, err)
 
 	err = Update_Snapshot(snapshot, inception)

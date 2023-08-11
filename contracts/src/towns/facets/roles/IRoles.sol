@@ -19,6 +19,12 @@ interface IRolesBase {
     address module;
     bytes data;
   }
+
+  event RoleCreated(address indexed creator, uint256 indexed roleId);
+
+  event RoleUpdated(address indexed updater, uint256 indexed roleId);
+
+  event RoleRemoved(address indexed remover, uint256 indexed roleId);
 }
 
 interface IRoles is IRolesBase {
