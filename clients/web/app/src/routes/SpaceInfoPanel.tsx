@@ -214,7 +214,7 @@ export const SpaceInfoPanel = () => {
         <Panel modalPresentable label="Town Info" onClose={onClose}>
             {space?.id && (
                 <Stack centerContent padding>
-                    {!shareButtonEnabled && (
+                    {shareButtonEnabled && (
                         <Stack horizontal paddingX="sm" width="100%">
                             <Box grow />
                             <IconButton
