@@ -25,6 +25,7 @@ import {
     BoxProps,
     FormRender,
     Icon,
+    IconButton,
     MotionStack,
     Paragraph,
     Stack,
@@ -213,13 +214,13 @@ export const SpaceInfoPanel = () => {
         <Panel modalPresentable label="Town Info" onClose={onClose}>
             {space?.id && (
                 <Stack centerContent padding>
-                    {shareButtonEnabled && (
+                    {!shareButtonEnabled && (
                         <Stack horizontal paddingX="sm" width="100%">
                             <Box grow />
-                            <Icon
-                                type="share"
-                                size="square_md"
+                            <IconButton
+                                icon="share"
                                 background="level2"
+                                color="default"
                                 onClick={onSharePressed}
                             />
                         </Stack>
