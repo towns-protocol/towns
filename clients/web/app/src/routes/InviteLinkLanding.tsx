@@ -1,7 +1,6 @@
 import React, { useEffect } from 'react'
 import { Navigate, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAccount } from 'wagmi'
-import { LoginButton } from '@components/Login/LoginButton/LoginButton'
 import { InteractiveSpaceIcon } from '@components/SpaceIcon'
 import { Box, Button, Heading, Icon, Paragraph, Stack, Text } from '@ui'
 import { useAuth } from 'hooks/useAuth'
@@ -11,27 +10,11 @@ import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
 import { FadeIn } from '@components/Transitions'
 import { useSetDocTitle } from 'hooks/useDocTitle'
 import { useGetSpaceTopic } from 'hooks/useSpaceTopic'
-import { useRequireTransactionNetwork } from 'hooks/useRequireTransactionNetwork'
-import { RequireTransactionNetworkMessage } from '@components/RequireTransactionNetworkMessage/RequireTransactionNetworkMessage'
 import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinner'
 import { PATHS } from 'routes'
+import { LoginComponent } from '@components/Login/LoginComponent'
+import { useDevice } from 'hooks/useDevice'
 import { TownsTokenConfig } from '../components/TownsToken/TownsTokenConfig'
-
-function getButtonLabel(status: SignupButtonStatus) {
-    switch (status) {
-        case SignupButtonStatus.Register:
-            return 'Register'
-        case SignupButtonStatus.Login:
-            return 'Login to join'
-        case SignupButtonStatus.ConnectRequired:
-        case SignupButtonStatus.ConnectError:
-            return 'Connect Wallet'
-        case SignupButtonStatus.FetchingRegistrationStatus:
-            return 'Connecting to server'
-        default:
-            return 'Waiting for approval'
-    }
-}
 
 const InviteLinkLanding = () => {
     const spaceId = useSpaceIdFromPathname()
@@ -43,6 +26,7 @@ const InviteLinkLanding = () => {
     const url = new URL(window.location.href)
     const { address: currentWallet } = useAccount()
     const invalidWallet = url.searchParams.get('invalidWallet')
+    const { isTouch } = useDevice()
     const navigate = useNavigate()
     // relevant only if a user has tried to join the town already, but we're denied b/c they don't have permission, and they then selected "switch wallet"
     // which navigates them back to this view, but with the invalidWallet param set. We need this b/c metamask UI is not very intuitive
@@ -50,30 +34,15 @@ const InviteLinkLanding = () => {
     const currentWalletIsInvalidForTown =
         currentWallet && invalidWallet && currentWallet === invalidWallet
 
-    const {
-        walletStatus,
-        connect,
-        loginStatus,
-        login,
-        register,
-        userOnWrongNetworkForSignIn,
-        isConnected,
-    } = useAuth()
+    const { walletStatus, connect, loginStatus, login, register } = useAuth()
 
-    const {
-        status,
-        onClick: onButtonClick,
-        isSpinning,
-    } = useSignupButton({
+    const { status } = useSignupButton({
         walletStatus,
         loginStatus,
         connect,
         register,
         login,
     })
-
-    const buttonLabel = getButtonLabel(status)
-    const { switchNetwork } = useRequireTransactionNetwork()
 
     useEffect(() => {
         if (!data) {
@@ -104,7 +73,7 @@ const InviteLinkLanding = () => {
                         spaceId={data.networkId}
                         address={data.address}
                         spaceName={data.name}
-                        size="lg"
+                        size={isTouch ? 'sm' : 'lg'}
                     />
                     <Stack gap data-testid="town-info">
                         <FadeIn>
@@ -164,14 +133,7 @@ const InviteLinkLanding = () => {
                     <Box height="x5" />
                 ) : data ? (
                     <FadeIn>
-                        <LoginButton
-                            isConnected={isConnected}
-                            userOnWrongNetworkForSignIn={userOnWrongNetworkForSignIn}
-                            loading={isSpinning}
-                            label={buttonLabel}
-                            tone="cta1"
-                            onClick={onButtonClick}
-                        />
+                        <LoginComponent />
                     </FadeIn>
                 ) : (
                     <Button onClick={() => navigate(`/${PATHS.LOGIN}`)}>Take me to login</Button>
@@ -184,15 +146,6 @@ const InviteLinkLanding = () => {
                                 "Your selected wallet doesn't have permissions for this town. Select a different wallet and try again."
                             }
                         </Text>
-                    </Box>
-                )}
-
-                {isConnected && userOnWrongNetworkForSignIn && (
-                    <Box paddingTop="md" flexDirection="row" justifyContent="end">
-                        <RequireTransactionNetworkMessage
-                            postCta="sign in."
-                            switchNetwork={switchNetwork}
-                        />
                     </Box>
                 )}
 
