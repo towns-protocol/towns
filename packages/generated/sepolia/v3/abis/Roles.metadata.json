@@ -620,14 +620,6 @@
         "dweb:/ipfs/QmUGj6BkHSHDVWP5DELc9tLP57myr5JbR7wm6dTqLb2jMA"
       ]
     },
-    "contracts/src/spaces/libraries/Permissions.sol": {
-      "keccak256": "0xa5c44d5d9ffdd2edacd86eff2a9a1f75f54d7fd907135871331b1bfeb13dae00",
-      "license": "UNLICENSED",
-      "urls": [
-        "bzz-raw://7d55d07d1f4dd34458e949b3378c57c84cacb258047c2569fabeec6ae9e1258f",
-        "dweb:/ipfs/QmRFUtyD1LWdtxvobZ1f6kF7DcaJVpPvafbzUVzv4grjtE"
-      ]
-    },
     "contracts/src/towns/entitlements/IEntitlement.sol": {
       "keccak256": "0x3c3733f40dcf373c19ea564ec9cbf49b33e96c27a80012e9be6f8d6d24e76c46",
       "license": "Apache-2.0",
@@ -642,6 +634,14 @@
       "urls": [
         "bzz-raw://b1de8bb2927c6506bda38a31f37c49724497eb619ef91e42eed2ca633c903967",
         "dweb:/ipfs/QmYirM962WpgQHoWz8ycKTCgxDM6VaWyJCqtPyTKh397Vf"
+      ]
+    },
+    "contracts/src/towns/facets/Permissions.sol": {
+      "keccak256": "0x99e1b05696939c103e6cc53185387d3c34ed95d245cd77a00413fbeb5c10e687",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://92e0f3657ba9404fa6f498438383f407ad4e44043bc1462e19b7bae67393155d",
+        "dweb:/ipfs/QmXiWHVG4yibXPjmWnJdLdZ9KDwJRa2MApyG9HN9qWwsD9"
       ]
     },
     "contracts/src/towns/facets/channels/ChannelService.sol": {
@@ -685,11 +685,11 @@
       ]
     },
     "contracts/src/towns/facets/roles/Roles.sol": {
-      "keccak256": "0xa95827a8ed9d6b829a4ab9efdb6b13d9e87db8e05e380a4d5b4fc428c3488e0e",
+      "keccak256": "0xfa81c81e0ba6b3b4324696838ffaa826ad603104608a21dc43dc0b91e3fa9d26",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://51415584c2be88b3aa169c0afaa527f1a95b01ab5aedb70453ffeb17f1437bd8",
-        "dweb:/ipfs/Qmd5PfaZacDHfnkPtU75GRtHu7RWz4oF6dQdc68azfQymY"
+        "bzz-raw://aaab5573564e43cd5e84b3f83c20fcd28428bfc80db8915821f2a3b48c614fe2",
+        "dweb:/ipfs/QmdgK1z9YUwSc66tfxq3rGphKqVFY7efqCku2DCYupz9gL"
       ]
     },
     "contracts/src/towns/facets/roles/RolesBase.sol": {
