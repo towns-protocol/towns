@@ -162,7 +162,9 @@ export const SpaceInfoPanel = () => {
             return
         }
         const url = getInviteUrl(space.id)
-        await navigator.share({ title: space.name, url: url })
+        try {
+            await navigator.share({ title: space.name, url: url })
+        } catch (_) {} // eslint-disable-line no-empty
     })
 
     const spaceID = useSpaceId()
