@@ -9,16 +9,18 @@ export const usePushSubscription = () => {
     const userId = useMyProfile()?.userId
 
     useEffect(() => {
+        const abortController = new AbortController()
         if (notificationsStatus !== 'granted' || !userId) {
             return
         }
-        registerForPushSubscription(userId).then(() =>
-            console.log('PUSH: did register for push notifications'),
-        )
+        registerForPushSubscription(userId, abortController.signal)
+        return () => {
+            abortController.abort()
+        }
     }, [notificationsStatus, userId])
 }
 
-async function registerForPushSubscription(userId: string) {
+async function registerForPushSubscription(userId: string, signal: AbortSignal) {
     const subscription = await getOrRegisterPushSubscription()
     if (!subscription) {
         return
@@ -35,7 +37,14 @@ async function registerForPushSubscription(userId: string) {
         data.userId,
         data.subscriptionObject.endpoint,
     )
-    return await axiosClient.post(`${url}/api/add-subscription`, data)
+    try {
+        await axiosClient.post(`${url}/api/add-subscription`, data, {
+            signal: signal,
+        })
+        console.log('PUSH: did register for push notifications')
+    } catch (e) {
+        console.error('PUSH: failed to send subscription to Push Notification Worker', e)
+    }
 }
 
 async function getOrRegisterPushSubscription() {
