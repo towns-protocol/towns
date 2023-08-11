@@ -134,7 +134,6 @@ export const RegisterForm = ({ isEdit }: { isEdit: boolean }) => {
     return (
         <Stack
             gap="x4"
-            minWidth="600"
             as="form"
             autoCorrect="off"
             data-testid="register-form"
