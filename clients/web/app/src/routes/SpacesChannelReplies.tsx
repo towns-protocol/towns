@@ -17,31 +17,21 @@ export const SpacesChannelReplies = (props: {
               navigate(parentRoute)
           }
 
+    // keep to make TS happy. this should never occur with since empty messageId
+    // woultn't target this route
     const isValid = !!messageId
 
     const eventHash = window.location.hash?.replace(/^#/, '')
     const highlightId = eventHash?.match(/^\$[a-z0-9_-]{16,128}/i) ? eventHash : undefined
 
-    return (
-        <Box grow height="100%" overflow="hidden">
-            {isValid ? (
-                <>
-                    <Box grow padding="lg">
-                        <Box absoluteFill gap paddingBottom="lg" position="relative">
-                            <MessageThreadPanel
-                                key={messageId}
-                                messageId={messageId}
-                                highlightId={highlightId}
-                                onClose={handleClose}
-                            />
-                        </Box>
-                    </Box>
-
-                    <Box paddingBottom="lg" paddingX="lg" />
-                </>
-            ) : (
-                <>Invalid Thread</>
-            )}
-        </Box>
+    return isValid ? (
+        <MessageThreadPanel
+            key={messageId}
+            messageId={messageId}
+            highlightId={highlightId}
+            onClose={handleClose}
+        />
+    ) : (
+        <>Invalid Thread</>
     )
 }

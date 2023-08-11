@@ -62,7 +62,12 @@ export const MessageThreadPanel = (props: Props) => {
 
     return (
         <Panel label={panelLabel} onClose={props.onClose}>
-            <Stack flexGrow={{ touch: 'x1', default: 'x0' }} overflow="hidden" width="100%">
+            <Stack
+                position="relative"
+                overflow="hidden"
+                flexGrow={{ touch: 'x1', default: 'x0' }}
+                width="100%"
+            >
                 <MessageTimelineWrapper
                     spaceId={spaceId}
                     channelId={channelId}
@@ -74,8 +79,9 @@ export const MessageThreadPanel = (props: Props) => {
                 </MessageTimelineWrapper>
             </Stack>
             {isChannelWritable && (
-                <Box paddingX="md" bottom={isTouch ? 'sm' : 'none'}>
+                <Box paddingX={{ default: 'md', touch: 'none' }} bottom={isTouch ? 'sm' : 'none'}>
                     <RichTextEditor
+                        isFullWidthOnTouch
                         autoFocus={!isTouch}
                         editable={!!isChannelWritable}
                         displayButtons={isTouch ? 'on-focus' : 'never'}
