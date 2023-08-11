@@ -51,7 +51,21 @@ export const AuthenticatedRoutes = () => {
                 <Route path={`${PATHS.SPACES}/new`} element={<SpacesNew />} />
             )}
             <Route path={`${PATHS.SPACES}/:spaceSlug`} element={<SpaceOutlet />}>
-                <Route index element={<SpaceHome />} />
+                {isTouch ? (
+                    <>
+                        <Route index element={<TouchHome />} />
+                        <Route path="info" element={<InfoPanelWrapper />} />
+                        <Route path={`${PATHS.PROFILE}/:profileId`} element={<TouchProfile />} />
+                    </>
+                ) : (
+                    <>
+                        <Route index element={<SpaceHome />} />
+                        <Route path="members" element={<SpaceMembers />}>
+                            <Route path="profile/:profileId" element={<SpaceProfilePanel />} />
+                            <Route path="info" element={<InfoPanelWrapper />} />
+                        </Route>
+                    </>
+                )}
                 <Route path="threads" element={<SpaceThreads />}>
                     <Route path="profile/:profileId" element={<SpaceProfilePanel />} />
                     <Route path="info" element={<InfoPanelWrapper />} />
@@ -77,20 +91,6 @@ export const AuthenticatedRoutes = () => {
                 </Route>
 
                 <Route path="invite" element={<SpacesInvite />} />
-
-                {isTouch ? (
-                    <>
-                        <Route path={`${PATHS.HOME}`} element={<TouchHome />}>
-                            <Route path="info" element={<InfoPanelWrapper />} />
-                        </Route>
-                        <Route path={`${PATHS.PROFILE}/:profileId`} element={<TouchProfile />} />
-                    </>
-                ) : (
-                    <Route path="members" element={<SpaceMembers />}>
-                        <Route path="profile/:profileId" element={<SpaceProfilePanel />} />
-                        <Route path="info" element={<InfoPanelWrapper />} />
-                    </Route>
-                )}
 
                 <Route element={<SpacesChannelRoute />}>
                     <Route path="channels/:channelSlug/members" element={<ChannelMembers />}>

@@ -1,6 +1,6 @@
 import React, { useCallback } from 'react'
 import { useMyProfile, useSpaceData } from 'use-zion-client'
-import { useMatch, useNavigate, useResolvedPath } from 'react-router'
+import { useLocation, useNavigate, useResolvedPath } from 'react-router'
 import { Avatar, Box, Icon, Stack, Text } from '@ui'
 import { SpaceIcon } from '@components/SpaceIcon'
 import { ImageVariants } from '@components/UploadImage/useImageSource'
@@ -35,7 +35,7 @@ export const TouchTabBar = () => {
                             />
                         </Box>
                     )}
-                    to={`/${PATHS.SPACES}/${space.id.slug}/${PATHS.HOME}`}
+                    to={`/${PATHS.SPACES}/${space.id.slug}/`}
                 />
                 <TabBarItem
                     title="Threads"
@@ -73,17 +73,17 @@ type TabBarItemProps = {
 
 const TabBarItem = (props: TabBarItemProps) => {
     const { title, icon, to } = props
+    const location = useLocation()
+
     const resolved = useResolvedPath(to)
     const navigate = useNavigate()
     const onClick = useCallback(() => {
         navigate(to)
     }, [navigate, to])
 
-    const match = useMatch({
-        path: resolved.pathname,
-    })
-    const isHighlighted = !!match
-
+    const isHighlighted = decodeURIComponent(location.pathname).startsWith(
+        decodeURIComponent(resolved.pathname),
+    )
     return (
         <Stack
             flexGrow="x1"

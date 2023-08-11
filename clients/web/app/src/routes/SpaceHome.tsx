@@ -49,12 +49,7 @@ export const SpaceHome = () => {
             let route: string
             const firstChannelId = channels?.at(0)?.id
 
-            // redirect user to the home view on mobile
-            if (isTouch) {
-                route = `/${PATHS.SPACES}/${spaceId?.slug}/${PATHS.HOME}`
-            }
-            // if channels haven't resolved OR if there are truly no channels
-            else if (!firstChannelId) {
+            if (!firstChannelId) {
                 // the worst case is that user is navigated to the threads page,
                 // and has to click on a channel once it loads in
                 // TODO: probably we should have replace this with "Space Home" or something when that is implemented/designed
