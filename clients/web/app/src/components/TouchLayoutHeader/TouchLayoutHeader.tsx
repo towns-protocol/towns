@@ -37,12 +37,13 @@ export const TouchLayoutHeader = () => {
     return (
         <Box borderBottom paddingTop={shouldDisplayPWAPrompt ? 'none' : 'sm'}>
             {shouldDisplayPWAPrompt && (
-                <Box paddingBottom="sm">
-                    <Stack horizontal centerContent padding="md" gap="lg" background="level3">
-                        <Text fontWeight="strong" color="default" textAlign="center">
-                            To use the Towns app, open in <strong>Safari</strong>, tap{' '}
+                <Box paddingX="sm" paddingBottom="sm">
+                    <Stack horizontal centerContent padding border rounded="xs" background="level2">
+                        <Text fontWeight="strong" color="default" textAlign="left">
+                            Enable notifications on <strong>mobile</strong>:<br /> Tap{' '}
                             <strong>Share</strong> &#8594; <strong>Add to Home Screen</strong>.
                         </Text>
+                        <Box grow />
                         <IconButton icon="close" onClick={closePWAPrompt} />
                     </Stack>
                 </Box>
