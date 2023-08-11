@@ -2,6 +2,7 @@
 /* tslint:disable */
 /* eslint-disable */
 export * as token from "./token";
+export * as user from "./user";
 export { IChannel__factory } from "./IChannel__factory";
 export { IDiamond__factory } from "./IDiamond__factory";
 export { IDiamondCut__factory } from "./IDiamondCut__factory";
@@ -13,3 +14,4 @@ export { ITownArchitect__factory } from "./ITownArchitect__factory";
 export { OwnableFacet__factory } from "./OwnableFacet__factory";
 export { TokenEntitlement__factory } from "./TokenEntitlement__factory";
 export { TokenPausableFacet__factory } from "./TokenPausableFacet__factory";
+export { UserEntitlement__factory } from "./UserEntitlement__factory";

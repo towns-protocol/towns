@@ -3,6 +3,8 @@
 /* eslint-disable */
 import type * as token from "./token";
 export type { token };
+import type * as user from "./user";
+export type { user };
 export type { IChannel } from "./IChannel";
 export type { IDiamond } from "./IDiamond";
 export type { IDiamondCut } from "./IDiamondCut";
@@ -14,6 +16,7 @@ export type { ITownArchitect } from "./ITownArchitect";
 export type { OwnableFacet } from "./OwnableFacet";
 export type { TokenEntitlement } from "./TokenEntitlement";
 export type { TokenPausableFacet } from "./TokenPausableFacet";
+export type { UserEntitlement } from "./UserEntitlement";
 export * as factories from "./factories";
 export { IChannel__factory } from "./factories/IChannel__factory";
 export { IDiamond__factory } from "./factories/IDiamond__factory";
@@ -27,3 +30,5 @@ export { OwnableFacet__factory } from "./factories/OwnableFacet__factory";
 export type { TokenEntitlement } from "./token/TokenEntitlement";
 export { TokenEntitlement__factory } from "./factories/token/TokenEntitlement__factory";
 export { TokenPausableFacet__factory } from "./factories/TokenPausableFacet__factory";
+export type { UserEntitlement } from "./user/UserEntitlement";
+export { UserEntitlement__factory } from "./factories/user/UserEntitlement__factory";
