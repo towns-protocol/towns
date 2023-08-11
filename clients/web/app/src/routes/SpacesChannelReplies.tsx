@@ -1,7 +1,6 @@
 import React from 'react'
 import { useNavigate, useParams } from 'react-router'
 import { MessageThreadPanel } from '@components/MessageThread/MessageThreadPanel'
-import { Box } from '@ui'
 
 export const SpacesChannelReplies = (props: {
     children?: React.ReactNode
