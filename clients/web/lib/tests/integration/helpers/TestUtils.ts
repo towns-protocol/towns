@@ -3,7 +3,7 @@ import {
     CreateSpaceInfo,
     RoomVisibility,
 } from 'use-zion-client/src/types/zion-types'
-import { Permission, RoleDetails } from '../../../src/client/web3/ContractTypes'
+import { BasicRoleInfo, Permission, RoleDetails } from '../../../src/client/web3/ContractTypes'
 import { Wallet, ethers } from 'ethers'
 import { ZionTestClient, ZionTestClientProps } from './ZionTestClient'
 import {
@@ -14,7 +14,6 @@ import {
 
 import { EventTimeline } from 'matrix-js-sdk'
 import { RoomIdentifier } from 'use-zion-client/src/types/room-identifier'
-import { SpaceDataTypes } from '../../../src/client/web3/shims/SpaceShim'
 import { SpaceFactoryDataTypes } from '../../../src/client/web3/shims/SpaceFactoryShim'
 import { SpaceProtocol, TransactionStatus } from '../../../src/client/ZionClientTypes'
 import { ZionTestWeb3Provider } from './ZionTestWeb3Provider'
@@ -235,7 +234,7 @@ export async function findRoleByName(
     client: ZionClient,
     spaceId: string,
     roleName: string,
-    roles?: SpaceDataTypes.RoleStructOutput[],
+    roles?: BasicRoleInfo[],
 ): Promise<RoleDetails | null> {
     let role: RoleDetails | null = null
     roles = roles ?? (await getFilteredRolesFromSpace(client, spaceId))

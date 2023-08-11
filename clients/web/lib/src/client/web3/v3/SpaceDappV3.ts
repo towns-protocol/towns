@@ -1,4 +1,10 @@
-import { ChannelDetails, ChannelMetadata, Permission, RoleDetails } from '../ContractTypes'
+import {
+    BasicRoleInfo,
+    ChannelDetails,
+    ChannelMetadata,
+    Permission,
+    RoleDetails,
+} from '../ContractTypes'
 import { ContractTransaction, ethers } from 'ethers'
 import { CreateSpaceParams, ISpaceDapp, UpdateChannelParams, UpdateRoleParams } from '../ISpaceDapp'
 import {
@@ -7,6 +13,7 @@ import {
     fromSpaceEntitlementsToMemberEntitlement,
 } from './ConvertersTownArchitect'
 
+import { IRolesBase } from './IRolesShim'
 import { ITownArchitectBase } from './ITownArchitectShim'
 import { SpaceDataTypes } from '../shims/SpaceShim'
 import { SpaceFactoryDataTypes } from '../shims/SpaceFactoryShim'
@@ -110,8 +117,16 @@ export class SpaceDappV3 implements ISpaceDapp {
         throw new Error('Method not implemented.')
     }
 
-    public getRoles(spaceId: string): Promise<SpaceDataTypes.RoleStructOutput[]> {
-        throw new Error('Method not implemented.')
+    public async getRoles(spaceId: string): Promise<BasicRoleInfo[]> {
+        const town = await this.getTown(spaceId)
+        if (!town) {
+            throw new Error(`Town with spaceId "${spaceId}" is not found.`)
+        }
+        const roles: IRolesBase.RoleStructOutput[] = await town.Roles.read.getRoles()
+        return roles.map((role) => ({
+            roleId: role.id,
+            name: role.name,
+        }))
     }
 
     public getRolesByChannel(

@@ -7,11 +7,10 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 
 import { BigNumber } from 'ethers'
 import { ChannelContextProvider } from '../../src/components/ChannelContextProvider'
-import { Permission } from '../../src/client/web3/ContractTypes'
+import { BasicRoleInfo, Permission } from '../../src/client/web3/ContractTypes'
 import { RegisterWallet, TransactionInfo } from './helpers/TestComponents'
 import { RoomVisibility } from 'use-zion-client/src/types/zion-types'
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
-import { SpaceDataTypes } from '../../src/client/web3/shims/SpaceShim'
 import { TestConstants } from './helpers/TestConstants'
 import { TransactionStatus } from '../../src/client/ZionClientTypes'
 import { ZionTestApp } from './helpers/ZionTestApp'
@@ -405,7 +404,7 @@ function RolesComponent({ spaceNetworkId }: { spaceNetworkId: string | undefined
 /**
  * Print helper functions
  */
-function printRoleStruct(roles: SpaceDataTypes.RoleStructOutput[] | undefined) {
+function printRoleStruct(roles: BasicRoleInfo[] | undefined) {
     if (roles) {
         for (const role of roles) {
             console.log({

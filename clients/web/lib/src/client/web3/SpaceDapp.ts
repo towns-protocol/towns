@@ -1,6 +1,5 @@
-import { BigNumber, ContractTransaction, ethers } from 'ethers'
-import { BytesLike, keccak256 } from 'ethers/lib/utils'
 import {
+    BasicRoleInfo,
     ChannelDetails,
     ChannelMetadata,
     EntitlementModuleType,
@@ -8,6 +7,8 @@ import {
     RoleDetails,
     RoleEntitlements,
 } from './ContractTypes'
+import { BigNumber, ContractTransaction, ethers } from 'ethers'
+import { BytesLike, keccak256 } from 'ethers/lib/utils'
 import { CreateSpaceParams, ISpaceDapp, UpdateChannelParams, UpdateRoleParams } from './ISpaceDapp'
 import { IStaticContractsInfo, getContractsInfo } from './IStaticContractsInfo'
 import { SpaceDataTypes, SpaceShim } from './shims/SpaceShim'
@@ -259,7 +260,7 @@ export class SpaceDapp implements ISpaceDapp {
         return null
     }
 
-    public async getRoles(spaceId: string): Promise<SpaceDataTypes.RoleStructOutput[]> {
+    public async getRoles(spaceId: string): Promise<BasicRoleInfo[]> {
         const space = await this.getSpace(spaceId)
         if (!space?.read) {
             throw new Error(`Space with networkId "${spaceId}" is not found.`)
