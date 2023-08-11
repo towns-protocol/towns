@@ -105,7 +105,7 @@ export const MessageThread = (props: {
                         grow
                         elevate={!isTouch}
                         rounded="sm"
-                        boxShadow={{ touch: undefined, default: 'panel' }}
+                        boxShadow={{ touch: 'none', default: 'panel' }}
                     >
                         <Stack>
                             <MessageTimeline collapsed align="top" />

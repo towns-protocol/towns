@@ -151,6 +151,9 @@ export const boxProperties = defineProperties({
                     },
                 },
             },
+            none: {
+                boxShadow: `none`,
+            },
         },
 
         height: {

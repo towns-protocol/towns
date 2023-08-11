@@ -116,7 +116,7 @@ const MentionBox = (props: { mention: MentionResult; userId?: string }) => {
                 rounded="md"
                 background={mention.unread ? 'level3' : 'level2'}
                 cursor="alias"
-                boxShadow={{ touch: undefined, default: 'card' }}
+                boxShadow={{ touch: 'none', default: 'card' }}
                 overflow="hidden"
             >
                 <Message
