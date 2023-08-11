@@ -53,6 +53,7 @@ func createUser(ctx context.Context, wallet *crypto.Wallet, client protocolconne
 		wallet,
 		events.Make_UserPayload_Inception(
 			userStreamId,
+			nil,
 		),
 		nil,
 	)
@@ -74,6 +75,7 @@ func createSpace(ctx context.Context, wallet *crypto.Wallet, client protocolconn
 		events.Make_SpacePayload_Inception(
 			common.SpaceStreamIdFromName(spaceId),
 			"test space",
+			nil,
 		),
 		nil,
 	)
@@ -117,6 +119,7 @@ func createChannel(ctx context.Context, wallet *crypto.Wallet, client protocolco
 			spaceId,
 			//TODO: add channel settings
 			&channelProperties,
+			nil,
 		),
 		nil,
 	)

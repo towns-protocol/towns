@@ -57,7 +57,7 @@ func (s *Stream) startTicker(miniblockTimeMs uint64) {
 	if miniblockTimeMs == 0 {
 		miniblockTimeMs = 2000
 	}
-	s.miniblockTicker = time.NewTicker(time.Duration(miniblockTimeMs) * time.Millisecond) // TODO: make configurable, disable setting from client if not test run.
+	s.miniblockTicker = time.NewTicker(time.Duration(miniblockTimeMs) * time.Millisecond) // TODO: make configurable, disable setting from client if not test run. https://linear.app/hnt-labs/issue/HNT-2011
 	go s.miniblockTick(s.miniblockTickerContext)
 }
 

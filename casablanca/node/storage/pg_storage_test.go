@@ -46,7 +46,7 @@ func TestPGEventStore(t *testing.T) {
 	wallet, _ := crypto.NewWallet(ctx)
 	inceptionEvent, err := events.MakeEnvelopeWithPayload(
 		wallet,
-		events.Make_UserPayload_Inception(streamId),
+		events.Make_UserPayload_Inception(streamId, nil),
 		nil,
 	)
 	if err != nil {

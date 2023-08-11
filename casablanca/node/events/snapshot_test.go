@@ -14,7 +14,7 @@ import (
 func make_User_Inception(wallet *crypto.Wallet, streamId string, t *testing.T) *ParsedEvent {
 	envelope, err := MakeEnvelopeWithPayload(
 		wallet,
-		Make_UserPayload_Inception(streamId),
+		Make_UserPayload_Inception(streamId, nil),
 		nil,
 	)
 	assert.NoError(t, err)
