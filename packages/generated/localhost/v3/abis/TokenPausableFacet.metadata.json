@@ -12,6 +12,11 @@
       },
       {
         "inputs": [],
+        "name": "Initializable_NotInInitializingState",
+        "type": "error"
+      },
+      {
+        "inputs": [],
         "name": "Introspection_AlreadySupported",
         "type": "error"
       },
@@ -129,6 +134,13 @@
         ],
         "name": "Unpaused",
         "type": "event"
+      },
+      {
+        "inputs": [],
+        "name": "__Pausable_init",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
       },
       {
         "inputs": [],
@@ -268,11 +280,11 @@
       ]
     },
     "contracts/src/diamond/facets/ownable/token/TokenOwnableBase.sol": {
-      "keccak256": "0xbcbc472f917bac57d59fadafaec7bc33bd1e8f4e7e1e381581dbd42fa25e81d8",
+      "keccak256": "0x177226fa7ff9fb7c1049b609a22a53e49ef3e1bbdb602cf4b334a95f3d7e1af8",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://76079f20491ecd4cbfb21a1560616d82f86e650a1607e896e3ea43236a6184cc",
-        "dweb:/ipfs/QmeSYpbqhtegbdvdHrna4GNsgt5HCXHHydQ5k6b9ruLR3i"
+        "bzz-raw://9d9e436af761b4c2f512e63d0f212b7e00d93076ab185db10dcaf4089b87ce61",
+        "dweb:/ipfs/QmYckmvZiw9S2sSj8AamiCDecpG5uCWSbTHwfhyu7xSy3Z"
       ]
     },
     "contracts/src/diamond/facets/ownable/token/TokenOwnableStorage.sol": {
@@ -308,11 +320,11 @@
       ]
     },
     "contracts/src/diamond/facets/pausable/token/TokenPausableFacet.sol": {
-      "keccak256": "0x5e0f9d930c583d43fafef42b4ed87c249704eeb0743c313e31520850e9e0e9ef",
+      "keccak256": "0x08c0d83a04c74f0db83df3f7bdce73e5f7bb329a5a92d89dbee1d037a385a643",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://b81608351433daf80cf906c2242d706b6232ad72644185142291a0ed2cb77cb4",
-        "dweb:/ipfs/QmY7i1iiQctHKL3UQUDzfDdtZfQKP3EJchzy7Ea7ZEFian"
+        "bzz-raw://54daec7f90416334a0206e8e113044e8e6a3a42c45c1d06c9e23ecb9ef950ee5",
+        "dweb:/ipfs/QmdvruX2zcjbHg9i1LMXibAPku4aw2d3iFrB98Y8jhd1Mg"
       ]
     },
     "lib/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol": {

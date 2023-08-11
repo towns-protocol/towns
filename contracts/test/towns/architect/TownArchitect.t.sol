@@ -7,6 +7,7 @@ import {ITokenEntitlement} from "contracts/src/towns/entitlements/token/ITokenEn
 import {IEntitlements} from "contracts/src/towns/facets/entitlements/IEntitlements.sol";
 import {IOwnableBase} from "contracts/src/diamond/facets/ownable/IERC173.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import {IERC173} from "contracts/src/diamond/facets/ownable/IERC173.sol";
 import {IPausableBase, IPausable} from "contracts/src/diamond/facets/pausable/IPausable.sol";
 
 // libraries
@@ -25,7 +26,7 @@ contract TownArchitectTest is
   IOwnableBase,
   IPausableBase
 {
-  function test_createTown() external {
+  function test_createTown_only() external {
     string memory name = "Test";
 
     address founder = _randomAddress();

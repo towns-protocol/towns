@@ -17,7 +17,7 @@ contract TokenPausableFacet is
   TokenOwnableBase,
   Facet
 {
-  function __Pausable_init() internal onlyInitializing {
+  function __Pausable_init() external onlyInitializing {
     _unpause();
   }
 

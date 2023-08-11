@@ -15,7 +15,7 @@ contract TokenOwnableFacet is IERC173, TokenOwnableBase, Facet {
     address collection,
     uint256 tokenId
   ) external onlyInitializing {
-    _setOwnership(collection, tokenId);
+    __TokenOwnableBase_init(collection, tokenId);
     _addInterface(type(IERC173).interfaceId);
   }
 

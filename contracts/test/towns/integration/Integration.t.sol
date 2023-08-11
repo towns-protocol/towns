@@ -3,15 +3,17 @@ pragma solidity ^0.8.20;
 
 // interfaces
 import {IDiamond, Diamond} from "contracts/src/diamond/Diamond.sol";
-import {ITownArchitect} from "contracts/src/towns/facets/architect/ITownArchitect.sol";
+import {ITownArchitect, ITownArchitectBase} from "contracts/src/towns/facets/architect/ITownArchitect.sol";
+import {ITokenEntitlement} from "contracts/src/towns/entitlements/token/ITokenEntitlement.sol";
 
 // contracts
-import {FacetHelper, FacetTest} from "contracts/test/diamond/Facet.t.sol";
+import {FacetTest} from "contracts/test/diamond/Facet.t.sol";
 import {TownArchitect} from "contracts/src/towns/facets/architect/TownArchitect.sol";
 import {ProxyManagerHelper} from "contracts/test/diamond/proxy/ProxyManagerSetup.sol";
 import {ERC721HolderHelper} from "contracts/test/towns/holder/ERC721HolderSetup.sol";
 import {OwnableHelper} from "contracts/test/diamond/ownable/OwnableSetup.sol";
 import {PausableHelper} from "contracts/test/diamond/pausable/PausableSetup.sol";
+import {TownArchitectHelper} from "contracts/test/towns/architect/TownArchitectSetup.sol";
 
 import {MultiInit} from "contracts/src/diamond/initializers/MultiInit.sol";
 import {TownOwner} from "contracts/src/tokens/TownOwner.sol";
@@ -20,17 +22,14 @@ import {TokenEntitlement} from "contracts/src/towns/entitlements/token/TokenEnti
 
 import {TownImplementationHelper} from "contracts/test/towns/Town.t.sol";
 
-abstract contract TownArchitectSetup is FacetTest {
+abstract contract IntegrationSetup is FacetTest {
   address internal townToken;
   address internal userEntitlement;
   address internal tokenEntitlement;
   address internal townImplementation;
 
-  TownArchitect internal townArchitect;
-
   function setUp() public override {
     super.setUp();
-    townArchitect = TownArchitect(diamond);
     TownOwner(townToken).setFactory(diamond);
   }
 
@@ -45,15 +44,12 @@ abstract contract TownArchitectSetup is FacetTest {
     ERC721HolderHelper holderHelper = new ERC721HolderHelper();
     OwnableHelper ownableHelper = new OwnableHelper();
     PausableHelper pausableHelper = new PausableHelper();
-
     TownImplementationHelper townHelper = new TownImplementationHelper();
-
     MultiInit multiInit = new MultiInit();
 
     userEntitlement = address(new UserEntitlement());
     tokenEntitlement = address(new TokenEntitlement());
     townToken = address(new TownOwner("Town Founder", "TOWN", deployer, 0));
-
     townImplementation = address(townHelper.createImplementation(deployer));
 
     // cuts
@@ -95,44 +91,29 @@ abstract contract TownArchitectSetup is FacetTest {
         )
       });
   }
-}
 
-contract TownArchitectHelper is FacetHelper {
-  TownArchitect internal townArchitect;
+  function _createSimpleTown(string memory townId) internal returns (address) {
+    ITownArchitectBase.TownInfo memory townInfo = ITownArchitectBase.TownInfo({
+      id: townId,
+      metadata: "test",
+      everyoneEntitlement: ITownArchitectBase.RoleInfo({
+        name: "Everyone",
+        permissions: new string[](0)
+      }),
+      memberEntitlement: ITownArchitectBase.MemberEntitlement({
+        role: ITownArchitectBase.RoleInfo({
+          name: "test",
+          permissions: new string[](0)
+        }),
+        tokens: new ITokenEntitlement.ExternalToken[](0),
+        users: new address[](0)
+      }),
+      channel: ITownArchitectBase.ChannelInfo({
+        id: "test",
+        metadata: "ipfs://test"
+      })
+    });
 
-  constructor() {
-    townArchitect = new TownArchitect();
-  }
-
-  function facet() public view override returns (address) {
-    return address(townArchitect);
-  }
-
-  function initializer() public pure override returns (bytes4) {
-    return TownArchitect.__TownArchitect_init.selector;
-  }
-
-  function selectors()
-    public
-    pure
-    override
-    returns (bytes4[] memory selectors_)
-  {
-    selectors_ = new bytes4[](9);
-
-    uint256 index;
-    selectors_[index++] = ITownArchitect.createTown.selector;
-    selectors_[index++] = ITownArchitect.computeTown.selector;
-    selectors_[index++] = ITownArchitect
-      .getTownArchitectImplementations
-      .selector;
-    selectors_[index++] = ITownArchitect
-      .setTownArchitectImplementations
-      .selector;
-    selectors_[index++] = ITownArchitect.getTownById.selector;
-    selectors_[index++] = ITownArchitect.getTokenIdByTownId.selector;
-    selectors_[index++] = ITownArchitect.gateByToken.selector;
-    selectors_[index++] = ITownArchitect.ungateByToken.selector;
-    selectors_[index++] = ITownArchitect.isTokenGated.selector;
+    return TownArchitect(diamond).createTown(townInfo);
   }
 }

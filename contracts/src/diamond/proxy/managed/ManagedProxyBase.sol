@@ -15,6 +15,14 @@ import {Proxy} from "../Proxy.sol";
  * @dev implementation fetched using immutable function selector
  */
 abstract contract ManagedProxyBase is IManagedProxyBase, Proxy {
+  function __ManagedProxyBase_init(
+    bytes4 managerSelector,
+    address manager
+  ) internal {
+    _setManagerSelector(managerSelector);
+    _setManager(manager);
+  }
+
   /**
    * @inheritdoc Proxy
    */

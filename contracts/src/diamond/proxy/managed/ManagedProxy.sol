@@ -11,8 +11,7 @@ import {OwnableBase} from "contracts/src/diamond/facets/ownable/OwnableBase.sol"
 
 contract ManagedProxy is ManagedProxyBase, OwnableBase {
   constructor(bytes4 managerSelector, address manager) {
+    __ManagedProxyBase_init(managerSelector, manager);
     _transferOwnership(msg.sender);
-    _setManagerSelector(managerSelector);
-    _setManager(manager);
   }
 }

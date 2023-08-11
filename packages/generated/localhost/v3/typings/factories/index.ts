@@ -14,4 +14,5 @@ export { ITownArchitect__factory } from "./ITownArchitect__factory";
 export { OwnableFacet__factory } from "./OwnableFacet__factory";
 export { TokenEntitlement__factory } from "./TokenEntitlement__factory";
 export { TokenPausableFacet__factory } from "./TokenPausableFacet__factory";
+export { TownFacet__factory } from "./TownFacet__factory";
 export { UserEntitlement__factory } from "./UserEntitlement__factory";

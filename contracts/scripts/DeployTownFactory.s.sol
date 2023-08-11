@@ -98,38 +98,29 @@ contract DeployTownFactory is Deployer {
     IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](totalFacets);
     uint256 index;
 
-    cuts[index++] = cutHelper.makeDeployCut(
-      diamondCut,
-      IDiamond.FacetCutAction.Add
-    );
+    cuts[index++] = cutHelper.makeCut(diamondCut, IDiamond.FacetCutAction.Add);
 
-    cuts[index++] = loupeHelper.makeDeployCut(
+    cuts[index++] = loupeHelper.makeCut(
       diamondLoupe,
       IDiamond.FacetCutAction.Add
     );
 
-    cuts[index++] = townArchitectHelper.makeDeployCut(
+    cuts[index++] = townArchitectHelper.makeCut(
       architect,
       IDiamond.FacetCutAction.Add
     );
-    cuts[index++] = proxyManagerHelper.makeDeployCut(
+    cuts[index++] = proxyManagerHelper.makeCut(
       proxyManager,
       IDiamond.FacetCutAction.Add
     );
-    cuts[index++] = holderHelper.makeDeployCut(
-      holder,
-      IDiamond.FacetCutAction.Add
-    );
-    cuts[index++] = ownableHelper.makeDeployCut(
-      ownable,
-      IDiamond.FacetCutAction.Add
-    );
-    cuts[index++] = pausableHelper.makeDeployCut(
+    cuts[index++] = holderHelper.makeCut(holder, IDiamond.FacetCutAction.Add);
+    cuts[index++] = ownableHelper.makeCut(ownable, IDiamond.FacetCutAction.Add);
+    cuts[index++] = pausableHelper.makeCut(
       pausable,
       IDiamond.FacetCutAction.Add
     );
 
-    cuts[index++] = platformFeeHelper.makeDeployCut(
+    cuts[index++] = platformFeeHelper.makeCut(
       platformFee,
       IDiamond.FacetCutAction.Add
     );

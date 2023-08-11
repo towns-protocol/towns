@@ -13,32 +13,59 @@ import {DiamondLoupeHelper} from "contracts/test/diamond/loupe/DiamondLoupeSetup
 import {EntitlementsHelper} from "contracts/test/towns/entitlements/EntitlementsSetup.sol";
 import {RolesHelper} from "contracts/test/towns/roles/RolesSetup.sol";
 import {ChannelsHelper} from "contracts/test/towns/channels/ChannelsSetup.sol";
+import {TokenOwnableHelper} from "contracts/test/diamond/ownable/token/TokenOwnableSetup.sol";
+import {TokenPausableHelper} from "contracts/test/diamond/pausable/token/TokenPausableSetup.sol";
+import {TownHelper} from "contracts/test/towns/town/TownSetup.sol";
 
-contract TownHelper {
+import {MultiInit} from "contracts/src/diamond/initializers/MultiInit.sol";
+
+contract TownImplementationHelper {
+  OwnableHelper ownableHelper = new OwnableHelper();
+  TokenPausableHelper tokenPausableHelper = new TokenPausableHelper();
+  TokenOwnableHelper tokenOwnableHelper = new TokenOwnableHelper();
+  DiamondCutHelper diamondCutHelper = new DiamondCutHelper();
+  DiamondLoupeHelper diamondLoupeHelper = new DiamondLoupeHelper();
+  EntitlementsHelper entitlementsHelper = new EntitlementsHelper();
+  RolesHelper rolesHelper = new RolesHelper();
+  ChannelsHelper channelsHelper = new ChannelsHelper();
+  TownHelper townHelper = new TownHelper();
+  MultiInit multiInit = new MultiInit();
+
+  address[] initAddresses = new address[](3);
+  bytes[] initDatas = new bytes[](3);
+
   function createImplementation(address owner) external returns (Diamond) {
-    OwnableHelper ownableHelper = new OwnableHelper();
-    DiamondCutHelper diamondCutHelper = new DiamondCutHelper();
-    DiamondLoupeHelper diamondLoupeHelper = new DiamondLoupeHelper();
-    EntitlementsHelper entitlementsHelper = new EntitlementsHelper();
-    RolesHelper rolesHelper = new RolesHelper();
-    ChannelsHelper channelsHelper = new ChannelsHelper();
-
-    uint256 cutCount = 6;
+    uint256 cutCount = 8;
+    uint256 index;
 
     Diamond.FacetCut[] memory cuts = new Diamond.FacetCut[](cutCount);
-    cuts[0] = ownableHelper.makeCut(IDiamond.FacetCutAction.Add);
-    cuts[1] = diamondCutHelper.makeCut(IDiamond.FacetCutAction.Add);
-    cuts[2] = diamondLoupeHelper.makeCut(IDiamond.FacetCutAction.Add);
-    cuts[3] = entitlementsHelper.makeCut(IDiamond.FacetCutAction.Add);
-    cuts[4] = rolesHelper.makeCut(IDiamond.FacetCutAction.Add);
-    cuts[5] = channelsHelper.makeCut(IDiamond.FacetCutAction.Add);
+    cuts[index++] = tokenOwnableHelper.makeCut(IDiamond.FacetCutAction.Add);
+    cuts[index++] = diamondCutHelper.makeCut(IDiamond.FacetCutAction.Add);
+    cuts[index++] = diamondLoupeHelper.makeCut(IDiamond.FacetCutAction.Add);
+    cuts[index++] = entitlementsHelper.makeCut(IDiamond.FacetCutAction.Add);
+    cuts[index++] = rolesHelper.makeCut(IDiamond.FacetCutAction.Add);
+    cuts[index++] = channelsHelper.makeCut(IDiamond.FacetCutAction.Add);
+    cuts[index++] = tokenPausableHelper.makeCut(IDiamond.FacetCutAction.Add);
+    cuts[index++] = townHelper.makeCut(IDiamond.FacetCutAction.Add);
+
+    initAddresses[0] = ownableHelper.facet();
+    initAddresses[1] = diamondCutHelper.facet();
+    initAddresses[2] = diamondLoupeHelper.facet();
+
+    initDatas[0] = ownableHelper.makeInitData(abi.encode(owner));
+    initDatas[1] = diamondCutHelper.makeInitData("");
+    initDatas[2] = diamondLoupeHelper.makeInitData("");
 
     return
       new Diamond(
         Diamond.InitParams({
           baseFacets: cuts,
-          init: ownableHelper.facet(),
-          initData: ownableHelper.makeInitData(abi.encode(owner))
+          init: address(multiInit),
+          initData: abi.encodeWithSelector(
+            multiInit.multiInit.selector,
+            initAddresses,
+            initDatas
+          )
         })
       );
   }
