@@ -124,7 +124,7 @@ export class SpaceDappV3 implements ISpaceDapp {
         }
         const roles: IRolesBase.RoleStructOutput[] = await town.Roles.read.getRoles()
         return roles.map((role) => ({
-            roleId: role.id,
+            roleId: role.id.toNumber(),
             name: role.name,
         }))
     }

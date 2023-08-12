@@ -53,7 +53,7 @@ const schema = z.object({
 export const CreateChannelForm = (props: Props) => {
     const { onCreateChannel, onHide } = props
     const { data: roles } = useContractRoles(props.spaceId.networkId)
-    const roledIds = useMemo(() => roles?.map((r) => r.roleId?.toNumber()) ?? [], [roles])
+    const roledIds = useMemo(() => roles?.map((r) => r.roleId) ?? [], [roles])
     const { data: _rolesDetails, invalidateQuery } = useMultipleRoleDetails(
         props.spaceId.networkId,
         roledIds,

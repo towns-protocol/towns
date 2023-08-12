@@ -7,7 +7,7 @@ import {
     RoleDetails,
     RoleEntitlements,
 } from './ContractTypes'
-import { BigNumber, ContractTransaction, ethers } from 'ethers'
+import { BigNumber, BigNumberish, ContractTransaction, ethers } from 'ethers'
 import { BytesLike, keccak256 } from 'ethers/lib/utils'
 import { CreateSpaceParams, ISpaceDapp, UpdateChannelParams, UpdateRoleParams } from './ISpaceDapp'
 import { IStaticContractsInfo, getContractsInfo } from './IStaticContractsInfo'
@@ -19,7 +19,7 @@ import {
     createUserEntitlementStruct,
     decodeExternalTokens,
     decodeUsers,
-} from './ContractHelpers'
+} from './v3/ConvertersEntitlements'
 
 import { ShimFactory } from './shims/ShimFactory'
 import { SpaceInfo } from './SpaceInfo'
@@ -180,7 +180,7 @@ export class SpaceDapp implements ISpaceDapp {
                 space.interface.encodeFunctionData('addRoleToChannel', [
                     channelNetworkId,
                     userEntitlement as string,
-                    BigNumber.from(roleId),
+                    roleId,
                 ]),
             )
         }
@@ -219,7 +219,7 @@ export class SpaceDapp implements ISpaceDapp {
             const getRoleEntitlementsAsync: Promise<RoleEntitlements>[] = []
             for (const role of channelRoles) {
                 getRoleEntitlementsAsync.push(
-                    this.getRoleEntitlements(space, entitlementShims, role.roleId.toNumber()),
+                    this.getRoleEntitlements(space, entitlementShims, role.roleId),
                 )
             }
             const roles = await Promise.all(getRoleEntitlementsAsync)
@@ -266,7 +266,14 @@ export class SpaceDapp implements ISpaceDapp {
             throw new Error(`Space with networkId "${spaceId}" is not found.`)
         }
         const roles = await space.read.getRoles()
-        return roles.filter((role) => role.roleId.toNumber() !== 0)
+        return roles
+            .filter((role) => role.roleId.toNumber() !== 0)
+            .map((role) => {
+                return {
+                    roleId: role.roleId.toNumber(),
+                    name: role.name,
+                }
+            })
     }
 
     public async getRolesByChannel(
@@ -552,7 +559,7 @@ export class SpaceDapp implements ISpaceDapp {
     private async encodeDeleteRoleFromEntitlements(
         space: SpaceShim,
         modules: SpaceDataTypes.EntitlementModuleStructOutput[],
-        roleId: number,
+        roleId: BigNumberish,
     ): Promise<BytesLike[]> {
         const encodedCallData: BytesLike[] = []
         // get current entitlements for the role
@@ -576,14 +583,11 @@ export class SpaceDapp implements ISpaceDapp {
     }
 
     private encodeRoleDelete(space: SpaceShim, roleId: number): string {
-        return space.interface.encodeFunctionData('removeRole', [BigNumber.from(roleId)])
+        return space.interface.encodeFunctionData('removeRole', [roleId])
     }
 
     private encodeRoleNameUpdate(space: SpaceShim, params: UpdateRoleParams): string {
-        return space.interface.encodeFunctionData('updateRole', [
-            BigNumber.from(params.roleId),
-            params.roleName,
-        ])
+        return space.interface.encodeFunctionData('updateRole', [params.roleId, params.roleName])
     }
 
     private encodePermissionUpdate(
@@ -743,7 +747,7 @@ export class SpaceDapp implements ISpaceDapp {
 
     private encodeRemoveRoleFromEntitlement(
         space: SpaceShim,
-        roleId: number,
+        roleId: BigNumberish,
         modules: SpaceDataTypes.EntitlementModuleStructOutput[],
         entitlementsToRemove: EntitlementData,
     ): BytesLike[] {
@@ -793,7 +797,7 @@ export class SpaceDapp implements ISpaceDapp {
     private async getEntitlementDetails(
         space: SpaceShim,
         entitlementShims: EntitlementShims,
-        roleId: number,
+        roleId: BigNumberish,
     ): Promise<EntitlementData> {
         let rawTokenDetails: TokenDataTypes.ExternalTokenStruct[][] = []
         let rawUserDetails: string[][] = []
@@ -932,7 +936,7 @@ export class SpaceDapp implements ISpaceDapp {
     }
 
     private async getTokenEntitlementDetails(
-        roleId: number,
+        roleId: BigNumberish,
         tokenEntitlement: TokenEntitlementShim,
     ): Promise<TokenDataTypes.ExternalTokenStruct[][]> {
         // a token-gated entitlement can have multiple tokens OR together, or AND together.
@@ -947,7 +951,7 @@ export class SpaceDapp implements ISpaceDapp {
     }
 
     private async getUserEntitlementDetails(
-        roleId: number,
+        roleId: BigNumberish,
         userEntitlement: UserEntitlementShim,
     ): Promise<string[][]> {
         // a user-gated entitlement has multiple user arrays OR together or AND together.
@@ -1086,7 +1090,7 @@ export class SpaceDapp implements ISpaceDapp {
     private async getRoleEntitlements(
         space: SpaceShim,
         entitlementShims: EntitlementShims,
-        roleId: number,
+        roleId: BigNumberish,
     ): Promise<RoleEntitlements> {
         const [roleMetadata, permissions, entitlementDetails] = await Promise.all([
             space.read.getRoleById(roleId),

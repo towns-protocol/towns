@@ -1,9 +1,7 @@
-import { BigNumber } from 'ethers'
 import { TokenDataTypes } from './shims/TokenEntitlementShim'
+import { TokenEntitlementShim } from './v3/TokenEntitlementShim'
+import { UserEntitlementShim } from './v3/UserEntitlementShim'
 
-/**
- * Todo: Should generate and publish from our solidity contract definition.
- */
 export enum Permission {
     Read = 'Read',
     Write = 'Write',
@@ -21,6 +19,8 @@ export enum Permission {
 /**
  * Supported entitlement modules
  */
+export type SupportedEntitlement = TokenEntitlementShim | UserEntitlementShim
+
 export enum EntitlementModuleType {
     TokenEntitlement = 'TokenEntitlement',
     UserEntitlement = 'UserEntitlement',
@@ -71,6 +71,22 @@ export interface RoleEntitlements {
 }
 
 export interface BasicRoleInfo {
-    roleId: BigNumber
+    roleId: number
     name: string
+}
+
+export interface EntitlementModule {
+    moduleType: EntitlementModuleType
+}
+
+export function isTokenEntitlement(
+    entitlement: EntitlementModule,
+): entitlement is TokenEntitlementShim {
+    return entitlement.moduleType === EntitlementModuleType.TokenEntitlement
+}
+
+export function isUserEntitlement(
+    entitlement: EntitlementModule,
+): entitlement is UserEntitlementShim {
+    return entitlement.moduleType === EntitlementModuleType.UserEntitlement
 }

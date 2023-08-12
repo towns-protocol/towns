@@ -18,6 +18,6 @@ export function useDefaultRolePath() {
             return `/${rolesPath}/empty/permissions`
         }
 
-        return `/${rolesPath}/${firstRole.roleId.toNumber()}/permissions`
+        return `/${rolesPath}/${firstRole.roleId}/permissions`
     }, [isLoading, _roles, rolesPath])
 }

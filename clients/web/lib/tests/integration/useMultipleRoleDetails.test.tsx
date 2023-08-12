@@ -233,7 +233,7 @@ function MultipleRolesComponent({
     spaceNetworkId: string | undefined
 }): JSX.Element {
     const { isLoading, spaceRoles, error } = useRoles(spaceNetworkId)
-    const roleIds = useMemo(() => spaceRoles?.map((role) => role.roleId.toNumber()), [spaceRoles])
+    const roleIds = useMemo(() => spaceRoles?.map((role) => role.roleId), [spaceRoles])
 
     useEffect(() => {
         console.log({
@@ -258,7 +258,7 @@ function printRoleStruct(roles: BasicRoleInfo[] | undefined) {
     if (roles) {
         for (const role of roles) {
             console.log({
-                roleId: role.roleId.toNumber(),
+                roleId: role.roleId,
                 name: role.name,
             })
         }

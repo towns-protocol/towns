@@ -21,11 +21,16 @@ import { RoleIdentifier } from '../../src/types/web3-types'
 import { RoomVisibility } from '../../src/types/zion-types'
 import { SpaceFactoryDataTypes } from '../../src/client/web3/shims/SpaceFactoryShim'
 import { TestConstants } from './helpers/TestConstants'
+import { ZionTestClientProps } from './helpers/ZionTestClient'
 
 describe('get role details', () => {
+    const withTestProps: ZionTestClientProps = {
+        smartContractVersion: '', // use v3 for the new TownArchitect. work-in-progress.
+    }
+
     test('get details of a role that no channel uses', async () => {
         /** Arrange */
-        const { alice } = await registerAndStartClients(['alice'])
+        const { alice } = await registerAndStartClients(['alice'], withTestProps)
         await alice.fundWallet()
         const roomId = await createTestSpaceWithZionMemberRole(alice, [Permission.Read])
         if (!roomId) {

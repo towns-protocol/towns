@@ -277,11 +277,8 @@ function RolesComponent({ spaceNetworkId }: { spaceNetworkId: string | undefined
                 spaceRoles &&
                 spaceRoles.map((role) => {
                     return (
-                        <div key={role.roleId.toNumber()}>
-                            <RoleDetailsComponent
-                                spaceId={spaceNetworkId}
-                                roleId={role.roleId.toNumber()}
-                            />
+                        <div key={role.roleId}>
+                            <RoleDetailsComponent spaceId={spaceNetworkId} roleId={role.roleId} />
                         </div>
                     )
                 })}
@@ -296,7 +293,7 @@ function printRoleStruct(roles: BasicRoleInfo[] | undefined) {
     if (roles) {
         for (const role of roles) {
             console.log({
-                roleId: role.roleId.toNumber(),
+                roleId: role.roleId,
                 name: role.name,
             })
         }

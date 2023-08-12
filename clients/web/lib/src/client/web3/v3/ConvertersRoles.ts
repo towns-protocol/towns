@@ -1,6 +1,6 @@
-import { encodeExternalTokens, encodeUsers } from '../ContractHelpers'
+import { EntitlementModuleType, Permission } from '../ContractTypes'
+import { createTokenEntitlementStruct, createUserEntitlementStruct } from './ConvertersEntitlements'
 
-import { EntitlementModuleType } from '../ContractTypes'
 import { IRolesBase } from './IRolesShim'
 import { SpaceFactoryDataTypes } from '../shims/SpaceFactoryShim'
 import { Town } from './Town'
@@ -53,24 +53,9 @@ export async function fromCreateRoleStructToCreateEntitlementStruct(
     return entitlements
 }
 
-function createTokenEntitlementStruct(
-    moduleAddress: string,
-    tokens: SpaceFactoryDataTypes.ExternalTokenStruct[],
-): IRolesBase.CreateEntitlementStruct {
-    const data = encodeExternalTokens(tokens)
-    return {
-        module: moduleAddress,
-        data,
-    }
-}
-
-export function createUserEntitlementStruct(
-    moduleAddress: string,
-    users: string[],
-): IRolesBase.CreateEntitlementStruct {
-    const data = encodeUsers(users)
-    return {
-        module: moduleAddress,
-        data,
-    }
+export function toPermissions(permissions: string[]): Permission[] {
+    return permissions.map((p) => {
+        const perm = p as Permission
+        return perm
+    })
 }
