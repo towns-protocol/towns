@@ -24,7 +24,7 @@ import { VListItem } from './VListItem'
 
 const DEFAULT_ITEM_HEIGHT = 100
 const DEFAULT_MARGIN_RATIO = 1
-const RESET_DELAY_MS = 300
+const RESET_DELAY_MS = 100
 
 const info = debug('app:vlist')
 info.color = 'gray'
@@ -405,6 +405,8 @@ export function VList<T>(props: Props<T>) {
         content.style.height = `${contentHeightRef.current}px`
     }, [getElements])
 
+    const [isAligned, setIsAligned] = useState(false)
+
     const realignImperatively = useCallback(() => {
         setIsReadyToRealign(false)
         // keep offset to scrollBy() once dom is updated
@@ -431,6 +433,8 @@ export function VList<T>(props: Props<T>) {
             // otherwise offset the current position
             container.scrollBy({ top: -diff })
         }
+
+        setIsAligned(true)
 
         debugRef.current?.()
     }, [getElements, getScrollY, updateDOM, updateDOMHeight])
@@ -498,6 +502,8 @@ export function VList<T>(props: Props<T>) {
             ) +
             // padding at the end
             padding
+
+        setIsAligned(contentHeightRef.current === contentHeight)
 
         contentHeightRef.current = contentHeight
 
@@ -684,9 +690,7 @@ export function VList<T>(props: Props<T>) {
             const overScroll = Math.max(0, anchorDiffRef.current - scrollY)
             if (overScroll > 0 && anchorDiffRef.current > 0) {
                 anchorDiffRef.current = 0
-                updateDOM()
-                updateDOMHeight()
-                setIsReadyToRealign(true)
+                realignImperatively()
             }
         }
 
@@ -712,6 +716,7 @@ export function VList<T>(props: Props<T>) {
         keyList,
         list,
         overscan,
+        realignImperatively,
         updateDOM,
         updateDOMHeight,
         viewport,
@@ -834,11 +839,19 @@ export function VList<T>(props: Props<T>) {
         }
     }, [align])
 
+    const computedContainerStyle = useMemo(() => {
+        return {
+            ...containerStyle,
+            // no elastic scrolling while alignmenet is off (mobile)
+            overscrollBehaviorY: isAligned ? 'contain' : 'none',
+        } as const
+    }, [isAligned])
+
     return (
         <div style={computedMainStyle} data-testid="vlist-main">
             <div
                 className={scrollbarsClass}
-                style={{ ...containerStyle, height: contentHeightRef.current }}
+                style={{ ...computedContainerStyle, height: contentHeightRef.current }}
                 ref={scrollContainerRef}
                 data-testid="vlist-container"
             >
