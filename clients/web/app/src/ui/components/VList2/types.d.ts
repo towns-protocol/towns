@@ -15,4 +15,5 @@ type ItemCacheMap = { [key: string]: ItemCache | undefined }
 type FocusOption = {
     key: string
     align: 'start' | 'end'
+    force?: boolean
 }

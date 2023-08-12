@@ -27,36 +27,15 @@ import { DateDivider } from '../MessageTimeIineItem/items/DateDivider'
 import { NewDivider } from '../MessageTimeIineItem/items/NewDivider'
 import {
     EncryptedMessageRenderEvent,
-    FullyReadRenderEvent,
     MessageRenderEvent,
     RedactedMessageRenderEvent,
-    RenderEvent,
     RenderEventType,
-    ThreadUpdateRenderEvent,
-    UserMessagesRenderEvent,
     getEventsByDate,
     isRedactedRoomMessage,
     isRoomMessage,
 } from './util/getEventsByDate'
-
-type ListItem =
-    | { id: string; type: 'divider' }
-    | { id: string; type: 'expander' }
-    | { id: string; type: 'header' }
-    | { id: string; type: 'group'; date: string; isNew?: boolean }
-    | { id: string; type: 'user-messages'; item: UserMessagesRenderEvent }
-    | { id: string; type: 'fully-read'; item: FullyReadRenderEvent }
-    | {
-          id: string
-          type: 'message'
-          item: MessageRenderEvent | EncryptedMessageRenderEvent | RedactedMessageRenderEvent
-      }
-    | { id: string; type: 'thread-update'; item: ThreadUpdateRenderEvent }
-    | {
-          id: string
-          type: 'generic'
-          item: RenderEvent
-      }
+import { ListItem } from './types'
+import { useFocusMessage } from './hooks/useFocusItem'
 
 type Props = {
     header?: JSX.Element
@@ -368,21 +347,7 @@ export const MessageTimeline = (props: Props) => {
         [listItems],
     )
 
-    const lastKey = listItems[listItems.length - 1]?.id
-
-    const focusItem = useMemo(
-        () =>
-            props.highlightId
-                ? {
-                      key: props.highlightId,
-                      align: 'start' as const,
-                  }
-                : {
-                      key: lastKey,
-                      align: 'end' as const,
-                  },
-        [lastKey, props.highlightId],
-    )
+    const { focusItem } = useFocusMessage(listItems, props.highlightId, userId)
 
     return (
         <VList

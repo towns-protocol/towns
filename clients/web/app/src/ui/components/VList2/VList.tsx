@@ -199,24 +199,22 @@ export function VList<T>(props: Props<T>) {
      * ------------------------------------------------------------------- focus
      */
 
-    // focus viewport on a specific item in the list set by prop, and cancelled by user scroll
-    const [focus, setFocus] = useState(props.focusItem ?? null)
+    const focusItemRef = useRef<FocusOption | null>()
 
-    // defaults to false, set to true when user scrolls
+    // set to true when user scrolls, cancels current focus
     const [hasUserScrolled, setHasUserScrolled] = useState(false)
-    const hasUserScrolledRef = useRef<boolean>(hasUserScrolled)
-
-    hasUserScrolledRef.current = hasUserScrolled
+    const hasUserScrolledRef = useUpdatedRef(hasUserScrolled)
 
     // change focus on prop change (e.g. new incoming message)
     useEffect(() => {
-        // only change once user has scrolled
-        if (!hasUserScrolledRef.current) {
-            log(` focus ${props.focusItem?.key}`)
-            setFocus(props.focusItem ?? null)
+        if (!props.focusItem) {
+            return
+        }
+        if (!hasUserScrolledRef.current || props.focusItem.force) {
+            focusItemRef.current = props.focusItem
             setHasUserScrolled(false)
         }
-    }, [props.focusItem])
+    }, [hasUserScrolledRef, props.focusItem])
 
     /**
      * discard focus when user scrolls
@@ -225,7 +223,7 @@ export function VList<T>(props: Props<T>) {
         log(`hasScrolled: ${hasUserScrolled}`)
         if (hasUserScrolled) {
             log(`setFocus: null`)
-            setFocus(null)
+            focusItemRef.current = null
         }
     }, [hasUserScrolled])
 
@@ -322,16 +320,20 @@ export function VList<T>(props: Props<T>) {
             return 0
         }
 
-        const focusedItem = focus?.key ? itemCache[focus.key] : undefined
+        const focusedItem = focusItemRef.current?.key
+            ? itemCache[focusItemRef.current.key]
+            : undefined
 
-        if (focusedItem) {
-            info(`getScrollTop() -  ${focus?.key}`)
+        const focus = focusItemRef.current
+
+        if (focus && focusedItem) {
+            info(`getScrollTop() -  ${focus.key}`)
             const y = focus?.align === 'end' ? focusedItem.y + focusedItem.height : focusedItem.y
             return y + (focus?.align === 'end' ? padding - viewport.height : 0)
         }
 
         return scrollContainerRef.current.scrollTop
-    }, [focus, itemCache, padding, viewport])
+    }, [itemCache, padding, viewport.height])
 
     // ------------------------------------------------------------------- groups
 
@@ -420,7 +422,7 @@ export function VList<T>(props: Props<T>) {
         // ensures scroll event doesn't trigger a realignment
         internalScrollRef.current = true
 
-        if (focus && !hasUserScrolled) {
+        if (focusItemRef.current) {
             // in the initialisation phase, we want to keep the scroll position
             // as steady as possible on the focused item (getScrollY will return
             // the focus item's position)
@@ -431,7 +433,7 @@ export function VList<T>(props: Props<T>) {
         }
 
         debugRef.current?.()
-    }, [focus, getElements, getScrollY, hasUserScrolled, updateDOM, updateDOMHeight])
+    }, [getElements, getScrollY, updateDOM, updateDOMHeight])
 
     // -------------------------------------------------------------async update
 
@@ -598,6 +600,8 @@ export function VList<T>(props: Props<T>) {
                 return isIntersecting
             })
 
+            const focus = focusItemRef.current
+
             if (!isInternalScroll || focus) {
                 const relativeEye = focus?.align !== 'start' ? viewport.height : 0
                 const eyeY = scrollY + relativeEye - diff
@@ -605,6 +609,7 @@ export function VList<T>(props: Props<T>) {
                 const key =
                     focus?.key ??
                     getScrollAnchor(keyList, itemCache, eyeY, ignoreFocusItemsRef.current)
+
                 const anchorY = key ? itemCache[key]?.y : undefined
                 const prevAnchor = anchorRef.current
 
@@ -695,11 +700,11 @@ export function VList<T>(props: Props<T>) {
         }
     }, [
         debounceResetIdle,
-        focus,
         getKey,
         getScrollY,
         groupIds,
         hasUserScrolled,
+        hasUserScrolledRef,
         isIdleRef,
         isScrollingRef,
         isTouch,
