@@ -6,13 +6,13 @@ import { Box, Button, Icon, IconButton, Paragraph, Stack, Text } from '@ui'
 import { useDevice } from 'hooks/useDevice'
 import { usePushNotifications } from 'hooks/usePushNotifications'
 import { useMuteSettings } from 'api/lib/notificationSettings'
-import { PATHS } from 'routes'
 import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
 import { TouchNavBar } from '@components/TouchNavBar/TouchNavBar'
 
 type Props = {
     channel: Channel
     spaceId: RoomIdentifier
+    onTouchClose?: () => void
 }
 
 export const ChannelHeader = (props: Props) => {
@@ -94,7 +94,7 @@ const DesktopChannelHeader = (props: Props) => {
 }
 
 const TouchChannelHeader = (props: Props) => {
-    const { channel } = props
+    const { channel, onTouchClose } = props
     const navigate = useNavigate()
     const spaceId = useSpaceIdFromPathname()
     const { members } = useChannelMembers()
@@ -106,10 +106,6 @@ const TouchChannelHeader = (props: Props) => {
     })
 
     const isMuted = channelIsMuted || spaceIsMuted
-
-    const homeButtonPressed = useCallback(() => {
-        navigate(`/${PATHS.SPACES}/${spaceId}/home`)
-    }, [navigate, spaceId])
 
     const infoButtonPressed = useCallback(() => {
         navigate(`info?channel`)
@@ -123,7 +119,7 @@ const TouchChannelHeader = (props: Props) => {
                         icon="back"
                         size="square_md"
                         color="default"
-                        onClick={homeButtonPressed}
+                        onClick={onTouchClose}
                     />
                 }
                 contentRight={

@@ -12,7 +12,7 @@ export const AppTouchLayout = () => {
     return (
         <TouchTabBarContext.Provider value={value}>
             {/* stretch main container to push footer down */}
-            <Box grow position="relative">
+            <Box grow position="relative" overflowX="hidden">
                 <SuspenseLoader>
                     <Outlet />
                 </SuspenseLoader>

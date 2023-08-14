@@ -30,10 +30,14 @@ import { useSpaceChannels } from 'hooks/useSpaceChannels'
 import { env } from 'utils'
 import { CentralPanelLayout } from './layouts/CentralPanelLayout'
 
-export const SpacesChannel = () => {
+type Props = {
+    onTouchClose?: () => void
+}
+
+export const SpacesChannel = (props: Props) => {
     return (
         <SpaceChannelWrapper>
-            <SpacesChannelComponent />
+            <SpacesChannelComponent {...props} />
         </SpaceChannelWrapper>
     )
 }
@@ -54,7 +58,7 @@ const SpaceChannelWrapper = (props: { children: React.ReactElement }) => {
     return <ChannelContextProvider channelId={channelSlug}>{props.children}</ChannelContextProvider>
 }
 
-const SpacesChannelComponent = () => {
+const SpacesChannelComponent = (props: Props) => {
     const { messageId } = useParams()
     const { isTouch } = useDevice()
     const { joinRoom, scrollback, sendMessage, isRoomEncrypted } = useZionClient()
@@ -191,7 +195,11 @@ const SpacesChannelComponent = () => {
                         events={channelMessages}
                         isChannelWritable={isChannelWritable}
                     >
-                        <ChannelHeader channel={channel} spaceId={spaceId} />
+                        <ChannelHeader
+                            channel={channel}
+                            spaceId={spaceId}
+                            onTouchClose={props.onTouchClose}
+                        />
 
                         <MessageTimeline
                             align="bottom"
