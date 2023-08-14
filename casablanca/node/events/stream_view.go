@@ -4,13 +4,17 @@ import (
 	"bytes"
 	. "casablanca/node/base"
 	. "casablanca/node/crypto"
+	"casablanca/node/dlog"
 	. "casablanca/node/protocol"
 	. "casablanca/node/utils"
+	"context"
 	"encoding/hex"
 	"fmt"
 	"os"
 	"runtime/debug"
 	"sync"
+
+	"google.golang.org/protobuf/proto"
 )
 
 type StreamView interface {
@@ -137,12 +141,17 @@ func MakeStreamViewFromParsedEvents(unsortedEvents []*ParsedEvent) (*streamViewI
 
 	streamId := events[0].Event.GetInceptionPayload().GetStreamId()
 
+	var snapshot *Snapshot
 	blocks := make([]*miniblockInfo, 0, len(events)/8)
 	for _, event := range events {
 		header := event.Event.GetMiniblockHeader()
 		if header != nil {
 			if header.MiniblockNum != int64(len(blocks)) {
 				return nil, RpcErrorf(Err_BAD_BLOCK, "MakeStreamView: block number mismatch, expected=%d, actual=%d", len(blocks), header.MiniblockNum)
+			}
+
+			if header.GetSnapshot() != nil {
+				snapshot = header.GetSnapshot()
 			}
 
 			if len(blocks) > 0 {
@@ -182,6 +191,10 @@ func MakeStreamViewFromParsedEvents(unsortedEvents []*ParsedEvent) (*streamViewI
 		return nil, RpcErrorf(Err_BAD_BLOCK, "MakeStreamView: No blocks")
 	}
 
+	if snapshot == nil {
+		return nil, RpcErrorf(Err_BAD_BLOCK, "MakeStreamView: No snapshot")
+	}
+
 	// Now eventsByHash contains events that are not in any block, and thus are part of the minipool.
 	minipoolEvents := NewOrderedMap[string, *ParsedEvent](len(eventsByHash))
 	for _, e := range events {
@@ -194,6 +207,7 @@ func MakeStreamViewFromParsedEvents(unsortedEvents []*ParsedEvent) (*streamViewI
 		streamId: streamId,
 		blocks:   blocks,
 		minipool: newMiniPoolInstance(minipoolEvents),
+		snapshot: snapshot,
 	}, nil
 }
 
@@ -202,6 +216,7 @@ type streamViewImpl struct {
 
 	blocks   []*miniblockInfo
 	minipool *minipoolInstance
+	snapshot *Snapshot
 }
 
 func (r *streamViewImpl) copyAndAddEvent(event *ParsedEvent) (*streamViewImpl, error) {
@@ -219,6 +234,7 @@ func (r *streamViewImpl) copyAndAddEvent(event *ParsedEvent) (*streamViewImpl, e
 		streamId: r.streamId,
 		blocks:   r.blocks,
 		minipool: r.minipool.copyAndAddEvent(event),
+		snapshot: r.snapshot,
 	}
 	return r, nil
 }
@@ -227,18 +243,37 @@ func (r *streamViewImpl) lastBlock() *miniblockInfo {
 	return r.blocks[len(r.blocks)-1]
 }
 
-func (r *streamViewImpl) makeMiniblockHeader() *MiniblockHeader {
+func (r *streamViewImpl) makeMiniblockHeader(ctx context.Context) *MiniblockHeader {
+
+	log := dlog.CtxLog(ctx)
 	hashes := make([][]byte, 0, r.minipool.events.Len())
-	_ = r.minipool.forEachEvent(func(e *ParsedEvent) (bool, error) {
+	for _, e := range r.minipool.events.Values {
 		hashes = append(hashes, e.Hash)
-		return true, nil
-	})
+	}
+
+	var snapshot *Snapshot
+	if r.shouldSnapshot() {
+		snapshot = proto.Clone(r.snapshot).(*Snapshot)
+		events := r.eventsSinceLastSnapshot()
+		for _, e := range events {
+			err := Update_Snapshot(snapshot, e)
+			if err != nil {
+				log.Error("Failed to update snapshot",
+					"error", err,
+					"streamId", r.streamId,
+					"event", e.ShortDebugStr(),
+				)
+			}
+		}
+	}
+
 	last := r.lastBlock()
 	return &MiniblockHeader{
 		MiniblockNum:      last.header().MiniblockNum + 1,
 		Timestamp:         NextMiniblockTimestamp(last.header().Timestamp),
 		EventHashes:       hashes,
 		PrevMiniblockHash: last.headerEvent.Hash,
+		Snapshot:          snapshot,
 	}
 }
 
@@ -287,10 +322,18 @@ func (r *streamViewImpl) copyAndApplyBlock(headerEvent *ParsedEvent) (*streamVie
 		}
 	}
 
+	var snapshot *Snapshot
+	if header.Snapshot != nil {
+		snapshot = header.Snapshot
+	} else {
+		snapshot = r.snapshot
+	}
+
 	return &streamViewImpl{
 		streamId: r.streamId,
 		blocks:   append(r.blocks, &miniblockInfo{headerEvent: headerEvent, events: eventsInBlock}),
 		minipool: newMiniPoolInstance(minipoolEvents),
+		snapshot: snapshot,
 	}, nil
 }
 
@@ -426,5 +469,57 @@ func (r *streamViewImpl) SyncCookie() *SyncCookie {
 		MinipoolInstance: r.minipool.instance,
 		MinipoolSlot:     int64(r.minipool.events.Len()),
 	}
+}
 
+func (r *streamViewImpl) getMinEventsPerSnapshot() int {
+	// TODO this should be a system level config https://linear.app/hnt-labs/issue/HNT-2011
+	defaultMinEventsPerSnapshot := 100
+	settings := r.InceptionPayload().GetSettings()
+	if settings == nil || settings.GetMinEventsPerSnapshot() == 0 {
+		return defaultMinEventsPerSnapshot
+	}
+	return int(settings.GetMinEventsPerSnapshot())
+}
+
+func (r *streamViewImpl) shouldSnapshot() bool {
+	var count = 0
+	var minEventsPerSnapshot = r.getMinEventsPerSnapshot()
+	// count the events in the minipool
+	count += r.minipool.events.Len()
+	if count >= minEventsPerSnapshot {
+		return true
+	}
+	// count the events in blocks since the last snapshot
+	for i := len(r.blocks) - 1; i >= 0; i-- {
+		block := r.blocks[i]
+		if block.header().Snapshot != nil {
+			break
+		}
+		count += len(block.events)
+		if count >= minEventsPerSnapshot {
+			return true
+		}
+	}
+	return false
+}
+
+func (r *streamViewImpl) eventsSinceLastSnapshot() []*ParsedEvent {
+	returnVal := make([]*ParsedEvent, 0, r.getMinEventsPerSnapshot())
+	// find index of oldest block without snapshot
+	lastSnapshotBlockIndex := len(r.blocks)
+	for i := len(r.blocks) - 1; i >= 0; i-- {
+		block := r.blocks[i]
+		if block.header().Snapshot != nil {
+			break
+		}
+		lastSnapshotBlockIndex = i
+	}
+	// add events from blocks without snapshot
+	for i := lastSnapshotBlockIndex; i < len(r.blocks); i++ {
+		block := r.blocks[i]
+		returnVal = append(returnVal, block.events...)
+	}
+	// add the minipool
+	returnVal = append(returnVal, r.minipool.events.Values...)
+	return returnVal
 }

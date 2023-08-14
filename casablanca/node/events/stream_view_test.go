@@ -19,9 +19,10 @@ func parsedEvent(t *testing.T, envelope *protocol.Envelope) *ParsedEvent {
 
 func TestLoad(t *testing.T) {
 	wallet, _ := crypto.NewWallet(context.Background())
+	minEventsPerSnapshot := 2
 	inception, err := MakeEnvelopeWithPayload(
 		wallet,
-		Make_UserPayload_Inception("streamid$1", nil),
+		Make_UserPayload_Inception("streamid$1", &protocol.StreamSettings{MinEventsPerSnapshot: int32(minEventsPerSnapshot), MiniblockTimeMs: 1000}),
 		nil,
 	)
 	assert.NoError(t, err)
@@ -78,6 +79,41 @@ func TestLoad(t *testing.T) {
 
 	// Check minipool, should be empty
 	assert.Equal(t, 0, len(view.minipool.events.Values))
+
+	// check snapshot generation
+	assert.Equal(t, minEventsPerSnapshot, view.getMinEventsPerSnapshot())
+	assert.Equal(t, false, view.shouldSnapshot())
+
+	// add one more event (just join again)
+	join2, err := MakeEnvelopeWithPayload(
+		wallet,
+		Make_UserPayload_Membership(protocol.MembershipOp_SO_JOIN, "userid$2", "streamid$1", nil),
+		[][]byte{join.Hash},
+	)
+	assert.NoError(t, err)
+	view, err = view.copyAndAddEvent(parsedEvent(t, join2))
+	assert.NoError(t, err)
+	// with one new event, we shouldn't snapshot yet
+	assert.Equal(t, false, view.shouldSnapshot())
+	// and miniblocks should have nil snapshots
+	miniblock := view.makeMiniblockHeader(context.Background())
+	assert.Nil(t, miniblock.Snapshot)
+	// add another join event
+	join3, err := MakeEnvelopeWithPayload(
+		wallet,
+		Make_UserPayload_Membership(protocol.MembershipOp_SO_JOIN, "userid$3", "streamid$1", nil),
+		[][]byte{join2.Hash},
+	)
+	assert.NoError(t, err)
+	view, err = view.copyAndAddEvent(parsedEvent(t, join3))
+	assert.NoError(t, err)
+	// with two new events, we should snapshot
+	assert.Equal(t, true, view.shouldSnapshot())
+	assert.Equal(t, 2, len(view.eventsSinceLastSnapshot()))
+	// and miniblocks should have non - nil snapshots
+	miniblock = view.makeMiniblockHeader(context.Background())
+	assert.NotNil(t, miniblock.Snapshot)
+
 }
 
 // TODO: add negative tests
