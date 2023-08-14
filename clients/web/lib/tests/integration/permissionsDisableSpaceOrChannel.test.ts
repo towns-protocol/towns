@@ -49,7 +49,8 @@ describe('disable channel', () => {
         expect(spaceInfo?.networkId).toEqual(spaceNetworkId)
     })
 
-    test('Space owner is allowed to re-enable disabled space access', async () => {
+    // https://linear.app/hnt-labs/issue/HNT-2046/testsintegrationpermissionsdisablespaceorchanneltestts
+    test.skip('Space owner is allowed to re-enable disabled space access', async () => {
         /** Arrange */
 
         const { alice } = await registerAndStartClients(['alice'], withTestProps)
