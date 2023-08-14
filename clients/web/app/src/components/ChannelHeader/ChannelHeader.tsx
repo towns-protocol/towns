@@ -133,7 +133,7 @@ const TouchChannelHeader = (props: Props) => {
             >
                 <Stack gap="sm" onClick={infoButtonPressed}>
                     <Stack horizontal gap="sm" alignContent="center">
-                        <Paragraph strong color="default">
+                        <Paragraph truncate strong color="default">
                             #{channel.label}
                         </Paragraph>
                         {isMuted && <Icon type="muteActive" size="square_xxs" color="gray2" />}
