@@ -136,10 +136,16 @@ export const App = () => {
                     />
                 </Helmet>
                 <AnalyticsProvider>
-                    <>{env.IS_DEV && <DebugBar {...environment} />}</>
+                    <>
+                        {env.IS_DEV && !env.VITE_DISABLE_DEBUG_BARS && (
+                            <DebugBar {...environment} />
+                        )}
+                    </>
                     <AllRoutes />
                 </AnalyticsProvider>
-                <ReactQueryDevtools position="bottom-right" initialIsOpen={false} />
+                {!env.VITE_DISABLE_DEBUG_BARS && (
+                    <ReactQueryDevtools position="bottom-right" initialIsOpen={false} />
+                )}
                 <Notifications />
                 <ReloadPrompt />
             </>
