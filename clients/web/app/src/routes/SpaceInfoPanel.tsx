@@ -25,9 +25,8 @@ import {
     BoxProps,
     FormRender,
     Icon,
+    IconButton,
     MotionStack,
-    Panel,
-    PanelButton,
     Paragraph,
     Stack,
     Text,
@@ -40,7 +39,7 @@ import { PATHS } from 'routes'
 import { TextArea } from 'ui/components/TextArea/TextArea'
 import { vars } from 'ui/styles/vars.css'
 import { transitions } from 'ui/transitions/transitions'
-import { shortAddress } from 'ui/utils/utils'
+import { getInviteUrl, shortAddress } from 'ui/utils/utils'
 import { useDevice } from 'hooks/useDevice'
 import { MembersPageTouchModal } from '@components/MembersPage/MembersPage'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
@@ -50,6 +49,8 @@ import {
     useMuteSettings,
     useSetMuteSettingForChannelOrSpace,
 } from 'api/lib/notificationSettings'
+import { useCreateLink } from 'hooks/useCreateLink'
+import { Panel, PanelButton } from '@components/Panel/Panel'
 import { useContractSpaceInfo } from '../hooks/useContractSpaceInfo'
 import { useEnvironment } from '../hooks/useEnvironmnet'
 import { env } from '../utils/environment'
@@ -155,6 +156,17 @@ export const SpaceInfoPanel = () => {
         }
     })
 
+    const shareButtonEnabled = isTouch && navigator.share
+    const onSharePressed = useEvent(async () => {
+        if (!space) {
+            return
+        }
+        const url = getInviteUrl(space.id)
+        try {
+            await navigator.share({ title: space.name, url: url })
+        } catch (_) {} // eslint-disable-line no-empty
+    })
+
     const spaceID = useSpaceId()
     const { spaceIsMuted, spaceMuteSetting } = useMuteSettings({
         spaceId: spaceID?.networkId,
@@ -195,10 +207,26 @@ export const SpaceInfoPanel = () => {
         }, 1000)
     }, [leaveRoom, navigate, spaceID])
 
+    const { createLink: createProfileLink } = useCreateLink()
+
+    const ownerProfileLink =
+        matrixUserOwner && createProfileLink({ profileId: matrixUserOwner.userId })
+
     return (
         <Panel modalPresentable label="Town Info" onClose={onClose}>
             {space?.id && (
-                <Stack centerContent gap padding>
+                <Stack centerContent padding>
+                    {shareButtonEnabled && (
+                        <Stack horizontal paddingX="sm" width="100%">
+                            <Box grow />
+                            <IconButton
+                                icon="share"
+                                background="level2"
+                                color="default"
+                                onClick={onSharePressed}
+                            />
+                        </Stack>
+                    )}
                     <FormRender>
                         {({ register, formState, setError, clearErrors }) => (
                             <LargeUploadImageTemplate
@@ -387,9 +415,9 @@ export const SpaceInfoPanel = () => {
                         <Paragraph strong color="default">
                             Owner
                         </Paragraph>
-                        {matrixUserOwner ? (
+                        {matrixUserOwner && ownerProfileLink ? (
                             <>
-                                <Link to={`../profile/${matrixUserOwner.userId}?spaceInfo`}>
+                                <Link to={ownerProfileLink + `?spaceInfo`}>
                                     <Box flexDirection="row" gap="sm">
                                         {matrixUserOwner && (
                                             <Avatar

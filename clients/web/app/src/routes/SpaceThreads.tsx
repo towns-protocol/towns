@@ -10,11 +10,11 @@ import {
 import { MessageThread } from '@components/MessageThread/MessageThread'
 import { Box, Heading, Icon, Paragraph, Stack } from '@ui'
 import { usePersistOrder } from 'hooks/usePersistOrder'
-import { TouchLayoutNavigationBar } from '@components/TouchLayoutNavigationBar/TouchLayoutNavigationBar'
 import { useDevice } from 'hooks/useDevice'
 import { useHasJoinedChannels } from 'hooks/useHasJoinedChannels'
 import { NoJoinedChannelsFallback } from '@components/NoJoinedChannelsFallback'
 import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinner'
+import { TouchNavBar } from '@components/TouchNavBar/TouchNavBar'
 import { CentralPanelLayout } from './layouts/CentralPanelLayout'
 
 function sortThreads(threads: ThreadResult[]) {
@@ -62,10 +62,15 @@ export const SpaceThreads = () => {
 
     return (
         <CentralPanelLayout>
-            {isTouch && <TouchLayoutNavigationBar value="threads" />}
+            {isTouch && <TouchNavBar>Threads</TouchNavBar>}
             {userId && spaceId && threads.length > 0 ? (
-                <Stack absoluteFill scroll paddingTop={isTouch ? 'x8' : 'none'}>
-                    <Stack gap="lg" padding="lg" minHeight="100svh">
+                <Stack scroll>
+                    <Stack
+                        gap="lg"
+                        paddingX={isTouch ? 'none' : 'lg'}
+                        paddingY="lg"
+                        minHeight="forceScroll"
+                    >
                         {threads.map(({ thread, channel }) => {
                             return (
                                 <ChannelContextProvider

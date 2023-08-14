@@ -6,22 +6,13 @@ import { hexlify, randomBytes } from 'ethers/lib/utils'
 import { useMutation } from 'wagmi'
 import { format } from 'date-fns'
 import { ModalContainer } from '@components/Modals/ModalContainer'
-import {
-    Button,
-    ErrorMessage,
-    FormRender,
-    Icon,
-    PanelButton,
-    Paragraph,
-    Stack,
-    Text,
-    TextField,
-} from '@ui'
+import { Button, ErrorMessage, FormRender, Icon, Paragraph, Stack, Text, TextField } from '@ui'
 import { TextArea } from 'ui/components/TextArea/TextArea'
 import { axiosClient } from 'api/apiClient'
 import { env } from 'utils'
 import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinner'
 import { useDevice } from 'hooks/useDevice'
+import { PanelButton } from '@components/Panel/Panel'
 
 const FormStateKeys = {
     name: 'name',

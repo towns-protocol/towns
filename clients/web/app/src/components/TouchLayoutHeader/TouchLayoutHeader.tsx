@@ -1,16 +1,17 @@
 import React, { useCallback, useMemo, useState } from 'react'
-import { useMyProfile, useSpaceData, useZionContext } from 'use-zion-client'
+import { useSpaceData, useZionContext } from 'use-zion-client'
 import { AnimatePresence } from 'framer-motion'
-import { Avatar, Box, Dot, IconButton, Stack, Text } from '@ui'
+import { Box, Dot, IconButton, Stack, Text } from '@ui'
 import { ImageVariants } from '@components/UploadImage/useImageSource'
 import { SpaceIcon } from '@components/SpaceIcon'
 import { TouchHomeOverlay } from '@components/TouchHomeOverlay/TouchHomeOverlay'
 import { useNavigateToCurrentSpaceInfo } from 'hooks/useNavigateToCurrentSpaceInfo'
 import { DirectMessagesModal } from '@components/DirectMessages/DirectMessagesModal'
 import { useInstallPWAPrompt } from 'hooks/useInstallPWAPrompt'
+import { AllChannelsList } from 'routes/AllChannelsList/AllChannelsList'
+import { ModalContainer } from '@components/Modals/ModalContainer'
 
 export const TouchLayoutHeader = () => {
-    const userId = useMyProfile()?.userId
     const space = useSpaceData()
     const currentSpaceId = space?.id
     const [activeOverlay, setActiveOverlay] = useState<
@@ -33,6 +34,10 @@ export const TouchLayoutHeader = () => {
     const onTokenClick = useCallback(() => {
         navigateToCurrentSpace()
     }, [navigateToCurrentSpace])
+
+    const [visibleModal, setVisibleModal] = useState<'browse' | undefined>(undefined)
+    const onShowBrowseChannels = useCallback(() => setVisibleModal('browse'), [setVisibleModal])
+    const onHideBrowseChannels = useCallback(() => setVisibleModal(undefined), [setVisibleModal])
 
     return (
         <Box borderBottom paddingTop={shouldDisplayPWAPrompt ? 'none' : 'sm'}>
@@ -59,9 +64,12 @@ export const TouchLayoutHeader = () => {
                 paddingY="sm"
             >
                 <Box position="relative">
-                    <Avatar
-                        size="avatar_x4"
-                        userId={userId}
+                    <IconButton
+                        icon="more"
+                        size="square_md"
+                        color="default"
+                        padding="xs"
+                        background="level2"
                         onClick={() => setActiveOverlay('main-panel')}
                     />
                     {hasUnread && <Dot />}
@@ -93,7 +101,14 @@ export const TouchLayoutHeader = () => {
                     </Stack>
                 )}
                 <Stack grow />
-                <Box width="x4" />
+                <IconButton
+                    icon="search"
+                    background="level2"
+                    size="square_md"
+                    padding="xs"
+                    onClick={onShowBrowseChannels}
+                />
+
                 <AnimatePresence>
                     {activeOverlay === 'main-panel' && (
                         <TouchHomeOverlay onClose={() => setActiveOverlay(undefined)} />
@@ -102,6 +117,12 @@ export const TouchLayoutHeader = () => {
                         <DirectMessagesModal onHide={() => setActiveOverlay(undefined)} />
                     )}
                 </AnimatePresence>
+
+                {visibleModal === 'browse' && (
+                    <ModalContainer touchTitle="Browse channels" onHide={onHideBrowseChannels}>
+                        <AllChannelsList onHideBrowseChannels={onHideBrowseChannels} />
+                    </ModalContainer>
+                )}
             </Stack>
         </Box>
     )

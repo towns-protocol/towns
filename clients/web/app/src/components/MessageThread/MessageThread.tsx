@@ -11,7 +11,7 @@ import { firstBy } from 'thenby'
 import { MessageTimeline } from '@components/MessageTimeline/MessageTimeline'
 import { MessageTimelineWrapper } from '@components/MessageTimeline/MessageTimelineContext'
 import { RichTextEditor } from '@components/RichText/RichTextEditor'
-import { Box, Paragraph, Stack } from '@ui'
+import { Box, Divider, Paragraph, Stack } from '@ui'
 import { useIsChannelWritable } from 'hooks/useIsChannelWritable'
 import { useSendReply } from 'hooks/useSendReply'
 import { useSpaceChannels } from 'hooks/useSpaceChannels'
@@ -92,34 +92,47 @@ export const MessageThread = (props: {
             channelId={channelId}
             threadParentId={parentId}
         >
-            <FadeInBox gap>
-                <Box>
-                    <Paragraph size="lg" color="default">
-                        #{channelLabel.toLocaleLowerCase()}
-                    </Paragraph>
-                    {usernames && <Paragraph color="gray2">{usernames}</Paragraph>}
-                </Box>
-                <Stack scroll grow elevate rounded="sm" boxShadow={isTouch ? undefined : 'panel'}>
-                    <Stack>
-                        <MessageTimeline collapsed />
-                        <Box padding>
-                            <RichTextEditor
-                                editable={!!isChannelWritable}
-                                threadId={parentId}
-                                displayButtons={isTouch ? 'on-focus' : 'never'}
-                                threadPreview={parentMessage?.fallbackContent}
-                                storageId={`${channelId.networkId}-${parentId}`}
-                                autoFocus={false}
-                                placeholder="Reply..."
-                                channels={channels}
-                                members={members}
-                                userId={userId}
-                                onSend={onSend}
-                            />
-                        </Box>
+            <>
+                <FadeInBox gap={{ touch: 'none', default: 'md' }}>
+                    <Box paddingX={{ touch: 'md', default: 'none' }} paddingTop="sm">
+                        <Paragraph size="lg" color="default">
+                            #{channelLabel.toLocaleLowerCase()}
+                        </Paragraph>
+                        {usernames && <Paragraph color="gray2">{usernames}</Paragraph>}
+                    </Box>
+                    <Stack
+                        scroll
+                        grow
+                        elevate={!isTouch}
+                        rounded="sm"
+                        boxShadow={{ touch: 'none', default: 'panel' }}
+                    >
+                        <Stack>
+                            <MessageTimeline collapsed align="top" />
+                            <Box
+                                paddingX
+                                paddingTop={{ touch: 'none', default: 'md' }}
+                                paddingBottom="md"
+                            >
+                                <RichTextEditor
+                                    editable={!!isChannelWritable}
+                                    threadId={parentId}
+                                    displayButtons={isTouch ? 'on-focus' : 'never'}
+                                    threadPreview={parentMessage?.fallbackContent}
+                                    storageId={`${channelId.networkId}-${parentId}`}
+                                    autoFocus={false}
+                                    placeholder="Reply..."
+                                    channels={channels}
+                                    members={members}
+                                    userId={userId}
+                                    onSend={onSend}
+                                />
+                            </Box>
+                        </Stack>
                     </Stack>
-                </Stack>
-            </FadeInBox>
+                </FadeInBox>
+                {isTouch && <Divider />}
+            </>
         </MessageTimelineWrapper>
     ) : (
         <></>

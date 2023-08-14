@@ -1,7 +1,7 @@
 import React, { useCallback } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import { Stack } from '@ui'
-import { TouchPanelNavigationBar } from 'ui/components/TouchPanelNavigationBar/TouchPanelNavigationBar'
+import { TouchPanelNavigationBar } from '@components/TouchPanelNavigationBar/TouchPanelNavigationBar'
 import { useDevice } from 'hooks/useDevice'
 import { PATHS } from 'routes'
 

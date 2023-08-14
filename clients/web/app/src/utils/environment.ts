@@ -46,6 +46,7 @@ const envSchema = z.object({
 
     VITE_PUSH_NOTIFICATION_ENABLED: boolish.transform(coerceBoolish).default(false), // making this optional since we want to allow local development with / without it
     VITE_DISABLE_SENTRY: boolish.transform(coerceBoolish).default(false), // making this optional since we want to allow local development with / without it
+    VITE_DISABLE_DEBUG_BARS: boolish.transform(coerceBoolish).default(false),
 
     VITE_WEB_PUSH_APPLICATION_SERVER_KEY: z.string().optional(), // making this optional since we want to allow local development without it
     VITE_WEB_PUSH_WORKER_URL: z.string().optional(), // url to the web push worker

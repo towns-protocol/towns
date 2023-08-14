@@ -30,10 +30,14 @@ import { useSpaceChannels } from 'hooks/useSpaceChannels'
 import { env } from 'utils'
 import { CentralPanelLayout } from './layouts/CentralPanelLayout'
 
-export const SpacesChannel = () => {
+type Props = {
+    onTouchClose?: () => void
+}
+
+export const SpacesChannel = (props: Props) => {
     return (
         <SpaceChannelWrapper>
-            <SpacesChannelComponent />
+            <SpacesChannelComponent {...props} />
         </SpaceChannelWrapper>
     )
 }
@@ -54,7 +58,7 @@ const SpaceChannelWrapper = (props: { children: React.ReactElement }) => {
     return <ChannelContextProvider channelId={channelSlug}>{props.children}</ChannelContextProvider>
 }
 
-const SpacesChannelComponent = () => {
+const SpacesChannelComponent = (props: Props) => {
     const { messageId } = useParams()
     const { isTouch } = useDevice()
     const { joinRoom, scrollback, sendMessage, isRoomEncrypted } = useZionClient()
@@ -131,6 +135,10 @@ const SpacesChannelComponent = () => {
         [onLoadMore],
     )
 
+    useEffect(() => {
+        // load more when opening the channel
+        onLoadMore()
+    }, [onLoadMore])
     const [debounceShimmer, setDebounceShimmer] = useState(true)
 
     useEffect(() => {
@@ -187,15 +195,14 @@ const SpacesChannelComponent = () => {
                         events={channelMessages}
                         isChannelWritable={isChannelWritable}
                     >
-                        <ChannelHeader channel={channel} spaceId={spaceId} />
+                        <ChannelHeader
+                            channel={channel}
+                            spaceId={spaceId}
+                            onTouchClose={props.onTouchClose}
+                        />
 
-                        {/* 
-                        /!\ keep
-                        spacer allowing the header to always stick to the top 
-                        in case the timeline is smaller than the screen
-                    */}
-                        <Stack grow />
                         <MessageTimeline
+                            align="bottom"
                             containerRef={timelineContainerRef}
                             header={
                                 <>

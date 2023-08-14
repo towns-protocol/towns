@@ -242,9 +242,12 @@ const RichTextEditorWithoutBoundary = (props: Props) => {
     )
 
     const [focused, setFocused] = useState(false)
-    const onFocusChange = (focus: boolean) => {
-        setFocused(focus)
-    }
+    const onFocusChange = useCallback(
+        (focus: boolean) => {
+            setFocused(focus)
+        },
+        [setFocused],
+    )
     const { isOffline } = useNetworkStatus()
     const [isAttemptingSend, setIsAttemptingSend] = useState(false)
 
@@ -261,7 +264,9 @@ const RichTextEditorWithoutBoundary = (props: Props) => {
 
     if (!editable) {
         return (
-            <RichTextUIContainer>
+            <RichTextUIContainer
+                rounded={{ default: 'sm', touch: isFullWidthOnTouch ? 'none' : 'sm' }}
+            >
                 <RichTextPlaceholder placeholder={placeholder} color="level4" />
             </RichTextUIContainer>
         )
@@ -272,9 +277,6 @@ const RichTextEditorWithoutBoundary = (props: Props) => {
             background="level2"
             rounded={{ default: 'sm', touch: isFullWidthOnTouch ? 'none' : 'sm' }}
             borderTop={{ default: 'none', touch: isFullWidthOnTouch ? 'default' : 'none' }}
-            paddingBottom={{
-                touch: !isFullWidthOnTouch || focused ? 'none' : 'safeAreaInsetBottom',
-            }}
         >
             <LexicalComposer initialConfig={initialConfig}>
                 <RichTextUI

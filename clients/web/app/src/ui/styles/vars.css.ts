@@ -1,14 +1,89 @@
-import { createGlobalTheme, createTheme, createThemeContract } from '@vanilla-extract/css'
+import {
+    assignVars,
+    createGlobalTheme,
+    createThemeContract,
+    globalStyle,
+    style,
+} from '@vanilla-extract/css'
 import { breakpoints } from './breakpoints'
 import { themes } from './themes'
 
 // export const zoom = 1.1;
 export const baseline = 8 as const
-export const fontBase = 15 as const
 
-const color = createThemeContract(themes.light)
-export const lightTheme = createTheme(color, themes.light)
-export const darkTheme = createTheme(color, themes.dark)
+const colorContract = createThemeContract(themes.light)
+
+export const lightTheme = style({})
+export const darkTheme = style({})
+
+export const globalPreventTransitions = style({})
+globalStyle(`${globalPreventTransitions} *`, {
+    transition: 'none!important',
+})
+
+const responsiveMeasurements = {
+    mobileFonts: {
+        fontSize: {
+            xs: `${12}px`,
+            sm: `${15}px`,
+            md: `${17}px`,
+            lg: `${20}px`,
+            display: `${120}px`,
+
+            h1: `${32}px`,
+            h2: `${21}px`,
+            h3: `${21}px`,
+            h4: `${17}px`,
+        } as const,
+    },
+
+    desktopFonts: {
+        fontSize: {
+            xs: `${11}px`,
+            sm: `${13}px`,
+            md: `${15}px`,
+            lg: `${18}px`,
+            display: `${120}px`,
+            h1: `${56}px`,
+            h2: `${32}px`,
+            h3: `${18}px`,
+            h4: `${15}px`,
+        } as const,
+    } as const,
+} as const
+
+export const fontContract = createThemeContract(responsiveMeasurements.desktopFonts)
+
+globalStyle(':root', {
+    vars: assignVars(fontContract, responsiveMeasurements.mobileFonts),
+    '@media': {
+        '(min-width: 720px)': {
+            vars: assignVars(fontContract, responsiveMeasurements.desktopFonts),
+        },
+    },
+})
+
+globalStyle(`:root:not(${darkTheme})`, {
+    '@media': {
+        '(prefers-color-scheme: light)': {
+            vars: assignVars(colorContract, themes.light),
+        },
+    },
+})
+globalStyle(`:root:not(${lightTheme})`, {
+    '@media': {
+        '(prefers-color-scheme: dark)': {
+            vars: assignVars(colorContract, themes.dark),
+        },
+    },
+})
+
+globalStyle(darkTheme, {
+    vars: assignVars(colorContract, themes.dark),
+})
+globalStyle(lightTheme, {
+    vars: assignVars(colorContract, themes.light),
+})
 
 const root = createGlobalTheme(':root', {
     bl: `${baseline}px`,
@@ -138,6 +213,10 @@ const root = createGlobalTheme(':root', {
             wide: `${breakpoints.wide}px`,
         },
 
+        toolbar: {
+            toolbar_icon: `${baseline * 3}px`,
+        },
+
         input: {
             input_sm: `${baseline * 3}px`,
             // drop downs
@@ -235,19 +314,6 @@ const root = createGlobalTheme(':root', {
         strong: '700',
     } as const,
 
-    fontSize: {
-        xs: `${11}px`,
-        sm: `${13}px`,
-        md: `${15}px`,
-        lg: `${18}px`,
-        display: `${120}px`,
-        // note: before setting the naming, figure the sizes we actually use
-        h1: `${56}px`,
-        h2: `${32}px`,
-        h3: `${18}px`,
-        h4: `${15}px`,
-    } as const,
-
     textAlign: {
         left: 'left',
         right: 'right',
@@ -292,10 +358,8 @@ const root = createGlobalTheme(':root', {
     } as const,
 })
 
-const defaultColorTheme = createGlobalTheme(':root', color, themes.light)
-
 export const vars = {
     ...root,
-    defaultColorTheme,
-    color,
+    ...fontContract,
+    color: colorContract,
 }

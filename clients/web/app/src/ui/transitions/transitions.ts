@@ -6,7 +6,7 @@ const root = {
         stiffness: 100,
         type: 'spring',
     } satisfies Transition,
-    panel: { type: 'spring', stiffness: 280, damping: 22, mass: 0.8 } satisfies Transition,
+    panel: { type: 'spring', stiffness: 500, damping: 50, restDelta: 0.1 } satisfies Transition,
     panelAnimationDuration: 0.5, // Estimated duration of the panel animation
 }
 

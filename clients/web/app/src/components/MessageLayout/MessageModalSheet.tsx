@@ -91,9 +91,9 @@ export const MessageModalSheet = (props: Props) => {
             }
             sendReaction(channelId, eventId, data.id)
             setActivePrompt(undefined)
-            setIsOpen(false)
+            onClose()
         },
-        [channelId, eventId, sendReaction, setIsOpen],
+        [channelId, eventId, sendReaction, onClose],
     )
 
     return (

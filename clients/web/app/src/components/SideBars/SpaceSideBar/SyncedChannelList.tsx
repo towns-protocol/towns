@@ -10,7 +10,7 @@ export const SyncedChannelList = (props: {
     space: SpaceData
     mentions: MentionResult[]
     canCreateChannel: boolean | undefined
-    onShowCreateChannel: () => void
+    onShowCreateChannel?: () => void
 }) => {
     const sizeContext = useSizeContext()
     const isSmall = sizeContext.lessThan(120)

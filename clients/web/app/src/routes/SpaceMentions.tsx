@@ -14,12 +14,12 @@ import { RichTextPreview } from '@components/RichText/RichTextEditor'
 import { Message } from '@components/MessageLayout'
 import { getIsRoomMessageContent, getMessageBody } from 'utils/ztevent_util'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
-import { TouchLayoutNavigationBar } from '@components/TouchLayoutNavigationBar/TouchLayoutNavigationBar'
 import { useDevice } from 'hooks/useDevice'
 import { FadeInBox } from '@components/Transitions'
 import { useHasJoinedChannels } from 'hooks/useHasJoinedChannels'
 import { NoJoinedChannelsFallback } from '@components/NoJoinedChannelsFallback'
 import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinner'
+import { TouchNavBar } from '@components/TouchNavBar/TouchNavBar'
 import { CentralPanelLayout } from './layouts/CentralPanelLayout'
 
 export const SpaceMentions = () => {
@@ -55,11 +55,14 @@ export const SpaceMentions = () => {
 
     return (
         <CentralPanelLayout>
-            {isTouch && <TouchLayoutNavigationBar value="mentions" />}
-            <Stack absoluteFill scroll paddingTop={isTouch ? 'x8' : 'none'}>
+            {isTouch && <TouchNavBar>Mentions</TouchNavBar>}
+            <Stack scroll>
                 {mentions.length ? (
-                    <Stack grow minHeight="100svh">
-                        <Stack gap padding={isTouch ? 'md' : 'lg'}>
+                    <Stack minHeight="forceScroll">
+                        <Stack
+                            gap={{ touch: 'none', default: 'md' }}
+                            padding={{ touch: 'none', default: 'lg' }}
+                        >
                             {mentions.map((m, index, mentions) => {
                                 return (
                                     m.type === 'mention' && (
@@ -108,18 +111,18 @@ const MentionBox = (props: { mention: MentionResult; userId?: string }) => {
     return (
         <NavLink to={link}>
             <FadeInBox
-                elevate
                 hoverable
+                elevate={!isTouch}
                 rounded="md"
                 background={mention.unread ? 'level3' : 'level2'}
                 cursor="alias"
-                boxShadow="card"
+                boxShadow={{ touch: 'none', default: 'card' }}
                 overflow="hidden"
             >
                 <Message
                     relativeDate
                     avatarSize={isTouch ? 'avatar_x4' : 'avatar_md'}
-                    padding="lg"
+                    padding={{ touch: 'md', default: 'lg' }}
                     key={mention.event.eventId}
                     messageSourceAnnotation={`${
                         mention.thread ? `Thread in` : ``

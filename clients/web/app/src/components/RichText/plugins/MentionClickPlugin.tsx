@@ -14,6 +14,7 @@ export const MentionClickPlugin = (props: { onMentionClick: (mentionName: string
                         props.onMentionClick(mentionName.slice(1).trim())
                     }
                 }
+                e.stopImmediatePropagation()
             }}
         />
     )

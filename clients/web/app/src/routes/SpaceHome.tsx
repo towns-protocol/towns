@@ -8,12 +8,13 @@ import { PATHS } from 'routes'
 import { SpaceJoin } from '@components/Web3/SpaceJoin'
 import { useContractAndServerSpaceData } from 'hooks/useContractAndServerSpaceData'
 import { useStore } from 'store/store'
+import { useDevice } from 'hooks/useDevice'
 import { LiquidContainer } from './SpacesIndex'
 
 export const SpaceHome = () => {
     const { serverSpace: space, chainSpace, chainSpaceLoading } = useContractAndServerSpaceData()
     const location = useLocation()
-
+    const { isTouch } = useDevice()
     const spaceId = space?.id
     const navigate = useNavigate()
     const channels = useMemo(
@@ -48,7 +49,6 @@ export const SpaceHome = () => {
             let route: string
             const firstChannelId = channels?.at(0)?.id
 
-            // if channels haven't resolved OR if there are truly no channels
             if (!firstChannelId) {
                 // the worst case is that user is navigated to the threads page,
                 // and has to click on a channel once it loads in
@@ -66,7 +66,7 @@ export const SpaceHome = () => {
                 clearTimeout(timeout)
             }
         }
-    }, [navigate, space, spaceId?.slug, channels])
+    }, [navigate, space, spaceId?.slug, channels, isTouch])
 
     // space doesn't exist
     if (!chainSpaceLoading && !chainSpace && !space) {

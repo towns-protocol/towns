@@ -122,7 +122,9 @@ const Reaction = (props: {
                 paddingX="sm"
                 onClick={onClick}
             >
-                <Text size="md">{getNativeEmojiFromName(props.name)}</Text>
+                <Text size="md" fontSize={{ desktop: 'lg', mobile: 'xs' }}>
+                    {getNativeEmojiFromName(props.name)}
+                </Text>
                 <Text size="sm">{Object.keys(users).length}</Text>
             </Box>
         </Box>

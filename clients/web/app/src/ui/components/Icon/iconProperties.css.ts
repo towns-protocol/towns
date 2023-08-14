@@ -38,6 +38,10 @@ export const iconProperties = defineProperties({
                 width: vars.dims.square.square_inline,
                 height: vars.dims.square.square_inline,
             },
+            toolbar_icon: {
+                width: vars.dims.toolbar.toolbar_icon,
+                height: vars.dims.toolbar.toolbar_icon,
+            },
         },
     },
     shorthands: {

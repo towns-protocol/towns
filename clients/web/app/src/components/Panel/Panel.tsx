@@ -5,12 +5,12 @@ import { modalSheetClass } from 'ui/styles/globals/sheet.css'
 import { useDevice } from 'hooks/useDevice'
 import { transitions } from 'ui/transitions/transitions'
 import { useSafeEscapeKeyCancellation } from 'hooks/useSafeEscapeKeyCancellation'
-import { Box, BoxProps } from '../Box/Box'
-import { IconButton } from '../IconButton/IconButton'
-import { Stack } from '../Stack/Stack'
-import { useZLayerContext } from '../ZLayer/ZLayer'
-import { TouchPanelNavigationBar } from '../TouchPanelNavigationBar/TouchPanelNavigationBar'
-import { MotionStack } from '../Motion/MotionComponents'
+import { TouchPanelNavigationBar } from '@components/TouchPanelNavigationBar/TouchPanelNavigationBar'
+import { Box, BoxProps } from '../../ui/components/Box/Box'
+import { IconButton } from '../../ui/components/IconButton/IconButton'
+import { Stack } from '../../ui/components/Stack/Stack'
+import { useZLayerContext } from '../../ui/components/ZLayer/ZLayer'
+import { MotionStack } from '../../ui/components/Motion/MotionComponents'
 
 type Props = {
     children: React.ReactNode
@@ -113,14 +113,12 @@ const TouchPanel = (props: Props) => {
             {modalPresented && (
                 <MotionStack
                     absoluteFill
-                    grow
-                    initial={{ x: '100%', opacity: 0 }}
-                    animate={{ x: '0%', opacity: 1 }}
-                    exit={{ x: '100%', opacity: 0 }}
+                    initial={{ x: '100%' }}
+                    animate={{ x: '0%' }}
+                    exit={{ x: '100%' }}
                     transition={transitions.panel}
                     background="level1"
                     zIndex="tooltips"
-                    height="100svh"
                     overflowX="hidden"
                 >
                     {/* this box makes sure the UI below doesn't bleed through while spring animating */}
@@ -128,16 +126,16 @@ const TouchPanel = (props: Props) => {
                         background="level1"
                         style={{ position: 'absolute', right: -100, top: 0, bottom: 0, width: 100 }}
                     />
+
                     <TouchPanelNavigationBar
                         title={props.label}
                         rightBarButton={rightBarButton}
                         onBack={closePanel}
                     />
-                    <Stack scroll scrollbars grow>
-                        <Box grow paddingBottom="safeAreaInsetBottom">
-                            {props.children}
-                        </Box>
-                    </Stack>
+                    {/* note: for vlist this following config would be ideal:  <Box grow overflow="hidden" position="relative"> */}
+                    <Box scroll scrollbars grow>
+                        {props.children}
+                    </Box>
                 </MotionStack>
             )}
         </AnimatePresence>

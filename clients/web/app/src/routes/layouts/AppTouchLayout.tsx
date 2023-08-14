@@ -1,16 +1,21 @@
 import React from 'react'
 import { Outlet } from 'react-router'
-import { Stack } from '@ui'
+import { Box } from '@ui'
 import { SuspenseLoader } from '@components/Loaders/SuspenseLoader'
-import { TouchLayoutHeader } from '@components/TouchLayoutHeader/TouchLayoutHeader'
+import { TouchTabBar } from '@components/TouchTabBar/TouchTabBar'
+import { VisualKeyboardContextProvider } from '@components/VisualKeyboardContext/VisualKeyboardContext'
 
 export const AppTouchLayout = () => {
     return (
-        <Stack height="100%">
-            <TouchLayoutHeader />
-            <SuspenseLoader>
-                <Outlet />
-            </SuspenseLoader>
-        </Stack>
+        <VisualKeyboardContextProvider>
+            {/* stretch main container to push footer down */}
+            <Box grow position="relative" overflowX="hidden">
+                <SuspenseLoader>
+                    <Outlet />
+                </SuspenseLoader>
+            </Box>
+            {/* bottom content */}
+            <TouchTabBar />
+        </VisualKeyboardContextProvider>
     )
 }

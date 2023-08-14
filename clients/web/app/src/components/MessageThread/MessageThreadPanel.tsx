@@ -10,13 +10,14 @@ import {
 import { MessageTimeline } from '@components/MessageTimeline/MessageTimeline'
 import { MessageTimelineWrapper } from '@components/MessageTimeline/MessageTimelineContext'
 import { RichTextEditor } from '@components/RichText/RichTextEditor'
-import { Box, Panel, Paragraph, Stack } from '@ui'
+import { Box, Paragraph, Stack } from '@ui'
 import { useIsChannelWritable } from 'hooks/useIsChannelWritable'
 import { useSendReply } from 'hooks/useSendReply'
 import { useSpaceChannels } from 'hooks/useSpaceChannels'
 import { atoms } from 'ui/styles/atoms.css'
 import { useDevice } from 'hooks/useDevice'
 import { useAuth } from 'hooks/useAuth'
+import { Panel } from '@components/Panel/Panel'
 
 type Props = {
     messageId: string
@@ -61,7 +62,12 @@ export const MessageThreadPanel = (props: Props) => {
 
     return (
         <Panel label={panelLabel} onClose={props.onClose}>
-            <Stack grow>
+            <Stack
+                position="relative"
+                overflow="hidden"
+                flexGrow={{ touch: 'x1', default: 'x0' }}
+                width="100%"
+            >
                 <MessageTimelineWrapper
                     spaceId={spaceId}
                     channelId={channelId}
@@ -69,29 +75,27 @@ export const MessageThreadPanel = (props: Props) => {
                     events={messagesWithParent}
                     isChannelWritable={isChannelWritable}
                 >
-                    <Stack grow overflow="hidden">
-                        <MessageTimeline highlightId={props.highlightId} />
-                    </Stack>
+                    <MessageTimeline align="top" highlightId={props.highlightId} />
                 </MessageTimelineWrapper>
-
-                {isChannelWritable && (
-                    <Box paddingX="md" position="sticky" bottom={isTouch ? 'sm' : 'none'}>
-                        <RichTextEditor
-                            autoFocus={!isTouch}
-                            editable={!!isChannelWritable}
-                            displayButtons={isTouch ? 'on-focus' : 'never'}
-                            placeholder="Reply..."
-                            storageId={`${channelId.networkId}-${messageId}`}
-                            threadId={messageId}
-                            channels={channels}
-                            members={members}
-                            background="level2"
-                            userId={userId}
-                            onSend={onSend}
-                        />
-                    </Box>
-                )}
             </Stack>
+            {isChannelWritable && (
+                <Box paddingX={{ default: 'md', touch: 'none' }} bottom={isTouch ? 'sm' : 'none'}>
+                    <RichTextEditor
+                        isFullWidthOnTouch
+                        autoFocus={!isTouch}
+                        editable={!!isChannelWritable}
+                        displayButtons={isTouch ? 'on-focus' : 'never'}
+                        placeholder="Reply..."
+                        storageId={`${channelId.networkId}-${messageId}`}
+                        threadId={messageId}
+                        channels={channels}
+                        members={members}
+                        background="level2"
+                        userId={userId}
+                        onSend={onSend}
+                    />
+                </Box>
+            )}
         </Panel>
     )
 }

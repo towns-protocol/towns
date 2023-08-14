@@ -28,7 +28,6 @@ export { ErrorMessage } from './ErrorMessage/ErrorMessage'
 export { VList } from './VList'
 export { TypeaheadMenu, TypeaheadMenuItem } from './Typeahead'
 export * from './Toggle'
-export * from './Panel/Panel'
 export {
     MotionBox,
     MotionStack,

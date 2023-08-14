@@ -1,25 +1,23 @@
-import React from 'react'
-import { Channel, RoomIdentifier, useRoom } from 'use-zion-client'
-import { Link } from 'react-router-dom'
+import React, { useCallback } from 'react'
+import { Channel, RoomIdentifier, useChannelMembers, useRoom } from 'use-zion-client'
+import { Link, useNavigate } from 'react-router-dom'
 import { ChannelUsersPill } from '@components/ChannelUserPill/ChannelUserPill'
-import { Box, Button, Icon, Paragraph, Stack, Text } from '@ui'
+import { Box, Button, Icon, IconButton, Paragraph, Stack, Text } from '@ui'
 import { useDevice } from 'hooks/useDevice'
-import { TouchLayoutNavigationBar } from '@components/TouchLayoutNavigationBar/TouchLayoutNavigationBar'
 import { usePushNotifications } from 'hooks/usePushNotifications'
 import { useMuteSettings } from 'api/lib/notificationSettings'
+import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
+import { TouchNavBar } from '@components/TouchNavBar/TouchNavBar'
 
 type Props = {
     channel: Channel
     spaceId: RoomIdentifier
+    onTouchClose?: () => void
 }
 
 export const ChannelHeader = (props: Props) => {
     const { isTouch } = useDevice()
-    return isTouch ? (
-        <TouchLayoutNavigationBar value={props.channel} />
-    ) : (
-        <DesktopChannelHeader {...props} />
-    )
+    return isTouch ? <TouchChannelHeader {...props} /> : <DesktopChannelHeader {...props} />
 }
 
 const DesktopChannelHeader = (props: Props) => {
@@ -91,6 +89,88 @@ const DesktopChannelHeader = (props: Props) => {
                 <Stack grow />
                 <ChannelUsersPill channelId={channel.id} spaceId={spaceId} />
             </Stack>
+        </Stack>
+    )
+}
+
+const TouchChannelHeader = (props: Props) => {
+    const { channel, onTouchClose } = props
+    const navigate = useNavigate()
+    const spaceId = useSpaceIdFromPathname()
+    const { members } = useChannelMembers()
+    const { displayNotificationBanner, requestPushPermission, denyPushPermission } =
+        usePushNotifications()
+    const { channelIsMuted, spaceIsMuted } = useMuteSettings({
+        spaceId: spaceId,
+        channelId: channel?.id.networkId,
+    })
+
+    const isMuted = channelIsMuted || spaceIsMuted
+
+    const infoButtonPressed = useCallback(() => {
+        navigate(`info?channel`)
+    }, [navigate])
+
+    return (
+        <Stack gap="sm">
+            <TouchNavBar
+                contentLeft={
+                    <IconButton
+                        icon="back"
+                        size="square_md"
+                        color="default"
+                        onClick={onTouchClose}
+                    />
+                }
+                contentRight={
+                    <IconButton
+                        icon="info"
+                        size="square_sm"
+                        color="default"
+                        onClick={infoButtonPressed}
+                    />
+                }
+            >
+                <Stack gap="sm" onClick={infoButtonPressed}>
+                    <Stack horizontal gap="sm" alignContent="center">
+                        <Paragraph truncate strong color="default">
+                            #{channel.label}
+                        </Paragraph>
+                        {isMuted && <Icon type="muteActive" size="square_xxs" color="gray2" />}
+                    </Stack>
+
+                    <Paragraph truncate color="gray2" size="sm">
+                        {`${members.length} member${members.length > 1 ? `s` : ``}`}
+                        {channel.topic ? ` · ${channel.topic.toLocaleLowerCase()}` : ``}
+                    </Paragraph>
+                </Stack>
+            </TouchNavBar>
+            {displayNotificationBanner && (
+                <Box paddingX="md">
+                    <Stack
+                        gap
+                        paddingY
+                        border
+                        paddingX="md"
+                        background="level2"
+                        alignItems="start"
+                        rounded="sm"
+                    >
+                        <Text fontWeight="strong" color="default">
+                            Turn on notifications for threads and mentions?
+                        </Text>
+                        <Stack horizontal gap width="100%">
+                            <Button size="button_sm" tone="level3" onClick={denyPushPermission}>
+                                No thanks
+                            </Button>
+
+                            <Button size="button_sm" tone="cta1" onClick={requestPushPermission}>
+                                Enable
+                            </Button>
+                        </Stack>
+                    </Stack>
+                </Box>
+            )}
         </Stack>
     )
 }

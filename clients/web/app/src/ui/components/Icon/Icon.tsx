@@ -776,6 +776,17 @@ export const SearchIcon = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) =
     </svg>
 ))
 
+export const ShareIcon = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" {...props} ref={ref}>
+        <path
+            fillRule="evenodd"
+            clipRule="evenodd"
+            d="M6.29289 9.70711C5.90237 9.31658 5.90237 8.68342 6.29289 8.29289L11.2929 3.29289C11.4804 3.10536 11.7348 3 12 3C12.2652 3 12.5196 3.10536 12.7071 3.29289L17.7071 8.29289C18.0976 8.68342 18.0976 9.31658 17.7071 9.70711C17.3166 10.0976 16.6834 10.0976 16.2929 9.70711L13 6.41421V15C13 15.5523 12.5523 16 12 16C11.4477 16 11 15.5523 11 15V6.41421L7.70711 9.70711C7.31658 10.0976 6.68342 10.0976 6.29289 9.70711ZM4 15C4.55228 15 5 15.4477 5 16V18C5 18.5523 5.44772 19 6 19H18C18.5523 19 19 18.5523 19 18V16C19 15.4477 19.4477 15 20 15C20.5523 15 21 15.4477 21 16V18C21 19.6569 19.6569 21 18 21H6C4.34315 21 3 19.6569 3 18V16C3 15.4477 3.44772 15 4 15Z"
+            fill="currentColor"
+        />
+    </svg>
+))
+
 export const StrikethroughIcon = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" {...props} ref={ref}>
         <path
@@ -1227,6 +1238,7 @@ const iconMap = {
     reply: ReplyIcon,
     search: SearchIcon,
     settings: SettingsIcon,
+    share: ShareIcon,
     sidebarclose: SidebarCloseIcon,
     sidebaropen: SidebarOpenIcon,
     strikethrough: StrikethroughIcon,

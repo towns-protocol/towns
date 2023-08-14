@@ -1,15 +1,16 @@
 import { globalStyle, style } from '@vanilla-extract/css'
 import { createSprinkles, defineProperties } from '@vanilla-extract/sprinkles'
 import { boxClass, containerWithGapClass } from 'ui/styles/atoms.css'
+import { responsivePropertiesMixin } from 'ui/styles/breakpoints'
 import { debugClass } from 'ui/styles/globals/debug.css'
 import { vars } from 'ui/styles/vars.css'
 import { FontFamily, fontSettings } from 'ui/utils/FontLoader'
 
 //  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - dynamic properties
 
-const nonResponsiveProperties = defineProperties({
+const responsiveProperties = defineProperties({
+    ...responsivePropertiesMixin,
     properties: {
-        color: vars.color.foreground,
         fontVariationSettings: vars.fontVariationSettings,
         fontWeight: vars.fontWeight,
         fontSize: vars.fontSize,
@@ -20,9 +21,14 @@ const nonResponsiveProperties = defineProperties({
         size: ['fontSize'],
     },
 })
+const nonResponsiveProperties = defineProperties({
+    properties: {
+        color: vars.color.foreground,
+    },
+})
 
 export type TextSprinkles = Parameters<typeof textSprinkles>[0]
-export const textSprinkles = createSprinkles(nonResponsiveProperties)
+export const textSprinkles = createSprinkles(responsiveProperties, nonResponsiveProperties)
 
 //  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  base properties
 
