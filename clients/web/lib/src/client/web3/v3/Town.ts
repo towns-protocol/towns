@@ -1,18 +1,21 @@
-import { BigNumberish, ethers } from 'ethers'
+import { BigNumber, BigNumberish, ethers } from 'ethers'
 import {
+    ChannelDetails,
     ChannelMetadata,
+    EntitlementDetails,
     EntitlementModuleType,
     EntitlementShim,
     RoleDetails,
+    RoleEntitlements,
     isExternalTokenStructArray,
     isStringArray,
     isTokenEntitlement,
     isUserEntitlement,
 } from '../ContractTypes'
+import { IChannelBase, IChannelShim } from './IChannelShim'
 import { IRolesBase, IRolesShim } from './IRolesShim'
 import { TokenEntitlementDataTypes, TokenEntitlementShim } from './TokenEntitlementShim'
 
-import { IChannelShim } from './IChannelShim'
 import { IEntitlementsShim } from './IEntitlementsShim'
 import { OwnableFacetShim } from './OwnableFacetShim'
 import { TokenPausableFacetShim } from './TokenPausableFacetShim'
@@ -83,25 +86,56 @@ export class Town {
     }
 
     public async getRole(roleId: BigNumberish): Promise<RoleDetails | null> {
+        // get all the entitlements for the town
+        const entitlementShims = await this.getEntitlementShims()
         // get the various pieces of details
-        const [roleInfo, roleEntitlements, channels] = await Promise.all([
-            this.getRoleInfo(roleId),
-            this.getEntitlementDetails(roleId),
+        const [roleEntitlements, channels] = await Promise.all([
+            this.getRoleEntitlements(entitlementShims, roleId),
             this.getChannelsWithRole(roleId),
         ])
         // assemble the result
-        let roleDetails: RoleDetails | null = null
-        if (roleInfo) {
-            roleDetails = {
-                id: roleInfo.id.toNumber(),
-                name: roleInfo.name,
-                permissions: toPermissions(roleInfo.permissions),
-                channels,
-                tokens: roleEntitlements.tokens,
-                users: roleEntitlements.users,
-            }
+        return {
+            id: roleEntitlements.roleId,
+            name: roleEntitlements.name,
+            permissions: roleEntitlements.permissions,
+            channels,
+            tokens: roleEntitlements.tokens,
+            users: roleEntitlements.users,
         }
-        return roleDetails
+    }
+
+    public async getChannel(channelId: string): Promise<ChannelDetails | null> {
+        // get most of the channel details except the roles which
+        // require a separate call to get each role's details
+        const channelInfo = await this.Channels.read.getChannel(channelId)
+        const roles = await this.getChannelRoleEntitlements(channelInfo)
+        return {
+            spaceNetworkId: this.spaceId,
+            channelNetworkId: channelId,
+            name: channelInfo.metadata,
+            disabled: channelInfo.disabled,
+            roles,
+        }
+    }
+
+    public async getChannelRoles(channelId: string): Promise<IRolesBase.RoleStructOutput[]> {
+        // get all the roleIds for the channel
+        const channelInfo = await this.Channels.read.getChannel(channelId)
+        // return the role info
+        return this.getRolesInfo(channelInfo.roleIds)
+    }
+
+    private async getChannelRoleEntitlements(
+        channelInfo: IChannelBase.ChannelStructOutput,
+    ): Promise<RoleEntitlements[]> {
+        // get all the entitlements for the town
+        const entitlementShims = await this.getEntitlementShims()
+        const getRoleEntitlementsAsync: Promise<RoleEntitlements>[] = []
+        for (const roleId of channelInfo.roleIds) {
+            getRoleEntitlementsAsync.push(this.getRoleEntitlements(entitlementShims, roleId))
+        }
+        // get all the role info
+        return Promise.all(getRoleEntitlementsAsync)
     }
 
     public parseError(error: unknown): Error {
@@ -167,17 +201,16 @@ export class Town {
         return Promise.all(getEntitlementShims)
     }
 
-    private async getEntitlementDetails(roleId: BigNumberish): Promise<{
-        tokens: TokenEntitlementDataTypes.ExternalTokenStruct[]
-        users: string[]
-    }> {
+    private async getEntitlementDetails(
+        entitlementShims: EntitlementShim[],
+        roleId: BigNumberish,
+    ): Promise<EntitlementDetails> {
         let tokens: TokenEntitlementDataTypes.ExternalTokenStruct[] = []
         let users: string[] = []
         // with the shims, get the role details for each entitlement
         const getEntitlements: Promise<
             TokenEntitlementDataTypes.ExternalTokenStruct[] | string[]
         >[] = []
-        const entitlementShims = await this.getEntitlementShims()
         for (const entitlement of entitlementShims) {
             if (isTokenEntitlement(entitlement)) {
                 getEntitlements.push(entitlement.getRoleEntitlement(roleId))
@@ -213,5 +246,37 @@ export class Town {
             }
         }
         return Array.from(channelMetadatas.values())
+    }
+
+    private async getRolesInfo(roleIds: BigNumber[]): Promise<IRolesBase.RoleStructOutput[]> {
+        // use a Set to ensure that we only get roles once
+        const roles = new Set<string>()
+        const getRoleStructsAsync: Promise<IRolesBase.RoleStructOutput>[] = []
+        for (const roleId of roleIds) {
+            // get the role info if we don't already have it
+            if (!roles.has(roleId.toString())) {
+                getRoleStructsAsync.push(this.roles.read.getRoleById(roleId))
+            }
+        }
+        // get all the role info
+        return Promise.all(getRoleStructsAsync)
+    }
+
+    private async getRoleEntitlements(
+        entitlementShims: EntitlementShim[],
+        roleId: BigNumberish,
+    ): Promise<RoleEntitlements> {
+        const [roleInfo, entitlementDetails] = await Promise.all([
+            this.getRoleInfo(roleId),
+            this.getEntitlementDetails(entitlementShims, roleId),
+        ])
+        // assemble the result
+        return {
+            roleId: roleInfo.id.toNumber(),
+            name: roleInfo.name,
+            permissions: toPermissions(roleInfo.permissions),
+            tokens: entitlementDetails.tokens,
+            users: entitlementDetails.users,
+        }
     }
 }

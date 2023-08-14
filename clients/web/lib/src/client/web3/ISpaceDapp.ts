@@ -75,7 +75,7 @@ export interface ISpaceDapp {
     getRolesByChannel: (
         spaceId: string,
         channelNetworkId: string,
-    ) => Promise<SpaceDataTypes.RoleStructOutput[]>
+    ) => Promise<SpaceDataTypes.RoleStruct[]>
     getSpaceInfo: (spaceId: string) => Promise<SpaceInfo | undefined>
     isEntitledToSpace: (spaceId: string, user: string, permission: Permission) => Promise<boolean>
     isEntitledToChannel: (

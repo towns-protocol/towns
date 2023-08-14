@@ -52,8 +52,9 @@ describe('create role', () => {
         const tokenGrantedUser = await registerAndStartClient(
             'tokenGrantedUser',
             TestConstants.getWalletWithMemberNft(),
+            withTestProps,
         )
-        const { bob } = await registerAndStartClients(['bob'])
+        const { bob } = await registerAndStartClients(['bob'], withTestProps)
         await bob.fundWallet()
 
         const roomId = await createTestSpaceWithZionMemberRole(bob, [Permission.Read])
@@ -79,7 +80,10 @@ describe('create role', () => {
         /* Assert */
         // check that the returned error wasn't that no error was thrown.
         expect(error).not.toBeInstanceOf(NoThrownError)
-        expect(error).toHaveProperty('name', CONTRACT_ERROR.NotAllowed)
+        expect(error).toHaveProperty('name')
+        expect(error.name).toMatch(
+            new RegExp(`${CONTRACT_ERROR.NotAllowed}|${CONTRACT_ERROR.NotOwner}`),
+        )
     })
 
     test('Space member allowed to create new role with permission', async () => {
@@ -119,7 +123,7 @@ describe('create role', () => {
     test('Space owner is allowed create multiple roles', async () => {
         /** Arrange */
 
-        const { alice } = await registerAndStartClients(['alice'])
+        const { alice } = await registerAndStartClients(['alice'], withTestProps)
         await alice.fundWallet()
 
         const roomId = await createTestSpaceWithZionMemberRole(alice, [Permission.Read])

@@ -105,8 +105,15 @@ export class SpaceDappV3 implements ISpaceDapp {
         throw new Error('Method not implemented.')
     }
 
-    public getChannelDetails(spaceId: string, channelId: string): Promise<ChannelDetails | null> {
-        throw new Error('Method not implemented.')
+    public async getChannelDetails(
+        spaceId: string,
+        channelId: string,
+    ): Promise<ChannelDetails | null> {
+        const town = await this.getTown(spaceId)
+        if (!town) {
+            throw new Error(`Town with spaceId "${spaceId}" is not found.`)
+        }
+        return town.getChannel(channelId)
     }
 
     public getPermissionsByRoleId(spaceId: string, roleId: number): Promise<Permission[]> {
@@ -133,11 +140,19 @@ export class SpaceDappV3 implements ISpaceDapp {
         }))
     }
 
-    public getRolesByChannel(
+    public async getRolesByChannel(
         spaceId: string,
         channelNetworkId: string,
-    ): Promise<SpaceDataTypes.RoleStructOutput[]> {
-        throw new Error('Method not implemented.')
+    ): Promise<SpaceDataTypes.RoleStruct[]> {
+        const town = await this.getTown(spaceId)
+        if (!town) {
+            throw new Error(`Town with spaceId "${spaceId}" is not found.`)
+        }
+        const roleStructs = await town.getChannelRoles(channelNetworkId)
+        return roleStructs.map((roleStruct) => ({
+            roleId: roleStruct.id,
+            name: roleStruct.name,
+        }))
     }
 
     public async getSpaceInfo(spaceId: string): Promise<SpaceInfo | undefined> {

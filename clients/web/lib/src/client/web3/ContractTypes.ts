@@ -70,6 +70,14 @@ export interface RoleEntitlements {
     users: string[]
 }
 
+/*
+    Decoded Token and User entitlenment details
+*/
+export interface EntitlementDetails {
+    tokens: TokenEntitlementDataTypes.ExternalTokenStruct[]
+    users: string[]
+}
+
 export interface BasicRoleInfo {
     roleId: number
     name: string

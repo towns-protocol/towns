@@ -219,7 +219,7 @@ export class SpaceDapp implements ISpaceDapp {
             const getRoleEntitlementsAsync: Promise<RoleEntitlements>[] = []
             for (const role of channelRoles) {
                 getRoleEntitlementsAsync.push(
-                    this.getRoleEntitlements(space, entitlementShims, role.roleId),
+                    this.getRoleEntitlements(space, entitlementShims, BigNumber.from(role.roleId)),
                 )
             }
             const roles = await Promise.all(getRoleEntitlementsAsync)
@@ -279,7 +279,7 @@ export class SpaceDapp implements ISpaceDapp {
     public async getRolesByChannel(
         spaceId: string,
         channelNetworkId: string,
-    ): Promise<SpaceDataTypes.RoleStructOutput[]> {
+    ): Promise<SpaceDataTypes.RoleStruct[]> {
         const space = await this.getSpace(spaceId)
         if (!space?.read) {
             throw new Error(`Space with networkId "${spaceId}" is not found.`)
@@ -1116,7 +1116,9 @@ export class SpaceDapp implements ISpaceDapp {
         const encodedCallData: BytesLike[] = []
         // get all the roles in the channel to figure out which roles to add and which to remove
         const roles = await this.getRolesByChannel(spaceNetworkId, channelNetworkId)
-        const currentRoleIds = new Set<number>(roles.map((r) => r.roleId.toNumber()))
+        const currentRoleIds = new Set<number>(
+            roles.map((r) => BigNumber.from(r.roleId).toNumber()),
+        )
         const updatedRoleIds = new Set<number>(_updatedRoleIds)
         const rolesToRemove: number[] = []
         const rolesToAdd: number[] = []
