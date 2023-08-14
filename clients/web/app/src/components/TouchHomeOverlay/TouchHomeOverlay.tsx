@@ -1,14 +1,16 @@
-import React, { useState } from 'react'
+import React, { useCallback, useState } from 'react'
 import { useSpaceContext, useZionContext } from 'use-zion-client'
-
 import { useEvent } from 'react-use-event-hook'
-import { Box, Icon, IconButton, IconName, MotionBox, MotionStack, Stack, Text } from '@ui'
-
+import { useNavigate } from 'react-router'
+import { useAuth } from 'hooks/useAuth'
+import { shortAddress } from 'ui/utils/utils'
+import { Box, IconButton, MotionBox, MotionStack, Stack, Text } from '@ui'
 import { SpaceNavItem } from '@components/NavItem/SpaceNavItem'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { SentryErrorReportForm } from '@components/SentryErrorReport/SentryErrorReport'
 import { transitions } from 'ui/transitions/transitions'
 import { NavItem } from '@components/NavItem/_NavItem'
+import { PATHS } from 'routes'
 
 type Props = {
     onClose: () => void
@@ -17,12 +19,18 @@ type Props = {
 export const TouchHomeOverlay = (props: Props) => {
     const { onClose } = props
 
+    const { loggedInWalletAddress } = useAuth()
     const { spaces } = useZionContext()
     const { spaceId } = useSpaceContext()
-
+    const navigate = useNavigate()
     const [isSentryModalVisible, setIsSentryModalVisible] = useState(false)
     const showSentryModal = useEvent(() => setIsSentryModalVisible(true))
     const hideSentryModal = useEvent(() => setIsSentryModalVisible(false))
+
+    const profileClicked = useCallback(() => {
+        const path = `/${PATHS.SPACES}/${spaceId?.slug}/${PATHS.PROFILE}/me`
+        navigate(path)
+    }, [navigate, spaceId])
 
     return (
         <Box absoluteFill height="100dvh">
@@ -56,9 +64,16 @@ export const TouchHomeOverlay = (props: Props) => {
 
                 <Box grow>
                     <Stack horizontal padding="md" paddingRight="sm" alignItems="center">
-                        <Text fontSize="lg" fontWeight="strong">
-                            Towns
-                        </Text>
+                        <Stack gap="sm" onClick={profileClicked}>
+                            <Text fontSize="lg" fontWeight="strong">
+                                My Towns
+                            </Text>
+                            {loggedInWalletAddress && (
+                                <Text fontSize="sm" color="gray2">
+                                    River Protocol user {shortAddress(loggedInWalletAddress)}
+                                </Text>
+                            )}
+                        </Stack>
                         <Box grow />
                         <IconButton icon="close" onClick={onClose} />
                     </Stack>
@@ -80,18 +95,17 @@ export const TouchHomeOverlay = (props: Props) => {
                     </Box>
                 </Box>
 
-                <Stack borderTop padding="sm">
-                    <BottomSectionButton
-                        signout={false}
-                        label="Report a bug"
-                        icon="help"
-                        onClick={showSentryModal}
-                    />
-                    <Box paddingTop="md" paddingBottom="lg">
-                        <Text textAlign="center" color="gray2" fontSize="sm">
+                <Stack paddingX="sm">
+                    <Box paddingX="sm">
+                        <Text textAlign="left" color="gray2" fontSize="sm">
                             Towns {APP_VERSION} ({APP_COMMIT_HASH})
                         </Text>
                     </Box>
+                    <NavItem padding="none" onClick={showSentryModal}>
+                        <Text textAlign="left" color="gray1" fontSize="sm">
+                            Send us Feedback
+                        </Text>
+                    </NavItem>
                 </Stack>
 
                 {isSentryModalVisible && (
@@ -101,25 +115,5 @@ export const TouchHomeOverlay = (props: Props) => {
                 )}
             </MotionStack>
         </Box>
-    )
-}
-
-const BottomSectionButton = (props: {
-    onClick: () => void
-    label: string
-    icon: IconName
-    signout: boolean
-}) => {
-    return (
-        <NavItem id={props.label} onClick={props.onClick}>
-            <Box padding="sm" background="level2" rounded="sm">
-                <Icon
-                    color={props.signout ? 'error' : 'gray2'}
-                    type={props.icon}
-                    size="square_xs"
-                />
-            </Box>
-            <Text color={props.signout ? 'error' : 'default'}>{props.label}</Text>
-        </NavItem>
     )
 }
