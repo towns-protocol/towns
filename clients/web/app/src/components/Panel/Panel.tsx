@@ -113,9 +113,9 @@ const TouchPanel = (props: Props) => {
             {modalPresented && (
                 <MotionStack
                     absoluteFill
-                    initial={{ x: '100%', opacity: 0 }}
-                    animate={{ x: '0%', opacity: 1 }}
-                    exit={{ x: '100%', opacity: 0 }}
+                    initial={{ x: '100%' }}
+                    animate={{ x: '0%' }}
+                    exit={{ x: '100%' }}
                     transition={transitions.panel}
                     background="level1"
                     zIndex="tooltips"
