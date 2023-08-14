@@ -6,8 +6,7 @@ import (
 	. "casablanca/node/protocol"
 )
 
-func StreamInfoFromInceptionEvent(e *ParsedEvent, streamId string, userId string) (*common.StreamInfo, error) {
-	payload := e.Event.GetInceptionPayload()
+func StreamInfoFromInceptionPayload(payload IsInceptionPayload, streamId string, userId string) (*common.StreamInfo, error) {
 	if payload == nil {
 		return nil, RpcErrorf(Err_STREAM_NO_INCEPTION_EVENT, "no inception payload for stream %s", streamId)
 	}

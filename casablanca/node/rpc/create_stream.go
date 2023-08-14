@@ -145,7 +145,7 @@ func (s *Service) createStream(ctx context.Context, log *slog.Logger, req *conne
 		if err != nil {
 			return nil, err
 		}
-		spaceInfo, err := StreamInfoFromInceptionEvent(spaceView.InceptionEvent(), inception.SpaceId, user)
+		spaceInfo, err := StreamInfoFromInceptionPayload(spaceView.InceptionPayload(), inception.SpaceId, user)
 		if err != nil {
 			return nil, err
 		}

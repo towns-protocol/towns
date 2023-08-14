@@ -147,7 +147,7 @@ func (s *Service) addChannelMessage(ctx context.Context, stream *Stream, view St
 		return err
 	}
 
-	info, err := StreamInfoFromInceptionEvent(view.InceptionEvent(), streamId, user)
+	info, err := StreamInfoFromInceptionPayload(view.InceptionPayload(), streamId, user)
 	if err != nil {
 		return status.Errorf(codes.Internal, "AddEvent: error getting stream info: %v", err)
 	}
@@ -257,7 +257,7 @@ func (s *Service) addMembershipEvent(ctx context.Context, stream *Stream, view S
 	}
 
 	if permission != auth.PermissionUndefined {
-		info, err := StreamInfoFromInceptionEvent(view.InceptionEvent(), streamId, userId)
+		info, err := StreamInfoFromInceptionPayload(view.InceptionPayload(), streamId, userId)
 		if err != nil {
 			return status.Errorf(codes.Internal, "AddEvent: error getting stream info: %v", err)
 		}

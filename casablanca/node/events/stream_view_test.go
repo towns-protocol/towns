@@ -51,9 +51,9 @@ func TestLoad(t *testing.T) {
 
 	assert.Equal(t, "streamid$1", view.StreamId())
 
-	i := view.InceptionEvent()
+	i := view.InceptionPayload()
 	assert.NotNil(t, i)
-	assert.Equal(t, inception.Hash, i.Hash)
+	assert.Equal(t, parsedEvent(t, inception).Event.GetInceptionPayload().GetStreamId(), i.GetStreamId())
 
 	ip := view.InceptionPayload()
 	assert.NotNil(t, ip)

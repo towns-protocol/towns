@@ -19,7 +19,6 @@ import (
 
 type StreamView interface {
 	StreamId() string
-	InceptionEvent() *ParsedEvent
 	InceptionPayload() IsInceptionPayload
 	LastEvent() *ParsedEvent
 	Envelopes() []*Envelope
@@ -341,12 +340,8 @@ func (r *streamViewImpl) StreamId() string {
 	return r.streamId
 }
 
-func (r *streamViewImpl) InceptionEvent() *ParsedEvent {
-	return r.blocks[0].events[0]
-}
-
 func (r *streamViewImpl) InceptionPayload() IsInceptionPayload {
-	return r.InceptionEvent().Event.GetInceptionPayload()
+	return r.snapshot.GetInceptionPayload()
 }
 
 func (r *streamViewImpl) forEachEvent(startBlock int, op func(e *ParsedEvent) (bool, error)) error {
