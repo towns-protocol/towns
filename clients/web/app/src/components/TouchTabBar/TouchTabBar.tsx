@@ -5,12 +5,16 @@ import { Avatar, Box, Dot, Icon, Stack, Text } from '@ui'
 import { SpaceIcon } from '@components/SpaceIcon'
 import { ImageVariants } from '@components/UploadImage/useImageSource'
 import { PATHS } from 'routes'
+import { useVisualKeyboardContext } from '../VisualKeyboardContext/VisualKeyboardContext'
 
 export const TouchTabBar = () => {
     const space = useSpaceData()
     const userId = useMyProfile()?.userId
     const hasUnread = useSpaceUnread()
-    if (!space) {
+
+    const { visualKeyboardPresent: tabBarHidden } = useVisualKeyboardContext()
+
+    if (!space || tabBarHidden) {
         return null
     }
 

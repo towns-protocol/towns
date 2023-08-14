@@ -3,14 +3,11 @@ import { Outlet } from 'react-router'
 import { Box } from '@ui'
 import { SuspenseLoader } from '@components/Loaders/SuspenseLoader'
 import { TouchTabBar } from '@components/TouchTabBar/TouchTabBar'
-import { TouchTabBarContext } from '@components/TouchTabBar/TouchTabBarContext'
+import { VisualKeyboardContextProvider } from '@components/VisualKeyboardContext/VisualKeyboardContext'
 
 export const AppTouchLayout = () => {
-    const [tabBarHidden, setTabBarHidden] = React.useState(false)
-    const value = { tabBarHidden, setTabBarHidden }
-
     return (
-        <TouchTabBarContext.Provider value={value}>
+        <VisualKeyboardContextProvider>
             {/* stretch main container to push footer down */}
             <Box grow position="relative" overflowX="hidden">
                 <SuspenseLoader>
@@ -18,7 +15,7 @@ export const AppTouchLayout = () => {
                 </SuspenseLoader>
             </Box>
             {/* bottom content */}
-            {!tabBarHidden && <TouchTabBar />}
-        </TouchTabBarContext.Provider>
+            <TouchTabBar />
+        </VisualKeyboardContextProvider>
     )
 }

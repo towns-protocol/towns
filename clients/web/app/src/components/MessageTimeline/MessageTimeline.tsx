@@ -22,6 +22,7 @@ import { notUndefined } from 'ui/utils/utils'
 import { MessageTimelineItem } from '@components/MessageTimeIineItem/TimelineItem'
 import { useDevice } from 'hooks/useDevice'
 import { VList } from 'ui/components/VList2/VList'
+import { useVisualKeyboardContext } from '@components/VisualKeyboardContext/VisualKeyboardContext'
 import { MessageTimelineContext, MessageTimelineType } from './MessageTimelineContext'
 import { DateDivider } from '../MessageTimeIineItem/items/DateDivider'
 import { NewDivider } from '../MessageTimeIineItem/items/NewDivider'
@@ -349,6 +350,8 @@ export const MessageTimeline = (props: Props) => {
 
     const { focusItem } = useFocusMessage(listItems, props.highlightId, userId)
 
+    const { visualKeyboardPresent: tabBarHidden } = useVisualKeyboardContext()
+
     return (
         <VList
             align={props.align}
@@ -361,6 +364,7 @@ export const MessageTimeline = (props: Props) => {
             scrollContainerRef={props.containerRef}
             key={channelId?.networkId}
             groupIds={groupIds}
+            pointerEvents={tabBarHidden ? 'none' : undefined}
             itemRenderer={(r, ref) => {
                 return r.type === 'header' ? (
                     <>{props.header}</>

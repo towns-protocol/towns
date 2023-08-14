@@ -97,6 +97,8 @@ interface Props<T> {
      * ref for the main container, used for external intersection-observer
      **/
     scrollContainerRef?: MutableRefObject<HTMLDivElement | null>
+
+    pointerEvents?: 'none' | 'auto'
 }
 
 export function VList<T>(props: Props<T>) {
@@ -106,6 +108,7 @@ export function VList<T>(props: Props<T>) {
         overscan = DEFAULT_MARGIN_RATIO,
         padding = 0,
         align = 'top',
+        pointerEvents = 'auto',
     } = props
 
     const { isTouch } = useDevice()
@@ -847,6 +850,13 @@ export function VList<T>(props: Props<T>) {
         } as const
     }, [isAligned])
 
+    const computedOffsetStyle = useMemo(() => {
+        return {
+            ...offsetStyle,
+            pointerEvents: isScrolling ? 'none' : pointerEvents,
+        }
+    }, [isScrolling, pointerEvents])
+
     return (
         <div style={computedMainStyle} data-testid="vlist-main">
             <div
@@ -864,7 +874,7 @@ export function VList<T>(props: Props<T>) {
                     data-testid="vlist-content"
                 >
                     <div
-                        style={{ ...offsetStyle, pointerEvents: isScrolling ? 'none' : 'auto' }}
+                        style={computedOffsetStyle}
                         ref={offsetContentRef}
                         data-testid="vlist-offset"
                     >
