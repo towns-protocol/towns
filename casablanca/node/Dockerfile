@@ -21,7 +21,7 @@ LABEL org.opencontainers.image.source="https://github.com/HereNotThere/harmony"
 LABEL org.opencontainers.image.licenses="Apache-2.0"
 
 COPY --from=base /build/bin/* /usr/bin/
-COPY --from=base /build/dev-auth.yaml /usr/etc/config.yaml
+COPY --from=base /build/config/config.yaml /usr/etc/config.yaml
 
 # ENV VARS FOR REFERENCE
 #
