@@ -116,6 +116,7 @@ func main() {
 }
 
 func genInceptionPayloadImpl(inceptionTypes []string, outputFile *FileHelper) {
+	// the header defines the IsInceptionPayload interface
 	header := func() string {
 		return `
 type IsInceptionPayload interface {
@@ -124,17 +125,38 @@ type IsInceptionPayload interface {
 	GetSettings() *StreamSettings
 }`
 	}
+
+	// conformance ensures that all inception types implement the IsInceptionPayload interface
 	conformance := func() string {
 		return `
 func (*%s) isInceptionPayload() {}`
 	}
-	getterStart := func() string {
+
+	// snapshot getter allows us to get the inception payload from a snapshot
+	snapshotGetterStart := func() string {
+		return `
+
+func (e *Snapshot) GetInceptionPayload() IsInceptionPayload {
+	switch e.Content.(type) {`
+	}
+	snapshotGetterCase := func() string {
+		return `
+	case *Snapshot_%s:
+		r := e.Content.(*Snapshot_%s).%s.GetInception()
+		if r == nil {
+			return nil
+		}
+		return r`
+	}
+
+	// stream event getter allows us to get the inception payload from a stream event
+	streamEventGetterStart := func() string {
 		return `
 
 func (e *StreamEvent) GetInceptionPayload() IsInceptionPayload {
 	switch e.Payload.(type) {`
 	}
-	getterCase := func() string {
+	streamEventGetterCase := func() string {
 		return `
 	case *StreamEvent_%s:
 		r := e.Payload.(*StreamEvent_%s).%s.GetInception()
@@ -148,12 +170,13 @@ func (e *StreamEvent) GetInceptionPayload() IsInceptionPayload {
 	default:
 		return nil
 	}
-}
-`
+}`
 	}
 
+	// validator ensures that the inception payload type matches the stream type
 	validatorStart := func() string {
 		return `
+
 func (e *StreamEvent) VerifyPayloadTypeMatchesStreamType(i IsInceptionPayload) error {
 	switch e.Payload.(type) {`
 	}
@@ -180,10 +203,18 @@ func (e *StreamEvent) VerifyPayloadTypeMatchesStreamType(i IsInceptionPayload) e
 		outputFile.WriteString2(fmt.Sprintf(conformance(), inceptionTypeName))
 	}
 
-	outputFile.WriteString2(getterStart())
+	outputFile.WriteString2(snapshotGetterStart())
 	for _, inceptionTypeName := range inceptionTypes {
 		inceptionTypeBase := strings.Split(inceptionTypeName, "_")[0]
-		outputFile.WriteString2(fmt.Sprintf(getterCase(), inceptionTypeBase, inceptionTypeBase, inceptionTypeBase))
+		inceptionTypeBase = strings.Replace(inceptionTypeBase, "Payload", "Content", 1)
+		outputFile.WriteString2(fmt.Sprintf(snapshotGetterCase(), inceptionTypeBase, inceptionTypeBase, inceptionTypeBase))
+	}
+	outputFile.WriteString2(getterEnd())
+
+	outputFile.WriteString2(streamEventGetterStart())
+	for _, inceptionTypeName := range inceptionTypes {
+		inceptionTypeBase := strings.Split(inceptionTypeName, "_")[0]
+		outputFile.WriteString2(fmt.Sprintf(streamEventGetterCase(), inceptionTypeBase, inceptionTypeBase, inceptionTypeBase))
 	}
 	outputFile.WriteString2(getterEnd())
 

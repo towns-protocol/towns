@@ -22,6 +22,43 @@ func (*ChannelPayload_Inception) isInceptionPayload() {}
 func (*UserSettingsPayload_Inception) isInceptionPayload() {}
 func (*UserDeviceKeyPayload_Inception) isInceptionPayload() {}
 
+func (e *Snapshot) GetInceptionPayload() IsInceptionPayload {
+	switch e.Content.(type) {
+	case *Snapshot_UserContent:
+		r := e.Content.(*Snapshot_UserContent).UserContent.GetInception()
+		if r == nil {
+			return nil
+		}
+		return r
+	case *Snapshot_SpaceContent:
+		r := e.Content.(*Snapshot_SpaceContent).SpaceContent.GetInception()
+		if r == nil {
+			return nil
+		}
+		return r
+	case *Snapshot_ChannelContent:
+		r := e.Content.(*Snapshot_ChannelContent).ChannelContent.GetInception()
+		if r == nil {
+			return nil
+		}
+		return r
+	case *Snapshot_UserSettingsContent:
+		r := e.Content.(*Snapshot_UserSettingsContent).UserSettingsContent.GetInception()
+		if r == nil {
+			return nil
+		}
+		return r
+	case *Snapshot_UserDeviceKeyContent:
+		r := e.Content.(*Snapshot_UserDeviceKeyContent).UserDeviceKeyContent.GetInception()
+		if r == nil {
+			return nil
+		}
+		return r
+	default:
+		return nil
+	}
+}
+
 func (e *StreamEvent) GetInceptionPayload() IsInceptionPayload {
 	switch e.Payload.(type) {
 	case *StreamEvent_UserPayload:
