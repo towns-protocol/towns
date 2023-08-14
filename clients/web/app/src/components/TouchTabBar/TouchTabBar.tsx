@@ -1,6 +1,6 @@
-import React, { useCallback } from 'react'
+import React, { useCallback, useMemo } from 'react'
 import { useMyProfile, useSpaceData, useSpaceUnread } from 'use-zion-client'
-import { useLocation, useNavigate, useResolvedPath } from 'react-router'
+import { matchRoutes, useLocation, useNavigate, useResolvedPath } from 'react-router'
 import { Avatar, Box, Dot, Icon, Stack, Text } from '@ui'
 import { SpaceIcon } from '@components/SpaceIcon'
 import { ImageVariants } from '@components/UploadImage/useImageSource'
@@ -36,6 +36,7 @@ export const TouchTabBar = () => {
                         </Box>
                     )}
                     to={`/${PATHS.SPACES}/${space.id.slug}/`}
+                    highlightPattern={`${PATHS.SPACES}/:spaceId/${PATHS.CHANNELS}/:channelId/*`}
                 />
                 <TabBarItem
                     title="Threads"
@@ -64,6 +65,7 @@ export const TouchTabBar = () => {
 type TabBarItemProps = {
     title: string
     to: string
+    highlightPattern?: string
     icon: (highlighted: boolean) => React.ReactNode
 }
 
@@ -77,9 +79,20 @@ const TabBarItem = (props: TabBarItemProps) => {
         navigate(to)
     }, [navigate, to])
 
-    const isHighlighted = decodeURIComponent(location.pathname).startsWith(
-        decodeURIComponent(resolved.pathname),
-    )
+    const isHighlighted = useMemo(() => {
+        // if "to" matches location.pathname exactly, it's highlighted
+        if (decodeURIComponent(location.pathname) === decodeURIComponent(resolved.pathname)) {
+            return true
+        }
+        return props.highlightPattern
+            ? // mainly to exclude 'home' "/" from matching all other tabs
+              !!matchRoutes([{ path: props.highlightPattern }], location.pathname)?.length
+            : // otherwise just check if location.pathname starts with "to"
+              decodeURIComponent(location.pathname).startsWith(
+                  decodeURIComponent(resolved.pathname),
+              )
+    }, [location.pathname, props.highlightPattern, resolved.pathname])
+
     return (
         <Stack
             flexGrow="x1"
