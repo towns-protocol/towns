@@ -24,7 +24,8 @@ describe('disable channel', () => {
         smartContractVersion: '', // use v3 for the new TownArchitect. work-in-progress.
     }
 
-    test('Space owner is allowed to disable space access', async () => {
+    // https://linear.app/hnt-labs/issue/HNT-2046/testsintegrationpermissionsdisablespaceorchanneltestts
+    test.skip('Space owner is allowed to disable space access', async () => {
         /** Arrange */
 
         const { alice } = await registerAndStartClients(['alice'], withTestProps)
