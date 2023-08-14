@@ -264,7 +264,9 @@ const RichTextEditorWithoutBoundary = (props: Props) => {
 
     if (!editable) {
         return (
-            <RichTextUIContainer>
+            <RichTextUIContainer
+                rounded={{ default: 'sm', touch: isFullWidthOnTouch ? 'none' : 'sm' }}
+            >
                 <RichTextPlaceholder placeholder={placeholder} color="level4" />
             </RichTextUIContainer>
         )

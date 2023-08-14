@@ -28,6 +28,7 @@ type Props = {
     readOnly?: boolean
     background?: BoxProps['background']
     attemptingToSend?: boolean
+    rounded?: BoxProps['rounded']
 } & ComponentProps<typeof GiphyEntryDesktop>
 
 export const RichTextUI = (props: Props) => {
@@ -189,13 +190,14 @@ export const RichTextUI = (props: Props) => {
 
 export const RichTextUIContainer = ({
     background = 'level2',
+    rounded = 'sm',
     readOnly,
     children,
-}: Pick<Props, 'background' | 'readOnly'> & { children?: React.ReactNode }) => (
+}: Pick<Props, 'background' | 'readOnly' | 'rounded'> & { children?: React.ReactNode }) => (
     <Stack
         gap
         transition
-        rounded="sm"
+        rounded={rounded}
         background={background}
         minWidth={readOnly ? undefined : '200'}
         position="relative"
