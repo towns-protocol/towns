@@ -32,6 +32,7 @@ export interface UpdateChannelParams {
     channelId: string
     channelName: string
     roleIds: number[]
+    disabled?: boolean
 }
 
 export interface UpdateRoleParams {

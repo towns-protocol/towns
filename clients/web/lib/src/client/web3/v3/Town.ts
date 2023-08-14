@@ -17,6 +17,7 @@ import { IRolesBase, IRolesShim } from './IRolesShim'
 import { TokenEntitlementDataTypes, TokenEntitlementShim } from './TokenEntitlementShim'
 
 import { IEntitlementsShim } from './IEntitlementsShim'
+import { IMulticallShim } from './IMulticallShim'
 import { OwnableFacetShim } from './OwnableFacetShim'
 import { TokenPausableFacetShim } from './TokenPausableFacetShim'
 import { UNKNOWN_ERROR } from './BaseContractShimV3'
@@ -35,6 +36,7 @@ export class Town {
     private readonly provider: ethers.providers.Provider | undefined
     private readonly channel: IChannelShim
     private readonly entitlements: IEntitlementsShim
+    private readonly multicall: IMulticallShim
     private readonly ownable: OwnableFacetShim
     private readonly pausable: TokenPausableFacetShim
     private readonly roles: IRolesShim
@@ -52,6 +54,7 @@ export class Town {
         this.provider = provider
         this.channel = new IChannelShim(address, chainId, provider)
         this.entitlements = new IEntitlementsShim(address, chainId, provider)
+        this.multicall = new IMulticallShim(address, chainId, provider)
         this.ownable = new OwnableFacetShim(address, chainId, provider)
         this.pausable = new TokenPausableFacetShim(address, chainId, provider)
         this.roles = new IRolesShim(address, chainId, provider)
@@ -67,6 +70,10 @@ export class Town {
 
     public get Channels(): IChannelShim {
         return this.channel
+    }
+
+    public get Multicall(): IMulticallShim {
+        return this.multicall
     }
 
     public get Ownable(): OwnableFacetShim {
@@ -190,7 +197,7 @@ export class Town {
         return this.roles.read.getRoleById(roleId)
     }
 
-    private async getEntitlementShims(): Promise<EntitlementShim[]> {
+    public async getEntitlementShims(): Promise<EntitlementShim[]> {
         // get all the entitlement addresses supported in the town
         const entitlementInfo = await this.entitlements.read.getEntitlements()
         const getEntitlementShims: Promise<EntitlementShim>[] = []

@@ -5,7 +5,7 @@ import {
     Permission,
     RoleDetails,
 } from '../ContractTypes'
-import { ContractTransaction, ethers } from 'ethers'
+import { BytesLike, ContractTransaction, ethers } from 'ethers'
 import { CreateSpaceParams, ISpaceDapp, UpdateChannelParams, UpdateRoleParams } from '../ISpaceDapp'
 import {
     fromChannelIdToChannelInfo,
@@ -213,11 +213,34 @@ export class SpaceDappV3 implements ISpaceDapp {
         return town.parseError(error)
     }
 
-    public updateChannel(
+    public async updateChannel(
         params: UpdateChannelParams,
         signer: ethers.Signer,
     ): Promise<ContractTransaction> {
-        throw new Error('Method not implemented.')
+        const town = await this.getTown(params.spaceId)
+        if (!town) {
+            throw new Error(`Town with spaceId "${params.spaceId}" is not found.`)
+        }
+        // data for the multicall
+        const encodedCallData: BytesLike[] = []
+        // update the channel metadata
+        encodedCallData.push(
+            town.Channels.interface.encodeFunctionData('updateChannel', [
+                params.channelId,
+                params.channelName,
+                params.disabled ?? false, // default to false
+            ]),
+        )
+        // update any channel role changes
+        const encodedUpdateChannelRoles = await this.encodeUpdateChannelRoles(
+            town,
+            params.channelId,
+            params.roleIds,
+        )
+        for (const callData of encodedUpdateChannelRoles) {
+            encodedCallData.push(callData)
+        }
+        return town.Multicall.write(signer).multicall(encodedCallData)
     }
 
     public updateRole(
@@ -258,5 +281,72 @@ export class SpaceDappV3 implements ISpaceDapp {
 
     private async getTown(townId: string): Promise<Town | undefined> {
         return this.townRegistrar.getTown(townId)
+    }
+
+    private async encodeUpdateChannelRoles(
+        town: Town,
+        channelId: string,
+        _updatedRoleIds: number[],
+    ): Promise<BytesLike[]> {
+        const encodedCallData: BytesLike[] = []
+        const [channelInfo] = await Promise.all([
+            town.Channels.read.getChannel(channelId),
+            town.getEntitlementShims(),
+        ])
+        const currentRoleIds = new Set<number>(channelInfo.roleIds.map((r) => r.toNumber()))
+        const updatedRoleIds = new Set<number>(_updatedRoleIds)
+        const rolesToRemove: number[] = []
+        const rolesToAdd: number[] = []
+        for (const r of updatedRoleIds) {
+            // if the current role IDs does not have the updated role ID, then that role should be added.
+            if (!currentRoleIds.has(r)) {
+                rolesToAdd.push(r)
+            }
+        }
+        for (const r of currentRoleIds) {
+            // if the updated role IDs no longer have the current role ID, then that role should be removed.
+            if (!updatedRoleIds.has(r)) {
+                rolesToRemove.push(r)
+            }
+        }
+        // encode the call data for each role to remove
+        const encodedRemoveRoles = this.encodeRemoveRolesFromChannel(town, channelId, rolesToRemove)
+        for (const callData of encodedRemoveRoles) {
+            encodedCallData.push(callData)
+        }
+        // encode the call data for each role to add
+        const encodedAddRoles = this.encodeAddRolesToChannel(town, channelId, rolesToAdd)
+        for (const callData of encodedAddRoles) {
+            encodedCallData.push(callData)
+        }
+        return encodedCallData
+    }
+
+    private encodeAddRolesToChannel(town: Town, channelId: string, roleIds: number[]): BytesLike[] {
+        const encodedCallData: BytesLike[] = []
+        for (const roleId of roleIds) {
+            const encodedBytes = town.Channels.interface.encodeFunctionData('addRoleToChannel', [
+                channelId,
+                roleId,
+            ])
+            encodedCallData.push(encodedBytes)
+        }
+        return encodedCallData
+    }
+
+    private encodeRemoveRolesFromChannel(
+        town: Town,
+        channelId: string,
+        roleIds: number[],
+    ): BytesLike[] {
+        const encodedCallData: BytesLike[] = []
+        for (const roleId of roleIds) {
+            const encodedBytes = town.Channels.interface.encodeFunctionData(
+                'removeRoleFromChannel',
+                [channelId, roleId],
+            )
+            encodedCallData.push(encodedBytes)
+        }
+        return encodedCallData
     }
 }
