@@ -5,7 +5,9 @@ import (
 	"context"
 	"crypto/ecdsa"
 	"encoding/binary"
+	"encoding/hex"
 	"io"
+	"os"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -15,6 +17,11 @@ import (
 )
 
 const (
+	WALLET_PATH              = "./wallet"
+	WALLET_PATH_PRIVATE_KEY  = "./wallet/private_key"
+	WALLET_PATH_PUBLIC_KEY   = "./wallet/public_key"
+	WALLET_PATH_NODE_ADDRESS = "./wallet/node_address"
+	KEY_FILE_PERMISSIONS     = 0600
 	TOWNS_HASH_SIZE = 32
 )
 
@@ -55,7 +62,6 @@ type Wallet struct {
 	AddressStr       string
 }
 
-// TODO: stop generating and load from file
 func NewWallet(ctx context.Context) (*Wallet, error) {
 	log := dlog.CtxLog(ctx)
 
@@ -73,6 +79,88 @@ func NewWallet(ctx context.Context) (*Wallet, error) {
 			AddressStr:       address.Hex(),
 		},
 		nil
+}
+
+func LoadWallet(ctx context.Context, filename string) (*Wallet, error) {
+	log := dlog.CtxLog(ctx)
+
+	key, err := crypto.LoadECDSA(filename)
+	if err != nil {
+		log.Error("Failed to load wallet.", "error", err)
+		return nil, err
+	}
+	address := crypto.PubkeyToAddress(key.PublicKey)
+
+	log.Info("Wallet loaded.", "address", address.Hex(), "publicKey", crypto.FromECDSAPub(&key.PublicKey))
+	return &Wallet{
+			PrivateKeyStruct: key,
+			PrivateKey:       crypto.FromECDSA(key),
+			Address:          address,
+			AddressStr:       address.Hex(),
+		},
+		nil
+}
+
+func (w *Wallet) SaveWallet(ctx context.Context, privateKeyFilename string, publicKeyFilename string, addressFilename string, overwrite bool) error {
+	log := dlog.CtxLog(ctx)
+
+	openFlags := os.O_WRONLY | os.O_CREATE | os.O_EXCL
+	if overwrite {
+		openFlags = os.O_WRONLY | os.O_CREATE | os.O_TRUNC
+	}
+
+	fPriv, err := os.OpenFile(privateKeyFilename, openFlags, KEY_FILE_PERMISSIONS)
+	if err != nil {
+		return err
+	}
+	defer fPriv.Close()
+
+	fPub, err := os.OpenFile(publicKeyFilename, openFlags, KEY_FILE_PERMISSIONS)
+	if err != nil {
+		return err
+	}
+	defer fPub.Close()
+
+	fAddr, err := os.OpenFile(addressFilename, openFlags, KEY_FILE_PERMISSIONS)
+	if err != nil {
+		return err
+	}
+	defer fAddr.Close()
+
+	k := hex.EncodeToString(w.PrivateKey)
+	_, err = fPriv.WriteString(k)
+	if err != nil {
+		return err
+	}
+
+	err = fPriv.Close()
+	if err != nil {
+		return err
+	}
+
+	k = hex.EncodeToString(crypto.FromECDSAPub(&w.PrivateKeyStruct.PublicKey))
+	_, err = fPub.WriteString(k)
+	if err != nil {
+		return err
+	}
+
+	err = fPub.Close()
+	if err != nil {
+		return err
+	}
+
+	_, err = fAddr.WriteString(w.AddressStr)
+	if err != nil {
+		return err
+	}
+
+	err = fAddr.Close()
+	if err != nil {
+		return err
+	}
+
+	log.Info("Wallet saved.", "address", w.Address.Hex(), "publicKey", crypto.FromECDSAPub(&w.PrivateKeyStruct.PublicKey), "filename", privateKeyFilename)
+	return nil
 }
 
 func (w *Wallet) SignHash(hash []byte) ([]byte, error) {

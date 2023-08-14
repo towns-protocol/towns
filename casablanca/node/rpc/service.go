@@ -27,17 +27,18 @@ type Service struct {
 	log           *slog.Logger
 }
 
-func MakeServiceHandler(ctx context.Context, log *slog.Logger, dbUrl string, chainConfig *config.ChainConfig, opts ...connect_go.HandlerOption) (string, http.Handler, error) {
+func MakeServiceHandler(ctx context.Context, log *slog.Logger, dbUrl string, chainConfig *config.ChainConfig, wallet *crypto.Wallet, opts ...connect_go.HandlerOption) (string, http.Handler, error) {
 	store, err := storage.NewPGEventStore(ctx, dbUrl, false)
 	if err != nil {
 		log.Error("failed to create storage", "error", err)
 		return "", nil, err
 	}
 
-	wallet, err := crypto.NewWallet(ctx)
-	if err != nil {
-		log.Error("failed to create wallet", "error", err)
-		return "", nil, err
+	if wallet == nil {
+		wallet, err = crypto.LoadWallet(ctx, crypto.WALLET_PATH_PRIVATE_KEY)
+		if err != nil {
+			return "", nil, err
+		}
 	}
 
 	var contract auth.TownsContract

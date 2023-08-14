@@ -152,7 +152,6 @@ func createChannel(ctx context.Context, wallet *crypto.Wallet, client protocolco
 }
 
 func testServerAndClient(ctx context.Context, dbUrl string) (protocolconnect.StreamServiceClient, func()) {
-
 	cfg := &config.Config{
 		UseContract: false,
 		Chain: config.ChainConfig{
@@ -164,7 +163,12 @@ func testServerAndClient(ctx context.Context, dbUrl string) (protocolconnect.Str
 		DbUrl:   dbUrl,
 	}
 
-	closer, port, err := rpc.StartServer(ctx, cfg)
+	wallet, err := crypto.NewWallet(ctx)
+	if err != nil {
+		panic(err)
+	}
+
+	closer, port, err := rpc.StartServer(ctx, cfg, wallet)
 	if err != nil {
 		panic(err)
 	}
