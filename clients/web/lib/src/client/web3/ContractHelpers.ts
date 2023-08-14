@@ -1,3 +1,5 @@
+import { BigNumber, BigNumberish } from 'ethers'
+
 import { BasicRoleInfo } from './ContractTypes'
 import { TokenDataTypes } from './shims/TokenEntitlementShim'
 import { ZionClient } from '../ZionClient'
@@ -45,4 +47,13 @@ export async function getFilteredRolesFromSpace(
         }
     }
     return filteredRoles
+}
+
+export function isRoleIdInArray(roleIds: BigNumber[], roleId: BigNumberish): boolean {
+    for (const r of roleIds) {
+        if (r.eq(roleId)) {
+            return true
+        }
+    }
+    return false
 }

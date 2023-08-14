@@ -113,8 +113,12 @@ export class SpaceDappV3 implements ISpaceDapp {
         throw new Error('Method not implemented.')
     }
 
-    public getRole(spaceId: string, roleId: number): Promise<RoleDetails | null> {
-        throw new Error('Method not implemented.')
+    public async getRole(spaceId: string, roleId: number): Promise<RoleDetails | null> {
+        const town = await this.getTown(spaceId)
+        if (!town) {
+            throw new Error(`Town with spaceId "${spaceId}" is not found.`)
+        }
+        return town.getRole(roleId)
     }
 
     public async getRoles(spaceId: string): Promise<BasicRoleInfo[]> {

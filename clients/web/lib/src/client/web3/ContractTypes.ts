@@ -1,5 +1,5 @@
 import { TokenDataTypes } from './shims/TokenEntitlementShim'
-import { TokenEntitlementShim } from './v3/TokenEntitlementShim'
+import { TokenEntitlementDataTypes, TokenEntitlementShim } from './v3/TokenEntitlementShim'
 import { UserEntitlementShim } from './v3/UserEntitlementShim'
 
 export enum Permission {
@@ -19,7 +19,7 @@ export enum Permission {
 /**
  * Supported entitlement modules
  */
-export type SupportedEntitlement = TokenEntitlementShim | UserEntitlementShim
+export type EntitlementShim = TokenEntitlementShim | UserEntitlementShim
 
 export enum EntitlementModuleType {
     TokenEntitlement = 'TokenEntitlement',
@@ -89,4 +89,34 @@ export function isUserEntitlement(
     entitlement: EntitlementModule,
 ): entitlement is UserEntitlementShim {
     return entitlement.moduleType === EntitlementModuleType.UserEntitlement
+}
+
+export function isExternalTokenStruct(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    args: any,
+): args is TokenEntitlementDataTypes.ExternalTokenStruct {
+    return (
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        typeof args.contractAddress === 'string' &&
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        typeof args.isSingleToken === 'boolean' &&
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        args.quantity !== undefined &&
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        args.tokenIds !== undefined
+    )
+}
+
+export function isExternalTokenStructArray(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    args: any,
+): args is TokenEntitlementDataTypes.ExternalTokenStruct[] {
+    return Array.isArray(args) && args.length > 0 && args.every(isExternalTokenStruct)
+}
+
+export function isStringArray(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    args: any,
+): args is string[] {
+    return Array.isArray(args) && args.length > 0 && args.every((arg) => typeof arg === 'string')
 }

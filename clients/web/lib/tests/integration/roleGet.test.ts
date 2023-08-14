@@ -70,7 +70,7 @@ describe('get role details', () => {
 
     test('get details of a role being used by a channel', async () => {
         /** Arrange */
-        const { alice } = await registerAndStartClients(['alice'])
+        const { alice } = await registerAndStartClients(['alice'], withTestProps)
         await alice.fundWallet()
         const roomId = await createTestSpaceWithZionMemberRole(alice, [Permission.Read])
         if (!roomId) {
@@ -127,7 +127,7 @@ describe('get role details', () => {
 
     test('get details of token member role', async () => {
         /** Arrange */
-        const { alice } = await registerAndStartClients(['alice'])
+        const { alice } = await registerAndStartClients(['alice'], withTestProps)
         await alice.fundWallet()
         const permissions = [Permission.Read, Permission.Write]
         const roomId = await createTestSpaceWithZionMemberRole(alice, permissions)
@@ -157,7 +157,7 @@ describe('get role details', () => {
 
     test('get details of Everyone role', async () => {
         /** Arrange */
-        const { alice } = await registerAndStartClients(['alice'])
+        const { alice } = await registerAndStartClients(['alice'], withTestProps)
         await alice.fundWallet()
         const permissions = [Permission.Read, Permission.Write]
         const roomId = await createTestSpaceWithEveryoneRole(alice, permissions)
@@ -185,7 +185,7 @@ describe('get role details', () => {
 
     test('get details of role with token entitlement', async () => {
         /** Arrange */
-        const { alice } = await registerAndStartClients(['alice'])
+        const { alice } = await registerAndStartClients(['alice'], withTestProps)
         await alice.fundWallet()
         const roomId = await createTestSpaceWithZionMemberRole(alice, [Permission.Read])
         if (!roomId) {
@@ -238,7 +238,7 @@ describe('get role details', () => {
 
     test('get details of role with user entitlement', async () => {
         /** Arrange */
-        const { alice } = await registerAndStartClients(['alice'])
+        const { alice } = await registerAndStartClients(['alice'], withTestProps)
         await alice.fundWallet()
         const roomId = await createTestSpaceWithZionMemberRole(alice, [Permission.Read])
         if (!roomId) {
