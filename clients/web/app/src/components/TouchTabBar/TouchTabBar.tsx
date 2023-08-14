@@ -36,7 +36,7 @@ export const TouchTabBar = () => {
                                 variant={ImageVariants.thumbnail50}
                                 fadeIn={false}
                             />
-                            {hasUnread && <Dot />}
+                            {hasUnread && <Dot position="topRight" />}
                         </Box>
                     )}
                     to={`/${PATHS.SPACES}/${space.id.slug}/`}
