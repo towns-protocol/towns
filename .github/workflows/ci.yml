@@ -1,8 +1,8 @@
 name: Continuous Integration
 on:
     schedule:
-        # run every 30 minutes
-        - cron: '*/30 * * * *'
+        # run once a day
+        - cron: '0 10-16 * * *'
     pull_request:
     workflow_dispatch: # Allow manual trigger in GitHub UI
         inputs:
@@ -395,10 +395,10 @@ jobs:
                   PGPASSWORD: postgres
 
             - name: Start Casablanca node with entitlements
-              run: yarn csb:start --config dev-entitlements.yaml &
+              run: yarn csb:start:entitlements  &
 
             - name: Wait for Casablanca (with entitlements) node to be up
-              run: yarn csb:wait
+              run: yarn csb:wait:entitlements
 
             - name: Build & Test (with entitlements)
               run: yarn csb:turbo-no-sdk

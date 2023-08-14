@@ -9,6 +9,7 @@ import { useWaitForInitialSync } from 'hooks/useWaitForInitialSync'
 import { SentryReportModal } from '@components/SentryErrorReport/SentryErrorReport'
 
 import { useStore } from 'store/store'
+import { useDevice } from 'hooks/useDevice'
 import { CentralPanelLayout } from './layouts/CentralPanelLayout'
 
 export const NoJoinedSpacesFallback = () => {
@@ -19,6 +20,8 @@ export const NoJoinedSpacesFallback = () => {
     const spaceIdBookmark = useStore((s) => {
         return s.spaceIdBookmark
     })
+
+    const { isTouch } = useDevice()
 
     useEffect(() => {
         if (!initialSyncComplete) {
@@ -44,7 +47,12 @@ export const NoJoinedSpacesFallback = () => {
 
     return (
         <CentralPanelLayout>
-            <Stack centerContent height="100vh" data-testid="space-home-fallback-content">
+            <Stack
+                centerContent
+                height="100vh"
+                data-testid="space-home-fallback-content"
+                paddingX="lg"
+            >
                 <Stack centerContent gap="x4" maxWidth="500">
                     <Heading level={2} textAlign="center">
                         You don&apos;t have invitations to any town
@@ -73,8 +81,17 @@ export const NoJoinedSpacesFallback = () => {
                         </Box>
                     </Stack>
                 </Stack>
-                <Box position="absolute" left="lg" bottom="lg">
-                    <SentryReportModal />
+                <Box
+                    centerContent={isTouch}
+                    position="absolute"
+                    width="100%"
+                    paddingBottom="lg"
+                    paddingLeft={isTouch ? 'none' : 'lg'}
+                    bottom="none"
+                >
+                    <div>
+                        <SentryReportModal />
+                    </div>
                 </Box>
             </Stack>
         </CentralPanelLayout>

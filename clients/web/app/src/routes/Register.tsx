@@ -2,11 +2,20 @@ import React from 'react'
 import { Box, Stack, Text } from '@ui'
 import { SignupForm } from '@components/RegisterForm'
 import { SentryReportModal } from '@components/SentryErrorReport/SentryErrorReport'
+import { useDevice } from 'hooks/useDevice'
 
 export const Register = ({ isEdit = false }: { isEdit?: boolean }) => {
+    const { isTouch } = useDevice()
+    const offset = isTouch ? 'none' : 'lg'
     return (
-        <Stack alignItems="center" height="100%" paddingY="x4">
-            <Stack grow width="600">
+        <Stack
+            overflow="auto"
+            alignItems="center"
+            height="100%"
+            paddingY={isTouch ? 'none' : 'x4'}
+            paddingX="lg"
+        >
+            <Stack grow width={isTouch ? 'auto' : '600'}>
                 <Box paddingY="x4">
                     <Text strong size="lg" textAlign="center">
                         Join Towns
@@ -14,7 +23,12 @@ export const Register = ({ isEdit = false }: { isEdit?: boolean }) => {
                 </Box>
                 <SignupForm isEdit={isEdit} />
             </Stack>
-            <Box position="fixed" left="lg" bottom="lg">
+            <Box
+                position={isTouch ? 'relative' : 'fixed'}
+                left={offset}
+                bottom={offset}
+                padding="lg"
+            >
                 <SentryReportModal />
             </Box>
         </Stack>

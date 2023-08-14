@@ -1,0 +1,108 @@
+{
+  "compiler": {
+    "version": "0.8.20+commit.a1b79de6"
+  },
+  "language": "Solidity",
+  "output": {
+    "abi": [
+      {
+        "inputs": [],
+        "name": "info",
+        "outputs": [
+          {
+            "components": [
+              {
+                "internalType": "string",
+                "name": "networkId",
+                "type": "string"
+              },
+              {
+                "internalType": "uint256",
+                "name": "createdAt",
+                "type": "uint256"
+              }
+            ],
+            "internalType": "struct ITownBase.Info",
+            "name": "",
+            "type": "tuple"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      }
+    ],
+    "devdoc": {
+      "kind": "dev",
+      "methods": {},
+      "version": 1
+    },
+    "userdoc": {
+      "kind": "user",
+      "methods": {},
+      "version": 1
+    }
+  },
+  "settings": {
+    "compilationTarget": {
+      "contracts/src/towns/facets/town/TownFacet.sol": "TownFacet"
+    },
+    "evmVersion": "paris",
+    "libraries": {},
+    "metadata": {
+      "appendCBOR": false,
+      "bytecodeHash": "none"
+    },
+    "optimizer": {
+      "enabled": true,
+      "runs": 200
+    },
+    "remappings": [
+      ":@openzeppelin/=lib/openzeppelin-contracts/",
+      ":@prb/test/=lib/prb-test/src/",
+      ":ERC721A/=lib/ERC721A/contracts/",
+      ":council/=lib/council/contracts/",
+      ":ds-test/=lib/ds-test/src/",
+      ":erc4626-tests/=lib/operator-filter-registry/lib/openzeppelin-contracts/lib/erc4626-tests/",
+      ":forge-std/=lib/forge-std/src/",
+      ":openzeppelin-contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/",
+      ":openzeppelin-contracts/=lib/openzeppelin-contracts/",
+      ":operator-filter-registry/=lib/operator-filter-registry/",
+      ":prb-test/=lib/prb-test/src/"
+    ]
+  },
+  "sources": {
+    "contracts/src/towns/facets/town/ITown.sol": {
+      "keccak256": "0x8763186dd3ae30c628401d46d642af6eaf83128bb6b8e91394ea4da730ef3cf9",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://afaf41dcb6b70998ed08ad497fda9e73121518f2b2994319a1689e30cb55c729",
+        "dweb:/ipfs/QmVAANYkBEurPPzP58sZekdB6UB3QFwoEyXKTq2cbVgyMD"
+      ]
+    },
+    "contracts/src/towns/facets/town/TownBase.sol": {
+      "keccak256": "0xffc28771047fd077025b02bbd7e5538c055bdfb492c5f9693112ca71bbb1201d",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://5079ca077369653f6872eadb3b94766f2fd1071532e0abf277d26fffa46cb71a",
+        "dweb:/ipfs/QmRCUAvN2VxqnqxQzAWSKHv958qh5MQwFcr9LcTRNQvuyn"
+      ]
+    },
+    "contracts/src/towns/facets/town/TownFacet.sol": {
+      "keccak256": "0x4cb0944254d535c8563cf16f5a3d69ed03f93640855fc0d02363273f1628e7c6",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://d3379bdcd15416434a9d6ba24430ea5561b847dcde59c5da20a9169ec7e007ad",
+        "dweb:/ipfs/Qmc2zyYwUNSa7RWzPHKtzzexRrehzZF9t6Soor8e4PKBwQ"
+      ]
+    },
+    "contracts/src/towns/facets/town/TownStorage.sol": {
+      "keccak256": "0xa2f1fa0cf97a834b41e49b72344a6ced82fed53d9dd3331d850786b913c929df",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://7842359fc92bc55a19438cb0c8816e2e2103d43dc46f9545a27c84cb35b5aba7",
+        "dweb:/ipfs/QmNgAvDL9VctrPM9LAwuh1w1RoDbZyqBii7hua84ors5fB"
+      ]
+    }
+  },
+  "version": 1
+}

@@ -7,8 +7,9 @@ import { SignupButtonStatus } from 'hooks/useSignupButton'
 import { useDebounce } from 'hooks/useDebounce'
 import { Logo } from '@components/Logo'
 import { atoms } from 'ui/styles/atoms.css'
+import { useAuth } from 'hooks/useAuth'
 
-type Props = {
+export type Props = {
     status: SignupButtonStatus
     onLoginClick: () => void
     isSpinning: boolean
@@ -48,6 +49,9 @@ export function RequireTransactionNetworkModal({
         setShowWalletCommsFailure(false)
         signMessageAbortController.abort()
     }
+
+    const { loginError } = useAuth()
+    const errorMessage = loginError ? loginError.message : getErrorMessage(status)
 
     return (
         <ModalContainer touchTitle="Back" onHide={onHide}>
@@ -93,6 +97,12 @@ export function RequireTransactionNetworkModal({
                         </Button>
                     </>
                 )}
+
+                {errorMessage && (
+                    <Text color="negative" size="sm">
+                        {errorMessage}
+                    </Text>
+                )}
             </Stack>
         </ModalContainer>
     )
@@ -108,5 +118,14 @@ const getButtonLabel = (status: SignupButtonStatus, chainName: string) => {
             return `Yes, I'm on ${chainName}`
         default:
             return 'Connect wallet'
+    }
+}
+
+const getErrorMessage = (status: SignupButtonStatus): string | null => {
+    switch (status) {
+        case SignupButtonStatus.ConnectError:
+            return 'Something went wrong, please make sure your wallet is unlocked'
+        default:
+            return null
     }
 }

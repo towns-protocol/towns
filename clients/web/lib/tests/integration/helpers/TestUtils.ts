@@ -4,7 +4,7 @@ import {
     RoomVisibility,
 } from 'use-zion-client/src/types/zion-types'
 import { BasicRoleInfo, Permission, RoleDetails } from '../../../src/client/web3/ContractTypes'
-import { Wallet, ethers } from 'ethers'
+import { BigNumber, Wallet, ethers } from 'ethers'
 import { ZionTestClient, ZionTestClientProps } from './ZionTestClient'
 import {
     createExternalTokenStruct,
@@ -195,7 +195,7 @@ export async function createTestChannelWithSpaceRoles(
             createChannelInfo.parentSpaceId.networkId,
         )
         for (const r of filteredRoles) {
-            createChannelInfo.roleIds.push(r.roleId.toNumber())
+            createChannelInfo.roleIds.push(BigNumber.from(r.roleId).toNumber())
         }
     }
 
@@ -242,7 +242,7 @@ export async function findRoleByName(
         if (r.name === roleName) {
             // found
             // get the role details
-            role = await client.spaceDapp.getRole(spaceId, r.roleId.toNumber())
+            role = await client.spaceDapp.getRole(spaceId, BigNumber.from(r.roleId).toNumber())
             break
         }
     }

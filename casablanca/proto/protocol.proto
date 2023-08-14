@@ -151,6 +151,8 @@ message StreamSettings {
     // This setting controls block production rate for a given stream.
     // It is used for testing and is used only by nodes running in test mode.
     uint64 miniblock_time_ms = 1;
+    // Minimum number of events before we take a snapshot
+    int32 min_events_per_snapshot = 2;
 }
 
 

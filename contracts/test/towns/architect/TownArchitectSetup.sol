@@ -18,12 +18,13 @@ import {TownOwner} from "contracts/src/tokens/TownOwner.sol";
 import {UserEntitlement} from "contracts/src/towns/entitlements/user/UserEntitlement.sol";
 import {TokenEntitlement} from "contracts/src/towns/entitlements/token/TokenEntitlement.sol";
 
-import {TownHelper} from "contracts/test/towns/Town.t.sol";
+import {TownImplementationHelper} from "contracts/test/towns/Town.t.sol";
 
 abstract contract TownArchitectSetup is FacetTest {
   address internal townToken;
   address internal userEntitlement;
   address internal tokenEntitlement;
+  address internal townImplementation;
 
   TownArchitect internal townArchitect;
 
@@ -45,7 +46,7 @@ abstract contract TownArchitectSetup is FacetTest {
     OwnableHelper ownableHelper = new OwnableHelper();
     PausableHelper pausableHelper = new PausableHelper();
 
-    TownHelper townHelper = new TownHelper();
+    TownImplementationHelper townHelper = new TownImplementationHelper();
 
     MultiInit multiInit = new MultiInit();
 
@@ -53,10 +54,9 @@ abstract contract TownArchitectSetup is FacetTest {
     tokenEntitlement = address(new TokenEntitlement());
     townToken = address(new TownOwner("Town Founder", "TOWN", deployer, 0));
 
-    Diamond implementation = townHelper.createImplementation(deployer);
+    townImplementation = address(townHelper.createImplementation(deployer));
 
     // cuts
-
     IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](5);
     cuts[0] = townArchitectHelper.makeCut(IDiamond.FacetCutAction.Add);
     cuts[1] = proxyManagerHelper.makeCut(IDiamond.FacetCutAction.Add);
@@ -79,7 +79,7 @@ abstract contract TownArchitectSetup is FacetTest {
       tokenEntitlement // tokenEntitlement
     );
     initDatas[1] = proxyManagerHelper.makeInitData(
-      abi.encode(address(implementation))
+      abi.encode(townImplementation)
     );
     initDatas[2] = ownableHelper.makeInitData(abi.encode(deployer));
     initDatas[3] = pausableHelper.makeInitData("");

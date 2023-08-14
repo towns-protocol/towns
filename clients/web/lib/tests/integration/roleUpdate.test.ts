@@ -197,7 +197,7 @@ describe('update role', () => {
         expect(receipt?.status).toEqual(1)
         roles = await getFilteredRolesFromSpace(alice, spaceNetworkId)
         for (const role of roles) {
-            const actual = await alice.spaceDapp.getRole(spaceNetworkId, role.roleId.toNumber())
+            const actual = await alice.spaceDapp.getRole(spaceNetworkId, role.roleId)
             expect(actual).toBeDefined()
             if (actual) {
                 if (role.name === 'Member') {
@@ -292,7 +292,7 @@ describe('update role', () => {
         expect(receipt?.status).toEqual(1)
         roles = await getFilteredRolesFromSpace(alice, spaceNetworkId)
         for (const role of roles) {
-            const actual = await alice.spaceDapp.getRole(spaceNetworkId, role.roleId.toNumber())
+            const actual = await alice.spaceDapp.getRole(spaceNetworkId, role.roleId)
             expect(actual).toBeDefined()
             if (actual) {
                 if (role.name === 'Member') {

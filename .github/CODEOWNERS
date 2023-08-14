@@ -27,3 +27,9 @@
 ##
 
 /casablanca/ @sergekh2
+/.github/ @mechanical-turk
+/infra @mechanical-turk
+package.json @mechanical-turk
+turbo.json @mechanical-turk
+/contracts/src/node-network @mechanical-turk
+.vscode/ @mechanical-turk

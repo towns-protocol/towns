@@ -19,6 +19,7 @@ import {
     useRoles,
 } from 'use-zion-client'
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import { BigNumber } from 'ethers'
 import { ChannelRoleSettings, RolesSettings } from 'routes/ChannelRoleSettings'
 
 import { useAsyncButtonCallback } from '../hooks/use-async-button-callback'
@@ -71,7 +72,7 @@ export function CreateChannelForm(props: Props): JSX.Element {
             for (const r of spaceRoles) {
                 if (roles[r.name]?.isSelected) {
                     console.log(`Adding role ${r.name} to channel`)
-                    createRoomInfo.roleIds.push(r.roleId.toNumber())
+                    createRoomInfo.roleIds.push(BigNumber.from(r.roleId).toNumber())
                 }
             }
         }

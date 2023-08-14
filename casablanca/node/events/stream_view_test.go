@@ -21,7 +21,7 @@ func TestLoad(t *testing.T) {
 	wallet, _ := crypto.NewWallet(context.Background())
 	inception, err := MakeEnvelopeWithPayload(
 		wallet,
-		Make_UserPayload_Inception("streamid$1"),
+		Make_UserPayload_Inception("streamid$1", nil),
 		nil,
 	)
 	assert.NoError(t, err)

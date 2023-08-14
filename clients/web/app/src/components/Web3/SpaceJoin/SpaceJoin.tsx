@@ -55,7 +55,14 @@ const SpaceJoinModal = (props: ModalProps) => {
 
     return (
         <ModalContainer minWidth="420" onHide={props.onHide}>
-            <Stack centerContent gap="lg" padding="lg">
+            <Stack
+                centerContent
+                gap="lg"
+                padding={{
+                    default: 'lg',
+                    touch: 'none',
+                }}
+            >
                 {notAllowd ? (
                     <>
                         <Box position="relative">

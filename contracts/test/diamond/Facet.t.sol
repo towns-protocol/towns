@@ -48,7 +48,7 @@ abstract contract FacetHelper is IDiamond {
       });
   }
 
-  function makeDeployCut(
+  function makeCut(
     address facetAddress,
     FacetCutAction action
   ) public view returns (FacetCut memory) {

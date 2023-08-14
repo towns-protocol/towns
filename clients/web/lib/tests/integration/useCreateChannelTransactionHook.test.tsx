@@ -126,7 +126,7 @@ describe('useCreateChannelTransactionHook', () => {
                 if (spaceId && createSpaceTxStatus === TransactionStatus.Success) {
                     if (spaceRoles) {
                         for (const r of spaceRoles) {
-                            roleIds.push(r.roleId.toNumber())
+                            roleIds.push(r.roleId)
                         }
                     }
                 }

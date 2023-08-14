@@ -412,6 +412,16 @@
         "presentation": {
           "group": "ephemeral"
         }
-      }
+      },
+      {
+        "label": "Start Local Blockscout",
+        "type": "shell",
+        "command": "./scripts/start-local-blockscout.sh",
+        "isBackground": true,
+        "problemMatcher": [],
+        "presentation": {
+          "group": "ephemeral"
+        }
+      },
     ]
   }

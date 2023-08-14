@@ -74,7 +74,7 @@ func MakeParsedEventWithPayload(wallet *crypto.Wallet, payload protocol.IsStream
 	}, nil
 }
 
-func Make_ChannelPayload_Inception(streamId string, spaceId string, channelProperties *EncryptedData) *StreamEvent_ChannelPayload {
+func Make_ChannelPayload_Inception(streamId string, spaceId string, channelProperties *EncryptedData, settings *StreamSettings) *StreamEvent_ChannelPayload {
 	return &StreamEvent_ChannelPayload{
 		ChannelPayload: &ChannelPayload{
 			Content: &ChannelPayload_Inception_{
@@ -82,6 +82,7 @@ func Make_ChannelPayload_Inception(streamId string, spaceId string, channelPrope
 					StreamId:          streamId,
 					SpaceId:           spaceId,
 					ChannelProperties: channelProperties,
+					Settings:          settings,
 				},
 			},
 		},
@@ -113,13 +114,14 @@ func Make_ChannelPayload_Message(content string) *StreamEvent_ChannelPayload {
 	}
 }
 
-func Make_SpacePayload_Inception(streamId string, name string) *StreamEvent_SpacePayload {
+func Make_SpacePayload_Inception(streamId string, name string, settings *StreamSettings) *StreamEvent_SpacePayload {
 	return &StreamEvent_SpacePayload{
 		SpacePayload: &SpacePayload{
 			Content: &SpacePayload_Inception_{
 				Inception: &SpacePayload_Inception{
 					StreamId: streamId,
 					Name:     name,
+					Settings: settings,
 				},
 			},
 		},
@@ -154,12 +156,13 @@ func Make_SpacePayload_Channel(op ChannelOp, channelId string, channelProperties
 	}
 }
 
-func Make_UserPayload_Inception(streamId string) *StreamEvent_UserPayload {
+func Make_UserPayload_Inception(streamId string, settings *StreamSettings) *StreamEvent_UserPayload {
 	return &StreamEvent_UserPayload{
 		UserPayload: &UserPayload{
 			Content: &UserPayload_Inception_{
 				Inception: &UserPayload_Inception{
 					StreamId: streamId,
+					Settings: settings,
 				},
 			},
 		},
@@ -181,12 +184,13 @@ func Make_UserPayload_Membership(op protocol.MembershipOp, inviterId string, str
 	}
 }
 
-func Make_UserSettingsPayload_Inception(streamId string) *StreamEvent_UserSettingsPayload {
+func Make_UserSettingsPayload_Inception(streamId string, settings *StreamSettings) *StreamEvent_UserSettingsPayload {
 	return &StreamEvent_UserSettingsPayload{
 		UserSettingsPayload: &UserSettingsPayload{
 			Content: &UserSettingsPayload_Inception_{
 				Inception: &UserSettingsPayload_Inception{
 					StreamId: streamId,
+					Settings: settings,
 				},
 			},
 		},

@@ -84,7 +84,7 @@ describe('streamRpcClient', () => {
                 streamId: channelId,
                 spaceId: spacedStreamId,
                 channelProperties: { text: channelProperties },
-                settings: { miniblockTimeMs: 1n },
+                settings: { miniblockTimeMs: 1n, minEventsPerSnapshot: 1 },
             }),
             [],
         )

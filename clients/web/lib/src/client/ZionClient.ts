@@ -528,7 +528,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
                 {
                     spaceId: spaceId.networkId,
                     spaceName: createSpaceInfo.name,
-                    spaceMetadata: '', // unused
+                    spaceMetadata: createSpaceInfo.name,
                     channelId: channelId.networkId,
                     channelName: createSpaceInfo.defaultChannelName ?? 'general', // default channel name
                     memberEntitlements,

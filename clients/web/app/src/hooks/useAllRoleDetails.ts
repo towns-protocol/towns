@@ -4,7 +4,7 @@ import { RoleDetails, useMultipleRoleDetails, useRoles } from 'use-zion-client'
 
 export function useAllRoleDetails(spaceId: string) {
     const { spaceRoles: _roles, isLoading: rolesLoading } = useRoles(decodeURIComponent(spaceId))
-    const roledIds = useMemo(() => _roles?.map((r) => r.roleId?.toNumber()) ?? [], [_roles])
+    const roledIds = useMemo(() => _roles?.map((r) => r.roleId) ?? [], [_roles])
     const [diffedRoles, setDiffedRoles] = useState<RoleDetails[] | undefined>()
     const {
         data: _rolesDetails,

@@ -38,7 +38,7 @@ describe.skip('redact messages', () => {
                 name: 'test channel',
                 visibility: RoomVisibility.Public,
                 parentSpaceId: spaceId,
-                roleIds: [roles[0].roleId.toNumber()],
+                roleIds: [roles[0].roleId],
             },
             alice.provider.wallet,
         )
@@ -91,7 +91,7 @@ describe.skip('redact messages', () => {
                 name: 'test channel',
                 visibility: RoomVisibility.Public,
                 parentSpaceId: spaceId,
-                roleIds: [roles[0].roleId.toNumber()],
+                roleIds: [roles[0].roleId],
             },
             alice.provider.wallet,
         )
@@ -168,7 +168,7 @@ describe.skip('redact messages', () => {
                 visibility: RoomVisibility.Public,
                 parentSpaceId: spaceId,
                 // add the space role and the moderator role to the channel
-                roleIds: [roles[0].roleId.toNumber(), moderatorRoleId.roleId],
+                roleIds: [roles[0].roleId, moderatorRoleId.roleId],
             },
             alice.provider.wallet,
         )

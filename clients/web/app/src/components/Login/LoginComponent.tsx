@@ -9,7 +9,6 @@ import { Box, FancyButton, Icon, Paragraph, Text } from '@ui'
 import { RequireTransactionNetworkMessage } from '@components/RequireTransactionNetworkMessage/RequireTransactionNetworkMessage'
 import { useRequireTransactionNetwork } from 'hooks/useRequireTransactionNetwork'
 import { FadeIn, FadeInBox } from '@components/Transitions'
-import { useDevice } from 'hooks/useDevice'
 import { useEnvironment } from 'hooks/useEnvironmnet'
 import { useAddSepoliaToWallet } from 'hooks/useAddSepoliaToWallet'
 import { shouldUseWalletConnect } from 'hooks/useShouldUseWalletConnect'
@@ -20,14 +19,16 @@ import { shortAddress } from 'ui/utils/utils'
 import { atoms } from 'ui/styles/atoms.css'
 import { WalletConnectButton } from './WalletConnectButton'
 import { RainbowKitLoginButton } from './RainbowKitLoginButton'
-import { RequireTransactionNetworkModal } from './RequireTransactionNetworkModal'
+import {
+    Props as RequireTransactionModalProps,
+    RequireTransactionNetworkModal,
+} from './RequireTransactionNetworkModal'
 
 export const LoginComponent = () => {
     const { theme } = useStore((state) => ({
         theme: state.theme,
     }))
     const { chains } = useWeb3Context()
-    const { shouldDisplaySepoliaPrompt, addSepoliaToWallet } = useAddSepoliaToWallet()
 
     const {
         activeWalletAddress,
@@ -43,9 +44,6 @@ export const LoginComponent = () => {
         userOnWrongNetworkForSignIn,
         isConnected,
     } = useAuth()
-
-    const { switchNetwork } = useRequireTransactionNetwork()
-    const { chainName } = useEnvironment()
 
     useEffect(() => {
         console.log('LoginComponent wagmi info:', {
@@ -79,8 +77,6 @@ export const LoginComponent = () => {
 
     const errorMessage = loginError ? loginError.message : getErrorMessage(status)
 
-    const { isTouch } = useDevice()
-
     const rainbowTheme = useMemo(() => {
         const customTheme: ThemeOptions = {
             fontStack: 'system',
@@ -98,50 +94,16 @@ export const LoginComponent = () => {
                         <Text>Connect your wallet to continue</Text>
                     </FadeIn>
                 )}
-                {isConnected && isTouch && userOnWrongNetworkForSignIn && (
-                    <Box
-                        gap
-                        rounded="sm"
-                        flexDirection="row"
-                        justifyContent="end"
-                        padding="md"
-                        background="level2"
-                        maxWidth="300"
-                    >
-                        <Icon type="alert" color="error" size="square_sm" />
-                        <Text size="sm">{`Please switch to ${chainName} in your wallet, and then come back to continue.`}</Text>
-                    </Box>
-                )}
+
                 {isConnected ? (
                     <ConnectedState
                         status={status}
                         isSpinning={isSpinning}
+                        userOnWrongNetworkForSignIn={userOnWrongNetworkForSignIn}
                         onLoginClick={onLoginClick}
                     />
                 ) : (
                     <DisconnectedState />
-                )}
-
-                {isConnected && userOnWrongNetworkForSignIn && !isTouch && (
-                    <Box paddingTop="md" flexDirection="row" justifyContent="end">
-                        <RequireTransactionNetworkMessage
-                            postCta="to sign in."
-                            switchNetwork={switchNetwork}
-                        />
-                    </Box>
-                )}
-
-                {shouldDisplaySepoliaPrompt && (
-                    <Box
-                        display="inline"
-                        as="span"
-                        cursor="pointer"
-                        fontSize="sm"
-                        color="cta1"
-                        onClick={addSepoliaToWallet}
-                    >
-                        Click here to add the Sepolia network to your wallet
-                    </Box>
                 )}
 
                 <AnimatePresence>
@@ -166,9 +128,11 @@ const ConnectedState = (props: {
     status: SignupButtonStatus
     onLoginClick: () => void
     isSpinning: boolean
+    userOnWrongNetworkForSignIn: boolean
 }) => {
     const buttonLabel = useDebounce(getButtonLabel(props.status), 500)
-    const [showMetaMaskWarning, setShowMetaMaskWarning] = useState(false)
+    const { switchNetwork } = useRequireTransactionNetwork()
+    const { shouldDisplaySepoliaPrompt, addSepoliaToWallet } = useAddSepoliaToWallet()
 
     const isWalletConnectWithMetaMask = shouldUseWalletConnect()
         ? JSON.parse(
@@ -176,36 +140,104 @@ const ConnectedState = (props: {
           )?.name?.toLowerCase() === 'metamask'
         : false
 
-    // Metamask + WC is just busted and we can't ensure that the user is on the right network so we have to show more info
-    if (isWalletConnectWithMetaMask) {
-        return (
-            <>
-                {showMetaMaskWarning && (
-                    <RequireTransactionNetworkModal
-                        {...props}
-                        onHide={() => setShowMetaMaskWarning(false)}
-                    />
-                )}
-                <FancyButton cta icon="wallet" onClick={() => setShowMetaMaskWarning(true)}>
-                    {buttonLabel ?? 'Login'}
-                </FancyButton>
-                <DisconnectButton />
-            </>
-        )
-    }
-
     return (
         <>
-            <FancyButton
-                cta
-                spinner={props.isSpinning}
-                icon="wallet"
-                disabled={props.isSpinning}
-                onClick={props.onLoginClick}
-            >
+            {/* Metamask + WC is just busted and we can't ensure that the user is on the right network so we have to show more info */}
+            {isWalletConnectWithMetaMask ? (
+                <>
+                    <MobileMetaMaskFlow
+                        buttonLabel={buttonLabel}
+                        userOnWrongNetworkForSignIn={props.userOnWrongNetworkForSignIn}
+                        isSpinning={props.isSpinning}
+                        status={props.status}
+                        onLoginClick={props.onLoginClick}
+                    />
+                </>
+            ) : (
+                <>
+                    <FancyButton
+                        cta
+                        spinner={props.isSpinning}
+                        icon="wallet"
+                        disabled={props.isSpinning || props.userOnWrongNetworkForSignIn}
+                        onClick={props.onLoginClick}
+                    >
+                        {buttonLabel ?? 'Login'}
+                    </FancyButton>
+                    {props.userOnWrongNetworkForSignIn && (
+                        <Box paddingTop="md" flexDirection="row" justifyContent="end">
+                            <RequireTransactionNetworkMessage
+                                postCta="to sign in."
+                                switchNetwork={switchNetwork}
+                            />
+                        </Box>
+                    )}
+                </>
+            )}
+
+            {shouldDisplaySepoliaPrompt && (
+                <Box
+                    display="inline"
+                    as="span"
+                    cursor="pointer"
+                    fontSize="sm"
+                    color="cta1"
+                    onClick={addSepoliaToWallet}
+                >
+                    Click here to add the Sepolia network to your wallet
+                </Box>
+            )}
+
+            <DisconnectButton />
+        </>
+    )
+}
+
+const MobileMetaMaskFlow = (
+    props: {
+        buttonLabel: string
+        userOnWrongNetworkForSignIn: boolean
+    } & Omit<RequireTransactionModalProps, 'onHide'>,
+) => {
+    const [showMetaMaskWarning, setShowMetaMaskWarning] = useState(false)
+    const { userOnWrongNetworkForSignIn, buttonLabel, ...modalProps } = props
+
+    const { chainName } = useEnvironment()
+    return (
+        <>
+            {/* 
+            wrong network on MM, can't switch network programatically YET - this should be fixed in Metamask Mobile 7.4.0, but who knows
+            https://github.com/MetaMask/metamask-mobile/issues/6655
+            in this case, just show them a message that they need to go switch networks themselves
+            Note that since WalletConnect doesn't really know what network MM is actually on except for right after you first connect, and that only happens sometimes, this message maybe won't show often, even if it should
+            */}
+            {userOnWrongNetworkForSignIn && (
+                <Box
+                    gap
+                    rounded="sm"
+                    flexDirection="row"
+                    justifyContent="end"
+                    padding="md"
+                    background="level2"
+                    maxWidth="300"
+                >
+                    <Icon type="alert" color="error" size="square_sm" />
+                    <Text size="sm">{`Please switch to ${chainName} in your wallet, and then come back to continue.`}</Text>
+                </Box>
+            )}
+            {/* 
+                Since the above message isn't going to show up reliably, we take the user to additional check
+            */}
+            <FancyButton cta icon="wallet" onClick={() => setShowMetaMaskWarning(true)}>
                 {buttonLabel ?? 'Login'}
             </FancyButton>
-            <DisconnectButton />
+
+            {showMetaMaskWarning && (
+                <RequireTransactionNetworkModal
+                    {...modalProps}
+                    onHide={() => setShowMetaMaskWarning(false)}
+                />
+            )}
         </>
     )
 }

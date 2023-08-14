@@ -25,4 +25,8 @@ library Permissions {
   string internal constant AddRoleToEntitlement = "AddRoleToEntitlement";
   string internal constant RemoveRoleFromEntitlement =
     "RemoveRoleFromEntitlement";
+
+  // Acces
+  string internal constant Write = "Write";
+  string internal constant Read = "Read";
 }

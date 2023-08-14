@@ -2,6 +2,7 @@ package rpc
 
 import (
 	"casablanca/node/config"
+	"casablanca/node/crypto"
 	"casablanca/node/dlog"
 
 	"context"
@@ -17,7 +18,7 @@ import (
 	"golang.org/x/net/http2/h2c"
 )
 
-func StartServer(ctx context.Context, cfg *config.Config) (func(), int, error) {
+func StartServer(ctx context.Context, cfg *config.Config, wallet *crypto.Wallet) (func(), int, error) {
 	log := dlog.CtxLog(ctx)
 
 	var chainConfig *config.ChainConfig
@@ -25,7 +26,7 @@ func StartServer(ctx context.Context, cfg *config.Config) (func(), int, error) {
 		chainConfig = &cfg.Chain
 	}
 
-	pattern, handler, err := MakeServiceHandler(context.Background(), log, cfg.DbUrl, chainConfig)
+	pattern, handler, err := MakeServiceHandler(context.Background(), log, cfg.DbUrl, chainConfig, wallet)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -79,11 +80,17 @@ func StartServer(ctx context.Context, cfg *config.Config) (func(), int, error) {
 
 	log.Info("Listening", "addr", address+pattern)
 	log.Info("Using DB", "url", cfg.DbUrl)
+	if cfg.UseContract {
+		log.Info("Using chain", "id", cfg.Chain.ChainId)
+	} else {
+		log.Info("Running Without Entitlements")
+	}
+	log.Info("Available on port", "port", actualPort)
 	return closer, actualPort, nil
 }
 
 func RunServer(ctx context.Context, config *config.Config) error {
-	closer, _, error := StartServer(ctx, config)
+	closer, _, error := StartServer(ctx, config, nil)
 	if error != nil {
 		return error
 	}

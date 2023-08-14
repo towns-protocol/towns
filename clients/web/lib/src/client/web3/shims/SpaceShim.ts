@@ -16,6 +16,7 @@ import {
 } from '@towns/generated/sepolia/typings/Space'
 
 import { BaseContractShim } from './BaseContractShim'
+import { BigNumberish } from 'ethers'
 
 export type { LocalhostDataTypes as SpaceDataTypes }
 
@@ -45,7 +46,7 @@ export class SpaceShim extends BaseContractShim<
         return channels
     }
 
-    public async getPermissionsByRoleId(roleId: number): Promise<Permission[]> {
+    public async getPermissionsByRoleId(roleId: BigNumberish): Promise<Permission[]> {
         const localhostSpace = this.read as LocalhostContract
         return localhostSpace.getPermissionsByRoleId(roleId) as Promise<Permission[]>
     }

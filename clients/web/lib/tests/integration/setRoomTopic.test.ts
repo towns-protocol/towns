@@ -48,7 +48,7 @@ describe('On-chain channel creation tests', () => {
         const roleIds: number[] = []
         const allowedRoles = await getFilteredRolesFromSpace(alice, roomId.networkId)
         for (const r of allowedRoles) {
-            roleIds.push(r.roleId.toNumber())
+            roleIds.push(r.roleId)
         }
         const channel = (await alice.createChannel(
             {

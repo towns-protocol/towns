@@ -1,9 +1,7 @@
-import { BigNumber } from 'ethers'
 import { TokenDataTypes } from './shims/TokenEntitlementShim'
+import { TokenEntitlementDataTypes, TokenEntitlementShim } from './v3/TokenEntitlementShim'
+import { UserEntitlementShim } from './v3/UserEntitlementShim'
 
-/**
- * Todo: Should generate and publish from our solidity contract definition.
- */
 export enum Permission {
     Read = 'Read',
     Write = 'Write',
@@ -21,6 +19,8 @@ export enum Permission {
 /**
  * Supported entitlement modules
  */
+export type EntitlementShim = TokenEntitlementShim | UserEntitlementShim
+
 export enum EntitlementModuleType {
     TokenEntitlement = 'TokenEntitlement',
     UserEntitlement = 'UserEntitlement',
@@ -71,6 +71,52 @@ export interface RoleEntitlements {
 }
 
 export interface BasicRoleInfo {
-    roleId: BigNumber
+    roleId: number
     name: string
+}
+
+export interface EntitlementModule {
+    moduleType: EntitlementModuleType
+}
+
+export function isTokenEntitlement(
+    entitlement: EntitlementModule,
+): entitlement is TokenEntitlementShim {
+    return entitlement.moduleType === EntitlementModuleType.TokenEntitlement
+}
+
+export function isUserEntitlement(
+    entitlement: EntitlementModule,
+): entitlement is UserEntitlementShim {
+    return entitlement.moduleType === EntitlementModuleType.UserEntitlement
+}
+
+export function isExternalTokenStruct(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    args: any,
+): args is TokenEntitlementDataTypes.ExternalTokenStruct {
+    return (
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        typeof args.contractAddress === 'string' &&
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        typeof args.isSingleToken === 'boolean' &&
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        args.quantity !== undefined &&
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        args.tokenIds !== undefined
+    )
+}
+
+export function isExternalTokenStructArray(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    args: any,
+): args is TokenEntitlementDataTypes.ExternalTokenStruct[] {
+    return Array.isArray(args) && args.length > 0 && args.every(isExternalTokenStruct)
+}
+
+export function isStringArray(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    args: any,
+): args is string[] {
+    return Array.isArray(args) && args.length > 0 && args.every((arg) => typeof arg === 'string')
 }

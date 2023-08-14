@@ -6,19 +6,12 @@ pragma solidity ^0.8.20;
 // libraries
 
 // contracts
-import {TownProxyBase} from "./TownProxyBase.sol";
+import {TownBase} from "contracts/src/towns/facets/town/TownBase.sol";
 import {ManagedProxyBase} from "contracts/src/diamond/proxy/managed/ManagedProxyBase.sol";
-import {TokenOwnableFacet} from "contracts/src/diamond/facets/ownable/token/TokenOwnableFacet.sol";
-import {TokenPausableFacet} from "contracts/src/diamond/facets/pausable/token/TokenPausableFacet.sol";
+import {TokenOwnableBase} from "contracts/src/diamond/facets/ownable/token/TokenOwnableBase.sol";
 import {Multicall} from "contracts/src/diamond/utils/multicall/Multicall.sol";
 
-contract TownProxy is
-  TownProxyBase,
-  ManagedProxyBase,
-  TokenOwnableFacet,
-  TokenPausableFacet,
-  Multicall
-{
+contract TownProxy is TownBase, ManagedProxyBase, TokenOwnableBase, Multicall {
   constructor(
     bytes4 managerSelector,
     address manager,
@@ -26,15 +19,9 @@ contract TownProxy is
     address townToken,
     uint256 tokenId
   ) {
-    _setManagerSelector(managerSelector);
-    _setManager(manager);
-
-    _setNetworkId(networkId);
-    _setCreatedAt();
-
-    _setOwnership(townToken, tokenId);
-
-    _unpause();
+    __TownBase_init(networkId);
+    __ManagedProxyBase_init(managerSelector, manager);
+    __TokenOwnableBase_init(townToken, tokenId);
   }
 
   receive() external payable {}

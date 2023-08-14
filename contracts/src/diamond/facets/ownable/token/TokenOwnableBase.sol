@@ -12,6 +12,14 @@ import {TokenOwnableStorage} from "./TokenOwnableStorage.sol";
 // contracts
 
 abstract contract TokenOwnableBase is IOwnableBase {
+  function __TokenOwnableBase_init(
+    address collection,
+    uint256 tokenId
+  ) internal {
+    TokenOwnableStorage.layout().collection = collection;
+    TokenOwnableStorage.layout().tokenId = tokenId;
+  }
+
   modifier onlyOwner() {
     if (msg.sender != _owner()) {
       revert Ownable__NotOwner(msg.sender);
@@ -32,10 +40,5 @@ abstract contract TokenOwnableBase is IOwnableBase {
 
     IERC721(ds.collection).transferFrom(_owner(), newOwner, ds.tokenId);
     emit OwnershipTransferred(oldOwner, newOwner);
-  }
-
-  function _setOwnership(address collection, uint256 tokenId) internal {
-    TokenOwnableStorage.layout().collection = collection;
-    TokenOwnableStorage.layout().tokenId = tokenId;
   }
 }
