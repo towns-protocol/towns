@@ -6,6 +6,11 @@
   },
   {
     "inputs": [],
+    "name": "Initializable_NotInInitializingState",
+    "type": "error"
+  },
+  {
+    "inputs": [],
     "name": "Introspection_AlreadySupported",
     "type": "error"
   },
@@ -123,6 +128,13 @@
     ],
     "name": "Unpaused",
     "type": "event"
+  },
+  {
+    "inputs": [],
+    "name": "__Pausable_init",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
   },
   {
     "inputs": [],

@@ -7,6 +7,7 @@ export { IChannel__factory } from "./IChannel__factory";
 export { IDiamond__factory } from "./IDiamond__factory";
 export { IDiamondCut__factory } from "./IDiamondCut__factory";
 export { IEntitlements__factory } from "./IEntitlements__factory";
+export { IMulticall__factory } from "./IMulticall__factory";
 export { IPausable__factory } from "./IPausable__factory";
 export { IProxyManager__factory } from "./IProxyManager__factory";
 export { IRoles__factory } from "./IRoles__factory";

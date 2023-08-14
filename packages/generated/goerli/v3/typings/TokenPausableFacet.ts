@@ -28,19 +28,28 @@ import type {
 
 export interface TokenPausableFacetInterface extends utils.Interface {
   functions: {
+    "__Pausable_init()": FunctionFragment;
     "pause()": FunctionFragment;
     "paused()": FunctionFragment;
     "unpause()": FunctionFragment;
   };
 
   getFunction(
-    nameOrSignatureOrTopic: "pause" | "paused" | "unpause"
+    nameOrSignatureOrTopic: "__Pausable_init" | "pause" | "paused" | "unpause"
   ): FunctionFragment;
 
+  encodeFunctionData(
+    functionFragment: "__Pausable_init",
+    values?: undefined
+  ): string;
   encodeFunctionData(functionFragment: "pause", values?: undefined): string;
   encodeFunctionData(functionFragment: "paused", values?: undefined): string;
   encodeFunctionData(functionFragment: "unpause", values?: undefined): string;
 
+  decodeFunctionResult(
+    functionFragment: "__Pausable_init",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "pause", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "paused", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "unpause", data: BytesLike): Result;
@@ -143,6 +152,10 @@ export interface TokenPausableFacet extends BaseContract {
   removeListener: OnEvent<this>;
 
   functions: {
+    __Pausable_init(
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
     pause(
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
@@ -153,6 +166,10 @@ export interface TokenPausableFacet extends BaseContract {
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
   };
+
+  __Pausable_init(
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
 
   pause(
     overrides?: Overrides & { from?: PromiseOrValue<string> }
@@ -165,6 +182,8 @@ export interface TokenPausableFacet extends BaseContract {
   ): Promise<ContractTransaction>;
 
   callStatic: {
+    __Pausable_init(overrides?: CallOverrides): Promise<void>;
+
     pause(overrides?: CallOverrides): Promise<void>;
 
     paused(overrides?: CallOverrides): Promise<boolean>;
@@ -207,6 +226,10 @@ export interface TokenPausableFacet extends BaseContract {
   };
 
   estimateGas: {
+    __Pausable_init(
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
     pause(
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
@@ -219,6 +242,10 @@ export interface TokenPausableFacet extends BaseContract {
   };
 
   populateTransaction: {
+    __Pausable_init(
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
     pause(
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
