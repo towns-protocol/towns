@@ -38,13 +38,17 @@ export class SpaceDappV3 implements ISpaceDapp {
         this.townRegistrar = new TownRegistrar(contractsInfo.address, chainId, provider)
     }
 
-    public addRoleToChannel(
+    public async addRoleToChannel(
         spaceId: string,
         channelNetworkId: string,
         roleId: number,
         signer: ethers.Signer,
     ): Promise<ContractTransaction> {
-        throw new Error('Method not implemented.')
+        const town = await this.getTown(spaceId)
+        if (!town) {
+            throw new Error(`Town with spaceId "${spaceId}" is not found.`)
+        }
+        return town.Channels.write(signer).addRoleToChannel(channelNetworkId, roleId)
     }
 
     public async createSpace(

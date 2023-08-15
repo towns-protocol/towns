@@ -4,6 +4,10 @@
 import { MAXTRIX_ERROR, MatrixError, NoThrownError, getError } from './helpers/ErrorUtils'
 import { Room, RoomVisibility } from '../../src/types/zion-types'
 import {
+    createExternalTokenStruct,
+    getPioneerNftAddress,
+} from '../../src/client/web3/ContractHelpers'
+import {
     createTestSpaceWithZionMemberRole,
     findRoleByName,
     registerAndStartClients,
@@ -12,6 +16,7 @@ import {
 
 import { ContractReceipt } from 'ethers'
 import { Permission } from 'use-zion-client/src/client/web3/ContractTypes'
+import { RoleIdentifier } from '../../src/types/web3-types'
 import { ZionTestClientProps } from './helpers/ZionTestClient'
 
 // TODO: skip for now, refactor to accommodate new contracts
@@ -107,6 +112,91 @@ describe.skip('channel update', () => {
         try {
             await alice.logout()
             await bob.logout()
+        } catch (error) {
+            console.error(error)
+        }
+    })
+
+    test('Add a role to the channel', async () => {
+        /** Arrange */
+        const { alice } = await registerAndStartClients(['alice'], withTestProps)
+        const channelName = `alice_channel${Date.now()}`
+        const permissions = [Permission.Read, Permission.Write]
+        // create a token-gated space
+        await alice.fundWallet()
+        const spaceId = await createTestSpaceWithZionMemberRole(alice, permissions)
+        if (!spaceId) {
+            throw new Error('spaceId is undefined')
+        }
+        // get the member role
+        const memberRole = await findRoleByName(alice, spaceId.networkId, 'Member')
+        if (!memberRole) {
+            throw new Error('roleDetails is undefined')
+        }
+        // create a channel with the role
+        const channelId = await alice.createChannel(
+            {
+                name: channelName,
+                visibility: RoomVisibility.Public,
+                parentSpaceId: spaceId,
+                roleIds: [memberRole.id],
+            },
+            alice.provider.wallet,
+        )
+        if (!channelId) {
+            throw new Error('channelId is undefined')
+        }
+        // create another role
+        const newRoleName = `role${Date.now()}`
+        const newPermissions = [Permission.Read, Permission.Write, Permission.Redact]
+        const pioneerNftAddress = getPioneerNftAddress(alice.chainId)
+        // test space was created with council token. replace with zioneer token
+        const newTokens = createExternalTokenStruct([pioneerNftAddress])
+        const users: string[] = []
+        const newRoleId: RoleIdentifier | undefined = await alice.createRole(
+            spaceId.networkId,
+            newRoleName,
+            newPermissions,
+            newTokens,
+            users,
+        )
+        if (!newRoleId) {
+            throw new Error('newRoleId is undefined')
+        }
+
+        /** Act */
+        // add role to the channel
+        let receipt: ContractReceipt | undefined
+        try {
+            const transaction = await alice.spaceDapp.addRoleToChannel(
+                spaceId.networkId,
+                channelId.networkId,
+                newRoleId?.roleId,
+                alice.provider.wallet,
+            )
+            receipt = await transaction.wait()
+        } catch (e) {
+            const error = await alice.spaceDapp.parseSpaceError(spaceId.networkId, e)
+            console.error(error)
+            // fail the test.
+            throw e
+        }
+
+        /** Assert */
+        // verify the transaction succeeded
+        expect(receipt?.status).toEqual(1)
+        // verify the channel has the new role
+        const channelDetails = await alice.spaceDapp.getChannelDetails(
+            spaceId.networkId,
+            channelId.networkId,
+        )
+        const roleIds = channelDetails?.roles.map((role) => role.roleId)
+        const roleNames = channelDetails?.roles.map((role) => role.name)
+        expect(roleIds).toContain(newRoleId?.roleId)
+        expect(roleNames).toContain(newRoleName)
+
+        try {
+            await alice.logout()
         } catch (error) {
             console.error(error)
         }
