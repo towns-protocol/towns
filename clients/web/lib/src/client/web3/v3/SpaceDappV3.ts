@@ -176,7 +176,7 @@ export class SpaceDappV3 implements ISpaceDapp {
     public async getSpaceInfo(spaceId: string): Promise<SpaceInfo | undefined> {
         const town = await this.getTown(spaceId)
         if (!town) {
-            throw new Error(`Town with spaceId "${spaceId}" is not found.`)
+            return undefined
         }
         const [owner, disabled] = await Promise.all([
             town.Ownable.read.owner(),
@@ -185,7 +185,7 @@ export class SpaceDappV3 implements ISpaceDapp {
         return {
             address: town.Address,
             networkId: town.SpaceId,
-            name: '',
+            name: '', // https://linear.app/hnt-labs/issue/HNT-2090/how-to-get-spacename-in-the-diamond-contracts
             owner,
             disabled,
         }
@@ -198,7 +198,7 @@ export class SpaceDappV3 implements ISpaceDapp {
     ): Promise<boolean> {
         const town = await this.getTown(spaceId)
         if (!town) {
-            throw new Error(`Town with spaceId "${spaceId}" is not found.`)
+            return false
         }
         return town.Entitlements.read.isEntitledToTown(user, permission)
     }
@@ -211,7 +211,7 @@ export class SpaceDappV3 implements ISpaceDapp {
     ): Promise<boolean> {
         const town = await this.getTown(spaceId)
         if (!town) {
-            throw new Error(`Town with spaceId "${spaceId}" is not found.`)
+            return false
         }
         return town.Entitlements.read.isEntitledToChannel(channelId, user, permission)
     }

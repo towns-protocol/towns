@@ -25,6 +25,9 @@ export class TownRegistrar {
     public async getTown(townId: string): Promise<Town | undefined> {
         if (this.towns[townId] === undefined) {
             const townAddress = await this.townArchitect.read.getTownById(townId)
+            if (!townAddress || townAddress === ethers.constants.AddressZero) {
+                return undefined // space is not found
+            }
             this.towns[townId] = new Town(townAddress, townId, this.chainId, this.provider)
         }
         return this.towns[townId]
