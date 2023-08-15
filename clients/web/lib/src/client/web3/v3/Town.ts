@@ -125,6 +125,19 @@ export class Town {
         }
     }
 
+    public async getChannels(): Promise<ChannelMetadata[]> {
+        const channels: ChannelMetadata[] = []
+        const getOutput = await this.Channels.read.getChannels()
+        for (const o of getOutput) {
+            channels.push({
+                name: o.metadata,
+                channelNetworkId: o.id,
+                disabled: o.disabled,
+            })
+        }
+        return channels
+    }
+
     public async getChannelRoles(channelId: string): Promise<IRolesBase.RoleStructOutput[]> {
         // get all the roleIds for the channel
         const channelInfo = await this.Channels.read.getChannel(channelId)
