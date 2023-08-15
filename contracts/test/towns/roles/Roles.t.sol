@@ -499,6 +499,39 @@ contract RolesTest is RolesSetup, IRolesBase, IEntitlementBase {
     roles.removeRole(0);
   }
 
+  function test_removeRole_with_channels_already_created() external {
+    string memory roleName1 = "role1";
+    string memory channelId1 = "channel1";
+    string memory channelId2 = "channel2";
+
+    vm.prank(founder);
+    uint256 roleId = roles.createRole(
+      roleName1,
+      new string[](0),
+      new IRoles.CreateEntitlement[](0)
+    );
+
+    // create a channel
+    uint256[] memory roleIds = new uint256[](1);
+    roleIds[0] = roleId;
+
+    vm.startPrank(founder);
+    IChannel(diamond).createChannel(
+      channelId1,
+      "ipfs://test",
+      new uint256[](0)
+    );
+    IChannel(diamond).createChannel(channelId2, "ipfs://test", roleIds);
+    vm.stopPrank();
+
+    vm.prank(founder);
+    roles.removeRole(roleId);
+
+    // verify that role was removed from channel
+    IChannel.Channel memory channel = IChannel(diamond).getChannel(channelId2);
+    assertEq(channel.roleIds.length, 0);
+  }
+
   function test_removeRole_with_channels(
     string memory roleName,
     string memory channelId

@@ -199,12 +199,13 @@ abstract contract RolesBase is IRolesBase {
 
     RolesService.removeRole(roleId);
 
-    string[] memory channelIds = ChannelService.getChannelIds();
+    string[] memory channelIds = ChannelService.getChannelIdsByRole(roleId);
     uint256 channelIdsLen = channelIds.length;
 
     // remove role from channels
     for (uint256 i = 0; i < channelIdsLen; ) {
       ChannelService.removeRoleFromChannel(channelIds[i], roleId);
+
       unchecked {
         i++;
       }

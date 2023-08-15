@@ -108,6 +108,36 @@ library ChannelService {
     return channel.channelIds.values();
   }
 
+  function getChannelIdsByRole(
+    uint256 roleId
+  ) internal view returns (string[] memory channelIds) {
+    ChannelStorage.Layout storage channel = ChannelStorage.layout();
+
+    uint256 potentialChannelsLength = channel.channelIds.length();
+    uint256 count = 0;
+
+    channelIds = new string[](potentialChannelsLength);
+
+    for (uint256 i = 0; i < potentialChannelsLength; ) {
+      string memory channelId = channel.channelIds.at(i);
+
+      if (channel.rolesByChannelId[channelId].contains(roleId)) {
+        channelIds[count++] = channelId;
+      }
+
+      unchecked {
+        i++;
+      }
+    }
+
+    if (potentialChannelsLength > count) {
+      assembly {
+        let decrease := sub(potentialChannelsLength, count)
+        mstore(channelIds, sub(mload(channelIds), decrease))
+      }
+    }
+  }
+
   function addRoleToChannel(string memory channelId, uint256 roleId) internal {
     checkChannelExists(channelId);
     checkChannelNotDisabled(channelId);

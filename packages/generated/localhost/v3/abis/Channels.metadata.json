@@ -592,11 +592,11 @@
       ]
     },
     "contracts/src/towns/facets/channels/ChannelService.sol": {
-      "keccak256": "0x98f8d61536db55698d19d594f60af6eb4ffa3b3aa83a92a10d6accc7a6d0fdb1",
+      "keccak256": "0xb074c7c74c014bd224bcffedb327c71ce1110e620089bdfd29537b8a9da23672",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://9ea48b97f1faef8e245b13ef801e97196db173cb9b820167b069e3e7ac0e55c7",
-        "dweb:/ipfs/QmeZjsYZxCXtQ3M7QFbiwcJC7KZxtHfvhdWwYrBhceyJVY"
+        "bzz-raw://bc5f7b2ecd32818d2a800cc9544a1097b7e7014455f7f85dede09397a5ebe5f3",
+        "dweb:/ipfs/QmfKqHc9qECrTk62b9urQpYkmFmuLW4mpUJ4FKHRemhwvL"
       ]
     },
     "contracts/src/towns/facets/channels/ChannelStorage.sol": {
