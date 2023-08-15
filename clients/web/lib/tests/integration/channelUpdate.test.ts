@@ -17,18 +17,13 @@ import {
 import { ContractReceipt } from 'ethers'
 import { Permission } from 'use-zion-client/src/client/web3/ContractTypes'
 import { RoleIdentifier } from '../../src/types/web3-types'
-import { ZionTestClientProps } from './helpers/ZionTestClient'
 
 // TODO: skip for now, refactor to accommodate new contracts
 // https://linear.app/hnt-labs/issue/HNT-1641/testsintegrationchannelupdatetestts
 describe.skip('channel update', () => {
-    const withTestProps: ZionTestClientProps = {
-        smartContractVersion: '', // use v3 for the new TownArchitect. work-in-progress.
-    }
-
     test('Update the channel with multicall', async () => {
         /** Arrange */
-        const { alice, bob } = await registerAndStartClients(['alice', 'bob'], withTestProps)
+        const { alice, bob } = await registerAndStartClients(['alice', 'bob'])
         const channelName = 'my best friends channel'
         const roleName = 'my best friends'
         const permissions = [Permission.Read, Permission.Write]
@@ -119,7 +114,7 @@ describe.skip('channel update', () => {
 
     test('Add a role to the channel', async () => {
         /** Arrange */
-        const { alice } = await registerAndStartClients(['alice'], withTestProps)
+        const { alice } = await registerAndStartClients(['alice'])
         const channelName = `alice_channel${Date.now()}`
         const permissions = [Permission.Read, Permission.Write]
         // create a token-gated space

@@ -19,16 +19,11 @@ import {
 import { ContractReceipt } from 'ethers'
 import { TestConstants } from './helpers/TestConstants'
 import { TokenDataTypes } from '../../src/client/web3/shims/TokenEntitlementShim'
-import { ZionTestClientProps } from './helpers/ZionTestClient'
 
 describe('update role', () => {
-    const withTestProps: ZionTestClientProps = {
-        smartContractVersion: '', // use v3 for the new TownArchitect. work-in-progress.
-    }
-
     test('Update Everyone role with multicall', async () => {
         /** Arrange */
-        const { alice } = await registerAndStartClients(['alice'], withTestProps)
+        const { alice } = await registerAndStartClients(['alice'])
         await alice.fundWallet()
         const roomId = await createTestSpaceWithEveryoneRole(alice, [Permission.Ban])
         if (!roomId) {
@@ -72,7 +67,7 @@ describe('update role', () => {
 
     test('Update token-gated role with multicall', async () => {
         /** Arrange */
-        const { alice } = await registerAndStartClients(['alice'], withTestProps)
+        const { alice } = await registerAndStartClients(['alice'])
         await alice.fundWallet()
         const roomId = await createTestSpaceWithZionMemberRole(alice, [Permission.Ban])
         if (!roomId) {
@@ -130,7 +125,7 @@ describe('update role', () => {
 
     test('Add a moderator to the role', async () => {
         /** Arrange */
-        const { alice } = await registerAndStartClients(['alice'], withTestProps)
+        const { alice } = await registerAndStartClients(['alice'])
         await alice.fundWallet()
         const roomId = await createTestSpaceWithZionMemberRole(alice, [
             Permission.Read,
@@ -225,7 +220,7 @@ describe('update role', () => {
 
     test('Replace a moderator in the role', async () => {
         /** Arrange */
-        const { alice } = await registerAndStartClients(['alice'], withTestProps)
+        const { alice } = await registerAndStartClients(['alice'])
         await alice.fundWallet()
         const roomId = await createTestSpaceWithZionMemberRole(alice, [
             Permission.Read,

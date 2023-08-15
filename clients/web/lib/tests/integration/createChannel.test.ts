@@ -9,16 +9,11 @@ import { Permission } from '../../src/client/web3/ContractTypes'
 import { RoomIdentifier } from '../../src/types/room-identifier'
 import { RoomVisibility } from '../../src/types/zion-types'
 import { getFilteredRolesFromSpace } from '../../src/client/web3/ContractHelpers'
-import { ZionTestClientProps } from './helpers/ZionTestClient'
 
 describe('On-chain channel creation tests', () => {
-    const withTestProps: ZionTestClientProps = {
-        smartContractVersion: '', // use v3 for the new TownArchitect. work-in-progress.
-    }
-
     test('create channel with no roles', async () => {
         /* Arrange */
-        const { alice } = await registerAndStartClients(['alice'], withTestProps)
+        const { alice } = await registerAndStartClients(['alice'])
         await alice.fundWallet()
 
         // create a space with token entitlement to write

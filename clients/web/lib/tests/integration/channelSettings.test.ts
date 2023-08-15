@@ -15,16 +15,11 @@ import {
 
 import { RoleIdentifier } from '../../src/types/web3-types'
 import { RoomVisibility } from '../../src/types/zion-types'
-import { ZionTestClientProps } from './helpers/ZionTestClient'
 
 describe('channel settings', () => {
-    const withTestProps: ZionTestClientProps = {
-        smartContractVersion: '', // use v3 for the new TownArchitect. work-in-progress.
-    }
-
     test('get channel settings', async () => {
         /** Arrange */
-        const { alice, bob } = await registerAndStartClients(['alice', 'bob'], withTestProps)
+        const { alice, bob } = await registerAndStartClients(['alice', 'bob'])
         const channelName = 'test_channel'
         const channelTopic = 'test topic'
         if (!bob.walletAddress) {

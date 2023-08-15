@@ -12,6 +12,7 @@ OPTIONS:
    -h|--help    Show this message
    -wpp|--with-postgres-persist   Start Dendrite with persistent postgres
    -wpn|--with-push-notification  Start Dendrite with push notification enabled
+   -wv3|--with-smart-contracts-v3  Start Dendrite with smart contracts v3 enabled
    -spg|--skip-postgres   Dont start postgres at all
    -dco|--docker-compose-only  Start dendrite from docker-compose instead of source
 EOF
@@ -24,6 +25,7 @@ LOCAL_TEST_DIR=${SCRIPT_DIR}/servers/dendrite_local_test
 # Parse command line arguments
 WITH_POSTGRES_PERSIST=""
 WITH_PUSH_NOTIFICATION=""
+WITH_SMART_CONTRACTS_V3=""
 SKIP_POSTGRES=""
 DOCKER_COMPOSE_ONLY=""
 export DENDRITE_TRACE_INTERNAL="1"
@@ -35,6 +37,9 @@ while [ "$1" != "" ]; do
             ;;
         -wpn | --with-push-notification )  
             WITH_PUSH_NOTIFICATION="with-push-notification"
+            ;;
+        -wv3 | --with-smart-contracts-v3 )  
+            WITH_SMART_CONTRACTS_V3="with-smart-contracts-v3"
             ;;
         -spg | --skip-postgres )  
             SKIP_POSTGRES="skip-postgres"
@@ -100,6 +105,14 @@ else
   echo "Push Notification disabled"
   export PUSH_NOTIFICATION_AUTH_TOKEN=""
   export PUSH_NOTIFICATION_URL=""
+fi
+
+if [ "${WITH_SMART_CONTRACTS_V3}" == "with-smart-contracts-v3" ]; then
+  echo "Using smart contracts v3 by exporting env var"
+  export SMART_CONTRACT_VERSION="v3"
+else
+  echo "Using smart contracts v2 by resetting env var"
+  export SMART_CONTRACT_VERSION=""
 fi
 
 if [ "${DOCKER_COMPOSE_ONLY}" == "docker-compose-only" ]; then

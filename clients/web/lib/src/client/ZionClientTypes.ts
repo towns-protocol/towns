@@ -25,7 +25,6 @@ export interface ZionOpts {
     pushNotificationWorkerUrl?: string
     pushNotificationAuthToken?: string
     verbose?: boolean
-    smartContractVersion?: string
 }
 
 export interface MatrixAuth {

@@ -4,16 +4,11 @@ import {
     createTestSpaceWithZionMemberRole,
     registerAndStartClients,
 } from './helpers/TestUtils'
-import { ZionTestClientProps } from './helpers/ZionTestClient'
 
 describe.skip('ITownArchitect tests', () => {
-    const withTestProps: ZionTestClientProps = {
-        smartContractVersion: 'v3', // use v3 for the new TownArchitect. work-in-progress.
-    }
-
     test('create a town with Everyone role', async () => {
         /* Arrange */
-        const { alice } = await registerAndStartClients(['alice'], withTestProps)
+        const { alice } = await registerAndStartClients(['alice'])
         await alice.fundWallet()
 
         /* Act */
@@ -26,7 +21,7 @@ describe.skip('ITownArchitect tests', () => {
     test('create a town with token-gated member role', async () => {
         /* Arrange */
         const permissions: Permission[] = [Permission.Read, Permission.Write]
-        const { alice } = await registerAndStartClients(['alice'], withTestProps)
+        const { alice } = await registerAndStartClients(['alice'])
         await alice.fundWallet()
 
         /* Act */

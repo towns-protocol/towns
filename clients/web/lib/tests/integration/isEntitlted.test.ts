@@ -14,24 +14,18 @@ import { RoleIdentifier } from '../../src/types/web3-types'
 import { RoomIdentifier } from '../../src/types/room-identifier'
 import { RoomVisibility } from '../../src/types/zion-types'
 import { TestConstants } from './helpers/TestConstants'
-import { ZionTestClientProps } from './helpers/ZionTestClient'
 import { createUserIdFromString } from '../../src/types/user-identifier'
 
 describe.skip('isEntitledToSpace and isEntitledToChannel tests', () => {
-    const withTestProps: ZionTestClientProps = {
-        smartContractVersion: 'v3', // use v3 for the new TownArchitect. work-in-progress.
-    }
-
     test('server checks isEntitledToSpace true', async () => {
         /** Arrange */
         // create all the users for the test
         const bobWithNft = await registerAndStartClient(
             'bobWithNft',
             TestConstants.getWalletWithMemberNft(),
-            withTestProps,
         )
         const bobUserId = bobWithNft.getUserId() as string
-        const { alice } = await registerAndStartClients(['alice'], withTestProps)
+        const { alice } = await registerAndStartClients(['alice'])
         // create a space with token entitlement to read & write
         await alice.fundWallet()
         const spaceId = (await createTestSpaceWithZionMemberRole(
@@ -54,7 +48,7 @@ describe.skip('isEntitledToSpace and isEntitledToChannel tests', () => {
     test('server checks isEntitledToSpace false', async () => {
         /** Arrange */
         // create all the users for the test
-        const { alice, bob } = await registerAndStartClients(['alice', 'bob'], withTestProps)
+        const { alice, bob } = await registerAndStartClients(['alice', 'bob'])
         // create a space with token entitlement to read & write
         await alice.fundWallet()
         const spaceId = (await createTestSpaceWithZionMemberRole(
@@ -76,11 +70,10 @@ describe.skip('isEntitledToSpace and isEntitledToChannel tests', () => {
     test('server checks isEntitledToChannel true', async () => {
         /** Arrange */
         // create all the users for the test
-        const { alice } = await registerAndStartClients(['alice'], withTestProps)
+        const { alice } = await registerAndStartClients(['alice'])
         const bobWithNft = await registerAndStartClient(
             'bobWithNft',
             TestConstants.getWalletWithMemberNft(),
-            withTestProps,
         )
         // create a space with token entitlement to read & write
         const permissions = [Permission.Read, Permission.Write]
@@ -122,7 +115,7 @@ describe.skip('isEntitledToSpace and isEntitledToChannel tests', () => {
     test('server checks isEntitledToChannel false', async () => {
         /** Arrange */
         // create all the users for the test
-        const { alice, bob } = await registerAndStartClients(['alice', 'bob'], withTestProps)
+        const { alice, bob } = await registerAndStartClients(['alice', 'bob'])
         // create a space with token entitlement to read & write
         const permissions = [Permission.Read, Permission.Write]
         const memberNftAddress = getMemberNftAddress(alice.chainId)
@@ -163,11 +156,10 @@ describe.skip('isEntitledToSpace and isEntitledToChannel tests', () => {
     test('client checks isEntitledToSpace true', async () => {
         /** Arrange */
         // create all the users for the test
-        const { alice } = await registerAndStartClients(['alice'], withTestProps)
+        const { alice } = await registerAndStartClients(['alice'])
         const bobWithNft = await registerAndStartClient(
             'bobWithNft',
             TestConstants.getWalletWithMemberNft(),
-            withTestProps,
         )
         // convert bob's userId into its wallet address
         const bobUserId = bobWithNft.getUserId()
@@ -197,7 +189,7 @@ describe.skip('isEntitledToSpace and isEntitledToChannel tests', () => {
     test('client checks isEntitledToSpace false', async () => {
         /** Arrange */
         // create all the users for the test
-        const { alice, bob } = await registerAndStartClients(['alice', 'bob'], withTestProps)
+        const { alice, bob } = await registerAndStartClients(['alice', 'bob'])
         // convert bob's userId into its wallet address
         const bobUserId = bob.getUserId()
         const bobAccountAddress = createUserIdFromString(bobUserId as string)
@@ -226,11 +218,10 @@ describe.skip('isEntitledToSpace and isEntitledToChannel tests', () => {
     test('client checks isEntitledToChannel true', async () => {
         /** Arrange */
         // create all the users for the test
-        const { alice } = await registerAndStartClients(['alice'], withTestProps)
+        const { alice } = await registerAndStartClients(['alice'])
         const bobWithNft = await registerAndStartClient(
             'bobWithNft',
             TestConstants.getWalletWithMemberNft(),
-            withTestProps,
         )
         // convert bob's userId into its wallet address
         const bobUserId = bobWithNft.getUserId()
@@ -281,7 +272,7 @@ describe.skip('isEntitledToSpace and isEntitledToChannel tests', () => {
     test('client checks isEntitledToChannel false', async () => {
         /** Arrange */
         // create all the users for the test
-        const { alice, bob } = await registerAndStartClients(['alice', 'bob'], withTestProps)
+        const { alice, bob } = await registerAndStartClients(['alice', 'bob'])
         // convert bob's userId into its wallet address
         const bobUserId = bob.getUserId()
         const bobAccountAddress = createUserIdFromString(bobUserId as string)

@@ -143,7 +143,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
         console.log('~~~ new ZionClient ~~~', this.name, this.opts)
         this.dbManager = new MatrixDbManager()
         this.riverDbManager = new RiverDbManager()
-        this.spaceDapp = createSpaceDapp(opts.chainId, opts.web3Provider, opts.smartContractVersion)
+        this.spaceDapp = createSpaceDapp(opts.chainId, opts.web3Provider)
         this.pioneerNFT = new PioneerNFT(opts.chainId, opts.web3Provider)
         this._eventHandlers = opts.eventHandlers
         if (opts.pushNotificationWorkerUrl && opts.pushNotificationAuthToken) {

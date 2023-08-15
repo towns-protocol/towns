@@ -13,16 +13,11 @@ import { Permission } from 'use-zion-client/src/client/web3/ContractTypes'
 import { RoleIdentifier } from '../../src/types/web3-types'
 import { SpaceFactoryDataTypes } from '../../src/client/web3/shims/SpaceFactoryShim'
 import { TestConstants } from './helpers/TestConstants'
-import { ZionTestClientProps } from './helpers/ZionTestClient'
 
 describe('create role', () => {
-    const withTestProps: ZionTestClientProps = {
-        smartContractVersion: '', // use v3 for the new TownArchitect. work-in-progress.
-    }
-
     test('Space owner is allowed create new role', async () => {
         /** Arrange */
-        const { alice } = await registerAndStartClients(['alice'], withTestProps)
+        const { alice } = await registerAndStartClients(['alice'])
         await alice.fundWallet()
         const roomId = await createTestSpaceWithZionMemberRole(alice, [Permission.Read])
         if (!roomId) {
@@ -52,9 +47,8 @@ describe('create role', () => {
         const tokenGrantedUser = await registerAndStartClient(
             'tokenGrantedUser',
             TestConstants.getWalletWithMemberNft(),
-            withTestProps,
         )
-        const { bob } = await registerAndStartClients(['bob'], withTestProps)
+        const { bob } = await registerAndStartClients(['bob'])
         await bob.fundWallet()
 
         const roomId = await createTestSpaceWithZionMemberRole(bob, [Permission.Read])
@@ -123,7 +117,7 @@ describe('create role', () => {
     test('Space owner is allowed create multiple roles', async () => {
         /** Arrange */
 
-        const { alice } = await registerAndStartClients(['alice'], withTestProps)
+        const { alice } = await registerAndStartClients(['alice'])
         await alice.fundWallet()
 
         const roomId = await createTestSpaceWithZionMemberRole(alice, [Permission.Read])

@@ -16,19 +16,14 @@ import { Permission } from 'use-zion-client/src/client/web3/ContractTypes'
 import { RoomVisibility } from 'use-zion-client/src/types/zion-types'
 import { SpaceProtocol } from '../../src/client/ZionClientTypes'
 import { TestConstants } from './helpers/TestConstants'
-import { ZionTestClientProps } from './helpers/ZionTestClient'
 import { waitFor } from '@testing-library/react'
 
 describe('disable channel', () => {
-    const withTestProps: ZionTestClientProps = {
-        smartContractVersion: '', // use v3 for the new TownArchitect. work-in-progress.
-    }
-
     // https://linear.app/hnt-labs/issue/HNT-2046/testsintegrationpermissionsdisablespaceorchanneltestts
     test.skip('Space owner is allowed to disable space access', async () => {
         /** Arrange */
 
-        const { alice } = await registerAndStartClients(['alice'], withTestProps)
+        const { alice } = await registerAndStartClients(['alice'])
         await alice.fundWallet()
 
         const roomId = await createTestSpaceWithZionMemberRole(alice, [Permission.Read])
@@ -53,7 +48,7 @@ describe('disable channel', () => {
     test.skip('Space owner is allowed to re-enable disabled space access', async () => {
         /** Arrange */
 
-        const { alice } = await registerAndStartClients(['alice'], withTestProps)
+        const { alice } = await registerAndStartClients(['alice'])
         await alice.fundWallet()
 
         const roomId = await createTestSpaceWithZionMemberRole(alice, [Permission.Read])
@@ -87,7 +82,7 @@ describe('disable channel', () => {
     test.skip('Space member is not allowed to disable space access', async () => {
         /** Arrange */
 
-        const { alice, bob } = await registerAndStartClients(['alice', 'bob'], withTestProps)
+        const { alice, bob } = await registerAndStartClients(['alice', 'bob'])
         await alice.fundWallet()
         await bob.fundWallet()
 
@@ -120,9 +115,8 @@ describe('disable channel', () => {
         const tokenGrantedUser = await registerAndStartClient(
             'tokenGrantedUser',
             TestConstants.getWalletWithMemberNft(),
-            withTestProps,
         )
-        const { bob } = await registerAndStartClients(['bob'], withTestProps)
+        const { bob } = await registerAndStartClients(['bob'])
         await bob.fundWallet()
 
         // create a space with token entitlement to write
@@ -174,7 +168,7 @@ describe('disable channel', () => {
         /** Arrange */
 
         // create all the users for the test
-        const { bob, alice } = await registerAndStartClients(['bob', 'alice'], withTestProps)
+        const { bob, alice } = await registerAndStartClients(['bob', 'alice'])
         await bob.fundWallet()
         const roomId = await createTestSpaceWithEveryoneRole(
             bob,

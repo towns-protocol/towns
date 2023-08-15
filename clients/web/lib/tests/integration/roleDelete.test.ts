@@ -21,21 +21,15 @@ import { Permission } from 'use-zion-client/src/client/web3/ContractTypes'
 import { RoleIdentifier } from '../../src/types/web3-types'
 import { SpaceFactoryDataTypes } from '../../src/client/web3/shims/SpaceFactoryShim'
 import { TestConstants } from './helpers/TestConstants'
-import { ZionTestClientProps } from './helpers/ZionTestClient'
 import { waitFor } from '@testing-library/react'
 
 describe('delete role', () => {
-    const withTestProps: ZionTestClientProps = {
-        smartContractVersion: '', // use v3 for the new TownArchitect. work-in-progress.
-    }
-
-    test.only('delete token-gated role with a channel using it', async () => {
+    test('delete token-gated role with a channel using it', async () => {
         /** Arrange */
-        const { alice } = await registerAndStartClients(['alice'], withTestProps)
+        const { alice } = await registerAndStartClients(['alice'])
         const bobWithNft = await registerAndStartClient(
             'bobWithNft',
             TestConstants.getWalletWithMemberNft(),
-            withTestProps,
         )
         if (!bobWithNft.walletAddress) {
             throw new Error('bobWithNft.walletAddress is undefined')
@@ -157,7 +151,7 @@ describe('delete role', () => {
 
     test('delete user-gated role with a channel using it', async () => {
         /** Arrange */
-        const { alice, bob } = await registerAndStartClients(['alice', 'bob'], withTestProps)
+        const { alice, bob } = await registerAndStartClients(['alice', 'bob'])
         if (!bob.walletAddress) {
             throw new Error('bob.walletAddress is undefined')
         }
@@ -273,7 +267,7 @@ describe('delete role', () => {
 
     test('delete a role with no channels using it', async () => {
         /** Arrange */
-        const { alice, bob } = await registerAndStartClients(['alice', 'bob'], withTestProps)
+        const { alice, bob } = await registerAndStartClients(['alice', 'bob'])
         if (!alice.walletAddress) {
             throw new Error('alice.walletAddress is undefined')
         }
