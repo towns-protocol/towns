@@ -1,18 +1,20 @@
 import React, { useCallback, useMemo, useState } from 'react'
-import { useSpaceData, useZionContext } from 'use-zion-client'
+import { useSpaceData, useSpaceMembers, useZionContext } from 'use-zion-client'
 import { AnimatePresence } from 'framer-motion'
-import { Box, Dot, IconButton, Stack, Text } from '@ui'
-import { ImageVariants } from '@components/UploadImage/useImageSource'
-import { SpaceIcon } from '@components/SpaceIcon'
+import { Box, Dot, Icon, IconButton, Paragraph, Stack, Text } from '@ui'
 import { TouchHomeOverlay } from '@components/TouchHomeOverlay/TouchHomeOverlay'
 import { useNavigateToCurrentSpaceInfo } from 'hooks/useNavigateToCurrentSpaceInfo'
 import { DirectMessagesModal } from '@components/DirectMessages/DirectMessagesModal'
 import { useInstallPWAPrompt } from 'hooks/useInstallPWAPrompt'
 import { AllChannelsList } from 'routes/AllChannelsList/AllChannelsList'
 import { ModalContainer } from '@components/Modals/ModalContainer'
+import { useGetSpaceTopic } from 'hooks/useSpaceTopic'
+import { BlurredBackground } from './BlurredBackground'
 
 export const TouchLayoutHeader = () => {
     const space = useSpaceData()
+    const { members } = useSpaceMembers()
+    const { data: topic } = useGetSpaceTopic(space?.id.networkId)
     const currentSpaceId = space?.id
     const [activeOverlay, setActiveOverlay] = useState<
         'main-panel' | 'direct-messages' | undefined
@@ -40,7 +42,7 @@ export const TouchLayoutHeader = () => {
     const onHideBrowseChannels = useCallback(() => setVisibleModal(undefined), [setVisibleModal])
 
     return (
-        <Box borderBottom paddingTop={shouldDisplayPWAPrompt ? 'none' : 'sm'}>
+        <Box position="relative" paddingX="sm" paddingTop="sm" paddingBottom="md">
             {shouldDisplayPWAPrompt && (
                 <Box paddingX="sm" paddingBottom="sm">
                     <Stack horizontal centerContent padding border rounded="xs" background="level2">
@@ -53,15 +55,16 @@ export const TouchLayoutHeader = () => {
                     </Stack>
                 </Box>
             )}
+            <BlurredBackground spaceSlug={space?.id.slug ?? ''} />
             <Stack
                 horizontal
-                paddingX="md"
-                width="100%"
-                background="level1"
+                justifyContent="center"
                 alignItems="center"
+                paddingX="sm"
+                width="100%"
                 zIndex="tooltips"
                 paddingTop="safeAreaInsetTop"
-                paddingY="sm"
+                gap="sm"
             >
                 <Box position="relative">
                     <IconButton
@@ -74,37 +77,32 @@ export const TouchLayoutHeader = () => {
                     />
                     {hasUnread && <Dot />}
                 </Box>
-                <Stack grow />
-                {space && (
+
+                {space ? (
                     <Stack
-                        horizontal
-                        border
-                        gap="paragraph"
+                        position="relative"
+                        overflowX="hidden"
+                        gap="sm"
                         padding="sm"
-                        background="level2"
-                        rounded="sm"
-                        alignItems="center"
+                        width="100%"
                         onClick={onTokenClick}
                     >
-                        <SpaceIcon
-                            height="height_md"
-                            width="height_md"
-                            spaceId={space?.id.slug}
-                            firstLetterOfSpaceName={space?.name[0]}
-                            overrideBorderRadius="sm"
-                            variant={ImageVariants.thumbnail50}
-                            fadeIn={false}
-                        />
                         <Text fontWeight="strong" color="default">
                             {space.name}
                         </Text>
+                        <Paragraph truncate color="gray2" size="sm">
+                            {`${members.length} member${members.length > 1 ? `s` : ``}`}
+                            {topic ? ` · ${topic.toLocaleLowerCase()}` : ``}
+                        </Paragraph>
                     </Stack>
+                ) : (
+                    <Box grow />
                 )}
-                <Stack grow />
-                <IconButton
-                    icon="search"
-                    background="level2"
-                    size="square_md"
+
+                <Icon
+                    type="search"
+                    color="default"
+                    size="square_lg"
                     padding="xs"
                     onClick={onShowBrowseChannels}
                 />

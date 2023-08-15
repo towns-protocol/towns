@@ -71,7 +71,13 @@ export const ChannelNavItem = (props: Props) => {
             >
                 {({ triggerProps }) => {
                     return (
-                        <NavItem to={link} id={id} {...triggerProps} exact={false}>
+                        <NavItem
+                            to={link}
+                            id={id}
+                            {...triggerProps}
+                            exact={false}
+                            minHeight={{ touch: 'x5' }}
+                        >
                             <Icon
                                 type="tag"
                                 padding="line"
