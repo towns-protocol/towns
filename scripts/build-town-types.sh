@@ -12,9 +12,9 @@ DENDRITE_TOWNS_PAUSABLE_DIR="${DENDRITE_DIR}/${CHAIN}_towns_pausable"
 forge clean
 forge build --extra-output-files metadata --extra-output-files abi
 
-yarn typechain --target=ethers-v5 "contracts/out/**/?(IDiamond|IDiamondCut|ITownArchitect|IProxyManager|IPausable|IEntitlements|IChannel|IRoles|IMulticall|TokenEntitlement|OwnableFacet|TokenPausableFacet|UserEntitlement|TownFacet).json" --out-dir "packages/generated/${CHAIN}/v3/typings"
+yarn typechain --target=ethers-v5 "contracts/out/**/?(IDiamond|IDiamondCut|ITownArchitect|IProxyManager|IPausable|IEntitlements|IChannel|IRoles|IMulticall|TokenEntitlement|IDelegation|OwnableFacet|TokenPausableFacet|UserEntitlement|TownFacet).json" --out-dir "packages/generated/${CHAIN}/v3/typings"
 
-mkdir -p $ABI_DIR && cp -a contracts/out/{Diamond,DiamondCutFacet,TownArchitect,ProxyManager,Pausable,Entitlements,Channels,Roles,Multicall,OwnableFacet,TokenEntitlement,TokenPausableFacet,UserEntitlement,TownFacet}.sol/* "$ABI_DIR"
+mkdir -p $ABI_DIR && cp -a contracts/out/{Diamond,DiamondCutFacet,TownArchitect,ProxyManager,Pausable,Entitlements,Channels,Roles,Multicall,OwnableFacet,TokenEntitlement,Delegation,TokenPausableFacet,UserEntitlement,TownFacet}.sol/* "$ABI_DIR"
 
 # Copy the json abis to TS files for type inference
 for file in $ABI_DIR/*.abi.json; do

@@ -3,18 +3,27 @@
     "spaceFactory": "0x610178dA211FEF7D417bC0e6FeD39F05609AD788",
     "spaceToken": "0x68B1D87F95878fE05B998F19b66F4baba5De1aed",
     "pioneerToken": "0x9A9f2CCfdE556A7E9Ff0848998Aa4a0CFD8863AE",
-    "member": "0x5FbDB2315678afecb367f032d93F642f64180aa3"
+    "member": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+    "townFactory": "",
+    "town": "",
+    "delegation": "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9"
   },
   "5": {
     "spaceFactory": "0x59E16E32040Af97E56244562b569a244D3e59342",
     "spaceToken": "0xCbAcb4AA0Efc34F6f567000248a5348a6300DaB7",
     "pioneerToken": "0xdb66D5b28B9acc9FB55B96751Ba694829d7EE606",
-    "member": "0x4bc01028a7f1a56e267ecabd735567cdb1fc7744"
+    "member": "0x4bc01028a7f1a56e267ecabd735567cdb1fc7744",
+    "townFactory": "",
+    "town": "",
+    "delegation": ""
   },
   "11155111": {
     "spaceFactory": "0x39a7aDB6528B969c577566914A714aAD15bbA6B5",
     "spaceToken": "0x05d20AA1f18bFe3BD430baF7eB467A48e38093cE",
     "pioneerToken": "0xc47de7eCFd251b03D075Ee52a662AA1be5E3AF9d",
-    "member": ""
+    "member": "",
+    "townFactory": "",
+    "town": "",
+    "delegation": ""
   }
 }
