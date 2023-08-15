@@ -1,19 +1,11 @@
 import React, { useContext, useEffect } from 'react'
 
-const VisualKeyboardContext = React.createContext<
-    | {
-          visualKeyboardPresent: boolean
-      }
-    | undefined
->(undefined)
+const VisualKeyboardContext = React.createContext<{
+    visualKeyboardPresent: boolean
+}>({ visualKeyboardPresent: false })
 
 export const useVisualKeyboardContext = () => {
     const context = useContext(VisualKeyboardContext)
-    if (!context) {
-        throw new Error(
-            'useVisualKeyboardContext must be used within a VisualKeyboardContextProvider',
-        )
-    }
     return context
 }
 

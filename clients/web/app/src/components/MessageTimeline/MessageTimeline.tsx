@@ -364,7 +364,7 @@ export const MessageTimeline = (props: Props) => {
             scrollContainerRef={props.containerRef}
             key={channelId?.networkId}
             groupIds={groupIds}
-            pointerEvents={tabBarHidden ? 'none' : undefined}
+            pointerEvents={isTouch && tabBarHidden ? 'none' : undefined}
             itemRenderer={(r, ref) => {
                 return r.type === 'header' ? (
                     <>{props.header}</>
