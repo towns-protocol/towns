@@ -17,13 +17,18 @@ import {
 } from '../../src/client/web3/ContractHelpers'
 
 import { ContractReceipt } from 'ethers'
-import { TokenDataTypes } from '../../src/client/web3/shims/TokenEntitlementShim'
 import { TestConstants } from './helpers/TestConstants'
+import { TokenDataTypes } from '../../src/client/web3/shims/TokenEntitlementShim'
+import { ZionTestClientProps } from './helpers/ZionTestClient'
 
 describe('update role', () => {
+    const withTestProps: ZionTestClientProps = {
+        smartContractVersion: '', // use v3 for the new TownArchitect. work-in-progress.
+    }
+
     test('Update Everyone role with multicall', async () => {
         /** Arrange */
-        const { alice } = await registerAndStartClients(['alice'])
+        const { alice } = await registerAndStartClients(['alice'], withTestProps)
         await alice.fundWallet()
         const roomId = await createTestSpaceWithEveryoneRole(alice, [Permission.Ban])
         if (!roomId) {
@@ -43,7 +48,7 @@ describe('update role', () => {
         const newPermissions = [Permission.Read, Permission.Write, Permission.Redact]
         const transaction = await alice.spaceDapp.updateRole(
             {
-                spaceNetworkId,
+                spaceNetworkId: spaceNetworkId,
                 roleId: roleDetails.id,
                 roleName: newRoleName,
                 permissions: newPermissions,
@@ -67,7 +72,7 @@ describe('update role', () => {
 
     test('Update token-gated role with multicall', async () => {
         /** Arrange */
-        const { alice } = await registerAndStartClients(['alice'])
+        const { alice } = await registerAndStartClients(['alice'], withTestProps)
         await alice.fundWallet()
         const roomId = await createTestSpaceWithZionMemberRole(alice, [Permission.Ban])
         if (!roomId) {
@@ -90,7 +95,7 @@ describe('update role', () => {
         const newTokens = createExternalTokenStruct([pioneerNftAddress])
         const transaction = await alice.spaceDapp.updateRole(
             {
-                spaceNetworkId,
+                spaceNetworkId: spaceNetworkId,
                 roleId: roleDetails.id,
                 roleName: newRoleName,
                 permissions: newPermissions,
@@ -125,7 +130,7 @@ describe('update role', () => {
 
     test('Add a moderator to the role', async () => {
         /** Arrange */
-        const { alice } = await registerAndStartClients(['alice'])
+        const { alice } = await registerAndStartClients(['alice'], withTestProps)
         await alice.fundWallet()
         const roomId = await createTestSpaceWithZionMemberRole(alice, [
             Permission.Read,
@@ -175,7 +180,7 @@ describe('update role', () => {
         try {
             const transaction = await alice.spaceDapp.updateRole(
                 {
-                    spaceNetworkId,
+                    spaceNetworkId: spaceNetworkId,
                     roleId: newModeratorRole.id,
                     roleName: newModeratorRole.name,
                     permissions: newModeratorRole.permissions,
@@ -220,7 +225,7 @@ describe('update role', () => {
 
     test('Replace a moderator in the role', async () => {
         /** Arrange */
-        const { alice } = await registerAndStartClients(['alice'])
+        const { alice } = await registerAndStartClients(['alice'], withTestProps)
         await alice.fundWallet()
         const roomId = await createTestSpaceWithZionMemberRole(alice, [
             Permission.Read,
@@ -270,7 +275,7 @@ describe('update role', () => {
         try {
             const transaction = await alice.spaceDapp.updateRole(
                 {
-                    spaceNetworkId,
+                    spaceNetworkId: spaceNetworkId,
                     roleId: newModeratorRole.id,
                     roleName: newModeratorRole.name,
                     permissions: newModeratorRole.permissions,

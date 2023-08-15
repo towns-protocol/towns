@@ -25,7 +25,7 @@ import { UserEntitlementShim } from './UserEntitlementShim'
 import { isRoleIdInArray } from '../ContractHelpers'
 import { toPermissions } from './ConvertersRoles'
 
-interface EntitlementShims {
+interface AddressToEntitlement {
     [address: string]: EntitlementShim
 }
 
@@ -40,7 +40,7 @@ export class Town {
     private readonly ownable: OwnableFacetShim
     private readonly pausable: TokenPausableFacetShim
     private readonly roles: IRolesShim
-    private readonly entitlementShims: EntitlementShims = {}
+    private readonly addressToEntitlement: AddressToEntitlement = {}
 
     constructor(
         address: string,
@@ -145,6 +145,18 @@ export class Town {
         return Promise.all(getRoleEntitlementsAsync)
     }
 
+    public async findEntitlementByType(
+        entitlementType: EntitlementModuleType,
+    ): Promise<EntitlementShim | null> {
+        const entitlements = await this.getEntitlementShims()
+        for (const entitlement of entitlements) {
+            if (entitlement.moduleType === entitlementType) {
+                return entitlement
+            }
+        }
+        return null
+    }
+
     public parseError(error: unknown): Error {
         // try each of the contracts to see who can give the best error message
         let err = this.channel.parseError(error)
@@ -166,19 +178,19 @@ export class Town {
         return err
     }
 
-    private async getEntitlementShim(address: string): Promise<EntitlementShim> {
-        if (!this.entitlementShims[address]) {
+    private async getEntitlementByAddress(address: string): Promise<EntitlementShim> {
+        if (!this.addressToEntitlement[address]) {
             const entitlement = await this.entitlements.read.getEntitlement(address)
             switch (entitlement.moduleType) {
                 case EntitlementModuleType.TokenEntitlement:
-                    this.entitlementShims[address] = new TokenEntitlementShim(
+                    this.addressToEntitlement[address] = new TokenEntitlementShim(
                         address,
                         this.chainId,
                         this.provider,
                     )
                     break
                 case EntitlementModuleType.UserEntitlement:
-                    this.entitlementShims[address] = new UserEntitlementShim(
+                    this.addressToEntitlement[address] = new UserEntitlementShim(
                         address,
                         this.chainId,
                         this.provider,
@@ -190,7 +202,7 @@ export class Town {
                     )
             }
         }
-        return this.entitlementShims[address]
+        return this.addressToEntitlement[address]
     }
 
     private async getRoleInfo(roleId: BigNumberish): Promise<IRolesBase.RoleStructOutput> {
@@ -203,7 +215,7 @@ export class Town {
         const getEntitlementShims: Promise<EntitlementShim>[] = []
         // with the addresses, get the entitlement shims
         for (const info of entitlementInfo) {
-            getEntitlementShims.push(this.getEntitlementShim(info.moduleAddress))
+            getEntitlementShims.push(this.getEntitlementByAddress(info.moduleAddress))
         }
         return Promise.all(getEntitlementShims)
     }

@@ -2,11 +2,13 @@ import {
     BasicRoleInfo,
     ChannelDetails,
     ChannelMetadata,
+    EntitlementModuleType,
     Permission,
     RoleDetails,
 } from '../ContractTypes'
 import { BytesLike, ContractTransaction, ethers } from 'ethers'
 import { CreateSpaceParams, ISpaceDapp, UpdateChannelParams, UpdateRoleParams } from '../ISpaceDapp'
+import { createTokenEntitlementStruct, createUserEntitlementStruct } from './ConvertersEntitlements'
 import {
     fromChannelIdToChannelInfo,
     fromPermisisonsToRoleInfo,
@@ -243,11 +245,21 @@ export class SpaceDappV3 implements ISpaceDapp {
         return town.Multicall.write(signer).multicall(encodedCallData)
     }
 
-    public updateRole(
+    public async updateRole(
         params: UpdateRoleParams,
         signer: ethers.Signer,
     ): Promise<ContractTransaction> {
-        throw new Error('Method not implemented.')
+        const town = await this.getTown(params.spaceNetworkId)
+        if (!town) {
+            throw new Error(`Town with spaceId "${params.spaceNetworkId}" is not found.`)
+        }
+        const updatedEntitlemets = await this.createUpdatedEntitlements(town, params)
+        return town.Roles.write(signer).updateRole(
+            params.roleId,
+            params.roleName,
+            params.permissions,
+            updatedEntitlemets,
+        )
     }
 
     public async setSpaceAccess(
@@ -348,5 +360,31 @@ export class SpaceDappV3 implements ISpaceDapp {
             encodedCallData.push(encodedBytes)
         }
         return encodedCallData
+    }
+
+    private async createUpdatedEntitlements(
+        town: Town,
+        params: UpdateRoleParams,
+    ): Promise<IRolesBase.CreateEntitlementStruct[]> {
+        const updatedEntitlements: IRolesBase.CreateEntitlementStruct[] = []
+        const [tokenEntitlement, userEntitlement] = await Promise.all([
+            town.findEntitlementByType(EntitlementModuleType.TokenEntitlement),
+            town.findEntitlementByType(EntitlementModuleType.UserEntitlement),
+        ])
+        if (params.tokens.length > 0 && tokenEntitlement?.address) {
+            const entitlementData = createTokenEntitlementStruct(
+                tokenEntitlement.address,
+                params.tokens,
+            )
+            updatedEntitlements.push(entitlementData)
+        }
+        if (params.users.length > 0 && userEntitlement?.address) {
+            const entitlementData = createUserEntitlementStruct(
+                userEntitlement.address,
+                params.users,
+            )
+            updatedEntitlements.push(entitlementData)
+        }
+        return updatedEntitlements
     }
 }
