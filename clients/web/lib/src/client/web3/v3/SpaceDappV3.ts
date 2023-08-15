@@ -99,12 +99,16 @@ export class SpaceDappV3 implements ISpaceDapp {
         return town.Roles.write(signer).createRole(roleName, permissions, entitlements)
     }
 
-    public deleteRole(
+    public async deleteRole(
         spaceId: string,
         roleId: number,
         signer: ethers.Signer,
     ): Promise<ContractTransaction> {
-        throw new Error('Method not implemented.')
+        const town = await this.getTown(spaceId)
+        if (!town) {
+            throw new Error(`Town with spaceId "${spaceId}" is not found.`)
+        }
+        return town.Roles.write(signer).removeRole(roleId)
     }
 
     public async getChannels(spaceId: string): Promise<ChannelMetadata[]> {

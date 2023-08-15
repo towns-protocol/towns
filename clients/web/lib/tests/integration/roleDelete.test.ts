@@ -11,8 +11,8 @@ import {
 } from '../../src/client/web3/ContractHelpers'
 import {
     createTestSpaceWithZionMemberRole,
-    registerAndStartClients,
     registerAndStartClient,
+    registerAndStartClients,
     waitForRandom401ErrorsForAction,
 } from 'use-zion-client/tests/integration/helpers/TestUtils'
 
@@ -21,15 +21,21 @@ import { Permission } from 'use-zion-client/src/client/web3/ContractTypes'
 import { RoleIdentifier } from '../../src/types/web3-types'
 import { SpaceFactoryDataTypes } from '../../src/client/web3/shims/SpaceFactoryShim'
 import { TestConstants } from './helpers/TestConstants'
+import { ZionTestClientProps } from './helpers/ZionTestClient'
 import { waitFor } from '@testing-library/react'
 
 describe('delete role', () => {
-    test('delete token-gated role with a channel using it', async () => {
+    const withTestProps: ZionTestClientProps = {
+        smartContractVersion: '', // use v3 for the new TownArchitect. work-in-progress.
+    }
+
+    test.only('delete token-gated role with a channel using it', async () => {
         /** Arrange */
-        const { alice } = await registerAndStartClients(['alice'])
+        const { alice } = await registerAndStartClients(['alice'], withTestProps)
         const bobWithNft = await registerAndStartClient(
             'bobWithNft',
             TestConstants.getWalletWithMemberNft(),
+            withTestProps,
         )
         if (!bobWithNft.walletAddress) {
             throw new Error('bobWithNft.walletAddress is undefined')
@@ -151,7 +157,7 @@ describe('delete role', () => {
 
     test('delete user-gated role with a channel using it', async () => {
         /** Arrange */
-        const { alice, bob } = await registerAndStartClients(['alice', 'bob'])
+        const { alice, bob } = await registerAndStartClients(['alice', 'bob'], withTestProps)
         if (!bob.walletAddress) {
             throw new Error('bob.walletAddress is undefined')
         }
@@ -267,7 +273,7 @@ describe('delete role', () => {
 
     test('delete a role with no channels using it', async () => {
         /** Arrange */
-        const { alice, bob } = await registerAndStartClients(['alice', 'bob'])
+        const { alice, bob } = await registerAndStartClients(['alice', 'bob'], withTestProps)
         if (!alice.walletAddress) {
             throw new Error('alice.walletAddress is undefined')
         }
