@@ -1,31 +1,44 @@
 package storage
 
-import (
-	"casablanca/node/protocol"
-	"context"
-)
+import "context"
 
-const (
-	StorageTypePostgres = "postgres"
-)
-
-type StreamPos struct {
-	StreamId   string
-	SyncCookie int64
+type GetStreamFromLastSnapshotResult struct {
+	StartMiniblockNumber int
+	Miniblocks           [][]byte
+	MinipoolEnvelopes    [][]byte
 }
 
-type StreamEventsBlock struct {
-	OriginalSyncCookie []byte
-	SyncCookie         []byte
-	Events             []*protocol.Envelope
-}
+type StreamStorage interface {
+	// CreateStream creates a new stream with the given genesis miniblock at index 0.
+	// Last snapshot minblock index is set to 0.
+	// Minipool is set to generation number 1 (i.e. number of miniblock that is going to be produced next) and is empty.
+	CreateStream(ctx context.Context, streamId string, genesisMiniblock []byte) error
 
-type Storage interface {
-	CreateStream(ctx context.Context, streamId string, inceptionEvents []*protocol.Envelope) error
-	GetStream(ctx context.Context, streamId string) ([]*protocol.Envelope, error)
-	AddEvent(ctx context.Context, streamId string, event *protocol.Envelope) error
-}
+	// Returns all stream blocks starting from last snapshot miniblock index and all envelopes in the given minipool.
+	GetStreamFromLastSnapshot(ctx context.Context, streamId string) (*GetStreamFromLastSnapshotResult, error)
 
-func NewStorage(ctx context.Context, database_url string) (Storage, error) {
-	return NewPGEventStore(ctx, database_url, false)
+	// Returns miniblocks with indexes from fromIndex inclusive, to toIndex exlusive.
+	GetMiniblocks(ctx context.Context, streamId string, fromIndex int, toIndex int) ([][]byte, error)
+
+	// Adds event to the given minipool.
+	// Current generation of minipool should match minipoolGeneration,
+	// and there should be exactly minipoolSlot events in the minipool.
+	AddEvent(ctx context.Context, streamId string, minipoolGeneration int, minipoolSlot int, envelope []byte) error
+
+	// Current minipool generateion must be minipoolGeneration and size must be minipoolSize,
+	// stream must have minipoolGeneration miniblocks.
+	// Deletes current minipool at minipoolGeneration,
+	// creates new minipool at minipoolGeneration + 1,
+	// stores provided miniblock at minipoolGeneration index,
+	// if snapshotMiniblock is true, stores minipoolGeneration as last snapshot miniblock index,
+	// stores envelopes in the new minipool in slots starting with 0.
+	CreateBlock(
+		ctx context.Context,
+		streamId string,
+		minipoolGeneration int,
+		minipoolSize int,
+		miniblock []byte,
+		snapshotMiniblock bool,
+		envelopes [][]byte,
+	) error
 }
