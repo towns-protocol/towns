@@ -112,7 +112,7 @@ export const SpaceInfoPanel = () => {
     const onShowBrowseChannels = useEvent(() => setActiveModal('browse-channels'))
 
     const onClose = useEvent(() => {
-        navigate('..')
+        navigate('../')
     })
 
     const onEdit = useEvent(() => {
