@@ -124,7 +124,7 @@ export const ReloadPrompt = () => {
             position="fixed"
             bottom="none"
             right="none"
-            zIndex="uiAbove"
+            zIndex="tooltipsAbove"
             color="gray1"
             pointerEvents="none"
         >
