@@ -126,8 +126,12 @@ export class SpaceDappV3 implements ISpaceDapp {
         return town.getChannel(channelId)
     }
 
-    public getPermissionsByRoleId(spaceId: string, roleId: number): Promise<Permission[]> {
-        throw new Error('Method not implemented.')
+    public async getPermissionsByRoleId(spaceId: string, roleId: number): Promise<Permission[]> {
+        const town = await this.getTown(spaceId)
+        if (!town) {
+            throw new Error(`Town with spaceId "${spaceId}" is not found.`)
+        }
+        return town.getPermissionsByRoleId(roleId)
     }
 
     public async getRole(spaceId: string, roleId: number): Promise<RoleDetails | null> {

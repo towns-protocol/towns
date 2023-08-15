@@ -5,6 +5,7 @@ import {
     EntitlementDetails,
     EntitlementModuleType,
     EntitlementShim,
+    Permission,
     RoleDetails,
     RoleEntitlements,
     isExternalTokenStructArray,
@@ -143,6 +144,11 @@ export class Town {
         const channelInfo = await this.Channels.read.getChannel(channelId)
         // return the role info
         return this.getRolesInfo(channelInfo.roleIds)
+    }
+
+    public async getPermissionsByRoleId(roleId: number): Promise<Permission[]> {
+        const permissions = await this.Roles.read.getPermissionsByRoleId(roleId)
+        return toPermissions(permissions)
     }
 
     private async getChannelRoleEntitlements(
