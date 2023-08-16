@@ -1,11 +1,10 @@
-import React, { useCallback, useMemo, useState } from 'react'
+import React, { useCallback, useMemo } from 'react'
 import { useSpaceData, useSpaceMembers, useZionContext } from 'use-zion-client'
-import { ModalContainer } from '@components/Modals/ModalContainer'
-import { Box, Dot, Icon, IconButton, Paragraph, Stack, Text } from '@ui'
+
+import { Box, Dot, IconButton, Paragraph, Stack, Text } from '@ui'
 import { useInstallPWAPrompt } from 'hooks/useInstallPWAPrompt'
 import { useNavigateToCurrentSpaceInfo } from 'hooks/useNavigateToCurrentSpaceInfo'
 import { useGetSpaceTopic } from 'hooks/useSpaceTopic'
-import { AllChannelsList } from 'routes/AllChannelsList/AllChannelsList'
 
 type Props = {
     onDisplayMainPanel: () => void
@@ -33,10 +32,6 @@ export const TouchLayoutHeader = (props: Props) => {
     const onTokenClick = useCallback(() => {
         navigateToCurrentSpace()
     }, [navigateToCurrentSpace])
-
-    const [visibleModal, setVisibleModal] = useState<'browse' | undefined>(undefined)
-    const onShowBrowseChannels = useCallback(() => setVisibleModal('browse'), [setVisibleModal])
-    const onHideBrowseChannels = useCallback(() => setVisibleModal(undefined), [setVisibleModal])
 
     return (
         <Box position="relative" paddingX="sm" paddingTop="sm" paddingBottom="md">
@@ -93,19 +88,14 @@ export const TouchLayoutHeader = (props: Props) => {
                     <Box grow />
                 )}
 
-                <Icon
-                    type="search"
+                <IconButton
+                    icon="info"
                     color="default"
-                    size="square_lg"
+                    size="square_md"
                     padding="xs"
-                    onClick={onShowBrowseChannels}
+                    background="none"
+                    onClick={onTokenClick}
                 />
-
-                {visibleModal === 'browse' && (
-                    <ModalContainer touchTitle="Browse channels" onHide={onHideBrowseChannels}>
-                        <AllChannelsList onHideBrowseChannels={onHideBrowseChannels} />
-                    </ModalContainer>
-                )}
             </Stack>
         </Box>
     )

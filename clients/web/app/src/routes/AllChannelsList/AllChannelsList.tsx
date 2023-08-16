@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react'
+import React, { useEffect } from 'react'
 import {
     Membership,
     SpaceData,
@@ -8,14 +8,14 @@ import {
 } from 'use-zion-client'
 import { useEvent } from 'react-use-event-hook'
 import { useNavigate } from 'react-router'
-import { useContractChannels } from 'hooks/useContractChannels'
+
 import { Box, Button, Icon, IconButton, Stack, Text } from '@ui'
-import { useSpaceChannels } from 'hooks/useSpaceChannels'
 import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinner'
 import { PATHS } from 'routes'
 import { useChannelIdFromPathname } from 'hooks/useChannelIdFromPathname'
 import { useDevice } from 'hooks/useDevice'
 import { useStore } from 'store/store'
+import { useContractChannelsWithJoinedStatus } from 'hooks/useContractChannelsWithJoinedStatus'
 
 export const AllChannelsList = ({
     onHideBrowseChannels,
@@ -23,35 +23,8 @@ export const AllChannelsList = ({
     onHideBrowseChannels?: () => void
 }) => {
     const space = useSpaceData()
-    const { client } = useZionClient()
     const { isTouch } = useDevice()
-    // matrix doesn't always sync left rooms. For example if you leave a room, and all other members leave it too. And there may be other unexpected cases.
-    // matrix sdk .syncLeftRooms() returns empty array
-    // so using blockchain data to get all the channels
-    const { data: contractChannels } = useContractChannels(space?.id.networkId)
-    const matrixSyncedChannels = useSpaceChannels()
-
-    const contractChannelsWithJoinedStatus = useMemo(() => {
-        if (!contractChannels || space?.isLoadingChannels) {
-            return []
-        }
-        return contractChannels.map((c) => {
-            const syncedEq = matrixSyncedChannels?.find(
-                (m) => m.id.networkId === c.channelNetworkId,
-            )
-            if (!syncedEq) {
-                return {
-                    ...c,
-                    isJoined: false,
-                }
-            }
-            const roomData = client?.getRoomData(syncedEq.id)
-            return {
-                ...c,
-                isJoined: roomData ? roomData.membership === Membership.Join : false,
-            }
-        })
-    }, [client, contractChannels, matrixSyncedChannels, space?.isLoadingChannels])
+    const { contractChannelsWithJoinedStatus } = useContractChannelsWithJoinedStatus()
 
     return (
         <Stack height="100%">
@@ -110,7 +83,7 @@ export const AllChannelsList = ({
     )
 }
 
-const ChannelItem = ({
+export const ChannelItem = ({
     name,
     channelNetworkId,
     isJoined,

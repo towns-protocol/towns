@@ -1,6 +1,7 @@
 import React, { useCallback, useMemo, useState } from 'react'
 import {
     RoomMember,
+    SpaceData,
     createUserIdFromString,
     useSpaceData,
     useSpaceMembers,
@@ -21,7 +22,20 @@ import { shortAddress } from 'ui/utils/utils'
 import { NavItem } from '@components/NavItem/_NavItem'
 import { useCreateLink } from 'hooks/useCreateLink'
 import { BlurredBackground } from '@components/TouchLayoutHeader/BlurredBackground'
+import { useContractChannelsWithJoinedStatus } from 'hooks/useContractChannelsWithJoinedStatus'
 import { TouchTabBarLayout } from './layouts/TouchTabBarLayout'
+import { ChannelItem } from './AllChannelsList/AllChannelsList'
+
+const transition = {
+    duration: 0.5,
+    ease: 'easeIn',
+}
+
+const variants = {
+    initial: { opacity: 0 },
+    animate: { opacity: 1 },
+    exit: { opacity: 0 },
+}
 
 type Overlay = undefined | 'main-panel' | 'direct-messages'
 
@@ -34,6 +48,7 @@ export const TouchHome = () => {
     const [caretVisible, setCaretVisible] = useState<boolean>(false)
     const isLoadingChannels = spaceData?.isLoadingChannels ?? true
     const { members } = useSpaceMembers()
+    const { contractChannelsWithJoinedStatus } = useContractChannelsWithJoinedStatus()
 
     const onFocus = useCallback(() => {
         setIsSearching(true)
@@ -67,6 +82,15 @@ export const TouchHome = () => {
     const filteredMembers = useMemo(() => {
         return fuzzysort.go(searchString, members, { key: 'name', all: true }).map((m) => m.obj)
     }, [members, searchString])
+
+    const filteredChannels = useMemo(() => {
+        const unjoinedChannels = contractChannelsWithJoinedStatus.filter(
+            (c) => c.isJoined === false,
+        )
+        return fuzzysort
+            .go(searchString, unjoinedChannels, { key: 'name', all: true })
+            .map((m) => m.obj)
+    }, [contractChannelsWithJoinedStatus, searchString])
 
     const [activeOverlay, setActiveOverlay] = useState<Overlay>(undefined)
 
@@ -102,16 +126,22 @@ export const TouchHome = () => {
                             />
                             {isSearching && <IconButton icon="close" onClick={onCloseSearch} />}
                         </MotionStack>
-                        <Box scroll grow onScroll={onScroll}>
+                        <Box scroll grow scrollbars={isSearching} onScroll={onScroll}>
                             {isSearching ? (
-                                <UserList members={filteredMembers} />
+                                <>
+                                    {space && filteredChannels.length > 0 && (
+                                        <ChannelList space={space} channels={filteredChannels} />
+                                    )}
+                                    <UserList members={filteredMembers} />
+                                </>
                             ) : (
                                 <MotionBox
                                     minHeight="forceScroll"
-                                    initial={{ opacity: 0 }}
-                                    exit={{ opacity: 0 }}
-                                    animate={{ opacity: 1 }}
-                                    transition={{ duration: 0.5, ease: 'easeIn' }}
+                                    variants={variants}
+                                    initial="initial"
+                                    exit="exit"
+                                    animate="animate"
+                                    transition={transition}
                                 >
                                     {space && !isLoadingChannels ? (
                                         <SyncedChannelList
@@ -148,16 +178,46 @@ const ErrorFallbackComponent = (props: { error: Error }) => {
     )
 }
 
+const ChannelList = (props: {
+    space: SpaceData
+    channels: { channelNetworkId: string; isJoined: boolean; name: string }[]
+}) => {
+    const { channels, space } = props
+    return (
+        <MotionStack
+            paddingTop="md"
+            paddingX="md"
+            gap="sm"
+            initial="initial"
+            exit="exit"
+            animate="animate"
+            transition={transition}
+            variants={variants}
+        >
+            {channels.map((c) => (
+                <ChannelItem
+                    key={c.channelNetworkId}
+                    space={space}
+                    channelNetworkId={c.channelNetworkId}
+                    isJoined={c.isJoined}
+                    name={c.name}
+                />
+            ))}
+        </MotionStack>
+    )
+}
+
 const UserList = (props: { members: RoomMember[] }) => {
     const { members } = props
     return (
         <MotionStack
             minHeight="forceScroll"
             paddingTop="xs"
-            initial={{ opacity: 0 }}
-            exit={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5, ease: 'easeIn', delay: 0.2 }}
+            initial="initial"
+            exit="exit"
+            animate="animate"
+            transition={transition}
+            variants={variants}
         >
             {members.map((m) => (
                 <UserRow key={m.userId} member={m} />
