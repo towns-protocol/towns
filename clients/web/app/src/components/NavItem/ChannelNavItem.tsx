@@ -7,6 +7,7 @@ import { Badge, ButtonText, CardOpener, Icon, Stack } from '@ui'
 import { ChannelSettingsCard } from '@components/Cards/ChannelSettingsCard'
 import { ChannelSettingsModal } from '@components/ChannelSettings/ChannelSettingsModal'
 import { useMuteSettings } from 'api/lib/notificationSettings'
+import { useDevice } from 'hooks/useDevice'
 import { NavItem } from './_NavItem'
 
 type Props = {
@@ -45,6 +46,7 @@ export const ChannelNavItem = (props: Props) => {
         channelId: channel.id.networkId,
     })
     const isMuted = channelIsMuted || spaceIsMuted
+    const { isTouch } = useDevice()
 
     return (
         <>
@@ -70,11 +72,12 @@ export const ChannelNavItem = (props: Props) => {
                 layoutId={id}
             >
                 {({ triggerProps }) => {
+                    const props = isTouch ? {} : triggerProps
                     return (
                         <NavItem
                             to={link}
                             id={id}
-                            {...triggerProps}
+                            {...props}
                             exact={false}
                             minHeight={{ touch: 'x5' }}
                         >
