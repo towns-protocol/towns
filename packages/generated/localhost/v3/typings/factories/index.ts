@@ -4,6 +4,7 @@
 export * as token from "./token";
 export * as user from "./user";
 export { IChannel__factory } from "./IChannel__factory";
+export { IDelegation__factory } from "./IDelegation__factory";
 export { IDiamond__factory } from "./IDiamond__factory";
 export { IDiamondCut__factory } from "./IDiamondCut__factory";
 export { IEntitlements__factory } from "./IEntitlements__factory";
