@@ -11,7 +11,6 @@ export const base = style([{}, (f && f.className) || ''])
 export const flexaProperties = defineProperties({
     ...responsivePropertiesMixin,
     properties: {
-        fontVariationSettings: vars.fontVariationSettings,
         fontSize: vars.fontSize,
         textAlign: vars.textAlign,
         textTransform: vars.textTransform,

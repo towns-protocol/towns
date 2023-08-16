@@ -302,16 +302,16 @@ const root = createGlobalTheme(':root', {
         full: '999999px',
     } as const,
 
-    fontVariationSettings: {
-        normal: '"wdth" 100, "wght" 400, "ital" 0',
-        medium: '"wdth" 100, "wght" 500, "ital" 0',
-        strong: '"wdth" 100, "wght" 700, "ital" 0',
-    } as const,
-
     fontWeight: {
-        normal: 'normal',
-        medium: '500',
-        strong: '700',
+        normal: {
+            fontVariationSettings: '"wdth" 100, "wght" 400, "ital" 0',
+        },
+        medium: {
+            fontVariationSettings: '"wdth" 100, "wght" 550, "ital" 0',
+        },
+        strong: {
+            fontVariationSettings: '"wdth" 100, "wght" 700, "ital" 0',
+        },
     } as const,
 
     textAlign: {

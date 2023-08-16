@@ -12,7 +12,7 @@ globalStyle('p', {
 })
 
 globalStyle('strong', {
-    fontVariationSettings: vars.fontVariationSettings.strong,
+    fontVariationSettings: vars.fontWeight.strong.fontVariationSettings,
 })
 
 globalStyle('*', {

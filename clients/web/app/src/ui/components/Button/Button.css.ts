@@ -44,7 +44,7 @@ export const buttonStyle = recipe({
             button_xs: {
                 fontSize: vars.fontSize.sm,
                 height: vars.dims.button.button_xs,
-                fontVariationSettings: vars.fontVariationSettings.medium,
+                fontVariationSettings: vars.fontWeight.medium.fontVariationSettings,
                 paddingLeft: `calc(${vars.space.sm} * 1.33)`,
                 paddingRight: `calc(${vars.space.sm} * 1.33)`,
                 gap: vars.space.sm,
@@ -52,7 +52,7 @@ export const buttonStyle = recipe({
             button_sm: {
                 fontSize: vars.fontSize.sm,
                 height: vars.dims.button.button_sm,
-                fontVariationSettings: vars.fontVariationSettings.medium,
+                fontVariationSettings: vars.fontWeight.medium.fontVariationSettings,
                 paddingLeft: vars.space.md,
                 paddingRight: vars.space.md,
                 gap: vars.space.sm,
@@ -60,7 +60,7 @@ export const buttonStyle = recipe({
             button_md: {
                 fontSize: vars.fontSize.md,
                 height: vars.dims.button.button_md,
-                fontVariationSettings: vars.fontVariationSettings.medium,
+                fontVariationSettings: vars.fontWeight.medium.fontVariationSettings,
                 paddingLeft: vars.dims.baseline.x3,
                 paddingRight: vars.dims.baseline.x3,
                 borderRadius: vars.borderRadius.sm,
@@ -68,7 +68,7 @@ export const buttonStyle = recipe({
             },
             button_lg: {
                 fontSize: vars.fontSize.lg,
-                fontVariationSettings: vars.fontVariationSettings.medium,
+                fontVariationSettings: vars.fontWeight.medium.fontVariationSettings,
                 height: vars.dims.button.button_lg,
                 padding: vars.space.md,
                 paddingLeft: vars.space.lg,

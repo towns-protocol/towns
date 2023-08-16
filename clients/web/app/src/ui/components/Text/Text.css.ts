@@ -11,7 +11,6 @@ import { FontFamily, fontSettings } from 'ui/utils/FontLoader'
 const responsiveProperties = defineProperties({
     ...responsivePropertiesMixin,
     properties: {
-        fontVariationSettings: vars.fontVariationSettings,
         fontWeight: vars.fontWeight,
         fontSize: vars.fontSize,
         textAlign: vars.textAlign,

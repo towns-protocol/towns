@@ -150,7 +150,7 @@ export const FancyButton = (props: FancyButtonProps) => {
                     animate="show"
                     key={props.children}
                     layout="position"
-                    fontVariationSettings="medium"
+                    fontWeight="medium"
                     color="inherit"
                     transition={{
                         ease: 'easeIn',
