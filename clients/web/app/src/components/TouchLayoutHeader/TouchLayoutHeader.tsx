@@ -83,7 +83,7 @@ export const TouchLayoutHeader = (props: Props) => {
                         width="100%"
                         onClick={onTokenClick}
                     >
-                        <Text fontWeight="strong" color="default">
+                        <Text truncate fontWeight="strong" color="default">
                             {space.name}
                         </Text>
                         <Paragraph truncate color="gray2" size="sm">
