@@ -64,8 +64,12 @@ export const AuthenticatedRoutes = () => {
                                 <Route path="profile/:profileId" element={<SpaceProfilePanel />} />
                                 <Route path="info" element={<InfoPanelWrapper />} />
                             </Route>
+                            <Route
+                                path={`${PATHS.PROFILE}/:profileId`}
+                                element={<TouchProfile />}
+                            />
+                            <Route path="*" element={<TownRoutes />} />
                         </Route>
-                        <Route path={`${PATHS.PROFILE}/:profileId`} element={<TouchProfile />} />
                     </>
                 ) : (
                     <>
@@ -82,44 +86,9 @@ export const AuthenticatedRoutes = () => {
                             <Route path="profile/:profileId" element={<SpaceProfilePanel />} />
                             <Route path="info" element={<InfoPanelWrapper />} />
                         </Route>
+                        <Route path="*" element={<TownRoutes />} />
                     </>
                 )}
-                <Route path="threads" element={<SpaceThreads />}>
-                    <Route path="profile/:profileId" element={<SpaceProfilePanel />} />
-                    <Route path="info" element={<InfoPanelWrapper />} />
-                </Route>
-
-                <Route path="mentions" element={<SpaceMentions />}>
-                    <Route path="profile/:profileId" element={<SpaceProfilePanel />} />
-                    <Route path="info" element={<InfoPanelWrapper />} />
-                </Route>
-
-                <Route path={PATHS.GETTING_STARTED} element={<SpaceGettingStarted />}>
-                    <Route path="info" element={<InfoPanelWrapper />} />
-                </Route>
-
-                <Route path="settings-legacy" element={<SpacesSettingsOld />} />
-
-                <Route path="settings" element={<SpaceSettings />}>
-                    <Route path="roles/:role" element={<RoleSettings />}>
-                        <Route index path="permissions" element={<RoleSettingsPermissions />} />
-                        <Route path="gating" element={<RoleSettingsGating />} />
-                        <Route path="display" element={<RoleSettingsDisplay />} />
-                    </Route>
-                </Route>
-
-                <Route path="invite" element={<SpacesInvite />} />
-
-                <Route element={<SpacesChannelRoute />}>
-                    <Route path="channels/:channelSlug/members" element={<ChannelMembers />}>
-                        <Route path="profile/:profileId" element={<SpaceProfilePanel />} />
-                        <Route path="info" element={<InfoPanelWrapper />} />
-                    </Route>
-                </Route>
-
-                <Route element={<SpacesChannelRoute />}>
-                    <Route path="channels/:channelSlug/settings" element={<ChannelSettings />} />
-                </Route>
             </Route>
 
             <Route path="messages" element={<DirectMessageIndex />} />
@@ -138,5 +107,47 @@ export const AuthenticatedRoutes = () => {
         </Routes>
     )
 }
+
+const TownRoutes = () => (
+    <Routes>
+        <Route path="threads" element={<SpaceThreads />}>
+            <Route path="profile/:profileId" element={<SpaceProfilePanel />} />
+            <Route path="info" element={<InfoPanelWrapper />} />
+        </Route>
+
+        <Route path="mentions" element={<SpaceMentions />}>
+            <Route path="profile/:profileId" element={<SpaceProfilePanel />} />
+            <Route path="info" element={<InfoPanelWrapper />} />
+        </Route>
+
+        <Route path={PATHS.GETTING_STARTED} element={<SpaceGettingStarted />}>
+            <Route path="info" element={<InfoPanelWrapper />} />
+        </Route>
+
+        {/* TODO: Remove SpacesSettingsOld */}
+        <Route path="settings-legacy" element={<SpacesSettingsOld />} />
+
+        <Route path="settings" element={<SpaceSettings />}>
+            <Route path="roles/:role" element={<RoleSettings />}>
+                <Route index path="permissions" element={<RoleSettingsPermissions />} />
+                <Route path="gating" element={<RoleSettingsGating />} />
+                <Route path="display" element={<RoleSettingsDisplay />} />
+            </Route>
+        </Route>
+
+        <Route path="invite" element={<SpacesInvite />} />
+
+        <Route element={<SpacesChannelRoute />}>
+            <Route path="channels/:channelSlug/members" element={<ChannelMembers />}>
+                <Route path="profile/:profileId" element={<SpaceProfilePanel />} />
+                <Route path="info" element={<InfoPanelWrapper />} />
+            </Route>
+        </Route>
+
+        <Route element={<SpacesChannelRoute />}>
+            <Route path="channels/:channelSlug/settings" element={<ChannelSettings />} />
+        </Route>
+    </Routes>
+)
 
 export default AuthenticatedRoutes

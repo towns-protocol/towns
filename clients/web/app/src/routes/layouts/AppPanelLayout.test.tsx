@@ -4,12 +4,20 @@ import { beforeAll, describe, expect, test, vi } from 'vitest'
 import * as Lib from 'use-zion-client'
 import { TestApp } from 'test/testUtils'
 import * as useContractAndServerSpaceDataHook from 'hooks/useContractAndServerSpaceData'
-import { AppLayout } from './AppLayout'
+import { AppPanelLayout } from './AppPanelLayout'
 
 const Wrapper = () => {
     return (
         <TestApp>
-            <AppLayout />
+            <Lib.SpaceContextProvider
+                spaceId={{
+                    protocol: Lib.SpaceProtocol.Matrix,
+                    slug: 'some-slug',
+                    networkId: 'some-network',
+                }}
+            >
+                <AppPanelLayout />
+            </Lib.SpaceContextProvider>
         </TestApp>
     )
 }
@@ -19,23 +27,6 @@ beforeAll(() => {
 })
 
 describe('<AppPanelLayout />', () => {
-    test('renders register form when user needs onboarding', async () => {
-        vi.spyOn(Lib, 'useZionContext').mockImplementationOnce(() => {
-            return {
-                ...Lib.useZionContext(),
-                matrixOnboardingState: {
-                    kind: 'update-profile',
-                    bNeedsDisplayName: true,
-                    bNeedsAvatar: true,
-                },
-            }
-        })
-        render(<Wrapper />)
-        await waitFor(() => {
-            expect(screen.getByTestId('register-form')).toBeInTheDocument()
-        })
-    })
-
     test('renders SpaceSideBar when a server space exists', async () => {
         vi.spyOn(
             useContractAndServerSpaceDataHook,

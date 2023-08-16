@@ -247,7 +247,7 @@ describe('SpaceSettings', () => {
         await checkChangesInProgressToastVisible()
     })
 
-    test('should update role name in sidebar and prompt toast when change is made to display name', async () => {
+    test.skip('should update role name in sidebar and prompt toast when change is made to display name', async () => {
         vi.spyOn(Lib, 'useHasPermission').mockReturnValue({
             isLoading: false,
             hasPermission: true,

@@ -1,19 +1,33 @@
 import capitalize from 'lodash/capitalize'
 import React, { useEffect, useMemo } from 'react'
-import { Outlet } from 'react-router'
+import { Outlet, useMatch } from 'react-router'
 import { matchPath, useLocation } from 'react-router-dom'
-import { SpaceData, useSpaceMembers } from 'use-zion-client'
+import { AutojoinChannels, SpaceContextProvider, SpaceData, useSpaceMembers } from 'use-zion-client'
 import { PATHS } from 'routes'
 import { useStore } from 'store/store'
 import { useSetDocTitle } from 'hooks/useDocTitle'
 import { useContractAndServerSpaceData } from 'hooks/useContractAndServerSpaceData'
+import { VisualKeyboardContextProvider } from '@components/VisualKeyboardContext/VisualKeyboardContext'
+import { useDevice } from 'hooks/useDevice'
 import { ServiceWorkerMessageType } from '../workers/types.d'
+import { AppPanelLayout } from './layouts/AppPanelLayout'
 
 const createSpaceTitle = (spaceName?: string, childLabel?: string) => {
     return [childLabel, spaceName].filter(Boolean).concat('TOWNS').join(' - ')
 }
 
 export const SpaceOutlet = () => {
+    const spaceRoute = useMatch({ path: `/${PATHS.SPACES}/:spaceSlug`, end: false })
+    const spaceId = spaceRoute?.params.spaceSlug ?? ''
+
+    return (
+        <SpaceContextProvider spaceId={spaceId}>
+            <SpaceOutletInside />
+        </SpaceContextProvider>
+    )
+}
+
+const SpaceOutletInside = () => {
     const { serverSpace: space, chainSpace } = useContractAndServerSpaceData()
     const spaceSlug = space?.id.slug
     const setTownRouteBookmark = useStore((s) => s.setTownRouteBookmark)
@@ -59,10 +73,15 @@ export const SpaceOutlet = () => {
         setTitle(title)
     }, [setTitle, title])
 
+    const { isTouch } = useDevice()
+
     return (
         <>
+            <AutojoinChannels />
+            <VisualKeyboardContextProvider>
+                {isTouch ? <Outlet /> : <AppPanelLayout />}
+            </VisualKeyboardContextProvider>
             {space && <SpaceServiceWorkerMessenger space={space} />}
-            <Outlet />
         </>
     )
 }

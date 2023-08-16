@@ -8,6 +8,7 @@ export const BlurredBackground = (props: { spaceSlug: string }) => {
     return (
         <MotionBox
             absoluteFill
+            pointerEvents="none"
             initial={{ filter: 'blur(50px)' }}
             animate={{ filter: 'blur(5px)' }}
             key={imageSrc}

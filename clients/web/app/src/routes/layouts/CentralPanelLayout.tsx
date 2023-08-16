@@ -15,12 +15,8 @@ export const CentralPanelLayout = (props: { children: React.ReactNode }) => {
 
     return isTouch ? (
         <>
-            <Stack height="100%">
-                <Box grow centerContent position="relative">
-                    <ErrorBoundary fallback={ErrorFallbackComponent}>
-                        <Box absoluteFill>{children}</Box>
-                    </ErrorBoundary>
-                </Box>
+            <Stack absoluteFill minHeight="100%" background="level1">
+                {props.children}
             </Stack>
             {outlet}
         </>

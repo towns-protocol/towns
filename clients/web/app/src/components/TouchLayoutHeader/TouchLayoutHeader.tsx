@@ -1,24 +1,22 @@
 import React, { useCallback, useMemo, useState } from 'react'
 import { useSpaceData, useSpaceMembers, useZionContext } from 'use-zion-client'
-import { AnimatePresence } from 'framer-motion'
-import { Box, Dot, Icon, IconButton, Paragraph, Stack, Text } from '@ui'
-import { TouchHomeOverlay } from '@components/TouchHomeOverlay/TouchHomeOverlay'
-import { useNavigateToCurrentSpaceInfo } from 'hooks/useNavigateToCurrentSpaceInfo'
-import { DirectMessagesModal } from '@components/DirectMessages/DirectMessagesModal'
-import { useInstallPWAPrompt } from 'hooks/useInstallPWAPrompt'
-import { AllChannelsList } from 'routes/AllChannelsList/AllChannelsList'
 import { ModalContainer } from '@components/Modals/ModalContainer'
+import { Box, Dot, Icon, IconButton, Paragraph, Stack, Text } from '@ui'
+import { useInstallPWAPrompt } from 'hooks/useInstallPWAPrompt'
+import { useNavigateToCurrentSpaceInfo } from 'hooks/useNavigateToCurrentSpaceInfo'
 import { useGetSpaceTopic } from 'hooks/useSpaceTopic'
+import { AllChannelsList } from 'routes/AllChannelsList/AllChannelsList'
 import { BlurredBackground } from './BlurredBackground'
 
-export const TouchLayoutHeader = () => {
+type Props = {
+    onDisplayMainPanel: () => void
+}
+
+export const TouchLayoutHeader = (props: Props) => {
     const space = useSpaceData()
     const { members } = useSpaceMembers()
     const { data: topic } = useGetSpaceTopic(space?.id.networkId)
     const currentSpaceId = space?.id
-    const [activeOverlay, setActiveOverlay] = useState<
-        'main-panel' | 'direct-messages' | undefined
-    >(undefined)
 
     const { navigateToCurrentSpace } = useNavigateToCurrentSpaceInfo()
     const { spaces, spaceUnreads, spaceMentions } = useZionContext()
@@ -62,7 +60,6 @@ export const TouchLayoutHeader = () => {
                 alignItems="center"
                 paddingX="sm"
                 width="100%"
-                zIndex="tooltips"
                 paddingTop="safeAreaInsetTop"
                 gap="sm"
             >
@@ -73,7 +70,7 @@ export const TouchLayoutHeader = () => {
                         color="default"
                         padding="xs"
                         background="level2"
-                        onClick={() => setActiveOverlay('main-panel')}
+                        onClick={() => props.onDisplayMainPanel()}
                     />
                     {hasUnread && <Dot />}
                 </Box>
@@ -106,15 +103,6 @@ export const TouchLayoutHeader = () => {
                     padding="xs"
                     onClick={onShowBrowseChannels}
                 />
-
-                <AnimatePresence>
-                    {activeOverlay === 'main-panel' && (
-                        <TouchHomeOverlay onClose={() => setActiveOverlay(undefined)} />
-                    )}
-                    {activeOverlay === 'direct-messages' && (
-                        <DirectMessagesModal onHide={() => setActiveOverlay(undefined)} />
-                    )}
-                </AnimatePresence>
 
                 {visibleModal === 'browse' && (
                     <ModalContainer touchTitle="Browse channels" onHide={onHideBrowseChannels}>
