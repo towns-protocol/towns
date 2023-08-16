@@ -62,40 +62,38 @@ export const TouchHomeOverlay = (props: Props) => {
                     style={{ position: 'absolute', left: -100, top: 0, bottom: 0, width: 100 }}
                 />
 
-                <Box grow>
-                    <Stack horizontal padding="md" paddingRight="sm" alignItems="center">
-                        <Stack gap="sm" onClick={profileClicked}>
-                            <Text fontSize="lg" fontWeight="strong">
-                                My Towns
+                <Stack horizontal padding="md" paddingRight="sm" alignItems="center">
+                    <Stack gap="sm" onClick={profileClicked}>
+                        <Text fontSize="lg" fontWeight="strong">
+                            My Towns
+                        </Text>
+                        {loggedInWalletAddress && (
+                            <Text fontSize="sm" color="gray2">
+                                River Protocol user {shortAddress(loggedInWalletAddress)}
                             </Text>
-                            {loggedInWalletAddress && (
-                                <Text fontSize="sm" color="gray2">
-                                    River Protocol user {shortAddress(loggedInWalletAddress)}
-                                </Text>
-                            )}
-                        </Stack>
-                        <Box grow />
-                        <IconButton icon="close" onClick={onClose} />
+                        )}
                     </Stack>
-                    <Box grow scroll>
-                        <Box minHeight="forceScroll">
-                            {spaces.map((s) => (
-                                <SpaceNavItem
-                                    key={s.id.slug}
-                                    exact={false}
-                                    forceMatch={s.id.networkId === spaceId?.networkId}
-                                    id={s.id}
-                                    name={s.name}
-                                    avatar={s.avatarSrc}
-                                    pinned={false}
-                                    onClick={onClose}
-                                />
-                            ))}
-                        </Box>
+                    <Box grow />
+                    <IconButton icon="close" onClick={onClose} />
+                </Stack>
+                <Box grow scroll>
+                    <Box minHeight="forceScroll">
+                        {spaces.map((s) => (
+                            <SpaceNavItem
+                                key={s.id.slug}
+                                exact={false}
+                                forceMatch={s.id.networkId === spaceId?.networkId}
+                                id={s.id}
+                                name={s.name}
+                                avatar={s.avatarSrc}
+                                pinned={false}
+                                onClick={onClose}
+                            />
+                        ))}
                     </Box>
                 </Box>
 
-                <Stack paddingX="sm">
+                <Stack paddingX="sm" paddingTop="md">
                     <Box paddingX="sm">
                         <Text textAlign="left" color="gray2" fontSize="sm">
                             Towns {APP_VERSION} ({APP_COMMIT_HASH})
