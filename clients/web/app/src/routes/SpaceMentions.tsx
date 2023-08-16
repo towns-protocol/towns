@@ -56,7 +56,7 @@ export const SpaceMentions = () => {
     return (
         <CentralPanelLayout>
             {isTouch && <TouchNavBar>Mentions</TouchNavBar>}
-            <Stack scroll>
+            <Stack scroll height="100%">
                 {mentions.length ? (
                     <Stack minHeight="forceScroll">
                         <Stack
