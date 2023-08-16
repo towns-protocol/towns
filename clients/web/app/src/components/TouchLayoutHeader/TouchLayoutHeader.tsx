@@ -6,7 +6,6 @@ import { useInstallPWAPrompt } from 'hooks/useInstallPWAPrompt'
 import { useNavigateToCurrentSpaceInfo } from 'hooks/useNavigateToCurrentSpaceInfo'
 import { useGetSpaceTopic } from 'hooks/useSpaceTopic'
 import { AllChannelsList } from 'routes/AllChannelsList/AllChannelsList'
-import { BlurredBackground } from './BlurredBackground'
 
 type Props = {
     onDisplayMainPanel: () => void
@@ -53,14 +52,12 @@ export const TouchLayoutHeader = (props: Props) => {
                     </Stack>
                 </Box>
             )}
-            <BlurredBackground spaceSlug={space?.id.slug ?? ''} />
             <Stack
                 horizontal
                 justifyContent="center"
                 alignItems="center"
                 paddingX="sm"
                 width="100%"
-                paddingTop="safeAreaInsetTop"
                 gap="sm"
             >
                 <Box position="relative">

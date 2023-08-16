@@ -7,7 +7,11 @@ export const BlurredBackground = (props: { spaceSlug: string }) => {
     const { imageSrc } = useImageSource(props.spaceSlug, ImageVariants.thumbnail300)
     return (
         <MotionBox
-            absoluteFill
+            position="absolute"
+            top="none"
+            left="none"
+            right="none"
+            height="x20"
             pointerEvents="none"
             initial={{ filter: 'blur(50px)' }}
             animate={{ filter: 'blur(5px)' }}

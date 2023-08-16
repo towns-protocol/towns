@@ -79,6 +79,17 @@ const ArrowDownActive = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => 
     </svg>
 ))
 
+export const ArrowRight = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" {...props} ref={ref}>
+        <path
+            fillRule="evenodd"
+            clipRule="evenodd"
+            d="M8.29283 5.29289C8.68336 4.90237 9.31652 4.90237 9.70705 5.29289L15.5355 11.1213C15.926 11.5118 15.926 12.145 15.5355 12.5355L9.70705 18.364C9.31652 18.7545 8.68336 18.7545 8.29283 18.364C7.90231 17.9734 7.90231 17.3403 8.29283 16.9497L13.4142 11.8284L8.29283 6.70711C7.90231 6.31658 7.90231 5.68342 8.29283 5.29289Z"
+            fill="currentColor"
+        />
+    </svg>
+))
+
 export const AtIcon = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" {...props} ref={ref}>
         <path
@@ -1200,6 +1211,7 @@ const iconMap = {
     all: AllIcon,
     arrowDown: ArrowDown,
     arrowDownActive: ArrowDownActive,
+    arrowRight: ArrowRight,
     at: AtIcon,
     back: BackIcon,
     bell: BellIcon,
