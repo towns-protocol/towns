@@ -2,7 +2,7 @@ import React, { useCallback, useContext, useEffect, useState } from 'react'
 import Sheet from 'react-modal-sheet'
 import { RoomIdentifier, useZionClient } from 'use-zion-client'
 import { modalSheetClass } from 'ui/styles/globals/sheet.css'
-import { Icon, IconName, Stack, Text, useZLayerContext } from '@ui'
+import { Button, Divider, Icon, IconName, Stack, Text, useZLayerContext } from '@ui'
 import { MessageTimelineContext } from '@components/MessageTimeline/MessageTimelineContext'
 import { useOpenMessageThread } from 'hooks/useOpenThread'
 import { EmojiPickerContainerMobile } from '@components/EmojiPickerButton/EmojiPickerContainerMobile'
@@ -17,6 +17,14 @@ type Props = {
     canReply?: boolean
     canReact?: boolean
 }
+
+const emojis: { id: string; native: string }[] = [
+    { id: '+1', native: '👍' },
+    { id: 'raised_hands', native: '🙌' },
+    { id: 'heart', native: '❤️' },
+    { id: 'eyes', native: '👀' },
+    { id: 'saluting_face', native: '🫡' },
+]
 
 export const MessageModalSheet = (props: Props) => {
     const timelineContext = useContext(MessageTimelineContext)
@@ -79,21 +87,28 @@ export const MessageModalSheet = (props: Props) => {
         setIsHidden(true)
     }, [])
 
-    const onSelectEmoji = useCallback(
-        (data: EmojiPickerSelection) => {
+    const sendEmoji = useCallback(
+        (id: string) => {
             if (!channelId) {
                 console.error('no channel id')
                 return
             }
-            if (!data.id) {
-                console.error('no emoji id')
+            if (!eventId) {
+                console.error('no event id')
                 return
             }
-            sendReaction(channelId, eventId, data.id)
-            setActivePrompt(undefined)
+            sendReaction(channelId, eventId, id)
             onClose()
         },
-        [channelId, eventId, sendReaction, onClose],
+        [onClose, channelId, eventId, sendReaction],
+    )
+
+    const onSelectEmoji = useCallback(
+        (data: EmojiPickerSelection) => {
+            sendEmoji(data.id)
+            setActivePrompt(undefined)
+        },
+        [sendEmoji, setActivePrompt],
     )
 
     return (
@@ -108,33 +123,65 @@ export const MessageModalSheet = (props: Props) => {
                 <Sheet.Container>
                     <Sheet.Header />
                     <Sheet.Content>
-                        <Stack paddingX paddingBottom="lg" gap="sm" alignContent="start">
-                            {canEdit && (
-                                <TableCell
-                                    iconType="edit"
-                                    text="Edit Message"
-                                    onClick={onEditClick}
-                                />
-                            )}
-                            {canReply && (
-                                <TableCell iconType="reply" text="Reply" onClick={onThreadClick} />
-                            )}
-
-                            {canReact && (
-                                <TableCell
-                                    iconType="emoji"
-                                    text="Add Reaction"
+                        <Stack paddingBottom="lg" alignContent="start" gap="sm">
+                            <Stack
+                                horizontal
+                                paddingX="md"
+                                paddingBottom="sm"
+                                justifyContent="spaceBetween"
+                                width="100%"
+                                alignItems="center"
+                            >
+                                {emojis.map((e) => (
+                                    <EmojiButton
+                                        key={e.id}
+                                        id={e.id}
+                                        native={e.native}
+                                        onClick={sendEmoji}
+                                    />
+                                ))}
+                                <Button
+                                    aspectRatio="square"
+                                    size="button_rounded_md"
+                                    tone="level2"
                                     onClick={onEmojiClick}
-                                />
-                            )}
-                            {canEdit && (
-                                <TableCell
-                                    isError
-                                    iconType="delete"
-                                    text="Delete Message"
-                                    onClick={onDeleteClick}
-                                />
-                            )}
+                                >
+                                    <Icon type="emojiAdd" onClick={onEmojiClick} />
+                                </Button>
+                            </Stack>
+                            <Divider />
+                            <Stack paddingX="sm" gap="sm">
+                                {canEdit && (
+                                    <TableCell
+                                        iconType="edit"
+                                        text="Edit Message"
+                                        onClick={onEditClick}
+                                    />
+                                )}
+                                {canReply && (
+                                    <TableCell
+                                        iconType="reply"
+                                        text="Reply"
+                                        onClick={onThreadClick}
+                                    />
+                                )}
+
+                                {canReact && (
+                                    <TableCell
+                                        iconType="emoji"
+                                        text="Add Reaction"
+                                        onClick={onEmojiClick}
+                                    />
+                                )}
+                                {canEdit && (
+                                    <TableCell
+                                        isError
+                                        iconType="delete"
+                                        text="Delete Message"
+                                        onClick={onDeleteClick}
+                                    />
+                                )}
+                            </Stack>
                         </Stack>
                     </Sheet.Content>
                 </Sheet.Container>
@@ -187,5 +234,18 @@ const TableCell = (props: TableCellProps) => {
             />
             <Text color={isError ? 'error' : 'default'}>{text}</Text>
         </Stack>
+    )
+}
+
+const EmojiButton = (props: { id: string; native: string; onClick: (id: string) => void }) => {
+    return (
+        <Button
+            aspectRatio="square"
+            size="button_rounded_md"
+            tone="level2"
+            onClick={() => props.onClick(props.id)}
+        >
+            {props.native}
+        </Button>
     )
 }

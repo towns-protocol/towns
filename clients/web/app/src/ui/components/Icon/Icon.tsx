@@ -341,6 +341,17 @@ export const EmojiIcon = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) =>
     </svg>
 ))
 
+export const EmojiAddIcon = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" {...props} ref={ref}>
+        <path
+            fillRule="evenodd"
+            clipRule="evenodd"
+            d="M12 3C7.02944 3 3 7.02944 3 12C3 16.9706 7.02944 21 12 21C16.9706 21 21 16.9706 21 12C21 11.6955 20.9849 11.3949 20.9555 11.0988C20.901 10.5492 21.3022 10.0595 21.8518 10.0049C22.4014 9.95033 22.8912 10.3516 22.9457 10.9012C22.9816 11.2629 23 11.6295 23 12C23 18.0751 18.0751 23 12 23C5.92487 23 1 18.0751 1 12C1 5.92487 5.92487 1 12 1C12.3705 1 12.7371 1.01836 13.0988 1.05427C13.6484 1.10883 14.0497 1.59859 13.9951 2.14818C13.9405 2.69776 13.4508 3.09905 12.9012 3.04448C12.6051 3.01508 12.3045 3 12 3ZM10 10.5C10 11.3284 9.32843 12 8.5 12C7.67157 12 7 11.3284 7 10.5C7 9.67157 7.67157 9 8.5 9C9.32843 9 10 9.67157 10 10.5ZM17 10.5C17 11.3284 16.3284 12 15.5 12C14.6716 12 14 11.3284 14 10.5C14 9.67157 14.6716 9 15.5 9C16.3284 9 17 9.67157 17 10.5ZM15.5111 15.9179C14.8319 17.1587 13.5142 18 12 18C10.4858 18 9.16813 17.1587 8.48894 15.9179C7.95855 14.949 8.89543 14 10 14H14C15.1046 14 16.0414 14.949 15.5111 15.9179ZM18 8C18 8.55228 18.4477 9 19 9C19.5523 9 20 8.55228 20 8V6H22C22.5523 6 23 5.55228 23 5C23 4.44772 22.5523 4 22 4L20 4V2C20 1.44772 19.5523 1 19 1C18.4477 1 18 1.44772 18 2V4H16C15.4477 4 15 4.44772 15 5C15 5.55228 15.4477 6 16 6H18V8Z"
+            fill="currentColor"
+        />
+    </svg>
+))
+
 export const GifIcon = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
         <path
@@ -1232,6 +1243,7 @@ const iconMap = {
     dm: DMIcon,
     edit: EditIcon,
     emoji: EmojiIcon,
+    emojiAdd: EmojiAddIcon,
     eth: EthIcon,
     gif: GifIcon,
     help: Help,

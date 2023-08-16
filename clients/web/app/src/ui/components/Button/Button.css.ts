@@ -75,6 +75,16 @@ export const buttonStyle = recipe({
                 paddingRight: vars.space.lg,
                 gap: vars.space.md,
             },
+            button_rounded_md: {
+                fontSize: vars.fontSize.md,
+                height: vars.dims.button.button_md,
+                width: vars.dims.button.button_md,
+                fontVariationSettings: vars.fontWeight.medium.fontVariationSettings,
+                paddingLeft: vars.dims.baseline.x3,
+                paddingRight: vars.dims.baseline.x3,
+                borderRadius: vars.borderRadius.full,
+                gap: vars.space.sm,
+            },
         },
         hoverEffect: {
             none: {
