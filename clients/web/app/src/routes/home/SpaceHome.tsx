@@ -1,20 +1,13 @@
 import React, { useEffect, useMemo } from 'react'
 
-import { matchPath, useLocation, useNavigate } from 'react-router'
-import { Membership } from 'use-zion-client'
-import { TimelineShimmer } from '@components/Shimmer/TimelineShimmer'
-import { Box, Icon, Stack, Text } from '@ui'
+import { matchPath, useNavigate } from 'react-router'
+import { Membership, useSpaceData } from 'use-zion-client'
 import { PATHS } from 'routes'
-import { SpaceJoin } from '@components/Web3/SpaceJoin'
-import { useContractAndServerSpaceData } from 'hooks/useContractAndServerSpaceData'
 import { useStore } from 'store/store'
-import { useDevice } from 'hooks/useDevice'
-import { LiquidContainer } from './SpacesIndex'
+import { CheckValidSpaceOrInvite } from './CheckValidSpaceOrInvite'
 
 export const SpaceHome = () => {
-    const { serverSpace: space, chainSpace, chainSpaceLoading } = useContractAndServerSpaceData()
-    const location = useLocation()
-    const { isTouch } = useDevice()
+    const space = useSpaceData()
     const spaceId = space?.id
     const navigate = useNavigate()
     const channels = useMemo(
@@ -25,12 +18,19 @@ export const SpaceHome = () => {
     let bookmarkedRoute = useStore((s) =>
         spaceId?.slug ? s.townRouteBookmarks[spaceId?.slug] : undefined,
     )
+
     // verify the stored route matches the current URL scheme
     bookmarkedRoute = matchPath(`${PATHS.SPACES}/${space?.id.slug}/*`, bookmarkedRoute ?? '')
         ? bookmarkedRoute
         : undefined
 
     useEffect(() => {
+        // TODO: this hijacks invite routes if you leave and then rejoin a space with an invite link.
+        // We should unset all bookmarks for a space/channel when you leave it.
+        // For now just ignore invites
+        if (location.search.includes('invite')) {
+            return
+        }
         // if we have a bookmarked route (e.g. channel or thread), instead of
         // waiting for the channels to load to guess the first channel, we
         // assume we have access to the route and optimistically navigate to it.
@@ -66,45 +66,13 @@ export const SpaceHome = () => {
                 clearTimeout(timeout)
             }
         }
-    }, [navigate, space, spaceId?.slug, channels, isTouch])
+    }, [navigate, space, spaceId?.slug, channels])
 
-    // space doesn't exist
-    if (!chainSpaceLoading && !chainSpace && !space) {
-        return (
-            <Box absoluteFill centerContent gap="lg">
-                <Icon color="error" type="alert" size="square_xl" />
-                <Text size="lg">Town not found</Text>
-            </Box>
-        )
-    }
-
-    // space is on chain, but user has no matrix data, indicating they have landed via an invite link
-    // we could wrap in initialSyncComplete check also, but skipping for now because the modal will show a "connecting"
-    // and that's probably useful for debugging this screen
-    if (location.search.includes('invite') && !chainSpaceLoading && chainSpace && !space) {
-        const joinData = {
-            name: chainSpace.name,
-            networkId: chainSpace.networkId,
-            spaceAddress: chainSpace.address,
-        }
-        return (
-            <Container>
-                <SpaceJoin joinData={joinData} />
-                <TimelineShimmer />
-            </Container>
-        )
-    }
-
-    return <></>
-}
-
-const Container = (props: { children: React.ReactNode }) => {
     return (
-        <Stack horizontal grow justifyContent="center" basis="1200">
-            <LiquidContainer fullbleed position="relative">
-                {props.children}
-            </LiquidContainer>
-        </Stack>
+        <CheckValidSpaceOrInvite>
+            {/* don't need to render anything, redirects above take user elsewhere */}
+            <></>
+        </CheckValidSpaceOrInvite>
     )
 }
 

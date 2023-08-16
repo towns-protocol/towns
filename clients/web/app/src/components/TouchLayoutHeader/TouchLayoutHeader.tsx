@@ -1,9 +1,14 @@
 import React, { useCallback, useMemo } from 'react'
-import { useSpaceData, useSpaceMembers, useZionContext } from 'use-zion-client'
-
+import {
+    Membership,
+    useMyMembership,
+    useSpaceData,
+    useSpaceMembers,
+    useZionContext,
+} from 'use-zion-client'
 import { Box, Dot, IconButton, Paragraph, Stack, Text } from '@ui'
-import { useInstallPWAPrompt } from 'hooks/useInstallPWAPrompt'
 import { useNavigateToCurrentSpaceInfo } from 'hooks/useNavigateToCurrentSpaceInfo'
+import { useInstallPWAPrompt } from 'hooks/useInstallPWAPrompt'
 import { useGetSpaceTopic } from 'hooks/useSpaceTopic'
 
 type Props = {
@@ -32,6 +37,8 @@ export const TouchLayoutHeader = (props: Props) => {
     const onTokenClick = useCallback(() => {
         navigateToCurrentSpace()
     }, [navigateToCurrentSpace])
+
+    const myMembership = useMyMembership(space?.id)
 
     return (
         <Box position="relative" paddingX="sm" paddingTop="sm" paddingBottom="md">
@@ -67,7 +74,7 @@ export const TouchLayoutHeader = (props: Props) => {
                     {hasUnread && <Dot />}
                 </Box>
 
-                {space ? (
+                {space && myMembership === Membership.Join ? (
                     <Stack
                         position="relative"
                         overflowX="hidden"

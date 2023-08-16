@@ -1,7 +1,7 @@
 import React, { useCallback, useState } from 'react'
 import { matchPath, useLocation, useNavigate } from 'react-router'
 import { useEvent } from 'react-use-event-hook'
-import { SpaceData, useSpaceMembers } from 'use-zion-client'
+import { Membership, SpaceData, useMyMembership, useSpaceMembers } from 'use-zion-client'
 import { AnimatePresence } from 'framer-motion'
 import { useChannelIdFromPathname } from 'hooks/useChannelIdFromPathname'
 import { useContractSpaceInfo } from 'hooks/useContractSpaceInfo'
@@ -29,6 +29,7 @@ export const SpaceSideBarHeader = (props: {
 
     const { members } = useSpaceMembers()
     const { data: spaceInfo } = useContractSpaceInfo(space.id.networkId)
+    const myMembership = useMyMembership(space.id)
 
     const membersCount = members.length
 
@@ -65,7 +66,7 @@ export const SpaceSideBarHeader = (props: {
         }
     })
 
-    const hasName = !!space.name
+    const hasName = space && myMembership === Membership.Join && !!space.name
     const hasMembers = membersCount > 0
     const hasAddress = !!spaceInfo?.address
 

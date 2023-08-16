@@ -14,6 +14,41 @@ vi.mock('react-router', async () => {
     }
 })
 
+const mockSpaceData: Lib.SpaceData = {
+    id: {
+        protocol: Lib.SpaceProtocol.Matrix,
+        slug: 'some-slug',
+        networkId: 'some-network',
+    },
+    name: 'test space',
+    avatarSrc: 'test',
+    channelGroups: [
+        {
+            label: 'group 1',
+            channels: [
+                {
+                    id: {
+                        protocol: Lib.SpaceProtocol.Matrix,
+                        slug: 'some-channel-slug',
+                        networkId: 'some-network',
+                    },
+                    label: 'general',
+                },
+            ],
+        },
+    ],
+    membership: '',
+    isLoadingChannels: false,
+}
+
+const mockChainSpace = {
+    address: '0x1',
+    networkId: 'some-id',
+    name: 'some-name',
+    owner: '0x0',
+    disabled: false,
+}
+
 const Wrapper = () => {
     return (
         <TestApp>
@@ -32,7 +67,7 @@ const Wrapper = () => {
 
 describe('<SpaceHome />', () => {
     test('renders join space UI when it is an invite link', async () => {
-        vi.spyOn(Router, 'useLocation').mockReturnValueOnce({
+        vi.spyOn(Router, 'useLocation').mockReturnValue({
             search: '?invite',
             state: undefined,
             key: '',
@@ -40,20 +75,15 @@ describe('<SpaceHome />', () => {
             hash: '',
         })
 
+        // <CheckValidSpaceOrInvite /> mock
         vi.spyOn(
             useContractAndServerSpaceDataHook,
             'useContractAndServerSpaceData',
         ).mockImplementation(() => {
             return {
                 chainSpaceLoading: false,
-                chainSpace: {
-                    address: '0x1',
-                    networkId: 'some-id',
-                    name: 'some-name',
-                    owner: '0x0',
-                    disabled: false,
-                },
-                serverSpace: undefined,
+                chainSpace: mockChainSpace,
+                serverSpace: mockSpaceData,
             }
         })
         render(<Wrapper />)
@@ -65,59 +95,25 @@ describe('<SpaceHome />', () => {
         expect(screen.getByTestId('timeline-shimmer')).toBeInTheDocument()
     })
 
-    // evan 2.22.23 TBD what we are doing with default space, we've removed it for alpha
-    test.skip('renders join button when default space exists', async () => {
-        vi.spyOn(
-            useContractAndServerSpaceDataHook,
-            'useContractAndServerSpaceData',
-        ).mockImplementation(() => {
-            return {
-                chainSpaceLoading: false,
-                chainSpace: undefined,
-                serverSpace: {
-                    id: {
-                        protocol: Lib.SpaceProtocol.Matrix,
-                        slug: 'some-slug',
-                        networkId: 'some-network',
-                    },
-                    name: 'test space',
-                    avatarSrc: 'test',
-                    channelGroups: [],
-                    membership: '',
-                    isLoadingChannels: false,
-                },
-            }
-        })
-
-        render(<Wrapper />)
-
-        await waitFor(() => {
-            expect(screen.getByText('test space')).toBeInTheDocument()
-        })
-
-        expect(screen.queryByTestId('timeline-shimmer')).not.toBeInTheDocument()
-    })
-
     test('routes to spaces/:id/threads when no channel groups', async () => {
+        const serverSpaceData = {
+            ...mockSpaceData,
+            channelGroups: [],
+            membership: Lib.Membership.Join,
+        }
+        // <SpaceHome /> mock
+        vi.spyOn(Lib, 'useSpaceData').mockImplementation(() => {
+            return serverSpaceData
+        })
+        // <CheckValidSpaceOrInvite /> mock
         vi.spyOn(
             useContractAndServerSpaceDataHook,
             'useContractAndServerSpaceData',
         ).mockImplementation(() => {
             return {
                 chainSpaceLoading: false,
-                chainSpace: undefined,
-                serverSpace: {
-                    id: {
-                        protocol: Lib.SpaceProtocol.Matrix,
-                        slug: 'some-slug',
-                        networkId: 'some-network',
-                    },
-                    name: 'test space',
-                    avatarSrc: 'test',
-                    channelGroups: [],
-                    membership: Lib.Membership.Join,
-                    isLoadingChannels: false,
-                },
+                chainSpace: mockChainSpace,
+                serverSpace: serverSpaceData,
             }
         })
 
@@ -137,39 +133,24 @@ describe('<SpaceHome />', () => {
     })
 
     test('routes to first channel when channels exist', async () => {
+        const serverSpaceData = {
+            ...mockSpaceData,
+            membership: Lib.Membership.Join,
+        }
+        // <SpaceHome /> mock
+        vi.spyOn(Lib, 'useSpaceData').mockImplementation(() => {
+            return serverSpaceData
+        })
+
+        // <CheckValidSpaceOrInvite /> mock
         vi.spyOn(
             useContractAndServerSpaceDataHook,
             'useContractAndServerSpaceData',
         ).mockImplementation(() => {
             return {
                 chainSpaceLoading: false,
-                chainSpace: undefined,
-                serverSpace: {
-                    id: {
-                        protocol: Lib.SpaceProtocol.Matrix,
-                        slug: 'some-slug',
-                        networkId: 'some-network',
-                    },
-                    name: 'test space',
-                    avatarSrc: 'test',
-                    channelGroups: [
-                        {
-                            label: 'group 1',
-                            channels: [
-                                {
-                                    id: {
-                                        protocol: Lib.SpaceProtocol.Matrix,
-                                        slug: 'some-channel-slug',
-                                        networkId: 'some-network',
-                                    },
-                                    label: 'channel 1',
-                                },
-                            ],
-                        },
-                    ],
-                    isLoadingChannels: false,
-                    membership: Lib.Membership.Join,
-                },
+                chainSpace: mockChainSpace,
+                serverSpace: serverSpaceData,
             }
         })
 
