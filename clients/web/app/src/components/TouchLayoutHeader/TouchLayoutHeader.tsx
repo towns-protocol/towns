@@ -65,7 +65,7 @@ export const TouchLayoutHeader = (props: Props) => {
             >
                 <Box position="relative">
                     <IconButton
-                        icon="more"
+                        icon="bottomAlignedEllipsis"
                         size="square_md"
                         color="default"
                         padding="xs"

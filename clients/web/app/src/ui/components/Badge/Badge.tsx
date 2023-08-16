@@ -14,8 +14,8 @@ export const Badge = forwardRef<typeof Box, BoxProps & Props>(({ value, ...props
             centerContent
             background="accent"
             rounded="full"
-            minWidth="x2"
-            height="x2"
+            minWidth={{ touch: 'x3', default: 'x2' }}
+            height={{ touch: 'x3', default: 'x2' }}
             padding="xs"
             fontWeight="strong"
             {...props}
