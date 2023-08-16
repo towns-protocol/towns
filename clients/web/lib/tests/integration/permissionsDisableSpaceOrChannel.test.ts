@@ -18,9 +18,9 @@ import { SpaceProtocol } from '../../src/client/ZionClientTypes'
 import { TestConstants } from './helpers/TestConstants'
 import { waitFor } from '@testing-library/react'
 
-describe('disable channel', () => {
-    // https://linear.app/hnt-labs/issue/HNT-2046/testsintegrationpermissionsdisablespaceorchanneltestts
-    test.skip('Space owner is allowed to disable space access', async () => {
+// https://linear.app/hnt-labs/issue/HNT-2046/testsintegrationpermissionsdisablespaceorchanneltestts
+describe.skip('disable channel', () => {
+    test('Space owner is allowed to disable space access', async () => {
         /** Arrange */
 
         const { alice } = await registerAndStartClients(['alice'])
@@ -44,8 +44,7 @@ describe('disable channel', () => {
         expect(spaceInfo?.networkId).toEqual(spaceNetworkId)
     })
 
-    // https://linear.app/hnt-labs/issue/HNT-2046/testsintegrationpermissionsdisablespaceorchanneltestts
-    test.skip('Space owner is allowed to re-enable disabled space access', async () => {
+    test('Space owner is allowed to re-enable disabled space access', async () => {
         /** Arrange */
 
         const { alice } = await registerAndStartClients(['alice'])
@@ -78,8 +77,7 @@ describe('disable channel', () => {
         expect(spaceInfo?.networkId).toEqual(spaceNetworkId)
     })
 
-    // https://linear.app/hnt-labs/issue/HNT-2046/testsintegrationpermissionsdisablespaceorchanneltestts
-    test.skip('Space member is not allowed to disable space access', async () => {
+    test('Space member is not allowed to disable space access', async () => {
         /** Arrange */
 
         const { alice, bob } = await registerAndStartClients(['alice', 'bob'])
