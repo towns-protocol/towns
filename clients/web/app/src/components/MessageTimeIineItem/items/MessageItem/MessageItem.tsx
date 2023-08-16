@@ -33,6 +33,7 @@ type Props = {
 export const MessageItem = (props: Props) => {
     const { itemData, isHighlight } = props
     const event = itemData.event
+
     const { isTouch } = useDevice()
     const messageTooltipRef = useRef<HTMLElement | null>(null)
     const [hoveredMentionUserId, setHoveredMentionUserId] = useState<string | undefined>(undefined)
@@ -172,6 +173,8 @@ const MessageWrapper = React.memo((props: MessageWrapperProps) => {
     const timelineContext = useContext(MessageTimelineContext)
     const { isTouch } = useDevice()
 
+    const body = event.content?.kind === ZTEvent.RoomMessage ? event.content.body : undefined
+
     if (!timelineContext) {
         return <></>
     }
@@ -221,6 +224,7 @@ const MessageWrapper = React.memo((props: MessageWrapperProps) => {
             reactions={reactions}
             relativeDate={isRelativeDate}
             replies={replies}
+            messageBody={body}
             onReaction={handleReaction}
         >
             {props.children}

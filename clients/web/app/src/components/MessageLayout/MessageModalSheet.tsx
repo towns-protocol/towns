@@ -16,6 +16,7 @@ type Props = {
     canEdit?: boolean
     canReply?: boolean
     canReact?: boolean
+    messageBody?: string
 }
 
 const emojis: { id: string; native: string }[] = [
@@ -30,7 +31,7 @@ export const MessageModalSheet = (props: Props) => {
     const timelineContext = useContext(MessageTimelineContext)
     const mountPoint = useZLayerContext().rootLayerRef?.current ?? undefined
 
-    const { onClose, eventId, spaceId, channelId, canReply, canEdit, canReact } = props
+    const { onClose, eventId, spaceId, channelId, canReply, canEdit, canReact, messageBody } = props
     const [isHidden, setIsHidden] = React.useState(false)
     const { redactEvent, sendReaction } = useZionClient()
 
@@ -86,6 +87,11 @@ export const MessageModalSheet = (props: Props) => {
         setActivePrompt('emoji')
         setIsHidden(true)
     }, [])
+
+    const onCopyClick = useCallback(() => {
+        navigator.clipboard.writeText(messageBody ?? '')
+        closeSheet()
+    }, [closeSheet, messageBody])
 
     const sendEmoji = useCallback(
         (id: string) => {
@@ -171,6 +177,13 @@ export const MessageModalSheet = (props: Props) => {
                                         iconType="emoji"
                                         text="Add Reaction"
                                         onClick={onEmojiClick}
+                                    />
+                                )}
+                                {messageBody && (
+                                    <TableCell
+                                        iconType="copy"
+                                        text="Copy Text"
+                                        onClick={onCopyClick}
                                     />
                                 )}
                                 {canEdit && (

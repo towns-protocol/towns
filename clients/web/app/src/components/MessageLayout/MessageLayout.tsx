@@ -25,6 +25,7 @@ type Props = {
     name: string
     displayContext?: 'single' | 'head' | 'tail'
     messageSourceAnnotation?: string
+    messageBody?: string
     reactions?: MessageReactions
     replies?: ThreadStats
     canReply?: boolean
@@ -260,6 +261,7 @@ export const MessageLayout = (props: Props) => {
                         spaceId={spaceId}
                         eventId={eventId}
                         canEdit={isEditable}
+                        messageBody={props.messageBody}
                         onClose={() => setIsModalSheetVisible(false)}
                     />
                 )}

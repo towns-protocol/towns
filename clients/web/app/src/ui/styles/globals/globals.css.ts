@@ -21,6 +21,13 @@ globalStyle('*', {
     verticalAlign: 'baseline',
     WebkitTapHighlightColor: 'transparent',
     textSizeAdjust: 'none',
+    '@media': {
+        '(hover: none)': {
+            WebkitTouchCallout: 'none',
+            userSelect: 'none',
+            WebkitUserSelect: 'none',
+        },
+    },
 })
 
 globalStyle('ul, ol', {
