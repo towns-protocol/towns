@@ -46,6 +46,11 @@ export default ({ mode }: { mode: string }) => {
     const prodPlugins: PluginOption[] = [differMatrixSourcemapsPlugins()]
 
     let config: UserConfig = {
+        optimizeDeps: {
+            esbuildOptions: {
+                target: 'esnext',
+            },
+        },
         build: {
             target: 'esnext',
             sourcemap: true,

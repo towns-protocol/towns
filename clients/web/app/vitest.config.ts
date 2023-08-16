@@ -6,6 +6,7 @@ import tsconfigPaths from 'vite-tsconfig-paths'
 
 export default defineConfig({
     test: {
+        css: true,
         setupFiles: ['./vitest.setup.ts'],
         environment: 'jsdom',
         globals: true, // w/out this then testing-library requires cleanup() after every test https://vitest.dev/guide/migration.html

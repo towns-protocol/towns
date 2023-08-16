@@ -11,6 +11,7 @@
         "lint": "eslint .",
         "lint:fix": "yarn lint --fix",
         "preview": "vite preview",
+        "vitest-preview": "vitest-preview",
         "test": "yarn test:unit",
         "test:unit": "VITE_TOKEN_SERVER_URL=http://fake.com VITE_MATRIX_HOMESERVER_URL=https://node1-test.towns.com VITE_CASABLANCA_HOMESERVER_URL=http://fake.com VITE_CHAIN_ID=31337 VITE_AUTH_WORKER_HEADER_SECRET=fake VITE_GIPHY_API_KEY=fake VITE_UNFURL_SERVER_URL=http://fake.com VITE_ALCHEMY_API_KEY=fake VITE_GATEWAY_URL=http://fake.com vitest"
     },
@@ -126,6 +127,7 @@
         "vite-tsconfig-paths": "^4.2.0",
         "vitest": "^0.30.1",
         "vitest-canvas-mock": "^0.2.2",
+        "vitest-preview": "^0.0.1",
         "workbox-window": "^7.0.0"
     },
     "msw": {
