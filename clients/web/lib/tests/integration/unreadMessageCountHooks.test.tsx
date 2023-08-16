@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-explicit-any */
 /**
- * @group dendrite
+ * @group casablanca
  */
 import { Membership, RoomVisibility } from '../../src/types/zion-types'
 import React, { useCallback } from 'react'
@@ -8,6 +8,7 @@ import { TimelineEvent, ZTEvent } from '../../src/types/timeline-types'
 import {
     createTestChannelWithSpaceRoles,
     createTestSpaceWithEveryoneRole,
+    getPrimaryProtocol,
     registerAndStartClients,
 } from './helpers/TestUtils'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
@@ -25,11 +26,11 @@ import { useFullyReadMarker } from '../../src/hooks/use-fully-read-marker'
 import { useMyMembership } from '../../src/hooks/use-my-membership'
 import { useZionClient } from '../../src/hooks/use-zion-client'
 import { useZionContext } from '../../src/components/ZionContextProvider'
+import { SpaceProtocol } from '../../src/client/ZionClientTypes'
 
 // TODO Zustand https://docs.pmnd.rs/zustand/testing
 
-// TODO: https://linear.app/hnt-labs/issue/HNT-1579/fixing-e2e-tests
-describe.skip('unreadMessageCountHooks', () => {
+describe('unreadMessageCountHooks', () => {
     test('user can join a room, see messages, and send messages', async () => {
         // create clients
         const { jane } = await registerAndStartClients(['jane'])
@@ -53,7 +54,7 @@ describe.skip('unreadMessageCountHooks', () => {
         // dendrite doesn't natively send space child events with state
         // if they are too far back we don't know if this room has children
         for (let i = 0; i < 20; i++) {
-            await jane.sendMessage(janesSpaceId, 'hi ' + i.toString())
+            await jane.sendMessage(janesChannelId, 'hi ' + i.toString())
         }
 
         // create a veiw for bob
@@ -120,7 +121,7 @@ describe.skip('unreadMessageCountHooks', () => {
                     <div data-testid="lastMessage">
                         {messages.length > 0 ? formatMessage(messages.at(-1)!) : 'empty'}
                     </div>
-                    <div id="allMessages">
+                    <div data-testid="allMessages">
                         {timeline.map((event) => formatMessage(event)).join('\n')}
                     </div>
                 </>
@@ -143,6 +144,7 @@ describe.skip('unreadMessageCountHooks', () => {
         const spaceMembership = screen.getByTestId('spaceMembership')
         const channelMembership = screen.getByTestId('channelMembership')
         const lastMessage = screen.getByTestId('lastMessage')
+        const allMessages = screen.getByTestId('allMessages')
         const spaceHasUnread = screen.getByTestId('spaceHasUnread')
         const channelFullyReadMarker = screen.getByTestId('channelFullyReadMarker')
         const joinSpaceButton = screen.getByRole('button', {
@@ -166,8 +168,10 @@ describe.skip('unreadMessageCountHooks', () => {
         // check assumptions
         await waitFor(() => expect(spaceHasUnread).toHaveTextContent('false'))
         await waitFor(() => expect(channelFullyReadMarker).toHaveTextContent('undefined'))
-        // get invited to the channel
-        await jane.inviteUser(janesChannelId, bobId.textContent!)
+        if (getPrimaryProtocol() === SpaceProtocol.Matrix) {
+            // get invited to the channel
+            await jane.inviteUser(janesChannelId, bobId.textContent!)
+        }
         // check the count (9/28/2022 dendrite doesn't send notifications for invites)
         await waitFor(() => expect(spaceHasUnread).toHaveTextContent('false'))
         await waitFor(() => expect(channelFullyReadMarker).toHaveTextContent('undefined'))
@@ -199,7 +203,7 @@ describe.skip('unreadMessageCountHooks', () => {
         // check count
         await waitFor(() => expect(spaceHasUnread).toHaveTextContent('true'))
         await waitFor(() => expect(channelFullyReadMarker).toHaveTextContent('isUnread:true'))
-        await waitFor(() => expect(lastMessage).toHaveTextContent('rember me!'))
+        await waitFor(() => expect(allMessages).toHaveTextContent('rember me!'))
         // send a message back
         fireEvent.click(markAsReadButton)
         // check count
@@ -219,16 +223,18 @@ describe.skip('unreadMessageCountHooks', () => {
             throw new Error('new room id is undefined')
         }
 
-        // give bob a chance to see the new space.child message
-        // when we get an invite it doesn't come with any space info
-        // because the previous time we fetched the space we didn't have permission to see this space
-        // we didn't sync it
-        // it might exist in the timeline in a space.child event, but it probably won't be in the recent timeline
-        // and it's not a state event
-        await sleep(1000)
-        // get invited to the channel
-        await jane.inviteUser(newRoomId, bobId.textContent!)
-        // the space should show the unread count, but we don't (9/28/2022 dendrite doesn't send notifications for invites)
-        await waitFor(() => expect(spaceHasUnread).toHaveTextContent('false'))
+        if (getPrimaryProtocol() === SpaceProtocol.Matrix) {
+            // give bob a chance to see the new space.child message
+            // when we get an invite it doesn't come with any space info
+            // because the previous time we fetched the space we didn't have permission to see this space
+            // we didn't sync it
+            // it might exist in the timeline in a space.child event, but it probably won't be in the recent timeline
+            // and it's not a state event
+            await sleep(1000)
+            // get invited to the channel
+            await jane.inviteUser(newRoomId, bobId.textContent!)
+            // the space should show the unread count, but we don't (9/28/2022 dendrite doesn't send notifications for invites)
+            await waitFor(() => expect(spaceHasUnread).toHaveTextContent('false'))
+        }
     })
 })
