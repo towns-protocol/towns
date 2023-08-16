@@ -131,7 +131,7 @@ class OutboundSessionInfo {
      *    other group members. Note jterzis: default to true as we don't have a concept
      *    of "shared history visibility settings" in River.
      */
-    public constructor(public readonly sessionId: string) {
+    public constructor(public readonly sessionId: string, public readonly channelId: string) {
         this.creationTime = new Date().getTime()
     }
 
@@ -211,6 +211,9 @@ export class MegolmEncryption extends EncryptionAlgorithm {
     // session (the session we're currently using to send is always obtained
     // using setupPromise).
     private outboundSessions: Record<string, OutboundSessionInfo> = {}
+    // Map of outbound sessions by channel ID. Used to find existing sessions
+    // to use by channelId.
+    private outboundSessionsByChannelId: Map<string, OutboundSessionInfo> = new Map()
 
     private encryptionPreparation?: {
         promise: Promise<void>
@@ -303,18 +306,31 @@ export class MegolmEncryption extends EncryptionAlgorithm {
         // todo: implement session rotation logic
         // https://linear.app/hnt-labs/issue/HNT-1830/session-rotation-megolm
 
-        // determine if we have shared with anyone we shouldn't have
-        if (session?.sharedWithTooManyDevices(devicesInRoom)) {
-            session = null
+        let existingSession = session
+        // if cached session is associated with a different channelId, don't use it
+        if (existingSession && existingSession.channelId !== channelId) {
+            existingSession = null
+        }
+        // try to use an existing session if we have one for the channel.
+        if (this.outboundSessionsByChannelId.get(channelId)) {
+            existingSession = this.outboundSessionsByChannelId.get(channelId)!
         }
 
-        if (!session) {
-            session = await this.prepareNewSession(channelId)
-            this.logCall(`Started new megolm session ${session.sessionId}`)
-            this.outboundSessions[session.sessionId] = session
+        if (existingSession?.sharedWithTooManyDevices(devicesInRoom)) {
+            // determine if we have shared with anyone we shouldn't have
+            existingSession = null
         }
 
-        return session
+        // if we don't have a cached session at this point, create a new one
+        if (!existingSession) {
+            const newSession = await this.prepareNewSession(channelId)
+            this.logCall(`Started new megolm session ${newSession.sessionId}`)
+            this.outboundSessions[newSession.sessionId] = newSession
+            this.outboundSessionsByChannelId.set(channelId, newSession)
+            return newSession
+        }
+
+        return existingSession
     }
 
     private async shareSession(
@@ -501,7 +517,7 @@ export class MegolmEncryption extends EncryptionAlgorithm {
         // don't wait for it to complete
         // this.crypto.backupManager.backupGroupSession(this.olmDevice.deviceCurve25519Key!, sessionId)
 
-        return new OutboundSessionInfo(sessionId)
+        return new OutboundSessionInfo(sessionId, channelId)
     }
 
     /**
