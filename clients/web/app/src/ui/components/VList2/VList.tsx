@@ -24,7 +24,7 @@ import { VListItem } from './VListItem'
 
 const DEFAULT_ITEM_HEIGHT = 100
 const DEFAULT_MARGIN_RATIO = 1
-const RESET_DELAY_MS = 100
+const RESET_DELAY_MS = 250
 
 const info = debug('app:vlist')
 info.color = 'gray'
@@ -411,6 +411,10 @@ export function VList<T>(props: Props<T>) {
     const [isAligned, setIsAligned] = useState(false)
 
     const realignImperatively = useCallback(() => {
+        if (isTouchDownRef.current) {
+            return
+        }
+
         setIsReadyToRealign(false)
         // keep offset to scrollBy() once dom is updated
         const diff = anchorDiffRef.current
@@ -427,22 +431,46 @@ export function VList<T>(props: Props<T>) {
         // ensures scroll event doesn't trigger a realignment
         internalScrollRef.current = true
 
+        const safeTouchScrollTo = (s: { top: number }) => {
+            // hack for mobile devices: when inertia is still active, browser
+            // prevents us from detecting touch events.
+            // how to get here: give a long swipe that will scroll enough to
+            // trigger realignment, while intertia is still active, touch the
+            // screen and keep finger down. Realignment will occur and scroll lost)
+            container.style.overflow = 'hidden'
+            container.scrollTo(s)
+            container.style.overflow = 'scroll'
+        }
+
         if (focusItemRef.current) {
             // in the initialisation phase, we want to keep the scroll position
             // as steady as possible on the focused item (getScrollY will return
             // the focus item's position)
-            container.scrollTo({ top: getScrollY() })
+            if (isTouch) {
+                safeTouchScrollTo({ top: getScrollY() })
+            } else {
+                container.scrollTo({ top: getScrollY() })
+            }
         } else {
-            // otherwise offset the current position
-            container.scrollBy({ top: -diff })
+            if (isTouch) {
+                safeTouchScrollTo({ top: container.scrollTop - diff })
+            } else {
+                container.scrollBy({ top: -diff })
+            }
         }
 
         setIsAligned(true)
 
         debugRef.current?.()
-    }, [getElements, getScrollY, updateDOM, updateDOMHeight])
+    }, [getElements, getScrollY, isTouch, updateDOM, updateDOMHeight])
 
     // -------------------------------------------------------------async update
+
+    const isTouchDownRef = useRef(false)
+    const isReadyToRealignRef = useRef(false)
+    useEffect(() => {
+        isReadyToRealignRef.current = !!isReadyToRealign
+    }, [isReadyToRealign])
 
     useLayoutEffect(() => {
         if (isReadyToRealign === false) {
@@ -470,6 +498,29 @@ export function VList<T>(props: Props<T>) {
         idleDebounceRef.current = true
         setIsLazyRealign((v) => v + 1)
     }, [])
+
+    useEffect(() => {
+        const { container } = getElements()
+        if (isTouch && container) {
+            const onTouchStart = () => {
+                isTouchDownRef.current = true
+            }
+            const onTouchEnd = () => {
+                isTouchDownRef.current = false
+                setIsReadyToRealign(false)
+                debounceResetIdle()
+            }
+            container.addEventListener('touchstart', onTouchStart, { passive: false })
+            container.addEventListener('touchend', onTouchEnd)
+            container.addEventListener('touchcancel', onTouchEnd)
+
+            return () => {
+                container.removeEventListener('touchstart', onTouchStart)
+                container.removeEventListener('touchend', onTouchEnd)
+                container.removeEventListener('touchcancel', onTouchEnd)
+            }
+        }
+    }, [debounceResetIdle, getElements, isTouch])
 
     /**
      * --------------------------------------------------- recalculate positions
