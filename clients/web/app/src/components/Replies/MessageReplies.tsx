@@ -1,11 +1,17 @@
-import React, { useCallback } from 'react'
+import React, { useCallback, useMemo } from 'react'
 import { ThreadStats, useChannelId, useSpaceId, useSpaceMembers } from 'use-zion-client'
 import { useOpenMessageThread } from 'hooks/useOpenThread'
-import { Avatar, Box, Paragraph, Stack } from '@ui'
+import { Avatar, Box, Paragraph, Pill, Stack } from '@ui'
 import { notUndefined } from 'ui/utils/utils'
 
-export const RepliesButton = (props: { threadStats: ThreadStats; eventId: string }) => {
-    const { threadStats, eventId } = props
+type Props = {
+    threadStats: ThreadStats
+    eventId: string
+    userId?: string | null
+}
+
+export const RepliesButton = (props: Props) => {
+    const { threadStats, eventId, userId } = props
     const { replyCount } = threadStats
 
     const { membersMap } = useSpaceMembers()
@@ -13,35 +19,35 @@ export const RepliesButton = (props: { threadStats: ThreadStats; eventId: string
     const spaceId = useSpaceId()
     const channelId = useChannelId()
 
+    const users = useMemo(
+        () =>
+            Array.from(threadStats.userIds)
+                .map((u) => membersMap[u])
+                .filter(notUndefined),
+        [membersMap, threadStats.userIds],
+    )
+
+    const isOwn = userId && users.some((u) => u.userId === userId)
+
     const { onOpenMessageThread } = useOpenMessageThread(spaceId, channelId)
 
     const onClick = useCallback(() => onOpenMessageThread(eventId), [onOpenMessageThread, eventId])
 
     return (
-        <Box
-            horizontal
-            border
-            hoverable
-            height="height_lg"
-            paddingX="sm"
-            rounded="sm"
-            background="level2"
-            alignSelf="start"
-        >
+        <Pill rounded="sm" height={{ default: 'x4' }} border={isOwn ? 'accent' : undefined}>
             <Box shrink centerContent horizontal gap="sm" cursor="pointer" onClick={onClick}>
                 <Stack horizontal gap="xs">
-                    {Array.from(threadStats.userIds)
-                        .map((u) => membersMap[u])
-                        .filter(notUndefined)
-                        .map((u) => (
-                            <Avatar userId={u.userId} key={u.userId} size="avatar_sm" />
-                        ))}
+                    {users.slice(0, 3).map((u) => (
+                        <Avatar userId={u.userId} key={u.userId} size="avatar_xs" />
+                    ))}
                 </Stack>
-                <Paragraph size="md">
-                    {replyCount}
-                    {replyCount > 1 ? ' replies' : ' reply'}
-                </Paragraph>
+                <Stack paddingBottom="xxs">
+                    <Paragraph size="sm" color="default" fontWeight="medium">
+                        {replyCount}
+                        {replyCount > 1 ? ' replies' : ' reply'}
+                    </Paragraph>
+                </Stack>
             </Box>
-        </Box>
+        </Pill>
     )
 }

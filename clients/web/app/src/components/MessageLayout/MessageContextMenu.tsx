@@ -107,6 +107,8 @@ export const MessageContextMenu = (props: Props) => {
                     padding="xs"
                     rounded="sm"
                     width="auto"
+                    alignContent="center"
+                    alignItems="center"
                 >
                     {props.canEdit && (
                         <IconButton icon="edit" size="square_sm" onClick={onEditClick} />

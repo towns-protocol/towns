@@ -5,6 +5,8 @@ import { Text } from 'ui/components/Text/Text'
 import { EmojiPickerButton } from '@components/EmojiPickerButton'
 import { useHandleReaction } from 'hooks/useReactions'
 import { Stack } from 'ui/components/Stack/Stack'
+import { Pill } from '@ui'
+import { useDevice } from 'hooks/useDevice'
 import { ReactionTootip } from './ReactionTooltip'
 import { getNativeEmojiFromName } from './ReactionConstants'
 
@@ -31,8 +33,10 @@ export const Reactions = (props: Props) => {
         [onReaction, parentId],
     )
 
+    const { isTouch } = useDevice()
+
     return (
-        <Stack horizontal height="x3" insetX="xxs">
+        <Stack horizontal gap={{ default: 'xs', mobile: 'sm' }}>
             <Suspense>
                 <ReactionRow
                     userId={userId}
@@ -41,7 +45,11 @@ export const Reactions = (props: Props) => {
                     onReaction={onReaction}
                 />
             </Suspense>
-            <EmojiPickerButton size="square_xs" onSelectEmoji={onReactionPicker} />
+            <EmojiPickerButton
+                pill
+                size={isTouch ? 'square_sm' : 'square_xs'}
+                onSelectEmoji={onReactionPicker}
+            />
         </Stack>
     )
 }
@@ -109,24 +117,23 @@ const Reaction = (props: {
     }, [isOwn, name, onReact])
 
     return users && Object.keys(users).length ? (
-        <Box horizontal paddingX="xs" tooltip={<ReactionTootip userIds={users} reaction={name} />}>
-            <Box
+        <Box horizontal tooltip={<ReactionTootip userIds={users} reaction={name} />}>
+            <Pill
                 horizontal
                 centerContent
                 position="relative"
-                border={isOwn ? 'accent' : 'level4'}
-                gap="sm"
                 rounded="lg"
-                background="level2"
-                color="gray1"
-                paddingX="sm"
+                border={isOwn ? 'accent' : undefined}
+                gap="xs"
                 onClick={onClick}
             >
-                <Text size="md" fontSize={{ desktop: 'lg', mobile: 'xs' }}>
+                <Text size="md" fontSize={{ desktop: 'mds', mobile: 'xs' }}>
                     {getNativeEmojiFromName(props.name)}
                 </Text>
-                <Text size="sm">{Object.keys(users).length}</Text>
-            </Box>
+                <Text fontWeight="medium" size="sm">
+                    {Object.keys(users).length}
+                </Text>
+            </Pill>
         </Box>
     ) : null
 }

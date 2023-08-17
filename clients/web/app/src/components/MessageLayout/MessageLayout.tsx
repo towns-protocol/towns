@@ -23,7 +23,7 @@ type Props = {
     senderId?: string
     avatarSize?: AvatarAtoms['size']
     name: string
-    displayContext?: 'single' | 'head' | 'tail'
+    displayContext?: 'single' | 'head' | 'body' | 'tail'
     messageSourceAnnotation?: string
     messageBody?: string
     reactions?: MessageReactions
@@ -111,6 +111,11 @@ export const MessageLayout = (props: Props) => {
     const { createLink } = useCreateLink()
     const profileLink = createLink({ profileId: senderId })
 
+    const hasReplies = replies && eventId
+    const numReactions = reactions ? Object.values(reactions).length : 0
+    const hasReactions = reactions && numReactions && onReaction
+    const displayButtonsInRow = numReactions < 3 && isTouch
+
     return (
         <Stack
             horizontal
@@ -128,11 +133,12 @@ export const MessageLayout = (props: Props) => {
             {/* left / avatar gutter */}
             {/* snippet: center avatar with name row by keeping the size of the containers equal  */}
             <Box minWidth={isTouch ? 'x6' : 'x8'}>
-                {displayContext !== 'tail' ? (
+                {displayContext === 'single' || displayContext === 'head' ? (
                     senderId ? (
                         <AvatarComponent
                             size={avatarSize}
-                            insetY="xxs"
+                            insetTop="xxs"
+                            insetBottom="lg"
                             userId={senderId}
                             link={profileLink}
                             tooltip={isTouch ? undefined : <ProfileHoverCard userId={senderId} />}
@@ -143,8 +149,12 @@ export const MessageLayout = (props: Props) => {
                 ) : (
                     <>
                         {!isRelativeDate && isActive && (
-                            <Box paddingTop="xxs" insetBottom="xxs">
-                                <Paragraph truncate size="sm" color="gray2">
+                            <Box
+                                paddingTop="xxs"
+                                insetBottom="xxs"
+                                display={{ default: 'flex', touch: 'none' }}
+                            >
+                                <Paragraph truncate size="xs" color="gray2">
                                     {date}
                                 </Paragraph>
                             </Box>
@@ -156,8 +166,14 @@ export const MessageLayout = (props: Props) => {
             {/* right / main content */}
             <Stack grow gap="md" position="relative">
                 {/* name & date top row */}
-                {displayContext !== 'tail' && (
-                    <Stack horizontal grow gap="sm" height="height_sm" alignItems="end">
+                {(displayContext === 'head' || displayContext === 'single') && (
+                    <Stack
+                        horizontal
+                        grow
+                        gap={{ default: 'xs', mobile: 'xs' }}
+                        height="height_sm"
+                        alignItems="end"
+                    >
                         {/* display name with tooltip */}
                         {name && senderId && (
                             <Box
@@ -166,7 +182,13 @@ export const MessageLayout = (props: Props) => {
                                 }
                             >
                                 <Link to={`profile/${senderId}`}>
-                                    <Text truncate fontSize="md" color="gray1" as="span">
+                                    <Text
+                                        truncate
+                                        fontWeight="strong"
+                                        color="default"
+                                        as="span"
+                                        textTransform="capitalize"
+                                    >
                                         {name}&nbsp;
                                     </Text>
                                 </Link>
@@ -183,7 +205,7 @@ export const MessageLayout = (props: Props) => {
                             <Text
                                 grow
                                 shrink={false}
-                                fontSize="sm"
+                                fontSize={{ desktop: 'xs', mobile: 'xs' }}
                                 color="gray2"
                                 as="span"
                                 textAlign={isListView ? 'right' : 'left'}
@@ -193,11 +215,11 @@ export const MessageLayout = (props: Props) => {
                         )}
                     </Stack>
                 )}
-                <Stack gap="md">
+                <Stack gap={{ default: 'paragraph', mobile: 'paragraph' }}>
                     <Stack
                         grow
                         fontSize="md"
-                        color="default"
+                        color="gray1"
                         gap="md"
                         onClick={isTouch && isSelectable ? onClick : undefined}
                     >
@@ -210,22 +232,34 @@ export const MessageLayout = (props: Props) => {
                             {messageSourceAnnotation}
                         </ButtonText>
                     )}
-
-                    {reactions && onReaction ? (
-                        <Stack horizontal>
-                            <Reactions
-                                userId={userId}
-                                parentId={eventId}
-                                reactions={reactions}
-                                onReaction={onReaction}
-                            />
+                    {hasReactions || hasReplies ? (
+                        <Stack
+                            alignItems={displayButtonsInRow ? 'center' : undefined}
+                            flexDirection={displayButtonsInRow ? 'row' : 'columnReverse'}
+                            gap={
+                                displayButtonsInRow
+                                    ? { default: 'md', mobile: 'sm' }
+                                    : { default: 'sm', mobile: 'paragraph' }
+                            }
+                        >
+                            {hasReplies && (
+                                <RepliesButton
+                                    eventId={eventId}
+                                    threadStats={replies}
+                                    userId={userId}
+                                />
+                            )}
+                            {hasReactions ? (
+                                <Reactions
+                                    userId={userId}
+                                    parentId={eventId}
+                                    reactions={reactions}
+                                    onReaction={onReaction}
+                                />
+                            ) : null}
                         </Stack>
-                    ) : null}
-
-                    {replies && eventId && (
-                        <Stack horizontal>
-                            <RepliesButton eventId={eventId} threadStats={replies} />
-                        </Stack>
+                    ) : (
+                        <></>
                     )}
                 </Stack>
                 {!isTouch &&

@@ -203,8 +203,7 @@ export const MessageTimeline = (props: Props) => {
                                     key: event.eventId,
                                     event,
                                     displayEncrypted: displayEncrypted || messageDisplayEncrypted,
-                                    displayContext:
-                                        index > 0 ? 'tail' : events.length > 1 ? 'head' : 'single',
+                                    displayContext: getMessageDisplayContext(index, events.length),
                                 }
                             } else if (isRedactedRoomMessage(event)) {
                                 if (repliesMap?.[event.eventId]) {
@@ -213,12 +212,10 @@ export const MessageTimeline = (props: Props) => {
                                         key: event.eventId,
                                         event,
                                         displayEncrypted: false,
-                                        displayContext:
-                                            index > 0
-                                                ? 'tail'
-                                                : events.length > 1
-                                                ? 'head'
-                                                : 'single',
+                                        displayContext: getMessageDisplayContext(
+                                            index,
+                                            events.length,
+                                        ),
                                     }
                                 } else {
                                     item = null
@@ -229,8 +226,7 @@ export const MessageTimeline = (props: Props) => {
                                     key: event.eventId,
                                     event,
                                     displayEncrypted: true,
-                                    displayContext:
-                                        index > 0 ? 'tail' : events.length > 1 ? 'head' : 'single',
+                                    displayContext: getMessageDisplayContext(index, events.length),
                                 }
                             }
 
@@ -415,4 +411,12 @@ export const MessageTimeline = (props: Props) => {
             }}
         />
     )
+}
+
+const getMessageDisplayContext = (index: number, total: number) => {
+    if (index === 0) {
+        return total === 1 ? 'single' : 'head'
+    }
+
+    return index === total - 1 ? 'tail' : 'body'
 }

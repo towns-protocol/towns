@@ -1,10 +1,10 @@
-import React, { useCallback, useState } from 'react'
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext'
 import { $getSelection, $isRangeSelection } from 'lexical'
-import { Box, CardOpener, IconButton, IconProps } from '@ui'
+import React, { useCallback, useState } from 'react'
 import { $createEmojiNode } from '@components/RichText/nodes/EmojiNode'
-import { MotionIconButton } from 'ui/components/Motion/MotionComponents'
+import { Box, CardOpener, Icon, IconProps, Pill } from '@ui'
 import { useDevice } from 'hooks/useDevice'
+import { MotionIconButton } from 'ui/components/Motion/MotionComponents'
 import { EmojiPickerContainer } from './EmojiPickerContainer'
 import { EmojiPickerContainerMobile } from './EmojiPickerContainerMobile'
 
@@ -13,21 +13,31 @@ type Props = {
     onSelectEmoji: (data: EmojiPickerSelection) => void
     size?: IconProps['size']
     tabIndex?: number
+    pill?: boolean
 }
+
+const PillContainer = (props: { children: React.ReactNode }) => (
+    <Pill background="level1" color="level4">
+        {props.children}
+    </Pill>
+)
+
+const DefaultContainer = (props: { children: React.ReactNode }) => props.children
 
 export const EmojiPickerButton = (props: Props) => {
     const { onSelectEmoji, size = 'square_sm' } = props
+
+    const Container = props.pill ? PillContainer : DefaultContainer
+
     const [showMobileEmojiSheet, setShowMobileEmojiSheet] = useState<boolean>(false)
     const { isTouch } = useDevice()
 
     return isTouch ? (
         <>
-            <IconButton
-                icon="emojiAdd"
-                size={size}
-                alignSelf="start"
-                onClick={() => setShowMobileEmojiSheet(true)}
-            />
+            <Container>
+                <Icon type="emojiAdd" size={size} onClick={() => setShowMobileEmojiSheet(true)} />
+            </Container>
+
             {showMobileEmojiSheet && (
                 <EmojiPickerContainerMobile
                     onEmojiSelect={onSelectEmoji}
@@ -48,7 +58,9 @@ export const EmojiPickerButton = (props: Props) => {
             }
         >
             {({ triggerProps }) => (
-                <IconButton icon="emoji" size={size} {...triggerProps} alignSelf="start" />
+                <Container>
+                    <Icon type="emojiAdd" {...triggerProps} size={size} />
+                </Container>
             )}
         </CardOpener>
     )

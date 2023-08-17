@@ -6,9 +6,10 @@ export const border = {
     none: `none`,
     default: `1px solid ${vars.color.background.level3}`,
     faint: `1px solid ${vars.color.background.level2}`,
+    level3: `1px solid ${vars.color.background.level3}`,
     level4: `1px solid ${vars.color.background.level4}`,
     quote: `2px solid ${vars.color.background.level3}`,
-    accent: `1px solid ${vars.color.background.accent}`,
+    accent: `1px solid ${vars.color.background.accentTransparent}`,
     strong: `2px solid ${vars.color.text.default}`,
     strongLevel1: `2px solid ${vars.color.background.level1}`,
     inverted: `1px solid ${vars.color.text.inverted}`,
@@ -33,7 +34,7 @@ export const aspectRatio = {
 export const flexDirection = {
     row: 'row',
     column: 'column',
-    rowRevserse: 'row-reverse',
+    rowReverse: 'row-reverse',
     columnReverse: 'column-reverse',
 } as const
 

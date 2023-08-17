@@ -3,6 +3,7 @@ import { Figma } from './palette'
 export const ToneName = {
     Neutral: 'neutral',
     Accent: 'accent',
+    AccentTransparent: 'accentTransparent',
     CTA1: 'cta1',
     CTA2: 'cta2',
     Error: 'error',
@@ -17,6 +18,7 @@ const tone = {
     // default
     [ToneName.Neutral]: '',
     [ToneName.Accent]: Figma.Colors.Blue,
+    [ToneName.AccentTransparent]: Figma.Colors.BlueTransparent,
     [ToneName.CTA1]: Figma.Colors.Green,
     [ToneName.CTA2]: Figma.Colors.Purple,
     [ToneName.Error]: Figma.Colors.Red,

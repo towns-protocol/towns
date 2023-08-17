@@ -56,7 +56,7 @@ export interface MessageRenderEvent extends BaseEvent {
     type: RenderEventType.Message
     key: string
     event: ZRoomMessageEvent
-    displayContext: 'tail' | 'single' | 'head'
+    displayContext: 'single' | 'head' | 'body' | 'tail'
     isHighlight?: boolean
     displayEncrypted: boolean
 }
@@ -66,7 +66,7 @@ export interface EncryptedMessageRenderEvent extends BaseEvent {
     key: string
     event: ZRoomMessageEncryptedEvent
     displayEncrypted: boolean
-    displayContext: 'tail' | 'single' | 'head'
+    displayContext: 'single' | 'head' | 'body' | 'tail'
 }
 
 export interface RedactedMessageRenderEvent extends BaseEvent {
@@ -74,7 +74,7 @@ export interface RedactedMessageRenderEvent extends BaseEvent {
     key: string
     event: ZRoomMessageRedactedEvent
     displayEncrypted: boolean
-    displayContext: 'tail' | 'single' | 'head'
+    displayContext: 'single' | 'head' | 'body' | 'tail'
 }
 
 export interface RoomMemberRenderEvent extends BaseEvent {

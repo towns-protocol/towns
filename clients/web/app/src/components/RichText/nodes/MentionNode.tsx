@@ -91,13 +91,15 @@ export class MentionNode extends TextNode {
     createDOM(config: EditorConfig): HTMLElement {
         const dom = super.createDOM(config)
         dom.className = atoms({
-            fontWeight: 'strong',
-            background: 'level2',
+            fontWeight: 'medium',
+            background: { default: 'level2', hover: 'hover' },
+            border: { default: 'level3', hover: 'level4' },
             paddingX: 'xs',
-            paddingY: 'xxs',
             rounded: 'xs',
+            fontSize: { desktop: 'md', mobile: 'mds' },
             cursor: 'pointer',
             color: 'default',
+            insetY: 'xxs',
         })
         dom.setAttribute('data-lexical-mention', 'true')
         dom.setAttribute('data-mention-name', this.__mentionName)

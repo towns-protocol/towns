@@ -217,8 +217,8 @@ const MessageWrapper = React.memo((props: MessageWrapperProps) => {
             displayContext={displayContext}
             isChannelWritable={isChannelWritable}
             name={displayName}
-            paddingY={displayContext === 'tail' ? 'sm' : 'md'}
-            paddingBottom={displayContext === 'head' ? 'sm' : undefined}
+            paddingTop={displayContext === 'head' || displayContext === 'single' ? 'md' : 'sm'}
+            paddingBottom={displayContext === 'tail' || displayContext === 'single' ? 'md' : 'sm'}
             paddingX={isTouch ? 'md' : 'lg'}
             spaceId={spaceId}
             reactions={reactions}

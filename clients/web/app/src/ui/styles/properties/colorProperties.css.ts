@@ -167,6 +167,13 @@ export const colorProperties = defineProperties({
                     '--background': vars.color.tone.accent,
                 },
             },
+            [ToneName.AccentTransparent]: {
+                background: vars.color.tone.accentTransparent,
+                color: vars.color.text.default,
+                vars: {
+                    '--background': vars.color.tone.accentTransparent,
+                },
+            },
             [ToneName.CTA1]: {
                 background: `linear-gradient(90deg, #21E078 0%, #1FDBF1 100%);`,
                 color: vars.color.text.onTone,

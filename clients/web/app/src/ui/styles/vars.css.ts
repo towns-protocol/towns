@@ -26,6 +26,7 @@ const responsiveMeasurements = {
         fontSize: {
             xs: `${12}px`,
             sm: `${15}px`,
+            mds: `${16}px`,
             md: `${17}px`,
             lg: `${20}px`,
             display: `${120}px`,
@@ -40,8 +41,9 @@ const responsiveMeasurements = {
     desktopFonts: {
         fontSize: {
             xs: `${11}px`,
-            sm: `${13}px`,
-            md: `${15}px`,
+            sm: `${14}px`,
+            mds: `${15}px`,
+            md: `${16}px`,
             lg: `${18}px`,
             display: `${120}px`,
             h1: `${56}px`,
@@ -307,7 +309,7 @@ const root = createGlobalTheme(':root', {
             fontVariationSettings: '"wdth" 100, "wght" 400, "ital" 0',
         },
         medium: {
-            fontVariationSettings: '"wdth" 100, "wght" 550, "ital" 0',
+            fontVariationSettings: '"wdth" 100, "wght" 500, "ital" 0',
         },
         strong: {
             fontVariationSettings: '"wdth" 100, "wght" 700, "ital" 0',
