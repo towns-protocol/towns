@@ -139,14 +139,17 @@ describe('unreadMessageCountEdgeCases', () => {
         await waitFor(() => expect(channelFullyReadMarker).toHaveTextContent('isUnread:true'))
         await waitFor(() => expect(channelFullyReadMarker).toHaveTextContent('mentions:1'))
         // have jane delete the message
-        const event = jane
-            .getEvents_Typed<RoomMessageEvent>(channelId, ZTEvent.RoomMessage)
-            .find(
-                (x) =>
-                    x.content.body ===
-                    `@${bobName} it's Jane! (I'm going to delete this in a second)`,
-            )
-        expect(event).toBeDefined()
+        const event = await waitFor(() => {
+            const event = jane
+                .getEvents_Typed<RoomMessageEvent>(channelId, ZTEvent.RoomMessage)
+                .find(
+                    (x) =>
+                        x.content.body ===
+                        `@${bobName} it's Jane! (I'm going to delete this in a second)`,
+                )
+            expect(event).toBeDefined()
+            return event
+        })
 
         //Edit the message to remove the mention
         await jane.editMessage(
@@ -200,24 +203,28 @@ describe('unreadMessageCountEdgeCases', () => {
             ),
         )
 
-        const deletedEvent1 = jane
-            .getEvents_Typed<RoomMessageEvent>(channelId, ZTEvent.RoomMessage)
-            .find(
-                (x) =>
-                    x.content.body ===
-                    `@${bobName}, it is first message from Jane (I'm going to delete this in a second too)1`,
-            )
+        const deletedEvent1 = await waitFor(() => {
+            const event = jane
+                .getEvents_Typed<RoomMessageEvent>(channelId, ZTEvent.RoomMessage)
+                .find(
+                    (x) =>
+                        x.content.body ===
+                        `@${bobName}, it is first message from Jane (I'm going to delete this in a second too)1`,
+                )
+            expect(event).toBeDefined()
+            return event
+        })
 
-        let deletedEvent2_eventId: string | undefined
-        await waitFor(() => {
-            deletedEvent2_eventId = jane
+        const deletedEvent2_eventId = await waitFor(() => {
+            const eventId = jane
                 .getEvents_Typed<RoomMessageEvent>(channelId, ZTEvent.RoomMessage)
                 .find(
                     (x) =>
                         x.content.body ===
                         `@${bobName}, it is second message from Jane (I'm going to delete this in a second too)2`,
                 )?.eventId
-            expect(deletedEvent2_eventId).toBeDefined()
+            expect(eventId).toBeDefined()
+            return eventId
         })
 
         await waitFor(() => expect(spaceHasUnread).toHaveTextContent('true'))
@@ -255,24 +262,28 @@ describe('unreadMessageCountEdgeCases', () => {
             ),
         )
 
-        const deletedEventWithMention = jane
-            .getEvents_Typed<RoomMessageEvent>(channelId, ZTEvent.RoomMessage)
-            .find(
-                (x) =>
-                    x.content.body ===
-                    `@${bobName}, it is first message from Jane with mention (I'm going to delete this in a second too)`,
-            )
+        const deletedEventWithMention = await waitFor(() => {
+            const event = jane
+                .getEvents_Typed<RoomMessageEvent>(channelId, ZTEvent.RoomMessage)
+                .find(
+                    (x) =>
+                        x.content.body ===
+                        `@${bobName}, it is first message from Jane with mention (I'm going to delete this in a second too)`,
+                )
+            expect(event).toBeDefined()
+            return event
+        })
 
-        let deletedEventWithoutMention_eventId: string | undefined
-        await waitFor(() => {
-            deletedEventWithoutMention_eventId = jane
+        const deletedEventWithoutMention_eventId = await waitFor(() => {
+            const eventId = jane
                 .getEvents_Typed<RoomMessageEvent>(channelId, ZTEvent.RoomMessage)
                 .find(
                     (x) =>
                         x.content.body ===
                         `It is second message from Jane without mention (I'm going to delete this in a second too)`,
                 )?.eventId
-            expect(deletedEventWithoutMention_eventId).toBeDefined()
+            expect(eventId).toBeDefined()
+            return eventId
         })
 
         await waitFor(() => expect(spaceHasUnread).toHaveTextContent('true'))
@@ -310,24 +321,28 @@ describe('unreadMessageCountEdgeCases', () => {
             ),
         )
 
-        const deletedEventWithMention2 = jane
-            .getEvents_Typed<RoomMessageEvent>(channelId, ZTEvent.RoomMessage)
-            .find(
-                (x) =>
-                    x.content.body ===
-                    `@${bobName}, it is first message from Jane again with mention (I'm going to delete this in a second too)`,
-            )
+        const deletedEventWithMention2 = await waitFor(() => {
+            const event = jane
+                .getEvents_Typed<RoomMessageEvent>(channelId, ZTEvent.RoomMessage)
+                .find(
+                    (x) =>
+                        x.content.body ===
+                        `@${bobName}, it is first message from Jane again with mention (I'm going to delete this in a second too)`,
+                )
+            expect(event).toBeDefined()
+            return event
+        })
 
-        let deletedEventWithoutMention2_eventId: string | undefined
-        await waitFor(() => {
-            deletedEventWithoutMention2_eventId = jane
+        const deletedEventWithoutMention2_eventId = await waitFor(() => {
+            const returnVal = jane
                 .getEvents_Typed<RoomMessageEvent>(channelId, ZTEvent.RoomMessage)
                 .find(
                     (x) =>
                         x.content.body ===
                         `It is second message from Jane again without mention (I'm going to delete this in a second too)`,
                 )?.eventId
-            expect(deletedEventWithoutMention_eventId).toBeDefined()
+            expect(returnVal).toBeDefined()
+            return returnVal
         })
         await waitFor(() => expect(spaceHasUnread).toHaveTextContent('true'))
         await waitFor(() => expect(channelFullyReadMarker).toHaveTextContent('isUnread:true'))
