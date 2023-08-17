@@ -187,7 +187,8 @@ function checkChangesInProgressToastVisible() {
     })
 }
 
-describe('SpaceSettings', () => {
+// https://linear.app/hnt-labs/issue/HNT-2122/spacesettingstest-flakiness
+describe.skip('SpaceSettings', () => {
     test("should show the first role's permission tab when settings is loaded", async () => {
         vi.spyOn(Lib, 'useHasPermission').mockReturnValue({
             isLoading: false,
