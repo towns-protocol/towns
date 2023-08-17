@@ -470,7 +470,7 @@ export const getToDevicePayloadContent = (
             return content
         }
         case ToDeviceOp[ToDeviceOp.TDO_KEY_RESPONSE]: {
-            content = ToDeviceMessage_KeyRequest.fromJsonString(payload)
+            content = ToDeviceMessage_KeyResponse.fromJsonString(payload)
             return content
         }
         default:
