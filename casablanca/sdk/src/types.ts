@@ -16,9 +16,6 @@ import {
     SpacePayload_Channel,
     EncryptedData,
     ToDeviceMessage,
-    ToDeviceOp,
-    ToDeviceMessage_KeyRequest,
-    ToDeviceMessage_KeyResponse,
     UserPayload_UserMembership,
     UserSettingsPayload_FullyReadMarkers,
     MiniblockHeader,
@@ -457,80 +454,6 @@ export const getToDeviceWirePayloadContent = (
         sender_key: payload.senderKey,
         algorithm: OLM_ALGORITHM,
     }
-}
-
-export const getToDevicePayloadContent = (
-    payload: string,
-    op: string,
-): ToDeviceMessage_KeyRequest | ToDeviceMessage_KeyResponse | undefined => {
-    let content: ToDeviceMessage_KeyRequest | ToDeviceMessage_KeyResponse | undefined = undefined
-    switch (op) {
-        case ToDeviceOp[ToDeviceOp.TDO_KEY_REQUEST]: {
-            content = ToDeviceMessage_KeyRequest.fromJsonString(payload)
-            return content
-        }
-        case ToDeviceOp[ToDeviceOp.TDO_KEY_RESPONSE]: {
-            content = ToDeviceMessage_KeyResponse.fromJsonString(payload)
-            return content
-        }
-        default:
-            break
-    }
-    return content
-}
-
-export const getToDevicePayloadContentFromEvent = (
-    event: ParsedEvent | StreamEvent | undefined,
-): ToDeviceMessage | undefined => {
-    const payload = getToDeviceMessagePayload(event)
-    if (!payload) {
-        return undefined
-    }
-    // todo: fix this
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
-    const body = payload.message?.ciphertext?.body.toJsonString()
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-    return ToDeviceMessage.fromJsonString(body as string)
-}
-
-export const getToDevicePayloadContentFromJsonString = (
-    payload: string,
-): ToDeviceMessage | undefined => {
-    return ToDeviceMessage.fromJsonString(payload)
-}
-
-export const getToDeviceMessagePayload = (
-    event: ParsedEvent | StreamEvent | undefined,
-): UserPayload_ToDevice | undefined => {
-    if (!isDefined(event)) {
-        return undefined
-    }
-    if ('event' in event) {
-        event = event.event as unknown as StreamEvent
-    }
-    if (event.payload.case === 'userPayload') {
-        if (event.payload.value.content.case === 'toDevice') {
-            return event.payload.value.content.value
-        }
-    }
-    return undefined
-}
-
-export const getUserDeviceKeyMessagePayload = (
-    event: ParsedEvent | StreamEvent | undefined,
-): UserDeviceKeyPayload_UserDeviceKey | undefined => {
-    if (!isDefined(event)) {
-        return undefined
-    }
-    if ('event' in event) {
-        event = event.event as unknown as StreamEvent
-    }
-    if (event.payload.case === 'userDeviceKeyPayload') {
-        if (event.payload.value.content.case === 'userDeviceKey') {
-            return event.payload.value.content.value
-        }
-    }
-    return undefined
 }
 
 export const getMessagePayloadContent = (
