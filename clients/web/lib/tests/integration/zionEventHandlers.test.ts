@@ -43,10 +43,12 @@ describe('Zion event handlers test', () => {
             visibility: RoomVisibility.Public,
         }
         const memberNftAddress = getMemberNftAddress(alice.chainId)
+        expect(memberNftAddress).toBeDefined()
+        expect(memberNftAddress).not.toBe('')
         const tokens = createExternalTokenStruct([memberNftAddress])
         const tokenEntitlement: SpaceFactoryDataTypes.CreateSpaceExtraEntitlementsStruct = {
             roleName: 'Member',
-            permissions: [],
+            permissions: [Permission.Read, Permission.Write],
             tokens,
             users: [],
         }
