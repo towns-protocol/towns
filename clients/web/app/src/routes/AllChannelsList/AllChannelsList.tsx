@@ -181,9 +181,11 @@ export const ChannelItem = ({
     return (
         <Stack>
             <Stack horizontal justifyContent="spaceBetween">
-                <Stack horizontal centerContent gap="sm">
+                <Stack horizontal centerContent gap="sm" overflowX="hidden">
                     <Icon type="tag" padding="line" background="level2" size="square_lg" />
-                    <Text color="gray1">{name}</Text>
+                    <Text truncate color="gray1" textAlign="left">
+                        {name}
+                    </Text>
                 </Stack>
                 <Button
                     disabled={syncingSpace}

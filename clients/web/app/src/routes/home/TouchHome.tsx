@@ -85,11 +85,8 @@ export const TouchHome = () => {
     }, [members, searchString])
 
     const filteredChannels = useMemo(() => {
-        const unjoinedChannels = contractChannelsWithJoinedStatus.filter(
-            (c) => c.isJoined === false,
-        )
         return fuzzysort
-            .go(searchString, unjoinedChannels, { key: 'name', all: true })
+            .go(searchString, contractChannelsWithJoinedStatus, { key: 'name', all: true })
             .map((m) => m.obj)
     }, [contractChannelsWithJoinedStatus, searchString])
 
@@ -196,24 +193,57 @@ const ChannelList = (props: {
     return (
         <MotionStack
             paddingTop="md"
-            paddingX="md"
-            gap="sm"
             initial="initial"
+            paddingX="sm"
             exit="exit"
             animate="animate"
             transition={transition}
             variants={variants}
         >
-            {channels.map((c) => (
-                <ChannelItem
-                    key={c.channelNetworkId}
-                    space={space}
-                    channelNetworkId={c.channelNetworkId}
-                    isJoined={c.isJoined}
-                    name={c.name}
-                />
-            ))}
+            {channels.map((c) =>
+                c.isJoined ? (
+                    <ChannelRow
+                        key={c.channelNetworkId}
+                        channelNetworkId={c.channelNetworkId}
+                        name={c.name}
+                    />
+                ) : (
+                    <Box padding="sm" key={c.channelNetworkId}>
+                        <ChannelItem
+                            key={c.channelNetworkId}
+                            space={space}
+                            channelNetworkId={c.channelNetworkId}
+                            isJoined={c.isJoined}
+                            name={c.name}
+                        />
+                    </Box>
+                ),
+            )}
         </MotionStack>
+    )
+}
+
+const ChannelRow = (props: { channelNetworkId: string; name: string }) => {
+    const { channelNetworkId, name } = props
+
+    return (
+        <NavItem to={`channels/${channelNetworkId}`} padding="none">
+            <Stack
+                horizontal
+                alignItems="center"
+                key={channelNetworkId}
+                width="100%"
+                gap="sm"
+                overflowX="hidden"
+            >
+                <Icon type="tag" padding="line" background="level2" size="square_lg" />
+                <Text truncate color="gray1" textAlign="left">
+                    {name}
+                </Text>
+                <Box grow />
+                <Icon type="arrowRight" color="gray2" />
+            </Stack>
+        </NavItem>
     )
 }
 
@@ -222,7 +252,6 @@ const UserList = (props: { members: RoomMember[] }) => {
     return (
         <MotionStack
             minHeight="forceScroll"
-            paddingTop="xs"
             initial="initial"
             exit="exit"
             animate="animate"
@@ -252,7 +281,7 @@ const UserRow = (props: { member: RoomMember }) => {
                 alignItems="center"
                 width="100%"
             >
-                <Avatar size="avatar_sm" userId={member.userId} />
+                <Avatar size="avatar_x4" userId={member.userId} />
                 <Stack gap="sm">
                     <Text fontWeight="strong" size="sm" color="default">
                         {getPrettyDisplayName(member).initialName}
