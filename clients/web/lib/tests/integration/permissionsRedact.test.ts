@@ -7,7 +7,7 @@ import {
     createTestSpaceWithEveryoneRole,
     createTestSpaceWithZionMemberRole,
     registerAndStartClients,
-    waitForRandom401ErrorsForAction,
+    waitForWithRetries,
 } from 'use-zion-client/tests/integration/helpers/TestUtils'
 
 import { Permission } from 'use-zion-client/src/client/web3/ContractTypes'
@@ -104,7 +104,7 @@ describe.skip('redact messages', () => {
             throw new Error('Failed to get bob matrix user id')
         }
         await alice.inviteUser(channelId, bobUserId)
-        await waitForRandom401ErrorsForAction(() => bob.joinRoom(channelId))
+        await waitForWithRetries(() => bob.joinRoom(channelId))
 
         /** Act */
         // alice sends a message in the channel
@@ -181,7 +181,7 @@ describe.skip('redact messages', () => {
             throw new Error('Failed to get bob matrix user id')
         }
         await alice.inviteUser(channelId, bobUserId)
-        await waitForRandom401ErrorsForAction(() => bob.joinRoom(channelId))
+        await waitForWithRetries(() => bob.joinRoom(channelId))
 
         /** Act */
         // alice sends a message in the channel
@@ -198,9 +198,7 @@ describe.skip('redact messages', () => {
 
         /** Assert */
         // verify that NO error was thrown for redaction
-        await waitForRandom401ErrorsForAction(async () =>
-            bob.redactEvent(channelId, messageEvent.eventId),
-        )
+        await waitForWithRetries(async () => bob.redactEvent(channelId, messageEvent.eventId))
         // verify that the message is redacted
         await waitFor(() => expect(alice.getMessages(channelId)).not.toContain(message))
     })

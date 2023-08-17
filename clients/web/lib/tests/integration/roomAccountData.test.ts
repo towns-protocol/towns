@@ -9,7 +9,7 @@ import {
     registerAndStartClients,
     registerAndStartClient,
     createTestChannelWithSpaceRoles,
-    waitForRandom401ErrorsForAction,
+    waitForWithRetries,
 } from './helpers/TestUtils'
 
 import { FullyReadMarker } from '../../src/types/timeline-types'
@@ -45,7 +45,7 @@ describe('roomAccountData', () => {
         await alice.joinRoom(spaceId)
 
         // alice joins the channel
-        await waitForRandom401ErrorsForAction(() => alice.joinRoom(channelId))
+        await waitForWithRetries(() => alice.joinRoom(channelId))
 
         // alice sends a message
         await alice.sendMessage(channelId, 'GM Bob')

@@ -11,7 +11,7 @@ import {
     createTestSpaceWithZionMemberRole,
     registerAndStartClients,
     registerAndStartClient,
-    waitForRandom401ErrorsForAction,
+    waitForWithRetries,
 } from 'use-zion-client/tests/integration/helpers/TestUtils'
 
 import { Permission } from 'use-zion-client/src/client/web3/ContractTypes'
@@ -50,7 +50,7 @@ describe('channel with roles and permissions', () => {
         /** Act */
 
         // join the channel
-        await waitForRandom401ErrorsForAction(() => tokenGrantedUser.joinRoom(channelId))
+        await waitForWithRetries(() => tokenGrantedUser.joinRoom(channelId))
     }) // end test
 
     test('join Everyone channel', async () => {
@@ -76,7 +76,7 @@ describe('channel with roles and permissions', () => {
         /** Act */
 
         // join the channel
-        await waitForRandom401ErrorsForAction(() => bob.joinRoom(channelId))
+        await waitForWithRetries(() => bob.joinRoom(channelId))
     }) // end test
 
     test('denied access to token-gated channel', async () => {

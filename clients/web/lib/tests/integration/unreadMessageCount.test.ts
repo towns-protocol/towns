@@ -8,7 +8,7 @@ import {
     createTestSpaceWithZionMemberRole,
     registerAndStartClients,
     registerAndStartClient,
-    waitForRandom401ErrorsForAction,
+    waitForWithRetries,
 } from './helpers/TestUtils'
 
 import { Permission } from '../../src/client/web3/ContractTypes'
@@ -127,8 +127,8 @@ describe('unreadMessageCount', () => {
 
         // alice joins the room
         await alice.joinRoom(spaceId)
-        await waitForRandom401ErrorsForAction(() => alice.joinRoom(channel_1))
-        await waitForRandom401ErrorsForAction(() => alice.joinRoom(channel_2))
+        await waitForWithRetries(() => alice.joinRoom(channel_1))
+        await waitForWithRetries(() => alice.joinRoom(channel_2))
         // expect our membership to be join
         await waitFor(() => expect(alice.getRoomData(spaceId)?.membership).toBe('join'))
         await waitFor(() => expect(alice.getRoomData(channel_1)?.membership).toBe('join'))

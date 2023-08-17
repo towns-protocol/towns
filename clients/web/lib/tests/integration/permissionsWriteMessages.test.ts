@@ -8,7 +8,7 @@ import {
     registerAndStartClients,
     registerAndStartClient,
     createTestChannelWithSpaceRoles,
-    waitForRandom401ErrorsForAction,
+    waitForWithRetries,
 } from 'use-zion-client/tests/integration/helpers/TestUtils'
 
 import { Permission } from 'use-zion-client/src/client/web3/ContractTypes'
@@ -51,7 +51,7 @@ describe('write messages', () => {
         // // invite user to join the space by first checking if they can read.
         await bob.inviteUser(roomId, alice.getUserId() as string)
 
-        await waitForRandom401ErrorsForAction(() => alice.joinRoom(roomId))
+        await waitForWithRetries(() => alice.joinRoom(roomId))
         // bob sends a message to the room
         await bob.sendMessage(roomId, 'Hello tokenGrantedUser!')
 
@@ -110,7 +110,7 @@ describe('write messages', () => {
 
         // invite user to join the space by first checking if they can read.
         await bob.inviteUser(spaceId, tokenGrantedUser.getUserId() as string)
-        await waitForRandom401ErrorsForAction(() => tokenGrantedUser.joinRoom(roomId))
+        await waitForWithRetries(() => tokenGrantedUser.joinRoom(roomId))
         // bob send 25 messages (20 is our default initialSyncLimit)
         for (let i = 0; i < 25; i++) {
             await bob.sendMessage(roomId, `message ${i}`)
@@ -160,15 +160,13 @@ describe('write messages', () => {
         /** Act */
         // invite user to join the space by first checking if they can read.
         await bob.inviteUser(roomId, tokenGrantedUser.getUserId() as string)
-        await waitForRandom401ErrorsForAction(() => tokenGrantedUser.joinRoom(roomId))
+        await waitForWithRetries(() => tokenGrantedUser.joinRoom(roomId))
 
         // bob sends a message to the room
         await bob.sendMessage(roomId, 'Hello tokenGrantedUser!')
 
         // user sends a message to the room
-        await waitForRandom401ErrorsForAction(() =>
-            tokenGrantedUser.sendMessage(roomId, 'Hello Bob!'),
-        )
+        await waitForWithRetries(() => tokenGrantedUser.sendMessage(roomId, 'Hello Bob!'))
 
         /** Assert */
 

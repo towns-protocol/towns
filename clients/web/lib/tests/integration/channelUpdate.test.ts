@@ -11,7 +11,7 @@ import {
     createTestSpaceWithZionMemberRole,
     findRoleByName,
     registerAndStartClients,
-    waitForRandom401ErrorsForAction,
+    waitForWithRetries,
 } from 'use-zion-client/tests/integration/helpers/TestUtils'
 
 import { ContractReceipt } from 'ethers'
@@ -91,7 +91,7 @@ describe.skip('channel update', () => {
             throw e
         }
         // bob tries to join the space and succeeds because he is a member of the new role
-        const bobJoinedRoom = await waitForRandom401ErrorsForAction<Room>(() =>
+        const bobJoinedRoom = await waitForWithRetries<Room>(() =>
             bob.joinRoom(channelId, spaceId.networkId),
         )
 

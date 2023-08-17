@@ -263,7 +263,7 @@ export function assertRoleEquals(actual: RoleDetails, expected: RoleDetails) {
 
 // some test actions result in 401s before resulting in success, so we need to retry
 // most often this happens when joining a channel immediately after creation
-export async function waitForRandom401ErrorsForAction<T>(action: () => Promise<T>) {
+export async function waitForWithRetries<T>(action: () => Promise<T>) {
     let failMessage = ''
     let result: T | undefined
 
@@ -273,7 +273,7 @@ export async function waitForRandom401ErrorsForAction<T>(action: () => Promise<T
             timeout: 1000 * 20,
         })
     } catch (error) {
-        failMessage = `waitForRandom401ErrorsForAction() Failed action: ${action.toString()} because of error: ${JSON.stringify(
+        failMessage = `waitForWithRetries() Failed action: ${action.toString()} because of error: ${JSON.stringify(
             error,
             Object.getOwnPropertyNames(error),
         )}`

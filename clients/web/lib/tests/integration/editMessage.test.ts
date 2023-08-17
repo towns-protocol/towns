@@ -7,7 +7,7 @@ import {
     createTestChannelWithSpaceRoles,
     createTestSpaceWithEveryoneRole,
     registerAndStartClients,
-    waitForRandom401ErrorsForAction,
+    waitForWithRetries,
 } from './helpers/TestUtils'
 
 import { Permission } from '../../src/client/web3/ContractTypes'
@@ -41,7 +41,7 @@ describe('editMessage', () => {
 
         console.log("bob's spaceId", { spaceId, channelId })
 
-        await waitForRandom401ErrorsForAction(() => alice.joinRoom(channelId))
+        await waitForWithRetries(() => alice.joinRoom(channelId))
 
         // bob sends a message to the room
         await bob.sendMessage(channelId, 'Hello Balice!')

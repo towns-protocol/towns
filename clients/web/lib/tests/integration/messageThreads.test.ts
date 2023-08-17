@@ -8,7 +8,7 @@ import {
     registerAndStartClients,
     registerAndStartClient,
     createTestChannelWithSpaceRoles,
-    waitForRandom401ErrorsForAction,
+    waitForWithRetries,
 } from './helpers/TestUtils'
 import { Permission } from '../../src/client/web3/ContractTypes'
 import { RoomIdentifier } from '../../src/types/room-identifier'
@@ -39,7 +39,7 @@ describe('messageThreads', () => {
         }))!
 
         // alice joins the room
-        await waitForRandom401ErrorsForAction(() => alice.joinRoom(channelId))
+        await waitForWithRetries(() => alice.joinRoom(channelId))
 
         // alice sends a message
         await alice.sendMessage(channelId, 'hi Bob!')

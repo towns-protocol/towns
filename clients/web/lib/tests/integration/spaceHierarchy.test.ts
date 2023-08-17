@@ -8,7 +8,7 @@ import {
     makeUniqueName,
     registerAndStartClients,
     registerAndStartClient,
-    waitForRandom401ErrorsForAction,
+    waitForWithRetries,
 } from './helpers/TestUtils'
 
 import { Permission } from '../../src/client/web3/ContractTypes'
@@ -55,7 +55,7 @@ describe('spaceHierarchy', () => {
         expect(alice_spaceInfo?.children.length).toEqual(2)
 
         // can she join it?
-        await waitForRandom401ErrorsForAction(() => alice.joinRoom(roomId))
+        await waitForWithRetries(() => alice.joinRoom(roomId))
         const alice_roomInfo = alice.getRoomData(roomId)
         expect(alice_roomInfo?.id.networkId).toEqual(roomId.networkId)
     })
@@ -106,7 +106,7 @@ describe('spaceHierarchy', () => {
         expect(alice_spaceInfo?.children.length).toEqual(2)
 
         // can she join it?
-        await waitForRandom401ErrorsForAction(() => alice.joinRoom(roomId))
+        await waitForWithRetries(() => alice.joinRoom(roomId))
         const alice_roomInfo = alice.getRoomData(roomId)
         expect(alice_roomInfo?.id.networkId).toEqual(roomId.networkId)
     })

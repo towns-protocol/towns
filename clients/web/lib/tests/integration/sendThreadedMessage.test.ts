@@ -7,7 +7,7 @@ import {
     createTestChannelWithSpaceRoles,
     createTestSpaceWithEveryoneRole,
     registerAndStartClients,
-    waitForRandom401ErrorsForAction,
+    waitForWithRetries,
 } from './helpers/TestUtils'
 
 import { Permission } from '../../src/client/web3/ContractTypes'
@@ -42,7 +42,7 @@ describe('sendThreadedMessage', () => {
 
         console.log("bob's spaceId", { spaceId, channelId })
 
-        await waitForRandom401ErrorsForAction(() => alice.joinRoom(channelId))
+        await waitForWithRetries(() => alice.joinRoom(channelId))
 
         // bob sends a message to the room
         await bob.sendMessage(channelId, 'Hello Alice!')
@@ -56,7 +56,7 @@ describe('sendThreadedMessage', () => {
         // assert assumptions
         expect(event?.threadParentId).toBeUndefined()
         // alice sends a threaded reply room
-        await waitForRandom401ErrorsForAction(() =>
+        await waitForWithRetries(() =>
             alice.sendMessage(channelId, 'Hello Bob!', { threadId: event?.eventId }),
         )
         // bob should receive the message & thread id should be set to parent event id

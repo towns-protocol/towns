@@ -6,7 +6,7 @@ import {
     createTestChannelWithSpaceRoles,
     createTestSpaceWithEveryoneRole,
     registerAndStartClients,
-    waitForRandom401ErrorsForAction,
+    waitForWithRetries,
 } from './helpers/TestUtils'
 import { Permission } from '../../src/client/web3/ContractTypes'
 import { RoomVisibility } from '../../src/types/zion-types'
@@ -38,9 +38,9 @@ describe('presence', () => {
 
         console.log("bob's spaceId", { spaceId, channelId })
 
-        await waitForRandom401ErrorsForAction(() => alice.joinRoom(channelId))
+        await waitForWithRetries(() => alice.joinRoom(channelId))
 
-        await waitForRandom401ErrorsForAction(() => alice.sendMessage(channelId, 'Hi @bob'))
+        await waitForWithRetries(() => alice.sendMessage(channelId, 'Hi @bob'))
 
         await waitFor(() =>
             expect(bob.getEvents_TypedRoomMessage(channelId).at(-1)?.content?.body).toEqual(

@@ -6,7 +6,7 @@ import {
     createTestSpaceWithZionMemberRole,
     registerAndStartClient,
     registerAndStartClients,
-    waitForRandom401ErrorsForAction,
+    waitForWithRetries,
 } from 'use-zion-client/tests/integration/helpers/TestUtils'
 
 import { Permission } from 'use-zion-client/src/client/web3/ContractTypes'
@@ -107,9 +107,7 @@ describe.skip('isEntitledToSpace and isEntitledToChannel tests', () => {
         /** Act */
         /** Assert */
         // join the town. let the server enforce the channel entitlement check
-        await waitForRandom401ErrorsForAction(() =>
-            bobWithNft.joinRoom(channelId, spaceId.networkId),
-        )
+        await waitForWithRetries(() => bobWithNft.joinRoom(channelId, spaceId.networkId))
     }) // end test
 
     test('server checks isEntitledToChannel false', async () => {

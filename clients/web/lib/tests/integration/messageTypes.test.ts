@@ -16,7 +16,7 @@ import {
     registerAndStartClients,
     registerAndStartClient,
     createTestChannelWithSpaceRoles,
-    waitForRandom401ErrorsForAction,
+    waitForWithRetries,
 } from './helpers/TestUtils'
 
 import { Permission } from '../../src/client/web3/ContractTypes'
@@ -50,10 +50,10 @@ describe('messageTypes', () => {
         }))!
 
         // alice joins the room
-        await waitForRandom401ErrorsForAction(() => alice.joinRoom(channelId))
+        await waitForWithRetries(() => alice.joinRoom(channelId))
 
         // alice sends a gm message
-        await waitForRandom401ErrorsForAction(() =>
+        await waitForWithRetries(() =>
             alice.sendMessage(channelId, 'GM', {
                 messageType: MessageType.GM,
             }),
@@ -110,11 +110,9 @@ describe('messageTypes', () => {
         }))!
 
         // alice joins the room
-        await waitForRandom401ErrorsForAction(() => alice.joinRoom(channelId))
+        await waitForWithRetries(() => alice.joinRoom(channelId))
         // alice sends a image message
-        await waitForRandom401ErrorsForAction(() =>
-            alice.sendMessage(channelId, 'what.jpg', IMAGE_MSG_CONTENT),
-        )
+        await waitForWithRetries(() => alice.sendMessage(channelId, 'what.jpg', IMAGE_MSG_CONTENT))
 
         await waitFor(() => {
             expect(bob.getMessages(channelId)).toContain('what.jpg')

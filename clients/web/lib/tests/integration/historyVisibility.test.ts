@@ -12,7 +12,7 @@ import {
     createTestSpaceWithEveryoneRole,
     makeUniqueName,
     registerAndStartClients,
-    waitForRandom401ErrorsForAction,
+    waitForWithRetries,
 } from './helpers/TestUtils'
 import { ZionTestClient } from './helpers/ZionTestClient'
 
@@ -50,12 +50,12 @@ describe('historyVisibility', () => {
 
         await john.joinRoom(spaceId)
 
-        await waitForRandom401ErrorsForAction(() => john.joinRoom(roomId))
+        await waitForWithRetries(() => john.joinRoom(roomId))
 
         // if we don't wait for encryption, we'll send unencrypted messages :(
         await waitFor(() => expect(john.isRoomEncrypted(roomId)).toBeTruthy())
 
-        await waitForRandom401ErrorsForAction(() => john.sendMessage(roomId, "I'm John!"))
+        await waitForWithRetries(() => john.sendMessage(roomId, "I'm John!"))
 
         await waitFor(() => expect(bob.getMessages(roomId)).toContain("I'm John!"))
 
@@ -69,7 +69,7 @@ describe('historyVisibility', () => {
         // alice joins the room
         await alice.joinRoom(spaceId)
 
-        await waitForRandom401ErrorsForAction(() => alice.joinRoom(roomId))
+        await waitForWithRetries(() => alice.joinRoom(roomId))
 
         // and we should see the message
         await waitFor(
@@ -79,7 +79,7 @@ describe('historyVisibility', () => {
 
         await waitFor(() => expect(alice.getMessages(roomId)).toContain("I'm John!"))
 
-        await waitForRandom401ErrorsForAction(() => alice.sendMessage(roomId, "I'm Alice!"))
+        await waitForWithRetries(() => alice.sendMessage(roomId, "I'm Alice!"))
 
         await waitFor(() => expect(bob.getMessages(roomId)).toContain("I'm Alice!"))
 

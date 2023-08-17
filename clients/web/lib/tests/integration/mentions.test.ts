@@ -10,7 +10,7 @@ import {
     createTestChannelWithSpaceRoles,
     createTestSpaceWithEveryoneRole,
     registerAndStartClients,
-    waitForRandom401ErrorsForAction,
+    waitForWithRetries,
 } from './helpers/TestUtils'
 
 describe('mentions', () => {
@@ -38,7 +38,7 @@ describe('mentions', () => {
 
         console.log("bob's spaceId", { spaceId, channelId })
 
-        await waitForRandom401ErrorsForAction(() => alice.joinRoom(channelId))
+        await waitForWithRetries(() => alice.joinRoom(channelId))
         const bobDisplayName = bob.getUser(bob.getUserId()!)?.displayName ?? 'bob'
         // alice sends a message
         await alice.sendMessage(channelId, 'Hi @bob', {
