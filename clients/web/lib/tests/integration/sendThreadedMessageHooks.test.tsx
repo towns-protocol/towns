@@ -398,12 +398,11 @@ describe('sendThreadedMessageHooks', () => {
             })
         })
         // -- bob should see the channel_2.thread in his thread list
-        //TODO: add support of channel names in Casablanca HNT-1577
-        /*await waitFor(() =>
+        await waitFor(() =>
             expect(threadRoots).toHaveTextContent(
                 `channel: (channel_2) isUnread: (true) mentions: (0) replyCount: (1) parentId: (${channel_2_message_1.eventId})`,
             ),
-        )*/
+        )
         // -- bob should not see the channel_1.thread in his thread list
         await waitFor(() => expect(threadRoots).not.toHaveTextContent(`channel: (channel_1)`))
         // -- bob should see the thread root message in is thread list
