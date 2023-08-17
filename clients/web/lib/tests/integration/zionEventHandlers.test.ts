@@ -6,6 +6,7 @@ import {
     createTestChannelWithSpaceRoles,
     createTestSpaceWithEveryoneRole,
     registerAndStartClients,
+    waitForWithRetries,
 } from './helpers/TestUtils'
 import { RoomIdentifier } from '../../src/types/room-identifier'
 import { RoomVisibility } from '../../src/types/zion-types'
@@ -49,7 +50,7 @@ describe('Zion event handlers test', () => {
             tokens,
             users: [],
         }
-        await alice.createSpace(createSpaceInfo, tokenEntitlement, [])
+        await waitForWithRetries(() => alice.createSpace(createSpaceInfo, tokenEntitlement, []))
 
         expect(eventHandlerResult).toBeDefined()
         expect(eventHandlerResult?.roomIdentifier).toBeDefined()
