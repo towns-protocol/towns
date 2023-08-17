@@ -2,7 +2,7 @@ import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext
 import { $getSelection, $isRangeSelection } from 'lexical'
 import React, { useCallback, useState } from 'react'
 import { $createEmojiNode } from '@components/RichText/nodes/EmojiNode'
-import { Box, CardOpener, Icon, IconProps, Pill } from '@ui'
+import { Box, CardOpener, Icon, IconButton, IconProps, Pill } from '@ui'
 import { useDevice } from 'hooks/useDevice'
 import { MotionIconButton } from 'ui/components/Motion/MotionComponents'
 import { EmojiPickerContainer } from './EmojiPickerContainer'
@@ -59,7 +59,7 @@ export const EmojiPickerButton = (props: Props) => {
         >
             {({ triggerProps }) => (
                 <Container>
-                    <Icon type="emojiAdd" {...triggerProps} size={size} />
+                    <IconButton icon="emojiAdd" {...triggerProps} size={size} />
                 </Container>
             )}
         </CardOpener>
