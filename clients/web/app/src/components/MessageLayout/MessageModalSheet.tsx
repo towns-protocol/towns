@@ -174,7 +174,7 @@ export const MessageModalSheet = (props: Props) => {
 
                                 {canReact && (
                                     <TableCell
-                                        iconType="emoji"
+                                        iconType="emojiAdd"
                                         text="Add Reaction"
                                         onClick={onEmojiClick}
                                     />

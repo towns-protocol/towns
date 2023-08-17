@@ -23,7 +23,7 @@ export const EmojiPickerButton = (props: Props) => {
     return isTouch ? (
         <>
             <IconButton
-                icon="emoji"
+                icon="emojiAdd"
                 size={size}
                 alignSelf="start"
                 onClick={() => setShowMobileEmojiSheet(true)}
