@@ -20,6 +20,7 @@ import { useHasJoinedChannels } from 'hooks/useHasJoinedChannels'
 import { NoJoinedChannelsFallback } from '@components/NoJoinedChannelsFallback'
 import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinner'
 import { TouchNavBar } from '@components/TouchNavBar/TouchNavBar'
+import { useSpaceChannels } from 'hooks/useSpaceChannels'
 import { CentralPanelLayout } from './layouts/CentralPanelLayout'
 
 export const SpaceMentions = () => {
@@ -96,7 +97,8 @@ const MentionBox = (props: { mention: MentionResult; userId?: string }) => {
 
     const content = getIsRoomMessageContent(mention.event)
 
-    const { membersMap } = useSpaceMembers()
+    const { membersMap, members } = useSpaceMembers()
+    const channels = useSpaceChannels()
     const sender = membersMap[mention.event.sender.id]
 
     if (!content) {
@@ -133,6 +135,8 @@ const MentionBox = (props: { mention: MentionResult; userId?: string }) => {
                     name={getPrettyDisplayName(sender).name}
                 >
                     <RichTextPreview
+                        members={members}
+                        channels={channels}
                         content={getMessageBody(mention.event.eventId, content)}
                         statusAnnotation={
                             content.replacedMsgId !== undefined
