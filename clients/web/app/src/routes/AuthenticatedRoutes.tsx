@@ -63,7 +63,11 @@ export const AuthenticatedRoutes = () => {
                             <Route path="profile/:profileId" element={<SpaceProfilePanel />} />
                             <Route path="info" element={<InfoPanelWrapper />} />
                         </Route>
-                        <Route path={`${PATHS.PROFILE}/:profileId`} element={<TouchProfile />} />
+                        <Route path={`${PATHS.PROFILE}/me`} element={<TouchProfile />} />
+                        <Route
+                            path={`${PATHS.PROFILE}/:profileId`}
+                            element={<SpaceProfilePanel />}
+                        />
                         <Route path="*" element={<TownRoutes />} />
                     </Route>
                 ) : (

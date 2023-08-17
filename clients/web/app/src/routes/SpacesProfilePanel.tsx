@@ -34,7 +34,7 @@ export const SpaceProfilePanel = (props: { children?: React.ReactNode }) => {
 export const SpaceProfile = (props: { children?: React.ReactNode }) => {
     const [search] = useSearchParams()
     const cameFromSpaceInfoPanel = search.get('spaceInfo') !== null
-    const { profileId } = useParams()
+    const { profileId = 'me' } = useParams()
     const { requestPushPermission, simplifiedPermissionState } = usePushNotifications()
 
     const navigate = useNavigate()
