@@ -1,8 +1,8 @@
 name: Continuous Integration
 on:
     schedule:
-        # run once a day
-        - cron: '0 10-16 * * *'
+        # run during working hours
+        - cron: '0 15-24 * * *'
     pull_request:
     workflow_dispatch: # Allow manual trigger in GitHub UI
         inputs:
