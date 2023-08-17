@@ -282,6 +282,8 @@ export const CreateSpaceForm = (props: Props) => {
 }
 
 const LocalhostWalletInfo = (props: { accountId: Address }) => {
+    const { provider } = useWeb3Context()
+    const { chainId } = useEnvironment()
     const { accountId } = props
     const balance = useBalance({
         address: accountId,
@@ -298,34 +300,23 @@ const LocalhostWalletInfo = (props: { accountId: Address }) => {
                 const fundWallet = async () => {
                     try {
                         txInProgress.current = true
-                        // We're on Anvil, so we can use the anvil_setBalance RPC
-                        const getWsProvider = () => {
-                            return new ethers.providers.WebSocketProvider('ws://127.0.0.1:8545')
+                        const anvilKey =
+                            '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80' // anvil default funded address #1
+
+                        const wallet = new ethers.Wallet(anvilKey, provider)
+                        const amount = 0.1
+                        const tx = {
+                            from: wallet.address,
+                            to: accountId,
+                            value: ethers.utils.parseEther(amount.toString()),
+                            gasLimit: 1000000,
+                            chainId: chainId,
                         }
-
-                        const provider = getWsProvider()
-                        const amount = ethers.BigNumber.from(10).pow(18).toHexString()
-
-                        const result = provider.send('anvil_setBalance', [accountId, amount])
-
-                        console.log('fundWallet tx', result, amount, accountId)
-                        const receipt = await result
+                        console.log('fundWallet tx', tx)
+                        const result = await wallet.sendTransaction(tx)
+                        console.log('fundWallet result', result)
+                        const receipt = await result.wait()
                         console.log('fundWallet receipt', receipt)
-                        {
-                            const result = provider.send('anvil_nodeInfo')
-
-                            console.log('anvil_nodeInfo tx', result, amount, accountId)
-                            const receipt = await result
-                            console.log('anvil_nodeInfo receipt', receipt)
-                        }
-                        {
-                            const result = provider.send('eth_getBalance', [accountId, 'latest'])
-
-                            console.log('eth_getBalance tx', result, amount, accountId)
-                            const receipt = await result
-                            const newBalance = ethers.BigNumber.from(receipt).toString()
-                            console.log('eth_getBalance newBalance', newBalance)
-                        }
                     } catch (error) {
                         console.error('fundWallet failed', error)
                     } finally {
@@ -338,8 +329,9 @@ const LocalhostWalletInfo = (props: { accountId: Address }) => {
                 console.log('fundWallet in progress')
             }
         },
-        [balance],
+        [balance, chainId, provider],
     )
+
     return (
         <Box display="grid" flexDirection="column" alignItems="center" marginTop="20px">
             <Chip
