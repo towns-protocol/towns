@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { AnimatePresence } from 'framer-motion'
 import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
@@ -11,7 +11,11 @@ export const SpacesChannelAnimated = () => {
     const spaceId = useSpaceIdFromPathname()
     const navigate = useNavigate()
 
-    const [channelPresented, setChannelPresented] = useState(true)
+    const [channelPresented, setChannelPresented] = useState(false)
+    useEffect(() => {
+        setChannelPresented(true)
+    }, [])
+
     const closePanel = useCallback(() => {
         setChannelPresented(false)
         setTimeout(() => {
