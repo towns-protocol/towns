@@ -25,10 +25,12 @@ export const SendMarkdownPlugin = (props: {
     onSend?: (value: string, mentions: Mention[]) => void
     onSendAttemptWhileDisabled?: () => void
     onCancel?: () => void
+    isEditorEmpty: boolean
+    setIsEditorEmpty: (isEditorEmpty: boolean) => void
 }) => {
-    const { disabled, onSend, onSendAttemptWhileDisabled } = props
+    const { disabled, onSend, onSendAttemptWhileDisabled, isEditorEmpty, setIsEditorEmpty } = props
     const [editor] = useLexicalComposerContext()
-    const [isEditorEmpty, setIsEditorEmpty] = useState(true)
+
     const { parseMarkdown } = useParseMarkdown(onSend)
     const { isTouch } = useDevice()
 
@@ -66,7 +68,7 @@ export const SendMarkdownPlugin = (props: {
                 }
             })
         })
-    }, [editor])
+    }, [editor, setIsEditorEmpty])
 
     useEffect(() => {
         // keep depency in order to register when updated
@@ -106,7 +108,8 @@ export const SendMarkdownPlugin = (props: {
     }, [editor, parseMarkdown])
 
     const shouldDisplayButtons =
-        props.displayButtons === 'always' || (props.displayButtons === 'on-focus' && props.focused)
+        props.displayButtons === 'always' ||
+        (props.displayButtons === 'on-focus' && (props.focused || !isEditorEmpty))
 
     return (
         <AnimatePresence>

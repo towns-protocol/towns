@@ -227,6 +227,7 @@ const RichTextEditorWithoutBoundary = (props: Props) => {
     const { transformers } = useTransformers({ members, channels })
     const { isTouch } = useDevice()
     const showTouchMessageToolbar = isTouch && !isEditing
+    const [isEditorEmpty, setIsEditorEmpty] = useState(true)
 
     const userInput = useStore((state) =>
         props.storageId ? state.channelMessageInputMap[props.storageId] : undefined,
@@ -312,7 +313,7 @@ const RichTextEditorWithoutBoundary = (props: Props) => {
                         <RichTextTouchToolbar
                             threadId={props.threadId}
                             threadPreview={props.threadPreview}
-                            visible={focused}
+                            visible={focused || !isEditorEmpty}
                         />
                     )}
                     <Box grow />
@@ -321,6 +322,8 @@ const RichTextEditorWithoutBoundary = (props: Props) => {
                         disabled={isOffline}
                         focused={focused}
                         isEditing={isEditing ?? false}
+                        isEditorEmpty={isEditorEmpty}
+                        setIsEditorEmpty={setIsEditorEmpty}
                         onSend={onSendCb}
                         onSendAttemptWhileDisabled={onSendAttemptWhileDisabled}
                         onCancel={props.onCancel}
