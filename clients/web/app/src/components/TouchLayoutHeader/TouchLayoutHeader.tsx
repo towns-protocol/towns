@@ -6,10 +6,11 @@ import {
     useSpaceMembers,
     useZionContext,
 } from 'use-zion-client'
-import { Box, Dot, IconButton, Paragraph, Stack, Text } from '@ui'
+import { Box, Dot, Icon, IconButton, Paragraph, Stack, Text } from '@ui'
 import { useNavigateToCurrentSpaceInfo } from 'hooks/useNavigateToCurrentSpaceInfo'
 import { useInstallPWAPrompt } from 'hooks/useInstallPWAPrompt'
 import { useGetSpaceTopic } from 'hooks/useSpaceTopic'
+import { useMuteSettings } from 'api/lib/notificationSettings'
 
 type Props = {
     onDisplayMainPanel: () => void
@@ -33,6 +34,10 @@ export const TouchLayoutHeader = (props: Props) => {
             return spaceUnreads[space.id.networkId] || spaceMentions[space.id.networkId]
         }, 0)
     }, [spaceUnreads, spaceMentions, currentSpaceId, spaces])
+
+    const { spaceIsMuted } = useMuteSettings({
+        spaceId: currentSpaceId?.networkId,
+    })
 
     const onTokenClick = useCallback(() => {
         navigateToCurrentSpace()
@@ -83,9 +88,15 @@ export const TouchLayoutHeader = (props: Props) => {
                         width="100%"
                         onClick={onTokenClick}
                     >
-                        <Text truncate fontWeight="strong" color="default">
-                            {space.name}
-                        </Text>
+                        <Stack horizontal gap="sm" alignItems="center">
+                            <Text truncate fontWeight="strong" color="default">
+                                {space.name}
+                            </Text>
+
+                            {spaceIsMuted && (
+                                <Icon type="muteActive" color="default" size="square_xs" />
+                            )}
+                        </Stack>
                         <Paragraph truncate color="gray2" size="sm">
                             {`${members.length} member${members.length > 1 ? `s` : ``}`}
                             {topic ? ` · ${topic.toLocaleLowerCase()}` : ``}
