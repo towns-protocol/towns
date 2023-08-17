@@ -8,7 +8,7 @@ import { RoleSettingsGating } from '@components/SpaceSettings/RoleSettings/RoleS
 import { RoleSettingsDisplay } from '@components/SpaceSettings/RoleSettings/RoleSettingsDisplay'
 import { useIsHolderOfPioneerNFT } from 'api/lib/isHolderOfToken'
 import { env } from 'utils'
-import { SpaceOutlet } from 'routes/SpaceOutlet'
+import { SpaceContextRoute } from 'routes/SpaceContextRoute'
 import { useDevice } from 'hooks/useDevice'
 import { DirectMessageIndex } from '@components/DirectMessages/DirectMessageIndex'
 import { DirectMessageThread } from '@components/DirectMessages/DirectMessageThread'
@@ -30,6 +30,7 @@ import { NoJoinedSpacesFallback } from './NoJoinedSpacesFallback'
 import { ChannelMembers } from './ChannelMembers'
 import { TouchProfile } from './TouchProfile'
 import { SpacesChannelAnimated } from './SpacesChannelAnimated'
+import { AppPanelLayout } from './layouts/AppPanelLayout'
 
 const CheckRedirect = ({ children }: { children: JSX.Element }) => {
     const { state } = useLocation()
@@ -50,28 +51,23 @@ export const AuthenticatedRoutes = () => {
             {(env.IS_DEV || isHolderOfPioneerNft) && (
                 <Route path={`${PATHS.SPACES}/new`} element={<SpacesNew />} />
             )}
-            <Route path={`${PATHS.SPACES}/:spaceSlug`} element={<SpaceOutlet />}>
+            <Route path={`${PATHS.SPACES}/:spaceSlug`} element={<SpaceContextRoute />}>
                 {isTouch ? (
-                    <>
-                        <Route path="" element={<TouchHome />}>
-                            <Route path="info" element={<InfoPanelWrapper />} />
-                            <Route path="channels/:channelSlug" element={<SpacesChannelAnimated />}>
-                                <Route
-                                    path="replies/:messageId"
-                                    element={<SpacesChannelReplies parentRoute=".." />}
-                                />
-                                <Route path="profile/:profileId" element={<SpaceProfilePanel />} />
-                                <Route path="info" element={<InfoPanelWrapper />} />
-                            </Route>
+                    <Route path="" element={<TouchHome />}>
+                        <Route path="info" element={<InfoPanelWrapper />} />
+                        <Route path="channels/:channelSlug" element={<SpacesChannelAnimated />}>
                             <Route
-                                path={`${PATHS.PROFILE}/:profileId`}
-                                element={<TouchProfile />}
+                                path="replies/:messageId"
+                                element={<SpacesChannelReplies parentRoute=".." />}
                             />
-                            <Route path="*" element={<TownRoutes />} />
+                            <Route path="profile/:profileId" element={<SpaceProfilePanel />} />
+                            <Route path="info" element={<InfoPanelWrapper />} />
                         </Route>
-                    </>
+                        <Route path={`${PATHS.PROFILE}/:profileId`} element={<TouchProfile />} />
+                        <Route path="*" element={<TownRoutes />} />
+                    </Route>
                 ) : (
-                    <>
+                    <Route element={<AppPanelLayout />}>
                         <Route index element={<SpaceHome />} />
                         <Route path="members" element={<SpaceMembers />}>
                             <Route path="profile/:profileId" element={<SpaceProfilePanel />} />
@@ -86,7 +82,7 @@ export const AuthenticatedRoutes = () => {
                             <Route path="info" element={<InfoPanelWrapper />} />
                         </Route>
                         <Route path="*" element={<TownRoutes />} />
-                    </>
+                    </Route>
                 )}
             </Route>
 

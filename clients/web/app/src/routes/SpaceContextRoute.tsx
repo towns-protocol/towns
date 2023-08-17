@@ -7,28 +7,26 @@ import { PATHS } from 'routes'
 import { useStore } from 'store/store'
 import { useSetDocTitle } from 'hooks/useDocTitle'
 import { useContractAndServerSpaceData } from 'hooks/useContractAndServerSpaceData'
-import { VisualKeyboardContextProvider } from '@components/VisualKeyboardContext/VisualKeyboardContext'
-import { useDevice } from 'hooks/useDevice'
 import { ServiceWorkerMessageType } from '../workers/types.d'
-import { AppPanelLayout } from './layouts/AppPanelLayout'
 
 const createSpaceTitle = (spaceName?: string, childLabel?: string) => {
     return [childLabel, spaceName].filter(Boolean).concat('TOWNS').join(' - ')
 }
 
-export const SpaceOutlet = () => {
+export const SpaceContextRoute = () => {
     const spaceRoute = useMatch({ path: `/${PATHS.SPACES}/:spaceSlug`, end: false })
     const spaceId = spaceRoute?.params.spaceSlug ?? ''
 
     return (
         <SpaceContextProvider spaceId={spaceId}>
-            <SpaceOutletInside />
+            <SpaceContext />
         </SpaceContextProvider>
     )
 }
 
-const SpaceOutletInside = () => {
+const SpaceContext = () => {
     const { serverSpace: space, chainSpace } = useContractAndServerSpaceData()
+
     const spaceSlug = space?.id.slug
     const setTownRouteBookmark = useStore((s) => s.setTownRouteBookmark)
 
@@ -73,14 +71,10 @@ const SpaceOutletInside = () => {
         setTitle(title)
     }, [setTitle, title])
 
-    const { isTouch } = useDevice()
-
     return (
         <>
             <AutojoinChannels />
-            <VisualKeyboardContextProvider>
-                {isTouch ? <Outlet /> : <AppPanelLayout />}
-            </VisualKeyboardContextProvider>
+            <Outlet />
             {space && <SpaceServiceWorkerMessenger space={space} />}
         </>
     )

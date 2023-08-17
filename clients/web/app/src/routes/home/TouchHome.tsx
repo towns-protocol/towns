@@ -23,6 +23,7 @@ import { NavItem } from '@components/NavItem/_NavItem'
 import { useCreateLink } from 'hooks/useCreateLink'
 import { BlurredBackground } from '@components/TouchLayoutHeader/BlurredBackground'
 import { useContractChannelsWithJoinedStatus } from 'hooks/useContractChannelsWithJoinedStatus'
+import { VisualKeyboardContextProvider } from '@components/VisualKeyboardContext/VisualKeyboardContext'
 import { TouchTabBarLayout } from '../layouts/TouchTabBarLayout'
 import { ChannelItem } from '../AllChannelsList/AllChannelsList'
 import { CheckValidSpaceOrInvite } from './CheckValidSpaceOrInvite'
@@ -100,77 +101,81 @@ export const TouchHome = () => {
 
     return (
         <ErrorBoundary fallback={ErrorFallbackComponent}>
-            <TouchTabBarLayout>
-                <CheckValidSpaceOrInvite>
-                    {!isSearching && <BlurredBackground spaceSlug={space?.id.slug ?? ''} />}
-                    <AnimatePresence>
-                        <MotionStack absoluteFill layout paddingTop="safeAreaInsetTop">
-                            {!isSearching && (
-                                <TouchLayoutHeader onDisplayMainPanel={onDisplayMainPanel} />
-                            )}
-                            <MotionStack
-                                horizontal
-                                layout
-                                paddingX
-                                alignItems="center"
-                                paddingY="xs"
-                                gap="sm"
-                                animate={{ caretColor: caretVisible ? 'auto' : 'transparent' }}
-                            >
-                                <TextField
-                                    placeholder="Jump to..."
-                                    height="x5"
-                                    background="level2"
-                                    value={searchString}
-                                    onFocus={onFocus}
-                                    onChange={onChange}
-                                />
-                                {isSearching && <IconButton icon="close" onClick={onCloseSearch} />}
-                            </MotionStack>
-                            <Box scroll grow scrollbars={isSearching} onScroll={onScroll}>
-                                {isSearching ? (
-                                    <>
-                                        {space && filteredChannels.length > 0 && (
-                                            <ChannelList
-                                                space={space}
-                                                channels={filteredChannels}
-                                            />
-                                        )}
-                                        <UserList members={filteredMembers} />
-                                    </>
-                                ) : (
-                                    <MotionBox
-                                        minHeight="forceScroll"
-                                        variants={variants}
-                                        initial="initial"
-                                        exit="exit"
-                                        animate="animate"
-                                        transition={transition}
-                                    >
-                                        {space && !isLoadingChannels ? (
-                                            <SyncedChannelList
-                                                space={space}
-                                                mentions={mentions}
-                                                canCreateChannel={false}
-                                            />
-                                        ) : (
-                                            <Box absoluteFill centerContent>
-                                                <ButtonSpinner />
-                                            </Box>
-                                        )}
-                                    </MotionBox>
+            <VisualKeyboardContextProvider>
+                <TouchTabBarLayout>
+                    <CheckValidSpaceOrInvite>
+                        {!isSearching && <BlurredBackground spaceSlug={space?.id.slug ?? ''} />}
+                        <AnimatePresence>
+                            <MotionStack absoluteFill layout paddingTop="safeAreaInsetTop">
+                                {!isSearching && (
+                                    <TouchLayoutHeader onDisplayMainPanel={onDisplayMainPanel} />
                                 )}
-                            </Box>
-                        </MotionStack>
-                    </AnimatePresence>
-                    <Outlet />
-                </CheckValidSpaceOrInvite>
-            </TouchTabBarLayout>
-            <AnimatePresence>
-                {activeOverlay === 'main-panel' && (
-                    <TouchHomeOverlay onClose={() => setActiveOverlay(undefined)} />
-                )}
-            </AnimatePresence>
+                                <MotionStack
+                                    horizontal
+                                    layout
+                                    paddingX
+                                    alignItems="center"
+                                    paddingY="xs"
+                                    gap="sm"
+                                    animate={{ caretColor: caretVisible ? 'auto' : 'transparent' }}
+                                >
+                                    <TextField
+                                        placeholder="Jump to..."
+                                        height="x5"
+                                        background="level2"
+                                        value={searchString}
+                                        onFocus={onFocus}
+                                        onChange={onChange}
+                                    />
+                                    {isSearching && (
+                                        <IconButton icon="close" onClick={onCloseSearch} />
+                                    )}
+                                </MotionStack>
+                                <Box scroll grow scrollbars={isSearching} onScroll={onScroll}>
+                                    {isSearching ? (
+                                        <>
+                                            {space && filteredChannels.length > 0 && (
+                                                <ChannelList
+                                                    space={space}
+                                                    channels={filteredChannels}
+                                                />
+                                            )}
+                                            <UserList members={filteredMembers} />
+                                        </>
+                                    ) : (
+                                        <MotionBox
+                                            minHeight="forceScroll"
+                                            variants={variants}
+                                            initial="initial"
+                                            exit="exit"
+                                            animate="animate"
+                                            transition={transition}
+                                        >
+                                            {space && !isLoadingChannels ? (
+                                                <SyncedChannelList
+                                                    space={space}
+                                                    mentions={mentions}
+                                                    canCreateChannel={false}
+                                                />
+                                            ) : (
+                                                <Box absoluteFill centerContent>
+                                                    <ButtonSpinner />
+                                                </Box>
+                                            )}
+                                        </MotionBox>
+                                    )}
+                                </Box>
+                            </MotionStack>
+                        </AnimatePresence>
+                        <Outlet />
+                    </CheckValidSpaceOrInvite>
+                </TouchTabBarLayout>
+                <AnimatePresence>
+                    {activeOverlay === 'main-panel' && (
+                        <TouchHomeOverlay onClose={() => setActiveOverlay(undefined)} />
+                    )}
+                </AnimatePresence>
+            </VisualKeyboardContextProvider>
         </ErrorBoundary>
     )
 }
