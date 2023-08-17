@@ -60,7 +60,7 @@ describe('unreadMessageCountHooks', () => {
         // create a veiw for bob
         const TestComponent = () => {
             const { joinRoom, sendMessage, sendReadReceipt } = useZionClient()
-            const { spaceUnreads } = useZionContext()
+            const { spaceUnreads, spaceUnreadChannelIds } = useZionContext()
             const spaceFullyReadmarker = useFullyReadMarker(janesSpaceId)
             const channelFullyReadMarker = useFullyReadMarker(janesChannelId)
             const spaceHasUnread = spaceUnreads[janesSpaceId.networkId]
@@ -96,6 +96,9 @@ describe('unreadMessageCountHooks', () => {
             function formatMessage(e: TimelineEvent) {
                 return `${e.fallbackContent} eventId: ${e.eventId}`
             }
+
+            const listOfChannelsWithUnreads = spaceUnreadChannelIds[janesSpaceId.networkId]
+
             return (
                 <>
                     <RegisterWallet />
@@ -107,6 +110,12 @@ describe('unreadMessageCountHooks', () => {
                     <button onClick={onClickSendMessage}>Send Message</button>
                     <div data-testid="spaceFullyReadMarker">
                         {JSON.stringify(spaceFullyReadmarker)}
+                    </div>
+                    <div data-testid="spaceUnreadChannelIds">
+                        {listOfChannelsWithUnreads &&
+                            Array.from(listOfChannelsWithUnreads).map((id) => (
+                                <div key={id}>{id}</div>
+                            ))}
                     </div>
                     <div data-testid="spaceHasUnread">
                         {spaceHasUnread === undefined ? 'undefined' : spaceHasUnread.toString()}
@@ -147,6 +156,7 @@ describe('unreadMessageCountHooks', () => {
         const allMessages = screen.getByTestId('allMessages')
         const spaceHasUnread = screen.getByTestId('spaceHasUnread')
         const channelFullyReadMarker = screen.getByTestId('channelFullyReadMarker')
+        const spaceUnreadChannelIds = screen.getByTestId('spaceUnreadChannelIds')
         const joinSpaceButton = screen.getByRole('button', {
             name: 'join space',
         })
@@ -186,16 +196,19 @@ describe('unreadMessageCountHooks', () => {
         // check count
         await waitFor(() => expect(spaceHasUnread).toHaveTextContent('true'))
         await waitFor(() => expect(channelFullyReadMarker).toHaveTextContent('isUnread:true'))
+        await waitFor(() => expect(spaceUnreadChannelIds.children.length).toBe(1))
         // mark as read
         fireEvent.click(markAsReadButton)
         // check count
         await waitFor(() => expect(channelFullyReadMarker).toHaveTextContent('isUnread:false'))
         await waitFor(() => expect(spaceHasUnread).toHaveTextContent('false'))
+        await waitFor(() => expect(spaceUnreadChannelIds.children.length).toBe(0))
         // have jane send a message to bob
         await jane.sendMessage(janesChannelId, "it's Jane!")
         // check count
         await waitFor(() => expect(spaceHasUnread).toHaveTextContent('true'))
         await waitFor(() => expect(channelFullyReadMarker).toHaveTextContent('isUnread:true'))
+        await waitFor(() => expect(spaceUnreadChannelIds.children.length).toBe(1))
         // send another message
         await jane.sendMessage(janesChannelId, 'rember me!')
         // sending a message doesn't reset the count
@@ -204,11 +217,13 @@ describe('unreadMessageCountHooks', () => {
         await waitFor(() => expect(spaceHasUnread).toHaveTextContent('true'))
         await waitFor(() => expect(channelFullyReadMarker).toHaveTextContent('isUnread:true'))
         await waitFor(() => expect(allMessages).toHaveTextContent('rember me!'))
+        await waitFor(() => expect(spaceUnreadChannelIds.children.length).toBe(1))
         // send a message back
         fireEvent.click(markAsReadButton)
         // check count
         await waitFor(() => expect(spaceHasUnread).toHaveTextContent('false'))
         await waitFor(() => expect(channelFullyReadMarker).toHaveTextContent('isUnread:false'))
+        await waitFor(() => expect(spaceUnreadChannelIds.children.length).toBe(0))
         // have jane create a new room and invite bob
         const newRoomId = await jane.createChannel(
             {

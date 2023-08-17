@@ -5,6 +5,7 @@ import { useFullyReadMarkerStore } from '../../store/use-fully-read-marker-store
 import { ThreadStatsMap, useTimelineStore } from '../../store/use-timeline-store'
 import { useSpaceIdStore } from './useSpaceIds'
 import { FullyReadMarker } from 'types/timeline-types'
+import isEqual from 'lodash/isEqual'
 
 export function useSpaceUnreads(
     client: ZionClient | undefined,
@@ -16,7 +17,8 @@ export function useSpaceUnreads(
     const [state, setState] = useState<{
         spaceUnreads: Record<string, boolean>
         spaceMentions: Record<string, number>
-    }>({ spaceUnreads: {}, spaceMentions: {} })
+        spaceUnreadChannelIds: Record<string, string[]>
+    }>({ spaceUnreads: {}, spaceMentions: {}, spaceUnreadChannelIds: {} })
 
     const threadsStats = useTimelineStore((state) => state.threadsStats)
 
@@ -27,11 +29,22 @@ export function useSpaceUnreads(
 
         // gets run every time spaceIds changes
         // console.log("USE SPACE UNREADS::running effect");
-        const updateState = (spaceId: string, hasUnread: boolean, mentions: number) => {
+        const updateState = (
+            spaceId: string,
+            hasUnread: boolean,
+            mentions: number,
+            unreadChannelIds: Set<string>,
+        ) => {
             setState((prev) => {
+                const unreadChannelIdsArray = [...unreadChannelIds]
+                const channelIdsAreEqual = isEqual(
+                    prev.spaceUnreadChannelIds[spaceId],
+                    unreadChannelIdsArray,
+                )
                 if (
                     prev.spaceUnreads[spaceId] === hasUnread &&
-                    prev.spaceMentions[spaceId] === mentions
+                    prev.spaceMentions[spaceId] === mentions &&
+                    channelIdsAreEqual
                 ) {
                     return prev
                 }
@@ -43,9 +56,14 @@ export function useSpaceUnreads(
                     prev.spaceMentions[spaceId] === mentions
                         ? prev.spaceMentions
                         : { ...prev.spaceMentions, [spaceId]: mentions }
+                const spaceUnreadChannelIds = channelIdsAreEqual
+                    ? prev.spaceUnreadChannelIds
+                    : { ...prev.spaceUnreadChannelIds, [spaceId]: unreadChannelIdsArray }
+
                 return {
                     spaceUnreads,
                     spaceMentions,
+                    spaceUnreadChannelIds,
                 }
             })
         }
@@ -58,6 +76,7 @@ export function useSpaceUnreads(
             spaceIds.forEach((spaceId) => {
                 let hasUnread = false
                 let mentionCount = 0
+                const unreadChannelIds = new Set<string>()
                 // easy case: if the space has a fully read marker, then it's not unread
                 if (bShowSpaceRootUnreads && markers[spaceId.networkId]?.isUnread === true) {
                     hasUnread = true
@@ -76,10 +95,11 @@ export function useSpaceUnreads(
                     ) {
                         hasUnread = true
                         mentionCount += marker.mentions
+                        unreadChannelIds.add(marker.channelId.networkId)
                     }
                 })
 
-                updateState(spaceId.networkId, hasUnread, mentionCount)
+                updateState(spaceId.networkId, hasUnread, mentionCount, unreadChannelIds)
             })
         }
 

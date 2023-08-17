@@ -49,6 +49,7 @@ export interface IZionContext {
     invitedToIds: RoomIdentifier[] // ordered list of invites (spaces and channels)
     spaceUnreads: Record<string, boolean> // spaceId -> aggregated hasUnread
     spaceMentions: Record<string, number> // spaceId -> aggregated mentionCount
+    spaceUnreadChannelIds: Record<string, string[]> // spaceId -> array of channelIds with unreads
     spaces: SpaceItem[]
     spaceHierarchies: SpaceHierarchies
     syncSpaceHierarchy: (spaceId: string) => void // function to force sync the space hierarchy
@@ -132,7 +133,7 @@ const ContextImpl = (props: Props): JSX.Element => {
     )
     const casablancaSpaceHierarchies = useCasablancaSpaceHierarchies(casablancaClient)
     const spaceHierarchies = merge(matrixSpaceHierarchies, casablancaSpaceHierarchies)
-    const { spaceUnreads, spaceMentions } = useSpaceUnreads(
+    const { spaceUnreads, spaceMentions, spaceUnreadChannelIds } = useSpaceUnreads(
         client,
         spaceHierarchies,
         enableSpaceRootUnreads === true,
@@ -166,6 +167,7 @@ const ContextImpl = (props: Props): JSX.Element => {
                 invitedToIds,
                 spaceUnreads,
                 spaceMentions,
+                spaceUnreadChannelIds,
                 spaces,
                 spaceHierarchies,
                 matrixOnboardingState,
