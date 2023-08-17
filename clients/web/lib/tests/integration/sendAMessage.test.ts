@@ -73,7 +73,7 @@ describe('sendAMessage', () => {
 
         // bob sends a message to the room
         console.log(`!!!!!! bob sends message`)
-        await bob.sendMessage(channelId, 'Hello Alice!', { encrypt: true })
+        await bob.sendMessage(channelId, 'Hello Alice!')
 
         const clientEvents: RiverEvent[] = []
         const bobRecievedEvents: RiverEvent[] = []
@@ -123,9 +123,7 @@ describe('sendAMessage', () => {
         for (let i = 1; i < numClients; i++) {
             console.log(`!!!!!! client ${i} sends a message`)
             const client = clients[`client_${i}`]
-            await client.sendMessage(channelId, `Hello Bob! from ${client.getUserId()!}`, {
-                encrypt: true,
-            })
+            await client.sendMessage(channelId, `Hello Bob! from ${client.getUserId()!}`)
             if (primaryProtocol === SpaceProtocol.Matrix) {
                 await waitFor(async () => {
                     const event = await client.getLatestEvent<RoomMessageEvent>(channelId)
@@ -140,11 +138,11 @@ describe('sendAMessage', () => {
                     clientEvents.find((e) => {
                         const content = e.getClearContent_ChannelMessage()
                         if (
-                            content?.content &&
-                            content?.content?.case === 'post' &&
-                            content?.content?.value?.content?.case === 'text'
+                            content?.payload &&
+                            content?.payload?.case === 'post' &&
+                            content?.payload?.value?.content?.case === 'text'
                         ) {
-                            return content?.content?.value?.content?.value.body === 'Hello Alice!'
+                            return content?.payload?.value?.content?.value.body === 'Hello Alice!'
                         }
                         return false
                     }),
@@ -155,11 +153,11 @@ describe('sendAMessage', () => {
                     bobRecievedEvents.find((e) => {
                         const content = e.getClearContent_ChannelMessage()
                         if (
-                            content?.content &&
-                            content?.content?.case === 'post' &&
-                            content?.content?.value?.content?.case === 'text'
+                            content?.payload &&
+                            content?.payload?.case === 'post' &&
+                            content?.payload?.value?.content?.case === 'text'
                         ) {
-                            return content?.content?.value?.content?.value.body?.includes(
+                            return content?.payload?.value?.content?.value.body?.includes(
                                 'Hello Bob!',
                             )
                         }

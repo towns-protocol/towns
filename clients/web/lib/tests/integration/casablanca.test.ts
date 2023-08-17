@@ -13,7 +13,11 @@ import { ethers } from 'ethers'
 import { Permission } from '../../src/client/web3/ContractTypes'
 import { SpaceProtocol } from '../../src/client/ZionClientTypes'
 import { RoomVisibility } from '../../src/types/zion-types'
-import { RoomMessageEvent, ZTEvent } from '../../src/types/timeline-types'
+import {
+    RoomMessageEncryptedEvent,
+    RoomMessageEvent,
+    ZTEvent,
+} from '../../src/types/timeline-types'
 import {
     createTestChannelWithSpaceRoles,
     createTestSpaceWithEveryoneRole,
@@ -88,7 +92,63 @@ describe('casablanca', () => {
         log('Bob received the message, test done')
     })
 
-    test('test creating a casablanca space with the zion client', async () => {
+    test('test creating a casablanca space with the zion client and send encrypted messages', async () => {
+        log("Test starting, registering and starting clients 'bob' and 'alice'")
+        const { bob, alice } = await registerAndStartClients(['bob', 'alice'], {
+            primaryProtocol: SpaceProtocol.Casablanca,
+        })
+
+        log("Clients started, funding Bob's wallet")
+        await bob.fundWallet()
+
+        log("Bob's wallet funded, creating a space")
+        const spaceId = (await createTestSpaceWithEveryoneRole(
+            bob,
+            [Permission.Read, Permission.Write],
+            {
+                name: bob.makeUniqueName(),
+                visibility: RoomVisibility.Public,
+                spaceProtocol: SpaceProtocol.Casablanca,
+            },
+        ))!
+
+        log("Bob's space created, creating a channel")
+        const channelId = (await createTestChannelWithSpaceRoles(bob, {
+            name: 'bobs channel',
+            parentSpaceId: spaceId,
+            visibility: RoomVisibility.Public,
+            roleIds: [],
+        }))!
+
+        log("bob's spaceId and channelId", { spaceId, channelId })
+
+        log("Bob's channel created, joining Alice to the channel")
+        await alice.joinRoom(channelId)
+
+        log('Alice joined the channel, sending an encrypted message from Bob')
+        await bob.sendMessage(channelId, 'Hello, world from Bob!')
+
+        log('Bob sent a message, waiting for Alice to receive it')
+        await waitFor(async () => {
+            const encryptedEvent = await alice.getLatestEvent<RoomMessageEncryptedEvent>(
+                channelId,
+                ZTEvent.RoomMessageEncrypted,
+            )
+            expect(encryptedEvent).toBeDefined()
+            expect(encryptedEvent?.fallbackContent).toContain('m.room.encrypted')
+        })
+        await waitFor(async () => {
+            const event = await alice.getLatestEvent<RoomMessageEvent>(
+                channelId,
+                ZTEvent.RoomMessage,
+            )
+            expect(event?.content?.body).toEqual('Hello, world from Bob!')
+        })
+
+        log('Alice received the message, test done')
+    })
+
+    test('test decrypting encrypted content that looks like ciphertext', async () => {
         log("Test starting, registering and starting clients 'bob' and 'alice'")
         const { bob, alice } = await registerAndStartClients(['bob', 'alice'], {
             primaryProtocol: SpaceProtocol.Casablanca,
@@ -122,17 +182,27 @@ describe('casablanca', () => {
         await alice.joinRoom(channelId)
 
         log('Alice joined the channel, sending a message from Bob')
-        await bob.sendMessage(channelId, 'Hello, world from Bob!')
+        const message = 'aasSAJ2314235AKDSadsfsdf'
+        await bob.sendMessage(channelId, message)
 
         log('Bob sent a message, waiting for Alice to receive it')
+
+        await waitFor(async () => {
+            const encryptedEvent = await alice.getLatestEvent<RoomMessageEncryptedEvent>(
+                channelId,
+                ZTEvent.RoomMessageEncrypted,
+            )
+            expect(encryptedEvent).toBeDefined()
+            expect(encryptedEvent?.content?.kind).toEqual('m.room.encrypted')
+        })
         await waitFor(async () => {
             const event = await alice.getLatestEvent<RoomMessageEvent>(
                 channelId,
                 ZTEvent.RoomMessage,
             )
-            expect(event?.content?.body).toEqual('Hello, world from Bob!')
+            expect(event?.content?.body).toEqual(message)
         })
 
-        log('Alice received the message, test done')
+        log('Alice received the decrypted message, test done')
     })
 })

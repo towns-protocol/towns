@@ -1666,7 +1666,6 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
                                             mentions: options?.mentions ?? [],
                                         },
                                     },
-                                    options?.encrypt ? options.encrypt : false,
                                 )
                             }
                             break

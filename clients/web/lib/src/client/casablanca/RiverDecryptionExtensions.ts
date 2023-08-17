@@ -207,33 +207,39 @@ export class RiverDecryptionExtension extends (EventEmitter as new () => TypedEm
         // note: this cast while not ideal is to get around recursive reference compiler error,
         // see: HNT-1885
         const event = riverEvent as RiverEvent
-        if (event.isDecryptionFailure()) {
-            const channelId = event.getChannelId()
-            const spaceId = event.getSpaceId()
-            if (!channelId || !spaceId) {
-                console.log(
-                    'CDE::onDecryptionFailure - missing channelId, not going to start looking for keys',
-                    {
-                        eventId: event.getId() ?? '',
-                        err: err,
-                    },
-                )
-                return
+        if (!event.isDecryptionFailure()) {
+            const streamId = event.getStreamId()
+            if (!streamId) {
+                throw new Error('CDE::onDecryptionSuccess- no streamId found')
             }
-            if (!this.roomRecords[channelId]) {
-                this.roomRecords[channelId] = {
-                    decryptionFailures: [],
-                    channelId,
-                    spaceId,
-                }
+            this.client.updateDecryptedStream(streamId, event)
+            return
+        }
+        const channelId = event.getChannelId()
+        const spaceId = event.getSpaceId()
+        if (!channelId || !spaceId) {
+            console.log(
+                'CDE::onDecryptionFailure - missing channelId, not going to start looking for keys',
+                {
+                    eventId: event.getId() ?? '',
+                    err: err,
+                },
+            )
+            return
+        }
+        if (!this.roomRecords[channelId]) {
+            this.roomRecords[channelId] = {
+                decryptionFailures: [],
+                channelId,
+                spaceId,
             }
-            const roomRecord = this.roomRecords[channelId]
-            if (roomRecord.decryptionFailures.indexOf(event) === -1) {
-                roomRecord.decryptionFailures.push(event)
-            }
-            if (this.throttledStartLookingForKeys) {
-                this.throttledStartLookingForKeys()
-            }
+        }
+        const roomRecord = this.roomRecords[channelId]
+        if (roomRecord.decryptionFailures.indexOf(event) === -1) {
+            roomRecord.decryptionFailures.push(event)
+        }
+        if (this.throttledStartLookingForKeys) {
+            this.throttledStartLookingForKeys()
         }
     }
 

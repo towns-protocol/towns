@@ -6,6 +6,7 @@ import TypedEmitter from 'typed-emitter'
 import { StreamStateView } from './streamStateView'
 import { ParsedEvent } from './types'
 import { EmittedEvents } from './client'
+import { RiverEvent } from './event'
 
 export class Stream extends (EventEmitter as new () => TypedEmitter<EmittedEvents>) {
     readonly clientEmitter: TypedEmitter<EmittedEvents>
@@ -31,6 +32,9 @@ export class Stream extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         return this.view.streamId
     }
 
+    updateDecrypted(event: RiverEvent): void {
+        this.view.updateDecrypted(event)
+    }
     /**
      * NOTE: Separating initial rollup from the constructor allows consumer to subscribe to events
      * on the new stream event and still access this object through Client.streams.

@@ -2,7 +2,6 @@ import { dlog } from './dlog'
 import { CryptoBackend, IEventDecryptionResult, Crypto, IRoomKeyRequestBody } from './crypto/crypto'
 import {
     ChannelMessage,
-    ChannelMessage_Post_Content_Text,
     EncryptedData,
     EncryptedDeviceData,
     StreamEvent,
@@ -45,13 +44,6 @@ function isToDeviceContent(content: any): content is Partial<IToDeviceContent> {
         'algorithm' in content &&
         typeof cipher == 'object'
     )
-}
-
-export function isChannelContentPlainMessage_Post_Text(
-    content: any,
-): content is ChannelMessage_Post_Content_Text {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    return 'case' in content && content.case === 'post' && content.value.content.case === 'text'
 }
 
 // Type guards for IChannelContent['content'] and IToDeviceContent['content']
@@ -106,7 +98,7 @@ export type IClearContent =
     | (PlainMessage<ChannelMessage>['payload'] | PlainMessage<ToDeviceMessage>['payload']) &
           Partial<IContentOpts>
 
-type IContentOpts = {
+export type IContentOpts = {
     msgtype?: string
     membership?: string
     avatar_url?: string
@@ -150,6 +142,11 @@ export interface IContent {
 
 type IContentContent = IContent['content']
 
+export type ClearContent = {
+    payload: IChannelContent['content'] | undefined
+    opts: IContentOpts | undefined
+}
+
 export interface IPlainContent {
     payload: Record<string, string>
 }
@@ -186,6 +183,7 @@ interface StreamEventPayload {
     // hash_str, creator_user_id are not available when creating an event, but are when reading one off the wire
     hash_str?: string
     creator_user_id?: string
+    stream_id?: string
 }
 
 export interface IEvent {
@@ -254,8 +252,8 @@ export enum RiverEventType {
 // store known stream payload types that can be encrypted
 export enum EncryptedEventStreamTypes {
     Uknown = 'unknown',
-    Channel = 'channel',
-    ToDevice = 'to_device',
+    Channel = 'channelPayload',
+    ToDevice = 'userPayload',
 }
 
 export type RiverEvents = {
@@ -429,6 +427,10 @@ export class RiverEvent extends (EventEmitter as new () => TypedEmitter<RiverEve
 
     public getStreamType(): string | undefined {
         return this.event.stream_type
+    }
+
+    public getStreamId(): string | undefined {
+        return this.event?.payload?.stream_id
     }
 
     public getId(): string | undefined {
@@ -765,23 +767,21 @@ export class RiverEvent extends (EventEmitter as new () => TypedEmitter<RiverEve
     }
 
     // Get ChannelMessage clear content from decrypted event or informational/error message
-    public getClearContent_ChannelMessage():
-        | { content: IChannelContent['content'] | undefined; opts: IContentOpts | undefined }
-        | undefined {
+    public getClearContent_ChannelMessage(): ClearContent {
         const content = this.getContent()
         if (isClearEvent(content)) {
             if (content.content?.msgtype !== undefined && content.content?.body !== undefined) {
                 // return IContentOpts if msgtype and body are set on clear event
                 return {
                     opts: { ...content?.content },
-                    content: undefined,
+                    payload: undefined,
                 }
             }
             if (isChannelContentPlainMessage(content.content)) {
-                return { content: content.content, opts: undefined }
+                return { payload: content.content, opts: undefined }
             }
         }
-        return { content: undefined, opts: undefined }
+        return { payload: undefined, opts: undefined }
     }
 
     public getWireContent_fromJsonString<T extends Message<T>>(constructor: {

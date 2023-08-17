@@ -47,6 +47,9 @@ export class StreamStateView {
 
     readonly timeline: ParsedEvent[] = []
     readonly events = new Map<string, ParsedEvent>()
+    // todo: remove this additional map in favor of events map once RiverEvent decrypts to ParsedEvents
+    // https://linear.app/hnt-labs/issue/HNT-2049/refactor-riverevent-to-input-and-output-streamevents
+    readonly decryptedEvents = new Map<string, RiverEvent>()
 
     readonly joinedUsers = new Set<string>()
     readonly invitedUsers = new Set<string>()
@@ -163,6 +166,8 @@ export class StreamStateView {
                                             creator_user_id: userIdFromAddress(
                                                 event.event.creatorAddress,
                                             ),
+                                            hash_str: event.hashStr,
+                                            stream_id: this.streamId,
                                         },
                                     },
                                     emitter,
@@ -238,6 +243,7 @@ export class StreamStateView {
                                             creator_user_id: userIdFromAddress(
                                                 event.event.creatorAddress,
                                             ),
+                                            stream_id: this.streamId,
                                         },
                                     },
                                     emitter,
@@ -479,6 +485,35 @@ export class StreamStateView {
 
             emitter?.emit('channelUnreadMarkerUpdated', fullyReadMarkers)
         }
+    }
+
+    // update streeam state with successfully decrypted events by hashStr event id
+    updateDecrypted(event: RiverEvent): void {
+        const hashStr = event.getId()
+        if (!hashStr) {
+            log(`Ignoring decrypted event with no hash id`)
+            return
+        }
+        if (event.shouldAttemptDecryption()) {
+            log(`Ignoring event that has not attampted decryption yet, hash=${hashStr}`)
+            return
+        }
+        if (event.isDecryptionFailure()) {
+            log(`Ignoring event that failed decryption, hash=${hashStr}`)
+            return
+        }
+        if (this.decryptedEvents.has(hashStr)) {
+            log(`Ignoring duplicate decrypted event ${hashStr}`)
+            return
+        }
+        if (event.getStreamId() !== this.streamId) {
+            throwWithCode(
+                `Event does not exist on stream for decrypted event, hash=${hashStr}, stream=${this.streamId}`,
+                Err.STREAM_BAD_EVENT,
+            )
+        }
+
+        this.decryptedEvents.set(hashStr, event)
     }
 
     update(

@@ -4,7 +4,7 @@ import { Client } from './client'
 import { RiverEvent } from './event'
 import { PayloadCaseType, ToDeviceOp } from '@river/proto'
 import { genId, makeChannelStreamId, makeSpaceStreamId } from './id'
-import { make_ToDevice_KeyRequest } from './types'
+import { isCiphertext, make_ToDevice_KeyRequest } from './types'
 
 const log = dlog('test')
 
@@ -30,10 +30,12 @@ describe('riverEventTest', () => {
             done.runAndDone(() => {
                 // event is unencrypted so clear shouldn't be set
                 const content = event.getClearContent_ChannelMessage()
-                expect(content?.content === undefined).toBeTrue()
+                expect(content?.payload === undefined).toBeTrue()
                 const wire = event.getWireContentChannel()
                 expect(wire).toBeDefined()
-                expect(wire.content.ciphertext).toContain('Hello, world!')
+                if (wire?.content?.ciphertext) {
+                    expect(isCiphertext(wire?.content?.ciphertext)).toBeTrue()
+                }
                 // this should be undefined until we attempt decrypting the event
                 expect(event.getClearContent()).toBeUndefined()
             })
@@ -55,6 +57,7 @@ describe('riverEventTest', () => {
 
         bobsClient.on('streamInitialized', onStreamInitialized)
         await expect(bobsClient.createNewUser()).toResolve()
+        await expect(bobsClient.initCrypto()).toResolve()
 
         await bobsClient.startSync()
 

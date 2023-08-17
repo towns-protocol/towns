@@ -10,6 +10,7 @@ import {
     make_ChannelMessage_Reaction,
     make_ChannelMessage_Edit,
     make_ChannelMessage_Redaction,
+    isCiphertext,
 } from './types'
 import { makeDonePromise, makeTestClient } from './util.test'
 import { dlog } from './dlog'
@@ -122,9 +123,9 @@ describe('clientCryptoTest', () => {
         expect(encryptedContent?.content).toBeUndefined()
         await expect(bobsClient.decryptEventIfNeeded(encryptedEvent)).toResolve()
         const clearContent = encryptedEvent.getClearContent_ChannelMessage()
-        expect(clearContent?.content).toBeDefined()
-        if (clearContent?.content?.case === 'redaction') {
-            expect(clearContent?.content?.value?.refEventId).toEqual('fake_event_id')
+        expect(clearContent?.payload).toBeDefined()
+        if (clearContent?.payload?.case === 'redaction') {
+            expect(clearContent?.payload?.value?.refEventId).toEqual('fake_event_id')
         }
     })
 
@@ -222,13 +223,13 @@ describe('clientCryptoTest', () => {
         expect(encryptedContent?.content).toBeUndefined()
         await expect(bobsClient.decryptEventIfNeeded(encryptedEvent)).toResolve()
         const clearContent = encryptedEvent.getClearContent_ChannelMessage()
-        expect(clearContent?.content).toBeDefined()
+        expect(clearContent?.payload).toBeDefined()
         if (
-            clearContent?.content?.case === 'edit' &&
-            clearContent?.content?.value?.post?.content?.case === 'text'
+            clearContent?.payload?.case === 'edit' &&
+            clearContent?.payload?.value?.post?.content?.case === 'text'
         ) {
-            expect(clearContent?.content?.value?.refEventId).toEqual('fake_event_id')
-            expect(clearContent?.content?.value?.post?.content?.value.body).toEqual(
+            expect(clearContent?.payload?.value?.refEventId).toEqual('fake_event_id')
+            expect(clearContent?.payload?.value?.post?.content?.value.body).toEqual(
                 'First secret encrypted message by Alice!',
             )
         }
@@ -322,10 +323,10 @@ describe('clientCryptoTest', () => {
         expect(encryptedContent?.content).toBeUndefined()
         await expect(bobsClient.decryptEventIfNeeded(encryptedEvent)).toResolve()
         const clearContent = encryptedEvent.getClearContent_ChannelMessage()
-        expect(clearContent?.content).toBeDefined()
-        if (clearContent?.content?.case === 'reaction') {
-            expect(clearContent?.content.value.refEventId).toEqual('fake_event_id')
-            expect(clearContent?.content.value.reaction).toEqual('👍')
+        expect(clearContent?.payload).toBeDefined()
+        if (clearContent?.payload?.case === 'reaction') {
+            expect(clearContent?.payload.value.refEventId).toEqual('fake_event_id')
+            expect(clearContent?.payload.value.reaction).toEqual('👍')
         }
     })
 
@@ -416,12 +417,12 @@ describe('clientCryptoTest', () => {
         expect(encryptedContent?.content).toBeUndefined()
         await expect(bobsClient.decryptEventIfNeeded(encryptedEvent)).toResolve()
         const clearContent = encryptedEvent.getClearContent_ChannelMessage()
-        expect(clearContent?.content).toBeDefined()
+        expect(clearContent?.payload).toBeDefined()
         if (
-            clearContent?.content?.case === 'post' &&
-            clearContent?.content?.value?.content?.case === 'gm'
+            clearContent?.payload?.case === 'post' &&
+            clearContent?.payload?.value?.content?.case === 'gm'
         ) {
-            expect(clearContent?.content.value.content.value.typeUrl).toEqual('http://fake_url')
+            expect(clearContent?.payload.value.content.value.typeUrl).toEqual('http://fake_url')
         }
     })
 
@@ -513,13 +514,13 @@ describe('clientCryptoTest', () => {
         expect(encryptedContent?.content).toBeUndefined()
         await expect(bobsClient.decryptEventIfNeeded(encryptedEvent)).toResolve()
         const clearContent = encryptedEvent.getClearContent_ChannelMessage()
-        expect(clearContent?.content).toBeDefined()
+        expect(clearContent?.payload).toBeDefined()
         if (
-            clearContent?.content?.case === 'post' &&
-            clearContent?.content?.value?.content?.case === 'image'
+            clearContent?.payload?.case === 'post' &&
+            clearContent?.payload?.value?.content?.case === 'image'
         ) {
-            expect(clearContent?.content?.value?.content?.value?.title).toEqual('image1')
-            expect(clearContent?.content?.value?.content?.value?.info?.url).toEqual(
+            expect(clearContent?.payload?.value?.content?.value?.title).toEqual('image1')
+            expect(clearContent?.payload?.value?.content?.value?.info?.url).toEqual(
                 'http://fake_url',
             )
         }
@@ -612,12 +613,12 @@ describe('clientCryptoTest', () => {
         expect(encryptedContent?.content).toBeUndefined()
         await expect(bobsClient.decryptEventIfNeeded(encryptedEvent)).toResolve()
         const clearContent = encryptedEvent.getClearContent_ChannelMessage()
-        expect(clearContent?.content).toBeDefined()
+        expect(clearContent?.payload).toBeDefined()
         if (
-            clearContent?.content?.case === 'post' &&
-            clearContent?.content?.value?.content?.case === 'text'
+            clearContent?.payload?.case === 'post' &&
+            clearContent?.payload?.value?.content?.case === 'text'
         ) {
-            expect(clearContent?.content?.value?.content.value?.body).toContain(
+            expect(clearContent?.payload?.value?.content.value?.body).toContain(
                 'First secret encrypted message!',
             )
         }
@@ -758,12 +759,12 @@ describe('clientCryptoTest', () => {
             expect(content?.content === undefined).toBe(true)
             await expect(client.decryptEventIfNeeded(encryptedEvent)).toResolve()
             const clearContent = encryptedEvent.getClearContent_ChannelMessage()
-            expect(clearContent?.content).toBeDefined()
+            expect(clearContent?.payload).toBeDefined()
             if (
-                clearContent?.content?.case === 'post' &&
-                clearContent?.content?.value?.content?.case === 'text'
+                clearContent?.payload?.case === 'post' &&
+                clearContent?.payload?.value?.content?.case === 'text'
             ) {
-                expect(clearContent?.content?.value?.content.value?.body).toContain(
+                expect(clearContent?.payload?.value?.content.value?.body).toContain(
                     'secret encrypted message',
                 )
             }
@@ -785,12 +786,12 @@ describe('clientCryptoTest', () => {
             expect(content.content).toBeUnDefined()
             await expect(client.decryptEventIfNeeded(encryptedEvent)).toResolve()
             const clearContent = encryptedEvent.getClearContent_ChannelMessage()
-            expect(clearContent?.content).toBeDefined()
+            expect(clearContent?.payload).toBeDefined()
             if (
-                clearContent?.content?.case === 'post' &&
-                clearContent?.content?.value?.content?.case === 'text'
+                clearContent?.payload?.case === 'post' &&
+                clearContent?.payload?.value?.content?.case === 'text'
             ) {
-                expect(clearContent?.content?.value?.content.value?.body).toContain(
+                expect(clearContent?.payload?.value?.content.value?.body).toContain(
                     'encrypted message!',
                 )
             }
@@ -873,7 +874,7 @@ describe('clientCryptoTest', () => {
         )
         await expect(alicesClient.decryptEventIfNeeded(encryptedEvent)).toResolve()
         const clear = encryptedEvent.getClearContent_ChannelMessage()
-        if (clear && clear.content && clear.opts) {
+        if (clear && clear.payload && clear.opts) {
             expect(clear.opts.msgtype).toEqual('m.bad.encrypted')
         }
     })
@@ -931,12 +932,12 @@ describe('clientCryptoTest', () => {
                     expect(content).toBeDefined()
                     await bobsClient.decryptEventIfNeeded(event)
                     const clearEvent = event.getClearContent_ChannelMessage()
-                    expect(clearEvent?.content).toBeDefined()
+                    expect(clearEvent?.payload).toBeDefined()
                     if (
-                        clearEvent?.content?.case === 'post' &&
-                        clearEvent?.content?.value?.content?.case === 'text'
+                        clearEvent?.payload?.case === 'post' &&
+                        clearEvent?.payload?.value?.content?.case === 'text'
                     ) {
-                        expect(clearEvent?.content?.value?.content.value?.body).toContain(
+                        expect(clearEvent?.payload?.value?.content.value?.body).toContain(
                             'First secret encrypted message!',
                         )
                     }
@@ -950,7 +951,6 @@ describe('clientCryptoTest', () => {
             alicesClient.sendChannelMessage(
                 bobsChannelId,
                 make_ChannelMessage_Post_Content_Text(payload),
-                true,
             ),
         ).toResolve()
 
@@ -958,7 +958,7 @@ describe('clientCryptoTest', () => {
         await bobSelfToDevice.expectToSucceed()
     })
 
-    test('unencryptedChannelMessageSentOverClient', async () => {
+    test('encryptedChannelMessageReturnsCiphertext', async () => {
         await expect(bobsClient.createNewUser()).toResolve()
         await expect(bobsClient.initCrypto()).toResolve()
         await bobsClient.startSync()
@@ -1012,19 +1012,17 @@ describe('clientCryptoTest', () => {
                     await bobsClient.decryptEventIfNeeded(event)
                     const wireEvent = event.getWireContentChannel().content.ciphertext
                     expect(wireEvent).toBeDefined()
-                    expect(wireEvent).toContain('First secret encrypted message!')
+                    expect(isCiphertext(wireEvent!)).toBe(true)
                 })
             }
         })
 
         // Alices sends message to Bob's channel
-        const encrypt = false
         const payload = 'First secret encrypted message!'
         await expect(
             alicesClient.sendChannelMessage(
                 bobsChannelId,
                 make_ChannelMessage_Post_Content_Text(payload),
-                encrypt,
             ),
         ).toResolve()
 

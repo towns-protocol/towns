@@ -3,8 +3,7 @@ import { DLogger, dlog } from './dlog'
 import { makeTestClient } from './util.test'
 import { StreamEventKeys } from './streamEvents'
 import { makeUniqueChannelStreamId, makeUniqueSpaceStreamId } from './id'
-import { RiverEvent } from './event'
-import { ChannelMessage } from '@river/proto'
+import { ClearContent, RiverEvent } from './event'
 
 const log = dlog('test:aliceAndFriends')
 
@@ -28,6 +27,7 @@ class TestDriver {
         this.log(`driver starting client`)
 
         await this.client.createNewUser()
+        await this.client.initCrypto()
 
         this.client.on('userInvitedToStream', (s) => void this.userInvitedToStream.bind(this)(s))
         this.client.on('userJoinedStream', (s) => void this.userJoinedStream.bind(this)(s))
@@ -53,47 +53,53 @@ class TestDriver {
     }
 
     channelNewMessage(channelId: string, event: RiverEvent): void {
-        const wireContent = event.getWireContent_fromJsonString<ChannelMessage>(ChannelMessage)
-        if (
-            wireContent?.payload.case !== 'post' ||
-            wireContent?.payload?.value?.content?.case !== 'text'
-        ) {
-            throw new Error(`Expected text message, got=undefined`)
-        }
-        // todo jterzis: we need to encrypts events before sending them over transport.
-        // this is therefore temp measure. we need to get the plaintext from the event
-        // not wire content, but that assumes the event has been decrypted,
-        // which requires the event were encrypted in the first place.
-        const content = wireContent?.payload?.value?.content?.value?.body
-        this.log(`channelNewMessage channelId=${channelId} message=${content}`, this.expected)
-        if (this.expected?.delete(content)) {
-            this.log(`channelNewMessage expected message Received, text=${content}`)
+        let payload: ClearContent
+        let content = ''
+        ;(async () => {
+            await this.client.decryptEventIfNeeded(event)
+            payload = event.getClearContent_ChannelMessage()
+            if (!payload) {
+                return
+            }
+            if (
+                payload.payload?.case !== 'post' ||
+                payload.payload?.value.content.case !== 'text'
+            ) {
+                throw new Error(`channelNewMessage is not a post`)
+            }
+            content = payload.payload?.value.content.value.body
+            this.log(`channelNewMessage channelId=${channelId} message=${content}`, this.expected)
+            if (this.expected?.delete(content)) {
+                this.log(`channelNewMessage expected message Received, text=${content}`)
 
-            if (this.expected.size === 0) {
-                this.expected = undefined
-                if (this.allExpectedReceived === undefined) {
-                    throw new Error('allExpectedReceived is undefined')
+                if (this.expected.size === 0) {
+                    this.expected = undefined
+                    if (this.allExpectedReceived === undefined) {
+                        throw new Error('allExpectedReceived is undefined')
+                    }
+                    this.log(`channelNewMessage all expected messages Received, text=${content}`)
+                    this.allExpectedReceived()
+                } else {
+                    this.log(`channelNewMessage still expecting messages`, this.expected)
                 }
-                this.log(`channelNewMessage all expected messages Received, text=${content}`)
-                this.allExpectedReceived()
             } else {
-                this.log(`channelNewMessage still expecting messages`, this.expected)
+                if (this.badMessageReceived === undefined) {
+                    throw new Error('badMessageReceived is undefined')
+                }
+                this.log(
+                    `channelNewMessage badMessageReceived text=${content}}, expected=${Array.from(
+                        this.expected?.values() ?? [],
+                    ).join(', ')}`,
+                )
+                this.badMessageReceived(
+                    `badMessageReceived text=${content}, expected=${Array.from(
+                        this.expected?.values() ?? [],
+                    ).join(', ')}`,
+                )
             }
-        } else {
-            if (this.badMessageReceived === undefined) {
-                throw new Error('badMessageReceived is undefined')
-            }
-            this.log(
-                `channelNewMessage badMessageReceived text=${content}, expected=${Array.from(
-                    this.expected?.values() ?? [],
-                ).join(', ')}`,
-            )
-            this.badMessageReceived(
-                `badMessageReceived text=${content}, expected=${Array.from(
-                    this.expected?.values() ?? [],
-                ).join(', ')}`,
-            )
-        }
+        })().catch((e) => {
+            throw new Error(`channelNewMessage decryptEventIfNeeded error`, <Error>e)
+        })
     }
 
     async step(

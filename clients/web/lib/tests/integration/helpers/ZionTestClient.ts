@@ -32,7 +32,10 @@ import { ethers } from 'ethers'
 import { getPrimaryProtocol, makeUniqueName } from './TestUtils'
 import { staticAssertNever } from '../../../src/utils/zion-utils'
 import { toEvent as toEventFromMatrixEvent } from '../../../src/hooks/ZionContext/useMatrixTimelines'
-import { toEvent as toEventFromCasablancaEvent } from '../../../src/hooks/ZionContext/useCasablancaTimelines'
+import {
+    toEvent as toEventFromCasablancaEvent,
+    toEvent_FromRiverEvent,
+} from '../../../src/hooks/ZionContext/useCasablancaTimelines'
 import { newMatrixLoginSession, newMatrixRegisterSession } from '../../../src/hooks/session'
 import { MatrixClient } from 'matrix-js-sdk'
 import { Client as CasablancaClient } from '@river/sdk'
@@ -442,9 +445,16 @@ export class ZionTestClient extends ZionClient {
                 }
                 const stream = this.casablancaClient.stream(roomId.networkId)
                 const userId = this.casablancaClient.userId
-                const events = Array.from(stream?.view.events.values() ?? []).map((e) =>
-                    toEventFromCasablancaEvent(e, userId),
-                )
+                if (!stream) {
+                    throw new Error('stream is undefined')
+                }
+                const events = Array.from(stream.view.events.keys() ?? []).map((k) => {
+                    const decryptedEvent = stream.view.decryptedEvents.get(k)
+                    if (decryptedEvent) {
+                        return toEvent_FromRiverEvent(decryptedEvent, userId)
+                    }
+                    return toEventFromCasablancaEvent(stream.view.events.get(k)!, userId)
+                })
                 return events
             }
             default:

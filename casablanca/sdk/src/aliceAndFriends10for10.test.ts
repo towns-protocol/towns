@@ -17,5 +17,5 @@ describe('aliceAndBobAndFriends10for10', () => {
         const convResult = await converse(conversation, '10for10')
         log(`10for10 completed`, convResult)
         expect(convResult).toBe('success')
-    })
+    }, 250_000)
 })

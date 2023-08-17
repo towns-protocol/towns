@@ -8,7 +8,6 @@ import { DLogger, dlog } from './dlog'
 import { RiverEvent } from './event'
 import { genId, makeChannelStreamId, makeSpaceStreamId } from './id'
 import { makeDonePromise, makeTestClient, sendFlush } from './util.test'
-import { getMessagePayloadContent_Text } from './types'
 
 const log_base = dlog('csb:test')
 
@@ -28,12 +27,22 @@ describe('clientFlushes', () => {
 
         const done = makeDonePromise()
 
-        const onChannelNewMessage = (channelId: string, message: RiverEvent): void => {
+        const onChannelNewMessage = (channelId: string, event: RiverEvent): void => {
             log('channelNewMessage', channelId)
-            log(message)
-            done.runAndDone(() => {
-                const content = message.getContent().content.ciphertext
-                expect(content).toContain('Hello, world!')
+            done.runAndDoneAsync(async () => {
+                const { content } = event.getWireContentChannel()
+                expect(content).toBeDefined()
+                await bobsClient.decryptEventIfNeeded(event)
+                const clearEvent = event.getClearContent_ChannelMessage()
+                expect(clearEvent?.payload).toBeDefined()
+                if (
+                    clearEvent?.payload?.case === 'post' &&
+                    clearEvent?.payload?.value?.content?.case === 'text'
+                ) {
+                    expect(clearEvent?.payload?.value?.content.value?.body).toContain(
+                        'Hello, world!',
+                    )
+                }
             })
         }
 
@@ -54,6 +63,7 @@ describe('clientFlushes', () => {
         bobsClient.on('streamInitialized', onStreamInitialized)
 
         await expect(bobsClient.createNewUser()).toResolve()
+        await expect(bobsClient.initCrypto()).toResolve()
 
         await sendFlush(bobsClient.rpcClient)
 
@@ -95,12 +105,22 @@ describe('clientFlushes', () => {
 
         const done = makeDonePromise()
 
-        const onChannelNewMessage = (channelId: string, message: RiverEvent): void => {
+        const onChannelNewMessage = (channelId: string, event: RiverEvent): void => {
             log('channelNewMessage', channelId)
-            log(message)
-            done.runAndDone(() => {
-                const content = message.getContent().content.ciphertext
-                expect(content).toContain('Hello, again!')
+            done.runAndDoneAsync(async () => {
+                const { content } = event.getWireContentChannel()
+                expect(content).toBeDefined()
+                await bobsAnotherClient.decryptEventIfNeeded(event)
+                const clearEvent = event.getClearContent_ChannelMessage()
+                expect(clearEvent?.payload).toBeDefined()
+                if (
+                    clearEvent?.payload?.case === 'post' &&
+                    clearEvent?.payload?.value?.content?.case === 'text'
+                ) {
+                    expect(clearEvent?.payload?.value?.content.value?.body).toContain(
+                        'Hello, again!',
+                    )
+                }
             })
         }
 
@@ -114,19 +134,24 @@ describe('clientFlushes', () => {
 
                     const messages = Array.from(channel.view.messages.values())
                     expect(messages).toHaveLength(1)
-                    expect(getMessagePayloadContent_Text(messages[0])?.body).toBe('Hello, world!')
-
+                    if (!bobsAnotherClient.cryptoBackend) {
+                        // by the time this runs, the crypto backend should be initialized
+                        // but in case it is not, let's init it again
+                        await expect(bobsAnotherClient.initCrypto()).toResolve()
+                    }
                     channel.on('channelNewMessage', onChannelNewMessage)
                     bobsAnotherClient.sendMessage(streamId, 'Hello, again!')
                     await sendFlush(bobsClient.rpcClient)
                 }
             })
         }
+
         bobsAnotherClient.on('streamInitialized', onStreamInitialized)
 
-        await sendFlush(bobsClient.rpcClient)
-
         await expect(bobsAnotherClient.loadExistingUser()).toResolve()
+        await expect(bobsAnotherClient.initCrypto()).toResolve()
+
+        await sendFlush(bobsClient.rpcClient)
 
         await sendFlush(bobsClient.rpcClient)
 

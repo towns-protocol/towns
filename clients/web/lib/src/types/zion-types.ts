@@ -157,10 +157,6 @@ export interface ThreadIdOptions {
     threadParticipants?: Set<string>
 }
 
-export type EncryptionOptions = {
-    encrypt?: boolean
-}
-
 export type SendTextMessageOptions = ThreadIdOptions & {
     messageType?: MessageType.Text
     mentions?: Mention[]
@@ -210,7 +206,7 @@ export type SendMessageOptionsBase =
     | SendGMOptions
     | SendImageMessageOptions
 
-export type SendMessageOptions = SendMessageOptionsBase & SpaceIdOptions & EncryptionOptions
+export type SendMessageOptions = SendMessageOptionsBase & SpaceIdOptions
 
 export type ImageMessageContent = IContent & Omit<SendImageMessageOptions, 'messageType'>
 

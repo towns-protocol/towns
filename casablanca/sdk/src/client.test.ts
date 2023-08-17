@@ -8,21 +8,16 @@ import {
     makeUserSettingsStreamId,
     makeUserDeviceKeyStreamId,
 } from './id'
-import { getMessagePayloadContent_Text, IFallbackKey } from './types'
+import { IFallbackKey } from './types'
 import { makeDonePromise, makeTestClient } from './util.test'
-import {
-    DeviceKeys,
-    PayloadCaseType,
-    SyncStreamsRequest,
-    ChannelMessage,
-    SyncStreamsResponse,
-} from '@river/proto'
+import { DeviceKeys, PayloadCaseType, SyncStreamsRequest, SyncStreamsResponse } from '@river/proto'
 import { PartialMessage } from '@bufbuild/protobuf'
 import { CallOptions } from '@bufbuild/connect'
 // This is needed to get the jest itnerface for using in spyOn
 // eslint-disable-next-line import/no-extraneous-dependencies
 import { jest } from '@jest/globals'
 import { RiverEvent } from './event'
+import { SignerContext } from './sign'
 
 const log = dlog('csb:test')
 
@@ -56,6 +51,71 @@ describe('clientTest', () => {
     afterEach(async () => {
         await bobsClient.stop()
         await alicesClient.stop()
+    })
+
+    test('bobTalksToHimself-noflush', async () => {
+        const done = makeDonePromise()
+        await expect(bobsClient.createNewUser()).toResolve()
+        await expect(bobsClient.initCrypto()).toResolve()
+        await bobsClient.startSync()
+
+        const onChannelNewMessage = (channelId: string, event: RiverEvent): void => {
+            log('channelNewMessage', channelId)
+            done.runAndDoneAsync(async () => {
+                const { content } = event.getWireContentChannel()
+                expect(content).toBeDefined()
+                await bobsClient.decryptEventIfNeeded(event)
+                const clearEvent = event.getClearContent_ChannelMessage()
+                expect(clearEvent?.payload).toBeDefined()
+                if (
+                    clearEvent?.payload?.case === 'post' &&
+                    clearEvent?.payload?.value?.content?.case === 'text'
+                ) {
+                    expect(clearEvent?.payload?.value?.content.value?.body).toContain(
+                        'Hello, world!',
+                    )
+                }
+            })
+        }
+
+        const onStreamInitialized = (streamId: string, streamKind: PayloadCaseType) => {
+            log('streamInitialized', streamId, streamKind)
+            done.run(() => {
+                if (streamKind === 'channelPayload') {
+                    const channel = bobsClient.stream(streamId)!
+                    log('channel content')
+                    log(channel.view)
+
+                    channel.on('channelNewMessage', onChannelNewMessage)
+                    bobsClient.sendMessage(streamId, 'Hello, world!')
+                }
+            })
+        }
+        bobsClient.on('streamInitialized', onStreamInitialized)
+
+        const bobsSpaceId = makeSpaceStreamId('bobs-space-' + genId())
+        const bobsChannelName = 'Bobs channel'
+        const bobsChannelTopic = 'Bobs channel topic'
+        await expect(bobsClient.createSpace(bobsSpaceId, { name: "Bob's Space" })).toResolve()
+
+        await expect(
+            bobsClient.createChannel(
+                bobsSpaceId,
+                bobsChannelName,
+                bobsChannelTopic,
+                makeChannelStreamId('bobs-channel-' + genId()),
+            ),
+        ).toResolve()
+
+        await done.expectToSucceed()
+
+        await bobsClient.stopSync()
+
+        log('pass1 done')
+
+        await expect(bobCanReconnect(bobsClient.signerContext)).toResolve()
+
+        log('pass2 done')
     })
 
     test('clientsCanBeClosedNoSync', async () => {})
@@ -238,6 +298,7 @@ describe('clientTest', () => {
 
         // Bob gets created, creates a space without providing an ID, and a channel without providing an ID.
         await expect(bobsClient.createNewUser()).toResolve()
+        await expect(bobsClient.initCrypto()).toResolve()
         await bobsClient.startSync()
 
         const spaceId = bobsClient.createSpace(undefined, { name: 'Bobs space' })
@@ -249,38 +310,46 @@ describe('clientTest', () => {
         await expect(bobsClient.stopSync()).toResolve()
     })
 
-    const bobCanReconnect = async () => {
-        const bobsAnotherClient = await makeTestClient(undefined, bobsClient.signerContext)
+    const bobCanReconnect = async (signer: SignerContext) => {
+        const bobsAnotherClient = await makeTestClient(undefined, signer)
 
         const done = makeDonePromise()
 
-        const onChannelNewMessage = (channelId: string, message: RiverEvent): void => {
+        const onChannelNewMessage = (channelId: string, event: RiverEvent): void => {
             log('channelNewMessage', channelId)
-            log(message)
-            done.runAndDone(() => {
-                const content =
-                    message.getWireContent_fromJsonString<ChannelMessage>(ChannelMessage)
+            log(event)
+
+            done.runAndDoneAsync(async () => {
+                const { content } = event.getWireContentChannel()
+                expect(content).toBeDefined()
+                await bobsAnotherClient.decryptEventIfNeeded(event)
+                const clearEvent = event.getClearContent_ChannelMessage()
                 if (
-                    content?.payload.case === 'post' &&
-                    content?.payload?.value?.content?.case === 'text'
+                    clearEvent?.payload?.case === 'post' &&
+                    clearEvent?.payload?.value?.content?.case === 'text'
                 ) {
-                    expect(content?.payload?.value?.content?.value?.body).toBe('Hello, again!')
+                    expect(clearEvent?.payload?.value?.content.value?.body).toContain(
+                        'Hello, again!',
+                    )
                 }
             })
         }
 
         const onStreamInitialized = (streamId: string, streamKind: PayloadCaseType) => {
             log('streamInitialized', streamId, streamKind)
-            done.run(() => {
+            done.runAndDoneAsync(async () => {
                 if (streamKind === 'channelPayload') {
                     const channel = bobsAnotherClient.stream(streamId)!
                     log('channel content')
                     log(channel.view)
 
+                    if (!bobsAnotherClient.cryptoBackend) {
+                        // by the time this runs, the crypto backend should be initialized
+                        // but in case it is not, let's init it again
+                        await expect(bobsAnotherClient.initCrypto()).toResolve()
+                    }
                     const messages = Array.from(channel.view.messages.values())
                     expect(messages).toHaveLength(1)
-                    expect(getMessagePayloadContent_Text(messages[0])?.body).toBe('Hello, world!')
-
                     channel.on('channelNewMessage', onChannelNewMessage)
                     bobsAnotherClient.sendMessage(streamId, 'Hello, again!')
                 }
@@ -289,7 +358,7 @@ describe('clientTest', () => {
         bobsAnotherClient.on('streamInitialized', onStreamInitialized)
 
         await expect(bobsAnotherClient.loadExistingUser()).toResolve()
-
+        await expect(bobsAnotherClient.initCrypto()).toResolve()
         await bobsAnotherClient.startSync()
 
         await done.expectToSucceed()
@@ -299,67 +368,12 @@ describe('clientTest', () => {
         return 'done'
     }
 
-    test('bobTalksToHimself-noflush', async () => {
-        const done = makeDonePromise()
-
-        const onChannelNewMessage = (channelId: string, message: RiverEvent): void => {
-            log('channelNewMessage', channelId)
-            log(message)
-            done.runAndDone(() => {
-                const content = message.getContent().content.ciphertext
-                expect(content).toContain('Hello, world!')
-            })
-        }
-
-        const onStreamInitialized = (streamId: string, streamKind: PayloadCaseType) => {
-            log('streamInitialized', streamId, streamKind)
-            done.run(() => {
-                if (streamKind === 'channelPayload') {
-                    const channel = bobsClient.stream(streamId)!
-                    log('channel content')
-                    log(channel.view)
-
-                    channel.on('channelNewMessage', onChannelNewMessage)
-                    bobsClient.sendMessage(streamId, 'Hello, world!')
-                }
-            })
-        }
-        bobsClient.on('streamInitialized', onStreamInitialized)
-
-        await expect(bobsClient.createNewUser()).toResolve()
-
-        await bobsClient.startSync()
-
-        const bobsSpaceId = makeSpaceStreamId('bobs-space-' + genId())
-        const bobsChannelName = 'Bobs channel'
-        const bobsChannelTopic = 'Bobs channel topic'
-        await expect(bobsClient.createSpace(bobsSpaceId, { name: "Bob's Space" })).toResolve()
-
-        await expect(
-            bobsClient.createChannel(
-                bobsSpaceId,
-                bobsChannelName,
-                bobsChannelTopic,
-                makeChannelStreamId('bobs-channel-' + genId()),
-            ),
-        ).toResolve()
-
-        await done.expectToSucceed()
-
-        await bobsClient.stopSync()
-
-        log('pass1 done')
-
-        await expect(bobCanReconnect()).toResolve()
-
-        log('pass2 done')
-    })
-
     test('bobSendsSingleMessage', async () => {
         log('bobSendsSingleMessage')
 
         // Bob gets created, creates a space, and creates a channel.
         await expect(bobsClient.createNewUser()).toResolve()
+        await expect(bobsClient.initCrypto()).toResolve()
         await bobsClient.startSync()
 
         const bobsSpaceId = makeSpaceStreamId('bobs-space-' + genId())
@@ -376,12 +390,21 @@ describe('clientTest', () => {
 
         // Bob can send a message.
         const bobSelfHello = makeDonePromise()
-        bobsClient.once('channelNewMessage', (channelId: string, message: RiverEvent): void => {
-            const content = message.getContent().content.ciphertext
-            log('channelNewMessage', 'Bob Initial Message', channelId, content)
-            bobSelfHello.runAndDone(() => {
+        bobsClient.once('channelNewMessage', (channelId: string, event: RiverEvent): void => {
+            log('channelNewMessage', 'Bob Initial Message', channelId)
+            bobSelfHello.runAndDoneAsync(async () => {
                 expect(channelId).toBe(bobsChannelId)
-                expect(content).toContain('Hello, world from Bob!')
+                await bobsClient.decryptEventIfNeeded(event)
+                const clearEvent = event.getClearContent_ChannelMessage()
+                expect(clearEvent?.payload).toBeDefined()
+                if (
+                    clearEvent?.payload?.case === 'post' &&
+                    clearEvent?.payload?.value?.content?.case === 'text'
+                ) {
+                    expect(clearEvent?.payload?.value?.content.value?.body).toContain(
+                        'Hello, world from Bob!',
+                    )
+                }
             })
         })
 
@@ -396,6 +419,7 @@ describe('clientTest', () => {
 
         // Bob gets created, creates a space, and creates a channel.
         await expect(bobsClient.createNewUser()).toResolve()
+        await expect(bobsClient.initCrypto()).toResolve()
         await bobsClient.startSync()
 
         const bobsSpaceId = makeSpaceStreamId('bobs-space-' + genId())
@@ -412,17 +436,26 @@ describe('clientTest', () => {
 
         // Alice gest created.
         await expect(alicesClient.createNewUser()).toResolve()
+        await expect(alicesClient.initCrypto()).toResolve()
         await alicesClient.startSync()
 
         // Bob can send a message.
         const bobSelfHello = makeDonePromise()
-        bobsClient.once('channelNewMessage', (channelId: string, message: RiverEvent): void => {
-            const content = message.getContent().content.ciphertext
-            log('channelNewMessage', 'Bob Initial Message', channelId, content)
-            bobSelfHello.runAndDone(() => {
-                // TODO: why 'Hello, world from Bob!' can be received here?
+        bobsClient.once('channelNewMessage', (channelId: string, event: RiverEvent): void => {
+            log('channelNewMessage', 'Bob Initial Message', channelId)
+            bobSelfHello.runAndDoneAsync(async () => {
                 expect(channelId).toBe(bobsChannelId)
-                expect(content).toContain('Hello, world from Bob!')
+                await bobsClient.decryptEventIfNeeded(event)
+                const clearEvent = event.getClearContent_ChannelMessage()
+                expect(clearEvent?.payload).toBeDefined()
+                if (
+                    clearEvent?.payload?.case === 'post' &&
+                    clearEvent?.payload?.value?.content?.case === 'text'
+                ) {
+                    expect(clearEvent?.payload?.value?.content.value?.body).toContain(
+                        'Hello, world from Bob!',
+                    )
+                }
             })
         })
 
@@ -462,55 +495,57 @@ describe('clientTest', () => {
             'Both!',
         ]
 
-        alicesClient.on('channelNewMessage', (channelId: string, message: RiverEvent): void => {
-            const plainContent =
-                message.getWireContent_fromJsonString<ChannelMessage>(ChannelMessage)
-            expect(plainContent).toBeDefined()
-            if (
-                plainContent?.payload.case !== 'post' ||
-                plainContent?.payload?.value?.content?.case !== 'text'
-            ) {
-                throw new Error('Unexpected message type')
-            }
-            const content = plainContent?.payload?.value?.content?.value?.body
-            log('channelNewMessage', 'Alice', channelId, content)
-            aliceGetsMessage.run(() => {
+        alicesClient.on('channelNewMessage', (channelId: string, event: RiverEvent): void => {
+            const { content } = event.getWireContentChannel()
+            expect(content).toBeDefined()
+            log('channelNewMessage', 'Alice', channelId)
+            aliceGetsMessage.runAsync(async () => {
                 expect(channelId).toBe(bobsChannelId)
-                // @ts-ignore
-                expect(content).toBeOneOf(conversation)
-                if (content === 'Hello, Alice!') {
-                    alicesClient.sendMessage(channelId, 'Hello, Bob!')
-                } else if (content === 'Weather nice?') {
-                    alicesClient.sendMessage(channelId, 'Sun and rain!')
-                } else if (content === 'Coffee or tea?') {
-                    alicesClient.sendMessage(channelId, 'Both!')
-                    aliceGetsMessage.done()
+                await alicesClient.decryptEventIfNeeded(event)
+                const clearEvent = event.getClearContent_ChannelMessage()
+                expect(clearEvent?.payload).toBeDefined()
+                if (
+                    clearEvent?.payload?.case === 'post' &&
+                    clearEvent?.payload?.value?.content?.case === 'text'
+                ) {
+                    const body = clearEvent?.payload?.value?.content.value?.body
+                    // @ts-ignore
+                    expect(body).toBeOneOf(conversation)
+                    if (body === 'Hello, Alice!') {
+                        alicesClient.sendMessage(channelId, 'Hello, Bob!')
+                    } else if (body === 'Weather nice?') {
+                        alicesClient.sendMessage(channelId, 'Sun and rain!')
+                    } else if (body === 'Coffee or tea?') {
+                        alicesClient.sendMessage(channelId, 'Both!')
+                        aliceGetsMessage.done()
+                    }
                 }
             })
         })
 
-        bobsClient.on('channelNewMessage', (channelId: string, message: RiverEvent): void => {
-            const plainContent =
-                message.getWireContent_fromJsonString<ChannelMessage>(ChannelMessage)
-            expect(plainContent).toBeDefined()
-            if (
-                plainContent?.payload.case !== 'post' ||
-                plainContent?.payload?.value?.content?.case !== 'text'
-            ) {
-                throw new Error('Unexpected message type')
-            }
-            const content = plainContent?.payload?.value?.content?.value?.body
-            log('channelNewMessage', 'Bob', channelId, content)
-            bobGetsMessage.run(() => {
+        bobsClient.on('channelNewMessage', (channelId: string, event: RiverEvent): void => {
+            const { content } = event.getWireContentChannel()
+            expect(content).toBeDefined()
+            log('channelNewMessage', 'Bob', channelId)
+            bobGetsMessage.runAsync(async () => {
                 expect(channelId).toBe(bobsChannelId)
-                // @ts-ignore
-                expect(content).toBeOneOf(conversation)
-                if (content === 'Hello, Bob!') {
-                    bobsClient.sendMessage(channelId, 'Weather nice?')
-                } else if (content === 'Sun and rain!') {
-                    bobsClient.sendMessage(channelId, 'Coffee or tea?')
-                } else if (content === 'Both!') {
-                    bobGetsMessage.done()
+                await bobsClient.decryptEventIfNeeded(event)
+                const clearEvent = event.getClearContent_ChannelMessage()
+                expect(clearEvent?.payload).toBeDefined()
+                if (
+                    clearEvent?.payload?.case === 'post' &&
+                    clearEvent?.payload?.value?.content?.case === 'text'
+                ) {
+                    const body = clearEvent?.payload?.value?.content.value?.body
+                    // @ts-ignore
+                    expect(body).toBeOneOf(conversation)
+                    if (body === 'Hello, Bob!') {
+                        bobsClient.sendMessage(channelId, 'Weather nice?')
+                    } else if (body === 'Sun and rain!') {
+                        bobsClient.sendMessage(channelId, 'Coffee or tea?')
+                    } else if (body === 'Both!') {
+                        bobGetsMessage.done()
+                    }
                 }
             })
         })

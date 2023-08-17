@@ -1,7 +1,6 @@
-import { Client as CasablancaClient, ParsedEvent } from '@river/sdk'
+import { Client as CasablancaClient, ParsedEvent, isCiphertext } from '@river/sdk'
 import {
     MembershipOp,
-    ChannelMessage,
     ChannelMessage_Post,
     PayloadCaseType,
     ToDeviceOp,
@@ -24,6 +23,7 @@ import {
 import {
     getFallbackContent,
     ReactionEvent,
+    RoomMessageEncryptedEvent,
     RoomMessageEvent,
     RoomRedactionEvent,
     TimelineEvent,
@@ -31,6 +31,7 @@ import {
     ZTEvent,
 } from '../../types/timeline-types'
 import { staticAssertNever } from '../../utils/zion-utils'
+import { RiverEvent } from '@river/sdk'
 
 type SuccessResult = {
     content: TimelineEvent_OneOf
@@ -85,6 +86,27 @@ export function useCasablancaTimelines(casablancaClient: CasablancaClient | unde
             }
         }
 
+        const onEventDecrypted = (riverEvent: object, err: Error | undefined) => {
+            if (err) {
+                console.error('$$$ useCasablancaTimelines onEventDecrypted', err)
+                return
+            }
+            const message = riverEvent as RiverEvent
+            if (message.getStreamType() === 'channelPayload') {
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
+                const streamId: string | undefined = message.getStreamId()
+                if (!streamId) {
+                    console.error('$$$ useCasablancaTimelines onEventDecrypted no streamId')
+                    return
+                }
+                const timelineEvent = toEvent_FromRiverEvent(message, userId)
+
+                // get replace Id and remove/replace state or if redaction delete, or
+                // just replace if no replaceId.
+                processEvent(timelineEvent, userId, streamId, setState, timelineEvent.eventId)
+            }
+        }
+
         //TODO: this should be discussed with the team - if there is a chance for duplicates/lost events
         const timelineEvents: Map<string, TimelineEvent[]> = new Map()
         //Step 1: get all the events which are already in the river before listeners started
@@ -111,26 +133,29 @@ export function useCasablancaTimelines(casablancaClient: CasablancaClient | unde
 
         casablancaClient.on('streamInitialized', onStreamInitialized)
         casablancaClient.on('streamUpdated', onStreamUpdated)
+        casablancaClient.on('eventDecrypted', onEventDecrypted)
 
         return () => {
             casablancaClient.off('streamInitialized', onStreamInitialized)
             casablancaClient.off('streamUpdated', onStreamUpdated)
+            casablancaClient.off('eventDecrypted', onEventDecrypted)
             setState.reset(Array.from(streamIds))
         }
     }, [casablancaClient, setState])
 }
 
-export function toEvent(message: ParsedEvent, userId: string): TimelineEvent {
-    const eventId = message.hashStr
-    const { content, error } = toTownsContent(eventId, message)
+export function toEvent_FromRiverEvent(message: RiverEvent, userId: string): TimelineEvent {
+    const eventId = message.getId() ?? ''
+    const creatorUserId = message.getSender()
     const sender = {
-        id: message.creatorUserId,
-        displayName: message.creatorUserId, // todo displayName
+        id: creatorUserId,
+        displayName: creatorUserId, // todo displayName
         avatarUrl: undefined, // todo avatarUrl
     }
+    const { content, error } = toTownsContent_fromRiverEvent(eventId, message)
+
     const isSender = sender.id === userId
     const fbc = `${content?.kind ?? '??'} ${getFallbackContent(sender.displayName, content, error)}`
-    // console.log("!!!! to event", event.getId(), fbc);
     return {
         eventId: eventId,
         status: isSender ? undefined : undefined, // todo: set status for events this user sent
@@ -147,17 +172,111 @@ export function toEvent(message: ParsedEvent, userId: string): TimelineEvent {
     }
 }
 
-function toTownsContent(eventId: string, message: ParsedEvent): TownsContentResult {
+export function toEvent(message: ParsedEvent, userId: string): TimelineEvent {
+    const eventId = message.hashStr
+    const creatorUserId = message.creatorUserId
+    const sender = {
+        id: creatorUserId,
+        displayName: creatorUserId, // todo displayName
+        avatarUrl: undefined, // todo avatarUrl
+    }
+    const { content, error } = toTownsContent(eventId, message)
+
+    const isSender = sender.id === userId
+    const fbc = `${content?.kind ?? '??'} ${getFallbackContent(sender.displayName, content, error)}`
+    return {
+        eventId: eventId,
+        status: isSender ? undefined : undefined, // todo: set status for events this user sent
+        originServerTs: Date.now(), // todo: timestamps
+        updatedServerTs: Date.now(), // todo: timestamps
+        content: content,
+        fallbackContent: fbc,
+        isLocalPending: eventId.startsWith('~'),
+        threadParentId: getThreadParentId(content),
+        reactionParentId: getReactionParentId(content),
+        isMentioned: getIsMentioned(content, userId),
+        isRedacted: content?.kind === ZTEvent.RoomRedaction,
+        sender,
+    }
+}
+
+function validateEvent_fromRiverEvent(
+    eventId: string,
+    message: RiverEvent,
+): Partial<ErrorResult> & { description?: string } {
+    let error: ErrorResult
+    // handle RiverEvent
+    const payloadCase = message.getStreamType() ?? 'unknown payload case'
+    if (!message.event.payload || !message.event.payload.parsed_event) {
+        error = { error: 'payloadless payload' }
+        return error
+    }
+    if (!message.event.payload.parsed_event.case) {
+        error = { error: 'caseless payload' }
+        return error
+    }
+    if (!message.event.payload.parsed_event.value) {
+        error = { error: `${payloadCase} - caseless payload content` }
+        return error
+    }
+    const description = `${payloadCase}::${message.event.payload.parsed_event.case} id: ${eventId}`
+    return { description }
+}
+
+function validateEvent(
+    eventId: string,
+    message: ParsedEvent,
+): Partial<ErrorResult> & { description?: string } {
+    let error: ErrorResult
     if (!message.event.payload || !message.event.payload.value) {
-        return { error: 'payloadless payload' }
+        error = { error: 'payloadless payload' }
+        return error
     }
     if (!message.event.payload.case) {
-        return { error: 'caseless payload' }
+        error = { error: 'caseless payload' }
+        return error
     }
     if (!message.event.payload.value.content.case) {
-        return { error: `${message.event.payload.case} - caseless payload content` }
+        error = { error: `${message.event.payload.case} - caseless payload content` }
+        return error
     }
     const description = `${message.event.payload.case}::${message.event.payload.value.content.case} id: ${eventId}`
+    return { description }
+}
+
+function toTownsContent_fromRiverEvent(eventId: string, message: RiverEvent): TownsContentResult {
+    const { error, description } = validateEvent_fromRiverEvent(eventId, message)
+    if (error) {
+        return { error }
+    }
+    if (!description) {
+        return { error: 'no description' }
+    }
+    // handle RiverEvents which store potentially decrypted contents of the original parsed event
+    const payloadCase = message.getStreamType() ?? 'unknown payload case'
+    switch (payloadCase) {
+        case 'channelPayload':
+            return toTownsContent_ChanelPayload_Message_fromRiverEvent(message, description)
+        case 'userPayload':
+            return {
+                error: `${description} user payload not supported yet`,
+            }
+        default:
+            console.error('$$$ useCasablancaTimelines unknown case', {
+                payload: payloadCase,
+            })
+            return { error: `unknown payload case ${payloadCase}` }
+    }
+}
+
+function toTownsContent(eventId: string, message: ParsedEvent): TownsContentResult {
+    const { error, description } = validateEvent(eventId, message)
+    if (error) {
+        return { error }
+    }
+    if (!description) {
+        return { error: 'no description' }
+    }
 
     switch (message.event.payload.case) {
         case 'userPayload':
@@ -195,14 +314,16 @@ function toTownsContent(eventId: string, message: ParsedEvent): TownsContentResu
             }
         default:
             try {
-                staticAssertNever(message.event.payload)
+                if (message.event.payload && message.event.payload.value) {
+                    staticAssertNever(message.event.payload)
+                }
             } catch (e) {
                 console.error('$$$ useCasablancaTimelines unknown case', {
                     payload: message.event.payload,
                 })
-                // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
-                return { error: `unknown payload case ${message.event.payload}` }
             }
+            // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
+            return { error: `unknown payload case ${message.event.payload.case}` }
     }
 }
 
@@ -300,13 +421,7 @@ function toTownsContent_ChannelPayload(
         }
         case 'message': {
             const payload = value.content.value
-            return toTownsContent_ChannelPayload_Message(
-                eventId,
-                message,
-                value,
-                payload,
-                description,
-            )
+            return toTownsContent_ChannelPayload_Message(payload, description)
         }
         case undefined: {
             return { error: `${description} undefined message kind` }
@@ -320,28 +435,30 @@ function toTownsContent_ChannelPayload(
     }
 }
 
-function toTownsContent_ChannelPayload_Message(
-    eventId: string,
-    message: ParsedEvent,
-    value: ChannelPayload,
-    payload: EncryptedData,
+function toTownsContent_ChanelPayload_Message_fromRiverEvent(
+    payload: RiverEvent,
     description: string,
 ): TownsContentResult {
-    if (!payload.text) {
-        return { error: `${description} no text in message` }
-    }
     try {
-        // todo jterzis 08/08/23 HNT-1967: when ChannelMessage encryption is turned on by default,
-        // payload.text will always be ciphertext. We'll need to pass in
-        // RiverEvent to this function and extract clear content into ChannelMessage from it,
-        // using event.getClearContent_ChannelMessage. The rest of this
-        // code can stay the same.
-        const channelMessage = ChannelMessage.fromJsonString(payload.text)
+        const channelMessage = payload.getClearContent_ChannelMessage()
+        if (!channelMessage.payload) {
+            // if we don't have clear content available, we either have a decryption failure or we should attempt decryption
+            if (payload.shouldAttemptDecryption() || payload.isDecryptionFailure()) {
+                return {
+                    content: {
+                        kind: ZTEvent.RoomMessageEncrypted,
+                    } satisfies RoomMessageEncryptedEvent,
+                }
+            }
+            return { error: `${description} no clear text in message` }
+        }
 
-        switch (channelMessage.payload.case) {
+        switch (channelMessage?.payload?.case) {
             case 'post':
                 return (
-                    toTownsContent_ChannelPayload_Message_Post(channelMessage.payload.value) ?? {
+                    toTownsContent_ChannelPayload_Message_Post(
+                        new ChannelMessage_Post(channelMessage?.payload.value),
+                    ) ?? {
                         error: `${description} unknown message type`,
                     }
                 )
@@ -349,9 +466,7 @@ function toTownsContent_ChannelPayload_Message(
                 return {
                     content: {
                         kind: ZTEvent.Reaction,
-                        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
                         reaction: channelMessage.payload.value.reaction,
-                        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
                         targetEventId: channelMessage.payload.value.refEventId,
                     } satisfies ReactionEvent,
                 }
@@ -369,7 +484,7 @@ function toTownsContent_ChannelPayload_Message(
                     return { error: `${description} no post in edit` }
                 }
                 const newContent = toTownsContent_ChannelPayload_Message_Post(
-                    newPost,
+                    new ChannelMessage_Post(newPost),
                     channelMessage.payload.value.refEventId,
                 )
                 return newContent ?? { error: `${description} no content in edit` }
@@ -387,10 +502,23 @@ function toTownsContent_ChannelPayload_Message(
             }
         }
     } catch (e) {
-        return payload.algorithm
-            ? { error: `${description} message text encrypted with ${payload.algorithm}` }
-            : { error: `${description} message text invalid channel message` }
+        return { error: `${description} message text invalid channel message` }
     }
+}
+
+function toTownsContent_ChannelPayload_Message(
+    payload: EncryptedData,
+    description: string,
+): TownsContentResult {
+    if (isCiphertext(payload.text)) {
+        return {
+            // if payload is an EncryptedData message, than it is encrypted content kind
+            content: { kind: ZTEvent.RoomMessageEncrypted } satisfies RoomMessageEncryptedEvent,
+        }
+    }
+    // do not handle non-encrypted messages that should be encrypted
+    //return toTownsContent_ChannelPayload_Message_from_EncryptedData(payload, description)
+    return { error: `${description} message text invalid channel message` }
 }
 
 function toTownsContent_ChannelPayload_Message_Post(
@@ -521,15 +649,28 @@ function processEvent(
     userId: string,
     streamId: string,
     setState: TimelineStoreInterface,
+    decryptedFromEventId?: string,
 ) {
     const replacedEventId = getReplacedId(event.content)
     const redactsEventId = getRedactsId(event.content)
     if (redactsEventId) {
+        if (decryptedFromEventId) {
+            // remove the formerly encrypted event
+            setState.removeEvent(streamId, decryptedFromEventId)
+        }
         setState.removeEvent(streamId, redactsEventId)
         setState.appendEvent(userId, streamId, event)
     } else if (replacedEventId) {
+        if (decryptedFromEventId) {
+            setState.removeEvent(streamId, decryptedFromEventId)
+        }
         setState.replaceEvent(userId, streamId, replacedEventId, event)
     } else {
-        setState.appendEvent(userId, streamId, event)
+        if (decryptedFromEventId) {
+            // replace the formerly encrypted event
+            setState.replaceEvent(userId, streamId, decryptedFromEventId, event)
+        } else {
+            setState.appendEvent(userId, streamId, event)
+        }
     }
 }

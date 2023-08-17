@@ -69,12 +69,7 @@ import {
 import { shortenHexString } from './binary'
 import { CryptoStore } from './crypto/store/base'
 import { DeviceInfo } from './crypto/deviceInfo'
-import {
-    IDecryptOptions,
-    RiverEvent,
-    RiverEvents,
-    isChannelContentPlainMessage_Post_Text,
-} from './event'
+import { IDecryptOptions, RiverEvent, RiverEvents } from './event'
 import debug from 'debug'
 import { MEGOLM_ALGORITHM, OLM_ALGORITHM } from './crypto/olmLib'
 import { Stream } from './stream'
@@ -532,6 +527,14 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         return stream
     }
 
+    public updateDecryptedStream(streamId: string, event: RiverEvent): void {
+        const stream = this.stream(streamId)
+        if (stream === undefined) {
+            throw new Error(`Stream ${streamId} not found`)
+        }
+        stream.updateDecrypted(event)
+    }
+
     private async getStream(streamId: string): Promise<StreamStateView> {
         try {
             this.logCall('getStream', streamId)
@@ -763,31 +766,14 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
     async sendChannelMessage(
         streamId: string,
         payload: PlainMessage<ChannelMessage>['payload'],
-        encrypt?: boolean,
     ): Promise<void> {
-        if (encrypt) {
-            // todo: support encryption for all ChannelMessage payload cases.
-            // Requires type support in event model for all cases.
-            if (isChannelContentPlainMessage_Post_Text(payload)) {
-                const message = await this.createMegolmEncryptedEvent(payload, streamId)
-                if (!message) {
-                    throw new Error('failed to encrypt message')
-                }
-                return this.makeEventAndAddToStream(
-                    streamId,
-                    make_ChannelPayload_Message(message),
-                    'sendMessage',
-                )
-            } else {
-                throw new Error(`encryption not supported for this payload case, ${payload.case}`)
-            }
+        const message = await this.createMegolmEncryptedEvent(payload, streamId)
+        if (!message) {
+            throw new Error('failed to encrypt message')
         }
-        const channelMessage = new ChannelMessage({ payload: payload })
         return this.makeEventAndAddToStream(
             streamId,
-            make_ChannelPayload_Message({
-                text: channelMessage.toJsonString(),
-            }),
+            make_ChannelPayload_Message(message),
             'sendMessage',
         )
     }
@@ -797,23 +783,18 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         payload: Omit<PlainMessage<ChannelMessage_Post>, 'content'> & {
             content: PlainMessage<ChannelMessage_Post_Content_Text>
         },
-        encrypt?: boolean,
     ): Promise<void> {
         const { content, ...options } = payload
-        return this.sendChannelMessage(
-            streamId,
-            {
-                case: 'post',
-                value: {
-                    ...options,
-                    content: {
-                        case: 'text',
-                        value: content,
-                    },
+        return this.sendChannelMessage(streamId, {
+            case: 'post',
+            value: {
+                ...options,
+                content: {
+                    case: 'text',
+                    value: content,
                 },
             },
-            encrypt,
-        )
+        })
     }
 
     async sendChannelMessage_Image(

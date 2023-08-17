@@ -61,6 +61,16 @@ export interface IFallbackKey {
     signatures?: IDeviceKeySignatures
 }
 
+export function isCiphertext(text: string): boolean {
+    const cipherRegex = /^[A-Za-z0-9+/]{16,}$/
+    // suffices to check prefix of chars for ciphertext
+    // since obj.text when of the form EncryptedData is assumed to
+    // be either plaintext or ciphertext not a base64 string or
+    // something ciphertext-like.
+    const maxPrefixCheck = 16
+    return cipherRegex.test(text.slice(0, maxPrefixCheck))
+}
+
 export const takeKeccakFingerprintInHex = (buf: Uint8Array, n: number): string => {
     const hash = bin_toHexString(keccak256(buf))
     return hash.slice(0, n)
