@@ -844,11 +844,11 @@
       ]
     },
     "contracts/src/spaces/SpaceFactory.sol": {
-      "keccak256": "0xe6d5357086c75079a928b46169a0d6b6d44e689a08c4a338210effcbc70b9645",
+      "keccak256": "0xee9c1a201f33161a4c666927a27419061662b04efc6e9d1bd1b79214898016ae",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://1acfcfc74339474d62e2d9f458af226b5c5259a6d8ded29cff347d39e44046f5",
-        "dweb:/ipfs/QmWGjtQ6RvrWTLYfuGVHvQg227QNqMYvhjsi6tTWTQ7oah"
+        "bzz-raw://6a7510d5dd87944aeddacccd75d23f18ca3b517b4f75928af15167ac59a454b6",
+        "dweb:/ipfs/QmQ5dpBq4ghUKyYE78niFXNusYVrCPRue5rNCZbYKP9aXA"
       ]
     },
     "contracts/src/spaces/entitlements/TokenEntitlement.sol": {
@@ -939,12 +939,12 @@
         "dweb:/ipfs/QmfVYPDdJ8GCZWS4XaRERMpdavVu5BEK3NooxLbQPCzidz"
       ]
     },
-    "contracts/src/tokens/TownOwner.sol": {
-      "keccak256": "0xdad2bcdbb56c4064abf1f8d25b0d0e018cd83e0058b6358dabcb198dce79c55d",
+    "contracts/src/tokens/TownOwnerV1.sol": {
+      "keccak256": "0x41e1d5cfa6528299b724cf1b54983b982d0ac8d334e41f3a2374e0a522c2310d",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://b420524490d15ff0e1fc2bceb045477992a46151bed7486708531b67f8f7057d",
-        "dweb:/ipfs/QmbwM2GhgpKrMJv31wgSZ74PP3UunfQZgNfeZnDNmXRjEw"
+        "bzz-raw://bbce9710bc72068a82fa57d51d794d43496cfb436fd53333637c4769e72adc54",
+        "dweb:/ipfs/QmamqChiQ2whDCPzRXFEAKi2ZbV15VrqTHsuovCkMRLHwu"
       ]
     },
     "contracts/src/tokens/base/ERC721Base.sol": {

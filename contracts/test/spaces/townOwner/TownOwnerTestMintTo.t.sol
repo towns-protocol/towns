@@ -4,13 +4,13 @@ pragma solidity ^0.8.0;
 import {TestUtils} from "contracts/test/utils/TestUtils.sol";
 import {ERC721Holder} from "openzeppelin-contracts/contracts/token/ERC721/utils/ERC721Holder.sol";
 import {Errors} from "contracts/src/spaces/libraries/Errors.sol";
-import {TownOwner} from "contracts/src/tokens/TownOwner.sol";
+import {TownOwnerV1} from "contracts/src/tokens/TownOwnerV1.sol";
 
-contract TownOwnerTestMintTo is TestUtils, ERC721Holder {
-  TownOwner internal townOwner;
+contract OwnerTownTestMintTo is TestUtils, ERC721Holder {
+  TownOwnerV1 internal townOwner;
 
   function setUp() public {
-    townOwner = new TownOwner("Town Owner", "TOWN", address(this), 0);
+    townOwner = new TownOwnerV1("Town Owner", "TOWN", address(this), 0);
   }
 
   function testSetFactory() public {

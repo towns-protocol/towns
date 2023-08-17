@@ -1,11 +1,11 @@
 {
   "31337": {
     "spaceFactory": "0x610178dA211FEF7D417bC0e6FeD39F05609AD788",
-    "spaceToken": "0x68B1D87F95878fE05B998F19b66F4baba5De1aed",
+    "spaceToken": "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707",
     "pioneerToken": "0x9A9f2CCfdE556A7E9Ff0848998Aa4a0CFD8863AE",
     "member": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
-    "townFactory": "",
-    "town": "",
+    "townFactory": "0x0E801D84Fa97b50751Dbf25036d067dCf18858bF",
+    "town": "0x99bbA657f2BbC93c02D617f8bA121cB8Fc104Acf",
     "delegation": "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9"
   },
   "5": {

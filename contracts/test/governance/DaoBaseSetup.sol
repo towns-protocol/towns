@@ -20,7 +20,7 @@ import {Council} from "contracts/src/governance/Council.sol";
 // tokens
 import {Towns} from "contracts/src/tokens/Towns.sol";
 import {Member} from "contracts/src/tokens/Member.sol";
-import {TownOwner} from "contracts/src/tokens/TownOwner.sol";
+import {TownOwnerV1} from "contracts/src/tokens/TownOwnerV1.sol";
 import {Operator} from "contracts/src/tokens/Operator.sol";
 
 // vaults

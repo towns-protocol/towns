@@ -13,7 +13,7 @@ import {Permissions} from "contracts/src/spaces/libraries/Permissions.sol";
 /** Contracts */
 import {ERC1967Proxy} from "openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import {Space} from "contracts/src/spaces/Space.sol";
-import {TownOwner} from "contracts/src/tokens/TownOwner.sol";
+import {TownOwnerV1} from "contracts/src/tokens/TownOwnerV1.sol";
 import {SpaceFactory} from "contracts/src/spaces/SpaceFactory.sol";
 import {UserEntitlement} from "contracts/src/spaces/entitlements/UserEntitlement.sol";
 import {TokenEntitlement} from "contracts/src/spaces/entitlements/TokenEntitlement.sol";
@@ -24,13 +24,13 @@ contract SpaceFactoryTestInitialize is TestUtils {
   Space internal spaceImplementation;
   TokenEntitlement internal tokenImplementation;
   UserEntitlement internal userImplementation;
-  TownOwner internal spaceToken;
+  TownOwnerV1 internal spaceToken;
   Pioneer internal pioneer;
   string[] public initialPermissions;
 
   function setUp() public {
     pioneer = new Pioneer("Pioneer", "PNR", "");
-    spaceToken = new TownOwner("Town Owner", "TNR", address(this), 0);
+    spaceToken = new TownOwnerV1("Town Owner", "TNR", address(this), 0);
     spaceImplementation = new Space();
     tokenImplementation = new TokenEntitlement();
     userImplementation = new UserEntitlement();

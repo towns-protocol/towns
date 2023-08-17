@@ -230,7 +230,12 @@ export default [
           },
           {
             "internalType": "string",
-            "name": "metadata",
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "internalType": "string",
+            "name": "uri",
             "type": "string"
           },
           {

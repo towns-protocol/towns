@@ -21,7 +21,7 @@ import {TownProxy} from "contracts/src/towns/facets/proxy/TownProxy.sol";
 
 // modules
 
-import {TownOwner} from "contracts/src/tokens/TownOwner.sol";
+import {TownOwner} from "contracts/src/towns/facets/owner/TownOwner.sol";
 import {UserEntitlement} from "contracts/src/towns/entitlements/user/UserEntitlement.sol";
 import {TokenEntitlement} from "contracts/src/towns/entitlements/token/TokenEntitlement.sol";
 import {ERC1967Proxy} from "openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Proxy.sol";
@@ -84,7 +84,7 @@ abstract contract TownArchitectBase is Factory, ITownArchitectBase {
     TownArchitectService.setTown(townInfo.id, tokenId, townAddress);
 
     // mint token to TownArchitect
-    _mintTown(townInfo.metadata);
+    _mintTown(townInfo.name, townInfo.uri, townInfo.id, townAddress);
 
     // deploy town
     townAddress = _deployTown(townInfo.id, tokenId);
@@ -288,7 +288,6 @@ abstract contract TownArchitectBase is Factory, ITownArchitectBase {
       abi.encode(
         IProxyManager.getImplementation.selector,
         address(this),
-        townId,
         tokenCollection,
         tokenId
       )
@@ -304,9 +303,14 @@ abstract contract TownArchitectBase is Factory, ITownArchitectBase {
     tokenId = TownOwner(ds.townToken).nextTokenId();
   }
 
-  function _mintTown(string memory metadata) internal {
+  function _mintTown(
+    string memory name,
+    string memory uri,
+    string memory networkId,
+    address townAddress
+  ) internal {
     TownArchitectStorage.Layout storage ds = TownArchitectStorage.layout();
-    TownOwner(ds.townToken).mintTo(address(this), metadata);
+    TownOwner(ds.townToken).mintTown(name, uri, networkId, townAddress);
   }
 
   function _transferTown(uint256 tokenId, address to) internal {

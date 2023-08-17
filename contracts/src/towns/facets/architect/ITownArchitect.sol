@@ -26,7 +26,8 @@ interface ITownArchitectBase {
 
   struct TownInfo {
     string id;
-    string metadata;
+    string name;
+    string uri;
     RoleInfo everyoneEntitlement;
     MemberEntitlement memberEntitlement;
     ChannelInfo channel;

@@ -9,7 +9,7 @@ import {Permissions} from "contracts/src/spaces/libraries/Permissions.sol";
 
 /* Contracts */
 import {Space} from "contracts/src/spaces/Space.sol";
-import {TownOwner} from "contracts/src/tokens/TownOwner.sol";
+import {TownOwnerV1} from "contracts/src/tokens/TownOwnerV1.sol";
 import {Pioneer} from "contracts/src/tokens/Pioneer.sol";
 import {SpaceFactory} from "contracts/src/spaces/SpaceFactory.sol";
 import {UserEntitlement} from "contracts/src/spaces/entitlements/UserEntitlement.sol";
@@ -17,13 +17,13 @@ import {TokenEntitlement} from "contracts/src/spaces/entitlements/TokenEntitleme
 import {ERC1967Proxy} from "openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
 import {DeployPioneer} from "contracts/scripts/DeployPioneer.s.sol";
-import {DeployTownOwner} from "contracts/scripts/DeployTownOwner.s.sol";
+import {DeployOldTownOwner} from "contracts/scripts/DeployOldTownOwner.s.sol";
 import {DeployTokenImpl, DeployUserImpl} from "contracts/scripts/DeployImplementations.s.sol";
 import {DeploySpaceImpl} from "contracts/scripts/DeploySpaceImpl.s.sol";
 
 contract DeploySpaceFactory is Deployer {
   DeployPioneer internal deployPioneer;
-  DeployTownOwner internal deployTownOwner;
+  DeployOldTownOwner internal deployTownOwner;
   DeploySpaceImpl internal deploySpaceImpl;
   DeployTokenImpl internal deployTokenImpl;
   DeployUserImpl internal deployUserImpl;
@@ -32,7 +32,7 @@ contract DeploySpaceFactory is Deployer {
   Space internal spaceImplementation;
   TokenEntitlement internal tokenImplementation;
   UserEntitlement internal userImplementation;
-  TownOwner internal spaceToken;
+  TownOwnerV1 internal spaceToken;
   Pioneer internal pioneer;
 
   string[] public initialPermissions;
@@ -48,8 +48,8 @@ contract DeploySpaceFactory is Deployer {
     deployPioneer = new DeployPioneer();
     pioneer = Pioneer(payable(deployPioneer.deploy()));
 
-    deployTownOwner = new DeployTownOwner();
-    spaceToken = TownOwner(deployTownOwner.deploy());
+    deployTownOwner = new DeployOldTownOwner();
+    spaceToken = TownOwnerV1(deployTownOwner.deploy());
 
     deploySpaceImpl = new DeploySpaceImpl();
     spaceImplementation = Space(deploySpaceImpl.deploy());

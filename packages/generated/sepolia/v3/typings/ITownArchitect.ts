@@ -66,7 +66,8 @@ export declare namespace ITownArchitectBase {
 
   export type TownInfoStruct = {
     id: PromiseOrValue<string>;
-    metadata: PromiseOrValue<string>;
+    name: PromiseOrValue<string>;
+    uri: PromiseOrValue<string>;
     everyoneEntitlement: ITownArchitectBase.RoleInfoStruct;
     memberEntitlement: ITownArchitectBase.MemberEntitlementStruct;
     channel: ITownArchitectBase.ChannelInfoStruct;
@@ -75,12 +76,14 @@ export declare namespace ITownArchitectBase {
   export type TownInfoStructOutput = [
     string,
     string,
+    string,
     ITownArchitectBase.RoleInfoStructOutput,
     ITownArchitectBase.MemberEntitlementStructOutput,
     ITownArchitectBase.ChannelInfoStructOutput
   ] & {
     id: string;
-    metadata: string;
+    name: string;
+    uri: string;
     everyoneEntitlement: ITownArchitectBase.RoleInfoStructOutput;
     memberEntitlement: ITownArchitectBase.MemberEntitlementStructOutput;
     channel: ITownArchitectBase.ChannelInfoStructOutput;
@@ -111,7 +114,7 @@ export declare namespace ITokenEntitlement {
 export interface ITownArchitectInterface extends utils.Interface {
   functions: {
     "computeTown(string)": FunctionFragment;
-    "createTown((string,string,(string,string[]),((string,string[]),(address,uint256,bool,uint256[])[],address[]),(string,string)))": FunctionFragment;
+    "createTown((string,string,string,(string,string[]),((string,string[]),(address,uint256,bool,uint256[])[],address[]),(string,string)))": FunctionFragment;
     "gateByToken(address,uint256)": FunctionFragment;
     "getTokenIdByTownId(string)": FunctionFragment;
     "getTownArchitectImplementations()": FunctionFragment;

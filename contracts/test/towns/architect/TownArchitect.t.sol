@@ -204,7 +204,8 @@ contract TownArchitectTest is
   function _createSimpleTown(string memory townId) internal returns (address) {
     ITownArchitectBase.TownInfo memory townInfo = ITownArchitectBase.TownInfo({
       id: townId,
-      metadata: "test",
+      name: "test",
+      uri: "ipfs://test",
       everyoneEntitlement: ITownArchitectBase.RoleInfo({
         name: "Everyone",
         permissions: new string[](0)

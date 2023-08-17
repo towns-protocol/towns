@@ -15,7 +15,6 @@ import {RolesHelper} from "contracts/test/towns/roles/RolesSetup.sol";
 import {ChannelsHelper} from "contracts/test/towns/channels/ChannelsSetup.sol";
 import {TokenOwnableHelper} from "contracts/test/diamond/ownable/token/TokenOwnableSetup.sol";
 import {TokenPausableHelper} from "contracts/test/diamond/pausable/token/TokenPausableSetup.sol";
-import {TownHelper} from "contracts/test/towns/town/TownSetup.sol";
 
 import {MultiInit} from "contracts/src/diamond/initializers/MultiInit.sol";
 
@@ -28,14 +27,14 @@ contract TownImplementationHelper {
   EntitlementsHelper entitlementsHelper = new EntitlementsHelper();
   RolesHelper rolesHelper = new RolesHelper();
   ChannelsHelper channelsHelper = new ChannelsHelper();
-  TownHelper townHelper = new TownHelper();
+
   MultiInit multiInit = new MultiInit();
 
   address[] initAddresses = new address[](3);
   bytes[] initDatas = new bytes[](3);
 
   function createImplementation(address owner) external returns (Diamond) {
-    uint256 cutCount = 8;
+    uint256 cutCount = 7;
     uint256 index;
 
     Diamond.FacetCut[] memory cuts = new Diamond.FacetCut[](cutCount);
@@ -46,7 +45,6 @@ contract TownImplementationHelper {
     cuts[index++] = rolesHelper.makeCut(IDiamond.FacetCutAction.Add);
     cuts[index++] = channelsHelper.makeCut(IDiamond.FacetCutAction.Add);
     cuts[index++] = tokenPausableHelper.makeCut(IDiamond.FacetCutAction.Add);
-    cuts[index++] = townHelper.makeCut(IDiamond.FacetCutAction.Add);
 
     initAddresses[0] = ownableHelper.facet();
     initAddresses[1] = diamondCutHelper.facet();

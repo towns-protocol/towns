@@ -57,7 +57,8 @@ export class SpaceDappV3 implements ISpaceDapp {
     ): Promise<ContractTransaction> {
         const townInfo: ITownArchitectBase.TownInfoStruct = {
             id: params.spaceId,
-            metadata: params.spaceMetadata,
+            name: params.spaceName,
+            uri: params.spaceMetadata,
             everyoneEntitlement: fromPermisisonsToRoleInfo('Everyone', params.everyonePermissions),
             memberEntitlement: fromSpaceEntitlementsToMemberEntitlement(params.memberEntitlements),
             channel: fromChannelIdToChannelInfo(params.channelId),

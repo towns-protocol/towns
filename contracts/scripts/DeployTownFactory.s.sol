@@ -7,7 +7,7 @@ import {IDiamond} from "contracts/src/diamond/IDiamond.sol";
 // libraries
 
 // contracts
-import {TownOwner} from "contracts/src/tokens/TownOwner.sol";
+import {TownOwner} from "contracts/src/towns/facets/owner/TownOwner.sol";
 import {DiamondCutFacet} from "contracts/src/diamond/facets/cut/DiamondCutFacet.sol";
 import {DiamondLoupeFacet} from "contracts/src/diamond/facets/loupe/DiamondLoupeFacet.sol";
 import {OwnableFacet} from "contracts/src/diamond/facets/ownable/OwnableFacet.sol";

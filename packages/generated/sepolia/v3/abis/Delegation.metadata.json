@@ -1,0 +1,465 @@
+{
+  "compiler": {
+    "version": "0.8.20+commit.a1b79de6"
+  },
+  "language": "Solidity",
+  "output": {
+    "abi": [
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "vault",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "delegate",
+            "type": "address"
+          }
+        ],
+        "name": "DelegateAlreadyExists",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "Initializable_InInitializingState",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "Initializable_NotInInitializingState",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "Introspection_AlreadySupported",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "Introspection_NotSupported",
+        "type": "error"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": false,
+            "internalType": "address",
+            "name": "vault",
+            "type": "address"
+          },
+          {
+            "indexed": false,
+            "internalType": "address",
+            "name": "delegate",
+            "type": "address"
+          },
+          {
+            "indexed": false,
+            "internalType": "bool",
+            "name": "value",
+            "type": "bool"
+          }
+        ],
+        "name": "DelegateForAll",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": false,
+            "internalType": "uint32",
+            "name": "version",
+            "type": "uint32"
+          }
+        ],
+        "name": "Initialized",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": true,
+            "internalType": "bytes4",
+            "name": "interfaceId",
+            "type": "bytes4"
+          }
+        ],
+        "name": "InterfaceAdded",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": true,
+            "internalType": "bytes4",
+            "name": "interfaceId",
+            "type": "bytes4"
+          }
+        ],
+        "name": "InterfaceRemoved",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": false,
+            "internalType": "address",
+            "name": "vault",
+            "type": "address"
+          }
+        ],
+        "name": "RevokeAllDelegates",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": false,
+            "internalType": "address",
+            "name": "vault",
+            "type": "address"
+          },
+          {
+            "indexed": false,
+            "internalType": "address",
+            "name": "delegate",
+            "type": "address"
+          }
+        ],
+        "name": "RevokeDelegate",
+        "type": "event"
+      },
+      {
+        "inputs": [],
+        "name": "__Delegation_init",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "delegate",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "vault",
+            "type": "address"
+          }
+        ],
+        "name": "checkDelegateForAll",
+        "outputs": [
+          {
+            "internalType": "bool",
+            "name": "",
+            "type": "bool"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "delegate",
+            "type": "address"
+          },
+          {
+            "internalType": "bool",
+            "name": "value",
+            "type": "bool"
+          }
+        ],
+        "name": "delegateForAll",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "vault",
+            "type": "address"
+          }
+        ],
+        "name": "getDelegatesForAll",
+        "outputs": [
+          {
+            "internalType": "address[]",
+            "name": "delegates",
+            "type": "address[]"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "delegate",
+            "type": "address"
+          }
+        ],
+        "name": "getDelegationsByDelegate",
+        "outputs": [
+          {
+            "components": [
+              {
+                "internalType": "address",
+                "name": "vault",
+                "type": "address"
+              },
+              {
+                "internalType": "address",
+                "name": "delegate",
+                "type": "address"
+              }
+            ],
+            "internalType": "struct IDelegationBase.DelegationInfo[]",
+            "name": "info",
+            "type": "tuple[]"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "revokeAllDelegates",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "delegate",
+            "type": "address"
+          }
+        ],
+        "name": "revokeDelegate",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      }
+    ],
+    "devdoc": {
+      "kind": "dev",
+      "methods": {
+        "checkDelegateForAll(address,address)": {
+          "params": {
+            "delegate": "The wallet to act on your behalf",
+            "vault": "The cold wallet who issued the delegation"
+          }
+        },
+        "delegateForAll(address,bool)": {
+          "params": {
+            "delegate": "The address to act on your behalf",
+            "value": "Whether to enable or disable delegation for this address"
+          }
+        },
+        "getDelegatesForAll(address)": {
+          "params": {
+            "vault": "The cold wallet who issued the delegation"
+          },
+          "returns": {
+            "delegates": "addresses Array of wallet-level delegates for a given vault"
+          }
+        },
+        "getDelegationsByDelegate(address)": {
+          "params": {
+            "delegate": "The delegate to query"
+          },
+          "returns": {
+            "info": "An array of delegation info"
+          }
+        },
+        "revokeDelegate(address)": {
+          "params": {
+            "delegate": "The address to revoke"
+          }
+        }
+      },
+      "version": 1
+    },
+    "userdoc": {
+      "events": {
+        "DelegateForAll(address,address,bool)": {
+          "notice": "Emitted when a user delegates their entire wallet"
+        },
+        "InterfaceAdded(bytes4)": {
+          "notice": "Emitted when an interface is added to the contract via `_addInterface`."
+        },
+        "InterfaceRemoved(bytes4)": {
+          "notice": "Emitted when an interface is removed from the contract via `_removeInterface`."
+        },
+        "RevokeAllDelegates(address)": {
+          "notice": "Emitted when a user revokes all delegations"
+        },
+        "RevokeDelegate(address,address)": {
+          "notice": "Emitted when a user revoes all delegations for a given delegate"
+        }
+      },
+      "kind": "user",
+      "methods": {
+        "checkDelegateForAll(address,address)": {
+          "notice": "Returns true if the address is delegated to act on the entire vault"
+        },
+        "getDelegatesForAll(address)": {
+          "notice": "Returns an array of wallet-level delegates for a given vault"
+        },
+        "getDelegationsByDelegate(address)": {
+          "notice": "Get all delegations for a given delegate"
+        },
+        "revokeAllDelegates()": {
+          "notice": "Revoke all delegates for a given vault"
+        },
+        "revokeDelegate(address)": {
+          "notice": "Revoke a specific delegate for all their permissions"
+        }
+      },
+      "version": 1
+    }
+  },
+  "settings": {
+    "compilationTarget": {
+      "contracts/src/towns/facets/delegation/Delegation.sol": "Delegation"
+    },
+    "evmVersion": "paris",
+    "libraries": {},
+    "metadata": {
+      "appendCBOR": false,
+      "bytecodeHash": "none"
+    },
+    "optimizer": {
+      "enabled": true,
+      "runs": 200
+    },
+    "remappings": [
+      ":@openzeppelin/=lib/openzeppelin-contracts/",
+      ":@prb/test/=lib/prb-test/src/",
+      ":ERC721A/=lib/ERC721A/contracts/",
+      ":council/=lib/council/contracts/",
+      ":ds-test/=lib/ds-test/src/",
+      ":erc4626-tests/=lib/operator-filter-registry/lib/openzeppelin-contracts/lib/erc4626-tests/",
+      ":forge-std/=lib/forge-std/src/",
+      ":openzeppelin-contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/",
+      ":openzeppelin-contracts/=lib/openzeppelin-contracts/",
+      ":operator-filter-registry/=lib/operator-filter-registry/",
+      ":prb-test/=lib/prb-test/src/"
+    ]
+  },
+  "sources": {
+    "contracts/src/diamond/facets/Facet.sol": {
+      "keccak256": "0x8213b85d1271bc3c2aa9842979c8ad825066c4c9addc55296d53b6747e5198ba",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://b4e88e869c99e65f0caeb9d03938e78c578a869783b9f20c05f4ba52e7ca493d",
+        "dweb:/ipfs/QmRqPmg8BYD1V6Cd8kfihCQ7nn2DAsgRjGW2MJvc7Evnjt"
+      ]
+    },
+    "contracts/src/diamond/facets/initializable/Initializable.sol": {
+      "keccak256": "0x2a4f3a99b3b3ac6c2c18431cea80b40774c1d8265ddefac21b26da561e069096",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://36dbba730942b1fd345f242051ea7f33e979f70392fbd929d8522c0c9c6dd367",
+        "dweb:/ipfs/QmYMvYnvg9zQJpDQX9yMHZ1AET9Vx7UXtDenXAs1JhfPpd"
+      ]
+    },
+    "contracts/src/diamond/facets/initializable/InitializableStorage.sol": {
+      "keccak256": "0x4a708b87fe25525bd8b67b7e9541462110e6d2e480ee3253e821528349c04963",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://2b16b8575ca43f66ddd4bca6c6785d7fc2eb618568c06153cec1a12a2a6915af",
+        "dweb:/ipfs/QmVXod9CVcw66QrzSt2pjFfMbwXxZRBdW74X4y9JYTp923"
+      ]
+    },
+    "contracts/src/diamond/facets/introspection/IERC165.sol": {
+      "keccak256": "0xa1dfa0449031fced106dd105c184823595398c876be53b4bb8d855937a435816",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://e98a9007bca24776e4580c9326cfbb72ffe56334229626c336545be8c2c6e6d2",
+        "dweb:/ipfs/QmdqoQTUoDKqirUR3hscy4zBh4Kn2E1fRta1y9DfA43urV"
+      ]
+    },
+    "contracts/src/diamond/facets/introspection/IntrospectionBase.sol": {
+      "keccak256": "0x503b6ce030f8a760e9a877545b35307d05bbb704b501095795ab2168fe40db59",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://769658fed18c26f67dec9bf4ca18dd595c0343bc8ea21bb3e50595eca3401265",
+        "dweb:/ipfs/QmVuqWH5eKqBJbNEtXzybgZ7ahtjTraMew8CMb4TuVUyo6"
+      ]
+    },
+    "contracts/src/diamond/facets/introspection/IntrospectionStorage.sol": {
+      "keccak256": "0xc98f2cbf7cd8f96907a2b193f984b07955ec22579a5b7691f507f49047972620",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://5ce646e3e42dd9c8c46af53e04059f93cc141267d6841277ead66070d4bd8055",
+        "dweb:/ipfs/QmdWieFQfJC6tbF2fU2EnFUq4eZnGwbLiRE2CSGgXgy8TJ"
+      ]
+    },
+    "contracts/src/towns/facets/delegation/Delegation.sol": {
+      "keccak256": "0x0ed26d3b8e58a2a6def7c71ca6c0ea77b9234ac4c5357ed2c8d449011563748a",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://0a2887ea5bdf117c20b13f5fde4611b0d10e6f4463cb610359739ff778073df2",
+        "dweb:/ipfs/QmPrGoPLPPBX71nbMawqvPTMRQ6dkARZvR22xDapGsq168"
+      ]
+    },
+    "contracts/src/towns/facets/delegation/DelegationBase.sol": {
+      "keccak256": "0x172659cf86debe3fe326ae031aa87f7ffa44f3be6f2bb6cb3125869899ed15d2",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://8e2eba3063ef95b4343ee4c5ed65ebb28bd7977f7dbe66c97dbee223876a9766",
+        "dweb:/ipfs/QmSNmyETsAd57z3iGZnXCchA6kdGEAmRQUuhQMaNY8NvZt"
+      ]
+    },
+    "contracts/src/towns/facets/delegation/DelegationStorage.sol": {
+      "keccak256": "0x038ff9288f8766b818c5b3c0ece1bc9b03a69eb28744bf1e4ee3929b40f8ba91",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://84364702f677cca93fa943c136fd4b262d20fefff2e1910a28ae505081fbe4f3",
+        "dweb:/ipfs/QmchGGDurJ2Qnb869UZfvpGD6uxSx23pVBhBErspiT1ubS"
+      ]
+    },
+    "contracts/src/towns/facets/delegation/IDelegation.sol": {
+      "keccak256": "0xc095c69a609f21b99f14a2442b907861b72238c5743493c2f72d4fc017890302",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://b9a75f55941e2dccb340922d8a20b88f20ffae45ce78b218b45eac1d4382c424",
+        "dweb:/ipfs/QmbnEi9m3FCVJryZLsMMRhc616TFgB6erWFZG6mhUWe8ir"
+      ]
+    },
+    "lib/openzeppelin-contracts/contracts/utils/Address.sol": {
+      "keccak256": "0xf96f969e24029d43d0df89e59d365f277021dac62b48e1c1e3ebe0acdd7f1ca1",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://ec772b45a624be516f1c81970caa8a2e144301e9d0921cbc1a2789fef39a1269",
+        "dweb:/ipfs/QmNyjwxCrGhQMyzLD93oUobJXVe9ceJvRvfXwbEtuxPiEj"
+      ]
+    },
+    "lib/openzeppelin-contracts/contracts/utils/structs/EnumerableSet.sol": {
+      "keccak256": "0xc3ff3f5c4584e1d9a483ad7ced51ab64523201f4e3d3c65293e4ca8aeb77a961",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://d7d3dd6067a994690471b5fc71b6f81fac3847798b37d404f74db00b4d3c3d0e",
+        "dweb:/ipfs/QmRHF1RarifjNi93RttouNPkYZGyu6CD926PgRDzD5iL35"
+      ]
+    }
+  },
+  "version": 1
+}

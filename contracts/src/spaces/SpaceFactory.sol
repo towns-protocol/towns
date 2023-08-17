@@ -26,7 +26,7 @@ import {PausableUpgradeable} from "openzeppelin-contracts-upgradeable/security/P
 import {TokenEntitlement} from "contracts/src/spaces/entitlements/TokenEntitlement.sol";
 import {UserEntitlement} from "contracts/src/spaces/entitlements/UserEntitlement.sol";
 import {Space} from "contracts/src/spaces/Space.sol";
-import {TownOwner} from "contracts/src/tokens/TownOwner.sol";
+import {TownOwnerV1} from "contracts/src/tokens/TownOwnerV1.sol";
 
 contract SpaceFactory is
   Initializable,
@@ -126,8 +126,8 @@ contract SpaceFactory is
     }
 
     // mint space nft to owner
-    uint256 _tokenId = TownOwner(SPACE_TOKEN_ADDRESS).nextTokenId();
-    TownOwner(SPACE_TOKEN_ADDRESS).mintTo(
+    uint256 _tokenId = TownOwnerV1(SPACE_TOKEN_ADDRESS).nextTokenId();
+    TownOwnerV1(SPACE_TOKEN_ADDRESS).mintTo(
       address(this),
       _spaceData.spaceMetadata
     );
@@ -211,7 +211,7 @@ contract SpaceFactory is
       SPACE_IMPLEMENTATION_ADDRESS
     );
 
-    TownOwner(SPACE_TOKEN_ADDRESS).safeTransferFrom(
+    TownOwnerV1(SPACE_TOKEN_ADDRESS).safeTransferFrom(
       address(this),
       _msgSender(),
       _tokenId

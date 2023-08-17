@@ -14,7 +14,7 @@ import {Permissions} from "contracts/src/spaces/libraries/Permissions.sol";
 /** Contracts */
 import {ERC1967Proxy} from "openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import {Space} from "contracts/src/spaces/Space.sol";
-import {TownOwner} from "contracts/src/tokens/TownOwner.sol";
+import {TownOwnerV1} from "contracts/src/tokens/TownOwnerV1.sol";
 import {SpaceFactory} from "contracts/src/spaces/SpaceFactory.sol";
 import {Pioneer} from "contracts/src/tokens/Pioneer.sol";
 import {UserEntitlement} from "contracts/src/spaces/entitlements/UserEntitlement.sol";
@@ -26,7 +26,7 @@ contract SpaceBaseSetup is TestUtils, ERC721Holder {
   Space public spaceImplementation;
   TokenEntitlement public tokenImplementation;
   UserEntitlement public userImplementation;
-  TownOwner public spaceToken;
+  TownOwnerV1 public spaceToken;
   Pioneer public pioneer;
   SpaceUpgrades public spaceUpgrades;
   string[] public initialPermissions;
@@ -37,7 +37,7 @@ contract SpaceBaseSetup is TestUtils, ERC721Holder {
 
   constructor() {
     pioneer = new Pioneer("Pioneer", "PNR", "");
-    spaceToken = new TownOwner("Town Owner", "SPACE", address(this), 0);
+    spaceToken = new TownOwnerV1("Town Owner", "SPACE", address(this), 0);
     spaceImplementation = new Space();
     tokenImplementation = new TokenEntitlement();
     userImplementation = new UserEntitlement();

@@ -12,9 +12,10 @@ import {ProxyManagerHelper} from "contracts/test/diamond/proxy/ProxyManagerSetup
 import {ERC721HolderHelper} from "contracts/test/towns/holder/ERC721HolderSetup.sol";
 import {OwnableHelper} from "contracts/test/diamond/ownable/OwnableSetup.sol";
 import {PausableHelper} from "contracts/test/diamond/pausable/PausableSetup.sol";
+import {TownOwnerImplementation} from "contracts/test/towns/owner/TownOwnerSetup.sol";
 
 import {MultiInit} from "contracts/src/diamond/initializers/MultiInit.sol";
-import {TownOwner} from "contracts/src/tokens/TownOwner.sol";
+import {TownOwner} from "contracts/src/towns/facets/owner/TownOwner.sol";
 import {UserEntitlement} from "contracts/src/towns/entitlements/user/UserEntitlement.sol";
 import {TokenEntitlement} from "contracts/src/towns/entitlements/token/TokenEntitlement.sol";
 
@@ -31,6 +32,8 @@ abstract contract TownArchitectSetup is FacetTest {
   function setUp() public override {
     super.setUp();
     townArchitect = TownArchitect(diamond);
+
+    vm.prank(deployer);
     TownOwner(townToken).setFactory(diamond);
   }
 
@@ -45,6 +48,7 @@ abstract contract TownArchitectSetup is FacetTest {
     ERC721HolderHelper holderHelper = new ERC721HolderHelper();
     OwnableHelper ownableHelper = new OwnableHelper();
     PausableHelper pausableHelper = new PausableHelper();
+    TownOwnerImplementation townOwnerImplementation = new TownOwnerImplementation();
 
     TownImplementationHelper townHelper = new TownImplementationHelper();
 
@@ -52,7 +56,9 @@ abstract contract TownArchitectSetup is FacetTest {
 
     userEntitlement = address(new UserEntitlement());
     tokenEntitlement = address(new TokenEntitlement());
-    townToken = address(new TownOwner("Town Founder", "TOWN", deployer, 0));
+    townToken = address(
+      new Diamond(townOwnerImplementation.diamondInitParams(deployer))
+    );
 
     townImplementation = address(townHelper.createImplementation(deployer));
 

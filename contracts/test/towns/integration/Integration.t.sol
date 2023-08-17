@@ -14,9 +14,10 @@ import {ERC721HolderHelper} from "contracts/test/towns/holder/ERC721HolderSetup.
 import {OwnableHelper} from "contracts/test/diamond/ownable/OwnableSetup.sol";
 import {PausableHelper} from "contracts/test/diamond/pausable/PausableSetup.sol";
 import {TownArchitectHelper} from "contracts/test/towns/architect/TownArchitectSetup.sol";
+import {TownOwnerImplementation} from "contracts/test/towns/owner/TownOwnerSetup.sol";
 
 import {MultiInit} from "contracts/src/diamond/initializers/MultiInit.sol";
-import {TownOwner} from "contracts/src/tokens/TownOwner.sol";
+import {TownOwner} from "contracts/src/towns/facets/owner/TownOwner.sol";
 import {UserEntitlement} from "contracts/src/towns/entitlements/user/UserEntitlement.sol";
 import {TokenEntitlement} from "contracts/src/towns/entitlements/token/TokenEntitlement.sol";
 
@@ -30,6 +31,8 @@ abstract contract IntegrationSetup is FacetTest {
 
   function setUp() public override {
     super.setUp();
+
+    vm.prank(deployer);
     TownOwner(townToken).setFactory(diamond);
   }
 
@@ -45,11 +48,16 @@ abstract contract IntegrationSetup is FacetTest {
     OwnableHelper ownableHelper = new OwnableHelper();
     PausableHelper pausableHelper = new PausableHelper();
     TownImplementationHelper townHelper = new TownImplementationHelper();
+    TownOwnerImplementation townOwnerImplementation = new TownOwnerImplementation();
+
     MultiInit multiInit = new MultiInit();
 
     userEntitlement = address(new UserEntitlement());
     tokenEntitlement = address(new TokenEntitlement());
-    townToken = address(new TownOwner("Town Founder", "TOWN", deployer, 0));
+    townToken = address(
+      new Diamond(townOwnerImplementation.diamondInitParams(deployer))
+    );
+
     townImplementation = address(townHelper.createImplementation(deployer));
 
     // cuts
@@ -95,7 +103,8 @@ abstract contract IntegrationSetup is FacetTest {
   function _createSimpleTown(string memory townId) internal returns (address) {
     ITownArchitectBase.TownInfo memory townInfo = ITownArchitectBase.TownInfo({
       id: townId,
-      metadata: "test",
+      name: "test",
+      uri: "ipfs://test",
       everyoneEntitlement: ITownArchitectBase.RoleInfo({
         name: "Everyone",
         permissions: new string[](0)

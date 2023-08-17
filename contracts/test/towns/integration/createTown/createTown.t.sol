@@ -141,7 +141,8 @@ contract Integration_CreateTown is
 
     TownInfo memory townInfo = TownInfo({
       id: townId,
-      metadata: "",
+      name: "test",
+      uri: "ipfs://test",
       everyoneEntitlement: RoleInfo({
         name: "Everyone",
         permissions: new string[](0)
