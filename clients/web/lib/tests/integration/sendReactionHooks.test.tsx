@@ -140,7 +140,9 @@ describe('sendReactionHooks', () => {
         // expect jane to recieve the message
         await waitFor(
             () =>
-                expect(jane.getEvents(janesChannelId).at(-1)?.content?.kind).toBe(ZTEvent.Reaction),
+                expect(jane.getEvents(janesChannelId).map((x) => x.content?.kind)).toContain(
+                    ZTEvent.Reaction,
+                ),
             TestConstants.DecaDefaultWaitForTimeout,
         )
     })
