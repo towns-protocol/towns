@@ -187,345 +187,354 @@ function checkChangesInProgressToastVisible() {
     })
 }
 
-// https://linear.app/hnt-labs/issue/HNT-2122/spacesettingstest-flakiness
-describe.skip('SpaceSettings', () => {
-    test("should show the first role's permission tab when settings is loaded", async () => {
-        vi.spyOn(Lib, 'useHasPermission').mockReturnValue({
-            isLoading: false,
-            hasPermission: true,
-            error: undefined,
-        })
-        render(<Wrapper />)
-        await waitForScreenToBeLoaded()
-        const roleSettingsPermissions = screen.getByTestId('role-settings-permissions-content')
-        const everyonePermissions = within(roleSettingsPermissions).getAllByRole('checkbox')
+describe(
+    'SpaceSettings',
+    () => {
+        test("should show the first role's permission tab when settings is loaded", async () => {
+            vi.spyOn(Lib, 'useHasPermission').mockReturnValue({
+                isLoading: false,
+                hasPermission: true,
+                error: undefined,
+            })
+            render(<Wrapper />)
+            await waitForScreenToBeLoaded()
+            const roleSettingsPermissions = screen.getByTestId('role-settings-permissions-content')
+            const everyonePermissions = within(roleSettingsPermissions).getAllByRole('checkbox')
 
-        expect(everyonePermissions.length).toBe(4)
-        expect(everyonePermissions[0]).toBeChecked()
-    })
-
-    test('should show the correct state for everyone role on member and display tabs', async () => {
-        vi.spyOn(Lib, 'useHasPermission').mockReturnValue({
-            isLoading: false,
-            hasPermission: true,
-            error: undefined,
-        })
-        render(<Wrapper />)
-        await waitForScreenToBeLoaded()
-        const { gatingTab, displayTab } = getTabs()
-        fireEvent.click(gatingTab)
-        const roleSettingsMembers = screen.getByTestId('role-settings-gating-content')
-        const userGatedSection = within(roleSettingsMembers).getByTestId(
-            'role-settings-gating-user-gated',
-        )
-        await within(userGatedSection).findByText(/all wallet addresses/gi)
-
-        fireEvent.click(displayTab)
-
-        const roleSettingsDisplayContent = screen.getByTestId('role-settings-display-content')
-        const nameInput = await within(roleSettingsDisplayContent).findByPlaceholderText(
-            /role name/gi,
-        )
-        expect(nameInput).toHaveValue('Everyone')
-    })
-
-    test('should prompt toast when change is made to permissions', async () => {
-        vi.spyOn(Lib, 'useHasPermission').mockReturnValue({
-            isLoading: false,
-            hasPermission: true,
-            error: undefined,
-        })
-        render(<Wrapper />)
-        await waitForScreenToBeLoaded()
-        const roleSettingsPermissions = screen.getByTestId('role-settings-permissions-content')
-        const everyonePermissions = within(roleSettingsPermissions).getAllByRole('checkbox')
-
-        expect(everyonePermissions.length).toBe(4)
-
-        fireEvent.click(everyonePermissions[0])
-        expect(everyonePermissions[0]).not.toBeChecked()
-
-        await checkChangesInProgressToastVisible()
-    })
-
-    test.skip('should update role name in sidebar and prompt toast when change is made to display name', async () => {
-        vi.spyOn(Lib, 'useHasPermission').mockReturnValue({
-            isLoading: false,
-            hasPermission: true,
-            error: undefined,
-        })
-        render(<Wrapper />)
-        await waitForScreenToBeLoaded()
-        const { gatingTab, displayTab } = getTabs()
-        fireEvent.click(gatingTab)
-        const roleSettingsMembers = screen.getByTestId('role-settings-gating-content')
-        const userGatedSection = within(roleSettingsMembers).getByTestId(
-            'role-settings-gating-user-gated',
-        )
-        await within(userGatedSection).findByText(/all wallet addresses/gi)
-
-        fireEvent.click(displayTab)
-
-        const roleSettingsDisplayContent = screen.getByTestId('role-settings-display-content')
-        const nameInput = await within(roleSettingsDisplayContent).findByPlaceholderText(
-            /role name/gi,
-        )
-
-        userEvent.clear(nameInput)
-        userEvent.type(nameInput, 'rasberry delight')
-
-        await checkChangesInProgressToastVisible()
-
-        await waitFor(() => {
-            expect(screen.getAllByDisplayValue(/rasberry delight/gi).length).toBe(1)
+            expect(everyonePermissions.length).toBe(4)
+            expect(everyonePermissions[0]).toBeChecked()
         })
 
-        await waitFor(() => {
-            expect(screen.getAllByText(/rasberry delight/gi).length).toBe(1)
-        })
-    })
-
-    test('should prompt toast when change is made to members', async () => {
-        vi.spyOn(Lib, 'useHasPermission').mockReturnValue({
-            isLoading: false,
-            hasPermission: true,
-            error: undefined,
-        })
-        render(<Wrapper />)
-        await waitForScreenToBeLoaded()
-        const { gatingTab } = getTabs()
-        fireEvent.click(gatingTab)
-        const roleSettingsMembers = screen.getByTestId('role-settings-gating-content')
-        const userGatedSection = within(roleSettingsMembers).getByTestId(
-            'role-settings-gating-user-gated',
-        )
-        const addButton = await within(userGatedSection).findByRole('button', {
-            name: /add users/gi,
-        })
-        userEvent.click(addButton)
-
-        const memberListModal = await screen.findByTestId('role-settings-gating-modal')
-        const members = await within(memberListModal).findAllByRole('checkbox')
-        const saveButton = await within(memberListModal).findByRole('button', {
-            name: /update/gi,
-        })
-        await waitFor(() => {
-            expect(members.length).toBeGreaterThanOrEqual(2)
-        })
-        userEvent.click(members[0])
-        userEvent.click(saveButton)
-        await waitFor(() => {
-            expect(memberListModal).not.toBeInTheDocument()
-        })
-        await checkChangesInProgressToastVisible()
-    })
-
-    test('should remove toast when state is set back to intitial state', async () => {
-        vi.spyOn(Lib, 'useHasPermission').mockReturnValue({
-            isLoading: false,
-            hasPermission: true,
-            error: undefined,
-        })
-        render(<Wrapper />)
-        await waitForScreenToBeLoaded()
-        const roleSettingsPermissions = screen.getByTestId('role-settings-permissions-content')
-        const everyonePermissions = within(roleSettingsPermissions).getAllByRole('checkbox')
-
-        expect(everyonePermissions.length).toBe(4)
-
-        fireEvent.click(everyonePermissions[0])
-        expect(everyonePermissions[0]).not.toBeChecked()
-
-        await checkChangesInProgressToastVisible()
-        fireEvent.click(everyonePermissions[0])
-        await waitFor(() => {
-            expect(screen.getByTestId('role-settings-in-progress-toast')).not.toBeVisible()
-        })
-    })
-
-    test('should move to another role and prompt toast when choosing to delete role', async () => {
-        vi.spyOn(Lib, 'useHasPermission').mockReturnValue({
-            isLoading: false,
-            hasPermission: true,
-            error: undefined,
-        })
-        render(<Wrapper />)
-        await waitForScreenToBeLoaded()
-        const rolesNav = screen.getByTestId('space-settings-roles-nav')
-        const rolesButton = within(rolesNav).getAllByRole('link')
-        fireEvent.contextMenu(rolesButton[1])
-        const removeButton = await screen.findByRole('button', { name: /remove role/gi })
-        fireEvent.click(removeButton)
-
-        await waitFor(() => {
-            expect(navigateSpy).toHaveBeenCalledWith(
-                `/${PATHS.SPACES}/${spaceRoomIdentifier.slug}/${PATHS.SETTINGS}/${PATHS.ROLES}/${everyoneRole.roleId}/permissions`,
+        test('should show the correct state for everyone role on member and display tabs', async () => {
+            vi.spyOn(Lib, 'useHasPermission').mockReturnValue({
+                isLoading: false,
+                hasPermission: true,
+                error: undefined,
+            })
+            render(<Wrapper />)
+            await waitForScreenToBeLoaded()
+            const { gatingTab, displayTab } = getTabs()
+            fireEvent.click(gatingTab)
+            const roleSettingsMembers = screen.getByTestId('role-settings-gating-content')
+            const userGatedSection = within(roleSettingsMembers).getByTestId(
+                'role-settings-gating-user-gated',
             )
-        })
-        await checkChangesInProgressToastVisible()
-    })
+            await within(userGatedSection).findByText(/all wallet addresses/gi)
 
-    test('should navigate to new role and prompt toast when new role button clicked', async () => {
-        vi.spyOn(Lib, 'useHasPermission').mockReturnValue({
-            isLoading: false,
-            hasPermission: true,
-            error: undefined,
-        })
-        render(<Wrapper />)
-        await waitForScreenToBeLoaded()
-        const newRoleButton = screen.getByText(/create new role/gi)
-        fireEvent.click(newRoleButton)
-        await screen.findByTestId('role-settings-display-content')
+            fireEvent.click(displayTab)
 
-        await waitFor(() => {
-            expect(navigateSpy).toHaveBeenCalledWith(`../roles/n-1/display`)
-        })
-        await checkChangesInProgressToastVisible()
-    })
-
-    test('saving multiple changes should result in multiple transactions called with the correct arguments', async () => {
-        vi.spyOn(Lib, 'useCreateRoleTransaction').mockImplementation(useMockedCreateRoleTransaction)
-        vi.spyOn(Lib, 'useUpdateRoleTransaction').mockImplementation(useMockedUpdateRoleTransaction)
-        vi.spyOn(Lib, 'useHasPermission').mockReturnValue({
-            isLoading: false,
-            hasPermission: true,
-            error: undefined,
-        })
-
-        render(<Wrapper />)
-        await waitForScreenToBeLoaded()
-        const rolesNav = screen.getByTestId('space-settings-roles-nav')
-        const rolesButton = within(rolesNav).getAllByRole('link')
-
-        // everyone role change
-        const everyonePermissions = within(
-            screen.getByTestId('role-settings-permissions-content'),
-        ).getAllByRole('checkbox')
-        await userEvent.click(everyonePermissions[0])
-
-        // member role change
-        await userEvent.click(rolesButton[1])
-        const memberPermissions = within(
-            screen.getByTestId('role-settings-permissions-content'),
-        ).getAllByRole('checkbox')
-        await userEvent.click(memberPermissions[0])
-
-        // add new role
-        const newRoleButton = screen.getByText(/create new role/gi)
-        await userEvent.click(newRoleButton)
-
-        const membersButton = screen.getAllByText(/gating/gi)[0]
-        await userEvent.click(membersButton)
-
-        const userGatedButton = screen.getByText(/Add users/)
-        await userEvent.click(userGatedButton)
-
-        const everyoneButton = screen.getByText(/all wallet addresses/gi)
-        await userEvent.click(everyoneButton)
-
-        const updateButton = screen.getByText(/update/gi)
-        await userEvent.click(updateButton)
-
-        await checkChangesInProgressToastVisible()
-
-        const saveOnChainButton = screen.getByRole('button', { name: /save on chain/gi })
-
-        await userEvent.click(saveOnChainButton)
-
-        await waitFor(() => {
-            expect(screen.getByTestId('role-settings-checkout-modal')).toBeVisible()
-        })
-
-        await waitFor(() => {
-            const allAccordions = screen.getAllByTestId('accordion-group-item')
-            expect(allAccordions.length).toBe(3)
-        })
-
-        const transactButton = screen.getByTestId('role-settings-checkout-modal-save-button')
-
-        await userEvent.click(transactButton)
-
-        await waitFor(() => {
-            expect(createRoleTransactionSpy).toHaveBeenCalledWith(
-                spaceRoomIdentifier.networkId,
-                'New Role 1',
-                [Lib.Permission.Read],
-                [],
-                [EVERYONE_ADDRESS],
+            const roleSettingsDisplayContent = screen.getByTestId('role-settings-display-content')
+            const nameInput = await within(roleSettingsDisplayContent).findByPlaceholderText(
+                /role name/gi,
             )
+            expect(nameInput).toHaveValue('Everyone')
         })
 
-        await waitFor(() => {
-            expect(updateRoleTransactionSpy).toHaveBeenCalledWith(
-                spaceRoomIdentifier.networkId,
-                everyoneRole.roleId.toNumber(),
-                everyoneRole.name,
-                [],
-                [],
-                [EVERYONE_ADDRESS],
+        test('should prompt toast when change is made to permissions', async () => {
+            vi.spyOn(Lib, 'useHasPermission').mockReturnValue({
+                isLoading: false,
+                hasPermission: true,
+                error: undefined,
+            })
+            render(<Wrapper />)
+            await waitForScreenToBeLoaded()
+            const roleSettingsPermissions = screen.getByTestId('role-settings-permissions-content')
+            const everyonePermissions = within(roleSettingsPermissions).getAllByRole('checkbox')
+
+            expect(everyonePermissions.length).toBe(4)
+
+            fireEvent.click(everyonePermissions[0])
+            expect(everyonePermissions[0]).not.toBeChecked()
+
+            await checkChangesInProgressToastVisible()
+        })
+
+        test.skip('should update role name in sidebar and prompt toast when change is made to display name', async () => {
+            vi.spyOn(Lib, 'useHasPermission').mockReturnValue({
+                isLoading: false,
+                hasPermission: true,
+                error: undefined,
+            })
+            render(<Wrapper />)
+            await waitForScreenToBeLoaded()
+            const { gatingTab, displayTab } = getTabs()
+            fireEvent.click(gatingTab)
+            const roleSettingsMembers = screen.getByTestId('role-settings-gating-content')
+            const userGatedSection = within(roleSettingsMembers).getByTestId(
+                'role-settings-gating-user-gated',
             )
-        })
+            await within(userGatedSection).findByText(/all wallet addresses/gi)
 
-        await waitFor(() => {
-            expect(updateRoleTransactionSpy).toHaveBeenCalledWith(
-                spaceRoomIdentifier.networkId,
-                memberRole.roleId.toNumber(),
-                memberRole.name,
-                [Lib.Permission.Write],
-                MOCK_CONTRACT_METADATA_ADDRESSES,
-                [],
+            fireEvent.click(displayTab)
+
+            const roleSettingsDisplayContent = screen.getByTestId('role-settings-display-content')
+            const nameInput = await within(roleSettingsDisplayContent).findByPlaceholderText(
+                /role name/gi,
             )
+
+            userEvent.clear(nameInput)
+            userEvent.type(nameInput, 'rasberry delight')
+
+            await checkChangesInProgressToastVisible()
+
+            await waitFor(() => {
+                expect(screen.getAllByDisplayValue(/rasberry delight/gi).length).toBe(1)
+            })
+
+            await waitFor(() => {
+                expect(screen.getAllByText(/rasberry delight/gi).length).toBe(1)
+            })
         })
 
-        expect(
-            Object.keys(useSettingsTransactionsStore.getState().inProgressTransactions).length,
-        ).toBe(3)
-    })
-
-    test('deleting a role and saving should create a delete role transaction with correct arguments', async () => {
-        vi.spyOn(Lib, 'useDeleteRoleTransaction').mockImplementation(useMockedDeleteRoleTransaction)
-        vi.spyOn(Lib, 'useHasPermission').mockReturnValue({
-            isLoading: false,
-            hasPermission: true,
-            error: undefined,
-        })
-
-        render(<Wrapper />)
-        await waitForScreenToBeLoaded()
-        const rolesNav = screen.getByTestId('space-settings-roles-nav')
-        const rolesButton = within(rolesNav).getAllByRole('link')
-
-        fireEvent.contextMenu(rolesButton[1])
-        const removeButton = await screen.findByRole('button', { name: /remove role/gi })
-        fireEvent.click(removeButton)
-
-        await checkChangesInProgressToastVisible()
-
-        const saveOnChainButton = screen.getByRole('button', { name: /save on chain/gi })
-
-        await userEvent.click(saveOnChainButton)
-
-        await waitFor(() => {
-            const allAccordions = screen.getAllByTestId('accordion-group-item')
-            expect(allAccordions.length).toBe(1)
-        })
-
-        const transactButton = screen.getByTestId('role-settings-checkout-modal-save-button')
-
-        await userEvent.click(transactButton)
-
-        await waitFor(() => {
-            expect(deleteRoleTransactionSpy).toHaveBeenCalledWith(
-                spaceRoomIdentifier.networkId,
-                memberRole.roleId.toNumber(),
+        test('should prompt toast when change is made to members', async () => {
+            vi.spyOn(Lib, 'useHasPermission').mockReturnValue({
+                isLoading: false,
+                hasPermission: true,
+                error: undefined,
+            })
+            render(<Wrapper />)
+            await waitForScreenToBeLoaded()
+            const { gatingTab } = getTabs()
+            fireEvent.click(gatingTab)
+            const roleSettingsMembers = screen.getByTestId('role-settings-gating-content')
+            const userGatedSection = within(roleSettingsMembers).getByTestId(
+                'role-settings-gating-user-gated',
             )
-        })
-    })
+            const addButton = await within(userGatedSection).findByRole('button', {
+                name: /add users/gi,
+            })
+            userEvent.click(addButton)
 
-    test.skip('should not be able to close modal while transactions are in progress', async () => {
-        //
-    })
-    test.skip('should not be able to interact with settings post transaction, until clicking the "more changes" button', async () => {
-        //
-    })
-})
+            const memberListModal = await screen.findByTestId('role-settings-gating-modal')
+            const members = await within(memberListModal).findAllByRole('checkbox')
+            const saveButton = await within(memberListModal).findByRole('button', {
+                name: /update/gi,
+            })
+            await waitFor(() => {
+                expect(members.length).toBeGreaterThanOrEqual(2)
+            })
+            userEvent.click(members[0])
+            userEvent.click(saveButton)
+            await waitFor(() => {
+                expect(memberListModal).not.toBeInTheDocument()
+            })
+            await checkChangesInProgressToastVisible()
+        })
+
+        test('should remove toast when state is set back to intitial state', async () => {
+            vi.spyOn(Lib, 'useHasPermission').mockReturnValue({
+                isLoading: false,
+                hasPermission: true,
+                error: undefined,
+            })
+            render(<Wrapper />)
+            await waitForScreenToBeLoaded()
+            const roleSettingsPermissions = screen.getByTestId('role-settings-permissions-content')
+            const everyonePermissions = within(roleSettingsPermissions).getAllByRole('checkbox')
+
+            expect(everyonePermissions.length).toBe(4)
+
+            fireEvent.click(everyonePermissions[0])
+            expect(everyonePermissions[0]).not.toBeChecked()
+
+            await checkChangesInProgressToastVisible()
+            fireEvent.click(everyonePermissions[0])
+            await waitFor(() => {
+                expect(screen.getByTestId('role-settings-in-progress-toast')).not.toBeVisible()
+            })
+        })
+
+        test('should move to another role and prompt toast when choosing to delete role', async () => {
+            vi.spyOn(Lib, 'useHasPermission').mockReturnValue({
+                isLoading: false,
+                hasPermission: true,
+                error: undefined,
+            })
+            render(<Wrapper />)
+            await waitForScreenToBeLoaded()
+            const rolesNav = screen.getByTestId('space-settings-roles-nav')
+            const rolesButton = within(rolesNav).getAllByRole('link')
+            fireEvent.contextMenu(rolesButton[1])
+            const removeButton = await screen.findByRole('button', { name: /remove role/gi })
+            fireEvent.click(removeButton)
+
+            await waitFor(() => {
+                expect(navigateSpy).toHaveBeenCalledWith(
+                    `/${PATHS.SPACES}/${spaceRoomIdentifier.slug}/${PATHS.SETTINGS}/${PATHS.ROLES}/${everyoneRole.roleId}/permissions`,
+                )
+            })
+            await checkChangesInProgressToastVisible()
+        })
+
+        test('should navigate to new role and prompt toast when new role button clicked', async () => {
+            vi.spyOn(Lib, 'useHasPermission').mockReturnValue({
+                isLoading: false,
+                hasPermission: true,
+                error: undefined,
+            })
+            render(<Wrapper />)
+            await waitForScreenToBeLoaded()
+            const newRoleButton = screen.getByText(/create new role/gi)
+            fireEvent.click(newRoleButton)
+            await screen.findByTestId('role-settings-display-content')
+
+            await waitFor(() => {
+                expect(navigateSpy).toHaveBeenCalledWith(`../roles/n-1/display`)
+            })
+            await checkChangesInProgressToastVisible()
+        })
+
+        test('saving multiple changes should result in multiple transactions called with the correct arguments', async () => {
+            vi.spyOn(Lib, 'useCreateRoleTransaction').mockImplementation(
+                useMockedCreateRoleTransaction,
+            )
+            vi.spyOn(Lib, 'useUpdateRoleTransaction').mockImplementation(
+                useMockedUpdateRoleTransaction,
+            )
+            vi.spyOn(Lib, 'useHasPermission').mockReturnValue({
+                isLoading: false,
+                hasPermission: true,
+                error: undefined,
+            })
+
+            render(<Wrapper />)
+            await waitForScreenToBeLoaded()
+            const rolesNav = screen.getByTestId('space-settings-roles-nav')
+            const rolesButton = within(rolesNav).getAllByRole('link')
+
+            // everyone role change
+            const everyonePermissions = within(
+                screen.getByTestId('role-settings-permissions-content'),
+            ).getAllByRole('checkbox')
+            await userEvent.click(everyonePermissions[0])
+
+            // member role change
+            await userEvent.click(rolesButton[1])
+            const memberPermissions = within(
+                screen.getByTestId('role-settings-permissions-content'),
+            ).getAllByRole('checkbox')
+            await userEvent.click(memberPermissions[0])
+
+            // add new role
+            const newRoleButton = screen.getByText(/create new role/gi)
+            await userEvent.click(newRoleButton)
+
+            const membersButton = screen.getAllByText(/gating/gi)[0]
+            await userEvent.click(membersButton)
+
+            const userGatedButton = screen.getByText(/Add users/)
+            await userEvent.click(userGatedButton)
+
+            const everyoneButton = screen.getByText(/all wallet addresses/gi)
+            await userEvent.click(everyoneButton)
+
+            const updateButton = screen.getByText(/update/gi)
+            await userEvent.click(updateButton)
+
+            await checkChangesInProgressToastVisible()
+
+            const saveOnChainButton = screen.getByRole('button', { name: /save on chain/gi })
+
+            await userEvent.click(saveOnChainButton)
+
+            await waitFor(() => {
+                expect(screen.getByTestId('role-settings-checkout-modal')).toBeVisible()
+            })
+
+            await waitFor(() => {
+                const allAccordions = screen.getAllByTestId('accordion-group-item')
+                expect(allAccordions.length).toBe(3)
+            })
+
+            const transactButton = screen.getByTestId('role-settings-checkout-modal-save-button')
+
+            await userEvent.click(transactButton)
+
+            await waitFor(() => {
+                expect(createRoleTransactionSpy).toHaveBeenCalledWith(
+                    spaceRoomIdentifier.networkId,
+                    'New Role 1',
+                    [Lib.Permission.Read],
+                    [],
+                    [EVERYONE_ADDRESS],
+                )
+            })
+
+            await waitFor(() => {
+                expect(updateRoleTransactionSpy).toHaveBeenCalledWith(
+                    spaceRoomIdentifier.networkId,
+                    everyoneRole.roleId.toNumber(),
+                    everyoneRole.name,
+                    [],
+                    [],
+                    [EVERYONE_ADDRESS],
+                )
+            })
+
+            await waitFor(() => {
+                expect(updateRoleTransactionSpy).toHaveBeenCalledWith(
+                    spaceRoomIdentifier.networkId,
+                    memberRole.roleId.toNumber(),
+                    memberRole.name,
+                    [Lib.Permission.Write],
+                    MOCK_CONTRACT_METADATA_ADDRESSES,
+                    [],
+                )
+            })
+
+            expect(
+                Object.keys(useSettingsTransactionsStore.getState().inProgressTransactions).length,
+            ).toBe(3)
+        })
+
+        test('deleting a role and saving should create a delete role transaction with correct arguments', async () => {
+            vi.spyOn(Lib, 'useDeleteRoleTransaction').mockImplementation(
+                useMockedDeleteRoleTransaction,
+            )
+            vi.spyOn(Lib, 'useHasPermission').mockReturnValue({
+                isLoading: false,
+                hasPermission: true,
+                error: undefined,
+            })
+
+            render(<Wrapper />)
+            await waitForScreenToBeLoaded()
+            const rolesNav = screen.getByTestId('space-settings-roles-nav')
+            const rolesButton = within(rolesNav).getAllByRole('link')
+
+            fireEvent.contextMenu(rolesButton[1])
+            const removeButton = await screen.findByRole('button', { name: /remove role/gi })
+            fireEvent.click(removeButton)
+
+            await checkChangesInProgressToastVisible()
+
+            const saveOnChainButton = screen.getByRole('button', { name: /save on chain/gi })
+
+            await userEvent.click(saveOnChainButton)
+
+            await waitFor(() => {
+                const allAccordions = screen.getAllByTestId('accordion-group-item')
+                expect(allAccordions.length).toBe(1)
+            })
+
+            const transactButton = screen.getByTestId('role-settings-checkout-modal-save-button')
+
+            await userEvent.click(transactButton)
+
+            await waitFor(() => {
+                expect(deleteRoleTransactionSpy).toHaveBeenCalledWith(
+                    spaceRoomIdentifier.networkId,
+                    memberRole.roleId.toNumber(),
+                )
+            })
+        })
+
+        test.skip('should not be able to close modal while transactions are in progress', async () => {
+            //
+        })
+        test.skip('should not be able to interact with settings post transaction, until clicking the "more changes" button', async () => {
+            //
+        })
+    },
+    { timeout: 60000 },
+)
