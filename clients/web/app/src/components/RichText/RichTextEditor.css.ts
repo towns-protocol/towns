@@ -133,6 +133,12 @@ export const code = style({
     tabSize: vars.space.md,
 })
 
+export const singleEmojiMessage = style({})
+globalStyle(`${richText}${singleEmojiMessage} p`, {
+    fontSize: `calc(${vars.fontSize.md} * 3)`,
+    lineHeight: 1.5,
+})
+
 globalStyle(`${richText} ul ul, ${richText} ul ol`, {
     marginLeft: vars.space.md,
 })

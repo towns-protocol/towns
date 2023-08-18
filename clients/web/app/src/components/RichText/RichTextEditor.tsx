@@ -59,6 +59,7 @@ import CodeHighlightPlugin from './plugins/CodeHighlightPlugin'
 import { TabIndentationPlugin } from './plugins/TabIndentationPlugin'
 import { MentionHoverPlugin } from './plugins/MentionHoverPlugin'
 import { RichTextTouchToolbar } from './RichTextTouchToolbar'
+import { singleEmojiMessage } from './RichTextEditor.css'
 
 type Props = {
     onSend?: (value: string, options: SendTextMessageOptions | undefined) => void
@@ -135,12 +136,14 @@ export const RichTextPreview = React.memo(
         onMentionHover?: (element?: HTMLElement, userId?: string) => void
     }) => {
         const {
+            content,
             statusAnnotation,
             onMentionClick,
             onMentionHover,
             channels = [],
             members = [],
         } = props
+
         // note: unnecessary repetition here, could be optimised by handling above
         // inside e.g. space context or timeline
 
@@ -153,6 +156,14 @@ export const RichTextPreview = React.memo(
             false,
             statusAnnotation,
         )
+
+        const isSingleEmoji = useMemo(() => {
+            //  https://stackoverflow.com/a/72727900/64223
+            return (
+                content.length < 12 &&
+                /(\p{Emoji}\uFE0F|\p{Emoji_Presentation}|\s)+$/u.test(content)
+            )
+        }, [content])
 
         return (
             // this extra <div> prevents the preview from starting up too big,
@@ -176,7 +187,13 @@ export const RichTextPreview = React.memo(
 
                     <RichTextPlugin
                         ErrorBoundary={LexicalErrorBoundary}
-                        contentEditable={<ContentEditable className={fieldClassName} />}
+                        contentEditable={
+                            <ContentEditable
+                                className={clsx(fieldClassName, {
+                                    [singleEmojiMessage]: isSingleEmoji,
+                                })}
+                            />
+                        }
                         placeholder={<div />}
                     />
                     <CodeHighlightPlugin />
