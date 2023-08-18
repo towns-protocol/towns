@@ -52,7 +52,12 @@ export class UserEntitlementShim
         // a user-gated entitlement has multiple user arrays OR together or AND together.
         // the first dimensions are the ORs; the second dimensions are the ANDs.
         const rawUserDetails: string[][] = []
-        const encodedUsers = await this.read.getEntitlementDataByRoleId(roleId)
+        let encodedUsers: string[] = []
+        try {
+            encodedUsers = await this.read.getEntitlementDataByRoleId(roleId)
+        } catch (e) {
+            console.log('Error getting role entitlement:', e)
+        }
         for (const u of encodedUsers) {
             const users = decodeUsers(u)
             rawUserDetails.push(users)

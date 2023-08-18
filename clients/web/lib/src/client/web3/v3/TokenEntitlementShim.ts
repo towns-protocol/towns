@@ -54,7 +54,12 @@ export class TokenEntitlementShim
         // a token-gated entitlement can have multiple tokens OR together, or AND together.
         // the first dimensions are the ORs; the second dimensions are the ANDs.
         const rawTokenDetails: LocalhostDataTypes.ExternalTokenStruct[][] = []
-        const encodedTokens = await this.read.getEntitlementDataByRoleId(roleId)
+        let encodedTokens: string[] = []
+        try {
+            encodedTokens = await this.read.getEntitlementDataByRoleId(roleId)
+        } catch (e) {
+            console.log('Error reading token entitlement data by role id', e)
+        }
         for (const t of encodedTokens) {
             const tokens = decodeExternalTokens(t)
             rawTokenDetails.push(tokens)

@@ -112,6 +112,9 @@ export class Town {
             this.getChannelsWithRole(roleId),
         ])
         // assemble the result
+        if (roleEntitlements === null) {
+            return null
+        }
         return {
             id: roleEntitlements.roleId,
             name: roleEntitlements.name,
@@ -166,12 +169,13 @@ export class Town {
     ): Promise<RoleEntitlements[]> {
         // get all the entitlements for the town
         const entitlementShims = await this.getEntitlementShims()
-        const getRoleEntitlementsAsync: Promise<RoleEntitlements>[] = []
+        const getRoleEntitlementsAsync: Promise<RoleEntitlements | null>[] = []
         for (const roleId of channelInfo.roleIds) {
             getRoleEntitlementsAsync.push(this.getRoleEntitlements(entitlementShims, roleId))
         }
         // get all the role info
-        return Promise.all(getRoleEntitlementsAsync)
+        const allRoleEntitlements = await Promise.all(getRoleEntitlementsAsync)
+        return allRoleEntitlements.filter((r) => r !== null) as RoleEntitlements[]
     }
 
     public async findEntitlementByType(
@@ -234,8 +238,14 @@ export class Town {
         return this.addressToEntitlement[address]
     }
 
-    private async getRoleInfo(roleId: BigNumberish): Promise<IRolesBase.RoleStructOutput> {
-        return this.roles.read.getRoleById(roleId)
+    private async getRoleInfo(roleId: BigNumberish): Promise<IRolesBase.RoleStructOutput | null> {
+        try {
+            return await this.roles.read.getRoleById(roleId)
+        } catch (e) {
+            // any error means the role doesn't exist
+            //console.error(e)
+            return null
+        }
     }
 
     public async getEntitlementShims(): Promise<EntitlementShim[]> {
@@ -313,12 +323,15 @@ export class Town {
     private async getRoleEntitlements(
         entitlementShims: EntitlementShim[],
         roleId: BigNumberish,
-    ): Promise<RoleEntitlements> {
+    ): Promise<RoleEntitlements | null> {
         const [roleInfo, entitlementDetails] = await Promise.all([
             this.getRoleInfo(roleId),
             this.getEntitlementDetails(entitlementShims, roleId),
         ])
         // assemble the result
+        if (roleInfo === null) {
+            return null
+        }
         return {
             roleId: roleInfo.id.toNumber(),
             name: roleInfo.name,
