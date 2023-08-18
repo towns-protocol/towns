@@ -23,9 +23,13 @@ import {
 import {
     getFallbackContent,
     ReactionEvent,
+    ReceiptEvent,
+    RoomCreateEvent,
+    RoomMemberEvent,
     RoomMessageEncryptedEvent,
     RoomMessageEvent,
     RoomRedactionEvent,
+    SpaceChildEvent,
     TimelineEvent,
     TimelineEvent_OneOf,
     ZTEvent,
@@ -341,7 +345,7 @@ function toTownsContent_UserPayload(
                     creator: message.creatorUserId,
                     predecessor: undefined, // todo is this needed?
                     type: message.event.payload.case,
-                },
+                } satisfies RoomCreateEvent,
             }
         }
         case 'userMembership': {
@@ -355,7 +359,7 @@ function toTownsContent_UserPayload(
                     isDirect: undefined, // todo is this needed?
                     membership: toMembership(payload.op),
                     streamId: payload.streamId,
-                },
+                } satisfies RoomMemberEvent,
             }
         }
         case 'toDevice': {
@@ -390,7 +394,7 @@ function toTownsContent_ChannelPayload(
                     kind: ZTEvent.Receipt,
                     originOp: ToDeviceOp[value.content.value.originOp],
                     originEventHash: '0x' + value.content.value.originHash.toString(),
-                },
+                } satisfies ReceiptEvent,
             }
         }
         case 'inception': {
@@ -402,7 +406,7 @@ function toTownsContent_ChannelPayload(
                     predecessor: undefined, // todo is this needed?
                     type: message.event.payload.case,
                     spaceId: payload.spaceId,
-                },
+                } satisfies RoomCreateEvent,
             }
         }
         case 'membership': {
@@ -416,7 +420,7 @@ function toTownsContent_ChannelPayload(
                     isDirect: undefined, // todo is this needed?
                     membership: toMembership(payload.op),
                     reason: undefined, // todo is this needed?
-                },
+                } satisfies RoomMemberEvent,
             }
         }
         case 'message': {
@@ -593,7 +597,7 @@ function toTownsContent_SpacePayload(
                     creator: message.creatorUserId,
                     predecessor: undefined, // todo is this needed?
                     type: message.event.payload.case,
-                },
+                } satisfies RoomCreateEvent,
             }
         }
         case 'channel': {
@@ -604,7 +608,7 @@ function toTownsContent_SpacePayload(
                     kind: ZTEvent.SpaceChild,
                     childId: childId,
                     channelOp: payload.op,
-                },
+                } satisfies SpaceChildEvent,
             }
         }
         case 'membership': {
@@ -618,7 +622,7 @@ function toTownsContent_SpacePayload(
                     isDirect: undefined, // todo is this needed?
                     membership: toMembership(payload.op),
                     reason: undefined, // todo is this needed?
-                },
+                } satisfies RoomMemberEvent,
             }
         }
         case undefined:
