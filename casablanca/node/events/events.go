@@ -10,11 +10,11 @@ import (
 	. "casablanca/node/protocol"
 )
 
-func MakeStreamEvent(wallet *crypto.Wallet, payload protocol.IsStreamEvent_Payload, prevHashes [][]byte) *StreamEvent {
+func MakeStreamEvent(wallet *crypto.Wallet, payload protocol.IsStreamEvent_Payload, prevHashes [][]byte) (*StreamEvent, error) {
 	salt := make([]byte, 32)
 	_, err := rand.Read(salt)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	event := &StreamEvent{
@@ -24,7 +24,25 @@ func MakeStreamEvent(wallet *crypto.Wallet, payload protocol.IsStreamEvent_Paylo
 		Payload:        payload,
 	}
 
-	return event
+	return event, nil
+}
+
+func MakeDelegatedStreamEvent(wallet *crypto.Wallet, payload protocol.IsStreamEvent_Payload, prevHashes [][]byte, delegateSig []byte) (*StreamEvent, error) {
+	salt := make([]byte, 32)
+	_, err := rand.Read(salt)
+	if err != nil {
+		return nil, err
+	}
+
+	event := &StreamEvent{
+		CreatorAddress: wallet.Address.Bytes(),
+		Salt:           salt,
+		PrevEvents:     prevHashes,
+		Payload:        payload,
+		DelegateSig:    delegateSig,
+	}
+
+	return event, nil
 }
 
 func MakeEnvelopeWithEvent(wallet *crypto.Wallet, streamEvent *StreamEvent) (*Envelope, error) {
@@ -47,13 +65,18 @@ func MakeEnvelopeWithEvent(wallet *crypto.Wallet, streamEvent *StreamEvent) (*En
 }
 
 func MakeEnvelopeWithPayload(wallet *crypto.Wallet, payload protocol.IsStreamEvent_Payload, prevHashes [][]byte) (*Envelope, error) {
-	streamEvent := MakeStreamEvent(wallet, payload, prevHashes)
-
+	streamEvent, err := MakeStreamEvent(wallet, payload, prevHashes)
+	if err != nil {
+		return nil, err
+	}
 	return MakeEnvelopeWithEvent(wallet, streamEvent)
 }
 
 func MakeParsedEventWithPayload(wallet *crypto.Wallet, payload protocol.IsStreamEvent_Payload, prevHashes [][]byte) (*ParsedEvent, error) {
-	streamEvent := MakeStreamEvent(wallet, payload, prevHashes)
+	streamEvent, err := MakeStreamEvent(wallet, payload, prevHashes)
+	if err != nil {
+		return nil, err
+	}
 
 	envelope, err := MakeEnvelopeWithEvent(wallet, streamEvent)
 	if err != nil {
@@ -163,6 +186,35 @@ func Make_UserPayload_Inception(streamId string, settings *StreamSettings) *Stre
 				Inception: &UserPayload_Inception{
 					StreamId: streamId,
 					Settings: settings,
+				},
+			},
+		},
+	}
+}
+
+func Make_UserDeviceKeyPayload_Inception(streamId string, userId string) *StreamEvent_UserDeviceKeyPayload {
+	return &StreamEvent_UserDeviceKeyPayload{
+		UserDeviceKeyPayload: &UserDeviceKeyPayload{
+			Content: &UserDeviceKeyPayload_Inception_{
+				Inception: &UserDeviceKeyPayload_Inception{
+					StreamId: streamId,
+					UserId:   userId,
+				},
+			},
+		},
+	}
+}
+
+func Make_UserDeviceKeyPayload_RevokeUserDeviceKey(streamId string, userId string, deviceId string) *StreamEvent_UserDeviceKeyPayload {
+	return &StreamEvent_UserDeviceKeyPayload{
+		UserDeviceKeyPayload: &UserDeviceKeyPayload{
+			Content: &UserDeviceKeyPayload_UserDeviceKey_{
+				UserDeviceKey: &UserDeviceKeyPayload_UserDeviceKey{
+					UserId: userId,
+					DeviceKeys: &DeviceKeys{
+						DeviceId: deviceId,
+					},
+					RiverKeyOp: RiverKeyOp_RDKO_KEY_REVOKE.Enum(),
 				},
 			},
 		},

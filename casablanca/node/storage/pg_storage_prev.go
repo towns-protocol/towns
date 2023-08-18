@@ -279,7 +279,7 @@ func (s *PGEventStore) AddEvent(ctx context.Context, streamId string, event *pro
 	}
 	committed = true
 	if !exists {
-		return fmt.Errorf("stream %s does not exist", streamId)
+		return &ErrNotFound{streamId}
 	}
 
 	// add the event
@@ -353,7 +353,7 @@ func (s *PGEventStore) GetStream(ctx context.Context, streamId string) ([]*proto
 		return nil, err
 	}
 	if !exists {
-		return nil, fmt.Errorf("stream %s does not exist", string(streamId))
+		return nil, &ErrNotFound{streamId}
 	}
 
 	pos := StreamPos{

@@ -21,13 +21,14 @@ var (
 )
 
 type Service struct {
-	cache         events.StreamCache
-	townsContract auth.TownsContract
-	wallet        *crypto.Wallet
-	log           *slog.Logger
+	cache             events.StreamCache
+	townsContract     auth.TownsContract
+	wallet            *crypto.Wallet
+	log               *slog.Logger
+	skipDelegateCheck bool
 }
 
-func MakeServiceHandler(ctx context.Context, log *slog.Logger, dbUrl string, chainConfig *config.ChainConfig, wallet *crypto.Wallet, opts ...connect_go.HandlerOption) (string, http.Handler, error) {
+func MakeServiceHandler(ctx context.Context, log *slog.Logger, dbUrl string, chainConfig *config.ChainConfig, wallet *crypto.Wallet, skipDelegateCheck bool, opts ...connect_go.HandlerOption) (string, http.Handler, error) {
 	store, err := storage.NewPGEventStore(ctx, dbUrl, false)
 	if err != nil {
 		log.Error("failed to create storage", "error", err)
@@ -56,10 +57,11 @@ func MakeServiceHandler(ctx context.Context, log *slog.Logger, dbUrl string, cha
 
 	s, h := protocolconnect.NewStreamServiceHandler(
 		&Service{
-			cache:         events.NewStreamCache(&events.StreamCacheParams{Storage: store, Wallet: wallet, DefaultCtx: ctx}),
-			townsContract: contract,
-			wallet:        wallet,
-			log:           log,
+			cache:             events.NewStreamCache(&events.StreamCacheParams{Storage: store, Wallet: wallet, DefaultCtx: ctx}),
+			townsContract:     contract,
+			wallet:            wallet,
+			log:               log,
+			skipDelegateCheck: skipDelegateCheck,
 		},
 		opts...,
 	)

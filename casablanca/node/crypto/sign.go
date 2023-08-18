@@ -22,7 +22,6 @@ const (
 	WALLET_PATH_PUBLIC_KEY   = "./wallet/public_key"
 	WALLET_PATH_NODE_ADDRESS = "./wallet/node_address"
 	KEY_FILE_PERMISSIONS     = 0600
-	TOWNS_HASH_SIZE = 32
 )
 
 // String 'CSBLANCA' as bytes.

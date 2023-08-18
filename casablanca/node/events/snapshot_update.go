@@ -124,10 +124,9 @@ func update_Snapshot_UserDeviceKey(iSnapshot *Snapshot, userDeviceKeyPayload *Us
 		if snapshot.UserDeviceKeyContent.UserDeviceKeys == nil {
 			snapshot.UserDeviceKeyContent.UserDeviceKeys = make(map[string]*UserDeviceKeyPayload_UserDeviceKey)
 		}
-		if content.UserDeviceKey.GetRiverKeyOp() == RiverKeyOp_RDKO_KEY_REGISTER {
+		// Keeping only revoke events for now
+		if content.UserDeviceKey.GetRiverKeyOp() == RiverKeyOp_RDKO_KEY_REVOKE {
 			snapshot.UserDeviceKeyContent.UserDeviceKeys[content.UserDeviceKey.DeviceKeys.DeviceId] = content.UserDeviceKey
-		} else if content.UserDeviceKey.GetRiverKeyOp() == RiverKeyOp_RDKO_KEY_REVOKE {
-			delete(snapshot.UserDeviceKeyContent.UserDeviceKeys, content.UserDeviceKey.DeviceKeys.DeviceId)
 		} else {
 			return fmt.Errorf("unknown river key op %T", content.UserDeviceKey.GetRiverKeyOp())
 		}

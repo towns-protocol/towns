@@ -2,6 +2,10 @@ package storage
 
 import "context"
 
+type ErrNotFound struct {
+	StreamId string
+}
+
 type GetStreamFromLastSnapshotResult struct {
 	StartMiniblockNumber int
 	Miniblocks           [][]byte
@@ -41,4 +45,8 @@ type StreamStorage interface {
 		snapshotMiniblock bool,
 		envelopes [][]byte,
 	) error
+}
+
+func (m *ErrNotFound) Error() string {
+	return "stream not found: " + m.StreamId
 }

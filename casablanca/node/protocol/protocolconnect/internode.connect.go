@@ -98,26 +98,18 @@ type NodeToNodeHandler interface {
 // By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
 // and JSON codecs. They also support gzip compression.
 func NewNodeToNodeHandler(svc NodeToNodeHandler, opts ...connect_go.HandlerOption) (string, http.Handler) {
-	nodeToNodeNewEventReceivedHandler := connect_go.NewUnaryHandler(
+	mux := http.NewServeMux()
+	mux.Handle(NodeToNodeNewEventReceivedProcedure, connect_go.NewUnaryHandler(
 		NodeToNodeNewEventReceivedProcedure,
 		svc.NewEventReceived,
 		opts...,
-	)
-	nodeToNodeNewEventInPoolHandler := connect_go.NewUnaryHandler(
+	))
+	mux.Handle(NodeToNodeNewEventInPoolProcedure, connect_go.NewUnaryHandler(
 		NodeToNodeNewEventInPoolProcedure,
 		svc.NewEventInPool,
 		opts...,
-	)
-	return "/casablanca.NodeToNode/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		switch r.URL.Path {
-		case NodeToNodeNewEventReceivedProcedure:
-			nodeToNodeNewEventReceivedHandler.ServeHTTP(w, r)
-		case NodeToNodeNewEventInPoolProcedure:
-			nodeToNodeNewEventInPoolHandler.ServeHTTP(w, r)
-		default:
-			http.NotFound(w, r)
-		}
-	})
+	))
+	return "/casablanca.NodeToNode/", mux
 }
 
 // UnimplementedNodeToNodeHandler returns CodeUnimplemented from all methods.

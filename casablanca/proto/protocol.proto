@@ -381,8 +381,7 @@ enum ToDeviceOp {
 }
 
 enum RiverKeyOp {
-    RDKO_KEY_REGISTER = 0;
-    RDKO_KEY_REVOKE = 1;
+    RDKO_KEY_REVOKE = 0;
 }
 
 /**
@@ -522,4 +521,6 @@ enum Err {
     STREAM_NO_INCEPTION_EVENT = 27;
     BAD_BLOCK_NUMBER = 28;
     BAD_MINIPOOL_SLOT = 29;
+    BAD_CREATOR_ADDRESS = 30;
+    STALE_DELEGATE = 31;
 }

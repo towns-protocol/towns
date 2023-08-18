@@ -18,6 +18,7 @@ type ParsedEvent struct {
 	Hash          []byte
 	HashStr       string   `dlog:"omit"` // strangely Go can't have key maps of type []byte...
 	PrevEventStrs []string `dlog:"omit"`
+	SignerPubKey  []byte
 	shortDebugStr string
 }
 
@@ -70,6 +71,7 @@ func ParseEvent(envelope *Envelope) (*ParsedEvent, error) {
 		Hash:          envelope.Hash,
 		HashStr:       string(envelope.Hash),
 		PrevEventStrs: prevEventStrs,
+		SignerPubKey:  signerPubKey,
 	}, nil
 }
 

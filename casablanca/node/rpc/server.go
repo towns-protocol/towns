@@ -26,7 +26,7 @@ func StartServer(ctx context.Context, cfg *config.Config, wallet *crypto.Wallet)
 		chainConfig = &cfg.Chain
 	}
 
-	pattern, handler, err := MakeServiceHandler(context.Background(), log, cfg.DbUrl, chainConfig, wallet)
+	pattern, handler, err := MakeServiceHandler(context.Background(), log, cfg.DbUrl, chainConfig, wallet, cfg.SkipDelegateCheck)
 	if err != nil {
 		return nil, 0, err
 	}

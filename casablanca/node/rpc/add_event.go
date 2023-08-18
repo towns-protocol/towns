@@ -9,11 +9,13 @@ import (
 	"google.golang.org/grpc/status"
 
 	"casablanca/node/auth"
+	. "casablanca/node/base"
 	"casablanca/node/common"
 	"casablanca/node/crypto"
 	. "casablanca/node/events"
 	"casablanca/node/infra"
 	. "casablanca/node/protocol"
+	"casablanca/node/storage"
 )
 
 var (
@@ -31,6 +33,14 @@ func (s *Service) AddEvent(ctx context.Context, req *connect_go.Request[AddEvent
 	}
 
 	log.Debug("AddEvent ENTER", "streamId", req.Msg.StreamId, "event", parsedEvent)
+
+	if !s.skipDelegateCheck {
+		err = s.checkStaleDelegate(ctx, []*ParsedEvent{parsedEvent})
+		if err != nil {
+			log.Debug("AddEvent ERROR: stale delegate", "request", req.Msg, "error", err)
+			return nil, err
+		}
+	}
 
 	err = s.addParsedEvent(ctx, req.Msg.StreamId, parsedEvent)
 	if err == nil {
@@ -351,25 +361,6 @@ func (s *Service) checkRiverKeyManagementEvent(ctx context.Context, stream *Stre
 		return status.Errorf(codes.InvalidArgument, "AddEvent: invalid river device key id")
 	}
 
-	view := streamView.(UserDeviceStreamView)
-	switch payload.GetRiverKeyOp() {
-	case RiverKeyOp_RDKO_KEY_REGISTER:
-		{
-			keys, err := view.RiverDeviceKeys()
-			if err != nil {
-				return status.Errorf(codes.Internal, "AddEvent: error getting river device keys: %v", err)
-			}
-			rdkid := [crypto.TOWNS_HASH_SIZE]byte(rdkId)
-			_, ok := keys[rdkid]
-			if ok {
-				return status.Errorf(codes.InvalidArgument, "AddEvent: river device key already registered")
-			}
-		}
-	case RiverKeyOp_RDKO_KEY_REVOKE:
-		{
-			// Allow revoking even if the key is not registered
-		}
-	}
 	return nil
 }
 
@@ -384,4 +375,45 @@ func (s *Service) addUserDeviceKeyEvent(ctx context.Context, stream *Stream, str
 	}
 	_, err = stream.AddEvent(ctx, parsedEvent)
 	return err
+}
+
+func (s *Service) checkStaleDelegate(ctx context.Context, parsedEvents []*ParsedEvent) error {
+	for _, parsedEvent := range parsedEvents {
+		if len(parsedEvent.Event.DelegateSig) == 0 {
+			continue
+		}
+
+		creator, err := common.AddressHex(parsedEvent.Event.CreatorAddress)
+		if err != nil {
+			return RpcErrorf(Err_BAD_CREATOR_ADDRESS, "AddEvent: invalid user id: %v", err)
+		}
+		userDeviceStreamId, err := common.UserDeviceKeyStreamIdFromId(creator)
+		if err != nil {
+			return RpcErrorf(Err_BAD_CREATOR_ADDRESS, "AddEvent: invalid user id: %v", err)
+		}
+		_, userDeviceKeyStreamView, err := s.cache.GetStream(ctx, userDeviceStreamId)
+		if err != nil {
+			if _, ok := err.(*storage.ErrNotFound); ok {
+				// no stale delegates yet
+				return nil
+			}
+			return RpcErrorf(Err_INTERNAL_ERROR, "AddEvent: error getting user device key stream: %v", err)
+		}
+		view := userDeviceKeyStreamView.(UserDeviceStreamView)
+
+		signerPubKey := parsedEvent.SignerPubKey
+
+		rdkId, err := crypto.RdkIdFromPubKey(signerPubKey)
+		if err != nil {
+			return RpcErrorf(Err_BAD_PUBLIC_KEY, "AddEvent: invalid signer public key: %v", err)
+		}
+		isRevoked, err := view.IsDeviceIdRevoked(rdkId)
+		if err != nil {
+			return RpcErrorf(Err_INTERNAL_ERROR, "AddEvent: error getting river device keys: %v", err)
+		}
+		if isRevoked {
+			return RpcErrorf(Err_STALE_DELEGATE, "AddEvent: stale delegate")
+		}
+	}
+	return nil
 }

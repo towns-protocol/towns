@@ -2,6 +2,7 @@ package rpc_test
 
 import (
 	"context"
+	"encoding/hex"
 	"fmt"
 	"math/rand"
 	"net/http"
@@ -23,6 +24,7 @@ import (
 	"casablanca/node/testutils"
 
 	"github.com/bufbuild/connect-go"
+	eth_crypto "github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/protobuf/proto"
 )
@@ -44,7 +46,83 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
+func createUserDeviceKeyStream(ctx context.Context, wallet *crypto.Wallet, client protocolconnect.StreamServiceClient) (*protocol.SyncCookie, []byte, error) {
+	userId, err := common.AddressHex(wallet.Address.Bytes())
+	if err != nil {
+		return nil, nil, err
+	}
+	userDeviceKeyStreamId, err := common.UserDeviceKeyStreamIdFromId(userId)
+	if err != nil {
+		return nil, nil, err
+	}
+	inception, err := events.MakeEnvelopeWithPayload(
+		wallet,
+		events.Make_UserDeviceKeyPayload_Inception(
+			userDeviceKeyStreamId,
+			userId,
+		),
+		nil,
+	)
+	if err != nil {
+		return nil, nil, err
+	}
+	res, err := client.CreateStream(ctx, connect.NewRequest(&protocol.CreateStreamRequest{
+		Events: []*protocol.Envelope{inception},
+	}))
+	if err != nil {
+		return nil, nil, err
+	}
+	return res.Msg.Stream.NextSyncCookie, inception.Hash, nil
+}
+
+func getDeviceId(wallet *crypto.Wallet) (string, error) {
+	publicKey := eth_crypto.FromECDSAPub(&wallet.PrivateKeyStruct.PublicKey)
+	hash := crypto.TownsHash(publicKey)
+	return hex.EncodeToString(hash), nil
+}
+
+func makeDelegateSig(primaryWallet *crypto.Wallet, deviceWallet *crypto.Wallet) ([]byte, error) {
+	devicePubKey := eth_crypto.FromECDSAPub(&deviceWallet.PrivateKeyStruct.PublicKey)
+
+	delegatSig, err := primaryWallet.SignHash(crypto.TownsHash(devicePubKey))
+	return delegatSig, err
+}
+
+func revokeDeviceId(ctx context.Context, wallet *crypto.Wallet, deviceWallet *crypto.Wallet, client protocolconnect.StreamServiceClient, hash []byte) ([]byte, error) {
+	userId, err := common.AddressHex(wallet.Address.Bytes())
+	if err != nil {
+		return nil, err
+	}
+	userDeviceKeyStreamId, err := common.UserDeviceKeyStreamIdFromId(userId)
+	if err != nil {
+		return nil, err
+	}
+	deviceId, err := getDeviceId(deviceWallet)
+	if err != nil {
+		return nil, err
+	}
+	registerEvent, err := events.MakeEnvelopeWithPayload(
+		wallet,
+		events.Make_UserDeviceKeyPayload_RevokeUserDeviceKey(
+			userDeviceKeyStreamId, userId, deviceId,
+		),
+		[][]byte{hash},
+	)
+	if err != nil {
+		return nil, err
+	}
+	_, err = client.AddEvent(ctx, connect.NewRequest(&protocol.AddEventRequest{
+		StreamId: userDeviceKeyStreamId,
+		Event:    registerEvent,
+	}))
+	if err != nil {
+		return nil, err
+	}
+	return registerEvent.Hash, nil
+}
+
 func createUser(ctx context.Context, wallet *crypto.Wallet, client protocolconnect.StreamServiceClient) (*protocol.SyncCookie, []byte, error) {
+
 	userStreamId, err := common.UserStreamIdFromAddress(wallet.Address.Bytes())
 	if err != nil {
 		return nil, nil, err
@@ -158,9 +236,10 @@ func testServerAndClient(ctx context.Context, dbUrl string) (protocolconnect.Str
 			ChainId:    31337,
 			NetworkUrl: "http://localhost:8545",
 		},
-		Address: "localhost",
-		Port:    1234,
-		DbUrl:   dbUrl,
+		Address:           "localhost",
+		Port:              1234,
+		DbUrl:             dbUrl,
+		SkipDelegateCheck: false,
 	}
 
 	wallet, err := crypto.NewWallet(ctx)
@@ -200,6 +279,11 @@ func TestMethods(t *testing.T) {
 			t.Errorf("expected error calling CreateStream with no events")
 		}
 
+		_, udkHash, err := createUserDeviceKeyStream(ctx, wallet1, client)
+		if err != nil {
+			t.Fatalf("error calling CreateStream: %v", err)
+		}
+
 		// create user stream for user 1
 		res, _, err := createUser(ctx, wallet1, client)
 		if err != nil {
@@ -207,6 +291,11 @@ func TestMethods(t *testing.T) {
 		}
 		if res == nil {
 			t.Errorf("nil sync cookie")
+		}
+
+		_, _, err = createUserDeviceKeyStream(ctx, wallet2, client)
+		if err != nil {
+			t.Fatalf("error calling CreateStream: %v", err)
 		}
 
 		// create user stream for user 2
@@ -330,6 +419,103 @@ func TestMethods(t *testing.T) {
 			}
 		default:
 			t.Fatalf("expected channel event, got %v", payload.Payload)
+		}
+
+		_, err = revokeDeviceId(ctx, wallet1, wallet1, client, udkHash)
+		if err != nil {
+			t.Fatalf("error calling CreateStream: %v", err)
+		}
+	}
+}
+
+func TestRiverDeviceId(t *testing.T) {
+	ctx := context.Background()
+	client, closer := testServerAndClient(ctx, testDatabaseUrl)
+	wallet, _ := crypto.NewWallet(ctx)
+	deviceWallet, _ := crypto.NewWallet(ctx)
+	defer closer()
+	{
+		resuser, _, err := createUser(ctx, wallet, client)
+		if err != nil {
+			t.Fatalf("error calling CreateStream: %v", err)
+		}
+		if resuser == nil {
+			t.Errorf("nil sync cookie")
+		}
+
+		_, udkHash, err := createUserDeviceKeyStream(ctx, wallet, client)
+		if err != nil {
+			t.Fatalf("error calling CreateStream: %v", err)
+		}
+
+		space, _, err := createSpace(ctx, wallet, client, "test")
+		if err != nil {
+			t.Fatalf("error calling CreateStream: %v", err)
+		}
+		if space == nil {
+			t.Errorf("nil sync cookie")
+		}
+
+		channel, channelHash, err := createChannel(ctx, wallet, client, common.SpaceStreamIdFromName("test"), "channel1")
+		if err != nil {
+			t.Fatalf("error calling CreateStream: %v", err)
+		}
+		if channel == nil {
+			t.Errorf("nil sync cookie")
+		}
+
+		delegateSig, err := makeDelegateSig(wallet, deviceWallet)
+		if err != nil {
+			t.Fatalf("error calling CreateStream: %v", err)
+		}
+
+		event, err := events.MakeDelegatedStreamEvent(
+			wallet,
+			events.Make_ChannelPayload_Message(
+				"try to send a message without RDK",
+			),
+			[][]byte{channelHash},
+			delegateSig,
+		)
+		if err != nil {
+			t.Fatalf("error creating message event: %v", err)
+		}
+		msg, err := events.MakeEnvelopeWithEvent(
+			deviceWallet,
+			event,
+		)
+		if err != nil {
+			t.Errorf("error creating message event: %v", err)
+		}
+
+		_, err = client.AddEvent(
+			ctx,
+			connect.NewRequest(
+				&protocol.AddEventRequest{
+					StreamId: common.ChannelStreamIdFromName("channel1"),
+					Event:    msg,
+				},
+			),
+		)
+		if err != nil {
+			t.Fatalf("error calling AddEvent: %v", err)
+		}
+
+		_, err = revokeDeviceId(ctx, wallet, deviceWallet, client, udkHash)
+		if err != nil {
+			t.Fatalf("error registering device: %v", err)
+		}
+		_, err = client.AddEvent(
+			ctx,
+			connect.NewRequest(
+				&protocol.AddEventRequest{
+					StreamId: common.ChannelStreamIdFromName("channel1"),
+					Event:    msg,
+				},
+			),
+		)
+		if err == nil {
+			t.Fatalf("expected error calling AddEvent: %v", err)
 		}
 	}
 }

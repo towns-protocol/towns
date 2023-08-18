@@ -47,6 +47,14 @@ func (s *Service) createStream(ctx context.Context, log *slog.Logger, req *conne
 
 	log.Debug("CreateStream", "request", req.Msg, "events", parsedEvents)
 
+	if !s.skipDelegateCheck {
+		err = s.checkStaleDelegate(ctx, parsedEvents)
+		if err != nil {
+			log.Debug("CreateStream: stale delegate", "error", err)
+			return nil, err
+		}
+	}
+
 	inceptionEvent := parsedEvents[0]
 	inceptionPayload := inceptionEvent.Event.GetInceptionPayload()
 	if inceptionPayload == nil {

@@ -33,7 +33,9 @@ type JoinableStreamView interface {
 
 type UserDeviceStreamView interface {
 	StreamView
-	RiverDeviceKeys() (map[[TOWNS_HASH_SIZE]byte]struct{}, error)
+	// the set of river device key ids that are revoked
+	// river device id is a 256 bit keccak hash of the RDK's public key
+	IsDeviceIdRevoked(rdkId RdkId) (bool, error)
 }
 
 var debugLogMutex = &sync.Mutex{}
@@ -398,31 +400,30 @@ func (r *streamViewImpl) JoinedUsers() (map[string]struct{}, error) {
 	return users, nil
 }
 
-func (r *streamViewImpl) RiverDeviceIds() (map[[TOWNS_HASH_SIZE]byte]interface{}, error) {
-	ids := make(map[[TOWNS_HASH_SIZE]byte]interface{})
-
+func (r *streamViewImpl) IsDeviceIdRevoked(rdkId RdkId) (bool, error) {
+	isRevoked := false
 	_ = r.forEachEvent(0, func(e *ParsedEvent) (bool, error) {
 		switch payload := e.Event.Payload.(type) {
 		case *StreamEvent_UserDeviceKeyPayload:
 			switch devicePayload := payload.UserDeviceKeyPayload.Content.(type) {
 			case *UserDeviceKeyPayload_UserDeviceKey_:
-				if deviceKeys := devicePayload.UserDeviceKey.GetDeviceKeys(); ids != nil {
-					deviceId, err := hex.DecodeString(deviceKeys.DeviceId)
-					if err != nil {
-						return false, err
+				deviceKeys := devicePayload.UserDeviceKey.GetDeviceKeys()
+				deviceId, err := hex.DecodeString(deviceKeys.DeviceId)
+				if err != nil {
+					return false, err
+				}
+				eventRdkId, err := RdkIdFromSlice(deviceId)
+				if err != nil {
+					return false, err
+				}
+				switch devicePayload.UserDeviceKey.GetRiverKeyOp() {
+				case RiverKeyOp_RDKO_KEY_REVOKE:
+					if eventRdkId == rdkId {
+						isRevoked = true
+						return false, nil
 					}
-					if len(deviceId) != TOWNS_HASH_SIZE {
-						return false, RpcErrorf(Err_BAD_ARGS, "riverDeviceIds: bad deviceId, deviceId=%v", deviceId)
-					}
-					rdkId := [TOWNS_HASH_SIZE]byte(deviceId)
-					switch devicePayload.UserDeviceKey.GetRiverKeyOp() {
-					case RiverKeyOp_RDKO_KEY_REGISTER:
-						ids[rdkId] = struct{}{}
-					case RiverKeyOp_RDKO_KEY_REVOKE:
-						delete(ids, rdkId)
-					default:
-						break
-					}
+				default:
+					break
 				}
 			}
 		default:
@@ -431,7 +432,7 @@ func (r *streamViewImpl) RiverDeviceIds() (map[[TOWNS_HASH_SIZE]byte]interface{}
 		return true, nil
 	})
 
-	return ids, nil
+	return isRevoked, nil
 }
 
 func (r *streamViewImpl) LastEvent() *ParsedEvent {

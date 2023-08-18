@@ -9,6 +9,8 @@ type Config struct {
 	Chain       ChainConfig
 	UseContract bool
 	Log         LogConfig
+	// TODO HNT-2048 remove once RDK registration/revoke is implemented in the client
+	SkipDelegateCheck bool
 }
 
 type LogConfig struct {
