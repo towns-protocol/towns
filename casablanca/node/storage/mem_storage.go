@@ -4,6 +4,7 @@ import (
 	. "casablanca/node/base"
 	. "casablanca/node/protocol"
 	"context"
+	"sync"
 )
 
 type memStream struct {
@@ -12,13 +13,19 @@ type memStream struct {
 	lastSnapshotIndex int
 }
 
-type memStorage map[string]*memStream
+type memStorage struct {
+	streams map[string]*memStream
+	mutex   sync.Mutex
+}
 
 func (m *memStorage) CreateStream(ctx context.Context, streamId string, genesisMiniblock []byte) error {
-	if _, ok := (*m)[streamId]; ok {
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
+
+	if _, ok := m.streams[streamId]; ok {
 		return RpcError(Err_STREAM_ALREADY_EXISTS, "Stream already exists")
 	}
-	(*m)[streamId] = &memStream{
+	m.streams[streamId] = &memStream{
 		miniblocks:        [][]byte{genesisMiniblock},
 		minipool:          [][]byte{},
 		lastSnapshotIndex: 0,
@@ -27,7 +34,10 @@ func (m *memStorage) CreateStream(ctx context.Context, streamId string, genesisM
 }
 
 func (m *memStorage) GetStreamFromLastSnapshot(ctx context.Context, streamId string) (*GetStreamFromLastSnapshotResult, error) {
-	stream, ok := (*m)[streamId]
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
+
+	stream, ok := m.streams[streamId]
 	if !ok {
 		return nil, RpcError(Err_STREAM_NOT_FOUND, "Stream not found")
 	}
@@ -39,7 +49,10 @@ func (m *memStorage) GetStreamFromLastSnapshot(ctx context.Context, streamId str
 }
 
 func (m *memStorage) GetMiniblocks(ctx context.Context, streamId string, fromIndex int, toIndex int) ([][]byte, error) {
-	stream, ok := (*m)[streamId]
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
+
+	stream, ok := m.streams[streamId]
 	if !ok {
 		return nil, RpcError(Err_STREAM_NOT_FOUND, "Stream not found")
 	}
@@ -50,7 +63,10 @@ func (m *memStorage) GetMiniblocks(ctx context.Context, streamId string, fromInd
 }
 
 func (m *memStorage) AddEvent(ctx context.Context, streamId string, minipoolGeneration int, minipoolSlot int, envelope []byte) error {
-	stream, ok := (*m)[streamId]
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
+
+	stream, ok := m.streams[streamId]
 	if !ok {
 		return RpcError(Err_STREAM_NOT_FOUND, "Stream not found")
 	}
@@ -73,7 +89,10 @@ func (m *memStorage) CreateBlock(
 	snapshotMiniblock bool,
 	envelopes [][]byte,
 ) error {
-	stream, ok := (*m)[streamId]
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
+
+	stream, ok := m.streams[streamId]
 	if !ok {
 		return RpcError(Err_STREAM_NOT_FOUND, "Stream not found")
 	}
@@ -92,6 +111,7 @@ func (m *memStorage) CreateBlock(
 }
 
 func NewMemStorage() *memStorage {
-	var m memStorage = make(map[string]*memStream)
-	return &m
+	return &memStorage{
+		streams: map[string]*memStream{},
+	}
 }
