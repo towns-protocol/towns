@@ -25,6 +25,7 @@ import {
     SendImageMessageOptions,
     SendTextMessageOptions,
 } from 'use-zion-client'
+import { NodeEventPlugin } from '@lexical/react/LexicalNodeEventPlugin'
 import * as fieldStyles from 'ui/components/_internal/Field/Field.css'
 import { notUndefined } from 'ui/utils/utils'
 import { useStore } from 'store/store'
@@ -179,6 +180,13 @@ export const RichTextPreview = React.memo(
                         placeholder={<div />}
                     />
                     <CodeHighlightPlugin />
+                    <NodeEventPlugin
+                        nodeType={LinkNode}
+                        eventType="click"
+                        eventListener={(e: Event) => {
+                            e.stopPropagation()
+                        }}
+                    />
                 </LexicalComposer>
             </div>
         )
