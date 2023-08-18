@@ -1,19 +1,23 @@
 import Addresses from '@towns/generated/addresses.json' assert { type: 'json' }
 
 const goerliContractsInfo: IStaticContractsInfoV3 = {
-    address: Addresses['5']['townFactory'],
+    townFactoryAddress: Addresses['5']['townFactory'],
+    townOwnerAddress: Addresses['5']['townOwner'],
 }
 
 const localhostContractsInfo: IStaticContractsInfoV3 = {
-    address: Addresses['31337']['townFactory'],
+    townFactoryAddress: Addresses['31337']['townFactory'],
+    townOwnerAddress: Addresses['31337']['townOwner'],
 }
 
 const sepoliaContractsInfo: IStaticContractsInfoV3 = {
-    address: Addresses['11155111']['townFactory'],
+    townFactoryAddress: Addresses['11155111']['townFactory'],
+    townOwnerAddress: Addresses['11155111']['townOwner'],
 }
 
 export interface IStaticContractsInfoV3 {
-    address: string
+    townFactoryAddress: string
+    townOwnerAddress: string
 }
 
 /// get contract info for a given chain id

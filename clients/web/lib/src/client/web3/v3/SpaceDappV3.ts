@@ -35,7 +35,7 @@ export class SpaceDappV3 implements ISpaceDapp {
         this.chainId = chainId
         this.provider = provider
         const contractsInfo = getContractsInfoV3(chainId)
-        this.townRegistrar = new TownRegistrar(contractsInfo.address, chainId, provider)
+        this.townRegistrar = new TownRegistrar(contractsInfo, chainId, provider)
     }
 
     public async addRoleToChannel(
@@ -179,14 +179,15 @@ export class SpaceDappV3 implements ISpaceDapp {
         if (!town) {
             return undefined
         }
-        const [owner, disabled] = await Promise.all([
+        const [owner, disabled, townInfo] = await Promise.all([
             town.Ownable.read.owner(),
             town.Pausable.read.paused(),
+            town.getTownInfo(),
         ])
         return {
             address: town.Address,
             networkId: town.SpaceId,
-            name: '', // https://linear.app/hnt-labs/issue/HNT-2090/how-to-get-spacename-in-the-diamond-contracts
+            name: (townInfo.name as string) ?? '',
             owner,
             disabled,
         }

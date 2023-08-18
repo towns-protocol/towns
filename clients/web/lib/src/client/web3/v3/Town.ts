@@ -15,6 +15,7 @@ import {
 } from '../ContractTypes'
 import { IChannelBase, IChannelShim } from './IChannelShim'
 import { IRolesBase, IRolesShim } from './IRolesShim'
+import { ITownOwnerBase, ITownOwnerShim } from './ITownOwnerShim'
 import { TokenEntitlementDataTypes, TokenEntitlementShim } from './TokenEntitlementShim'
 
 import { IEntitlementsShim } from './IEntitlementsShim'
@@ -30,8 +31,17 @@ interface AddressToEntitlement {
     [address: string]: EntitlementShim
 }
 
+interface TownConstructorArgs {
+    address: string
+    spaceId: string
+    chainId: number
+    provider: ethers.providers.Provider | undefined
+    townOwnerAddress: string
+}
+
 export class Town {
     private readonly address: string
+    private readonly addressToEntitlement: AddressToEntitlement = {}
     private readonly spaceId: string
     private readonly chainId: number
     private readonly provider: ethers.providers.Provider | undefined
@@ -41,14 +51,9 @@ export class Town {
     private readonly ownable: OwnableFacetShim
     private readonly pausable: TokenPausableFacetShim
     private readonly roles: IRolesShim
-    private readonly addressToEntitlement: AddressToEntitlement = {}
+    private readonly townOwner: ITownOwnerShim
 
-    constructor(
-        address: string,
-        spaceId: string,
-        chainId: number,
-        provider: ethers.providers.Provider | undefined,
-    ) {
+    constructor({ address, spaceId, chainId, provider, townOwnerAddress }: TownConstructorArgs) {
         this.address = address
         this.spaceId = spaceId
         this.chainId = chainId
@@ -59,6 +64,7 @@ export class Town {
         this.ownable = new OwnableFacetShim(address, chainId, provider)
         this.pausable = new TokenPausableFacetShim(address, chainId, provider)
         this.roles = new IRolesShim(address, chainId, provider)
+        this.townOwner = new ITownOwnerShim(townOwnerAddress, chainId, provider)
     }
 
     public get Address(): string {
@@ -91,6 +97,10 @@ export class Town {
 
     public get Entitlements(): IEntitlementsShim {
         return this.entitlements
+    }
+
+    public getTownInfo(): Promise<ITownOwnerBase.TownStruct> {
+        return this.townOwner.read.getTownInfo(this.address)
     }
 
     public async getRole(roleId: BigNumberish): Promise<RoleDetails | null> {
