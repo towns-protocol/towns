@@ -2,7 +2,7 @@ import { HistoryVisibility, IContent, JoinRule, RestrictedAllowType } from 'matr
 import { Channel, Membership, Mention, PowerLevels } from './zion-types'
 import { RoomIdentifier } from './room-identifier'
 import { BlockchainTransaction } from './web3-types'
-import { ChannelOp, PayloadCaseType } from '@river/proto'
+import { ChannelOp, MiniblockHeader, PayloadCaseType } from '@river/proto'
 import { staticAssertNever } from '../utils/zion-utils'
 
 /**************************************************************************
@@ -31,6 +31,7 @@ export enum EventStatus {
 // Zion Timeline Event
 export enum ZTEvent {
     BlockchainTransaction = 'blockchain.transaction',
+    MiniblockHeader = 'm.miniblockheader',
     Notice = 'm.notice',
     Reaction = 'm.reaction',
     Receipt = 'm.receipt',
@@ -53,6 +54,7 @@ export enum ZTEvent {
 
 /// a timeline event should have one or none of the following fields set
 export type TimelineEvent_OneOf =
+    | MiniblockHeaderEvent
     | NoticeEvent
     | ReactionEvent
     | ReceiptEvent
@@ -74,6 +76,11 @@ export type TimelineEvent_OneOf =
 
 // NOTE this is an inexhaustive list, see https://spec.matrix.org/v1.2/client-server-api/#server-behaviour-16
 // and https://spec.matrix.org/v1.2/client-server-api/#stripped-state
+
+export interface MiniblockHeaderEvent {
+    kind: ZTEvent.MiniblockHeader
+    message: MiniblockHeader
+}
 
 export interface ReceiptEvent {
     kind: ZTEvent.Receipt
@@ -281,6 +288,12 @@ export function getFallbackContent(
         throw new Error('Either content or error should be defined')
     }
     switch (content.kind) {
+        case ZTEvent.MiniblockHeader:
+            return `Miniblock miniblockNum:${content.message.miniblockNum}, hasSnapshot:${(content
+                .message.snapshot
+                ? true
+                : false
+            ).toString()}`
         case ZTEvent.Reaction:
             return `${senderDisplayName} reacted with ${content.reaction} to ${content.targetEventId}`
         case ZTEvent.RoomAvatar:

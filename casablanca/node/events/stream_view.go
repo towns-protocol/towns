@@ -15,6 +15,7 @@ import (
 	"sync"
 
 	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 type StreamView interface {
@@ -273,6 +274,9 @@ func (r *streamViewImpl) makeMiniblockHeader(ctx context.Context) *MiniblockHead
 		EventHashes:       hashes,
 		PrevMiniblockHash: last.headerEvent.Hash,
 		Snapshot:          snapshot,
+		Content: &MiniblockHeader_None{
+			None: &emptypb.Empty{},
+		},
 	}
 }
 

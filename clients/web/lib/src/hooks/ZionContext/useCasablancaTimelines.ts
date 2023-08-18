@@ -8,6 +8,7 @@ import {
     ChannelPayload,
     EncryptedData,
     SpacePayload,
+    MiniblockHeader,
 } from '@river/proto'
 import { useEffect } from 'react'
 import { Membership, MessageType } from '../../types/zion-types'
@@ -22,6 +23,7 @@ import {
 } from '../../store/use-timeline-store'
 import {
     getFallbackContent,
+    MiniblockHeaderEvent,
     ReactionEvent,
     ReceiptEvent,
     RoomCreateEvent,
@@ -313,9 +315,12 @@ function toTownsContent(eventId: string, message: ParsedEvent): TownsContentResu
                 error: `${description} userSettingsPayload not supported?`,
             }
         case 'miniblockHeader':
-            return {
-                error: `${description} block payload not supported?`,
-            }
+            return toTownsContent_MiniblockHeader(
+                eventId,
+                message,
+                message.event.payload.value,
+                description,
+            )
         default:
             try {
                 if (message.event.payload && message.event.payload.value) {
@@ -328,6 +333,20 @@ function toTownsContent(eventId: string, message: ParsedEvent): TownsContentResu
             }
             // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
             return { error: `unknown payload case ${message.event.payload.case}` }
+    }
+}
+
+function toTownsContent_MiniblockHeader(
+    eventId: string,
+    message: ParsedEvent,
+    value: MiniblockHeader,
+    _description: string,
+): TownsContentResult {
+    return {
+        content: {
+            kind: ZTEvent.MiniblockHeader,
+            message: value,
+        } satisfies MiniblockHeaderEvent,
     }
 }
 

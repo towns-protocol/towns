@@ -421,7 +421,10 @@ export class ZionTestClient extends ZionClient {
     /************************************************
      * getLatestEvent
      ************************************************/
-    public getEvents(roomId: RoomIdentifier): TimelineEvent[] {
+    public getEvents(
+        roomId: RoomIdentifier,
+        options?: { excludeMiniblockHeaders?: boolean },
+    ): TimelineEvent[] {
         switch (roomId.protocol) {
             case SpaceProtocol.Matrix: {
                 if (!this.matrixClient) {
@@ -455,7 +458,11 @@ export class ZionTestClient extends ZionClient {
                     }
                     return toEventFromCasablancaEvent(stream.view.events.get(k)!, userId)
                 })
-                return events
+                if (options?.excludeMiniblockHeaders === true) {
+                    return events.filter((x) => x.content?.kind !== ZTEvent.MiniblockHeader)
+                } else {
+                    return events
+                }
             }
             default:
                 staticAssertNever(roomId)

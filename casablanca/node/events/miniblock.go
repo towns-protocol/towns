@@ -3,6 +3,7 @@ package events
 import (
 	. "casablanca/node/protocol"
 
+	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -24,6 +25,9 @@ func Make_GenisisMiniblockHeader(parsedEvents []*ParsedEvent) (*MiniblockHeader,
 		Timestamp:    NextMiniblockTimestamp(nil),
 		EventHashes:  eventHashes,
 		Snapshot:     snapshot,
+		Content: &MiniblockHeader_None{
+			None: &emptypb.Empty{},
+		},
 	}, nil
 
 }
