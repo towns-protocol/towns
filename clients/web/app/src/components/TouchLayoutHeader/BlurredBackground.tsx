@@ -3,10 +3,12 @@ import { MotionBox } from '@ui'
 import { ImageVariants, useImageSource } from '@components/UploadImage/useImageSource'
 import * as styles from './BlurredBackground.css'
 
-export const BlurredBackground = (props: { spaceSlug: string }) => {
-    const { imageSrc } = useImageSource(props.spaceSlug, ImageVariants.thumbnail300)
+export const BlurredBackground = (props: { spaceSlug: string; hidden: boolean }) => {
+    const { hidden, spaceSlug } = props
+    const { imageSrc } = useImageSource(spaceSlug, ImageVariants.thumbnail300)
     return (
         <MotionBox
+            layout
             position="absolute"
             top="none"
             left="none"
@@ -14,7 +16,7 @@ export const BlurredBackground = (props: { spaceSlug: string }) => {
             height="x20"
             pointerEvents="none"
             initial={{ filter: 'blur(50px)' }}
-            animate={{ filter: 'blur(5px)' }}
+            animate={{ filter: 'blur(5px)', opacity: hidden ? 0 : 1 }}
             key={imageSrc}
             transition={{ duration: 0.7 }}
             className={styles.blurredBackgroundStyle}

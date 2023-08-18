@@ -5,6 +5,7 @@ import * as Lib from 'use-zion-client'
 import * as Router from 'react-router'
 import { TestApp } from 'test/testUtils'
 import * as useContractAndServerSpaceDataHook from 'hooks/useContractAndServerSpaceData'
+import * as useChannelsWithMentionCountsAndUnread from 'hooks/useChannelsWithMentionCountsAndUnread'
 import { TouchHome } from './TouchHome'
 
 vi.mock('react-router', async () => {
@@ -112,11 +113,30 @@ describe('<TouchHome />', () => {
             }
         })
 
+        vi.spyOn(
+            useChannelsWithMentionCountsAndUnread,
+            'useChannelsWithMentionCountsAndUnread',
+        ).mockImplementation(() => {
+            return {
+                channelsWithMentionCountsAndUnread: [
+                    {
+                        isJoined: true,
+                        name: 'general',
+                        channelNetworkId: 'some-network',
+                        disabled: false,
+                        mentionCount: 0,
+                        unread: false,
+                        muted: false,
+                    },
+                ],
+            }
+        })
+
         render(<Wrapper />)
 
         // check the channel list is rendered
         await waitFor(() => {
-            expect(screen.getByText('group 1')).toBeInTheDocument()
+            expect(screen.getByText('general')).toBeInTheDocument()
         })
 
         expect(screen.queryByTestId('timeline-shimmer')).not.toBeInTheDocument()
