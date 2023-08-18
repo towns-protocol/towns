@@ -1,15 +1,10 @@
-import React, { useCallback, useMemo } from 'react'
-import {
-    Membership,
-    useMyMembership,
-    useSpaceData,
-    useSpaceMembers,
-    useZionContext,
-} from 'use-zion-client'
+import React, { useCallback } from 'react'
+import { Membership, useMyMembership, useSpaceData, useSpaceMembers } from 'use-zion-client'
 import { Box, Dot, Icon, IconButton, Paragraph, Stack, Text } from '@ui'
 import { useNavigateToCurrentSpaceInfo } from 'hooks/useNavigateToCurrentSpaceInfo'
 import { useInstallPWAPrompt } from 'hooks/useInstallPWAPrompt'
 import { useGetSpaceTopic } from 'hooks/useSpaceTopic'
+import { useShowHasUnreadBadgeForOtherSpaces } from 'hooks/useSpaceUnreadsIgnoreMuted'
 import { useMuteSettings } from 'api/lib/notificationSettings'
 
 type Props = {
@@ -23,17 +18,9 @@ export const TouchLayoutHeader = (props: Props) => {
     const currentSpaceId = space?.id
 
     const { navigateToCurrentSpace } = useNavigateToCurrentSpaceInfo()
-    const { spaces, spaceUnreads, spaceMentions } = useZionContext()
     const { shouldDisplayPWAPrompt, closePWAPrompt } = useInstallPWAPrompt()
 
-    const hasUnread = useMemo(() => {
-        return spaces.some((space) => {
-            if (space.id.networkId === currentSpaceId?.networkId) {
-                return false
-            }
-            return spaceUnreads[space.id.networkId] || spaceMentions[space.id.networkId]
-        }, 0)
-    }, [spaceUnreads, spaceMentions, currentSpaceId, spaces])
+    const hasUnread = useShowHasUnreadBadgeForOtherSpaces(currentSpaceId?.networkId)
 
     const { spaceIsMuted } = useMuteSettings({
         spaceId: currentSpaceId?.networkId,

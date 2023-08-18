@@ -6,6 +6,7 @@ import { IconName } from 'ui/components/Icon'
 import { useSizeContext } from 'ui/hooks/useSizeContext'
 import { SpaceIcon } from '@components/SpaceIcon'
 import { useDevice } from 'hooks/useDevice'
+import { useShowHasUnreadBadgeForSpaceId } from 'hooks/useSpaceUnreadsIgnoreMuted'
 import { NavItem } from './_NavItem'
 
 type Props = {
@@ -31,7 +32,7 @@ export const SpaceNavItem = (props: Props) => {
     const { isTouch } = useDevice()
     const notificationCounts = useSpaceNotificationCounts(id)
     const mentions = notificationCounts.mentions
-    const newMessages = notificationCounts.isUnread
+    const newMessages = useShowHasUnreadBadgeForSpaceId(id.networkId)
     const sizeContext = useSizeContext()
     // TODO: use tokens
     const isSmall = sizeContext.lessThan(180)

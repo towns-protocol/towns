@@ -47,6 +47,7 @@ export const ChannelNavItem = (props: Props) => {
     })
     const isMuted = channelIsMuted || spaceIsMuted
     const { isTouch } = useDevice()
+    const showUnread = notis.isUnread && !isMuted
 
     return (
         <>
@@ -85,14 +86,12 @@ export const ChannelNavItem = (props: Props) => {
                                 type="tag"
                                 padding="line"
                                 background="level2"
-                                color={notis.isUnread ? 'default' : 'gray2'}
+                                color={showUnread ? 'default' : 'gray2'}
                                 size="square_lg"
                             />
                             <ButtonText
-                                strong={notis.isUnread}
-                                color={
-                                    notis.isUnread ? 'default' : isHighlight ? 'default' : undefined
-                                }
+                                strong={showUnread}
+                                color={showUnread ? 'default' : isHighlight ? 'default' : undefined}
                             >
                                 {channel.label}
                             </ButtonText>

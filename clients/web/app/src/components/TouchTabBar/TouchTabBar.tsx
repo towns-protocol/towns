@@ -1,16 +1,17 @@
 import React, { useCallback, useMemo } from 'react'
-import { useMyProfile, useSpaceData, useSpaceUnread } from 'use-zion-client'
+import { useMyProfile, useSpaceData } from 'use-zion-client'
 import { matchRoutes, useLocation, useNavigate, useResolvedPath } from 'react-router'
 import { Avatar, Box, Dot, Icon, Stack, Text } from '@ui'
 import { SpaceIcon } from '@components/SpaceIcon'
 import { ImageVariants } from '@components/UploadImage/useImageSource'
 import { PATHS } from 'routes'
+import { useShowHasUnreadBadgeForSpaceId } from 'hooks/useSpaceUnreadsIgnoreMuted'
 import { useVisualKeyboardContext } from '../VisualKeyboardContext/VisualKeyboardContext'
 
 export const TouchTabBar = () => {
     const space = useSpaceData()
     const userId = useMyProfile()?.userId
-    const hasUnread = useSpaceUnread()
+    const hasUnread = useShowHasUnreadBadgeForSpaceId(space?.id.networkId)
 
     const { visualKeyboardPresent: tabBarHidden } = useVisualKeyboardContext()
 
