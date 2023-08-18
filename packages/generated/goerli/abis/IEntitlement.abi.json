@@ -1,21 +1,18 @@
 [
   {
-    "inputs": [
-      {
-        "internalType": "string",
-        "name": "channelId",
-        "type": "string"
-      },
-      {
-        "internalType": "uint256",
-        "name": "roleId",
-        "type": "uint256"
-      }
-    ],
-    "name": "addRoleIdToChannel",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
+    "inputs": [],
+    "name": "Entitlement__InvalidValue",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "Entitlement__NotAllowed",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "Entitlement__ValueAlreadyExists",
+    "type": "error"
   },
   {
     "inputs": [],
@@ -52,64 +49,9 @@
   {
     "inputs": [
       {
-        "internalType": "string",
-        "name": "channelId",
-        "type": "string"
-      }
-    ],
-    "name": "getRoleIdsByChannelId",
-    "outputs": [
-      {
-        "internalType": "uint256[]",
-        "name": "",
-        "type": "uint256[]"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
         "internalType": "address",
-        "name": "user",
+        "name": "space",
         "type": "address"
-      }
-    ],
-    "name": "getUserRoles",
-    "outputs": [
-      {
-        "components": [
-          {
-            "internalType": "uint256",
-            "name": "roleId",
-            "type": "uint256"
-          },
-          {
-            "internalType": "string",
-            "name": "name",
-            "type": "string"
-          }
-        ],
-        "internalType": "struct DataTypes.Role[]",
-        "name": "",
-        "type": "tuple[]"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "_tokenAddress",
-        "type": "address"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_tokenId",
-        "type": "uint256"
       }
     ],
     "name": "initialize",
@@ -199,24 +141,6 @@
   {
     "inputs": [
       {
-        "internalType": "string",
-        "name": "channelId",
-        "type": "string"
-      },
-      {
-        "internalType": "uint256",
-        "name": "roleId",
-        "type": "uint256"
-      }
-    ],
-    "name": "removeRoleIdFromChannel",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
         "internalType": "uint256",
         "name": "roleId",
         "type": "uint256"
@@ -235,19 +159,6 @@
         "type": "bytes32"
       }
     ],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "_space",
-        "type": "address"
-      }
-    ],
-    "name": "setSpace",
-    "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
   }

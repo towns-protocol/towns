@@ -1,6 +1,6 @@
 {
   "compiler": {
-    "version": "0.8.19+commit.7dd6d404"
+    "version": "0.8.20+commit.a1b79de6"
   },
   "language": "Solidity",
   "output": {
@@ -142,6 +142,93 @@
           }
         ],
         "name": "Initialized",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": true,
+            "internalType": "address",
+            "name": "caller",
+            "type": "address"
+          },
+          {
+            "indexed": true,
+            "internalType": "uint256",
+            "name": "roleId",
+            "type": "uint256"
+          },
+          {
+            "indexed": false,
+            "internalType": "string",
+            "name": "roleName",
+            "type": "string"
+          },
+          {
+            "indexed": false,
+            "internalType": "string",
+            "name": "networkId",
+            "type": "string"
+          }
+        ],
+        "name": "RoleCreated",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": true,
+            "internalType": "address",
+            "name": "caller",
+            "type": "address"
+          },
+          {
+            "indexed": true,
+            "internalType": "uint256",
+            "name": "roleId",
+            "type": "uint256"
+          },
+          {
+            "indexed": false,
+            "internalType": "string",
+            "name": "networkId",
+            "type": "string"
+          }
+        ],
+        "name": "RoleRemoved",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": true,
+            "internalType": "address",
+            "name": "caller",
+            "type": "address"
+          },
+          {
+            "indexed": true,
+            "internalType": "uint256",
+            "name": "roleId",
+            "type": "uint256"
+          },
+          {
+            "indexed": false,
+            "internalType": "string",
+            "name": "roleName",
+            "type": "string"
+          },
+          {
+            "indexed": false,
+            "internalType": "string",
+            "name": "networkId",
+            "type": "string"
+          }
+        ],
+        "name": "RoleUpdated",
         "type": "event"
       },
       {
@@ -314,6 +401,19 @@
       },
       {
         "inputs": [],
+        "name": "contractType",
+        "outputs": [
+          {
+            "internalType": "bytes32",
+            "name": "",
+            "type": "bytes32"
+          }
+        ],
+        "stateMutability": "pure",
+        "type": "function"
+      },
+      {
+        "inputs": [],
         "name": "contractURI",
         "outputs": [
           {
@@ -323,6 +423,19 @@
           }
         ],
         "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "contractVersion",
+        "outputs": [
+          {
+            "internalType": "uint8",
+            "name": "",
+            "type": "uint8"
+          }
+        ],
+        "stateMutability": "pure",
         "type": "function"
       },
       {
@@ -493,6 +606,47 @@
         "type": "function"
       },
       {
+        "inputs": [
+          {
+            "internalType": "string",
+            "name": "channelId",
+            "type": "string"
+          }
+        ],
+        "name": "getChannelInfo",
+        "outputs": [
+          {
+            "components": [
+              {
+                "internalType": "bytes32",
+                "name": "channelHash",
+                "type": "bytes32"
+              },
+              {
+                "internalType": "string",
+                "name": "channelId",
+                "type": "string"
+              },
+              {
+                "internalType": "string",
+                "name": "name",
+                "type": "string"
+              },
+              {
+                "internalType": "bool",
+                "name": "disabled",
+                "type": "bool"
+              }
+            ],
+            "internalType": "struct ISpace.ChannelInfo",
+            "name": "channelInfo",
+            "type": "tuple"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
         "inputs": [],
         "name": "getChannels",
         "outputs": [
@@ -648,6 +802,41 @@
             "internalType": "struct DataTypes.Role[]",
             "name": "",
             "type": "tuple[]"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "getSpaceInfo",
+        "outputs": [
+          {
+            "components": [
+              {
+                "internalType": "address",
+                "name": "spaceAddress",
+                "type": "address"
+              },
+              {
+                "internalType": "address",
+                "name": "owner",
+                "type": "address"
+              },
+              {
+                "internalType": "string",
+                "name": "spaceId",
+                "type": "string"
+              },
+              {
+                "internalType": "bool",
+                "name": "disabled",
+                "type": "bool"
+              }
+            ],
+            "internalType": "struct ISpace.SpaceInfo",
+            "name": "spaceInfo",
+            "type": "tuple"
           }
         ],
         "stateMutability": "view",
@@ -1039,6 +1228,25 @@
         "type": "function"
       },
       {
+        "inputs": [
+          {
+            "internalType": "bytes4",
+            "name": "interfaceId",
+            "type": "bytes4"
+          }
+        ],
+        "name": "supportsInterface",
+        "outputs": [
+          {
+            "internalType": "bool",
+            "name": "",
+            "type": "bool"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
         "inputs": [],
         "name": "token",
         "outputs": [
@@ -1192,6 +1400,12 @@
         "constructor": {
           "custom:oz-upgrades-unsafe-allow": "constructor"
         },
+        "contractType()": {
+          "details": "Returns the type of the contract."
+        },
+        "contractVersion()": {
+          "details": "Returns the version of the contract."
+        },
         "createChannel(string,string,uint256[])": {
           "params": {
             "channelId": "the network id of the channel linking it to the dendrite/casablanca protocol",
@@ -1218,6 +1432,14 @@
           },
           "returns": {
             "_0": "the Channel information"
+          }
+        },
+        "getChannelInfo(string)": {
+          "params": {
+            "channelId": "the channelId to fetch the information for"
+          },
+          "returns": {
+            "channelInfo": "the Channel information"
           }
         },
         "getEntitlementByModuleType(string)": {
@@ -1256,6 +1478,11 @@
           },
           "returns": {
             "_0": "the role information"
+          }
+        },
+        "getSpaceInfo()": {
+          "returns": {
+            "spaceInfo": "the Space information"
           }
         },
         "initialize(string,string,address,uint256,address[])": {
@@ -1338,6 +1565,9 @@
             "disabled": "whether to make the space disabled or not"
           }
         },
+        "supportsInterface(bytes4)": {
+          "details": "Returns true if this contract implements the interface defined by `interfaceId`. See the corresponding https://eips.ethereum.org/EIPS/eip-165#how-interfaces-are-identified[EIP section] to learn more about how these ids are created. This function call must use less than 30 000 gas."
+        },
         "updateChannel(string,string)": {
           "params": {
             "channelId": "the channelId to update",
@@ -1385,6 +1615,9 @@
         "getChannelByHash(bytes32)": {
           "notice": "fetches the Channel information by the hashed channelId"
         },
+        "getChannelInfo(string)": {
+          "notice": "fetches the Channel information by the channelId"
+        },
         "getChannels()": {
           "notice": "fetches all the channels for the space"
         },
@@ -1405,6 +1638,9 @@
         },
         "getRoles()": {
           "notice": "***** Role Management *****fetches the all the created roles for the space"
+        },
+        "getSpaceInfo()": {
+          "notice": "fetches the Space information"
         },
         "initialize(string,string,address,uint256,address[])": {
           "notice": "***** Space Management *****initializes a new Space"
@@ -1460,12 +1696,13 @@
   },
   "settings": {
     "compilationTarget": {
-      "packages/contracts/src/core/spaces/Space.sol": "Space"
+      "contracts/src/spaces/Space.sol": "Space"
     },
     "evmVersion": "paris",
     "libraries": {},
     "metadata": {
-      "bytecodeHash": "ipfs"
+      "appendCBOR": false,
+      "bytecodeHash": "none"
     },
     "optimizer": {
       "enabled": true,
@@ -1473,22 +1710,107 @@
     },
     "remappings": [
       ":@openzeppelin/=lib/openzeppelin-contracts/",
-      ":@towns/=node_modules/@towns/",
+      ":@prb/test/=lib/prb-test/src/",
       ":ERC721A/=lib/ERC721A/contracts/",
-      ":contracts/=packages/contracts/",
       ":council/=lib/council/contracts/",
       ":ds-test/=lib/ds-test/src/",
-      ":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/",
+      ":erc4626-tests/=lib/operator-filter-registry/lib/openzeppelin-contracts/lib/erc4626-tests/",
       ":forge-std/=lib/forge-std/src/",
-      ":murky/=lib/murky/src/",
       ":openzeppelin-contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/",
       ":openzeppelin-contracts/=lib/openzeppelin-contracts/",
       ":operator-filter-registry/=lib/operator-filter-registry/",
-      ":solmate/=lib/solmate/src/",
-      ":weird-erc20/=lib/solmate/lib/weird-erc20/src/"
+      ":prb-test/=lib/prb-test/src/"
     ]
   },
   "sources": {
+    "contracts/src/spaces/Space.sol": {
+      "keccak256": "0x0a8e74a4b8b8ce9f283579884f1d2ba0750d22df9d95907922c571df6791f6b1",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://c334946102db130623f3c26b085e62b59c604ec6130adeb6778c7634298c3869",
+        "dweb:/ipfs/QmZbzxDhb2ncrXdNpfcoc2RQVnEDc2oCVPDt7akVMv69jd"
+      ]
+    },
+    "contracts/src/spaces/interfaces/IEntitlement.sol": {
+      "keccak256": "0xd117eda6a43363b673a45755af9d7670fca134aa6fc4cb8f4c12e03d55e4fbf3",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://a58ad45677f42ce7ab8ebf687f59ad7dce4c0986a9904d23b6b639955aaaa900",
+        "dweb:/ipfs/QmZNosFfF6x2AM2hWwgoWL1NfM1mJTajkT6gc9wb76U4Dz"
+      ]
+    },
+    "contracts/src/spaces/interfaces/ISpace.sol": {
+      "keccak256": "0xe2bc4de0bc95702a13d258b28db02b33f5c42021be14356956fcf7e6e360801b",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://5850f8f96a04bf479a6c56c514375b9cac166ce9aa2b200d8db95921c38478d4",
+        "dweb:/ipfs/QmR6jf1P26ZtZJHDae3kzZnFukFnx9W2wTT84LkRSoT9FN"
+      ]
+    },
+    "contracts/src/spaces/libraries/DataTypes.sol": {
+      "keccak256": "0x9a6a567062168b76d863eb72f73019323b8298493fd17df28553801dbbbc3ff3",
+      "license": "Apache-20",
+      "urls": [
+        "bzz-raw://ccf7817629f02e35dc00593d05ce6318755d962c0790b20cb6da53c248fec93f",
+        "dweb:/ipfs/QmddwD9Q4FKNPeKG9jXsFAgLjJUWuiZmBQDobT3vSK7wyy"
+      ]
+    },
+    "contracts/src/spaces/libraries/Errors.sol": {
+      "keccak256": "0xb0a9a538c142afb52002a9ed67fe15f71263406b905ab854f58d0c4bbb168f79",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://f9a27883f35eee16c86c768b5084a1552058f996f72457e7ef624a20e731f4f7",
+        "dweb:/ipfs/QmWNJYmVeNmsbq8Q6DAfa5ciBzXg61ARKteprhxFsAF289"
+      ]
+    },
+    "contracts/src/spaces/libraries/Events.sol": {
+      "keccak256": "0x99aaeab8cc78d73bf26c609378a89e6b826105d8bf528c6d2a0e0c2344788f33",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://7f8fce84a1480276eabd24fd18dc606d219852a56f577130d24b93a596d081c9",
+        "dweb:/ipfs/QmVtoA5cYwvbU1eLqAbBwbH7mwmzieEpSp1k6bk1eSnqB5"
+      ]
+    },
+    "contracts/src/spaces/libraries/Permissions.sol": {
+      "keccak256": "0xa5c44d5d9ffdd2edacd86eff2a9a1f75f54d7fd907135871331b1bfeb13dae00",
+      "license": "UNLICENSED",
+      "urls": [
+        "bzz-raw://7d55d07d1f4dd34458e949b3378c57c84cacb258047c2569fabeec6ae9e1258f",
+        "dweb:/ipfs/QmRFUtyD1LWdtxvobZ1f6kF7DcaJVpPvafbzUVzv4grjtE"
+      ]
+    },
+    "contracts/src/spaces/libraries/Utils.sol": {
+      "keccak256": "0x743458b93e2d6e0f6d2e312b1ed7bad86040e2562e6bcaf0cce376175b86b1f4",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://52b505a5d3665d2b5894647f63f701ae3ebf5cec3c7f29248e004e151ad0d7ab",
+        "dweb:/ipfs/QmfVYPDdJ8GCZWS4XaRERMpdavVu5BEK3NooxLbQPCzidz"
+      ]
+    },
+    "contracts/src/utils/Metadata.sol": {
+      "keccak256": "0x4faf39f498e7ca9b62508754c32397ba1a7926bf78f9f87fb79d9b58e463ba22",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://0ce09573070d611fd78f5613ca3b258cf6905a745b053e47f4e7549b24b2f74f",
+        "dweb:/ipfs/QmcsxQjy8r38Qbg3Wyapy5tsdC8r9r72WNCfuveezaUASS"
+      ]
+    },
+    "contracts/src/utils/MultiCaller.sol": {
+      "keccak256": "0xcf45575c09499d9da9e443c37b8f210803bc4c04717f766aab39a3782111caf9",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://347f380b9b5e64b45b99310e35cfa0b80814d41218ab0abc867e81c754d8d088",
+        "dweb:/ipfs/QmeSmHWFJtofeMHow6W831HZPqhW4HALxjgQnMWKdHtBeM"
+      ]
+    },
+    "contracts/src/utils/interfaces/IMetadata.sol": {
+      "keccak256": "0x5a98b8364c872bdc15721eb5fbd699cd5043d5afa11795409fa92dc16d3a8ea1",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://8991259d62d9992ef697b6c81a4ead754e13c8fa7e2f6a16f05f50a4123dd5bb",
+        "dweb:/ipfs/QmS5smwNxGKTQKmuj5nT9JUMutnTWvFLjjdjxm8KMb9DLg"
+      ]
+    },
     "lib/openzeppelin-contracts-upgradeable/contracts/interfaces/draft-IERC1822Upgradeable.sol": {
       "keccak256": "0x77c89f893e403efc6929ba842b7ccf6534d4ffe03afe31670b4a528c0ad78c0f",
       "license": "MIT",
@@ -1567,94 +1889,6 @@
       "urls": [
         "bzz-raw://be161e54f24e5c6fae81a12db1a8ae87bc5ae1b0ddc805d82a1440a68455088f",
         "dweb:/ipfs/QmP7C3CHdY9urF4dEMb9wmsp1wMxHF6nhA2yQE5SKiPAdy"
-      ]
-    },
-    "packages/contracts/src/core/spaces/Space.sol": {
-      "keccak256": "0x253d7c00ce09b40b5e321ead1e310d243afc71b88104f4f749ce040ac93a1988",
-      "license": "Apache-2.0",
-      "urls": [
-        "bzz-raw://96e31fba06c9fa267bdda7dca3a5e5f92b615dfe5c9f84ca0c1dfccf6706c22c",
-        "dweb:/ipfs/Qmb4bXqCTq1hv2sGXVt5eYEjjVzwaq8ytpLVpsFAtdD1BQ"
-      ]
-    },
-    "packages/contracts/src/spaces/interfaces/IEntitlement.sol": {
-      "keccak256": "0xf2902303ba01ca2f9e5e0e9c947de3958f92f67a3301e54236472862a39388df",
-      "license": "Apache-2.0",
-      "urls": [
-        "bzz-raw://99a5e5bfef7a2249c272ac6fc9b5b95a7b14a194e34b2a5d92d3affb76cadbf2",
-        "dweb:/ipfs/QmSPdcBPLQ6hgX7s5zfuWkRqSErfmgrX4wyvm5pQ61w88W"
-      ]
-    },
-    "packages/contracts/src/interfaces/ISpace.sol": {
-      "keccak256": "0x4db577f41605312e618a4c70d71a071623982739236bf6fd3dccb84dfbe75935",
-      "license": "Apache-2.0",
-      "urls": [
-        "bzz-raw://035e378a17c4d6fa2b2e7ed3aa5afe7e726cbf2c787b34370aa3bef65bc0f02c",
-        "dweb:/ipfs/QmNwmqeWkpXkYVPKcpo2CSdTcWLThcnrNHRYoNHnaGY9Uc"
-      ]
-    },
-    "packages/contracts/src/libraries/DataTypes.sol": {
-      "keccak256": "0x59127dc6905dcf95782e379c0cadabaaed7514799dc85c29b9db7d3faaa26fcc",
-      "license": "Apache-20",
-      "urls": [
-        "bzz-raw://6d7c7aa13983d09bcec7aad416a5b1077c81765664386c519d3dad43a19cd5eb",
-        "dweb:/ipfs/Qmbu3S4RVybAQPNU5f7jhMxG1eFZhBypgbYVLpPhGDpNen"
-      ]
-    },
-    "packages/contracts/src/libraries/Errors.sol": {
-      "keccak256": "0x2d478c9688870f6780a19ea34d73db957f194702cbc3c4f4707f9825ba502cf1",
-      "license": "Apache-2.0",
-      "urls": [
-        "bzz-raw://2d777ea8d3fa5ce20b9cc36fc5194d7d129dc7b2ece31d060087f797628566fa",
-        "dweb:/ipfs/QmZ1KjfrYZ9A2FTUJkYs3rezxFrsUQWZySJRBL6RHQoyQF"
-      ]
-    },
-    "packages/contracts/src/libraries/Events.sol": {
-      "keccak256": "0xaab06310ec51a878125595216b6c1b72fa26096859c8297ed4d19cc91b6b4701",
-      "license": "Apache-2.0",
-      "urls": [
-        "bzz-raw://a26b81e03bae742ca30dfa0af4d8b3c2017798829f6a75ecca3550bb2cc37c46",
-        "dweb:/ipfs/QmWsUqtx3frKovXz9YQRSjxPVWUp8BzmRxY8s4u3hQbzzz"
-      ]
-    },
-    "packages/contracts/src/libraries/Permissions.sol": {
-      "keccak256": "0xf3c61d5c68e9d55d82c1d2b888881fc08211ee9c7b1ef579458f043965265399",
-      "license": "UNLICENSED",
-      "urls": [
-        "bzz-raw://4b5a2696f26adaa6f9e919ccbde2a2cfb4a17ae7c6000a9e965496b8602b5a1a",
-        "dweb:/ipfs/QmTS1uQ82B5i9C1ZJjU8jHSMU6vrRKDDhvcyrENmc9JMU1"
-      ]
-    },
-    "packages/contracts/src/libraries/Utils.sol": {
-      "keccak256": "0xf97297476d7fb903873593803aa8d4be3e300c02b83bb707e5a99e07d60786f0",
-      "license": "Apache-2.0",
-      "urls": [
-        "bzz-raw://71a549a9281a0a60e37f221d4ae0fdb6da9a8994d9c5a274b343585c88916af9",
-        "dweb:/ipfs/QmTr6J7qqkF8xiZkJSt8e812r4srdmXQetZk6jTgJbcasJ"
-      ]
-    },
-    "packages/contracts/src/misc/Metadata.sol": {
-      "keccak256": "0xc1530022c5ebb294986fc963c97e12edf7d3a83a6759e2f5942b61c09deaa775",
-      "license": "Apache-2.0",
-      "urls": [
-        "bzz-raw://ce76d3926fa45d1a8e97400dbffa9f96803a6df18b58ca9062769cdf87762c73",
-        "dweb:/ipfs/Qmcpz7ZEsZMcF4CwFooJnCjZx5nxiXdzTtkmaXdKnKVfds"
-      ]
-    },
-    "packages/contracts/src/misc/MultiCaller.sol": {
-      "keccak256": "0x3441542d90123c265e94b948a4215418c4a5f8a8e23bca3ba929671ef6bc8246",
-      "license": "Apache-2.0",
-      "urls": [
-        "bzz-raw://fab07fcf9c590926072868d314ccc453eece66a02a6fd5cba7aceed36b4ac33e",
-        "dweb:/ipfs/QmR29MwNCevmsa13kVoLDUf5LFCJw1SnY6VuB4f54TC7Ly"
-      ]
-    },
-    "packages/contracts/src/misc/interfaces/IMetadata.sol": {
-      "keccak256": "0xd16cdbf4362883382409025e41760f2382470cabada7fe0ce5fe165855debf52",
-      "license": "Apache-2.0",
-      "urls": [
-        "bzz-raw://0c3424b5243f243c7ea9d1760a99636ef8587beab81a161eae31ad65be66b702",
-        "dweb:/ipfs/QmUMsXbkA667dBhTwjmPE8VtLQCWeFWHqcrTmeAuWqw5Dn"
       ]
     }
   },

@@ -1,6 +1,6 @@
 {
   "compiler": {
-    "version": "0.8.19+commit.7dd6d404"
+    "version": "0.8.20+commit.a1b79de6"
   },
   "language": "Solidity",
   "output": {
@@ -846,12 +846,13 @@
   },
   "settings": {
     "compilationTarget": {
-      "packages/contracts/src/core/tokens/Member.sol": "Member"
+      "contracts/src/tokens/Member.sol": "Member"
     },
     "evmVersion": "paris",
     "libraries": {},
     "metadata": {
-      "bytecodeHash": "ipfs"
+      "appendCBOR": false,
+      "bytecodeHash": "none"
     },
     "optimizer": {
       "enabled": true,
@@ -859,22 +860,35 @@
     },
     "remappings": [
       ":@openzeppelin/=lib/openzeppelin-contracts/",
-      ":@towns/=node_modules/@towns/",
+      ":@prb/test/=lib/prb-test/src/",
       ":ERC721A/=lib/ERC721A/contracts/",
-      ":contracts/=packages/contracts/",
       ":council/=lib/council/contracts/",
       ":ds-test/=lib/ds-test/src/",
-      ":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/",
+      ":erc4626-tests/=lib/operator-filter-registry/lib/openzeppelin-contracts/lib/erc4626-tests/",
       ":forge-std/=lib/forge-std/src/",
-      ":murky/=lib/murky/src/",
       ":openzeppelin-contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/",
       ":openzeppelin-contracts/=lib/openzeppelin-contracts/",
       ":operator-filter-registry/=lib/operator-filter-registry/",
-      ":solmate/=lib/solmate/src/",
-      ":weird-erc20/=lib/solmate/lib/weird-erc20/src/"
+      ":prb-test/=lib/prb-test/src/"
     ]
   },
   "sources": {
+    "contracts/src/tokens/Member.sol": {
+      "keccak256": "0x2527dca5799dd7ad1695db22f22c9cc35f170c8bd8def82f40e9d3f6c844ee12",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://aed81863f971934a9b06b1e1166e2615c9d61f4d23a4c08ee3abd504347ab7e1",
+        "dweb:/ipfs/QmbxUTnQD6hFWsTxiyEoE9r4xtvY2bNrUpuEPg3iiDmdot"
+      ]
+    },
+    "contracts/src/tokens/interfaces/IMember.sol": {
+      "keccak256": "0x2537c536bab012221427ba91c86628aa03bd37c9382a474e4e982c3a183d63c2",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://73415f6a6da57bfa138032ca2fbf0ba385ba495910fb27ed186e3e9aa0a2398c",
+        "dweb:/ipfs/QmY9DaoQBivrSpigaHkRmacmMyqZNxGQ63sHCRLAaopNCX"
+      ]
+    },
     "lib/openzeppelin-contracts/contracts/access/Ownable.sol": {
       "keccak256": "0xa94b34880e3c1b0b931662cb1c09e5dfa6662f31cba80e07c5ee71cd135c9673",
       "license": "MIT",
@@ -977,22 +991,6 @@
       "urls": [
         "bzz-raw://33bbf48cc069be677705037ba7520c22b1b622c23b33e1a71495f2d36549d40b",
         "dweb:/ipfs/Qmct36zWXv3j7LZB83uwbg7TXwnZSN1fqHNDZ93GG98bGz"
-      ]
-    },
-    "packages/contracts/src/core/tokens/Member.sol": {
-      "keccak256": "0x687b18719bc7fef2c199faa58d84173330c93fa90b10c7a161a615d52f9bc5b4",
-      "license": "Apache-2.0",
-      "urls": [
-        "bzz-raw://288c2ec7d13bf522cccfb86921d0c7483c6a7bb15352fff4815e011275d8e5ee",
-        "dweb:/ipfs/QmeBqf76SWcsaS1kwtp2frVURMJCbBocjvGofuaRByrX66"
-      ]
-    },
-    "packages/contracts/src/interfaces/IMember.sol": {
-      "keccak256": "0xdb804068d751228ab794835c83722a1b375446a557e61c677f19db5509c3f5e7",
-      "license": "Apache-2.0",
-      "urls": [
-        "bzz-raw://1ad9711c5c822b4240883d167e9e1dfedeadfcf4edaab450d7d9bddac824cb4b",
-        "dweb:/ipfs/QmRYrQxesU39iBitpSVe6MRFv9nzV1vGF48A4Veyc8823D"
       ]
     }
   },

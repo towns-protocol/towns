@@ -110,6 +110,31 @@ export default [
     "anonymous": false,
     "inputs": [
       {
+        "indexed": true,
+        "internalType": "address",
+        "name": "spaceAddress",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "ownerAddress",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "networkId",
+        "type": "string"
+      }
+    ],
+    "name": "SpaceCreated",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
         "indexed": false,
         "internalType": "address",
         "name": "account",
@@ -161,6 +186,19 @@ export default [
   {
     "inputs": [],
     "name": "SPACE_TOKEN_ADDRESS",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "SPACE_UPGRADES_ADDRESS",
     "outputs": [
       {
         "internalType": "address",
@@ -621,6 +659,11 @@ export default [
       {
         "internalType": "address",
         "name": "_gateToken",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_spaceUpgrades",
         "type": "address"
       }
     ],

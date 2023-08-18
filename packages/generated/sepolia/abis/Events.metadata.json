@@ -1,6 +1,6 @@
 {
   "compiler": {
-    "version": "0.8.19+commit.7dd6d404"
+    "version": "0.8.20+commit.a1b79de6"
   },
   "language": "Solidity",
   "output": {
@@ -131,12 +131,13 @@
   },
   "settings": {
     "compilationTarget": {
-      "packages/contracts/src/libraries/Events.sol": "Events"
+      "contracts/src/spaces/libraries/Events.sol": "Events"
     },
     "evmVersion": "paris",
     "libraries": {},
     "metadata": {
-      "bytecodeHash": "ipfs"
+      "appendCBOR": false,
+      "bytecodeHash": "none"
     },
     "optimizer": {
       "enabled": true,
@@ -144,28 +145,25 @@
     },
     "remappings": [
       ":@openzeppelin/=lib/openzeppelin-contracts/",
-      ":@towns/=node_modules/@towns/",
+      ":@prb/test/=lib/prb-test/src/",
       ":ERC721A/=lib/ERC721A/contracts/",
-      ":contracts/=packages/contracts/",
       ":council/=lib/council/contracts/",
       ":ds-test/=lib/ds-test/src/",
-      ":erc4626-tests/=lib/openzeppelin-contracts/lib/erc4626-tests/",
+      ":erc4626-tests/=lib/operator-filter-registry/lib/openzeppelin-contracts/lib/erc4626-tests/",
       ":forge-std/=lib/forge-std/src/",
-      ":murky/=lib/murky/src/",
       ":openzeppelin-contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/",
       ":openzeppelin-contracts/=lib/openzeppelin-contracts/",
       ":operator-filter-registry/=lib/operator-filter-registry/",
-      ":solmate/=lib/solmate/src/",
-      ":weird-erc20/=lib/solmate/lib/weird-erc20/src/"
+      ":prb-test/=lib/prb-test/src/"
     ]
   },
   "sources": {
-    "packages/contracts/src/libraries/Events.sol": {
-      "keccak256": "0xaab06310ec51a878125595216b6c1b72fa26096859c8297ed4d19cc91b6b4701",
+    "contracts/src/spaces/libraries/Events.sol": {
+      "keccak256": "0x99aaeab8cc78d73bf26c609378a89e6b826105d8bf528c6d2a0e0c2344788f33",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://a26b81e03bae742ca30dfa0af4d8b3c2017798829f6a75ecca3550bb2cc37c46",
-        "dweb:/ipfs/QmWsUqtx3frKovXz9YQRSjxPVWUp8BzmRxY8s4u3hQbzzz"
+        "bzz-raw://7f8fce84a1480276eabd24fd18dc606d219852a56f577130d24b93a596d081c9",
+        "dweb:/ipfs/QmVtoA5cYwvbU1eLqAbBwbH7mwmzieEpSp1k6bk1eSnqB5"
       ]
     }
   },
