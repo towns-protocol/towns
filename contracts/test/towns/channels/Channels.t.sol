@@ -32,6 +32,32 @@ contract ChannelsTest is ChannelsSetup, IEntitlementBase {
     channels.createChannel(channelId, channelMetadata, new uint256[](0));
   }
 
+  function test_revert_createChannel_with_duplicate_role(
+    string memory channelMetadata,
+    string memory channelId
+  ) public {
+    vm.assume(bytes(channelMetadata).length > 2);
+    vm.assume(bytes(channelId).length > 2);
+
+    string[] memory permissions = new string[](1);
+    permissions[0] = "Write";
+
+    vm.prank(founder);
+    uint256 roleId = IRoles(diamond).createRole(
+      "Member",
+      permissions,
+      new IRoles.CreateEntitlement[](0)
+    );
+
+    uint256[] memory roleIds = new uint256[](2);
+    roleIds[0] = roleId;
+    roleIds[1] = roleId;
+
+    vm.prank(founder);
+    vm.expectRevert(ChannelService__RoleAlreadyExists.selector);
+    channels.createChannel(channelId, channelMetadata, roleIds);
+  }
+
   function test_createChannel_with_multiple_roles(
     string memory channelMetadata,
     string memory channelId

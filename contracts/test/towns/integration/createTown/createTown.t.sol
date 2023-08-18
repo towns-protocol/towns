@@ -69,7 +69,7 @@ contract Integration_CreateTown is
 
     // create permissions for entitlement
     string[] memory permissions = new string[](1);
-    permissions[0] = Permissions.Write;
+    permissions[0] = "Write";
 
     // create which entitlements have access to this role
     address[] memory users = new address[](1);
@@ -103,7 +103,7 @@ contract Integration_CreateTown is
     assertTrue(
       IEntitlements(newTown).isEntitledToTown({
         user: member,
-        permission: Permissions.Write
+        permission: "Write"
       })
     );
 
@@ -112,7 +112,7 @@ contract Integration_CreateTown is
       IEntitlements(newTown).isEntitledToChannel({
         channelId: "test2",
         user: member,
-        permission: Permissions.Write
+        permission: "Write"
       })
     );
 
@@ -122,11 +122,7 @@ contract Integration_CreateTown is
 
     // members can access the channel now
     assertTrue(
-      IEntitlements(newTown).isEntitledToChannel(
-        "test2",
-        member,
-        Permissions.Write
-      )
+      IEntitlements(newTown).isEntitledToChannel("test2", member, "Write")
     );
   }
 
@@ -155,14 +151,14 @@ contract Integration_CreateTown is
       channel: ChannelInfo({metadata: "ipfs://test", id: "test"})
     });
 
-    townInfo.memberEntitlement.role.permissions[0] = Permissions.Read;
+    townInfo.memberEntitlement.role.permissions[0] = "Read";
     townInfo.memberEntitlement.users[0] = bob;
 
     vm.prank(founder);
     address newTown = ITownArchitect(diamond).createTown(townInfo);
 
     assertTrue(
-      IEntitlements(newTown).isEntitledToTown(bob, Permissions.Read),
+      IEntitlements(newTown).isEntitledToTown(bob, "Read"),
       "Bob should be entitled to read"
     );
   }

@@ -18,7 +18,7 @@ contract Channels is IChannel, ChannelBase, Entitled, Facet {
     string memory metadata,
     uint256[] memory roleIds
   ) external {
-    _validatePermission(Permissions.CreateChannel);
+    _validatePermission(Permissions.ModifyChannels);
     _createChannel(channelId, metadata, roleIds);
   }
 
@@ -37,12 +37,12 @@ contract Channels is IChannel, ChannelBase, Entitled, Facet {
     string memory metadata,
     bool disabled
   ) external {
-    _validatePermission(Permissions.UpdateChannel);
+    _validatePermission(Permissions.ModifyChannels);
     _updateChannel(channelId, metadata, disabled);
   }
 
   function removeChannel(string memory channelId) external {
-    _validatePermission(Permissions.RemoveChannel);
+    _validatePermission(Permissions.ModifyChannels);
     _removeChannel(channelId);
   }
 
@@ -50,7 +50,7 @@ contract Channels is IChannel, ChannelBase, Entitled, Facet {
     string calldata channelId,
     uint256 roleId
   ) external {
-    _validateChannelPermission(channelId, Permissions.AddRoleToChannel);
+    _validateChannelPermission(channelId, Permissions.ModifyChannels);
     _addRoleToChannel(channelId, roleId);
   }
 
@@ -58,7 +58,7 @@ contract Channels is IChannel, ChannelBase, Entitled, Facet {
     string calldata channelId,
     uint256 roleId
   ) external {
-    _validateChannelPermission(channelId, Permissions.RemoveRoleFromChannel);
+    _validateChannelPermission(channelId, Permissions.ModifyChannels);
     _removeRoleFromChannel(channelId, roleId);
   }
 }

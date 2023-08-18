@@ -2,7 +2,8 @@
 pragma solidity ^0.8.19;
 
 // interfaces
-import {IEntitlement, IEntitlementBase} from "contracts/src/towns/entitlements/IEntitlement.sol";
+import {IEntitlement} from "contracts/src/towns/entitlements/IEntitlement.sol";
+import {IEntitlementBase} from "contracts/src/towns/entitlements/IEntitlement.sol";
 
 // libraries
 import {EnumerableSet} from "openzeppelin-contracts/contracts/utils/structs/EnumerableSet.sol";

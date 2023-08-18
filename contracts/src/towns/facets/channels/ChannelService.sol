@@ -41,6 +41,9 @@ library ChannelService {
     });
 
     for (uint256 i = 0; i < roleIds.length; i++) {
+      // check if role already exists in channel
+      if (channel.rolesByChannelId[channelId].contains(roleIds[i]))
+        revert ChannelService__RoleAlreadyExists();
       channel.rolesByChannelId[channelId].add(roleIds[i]);
     }
   }

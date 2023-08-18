@@ -17,7 +17,7 @@ contract Roles is IRoles, RolesBase, Entitled {
     string[] memory permissions,
     CreateEntitlement[] memory entitlements
   ) external override returns (uint256) {
-    _validatePermission(Permissions.CreateRole);
+    _validatePermission(Permissions.ModifyRoles);
     return _createRole(roleName, permissions, entitlements);
   }
 
@@ -37,12 +37,12 @@ contract Roles is IRoles, RolesBase, Entitled {
     string[] memory permissions,
     CreateEntitlement[] memory entitlements
   ) external override {
-    _validatePermission(Permissions.UpdateRole);
+    _validatePermission(Permissions.ModifyRoles);
     _updateRole(roleId, roleName, permissions, entitlements);
   }
 
   function removeRole(uint256 roleId) external override {
-    _validatePermission(Permissions.RemoveRole);
+    _validatePermission(Permissions.ModifyRoles);
     _removeRole(roleId);
   }
 
@@ -52,6 +52,7 @@ contract Roles is IRoles, RolesBase, Entitled {
     uint256 roleId,
     string[] memory permissions
   ) external override {
+    _validatePermission(Permissions.ModifyRoles);
     _addPermissionsToRole(roleId, permissions);
   }
 
@@ -59,7 +60,7 @@ contract Roles is IRoles, RolesBase, Entitled {
     uint256 roleId,
     string[] memory permissions
   ) external override {
-    _validatePermission(Permissions.RemovePermissionsFromRole);
+    _validatePermission(Permissions.ModifyRoles);
     _removePermissionsFromRole(roleId, permissions);
   }
 
@@ -74,7 +75,7 @@ contract Roles is IRoles, RolesBase, Entitled {
     uint256 roleId,
     CreateEntitlement memory entitlement
   ) external {
-    _validatePermission(Permissions.AddRoleToEntitlement);
+    _validatePermission(Permissions.ModifyRoles);
     _addRoleToEntitlement(roleId, entitlement);
   }
 
@@ -82,7 +83,7 @@ contract Roles is IRoles, RolesBase, Entitled {
     uint256 roleId,
     CreateEntitlement memory entitlement
   ) external {
-    _validatePermission(Permissions.RemoveRoleFromEntitlement);
+    _validatePermission(Permissions.ModifyRoles);
     _removeRoleFromEntitlement(roleId, entitlement);
   }
 }
