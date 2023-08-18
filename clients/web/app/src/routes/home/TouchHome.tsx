@@ -10,7 +10,7 @@ import { ErrorBoundary } from '@sentry/react'
 import { AnimatePresence } from 'framer-motion'
 import { Outlet } from 'react-router'
 import fuzzysort from 'fuzzysort'
-
+import { atoms } from 'ui/styles/atoms.css'
 import { TouchLayoutHeader } from '@components/TouchLayoutHeader/TouchLayoutHeader'
 import {
     Avatar,
@@ -172,7 +172,7 @@ export const TouchHome = () => {
                                     onScroll={onScroll}
                                 >
                                     {!isLoadingChannels ? (
-                                        <>
+                                        <Box minHeight="forceScroll">
                                             {space && unreadChannels.length > 0 && (
                                                 <>
                                                     <SectionHeader title="Unread" />
@@ -212,7 +212,7 @@ export const TouchHome = () => {
                                                 filteredMembers.length === 0 && (
                                                     <NoResults searchString={searchString} />
                                                 )}
-                                        </>
+                                        </Box>
                                     ) : (
                                         <Box absoluteFill centerContent>
                                             <ButtonSpinner />
@@ -300,7 +300,7 @@ const ChannelRow = (props: {
                 width="100%"
                 gap="sm"
                 overflowX="hidden"
-                fontWeight={unread ? 'strong' : 'normal'}
+                fontWeight={unread ? 'medium' : 'normal'}
             >
                 <Icon
                     type="tag"
@@ -325,7 +325,7 @@ const UserList = (props: { members: RoomMember[] }) => {
     const { members } = props
 
     return (
-        <Stack minHeight="forceScroll">
+        <Stack>
             {members.map((m) => (
                 <UserRow key={m.userId} member={m} />
             ))}
@@ -351,7 +351,7 @@ const UserRow = (props: { member: RoomMember }) => {
             >
                 <Avatar size="avatar_x4" userId={member.userId} />
                 <Stack gap="sm">
-                    <Text fontWeight="strong" size="sm" color="default">
+                    <Text fontWeight="medium" size="sm" color="default">
                         {getPrettyDisplayName(member).initialName}
                     </Text>
                     {accountAddress && (
@@ -382,7 +382,11 @@ const NoResults = (props: { searchString: string }) => {
         <Box centerContent position="relative" paddingTop="x8">
             <Heading level={3}>No results</Heading>
             <Paragraph textAlign="center" color="gray2">
-                No results for &quot;<strong>{searchString}</strong>&quot;
+                No results for &quot;
+                <span className={atoms({ fontWeight: 'medium', color: 'default' })}>
+                    {searchString}
+                </span>
+                &quot;
             </Paragraph>
         </Box>
     )
