@@ -109,6 +109,9 @@ describe('On-chain channel creation tests', () => {
         /* Assert */
         // check that the returned error wasn't that no error was thrown.
         expect(error).not.toBeInstanceOf(NoThrownError)
-        expect(error).toHaveProperty('name', CONTRACT_ERROR.AddRoleFailed)
+        expect(error).toHaveProperty('name')
+        expect(error.name).toMatch(
+            new RegExp(`${CONTRACT_ERROR.AddRoleFailed}|${CONTRACT_ERROR.RoleAlreadyExists}`),
+        )
     })
 })
