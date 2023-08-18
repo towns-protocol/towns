@@ -26,11 +26,13 @@ export const EmojiPickerContainerMobile = (props: {
             bottom="none"
             left="none"
             right="none"
+            paddingTop="safeAreaInsetTop"
             zIndex="tooltips"
         >
             <Box absoluteFill background="level1" opacity="0.5" onClick={props.onCancel} />
-            <Box className={emojiPickerClassName} paddingTop="lg">
+            <Box className={emojiPickerClassName} paddingTop="sm">
                 <Picker
+                    autoFocus
                     data={data}
                     previewPosition="none"
                     theme="dark"
