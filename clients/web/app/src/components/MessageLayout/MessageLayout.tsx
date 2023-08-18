@@ -57,6 +57,7 @@ export const MessageLayout = (props: Props) => {
         eventId,
         avatarSize = 'avatar_md',
         name,
+        messageBody,
         messageSourceAnnotation,
         channelId,
         spaceId,
@@ -295,7 +296,7 @@ export const MessageLayout = (props: Props) => {
                         spaceId={spaceId}
                         eventId={eventId}
                         canEdit={isEditable}
-                        messageBody={props.messageBody}
+                        messageBody={messageBody}
                         onClose={() => setIsModalSheetVisible(false)}
                     />
                 )}
