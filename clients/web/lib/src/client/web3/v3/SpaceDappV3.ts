@@ -222,7 +222,9 @@ export class SpaceDappV3 implements ISpaceDapp {
         if (!this.townRegistrar.TownArchitect) {
             throw new Error('TownArchitect is not deployed properly.')
         }
-        return this.townRegistrar.TownArchitect.parseError(error)
+        const decodedErr = this.townRegistrar.TownArchitect.parseError(error)
+        console.error(decodedErr)
+        return decodedErr
     }
 
     public async parseSpaceError(spaceId: string, error: unknown): Promise<Error> {
@@ -230,7 +232,9 @@ export class SpaceDappV3 implements ISpaceDapp {
         if (!town) {
             throw new Error(`Town with spaceId "${spaceId}" is not found.`)
         }
-        return town.parseError(error)
+        const decodedErr = town.parseError(error)
+        console.error(decodedErr)
+        return decodedErr
     }
 
     public async updateChannel(

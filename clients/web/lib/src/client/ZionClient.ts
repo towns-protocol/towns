@@ -431,7 +431,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
         context: TransactionContext<RoomIdentifier> | undefined,
     ): Promise<TransactionContext<RoomIdentifier>> {
         if (!context?.transaction) {
-            console.error('[waitForCreateRoleTransaction] transaction is undefined')
+            console.error('[waitForCreateSpaceTransaction] transaction is undefined')
             return createTransactionContext({
                 status: TransactionStatus.Failed,
                 error: new Error('transaction is undefined'),
@@ -447,7 +447,6 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
             roomId = context.data
             receipt = await context.transaction.wait()
         } catch (err) {
-            console.error('[waitForCreateSpaceTransaction] error', err)
             error = await this.onErrorLeaveSpaceRoomAndDecodeError(roomId, err)
         }
 
@@ -1127,7 +1126,6 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
             )
             console.log(`[createRoleTransaction] transaction created` /*, transaction*/)
         } catch (err) {
-            console.error('[createRoleTransaction] error', err)
             error = await this.spaceDapp.parseSpaceError(spaceNetworkId, err)
         }
 
@@ -1223,7 +1221,6 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
             )
             console.log(`[addRoleToChannelTransaction] transaction created` /*, transaction*/)
         } catch (err) {
-            console.error('[addRoleToChannelTransaction] error', err)
             error = await this.spaceDapp.parseSpaceError(spaceNetworkId, err)
         }
 
@@ -1264,7 +1261,6 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
             )
             console.log(`[updateRoleTransaction] transaction created` /*, transaction*/)
         } catch (err) {
-            console.error('[updateRoleTransaction] error', err)
             error = await this.spaceDapp.parseSpaceError(spaceNetworkId, err)
         }
 
@@ -1384,7 +1380,6 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
             transaction = await this.spaceDapp.deleteRole(spaceNetworkId, roleId, signer)
             console.log(`[deleteRoleTransaction] transaction created` /*, transaction*/)
         } catch (err) {
-            console.error('[deleteRoleTransaction] error', err)
             error = await this.spaceDapp.parseSpaceError(spaceNetworkId, err)
         }
 
