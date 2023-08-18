@@ -21,12 +21,7 @@ import {
 } from '@river/proto'
 import TypedEmitter from 'typed-emitter'
 import { check, checkNever, isDefined, throwWithCode } from './check'
-import {
-    ParsedEvent,
-    getToDeviceWirePayloadContent,
-    make_ChannelPayload_Message,
-    make_UserPayload_ToDevice,
-} from './types'
+import { ParsedEvent } from './types'
 import { userIdFromAddress } from './id'
 import { RiverEvent } from './event'
 import isEqual from 'lodash/isEqual'
@@ -160,9 +155,7 @@ export class StreamStateView {
                                         channel_id: this.streamId,
                                         space_id: this.parentSpaceId,
                                         payload: {
-                                            parsed_event: make_ChannelPayload_Message(
-                                                payload.value.content.value,
-                                            ),
+                                            parsed_event: payload,
                                             creator_user_id: userIdFromAddress(
                                                 event.event.creatorAddress,
                                             ),
@@ -224,22 +217,12 @@ export class StreamStateView {
                             break
                         case 'toDevice':
                             {
-                                const payload_todevice = payload.value.content.value
-                                // get ciphertext payload object
-                                const content = getToDeviceWirePayloadContent(payload_todevice)
-
-                                const toDevicePayload = make_UserPayload_ToDevice({
-                                    deviceKey: payload_todevice.deviceKey,
-                                    senderKey: payload_todevice.senderKey,
-                                    op: payload_todevice.op,
-                                    message: content,
-                                })
                                 // todo jterzis: really we should be passing emitter to RiverEvent
                                 // here but it causes a bug in the tests.
                                 const riverEvent = new RiverEvent(
                                     {
                                         payload: {
-                                            parsed_event: toDevicePayload,
+                                            parsed_event: payload,
                                             creator_user_id: userIdFromAddress(
                                                 event.event.creatorAddress,
                                             ),

@@ -29,7 +29,6 @@ import { keccak256 } from 'ethereum-cryptography/keccak'
 import { isDefined } from './check'
 import { ISignatures } from './crypto/deviceInfo'
 import { bin_toHexString } from './binary'
-import { IMessage, IOlmEncryptedContent, OLM_ALGORITHM } from './crypto/olmLib'
 
 export interface ParsedEvent {
     event: StreamEvent
@@ -439,21 +438,6 @@ export const getMessagePayload = (
         }
     }
     return undefined
-}
-
-export const getToDeviceWirePayloadContent = (
-    payload: UserPayload_ToDevice,
-): IOlmEncryptedContent => {
-    let cipher: Record<string, IMessage> = {}
-    if (payload.message !== undefined) {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-        cipher = payload?.message.ciphertext
-    }
-    return {
-        ciphertext: cipher,
-        sender_key: payload.senderKey,
-        algorithm: OLM_ALGORITHM,
-    }
 }
 
 export const getMessagePayloadContent = (

@@ -62,7 +62,6 @@ import {
     make_UserPayload_ToDevice,
     IDeviceKeySignatures,
     make_SpacePayload_Channel,
-    getToDeviceWirePayloadContent,
     make_UserSettingsPayload_FullyReadMarkers,
     make_UserSettingsPayload_Inception,
 } from './types'
@@ -1278,35 +1277,6 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         // TODO: register event handlers once crypto module is successfully initiatilized
         this.logCall('initCrypto:: uploading device keys...')
         return this.cryptoBackend.uploadDeviceKeys()
-    }
-
-    /**
-     * Creates an Event from a toDevice payload and attempts to decrypt it.
-     */
-    public async createDecryptToDeviceEvent(
-        payload: UserPayload_ToDevice,
-        senderUserId: string,
-    ): Promise<RiverEvent> {
-        const content = getToDeviceWirePayloadContent(payload)
-        const toDevicePayload = make_UserPayload_ToDevice({
-            deviceKey: payload.deviceKey,
-            senderKey: payload.senderKey,
-            op: payload.op,
-            message: content,
-        })
-
-        const event = new RiverEvent({
-            payload: {
-                parsed_event: toDevicePayload,
-                creator_user_id: senderUserId,
-            },
-        })
-        try {
-            await this.decryptEventIfNeeded(event)
-        } catch (e) {
-            this.logCall('error decrypting to-device event', e)
-        }
-        return event
     }
 
     /**

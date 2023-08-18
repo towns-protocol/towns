@@ -177,6 +177,7 @@ interface StreamEventPayload {
     // parsed_event is a plain message of proto payload defined in protocol.proto or payloads.proto
     // depending on whether RiverEvent is instantiated with encrypted (server-side) or decrypted (client-side) data.
     parsed_event:
+        | StreamEvent['payload']
         | PlainMessage<StreamEvent>['payload']
         | PlainMessage<ChannelMessage>['payload']
         | PlainMessage<ToDeviceMessage>['payload']
