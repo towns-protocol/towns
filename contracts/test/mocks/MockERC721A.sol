@@ -9,10 +9,6 @@ pragma solidity ^0.8.20;
 import {ERC721A} from "contracts/src/diamond/facets/token/ERC721A/ERC721A.sol";
 
 contract MockERC721A is ERC721A {
-  function init() external onlyInitializing {
-    __ERC721A_init("MockERC721A", "MERC721A");
-  }
-
   function mintTo(address to) external returns (uint256 tokenId) {
     tokenId = _nextTokenId();
     _mint(to, 1);

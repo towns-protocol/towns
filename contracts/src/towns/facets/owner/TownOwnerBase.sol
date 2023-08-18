@@ -10,17 +10,22 @@ import {TownOwnerStorage} from "./TownOwnerStorage.sol";
 // contracts
 
 abstract contract TownOwnerBase is ITownOwnerBase {
-  function _setFactory(address factory) internal {
-    TownOwnerStorage.Layout storage ds = TownOwnerStorage.layout();
-    ds.factory = factory;
-  }
-
   modifier onlyFactory() {
     TownOwnerStorage.Layout storage ds = TownOwnerStorage.layout();
     if (msg.sender != ds.factory) {
       revert TownOwner__OnlyFactoryAllowed();
     }
     _;
+  }
+
+  function _setFactory(address factory) internal {
+    TownOwnerStorage.Layout storage ds = TownOwnerStorage.layout();
+    ds.factory = factory;
+  }
+
+  function _getFactory() internal view returns (address) {
+    TownOwnerStorage.Layout storage ds = TownOwnerStorage.layout();
+    return ds.factory;
   }
 
   function _createTown(

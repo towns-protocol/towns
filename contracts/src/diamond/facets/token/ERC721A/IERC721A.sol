@@ -2,9 +2,40 @@
 pragma solidity ^0.8.20;
 
 /**
- * @dev Interface of ERC721A.
+ * @dev Interface of ERC721 token receiver.
  */
-interface IERC721A {
+interface ERC721A__IERC721ReceiverUpgradeable {
+  function onERC721Received(
+    address operator,
+    address from,
+    uint256 tokenId,
+    bytes calldata data
+  ) external returns (bytes4);
+}
+
+interface IERC721ABase {
+  // =============================================================
+  //                            STRUCTS
+  // =============================================================
+  struct TokenApprovalRef {
+    address value;
+  }
+
+  struct TokenOwnership {
+    // The address of the owner.
+    address addr;
+    // Stores the start time of ownership with minimal overhead for tokenomics.
+    uint64 startTimestamp;
+    // Whether the token has been burned.
+    bool burned;
+    // Arbitrary data similar to `startTimestamp` that can be set via {_extraData}.
+    uint24 extraData;
+  }
+
+  // =============================================================
+  //                           ERRORS
+  // =============================================================
+
   /**
    * The caller must own the token or be an approved operator.
    */
@@ -72,32 +103,6 @@ interface IERC721A {
   error OwnershipNotInitializedForExtraData();
 
   // =============================================================
-  //                            STRUCTS
-  // =============================================================
-
-  struct TokenOwnership {
-    // The address of the owner.
-    address addr;
-    // Stores the start time of ownership with minimal overhead for tokenomics.
-    uint64 startTimestamp;
-    // Whether the token has been burned.
-    bool burned;
-    // Arbitrary data similar to `startTimestamp` that can be set via {_extraData}.
-    uint24 extraData;
-  }
-
-  // =============================================================
-  //                         TOKEN COUNTERS
-  // =============================================================
-
-  /**
-   * @dev Returns the total number of tokens in existence.
-   * Burned tokens will reduce the count.
-   * To get the total number of tokens minted, please see {_totalMinted}.
-   */
-  function totalSupply() external view returns (uint256);
-
-  // =============================================================
   //                            IERC721
   // =============================================================
 
@@ -128,6 +133,40 @@ interface IERC721A {
     address indexed operator,
     bool approved
   );
+
+  // =============================================================
+  //                           IERC2309
+  // =============================================================
+
+  /**
+   * @dev Emitted when tokens in `fromTokenId` to `toTokenId`
+   * (inclusive) is transferred from `from` to `to`, as defined in the
+   * [ERC2309](https://eips.ethereum.org/EIPS/eip-2309) standard.
+   *
+   * See {_mintERC2309} for more details.
+   */
+  event ConsecutiveTransfer(
+    uint256 indexed fromTokenId,
+    uint256 toTokenId,
+    address indexed from,
+    address indexed to
+  );
+}
+
+/**
+ * @dev Interface of ERC721A.
+ */
+interface IERC721A is IERC721ABase {
+  // =============================================================
+  //                         TOKEN COUNTERS
+  // =============================================================
+
+  /**
+   * @dev Returns the total number of tokens in existence.
+   * Burned tokens will reduce the count.
+   * To get the total number of tokens minted, please see {_totalMinted}.
+   */
+  function totalSupply() external view returns (uint256);
 
   /**
    * @dev Returns the number of tokens in `owner`'s account.
@@ -266,22 +305,4 @@ interface IERC721A {
    * @dev Returns the Uniform Resource Identifier (URI) for `tokenId` token.
    */
   function tokenURI(uint256 tokenId) external view returns (string memory);
-
-  // =============================================================
-  //                           IERC2309
-  // =============================================================
-
-  /**
-   * @dev Emitted when tokens in `fromTokenId` to `toTokenId`
-   * (inclusive) is transferred from `from` to `to`, as defined in the
-   * [ERC2309](https://eips.ethereum.org/EIPS/eip-2309) standard.
-   *
-   * See {_mintERC2309} for more details.
-   */
-  event ConsecutiveTransfer(
-    uint256 indexed fromTokenId,
-    uint256 toTokenId,
-    address indexed from,
-    address indexed to
-  );
 }

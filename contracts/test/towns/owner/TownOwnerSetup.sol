@@ -3,17 +3,18 @@ pragma solidity ^0.8.19;
 
 // interfaces
 import {IDiamond, Diamond} from "contracts/src/diamond/Diamond.sol";
-import {IERC721A} from "contracts/src/diamond/facets/token/ERC721A/IERC721A.sol";
 
 // libraries
 
 // helpers
-import {FacetHelper, FacetTest} from "contracts/test/diamond/Facet.t.sol";
+import {FacetTest} from "contracts/test/diamond/Facet.t.sol";
 import {TownOwner} from "contracts/src/towns/facets/owner/TownOwner.sol";
 import {OwnableHelper} from "contracts/test/diamond/ownable/OwnableSetup.sol";
+import {ERC721AHelper} from "contracts/test/diamond/erc721a/ERC721ASetup.sol";
+
 import {MultiInit} from "contracts/src/diamond/initializers/MultiInit.sol";
 
-abstract contract TownOwnerSetup is FacetTest {
+contract TownOwnerSetup is FacetTest {
   TownOwner internal townOwner;
 
   function setUp() public override {
@@ -52,11 +53,7 @@ contract TownOwnerImplementation {
 
     bytes[] memory payloads = new bytes[](2);
     payloads[0] = ownableHelper.makeInitData(abi.encode(deployer));
-    payloads[1] = abi.encodeWithSelector(
-      townOwnerHelper.initializer(),
-      "TownOwner",
-      "OWNER"
-    );
+    payloads[1] = townOwnerHelper.makeInitData("TownOwner", "OWNER");
 
     return
       Diamond.InitParams({
@@ -71,7 +68,7 @@ contract TownOwnerImplementation {
   }
 }
 
-contract TownOwnerHelper is FacetHelper {
+contract TownOwnerHelper is ERC721AHelper {
   TownOwner internal townOwner;
 
   constructor() {
@@ -82,38 +79,25 @@ contract TownOwnerHelper is FacetHelper {
     return address(townOwner);
   }
 
-  function selectors() public pure override returns (bytes4[] memory) {
-    bytes4[] memory selectors_ = new bytes4[](17);
+  function selectors() public view override returns (bytes4[] memory) {
+    bytes4[] memory currentSelectors_ = super.selectors();
+    bytes4[] memory selectors_ = new bytes4[](currentSelectors_.length + 5);
     uint256 index;
 
-    // ERC721A
-    selectors_[index++] = IERC721A.totalSupply.selector;
-    selectors_[index++] = IERC721A.balanceOf.selector;
-    selectors_[index++] = IERC721A.ownerOf.selector;
-    selectors_[index++] = IERC721A.transferFrom.selector;
-    selectors_[index++] = IERC721A.approve.selector;
-    selectors_[index++] = IERC721A.getApproved.selector;
-    selectors_[index++] = IERC721A.setApprovalForAll.selector;
-    selectors_[index++] = IERC721A.isApprovedForAll.selector;
-    selectors_[index++] = IERC721A.name.selector;
-    selectors_[index++] = IERC721A.symbol.selector;
-    selectors_[index++] = IERC721A.tokenURI.selector;
-    selectors_[index++] = bytes4(
-      keccak256("safeTransferFrom(address,address,uint256)")
-    );
-    selectors_[index++] = bytes4(
-      keccak256("safeTransferFrom(address,address,uint256,bytes)")
-    );
+    for (uint256 i = 0; i < currentSelectors_.length; i++) {
+      selectors_[index++] = currentSelectors_[i];
+    }
 
     // TownOwner
     selectors_[index++] = TownOwner.setFactory.selector;
+    selectors_[index++] = TownOwner.getFactory.selector;
     selectors_[index++] = TownOwner.mintTown.selector;
     selectors_[index++] = TownOwner.getTownInfo.selector;
     selectors_[index++] = TownOwner.nextTokenId.selector;
     return selectors_;
   }
 
-  function initializer() public pure override returns (bytes4) {
-    return TownOwner.__TownOwner__init.selector;
+  function creationCode() public pure virtual returns (bytes memory) {
+    return type(TownOwner).creationCode;
   }
 }

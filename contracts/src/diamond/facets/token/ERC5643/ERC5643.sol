@@ -15,7 +15,7 @@ contract ERC5643 is IERC5643, ERC5643Base, ERC721A {
     string memory name_,
     string memory symbol_
   ) internal onlyInitializing {
-    __ERC721A_init(name_, symbol_);
+    __ERC721A_init_unchained(name_, symbol_);
     _addInterface(type(IERC5643).interfaceId);
   }
 

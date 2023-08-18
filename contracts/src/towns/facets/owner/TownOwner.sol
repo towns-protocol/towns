@@ -12,15 +12,12 @@ import {TownOwnerBase} from "./TownOwnerBase.sol";
 import {OwnableBase} from "contracts/src/diamond/facets/ownable/OwnableBase.sol";
 
 contract TownOwner is ITownOwner, TownOwnerBase, OwnableBase, ERC721A {
-  function __TownOwner__init(
-    string memory name,
-    string memory symbol
-  ) external onlyInitializing {
-    __ERC721A_init(name, symbol);
-  }
-
   function setFactory(address factory) external onlyOwner {
     _setFactory(factory);
+  }
+
+  function getFactory() external view returns (address) {
+    return _getFactory();
   }
 
   function nextTokenId() external view returns (uint256) {

@@ -24,4 +24,13 @@ contract TownOwnerTest is TownOwnerSetup {
 
     assertEq(townOwner.ownerOf(tokenId), owner);
   }
+
+  function test_setFactory() external {
+    address factory = _randomAddress();
+
+    vm.prank(deployer);
+    townOwner.setFactory(factory);
+
+    assertEq(townOwner.getFactory(), factory);
+  }
 }

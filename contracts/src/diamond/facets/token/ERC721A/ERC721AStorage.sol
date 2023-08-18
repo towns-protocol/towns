@@ -1,13 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
+import {IERC721ABase} from "./IERC721A.sol";
+
 library ERC721AStorage {
   bytes32 internal constant STORAGE_SLOT =
     keccak256("towns.contracts.storage.ERC721A");
-
-  struct TokenApprovalRef {
-    address value;
-  }
 
   struct Layout {
     // =============================================================
@@ -42,7 +40,7 @@ library ERC721AStorage {
     // - [192..255] `aux`
     mapping(address => uint256) _packedAddressData;
     // Mapping from token ID to approved address.
-    mapping(uint256 => TokenApprovalRef) _tokenApprovals;
+    mapping(uint256 => IERC721ABase.TokenApprovalRef) _tokenApprovals;
     // Mapping from owner to operator approvals
     mapping(address => mapping(address => bool)) _operatorApprovals;
   }
