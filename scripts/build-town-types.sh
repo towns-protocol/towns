@@ -28,7 +28,7 @@ mkdir -p $DENDRITE_TOWNS_ARCHITECT_DIR
 mkdir -p $DENDRITE_TOWNS_CHANNELS_DIR
 mkdir -p $DENDRITE_TOWNS_ENTITLEMENTS_DIR
 mkdir -p $DENDRITE_TOWNS_PAUSABLE_DIR
-mkrit -p $DENDRITE_TOWNS_DELEGATION_DIR
+mkdir -p $DENDRITE_TOWNS_DELEGATION_DIR
 
 # Town Architect typings for Dendrite
 go run github.com/ethereum/go-ethereum/cmd/abigen@v1.10.25 --abi contracts/out/TownArchitect.sol/TownArchitect.abi.json --pkg "${CHAIN}_towns_architect" --type "${CHAIN}_towns_architect" --out "${DENDRITE_TOWNS_ARCHITECT_DIR}/${CHAIN}_towns_architect.go"
