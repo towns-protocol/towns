@@ -13,15 +13,31 @@ COPY . /build
 RUN mkdir -p bin
 RUN go build -trimpath -o bin/ ./node/
 
+ARG INSTANCE="docker-docker-single"
+
+# TODO: This is not production ready.
+# This line generates keys for the node.
+# We will revisit this in the future before
+# our beta release.
+
+# TODO: we should also simplify this config script so
+# that we don't have to pass "Null" to values we don't need.
+RUN ./config_instance.sh docker-single \
+    RPC_PORT 5157 \
+    DB_PORT null \
+    USE_CONTRACT true \
+    METRICS_ENABLED false \
+    METRICS_PORT null
+
 FROM alpine:latest
 
-LABEL org.opencontainers.image.title="Towns Protocol (Node)"
-LABEL org.opencontainers.image.description="Towns Protocol Node reference implementation, written in Go"
+LABEL org.opencontainers.image.title="River Node"
+LABEL org.opencontainers.image.description="River Node reference implementation, written in Go"
 LABEL org.opencontainers.image.source="https://github.com/HereNotThere/harmony"
 LABEL org.opencontainers.image.licenses="Apache-2.0"
 
 COPY --from=base /build/bin/* /usr/bin/
-COPY --from=base /build/config/config.yaml /usr/etc/config.yaml
+COPY --from=base /build/run_files/docker-single /usr/config/run_files/docker-single
 
 # ENV VARS FOR REFERENCE
 #
@@ -36,8 +52,5 @@ COPY --from=base /build/config/config.yaml /usr/etc/config.yaml
 ARG RELEASE_VERSION="Unreleased"
 ENV RELEASE_VERSION=${RELEASE_VERSION}
 
-ENTRYPOINT /usr/bin/node run \
-    --config /usr/etc/config.yaml \
-    --log_level info \
-    --log_file /var/log/casablanca.log \
-    --events_file /var/log/casablanca_events.log 
+WORKDIR /usr/config/run_files/docker-single
+ENTRYPOINT /usr/bin/node run

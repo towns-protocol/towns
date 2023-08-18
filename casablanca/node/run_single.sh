@@ -34,4 +34,4 @@ done
 
 cd ./run_files/$INSTANCE
 echo "Running instance '$INSTANCE' with extra aguments: '${args[@]:-}'"
-go run --race ../../node/main.go run --config config/config.yaml "${args[@]:-}"
+go run --race ../../node/main.go run "${args[@]:-}"
