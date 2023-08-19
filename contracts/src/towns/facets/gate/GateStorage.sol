@@ -22,10 +22,10 @@ library GateStorage {
     mapping(address => Gating) allowedTokens;
   }
 
-  function gateStorage() internal pure returns (Layout storage layout) {
-    bytes32 position = STORAGE_SLOT;
+  function layout() internal pure returns (Layout storage ds) {
+    bytes32 slot = STORAGE_SLOT;
     assembly {
-      layout.slot := position
+      ds.slot := slot
     }
   }
 }

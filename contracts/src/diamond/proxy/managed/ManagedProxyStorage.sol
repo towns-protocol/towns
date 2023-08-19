@@ -9,7 +9,7 @@ pragma solidity ^0.8.20;
 
 library ManagedProxyStorage {
   bytes32 internal constant STORAGE_SLOT =
-    keccak256("towns.contracts.diamond.proxy.managed.storage");
+    keccak256("towns.diamond.proxy.managed.ManagedProxyStorage");
 
   struct Layout {
     address manager;

@@ -35,9 +35,6 @@ contract Diamond is
     );
   }
 
-  // solhint-disable-next-line no-empty-blocks
-  receive() external payable {}
-
   // =============================================================
   //                           Internal
   // =============================================================

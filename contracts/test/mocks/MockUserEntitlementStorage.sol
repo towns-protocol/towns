@@ -25,9 +25,9 @@ library MockUserEntitlementStorage {
   }
 
   function layout() internal pure returns (Layout storage ds) {
-    bytes32 position = STORAGE_SLOT;
+    bytes32 slot = STORAGE_SLOT;
     assembly {
-      ds.slot := position
+      ds.slot := slot
     }
   }
 }

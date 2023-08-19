@@ -25,11 +25,11 @@ contract TokenPausableFacet is
     return _paused();
   }
 
-  function pause() external onlyOwner {
+  function pause() external onlyOwner whenNotPaused {
     _pause();
   }
 
-  function unpause() external onlyOwner {
+  function unpause() external onlyOwner whenPaused {
     _unpause();
   }
 }

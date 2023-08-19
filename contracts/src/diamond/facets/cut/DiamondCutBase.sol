@@ -2,7 +2,7 @@
 pragma solidity 0.8.20;
 
 // interfaces
-import {IDiamondCutBase, IDiamondCut} from "contracts/src/diamond/facets/cut/IDiamondCut.sol";
+import {IDiamondCutBase} from "contracts/src/diamond/facets/cut/IDiamondCut.sol";
 import {IDiamond} from "contracts/src/diamond/IDiamond.sol";
 
 // libraries
@@ -155,10 +155,6 @@ abstract contract DiamondCutBase is IDiamondCutBase {
   /// @notice Validate a facet cut
   /// @param facetCut The facet cut to validate
   function _validateFacetCut(IDiamond.FacetCut memory facetCut) internal view {
-    if (uint256(facetCut.action) > 2) {
-      revert DiamondCut_InvalidFacetCutAction();
-    }
-
     if (facetCut.facetAddress == address(0)) {
       revert DiamondCut_InvalidFacet(facetCut.facetAddress);
     }
@@ -189,6 +185,10 @@ abstract contract DiamondCutBase is IDiamondCutBase {
       revert DiamondCut_InvalidContract(init);
     }
 
-    Address.functionDelegateCall(init, initPayload);
+    Address.functionDelegateCall(
+      init,
+      initPayload,
+      "DiamondCutBase: Failed to initialize cut, check init or payload"
+    );
   }
 }

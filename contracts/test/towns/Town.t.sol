@@ -8,6 +8,7 @@ import {IDiamond, Diamond} from "contracts/src/diamond/Diamond.sol";
 
 // contracts
 import {OwnableHelper} from "contracts/test/diamond/ownable/OwnableSetup.sol";
+import {OwnablePendingHelper} from "contracts/test/diamond/ownable/pending/OwnablePendingSetup.sol";
 import {DiamondCutHelper} from "contracts/test/diamond/cut/DiamondCutSetup.sol";
 import {DiamondLoupeHelper} from "contracts/test/diamond/loupe/DiamondLoupeSetup.sol";
 import {EntitlementsHelper} from "contracts/test/towns/entitlements/EntitlementsSetup.sol";
@@ -19,7 +20,7 @@ import {TokenPausableHelper} from "contracts/test/diamond/pausable/token/TokenPa
 import {MultiInit} from "contracts/src/diamond/initializers/MultiInit.sol";
 
 contract TownImplementationHelper {
-  OwnableHelper ownableHelper = new OwnableHelper();
+  OwnablePendingHelper ownableHelper = new OwnablePendingHelper();
   TokenPausableHelper tokenPausableHelper = new TokenPausableHelper();
   TokenOwnableHelper tokenOwnableHelper = new TokenOwnableHelper();
   DiamondCutHelper diamondCutHelper = new DiamondCutHelper();
@@ -50,7 +51,7 @@ contract TownImplementationHelper {
     initAddresses[1] = diamondCutHelper.facet();
     initAddresses[2] = diamondLoupeHelper.facet();
 
-    initDatas[0] = ownableHelper.makeInitData(abi.encode(owner));
+    initDatas[0] = ownableHelper.makeInitData(owner);
     initDatas[1] = diamondCutHelper.makeInitData("");
     initDatas[2] = diamondLoupeHelper.makeInitData("");
 

@@ -28,12 +28,12 @@
   ],
   "bytecode": {
     "object": "0x608060405234801561001057600080fd5b506101f0806100206000396000f3fe608060405234801561001057600080fd5b506004361061002b5760003560e01c8063370158ea14610030575b600080fd5b61003861004e565b6040516100459190610155565b60405180910390f35b60408051808201909152606081526000602082015261006b610070565b905090565b60408051808201909152606081526000602082015260007f37387c92bc1af262a940de25ef2429d783e8c29c13c4034586a4ebfcff884ad1905060405180604001604052808260000180546100c4906101b6565b80601f01602080910402602001604051908101604052809291908181526020018280546100f0906101b6565b801561013d5780601f106101125761010080835404028352916020019161013d565b820191906000526020600020905b81548152906001019060200180831161012057829003601f168201915b50505050508152602001826001015481525091505090565b600060208083528351604082850152805180606086015260005b8181101561018b5782810184015186820160800152830161016f565b506000608082870101528286015160408601526080601f19601f830116860101935050505092915050565b600181811c908216806101ca57607f821691505b6020821081036101ea57634e487b7160e01b600052602260045260246000fd5b5091905056",
-    "sourceMap": "184:130:160:-:0;;;;;;;;;;;;;;;;;;;",
+    "sourceMap": "184:130:164:-:0;;;;;;;;;;;;;;;;;;;",
     "linkReferences": {}
   },
   "deployedBytecode": {
     "object": "0x608060405234801561001057600080fd5b506004361061002b5760003560e01c8063370158ea14610030575b600080fd5b61003861004e565b6040516100459190610155565b60405180910390f35b60408051808201909152606081526000602082015261006b610070565b905090565b60408051808201909152606081526000602082015260007f37387c92bc1af262a940de25ef2429d783e8c29c13c4034586a4ebfcff884ad1905060405180604001604052808260000180546100c4906101b6565b80601f01602080910402602001604051908101604052809291908181526020018280546100f0906101b6565b801561013d5780601f106101125761010080835404028352916020019161013d565b820191906000526020600020905b81548152906001019060200180831161012057829003601f168201915b50505050508152602001826001015481525091505090565b600060208083528351604082850152805180606086015260005b8181101561018b5782810184015186820160800152830161016f565b506000608082870101528286015160408601526080601f19601f830116860101935050505092915050565b600181811c908216806101ca57607f821691505b6020821081036101ea57634e487b7160e01b600052602260045260246000fd5b5091905056",
-    "sourceMap": "184:130:160:-:0;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;226:86;;;:::i;:::-;;;;;;;:::i;:::-;;;;;;;;;-1:-1:-1;;;;;;;;;;;;;;;;;300:7:160;:5;:7::i;:::-;293:14;;226:86;:::o;430:185:159:-;-1:-1:-1;;;;;;;;;;;;;;;;;489:29:159;177:42:161;489:52:159;;554:56;;;;;;;;571:2;:12;;554:56;;;;;:::i;:::-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;:::i;:::-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;596:2;:12;;;554:56;;;547:63;;;430:185;:::o;14:733:384:-;152:4;181:2;210;199:9;192:21;248:6;242:13;291:4;286:2;275:9;271:18;264:32;325:12;319:19;374:6;369:2;358:9;354:18;347:34;399:1;409:147;423:6;420:1;417:13;409:147;;;519:20;;;515:29;;509:36;484:17;;;503:3;480:27;473:73;438:10;;409:147;;;413:3;606:1;600:3;591:6;580:9;576:22;572:32;565:43;664:2;656:6;652:15;646:22;639:4;628:9;624:20;617:52;737:3;730:2;726:7;721:2;713:6;709:15;705:29;694:9;690:45;686:55;678:63;;;;;14:733;;;;:::o;752:380::-;831:1;827:12;;;;874;;;895:61;;949:4;941:6;937:17;927:27;;895:61;1002:2;994:6;991:14;971:18;968:38;965:161;;1048:10;1043:3;1039:20;1036:1;1029:31;1083:4;1080:1;1073:15;1111:4;1108:1;1101:15;965:161;;752:380;;;:::o",
+    "sourceMap": "184:130:164:-:0;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;226:86;;;:::i;:::-;;;;;;;:::i;:::-;;;;;;;;;-1:-1:-1;;;;;;;;;;;;;;;;;300:7:164;:5;:7::i;:::-;293:14;;226:86;:::o;430:185:163:-;-1:-1:-1;;;;;;;;;;;;;;;;;489:29:163;177:42:165;489:52:163;;554:56;;;;;;;;571:2;:12;;554:56;;;;;:::i;:::-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;:::i;:::-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;596:2;:12;;;554:56;;;547:63;;;430:185;:::o;14:733:390:-;152:4;181:2;210;199:9;192:21;248:6;242:13;291:4;286:2;275:9;271:18;264:32;325:12;319:19;374:6;369:2;358:9;354:18;347:34;399:1;409:147;423:6;420:1;417:13;409:147;;;519:20;;;515:29;;509:36;484:17;;;503:3;480:27;473:73;438:10;;409:147;;;413:3;606:1;600:3;591:6;580:9;576:22;572:32;565:43;664:2;656:6;652:15;646:22;639:4;628:9;624:20;617:52;737:3;730:2;726:7;721:2;713:6;709:15;705:29;694:9;690:45;686:55;678:63;;;;;14:733;;;;:::o;752:380::-;831:1;827:12;;;;874;;;895:61;;949:4;941:6;937:17;927:27;;895:61;1002:2;994:6;991:14;971:18;968:38;965:161;;1048:10;1043:3;1039:20;1036:1;1029:31;1083:4;1080:1;1073:15;1111:4;1108:1;1101:15;965:161;;752:380;;;:::o",
     "linkReferences": {}
   },
   "methodIdentifiers": {
@@ -149,25 +149,25 @@
   },
   "ast": {
     "absolutePath": "contracts/src/towns/facets/town/TownFacet.sol",
-    "id": 34032,
+    "id": 34228,
     "exportedSymbols": {
       "ITown": [
-        33949
+        34145
       ],
       "TownBase": [
-        34009
+        34205
       ],
       "TownFacet": [
-        34031
+        34227
       ]
     },
     "nodeType": "SourceUnit",
-    "src": "39:276:160",
+    "src": "39:276:164",
     "nodes": [
       {
-        "id": 34011,
+        "id": 34207,
         "nodeType": "PragmaDirective",
-        "src": "39:24:160",
+        "src": "39:24:164",
         "nodes": [],
         "literals": [
           "solidity",
@@ -177,24 +177,24 @@
         ]
       },
       {
-        "id": 34013,
+        "id": 34209,
         "nodeType": "ImportDirective",
-        "src": "79:34:160",
+        "src": "79:34:164",
         "nodes": [],
         "absolutePath": "contracts/src/towns/facets/town/ITown.sol",
         "file": "./ITown.sol",
         "nameLocation": "-1:-1:-1",
-        "scope": 34032,
-        "sourceUnit": 33950,
+        "scope": 34228,
+        "sourceUnit": 34146,
         "symbolAliases": [
           {
             "foreign": {
-              "id": 34012,
+              "id": 34208,
               "name": "ITown",
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
-              "referencedDeclaration": 33949,
-              "src": "87:5:160",
+              "referencedDeclaration": 34145,
+              "src": "87:5:164",
               "typeDescriptions": {}
             },
             "nameLocation": "-1:-1:-1"
@@ -203,24 +203,24 @@
         "unitAlias": ""
       },
       {
-        "id": 34015,
+        "id": 34211,
         "nodeType": "ImportDirective",
-        "src": "142:40:160",
+        "src": "142:40:164",
         "nodes": [],
         "absolutePath": "contracts/src/towns/facets/town/TownBase.sol",
         "file": "./TownBase.sol",
         "nameLocation": "-1:-1:-1",
-        "scope": 34032,
-        "sourceUnit": 34010,
+        "scope": 34228,
+        "sourceUnit": 34206,
         "symbolAliases": [
           {
             "foreign": {
-              "id": 34014,
+              "id": 34210,
               "name": "TownBase",
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
-              "referencedDeclaration": 34009,
-              "src": "150:8:160",
+              "referencedDeclaration": 34205,
+              "src": "150:8:164",
               "typeDescriptions": {}
             },
             "nameLocation": "-1:-1:-1"
@@ -229,19 +229,19 @@
         "unitAlias": ""
       },
       {
-        "id": 34031,
+        "id": 34227,
         "nodeType": "ContractDefinition",
-        "src": "184:130:160",
+        "src": "184:130:164",
         "nodes": [
           {
-            "id": 34030,
+            "id": 34226,
             "nodeType": "FunctionDefinition",
-            "src": "226:86:160",
+            "src": "226:86:164",
             "nodes": [],
             "body": {
-              "id": 34029,
+              "id": 34225,
               "nodeType": "Block",
-              "src": "287:25:160",
+              "src": "287:25:164",
               "nodes": [],
               "statements": [
                 {
@@ -249,18 +249,18 @@
                     "arguments": [],
                     "expression": {
                       "argumentTypes": [],
-                      "id": 34026,
+                      "id": 34222,
                       "name": "_info",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 34008,
-                      "src": "300:5:160",
+                      "referencedDeclaration": 34204,
+                      "src": "300:5:164",
                       "typeDescriptions": {
-                        "typeIdentifier": "t_function_internal_view$__$returns$_t_struct$_Info_$33939_memory_ptr_$",
+                        "typeIdentifier": "t_function_internal_view$__$returns$_t_struct$_Info_$34135_memory_ptr_$",
                         "typeString": "function () view returns (struct ITownBase.Info memory)"
                       }
                     },
-                    "id": 34027,
+                    "id": 34223,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -269,86 +269,86 @@
                     "nameLocations": [],
                     "names": [],
                     "nodeType": "FunctionCall",
-                    "src": "300:7:160",
+                    "src": "300:7:164",
                     "tryCall": false,
                     "typeDescriptions": {
-                      "typeIdentifier": "t_struct$_Info_$33939_memory_ptr",
+                      "typeIdentifier": "t_struct$_Info_$34135_memory_ptr",
                       "typeString": "struct ITownBase.Info memory"
                     }
                   },
-                  "functionReturnParameters": 34025,
-                  "id": 34028,
+                  "functionReturnParameters": 34221,
+                  "id": 34224,
                   "nodeType": "Return",
-                  "src": "293:14:160"
+                  "src": "293:14:164"
                 }
               ]
             },
             "baseFunctions": [
-              33948
+              34144
             ],
             "functionSelector": "370158ea",
             "implemented": true,
             "kind": "function",
             "modifiers": [],
             "name": "info",
-            "nameLocation": "235:4:160",
+            "nameLocation": "235:4:164",
             "overrides": {
-              "id": 34021,
+              "id": 34217,
               "nodeType": "OverrideSpecifier",
               "overrides": [],
-              "src": "256:8:160"
+              "src": "256:8:164"
             },
             "parameters": {
-              "id": 34020,
+              "id": 34216,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "239:2:160"
+              "src": "239:2:164"
             },
             "returnParameters": {
-              "id": 34025,
+              "id": 34221,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 34024,
+                  "id": 34220,
                   "mutability": "mutable",
                   "name": "",
                   "nameLocation": "-1:-1:-1",
                   "nodeType": "VariableDeclaration",
-                  "scope": 34030,
-                  "src": "274:11:160",
+                  "scope": 34226,
+                  "src": "274:11:164",
                   "stateVariable": false,
                   "storageLocation": "memory",
                   "typeDescriptions": {
-                    "typeIdentifier": "t_struct$_Info_$33939_memory_ptr",
+                    "typeIdentifier": "t_struct$_Info_$34135_memory_ptr",
                     "typeString": "struct ITownBase.Info"
                   },
                   "typeName": {
-                    "id": 34023,
+                    "id": 34219,
                     "nodeType": "UserDefinedTypeName",
                     "pathNode": {
-                      "id": 34022,
+                      "id": 34218,
                       "name": "Info",
                       "nameLocations": [
-                        "274:4:160"
+                        "274:4:164"
                       ],
                       "nodeType": "IdentifierPath",
-                      "referencedDeclaration": 33939,
-                      "src": "274:4:160"
+                      "referencedDeclaration": 34135,
+                      "src": "274:4:164"
                     },
-                    "referencedDeclaration": 33939,
-                    "src": "274:4:160",
+                    "referencedDeclaration": 34135,
+                    "src": "274:4:164",
                     "typeDescriptions": {
-                      "typeIdentifier": "t_struct$_Info_$33939_storage_ptr",
+                      "typeIdentifier": "t_struct$_Info_$34135_storage_ptr",
                       "typeString": "struct ITownBase.Info"
                     }
                   },
                   "visibility": "internal"
                 }
               ],
-              "src": "273:13:160"
+              "src": "273:13:164"
             },
-            "scope": 34031,
+            "scope": 34227,
             "stateMutability": "view",
             "virtual": false,
             "visibility": "external"
@@ -358,33 +358,33 @@
         "baseContracts": [
           {
             "baseName": {
-              "id": 34016,
+              "id": 34212,
               "name": "ITown",
               "nameLocations": [
-                "206:5:160"
+                "206:5:164"
               ],
               "nodeType": "IdentifierPath",
-              "referencedDeclaration": 33949,
-              "src": "206:5:160"
+              "referencedDeclaration": 34145,
+              "src": "206:5:164"
             },
-            "id": 34017,
+            "id": 34213,
             "nodeType": "InheritanceSpecifier",
-            "src": "206:5:160"
+            "src": "206:5:164"
           },
           {
             "baseName": {
-              "id": 34018,
+              "id": 34214,
               "name": "TownBase",
               "nameLocations": [
-                "213:8:160"
+                "213:8:164"
               ],
               "nodeType": "IdentifierPath",
-              "referencedDeclaration": 34009,
-              "src": "213:8:160"
+              "referencedDeclaration": 34205,
+              "src": "213:8:164"
             },
-            "id": 34019,
+            "id": 34215,
             "nodeType": "InheritanceSpecifier",
-            "src": "213:8:160"
+            "src": "213:8:164"
           }
         ],
         "canonicalName": "TownFacet",
@@ -392,19 +392,19 @@
         "contractKind": "contract",
         "fullyImplemented": true,
         "linearizedBaseContracts": [
-          34031,
-          34009,
-          33949,
-          33940
+          34227,
+          34205,
+          34145,
+          34136
         ],
         "name": "TownFacet",
-        "nameLocation": "193:9:160",
-        "scope": 34032,
+        "nameLocation": "193:9:164",
+        "scope": 34228,
         "usedErrors": [],
         "usedEvents": []
       }
     ],
     "license": "Apache-2.0"
   },
-  "id": 160
+  "id": 164
 }

@@ -35,8 +35,16 @@ library MockFacetStorage {
   }
 }
 
+// debuggging
+import {console} from "forge-std/console.sol";
+
 contract MockFacet is IMockFacet, TokenOwnableBase {
   using MockFacetStorage for MockFacetStorage.Layout;
+
+  function init(uint256 value) external {
+    require(value > 10, "value must be greater than 10");
+    MockFacetStorage.layout().value = value;
+  }
 
   function mockFunction() external pure override returns (uint256) {
     return 42;

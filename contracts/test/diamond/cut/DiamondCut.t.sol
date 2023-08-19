@@ -126,6 +126,29 @@ contract DiamondCutTest is DiamondCutSetup, IDiamondCutBase, IOwnableBase {
     diamondCut.diamondCut(facetCuts, address(0), "");
   }
 
+  function test_reverts_when_initializeDiamondCut() external {
+    // create facet selectors
+    bytes4[] memory facetSelectors = new bytes4[](1);
+    facetSelectors[0] = mockFacet.mockFunction.selector;
+    // create facet cuts
+    IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](1);
+    cuts[0] = IDiamond.FacetCut({
+      facetAddress: address(mockFacet),
+      action: IDiamond.FacetCutAction.Add,
+      functionSelectors: facetSelectors
+    });
+
+    // cut diamond
+    vm.expectRevert(
+      "DiamondCutBase: Failed to initialize cut, check init or payload"
+    );
+    diamondCut.diamondCut(
+      cuts,
+      address(this),
+      abi.encodeWithSelector(mockFacet.init.selector, true)
+    );
+  }
+
   // =============================================================
   //                           Add Facet
   // =============================================================

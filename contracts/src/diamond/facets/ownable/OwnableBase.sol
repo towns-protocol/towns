@@ -3,7 +3,6 @@ pragma solidity ^0.8.20;
 
 // interfaces
 import {IOwnableBase} from "./IERC173.sol";
-import {IERC173} from "./IERC173.sol";
 
 // libraries
 import {OwnableStorage} from "./OwnableStorage.sol";

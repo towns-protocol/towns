@@ -29,7 +29,7 @@ library GateService {
       revert GateFacetService__NotAllowed();
     }
 
-    GateStorage.Layout storage ds = GateStorage.gateStorage();
+    GateStorage.Layout storage ds = GateStorage.layout();
 
     ds.tokens.add(token);
     ds.allowedTokens[token] = GateStorage.Gating({
@@ -39,17 +39,17 @@ library GateService {
   }
 
   function removeGate(address token) internal {
-    GateStorage.Layout storage ds = GateStorage.gateStorage();
+    GateStorage.Layout storage ds = GateStorage.layout();
     delete ds.allowedTokens[token];
   }
 
   function isTokenGated(address token) internal view returns (bool) {
-    GateStorage.Layout storage ds = GateStorage.gateStorage();
+    GateStorage.Layout storage ds = GateStorage.layout();
     return ds.allowedTokens[token].token != address(0);
   }
 
   function checkTokenGate(address user) internal view {
-    GateStorage.Layout storage ds = GateStorage.gateStorage();
+    GateStorage.Layout storage ds = GateStorage.layout();
 
     uint256 tokensLen = ds.tokens.length();
 

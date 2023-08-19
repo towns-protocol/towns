@@ -9,7 +9,7 @@ pragma solidity ^0.8.20;
 
 library PausableStorage {
   bytes32 internal constant STORAGE_SLOT =
-    keccak256("towns.contracts.storage.Pausable");
+    keccak256("towns.diamond.facets.pausable.PausableStorage");
 
   struct Layout {
     bool paused;

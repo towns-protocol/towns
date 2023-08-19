@@ -10,8 +10,8 @@ import {EnumerableSet} from "openzeppelin-contracts/contracts/utils/structs/Enum
 
 library DiamondCutStorage {
   // solhint-disable-next-line private-vars-leading-underscore
-  bytes32 internal constant DIAMOND_CUT_STORAGE_POSITION =
-    keccak256("towns.diamond.facets.cut.storage");
+  bytes32 internal constant STORAGE_SLOT =
+    keccak256("towns.diamond.facets.cut.DiamondCutStorage");
 
   /// @notice Facet cut struct
   /// @param facet Set of facets
@@ -24,11 +24,9 @@ library DiamondCutStorage {
   }
 
   function layout() internal pure returns (Layout storage ds) {
-    bytes32 position = DIAMOND_CUT_STORAGE_POSITION;
-
-    // solhint-disable-next-line no-inline-assembly
+    bytes32 slot = STORAGE_SLOT;
     assembly {
-      ds.slot := position
+      ds.slot := slot
     }
   }
 }

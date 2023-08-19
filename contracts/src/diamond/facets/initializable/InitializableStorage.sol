@@ -8,8 +8,8 @@ pragma solidity ^0.8.20;
 // contracts
 
 library InitializableStorage {
-  bytes32 internal constant _INITIALIZABLE_SLOT =
-    keccak256("towns.contracts.diamond.Initializable");
+  bytes32 internal constant STORAGE_SLOT =
+    keccak256("towns.diamond.facets.initializable.InitializableStorage");
 
   struct Layout {
     uint32 version;
@@ -17,11 +17,9 @@ library InitializableStorage {
   }
 
   function layout() internal pure returns (Layout storage s) {
-    bytes32 position = _INITIALIZABLE_SLOT;
-
-    // solhint-disable-next-line no-inline-assembly
+    bytes32 slot = STORAGE_SLOT;
     assembly {
-      s.slot := position
+      s.slot := slot
     }
   }
 }
