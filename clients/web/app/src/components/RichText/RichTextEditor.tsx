@@ -161,7 +161,7 @@ export const RichTextPreview = React.memo(
             //  https://stackoverflow.com/a/72727900/64223
             return (
                 content.length < 12 &&
-                /(\p{Emoji}\uFE0F|\p{Emoji_Presentation}|\s)+$/u.test(content)
+                /^(\p{Emoji}\uFE0F|\p{Emoji_Presentation}|\s)+$/u.test(content)
             )
         }, [content])
 
