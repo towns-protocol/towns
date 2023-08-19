@@ -114,6 +114,7 @@ const TouchChannelHeader = (props: Props) => {
     return (
         <Stack gap="sm">
             <TouchNavBar
+                extraHeight
                 contentLeft={
                     <IconButton
                         icon="back"
@@ -133,7 +134,7 @@ const TouchChannelHeader = (props: Props) => {
             >
                 <Stack gap="sm" onClick={infoButtonPressed}>
                     <Stack horizontal gap="sm" alignContent="center">
-                        <Paragraph truncate strong color="default">
+                        <Paragraph truncate strong color="default" size="lg">
                             #{channel.label}
                         </Paragraph>
                         {isMuted && <Icon type="muteActive" size="square_xxs" color="gray2" />}

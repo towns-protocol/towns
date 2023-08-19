@@ -93,7 +93,7 @@ export const UserProfile = (props: Props) => {
     return (
         <Stack grow padding gap position="relative">
             <Stack centerContent={center} padding="lg">
-                <FormRender maxWidth="250" width="100%" key={resourceId}>
+                <FormRender maxWidth="200" width="100%" key={resourceId}>
                     {({ register, formState, setError, clearErrors }) => (
                         <LargeUploadImageTemplate
                             canEdit={Boolean(loggedInWalletAddress === resourceId)}

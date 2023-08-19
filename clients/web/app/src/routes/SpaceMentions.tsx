@@ -62,7 +62,8 @@ export const SpaceMentions = () => {
                     <Stack minHeight="forceScroll">
                         <Stack
                             gap={{ touch: 'none', default: 'md' }}
-                            padding={{ touch: 'none', default: 'lg' }}
+                            paddingX={{ touch: 'none', default: 'lg' }}
+                            paddingY={{ touch: 'md', default: 'lg' }}
                         >
                             {mentions.map((m, index, mentions) => {
                                 return (

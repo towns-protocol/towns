@@ -76,7 +76,7 @@ export const TouchLayoutHeader = (props: Props) => {
                         onClick={onTokenClick}
                     >
                         <Stack horizontal gap="sm" alignItems="center">
-                            <Text truncate fontWeight="strong" color="default">
+                            <Text truncate fontWeight="strong" color="default" size="lg">
                                 {space.name}
                             </Text>
 
