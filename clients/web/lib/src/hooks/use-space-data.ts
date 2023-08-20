@@ -239,9 +239,9 @@ function rollupSpace(stream: Stream, userId: string, channels: string[]): SpaceD
         throw new Error('stream is not a space')
     }
 
-    const membership = stream.view.userJoinedStreams.has(userId)
+    const membership = stream.view.joinedUsers.has(userId)
         ? Membership.Join
-        : stream.view.userInvitedStreams.has(userId)
+        : stream.view.invitedUsers.has(userId)
         ? Membership.Invite
         : Membership.None
 
