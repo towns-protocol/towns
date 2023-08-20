@@ -360,11 +360,8 @@ function formatError<T extends Array<unknown>, U>(
 function errorToString(err: unknown): string {
     try {
         const attempt1 = JSON.stringify(err)
-        if (!attempt1 || attempt1 === '{}') {
-            return String(err) //err.message
-        } else {
-            return attempt1
-        }
+        // combine both the json and the stringified error, so that we see codes and messages
+        return `${attempt1} ${String(err)}`
     } catch (e) {
         return `unformattable ERROR: ${String(e)}`
     }
