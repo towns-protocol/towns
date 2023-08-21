@@ -21,7 +21,7 @@ export const SpaceProfilePanel = (props: { children?: React.ReactNode }) => {
     const navigate = useNavigate()
 
     const onClose = useEvent(() => {
-        navigate('..')
+        navigate('../')
     })
 
     return (
