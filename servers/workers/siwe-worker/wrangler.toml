@@ -38,4 +38,4 @@ vars = { ENVIRONMENT = "production", VERIFY = "true", SMART_CONTRACT_VERSION = "
 # yarn publish:test
 [env.test]
 routes = [{ pattern = "siwe-worker-test.towns.com", custom_domain = true }]
-vars = { ENVIRONMENT = "test", VERIFY = "true", SMART_CONTRACT_VERSION = "" }
+vars = { ENVIRONMENT = "test", VERIFY = "true", SMART_CONTRACT_VERSION = "v3" }
