@@ -13,6 +13,7 @@ local_protocol = "http"
 [vars]
 ENVIRONMENT = "development"
 VERIFY = "true"
+SMART_CONTRACT_VERSION = "v3"
 
 # The necessary secrets are:
 # AUTH_SECRET
@@ -31,10 +32,10 @@ VERIFY = "true"
 # yarn publish:prod
 [env.production]
 routes = [{ pattern = "siwe-worker.towns.com", custom_domain = true }]
-vars = { ENVIRONMENT = "production", VERIFY = "true" }
+vars = { ENVIRONMENT = "production", VERIFY = "true", SMART_CONTRACT_VERSION = "" }
 
 # test routes
 # yarn publish:test
 [env.test]
 routes = [{ pattern = "siwe-worker-test.towns.com", custom_domain = true }]
-vars = { ENVIRONMENT = "test", VERIFY = "true" }
+vars = { ENVIRONMENT = "test", VERIFY = "true", SMART_CONTRACT_VERSION = "" }

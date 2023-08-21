@@ -52,6 +52,7 @@ export async function verifySiweMessage(
 			siweMessage.address,
 			siweMessage.chainId,
 			provider,
+			env.SMART_CONTRACT_VERSION,
 		)
 		if (isSpaceOwner) {
 			return new Response(`OK`)
@@ -70,8 +71,10 @@ export async function verifySpaceOwner(
 	address: string,
 	chainId: number = GOERLI,
 	provider: ethers.providers.StaticJsonRpcProvider,
+	smartContractVersion?: string,
 ): Promise<boolean> {
-	const spaceDapp = createSpaceDapp(chainId, provider)
+	console.log('smart contract version', smartContractVersion)
+	const spaceDapp = createSpaceDapp(chainId, provider, smartContractVersion)
 	try {
 		const hasPermission = await spaceDapp.isEntitledToSpace(
 			decodeURIComponent(spaceId),

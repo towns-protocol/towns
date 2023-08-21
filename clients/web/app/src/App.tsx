@@ -90,6 +90,7 @@ export const App = () => {
     }, [])
 
     const timeBetweenSyncingSpaces = useMemo(() => (isTouch ? 2_000 : 0), [isTouch])
+    console.log('smart contract version', environment.smartContractVersion)
 
     return (
         <ZionContextProvider
@@ -105,6 +106,7 @@ export const App = () => {
             timeBetweenSyncingSpaces={timeBetweenSyncingSpaces}
             pushNotificationAuthToken={env.VITE_AUTH_WORKER_HEADER_SECRET}
             pushNotificationWorkerUrl={env.VITE_WEB_PUSH_WORKER_URL}
+            smartContractVersion={env.VITE_SMART_CONTRACT_VERSION}
         >
             <>
                 <FaviconBadge />
