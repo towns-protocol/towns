@@ -300,7 +300,7 @@ const ChannelRow = (props: {
                 width="100%"
                 gap="sm"
                 overflowX="hidden"
-                fontWeight={unread ? 'medium' : 'normal'}
+                fontWeight={unread ? 'strong' : 'normal'}
             >
                 <Icon
                     type="tag"
