@@ -34,12 +34,9 @@ const InviteLinkLanding = () => {
     const currentWalletIsInvalidForTown =
         currentWallet && invalidWallet && currentWallet === invalidWallet
 
-    const { walletStatus, connect, loginStatus, login, register } = useAuth()
+    const { login, register } = useAuth()
 
     const { status } = useSignupButton({
-        walletStatus,
-        loginStatus,
-        connect,
         register,
         login,
     })

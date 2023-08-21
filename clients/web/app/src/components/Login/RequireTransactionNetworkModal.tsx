@@ -2,39 +2,35 @@ import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { signMessageAbortController } from 'use-zion-client'
 import { useEnvironment } from 'hooks/useEnvironmnet'
 import { ModalContainer } from '@components/Modals/ModalContainer'
-import { Box, Button, FancyButton, Icon, Stack, Text } from '@ui'
-import { SignupButtonStatus } from 'hooks/useSignupButton'
-import { useDebounce } from 'hooks/useDebounce'
-import { Logo } from '@components/Logo'
+import { Box, FancyButton, Icon, Paragraph, Stack, Text } from '@ui'
 import { atoms } from 'ui/styles/atoms.css'
 import { useAuth } from 'hooks/useAuth'
+import { FadeInBox } from '@components/Transitions'
 
 export type Props = {
-    status: SignupButtonStatus
     onLoginClick: () => void
     isSpinning: boolean
     onHide: () => void
 }
 
-export function RequireTransactionNetworkModal({
-    onHide,
-    isSpinning,
-    status,
-    onLoginClick,
-}: Props) {
+export function RequireTransactionNetworkModal({ onHide, isSpinning, onLoginClick }: Props) {
     const timeoutId = useRef<ReturnType<typeof setTimeout> | undefined>()
     const { chainName } = useEnvironment()
-    const buttonLabel = useDebounce(getButtonLabel(status, chainName), 500)
     const [showWalletCommsFailure, setShowWalletCommsFailure] = useState(false)
+    const clicked = useRef(false)
+
     const _onLoginClick = useCallback(() => {
+        if (clicked.current) {
+            return
+        }
         if (timeoutId.current) {
-            setShowWalletCommsFailure(false)
             clearTimeout(timeoutId.current)
         }
         onLoginClick()
         timeoutId.current = setTimeout(() => {
             setShowWalletCommsFailure(true)
-        }, 10_000)
+            clicked.current = false
+        }, 8000)
     }, [onLoginClick])
 
     useEffect(() => {
@@ -46,15 +42,16 @@ export function RequireTransactionNetworkModal({
     }, [])
 
     function dismissWalletCommsMessage() {
+        clicked.current = false
         setShowWalletCommsFailure(false)
         signMessageAbortController.abort()
     }
 
     const { loginError } = useAuth()
-    const errorMessage = loginError ? loginError.message : getErrorMessage(status)
+    const errorMessage = loginError ? loginError.message : null
 
     return (
-        <ModalContainer touchTitle="Back" onHide={onHide}>
+        <ModalContainer onHide={onHide}>
             <Stack
                 height="100%"
                 padding="sm"
@@ -63,15 +60,27 @@ export function RequireTransactionNetworkModal({
                 justifyContent="center"
                 alignItems="center"
             >
-                <Logo className={atoms({ height: 'x6' })} />
-
-                <Icon type="metamask" size="square_xl" />
-                <Box gap horizontal border rounded="sm" padding="md" background="level2">
-                    <Icon type="alert" color="error" />
-                    <Text size="sm">
-                        {`Looks like you're using MetaMask. To ensure a smooth login experience, please go to your wallet and make sure you are on the ${chainName} network.`}
+                <Stack horizontal centerContent gap>
+                    <Icon type="metamask" size="square_lg" />
+                    <Text strong size="lg">
+                        Hold up!
                     </Text>
-                </Box>
+                </Stack>
+                <Text size="sm" textAlign="center">
+                    {`Looks like you're using MetaMask. To ensure a smooth login experience, we recommend switching to 
+                        the correct network before proceeding.`}
+                </Text>
+                <Text size="sm" textAlign="center">
+                    Please go to your wallet and make sure you are on the{' '}
+                    <span
+                        className={atoms({
+                            color: 'cta1',
+                        })}
+                    >
+                        {chainName}
+                    </span>{' '}
+                    network.
+                </Text>
 
                 <Box centerContent>
                     <Box opacity={isSpinning ? '0.5' : 'opaque'}>
@@ -82,19 +91,35 @@ export function RequireTransactionNetworkModal({
                             disabled={isSpinning}
                             onClick={_onLoginClick}
                         >
-                            {buttonLabel ?? `Yes, I'm on ${chainName}`}
+                            {isSpinning ? 'Talking to wallet' : `Yes, I'm on ${chainName}`}
                         </FancyButton>
                     </Box>
                 </Box>
 
                 {showWalletCommsFailure && (
                     <>
-                        <Text size="sm">
-                            {`We're having trouble communicating with your wallet. `}
-                        </Text>
-                        <Button size="inline" tone="none" onClick={dismissWalletCommsMessage}>
-                            <Text size="sm" color="cta1">{`Start over?`}</Text>
-                        </Button>
+                        <FadeInBox
+                            hoverable
+                            background="level2"
+                            rounded="xs"
+                            layout="position"
+                            cursor="pointer"
+                            padding="md"
+                        >
+                            <Paragraph size="sm" textAlign="center">
+                                This is taking a while. Please check your wallet for any prompts.
+                            </Paragraph>
+                            <Paragraph size="sm" textAlign="center">
+                                If issues persist, try{' '}
+                                <Box
+                                    display="inline"
+                                    color="cta1"
+                                    onClick={dismissWalletCommsMessage}
+                                >
+                                    starting over.
+                                </Box>
+                            </Paragraph>
+                        </FadeInBox>
                     </>
                 )}
 
@@ -106,26 +131,4 @@ export function RequireTransactionNetworkModal({
             </Stack>
         </ModalContainer>
     )
-}
-
-const getButtonLabel = (status: SignupButtonStatus, chainName: string) => {
-    switch (status) {
-        case SignupButtonStatus.ConnectUnlock:
-        case SignupButtonStatus.WalletBusy:
-            return 'Talking to wallet'
-        case SignupButtonStatus.Login:
-        case SignupButtonStatus.Register:
-            return `Yes, I'm on ${chainName}`
-        default:
-            return 'Connect wallet'
-    }
-}
-
-const getErrorMessage = (status: SignupButtonStatus): string | null => {
-    switch (status) {
-        case SignupButtonStatus.ConnectError:
-            return 'Something went wrong, please make sure your wallet is unlocked'
-        default:
-            return null
-    }
 }
