@@ -348,7 +348,7 @@ describe('clientTest', () => {
                         // but in case it is not, let's init it again
                         await expect(bobsAnotherClient.initCrypto()).toResolve()
                     }
-                    const messages = Array.from(channel.view.messages.values())
+                    const messages = Array.from(channel.view.channelContent.messages.values() ?? [])
                     expect(messages).toHaveLength(1)
                     channel.on('channelNewMessage', onChannelNewMessage)
                     bobsAnotherClient.sendMessage(streamId, 'Hello, again!')

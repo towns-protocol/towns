@@ -1,33 +1,18 @@
 import { dlog } from './dlog'
-import {
-    ChannelOp,
-    DeviceKeys,
-    MembershipOp,
-    Err,
-    ChannelPayload_Inception,
-    PayloadCaseType,
-    Membership,
-    SpacePayload_Channel,
-    UserPayload_UserMembership,
-    UserDeviceKeyPayload_UserDeviceKey,
-    SyncCookie,
-    StreamAndCookie,
-    ChannelProperties,
-    EncryptedData,
-    SpacePayload_Inception,
-    FullyReadMarkerContent,
-    FullyReadMarkersContent,
-    UserSettingsPayload_FullyReadMarkers,
-} from '@river/proto'
+import { Err, PayloadCaseType, SyncCookie, StreamAndCookie } from '@river/proto'
 import TypedEmitter from 'typed-emitter'
 import { check, checkNever, isDefined, throwWithCode } from './check'
 import { ParsedEvent } from './types'
-import { userIdFromAddress } from './id'
 import { RiverEvent } from './event'
 import isEqual from 'lodash/isEqual'
 import { unpackEnvelopes } from './sign'
-import { StreamEvents } from './streamEvents'
 import { EmittedEvents } from './client'
+import { StreamStateView_Space } from './streamStateView_Space'
+import { StreamStateView_Channel } from './streamStateView_Channel'
+import { StreamStateView_User } from './streamStateView_User'
+import { StreamStateView_UserSettings } from './streamStateView_UserSettings'
+import { StreamStateView_UserDeviceKeys } from './streamStateView_UserDeviceKey'
+import { StreamStateView_Membership } from './streamStateView_Membership'
 
 const log = dlog('csb:streams')
 
@@ -35,39 +20,60 @@ const isCookieEqual = (a?: SyncCookie, b?: SyncCookie): boolean => isEqual(a, b)
 
 export class StreamStateView {
     readonly streamId: string
-    readonly name?: string
-    readonly payloadKind: PayloadCaseType
 
-    readonly streamCustomProperties = new Map<string, string>()
+    readonly payloadKind: PayloadCaseType
 
     readonly timeline: ParsedEvent[] = []
     readonly events = new Map<string, ParsedEvent>()
+
     // todo: remove this additional map in favor of events map once RiverEvent decrypts to ParsedEvents
     // https://linear.app/hnt-labs/issue/HNT-2049/refactor-riverevent-to-input-and-output-streamevents
     readonly decryptedEvents = new Map<string, RiverEvent>()
 
-    readonly joinedUsers = new Set<string>()
-    readonly invitedUsers = new Set<string>()
-
-    readonly messages = new Map<string, ParsedEvent>()
-    readonly receipts = new Map<string, ParsedEvent>()
-
-    readonly spaceChannelsMetadata = new Map<string, ChannelProperties>()
-    readonly parentSpaceId?: string
-
-    readonly userInvitedStreams = new Set<string>()
-    readonly userJoinedStreams = new Set<string>()
-
-    readonly toDeviceMessages: ParsedEvent[] = []
-    // device_id -> device_keys, fallback_keys
-    readonly uploadedDeviceKeys = new Map<string, UserDeviceKeyPayload_UserDeviceKey[]>()
-
     readonly leafEventHashes = new Map<string, Uint8Array>()
-    //this property can be used during the UI part initialization to get initial state of fullyReadMarkers
-    readonly readFullyReadMarkers = new Map<string, EncryptedData>()
 
     syncCookie?: SyncCookie
     maxOldInstanceBlockNumber = -1n
+
+    // Space Content
+    private readonly _spaceContent?: StreamStateView_Space
+    get spaceContent(): StreamStateView_Space {
+        check(isDefined(this._spaceContent), `spaceContent not defined for ${this.payloadKind}`)
+        return this._spaceContent
+    }
+
+    // Channel Content
+    private readonly _channelContent?: StreamStateView_Channel
+    get channelContent(): StreamStateView_Channel {
+        check(isDefined(this._channelContent), `channelContent not defined for ${this.payloadKind}`)
+        return this._channelContent
+    }
+
+    // User Content
+    private readonly _userContent?: StreamStateView_User
+    get userContent(): StreamStateView_User {
+        check(isDefined(this._userContent), `userContent not defined for ${this.payloadKind}`)
+        return this._userContent
+    }
+
+    // User Settings Content
+    private readonly _userSettingsContent?: StreamStateView_UserSettings
+    get userSettingsContent(): StreamStateView_UserSettings {
+        check(
+            isDefined(this._userSettingsContent),
+            `userSettingsContent not defined for ${this.payloadKind}`,
+        )
+        return this._userSettingsContent
+    }
+
+    private readonly _userDeviceKeyContent?: StreamStateView_UserDeviceKeys
+    get userDeviceKeyContent(): StreamStateView_UserDeviceKeys {
+        check(
+            isDefined(this._userDeviceKeyContent),
+            `userDeviceKeyContent not defined for ${this.payloadKind}`,
+        )
+        return this._userDeviceKeyContent
+    }
 
     constructor(streamId: string, inceptionEvent: ParsedEvent | undefined) {
         check(isDefined(inceptionEvent), `Stream is empty ${streamId}`, Err.STREAM_EMPTY)
@@ -90,10 +96,41 @@ export class StreamStateView {
 
         this.streamId = streamId
         this.payloadKind = inceptionEvent.event.payload.case
-        if (this.payloadKind === 'channelPayload') {
-            this.parentSpaceId = (inceptionPayload as ChannelPayload_Inception).spaceId
-        } else if (this.payloadKind === 'spacePayload') {
-            this.name = (inceptionPayload as SpacePayload_Inception).name
+
+        switch (inceptionEvent.event.payload.case) {
+            case 'channelPayload':
+                this._channelContent = new StreamStateView_Channel(
+                    inceptionEvent.event.payload?.value?.content.value,
+                )
+                break
+            case 'spacePayload':
+                this._spaceContent = new StreamStateView_Space(
+                    inceptionEvent.event.payload?.value?.content.value,
+                )
+                break
+            case 'userPayload':
+                this._userContent = new StreamStateView_User(
+                    inceptionEvent.event.payload?.value?.content.value,
+                )
+                break
+            case 'userSettingsPayload':
+                this._userSettingsContent = new StreamStateView_UserSettings(
+                    inceptionEvent.event.payload?.value?.content.value,
+                )
+                break
+            case 'userDeviceKeyPayload':
+                this._userDeviceKeyContent = new StreamStateView_UserDeviceKeys(
+                    inceptionEvent.event.payload?.value?.content.value,
+                )
+                break
+            case 'miniblockHeader':
+                check(false, `Miniblock header not supported ${streamId}`, Err.STREAM_BAD_EVENT)
+                break
+            case undefined:
+                check(false, `Inception has no payload ${streamId}`, Err.STREAM_BAD_EVENT)
+                break
+            default:
+                checkNever(inceptionEvent.event.payload)
         }
     }
 
@@ -138,175 +175,22 @@ export class StreamStateView {
         try {
             switch (payload.case) {
                 case 'channelPayload':
-                    switch (payload.value.content.case) {
-                        case 'inception':
-                            emitter?.emit(
-                                'channelInception',
-                                this.streamId,
-                                event.event,
-                                payload.value.content.value,
-                            )
-                            break
-                        case 'message':
-                            {
-                                this.messages.set(event.hashStr, event)
-                                const riverEvent = new RiverEvent(
-                                    {
-                                        channel_id: this.streamId,
-                                        space_id: this.parentSpaceId,
-                                        payload: {
-                                            parsed_event: payload,
-                                            creator_user_id: userIdFromAddress(
-                                                event.event.creatorAddress,
-                                            ),
-                                            hash_str: event.hashStr,
-                                            stream_id: this.streamId,
-                                        },
-                                    },
-                                    emitter,
-                                )
-                                emitter?.emit('channelNewMessage', this.streamId, riverEvent)
-                            }
-                            break
-                        case 'membership':
-                            this.addChannelPayload_Membership(payload.value.content.value, emitter)
-                            break
-                        case 'receipt':
-                            this.receipts.set(event.hashStr, event)
-                            break
-                        case undefined:
-                            break
-                        default:
-                            checkNever(payload.value.content)
-                    }
+                    this.channelContent?.addEvent(event, payload.value, emitter)
                     break
                 case 'spacePayload':
-                    switch (payload.value.content.case) {
-                        case 'inception':
-                            emitter?.emit(
-                                'spaceInception',
-                                this.streamId,
-                                event.event,
-                                payload.value.content.value,
-                            )
-                            break
-                        case 'channel':
-                            this.addSpacePayload_Channel(payload.value.content.value, emitter)
-                            break
-                        case 'membership':
-                            this.addSpacePayload_Membership(payload.value.content.value, emitter)
-                            break
-                        case undefined:
-                            break
-                        default:
-                            checkNever(payload.value.content)
-                    }
+                    this.spaceContent?.addEvent(event, payload.value, emitter)
                     break
                 case 'userPayload':
-                    switch (payload.value.content.case) {
-                        case 'inception':
-                            emitter?.emit(
-                                'userInception',
-                                this.streamId,
-                                event.event,
-                                payload.value.content.value,
-                            )
-                            break
-                        case 'userMembership':
-                            this.addUserPayload_userMembership(payload.value.content.value, emitter)
-                            break
-                        case 'toDevice':
-                            {
-                                // todo jterzis: really we should be passing emitter to RiverEvent
-                                // here but it causes a bug in the tests.
-                                const riverEvent = new RiverEvent(
-                                    {
-                                        payload: {
-                                            parsed_event: payload,
-                                            creator_user_id: userIdFromAddress(
-                                                event.event.creatorAddress,
-                                            ),
-                                            stream_id: this.streamId,
-                                        },
-                                    },
-                                    emitter,
-                                )
-                                emitter?.emit('toDeviceMessage', this.streamId, riverEvent)
-
-                                // TODO: filter by deviceId and only store current deviceId's events
-                                this.toDeviceMessages.push(event)
-                            }
-                            break
-                        case undefined:
-                            break
-                        default:
-                            checkNever(payload.value.content)
-                    }
+                    this.userContent?.addEvent(event, payload.value, emitter)
                     break
                 case 'userSettingsPayload':
-                    switch (payload.value.content.case) {
-                        case 'inception':
-                            emitter?.emit(
-                                'userSettingsInception',
-                                this.streamId,
-                                event.event,
-                                payload.value.content.value,
-                            )
-                            break
-                        case 'fullyReadMarkers':
-                            if (payload.value.content.value.content) {
-                                this.readFullyReadMarkers.set(
-                                    payload.value.content.value.channelStreamId,
-                                    payload.value.content.value.content,
-                                )
-                            }
-                            this.fullyReadMarkerUpdate(payload.value.content.value, emitter)
-                            break
-                        case undefined:
-                            break
-                        default:
-                            checkNever(payload.value.content)
-                    }
+                    this.userSettingsContent?.addEvent(event, payload.value, emitter)
                     break
                 case 'userDeviceKeyPayload':
-                    switch (payload.value.content.case) {
-                        case 'inception':
-                            emitter?.emit(
-                                'userDeviceKeyInception',
-                                this.streamId,
-                                event.event,
-                                payload.value.content.value,
-                            )
-                            break
-                        case 'userDeviceKey':
-                            {
-                                const { userId, deviceKeys, fallbackKeys } =
-                                    payload.value.content.value
-                                emitter?.emit(
-                                    'userDeviceKeyMessage',
-                                    this.streamId,
-                                    userId,
-                                    deviceKeys as DeviceKeys,
-                                    fallbackKeys,
-                                )
-                                if (deviceKeys?.deviceId !== undefined) {
-                                    this.uploadedDeviceKeys.set(deviceKeys.deviceId, [
-                                        ...(this.uploadedDeviceKeys.get(deviceKeys.deviceId) || []),
-                                        payload.value.content.value,
-                                    ])
-                                }
-                            }
-                            break
-                        case undefined:
-                            break
-                        default:
-                            checkNever(payload.value.content)
-                    }
+                    this.userDeviceKeyContent?.addEvent(event, payload.value, emitter)
                     break
-
                 case 'miniblockHeader':
                     break
-
                 case undefined:
                     break
                 default:
@@ -314,159 +198,6 @@ export class StreamStateView {
             }
         } catch (e) {
             log(`Error processing event ${event.hashStr}`, e)
-        }
-    }
-
-    private channelPropertiesFromEncryptedData(
-        encryptedData: EncryptedData | undefined,
-    ): ChannelProperties {
-        //TODO: We need to support decryption once encryption is enabled for Channel EncryptedData events
-        let channelProperties = ChannelProperties.fromJsonString(encryptedData?.text ?? '')
-        if (!isDefined(channelProperties)) {
-            channelProperties = new ChannelProperties()
-        }
-        return channelProperties
-    }
-
-    private addSpacePayload_Channel(
-        payload: SpacePayload_Channel,
-        emitter?: TypedEmitter<StreamEvents>,
-    ): void {
-        const { op, channelId, channelProperties } = payload
-        switch (op) {
-            case ChannelOp.CO_CREATED: {
-                const emittedChannelProperties =
-                    this.channelPropertiesFromEncryptedData(channelProperties)
-
-                this.spaceChannelsMetadata.set(channelId, emittedChannelProperties)
-
-                emitter?.emit(
-                    'spaceChannelCreated',
-                    this.streamId,
-                    channelId,
-                    emittedChannelProperties,
-                )
-                break
-            }
-            case ChannelOp.CO_DELETED:
-                emitter?.emit('spaceChannelDeleted', this.streamId, channelId)
-                this.spaceChannelsMetadata.delete(channelId)
-                break
-            case ChannelOp.CO_UPDATED: {
-                const emittedChannelProperties =
-                    this.channelPropertiesFromEncryptedData(channelProperties)
-
-                this.spaceChannelsMetadata.set(channelId, emittedChannelProperties)
-
-                emitter?.emit(
-                    'spaceChannelUpdated',
-                    this.streamId,
-                    channelId,
-                    emittedChannelProperties,
-                )
-                break
-            }
-            default:
-                throwWithCode(`Unknown channel ${op}`, Err.STREAM_BAD_EVENT)
-        }
-    }
-
-    private addUserPayload_userMembership(
-        payload: UserPayload_UserMembership,
-        emitter?: TypedEmitter<StreamEvents>,
-    ): void {
-        const { op, streamId } = payload
-        switch (op) {
-            case MembershipOp.SO_INVITE:
-                this.userInvitedStreams.add(streamId)
-                emitter?.emit('userInvitedToStream', streamId)
-                break
-            case MembershipOp.SO_JOIN:
-                this.userJoinedStreams.add(streamId)
-                emitter?.emit('userJoinedStream', streamId)
-                break
-            case MembershipOp.SO_LEAVE:
-                emitter?.emit('userLeftStream', streamId)
-                this.userJoinedStreams.delete(streamId)
-                break
-            case MembershipOp.SO_UNSPECIFIED:
-                break
-            default:
-                checkNever(op)
-        }
-    }
-
-    private addSpacePayload_Membership(
-        payload: Membership,
-        emitter?: TypedEmitter<StreamEvents>,
-    ): void {
-        this.addMembershipEvent(payload, emitter)
-    }
-
-    private addChannelPayload_Membership(
-        payload: Membership,
-        emitter?: TypedEmitter<StreamEvents>,
-    ): void {
-        this.addMembershipEvent(payload, emitter)
-    }
-
-    private addMembershipEvent(payload: Membership, emitter?: TypedEmitter<StreamEvents>): void {
-        const { op, userId } = payload
-        switch (op) {
-            case MembershipOp.SO_INVITE:
-                this.invitedUsers.add(userId)
-                emitter?.emit('streamNewUserInvited', this.streamId, userId)
-                break
-            case MembershipOp.SO_JOIN:
-                this.joinedUsers.add(userId)
-                emitter?.emit('streamNewUserJoined', this.streamId, userId)
-                break
-            case MembershipOp.SO_LEAVE:
-                this.joinedUsers.delete(userId)
-                this.invitedUsers.delete(userId)
-                emitter?.emit('streamUserLeft', this.streamId, userId)
-                break
-            case MembershipOp.SO_UNSPECIFIED:
-                break
-            default:
-                checkNever(op)
-        }
-    }
-
-    private fullyReadMarkerContentFromEncryptedData(
-        encryptedData: EncryptedData | undefined,
-    ): FullyReadMarkerContent {
-        //TODO: We need to support decryption once encryption is enabled for Channel EncryptedData events
-        if (!isDefined(encryptedData?.text)) {
-            throw new Error('EncryptedData is undefined')
-        } else {
-            const fullyReadMarkerData = FullyReadMarkerContent.fromJsonString(
-                encryptedData?.text ?? '',
-            )
-            return fullyReadMarkerData
-        }
-    }
-
-    private fullyReadMarkerUpdate(
-        payload: UserSettingsPayload_FullyReadMarkers,
-        emitter?: TypedEmitter<StreamEvents>,
-    ): void {
-        const { content } = payload
-        if (content === undefined) {
-            throw Error('Content with FullyReadMarkers is undefined')
-        } else {
-            const fullyReadMarkers: Record<string, FullyReadMarkerContent> = {}
-
-            const fullyReadMarkersContent: FullyReadMarkersContent =
-                FullyReadMarkersContent.fromJsonString(content.text)
-
-            for (const [threadRoot, fullyReadMarker] of Object.entries(
-                fullyReadMarkersContent.markers,
-            )) {
-                fullyReadMarkers[threadRoot] = fullyReadMarker
-            }
-
-            emitter?.emit('channelUnreadMarkerUpdated', fullyReadMarkers)
         }
     }
 
@@ -532,6 +263,27 @@ export class StreamStateView {
             } else {
                 emitter.emit('streamUpdated', this.streamId, this.payloadKind, events)
             }
+        }
+    }
+
+    getMemberships(): StreamStateView_Membership {
+        switch (this.payloadKind) {
+            case 'channelPayload':
+                return this.channelContent.memberships
+            case 'spacePayload':
+                return this.spaceContent.memberships
+            case 'userPayload':
+                throw new Error('User content has no memberships')
+            case 'userSettingsPayload':
+                throw new Error('User settings content has no memberships')
+            case 'userDeviceKeyPayload':
+                throw new Error('User device key content has no memberships')
+            case 'miniblockHeader':
+                throw new Error('Miniblock header has no memberships')
+            case undefined:
+                throw new Error('Stream has no content')
+            default:
+                checkNever(this.payloadKind)
         }
     }
 }

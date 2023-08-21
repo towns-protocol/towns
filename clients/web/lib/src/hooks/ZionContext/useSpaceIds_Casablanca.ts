@@ -26,13 +26,12 @@ export function useSpacesIds_Casablanca(casablancaClient: CasablancaClient | und
             const streams = Array.from(casablancaClient.streams.values())
                 .filter((stream) => stream.view.payloadKind === 'spacePayload')
                 .sort((a, b) => a.view.streamId.localeCompare(b.view.streamId))
-
             const joined = streams
-                .filter((stream) => stream.view.joinedUsers.has(userId))
+                .filter((stream) => stream.view.getMemberships().joinedUsers.has(userId))
                 .map((stream) => makeRoomIdentifier(stream.view.streamId))
 
             const invited = streams
-                .filter((stream) => stream.view.invitedUsers.has(userId))
+                .filter((stream) => stream.view.getMemberships().invitedUsers.has(userId))
                 .map((stream) => makeRoomIdentifier(stream.view.streamId))
 
             setSpaceIds((prev) => {

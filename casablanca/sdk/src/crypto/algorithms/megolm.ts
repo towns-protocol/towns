@@ -1020,7 +1020,7 @@ export class MegolmEncryption extends EncryptionAlgorithm {
             this.logError(`stream for room ${channel_id} not found`)
             return null
         }
-        const members: string[] = Array.from(stream.view.joinedUsers)
+        const members: string[] = Array.from(stream.view.getMemberships().joinedUsers)
         this.logCall(
             `Encrypting for users (shouldEncryptForInvitedMembers:`,
             members.map((u) => `${u} (${MembershipOp[MembershipOp.SO_JOIN]})`),

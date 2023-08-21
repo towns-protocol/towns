@@ -1578,8 +1578,11 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
                 await this.casablancaClient.joinStream(roomId.networkId)
                 const stream = await this.casablancaClient.waitForStream(roomId.networkId)
                 let parentId = roomId
-                if (stream.view.parentSpaceId) {
-                    parentId = makeCasablancaStreamIdentifier(stream.view.parentSpaceId)
+                if (
+                    stream.view.payloadKind === 'channelPayload' &&
+                    stream.view.channelContent.spaceId
+                ) {
+                    parentId = makeCasablancaStreamIdentifier(stream.view.channelContent.spaceId)
                 }
                 this._eventHandlers?.onJoinRoom?.(roomId, parentId)
                 return toZionRoomFromStream(stream, this.casablancaClient.userId)
@@ -1989,15 +1992,15 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
 
                 const spaceStream = this.casablancaClient?.streams.get(roomId.networkId)
                 const spaceChannels = Array.from(
-                    spaceStream?.view?.spaceChannelsMetadata.keys() || [],
+                    spaceStream?.view?.spaceContent.spaceChannelsMetadata.keys() || [],
                 )
 
                 //We go through all the channels in the space and check if the user is invited or joined
                 spaceChannels?.forEach((channel) => {
-                    if (userStreamRollup?.userInvitedStreams.has(channel)) {
+                    if (userStreamRollup?.userContent.userInvitedStreams.has(channel)) {
                         memberships[channel] = Membership.Invite
                     }
-                    if (userStreamRollup?.userJoinedStreams.has(channel)) {
+                    if (userStreamRollup?.userContent.userJoinedStreams.has(channel)) {
                         memberships[channel] = Membership.Join
                     }
                 })

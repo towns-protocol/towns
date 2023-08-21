@@ -200,7 +200,7 @@ function useSpaceRollup(streamId: RoomIdentifier | undefined): SpaceData | undef
         // wrap the update op, we get the channel ids and
         // rollup the space channels into a space
         const update = () => {
-            const channelIds = Array.from(stream.view.spaceChannelsMetadata.keys())
+            const channelIds = Array.from(stream.view.spaceContent.spaceChannelsMetadata.keys())
             const newSpace = rollupSpace(stream, userId, channelIds)
             setSpace((prev) => {
                 if (isEqual(prev, newSpace)) {
@@ -239,15 +239,15 @@ function rollupSpace(stream: Stream, userId: string, channels: string[]): SpaceD
         throw new Error('stream is not a space')
     }
 
-    const membership = stream.view.joinedUsers.has(userId)
+    const membership = stream.view.getMemberships().joinedUsers.has(userId)
         ? Membership.Join
-        : stream.view.invitedUsers.has(userId)
+        : stream.view.getMemberships().invitedUsers.has(userId)
         ? Membership.Invite
         : Membership.None
 
     return {
         id: makeRoomIdentifier(stream.view.streamId),
-        name: stream.view.name ?? stream.view.streamId,
+        name: stream.view.spaceContent.name ?? stream.view.streamId,
         avatarSrc: '',
         channelGroups: [
             {
@@ -265,10 +265,10 @@ function rollupSpace(stream: Stream, userId: string, channels: string[]): SpaceD
                     .sort((a, b) => a.localeCompare(b))
                     .map((c) => ({
                         id: makeRoomIdentifier(c),
-                        label: stream.view.spaceChannelsMetadata.get(c)?.name ?? c,
+                        label: stream.view.spaceContent.spaceChannelsMetadata.get(c)?.name ?? c,
                         private: false,
                         highlight: false,
-                        topic: stream.view.spaceChannelsMetadata.get(c)?.topic ?? '',
+                        topic: stream.view.spaceContent.spaceChannelsMetadata.get(c)?.topic ?? '',
                     })),
             },
         ],

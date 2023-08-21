@@ -207,7 +207,9 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         stream.on('userLeftStream', (s) => void this.onLeftStream(s))
 
         return Promise.all(
-            Array.from(stream.view.userJoinedStreams).map((streamId) => this.initStream(streamId)),
+            Array.from(stream.view.userContent.userJoinedStreams).map((streamId) =>
+                this.initStream(streamId),
+            ),
         ).then(() => {})
     }
 
@@ -1152,7 +1154,9 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
                     // 06/02/23 note: for now there's a one to one mapping between userIds - deviceIds, which is why
                     // we return the latest UserDeviceKey event for each user from their stream. This won't hold in the future
                     // as user's will eventually have multiple devices per user.
-                    const payload = Array.from(stream.uploadedDeviceKeys.values())[0]
+                    const payload = Array.from(
+                        stream.userDeviceKeyContent.uploadedDeviceKeys.values(),
+                    )[0]
 
                     if (!returnFallbackKeys) {
                         const deviceKeys = payload.map((v) => v.deviceKeys).filter(isDefined)

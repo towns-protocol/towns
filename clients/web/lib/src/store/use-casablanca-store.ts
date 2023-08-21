@@ -67,14 +67,18 @@ export function toZionCasablancaRoom(streamId: string, client: CasablancaClient)
     let topic: string | undefined = undefined
     let name: string
     if (isChannelStreamId(streamId)) {
-        const parentSpace = client.streams.get(streamId)?.view.parentSpaceId
+        const parentSpace = client.streams.get(streamId)?.view.channelContent.spaceId
         if (parentSpace === undefined) {
             throw new Error('Parent space not found for streamId: ' + streamId)
         }
-        name = client.streams.get(parentSpace)?.view.spaceChannelsMetadata.get(streamId)?.name ?? ''
-        topic = client.streams.get(parentSpace)?.view.spaceChannelsMetadata.get(streamId)?.topic
+        name =
+            client.streams.get(parentSpace)?.view.spaceContent.spaceChannelsMetadata.get(streamId)
+                ?.name ?? ''
+        topic = client.streams
+            .get(parentSpace)
+            ?.view.spaceContent.spaceChannelsMetadata.get(streamId)?.topic
     } else {
-        name = client.streams.get(streamId)?.view.name ?? ''
+        name = client.streams.get(streamId)?.view.spaceContent.name ?? ''
     }
 
     return {
@@ -153,11 +157,11 @@ function getMembersWithMembership(
     } else {
         switch (membership) {
             case Membership.Join: {
-                users = stream.view.joinedUsers
+                users = stream.view.getMemberships().joinedUsers
                 break
             }
             case Membership.Invite: {
-                users = stream.view.invitedUsers
+                users = stream.view.getMemberships().invitedUsers
                 break
             }
             default: {
