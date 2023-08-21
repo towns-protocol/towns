@@ -44,8 +44,8 @@ contract TownImplementationHelper {
     cuts[index++] = diamondLoupeHelper.makeCut(IDiamond.FacetCutAction.Add);
     cuts[index++] = entitlementsHelper.makeCut(IDiamond.FacetCutAction.Add);
     cuts[index++] = rolesHelper.makeCut(IDiamond.FacetCutAction.Add);
-    cuts[index++] = channelsHelper.makeCut(IDiamond.FacetCutAction.Add);
     cuts[index++] = tokenPausableHelper.makeCut(IDiamond.FacetCutAction.Add);
+    cuts[index++] = channelsHelper.makeCut(IDiamond.FacetCutAction.Add);
 
     initAddresses[0] = ownableHelper.facet();
     initAddresses[1] = diamondCutHelper.facet();

@@ -33,6 +33,10 @@ deploy-goerli :;
 	@forge build
 	@SAVE_DEPLOYMENTS=1 forge script scripts/${contract}.s.sol:${contract} --ffi --rpc-url goerli --private-key ${PRIVATE_KEY} --broadcast --verify --watch -vvvv
 
+verify-goerli :;
+	@forge build
+	@SAVE_DEPLOYMENTS=1 forge script scripts/${contract}.s.sol:${contract} --ffi --rpc-url goerli --private-key ${PRIVATE_KEY} --verify --resume
+
 # Seperate build from script to avoid race inside forge where the linker wasn't fnisihing before the script started running
 deploy-sepolia :;
 	@forge build

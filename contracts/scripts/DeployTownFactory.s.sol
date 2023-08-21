@@ -80,7 +80,7 @@ contract DeployTownFactory is Deployer {
     uint256 deployerPK,
     address deployer
   ) public override returns (address) {
-    deployPioneer.deploy();
+    address pioneerToken = deployPioneer.deploy();
     address townToken = deployTownOwner.deploy();
 
     vm.startBroadcast(deployerPK);
@@ -174,8 +174,7 @@ contract DeployTownFactory is Deployer {
     );
 
     TownOwner(townToken).setFactory(address(townFactory));
-    // TODO: disable for now because it requires the tests to generate a Pioneer token for the test owner.
-    //TownArchitect(townFactory).gateByToken(pioneer, 1);
+    TownArchitect(townFactory).gateByToken(pioneerToken, 1);
     vm.stopBroadcast();
 
     return townFactory;
