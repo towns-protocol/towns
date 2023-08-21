@@ -41,10 +41,11 @@ func (s *Service) getStream(ctx context.Context, req *connect_go.Request[GetStre
 
 	resp := &GetStreamResponse{
 		Stream: &StreamAndCookie{
-			Events:         streamView.Envelopes(),
+			Events:         streamView.Envelopes(), // todo HNT-2073 switch to MinipoolEnvelopes
 			StreamId:       streamView.StreamId(),
 			NextSyncCookie: streamView.SyncCookie(),
 		},
+		Miniblocks: streamView.MiniblocksFromLastSnapshot(),
 	}
 
 	return connect_go.NewResponse(resp), nil

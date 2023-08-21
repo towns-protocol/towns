@@ -51,12 +51,9 @@ func TestLoad(t *testing.T) {
 
 	assert.Equal(t, "streamid$1", view.StreamId())
 
-	i := view.InceptionPayload()
-	assert.NotNil(t, i)
-	assert.Equal(t, parsedEvent(t, inception).Event.GetInceptionPayload().GetStreamId(), i.GetStreamId())
-
 	ip := view.InceptionPayload()
 	assert.NotNil(t, ip)
+	assert.Equal(t, parsedEvent(t, inception).Event.GetInceptionPayload().GetStreamId(), ip.GetStreamId())
 	assert.Equal(t, "streamid$1", ip.GetStreamId())
 
 	users, err := view.JoinedUsers()
@@ -67,7 +64,15 @@ func TestLoad(t *testing.T) {
 	assert.NotNil(t, last)
 	assert.Equal(t, join.Hash, last.Hash)
 
-	newEnvelopes := view.Envelopes()
+	miniEnvelopes := view.MinipoolEnvelopes()
+	assert.Equal(t, 0, len(miniEnvelopes))
+
+	newEnvelopes := make([]*protocol.Envelope, 0, len(envelopes))
+	_ = view.forEachEvent(0, func(e *ParsedEvent) (bool, error) {
+		newEnvelopes = append(newEnvelopes, e.Envelope)
+		return true, nil
+	})
+
 	assert.Equal(t, 3, len(newEnvelopes))
 	assert.Equal(t, envelopes, newEnvelopes)
 

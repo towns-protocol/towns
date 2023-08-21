@@ -23,6 +23,8 @@ type StreamView interface {
 	InceptionPayload() IsInceptionPayload
 	LastEvent() *ParsedEvent
 	Envelopes() []*Envelope
+	MinipoolEnvelopes() []*Envelope
+	MiniblocksFromLastSnapshot() []*Miniblock
 	SyncCookie() *SyncCookie
 }
 
@@ -143,6 +145,7 @@ func MakeStreamViewFromParsedEvents(unsortedEvents []*ParsedEvent) (*streamViewI
 
 	streamId := events[0].Event.GetInceptionPayload().GetStreamId()
 
+	var snapshotIndex = 0
 	var snapshot *Snapshot
 	blocks := make([]*miniblockInfo, 0, len(events)/8)
 	for _, event := range events {
@@ -154,6 +157,7 @@ func MakeStreamViewFromParsedEvents(unsortedEvents []*ParsedEvent) (*streamViewI
 
 			if header.GetSnapshot() != nil {
 				snapshot = header.GetSnapshot()
+				snapshotIndex = len(blocks)
 			}
 
 			if len(blocks) > 0 {
@@ -206,19 +210,21 @@ func MakeStreamViewFromParsedEvents(unsortedEvents []*ParsedEvent) (*streamViewI
 	}
 
 	return &streamViewImpl{
-		streamId: streamId,
-		blocks:   blocks,
-		minipool: newMiniPoolInstance(minipoolEvents),
-		snapshot: snapshot,
+		streamId:      streamId,
+		blocks:        blocks,
+		minipool:      newMiniPoolInstance(minipoolEvents),
+		snapshot:      snapshot,
+		snapshotIndex: snapshotIndex,
 	}, nil
 }
 
 type streamViewImpl struct {
 	streamId string
 
-	blocks   []*miniblockInfo
-	minipool *minipoolInstance
-	snapshot *Snapshot
+	blocks        []*miniblockInfo
+	minipool      *minipoolInstance
+	snapshot      *Snapshot
+	snapshotIndex int
 }
 
 func (r *streamViewImpl) copyAndAddEvent(event *ParsedEvent) (*streamViewImpl, error) {
@@ -233,10 +239,11 @@ func (r *streamViewImpl) copyAndAddEvent(event *ParsedEvent) (*streamViewImpl, e
 	// to check only recent blocks for duplicates.
 
 	r = &streamViewImpl{
-		streamId: r.streamId,
-		blocks:   r.blocks,
-		minipool: r.minipool.copyAndAddEvent(event),
-		snapshot: r.snapshot,
+		streamId:      r.streamId,
+		blocks:        r.blocks,
+		minipool:      r.minipool.copyAndAddEvent(event),
+		snapshot:      r.snapshot,
+		snapshotIndex: r.snapshotIndex,
 	}
 	return r, nil
 }
@@ -327,18 +334,22 @@ func (r *streamViewImpl) copyAndApplyBlock(headerEvent *ParsedEvent) (*streamVie
 		}
 	}
 
+	var snapshotIndex int
 	var snapshot *Snapshot
 	if header.Snapshot != nil {
 		snapshot = header.Snapshot
+		snapshotIndex = len(r.blocks)
 	} else {
 		snapshot = r.snapshot
+		snapshotIndex = r.snapshotIndex
 	}
 
 	return &streamViewImpl{
-		streamId: r.streamId,
-		blocks:   append(r.blocks, &miniblockInfo{headerEvent: headerEvent, events: eventsInBlock}),
-		minipool: newMiniPoolInstance(minipoolEvents),
-		snapshot: snapshot,
+		streamId:      r.streamId,
+		blocks:        append(r.blocks, &miniblockInfo{headerEvent: headerEvent, events: eventsInBlock}),
+		minipool:      newMiniPoolInstance(minipoolEvents),
+		snapshot:      snapshot,
+		snapshotIndex: snapshotIndex,
 	}, nil
 }
 
@@ -460,6 +471,36 @@ func (r *streamViewImpl) Envelopes() []*Envelope {
 	return envelopes
 }
 
+func (r *streamViewImpl) MinipoolEnvelopes() []*Envelope {
+	envelopes := make([]*Envelope, 0, len(r.minipool.events.Values))
+	_ = r.minipool.forEachEvent(func(e *ParsedEvent) (bool, error) {
+		envelopes = append(envelopes, e.Envelope)
+		return true, nil
+	})
+	return envelopes
+}
+
+func (r *streamViewImpl) MiniblocksFromLastSnapshot() []*Miniblock {
+	miniblocks := make([]*Miniblock, 0, len(r.blocks)-r.snapshotIndex)
+	for i := r.snapshotIndex; i < len(r.blocks); i++ {
+		// grab the block
+		block := r.blocks[i]
+		// start copying events
+		envelopes := make([]*Envelope, 0, len(block.events))
+		// copy all the events (but not the header)
+		for _, event := range block.events {
+			envelopes = append(envelopes, event.Envelope)
+		}
+		// make the block
+		miniblock := Miniblock{
+			Events: envelopes,
+			Header: block.headerEvent.Envelope,
+		}
+		miniblocks = append(miniblocks, &miniblock)
+	}
+	return miniblocks
+}
+
 func (r *streamViewImpl) SyncCookie() *SyncCookie {
 	// TODO: create once and re-use.
 	return &SyncCookie{
@@ -505,17 +546,8 @@ func (r *streamViewImpl) shouldSnapshot() bool {
 
 func (r *streamViewImpl) eventsSinceLastSnapshot() []*ParsedEvent {
 	returnVal := make([]*ParsedEvent, 0, r.getMinEventsPerSnapshot())
-	// find index of oldest block without snapshot
-	lastSnapshotBlockIndex := len(r.blocks)
-	for i := len(r.blocks) - 1; i >= 0; i-- {
-		block := r.blocks[i]
-		if block.header().Snapshot != nil {
-			break
-		}
-		lastSnapshotBlockIndex = i
-	}
 	// add events from blocks without snapshot
-	for i := lastSnapshotBlockIndex; i < len(r.blocks); i++ {
+	for i := r.snapshotIndex + 1; i < len(r.blocks); i++ {
 		block := r.blocks[i]
 		returnVal = append(returnVal, block.events...)
 	}

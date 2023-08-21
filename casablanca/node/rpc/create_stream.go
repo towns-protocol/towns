@@ -180,8 +180,8 @@ func (s *Service) createStream(ctx context.Context, log *slog.Logger, req *conne
 		break
 	}
 
-	// Make genesis block header and add to the stream.
-	block, err := Make_GenisisMiniblockHeader(parsedEvents)
+	// Make genesis minibock header and add to the stream.
+	minibockHeader, err := Make_GenisisMiniblockHeader(parsedEvents)
 
 	if err != nil {
 		return nil, err
@@ -189,7 +189,7 @@ func (s *Service) createStream(ctx context.Context, log *slog.Logger, req *conne
 
 	blockEvent, err := MakeParsedEventWithPayload(
 		s.wallet,
-		Make_MiniblockHeader(block),
+		Make_MiniblockHeader(minibockHeader),
 		[][]byte{parsedEvents[len(parsedEvents)-1].Hash},
 	)
 
@@ -245,10 +245,11 @@ func (s *Service) createStream(ctx context.Context, log *slog.Logger, req *conne
 	return connect_go.NewResponse(
 		&CreateStreamResponse{
 			Stream: &StreamAndCookie{
-				Events:         streamView.Envelopes(),
+				Events:         streamView.Envelopes(), // todo HNT-2073 switch to MinipoolEnvelopes
 				StreamId:       streamView.StreamId(),
 				NextSyncCookie: streamView.SyncCookie(),
 			},
+			Miniblocks: streamView.MiniblocksFromLastSnapshot(),
 		},
 	), nil
 }

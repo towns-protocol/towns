@@ -449,6 +449,7 @@ message CreateStreamRequest {
 
 message CreateStreamResponse {
     StreamAndCookie stream = 1;
+    repeated Miniblock miniblocks = 2;
 }
 
 message GetStreamRequest {
@@ -457,6 +458,7 @@ message GetStreamRequest {
 
 message GetStreamResponse {
     StreamAndCookie stream = 1;
+    repeated Miniblock miniblocks = 2;
 }
 
 message AddEventRequest {
