@@ -180,15 +180,14 @@ const search = async function (string: string) {
     // prepare the data once, search on []keywords and name.
     emojiCache =
         emojiCache ??
-        Object.values(emojis).flatMap((emoji) => {
-            return emoji.keywords
-                .map((keyword) => ({ name: emoji.name, emoji: emoji.default, keyword: keyword }))
-                .concat({ name: emoji.name, emoji: emoji.default, keyword: emoji.name })
+        Object.values(emojis).map((emoji) => {
+            const keywords = [emoji.name, ...emoji.keywords].join(',')
+            return { emoji: emoji.default, keywords: keywords, name: emoji.name }
         })
 
     return fuzzysort
         .go(string, emojiCache, {
-            key: 'keyword',
+            key: 'keywords',
             all: true,
         })
         .map((r) => ({
