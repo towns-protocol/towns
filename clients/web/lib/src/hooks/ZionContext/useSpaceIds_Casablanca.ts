@@ -2,7 +2,7 @@ import { Client as CasablancaClient, ParsedEvent } from '@river/sdk'
 import { useEffect, useState } from 'react'
 import { RoomIdentifier, makeRoomIdentifier } from '../../types/room-identifier'
 import isEqual from 'lodash/isEqual'
-import { PayloadCaseType } from '@river/proto'
+import { SnapshotCaseType } from '@river/proto'
 
 export function useSpacesIds_Casablanca(casablancaClient: CasablancaClient | undefined): {
     invitedToIds: RoomIdentifier[]
@@ -24,7 +24,7 @@ export function useSpacesIds_Casablanca(casablancaClient: CasablancaClient | und
 
         const updateSpaces = () => {
             const streams = Array.from(casablancaClient.streams.values())
-                .filter((stream) => stream.view.payloadKind === 'spacePayload')
+                .filter((stream) => stream.view.contentKind === 'spaceContent')
                 .sort((a, b) => a.view.streamId.localeCompare(b.view.streamId))
             const joined = streams
                 .filter((stream) => stream.view.getMemberships().joinedUsers.has(userId))
@@ -50,10 +50,10 @@ export function useSpacesIds_Casablanca(casablancaClient: CasablancaClient | und
 
         const onStreamChange = (
             _streamId: string,
-            kind: PayloadCaseType,
+            kind: SnapshotCaseType,
             _messages: ParsedEvent[],
         ) => {
-            if (kind === 'spacePayload') {
+            if (kind === 'spaceContent') {
                 updateSpaces()
             }
         }

@@ -1,10 +1,9 @@
-import { StreamAndCookie } from '@river/proto'
+import { Snapshot, StreamAndCookie } from '@river/proto'
 
 import { DLogger } from './dlog'
 import EventEmitter from 'events'
 import TypedEmitter from 'typed-emitter'
 import { StreamStateView } from './streamStateView'
-import { ParsedEvent } from './types'
 import { EmittedEvents } from './client'
 import { RiverEvent } from './event'
 
@@ -16,7 +15,7 @@ export class Stream extends (EventEmitter as new () => TypedEmitter<EmittedEvent
 
     constructor(
         streamId: string,
-        inceptionEvent: ParsedEvent | undefined,
+        snapshot: Snapshot,
         clientEmitter: TypedEmitter<EmittedEvents>,
         logEmitFromStream: DLogger,
         foreignUserStream?: boolean,
@@ -24,7 +23,7 @@ export class Stream extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         super()
         this.clientEmitter = clientEmitter
         this.logEmitFromStream = logEmitFromStream
-        this.view = new StreamStateView(streamId, inceptionEvent)
+        this.view = new StreamStateView(streamId, snapshot)
         this.foreignUserStream = foreignUserStream ?? false
     }
 

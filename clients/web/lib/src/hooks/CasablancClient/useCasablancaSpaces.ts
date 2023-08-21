@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { makeRoomIdentifier } from '../../types/room-identifier'
 import { SpaceItem } from '../../types/zion-types'
 import isEqual from 'lodash/isEqual'
-import { PayloadCaseType } from '@river/proto'
+import { SnapshotCaseType } from '@river/proto'
 
 export function useCasablancaSpaces(casablancaClient?: CasablancaClient): SpaceItem[] {
     const [spaces, setSpaces] = useState<SpaceItem[]>([])
@@ -15,7 +15,7 @@ export function useCasablancaSpaces(casablancaClient?: CasablancaClient): SpaceI
 
         const updateSpaces = () => {
             const streams = Array.from(casablancaClient.streams.values())
-                .filter((stream: Stream) => stream.view.payloadKind === 'spacePayload')
+                .filter((stream: Stream) => stream.view.contentKind === 'spaceContent')
                 .sort((a: Stream, b: Stream) => a.view.streamId.localeCompare(b.view.streamId))
                 .map(
                     (stream: Stream) =>
@@ -36,10 +36,10 @@ export function useCasablancaSpaces(casablancaClient?: CasablancaClient): SpaceI
 
         const onStreamChange = (
             _streamId: string,
-            kind: PayloadCaseType,
+            kind: SnapshotCaseType,
             _messages: ParsedEvent[],
         ) => {
-            if (kind === 'spacePayload') {
+            if (kind === 'spaceContent') {
                 updateSpaces()
             }
         }

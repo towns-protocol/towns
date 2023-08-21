@@ -1579,7 +1579,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
                 const stream = await this.casablancaClient.waitForStream(roomId.networkId)
                 let parentId = roomId
                 if (
-                    stream.view.payloadKind === 'channelPayload' &&
+                    stream.view.contentKind === 'channelContent' &&
                     stream.view.channelContent.spaceId
                 ) {
                     parentId = makeCasablancaStreamIdentifier(stream.view.channelContent.spaceId)

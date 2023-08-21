@@ -2,13 +2,13 @@ import { Client as CasablancaClient, ParsedEvent, isCiphertext } from '@river/sd
 import {
     MembershipOp,
     ChannelMessage_Post,
-    PayloadCaseType,
     ToDeviceOp,
     UserPayload,
     ChannelPayload,
     EncryptedData,
     SpacePayload,
     MiniblockHeader,
+    SnapshotCaseType,
 } from '@river/proto'
 import { useEffect } from 'react'
 import { Membership, MessageType } from '../../types/zion-types'
@@ -69,10 +69,10 @@ export function useCasablancaTimelines(casablancaClient: CasablancaClient | unde
 
         const onStreamInitialized = (
             streamId: string,
-            kind: PayloadCaseType,
+            kind: SnapshotCaseType,
             messages: ParsedEvent[],
         ) => {
-            if (kind === 'channelPayload' || kind === 'spacePayload') {
+            if (kind === 'channelContent' || kind === 'spaceContent') {
                 streamIds.add(streamId)
                 const timelineEvents = messages.map((message) => toEvent(message, userId))
                 setState.initializeRoom(userId, streamId, [])
@@ -82,10 +82,10 @@ export function useCasablancaTimelines(casablancaClient: CasablancaClient | unde
 
         const onStreamUpdated = (
             streamId: string,
-            kind: PayloadCaseType,
+            kind: SnapshotCaseType,
             messages: ParsedEvent[],
         ) => {
-            if (kind === 'channelPayload' || kind === 'spacePayload') {
+            if (kind === 'channelContent' || kind === 'spaceContent') {
                 streamIds.add(streamId)
                 const timelineEvents = messages.map((message) => toEvent(message, userId))
                 onStreamEvents(streamId, timelineEvents)
@@ -118,8 +118,8 @@ export function useCasablancaTimelines(casablancaClient: CasablancaClient | unde
         //Step 1: get all the events which are already in the river before listeners started
         casablancaClient?.streams.forEach((stream) => {
             if (
-                stream.view.payloadKind === 'channelPayload' ||
-                stream.view.payloadKind === 'spacePayload'
+                stream.view.contentKind === 'channelContent' ||
+                stream.view.contentKind === 'spaceContent'
             ) {
                 streamIds.add(stream.streamId)
                 timelineEvents.set(stream.streamId, [])

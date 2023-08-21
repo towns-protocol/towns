@@ -1,5 +1,5 @@
 import { dlog } from './dlog'
-import { Err, PayloadCaseType, SyncCookie, StreamAndCookie } from '@river/proto'
+import { Err, SnapshotCaseType, SyncCookie, StreamAndCookie, Snapshot } from '@river/proto'
 import TypedEmitter from 'typed-emitter'
 import { check, checkNever, isDefined, throwWithCode } from './check'
 import { ParsedEvent } from './types'
@@ -21,7 +21,7 @@ const isCookieEqual = (a?: SyncCookie, b?: SyncCookie): boolean => isEqual(a, b)
 export class StreamStateView {
     readonly streamId: string
 
-    readonly payloadKind: PayloadCaseType
+    readonly contentKind: SnapshotCaseType
 
     readonly timeline: ParsedEvent[] = []
     readonly events = new Map<string, ParsedEvent>()
@@ -38,21 +38,21 @@ export class StreamStateView {
     // Space Content
     private readonly _spaceContent?: StreamStateView_Space
     get spaceContent(): StreamStateView_Space {
-        check(isDefined(this._spaceContent), `spaceContent not defined for ${this.payloadKind}`)
+        check(isDefined(this._spaceContent), `spaceContent not defined for ${this.contentKind}`)
         return this._spaceContent
     }
 
     // Channel Content
     private readonly _channelContent?: StreamStateView_Channel
     get channelContent(): StreamStateView_Channel {
-        check(isDefined(this._channelContent), `channelContent not defined for ${this.payloadKind}`)
+        check(isDefined(this._channelContent), `channelContent not defined for ${this.contentKind}`)
         return this._channelContent
     }
 
     // User Content
     private readonly _userContent?: StreamStateView_User
     get userContent(): StreamStateView_User {
-        check(isDefined(this._userContent), `userContent not defined for ${this.payloadKind}`)
+        check(isDefined(this._userContent), `userContent not defined for ${this.contentKind}`)
         return this._userContent
     }
 
@@ -61,7 +61,7 @@ export class StreamStateView {
     get userSettingsContent(): StreamStateView_UserSettings {
         check(
             isDefined(this._userSettingsContent),
-            `userSettingsContent not defined for ${this.payloadKind}`,
+            `userSettingsContent not defined for ${this.contentKind}`,
         )
         return this._userSettingsContent
     }
@@ -70,67 +70,54 @@ export class StreamStateView {
     get userDeviceKeyContent(): StreamStateView_UserDeviceKeys {
         check(
             isDefined(this._userDeviceKeyContent),
-            `userDeviceKeyContent not defined for ${this.payloadKind}`,
+            `userDeviceKeyContent not defined for ${this.contentKind}`,
         )
         return this._userDeviceKeyContent
     }
 
-    constructor(streamId: string, inceptionEvent: ParsedEvent | undefined) {
-        check(isDefined(inceptionEvent), `Stream is empty ${streamId}`, Err.STREAM_EMPTY)
+    constructor(streamId: string, snapshot: Snapshot | undefined) {
+        check(isDefined(snapshot), `Stream is empty ${streamId}`, Err.STREAM_EMPTY)
+
         check(
-            inceptionEvent.event.payload?.value?.content.case === 'inception',
-            `First event is not inception ${streamId}`,
+            isDefined(snapshot.content.value?.inception),
+            `Snapshot does not contain inception ${streamId}`,
             Err.STREAM_BAD_EVENT,
         )
-        const inceptionPayload = inceptionEvent.event.payload?.value?.content.value
+        const inceptionPayload = snapshot.content.value?.inception
         check(
-            isDefined(inceptionPayload),
-            `First event is not inception ${streamId}`,
-            Err.STREAM_BAD_EVENT,
-        )
-        check(
-            inceptionPayload.streamId === streamId,
-            `Non-matching stream id in inception ${streamId} != ${inceptionPayload.streamId}`,
+            inceptionPayload?.streamId === streamId,
+            `Non-matching stream id in inception ${streamId} != ${inceptionPayload?.streamId}`,
             Err.STREAM_BAD_EVENT,
         )
 
         this.streamId = streamId
-        this.payloadKind = inceptionEvent.event.payload.case
+        this.contentKind = snapshot.content.case
 
-        switch (inceptionEvent.event.payload.case) {
-            case 'channelPayload':
-                this._channelContent = new StreamStateView_Channel(
-                    inceptionEvent.event.payload?.value?.content.value,
-                )
+        switch (snapshot.content.case) {
+            case 'channelContent':
+                this._channelContent = new StreamStateView_Channel(snapshot.content.value.inception)
                 break
-            case 'spacePayload':
-                this._spaceContent = new StreamStateView_Space(
-                    inceptionEvent.event.payload?.value?.content.value,
-                )
+            case 'spaceContent':
+                this._spaceContent = new StreamStateView_Space(snapshot.content.value.inception)
                 break
-            case 'userPayload':
-                this._userContent = new StreamStateView_User(
-                    inceptionEvent.event.payload?.value?.content.value,
-                )
+            case 'userContent':
+                this._userContent = new StreamStateView_User(snapshot.content.value.inception)
                 break
-            case 'userSettingsPayload':
+            case 'userSettingsContent':
                 this._userSettingsContent = new StreamStateView_UserSettings(
-                    inceptionEvent.event.payload?.value?.content.value,
+                    snapshot.content.value.inception,
                 )
                 break
-            case 'userDeviceKeyPayload':
+            case 'userDeviceKeyContent':
                 this._userDeviceKeyContent = new StreamStateView_UserDeviceKeys(
-                    inceptionEvent.event.payload?.value?.content.value,
+                    snapshot.content.value.inception,
                 )
-                break
-            case 'miniblockHeader':
-                check(false, `Miniblock header not supported ${streamId}`, Err.STREAM_BAD_EVENT)
                 break
             case undefined:
-                check(false, `Inception has no payload ${streamId}`, Err.STREAM_BAD_EVENT)
+                check(false, `Snapshot has no content ${streamId}`, Err.STREAM_BAD_EVENT)
                 break
             default:
-                checkNever(inceptionEvent.event.payload)
+                checkNever(snapshot.content)
         }
     }
 
@@ -259,31 +246,29 @@ export class StreamStateView {
 
         if (emitter !== undefined) {
             if (init ?? false) {
-                emitter.emit('streamInitialized', this.streamId, this.payloadKind, events)
+                emitter.emit('streamInitialized', this.streamId, this.contentKind, events)
             } else {
-                emitter.emit('streamUpdated', this.streamId, this.payloadKind, events)
+                emitter.emit('streamUpdated', this.streamId, this.contentKind, events)
             }
         }
     }
 
     getMemberships(): StreamStateView_Membership {
-        switch (this.payloadKind) {
-            case 'channelPayload':
+        switch (this.contentKind) {
+            case 'channelContent':
                 return this.channelContent.memberships
-            case 'spacePayload':
+            case 'spaceContent':
                 return this.spaceContent.memberships
-            case 'userPayload':
+            case 'userContent':
                 throw new Error('User content has no memberships')
-            case 'userSettingsPayload':
+            case 'userSettingsContent':
                 throw new Error('User settings content has no memberships')
-            case 'userDeviceKeyPayload':
+            case 'userDeviceKeyContent':
                 throw new Error('User device key content has no memberships')
-            case 'miniblockHeader':
-                throw new Error('Miniblock header has no memberships')
             case undefined:
                 throw new Error('Stream has no content')
             default:
-                checkNever(this.payloadKind)
+                checkNever(this.contentKind)
         }
     }
 }

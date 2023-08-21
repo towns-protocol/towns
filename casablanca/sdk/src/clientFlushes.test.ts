@@ -2,7 +2,7 @@
  * @group node-minipool-flush
  */
 
-import { PayloadCaseType } from '@river/proto'
+import { SnapshotCaseType } from '@river/proto'
 import { Client } from './client'
 import { DLogger, dlog } from './dlog'
 import { RiverEvent } from './event'
@@ -46,10 +46,10 @@ describe('clientFlushes', () => {
             })
         }
 
-        const onStreamInitialized = (streamId: string, streamKind: PayloadCaseType) => {
+        const onStreamInitialized = (streamId: string, streamKind: SnapshotCaseType) => {
             log('streamInitialized', streamId, streamKind)
             done.runAsync(async () => {
-                if (streamKind === 'channelPayload') {
+                if (streamKind === 'channelContent') {
                     const channel = bobsClient.stream(streamId)!
                     log('channel content')
                     log(channel.view)
@@ -124,10 +124,10 @@ describe('clientFlushes', () => {
             })
         }
 
-        const onStreamInitialized = (streamId: string, streamKind: PayloadCaseType) => {
+        const onStreamInitialized = (streamId: string, streamKind: SnapshotCaseType) => {
             log('streamInitialized', streamId, streamKind)
             done.runAsync(async () => {
-                if (streamKind === 'channelPayload') {
+                if (streamKind === 'channelContent') {
                     const channel = bobsAnotherClient.stream(streamId)!
                     log('channel content')
                     log(channel.view)

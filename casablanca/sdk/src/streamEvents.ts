@@ -6,9 +6,9 @@ import {
     UserDeviceKeyPayload_Inception,
     UserSettingsPayload_Inception,
     UserPayload_Inception,
-    PayloadCaseType,
     ChannelProperties,
     FullyReadMarkerContent,
+    SnapshotCaseType,
 } from '@river/proto'
 import { ParsedEvent } from './types'
 import { RiverEvent } from './event'
@@ -67,10 +67,10 @@ export type StreamEvents = {
     ) => void
     streamInitialized: (
         streamId: string,
-        payloadKind: PayloadCaseType,
+        contentKind: SnapshotCaseType,
         events: ParsedEvent[],
     ) => void
-    streamUpdated: (streamId: string, payloadKind: PayloadCaseType, events: ParsedEvent[]) => void
+    streamUpdated: (streamId: string, contentKind: SnapshotCaseType, events: ParsedEvent[]) => void
 }
 
 export type StreamEventKeys = keyof StreamEvents

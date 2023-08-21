@@ -2,7 +2,7 @@ import { dlog } from './dlog'
 import { makeDonePromise, makeTestClient } from './util.test'
 import { Client } from './client'
 import { RiverEvent } from './event'
-import { PayloadCaseType, ToDeviceOp } from '@river/proto'
+import { SnapshotCaseType, ToDeviceOp } from '@river/proto'
 import { genId, makeChannelStreamId, makeSpaceStreamId } from './id'
 import { isCiphertext, make_ToDevice_KeyRequest } from './types'
 
@@ -41,10 +41,10 @@ describe('riverEventTest', () => {
             })
         }
 
-        const onStreamInitialized = (streamId: string, streamKind: PayloadCaseType) => {
+        const onStreamInitialized = (streamId: string, streamKind: SnapshotCaseType) => {
             log('streamInitialized', streamId, streamKind)
             done.run(() => {
-                if (streamKind === 'channelPayload') {
+                if (streamKind === 'channelContent') {
                     const channel = bobsClient.stream(streamId)!
                     log('channel content')
                     log(channel.view)

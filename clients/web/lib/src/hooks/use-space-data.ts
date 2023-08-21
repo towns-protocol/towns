@@ -190,7 +190,7 @@ function useSpaceRollup(streamId: RoomIdentifier | undefined): SpaceData | undef
         if (!stream || !casablancaClient) {
             return
         }
-        if (stream.view.payloadKind !== 'spacePayload') {
+        if (stream.view.contentKind !== 'spaceContent') {
             console.error('useSpaceRollup called with non-space stream')
             return
         }
@@ -235,7 +235,7 @@ function useSpaceRollup(streamId: RoomIdentifier | undefined): SpaceData | undef
 }
 
 function rollupSpace(stream: Stream, userId: string, channels: string[]): SpaceData | undefined {
-    if (stream.view.payloadKind !== 'spacePayload') {
+    if (stream.view.contentKind !== 'spaceContent') {
         throw new Error('stream is not a space')
     }
 

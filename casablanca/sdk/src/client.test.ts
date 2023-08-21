@@ -10,7 +10,7 @@ import {
 } from './id'
 import { IFallbackKey } from './types'
 import { makeDonePromise, makeTestClient } from './util.test'
-import { DeviceKeys, PayloadCaseType, SyncStreamsRequest, SyncStreamsResponse } from '@river/proto'
+import { DeviceKeys, SnapshotCaseType, SyncStreamsRequest, SyncStreamsResponse } from '@river/proto'
 import { PartialMessage } from '@bufbuild/protobuf'
 import { CallOptions } from '@bufbuild/connect'
 // This is needed to get the jest itnerface for using in spyOn
@@ -78,10 +78,10 @@ describe('clientTest', () => {
             })
         }
 
-        const onStreamInitialized = (streamId: string, streamKind: PayloadCaseType) => {
+        const onStreamInitialized = (streamId: string, streamKind: SnapshotCaseType) => {
             log('streamInitialized', streamId, streamKind)
             done.run(() => {
-                if (streamKind === 'channelPayload') {
+                if (streamKind === 'channelContent') {
                     const channel = bobsClient.stream(streamId)!
                     log('channel content')
                     log(channel.view)
@@ -335,10 +335,10 @@ describe('clientTest', () => {
             })
         }
 
-        const onStreamInitialized = (streamId: string, streamKind: PayloadCaseType) => {
+        const onStreamInitialized = (streamId: string, streamKind: SnapshotCaseType) => {
             log('streamInitialized', streamId, streamKind)
             done.runAndDoneAsync(async () => {
-                if (streamKind === 'channelPayload') {
+                if (streamKind === 'channelContent') {
                     const channel = bobsAnotherClient.stream(streamId)!
                     log('channel content')
                     log(channel.view)

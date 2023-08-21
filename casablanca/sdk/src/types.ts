@@ -24,11 +24,27 @@ import {
     KeyResponseKind,
     ChannelMessage_Post_Content_Image_Info,
     ChannelMessage_Post,
+    CreateStreamResponse,
+    GetStreamResponse,
+    Snapshot,
+    Miniblock,
+    StreamAndCookie,
 } from '@river/proto'
 import { keccak256 } from 'ethereum-cryptography/keccak'
 import { isDefined } from './check'
 import { ISignatures } from './crypto/deviceInfo'
 import { bin_toHexString } from './binary'
+import { dlog } from './dlog'
+import { unpackEnvelope } from './sign'
+
+const log = dlog('csb:types')
+
+function assert(condition: boolean, message: string): asserts condition {
+    if (!condition) {
+        log('assertion failed: ', message)
+        throw new Error(message)
+    }
+}
 
 export interface ParsedEvent {
     event: StreamEvent
@@ -503,4 +519,27 @@ export const getMiniblockHeader = (
         return event.payload.value
     }
     return undefined
+}
+
+export const unpackStreamResponse = (
+    response: CreateStreamResponse | GetStreamResponse,
+): { snapshot: Snapshot; streamAndCookie: StreamAndCookie; miniblocks: Miniblock[] } => {
+    const streamAndCookie = response.stream
+    assert(streamAndCookie !== undefined, 'bad stream')
+    assert(response.miniblocks.length > 0, `bad stream: no blocks ${streamAndCookie.streamId}`)
+    const block = response.miniblocks[0]
+    assert(block.header !== undefined, `bad block: no header ${streamAndCookie.streamId}`)
+    const miniblock = unpackEnvelope(block.header)
+    assert(
+        miniblock.event.payload.case === 'miniblockHeader',
+        `bad block: wrong case ${streamAndCookie.streamId} received: ${miniblock.event.payload.case}`,
+    )
+    const snapshot = miniblock.event.payload.value.snapshot
+    assert(snapshot !== undefined, `bad block: snapshot is undefined ${streamAndCookie.streamId}`)
+
+    return {
+        streamAndCookie,
+        snapshot,
+        miniblocks: response.miniblocks,
+    }
 }
