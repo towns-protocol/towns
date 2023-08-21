@@ -10,12 +10,13 @@ function showUnreadBadge(
 ) {
     // if the space is muted, or if there is no spaceId, we can short circuit here
     if (
+        !spaceId ||
+        !spaceUnreadChannelIds[spaceId] ||
         !userSettings ||
         userSettings.spaceSettings.some(
             (spaceSetting) =>
                 spaceSetting.spaceId === spaceId && spaceSetting.spaceMute === Mute.Muted,
-        ) ||
-        !spaceId
+        )
     ) {
         return false
     }
