@@ -1,5 +1,5 @@
 import React from 'react'
-import { Navigate, Route, Routes, useLocation } from 'react-router'
+import { Navigate, Outlet, Route, Routes, useLocation } from 'react-router'
 import { SpaceSettings } from '@components/SpaceSettings/SpaceSettings'
 import { PATHS } from 'routes'
 import { RoleSettings } from '@components/SpaceSettings/RoleSettings/RoleSettings'
@@ -32,13 +32,13 @@ import { TouchProfile } from './TouchProfile'
 import { SpacesChannelAnimated } from './SpacesChannelAnimated'
 import { AppPanelLayout } from './layouts/AppPanelLayout'
 
-const CheckRedirect = ({ children }: { children: JSX.Element }) => {
+const CheckRedirect = () => {
     const { state } = useLocation()
     if (state?.redirectTo) {
         return <Navigate replace to={state.redirectTo} />
     }
 
-    return children
+    return <Outlet />
 }
 
 export const AuthenticatedRoutes = () => {
@@ -47,66 +47,96 @@ export const AuthenticatedRoutes = () => {
 
     return (
         <Routes>
-            <Route path="invites/:inviteSlug" element={<InvitesIndex />} />
-            {(env.IS_DEV || isHolderOfPioneerNft) && (
-                <Route path={`${PATHS.SPACES}/new`} element={<SpacesNew />} />
+            {/* 
+                create new space is only for desktop atm. we can't put this inside of <OutsideTownRoutes /> 
+                since space route `t/spaceId` will take precedence 
+            */}
+            {!isTouch && (env.IS_DEV || isHolderOfPioneerNft) && (
+                <Route path={`${PATHS.SPACES}/new`} element={<SpacesNew />}>
+                    <Route path="profile/:profileId" element={<SpaceProfilePanel />} />
+                </Route>
             )}
-            <Route path={`${PATHS.SPACES}/:spaceSlug`} element={<SpaceContextRoute />}>
+            {/* 
+                space context is "available" but its value `space` remains undefined outside /t/:townId/* 
+            */}
+            <Route element={<SpaceContextRoute />}>
                 {isTouch ? (
-                    <Route path="" element={<TouchHome />}>
-                        <Route path="info" element={<InfoPanelWrapper />} />
-                        <Route path="channels/:channelSlug" element={<SpacesChannelAnimated />}>
-                            <Route
-                                path="replies/:messageId"
-                                element={<SpacesChannelReplies parentRoute=".." />}
-                            />
-                            <Route path="profile/:profileId" element={<SpaceProfilePanel />} />
-                            <Route path="info" element={<InfoPanelWrapper />} />
+                    <>
+                        <Route path={`${PATHS.SPACES}/:spaceSlug`}>
+                            <Route path="" element={<TouchHome />}>
+                                <Route path="info" element={<InfoPanelWrapper />} />
+                                <Route
+                                    path="channels/:channelSlug"
+                                    element={<SpacesChannelAnimated />}
+                                >
+                                    <Route
+                                        path="replies/:messageId"
+                                        element={<SpacesChannelReplies parentRoute=".." />}
+                                    />
+                                    <Route
+                                        path="profile/:profileId"
+                                        element={<SpaceProfilePanel />}
+                                    />
+                                    <Route path="info" element={<InfoPanelWrapper />} />
+                                </Route>
+                                <Route path={`${PATHS.PROFILE}/me`} element={<TouchProfile />} />
+                                <Route
+                                    path={`${PATHS.PROFILE}/:profileId`}
+                                    element={<SpaceProfilePanel />}
+                                />
+                                <Route path="*" element={<TownRoutes />} />
+                            </Route>
                         </Route>
-                        <Route path={`${PATHS.PROFILE}/me`} element={<TouchProfile />} />
-                        <Route
-                            path={`${PATHS.PROFILE}/:profileId`}
-                            element={<SpaceProfilePanel />}
-                        />
-                        <Route path="*" element={<TownRoutes />} />
-                    </Route>
+                        <Route path="*" element={<OutsideTownRoutes />} />
+                    </>
                 ) : (
                     <Route element={<AppPanelLayout />}>
-                        <Route index element={<SpaceHome />} />
-                        <Route path="members" element={<SpaceMembers />}>
-                            <Route path="profile/:profileId" element={<SpaceProfilePanel />} />
-                            <Route path="info" element={<InfoPanelWrapper />} />
+                        <Route path={`${PATHS.SPACES}/:spaceSlug`}>
+                            <Route index element={<SpaceHome />} />
+                            <Route path="members" element={<SpaceMembers />}>
+                                <Route path="profile/:profileId" element={<SpaceProfilePanel />} />
+                                <Route path="info" element={<InfoPanelWrapper />} />
+                            </Route>
+                            <Route path="channels/:channelSlug" element={<SpacesChannel />}>
+                                <Route
+                                    path="replies/:messageId"
+                                    element={<SpacesChannelReplies parentRoute=".." />}
+                                />
+                                <Route path="profile/:profileId" element={<SpaceProfilePanel />} />
+                                <Route path="info" element={<InfoPanelWrapper />} />
+                            </Route>
+                            <Route path="*" element={<TownRoutes />} />
                         </Route>
-                        <Route path="channels/:channelSlug" element={<SpacesChannel />}>
-                            <Route
-                                path="replies/:messageId"
-                                element={<SpacesChannelReplies parentRoute=".." />}
-                            />
-                            <Route path="profile/:profileId" element={<SpaceProfilePanel />} />
-                            <Route path="info" element={<InfoPanelWrapper />} />
-                        </Route>
-                        <Route path="*" element={<TownRoutes />} />
+                        <Route path="*" element={<OutsideTownRoutes />} />
                     </Route>
                 )}
-            </Route>
-
-            <Route path="messages" element={<DirectMessageIndex />} />
-            <Route path="messages/:messageId" element={<DirectMessageThread />} />
-
-            <Route
-                path="*"
-                element={
-                    <CheckRedirect>
-                        <NoJoinedSpacesFallback />
-                    </CheckRedirect>
-                }
-            >
-                <Route path="me" element={<SpaceProfilePanel />} />
             </Route>
         </Routes>
     )
 }
 
+/**
+ *  authenticated but not under `/t/:townId/*
+ */
+const OutsideTownRoutes = () => {
+    return (
+        <Routes>
+            <Route path="invites/:inviteSlug" element={<InvitesIndex />} />
+            <Route path="messages" element={<DirectMessageIndex />} />
+            <Route path="messages/:messageId" element={<DirectMessageThread />} />
+            {/* catch all */}
+            <Route element={<CheckRedirect />}>
+                <Route path="*" element={<NoJoinedSpacesFallback />}>
+                    <Route path="me" element={<SpaceProfilePanel />} />
+                </Route>
+            </Route>
+        </Routes>
+    )
+}
+
+/**
+ *  anything under `/t/:townId/*
+ */
 const TownRoutes = () => (
     <Routes>
         <Route path="threads" element={<SpaceThreads />}>

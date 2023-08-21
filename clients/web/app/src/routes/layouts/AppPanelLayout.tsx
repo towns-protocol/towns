@@ -10,6 +10,7 @@ import { useContractAndServerSpaceData } from 'hooks/useContractAndServerSpaceDa
 import { usePersistPanes } from 'hooks/usePersistPanes'
 import { PATHS } from 'routes'
 import { atoms } from 'ui/styles/atoms.css'
+import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
 import * as styles from './AppPanelLayout.css'
 import { PersistAndFadeWelcomeLogo } from './WelcomeLayout'
 
@@ -26,8 +27,12 @@ export const AppPanelLayout = () => {
 
     const isMessagesRoute = !!messageRoute
 
+    // we still want to show town drawer event when space is loading, so we
+    // can't rely on `space` being defined
+    const hasTownRoute = !!useSpaceIdFromPathname() || space
+
     const displaySpacePanel =
-        !(spacesSettingsRoute || spacesNewRoute || homeRoute) || isMessagesRoute
+        hasTownRoute && (!(spacesSettingsRoute || spacesNewRoute || homeRoute) || isMessagesRoute)
 
     return (
         <Stack horizontal grow borderTop position="relative">
