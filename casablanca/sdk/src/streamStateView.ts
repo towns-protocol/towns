@@ -196,16 +196,19 @@ export class StreamStateView {
             return
         }
         if (event.shouldAttemptDecryption()) {
-            log(`Ignoring event that has not attampted decryption yet, hash=${hashStr}`)
+            log(`Ignoring event that has not attempted decryption yet, hash=${hashStr}`)
             return
         }
-        if (event.isDecryptionFailure()) {
-            log(`Ignoring event that failed decryption, hash=${hashStr}`)
-            return
-        }
+
         if (this.decryptedEvents.has(hashStr)) {
-            log(`Ignoring duplicate decrypted event ${hashStr}`)
-            return
+            const isDecryptionFailure = event.isDecryptionFailure()
+            const existingDecrypted = this.decryptedEvents.get(hashStr)
+            if (isDecryptionFailure == existingDecrypted?.isDecryptionFailure()) {
+                log(
+                    `Ignoring duplicate decrypted event with unchanged decryption status ${hashStr}`,
+                )
+                return
+            }
         }
         if (event.getStreamId() !== this.streamId) {
             throwWithCode(

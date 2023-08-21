@@ -94,8 +94,7 @@ export function useCasablancaTimelines(casablancaClient: CasablancaClient | unde
 
         const onEventDecrypted = (riverEvent: object, err: Error | undefined) => {
             if (err) {
-                console.error('$$$ useCasablancaTimelines onEventDecrypted', err)
-                return
+                console.log('$$$ useCasablancaTimelines onEventDecrypted', err)
             }
             const message = riverEvent as RiverEvent
             if (message.getStreamType() === 'channelPayload') {
@@ -257,6 +256,12 @@ function toTownsContent_fromRiverEvent(eventId: string, message: RiverEvent): To
     }
     if (!description) {
         return { error: 'no description' }
+    }
+    // return decryption failures
+    if (message.isDecryptionFailure()) {
+        return {
+            content: { kind: ZTEvent.RoomMessageEncrypted } satisfies RoomMessageEncryptedEvent,
+        }
     }
     // handle RiverEvents which store potentially decrypted contents of the original parsed event
     const payloadCase = message.getStreamType() ?? 'unknown payload case'
