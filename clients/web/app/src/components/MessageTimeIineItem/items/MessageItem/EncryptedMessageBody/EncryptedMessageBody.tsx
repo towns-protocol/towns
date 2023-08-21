@@ -18,7 +18,7 @@ export const TimelineEncryptedContent = React.memo(
                     horizontal
                     centerContent
                     gap="sm"
-                    style={{ width }}
+                    style={{ width: `min(${width}px, 100%)` }}
                     tooltip={<DecryptionTooltip />}
                 >
                     <Box
