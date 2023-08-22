@@ -7,14 +7,14 @@ import { ImageVariants } from '@components/UploadImage/useImageSource'
 import { PATHS } from 'routes'
 import { useShowHasUnreadBadgeForSpaceId } from 'hooks/useSpaceUnreadsIgnoreMuted'
 import { useInstallPWAPrompt } from 'hooks/useInstallPWAPrompt'
-import { useVisualKeyboardContext } from '../VisualKeyboardContext/VisualKeyboardContext'
+import { useVisualViewportContext } from '../VisualViewportContext/VisualViewportContext'
 
 export const TouchTabBar = () => {
     const space = useSpaceData()
     const userId = useMyProfile()?.userId
     const hasUnread = useShowHasUnreadBadgeForSpaceId(space?.id.networkId)
     const { shouldDisplayPWAPrompt, closePWAPrompt } = useInstallPWAPrompt()
-    const { visualKeyboardPresent: tabBarHidden } = useVisualKeyboardContext()
+    const { visualViewportScrolled: tabBarHidden } = useVisualViewportContext()
 
     if (!space || tabBarHidden) {
         return null

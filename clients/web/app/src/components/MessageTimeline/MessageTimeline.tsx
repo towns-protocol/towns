@@ -21,8 +21,8 @@ import { notUndefined } from 'ui/utils/utils'
 import { MessageTimelineItem } from '@components/MessageTimeIineItem/TimelineItem'
 import { useDevice } from 'hooks/useDevice'
 import { VList } from 'ui/components/VList2/VList'
-import { useVisualKeyboardContext } from '@components/VisualKeyboardContext/VisualKeyboardContext'
 import { useThrottledValue } from 'hooks/useThrottledValue'
+import { useVisualViewportContext } from '@components/VisualViewportContext/VisualViewportContext'
 import { MessageTimelineContext, MessageTimelineType } from './MessageTimelineContext'
 import { DateDivider } from '../MessageTimeIineItem/items/DateDivider'
 import { NewDivider } from '../MessageTimeIineItem/items/NewDivider'
@@ -342,7 +342,7 @@ export const MessageTimeline = (props: Props) => {
 
     const { focusItem } = useFocusMessage(listItems, props.highlightId, userId)
 
-    const { visualKeyboardPresent: tabBarHidden } = useVisualKeyboardContext()
+    const { visualViewportScrolled: tabBarHidden } = useVisualViewportContext()
 
     return (
         <VList

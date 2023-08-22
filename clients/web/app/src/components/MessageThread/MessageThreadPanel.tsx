@@ -63,23 +63,31 @@ export const MessageThreadPanel = (props: Props) => {
     return (
         <Panel label={panelLabel} onClose={props.onClose}>
             <Stack
+                grow
                 position="relative"
                 overflow="hidden"
-                flexGrow={{ touch: 'x1', default: 'x0' }}
+                justifyContent={{ default: 'start', touch: 'end' }}
                 width="100%"
             >
-                <MessageTimelineWrapper
-                    spaceId={spaceId}
-                    channelId={channelId}
-                    threadParentId={messageId}
-                    events={messagesWithParent}
-                    isChannelWritable={isChannelWritable}
-                >
-                    <MessageTimeline align="top" highlightId={props.highlightId} />
-                </MessageTimelineWrapper>
+                <Box justifySelf="end" overflow="hidden">
+                    <MessageTimelineWrapper
+                        spaceId={spaceId}
+                        channelId={channelId}
+                        threadParentId={messageId}
+                        events={messagesWithParent}
+                        isChannelWritable={isChannelWritable}
+                    >
+                        <MessageTimeline align="top" highlightId={props.highlightId} />
+                    </MessageTimelineWrapper>
+                </Box>
             </Stack>
             {isChannelWritable && (
-                <Box paddingX={{ default: 'md', touch: 'none' }} bottom={isTouch ? 'sm' : 'none'}>
+                <Box
+                    paddingX={{ default: 'md', touch: 'none' }}
+                    paddingBottom={{ default: 'lg', touch: 'none' }}
+                    paddingTop={{ default: 'none', touch: 'none' }}
+                    bottom={isTouch ? 'sm' : 'none'}
+                >
                     <RichTextEditor
                         isFullWidthOnTouch
                         autoFocus={!isTouch}

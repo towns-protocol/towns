@@ -34,7 +34,7 @@ import { shortAddress } from 'ui/utils/utils'
 import { NavItem } from '@components/NavItem/_NavItem'
 import { useCreateLink } from 'hooks/useCreateLink'
 import { BlurredBackground } from '@components/TouchLayoutHeader/BlurredBackground'
-import { VisualKeyboardContextProvider } from '@components/VisualKeyboardContext/VisualKeyboardContext'
+import { VisualViewportContextProvider } from '@components/VisualViewportContext/VisualViewportContext'
 import { useChannelsWithMentionCountsAndUnread } from 'hooks/useChannelsWithMentionCountsAndUnread'
 import { TouchTabBarLayout } from '../layouts/TouchTabBarLayout'
 import { ChannelItem } from '../AllChannelsList/AllChannelsList'
@@ -116,7 +116,7 @@ export const TouchHome = () => {
 
     return (
         <ErrorBoundary fallback={ErrorFallbackComponent}>
-            <VisualKeyboardContextProvider>
+            <VisualViewportContextProvider>
                 <TouchTabBarLayout>
                     <CheckValidSpaceOrInvite>
                         <AnimatePresence>
@@ -229,7 +229,7 @@ export const TouchHome = () => {
                         <TouchHomeOverlay onClose={() => setActiveOverlay(undefined)} />
                     )}
                 </AnimatePresence>
-            </VisualKeyboardContextProvider>
+            </VisualViewportContextProvider>
         </ErrorBoundary>
     )
 }
