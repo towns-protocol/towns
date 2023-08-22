@@ -1,18 +1,19 @@
 import React, { useCallback, useMemo } from 'react'
 import { useMyProfile, useSpaceData } from 'use-zion-client'
 import { matchRoutes, useLocation, useNavigate, useResolvedPath } from 'react-router'
-import { Avatar, Box, Dot, Icon, Stack, Text } from '@ui'
+import { Avatar, Box, Dot, Icon, IconButton, Stack, Text, Tooltip } from '@ui'
 import { SpaceIcon } from '@components/SpaceIcon'
 import { ImageVariants } from '@components/UploadImage/useImageSource'
 import { PATHS } from 'routes'
 import { useShowHasUnreadBadgeForSpaceId } from 'hooks/useSpaceUnreadsIgnoreMuted'
+import { useInstallPWAPrompt } from 'hooks/useInstallPWAPrompt'
 import { useVisualKeyboardContext } from '../VisualKeyboardContext/VisualKeyboardContext'
 
 export const TouchTabBar = () => {
     const space = useSpaceData()
     const userId = useMyProfile()?.userId
     const hasUnread = useShowHasUnreadBadgeForSpaceId(space?.id.networkId)
-
+    const { shouldDisplayPWAPrompt, closePWAPrompt } = useInstallPWAPrompt()
     const { visualKeyboardPresent: tabBarHidden } = useVisualKeyboardContext()
 
     if (!space || tabBarHidden) {
@@ -63,6 +64,7 @@ export const TouchTabBar = () => {
                     to={`/${PATHS.SPACES}/${space.id.slug}/${PATHS.PROFILE}/me`}
                 />
             </Stack>
+            {shouldDisplayPWAPrompt && <PWATooltip onClose={closePWAPrompt} />}
         </Box>
     )
 }
@@ -113,5 +115,37 @@ const TabBarItem = (props: TabBarItemProps) => {
                 {title}
             </Text>
         </Stack>
+    )
+}
+
+const PWATooltip = (props: { onClose: () => void }) => {
+    const { onClose } = props
+    return (
+        <Box
+            width="100%"
+            tooltip={
+                <Tooltip background="level3" style={{ translate: '0px 10px' }} pointerEvents="all">
+                    <Stack horizontal centerContent>
+                        <Text fontWeight="normal" color="default" textAlign="left" fontSize="sm">
+                            Enable notifications on <strong>mobile</strong>: <br /> Tap{' '}
+                            <Icon
+                                type="share"
+                                size="square_sm"
+                                display="inline-block"
+                                style={{ verticalAlign: 'middle' }}
+                            />{' '}
+                            and then <strong>Add to Home Screen</strong>
+                        </Text>
+                        <Box grow />
+                        <IconButton icon="close" size="square_sm" onClick={onClose} />
+                    </Stack>
+                </Tooltip>
+            }
+            tooltipOptions={{ active: true }}
+            position="fixed"
+            right="none"
+            left="none"
+            bottom="sm"
+        />
     )
 }

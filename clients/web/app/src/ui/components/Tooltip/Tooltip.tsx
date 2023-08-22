@@ -9,6 +9,7 @@ export const Tooltip = ({ children, ...boxProps }: { children: React.ReactNode }
     const tooltipContext = useContext(TooltipContext)
     const arrowDirection =
         tooltipContext.placement === 'horizontal' ? style.tooltipRight : style.tooltipBottom
+    const { pointerEvents = 'none' } = boxProps
 
     children =
         typeof children === 'string' ? (
@@ -25,7 +26,7 @@ export const Tooltip = ({ children, ...boxProps }: { children: React.ReactNode }
             className={clsx(style.tooltip, style.arrow, arrowDirection)}
             fontSize="sm"
             {...boxProps}
-            pointerEvents="none"
+            pointerEvents={pointerEvents}
         >
             {children}
         </Box>

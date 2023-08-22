@@ -2,7 +2,6 @@ import React, { useCallback } from 'react'
 import { Membership, useMyMembership, useSpaceData, useSpaceMembers } from 'use-zion-client'
 import { Box, Dot, Icon, IconButton, Paragraph, Stack, Text } from '@ui'
 import { useNavigateToCurrentSpaceInfo } from 'hooks/useNavigateToCurrentSpaceInfo'
-import { useInstallPWAPrompt } from 'hooks/useInstallPWAPrompt'
 import { useGetSpaceTopic } from 'hooks/useSpaceTopic'
 import { useShowHasUnreadBadgeForOtherSpaces } from 'hooks/useSpaceUnreadsIgnoreMuted'
 import { useMuteSettings } from 'api/lib/notificationSettings'
@@ -18,7 +17,6 @@ export const TouchLayoutHeader = (props: Props) => {
     const currentSpaceId = space?.id
 
     const { navigateToCurrentSpace } = useNavigateToCurrentSpaceInfo()
-    const { shouldDisplayPWAPrompt, closePWAPrompt } = useInstallPWAPrompt()
 
     const hasUnread = useShowHasUnreadBadgeForOtherSpaces(currentSpaceId?.networkId)
 
@@ -34,18 +32,6 @@ export const TouchLayoutHeader = (props: Props) => {
 
     return (
         <Box position="relative" paddingX="sm" paddingTop="sm" paddingBottom="md">
-            {shouldDisplayPWAPrompt && (
-                <Box paddingX="sm" paddingBottom="sm">
-                    <Stack horizontal centerContent padding border rounded="xs" background="level2">
-                        <Text fontWeight="strong" color="default" textAlign="left">
-                            Enable notifications on <strong>mobile</strong>:<br /> Tap{' '}
-                            <strong>Share</strong> &#8594; <strong>Add to Home Screen</strong>.
-                        </Text>
-                        <Box grow />
-                        <IconButton icon="close" onClick={closePWAPrompt} />
-                    </Stack>
-                </Box>
-            )}
             <Stack
                 horizontal
                 justifyContent="center"
