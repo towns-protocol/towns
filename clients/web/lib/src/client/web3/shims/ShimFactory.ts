@@ -12,6 +12,7 @@ import LocalhostTokenEntitlementAbi from '@towns/generated/localhost/abis/TokenE
 import SepoliaIEntitlementModuleAbi from '@towns/generated/sepolia/abis/IEntitlement.abi.json' assert { type: 'json' }
 import SepoliaSpaceAbi from '@towns/generated/sepolia/abis/Space.abi.json' assert { type: 'json' }
 import SepoliaTokenEntitlementAbi from '@towns/generated/sepolia/abis/TokenEntitlement.abi.json' assert { type: 'json' }
+import SepoliaUserEntitlementAbi from '@towns/generated/sepolia/abis/UserEntitlement.abi.json' assert { type: 'json' }
 import { TokenEntitlementShim } from './TokenEntitlementShim'
 import { UserEntitlementShim } from './UserEntitlementShim'
 import { ethers } from 'ethers'
@@ -123,7 +124,7 @@ export class ShimFactory {
             case 11155111:
                 return new UserEntitlementShim(
                     address,
-                    SepoliaIEntitlementModuleAbi,
+                    SepoliaUserEntitlementAbi,
                     chainId,
                     provider,
                 )
