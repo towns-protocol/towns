@@ -35,13 +35,14 @@ export function RequireTransactionNetworkModal({ onHide, isSpinning, onLoginClic
 
     useEffect(() => {
         return () => {
+            onStartOverClick()
             if (timeoutId.current) {
                 clearTimeout(timeoutId.current)
             }
         }
     }, [])
 
-    function dismissWalletCommsMessage() {
+    function onStartOverClick() {
         clicked.current = false
         setShowWalletCommsFailure(false)
         signMessageAbortController.abort()
@@ -111,11 +112,7 @@ export function RequireTransactionNetworkModal({ onHide, isSpinning, onLoginClic
                             </Paragraph>
                             <Paragraph size="sm" textAlign="center">
                                 If issues persist, try{' '}
-                                <Box
-                                    display="inline"
-                                    color="cta1"
-                                    onClick={dismissWalletCommsMessage}
-                                >
+                                <Box display="inline" color="cta1" onClick={onStartOverClick}>
                                     starting over.
                                 </Box>
                             </Paragraph>
