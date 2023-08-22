@@ -4,7 +4,6 @@ import TypedEmitter from 'typed-emitter'
 import { check, checkNever, isDefined, throwWithCode } from './check'
 import { ParsedEvent } from './types'
 import { RiverEvent } from './event'
-import isEqual from 'lodash/isEqual'
 import { unpackEnvelopes } from './sign'
 import { EmittedEvents } from './client'
 import { StreamStateView_Space } from './streamStateView_Space'
@@ -15,8 +14,6 @@ import { StreamStateView_UserDeviceKeys } from './streamStateView_UserDeviceKey'
 import { StreamStateView_Membership } from './streamStateView_Membership'
 
 const log = dlog('csb:streams')
-
-const isCookieEqual = (a?: SyncCookie, b?: SyncCookie): boolean => isEqual(a, b)
 
 export class StreamStateView {
     readonly streamId: string
@@ -33,7 +30,6 @@ export class StreamStateView {
     readonly leafEventHashes = new Map<string, Uint8Array>()
 
     syncCookie?: SyncCookie
-    maxOldInstanceBlockNumber = -1n
 
     // Space Content
     private readonly _spaceContent?: StreamStateView_Space
@@ -121,20 +117,9 @@ export class StreamStateView {
         }
     }
 
-    private addEvent(
-        event: ParsedEvent,
-        ignoreExisting: boolean,
-        emitter?: TypedEmitter<EmittedEvents>,
-    ): void {
+    private addEvent(event: ParsedEvent, emitter?: TypedEmitter<EmittedEvents>): void {
         if (this.events.has(event.hashStr)) {
-            if (ignoreExisting) {
-                return
-            } else {
-                throwWithCode(
-                    `Can't add same event twice, hash=${event.hashStr}, stream=${this.streamId}`,
-                    Err.STREAM_BAD_EVENT,
-                )
-            }
+            return
         }
 
         for (const prev of event.prevEventsStrs ?? []) {
@@ -227,23 +212,8 @@ export class StreamStateView {
     ): void {
         const events = unpackEnvelopes(streamAndCookie.events)
 
-        let ignoreExisting = false
-
-        if (!init) {
-            if (isCookieEqual(this.syncCookie, streamAndCookie.originalSyncCookie)) {
-                ignoreExisting =
-                    streamAndCookie.nextSyncCookie!.miniblockNum <= this.maxOldInstanceBlockNumber
-            } else {
-                // Minipool instance changed, duplicate events are possible.
-                ignoreExisting = true
-                if (streamAndCookie.nextSyncCookie!.miniblockNum > this.maxOldInstanceBlockNumber) {
-                    this.maxOldInstanceBlockNumber = streamAndCookie.nextSyncCookie!.miniblockNum
-                }
-            }
-        }
-
         for (const event of events) {
-            this.addEvent(event, ignoreExisting, emitter)
+            this.addEvent(event, emitter)
         }
         this.syncCookie = streamAndCookie.nextSyncCookie
 
