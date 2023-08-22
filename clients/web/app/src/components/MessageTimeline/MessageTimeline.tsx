@@ -136,6 +136,7 @@ export const MessageTimeline = (props: Props) => {
         if (r.type === 'divider') {
             return 50
         }
+        return 50
     }, [])
 
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

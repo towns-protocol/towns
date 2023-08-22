@@ -403,9 +403,15 @@ export function VList<T>(props: Props<T>) {
      * from the DOM update since it can affect the scroll position
      */
     const updateDOMHeight = useCallback(() => {
-        const { content } = getElements()
+        const { content, container } = getElements()
         internalScrollRef.current = true
-        content.style.height = `${contentHeightRef.current}px`
+
+        log('updateDOMHeight', contentHeightRef.current, content.style.height)
+        content.style.height = `${Math.round(contentHeightRef.current)}px`
+
+        requestAnimationFrame(() => {
+            container.style.height = `${Math.round(contentHeightRef.current)}px`
+        })
     }, [getElements])
 
     const [isAligned, setIsAligned] = useState(false)
@@ -581,7 +587,7 @@ export function VList<T>(props: Props<T>) {
             realignImperatively()
         }
 
-        log(`updatePositions() contentHeight:${~~contentHeight}`)
+        log(`updatePositions() contentHeight:${Math.round(contentHeight)}`)
 
         updateDOM()
         debugRef.current?.()
@@ -912,7 +918,7 @@ export function VList<T>(props: Props<T>) {
         <div style={computedMainStyle} data-testid="vlist-main">
             <div
                 className={scrollbarsClass}
-                style={{ ...computedContainerStyle, height: contentHeightRef.current }}
+                style={computedContainerStyle}
                 ref={scrollContainerRef}
                 data-testid="vlist-container"
             >
@@ -937,8 +943,6 @@ export function VList<T>(props: Props<T>) {
                                     key={key}
                                     uid={key}
                                     index={index}
-                                    screenIndex={screenIndex}
-                                    screenTotal={renderItems.length}
                                     item={t}
                                     itemRenderer={itemRenderer}
                                     isGroup={!!groupIds?.includes(key)}

@@ -13,8 +13,6 @@ const USE_TRANSITION = false
 type VListItemProps<T> = {
     uid: string
     index: number
-    screenIndex: number
-    screenTotal: number
     item: T
     onAdded: (
         ref: RefObject<HTMLDivElement>,
@@ -34,17 +32,7 @@ type VListItemProps<T> = {
 }
 
 export const VListItem = <T,>(props: VListItemProps<T>) => {
-    const {
-        uid,
-        index,
-        screenIndex,
-        screenTotal,
-        onAdded,
-        onRemoved,
-        itemRenderer,
-        isGroup,
-        groupHeight,
-    } = props
+    const { uid, index, onAdded, onRemoved, itemRenderer, isGroup, groupHeight } = props
 
     const ref = useRef<HTMLDivElement>(null)
     const heightRef: MutableRefObject<HTMLDivElement | null> = useRef(null)
@@ -77,14 +65,14 @@ export const VListItem = <T,>(props: VListItemProps<T>) => {
             ? {}
             : !isRendered
             ? { opacity: 0 }
-            : { opacity: 1, transition: `opacity 180ms ease ${(screenTotal - screenIndex) * 4}ms` }
+            : { opacity: 1, transition: `opacity 180ms ease` }
 
         return {
             ...itemStyle,
             ...groupStyle,
             ...transitionStyle,
         }
-    }, [groupHeight, isGroup, isRendered, screenIndex, screenTotal])
+    }, [groupHeight, isGroup, isRendered])
 
     return (
         <div ref={ref} style={style} data-item-key={uid}>
