@@ -48,15 +48,6 @@ export const AuthenticatedRoutes = () => {
     return (
         <Routes>
             {/* 
-                create new space is only for desktop atm. we can't put this inside of <OutsideTownRoutes /> 
-                since space route `t/spaceId` will take precedence 
-            */}
-            {!isTouch && (env.IS_DEV || isHolderOfPioneerNft) && (
-                <Route path={`${PATHS.SPACES}/new`} element={<SpacesNew />}>
-                    <Route path="profile/:profileId" element={<SpaceProfilePanel />} />
-                </Route>
-            )}
-            {/* 
                 space context is "available" but its value `space` remains undefined outside /t/:townId/* 
             */}
             <Route element={<SpaceContextRoute />}>
@@ -91,6 +82,9 @@ export const AuthenticatedRoutes = () => {
                     </>
                 ) : (
                     <Route element={<AppPanelLayout />}>
+                        {(env.IS_DEV || isHolderOfPioneerNft) && (
+                            <Route path={`${PATHS.SPACES}/new`} element={<SpacesNew />} />
+                        )}
                         <Route path={`${PATHS.SPACES}/:spaceSlug`}>
                             <Route index element={<SpaceHome />} />
                             <Route path="members" element={<SpaceMembers />}>

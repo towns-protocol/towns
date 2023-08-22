@@ -1,13 +1,15 @@
 import { default as React, useCallback } from 'react'
-import { useNavigate } from 'react-router'
+import { useMatch, useNavigate } from 'react-router'
 import { useMyProfile } from 'use-zion-client'
 import { Avatar, Box } from '@ui'
 import { useAuth } from 'hooks/useAuth'
 import { useCreateLink } from 'hooks/useCreateLink'
+import { PATHS } from 'routes'
 
 export const ProfileCardButton = () => {
     const myProfile = useMyProfile()
     const userId = myProfile?.userId
+    const isSpaceCreateRoute = useMatch(`${PATHS.SPACES}/new`)
 
     const { isAuthenticated } = useAuth()
 
@@ -28,14 +30,14 @@ export const ProfileCardButton = () => {
     return (
         <Box centerContent paddingBottom="sm">
             <Box
-                hoverable
-                cursor="pointer"
+                hoverable={!isSpaceCreateRoute}
+                cursor={isSpaceCreateRoute ? 'auto' : 'pointer'}
                 background="level1"
                 padding="sm"
                 rounded="sm"
-                tooltip="Profile Info"
+                tooltip={isSpaceCreateRoute ? undefined : 'Profile Info'}
                 tooltipOptions={{ placement: 'horizontal' }}
-                onClick={hasAvatar ? onClick : undefined}
+                onClick={!isSpaceCreateRoute && hasAvatar ? onClick : undefined}
             >
                 {hasAvatar ? (
                     <Avatar size="avatar_x4" userId={userId} />
