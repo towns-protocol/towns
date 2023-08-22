@@ -15,7 +15,6 @@ import {
     useFullyReadMarker,
     useZionClient,
 } from 'use-zion-client'
-import { debounce } from 'lodash'
 import { Box, Divider, Paragraph } from '@ui'
 import { useExperimentsStore } from 'store/experimentsStore'
 import { notUndefined } from 'ui/utils/utils'
@@ -23,6 +22,7 @@ import { MessageTimelineItem } from '@components/MessageTimeIineItem/TimelineIte
 import { useDevice } from 'hooks/useDevice'
 import { VList } from 'ui/components/VList2/VList'
 import { useVisualKeyboardContext } from '@components/VisualKeyboardContext/VisualKeyboardContext'
+import { useThrottledValue } from 'hooks/useThrottledValue'
 import { MessageTimelineContext, MessageTimelineType } from './MessageTimelineContext'
 import { DateDivider } from '../MessageTimeIineItem/items/DateDivider'
 import { NewDivider } from '../MessageTimeIineItem/items/NewDivider'
@@ -62,21 +62,16 @@ export const MessageTimeline = (props: Props) => {
     }, [])
 
     const _events = useMemo(() => {
-        return timelineContext?.events ?? []
+        return timelineContext?.events ?? emptyTimeline
     }, [timelineContext?.events])
 
-    const skipDebounce = _events.length < 3
+    const isStartupRef = useRef(true)
 
-    const debounced = useMemo(
-        () =>
-            debounce((v: TimelineEvent[]) => v, skipDebounce ? 0 : 250, {
-                leading: true,
-                maxWait: 1000,
-            }),
-        [skipDebounce],
-    )
+    const events = useThrottledValue(_events, isStartupRef.current ? 0 : 500)
 
-    const events = debounced(_events) ?? emptyTimeline
+    if (events.length > 0) {
+        isStartupRef.current = false
+    }
 
     const fullyReadMarker = useFullyReadMarker(channelId, timelineContext?.threadParentId)
     const experiments = useExperimentsStore()
