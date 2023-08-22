@@ -17,9 +17,9 @@ export const TouchNavBar = (props: Props) => {
                 borderBottom
                 height={props.extraHeight ? 'x7' : 'x5'}
                 justifyContent="end"
-                paddingBottom="sm"
+                paddingY="sm"
             >
-                <Stack horizontal justifyContent="center" height={props.extraHeight ? 'x7' : 'x5'}>
+                <Stack horizontal justifyContent="center" height="100%">
                     {hasSideContent && (
                         <Box centerContent width="x10">
                             {props.contentLeft}
@@ -28,7 +28,7 @@ export const TouchNavBar = (props: Props) => {
                     <Stack
                         grow
                         position="relative"
-                        overflowX="hidden"
+                        overflow="hidden"
                         justifyContent="center"
                         alignItems={centerContent ? 'center' : undefined}
                     >
