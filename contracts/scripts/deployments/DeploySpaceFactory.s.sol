@@ -4,7 +4,7 @@ pragma solidity 0.8.20;
 /* Interfaces */
 
 /* Libraries */
-import {Deployer} from "./common/Deployer.s.sol";
+import {Deployer} from "../common/Deployer.s.sol";
 import {Permissions} from "contracts/src/spaces/libraries/Permissions.sol";
 
 /* Contracts */
@@ -16,10 +16,10 @@ import {UserEntitlement} from "contracts/src/spaces/entitlements/UserEntitlement
 import {TokenEntitlement} from "contracts/src/spaces/entitlements/TokenEntitlement.sol";
 import {ERC1967Proxy} from "openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
-import {DeployPioneer} from "contracts/scripts/DeployPioneer.s.sol";
-import {DeployOldTownOwner} from "contracts/scripts/DeployOldTownOwner.s.sol";
-import {DeployTokenImpl, DeployUserImpl} from "contracts/scripts/DeployImplementations.s.sol";
-import {DeploySpaceImpl} from "contracts/scripts/DeploySpaceImpl.s.sol";
+import {DeployPioneer} from "contracts/scripts/deployments/DeployPioneer.s.sol";
+import {DeployOldTownOwner} from "contracts/scripts/deployments/DeployOldTownOwner.s.sol";
+import {DeployTokenImpl, DeployUserImpl} from "contracts/scripts/deployments/DeployImplementations.s.sol";
+import {DeploySpaceImpl} from "contracts/scripts/deployments/DeploySpaceImpl.s.sol";
 
 contract DeploySpaceFactory is Deployer {
   DeployPioneer internal deployPioneer;

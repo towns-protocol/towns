@@ -1,13 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity 0.8.20;
 
-import "./common/Deployer.s.sol";
+import {Deployer} from "../common/Deployer.s.sol";
+import {Pioneer} from "contracts/src/tokens/Pioneer.sol";
 
-import {TownOwnerV1} from "contracts/src/tokens/TownOwnerV1.sol";
-
-contract DeployOldTownOwner is Deployer {
+contract DeployPioneer is Deployer {
   function versionName() public pure override returns (string memory) {
-    return "spaceToken";
+    return "pioneerToken";
   }
 
   function __deploy(
@@ -15,7 +14,6 @@ contract DeployOldTownOwner is Deployer {
     address
   ) public override returns (address) {
     vm.broadcast(deployerPK);
-    return
-      address(new TownOwnerV1("TownOwner", "TOWN", vm.addr(deployerPK), 0));
+    return address(new Pioneer("Pioneer", "PIONEER", ""));
   }
 }

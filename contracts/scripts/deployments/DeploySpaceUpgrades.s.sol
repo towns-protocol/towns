@@ -6,7 +6,7 @@ pragma solidity ^0.8.0;
 //libraries
 
 //contracts
-import {Deployer} from "./common/Deployer.s.sol";
+import {Deployer} from "../common/Deployer.s.sol";
 import {SpaceUpgrades} from "contracts/src/spaces/SpaceUpgrades.sol";
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 

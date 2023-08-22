@@ -7,7 +7,7 @@ import {IDiamond, Diamond} from "contracts/src/diamond/Diamond.sol";
 //libraries
 
 //contracts
-import {Deployer} from "./common/Deployer.s.sol";
+import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
 import {Delegation} from "contracts/src/towns/facets/delegation/Delegation.sol";
 
 import {DelegationHelper} from "contracts/test/towns/delegation/DelegationSetup.sol";

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity 0.8.20;
 
-import {Deployer} from "./common/Deployer.s.sol";
+import {Deployer} from "../common/Deployer.s.sol";
 import {Space} from "contracts/src/spaces/Space.sol";
 
 contract DeploySpaceImpl is Deployer {

@@ -35,9 +35,6 @@ library MockFacetStorage {
   }
 }
 
-// debuggging
-import {console} from "forge-std/console.sol";
-
 contract MockFacet is IMockFacet, TokenOwnableBase {
   using MockFacetStorage for MockFacetStorage.Layout;
 

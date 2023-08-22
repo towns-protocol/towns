@@ -194,6 +194,25 @@ contract DeployBase is Script {
     return paths;
   }
 
+  function getAddress(string memory versionName) internal returns (address) {
+    string memory path = deploymentPath(versionName);
+
+    if (!exists(path)) {
+      debug(
+        string.concat(
+          "no address found for ",
+          versionName,
+          " on ",
+          chainAlias()
+        )
+      );
+      return address(0);
+    }
+
+    string memory data = vm.readFile(path);
+    return vm.parseJsonAddress(data, ".address");
+  }
+
   function getDeployment(string memory versionName) internal returns (address) {
     if (isAnvil()) {
       debug("not fetching deployments when targeting anvil");

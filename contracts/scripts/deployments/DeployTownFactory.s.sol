@@ -19,11 +19,11 @@ import {PlatformFeeFacet} from "contracts/src/towns/facets/platform/fee/Platform
 import {Diamond} from "contracts/src/diamond/Diamond.sol";
 
 // helpers
-import {Deployer} from "./common/Deployer.s.sol";
-import {DeployPioneer} from "contracts/scripts/DeployPioneer.s.sol";
-import {DeployTownOwner} from "contracts/scripts/DeployTownOwner.s.sol";
-import {DeployTokenEntitlement, DeployUserEntitlement} from "contracts/scripts/DeployEntitlements.s.sol";
-import {DeployTown} from "contracts/scripts/DeployTown.s.sol";
+import {Deployer} from "../common/Deployer.s.sol";
+import {DeployPioneer} from "contracts/scripts/deployments/DeployPioneer.s.sol";
+import {DeployTownOwner} from "contracts/scripts/deployments/DeployTownOwner.s.sol";
+import {DeployTokenEntitlement, DeployUserEntitlement} from "contracts/scripts/deployments/DeployEntitlements.s.sol";
+import {DeployTown} from "contracts/scripts/deployments/DeployTown.s.sol";
 
 // helpers
 import {DiamondCutHelper} from "contracts/test/diamond/cut/DiamondCutSetup.sol";

@@ -6,7 +6,7 @@ pragma solidity ^0.8.0;
 //libraries
 
 //contracts
-import {Deployer} from "./common/Deployer.s.sol";
+import {Deployer} from "../common/Deployer.s.sol";
 import {DeploySpaceImpl} from "./DeploySpaceImpl.s.sol";
 import {DeploySpaceFactory} from "./DeploySpaceFactory.s.sol";
 
