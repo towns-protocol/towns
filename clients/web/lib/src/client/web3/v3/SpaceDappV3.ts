@@ -61,7 +61,7 @@ export class SpaceDappV3 implements ISpaceDapp {
             uri: params.spaceMetadata,
             everyoneEntitlement: fromPermisisonsToRoleInfo('Everyone', params.everyonePermissions),
             memberEntitlement: fromSpaceEntitlementsToMemberEntitlement(params.memberEntitlements),
-            channel: fromChannelIdToChannelInfo(params.channelId),
+            channel: fromChannelIdToChannelInfo(params.channelId, params.channelName),
         }
         return this.townRegistrar.TownArchitect.write(signer).createTown(townInfo)
     }
