@@ -180,25 +180,6 @@ func (s *Service) createStream(ctx context.Context, log *slog.Logger, req *conne
 		break
 	}
 
-	// Make genesis minibock header and add to the stream.
-	minibockHeader, err := Make_GenisisMiniblockHeader(parsedEvents)
-
-	if err != nil {
-		return nil, err
-	}
-
-	blockEvent, err := MakeParsedEventWithPayload(
-		s.wallet,
-		Make_MiniblockHeader(minibockHeader),
-		[][]byte{parsedEvents[len(parsedEvents)-1].Hash},
-	)
-
-	if err != nil {
-		return nil, err
-	}
-
-	parsedEvents = append(parsedEvents, blockEvent)
-
 	streamId := inceptionPayload.GetStreamId()
 	_, streamView, err := s.cache.CreateStream(ctx, streamId, parsedEvents)
 	if err != nil {

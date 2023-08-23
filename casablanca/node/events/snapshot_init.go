@@ -7,7 +7,6 @@ import (
 )
 
 func Make_GenisisSnapshot(events []*ParsedEvent) (*Snapshot, error) {
-
 	inceptionPayload := events[0].Event.GetInceptionPayload()
 
 	if inceptionPayload == nil {

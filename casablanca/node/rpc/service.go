@@ -29,11 +29,12 @@ type Service struct {
 }
 
 func MakeServiceHandler(ctx context.Context, log *slog.Logger, dbUrl string, chainConfig *config.ChainConfig, wallet *crypto.Wallet, skipDelegateCheck bool, opts ...connect_go.HandlerOption) (string, http.Handler, error) {
-	store, err := storage.NewPGEventStore(ctx, dbUrl, false)
-	if err != nil {
-		log.Error("failed to create storage", "error", err)
-		return "", nil, err
-	}
+	store := storage.NewMemStorage()
+	// if err != nil {
+	// 	log.Error("failed to create storage", "error", err)
+	// 	return "", nil, err
+	// }
+	var err error
 
 	if wallet == nil {
 		wallet, err = crypto.LoadWallet(ctx, crypto.WALLET_PATH_PRIVATE_KEY)
@@ -57,7 +58,13 @@ func MakeServiceHandler(ctx context.Context, log *slog.Logger, dbUrl string, cha
 
 	s, h := protocolconnect.NewStreamServiceHandler(
 		&Service{
-			cache:             events.NewStreamCache(&events.StreamCacheParams{Storage: store, Wallet: wallet, DefaultCtx: ctx}),
+			cache: events.NewStreamCache(
+				&events.StreamCacheParams{
+					Storage:    store,
+					Wallet:     wallet,
+					DefaultCtx: ctx,
+				},
+			),
 			townsContract:     contract,
 			wallet:            wallet,
 			log:               log,

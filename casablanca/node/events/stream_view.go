@@ -6,13 +6,10 @@ import (
 	. "casablanca/node/crypto"
 	"casablanca/node/dlog"
 	. "casablanca/node/protocol"
+	"casablanca/node/storage"
 	. "casablanca/node/utils"
 	"context"
 	"encoding/hex"
-	"fmt"
-	"os"
-	"runtime/debug"
-	"sync"
 
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -40,196 +37,81 @@ type UserDeviceStreamView interface {
 	IsDeviceIdRevoked(rdkId RdkId) (bool, error)
 }
 
-var debugLogMutex = &sync.Mutex{}
-
-func degugLogEvents(events []*ParsedEvent, markEvent string, problem error) {
-	debugLogMutex.Lock()
-	defer debugLogMutex.Unlock()
-	for i, e := range events {
-		var marker string
-		if e.HashStr == markEvent {
-			marker = " <=="
-		}
-		fmt.Printf("%3d %s%s\n", i, e.ShortDebugStr(), marker)
-	}
-	fmt.Printf("Error: %s\n", problem.Error())
-	if DebugCorruptionExit() {
-		fmt.Printf("%s", debug.Stack())
-		os.Exit(1)
-	}
-}
-
-func topologicalSort(events []*ParsedEvent, eventsByHash map[string]*ParsedEvent) (sorted []*ParsedEvent, err error) {
-	sorted = make([]*ParsedEvent, 0, len(events))
-	visited := make(map[string]bool)
-
-	for _, e := range events {
-		if !visited[e.HashStr] {
-			visited[e.HashStr] = true
-			sorted, err = dfs(e, visited, events, eventsByHash, sorted)
-			if err != nil {
-				return
-			}
-		}
+func MakeStreamView(preceedingMiniblocks [][]byte, streamData *storage.GetStreamFromLastSnapshotResult) (*streamViewImpl, error) {
+	// TODO: make sure both client and node can init from snapshot and remove preceedingMiniblocks param.
+	if len(preceedingMiniblocks) != streamData.StartMiniblockNumber {
+		return nil, RpcErrorf(Err_STREAM_BAD_EVENT, "MakeStreamView: not enogh preceeding blocks")
 	}
 
-	return
-}
-
-func dfs(e *ParsedEvent, visited map[string]bool, events []*ParsedEvent, eventsByHash map[string]*ParsedEvent, sorted []*ParsedEvent) ([]*ParsedEvent, error) {
-	for _, p := range e.PrevEventStrs {
-		if !visited[p] {
-			pe := eventsByHash[p]
-			if pe == nil {
-				err := RpcErrorf(Err_BAD_EVENT, "MakeStreamView: prev event not found, prev_event_hash=%s, event=%s", FormatHashFromString(p), e.ShortDebugStr())
-				if DebugCorruptionPrint() {
-					fmt.Printf("%d\n", len(eventsByHash))
-					degugLogEvents(events, e.HashStr, err)
-				}
-				return nil, err
-			}
-			visited[p] = true
-			sorted2, err := dfs(pe, visited, events, eventsByHash, sorted)
-			if err != nil {
-				return nil, err
-			}
-			sorted = sorted2
-		}
-	}
-	return append(sorted, e), nil
-}
-
-func MakeStreamView(envelopes []*Envelope) (*streamViewImpl, error) {
-	unsortedEvents, err := ParseEvents(envelopes)
-	if err != nil {
-		return nil, err
-	}
-	return MakeStreamViewFromParsedEvents(unsortedEvents)
-}
-
-func MakeStreamViewFromParsedEvents(unsortedEvents []*ParsedEvent) (*streamViewImpl, error) {
-	// TODO: HNT-1854: Change storage to be block-aware.
-	//
-	// Currently this function reconstructs blocks from flat events, since this is what current
-	// storage implemntation returns. In the future storage will be updated to represent blocks
-	// and minipool directly, and this function will be updated to use them.
-	//
-	// Currently storage returns events in non-append order, so we need to sort them.
-
-	if len(unsortedEvents) <= 0 {
-		return nil, RpcErrorf(Err_STREAM_EMPTY, "MakeStreamView: No events")
+	if len(streamData.Miniblocks) <= 0 {
+		return nil, RpcErrorf(Err_STREAM_EMPTY, "MakeStreamView: no blocks")
 	}
 
-	eventsByHash := make(map[string]*ParsedEvent)
+	allBlocks := preceedingMiniblocks
+	if len(preceedingMiniblocks) == 0 {
+		allBlocks = streamData.Miniblocks
+	} else {
+		allBlocks = append(allBlocks, streamData.Miniblocks...)
+	}
 
-	for _, e := range unsortedEvents {
-		if _, ok := eventsByHash[e.HashStr]; !ok {
-			eventsByHash[e.HashStr] = e
-		} else {
-			err := RpcErrorf(Err_DUPLICATE_EVENT, "MakeStreamView: Duplicate event hash, event=%s", e.ShortDebugStr())
-			if DebugCorruptionPrint() {
-				degugLogEvents(unsortedEvents, e.HashStr, err)
-			}
+	miniblocks := make([]*miniblockInfo, len(allBlocks))
+	for i, binMiniblock := range allBlocks {
+		miniblock, err := NewMiniblockInfoFromBytes(binMiniblock)
+		if err != nil {
 			return nil, err
 		}
+		miniblocks[i] = miniblock
 	}
 
-	events, err := topologicalSort(unsortedEvents, eventsByHash)
-	if err != nil {
-		return nil, err
-	}
-
-	if events[0].Event.GetInceptionPayload() == nil {
-		return nil, RpcErrorf(Err_BAD_EVENT, "MakeStreamView: First event is not inception")
-	}
-
-	streamId := events[0].Event.GetInceptionPayload().GetStreamId()
-
-	var snapshotIndex = 0
-	var snapshot *Snapshot
-	blocks := make([]*miniblockInfo, 0, len(events)/8)
-	for _, event := range events {
-		header := event.Event.GetMiniblockHeader()
-		if header != nil {
-			if header.MiniblockNum != int64(len(blocks)) {
-				return nil, RpcErrorf(Err_BAD_BLOCK, "MakeStreamView: block number mismatch, expected=%d, actual=%d", len(blocks), header.MiniblockNum)
-			}
-
-			if header.GetSnapshot() != nil {
-				snapshot = header.GetSnapshot()
-				snapshotIndex = len(blocks)
-			}
-
-			if len(blocks) > 0 {
-				if header.PrevMiniblockHash == nil {
-					return nil, RpcErrorf(Err_BAD_BLOCK, "MakeStreamView: block hash is nil, block=%s", event.ShortDebugStr())
-				}
-				if !bytes.Equal(blocks[len(blocks)-1].headerEvent.Hash, header.PrevMiniblockHash) {
-					return nil, RpcErrorf(Err_BAD_BLOCK, "MakeStreamView: block hash mismatch, block=%s", event.ShortDebugStr())
-				}
-			} else {
-				if header.PrevMiniblockHash != nil {
-					return nil, RpcErrorf(Err_BAD_BLOCK, "MakeStreamView: block hash is not nil, block=%s", event.ShortDebugStr())
-				}
-			}
-
-			delete(eventsByHash, event.HashStr)
-
-			blockEvents := make([]*ParsedEvent, 0, len(header.EventHashes))
-			for _, hash := range header.EventHashes {
-				eventHashStr := string(hash)
-				e := eventsByHash[eventHashStr]
-				if e == nil {
-					return nil, RpcErrorf(Err_BAD_BLOCK, "MakeStreamView: block event not found, block=%s, event_hash=%s", e.ShortDebugStr(), FormatHashFromString(eventHashStr))
-				}
-				delete(eventsByHash, eventHashStr)
-				blockEvents = append(blockEvents, e)
-			}
-
-			blocks = append(blocks, &miniblockInfo{
-				headerEvent: event,
-				events:      blockEvents,
-			})
-		}
-	}
-
-	if len(blocks) <= 0 {
-		return nil, RpcErrorf(Err_BAD_BLOCK, "MakeStreamView: No blocks")
-	}
-
+	snapshot := miniblocks[streamData.StartMiniblockNumber].headerEvent.Event.GetMiniblockHeader().GetSnapshot()
 	if snapshot == nil {
-		return nil, RpcErrorf(Err_BAD_BLOCK, "MakeStreamView: No snapshot")
+		return nil, RpcErrorf(Err_STREAM_BAD_EVENT, "MakeStreamView: no snapshot")
+	}
+	streamId := snapshot.GetInceptionPayload().GetStreamId()
+	if streamId == "" {
+		return nil, RpcErrorf(Err_STREAM_BAD_EVENT, "MakeStreamView: no streamId")
 	}
 
-	// Now eventsByHash contains events that are not in any block, and thus are part of the minipool.
-	minipoolEvents := NewOrderedMap[string, *ParsedEvent](len(eventsByHash))
-	for _, e := range events {
-		if _, ok := eventsByHash[e.HashStr]; ok {
-			minipoolEvents.Set(e.HashStr, e)
+	minipoolEvents := NewOrderedMap[string, *ParsedEvent](len(streamData.MinipoolEnvelopes))
+	for _, e := range streamData.MinipoolEnvelopes {
+		var env Envelope
+		err := proto.Unmarshal(e, &env)
+		if err != nil {
+			return nil, err
 		}
+		parsed, err := ParseEvent(&env)
+		if err != nil {
+			return nil, err
+		}
+		minipoolEvents.Set(parsed.HashStr, parsed)
 	}
 
 	return &streamViewImpl{
 		streamId:      streamId,
-		blocks:        blocks,
+		blocks:        miniblocks,
 		minipool:      newMiniPoolInstance(minipoolEvents),
 		snapshot:      snapshot,
-		snapshotIndex: snapshotIndex,
+		snapshotIndex: streamData.StartMiniblockNumber,
 	}, nil
 }
 
 type streamViewImpl struct {
 	streamId string
 
+	firstBlockNum int
 	blocks        []*miniblockInfo
 	minipool      *minipoolInstance
 	snapshot      *Snapshot
 	snapshotIndex int
 }
 
+func (r *streamViewImpl) GetMinipoolGeneration() int {
+	return r.firstBlockNum + len(r.blocks)
+}
+
 func (r *streamViewImpl) copyAndAddEvent(event *ParsedEvent) (*streamViewImpl, error) {
 	if event.Event.GetMiniblockHeader() != nil {
-		return r.copyAndApplyBlock(event)
+		return nil, RpcError(Err_BAD_EVENT, "streamViewImpl: block event not allowed")
 	}
 
 	// TODO: HNT-1843: Re-enable block-aware event duplicate checks
@@ -240,6 +122,7 @@ func (r *streamViewImpl) copyAndAddEvent(event *ParsedEvent) (*streamViewImpl, e
 
 	r = &streamViewImpl{
 		streamId:      r.streamId,
+		firstBlockNum: r.firstBlockNum,
 		blocks:        r.blocks,
 		minipool:      r.minipool.copyAndAddEvent(event),
 		snapshot:      r.snapshot,
@@ -252,12 +135,13 @@ func (r *streamViewImpl) lastBlock() *miniblockInfo {
 	return r.blocks[len(r.blocks)-1]
 }
 
-func (r *streamViewImpl) makeMiniblockHeader(ctx context.Context) *MiniblockHeader {
-
+func (r *streamViewImpl) makeMiniblockHeader(ctx context.Context) (*MiniblockHeader, []*ParsedEvent) {
 	log := dlog.CtxLog(ctx)
-	hashes := make([][]byte, 0, r.minipool.events.Len())
-	for _, e := range r.minipool.events.Values {
-		hashes = append(hashes, e.Hash)
+	hashes := make([][]byte, r.minipool.events.Len())
+	events := make([]*ParsedEvent, r.minipool.events.Len())
+	for i, e := range r.minipool.events.Values {
+		hashes[i] = e.Hash
+		events[i] = e
 	}
 
 	var snapshot *Snapshot
@@ -286,7 +170,7 @@ func (r *streamViewImpl) makeMiniblockHeader(ctx context.Context) *MiniblockHead
 		Content: &MiniblockHeader_None{
 			None: &emptypb.Empty{},
 		},
-	}
+	}, events
 }
 
 // In 1.21 there is built-in max! (facepalm)
@@ -297,10 +181,10 @@ func MaxInt_(a, b int) int {
 	return b
 }
 
-func (r *streamViewImpl) copyAndApplyBlock(headerEvent *ParsedEvent) (*streamViewImpl, error) {
-	header := headerEvent.Event.GetMiniblockHeader()
+func (r *streamViewImpl) copyAndApplyBlock(miniblock *miniblockInfo) (*streamViewImpl, error) {
+	header := miniblock.headerEvent.Event.GetMiniblockHeader()
 	if header == nil {
-		return nil, RpcErrorf(Err_INTERNAL_ERROR, "streamViewImpl: non block event not allowed, stream=%s, event=%s", r.streamId, headerEvent.ShortDebugStr())
+		return nil, RpcErrorf(Err_INTERNAL_ERROR, "streamViewImpl: non block event not allowed, stream=%s, event=%s", r.streamId, miniblock.headerEvent.ShortDebugStr())
 	}
 
 	lastBlock := r.lastBlock()
@@ -316,14 +200,11 @@ func (r *streamViewImpl) copyAndApplyBlock(headerEvent *ParsedEvent) (*streamVie
 		remaining[k] = v
 	}
 
-	eventsInBlock := make([]*ParsedEvent, 0, len(header.EventHashes))
-	for _, hash := range header.EventHashes {
-		eventHashStr := string(hash)
-		if e, ok := remaining[eventHashStr]; ok {
-			eventsInBlock = append(eventsInBlock, e)
-			delete(remaining, eventHashStr)
+	for _, e := range miniblock.events {
+		if _, ok := remaining[e.HashStr]; ok {
+			delete(remaining, e.HashStr)
 		} else {
-			return nil, RpcErrorf(Err_BAD_BLOCK, "streamViewImpl: block event not found, stream=%s, event_hash=%s", r.streamId, FormatHashFromString(eventHashStr))
+			return nil, RpcErrorf(Err_BAD_BLOCK, "streamViewImpl: block event not found, stream=%s, event_hash=%s", r.streamId, FormatHashFromString(e.HashStr))
 		}
 	}
 
@@ -346,7 +227,8 @@ func (r *streamViewImpl) copyAndApplyBlock(headerEvent *ParsedEvent) (*streamVie
 
 	return &streamViewImpl{
 		streamId:      r.streamId,
-		blocks:        append(r.blocks, &miniblockInfo{headerEvent: headerEvent, events: eventsInBlock}),
+		firstBlockNum: r.firstBlockNum,
+		blocks:        append(r.blocks, miniblock),
 		minipool:      newMiniPoolInstance(minipoolEvents),
 		snapshot:      snapshot,
 		snapshotIndex: snapshotIndex,

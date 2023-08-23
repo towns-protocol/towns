@@ -3,10 +3,13 @@ package events
 import (
 	"casablanca/node/crypto"
 	"casablanca/node/protocol"
+	. "casablanca/node/protocol"
+	"casablanca/node/storage"
 	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"google.golang.org/protobuf/proto"
 )
 
 func parsedEvent(t *testing.T, envelope *protocol.Envelope) *ParsedEvent {
@@ -34,19 +37,23 @@ func TestLoad(t *testing.T) {
 	assert.NoError(t, err)
 	miniblockHeader, err := Make_GenisisMiniblockHeader([]*ParsedEvent{parsedEvent(t, inception), parsedEvent(t, join)})
 	assert.NoError(t, err)
-	block, err := MakeEnvelopeWithPayload(
+	miniblockHeaderProto, err := MakeEnvelopeWithPayload(
 		wallet,
 		Make_MiniblockHeader(miniblockHeader),
 		[][]byte{join.Hash},
 	)
 	assert.NoError(t, err)
 
-	envelopes := []*protocol.Envelope{
-		inception,
-		join,
-		block,
+	miniblockProto := &Miniblock{
+		Header: miniblockHeaderProto,
+		Events: []*Envelope{inception, join},
 	}
-	view, err := MakeStreamView(envelopes)
+	miniblockProtoBytes, err := proto.Marshal(miniblockProto)
+	assert.NoError(t, err)
+
+	view, err := MakeStreamView(nil, &storage.GetStreamFromLastSnapshotResult{
+		Miniblocks: [][]byte{miniblockProtoBytes},
+	})
 	assert.NoError(t, err)
 
 	assert.Equal(t, "streamid$1", view.StreamId())
@@ -67,14 +74,14 @@ func TestLoad(t *testing.T) {
 	miniEnvelopes := view.MinipoolEnvelopes()
 	assert.Equal(t, 0, len(miniEnvelopes))
 
-	newEnvelopes := make([]*protocol.Envelope, 0, len(envelopes))
+	newEnvelopesHashes := make([]string, 0)
 	_ = view.forEachEvent(0, func(e *ParsedEvent) (bool, error) {
-		newEnvelopes = append(newEnvelopes, e.Envelope)
+		newEnvelopesHashes = append(newEnvelopesHashes, e.HashStr)
 		return true, nil
 	})
 
-	assert.Equal(t, 3, len(newEnvelopes))
-	assert.Equal(t, envelopes, newEnvelopes)
+	assert.Equal(t, 3, len(newEnvelopesHashes))
+	assert.Equal(t, []string{string(inception.Hash), string(join.Hash), string(miniblockHeaderProto.Hash)}, newEnvelopesHashes)
 
 	cookie := view.SyncCookie()
 	assert.NotNil(t, cookie)
@@ -98,10 +105,12 @@ func TestLoad(t *testing.T) {
 	assert.NoError(t, err)
 	view, err = view.copyAndAddEvent(parsedEvent(t, join2))
 	assert.NoError(t, err)
+
 	// with one new event, we shouldn't snapshot yet
 	assert.Equal(t, false, view.shouldSnapshot())
+
 	// and miniblocks should have nil snapshots
-	miniblock := view.makeMiniblockHeader(context.Background())
+	miniblock, _ := view.makeMiniblockHeader(context.Background())
 	assert.Nil(t, miniblock.Snapshot)
 	// add another join event
 	join3, err := MakeEnvelopeWithPayload(
@@ -116,9 +125,8 @@ func TestLoad(t *testing.T) {
 	assert.Equal(t, true, view.shouldSnapshot())
 	assert.Equal(t, 2, len(view.eventsSinceLastSnapshot()))
 	// and miniblocks should have non - nil snapshots
-	miniblock = view.makeMiniblockHeader(context.Background())
+	miniblock, _ = view.makeMiniblockHeader(context.Background())
 	assert.NotNil(t, miniblock.Snapshot)
-
 }
 
 // TODO: add negative tests

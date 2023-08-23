@@ -22,6 +22,10 @@ type ParsedEvent struct {
 	shortDebugStr string
 }
 
+func (e *ParsedEvent) GetEnvelopeBytes() ([]byte, error) {
+	return proto.Marshal(e.Envelope)
+}
+
 type FullEvent struct {
 	StreamId    string
 	SeqNum      int64

@@ -1,13 +1,16 @@
 package events
 
 import (
-	"casablanca/node/dlog"
+	"casablanca/node/storage"
 	"context"
 	"sync"
 	"time"
 
 	. "casablanca/node/base"
 	. "casablanca/node/protocol"
+
+	"github.com/gologme/log"
+	"google.golang.org/protobuf/proto"
 )
 
 type Stream struct {
@@ -36,13 +39,23 @@ func (s *Stream) loadInternal(ctx context.Context) {
 	if s.view != nil || s.loadError != nil {
 		return
 	}
-	events, err := s.params.Storage.GetStream(ctx, s.streamId)
+	streamData, err := s.params.Storage.GetStreamFromLastSnapshot(ctx, s.streamId)
 	if err != nil {
 		s.loadError = err
 		return
 	}
 
-	view, err := MakeStreamView(events)
+	// TODO: stop reading preceding miniblocks once snapshots work end-to-end.
+	var preceedingMiniblocks [][]byte
+	if streamData.StartMiniblockNumber > 0 {
+		preceedingMiniblocks, err = s.params.Storage.GetMiniblocks(ctx, s.streamId, 0, streamData.StartMiniblockNumber)
+		if err != nil {
+			s.loadError = err
+			return
+		}
+	}
+
+	view, err := MakeStreamView(preceedingMiniblocks, streamData)
 	if err != nil {
 		s.loadError = err
 	} else {
@@ -85,6 +98,50 @@ func (s *Stream) stopTicker() {
 	s.miniblockTickerContext = nil
 }
 
+func (s *Stream) makeMiniblock(ctx context.Context) error {
+	miniblockHeader, envelopes := s.view.makeMiniblockHeader(ctx)
+
+	prevHashes := [][]byte{s.view.LastEvent().Hash}
+	miniblockHeaderEvent, err := MakeParsedEventWithPayload(s.params.Wallet, Make_MiniblockHeader(miniblockHeader), prevHashes)
+	if err != nil {
+		return err
+	}
+
+	miniblock, err := NewMiniblockInfoFromParsed(miniblockHeaderEvent, envelopes)
+	if err != nil {
+		return err
+	}
+
+	miniblockBytes, err := miniblock.ToBytes()
+	if err != nil {
+		return err
+	}
+
+	err = s.params.Storage.CreateBlock(
+		ctx,
+		s.streamId,
+		s.view.GetMinipoolGeneration(),
+		s.view.minipool.nextSlotNumber(),
+		miniblockBytes,
+		miniblockHeader.GetSnapshot() != nil,
+		nil,
+	)
+	if err != nil {
+		return err
+	}
+
+	newSV, err := s.view.copyAndApplyBlock(miniblock)
+	if err != nil {
+		return err
+	}
+	prevSyncCookie := s.view.SyncCookie()
+	s.view = newSV
+	newSyncCookie := s.view.SyncCookie()
+
+	s.notifySubscribers([]*Envelope{miniblockHeaderEvent.Envelope}, newSyncCookie, prevSyncCookie)
+	return nil
+}
+
 func (s *Stream) maybeMakeMiniblock(ctx context.Context) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -96,50 +153,55 @@ func (s *Stream) maybeMakeMiniblock(ctx context.Context) {
 
 	viewInitialLen := s.view.minipool.events.Len()
 	if viewInitialLen > 0 {
-		log := dlog.CtxLog(ctx)
-
-		block := s.view.makeMiniblockHeader(ctx)
-
-		prevHashes := [][]byte{s.view.LastEvent().Hash}
-		event, err := MakeParsedEventWithPayload(s.params.Wallet, Make_MiniblockHeader(block), prevHashes)
-		if err == nil {
-			_, err = s.addEventImpl(ctx, event)
-		}
-
+		err := s.makeMiniblock(ctx)
 		if err != nil {
 			log.Error("Failed to add miniblock event",
 				"error", err,
 				"streamId", s.streamId,
-				"blockNum", block.MiniblockNum,
-				"blockHash", event.Hash,
-				"blockLen", len(block.EventHashes),
-				"numEventsInInitialMinipool", viewInitialLen,
 			)
-			return
 		}
-
-		log.Debug("Made miniblock",
-			"streamId", s.streamId,
-			"blockNum", block.MiniblockNum,
-			"blockHash", event.Hash,
-			"blockLen", len(block.EventHashes),
-			"numEventsInInitialMinipool", viewInitialLen,
-			"numEventsInNewMinipool", s.view.minipool.events.Len(),
-		)
 	}
 }
 
-func createStream(ctx context.Context, params *StreamCacheParams, streamId string, events []*ParsedEvent) (*Stream, *streamViewImpl, error) {
-	envelopes := make([]*Envelope, 0, len(events))
-	for _, e := range events {
-		envelopes = append(envelopes, e.Envelope)
+func createStream(ctx context.Context, params *StreamCacheParams, streamId string, genesisMiniblockEvents []*ParsedEvent) (*Stream, *streamViewImpl, error) {
+	header, err := Make_GenisisMiniblockHeader(genesisMiniblockEvents)
+	if err != nil {
+		return nil, nil, err
 	}
-	err := params.Storage.CreateStream(ctx, streamId, envelopes)
+	headerEnvelope, err := MakeEnvelopeWithPayload(
+		params.Wallet,
+		Make_MiniblockHeader(header),
+		[][]byte{genesisMiniblockEvents[len(genesisMiniblockEvents)-1].Hash},
+	)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	view, err := MakeStreamViewFromParsedEvents(events)
+	envelopes := make([]*Envelope, len(genesisMiniblockEvents))
+	for i, e := range genesisMiniblockEvents {
+		envelopes[i] = e.Envelope
+	}
+
+	miniblock := &Miniblock{
+		Events: envelopes,
+		Header: headerEnvelope,
+	}
+
+	serializedMiniblock, err := proto.Marshal(miniblock)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	err = params.Storage.CreateStream(ctx, streamId, serializedMiniblock)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// TODO: redundant parsing here.
+	view, err := MakeStreamView(nil, &storage.GetStreamFromLastSnapshotResult{
+		StartMiniblockNumber: 0,
+		Miniblocks:           [][]byte{serializedMiniblock},
+	})
 	if err != nil {
 		return nil, nil, err
 	}
@@ -178,9 +240,28 @@ func (s *Stream) AddEvent(ctx context.Context, event *ParsedEvent) (*SyncCookie,
 	return s.addEventImpl(ctx, event)
 }
 
+func (s *Stream) notifySubscribers(envelopes []*Envelope, newSyncCookie *SyncCookie, prevSyncCookie *SyncCookie) {
+	if len(s.receivers) > 0 {
+		update := &StreamAndCookie{
+			StreamId:           s.streamId,
+			Events:             envelopes,
+			NextSyncCookie:     newSyncCookie,
+			OriginalSyncCookie: prevSyncCookie,
+		}
+		for receiver := range s.receivers {
+			receiver <- update
+		}
+	}
+}
+
 // Lock must be taken.
 func (s *Stream) addEventImpl(ctx context.Context, event *ParsedEvent) (*SyncCookie, error) {
-	err := s.params.Storage.AddEvent(ctx, s.streamId, event.Envelope)
+	envelopeBytes, err := event.GetEnvelopeBytes()
+	if err != nil {
+		return nil, err
+	}
+
+	err = s.params.Storage.AddEvent(ctx, s.streamId, len(s.view.blocks), s.view.minipool.nextSlotNumber(), envelopeBytes)
 	// TODO: for some classes of errors, it's not clear if event was added or not
 	// for those, perhaps entire Stream structure should be scrapped and reloaded
 	if err != nil {
@@ -195,17 +276,8 @@ func (s *Stream) addEventImpl(ctx context.Context, event *ParsedEvent) (*SyncCoo
 	s.view = newSV
 	newSyncCookie := s.view.SyncCookie()
 
-	if len(s.receivers) > 0 {
-		update := &StreamAndCookie{
-			StreamId:           s.streamId,
-			Events:             []*Envelope{event.Envelope},
-			NextSyncCookie:     newSyncCookie,
-			OriginalSyncCookie: prevSyncCookie,
-		}
-		for receiver := range s.receivers {
-			receiver <- update
-		}
-	}
+	s.notifySubscribers([]*Envelope{event.Envelope}, newSyncCookie, prevSyncCookie)
+
 	return newSyncCookie, nil
 }
 

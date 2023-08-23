@@ -10,7 +10,7 @@ import (
 )
 
 type StreamCacheParams struct {
-	Storage    storage.Storage
+	Storage    storage.StreamStorage
 	Wallet     *crypto.Wallet
 	DefaultCtx context.Context
 }
@@ -55,12 +55,12 @@ func (s *streamCacheImpl) GetStream(ctx context.Context, streamId string) (*Stre
 	}
 }
 
-func (s *streamCacheImpl) CreateStream(ctx context.Context, streamId string, events []*ParsedEvent) (*Stream, StreamView, error) {
+func (s *streamCacheImpl) CreateStream(ctx context.Context, streamId string, genesisMiniblockEvents []*ParsedEvent) (*Stream, StreamView, error) {
 	if existing, _ := s.cache.Load(streamId); existing != nil {
 		return nil, nil, RpcErrorf(Err_STREAM_ALREADY_EXISTS, "stream already exists, %s", streamId)
 	}
 
-	stream, view, err := createStream(ctx, s.params, streamId, events)
+	stream, view, err := createStream(ctx, s.params, streamId, genesisMiniblockEvents)
 	if err != nil {
 		return nil, nil, err
 	}
