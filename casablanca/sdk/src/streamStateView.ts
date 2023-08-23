@@ -1,7 +1,7 @@
 import { dlog } from './dlog'
 import { Err, SnapshotCaseType, SyncCookie, StreamAndCookie, Snapshot } from '@river/proto'
 import TypedEmitter from 'typed-emitter'
-import { check, checkNever, isDefined, throwWithCode } from './check'
+import { check, logNever, isDefined, throwWithCode } from './check'
 import { ParsedEvent } from './types'
 import { RiverEvent } from './event'
 import { unpackEnvelopes } from './sign'
@@ -113,7 +113,7 @@ export class StreamStateView {
                 check(false, `Snapshot has no content ${streamId}`, Err.STREAM_BAD_EVENT)
                 break
             default:
-                checkNever(snapshot.content)
+                logNever(snapshot.content)
         }
     }
 
@@ -174,7 +174,7 @@ export class StreamStateView {
                 case undefined:
                     break
                 default:
-                    checkNever(payload)
+                    logNever(payload)
             }
         } catch (e) {
             log(`Error processing event ${event.hashStr}`, e)
@@ -244,7 +244,8 @@ export class StreamStateView {
             case undefined:
                 throw new Error('Stream has no content')
             default:
-                checkNever(this.contentKind)
+                logNever(this.contentKind)
+                return new StreamStateView_Membership()
         }
     }
 }

@@ -1,5 +1,5 @@
 import { Membership, MembershipOp } from '@river/proto'
-import { checkNever } from './check'
+import { logNever } from './check'
 import TypedEmitter from 'typed-emitter'
 import { StreamEvents } from './streamEvents'
 
@@ -30,7 +30,7 @@ export class StreamStateView_Membership {
             case MembershipOp.SO_UNSPECIFIED:
                 break
             default:
-                checkNever(op)
+                logNever(op)
         }
     }
 }

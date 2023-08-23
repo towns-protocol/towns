@@ -7,7 +7,7 @@ import {
     UserPayload_Inception,
     UserPayload_UserMembership,
 } from '@river/proto'
-import { checkNever } from './check'
+import { logNever } from './check'
 import { StreamEvents } from './streamEvents'
 import { RiverEvent } from './event'
 import { userIdFromAddress } from './id'
@@ -56,7 +56,7 @@ export class StreamStateView_User {
             case undefined:
                 break
             default:
-                checkNever(payload.content)
+                logNever(payload.content)
         }
     }
 
@@ -81,7 +81,7 @@ export class StreamStateView_User {
             case MembershipOp.SO_UNSPECIFIED:
                 break
             default:
-                checkNever(op)
+                logNever(op)
         }
     }
 }

@@ -11,7 +11,7 @@ import {
     SpacePayload_Channel,
     SpacePayload_Inception,
 } from '@river/proto'
-import { checkNever, isDefined, throwWithCode } from './check'
+import { isDefined, logNever, throwWithCode } from './check'
 import { StreamEvents } from './streamEvents'
 
 export class StreamStateView_Space {
@@ -46,7 +46,7 @@ export class StreamStateView_Space {
             case undefined:
                 break
             default:
-                checkNever(payload.content)
+                logNever(payload.content)
         }
     }
 

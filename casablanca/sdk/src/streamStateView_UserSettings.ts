@@ -9,7 +9,7 @@ import {
 import TypedEmitter from 'typed-emitter'
 import { ParsedEvent } from './types'
 import { EmittedEvents } from './client'
-import { checkNever } from './check'
+import { logNever } from './check'
 import { StreamEvents } from './streamEvents'
 
 export class StreamStateView_UserSettings {
@@ -42,7 +42,7 @@ export class StreamStateView_UserSettings {
             case undefined:
                 break
             default:
-                checkNever(payload.content)
+                logNever(payload.content)
         }
     }
 

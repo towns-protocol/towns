@@ -7,7 +7,7 @@ import {
     UserDeviceKeyPayload_Inception,
     UserDeviceKeyPayload_UserDeviceKey,
 } from '@river/proto'
-import { checkNever } from './check'
+import { logNever } from './check'
 
 export class StreamStateView_UserDeviceKeys {
     readonly streamId: string
@@ -48,7 +48,7 @@ export class StreamStateView_UserDeviceKeys {
             case undefined:
                 break
             default:
-                checkNever(payload.content)
+                logNever(payload.content)
         }
     }
 }

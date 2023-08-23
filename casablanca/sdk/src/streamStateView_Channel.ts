@@ -5,7 +5,7 @@ import { EmittedEvents } from './client'
 import { ChannelPayload, ChannelPayload_Inception } from '@river/proto'
 import { RiverEvent } from './event'
 import { userIdFromAddress } from './id'
-import { checkNever } from './check'
+import { logNever } from './check'
 
 export type ChannelPayloadCaseType = ChannelPayload['content']['case']
 export type ChannelPayloadValueType = ChannelPayload['content']['value']
@@ -67,7 +67,7 @@ export class StreamStateView_Channel {
             case undefined:
                 break
             default:
-                checkNever(payload.content)
+                logNever(payload.content)
         }
     }
 }
