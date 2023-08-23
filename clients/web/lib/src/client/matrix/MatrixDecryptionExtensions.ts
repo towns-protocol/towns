@@ -21,6 +21,7 @@ import throttle from 'lodash/throttle'
 import { MEGOLM_ALGORITHM } from 'matrix-js-sdk/lib/crypto/olmlib'
 // eslint-disable-next-line lodash/import-scope
 import type { DebouncedFunc } from 'lodash'
+import { Membership } from '../../types/zion-types'
 
 /**
  * If I have messages that I can't decrypt (which happens all the time in normal use cases,
@@ -159,6 +160,7 @@ export class MatrixDecryptionExtension extends TypedEventEmitter<
     private onDecryptedEvent = (event: MatrixEvent, err: Error | undefined) => {
         if (event.isDecryptionFailure()) {
             const roomId = event.getRoomId()
+
             if (!roomId) {
                 console.log("MDE::onDecryptionFailure - event doesn't have a roomId", {
                     eventId: event.getId(),
@@ -166,6 +168,36 @@ export class MatrixDecryptionExtension extends TypedEventEmitter<
                 })
                 return
             }
+
+            // we can leave a space, but that doesn't mean we've left all the channels in the space.
+            // so we can still get a bunch of (decrypted) events for channels we're not in.
+            // matrix is probably doing work on these events already, before we handle them here, and we should solve that, probably by
+            // 1. leave all the channels in the space as well as the space
+            // 2. for spaces left before 1 is implemented, something to auto leave a user from all channels in said left space
+            // https://linear.app/hnt-labs/issue/HNT-2207/leave-channels-when-leaving-a-space
+            // For now, we'll just ignore events for rooms we're not in so we can avoid further work here
+            const room = this.matrixClient.getRoom(roomId)
+            if (!room || room.getMyMembership() !== Membership.Join) {
+                console.log('MDE::onDecryption skipping - not a member of room', {
+                    room,
+                })
+                return
+            }
+
+            if (!room.isSpaceRoom()) {
+                const parentId = room.currentState.getStateEvents(EventType.SpaceParent)?.[0]?.event
+                    ?.state_key
+
+                const parentMembership = this.matrixClient.getRoom(parentId)?.getMyMembership()
+                if (!parentMembership || parentMembership !== Membership.Join) {
+                    console.log('MDE::onDecryption skipping - not a member of parent space', {
+                        room,
+                        parentId,
+                    })
+                    return
+                }
+            }
+
             if (!this.roomRecords[roomId]) {
                 this.roomRecords[roomId] = { decryptionFailures: [] }
             }
