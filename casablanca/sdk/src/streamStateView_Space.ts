@@ -57,35 +57,20 @@ export class StreamStateView_Space {
         const { op, channelId, channelProperties } = payload
         switch (op) {
             case ChannelOp.CO_CREATED: {
-                const emittedChannelProperties =
-                    this.channelPropertiesFromEncryptedData(channelProperties)
-
-                this.spaceChannelsMetadata.set(channelId, emittedChannelProperties)
-
-                emitter?.emit(
-                    'spaceChannelCreated',
-                    this.streamId,
-                    channelId,
-                    emittedChannelProperties,
-                )
+                const props = this.decryptChannelProps(channelProperties)
+                this.spaceChannelsMetadata.set(channelId, props)
+                emitter?.emit('spaceChannelCreated', this.streamId, channelId, props)
                 break
             }
             case ChannelOp.CO_DELETED:
-                emitter?.emit('spaceChannelDeleted', this.streamId, channelId)
-                this.spaceChannelsMetadata.delete(channelId)
+                if (this.spaceChannelsMetadata.delete(channelId)) {
+                    emitter?.emit('spaceChannelDeleted', this.streamId, channelId)
+                }
                 break
             case ChannelOp.CO_UPDATED: {
-                const emittedChannelProperties =
-                    this.channelPropertiesFromEncryptedData(channelProperties)
-
-                this.spaceChannelsMetadata.set(channelId, emittedChannelProperties)
-
-                emitter?.emit(
-                    'spaceChannelUpdated',
-                    this.streamId,
-                    channelId,
-                    emittedChannelProperties,
-                )
+                const props = this.decryptChannelProps(channelProperties)
+                this.spaceChannelsMetadata.set(channelId, props)
+                emitter?.emit('spaceChannelUpdated', this.streamId, channelId, props)
                 break
             }
             default:
@@ -93,9 +78,7 @@ export class StreamStateView_Space {
         }
     }
 
-    private channelPropertiesFromEncryptedData(
-        encryptedData: EncryptedData | undefined,
-    ): ChannelProperties {
+    private decryptChannelProps(encryptedData: EncryptedData | undefined): ChannelProperties {
         //TODO: We need to support decryption once encryption is enabled for Channel EncryptedData events
         let channelProperties = ChannelProperties.fromJsonString(encryptedData?.text ?? '')
         if (!isDefined(channelProperties)) {
