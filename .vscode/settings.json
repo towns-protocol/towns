@@ -10,6 +10,7 @@
     "./clients/web/app",
     "./clients/web/lib",
     "./clients/web/sample-app",
+    "./servers/workers/worker-common"
   ],
   "[solidity]": {
     "editor.defaultFormatter": "NomicFoundation.hardhat-solidity"

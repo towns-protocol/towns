@@ -6,6 +6,8 @@ storybook-static
 
 servers/*
 !servers/workers
+servers/workers/**/coverage/*
+servers/workers/**/dist/*
 servers/workers/**/.keys/*
 casablanca/**/gen/*
 casablanca/**/coverage/*

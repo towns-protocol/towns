@@ -20176,6 +20176,7 @@ __metadata:
     ts-loader: ^9.4.2
     typescript: ^5.1.3
     use-zion-client: "workspace:^"
+    worker-common: "workspace:^"
     wrangler: ^3.2.0
   languageName: unknown
   linkType: soft
@@ -23552,6 +23553,29 @@ __metadata:
   checksum: 486ceaf2c04953cd73fe04760929a9c42818b57fffbbaca3fc9065cfd6bf3f5a571d2ea78db177e548a98041c8752faa360dda8eaf0f10b8638ef3eb1b696b13
   languageName: node
   linkType: hard
+
+"worker-common@workspace:^, worker-common@workspace:servers/workers/worker-common":
+  version: 0.0.0-use.local
+  resolution: "worker-common@workspace:servers/workers/worker-common"
+  dependencies:
+    "@cloudflare/workers-types": ^4.20230710.1
+    "@towns/generated": "workspace:^"
+    "@types/jest": ^29.4.0
+    "@typescript-eslint/eslint-plugin": ^5.61.0
+    "@typescript-eslint/parser": ^5.61.0
+    eslint: ^8.42.0
+    ethers: ^5.7.2
+    jest: ^29.6.2
+    jest-environment-miniflare: ^2.14.0
+    miniflare: ^3.20230710.0
+    prettier: ^2.8.8
+    siwe: ^2.1.3
+    ts-jest: ^29.1.1
+    typescript: ^5.1.3
+    use-zion-client: "workspace:^"
+    wrangler: ^3.2.0
+  languageName: unknown
+  linkType: soft
 
 "worker-typescript-template@workspace:servers/workers/worker-template":
   version: 0.0.0-use.local

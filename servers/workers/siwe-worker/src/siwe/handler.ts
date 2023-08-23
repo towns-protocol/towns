@@ -30,8 +30,8 @@ export async function verifySiweMessage(
 		userId?: string
 	}
 
-	const siweMessage = new SiweMessage(message as string)
-	await siweMessage.verify({ signature: signature as string })
+	const siweMessage = new SiweMessage(message)
+	await siweMessage.verify({ signature: signature })
 	if (!verifyUser) {
 		// Need to setup provider with skipFetchSetup flag
 		// See issue: https://github.com/ethers-io/ethers.js/issues/1886
@@ -41,8 +41,8 @@ export async function verifySiweMessage(
 			{
 				url:
 					env.ENVIRONMENT == 'development'
-						? `${providerMap.get(env.ENVIRONMENT)}`
-						: `${providerMap.get(env.ENVIRONMENT)}${env.INFURA_API_KEY}`,
+						? `${providerMap.get(env.ENVIRONMENT) ?? ''}`
+						: `${providerMap.get(env.ENVIRONMENT) ?? ''}${env.INFURA_API_KEY}`,
 				skipFetchSetup: true,
 			},
 			network,

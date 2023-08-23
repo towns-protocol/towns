@@ -6,16 +6,20 @@
 		"project": ["./tsconfig.eslint.json"],
 		"sourceType": "module"
 	},
-	"ignorePatterns": ["dist/"],
 	"extends": [
 		"eslint:recommended",
 		"plugin:@typescript-eslint/recommended",
-		"plugin:prettier/recommended",
-		"prettier"
+		"plugin:@typescript-eslint/recommended-requiring-type-checking",
+		"plugin:prettier/recommended"
 	],
 	"plugins": ["@typescript-eslint", "prettier"],
 	"rules": {
 		"@typescript-eslint/no-var-requires": "off",
-		"@typescript-eslint/no-unused-vars": "off"
+		"@typescript-eslint/no-floating-promises": "error",
+		"@typescript-eslint/no-base-to-string": "error",
+		"@typescript-eslint/no-unused-vars": "off",
+		"@typescript-eslint/no-unsafe-argument": "off",
+		"@typescript-eslint/no-unsafe-member-access": "off",
+		"@typescript-eslint/no-unsafe-call": "off"
 	}
 }

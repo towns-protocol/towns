@@ -112,7 +112,8 @@
                     "siwe"
                 ],
                 "packages": [
-                    "siwe-worker"
+                    "siwe-worker",
+                    "worker-common"
                 ],
                 "dependencyTypes": [
                     "prod",

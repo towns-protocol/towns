@@ -1,7 +1,8 @@
 {
 	"extends": "../tsconfig.json",
 	"compilerOptions": {
-		"types": ["@cloudflare/workers-types", "jest", "miniflare"]
+		"types": ["@cloudflare/workers-types", "jest", "miniflare"],
+		"allowJs": true
 	},
 	"include": ["../src/**/*", "**/*"]
 }

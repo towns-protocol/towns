@@ -8,9 +8,11 @@
 		"dev": "echo use dev:local for now - see wrangler.toml",
 		"dev:local": "wrangler dev",
 		"dev:remote": "wrangler dev --remote",
-		"lint": "eslint .",
+		"lint": "yarn eslint --format unix ./src",
+		"lint:fix": "yarn lint --fix",
 		"publish:prod": "wrangler deploy --env production",
 		"publish:test": "wrangler deploy --env test",
+		"publish:test-beta": "wrangler deploy --env test-beta",
 		"test": "yarn test:unit",
 		"test:unit": "jest"
 	},
@@ -18,7 +20,8 @@
 		"@towns/generated": "workspace:^",
 		"siwe": "^2.1.3",
 		"ts-loader": "^9.4.2",
-		"use-zion-client": "workspace:^"
+		"use-zion-client": "workspace:^",
+		"worker-common": "workspace:^"
 	},
 	"devDependencies": {
 		"@cloudflare/workers-types": "^4.20230710.1",

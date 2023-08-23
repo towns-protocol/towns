@@ -1,11 +1,12 @@
 import {
-	withCorsHeaders,
-	AuthEnv,
+	verifySiweMessage,
 	isAuthedRequest,
 	isOptionsRequest,
 	getOptionsResponse,
 	Environment,
-} from '../../common'
+	AuthEnv,
+	withCorsHeaders,
+} from 'worker-common'
 
 // These initial Types are based on bindings that don't exist in the project yet,
 // you can follow the links to learn how to implement them.
@@ -34,11 +35,6 @@ export default {
 
 export const worker = {
 	async fetch(request: FetchEvent['request'], env: Env): Promise<Response> {
-		// Do not move this import to global scope
-		// See CPU startup time issues
-		// https://github.com/cloudflare/wrangler2/issues/2519
-		// https://github.com/cloudflare/wrangler2/issues/2152
-		const { verifySiweMessage } = require('./siwe/handler')
 		if (isOptionsRequest(request)) {
 			return getOptionsResponse(request, env.ENVIRONMENT)
 		}
@@ -63,7 +59,7 @@ export const worker = {
 				spaceId?: string
 				userId?: string
 			}
-			console.log(`spaceId: ${spaceId}, userId: ${userId}`)
+			console.log(`spaceId: ${spaceId ?? ''}, userId: ${userId ?? ''}`)
 			if (!!spaceId && !!userId) {
 				return new Response('Can only provide one of spaceId or userId', { status: 400 })
 			} else if (spaceId !== undefined) {
