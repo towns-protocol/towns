@@ -1,5 +1,5 @@
 import { PlainMessage } from '@bufbuild/protobuf'
-import { Envelope, EventRef, StreamEvent, Err } from '@river/proto'
+import { Envelope, EventRef, StreamEvent, Err, Miniblock } from '@river/proto'
 import { check, hasElements, isDefined } from './check'
 import {
     townsHash,
@@ -159,6 +159,16 @@ export const checkDelegateSig = (
         'delegateSig does not match creatorAddress',
         Err.BAD_DELEGATE_SIG,
     )
+}
+
+// returns all events + the header event
+export const unpackMiniblock = (miniblock: Miniblock): ParsedEvent[] => {
+    const events = unpackEnvelopes(miniblock.events)
+    if (miniblock.header) {
+        const header = unpackEnvelope(miniblock.header)
+        return [...events, header]
+    }
+    return events
 }
 
 export const unpackEnvelope = (envelope: Envelope, _prevEventHash?: Uint8Array): ParsedEvent => {

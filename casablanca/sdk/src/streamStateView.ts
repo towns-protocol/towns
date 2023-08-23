@@ -1,10 +1,17 @@
 import { dlog } from './dlog'
-import { Err, SnapshotCaseType, SyncCookie, StreamAndCookie, Snapshot } from '@river/proto'
+import {
+    Err,
+    SnapshotCaseType,
+    SyncCookie,
+    StreamAndCookie,
+    Snapshot,
+    Miniblock,
+} from '@river/proto'
 import TypedEmitter from 'typed-emitter'
 import { check, logNever, isDefined, throwWithCode } from './check'
 import { ParsedEvent } from './types'
 import { RiverEvent } from './event'
-import { unpackEnvelopes } from './sign'
+import { unpackEnvelopes, unpackMiniblock } from './sign'
 import { EmittedEvents } from './client'
 import { StreamStateView_Space } from './streamStateView_Space'
 import { StreamStateView_Channel } from './streamStateView_Channel'
@@ -117,6 +124,34 @@ export class StreamStateView {
         }
     }
 
+    private initializeFromSnapshot(
+        snapshot: Snapshot,
+        emitter: TypedEmitter<EmittedEvents> | undefined,
+    ): void {
+        switch (snapshot.content.case) {
+            case 'channelContent':
+                this.channelContent.initialize(snapshot, snapshot.content.value, emitter)
+                break
+            case 'spaceContent':
+                this.spaceContent.initialize(snapshot, snapshot.content.value, emitter)
+                break
+            case 'userContent':
+                this.userContent.initialize(snapshot, snapshot.content.value, emitter)
+                break
+            case 'userSettingsContent':
+                this.userSettingsContent.initialize(snapshot, snapshot.content.value)
+                break
+            case 'userDeviceKeyContent':
+                this.userDeviceKeyContent.initialize(snapshot, snapshot.content.value, emitter)
+                break
+            case undefined:
+                check(false, `Snapshot has no content ${this.streamId}`, Err.STREAM_BAD_EVENT)
+                break
+            default:
+                logNever(snapshot.content)
+        }
+    }
+
     private appendStreamAndCookie(
         streamAndCookie: StreamAndCookie,
         emitter: TypedEmitter<EmittedEvents> | undefined,
@@ -129,7 +164,10 @@ export class StreamStateView {
         return events
     }
 
-    private appendEvent(event: ParsedEvent, emitter?: TypedEmitter<EmittedEvents>): void {
+    private appendEvent(
+        event: ParsedEvent,
+        emitter: TypedEmitter<EmittedEvents> | undefined,
+    ): void {
         if (this.events.has(event.hashStr)) {
             return
         }
@@ -181,6 +219,55 @@ export class StreamStateView {
         }
     }
 
+    private prependEvent(
+        event: ParsedEvent,
+        emitter: TypedEmitter<EmittedEvents> | undefined,
+    ): void {
+        if (this.events.has(event.hashStr)) {
+            return
+        }
+
+        // not exactly a hack, but if this is the first event, we need to
+        // save the hash so that we can submit new events to this stream
+        if (this.timeline.length === 0) {
+            this.leafEventHashes.set(event.hashStr, event.envelope.hash)
+        }
+
+        this.timeline.unshift(event)
+        this.events.set(event.hashStr, event)
+
+        const payload = event.event.payload
+        check(isDefined(payload), `Event has no payload ${event.hashStr}`, Err.STREAM_BAD_EVENT)
+
+        try {
+            switch (payload.case) {
+                case 'channelPayload':
+                    this.channelContent?.prependEvent(event, payload.value, emitter)
+                    break
+                case 'spacePayload':
+                    this.spaceContent?.prependEvent(event, payload.value, emitter)
+                    break
+                case 'userPayload':
+                    this.userContent?.prependEvent(event, payload.value, emitter)
+                    break
+                case 'userSettingsPayload':
+                    this.userSettingsContent?.prependEvent(event, payload.value, emitter)
+                    break
+                case 'userDeviceKeyPayload':
+                    this.userDeviceKeyContent?.prependEvent(event, payload.value, emitter)
+                    break
+                case 'miniblockHeader':
+                    break
+                case undefined:
+                    break
+                default:
+                    logNever(payload)
+            }
+        } catch (e) {
+            log(`Error processing event ${event.hashStr}`, e)
+        }
+    }
+
     // update streeam state with successfully decrypted events by hashStr event id
     updateDecrypted(event: RiverEvent): void {
         const hashStr = event.getId()
@@ -215,10 +302,34 @@ export class StreamStateView {
 
     initialize(
         streamAndCookie: StreamAndCookie,
+        snapshot: Snapshot,
+        miniblocks: Miniblock[],
         emitter: TypedEmitter<EmittedEvents> | undefined,
     ): void {
-        const events = this.appendStreamAndCookie(streamAndCookie, emitter)
-        emitter?.emit('streamInitialized', this.streamId, this.contentKind, events)
+        check(miniblocks.length > 0, `Stream has no miniblocks ${this.streamId}`, Err.STREAM_EMPTY)
+        // initialize from snapshot data, this gets all memberships and channel data, etc
+        this.initializeFromSnapshot(snapshot, emitter)
+        // initialize from miniblocks, the first minblock is the snapshot block, it's events are accounted for
+        const block0 = unpackMiniblock(miniblocks[0])
+        // the rest need to be added to the timeline
+        const rest = miniblocks.slice(1).flatMap((mb) => unpackMiniblock(mb))
+        // prepend the snapshotted block in reverse order
+        for (let i = block0.length - 1; i >= 0; i--) {
+            const event = block0[i]
+            this.prependEvent(event, emitter)
+        }
+        // append the new block events
+        for (const event of rest) {
+            this.appendEvent(event, emitter)
+        }
+        // append the minipool events
+        const minipoolEvents = this.appendStreamAndCookie(streamAndCookie, emitter)
+        // let everyone know
+        emitter?.emit('streamInitialized', this.streamId, this.contentKind, [
+            ...block0,
+            ...rest,
+            ...minipoolEvents,
+        ])
     }
 
     appendEvents(

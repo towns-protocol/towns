@@ -3,8 +3,10 @@ import { ParsedEvent } from './types'
 import { EmittedEvents } from './client'
 import {
     DeviceKeys,
+    Snapshot,
     UserDeviceKeyPayload,
     UserDeviceKeyPayload_Inception,
+    UserDeviceKeyPayload_Snapshot,
     UserDeviceKeyPayload_UserDeviceKey,
 } from '@river/proto'
 import { logNever } from './check'
@@ -19,36 +21,72 @@ export class StreamStateView_UserDeviceKeys {
         this.streamId = inception.streamId
     }
 
-    appendEvent(
+    initialize(
+        snapshot: Snapshot,
+        content: UserDeviceKeyPayload_Snapshot,
+        emitter: TypedEmitter<EmittedEvents> | undefined,
+    ): void {
+        // dispatch events for all device keys, todo this seems inefficient?
+        for (const [_, value] of Object.entries(content.userDeviceKeys)) {
+            this.addUserDeviceKey(value, emitter)
+        }
+    }
+
+    prependEvent(
         event: ParsedEvent,
         payload: UserDeviceKeyPayload,
-        emitter?: TypedEmitter<EmittedEvents>,
+        _emitter: TypedEmitter<EmittedEvents> | undefined,
     ): void {
         switch (payload.content.case) {
             case 'inception':
                 break
             case 'userDeviceKey':
-                {
-                    const { userId, deviceKeys, fallbackKeys } = payload.content.value
-                    emitter?.emit(
-                        'userDeviceKeyMessage',
-                        this.streamId,
-                        userId,
-                        deviceKeys as DeviceKeys,
-                        fallbackKeys,
-                    )
-                    if (deviceKeys?.deviceId !== undefined) {
-                        this.uploadedDeviceKeys.set(deviceKeys.deviceId, [
-                            ...(this.uploadedDeviceKeys.get(deviceKeys.deviceId) || []),
-                            payload.content.value,
-                        ])
-                    }
-                }
+                // handled in snapshot
                 break
             case undefined:
                 break
             default:
                 logNever(payload.content)
+        }
+    }
+
+    appendEvent(
+        event: ParsedEvent,
+        payload: UserDeviceKeyPayload,
+        emitter: TypedEmitter<EmittedEvents> | undefined,
+    ): void {
+        switch (payload.content.case) {
+            case 'inception':
+                break
+            case 'userDeviceKey':
+                this.addUserDeviceKey(payload.content.value, emitter)
+                break
+            case undefined:
+                break
+            default:
+                logNever(payload.content)
+        }
+    }
+
+    private addUserDeviceKey(
+        value: UserDeviceKeyPayload_UserDeviceKey,
+        emitter: TypedEmitter<EmittedEvents> | undefined,
+    ) {
+        {
+            const { userId, deviceKeys, fallbackKeys } = value
+            emitter?.emit(
+                'userDeviceKeyMessage',
+                this.streamId,
+                userId,
+                deviceKeys as DeviceKeys,
+                fallbackKeys,
+            )
+            if (deviceKeys?.deviceId !== undefined) {
+                this.uploadedDeviceKeys.set(deviceKeys.deviceId, [
+                    ...(this.uploadedDeviceKeys.get(deviceKeys.deviceId) || []),
+                    value,
+                ])
+            }
         }
     }
 }

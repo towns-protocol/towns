@@ -1,4 +1,4 @@
-import { Snapshot, StreamAndCookie } from '@river/proto'
+import { Miniblock, Snapshot, StreamAndCookie } from '@river/proto'
 
 import { DLogger } from './dlog'
 import EventEmitter from 'events'
@@ -38,8 +38,12 @@ export class Stream extends (EventEmitter as new () => TypedEmitter<EmittedEvent
      * NOTE: Separating initial rollup from the constructor allows consumer to subscribe to events
      * on the new stream event and still access this object through Client.streams.
      */
-    initialize(streamAndCookie: StreamAndCookie): void {
-        this.view.initialize(streamAndCookie, this)
+    initialize(
+        streamAndCookie: StreamAndCookie,
+        snapshot: Snapshot,
+        miniblocks: Miniblock[],
+    ): void {
+        this.view.initialize(streamAndCookie, snapshot, miniblocks, this)
     }
 
     appendEvents(streamAndCookie: StreamAndCookie): void {

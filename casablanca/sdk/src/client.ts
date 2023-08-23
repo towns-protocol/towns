@@ -195,11 +195,11 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
     ): Promise<void> {
         assert(this.userStreamId === undefined, 'streamId must not be set')
         this.userStreamId = userStreamId
-        const { streamAndCookie, snapshot } = unpackStreamResponse(response)
+        const { streamAndCookie, snapshot, miniblocks } = unpackStreamResponse(response)
 
         const stream = new Stream(userStreamId, snapshot, this, this.logEmitFromStream)
         this.streams.set(userStreamId, stream)
-        stream.initialize(streamAndCookie)
+        stream.initialize(streamAndCookie, snapshot, miniblocks)
 
         stream.on('userJoinedStream', (s) => void this.onJoinedStream(s))
         stream.on('userLeftStream', (s) => void this.onLeftStream(s))
@@ -217,11 +217,11 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
     ): Promise<void> {
         assert(this.userSettingsStreamId === undefined, 'streamId must not be set')
         this.userSettingsStreamId = userSettingsStreamId
-        const { streamAndCookie, snapshot } = unpackStreamResponse(response)
+        const { streamAndCookie, snapshot, miniblocks } = unpackStreamResponse(response)
 
         const stream = new Stream(userSettingsStreamId, snapshot, this, this.logEmitFromStream)
         this.streams.set(userSettingsStreamId, stream)
-        stream.initialize(streamAndCookie)
+        stream.initialize(streamAndCookie, snapshot, miniblocks)
     }
 
     private async initUserDeviceKeyStream(
@@ -230,11 +230,11 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
     ): Promise<void> {
         assert(this.userDeviceKeyStreamId === undefined, 'streamId must not be set')
         this.userDeviceKeyStreamId = userDeviceKeyStreamId
-        const { streamAndCookie, snapshot } = unpackStreamResponse(response)
+        const { streamAndCookie, snapshot, miniblocks } = unpackStreamResponse(response)
 
         const stream = new Stream(userDeviceKeyStreamId, snapshot, this, this.logEmitFromStream)
         this.streams.set(userDeviceKeyStreamId, stream)
-        stream.initialize(streamAndCookie)
+        stream.initialize(streamAndCookie, snapshot, miniblocks)
     }
 
     async createNewUser(): Promise<void> {
@@ -328,11 +328,11 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         }
 
         const response = await this.rpcClient.getStream({ streamId })
-        const { streamAndCookie, snapshot } = unpackStreamResponse(response)
+        const { streamAndCookie, snapshot, miniblocks } = unpackStreamResponse(response)
         const stream = new Stream(streamId, snapshot, this, this.logEmitFromStream, true)
         this.streams.set(streamId, stream)
         // add init events
-        stream.initialize(streamAndCookie)
+        stream.initialize(streamAndCookie, snapshot, miniblocks)
     }
 
     async createSpace(
@@ -511,9 +511,9 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
             const response = await this.rpcClient.getStream({ streamId })
             this.logCall('getStream', response.stream)
             check(isDefined(response.stream) && hasElements(response.miniblocks), 'got bad stream')
-            const { streamAndCookie, snapshot } = unpackStreamResponse(response)
+            const { streamAndCookie, snapshot, miniblocks } = unpackStreamResponse(response)
             const streamView = new StreamStateView(streamId, snapshot)
-            streamView.initialize(streamAndCookie, undefined)
+            streamView.initialize(streamAndCookie, snapshot, miniblocks, undefined)
             return streamView
         } catch (err) {
             this.logCall('getStream', streamId, 'ERROR', err)
@@ -527,11 +527,11 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
             if (this.streams.get(streamId) === undefined) {
                 const response = await this.rpcClient.getStream({ streamId })
                 if (this.streams.get(streamId) === undefined) {
-                    const { streamAndCookie, snapshot } = unpackStreamResponse(response)
+                    const { streamAndCookie, snapshot, miniblocks } = unpackStreamResponse(response)
                     this.logCall('initStream', streamAndCookie)
                     const stream = new Stream(streamId, snapshot, this, this.logEmitFromStream)
                     this.streams.set(streamId, stream)
-                    stream.initialize(streamAndCookie)
+                    stream.initialize(streamAndCookie, snapshot, miniblocks)
                     // Blip sync here to make sure it also monitors new stream
                     this.blipSync()
                 } else {
