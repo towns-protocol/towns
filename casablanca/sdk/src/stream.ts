@@ -38,8 +38,12 @@ export class Stream extends (EventEmitter as new () => TypedEmitter<EmittedEvent
      * NOTE: Separating initial rollup from the constructor allows consumer to subscribe to events
      * on the new stream event and still access this object through Client.streams.
      */
-    update(streamAndCookie: StreamAndCookie, init?: boolean): void {
-        this.view.update(streamAndCookie, this, init)
+    initialize(streamAndCookie: StreamAndCookie): void {
+        this.view.initialize(streamAndCookie, this)
+    }
+
+    appendEvents(streamAndCookie: StreamAndCookie): void {
+        this.view.appendEvents(streamAndCookie, this)
     }
 
     emit<E extends keyof EmittedEvents>(event: E, ...args: Parameters<EmittedEvents[E]>): boolean {

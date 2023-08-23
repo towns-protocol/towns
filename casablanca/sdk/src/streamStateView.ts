@@ -117,6 +117,18 @@ export class StreamStateView {
         }
     }
 
+    private appendStreamAndCookie(
+        streamAndCookie: StreamAndCookie,
+        emitter: TypedEmitter<EmittedEvents> | undefined,
+    ): ParsedEvent[] {
+        const events = unpackEnvelopes(streamAndCookie.events)
+        for (const event of events) {
+            this.addEvent(event, emitter)
+        }
+        this.syncCookie = streamAndCookie.nextSyncCookie
+        return events
+    }
+
     private addEvent(event: ParsedEvent, emitter?: TypedEmitter<EmittedEvents>): void {
         if (this.events.has(event.hashStr)) {
             return
@@ -205,25 +217,20 @@ export class StreamStateView {
         this.decryptedEvents.set(hashStr, event)
     }
 
-    update(
+    initialize(
         streamAndCookie: StreamAndCookie,
-        emitter?: TypedEmitter<EmittedEvents>,
-        init?: boolean,
+        emitter: TypedEmitter<EmittedEvents> | undefined,
     ): void {
-        const events = unpackEnvelopes(streamAndCookie.events)
+        const events = this.appendStreamAndCookie(streamAndCookie, emitter)
+        emitter?.emit('streamInitialized', this.streamId, this.contentKind, events)
+    }
 
-        for (const event of events) {
-            this.addEvent(event, emitter)
-        }
-        this.syncCookie = streamAndCookie.nextSyncCookie
-
-        if (emitter !== undefined) {
-            if (init ?? false) {
-                emitter.emit('streamInitialized', this.streamId, this.contentKind, events)
-            } else {
-                emitter.emit('streamUpdated', this.streamId, this.contentKind, events)
-            }
-        }
+    appendEvents(
+        streamAndCookie: StreamAndCookie,
+        emitter: TypedEmitter<EmittedEvents> | undefined,
+    ) {
+        const events = this.appendStreamAndCookie(streamAndCookie, emitter)
+        emitter?.emit('streamUpdated', this.streamId, this.contentKind, events)
     }
 
     getMemberships(): StreamStateView_Membership {

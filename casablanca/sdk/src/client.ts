@@ -199,7 +199,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
 
         const stream = new Stream(userStreamId, snapshot, this, this.logEmitFromStream)
         this.streams.set(userStreamId, stream)
-        stream.update(streamAndCookie, true)
+        stream.initialize(streamAndCookie)
 
         stream.on('userJoinedStream', (s) => void this.onJoinedStream(s))
         stream.on('userLeftStream', (s) => void this.onLeftStream(s))
@@ -221,7 +221,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
 
         const stream = new Stream(userSettingsStreamId, snapshot, this, this.logEmitFromStream)
         this.streams.set(userSettingsStreamId, stream)
-        stream.update(streamAndCookie, true)
+        stream.initialize(streamAndCookie)
     }
 
     private async initUserDeviceKeyStream(
@@ -234,7 +234,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
 
         const stream = new Stream(userDeviceKeyStreamId, snapshot, this, this.logEmitFromStream)
         this.streams.set(userDeviceKeyStreamId, stream)
-        stream.update(streamAndCookie, true)
+        stream.initialize(streamAndCookie)
     }
 
     async createNewUser(): Promise<void> {
@@ -332,7 +332,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         const stream = new Stream(streamId, snapshot, this, this.logEmitFromStream, true)
         this.streams.set(streamId, stream)
         // add init events
-        stream.update(streamAndCookie, true)
+        stream.initialize(streamAndCookie)
     }
 
     async createSpace(
@@ -512,9 +512,9 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
             this.logCall('getStream', response.stream)
             check(isDefined(response.stream) && hasElements(response.miniblocks), 'got bad stream')
             const { streamAndCookie, snapshot } = unpackStreamResponse(response)
-            const stream = new StreamStateView(streamId, snapshot)
-            stream.update(streamAndCookie)
-            return stream
+            const streamView = new StreamStateView(streamId, snapshot)
+            streamView.initialize(streamAndCookie, undefined)
+            return streamView
         } catch (err) {
             this.logCall('getStream', streamId, 'ERROR', err)
             throw err
@@ -531,7 +531,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
                     this.logCall('initStream', streamAndCookie)
                     const stream = new Stream(streamId, snapshot, this, this.logEmitFromStream)
                     this.streams.set(streamId, stream)
-                    stream.update(streamAndCookie, true)
+                    stream.initialize(streamAndCookie)
                     // Blip sync here to make sure it also monitors new stream
                     this.blipSync()
                 } else {
@@ -622,7 +622,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
                                     this.logSync('sync got stream', streamId, 'NOT FOUND')
                                     throwWithCode("Sync got stream that wasn't requested")
                                 }
-                                stream.update(streamAndCookie)
+                                stream.appendEvents(streamAndCookie)
                             })
                         }
                         this.logSync('finished syncStreams', syncPos)
