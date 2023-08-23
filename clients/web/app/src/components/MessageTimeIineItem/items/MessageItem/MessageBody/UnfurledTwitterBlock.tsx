@@ -33,7 +33,7 @@ export const UnfurledTwitterBlock = (props: TwitterBlockProps) => {
     }, [media])
 
     if (!data) {
-        return <Text color="gray2">** Could not load Twitter content. **</Text>
+        return <Text color="gray2">** Could not preview Twitter content. **</Text>
     }
 
     return (
