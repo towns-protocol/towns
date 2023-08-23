@@ -2,7 +2,7 @@ import { Allotment, AllotmentHandle } from 'allotment'
 import React, { useRef } from 'react'
 import { Outlet, useMatch } from 'react-router'
 import { DirectMessages } from '@components/DirectMessages/DirectMessages'
-import { SuspenseLoader } from '@components/Loaders/SuspenseLoader'
+import { PotentiallyUnusedSuspenseLoader } from '@components/Loaders/SuspenseLoader'
 import { MainSideBar, SpaceSideBar } from '@components/SideBars'
 import { SpaceSidebarLoadingPlaceholder } from '@components/SideBars/SpaceSideBar/SpaceSideBarLoading'
 import { Box, Stack } from '@ui'
@@ -70,9 +70,9 @@ export const AppPanelLayout = () => {
                     {/* main container */}
                     <Allotment.Pane>
                         <Box absoluteFill scroll className={styles.allotmentResizeBorderPadding}>
-                            <SuspenseLoader>
+                            <PotentiallyUnusedSuspenseLoader>
                                 <Outlet />
-                            </SuspenseLoader>
+                            </PotentiallyUnusedSuspenseLoader>
                         </Box>
                     </Allotment.Pane>
                 </Allotment>

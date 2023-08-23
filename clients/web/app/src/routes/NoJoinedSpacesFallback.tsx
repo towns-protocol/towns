@@ -2,7 +2,6 @@ import React, { useEffect } from 'react'
 import { useNavigate } from 'react-router'
 import { Membership, useZionClient, useZionContext } from 'use-zion-client'
 import { SentryReportModal } from '@components/SentryErrorReport/SentryErrorReport'
-import { TimelineShimmer } from '@components/Shimmer/TimelineShimmer'
 import { Box, Button, Heading, Stack, Text } from '@ui'
 import { useWaitForInitialSync } from 'hooks/useWaitForInitialSync'
 import { PATHS } from 'routes'
@@ -11,6 +10,7 @@ import { env } from 'utils'
 import { useDevice } from 'hooks/useDevice'
 import { useStore } from 'store/store'
 import { CentralPanelLayout } from './layouts/CentralPanelLayout'
+import { WelcomeLayout } from './layouts/WelcomeLayout'
 
 export const NoJoinedSpacesFallback = () => {
     const navigate = useNavigate()
@@ -42,7 +42,7 @@ export const NoJoinedSpacesFallback = () => {
     }, [spaces, navigate, initialSyncComplete, client, spaceIdBookmark])
 
     if (!initialSyncComplete || spaces.length) {
-        return <TimelineShimmer />
+        return isTouch ? <WelcomeLayout /> : <></>
     }
 
     return (

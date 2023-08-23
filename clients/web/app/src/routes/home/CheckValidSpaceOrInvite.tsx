@@ -6,13 +6,16 @@ import { Box, Icon, Stack, Text } from '@ui'
 import { LiquidContainer } from 'routes/SpacesIndex'
 import { SpaceJoin } from '@components/Web3/SpaceJoin'
 import { TimelineShimmer } from '@components/Shimmer'
+import { useDevice } from 'hooks/useDevice'
 
 export function CheckValidSpaceOrInvite({ children }: { children: React.ReactNode }) {
     const location = useLocation()
     const { serverSpace: space, chainSpace, chainSpaceLoading } = useContractAndServerSpaceData()
+    const { isTouch } = useDevice()
 
     if (chainSpaceLoading) {
-        return <TimelineShimmer />
+        // this should probably be home screen shimmer
+        return isTouch ? <TimelineShimmer /> : <></>
     }
 
     // space doesn't exist

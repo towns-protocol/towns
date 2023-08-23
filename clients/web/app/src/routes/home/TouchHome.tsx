@@ -36,6 +36,7 @@ import { useCreateLink } from 'hooks/useCreateLink'
 import { BlurredBackground } from '@components/TouchLayoutHeader/BlurredBackground'
 import { VisualViewportContextProvider } from '@components/VisualViewportContext/VisualViewportContext'
 import { useChannelsWithMentionCountsAndUnread } from 'hooks/useChannelsWithMentionCountsAndUnread'
+import { PersistAndFadeWelcomeLogo } from 'routes/layouts/WelcomeLayout'
 import { TouchTabBarLayout } from '../layouts/TouchTabBarLayout'
 import { ChannelItem } from '../AllChannelsList/AllChannelsList'
 import { CheckValidSpaceOrInvite } from './CheckValidSpaceOrInvite'
@@ -223,6 +224,8 @@ export const TouchHome = () => {
                         </AnimatePresence>
                         <Outlet />
                     </CheckValidSpaceOrInvite>
+                    {/* loading overlay, transition from home screen */}
+                    <PersistAndFadeWelcomeLogo />
                 </TouchTabBarLayout>
                 <AnimatePresence>
                     {activeOverlay === 'main-panel' && (

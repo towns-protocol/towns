@@ -5,7 +5,7 @@ import { MotionBox, Stack } from '@ui'
 
 // shared structure w/ LoadingScreen so logo position is consistent
 export const WelcomeLayout = (props: { children?: React.ReactNode }) => (
-    <Stack centerContent height="100vh">
+    <Stack centerContent height="100vh" background="level1">
         <Stack padding justifyContent="end" height="50vh">
             <TransitionLogo />
         </Stack>

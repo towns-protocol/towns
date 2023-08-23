@@ -5,8 +5,10 @@ type Props = {
     children?: React.ReactNode
 }
 
-export const SuspenseLoader = (props: Props) => (
+export const PotentiallyUnusedSuspenseLoader = (props: Props) => (
     <Suspense fallback={<Fallback />}>{props.children}</Suspense>
 )
 
-const Fallback = () => <Box absoluteFill centerContent />
+// making this flash blue in order to figure if we actually need it and where it
+// appears
+const Fallback = () => <Box absoluteFill centerContent background="accent" />

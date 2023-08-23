@@ -9,7 +9,7 @@ import { PATHS } from 'routes'
 import { Register } from 'routes/Register'
 import { WelcomeRoute } from 'routes/Welcome'
 import { mobileAppClass } from 'ui/styles/globals/utils.css'
-import { SuspenseLoader } from '@components/Loaders/SuspenseLoader'
+import { LoadingScreen } from 'routes/LoadingScreen'
 
 const AuthenticatedRoutes = React.lazy(() => import('routes/AuthenticatedRoutes'))
 const InviteLinkLanding = React.lazy(() => import('routes/InviteLinkLanding'))
@@ -52,7 +52,9 @@ export const AllRoutes = () => {
                                         path={`/${PATHS.PREFERENCES}`}
                                         element={<Register isEdit />}
                                     />
-                                    <Route path="*" element={<AuthenticatedOrRegister />} />
+                                    <Route path="*" element={<AuthenticatedOrRegister />}>
+                                        <Route path="*" element={<AuthenticatedRoutes />} />
+                                    </Route>
                                 </>
                             )}
                         </>
@@ -70,8 +72,8 @@ export const AuthenticatedOrRegister = () => {
     return needsOnboarding ? (
         <Register />
     ) : (
-        <Suspense fallback={<SuspenseLoader />}>
-            <AuthenticatedRoutes />
+        <Suspense fallback={<LoadingScreen />}>
+            <Outlet />
         </Suspense>
     )
 }
