@@ -22,7 +22,7 @@ export class StreamStateView_UserSettings {
         this.streamId = inception.streamId
     }
 
-    addEvent(
+    appendEvent(
         event: ParsedEvent,
         payload: UserSettingsPayload,
         emitter?: TypedEmitter<EmittedEvents>,

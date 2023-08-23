@@ -27,7 +27,7 @@ export class StreamStateView_Channel {
         this.spaceId = inception.spaceId
     }
 
-    addEvent(
+    appendEvent(
         event: ParsedEvent,
         payload: ChannelPayload,
         emitter?: TypedEmitter<EmittedEvents>,
@@ -56,7 +56,11 @@ export class StreamStateView_Channel {
                 }
                 break
             case 'membership':
-                this.memberships.addMembershipEvent(payload.content.value, this.streamId, emitter)
+                this.memberships.appendMembershipEvent(
+                    payload.content.value,
+                    this.streamId,
+                    emitter,
+                )
                 break
             case 'receipt':
                 this.receipts.set(event.hashStr, event)

@@ -7,7 +7,7 @@ export class StreamStateView_Membership {
     readonly joinedUsers = new Set<string>()
     readonly invitedUsers = new Set<string>()
 
-    addMembershipEvent(
+    appendMembershipEvent(
         payload: Membership,
         streamId: string,
         emitter?: TypedEmitter<StreamEvents>,

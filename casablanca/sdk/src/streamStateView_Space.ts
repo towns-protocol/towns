@@ -25,7 +25,7 @@ export class StreamStateView_Space {
         this.name = inception.name
     }
 
-    addEvent(
+    appendEvent(
         event: ParsedEvent,
         payload: SpacePayload,
         emitter?: TypedEmitter<EmittedEvents>,
@@ -38,7 +38,7 @@ export class StreamStateView_Space {
                 this.addSpacePayload_Channel(payload.content.value, emitter)
                 break
             case 'membership':
-                this.memberships.addMembershipEvent(payload.content.value, this.streamId, emitter)
+                this.memberships.appendMembershipEvent(payload.content.value, this.streamId, emitter)
                 break
             case undefined:
                 break

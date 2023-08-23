@@ -123,13 +123,13 @@ export class StreamStateView {
     ): ParsedEvent[] {
         const events = unpackEnvelopes(streamAndCookie.events)
         for (const event of events) {
-            this.addEvent(event, emitter)
+            this.appendEvent(event, emitter)
         }
         this.syncCookie = streamAndCookie.nextSyncCookie
         return events
     }
 
-    private addEvent(event: ParsedEvent, emitter?: TypedEmitter<EmittedEvents>): void {
+    private appendEvent(event: ParsedEvent, emitter?: TypedEmitter<EmittedEvents>): void {
         if (this.events.has(event.hashStr)) {
             return
         }
@@ -159,19 +159,19 @@ export class StreamStateView {
         try {
             switch (payload.case) {
                 case 'channelPayload':
-                    this.channelContent?.addEvent(event, payload.value, emitter)
+                    this.channelContent?.appendEvent(event, payload.value, emitter)
                     break
                 case 'spacePayload':
-                    this.spaceContent?.addEvent(event, payload.value, emitter)
+                    this.spaceContent?.appendEvent(event, payload.value, emitter)
                     break
                 case 'userPayload':
-                    this.userContent?.addEvent(event, payload.value, emitter)
+                    this.userContent?.appendEvent(event, payload.value, emitter)
                     break
                 case 'userSettingsPayload':
-                    this.userSettingsContent?.addEvent(event, payload.value, emitter)
+                    this.userSettingsContent?.appendEvent(event, payload.value, emitter)
                     break
                 case 'userDeviceKeyPayload':
-                    this.userDeviceKeyContent?.addEvent(event, payload.value, emitter)
+                    this.userDeviceKeyContent?.appendEvent(event, payload.value, emitter)
                     break
                 case 'miniblockHeader':
                     break

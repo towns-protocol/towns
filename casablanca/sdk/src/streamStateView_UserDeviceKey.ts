@@ -19,7 +19,7 @@ export class StreamStateView_UserDeviceKeys {
         this.streamId = inception.streamId
     }
 
-    addEvent(
+    appendEvent(
         event: ParsedEvent,
         payload: UserDeviceKeyPayload,
         emitter?: TypedEmitter<EmittedEvents>,
