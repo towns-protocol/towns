@@ -109,3 +109,46 @@ SAVE_DEPLOYMENTS=1 OVERRIDE_DEPLOYMENTS=1 make deploy-goerli contract=DeploySpac
 ```bash
 SAVE_DEPLOYMENTS=1 make deploy-goerli contract=UpgradeSpaceImpl
 ```
+
+# How to deploy predeterministic contracts?
+
+```
+// SPDX-License-Identifier: Apache-2.0
+pragma solidity ^0.8.20;
+
+//interfaces
+
+//libraries
+
+//contracts
+import {Deployer} from "./utils/Deployer.s.sol";
+import {Hello} from "src/hello/Hello.sol";
+
+// debuggging
+import {console} from "forge-std/console.sol";
+
+contract DeployHello is Deployer {
+  function versionName() public pure override returns (string memory) {
+    return "hello";
+  }
+
+  function __deploy(uint256 deployerPK) public override returns (address) {
+    bytes32 salt = bytes32(uint256(deployerPK)); // create a salt
+
+    bytes32 initCodeHash = hashInitCode(
+      type(Hello).creationCode,
+      abi.encode("Hello, World!") // encode any parameters that will go in the contstructor
+    );
+
+    address predeterminedAddress = computeCreate2Address(salt, initCodeHash);
+
+    vm.startBroadcast(deployerPK);
+    Hello hello = new Hello{salt: salt}("Hello, World!");
+    vm.stopBroadcast();
+
+    require(address(hello) == predeterminedAddress, "DeployHello: address mismatch");
+
+    return address(hello);
+  }
+}
+```

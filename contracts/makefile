@@ -23,16 +23,37 @@ lint :; yarn solhint "{scripts,src,test/**/*.sol}"
 anvil :; anvil -m 'test test test test test test test test test test test junk'
 
 # Contract deployment scripts
-# Seperate build from script to avoid race inside forge where the linker wasn't fnisihing before the script started running
+
+# ===========================
+# 				   Anvil
+# ===========================
 deploy-anvil :;
 	@forge build
 	@SAVE_DEPLOYMENTS=1 forge script scripts/deployments/${contract}.s.sol:${contract} --ffi --rpc-url anvil --private-key ${LOCAL_PRIVATE_KEY} --broadcast --watch
 
-migrate-anvil:;
+upgrade-anvil:;
 	@forge build
-	@SAVE_DEPLOYMENTS=1 forge script scripts/migrations/${contract}.s.sol:${contract} --ffi --rpc-url anvil --private-key ${LOCAL_PRIVATE_KEY} --broadcast --watch
+	@SAVE_DEPLOYMENTS=1 forge script scripts/upgrades/${contract}.s.sol:${contract} --ffi --rpc-url anvil --private-key ${LOCAL_PRIVATE_KEY} --broadcast --watch
 
-# Seperate build from script to avoid race inside forge where the linker wasn't fnisihing before the script started running
+# ===========================
+# 				 Base Goerli
+# ===========================
+deploy-base-goerli :;
+	@forge build
+	@forge script script/${contract}.s.sol:${contract} --ffi --rpc-url base_goerli --private-key ${PRIVATE_KEY} --broadcast --verify --watch
+
+# ===========================
+# 				 		Base
+# ===========================
+
+deploy-base :;
+	@forge build
+	@forge script script/${contract}.s.sol:${contract} --ffi --rpc-url base --private-key ${PRIVATE_KEY} --broadcast --verify --watch
+
+# ===========================
+# 				  Goerli
+# ===========================
+
 deploy-goerli :;
 	@forge build
 	@SAVE_DEPLOYMENTS=1 forge script scripts/deployments/${contract}.s.sol:${contract} --ffi --rpc-url goerli --private-key ${PRIVATE_KEY} --broadcast --verify --watch -vvvv
@@ -41,7 +62,10 @@ verify-goerli :;
 	@forge build
 	@SAVE_DEPLOYMENTS=1 forge script scripts/deployments/${contract}.s.sol:${contract} --ffi --rpc-url goerli --private-key ${PRIVATE_KEY} --verify --resume
 
-# Seperate build from script to avoid race inside forge where the linker wasn't fnisihing before the script started running
+# ===========================
+# 				  Sepolia
+# ===========================
+
 deploy-sepolia :;
 	@forge build
 	@forge script scripts/deployments/${contract}.s.sol:${contract} --ffi --rpc-url sepolia --private-key ${PRIVATE_KEY} --broadcast --verify --watch -vvvv

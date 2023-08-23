@@ -25,6 +25,15 @@
 [etherscan]
   goerli = { key = "${ETHERSCAN_API_KEY}" }
   sepolia = { key = "${ETHERSCAN_API_KEY}" }
+  base_goerli = { key = "${BASESCAN_GOERLI_API_KEY}", url = "${BASESCAN_GOERLI_URL}" }
+  base = { key = "${BASESCAN_API_KEY}", url = "${BASESCAN_URL}"}
+
+[rpc_endpoints]
+  anvil = "http://127.0.0.1:8545"
+  goerli = "${GOERLI_RPC_URL}"
+  sepolia = "${SEPOLIA_RPC_URL}"
+  base_goerli = "${BASE_GOERLI_RPC_URL}"
+  base = "${BASE_RPC_URL}"
 
 [fmt]
   bracket_spacing = true
@@ -35,11 +44,6 @@
   quote_style = "double"
   tab_width = 2
   wrap_comments = true
-
-[rpc_endpoints]
-  anvil = "http://127.0.0.1:8545"
-  goerli = "${GOERLI_RPC_URL}"
-  sepolia = "${SEPOLIA_RPC_URL}"
 
 
 
