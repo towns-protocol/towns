@@ -7,7 +7,6 @@ import { Permission } from '../web3/ContractTypes'
 import { blockchainKeys } from '../../query/query-keys'
 import { RoomHierarchy } from 'matrix-js-sdk/lib/room-hierarchy'
 import { queryClient } from '../../query/queryClient'
-import { SpaceDapp } from '../../client/web3/SpaceDapp'
 import { Membership } from '../../types/zion-types'
 
 export type MatrixSpaceHierarchy = {
@@ -171,7 +170,7 @@ async function leaveChannelIfMember(matrixClient: MatrixClient, channelId: strin
 }
 
 function isChannelDoesNotExistError(
-    parsedError: Awaited<ReturnType<SpaceDapp['parseSpaceError']>>,
+    parsedError: Awaited<ReturnType<ISpaceDapp['parseSpaceError']>>,
 ) {
     return (
         (
