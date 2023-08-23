@@ -4,7 +4,13 @@ import { toZionUser } from '../../store/use-matrix-store'
 import { User } from '../../types/zion-types'
 
 export function useMatrixUser(userId?: string, matrixClient?: MatrixClient): User | undefined {
-    const [user, setUser] = useState<User>()
+    const [user, setUser] = useState<User | undefined>(() => {
+        if (userId) {
+            const matrixUser = matrixClient?.getUser(userId)
+            return matrixUser ? toZionUser(matrixUser) : undefined
+        }
+        return undefined
+    })
 
     useEffect(() => {
         if (!userId) {
