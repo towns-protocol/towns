@@ -32,34 +32,38 @@ library GateService {
     GateStorage.Layout storage ds = GateStorage.layout();
 
     ds.tokens.add(token);
-    ds.allowedTokens[token] = GateStorage.Gating({
-      token: token,
-      quantity: quantity
-    });
+    ds.quantityByToken[token] = quantity;
   }
 
   function removeGate(address token) internal {
     GateStorage.Layout storage ds = GateStorage.layout();
-    delete ds.allowedTokens[token];
+    ds.tokens.remove(token);
+    ds.quantityByToken[token] = 0;
   }
 
   function isTokenGated(address token) internal view returns (bool) {
     GateStorage.Layout storage ds = GateStorage.layout();
-    return ds.allowedTokens[token].token != address(0);
+    return ds.tokens.contains(token) && ds.quantityByToken[token] > 0;
   }
 
   function checkTokenGate(address user) internal view {
     GateStorage.Layout storage ds = GateStorage.layout();
 
     uint256 tokensLen = ds.tokens.length();
+    bool isAllowed = tokensLen == 0;
 
     for (uint256 i = 0; i < tokensLen; i++) {
       address token = ds.tokens.at(i);
-      GateStorage.Gating storage gating = ds.allowedTokens[token];
+      uint256 tokenQuantity = ds.quantityByToken[token];
 
-      if (IERC20(token).balanceOf(user) < gating.quantity) {
-        revert GateFacetService__NotAllowed();
+      if (tokenQuantity > 0 && IERC20(token).balanceOf(user) >= tokenQuantity) {
+        isAllowed = true;
+        break;
       }
+    }
+
+    if (!isAllowed) {
+      revert GateFacetService__NotAllowed();
     }
   }
 }

@@ -10,6 +10,7 @@ import {IDiamond} from "contracts/src/diamond/IDiamond.sol";
 import {TownOwner} from "contracts/src/towns/facets/owner/TownOwner.sol";
 import {DiamondCutFacet} from "contracts/src/diamond/facets/cut/DiamondCutFacet.sol";
 import {DiamondLoupeFacet} from "contracts/src/diamond/facets/loupe/DiamondLoupeFacet.sol";
+import {IntrospectionFacet} from "contracts/src/diamond/facets/introspection/IntrospectionFacet.sol";
 import {OwnableFacet} from "contracts/src/diamond/facets/ownable/OwnableFacet.sol";
 import {ProxyManager} from "contracts/src/diamond/proxy/manager/ProxyManager.sol";
 import {PausableFacet} from "contracts/src/diamond/facets/pausable/PausableFacet.sol";
@@ -28,6 +29,7 @@ import {DeployTown} from "contracts/scripts/deployments/DeployTown.s.sol";
 // helpers
 import {DiamondCutHelper} from "contracts/test/diamond/cut/DiamondCutSetup.sol";
 import {DiamondLoupeHelper} from "contracts/test/diamond/loupe/DiamondLoupeSetup.sol";
+import {IntrospectionHelper} from "contracts/test/diamond/introspection/IntrospectionSetup.sol";
 
 import {OwnableHelper} from "contracts/test/diamond/ownable/OwnableSetup.sol";
 import {ProxyManagerHelper} from "contracts/test/diamond/proxy/ProxyManagerSetup.sol";
@@ -37,6 +39,8 @@ import {TownArchitectHelper} from "contracts/test/towns/architect/TownArchitectS
 import {PlatformFeeHelper} from "contracts/test/towns/platform/fee/PlatformFeeSetup.sol";
 
 import {MultiInit} from "contracts/src/diamond/initializers/MultiInit.sol";
+
+// mocks
 
 contract DeployTownFactory is Deployer {
   // dependencies
@@ -54,16 +58,19 @@ contract DeployTownFactory is Deployer {
   OwnableHelper ownableHelper = new OwnableHelper();
   DiamondCutHelper cutHelper = new DiamondCutHelper();
   DiamondLoupeHelper loupeHelper = new DiamondLoupeHelper();
+  IntrospectionHelper introspectionHelper = new IntrospectionHelper();
   PlatformFeeHelper platformFeeHelper = new PlatformFeeHelper();
 
-  uint256 totalFacets = 8;
-  uint256 totalInit = 7;
+  uint256 totalFacets = 9;
+  uint256 totalInit = 8;
 
   address[] initAddresses = new address[](totalInit);
   bytes[] initDatas = new bytes[](totalInit);
 
   address diamondCut;
   address diamondLoupe;
+  address introspection;
+
   address ownable;
   address proxyManager;
   address pausable;
@@ -86,6 +93,7 @@ contract DeployTownFactory is Deployer {
     vm.startBroadcast(deployerPK);
     diamondCut = address(new DiamondCutFacet());
     diamondLoupe = address(new DiamondLoupeFacet());
+    introspection = address(new IntrospectionFacet());
     ownable = address(new OwnableFacet());
     proxyManager = address(new ProxyManager());
     pausable = address(new PausableFacet());
@@ -102,6 +110,11 @@ contract DeployTownFactory is Deployer {
 
     cuts[index++] = loupeHelper.makeCut(
       diamondLoupe,
+      IDiamond.FacetCutAction.Add
+    );
+
+    cuts[index++] = introspectionHelper.makeCut(
+      introspection,
       IDiamond.FacetCutAction.Add
     );
 
@@ -129,6 +142,7 @@ contract DeployTownFactory is Deployer {
 
     initAddresses[index++] = diamondCut;
     initAddresses[index++] = diamondLoupe;
+    initAddresses[index++] = introspection;
     initAddresses[index++] = architect;
     initAddresses[index++] = proxyManager;
     initAddresses[index++] = ownable;
@@ -139,6 +153,7 @@ contract DeployTownFactory is Deployer {
 
     initDatas[index++] = cutHelper.makeInitData("");
     initDatas[index++] = loupeHelper.makeInitData("");
+    initDatas[index++] = introspectionHelper.makeInitData("");
     initDatas[index++] = abi.encodeWithSelector(
       townArchitectHelper.initializer(),
       townToken, // townToken
@@ -172,7 +187,6 @@ contract DeployTownFactory is Deployer {
         })
       )
     );
-
     TownOwner(townToken).setFactory(address(townFactory));
     TownArchitect(townFactory).gateByToken(pioneerToken, 1);
     vm.stopBroadcast();

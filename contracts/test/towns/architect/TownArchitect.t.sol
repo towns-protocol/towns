@@ -149,12 +149,19 @@ contract TownArchitectTest is
 
     // Create a mock NFT contract.
     address mockNFT = address(new MockERC721());
+    address mockNFT2 = address(new MockERC721());
 
     assertFalse(townArchitect.isTokenGated(mockNFT), "Gate should be disabled");
+    assertFalse(
+      townArchitect.isTokenGated(mockNFT2),
+      "Gate should be disabled"
+    );
 
-    // Enable the gate for the mock NFT contract, with a value of 1.
-    vm.prank(deployer);
+    // Enable the gate for both mock NFT contracts, with a value of 1.
+    vm.startPrank(deployer);
     townArchitect.gateByToken(mockNFT, 1);
+    townArchitect.gateByToken(mockNFT2, 1);
+    vm.stopPrank();
 
     // Founder should not be allowed to create a town, since they don't own
     // any tokens for the mock NFT contract.
@@ -170,8 +177,10 @@ contract TownArchitectTest is
     _createSimpleTown("test");
 
     // Disable the gate for the mock NFT contract.
-    vm.prank(deployer);
+    vm.startPrank(deployer);
     townArchitect.ungateByToken(mockNFT);
+    townArchitect.ungateByToken(mockNFT2);
+    vm.stopPrank();
 
     // Now anyone should be able to create a town, since the gate
     // has been disabled.

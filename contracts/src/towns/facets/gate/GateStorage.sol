@@ -12,14 +12,9 @@ library GateStorage {
   bytes32 internal constant STORAGE_SLOT =
     keccak256("towns.contracts.storage.Gate");
 
-  struct Gating {
-    address token;
-    uint256 quantity;
-  }
-
   struct Layout {
     EnumerableSet.AddressSet tokens;
-    mapping(address => Gating) allowedTokens;
+    mapping(address => uint256) quantityByToken;
   }
 
   function layout() internal pure returns (Layout storage ds) {

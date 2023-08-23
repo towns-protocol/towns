@@ -20,9 +20,7 @@ abstract contract Upgrader is Script, DeployBase {
       ? vm.envUint("LOCAL_PRIVATE_KEY")
       : vm.envUint("PRIVATE_KEY");
 
-    address deployer = vm.addr(pk);
-
-    __upgrade(pk, deployer);
+    __upgrade(pk, vm.addr(pk));
   }
 
   function run() public virtual {
