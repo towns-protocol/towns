@@ -32,13 +32,16 @@ export class StreamStateView_Space {
     ): void {
         switch (payload.content.case) {
             case 'inception':
-                emitter?.emit('spaceInception', this.streamId, event.event, payload.content.value)
                 break
             case 'channel':
                 this.addSpacePayload_Channel(payload.content.value, emitter)
                 break
             case 'membership':
-                this.memberships.appendMembershipEvent(payload.content.value, this.streamId, emitter)
+                this.memberships.appendMembershipEvent(
+                    payload.content.value,
+                    this.streamId,
+                    emitter,
+                )
                 break
             case undefined:
                 break

@@ -34,7 +34,6 @@ export class StreamStateView_Channel {
     ): void {
         switch (payload.content.case) {
             case 'inception':
-                emitter?.emit('channelInception', this.streamId, event.event, payload.content.value)
                 break
             case 'message':
                 {

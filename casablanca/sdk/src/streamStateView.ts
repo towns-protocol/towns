@@ -152,10 +152,6 @@ export class StreamStateView {
         const payload = event.event.payload
         check(isDefined(payload), `Event has no payload ${event.hashStr}`, Err.STREAM_BAD_EVENT)
 
-        if (payload.value?.content?.case === 'inception') {
-            emitter?.emit('streamInception', this.streamId, event.event)
-        }
-
         try {
             switch (payload.case) {
                 case 'channelPayload':

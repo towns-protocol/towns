@@ -26,12 +26,6 @@ export class StreamStateView_UserDeviceKeys {
     ): void {
         switch (payload.content.case) {
             case 'inception':
-                emitter?.emit(
-                    'userDeviceKeyInception',
-                    this.streamId,
-                    event.event,
-                    payload.content.value,
-                )
                 break
             case 'userDeviceKey':
                 {

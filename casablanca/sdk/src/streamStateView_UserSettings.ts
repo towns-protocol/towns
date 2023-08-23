@@ -29,12 +29,6 @@ export class StreamStateView_UserSettings {
     ): void {
         switch (payload.content.case) {
             case 'inception':
-                emitter?.emit(
-                    'userSettingsInception',
-                    this.streamId,
-                    event.event,
-                    payload.content.value,
-                )
                 break
             case 'fullyReadMarkers':
                 if (payload.content.value.content) {

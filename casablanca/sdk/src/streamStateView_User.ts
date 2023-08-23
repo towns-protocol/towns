@@ -29,7 +29,6 @@ export class StreamStateView_User {
     ): void {
         switch (payload.content.case) {
             case 'inception':
-                emitter?.emit('userInception', this.streamId, event.event, payload.content.value)
                 break
             case 'userMembership':
                 this.addUserPayload_userMembership(payload.content.value, emitter)
