@@ -1,6 +1,5 @@
 import { ConnectError } from '@bufbuild/connect'
 import { MembershipOp } from '@river/proto'
-import _ from 'lodash'
 import { dlog } from './dlog'
 import {
     genId,
@@ -9,7 +8,7 @@ import {
     makeUserStreamId,
     userIdFromAddress,
 } from './id'
-import { SignerContext, makeEvent, unpackEnvelopes } from './sign'
+import { SignerContext, makeEvent, unpackAllResponseEnvelopes, unpackEnvelopes } from './sign'
 import {
     getMessagePayload,
     getMiniblockHeader,
@@ -110,8 +109,8 @@ describe('streamRpcClient', () => {
         expect(channel.stream?.streamId).toEqual(channelId)
 
         // Last event must be a genesis miniblock header.
-        const events = unpackEnvelopes(channel.stream!.events)
-        const lastEvent = _.last(events)
+        const events = unpackAllResponseEnvelopes(channel)
+        const lastEvent = events.at(-1)
         const miniblockHeader = getMiniblockHeader(lastEvent)
         expect(miniblockHeader).toBeDefined()
         expect(miniblockHeader?.miniblockNum).toEqual(0n)

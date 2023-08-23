@@ -2065,6 +2065,7 @@ type StreamAndCookie struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
+	// events in the current minipool
 	Events             []*Envelope `protobuf:"bytes,1,rep,name=events,proto3" json:"events,omitempty"`
 	NextSyncCookie     *SyncCookie `protobuf:"bytes,2,opt,name=next_sync_cookie,json=nextSyncCookie,proto3" json:"next_sync_cookie,omitempty"`
 	OriginalSyncCookie *SyncCookie `protobuf:"bytes,3,opt,name=original_sync_cookie,json=originalSyncCookie,proto3" json:"original_sync_cookie,omitempty"` // TODO: rename to start_sync_cookie
@@ -2183,8 +2184,10 @@ type CreateStreamResponse struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Stream     *StreamAndCookie `protobuf:"bytes,1,opt,name=stream,proto3" json:"stream,omitempty"`
-	Miniblocks []*Miniblock     `protobuf:"bytes,2,rep,name=miniblocks,proto3" json:"miniblocks,omitempty"`
+	// all events in current minipool and cookie allowing to sync from the end of the stream
+	Stream *StreamAndCookie `protobuf:"bytes,1,opt,name=stream,proto3" json:"stream,omitempty"`
+	// all blocks since the latest snapshot, miniblocks[0].header is the latest snapshot
+	Miniblocks []*Miniblock `protobuf:"bytes,2,rep,name=miniblocks,proto3" json:"miniblocks,omitempty"`
 }
 
 func (x *CreateStreamResponse) Reset() {
@@ -2285,8 +2288,10 @@ type GetStreamResponse struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Stream     *StreamAndCookie `protobuf:"bytes,1,opt,name=stream,proto3" json:"stream,omitempty"`
-	Miniblocks []*Miniblock     `protobuf:"bytes,2,rep,name=miniblocks,proto3" json:"miniblocks,omitempty"`
+	// all events in current minipool and cookie allowing to sync from the end of the stream
+	Stream *StreamAndCookie `protobuf:"bytes,1,opt,name=stream,proto3" json:"stream,omitempty"`
+	// all blocks since the latest snapshot, miniblocks[0].header is the latest snapshot
+	Miniblocks []*Miniblock `protobuf:"bytes,2,rep,name=miniblocks,proto3" json:"miniblocks,omitempty"`
 }
 
 func (x *GetStreamResponse) Reset() {

@@ -226,7 +226,7 @@ func (s *Service) createStream(ctx context.Context, log *slog.Logger, req *conne
 	return connect_go.NewResponse(
 		&CreateStreamResponse{
 			Stream: &StreamAndCookie{
-				Events:         streamView.Envelopes(), // todo HNT-2073 switch to MinipoolEnvelopes
+				Events:         streamView.MinipoolEnvelopes(),
 				StreamId:       streamView.StreamId(),
 				NextSyncCookie: streamView.SyncCookie(),
 			},

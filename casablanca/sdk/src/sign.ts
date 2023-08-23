@@ -1,5 +1,13 @@
 import { PlainMessage } from '@bufbuild/protobuf'
-import { Envelope, EventRef, StreamEvent, Err, Miniblock } from '@river/proto'
+import {
+    Envelope,
+    EventRef,
+    StreamEvent,
+    Err,
+    Miniblock,
+    GetStreamResponse,
+    CreateStreamResponse,
+} from '@river/proto'
 import { check, hasElements, isDefined } from './check'
 import {
     townsHash,
@@ -159,6 +167,16 @@ export const checkDelegateSig = (
         'delegateSig does not match creatorAddress',
         Err.BAD_DELEGATE_SIG,
     )
+}
+
+export const unpackAllResponseEnvelopes = (
+    response: GetStreamResponse | CreateStreamResponse,
+): ParsedEvent[] => {
+    const streamAndCookie = response.stream
+    check(streamAndCookie !== undefined, 'bad stream')
+    const blockEvents = response.miniblocks.flatMap((b) => unpackMiniblock(b))
+    const minipoolEvents = unpackEnvelopes(streamAndCookie.events)
+    return [...blockEvents, ...minipoolEvents]
 }
 
 // returns all events + the header event

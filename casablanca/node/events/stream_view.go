@@ -19,7 +19,6 @@ type StreamView interface {
 	StreamId() string
 	InceptionPayload() IsInceptionPayload
 	LastEvent() *ParsedEvent
-	Envelopes() []*Envelope
 	MinipoolEnvelopes() []*Envelope
 	MiniblocksFromLastSnapshot() []*Miniblock
 	SyncCookie() *SyncCookie
@@ -342,15 +341,6 @@ func (r *streamViewImpl) LastEvent() *ParsedEvent {
 		}
 	}
 	return nil
-}
-
-func (r *streamViewImpl) Envelopes() []*Envelope {
-	envelopes := make([]*Envelope, 0, len(r.blocks)*8)
-	_ = r.forEachEvent(0, func(e *ParsedEvent) (bool, error) {
-		envelopes = append(envelopes, e.Envelope)
-		return true, nil
-	})
-	return envelopes
 }
 
 func (r *streamViewImpl) MinipoolEnvelopes() []*Envelope {
