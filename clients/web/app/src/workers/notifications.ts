@@ -9,6 +9,7 @@ import {
 import { appNotificationFromPushEvent, pathFromAppNotification } from './notificationParsers'
 import { env } from '../utils/environment'
 import { startDB } from '../idb/notificationsMeta'
+import { checkClientIsVisible } from './utils'
 
 let idbChannels: ReturnType<typeof startDB>['idbChannels'] | undefined = undefined
 let idbSpaces: ReturnType<typeof startDB>['idbSpaces'] | undefined = undefined
@@ -108,6 +109,13 @@ export function handleNotifications(worker: ServiceWorkerGlobalScope) {
     worker.addEventListener('push', (event) => {
         async function handleEvent(event: PushEvent) {
             console.log('sw: "push" event')
+
+            const clientVisible = await checkClientIsVisible(worker)
+            if (clientVisible) {
+                console.log('sw: client is visible, not showing notification')
+                return
+            }
+
             if (!event.data) {
                 console.log('sw: push event contains no data')
                 return
@@ -122,6 +130,7 @@ export function handleNotifications(worker: ServiceWorkerGlobalScope) {
             }
 
             const { title, body } = await getNotificationContent(notification)
+
             // options: https://developer.mozilla.org/en-US/docs/Web/API/Notification
             const options: NotificationOptions = {
                 body,

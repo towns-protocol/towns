@@ -1,9 +1,9 @@
 // TODO: should we use this to only show notifications when the tab is not visible?
-export async function checkClientIsVisible(): Promise<boolean> {
+export async function checkClientIsVisible(worker: ServiceWorkerGlobalScope): Promise<boolean> {
     // https://github.com/microsoft/TypeScript/issues/14877
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
-    const windowClients = await new self.clients.matchAll({
+    const windowClients = await worker.clients.matchAll({
         type: 'window',
         includeUncontrolled: true,
     })
