@@ -14,6 +14,7 @@ export { IProxyManager__factory } from "./IProxyManager__factory";
 export { IRoles__factory } from "./IRoles__factory";
 export { ITownArchitect__factory } from "./ITownArchitect__factory";
 export { ITownOwner__factory } from "./ITownOwner__factory";
+export { MockERC721A__factory } from "./MockERC721A__factory";
 export { OwnableFacet__factory } from "./OwnableFacet__factory";
 export { TokenEntitlement__factory } from "./TokenEntitlement__factory";
 export { TokenPausableFacet__factory } from "./TokenPausableFacet__factory";

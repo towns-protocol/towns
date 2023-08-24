@@ -878,19 +878,19 @@
       ]
     },
     "contracts/src/towns/facets/gate/GateService.sol": {
-      "keccak256": "0x954e1b0820b35069fd471eae179169ca69d08ca55b63e8bbfa4266a01dd5f860",
+      "keccak256": "0xebe7651f02ef1a3be88fca2496cafa2b580832969f97972ed57a35c9034091fd",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://1d10444e3072907cb32fb53be7d96799752a163e72d6b1540d424b360de36554",
-        "dweb:/ipfs/Qmetm8UQ7FNUrD2UtJ35p88eT437sAkudEqruwRBApxgmT"
+        "bzz-raw://477a6cdfa2420de06f9905c5f31f479b557f147e45ea81873a1df2bcc2d26255",
+        "dweb:/ipfs/QmRns8Kv2QNbw7mBjywchXPAp3mpkGJV4Y4v98cYbyEfxo"
       ]
     },
     "contracts/src/towns/facets/gate/GateStorage.sol": {
-      "keccak256": "0xafe70801a243c5e818b2a9c9e8cd05359cca432869ab462227b28c6691aa0a54",
+      "keccak256": "0xc6026263ee2e62e07af9a53f5c18f2d997f30d459b896f3fe6252956bd06277d",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://224d3c9be1923c92061e4daa5d24edc4e14aa955acc4a3b600bcf8d737aab168",
-        "dweb:/ipfs/QmXeBFGvD83KoAMDbHZfZFmxR9xLCb8BA15TiiBLKVGm9u"
+        "bzz-raw://71964316e0bb5bfef7c4f8a9fed20c7f3e0692e2dbe30c4d1f0cb43162003fc2",
+        "dweb:/ipfs/QmfNvU6wuvzjFzCZPLrsgmxN18QcYjWhGMk9qQfYvQWraY"
       ]
     },
     "contracts/src/towns/facets/owner/ITownOwner.sol": {

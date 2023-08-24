@@ -273,16 +273,16 @@ export default [
     "inputs": [
       {
         "internalType": "string",
-        "name": "name",
+        "name": "name_",
         "type": "string"
       },
       {
         "internalType": "string",
-        "name": "symbol",
+        "name": "symbol_",
         "type": "string"
       }
     ],
-    "name": "__TownOwner__init",
+    "name": "__ERC721A_init",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -333,6 +333,19 @@ export default [
       }
     ],
     "name": "getApproved",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getFactory",
     "outputs": [
       {
         "internalType": "address",
