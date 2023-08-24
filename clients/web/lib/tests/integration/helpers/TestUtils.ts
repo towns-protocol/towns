@@ -134,7 +134,7 @@ export async function fundWallet(walletToFund: ethers.Wallet) {
     return true
 }
 
-export function createTestSpaceWithZionMemberRole(
+export async function createTestSpaceWithZionMemberRole(
     client: ZionTestClient,
     tokenGrantedPermissions: Permission[],
     everyonePermissions: Permission[] = [],
@@ -156,10 +156,12 @@ export function createTestSpaceWithZionMemberRole(
         users: [],
     }
 
+    // createSpace is gated by the mock NFT. Mint one for yourself before proceeding.
+    await client.mintMockNFT()
     return client.createSpace(createSpaceInfo, tokenEntitlement, everyonePermissions)
 }
 
-export function createTestSpaceWithEveryoneRole(
+export async function createTestSpaceWithEveryoneRole(
     client: ZionTestClient,
     everyonePermissions: Permission[] = [],
     createSpaceInfo?: CreateSpaceInfo,
@@ -179,6 +181,8 @@ export function createTestSpaceWithEveryoneRole(
         users: [],
     }
 
+    // createSpace is gated by the mock NFT. Mint one for yourself before proceeding.
+    await client.mintMockNFT()
     return client.createSpace(createSpaceInfo, tokenEntitlement, everyonePermissions)
 }
 

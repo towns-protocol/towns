@@ -39,6 +39,8 @@ import {
 import { newMatrixLoginSession, newMatrixRegisterSession } from '../../../src/hooks/session'
 import { MatrixClient } from 'matrix-js-sdk'
 import { Client as CasablancaClient } from '@river/sdk'
+import { getContractsInfoV3 } from '../../../src/client/web3/v3/IStaticContractsInfoV3'
+import { MockERC721AShim } from '../../../src/client/web3/v3/MockERC721AShim'
 
 export interface ZionTestClientProps {
     primaryProtocol?: SpaceProtocol
@@ -47,6 +49,7 @@ export interface ZionTestClientProps {
 
 export class ZionTestClient extends ZionClient {
     private userIdentifier: UserIdentifier
+    private mockNFT: MockERC721AShim
 
     static allClients: ZionTestClient[] = []
     static async cleanup() {
@@ -106,6 +109,10 @@ export class ZionTestClient extends ZionClient {
 
         // add ourselves to the list of all clients
         ZionTestClient.allClients.push(this)
+
+        // set mockNFTAddress
+        const mockNFTAddress = getContractsInfoV3(this.chainId).mockErc721aAddress
+        this.mockNFT = new MockERC721AShim(mockNFTAddress, this.chainId, this.provider)
     }
 
     /************************************************
@@ -189,6 +196,12 @@ export class ZionTestClient extends ZionClient {
     public async fundWallet() {
         await this.provider.fundWallet()
         this.log('funded wallet')
+    }
+
+    /// mint a mock NFT. createSpace is gated by this NFT
+    public async mintMockNFT(): Promise<void> {
+        await this.mockNFT.write(this.provider.wallet).mintTo(this.provider.wallet.address)
+        this.log('minted mock NFT')
     }
 
     /// register this users wallet with the matrix server
