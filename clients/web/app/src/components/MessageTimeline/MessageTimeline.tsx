@@ -281,10 +281,10 @@ export const MessageTimeline = (props: Props) => {
          user or an image
         */
 
-        if (!lastMessageOnInitIdRef.current) {
+        if (!lastMessageOnInitIdRef.current && allListItems.length > 0) {
             // keep track of the last message when opening the timeline, this marker
             // enables us to figure which messages are to be considered as new
-            lastMessageOnInitIdRef.current = allListItems[allListItems.length - 1].id
+            lastMessageOnInitIdRef.current = allListItems[allListItems.length - 1]?.id
         }
         const collapseStats = allListItems.reduceRight(
             (prev, curr, index) => {
