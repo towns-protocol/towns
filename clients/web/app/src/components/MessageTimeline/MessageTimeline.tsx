@@ -169,6 +169,8 @@ export const MessageTimeline = (props: Props) => {
         [dateGroups],
     )
 
+    const lastMessageOnInitIdRef = useRef<string>()
+
     const allListItems = useMemo(() => {
         const groupByDate = timelineContext?.type === MessageTimelineType.Channel
 
@@ -279,6 +281,11 @@ export const MessageTimeline = (props: Props) => {
          user or an image
         */
 
+        if (!lastMessageOnInitIdRef.current) {
+            // keep track of the last message when opening the timeline, this marker
+            // enables us to figure which messages are to be considered as new
+            lastMessageOnInitIdRef.current = allListItems[allListItems.length - 1].id
+        }
         const collapseStats = allListItems.reduceRight(
             (prev, curr, index) => {
                 if (curr.type === 'message') {
@@ -303,7 +310,17 @@ export const MessageTimeline = (props: Props) => {
                             prev.lastDate = date
                         }
                     } else {
-                        prev.chunkCount++
+                        // anything after the last message is considered new
+                        // and I guess we want to show it, once the the last
+                        // message has been reached we count count 2 messages
+                        // and collapse
+                        if (curr.id === lastMessageOnInitIdRef.current) {
+                            prev.isNewMessage = false
+                        }
+
+                        if (!prev.isNewMessage || !lastMessageOnInitIdRef.current) {
+                            prev.chunkCount++
+                        }
                     }
                 }
 
@@ -318,11 +335,13 @@ export const MessageTimeline = (props: Props) => {
                 collapseEndIndex: 1,
                 lastUserId: undefined,
                 lastDate: undefined,
+                isNewMessage: true,
             } as {
                 chunkCount: number
                 collapseEndIndex: number
                 lastUserId: string | undefined
                 lastDate: number | undefined
+                isNewMessage: boolean
             },
         )
 
