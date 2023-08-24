@@ -88,7 +88,12 @@ export async function verifySpaceOwner(
     provider: ethers.providers.StaticJsonRpcProvider,
     smartContractVersion?: string,
 ): Promise<boolean> {
-    console.log('smart contract version', smartContractVersion)
+    console.log('siweVerification verifySpaceOwner() params', {
+        chainId,
+        smartContractVersion,
+        spaceId: decodeURIComponent(spaceId),
+        address,
+    })
     const spaceDapp = createSpaceDapp(chainId, provider, smartContractVersion)
     try {
         const hasPermission = await spaceDapp.isEntitledToSpace(
