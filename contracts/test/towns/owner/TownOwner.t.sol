@@ -2,6 +2,7 @@
 pragma solidity ^0.8.19;
 
 // interfaces
+import {IGuardian} from "contracts/src/towns/facets/guardian/IGuardian.sol";
 
 // libraries
 
@@ -18,6 +19,10 @@ contract TownOwnerTest is TownOwnerSetup {
 
     vm.prank(deployer);
     uint256 tokenId = townOwner.mintTown(name, uri, networkId, townAddress);
+
+    vm.prank(deployer);
+    IGuardian(diamond).disableGuardian();
+    vm.warp(IGuardian(diamond).guardianCooldown(deployer));
 
     vm.prank(deployer);
     townOwner.transferFrom(deployer, owner, tokenId);

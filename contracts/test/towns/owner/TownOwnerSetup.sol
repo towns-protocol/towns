@@ -11,6 +11,7 @@ import {FacetTest} from "contracts/test/diamond/Facet.t.sol";
 import {TownOwner} from "contracts/src/towns/facets/owner/TownOwner.sol";
 import {OwnableHelper} from "contracts/test/diamond/ownable/OwnableSetup.sol";
 import {ERC721AHelper} from "contracts/test/diamond/erc721a/ERC721ASetup.sol";
+import {GuardianHelper} from "contracts/test/towns/guardian/GuardianSetup.sol";
 
 import {MultiInit} from "contracts/src/diamond/initializers/MultiInit.sol";
 
@@ -40,20 +41,30 @@ contract TownOwnerImplementation {
     address deployer
   ) public returns (Diamond.InitParams memory) {
     OwnableHelper ownableHelper = new OwnableHelper();
+    GuardianHelper guardianHelper = new GuardianHelper();
     TownOwnerHelper townOwnerHelper = new TownOwnerHelper();
     MultiInit multiInit = new MultiInit();
 
-    IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](2);
-    cuts[0] = ownableHelper.makeCut(IDiamond.FacetCutAction.Add);
-    cuts[1] = townOwnerHelper.makeCut(IDiamond.FacetCutAction.Add);
+    IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](3);
+    uint256 index;
 
-    address[] memory addresses = new address[](2);
-    addresses[0] = ownableHelper.facet();
-    addresses[1] = townOwnerHelper.facet();
+    cuts[index++] = ownableHelper.makeCut(IDiamond.FacetCutAction.Add);
+    cuts[index++] = townOwnerHelper.makeCut(IDiamond.FacetCutAction.Add);
+    cuts[index++] = guardianHelper.makeCut(IDiamond.FacetCutAction.Add);
 
-    bytes[] memory payloads = new bytes[](2);
-    payloads[0] = ownableHelper.makeInitData(abi.encode(deployer));
-    payloads[1] = townOwnerHelper.makeInitData("TownOwner", "OWNER");
+    index = 0;
+
+    address[] memory addresses = new address[](3);
+    addresses[index++] = ownableHelper.facet();
+    addresses[index++] = townOwnerHelper.facet();
+    addresses[index++] = guardianHelper.facet();
+
+    index = 0;
+
+    bytes[] memory payloads = new bytes[](3);
+    payloads[index++] = ownableHelper.makeInitData(abi.encode(deployer));
+    payloads[index++] = townOwnerHelper.makeInitData("TownOwner", "OWNER");
+    payloads[index++] = guardianHelper.makeInitData(7 days);
 
     return
       Diamond.InitParams({

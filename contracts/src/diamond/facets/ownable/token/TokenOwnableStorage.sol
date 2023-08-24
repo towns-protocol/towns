@@ -9,7 +9,7 @@ pragma solidity ^0.8.20;
 
 library TokenOwnableStorage {
   bytes32 internal constant STORAGE_SLOT =
-    keccak256("towns.diamond.facets.ownable.token.TokenOwnableStorage");
+    keccak256("diamond.facets.ownable.token.TokenOwnableStorage");
 
   struct Layout {
     address collection;

@@ -7,16 +7,17 @@ pragma solidity ^0.8.19;
 
 // contracts
 
-library OwnablePendingStorage {
-  bytes32 internal constant STORAGE_SLOT =
-    keccak256("diamond.facets.ownable.pending.OwnablePendingStorage");
+library GuardianStorage {
+  bytes32 constant STORAGE_POSITION =
+    keccak256("towns.facets.guardian.GuardianStorage");
 
   struct Layout {
-    address pendingOwner;
+    uint256 defaultCooldown;
+    mapping(address => uint256) cooldownByAddress;
   }
 
   function layout() internal pure returns (Layout storage l) {
-    bytes32 slot = STORAGE_SLOT;
+    bytes32 slot = STORAGE_POSITION;
     assembly {
       l.slot := slot
     }

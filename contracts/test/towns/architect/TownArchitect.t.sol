@@ -9,6 +9,7 @@ import {IOwnableBase} from "contracts/src/diamond/facets/ownable/IERC173.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {IERC173} from "contracts/src/diamond/facets/ownable/IERC173.sol";
 import {IPausableBase, IPausable} from "contracts/src/diamond/facets/pausable/IPausable.sol";
+import {IGuardian} from "contracts/src/towns/facets/guardian/IGuardian.sol";
 
 // libraries
 
@@ -114,6 +115,11 @@ contract TownArchitectTest is
 
     (address townToken, , ) = townArchitect.getTownArchitectImplementations();
     uint256 tokenId = townArchitect.getTokenIdByTownId(townId);
+
+    vm.prank(founder);
+    IGuardian(townToken).disableGuardian();
+
+    vm.warp(IGuardian(townToken).guardianCooldown(founder));
 
     vm.prank(founder);
     IERC721(townToken).transferFrom(founder, buyer, tokenId);
