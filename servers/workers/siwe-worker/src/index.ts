@@ -6,7 +6,7 @@ import {
 	Environment,
 	AuthEnv,
 	withCorsHeaders,
-} from 'worker-common'
+} from '../../worker-common/src'
 
 // These initial Types are based on bindings that don't exist in the project yet,
 // you can follow the links to learn how to implement them.
