@@ -15,7 +15,6 @@ import { Message } from '@components/MessageLayout'
 import { getIsRoomMessageContent, getMessageBody } from 'utils/ztevent_util'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { useDevice } from 'hooks/useDevice'
-import { FadeInBox } from '@components/Transitions'
 import { useHasJoinedChannels } from 'hooks/useHasJoinedChannels'
 import { NoJoinedChannelsFallback } from '@components/NoJoinedChannelsFallback'
 import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinner'
@@ -113,7 +112,7 @@ const MentionBox = (props: { mention: MentionResult; userId?: string }) => {
 
     return (
         <NavLink to={link}>
-            <FadeInBox
+            <Box
                 hoverable
                 elevate={!isTouch}
                 rounded="md"
@@ -148,7 +147,7 @@ const MentionBox = (props: { mention: MentionResult; userId?: string }) => {
                         }
                     />
                 </Message>
-            </FadeInBox>
+            </Box>
         </NavLink>
     )
 }

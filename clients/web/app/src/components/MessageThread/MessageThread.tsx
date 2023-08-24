@@ -11,14 +11,14 @@ import { firstBy } from 'thenby'
 import { MessageTimeline } from '@components/MessageTimeline/MessageTimeline'
 import { MessageTimelineWrapper } from '@components/MessageTimeline/MessageTimelineContext'
 import { RichTextEditor } from '@components/RichText/RichTextEditor'
-import { Box, Divider, Paragraph, Stack } from '@ui'
+import { Box, Paragraph, Stack } from '@ui'
 import { useIsChannelWritable } from 'hooks/useIsChannelWritable'
 import { useSendReply } from 'hooks/useSendReply'
 import { useSpaceChannels } from 'hooks/useSpaceChannels'
-import { FadeInBox } from '@components/Transitions'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { useAuth } from 'hooks/useAuth'
 import { useDevice } from 'hooks/useDevice'
+import { useThrottledValue } from 'hooks/useThrottledValue'
 
 export const MessageThread = (props: {
     userId: string
@@ -28,9 +28,11 @@ export const MessageThread = (props: {
     spaceId: RoomIdentifier
 }) => {
     const { parentId, spaceId, channelId, channelLabel } = props
-    const { parent, messages } = useTimelineThread(channelId, parentId)
+    const { parent, messages: unthrottledMessages } = useTimelineThread(channelId, parentId)
     const parentMessage = parent?.parentEvent
     const { isTouch } = useDevice()
+
+    const messages = useThrottledValue(unthrottledMessages, 1000)
 
     const { sendReply } = useSendReply(parentId, parentMessage?.fallbackContent)
 
@@ -93,7 +95,7 @@ export const MessageThread = (props: {
             threadParentId={parentId}
         >
             <>
-                <FadeInBox gap={{ touch: 'none', default: 'md' }}>
+                <Stack gap={{ touch: 'none', default: 'md' }}>
                     <Box paddingX={{ touch: 'md', default: 'none' }} paddingTop="sm">
                         <Paragraph size="lg" color="default">
                             #{channelLabel.toLocaleLowerCase()}
@@ -101,37 +103,33 @@ export const MessageThread = (props: {
                         {usernames && <Paragraph color="gray2">{usernames}</Paragraph>}
                     </Box>
                     <Stack
-                        scroll
-                        grow
                         elevate={!isTouch}
-                        rounded="sm"
+                        rounded="md"
                         boxShadow={{ touch: 'none', default: 'panel' }}
                     >
-                        <Stack>
-                            <MessageTimeline collapsed align="top" />
-                            <Box
-                                paddingX
-                                paddingTop={{ touch: 'none', default: 'md' }}
-                                paddingBottom="md"
-                            >
-                                <RichTextEditor
-                                    editable={!!isChannelWritable}
-                                    threadId={parentId}
-                                    displayButtons={isTouch ? 'on-focus' : 'never'}
-                                    threadPreview={parentMessage?.fallbackContent}
-                                    storageId={`${channelId.networkId}-${parentId}`}
-                                    autoFocus={false}
-                                    placeholder="Reply..."
-                                    channels={channels}
-                                    members={members}
-                                    userId={userId}
-                                    onSend={onSend}
-                                />
-                            </Box>
-                        </Stack>
+                        <MessageTimeline
+                            collapsed
+                            displayAsSimpleList
+                            align="top"
+                            groupByUser={false}
+                        />
+                        <Box paddingX="md" paddingTop="none" paddingBottom="md">
+                            <RichTextEditor
+                                editable={!!isChannelWritable}
+                                threadId={parentId}
+                                displayButtons={isTouch ? 'on-focus' : 'never'}
+                                threadPreview={parentMessage?.fallbackContent}
+                                storageId={`${channelId.networkId}-${parentId}`}
+                                autoFocus={false}
+                                placeholder="Reply..."
+                                channels={channels}
+                                members={members}
+                                userId={userId}
+                                onSend={onSend}
+                            />
+                        </Box>
                     </Stack>
-                </FadeInBox>
-                {isTouch && <Divider />}
+                </Stack>
             </>
         </MessageTimelineWrapper>
     ) : (

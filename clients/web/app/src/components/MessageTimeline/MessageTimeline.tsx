@@ -44,11 +44,14 @@ type Props = {
     highlightId?: string
     collapsed?: boolean
     containerRef?: MutableRefObject<HTMLDivElement | null>
+    groupByUser?: boolean
+    displayAsSimpleList?: boolean
 }
 
 const emptyTimeline: TimelineEvent[] = []
 
 export const MessageTimeline = (props: Props) => {
+    const { groupByUser = true, displayAsSimpleList: displaySimpleList = false } = props
     const timelineContext = useContext(MessageTimelineContext)
     const repliesMap = timelineContext?.messageRepliesMap
     const channelId = timelineContext?.channelId
@@ -105,8 +108,16 @@ export const MessageTimeline = (props: Props) => {
     const isThread = timelineContext?.type === MessageTimelineType.Thread
 
     const dateGroups = useMemo(
-        () => getEventsByDate(events, fullyReadPersisted, isThread, repliesMap, experiments),
-        [events, fullyReadPersisted, isThread, repliesMap, experiments],
+        () =>
+            getEventsByDate(
+                events,
+                fullyReadPersisted,
+                isThread,
+                repliesMap,
+                experiments,
+                groupByUser,
+            ),
+        [events, fullyReadPersisted, isThread, repliesMap, experiments, groupByUser],
     )
 
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -271,21 +282,31 @@ export const MessageTimeline = (props: Props) => {
         const collapseStats = allListItems.reduceRight(
             (prev, curr, index) => {
                 if (curr.type === 'message') {
-                    const userId = curr.item.event.sender.id
-                    if (
-                        // count first chunk
-                        typeof prev.collapseEndIndex === undefined ||
-                        // count if user changed
-                        userId !== prev.lastUserId ||
-                        // count if message is an image
-                        (!isRedactedRoomMessage(curr.item.event) &&
-                            curr.item.event.content.kind === ZTEvent.RoomMessage &&
-                            curr.item.event.content.msgType === MessageType.Image)
-                    ) {
+                    if (groupByUser) {
+                        const userId = curr.item.event.sender.id
+                        const date = Math.floor(
+                            curr.item.event.originServerTs / (1000 * 60 * 60 * 24),
+                        )
+                        if (
+                            // count first chunk
+                            typeof prev.collapseEndIndex === undefined ||
+                            // count if user changed
+                            userId !== prev.lastUserId ||
+                            date !== prev.lastDate ||
+                            // count if message is an image
+                            (!isRedactedRoomMessage(curr.item.event) &&
+                                curr.item.event.content.kind === ZTEvent.RoomMessage &&
+                                curr.item.event.content.msgType === MessageType.Image)
+                        ) {
+                            prev.chunkCount++
+                            prev.lastUserId = userId
+                            prev.lastDate = date
+                        }
+                    } else {
                         prev.chunkCount++
-                        prev.lastUserId = userId
                     }
                 }
+
                 if (prev.chunkCount <= 2) {
                     // index until which collapsed section ends
                     prev.collapseEndIndex = index
@@ -296,10 +317,12 @@ export const MessageTimeline = (props: Props) => {
                 chunkCount: 0,
                 collapseEndIndex: 1,
                 lastUserId: undefined,
+                lastDate: undefined,
             } as {
                 chunkCount: number
                 collapseEndIndex: number
                 lastUserId: string | undefined
+                lastDate: number | undefined
             },
         )
 
@@ -313,7 +336,7 @@ export const MessageTimeline = (props: Props) => {
         }
 
         return { listItems, numHidden }
-    }, [allListItems, flatGroups.length, isCollapsed, timelineContext?.type])
+    }, [allListItems, flatGroups.length, groupByUser, isCollapsed, timelineContext?.type])
 
     const hasUnreadMarker = fullyPersistedRef.current
     const [isUnreadMarkerFaded, setIsUnreadMarkerFaded] = useState(false)
@@ -344,7 +367,63 @@ export const MessageTimeline = (props: Props) => {
 
     const { visualViewportScrolled: tabBarHidden } = useVisualViewportContext()
 
-    return (
+    const itemRenderer = useCallback(
+        (r: ListItem, measureRef?: React.RefObject<HTMLDivElement> | undefined) => {
+            return r.type === 'header' ? (
+                <>{props.header}</>
+            ) : r.type === 'group' ? (
+                <DateDivider
+                    label={r.date}
+                    ref={measureRef}
+                    new={r.isNew}
+                    faded={isUnreadMarkerFaded}
+                />
+            ) : r.type === 'divider' ? (
+                <Box paddingX="md" paddingY="md" display={isTouch ? 'none' : 'flex'}>
+                    <Divider space="none" />
+                </Box>
+            ) : r.type === 'expander' ? (
+                <Box paddingX="md" paddingY="md">
+                    <Box cursor="pointer" onClick={onExpandClick}>
+                        <Paragraph color="accent">Show {numHidden} more messages</Paragraph>
+                    </Box>
+                </Box>
+            ) : r.type === 'fully-read' ? (
+                <NewDivider
+                    fullyReadMarker={r.item.event}
+                    hidden={r.item.isHidden}
+                    faded={isUnreadMarkerFaded}
+                    paddingX={timelineContext?.type === MessageTimelineType.Channel ? 'lg' : 'md'}
+                    onMarkAsRead={onMarkAsRead}
+                />
+            ) : (
+                <MessageTimelineItem
+                    itemData={r.item}
+                    highlight={r.id === props.highlightId}
+                    userId={userId}
+                    channelName={channelName}
+                    channelEncrypted={isChannelEncrypted}
+                />
+            )
+        },
+        [
+            channelName,
+            isChannelEncrypted,
+            isTouch,
+            isUnreadMarkerFaded,
+            numHidden,
+            onExpandClick,
+            onMarkAsRead,
+            props.header,
+            props.highlightId,
+            timelineContext?.type,
+            userId,
+        ],
+    )
+
+    return displaySimpleList ? (
+        <Box paddingY="md">{listItems.map((item) => itemRenderer(item))}</Box>
+    ) : (
         <VList
             align={props.align}
             list={listItems}
@@ -357,54 +436,7 @@ export const MessageTimeline = (props: Props) => {
             key={channelId?.networkId}
             groupIds={groupIds}
             pointerEvents={isTouch && tabBarHidden ? 'none' : undefined}
-            itemRenderer={(r, ref) => {
-                return r.type === 'header' ? (
-                    <>{props.header}</>
-                ) : r.type === 'group' ? (
-                    <DateDivider
-                        label={r.date}
-                        ref={ref}
-                        new={r.isNew}
-                        faded={isUnreadMarkerFaded}
-                    />
-                ) : r.type === 'divider' ? (
-                    <Box paddingX="md" paddingY="md" display={isTouch ? 'none' : 'flex'}>
-                        <Divider space="none" />
-                    </Box>
-                ) : r.type === 'expander' ? (
-                    <Box paddingX="md" paddingY="md">
-                        <Divider
-                            space="none"
-                            fontSize="sm"
-                            label={
-                                <Box cursor="pointer" onClick={onExpandClick}>
-                                    <Paragraph color="accent" size="sm">
-                                        show {numHidden} more messages
-                                    </Paragraph>
-                                </Box>
-                            }
-                        />
-                    </Box>
-                ) : r.type === 'fully-read' ? (
-                    <NewDivider
-                        fullyReadMarker={r.item.event}
-                        hidden={r.item.isHidden}
-                        faded={isUnreadMarkerFaded}
-                        paddingX={
-                            timelineContext?.type === MessageTimelineType.Channel ? 'lg' : 'md'
-                        }
-                        onMarkAsRead={onMarkAsRead}
-                    />
-                ) : (
-                    <MessageTimelineItem
-                        itemData={r.item}
-                        highlight={r.id === props.highlightId}
-                        userId={userId}
-                        channelName={channelName}
-                        channelEncrypted={isChannelEncrypted}
-                    />
-                )
-            }}
+            itemRenderer={itemRenderer}
         />
     )
 }

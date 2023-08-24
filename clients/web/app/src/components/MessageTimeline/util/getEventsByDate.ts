@@ -181,10 +181,9 @@ export const getEventsByDate = (
     isThread?: boolean,
     replyMap?: Record<string, ThreadStats>,
     experiments?: ExperimentsState,
+    groupByUser: boolean = DEBUG_NO_GROUP_BY_USER,
 ) => {
     const { getRelativeDays } = createRelativeDateUtil()
-
-    const groupByUser = !isThread || DEBUG_NO_GROUP_BY_USER
 
     const result = events.reduce(
         (result, event: TimelineEvent, index) => {

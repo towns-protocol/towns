@@ -77,7 +77,11 @@ export const MessageThreadPanel = (props: Props) => {
                         events={messagesWithParent}
                         isChannelWritable={isChannelWritable}
                     >
-                        <MessageTimeline align="top" highlightId={props.highlightId} />
+                        <MessageTimeline
+                            align="top"
+                            highlightId={props.highlightId}
+                            groupByUser={false}
+                        />
                     </MessageTimelineWrapper>
                 </Box>
             </Stack>
