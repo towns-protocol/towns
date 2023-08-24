@@ -1,6 +1,6 @@
 # Based on https://github.com/docker/build-push-action
 
-name: 'Towns_node_docker'
+name: 'River_node_docker'
 
 on:
     push:
@@ -46,7 +46,7 @@ jobs:
                   username: ${{ secrets.DOCKER_HUB_USERNAME }}
                   password: ${{ secrets.DOCKER_HUB_TOKEN }}
 
-            - name: Build towns
+            - name: Build River Node
               uses: docker/build-push-action@v4
               with:
                   cache-from: type=gha
@@ -58,8 +58,8 @@ jobs:
                   build-args: |
                       RELEASE_VERSION=${{ env.RELEASE_VERSION }}
                   tags: |
-                      ${{ env.DOCKER_NAMESPACE }}/towns-node:latest
-                      ${{ env.DOCKER_NAMESPACE }}/towns-node:${{ env.RELEASE_VERSION }}
+                      ${{ env.DOCKER_NAMESPACE }}/river-node:latest
+                      ${{ env.DOCKER_NAMESPACE }}/river-node:${{ env.RELEASE_VERSION }}
 
             # If action failed, we send a slack notification
             - name: Slack notification
@@ -71,4 +71,4 @@ jobs:
                   SLACK_USERNAME: 'CI'
                   SLACK_ICON_EMOJI: ':boom:'
                   SLACK_COLOR: '#FF0000'
-                  SLACK_MESSAGE: 'Towns Node Docker Failed on ${{ github.repository }}'
+                  SLACK_MESSAGE: 'River Node Docker Failed on ${{ github.repository }}'
