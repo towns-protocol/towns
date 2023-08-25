@@ -8,7 +8,7 @@ import {TokenEntitlement} from "contracts/src/towns/entitlements/token/TokenEnti
 
 contract DeployTokenEntitlement is Deployer {
   function versionName() public pure override returns (string memory) {
-    return "TokenEntitlement";
+    return "tokenEntitlement";
   }
 
   function __deploy(
@@ -22,7 +22,7 @@ contract DeployTokenEntitlement is Deployer {
 
 contract DeployUserEntitlement is Deployer {
   function versionName() public pure override returns (string memory) {
-    return "UserEntitlement";
+    return "userEntitlement";
   }
 
   function __deploy(

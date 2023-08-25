@@ -22,7 +22,7 @@ contract DiamondCutFacet is IDiamondCut, DiamondCutBase, OwnableBase, Facet {
     IDiamond.FacetCut[] memory facetCuts,
     address init,
     bytes memory initPayload
-  ) external onlyOwner {
+  ) external onlyOwner reinitializer(_nextVersion()) {
     _diamondCut(facetCuts, init, initPayload);
   }
 }

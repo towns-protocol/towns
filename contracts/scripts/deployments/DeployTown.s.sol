@@ -17,6 +17,7 @@ import {EntitlementsHelper} from "contracts/test/towns/entitlements/Entitlements
 import {RolesHelper} from "contracts/test/towns/roles/RolesSetup.sol";
 import {ChannelsHelper} from "contracts/test/towns/channels/ChannelsSetup.sol";
 import {TokenPausableHelper} from "contracts/test/diamond/pausable/token/TokenPausableSetup.sol";
+import {IntrospectionHelper} from "contracts/test/diamond/introspection/IntrospectionSetup.sol";
 
 // Facets
 import {OwnableFacet} from "contracts/src/diamond/facets/ownable/OwnableFacet.sol";
@@ -27,6 +28,7 @@ import {Entitlements} from "contracts/src/towns/facets/entitlements/Entitlements
 import {Channels} from "contracts/src/towns/facets/channels/Channels.sol";
 import {Roles} from "contracts/src/towns/facets/roles/Roles.sol";
 import {TokenPausableFacet} from "contracts/src/diamond/facets/pausable/token/TokenPausableFacet.sol";
+import {IntrospectionFacet} from "contracts/src/diamond/facets/introspection/IntrospectionFacet.sol";
 
 import {MultiInit} from "contracts/src/diamond/initializers/MultiInit.sol";
 
@@ -39,9 +41,10 @@ contract DeployTown is Deployer {
   RolesHelper rolesHelper = new RolesHelper();
   ChannelsHelper channelsHelper = new ChannelsHelper();
   TokenPausableHelper tokenPausableHelper = new TokenPausableHelper();
+  IntrospectionHelper introspectionHelper = new IntrospectionHelper();
 
-  address[] initAddresses = new address[](3);
-  bytes[] initDatas = new bytes[](3);
+  address[] initAddresses = new address[](4);
+  bytes[] initDatas = new bytes[](4);
 
   address ownable;
   address tokenOwnable;
@@ -51,6 +54,7 @@ contract DeployTown is Deployer {
   address channels;
   address roles;
   address tokenPausable;
+  address introspection;
   address town;
 
   address multiInit;
@@ -72,10 +76,11 @@ contract DeployTown is Deployer {
     channels = address(new Channels());
     roles = address(new Roles());
     tokenPausable = address(new TokenPausableFacet());
+    introspection = address(new IntrospectionFacet());
     multiInit = address(new MultiInit());
     vm.stopBroadcast();
 
-    IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](7);
+    IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](8);
     uint256 index;
 
     cuts[index++] = tokenOwnableHelper.makeCut(
@@ -103,14 +108,20 @@ contract DeployTown is Deployer {
       channels,
       IDiamond.FacetCutAction.Add
     );
+    cuts[index++] = introspectionHelper.makeCut(
+      introspection,
+      IDiamond.FacetCutAction.Add
+    );
 
     initAddresses[0] = ownable;
     initAddresses[1] = diamondCut;
     initAddresses[2] = diamondLoupe;
+    initAddresses[3] = introspection;
 
     initDatas[0] = ownableHelper.makeInitData(abi.encode(deployer));
     initDatas[1] = diamondCutHelper.makeInitData("");
     initDatas[2] = diamondLoupeHelper.makeInitData("");
+    initDatas[3] = introspectionHelper.makeInitData("");
 
     vm.broadcast(deployerPK);
     address townAddress = address(
