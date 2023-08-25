@@ -25,6 +25,7 @@ import {
     EncryptedData,
     GetStreamResponse,
     CreateStreamResponse,
+    StreamSettings,
 } from '@river/proto'
 
 import { Crypto, EncryptionTarget } from './crypto/crypto'
@@ -375,6 +376,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         channelName: string,
         channelTopic: string,
         channelId?: string,
+        streamSettings?: PlainMessage<StreamSettings>,
     ): Promise<{ streamId: string }> {
         channelId = channelId ?? makeUniqueChannelStreamId()
         this.logCall('createChannel', channelId, spaceId)
@@ -390,6 +392,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
                 channelProperties: {
                     text: make_ChannelProperties(channelName, channelTopic).toJsonString(),
                 },
+                settings: streamSettings,
             }),
             [],
         )

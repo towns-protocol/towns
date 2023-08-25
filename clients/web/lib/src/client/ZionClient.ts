@@ -674,6 +674,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
                     createInfo.name,
                     createInfo.topic ? createInfo.topic : '',
                     networkId,
+                    createInfo.streamSettings,
                 )
             default:
                 staticAssertNever(createInfo.parentSpaceId)
