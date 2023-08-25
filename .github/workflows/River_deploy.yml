@@ -14,6 +14,9 @@ on:
                 description: 'Docker image tag to deploy'
                 required: true
                 default: 'latest'
+    repository_dispatch:
+        types:
+            - deploy-event
 
 concurrency:
     group: ${{ github.workflow }}-${{ github.ref }}
@@ -24,7 +27,8 @@ jobs:
         name: Deploy to AWS ECS
         runs-on: ubuntu-latest
 
-        environment: ${{ inputs.environment }}
+        environment:
+            name: ${{ github.event.inputs.environment || github.event.client_payload.environment }}
 
         permissions:
             contents: write
@@ -42,7 +46,18 @@ jobs:
                   aws-region: us-east-1
 
             - name: Create new task definition
-              run: ./scripts/create-river-task-definition.sh --environment ${{ inputs.environment }} --docker-image-tag ${{ inputs.docker_image_tag }}
+              run: ./scripts/create-river-task-definition.sh --environment ${{ vars.ENVIRONMENT }} --docker-image-tag ${{ github.event.inputs.docker_image_tag || github.event.client_payload.docker_image_tag }}
 
             - name: Deploy service
-              run: ./scripts/deploy-river-task-definition.sh --environment ${{ inputs.environment }} --node-name ${{ vars.PRIMARY_NODE_NAME }}
+              run: ./scripts/deploy-river-task-definition.sh --environment ${{ vars.ENVIRONMENT }} --node-name ${{ vars.PRIMARY_NODE_NAME }}
+
+            - name: Slack notification
+              uses: rtCamp/action-slack-notify@v2
+              if: failure()
+              env:
+                  SLACK_WEBHOOK: ${{ secrets.SLACK_CI_CHANNEL_WEBHOOK_URL }}
+                  SLACK_TITLE: 'Failure'
+                  SLACK_USERNAME: 'CI'
+                  SLACK_ICON_EMOJI: ':boom:'
+                  SLACK_COLOR: '#FF0000'
+                  SLACK_MESSAGE: 'River Deploy Failed on ${{ github.repository }}'
