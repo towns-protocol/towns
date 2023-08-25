@@ -10,7 +10,12 @@ import {
     RangeSelection,
 } from 'lexical'
 import React, { useCallback, useEffect, useRef, useState } from 'react'
-import { INSERT_ORDERED_LIST_COMMAND, INSERT_UNORDERED_LIST_COMMAND } from '@lexical/list'
+import {
+    $isListNode,
+    INSERT_ORDERED_LIST_COMMAND,
+    INSERT_UNORDERED_LIST_COMMAND,
+    REMOVE_LIST_COMMAND,
+} from '@lexical/list'
 import { $createCodeNode, $isCodeNode } from '@lexical/code'
 import { Box, IconButton, Stack } from '@ui'
 import { vars } from 'ui/styles/vars.css'
@@ -33,6 +38,8 @@ export const InlineToolbar = (props: {
     const [isLink, setIsLink] = useState(false)
     const [isCode, setIsCode] = useState(false)
     const [isCodeBlock, setIsCodeBlock] = useState(false)
+    const [isBulletList, setIsBulletList] = useState(false)
+    const [isNumberedList, setIsNumberedList] = useState(false)
 
     const updateToolbar = useCallback(() => {
         editor.getEditorState().read(() => {
@@ -81,6 +88,15 @@ export const InlineToolbar = (props: {
             } else {
                 setIsCodeBlock(false)
             }
+
+            const grandParent = parent?.getParent()
+            if ($isListNode(grandParent)) {
+                setIsBulletList(grandParent.getListType() === 'bullet')
+                setIsNumberedList(grandParent.getListType() === 'number')
+            } else {
+                setIsBulletList(false)
+                setIsNumberedList(false)
+            }
         })
     }, [editor])
 
@@ -97,16 +113,25 @@ export const InlineToolbar = (props: {
         editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'italic')
     }
 
+    const onNumberedListClick = () => {
+        if (isNumberedList) {
+            editor.dispatchCommand(REMOVE_LIST_COMMAND, undefined)
+        } else {
+            editor.dispatchCommand(INSERT_ORDERED_LIST_COMMAND, undefined)
+        }
+    }
+
     const onStrikethroughClick = () => {
         editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'strikethrough')
     }
 
-    const onOrderedListClick = () => {
-        editor.dispatchCommand(INSERT_ORDERED_LIST_COMMAND, undefined)
-    }
-
     const onBulletListClick = () => {
-        editor.dispatchCommand(INSERT_UNORDERED_LIST_COMMAND, undefined)
+        if (isBulletList) {
+            console.log('removing!')
+            editor.dispatchCommand(REMOVE_LIST_COMMAND, undefined)
+        } else {
+            editor.dispatchCommand(INSERT_UNORDERED_LIST_COMMAND, undefined)
+        }
     }
 
     const onCodeClick = () => {
@@ -181,8 +206,18 @@ export const InlineToolbar = (props: {
             />
             <IconButton opaque active={isLink} icon="link" onClick={onLinkClick} />
             <Divider />
-            <IconButton opaque active={isLink} icon="numberedlist" onClick={onOrderedListClick} />
-            <IconButton opaque active={isLink} icon="bulletedlist" onClick={onBulletListClick} />
+            <IconButton
+                opaque
+                active={isNumberedList}
+                icon="numberedlist"
+                onClick={onNumberedListClick}
+            />
+            <IconButton
+                opaque
+                active={isBulletList}
+                icon="bulletedlist"
+                onClick={onBulletListClick}
+            />
             <Divider />
             <IconButton opaque active={isCode} icon="code" onClick={onCodeClick} />
             <IconButton opaque active={isCodeBlock} icon="codeBlock" onClick={onCodeBlockClick} />
