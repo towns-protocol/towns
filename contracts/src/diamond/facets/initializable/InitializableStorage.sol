@@ -9,7 +9,7 @@ pragma solidity ^0.8.20;
 
 library InitializableStorage {
   bytes32 internal constant STORAGE_SLOT =
-    keccak256("diamond.facets.initializable.InitializableStorage");
+    keccak256("towns.diamond.facets.initializable.InitializableStorage");
 
   struct Layout {
     uint32 version;

@@ -9,7 +9,7 @@ pragma solidity ^0.8.20;
 
 library ReentrancyGuardStorage {
   bytes32 internal constant STORAGE_SLOT =
-    keccak256("diamond.facets.reentrancy.ReentrancyGuardStorage");
+    keccak256("towns.diamond.facets.reentrancy.ReentrancyGuardStorage");
 
   struct Layout {
     uint256 status;

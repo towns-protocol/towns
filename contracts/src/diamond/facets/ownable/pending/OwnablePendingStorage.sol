@@ -9,7 +9,7 @@ pragma solidity ^0.8.19;
 
 library OwnablePendingStorage {
   bytes32 internal constant STORAGE_SLOT =
-    keccak256("diamond.facets.ownable.pending.OwnablePendingStorage");
+    keccak256("towns.diamond.facets.ownable.pending.OwnablePendingStorage");
 
   struct Layout {
     address pendingOwner;

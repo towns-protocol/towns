@@ -9,7 +9,7 @@ pragma solidity ^0.8.20;
 
 library IntrospectionStorage {
   bytes32 internal constant STORAGE_SLOT =
-    keccak256("diamond.facets.introspection.IntrospectionStorage");
+    keccak256("towns.diamond.facets.introspection.IntrospectionStorage");
 
   struct Layout {
     mapping(bytes4 => bool) supportedInterfaces;

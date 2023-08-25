@@ -74,6 +74,14 @@ deploy-sepolia :;
 	@forge build
 	@forge script scripts/deployments/${contract}.s.sol:${contract} --ffi --rpc-url sepolia --private-key ${PRIVATE_KEY} --broadcast --verify --watch -vvvv
 
+upgrade-sepolia:;
+	@forge build
+	@SAVE_DEPLOYMENTS=1 forge script scripts/upgrades/${contract}.s.sol:${contract} --ffi --rpc-url sepolia --private-key ${PRIVATE_KEY} --broadcast --verify --watch -vvvv
+
+verify-sepolia :;
+	@forge build
+	@forge verify-contract ${address} ${contract} --chain sepolia
+
 # Council NFT interaction scripts
 read-anvil :; @cast call ${contractAddress} "${functionName}" --rpc-url http://localhost:8545 --private-key ${LOCAL_PRIVATE_KEY}
 
