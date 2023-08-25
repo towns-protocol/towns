@@ -8,6 +8,9 @@ function getAllowedOrigins(env: Environment): string[] {
                 Everything except for production
             */
             return [
+                'https://app-beta.towns.com',
+                'https://app-beta-staging.towns.com',
+                'https://app-beta-test.towns.com',
                 'https://app-staging.towns.com',
                 'https://app-test.towns.com',
                 'https://harmony-web-pr-*.onrender.com',
@@ -27,6 +30,8 @@ function getAllowedOrigins(env: Environment): string[] {
                 'https://alpha.towns.com',
                 'https://app.towns.com',
                 'https://app-staging.towns.com',
+                'https://app-beta-staging.towns.com',
+                'https://app-beta.towns.com',
                 'https://harmony-web-pr-*.onrender.com',
                 'https://towns.com',
             ]
