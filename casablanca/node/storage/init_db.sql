@@ -2,7 +2,8 @@
 -- \c casablanca;
 
 CREATE TABLE IF NOT EXISTS es (
-  name VARCHAR PRIMARY KEY);
+  stream_name VARCHAR PRIMARY KEY,
+  latest_snapshot_miniblock BIGINT NOT NULL);
 
 CREATE OR REPLACE FUNCTION public.notify_newevent()
   RETURNS trigger

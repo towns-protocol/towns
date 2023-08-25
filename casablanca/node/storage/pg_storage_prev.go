@@ -3,7 +3,6 @@ package storage
 import (
 	"context"
 	_ "embed"
-	"errors"
 	"fmt"
 	"time"
 
@@ -34,10 +33,6 @@ type PGEventNotificationEntry struct {
 	Signature string `json:"signature"`
 	Event     string `json:"event"`
 }
-
-const (
-	PG_REPORT_INTERVAL = 3 * time.Minute
-)
 
 // NewPGEventStore creates a new PGEventStore
 func NewPGEventStore(ctx context.Context, database_url string, clean bool) (*PGEventStore, error) {
@@ -95,32 +90,6 @@ func (s *PGEventStore) Close() error {
 	close(s.debugCtl)
 	s.pool.Close()
 	return nil
-}
-
-func streamExists(ctx context.Context, tx pgx.Tx, streamId string) (bool, error) {
-	rows, err := tx.Query(ctx, "SELECT name FROM es WHERE name = $1 LIMIT 1", streamId)
-	if err != nil {
-		return false, err
-	}
-	defer rows.Close()
-	res := rows.Next()
-	return res, nil
-}
-
-func createEventStreamInstance(ctx context.Context, tx pgx.Tx, streamId string) error {
-	_, err := tx.Exec(ctx, `INSERT INTO es (name) VALUES ($1)`, streamId)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func startTx(ctx context.Context, pool *pgxpool.Pool) (pgx.Tx, error) {
-	tx, err := pool.BeginTx(ctx, pgx.TxOptions{IsoLevel: pgx.Serializable})
-	if err != nil {
-		return nil, err
-	}
-	return tx, nil
 }
 
 func lockTable(ctx context.Context, tx pgx.Tx, tableName string) error {
@@ -296,7 +265,7 @@ func (s *PGEventStore) AddEvent(ctx context.Context, streamId string, event *pro
 // GetStreams returns a list of all event streams
 func (s *PGEventStore) GetStreams(ctx context.Context) ([]string, error) {
 	streams := []string{}
-	rows, err := s.pool.Query(ctx, "SELECT name FROM es")
+	rows, err := s.pool.Query(ctx, "SELECT stream_name FROM es")
 	if err != nil {
 		return nil, err
 	}
@@ -313,7 +282,7 @@ func (s *PGEventStore) GetStreams(ctx context.Context) ([]string, error) {
 }
 
 func checkStream(ctx context.Context, tx pgx.Tx, streamId string) (bool, error) {
-	rows, err := tx.Query(ctx, "SELECT name FROM es WHERE name = $1", streamId)
+	rows, err := tx.Query(ctx, "SELECT stream_name FROM es WHERE stream_name = $1", streamId)
 	if err != nil {
 		return false, err
 	}
@@ -387,7 +356,7 @@ func (s *PGEventStore) DeleteStream(ctx context.Context, streamID string) error 
 		return err
 	}
 
-	_, err = tx.Exec(ctx, "DELETE FROM es WHERE name = $1", streamID)
+	_, err = tx.Exec(ctx, "DELETE FROM es WHERE stream_name = $1", streamID)
 	if err != nil {
 		return err
 	}
@@ -492,82 +461,6 @@ func fetchMessages(ctx context.Context, tx pgx.Tx, positions []StreamPos, maxCou
 	return events, nextSeqNums, nil
 }
 
-//go:embed init_db.sql
-var schema string
-
-func initStorage(ctx context.Context, pool *pgxpool.Pool) error {
-	log := dlog.CtxLog(ctx)
-
-	tx, err := pool.Begin(ctx)
-	if err != nil {
-		return err
-	}
-	committed := false
-	defer func() {
-		if !committed {
-			err := tx.Rollback(ctx)
-			if err != nil {
-				if errors.Is(err, pgx.ErrTxClosed) {
-					return
-				}
-				log.Error("InitStorage: Failed to rollback transaction", "error", err)
-			}
-		}
-	}()
-
-	_, err = tx.Exec(context.Background(), schema)
-	if err != nil {
-		return err
-	}
-
-	err = tx.Commit(ctx)
-	if err != nil {
-		log.Error("InitStorage: Failed to commit transaction", "error", err)
-		return err
-	}
-	committed = true
-	return nil
-}
-
-func cleanStorage(ctx context.Context, pool *pgxpool.Pool) error {
-	log := dlog.CtxLog(ctx)
-
-	tx, err := pool.Begin(ctx)
-	if err != nil {
-		return err
-	}
-	committed := false
-	defer func() {
-		if !committed {
-			err := tx.Rollback(ctx)
-			if err != nil {
-				if errors.Is(err, pgx.ErrTxClosed) {
-					return
-				}
-				log.Error("CleanStorage: Failed to rollback transaction: %s", err)
-			}
-		}
-	}()
-
-	_, err = tx.Exec(ctx, "DROP SCHEMA public CASCADE")
-	if err != nil {
-		return err
-	}
-
-	_, err = tx.Exec(ctx, "CREATE SCHEMA public")
-	if err != nil {
-		return err
-	}
-
-	err = tx.Commit(ctx)
-	if err != nil {
-		log.Error("Failed to commit transaction: %s", err)
-		return err
-	}
-	committed = true
-	return nil
-}
-
 //go:embed create_stream.sql
 var createStream string
 
@@ -578,8 +471,4 @@ func createStreamSql(streamId string) string {
 
 func streamSqlName(streamId string) string {
 	return fmt.Sprintf("stream_%s", sanitizeSqlName(streamId))
-}
-
-func sanitizeSqlName(name string) string {
-	return strings.ReplaceAll(name, "-", "_")
 }
