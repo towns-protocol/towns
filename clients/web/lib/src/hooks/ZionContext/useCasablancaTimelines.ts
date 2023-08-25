@@ -38,6 +38,7 @@ import {
 } from '../../types/timeline-types'
 import { staticAssertNever } from '../../utils/zion-utils'
 import { RiverEvent } from '@river/sdk'
+import reverse from 'lodash/reverse'
 
 type SuccessResult = {
     content: TimelineEvent_OneOf
@@ -92,6 +93,18 @@ export function useCasablancaTimelines(casablancaClient: CasablancaClient | unde
             }
         }
 
+        const onStreamEventsPrepended = (
+            streamId: string,
+            kind: SnapshotCaseType,
+            messages: ParsedEvent[],
+        ) => {
+            if (kind === 'channelContent' || kind === 'spaceContent') {
+                streamIds.add(streamId)
+                const timelineEvents = messages.map((message) => toEvent(message, userId))
+                prependEvents(timelineEvents, userId, streamId, setState)
+            }
+        }
+
         const onEventDecrypted = (riverEvent: object, err: Error | undefined) => {
             if (err) {
                 console.log('$$$ useCasablancaTimelines onEventDecrypted', err)
@@ -138,11 +151,13 @@ export function useCasablancaTimelines(casablancaClient: CasablancaClient | unde
 
         casablancaClient.on('streamInitialized', onStreamInitialized)
         casablancaClient.on('streamUpdated', onStreamUpdated)
+        casablancaClient.on('streamEventsPrepended', onStreamEventsPrepended)
         casablancaClient.on('eventDecrypted', onEventDecrypted)
 
         return () => {
             casablancaClient.off('streamInitialized', onStreamInitialized)
             casablancaClient.off('streamUpdated', onStreamUpdated)
+            casablancaClient.off('streamEventsPrepended', onStreamEventsPrepended)
             casablancaClient.off('eventDecrypted', onEventDecrypted)
             setState.reset(Array.from(streamIds))
         }
@@ -700,5 +715,17 @@ function processEvent(
         } else {
             setState.appendEvent(userId, streamId, event)
         }
+    }
+}
+
+function prependEvents(
+    events: TimelineEvent[],
+    userId: string,
+    streamId: string,
+    setState: TimelineStoreInterface,
+) {
+    // todo, we need to handle replace and redact events here https://linear.app/hnt-labs/issue/HNT-2219/handle-replacements-and-redactions-in-a-paginated-world
+    for (const event of reverse(events)) {
+        setState.prependEvent(userId, streamId, event)
     }
 }

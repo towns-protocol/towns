@@ -23,7 +23,7 @@ import { makeRandomUserContext, makeTestRpcClient, timeoutIterable } from './uti
 
 const log = dlog('csb:test:syncWithBlocks')
 
-describe('streamRpcClient', () => {
+describe('syncWithBlocks', () => {
     let bobsContext: SignerContext
 
     beforeEach(async () => {

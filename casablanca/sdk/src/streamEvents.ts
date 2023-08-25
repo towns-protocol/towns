@@ -39,6 +39,11 @@ export type StreamEvents = {
         events: ParsedEvent[],
     ) => void
     streamUpdated: (streamId: string, contentKind: SnapshotCaseType, events: ParsedEvent[]) => void
+    streamEventsPrepended: (
+        streamId: string,
+        contentKind: SnapshotCaseType,
+        events: ParsedEvent[],
+    ) => void
 }
 
 export type StreamEventKeys = keyof StreamEvents

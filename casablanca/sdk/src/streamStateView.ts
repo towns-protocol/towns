@@ -340,6 +340,16 @@ export class StreamStateView {
         emitter?.emit('streamUpdated', this.streamId, this.contentKind, events)
     }
 
+    prependEvents(miniblocks: Miniblock[], emitter: TypedEmitter<EmittedEvents> | undefined) {
+        const events = miniblocks.flatMap((mb) => unpackMiniblock(mb))
+        // prepend the new block events in reverse order
+        for (let i = events.length - 1; i >= 0; i--) {
+            const event = events[i]
+            this.prependEvent(event, emitter)
+        }
+        emitter?.emit('streamEventsPrepended', this.streamId, this.contentKind, events)
+    }
+
     getMemberships(): StreamStateView_Membership {
         switch (this.contentKind) {
             case 'channelContent':
