@@ -29,6 +29,7 @@ export const InlineToolbar = (props: {
     const [isText, setIsText] = useState(false)
     const [isItalic, setIsItalic] = useState(false)
     const [isBold, setIsBold] = useState(false)
+    const [isStrikethrough, setIsStrikethrough] = useState(false)
     const [isLink, setIsLink] = useState(false)
     const [isCode, setIsCode] = useState(false)
     const [isCodeBlock, setIsCodeBlock] = useState(false)
@@ -58,6 +59,7 @@ export const InlineToolbar = (props: {
             setIsBold(selection.hasFormat('bold'))
             setIsItalic(selection.hasFormat('italic'))
             setIsCode(selection.hasFormat('code'))
+            setIsStrikethrough(selection.hasFormat('strikethrough'))
 
             // Update links
             const parent = node.getParent()
@@ -93,6 +95,10 @@ export const InlineToolbar = (props: {
     }
     const onItalicClick = () => {
         editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'italic')
+    }
+
+    const onStrikethroughClick = () => {
+        editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'strikethrough')
     }
 
     const onOrderedListClick = () => {
@@ -167,6 +173,12 @@ export const InlineToolbar = (props: {
         >
             <IconButton opaque active={isItalic} icon="italic" onMouseDown={onItalicClick} />
             <IconButton opaque active={isBold} icon="bold" onClick={onBoldClick} />
+            <IconButton
+                opaque
+                active={isStrikethrough}
+                icon="strikethrough"
+                onClick={onStrikethroughClick}
+            />
             <IconButton opaque active={isLink} icon="link" onClick={onLinkClick} />
             <Divider />
             <IconButton opaque active={isLink} icon="numberedlist" onClick={onOrderedListClick} />
