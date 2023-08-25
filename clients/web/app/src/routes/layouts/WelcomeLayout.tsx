@@ -3,13 +3,12 @@ import { AnimatePresence } from 'framer-motion'
 import { TransitionLogo } from '@components/Logo/Logo'
 import { MotionBox, Stack } from '@ui'
 
-// shared structure w/ LoadingScreen so logo position is consistent
 export const WelcomeLayout = (props: { children?: React.ReactNode }) => (
-    <Stack centerContent height="100vh" background="level1">
-        <Stack padding justifyContent="end" height="50vh">
+    <Stack centerContent scroll height="100vh" background="level1">
+        <Stack padding justifyContent="end">
             <TransitionLogo />
         </Stack>
-        <Stack padding grow>
+        <Stack padding>
             <Stack justifyContent="start" minHeight="height_xl" gap="lg">
                 {props.children}
             </Stack>

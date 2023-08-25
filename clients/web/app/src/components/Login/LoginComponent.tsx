@@ -5,7 +5,7 @@ import { useWeb3Context } from 'use-zion-client'
 import { ThemeOptions } from '@rainbow-me/rainbowkit/dist/themes/baseTheme'
 import { useAuth } from 'hooks/useAuth'
 import { SignupButtonStatus, useSignupButton } from 'hooks/useSignupButton'
-import { Box, FancyButton, Paragraph, Text } from '@ui'
+import { Box, Card, FancyButton, Paragraph, Stack, Text } from '@ui'
 import { RequireTransactionNetworkMessage } from '@components/RequireTransactionNetworkMessage/RequireTransactionNetworkMessage'
 import { useRequireTransactionNetwork } from 'hooks/useRequireTransactionNetwork'
 import { FadeIn, FadeInBox } from '@components/Transitions'
@@ -18,6 +18,7 @@ import { shortAddress } from 'ui/utils/utils'
 import { atoms } from 'ui/styles/atoms.css'
 import { isTouch } from 'hooks/useDevice'
 import { useWalletConnectProvider } from 'hooks/useWalletConnectProvider'
+import { useEnvironment } from 'hooks/useEnvironmnet'
 import { WalletConnectButton } from './WalletConnectButton'
 import { RainbowKitLoginButton } from './RainbowKitLoginButton'
 import { MobileMetaMaskFlow } from './MobileMetamaskFlow'
@@ -38,6 +39,8 @@ function DisconnectedState() {
     const { theme } = useStore((state) => ({
         theme: state.theme,
     }))
+    const { chainId } = useEnvironment()
+    const showSepoliaExplanation = chainId === 11155111
 
     const rainbowTheme = useMemo(() => {
         const customTheme: ThemeOptions = {
@@ -56,6 +59,7 @@ function DisconnectedState() {
             <RainbowKitProvider chains={chains} theme={rainbowTheme}>
                 {shouldUseWalletConnect() ? <WalletConnectButton /> : <RainbowKitLoginButton />}
             </RainbowKitProvider>
+            {showSepoliaExplanation && <SepoliaExplanation />}
         </>
     )
 }
@@ -188,6 +192,26 @@ const getLoginButtonLabel = (status: SignupButtonStatus) => {
         case SignupButtonStatus.Register:
             return 'Register'
     }
+}
+
+const SepoliaExplanation = () => {
+    return (
+        <Card>
+            <Stack maxWidth="300" gap="md" paddingX="md" paddingY="lg">
+                <Text size="md" textAlign="center" fontWeight="medium" color="default">
+                    Before you connect
+                </Text>
+                <Text size="sm" textAlign="center">
+                    Towns alpha runs on Sepolia, which isn&apos;t supported on all wallets.
+                    Currently, Rainbow wallet does not support Sepolia.
+                </Text>
+                <Text size="sm" textAlign="center">
+                    Please go to your wallet and make sure you are on the{' '}
+                    <span className={atoms({ color: 'cta1' })}> Sepolia</span> network.
+                </Text>
+            </Stack>
+        </Card>
+    )
 }
 
 export default LoginComponent
