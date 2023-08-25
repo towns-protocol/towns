@@ -102,11 +102,7 @@ export const MessageThread = (props: {
                         </Paragraph>
                         {usernames && <Paragraph color="gray2">{usernames}</Paragraph>}
                     </Box>
-                    <Stack
-                        elevate={!isTouch}
-                        rounded="md"
-                        boxShadow={{ touch: 'none', default: 'panel' }}
-                    >
+                    <Stack elevate={!isTouch} rounded="md" boxShadow="none">
                         <MessageTimeline
                             collapsed
                             displayAsSimpleList

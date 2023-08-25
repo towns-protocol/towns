@@ -116,9 +116,7 @@ const MentionBox = (props: { mention: MentionResult; userId?: string }) => {
                 hoverable
                 elevate={!isTouch}
                 rounded="md"
-                background={mention.unread ? 'level3' : 'level2'}
-                cursor="alias"
-                boxShadow={{ touch: 'none', default: 'card' }}
+                border={mention.unread ? 'level3' : 'none'}
                 overflow="hidden"
             >
                 <Message
