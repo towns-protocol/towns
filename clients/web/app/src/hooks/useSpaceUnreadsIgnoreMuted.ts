@@ -1,7 +1,8 @@
 import { Mute, UserSettings } from '@push-notification-worker/types'
-import { useZionContext } from 'use-zion-client'
+import { useFullyReadMarkerStore, useSpaceId, useZionContext } from 'use-zion-client'
 import { useMemo } from 'react'
 import { useGetNotificationSettings } from 'api/lib/notificationSettings'
+import { useSpaceChannels } from './useSpaceChannels'
 
 function showUnreadBadge(
     spaceUnreadChannelIds: Record<string, string[]>,
@@ -54,4 +55,41 @@ export const useShowHasUnreadBadgeForOtherSpaces = (ignoredSpaceId?: string) => 
                 return showUnreadBadge(spaceUnreadChannelIds, data, space.id.networkId)
             })
     }, [spaceUnreadChannelIds, data, ignoredSpaceId, spaces])
+}
+
+// The hook for badging the active space is slightly different. We need access to the
+// space's channels in order to pluck out the correct channels from the fullyReadMarkers.
+export const useShowHasUnreadBadgeForCurrentSpace = () => {
+    const spaceId = useSpaceId()
+    const channels = useSpaceChannels()
+    const { data } = useGetNotificationSettings()
+    const fullyReadMarkers = useFullyReadMarkerStore()
+
+    const showHasUnreadBadgeForCurrentSpace = useMemo(() => {
+        const mutedChannelIds = new Set(
+            data?.channelSettings
+                .filter((c) => c.channelMute === Mute.Muted)
+                .map((c) => c.channelId) ?? [],
+        )
+
+        if (
+            data?.spaceSettings.some(
+                (spaceSetting) =>
+                    spaceSetting.spaceId === spaceId?.networkId &&
+                    spaceSetting.spaceMute === Mute.Muted,
+            )
+        ) {
+            return false
+        }
+
+        for (const channel of channels) {
+            if (fullyReadMarkers.markers[channel.id.networkId]?.isUnread) {
+                if (!mutedChannelIds.has(channel.id.networkId)) {
+                    return true
+                }
+            }
+        }
+        return false
+    }, [channels, data, fullyReadMarkers, spaceId])
+    return { showHasUnreadBadgeForCurrentSpace }
 }

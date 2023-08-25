@@ -1,18 +1,20 @@
 import React, { useCallback, useMemo } from 'react'
-import { useMyProfile, useSpaceData } from 'use-zion-client'
+import { useMyProfile, useSpaceData, useSpaceThreadRootsUnreadCount } from 'use-zion-client'
 import { matchRoutes, useLocation, useNavigate, useResolvedPath } from 'react-router'
 import { Avatar, Box, Dot, Icon, IconButton, Stack, Text, Tooltip } from '@ui'
 import { SpaceIcon } from '@components/SpaceIcon'
 import { ImageVariants } from '@components/UploadImage/useImageSource'
 import { PATHS } from 'routes'
-import { useShowHasUnreadBadgeForSpaceId } from 'hooks/useSpaceUnreadsIgnoreMuted'
+import { useShowHasUnreadBadgeForCurrentSpace } from 'hooks/useSpaceUnreadsIgnoreMuted'
 import { useInstallPWAPrompt } from 'hooks/useInstallPWAPrompt'
 import { useVisualViewportContext } from '../VisualViewportContext/VisualViewportContext'
 
 export const TouchTabBar = () => {
     const space = useSpaceData()
     const userId = useMyProfile()?.userId
-    const hasUnread = useShowHasUnreadBadgeForSpaceId(space?.id.networkId)
+    const { showHasUnreadBadgeForCurrentSpace } = useShowHasUnreadBadgeForCurrentSpace()
+    const hasUnreadThreads = useSpaceThreadRootsUnreadCount() > 0
+
     const { shouldDisplayPWAPrompt, closePWAPrompt } = useInstallPWAPrompt()
     const { visualViewportScrolled: tabBarHidden } = useVisualViewportContext()
 
@@ -38,7 +40,7 @@ export const TouchTabBar = () => {
                                 variant={ImageVariants.thumbnail50}
                                 fadeIn={false}
                             />
-                            {hasUnread && <Dot position="topRight" />}
+                            {showHasUnreadBadgeForCurrentSpace && <Dot position="topRight" />}
                         </Box>
                     )}
                     to={`/${PATHS.SPACES}/${space.id.slug}/`}
@@ -46,7 +48,12 @@ export const TouchTabBar = () => {
                 />
                 <TabBarItem
                     title="Threads"
-                    icon={() => <Icon type="message" size="toolbar_icon" />}
+                    icon={() => (
+                        <Box>
+                            <Icon type="message" size="toolbar_icon" />
+                            {hasUnreadThreads && <Dot position="topRight" />}
+                        </Box>
+                    )}
                     to={`/${PATHS.SPACES}/${space.id.slug}/${PATHS.THREADS}`}
                 />
                 <TabBarItem

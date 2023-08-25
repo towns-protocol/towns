@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { useSpaceData, useSpaceMentions, useZionContext } from 'use-zion-client'
+import { useFullyReadMarkerStore, useSpaceData, useSpaceMentions } from 'use-zion-client'
 import { Mute } from '@push-notification-worker/types'
 import { useGetNotificationSettings } from 'api/lib/notificationSettings'
 import { useContractChannelsWithJoinedStatus } from './useContractChannelsWithJoinedStatus'
@@ -8,8 +8,8 @@ export const useChannelsWithMentionCountsAndUnread = () => {
     const space = useSpaceData()
     const mentions = useSpaceMentions()
     const { contractChannelsWithJoinedStatus } = useContractChannelsWithJoinedStatus()
-    const { spaceUnreadChannelIds } = useZionContext()
     const { data } = useGetNotificationSettings()
+    const fullyReadMarkers = useFullyReadMarkerStore()
 
     const mutedChannelIds = useMemo(() => {
         return new Set(
@@ -38,15 +38,13 @@ export const useChannelsWithMentionCountsAndUnread = () => {
     }, [mentions])
 
     const channelsWithMentionCountsAndUnread = useMemo(() => {
-        const spaceId = space?.id.networkId ?? ''
-        const unreadChannelIds = new Set(spaceUnreadChannelIds[spaceId] ?? [])
         return contractChannelsWithJoinedStatus
             .map((c) => {
                 return {
                     ...c,
                     mentionCount: mentionCountsPerChannel.get(c.channelNetworkId) ?? 0,
                     unread:
-                        unreadChannelIds.has(c.channelNetworkId) &&
+                        fullyReadMarkers.markers[c.channelNetworkId]?.isUnread &&
                         !mutedChannelIds.has(c.channelNetworkId) &&
                         !spaceIsMuted,
                     muted: mutedChannelIds.has(c.channelNetworkId) || spaceIsMuted,
@@ -56,10 +54,10 @@ export const useChannelsWithMentionCountsAndUnread = () => {
     }, [
         contractChannelsWithJoinedStatus,
         mentionCountsPerChannel,
-        space?.id.networkId,
-        spaceUnreadChannelIds,
+        fullyReadMarkers,
         mutedChannelIds,
         spaceIsMuted,
     ])
+
     return { channelsWithMentionCountsAndUnread }
 }
