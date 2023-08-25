@@ -69,7 +69,7 @@ resource "aws_ecs_task_definition" "river-fargate" {
 
   container_definitions = jsonencode([{
     name      = "river-node"
-    image     = "docker.io/herenotthere/towns-node:latest"
+    image     = "docker.io/herenotthere/river-node:latest"
     essential = true
     portMappings = [{
       containerPort = 5157

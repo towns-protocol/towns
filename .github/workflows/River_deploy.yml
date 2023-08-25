@@ -1,0 +1,48 @@
+name: 'River_deploy'
+
+on:
+    workflow_dispatch:
+        inputs:
+            environment:
+                description: 'Environment'
+                required: true
+                default: 'test'
+                type: choice
+                options:
+                    - test-beta
+            docker_image_tag:
+                description: 'Docker image tag to deploy'
+                required: true
+                default: 'latest'
+
+concurrency:
+    group: ${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: true
+
+jobs:
+    deploy:
+        name: Deploy to AWS ECS
+        runs-on: ubuntu-latest
+
+        environment: ${{ inputs.environment }}
+
+        permissions:
+            contents: write
+            packages: write
+
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v3
+
+            - name: Configure AWS credentials
+              uses: aws-actions/configure-aws-credentials@v1
+              with:
+                  aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+                  aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+                  aws-region: us-east-1
+
+            - name: Create new task definition
+              run: ./scripts/create-river-task-definition.sh --environment ${{ inputs.environment }} --docker-image-tag ${{ inputs.docker_image_tag }}
+
+            - name: Deploy service
+              run: ./scripts/deploy-river-task-definition.sh --environment ${{ inputs.environment }} --node-name ${{ vars.PRIMARY_NODE_NAME }}
