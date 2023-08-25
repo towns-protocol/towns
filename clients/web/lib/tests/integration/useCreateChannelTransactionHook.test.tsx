@@ -41,6 +41,8 @@ describe('useCreateChannelTransactionHook', () => {
         const spaceName = makeUniqueName('alice')
         const channelName = 'test channel'
         await provider.fundWallet()
+        await provider.mintMockNFT()
+
         // create a view for alice
         const SpacesComponent = () => {
             // spaces

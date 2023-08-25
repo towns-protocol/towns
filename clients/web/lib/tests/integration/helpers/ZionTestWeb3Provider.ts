@@ -3,6 +3,8 @@
 import { Wallet, ethers } from 'ethers'
 
 import { fundWallet } from './TestUtils'
+import { getContractsInfoV3 } from '../../../src/client/web3/v3/IStaticContractsInfoV3'
+import { MockERC721AShim } from '../../../src/client/web3/v3/MockERC721AShim'
 
 export class ZionTestWeb3Provider extends ethers.providers.JsonRpcProvider {
     // note to self, the wallet contains a reference to a provider, which is a circular ref back this class
@@ -21,6 +23,18 @@ export class ZionTestWeb3Provider extends ethers.providers.JsonRpcProvider {
 
     public async fundWallet() {
         await fundWallet(this.wallet)
+    }
+
+    /**
+     * Mint a mock NFT for the current wallet
+     * required for the wallet to be able to create a town
+     */
+    public async mintMockNFT() {
+        await this.ready
+        const chainId = this.network.chainId
+        const mockNFTAddress = getContractsInfoV3(chainId).mockErc721aAddress
+        const mockNFT = new MockERC721AShim(mockNFTAddress, chainId, this)
+        return mockNFT.write(this.wallet).mintTo(this.wallet.address)
     }
 
     public async request({

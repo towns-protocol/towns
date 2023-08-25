@@ -49,6 +49,8 @@ describe('useDeleteRoleTransaction', () => {
         // create a view for alice
         // make sure alice has some funds
         await provider.fundWallet()
+        await provider.mintMockNFT()
+
         render(
             <ZionTestApp provider={provider}>
                 <>

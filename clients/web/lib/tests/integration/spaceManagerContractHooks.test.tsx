@@ -31,6 +31,8 @@ describe('spaceManagerContractHooks', () => {
         const provider = new ZionTestWeb3Provider()
         // add funds
         await provider.fundWallet()
+        await provider.mintMockNFT()
+
         // create a unique space name for this test
         const spaceName = makeUniqueName('alice')
         const tokenGatedSpaceName = makeUniqueName('alice')

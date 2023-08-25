@@ -25,6 +25,8 @@ describe('createSpaceChannelHooks', () => {
         const aliceProvider = new ZionTestWeb3Provider()
         // add funds
         await aliceProvider.fundWallet()
+        await aliceProvider.mintMockNFT()
+
         // create a veiw for bob
         const TestComponent = () => {
             const spaceTransaction = useCreateSpaceTransaction()
