@@ -15,12 +15,6 @@ contract GuardianFacet is IGuardian, GuardianBase, Facet {
     _setDefaultCooldown(cooldown);
   }
 
-  // function __GuardianFacet_init(
-  //   uint256 cooldown
-  // ) external reinitializer(_nextVersion()) {
-  //   _setDefaultCooldown(cooldown);
-  // }
-
   function enableGuardian() external onlyEOA {
     _enableGuardian(msg.sender);
   }

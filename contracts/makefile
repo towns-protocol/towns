@@ -64,7 +64,7 @@ verify-goerli :;
 
 upgrade-goerli:;
 	@forge build
-	@SAVE_DEPLOYMENTS=1 forge script scripts/upgrades/${contract}.s.sol:${contract} --ffi --rpc-url goerli --private-key ${PRIVATE_KEY} --broadcast --verify --watch -vvvv
+	@forge script scripts/upgrades/${contract}.s.sol:${contract} --ffi --rpc-url goerli --private-key ${PRIVATE_KEY} --broadcast --verify --watch -vvvv
 
 # ===========================
 # 				  Sepolia
@@ -72,11 +72,11 @@ upgrade-goerli:;
 
 deploy-sepolia :;
 	@forge build
-	@forge script scripts/deployments/${contract}.s.sol:${contract} --ffi --rpc-url sepolia --private-key ${PRIVATE_KEY} --broadcast --verify --watch -vvvv
+	@SAVE_DEPLOYMENTS=1 forge script scripts/deployments/${contract}.s.sol:${contract} --ffi --rpc-url sepolia --private-key ${PRIVATE_KEY} --broadcast --verify --watch -vvvv
 
 upgrade-sepolia:;
 	@forge build
-	@SAVE_DEPLOYMENTS=1 forge script scripts/upgrades/${contract}.s.sol:${contract} --ffi --rpc-url sepolia --private-key ${PRIVATE_KEY} --broadcast --verify --watch -vvvv
+	@forge script scripts/upgrades/${contract}.s.sol:${contract} --ffi --rpc-url sepolia --private-key ${PRIVATE_KEY} --broadcast --verify --watch -vvvv
 
 verify-sepolia :;
 	@forge build
