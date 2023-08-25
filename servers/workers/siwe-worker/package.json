@@ -12,6 +12,7 @@
 		"lint:fix": "yarn lint --fix",
 		"publish:prod": "wrangler deploy --env production",
 		"publish:test": "wrangler deploy --env test",
+		"publish:prod-beta": "wrangler deploy --env production-beta",
 		"publish:test-beta": "wrangler deploy --env test-beta",
 		"test": "yarn test:unit",
 		"test:unit": "jest"

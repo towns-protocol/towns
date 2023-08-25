@@ -39,3 +39,15 @@ vars = { ENVIRONMENT = "production", VERIFY = "true", SMART_CONTRACT_VERSION = "
 [env.test]
 routes = [{ pattern = "siwe-worker-test.towns.com", custom_domain = true }]
 vars = { ENVIRONMENT = "test", VERIFY = "true", SMART_CONTRACT_VERSION = "v3" }
+
+# beta routes
+# yarn publish:prod-beta
+[env.production-beta]
+routes = [{ pattern = "siwe-worker-beta.towns.com", custom_domain = true }]
+vars = { ENVIRONMENT = "production-beta", VERIFY = "true", SMART_CONTRACT_VERSION = "v3" }
+
+# test routes
+# yarn publish:test-beta
+[env.test-beta]
+routes = [{ pattern = "siwe-worker-test-beta.towns.com", custom_domain = true }]
+vars = { ENVIRONMENT = "test-beta", VERIFY = "true", SMART_CONTRACT_VERSION = "v3" }

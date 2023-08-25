@@ -29,6 +29,8 @@ VAPID_SUBJECT = "mailto:test@test.test"
 #
 # for production, the secrets must be deployed behind the production flag
 # `echo <VALUE> | npx wrangler secret put <NAME> --env production`
+# to create D1 db
+# wrangler d1 create <DATABASE_NAME>
 
 [env.test]
 name = "push-notification-worker-test"
@@ -44,5 +46,18 @@ d1_databases = [
 ]
 vars = { ENVIRONMENT = "production", VAPID_SUBJECT = "mailto:support@towns.com" }
 
-# [env.shared]
-# SHARED_VARIABLE = "shared_value"
+[env.test-beta]
+name = "push-notification-worker-test-beta"
+d1_databases = [
+  { binding = "DB", database_name = "PushSubscription_test_beta", database_id = "8fb0bf52-07ca-4247-b0ec-a0ccb79ebdab"}
+]
+routes = [{ pattern = "push-notification-worker-test-beta.towns.com", custom_domain = true }]
+vars = { ENVIRONMENT = "test-beta", VAPID_SUBJECT = "mailto:test@towns.com" }
+
+[env.production-beta]
+name = "push-notification-worker-production-beta"
+d1_databases = [
+  { binding = "DB", database_name = "PushSubscription_beta", database_id = "e2a212f4-eb8b-43a1-b60a-9cecf9dad6bf"}
+]
+routes = [{ pattern = "push-notification-worker-production-beta.towns.com", custom_domain = true }]
+vars = { ENVIRONMENT = "production-beta", VAPID_SUBJECT = "mailto:support@towns.com" }

@@ -10,6 +10,12 @@
     "./clients/web/app",
     "./clients/web/lib",
     "./clients/web/sample-app",
+    "./servers/workers/token-worker",
+    "./servers/workers/amp-worker",
+    "./servers/workers/gateway-worker",
+    "./servers/workers/push-notification-worker",
+    "./servers/workers/siwe-worker",
+    "./servers/workers/unfurl-worker",
     "./servers/workers/worker-common"
   ],
   "[solidity]": {

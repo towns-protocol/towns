@@ -38,3 +38,16 @@ vars = { ENVIRONMENT = "production" }
 [env.test]
 routes = [{ pattern = "unfurl-worker-test.towns.com", custom_domain = true }]
 vars = { ENVIRONMENT = "test" }
+
+# Beta
+# production routes
+# yarn publish:prod-beta
+[env.production-beta]
+routes = [{ pattern = "unfurl-worker-beta.towns.com", custom_domain = true }]
+vars = { ENVIRONMENT = "production-beta" }
+
+# test routes
+# yarn publish:test-beta
+[env.test-beta]
+routes = [{ pattern = "unfurl-worker-test-beta.towns.com", custom_domain = true }]
+vars = { ENVIRONMENT = "test-beta" }
