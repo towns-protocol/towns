@@ -46,8 +46,6 @@ const TIME_BETWEEN_LOOKING_FOR_KEYS_MS = 500
 const TIME_BETWEEN_USER_KEY_REQUESTS_MS = 1000 * 60 * 5
 /// time between processing to-device events
 const DELAY_BETWEEN_PROCESSING_TO_DEVICE_EVENTS_MS = 10
-/// time between processing forget rooms queue
-const DELAY_BETWEEN_PROCESSING_FORGET_LEFT_ROOMS_MS = 1000
 
 const DECRYPTION_OPTIONS = {
     isRetry: true,
@@ -139,7 +137,6 @@ export class MatrixDecryptionExtension extends TypedEventEmitter<
     private hasUpToDateDeviceForUser = new Set<string>()
     private userId: string
     private accountAddress: string
-    private forgetLeftRoomsQueue: ProcessingQueue<string>
 
     private onTimelineEvent = (
         event: MatrixEvent,
@@ -174,13 +171,16 @@ export class MatrixDecryptionExtension extends TypedEventEmitter<
 
             // we can leave a space, but that doesn't mean we've left all the channels in the space.
             // so we can still get a bunch of (decrypted) events for channels we're not in.
-            // We can just ignore events for rooms we're not in, and queue them to be forgotten, so we won't keep receiving them
+            // matrix is probably doing work on these events already, before we handle them here, and we should solve that, probably by
+            // 1. leave all the channels in the space as well as the space
+            // 2. for spaces left before 1 is implemented, something to auto leave a user from all channels in said left space
+            // https://linear.app/hnt-labs/issue/HNT-2207/leave-channels-when-leaving-a-space
+            // For now, we'll just ignore events for rooms we're not in so we can avoid further work here
             const room = this.matrixClient.getRoom(roomId)
             if (!room || room.getMyMembership() !== Membership.Join) {
                 console.log('MDE::onDecryption skipping - not a member of room', {
                     room,
                 })
-                this.forgetLeftRoomsQueue.enqueue(roomId)
                 return
             }
 
@@ -194,7 +194,6 @@ export class MatrixDecryptionExtension extends TypedEventEmitter<
                         room,
                         parentId,
                     })
-                    this.forgetLeftRoomsQueue.enqueue(roomId)
                     return
                 }
             }
@@ -268,28 +267,6 @@ export class MatrixDecryptionExtension extends TypedEventEmitter<
                 return this.processToDeviceEvent(event)
             },
             delayMs: DELAY_BETWEEN_PROCESSING_TO_DEVICE_EVENTS_MS,
-        })
-
-        // queue for forgetting rooms user is no longer a part of
-        // matrix tries to decrypt all the events in the rooms we haven't forgotten, and clogs up the console with logs and warnings (and maybe impacts performance?)
-        // so even though we're filtering out decryption retries in onDecryptedEvent(), it's still confusing to see the warnings
-        // so if we encounter a decrypted event for a room we're no longer in, we'll forget the room
-        this.forgetLeftRoomsQueue = new ProcessingQueue<string>({
-            process: async (roomId) => {
-                try {
-                    await this.matrixClient.leave(roomId)
-                    // this typically throws if you left a space before
-                } catch (error) {
-                    console.log('MDE::forgetLeftRoomsQueue - already left room', error)
-                }
-                try {
-                    await this.matrixClient.forget(roomId)
-                    // this probabaly won't throw
-                } catch (error) {
-                    console.log('MDE::forgetLeftRoomsQueue - already forgot room', error)
-                }
-            },
-            delayMs: DELAY_BETWEEN_PROCESSING_FORGET_LEFT_ROOMS_MS,
         })
 
         this.throttledStartLookingForKeys = throttle(
