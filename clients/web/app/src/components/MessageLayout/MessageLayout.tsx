@@ -183,13 +183,7 @@ export const MessageLayout = (props: Props) => {
                                 }
                             >
                                 <Link to={`profile/${senderId}`}>
-                                    <Text
-                                        truncate
-                                        fontWeight="strong"
-                                        color="default"
-                                        as="span"
-                                        textTransform="capitalize"
-                                    >
+                                    <Text truncate fontWeight="strong" color="default" as="span">
                                         {name}&nbsp;
                                     </Text>
                                 </Link>
