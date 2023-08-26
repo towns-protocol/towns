@@ -5,6 +5,7 @@ type Config struct {
 	Port        int
 	Address     string
 	DbUrl       string
+	StorageType string
 	Metrics     MetricsConfig
 	Chain       ChainConfig
 	UseContract bool

@@ -1,5 +1,6 @@
 port: <RPC_PORT>
 dburl: postgres://postgres:postgres@localhost:<DB_PORT>/casablanca?sslmode=disable&pool_max_conns=1000
+storageType: postgres
 address:
 useContract: <USE_CONTRACT>
 # HNT-2048 remove this line once RDK registration is implemented in the client

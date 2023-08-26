@@ -239,6 +239,7 @@ func testServerAndClient(ctx context.Context, dbUrl string) (protocolconnect.Str
 		Address:           "localhost",
 		Port:              1234,
 		DbUrl:             dbUrl,
+		StorageType:       "postgres",
 		SkipDelegateCheck: false,
 	}
 

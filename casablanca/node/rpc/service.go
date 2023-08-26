@@ -28,12 +28,19 @@ type Service struct {
 	skipDelegateCheck bool
 }
 
-func MakeServiceHandler(ctx context.Context, log *slog.Logger, dbUrl string, chainConfig *config.ChainConfig, wallet *crypto.Wallet, skipDelegateCheck bool, opts ...connect_go.HandlerOption) (string, http.Handler, error) {
-	store := storage.NewMemStorage()
-	// if err != nil {
-	// 	log.Error("failed to create storage", "error", err)
-	// 	return "", nil, err
-	// }
+func MakeServiceHandler(ctx context.Context, log *slog.Logger, dbUrl string, storageType string, chainConfig *config.ChainConfig, wallet *crypto.Wallet, skipDelegateCheck bool, opts ...connect_go.HandlerOption) (string, http.Handler, error) {
+	var store storage.StreamStorage
+	if storageType == "in-memory" {
+		store = storage.NewMemStorage()
+	} else {
+		var err error
+		store, err = storage.NewPostgresEventStore(ctx, dbUrl, true)
+		if err != nil {
+			log.Error("failed to create storage", "error", err)
+			return "", nil, err
+		}
+	}
+
 	var err error
 
 	if wallet == nil {
