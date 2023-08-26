@@ -15,6 +15,7 @@ import {
     useFullyReadMarker,
     useZionClient,
 } from 'use-zion-client'
+import { uniqBy } from 'lodash'
 import { Box, Divider, Paragraph } from '@ui'
 import { useExperimentsStore } from 'store/experimentsStore'
 import { notUndefined } from 'ui/utils/utils'
@@ -65,7 +66,7 @@ export const MessageTimeline = (props: Props) => {
     }, [])
 
     const _events = useMemo(() => {
-        return timelineContext?.events ?? emptyTimeline
+        return uniqBy(timelineContext?.events ?? emptyTimeline, (t) => t.eventId)
     }, [timelineContext?.events])
 
     const isStartupRef = useRef(true)
