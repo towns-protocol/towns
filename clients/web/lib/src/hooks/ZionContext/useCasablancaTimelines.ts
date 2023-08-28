@@ -13,11 +13,8 @@ import {
 import { useEffect } from 'react'
 import { Membership, MessageType } from '../../types/zion-types'
 import {
-    TimelineStoreInterface,
     getIsMentioned,
     getReactionParentId,
-    getRedactsId,
-    getReplacedId,
     getThreadParentId,
     useTimelineStore,
 } from '../../store/use-timeline-store'
@@ -38,7 +35,6 @@ import {
 } from '../../types/timeline-types'
 import { staticAssertNever } from '../../utils/zion-utils'
 import { RiverEvent } from '@river/sdk'
-import reverse from 'lodash/reverse'
 
 type SuccessResult = {
     content: TimelineEvent_OneOf
@@ -64,7 +60,7 @@ export function useCasablancaTimelines(casablancaClient: CasablancaClient | unde
 
         const onStreamEvents = (streamId: string, timelineEvents: TimelineEvent[]) => {
             timelineEvents.forEach((event) => {
-                processEvent(event, userId, streamId, setState)
+                setState.processEvent(event, userId, streamId)
             })
         }
 
@@ -101,7 +97,7 @@ export function useCasablancaTimelines(casablancaClient: CasablancaClient | unde
             if (kind === 'channelContent' || kind === 'spaceContent') {
                 streamIds.add(streamId)
                 const timelineEvents = messages.map((message) => toEvent(message, userId))
-                prependEvents(timelineEvents, userId, streamId, setState)
+                setState.prependEvents(timelineEvents, userId, streamId)
             }
         }
 
@@ -121,7 +117,7 @@ export function useCasablancaTimelines(casablancaClient: CasablancaClient | unde
 
                 // get replace Id and remove/replace state or if redaction delete, or
                 // just replace if no replaceId.
-                processEvent(timelineEvent, userId, streamId, setState, timelineEvent.eventId)
+                setState.processEvent(timelineEvent, userId, streamId, timelineEvent.eventId)
             }
         }
 
@@ -145,7 +141,7 @@ export function useCasablancaTimelines(casablancaClient: CasablancaClient | unde
         //Step 2: add them into the timeline
         timelineEvents.forEach((events, streamId) => {
             events.forEach((event) => {
-                processEvent(event, userId, streamId, setState)
+                setState.processEvent(event, userId, streamId)
             })
         })
 
@@ -685,47 +681,4 @@ function toMembership(op: MembershipOp): Membership {
             return Membership.Invite
     }
     return Membership.None
-}
-
-function processEvent(
-    event: TimelineEvent,
-    userId: string,
-    streamId: string,
-    setState: TimelineStoreInterface,
-    decryptedFromEventId?: string,
-) {
-    const replacedEventId = getReplacedId(event.content)
-    const redactsEventId = getRedactsId(event.content)
-    if (redactsEventId) {
-        if (decryptedFromEventId) {
-            // remove the formerly encrypted event
-            setState.removeEvent(streamId, decryptedFromEventId)
-        }
-        setState.removeEvent(streamId, redactsEventId)
-        setState.appendEvent(userId, streamId, event)
-    } else if (replacedEventId) {
-        if (decryptedFromEventId) {
-            setState.removeEvent(streamId, decryptedFromEventId)
-        }
-        setState.replaceEvent(userId, streamId, replacedEventId, event)
-    } else {
-        if (decryptedFromEventId) {
-            // replace the formerly encrypted event
-            setState.replaceEvent(userId, streamId, decryptedFromEventId, event)
-        } else {
-            setState.appendEvent(userId, streamId, event)
-        }
-    }
-}
-
-function prependEvents(
-    events: TimelineEvent[],
-    userId: string,
-    streamId: string,
-    setState: TimelineStoreInterface,
-) {
-    // todo, we need to handle replace and redact events here https://linear.app/hnt-labs/issue/HNT-2219/handle-replacements-and-redactions-in-a-paginated-world
-    for (const event of reverse(events)) {
-        setState.prependEvent(userId, streamId, event)
-    }
 }

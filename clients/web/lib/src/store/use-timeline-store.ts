@@ -7,6 +7,7 @@ import {
     TimelineEvent_OneOf,
     ZTEvent,
 } from '../types/timeline-types'
+import reverse from 'lodash/reverse'
 
 /// TimelinesMap: { roomId: TimelineEvent[] }
 export type TimelinesMap = Record<string, TimelineEvent[]>
@@ -39,6 +40,14 @@ export interface TimelineStoreInterface {
         replacedMsgId: string,
         timelineEvent: TimelineEvent,
     ) => void
+    processEvent: (
+        event: TimelineEvent,
+        userId: string,
+        streamId: string,
+        decryptedFromEventId?: string,
+    ) => void
+    processEvents: (events: TimelineEvent[], userId: string, streamId: string) => void
+    prependEvents: (events: TimelineEvent[], userId: string, streamId: string) => void
 }
 
 export type TimelineStore = TimelineStoreStates & {
@@ -238,6 +247,49 @@ function makeTimelineStoreInterface(
         })
     }
 
+    function processEvent(
+        event: TimelineEvent,
+        userId: string,
+        streamId: string,
+        decryptedFromEventId?: string,
+    ) {
+        const replacedEventId = getReplacedId(event.content)
+        const redactsEventId = getRedactsId(event.content)
+        if (redactsEventId) {
+            if (decryptedFromEventId) {
+                // remove the formerly encrypted event
+                removeEvent(streamId, decryptedFromEventId)
+            }
+            removeEvent(streamId, redactsEventId)
+            appendEvent(userId, streamId, event)
+        } else if (replacedEventId) {
+            if (decryptedFromEventId) {
+                removeEvent(streamId, decryptedFromEventId)
+            }
+            replaceEvent(userId, streamId, replacedEventId, event)
+        } else {
+            if (decryptedFromEventId) {
+                // replace the formerly encrypted event
+                replaceEvent(userId, streamId, decryptedFromEventId, event)
+            } else {
+                appendEvent(userId, streamId, event)
+            }
+        }
+    }
+
+    function processEvents(events: TimelineEvent[], userId: string, streamId: string) {
+        for (const event of events) {
+            processEvent(event, userId, streamId, undefined)
+        }
+    }
+
+    function prependEvents(events: TimelineEvent[], userId: string, streamId: string) {
+        // todo, we need to handle replace and redact events here https://linear.app/hnt-labs/issue/HNT-2219/handle-replacements-and-redactions-in-a-paginated-world
+        for (const event of reverse(events)) {
+            prependEvent(userId, streamId, event)
+        }
+    }
+
     return {
         initialize,
         initializeRoom,
@@ -246,6 +298,9 @@ function makeTimelineStoreInterface(
         appendEvent,
         prependEvent,
         replaceEvent,
+        processEvent,
+        processEvents,
+        prependEvents,
     }
 }
 
