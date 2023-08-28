@@ -12,6 +12,8 @@ const UPDATE_INTERVAL_MS = 5 * 60 * 1000
 
 const log = debug('app:ReloadPrompt')
 
+log.enabled = true
+
 export const ReloadPrompt = () => {
     const {
         offlineReady: [offlineReady, setOfflineReady],
@@ -38,6 +40,7 @@ export const ReloadPrompt = () => {
                         return
                     }
                     const asyncUpdate = async () => {
+                        log('asyncUpdate...')
                         try {
                             const resp = await fetch(swUrl, {
                                 cache: 'no-store',
@@ -49,6 +52,8 @@ export const ReloadPrompt = () => {
                             if (resp?.status === 200) {
                                 log('status 200, updating...')
                                 await r.update()
+                            } else {
+                                log('skip updating', resp?.status)
                             }
                         } catch (error) {
                             console.error('sw: reload prompt, error checking for update', error)
@@ -102,6 +107,7 @@ export const ReloadPrompt = () => {
             // we're not clearing this timeout because this should only happen once
             // and updateServiceWorker() doesn't throw an error if it doesn't work, so we don't want to clear the timeout immediately
             setTimeout(async () => {
+                log('update failed, clearing workers and reloading...')
                 await clearAllWorkers()
                 window.location.reload()
             }, 5000)
@@ -110,10 +116,14 @@ export const ReloadPrompt = () => {
             // fail upon hard-refresh because of invalid chars
             const isCleanUrl = window.location.href.match(/\/$/)
             if (!isCleanUrl) {
+                log('cleaning url...', window.location.href)
                 window.location.replace(`${window.location.href}${isCleanUrl ? '' : '/'}`)
             }
+            log('updateServiceWorker...')
             // triggers update and immediate reload
             await updateServiceWorker(true)
+
+            log('updateServiceWorker complete')
         }
         asyncUpdate()
     }, [isUpdating, updateServiceWorker])
