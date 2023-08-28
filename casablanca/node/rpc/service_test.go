@@ -30,15 +30,17 @@ import (
 )
 
 var testDatabaseUrl string
+var testSchemaName string
 
 func TestMain(m *testing.M) {
 
-	db, closer, err := testutils.StartDB(context.Background())
+	db, schemaName, closer, err := testutils.StartDB(context.Background())
 	if err != nil {
 		panic(err)
 	}
 	defer closer()
 	testDatabaseUrl = db
+	testSchemaName = schemaName
 
 	//Run tests
 	code := m.Run()
@@ -229,7 +231,7 @@ func createChannel(ctx context.Context, wallet *crypto.Wallet, client protocolco
 	return reschannel.Msg.Stream.NextSyncCookie, joinChannel.Hash, nil
 }
 
-func testServerAndClient(ctx context.Context, dbUrl string) (protocolconnect.StreamServiceClient, func()) {
+func testServerAndClient(ctx context.Context, dbUrl string, dbSchemaName string) (protocolconnect.StreamServiceClient, func()) {
 	cfg := &config.Config{
 		UseContract: false,
 		Chain: config.ChainConfig{
@@ -263,7 +265,7 @@ func testServerAndClient(ctx context.Context, dbUrl string) (protocolconnect.Str
 
 func TestMethods(t *testing.T) {
 	ctx := context.Background()
-	client, closer := testServerAndClient(ctx, testDatabaseUrl)
+	client, closer := testServerAndClient(ctx, testDatabaseUrl, testSchemaName)
 	wallet1, _ := crypto.NewWallet(ctx)
 	wallet2, _ := crypto.NewWallet(ctx)
 	defer closer()
@@ -441,7 +443,7 @@ func TestMethods(t *testing.T) {
 
 func TestRiverDeviceId(t *testing.T) {
 	ctx := context.Background()
-	client, closer := testServerAndClient(ctx, testDatabaseUrl)
+	client, closer := testServerAndClient(ctx, testDatabaseUrl, testSchemaName)
 	wallet, _ := crypto.NewWallet(ctx)
 	deviceWallet, _ := crypto.NewWallet(ctx)
 	defer closer()
@@ -534,7 +536,7 @@ func TestRiverDeviceId(t *testing.T) {
 // TODO: revamp with block support
 func DisableTestManyUsers(t *testing.T) {
 	ctx := context.Background()
-	client, closer := testServerAndClient(ctx, testDatabaseUrl)
+	client, closer := testServerAndClient(ctx, testDatabaseUrl, testSchemaName)
 	defer closer()
 
 	totalUsers := 14

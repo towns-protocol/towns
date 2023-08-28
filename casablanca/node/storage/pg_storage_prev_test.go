@@ -15,14 +15,16 @@ import (
 )
 
 var testDatabaseUrl string
+var testSchemaName string
 
 func TestMain(m *testing.M) {
-	dbUrl, closer, err := testutils.StartDB(context.Background())
+	dbUrl, dbSchemaName, closer, err := testutils.StartDB(context.Background())
 	if err != nil {
 		panic("Could not connect to docker" + err.Error())
 	}
 	defer closer()
 	testDatabaseUrl = dbUrl
+	testSchemaName = dbSchemaName
 
 	//Run tests
 	code := m.Run()
@@ -35,7 +37,7 @@ func TestMain(m *testing.M) {
 func TestPostgresEventStore(t *testing.T) {
 	ctx := context.Background()
 	// Create a new PGEventStore
-	pgEventStore, err := storage.NewPostgresEventStore(ctx, testDatabaseUrl, true)
+	pgEventStore, err := storage.NewPostgresEventStore(ctx, testDatabaseUrl, testSchemaName, true)
 	if err != nil {
 		t.Fatal(err)
 	}

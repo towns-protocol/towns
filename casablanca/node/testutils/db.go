@@ -13,21 +13,25 @@ import (
 	"github.com/ory/dockertest/v3/docker"
 )
 
-func StartDB(ctx context.Context) (string, func(), error) {
+func StartDB(ctx context.Context) (string, string, func(), error) {
+	dbSchemaName := os.Getenv("TEST_DATABASE_SCHEMA_NAME")
+	if dbSchemaName == "" {
+		dbSchemaName = "public"
+	}
 	dbUrl := os.Getenv("TEST_DATABASE_URL")
 	if dbUrl != "" {
-		return dbUrl, func() {}, nil
+		return dbUrl, dbSchemaName, func() {}, nil
 	}
 
 	// uses a sensible default on windows (tcp/http) and linux/osx (socket)
 	pool, err := dockertest.NewPool("")
 	if err != nil {
-		return dbUrl, func() {}, err
+		return dbUrl, dbSchemaName, func() {}, err
 	}
 
 	err = pool.Client.Ping()
 	if err != nil {
-		return dbUrl, func() {}, err
+		return dbUrl, dbSchemaName, func() {}, err
 	}
 
 	// pulls an image, creates a container based on it and runs it
@@ -48,7 +52,7 @@ func StartDB(ctx context.Context) (string, func(), error) {
 	})
 	if err != nil {
 		log.Fatalf("Could not start resource: %s", err)
-		return dbUrl, func() {}, err
+		return dbUrl, dbSchemaName, func() {}, err
 	}
 
 	hostAndPort := resource.GetHostPort("5432/tcp")
@@ -56,7 +60,7 @@ func StartDB(ctx context.Context) (string, func(), error) {
 
 	err = resource.Expire(600) // Tell docker to hard kill the container in 120 seconds
 	if err != nil {
-		return dbUrl, func() {}, err
+		return dbUrl, dbSchemaName, func() {}, err
 	}
 
 	// exponential backoff-retry, because the application in the container might not be ready to accept connections yet
@@ -68,10 +72,10 @@ func StartDB(ctx context.Context) (string, func(), error) {
 		}
 		return db.Ping()
 	}); err != nil {
-		return dbUrl, func() {}, err
+		return dbUrl, dbSchemaName, func() {}, err
 	}
 
-	return fmt.Sprintf("%s&pool_max_conns=1000", testDatabaseUrl), func() {
+	return fmt.Sprintf("%s&pool_max_conns=1000", testDatabaseUrl), dbSchemaName, func() {
 		// You can't defer this because os.Exit doesn't care for defer
 		_ = pool.Purge(resource)
 	}, nil

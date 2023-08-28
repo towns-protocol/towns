@@ -3,6 +3,7 @@ package rpc
 import (
 	"context"
 	"net/http"
+	"strings"
 
 	connect_go "github.com/bufbuild/connect-go"
 	"golang.org/x/exp/slog"
@@ -29,23 +30,21 @@ type Service struct {
 }
 
 func MakeServiceHandler(ctx context.Context, log *slog.Logger, dbUrl string, storageType string, chainConfig *config.ChainConfig, wallet *crypto.Wallet, skipDelegateCheck bool, opts ...connect_go.HandlerOption) (string, http.Handler, error) {
-	var store storage.StreamStorage
-	if storageType == "in-memory" {
-		store = storage.NewMemStorage()
-	} else {
-		var err error
-		store, err = storage.NewPostgresEventStore(ctx, dbUrl, true)
+	var err error
+	if wallet == nil {
+		wallet, err = crypto.LoadWallet(ctx, crypto.WALLET_PATH_PRIVATE_KEY)
 		if err != nil {
-			log.Error("failed to create storage", "error", err)
 			return "", nil, err
 		}
 	}
 
-	var err error
-
-	if wallet == nil {
-		wallet, err = crypto.LoadWallet(ctx, crypto.WALLET_PATH_PRIVATE_KEY)
+	var store storage.StreamStorage
+	if storageType == "in-memory" {
+		store = storage.NewMemStorage()
+	} else {
+		store, err = storage.NewPostgresEventStore(ctx, dbUrl, "s"+strings.ToLower(wallet.Address.String()), true)
 		if err != nil {
+			log.Error("failed to create storage", "error", err)
 			return "", nil, err
 		}
 	}

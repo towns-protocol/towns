@@ -16,8 +16,9 @@ import (
 )
 
 type PostgresEventStore struct {
-	pool     *pgxpool.Pool
-	debugCtl chan struct{}
+	pool       *pgxpool.Pool
+	debugCtl   chan struct{}
+	schemaName string
 }
 
 const (
@@ -540,10 +541,14 @@ func startTx(ctx context.Context, pool *pgxpool.Pool) (pgx.Tx, error) {
 	return tx, nil
 }
 
-func NewPostgresEventStore(ctx context.Context, database_url string, clean bool) (*PostgresEventStore, error) {
+func NewPostgresEventStore(ctx context.Context, database_url string, database_schema_name string, clean bool) (*PostgresEventStore, error) {
 	log := dlog.CtxLog(ctx)
 
 	pool_conf, err := pgxpool.ParseConfig(database_url)
+
+	//In general, it should be possible to add database schema name into database url as a parameter search_path (&search_path=database_schema_name)
+	//For some reason it doesn't work so have to put it into config explicitly
+	pool_conf.ConnConfig.RuntimeParams["search_path"] = database_schema_name
 	if err != nil {
 		return nil, err
 	}
@@ -585,7 +590,7 @@ func NewPostgresEventStore(ctx context.Context, database_url string, clean bool)
 		}
 	}()
 
-	store := &PostgresEventStore{pool: pool, debugCtl: make(chan struct{})}
+	store := &PostgresEventStore{pool: pool, debugCtl: make(chan struct{}), schemaName: database_schema_name}
 
 	return store, nil
 }
@@ -617,12 +622,12 @@ func cleanStorage(ctx context.Context, pool *pgxpool.Pool) error {
 		}
 	}()
 
-	_, err = tx.Exec(ctx, "DROP SCHEMA public CASCADE")
+	_, err = tx.Exec(ctx, fmt.Sprintf("DROP SCHEMA IF EXISTS %s CASCADE", pool.Config().ConnConfig.Config.RuntimeParams["search_path"]))
 	if err != nil {
 		return err
 	}
 
-	_, err = tx.Exec(ctx, "CREATE SCHEMA public")
+	_, err = tx.Exec(ctx, fmt.Sprintf("CREATE SCHEMA %s", pool.Config().ConnConfig.Config.RuntimeParams["search_path"]))
 	if err != nil {
 		return err
 	}
@@ -658,6 +663,25 @@ func initStorage(ctx context.Context, pool *pgxpool.Pool) error {
 			}
 		}
 	}()
+
+	//check if schema exists
+	var schemaExists bool
+	err = tx.QueryRow(context.Background(), "SELECT EXISTS(SELECT 1 FROM information_schema.schemata WHERE schema_name = $1)", pool.Config().ConnConfig.Config.RuntimeParams["search_path"]).Scan(&schemaExists)
+	if err != nil {
+		log.Error("Error checking schema existence:", err)
+	}
+
+	if !schemaExists {
+		createSchemaQuery := fmt.Sprintf("CREATE SCHEMA \"%s\"", pool.Config().ConnConfig.Config.RuntimeParams["search_path"])
+		_, err := tx.Exec(context.Background(), createSchemaQuery)
+		if err != nil {
+			log.Error("Error creating schema:", pool.Config().ConnConfig.Config.RuntimeParams["search_path"], err)
+			return err
+		}
+		fmt.Println("Schema created successfully")
+	} else {
+		fmt.Println("Schema already exists")
+	}
 
 	_, err = tx.Exec(context.Background(), schema)
 	if err != nil {
