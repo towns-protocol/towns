@@ -3,7 +3,7 @@ name = "amp-worker"
 compatibility_date = "2023-01-18"
 account_id="9840f8a36a817b103e00e29a0e2bad6f"
 minify = true
-node_compat = false
+node_compat = true
 
 [dev]
 ip = "localhost"
