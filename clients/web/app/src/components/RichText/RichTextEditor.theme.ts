@@ -105,7 +105,11 @@ export const theme: EditorThemeClasses = {
             fontWeight: 'strong',
         }),
         code: atoms({
-            color: 'accent',
+            color: 'default',
+            background: 'level2',
+            paddingX: 'xxs',
+            rounded: 'xs',
+            border: 'level3',
         }),
         italic: atoms({
             fontStyle: 'italic',
