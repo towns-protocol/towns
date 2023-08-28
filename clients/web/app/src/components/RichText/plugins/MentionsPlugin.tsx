@@ -1,8 +1,8 @@
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext'
 import {
     LexicalTypeaheadMenuPlugin,
-    QueryMatch,
-    TypeaheadOption,
+    MenuOption,
+    MenuTextMatch,
     useBasicTypeaheadTriggerMatch,
 } from '@lexical/react/LexicalTypeaheadMenuPlugin'
 
@@ -61,12 +61,11 @@ export const MentionsPlugin = (props: Props) => {
     )
 
     const onSelectOption = useCallback(
-        (
-            selectedOption: MentionTypeaheadOption,
-            nodeToReplace: TextNode | null,
-            closeMenu: () => void,
-        ) => {
+        (selectedOption: MenuOption, nodeToReplace: TextNode | null, closeMenu: () => void) => {
             editor.update(() => {
+                if (!(selectedOption instanceof MentionTypeaheadOption)) {
+                    return
+                }
                 const mentionNode = $createMentionNode(
                     `@${selectedOption.name}`,
                     selectedOption.userId,
@@ -95,7 +94,7 @@ export const MentionsPlugin = (props: Props) => {
     )
 
     return (
-        <LexicalTypeaheadMenuPlugin<MentionTypeaheadOption>
+        <LexicalTypeaheadMenuPlugin<MenuOption>
             triggerFn={checkForMentionMatch}
             options={results}
             menuRenderFn={(
@@ -200,7 +199,7 @@ export const AtSignMentionsRegexAliasRegex = new RegExp(
 const checkForCapitalizedNameMentions = (
     text: string,
     minMatchLength: number,
-): QueryMatch | null => {
+): MenuTextMatch | null => {
     const match = CapitalizedNameMentionsRegex.exec(text)
     if (match !== null) {
         // The strategy ignores leading whitespace but we need to know it's
@@ -219,7 +218,7 @@ const checkForCapitalizedNameMentions = (
     return null
 }
 
-const checkForAtSignMentions = (text: string, minMatchLength: number): QueryMatch | null => {
+const checkForAtSignMentions = (text: string, minMatchLength: number): MenuTextMatch | null => {
     let match = AtSignMentionsRegex.exec(text)
     if (match === null) {
         match = AtSignMentionsRegexAliasRegex.exec(text)
@@ -241,12 +240,12 @@ const checkForAtSignMentions = (text: string, minMatchLength: number): QueryMatc
     return null
 }
 
-const getPossibleQueryMatch = (text: string): QueryMatch | null => {
+const getPossibleQueryMatch = (text: string): MenuTextMatch | null => {
     const match = checkForAtSignMentions(text, 0)
     return match === null ? checkForCapitalizedNameMentions(text, 3) : match
 }
 
-class MentionTypeaheadOption extends TypeaheadOption {
+class MentionTypeaheadOption extends MenuOption {
     name: string
     userId: string
     isSelf: boolean

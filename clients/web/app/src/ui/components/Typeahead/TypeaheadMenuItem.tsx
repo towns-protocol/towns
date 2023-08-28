@@ -1,10 +1,10 @@
-import { TypeaheadOption } from '@lexical/react/LexicalTypeaheadMenuPlugin'
+import { MenuOption } from '@lexical/react/LexicalTypeaheadMenuPlugin'
 import React from 'react'
 import { Stack } from 'ui/components/Stack/Stack'
 import { Box } from 'ui/components/Box/Box'
 import { Text } from 'ui/components/Text/Text'
 
-export const TypeaheadMenuItem = <T extends TypeaheadOption>(props: {
+export const TypeaheadMenuItem = <T extends MenuOption>(props: {
     index: number
     isSelected: boolean
     isLast?: boolean

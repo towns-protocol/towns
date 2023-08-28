@@ -1,8 +1,8 @@
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext'
 import {
     LexicalTypeaheadMenuPlugin,
-    QueryMatch,
-    TypeaheadOption,
+    MenuOption,
+    MenuTextMatch,
     useBasicTypeaheadTriggerMatch,
 } from '@lexical/react/LexicalTypeaheadMenuPlugin'
 
@@ -252,12 +252,12 @@ const checkForColonEmoijis = (text: string, minMatchLength: number) => {
     return null
 }
 
-function getPossibleQueryMatch(text: string): QueryMatch | null {
+function getPossibleQueryMatch(text: string): MenuTextMatch | null {
     const match = checkForColonEmoijis(text, 1)
     return match
 }
 
-class EmojiTypeaheadOption extends TypeaheadOption {
+class EmojiTypeaheadOption extends MenuOption {
     name: string
     picture: string
 

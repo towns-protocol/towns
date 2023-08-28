@@ -1,8 +1,8 @@
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext'
 import {
     LexicalTypeaheadMenuPlugin,
-    QueryMatch,
-    TypeaheadOption,
+    MenuOption,
+    MenuTextMatch,
 } from '@lexical/react/LexicalTypeaheadMenuPlugin'
 
 import fuzzysort from 'fuzzysort'
@@ -161,7 +161,7 @@ export const ChannelMentionRegex = new RegExp(
         ')$',
 )
 
-const checkForChannelMentions = (text: string, minMatchLength: number): QueryMatch | null => {
+const checkForChannelMentions = (text: string, minMatchLength: number): MenuTextMatch | null => {
     const match = ChannelMentionRegex.exec(text)
     if (match !== null) {
         // The strategy ignores leading whitespace but we need to know it's
@@ -180,12 +180,12 @@ const checkForChannelMentions = (text: string, minMatchLength: number): QueryMat
     return null
 }
 
-const getPossibleQueryMatch = (text: string): QueryMatch | null => {
+const getPossibleQueryMatch = (text: string): MenuTextMatch | null => {
     const match = checkForChannelMentions(text, 0)
     return match || null
 }
 
-class ChannelMentionTypeaheadOption extends TypeaheadOption {
+class ChannelMentionTypeaheadOption extends MenuOption {
     channel: Channel
     label: string
 
