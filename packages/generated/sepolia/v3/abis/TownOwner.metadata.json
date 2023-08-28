@@ -7,6 +7,16 @@
     "abi": [
       {
         "inputs": [],
+        "name": "AlreadyDisabled",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "AlreadyEnabled",
+        "type": "error"
+      },
+      {
+        "inputs": [],
         "name": "ApprovalCallerNotOwnerNorApproved",
         "type": "error"
       },
@@ -18,6 +28,11 @@
       {
         "inputs": [],
         "name": "BalanceQueryForZeroAddress",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "GuardianEnabled",
         "type": "error"
       },
       {
@@ -53,6 +68,11 @@
       {
         "inputs": [],
         "name": "MintZeroQuantity",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "NotExternalAccount",
         "type": "error"
       },
       {
@@ -190,6 +210,37 @@
           }
         ],
         "name": "ConsecutiveTransfer",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": true,
+            "internalType": "address",
+            "name": "caller",
+            "type": "address"
+          },
+          {
+            "indexed": true,
+            "internalType": "bool",
+            "name": "enabled",
+            "type": "bool"
+          },
+          {
+            "indexed": false,
+            "internalType": "uint256",
+            "name": "cooldown",
+            "type": "uint256"
+          },
+          {
+            "indexed": false,
+            "internalType": "uint256",
+            "name": "timestamp",
+            "type": "uint256"
+          }
+        ],
+        "name": "GuardianUpdated",
         "type": "event"
       },
       {
@@ -938,6 +989,30 @@
         "dweb:/ipfs/QmSkGb7ByX4DTvNPh6egoSAs71b7w1NHoYfPUPT9LdtJY9"
       ]
     },
+    "contracts/src/towns/facets/guardian/GuardianBase.sol": {
+      "keccak256": "0x05818bc7af6dddd9f2604e8f21ec209a8461eaa34bfc4a86387d50d3b71f329a",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://6a6609601f40cb454db7a90b3aee3a4d0cc42c387519dcd0d912efbdf2ce814d",
+        "dweb:/ipfs/QmXpsua23NXQUKp9ky2szUiFRVH1nQjwBmEZcBcbJHxkiJ"
+      ]
+    },
+    "contracts/src/towns/facets/guardian/GuardianStorage.sol": {
+      "keccak256": "0x100d5a6cffd5b39943ab3fe084e452cb926ba99f5b12edf68571a6f91a0192ce",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://498557050ac7fef1fe8ec654b98f50dff34cbf0474735bd12ea6dd68040edc4e",
+        "dweb:/ipfs/QmSSnL5Ku16admU3iziT5uys53EoJndAMn9wqt7mGw1doJ"
+      ]
+    },
+    "contracts/src/towns/facets/guardian/IGuardian.sol": {
+      "keccak256": "0xf781f78bf2734e510489aafac2abbaaca1236040c2a1fd070aa8ced5d2939ccd",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://407d76a8056279afc6c12131a5c1e651a9f84d0b5b1635132b0932723a3102bc",
+        "dweb:/ipfs/QmevKHxfcRtHeWypqwtDMrC7i4Jb2AZ8Yz6v8Wo65sGn66"
+      ]
+    },
     "contracts/src/towns/facets/owner/ITownOwner.sol": {
       "keccak256": "0x8ef18664cae8782984a1c7fa3f5cbe694f663f4bd5078de65b58d61ad3d3c569",
       "license": "Apache-2.0",
@@ -947,11 +1022,11 @@
       ]
     },
     "contracts/src/towns/facets/owner/TownOwner.sol": {
-      "keccak256": "0x1dd2eb22472b4139c89e0df8d7eab781e1ee507cbb4c977cfc7b19ba3cad8b17",
+      "keccak256": "0xf57513c3838501c1cffe31298c2c9cc1336aaa4f457a6765aed64a776b51118c",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://c148056559681dac30bd6504f98f1f547f1f3aff6254b99420d4801940d42ffb",
-        "dweb:/ipfs/QmZgx94aeWRW2CMgMq1EX4XTFifMDxofMMCrpjHoQGHmzE"
+        "bzz-raw://247006df84e25e85fab1bd4fa44ed2079c01233c1320825209e847f048ca57a7",
+        "dweb:/ipfs/QmZZbUP2Fbb4QHTSTiCzG9VGsC1V6BL3ebXtTnDM8JPtU3"
       ]
     },
     "contracts/src/towns/facets/owner/TownOwnerBase.sol": {

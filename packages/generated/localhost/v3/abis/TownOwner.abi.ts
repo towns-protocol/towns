@@ -1,6 +1,16 @@
 export default [
   {
     "inputs": [],
+    "name": "AlreadyDisabled",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "AlreadyEnabled",
+    "type": "error"
+  },
+  {
+    "inputs": [],
     "name": "ApprovalCallerNotOwnerNorApproved",
     "type": "error"
   },
@@ -12,6 +22,11 @@ export default [
   {
     "inputs": [],
     "name": "BalanceQueryForZeroAddress",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "GuardianEnabled",
     "type": "error"
   },
   {
@@ -47,6 +62,11 @@ export default [
   {
     "inputs": [],
     "name": "MintZeroQuantity",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "NotExternalAccount",
     "type": "error"
   },
   {
@@ -184,6 +204,37 @@ export default [
       }
     ],
     "name": "ConsecutiveTransfer",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "caller",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "bool",
+        "name": "enabled",
+        "type": "bool"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "cooldown",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "timestamp",
+        "type": "uint256"
+      }
+    ],
+    "name": "GuardianUpdated",
     "type": "event"
   },
   {

@@ -9,6 +9,12 @@ DENDRITE_TOWNS_CHANNELS_DIR="${DENDRITE_DIR}/${CHAIN}_towns_channels"
 DENDRITE_TOWNS_ENTITLEMENTS_DIR="${DENDRITE_DIR}/${CHAIN}_towns_entitlements"
 DENDRITE_TOWNS_PAUSABLE_DIR="${DENDRITE_DIR}/${CHAIN}_towns_pausable"
 DENDRITE_TOWNS_DELEGATION_DIR="${DENDRITE_DIR}/${CHAIN}_towns_delegation"
+RIVER_DIR="casablanca/node/auth/contracts"
+RIVER_TOWNS_ARCHITECT_DIR="${RIVER_DIR}/${CHAIN}_towns_architect"
+RIVER_TOWNS_CHANNELS_DIR="${RIVER_DIR}/${CHAIN}_towns_channels"
+RIVER_TOWNS_ENTITLEMENTS_DIR="${RIVER_DIR}/${CHAIN}_towns_entitlements"
+RIVER_TOWNS_PAUSABLE_DIR="${RIVER_DIR}/${CHAIN}_towns_pausable"
+RIVER_TOWNS_DELEGATION_DIR="${RIVER_DIR}/${CHAIN}_towns_delegation"
 
 forge clean
 forge build --extra-output-files metadata --extra-output-files abi
@@ -23,23 +29,28 @@ for file in $ABI_DIR/*.abi.json; do
   echo "export default $(cat $file) as const" > $ABI_DIR/$filename.ts
 done
 
-mkdir -p $DENDRITE_DIR
-mkdir -p $DENDRITE_TOWNS_ARCHITECT_DIR
-mkdir -p $DENDRITE_TOWNS_CHANNELS_DIR
-mkdir -p $DENDRITE_TOWNS_ENTITLEMENTS_DIR
-mkdir -p $DENDRITE_TOWNS_PAUSABLE_DIR
-mkdir -p $DENDRITE_TOWNS_DELEGATION_DIR
+mkdir -p $DENDRITE_DIR $RIVER_DIR
+mkdir -p $DENDRITE_TOWNS_ARCHITECT_DIR $RIVER_TOWNS_ARCHITECT_DIR
+mkdir -p $DENDRITE_TOWNS_CHANNELS_DIR $RIVER_TOWNS_CHANNELS_DIR
+mkdir -p $DENDRITE_TOWNS_ENTITLEMENTS_DIR $RIVER_TOWNS_ENTITLEMENTS_DIR
+mkdir -p $DENDRITE_TOWNS_PAUSABLE_DIR $RIVER_TOWNS_PAUSABLE_DIR
+mkdir -p $DENDRITE_TOWNS_DELEGATION_DIR $RIVER_TOWNS_DELEGATION_DIR
 
-# Town Architect typings for Dendrite
+# Town Architect typings
 go run github.com/ethereum/go-ethereum/cmd/abigen@v1.10.25 --abi contracts/out/TownArchitect.sol/TownArchitect.abi.json --pkg "${CHAIN}_towns_architect" --type "${CHAIN}_towns_architect" --out "${DENDRITE_TOWNS_ARCHITECT_DIR}/${CHAIN}_towns_architect.go"
-# Town Channels typings for Dendrite
+go run github.com/ethereum/go-ethereum/cmd/abigen@v1.10.25 --abi contracts/out/TownArchitect.sol/TownArchitect.abi.json --pkg "${CHAIN}_towns_architect" --type "${CHAIN}_towns_architect" --out "${RIVER_TOWNS_ARCHITECT_DIR}/${CHAIN}_towns_architect.go"
+# Town Channels typings
 go run github.com/ethereum/go-ethereum/cmd/abigen@v1.10.25 --abi contracts/out/Channels.sol/Channels.abi.json --pkg "${CHAIN}_towns_channels" --type "${CHAIN}_towns_channels" --out "${DENDRITE_TOWNS_CHANNELS_DIR}/${CHAIN}_towns_channels.go"
-# Town Entitlements typings for Dendrite
+go run github.com/ethereum/go-ethereum/cmd/abigen@v1.10.25 --abi contracts/out/Channels.sol/Channels.abi.json --pkg "${CHAIN}_towns_channels" --type "${CHAIN}_towns_channels" --out "${RIVER_TOWNS_CHANNELS_DIR}/${CHAIN}_towns_channels.go"
+# Town Entitlements typings
 go run github.com/ethereum/go-ethereum/cmd/abigen@v1.10.25 --abi contracts/out/Entitlements.sol/Entitlements.abi.json --pkg "${CHAIN}_towns_entitlements" --type "${CHAIN}_towns_entitlements" --out "${DENDRITE_TOWNS_ENTITLEMENTS_DIR}/${CHAIN}_towns_entitlements.go"
-# Town Pausable typings for Dendrite
+go run github.com/ethereum/go-ethereum/cmd/abigen@v1.10.25 --abi contracts/out/Entitlements.sol/Entitlements.abi.json --pkg "${CHAIN}_towns_entitlements" --type "${CHAIN}_towns_entitlements" --out "${RIVER_TOWNS_ENTITLEMENTS_DIR}/${CHAIN}_towns_entitlements.go"
+# Town Pausable typings
 go run github.com/ethereum/go-ethereum/cmd/abigen@v1.10.25 --abi contracts/out/Pausable.sol/Pausable.abi.json --pkg "${CHAIN}_towns_pausable" --type "${CHAIN}_towns_pausable" --out "${DENDRITE_TOWNS_PAUSABLE_DIR}/${CHAIN}_towns_pausable.go"
+go run github.com/ethereum/go-ethereum/cmd/abigen@v1.10.25 --abi contracts/out/Pausable.sol/Pausable.abi.json --pkg "${CHAIN}_towns_pausable" --type "${CHAIN}_towns_pausable" --out "${RIVER_TOWNS_PAUSABLE_DIR}/${CHAIN}_towns_pausable.go"
 # Towns Delegation Registry
 go run github.com/ethereum/go-ethereum/cmd/abigen@v1.10.25 --abi contracts/out/Delegation.sol/Delegation.abi.json --pkg "${CHAIN}_towns_delegation" --type "${CHAIN}_towns_delegation" --out "${DENDRITE_TOWNS_DELEGATION_DIR}/${CHAIN}_towns_delegation.go"
+go run github.com/ethereum/go-ethereum/cmd/abigen@v1.10.25 --abi contracts/out/Delegation.sol/Delegation.abi.json --pkg "${CHAIN}_towns_delegation" --type "${CHAIN}_towns_delegation" --out "${RIVER_TOWNS_DELEGATION_DIR}/${CHAIN}_towns_delegation.go"
 
 # Using the $FROZEN flag and git diff, we can check if this script generates any new files
 # under the $ABI_DIR or $DENDRITE_DIR directories.

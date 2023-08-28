@@ -102,6 +102,17 @@ export default [
     "type": "error"
   },
   {
+    "inputs": [
+      {
+        "internalType": "uint32",
+        "name": "version",
+        "type": "uint32"
+      }
+    ],
+    "name": "Initializable_AlreadyInitialized",
+    "type": "error"
+  },
+  {
     "inputs": [],
     "name": "Initializable_InInitializingState",
     "type": "error"
