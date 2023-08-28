@@ -392,7 +392,7 @@ func (s *PostgresEventStore) CreateBlock(
 
 	//update stream_snapshots_index if needed
 	if snapshotMiniblock {
-		_, err := tx.Exec(ctx, `UPDATE es SET latest_snapshot_miniblock = $1 WHERE stream_id = $2`, minipoolGeneration, streamId)
+		_, err := tx.Exec(ctx, `UPDATE es SET latest_snapshot_miniblock = $1 WHERE stream_name = $2`, minipoolGeneration, streamId)
 		if err != nil {
 			log.Debug("Snapshot index update error: ", err)
 			return err
