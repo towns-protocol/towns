@@ -26,6 +26,7 @@ var (
 	_ = common.Big1
 	_ = types.BloomLookup
 	_ = event.NewSubscription
+	_ = abi.ConvertType
 )
 
 // LocalhostTownsPausableMetaData contains all meta data concerning the LocalhostTownsPausable contract.
@@ -134,11 +135,11 @@ func NewLocalhostTownsPausableFilterer(address common.Address, filterer bind.Con
 
 // bindLocalhostTownsPausable binds a generic wrapper to an already deployed contract.
 func bindLocalhostTownsPausable(address common.Address, caller bind.ContractCaller, transactor bind.ContractTransactor, filterer bind.ContractFilterer) (*bind.BoundContract, error) {
-	parsed, err := abi.JSON(strings.NewReader(LocalhostTownsPausableABI))
+	parsed, err := LocalhostTownsPausableMetaData.GetAbi()
 	if err != nil {
 		return nil, err
 	}
-	return bind.NewBoundContract(address, parsed, caller, transactor, filterer), nil
+	return bind.NewBoundContract(address, *parsed, caller, transactor, filterer), nil
 }
 
 // Call invokes the (constant) contract method with params as input values and

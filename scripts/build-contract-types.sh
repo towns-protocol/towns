@@ -30,11 +30,11 @@ mkdir -p $TYPINGS_DIR
 
 # Create space factory v2 typings
 mkdir -p "servers/dendrite/zion/contracts/${CHAIN}_space_factory"
-go run github.com/ethereum/go-ethereum/cmd/abigen@v1.10.25 --abi contracts/out/SpaceFactory.sol/SpaceFactory.abi.json --pkg "${CHAIN}_space_factory" --type "${CHAIN}_space_factory" --out "servers/dendrite/zion/contracts/${CHAIN}_space_factory/${CHAIN}_space_factory.go"
+go run github.com/ethereum/go-ethereum/cmd/abigen@v1.12.2 --abi contracts/out/SpaceFactory.sol/SpaceFactory.abi.json --pkg "${CHAIN}_space_factory" --type "${CHAIN}_space_factory" --out "servers/dendrite/zion/contracts/${CHAIN}_space_factory/${CHAIN}_space_factory.go"
 
 # Create space v2 typings
 mkdir -p "servers/dendrite/zion/contracts/${CHAIN}_space"
-go run github.com/ethereum/go-ethereum/cmd/abigen@v1.10.25 --abi contracts/out/Space.sol/Space.abi.json --pkg "${CHAIN}_space"  --type "${CHAIN}_space" --out "servers/dendrite/zion/contracts/${CHAIN}_space/${CHAIN}_space.go"
+go run github.com/ethereum/go-ethereum/cmd/abigen@v1.12.2 --abi contracts/out/Space.sol/Space.abi.json --pkg "${CHAIN}_space"  --type "${CHAIN}_space" --out "servers/dendrite/zion/contracts/${CHAIN}_space/${CHAIN}_space.go"
 
 # Using the $FROZEN flag and git diff, we can check if this script generates any new files
 # under the $ABI_DIR or $TYPINGS_DIR directories.
