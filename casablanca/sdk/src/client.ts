@@ -935,6 +935,26 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         }
     }
 
+    async scrollback(streamId: string) {
+        this.logCall('scrollback', streamId)
+        const stream = this.stream(streamId)
+        check(isDefined(stream), `stream not found: ${streamId}`)
+        check(isDefined(stream.view.miniblockInfo), `stream not initialized: ${streamId}`)
+        if (stream.view.miniblockInfo.terminusReached) {
+            this.logCall('scrollback', streamId, 'terminus reached')
+            return
+        }
+        const step = 2n // todo better step amount? https://linear.app/hnt-labs/issue/HNT-2242/pagination-step-amount
+        const toExclusive = stream.view.miniblockInfo.min
+        const fromInclusive = toExclusive - step > 0 ? toExclusive - step : 0n
+        const response = await this.rpcClient.getMiniblocks({
+            streamId,
+            fromInclusive,
+            toExclusive,
+        })
+        stream.prependEvents(response.miniblocks, response.terminus)
+    }
+
     async sendToDevicesMessage(
         userId: string,
         event:

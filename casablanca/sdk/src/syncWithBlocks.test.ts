@@ -43,6 +43,7 @@ describe('syncWithBlocks', () => {
                     bobsContext,
                     make_UserPayload_Inception({
                         streamId: bobsUserStreamId,
+                        settings: { minEventsPerSnapshot: 1, miniblockTimeMs: 1n },
                     }),
                     [],
                 ),
@@ -128,10 +129,12 @@ describe('syncWithBlocks', () => {
             [nextHash],
         )
         nextHash = messageEvent.hash
-        await bob.addEvent({
+        const resp = await bob.addEvent({
             streamId: channelId,
             event: messageEvent,
         })
+
+        log('addEvent response', { resp })
 
         // Bob starts sync on the channel
         const abortController = new AbortController()
@@ -148,10 +151,12 @@ describe('syncWithBlocks', () => {
         let expectMessage = true
         let blocksSeen = 0
         let abortError: ConnectError | undefined = undefined
+        log('===================syncing===================')
         try {
-            for await (const res of timeoutIterable(syncStream, 2000)) {
+            for await (const res of timeoutIterable(syncStream, 5000)) {
                 expect(res.streams).toHaveLength(1)
                 const parsed = unpackEnvelopes(res.streams[0].events)
+                log('===================sunk===================', { parsed })
                 for (const p of parsed) {
                     if (knownHashes.has(p.hashStr)) {
                         continue
@@ -162,7 +167,7 @@ describe('syncWithBlocks', () => {
                         const message = getMessagePayload(p)
                         expect(message).toBeDefined()
                         expect(message?.text).toEqual(text)
-
+                        log('messageSeen', { message })
                         expectMessage = false
                     } else {
                         const miniblockHeader = getMiniblockHeader(p)
@@ -177,6 +182,7 @@ describe('syncWithBlocks', () => {
                         }
                         expectMessage = true
                         text = `${text} ${blocksSeen}`
+                        log('expectMessgage', { text })
                         blocksSeen++
 
                         const messageEvent = await makeEvent(
@@ -187,10 +193,11 @@ describe('syncWithBlocks', () => {
                             [nextHash],
                         )
                         nextHash = messageEvent.hash
-                        await bob.addEvent({
+                        const response = await bob.addEvent({
                             streamId: channelId,
                             event: messageEvent,
                         })
+                        log('addEvent response', { response })
                     }
                 }
             }

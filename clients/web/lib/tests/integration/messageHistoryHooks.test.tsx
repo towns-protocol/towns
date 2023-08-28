@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-explicit-any */
 /**
  * @group dendrite
+ * @group casablanca
  */
 import { Membership, RoomVisibility } from '../../src/types/zion-types'
 import { RoomIdentifier } from '../../src/types/room-identifier'

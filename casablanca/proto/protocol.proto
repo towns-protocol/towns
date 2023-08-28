@@ -466,6 +466,18 @@ message GetStreamResponse {
     repeated Miniblock miniblocks = 2;
 }
 
+message GetMiniblocksRequest {
+    string stream_id = 1;
+    int64 fromInclusive = 2;
+    int64 toExclusive = 3;
+}
+
+message GetMiniblocksResponse {
+    repeated Miniblock miniblocks = 1;
+    // terminus: true if there are no more blocks to fetch because they've been garbage collected, or you've reached block 0
+    bool terminus = 2;
+}
+
 message AddEventRequest {
     string stream_id = 1;
     Envelope event = 2;
@@ -492,6 +504,7 @@ message InfoResponse {
 service StreamService {
     rpc CreateStream(CreateStreamRequest) returns (CreateStreamResponse);
     rpc GetStream(GetStreamRequest) returns (GetStreamResponse);
+    rpc GetMiniblocks(GetMiniblocksRequest) returns (GetMiniblocksResponse);
     rpc AddEvent(AddEventRequest) returns (AddEventResponse);
     rpc SyncStreams(SyncStreamsRequest) returns (stream SyncStreamsResponse);
     rpc Info(InfoRequest) returns (InfoResponse);

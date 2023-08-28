@@ -6,6 +6,7 @@ import {
     StreamAndCookie,
     Snapshot,
     Miniblock,
+    MiniblockHeader,
 } from '@river/proto'
 import TypedEmitter from 'typed-emitter'
 import { check, logNever, isDefined, throwWithCode } from './check'
@@ -24,18 +25,15 @@ const log = dlog('csb:streams')
 
 export class StreamStateView {
     readonly streamId: string
-
     readonly contentKind: SnapshotCaseType
-
     readonly timeline: ParsedEvent[] = []
     readonly events = new Map<string, ParsedEvent>()
-
     // todo: remove this additional map in favor of events map once RiverEvent decrypts to ParsedEvents
     // https://linear.app/hnt-labs/issue/HNT-2049/refactor-riverevent-to-input-and-output-streamevents
     readonly decryptedEvents = new Map<string, RiverEvent>()
-
     readonly leafEventHashes = new Map<string, Uint8Array>()
 
+    miniblockInfo?: { max: bigint; min: bigint; terminusReached: boolean }
     syncCookie?: SyncCookie
 
     // Space Content
@@ -208,6 +206,7 @@ export class StreamStateView {
                     this.userDeviceKeyContent?.appendEvent(event, payload.value, emitter)
                     break
                 case 'miniblockHeader':
+                    this.updateMiniblockInfo(payload.value, { max: payload.value.miniblockNum })
                     break
                 case undefined:
                     break
@@ -257,6 +256,7 @@ export class StreamStateView {
                     this.userDeviceKeyContent?.prependEvent(event, payload.value, emitter)
                     break
                 case 'miniblockHeader':
+                    this.updateMiniblockInfo(payload.value, { min: payload.value.miniblockNum })
                     break
                 case undefined:
                     break
@@ -265,6 +265,29 @@ export class StreamStateView {
             }
         } catch (e) {
             log(`Error processing event ${event.hashStr}`, e)
+        }
+    }
+
+    private updateMiniblockInfo(value: MiniblockHeader, update: { max?: bigint; min?: bigint }) {
+        if (!this.miniblockInfo) {
+            this.miniblockInfo = {
+                max: value.miniblockNum,
+                min: value.miniblockNum,
+                terminusReached: value.miniblockNum === 0n,
+            }
+            return
+        }
+
+        if (update.max && update.max > this.miniblockInfo.max) {
+            this.miniblockInfo.max = update.max
+        }
+
+        if (update.min && update.min < this.miniblockInfo.min) {
+            this.miniblockInfo.min = update.min
+        }
+
+        if (this.miniblockInfo.min === 0n || this.miniblockInfo.max === 0n) {
+            this.miniblockInfo.terminusReached = true
         }
     }
 
@@ -340,13 +363,22 @@ export class StreamStateView {
         emitter?.emit('streamUpdated', this.streamId, this.contentKind, events)
     }
 
-    prependEvents(miniblocks: Miniblock[], emitter: TypedEmitter<EmittedEvents> | undefined) {
+    prependEvents(
+        miniblocks: Miniblock[],
+        terminus: boolean,
+        emitter: TypedEmitter<EmittedEvents> | undefined,
+    ) {
         const events = miniblocks.flatMap((mb) => unpackMiniblock(mb))
         // prepend the new block events in reverse order
         for (let i = events.length - 1; i >= 0; i--) {
             const event = events[i]
             this.prependEvent(event, emitter)
         }
+
+        if (this.miniblockInfo && terminus) {
+            this.miniblockInfo.terminusReached = true
+        }
+
         emitter?.emit('streamEventsPrepended', this.streamId, this.contentKind, events)
     }
 

@@ -50,6 +50,10 @@ export class Stream extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         this.view.appendEvents(streamAndCookie, this)
     }
 
+    prependEvents(miniblocks: Miniblock[], terminus: boolean) {
+        this.view.prependEvents(miniblocks, terminus, this)
+    }
+
     emit<E extends keyof EmittedEvents>(event: E, ...args: Parameters<EmittedEvents[E]>): boolean {
         this.logEmitFromStream(event, ...args)
         this.clientEmitter.emit(event, ...args)

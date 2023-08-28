@@ -38,6 +38,9 @@ const (
 	StreamServiceCreateStreamProcedure = "/casablanca.StreamService/CreateStream"
 	// StreamServiceGetStreamProcedure is the fully-qualified name of the StreamService's GetStream RPC.
 	StreamServiceGetStreamProcedure = "/casablanca.StreamService/GetStream"
+	// StreamServiceGetMiniblocksProcedure is the fully-qualified name of the StreamService's
+	// GetMiniblocks RPC.
+	StreamServiceGetMiniblocksProcedure = "/casablanca.StreamService/GetMiniblocks"
 	// StreamServiceAddEventProcedure is the fully-qualified name of the StreamService's AddEvent RPC.
 	StreamServiceAddEventProcedure = "/casablanca.StreamService/AddEvent"
 	// StreamServiceSyncStreamsProcedure is the fully-qualified name of the StreamService's SyncStreams
@@ -51,6 +54,7 @@ const (
 type StreamServiceClient interface {
 	CreateStream(context.Context, *connect_go.Request[protocol.CreateStreamRequest]) (*connect_go.Response[protocol.CreateStreamResponse], error)
 	GetStream(context.Context, *connect_go.Request[protocol.GetStreamRequest]) (*connect_go.Response[protocol.GetStreamResponse], error)
+	GetMiniblocks(context.Context, *connect_go.Request[protocol.GetMiniblocksRequest]) (*connect_go.Response[protocol.GetMiniblocksResponse], error)
 	AddEvent(context.Context, *connect_go.Request[protocol.AddEventRequest]) (*connect_go.Response[protocol.AddEventResponse], error)
 	SyncStreams(context.Context, *connect_go.Request[protocol.SyncStreamsRequest]) (*connect_go.ServerStreamForClient[protocol.SyncStreamsResponse], error)
 	Info(context.Context, *connect_go.Request[protocol.InfoRequest]) (*connect_go.Response[protocol.InfoResponse], error)
@@ -76,6 +80,11 @@ func NewStreamServiceClient(httpClient connect_go.HTTPClient, baseURL string, op
 			baseURL+StreamServiceGetStreamProcedure,
 			opts...,
 		),
+		getMiniblocks: connect_go.NewClient[protocol.GetMiniblocksRequest, protocol.GetMiniblocksResponse](
+			httpClient,
+			baseURL+StreamServiceGetMiniblocksProcedure,
+			opts...,
+		),
 		addEvent: connect_go.NewClient[protocol.AddEventRequest, protocol.AddEventResponse](
 			httpClient,
 			baseURL+StreamServiceAddEventProcedure,
@@ -96,11 +105,12 @@ func NewStreamServiceClient(httpClient connect_go.HTTPClient, baseURL string, op
 
 // streamServiceClient implements StreamServiceClient.
 type streamServiceClient struct {
-	createStream *connect_go.Client[protocol.CreateStreamRequest, protocol.CreateStreamResponse]
-	getStream    *connect_go.Client[protocol.GetStreamRequest, protocol.GetStreamResponse]
-	addEvent     *connect_go.Client[protocol.AddEventRequest, protocol.AddEventResponse]
-	syncStreams  *connect_go.Client[protocol.SyncStreamsRequest, protocol.SyncStreamsResponse]
-	info         *connect_go.Client[protocol.InfoRequest, protocol.InfoResponse]
+	createStream  *connect_go.Client[protocol.CreateStreamRequest, protocol.CreateStreamResponse]
+	getStream     *connect_go.Client[protocol.GetStreamRequest, protocol.GetStreamResponse]
+	getMiniblocks *connect_go.Client[protocol.GetMiniblocksRequest, protocol.GetMiniblocksResponse]
+	addEvent      *connect_go.Client[protocol.AddEventRequest, protocol.AddEventResponse]
+	syncStreams   *connect_go.Client[protocol.SyncStreamsRequest, protocol.SyncStreamsResponse]
+	info          *connect_go.Client[protocol.InfoRequest, protocol.InfoResponse]
 }
 
 // CreateStream calls casablanca.StreamService.CreateStream.
@@ -111,6 +121,11 @@ func (c *streamServiceClient) CreateStream(ctx context.Context, req *connect_go.
 // GetStream calls casablanca.StreamService.GetStream.
 func (c *streamServiceClient) GetStream(ctx context.Context, req *connect_go.Request[protocol.GetStreamRequest]) (*connect_go.Response[protocol.GetStreamResponse], error) {
 	return c.getStream.CallUnary(ctx, req)
+}
+
+// GetMiniblocks calls casablanca.StreamService.GetMiniblocks.
+func (c *streamServiceClient) GetMiniblocks(ctx context.Context, req *connect_go.Request[protocol.GetMiniblocksRequest]) (*connect_go.Response[protocol.GetMiniblocksResponse], error) {
+	return c.getMiniblocks.CallUnary(ctx, req)
 }
 
 // AddEvent calls casablanca.StreamService.AddEvent.
@@ -132,6 +147,7 @@ func (c *streamServiceClient) Info(ctx context.Context, req *connect_go.Request[
 type StreamServiceHandler interface {
 	CreateStream(context.Context, *connect_go.Request[protocol.CreateStreamRequest]) (*connect_go.Response[protocol.CreateStreamResponse], error)
 	GetStream(context.Context, *connect_go.Request[protocol.GetStreamRequest]) (*connect_go.Response[protocol.GetStreamResponse], error)
+	GetMiniblocks(context.Context, *connect_go.Request[protocol.GetMiniblocksRequest]) (*connect_go.Response[protocol.GetMiniblocksResponse], error)
 	AddEvent(context.Context, *connect_go.Request[protocol.AddEventRequest]) (*connect_go.Response[protocol.AddEventResponse], error)
 	SyncStreams(context.Context, *connect_go.Request[protocol.SyncStreamsRequest], *connect_go.ServerStream[protocol.SyncStreamsResponse]) error
 	Info(context.Context, *connect_go.Request[protocol.InfoRequest]) (*connect_go.Response[protocol.InfoResponse], error)
@@ -151,6 +167,11 @@ func NewStreamServiceHandler(svc StreamServiceHandler, opts ...connect_go.Handle
 	streamServiceGetStreamHandler := connect_go.NewUnaryHandler(
 		StreamServiceGetStreamProcedure,
 		svc.GetStream,
+		opts...,
+	)
+	streamServiceGetMiniblocksHandler := connect_go.NewUnaryHandler(
+		StreamServiceGetMiniblocksProcedure,
+		svc.GetMiniblocks,
 		opts...,
 	)
 	streamServiceAddEventHandler := connect_go.NewUnaryHandler(
@@ -174,6 +195,8 @@ func NewStreamServiceHandler(svc StreamServiceHandler, opts ...connect_go.Handle
 			streamServiceCreateStreamHandler.ServeHTTP(w, r)
 		case StreamServiceGetStreamProcedure:
 			streamServiceGetStreamHandler.ServeHTTP(w, r)
+		case StreamServiceGetMiniblocksProcedure:
+			streamServiceGetMiniblocksHandler.ServeHTTP(w, r)
 		case StreamServiceAddEventProcedure:
 			streamServiceAddEventHandler.ServeHTTP(w, r)
 		case StreamServiceSyncStreamsProcedure:
@@ -195,6 +218,10 @@ func (UnimplementedStreamServiceHandler) CreateStream(context.Context, *connect_
 
 func (UnimplementedStreamServiceHandler) GetStream(context.Context, *connect_go.Request[protocol.GetStreamRequest]) (*connect_go.Response[protocol.GetStreamResponse], error) {
 	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("casablanca.StreamService.GetStream is not implemented"))
+}
+
+func (UnimplementedStreamServiceHandler) GetMiniblocks(context.Context, *connect_go.Request[protocol.GetMiniblocksRequest]) (*connect_go.Response[protocol.GetMiniblocksResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("casablanca.StreamService.GetMiniblocks is not implemented"))
 }
 
 func (UnimplementedStreamServiceHandler) AddEvent(context.Context, *connect_go.Request[protocol.AddEventRequest]) (*connect_go.Response[protocol.AddEventResponse], error) {

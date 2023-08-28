@@ -2273,7 +2273,10 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
                 }
                 break
             case SpaceProtocol.Casablanca:
-                console.error('not implemented for casablanca')
+                if (!this.casablancaClient) {
+                    throw new Error('casablanca client is undefined')
+                }
+                await this.casablancaClient.scrollback(roomId.networkId)
                 break
         }
     }

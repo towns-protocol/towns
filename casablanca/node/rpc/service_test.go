@@ -378,6 +378,16 @@ func TestMethods(t *testing.T) {
 			t.Fatalf("error calling AddEvent: %v", err)
 		}
 
+		_, err = client.GetMiniblocks(ctx, connect.NewRequest(&protocol.GetMiniblocksRequest{
+			StreamId:      common.ChannelStreamIdFromName("channel1"),
+			FromInclusive: 0,
+			ToExclusive:   1,
+		}))
+
+		if err != nil {
+			t.Fatalf("error calling GetMiniblocks: %v", err)
+		}
+
 		syncCtx, syncCancel := context.WithCancel(context.Background())
 		syncRes, err := client.SyncStreams(
 			syncCtx,

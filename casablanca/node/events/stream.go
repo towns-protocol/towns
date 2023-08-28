@@ -229,6 +229,28 @@ func (s *Stream) GetView(ctx context.Context) (StreamView, error) {
 	return s.view, s.loadError
 }
 
+// Returns
+// miniblocks: with indexes from fromIndex inclusive, to toIndex exlusive
+// terminus: true if fromIndex is 0, or if there are no more blocks because they've been garbage collected
+func (s *Stream) GetMiniblocks(ctx context.Context, fromIndex int, toIndex int) ([]*Miniblock, bool, error) {
+	blocks, err := s.params.Storage.GetMiniblocks(ctx, s.streamId, fromIndex, toIndex)
+	if err != nil {
+		return nil, false, err
+	}
+
+	miniblocks := make([]*Miniblock, len(blocks))
+	for i, binMiniblock := range blocks {
+		miniblock, err := NewMiniblockInfoFromBytes(binMiniblock)
+		if err != nil {
+			return nil, false, err
+		}
+		miniblocks[i] = miniblock.proto
+	}
+
+	terminus := fromIndex == 0
+	return miniblocks, terminus, nil
+}
+
 func (s *Stream) AddEvent(ctx context.Context, event *ParsedEvent) (*SyncCookie, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
