@@ -13,7 +13,7 @@ import {
   appendCorsHeaders,
   isAllowedOrigin,
   AuthEnv,
-} from '../../common'
+} from 'worker-common'
 
 import apiRouter from './router'
 

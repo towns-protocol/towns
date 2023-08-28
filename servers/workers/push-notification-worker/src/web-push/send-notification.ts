@@ -11,7 +11,7 @@ import {
   vapidKeysToJsonWebKey,
 } from './crypto-utils'
 
-import { Env } from 'index'
+import { Env } from '../index'
 import { JwtData } from './jwt'
 import { PushOptions } from '../types'
 import { QueryResultSubscription } from '../subscription-handlers'

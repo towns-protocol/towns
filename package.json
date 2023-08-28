@@ -48,7 +48,8 @@
         "syncpack:fix": "syncpack fix-mismatches && syncpack format",
         "test": "turbo test",
         "test:dendrite:e2e": "turbo test:dendrite:e2e",
-        "test:unit": "turbo test:unit -- --silent"
+        "test:unit": "turbo test:unit -- --silent",
+        "worker:build": "yarn workspace worker-common run build && echo BUILD DONE || (echo BUILD ERROR; exit 1)"
     },
     "devDependencies": {
         "@typechain/ethers-v5": "^10.1.1",

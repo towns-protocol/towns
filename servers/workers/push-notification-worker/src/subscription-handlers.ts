@@ -4,7 +4,7 @@ import {
 } from './request-interfaces'
 import { PushType, UserId, isPushType, isUserId } from './types'
 
-import { Env } from 'index'
+import { Env } from './index'
 import { create204Response, create422Response } from './http-responses'
 import { printDbResultInfo } from './sql'
 

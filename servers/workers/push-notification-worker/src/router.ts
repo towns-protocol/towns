@@ -22,7 +22,7 @@ import { tagMentionUsers, tagReplyToUser } from './tag-handlers'
 
 import { Env } from '.'
 import { Router } from 'itty-router'
-import { isAuthedRequest } from '../../common'
+import { isAuthedRequest } from 'worker-common'
 import { notifyUsers } from './notify-users-handlers'
 
 // now let's create a router (note the lack of "new")

@@ -5,7 +5,7 @@ import {
     isOptionsRequest,
     getOptionsResponse,
     Environment,
-} from '../../common'
+} from 'worker-common'
 
 import { isUrl } from './utils/isUrl'
 import { checkForTweetIdFromUrl, getTweet } from './twitter'

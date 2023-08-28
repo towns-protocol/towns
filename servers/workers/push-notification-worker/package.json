@@ -8,9 +8,10 @@
   "scripts": {
     "dev": "NO_D1_WARNING=true && wrangler dev",
     "dev:remote": "NO_D1_WARNING=true && wrangler dev --remote",
-    "lint": "eslint .",
+    "lint": "yarn eslint --format unix ./src",
     "prettier:check": "prettier --check .",
     "prettier:fix": "prettier --write .",
+    "preinstall": "yarn run --top-level worker:build",
     "publish:prod": "NO_D1_WARNING=true && wrangler deploy --env production",
     "publish:test": "NO_D1_WARNING=true && wrangler deploy --env test",
     "publish:prod-beta": "NO_D1_WARNING=true && wrangler deploy --env production-beta",
@@ -30,8 +31,10 @@
     "test:unit": "jest"
   },
   "dependencies": {
+    "@towns/generated": "workspace:^",
     "itty-router": "^2.6.6",
-    "jsonwebtoken": "^9.0.0"
+    "jsonwebtoken": "^9.0.0",
+    "worker-common": "workspace:^"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20230710.1",

@@ -3,7 +3,7 @@ import {
     withCorsHeaders,
     getOptionsResponse,
     isOptionsRequest,
-} from '../../common'
+} from 'worker-common'
 import { getCollectionMetadata as getCollectionMetadataInfura } from './handlers/infura/getCollectionMetadata'
 import { getCollectionMetadata as getCollectionMetadataAlchemy } from './handlers/alchemy/getCollectionMetadata'
 import { router } from './router'

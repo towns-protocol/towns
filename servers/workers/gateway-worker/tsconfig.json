@@ -2,18 +2,17 @@
     "include": ["src/**/*"],
     "compilerOptions": {
         "incremental": true,
-        "target": "ES2020" /* Set the JavaScript language version for emitted JavaScript and include compatible library declarations. */,
-        "module": "ES2020" /* Specify what module code is generated. */,
-        "lib": ["ES2020"],
+        "target": "ESNext" /* Set the JavaScript language version for emitted JavaScript and include compatible library declarations. */,
+        "module": "ESNext" /* Specify what module code is generated. */,
+        "lib": ["ESNext", "DOM"],
         "outDir": "./dist",
         "moduleResolution": "node" /* Specify how TypeScript looks up a file from a given module specifier. */,
-        "types": ["@cloudflare/workers-types"],
+        "types": ["@cloudflare/workers-types", "@types/jest", "miniflare"],
         // "noResolve": true,                                /* Disallow `import`s, `require`s or `<reference>`s from expanding the number of files TypeScript should add to a project. */
         "noEmit": false /* Disable emitting files from a compilation. */,
         "strict": true /* Enable all strict type-checking options. */,
         // "noImplicitAny": true /* Enable error reporting for expressions and declarations with an implied `any` type.. */
         // "strictNullChecks": true,                         /* When type checking, take into account `null` and `undefined`. */
-        "esModuleInterop": true
         // "strictFunctionTypes": true,                      /* When assigning functions, check to ensure parameters and the return values are subtype-compatible. */
         // "strictBindCallApply": true,                      /* Check that the arguments for `bind`, `call`, and `apply` methods match the original function. */
         // "strictPropertyInitialization": true,             /* Check for class properties that are declared but not set in the constructor. */
@@ -30,6 +29,8 @@
         // "noPropertyAccessFromIndexSignature": true,       /* Enforces using indexed accessors for keys declared using an indexed type */
         // "allowUnusedLabels": true,                        /* Disable error reporting for unused labels. */
         // "allowUnreachableCode": true,                     /* Disable error reporting for unreachable code. */
+        "resolveJsonModule": true,
+        "allowSyntheticDefaultImports": true
         /* Completeness */
         // "skipDefaultLibCheck": true,                      /* Skip type checking .d.ts files that are included with TypeScript. */
         // "skipLibCheck": true /* Skip type checking all .d.ts files. */

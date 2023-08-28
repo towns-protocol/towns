@@ -80,5 +80,7 @@ Deployment account and workers domain is defined in wrangler.toml config.
 Unless specified in config, workers are deployed to `{name}`.johnhnt.workers.dev domain. See [Wrangler Config](https://developers.cloudflare.com/workers/wrangler/configuration/) for more details.
 
 ```bash
-yarn publish
+yarn install
+yarn run --top-level worker:build
+yarn publish:prod
 ```

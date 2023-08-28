@@ -7,17 +7,20 @@
     "scripts": {
         "dev:local": "wrangler dev",
         "dev:remote": "wrangler dev --remote",
-        "lint": "eslint .",
+        "lint": "yarn eslint --format unix ./src",
         "publish:prod": "wrangler deploy --env production",
         "publish:test": "wrangler deploy --env test",
+        "preinstall": "yarn run --top-level worker:build",
         "publish:prod-beta": "wrangler deploy --env production-beta",
         "publish:test-beta": "wrangler deploy --env test-beta",
         "test": "yarn test:unit",
         "test:unit": "jest"
     },
     "dependencies": {
+        "@towns/generated": "workspace:^",
         "alchemy-sdk": "^2.2.4",
-        "itty-router": "^2.6.6"
+        "itty-router": "^2.6.6",
+        "worker-common": "workspace:^"
     },
     "devDependencies": {
         "@cloudflare/workers-types": "^4.20230710.1",

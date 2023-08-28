@@ -8,11 +8,12 @@
         "dev": "echo use dev:local for now - see wrangler.toml",
         "dev:local": "wrangler dev",
         "dev:remote": "wrangler dev --remote",
-        "lint": "eslint .",
+        "lint": "yarn eslint --format unix ./src",
         "publish:prod": "wrangler deploy --env production",
         "publish:test": "wrangler deploy --env test",
         "publish:prod-beta": "wrangler deploy --env production-beta",
         "publish:test-beta": "wrangler deploy --env test-beta",
+        "preinstall": "yarn run --top-level worker:build",
         "test": "yarn test:unit",
         "test:jest": "jest --coverage",
         "test:unit": "concurrently \"yarn test:jest\"",
@@ -20,7 +21,8 @@
     },
     "dependencies": {
         "@towns/generated": "workspace:^",
-        "ts-loader": "^9.4.2"
+        "ts-loader": "^9.4.2",
+        "worker-common": "workspace:^"
     },
     "devDependencies": {
         "@cloudflare/workers-types": "^4.20230710.1",

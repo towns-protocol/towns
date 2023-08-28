@@ -5,7 +5,7 @@ import {
 } from './subscription-handlers'
 import { TaggedUsers, getNotificationTags } from './tag-handlers'
 
-import { Env } from 'index'
+import { Env } from './index'
 import { NotifyRequestParams } from './request-interfaces'
 import { isQueryResultSubscription } from './subscription-handlers'
 import { sendNotificationViaWebPush } from './web-push/send-notification'

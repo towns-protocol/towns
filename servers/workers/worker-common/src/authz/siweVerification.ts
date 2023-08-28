@@ -1,5 +1,4 @@
 import { SiweMessage } from 'siwe'
-import { createSpaceDapp } from 'use-zion-client/src/client/web3/SpaceDappFactory'
 import { ethers } from 'ethers'
 import { AuthEnv, Environment } from '..'
 import { Permission } from 'use-zion-client/src/client/web3/ContractTypes'
@@ -88,19 +87,28 @@ export async function verifySpaceOwner(
     provider: ethers.providers.StaticJsonRpcProvider,
     smartContractVersion?: string,
 ): Promise<boolean> {
+    // Using CommonJs import syntax to workaround a bug in importing this module.
+    // https://linear.app/hnt-labs/issue/HNT-2243/bug-in-import-of-istaticcontractsinfo-to-workers
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const module = require('use-zion-client/src/client/web3/SpaceDappFactory')
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    const createSpaceDapp = module.createSpaceDapp
     console.log('siweVerification verifySpaceOwner() params', {
         chainId,
         smartContractVersion,
         spaceId: decodeURIComponent(spaceId),
         address,
     })
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
     const spaceDapp = createSpaceDapp(chainId, provider, smartContractVersion)
     try {
-        const hasPermission = await spaceDapp.isEntitledToSpace(
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+        const hasPermission: boolean = await spaceDapp.isEntitledToSpace(
             decodeURIComponent(spaceId),
             address,
             PERMISSION,
         )
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return hasPermission
     } catch (error) {
         console.error('spaceDapp.isEntitled error', (error as Error).message)

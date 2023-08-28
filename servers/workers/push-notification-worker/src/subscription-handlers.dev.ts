@@ -1,6 +1,6 @@
 import { Membership, Mute } from './types'
 
-import { Env } from 'index'
+import { Env } from './index'
 
 /*
 dev functions to test push notifications

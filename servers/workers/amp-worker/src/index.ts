@@ -4,7 +4,7 @@ import {
     isOptionsRequest,
     getOptionsResponse,
     Environment,
-} from '../../common'
+} from 'worker-common'
 
 // Note: this assumes fetch is made from JS sdk.
 // For using Amplitude http api use https://api2.amplitude.com/2/httpapi

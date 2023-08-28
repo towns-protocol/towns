@@ -1,4 +1,4 @@
-import { Environment, withCorsHeaders } from '../../../../common'
+import { Environment, withCorsHeaders } from 'worker-common'
 import { throwCustomError } from '../../router'
 import {
     GetCollectionsForOwnerInfuraResponse,

@@ -6,7 +6,7 @@ import {
     OpenSeaCollectionMetadata,
     GetContractsForOwnerResponse,
 } from 'alchemy-sdk'
-import { AuthEnv, Environment } from '../../common'
+import { AuthEnv, Environment } from 'worker-common'
 
 export interface Env extends AuthEnv {
     ENVIRONMENT: Environment

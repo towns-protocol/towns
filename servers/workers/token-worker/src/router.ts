@@ -1,5 +1,5 @@
 import { Router } from 'itty-router'
-import { withCorsHeaders } from '../../common'
+import { withCorsHeaders } from 'worker-common'
 import { Env, IError } from './types'
 
 export function throwCustomError(message: string, status: number) {

@@ -1,4 +1,4 @@
-import { withCorsHeaders } from '../../../common'
+import { withCorsHeaders } from 'worker-common'
 import { throwCustomError } from '../router'
 import { GetNftsAlchemyResponse, GetNftsResponse, TokenProviderRequest } from '../types'
 
