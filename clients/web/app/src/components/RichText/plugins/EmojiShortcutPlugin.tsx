@@ -77,7 +77,7 @@ export const EmojiShortcutPlugin = () => {
             ) =>
                 anchorElement.current && results.length > 0
                     ? ReactDOM.createPortal(
-                          <TypeaheadMenu>
+                          <TypeaheadMenu zIndex="tooltips">
                               {options.map((option, i: number) => (
                                   <TypeaheadMenuItem
                                       index={i}
