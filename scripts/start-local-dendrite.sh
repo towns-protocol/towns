@@ -25,7 +25,6 @@ LOCAL_TEST_DIR=${SCRIPT_DIR}/servers/dendrite_local_test
 # Parse command line arguments
 WITH_POSTGRES_PERSIST=""
 WITH_PUSH_NOTIFICATION=""
-WITH_SMART_CONTRACTS_V3="with-smart-contracts-v3"
 SKIP_POSTGRES=""
 DOCKER_COMPOSE_ONLY=""
 export DENDRITE_TRACE_INTERNAL="1"
@@ -37,9 +36,6 @@ while [ "$1" != "" ]; do
             ;;
         -wpn | --with-push-notification )  
             WITH_PUSH_NOTIFICATION="with-push-notification"
-            ;;
-        -wv3 | --with-smart-contracts-v3 )  
-            WITH_SMART_CONTRACTS_V3="with-smart-contracts-v3"
             ;;
         -spg | --skip-postgres )  
             SKIP_POSTGRES="skip-postgres"
@@ -105,14 +101,6 @@ else
   echo "Push Notification disabled"
   export PUSH_NOTIFICATION_AUTH_TOKEN=""
   export PUSH_NOTIFICATION_URL=""
-fi
-
-if [ "${WITH_SMART_CONTRACTS_V3}" == "with-smart-contracts-v3" ]; then
-  echo "Using smart contracts v3 by exporting env var"
-  export SMART_CONTRACT_VERSION="v3"
-else
-  echo "Using smart contracts v2 by resetting env var"
-  export SMART_CONTRACT_VERSION=""
 fi
 
 if [ "${DOCKER_COMPOSE_ONLY}" == "docker-compose-only" ]; then
