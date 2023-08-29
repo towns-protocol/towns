@@ -1,3 +1,4 @@
+import { PlainMessage } from '@bufbuild/protobuf'
 import { Client as CasablancaClient, ParsedEvent, isCiphertext } from '@river/sdk'
 import {
     MembershipOp,
@@ -495,9 +496,7 @@ function toTownsContent_ChanelPayload_Message_fromRiverEvent(
         switch (channelMessage?.payload?.case) {
             case 'post':
                 return (
-                    toTownsContent_ChannelPayload_Message_Post(
-                        new ChannelMessage_Post(channelMessage?.payload.value),
-                    ) ?? {
+                    toTownsContent_ChannelPayload_Message_Post(channelMessage?.payload.value) ?? {
                         error: `${description} unknown message type`,
                     }
                 )
@@ -522,7 +521,7 @@ function toTownsContent_ChanelPayload_Message_fromRiverEvent(
                     return { error: `${description} no post in edit` }
                 }
                 const newContent = toTownsContent_ChannelPayload_Message_Post(
-                    new ChannelMessage_Post(newPost),
+                    newPost,
                     channelMessage.payload.value.refEventId,
                 )
                 return newContent ?? { error: `${description} no content in edit` }
@@ -560,7 +559,7 @@ function toTownsContent_ChannelPayload_Message(
 }
 
 function toTownsContent_ChannelPayload_Message_Post(
-    value: ChannelMessage_Post,
+    value: ChannelMessage_Post | PlainMessage<ChannelMessage_Post>,
     replacedMsgId?: string,
 ) {
     switch (value.content.case) {
