@@ -26,7 +26,7 @@ import { Channels } from './routes/Channels'
 import { AuthenticatedContent } from './routes/AuthenticatedContent'
 
 const ALCHEMY_KEY = import.meta.env.VITE_ALCHEMY_API_KEY ?? ''
-const SMART_CONTRACT_VERSION = import.meta.env.VITE_SMART_CONTRACT_VERSION ?? ''
+const SMART_CONTRACT_VERSION = 'v3' /*import.meta.env.VITE_SMART_CONTRACT_VERSION*/
 
 export const App = () => {
     const { matrixUrl, casablancaUrl, chainId } = useEnvironment()

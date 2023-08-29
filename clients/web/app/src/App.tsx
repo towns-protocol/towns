@@ -106,7 +106,7 @@ export const App = () => {
             timeBetweenSyncingSpaces={timeBetweenSyncingSpaces}
             pushNotificationAuthToken={env.VITE_AUTH_WORKER_HEADER_SECRET}
             pushNotificationWorkerUrl={env.VITE_WEB_PUSH_WORKER_URL}
-            smartContractVersion={env.VITE_SMART_CONTRACT_VERSION}
+            smartContractVersion={'v3' /*env.VITE_SMART_CONTRACT_VERSION*/}
         >
             <>
                 <FaviconBadge />

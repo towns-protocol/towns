@@ -53,7 +53,7 @@ const envSchema = z.object({
     VITE_AMP_WORKER_URL: z.string().url().optional(),
     VITE_TOWNS_TOKEN_URL: z.string().url().optional(),
     VITE_WALLET_CONNECT_PROJECT_ID: z.string().default('stringtopreventerror'),
-    VITE_SMART_CONTRACT_VERSION: z.string().default(''), // TODO: remove this once we've migrated to v3. https://linear.app/hnt-labs/issue/HNT-2165/cleanup-delete-smart-contracts-v3-flags-from-clients
+    VITE_SMART_CONTRACT_VERSION: z.string().default('v3'), // TODO: remove this once we've migrated to v3. https://linear.app/hnt-labs/issue/HNT-2165/cleanup-delete-smart-contracts-v3-flags-from-clients
 })
 
 const parsed = envSchema.safeParse(import.meta.env)

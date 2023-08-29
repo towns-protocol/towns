@@ -2,7 +2,7 @@ import React, { useCallback, useRef, useState } from 'react'
 import { Address, useBalance, useNetwork, useSwitchNetwork } from 'wagmi'
 import { useEvent } from 'react-use-event-hook'
 import { ethers, providers } from 'ethers'
-import { useWeb3Context } from 'use-zion-client'
+import { mintMockNFT, useWeb3Context } from 'use-zion-client'
 import { debug } from 'debug'
 import { Box, Button, Divider, Stack, Text } from '@ui'
 import { ModalContainer } from '@components/Modals/ModalContainer'
@@ -59,6 +59,13 @@ async function fundWallet({ accountId, provider, chainId }: FundProps) {
         log('fundWallet result', result)
         const receipt = await result.wait()
         log('fundWallet receipt', receipt)
+        if (chainId === 31337 && provider) {
+            // only support localhost anvil testing
+            const mintTx = await mintMockNFT(chainId, provider, wallet, accountId)
+            await mintTx.wait()
+            log('fundWallet minted MockNFT', { walletAddress: accountId })
+            console.log('fundWallet minted MockNFT', { walletAddress: accountId })
+        }
     } catch (e) {
         console.error('fundWallet error', e)
     }

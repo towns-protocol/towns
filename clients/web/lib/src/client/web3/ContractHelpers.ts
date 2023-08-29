@@ -1,9 +1,25 @@
-import { BigNumber, BigNumberish } from 'ethers'
+import { BigNumber, BigNumberish, ethers } from 'ethers'
 
 import { BasicRoleInfo } from './ContractTypes'
+import { MockERC721AShim } from './v3/MockERC721AShim'
 import { TokenDataTypes } from './shims/TokenEntitlementShim'
 import { ZionClient } from '../ZionClient'
 import { getContractsInfo } from './IStaticContractsInfo'
+import { getContractsInfoV3 } from './v3/IStaticContractsInfoV3'
+
+export function mintMockNFT(
+    chainId: number,
+    provider: ethers.providers.Provider,
+    fromWallet: ethers.Wallet,
+    toAddress: string,
+): Promise<ethers.ContractTransaction> {
+    if (chainId === 31337) {
+        const mockNFTAddress = getContractsInfoV3(chainId).mockErc721aAddress
+        const mockNFT = new MockERC721AShim(mockNFTAddress, chainId, provider)
+        return mockNFT.write(fromWallet).mintTo(toAddress)
+    }
+    throw new Error(`Unsupported chainId ${chainId}, only 31337 is supported.`)
+}
 
 export function getMemberNftAddress(chainId: number): string {
     const contractInfo = getContractsInfo(chainId)

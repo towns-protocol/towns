@@ -24,6 +24,7 @@ import {
     TransactionStatus,
     getMemberNftAddress,
     getPioneerNftAddress,
+    mintMockNFT,
     useCasablancaStore,
     useCreateSpaceTransaction,
     useMatrixStore,
@@ -317,6 +318,12 @@ const LocalhostWalletInfo = (props: { accountId: Address }) => {
                         console.log('fundWallet result', result)
                         const receipt = await result.wait()
                         console.log('fundWallet receipt', receipt)
+                        if (chainId === 31337 && provider) {
+                            // only support localhost anvil testing
+                            const mintTx = await mintMockNFT(chainId, provider, wallet, accountId)
+                            await mintTx.wait()
+                            console.log('fundWallet minted MockNFT', { walletAddress: accountId })
+                        }
                     } catch (error) {
                         console.error('fundWallet failed', error)
                     } finally {

@@ -5,7 +5,7 @@ INSTANCE=single
 USE_CONTRACT=true
 METRICS_ENABLED=true
 RPC_PORT=5157
-CONTRACT_VERSION=v2
+CONTRACT_VERSION=v3
 
 # Parse command-line options
 args=() # Collect arguments to pass to the last command

@@ -90,6 +90,7 @@ export {
     getMemberNftAddress,
     getFilteredRolesFromSpace,
     getPioneerNftAddress,
+    mintMockNFT,
 } from './client/web3/ContractHelpers'
 export {
     signMessageAbortController,
