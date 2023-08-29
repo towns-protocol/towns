@@ -206,8 +206,8 @@ export interface SpaceParentEvent {
 export interface TimelineEvent {
     eventId: string
     status?: EventStatus
-    originServerTs: number
-    updatedServerTs?: number
+    createdAtEpocMs: number
+    updatedAtEpocMs?: number
     content?: TimelineEvent_OneOf
     fallbackContent: string
     isLocalPending: boolean /// true if we're waiting for the event to get sent back from the server
@@ -259,7 +259,7 @@ export interface FullyReadMarker {
     channelId: RoomIdentifier
     threadParentId?: string
     eventId: string
-    eventOriginServerTs: number
+    eventCreatedAtEpocMs: number
     isUnread: boolean
     markedUnreadAtTs: number
     markedReadAtTs: number

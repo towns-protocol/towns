@@ -121,8 +121,8 @@ export class ConversationBuilder {
         return {
             eventId: eventId,
             status: params.isSender ? undefined : undefined, // todo: set status for events this user sent
-            originServerTs: timestamp,
-            updatedServerTs: timestamp,
+            createdAtEpocMs: timestamp,
+            updatedAtEpocMs: timestamp,
             content: params.content,
             fallbackContent: getFallbackContent(oUserId, params.content),
             isLocalPending: eventId.startsWith('~'),

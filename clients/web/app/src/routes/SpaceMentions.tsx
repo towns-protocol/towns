@@ -127,7 +127,7 @@ const MentionBox = (props: { mention: MentionResult; userId?: string }) => {
                     messageSourceAnnotation={`${
                         mention.thread ? `Thread in` : ``
                     } #${mention.channel.label.toLowerCase()}`}
-                    timestamp={mention.event.originServerTs}
+                    timestamp={mention.event.createdAtEpocMs}
                     userId={sender?.userId}
                     senderId={sender?.userId}
                     name={getPrettyDisplayName(sender).name}

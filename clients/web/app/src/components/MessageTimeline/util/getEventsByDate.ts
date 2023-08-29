@@ -191,7 +191,7 @@ export const getEventsByDate = (
 
             let group = dateGroups[dateGroups.length - 1]
             const prevDate = group?.date.humanDate
-            const date = new Date(event.originServerTs)
+            const date = new Date(event.createdAtEpocMs)
             const humanDate = getRelativeDays(date)
 
             if (humanDate !== prevDate) {

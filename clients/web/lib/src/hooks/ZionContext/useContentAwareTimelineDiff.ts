@@ -62,10 +62,10 @@ export function useContentAwareTimelineDiffCasablanca(casablancaClient?: Casabla
                             channelId: toCasablancaRoomId(value.channelId),
                             threadParentId: value.threadParentId,
                             eventId: value.eventId,
-                            eventOriginServerTs: Number(value.eventOriginServerTsEpochMs),
+                            eventCreatedAtEpocMs: Number(value.eventCreatedAtEpochMs),
                             isUnread: value.isUnread,
-                            markedUnreadAtTs: Number(value.markedUnreadAtTsEpochMs),
-                            markedReadAtTs: Number(value.markedReadAtTsEpochMs),
+                            markedUnreadAtTs: Number(value.markedUnreadAtEpochMs),
+                            markedReadAtTs: Number(value.markedReadAtEpochMs),
                             mentions: value.mentions ? value.mentions : 0,
                         }
                         if (!updated[key] || updated[key].markedReadAtTs < marker.markedReadAtTs) {
@@ -209,7 +209,9 @@ function toFullyReadMarker(value: any): FullyReadMarker {
         channelId: toRoomId(value.channelId),
         threadParentId: value.threadParentId ? (value.threadParentId as string) : undefined,
         eventId: value.eventId as string,
-        eventOriginServerTs: value.eventOriginServerTs ? (value.eventOriginServerTs as number) : 0,
+        eventCreatedAtEpocMs: value.eventCreatedAtEpochMs
+            ? (value.eventCreatedAtEpochMs as number)
+            : 0,
         isUnread: value.isUnread as boolean,
         markedReadAtTs: value.markedReadAtTs as number,
         markedUnreadAtTs: value.markedUnreadAtTs as number,
@@ -378,7 +380,7 @@ function diffTimeline(
                                           channelId: makeRoomIdentifier(roomId),
                                           threadParentId: event.threadParentId,
                                           eventId: event.eventId,
-                                          eventOriginServerTs: event.originServerTs,
+                                          eventCreatedAtEpocMs: event.createdAtEpocMs,
                                           isUnread: true,
                                           markedUnreadAtTs: Date.now(),
                                           markedReadAtTs: 0,
@@ -465,11 +467,11 @@ function _diffDeleted(
     //First we process mentions update in the loop below
     for (let i = deletedEvents.length - 1; i >= prevDeletedEvents.length; i--) {
         const event = deletedEvents[i]
-        const originServerTs = event.originServerTs
-        //check this if (markedReadAtTs < markedUnreadAtTs && originServerTs > markedReadAtTs)
+        const createdAtEpocMs = event.createdAtEpocMs //TODO: we can't depend on createdAtEpocMs for comparing events https://linear.app/hnt-labs/issue/HNT-2292/unread-markers-cant-count-on-timestamps-in-river
+        //check this if (markedReadAtTs < markedUnreadAtTs && createdAtEpocMs > markedReadAtTs)
         //if this condition below is false - there no updates for channel unread state and mentions count
         //as currently processed event is in the read section
-        if (originServerTs > markedReadAtTs) {
+        if (createdAtEpocMs > markedReadAtTs) {
             //If event that we are deleting has mention - decrement mentions count for the channel
             if (event.isMentioned) {
                 updated[roomId].mentions -= 1
@@ -489,12 +491,12 @@ function _diffDeleted(
         if (!isCountedAsUnreadZTEvent(events[i], userId)) {
             continue
         }
-        //check this if (originServerTs > markedReadAtTs)
+        //check this if (createdAtEpocMs > markedReadAtTs)
         //if this condition below is false - there no updates for channel unread state and mentions count
         //as currently processed event is in the read section
-        if (events[i].originServerTs > updated[roomId].markedReadAtTs) {
+        if (events[i].createdAtEpocMs > updated[roomId].markedReadAtTs) {
             updated[roomId].eventId = events[i].eventId
-            updated[roomId].eventOriginServerTs = events[i].originServerTs
+            updated[roomId].eventCreatedAtEpocMs = events[i].createdAtEpocMs
             updated[roomId].isUnread = true
         } else {
             //Stop if we are earlier than markedReadAtTs
@@ -523,10 +525,10 @@ function _diffReplaced(
         if (updated[roomId]) {
             for (let i = prevReplacedEvents.length; i < replacedEvents.length; i++) {
                 const event = replacedEvents[i]
-                const originServerTs = event.newEvent.originServerTs
+                const createdAtEpocMs = event.newEvent.createdAtEpocMs // todo, use something other than timestamps https://linear.app/hnt-labs/issue/HNT-2292/unread-markers-cant-count-on-timestamps-in-river
                 const markedReadAtTs = updated[roomId].markedReadAtTs
                 const markedUnreadAtTs = updated[roomId].markedUnreadAtTs
-                if (markedReadAtTs < markedUnreadAtTs && originServerTs > markedReadAtTs) {
+                if (markedReadAtTs < markedUnreadAtTs && createdAtEpocMs > markedReadAtTs) {
                     const wasMentionedBefore = event.oldEvent.isMentioned
                     const wasMentionedAfter = event.newEvent.isMentioned
                     // this check
@@ -561,12 +563,13 @@ function _diffReplaced(
                 if (!isCountedAsUnreadZTEvent(events[i], userId)) {
                     continue
                 }
-                //check this if (originServerTs > markedReadAtTs)
+                //check this if (createdAtEpocMs > markedReadAtTs)
                 //if this condition below is false - there no updates for channel unread state and mentions count
                 //as currently processed event is in the read section
-                if (events[i].originServerTs > updated[roomId].markedReadAtTs) {
+                if (events[i].createdAtEpocMs > updated[roomId].markedReadAtTs) {
+                    // todo use something other than timestamps https://linear.app/hnt-labs/issue/HNT-2292/unread-markers-cant-count-on-timestamps-in-river
                     updated[roomId].eventId = events[i].eventId
-                    updated[roomId].eventOriginServerTs = events[i].originServerTs
+                    updated[roomId].eventCreatedAtEpocMs = events[i].createdAtEpocMs
                     updated[roomId].isUnread = true
                 } else {
                     //Stop if we are earlier than markedReadAtTs
@@ -616,7 +619,7 @@ function _diffTimeline(
                           channelId: makeRoomIdentifier(roomId),
                           threadParentId: isThread ? id : undefined,
                           eventId: events[0].eventId,
-                          eventOriginServerTs: events[0].originServerTs,
+                          eventCreatedAtEpocMs: events[0].createdAtEpocMs,
                           isUnread: true,
                           markedUnreadAtTs: Date.now(),
                           markedReadAtTs: 0,

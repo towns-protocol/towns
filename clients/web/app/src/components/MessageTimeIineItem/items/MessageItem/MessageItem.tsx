@@ -85,7 +85,7 @@ export const MessageItem = (props: Props) => {
             selectable={isSelectable}
             displayContext={displayContext}
             replies={replies}
-            key={`${event.eventId}${event.updatedServerTs ?? event.originServerTs}${msgTypeKey}`}
+            key={`${event.eventId}${event.updatedAtEpocMs ?? event.createdAtEpocMs}${msgTypeKey}`}
         >
             {displayEncrypted ? (
                 <TimelineEncryptedContent event={event} displayContext={displayContext} />
@@ -210,7 +210,7 @@ const MessageWrapper = React.memo((props: MessageWrapperProps) => {
             userId={userId}
             senderId={sender.id}
             canReply={!event.isLocalPending && type !== MessageTimelineType.Thread}
-            timestamp={event.originServerTs}
+            timestamp={event.createdAtEpocMs}
             channelId={channelId}
             editable={isOwn && !event.isLocalPending}
             eventId={event.eventId}

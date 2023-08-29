@@ -176,8 +176,8 @@ export function toEvent_FromRiverEvent(message: RiverEvent, userId: string): Tim
     return {
         eventId: eventId,
         status: isSender ? undefined : undefined, // todo: set status for events this user sent
-        originServerTs: Date.now(), // todo: timestamps
-        updatedServerTs: Date.now(), // todo: timestamps
+        createdAtEpocMs: Date.now(), // todo: timestamps
+        updatedAtEpocMs: Date.now(), // todo: timestamps
         content: content,
         fallbackContent: fbc,
         isLocalPending: eventId.startsWith('~'),
@@ -204,8 +204,8 @@ export function toEvent(message: ParsedEvent, userId: string): TimelineEvent {
     return {
         eventId: eventId,
         status: isSender ? undefined : undefined, // todo: set status for events this user sent
-        originServerTs: Date.now(), // todo: timestamps
-        updatedServerTs: Date.now(), // todo: timestamps
+        createdAtEpocMs: Date.now(), // todo: timestamps
+        updatedAtEpocMs: Date.now(), // todo: timestamps
         content: content,
         fallbackContent: fbc,
         isLocalPending: eventId.startsWith('~'),

@@ -13,12 +13,12 @@ export async function sendFullyReadMarkers(
             channelId: fullyReadMarker.channelId.networkId,
             threadParentId: fullyReadMarker.threadParentId,
             eventId: fullyReadMarker.eventId,
-            eventOriginServerTsEpochMs: fullyReadMarker.eventOriginServerTs
-                ? BigInt(fullyReadMarker.eventOriginServerTs)
+            eventCreatedAtEpochMs: fullyReadMarker.eventCreatedAtEpocMs
+                ? BigInt(fullyReadMarker.eventCreatedAtEpocMs)
                 : undefined,
             isUnread: fullyReadMarker.isUnread,
-            markedReadAtTsEpochMs: BigInt(fullyReadMarker.markedReadAtTs),
-            markedUnreadAtTsEpochMs: BigInt(fullyReadMarker.markedUnreadAtTs),
+            markedReadAtEpochMs: BigInt(fullyReadMarker.markedReadAtTs),
+            markedUnreadAtEpochMs: BigInt(fullyReadMarker.markedUnreadAtTs),
             mentions: fullyReadMarker.mentions,
         })
 

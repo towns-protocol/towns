@@ -13,7 +13,7 @@ export const useFocusMessage = (
         last.item.event.sender.id === userId &&
         // TODO: we actually want to compare the message with the last message
         // sent by the user from the device.
-        Date.now() - last.item.event.originServerTs < 1000 * 5
+        Date.now() - last.item.event.createdAtEpocMs < 1000 * 5
 
     const lastKey = last?.id
 

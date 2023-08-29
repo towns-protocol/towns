@@ -358,8 +358,8 @@ function toReplacedMessageEvent(prev: TimelineEvent, next: TimelineEvent): Timel
         return {
             eventId: eventId,
             status: next.status,
-            originServerTs: prev.originServerTs,
-            updatedServerTs: next.originServerTs,
+            createdAtEpocMs: prev.createdAtEpocMs,
+            updatedAtEpocMs: next.createdAtEpocMs,
             content: {
                 ...next.content,
                 inReplyTo: prev.content.inReplyTo,
@@ -378,14 +378,19 @@ function toReplacedMessageEvent(prev: TimelineEvent, next: TimelineEvent): Timel
         return {
             ...next,
             eventId: prev.eventId,
-            originServerTs: prev.originServerTs,
+            createdAtEpocMs: prev.createdAtEpocMs,
+            updatedAtEpocMs: next.createdAtEpocMs,
             threadParentId: prev.threadParentId,
             reactionParentId: prev.reactionParentId,
         }
     } else {
-        // make sure we carry the originServerTs of the previous event
+        // make sure we carry the createdAtEpocMs of the previous event
         // so we don't end up with a timeline that has events out of order.
-        return { ...next, originServerTs: prev.originServerTs }
+        return {
+            ...next,
+            createdAtEpocMs: prev.createdAtEpocMs,
+            updatedAtEpocMs: next.createdAtEpocMs,
+        }
     }
 }
 
@@ -497,7 +502,7 @@ function makeNewThreadStats(
     return {
         replyCount: 0,
         userIds: new Set<string>(),
-        latestTs: event.originServerTs,
+        latestTs: event.createdAtEpocMs,
         parentId,
         parentEvent: parent,
         parentMessageContent: getRoomMessageContent(parent),
@@ -517,7 +522,7 @@ function addThreadStat(
         return updated
     }
     updated.replyCount++
-    updated.latestTs = Math.max(updated.latestTs, event.originServerTs)
+    updated.latestTs = Math.max(updated.latestTs, event.createdAtEpocMs)
     const senderId = getMessageSenderId(event)
     if (senderId) {
         updated.userIds.add(senderId)

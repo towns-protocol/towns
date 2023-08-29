@@ -8,7 +8,7 @@ export const TimelineEncryptedContent = React.memo(
         const { event } = props
 
         const width = Math.min(
-            (Math.floor((Math.cos(event.originServerTs / 1000) * 0.5 + 0.5) * 4) / 4) * 250 + 200,
+            (Math.floor((Math.cos(event.createdAtEpocMs / 1000) * 0.5 + 0.5) * 4) / 4) * 250 + 200,
             window.innerWidth - 100,
         )
 

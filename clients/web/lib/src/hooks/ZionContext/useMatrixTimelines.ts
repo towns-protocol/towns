@@ -208,8 +208,8 @@ export function toEvent(event: MatrixEvent, userId: string): TimelineEvent {
     return {
         eventId: eventId,
         status: isSender ? event.status ?? undefined : undefined,
-        originServerTs: event.getTs(),
-        updatedServerTs: event.replacingEvent()?.getTs(),
+        createdAtEpocMs: event.getTs(),
+        updatedAtEpocMs: event.replacingEvent()?.getTs(),
         content: content,
         fallbackContent: fbc,
         isLocalPending: eventId.startsWith('~'),

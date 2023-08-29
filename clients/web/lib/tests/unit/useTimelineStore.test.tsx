@@ -142,7 +142,7 @@ describe('UseTimelineStore', () => {
                     MSG_0: {
                         replyCount: 2,
                         userIds: new Set(['bob']),
-                        latestTs: events[2].originServerTs,
+                        latestTs: events[2].createdAtEpocMs,
                         parentId: events[0].eventId,
                         parentEvent: events[0],
                         parentMessageContent: events[0].content as RoomMessageEvent,
@@ -168,7 +168,7 @@ describe('UseTimelineStore', () => {
                     MSG_0: {
                         replyCount: 1,
                         userIds: new Set(['bob']),
-                        latestTs: events[1].originServerTs,
+                        latestTs: events[1].createdAtEpocMs,
                         parentId: events[0].eventId,
                         parentEvent: events[0],
                         parentMessageContent: events[0].content as RoomMessageEvent,
@@ -198,7 +198,7 @@ describe('UseTimelineStore', () => {
                     MSG_0: {
                         replyCount: 0,
                         userIds: new Set([]),
-                        latestTs: events[1].originServerTs,
+                        latestTs: events[1].createdAtEpocMs,
                         parentId: events[0].eventId,
                         parentEvent: events[0],
                         parentMessageContent: events[0].content as RoomMessageEvent,

@@ -35,7 +35,7 @@ function generateMessageRenderEvent(messageContent: MessageContent): MessageRend
         displayEncrypted: false,
         event: {
             eventId: 'event-id',
-            originServerTs: 0,
+            createdAtEpocMs: 0,
             fallbackContent: '',
             isLocalPending: false,
             isMentioned: false,

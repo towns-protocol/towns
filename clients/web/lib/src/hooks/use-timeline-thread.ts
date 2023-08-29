@@ -30,7 +30,7 @@ export function useTimelineThread(
                       messages:
                           state.threads[roomId.networkId]?.[eventId]
                               ?.slice()
-                              .sort((a, b) => a.originServerTs - b.originServerTs) ??
+                              .sort((a, b) => a.createdAtEpocMs - b.createdAtEpocMs) ??
                           EMPTY_TIMELINE,
                   }
                 : { parent: undefined, messages: EMPTY_TIMELINE },
@@ -51,7 +51,7 @@ function toDummyThreadStats(
         cache.current[event.eventId] = {
             replyCount: 0,
             userIds: new Set<string>(event.sender.id ? [event.sender.id] : []),
-            latestTs: event.originServerTs,
+            latestTs: event.createdAtEpocMs,
             parentId: event.eventId,
             parentEvent: event,
             parentMessageContent: content,

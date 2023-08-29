@@ -293,7 +293,7 @@ export const MessageTimeline = (props: Props) => {
                     if (groupByUser) {
                         const userId = curr.item.event.sender.id
                         const date = Math.floor(
-                            curr.item.event.originServerTs / (1000 * 60 * 60 * 24),
+                            curr.item.event.createdAtEpocMs / (1000 * 60 * 60 * 24),
                         )
                         if (
                             // count first chunk
