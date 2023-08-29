@@ -16,13 +16,13 @@ export type TimelinesMap = Record<string, TimelineEvent[]>
 /// ThreadStatsMap: { roomId: { eventId: ThreadStats } }
 export type ThreadStatsMap = Record<string, Record<string, ThreadStats>>
 /// ThreadContentMap: { roomId: { eventId: ThreadContent } }
-export type ThreadsMap = Record<string, Record<string, TimelineEvent[]>>
+export type ThreadsMap = Record<string, TimelinesMap>
 /// ReactionsMap: { roomId: { eventId: MessageReactions } }
 export type ReactionsMap = Record<string, Record<string, MessageReactions>>
 
 export type TimelineStoreStates = {
     timelines: TimelinesMap
-    deletedEvents: Record<string, TimelineEvent[]>
+    deletedEvents: TimelinesMap
     replacedEvents: Record<string, { oldEvent: TimelineEvent; newEvent: TimelineEvent }[]>
     pendingReplacedEvents: Record<string, Record<string, TimelineEvent>>
     threadsStats: ThreadStatsMap
@@ -350,7 +350,6 @@ function makeTimelineStoreInterface(
 }
 
 function toReplacedMessageEvent(prev: TimelineEvent, next: TimelineEvent): TimelineEvent {
-    // for non message events, things are simplier
     if (next.content?.kind === ZTEvent.RoomMessage && prev.content?.kind === ZTEvent.RoomMessage) {
         // when we replace an event, we copy the content up to the root event
         // so we keep the prev id, but use the next content
@@ -476,6 +475,11 @@ function addThreadStats(
                     ...threadsStats[roomId][timelineEvent.eventId],
                     parentEvent: timelineEvent,
                     parentMessageContent: getRoomMessageContent(timelineEvent),
+                    isParticipating:
+                        threadsStats[roomId][timelineEvent.eventId].isParticipating ||
+                        (timelineEvent.content?.kind !== ZTEvent.RedactedEvent &&
+                            threadsStats[roomId][timelineEvent.eventId].replyCount > 0 &&
+                            (timelineEvent.sender.id === userId || timelineEvent.isMentioned)),
                 },
             },
         }
@@ -509,6 +513,9 @@ function addThreadStat(
     userId: string,
 ): ThreadStats {
     const updated = entry ? { ...entry } : makeNewThreadStats(event, parentId, timeline)
+    if (event.content?.kind === ZTEvent.RedactedEvent) {
+        return updated
+    }
     updated.replyCount++
     updated.latestTs = Math.max(updated.latestTs, event.originServerTs)
     const senderId = getMessageSenderId(event)
@@ -550,8 +557,6 @@ function removeThreadStat(
     }
     return { ...threadsStats, [roomId]: updated }
 }
-
-// todo, this should be addReactions, addReaction takes a single reaction
 
 function addReactions(roomId: string, event: TimelineEvent, reactions: ReactionsMap): ReactionsMap {
     const parentId = event.reactionParentId

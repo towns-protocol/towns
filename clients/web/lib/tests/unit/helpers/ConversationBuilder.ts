@@ -16,17 +16,10 @@ import {
 
 export class ConversationBuilder {
     events: TimelineEvent[] = []
+    lastTimestamp = 0
 
     private get index(): number {
         return this.events.length
-    }
-
-    private makeId(id?: string): string {
-        if (id) {
-            this.checkId(id)
-            return id
-        }
-        return this.nextId()
     }
 
     private nextId(): string {
@@ -35,10 +28,18 @@ export class ConversationBuilder {
         return id
     }
 
-    private checkId(id: string): void {
+    private checkId(id: string): string {
         if (this.events.find((e) => e.eventId === id)) {
             throw new Error(`Event with id ${id} already exists`)
         }
+        return id
+    }
+
+    private nextTimestamp(): number {
+        const now = Date.now()
+        const timestamp = now > this.lastTimestamp ? now : this.lastTimestamp + 1
+        this.lastTimestamp = timestamp
+        return timestamp
     }
 
     getEvents(): TimelineEvent[] {
@@ -50,13 +51,15 @@ export class ConversationBuilder {
         body: string
         mentions?: OTWMention[]
         id?: string
+        threadId?: string
     }): ConversationBuilder {
         this.events.push(
-            makeEvent({
-                eventId: this.makeId(params.id),
+            this.makeEvent({
+                eventId: params.id,
                 content: makeMessage({
                     body: params.body,
                     mentions: params.mentions,
+                    threadId: params.threadId,
                 }),
                 userId: params.from,
             }),
@@ -75,8 +78,8 @@ export class ConversationBuilder {
             throw new Error(`Could not find event ${params.edits}`)
         }
         this.events.push(
-            makeEvent({
-                eventId: this.makeId(params.id),
+            this.makeEvent({
+                eventId: params.id,
                 content: makeEdit({
                     body: params.newBody,
                     edits: params.edits,
@@ -94,8 +97,8 @@ export class ConversationBuilder {
             throw new Error(`Could not find event ${params.redacts}`)
         }
         this.events.push(
-            makeEvent({
-                eventId: this.makeId(params.id),
+            this.makeEvent({
+                eventId: params.id,
                 content: makeRedaction({
                     redacts: params.redacts,
                 }),
@@ -104,44 +107,48 @@ export class ConversationBuilder {
         )
         return this
     }
-}
 
-function makeEvent(params: {
-    eventId: string
-    content: TimelineEvent_OneOf
-    userId?: string
-    sender?: { id: string; displayName: string }
-    isSender?: boolean
-}): TimelineEvent {
-    const oUserId = params.userId ?? '@alice:example.com'
-    return {
-        eventId: params.eventId,
-        status: params.isSender ? undefined : undefined, // todo: set status for events this user sent
-        originServerTs: Date.now(), // todo: timestamps
-        updatedServerTs: Date.now(), // todo: timestamps
-        content: params.content,
-        fallbackContent: getFallbackContent(oUserId, params.content),
-        isLocalPending: params.eventId.startsWith('~'),
-        threadParentId: getThreadParentId(params.content),
-        reactionParentId: getReactionParentId(params.content),
-        isMentioned: getIsMentioned(params.content, oUserId),
-        isRedacted: false,
-        sender: params.sender ?? { id: oUserId, displayName: oUserId },
+    private makeEvent(params: {
+        eventId?: string
+        content: TimelineEvent_OneOf
+        userId?: string
+        sender?: { id: string; displayName: string }
+        isSender?: boolean
+    }): TimelineEvent {
+        const oUserId = params.userId ?? '@alice:example.com'
+        const eventId = params.eventId ? this.checkId(params.eventId) : this.nextId()
+        const timestamp = this.nextTimestamp()
+        return {
+            eventId: eventId,
+            status: params.isSender ? undefined : undefined, // todo: set status for events this user sent
+            originServerTs: timestamp,
+            updatedServerTs: timestamp,
+            content: params.content,
+            fallbackContent: getFallbackContent(oUserId, params.content),
+            isLocalPending: eventId.startsWith('~'),
+            threadParentId: getThreadParentId(params.content),
+            reactionParentId: getReactionParentId(params.content),
+            isMentioned: getIsMentioned(params.content, oUserId),
+            isRedacted: false,
+            sender: params.sender ?? { id: oUserId, displayName: oUserId },
+        }
     }
 }
 
 function makeMessage(params: {
     body: string
-    edits?: string
+    replacesMsgId?: string
+    threadId?: string
     mentions?: OTWMention[]
 }): RoomMessageEvent {
     return {
         kind: ZTEvent.RoomMessage,
         body: params.body,
         msgType: MessageType.Text,
+        inReplyTo: params.threadId,
         threadPreview: undefined,
         mentions: [],
-        replacedMsgId: params.edits,
+        replacedMsgId: params.replacesMsgId,
         content: {},
         wireContent: {},
     }
@@ -150,11 +157,13 @@ function makeMessage(params: {
 function makeEdit(params: {
     body: string
     edits: string
+    threadId?: string
     mentions?: OTWMention[]
 }): RoomMessageEvent {
     return makeMessage({
         body: params.body,
-        edits: params.edits,
+        replacesMsgId: params.edits,
+        threadId: params.threadId,
         mentions: params.mentions,
     })
 }
