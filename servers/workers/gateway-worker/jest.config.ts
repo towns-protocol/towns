@@ -13,7 +13,7 @@ export default {
         '^@/(.*)$': '<rootDir>/src/$1',
         '^(\\.{1,2}/.*)\\.js$': '$1',
     },
-    resolver: `../common/resolver.js`,
+    resolver: `../worker-common/resolver.cjs`,
     testRegex: '/test/.*\\.test\\.ts$',
     testEnvironment: 'miniflare',
     testEnvironmentOptions: {

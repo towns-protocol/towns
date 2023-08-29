@@ -1,1 +1,7 @@
-export type Environment = 'development' | 'production' | 'staging' | 'test'
+export type Environment =
+    | 'development'
+    | 'production'
+    | 'staging'
+    | 'test'
+    | 'test-beta'
+    | 'production-beta'

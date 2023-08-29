@@ -3,16 +3,15 @@ import { Environment } from './environment'
 function getAllowedOrigins(env: Environment): string[] {
     switch (env) {
         case 'test':
+        case 'test-beta':
         case 'development':
             /*
                 Everything except for production
             */
             return [
-                'https://app-beta.towns.com',
-                'https://app-beta-staging.towns.com',
-                'https://app-beta-test.towns.com',
                 'https://app-staging.towns.com',
                 'https://app-test.towns.com',
+                'https://app-test-beta.towns.com',
                 'https://harmony-web-pr-*.onrender.com',
                 'http://localhost:3000',
                 'http://localhost:3002', // local app prod builds
@@ -23,15 +22,17 @@ function getAllowedOrigins(env: Environment): string[] {
             ]
         case 'staging': // Stay as close to production as possible.
         case 'production':
+        case 'production-beta':
             /*
                 Production only.
             */
             return [
                 'https://alpha.towns.com',
+                'https://beta.towns.com',
                 'https://app.towns.com',
-                'https://app-staging.towns.com',
-                'https://app-beta-staging.towns.com',
                 'https://app-beta.towns.com',
+                'https://app-staging.towns.com',
+                'https://app-staging-beta.towns.com',
                 'https://harmony-web-pr-*.onrender.com',
                 'https://towns.com',
             ]
