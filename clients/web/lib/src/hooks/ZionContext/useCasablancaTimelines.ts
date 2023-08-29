@@ -23,11 +23,11 @@ import {
     MiniblockHeaderEvent,
     ReactionEvent,
     ReceiptEvent,
+    RedactionActionEvent,
     RoomCreateEvent,
     RoomMemberEvent,
     RoomMessageEncryptedEvent,
     RoomMessageEvent,
-    RoomRedactionEvent,
     SpaceChildEvent,
     TimelineEvent,
     TimelineEvent_OneOf,
@@ -183,7 +183,7 @@ export function toEvent_FromRiverEvent(message: RiverEvent, userId: string): Tim
         threadParentId: getThreadParentId(content),
         reactionParentId: getReactionParentId(content),
         isMentioned: getIsMentioned(content, userId),
-        isRedacted: content?.kind === ZTEvent.RoomRedaction,
+        isRedacted: false, // redacted is handled in use timeline store when the redaction event is received
         sender,
     }
 }
@@ -211,7 +211,7 @@ export function toEvent(message: ParsedEvent, userId: string): TimelineEvent {
         threadParentId: getThreadParentId(content),
         reactionParentId: getReactionParentId(content),
         isMentioned: getIsMentioned(content, userId),
-        isRedacted: content?.kind === ZTEvent.RoomRedaction,
+        isRedacted: false, // redacted is handled in use timeline store when the redaction event is received
         sender,
     }
 }
@@ -512,10 +512,9 @@ function toTownsContent_ChanelPayload_Message_fromRiverEvent(
             case 'redaction':
                 return {
                     content: {
-                        kind: ZTEvent.RoomRedaction,
-                        inReplyTo: channelMessage.payload.value.refEventId,
-                        content: {},
-                    } satisfies RoomRedactionEvent,
+                        kind: ZTEvent.RedactionActionEvent,
+                        refEventId: channelMessage.payload.value.refEventId,
+                    } satisfies RedactionActionEvent,
                 }
             case 'edit': {
                 const newPost = channelMessage.payload.value.post

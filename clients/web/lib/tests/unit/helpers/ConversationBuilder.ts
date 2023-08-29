@@ -1,7 +1,7 @@
 import {
     OTWMention,
+    RedactionActionEvent,
     RoomMessageEvent,
-    RoomRedactionEvent,
     TimelineEvent,
     TimelineEvent_OneOf,
     ZTEvent,
@@ -159,10 +159,9 @@ function makeEdit(params: {
     })
 }
 
-function makeRedaction(params: { redacts: string }): RoomRedactionEvent {
+function makeRedaction(params: { redacts: string }): RedactionActionEvent {
     return {
-        kind: ZTEvent.RoomRedaction,
-        inReplyTo: params.redacts,
-        content: {},
+        kind: ZTEvent.RedactionActionEvent,
+        refEventId: params.redacts,
     }
 }

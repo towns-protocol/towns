@@ -6,8 +6,8 @@ import {
     RegisterRequest,
 } from '../../../src/hooks/login'
 import {
+    RedactionActionEvent,
     RoomMessageEvent,
-    RoomRedactionEvent,
     TimelineEvent,
     TimelineEvent_OneOf,
     ZTEvent,
@@ -496,8 +496,8 @@ export class ZionTestClient extends ZionClient {
     public getMessages(roomId: RoomIdentifier): string[] {
         const messages = this.getEvents_Typed<RoomMessageEvent>(roomId, ZTEvent.RoomMessage)
         const redactions = new Set(
-            this.getEvents_Typed<RoomRedactionEvent>(roomId, ZTEvent.RoomRedaction)
-                .map((e) => e.content.inReplyTo)
+            this.getEvents_Typed<RedactionActionEvent>(roomId, ZTEvent.RedactionActionEvent)
+                .map((e) => e.content.refEventId)
                 .filter((e) => e),
         )
         return messages.filter((e) => !redactions.has(e.eventId)).map((e) => e.content.body)

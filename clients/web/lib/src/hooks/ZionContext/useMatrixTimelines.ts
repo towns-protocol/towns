@@ -203,7 +203,7 @@ export function toEvent(event: MatrixEvent, userId: string): TimelineEvent {
         avatarUrl: event.sender?.getMxcAvatarUrl() ?? undefined,
     }
     const isSender = sender.id === userId
-    const fbc = `${event.getType()} ${getFallbackContent(sender.displayName, content, error)}`
+    const fbc = `${content?.kind ?? '??'} ${getFallbackContent(sender.displayName, content, error)}`
     // console.log('!!!! to event', { id: event.getId(), fbc, content, mcontent: event.getContent() })
     return {
         eventId: eventId,
@@ -387,11 +387,15 @@ function toZionContent(
                 },
             }
         case MatrixEventType.RoomRedaction: {
+            if (!event.event.redacts) {
+                return {
+                    error: `${describe()} has no replyEventId`,
+                }
+            }
             return {
                 content: {
-                    kind: ZTEvent.RoomRedaction,
-                    inReplyTo: event.replyEventId,
-                    content: content,
+                    kind: ZTEvent.RedactionActionEvent,
+                    refEventId: event.event.redacts,
                 },
             }
         }

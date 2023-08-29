@@ -74,7 +74,7 @@ describe('sendMessageHooks', () => {
                     timeline.filter(
                         (x) =>
                             x.content?.kind === ZTEvent.RoomMessage ||
-                            x.content?.kind === ZTEvent.RoomRedaction,
+                            x.content?.kind === ZTEvent.RedactionActionEvent,
                     ),
                 [timeline],
             )
@@ -208,6 +208,6 @@ describe('sendMessageHooks', () => {
         // redact the event
         fireEvent.click(redactButton)
         // exect the message to be empty
-        await waitFor(() => expect(message1).toHaveTextContent('m.room.redaction'))
+        await waitFor(() => expect(message1).toHaveTextContent(ZTEvent.RedactionActionEvent))
     })
 })

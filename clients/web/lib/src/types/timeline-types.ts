@@ -35,6 +35,8 @@ export enum ZTEvent {
     Notice = 'm.notice',
     Reaction = 'm.reaction',
     Receipt = 'm.receipt',
+    RedactedEvent = 'm.redacted_event',
+    RedactionActionEvent = 'm.redaction_action_event',
     RoomAvatar = 'm.room.avatar',
     RoomCanonicalAlias = 'm.room.canonical_alias',
     RoomCreate = 'm.room.create',
@@ -46,7 +48,6 @@ export enum ZTEvent {
     RoomMessageEncrypted = 'm.room.encrypted',
     RoomName = 'm.room.name',
     RoomPowerLevels = 'm.room.power_levels',
-    RoomRedaction = 'm.room.redaction',
     RoomTopic = 'm.room.topic',
     SpaceChild = 'm.space.child',
     SpaceParent = 'm.space.parent',
@@ -58,6 +59,8 @@ export type TimelineEvent_OneOf =
     | NoticeEvent
     | ReactionEvent
     | ReceiptEvent
+    | RedactedEvent
+    | RedactionActionEvent
     | RoomCanonicalAliasEvent
     | RoomEncryptionEvent
     | RoomHistoryVisibilityEvent
@@ -68,7 +71,6 @@ export type TimelineEvent_OneOf =
     | RoomMemberEvent
     | RoomMessageEvent
     | RoomNameEvent
-    | RoomRedactionEvent
     | RoomPowerLevelsEvent
     | RoomTopicEvent
     | SpaceChildEvent
@@ -179,10 +181,15 @@ export interface RoomPowerLevelsEvent extends PowerLevels {
     kind: ZTEvent.RoomPowerLevels
 }
 
-export interface RoomRedactionEvent {
-    kind: ZTEvent.RoomRedaction
-    inReplyTo?: string
-    content: IContent // room messages have lots of representations
+// original event: the event that was redacted
+export interface RedactedEvent {
+    kind: ZTEvent.RedactedEvent
+}
+
+// the event that redacted the original event
+export interface RedactionActionEvent {
+    kind: ZTEvent.RedactionActionEvent
+    refEventId: string
 }
 
 export interface SpaceChildEvent {
@@ -325,8 +332,10 @@ export function getFallbackContent(
             return `newValue: ${content.name}`
         case ZTEvent.RoomTopic:
             return `newValue: ${content.topic}`
-        case ZTEvent.RoomRedaction:
-            return `${senderDisplayName}: ~Redacted~`
+        case ZTEvent.RedactedEvent:
+            return `~Redacted~`
+        case ZTEvent.RedactionActionEvent:
+            return `Redacts ${content.refEventId}`
         case ZTEvent.RoomPowerLevels:
             return `${content.kind}`
         case ZTEvent.SpaceChild:

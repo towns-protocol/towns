@@ -660,7 +660,7 @@ export function getReplacedId(content: TimelineEvent_OneOf | undefined): string 
 }
 
 export function getRedactsId(content: TimelineEvent_OneOf | undefined): string | undefined {
-    return content?.kind === ZTEvent.RoomRedaction ? content.inReplyTo : undefined
+    return content?.kind === ZTEvent.RedactionActionEvent ? content.refEventId : undefined
 }
 
 export function getThreadParentId(content: TimelineEvent_OneOf | undefined): string | undefined {
