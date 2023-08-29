@@ -14,10 +14,10 @@ TYPINGS_DIR="servers/dendrite/zion/contracts/zion_${CHAIN}"
 FROZEN="${2:-}"
 
 # Create typings using typechain
-yarn typechain --target=ethers-v5 "contracts/out/**/?(Events|Errors|Member|CouncilStaking|IEntitlement|TokenEntitlement|UserEntitlement|Space|SpaceFactory|Pioneer|Mock721).json" --out-dir "packages/generated/${CHAIN}/typings"
+yarn typechain --target=ethers-v5 "contracts/out/**/?(Events|Errors|Member|CouncilStaking|IEntitlement|TokenEntitlement|UserEntitlement|Space|SpaceFactory|Pioneer|Mock721|IEntitlementGated|IEntitlementCheckerEvents|IEntitlementChecker).json" --out-dir "packages/generated/${CHAIN}/typings"
 
 # Move abis to the packages folder
-mkdir -p $ABI_DIR && cp -a contracts/out/{Events,Errors,Member,CouncilStaking,entitlements/IEntitlement,TokenEntitlement,UserEntitlement,Space,SpaceFactory,Pioneer}.sol/* "packages/generated/${CHAIN}/abis"
+mkdir -p $ABI_DIR && cp -a contracts/out/{Events,Errors,Member,CouncilStaking,entitlements/IEntitlement,TokenEntitlement,UserEntitlement,Space,SpaceFactory,Pioneer,IEntitlement*,Entitlement*}.sol/* "packages/generated/${CHAIN}/abis"
 
 # Copy the json abis to TS files for type inference
 for file in $ABI_DIR/*.abi.json; do

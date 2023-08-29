@@ -1,0 +1,148 @@
+{
+  "compiler": {
+    "version": "0.8.20+commit.a1b79de6"
+  },
+  "language": "Solidity",
+  "output": {
+    "abi": [
+      {
+        "inputs": [
+          {
+            "internalType": "bytes32",
+            "name": "transactionId",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "address[]",
+            "name": "selectedNodes",
+            "type": "address[]"
+          }
+        ],
+        "name": "emitEntitlementCheckRequested",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "requestedNodeCount",
+            "type": "uint256"
+          },
+          {
+            "internalType": "address",
+            "name": "requestingContract",
+            "type": "address"
+          }
+        ],
+        "name": "getRandomNodes",
+        "outputs": [
+          {
+            "internalType": "address[]",
+            "name": "",
+            "type": "address[]"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "nodeCount",
+        "outputs": [
+          {
+            "internalType": "uint256",
+            "name": "",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "registerNode",
+        "outputs": [
+          {
+            "internalType": "bool",
+            "name": "",
+            "type": "bool"
+          }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "unregisterNode",
+        "outputs": [
+          {
+            "internalType": "bool",
+            "name": "",
+            "type": "bool"
+          }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      }
+    ],
+    "devdoc": {
+      "kind": "dev",
+      "methods": {},
+      "version": 1
+    },
+    "userdoc": {
+      "kind": "user",
+      "methods": {},
+      "version": 1
+    }
+  },
+  "settings": {
+    "compilationTarget": {
+      "contracts/src/crosschain/IEntitlementChecker.sol": "IEntitlementChecker"
+    },
+    "evmVersion": "paris",
+    "libraries": {},
+    "metadata": {
+      "appendCBOR": false,
+      "bytecodeHash": "none"
+    },
+    "optimizer": {
+      "enabled": true,
+      "runs": 200
+    },
+    "remappings": [
+      ":@openzeppelin/=lib/openzeppelin-contracts/",
+      ":@prb/test/=lib/prb-test/src/",
+      ":ERC721A/=lib/ERC721A/contracts/",
+      ":council/=lib/council/contracts/",
+      ":ds-test/=lib/ds-test/src/",
+      ":erc4626-tests/=lib/operator-filter-registry/lib/openzeppelin-contracts/lib/erc4626-tests/",
+      ":forge-std/=lib/forge-std/src/",
+      ":openzeppelin-contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/",
+      ":openzeppelin-contracts/=lib/openzeppelin-contracts/",
+      ":operator-filter-registry/=lib/operator-filter-registry/",
+      ":prb-test/=lib/prb-test/src/"
+    ]
+  },
+  "sources": {
+    "contracts/src/crosschain/IEntitlementChecker.sol": {
+      "keccak256": "0x94de9de695e3d670312dfba784bd2cb8b61610aec17891074fe530bbb5e459c0",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://d62403df2139ddd4e26bb4987d02db0c4b0ffff06aa76508c88fab69c7f570c2",
+        "dweb:/ipfs/QmatDTSs82dr6LFifooZqe91YiEpFf2on19h6QNza1zJwg"
+      ]
+    },
+    "contracts/src/crosschain/IEntitlementCheckerEvents.sol": {
+      "keccak256": "0xd92c50c58665221673b0c680b1b1ab35ed4d217de192b190f5f4388defcec1e8",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://7ca7990018f8fec37c7cf5139ef94c427c2dd3bb873861658c664d62f85e80f2",
+        "dweb:/ipfs/QmWTNTbjD5PWEVva82NqCUqrQWWem9y9F6wXEdVz1dc3hJ"
+      ]
+    }
+  },
+  "version": 1
+}

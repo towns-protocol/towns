@@ -102,6 +102,11 @@ export default [
   },
   {
     "inputs": [],
+    "name": "TownOwner__OnlyTownOwnerAllowed",
+    "type": "error"
+  },
+  {
+    "inputs": [],
     "name": "TransferCallerNotOwnerNorApproved",
     "type": "error"
   },
@@ -123,6 +128,16 @@ export default [
   {
     "inputs": [],
     "name": "URIQueryForNonexistentToken",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "Validator__InvalidAddress",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "Validator__InvalidStringLength",
     "type": "error"
   },
   {
@@ -299,6 +314,32 @@ export default [
     "anonymous": false,
     "inputs": [
       {
+        "indexed": false,
+        "internalType": "address",
+        "name": "factory",
+        "type": "address"
+      }
+    ],
+    "name": "TownOwner__SetFactory",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "town",
+        "type": "address"
+      }
+    ],
+    "name": "TownOwner__UpdateTown",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
         "indexed": true,
         "internalType": "address",
         "name": "from",
@@ -411,7 +452,7 @@ export default [
     "inputs": [
       {
         "internalType": "address",
-        "name": "townAddress",
+        "name": "town",
         "type": "address"
       }
     ],
@@ -496,7 +537,7 @@ export default [
       },
       {
         "internalType": "address",
-        "name": "townAddress",
+        "name": "town",
         "type": "address"
       }
     ],
@@ -704,6 +745,29 @@ export default [
     "name": "transferFrom",
     "outputs": [],
     "stateMutability": "payable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "town",
+        "type": "address"
+      },
+      {
+        "internalType": "string",
+        "name": "name",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "uri",
+        "type": "string"
+      }
+    ],
+    "name": "updateTownInfo",
+    "outputs": [],
+    "stateMutability": "nonpayable",
     "type": "function"
   }
 ] as const

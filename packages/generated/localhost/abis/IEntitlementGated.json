@@ -1,0 +1,537 @@
+{
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "transactionId",
+          "type": "bytes32"
+        }
+      ],
+      "name": "deleteTransaction",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "transactionId",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "enum IEntitlementCheckerEvents.NodeVoteStatus",
+          "name": "result",
+          "type": "uint8"
+        }
+      ],
+      "name": "postEntitlementCheckResult",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "requestEntitlementCheck",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ],
+  "bytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "deployedBytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "methodIdentifiers": {
+    "deleteTransaction(bytes32)": "4b5e97fe",
+    "postEntitlementCheckResult(bytes32,uint8)": "f4efb0bb",
+    "requestEntitlementCheck()": "d7eca30a"
+  },
+  "rawMetadata": "{\"compiler\":{\"version\":\"0.8.20+commit.a1b79de6\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"transactionId\",\"type\":\"bytes32\"}],\"name\":\"deleteTransaction\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"transactionId\",\"type\":\"bytes32\"},{\"internalType\":\"enum IEntitlementCheckerEvents.NodeVoteStatus\",\"name\":\"result\",\"type\":\"uint8\"}],\"name\":\"postEntitlementCheckResult\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"requestEntitlementCheck\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"contracts/src/crosschain/IEntitlementGated.sol\":\"IEntitlementGated\"},\"evmVersion\":\"paris\",\"libraries\":{},\"metadata\":{\"appendCBOR\":false,\"bytecodeHash\":\"none\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[\":@openzeppelin/=lib/openzeppelin-contracts/\",\":@prb/test/=lib/prb-test/src/\",\":ERC721A/=lib/ERC721A/contracts/\",\":council/=lib/council/contracts/\",\":ds-test/=lib/ds-test/src/\",\":erc4626-tests/=lib/operator-filter-registry/lib/openzeppelin-contracts/lib/erc4626-tests/\",\":forge-std/=lib/forge-std/src/\",\":openzeppelin-contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/\",\":openzeppelin-contracts/=lib/openzeppelin-contracts/\",\":operator-filter-registry/=lib/operator-filter-registry/\",\":prb-test/=lib/prb-test/src/\"]},\"sources\":{\"contracts/src/crosschain/IEntitlementCheckerEvents.sol\":{\"keccak256\":\"0xd92c50c58665221673b0c680b1b1ab35ed4d217de192b190f5f4388defcec1e8\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://7ca7990018f8fec37c7cf5139ef94c427c2dd3bb873861658c664d62f85e80f2\",\"dweb:/ipfs/QmWTNTbjD5PWEVva82NqCUqrQWWem9y9F6wXEdVz1dc3hJ\"]},\"contracts/src/crosschain/IEntitlementGated.sol\":{\"keccak256\":\"0xcac848143574a746bd1468827ec3fe216d9e29daf29c737281e5659a414c8b6e\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://966f6a08ec37834a40c658238460da6d89102d22ef464f30733d3f9a938a8b26\",\"dweb:/ipfs/QmVk8eYbZWZcAimbKDxAVVVmMxDeMWEhazswWHLpsRDDbV\"]}},\"version\":1}",
+  "metadata": {
+    "compiler": {
+      "version": "0.8.20+commit.a1b79de6"
+    },
+    "language": "Solidity",
+    "output": {
+      "abi": [
+        {
+          "inputs": [
+            {
+              "internalType": "bytes32",
+              "name": "transactionId",
+              "type": "bytes32"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "deleteTransaction",
+          "outputs": [
+            {
+              "internalType": "bool",
+              "name": "",
+              "type": "bool"
+            }
+          ]
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "bytes32",
+              "name": "transactionId",
+              "type": "bytes32"
+            },
+            {
+              "internalType": "enum IEntitlementCheckerEvents.NodeVoteStatus",
+              "name": "result",
+              "type": "uint8"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "postEntitlementCheckResult",
+          "outputs": [
+            {
+              "internalType": "bool",
+              "name": "",
+              "type": "bool"
+            }
+          ]
+        },
+        {
+          "inputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function",
+          "name": "requestEntitlementCheck",
+          "outputs": [
+            {
+              "internalType": "bool",
+              "name": "",
+              "type": "bool"
+            }
+          ]
+        }
+      ],
+      "devdoc": {
+        "kind": "dev",
+        "methods": {},
+        "version": 1
+      },
+      "userdoc": {
+        "kind": "user",
+        "methods": {},
+        "version": 1
+      }
+    },
+    "settings": {
+      "remappings": [
+        "@openzeppelin/=lib/openzeppelin-contracts/",
+        "@prb/test/=lib/prb-test/src/",
+        "ERC721A/=lib/ERC721A/contracts/",
+        "council/=lib/council/contracts/",
+        "ds-test/=lib/ds-test/src/",
+        "erc4626-tests/=lib/operator-filter-registry/lib/openzeppelin-contracts/lib/erc4626-tests/",
+        "forge-std/=lib/forge-std/src/",
+        "openzeppelin-contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/",
+        "openzeppelin-contracts/=lib/openzeppelin-contracts/",
+        "operator-filter-registry/=lib/operator-filter-registry/",
+        "prb-test/=lib/prb-test/src/"
+      ],
+      "optimizer": {
+        "enabled": true,
+        "runs": 200
+      },
+      "metadata": {
+        "bytecodeHash": "none",
+        "appendCBOR": false
+      },
+      "compilationTarget": {
+        "contracts/src/crosschain/IEntitlementGated.sol": "IEntitlementGated"
+      },
+      "libraries": {}
+    },
+    "sources": {
+      "contracts/src/crosschain/IEntitlementCheckerEvents.sol": {
+        "keccak256": "0xd92c50c58665221673b0c680b1b1ab35ed4d217de192b190f5f4388defcec1e8",
+        "urls": [
+          "bzz-raw://7ca7990018f8fec37c7cf5139ef94c427c2dd3bb873861658c664d62f85e80f2",
+          "dweb:/ipfs/QmWTNTbjD5PWEVva82NqCUqrQWWem9y9F6wXEdVz1dc3hJ"
+        ],
+        "license": "MIT"
+      },
+      "contracts/src/crosschain/IEntitlementGated.sol": {
+        "keccak256": "0xcac848143574a746bd1468827ec3fe216d9e29daf29c737281e5659a414c8b6e",
+        "urls": [
+          "bzz-raw://966f6a08ec37834a40c658238460da6d89102d22ef464f30733d3f9a938a8b26",
+          "dweb:/ipfs/QmVk8eYbZWZcAimbKDxAVVVmMxDeMWEhazswWHLpsRDDbV"
+        ],
+        "license": "MIT"
+      }
+    },
+    "version": 1
+  },
+  "ast": {
+    "absolutePath": "contracts/src/crosschain/IEntitlementGated.sol",
+    "id": 5962,
+    "exportedSymbols": {
+      "IEntitlementCheckerEvents": [
+        5934
+      ],
+      "IEntitlementGated": [
+        5961
+      ]
+    },
+    "nodeType": "SourceUnit",
+    "src": "32:422:27",
+    "nodes": [
+      {
+        "id": 5936,
+        "nodeType": "PragmaDirective",
+        "src": "32:24:27",
+        "nodes": [],
+        "literals": [
+          "solidity",
+          "^",
+          "0.8",
+          ".20"
+        ]
+      },
+      {
+        "id": 5938,
+        "nodeType": "ImportDirective",
+        "src": "58:74:27",
+        "nodes": [],
+        "absolutePath": "contracts/src/crosschain/IEntitlementCheckerEvents.sol",
+        "file": "./IEntitlementCheckerEvents.sol",
+        "nameLocation": "-1:-1:-1",
+        "scope": 5962,
+        "sourceUnit": 5935,
+        "symbolAliases": [
+          {
+            "foreign": {
+              "id": 5937,
+              "name": "IEntitlementCheckerEvents",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "referencedDeclaration": 5934,
+              "src": "66:25:27",
+              "typeDescriptions": {}
+            },
+            "nameLocation": "-1:-1:-1"
+          }
+        ],
+        "unitAlias": ""
+      },
+      {
+        "id": 5961,
+        "nodeType": "ContractDefinition",
+        "src": "134:319:27",
+        "nodes": [
+          {
+            "id": 5943,
+            "nodeType": "FunctionDefinition",
+            "src": "166:59:27",
+            "nodes": [],
+            "functionSelector": "d7eca30a",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "requestEntitlementCheck",
+            "nameLocation": "175:23:27",
+            "parameters": {
+              "id": 5939,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "198:2:27"
+            },
+            "returnParameters": {
+              "id": 5942,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 5941,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 5943,
+                  "src": "219:4:27",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bool",
+                    "typeString": "bool"
+                  },
+                  "typeName": {
+                    "id": 5940,
+                    "name": "bool",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "219:4:27",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bool",
+                      "typeString": "bool"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "218:6:27"
+            },
+            "scope": 5961,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 5953,
+            "nodeType": "FunctionDefinition",
+            "src": "229:144:27",
+            "nodes": [],
+            "functionSelector": "f4efb0bb",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "postEntitlementCheckResult",
+            "nameLocation": "238:26:27",
+            "parameters": {
+              "id": 5949,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 5945,
+                  "mutability": "mutable",
+                  "name": "transactionId",
+                  "nameLocation": "278:13:27",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 5953,
+                  "src": "270:21:27",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bytes32",
+                    "typeString": "bytes32"
+                  },
+                  "typeName": {
+                    "id": 5944,
+                    "name": "bytes32",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "270:7:27",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bytes32",
+                      "typeString": "bytes32"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 5948,
+                  "mutability": "mutable",
+                  "name": "result",
+                  "nameLocation": "338:6:27",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 5953,
+                  "src": "297:47:27",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_enum$_NodeVoteStatus_$5915",
+                    "typeString": "enum IEntitlementCheckerEvents.NodeVoteStatus"
+                  },
+                  "typeName": {
+                    "id": 5947,
+                    "nodeType": "UserDefinedTypeName",
+                    "pathNode": {
+                      "id": 5946,
+                      "name": "IEntitlementCheckerEvents.NodeVoteStatus",
+                      "nameLocations": [
+                        "297:25:27",
+                        "323:14:27"
+                      ],
+                      "nodeType": "IdentifierPath",
+                      "referencedDeclaration": 5915,
+                      "src": "297:40:27"
+                    },
+                    "referencedDeclaration": 5915,
+                    "src": "297:40:27",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_enum$_NodeVoteStatus_$5915",
+                      "typeString": "enum IEntitlementCheckerEvents.NodeVoteStatus"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "264:84:27"
+            },
+            "returnParameters": {
+              "id": 5952,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 5951,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 5953,
+                  "src": "367:4:27",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bool",
+                    "typeString": "bool"
+                  },
+                  "typeName": {
+                    "id": 5950,
+                    "name": "bool",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "367:4:27",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bool",
+                      "typeString": "bool"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "366:6:27"
+            },
+            "scope": 5961,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 5960,
+            "nodeType": "FunctionDefinition",
+            "src": "377:74:27",
+            "nodes": [],
+            "functionSelector": "4b5e97fe",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "deleteTransaction",
+            "nameLocation": "386:17:27",
+            "parameters": {
+              "id": 5956,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 5955,
+                  "mutability": "mutable",
+                  "name": "transactionId",
+                  "nameLocation": "412:13:27",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 5960,
+                  "src": "404:21:27",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bytes32",
+                    "typeString": "bytes32"
+                  },
+                  "typeName": {
+                    "id": 5954,
+                    "name": "bytes32",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "404:7:27",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bytes32",
+                      "typeString": "bytes32"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "403:23:27"
+            },
+            "returnParameters": {
+              "id": 5959,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 5958,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 5960,
+                  "src": "445:4:27",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bool",
+                    "typeString": "bool"
+                  },
+                  "typeName": {
+                    "id": 5957,
+                    "name": "bool",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "445:4:27",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bool",
+                      "typeString": "bool"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "444:6:27"
+            },
+            "scope": 5961,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          }
+        ],
+        "abstract": false,
+        "baseContracts": [],
+        "canonicalName": "IEntitlementGated",
+        "contractDependencies": [],
+        "contractKind": "interface",
+        "fullyImplemented": false,
+        "linearizedBaseContracts": [
+          5961
+        ],
+        "name": "IEntitlementGated",
+        "nameLocation": "144:17:27",
+        "scope": 5962,
+        "usedErrors": [],
+        "usedEvents": []
+      }
+    ],
+    "license": "MIT"
+  },
+  "id": 27
+}
