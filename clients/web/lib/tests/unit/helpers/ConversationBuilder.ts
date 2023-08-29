@@ -120,7 +120,7 @@ function makeEvent(params: {
         originServerTs: Date.now(), // todo: timestamps
         updatedServerTs: Date.now(), // todo: timestamps
         content: params.content,
-        fallbackContent: `${params.eventId} ${getFallbackContent(oUserId, params.content)}`,
+        fallbackContent: getFallbackContent(oUserId, params.content),
         isLocalPending: params.eventId.startsWith('~'),
         threadParentId: getThreadParentId(params.content),
         reactionParentId: getReactionParentId(params.content),

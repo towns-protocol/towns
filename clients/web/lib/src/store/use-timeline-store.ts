@@ -305,11 +305,7 @@ function makeTimelineStoreInterface(
 }
 
 function toReplacedMessageEvent(prev: TimelineEvent, next: TimelineEvent): TimelineEvent {
-    if (
-        next.content?.kind !== ZTEvent.RoomMessage ||
-        prev.content?.kind !== ZTEvent.RoomMessage ||
-        !next.content
-    ) {
+    if (next.content?.kind !== ZTEvent.RoomMessage || prev.content?.kind !== ZTEvent.RoomMessage) {
         // When returning early, make sure we carry the originServerTs of the previous event
         // so we don't end up with a timeline that has events out of order.
         return { ...next, originServerTs: prev.originServerTs }

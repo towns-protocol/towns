@@ -8,6 +8,10 @@ import { ConversationBuilder } from './helpers/ConversationBuilder'
 
 export {}
 
+function describeEvent(event: TimelineEvent) {
+    return `${event.eventId} ${event.fallbackContent}`
+}
+
 function execute(events: TimelineEvent[], expected: string[]) {
     const channelId = 'channel1'
     // get the timeline store interface
@@ -17,7 +21,7 @@ function execute(events: TimelineEvent[], expected: string[]) {
     // get the timeline store interface
     const { timelines: timelinesAppended } = useTimelineStore.getState()
     // assert the timeline events are in the correct order
-    expect(timelinesAppended[channelId].map((e) => e.fallbackContent)).toEqual(expected)
+    expect(timelinesAppended[channelId].map((e) => describeEvent(e))).toEqual(expected)
     // clear the timeline
     setState.reset([channelId])
     // test prepend
@@ -26,7 +30,7 @@ function execute(events: TimelineEvent[], expected: string[]) {
     //// get the timeline store interface
     // const { timelines: timelinesPrepended } = useTimelineStore.getState()
     //// assert the timeline events are in the correct order
-    // expect(timelinesPrepended[channelId].map((e) => e.fallbackContent)).toEqual(expected)
+    // expect(timelinesPrepended[channelId].map((e) => describeEvent(e))).toEqual(expected)
 }
 
 describe('UseTimelineStore', () => {
@@ -51,11 +55,21 @@ describe('UseTimelineStore', () => {
         test('test send and edit', () => {
             // events (use a custom id for the fist message so we can edit it)
             const events = new ConversationBuilder()
-                .sendMessage({ id: 'MSG_1', from: 'alice', body: 'hi bob!' })
-                .editMessage({ edits: 'MSG_1', newBody: 'hi bob! (edited)' })
+                .sendMessage({ id: 'MSG_0', from: 'alice', body: 'hi bob!' })
+                .editMessage({ edits: 'MSG_0', newBody: 'hi bob! (edited)' })
                 .getEvents()
             // results
-            execute(events, ['event1 alice: hi bob! (edited)'])
+            execute(events, ['MSG_0 alice: hi bob! (edited)'])
+        }),
+        test('test send and multiple edits', () => {
+            // events (use a custom id for the fist message so we can edit it)
+            const events = new ConversationBuilder()
+                .sendMessage({ id: 'MSG_0', from: 'alice', body: 'hi bob!' })
+                .editMessage({ edits: 'MSG_0', newBody: 'hi bob! (edited)' })
+                .editMessage({ edits: 'MSG_0', newBody: 'hi bob! (edited2)' })
+                .getEvents()
+            // results
+            execute(events, ['MSG_0 alice: hi bob! (edited2)'])
         }),
         test('test send, edit and redact', () => {
             // events
@@ -81,7 +95,7 @@ describe('UseTimelineStore', () => {
             // results
             execute(events, [
                 'event0 alice: hi bob!',
-                'event3 bob: hi alice! (edited)',
+                'MSG_1 bob: hi alice! (edited)',
                 'event4 alice: banannas? lol',
                 'event5 bob: ~Redacted~',
             ])
