@@ -6,7 +6,6 @@ type Props<T> = {
     itemCache: ItemCacheMap
     containerRef: MutableRefObject<HTMLDivElement | null>
     contentHeightRef: MutableRefObject<number>
-    containerSize: { width: number; height: number } | undefined
     pinnedItemRef: MutableRefObject<{ key: string; y: number } | undefined>
     renderItems: string[]
     generateKey: (item: T) => string
@@ -20,11 +19,12 @@ export const VListDebugger = <T,>(props: Props<T>) => {
         itemCache,
         contentHeightRef,
         containerRef,
-        containerSize,
         pinnedItemRef,
         generateKey,
         anchorDiffRef: referenceDiffRef,
     } = props
+
+    const containerSize = containerRef.current?.getBoundingClientRect()
 
     const updateCallback = useCallback(() => {
         const canvas = canvasRef.current

@@ -169,10 +169,7 @@ export function VList<T>(props: Props<T>) {
         [itemRendererRef],
     )
 
-    const [viewport, setViewportSize] = useState<{
-        width: number
-        height: number
-    }>({ width: 0, height: 0 })
+    const [vh, setViewportHeight] = useState(0)
 
     // imperative api to refresh debug view
     const debugRef = useRef<() => void>()
@@ -300,24 +297,6 @@ export function VList<T>(props: Props<T>) {
 
     // ---------------------------------------------------------------- viewport
 
-    useLayoutEffect(() => {
-        const { container } = getElements()
-
-        const observer = new ResizeObserver((e) => {
-            const event = e[0]
-            if (event) {
-                const { width, height } = container.getBoundingClientRect()
-                setViewportSize({ width, height })
-            }
-        })
-
-        observer.observe(container)
-
-        return () => {
-            observer.disconnect()
-        }
-    }, [getElements])
-
     const getScrollY = useCallback(() => {
         if (!scrollContainerRef.current) {
             return 0
@@ -332,11 +311,11 @@ export function VList<T>(props: Props<T>) {
         if (focus && focusedItem) {
             info(`getScrollTop() -  ${focus.key}`)
             const y = focus?.align === 'end' ? focusedItem.y + focusedItem.height : focusedItem.y
-            return y + (focus?.align === 'end' ? padding - viewport.height : 0)
+            return y + (focus?.align === 'end' ? padding - vh : 0)
         }
 
         return scrollContainerRef.current.scrollTop
-    }, [itemCache, padding, viewport.height])
+    }, [itemCache, padding, vh])
 
     // ------------------------------------------------------------------- groups
 
@@ -407,11 +386,11 @@ export function VList<T>(props: Props<T>) {
         internalScrollRef.current = true
 
         log('updateDOMHeight', contentHeightRef.current, content.style.height)
-        content.style.height = `${Math.round(contentHeightRef.current)}px`
 
-        requestAnimationFrame(() => {
-            container.style.height = `${Math.round(contentHeightRef.current)}px`
-        })
+        content.style.height = `${Math.round(contentHeightRef.current)}px`
+        container.style.height = `${Math.round(contentHeightRef.current)}px`
+        const { height } = container.getBoundingClientRect()
+        setViewportHeight(height)
     }, [getElements])
 
     const [isAligned, setIsAligned] = useState(false)
@@ -620,7 +599,7 @@ export function VList<T>(props: Props<T>) {
     useLayoutEffect(() => {
         const container = scrollContainerRef.current
 
-        if (!container || !viewport) {
+        if (!container) {
             throw new Error('VList - Missing container or viewport')
         }
 
@@ -637,12 +616,12 @@ export function VList<T>(props: Props<T>) {
                 setIsIdle(false)
             }
 
-            const margin = -1 * viewport.height * overscan
+            const margin = -1 * vh * overscan
 
             const diff = anchorDiffRef.current
 
             const a1 = margin - diff
-            const a2 = viewport.height - margin - diff
+            const a2 = vh - margin - diff
 
             const newItems = keyList.filter((key) => {
                 const cacheItem = itemCache[key]
@@ -669,7 +648,7 @@ export function VList<T>(props: Props<T>) {
             const focus = focusItemRef.current
 
             if (!isInternalScroll || focus) {
-                const relativeEye = focus?.align !== 'start' ? viewport.height : 0
+                const relativeEye = focus?.align !== 'start' || !focus ? vh * 0.5 : 0
                 const eyeY = scrollY + relativeEye - diff
 
                 const key =
@@ -779,7 +758,7 @@ export function VList<T>(props: Props<T>) {
         realignImperatively,
         updateDOM,
         updateDOMHeight,
-        viewport,
+        vh,
     ])
 
     /**
@@ -959,7 +938,6 @@ export function VList<T>(props: Props<T>) {
                 <VListDebugger
                     itemCache={itemCache}
                     containerRef={scrollContainerRef}
-                    containerSize={viewport}
                     contentHeightRef={contentHeightRef}
                     debugRef={debugRef}
                     generateKey={getKey}
@@ -1055,6 +1033,7 @@ const containerStyle: CSSProperties = {
 const contentStyle: CSSProperties = {
     position: 'absolute',
     width: '100%',
+    contain: 'paint',
 }
 
 const offsetStyle: CSSProperties = {
