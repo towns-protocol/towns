@@ -8,6 +8,7 @@ pragma solidity ^0.8.20;
 // contracts
 error Validator__InvalidStringLength();
 error Validator__InvalidByteLength();
+error Validator__InvalidAddress();
 
 library Validator {
   function checkLength(string memory name, uint min) internal pure {
@@ -17,5 +18,9 @@ library Validator {
 
   function checkByteLength(bytes memory name) internal pure {
     if (name.length == 0) revert Validator__InvalidByteLength();
+  }
+
+  function checkAddress(address addr) internal pure {
+    if (addr == address(0)) revert Validator__InvalidAddress();
   }
 }

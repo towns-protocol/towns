@@ -92,7 +92,7 @@ contract TownOwnerHelper is ERC721AHelper {
 
   function selectors() public view override returns (bytes4[] memory) {
     bytes4[] memory currentSelectors_ = super.selectors();
-    bytes4[] memory selectors_ = new bytes4[](currentSelectors_.length + 5);
+    bytes4[] memory selectors_ = new bytes4[](currentSelectors_.length + 6);
     uint256 index;
 
     for (uint256 i = 0; i < currentSelectors_.length; i++) {
@@ -105,6 +105,7 @@ contract TownOwnerHelper is ERC721AHelper {
     selectors_[index++] = TownOwner.mintTown.selector;
     selectors_[index++] = TownOwner.getTownInfo.selector;
     selectors_[index++] = TownOwner.nextTokenId.selector;
+    selectors_[index++] = TownOwner.updateTownInfo.selector;
     return selectors_;
   }
 

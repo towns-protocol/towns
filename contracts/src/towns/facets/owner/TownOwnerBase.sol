@@ -6,6 +6,7 @@ import {ITownOwnerBase} from "./ITownOwner.sol";
 
 // libraries
 import {TownOwnerStorage} from "./TownOwnerStorage.sol";
+import {Validator} from "contracts/src/utils/Validator.sol";
 
 // contracts
 
@@ -19,8 +20,11 @@ abstract contract TownOwnerBase is ITownOwnerBase {
   }
 
   function _setFactory(address factory) internal {
+    Validator.checkAddress(factory);
+
     TownOwnerStorage.Layout storage ds = TownOwnerStorage.layout();
     ds.factory = factory;
+    emit TownOwner__SetFactory(factory);
   }
 
   function _getFactory() internal view returns (address) {
@@ -35,6 +39,11 @@ abstract contract TownOwnerBase is ITownOwnerBase {
     address townAddress,
     string memory networkId
   ) internal {
+    Validator.checkLength(name, 2);
+    Validator.checkLength(uri, 0);
+    Validator.checkLength(networkId, 1);
+    Validator.checkAddress(townAddress);
+
     TownOwnerStorage.Layout storage ds = TownOwnerStorage.layout();
 
     ds.townByAddress[townAddress] = Town({
@@ -44,6 +53,23 @@ abstract contract TownOwnerBase is ITownOwnerBase {
       networkId: networkId,
       createdAt: block.timestamp
     });
+  }
+
+  function _updateTown(
+    address town,
+    string memory name,
+    string memory uri
+  ) internal {
+    Validator.checkLength(name, 2);
+    Validator.checkLength(uri, 1);
+
+    TownOwnerStorage.Layout storage ds = TownOwnerStorage.layout();
+
+    Town storage townInfo = ds.townByAddress[town];
+    townInfo.name = name;
+    townInfo.uri = uri;
+
+    emit TownOwner__UpdateTown(town);
   }
 
   function _getTown(address town) internal view returns (Town memory) {

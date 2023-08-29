@@ -34,7 +34,6 @@ contract TownOwner is
   // =============================================================
   //                           Town
   // =============================================================
-
   function nextTokenId() external view returns (uint256) {
     return _nextTokenId();
   }
@@ -43,17 +42,24 @@ contract TownOwner is
     string memory name,
     string memory uri,
     string memory networkId,
-    address townAddress
+    address town
   ) external onlyFactory returns (uint256 tokenId) {
     tokenId = _nextTokenId();
-    _createTown(name, uri, tokenId, townAddress, networkId);
+    _createTown(name, uri, tokenId, town, networkId);
     _safeMint(msg.sender, 1);
   }
 
-  function getTownInfo(
-    address townAddress
-  ) external view returns (Town memory) {
-    return _getTown(townAddress);
+  function getTownInfo(address town) external view returns (Town memory) {
+    return _getTown(town);
+  }
+
+  function updateTownInfo(
+    address town,
+    string memory name,
+    string memory uri
+  ) external {
+    _onlyTownOwner(town);
+    _updateTown(town, name, uri);
   }
 
   // =============================================================
@@ -89,5 +95,14 @@ contract TownOwner is
     }
 
     super._beforeTokenTransfers(from, to, startTokenId, quantity);
+  }
+
+  // =============================================================
+  //                           Internal
+  // =============================================================
+  function _onlyTownOwner(address town) internal view {
+    if (_ownerOf(_getTown(town).tokenId) != msg.sender) {
+      revert TownOwner__OnlyTownOwnerAllowed();
+    }
   }
 }

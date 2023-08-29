@@ -14,6 +14,7 @@ library TownOwnerStorage {
 
   struct Layout {
     address factory;
+    mapping(uint256 => address) townByTokenId;
     mapping(address => ITownOwnerBase.Town) townByAddress;
   }
 

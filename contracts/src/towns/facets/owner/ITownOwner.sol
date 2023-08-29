@@ -16,6 +16,10 @@ interface ITownOwnerBase {
   }
 
   error TownOwner__OnlyFactoryAllowed();
+  error TownOwner__OnlyTownOwnerAllowed();
+
+  event TownOwner__UpdateTown(address town);
+  event TownOwner__SetFactory(address factory);
 }
 
 interface ITownOwner is ITownOwnerBase {
