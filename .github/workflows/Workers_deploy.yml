@@ -1,0 +1,57 @@
+name: 'Workers_deploy'
+
+on:
+    push:
+        branches:
+            - main
+        paths:
+            - 'servers/workers/**'
+    workflow_dispatch:
+        inputs:
+            environment:
+                description: 'Environment'
+                required: true
+                default: 'test-beta'
+                type: choice
+                options:
+                    - test-beta
+
+concurrency:
+    group: ${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: true
+
+jobs:
+    deploy:
+        name: Deploy CF Workers
+        runs-on: ubuntu-latest
+
+        # Setting the environment name conditionally
+        environment:
+            # Set the environment name to test-beta if the event is push,
+            # or to the input value if the event is workflow_dispatch
+            name: ${{ (github.event_name == 'push' && 'test-beta') || github.event.inputs.environment }}
+
+        permissions:
+            contents: write
+            packages: write
+
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v3
+
+            - name: Deploy All CF Workers
+              uses: cloudflare/wrangler-action@v3
+              with:
+                  apiToken: ${{ secrets.CF_API_TOKEN }}
+                  command: ./scripts/deploy-all-workers.sh --environment ${{ vars.ENVIRONMENT }}
+
+            - name: Slack notification
+              uses: rtCamp/action-slack-notify@v2
+              if: failure()
+              env:
+                  SLACK_WEBHOOK: ${{ secrets.SLACK_CI_CHANNEL_WEBHOOK_URL }}
+                  SLACK_TITLE: 'Failure'
+                  SLACK_USERNAME: 'CI'
+                  SLACK_ICON_EMOJI: ':boom:'
+                  SLACK_COLOR: '#FF0000'
+                  SLACK_MESSAGE: 'CF Workers Deploy Failed on ${{ github.repository }}'

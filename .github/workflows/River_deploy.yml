@@ -6,7 +6,7 @@ on:
             environment:
                 description: 'Environment'
                 required: true
-                default: 'test'
+                default: 'test-beta'
                 type: choice
                 options:
                     - test-beta
