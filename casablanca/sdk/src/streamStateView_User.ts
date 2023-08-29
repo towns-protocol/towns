@@ -92,6 +92,7 @@ export class StreamStateView_User {
                 },
             },
             emitter,
+            event,
         )
         emitter?.emit('toDeviceMessage', this.streamId, riverEvent)
 

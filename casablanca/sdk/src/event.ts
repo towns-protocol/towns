@@ -20,6 +20,7 @@ import {
     OLM_ALGORITHM,
 } from './crypto/olmLib'
 import { Message, PlainMessage } from '@bufbuild/protobuf'
+import { ParsedEvent } from './types'
 
 const log = dlog('csb:event')
 
@@ -305,7 +306,11 @@ export class RiverEvent extends (EventEmitter as new () => TypedEmitter<RiverEve
      */
     public claimedDoNotUseKey: string | undefined = undefined
 
-    constructor(public event: Partial<IEvent> = {}, private emitter?: TypedEmitter<RiverEvents>) {
+    constructor(
+        public event: Partial<IEvent> = {},
+        private emitter?: TypedEmitter<RiverEvents>,
+        public wireEvent?: ParsedEvent,
+    ) {
         super()
 
         const { parsed_event, hash_str, creator_user_id } = event?.payload || {}

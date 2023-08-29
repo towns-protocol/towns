@@ -101,6 +101,7 @@ export class StreamStateView_Channel {
                 },
             },
             emitter,
+            event,
         )
         emitter?.emit('channelNewMessage', this.streamId, riverEvent)
     }

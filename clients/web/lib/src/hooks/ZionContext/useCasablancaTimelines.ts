@@ -162,34 +162,19 @@ export function useCasablancaTimelines(casablancaClient: CasablancaClient | unde
 }
 
 export function toEvent_FromRiverEvent(message: RiverEvent, userId: string): TimelineEvent {
-    const eventId = message.getId() ?? ''
-    const creatorUserId = message.getSender()
-    const sender = {
-        id: creatorUserId,
-        displayName: creatorUserId, // todo displayName
-        avatarUrl: undefined, // todo avatarUrl
+    if (!message.wireEvent) {
+        throw new Error('Implementation error, river events should have a wireEvent')
     }
-    const { content, error } = toTownsContent_fromRiverEvent(eventId, message)
-
-    const isSender = sender.id === userId
-    const fbc = `${content?.kind ?? '??'} ${getFallbackContent(sender.displayName, content, error)}`
-    return {
-        eventId: eventId,
-        status: isSender ? undefined : undefined, // todo: set status for events this user sent
-        createdAtEpocMs: Date.now(), // todo: timestamps
-        updatedAtEpocMs: Date.now(), // todo: timestamps
-        content: content,
-        fallbackContent: fbc,
-        isLocalPending: eventId.startsWith('~'),
-        threadParentId: getThreadParentId(content),
-        reactionParentId: getReactionParentId(content),
-        isMentioned: getIsMentioned(content, userId),
-        isRedacted: false, // redacted is handled in use timeline store when the redaction event is received
-        sender,
-    }
+    const eventId = message.wireEvent.hashStr
+    const decryptedContent = toTownsContent_fromRiverEvent(eventId, message)
+    return toEvent(message.wireEvent, userId, decryptedContent)
 }
 
-export function toEvent(message: ParsedEvent, userId: string): TimelineEvent {
+export function toEvent(
+    message: ParsedEvent,
+    userId: string,
+    decryptedContent?: TownsContentResult,
+): TimelineEvent {
     const eventId = message.hashStr
     const creatorUserId = message.creatorUserId
     const sender = {
@@ -197,7 +182,7 @@ export function toEvent(message: ParsedEvent, userId: string): TimelineEvent {
         displayName: creatorUserId, // todo displayName
         avatarUrl: undefined, // todo avatarUrl
     }
-    const { content, error } = toTownsContent(eventId, message)
+    const { content, error } = decryptedContent ?? toTownsContent(eventId, message)
 
     const isSender = sender.id === userId
     const fbc = `${content?.kind ?? '??'} ${getFallbackContent(sender.displayName, content, error)}`
