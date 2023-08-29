@@ -14,7 +14,7 @@ export async function sendFullyReadMarkers(
             threadParentId: fullyReadMarker.threadParentId,
             eventId: fullyReadMarker.eventId,
             eventOriginServerTsEpochMs: fullyReadMarker.eventOriginServerTs
-                ? BigInt(fullyReadMarker.markedReadAtTs)
+                ? BigInt(fullyReadMarker.eventOriginServerTs)
                 : undefined,
             isUnread: fullyReadMarker.isUnread,
             markedReadAtTsEpochMs: BigInt(fullyReadMarker.markedReadAtTs),
