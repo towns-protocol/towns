@@ -14,9 +14,9 @@ import { RoleIdentifier } from '../../src/types/web3-types'
 import { RoomIdentifier } from '../../src/types/room-identifier'
 import { RoomVisibility } from '../../src/types/zion-types'
 import { TestConstants } from './helpers/TestConstants'
-import { createUserIdFromString } from '../../src/types/user-identifier'
+import { getAccountAddress } from '../../src/types/user-identifier'
 
-describe.skip('isEntitledToSpace and isEntitledToChannel tests', () => {
+describe('isEntitledToSpace and isEntitledToChannel tests', () => {
     test('server checks isEntitledToSpace true', async () => {
         /** Arrange */
         // create all the users for the test
@@ -161,8 +161,7 @@ describe.skip('isEntitledToSpace and isEntitledToChannel tests', () => {
         )
         // convert bob's userId into its wallet address
         const bobUserId = bobWithNft.getUserId()
-        const bobAccountAddress = createUserIdFromString(bobUserId as string)
-            ?.accountAddress as string
+        const bobAccountAddress = getAccountAddress(bobUserId as string) ?? ''
         // create a space with token entitlement to read & write
         await alice.fundWallet()
         const spaceId = (await createTestSpaceWithZionMemberRole(
@@ -190,8 +189,7 @@ describe.skip('isEntitledToSpace and isEntitledToChannel tests', () => {
         const { alice, bob } = await registerAndStartClients(['alice', 'bob'])
         // convert bob's userId into its wallet address
         const bobUserId = bob.getUserId()
-        const bobAccountAddress = createUserIdFromString(bobUserId as string)
-            ?.accountAddress as string
+        const bobAccountAddress = getAccountAddress(bobUserId as string) ?? ''
         // create a space with token entitlement to read & write
         await alice.fundWallet()
         const spaceId = (await createTestSpaceWithZionMemberRole(
@@ -223,8 +221,7 @@ describe.skip('isEntitledToSpace and isEntitledToChannel tests', () => {
         )
         // convert bob's userId into its wallet address
         const bobUserId = bobWithNft.getUserId()
-        const bobAccountAddress = createUserIdFromString(bobUserId as string)
-            ?.accountAddress as string
+        const bobAccountAddress = getAccountAddress(bobUserId as string) ?? ''
         // create a space with token entitlement to read & write
         const permissions = [Permission.Read, Permission.Write]
         const memberNftAddress = getMemberNftAddress(alice.chainId)
@@ -273,8 +270,7 @@ describe.skip('isEntitledToSpace and isEntitledToChannel tests', () => {
         const { alice, bob } = await registerAndStartClients(['alice', 'bob'])
         // convert bob's userId into its wallet address
         const bobUserId = bob.getUserId()
-        const bobAccountAddress = createUserIdFromString(bobUserId as string)
-            ?.accountAddress as string
+        const bobAccountAddress = getAccountAddress(bobUserId as string) ?? ''
         // create a space with token entitlement to read & write
         const permissions = [Permission.Read, Permission.Write]
         const memberNftAddress = getMemberNftAddress(alice.chainId)

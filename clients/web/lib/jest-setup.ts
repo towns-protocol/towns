@@ -16,6 +16,7 @@ process.env.HOMESERVER = 'http://localhost:8008' // OR "https://node1.towns.com"
 process.env.CASABLANCA_SERVER_URL = 'http://localhost:5157'
 process.env.DISABLE_ENCRYPTION = 'false'
 process.env.ETHERS_NETWORK = 'http://127.0.0.1:8545' // OR "rinkeby"
+//process.env.PRIMARY_PROTOCOL = 'casablanca' // enable if you want to test casablanca as the primary protocol
 //process.env.SMART_CONTRACT_VERSION = 'v3' // enable if you want to test v3 contracts
 
 // fetch-polyfill.js

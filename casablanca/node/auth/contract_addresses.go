@@ -5,16 +5,22 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/gologme/log"
 )
 
 //go:embed contracts/addresses.json
 var addressesJson []byte
+
+var EMPTY_ADDRESS = common.Address{}
 
 type ContractAddresses struct {
 	SpaceFactory string `json:"spaceFactory"`
 	SpaceToken   string `json:"spaceToken"`
 	PioneerToken string `json:"pioneerToken"`
 	Member       string `json:"member"`
+	TownFactory  string `json:"townFactory"`
 }
 
 type ContractAddressesByChainId struct {
@@ -23,7 +29,7 @@ type ContractAddressesByChainId struct {
 	Sepolia   ContractAddresses `json:"11155111"`
 }
 
-func loadSpaceFactoryAddress(chainId int) (*ContractAddresses, error) {
+func loadContractAddresses(chainId int) (*ContractAddresses, error) {
 	var address ContractAddresses
 	var allAddresses ContractAddressesByChainId
 	err := json.Unmarshal(addressesJson, &allAddresses)
@@ -33,12 +39,16 @@ func loadSpaceFactoryAddress(chainId int) (*ContractAddresses, error) {
 	switch chainId {
 	case 31337:
 		address.SpaceFactory = allAddresses.Localhost.SpaceFactory
+		address.TownFactory = allAddresses.Localhost.TownFactory
 	case 5:
 		address.SpaceFactory = allAddresses.Goerli.SpaceFactory
+		address.TownFactory = allAddresses.Goerli.TownFactory
 	case 11155111:
 		address.SpaceFactory = allAddresses.Sepolia.SpaceFactory
+		address.TownFactory = allAddresses.Sepolia.TownFactory
 	default:
 		errMsg := fmt.Sprintf("unsupported chainId: %d", chainId)
+		log.Error("loadSpaceFactoryAddress", errMsg)
 		return nil, errors.New(errMsg)
 	}
 	return &address, nil

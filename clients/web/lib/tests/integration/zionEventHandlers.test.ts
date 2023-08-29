@@ -51,6 +51,8 @@ describe('Zion event handlers test', () => {
             tokens,
             users: [],
         }
+        // createSpace is gated by the mock NFT. Mint one for yourself before proceeding.
+        await alice.mintMockNFT()
         await waitForWithRetries(() => alice.createSpace(createSpaceInfo, tokenEntitlement, []))
 
         expect(eventHandlerResult).toBeDefined()

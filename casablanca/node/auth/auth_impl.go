@@ -9,9 +9,10 @@ import (
 	"errors"
 	"fmt"
 
+	"golang.org/x/exp/slog"
+
 	eth "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
-	"golang.org/x/exp/slog"
 )
 
 type AuthorizationArgs struct {
@@ -58,19 +59,28 @@ func NewTownsContract(cfg *config.ChainConfig) (TownsContract, error) {
 	}
 	switch za.chainId {
 	case 1337, 31337:
-		localhost, err := NewSpaceContractLocalhost(za.ethClient)
+		localhost, err := NewSpaceContractLocalhost(za.ethClient, cfg.ContractVersion)
 		if err != nil {
 			slog.Error("error instantiating SpaceContractLocalhost", "error", err)
 			return nil, err
 		}
 		za.spaceContract = localhost
+
 	case 5:
-		goerli, err := NewSpaceContractGoerli(za.ethClient)
+		goerli, err := NewSpaceContractGoerli(za.ethClient, cfg.ContractVersion)
 		if err != nil {
 			slog.Error("error instantiating SpaceContractGoerli", "error", err)
 			return nil, err
 		}
 		za.spaceContract = goerli
+
+	case 11155111:
+		sepolia, err := NewSpaceContractSepolia(za.ethClient, cfg.ContractVersion)
+		if err != nil {
+			slog.Error("error instantiating SpaceContractSepolia", "error", err)
+			return nil, err
+		}
+		za.spaceContract = sepolia
 	default:
 		slog.Error("Bad chain id", "id", za.chainId)
 		return nil, fmt.Errorf("unsupported chain id: %d", za.chainId)

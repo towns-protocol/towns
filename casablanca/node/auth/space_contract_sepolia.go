@@ -1,41 +1,41 @@
 package auth
 
 import (
-	"casablanca/node/auth/contracts/goerli_space"
-	"casablanca/node/auth/contracts/goerli_space_factory"
+	"casablanca/node/auth/contracts/sepolia_space"
+	"casablanca/node/auth/contracts/sepolia_space_factory"
 	"sync"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 )
 
-type SpaceContractGoerli struct {
+type SpaceContractSepolia struct {
 	ethClient    *ethclient.Client
-	spaceFactory *goerli_space_factory.GoerliSpaceFactory
-	spaces       map[string]*goerli_space.GoerliSpace
+	spaceFactory *sepolia_space_factory.SepoliaSpaceFactory
+	spaces       map[string]*sepolia_space.SepoliaSpace
 	spacesLock   sync.Mutex
 }
 
-func NewSpaceContractGoerliV2(ethClient *ethclient.Client) (*SpaceContractGoerli, error) {
-	jsonAddress, err := loadContractAddresses(5)
+func NewSpaceContractSepoliaV2(ethClient *ethclient.Client) (*SpaceContractSepolia, error) {
+	jsonAddress, err := loadContractAddresses(11155111)
 	if err != nil {
 		return nil, err
 	}
 	address := common.HexToAddress(jsonAddress.SpaceFactory)
-	spaceFactory, err := goerli_space_factory.NewGoerliSpaceFactory(address, ethClient)
+	spaceFactory, err := sepolia_space_factory.NewSepoliaSpaceFactory(address, ethClient)
 	if err != nil {
 		return nil, err
 	}
 	// no errors.
-	var spaceContract = &SpaceContractGoerli{
+	var spaceContract = &SpaceContractSepolia{
 		ethClient:    ethClient,
 		spaceFactory: spaceFactory,
-		spaces:       make(map[string]*goerli_space.GoerliSpace),
+		spaces:       make(map[string]*sepolia_space.SepoliaSpace),
 	}
 	return spaceContract, nil
 }
 
-func (za *SpaceContractGoerli) IsEntitledToSpace(
+func (za *SpaceContractSepolia) IsEntitledToSpace(
 	spaceNetworkId string,
 	user common.Address,
 	permission Permission,
@@ -53,7 +53,7 @@ func (za *SpaceContractGoerli) IsEntitledToSpace(
 	return isEntitled, err
 }
 
-func (za *SpaceContractGoerli) IsEntitledToChannel(
+func (za *SpaceContractSepolia) IsEntitledToChannel(
 	spaceNetworkId string,
 	channelNetworkId string,
 	user common.Address,
@@ -74,7 +74,7 @@ func (za *SpaceContractGoerli) IsEntitledToChannel(
 	return isEntitled, err
 }
 
-func (za *SpaceContractGoerli) IsSpaceDisabled(spaceNetworkId string) (bool, error) {
+func (za *SpaceContractSepolia) IsSpaceDisabled(spaceNetworkId string) (bool, error) {
 	space, err := za.getSpace(spaceNetworkId)
 	if err != nil {
 		return false, err
@@ -84,7 +84,7 @@ func (za *SpaceContractGoerli) IsSpaceDisabled(spaceNetworkId string) (bool, err
 	return isDisabled, err
 }
 
-func (za *SpaceContractGoerli) IsChannelDisabled(spaceNetworkId string, channelNetworkId string) (bool, error) {
+func (za *SpaceContractSepolia) IsChannelDisabled(spaceNetworkId string, channelNetworkId string) (bool, error) {
 	space, err := za.getSpace(spaceNetworkId)
 	if err != nil {
 		return false, err
@@ -94,7 +94,7 @@ func (za *SpaceContractGoerli) IsChannelDisabled(spaceNetworkId string, channelN
 	return channel.Disabled, err
 }
 
-func (za *SpaceContractGoerli) getSpace(networkId string) (*goerli_space.GoerliSpace, error) {
+func (za *SpaceContractSepolia) getSpace(networkId string) (*sepolia_space.SepoliaSpace, error) {
 	za.spacesLock.Lock()
 	defer za.spacesLock.Unlock()
 	if za.spaces[networkId] == nil {
@@ -106,7 +106,7 @@ func (za *SpaceContractGoerli) getSpace(networkId string) (*goerli_space.GoerliS
 			return nil, err
 		}
 		// cache the space for future use
-		space, err := goerli_space.NewGoerliSpace(spaceAddress, za.ethClient)
+		space, err := sepolia_space.NewSepoliaSpace(spaceAddress, za.ethClient)
 		if err != nil {
 			return nil, err
 		}

@@ -16,8 +16,8 @@ type SpaceContractLocalhost struct {
 	spacesLock   sync.Mutex
 }
 
-func NewSpaceContractLocalhost(ethClient *ethclient.Client) (*SpaceContractLocalhost, error) {
-	jsonAddress, err := loadSpaceFactoryAddress(31337)
+func NewSpaceContractLocalhostV2(ethClient *ethclient.Client) (*SpaceContractLocalhost, error) {
+	jsonAddress, err := loadContractAddresses(31337)
 	if err != nil {
 		return nil, err
 	}
