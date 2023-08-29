@@ -416,6 +416,8 @@ function diffTimeline(
                 )
                 const resultReplaced = _diffReplaced(
                     roomId,
+                    userId,
+                    events,
                     timelineState.replacedEvents[roomId] ?? [],
                     prev.replacedEvents[roomId] ?? [],
                     updated,
@@ -479,7 +481,9 @@ function _diffDeleted(
     //Next step is update fullyUnreadMarker for the channel
     //We need to iterate over current message events backwards and if there are remaining with the timestamp later than markedReadAtTs - keep unread flag on
     //One of the key factors here is that events array is sorted by timestamp
-    let newIsUnread = false
+    const oldIsUnread = updated[roomId].isUnread
+    const oldEventId = updated[roomId].eventId
+    updated[roomId].isUnread = false
     for (let i = events.length - 1; i >= 0; i--) {
         //if event is not a message from user - skip it
         if (!isCountedAsUnreadZTEvent(events[i], userId)) {
@@ -491,28 +495,31 @@ function _diffDeleted(
         if (events[i].originServerTs > updated[roomId].markedReadAtTs) {
             updated[roomId].eventId = events[i].eventId
             updated[roomId].eventOriginServerTs = events[i].originServerTs
-            newIsUnread = true
+            updated[roomId].isUnread = true
         } else {
             //Stop if we are earlier than markedReadAtTs
             break
         }
     }
-    if (updated[roomId].isUnread !== newIsUnread) {
-        updateHappened = true
-        updated[roomId].isUnread = newIsUnread
-    }
+    updateHappened =
+        updateHappened ||
+        oldIsUnread !== updated[roomId].isUnread ||
+        oldEventId !== updated[roomId].eventId
 
     return { didUpdate: updateHappened }
 }
 
 function _diffReplaced(
     roomId: string,
+    userId: string,
+    events: TimelineEvent[],
     replacedEvents: { oldEvent: TimelineEvent; newEvent: TimelineEvent }[],
     prevReplacedEvents: { oldEvent: TimelineEvent; newEvent: TimelineEvent }[],
     updated: { [key: string]: FullyReadMarker },
 ): { didUpdate: boolean } {
     const diff = replacedEvents.length - prevReplacedEvents.length
     if (diff > 0) {
+        let updateHappened = false
         if (updated[roomId]) {
             for (let i = prevReplacedEvents.length; i < replacedEvents.length; i++) {
                 const event = replacedEvents[i]
@@ -533,15 +540,45 @@ function _diffReplaced(
                         if (wasMentionedBefore) {
                             //case of mention is removed
                             updated[roomId].mentions -= 1
+                            updateHappened = true
                         } else {
                             //case of mention is added
                             updated[roomId].mentions += 1
+                            updateHappened = true
                         }
                     }
                 }
             }
+
+            //Next step is update fullyUnreadMarker for the channel
+            //We need to iterate over current message events backwards and if there are remaining with the timestamp later than markedReadAtTs - keep unread flag on
+            //One of the key factors here is that events array is sorted by timestamp
+            const oldIsUnread = updated[roomId].isUnread
+            const oldEventId = updated[roomId].eventId
+            updated[roomId].isUnread = false
+            for (let i = events.length - 1; i >= 0; i--) {
+                //if event is not a message from user - skip it
+                if (!isCountedAsUnreadZTEvent(events[i], userId)) {
+                    continue
+                }
+                //check this if (originServerTs > markedReadAtTs)
+                //if this condition below is false - there no updates for channel unread state and mentions count
+                //as currently processed event is in the read section
+                if (events[i].originServerTs > updated[roomId].markedReadAtTs) {
+                    updated[roomId].eventId = events[i].eventId
+                    updated[roomId].eventOriginServerTs = events[i].originServerTs
+                    updated[roomId].isUnread = true
+                } else {
+                    //Stop if we are earlier than markedReadAtTs
+                    break
+                }
+            }
+            updateHappened =
+                updateHappened ||
+                oldIsUnread !== updated[roomId].isUnread ||
+                oldEventId !== updated[roomId].eventId
         }
-        return { didUpdate: true }
+        return { didUpdate: updateHappened }
     }
     return { didUpdate: false }
 }

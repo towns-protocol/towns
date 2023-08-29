@@ -36,7 +36,7 @@ export enum ZTEvent {
     Reaction = 'm.reaction',
     Receipt = 'm.receipt',
     RedactedEvent = 'm.redacted_event',
-    RedactionActionEvent = 'm.redaction_action_event',
+    RedactionActionEvent = 'm.redaction_action',
     RoomAvatar = 'm.room.avatar',
     RoomCanonicalAlias = 'm.room.canonical_alias',
     RoomCreate = 'm.room.create',

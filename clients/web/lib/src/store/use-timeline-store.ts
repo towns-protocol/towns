@@ -1,11 +1,13 @@
 import { create } from 'zustand'
 import {
     MessageReactions,
+    RedactedEvent,
     RoomMessageEvent,
     ThreadStats,
     TimelineEvent,
     TimelineEvent_OneOf,
     ZTEvent,
+    getFallbackContent,
 } from '../types/timeline-types'
 import reverse from 'lodash/reverse'
 
@@ -260,7 +262,8 @@ function makeTimelineStoreInterface(
                 // remove the formerly encrypted event
                 removeEvent(streamId, decryptedFromEventId)
             }
-            removeEvent(streamId, redactsEventId)
+            const redactedEvent = makeRedactionEvent(event)
+            replaceEvent(userId, streamId, redactsEventId, redactedEvent)
             appendEvent(userId, streamId, event)
         } else if (replacedEventId) {
             if (decryptedFromEventId) {
@@ -305,30 +308,59 @@ function makeTimelineStoreInterface(
 }
 
 function toReplacedMessageEvent(prev: TimelineEvent, next: TimelineEvent): TimelineEvent {
-    if (next.content?.kind !== ZTEvent.RoomMessage || prev.content?.kind !== ZTEvent.RoomMessage) {
-        // When returning early, make sure we carry the originServerTs of the previous event
+    // for non message events, things are simplier
+    if (next.content?.kind === ZTEvent.RoomMessage && prev.content?.kind === ZTEvent.RoomMessage) {
+        // when we replace an event, we copy the content up to the root event
+        // so we keep the prev id, but use the next content
+        const eventId = !prev.isLocalPending ? prev.eventId : next.eventId
+
+        return {
+            eventId: eventId,
+            status: next.status,
+            originServerTs: prev.originServerTs,
+            updatedServerTs: next.originServerTs,
+            content: {
+                ...next.content,
+                inReplyTo: prev.content.inReplyTo,
+            },
+            fallbackContent: next.fallbackContent,
+            isLocalPending: eventId.startsWith('~'),
+            threadParentId: prev.threadParentId,
+            reactionParentId: prev.reactionParentId,
+            isMentioned: next.isMentioned,
+            isRedacted: next.isRedacted,
+            sender: prev.sender,
+        }
+    } else if (next.content?.kind === ZTEvent.RedactedEvent) {
+        // for redacted events, carry over previous pointers to content
+        // we don't want to lose thread info
+        return {
+            ...next,
+            eventId: prev.eventId,
+            originServerTs: prev.originServerTs,
+            threadParentId: prev.threadParentId,
+            reactionParentId: prev.reactionParentId,
+        }
+    } else {
+        // make sure we carry the originServerTs of the previous event
         // so we don't end up with a timeline that has events out of order.
         return { ...next, originServerTs: prev.originServerTs }
     }
-    // when we replace an event, we copy the content up to the root event
-    // so we keep the prev id, but use the next content
-    const eventId = !prev.isLocalPending ? prev.eventId : next.eventId
+}
+
+function makeRedactionEvent(redactionAction: TimelineEvent): TimelineEvent {
+    if (redactionAction.content?.kind !== ZTEvent.RedactionActionEvent) {
+        throw new Error('makeRedactionEvent called with non-redaction action event')
+    }
+    const newContent = {
+        kind: ZTEvent.RedactedEvent,
+    } satisfies RedactedEvent
+
     return {
-        eventId: eventId,
-        status: next.status,
-        originServerTs: prev.originServerTs,
-        updatedServerTs: next.originServerTs,
-        content: {
-            ...next.content,
-            inReplyTo: prev.content.inReplyTo,
-        },
-        fallbackContent: next.fallbackContent,
-        isLocalPending: eventId.startsWith('~'),
-        threadParentId: prev.threadParentId,
-        reactionParentId: prev.reactionParentId,
-        isMentioned: next.isMentioned,
-        isRedacted: next.isRedacted,
-        sender: prev.sender,
+        ...redactionAction,
+        content: newContent,
+        fallbackContent: getFallbackContent('', newContent),
+        isRedacted: true,
     }
 }
 

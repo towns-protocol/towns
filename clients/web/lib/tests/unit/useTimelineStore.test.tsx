@@ -96,6 +96,7 @@ describe('UseTimelineStore', () => {
             execute(events, [
                 'event0 alice: hi bob!',
                 'MSG_1 bob: hi alice! (edited)',
+                'MSG_2 ~Redacted~',
                 'event4 alice: banannas? lol',
                 'event5 Redacts MSG_2',
             ])
