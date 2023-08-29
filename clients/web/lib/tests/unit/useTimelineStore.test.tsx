@@ -26,11 +26,10 @@ function execute(events: TimelineEvent[], expected: string[]) {
     setState.reset([channelId])
     // test prepend
     setState.prependEvents(events, 'alice', channelId)
-    // todo enable prepended tests // https://linear.app/hnt-labs/issue/HNT-2219/handle-replacements-and-redactions-in-a-paginated-world
-    //// get the timeline store interface
-    // const { timelines: timelinesPrepended } = useTimelineStore.getState()
-    //// assert the timeline events are in the correct order
-    // expect(timelinesPrepended[channelId].map((e) => describeEvent(e))).toEqual(expected)
+    // get the timeline store interface
+    const { timelines: timelinesPrepended } = useTimelineStore.getState()
+    // assert the timeline events are in the correct order
+    expect(timelinesPrepended[channelId].map((e) => describeEvent(e))).toEqual(expected)
 }
 
 describe('UseTimelineStore', () => {

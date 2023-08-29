@@ -24,6 +24,7 @@ export type TimelineStoreStates = {
     timelines: TimelinesMap
     deletedEvents: Record<string, TimelineEvent[]>
     replacedEvents: Record<string, { oldEvent: TimelineEvent; newEvent: TimelineEvent }[]>
+    pendingReplacedEvents: Record<string, Record<string, TimelineEvent>>
     threadsStats: ThreadStatsMap
     threads: ThreadsMap
     reactions: ReactionsMap
@@ -60,6 +61,7 @@ export const useTimelineStore = create<TimelineStore>((set) => ({
     timelines: {},
     deletedEvents: {},
     replacedEvents: {},
+    pendingReplacedEvents: {},
     threadsStats: {},
     threads: {},
     reactions: {},
@@ -93,6 +95,7 @@ function makeTimelineStoreInterface(
             timelines: { ...prev.timelines, ...timelines },
             deletedEvents: prev.deletedEvents,
             replacedEvents: prev.replacedEvents,
+            pendingReplacedEvents: prev.pendingReplacedEvents,
             threadsStats: { ...prev.threadsStats, ...threadsStats },
             threads: { ...prev.threads, ...threads },
             reactions: { ...prev.reactions, ...reactions },
@@ -104,6 +107,7 @@ function makeTimelineStoreInterface(
             timelines: { ...state.timelines, [roomId]: timelineEvents },
             deletedEvents: state.deletedEvents,
             replacedEvents: state.replacedEvents,
+            pendingReplacedEvents: state.pendingReplacedEvents,
             threadsStats: {
                 ...state.threadsStats,
                 [roomId]: aggregated.threadStats,
@@ -125,6 +129,7 @@ function makeTimelineStoreInterface(
                 delete prev.timelines[roomId]
                 delete prev.deletedEvents[roomId]
                 delete prev.replacedEvents[roomId]
+                delete prev.pendingReplacedEvents[roomId]
                 delete prev.threadsStats[roomId]
                 delete prev.threads[roomId]
                 delete prev.reactions[roomId]
@@ -144,6 +149,7 @@ function makeTimelineStoreInterface(
                 timelines: removeTimelineEvent(roomId, eventIndex, state.timelines),
                 deletedEvents: appendTimelineEvent(roomId, event, state.deletedEvents),
                 replacedEvents: state.replacedEvents,
+                pendingReplacedEvents: state.pendingReplacedEvents,
                 threadsStats: removeThreadStat(roomId, event, state.threadsStats),
                 threads: removeThreadEvent(roomId, event, state.threads),
                 reactions: removeReaction(roomId, event, state.reactions),
@@ -155,6 +161,7 @@ function makeTimelineStoreInterface(
             timelines: appendTimelineEvent(roomId, timelineEvent, state.timelines),
             deletedEvents: state.deletedEvents,
             replacedEvents: state.replacedEvents,
+            pendingReplacedEvents: state.pendingReplacedEvents,
             threadsStats: addThreadStats(
                 roomId,
                 timelineEvent,
@@ -166,21 +173,30 @@ function makeTimelineStoreInterface(
             reactions: addReactions(roomId, timelineEvent, state.reactions),
         }))
     }
-    const prependEvent = (userId: string, roomId: string, timelineEvent: TimelineEvent) => {
-        setState((state) => ({
-            timelines: prependTimelineEvent(roomId, timelineEvent, state.timelines),
-            deletedEvents: state.deletedEvents,
-            replacedEvents: state.replacedEvents,
-            threadsStats: addThreadStats(
-                roomId,
-                timelineEvent,
-                state.threadsStats,
-                state.timelines[roomId],
-                userId,
-            ),
-            threads: prependThreadEvent(roomId, timelineEvent, state.threads),
-            reactions: addReactions(roomId, timelineEvent, state.reactions),
-        }))
+    const prependEvent = (userId: string, roomId: string, inTimelineEvent: TimelineEvent) => {
+        setState((state) => {
+            const timelineEvent = state.pendingReplacedEvents[roomId]?.[inTimelineEvent.eventId]
+                ? toReplacedMessageEvent(
+                      inTimelineEvent,
+                      state.pendingReplacedEvents[roomId][inTimelineEvent.eventId],
+                  )
+                : inTimelineEvent
+            return {
+                timelines: prependTimelineEvent(roomId, timelineEvent, state.timelines),
+                deletedEvents: state.deletedEvents,
+                replacedEvents: state.replacedEvents,
+                pendingReplacedEvents: state.pendingReplacedEvents,
+                threadsStats: addThreadStats(
+                    roomId,
+                    timelineEvent,
+                    state.threadsStats,
+                    state.timelines[roomId],
+                    userId,
+                ),
+                threads: prependThreadEvent(roomId, timelineEvent, state.threads),
+                reactions: addReactions(roomId, timelineEvent, state.reactions),
+            }
+        })
     }
 
     const replaceEvent = (
@@ -193,7 +209,23 @@ function makeTimelineStoreInterface(
             const timeline = state.timelines[roomId] ?? []
             const eventIndex = timeline.findIndex((e: TimelineEvent) => e.eventId === replacedMsgId)
             if (eventIndex === -1) {
-                return state
+                // if we didn't find an event to replace...
+                if (state.pendingReplacedEvents[roomId]?.[replacedMsgId]) {
+                    // if we already have a replacement here, leave it, because we sync backwards, we assume the first one is the correct one
+                    return state
+                } else {
+                    // otherwise add it to the pending list
+                    return {
+                        ...state,
+                        pendingReplacedEvents: {
+                            ...state.pendingReplacedEvents,
+                            [roomId]: {
+                                ...state.pendingReplacedEvents[roomId],
+                                [replacedMsgId]: timelineEvent,
+                            },
+                        },
+                    }
+                }
             }
             const oldEvent = timeline[eventIndex]
             const newEvent = toReplacedMessageEvent(oldEvent, timelineEvent)
@@ -218,6 +250,7 @@ function makeTimelineStoreInterface(
                     ...state.replacedEvents,
                     [roomId]: [...(state.replacedEvents[roomId] ?? []), { oldEvent, newEvent }],
                 },
+                pendingReplacedEvents: state.pendingReplacedEvents,
                 threadsStats: addThreadStats(
                     roomId,
                     newEvent,
@@ -287,9 +320,18 @@ function makeTimelineStoreInterface(
     }
 
     function prependEvents(events: TimelineEvent[], userId: string, streamId: string) {
-        // todo, we need to handle replace and redact events here https://linear.app/hnt-labs/issue/HNT-2219/handle-replacements-and-redactions-in-a-paginated-world
         for (const event of reverse(events)) {
-            prependEvent(userId, streamId, event)
+            const replacedEventId = getReplacedId(event.content)
+            const redactsEventId = getRedactsId(event.content)
+            if (redactsEventId) {
+                const redactedEvent = makeRedactionEvent(event)
+                prependEvent(userId, streamId, event)
+                replaceEvent(userId, streamId, redactsEventId, redactedEvent)
+            } else if (replacedEventId) {
+                replaceEvent(userId, streamId, replacedEventId, event)
+            } else {
+                prependEvent(userId, streamId, event)
+            }
         }
     }
 
