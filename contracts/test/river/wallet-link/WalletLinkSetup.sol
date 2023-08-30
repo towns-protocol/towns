@@ -3,23 +3,23 @@ pragma solidity ^0.8.19;
 
 // interfaces
 import {IDiamond, Diamond} from "contracts/src/diamond/Diamond.sol";
-import {IDelegation} from "contracts/src/towns/facets/delegation/IDelegation.sol";
+import {IWalletLink} from "contracts/src/river/wallet-link/IWalletLink.sol";
 
 // libraries
 
 // helpers
 import {FacetHelper, FacetTest} from "contracts/test/diamond/Facet.t.sol";
-import {Delegation} from "contracts/src/towns/facets/delegation/Delegation.sol";
+import {WalletLink} from "contracts/src/river/wallet-link/WalletLink.sol";
 import {IntrospectionHelper} from "contracts/test/diamond/introspection/IntrospectionSetup.sol";
 
 import {MultiInit} from "contracts/src/diamond/initializers/MultiInit.sol";
 
-abstract contract DelegationSetup is FacetTest {
-  Delegation internal delegation;
+abstract contract WalletLinkSetup is FacetTest {
+  WalletLink internal walletLink;
 
   function setUp() public override {
     super.setUp();
-    delegation = new Delegation();
+    walletLink = new WalletLink();
   }
 
   function diamondInitParams()
@@ -28,20 +28,20 @@ abstract contract DelegationSetup is FacetTest {
     returns (Diamond.InitParams memory)
   {
     IntrospectionHelper introspectionHelper = new IntrospectionHelper();
-    DelegationHelper delegationHelper = new DelegationHelper();
+    WalletLinkHelper walletLinkHelper = new WalletLinkHelper();
     MultiInit multiInit = new MultiInit();
 
     IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](2);
     cuts[0] = introspectionHelper.makeCut(IDiamond.FacetCutAction.Add);
-    cuts[1] = delegationHelper.makeCut(IDiamond.FacetCutAction.Add);
+    cuts[1] = walletLinkHelper.makeCut(IDiamond.FacetCutAction.Add);
 
     address[] memory addresses = new address[](2);
     addresses[0] = introspectionHelper.facet();
-    addresses[1] = delegationHelper.facet();
+    addresses[1] = walletLinkHelper.facet();
 
     bytes[] memory datas = new bytes[](2);
     datas[0] = introspectionHelper.makeInitData("");
-    datas[1] = delegationHelper.makeInitData("");
+    datas[1] = walletLinkHelper.makeInitData("");
 
     return
       Diamond.InitParams({
@@ -56,27 +56,30 @@ abstract contract DelegationSetup is FacetTest {
   }
 }
 
-contract DelegationHelper is FacetHelper {
-  Delegation internal delegation;
+contract WalletLinkHelper is FacetHelper {
+  WalletLink internal walletLink;
 
   constructor() {
-    delegation = new Delegation();
+    walletLink = new WalletLink();
   }
 
   function facet() public view override returns (address) {
-    return address(delegation);
+    return address(walletLink);
   }
 
   function selectors() public pure override returns (bytes4[] memory) {
-    bytes4[] memory selectors_ = new bytes4[](4);
-    selectors_[0] = IDelegation.delegateForAll.selector;
-    selectors_[1] = IDelegation.getDelegationsByDelegate.selector;
-    selectors_[2] = IDelegation.checkDelegateForAll.selector;
-    selectors_[3] = IDelegation.getDelegatesForAll.selector;
+    bytes4[] memory selectors_ = new bytes4[](6);
+    uint256 idx;
+    selectors_[idx++] = IWalletLink.linkForAll.selector;
+    selectors_[idx++] = IWalletLink.revokeAllLinks.selector;
+    selectors_[idx++] = IWalletLink.revokeLink.selector;
+    selectors_[idx++] = IWalletLink.getLinksByRootKey.selector;
+    selectors_[idx++] = IWalletLink.getLinksForAll.selector;
+    selectors_[idx++] = IWalletLink.checkLinkForAll.selector;
     return selectors_;
   }
 
   function initializer() public view override returns (bytes4) {
-    return delegation.__Delegation_init.selector;
+    return walletLink.__WalletLink_init.selector;
   }
 }

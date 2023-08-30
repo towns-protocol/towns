@@ -173,17 +173,17 @@
   },
   "ast": {
     "absolutePath": "contracts/src/crosschain/IEntitlementCheckerEvents.sol",
-    "id": 5935,
+    "id": 6041,
     "exportedSymbols": {
       "IEntitlementCheckerEvents": [
-        5934
+        6040
       ]
     },
     "nodeType": "SourceUnit",
     "src": "32:397:26",
     "nodes": [
       {
-        "id": 5911,
+        "id": 6017,
         "nodeType": "PragmaDirective",
         "src": "32:24:26",
         "nodes": [],
@@ -195,33 +195,33 @@
         ]
       },
       {
-        "id": 5934,
+        "id": 6040,
         "nodeType": "ContractDefinition",
         "src": "58:370:26",
         "nodes": [
           {
-            "id": 5915,
+            "id": 6021,
             "nodeType": "EnumDefinition",
             "src": "98:63:26",
             "nodes": [],
             "canonicalName": "IEntitlementCheckerEvents.NodeVoteStatus",
             "members": [
               {
-                "id": 5912,
+                "id": 6018,
                 "name": "NOT_VOTED",
                 "nameLocation": "124:9:26",
                 "nodeType": "EnumValue",
                 "src": "124:9:26"
               },
               {
-                "id": 5913,
+                "id": 6019,
                 "name": "PASSED",
                 "nameLocation": "139:6:26",
                 "nodeType": "EnumValue",
                 "src": "139:6:26"
               },
               {
-                "id": 5914,
+                "id": 6020,
                 "name": "FAILED",
                 "nameLocation": "151:6:26",
                 "nodeType": "EnumValue",
@@ -232,7 +232,7 @@
             "nameLocation": "103:14:26"
           },
           {
-            "id": 5926,
+            "id": 6032,
             "nodeType": "EventDefinition",
             "src": "165:156:26",
             "nodes": [],
@@ -241,18 +241,18 @@
             "name": "EntitlementCheckRequested",
             "nameLocation": "171:25:26",
             "parameters": {
-              "id": 5925,
+              "id": 6031,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 5917,
+                  "id": 6023,
                   "indexed": true,
                   "mutability": "mutable",
                   "name": "callerAddress",
                   "nameLocation": "218:13:26",
                   "nodeType": "VariableDeclaration",
-                  "scope": 5926,
+                  "scope": 6032,
                   "src": "202:29:26",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -261,7 +261,7 @@
                     "typeString": "address"
                   },
                   "typeName": {
-                    "id": 5916,
+                    "id": 6022,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
                     "src": "202:7:26",
@@ -275,13 +275,13 @@
                 },
                 {
                   "constant": false,
-                  "id": 5919,
+                  "id": 6025,
                   "indexed": false,
                   "mutability": "mutable",
                   "name": "transactionId",
                   "nameLocation": "245:13:26",
                   "nodeType": "VariableDeclaration",
-                  "scope": 5926,
+                  "scope": 6032,
                   "src": "237:21:26",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -290,7 +290,7 @@
                     "typeString": "bytes32"
                   },
                   "typeName": {
-                    "id": 5918,
+                    "id": 6024,
                     "name": "bytes32",
                     "nodeType": "ElementaryTypeName",
                     "src": "237:7:26",
@@ -303,13 +303,13 @@
                 },
                 {
                   "constant": false,
-                  "id": 5922,
+                  "id": 6028,
                   "indexed": false,
                   "mutability": "mutable",
                   "name": "selectedNodes",
                   "nameLocation": "274:13:26",
                   "nodeType": "VariableDeclaration",
-                  "scope": 5926,
+                  "scope": 6032,
                   "src": "264:23:26",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -319,7 +319,7 @@
                   },
                   "typeName": {
                     "baseType": {
-                      "id": 5920,
+                      "id": 6026,
                       "name": "address",
                       "nodeType": "ElementaryTypeName",
                       "src": "264:7:26",
@@ -329,7 +329,7 @@
                         "typeString": "address"
                       }
                     },
-                    "id": 5921,
+                    "id": 6027,
                     "nodeType": "ArrayTypeName",
                     "src": "264:9:26",
                     "typeDescriptions": {
@@ -341,13 +341,13 @@
                 },
                 {
                   "constant": false,
-                  "id": 5924,
+                  "id": 6030,
                   "indexed": false,
                   "mutability": "mutable",
                   "name": "contractAddress",
                   "nameLocation": "301:15:26",
                   "nodeType": "VariableDeclaration",
-                  "scope": 5926,
+                  "scope": 6032,
                   "src": "293:23:26",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -356,7 +356,7 @@
                     "typeString": "address"
                   },
                   "typeName": {
-                    "id": 5923,
+                    "id": 6029,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
                     "src": "293:7:26",
@@ -373,7 +373,7 @@
             }
           },
           {
-            "id": 5933,
+            "id": 6039,
             "nodeType": "EventDefinition",
             "src": "325:101:26",
             "nodes": [],
@@ -382,18 +382,18 @@
             "name": "EntitlementCheckResultPosted",
             "nameLocation": "331:28:26",
             "parameters": {
-              "id": 5932,
+              "id": 6038,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 5928,
+                  "id": 6034,
                   "indexed": true,
                   "mutability": "mutable",
                   "name": "transactionId",
                   "nameLocation": "381:13:26",
                   "nodeType": "VariableDeclaration",
-                  "scope": 5933,
+                  "scope": 6039,
                   "src": "365:29:26",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -402,7 +402,7 @@
                     "typeString": "bytes32"
                   },
                   "typeName": {
-                    "id": 5927,
+                    "id": 6033,
                     "name": "bytes32",
                     "nodeType": "ElementaryTypeName",
                     "src": "365:7:26",
@@ -415,37 +415,37 @@
                 },
                 {
                   "constant": false,
-                  "id": 5931,
+                  "id": 6037,
                   "indexed": false,
                   "mutability": "mutable",
                   "name": "result",
                   "nameLocation": "415:6:26",
                   "nodeType": "VariableDeclaration",
-                  "scope": 5933,
+                  "scope": 6039,
                   "src": "400:21:26",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
-                    "typeIdentifier": "t_enum$_NodeVoteStatus_$5915",
+                    "typeIdentifier": "t_enum$_NodeVoteStatus_$6021",
                     "typeString": "enum IEntitlementCheckerEvents.NodeVoteStatus"
                   },
                   "typeName": {
-                    "id": 5930,
+                    "id": 6036,
                     "nodeType": "UserDefinedTypeName",
                     "pathNode": {
-                      "id": 5929,
+                      "id": 6035,
                       "name": "NodeVoteStatus",
                       "nameLocations": [
                         "400:14:26"
                       ],
                       "nodeType": "IdentifierPath",
-                      "referencedDeclaration": 5915,
+                      "referencedDeclaration": 6021,
                       "src": "400:14:26"
                     },
-                    "referencedDeclaration": 5915,
+                    "referencedDeclaration": 6021,
                     "src": "400:14:26",
                     "typeDescriptions": {
-                      "typeIdentifier": "t_enum$_NodeVoteStatus_$5915",
+                      "typeIdentifier": "t_enum$_NodeVoteStatus_$6021",
                       "typeString": "enum IEntitlementCheckerEvents.NodeVoteStatus"
                     }
                   },
@@ -463,15 +463,15 @@
         "contractKind": "interface",
         "fullyImplemented": true,
         "linearizedBaseContracts": [
-          5934
+          6040
         ],
         "name": "IEntitlementCheckerEvents",
         "nameLocation": "68:25:26",
-        "scope": 5935,
+        "scope": 6041,
         "usedErrors": [],
         "usedEvents": [
-          5926,
-          5933
+          6032,
+          6039
         ]
       }
     ],

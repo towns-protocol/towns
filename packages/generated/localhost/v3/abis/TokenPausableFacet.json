@@ -523,29 +523,29 @@
   },
   "ast": {
     "absolutePath": "contracts/src/diamond/facets/pausable/token/TokenPausableFacet.sol",
-    "id": 8508,
+    "id": 8614,
     "exportedSymbols": {
       "Facet": [
-        6118
+        6224
       ],
       "IPausable": [
-        8289
+        8395
       ],
       "PausableBase": [
-        8366
+        8472
       ],
       "TokenOwnableBase": [
-        8175
+        8281
       ],
       "TokenPausableFacet": [
-        8507
+        8613
       ]
     },
     "nodeType": "SourceUnit",
     "src": "39:787:60",
     "nodes": [
       {
-        "id": 8450,
+        "id": 8556,
         "nodeType": "PragmaDirective",
         "src": "39:24:60",
         "nodes": [],
@@ -557,23 +557,23 @@
         ]
       },
       {
-        "id": 8452,
+        "id": 8558,
         "nodeType": "ImportDirective",
         "src": "79:78:60",
         "nodes": [],
         "absolutePath": "contracts/src/diamond/facets/pausable/IPausable.sol",
         "file": "contracts/src/diamond/facets/pausable/IPausable.sol",
         "nameLocation": "-1:-1:-1",
-        "scope": 8508,
-        "sourceUnit": 8290,
+        "scope": 8614,
+        "sourceUnit": 8396,
         "symbolAliases": [
           {
             "foreign": {
-              "id": 8451,
+              "id": 8557,
               "name": "IPausable",
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
-              "referencedDeclaration": 8289,
+              "referencedDeclaration": 8395,
               "src": "87:9:60",
               "typeDescriptions": {}
             },
@@ -583,23 +583,23 @@
         "unitAlias": ""
       },
       {
-        "id": 8454,
+        "id": 8560,
         "nodeType": "ImportDirective",
         "src": "186:61:60",
         "nodes": [],
         "absolutePath": "contracts/src/diamond/facets/Facet.sol",
         "file": "contracts/src/diamond/facets/Facet.sol",
         "nameLocation": "-1:-1:-1",
-        "scope": 8508,
-        "sourceUnit": 6119,
+        "scope": 8614,
+        "sourceUnit": 6225,
         "symbolAliases": [
           {
             "foreign": {
-              "id": 8453,
+              "id": 8559,
               "name": "Facet",
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
-              "referencedDeclaration": 6118,
+              "referencedDeclaration": 6224,
               "src": "194:5:60",
               "typeDescriptions": {}
             },
@@ -609,23 +609,23 @@
         "unitAlias": ""
       },
       {
-        "id": 8456,
+        "id": 8562,
         "nodeType": "ImportDirective",
         "src": "248:84:60",
         "nodes": [],
         "absolutePath": "contracts/src/diamond/facets/pausable/PausableBase.sol",
         "file": "contracts/src/diamond/facets/pausable/PausableBase.sol",
         "nameLocation": "-1:-1:-1",
-        "scope": 8508,
-        "sourceUnit": 8367,
+        "scope": 8614,
+        "sourceUnit": 8473,
         "symbolAliases": [
           {
             "foreign": {
-              "id": 8455,
+              "id": 8561,
               "name": "PausableBase",
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
-              "referencedDeclaration": 8366,
+              "referencedDeclaration": 8472,
               "src": "256:12:60",
               "typeDescriptions": {}
             },
@@ -635,23 +635,23 @@
         "unitAlias": ""
       },
       {
-        "id": 8458,
+        "id": 8564,
         "nodeType": "ImportDirective",
         "src": "333:97:60",
         "nodes": [],
         "absolutePath": "contracts/src/diamond/facets/ownable/token/TokenOwnableBase.sol",
         "file": "contracts/src/diamond/facets/ownable/token/TokenOwnableBase.sol",
         "nameLocation": "-1:-1:-1",
-        "scope": 8508,
-        "sourceUnit": 8176,
+        "scope": 8614,
+        "sourceUnit": 8282,
         "symbolAliases": [
           {
             "foreign": {
-              "id": 8457,
+              "id": 8563,
               "name": "TokenOwnableBase",
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
-              "referencedDeclaration": 8175,
+              "referencedDeclaration": 8281,
               "src": "341:16:60",
               "typeDescriptions": {}
             },
@@ -661,17 +661,17 @@
         "unitAlias": ""
       },
       {
-        "id": 8507,
+        "id": 8613,
         "nodeType": "ContractDefinition",
         "src": "432:393:60",
         "nodes": [
           {
-            "id": 8475,
+            "id": 8581,
             "nodeType": "FunctionDefinition",
             "src": "524:74:60",
             "nodes": [],
             "body": {
-              "id": 8474,
+              "id": 8580,
               "nodeType": "Block",
               "src": "577:21:60",
               "nodes": [],
@@ -681,18 +681,18 @@
                     "arguments": [],
                     "expression": {
                       "argumentTypes": [],
-                      "id": 8471,
+                      "id": 8577,
                       "name": "_unpause",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 8365,
+                      "referencedDeclaration": 8471,
                       "src": "583:8:60",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_internal_nonpayable$__$returns$__$",
                         "typeString": "function ()"
                       }
                     },
-                    "id": 8472,
+                    "id": 8578,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -708,7 +708,7 @@
                       "typeString": "tuple()"
                     }
                   },
-                  "id": 8473,
+                  "id": 8579,
                   "nodeType": "ExpressionStatement",
                   "src": "583:10:60"
                 }
@@ -719,16 +719,16 @@
             "kind": "function",
             "modifiers": [
               {
-                "id": 8469,
+                "id": 8575,
                 "kind": "modifierInvocation",
                 "modifierName": {
-                  "id": 8468,
+                  "id": 8574,
                   "name": "onlyInitializing",
                   "nameLocations": [
                     "560:16:60"
                   ],
                   "nodeType": "IdentifierPath",
-                  "referencedDeclaration": 7022,
+                  "referencedDeclaration": 7128,
                   "src": "560:16:60"
                 },
                 "nodeType": "ModifierInvocation",
@@ -738,29 +738,29 @@
             "name": "__Pausable_init",
             "nameLocation": "533:15:60",
             "parameters": {
-              "id": 8467,
+              "id": 8573,
               "nodeType": "ParameterList",
               "parameters": [],
               "src": "548:2:60"
             },
             "returnParameters": {
-              "id": 8470,
+              "id": 8576,
               "nodeType": "ParameterList",
               "parameters": [],
               "src": "577:0:60"
             },
-            "scope": 8507,
+            "scope": 8613,
             "stateMutability": "nonpayable",
             "virtual": false,
             "visibility": "external"
           },
           {
-            "id": 8484,
+            "id": 8590,
             "nodeType": "FunctionDefinition",
             "src": "602:74:60",
             "nodes": [],
             "body": {
-              "id": 8483,
+              "id": 8589,
               "nodeType": "Block",
               "src": "649:27:60",
               "nodes": [],
@@ -770,18 +770,18 @@
                     "arguments": [],
                     "expression": {
                       "argumentTypes": [],
-                      "id": 8480,
+                      "id": 8586,
                       "name": "_paused",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 8331,
+                      "referencedDeclaration": 8437,
                       "src": "662:7:60",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_internal_view$__$returns$_t_bool_$",
                         "typeString": "function () view returns (bool)"
                       }
                     },
-                    "id": 8481,
+                    "id": 8587,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -797,15 +797,15 @@
                       "typeString": "bool"
                     }
                   },
-                  "functionReturnParameters": 8479,
-                  "id": 8482,
+                  "functionReturnParameters": 8585,
+                  "id": 8588,
                   "nodeType": "Return",
                   "src": "655:16:60"
                 }
               ]
             },
             "baseFunctions": [
-              8282
+              8388
             ],
             "functionSelector": "5c975abb",
             "implemented": true,
@@ -814,23 +814,23 @@
             "name": "paused",
             "nameLocation": "611:6:60",
             "parameters": {
-              "id": 8476,
+              "id": 8582,
               "nodeType": "ParameterList",
               "parameters": [],
               "src": "617:2:60"
             },
             "returnParameters": {
-              "id": 8479,
+              "id": 8585,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 8478,
+                  "id": 8584,
                   "mutability": "mutable",
                   "name": "",
                   "nameLocation": "-1:-1:-1",
                   "nodeType": "VariableDeclaration",
-                  "scope": 8484,
+                  "scope": 8590,
                   "src": "643:4:60",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -839,7 +839,7 @@
                     "typeString": "bool"
                   },
                   "typeName": {
-                    "id": 8477,
+                    "id": 8583,
                     "name": "bool",
                     "nodeType": "ElementaryTypeName",
                     "src": "643:4:60",
@@ -853,18 +853,18 @@
               ],
               "src": "642:6:60"
             },
-            "scope": 8507,
+            "scope": 8613,
             "stateMutability": "view",
             "virtual": false,
             "visibility": "external"
           },
           {
-            "id": 8495,
+            "id": 8601,
             "nodeType": "FunctionDefinition",
             "src": "680:69:60",
             "nodes": [],
             "body": {
-              "id": 8494,
+              "id": 8600,
               "nodeType": "Block",
               "src": "730:19:60",
               "nodes": [],
@@ -874,18 +874,18 @@
                     "arguments": [],
                     "expression": {
                       "argumentTypes": [],
-                      "id": 8491,
+                      "id": 8597,
                       "name": "_pause",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 8348,
+                      "referencedDeclaration": 8454,
                       "src": "736:6:60",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_internal_nonpayable$__$returns$__$",
                         "typeString": "function ()"
                       }
                     },
-                    "id": 8492,
+                    "id": 8598,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -901,46 +901,46 @@
                       "typeString": "tuple()"
                     }
                   },
-                  "id": 8493,
+                  "id": 8599,
                   "nodeType": "ExpressionStatement",
                   "src": "736:8:60"
                 }
               ]
             },
             "baseFunctions": [
-              8285
+              8391
             ],
             "functionSelector": "8456cb59",
             "implemented": true,
             "kind": "function",
             "modifiers": [
               {
-                "id": 8487,
+                "id": 8593,
                 "kind": "modifierInvocation",
                 "modifierName": {
-                  "id": 8486,
+                  "id": 8592,
                   "name": "onlyOwner",
                   "nameLocations": [
                     "706:9:60"
                   ],
                   "nodeType": "IdentifierPath",
-                  "referencedDeclaration": 8103,
+                  "referencedDeclaration": 8209,
                   "src": "706:9:60"
                 },
                 "nodeType": "ModifierInvocation",
                 "src": "706:9:60"
               },
               {
-                "id": 8489,
+                "id": 8595,
                 "kind": "modifierInvocation",
                 "modifierName": {
-                  "id": 8488,
+                  "id": 8594,
                   "name": "whenNotPaused",
                   "nameLocations": [
                     "716:13:60"
                   ],
                   "nodeType": "IdentifierPath",
-                  "referencedDeclaration": 8308,
+                  "referencedDeclaration": 8414,
                   "src": "716:13:60"
                 },
                 "nodeType": "ModifierInvocation",
@@ -950,29 +950,29 @@
             "name": "pause",
             "nameLocation": "689:5:60",
             "parameters": {
-              "id": 8485,
+              "id": 8591,
               "nodeType": "ParameterList",
               "parameters": [],
               "src": "694:2:60"
             },
             "returnParameters": {
-              "id": 8490,
+              "id": 8596,
               "nodeType": "ParameterList",
               "parameters": [],
               "src": "730:0:60"
             },
-            "scope": 8507,
+            "scope": 8613,
             "stateMutability": "nonpayable",
             "virtual": false,
             "visibility": "external"
           },
           {
-            "id": 8506,
+            "id": 8612,
             "nodeType": "FunctionDefinition",
             "src": "753:70:60",
             "nodes": [],
             "body": {
-              "id": 8505,
+              "id": 8611,
               "nodeType": "Block",
               "src": "802:21:60",
               "nodes": [],
@@ -982,18 +982,18 @@
                     "arguments": [],
                     "expression": {
                       "argumentTypes": [],
-                      "id": 8502,
+                      "id": 8608,
                       "name": "_unpause",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 8365,
+                      "referencedDeclaration": 8471,
                       "src": "808:8:60",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_internal_nonpayable$__$returns$__$",
                         "typeString": "function ()"
                       }
                     },
-                    "id": 8503,
+                    "id": 8609,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -1009,46 +1009,46 @@
                       "typeString": "tuple()"
                     }
                   },
-                  "id": 8504,
+                  "id": 8610,
                   "nodeType": "ExpressionStatement",
                   "src": "808:10:60"
                 }
               ]
             },
             "baseFunctions": [
-              8288
+              8394
             ],
             "functionSelector": "3f4ba83a",
             "implemented": true,
             "kind": "function",
             "modifiers": [
               {
-                "id": 8498,
+                "id": 8604,
                 "kind": "modifierInvocation",
                 "modifierName": {
-                  "id": 8497,
+                  "id": 8603,
                   "name": "onlyOwner",
                   "nameLocations": [
                     "781:9:60"
                   ],
                   "nodeType": "IdentifierPath",
-                  "referencedDeclaration": 8103,
+                  "referencedDeclaration": 8209,
                   "src": "781:9:60"
                 },
                 "nodeType": "ModifierInvocation",
                 "src": "781:9:60"
               },
               {
-                "id": 8500,
+                "id": 8606,
                 "kind": "modifierInvocation",
                 "modifierName": {
-                  "id": 8499,
+                  "id": 8605,
                   "name": "whenPaused",
                   "nameLocations": [
                     "791:10:60"
                   ],
                   "nodeType": "IdentifierPath",
-                  "referencedDeclaration": 8320,
+                  "referencedDeclaration": 8426,
                   "src": "791:10:60"
                 },
                 "nodeType": "ModifierInvocation",
@@ -1058,18 +1058,18 @@
             "name": "unpause",
             "nameLocation": "762:7:60",
             "parameters": {
-              "id": 8496,
+              "id": 8602,
               "nodeType": "ParameterList",
               "parameters": [],
               "src": "769:2:60"
             },
             "returnParameters": {
-              "id": 8501,
+              "id": 8607,
               "nodeType": "ParameterList",
               "parameters": [],
               "src": "802:0:60"
             },
-            "scope": 8507,
+            "scope": 8613,
             "stateMutability": "nonpayable",
             "virtual": false,
             "visibility": "external"
@@ -1079,61 +1079,61 @@
         "baseContracts": [
           {
             "baseName": {
-              "id": 8459,
+              "id": 8565,
               "name": "IPausable",
               "nameLocations": [
                 "465:9:60"
               ],
               "nodeType": "IdentifierPath",
-              "referencedDeclaration": 8289,
+              "referencedDeclaration": 8395,
               "src": "465:9:60"
             },
-            "id": 8460,
+            "id": 8566,
             "nodeType": "InheritanceSpecifier",
             "src": "465:9:60"
           },
           {
             "baseName": {
-              "id": 8461,
+              "id": 8567,
               "name": "PausableBase",
               "nameLocations": [
                 "478:12:60"
               ],
               "nodeType": "IdentifierPath",
-              "referencedDeclaration": 8366,
+              "referencedDeclaration": 8472,
               "src": "478:12:60"
             },
-            "id": 8462,
+            "id": 8568,
             "nodeType": "InheritanceSpecifier",
             "src": "478:12:60"
           },
           {
             "baseName": {
-              "id": 8463,
+              "id": 8569,
               "name": "TokenOwnableBase",
               "nameLocations": [
                 "494:16:60"
               ],
               "nodeType": "IdentifierPath",
-              "referencedDeclaration": 8175,
+              "referencedDeclaration": 8281,
               "src": "494:16:60"
             },
-            "id": 8464,
+            "id": 8570,
             "nodeType": "InheritanceSpecifier",
             "src": "494:16:60"
           },
           {
             "baseName": {
-              "id": 8465,
+              "id": 8571,
               "name": "Facet",
               "nameLocations": [
                 "514:5:60"
               ],
               "nodeType": "IdentifierPath",
-              "referencedDeclaration": 6118,
+              "referencedDeclaration": 6224,
               "src": "514:5:60"
             },
-            "id": 8466,
+            "id": 8572,
             "nodeType": "InheritanceSpecifier",
             "src": "514:5:60"
           }
@@ -1143,37 +1143,37 @@
         "contractKind": "contract",
         "fullyImplemented": true,
         "linearizedBaseContracts": [
-          8507,
-          6118,
-          7249,
-          7152,
-          7110,
-          8175,
-          7632,
-          8366,
-          8289,
-          8275
+          8613,
+          6224,
+          7355,
+          7258,
+          7216,
+          8281,
+          7738,
+          8472,
+          8395,
+          8381
         ],
         "name": "TokenPausableFacet",
         "nameLocation": "441:18:60",
-        "scope": 8508,
+        "scope": 8614,
         "usedErrors": [
-          6890,
-          6892,
-          7139,
-          7141,
-          7620,
-          7624,
-          8264,
-          8266
+          6996,
+          6998,
+          7245,
+          7247,
+          7726,
+          7730,
+          8370,
+          8372
         ],
         "usedEvents": [
-          6896,
-          7146,
-          7151,
-          7631,
-          8270,
-          8274
+          7002,
+          7252,
+          7257,
+          7737,
+          8376,
+          8380
         ]
       }
     ],

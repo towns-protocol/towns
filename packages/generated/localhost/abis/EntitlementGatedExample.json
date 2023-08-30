@@ -524,32 +524,32 @@
   },
   "ast": {
     "absolutePath": "contracts/src/crosschain/example/EntitlementGatedExample.sol",
-    "id": 6002,
+    "id": 6108,
     "exportedSymbols": {
       "EntitlementChecker": [
-        5386
+        5492
       ],
       "EntitlementGated": [
-        5871
+        5977
       ],
       "EntitlementGatedExample": [
-        6001
+        6107
       ],
       "IEntitlementChecker": [
-        5909
+        6015
       ],
       "IEntitlementCheckerEvents": [
-        5934
+        6040
       ],
       "IEntitlementGated": [
-        5961
+        6067
       ]
     },
     "nodeType": "SourceUnit",
     "src": "32:704:28",
     "nodes": [
       {
-        "id": 5963,
+        "id": 6069,
         "nodeType": "PragmaDirective",
         "src": "32:24:28",
         "nodes": [],
@@ -561,23 +561,23 @@
         ]
       },
       {
-        "id": 5965,
+        "id": 6071,
         "nodeType": "ImportDirective",
         "src": "58:61:28",
         "nodes": [],
         "absolutePath": "contracts/src/crosschain/EntitlementChecker.sol",
         "file": "../EntitlementChecker.sol",
         "nameLocation": "-1:-1:-1",
-        "scope": 6002,
-        "sourceUnit": 5387,
+        "scope": 6108,
+        "sourceUnit": 5493,
         "symbolAliases": [
           {
             "foreign": {
-              "id": 5964,
+              "id": 6070,
               "name": "EntitlementChecker",
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
-              "referencedDeclaration": 5386,
+              "referencedDeclaration": 5492,
               "src": "66:18:28",
               "typeDescriptions": {}
             },
@@ -587,23 +587,23 @@
         "unitAlias": ""
       },
       {
-        "id": 5967,
+        "id": 6073,
         "nodeType": "ImportDirective",
         "src": "120:63:28",
         "nodes": [],
         "absolutePath": "contracts/src/crosschain/IEntitlementChecker.sol",
         "file": "../IEntitlementChecker.sol",
         "nameLocation": "-1:-1:-1",
-        "scope": 6002,
-        "sourceUnit": 5910,
+        "scope": 6108,
+        "sourceUnit": 6016,
         "symbolAliases": [
           {
             "foreign": {
-              "id": 5966,
+              "id": 6072,
               "name": "IEntitlementChecker",
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
-              "referencedDeclaration": 5909,
+              "referencedDeclaration": 6015,
               "src": "128:19:28",
               "typeDescriptions": {}
             },
@@ -613,23 +613,23 @@
         "unitAlias": ""
       },
       {
-        "id": 5969,
+        "id": 6075,
         "nodeType": "ImportDirective",
         "src": "184:75:28",
         "nodes": [],
         "absolutePath": "contracts/src/crosschain/IEntitlementCheckerEvents.sol",
         "file": "../IEntitlementCheckerEvents.sol",
         "nameLocation": "-1:-1:-1",
-        "scope": 6002,
-        "sourceUnit": 5935,
+        "scope": 6108,
+        "sourceUnit": 6041,
         "symbolAliases": [
           {
             "foreign": {
-              "id": 5968,
+              "id": 6074,
               "name": "IEntitlementCheckerEvents",
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
-              "referencedDeclaration": 5934,
+              "referencedDeclaration": 6040,
               "src": "192:25:28",
               "typeDescriptions": {}
             },
@@ -639,23 +639,23 @@
         "unitAlias": ""
       },
       {
-        "id": 5971,
+        "id": 6077,
         "nodeType": "ImportDirective",
         "src": "260:59:28",
         "nodes": [],
         "absolutePath": "contracts/src/crosschain/IEntitlementGated.sol",
         "file": "../IEntitlementGated.sol",
         "nameLocation": "-1:-1:-1",
-        "scope": 6002,
-        "sourceUnit": 5962,
+        "scope": 6108,
+        "sourceUnit": 6068,
         "symbolAliases": [
           {
             "foreign": {
-              "id": 5970,
+              "id": 6076,
               "name": "IEntitlementGated",
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
-              "referencedDeclaration": 5961,
+              "referencedDeclaration": 6067,
               "src": "268:17:28",
               "typeDescriptions": {}
             },
@@ -665,23 +665,23 @@
         "unitAlias": ""
       },
       {
-        "id": 5973,
+        "id": 6079,
         "nodeType": "ImportDirective",
         "src": "320:57:28",
         "nodes": [],
         "absolutePath": "contracts/src/crosschain/EntitlementGated.sol",
         "file": "../EntitlementGated.sol",
         "nameLocation": "-1:-1:-1",
-        "scope": 6002,
-        "sourceUnit": 5872,
+        "scope": 6108,
+        "sourceUnit": 5978,
         "symbolAliases": [
           {
             "foreign": {
-              "id": 5972,
+              "id": 6078,
               "name": "EntitlementGated",
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
-              "referencedDeclaration": 5871,
+              "referencedDeclaration": 5977,
               "src": "328:16:28",
               "typeDescriptions": {}
             },
@@ -691,12 +691,12 @@
         "unitAlias": ""
       },
       {
-        "id": 6001,
+        "id": 6107,
         "nodeType": "ContractDefinition",
         "src": "379:356:28",
         "nodes": [
           {
-            "id": 5981,
+            "id": 6087,
             "nodeType": "VariableDeclaration",
             "src": "436:53:28",
             "nodes": [],
@@ -705,7 +705,7 @@
             "mutability": "constant",
             "name": "test",
             "nameLocation": "458:4:28",
-            "scope": 6001,
+            "scope": 6107,
             "stateVariable": true,
             "storageLocation": "default",
             "typeDescriptions": {
@@ -713,7 +713,7 @@
               "typeString": "bytes"
             },
             "typeName": {
-              "id": 5976,
+              "id": 6082,
               "name": "bytes",
               "nodeType": "ElementaryTypeName",
               "src": "436:5:28",
@@ -726,7 +726,7 @@
               "arguments": [
                 {
                   "hexValue": "74657374",
-                  "id": 5979,
+                  "id": 6085,
                   "isConstant": false,
                   "isLValue": false,
                   "isPure": true,
@@ -749,7 +749,7 @@
                   }
                 ],
                 "expression": {
-                  "id": 5977,
+                  "id": 6083,
                   "name": "abi",
                   "nodeType": "Identifier",
                   "overloadedDeclarations": [],
@@ -760,7 +760,7 @@
                     "typeString": "abi"
                   }
                 },
-                "id": 5978,
+                "id": 6084,
                 "isConstant": false,
                 "isLValue": false,
                 "isPure": true,
@@ -774,7 +774,7 @@
                   "typeString": "function () pure returns (bytes memory)"
                 }
               },
-              "id": 5980,
+              "id": 6086,
               "isConstant": false,
               "isLValue": false,
               "isPure": true,
@@ -793,12 +793,12 @@
             "visibility": "public"
           },
           {
-            "id": 5991,
+            "id": 6097,
             "nodeType": "FunctionDefinition",
             "src": "494:115:28",
             "nodes": [],
             "body": {
-              "id": 5990,
+              "id": 6096,
               "nodeType": "Block",
               "src": "607:2:28",
               "nodes": [],
@@ -810,28 +810,28 @@
               {
                 "arguments": [
                   {
-                    "id": 5987,
+                    "id": 6093,
                     "name": "assignedEntitlementChecker",
                     "nodeType": "Identifier",
                     "overloadedDeclarations": [],
-                    "referencedDeclaration": 5984,
+                    "referencedDeclaration": 6090,
                     "src": "579:26:28",
                     "typeDescriptions": {
-                      "typeIdentifier": "t_contract$_IEntitlementChecker_$5909",
+                      "typeIdentifier": "t_contract$_IEntitlementChecker_$6015",
                       "typeString": "contract IEntitlementChecker"
                     }
                   }
                 ],
-                "id": 5988,
+                "id": 6094,
                 "kind": "baseConstructorSpecifier",
                 "modifierName": {
-                  "id": 5986,
+                  "id": 6092,
                   "name": "EntitlementGated",
                   "nameLocations": [
                     "562:16:28"
                   ],
                   "nodeType": "IdentifierPath",
-                  "referencedDeclaration": 5871,
+                  "referencedDeclaration": 5977,
                   "src": "562:16:28"
                 },
                 "nodeType": "ModifierInvocation",
@@ -841,41 +841,41 @@
             "name": "",
             "nameLocation": "-1:-1:-1",
             "parameters": {
-              "id": 5985,
+              "id": 6091,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 5984,
+                  "id": 6090,
                   "mutability": "mutable",
                   "name": "assignedEntitlementChecker",
                   "nameLocation": "531:26:28",
                   "nodeType": "VariableDeclaration",
-                  "scope": 5991,
+                  "scope": 6097,
                   "src": "511:46:28",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
-                    "typeIdentifier": "t_contract$_IEntitlementChecker_$5909",
+                    "typeIdentifier": "t_contract$_IEntitlementChecker_$6015",
                     "typeString": "contract IEntitlementChecker"
                   },
                   "typeName": {
-                    "id": 5983,
+                    "id": 6089,
                     "nodeType": "UserDefinedTypeName",
                     "pathNode": {
-                      "id": 5982,
+                      "id": 6088,
                       "name": "IEntitlementChecker",
                       "nameLocations": [
                         "511:19:28"
                       ],
                       "nodeType": "IdentifierPath",
-                      "referencedDeclaration": 5909,
+                      "referencedDeclaration": 6015,
                       "src": "511:19:28"
                     },
-                    "referencedDeclaration": 5909,
+                    "referencedDeclaration": 6015,
                     "src": "511:19:28",
                     "typeDescriptions": {
-                      "typeIdentifier": "t_contract$_IEntitlementChecker_$5909",
+                      "typeIdentifier": "t_contract$_IEntitlementChecker_$6015",
                       "typeString": "contract IEntitlementChecker"
                     }
                   },
@@ -885,49 +885,49 @@
               "src": "505:56:28"
             },
             "returnParameters": {
-              "id": 5989,
+              "id": 6095,
               "nodeType": "ParameterList",
               "parameters": [],
               "src": "607:0:28"
             },
-            "scope": 6001,
+            "scope": 6107,
             "stateMutability": "nonpayable",
             "virtual": false,
             "visibility": "public"
           },
           {
-            "id": 6000,
+            "id": 6106,
             "nodeType": "FunctionDefinition",
             "src": "613:120:28",
             "nodes": [],
             "body": {
-              "id": 5999,
+              "id": 6105,
               "nodeType": "Block",
               "src": "711:22:28",
               "nodes": [],
               "statements": [
                 {
                   "expression": {
-                    "id": 5997,
+                    "id": 6103,
                     "name": "test",
                     "nodeType": "Identifier",
                     "overloadedDeclarations": [],
-                    "referencedDeclaration": 5981,
+                    "referencedDeclaration": 6087,
                     "src": "724:4:28",
                     "typeDescriptions": {
                       "typeIdentifier": "t_bytes_memory_ptr",
                       "typeString": "bytes memory"
                     }
                   },
-                  "functionReturnParameters": 5996,
-                  "id": 5998,
+                  "functionReturnParameters": 6102,
+                  "id": 6104,
                   "nodeType": "Return",
                   "src": "717:11:28"
                 }
               ]
             },
             "baseFunctions": [
-              5445
+              5551
             ],
             "functionSelector": "4cdf3ab8",
             "implemented": true,
@@ -936,29 +936,29 @@
             "name": "getEntitlementOperations",
             "nameLocation": "622:24:28",
             "overrides": {
-              "id": 5993,
+              "id": 6099,
               "nodeType": "OverrideSpecifier",
               "overrides": [],
               "src": "673:8:28"
             },
             "parameters": {
-              "id": 5992,
+              "id": 6098,
               "nodeType": "ParameterList",
               "parameters": [],
               "src": "646:2:28"
             },
             "returnParameters": {
-              "id": 5996,
+              "id": 6102,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 5995,
+                  "id": 6101,
                   "mutability": "mutable",
                   "name": "",
                   "nameLocation": "-1:-1:-1",
                   "nodeType": "VariableDeclaration",
-                  "scope": 6000,
+                  "scope": 6106,
                   "src": "695:12:28",
                   "stateVariable": false,
                   "storageLocation": "memory",
@@ -967,7 +967,7 @@
                     "typeString": "bytes"
                   },
                   "typeName": {
-                    "id": 5994,
+                    "id": 6100,
                     "name": "bytes",
                     "nodeType": "ElementaryTypeName",
                     "src": "695:5:28",
@@ -981,7 +981,7 @@
               ],
               "src": "694:14:28"
             },
-            "scope": 6001,
+            "scope": 6107,
             "stateMutability": "view",
             "virtual": false,
             "visibility": "public"
@@ -991,16 +991,16 @@
         "baseContracts": [
           {
             "baseName": {
-              "id": 5974,
+              "id": 6080,
               "name": "EntitlementGated",
               "nameLocations": [
                 "415:16:28"
               ],
               "nodeType": "IdentifierPath",
-              "referencedDeclaration": 5871,
+              "referencedDeclaration": 5977,
               "src": "415:16:28"
             },
-            "id": 5975,
+            "id": 6081,
             "nodeType": "InheritanceSpecifier",
             "src": "415:16:28"
           }
@@ -1010,18 +1010,18 @@
         "contractKind": "contract",
         "fullyImplemented": true,
         "linearizedBaseContracts": [
-          6001,
-          5871,
-          5934,
-          5961
+          6107,
+          5977,
+          6040,
+          6067
         ],
         "name": "EntitlementGatedExample",
         "nameLocation": "388:23:28",
-        "scope": 6002,
+        "scope": 6108,
         "usedErrors": [],
         "usedEvents": [
-          5926,
-          5933
+          6032,
+          6039
         ]
       }
     ],

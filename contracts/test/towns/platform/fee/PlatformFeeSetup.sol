@@ -20,7 +20,6 @@ abstract contract PlatformFeeSetup is FacetTest {
   function setUp() public override {
     super.setUp();
 
-    vm.prank(deployer);
     platformFee = PlatformFeeFacet(diamond);
   }
 
