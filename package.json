@@ -49,7 +49,7 @@
         "test": "turbo test",
         "test:dendrite:e2e": "turbo test:dendrite:e2e",
         "test:unit": "turbo test:unit -- --silent",
-        "worker:build": "yarn workspace worker-common run build && echo BUILD DONE || (echo BUILD ERROR; exit 1)"
+        "workers:build": "turbo build --filter amp-worker --filter gateway-worker --filter siwe-worker --filter token-worker --filter unfurl-worker --filter push-notification-worker"
     },
     "devDependencies": {
         "@typechain/ethers-v5": "^10.1.1",

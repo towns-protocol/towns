@@ -25,11 +25,8 @@ jobs:
         name: Deploy CF Workers
         runs-on: ubuntu-latest
 
-        # Setting the environment name conditionally
-        environment:
-            # Set the environment name to test-beta if the event is push,
-            # or to the input value if the event is workflow_dispatch
-            name: ${{ (github.event_name == 'push' && 'test-beta') || github.event.inputs.environment }}
+        env:
+            ENV_NAME: ${{ (github.event_name == 'push' && 'test-beta') || github.event.inputs.environment }}
 
         permissions:
             contents: write
@@ -39,11 +36,37 @@ jobs:
             - name: Checkout
               uses: actions/checkout@v3
 
-            - name: Deploy All CF Workers
-              uses: cloudflare/wrangler-action@v3
+            - name: Git submodules
+              run: git submodule update --init --recursive
+
+            - name: Setup Go
+              uses: actions/setup-go@v3
               with:
-                  apiToken: ${{ secrets.CF_API_TOKEN }}
-                  command: ./scripts/deploy-all-workers.sh --environment ${{ vars.ENVIRONMENT }}
+                  go-version: '1.20'
+                  cache: true
+                  cache-dependency-path: 'servers/**/go.sum'
+
+            - name: Install Foundry
+              uses: foundry-rs/foundry-toolchain@v1
+              with:
+                  version: nightly
+
+            - name: Install Forge modules
+              run: ./scripts/install-deps.sh
+
+            - uses: actions/setup-node@v3
+              with:
+                  node-version: '20'
+                  cache: 'yarn'
+
+            - name: Install node dependencies
+              run: yarn install --immutable
+
+            - name: Build
+              run: yarn workers:build
+
+            - name: Deploy All CF Workers
+              run: CLOUDFLARE_API_TOKEN=${{ secrets.CF_API_TOKEN }} ./scripts/deploy-all-workers.sh --environment ${{ env.ENV_NAME }}
 
             - name: Slack notification
               uses: rtCamp/action-slack-notify@v2

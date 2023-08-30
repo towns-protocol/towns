@@ -10,7 +10,6 @@
         "lint": "yarn eslint --format unix ./src",
         "publish:prod": "wrangler deploy --env production",
         "publish:test": "wrangler deploy --env test",
-        "preinstall": "yarn run --top-level worker:build",
         "publish:prod-beta": "wrangler deploy --env production-beta",
         "publish:test-beta": "wrangler deploy --env test-beta",
         "test": "yarn test:unit",

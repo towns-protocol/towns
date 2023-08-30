@@ -81,6 +81,6 @@ Unless specified in config, workers are deployed to `{name}`.johnhnt.workers.dev
 
 ```bash
 yarn install
-yarn run --top-level worker:build
+yarn run --top-level workers:build
 yarn publish:prod
 ```
