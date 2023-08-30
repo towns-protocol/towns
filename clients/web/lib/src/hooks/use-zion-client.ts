@@ -25,7 +25,8 @@ import { ISpaceDapp } from 'client/web3/ISpaceDapp'
 import { MatrixSpaceHierarchy } from '../client/matrix/SyncSpace'
 import { Permission } from '../client/web3/ContractTypes'
 import { RoomIdentifier } from '../types/room-identifier'
-import { DataTypes as SpaceFactoryDataTypes } from '@towns/generated/localhost/typings/SpaceFactory'
+import { ITownArchitectBase } from '../client/web3/v3/ITownArchitectShim'
+import { TokenEntitlementDataTypes } from '../client/web3/v3/TokenEntitlementShim'
 import { ZionClient } from '../client/ZionClient'
 import { useLogout } from './MatrixClient/useLogout'
 import { useMatrixStore } from '../store/use-matrix-store'
@@ -65,7 +66,7 @@ interface ZionClientImpl {
     ) => Promise<RoomIdentifier | undefined>
     createSpaceTransaction: (
         createSpaceInfo: CreateSpaceInfo,
-        memberEntitlements: SpaceFactoryDataTypes.CreateSpaceExtraEntitlementsStruct,
+        memberEntitlements: ITownArchitectBase.MemberEntitlementStruct,
         everyonePermissions: Permission[],
         signer: ethers.Signer | undefined,
     ) => Promise<TransactionContext<RoomIdentifier> | undefined>
@@ -98,7 +99,7 @@ interface ZionClientImpl {
         spaceNetworkId: string,
         roleName: string,
         permissions: Permission[],
-        tokens: SpaceFactoryDataTypes.ExternalTokenStruct[],
+        tokens: TokenEntitlementDataTypes.ExternalTokenStruct[],
         users: string[],
         signer: ethers.Signer | undefined,
     ) => Promise<RoleTransactionContext | undefined>
@@ -119,7 +120,7 @@ interface ZionClientImpl {
         roleId: number,
         roleName: string,
         permissions: Permission[],
-        tokens: SpaceFactoryDataTypes.ExternalTokenStruct[],
+        tokens: TokenEntitlementDataTypes.ExternalTokenStruct[],
         users: string[],
         signer: ethers.Signer | undefined,
     ) => Promise<TransactionContext<void> | undefined>

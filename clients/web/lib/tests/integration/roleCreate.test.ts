@@ -11,7 +11,8 @@ import {
 
 import { Permission } from 'use-zion-client/src/client/web3/ContractTypes'
 import { RoleIdentifier } from '../../src/types/web3-types'
-import { SpaceFactoryDataTypes } from '../../src/client/web3/shims/SpaceFactoryShim'
+import { TokenEntitlementDataTypes } from '../../src/client/web3/v3/TokenEntitlementShim'
+
 import { TestConstants } from './helpers/TestConstants'
 
 describe('create role', () => {
@@ -27,7 +28,7 @@ describe('create role', () => {
         /** Act */
         // create new role in space
         const permissions = [Permission.Ban]
-        const tokens: SpaceFactoryDataTypes.ExternalTokenStruct[] = []
+        const tokens: TokenEntitlementDataTypes.ExternalTokenStruct[] = []
         const users: string[] = []
 
         const roleIdentifier: RoleIdentifier | undefined = await alice.createRole(
@@ -59,7 +60,7 @@ describe('create role', () => {
         /** Act & Assert */
         // Try to create new role in space without permission
         const permissions = [Permission.Ban]
-        const tokens: SpaceFactoryDataTypes.ExternalTokenStruct[] = []
+        const tokens: TokenEntitlementDataTypes.ExternalTokenStruct[] = []
         const users: string[] = []
         const error = await getError<Error>(async function () {
             await tokenGrantedUser.createRole(
@@ -100,7 +101,7 @@ describe('create role', () => {
         /** Act */
         // create new role in space
         const permissions = [Permission.Ban]
-        const tokens: SpaceFactoryDataTypes.ExternalTokenStruct[] = []
+        const tokens: TokenEntitlementDataTypes.ExternalTokenStruct[] = []
         const users: string[] = []
         const roleIdentifier: RoleIdentifier | undefined = await tokenGrantedUser.createRole(
             roomId.networkId,
@@ -124,7 +125,7 @@ describe('create role', () => {
         /** Act */
         // create new role in space
         const permissions = [Permission.Ban]
-        const tokens: SpaceFactoryDataTypes.ExternalTokenStruct[] = []
+        const tokens: TokenEntitlementDataTypes.ExternalTokenStruct[] = []
         const users: string[] = []
         const roleIdentifier: RoleIdentifier | undefined = await alice.createRole(
             roomId?.networkId as string,

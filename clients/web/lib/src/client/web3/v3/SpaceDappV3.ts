@@ -9,20 +9,15 @@ import {
 import { BytesLike, ContractTransaction, ethers } from 'ethers'
 import { CreateSpaceParams, ISpaceDapp, UpdateChannelParams, UpdateRoleParams } from '../ISpaceDapp'
 import { createTokenEntitlementStruct, createUserEntitlementStruct } from './ConvertersEntitlements'
-import {
-    fromChannelIdToChannelInfo,
-    fromPermisisonsToRoleInfo,
-    fromSpaceEntitlementsToMemberEntitlement,
-} from './ConvertersTownArchitect'
 
 import { IRolesBase } from './IRolesShim'
 import { ITownArchitectBase } from './ITownArchitectShim'
-import { SpaceFactoryDataTypes } from '../shims/SpaceFactoryShim'
 import { SpaceInfo } from '../SpaceInfo'
 import { Town } from './Town'
 import { TownRegistrar } from './TownRegistrar'
-import { fromCreateRoleStructToCreateEntitlementStruct } from './ConvertersRoles'
+import { createEntitlementStruct } from './ConvertersRoles'
 import { getContractsInfoV3 } from './IStaticContractsInfoV3'
+import { TokenEntitlementDataTypes } from './TokenEntitlementShim'
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
 export class SpaceDappV3 implements ISpaceDapp {
@@ -58,9 +53,15 @@ export class SpaceDappV3 implements ISpaceDapp {
             id: params.spaceId,
             name: params.spaceName,
             uri: params.spaceMetadata,
-            everyoneEntitlement: fromPermisisonsToRoleInfo('Everyone', params.everyonePermissions),
-            memberEntitlement: fromSpaceEntitlementsToMemberEntitlement(params.memberEntitlements),
-            channel: fromChannelIdToChannelInfo(params.channelId, params.channelName),
+            everyoneEntitlement: {
+                name: 'Everyone',
+                permissions: params.everyonePermissions,
+            },
+            memberEntitlement: params.memberEntitlements,
+            channel: {
+                id: params.channelId,
+                metadata: params.channelName || '',
+            },
         }
         return this.townRegistrar.TownArchitect.write(signer).createTown(townInfo)
     }
@@ -83,7 +84,7 @@ export class SpaceDappV3 implements ISpaceDapp {
         spaceId: string,
         roleName: string,
         permissions: Permission[],
-        tokens: SpaceFactoryDataTypes.ExternalTokenStruct[],
+        tokens: TokenEntitlementDataTypes.ExternalTokenStruct[],
         users: string[],
         signer: ethers.Signer,
     ): Promise<ContractTransaction> {
@@ -91,11 +92,7 @@ export class SpaceDappV3 implements ISpaceDapp {
         if (!town) {
             throw new Error(`Town with spaceId "${spaceId}" is not found.`)
         }
-        const entitlements = await fromCreateRoleStructToCreateEntitlementStruct(
-            town,
-            tokens,
-            users,
-        )
+        const entitlements = await createEntitlementStruct(town, tokens, users)
         return town.Roles.write(signer).createRole(roleName, permissions, entitlements)
     }
 

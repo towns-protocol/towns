@@ -19,7 +19,7 @@ import { BigNumber } from 'ethers'
 import { Permission, RoleDetails } from 'use-zion-client/src/client/web3/ContractTypes'
 import { RoleIdentifier } from '../../src/types/web3-types'
 import { RoomVisibility } from '../../src/types/zion-types'
-import { SpaceFactoryDataTypes } from '../../src/client/web3/shims/SpaceFactoryShim'
+import { TokenEntitlementDataTypes } from '../../src/client/web3/v3/TokenEntitlementShim'
 import { TestConstants } from './helpers/TestConstants'
 
 describe('get role details', () => {
@@ -33,7 +33,7 @@ describe('get role details', () => {
         }
         // create new role in space
         const permissions = [Permission.Ban, Permission.Read, Permission.Write, Permission.Redact]
-        const tokens: SpaceFactoryDataTypes.ExternalTokenStruct[] = []
+        const tokens: TokenEntitlementDataTypes.ExternalTokenStruct[] = []
         const users: string[] = []
         const roleName = 'newRole1'
         const roleId: RoleIdentifier | undefined = await alice.createRole(
@@ -73,7 +73,7 @@ describe('get role details', () => {
         }
         // create new role in space
         const permissions = [Permission.Ban, Permission.Read, Permission.Write, Permission.Redact]
-        const tokens: SpaceFactoryDataTypes.ExternalTokenStruct[] = []
+        const tokens: TokenEntitlementDataTypes.ExternalTokenStruct[] = []
         const users: string[] = []
         const roleName = 'newRole1'
         const roleIdentifier: RoleIdentifier | undefined = await alice.createRole(
@@ -241,7 +241,7 @@ describe('get role details', () => {
         }
         // create new role in space
         const permissions = [Permission.Read, Permission.Write]
-        const tokens: SpaceFactoryDataTypes.ExternalTokenStruct[] = []
+        const tokens: TokenEntitlementDataTypes.ExternalTokenStruct[] = []
 
         const mod1 = await TestConstants.getWalletWithMemberNft()
         const mod2 = await TestConstants.getWalletWithMemberNft()

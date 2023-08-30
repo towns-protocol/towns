@@ -10,12 +10,12 @@ import { BlockchainTransactionType } from '../types/web3-types'
 import { CreateSpaceInfo } from '../types/zion-types'
 import { Permission } from '../client/web3/ContractTypes'
 import { RoomIdentifier } from '../types/room-identifier'
-import { SpaceFactoryDataTypes } from '../client/web3/shims/SpaceFactoryShim'
 import { createExternalTokenStruct } from '../client/web3/ContractHelpers'
 import { useSyncSpace } from './use-sync-space'
 import { useTransactionStore } from '../store/use-transactions-store'
 import { useWeb3Context } from '../components/Web3ContextProvider'
 import { useZionClient } from './use-zion-client'
+import { ITownArchitectBase } from '../client/web3/v3/ITownArchitectShim'
 
 /**
  * Combine Matrix space creation and smart contract space
@@ -67,18 +67,22 @@ export function useCreateSpaceTransaction() {
             try {
                 transactionResult = createTransactionContext({ status: TransactionStatus.Pending })
                 setTransactionContext(transactionResult)
-                let tokenEntitlement: SpaceFactoryDataTypes.CreateSpaceExtraEntitlementsStruct
+                let tokenEntitlement: ITownArchitectBase.MemberEntitlementStruct
                 if (tokenAddresses.length) {
                     tokenEntitlement = {
-                        roleName,
-                        permissions: memberPermissions,
+                        role: {
+                            name: roleName,
+                            permissions: memberPermissions,
+                        },
                         tokens: createExternalTokenStruct(tokenAddresses),
                         users: [],
                     }
                 } else {
                     tokenEntitlement = {
-                        roleName: '',
-                        permissions: [],
+                        role: {
+                            name: '',
+                            permissions: [],
+                        },
                         tokens: [],
                         users: [],
                     }

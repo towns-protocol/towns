@@ -8,9 +8,9 @@ import {
 import { ContractTransaction, ethers } from 'ethers'
 
 import { IRolesBase } from './v3/IRolesShim'
-import { SpaceFactoryDataTypes } from './shims/SpaceFactoryShim'
 import { SpaceInfo } from './SpaceInfo'
 import { TokenEntitlementDataTypes } from './v3/TokenEntitlementShim'
+import { ITownArchitectBase } from './v3/ITownArchitectShim'
 
 export interface EventsContractInfo {
     abi: ethers.ContractInterface
@@ -23,7 +23,7 @@ export interface CreateSpaceParams {
     spaceMetadata: string
     channelId: string
     channelName: string
-    memberEntitlements: SpaceFactoryDataTypes.CreateSpaceExtraEntitlementsStruct
+    memberEntitlements: ITownArchitectBase.MemberEntitlementStruct
     everyonePermissions: string[]
 }
 
@@ -63,7 +63,7 @@ export interface ISpaceDapp {
         spaceId: string,
         roleName: string,
         permissions: Permission[],
-        tokens: SpaceFactoryDataTypes.ExternalTokenStruct[],
+        tokens: TokenEntitlementDataTypes.ExternalTokenStruct[],
         users: string[],
         signer: ethers.Signer,
     ): Promise<ContractTransaction>

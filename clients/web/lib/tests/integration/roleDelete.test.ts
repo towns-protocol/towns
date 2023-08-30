@@ -19,7 +19,7 @@ import {
 import { ContractReceipt } from 'ethers'
 import { Permission } from 'use-zion-client/src/client/web3/ContractTypes'
 import { RoleIdentifier } from '../../src/types/web3-types'
-import { SpaceFactoryDataTypes } from '../../src/client/web3/shims/SpaceFactoryShim'
+import { TokenEntitlementDataTypes } from '../../src/client/web3/v3/TokenEntitlementShim'
 import { TestConstants } from './helpers/TestConstants'
 import { waitFor } from '@testing-library/react'
 
@@ -157,7 +157,7 @@ describe('delete role', () => {
         }
         const newRoleName = 'newRole1'
         const newPermissions = [Permission.Read, Permission.Write]
-        const newTokens: SpaceFactoryDataTypes.ExternalTokenStruct[] = []
+        const newTokens: TokenEntitlementDataTypes.ExternalTokenStruct[] = []
         // add bob to the users list
         const newUsers: string[] = [bob.walletAddress]
         // create a new test space
@@ -276,7 +276,7 @@ describe('delete role', () => {
         }
         const newRoleName = 'newRole1'
         const newPermissions = [Permission.Read, Permission.Write]
-        const newTokens: SpaceFactoryDataTypes.ExternalTokenStruct[] = []
+        const newTokens: TokenEntitlementDataTypes.ExternalTokenStruct[] = []
         // add bob to the users list
         const newUsers: string[] = [bob.walletAddress]
         // create a new test space

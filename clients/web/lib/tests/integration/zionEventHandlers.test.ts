@@ -13,7 +13,8 @@ import {
     createExternalTokenStruct,
     getMemberNftAddress,
 } from '../../src/client/web3/ContractHelpers'
-import { SpaceFactoryDataTypes } from '../../src/client/web3/shims/SpaceFactoryShim'
+import { ITownArchitectBase } from '../../src/client/web3/v3/ITownArchitectShim'
+
 import { waitFor } from '@testing-library/dom'
 import { Permission } from '../../src/client/web3/ContractTypes'
 import { SpaceProtocol } from '../../src/client/ZionClientTypes'
@@ -45,9 +46,11 @@ describe('Zion event handlers test', () => {
         expect(memberNftAddress).toBeDefined()
         expect(memberNftAddress).not.toBe('')
         const tokens = createExternalTokenStruct([memberNftAddress])
-        const tokenEntitlement: SpaceFactoryDataTypes.CreateSpaceExtraEntitlementsStruct = {
-            roleName: 'Member',
-            permissions: [Permission.Read, Permission.Write],
+        const tokenEntitlement: ITownArchitectBase.MemberEntitlementStruct = {
+            role: {
+                name: 'Member',
+                permissions: [Permission.Read as string, Permission.Write as string],
+            },
             tokens,
             users: [],
         }

@@ -14,7 +14,6 @@ import {
 
 import { EventTimeline } from 'matrix-js-sdk'
 import { RoomIdentifier } from 'use-zion-client/src/types/room-identifier'
-import { SpaceFactoryDataTypes } from '../../../src/client/web3/shims/SpaceFactoryShim'
 import { SpaceProtocol, TransactionStatus } from '../../../src/client/ZionClientTypes'
 import { ZionTestWeb3Provider } from './ZionTestWeb3Provider'
 import { ZionClient } from '../../../src/client/ZionClient'
@@ -22,6 +21,7 @@ import { waitFor } from '@testing-library/dom'
 import { SignerUndefinedError } from '../../../src/types/error-types'
 import { useTransactionStore } from '../../../src/store/use-transactions-store'
 import { BlockchainTransactionType } from '../../../src/types/web3-types'
+import { ITownArchitectBase } from '../../../src/client/web3/v3/ITownArchitectShim'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function assert(condition: any, msg?: string): asserts condition {
@@ -149,9 +149,11 @@ export async function createTestSpaceWithZionMemberRole(
 
     const memberNftAddress = getMemberNftAddress(client.chainId)
     const tokens = createExternalTokenStruct([memberNftAddress])
-    const tokenEntitlement: SpaceFactoryDataTypes.CreateSpaceExtraEntitlementsStruct = {
-        roleName: 'Member',
-        permissions: tokenGrantedPermissions,
+    const tokenEntitlement: ITownArchitectBase.MemberEntitlementStruct = {
+        role: {
+            name: 'Member',
+            permissions: tokenGrantedPermissions,
+        },
         tokens,
         users: [],
     }
@@ -174,9 +176,11 @@ export async function createTestSpaceWithEveryoneRole(
     }
 
     // No member role. Everyone role is the only role.
-    const tokenEntitlement: SpaceFactoryDataTypes.CreateSpaceExtraEntitlementsStruct = {
-        roleName: '',
-        permissions: [],
+    const tokenEntitlement: ITownArchitectBase.MemberEntitlementStruct = {
+        role: {
+            name: '',
+            permissions: [],
+        },
         tokens: [],
         users: [],
     }

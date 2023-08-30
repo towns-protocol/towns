@@ -24,7 +24,6 @@ import { CreateSpaceInfo } from '../../../src/types/zion-types'
 import { Permission } from '../../../src/client/web3/ContractTypes'
 import { RoleIdentifier } from '../../../src/types/web3-types'
 import { RoomIdentifier } from '../../../src/types/room-identifier'
-import { SpaceFactoryDataTypes } from '../../../src/client/web3/shims/SpaceFactoryShim'
 import { ZionClient } from '../../../src/client/ZionClient'
 import { ZionTestWeb3Provider } from './ZionTestWeb3Provider'
 import { createMessageToSign } from '../../../src/hooks/use-matrix-wallet-sign-in'
@@ -39,6 +38,8 @@ import {
 import { newMatrixLoginSession, newMatrixRegisterSession } from '../../../src/hooks/session'
 import { MatrixClient } from 'matrix-js-sdk'
 import { Client as CasablancaClient } from '@river/sdk'
+import { TokenEntitlementDataTypes } from '../../../src/client/web3/v3/TokenEntitlementShim'
+import { ITownArchitectBase } from '../../../src/client/web3/v3/ITownArchitectShim'
 
 export interface ZionTestClientProps {
     primaryProtocol?: SpaceProtocol
@@ -113,7 +114,7 @@ export class ZionTestClient extends ZionClient {
      *************************************************/
     public async createSpace(
         createSpaceInfo: CreateSpaceInfo,
-        memberEntitlements: SpaceFactoryDataTypes.CreateSpaceExtraEntitlementsStruct,
+        memberEntitlements: ITownArchitectBase.MemberEntitlementStruct,
         everyonePermissions: Permission[],
     ): Promise<RoomIdentifier | undefined> {
         const txContext = await this.createSpaceTransaction(
@@ -143,7 +144,7 @@ export class ZionTestClient extends ZionClient {
         spaceNetworkId: string,
         roleName: string,
         permissions: Permission[],
-        tokens: SpaceFactoryDataTypes.ExternalTokenStruct[],
+        tokens: TokenEntitlementDataTypes.ExternalTokenStruct[],
         users: string[],
     ): Promise<RoleIdentifier | undefined> {
         const txContext = await this.createRoleTransaction(

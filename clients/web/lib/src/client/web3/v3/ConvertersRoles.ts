@@ -5,7 +5,7 @@ import { IRolesBase } from './IRolesShim'
 import { Town } from './Town'
 import { TokenEntitlementDataTypes } from './TokenEntitlementShim'
 
-export async function fromCreateRoleStructToCreateEntitlementStruct(
+export async function createEntitlementStruct(
     town: Town,
     tokens: TokenEntitlementDataTypes.ExternalTokenStruct[],
     users: string[],

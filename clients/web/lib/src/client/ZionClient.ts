@@ -78,7 +78,7 @@ import { PioneerNFT } from './web3/PioneerNFT'
 import { PushNotificationClient } from './PushNotificationClient'
 import { RoleIdentifier } from '../types/web3-types'
 import { SignerUndefinedError } from '../types/error-types'
-import { SpaceFactoryDataTypes } from './web3/shims/SpaceFactoryShim'
+import { TokenEntitlementDataTypes } from './web3/v3/TokenEntitlementShim'
 import { SpaceInfo } from './web3/SpaceInfo'
 import { SyncState } from 'matrix-js-sdk/lib/sync'
 import {
@@ -102,6 +102,7 @@ import { sendFullyReadMarkers } from './casablanca/SendFullyReadMarkers'
 import { RiverDecryptionExtension } from './casablanca/RiverDecryptionExtensions'
 import { isToDevicePlainMessage } from '@river/sdk'
 import { createSpaceDapp } from './web3/SpaceDappFactory'
+import { ITownArchitectBase } from './web3/v3/ITownArchitectShim'
 
 /***
  * Zion Client
@@ -397,7 +398,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
 
     public async createSpaceTransaction(
         createSpaceInfo: CreateSpaceInfo,
-        memberEntitlements: SpaceFactoryDataTypes.CreateSpaceExtraEntitlementsStruct,
+        memberEntitlements: ITownArchitectBase.MemberEntitlementStruct,
         everyonePermissions: Permission[],
         signer: ethers.Signer | undefined,
     ): Promise<TransactionContext<RoomIdentifier>> {
@@ -510,7 +511,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
 
     private async createCasablancaSpaceTransaction(
         createSpaceInfo: CreateSpaceInfo,
-        memberEntitlements: SpaceFactoryDataTypes.CreateSpaceExtraEntitlementsStruct,
+        memberEntitlements: ITownArchitectBase.MemberEntitlementStruct,
         everyonePermissions: Permission[],
         signer: ethers.Signer,
     ): Promise<TransactionContext<RoomIdentifier>> {
@@ -569,7 +570,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
 
     private async createMatrixSpaceTransaction(
         createSpaceInfo: CreateSpaceInfo,
-        memberEntitlements: SpaceFactoryDataTypes.CreateSpaceExtraEntitlementsStruct,
+        memberEntitlements: ITownArchitectBase.MemberEntitlementStruct,
         everyonePermissions: Permission[],
         signer: ethers.Signer,
     ): Promise<TransactionContext<RoomIdentifier>> {
@@ -1107,7 +1108,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
         spaceNetworkId: string,
         roleName: string,
         permissions: Permission[],
-        tokens: SpaceFactoryDataTypes.ExternalTokenStruct[],
+        tokens: TokenEntitlementDataTypes.ExternalTokenStruct[],
         users: string[],
         signer: ethers.Signer | undefined,
     ): Promise<RoleTransactionContext> {
@@ -1239,7 +1240,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
         roleId: number,
         roleName: string,
         permissions: Permission[],
-        tokens: SpaceFactoryDataTypes.ExternalTokenStruct[],
+        tokens: TokenEntitlementDataTypes.ExternalTokenStruct[],
         users: string[],
         signer: ethers.Signer | undefined,
     ): Promise<TransactionContext<void>> {
