@@ -1,17 +1,13 @@
 import { Env, worker } from '../src/index'
 
 const mockIsEntitled = jest.fn()
-jest.mock('use-zion-client/src/client/web3/SpaceDapp', () => {
+
+jest.mock('use-zion-client/src/client/web3/SpaceDappFactory', () => {
 	return {
-		SpaceDapp: class {
-			isEntitledToSpace = mockIsEntitled
-		},
-	}
-})
-jest.mock('use-zion-client/src/client/web3/v3/SpaceDappV3', () => {
-	return {
-		SpaceDapp: class {
-			isEntitledToSpace = mockIsEntitled
+		createSpaceDapp() {
+			return {
+				isEntitledToSpace: mockIsEntitled,
+			}
 		},
 	}
 })

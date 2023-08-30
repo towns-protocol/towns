@@ -39,7 +39,7 @@ export const TestApp = (props: TestAppProps) => {
                 primaryProtocol={Lib.SpaceProtocol.Matrix}
                 matrixServerUrl=""
                 casablancaServerUrl=""
-                chainId={0}
+                chainId={31337}
                 // TODO: fix this
                 // Intenionally omitting, something within wagmi/walletconnect/rainbowkit is throwing errors during tests
                 // Instead, we'll use the default injected connector provided by the ContextProvider, which is fine for testing
