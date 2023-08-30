@@ -46,22 +46,18 @@ export const TimelineMessageEditor = (props: Props) => {
     return isTouch ? (
         <TouchEditMessageWrapper onCancel={onCancel}>
             <Box grow />
-            <Box padding borderTop background="level1">
-                <Stack rounded="sm" background="level2">
-                    <RichTextEditor
-                        autoFocus
-                        editable
-                        editing
-                        displayButtons="always"
-                        initialValue={initialValue}
-                        channels={channels}
-                        members={members}
-                        userId={userId}
-                        onSend={onSend}
-                        onCancel={onCancel}
-                    />
-                </Stack>
-            </Box>
+            <RichTextEditor
+                autoFocus
+                editable
+                editing
+                displayButtons="always"
+                initialValue={initialValue}
+                channels={channels}
+                members={members}
+                userId={userId}
+                onSend={onSend}
+                onCancel={onCancel}
+            />
         </TouchEditMessageWrapper>
     ) : (
         <Stack gap>
@@ -84,6 +80,16 @@ export const TouchEditMessageWrapper = (props: {
     children: React.ReactNode
     onCancel: () => void
 }) => {
+    const { onCancel } = props
+    const backgroundPressed = useCallback(
+        (event: React.MouseEvent) => {
+            event.preventDefault()
+            event.stopPropagation()
+            onCancel()
+        },
+        [onCancel],
+    )
+
     const root = useZLayerContext().rootLayerRef?.current
     if (!root) {
         console.error(`no root context declared for use of modal`)
@@ -91,8 +97,8 @@ export const TouchEditMessageWrapper = (props: {
     }
 
     return createPortal(
-        <Box background="cta1" border="quote" zIndex="tooltips" pointerEvents="auto">
-            <Box absoluteFill onClick={props.onCancel} />
+        <Box zIndex="tooltips" pointerEvents="auto">
+            <Box absoluteFill onClick={backgroundPressed} />
             <Box position="absolute" bottom="none" right="none" left="none">
                 {props.children}
             </Box>

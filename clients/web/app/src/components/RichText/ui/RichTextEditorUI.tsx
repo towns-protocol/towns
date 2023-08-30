@@ -1,25 +1,28 @@
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext'
-import { mergeRegister } from '@lexical/utils'
-import {
-    $getSelection,
-    $isRangeSelection,
-    COMMAND_PRIORITY_LOW,
-    SELECTION_CHANGE_COMMAND,
-} from 'lexical'
 import React, { ComponentProps, useCallback, useEffect, useRef, useState } from 'react'
 import { useEvent } from 'react-use-event-hook'
 import { TOGGLE_LINK_COMMAND } from '@lexical/link'
-import { createPortal } from 'react-dom'
 import { AnimatePresence } from 'framer-motion'
-import { Box, BoxProps, Icon, Paragraph, Stack, useZLayerContext } from '@ui'
+import { createPortal } from 'react-dom'
+import { $getSelection, COMMAND_PRIORITY_LOW, SELECTION_CHANGE_COMMAND } from 'lexical'
+import { mergeRegister } from '@lexical/utils'
+import {
+    Box,
+    BoxProps,
+    Icon,
+    MotionBox,
+    MotionStack,
+    Paragraph,
+    Stack,
+    useZLayerContext,
+} from '@ui'
 import { GiphyEntryDesktop } from '@components/Giphy/GiphyEntry'
-import { EmojiPickerButton } from '@components/EmojiPickerButton'
 import { FadeInBox } from '@components/Transitions'
 import { useNetworkStatus } from 'hooks/useNetworkStatus'
 import { useDevice } from 'hooks/useDevice'
-import { $createEmojiNode } from '../nodes/EmojiNode'
-import { InlineToolbar } from './InlineToolbar'
+import { RichTextToolbar } from './RichTextToolbar'
 import { AddLinkModal } from './LinkModal'
+import { InlineToolbar } from './InlineToolbar'
 
 type Props = {
     children: React.ReactNode
@@ -29,28 +32,14 @@ type Props = {
     background?: BoxProps['background']
     attemptingToSend?: boolean
     rounded?: BoxProps['rounded']
+    showFormattingToolbar: boolean
+    canShowInlineToolbar: boolean
 } & ComponentProps<typeof GiphyEntryDesktop>
 
 export const RichTextUI = (props: Props) => {
-    const { background = 'level2' } = props
     const [editor] = useLexicalComposerContext()
     const { isTouch } = useDevice()
-
-    const onSelectEmoji = useCallback(
-        (data: EmojiPickerSelection) => {
-            editor.focus(() => {
-                editor.update(() => {
-                    const selection = $getSelection()
-                    const emojiNode = $createEmojiNode('', data.native)
-                    if ($isRangeSelection(selection)) {
-                        selection.insertNodes([emojiNode])
-                    }
-                })
-            })
-        },
-        [editor],
-    )
-
+    const { showFormattingToolbar, canShowInlineToolbar } = props
     const absoluteRef = useRef<HTMLDivElement>(null)
 
     const [linkLinkModal, setLinkModal] = useState(false)
@@ -61,6 +50,13 @@ export const RichTextUI = (props: Props) => {
     const onLinkClick = useEvent(() => {
         if (isTouch) {
             const text = prompt('Add Link', 'https://')
+            editor.focus()
+            if (!text) {
+                return
+            }
+            if (text.length < 1) {
+                return
+            }
             onSaveLink(text || '')
         } else {
             setLinkModal(true)
@@ -70,6 +66,7 @@ export const RichTextUI = (props: Props) => {
     const onSaveLink = useEvent((url: string) => {
         editor.dispatchCommand(TOGGLE_LINK_COMMAND, url)
     })
+
     const [toolbarPosition, setToolbarPosition] = useState<{
         top: number
         left: number | string
@@ -154,23 +151,23 @@ export const RichTextUI = (props: Props) => {
     const { rootLayerRef } = useZLayerContext()
 
     return (
-        <RichTextUIContainer key="editor" background={background} readOnly={props.readOnly}>
-            <Stack horizontal alignItems="center" gap="lg" paddingX="md">
-                <Box grow>{props.children}</Box>
-                <Stack horizontal gap="xs" color="gray2" alignItems="start" paddingY="sm">
-                    {!isTouch && (
-                        <>
-                            {!props.editing ? (
-                                <GiphyEntryDesktop
-                                    threadId={props.threadId}
-                                    threadPreview={props.threadPreview}
-                                />
-                            ) : null}
-                            <EmojiPickerButton onSelectEmoji={onSelectEmoji} />
-                        </>
+        <RichTextUIContainer key="editor" readOnly={props.readOnly}>
+            <Stack paddingX="sm" width="100%">
+                <AnimatePresence mode="sync">
+                    {showFormattingToolbar && (
+                        <RichTextToolbar
+                            focused={props.focused ?? false}
+                            key="toolbar"
+                            onAddLinkClick={onLinkClick}
+                        />
                     )}
-                </Stack>
-                {rootLayerRef?.current &&
+                </AnimatePresence>
+                <MotionBox layout="preserve-aspect" position="relative" paddingX="xs" width="100%">
+                    {props.children}
+                </MotionBox>
+                {canShowInlineToolbar &&
+                    !isTouch &&
+                    rootLayerRef?.current &&
                     createPortal(
                         <Box absoluteFill padding="lg" ref={absoluteRef} pointerEvents="none">
                             <InlineToolbar
@@ -189,23 +186,19 @@ export const RichTextUI = (props: Props) => {
 }
 
 export const RichTextUIContainer = ({
-    background = 'level2',
-    rounded = 'sm',
     readOnly,
     children,
 }: Pick<Props, 'background' | 'readOnly' | 'rounded'> & { children?: React.ReactNode }) => (
-    <Stack
+    <MotionStack
         gap
         transition
-        rounded={rounded}
-        background={background}
+        layout="position"
         minWidth={readOnly ? undefined : '200'}
         position="relative"
-        minHeight="x6"
-        justifyContent="center"
+        justifyContent="end"
     >
         {children}
-    </Stack>
+    </MotionStack>
 )
 
 const OfflineIndicator = (props: { attemptingToSend?: boolean }) => {

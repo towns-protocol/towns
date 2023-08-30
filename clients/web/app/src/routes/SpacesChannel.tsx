@@ -229,7 +229,7 @@ const SpacesChannelComponent = (props: Props) => {
                             isFullWidthOnTouch
                             editable={!!isChannelWritable}
                             background={isChannelWritable ? 'level2' : 'level1'}
-                            displayButtons={isTouch ? 'on-focus' : 'never'}
+                            displayButtons={isTouch ? 'on-focus' : 'always'}
                             key={channelId.networkId}
                             storageId={channel.id.networkId}
                             autoFocus={!hasThreadOpen && !isTouch}

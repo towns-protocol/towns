@@ -19,7 +19,7 @@ import { $isMentionNode } from '../nodes/MentionNode'
 
 export const SendMarkdownPlugin = (props: {
     disabled?: boolean
-    displayButtons: 'always' | 'never' | 'on-focus'
+    displayButtons: 'always' | 'on-focus'
     focused: boolean
     isEditing: boolean
     onSend?: (value: string, mentions: Mention[]) => void
@@ -115,9 +115,10 @@ export const SendMarkdownPlugin = (props: {
         <AnimatePresence>
             {shouldDisplayButtons && (
                 <MotionBox
-                    initial={{ height: 0, opacity: 0 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    animate={{ height: 'auto', opacity: 1 }}
+                    initial={isTouch ? { height: 0, opacity: 0 } : undefined}
+                    exit={isTouch ? { height: 0, opacity: 0 } : undefined}
+                    animate={isTouch ? { height: 'auto', opacity: 1 } : undefined}
+                    layout="position"
                 >
                     <EditMessageButtons
                         isEditing={props.isEditing}
@@ -138,7 +139,7 @@ const EditMessageButtons = (props: {
     isEditorEmpty: boolean
 }) => {
     const { isTouch } = useDevice()
-    const { onCancel, isEditing, isEditorEmpty } = props
+    const { onCancel, onSave, isEditing, isEditorEmpty } = props
 
     useEffect(() => {
         if (!onCancel) {
@@ -155,29 +156,48 @@ const EditMessageButtons = (props: {
         }
     }, [onCancel])
 
-    return isTouch ? (
-        <Stack horizontal gap justifyContent="start" paddingBottom="sm">
+    const cancelButtonPressed = useCallback(
+        (event: React.MouseEvent) => {
+            event.preventDefault()
+            event.stopPropagation()
+            onCancel?.()
+        },
+        [onCancel],
+    )
+
+    const saveButtonPressed = useCallback(
+        (event: React.MouseEvent) => {
+            event.preventDefault()
+            event.stopPropagation()
+            onSave?.()
+        },
+        [onSave],
+    )
+
+    return (
+        <Stack horizontal gap paddingX={isTouch ? 'none' : 'xs'}>
             {isEditing ? (
                 <>
-                    <Icon type="touchEditingCancel" size="square_lg" onClick={props.onCancel} />
-                    <Icon type="touchEditingSend" size="square_lg" onClick={props.onSave} />
+                    <Button size="button_xs" onClick={cancelButtonPressed}>
+                        Cancel
+                    </Button>
+                    <Button size="button_xs" tone="cta1" onClick={saveButtonPressed}>
+                        Save
+                    </Button>
                 </>
-            ) : (
+            ) : isTouch ? (
                 <Icon
                     type={isEditorEmpty ? 'touchSendDisabled' : 'touchSendEnabled'}
                     size="square_lg"
                     onClick={isEditorEmpty ? props.onCancel : props.onSave}
                 />
-            )}{' '}
-        </Stack>
-    ) : (
-        <Stack horizontal gap>
-            <Button size="button_sm" tone="cta1" onClick={props.onSave}>
-                Save
-            </Button>
-            <Button size="button_sm" onClick={props.onCancel}>
-                Cancel
-            </Button>
+            ) : (
+                <Icon
+                    type={isEditorEmpty ? 'touchSendDisabled' : 'touchSendEnabled'}
+                    size="square_md"
+                    onClick={isEditorEmpty ? props.onCancel : props.onSave}
+                />
+            )}
         </Stack>
     )
 }

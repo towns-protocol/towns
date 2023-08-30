@@ -1,7 +1,5 @@
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext'
-import { $getSelection, $isRangeSelection } from 'lexical'
 import React, { useCallback, useState } from 'react'
-import { $createEmojiNode } from '@components/RichText/nodes/EmojiNode'
 import { Box, CardOpener, Icon, IconButton, IconProps, Pill } from '@ui'
 import { useDevice } from 'hooks/useDevice'
 import { MotionIconButton } from 'ui/components/Motion/MotionComponents'
@@ -66,33 +64,22 @@ export const EmojiPickerButton = (props: Props) => {
     )
 }
 
-export const EmojiPickerButtonTouch = (props: { showButton: boolean }) => {
-    const [editor] = useLexicalComposerContext()
+export const EmojiPickerButtonTouch = (props: {
+    showButton: boolean
+    onSelectEmoji: (data: EmojiPickerSelection) => void
+}) => {
+    const { showButton, onSelectEmoji } = props
     const [sheetVisible, setSheetVisible] = useState<boolean>(false)
+    const [editor] = useLexicalComposerContext()
 
     const onCloseSheet = useCallback(() => {
         setSheetVisible(false)
         editor.focus()
     }, [setSheetVisible, editor])
 
-    const onSelectEmoji = useCallback(
-        (data: EmojiPickerSelection) => {
-            editor.focus()
-            editor.update(() => {
-                const selection = $getSelection()
-                const emojiNode = $createEmojiNode('', data.native)
-                if ($isRangeSelection(selection)) {
-                    selection.insertNodes([emojiNode])
-                }
-            })
-            setSheetVisible(false)
-        },
-        [editor, setSheetVisible],
-    )
-
     return (
         <>
-            {props.showButton && (
+            {showButton && (
                 <MotionIconButton
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}

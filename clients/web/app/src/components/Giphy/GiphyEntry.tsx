@@ -81,7 +81,7 @@ const GiphyCardOpener = (props: Props) => {
             {({ triggerProps: { onClick: clickCb, ...rest } }) => (
                 <IconButton
                     icon="gif"
-                    alignSelf="start"
+                    size="square_sm"
                     onClick={(e) => onClick(e, clickCb)}
                     {...rest}
                 />

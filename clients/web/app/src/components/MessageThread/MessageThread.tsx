@@ -109,11 +109,11 @@ export const MessageThread = (props: {
                             align="top"
                             groupByUser={false}
                         />
-                        <Box paddingX="md" paddingTop="none" paddingBottom="md">
+                        <Box paddingTop="none" paddingBottom="md">
                             <RichTextEditor
                                 editable={!!isChannelWritable}
                                 threadId={parentId}
-                                displayButtons={isTouch ? 'on-focus' : 'never'}
+                                displayButtons={isTouch ? 'on-focus' : 'always'}
                                 threadPreview={parentMessage?.fallbackContent}
                                 storageId={`${channelId.networkId}-${parentId}`}
                                 autoFocus={false}

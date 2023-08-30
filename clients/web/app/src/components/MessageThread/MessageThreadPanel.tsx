@@ -96,7 +96,7 @@ export const MessageThreadPanel = (props: Props) => {
                         isFullWidthOnTouch
                         autoFocus={!isTouch}
                         editable={!!isChannelWritable}
-                        displayButtons={isTouch ? 'on-focus' : 'never'}
+                        displayButtons="on-focus"
                         placeholder="Reply..."
                         storageId={`${channelId.networkId}-${messageId}`}
                         threadId={messageId}

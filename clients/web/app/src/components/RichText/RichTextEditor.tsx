@@ -29,7 +29,7 @@ import { NodeEventPlugin } from '@lexical/react/LexicalNodeEventPlugin'
 import * as fieldStyles from 'ui/components/_internal/Field/Field.css'
 import { notUndefined } from 'ui/utils/utils'
 import { useStore } from 'store/store'
-import { Box, BoxProps, Stack } from '@ui'
+import { Box, BoxProps, MotionStack, Stack } from '@ui'
 import { useNetworkStatus } from 'hooks/useNetworkStatus'
 import { SomethingWentWrong } from '@components/Errors/SomethingWentWrong'
 import { atoms } from 'ui/styles/atoms.css'
@@ -58,7 +58,7 @@ import { RememberInputPlugin } from './plugins/RememberInputPlugin'
 import CodeHighlightPlugin from './plugins/CodeHighlightPlugin'
 import { TabIndentationPlugin } from './plugins/TabIndentationPlugin'
 import { MentionHoverPlugin } from './plugins/MentionHoverPlugin'
-import { RichTextTouchToolbar } from './RichTextTouchToolbar'
+import { RichTextBottomToolbar } from './RichTextBottomToolbar'
 import { singleEmojiMessage } from './RichTextEditor.css'
 
 type Props = {
@@ -70,7 +70,7 @@ type Props = {
     editing?: boolean
     placeholder?: string
     initialValue?: string
-    displayButtons?: 'always' | 'never' | 'on-focus'
+    displayButtons?: 'always' | 'on-focus'
     container?: (props: { children: React.ReactNode }) => JSX.Element
     tabIndex?: number
     storageId?: string
@@ -251,7 +251,6 @@ const RichTextEditorWithoutBoundary = (props: Props) => {
 
     const { transformers } = useTransformers({ members, channels })
     const { isTouch } = useDevice()
-    const showTouchMessageToolbar = isTouch && !isEditing
     const [isEditorEmpty, setIsEditorEmpty] = useState(true)
 
     const userInput = useStore((state) =>
@@ -266,6 +265,7 @@ const RichTextEditorWithoutBoundary = (props: Props) => {
         transformers,
         editable,
     )
+    const [isFormattingToolbarOpen, setIsFormattingToolbarOpen] = useState(false)
 
     const [focused, setFocused] = useState(false)
     const onFocusChange = useCallback(
@@ -298,20 +298,33 @@ const RichTextEditorWithoutBoundary = (props: Props) => {
         )
     }
 
+    const showFormattingToolbar = !isTouch
+        ? isFormattingToolbarOpen
+        : isFormattingToolbarOpen && focused
+
     return (
-        <Box
-            background="level2"
-            rounded={{ default: 'sm', touch: isFullWidthOnTouch ? 'none' : 'sm' }}
-            borderTop={{ default: 'none', touch: isFullWidthOnTouch ? 'default' : 'none' }}
+        <MotionStack
+            layout
+            height="auto"
+            background={isEditing && !isTouch ? 'level1' : 'level2'}
+            paddingY="sm"
+            rounded={{ default: 'sm', touch: 'none' }}
+            borderLeft={!isTouch ? 'default' : 'none'}
+            borderRight={!isTouch ? 'default' : 'none'}
+            borderTop="default"
+            borderBottom={!isTouch ? 'default' : 'none'}
         >
             <LexicalComposer initialConfig={initialConfig}>
                 <RichTextUI
-                    focused={focused}
+                    focused={focused || !isEditorEmpty}
                     editing={isEditing}
                     background={props.background}
                     attemptingToSend={isAttemptingSend}
                     threadId={props.threadId}
                     threadPreview={props.threadPreview}
+                    showFormattingToolbar={showFormattingToolbar}
+                    canShowInlineToolbar={!isTouch && !showFormattingToolbar}
+                    key="editor"
                 >
                     <RichTextPlugin
                         contentEditable={
@@ -321,6 +334,32 @@ const RichTextEditorWithoutBoundary = (props: Props) => {
                         ErrorBoundary={LexicalErrorBoundary}
                     />
                 </RichTextUI>
+                <Stack horizontal paddingX="sm" alignContent="center" key="bottom_row">
+                    <RichTextBottomToolbar
+                        editing={isEditing}
+                        threadId={props.threadId}
+                        threadPreview={props.threadPreview}
+                        visible={!isTouch || focused || !isEditorEmpty}
+                        isFormattingToolbarOpen={isFormattingToolbarOpen}
+                        setIsFormattingToolbarOpen={setIsFormattingToolbarOpen}
+                        key="toolbar"
+                    />
+
+                    <Box grow />
+                    <SendMarkdownPlugin
+                        displayButtons={props.displayButtons ?? 'on-focus'}
+                        disabled={isOffline}
+                        focused={focused}
+                        isEditing={isEditing ?? false}
+                        isEditorEmpty={isEditorEmpty}
+                        setIsEditorEmpty={setIsEditorEmpty}
+                        key="markdownplugin"
+                        onSend={onSendCb}
+                        onSendAttemptWhileDisabled={onSendAttemptWhileDisabled}
+                        onCancel={props.onCancel}
+                    />
+                </Stack>
+
                 <OnFocusPlugin autoFocus={props.autoFocus} onFocusChange={onFocusChange} />
                 <ClearEditorPlugin />
                 <MarkdownShortcutPlugin transformers={transformers} />
@@ -332,29 +371,6 @@ const RichTextEditorWithoutBoundary = (props: Props) => {
                 <ListMaxIndentLevelPlugin maxDepth={4} />
                 <ListPlugin />
                 <CheckListPlugin />
-
-                <Stack horizontal gap="xs" paddingX="sm" alignContent="center">
-                    {showTouchMessageToolbar && (
-                        <RichTextTouchToolbar
-                            threadId={props.threadId}
-                            threadPreview={props.threadPreview}
-                            visible={focused || !isEditorEmpty}
-                        />
-                    )}
-                    <Box grow />
-                    <SendMarkdownPlugin
-                        displayButtons={props.displayButtons ?? 'never'}
-                        disabled={isOffline}
-                        focused={focused}
-                        isEditing={isEditing ?? false}
-                        isEditorEmpty={isEditorEmpty}
-                        setIsEditorEmpty={setIsEditorEmpty}
-                        onSend={onSendCb}
-                        onSendAttemptWhileDisabled={onSendAttemptWhileDisabled}
-                        onCancel={props.onCancel}
-                    />
-                </Stack>
-
                 {props.autoFocus ? <AutoFocusPlugin /> : <></>}
                 <AutoLinkMatcherPlugin />
                 <ChannelMentionPlugin channels={channels} />
@@ -363,7 +379,7 @@ const RichTextEditorWithoutBoundary = (props: Props) => {
                 <CodeHighlightPlugin />
                 <TabIndentationPlugin />
             </LexicalComposer>
-        </Box>
+        </MotionStack>
     )
 }
 
