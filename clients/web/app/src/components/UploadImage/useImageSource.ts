@@ -6,6 +6,7 @@ export const ImageVariants = {
     thumbnail100: 'thumbnail100',
     thumbnail50: 'thumbnail50',
     thumbnail300: 'thumbnail300',
+    thumbnail600: 'thumbnail600',
 } as const
 
 export type ImageVariant = (typeof ImageVariants)[keyof typeof ImageVariants]

@@ -68,7 +68,7 @@ export const TownsToken = (props: Props) => {
                                 src={imageSrc}
                                 width="100%"
                                 height="100%"
-                                style={{ opacity: loaded ? 1 : 0 }}
+                                style={{ opacity: loaded ? 1 : 0, objectFit: 'cover' }}
                                 onLoad={onLoad}
                                 onError={onError}
                             />

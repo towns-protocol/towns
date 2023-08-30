@@ -76,7 +76,8 @@ export const InteractiveSpaceIcon = (
 ) => {
     const { overrideSrc, size, spaceName: name, address } = props
 
-    const imageVariant = size === 'sm' ? ImageVariants.thumbnail100 : ImageVariants.thumbnail300
+    // todo: we probably need a x600 too
+    const imageVariant = size === 'sm' ? ImageVariants.thumbnail300 : ImageVariants.thumbnail600
     const { imageSrc } = useImageSource(props.spaceId, imageVariant)
     return (
         <InteractiveTownsToken
