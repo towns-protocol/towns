@@ -15,7 +15,7 @@ import { BaseContractShimV3 } from './BaseContractShimV3'
 
 import GoerliAbi from '@towns/generated/goerli/v3/abis/MockERC721A.abi.json' assert { type: 'json' }
 
-import LocalhostAbi from '@towns/generated/localhost/v3/abis/MockERC721A.abi' assert { type: 'json' }
+import LocalhostAbi from '@towns/generated/localhost/v3/abis/MockERC721A.abi.json' assert { type: 'json' }
 
 import SepoliaAbi from '@towns/generated/sepolia/v3/abis/MockERC721A.abi.json' assert { type: 'json' }
 import { ethers } from 'ethers'
