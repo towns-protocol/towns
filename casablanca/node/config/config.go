@@ -32,6 +32,4 @@ type MetricsConfig struct {
 type ChainConfig struct {
 	NetworkUrl string
 	ChainId    int
-	// TODO https://linear.app/hnt-labs/issue/HNT-2249/cleanup-delete-v2-code-from-river-server
-	ContractVersion string
 }

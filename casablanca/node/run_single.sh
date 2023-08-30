@@ -5,7 +5,6 @@ INSTANCE=single
 USE_CONTRACT=true
 METRICS_ENABLED=true
 RPC_PORT=5157
-CONTRACT_VERSION=v3
 
 # Parse command-line options
 args=() # Collect arguments to pass to the last command
@@ -19,10 +18,6 @@ while [[ "$#" -gt 0 ]]; do
             METRICS_PORT=8082
             shift
             ;;
-        --contract_version|--cv)
-            CONTRACT_VERSION=$2
-            shift 2
-            ;;
         *)
             args+=("$1")
             shift
@@ -35,8 +30,7 @@ done
     DB_PORT 5433 \
     USE_CONTRACT $USE_CONTRACT \
     METRICS_ENABLED $METRICS_ENABLED \
-    METRICS_PORT 8081 \
-    CONTRACT_VERSION $CONTRACT_VERSION
+    METRICS_PORT 8081
 
 cd ./run_files/$INSTANCE
 echo "Running instance '$INSTANCE' with extra aguments: '${args[@]:-}'"

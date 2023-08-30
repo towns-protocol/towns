@@ -16,11 +16,7 @@ var addressesJson []byte
 var EMPTY_ADDRESS = common.Address{}
 
 type ContractAddresses struct {
-	SpaceFactory string `json:"spaceFactory"`
-	SpaceToken   string `json:"spaceToken"`
-	PioneerToken string `json:"pioneerToken"`
-	Member       string `json:"member"`
-	TownFactory  string `json:"townFactory"`
+	TownFactory string `json:"townFactory"`
 }
 
 type ContractAddressesByChainId struct {
@@ -38,13 +34,10 @@ func loadContractAddresses(chainId int) (*ContractAddresses, error) {
 	}
 	switch chainId {
 	case 31337:
-		address.SpaceFactory = allAddresses.Localhost.SpaceFactory
 		address.TownFactory = allAddresses.Localhost.TownFactory
 	case 5:
-		address.SpaceFactory = allAddresses.Goerli.SpaceFactory
 		address.TownFactory = allAddresses.Goerli.TownFactory
 	case 11155111:
-		address.SpaceFactory = allAddresses.Sepolia.SpaceFactory
 		address.TownFactory = allAddresses.Sepolia.TownFactory
 	default:
 		errMsg := fmt.Sprintf("unsupported chainId: %d", chainId)

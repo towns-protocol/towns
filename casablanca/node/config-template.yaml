@@ -8,8 +8,6 @@ skipDelegateCheck: true
 chain:
     chainId: 31337
     networkUrl: 'http://127.0.0.1:8545'
-    # use v2 or v3. Defaults to v2 if unspecified or empty
-    contractVersion: <CONTRACT_VERSION>
 log:
     file: logs/dev.log
     level: info

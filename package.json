@@ -14,7 +14,6 @@
         "csb:command": "bash -c 'yarn workspaces foreach --verbose $(yarn csb:list:include) $0 $@'",
         "csb:dev": "yarn csb:dev:entitlements",
         "csb:dev:entitlements": "./casablanca/scripts/launch.sh",
-        "csb:dev:entitlements:v3": "./casablanca/scripts/launch.sh --contract_version v3",
         "csb:dev:no-entitlements": "./casablanca/scripts/launch.sh --disable_entitlements",
         "csb:list": "yarn workspaces list --json | grep casablanca | grep -o '\"name\":\"[^\"]*' | grep -o '[^\"]*$'",
         "csb:list:filter": "yarn csb:list | xargs -I arg echo -n \"--filter arg \"",

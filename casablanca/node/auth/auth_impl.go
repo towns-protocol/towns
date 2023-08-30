@@ -59,7 +59,7 @@ func NewTownsContract(cfg *config.ChainConfig) (TownsContract, error) {
 	}
 	switch za.chainId {
 	case 1337, 31337:
-		localhost, err := NewSpaceContractLocalhost(za.ethClient, cfg.ContractVersion)
+		localhost, err := NewSpaceContractLocalhost(za.ethClient)
 		if err != nil {
 			slog.Error("error instantiating SpaceContractLocalhost", "error", err)
 			return nil, err
@@ -67,7 +67,7 @@ func NewTownsContract(cfg *config.ChainConfig) (TownsContract, error) {
 		za.spaceContract = localhost
 
 	case 5:
-		goerli, err := NewSpaceContractGoerli(za.ethClient, cfg.ContractVersion)
+		goerli, err := NewSpaceContractGoerli(za.ethClient)
 		if err != nil {
 			slog.Error("error instantiating SpaceContractGoerli", "error", err)
 			return nil, err
@@ -75,7 +75,7 @@ func NewTownsContract(cfg *config.ChainConfig) (TownsContract, error) {
 		za.spaceContract = goerli
 
 	case 11155111:
-		sepolia, err := NewSpaceContractSepolia(za.ethClient, cfg.ContractVersion)
+		sepolia, err := NewSpaceContractSepolia(za.ethClient)
 		if err != nil {
 			slog.Error("error instantiating SpaceContractSepolia", "error", err)
 			return nil, err
