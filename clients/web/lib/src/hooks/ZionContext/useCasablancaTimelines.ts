@@ -189,8 +189,8 @@ export function toEvent(
     return {
         eventId: eventId,
         status: isSender ? undefined : undefined, // todo: set status for events this user sent
-        createdAtEpocMs: Date.now(), // todo: timestamps
-        updatedAtEpocMs: Date.now(), // todo: timestamps
+        createdAtEpocMs: Number(message.event.createdAtEpocMs),
+        updatedAtEpocMs: undefined,
         content: content,
         fallbackContent: fbc,
         isLocalPending: eventId.startsWith('~'),
