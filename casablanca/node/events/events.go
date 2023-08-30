@@ -2,6 +2,7 @@ package events
 
 import (
 	"crypto/rand"
+	"time"
 
 	"google.golang.org/protobuf/proto"
 
@@ -16,12 +17,14 @@ func MakeStreamEvent(wallet *crypto.Wallet, payload protocol.IsStreamEvent_Paylo
 	if err != nil {
 		return nil, err
 	}
+	epocMillis := time.Now().UnixNano() / int64(time.Millisecond)
 
 	event := &StreamEvent{
-		CreatorAddress: wallet.Address.Bytes(),
-		Salt:           salt,
-		PrevEvents:     prevHashes,
-		Payload:        payload,
+		CreatorAddress:  wallet.Address.Bytes(),
+		Salt:            salt,
+		PrevEvents:      prevHashes,
+		Payload:         payload,
+		CreatedAtEpocMs: epocMillis,
 	}
 
 	return event, nil
@@ -33,13 +36,15 @@ func MakeDelegatedStreamEvent(wallet *crypto.Wallet, payload protocol.IsStreamEv
 	if err != nil {
 		return nil, err
 	}
+	epocMillis := time.Now().UnixNano() / int64(time.Millisecond)
 
 	event := &StreamEvent{
-		CreatorAddress: wallet.Address.Bytes(),
-		Salt:           salt,
-		PrevEvents:     prevHashes,
-		Payload:        payload,
-		DelegateSig:    delegateSig,
+		CreatorAddress:  wallet.Address.Bytes(),
+		Salt:            salt,
+		PrevEvents:      prevHashes,
+		Payload:         payload,
+		DelegateSig:     delegateSig,
+		CreatedAtEpocMs: epocMillis,
 	}
 
 	return event, nil

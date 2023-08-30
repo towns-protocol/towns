@@ -63,6 +63,11 @@ message StreamEvent {
     /** Hashes of the preceding leaf events in the stream. Empty array for the inception event. */
     repeated bytes prev_events = 4;
  
+    /** CreatedAt is the time when the event was created.
+    NOTE: this value is set by clients and is not reliable for anything other than displaying
+    the value to the user. Never use this value to sort events from different users.  */
+    int64 created_at_epoc_ms = 5;
+    
     /** Variable-type payload. 
       * Payloads should obey the following rules:
       * - payloads should have their own unique type

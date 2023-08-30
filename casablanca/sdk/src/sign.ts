@@ -72,6 +72,7 @@ export const _impl_makeEvent_impl_ = async (
         salt: genIdBlob(),
         prevEvents,
         payload,
+        createdAtEpocMs: BigInt(Date.now()),
     })
     if (context.delegateSig !== undefined) {
         streamEvent.delegateSig = context.delegateSig
