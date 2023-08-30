@@ -26,7 +26,6 @@ import { Channels } from './routes/Channels'
 import { AuthenticatedContent } from './routes/AuthenticatedContent'
 
 const ALCHEMY_KEY = import.meta.env.VITE_ALCHEMY_API_KEY ?? ''
-const SMART_CONTRACT_VERSION = 'v3' /*import.meta.env.VITE_SMART_CONTRACT_VERSION*/
 
 export const App = () => {
     const { matrixUrl, casablancaUrl, chainId } = useEnvironment()
@@ -42,7 +41,6 @@ export const App = () => {
                     chainId={chainId}
                     onboardingOpts={{ skipAvatar: true, showWelcomeSpash: false }}
                     initialSyncLimit={100}
-                    smartContractVersion={SMART_CONTRACT_VERSION}
                 >
                     <Routes>
                         <Route path="/alpha-access" element={<AlphaAccessMainPage />} />
