@@ -1,0 +1,260 @@
+{
+  "compiler": {
+    "version": "0.8.20+commit.a1b79de6"
+  },
+  "language": "Solidity",
+  "output": {
+    "abi": [
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": true,
+            "internalType": "address",
+            "name": "callerAddress",
+            "type": "address"
+          },
+          {
+            "indexed": false,
+            "internalType": "bytes32",
+            "name": "transactionId",
+            "type": "bytes32"
+          },
+          {
+            "indexed": false,
+            "internalType": "address[]",
+            "name": "selectedNodes",
+            "type": "address[]"
+          },
+          {
+            "indexed": false,
+            "internalType": "address",
+            "name": "contractAddress",
+            "type": "address"
+          }
+        ],
+        "name": "EntitlementCheckRequested",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": true,
+            "internalType": "bytes32",
+            "name": "transactionId",
+            "type": "bytes32"
+          },
+          {
+            "indexed": false,
+            "internalType": "enum IEntitlementCheckerEvents.NodeVoteStatus",
+            "name": "result",
+            "type": "uint8"
+          }
+        ],
+        "name": "EntitlementCheckResultPosted",
+        "type": "event"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "bytes32",
+            "name": "transactionId",
+            "type": "bytes32"
+          }
+        ],
+        "name": "deleteTransaction",
+        "outputs": [
+          {
+            "internalType": "bool",
+            "name": "",
+            "type": "bool"
+          }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "getEntitlementOperations",
+        "outputs": [
+          {
+            "internalType": "bytes",
+            "name": "",
+            "type": "bytes"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "bytes32",
+            "name": "transactionId",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "enum IEntitlementCheckerEvents.NodeVoteStatus",
+            "name": "result",
+            "type": "uint8"
+          }
+        ],
+        "name": "postEntitlementCheckResult",
+        "outputs": [
+          {
+            "internalType": "bool",
+            "name": "",
+            "type": "bool"
+          }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "requestEntitlementCheck",
+        "outputs": [
+          {
+            "internalType": "bool",
+            "name": "",
+            "type": "bool"
+          }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "bytes32",
+            "name": "",
+            "type": "bytes32"
+          }
+        ],
+        "name": "transactions",
+        "outputs": [
+          {
+            "internalType": "bool",
+            "name": "hasBenSet",
+            "type": "bool"
+          },
+          {
+            "internalType": "address",
+            "name": "clientAddress",
+            "type": "address"
+          },
+          {
+            "internalType": "enum IEntitlementCheckerEvents.NodeVoteStatus",
+            "name": "checkResult",
+            "type": "uint8"
+          },
+          {
+            "internalType": "bool",
+            "name": "isCompleted",
+            "type": "bool"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      }
+    ],
+    "devdoc": {
+      "kind": "dev",
+      "methods": {},
+      "version": 1
+    },
+    "userdoc": {
+      "kind": "user",
+      "methods": {},
+      "version": 1
+    }
+  },
+  "settings": {
+    "compilationTarget": {
+      "contracts/src/crosschain/EntitlementGated.sol": "EntitlementGated"
+    },
+    "evmVersion": "paris",
+    "libraries": {},
+    "metadata": {
+      "appendCBOR": false,
+      "bytecodeHash": "none"
+    },
+    "optimizer": {
+      "enabled": true,
+      "runs": 200
+    },
+    "remappings": [
+      ":@openzeppelin/=lib/openzeppelin-contracts/",
+      ":@prb/test/=lib/prb-test/src/",
+      ":ERC721A/=lib/ERC721A/contracts/",
+      ":council/=lib/council/contracts/",
+      ":ds-test/=lib/ds-test/src/",
+      ":erc4626-tests/=lib/operator-filter-registry/lib/openzeppelin-contracts/lib/erc4626-tests/",
+      ":forge-std/=lib/forge-std/src/",
+      ":openzeppelin-contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/",
+      ":openzeppelin-contracts/=lib/openzeppelin-contracts/",
+      ":operator-filter-registry/=lib/operator-filter-registry/",
+      ":prb-test/=lib/prb-test/src/"
+    ]
+  },
+  "sources": {
+    "contracts/src/crosschain/EntitlementChecker.sol": {
+      "keccak256": "0x28c2b265d3e69376f7f97cf601c0899325d5baba27dbc8a067e3b4fda6ba87b6",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://ed82e8e2caf2ac39bfe8d5030efb0425702a85ef59a7470f912fe99798694879",
+        "dweb:/ipfs/QmXXoAYdQXGCMcZdUDKmNeH5xhNWZ8b1NNWuiHwEXbwmEh"
+      ]
+    },
+    "contracts/src/crosschain/EntitlementGated.sol": {
+      "keccak256": "0x7a537f1134cf87f78ba74adf95687a7d56200fb1cbc7a8bcbd5e500e1634d7bc",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://4f8a67bba65b49abb15f307f771782a8a0d90e2526a5319a8d7bc19306801a65",
+        "dweb:/ipfs/QmcziosZLLMotBuFi5cFP2KM6DwCYiYiHpimLNfXfaPfqf"
+      ]
+    },
+    "contracts/src/crosschain/IEntitlementChecker.sol": {
+      "keccak256": "0x94de9de695e3d670312dfba784bd2cb8b61610aec17891074fe530bbb5e459c0",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://d62403df2139ddd4e26bb4987d02db0c4b0ffff06aa76508c88fab69c7f570c2",
+        "dweb:/ipfs/QmatDTSs82dr6LFifooZqe91YiEpFf2on19h6QNza1zJwg"
+      ]
+    },
+    "contracts/src/crosschain/IEntitlementCheckerEvents.sol": {
+      "keccak256": "0xd92c50c58665221673b0c680b1b1ab35ed4d217de192b190f5f4388defcec1e8",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://7ca7990018f8fec37c7cf5139ef94c427c2dd3bb873861658c664d62f85e80f2",
+        "dweb:/ipfs/QmWTNTbjD5PWEVva82NqCUqrQWWem9y9F6wXEdVz1dc3hJ"
+      ]
+    },
+    "contracts/src/crosschain/IEntitlementGated.sol": {
+      "keccak256": "0xcac848143574a746bd1468827ec3fe216d9e29daf29c737281e5659a414c8b6e",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://966f6a08ec37834a40c658238460da6d89102d22ef464f30733d3f9a938a8b26",
+        "dweb:/ipfs/QmVk8eYbZWZcAimbKDxAVVVmMxDeMWEhazswWHLpsRDDbV"
+      ]
+    },
+    "contracts/src/utils/Bytes32ToHexString.sol": {
+      "keccak256": "0xe86c086b5e433b519b54b1a13042a5ab079934db48146d9ce90ee624f6a30a45",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://46034bc59a2bb0c3890f4bf0fc7d12652239ea87445cabfd32969abbb9417575",
+        "dweb:/ipfs/QmQjKfCvBStVFg3NqK4WZtp8ENLzN2SGHgusQbSqyJAbQU"
+      ]
+    },
+    "lib/forge-std/src/console2.sol": {
+      "keccak256": "0xcd5706f5a7025825d9fd389c89b49bf571f9abaea8a062dc4048320b5b43bf46",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://c066485a7d4bd18d44efb4c89274b0959e8066b9a480383a2ce07d7f31555f88",
+        "dweb:/ipfs/QmckeYfA5FtAjcxaytq69Dpj6uY57tbQ61kNPPxXi9kgbW"
+      ]
+    }
+  },
+  "version": 1
+}

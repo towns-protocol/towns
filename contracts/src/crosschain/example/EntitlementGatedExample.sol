@@ -16,7 +16,7 @@ contract EntitlementGatedExample is EntitlementGated {
 
   function getEntitlementOperations()
     public
-    view
+    pure
     override
     returns (bytes memory)
   {

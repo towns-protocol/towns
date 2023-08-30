@@ -1,0 +1,972 @@
+{
+  "abi": [
+    {
+      "inputs": [],
+      "name": "Entitlement__InvalidValue",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "Entitlement__NotAllowed",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "Entitlement__ValueAlreadyExists",
+      "type": "error"
+    }
+  ],
+  "bytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "deployedBytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "methodIdentifiers": {},
+  "rawMetadata": "{\"compiler\":{\"version\":\"0.8.20+commit.a1b79de6\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[],\"name\":\"Entitlement__InvalidValue\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"Entitlement__NotAllowed\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"Entitlement__ValueAlreadyExists\",\"type\":\"error\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"contracts/src/towns/entitlements/IEntitlement.sol\":\"IEntitlementBase\"},\"evmVersion\":\"paris\",\"libraries\":{},\"metadata\":{\"appendCBOR\":false,\"bytecodeHash\":\"none\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[\":@openzeppelin/=lib/openzeppelin-contracts/\",\":@prb/test/=lib/prb-test/src/\",\":ERC721A/=lib/ERC721A/contracts/\",\":council/=lib/council/contracts/\",\":ds-test/=lib/ds-test/src/\",\":erc4626-tests/=lib/operator-filter-registry/lib/openzeppelin-contracts/lib/erc4626-tests/\",\":forge-std/=lib/forge-std/src/\",\":openzeppelin-contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/\",\":openzeppelin-contracts/=lib/openzeppelin-contracts/\",\":operator-filter-registry/=lib/operator-filter-registry/\",\":prb-test/=lib/prb-test/src/\"]},\"sources\":{\"contracts/src/towns/entitlements/IEntitlement.sol\":{\"keccak256\":\"0x3c3733f40dcf373c19ea564ec9cbf49b33e96c27a80012e9be6f8d6d24e76c46\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://ba0686e15bc8bfac66d59f62e59832eaf6d4c1b636080f9b2367386d5dc72ecb\",\"dweb:/ipfs/QmemW17L8TkGWG9RHKWTpjq9WBtYX3dmZsiTtzDmYNNXwE\"]}},\"version\":1}",
+  "metadata": {
+    "compiler": {
+      "version": "0.8.20+commit.a1b79de6"
+    },
+    "language": "Solidity",
+    "output": {
+      "abi": [
+        {
+          "inputs": [],
+          "type": "error",
+          "name": "Entitlement__InvalidValue"
+        },
+        {
+          "inputs": [],
+          "type": "error",
+          "name": "Entitlement__NotAllowed"
+        },
+        {
+          "inputs": [],
+          "type": "error",
+          "name": "Entitlement__ValueAlreadyExists"
+        }
+      ],
+      "devdoc": {
+        "kind": "dev",
+        "methods": {},
+        "version": 1
+      },
+      "userdoc": {
+        "kind": "user",
+        "methods": {},
+        "version": 1
+      }
+    },
+    "settings": {
+      "remappings": [
+        "@openzeppelin/=lib/openzeppelin-contracts/",
+        "@prb/test/=lib/prb-test/src/",
+        "ERC721A/=lib/ERC721A/contracts/",
+        "council/=lib/council/contracts/",
+        "ds-test/=lib/ds-test/src/",
+        "erc4626-tests/=lib/operator-filter-registry/lib/openzeppelin-contracts/lib/erc4626-tests/",
+        "forge-std/=lib/forge-std/src/",
+        "openzeppelin-contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/",
+        "openzeppelin-contracts/=lib/openzeppelin-contracts/",
+        "operator-filter-registry/=lib/operator-filter-registry/",
+        "prb-test/=lib/prb-test/src/"
+      ],
+      "optimizer": {
+        "enabled": true,
+        "runs": 200
+      },
+      "metadata": {
+        "bytecodeHash": "none",
+        "appendCBOR": false
+      },
+      "compilationTarget": {
+        "contracts/src/towns/entitlements/IEntitlement.sol": "IEntitlementBase"
+      },
+      "libraries": {}
+    },
+    "sources": {
+      "contracts/src/towns/entitlements/IEntitlement.sol": {
+        "keccak256": "0x3c3733f40dcf373c19ea564ec9cbf49b33e96c27a80012e9be6f8d6d24e76c46",
+        "urls": [
+          "bzz-raw://ba0686e15bc8bfac66d59f62e59832eaf6d4c1b636080f9b2367386d5dc72ecb",
+          "dweb:/ipfs/QmemW17L8TkGWG9RHKWTpjq9WBtYX3dmZsiTtzDmYNNXwE"
+        ],
+        "license": "Apache-2.0"
+      }
+    },
+    "version": 1
+  },
+  "ast": {
+    "absolutePath": "contracts/src/towns/entitlements/IEntitlement.sol",
+    "id": 27407,
+    "exportedSymbols": {
+      "IEntitlement": [
+        27406
+      ],
+      "IEntitlementBase": [
+        27338
+      ]
+    },
+    "nodeType": "SourceUnit",
+    "src": "38:2201:130",
+    "nodes": [
+      {
+        "id": 27331,
+        "nodeType": "PragmaDirective",
+        "src": "38:23:130",
+        "nodes": [],
+        "literals": [
+          "solidity",
+          "0.8",
+          ".20"
+        ]
+      },
+      {
+        "id": 27338,
+        "nodeType": "ContractDefinition",
+        "src": "63:288:130",
+        "nodes": [
+          {
+            "id": 27333,
+            "nodeType": "ErrorDefinition",
+            "src": "144:32:130",
+            "nodes": [],
+            "errorSelector": "338e692c",
+            "name": "Entitlement__NotAllowed",
+            "nameLocation": "150:23:130",
+            "parameters": {
+              "id": 27332,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "173:2:130"
+            }
+          },
+          {
+            "id": 27335,
+            "nodeType": "ErrorDefinition",
+            "src": "220:34:130",
+            "nodes": [],
+            "errorSelector": "e577901e",
+            "name": "Entitlement__InvalidValue",
+            "nameLocation": "226:25:130",
+            "parameters": {
+              "id": 27334,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "251:2:130"
+            }
+          },
+          {
+            "id": 27337,
+            "nodeType": "ErrorDefinition",
+            "src": "309:40:130",
+            "nodes": [],
+            "errorSelector": "544e3153",
+            "name": "Entitlement__ValueAlreadyExists",
+            "nameLocation": "315:31:130",
+            "parameters": {
+              "id": 27336,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "346:2:130"
+            }
+          }
+        ],
+        "abstract": false,
+        "baseContracts": [],
+        "canonicalName": "IEntitlementBase",
+        "contractDependencies": [],
+        "contractKind": "interface",
+        "fullyImplemented": true,
+        "linearizedBaseContracts": [
+          27338
+        ],
+        "name": "IEntitlementBase",
+        "nameLocation": "73:16:130",
+        "scope": 27407,
+        "usedErrors": [
+          27333,
+          27335,
+          27337
+        ],
+        "usedEvents": []
+      },
+      {
+        "id": 27406,
+        "nodeType": "ContractDefinition",
+        "src": "353:1885:130",
+        "nodes": [
+          {
+            "id": 27346,
+            "nodeType": "FunctionDefinition",
+            "src": "449:44:130",
+            "nodes": [],
+            "documentation": {
+              "id": 27341,
+              "nodeType": "StructuredDocumentation",
+              "src": "400:46:130",
+              "text": "@notice initializes the entitlement module"
+            },
+            "functionSelector": "c4d66de8",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "initialize",
+            "nameLocation": "458:10:130",
+            "parameters": {
+              "id": 27344,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 27343,
+                  "mutability": "mutable",
+                  "name": "space",
+                  "nameLocation": "477:5:130",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 27346,
+                  "src": "469:13:130",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 27342,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "469:7:130",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "468:15:130"
+            },
+            "returnParameters": {
+              "id": 27345,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "492:0:130"
+            },
+            "scope": 27406,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 27352,
+            "nodeType": "FunctionDefinition",
+            "src": "546:54:130",
+            "nodes": [],
+            "documentation": {
+              "id": 27347,
+              "nodeType": "StructuredDocumentation",
+              "src": "497:46:130",
+              "text": "@notice The name of the entitlement module"
+            },
+            "functionSelector": "06fdde03",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "name",
+            "nameLocation": "555:4:130",
+            "parameters": {
+              "id": 27348,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "559:2:130"
+            },
+            "returnParameters": {
+              "id": 27351,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 27350,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 27352,
+                  "src": "585:13:130",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_string_memory_ptr",
+                    "typeString": "string"
+                  },
+                  "typeName": {
+                    "id": 27349,
+                    "name": "string",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "585:6:130",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_string_storage_ptr",
+                      "typeString": "string"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "584:15:130"
+            },
+            "scope": 27406,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 27358,
+            "nodeType": "FunctionDefinition",
+            "src": "653:60:130",
+            "nodes": [],
+            "documentation": {
+              "id": 27353,
+              "nodeType": "StructuredDocumentation",
+              "src": "604:46:130",
+              "text": "@notice The type of the entitlement module"
+            },
+            "functionSelector": "6465e69f",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "moduleType",
+            "nameLocation": "662:10:130",
+            "parameters": {
+              "id": 27354,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "672:2:130"
+            },
+            "returnParameters": {
+              "id": 27357,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 27356,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 27358,
+                  "src": "698:13:130",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_string_memory_ptr",
+                    "typeString": "string"
+                  },
+                  "typeName": {
+                    "id": 27355,
+                    "name": "string",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "698:6:130",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_string_storage_ptr",
+                      "typeString": "string"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "697:15:130"
+            },
+            "scope": 27406,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 27364,
+            "nodeType": "FunctionDefinition",
+            "src": "773:61:130",
+            "nodes": [],
+            "documentation": {
+              "id": 27359,
+              "nodeType": "StructuredDocumentation",
+              "src": "717:53:130",
+              "text": "@notice The description of the entitlement module"
+            },
+            "functionSelector": "7284e416",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "description",
+            "nameLocation": "782:11:130",
+            "parameters": {
+              "id": 27360,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "793:2:130"
+            },
+            "returnParameters": {
+              "id": 27363,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 27362,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 27364,
+                  "src": "819:13:130",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_string_memory_ptr",
+                    "typeString": "string"
+                  },
+                  "typeName": {
+                    "id": 27361,
+                    "name": "string",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "819:6:130",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_string_storage_ptr",
+                      "typeString": "string"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "818:15:130"
+            },
+            "scope": 27406,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 27374,
+            "nodeType": "FunctionDefinition",
+            "src": "1054:111:130",
+            "nodes": [],
+            "documentation": {
+              "id": 27365,
+              "nodeType": "StructuredDocumentation",
+              "src": "838:213:130",
+              "text": "@notice sets a new entitlement\n @param roleId id of the role to gate\n @param entitlementData abi encoded array of data necessary to set the entitlement\n @return entitlementId the id that was set"
+            },
+            "functionSelector": "ef8be574",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "setEntitlement",
+            "nameLocation": "1063:14:130",
+            "parameters": {
+              "id": 27370,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 27367,
+                  "mutability": "mutable",
+                  "name": "roleId",
+                  "nameLocation": "1091:6:130",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 27374,
+                  "src": "1083:14:130",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 27366,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1083:7:130",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 27369,
+                  "mutability": "mutable",
+                  "name": "entitlementData",
+                  "nameLocation": "1118:15:130",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 27374,
+                  "src": "1103:30:130",
+                  "stateVariable": false,
+                  "storageLocation": "calldata",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bytes_calldata_ptr",
+                    "typeString": "bytes"
+                  },
+                  "typeName": {
+                    "id": 27368,
+                    "name": "bytes",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1103:5:130",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bytes_storage_ptr",
+                      "typeString": "bytes"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1077:60:130"
+            },
+            "returnParameters": {
+              "id": 27373,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 27372,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 27374,
+                  "src": "1156:7:130",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bytes32",
+                    "typeString": "bytes32"
+                  },
+                  "typeName": {
+                    "id": 27371,
+                    "name": "bytes32",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1156:7:130",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bytes32",
+                      "typeString": "bytes32"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1155:9:130"
+            },
+            "scope": 27406,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 27384,
+            "nodeType": "FunctionDefinition",
+            "src": "1395:114:130",
+            "nodes": [],
+            "documentation": {
+              "id": 27375,
+              "nodeType": "StructuredDocumentation",
+              "src": "1169:223:130",
+              "text": "@notice removes an entitlement\n @param roleId id of the role to remove\n @param entitlementData abi encoded array of the data associated with that entitlement\n @return entitlementId the id that was removed"
+            },
+            "functionSelector": "fa6d1adf",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "removeEntitlement",
+            "nameLocation": "1404:17:130",
+            "parameters": {
+              "id": 27380,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 27377,
+                  "mutability": "mutable",
+                  "name": "roleId",
+                  "nameLocation": "1435:6:130",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 27384,
+                  "src": "1427:14:130",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 27376,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1427:7:130",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 27379,
+                  "mutability": "mutable",
+                  "name": "entitlementData",
+                  "nameLocation": "1462:15:130",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 27384,
+                  "src": "1447:30:130",
+                  "stateVariable": false,
+                  "storageLocation": "calldata",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bytes_calldata_ptr",
+                    "typeString": "bytes"
+                  },
+                  "typeName": {
+                    "id": 27378,
+                    "name": "bytes",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1447:5:130",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bytes_storage_ptr",
+                      "typeString": "bytes"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1421:60:130"
+            },
+            "returnParameters": {
+              "id": 27383,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 27382,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 27384,
+                  "src": "1500:7:130",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bytes32",
+                    "typeString": "bytes32"
+                  },
+                  "typeName": {
+                    "id": 27381,
+                    "name": "bytes32",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1500:7:130",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bytes32",
+                      "typeString": "bytes32"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1499:9:130"
+            },
+            "scope": 27406,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 27396,
+            "nodeType": "FunctionDefinition",
+            "src": "1837:126:130",
+            "nodes": [],
+            "documentation": {
+              "id": 27385,
+              "nodeType": "StructuredDocumentation",
+              "src": "1513:321:130",
+              "text": "@notice checks whether a user is has a given permission for a channel or a space\n @param channelId id of the channel to check, if empty string, checks space\n @param user address of the user to check\n @param permission the permission to check\n @return whether the user is entitled to the permission"
+            },
+            "functionSelector": "00b4eaa8",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "isEntitled",
+            "nameLocation": "1846:10:130",
+            "parameters": {
+              "id": 27392,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 27387,
+                  "mutability": "mutable",
+                  "name": "channelId",
+                  "nameLocation": "1878:9:130",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 27396,
+                  "src": "1862:25:130",
+                  "stateVariable": false,
+                  "storageLocation": "calldata",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_string_calldata_ptr",
+                    "typeString": "string"
+                  },
+                  "typeName": {
+                    "id": 27386,
+                    "name": "string",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1862:6:130",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_string_storage_ptr",
+                      "typeString": "string"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 27389,
+                  "mutability": "mutable",
+                  "name": "user",
+                  "nameLocation": "1901:4:130",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 27396,
+                  "src": "1893:12:130",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 27388,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1893:7:130",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 27391,
+                  "mutability": "mutable",
+                  "name": "permission",
+                  "nameLocation": "1919:10:130",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 27396,
+                  "src": "1911:18:130",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bytes32",
+                    "typeString": "bytes32"
+                  },
+                  "typeName": {
+                    "id": 27390,
+                    "name": "bytes32",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1911:7:130",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bytes32",
+                      "typeString": "bytes32"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1856:77:130"
+            },
+            "returnParameters": {
+              "id": 27395,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 27394,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 27396,
+                  "src": "1957:4:130",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bool",
+                    "typeString": "bool"
+                  },
+                  "typeName": {
+                    "id": 27393,
+                    "name": "bool",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1957:4:130",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bool",
+                      "typeString": "bool"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1956:6:130"
+            },
+            "scope": 27406,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          },
+          {
+            "id": 27405,
+            "nodeType": "FunctionDefinition",
+            "src": "2137:99:130",
+            "nodes": [],
+            "documentation": {
+              "id": 27397,
+              "nodeType": "StructuredDocumentation",
+              "src": "1967:167:130",
+              "text": "@notice fetches the entitlement data for a roleId\n @param roleId the roleId to fetch the entitlement data for\n @return entitlementData array for the role"
+            },
+            "functionSelector": "1eee07b2",
+            "implemented": false,
+            "kind": "function",
+            "modifiers": [],
+            "name": "getEntitlementDataByRoleId",
+            "nameLocation": "2146:26:130",
+            "parameters": {
+              "id": 27400,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 27399,
+                  "mutability": "mutable",
+                  "name": "roleId",
+                  "nameLocation": "2186:6:130",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 27405,
+                  "src": "2178:14:130",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 27398,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2178:7:130",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "2172:24:130"
+            },
+            "returnParameters": {
+              "id": 27404,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 27403,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 27405,
+                  "src": "2220:14:130",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_array$_t_bytes_memory_ptr_$dyn_memory_ptr",
+                    "typeString": "bytes[]"
+                  },
+                  "typeName": {
+                    "baseType": {
+                      "id": 27401,
+                      "name": "bytes",
+                      "nodeType": "ElementaryTypeName",
+                      "src": "2220:5:130",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_bytes_storage_ptr",
+                        "typeString": "bytes"
+                      }
+                    },
+                    "id": 27402,
+                    "nodeType": "ArrayTypeName",
+                    "src": "2220:7:130",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_array$_t_bytes_storage_$dyn_storage_ptr",
+                      "typeString": "bytes[]"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "2219:16:130"
+            },
+            "scope": 27406,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "external"
+          }
+        ],
+        "abstract": false,
+        "baseContracts": [
+          {
+            "baseName": {
+              "id": 27339,
+              "name": "IEntitlementBase",
+              "nameLocations": [
+                "379:16:130"
+              ],
+              "nodeType": "IdentifierPath",
+              "referencedDeclaration": 27338,
+              "src": "379:16:130"
+            },
+            "id": 27340,
+            "nodeType": "InheritanceSpecifier",
+            "src": "379:16:130"
+          }
+        ],
+        "canonicalName": "IEntitlement",
+        "contractDependencies": [],
+        "contractKind": "interface",
+        "fullyImplemented": false,
+        "linearizedBaseContracts": [
+          27406,
+          27338
+        ],
+        "name": "IEntitlement",
+        "nameLocation": "363:12:130",
+        "scope": 27407,
+        "usedErrors": [
+          27333,
+          27335,
+          27337
+        ],
+        "usedEvents": []
+      }
+    ],
+    "license": "Apache-2.0"
+  },
+  "id": 130
+}

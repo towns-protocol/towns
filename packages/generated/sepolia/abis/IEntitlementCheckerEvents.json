@@ -1,0 +1,481 @@
+{
+  "abi": [
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "callerAddress",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "bytes32",
+          "name": "transactionId",
+          "type": "bytes32"
+        },
+        {
+          "indexed": false,
+          "internalType": "address[]",
+          "name": "selectedNodes",
+          "type": "address[]"
+        },
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "contractAddress",
+          "type": "address"
+        }
+      ],
+      "name": "EntitlementCheckRequested",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "bytes32",
+          "name": "transactionId",
+          "type": "bytes32"
+        },
+        {
+          "indexed": false,
+          "internalType": "enum IEntitlementCheckerEvents.NodeVoteStatus",
+          "name": "result",
+          "type": "uint8"
+        }
+      ],
+      "name": "EntitlementCheckResultPosted",
+      "type": "event"
+    }
+  ],
+  "bytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "deployedBytecode": {
+    "object": "0x",
+    "sourceMap": "",
+    "linkReferences": {}
+  },
+  "methodIdentifiers": {},
+  "rawMetadata": "{\"compiler\":{\"version\":\"0.8.20+commit.a1b79de6\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"callerAddress\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"bytes32\",\"name\":\"transactionId\",\"type\":\"bytes32\"},{\"indexed\":false,\"internalType\":\"address[]\",\"name\":\"selectedNodes\",\"type\":\"address[]\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"contractAddress\",\"type\":\"address\"}],\"name\":\"EntitlementCheckRequested\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"bytes32\",\"name\":\"transactionId\",\"type\":\"bytes32\"},{\"indexed\":false,\"internalType\":\"enum IEntitlementCheckerEvents.NodeVoteStatus\",\"name\":\"result\",\"type\":\"uint8\"}],\"name\":\"EntitlementCheckResultPosted\",\"type\":\"event\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"contracts/src/crosschain/IEntitlementCheckerEvents.sol\":\"IEntitlementCheckerEvents\"},\"evmVersion\":\"paris\",\"libraries\":{},\"metadata\":{\"appendCBOR\":false,\"bytecodeHash\":\"none\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[\":@openzeppelin/=lib/openzeppelin-contracts/\",\":@prb/test/=lib/prb-test/src/\",\":ERC721A/=lib/ERC721A/contracts/\",\":council/=lib/council/contracts/\",\":ds-test/=lib/ds-test/src/\",\":erc4626-tests/=lib/operator-filter-registry/lib/openzeppelin-contracts/lib/erc4626-tests/\",\":forge-std/=lib/forge-std/src/\",\":openzeppelin-contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/\",\":openzeppelin-contracts/=lib/openzeppelin-contracts/\",\":operator-filter-registry/=lib/operator-filter-registry/\",\":prb-test/=lib/prb-test/src/\"]},\"sources\":{\"contracts/src/crosschain/IEntitlementCheckerEvents.sol\":{\"keccak256\":\"0xd92c50c58665221673b0c680b1b1ab35ed4d217de192b190f5f4388defcec1e8\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://7ca7990018f8fec37c7cf5139ef94c427c2dd3bb873861658c664d62f85e80f2\",\"dweb:/ipfs/QmWTNTbjD5PWEVva82NqCUqrQWWem9y9F6wXEdVz1dc3hJ\"]}},\"version\":1}",
+  "metadata": {
+    "compiler": {
+      "version": "0.8.20+commit.a1b79de6"
+    },
+    "language": "Solidity",
+    "output": {
+      "abi": [
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "callerAddress",
+              "type": "address",
+              "indexed": true
+            },
+            {
+              "internalType": "bytes32",
+              "name": "transactionId",
+              "type": "bytes32",
+              "indexed": false
+            },
+            {
+              "internalType": "address[]",
+              "name": "selectedNodes",
+              "type": "address[]",
+              "indexed": false
+            },
+            {
+              "internalType": "address",
+              "name": "contractAddress",
+              "type": "address",
+              "indexed": false
+            }
+          ],
+          "type": "event",
+          "name": "EntitlementCheckRequested",
+          "anonymous": false
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "bytes32",
+              "name": "transactionId",
+              "type": "bytes32",
+              "indexed": true
+            },
+            {
+              "internalType": "enum IEntitlementCheckerEvents.NodeVoteStatus",
+              "name": "result",
+              "type": "uint8",
+              "indexed": false
+            }
+          ],
+          "type": "event",
+          "name": "EntitlementCheckResultPosted",
+          "anonymous": false
+        }
+      ],
+      "devdoc": {
+        "kind": "dev",
+        "methods": {},
+        "version": 1
+      },
+      "userdoc": {
+        "kind": "user",
+        "methods": {},
+        "version": 1
+      }
+    },
+    "settings": {
+      "remappings": [
+        "@openzeppelin/=lib/openzeppelin-contracts/",
+        "@prb/test/=lib/prb-test/src/",
+        "ERC721A/=lib/ERC721A/contracts/",
+        "council/=lib/council/contracts/",
+        "ds-test/=lib/ds-test/src/",
+        "erc4626-tests/=lib/operator-filter-registry/lib/openzeppelin-contracts/lib/erc4626-tests/",
+        "forge-std/=lib/forge-std/src/",
+        "openzeppelin-contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/",
+        "openzeppelin-contracts/=lib/openzeppelin-contracts/",
+        "operator-filter-registry/=lib/operator-filter-registry/",
+        "prb-test/=lib/prb-test/src/"
+      ],
+      "optimizer": {
+        "enabled": true,
+        "runs": 200
+      },
+      "metadata": {
+        "bytecodeHash": "none",
+        "appendCBOR": false
+      },
+      "compilationTarget": {
+        "contracts/src/crosschain/IEntitlementCheckerEvents.sol": "IEntitlementCheckerEvents"
+      },
+      "libraries": {}
+    },
+    "sources": {
+      "contracts/src/crosschain/IEntitlementCheckerEvents.sol": {
+        "keccak256": "0xd92c50c58665221673b0c680b1b1ab35ed4d217de192b190f5f4388defcec1e8",
+        "urls": [
+          "bzz-raw://7ca7990018f8fec37c7cf5139ef94c427c2dd3bb873861658c664d62f85e80f2",
+          "dweb:/ipfs/QmWTNTbjD5PWEVva82NqCUqrQWWem9y9F6wXEdVz1dc3hJ"
+        ],
+        "license": "MIT"
+      }
+    },
+    "version": 1
+  },
+  "ast": {
+    "absolutePath": "contracts/src/crosschain/IEntitlementCheckerEvents.sol",
+    "id": 6041,
+    "exportedSymbols": {
+      "IEntitlementCheckerEvents": [
+        6040
+      ]
+    },
+    "nodeType": "SourceUnit",
+    "src": "32:397:26",
+    "nodes": [
+      {
+        "id": 6017,
+        "nodeType": "PragmaDirective",
+        "src": "32:24:26",
+        "nodes": [],
+        "literals": [
+          "solidity",
+          "^",
+          "0.8",
+          ".20"
+        ]
+      },
+      {
+        "id": 6040,
+        "nodeType": "ContractDefinition",
+        "src": "58:370:26",
+        "nodes": [
+          {
+            "id": 6021,
+            "nodeType": "EnumDefinition",
+            "src": "98:63:26",
+            "nodes": [],
+            "canonicalName": "IEntitlementCheckerEvents.NodeVoteStatus",
+            "members": [
+              {
+                "id": 6018,
+                "name": "NOT_VOTED",
+                "nameLocation": "124:9:26",
+                "nodeType": "EnumValue",
+                "src": "124:9:26"
+              },
+              {
+                "id": 6019,
+                "name": "PASSED",
+                "nameLocation": "139:6:26",
+                "nodeType": "EnumValue",
+                "src": "139:6:26"
+              },
+              {
+                "id": 6020,
+                "name": "FAILED",
+                "nameLocation": "151:6:26",
+                "nodeType": "EnumValue",
+                "src": "151:6:26"
+              }
+            ],
+            "name": "NodeVoteStatus",
+            "nameLocation": "103:14:26"
+          },
+          {
+            "id": 6032,
+            "nodeType": "EventDefinition",
+            "src": "165:156:26",
+            "nodes": [],
+            "anonymous": false,
+            "eventSelector": "58529d9ba9cbe2a11e905b3c701769d5265641ce084d196095a7692839481a4b",
+            "name": "EntitlementCheckRequested",
+            "nameLocation": "171:25:26",
+            "parameters": {
+              "id": 6031,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 6023,
+                  "indexed": true,
+                  "mutability": "mutable",
+                  "name": "callerAddress",
+                  "nameLocation": "218:13:26",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 6032,
+                  "src": "202:29:26",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 6022,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "202:7:26",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 6025,
+                  "indexed": false,
+                  "mutability": "mutable",
+                  "name": "transactionId",
+                  "nameLocation": "245:13:26",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 6032,
+                  "src": "237:21:26",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bytes32",
+                    "typeString": "bytes32"
+                  },
+                  "typeName": {
+                    "id": 6024,
+                    "name": "bytes32",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "237:7:26",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bytes32",
+                      "typeString": "bytes32"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 6028,
+                  "indexed": false,
+                  "mutability": "mutable",
+                  "name": "selectedNodes",
+                  "nameLocation": "274:13:26",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 6032,
+                  "src": "264:23:26",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_array$_t_address_$dyn_memory_ptr",
+                    "typeString": "address[]"
+                  },
+                  "typeName": {
+                    "baseType": {
+                      "id": 6026,
+                      "name": "address",
+                      "nodeType": "ElementaryTypeName",
+                      "src": "264:7:26",
+                      "stateMutability": "nonpayable",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_address",
+                        "typeString": "address"
+                      }
+                    },
+                    "id": 6027,
+                    "nodeType": "ArrayTypeName",
+                    "src": "264:9:26",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_array$_t_address_$dyn_storage_ptr",
+                      "typeString": "address[]"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 6030,
+                  "indexed": false,
+                  "mutability": "mutable",
+                  "name": "contractAddress",
+                  "nameLocation": "301:15:26",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 6032,
+                  "src": "293:23:26",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 6029,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "293:7:26",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "196:124:26"
+            }
+          },
+          {
+            "id": 6039,
+            "nodeType": "EventDefinition",
+            "src": "325:101:26",
+            "nodes": [],
+            "anonymous": false,
+            "eventSelector": "b9d6ce397e562841871d119aaf77469c60a3b5bf8b99a5d9851656015015c633",
+            "name": "EntitlementCheckResultPosted",
+            "nameLocation": "331:28:26",
+            "parameters": {
+              "id": 6038,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 6034,
+                  "indexed": true,
+                  "mutability": "mutable",
+                  "name": "transactionId",
+                  "nameLocation": "381:13:26",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 6039,
+                  "src": "365:29:26",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bytes32",
+                    "typeString": "bytes32"
+                  },
+                  "typeName": {
+                    "id": 6033,
+                    "name": "bytes32",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "365:7:26",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bytes32",
+                      "typeString": "bytes32"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 6037,
+                  "indexed": false,
+                  "mutability": "mutable",
+                  "name": "result",
+                  "nameLocation": "415:6:26",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 6039,
+                  "src": "400:21:26",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_enum$_NodeVoteStatus_$6021",
+                    "typeString": "enum IEntitlementCheckerEvents.NodeVoteStatus"
+                  },
+                  "typeName": {
+                    "id": 6036,
+                    "nodeType": "UserDefinedTypeName",
+                    "pathNode": {
+                      "id": 6035,
+                      "name": "NodeVoteStatus",
+                      "nameLocations": [
+                        "400:14:26"
+                      ],
+                      "nodeType": "IdentifierPath",
+                      "referencedDeclaration": 6021,
+                      "src": "400:14:26"
+                    },
+                    "referencedDeclaration": 6021,
+                    "src": "400:14:26",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_enum$_NodeVoteStatus_$6021",
+                      "typeString": "enum IEntitlementCheckerEvents.NodeVoteStatus"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "359:66:26"
+            }
+          }
+        ],
+        "abstract": false,
+        "baseContracts": [],
+        "canonicalName": "IEntitlementCheckerEvents",
+        "contractDependencies": [],
+        "contractKind": "interface",
+        "fullyImplemented": true,
+        "linearizedBaseContracts": [
+          6040
+        ],
+        "name": "IEntitlementCheckerEvents",
+        "nameLocation": "68:25:26",
+        "scope": 6041,
+        "usedErrors": [],
+        "usedEvents": [
+          6032,
+          6039
+        ]
+      }
+    ],
+    "license": "MIT"
+  },
+  "id": 26
+}

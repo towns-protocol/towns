@@ -312,11 +312,10 @@ contract EntitlementCheckerTest is Test, IEntitlementCheckerEvents {
         )
       );
       console2.log("topics[1] found");
-      (
-        bytes32 transactionId2,
-        address[] memory _nodeAddress,
-        address _origin
-      ) = abi.decode(entries[i].data, (bytes32, address[], address));
+      (bytes32 transactionId2, , ) = abi.decode(
+        entries[i].data,
+        (bytes32, address[], address)
+      );
       transactionId = transactionId2;
     }
 
