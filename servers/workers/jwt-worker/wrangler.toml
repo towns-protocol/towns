@@ -1,0 +1,30 @@
+main = "./src/index.ts"
+name = "jwt-worker"
+compatibility_date = "2023-05-18"
+account_id="9840f8a36a817b103e00e29a0e2bad6f"
+minify = true
+node_compat=true
+
+
+[dev]
+ip = "localhost"
+port = 8114
+local_protocol = "http"
+
+
+[vars]
+# VAR_NAME = "some_value"
+
+# The necessary secrets are:
+# for local development, you can add these in .dev.vars
+# OR
+# Run `echo <VALUE> | wrangler secret put <NAME>` for each of these
+# add your secret property names here
+
+
+
+[env.production-beta]
+routes = [{ pattern = "jwt-worker-beta.towns.com", custom_domain = true }]
+
+[env.test-beta]
+routes = [{ pattern = "jwt-worker-test-beta.towns.com", custom_domain = true }]
