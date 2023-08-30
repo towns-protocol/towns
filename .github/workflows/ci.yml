@@ -70,7 +70,7 @@ jobs:
             - name: Install Foundry
               uses: foundry-rs/foundry-toolchain@v1
               with:
-                  version: nightly
+                  version: nightly-ae3ec74234fe30a88279b3850c99ff191f373781
 
             - name: Install Forge modules
               run: ./scripts/install-deps.sh
@@ -110,7 +110,8 @@ jobs:
               run: ./scripts/start-local-dendrite.sh --skip-postgres &
 
             - name: Start anvil
-              run: anvil &
+              # Start anvil in the background, and wait for it to be ready
+              run: anvil & ./scripts/wait-for-blockchain.sh
 
             - name: Deploy local zion governance contracts
               run: ./scripts/deploy-zion-governance-contracts.sh
@@ -204,7 +205,7 @@ jobs:
             - name: Install Foundry
               uses: foundry-rs/foundry-toolchain@v1
               with:
-                  version: nightly
+                  version: nightly-ae3ec74234fe30a88279b3850c99ff191f373781
 
             - name: Install Forge modules
               run: ./scripts/install-deps.sh
@@ -238,7 +239,8 @@ jobs:
               run: ./scripts/build-contract-types.sh localhost --frozen
 
             - name: Start anvil
-              run: anvil &
+              # Start anvil in the background, and wait for it to be ready
+              run: anvil & ./scripts/wait-for-blockchain.sh
 
             - name: Deploy local zion governance contracts
               run: ./scripts/deploy-zion-governance-contracts.sh
@@ -349,7 +351,7 @@ jobs:
             - name: Install Foundry
               uses: foundry-rs/foundry-toolchain@v1
               with:
-                  version: nightly
+                  version: nightly-ae3ec74234fe30a88279b3850c99ff191f373781
 
             - name: Install Forge modules
               run: ./scripts/install-deps.sh
@@ -383,7 +385,8 @@ jobs:
               run: ./scripts/build-contract-types.sh localhost --frozen
 
             - name: Start anvil
-              run: anvil &
+              # Start anvil in the background, and wait for it to be ready
+              run: anvil & ./scripts/wait-for-blockchain.sh
 
             - name: Deploy local zion governance contracts
               run: ./scripts/deploy-zion-governance-contracts.sh
