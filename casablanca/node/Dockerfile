@@ -27,8 +27,7 @@ RUN ./config_instance.sh docker-single \
     DB_PORT null \
     USE_CONTRACT true \
     METRICS_ENABLED false \
-    METRICS_PORT null \
-    CONTRACT_VERSION v3
+    METRICS_PORT null
 
 FROM alpine:latest
 
