@@ -1,4 +1,3 @@
-import { TokenDataTypes } from './shims/TokenEntitlementShim'
 import { TokenEntitlementDataTypes, TokenEntitlementShim } from './v3/TokenEntitlementShim'
 import { UserEntitlementShim } from './v3/UserEntitlementShim'
 
@@ -33,7 +32,7 @@ export interface RoleDetails {
     id: number
     name: string
     permissions: Permission[]
-    tokens: TokenDataTypes.ExternalTokenStruct[]
+    tokens: TokenEntitlementDataTypes.ExternalTokenStruct[]
     users: string[]
     channels: ChannelMetadata[]
 }
@@ -66,7 +65,7 @@ export interface RoleEntitlements {
     roleId: number
     name: string
     permissions: Permission[]
-    tokens: TokenDataTypes.ExternalTokenStruct[]
+    tokens: TokenEntitlementDataTypes.ExternalTokenStruct[]
     users: string[]
 }
 

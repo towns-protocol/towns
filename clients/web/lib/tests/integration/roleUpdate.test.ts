@@ -18,7 +18,7 @@ import {
 
 import { ContractReceipt } from 'ethers'
 import { TestConstants } from './helpers/TestConstants'
-import { TokenDataTypes } from '../../src/client/web3/shims/TokenEntitlementShim'
+import { TokenEntitlementDataTypes } from '../../src/client/web3/v3/TokenEntitlementShim'
 
 describe('update role', () => {
     test('Update Everyone role with multicall', async () => {
@@ -136,7 +136,7 @@ describe('update role', () => {
         }
         // create a new role
         const moderatorPermissions = [Permission.Read, Permission.Write, Permission.Ban]
-        const moderatorTokens: TokenDataTypes.ExternalTokenStruct[] = []
+        const moderatorTokens: TokenEntitlementDataTypes.ExternalTokenStruct[] = []
         // replace the current moderator with this user
         const mod1 = await TestConstants.getWalletWithMemberNft()
         const moderatorUsers: string[] = [mod1.address]
@@ -231,7 +231,7 @@ describe('update role', () => {
         }
         // create a new role
         const moderatorPermissions = [Permission.Read, Permission.Write, Permission.Ban]
-        const moderatorTokens: TokenDataTypes.ExternalTokenStruct[] = []
+        const moderatorTokens: TokenEntitlementDataTypes.ExternalTokenStruct[] = []
         // replace the current moderator with this user
         const mod1 = await TestConstants.getWalletWithMemberNft()
         const moderatorUsers: string[] = [mod1.address]

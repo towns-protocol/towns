@@ -2,12 +2,12 @@ import { EntitlementModuleType, Permission } from '../ContractTypes'
 import { createTokenEntitlementStruct, createUserEntitlementStruct } from './ConvertersEntitlements'
 
 import { IRolesBase } from './IRolesShim'
-import { SpaceFactoryDataTypes } from '../shims/SpaceFactoryShim'
 import { Town } from './Town'
+import { TokenEntitlementDataTypes } from './TokenEntitlementShim'
 
 export async function fromCreateRoleStructToCreateEntitlementStruct(
     town: Town,
-    tokens: SpaceFactoryDataTypes.ExternalTokenStruct[],
+    tokens: TokenEntitlementDataTypes.ExternalTokenStruct[],
     users: string[],
 ): Promise<IRolesBase.CreateEntitlementStruct[]> {
     // figure out the addresses for each entitlement module

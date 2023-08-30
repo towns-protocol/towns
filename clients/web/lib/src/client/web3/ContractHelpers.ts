@@ -2,7 +2,7 @@ import { BigNumber, BigNumberish, ethers } from 'ethers'
 
 import { BasicRoleInfo } from './ContractTypes'
 import { MockERC721AShim } from './v3/MockERC721AShim'
-import { TokenDataTypes } from './shims/TokenEntitlementShim'
+import { TokenEntitlementDataTypes } from './v3/TokenEntitlementShim'
 import { ZionClient } from '../ZionClient'
 import { getContractsInfo } from './IStaticContractsInfo'
 import { getContractsInfoV3 } from './v3/IStaticContractsInfoV3'
@@ -39,13 +39,15 @@ export function getPioneerNftAddress(chainId: number): string {
 
 export function createExternalTokenStruct(
     tokenAddresses: string[],
-): TokenDataTypes.ExternalTokenStruct[] {
-    const tokenStruct: TokenDataTypes.ExternalTokenStruct[] = tokenAddresses.map((address) => ({
-        contractAddress: address,
-        isSingleToken: false,
-        quantity: 1,
-        tokenIds: [],
-    }))
+): TokenEntitlementDataTypes.ExternalTokenStruct[] {
+    const tokenStruct: TokenEntitlementDataTypes.ExternalTokenStruct[] = tokenAddresses.map(
+        (address) => ({
+            contractAddress: address,
+            isSingleToken: false,
+            quantity: 1,
+            tokenIds: [],
+        }),
+    )
     return tokenStruct
 }
 

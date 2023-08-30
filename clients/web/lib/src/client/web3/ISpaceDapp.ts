@@ -7,10 +7,10 @@ import {
 } from './ContractTypes'
 import { ContractTransaction, ethers } from 'ethers'
 
-import { SpaceDataTypes } from './shims/SpaceShim'
+import { IRolesBase } from './v3/IRolesShim'
 import { SpaceFactoryDataTypes } from './shims/SpaceFactoryShim'
 import { SpaceInfo } from './SpaceInfo'
-import { TokenDataTypes } from './shims/TokenEntitlementShim'
+import { TokenEntitlementDataTypes } from './v3/TokenEntitlementShim'
 
 export interface EventsContractInfo {
     abi: ethers.ContractInterface
@@ -40,7 +40,7 @@ export interface UpdateRoleParams {
     roleId: number
     roleName: string
     permissions: Permission[]
-    tokens: TokenDataTypes.ExternalTokenStruct[]
+    tokens: TokenEntitlementDataTypes.ExternalTokenStruct[]
     users: string[]
 }
 
@@ -76,7 +76,7 @@ export interface ISpaceDapp {
     getRolesByChannel: (
         spaceId: string,
         channelNetworkId: string,
-    ) => Promise<SpaceDataTypes.RoleStruct[]>
+    ) => Promise<IRolesBase.RoleStruct[]>
     getSpaceInfo: (spaceId: string) => Promise<SpaceInfo | undefined>
     isEntitledToSpace: (spaceId: string, user: string, permission: Permission) => Promise<boolean>
     isEntitledToChannel: (

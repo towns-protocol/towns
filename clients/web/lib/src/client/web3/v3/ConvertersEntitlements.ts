@@ -1,6 +1,6 @@
-import { SpaceDataTypes } from '../shims/SpaceShim'
-import { TokenDataTypes } from '../shims/TokenEntitlementShim'
 import { ethers } from 'ethers'
+import { IRolesBase } from './IRolesShim'
+import { TokenEntitlementDataTypes } from './TokenEntitlementShim'
 
 const UserAddressesEncoding = 'address[]'
 const ExternalTokenEncoding =
@@ -25,8 +25,8 @@ export function decodeUsers(encodedData: string): string[] {
 
 export function createTokenEntitlementStruct(
     moduleAddress: string,
-    tokens: TokenDataTypes.ExternalTokenStruct[],
-): SpaceDataTypes.EntitlementStruct {
+    tokens: TokenEntitlementDataTypes.ExternalTokenStruct[],
+): IRolesBase.CreateEntitlementStruct {
     const data = encodeExternalTokens(tokens)
     return {
         module: moduleAddress,
@@ -37,7 +37,7 @@ export function createTokenEntitlementStruct(
 export function createUserEntitlementStruct(
     moduleAddress: string,
     users: string[],
-): SpaceDataTypes.EntitlementStruct {
+): IRolesBase.CreateEntitlementStruct {
     const data = encodeUsers(users)
     return {
         module: moduleAddress,
@@ -45,19 +45,23 @@ export function createUserEntitlementStruct(
     }
 }
 
-export function encodeExternalTokens(tokens: TokenDataTypes.ExternalTokenStruct[]): string {
+export function encodeExternalTokens(
+    tokens: TokenEntitlementDataTypes.ExternalTokenStruct[],
+): string {
     const abiCoder = ethers.utils.defaultAbiCoder
     const encodedData = abiCoder.encode([ExternalTokenEncoding], [tokens])
     return encodedData
 }
 
-export function decodeExternalTokens(encodedData: string): TokenDataTypes.ExternalTokenStruct[] {
+export function decodeExternalTokens(
+    encodedData: string,
+): TokenEntitlementDataTypes.ExternalTokenStruct[] {
     const abiCoder = ethers.utils.defaultAbiCoder
     const decodedData = abiCoder.decode(
         [ExternalTokenEncoding],
         encodedData,
-    ) as TokenDataTypes.ExternalTokenStruct[][]
-    let t: TokenDataTypes.ExternalTokenStruct[] = []
+    ) as TokenEntitlementDataTypes.ExternalTokenStruct[][]
+    let t: TokenEntitlementDataTypes.ExternalTokenStruct[] = []
     if (decodedData.length) {
         // decoded value is in element 0 of the array
         t = decodedData[0]
