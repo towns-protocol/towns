@@ -7,7 +7,7 @@ type Props = {
 }
 
 export const RichTextPlaceholder = ({ color = 'gray2', placeholder }: Props) => (
-    <Box absoluteFill pointerEvents="none" color={color} justifyContent="center" padding="xs">
+    <Box absoluteFill pointerEvents="none" color={color} justifyContent="center" padding="md">
         <Paragraph>{placeholder}</Paragraph>
     </Box>
 )

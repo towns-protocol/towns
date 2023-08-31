@@ -304,9 +304,7 @@ const RichTextEditorWithoutBoundary = (props: Props) => {
 
     return (
         <Stack
-            height="auto"
             background={isEditing && !isTouch ? 'level1' : 'level2'}
-            paddingY="sm"
             rounded={{ default: 'sm', touch: 'none' }}
             borderLeft={!isTouch ? 'default' : 'none'}
             borderRight={!isTouch ? 'default' : 'none'}
@@ -333,7 +331,13 @@ const RichTextEditorWithoutBoundary = (props: Props) => {
                         ErrorBoundary={LexicalErrorBoundary}
                     />
                 </RichTextUI>
-                <Stack horizontal paddingX="sm" alignContent="center" key="bottom_row">
+                <Stack
+                    horizontal
+                    paddingBottom="sm"
+                    paddingX="md"
+                    insetX="xxs"
+                    alignContent="center"
+                >
                     <RichTextBottomToolbar
                         editing={isEditing}
                         threadId={props.threadId}

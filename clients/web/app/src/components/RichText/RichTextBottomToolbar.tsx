@@ -4,7 +4,7 @@ import { $getSelection, $isRangeSelection } from 'lexical'
 import { GiphyEntryDesktop, GiphyEntryTouch } from '@components/Giphy/GiphyEntry'
 import { EmojiPickerButton, EmojiPickerButtonTouch } from '@components/EmojiPickerButton'
 import { useDevice } from 'hooks/useDevice'
-import { IconButton, MotionStack } from '@ui'
+import { IconButton, Stack } from '@ui'
 import { MotionIconButton } from 'ui/components/Motion/MotionComponents'
 import { $createEmojiNode } from './nodes/EmojiNode'
 
@@ -48,7 +48,7 @@ export const RichTextBottomToolbar = (props: Props) => {
     )
 
     return (
-        <MotionStack horizontal gap="xs" alignItems="center" layout="position">
+        <Stack horizontal gap="xs" alignItems="center">
             {isTouch ? (
                 <>
                     {props.visible && (
@@ -86,6 +86,6 @@ export const RichTextBottomToolbar = (props: Props) => {
                     <EmojiPickerButton onSelectEmoji={onSelectEmoji} />
                 </>
             )}
-        </MotionStack>
+        </Stack>
     )
 }

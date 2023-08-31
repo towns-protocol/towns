@@ -109,7 +109,11 @@ export const MessageThread = (props: {
                             align="top"
                             groupByUser={false}
                         />
-                        <Box paddingTop="none" paddingBottom="md">
+                        <Box
+                            paddingTop="none"
+                            paddingBottom="md"
+                            paddingX={{ default: 'md', touch: 'none' }}
+                        >
                             <RichTextEditor
                                 editable={!!isChannelWritable}
                                 threadId={parentId}

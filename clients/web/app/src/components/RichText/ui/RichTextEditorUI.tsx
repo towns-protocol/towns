@@ -142,25 +142,28 @@ export const RichTextUI = (props: Props) => {
     const { rootLayerRef } = useZLayerContext()
 
     return (
-        <RichTextUIContainer key="editor" readOnly={props.readOnly}>
-            <Stack paddingX="sm" width="100%">
-                <AnimatePresence>
-                    {showFormattingToolbar && (
-                        <MotionBox
-                            initial={{ opacity: 0, height: 0 }}
-                            animate={{ opacity: 1, height: 'auto' }}
-                            exit={{ opacity: 0, height: 0 }}
-                        >
+        <>
+            <AnimatePresence>
+                {showFormattingToolbar && (
+                    <MotionBox
+                        overflow="hidden"
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                    >
+                        <Box paddingTop="sm" paddingX="sm">
                             <RichTextToolbar
                                 focused={props.focused ?? false}
                                 key="toolbar"
                                 onAddLinkClick={onLinkClick}
                             />
-                        </MotionBox>
-                    )}
-                </AnimatePresence>
+                        </Box>
+                    </MotionBox>
+                )}
+            </AnimatePresence>
 
-                <Box position="relative" paddingX="xs" width="100%">
+            <RichTextUIContainer key="editor" readOnly={props.readOnly}>
+                <Box position="relative" paddingX="md" width="100%">
                     {props.children}
                 </Box>
                 {canShowInlineToolbar &&
@@ -177,13 +180,15 @@ export const RichTextUI = (props: Props) => {
                         rootLayerRef?.current,
                     )}
                 {linkLinkModal && <AddLinkModal onHide={onHideModal} onSaveLink={onSaveLink} />}
-            </Stack>
-            <OfflineIndicator attemptingToSend={props.attemptingToSend} />
-        </RichTextUIContainer>
+                <OfflineIndicator attemptingToSend={props.attemptingToSend} />
+            </RichTextUIContainer>
+        </>
     )
 }
 
 export const RichTextUIContainer = ({
+    background = 'level2',
+    rounded = 'sm',
     readOnly,
     children,
 }: Pick<Props, 'background' | 'readOnly' | 'rounded'> & { children?: React.ReactNode }) => (
@@ -192,7 +197,10 @@ export const RichTextUIContainer = ({
         transition
         minWidth={readOnly ? undefined : '200'}
         position="relative"
-        justifyContent="end"
+        justifyContent="center"
+        minHeight="x6"
+        background={background}
+        rounded={rounded}
     >
         {children}
     </Stack>
