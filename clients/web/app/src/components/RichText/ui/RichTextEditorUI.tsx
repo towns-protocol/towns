@@ -6,16 +6,7 @@ import { AnimatePresence } from 'framer-motion'
 import { createPortal } from 'react-dom'
 import { $getSelection, COMMAND_PRIORITY_LOW, SELECTION_CHANGE_COMMAND } from 'lexical'
 import { mergeRegister } from '@lexical/utils'
-import {
-    Box,
-    BoxProps,
-    Icon,
-    MotionBox,
-    MotionStack,
-    Paragraph,
-    Stack,
-    useZLayerContext,
-} from '@ui'
+import { Box, BoxProps, Icon, MotionBox, Paragraph, Stack, useZLayerContext } from '@ui'
 import { GiphyEntryDesktop } from '@components/Giphy/GiphyEntry'
 import { FadeInBox } from '@components/Transitions'
 import { useNetworkStatus } from 'hooks/useNetworkStatus'
@@ -153,18 +144,25 @@ export const RichTextUI = (props: Props) => {
     return (
         <RichTextUIContainer key="editor" readOnly={props.readOnly}>
             <Stack paddingX="sm" width="100%">
-                <AnimatePresence mode="sync">
+                <AnimatePresence>
                     {showFormattingToolbar && (
-                        <RichTextToolbar
-                            focused={props.focused ?? false}
-                            key="toolbar"
-                            onAddLinkClick={onLinkClick}
-                        />
+                        <MotionBox
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            exit={{ opacity: 0, height: 0 }}
+                        >
+                            <RichTextToolbar
+                                focused={props.focused ?? false}
+                                key="toolbar"
+                                onAddLinkClick={onLinkClick}
+                            />
+                        </MotionBox>
                     )}
                 </AnimatePresence>
-                <MotionBox layout="preserve-aspect" position="relative" paddingX="xs" width="100%">
+
+                <Box position="relative" paddingX="xs" width="100%">
                     {props.children}
-                </MotionBox>
+                </Box>
                 {canShowInlineToolbar &&
                     !isTouch &&
                     rootLayerRef?.current &&
@@ -189,16 +187,15 @@ export const RichTextUIContainer = ({
     readOnly,
     children,
 }: Pick<Props, 'background' | 'readOnly' | 'rounded'> & { children?: React.ReactNode }) => (
-    <MotionStack
+    <Stack
         gap
         transition
-        layout="position"
         minWidth={readOnly ? undefined : '200'}
         position="relative"
         justifyContent="end"
     >
         {children}
-    </MotionStack>
+    </Stack>
 )
 
 const OfflineIndicator = (props: { attemptingToSend?: boolean }) => {

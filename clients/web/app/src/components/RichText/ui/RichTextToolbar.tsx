@@ -16,7 +16,7 @@ import {
     REMOVE_LIST_COMMAND,
 } from '@lexical/list'
 import { $createCodeNode, $isCodeNode } from '@lexical/code'
-import { Box, IconButton, MotionStack } from '@ui'
+import { Box, IconButton, Stack } from '@ui'
 
 export const RichTextToolbar = (props: { focused: boolean; onAddLinkClick: () => void }) => {
     const { onAddLinkClick, focused } = props
@@ -149,12 +149,8 @@ export const RichTextToolbar = (props: { focused: boolean; onAddLinkClick: () =>
     }
 
     return (
-        <MotionStack
+        <Stack
             horizontal
-            layout="preserve-aspect"
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
             overflowX="scroll"
             gap="xs"
             pointerEvents="auto"
@@ -189,7 +185,7 @@ export const RichTextToolbar = (props: { focused: boolean; onAddLinkClick: () =>
             <Divider />
             <IconButton opaque active={isCode} icon="code" onClick={onCodeClick} />
             <IconButton opaque active={isCodeBlock} icon="codeBlock" onClick={onCodeBlockClick} />
-        </MotionStack>
+        </Stack>
     )
 }
 

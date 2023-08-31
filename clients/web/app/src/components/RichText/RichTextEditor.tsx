@@ -29,7 +29,7 @@ import { NodeEventPlugin } from '@lexical/react/LexicalNodeEventPlugin'
 import * as fieldStyles from 'ui/components/_internal/Field/Field.css'
 import { notUndefined } from 'ui/utils/utils'
 import { useStore } from 'store/store'
-import { Box, BoxProps, MotionStack, Stack } from '@ui'
+import { Box, BoxProps, Stack } from '@ui'
 import { useNetworkStatus } from 'hooks/useNetworkStatus'
 import { SomethingWentWrong } from '@components/Errors/SomethingWentWrong'
 import { atoms } from 'ui/styles/atoms.css'
@@ -303,8 +303,7 @@ const RichTextEditorWithoutBoundary = (props: Props) => {
         : isFormattingToolbarOpen && focused
 
     return (
-        <MotionStack
-            layout
+        <Stack
             height="auto"
             background={isEditing && !isTouch ? 'level1' : 'level2'}
             paddingY="sm"
@@ -379,7 +378,7 @@ const RichTextEditorWithoutBoundary = (props: Props) => {
                 <CodeHighlightPlugin />
                 <TabIndentationPlugin />
             </LexicalComposer>
-        </MotionStack>
+        </Stack>
     )
 }
 
