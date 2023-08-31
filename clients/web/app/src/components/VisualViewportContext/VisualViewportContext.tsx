@@ -5,7 +5,12 @@ const VisualViewportContext = React.createContext<{
     visualViewportScrolled: boolean
     offset?: number
     height?: number
-}>({ visualViewportScrolled: false, offset: 0 })
+    visible: boolean
+}>({
+    visualViewportScrolled: false,
+    offset: 0,
+    visible: false,
+})
 
 export const useVisualViewportContext = () => {
     const context = useContext(VisualViewportContext)
@@ -16,20 +21,45 @@ const { visualViewport } = window
 
 export const VisualViewportContextProvider = ({ children }: { children: React.ReactNode }) => {
     const { isTouch } = useDevice()
-    const [setIsKeyboardPresent, isKeyboardPresent] = React.useState(false)
+    const [visible, setVisible] = React.useState(document.visibilityState === 'visible')
+    const [isViewportScrolled, setIsViewportScrolled] = React.useState(false)
     const [offset, setOffset] = React.useState(visualViewport?.pageTop)
     const [height, setHeight] = React.useState(visualViewport?.height)
 
     useEffect(() => {
         const onScroll = () => {
-            isKeyboardPresent((visualViewport?.pageTop ?? 0) > 0)
+            setIsViewportScrolled((visualViewport?.pageTop ?? 0) > 0)
             setOffset(visualViewport?.pageTop ?? 0)
         }
         visualViewport?.addEventListener('scroll', onScroll)
         return () => {
             visualViewport?.removeEventListener('scroll', onScroll)
         }
-    }, [isKeyboardPresent])
+    }, [setIsViewportScrolled])
+
+    useEffect(() => {
+        const onVisibilityChange = () => {
+            const activeElement = document.activeElement as HTMLElement
+            const v = document.visibilityState === 'visible'
+            setVisible(v)
+            if (v && !activeElement) {
+                // clean up state when coming back from background
+                setIsViewportScrolled(false)
+                setOffset(0)
+                setHeight(visualViewport?.height)
+                const root = document.querySelector('html')
+                if (root) {
+                    // when coming back from background on iOS, page is scrolled
+                    // down. not sure if this is a browser bug or not, but this fixes it.
+                    root.scrollTo(0, 0)
+                }
+            }
+        }
+        document.addEventListener('visibilitychange', onVisibilityChange)
+        return () => {
+            document.removeEventListener('visibilitychange', onVisibilityChange)
+        }
+    }, [])
 
     useEffect(() => {
         const onResize = () => {
@@ -39,7 +69,7 @@ export const VisualViewportContextProvider = ({ children }: { children: React.Re
         return () => {
             visualViewport?.removeEventListener('resize', onResize)
         }
-    }, [isKeyboardPresent])
+    }, [setIsViewportScrolled])
 
     /**
      * dismiss keyboard when (fake) swiping down on iOS
@@ -47,7 +77,7 @@ export const VisualViewportContextProvider = ({ children }: { children: React.Re
     useEffect(() => {
         const viewportHeight = visualViewport?.height
 
-        if (!isTouch || !setIsKeyboardPresent || !viewportHeight) {
+        if (!isTouch || !isViewportScrolled || !viewportHeight) {
             return
         }
 
@@ -70,6 +100,7 @@ export const VisualViewportContextProvider = ({ children }: { children: React.Re
                 }
             }
         }
+
         const touchEnd = (e: TouchEvent) => {
             window.removeEventListener('touchmove', touchMove)
             window.removeEventListener('touchend', touchEnd)
@@ -82,11 +113,11 @@ export const VisualViewportContextProvider = ({ children }: { children: React.Re
             window.removeEventListener('touchmove', touchMove)
             window.removeEventListener('touchend', touchEnd)
         }
-    }, [isTouch, setIsKeyboardPresent])
+    }, [isTouch, isViewportScrolled])
 
     return (
         <VisualViewportContext.Provider
-            value={{ visualViewportScrolled: setIsKeyboardPresent, offset, height }}
+            value={{ visualViewportScrolled: isViewportScrolled, offset, height, visible }}
         >
             {children}
         </VisualViewportContext.Provider>
