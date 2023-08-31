@@ -53,7 +53,6 @@ import * as styles from './RichTextEditor.css'
 import { RichTextPlaceholder } from './ui/Placeholder/RichTextEditorPlaceholder'
 import { RichTextUI, RichTextUIContainer } from './ui/RichTextEditorUI'
 import { BLANK_LINK } from './transformers/LinkTransformer'
-import { TabThroughPlugin } from './plugins/TabThroughPlugin'
 import { RememberInputPlugin } from './plugins/RememberInputPlugin'
 import CodeHighlightPlugin from './plugins/CodeHighlightPlugin'
 import { TabIndentationPlugin } from './plugins/TabIndentationPlugin'
@@ -377,7 +376,6 @@ const RichTextEditorWithoutBoundary = (props: Props) => {
                 {props.autoFocus ? <AutoFocusPlugin /> : <></>}
                 <AutoLinkMatcherPlugin />
                 <ChannelMentionPlugin channels={channels} />
-                <TabThroughPlugin />
                 <RememberInputPlugin storageId={props.storageId} />
                 <CodeHighlightPlugin />
                 <TabIndentationPlugin />
