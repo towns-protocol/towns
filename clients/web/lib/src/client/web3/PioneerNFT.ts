@@ -1,5 +1,5 @@
 import { ethers, BigNumber } from 'ethers'
-import { IStaticContractsInfo, getContractsInfo } from './IStaticContractsInfo'
+import { IStaticContractsInfoV3, getContractsInfoV3 } from './v3/IStaticContractsInfoV3'
 
 import { PioneerNFTShim } from './shims/PioneerNFTShim'
 
@@ -11,16 +11,15 @@ export interface PioneerNFTContractState {
 }
 
 export class PioneerNFT {
-    private readonly contractsInfo: IStaticContractsInfo
+    private readonly contractsInfo: IStaticContractsInfoV3
     private readonly provider: ethers.providers.Provider | undefined
     public readonly pioneerNFTShim: PioneerNFTShim
 
     constructor(chainId: number, provider: ethers.providers.Provider | undefined) {
         this.provider = provider
-        this.contractsInfo = getContractsInfo(chainId)
+        this.contractsInfo = getContractsInfoV3(chainId)
         this.pioneerNFTShim = new PioneerNFTShim(
-            this.contractsInfo.pioneerNft.address,
-            this.contractsInfo.pioneerNft.abi,
+            this.contractsInfo.pioneerTokenAddress,
             chainId,
             provider,
         )

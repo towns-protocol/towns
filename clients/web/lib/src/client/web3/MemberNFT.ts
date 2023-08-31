@@ -1,5 +1,5 @@
 import { ethers, BigNumber } from 'ethers'
-import { IStaticContractsInfo, getContractsInfo } from './IStaticContractsInfo'
+import { IStaticContractsInfoV3, getContractsInfoV3 } from './v3/IStaticContractsInfoV3'
 
 import { MemberNFTShim } from './shims/MemberNFTShim'
 
@@ -11,16 +11,15 @@ export interface MemberNFTContractState {
 }
 
 export class MemberNFT {
-    private readonly contractsInfo: IStaticContractsInfo
+    private readonly contractsInfo: IStaticContractsInfoV3
     public readonly memberNFTShim: MemberNFTShim
     private readonly signer: ethers.Signer
 
     constructor(chainId: number, provider: ethers.providers.Provider, signer: ethers.Signer) {
         this.signer = signer
-        this.contractsInfo = getContractsInfo(chainId)
+        this.contractsInfo = getContractsInfoV3(chainId)
         this.memberNFTShim = new MemberNFTShim(
-            this.contractsInfo.memberNft.address,
-            this.contractsInfo.memberNft.abi,
+            this.contractsInfo.memberTokenAddress,
             chainId,
             provider,
         )

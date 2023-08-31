@@ -14,13 +14,25 @@ import {
     MemberInterface as SepoliaInterface,
 } from '@towns/generated/sepolia/typings/Member'
 
-import { BaseContractShim } from './BaseContractShim'
+import { BaseContractShimV3 } from '../v3/BaseContractShimV3'
+import { ethers } from 'ethers'
+import LocalhostAbi from '@towns/generated/localhost/abis/Member.abi.json' assert { type: 'json' }
+import GoerliAbi from '@towns/generated/goerli/abis/Member.abi.json' assert { type: 'json' }
+import SepoliaAbi from '@towns/generated/sepolia/abis/Member.abi.json' assert { type: 'json' }
 
-export class MemberNFTShim extends BaseContractShim<
+export class MemberNFTShim extends BaseContractShimV3<
     LocalhostContract,
     LocalhostInterface,
     GoerliContract,
     GoerliInterface,
     SepoliaContract,
     SepoliaInterface
-> {}
+> {
+    constructor(address: string, chainId: number, provider: ethers.providers.Provider | undefined) {
+        super(address, chainId, provider, {
+            localhostAbi: LocalhostAbi,
+            goerliAbi: GoerliAbi,
+            sepoliaAbi: SepoliaAbi,
+        })
+    }
+}

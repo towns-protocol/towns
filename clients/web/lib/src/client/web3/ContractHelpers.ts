@@ -4,7 +4,6 @@ import { BasicRoleInfo } from './ContractTypes'
 import { MockERC721AShim } from './v3/MockERC721AShim'
 import { TokenEntitlementDataTypes } from './v3/TokenEntitlementShim'
 import { ZionClient } from '../ZionClient'
-import { getContractsInfo } from './IStaticContractsInfo'
 import { getContractsInfoV3 } from './v3/IStaticContractsInfoV3'
 
 export function mintMockNFT(
@@ -22,19 +21,19 @@ export function mintMockNFT(
 }
 
 export function getMemberNftAddress(chainId: number): string {
-    const contractInfo = getContractsInfo(chainId)
+    const contractInfo = getContractsInfoV3(chainId)
     if (!contractInfo) {
         throw new Error(`Contract info for chainId ${chainId} is not found.`)
     }
-    return contractInfo.memberNft.address
+    return contractInfo.memberTokenAddress
 }
 
 export function getPioneerNftAddress(chainId: number): string {
-    const contractInfo = getContractsInfo(chainId)
+    const contractInfo = getContractsInfoV3(chainId)
     if (!contractInfo) {
         throw new Error(`Contract info for chainId ${chainId} is not found.`)
     }
-    return contractInfo.pioneerNft.address
+    return contractInfo.pioneerTokenAddress
 }
 
 export function createExternalTokenStruct(
