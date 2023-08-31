@@ -176,6 +176,14 @@ func TestPostgresEventStore(t *testing.T) {
 		t.Fatal("error creating block", err)
 	}
 
+	var testEnvelopes2 [][]byte
+	testEnvelopes2 = append(testEnvelopes2, []byte("event3"))
+	err = pgEventStore.CreateBlock(ctx, streamId1, 2, 1, []byte("block2"), true, testEnvelopes2)
+
+	if err != nil {
+		t.Fatal("error creating block with snapshot", err)
+	}
+
 	//Test that we can delete all streams
 	err = pgEventStore.DeleteAllStreams(ctx)
 
