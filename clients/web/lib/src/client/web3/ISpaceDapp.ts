@@ -7,7 +7,6 @@ import {
 } from './ContractTypes'
 import { ContractTransaction, ethers } from 'ethers'
 
-import { IRolesBase } from './v3/IRolesShim'
 import { SpaceInfo } from './SpaceInfo'
 import { TokenEntitlementDataTypes } from './v3/TokenEntitlementShim'
 import { ITownArchitectBase } from './v3/ITownArchitectShim'
@@ -73,10 +72,6 @@ export interface ISpaceDapp {
     getPermissionsByRoleId: (spaceId: string, roleId: number) => Promise<Permission[]>
     getRole: (spaceId: string, roleId: number) => Promise<RoleDetails | null>
     getRoles: (spaceId: string) => Promise<BasicRoleInfo[]>
-    getRolesByChannel: (
-        spaceId: string,
-        channelNetworkId: string,
-    ) => Promise<IRolesBase.RoleStruct[]>
     getSpaceInfo: (spaceId: string) => Promise<SpaceInfo | undefined>
     isEntitledToSpace: (spaceId: string, user: string, permission: Permission) => Promise<boolean>
     isEntitledToChannel: (

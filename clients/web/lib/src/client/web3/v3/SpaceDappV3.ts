@@ -155,25 +155,6 @@ export class SpaceDappV3 implements ISpaceDapp {
         }))
     }
 
-    public async getRolesByChannel(
-        spaceId: string,
-        channelNetworkId: string,
-    ): Promise<IRolesBase.RoleStruct[]> {
-        const town = await this.getTown(spaceId)
-        if (!town) {
-            throw new Error(`Town with spaceId "${spaceId}" is not found.`)
-        }
-        const roleStructs = await town.getChannelRoles(channelNetworkId)
-        return roleStructs.map((roleStruct) => ({
-            roleId: roleStruct.id, // TODO: remove this property, it's was part of v2 but not v3
-            name: roleStruct.name,
-            id: roleStruct.id,
-            permissions: roleStruct.permissions,
-            entitlements: roleStruct.entitlements,
-            disabled: roleStruct.disabled,
-        }))
-    }
-
     public async getSpaceInfo(spaceId: string): Promise<SpaceInfo | undefined> {
         const town = await this.getTown(spaceId)
         if (!town) {
