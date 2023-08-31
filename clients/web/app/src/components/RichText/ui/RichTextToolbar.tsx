@@ -89,44 +89,42 @@ export const RichTextToolbar = (props: { focused: boolean; onAddLinkClick: () =>
         })
     }, [editor, updateToolbar])
 
-    const onBoldClick = () => {
-        editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'bold')
-        editor.focus()
-    }
-    const onItalicClick = () => {
-        editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'italic')
-        editor.focus()
+    const onToolbarPointerDown = (e: React.PointerEvent) => {
+        e.preventDefault()
     }
 
-    const onNumberedListClick = () => {
+    const onBoldClick = (e: React.MouseEvent) => {
+        editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'bold')
+    }
+    const onItalicClick = (e: React.MouseEvent) => {
+        editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'italic')
+    }
+
+    const onNumberedListClick = (e: React.MouseEvent) => {
         if (isNumberedList) {
             editor.dispatchCommand(REMOVE_LIST_COMMAND, undefined)
         } else {
             editor.dispatchCommand(INSERT_ORDERED_LIST_COMMAND, undefined)
         }
-        editor.focus()
     }
 
-    const onStrikethroughClick = () => {
+    const onStrikethroughClick = (e: React.MouseEvent) => {
         editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'strikethrough')
-        editor.focus()
     }
 
-    const onBulletListClick = () => {
+    const onBulletListClick = (e: React.MouseEvent) => {
         if (isBulletList) {
             editor.dispatchCommand(REMOVE_LIST_COMMAND, undefined)
         } else {
             editor.dispatchCommand(INSERT_UNORDERED_LIST_COMMAND, undefined)
         }
-        editor.focus()
     }
 
-    const onCodeClick = () => {
+    const onCodeClick = (e: React.MouseEvent) => {
         editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'code')
-        editor.focus()
     }
 
-    const onCodeBlockClick = () => {
+    const onCodeBlockClick = (e: React.MouseEvent) => {
         editor.update(() => {
             const selection = $getSelection()
             if ($isRangeSelection(selection)) {
@@ -137,10 +135,9 @@ export const RichTextToolbar = (props: { focused: boolean; onAddLinkClick: () =>
                 }
             }
         })
-        editor.focus()
     }
 
-    const onLinkClick = () => {
+    const onLinkClick = (e: React.MouseEvent) => {
         if (isLink) {
             editor.dispatchCommand(TOGGLE_LINK_COMMAND, null)
         } else {
@@ -158,6 +155,7 @@ export const RichTextToolbar = (props: { focused: boolean; onAddLinkClick: () =>
             width="100%"
             opacity={focused ? 'opaque' : '0.4'}
             zIndex="tooltips"
+            onPointerDown={onToolbarPointerDown}
         >
             <IconButton opaque active={isBold} icon="bold" onClick={onBoldClick} />
             <IconButton opaque active={isItalic} icon="italic" onClick={onItalicClick} />
