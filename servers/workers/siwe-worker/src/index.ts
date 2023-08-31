@@ -23,7 +23,6 @@ export interface Env extends AuthEnv {
 	INFURA_API_KEY: string
 	ENVIRONMENT: Environment
 	VERIFY: string
-	SMART_CONTRACT_VERSION: string
 }
 
 // have to use module syntax to gain access to env which contains secret variables for local dev

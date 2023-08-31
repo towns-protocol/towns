@@ -15,7 +15,6 @@ export interface Env extends AuthEnv {
     INFURA_API_KEY: string
     ENVIRONMENT: Environment
     VERIFY: string
-    SMART_CONTRACT_VERSION: string
 }
 
 const GOERLI_RPC_URL = 'https://goerli.infura.io/v3/'
@@ -66,7 +65,6 @@ export async function verifySiweMessage(
             siweMessage.address,
             siweMessage.chainId,
             provider,
-            env.SMART_CONTRACT_VERSION,
         )
         if (isSpaceOwner) {
             return new Response(`OK`)
@@ -85,7 +83,6 @@ export async function verifySpaceOwner(
     address: string,
     chainId: number = GOERLI,
     provider: ethers.providers.StaticJsonRpcProvider,
-    smartContractVersion?: string,
 ): Promise<boolean> {
     // Using CommonJs import syntax to workaround a bug in importing this module.
     // https://linear.app/hnt-labs/issue/HNT-2243/bug-in-import-of-istaticcontractsinfo-to-workers
@@ -95,12 +92,11 @@ export async function verifySpaceOwner(
     const createSpaceDapp = module.createSpaceDapp
     console.log('siweVerification verifySpaceOwner() params', {
         chainId,
-        smartContractVersion,
         spaceId: decodeURIComponent(spaceId),
         address,
     })
     // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-    const spaceDapp = createSpaceDapp(chainId, provider, smartContractVersion)
+    const spaceDapp = createSpaceDapp(chainId, provider)
     try {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
         const hasPermission: boolean = await spaceDapp.isEntitledToSpace(
