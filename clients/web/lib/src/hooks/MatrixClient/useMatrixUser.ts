@@ -21,6 +21,9 @@ export function useMatrixUser(userId?: string, matrixClient?: MatrixClient): Use
             return
         }
 
+        // discard warnings about max listeners (10)
+        matrixUser.setMaxListeners(100)
+
         const onUserUpdated = (event: MatrixEvent | undefined, theUser: MatrixUser) => {
             setUser(toZionUser(theUser))
         }
