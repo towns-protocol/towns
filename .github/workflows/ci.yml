@@ -70,7 +70,7 @@ jobs:
             - name: Install Foundry
               uses: foundry-rs/foundry-toolchain@v1
               with:
-                  version: nightly-ae3ec74234fe30a88279b3850c99ff191f373781
+                  version: nightly
 
             - name: Install Forge modules
               run: ./scripts/install-deps.sh
@@ -205,7 +205,7 @@ jobs:
             - name: Install Foundry
               uses: foundry-rs/foundry-toolchain@v1
               with:
-                  version: nightly-ae3ec74234fe30a88279b3850c99ff191f373781
+                  version: nightly
 
             - name: Install Forge modules
               run: ./scripts/install-deps.sh
@@ -351,7 +351,7 @@ jobs:
             - name: Install Foundry
               uses: foundry-rs/foundry-toolchain@v1
               with:
-                  version: nightly-ae3ec74234fe30a88279b3850c99ff191f373781
+                  version: nightly
 
             - name: Install Forge modules
               run: ./scripts/install-deps.sh
