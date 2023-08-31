@@ -8,7 +8,7 @@ import * as Zion from 'use-zion-client'
 import { BrowserRouter } from 'react-router-dom'
 import matchers from '@testing-library/jest-dom/matchers'
 import * as router from 'react-router'
-import { mockUseConnectivity } from 'test/testUtils'
+import { TestApp, mockUseConnectivity } from 'test/testUtils'
 import { RegisterForm } from './RegisterForm'
 
 expect.extend(matchers)
@@ -38,16 +38,7 @@ vi.mock('hooks/useAuth', () => {
 })
 
 const Mock = ({ children }: any) => {
-    return (
-        <Zion.ZionContextProvider
-            primaryProtocol={Zion.SpaceProtocol.Matrix}
-            matrixServerUrl=""
-            casablancaServerUrl=""
-            chainId={31337}
-        >
-            <BrowserRouter>{children}</BrowserRouter>
-        </Zion.ZionContextProvider>
-    )
+    return <TestApp Router={BrowserRouter}>{children}</TestApp>
 }
 
 describe('#RegisterForm', () => {

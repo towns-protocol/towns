@@ -6,9 +6,11 @@ import { TestQueryClientProvider } from './TestQueryClientProvider'
 import { ZionContextProvider } from '../../../src/components/ZionContextProvider'
 import { ZionTestWeb3Provider } from './ZionTestWeb3Provider'
 import { foundry } from 'wagmi/chains'
-import { useConnect } from 'wagmi'
+import { configureChains, createConfig, useConnect } from 'wagmi'
+import { InjectedConnector } from 'wagmi/connectors/injected'
 import { getPrimaryProtocol } from './TestUtils'
 import { useZionErrorStore } from '../../../src/hooks/use-zion-client'
+import { publicProvider } from 'wagmi/providers/public'
 
 interface Props {
     provider: ZionTestWeb3Provider
@@ -19,6 +21,16 @@ interface Props {
     chainId?: number
     children: JSX.Element
 }
+
+const { chains, publicClient, webSocketPublicClient } = configureChains(
+    [foundry],
+    [publicProvider()],
+)
+const mockConfig = createConfig({
+    connectors: [new InjectedConnector({ chains })],
+    publicClient,
+    webSocketPublicClient,
+})
 
 export const ZionTestApp = (props: Props) => {
     const {
@@ -56,6 +68,7 @@ export const ZionTestApp = (props: Props) => {
             logNamespaceFilter="" // "csb:*" A bit too much for tests, better way to set?
             web3Signer={provider.wallet}
             verbose={true}
+            wagmiConfig={mockConfig}
         >
             <>
                 <ZionWalletAutoConnect />

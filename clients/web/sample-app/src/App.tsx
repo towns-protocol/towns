@@ -3,6 +3,11 @@ import { Route, Routes } from 'react-router-dom'
 import { Container } from '@mui/material'
 import { SpaceProtocol, ZionContextProvider } from 'use-zion-client'
 import { ThemeProvider } from '@mui/material/styles'
+import { foundry, goerli, localhost, sepolia } from 'wagmi/chains'
+import { configureChains, createConfig } from 'wagmi'
+import { alchemyProvider } from 'wagmi/providers/alchemy'
+import { publicProvider } from 'wagmi/providers/public'
+import { InjectedConnector } from 'wagmi/connectors/injected'
 import { Thread } from 'routes/Thread'
 import { Threads } from 'routes/Threads'
 import { Mentions } from 'routes/Mentions'
@@ -27,6 +32,21 @@ import { AuthenticatedContent } from './routes/AuthenticatedContent'
 
 const ALCHEMY_KEY = import.meta.env.VITE_ALCHEMY_API_KEY ?? ''
 
+const SUPPORTED_CHAINS = [goerli, sepolia, foundry, localhost]
+
+const { chains, publicClient, webSocketPublicClient } = configureChains(
+    SUPPORTED_CHAINS,
+    ALCHEMY_KEY ? [alchemyProvider({ apiKey: ALCHEMY_KEY }), publicProvider()] : [publicProvider()],
+    { retryCount: 5 },
+)
+
+export const wagmiConfig = createConfig({
+    autoConnect: true,
+    connectors: [new InjectedConnector({ chains })],
+    publicClient,
+    webSocketPublicClient,
+})
+
 export const App = () => {
     const { matrixUrl, casablancaUrl, chainId } = useEnvironment()
     return (
@@ -34,13 +54,13 @@ export const App = () => {
             <Container maxWidth="md">
                 <ZionContextProvider
                     enableSpaceRootUnreads
-                    alchemyKey={ALCHEMY_KEY}
                     primaryProtocol={SpaceProtocol.Matrix}
                     matrixServerUrl={matrixUrl}
                     casablancaServerUrl={casablancaUrl}
                     chainId={chainId}
                     onboardingOpts={{ skipAvatar: true, showWelcomeSpash: false }}
                     initialSyncLimit={100}
+                    wagmiConfig={wagmiConfig}
                 >
                     <Routes>
                         <Route path="/alpha-access" element={<AlphaAccessMainPage />} />

@@ -34,7 +34,8 @@ import { useCasablancaRooms } from '../hooks/ZionContext/useCasablancaRooms'
 import { ethers } from 'ethers'
 import merge from 'lodash/merge'
 import { useLoggedInWalletAddress } from '../hooks/use-logged-in-wallet-address'
-import { Connectors } from '../types/web3-types'
+import { Config, WebSocketPublicClient, PublicClient } from 'wagmi'
+import { FallbackTransport } from 'viem'
 
 export interface IZionContext {
     homeServerUrl: string
@@ -75,24 +76,22 @@ export function useZionContext(): IZionContext {
 interface Props extends ZionOpts {
     enableSpaceRootUnreads?: boolean
     children: JSX.Element
-    alchemyKey?: string
-    connectors?: Connectors // optional connectors to use instead of default injected connector
     web3Signer?: ethers.Signer
     initalSyncSortPredicate?: InitialSyncSortPredicate
     timeBetweenSyncingSpaces?: number
     QueryClientProvider?: React.ElementType<{ children: JSX.Element }>
+    wagmiConfig: Config<PublicClient<FallbackTransport>, WebSocketPublicClient<FallbackTransport>>
 }
 
 export function ZionContextProvider({
     QueryClientProvider = QueryProvider,
     ...props
 }: Props): JSX.Element {
-    const { alchemyKey, web3Signer, connectors, ...contextProps } = props
+    const { web3Signer, ...contextProps } = props
     return (
         <QueryClientProvider>
             <Web3ContextProvider
-                alchemyKey={alchemyKey}
-                connectors={connectors}
+                wagmiConfig={props.wagmiConfig}
                 chainId={contextProps.chainId}
                 web3Signer={web3Signer}
             >

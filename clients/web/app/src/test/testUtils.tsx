@@ -5,6 +5,10 @@ import { afterEach, vi } from 'vitest'
 import { MemoryRouter } from 'react-router'
 import { BrowserRouter } from 'react-router-dom'
 import { ethers } from 'ethers'
+import { configureChains, createConfig } from 'wagmi'
+import { foundry } from 'wagmi/chains'
+import { publicProvider } from 'wagmi/providers/public'
+import { InjectedConnector } from 'wagmi/connectors/injected'
 import { ZLayerProvider } from '@ui'
 
 type TestAppProps = {
@@ -16,6 +20,15 @@ type TestAppProps = {
 
 export const getWalletAddress = () => ethers.Wallet.createRandom().address
 
+const { chains, publicClient, webSocketPublicClient } = configureChains(
+    [foundry],
+    [publicProvider()],
+)
+const mockConfig = createConfig({
+    connectors: [new InjectedConnector({ chains })],
+    publicClient,
+    webSocketPublicClient,
+})
 export const TestApp = (props: TestAppProps) => {
     // new query client for each test for isolation
     const Router = props.Router || MemoryRouter
@@ -40,10 +53,7 @@ export const TestApp = (props: TestAppProps) => {
                 matrixServerUrl=""
                 casablancaServerUrl=""
                 chainId={31337}
-                // TODO: fix this
-                // Intenionally omitting, something within wagmi/walletconnect/rainbowkit is throwing errors during tests
-                // Instead, we'll use the default injected connector provided by the ContextProvider, which is fine for testing
-                // connectors={rainbowConnectors}
+                wagmiConfig={mockConfig}
                 {...props.zionContextProviderProps}
             >
                 <QueryClientProvider client={queryClient}>
