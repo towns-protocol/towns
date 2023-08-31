@@ -7,7 +7,7 @@
     "townOwner": "0x4A679253410272dd5232B3Ff7cF5dbB88f295319",
     "townFactory": "0x4c5859f0F772848b2D91F1D83E2Fe57935348029",
     "town": "0x809d550fca64d94Bd9F66E60752A544199cfAC3D",
-    "delegation": "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9",
+    "walletLink": "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9",
     "mockNFT": "0x7bc06c482DEAd17c0e297aFbC32f6e63d3846650",
     "entitlementChecker": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
     "entitlementGatedExample": "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9"
@@ -20,7 +20,7 @@
     "townOwner": "0x66d0929417FE684734d45F153a5831C78efFB191",
     "townFactory": "0xcA0785D9C42e28e1b802D5DC72c51a1796Aee5c2",
     "town": "0x6CE0b1d4Ff723E24129db83F2baC4845805B5f5a",
-    "delegation": "",
+    "walletLink": "",
     "entitlementChecker": ""
   },
   "11155111": {
@@ -31,7 +31,7 @@
     "townOwner": "0x20aB2655Dfcd7C0876bC19fBB281FB0Cde6Fb288",
     "townFactory": "0xD7efA82c6CEa706B396F4FfA23f0D01726F675cc",
     "town": "0xe7c4cd054a0A0C2e6FB4Cd1e9f599598c3c45dF0",
-    "delegation": "",
+    "walletLink": "",
     "entitlementChecker": ""
   }
 }
