@@ -25,7 +25,6 @@ export interface ZionOpts {
     pushNotificationWorkerUrl?: string
     pushNotificationAuthToken?: string
     verbose?: boolean
-    smartContractVersion?: string // https://linear.app/hnt-labs/issue/HNT-2165/cleanup-delete-smart-contracts-v3-flags-from-clients
 }
 
 export interface MatrixAuth {

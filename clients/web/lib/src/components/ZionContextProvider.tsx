@@ -57,7 +57,6 @@ export interface IZionContext {
     matrixOnboardingState: IOnboardingState
     casablancaOnboardingState: IOnboardingState
     syncError?: string
-    smartContractVersion?: string
 }
 
 export const ZionContext = createContext<IZionContext | undefined>(undefined)
@@ -110,7 +109,6 @@ const ContextImpl = (props: Props): JSX.Element => {
         primaryProtocol,
         initalSyncSortPredicate,
         timeBetweenSyncingSpaces,
-        smartContractVersion,
     } = props
 
     const { client, clientSingleton, matrixClient, casablancaClient } = useZionClientListener(props)
@@ -177,7 +175,6 @@ const ContextImpl = (props: Props): JSX.Element => {
                 casablancaServerUrl: casablancaServerUrl,
                 syncError,
                 syncSpaceHierarchy,
-                smartContractVersion,
             }}
         >
             {props.children}

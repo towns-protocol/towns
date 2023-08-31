@@ -17,7 +17,6 @@ process.env.CASABLANCA_SERVER_URL = 'http://localhost:5157'
 process.env.DISABLE_ENCRYPTION = 'false'
 process.env.ETHERS_NETWORK = 'http://127.0.0.1:8545' // OR "rinkeby"
 //process.env.PRIMARY_PROTOCOL = 'casablanca' // set to matrix | casablanca as the primary protocol
-process.env.SMART_CONTRACT_VERSION = 'v3' // set to empty string if you want to test v2 contracts
 
 // fetch-polyfill.js
 import fetch, { Headers, Request, Response } from 'node-fetch'

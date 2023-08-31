@@ -99,7 +99,6 @@ export function useEnvironment() {
     const chainName = environmentInfo?.chain.name ?? getChainName(chainId)
     const matrixUrl = environmentInfo?.matrixUrl ?? MATRIX_URL
     const casablancaUrl = environmentInfo?.casablancaUrl ?? CASABLANCA_URL
-    const smartContractVersion = 'v3' //env.VITE_SMART_CONTRACT_VERSION
 
     return useMemo(
         () => ({
@@ -108,7 +107,6 @@ export function useEnvironment() {
             chainName,
             matrixUrl,
             casablancaUrl,
-            smartContractVersion,
             setEnvironment,
             clearEnvironment,
         }),
@@ -120,7 +118,6 @@ export function useEnvironment() {
             environment,
             matrixUrl,
             setEnvironment,
-            smartContractVersion,
         ],
     )
 }
