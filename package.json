@@ -37,6 +37,7 @@
         "csb:wait:no-entitlements": "wait-on tcp:5158 --timeout=400000 --i=5000 --verbose",
         "drt:wait": "wait-on tcp:8008 --timeout=400000 --i=5000 --verbose",
         "forge": "yarn workspace @towns/contracts exec forge",
+        "harmonyweb:build": "turbo build --filter harmonyweb",
         "install:foundry": "yarn workspace @towns/contracts exec foundryup && yarn forge install",
         "lint": "turbo lint",
         "postinstall": "husky install",

@@ -13,5 +13,4 @@ export VITE_APP_RELEASE_VERSION=$RENDER_GIT_COMMIT
 node -e 'import("v8").then( console.table(v8.getHeapStatistics()))'
 
 yarn install
-yarn workspace use-zion-client build
-yarn workspace harmonyweb build
+yarn harmonyweb:build
