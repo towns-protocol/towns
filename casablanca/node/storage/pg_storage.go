@@ -7,6 +7,7 @@ import (
 	_ "embed"
 	"errors"
 	"fmt"
+	"regexp"
 	"strings"
 	"time"
 
@@ -26,6 +27,12 @@ const (
 )
 
 func (s *PostgresEventStore) CreateStream(ctx context.Context, streamId string, genesisMiniblock []byte) error {
+	err := validateStreamId(streamId)
+	if err != nil {
+		log.Error("Wrong streamId", streamId)
+		return err
+	}
+
 	log := dlog.CtxLog(ctx)
 
 	tx, err := startTx(ctx, s.pool)
@@ -89,6 +96,12 @@ func (s *PostgresEventStore) CreateStream(ctx context.Context, streamId string, 
 }
 
 func (s *PostgresEventStore) GetStreamFromLastSnapshot(ctx context.Context, streamId string) (*GetStreamFromLastSnapshotResult, error) {
+	err := validateStreamId(streamId)
+	if err != nil {
+		log.Error("Wrong streamId", streamId)
+		return nil, err
+	}
+
 	log := dlog.CtxLog(ctx)
 	tx, err := startTx(ctx, s.pool)
 
@@ -178,6 +191,12 @@ func (s *PostgresEventStore) GetStreamFromLastSnapshot(ctx context.Context, stre
 // Current generation of minipool should match minipoolGeneration,
 // and there should be exactly minipoolSlot events in the minipool.
 func (s *PostgresEventStore) AddEvent(ctx context.Context, streamId string, minipoolGeneration int, minipoolSlot int, envelope []byte) error {
+	err := validateStreamId(streamId)
+	if err != nil {
+		log.Error("Wrong streamId", streamId)
+		return err
+	}
+
 	log := dlog.CtxLog(ctx)
 
 	// Start transaction for making checks of minipool generation and slot
@@ -263,6 +282,12 @@ func (s *PostgresEventStore) AddEvent(ctx context.Context, streamId string, mini
 }
 
 func (s *PostgresEventStore) GetMiniblocks(ctx context.Context, streamId string, fromIndex int, toIndex int) ([][]byte, error) {
+	err := validateStreamId(streamId)
+	if err != nil {
+		log.Error("Wrong streamId", streamId)
+		return nil, err
+	}
+
 	//TODO: do we want to validate here if blocks which are subject to read exist?
 	log := dlog.CtxLog(ctx)
 
@@ -329,6 +354,12 @@ func (s *PostgresEventStore) CreateBlock(
 	snapshotMiniblock bool,
 	envelopes [][]byte,
 ) error {
+	err := validateStreamId(streamId)
+	if err != nil {
+		log.Error("Wrong streamId", streamId)
+		return err
+	}
+
 	log := dlog.CtxLog(ctx)
 
 	tx, err := startTx(ctx, s.pool)
@@ -430,6 +461,12 @@ func (s *PostgresEventStore) CreateBlock(
 // Checks if stream exists in the database
 // Should always be used in scope of open transaction tx
 func streamExists(ctx context.Context, tx pgx.Tx, streamId string) (bool, error) {
+	err := validateStreamId(streamId)
+	if err != nil {
+		log.Error("Wrong streamId", streamId)
+		return false, err
+	}
+
 	rows, err := tx.Query(ctx, "SELECT stream_name FROM es WHERE stream_name = $1 LIMIT 1", streamId)
 	if err != nil {
 		return false, err
@@ -442,7 +479,13 @@ func streamExists(ctx context.Context, tx pgx.Tx, streamId string) (bool, error)
 // Creates record in es table for the stream
 // Should always be used in scope of open transaction tx
 func createEventStreamInstance(ctx context.Context, tx pgx.Tx, streamId string) error {
-	_, err := tx.Exec(ctx, `INSERT INTO es (stream_name, latest_snapshot_miniblock) VALUES ($1, 0)`, streamId)
+	err := validateStreamId(streamId)
+	if err != nil {
+		log.Error("Wrong streamId", streamId)
+		return err
+	}
+
+	_, err = tx.Exec(ctx, `INSERT INTO es (stream_name, latest_snapshot_miniblock) VALUES ($1, 0)`, streamId)
 	if err != nil {
 		return err
 	}
@@ -474,6 +517,12 @@ func (s *PostgresEventStore) GetStreams(ctx context.Context) ([]string, error) {
 * Delete minipool and miniblock tables associated with the stream and stream record from streams table
  */
 func (s *PostgresEventStore) DeleteStream(ctx context.Context, streamId string) error {
+	err := validateStreamId(streamId)
+	if err != nil {
+		log.Error("Wrong streamId", streamId)
+		return err
+	}
+
 	tx, err := startTx(ctx, s.pool)
 	if err != nil {
 		return err
@@ -622,11 +671,13 @@ func cleanStorage(ctx context.Context, pool *pgxpool.Pool) error {
 		}
 	}()
 
+	//TODO: fix approach to the query - not critical as it is pure internal, though to bring the right order it is helpful
 	_, err = tx.Exec(ctx, fmt.Sprintf("DROP SCHEMA IF EXISTS %s CASCADE", pool.Config().ConnConfig.Config.RuntimeParams["search_path"]))
 	if err != nil {
 		return err
 	}
 
+	//TODO: fix approach to the query - not critical as it is pure internal, though to bring the right order it is helpful
 	_, err = tx.Exec(ctx, fmt.Sprintf("CREATE SCHEMA %s", pool.Config().ConnConfig.Config.RuntimeParams["search_path"]))
 	if err != nil {
 		return err
@@ -727,4 +778,13 @@ func sanitizeSqlName(name string) string {
 
 func GetStream(ctx context.Context, streamId string) ([]*protocol.Envelope, error) {
 	return nil, nil
+}
+
+func validateStreamId(streamId string) error {
+	pattern := `^(00-|11-|22-|33-|44-|55-)[\w\d_-]*$`
+	match, _ := regexp.MatchString(pattern, streamId)
+	if !match {
+		return fmt.Errorf("Wrong stream id %s", streamId)
+	}
+	return nil
 }

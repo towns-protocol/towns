@@ -43,9 +43,17 @@ func TestPostgresEventStore(t *testing.T) {
 	}
 	defer pgEventStore.Close()
 
-	streamId1 := "streamid1"
-	streamId2 := "streamid2"
-	streamId3 := "streamid3"
+	wrongStreamId := "wrong streamd id"
+
+	//TODO: make proper test for this
+	err = pgEventStore.CreateStream(ctx, wrongStreamId, []byte("testMiniblock"))
+	if err == nil {
+		t.Fatal("Expected error, got nil")
+	}
+
+	streamId1 := "11-0sfdsf_sdfds1"
+	streamId2 := "11-0sfdsf_sdfds2"
+	streamId3 := "11-0sfdsf_sdfds3"
 
 	wallet, _ := crypto.NewWallet(ctx)
 	_, err = events.MakeEnvelopeWithPayload(
@@ -102,10 +110,10 @@ func TestPostgresEventStore(t *testing.T) {
 	}
 
 	var streamsOrder1 []string
-	streamsOrder1 = append(streamsOrder1, "streamid1", "streamid2")
+	streamsOrder1 = append(streamsOrder1, "11-0sfdsf_sdfds1", "11-0sfdsf_sdfds2")
 
 	var streamsOrder2 []string
-	streamsOrder2 = append(streamsOrder1, "streamid2", "streamid1")
+	streamsOrder2 = append(streamsOrder1, "11-0sfdsf_sdfds2", "11-0sfdsf_sdfds1")
 
 	if !reflect.DeepEqual(streams, streamsOrder1) && !reflect.DeepEqual(streams, streamsOrder2) {
 		t.Fatal("expected to find 2 streams, found something else")
@@ -125,10 +133,10 @@ func TestPostgresEventStore(t *testing.T) {
 	}
 
 	streamsOrder1 = streamsOrder1[:0]
-	streamsOrder1 = append(streamsOrder1, "streamid1", "streamid3")
+	streamsOrder1 = append(streamsOrder1, "11-0sfdsf_sdfds1", "11-0sfdsf_sdfds3")
 
 	streamsOrder2 = streamsOrder2[:0]
-	streamsOrder2 = append(streamsOrder2, "streamid3", "streamid1")
+	streamsOrder2 = append(streamsOrder2, "11-0sfdsf_sdfds3", "11-0sfdsf_sdfds1")
 
 	streams, err = pgEventStore.GetStreams(ctx)
 
