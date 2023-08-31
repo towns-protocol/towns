@@ -4,10 +4,25 @@ import { WalletConnectConnector } from 'wagmi/connectors/walletConnect'
 import { foundry, goerli, localhost, sepolia } from 'wagmi/chains'
 import { alchemyProvider } from 'wagmi/providers/alchemy'
 import { publicProvider } from 'wagmi/providers/public'
+import cloneDeep from 'lodash/cloneDeep'
 import { shouldUseWalletConnect } from 'hooks/useShouldUseWalletConnect'
 import { env } from 'utils'
 
-const SUPPORTED_CHAINS = [goerli, sepolia, foundry, localhost]
+export const foundryClone: Chain = cloneDeep(foundry)
+
+if (env.VITE_CF_TUNNEL_PREFIX) {
+    const rpcUrl = `https://${env.VITE_CF_TUNNEL_PREFIX}-anvil.towns.com`
+    foundryClone.rpcUrls = {
+        default: {
+            http: [rpcUrl],
+        },
+        public: {
+            http: [rpcUrl],
+        },
+    }
+}
+
+const SUPPORTED_CHAINS = [goerli, sepolia, foundryClone, localhost]
 
 const walletConnectors = ({ chains }: { chains: Chain[] }) => {
     const { connectors: rainbowKitConnectors } = getDefaultWallets({

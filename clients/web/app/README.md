@@ -25,14 +25,20 @@ yarn dev
 
 - [ESLint](https://marketplace.visualstudio.com/items?itemName=dbaeumer.vscode-eslint)
 
-## Storybook
+## Testing Push notifications locally on mobile devices
 
-Storybook can be used to preview and test components in an isolated
-environnement.
+1. Set up a [cloudflare tunnel](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/install-and-setup/tunnel-guide/remote/) using the cf dashboard. Once the tunnel is set up, you need to set up hostnames for 4 services. Each hostname's subdomain should be set with a common phrase of your choosing exactly as described below (I suggest your name). For this example, let's use `star`
 
-```
-yarn storybook
-```
+   - subdomain: `star-app`, domain: `towns.com`, service type: `http`, service url: `localhost:3000`
+   - subdomain: `star-dendrite`, domain: `towns.com`, service type: `http`, service url: `localhost:8008`
+   - subdomain: `star-anvil`, domain: `towns.com`, service type: `http`, service url: `localhost:8545`
+   - subdomain: `star-pnw`, domain: `towns.com`, service type: `http`, service url: `localhost:8787`
+
+   To verify that the tunnels are working, you can run just the the app locally and visit `star-app.towns.com` in your browser. You should see the app running.
+
+2. You also have to set the `VITE_CF_TUNNEL_PREFIX` in `.env.local` to the same phrase. Note that setting this flag is going to lock your dev environment to using tunnels for the services listed above. So your matrix url, blockchain network, etc, will not be able to be swapped to other urls/networks while developing.
+3. On your mobile wallet, you need to add a the foundry network via the tunnel url. Make sure anvil is running. Then add the network with the same settings you added via desktop, except the RPC url is going to be the tunnel - `star-anvil.towns.com`.
+4. On your mobile device, you should now be able to visit `star-app.towns.com` and complete the connect/login process. Once you enable push notifications, you should be able to receive them on your mobile device. It's not required to connect your device to your machine, but you'll need to do so to debug any logs.
 
 ## Installation log
 

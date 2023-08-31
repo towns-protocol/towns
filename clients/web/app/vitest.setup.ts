@@ -4,9 +4,24 @@ import '@testing-library/jest-dom/extend-expect' // dont delete this line its ne
 import { vi } from 'vitest'
 import { act } from 'react-test-renderer'
 import { ResizeObserver } from '@juggle/resize-observer' // dependency of react-hook/resize-observer
+import { foundry } from 'wagmi/chains'
 
 vi.mock('./src/components/Transitions/MotionBox')
 vi.mock('./src/ui/components/ZLayer/ZLayer')
+
+// have to mock this whole module because walletConnect causes a bunch of issues
+vi.mock('./src/wagmiConfig', async () => {
+    return {
+        foundryClone: (() => {
+            console.log('USING wagmiConfig MOCKED FOUNDRYCLONE')
+            return foundry
+        })(),
+        walletConnectors: () => {
+            console.log('USING wagmiConfig MOCKED WALLETCONNECTORS')
+            return []
+        },
+    }
+})
 
 const storeResetFns = new Set<() => void>()
 

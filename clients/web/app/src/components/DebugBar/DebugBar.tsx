@@ -7,7 +7,7 @@ import { debug } from 'debug'
 import { Box, Button, Divider, Stack, Text } from '@ui'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { shortAddress } from 'ui/utils/utils'
-import { useDevice } from 'hooks/useDevice'
+import { isTouch, useDevice } from 'hooks/useDevice'
 
 import {
     ENVIRONMENTS,
@@ -16,6 +16,9 @@ import {
     UseEnvironmentReturn,
 } from 'hooks/useEnvironmnet'
 import { useAuth } from 'hooks/useAuth'
+import { env } from 'utils'
+
+const CF_TUNNEL_PREFIX = env.VITE_CF_TUNNEL_PREFIX
 
 const log = debug('app:DebugBar')
 
@@ -74,14 +77,17 @@ async function fundWallet({ accountId, provider, chainId }: FundProps) {
 const FundButton = (props: FundProps & { disabled: boolean }) => {
     const balance = useBalance({ address: props.accountId, watch: true })
     return (
-        <Button disabled={props.disabled} size="button_xs" onClick={() => fundWallet(props)}>
-            <>
-                <Text size="sm">{shortAddress(props.accountId)}</Text>
-                <Text size="sm" color="negative">
-                    Balance: {balance.data?.formatted} {balance.data?.symbol}
-                </Text>
-            </>
-        </Button>
+        <Stack gap>
+            <Button disabled={props.disabled} size="button_xs" onClick={() => fundWallet(props)}>
+                <>
+                    <Text size="sm">Fund Wallet and Mint MockNFT</Text>
+                    <Text size="sm">{shortAddress(props.accountId)}</Text>
+                </>
+            </Button>
+            <Text size="sm" color="cta1">
+                Balance: {balance.data?.formatted} {balance.data?.symbol}
+            </Text>
+        </Stack>
     )
 }
 
@@ -145,29 +151,34 @@ const DebugModal = ({
 
                         <Divider />
 
-                        <Stack gap horizontal={!isTouch} justifyContent="end">
-                            {ENVIRONMENTS.map((env) => (
-                                <Button
-                                    key={env.name}
-                                    size="button_xs"
-                                    tone="accent"
-                                    disabled={
-                                        chainId === env.chainId && walletChain.id === env.chainId
-                                    }
-                                    onClick={() => onSwitchEnvironment(env)}
-                                >
-                                    Switch to {env.name}/{env.chain.name}
+                        {CF_TUNNEL_PREFIX ? (
+                            <Text color="error">Your environment is using tunnels</Text>
+                        ) : (
+                            <Stack gap horizontal={!isTouch} justifyContent="end">
+                                {ENVIRONMENTS.map((env) => (
+                                    <Button
+                                        key={env.name}
+                                        size="button_xs"
+                                        tone="accent"
+                                        disabled={
+                                            chainId === env.chainId &&
+                                            walletChain.id === env.chainId
+                                        }
+                                        onClick={() => onSwitchEnvironment(env)}
+                                    >
+                                        Switch to {env.name}/{env.chain.name}
+                                    </Button>
+                                ))}
+                                <Button size="button_xs" onClick={onClear}>
+                                    <Text size="sm" color="default">
+                                        Clear Local Storage
+                                    </Text>
                                 </Button>
-                            ))}
-                            <Button size="button_xs" onClick={onClear}>
-                                <Text size="sm" color="default">
-                                    Clear Local Storage
-                                </Text>
-                            </Button>
-                            <Button size="button_xs" onClick={onHide}>
-                                Cancel
-                            </Button>
-                        </Stack>
+                                <Button size="button_xs" onClick={onHide}>
+                                    Cancel
+                                </Button>
+                            </Stack>
+                        )}
                     </>
                 )}
             </Stack>
@@ -242,7 +253,6 @@ const DebugBar = ({
 }: Props) => {
     const { chain } = useNetwork()
     const { logout } = useAuth()
-
     const [modal, setModal] = useState(false)
 
     const switchNetwork = useAsyncSwitchNetwork()
@@ -285,6 +295,8 @@ const DebugBar = ({
         clearEnvironment()
     }, [clearEnvironment])
 
+    const touch = isTouch()
+
     return (
         <Box
             position="fixed"
@@ -295,7 +307,7 @@ const DebugBar = ({
             paddingY="xs"
             flexDirection="row"
             gap="sm"
-            justifyContent="end"
+            justifyContent={touch ? 'start' : 'end'}
         >
             {modal && (
                 <DebugModal
@@ -312,35 +324,60 @@ const DebugBar = ({
                 />
             )}
             <Box flexDirection="row" alignItems="center" cursor="pointer" gap="sm" onClick={onShow}>
-                <Box>
-                    {synced && (
+                {CF_TUNNEL_PREFIX ? (
+                    <>
                         <Box
-                            background={
-                                platform.toLowerCase().includes('foundry') ? 'accent' : 'cta1'
-                            }
+                            background="cta1"
                             rounded="full"
                             style={{ width: '15px', height: '15px' }}
                         />
-                    )}
-                    {!synced && (
+                        <Text strong as="span" size="sm">
+                            Tunnels
+                        </Text>
+                    </>
+                ) : touch ? (
+                    <>
                         <Box
-                            border="negative"
+                            background="cta1"
                             rounded="full"
                             style={{ width: '15px', height: '15px' }}
-                        >
-                            {' '}
+                        />
+                    </>
+                ) : (
+                    <>
+                        <Box>
+                            {synced && (
+                                <Box
+                                    background={
+                                        platform.toLowerCase().includes('foundry')
+                                            ? 'accent'
+                                            : 'cta1'
+                                    }
+                                    rounded="full"
+                                    style={{ width: '15px', height: '15px' }}
+                                />
+                            )}
+                            {!synced && (
+                                <Box
+                                    border="negative"
+                                    rounded="full"
+                                    style={{ width: '15px', height: '15px' }}
+                                >
+                                    {' '}
+                                </Box>
+                            )}
                         </Box>
-                    )}
-                </Box>
 
-                <Text strong as="span" size="sm">
-                    {platform}&nbsp; | app using: {destinationChainName}
-                </Text>
+                        <Text strong as="span" size="sm">
+                            {platform}&nbsp; | app using: {destinationChainName}
+                        </Text>
 
-                {environment && (
-                    <Text as="span" size="sm" color="negative">
-                        Local Storage
-                    </Text>
+                        {environment && (
+                            <Text as="span" size="sm" color="negative">
+                                Local Storage
+                            </Text>
+                        )}
+                    </>
                 )}
             </Box>
         </Box>

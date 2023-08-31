@@ -379,3 +379,5 @@ allowed_origins:
   - http://localhost:3001
   # tests
   - http://localhost
+  # tunnels
+  - https://*.towns.com

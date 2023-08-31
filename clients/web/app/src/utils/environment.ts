@@ -26,6 +26,7 @@ const envSchema = z.object({
     PROD: boolish,
     BASE_URL: baseUrlSchema,
     DESTROY_PROD_SERVICE_WORKER: boolish.transform(coerceBoolish).default(false),
+    VITE_CF_TUNNEL_PREFIX: z.string().optional(),
     VITE_TYPEFORM_ALPHA_URL: z.string().optional(),
     VITE_IGNORE_IS_DEV_CHECKS: z.string().optional(),
     VITE_TOKEN_SERVER_URL: z.string().url(),
@@ -65,8 +66,20 @@ if (!parsed.success) {
 
 const rawEnv = parsed.data
 
+let tunnelOverrides: {
+    VITE_MATRIX_HOMESERVER_URL?: string
+    VITE_WEB_PUSH_WORKER_URL?: string
+} = {}
+if (rawEnv.VITE_CF_TUNNEL_PREFIX) {
+    tunnelOverrides = {
+        VITE_MATRIX_HOMESERVER_URL: `https://${rawEnv.VITE_CF_TUNNEL_PREFIX}-dendrite.towns.com`,
+        VITE_WEB_PUSH_WORKER_URL: `https://${rawEnv.VITE_CF_TUNNEL_PREFIX}-pnw.towns.com`,
+    }
+}
+
 export const env = {
     ...rawEnv,
+    ...tunnelOverrides,
     IS_DEV: coerceBoolish(rawEnv.DEV),
 }
 

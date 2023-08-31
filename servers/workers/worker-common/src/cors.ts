@@ -48,6 +48,12 @@ function getOnRenderOrigin(origin: string): string | undefined {
     return undefined
 }
 
+function getTownsOrigin(origin: string): string | undefined {
+    if (origin.includes('.towns.com')) {
+        return origin
+    }
+}
+
 function getLocalDomainOrigin(origin: string, env: Environment): string | undefined {
     // Matches a local domain like https://towns.local:3000
     const rExp = /https:\/\/(\w+).local:3000/
@@ -80,6 +86,7 @@ function getOriginForCors(request: Request, env: Environment): string {
         foundOrigin =
             allowedOrigins.find((allowedOrigin) => allowedOrigin.includes(origin)) ||
             getOnRenderOrigin(origin) ||
+            getTownsOrigin(origin) ||
             getLocalDomainOrigin(origin, env)
     }
     return foundOrigin ?? ''
