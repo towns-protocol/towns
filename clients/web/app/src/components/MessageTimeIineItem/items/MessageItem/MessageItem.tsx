@@ -82,7 +82,7 @@ export const MessageItem = (props: Props) => {
         <MessageWrapper
             highlight={isHighlight}
             event={event}
-            selectable={isSelectable}
+            selectable={!isEditing && isSelectable}
             displayContext={displayContext}
             replies={replies}
             key={`${event.eventId}${event.updatedAtEpocMs ?? event.createdAtEpocMs}${msgTypeKey}`}
