@@ -19,6 +19,9 @@ var goerliTownFactoryAddressJson []byte
 //go:embed contracts/sepolia_town_factory.json
 var sepoliaTownFactoryAddressJson []byte
 
+//go:embed contracts/localhost_wallet_link.json
+var localhostWalletLinkAddressJson []byte
+
 var EMPTY_ADDRESS = common.Address{}
 
 type ContractAddress struct {
@@ -36,6 +39,17 @@ func loadContractAddress(chainId int) (string, error) {
 	default:
 		errMsg := fmt.Sprintf("unsupported chainId: %d", chainId)
 		log.Error("loadContractAddress", errMsg)
+		return "", errors.New(errMsg)
+	}
+}
+
+func loadWalletLinkContractAddress(chainId int) (string, error) {
+	switch chainId {
+	case 31337:
+		return unmarshalFromJson(localhostWalletLinkAddressJson)
+	default:
+		errMsg := fmt.Sprintf("unsupported chainId: %d", chainId)
+		log.Error("loadWalletLinkContractAddress", errMsg)
 		return "", errors.New(errMsg)
 	}
 }
