@@ -47,3 +47,18 @@ jobs:
 
             - name: Deploy service
               run: ./scripts/deploy-task-definition.sh --environment ${{ inputs.environment }} --node-name ${{ vars.PRIMARY_NODE_NAME }}
+
+            # If action failed, we send a slack notification
+            - name: Slack notification
+              if: failure()
+              uses: slackapi/slack-github-action@v1.24.0
+              with:
+                  payload: |
+                      {
+                          "step": "Deploy Dendrite ECS",
+                          "environment": "${{ inputs.environment }}",
+                          "branch": "${{ github.ref }}",
+                          "url": "${{ github.event.workflow_run.url }}"
+                      }
+              env:
+                  SLACK_WEBHOOK_URL: ${{ secrets.SLACK_CD_WORKFLOW_WEBHOOK_URL }}

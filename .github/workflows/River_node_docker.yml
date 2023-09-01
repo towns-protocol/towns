@@ -75,14 +75,17 @@ jobs:
                     }
                   }'
 
-            # If action failed, we send a slack notification
+              # If action failed, we send a slack notification
             - name: Slack notification
               if: failure()
-              uses: rtCamp/action-slack-notify@v2
+              uses: slackapi/slack-github-action@v1.24.0
+              with:
+                  payload: |
+                      {
+                          "step": "Build River Docker Image",
+                          "environment": "N/",
+                          "branch": "${{ github.ref }}",
+                          "url": "${{ github.event.workflow_run.url }}"
+                      }
               env:
-                  SLACK_WEBHOOK: ${{ secrets.SLACK_CI_CHANNEL_WEBHOOK_URL }}
-                  SLACK_TITLE: 'Failure'
-                  SLACK_USERNAME: 'CI'
-                  SLACK_ICON_EMOJI: ':boom:'
-                  SLACK_COLOR: '#FF0000'
-                  SLACK_MESSAGE: 'River Node Docker Failed on ${{ github.repository }}'
+                  SLACK_WEBHOOK_URL: ${{ secrets.SLACK_CD_WORKFLOW_WEBHOOK_URL }}
