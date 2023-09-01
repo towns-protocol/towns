@@ -96,6 +96,10 @@ resource "aws_ecs_task_definition" "river-fargate" {
       {
         name  = "METRICS__ENABLED",
         value = "false"
+      },
+      {
+        name = "STORAGE_TYPE",
+        value = "postgres"
       }
     ]
 
