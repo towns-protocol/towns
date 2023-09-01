@@ -301,9 +301,10 @@ const RichTextEditorWithoutBoundary = (props: Props) => {
         ? isFormattingToolbarOpen
         : isFormattingToolbarOpen && focused
 
+    const background = isEditing && !isTouch ? 'level1' : 'level2'
     return (
         <Stack
-            background={isEditing && !isTouch ? 'level1' : 'level2'}
+            background={background}
             rounded={{ default: 'sm', touch: 'none' }}
             borderLeft={!isTouch ? 'default' : 'none'}
             borderRight={!isTouch ? 'default' : 'none'}
@@ -314,7 +315,7 @@ const RichTextEditorWithoutBoundary = (props: Props) => {
                 <RichTextUI
                     focused={focused || !isEditorEmpty}
                     editing={isEditing}
-                    background={props.background}
+                    background={background}
                     attemptingToSend={isAttemptingSend}
                     threadId={props.threadId}
                     threadPreview={props.threadPreview}

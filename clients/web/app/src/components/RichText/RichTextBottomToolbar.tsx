@@ -21,7 +21,7 @@ export const RichTextBottomToolbar = (props: Props) => {
     const { isTouch } = useDevice()
     const [editor] = useLexicalComposerContext()
 
-    const { isFormattingToolbarOpen, setIsFormattingToolbarOpen } = props
+    const { isFormattingToolbarOpen, setIsFormattingToolbarOpen, editing = false } = props
 
     const onSelectEmoji = useCallback(
         (data: EmojiPickerSelection) => {
@@ -62,12 +62,14 @@ export const RichTextBottomToolbar = (props: Props) => {
                             onClick={onFormattingButtonClicked}
                         />
                     )}
-                    <GiphyEntryTouch
-                        key="giphy"
-                        threadId={props.threadId}
-                        threadPreview={props.threadPreview}
-                        showButton={props.visible}
-                    />
+                    {!editing && (
+                        <GiphyEntryTouch
+                            key="giphy"
+                            threadId={props.threadId}
+                            threadPreview={props.threadPreview}
+                            showButton={props.visible}
+                        />
+                    )}
                     <EmojiPickerButtonTouch
                         key="emoji"
                         showButton={props.visible}
@@ -77,7 +79,7 @@ export const RichTextBottomToolbar = (props: Props) => {
             ) : (
                 <>
                     <IconButton icon="text" active={false} onClick={onFormattingButtonClicked} />
-                    {!props.editing ? (
+                    {!editing ? (
                         <GiphyEntryDesktop
                             threadId={props.threadId}
                             threadPreview={props.threadPreview}

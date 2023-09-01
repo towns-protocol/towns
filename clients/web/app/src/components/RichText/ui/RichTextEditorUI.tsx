@@ -162,7 +162,11 @@ export const RichTextUI = (props: Props) => {
                 )}
             </AnimatePresence>
 
-            <RichTextUIContainer key="editor" readOnly={props.readOnly}>
+            <RichTextUIContainer
+                key="editor"
+                readOnly={props.readOnly}
+                background={props.background}
+            >
                 <Box position="relative" paddingX="md" width="100%">
                     {props.children}
                 </Box>
