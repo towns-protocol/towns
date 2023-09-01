@@ -4,7 +4,7 @@ import { SignupForm } from '@components/RegisterForm'
 import { SentryReportModal } from '@components/SentryErrorReport/SentryErrorReport'
 import { useDevice } from 'hooks/useDevice'
 
-export const Register = ({ isEdit = false }: { isEdit?: boolean }) => {
+export const Register = () => {
     const { isTouch } = useDevice()
     const offset = isTouch ? 'none' : 'lg'
     return (
@@ -21,7 +21,7 @@ export const Register = ({ isEdit = false }: { isEdit?: boolean }) => {
                         Join Towns
                     </Text>
                 </Box>
-                <SignupForm isEdit={isEdit} />
+                <SignupForm />
             </Stack>
             <Box
                 position={isTouch ? 'relative' : 'fixed'}

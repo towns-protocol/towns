@@ -4,7 +4,6 @@ import React from 'react'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, test, vi } from 'vitest'
-import * as Zion from 'use-zion-client'
 import { BrowserRouter } from 'react-router-dom'
 import matchers from '@testing-library/jest-dom/matchers'
 import * as router from 'react-router'
@@ -49,7 +48,7 @@ describe('#RegisterForm', () => {
     test('for new registrations, renders the form without prepopulating fields', () => {
         render(
             <Mock>
-                <RegisterForm isEdit={false} />
+                <RegisterForm />
             </Mock>,
         )
         const walletField: HTMLInputElement = screen.getByLabelText(/connected wallet/i)
@@ -62,34 +61,6 @@ describe('#RegisterForm', () => {
         expect(submit).toBeDisabled('disabled')
     })
 
-    test('for editing existing user, renders the form with prepopulated fields', async () => {
-        vi.spyOn(Zion, 'useMyProfile').mockReturnValue({
-            userId: 'abcd',
-            displayName: 'gandalf',
-            avatarUrl: 'gandalf.jpg',
-            lastPresenceTs: 0,
-            currentlyActive: true,
-        })
-
-        render(
-            <Mock>
-                <RegisterForm isEdit />
-            </Mock>,
-        )
-        const walletField: HTMLInputElement = screen.getByLabelText(/connected wallet/i)
-        const displayNameField: HTMLInputElement = screen.getByLabelText(/display name/i)
-        const submit: HTMLButtonElement = screen.getByText(/next/i)
-
-        // should be testing the avatars/ RadioSelect but not b/c there are errors from vanilla-extract/framer-motion
-        // const avatarRadios = screen.getAllByTestId('avatar-radio')
-        // fireEvent.click(avatarRadios[0])
-
-        expect(walletField.value).toBe('0x1234')
-        expect(displayNameField.value).toBe('gandalf')
-        //@ts-ignore TODO: extend types for matchers https://markus.oberlehner.net/blog/using-testing-library-jest-dom-with-vitest/
-        expect(submit).toBeDisabled('disabled')
-    })
-
     test('it should allow to submit once the required fields are populated', async () => {
         // // dunno if this is a vitest or react-router thing, but if you just try to spy
         // // on the method w/out mocking the module (at top of this file), then you get errors
@@ -97,7 +68,7 @@ describe('#RegisterForm', () => {
         vi.spyOn(router, 'useNavigate').mockReturnValue(spy)
         render(
             <Mock>
-                <RegisterForm isEdit={false} />
+                <RegisterForm />
             </Mock>,
         )
         const displayNameField: HTMLInputElement = screen.getByLabelText(/display name/i)
@@ -121,7 +92,7 @@ describe('#RegisterForm', () => {
         vi.spyOn(router, 'useNavigate').mockReturnValue(spy)
         render(
             <Mock>
-                <RegisterForm isEdit={false} />
+                <RegisterForm />
             </Mock>,
         )
         const displayNameField: HTMLInputElement = screen.getByLabelText(/display name/i)

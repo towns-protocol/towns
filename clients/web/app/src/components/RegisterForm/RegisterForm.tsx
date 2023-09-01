@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo } from 'react'
+import React, { useCallback, useMemo } from 'react'
 import { useForm } from 'react-hook-form'
 import { matchPath, useNavigate } from 'react-router'
 import { LoginStatus, useMatrixStore, useMyProfile, useZionClient } from 'use-zion-client'
@@ -16,7 +16,7 @@ type RegisterFormFieldValues = {
     profilePic: FileList | undefined
 }
 
-export const RegisterForm = ({ isEdit }: { isEdit: boolean }) => {
+export const RegisterForm = () => {
     const { loggedInWalletAddress, isConnected, register: registerWallet } = useAuth()
     const { setDisplayName } = useZionClient()
     const navigate = useNavigate()
@@ -26,33 +26,26 @@ export const RegisterForm = ({ isEdit }: { isEdit: boolean }) => {
     const defaultValues = useMemo(
         () => ({
             walletAddress: loggedInWalletAddress,
-            displayName: myProfile?.displayName ?? '',
+            displayName: '',
             // this property is used for the upload component and to leverage react-hook-form's error/state tracking, but we don't actually have to track it's defaultValue when the form loads
             // 1. when registering, if this field is empty at submission time, we will upload a random image
             // 2. when editing, they will already have an image and we don't want to overwrite it in submission
             profilePic: undefined,
         }),
-        [loggedInWalletAddress, myProfile],
+        [loggedInWalletAddress],
     )
 
     const { mutateAsync: upload, isLoading: imageUploading } = useUploadImage(
         loggedInWalletAddress ?? '',
     )
 
-    const { register, handleSubmit, formState, reset, setError, clearErrors, watch } =
+    const { register, handleSubmit, formState, setError, clearErrors, watch } =
         useForm<RegisterFormFieldValues>({
             defaultValues,
             mode: 'onChange',
         })
 
     watch(['profilePic', 'displayName'])
-
-    useEffect(() => {
-        if (!isEdit) {
-            return
-        }
-        reset(defaultValues)
-    }, [reset, defaultValues, isEdit])
 
     const { errors, isValid } = formState
 
@@ -73,7 +66,7 @@ export const RegisterForm = ({ isEdit }: { isEdit: boolean }) => {
                     }
                     // only upload an image when first registering and if the user has not uploaded one
                     // this needs to be done before the registerWallet call
-                    if (!isEdit && !data.profilePic?.[0] && loggedInWalletAddress) {
+                    if (!data.profilePic?.[0] && loggedInWalletAddress) {
                         if (
                             !env.IS_DEV ||
                             // only upload an image locally when actually want to using ?registrationUpload
@@ -120,7 +113,6 @@ export const RegisterForm = ({ isEdit }: { isEdit: boolean }) => {
         },
         [
             isConnected,
-            isEdit,
             loggedInWalletAddress,
             loginStatus,
             myProfile?.displayName,
@@ -167,7 +159,7 @@ export const RegisterForm = ({ isEdit }: { isEdit: boolean }) => {
                         pattern: {
                             value: /^[a-z0-9 '._-]+$/i,
                             message:
-                                'Mostly, names can&apos;t contain punctuation. Spaces, hyphens, underscores, apostrophes and periods are fine.',
+                                "Mostly, names can't contain punctuation. Spaces, hyphens, underscores, apostrophes and periods are fine.",
                         },
                         required: 'Please enter a display name.',
                     })}

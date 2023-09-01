@@ -48,10 +48,6 @@ export const AllRoutes = () => {
                                 </>
                             ) : (
                                 <>
-                                    <Route
-                                        path={`/${PATHS.PREFERENCES}`}
-                                        element={<Register isEdit />}
-                                    />
                                     <Route path="*" element={<AuthenticatedOrRegister />}>
                                         <Route path="*" element={<AuthenticatedRoutes />} />
                                     </Route>
