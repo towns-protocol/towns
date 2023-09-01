@@ -1,4 +1,18 @@
-import Addresses from '@towns/generated/addresses.json' assert { type: 'json' }
+import LocalhostTownFactoryAddress from '@towns/generated/localhost/addresses/townFactory.json' assert { type: 'json' }
+import LocalhostTownOwnerAddress from '@towns/generated/localhost/addresses/townOwner.json' assert { type: 'json' }
+import LocalhostMockNFTAddress from '@towns/generated/localhost/addresses/mockNFT.json' assert { type: 'json' }
+import LocalhostMemberAddress from '@towns/generated/localhost/addresses/member.json' assert { type: 'json' }
+import LocalhostPioneerAddress from '@towns/generated/localhost/addresses/pioneerToken.json' assert { type: 'json' }
+
+import GoerliTownFactoryAddress from '@towns/generated/goerli/addresses/townFactory.json' assert { type: 'json' }
+import GoerliTownOwnerAddress from '@towns/generated/goerli/addresses/townOwner.json' assert { type: 'json' }
+import GoerliMemberAddress from '@towns/generated/goerli/addresses/member.json' assert { type: 'json' }
+import GoerliPioneerAddress from '@towns/generated/goerli/addresses/pioneerToken.json' assert { type: 'json' }
+
+import SepoliaTownFactoryAddress from '@towns/generated/sepolia/addresses/townFactory.json' assert { type: 'json' }
+import SepoliaTownOwnerAddress from '@towns/generated/sepolia/addresses/townOwner.json' assert { type: 'json' }
+import SepoliaMemberAddress from '@towns/generated/sepolia/addresses/member.json' assert { type: 'json' }
+import SepoliaPioneerAddress from '@towns/generated/sepolia/addresses/pioneerToken.json' assert { type: 'json' }
 
 export interface IStaticContractsInfoV3 {
     townFactoryAddress: string
@@ -9,27 +23,27 @@ export interface IStaticContractsInfoV3 {
 }
 
 const goerliContractsInfo: IStaticContractsInfoV3 = {
-    townFactoryAddress: Addresses['5']['townFactory'],
-    townOwnerAddress: Addresses['5']['townOwner'],
+    townFactoryAddress: GoerliTownFactoryAddress.address,
+    townOwnerAddress: GoerliTownOwnerAddress.address,
     mockErc721aAddress: '',
-    memberTokenAddress: Addresses['5']['member'],
-    pioneerTokenAddress: Addresses['5']['pioneerToken'],
+    memberTokenAddress: GoerliMemberAddress.address,
+    pioneerTokenAddress: GoerliPioneerAddress.address,
 }
 
 const localhostContractsInfo: IStaticContractsInfoV3 = {
-    townFactoryAddress: Addresses['31337']['townFactory'],
-    townOwnerAddress: Addresses['31337']['townOwner'],
-    mockErc721aAddress: Addresses['31337']['mockNFT'],
-    memberTokenAddress: Addresses['31337']['member'],
-    pioneerTokenAddress: Addresses['31337']['pioneerToken'],
+    townFactoryAddress: LocalhostTownFactoryAddress.address,
+    townOwnerAddress: LocalhostTownOwnerAddress.address,
+    mockErc721aAddress: LocalhostMockNFTAddress.address,
+    memberTokenAddress: LocalhostMemberAddress.address,
+    pioneerTokenAddress: LocalhostPioneerAddress.address,
 }
 
 const sepoliaContractsInfo: IStaticContractsInfoV3 = {
-    townFactoryAddress: Addresses['11155111']['townFactory'],
-    townOwnerAddress: Addresses['11155111']['townOwner'],
+    townFactoryAddress: SepoliaTownFactoryAddress.address,
+    townOwnerAddress: SepoliaTownOwnerAddress.address,
     mockErc721aAddress: '',
-    memberTokenAddress: Addresses['11155111']['member'],
-    pioneerTokenAddress: Addresses['11155111']['pioneerToken'],
+    memberTokenAddress: SepoliaMemberAddress.address,
+    pioneerTokenAddress: SepoliaPioneerAddress.address,
 }
 
 /// get contract info for a given chain id

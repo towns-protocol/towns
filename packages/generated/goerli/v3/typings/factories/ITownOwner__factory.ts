@@ -13,6 +13,37 @@ const _abi = [
     type: "error",
   },
   {
+    inputs: [],
+    name: "TownOwner__OnlyTownOwnerAllowed",
+    type: "error",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: false,
+        internalType: "address",
+        name: "factory",
+        type: "address",
+      },
+    ],
+    name: "TownOwner__SetFactory",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: false,
+        internalType: "address",
+        name: "town",
+        type: "address",
+      },
+    ],
+    name: "TownOwner__UpdateTown",
+    type: "event",
+  },
+  {
     inputs: [
       {
         internalType: "address",

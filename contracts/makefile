@@ -29,7 +29,12 @@ anvil :; anvil -m 'test test test test test test test test test test test junk'
 # ===========================
 deploy-anvil :;
 	@forge build
-	@SAVE_DEPLOYMENTS=1 forge script scripts/deployments/${contract}.s.sol:${contract} --ffi --rpc-url anvil --private-key ${LOCAL_PRIVATE_KEY} --broadcast --watch
+	@SAVE_DEPLOYMENTS=1 OVERRIDE_DEPLOYMENTS=1 forge script scripts/deployments/${contract}.s.sol:${contract} --ffi --rpc-url anvil --private-key ${LOCAL_PRIVATE_KEY} --broadcast --watch
+
+# EXAMPLE
+deploy-anvil-staging :;
+	@forge build
+	@SAVE_DEPLOYMENTS=1 DEPLOYMENT_CONTEXT=staging forge script scripts/deployments/${contract}.s.sol:${contract} --ffi --rpc-url anvil --private-key ${LOCAL_PRIVATE_KEY} --broadcast --watch
 
 upgrade-anvil:;
 	@forge build

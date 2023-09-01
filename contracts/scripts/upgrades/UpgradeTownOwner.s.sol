@@ -28,7 +28,7 @@ contract UpgradeTownOwner is Upgrader {
   address guardian;
 
   function __upgrade(uint256 deployerPK, address) public override {
-    address diamond = getAddress("townOwner");
+    address diamond = getDeployment("townOwner");
 
     vm.startBroadcast(deployerPK);
     diamondCut = address(new DiamondCutFacet());

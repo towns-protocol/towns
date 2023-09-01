@@ -3,7 +3,6 @@ pragma solidity 0.8.20;
 
 import {Deployer} from "../common/Deployer.s.sol";
 
-import {UserEntitlement} from "contracts/src/towns/entitlements/user/UserEntitlement.sol";
 import {TokenEntitlement} from "contracts/src/towns/entitlements/token/TokenEntitlement.sol";
 
 contract DeployTokenEntitlement is Deployer {
@@ -17,19 +16,5 @@ contract DeployTokenEntitlement is Deployer {
   ) public override returns (address) {
     vm.broadcast(deployerPK);
     return address(new TokenEntitlement());
-  }
-}
-
-contract DeployUserEntitlement is Deployer {
-  function versionName() public pure override returns (string memory) {
-    return "userEntitlement";
-  }
-
-  function __deploy(
-    uint256 deployerPK,
-    address
-  ) public override returns (address) {
-    vm.broadcast(deployerPK);
-    return address(new UserEntitlement());
   }
 }

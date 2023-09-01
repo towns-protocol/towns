@@ -31,15 +31,15 @@ type SpaceContractLocalhostV3 struct {
 
 func NewSpaceContractLocalhostV3(ethClient *ethclient.Client) (SpaceContract, error) {
 	// get the space factory address from config
-	jsonAddress, err := loadContractAddresses(31337)
+	strAddress, err := loadContractAddress(31337)
 	if err != nil {
-		slog.Error("error parsing localhost contract address", "address", jsonAddress, "error", err)
+		slog.Error("error parsing localhost contract address", "address", strAddress, "error", err)
 		return nil, err
 	}
-	address := common.HexToAddress(jsonAddress.TownFactory)
+	address := common.HexToAddress(strAddress)
 	townsArchitect, err := localhost_towns_architect.NewLocalhostTownsArchitect(address, ethClient)
 	if err != nil {
-		slog.Error("error fetching localhost TownArchitect contract with address", "address", jsonAddress, "error", err)
+		slog.Error("error fetching localhost TownArchitect contract with address", "address", strAddress, "error", err)
 		return nil, err
 	}
 	// no errors.

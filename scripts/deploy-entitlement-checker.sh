@@ -4,5 +4,6 @@ cd contracts/
 set -a
 . .env.localhost
 set +a
+
 make deploy-anvil contract=DeployEntitlementChecker
 make deploy-anvil contract=DeployEntitlementGatedExample

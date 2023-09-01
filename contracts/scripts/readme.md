@@ -16,7 +16,7 @@ import { Pioneer } from "contracts/src/core/tokens/Pioneer.sol";
 
 contract DeployPioneer is Deployer {
   function versionName() public pure override returns (string memory) {
-    return "pioneerToken"; // will show up in addresses.json as key
+    return "pioneerToken"; // will show up in packages/generated/{chain}/addresses/pioneerToken.json
   }
 
   function __deploy(

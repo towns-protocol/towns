@@ -18,7 +18,7 @@ contract UpgradeTownArchitect is Upgrader {
   TownArchitectHelper townArchitectHelper = new TownArchitectHelper();
 
   function __upgrade(uint256 deployerPK, address) public override {
-    address townFactory = getAddress("townFactory");
+    address townFactory = getDeployment("townFactory");
 
     vm.broadcast(deployerPK);
     address townArchitect = address(new TownArchitect());

@@ -21,10 +21,6 @@ import {Diamond} from "contracts/src/diamond/Diamond.sol";
 
 // helpers
 import {Deployer} from "../common/Deployer.s.sol";
-import {DeployPioneer} from "contracts/scripts/deployments/DeployPioneer.s.sol";
-import {DeployTownOwner} from "contracts/scripts/deployments/DeployTownOwner.s.sol";
-import {DeployTokenEntitlement, DeployUserEntitlement} from "contracts/scripts/deployments/DeployEntitlements.s.sol";
-import {DeployTown} from "contracts/scripts/deployments/DeployTown.s.sol";
 
 // helpers
 import {DiamondCutHelper} from "contracts/test/diamond/cut/DiamondCutSetup.sol";
@@ -43,13 +39,6 @@ import {MultiInit} from "contracts/src/diamond/initializers/MultiInit.sol";
 // mocks
 
 contract DeployTownFactory is Deployer {
-  // dependencies
-  DeployPioneer deployPioneer = new DeployPioneer();
-  DeployTownOwner deployTownOwner = new DeployTownOwner();
-  DeployTokenEntitlement deployTokenEntitlement = new DeployTokenEntitlement();
-  DeployUserEntitlement deployUserEntitlement = new DeployUserEntitlement();
-  DeployTown deployTown = new DeployTown();
-
   // helpers
   TownArchitectHelper townArchitectHelper = new TownArchitectHelper();
   ProxyManagerHelper proxyManagerHelper = new ProxyManagerHelper();
@@ -87,8 +76,8 @@ contract DeployTownFactory is Deployer {
     uint256 deployerPK,
     address deployer
   ) public override returns (address) {
-    address pioneerToken = deployPioneer.deploy();
-    address townToken = deployTownOwner.deploy();
+    address pioneerToken = getDeployment("pioneerToken");
+    address townToken = getDeployment("townOwner");
 
     vm.startBroadcast(deployerPK);
     diamondCut = address(new DiamondCutFacet());
@@ -157,11 +146,11 @@ contract DeployTownFactory is Deployer {
     initDatas[index++] = abi.encodeWithSelector(
       townArchitectHelper.initializer(),
       townToken, // townToken
-      deployUserEntitlement.deploy(), // userEntitlement
-      deployTokenEntitlement.deploy() // tokenEntitlement
+      getDeployment("userEntitlement"), // userEntitlement
+      getDeployment("tokenEntitlement") // tokenEntitlement
     );
     initDatas[index++] = proxyManagerHelper.makeInitData(
-      abi.encode(deployTown.deploy())
+      abi.encode(getDeployment("town"))
     );
 
     initDatas[index++] = ownableHelper.makeInitData(abi.encode(deployer));

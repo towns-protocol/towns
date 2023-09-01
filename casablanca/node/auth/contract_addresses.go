@@ -10,39 +10,41 @@ import (
 	"github.com/gologme/log"
 )
 
-//go:embed contracts/addresses.json
-var addressesJson []byte
+//go:embed contracts/localhost_town_factory.json
+var localhostTownFactoryAddressJson []byte
+
+//go:embed contracts/goerli_town_factory.json
+var goerliTownFactoryAddressJson []byte
+
+//go:embed contracts/sepolia_town_factory.json
+var sepoliaTownFactoryAddressJson []byte
 
 var EMPTY_ADDRESS = common.Address{}
 
-type ContractAddresses struct {
-	TownFactory string `json:"townFactory"`
+type ContractAddress struct {
+	Address string `json:"address"`
 }
 
-type ContractAddressesByChainId struct {
-	Localhost ContractAddresses `json:"31337"`
-	Goerli    ContractAddresses `json:"5"`
-	Sepolia   ContractAddresses `json:"11155111"`
-}
-
-func loadContractAddresses(chainId int) (*ContractAddresses, error) {
-	var address ContractAddresses
-	var allAddresses ContractAddressesByChainId
-	err := json.Unmarshal(addressesJson, &allAddresses)
-	if err != nil {
-		return nil, err
-	}
+func loadContractAddress(chainId int) (string, error) {
 	switch chainId {
 	case 31337:
-		address.TownFactory = allAddresses.Localhost.TownFactory
+		return unmarshalFromJson(localhostTownFactoryAddressJson)
 	case 5:
-		address.TownFactory = allAddresses.Goerli.TownFactory
+		return unmarshalFromJson(goerliTownFactoryAddressJson)
 	case 11155111:
-		address.TownFactory = allAddresses.Sepolia.TownFactory
+		return unmarshalFromJson(sepoliaTownFactoryAddressJson)
 	default:
 		errMsg := fmt.Sprintf("unsupported chainId: %d", chainId)
-		log.Error("loadSpaceFactoryAddress", errMsg)
-		return nil, errors.New(errMsg)
+		log.Error("loadContractAddress", errMsg)
+		return "", errors.New(errMsg)
 	}
-	return &address, nil
+}
+
+func unmarshalFromJson(bytes []byte) (string, error) {
+	var address ContractAddress
+	err := json.Unmarshal(bytes, &address)
+	if err != nil {
+		return "", err
+	}
+	return address.Address, nil
 }

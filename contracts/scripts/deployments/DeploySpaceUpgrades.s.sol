@@ -25,8 +25,7 @@ contract DeploySpaceUpgrades is Deployer {
     uint256 deployerPK,
     address
   ) public override returns (address) {
-    DeploySpaceFactory deploySpaceFactory = new DeploySpaceFactory();
-    SpaceFactory spaceFactory = SpaceFactory(deploySpaceFactory.deploy());
+    SpaceFactory spaceFactory = SpaceFactory(getDeployment("spaceFactory"));
 
     vm.startBroadcast(deployerPK);
     spaceUpgrades = new SpaceUpgrades();

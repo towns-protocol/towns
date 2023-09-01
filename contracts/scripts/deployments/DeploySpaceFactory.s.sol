@@ -16,18 +16,7 @@ import {UserEntitlement} from "contracts/src/spaces/entitlements/UserEntitlement
 import {TokenEntitlement} from "contracts/src/spaces/entitlements/TokenEntitlement.sol";
 import {ERC1967Proxy} from "openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
-import {DeployPioneer} from "contracts/scripts/deployments/DeployPioneer.s.sol";
-import {DeployOldTownOwner} from "contracts/scripts/deployments/DeployOldTownOwner.s.sol";
-import {DeployTokenImpl, DeployUserImpl} from "contracts/scripts/deployments/DeployImplementations.s.sol";
-import {DeploySpaceImpl} from "contracts/scripts/deployments/DeploySpaceImpl.s.sol";
-
 contract DeploySpaceFactory is Deployer {
-  DeployPioneer internal deployPioneer;
-  DeployOldTownOwner internal deployTownOwner;
-  DeploySpaceImpl internal deploySpaceImpl;
-  DeployTokenImpl internal deployTokenImpl;
-  DeployUserImpl internal deployUserImpl;
-
   SpaceFactory internal spaceFactory;
   Space internal spaceImplementation;
   TokenEntitlement internal tokenImplementation;
@@ -45,20 +34,13 @@ contract DeploySpaceFactory is Deployer {
     uint256 deployerPK,
     address
   ) public override returns (address) {
-    deployPioneer = new DeployPioneer();
-    pioneer = Pioneer(payable(deployPioneer.deploy()));
-
-    deployTownOwner = new DeployOldTownOwner();
-    spaceToken = TownOwnerV1(deployTownOwner.deploy());
-
-    deploySpaceImpl = new DeploySpaceImpl();
-    spaceImplementation = Space(deploySpaceImpl.deploy());
-
-    deployTokenImpl = new DeployTokenImpl();
-    tokenImplementation = TokenEntitlement(deployTokenImpl.deploy());
-
-    deployUserImpl = new DeployUserImpl();
-    userImplementation = UserEntitlement(deployUserImpl.deploy());
+    pioneer = Pioneer(payable(getDeployment("pioneerToken")));
+    spaceToken = TownOwnerV1(getDeployment("spaceToken"));
+    spaceImplementation = Space(getDeployment("spaceImpl"));
+    tokenImplementation = TokenEntitlement(
+      getDeployment("tokenEntitlementImpl")
+    );
+    userImplementation = UserEntitlement(getDeployment("userEntitlementImpl"));
 
     _createInitialOwnerPermissions();
 
@@ -86,7 +68,6 @@ contract DeploySpaceFactory is Deployer {
     vm.stopBroadcast();
 
     // set space upgrades
-
     return spaceFactoryAddress;
   }
 

@@ -31,15 +31,15 @@ type SpaceContractSepoliaV3 struct {
 
 func NewSpaceContractSepoliaV3(ethClient *ethclient.Client) (SpaceContract, error) {
 	// get the space factory address from config
-	jsonAddress, err := loadContractAddresses(11155111)
+	strAddress, err := loadContractAddress(11155111)
 	if err != nil {
-		slog.Error("error parsing sepolia contract address", "address", jsonAddress, "error", err)
+		slog.Error("error parsing sepolia contract address", "address", strAddress, "error", err)
 		return nil, err
 	}
-	address := common.HexToAddress(jsonAddress.TownFactory)
+	address := common.HexToAddress(strAddress)
 	townsArchitect, err := sepolia_towns_architect.NewSepoliaTownsArchitect(address, ethClient)
 	if err != nil {
-		slog.Error("error fetching sepolia TownArchitect contract with address", "address", jsonAddress, "error", err)
+		slog.Error("error fetching sepolia TownArchitect contract with address", "address", strAddress, "error", err)
 		return nil, err
 	}
 	// no errors.

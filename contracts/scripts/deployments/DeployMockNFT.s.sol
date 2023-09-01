@@ -10,9 +10,6 @@ import {Deployer} from "../common/Deployer.s.sol";
 import {Diamond} from "contracts/src/diamond/Diamond.sol";
 import {MultiInit} from "contracts/src/diamond/initializers/MultiInit.sol";
 
-// deployments
-import {DeployTownFactory} from "./DeployTownFactory.s.sol";
-
 // mocks
 import {DiamondCutHelper} from "contracts/test/diamond/cut/DiamondCutSetup.sol";
 import {DiamondLoupeHelper} from "contracts/test/diamond/loupe/DiamondLoupeSetup.sol";
@@ -31,9 +28,6 @@ contract DeployMockNFT is Deployer {
   DiamondLoupeHelper loupeHelper = new DiamondLoupeHelper();
   IntrospectionHelper introspectionHelper = new IntrospectionHelper();
   ERC721AMockHelper erc721aHelper = new ERC721AMockHelper();
-
-  // deployments
-  DeployTownFactory deployTownFactory = new DeployTownFactory();
 
   uint256 totalFacets = 4;
   uint256 totalInit = 4;
@@ -56,7 +50,7 @@ contract DeployMockNFT is Deployer {
     uint256 deployerPK,
     address
   ) public override returns (address) {
-    address townFactory = deployTownFactory.deploy();
+    address townFactory = getDeployment("townFactory");
 
     vm.startBroadcast(deployerPK);
     diamondCut = address(new DiamondCutFacet());

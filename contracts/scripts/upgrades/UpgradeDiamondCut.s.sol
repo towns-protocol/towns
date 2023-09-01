@@ -15,7 +15,7 @@ contract UpgradeDiamondCut is Upgrader {
   DiamondCutHelper diamondCutHelper = new DiamondCutHelper();
 
   function __upgrade(uint256 deployerPk, address) public override {
-    address diamond = getAddress("town");
+    address diamond = getDeployment("town");
 
     vm.startBroadcast(deployerPk);
     address diamondCut = address(new DiamondCutFacet());

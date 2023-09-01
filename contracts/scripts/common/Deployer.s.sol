@@ -10,6 +10,9 @@ import "forge-std/Script.sol";
 import {DeployBase} from "./DeployBase.s.sol";
 
 abstract contract Deployer is Script, DeployBase {
+  string internal constant PACKAGES_ADDRESS_PATH =
+    "/packages/generated/addresses.json";
+
   // override this with the name of the deployment version that this script deploys
   function versionName() public view virtual returns (string memory);
 
@@ -41,9 +44,10 @@ abstract contract Deployer is Script, DeployBase {
       return existingAddr;
     }
 
-    uint256 pk = block.chainid == 31337
+    uint256 pk = isAnvil()
       ? vm.envUint("LOCAL_PRIVATE_KEY")
       : vm.envUint("PRIVATE_KEY");
+
     address deployer = vm.addr(pk);
 
     info(
@@ -65,10 +69,42 @@ abstract contract Deployer is Script, DeployBase {
     );
 
     saveDeployment(versionName(), deployedAddr);
-    saveAddresses(versionName(), deployedAddr);
+    saveToPackages(versionName(), deployedAddr);
   }
 
   function run() public virtual {
     deploy();
+  }
+
+  // ===============================
+  // Custom deployment logic helpers
+  // ===============================
+  function clearAddress(string memory contractName) internal {
+    string memory generatedPath = string.concat(
+      vm.projectRoot(),
+      PACKAGES_ADDRESS_PATH
+    );
+
+    vm.writeJson(
+      "",
+      generatedPath,
+      string.concat(".", vm.toString(block.chainid), ".", contractName)
+    );
+  }
+
+  function saveToPackages(
+    string memory contractName,
+    address contractAddr
+  ) internal {
+    string memory generatedPath = string.concat(
+      vm.projectRoot(),
+      PACKAGES_ADDRESS_PATH
+    );
+
+    vm.writeJson(
+      vm.toString(contractAddr),
+      generatedPath,
+      string.concat(".", vm.toString(block.chainid), ".", contractName)
+    );
   }
 }

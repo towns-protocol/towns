@@ -31,15 +31,15 @@ type SpaceContractGoerliV3 struct {
 
 func NewSpaceContractGoerliV3(ethClient *ethclient.Client) (SpaceContract, error) {
 	// get the space factory address from config
-	jsonAddress, err := loadContractAddresses(5)
+	strAddress, err := loadContractAddress(5)
 	if err != nil {
-		slog.Error("error parsing goerli contract address", "address", jsonAddress, "error", err)
+		slog.Error("error parsing goerli contract address", "address", strAddress, "error", err)
 		return nil, err
 	}
-	address := common.HexToAddress(jsonAddress.TownFactory)
+	address := common.HexToAddress(strAddress)
 	townsArchitect, err := goerli_towns_architect.NewGoerliTownsArchitect(address, ethClient)
 	if err != nil {
-		slog.Error("error fetching goerli TownArchitect contract with address", "address", jsonAddress, "error", err)
+		slog.Error("error fetching goerli TownArchitect contract with address", "address", strAddress, "error", err)
 		return nil, err
 	}
 	// no errors.

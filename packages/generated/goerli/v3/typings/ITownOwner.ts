@@ -13,7 +13,11 @@ import type {
   Signer,
   utils,
 } from "ethers";
-import type { FunctionFragment, Result } from "@ethersproject/abi";
+import type {
+  FunctionFragment,
+  Result,
+  EventFragment,
+} from "@ethersproject/abi";
 import type { Listener, Provider } from "@ethersproject/providers";
 import type {
   TypedEventFilter,
@@ -96,8 +100,36 @@ export interface ITownOwnerInterface extends utils.Interface {
   ): Result;
   decodeFunctionResult(functionFragment: "setFactory", data: BytesLike): Result;
 
-  events: {};
+  events: {
+    "TownOwner__SetFactory(address)": EventFragment;
+    "TownOwner__UpdateTown(address)": EventFragment;
+  };
+
+  getEvent(nameOrSignatureOrTopic: "TownOwner__SetFactory"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "TownOwner__UpdateTown"): EventFragment;
 }
+
+export interface TownOwner__SetFactoryEventObject {
+  factory: string;
+}
+export type TownOwner__SetFactoryEvent = TypedEvent<
+  [string],
+  TownOwner__SetFactoryEventObject
+>;
+
+export type TownOwner__SetFactoryEventFilter =
+  TypedEventFilter<TownOwner__SetFactoryEvent>;
+
+export interface TownOwner__UpdateTownEventObject {
+  town: string;
+}
+export type TownOwner__UpdateTownEvent = TypedEvent<
+  [string],
+  TownOwner__UpdateTownEventObject
+>;
+
+export type TownOwner__UpdateTownEventFilter =
+  TypedEventFilter<TownOwner__UpdateTownEvent>;
 
 export interface ITownOwner extends BaseContract {
   connect(signerOrProvider: Signer | Provider | string): this;
@@ -189,7 +221,17 @@ export interface ITownOwner extends BaseContract {
     ): Promise<void>;
   };
 
-  filters: {};
+  filters: {
+    "TownOwner__SetFactory(address)"(
+      factory?: null
+    ): TownOwner__SetFactoryEventFilter;
+    TownOwner__SetFactory(factory?: null): TownOwner__SetFactoryEventFilter;
+
+    "TownOwner__UpdateTown(address)"(
+      town?: null
+    ): TownOwner__UpdateTownEventFilter;
+    TownOwner__UpdateTown(town?: null): TownOwner__UpdateTownEventFilter;
+  };
 
   estimateGas: {
     getTownInfo(

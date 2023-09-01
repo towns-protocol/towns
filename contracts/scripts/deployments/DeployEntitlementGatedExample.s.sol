@@ -6,7 +6,6 @@ import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
 
 import {EntitlementGatedExample} from "contracts/src/crosschain/example/EntitlementGatedExample.sol";
 import {IEntitlementChecker} from "contracts/src/crosschain/IEntitlementChecker.sol";
-import {DeployEntitlementChecker} from "contracts/scripts/deployments/DeployEntitlementChecker.s.sol";
 
 contract DeployEntitlementGatedExample is Deployer {
   function versionName() public pure override returns (string memory) {
@@ -17,9 +16,8 @@ contract DeployEntitlementGatedExample is Deployer {
     uint256 deployerPK,
     address
   ) public override returns (address) {
-    DeployEntitlementChecker deployEntitlementChecker = new DeployEntitlementChecker();
     IEntitlementChecker entitlementCheckerImpl = IEntitlementChecker(
-      deployEntitlementChecker.deploy()
+      getDeployment("entitlementChecker")
     );
 
     console2.log(
