@@ -8,6 +8,7 @@ type Config struct {
 	StorageType string
 	Metrics     MetricsConfig
 	Chain       ChainConfig
+	TopChain    ChainConfig
 	UseContract bool
 	Log         LogConfig
 	// TODO HNT-2048 remove once RDK registration/revoke is implemented in the client

@@ -22,14 +22,16 @@ var (
 )
 
 type Service struct {
-	cache             events.StreamCache
-	townsContract     auth.TownsContract
-	wallet            *crypto.Wallet
-	log               *slog.Logger
-	skipDelegateCheck bool
+	cache         events.StreamCache
+	townsContract auth.TownsContract
+	// keep it separate as it lives in the top-chain
+	walletLinkContract auth.WalletLinkContract
+	wallet             *crypto.Wallet
+	log                *slog.Logger
+	skipDelegateCheck  bool
 }
 
-func MakeServiceHandler(ctx context.Context, log *slog.Logger, dbUrl string, storageType string, chainConfig *config.ChainConfig, wallet *crypto.Wallet, skipDelegateCheck bool, opts ...connect_go.HandlerOption) (string, http.Handler, error) {
+func MakeServiceHandler(ctx context.Context, log *slog.Logger, dbUrl string, storageType string, chainConfig *config.ChainConfig, topChainConfig *config.ChainConfig, wallet *crypto.Wallet, skipDelegateCheck bool, opts ...connect_go.HandlerOption) (string, http.Handler, error) {
 	var err error
 	if wallet == nil {
 		wallet, err = crypto.LoadWallet(ctx, crypto.WALLET_PATH_PRIVATE_KEY)
@@ -49,15 +51,28 @@ func MakeServiceHandler(ctx context.Context, log *slog.Logger, dbUrl string, sto
 		}
 	}
 
-	var contract auth.TownsContract
+	var townsContract auth.TownsContract
 	if chainConfig == nil {
 		log.Warn("Using passthrough auth")
-		contract = auth.NewTownsPassThrough()
+		townsContract = auth.NewTownsPassThrough()
 	} else {
 		log.Info("Using casablanca auth", "chain_config", chainConfig)
-		contract, err = auth.NewTownsContract(chainConfig)
+		townsContract, err = auth.NewTownsContract(chainConfig)
 		if err != nil {
 			log.Error("failed to create auth", "error", err)
+			return "", nil, err
+		}
+	}
+
+	var walletLinkContract auth.WalletLinkContract
+	if topChainConfig == nil {
+		log.Warn("Using no-op wallet linking contract")
+		walletLinkContract = nil
+	} else {
+		log.Info("Using wallet link contract on", "chain_config", topChainConfig)
+		walletLinkContract, err = auth.NewTownsWalletLink(topChainConfig, wallet)
+		if err != nil {
+			log.Error("failed to create wallet link contract", "error", err)
 			return "", nil, err
 		}
 	}
@@ -71,10 +86,11 @@ func MakeServiceHandler(ctx context.Context, log *slog.Logger, dbUrl string, sto
 					DefaultCtx: ctx,
 				},
 			),
-			townsContract:     contract,
-			wallet:            wallet,
-			log:               log,
-			skipDelegateCheck: skipDelegateCheck,
+			townsContract:      townsContract,
+			walletLinkContract: walletLinkContract,
+			wallet:             wallet,
+			log:                log,
+			skipDelegateCheck:  skipDelegateCheck,
 		},
 		opts...,
 	)

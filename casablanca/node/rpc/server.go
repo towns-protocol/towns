@@ -22,11 +22,13 @@ func StartServer(ctx context.Context, cfg *config.Config, wallet *crypto.Wallet)
 	log := dlog.CtxLog(ctx)
 
 	var chainConfig *config.ChainConfig
+	var topChainConfig *config.ChainConfig
 	if cfg.UseContract {
 		chainConfig = &cfg.Chain
+		topChainConfig = &cfg.TopChain
 	}
 
-	pattern, handler, err := MakeServiceHandler(context.Background(), log, cfg.DbUrl, cfg.StorageType, chainConfig, wallet, cfg.SkipDelegateCheck)
+	pattern, handler, err := MakeServiceHandler(context.Background(), log, cfg.DbUrl, cfg.StorageType, chainConfig, topChainConfig, wallet, cfg.SkipDelegateCheck)
 	if err != nil {
 		return nil, 0, err
 	}

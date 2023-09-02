@@ -506,12 +506,31 @@ message InfoResponse {
     string graffiti = 1;
 }
 
+message LinkWalletRequest {
+    string root_key_id = 1;
+    string wallet_address = 2;
+    string root_key_signature = 3;
+    string wallet_signature = 4;
+}
+
+message LinkWalletResponse {}
+
+message GetLinkedWalletsRequest {
+    string root_key_id = 1;
+}
+
+message GetLinkedWalletsResponse {
+    repeated string wallet_addresses = 1;
+}
+
 service StreamService {
     rpc CreateStream(CreateStreamRequest) returns (CreateStreamResponse);
     rpc GetStream(GetStreamRequest) returns (GetStreamResponse);
     rpc GetMiniblocks(GetMiniblocksRequest) returns (GetMiniblocksResponse);
     rpc AddEvent(AddEventRequest) returns (AddEventResponse);
     rpc SyncStreams(SyncStreamsRequest) returns (stream SyncStreamsResponse);
+    rpc LinkWallet(LinkWalletRequest) returns (LinkWalletResponse);
+    rpc GetLinkedWallets(GetLinkedWalletsRequest) returns (GetLinkedWalletsResponse);
     rpc Info(InfoRequest) returns (InfoResponse);
 }
 
@@ -548,4 +567,6 @@ enum Err {
     BAD_MINIPOOL_SLOT = 29;
     BAD_CREATOR_ADDRESS = 30;
     STALE_DELEGATE = 31;
+    BAD_LINK_WALLET_BAD_SIGNATURE = 32;
+    BAD_ROOT_KEY_ID = 33;
 }

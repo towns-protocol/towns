@@ -8,6 +8,9 @@ skipDelegateCheck: true
 chain:
     chainId: 31337
     networkUrl: 'http://127.0.0.1:8545'
+topChain:
+    chainId: 31337
+    networkUrl: 'http://127.0.0.1:8545'
 log:
     file: logs/dev.log
     level: info

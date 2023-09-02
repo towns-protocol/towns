@@ -231,10 +231,14 @@ func createChannel(ctx context.Context, wallet *crypto.Wallet, client protocolco
 	return reschannel.Msg.Stream.NextSyncCookie, joinChannel.Hash, nil
 }
 
-func testServerAndClient(ctx context.Context, dbUrl string, dbSchemaName string) (protocolconnect.StreamServiceClient, func()) {
+func testServerAndClient(ctx context.Context, dbUrl string, dbSchemaName string, useContract bool) (protocolconnect.StreamServiceClient, func()) {
 	cfg := &config.Config{
-		UseContract: false,
+		UseContract: useContract,
 		Chain: config.ChainConfig{
+			ChainId:    31337,
+			NetworkUrl: "http://localhost:8545",
+		},
+		TopChain: config.ChainConfig{
 			ChainId:    31337,
 			NetworkUrl: "http://localhost:8545",
 		},
@@ -248,6 +252,13 @@ func testServerAndClient(ctx context.Context, dbUrl string, dbSchemaName string)
 	wallet, err := crypto.NewWallet(ctx)
 	if err != nil {
 		panic(err)
+	}
+
+	if useContract {
+		err = testutils.FundWallet(ctx, wallet.Address, cfg.TopChain.NetworkUrl)
+		if err != nil {
+			panic(err)
+		}
 	}
 
 	closer, port, err := rpc.StartServer(ctx, cfg, wallet)
@@ -265,7 +276,7 @@ func testServerAndClient(ctx context.Context, dbUrl string, dbSchemaName string)
 
 func TestMethods(t *testing.T) {
 	ctx := context.Background()
-	client, closer := testServerAndClient(ctx, testDatabaseUrl, testSchemaName)
+	client, closer := testServerAndClient(ctx, testDatabaseUrl, testSchemaName, false)
 	wallet1, _ := crypto.NewWallet(ctx)
 	wallet2, _ := crypto.NewWallet(ctx)
 	defer closer()
@@ -443,7 +454,7 @@ func TestMethods(t *testing.T) {
 
 func TestRiverDeviceId(t *testing.T) {
 	ctx := context.Background()
-	client, closer := testServerAndClient(ctx, testDatabaseUrl, testSchemaName)
+	client, closer := testServerAndClient(ctx, testDatabaseUrl, testSchemaName, false)
 	wallet, _ := crypto.NewWallet(ctx)
 	deviceWallet, _ := crypto.NewWallet(ctx)
 	defer closer()
@@ -536,7 +547,7 @@ func TestRiverDeviceId(t *testing.T) {
 // TODO: revamp with block support
 func DisableTestManyUsers(t *testing.T) {
 	ctx := context.Background()
-	client, closer := testServerAndClient(ctx, testDatabaseUrl, testSchemaName)
+	client, closer := testServerAndClient(ctx, testDatabaseUrl, testSchemaName, false)
 	defer closer()
 
 	totalUsers := 14

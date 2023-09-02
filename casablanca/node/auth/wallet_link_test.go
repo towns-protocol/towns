@@ -3,6 +3,7 @@ package auth_test
 import (
 	"casablanca/node/auth"
 	"casablanca/node/crypto"
+	"casablanca/node/testutils"
 	"context"
 	"fmt"
 	"os"
@@ -31,12 +32,12 @@ func TestWalletLink(t *testing.T) {
 		panic(err)
 	}
 	ethClient := ethclient.NewClient(rpcClient)
-	err = fundWallet(ctx, wallet.Address.Hex(), rpcClient)
+	err = testutils.FundWallet(ctx, wallet.Address, "http://127.0.0.1:8545")
 	if err != nil {
 		panic(err)
 	}
 
-	var walletLink auth.WalletLink
+	var walletLink auth.WalletLinkContract
 	walletLink, err = auth.NewTownsWalletLinkLocalhost(ethClient, wallet)
 	if err != nil {
 		panic(err)
@@ -68,17 +69,4 @@ func TestWalletLink(t *testing.T) {
 
 	fmt.Printf("Linked Wallets: %v\n", wallets)
 
-}
-
-func fundWallet(ctx context.Context, wallet string, rpcClient *rpc.Client) error {
-
-	// 1 eth
-	amountInWei := "1000000000000000000"
-
-	var result interface{}
-	err := rpcClient.CallContext(ctx, &result, "anvil_setBalance", wallet, amountInWei)
-	if err != nil {
-		return err
-	}
-	return nil
 }

@@ -46,6 +46,12 @@ const (
 	// StreamServiceSyncStreamsProcedure is the fully-qualified name of the StreamService's SyncStreams
 	// RPC.
 	StreamServiceSyncStreamsProcedure = "/casablanca.StreamService/SyncStreams"
+	// StreamServiceLinkWalletProcedure is the fully-qualified name of the StreamService's LinkWallet
+	// RPC.
+	StreamServiceLinkWalletProcedure = "/casablanca.StreamService/LinkWallet"
+	// StreamServiceGetLinkedWalletsProcedure is the fully-qualified name of the StreamService's
+	// GetLinkedWallets RPC.
+	StreamServiceGetLinkedWalletsProcedure = "/casablanca.StreamService/GetLinkedWallets"
 	// StreamServiceInfoProcedure is the fully-qualified name of the StreamService's Info RPC.
 	StreamServiceInfoProcedure = "/casablanca.StreamService/Info"
 )
@@ -57,6 +63,8 @@ type StreamServiceClient interface {
 	GetMiniblocks(context.Context, *connect_go.Request[protocol.GetMiniblocksRequest]) (*connect_go.Response[protocol.GetMiniblocksResponse], error)
 	AddEvent(context.Context, *connect_go.Request[protocol.AddEventRequest]) (*connect_go.Response[protocol.AddEventResponse], error)
 	SyncStreams(context.Context, *connect_go.Request[protocol.SyncStreamsRequest]) (*connect_go.ServerStreamForClient[protocol.SyncStreamsResponse], error)
+	LinkWallet(context.Context, *connect_go.Request[protocol.LinkWalletRequest]) (*connect_go.Response[protocol.LinkWalletResponse], error)
+	GetLinkedWallets(context.Context, *connect_go.Request[protocol.GetLinkedWalletsRequest]) (*connect_go.Response[protocol.GetLinkedWalletsResponse], error)
 	Info(context.Context, *connect_go.Request[protocol.InfoRequest]) (*connect_go.Response[protocol.InfoResponse], error)
 }
 
@@ -95,6 +103,16 @@ func NewStreamServiceClient(httpClient connect_go.HTTPClient, baseURL string, op
 			baseURL+StreamServiceSyncStreamsProcedure,
 			opts...,
 		),
+		linkWallet: connect_go.NewClient[protocol.LinkWalletRequest, protocol.LinkWalletResponse](
+			httpClient,
+			baseURL+StreamServiceLinkWalletProcedure,
+			opts...,
+		),
+		getLinkedWallets: connect_go.NewClient[protocol.GetLinkedWalletsRequest, protocol.GetLinkedWalletsResponse](
+			httpClient,
+			baseURL+StreamServiceGetLinkedWalletsProcedure,
+			opts...,
+		),
 		info: connect_go.NewClient[protocol.InfoRequest, protocol.InfoResponse](
 			httpClient,
 			baseURL+StreamServiceInfoProcedure,
@@ -105,12 +123,14 @@ func NewStreamServiceClient(httpClient connect_go.HTTPClient, baseURL string, op
 
 // streamServiceClient implements StreamServiceClient.
 type streamServiceClient struct {
-	createStream  *connect_go.Client[protocol.CreateStreamRequest, protocol.CreateStreamResponse]
-	getStream     *connect_go.Client[protocol.GetStreamRequest, protocol.GetStreamResponse]
-	getMiniblocks *connect_go.Client[protocol.GetMiniblocksRequest, protocol.GetMiniblocksResponse]
-	addEvent      *connect_go.Client[protocol.AddEventRequest, protocol.AddEventResponse]
-	syncStreams   *connect_go.Client[protocol.SyncStreamsRequest, protocol.SyncStreamsResponse]
-	info          *connect_go.Client[protocol.InfoRequest, protocol.InfoResponse]
+	createStream     *connect_go.Client[protocol.CreateStreamRequest, protocol.CreateStreamResponse]
+	getStream        *connect_go.Client[protocol.GetStreamRequest, protocol.GetStreamResponse]
+	getMiniblocks    *connect_go.Client[protocol.GetMiniblocksRequest, protocol.GetMiniblocksResponse]
+	addEvent         *connect_go.Client[protocol.AddEventRequest, protocol.AddEventResponse]
+	syncStreams      *connect_go.Client[protocol.SyncStreamsRequest, protocol.SyncStreamsResponse]
+	linkWallet       *connect_go.Client[protocol.LinkWalletRequest, protocol.LinkWalletResponse]
+	getLinkedWallets *connect_go.Client[protocol.GetLinkedWalletsRequest, protocol.GetLinkedWalletsResponse]
+	info             *connect_go.Client[protocol.InfoRequest, protocol.InfoResponse]
 }
 
 // CreateStream calls casablanca.StreamService.CreateStream.
@@ -138,6 +158,16 @@ func (c *streamServiceClient) SyncStreams(ctx context.Context, req *connect_go.R
 	return c.syncStreams.CallServerStream(ctx, req)
 }
 
+// LinkWallet calls casablanca.StreamService.LinkWallet.
+func (c *streamServiceClient) LinkWallet(ctx context.Context, req *connect_go.Request[protocol.LinkWalletRequest]) (*connect_go.Response[protocol.LinkWalletResponse], error) {
+	return c.linkWallet.CallUnary(ctx, req)
+}
+
+// GetLinkedWallets calls casablanca.StreamService.GetLinkedWallets.
+func (c *streamServiceClient) GetLinkedWallets(ctx context.Context, req *connect_go.Request[protocol.GetLinkedWalletsRequest]) (*connect_go.Response[protocol.GetLinkedWalletsResponse], error) {
+	return c.getLinkedWallets.CallUnary(ctx, req)
+}
+
 // Info calls casablanca.StreamService.Info.
 func (c *streamServiceClient) Info(ctx context.Context, req *connect_go.Request[protocol.InfoRequest]) (*connect_go.Response[protocol.InfoResponse], error) {
 	return c.info.CallUnary(ctx, req)
@@ -150,6 +180,8 @@ type StreamServiceHandler interface {
 	GetMiniblocks(context.Context, *connect_go.Request[protocol.GetMiniblocksRequest]) (*connect_go.Response[protocol.GetMiniblocksResponse], error)
 	AddEvent(context.Context, *connect_go.Request[protocol.AddEventRequest]) (*connect_go.Response[protocol.AddEventResponse], error)
 	SyncStreams(context.Context, *connect_go.Request[protocol.SyncStreamsRequest], *connect_go.ServerStream[protocol.SyncStreamsResponse]) error
+	LinkWallet(context.Context, *connect_go.Request[protocol.LinkWalletRequest]) (*connect_go.Response[protocol.LinkWalletResponse], error)
+	GetLinkedWallets(context.Context, *connect_go.Request[protocol.GetLinkedWalletsRequest]) (*connect_go.Response[protocol.GetLinkedWalletsResponse], error)
 	Info(context.Context, *connect_go.Request[protocol.InfoRequest]) (*connect_go.Response[protocol.InfoResponse], error)
 }
 
@@ -184,6 +216,16 @@ func NewStreamServiceHandler(svc StreamServiceHandler, opts ...connect_go.Handle
 		svc.SyncStreams,
 		opts...,
 	)
+	streamServiceLinkWalletHandler := connect_go.NewUnaryHandler(
+		StreamServiceLinkWalletProcedure,
+		svc.LinkWallet,
+		opts...,
+	)
+	streamServiceGetLinkedWalletsHandler := connect_go.NewUnaryHandler(
+		StreamServiceGetLinkedWalletsProcedure,
+		svc.GetLinkedWallets,
+		opts...,
+	)
 	streamServiceInfoHandler := connect_go.NewUnaryHandler(
 		StreamServiceInfoProcedure,
 		svc.Info,
@@ -201,6 +243,10 @@ func NewStreamServiceHandler(svc StreamServiceHandler, opts ...connect_go.Handle
 			streamServiceAddEventHandler.ServeHTTP(w, r)
 		case StreamServiceSyncStreamsProcedure:
 			streamServiceSyncStreamsHandler.ServeHTTP(w, r)
+		case StreamServiceLinkWalletProcedure:
+			streamServiceLinkWalletHandler.ServeHTTP(w, r)
+		case StreamServiceGetLinkedWalletsProcedure:
+			streamServiceGetLinkedWalletsHandler.ServeHTTP(w, r)
 		case StreamServiceInfoProcedure:
 			streamServiceInfoHandler.ServeHTTP(w, r)
 		default:
@@ -230,6 +276,14 @@ func (UnimplementedStreamServiceHandler) AddEvent(context.Context, *connect_go.R
 
 func (UnimplementedStreamServiceHandler) SyncStreams(context.Context, *connect_go.Request[protocol.SyncStreamsRequest], *connect_go.ServerStream[protocol.SyncStreamsResponse]) error {
 	return connect_go.NewError(connect_go.CodeUnimplemented, errors.New("casablanca.StreamService.SyncStreams is not implemented"))
+}
+
+func (UnimplementedStreamServiceHandler) LinkWallet(context.Context, *connect_go.Request[protocol.LinkWalletRequest]) (*connect_go.Response[protocol.LinkWalletResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("casablanca.StreamService.LinkWallet is not implemented"))
+}
+
+func (UnimplementedStreamServiceHandler) GetLinkedWallets(context.Context, *connect_go.Request[protocol.GetLinkedWalletsRequest]) (*connect_go.Response[protocol.GetLinkedWalletsResponse], error) {
+	return nil, connect_go.NewError(connect_go.CodeUnimplemented, errors.New("casablanca.StreamService.GetLinkedWallets is not implemented"))
 }
 
 func (UnimplementedStreamServiceHandler) Info(context.Context, *connect_go.Request[protocol.InfoRequest]) (*connect_go.Response[protocol.InfoResponse], error) {
