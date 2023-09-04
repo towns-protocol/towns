@@ -210,7 +210,13 @@ export function VList<T>(props: Props<T>) {
         if (!props.focusItem) {
             return
         }
-        if (!hasUserScrolledRef.current || props.focusItem.force) {
+
+        // if a focus element is sticky (highlighted items), the user needs to
+        // initiate a scroll to unblock, unless the `force` param is passed
+        const shouldFocus =
+            !focusItemRef.current?.sticky || hasUserScrolledRef.current || props.focusItem.force
+
+        if (shouldFocus) {
             focusItemRef.current = props.focusItem
             setHasUserScrolled(false)
         }
@@ -297,7 +303,7 @@ export function VList<T>(props: Props<T>) {
 
     // ---------------------------------------------------------------- viewport
 
-    const getScrollY = useCallback(() => {
+    const getScrollY = useEvent(() => {
         if (!scrollContainerRef.current) {
             return 0
         }
@@ -315,7 +321,7 @@ export function VList<T>(props: Props<T>) {
         }
 
         return scrollContainerRef.current.scrollTop
-    }, [itemCache, padding, vh])
+    })
 
     // ------------------------------------------------------------------- groups
 
@@ -387,8 +393,8 @@ export function VList<T>(props: Props<T>) {
 
         log('updateDOMHeight', contentHeightRef.current, content.style.height)
 
-        content.style.height = `${Math.round(contentHeightRef.current)}px`
-        container.style.height = `${Math.round(contentHeightRef.current)}px`
+        content.style.height = `${contentHeightRef.current}px`
+        container.style.height = `${contentHeightRef.current}px`
         const { height } = container.getBoundingClientRect()
         setViewportHeight(height)
     }, [getElements])
@@ -608,7 +614,7 @@ export function VList<T>(props: Props<T>) {
         const handleScroll = (scrollY: number, isInternalScroll?: boolean) => {
             isInternalScroll = isInternalScroll || internalScrollRef.current
 
-            info(`handleScroll() silent:${isInternalScroll}`)
+            info(`handleScroll() isInternalScroll:${isInternalScroll}`)
 
             debounceResetIdle()
 
@@ -717,6 +723,7 @@ export function VList<T>(props: Props<T>) {
             } else {
                 if (!hasUserScrolledRef.current) {
                     setHasUserScrolled(true)
+                    hasUserScrolledRef.current = true
                 }
                 if (!isScrollingRef.current) {
                     setIsScrolling(true)
@@ -1012,9 +1019,10 @@ const logKey = (key?: string) => {
  */
 
 const mainStyle: CSSProperties = {
-    display: 'flex',
-    flexDirection: 'column',
     position: 'relative',
+    display: 'flex',
+    contain: 'paint',
+    flexDirection: 'column',
     flexGrow: 1,
     overflow: 'hidden',
     width: '100%',
@@ -1022,6 +1030,7 @@ const mainStyle: CSSProperties = {
 
 const containerStyle: CSSProperties = {
     position: 'relative',
+    contain: 'paint',
     inset: 0,
     width: '100%',
     height: '100%',
@@ -1032,8 +1041,8 @@ const containerStyle: CSSProperties = {
 
 const contentStyle: CSSProperties = {
     position: 'absolute',
-    width: '100%',
     contain: 'paint',
+    width: '100%',
 }
 
 const offsetStyle: CSSProperties = {

@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useEffect, useState } from 'react'
 import { ListItem } from '../types'
 
 export const useFocusMessage = (
@@ -8,6 +8,21 @@ export const useFocusMessage = (
 ) => {
     const last = listItems[listItems.length - 1]
 
+    const lastKey = last?.id
+
+    const [focusItem, setFocusItem] = useState<FocusOption | undefined>(() =>
+        highlightId
+            ? {
+                  key: highlightId,
+                  align: 'start' as const,
+                  sticky: true,
+              }
+            : {
+                  key: lastKey,
+                  align: 'end' as const,
+              },
+    )
+
     const force =
         last?.type === 'message' &&
         last.item.event.sender.id === userId &&
@@ -15,23 +30,13 @@ export const useFocusMessage = (
         // sent by the user from the device.
         Date.now() - last.item.event.createdAtEpocMs < 1000 * 5
 
-    const lastKey = last?.id
-
-    const focusItem = useMemo<FocusOption | undefined>(
-        () =>
-            highlightId
-                ? {
-                      key: highlightId,
-                      align: 'start' as const,
-                  }
-                : {
-                      key: lastKey,
-                      align: 'end' as const,
-                      force,
-                  },
-
-        [lastKey, force, highlightId],
-    )
+    useEffect(() => {
+        setFocusItem({
+            key: lastKey,
+            align: 'end' as const,
+            force: force,
+        })
+    }, [lastKey, force])
 
     return { focusItem }
 }

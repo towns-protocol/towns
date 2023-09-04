@@ -16,4 +16,5 @@ type FocusOption = {
     key: string
     align: 'start' | 'end'
     force?: boolean
+    sticky?: boolean
 }
