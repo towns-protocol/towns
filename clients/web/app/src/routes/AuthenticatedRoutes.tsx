@@ -62,7 +62,7 @@ export const AuthenticatedRoutes = () => {
                                 >
                                     <Route
                                         path="replies/:messageId"
-                                        element={<SpacesChannelReplies parentRoute=".." />}
+                                        element={<SpacesChannelReplies parentRoute="../" />}
                                     />
                                     <Route
                                         path="profile/:profileId"
@@ -94,7 +94,7 @@ export const AuthenticatedRoutes = () => {
                             <Route path="channels/:channelSlug" element={<SpacesChannel />}>
                                 <Route
                                     path="replies/:messageId"
-                                    element={<SpacesChannelReplies parentRoute=".." />}
+                                    element={<SpacesChannelReplies parentRoute="../" />}
                                 />
                                 <Route path="profile/:profileId" element={<SpaceProfilePanel />} />
                                 <Route path="info" element={<InfoPanelWrapper />} />
