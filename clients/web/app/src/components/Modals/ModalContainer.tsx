@@ -100,7 +100,11 @@ const TouchFullScreenModalContainer = (props: TouchFullScreenModalContainerProps
 
 export const CenteredModalContainer = (props: Props) => {
     const { isTouch } = useDevice()
-    const minWidth: BoxProps['minWidth'] = isTouch ? '100%' : props.minWidth || '600'
+    const minWidth: BoxProps['minWidth'] = props.minWidth
+        ? props.minWidth
+        : isTouch
+        ? '100%'
+        : '600'
     const { onHide } = props
 
     useSafeEscapeKeyCancellation({ onEscape: onHide, capture: true })

@@ -23,6 +23,7 @@ import {
     Avatar,
     Box,
     BoxProps,
+    Button,
     FormRender,
     Icon,
     IconButton,
@@ -105,9 +106,9 @@ export const SpaceInfoPanel = () => {
     }, [client, data?.owner, matrixUrl, chainId])
 
     const { members } = useSpaceMembers()
-    const [activeModal, setActiveModal] = useState<'browse-channels' | 'members' | undefined>(
-        undefined,
-    )
+    const [activeModal, setActiveModal] = useState<
+        'browse-channels' | 'members' | 'confirm-leave' | undefined
+    >(undefined)
     const onHideBrowseChannels = useEvent(() => setActiveModal(undefined))
     const onShowBrowseChannels = useEvent(() => setActiveModal('browse-channels'))
 
@@ -197,7 +198,11 @@ export const SpaceInfoPanel = () => {
         navigate(`/${PATHS.SPACES}/${spaceID?.slug}/settings`)
     })
 
-    const onLeaveClick = useCallback(async () => {
+    const onLeaveClick = useCallback(() => {
+        setActiveModal('confirm-leave')
+    }, [setActiveModal])
+
+    const leaveTown = useCallback(async () => {
         if (!spaceID) {
             return
         }
@@ -502,6 +507,14 @@ export const SpaceInfoPanel = () => {
             {activeModal === 'members' && (
                 <MembersPageTouchModal onHide={() => setActiveModal(undefined)} />
             )}
+
+            {activeModal === 'confirm-leave' && (
+                <ConfirmLeaveTownModal
+                    spaceName={space?.name}
+                    onConfirm={leaveTown}
+                    onCancel={() => setActiveModal(undefined)}
+                />
+            )}
         </Panel>
     )
 }
@@ -519,5 +532,30 @@ const TownContractOpener = (props: { children?: React.ReactNode }) => {
                 <Box inset="md">{props.children}</Box>
             </Box>
         </Box>
+    )
+}
+
+const ConfirmLeaveTownModal = (props: {
+    onConfirm: () => void
+    onCancel: () => void
+    spaceName?: string
+}) => {
+    const { onConfirm, onCancel, spaceName } = props
+    const text = spaceName ? `Leave ${spaceName}?` : 'Leave town?'
+    return (
+        <ModalContainer minWidth="auto" onHide={onCancel}>
+            <Stack padding="sm" gap="lg" alignItems="center">
+                <Text fontWeight="strong">{text}</Text>
+                <Text>Are you sure you want to leave?</Text>
+                <Stack horizontal gap>
+                    <Button tone="level2" onClick={onCancel}>
+                        Cancel
+                    </Button>
+                    <Button tone="negative" onClick={onConfirm}>
+                        Confirm
+                    </Button>
+                </Stack>
+            </Stack>
+        </ModalContainer>
     )
 }
