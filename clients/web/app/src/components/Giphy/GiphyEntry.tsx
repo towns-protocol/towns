@@ -82,6 +82,8 @@ const GiphyCardOpener = (props: Props) => {
                 <IconButton
                     icon="gif"
                     size="square_sm"
+                    tooltip="Giphy"
+                    tooltipOptions={{ placement: 'vertical', immediate: true }}
                     onClick={(e) => onClick(e, clickCb)}
                     {...rest}
                 />

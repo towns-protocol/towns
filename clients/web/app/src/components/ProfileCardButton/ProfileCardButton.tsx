@@ -36,7 +36,7 @@ export const ProfileCardButton = () => {
                 padding="sm"
                 rounded="sm"
                 tooltip={isSpaceCreateRoute ? undefined : 'Profile Info'}
-                tooltipOptions={{ placement: 'horizontal' }}
+                tooltipOptions={{ placement: 'horizontal', immediate: true }}
                 onClick={!isSpaceCreateRoute && hasAvatar ? onClick : undefined}
             >
                 {hasAvatar ? (

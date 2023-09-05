@@ -78,7 +78,13 @@ export const RichTextBottomToolbar = (props: Props) => {
                 </>
             ) : (
                 <>
-                    <IconButton icon="text" active={false} onClick={onFormattingButtonClicked} />
+                    <IconButton
+                        icon="text"
+                        active={false}
+                        tooltip="Formatting"
+                        tooltipOptions={{ placement: 'vertical', immediate: true }}
+                        onClick={onFormattingButtonClicked}
+                    />
                     {!editing ? (
                         <GiphyEntryDesktop
                             threadId={props.threadId}

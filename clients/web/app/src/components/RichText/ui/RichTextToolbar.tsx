@@ -157,32 +157,73 @@ export const RichTextToolbar = (props: { focused: boolean; onAddLinkClick: () =>
             zIndex="tooltips"
             onPointerDown={onToolbarPointerDown}
         >
-            <IconButton opaque active={isBold} icon="bold" onClick={onBoldClick} />
-            <IconButton opaque active={isItalic} icon="italic" onClick={onItalicClick} />
+            <IconButton
+                opaque
+                active={isBold}
+                icon="bold"
+                tooltip="Bold"
+                tooltipOptions={{ placement: 'vertical', immediate: true }}
+                onClick={onBoldClick}
+            />
+            <IconButton
+                opaque
+                active={isItalic}
+                icon="italic"
+                tooltip="Italic"
+                tooltipOptions={{ placement: 'vertical', immediate: true }}
+                onClick={onItalicClick}
+            />
 
             <IconButton
                 opaque
                 active={isStrikethrough}
                 icon="strikethrough"
+                tooltip="Strikethrough"
+                tooltipOptions={{ placement: 'vertical', immediate: true }}
                 onClick={onStrikethroughClick}
             />
-            <IconButton opaque active={isLink} icon="link" onClick={onLinkClick} />
+            <IconButton
+                opaque
+                active={isLink}
+                icon="link"
+                tooltip="Link"
+                tooltipOptions={{ placement: 'vertical', immediate: true }}
+                onClick={onLinkClick}
+            />
             <Divider />
             <IconButton
                 opaque
                 active={isNumberedList}
                 icon="numberedlist"
+                tooltip="Ordered list"
+                tooltipOptions={{ placement: 'vertical', immediate: true }}
                 onClick={onNumberedListClick}
             />
             <IconButton
                 opaque
                 active={isBulletList}
                 icon="bulletedlist"
+                tooltip="Bulleted list"
+                tooltipOptions={{ placement: 'vertical', immediate: true }}
                 onClick={onBulletListClick}
             />
             <Divider />
-            <IconButton opaque active={isCode} icon="code" onClick={onCodeClick} />
-            <IconButton opaque active={isCodeBlock} icon="codeBlock" onClick={onCodeBlockClick} />
+            <IconButton
+                opaque
+                active={isCode}
+                tooltip="Code"
+                tooltipOptions={{ placement: 'vertical', immediate: true }}
+                icon="code"
+                onClick={onCodeClick}
+            />
+            <IconButton
+                opaque
+                active={isCodeBlock}
+                icon="codeBlock"
+                tooltip="Code block"
+                tooltipOptions={{ placement: 'vertical', immediate: true }}
+                onClick={onCodeBlockClick}
+            />
         </Stack>
     )
 }
