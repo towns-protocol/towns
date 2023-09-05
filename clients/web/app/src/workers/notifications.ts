@@ -178,7 +178,7 @@ export function handleNotifications(worker: ServiceWorkerGlobalScope) {
 }
 
 function generateNewNotificationMessage(
-    townName: string | undefined,
+    townName: string,
     channelName: string | undefined,
     sender: string | undefined,
 ) {
@@ -188,23 +188,23 @@ function generateNewNotificationMessage(
             body = `@${sender} posted a new message in #${channelName}`
             break
         case stringHasValue(channelName) && !stringHasValue(sender):
-            body = `You've received a new message in #${channelName}`
+            body = `There's a new message in #${channelName}`
             break
         case !stringHasValue(channelName) && stringHasValue(sender):
-            body = `@${sender} posted a new message`
+            body = `@${sender} posted a new message in ${townName}`
             break
         default:
-            body = `You've received a new message`
+            body = `There's a new message in ${townName}`
             break
     }
     return {
-        title: townName ?? 'Town',
+        title: townName,
         body,
     }
 }
 
 function generateMentionedMessage(
-    townName: string | undefined,
+    townName: string,
     channelName: string | undefined,
     sender: string | undefined,
 ) {
@@ -214,43 +214,43 @@ function generateMentionedMessage(
             body = `@${sender} mentioned you in #${channelName}`
             break
         case stringHasValue(channelName) && !stringHasValue(sender):
-            body = `You were mentioned in #${channelName}`
+            body = `You got mentioned in #${channelName}`
             break
         case !stringHasValue(channelName) && stringHasValue(sender):
-            body = `@${sender} mentioned you`
+            body = `@${sender} mentioned you in ${townName}`
             break
         default:
-            body = 'You were mentioned'
+            body = `You got mentioned in ${townName}`
             break
     }
     return {
-        title: townName ?? 'Town',
+        title: townName,
         body,
     }
 }
 
 function generateReplyToMessage(
-    townName: string | undefined,
+    townName: string,
     channelName: string | undefined,
     sender: string | undefined,
 ) {
     let body = ''
     switch (true) {
         case stringHasValue(channelName) && stringHasValue(sender):
-            body = `@${sender} replied to a thread in #${channelName} that you are participating in`
+            body = `@${sender} replied to a thread in #${channelName} that you're participating in`
             break
         case stringHasValue(channelName) && !stringHasValue(sender):
-            body = `A thread in #${channelName} that you are participating in has a new reply`
+            body = `A thread in #${channelName} that you're participating in has a new reply`
             break
         case !stringHasValue(channelName) && stringHasValue(sender):
-            body = `@${sender} replied to a thread that you are participating in`
+            body = `@${sender} replied to a thread that you're a part of in ${townName}`
             break
         default:
-            body = 'A thread you are participating in has a new reply'
+            body = `A thread you're a part of in ${townName} has a new reply`
             break
     }
     return {
-        title: townName ?? 'Town',
+        title: townName,
         body,
     }
 }
@@ -277,6 +277,15 @@ async function getNotificationContent(notification: AppNotification): Promise<{
         senderName = sender?.name
     } catch (error) {
         console.error('sw: error fetching space/channel name from idb', error)
+    }
+
+    // if this device doesn't have a town name, they haven't synced this town at all yet.
+    // show them a message to open the app to sync this town
+    if (!townName) {
+        return {
+            title: "Let's sync!",
+            body: "There's a new message in one of your towns. Open the app to sync with it.",
+        }
     }
 
     switch (notification.notificationType) {

@@ -19,6 +19,7 @@ import { useStore } from 'store/store'
 import { RegisterPushSubscription } from '@components/RegisterPushSubscription/RegisterPushSubscription'
 import { AllRoutes } from 'AllRoutes'
 import { wagmiConfig } from 'wagmiConfig'
+import { ServiceWorkerSpacesSyncer } from 'workers/ServiceWorkerSpaceSyncer'
 
 const DebugBar = React.lazy(() => import('@components/DebugBar/DebugBar'))
 
@@ -110,6 +111,7 @@ export const App = () => {
                 )}
                 <Notifications />
                 <ReloadPrompt />
+                <ServiceWorkerSpacesSyncer />
             </>
         </ZionContextProvider>
     )

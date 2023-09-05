@@ -2,12 +2,11 @@ import capitalize from 'lodash/capitalize'
 import React, { useEffect, useMemo } from 'react'
 import { Outlet, useMatch } from 'react-router'
 import { matchPath, useLocation } from 'react-router-dom'
-import { AutojoinChannels, SpaceContextProvider, SpaceData, useSpaceMembers } from 'use-zion-client'
+import { AutojoinChannels, SpaceContextProvider, SpaceData } from 'use-zion-client'
 import { PATHS } from 'routes'
 import { useStore } from 'store/store'
 import { useSetDocTitle } from 'hooks/useDocTitle'
 import { useContractAndServerSpaceData } from 'hooks/useContractAndServerSpaceData'
-import { ServiceWorkerMessageType } from '../workers/types.d'
 
 const createSpaceTitle = (spaceName?: string, childLabel?: string) => {
     return [childLabel, spaceName].filter(Boolean).concat('TOWNS').join(' - ')
@@ -75,7 +74,6 @@ const SpaceContext = () => {
         <>
             <AutojoinChannels />
             <Outlet />
-            {space && <SpaceServiceWorkerMessenger space={space} />}
         </>
     )
 }
@@ -121,24 +119,4 @@ const useSpaceRouteMatcher = (space: SpaceData | undefined) => {
             }
         }
     }, [locationSearch, pathName, space])
-}
-
-// Send space/membership data to service worker when space loads
-function SpaceServiceWorkerMessenger({ space }: { space: SpaceData }) {
-    const members = useSpaceMembers()
-
-    useEffect(() => {
-        navigator.serviceWorker.controller?.postMessage({
-            type: ServiceWorkerMessageType.SpaceMetadata,
-            space,
-        })
-    }, [space])
-
-    useEffect(() => {
-        navigator.serviceWorker.controller?.postMessage({
-            type: ServiceWorkerMessageType.SpaceMembers,
-            membersMap: members.membersMap,
-        })
-    }, [members.membersMap, space])
-    return null
 }
