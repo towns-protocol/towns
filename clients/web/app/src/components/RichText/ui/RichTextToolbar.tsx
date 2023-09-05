@@ -16,6 +16,7 @@ import {
     REMOVE_LIST_COMMAND,
 } from '@lexical/list'
 import { $createCodeNode, $isCodeNode } from '@lexical/code'
+import { $createQuoteNode, $isQuoteNode } from '@lexical/rich-text'
 import { Box, IconButton, Stack } from '@ui'
 
 export const RichTextToolbar = (props: { focused: boolean; onAddLinkClick: () => void }) => {
@@ -30,6 +31,7 @@ export const RichTextToolbar = (props: { focused: boolean; onAddLinkClick: () =>
     const [isCodeBlock, setIsCodeBlock] = useState(false)
     const [isBulletList, setIsBulletList] = useState(false)
     const [isNumberedList, setIsNumberedList] = useState(false)
+    const [isBlockQuote, setIsBlockQuote] = useState(false)
 
     const updateToolbar = useCallback(() => {
         editor.getEditorState().read(() => {
@@ -71,6 +73,8 @@ export const RichTextToolbar = (props: { focused: boolean; onAddLinkClick: () =>
             } else {
                 setIsCodeBlock(false)
             }
+
+            setIsBlockQuote($isQuoteNode(parent))
 
             const grandParent = parent?.getParent()
             if ($isListNode(grandParent)) {
@@ -132,6 +136,18 @@ export const RichTextToolbar = (props: { focused: boolean; onAddLinkClick: () =>
                     $setBlocksType(selection, () => $createParagraphNode())
                 } else {
                     $setBlocksType(selection, () => $createCodeNode())
+                }
+            }
+        })
+    }
+    const onBlockQuoteClick = (e: React.MouseEvent) => {
+        editor.update(() => {
+            const selection = $getSelection()
+            if ($isRangeSelection(selection)) {
+                if (isBlockQuote) {
+                    $setBlocksType(selection, () => $createParagraphNode())
+                } else {
+                    $setBlocksType(selection, () => $createQuoteNode())
                 }
             }
         })
@@ -206,6 +222,15 @@ export const RichTextToolbar = (props: { focused: boolean; onAddLinkClick: () =>
                 tooltip="Bulleted list"
                 tooltipOptions={{ placement: 'vertical', immediate: true }}
                 onClick={onBulletListClick}
+            />
+            <Divider />
+            <IconButton
+                opaque
+                tooltip="Block quote"
+                tooltipOptions={{ placement: 'vertical', immediate: true }}
+                active={isBlockQuote}
+                icon="blockquote"
+                onClick={onBlockQuoteClick}
             />
             <Divider />
             <IconButton

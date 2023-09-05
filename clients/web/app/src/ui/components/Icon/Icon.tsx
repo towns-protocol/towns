@@ -123,6 +123,16 @@ export const BellIcon = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => 
     </svg>
 ))
 
+export const BlockQuoteIcon = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" {...props} ref={ref}>
+        <path
+            fillRule="evenodd"
+            clipRule="evenodd"
+            d="M5 4C5 3.44772 4.55229 3 4 3C3.44772 3 3 3.44772 3 4V20C3 20.5523 3.44772 21 4 21C4.55228 21 5 20.5523 5 20L5 4ZM7 5C7 4.44772 7.44772 4 8 4H20C20.5523 4 21 4.44772 21 5C21 5.55228 20.5523 6 20 6H8C7.44772 6 7 5.55228 7 5ZM8 11C7.44772 11 7 11.4477 7 12C7 12.5523 7.44772 13 8 13H20C20.5523 13 21 12.5523 21 12C21 11.4477 20.5523 11 20 11H8ZM8 18C7.44772 18 7 18.4477 7 19C7 19.5523 7.44772 20 8 20H15.9756C16.5279 20 16.9756 19.5523 16.9756 19C16.9756 18.4477 16.5279 18 15.9756 18H8Z"
+            fill="currentColor"
+        />
+    </svg>
+))
 export const BoldIcon = forwardRef<SVGSVGElement, SVGIconProps>((props, ref) => (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" {...props} ref={ref}>
         <path
@@ -1247,6 +1257,7 @@ const iconMap = {
     at: AtIcon,
     back: BackIcon,
     bell: BellIcon,
+    blockquote: BlockQuoteIcon,
     bold: BoldIcon,
     bottomAlignedEllipsis: BottomAlignedEllipsis,
     bulletedlist: BulletedListIcon,

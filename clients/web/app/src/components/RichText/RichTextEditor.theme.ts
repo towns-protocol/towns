@@ -14,6 +14,7 @@ import {
     ol3,
     ol4,
     paragraph,
+    quote,
     root,
     ul,
     ul1,
@@ -78,10 +79,14 @@ export const theme: EditorThemeClasses = {
         url: tokens.operator,
         variable: tokens.variable,
     },
-    quote: atoms({
-        paddingLeft: 'sm',
-        borderLeft: 'quote',
-    }),
+    quote: clsx([
+        atoms({
+            paddingLeft: 'sm',
+            borderLeft: 'strong',
+            fontStyle: 'italic',
+        }),
+        quote,
+    ]),
     bold: atoms({
         fontWeight: 'strong',
     }),
