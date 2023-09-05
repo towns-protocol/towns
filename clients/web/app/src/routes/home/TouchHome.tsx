@@ -37,6 +37,7 @@ import { BlurredBackground } from '@components/TouchLayoutHeader/BlurredBackgrou
 import { VisualViewportContextProvider } from '@components/VisualViewportContext/VisualViewportContext'
 import { useChannelsWithMentionCountsAndUnread } from 'hooks/useChannelsWithMentionCountsAndUnread'
 import { PersistAndFadeWelcomeLogo } from 'routes/layouts/WelcomeLayout'
+import { vars } from 'ui/styles/vars.css'
 import { TouchTabBarLayout } from '../layouts/TouchTabBarLayout'
 import { ChannelItem } from '../AllChannelsList/AllChannelsList'
 import { CheckValidSpaceOrInvite } from './CheckValidSpaceOrInvite'
@@ -141,7 +142,11 @@ export const TouchHome = () => {
                                     alignItems="center"
                                     paddingY="xs"
                                     gap="sm"
-                                    animate={{ caretColor: caretVisible ? 'auto' : 'transparent' }}
+                                    animate={{
+                                        caretColor: caretVisible
+                                            ? vars.color.foreground.accent
+                                            : 'rgba(0,0,0,0)',
+                                    }}
                                     transition={transition}
                                     key="search_header"
                                 >
