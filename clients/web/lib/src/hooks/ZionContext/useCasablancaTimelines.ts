@@ -72,6 +72,7 @@ export function useCasablancaTimelines(casablancaClient: CasablancaClient | unde
         ) => {
             if (kind === 'channelContent' || kind === 'spaceContent') {
                 streamIds.add(streamId)
+
                 const timelineEvents = messages.map((message) => toEvent(message, userId))
                 setState.initializeRoom(userId, streamId, [])
                 onStreamEvents(streamId, timelineEvents)
@@ -105,6 +106,10 @@ export function useCasablancaTimelines(casablancaClient: CasablancaClient | unde
         const onEventDecrypted = (riverEvent: object, err: Error | undefined) => {
             if (err) {
                 console.log('$$$ useCasablancaTimelines onEventDecrypted', err)
+                console.log(
+                    '$$$ useCasablancaTimelines onEventDecrypted this device key',
+                    casablancaClient?.cryptoBackend?.olmDevice?.deviceCurve25519Key,
+                )
             }
             const message = riverEvent as RiverEvent
             if (message.getStreamType() === 'channelPayload') {
@@ -132,7 +137,11 @@ export function useCasablancaTimelines(casablancaClient: CasablancaClient | unde
             ) {
                 streamIds.add(stream.streamId)
                 timelineEvents.set(stream.streamId, [])
+                console.log('$$$ useCasablancaTimelines load streamId', stream.streamId)
                 stream.view.timeline.forEach((event) => {
+                    if (stream.view.contentKind === 'channelContent') {
+                        casablancaClient.emit('channelTimelineEvent', stream.streamId, event)
+                    }
                     const parsedEvent = toEvent(event, casablancaClient.userId)
                     timelineEvents.get(stream.streamId)?.push(parsedEvent)
                 })
@@ -256,6 +265,10 @@ function toTownsContent_fromRiverEvent(eventId: string, message: RiverEvent): To
     }
     // return decryption failures
     if (message.isDecryptionFailure()) {
+        console.log(
+            `$$$ useCasablancaTimelines decryption failure`,
+            message.getClearContent_ChannelMessage(),
+        )
         return {
             content: { kind: ZTEvent.RoomMessageEncrypted } satisfies RoomMessageEncryptedEvent,
         }
@@ -533,6 +546,10 @@ function toTownsContent_ChannelPayload_Message(
     description: string,
 ): TownsContentResult {
     if (isCiphertext(payload.text)) {
+        console.log(
+            `$$$ useCasablancaTimelines toTownsContent_ChannelPayload_Message decryption failure`,
+            payload.sessionId,
+        )
         return {
             // if payload is an EncryptedData message, than it is encrypted content kind
             content: { kind: ZTEvent.RoomMessageEncrypted } satisfies RoomMessageEncryptedEvent,

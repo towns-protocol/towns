@@ -8,6 +8,7 @@ import {
     EncryptedEventStreamTypes,
     make_ToDevice_KeyRequest,
     IndexedDBCryptoStore,
+    userIdFromAddress,
 } from '@river/sdk'
 import { ToDeviceOp, KeyResponseKind, MegolmSession, ToDeviceMessage } from '@river/proto'
 import { MEGOLM_ALGORITHM } from '@river/sdk'
@@ -31,7 +32,7 @@ const MAX_EVENTS_PER_REQUEST = 64
 /// time betwen debounced calls to look for keys
 const TIME_BETWEEN_LOOKING_FOR_KEYS_MS = 250
 /// time before we bug a user again for keys
-const TIME_BETWEEN_USER_KEY_REQUESTS_MS = 1000 * 60 * 5
+const TIME_BETWEEN_USER_KEY_REQUESTS_MS = 1000 * 60
 /// time between processing to-device events
 const DELAY_BETWEEN_PROCESSING_TO_DEVICE_EVENTS_MS = 10
 
@@ -156,9 +157,10 @@ export class RiverDecryptionExtension extends (EventEmitter as new () => TypedEm
         // listen for key requests
         client.on('toDeviceMessage', this.onToDeviceEvent)
 
-        // listen for channel message events
+        // listen for channel timeline events
+        client.on('channelTimelineEvent', this.onChannelTimelineEvent)
 
-        // todo: listen for timeline events instead
+        // listen for new channel message events
         client.on('channelNewMessage', this.onChannelEvent)
 
         // todo: listen for device update events
@@ -172,6 +174,7 @@ export class RiverDecryptionExtension extends (EventEmitter as new () => TypedEm
         this.throttledStartLookingForKeys = null
         // stop listening for key requests
         this.client.off('toDeviceMessage', this.onToDeviceEvent)
+        this.client.off('channelTimelineEvent', this.onChannelTimelineEvent)
         this.client.off('channelNewMessage', this.onChannelEvent)
         this.client.off('eventDecrypted', this.onDecryptedEvent)
         this.receivedToDeviceProcessorMap = {}
@@ -243,8 +246,42 @@ export class RiverDecryptionExtension extends (EventEmitter as new () => TypedEm
         }
     }
 
+    private onChannelTimelineEvent = (streamId: string, event: ParsedEvent) => {
+        ;(async () => {
+            const riverEvent = new RiverEvent(
+                {
+                    channel_id: streamId,
+                    payload: {
+                        parsed_event: event.event.payload,
+                        creator_user_id: userIdFromAddress(event.event.creatorAddress),
+                        hash_str: event.hashStr,
+                        stream_id: streamId,
+                    },
+                },
+                this.client,
+                event,
+            )
+            if (riverEvent.shouldAttemptDecryption()) {
+                try {
+                    await this.client.decryptEventIfNeeded(riverEvent)
+                    if (riverEvent.isDecryptionFailure()) {
+                        console.log(
+                            'CDE::onChannelTimelineEvent - decryption failure',
+                            riverEvent.getClearContent_ChannelMessage(),
+                        )
+                    }
+                } catch (e) {
+                    console.error('error decrypting channel timeline event', e)
+                }
+            }
+        })().catch((e) => {
+            console.error('CDE::onChannelTimelineEvent - error decrypting event', e)
+        })
+    }
+
     private onChannelEvent = (_streamId: string, event: RiverEvent) => {
         ;(async () => {
+            console.log('CDE::onChannelEvent - new channel event for streamId', _streamId)
             if (event.shouldAttemptDecryption()) {
                 try {
                     await this.client.decryptEventIfNeeded(event)
@@ -263,10 +300,20 @@ export class RiverDecryptionExtension extends (EventEmitter as new () => TypedEm
             if (!op) {
                 throw new Error('CDE::onToDeviceEvent - no event type found')
             }
+            const intendedDeviceKey = event.getWireContentToDevice().content.device_key
+            if (intendedDeviceKey !== this.client.olmDevice.deviceCurve25519Key) {
+                console.log(
+                    'CDE::onToDeviceEvent - not intended for this device, not attempting to decrypt',
+                    intendedDeviceKey,
+                )
+                return
+            }
             try {
                 await this.client.decryptEventIfNeeded(event)
             } catch (e) {
                 console.error('error decrypting to-device event', e)
+                // todo: we should send a failure response here to sender
+                return
             }
             if (Object.keys(this.receivedToDeviceProcessorMap).includes(op)) {
                 this.receivedToDeviceEventQueue.enqueue(event)
@@ -412,7 +459,10 @@ export class RiverDecryptionExtension extends (EventEmitter as new () => TypedEm
                 now - (roomRecord.requests?.[memberId]?.timestamp ?? 0) >
                 TIME_BETWEEN_USER_KEY_REQUESTS_MS,
         )
-
+        console.log(
+            `CDE:_startLookingForKeys - original eligible member length`,
+            eligibleMemberIds.length,
+        )
         if (!eligibleMemberIds.length) {
             const userWithNewDevices = roomMembers.find(async (memberId) => {
                 const seenDeviceIds = roomRecord.requests?.[memberId]?.toDeviceIds ?? []
@@ -564,6 +614,11 @@ export class RiverDecryptionExtension extends (EventEmitter as new () => TypedEm
                 ToDeviceOp.TDO_KEY_REQUEST,
             )
             console.log('CDE::_startLookingForKeys - key request sent')
+            console.log('CDE::_startLookingForKeys - key request sent to devices', {
+                deviceInfo: devicesInfo,
+                thisDeviceKey: this.client.olmDevice.deviceCurve25519Key,
+                thisDeviceid: this.client.deviceId,
+            })
         } catch (e) {
             console.error('CDE::_startLookingForKeys - error sending request', e)
             this.clearKeyRequest(channelId, requesteeId, <Error>e)
@@ -585,7 +640,13 @@ export class RiverDecryptionExtension extends (EventEmitter as new () => TypedEm
             console.log('CDE::onKeyRequest: request from self.')
         }
         const requestedSessions: [senderKey: string, sessionId: string][] = [[senderKey, sessionId]]
-        console.log('CDE::onKeyRequest', { spaceId, channelId, fromUserId })
+        console.log('CDE::onKeyRequest recieved', {
+            spaceId,
+            channelId,
+            fromUserId,
+            senderKey,
+            sessionId,
+        })
         // check with the space contract to see if this user is entitled
         // jterzis note: userId in Casablanca for now equals ethereum identitifying address
         const isEntitled = await this.delegate.isEntitled(
