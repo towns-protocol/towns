@@ -20,6 +20,8 @@
         "csb:list:filter-without-sdk": "yarn csb:list | grep -v sdk | xargs -I arg echo -n \"--filter arg \"",
         "csb:list:include": "yarn csb:list | xargs -I arg echo -n \"--include arg \"",
         "csb:mainnet": "./casablanca/scripts/start_mainnet.sh",
+        "csb:multi": "./casablanca/scripts/launch_multi.sh",
+        "csb:multi:no-entitlements": "./casablanca/scripts/launch_multi.sh --disable_entitlements",
         "csb:node": "./casablanca/scripts/start_node.sh",
         "csb:prettier:check": "prettier --check ./casablanca",
         "csb:prettier:fix": "prettier --write ./casablanca",
