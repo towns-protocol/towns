@@ -8,6 +8,7 @@ import { PATHS } from 'routes'
 import { useShowHasUnreadBadgeForCurrentSpace } from 'hooks/useSpaceUnreadsIgnoreMuted'
 import { useInstallPWAPrompt } from 'hooks/useInstallPWAPrompt'
 import { useVisualViewportContext } from '../VisualViewportContext/VisualViewportContext'
+import { TouchScrollToTopScrollId } from './TouchScrollToTopScrollId'
 
 export const TouchTabBar = () => {
     const space = useSpaceData()
@@ -44,6 +45,7 @@ export const TouchTabBar = () => {
                         </Box>
                     )}
                     to={`/${PATHS.SPACES}/${space.id.slug}/`}
+                    scrollToTopId={TouchScrollToTopScrollId.HomeTabScrollId}
                     highlightPattern={`${PATHS.SPACES}/:spaceId/${PATHS.CHANNELS}/:channelId/*`}
                 />
                 <TabBarItem
@@ -54,12 +56,14 @@ export const TouchTabBar = () => {
                             {hasUnreadThreads && <Dot position="topRight" />}
                         </Box>
                     )}
+                    scrollToTopId={TouchScrollToTopScrollId.ThreadsTabScrollId}
                     to={`/${PATHS.SPACES}/${space.id.slug}/${PATHS.THREADS}`}
                 />
                 <TabBarItem
                     title="Mentions"
                     icon={() => <Icon type="at" size="toolbar_icon" />}
                     to={`/${PATHS.SPACES}/${space.id.slug}/${PATHS.MENTIONS}`}
+                    scrollToTopId={TouchScrollToTopScrollId.MentionsTabScrollId}
                 />
                 <TabBarItem
                     title="You"
@@ -68,6 +72,7 @@ export const TouchTabBar = () => {
                             <Avatar size="toolbar_icon" userId={userId} />
                         </Box>
                     )}
+                    scrollToTopId={TouchScrollToTopScrollId.ProfileTabScrollId}
                     to={`/${PATHS.SPACES}/${space.id.slug}/${PATHS.PROFILE}/me`}
                 />
             </Stack>
@@ -80,18 +85,16 @@ type TabBarItemProps = {
     title: string
     to: string
     highlightPattern?: string
+    scrollToTopId: TouchScrollToTopScrollId
     icon: (highlighted: boolean) => React.ReactNode
 }
 
 const TabBarItem = (props: TabBarItemProps) => {
-    const { title, icon, to } = props
+    const { title, icon, to, scrollToTopId } = props
     const location = useLocation()
 
     const resolved = useResolvedPath(to)
     const navigate = useNavigate()
-    const onClick = useCallback(() => {
-        navigate(to)
-    }, [navigate, to])
 
     const isHighlighted = useMemo(() => {
         // if "to" matches location.pathname exactly, it's highlighted
@@ -106,6 +109,15 @@ const TabBarItem = (props: TabBarItemProps) => {
                   decodeURIComponent(resolved.pathname),
               )
     }, [location.pathname, props.highlightPattern, resolved.pathname])
+
+    const onClick = useCallback(() => {
+        if (location.pathname === to) {
+            const element = document.getElementById(scrollToTopId)
+            element?.scrollTo({ top: 0, behavior: 'smooth' })
+            return
+        }
+        navigate(to)
+    }, [navigate, to, location, scrollToTopId])
 
     return (
         <Stack

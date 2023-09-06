@@ -37,6 +37,7 @@ import { BlurredBackground } from '@components/TouchLayoutHeader/BlurredBackgrou
 import { VisualViewportContextProvider } from '@components/VisualViewportContext/VisualViewportContext'
 import { useChannelsWithMentionCountsAndUnread } from 'hooks/useChannelsWithMentionCountsAndUnread'
 import { PersistAndFadeWelcomeLogo } from 'routes/layouts/WelcomeLayout'
+import { TouchScrollToTopScrollId } from '@components/TouchTabBar/TouchScrollToTopScrollId'
 import { vars } from 'ui/styles/vars.css'
 import { TouchTabBarLayout } from '../layouts/TouchTabBarLayout'
 import { ChannelItem } from '../AllChannelsList/AllChannelsList'
@@ -175,6 +176,7 @@ export const TouchHome = () => {
                                     transition={transition}
                                     variants={variants}
                                     key="results"
+                                    id={TouchScrollToTopScrollId.HomeTabScrollId}
                                     onScroll={onScroll}
                                 >
                                     {!isLoadingChannels ? (

@@ -20,6 +20,7 @@ import { NoJoinedChannelsFallback } from '@components/NoJoinedChannelsFallback'
 import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinner'
 import { TouchNavBar } from '@components/TouchNavBar/TouchNavBar'
 import { useSpaceChannels } from 'hooks/useSpaceChannels'
+import { TouchScrollToTopScrollId } from '@components/TouchTabBar/TouchScrollToTopScrollId'
 import { CentralPanelLayout } from './layouts/CentralPanelLayout'
 
 export const SpaceMentions = () => {
@@ -56,7 +57,7 @@ export const SpaceMentions = () => {
     return (
         <CentralPanelLayout>
             {isTouch && <TouchNavBar>Mentions</TouchNavBar>}
-            <Stack scroll height="100%">
+            <Stack scroll height="100%" id={TouchScrollToTopScrollId.MentionsTabScrollId}>
                 {mentions.length ? (
                     <Stack minHeight="forceScroll">
                         <Stack
