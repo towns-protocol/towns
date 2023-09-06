@@ -245,9 +245,9 @@ export async function ensureOlmSessionsForDevices(
                 continue
             }
             const deviceFbkKeys: FallbackKeys[] = []
-            for (const fbk of fbksByDevice) {
-                if (fbk[deviceId]) {
-                    deviceFbkKeys.push(fbk[deviceId])
+            for (const fb of fbksByDevice) {
+                if (fb[deviceId]) {
+                    deviceFbkKeys.push(fb[deviceId])
                 }
             }
             // find first fallback key that matches our desired algorithm
@@ -261,6 +261,9 @@ export async function ensureOlmSessionsForDevices(
                         if (!fallbackKey) {
                             fallbackKey = {} as FallbackKey
                         }
+                        log(
+                            `[ensureOlmSessionsForDevices]:: Found fallback key match for userId:deviceId: ${userId}:${deviceId}, key: ${matchingKey.key}`,
+                        )
                         fallbackKey['key'] = matchingKey.key
                         fallbackKey['signatures'] = {
                             [deviceId]: matchingKey.signatures,
@@ -313,19 +316,8 @@ async function _verifyKeyAndStartSession(
     deviceInfo: DeviceInfo,
 ): Promise<string | null> {
     const deviceId = deviceInfo.deviceId
-    try {
-        await verifySignature(olmDevice, fallbackKey, userId, deviceId, deviceInfo.getFingerprint())
-    } catch (e) {
-        log(
-            'Unable to verify signature on fallback key for device ' +
-                userId +
-                ':' +
-                deviceId +
-                ':',
-            e,
-        )
-    }
-
+    // todo: verify signature on fallback key prior to creating outbound session
+    // https://linear.app/hnt-labs/issue/HNT-2359/sign-curve25519-key-with-rdk-and-verify-signature-during-olm-handshake
     let sid
     try {
         sid = await olmDevice.createOutboundSession(deviceInfo.getIdentityKey(), fallbackKey.key)
@@ -462,6 +454,9 @@ export async function encryptMessageForDevice(
         deviceKey,
         sessionId,
         JSON.stringify(payload),
+    )
+    console.log(
+        `[encryptMessageForDevice]:: Using Olm session ${sessionId} for target device ${deviceKey}`,
     )
 }
 
