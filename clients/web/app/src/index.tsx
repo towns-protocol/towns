@@ -4,6 +4,7 @@ import { init as SentryInit, Replay as SentryReplay } from '@sentry/react'
 import { BrowserTracing } from '@sentry/browser'
 import React from 'react'
 import { createRoot } from 'react-dom/client'
+import { datadogLogs } from '@datadog/browser-logs'
 import { Main } from 'Main'
 import { env } from 'utils'
 
@@ -54,6 +55,24 @@ if (env.IS_DEV) {
         integrations: [new SentryReplay(), new BrowserTracing()],
         release: env.VITE_APP_RELEASE_VERSION,
     })
+}
+
+if (
+    env.VITE_DD_CLIENT_TOKEN &&
+    env.VITE_PRIMARY_PROTOCOL === 'casablanca' &&
+    !!env.VITE_DD_SERVICE_NAME
+) {
+    datadogLogs.init({
+        clientToken: env.VITE_DD_CLIENT_TOKEN,
+        service: env.VITE_DD_SERVICE_NAME,
+        forwardConsoleLogs: 'all',
+        forwardErrorsToLogs: true,
+        sessionSampleRate: 100,
+        // TODO: get the env name: https://linear.app/hnt-labs/issue/HNT-2357/we-should-have-a-canonical-accessor-for-environment-name-instead-of
+    })
+    console.info("datadogLogs initialized with service name: '" + env.VITE_DD_SERVICE_NAME + "'")
+} else {
+    console.info('datadogLogs not initialized')
 }
 
 const node = document.getElementById('root')

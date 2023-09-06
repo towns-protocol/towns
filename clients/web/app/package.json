@@ -18,6 +18,7 @@
     "dependencies": {
         "@amplitude/analytics-browser": "1.8.0",
         "@capsizecss/vanilla-extract": "^1.0.0",
+        "@datadog/browser-logs": "^4.48.1",
         "@emoji-mart/data": "^1.1.2",
         "@emoji-mart/react": "^1.1.1",
         "@giphy/js-fetch-api": "^4.4.0",

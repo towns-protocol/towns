@@ -2709,6 +2709,27 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@datadog/browser-core@npm:4.48.1":
+  version: 4.48.1
+  resolution: "@datadog/browser-core@npm:4.48.1"
+  checksum: c2638cdc562609b775cd0181fddec3516a7a4e3ec253f7f89529c96a72bfd40ad36428a11cb9076763e82f2671491a1d4fc5e04e3ae6bc2a1be8f8cfb49bc4f1
+  languageName: node
+  linkType: hard
+
+"@datadog/browser-logs@npm:^4.48.1":
+  version: 4.48.1
+  resolution: "@datadog/browser-logs@npm:4.48.1"
+  dependencies:
+    "@datadog/browser-core": 4.48.1
+  peerDependencies:
+    "@datadog/browser-rum": 4.48.1
+  peerDependenciesMeta:
+    "@datadog/browser-rum":
+      optional: true
+  checksum: 3d8b3f6f2b032b075397ab821dabb32148c037da07865f468c933f075cbbed34a169fb81de79eef5719d77d35244f9d51da546d70a4044b0d8a94d325b7755a2
+  languageName: node
+  linkType: hard
+
 "@effect/data@npm:0.12.9":
   version: 0.12.9
   resolution: "@effect/data@npm:0.12.9"
@@ -13685,6 +13706,7 @@ __metadata:
   dependencies:
     "@amplitude/analytics-browser": 1.8.0
     "@capsizecss/vanilla-extract": ^1.0.0
+    "@datadog/browser-logs": ^4.48.1
     "@emoji-mart/data": ^1.1.2
     "@emoji-mart/react": ^1.1.1
     "@giphy/js-fetch-api": ^4.4.0

@@ -54,6 +54,9 @@ const envSchema = z.object({
     VITE_AMP_WORKER_URL: z.string().url().optional(),
     VITE_TOWNS_TOKEN_URL: z.string().url().optional(),
     VITE_WALLET_CONNECT_PROJECT_ID: z.string().default('stringtopreventerror'),
+
+    VITE_DD_CLIENT_TOKEN: z.string().optional(), // used for datadog client side monitoring
+    VITE_DD_SERVICE_NAME: z.string().optional(), // used for datadog client side monitoring
 })
 
 const parsed = envSchema.safeParse(import.meta.env)
