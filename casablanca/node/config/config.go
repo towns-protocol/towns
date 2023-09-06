@@ -16,10 +16,15 @@ type Config struct {
 	UseContract bool
 	Log         infra.LogConfig
 	// TODO HNT-2048 remove once RDK registration/revoke is implemented in the client
-	SkipDelegateCheck bool
+	SkipDelegateCheck   bool
+	PerformanceTracking PerformanceTrackingConfig
 }
 
 type ChainConfig struct {
 	NetworkUrl string
 	ChainId    int
+}
+
+type PerformanceTrackingConfig struct {
+	ProfilingEnabled bool
 }

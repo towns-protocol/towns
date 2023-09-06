@@ -18,3 +18,6 @@ log:
 metrics:
     enabled: <METRICS_ENABLED>
     port: <METRICS_PORT>
+# profiling is turned of by default (see profilngEnabled: false below)
+performanceTracking:
+    profilingEnabled: false
