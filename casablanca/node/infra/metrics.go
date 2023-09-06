@@ -9,8 +9,8 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
-	"casablanca/node/config"
 	"casablanca/node/dlog"
+	config "casablanca/node/infra/config"
 )
 
 type SuccessMetrics struct {

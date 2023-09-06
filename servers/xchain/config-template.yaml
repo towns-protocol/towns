@@ -1,0 +1,12 @@
+chain:
+    - network_url: 'http://localhost:8545'
+      chain_id: 1
+    - network_url: 'http://localhost:8546'
+      chain_id: 2
+log:
+    file: logs/dev.log
+    level: info
+    console: true
+metrics:
+    enabled: true
+    port: <METRICS_PORT>

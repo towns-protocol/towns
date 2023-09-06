@@ -1,8 +1,8 @@
 package infra
 
 import (
-	"casablanca/node/config"
 	"casablanca/node/dlog"
+	config "casablanca/node/infra/config"
 	"fmt"
 	"os"
 
