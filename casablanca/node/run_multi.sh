@@ -30,6 +30,9 @@ while [[ "$#" -gt 0 ]]; do
     esac
 done
 
+echo "{" > ./run_files/node_registry.json
+echo "  \"nodes\": [" >> ./run_files/node_registry.json
+
 for ((i=0; i<NUM_INSTANCES; i++)); do
   printf -v INSTANCE "%02d" $i
   I_RPC_PORT=$((RPC_PORT + i))
@@ -48,4 +51,11 @@ for ((i=0; i<NUM_INSTANCES; i++)); do
   go run --race ../../node/main.go run --config config/config.yaml "${args[@]:-}" &
   echo $! > pid
   popd
+
+  NODE_ADDRESS=$(cat ./run_files/$INSTANCE/wallet/node_address)
+  echo "    { \"name\": \"$INSTANCE\", \"address\": \"$NODE_ADDRESS\", \"rpc_port\": $I_RPC_PORT }," >> ./run_files/node_registry.json
 done
+
+sed -i.bak '$ s/,$//' ./run_files/node_registry.json && rm ./run_files/node_registry.json.bak
+echo "  ]" >> ./run_files/node_registry.json
+echo "}" >> ./run_files/node_registry.json
