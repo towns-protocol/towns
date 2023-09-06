@@ -109,7 +109,7 @@ export const TokenAvatar = (props: TokenAvatarProps) => {
                         background="level4"
                         border="faint"
                         color="default"
-                        onClick={(e) => onClick(contractAddress, e)}
+                        onClick={(e) => onClick({ contractAddress }, e)}
                     />
                 )}
             </Box>

@@ -3,6 +3,8 @@ import { AnimatePresence } from 'framer-motion'
 import { ethers } from 'ethers'
 import { Box, BoxProps, MotionBox, VList } from '@ui'
 import { FadeInBox } from '@components/Transitions'
+import { TokenClickParameters } from '@components/Tokens/types'
+import { TokenDataStruct } from '@components/Web3/CreateSpaceForm/types'
 
 const searchArrayOfData = <T extends Record<string, unknown>>(array: T[], query: string): T[] => {
     const searchTerm = query
@@ -38,22 +40,22 @@ export function useTokenSearch<T extends Record<string, unknown>>({ data }: { da
 }
 
 type UseWatchItemsParams = {
-    initialItems?: string[]
-    onUpdate?: (item: string[]) => void
+    initialItems?: TokenDataStruct[]
+    onUpdate?: (item: TokenDataStruct[]) => void
 }
 
 export function useWatchItems({ initialItems, onUpdate }: UseWatchItemsParams) {
     const onUpdateRef = useRef(onUpdate)
     onUpdateRef.current = onUpdate
-    const [selectedItems, setSelectedItems] = React.useState<string[]>(initialItems ?? [])
+    const [selectedItems, setSelectedItems] = React.useState<TokenDataStruct[]>(initialItems ?? [])
 
-    const onItemClick = useCallback((contractAddress: string) => {
+    const onItemClick = useCallback(({ contractAddress }: TokenClickParameters) => {
         setSelectedItems((prev) => {
-            const isSelected = prev.includes(contractAddress)
+            const isSelected = prev.map((t) => t.contractAddress).includes(contractAddress)
             if (isSelected) {
-                return prev.filter((t) => t !== contractAddress)
+                return prev.filter((t) => t.contractAddress !== contractAddress)
             }
-            return [...prev, contractAddress]
+            return [...prev, { contractAddress }]
         })
     }, [])
 
@@ -72,7 +74,7 @@ export const SelectedItemsList = ({
     items,
     children,
 }: {
-    items: string[]
+    items: TokenDataStruct[]
     children: ({ item }: { item: string }) => JSX.Element
 }) => {
     const listId = useId()
@@ -82,10 +84,14 @@ export const SelectedItemsList = ({
             {!items.length ? null : (
                 <FadeInBox horizontal fast gap="lg" layout="position" padding="md">
                     <AnimatePresence mode="popLayout">
-                        {items.map((item: string) => {
+                        {items.map((item: TokenDataStruct) => {
                             return (
-                                <FadeInBox preset="fadeup" key={listId + item} layout="position">
-                                    {children({ item: item })}
+                                <FadeInBox
+                                    preset="fadeup"
+                                    key={listId + item.contractAddress}
+                                    layout="position"
+                                >
+                                    {children({ item: item.contractAddress })}
                                 </FadeInBox>
                             )
                         })}

@@ -75,7 +75,7 @@ export const StoreMockForManualSubmissionsNotToBeUsedInTests: CreateSpaceFormSta
     step1: {
         membershipType: 'tokenHolders',
         // just for easier development, this is the zion token address from council.json, which may change so check it sometimes
-        tokens: ['0x9a676e781a523b5d0c0e43731313a708cb607508'],
+        tokens: [{ contractAddress: '0x9a676e781a523b5d0c0e43731313a708cb607508' }],
     },
     step2: {
         spaceName: randProductName().toLowerCase(),

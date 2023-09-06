@@ -8,20 +8,32 @@ import { FadeInBox } from '@components/Transitions'
 import { TokensList } from '@components/Tokens'
 import { useCreateSpaceFormStore } from '../CreateSpaceFormStore'
 import { FormStepProps } from '../../../../hooks/useFormSteps'
-import { CreateSpaceFormState } from '../types'
+import { CreateSpaceFormState, TokenDataStruct } from '../types'
 import { EVERYONE, MEMBERSHIP_TYPE, TOKENS, TOKEN_HOLDERS } from '../constants'
 
 const membershipTypeErrorMessage = 'Please choose who can join your town.'
 
-const schema = z
+const schema: z.ZodType<CreateSpaceFormState['step1']> = z
     .object({
-        [MEMBERSHIP_TYPE]: z
-            .string({
-                invalid_type_error: membershipTypeErrorMessage, // b/c initially undefined for string
-                required_error: membershipTypeErrorMessage,
-            })
-            .min(1),
-        tokens: z.array(z.string()),
+        [MEMBERSHIP_TYPE]: z.union([
+            z.literal(EVERYONE, {
+                errorMap: (_err, _ctx) => {
+                    // invalid_literal is the error code, but zod only configs for invalid_type_error
+                    return { message: membershipTypeErrorMessage }
+                },
+            }),
+            z.literal(TOKEN_HOLDERS, {
+                errorMap: (_err, _ctx) => {
+                    // invalid_literal is the error code, but zod only configs for invalid_type_error
+                    return { message: membershipTypeErrorMessage }
+                },
+            }),
+        ]),
+        tokens: z.array(
+            z.object({
+                contractAddress: z.string(),
+            }),
+        ),
     })
     .superRefine((data, ctx) => {
         if (data[MEMBERSHIP_TYPE] === TOKEN_HOLDERS) {
@@ -57,7 +69,7 @@ export const CreateSpaceStep1 = ({ onSubmit, id }: FormStepProps) => {
     }, [])
 
     const onSelectedTokensUpdate = useCallback(
-        (tokens: string[], setValue: UseFormReturn['setValue']) => {
+        (tokens: TokenDataStruct[], setValue: UseFormReturn['setValue']) => {
             // set form values (for validation)
             setValue?.(TOKENS, tokens, {
                 shouldValidate: true,

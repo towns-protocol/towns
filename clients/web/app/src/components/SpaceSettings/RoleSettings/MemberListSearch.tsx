@@ -12,6 +12,8 @@ import {
     useWatchItems,
 } from '@components/AddressListSearch/AddressListSearch'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
+import { TokenClickParameters } from '@components/Tokens/types'
+import { TokenDataStruct } from '@components/Web3/CreateSpaceForm/types'
 type MyRoomMember = Pick<RoomMember, 'userId' | 'name'>
 
 type ResultsWithIdForVList = {
@@ -52,10 +54,18 @@ export function MemberList({
         data: membersWithAddress,
     })
 
-    const { selectedItems, onItemClick } = useWatchItems({
-        initialItems: initialItems,
+    const _initialItems = useMemo(
+        () =>
+            initialItems.map((i) => ({
+                contractAddress: i,
+            })),
+        [initialItems],
+    )
+    const { selectedItems: tokenStructItems, onItemClick } = useWatchItems({
+        initialItems: _initialItems,
         onUpdate: (items) => {
-            onUpdate(items)
+            const _items = items.map(toAddress)
+            onUpdate(_items)
         },
     })
 
@@ -63,7 +73,7 @@ export function MemberList({
 
     return (
         <>
-            <SelectedItemsList items={selectedItems}>
+            <SelectedItemsList items={tokenStructItems}>
                 {({ item }) => {
                     const member = membersWithAddress.find((m) => m.address === item)
                     return (
@@ -92,8 +102,8 @@ export function MemberList({
                                 label="Add user"
                             />
                         }
-                        checked={selectedItems.includes(search)}
-                        onChange={() => onItemClick(search)}
+                        checked={tokenStructItems.map(toAddress).includes(search)}
+                        onChange={() => onItemClick({ contractAddress: search })}
                     />
                 </Box>
             ) : (
@@ -105,14 +115,18 @@ export function MemberList({
                     itemRenderer={(data) => (
                         <MemberCheckbox
                             item={data}
-                            selectedItems={selectedItems}
-                            onItemClick={onItemClick}
+                            selectedItems={tokenStructItems.map(toAddress)}
+                            onItemClick={(address) => onItemClick({ contractAddress: address })}
                         />
                     )}
                 />
             )}
         </>
     )
+}
+
+function toAddress(params: TokenDataStruct) {
+    return params.contractAddress
 }
 
 function MemberCheckboxLabel({
@@ -145,7 +159,7 @@ function SelectedMemberItem({
 }: {
     address: string
     member: MyRoomMember | undefined
-    onClick: (address: string, e: React.MouseEvent<HTMLElement>) => void
+    onClick: (args: TokenClickParameters, e: React.MouseEvent<HTMLElement>) => void
 }) {
     const isEveryoneAddress = address === EVERYONE_ADDRESS
 
@@ -168,7 +182,7 @@ function SelectedMemberItem({
                     background="level4"
                     border="faint"
                     color="default"
-                    onClick={(e) => onClick(address, e)}
+                    onClick={(e) => onClick({ contractAddress: address }, e)}
                 />
             </Box>
             <Text size="sm">{member?.name ? member.name : shortAddress(address)}</Text>

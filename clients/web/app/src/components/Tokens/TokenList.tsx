@@ -16,6 +16,7 @@ import {
     useWatchItems,
 } from '@components/AddressListSearch/AddressListSearch'
 import { useEnvironment } from 'hooks/useEnvironmnet'
+import { TokenDataStruct } from '@components/Web3/CreateSpaceForm/types'
 import { TokenAvatar } from './TokenAvatar'
 import { TokenData, TokenProps } from './types'
 
@@ -81,8 +82,8 @@ export function TokensList({
 }: {
     wallet: string
     showTokenList: boolean
-    initialItems?: string[]
-    onUpdate: (items: string[]) => void
+    initialItems?: TokenDataStruct[]
+    onUpdate: (items: TokenDataStruct[]) => void
     listMaxHeight?: BoxProps['maxHeight']
 }) {
     const { chainId } = useEnvironment()
@@ -149,8 +150,8 @@ export function TokensList({
                                 imgSrc=""
                             />
                         }
-                        checked={selectedItems.includes(search)}
-                        onChange={() => onItemClick(search)}
+                        checked={selectedItems.map((t) => t.contractAddress).includes(search)}
+                        onChange={() => onItemClick({ contractAddress: search })}
                     />
                 </Box>
             )}
@@ -197,8 +198,12 @@ export function TokensList({
                                 width="100%"
                                 value={data.contractAddress}
                                 label={<TokenCheckboxLabel {...data} />}
-                                checked={selectedItems.includes(data.contractAddress)}
-                                onChange={() => onItemClick(data.contractAddress)}
+                                checked={selectedItems
+                                    .map((t) => t.contractAddress)
+                                    .includes(data.contractAddress)}
+                                onChange={() =>
+                                    onItemClick({ contractAddress: data.contractAddress })
+                                }
                             />
                         </Box>
                     )}

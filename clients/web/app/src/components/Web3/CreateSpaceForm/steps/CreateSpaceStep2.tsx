@@ -19,6 +19,7 @@ import { FadeInBox } from '@components/Transitions'
 import { SmallUploadImageTemplate } from '@components/UploadImage/SmallUploadImageTemplate'
 import { useImageStore } from '@components/UploadImage/useImageStore'
 import { UploadImageRequestConfig } from 'api/lib/uploadImage'
+import { TokenClickParameters } from '@components/Tokens/types'
 import { FormStepProps } from '../../../../hooks/useFormSteps'
 import { useCreateSpaceFormStore } from '../CreateSpaceFormStore'
 import { TokenAvatar } from '../../../Tokens/TokenAvatar'
@@ -53,13 +54,13 @@ const schema = z.object({
 
 const TokenList = (props: Partial<UseFormReturn>) => {
     const { setError, clearErrors } = props
-    const tokens = useCreateSpaceFormStore((state) => state.step1.tokens)
+    const tokensSelectedInStep1 = useCreateSpaceFormStore((state) => state.step1.tokens)
     const toggleToken = useCreateSpaceFormStore((state) => state.toggleToken)
-    const cachedTokensForWallet = useCachedTokensForWallet()
-    function handleClick(contractAddress: string, e: React.MouseEvent) {
+    const tokenCollectionsForWallet = useCachedTokensForWallet()
+    function handleClick({ contractAddress }: TokenClickParameters, e: React.MouseEvent) {
         e.preventDefault()
 
-        if (tokens.length === 1) {
+        if (tokensSelectedInStep1.length === 1) {
             setError?.('tokens', {
                 type: 'required',
                 message: `You can't remove the last token. If you would like to include everyone, please go to previous step.`,
@@ -70,21 +71,24 @@ const TokenList = (props: Partial<UseFormReturn>) => {
         toggleToken(contractAddress)
     }
 
-    return !tokens.length ? (
+    return !tokensSelectedInStep1.length ? (
         <Paragraph color="gray1">Everyone</Paragraph>
     ) : (
         <Box display="flex" flexDirection="row" gap="md" data-testid="step-2-avatars">
-            {tokens.map((contractAddress: string) => {
-                const token = cachedTokensForWallet.tokens.find(
-                    (t) => t.contractAddress === contractAddress,
+            {tokensSelectedInStep1.map((t) => {
+                // check if selected token is in the NFT api response cache
+                const tokenData = tokenCollectionsForWallet.tokens.find(
+                    (x) => x.contractAddress === t.contractAddress,
                 )
                 return (
                     <TokenAvatar
                         size="avatar_md"
-                        key={contractAddress}
-                        imgSrc={token?.imgSrc || ''}
-                        label={token?.label || ''}
-                        contractAddress={contractAddress}
+                        key={t.contractAddress}
+                        // enhance the ui with extra data
+                        imgSrc={tokenData?.imgSrc || ''}
+                        label={tokenData?.label || ''}
+                        // a custom, user inputted token won't have a match, so pass the contract address directly
+                        contractAddress={t.contractAddress}
                         onClick={handleClick}
                     />
                 )

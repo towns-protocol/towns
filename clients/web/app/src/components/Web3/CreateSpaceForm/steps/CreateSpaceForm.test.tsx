@@ -202,7 +202,7 @@ describe('<CreateSpaceForm />', () => {
         const match = checkboxes.find(
             (t) =>
                 (t as HTMLInputElement).value ===
-                useCreateSpaceFormStore.getState().step1.tokens[0],
+                useCreateSpaceFormStore.getState().step1.tokens[0].contractAddress,
         )
 
         expect(match).toBeChecked()
@@ -442,7 +442,11 @@ describe('<CreateSpaceForm />', () => {
             useCreateSpaceFormStore.setState({
                 step1: {
                     membershipType: TOKEN_HOLDERS,
-                    tokens: ['0x123'],
+                    tokens: [
+                        {
+                            contractAddress: '0x123',
+                        },
+                    ],
                 },
                 step2: {
                     spaceName: 'sample space',

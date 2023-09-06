@@ -1,9 +1,10 @@
-import React, { useState } from 'react'
+import React, { useMemo, useState } from 'react'
 import { useEvent } from 'react-use-event-hook'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { TokensList } from '@components/Tokens'
 import { Button, IconButton, Stack, Text } from '@ui'
 import { MemberList } from '@components/SpaceSettings/RoleSettings/MemberListSearch'
+import { TokenDataStruct } from '@components/Web3/CreateSpaceForm/types'
 
 export function TokenListModal({
     setStoreTokens,
@@ -20,15 +21,21 @@ export function TokenListModal({
 }) {
     const [tokenListSelectedTokens, setTokenListSelectedTokens] = useState<string[]>(storeTokens)
 
-    const onTokensSelected = useEvent((addresses: string[]) =>
-        setTokenListSelectedTokens(addresses),
-    )
+    const onTokensSelected = useEvent((addresses: TokenDataStruct[]) => {
+        const _addresses = addresses.map((t) => t.contractAddress)
+        setTokenListSelectedTokens(_addresses)
+    })
     const onAddTokenClick = useEvent(() => {
         if (roleId && tokenListSelectedTokens) {
             setStoreTokens(roleId, tokenListSelectedTokens)
         }
         hideTokenModal()
     })
+
+    const initialItems = useMemo(
+        () => storeTokens.map((address) => ({ contractAddress: address })),
+        [storeTokens],
+    )
     return (
         <ModalContainer stableTopAlignment onHide={hideTokenModal}>
             <Stack gap>
@@ -40,7 +47,7 @@ export function TokenListModal({
                     showTokenList
                     listMaxHeight="300"
                     wallet={loggedInWalletAddress}
-                    initialItems={storeTokens}
+                    initialItems={initialItems}
                     onUpdate={onTokensSelected}
                 />
                 <Stack horizontal gap justifyContent="end">

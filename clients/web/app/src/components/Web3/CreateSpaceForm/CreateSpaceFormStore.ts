@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { Address } from 'wagmi'
 import { env } from 'utils'
-import { CreateSpaceFormState } from './types'
+import { CreateSpaceFormState, TokenDataStruct } from './types'
 import { StoreMockForManualSubmissionsNotToBeUsedInTests } from './mock'
 
 const withMock =
@@ -10,8 +10,8 @@ const withMock =
 interface CreateSpaceActions {
     setStep1: (step1: CreateSpaceFormState['step1']) => void
     setStep2: (step1: CreateSpaceFormState['step2']) => void
-    toggleToken: (token: string) => void
-    setTokens: (tokens: string[]) => void
+    toggleToken: (contractAddress: string) => void
+    setTokens: (tokens: TokenDataStruct[]) => void
     clearTokens: () => void
     reset: () => void
     setImageData: (spaceImageData: CreateSpaceFormState['spaceImageData']) => void
@@ -57,14 +57,15 @@ export const useCreateSpaceFormStore = create<CreateSpaceFormState & CreateSpace
             }
         })
     },
-    toggleToken: (token: string) =>
+    toggleToken: (contractAddress: TokenDataStruct['contractAddress']) =>
         set((state) => {
             let tokens
 
-            if (state.step1.tokens.includes(token)) {
-                tokens = state.step1.tokens.filter((t) => t !== token)
+            if (state.step1.tokens.map((t) => t.contractAddress).includes(contractAddress)) {
+                tokens = state.step1.tokens.filter((t) => t.contractAddress !== contractAddress)
             } else {
-                tokens = [...state.step1.tokens, token]
+                // Evan TODO: add the rest of token struct props
+                tokens = [...state.step1.tokens, { contractAddress: contractAddress }]
             }
 
             return {
@@ -75,7 +76,7 @@ export const useCreateSpaceFormStore = create<CreateSpaceFormState & CreateSpace
                 },
             }
         }),
-    setTokens: (tokens: string[]) =>
+    setTokens: (tokens: TokenDataStruct[]) =>
         set((state) => ({ ...state, step1: { ...state.step1, tokens } })),
     clearTokens: () => set((state) => ({ ...state, step1: { ...state.step1, tokens: [] } })),
     setCreatedSpaceId: (createdSpaceId: string) => set({ createdSpaceId }),

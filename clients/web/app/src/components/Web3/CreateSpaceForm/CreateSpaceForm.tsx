@@ -233,7 +233,7 @@ export const CreateSpaceForm = () => {
         await createSpaceTransactionWithRole(
             createSpaceInfo,
             'Member',
-            tokens,
+            tokens.map((t) => t.contractAddress),
             tokenGrantedPermissions,
             everyonePermissions,
         )
