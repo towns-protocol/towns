@@ -10,7 +10,6 @@ export { CouncilStaking__factory } from "./CouncilStaking__factory";
 export { Errors__factory } from "./Errors__factory";
 export { Events__factory } from "./Events__factory";
 export { IEntitlementChecker__factory } from "./IEntitlementChecker__factory";
-export { IEntitlementCheckerEvents__factory } from "./IEntitlementCheckerEvents__factory";
 export { IEntitlementGated__factory } from "./IEntitlementGated__factory";
 export { Member__factory } from "./Member__factory";
 export { Pioneer__factory } from "./Pioneer__factory";

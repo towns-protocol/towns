@@ -11,6 +11,78 @@ import type {
 
 const _abi = [
   {
+    inputs: [],
+    name: "EntitlementChecker_InsufficientNumberOfNodes",
+    type: "error",
+  },
+  {
+    inputs: [],
+    name: "EntitlementChecker_NodeAlreadyRegistered",
+    type: "error",
+  },
+  {
+    inputs: [],
+    name: "EntitlementChecker_NodeNotRegistered",
+    type: "error",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: true,
+        internalType: "address",
+        name: "callerAddress",
+        type: "address",
+      },
+      {
+        indexed: false,
+        internalType: "bytes32",
+        name: "transactionId",
+        type: "bytes32",
+      },
+      {
+        indexed: false,
+        internalType: "address[]",
+        name: "selectedNodes",
+        type: "address[]",
+      },
+      {
+        indexed: false,
+        internalType: "address",
+        name: "contractAddress",
+        type: "address",
+      },
+    ],
+    name: "EntitlementCheckRequested",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: true,
+        internalType: "address",
+        name: "nodeAddress",
+        type: "address",
+      },
+    ],
+    name: "NodeRegistered",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: true,
+        internalType: "address",
+        name: "nodeAddress",
+        type: "address",
+      },
+    ],
+    name: "NodeUnregistered",
+    type: "event",
+  },
+  {
     inputs: [
       {
         internalType: "bytes32",
@@ -68,26 +140,14 @@ const _abi = [
   {
     inputs: [],
     name: "registerNode",
-    outputs: [
-      {
-        internalType: "bool",
-        name: "",
-        type: "bool",
-      },
-    ],
+    outputs: [],
     stateMutability: "nonpayable",
     type: "function",
   },
   {
     inputs: [],
     name: "unregisterNode",
-    outputs: [
-      {
-        internalType: "bool",
-        name: "",
-        type: "bool",
-      },
-    ],
+    outputs: [],
     stateMutability: "nonpayable",
     type: "function",
   },

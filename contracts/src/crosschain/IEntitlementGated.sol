@@ -1,15 +1,48 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-import {IEntitlementCheckerEvents} from "./IEntitlementCheckerEvents.sol";
+interface IEntitlementGatedBase {
+  enum NodeVoteStatus {
+    NOT_VOTED,
+    PASSED,
+    FAILED
+  }
 
-interface IEntitlementGated {
-  function requestEntitlementCheck() external returns (bool);
+  struct NodeVote {
+    address node;
+    NodeVoteStatus vote;
+  }
+
+  struct Transaction {
+    bool hasBenSet;
+    address clientAddress;
+    NodeVoteStatus checkResult;
+    bool isCompleted;
+    NodeVote[] nodeVotesArray;
+  }
+
+  error EntitlementGated_InvalidAddress();
+  error EntitlementGated_TransactionAlreadyRegistered();
+  error EntitlementGated_TransactionNotRegistered();
+  error EntitlementGated_TransactionAlreadyCompleted();
+  error EntitlementGated_NodeNotFound();
+  error EntitlementGated_NodeAlreadyVoted();
+
+  event EntitlementCheckResultPosted(
+    bytes32 indexed transactionId,
+    NodeVoteStatus result
+  );
+}
+
+interface IEntitlementGated is IEntitlementGatedBase {
+  function getEntitlementOperations() external view returns (bytes memory);
+
+  function requestEntitlementCheck() external;
 
   function postEntitlementCheckResult(
     bytes32 transactionId,
-    IEntitlementCheckerEvents.NodeVoteStatus result
-  ) external returns (bool);
+    NodeVoteStatus result
+  ) external;
 
-  function deleteTransaction(bytes32 transactionId) external returns (bool);
+  function removeTransaction(bytes32 transactionId) external;
 }

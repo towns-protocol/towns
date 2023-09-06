@@ -6,35 +6,34 @@
   "output": {
     "abi": [
       {
-        "anonymous": false,
-        "inputs": [
-          {
-            "indexed": true,
-            "internalType": "address",
-            "name": "callerAddress",
-            "type": "address"
-          },
-          {
-            "indexed": false,
-            "internalType": "bytes32",
-            "name": "transactionId",
-            "type": "bytes32"
-          },
-          {
-            "indexed": false,
-            "internalType": "address[]",
-            "name": "selectedNodes",
-            "type": "address[]"
-          },
-          {
-            "indexed": false,
-            "internalType": "address",
-            "name": "contractAddress",
-            "type": "address"
-          }
-        ],
-        "name": "EntitlementCheckRequested",
-        "type": "event"
+        "inputs": [],
+        "name": "EntitlementGated_InvalidAddress",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "EntitlementGated_NodeAlreadyVoted",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "EntitlementGated_NodeNotFound",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "EntitlementGated_TransactionAlreadyCompleted",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "EntitlementGated_TransactionAlreadyRegistered",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "EntitlementGated_TransactionNotRegistered",
+        "type": "error"
       },
       {
         "anonymous": false,
@@ -47,32 +46,13 @@
           },
           {
             "indexed": false,
-            "internalType": "enum IEntitlementCheckerEvents.NodeVoteStatus",
+            "internalType": "enum IEntitlementGatedBase.NodeVoteStatus",
             "name": "result",
             "type": "uint8"
           }
         ],
         "name": "EntitlementCheckResultPosted",
         "type": "event"
-      },
-      {
-        "inputs": [
-          {
-            "internalType": "bytes32",
-            "name": "transactionId",
-            "type": "bytes32"
-          }
-        ],
-        "name": "deleteTransaction",
-        "outputs": [
-          {
-            "internalType": "bool",
-            "name": "",
-            "type": "bool"
-          }
-        ],
-        "stateMutability": "nonpayable",
-        "type": "function"
       },
       {
         "inputs": [],
@@ -95,32 +75,13 @@
             "type": "bytes32"
           },
           {
-            "internalType": "enum IEntitlementCheckerEvents.NodeVoteStatus",
+            "internalType": "enum IEntitlementGatedBase.NodeVoteStatus",
             "name": "result",
             "type": "uint8"
           }
         ],
         "name": "postEntitlementCheckResult",
-        "outputs": [
-          {
-            "internalType": "bool",
-            "name": "",
-            "type": "bool"
-          }
-        ],
-        "stateMutability": "nonpayable",
-        "type": "function"
-      },
-      {
-        "inputs": [],
-        "name": "requestEntitlementCheck",
-        "outputs": [
-          {
-            "internalType": "bool",
-            "name": "",
-            "type": "bool"
-          }
-        ],
+        "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"
       },
@@ -128,34 +89,20 @@
         "inputs": [
           {
             "internalType": "bytes32",
-            "name": "",
+            "name": "transactionId",
             "type": "bytes32"
           }
         ],
-        "name": "transactions",
-        "outputs": [
-          {
-            "internalType": "bool",
-            "name": "hasBenSet",
-            "type": "bool"
-          },
-          {
-            "internalType": "address",
-            "name": "clientAddress",
-            "type": "address"
-          },
-          {
-            "internalType": "enum IEntitlementCheckerEvents.NodeVoteStatus",
-            "name": "checkResult",
-            "type": "uint8"
-          },
-          {
-            "internalType": "bool",
-            "name": "isCompleted",
-            "type": "bool"
-          }
-        ],
-        "stateMutability": "view",
+        "name": "removeTransaction",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "requestEntitlementCheck",
+        "outputs": [],
+        "stateMutability": "nonpayable",
         "type": "function"
       }
     ],
@@ -199,60 +146,44 @@
     ]
   },
   "sources": {
-    "contracts/src/crosschain/EntitlementChecker.sol": {
-      "keccak256": "0x28c2b265d3e69376f7f97cf601c0899325d5baba27dbc8a067e3b4fda6ba87b6",
-      "license": "MIT",
-      "urls": [
-        "bzz-raw://ed82e8e2caf2ac39bfe8d5030efb0425702a85ef59a7470f912fe99798694879",
-        "dweb:/ipfs/QmXXoAYdQXGCMcZdUDKmNeH5xhNWZ8b1NNWuiHwEXbwmEh"
-      ]
-    },
     "contracts/src/crosschain/EntitlementGated.sol": {
-      "keccak256": "0x7a537f1134cf87f78ba74adf95687a7d56200fb1cbc7a8bcbd5e500e1634d7bc",
-      "license": "MIT",
+      "keccak256": "0xf9ed0348a36101b1fe81327f6a292391b4c2c8ebe36992d4df99acc1bae74289",
+      "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://4f8a67bba65b49abb15f307f771782a8a0d90e2526a5319a8d7bc19306801a65",
-        "dweb:/ipfs/QmcziosZLLMotBuFi5cFP2KM6DwCYiYiHpimLNfXfaPfqf"
+        "bzz-raw://f608c7e6444ff77b10b2af1a1239e0822827a2977e8ff48fa08af8cc6fb4cfb8",
+        "dweb:/ipfs/QmZ615rEPNWfMRQCwsQ29gEPrk8rmnj99SzxnC63njCQES"
       ]
     },
-    "contracts/src/crosschain/IEntitlementChecker.sol": {
-      "keccak256": "0x94de9de695e3d670312dfba784bd2cb8b61610aec17891074fe530bbb5e459c0",
-      "license": "MIT",
+    "contracts/src/crosschain/EntitlementGatedBase.sol": {
+      "keccak256": "0x5ac5ad2389e9b552754edca2a8704cafc613a4841336b03efb559e9231e3bc03",
+      "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://d62403df2139ddd4e26bb4987d02db0c4b0ffff06aa76508c88fab69c7f570c2",
-        "dweb:/ipfs/QmatDTSs82dr6LFifooZqe91YiEpFf2on19h6QNza1zJwg"
+        "bzz-raw://8502d0a96617a48bade56b65fc747b7239c2f265ef8efce5252fbcead830b218",
+        "dweb:/ipfs/QmWJDfrY8k5vDPUj6GroY4r6GX5rucDai7xcUAb3mptrzD"
       ]
     },
-    "contracts/src/crosschain/IEntitlementCheckerEvents.sol": {
-      "keccak256": "0xd92c50c58665221673b0c680b1b1ab35ed4d217de192b190f5f4388defcec1e8",
-      "license": "MIT",
+    "contracts/src/crosschain/EntitlementGatedStorage.sol": {
+      "keccak256": "0x51b85ff651a75d749eb65e768428b25d158ef6ae9678655e65e8d2f1e9b638cb",
+      "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://7ca7990018f8fec37c7cf5139ef94c427c2dd3bb873861658c664d62f85e80f2",
-        "dweb:/ipfs/QmWTNTbjD5PWEVva82NqCUqrQWWem9y9F6wXEdVz1dc3hJ"
+        "bzz-raw://8f98bd3e02018d9c2620e8f94b3b212e25af4b23a2faf2b54c48121cd2042676",
+        "dweb:/ipfs/QmNMGZBvqWDERgM2idJNGZs5J2D2qQszfJDeiaeG5k5kMK"
       ]
     },
     "contracts/src/crosschain/IEntitlementGated.sol": {
-      "keccak256": "0xcac848143574a746bd1468827ec3fe216d9e29daf29c737281e5659a414c8b6e",
+      "keccak256": "0xa6f6876226c72f9b1a58fed8f07824e01e5bae0bd998a358c98f111b97673b5b",
       "license": "MIT",
       "urls": [
-        "bzz-raw://966f6a08ec37834a40c658238460da6d89102d22ef464f30733d3f9a938a8b26",
-        "dweb:/ipfs/QmVk8eYbZWZcAimbKDxAVVVmMxDeMWEhazswWHLpsRDDbV"
+        "bzz-raw://bcb111cd2c4756c6f8320bee975f69983ac5fb9661cdab4fc744f31e9fde5016",
+        "dweb:/ipfs/QmVaei4ML3v2tCaUPiJGkCx4g5kkzNNTQ1XrgjUxzoy6vi"
       ]
     },
-    "contracts/src/utils/Bytes32ToHexString.sol": {
-      "keccak256": "0xe86c086b5e433b519b54b1a13042a5ab079934db48146d9ce90ee624f6a30a45",
+    "contracts/src/crosschain/checker/IEntitlementChecker.sol": {
+      "keccak256": "0x409247398c6bfce94d86a3d7f12b6e86dc9c008546f95b9f511ddfffd9e2b222",
       "license": "MIT",
       "urls": [
-        "bzz-raw://46034bc59a2bb0c3890f4bf0fc7d12652239ea87445cabfd32969abbb9417575",
-        "dweb:/ipfs/QmQjKfCvBStVFg3NqK4WZtp8ENLzN2SGHgusQbSqyJAbQU"
-      ]
-    },
-    "lib/forge-std/src/console2.sol": {
-      "keccak256": "0xcd5706f5a7025825d9fd389c89b49bf571f9abaea8a062dc4048320b5b43bf46",
-      "license": "MIT",
-      "urls": [
-        "bzz-raw://c066485a7d4bd18d44efb4c89274b0959e8066b9a480383a2ce07d7f31555f88",
-        "dweb:/ipfs/QmckeYfA5FtAjcxaytq69Dpj6uY57tbQ61kNPPxXi9kgbW"
+        "bzz-raw://85d9b22629977cdc607ba80e2b3e9d4e0d8ffa125eb66d75ea0e920a0685e5a9",
+        "dweb:/ipfs/Qmcn5V1iGQMVgvnFkQv8Qrz7oMdrxSsPu1txGwsHsUwHVR"
       ]
     }
   },

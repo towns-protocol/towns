@@ -6,6 +6,78 @@
   "output": {
     "abi": [
       {
+        "inputs": [],
+        "name": "EntitlementChecker_InsufficientNumberOfNodes",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "EntitlementChecker_NodeAlreadyRegistered",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "EntitlementChecker_NodeNotRegistered",
+        "type": "error"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": true,
+            "internalType": "address",
+            "name": "callerAddress",
+            "type": "address"
+          },
+          {
+            "indexed": false,
+            "internalType": "bytes32",
+            "name": "transactionId",
+            "type": "bytes32"
+          },
+          {
+            "indexed": false,
+            "internalType": "address[]",
+            "name": "selectedNodes",
+            "type": "address[]"
+          },
+          {
+            "indexed": false,
+            "internalType": "address",
+            "name": "contractAddress",
+            "type": "address"
+          }
+        ],
+        "name": "EntitlementCheckRequested",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": true,
+            "internalType": "address",
+            "name": "nodeAddress",
+            "type": "address"
+          }
+        ],
+        "name": "NodeRegistered",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": true,
+            "internalType": "address",
+            "name": "nodeAddress",
+            "type": "address"
+          }
+        ],
+        "name": "NodeUnregistered",
+        "type": "event"
+      },
+      {
         "inputs": [
           {
             "internalType": "bytes32",
@@ -63,26 +135,14 @@
       {
         "inputs": [],
         "name": "registerNode",
-        "outputs": [
-          {
-            "internalType": "bool",
-            "name": "",
-            "type": "bool"
-          }
-        ],
+        "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"
       },
       {
         "inputs": [],
         "name": "unregisterNode",
-        "outputs": [
-          {
-            "internalType": "bool",
-            "name": "",
-            "type": "bool"
-          }
-        ],
+        "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"
       }
@@ -100,7 +160,7 @@
   },
   "settings": {
     "compilationTarget": {
-      "contracts/src/crosschain/IEntitlementChecker.sol": "IEntitlementChecker"
+      "contracts/src/crosschain/checker/IEntitlementChecker.sol": "IEntitlementChecker"
     },
     "evmVersion": "paris",
     "libraries": {},
@@ -127,20 +187,12 @@
     ]
   },
   "sources": {
-    "contracts/src/crosschain/IEntitlementChecker.sol": {
-      "keccak256": "0x94de9de695e3d670312dfba784bd2cb8b61610aec17891074fe530bbb5e459c0",
+    "contracts/src/crosschain/checker/IEntitlementChecker.sol": {
+      "keccak256": "0x409247398c6bfce94d86a3d7f12b6e86dc9c008546f95b9f511ddfffd9e2b222",
       "license": "MIT",
       "urls": [
-        "bzz-raw://d62403df2139ddd4e26bb4987d02db0c4b0ffff06aa76508c88fab69c7f570c2",
-        "dweb:/ipfs/QmatDTSs82dr6LFifooZqe91YiEpFf2on19h6QNza1zJwg"
-      ]
-    },
-    "contracts/src/crosschain/IEntitlementCheckerEvents.sol": {
-      "keccak256": "0xd92c50c58665221673b0c680b1b1ab35ed4d217de192b190f5f4388defcec1e8",
-      "license": "MIT",
-      "urls": [
-        "bzz-raw://7ca7990018f8fec37c7cf5139ef94c427c2dd3bb873861658c664d62f85e80f2",
-        "dweb:/ipfs/QmWTNTbjD5PWEVva82NqCUqrQWWem9y9F6wXEdVz1dc3hJ"
+        "bzz-raw://85d9b22629977cdc607ba80e2b3e9d4e0d8ffa125eb66d75ea0e920a0685e5a9",
+        "dweb:/ipfs/Qmcn5V1iGQMVgvnFkQv8Qrz7oMdrxSsPu1txGwsHsUwHVR"
       ]
     }
   },

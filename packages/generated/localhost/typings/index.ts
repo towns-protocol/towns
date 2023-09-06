@@ -15,7 +15,6 @@ export type { CouncilStaking } from "./CouncilStaking";
 export type { Errors } from "./Errors";
 export type { Events } from "./Events";
 export type { IEntitlementChecker } from "./IEntitlementChecker";
-export type { IEntitlementCheckerEvents } from "./IEntitlementCheckerEvents";
 export type { IEntitlementGated } from "./IEntitlementGated";
 export type { Member } from "./Member";
 export type { Pioneer } from "./Pioneer";
@@ -30,7 +29,6 @@ export { IEntitlement__factory } from "./factories/entitlements/IEntitlement__fa
 export { Errors__factory } from "./factories/Errors__factory";
 export { Events__factory } from "./factories/Events__factory";
 export { IEntitlementChecker__factory } from "./factories/IEntitlementChecker__factory";
-export { IEntitlementCheckerEvents__factory } from "./factories/IEntitlementCheckerEvents__factory";
 export { IEntitlementGated__factory } from "./factories/IEntitlementGated__factory";
 export { Member__factory } from "./factories/Member__factory";
 export type { Mock721 } from "./MockToken.sol/Mock721";

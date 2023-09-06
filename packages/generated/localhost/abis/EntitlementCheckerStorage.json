@@ -1,0 +1,456 @@
+{
+  "abi": [],
+  "bytecode": {
+    "object": "0x60206037600b82828239805160001a607314602a57634e487b7160e01b600052600060045260246000fd5b30600052607381538281f3fe73000000000000000000000000000000000000000030146080604052600080fd",
+    "sourceMap": "204:337:32:-:0;;;;;;;;;;;;;;;-1:-1:-1;;;204:337:32;;;;;;;;;;;;;;;;;",
+    "linkReferences": {}
+  },
+  "deployedBytecode": {
+    "object": "0x73000000000000000000000000000000000000000030146080604052600080fd",
+    "sourceMap": "204:337:32:-:0;;;;;;;;",
+    "linkReferences": {}
+  },
+  "methodIdentifiers": {},
+  "rawMetadata": "{\"compiler\":{\"version\":\"0.8.20+commit.a1b79de6\"},\"language\":\"Solidity\",\"output\":{\"abi\":[],\"devdoc\":{\"kind\":\"dev\",\"methods\":{},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"contracts/src/crosschain/checker/EntitlementCheckerStorage.sol\":\"EntitlementCheckerStorage\"},\"evmVersion\":\"paris\",\"libraries\":{},\"metadata\":{\"appendCBOR\":false,\"bytecodeHash\":\"none\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[\":@openzeppelin/=lib/openzeppelin-contracts/\",\":@prb/test/=lib/prb-test/src/\",\":ERC721A/=lib/ERC721A/contracts/\",\":council/=lib/council/contracts/\",\":ds-test/=lib/ds-test/src/\",\":erc4626-tests/=lib/operator-filter-registry/lib/openzeppelin-contracts/lib/erc4626-tests/\",\":forge-std/=lib/forge-std/src/\",\":openzeppelin-contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/\",\":openzeppelin-contracts/=lib/openzeppelin-contracts/\",\":operator-filter-registry/=lib/operator-filter-registry/\",\":prb-test/=lib/prb-test/src/\"]},\"sources\":{\"contracts/src/crosschain/checker/EntitlementCheckerStorage.sol\":{\"keccak256\":\"0x31800262b31c904ac1e7bd21b5ccbb2ef0d35dd9329a07828d4382bb1cf7896a\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://a58f0963f1c405771f2bbeceda8c7b41b7cbfa533b46db082cc6cb3c3d3e68a4\",\"dweb:/ipfs/QmUTti16QXFXK9rjCDJg3WBJTb4GTKPCYwuxXDv7f2UH3y\"]},\"lib/openzeppelin-contracts/contracts/utils/structs/EnumerableSet.sol\":{\"keccak256\":\"0xc3ff3f5c4584e1d9a483ad7ced51ab64523201f4e3d3c65293e4ca8aeb77a961\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://d7d3dd6067a994690471b5fc71b6f81fac3847798b37d404f74db00b4d3c3d0e\",\"dweb:/ipfs/QmRHF1RarifjNi93RttouNPkYZGyu6CD926PgRDzD5iL35\"]}},\"version\":1}",
+  "metadata": {
+    "compiler": {
+      "version": "0.8.20+commit.a1b79de6"
+    },
+    "language": "Solidity",
+    "output": {
+      "abi": [],
+      "devdoc": {
+        "kind": "dev",
+        "methods": {},
+        "version": 1
+      },
+      "userdoc": {
+        "kind": "user",
+        "methods": {},
+        "version": 1
+      }
+    },
+    "settings": {
+      "remappings": [
+        "@openzeppelin/=lib/openzeppelin-contracts/",
+        "@prb/test/=lib/prb-test/src/",
+        "ERC721A/=lib/ERC721A/contracts/",
+        "council/=lib/council/contracts/",
+        "ds-test/=lib/ds-test/src/",
+        "erc4626-tests/=lib/operator-filter-registry/lib/openzeppelin-contracts/lib/erc4626-tests/",
+        "forge-std/=lib/forge-std/src/",
+        "openzeppelin-contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/",
+        "openzeppelin-contracts/=lib/openzeppelin-contracts/",
+        "operator-filter-registry/=lib/operator-filter-registry/",
+        "prb-test/=lib/prb-test/src/"
+      ],
+      "optimizer": {
+        "enabled": true,
+        "runs": 200
+      },
+      "metadata": {
+        "bytecodeHash": "none",
+        "appendCBOR": false
+      },
+      "compilationTarget": {
+        "contracts/src/crosschain/checker/EntitlementCheckerStorage.sol": "EntitlementCheckerStorage"
+      },
+      "libraries": {}
+    },
+    "sources": {
+      "contracts/src/crosschain/checker/EntitlementCheckerStorage.sol": {
+        "keccak256": "0x31800262b31c904ac1e7bd21b5ccbb2ef0d35dd9329a07828d4382bb1cf7896a",
+        "urls": [
+          "bzz-raw://a58f0963f1c405771f2bbeceda8c7b41b7cbfa533b46db082cc6cb3c3d3e68a4",
+          "dweb:/ipfs/QmUTti16QXFXK9rjCDJg3WBJTb4GTKPCYwuxXDv7f2UH3y"
+        ],
+        "license": "Apache-2.0"
+      },
+      "lib/openzeppelin-contracts/contracts/utils/structs/EnumerableSet.sol": {
+        "keccak256": "0xc3ff3f5c4584e1d9a483ad7ced51ab64523201f4e3d3c65293e4ca8aeb77a961",
+        "urls": [
+          "bzz-raw://d7d3dd6067a994690471b5fc71b6f81fac3847798b37d404f74db00b4d3c3d0e",
+          "dweb:/ipfs/QmRHF1RarifjNi93RttouNPkYZGyu6CD926PgRDzD5iL35"
+        ],
+        "license": "MIT"
+      }
+    },
+    "version": 1
+  },
+  "ast": {
+    "absolutePath": "contracts/src/crosschain/checker/EntitlementCheckerStorage.sol",
+    "id": 5822,
+    "exportedSymbols": {
+      "EntitlementCheckerStorage": [
+        5821
+      ],
+      "EnumerableSet": [
+        120954
+      ]
+    },
+    "nodeType": "SourceUnit",
+    "src": "39:503:32",
+    "nodes": [
+      {
+        "id": 5797,
+        "nodeType": "PragmaDirective",
+        "src": "39:24:32",
+        "nodes": [],
+        "literals": [
+          "solidity",
+          "^",
+          "0.8",
+          ".19"
+        ]
+      },
+      {
+        "id": 5799,
+        "nodeType": "ImportDirective",
+        "src": "93:95:32",
+        "nodes": [],
+        "absolutePath": "lib/openzeppelin-contracts/contracts/utils/structs/EnumerableSet.sol",
+        "file": "openzeppelin-contracts/contracts/utils/structs/EnumerableSet.sol",
+        "nameLocation": "-1:-1:-1",
+        "scope": 5822,
+        "sourceUnit": 120955,
+        "symbolAliases": [
+          {
+            "foreign": {
+              "id": 5798,
+              "name": "EnumerableSet",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "referencedDeclaration": 120954,
+              "src": "101:13:32",
+              "typeDescriptions": {}
+            },
+            "nameLocation": "-1:-1:-1"
+          }
+        ],
+        "unitAlias": ""
+      },
+      {
+        "id": 5821,
+        "nodeType": "ContractDefinition",
+        "src": "204:337:32",
+        "nodes": [
+          {
+            "id": 5804,
+            "nodeType": "VariableDeclaration",
+            "src": "242:94:32",
+            "nodes": [],
+            "constant": true,
+            "mutability": "constant",
+            "name": "STORAGE_SLOT",
+            "nameLocation": "268:12:32",
+            "scope": 5821,
+            "stateVariable": true,
+            "storageLocation": "default",
+            "typeDescriptions": {
+              "typeIdentifier": "t_bytes32",
+              "typeString": "bytes32"
+            },
+            "typeName": {
+              "id": 5800,
+              "name": "bytes32",
+              "nodeType": "ElementaryTypeName",
+              "src": "242:7:32",
+              "typeDescriptions": {
+                "typeIdentifier": "t_bytes32",
+                "typeString": "bytes32"
+              }
+            },
+            "value": {
+              "arguments": [
+                {
+                  "hexValue": "63726f7373636861696e2e456e7469746c656d656e74436865636b657253746f72616765",
+                  "id": 5802,
+                  "isConstant": false,
+                  "isLValue": false,
+                  "isPure": true,
+                  "kind": "string",
+                  "lValueRequested": false,
+                  "nodeType": "Literal",
+                  "src": "297:38:32",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_stringliteral_fc7acd906223ea4362cec2df6e927b10b0448ae1bf045557e5b57490cab1e1bc",
+                    "typeString": "literal_string \"crosschain.EntitlementCheckerStorage\""
+                  },
+                  "value": "crosschain.EntitlementCheckerStorage"
+                }
+              ],
+              "expression": {
+                "argumentTypes": [
+                  {
+                    "typeIdentifier": "t_stringliteral_fc7acd906223ea4362cec2df6e927b10b0448ae1bf045557e5b57490cab1e1bc",
+                    "typeString": "literal_string \"crosschain.EntitlementCheckerStorage\""
+                  }
+                ],
+                "id": 5801,
+                "name": "keccak256",
+                "nodeType": "Identifier",
+                "overloadedDeclarations": [],
+                "referencedDeclaration": -8,
+                "src": "287:9:32",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_function_keccak256_pure$_t_bytes_memory_ptr_$returns$_t_bytes32_$",
+                  "typeString": "function (bytes memory) pure returns (bytes32)"
+                }
+              },
+              "id": 5803,
+              "isConstant": false,
+              "isLValue": false,
+              "isPure": true,
+              "kind": "functionCall",
+              "lValueRequested": false,
+              "nameLocations": [],
+              "names": [],
+              "nodeType": "FunctionCall",
+              "src": "287:49:32",
+              "tryCall": false,
+              "typeDescriptions": {
+                "typeIdentifier": "t_bytes32",
+                "typeString": "bytes32"
+              }
+            },
+            "visibility": "internal"
+          },
+          {
+            "id": 5808,
+            "nodeType": "StructDefinition",
+            "src": "341:55:32",
+            "nodes": [],
+            "canonicalName": "EntitlementCheckerStorage.Layout",
+            "members": [
+              {
+                "constant": false,
+                "id": 5807,
+                "mutability": "mutable",
+                "name": "nodes",
+                "nameLocation": "386:5:32",
+                "nodeType": "VariableDeclaration",
+                "scope": 5808,
+                "src": "361:30:32",
+                "stateVariable": false,
+                "storageLocation": "default",
+                "typeDescriptions": {
+                  "typeIdentifier": "t_struct$_AddressSet_$120667_storage_ptr",
+                  "typeString": "struct EnumerableSet.AddressSet"
+                },
+                "typeName": {
+                  "id": 5806,
+                  "nodeType": "UserDefinedTypeName",
+                  "pathNode": {
+                    "id": 5805,
+                    "name": "EnumerableSet.AddressSet",
+                    "nameLocations": [
+                      "361:13:32",
+                      "375:10:32"
+                    ],
+                    "nodeType": "IdentifierPath",
+                    "referencedDeclaration": 120667,
+                    "src": "361:24:32"
+                  },
+                  "referencedDeclaration": 120667,
+                  "src": "361:24:32",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_struct$_AddressSet_$120667_storage_ptr",
+                    "typeString": "struct EnumerableSet.AddressSet"
+                  }
+                },
+                "visibility": "internal"
+              }
+            ],
+            "name": "Layout",
+            "nameLocation": "348:6:32",
+            "scope": 5821,
+            "visibility": "public"
+          },
+          {
+            "id": 5820,
+            "nodeType": "FunctionDefinition",
+            "src": "400:139:32",
+            "nodes": [],
+            "body": {
+              "id": 5819,
+              "nodeType": "Block",
+              "src": "459:80:32",
+              "nodes": [],
+              "statements": [
+                {
+                  "assignments": [
+                    5815
+                  ],
+                  "declarations": [
+                    {
+                      "constant": false,
+                      "id": 5815,
+                      "mutability": "mutable",
+                      "name": "slot",
+                      "nameLocation": "473:4:32",
+                      "nodeType": "VariableDeclaration",
+                      "scope": 5819,
+                      "src": "465:12:32",
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_bytes32",
+                        "typeString": "bytes32"
+                      },
+                      "typeName": {
+                        "id": 5814,
+                        "name": "bytes32",
+                        "nodeType": "ElementaryTypeName",
+                        "src": "465:7:32",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_bytes32",
+                          "typeString": "bytes32"
+                        }
+                      },
+                      "visibility": "internal"
+                    }
+                  ],
+                  "id": 5817,
+                  "initialValue": {
+                    "id": 5816,
+                    "name": "STORAGE_SLOT",
+                    "nodeType": "Identifier",
+                    "overloadedDeclarations": [],
+                    "referencedDeclaration": 5804,
+                    "src": "480:12:32",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bytes32",
+                      "typeString": "bytes32"
+                    }
+                  },
+                  "nodeType": "VariableDeclarationStatement",
+                  "src": "465:27:32"
+                },
+                {
+                  "AST": {
+                    "nodeType": "YulBlock",
+                    "src": "507:28:32",
+                    "statements": [
+                      {
+                        "nodeType": "YulAssignment",
+                        "src": "515:14:32",
+                        "value": {
+                          "name": "slot",
+                          "nodeType": "YulIdentifier",
+                          "src": "525:4:32"
+                        },
+                        "variableNames": [
+                          {
+                            "name": "l.slot",
+                            "nodeType": "YulIdentifier",
+                            "src": "515:6:32"
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  "evmVersion": "paris",
+                  "externalReferences": [
+                    {
+                      "declaration": 5812,
+                      "isOffset": false,
+                      "isSlot": true,
+                      "src": "515:6:32",
+                      "suffix": "slot",
+                      "valueSize": 1
+                    },
+                    {
+                      "declaration": 5815,
+                      "isOffset": false,
+                      "isSlot": false,
+                      "src": "525:4:32",
+                      "valueSize": 1
+                    }
+                  ],
+                  "id": 5818,
+                  "nodeType": "InlineAssembly",
+                  "src": "498:37:32"
+                }
+              ]
+            },
+            "implemented": true,
+            "kind": "function",
+            "modifiers": [],
+            "name": "layout",
+            "nameLocation": "409:6:32",
+            "parameters": {
+              "id": 5809,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "415:2:32"
+            },
+            "returnParameters": {
+              "id": 5813,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 5812,
+                  "mutability": "mutable",
+                  "name": "l",
+                  "nameLocation": "456:1:32",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 5820,
+                  "src": "441:16:32",
+                  "stateVariable": false,
+                  "storageLocation": "storage",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_struct$_Layout_$5808_storage_ptr",
+                    "typeString": "struct EntitlementCheckerStorage.Layout"
+                  },
+                  "typeName": {
+                    "id": 5811,
+                    "nodeType": "UserDefinedTypeName",
+                    "pathNode": {
+                      "id": 5810,
+                      "name": "Layout",
+                      "nameLocations": [
+                        "441:6:32"
+                      ],
+                      "nodeType": "IdentifierPath",
+                      "referencedDeclaration": 5808,
+                      "src": "441:6:32"
+                    },
+                    "referencedDeclaration": 5808,
+                    "src": "441:6:32",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_struct$_Layout_$5808_storage_ptr",
+                      "typeString": "struct EntitlementCheckerStorage.Layout"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "440:18:32"
+            },
+            "scope": 5821,
+            "stateMutability": "pure",
+            "virtual": false,
+            "visibility": "internal"
+          }
+        ],
+        "abstract": false,
+        "baseContracts": [],
+        "canonicalName": "EntitlementCheckerStorage",
+        "contractDependencies": [],
+        "contractKind": "library",
+        "fullyImplemented": true,
+        "linearizedBaseContracts": [
+          5821
+        ],
+        "name": "EntitlementCheckerStorage",
+        "nameLocation": "212:25:32",
+        "scope": 5822,
+        "usedErrors": [],
+        "usedEvents": []
+      }
+    ],
+    "license": "Apache-2.0"
+  },
+  "id": 32
+}

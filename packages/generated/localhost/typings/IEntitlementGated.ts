@@ -13,7 +13,11 @@ import type {
   Signer,
   utils,
 } from "ethers";
-import type { FunctionFragment, Result } from "@ethersproject/abi";
+import type {
+  FunctionFragment,
+  Result,
+  EventFragment,
+} from "@ethersproject/abi";
 import type { Listener, Provider } from "@ethersproject/providers";
 import type {
   TypedEventFilter,
@@ -25,25 +29,31 @@ import type {
 
 export interface IEntitlementGatedInterface extends utils.Interface {
   functions: {
-    "deleteTransaction(bytes32)": FunctionFragment;
+    "getEntitlementOperations()": FunctionFragment;
     "postEntitlementCheckResult(bytes32,uint8)": FunctionFragment;
+    "removeTransaction(bytes32)": FunctionFragment;
     "requestEntitlementCheck()": FunctionFragment;
   };
 
   getFunction(
     nameOrSignatureOrTopic:
-      | "deleteTransaction"
+      | "getEntitlementOperations"
       | "postEntitlementCheckResult"
+      | "removeTransaction"
       | "requestEntitlementCheck"
   ): FunctionFragment;
 
   encodeFunctionData(
-    functionFragment: "deleteTransaction",
-    values: [PromiseOrValue<BytesLike>]
+    functionFragment: "getEntitlementOperations",
+    values?: undefined
   ): string;
   encodeFunctionData(
     functionFragment: "postEntitlementCheckResult",
     values: [PromiseOrValue<BytesLike>, PromiseOrValue<BigNumberish>]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "removeTransaction",
+    values: [PromiseOrValue<BytesLike>]
   ): string;
   encodeFunctionData(
     functionFragment: "requestEntitlementCheck",
@@ -51,7 +61,7 @@ export interface IEntitlementGatedInterface extends utils.Interface {
   ): string;
 
   decodeFunctionResult(
-    functionFragment: "deleteTransaction",
+    functionFragment: "getEntitlementOperations",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -59,12 +69,34 @@ export interface IEntitlementGatedInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
+    functionFragment: "removeTransaction",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "requestEntitlementCheck",
     data: BytesLike
   ): Result;
 
-  events: {};
+  events: {
+    "EntitlementCheckResultPosted(bytes32,uint8)": EventFragment;
+  };
+
+  getEvent(
+    nameOrSignatureOrTopic: "EntitlementCheckResultPosted"
+  ): EventFragment;
 }
+
+export interface EntitlementCheckResultPostedEventObject {
+  transactionId: string;
+  result: number;
+}
+export type EntitlementCheckResultPostedEvent = TypedEvent<
+  [string, number],
+  EntitlementCheckResultPostedEventObject
+>;
+
+export type EntitlementCheckResultPostedEventFilter =
+  TypedEventFilter<EntitlementCheckResultPostedEvent>;
 
 export interface IEntitlementGated extends BaseContract {
   connect(signerOrProvider: Signer | Provider | string): this;
@@ -93,14 +125,16 @@ export interface IEntitlementGated extends BaseContract {
   removeListener: OnEvent<this>;
 
   functions: {
-    deleteTransaction(
-      transactionId: PromiseOrValue<BytesLike>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
-    ): Promise<ContractTransaction>;
+    getEntitlementOperations(overrides?: CallOverrides): Promise<[string]>;
 
     postEntitlementCheckResult(
       transactionId: PromiseOrValue<BytesLike>,
       result: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
+    removeTransaction(
+      transactionId: PromiseOrValue<BytesLike>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
@@ -109,14 +143,16 @@ export interface IEntitlementGated extends BaseContract {
     ): Promise<ContractTransaction>;
   };
 
-  deleteTransaction(
-    transactionId: PromiseOrValue<BytesLike>,
-    overrides?: Overrides & { from?: PromiseOrValue<string> }
-  ): Promise<ContractTransaction>;
+  getEntitlementOperations(overrides?: CallOverrides): Promise<string>;
 
   postEntitlementCheckResult(
     transactionId: PromiseOrValue<BytesLike>,
     result: PromiseOrValue<BigNumberish>,
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
+  removeTransaction(
+    transactionId: PromiseOrValue<BytesLike>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
@@ -125,31 +161,44 @@ export interface IEntitlementGated extends BaseContract {
   ): Promise<ContractTransaction>;
 
   callStatic: {
-    deleteTransaction(
-      transactionId: PromiseOrValue<BytesLike>,
-      overrides?: CallOverrides
-    ): Promise<boolean>;
+    getEntitlementOperations(overrides?: CallOverrides): Promise<string>;
 
     postEntitlementCheckResult(
       transactionId: PromiseOrValue<BytesLike>,
       result: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
-    ): Promise<boolean>;
+    ): Promise<void>;
 
-    requestEntitlementCheck(overrides?: CallOverrides): Promise<boolean>;
+    removeTransaction(
+      transactionId: PromiseOrValue<BytesLike>,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
+    requestEntitlementCheck(overrides?: CallOverrides): Promise<void>;
   };
 
-  filters: {};
+  filters: {
+    "EntitlementCheckResultPosted(bytes32,uint8)"(
+      transactionId?: PromiseOrValue<BytesLike> | null,
+      result?: null
+    ): EntitlementCheckResultPostedEventFilter;
+    EntitlementCheckResultPosted(
+      transactionId?: PromiseOrValue<BytesLike> | null,
+      result?: null
+    ): EntitlementCheckResultPostedEventFilter;
+  };
 
   estimateGas: {
-    deleteTransaction(
+    getEntitlementOperations(overrides?: CallOverrides): Promise<BigNumber>;
+
+    postEntitlementCheckResult(
       transactionId: PromiseOrValue<BytesLike>,
+      result: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
-    postEntitlementCheckResult(
+    removeTransaction(
       transactionId: PromiseOrValue<BytesLike>,
-      result: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
@@ -159,14 +208,18 @@ export interface IEntitlementGated extends BaseContract {
   };
 
   populateTransaction: {
-    deleteTransaction(
-      transactionId: PromiseOrValue<BytesLike>,
-      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    getEntitlementOperations(
+      overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
     postEntitlementCheckResult(
       transactionId: PromiseOrValue<BytesLike>,
       result: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    removeTransaction(
+      transactionId: PromiseOrValue<BytesLike>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 

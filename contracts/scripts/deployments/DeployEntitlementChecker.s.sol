@@ -2,7 +2,7 @@
 pragma solidity ^0.8.20;
 
 import {Deployer} from "contracts/scripts/common/Deployer.s.sol";
-import {EntitlementChecker} from "contracts/src/crosschain/EntitlementChecker.sol";
+import {EntitlementChecker} from "contracts/src/crosschain/checker/EntitlementChecker.sol";
 
 contract DeployEntitlementChecker is Deployer {
   function versionName() public pure override returns (string memory) {

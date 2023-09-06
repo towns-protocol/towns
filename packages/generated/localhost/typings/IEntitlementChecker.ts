@@ -13,7 +13,11 @@ import type {
   Signer,
   utils,
 } from "ethers";
-import type { FunctionFragment, Result } from "@ethersproject/abi";
+import type {
+  FunctionFragment,
+  Result,
+  EventFragment,
+} from "@ethersproject/abi";
 import type { Listener, Provider } from "@ethersproject/providers";
 import type {
   TypedEventFilter,
@@ -77,8 +81,51 @@ export interface IEntitlementCheckerInterface extends utils.Interface {
     data: BytesLike
   ): Result;
 
-  events: {};
+  events: {
+    "EntitlementCheckRequested(address,bytes32,address[],address)": EventFragment;
+    "NodeRegistered(address)": EventFragment;
+    "NodeUnregistered(address)": EventFragment;
+  };
+
+  getEvent(nameOrSignatureOrTopic: "EntitlementCheckRequested"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "NodeRegistered"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "NodeUnregistered"): EventFragment;
 }
+
+export interface EntitlementCheckRequestedEventObject {
+  callerAddress: string;
+  transactionId: string;
+  selectedNodes: string[];
+  contractAddress: string;
+}
+export type EntitlementCheckRequestedEvent = TypedEvent<
+  [string, string, string[], string],
+  EntitlementCheckRequestedEventObject
+>;
+
+export type EntitlementCheckRequestedEventFilter =
+  TypedEventFilter<EntitlementCheckRequestedEvent>;
+
+export interface NodeRegisteredEventObject {
+  nodeAddress: string;
+}
+export type NodeRegisteredEvent = TypedEvent<
+  [string],
+  NodeRegisteredEventObject
+>;
+
+export type NodeRegisteredEventFilter = TypedEventFilter<NodeRegisteredEvent>;
+
+export interface NodeUnregisteredEventObject {
+  nodeAddress: string;
+}
+export type NodeUnregisteredEvent = TypedEvent<
+  [string],
+  NodeUnregisteredEventObject
+>;
+
+export type NodeUnregisteredEventFilter =
+  TypedEventFilter<NodeUnregisteredEvent>;
 
 export interface IEntitlementChecker extends BaseContract {
   connect(signerOrProvider: Signer | Provider | string): this;
@@ -167,12 +214,39 @@ export interface IEntitlementChecker extends BaseContract {
 
     nodeCount(overrides?: CallOverrides): Promise<BigNumber>;
 
-    registerNode(overrides?: CallOverrides): Promise<boolean>;
+    registerNode(overrides?: CallOverrides): Promise<void>;
 
-    unregisterNode(overrides?: CallOverrides): Promise<boolean>;
+    unregisterNode(overrides?: CallOverrides): Promise<void>;
   };
 
-  filters: {};
+  filters: {
+    "EntitlementCheckRequested(address,bytes32,address[],address)"(
+      callerAddress?: PromiseOrValue<string> | null,
+      transactionId?: null,
+      selectedNodes?: null,
+      contractAddress?: null
+    ): EntitlementCheckRequestedEventFilter;
+    EntitlementCheckRequested(
+      callerAddress?: PromiseOrValue<string> | null,
+      transactionId?: null,
+      selectedNodes?: null,
+      contractAddress?: null
+    ): EntitlementCheckRequestedEventFilter;
+
+    "NodeRegistered(address)"(
+      nodeAddress?: PromiseOrValue<string> | null
+    ): NodeRegisteredEventFilter;
+    NodeRegistered(
+      nodeAddress?: PromiseOrValue<string> | null
+    ): NodeRegisteredEventFilter;
+
+    "NodeUnregistered(address)"(
+      nodeAddress?: PromiseOrValue<string> | null
+    ): NodeUnregisteredEventFilter;
+    NodeUnregistered(
+      nodeAddress?: PromiseOrValue<string> | null
+    ): NodeUnregisteredEventFilter;
+  };
 
   estimateGas: {
     emitEntitlementCheckRequested(
