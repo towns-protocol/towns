@@ -167,7 +167,6 @@ export class OlmDevice {
         exportedOlmDevice: fromExportedDevice,
     }: IInitOpts = {}): Promise<void> {
         let e2eKeys
-        let fallbackKey: Record<string, Record<string, string>> | undefined
         if (!this.olmDelegate.initialized) {
             await this.olmDelegate.init()
         }
@@ -186,28 +185,22 @@ export class OlmDevice {
                 }
                 await this.initializeAccount(account)
             }
-            fallbackKey = await this.getFallbackKey()
-            if (!fallbackKey || Object.keys(fallbackKey.curve25519).length === 0) {
-                // fallback key { keyId: base64(key) }
-                await this.generateFallbackKey()
-                this.fallbackKey = (await this.getFallbackKey()).curve25519
-            } else {
-                this.fallbackKey = fallbackKey.curve25519
-            }
             e2eKeys = JSON.parse(account.identity_keys())
         } finally {
             account.free()
+        }
+        try {
+            await this.generateFallbackKey()
+            // fallback key { keyId: base64(key) }
+            this.fallbackKey = (await this.getFallbackKey()).curve25519
+        } catch (e) {
+            log(`Error generating fallback key: ${JSON.stringify(e)}`)
         }
 
         this.deviceCurve25519Key = e2eKeys.curve25519
         // note jterzis 07/19/23: deprecating ed25519 key in favor of TDK
         // see: https://linear.app/hnt-labs/issue/HNT-1796/tdk-signature-storage-curve25519-key
         this.deviceDoNotUseKey = e2eKeys.ed25519
-        console.log(
-            `OlmDevice.init: deviceCurve25519Key: ${
-                this.deviceCurve25519Key
-            }, fallbackKey ${JSON.stringify(this.fallbackKey)}`,
-        )
     }
 
     /**
@@ -1014,6 +1007,7 @@ export class OlmDevice {
                     const session = this.olmDelegate.createSession()
                     try {
                         session.create_inbound_from(account, theirDeviceIdentityKey, ciphertext)
+                        account.remove_one_time_keys(session)
                         this.storeAccount(txn, account)
 
                         const payloadString = session.decrypt(messageType, ciphertext)
