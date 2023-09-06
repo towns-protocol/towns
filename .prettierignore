@@ -12,6 +12,7 @@ servers/workers/**/dist/*
 servers/workers/**/.keys/*
 casablanca/**/gen/*
 casablanca/**/coverage/*
+casablanca/**/run_files/*
 casablanca/node/auth/contracts/*
 contracts/cache/*
 contracts/lib/*

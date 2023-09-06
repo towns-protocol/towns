@@ -13,6 +13,7 @@ import (
 	"casablanca/node/crypto"
 	"casablanca/node/events"
 	"casablanca/node/infra"
+	"casablanca/node/nodes"
 	"casablanca/node/protocol/protocolconnect"
 	"casablanca/node/storage"
 )
@@ -22,9 +23,9 @@ var (
 )
 
 type Service struct {
-	cache         events.StreamCache
-	townsContract auth.TownsContract
-	// keep it separate as it lives in the top-chain
+	cache              events.StreamCache
+	nodeRegistry       nodes.NodeRegistry
+	townsContract      auth.TownsContract
 	walletLinkContract auth.WalletLinkContract
 	wallet             *crypto.Wallet
 	log                *slog.Logger
@@ -86,6 +87,7 @@ func MakeServiceHandler(ctx context.Context, log *slog.Logger, dbUrl string, sto
 					DefaultCtx: ctx,
 				},
 			),
+			nodeRegistry:       nodes.NewNodeRegistry(ctx),
 			townsContract:      townsContract,
 			walletLinkContract: walletLinkContract,
 			wallet:             wallet,
