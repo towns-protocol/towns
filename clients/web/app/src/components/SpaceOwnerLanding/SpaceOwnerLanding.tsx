@@ -10,7 +10,7 @@ import { FadeIn } from '@components/Transitions'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { CreateChannelFormContainer } from '@components/Web3/CreateChannelForm'
 import { getInviteUrl } from 'ui/utils/utils'
-import { childStyle, contentStyle, copiedStyle, headerStyle } from './SpaceOwnerLanding.css'
+import { copiedStyle } from './SpaceOwnerLanding.css'
 
 export const SpaceOwnerLanding = () => {
     const space = useSpaceData()
@@ -36,12 +36,12 @@ export const SpaceOwnerLanding = () => {
     }
 
     return (
-        <>
-            <Stack grow horizontal padding="lg" className={headerStyle}>
+        <Stack padding={{ touch: 'md', default: 'x8' }} maxWidth="600">
+            <Stack grow horizontal padding="lg">
                 <Heading level={1}>Welcome to {space?.name}</Heading>
             </Stack>
-            <Stack className={contentStyle}>
-                <Stack className={childStyle} gap="lg">
+            <Stack padding="lg">
+                <Stack gap="lg">
                     <Paragraph size="lg">
                         You now hold the key to your town square. You and your community members can
                         chat freely here and own your communication. You can configure your settings
@@ -112,6 +112,6 @@ export const SpaceOwnerLanding = () => {
                     <CreateChannelFormContainer spaceId={space.id} onHide={onHide} />
                 </ModalContainer>
             )}
-        </>
+        </Stack>
     )
 }
