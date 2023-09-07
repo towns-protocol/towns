@@ -167,7 +167,6 @@ export const RichTextToolbar = (props: { focused: boolean; onAddLinkClick: () =>
             overflowX="scroll"
             gap="xs"
             pointerEvents="auto"
-            rounded="sm"
             width="100%"
             opacity={focused ? 'opaque' : '0.4'}
             zIndex="tooltips"
