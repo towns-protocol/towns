@@ -48,6 +48,7 @@ describe('workflows', () => {
                     [],
                 ),
             ],
+            streamId: bobsUserStreamId,
         })
 
         log('Bob created user, about to create space')
@@ -72,6 +73,7 @@ describe('workflows', () => {
                     [spaceInceptionEvent.hash],
                 ),
             ],
+            streamId: spacedStreamId,
         })
 
         // Now there must be "joined space" event in the user stream.
@@ -108,6 +110,7 @@ describe('workflows', () => {
         )
         await bob.createStream({
             events: [channelInceptionEvent, channelJoinEvent],
+            streamId: channelId,
         })
 
         // Now there must be "joined channel" event in the user stream.

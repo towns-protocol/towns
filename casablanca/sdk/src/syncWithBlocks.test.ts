@@ -48,6 +48,7 @@ describe('syncWithBlocks', () => {
                     [],
                 ),
             ],
+            streamId: bobsUserStreamId,
         })
         log('Bob created user, about to create space')
 
@@ -73,6 +74,7 @@ describe('syncWithBlocks', () => {
                     [spaceInceptionEvent.hash],
                 ),
             ],
+            streamId: spacedStreamId,
         })
 
         const channelId = makeChannelStreamId('bobs-channel-' + genId())
@@ -101,6 +103,7 @@ describe('syncWithBlocks', () => {
         log('creating channel with events=', channelEvents)
         await bob.createStream({
             events: channelEvents,
+            streamId: channelId,
         })
 
         log('Bob created channel, reads it back')

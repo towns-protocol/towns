@@ -256,6 +256,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         ]
         const userResponse = await this.rpcClient.createStream({
             events: userEvents,
+            streamId: userStreamId,
         })
 
         const userDeviceKeyEvents = [
@@ -271,6 +272,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
 
         const deviceResponse = await this.rpcClient.createStream({
             events: userDeviceKeyEvents,
+            streamId: userDeviceKeyStreamId,
         })
 
         const userSettingsEvents = [
@@ -285,6 +287,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
 
         const userSettingResponse = await this.rpcClient.createStream({
             events: userSettingsEvents,
+            streamId: userSettingsStreamId,
         })
 
         await this.initUserDeviceKeyStream(userDeviceKeyStreamId, deviceResponse)
@@ -366,6 +369,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
 
         await this.rpcClient.createStream({
             events: [inceptionEvent, joinEvent],
+            streamId: spaceId,
         })
 
         return { streamId: streamId }
@@ -407,6 +411,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
 
         await this.rpcClient.createStream({
             events: [inceptionEvent, joinEvent],
+            streamId: channelId,
         })
 
         return { streamId: channelId }

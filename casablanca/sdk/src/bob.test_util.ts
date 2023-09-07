@@ -48,6 +48,7 @@ export const bobTalksToHimself = async (
                 [],
             ),
         ],
+        streamId: bobsUserStreamId,
     })
     await maybeFlush()
     log('Bob created user, about to create space')
@@ -74,6 +75,7 @@ export const bobTalksToHimself = async (
                 [spaceInceptionEvent.hash],
             ),
         ],
+        streamId: spacedStreamId,
     })
     await maybeFlush()
 
@@ -102,6 +104,7 @@ export const bobTalksToHimself = async (
     log('creating channel with events=', channelEvents)
     await bob.createStream({
         events: channelEvents,
+        streamId: channelId,
     })
     log('Bob created channel, reads it back')
     const channel = await bob.getStream({ streamId: channelId })

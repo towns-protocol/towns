@@ -57,9 +57,15 @@ func (s *Service) createStream(ctx context.Context, log *slog.Logger, req *conne
 
 	inceptionEvent := parsedEvents[0]
 	inceptionPayload := inceptionEvent.Event.GetInceptionPayload()
+
 	if inceptionPayload == nil {
 		return nil, RpcErrorf(Err_BAD_STREAM_CREATION_PARAMS, "CreateStream: first event is not an inception event")
 	}
+
+	if inceptionPayload.GetStreamId() != req.Msg.StreamId {
+		return nil, RpcErrorf(Err_BAD_STREAM_CREATION_PARAMS, "CreateStream: stream id in request does not match stream id in inception event")
+	}
+
 	creatorUserId, err := common.UserStreamIdFromAddress(inceptionEvent.Event.CreatorAddress)
 	if err != nil {
 		return nil, err

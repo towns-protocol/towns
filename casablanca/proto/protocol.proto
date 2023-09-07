@@ -451,7 +451,8 @@ message StreamAndCookie {
 
 message CreateStreamRequest {
     repeated Envelope events = 1;
-}
+    string stream_id = 2; // stream_id should match the stream_id in the inception payload of the first event
+ }
 
 message CreateStreamResponse {
     // all events in current minipool and cookie allowing to sync from the end of the stream

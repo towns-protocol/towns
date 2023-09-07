@@ -69,7 +69,8 @@ func createUserDeviceKeyStream(ctx context.Context, wallet *crypto.Wallet, clien
 		return nil, nil, err
 	}
 	res, err := client.CreateStream(ctx, connect.NewRequest(&protocol.CreateStreamRequest{
-		Events: []*protocol.Envelope{inception},
+		Events:   []*protocol.Envelope{inception},
+		StreamId: userDeviceKeyStreamId,
 	}))
 	if err != nil {
 		return nil, nil, err
@@ -123,6 +124,33 @@ func revokeDeviceId(ctx context.Context, wallet *crypto.Wallet, deviceWallet *cr
 	return registerEvent.Hash, nil
 }
 
+func createUserWithMismatchedId(ctx context.Context, wallet *crypto.Wallet, client protocolconnect.StreamServiceClient) (*protocol.SyncCookie, []byte, error) {
+
+	userStreamId, err := common.UserStreamIdFromAddress(wallet.Address.Bytes())
+	if err != nil {
+		return nil, nil, err
+	}
+	inception, err := events.MakeEnvelopeWithPayload(
+		wallet,
+		events.Make_UserPayload_Inception(
+			userStreamId,
+			nil,
+		),
+		nil,
+	)
+	if err != nil {
+		return nil, nil, err
+	}
+	res, err := client.CreateStream(ctx, connect.NewRequest(&protocol.CreateStreamRequest{
+		Events:   []*protocol.Envelope{inception},
+		StreamId: "BAD_ID",
+	}))
+	if err != nil {
+		return nil, nil, err
+	}
+	return res.Msg.Stream.NextSyncCookie, inception.Hash, nil
+}
+
 func createUser(ctx context.Context, wallet *crypto.Wallet, client protocolconnect.StreamServiceClient) (*protocol.SyncCookie, []byte, error) {
 
 	userStreamId, err := common.UserStreamIdFromAddress(wallet.Address.Bytes())
@@ -141,7 +169,8 @@ func createUser(ctx context.Context, wallet *crypto.Wallet, client protocolconne
 		return nil, nil, err
 	}
 	res, err := client.CreateStream(ctx, connect.NewRequest(&protocol.CreateStreamRequest{
-		Events: []*protocol.Envelope{inception},
+		Events:   []*protocol.Envelope{inception},
+		StreamId: userStreamId,
 	}))
 	if err != nil {
 		return nil, nil, err
@@ -150,10 +179,11 @@ func createUser(ctx context.Context, wallet *crypto.Wallet, client protocolconne
 }
 
 func createSpace(ctx context.Context, wallet *crypto.Wallet, client protocolconnect.StreamServiceClient, spaceId string) (*protocol.SyncCookie, []byte, error) {
+	spaceStreamId := common.SpaceStreamIdFromName(spaceId)
 	space, err := events.MakeEnvelopeWithPayload(
 		wallet,
 		events.Make_SpacePayload_Inception(
-			common.SpaceStreamIdFromName(spaceId),
+			spaceStreamId,
 			"test space",
 			nil,
 		),
@@ -179,7 +209,8 @@ func createSpace(ctx context.Context, wallet *crypto.Wallet, client protocolconn
 	}
 
 	resspace, err := client.CreateStream(ctx, connect.NewRequest(&protocol.CreateStreamRequest{
-		Events: []*protocol.Envelope{space, joinSpace},
+		Events:   []*protocol.Envelope{space, joinSpace},
+		StreamId: spaceStreamId,
 	},
 	))
 	if err != nil {
@@ -192,10 +223,11 @@ func createSpace(ctx context.Context, wallet *crypto.Wallet, client protocolconn
 func createChannel(ctx context.Context, wallet *crypto.Wallet, client protocolconnect.StreamServiceClient, spaceId string, channelId string) (*protocol.SyncCookie, []byte, error) {
 	var channelProperties protocol.EncryptedData
 	channelProperties.Text = "encrypted text supposed to be here"
+	channelStreamId := common.ChannelStreamIdFromName(channelId)
 	channel, err := events.MakeEnvelopeWithPayload(
 		wallet,
 		events.Make_ChannelPayload_Inception(
-			common.ChannelStreamIdFromName(channelId),
+			channelStreamId,
 			spaceId,
 			//TODO: add channel settings
 			&channelProperties,
@@ -222,7 +254,8 @@ func createChannel(ctx context.Context, wallet *crypto.Wallet, client protocolco
 		return nil, nil, err
 	}
 	reschannel, err := client.CreateStream(ctx, connect.NewRequest(&protocol.CreateStreamRequest{
-		Events: []*protocol.Envelope{channel, joinChannel},
+		Events:   []*protocol.Envelope{channel, joinChannel},
+		StreamId: channelStreamId,
 	},
 	))
 	if err != nil {
@@ -296,6 +329,11 @@ func TestMethods(t *testing.T) {
 		_, udkHash, err := createUserDeviceKeyStream(ctx, wallet1, client)
 		if err != nil {
 			t.Fatalf("error calling CreateStream: %v", err)
+		}
+
+		_, _, err = createUserWithMismatchedId(ctx, wallet1, client)
+		if err == nil {
+			t.Fatalf("expected Error when calling CreateStream with mismatched id")
 		}
 
 		// create user stream for user 1

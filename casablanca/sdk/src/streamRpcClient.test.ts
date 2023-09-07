@@ -79,6 +79,7 @@ describe('streamRpcClient', () => {
                     [],
                 ),
             ],
+            streamId: streamId,
         })
     })
 
@@ -96,6 +97,7 @@ describe('streamRpcClient', () => {
         )
         await bob.createStream({
             events: [inceptionEvent],
+            streamId: bobsUserStreamId,
         })
         const userStream = await bob.getStream({ streamId: bobsUserStreamId })
         expect(userStream).toBeDefined()
@@ -150,6 +152,7 @@ describe('streamRpcClient', () => {
                     [],
                 ),
             ],
+            streamId: bobsUserStreamId,
         })
 
         await alice.createStream({
@@ -162,6 +165,7 @@ describe('streamRpcClient', () => {
                     [],
                 ),
             ],
+            streamId: alicesUserStreamId,
         })
 
         // Bob creates space
@@ -184,6 +188,7 @@ describe('streamRpcClient', () => {
         )
         await bob.createStream({
             events: [inceptionEvent, joinEvent],
+            streamId: spaceId,
         })
 
         // Bob creates channel
@@ -209,6 +214,7 @@ describe('streamRpcClient', () => {
         )
         await bob.createStream({
             events: [channelInceptionEvent, event],
+            streamId: channelId,
         })
 
         // Bob succesdfully posts a message
@@ -386,12 +392,14 @@ describe('streamRpcClient', () => {
                         [],
                     ),
                 ],
+                streamId: 'foo',
             }),
         ).rejects.toThrow(expect.objectContaining({ code: Err.BAD_STREAM_ID }))
 
         await expect(
             bob.createStream({
                 events: [],
+                streamId: undefined,
             }),
         ).rejects.toThrow(expect.objectContaining({ code: Err.BAD_STREAM_CREATION_PARAMS }))
     })
@@ -411,6 +419,7 @@ describe('streamRpcClient', () => {
                         [],
                     ),
                 ],
+                streamId: bobsUserStreamId,
             }),
         ).toResolve()
         log('Bob created user, about to create space')
@@ -429,6 +438,7 @@ describe('streamRpcClient', () => {
         ])
         await bob.createStream({
             events: spaceEvents,
+            streamId: spacedStreamId,
         })
         log('Bob created space, about to create channel')
 
@@ -448,6 +458,7 @@ describe('streamRpcClient', () => {
         ])
         await bob.createStream({
             events: channelEvents,
+            streamId: channelId,
         })
         log('Bob created channel')
 
@@ -474,6 +485,7 @@ describe('streamRpcClient', () => {
         await expect(
             bob.createStream({
                 events: [channelEvent2_0, channelEvent2_1],
+                streamId: channelId2,
             }),
         ).rejects.toThrow(
             expect.objectContaining({
@@ -495,6 +507,7 @@ describe('streamRpcClient', () => {
         await expect(
             bob.createStream({
                 events: [channelEvent2_0, channelEvent2_2],
+                streamId: channelId2,
             }),
         ).rejects.toThrow(
             expect.objectContaining({
@@ -575,6 +588,7 @@ describe('streamRpcClient', () => {
                         [],
                     ),
                 ],
+                streamId: bobsUserStreamId,
             }),
         ).toResolve()
         log('Bob created user, about to create space')
@@ -593,6 +607,7 @@ describe('streamRpcClient', () => {
         ])
         await bob.createStream({
             events: spaceEvents,
+            streamId: spacedStreamId,
         })
         log('Bob created space, about to create channel')
 
@@ -612,6 +627,7 @@ describe('streamRpcClient', () => {
         ])
         await bob.createStream({
             events: channelEvents,
+            streamId: channelId,
         })
         log('Bob created channel')
 
