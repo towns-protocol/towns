@@ -4,7 +4,7 @@ import { $getSelection, $isRangeSelection } from 'lexical'
 import { GiphyEntryDesktop, GiphyEntryTouch } from '@components/Giphy/GiphyEntry'
 import { EmojiPickerButton, EmojiPickerButtonTouch } from '@components/EmojiPickerButton'
 import { useDevice } from 'hooks/useDevice'
-import { IconButton, Stack } from '@ui'
+import { Box, IconButton, Stack } from '@ui'
 import { MotionIconButton } from 'ui/components/Motion/MotionComponents'
 import { $createEmojiNode } from './nodes/EmojiNode'
 
@@ -86,12 +86,22 @@ export const RichTextBottomToolbar = (props: Props) => {
                         onClick={onFormattingButtonClicked}
                     />
                     {!editing ? (
-                        <GiphyEntryDesktop
-                            threadId={props.threadId}
-                            threadPreview={props.threadPreview}
-                        />
+                        <Box
+                            tooltip="Giphy"
+                            tooltipOptions={{ placement: 'vertical', immediate: true }}
+                        >
+                            <GiphyEntryDesktop
+                                threadId={props.threadId}
+                                threadPreview={props.threadPreview}
+                            />
+                        </Box>
                     ) : null}
-                    <EmojiPickerButton onSelectEmoji={onSelectEmoji} />
+                    <Box
+                        tooltip="Emoji"
+                        tooltipOptions={{ placement: 'vertical', immediate: true }}
+                    >
+                        <EmojiPickerButton onSelectEmoji={onSelectEmoji} />
+                    </Box>
                 </>
             )}
         </Stack>

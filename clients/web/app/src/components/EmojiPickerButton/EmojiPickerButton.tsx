@@ -57,13 +57,7 @@ export const EmojiPickerButton = (props: Props) => {
         >
             {({ triggerProps }) => (
                 <Container>
-                    <IconButton
-                        icon="emojiAdd"
-                        tooltip="Emoji"
-                        tooltipOptions={{ placement: 'vertical', immediate: true }}
-                        {...triggerProps}
-                        size={size}
-                    />
+                    <IconButton icon="emojiAdd" {...triggerProps} size={size} />
                 </Container>
             )}
         </CardOpener>
