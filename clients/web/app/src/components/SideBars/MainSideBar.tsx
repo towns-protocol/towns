@@ -41,6 +41,11 @@ export const MainSideBar = () => {
                         link={`/${PATHS.SPACES}/new`}
                         icon="plus"
                         label="New Town"
+                        tooltip="New Town"
+                        tooltipOptions={{
+                            placement: 'horizontal',
+                            immediate: true,
+                        }}
                     />
                 </TransitionItem>
             )}

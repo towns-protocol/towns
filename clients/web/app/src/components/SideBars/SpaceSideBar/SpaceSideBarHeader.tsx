@@ -98,6 +98,8 @@ export const SpaceSideBarHeader = (props: {
                         cursor="pointer"
                         padding="xs"
                         color={{ hover: 'default', default: 'gray2' }}
+                        tooltip="Town Settings"
+                        tooltipOptions={{ immediate: true }}
                         onClick={onTokenClick}
                     >
                         <Icon type="settings" size="square_sm" />

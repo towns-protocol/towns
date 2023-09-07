@@ -1,6 +1,7 @@
 import React from 'react'
 import { ButtonText, Stack } from '@ui'
 import { Icon, IconName } from 'ui/components/Icon'
+import { TooltipOptions } from 'ui/components/Tooltip/TooltipRenderer'
 import { NavItem } from './_NavItem'
 
 export const ActionNavItem = (props: {
@@ -10,12 +11,33 @@ export const ActionNavItem = (props: {
     link?: string
     icon?: IconName
     highlight?: boolean
+    tooltip?: React.ReactNode
+    tooltipOptions?: TooltipOptions
     onClick?: (e: React.MouseEvent) => void
     children?: React.ReactNode
 }) => {
-    const { icon, id, link, highlight: isHighlight, label, badge, onClick, children } = props
+    const {
+        icon,
+        id,
+        link,
+        highlight: isHighlight,
+        label,
+        badge,
+        onClick,
+        tooltip,
+        tooltipOptions,
+        children,
+    } = props
     return (
-        <NavItem to={link} id={id} exact={false} cursor="pointer" onClick={onClick}>
+        <NavItem
+            tooltip={tooltip}
+            tooltipOptions={tooltipOptions}
+            to={link}
+            id={id}
+            exact={false}
+            cursor="pointer"
+            onClick={onClick}
+        >
             {icon && (
                 <Icon
                     type={icon}

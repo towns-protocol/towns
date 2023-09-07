@@ -24,7 +24,12 @@ export const SyncedChannelList = (props: {
                 <MotionStack key={group.label} display={isSmall ? 'none' : 'flex'}>
                     <ChannelGroupHeader label={group.label}>
                         {canCreateChannel && (
-                            <IconButton icon="plus" onClick={onShowCreateChannel} />
+                            <IconButton
+                                icon="plus"
+                                tooltip="New channel"
+                                tooltipOptions={{ immediate: true }}
+                                onClick={onShowCreateChannel}
+                            />
                         )}
                     </ChannelGroupHeader>
                     {group.channels?.map((channel) => {
