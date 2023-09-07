@@ -2,6 +2,7 @@ package storage
 
 import (
 	"casablanca/node/dlog"
+	"casablanca/node/infra"
 	"casablanca/node/protocol"
 	"context"
 	_ "embed"
@@ -96,6 +97,8 @@ func (s *PostgresEventStore) CreateStream(ctx context.Context, streamId string, 
 }
 
 func (s *PostgresEventStore) GetStreamFromLastSnapshot(ctx context.Context, streamId string) (*GetStreamFromLastSnapshotResult, error) {
+	infra.StoreExecutionTimeMetrics("GetStreamFromLastSnapshotMs", time.Now())
+
 	err := validateStreamId(streamId)
 	if err != nil {
 		log.Error("Wrong streamId", streamId)
@@ -191,6 +194,8 @@ func (s *PostgresEventStore) GetStreamFromLastSnapshot(ctx context.Context, stre
 // Current generation of minipool should match minipoolGeneration,
 // and there should be exactly minipoolSlot events in the minipool.
 func (s *PostgresEventStore) AddEvent(ctx context.Context, streamId string, minipoolGeneration int, minipoolSlot int, envelope []byte) error {
+	defer infra.StoreExecutionTimeMetrics("AddEventMs", time.Now())
+
 	err := validateStreamId(streamId)
 	if err != nil {
 		log.Error("Wrong streamId", streamId)

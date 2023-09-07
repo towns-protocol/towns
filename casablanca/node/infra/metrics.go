@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus"
@@ -20,6 +21,16 @@ type SuccessMetrics struct {
 }
 
 var registry = prometheus.DefaultRegisterer
+
+var (
+	functionDuration = prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Name: "function_execution_duration_seconds",
+			Help: "Duration of function execution",
+		},
+		[]string{"function_name"},
+	)
+)
 
 func NewSuccessMetrics(name string, parent *SuccessMetrics) *SuccessMetrics {
 	success := prometheus.NewCounter(prometheus.CounterOpts{
@@ -44,6 +55,10 @@ func NewSuccessMetrics(name string, parent *SuccessMetrics) *SuccessMetrics {
 		Total:  total,
 		Parent: parent,
 	}
+}
+
+func StoreExecutionTimeMetrics(name string, startTime time.Time) {
+	functionDuration.WithLabelValues(name).Observe(float64(time.Since(startTime).Milliseconds()))
 }
 
 func NewCounter(name string, help string) prometheus.Counter {
@@ -78,10 +93,15 @@ func StartMetricsService(ctx context.Context, config config.MetricsConfig) {
 
 	r := mux.NewRouter()
 
+	err := registry.Register(functionDuration)
+	if err != nil {
+		panic(err)
+	}
+
 	r.Handle("/metrics", promhttp.Handler())
 	addr := fmt.Sprintf("%s:%d", config.Interface, config.Port)
 	log.Info("Starting metrics HTTP server", "addr", addr)
-	err := http.ListenAndServe(addr, r)
+	err = http.ListenAndServe(addr, r)
 	if err != nil {
 		panic(err)
 	}
