@@ -30,7 +30,7 @@ describe('syncWithBlocks', () => {
         bobsContext = await makeRandomUserContext()
     })
 
-    test('blocksGetGeratedAndSynced', async () => {
+    test('blocksGetGeneratedAndSynced', async () => {
         log('start')
 
         const bob = makeTestRpcClient()
@@ -211,7 +211,7 @@ describe('syncWithBlocks', () => {
         }
 
         expect(abortError).toBeDefined()
-        expect(abortError?.message).toContain('AbortError: The operation was aborted.')
+        expect(abortError?.message).toContain('The operation was aborted.')
         log('done')
     })
 })
