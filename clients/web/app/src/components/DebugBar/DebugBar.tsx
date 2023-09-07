@@ -78,7 +78,12 @@ const FundButton = (props: FundProps & { disabled: boolean }) => {
     const balance = useBalance({ address: props.accountId, watch: true })
     return (
         <Stack gap>
-            <Button disabled={props.disabled} size="button_xs" onClick={() => fundWallet(props)}>
+            <Button
+                width="300"
+                disabled={props.disabled}
+                size="button_xs"
+                onClick={() => fundWallet(props)}
+            >
                 <>
                     <Text size="sm">Fund Wallet and Mint MockNFT</Text>
                     <Text size="sm">{shortAddress(props.accountId)}</Text>
@@ -286,7 +291,10 @@ const DebugBar = ({
 
     const connectedChainId = chain?.id
     const synced = destinationChainId === connectedChainId
-    const serverName = matrixUrl.replaceAll('https://', '').replaceAll('http://', '')
+    const serverName =
+        env.VITE_PRIMARY_PROTOCOL === 'casablanca'
+            ? casablancaUrl?.replaceAll('https://', '').replaceAll('http://', '')
+            : matrixUrl.replaceAll('https://', '').replaceAll('http://', '')
     const platform = !chain?.name
         ? `Not connected | server:${serverName}`
         : `wallet: ${chain.name} | server:${serverName}`

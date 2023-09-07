@@ -12,12 +12,13 @@ export enum TownsEnvironment {
     Test = 'test',
     Local = 'local',
     Tunnel = 'tunnel',
+    RiverTest = 'river-test',
 }
 
 export interface TownsEnvironmentInfo {
     id: TownsEnvironment
     name: string
-    matrixUrl: string
+    matrixUrl: string | undefined
     casablancaUrl: string | undefined
     chainId: number
     chain: Chain
@@ -56,6 +57,14 @@ export const ENVIRONMENTS: TownsEnvironmentInfo[] = [
         casablancaUrl: undefined,
         chainId: 31337,
         chain: foundryClone,
+    },
+    {
+        id: TownsEnvironment.RiverTest,
+        name: 'River Test',
+        matrixUrl: undefined,
+        casablancaUrl: 'https://river1-test.towns.com',
+        chainId: 5,
+        chain: goerli,
     },
 ]
 
