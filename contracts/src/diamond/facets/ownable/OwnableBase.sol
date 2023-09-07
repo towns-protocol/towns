@@ -34,7 +34,7 @@ abstract contract OwnableBase is IOwnableBase {
     emit OwnershipTransferred(oldOwner, newOwner);
   }
 
-  function _renounceOwnership() internal {
+  function _renounceOwnership() internal virtual {
     address oldOwner = _owner();
     OwnableStorage.layout().owner = address(0);
     emit OwnershipTransferred(oldOwner, address(0));

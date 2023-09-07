@@ -79,20 +79,20 @@
   },
   "ast": {
     "absolutePath": "contracts/src/towns/facets/entitlements/EntitlementsStorage.sol",
-    "id": 32378,
+    "id": 32399,
     "exportedSymbols": {
       "EntitlementsStorage": [
-        32377
+        32398
       ],
       "EnumerableSet": [
-        120954
+        120975
       ]
     },
     "nodeType": "SourceUnit",
     "src": "39:638:154",
     "nodes": [
       {
-        "id": 32343,
+        "id": 32364,
         "nodeType": "PragmaDirective",
         "src": "39:24:154",
         "nodes": [],
@@ -104,23 +104,23 @@
         ]
       },
       {
-        "id": 32345,
+        "id": 32366,
         "nodeType": "ImportDirective",
         "src": "93:95:154",
         "nodes": [],
         "absolutePath": "lib/openzeppelin-contracts/contracts/utils/structs/EnumerableSet.sol",
         "file": "openzeppelin-contracts/contracts/utils/structs/EnumerableSet.sol",
         "nameLocation": "-1:-1:-1",
-        "scope": 32378,
-        "sourceUnit": 120955,
+        "scope": 32399,
+        "sourceUnit": 120976,
         "symbolAliases": [
           {
             "foreign": {
-              "id": 32344,
+              "id": 32365,
               "name": "EnumerableSet",
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
-              "referencedDeclaration": 120954,
+              "referencedDeclaration": 120975,
               "src": "101:13:154",
               "typeDescriptions": {}
             },
@@ -130,12 +130,12 @@
         "unitAlias": ""
       },
       {
-        "id": 32377,
+        "id": 32398,
         "nodeType": "ContractDefinition",
         "src": "204:472:154",
         "nodes": [
           {
-            "id": 32350,
+            "id": 32371,
             "nodeType": "VariableDeclaration",
             "src": "236:93:154",
             "nodes": [],
@@ -143,7 +143,7 @@
             "mutability": "constant",
             "name": "STORAGE_SLOT",
             "nameLocation": "262:12:154",
-            "scope": 32377,
+            "scope": 32398,
             "stateVariable": true,
             "storageLocation": "default",
             "typeDescriptions": {
@@ -151,7 +151,7 @@
               "typeString": "bytes32"
             },
             "typeName": {
-              "id": 32346,
+              "id": 32367,
               "name": "bytes32",
               "nodeType": "ElementaryTypeName",
               "src": "236:7:154",
@@ -164,7 +164,7 @@
               "arguments": [
                 {
                   "hexValue": "746f776e732e636f6e7472616374732e73746f726167652e456e7469746c656d656e74",
-                  "id": 32348,
+                  "id": 32369,
                   "isConstant": false,
                   "isLValue": false,
                   "isPure": true,
@@ -186,7 +186,7 @@
                     "typeString": "literal_string \"towns.contracts.storage.Entitlement\""
                   }
                 ],
-                "id": 32347,
+                "id": 32368,
                 "name": "keccak256",
                 "nodeType": "Identifier",
                 "overloadedDeclarations": [],
@@ -197,7 +197,7 @@
                   "typeString": "function (bytes memory) pure returns (bytes32)"
                 }
               },
-              "id": 32349,
+              "id": 32370,
               "isConstant": false,
               "isLValue": false,
               "isPure": true,
@@ -216,7 +216,7 @@
             "visibility": "internal"
           },
           {
-            "id": 32355,
+            "id": 32376,
             "nodeType": "StructDefinition",
             "src": "334:71:154",
             "nodes": [],
@@ -224,12 +224,12 @@
             "members": [
               {
                 "constant": false,
-                "id": 32352,
+                "id": 32373,
                 "mutability": "mutable",
                 "name": "entitlement",
                 "nameLocation": "367:11:154",
                 "nodeType": "VariableDeclaration",
-                "scope": 32355,
+                "scope": 32376,
                 "src": "359:19:154",
                 "stateVariable": false,
                 "storageLocation": "default",
@@ -238,7 +238,7 @@
                   "typeString": "address"
                 },
                 "typeName": {
-                  "id": 32351,
+                  "id": 32372,
                   "name": "address",
                   "nodeType": "ElementaryTypeName",
                   "src": "359:7:154",
@@ -252,12 +252,12 @@
               },
               {
                 "constant": false,
-                "id": 32354,
+                "id": 32375,
                 "mutability": "mutable",
                 "name": "isImmutable",
                 "nameLocation": "389:11:154",
                 "nodeType": "VariableDeclaration",
-                "scope": 32355,
+                "scope": 32376,
                 "src": "384:16:154",
                 "stateVariable": false,
                 "storageLocation": "default",
@@ -266,7 +266,7 @@
                   "typeString": "bool"
                 },
                 "typeName": {
-                  "id": 32353,
+                  "id": 32374,
                   "name": "bool",
                   "nodeType": "ElementaryTypeName",
                   "src": "384:4:154",
@@ -280,11 +280,11 @@
             ],
             "name": "Entitlement",
             "nameLocation": "341:11:154",
-            "scope": 32377,
+            "scope": 32398,
             "visibility": "public"
           },
           {
-            "id": 32364,
+            "id": 32385,
             "nodeType": "StructDefinition",
             "src": "409:120:154",
             "nodes": [],
@@ -292,25 +292,25 @@
             "members": [
               {
                 "constant": false,
-                "id": 32360,
+                "id": 32381,
                 "mutability": "mutable",
                 "name": "entitlementByAddress",
                 "nameLocation": "461:20:154",
                 "nodeType": "VariableDeclaration",
-                "scope": 32364,
+                "scope": 32385,
                 "src": "429:52:154",
                 "stateVariable": false,
                 "storageLocation": "default",
                 "typeDescriptions": {
-                  "typeIdentifier": "t_mapping$_t_address_$_t_struct$_Entitlement_$32355_storage_$",
+                  "typeIdentifier": "t_mapping$_t_address_$_t_struct$_Entitlement_$32376_storage_$",
                   "typeString": "mapping(address => struct EntitlementsStorage.Entitlement)"
                 },
                 "typeName": {
-                  "id": 32359,
+                  "id": 32380,
                   "keyName": "",
                   "keyNameLocation": "-1:-1:-1",
                   "keyType": {
-                    "id": 32356,
+                    "id": 32377,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
                     "src": "437:7:154",
@@ -322,28 +322,28 @@
                   "nodeType": "Mapping",
                   "src": "429:31:154",
                   "typeDescriptions": {
-                    "typeIdentifier": "t_mapping$_t_address_$_t_struct$_Entitlement_$32355_storage_$",
+                    "typeIdentifier": "t_mapping$_t_address_$_t_struct$_Entitlement_$32376_storage_$",
                     "typeString": "mapping(address => struct EntitlementsStorage.Entitlement)"
                   },
                   "valueName": "",
                   "valueNameLocation": "-1:-1:-1",
                   "valueType": {
-                    "id": 32358,
+                    "id": 32379,
                     "nodeType": "UserDefinedTypeName",
                     "pathNode": {
-                      "id": 32357,
+                      "id": 32378,
                       "name": "Entitlement",
                       "nameLocations": [
                         "448:11:154"
                       ],
                       "nodeType": "IdentifierPath",
-                      "referencedDeclaration": 32355,
+                      "referencedDeclaration": 32376,
                       "src": "448:11:154"
                     },
-                    "referencedDeclaration": 32355,
+                    "referencedDeclaration": 32376,
                     "src": "448:11:154",
                     "typeDescriptions": {
-                      "typeIdentifier": "t_struct$_Entitlement_$32355_storage_ptr",
+                      "typeIdentifier": "t_struct$_Entitlement_$32376_storage_ptr",
                       "typeString": "struct EntitlementsStorage.Entitlement"
                     }
                   }
@@ -352,37 +352,37 @@
               },
               {
                 "constant": false,
-                "id": 32363,
+                "id": 32384,
                 "mutability": "mutable",
                 "name": "entitlements",
                 "nameLocation": "512:12:154",
                 "nodeType": "VariableDeclaration",
-                "scope": 32364,
+                "scope": 32385,
                 "src": "487:37:154",
                 "stateVariable": false,
                 "storageLocation": "default",
                 "typeDescriptions": {
-                  "typeIdentifier": "t_struct$_AddressSet_$120667_storage_ptr",
+                  "typeIdentifier": "t_struct$_AddressSet_$120688_storage_ptr",
                   "typeString": "struct EnumerableSet.AddressSet"
                 },
                 "typeName": {
-                  "id": 32362,
+                  "id": 32383,
                   "nodeType": "UserDefinedTypeName",
                   "pathNode": {
-                    "id": 32361,
+                    "id": 32382,
                     "name": "EnumerableSet.AddressSet",
                     "nameLocations": [
                       "487:13:154",
                       "501:10:154"
                     ],
                     "nodeType": "IdentifierPath",
-                    "referencedDeclaration": 120667,
+                    "referencedDeclaration": 120688,
                     "src": "487:24:154"
                   },
-                  "referencedDeclaration": 120667,
+                  "referencedDeclaration": 120688,
                   "src": "487:24:154",
                   "typeDescriptions": {
-                    "typeIdentifier": "t_struct$_AddressSet_$120667_storage_ptr",
+                    "typeIdentifier": "t_struct$_AddressSet_$120688_storage_ptr",
                     "typeString": "struct EnumerableSet.AddressSet"
                   }
                 },
@@ -391,33 +391,33 @@
             ],
             "name": "Layout",
             "nameLocation": "416:6:154",
-            "scope": 32377,
+            "scope": 32398,
             "visibility": "public"
           },
           {
-            "id": 32376,
+            "id": 32397,
             "nodeType": "FunctionDefinition",
             "src": "533:141:154",
             "nodes": [],
             "body": {
-              "id": 32375,
+              "id": 32396,
               "nodeType": "Block",
               "src": "593:81:154",
               "nodes": [],
               "statements": [
                 {
                   "assignments": [
-                    32371
+                    32392
                   ],
                   "declarations": [
                     {
                       "constant": false,
-                      "id": 32371,
+                      "id": 32392,
                       "mutability": "mutable",
                       "name": "slot",
                       "nameLocation": "607:4:154",
                       "nodeType": "VariableDeclaration",
-                      "scope": 32375,
+                      "scope": 32396,
                       "src": "599:12:154",
                       "stateVariable": false,
                       "storageLocation": "default",
@@ -426,7 +426,7 @@
                         "typeString": "bytes32"
                       },
                       "typeName": {
-                        "id": 32370,
+                        "id": 32391,
                         "name": "bytes32",
                         "nodeType": "ElementaryTypeName",
                         "src": "599:7:154",
@@ -438,13 +438,13 @@
                       "visibility": "internal"
                     }
                   ],
-                  "id": 32373,
+                  "id": 32394,
                   "initialValue": {
-                    "id": 32372,
+                    "id": 32393,
                     "name": "STORAGE_SLOT",
                     "nodeType": "Identifier",
                     "overloadedDeclarations": [],
-                    "referencedDeclaration": 32350,
+                    "referencedDeclaration": 32371,
                     "src": "614:12:154",
                     "typeDescriptions": {
                       "typeIdentifier": "t_bytes32",
@@ -480,7 +480,7 @@
                   "evmVersion": "paris",
                   "externalReferences": [
                     {
-                      "declaration": 32368,
+                      "declaration": 32389,
                       "isOffset": false,
                       "isSlot": true,
                       "src": "649:7:154",
@@ -488,14 +488,14 @@
                       "valueSize": 1
                     },
                     {
-                      "declaration": 32371,
+                      "declaration": 32392,
                       "isOffset": false,
                       "isSlot": false,
                       "src": "660:4:154",
                       "valueSize": 1
                     }
                   ],
-                  "id": 32374,
+                  "id": 32395,
                   "nodeType": "InlineAssembly",
                   "src": "632:38:154"
                 }
@@ -507,47 +507,47 @@
             "name": "layout",
             "nameLocation": "542:6:154",
             "parameters": {
-              "id": 32365,
+              "id": 32386,
               "nodeType": "ParameterList",
               "parameters": [],
               "src": "548:2:154"
             },
             "returnParameters": {
-              "id": 32369,
+              "id": 32390,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 32368,
+                  "id": 32389,
                   "mutability": "mutable",
                   "name": "ds",
                   "nameLocation": "589:2:154",
                   "nodeType": "VariableDeclaration",
-                  "scope": 32376,
+                  "scope": 32397,
                   "src": "574:17:154",
                   "stateVariable": false,
                   "storageLocation": "storage",
                   "typeDescriptions": {
-                    "typeIdentifier": "t_struct$_Layout_$32364_storage_ptr",
+                    "typeIdentifier": "t_struct$_Layout_$32385_storage_ptr",
                     "typeString": "struct EntitlementsStorage.Layout"
                   },
                   "typeName": {
-                    "id": 32367,
+                    "id": 32388,
                     "nodeType": "UserDefinedTypeName",
                     "pathNode": {
-                      "id": 32366,
+                      "id": 32387,
                       "name": "Layout",
                       "nameLocations": [
                         "574:6:154"
                       ],
                       "nodeType": "IdentifierPath",
-                      "referencedDeclaration": 32364,
+                      "referencedDeclaration": 32385,
                       "src": "574:6:154"
                     },
-                    "referencedDeclaration": 32364,
+                    "referencedDeclaration": 32385,
                     "src": "574:6:154",
                     "typeDescriptions": {
-                      "typeIdentifier": "t_struct$_Layout_$32364_storage_ptr",
+                      "typeIdentifier": "t_struct$_Layout_$32385_storage_ptr",
                       "typeString": "struct EntitlementsStorage.Layout"
                     }
                   },
@@ -556,7 +556,7 @@
               ],
               "src": "573:19:154"
             },
-            "scope": 32377,
+            "scope": 32398,
             "stateMutability": "pure",
             "virtual": false,
             "visibility": "internal"
@@ -569,11 +569,11 @@
         "contractKind": "library",
         "fullyImplemented": true,
         "linearizedBaseContracts": [
-          32377
+          32398
         ],
         "name": "EntitlementsStorage",
         "nameLocation": "212:19:154",
-        "scope": 32378,
+        "scope": 32399,
         "usedErrors": [],
         "usedEvents": []
       }

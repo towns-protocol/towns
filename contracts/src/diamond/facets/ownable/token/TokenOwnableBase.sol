@@ -37,7 +37,7 @@ abstract contract TokenOwnableBase is IOwnableBase {
 
     TokenOwnableStorage.Layout memory ds = TokenOwnableStorage.layout();
 
-    IERC721(ds.collection).transferFrom(_owner(), newOwner, ds.tokenId);
+    IERC721(ds.collection).safeTransferFrom(_owner(), newOwner, ds.tokenId);
     emit OwnershipTransferred(oldOwner, newOwner);
   }
 }

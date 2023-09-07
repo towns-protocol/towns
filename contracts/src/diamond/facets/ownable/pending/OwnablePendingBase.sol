@@ -32,6 +32,11 @@ abstract contract OwnablePendingBase is IOwnablePendingBase, OwnableBase {
     delete OwnablePendingStorage.layout().pendingOwner;
   }
 
+  function _renounceOwnership() internal override {
+    OwnablePendingStorage.layout().pendingOwner = address(0);
+    super._renounceOwnership();
+  }
+
   function _pendingOwner() internal view returns (address) {
     return OwnablePendingStorage.layout().pendingOwner;
   }
