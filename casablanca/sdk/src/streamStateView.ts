@@ -171,11 +171,11 @@ export class StreamStateView {
         }
 
         for (const prev of event.prevEventsStrs ?? []) {
-            check(
-                this.events.has(prev),
-                `Can't add event with unknown prevEvent ${prev}, hash=${event.hashStr}, stream=${this.streamId}`,
-                Err.STREAM_BAD_EVENT,
-            )
+            if (!this.events.has(prev)) {
+                log(
+                    `Adding event with unknown prevEvent ${prev}, hash=${event.hashStr}, stream=${this.streamId}`,
+                )
+            }
         }
 
         this.timeline.push(event)
