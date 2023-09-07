@@ -44,8 +44,10 @@ export function Web3ContextProvider(props: Props): JSX.Element {
 }
 
 export function ContextImpl(props: Props): JSX.Element {
-    const { chainId, web3Signer } = props
-    const chain = props.wagmiConfig.chains?.find((c) => c.id === props.chainId)
+    const { chainId, web3Signer, wagmiConfig } = props
+    // wagmiConfig.chanins is not populated unless you are connected!
+    // so use this for now
+    const chain = wagmiConfig.publicClient.chains?.find((c) => c.id === props.chainId)
 
     if (!chain) {
         console.error('Unsupported chain for Towns', props.chainId)
