@@ -35,7 +35,7 @@ const SpaceContext = () => {
     const spaceName = space?.name || chainSpace?.name
 
     useEffect(() => {
-        if (!path || !spaceSlug || path.type === 'home') {
+        if (!path || !spaceSlug || path.type === 'home' || path.type === 'settings') {
             return
         }
         if (path.type === 'channel') {
@@ -78,17 +78,17 @@ const SpaceContext = () => {
     )
 }
 
-const { CHANNELS, SPACES } = PATHS
+const { CHANNELS, SPACES, SETTINGS } = PATHS
 
 const useSpaceRouteMatcher = (space: SpaceData | undefined) => {
     const location = useLocation()
-    const pathName = location.pathname
+    const pathname = location.pathname
     const locationSearch = location.search
 
     return useMemo(() => {
-        const channelPath = matchPath(`${SPACES}/:spaceSlug/${CHANNELS}/:channelId`, pathName)
-        const childSpacePath = matchPath(`${SPACES}/:spaceSlug/:child/*`, pathName)
-        const homeSpacePath = matchPath(`${SPACES}/:spaceSlug/`, pathName)
+        const channelPath = matchPath(`${SPACES}/:spaceSlug/${CHANNELS}/:channelId`, pathname)
+        const childSpacePath = matchPath(`${SPACES}/:spaceSlug/:child/*`, pathname)
+        const homeSpacePath = matchPath(`${SPACES}/:spaceSlug/`, pathname)
 
         const paramsChannelId = channelPath?.params.channelId
         const paramsChild = childSpacePath?.params.child
@@ -107,6 +107,10 @@ const useSpaceRouteMatcher = (space: SpaceData | undefined) => {
                 return {
                     type: 'invite',
                 } as const
+            } else if (pathname.includes(SETTINGS)) {
+                return {
+                    type: 'settings',
+                } as const
             } else {
                 return paramsChild
                     ? ({
@@ -118,5 +122,5 @@ const useSpaceRouteMatcher = (space: SpaceData | undefined) => {
                     : ({ type: 'notfound' } as const)
             }
         }
-    }, [locationSearch, pathName, space])
+    }, [locationSearch, pathname, space])
 }
