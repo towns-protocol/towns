@@ -69,14 +69,6 @@ interface ZionClientImpl {
     waitForCreateSpaceTransaction: (
         context: TransactionContext<RoomIdentifier> | undefined,
     ) => Promise<TransactionContext<RoomIdentifier> | undefined>
-    createChannelRoom: (
-        createInfo: CreateChannelInfo,
-        networkId: string,
-    ) => Promise<RoomIdentifier | undefined>
-    createChannel: (
-        createInfo: CreateChannelInfo,
-        signer: ethers.Signer | undefined,
-    ) => Promise<RoomIdentifier | undefined>
     createChannelTransaction: (
         createChannelInfo: CreateChannelInfo,
         signer: ethers.Signer | undefined,
@@ -99,6 +91,9 @@ interface ZionClientImpl {
         users: string[],
         signer: ethers.Signer | undefined,
     ) => Promise<RoleTransactionContext | undefined>
+    waitForCreateRoleTransaction: (
+        context: RoleTransactionContext | undefined,
+    ) => Promise<RoleTransactionContext | undefined>
     addRoleToChannelTransaction: (
         spaceNetworkId: string,
         channelNetworkId: string,
@@ -108,9 +103,6 @@ interface ZionClientImpl {
     waitForAddRoleToChannelTransaction: (
         context: TransactionContext<void> | undefined,
     ) => Promise<TransactionContext<void> | undefined>
-    waitForCreateRoleTransaction: (
-        context: RoleTransactionContext | undefined,
-    ) => Promise<RoleTransactionContext | undefined>
     updateRoleTransaction: (
         spaceNetworkId: string,
         roleId: number,
@@ -199,13 +191,11 @@ export function useZionClient(): ZionClientImpl {
         client,
         clientRunning,
         spaceDapp: client?.spaceDapp,
-        createChannelRoom: useWithCatch(client?.createChannelRoom),
         createSpaceTransaction: useWithCatch(client?.createSpaceTransaction),
         waitForCreateSpaceTransaction: useWithCatch(
             client?.waitForCreateSpaceTransaction,
             ZionClientEvent.NewSpace,
         ),
-        createChannel: useWithCatch(client?.createChannel, ZionClientEvent.NewChannel),
         createChannelTransaction: useWithCatch(client?.createChannelTransaction),
         waitForCreateChannelTransaction: useWithCatch(
             client?.waitForCreateChannelTransaction,
@@ -218,10 +208,10 @@ export function useZionClient(): ZionClientImpl {
         ),
         createRoleTransaction: useWithCatch(client?.createRoleTransaction),
         waitForCreateRoleTransaction: useWithCatch(client?.waitForCreateRoleTransaction),
+        addRoleToChannelTransaction: useWithCatch(client?.addRoleToChannelTransaction),
         waitForAddRoleToChannelTransaction: useWithCatch(
             client?.waitForAddRoleToChannelTransaction,
         ),
-        addRoleToChannelTransaction: useWithCatch(client?.addRoleToChannelTransaction),
         updateRoleTransaction: useWithCatch(client?.updateRoleTransaction),
         waitForUpdateRoleTransaction: useWithCatch(client?.waitForUpdateRoleTransaction),
         deleteRoleTransaction: useWithCatch(client?.deleteRoleTransaction),

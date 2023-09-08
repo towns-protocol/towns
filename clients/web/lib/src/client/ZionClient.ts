@@ -644,7 +644,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
     /************************************************
      * createChannelRoom
      *************************************************/
-    public async createChannelRoom(
+    private async createChannelRoom(
         createInfo: CreateChannelInfo,
         networkId?: string,
     ): Promise<RoomIdentifier> {
