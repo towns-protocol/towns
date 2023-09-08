@@ -32,6 +32,21 @@ resource "aws_secretsmanager_secret_version" "rds_river_node_credentials" {
 EOF
 }
 
+resource "aws_secretsmanager_secret" "river_node_wallet_credentials" {
+  name = "${module.global_constants.environment}-river-${var.river_node_name}-wallet-credentials"
+  tags = local.tags
+}
+
+resource "aws_secretsmanager_secret_version" "river_node_wallet_credentials" {
+  secret_id     = aws_secretsmanager_secret.river_node_wallet_credentials.id
+  secret_string = <<EOF
+{
+  "walletPathPrivateKey": "DUMMY"
+}
+EOF
+}
+
+
 data "aws_iam_role" "ecs_task_execution_role" {
   name = "ecsTaskExecutionRole"
 }

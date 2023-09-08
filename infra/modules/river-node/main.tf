@@ -81,6 +81,10 @@ resource "aws_ecs_task_definition" "river-fargate" {
       {
         name      = "DBURL"
         valueFrom = "${module.river_node_db.rds_river_node_credentials_arn}:dbConnectionString::"
+      },
+      {
+        name      = "WALLETPRIVATEKEY"
+        valueFrom = "${module.river_node_db.river_node_wallet_credentials_arn}:walletPathPrivateKey::"
       }
     ]
 
