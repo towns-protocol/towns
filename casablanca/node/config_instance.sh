@@ -20,6 +20,8 @@ mkdir -p "$INSTANCE_DIR/wallet"
 
 cp "$TEMPLATE_FILE" "$OUTPUT_FILE"
 
+SKIP_GENKEY=${SKIP_GENKEY:-false}
+
 # Parse key-value pairs from the arguments
 while [[ "$#" -gt 1 ]]; do
     key=$1
@@ -48,8 +50,12 @@ if grep -q '<.*>' $OUTPUT_FILE; then
     exit 1
 fi
 
-# Generate a new wallet if one doesn't exist
-if [ ! -f "${INSTANCE_DIR}/wallet/private_key" ]; then
+# Generate a new wallet if one doesn't exist and SKIP_GENKEY is not set
+
+if [ "$SKIP_GENKEY" = true ]; then
+    echo "Skipping wallet generation for instance '${INSTANCE_NAME}'"
+    exit 0
+elif [ ! -f "${INSTANCE_DIR}/wallet/private_key" ]; then
     echo "Generating a new wallet for instance '${INSTANCE_NAME}'"
     cd "$INSTANCE_DIR"
     go run ../../node/main.go genkey

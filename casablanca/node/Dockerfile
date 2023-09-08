@@ -8,7 +8,7 @@ COPY go.mod ./
 COPY go.sum ./
 RUN go mod download
 
-COPY . /build
+COPY . ./
 
 RUN mkdir -p bin
 RUN go build -trimpath -o bin/ ./node/
@@ -22,7 +22,7 @@ ARG INSTANCE="docker-docker-single"
 
 # TODO: we should also simplify this config script so
 # that we don't have to pass "Null" to values we don't need.
-RUN ./config_instance.sh docker-single \
+RUN SKIP_GENKEY=true ./config_instance.sh docker-single \
     RPC_PORT 5157 \
     DB_PORT null \
     USE_CONTRACT true \
@@ -38,6 +38,7 @@ LABEL org.opencontainers.image.licenses="Apache-2.0"
 
 COPY --from=base /build/bin/* /usr/bin/
 COPY --from=base /build/run_files/docker-single /usr/config/run_files/docker-single
+COPY --from=base /build/run_docker.sh /usr/bin/run_docker.sh
 
 # ENV VARS FOR REFERENCE
 #
@@ -53,4 +54,4 @@ ARG RELEASE_VERSION="Unreleased"
 ENV RELEASE_VERSION=${RELEASE_VERSION}
 
 WORKDIR /usr/config/run_files/docker-single
-ENTRYPOINT /usr/bin/node run
+ENTRYPOINT [ "sh", "/usr/bin/run_docker.sh" ]
