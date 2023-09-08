@@ -3,12 +3,12 @@ import {
     Channel,
     ChannelGroup,
     InviteData,
-    Membership,
     Room,
     SpaceChild,
     SpaceData,
     SpaceHierarchies,
     SpaceHierarchy,
+    getMembershipFor,
 } from '../types/zion-types'
 import { RoomIdentifier, makeRoomIdentifier } from '../types/room-identifier'
 import { useRoom, useRoomNames } from './use-room'
@@ -223,11 +223,13 @@ function useSpaceRollup(streamId: RoomIdentifier | undefined): SpaceData | undef
         // add listeners
         casablancaClient.on('spaceChannelCreated', onSpaceChannelUpdated)
         casablancaClient.on('spaceChannelUpdated', onSpaceChannelUpdated)
+        casablancaClient.on('streamMyMembershipUpdated', onSpaceChannelUpdated)
 
         return () => {
             // remove lsiteners and clear state when the effect stops
             casablancaClient.off('spaceChannelCreated', onSpaceChannelUpdated)
             casablancaClient.off('spaceChannelUpdated', onSpaceChannelUpdated)
+            casablancaClient.off('streamMyMembershipUpdated', onSpaceChannelUpdated)
             setSpace(undefined)
         }
     }, [casablancaClient, stream])
@@ -239,11 +241,7 @@ function rollupSpace(stream: Stream, userId: string, channels: string[]): SpaceD
         throw new Error('stream is not a space')
     }
 
-    const membership = stream.view.getMemberships().joinedUsers.has(userId)
-        ? Membership.Join
-        : stream.view.getMemberships().invitedUsers.has(userId)
-        ? Membership.Invite
-        : Membership.None
+    const membership = getMembershipFor(userId, stream)
 
     return {
         id: makeRoomIdentifier(stream.view.streamId),

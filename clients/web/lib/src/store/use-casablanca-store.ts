@@ -1,10 +1,10 @@
 import { create } from 'zustand'
 
 import { AuthenticationError, LoginStatus } from '../hooks/login'
-import { User, RoomMember, Room, Membership } from '../types/zion-types'
+import { User, RoomMember, Room, Membership, getMembershipFor } from '../types/zion-types'
 import { makeRoomIdentifier } from '../types/room-identifier'
 
-import { Client as CasablancaClient, isSpaceStreamId, isChannelStreamId } from '@river/sdk'
+import { Client as CasablancaClient, isSpaceStreamId, isChannelStreamId, Stream } from '@river/sdk'
 
 export type CasablancaStoreStates = {
     loginStatus: LoginStatus
@@ -56,12 +56,21 @@ export function toZionCasablancaRoom(streamId: string, client: CasablancaClient)
         throw new Error('Client not defined')
     }
 
+    const userId = client.userId
+    if (!userId) {
+        throw new Error('User not logged in')
+    }
+
     //reject if streamId is not associated with a channel or space
     if (!isSpaceStreamId(streamId) && !isChannelStreamId(streamId)) {
         throw new Error('Invalid streamId: ' + streamId)
     }
 
-    const { members, membersMap } = toZionMembers(streamId, client)
+    const stream = client.streams.get(streamId)
+    if (!stream) {
+        throw new Error('Stream not found')
+    }
+    const { members, membersMap } = toZionMembers(stream)
 
     //Room topic is available only for channels
     let topic: string | undefined = undefined
@@ -84,7 +93,7 @@ export function toZionCasablancaRoom(streamId: string, client: CasablancaClient)
     return {
         id: makeRoomIdentifier(streamId),
         name: name,
-        membership: Membership.Join,
+        membership: getMembershipFor(userId, stream),
         inviter: undefined,
         members: members,
         membersMap: membersMap,
@@ -99,24 +108,11 @@ export function toZionCasablancaRoom(streamId: string, client: CasablancaClient)
  * @param client - The Casablanca client.
  * @returns A list of members joined space or channel. Throw error if membership is not valid or streamId is not associated with a channel or space.
  */
-function toZionMembers(
-    streamId: string,
-    client: CasablancaClient,
-): {
+function toZionMembers(stream: Stream): {
     members: RoomMember[]
     membersMap: { [userId: string]: RoomMember }
 } {
-    //reject if client is not defined
-    if (!client) {
-        throw new Error('Client not defined')
-    }
-
-    //reject if streamId is not associated with a channel or space
-    if (!isSpaceStreamId(streamId) && !isChannelStreamId(streamId)) {
-        throw new Error('Invalid streamId: ' + streamId)
-    }
-
-    const members: RoomMember[] = getMembersWithMembership(Membership.Join, streamId, client)
+    const members: RoomMember[] = getMembersWithMembership(Membership.Join, stream)
 
     const membersMap = members.reduce((result, x) => {
         result[x.userId] = x
@@ -133,15 +129,8 @@ function toZionMembers(
  * @returns A list of members with the given membership state. Throw error if membership is not valid or streamId is not associated with a channel or space.
  */
 
-function getMembersWithMembership(
-    membership: Membership,
-    streamId: string,
-    client: CasablancaClient,
-): RoomMember[] {
-    //reject if client is not defined
-    if (!client) {
-        throw new Error('Client not defined')
-    }
+function getMembersWithMembership(membership: Membership, stream: Stream): RoomMember[] {
+    const streamId = stream.view.streamId
     //reject if streamId is not associated with a channel or space
     if (!isSpaceStreamId(streamId) && !isChannelStreamId(streamId)) {
         throw new Error('Invalid streamId: ' + streamId)
@@ -151,22 +140,17 @@ function getMembersWithMembership(
 
     let users: Set<string>
 
-    const stream = client.streams.get(streamId)
-    if (!stream) {
-        throw new Error('Stream not found')
-    } else {
-        switch (membership) {
-            case Membership.Join: {
-                users = stream.view.getMemberships().joinedUsers
-                break
-            }
-            case Membership.Invite: {
-                users = stream.view.getMemberships().invitedUsers
-                break
-            }
-            default: {
-                throw new Error('Invalid membership type: ' + membership)
-            }
+    switch (membership) {
+        case Membership.Join: {
+            users = stream.view.getMemberships().joinedUsers
+            break
+        }
+        case Membership.Invite: {
+            users = stream.view.getMemberships().invitedUsers
+            break
+        }
+        default: {
+            throw new Error('Invalid membership type: ' + membership)
         }
     }
 

@@ -19,10 +19,11 @@ import { StreamEvents } from './streamEvents'
 export class StreamStateView_Space {
     readonly streamId: string
     readonly name?: string
-    readonly memberships = new StreamStateView_Membership()
+    readonly memberships: StreamStateView_Membership
     readonly spaceChannelsMetadata = new Map<string, ChannelProperties>()
 
-    constructor(inception: SpacePayload_Inception) {
+    constructor(userId: string, inception: SpacePayload_Inception) {
+        this.memberships = new StreamStateView_Membership(userId)
         this.streamId = inception.streamId
         this.name = inception.name
     }

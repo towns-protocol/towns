@@ -15,11 +15,12 @@ import { logNever } from './check'
 export class StreamStateView_Channel {
     readonly streamId: string
     readonly spaceId?: string
-    readonly memberships = new StreamStateView_Membership()
+    readonly memberships: StreamStateView_Membership
     readonly messages = new Map<string, ParsedEvent>()
     readonly receipts = new Map<string, ParsedEvent>()
 
-    constructor(inception: ChannelPayload_Inception) {
+    constructor(userId: string, inception: ChannelPayload_Inception) {
+        this.memberships = new StreamStateView_Membership(userId)
         this.streamId = inception.streamId
         this.spaceId = inception.spaceId
     }

@@ -198,7 +198,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         this.userStreamId = userStreamId
         const { streamAndCookie, snapshot, miniblocks } = unpackStreamResponse(response)
 
-        const stream = new Stream(userStreamId, snapshot, this, this.logEmitFromStream)
+        const stream = new Stream(this.userId, userStreamId, snapshot, this, this.logEmitFromStream)
         this.streams.set(userStreamId, stream)
         stream.initialize(streamAndCookie, snapshot, miniblocks)
 
@@ -220,7 +220,13 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         this.userSettingsStreamId = userSettingsStreamId
         const { streamAndCookie, snapshot, miniblocks } = unpackStreamResponse(response)
 
-        const stream = new Stream(userSettingsStreamId, snapshot, this, this.logEmitFromStream)
+        const stream = new Stream(
+            this.userId,
+            userSettingsStreamId,
+            snapshot,
+            this,
+            this.logEmitFromStream,
+        )
         this.streams.set(userSettingsStreamId, stream)
         stream.initialize(streamAndCookie, snapshot, miniblocks)
     }
@@ -233,7 +239,13 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         this.userDeviceKeyStreamId = userDeviceKeyStreamId
         const { streamAndCookie, snapshot, miniblocks } = unpackStreamResponse(response)
 
-        const stream = new Stream(userDeviceKeyStreamId, snapshot, this, this.logEmitFromStream)
+        const stream = new Stream(
+            this.userId,
+            userDeviceKeyStreamId,
+            snapshot,
+            this,
+            this.logEmitFromStream,
+        )
         this.streams.set(userDeviceKeyStreamId, stream)
         stream.initialize(streamAndCookie, snapshot, miniblocks)
     }
@@ -333,7 +345,14 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
 
         const response = await this.rpcClient.getStream({ streamId })
         const { streamAndCookie, snapshot, miniblocks } = unpackStreamResponse(response)
-        const stream = new Stream(streamId, snapshot, this, this.logEmitFromStream, true)
+        const stream = new Stream(
+            this.userId,
+            streamId,
+            snapshot,
+            this,
+            this.logEmitFromStream,
+            true,
+        )
         this.streams.set(streamId, stream)
         // add init events
         stream.initialize(streamAndCookie, snapshot, miniblocks)
@@ -520,7 +539,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
             this.logCall('getStream', response.stream)
             check(isDefined(response.stream) && hasElements(response.miniblocks), 'got bad stream')
             const { streamAndCookie, snapshot, miniblocks } = unpackStreamResponse(response)
-            const streamView = new StreamStateView(streamId, snapshot)
+            const streamView = new StreamStateView(this.userId, streamId, snapshot)
             streamView.initialize(streamAndCookie, snapshot, miniblocks, undefined)
             return streamView
         } catch (err) {
@@ -537,7 +556,13 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
                 if (this.streams.get(streamId) === undefined) {
                     const { streamAndCookie, snapshot, miniblocks } = unpackStreamResponse(response)
                     this.logCall('initStream', streamAndCookie)
-                    const stream = new Stream(streamId, snapshot, this, this.logEmitFromStream)
+                    const stream = new Stream(
+                        this.userId,
+                        streamId,
+                        snapshot,
+                        this,
+                        this.logEmitFromStream,
+                    )
                     this.streams.set(streamId, stream)
                     stream.initialize(streamAndCookie, snapshot, miniblocks)
                     // Blip sync here to make sure it also monitors new stream

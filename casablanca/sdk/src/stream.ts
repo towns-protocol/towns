@@ -14,6 +14,7 @@ export class Stream extends (EventEmitter as new () => TypedEmitter<EmittedEvent
     readonly foreignUserStream: boolean
 
     constructor(
+        userId: string,
         streamId: string,
         snapshot: Snapshot,
         clientEmitter: TypedEmitter<EmittedEvents>,
@@ -23,7 +24,7 @@ export class Stream extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         super()
         this.clientEmitter = clientEmitter
         this.logEmitFromStream = logEmitFromStream
-        this.view = new StreamStateView(streamId, snapshot)
+        this.view = new StreamStateView(userId, streamId, snapshot)
         this.foreignUserStream = foreignUserStream ?? false
     }
 

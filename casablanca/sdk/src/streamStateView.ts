@@ -76,7 +76,7 @@ export class StreamStateView {
         return this._userDeviceKeyContent
     }
 
-    constructor(streamId: string, snapshot: Snapshot | undefined) {
+    constructor(userId: string, streamId: string, snapshot: Snapshot | undefined) {
         check(isDefined(snapshot), `Stream is empty ${streamId}`, Err.STREAM_EMPTY)
 
         check(
@@ -96,10 +96,16 @@ export class StreamStateView {
 
         switch (snapshot.content.case) {
             case 'channelContent':
-                this._channelContent = new StreamStateView_Channel(snapshot.content.value.inception)
+                this._channelContent = new StreamStateView_Channel(
+                    userId,
+                    snapshot.content.value.inception,
+                )
                 break
             case 'spaceContent':
-                this._spaceContent = new StreamStateView_Space(snapshot.content.value.inception)
+                this._spaceContent = new StreamStateView_Space(
+                    userId,
+                    snapshot.content.value.inception,
+                )
                 break
             case 'userContent':
                 this._userContent = new StreamStateView_User(snapshot.content.value.inception)
@@ -398,7 +404,7 @@ export class StreamStateView {
                 throw new Error('Stream has no content')
             default:
                 logNever(this.contentKind)
-                return new StreamStateView_Membership()
+                return new StreamStateView_Membership('')
         }
     }
 }

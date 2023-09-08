@@ -3,6 +3,7 @@ import { SpaceProtocol } from '../client/ZionClientTypes'
 import { HistoryVisibility, IContent, MatrixEvent } from 'matrix-js-sdk'
 import { RoomIdentifier } from './room-identifier'
 import { StreamSettings } from '@river/proto'
+import { Stream } from '@river/sdk'
 
 export enum RoomVisibility {
     Private = 'private',
@@ -259,4 +260,14 @@ export function isMentionedTextMessageOptions(
 
 export function isThreadIdOptions(options: SendMessageOptions): options is ThreadIdOptions {
     return 'threadId' in options && typeof options.threadId === 'string'
+}
+
+export function getMembershipFor(userId: string, stream: Stream): Membership {
+    if (stream.view.getMemberships().joinedUsers.has(userId)) {
+        return Membership.Join
+    }
+    if (stream.view.getMemberships().invitedUsers.has(userId)) {
+        return Membership.Invite
+    }
+    return Membership.None
 }

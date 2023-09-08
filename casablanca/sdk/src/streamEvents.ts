@@ -10,6 +10,10 @@ export type StreamEvents = {
     streamNewUserJoined: (streamId: string, userId: string) => void
     streamNewUserInvited: (streamId: string, userId: string) => void
     streamUserLeft: (streamId: string, userId: string) => void
+    streamMyMembershipUpdated: (
+        streamId: string,
+        membership: { joined: boolean; invited: boolean },
+    ) => void
     userJoinedStream: (streamId: string) => void
     userInvitedToStream: (streamId: string) => void
     userLeftStream: (streamId: string) => void

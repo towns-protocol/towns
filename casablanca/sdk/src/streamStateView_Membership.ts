@@ -5,8 +5,13 @@ import { StreamEvents } from './streamEvents'
 import { EmittedEvents } from './client'
 
 export class StreamStateView_Membership {
+    readonly userId: string
     readonly joinedUsers = new Set<string>()
     readonly invitedUsers = new Set<string>()
+
+    constructor(userId: string) {
+        this.userId = userId
+    }
 
     initialize(
         memberships: { [key: string]: Membership },
@@ -27,12 +32,16 @@ export class StreamStateView_Membership {
         const { op, userId } = payload
         switch (op) {
             case MembershipOp.SO_INVITE:
-                this.invitedUsers.add(userId)
-                emitter?.emit('streamNewUserInvited', streamId, userId)
+                if (this.invitedUsers.add(userId)) {
+                    emitter?.emit('streamNewUserInvited', streamId, userId)
+                    this.maybeEmitMyMembershipChange(userId, emitter, streamId)
+                }
                 break
             case MembershipOp.SO_JOIN:
-                this.joinedUsers.add(userId)
-                emitter?.emit('streamNewUserJoined', streamId, userId)
+                if (this.joinedUsers.add(userId)) {
+                    emitter?.emit('streamNewUserJoined', streamId, userId)
+                    this.maybeEmitMyMembershipChange(userId, emitter, streamId)
+                }
                 break
             case MembershipOp.SO_LEAVE:
                 {
@@ -40,6 +49,7 @@ export class StreamStateView_Membership {
                     const wasInvited = this.invitedUsers.delete(userId)
                     if (wasJoined || wasInvited) {
                         emitter?.emit('streamUserLeft', streamId, userId)
+                        this.maybeEmitMyMembershipChange(userId, emitter, streamId)
                     }
                 }
                 break
@@ -47,6 +57,19 @@ export class StreamStateView_Membership {
                 break
             default:
                 logNever(op)
+        }
+    }
+
+    private maybeEmitMyMembershipChange(
+        userId: string,
+        emitter: TypedEmitter<StreamEvents> | undefined,
+        streamId: string,
+    ) {
+        if (userId === this.userId) {
+            emitter?.emit('streamMyMembershipUpdated', streamId, {
+                invited: this.invitedUsers.has(userId),
+                joined: this.joinedUsers.has(userId),
+            })
         }
     }
 }
