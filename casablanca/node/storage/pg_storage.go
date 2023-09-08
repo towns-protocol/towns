@@ -28,6 +28,8 @@ const (
 )
 
 func (s *PostgresEventStore) CreateStream(ctx context.Context, streamId string, genesisMiniblock []byte) error {
+	defer infra.StoreExecutionTimeMetrics("CreateStreamMs", time.Now())
+
 	err := validateStreamId(streamId)
 	if err != nil {
 		log.Error("Wrong streamId", streamId)
@@ -287,6 +289,8 @@ func (s *PostgresEventStore) AddEvent(ctx context.Context, streamId string, mini
 }
 
 func (s *PostgresEventStore) GetMiniblocks(ctx context.Context, streamId string, fromIndex int, toIndex int) ([][]byte, error) {
+	defer infra.StoreExecutionTimeMetrics("GetMiniblocksMs", time.Now())
+
 	err := validateStreamId(streamId)
 	if err != nil {
 		log.Error("Wrong streamId", streamId)
@@ -359,6 +363,8 @@ func (s *PostgresEventStore) CreateBlock(
 	snapshotMiniblock bool,
 	envelopes [][]byte,
 ) error {
+	defer infra.StoreExecutionTimeMetrics("CreateBlockMs", time.Now())
+
 	err := validateStreamId(streamId)
 	if err != nil {
 		log.Error("Wrong streamId", streamId)
@@ -466,6 +472,8 @@ func (s *PostgresEventStore) CreateBlock(
 // Checks if stream exists in the database
 // Should always be used in scope of open transaction tx
 func streamExists(ctx context.Context, tx pgx.Tx, streamId string) (bool, error) {
+	defer infra.StoreExecutionTimeMetrics("streamExistsMs", time.Now())
+
 	err := validateStreamId(streamId)
 	if err != nil {
 		log.Error("Wrong streamId", streamId)
@@ -484,6 +492,8 @@ func streamExists(ctx context.Context, tx pgx.Tx, streamId string) (bool, error)
 // Creates record in es table for the stream
 // Should always be used in scope of open transaction tx
 func createEventStreamInstance(ctx context.Context, tx pgx.Tx, streamId string) error {
+	defer infra.StoreExecutionTimeMetrics("createEventStreamInstance", time.Now())
+
 	err := validateStreamId(streamId)
 	if err != nil {
 		log.Error("Wrong streamId", streamId)
@@ -499,6 +509,8 @@ func createEventStreamInstance(ctx context.Context, tx pgx.Tx, streamId string) 
 
 // GetStreams returns a list of all event streams
 func (s *PostgresEventStore) GetStreams(ctx context.Context) ([]string, error) {
+	defer infra.StoreExecutionTimeMetrics("GetStreamsMs", time.Now())
+
 	streams := []string{}
 	rows, err := s.pool.Query(ctx, "SELECT stream_name FROM es")
 	if err != nil {
@@ -522,6 +534,8 @@ func (s *PostgresEventStore) GetStreams(ctx context.Context) ([]string, error) {
 * Delete minipool and miniblock tables associated with the stream and stream record from streams table
  */
 func (s *PostgresEventStore) DeleteStream(ctx context.Context, streamId string) error {
+	defer infra.StoreExecutionTimeMetrics("DeleteStreamMs", time.Now())
+
 	err := validateStreamId(streamId)
 	if err != nil {
 		log.Error("Wrong streamId", streamId)
@@ -570,6 +584,8 @@ func (s *PostgresEventStore) DeleteStream(ctx context.Context, streamId string) 
 * Deletes all event streams
  */
 func (s *PostgresEventStore) DeleteAllStreams(ctx context.Context) error {
+	defer infra.StoreExecutionTimeMetrics("DeleteAllStreamsMs", time.Now())
+
 	streams, err := s.GetStreams(ctx)
 	if err != nil {
 		return err
@@ -596,6 +612,8 @@ func startTx(ctx context.Context, pool *pgxpool.Pool) (pgx.Tx, error) {
 }
 
 func NewPostgresEventStore(ctx context.Context, database_url string, database_schema_name string, clean bool) (*PostgresEventStore, error) {
+	defer infra.StoreExecutionTimeMetrics("NewPostgresEventStoreMs", time.Now())
+
 	log := dlog.CtxLog(ctx)
 
 	pool_conf, err := pgxpool.ParseConfig(database_url)
@@ -657,6 +675,8 @@ func (s *PostgresEventStore) Close() error {
 }
 
 func cleanStorage(ctx context.Context, pool *pgxpool.Pool) error {
+	defer infra.StoreExecutionTimeMetrics("cleanStorageMs", time.Now())
+
 	log := dlog.CtxLog(ctx)
 
 	tx, err := pool.Begin(ctx)
@@ -701,6 +721,8 @@ func cleanStorage(ctx context.Context, pool *pgxpool.Pool) error {
 var schema string
 
 func initStorage(ctx context.Context, pool *pgxpool.Pool) error {
+	defer infra.StoreExecutionTimeMetrics("initStorageMs", time.Now())
+
 	log := dlog.CtxLog(ctx)
 
 	tx, err := pool.Begin(ctx)
