@@ -486,7 +486,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
     /************************************************
      * createSpace
      *************************************************/
-    public async createSpaceRoom(
+    private async createSpaceRoom(
         createSpaceInfo: CreateSpaceInfo,
         networkId?: string,
     ): Promise<RoomIdentifier> {

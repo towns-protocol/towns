@@ -60,10 +60,6 @@ interface ZionClientImpl {
     client: ZionClient | undefined
     clientRunning: boolean
     spaceDapp: ISpaceDapp | undefined
-    createSpaceRoom: (
-        createInfo: CreateSpaceInfo,
-        networkId: string,
-    ) => Promise<RoomIdentifier | undefined>
     createSpaceTransaction: (
         createSpaceInfo: CreateSpaceInfo,
         memberEntitlements: ITownArchitectBase.MemberEntitlementStruct,
@@ -204,7 +200,6 @@ export function useZionClient(): ZionClientImpl {
         clientRunning,
         spaceDapp: client?.spaceDapp,
         createChannelRoom: useWithCatch(client?.createChannelRoom),
-        createSpaceRoom: useWithCatch(client?.createSpaceRoom),
         createSpaceTransaction: useWithCatch(client?.createSpaceTransaction),
         waitForCreateSpaceTransaction: useWithCatch(
             client?.waitForCreateSpaceTransaction,
