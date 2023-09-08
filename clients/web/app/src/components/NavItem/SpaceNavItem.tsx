@@ -27,8 +27,7 @@ type Props = {
 }
 
 export const SpaceNavItem = (props: Props) => {
-    const { id, forceMatch, highlight, avatar, exact, icon, name, pinned, isInvite, onClick } =
-        props
+    const { id, forceMatch, highlight, exact, icon, name, pinned, isInvite, onClick } = props
     const { isTouch } = useDevice()
     const notificationCounts = useSpaceNotificationCounts(id)
     const mentions = notificationCounts.mentions
@@ -52,23 +51,21 @@ export const SpaceNavItem = (props: Props) => {
             }}
             onClick={onClick}
         >
-            {avatar && (
-                <Box position="relative">
-                    <SpaceIcon
-                        border
-                        fadeIn
-                        width="x4"
-                        minWidth="x4"
-                        aspectRatio="1/1"
-                        spaceId={id.networkId}
-                        background="level1"
-                        rounded="xs"
-                        variant="thumbnail100"
-                        firstLetterOfSpaceName={name[0]}
-                    />
-                    {newMessages && <Dot position="bottomRight" />}
-                </Box>
-            )}
+            <Box position="relative">
+                <SpaceIcon
+                    border
+                    fadeIn
+                    width="x4"
+                    minWidth="x4"
+                    aspectRatio="1/1"
+                    spaceId={id.networkId}
+                    background="level1"
+                    rounded="xs"
+                    variant="thumbnail100"
+                    firstLetterOfSpaceName={name[0]}
+                />
+                {newMessages && <Dot position="bottomRight" />}
+            </Box>
 
             {icon && <Icon type={icon} color="gray2" background="level2" size="square_lg" />}
 

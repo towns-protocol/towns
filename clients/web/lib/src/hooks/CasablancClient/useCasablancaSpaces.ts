@@ -21,7 +21,7 @@ export function useCasablancaSpaces(casablancaClient?: CasablancaClient): SpaceI
                     (stream: Stream) =>
                         ({
                             id: makeRoomIdentifier(stream.view.streamId),
-                            name: stream.view.streamId, // todo real name
+                            name: stream.view.spaceContent.name ?? '',
                             avatarSrc: '',
                         } satisfies SpaceItem),
                 )
