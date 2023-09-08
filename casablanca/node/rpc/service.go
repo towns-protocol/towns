@@ -45,11 +45,13 @@ func MakeServiceHandler(ctx context.Context, log *slog.Logger, dbUrl string, sto
 	if storageType == "in-memory" {
 		store = storage.NewMemStorage()
 	} else {
-		store, err = storage.NewPostgresEventStore(ctx, dbUrl, "s"+strings.ToLower(wallet.Address.String()), true)
+		schemaName := "s" + strings.ToLower(wallet.Address.String())
+		store, err = storage.NewPostgresEventStore(ctx, dbUrl, schemaName, true)
 		if err != nil {
 			log.Error("failed to create storage", "error", err)
 			return "", nil, err
 		}
+		log.Info("Created postgres event store with schema", schemaName)
 	}
 
 	var townsContract auth.TownsContract
