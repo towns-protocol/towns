@@ -59,7 +59,6 @@ export function useCreateChannelTransaction() {
             try {
                 transactionResult = createChannelTransactionContext({
                     status: TransactionStatus.Pending,
-                    parentSpaceId: createInfo.parentSpaceId.networkId,
                 })
                 setTransactionContext(transactionResult)
                 transactionResult = await createChannelTransaction(createInfo, signer)
@@ -72,13 +71,16 @@ export function useCreateChannelTransaction() {
                             hash: transactionResult.transaction?.hash as `0x${string}`,
                             type: BlockchainTransactionType.CreateChannel,
                             data: {
-                                parentSpaceId: transactionResult.parentSpaceId,
+                                parentSpaceId: createInfo.parentSpaceId.networkId,
                                 spaceId: transactionResult.data,
                             },
                         })
                     }
                     // Wait for transaction to be mined
-                    transactionResult = await waitForCreateChannelTransaction(transactionResult)
+                    transactionResult = await waitForCreateChannelTransaction(
+                        createInfo.parentSpaceId.networkId,
+                        transactionResult,
+                    )
                     setTransactionContext(transactionResult)
                 }
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any

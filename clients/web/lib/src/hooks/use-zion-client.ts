@@ -74,6 +74,7 @@ interface ZionClientImpl {
         signer: ethers.Signer | undefined,
     ) => Promise<ChannelTransactionContext | undefined>
     waitForCreateChannelTransaction: (
+        parentSpaceId: string,
         context: ChannelTransactionContext | undefined,
     ) => Promise<ChannelTransactionContext | undefined>
     updateChannelTransaction: (

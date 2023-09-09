@@ -736,7 +736,6 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
                 receipt: undefined,
                 status: TransactionStatus.Failed,
                 data: undefined,
-                parentSpaceId: undefined,
                 error: _error,
             }
         }
@@ -745,7 +744,6 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
             transaction,
             receipt: undefined,
             status: transaction ? TransactionStatus.Pending : TransactionStatus.Failed,
-            parentSpaceId: createChannelInfo.parentSpaceId.networkId,
             data: transaction ? roomId : undefined,
             error,
         }
@@ -767,7 +765,6 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
                 receipt: undefined,
                 status: TransactionStatus.Failed,
                 data: undefined,
-                parentSpaceId: undefined,
                 error: _error,
             }
         }
@@ -799,7 +796,6 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
             transaction,
             receipt: undefined,
             status: transaction ? TransactionStatus.Pending : TransactionStatus.Failed,
-            parentSpaceId: createChannelInfo.parentSpaceId.networkId,
             data: transaction ? roomId : undefined,
             error,
         }
@@ -820,7 +816,10 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
             throw txContext.error
         }
         if (txContext.status === TransactionStatus.Pending) {
-            const rxContext = await this.waitForCreateChannelTransaction(txContext)
+            const rxContext = await this.waitForCreateChannelTransaction(
+                createChannelInfo.parentSpaceId.networkId,
+                txContext,
+            )
             return rxContext?.data
         }
         // Something went wrong. Don't return a room identifier.
@@ -845,6 +844,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
     }
 
     public async waitForCreateChannelTransaction(
+        parentSpaceId: string,
         context: ChannelTransactionContext | undefined,
     ): Promise<ChannelTransactionContext> {
         if (!context?.transaction) {
@@ -879,11 +879,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
             }
         } catch (err) {
             console.error('[waitForCreateChannelTransaction]', err)
-            error = await this.onErrorLeaveChannelRoomAndDecodeError(
-                context?.parentSpaceId,
-                roomId,
-                err,
-            )
+            error = await this.onErrorLeaveChannelRoomAndDecodeError(parentSpaceId, roomId, err)
         }
         return createChannelTransactionContext({
             status: TransactionStatus.Failed,
@@ -1009,7 +1005,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
         })
     }
 
-    public async updateChannelRoom(updateChannelInfo: UpdateChannelInfo): Promise<void> {
+    private async updateChannelRoom(updateChannelInfo: UpdateChannelInfo): Promise<void> {
         switch (updateChannelInfo.channelId.protocol) {
             case SpaceProtocol.Matrix:
                 {

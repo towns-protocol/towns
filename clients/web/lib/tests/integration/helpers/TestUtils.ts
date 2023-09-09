@@ -224,14 +224,17 @@ export async function createTestChannelWithSpaceRoles(
             hash: txContext.transaction?.hash as `0x${string}`,
             type: BlockchainTransactionType.CreateChannel,
             data: {
-                parentSpaceId: txContext.parentSpaceId,
+                parentSpaceId: createChannelInfo.parentSpaceId.networkId,
                 spaceId: txContext.data,
             },
         })
     }
 
     if (txContext.status === TransactionStatus.Pending) {
-        const rxContext = await client.waitForCreateChannelTransaction(txContext)
+        const rxContext = await client.waitForCreateChannelTransaction(
+            createChannelInfo.parentSpaceId.networkId,
+            txContext,
+        )
         return rxContext?.data
     }
     // Something went wrong. Don't return a room identifier.

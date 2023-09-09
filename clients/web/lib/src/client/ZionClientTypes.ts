@@ -87,9 +87,7 @@ export interface TransactionContext<T> {
     error?: Error
 }
 
-export interface ChannelTransactionContext extends TransactionContext<RoomIdentifier> {
-    parentSpaceId: string | undefined
-}
+export type ChannelTransactionContext = TransactionContext<RoomIdentifier>
 
 export interface ChannelUpdateTransactionContext extends TransactionContext<UpdateChannelInfo> {
     hasOffChainUpdate: boolean // true if this has an off chain update.
@@ -130,7 +128,6 @@ export function createTransactionContext<T>(props: {
 
 export function createChannelTransactionContext(props: {
     status: TransactionStatus
-    parentSpaceId?: string
     data?: RoomIdentifier
     transaction?: ContractTransaction
     receipt?: ContractReceipt
@@ -138,7 +135,6 @@ export function createChannelTransactionContext(props: {
 }): ChannelTransactionContext {
     return {
         status: props.status,
-        parentSpaceId: props.parentSpaceId,
         data: props.data,
         transaction: props.transaction,
         receipt: props.receipt,
