@@ -1,5 +1,5 @@
 import React from 'react'
-import { ButtonText, Stack } from '@ui'
+import { BoxProps, ButtonText, Stack } from '@ui'
 import { Icon, IconName } from 'ui/components/Icon'
 import { TooltipOptions } from 'ui/components/Tooltip/TooltipRenderer'
 import { NavItem } from './_NavItem'
@@ -13,6 +13,7 @@ export const ActionNavItem = (props: {
     highlight?: boolean
     tooltip?: React.ReactNode
     tooltipOptions?: TooltipOptions
+    minHeight?: BoxProps['minHeight']
     onClick?: (e: React.MouseEvent) => void
     children?: React.ReactNode
 }) => {
@@ -26,6 +27,7 @@ export const ActionNavItem = (props: {
         onClick,
         tooltip,
         tooltipOptions,
+        minHeight,
         children,
     } = props
     return (
@@ -36,6 +38,8 @@ export const ActionNavItem = (props: {
             id={id}
             exact={false}
             cursor="pointer"
+            paddingY="xxs"
+            minHeight={minHeight}
             onClick={onClick}
         >
             {icon && (

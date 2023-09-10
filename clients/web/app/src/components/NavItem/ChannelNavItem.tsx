@@ -80,7 +80,8 @@ export const ChannelNavItem = (props: Props) => {
                             id={id}
                             {...props}
                             exact={false}
-                            minHeight={{ touch: 'x5' }}
+                            paddingY="xxs"
+                            minHeight="x5"
                         >
                             <Icon
                                 type="tag"

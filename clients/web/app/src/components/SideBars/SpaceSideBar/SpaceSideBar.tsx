@@ -122,6 +122,7 @@ export const SpaceSideBar = (props: Props) => {
                                         id="getting-started"
                                         label="Getting Started"
                                         link={`/${PATHS.SPACES}/${space.id.slug}/${PATHS.GETTING_STARTED}`}
+                                        minHeight="x5"
                                     >
                                         <Button
                                             className={styles.buttonText}
@@ -149,12 +150,14 @@ export const SpaceSideBar = (props: Props) => {
                                         <Badge value={unreadThreadMentions} />
                                     )
                                 }
+                                minHeight="x5"
                             />
                             <ActionNavItem
                                 icon="at"
                                 id="mentions"
                                 label="Mentions"
                                 link={`/${PATHS.SPACES}/${space.id.slug}/mentions`}
+                                minHeight="x5"
                             />
                             <SyncedChannelList
                                 key={space.id.networkId}
@@ -167,6 +170,7 @@ export const SpaceSideBar = (props: Props) => {
                                 icon="search"
                                 id="browseChannels"
                                 label="Browse channels"
+                                minHeight="x5"
                                 onClick={onShowBrowseChannels}
                             />
                             {!isMemberOfAnyChannel && canCreateChannel && (
