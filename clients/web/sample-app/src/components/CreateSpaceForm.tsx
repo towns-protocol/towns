@@ -29,6 +29,7 @@ import {
     useCreateSpaceTransaction,
     useMatrixStore,
     useWeb3Context,
+    useZionClient,
 } from 'use-zion-client'
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
@@ -51,6 +52,7 @@ export const CreateSpaceForm = (props: Props) => {
     const [spaceName, setSpaceName] = useState<string>('')
     const [visibility, setVisibility] = useState<RoomVisibility>(RoomVisibility.Public)
     const [protocol, setProtocol] = useState<SpaceProtocol>(SpaceProtocol.Casablanca)
+    const { blip } = useZionClient()
 
     const [membershipRequirement, setMembershipRequirement] = useState<MembershipRequirement>(
         MembershipRequirement.Everyone,
@@ -169,6 +171,10 @@ export const CreateSpaceForm = (props: Props) => {
         MembershipRequirement,
     })
 
+    const onBlipSync = useCallback(() => {
+        blip()
+    }, [blip])
+
     return (
         <Box
             display="flex"
@@ -278,6 +284,21 @@ export const CreateSpaceForm = (props: Props) => {
                     accounts.map((accountId) => (
                         <LocalhostWalletInfo accountId={accountId} key={accountId} />
                     ))}
+                {(chain?.id === localhost.id ||
+                    chain?.id === foundry.id ||
+                    chain?.id === hardhat.id) && (
+                    <Box
+                        display="grid"
+                        flexDirection="column"
+                        alignItems="center"
+                        marginTop="20px"
+                        padding="20px"
+                    >
+                        <Button variant="contained" color="primary" onClick={onBlipSync}>
+                            River Debug, Tirgger Blip Sync
+                        </Button>
+                    </Box>
+                )}
             </Box>
         </Box>
     )

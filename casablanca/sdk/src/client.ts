@@ -635,7 +635,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
                                 signal: abortController.signal,
                             },
                         )
-                        this.logSync('started syncStreams', syncPos)
+                        this.logSync('called syncStreams', { syncPos, sync })
                         for await (const syncedStream of sync) {
                             this.logSync('got syncStreams', syncedStream)
                             syncedStream.streams.forEach((streamAndCookie) => {
@@ -669,6 +669,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
                                 running = false
                                 break
                             case AbortReason.BLIP:
+                                this.logSync('caught BLIP')
                                 break
                             default: {
                                 this.logSync('sync error', err)

@@ -162,6 +162,7 @@ interface ZionClientImpl {
         spaceId: RoomIdentifier,
         walletAddress: string,
     ) => Promise<MatrixSpaceHierarchy | undefined>
+    blip: () => void
     userOnWrongNetworkForSignIn: boolean
 }
 
@@ -177,7 +178,7 @@ export function useZionClient(): ZionClientImpl {
         loginWithWalletToCasablanca,
         registerWalletWithCasablanca,
     } = useCasablancaWalletSignIn()
-    const { client } = useZionContext()
+    const { client, casablancaClient } = useZionContext()
     const clientRunning = useMemo(() => client !== undefined, [client])
     const logout = useLogout()
     const sendReadReceipt = useSendReadReceipt(client)
@@ -186,12 +187,14 @@ export function useZionClient(): ZionClientImpl {
         (roomId: RoomIdentifier) => client?.isRoomEncrypted(roomId),
         [client],
     )
+    const blip = useCallback(() => casablancaClient?.blipSync(), [casablancaClient])
 
     return {
         chainId: client?.opts.chainId,
         client,
         clientRunning,
         spaceDapp: client?.spaceDapp,
+        blip: blip,
         createSpaceTransaction: useWithCatch(client?.createSpaceTransaction),
         waitForCreateSpaceTransaction: useWithCatch(
             client?.waitForCreateSpaceTransaction,
