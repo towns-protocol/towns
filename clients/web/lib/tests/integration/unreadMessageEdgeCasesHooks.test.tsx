@@ -8,6 +8,7 @@ import { RoomMessageEvent, TimelineEvent, ZTEvent } from '../../src/types/timeli
 import {
     createTestChannelWithSpaceRoles,
     createTestSpaceWithEveryoneRole,
+    getPrimaryProtocol,
     registerAndStartClients,
 } from './helpers/TestUtils'
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
@@ -22,10 +23,16 @@ import { useChannelTimeline } from '../../src/hooks/use-channel-timeline'
 import { useFullyReadMarker } from '../../src/hooks/use-fully-read-marker'
 import { useZionClient } from '../../src/hooks/use-zion-client'
 import { useZionContext } from '../../src/components/ZionContextProvider'
+import { SpaceProtocol } from '../../src/client/ZionClientTypes'
 
 // make sure things like deleting messages don't cause the unread count to go bad
 describe('unreadMessageCountEdgeCases', () => {
     test('user sees correct unread message counts', async () => {
+        // only works on river
+        if (getPrimaryProtocol() !== SpaceProtocol.Casablanca) {
+            console.log('skipping test, only works on river')
+            return
+        }
         // create clients
         const { jane, bob } = await registerAndStartClients(['jane', 'bob'])
         const bobName = bob.name
