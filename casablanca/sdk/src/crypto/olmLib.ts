@@ -33,12 +33,6 @@ export const OLM_ALGORITHM = Algorithm.Olm
  */
 export const MEGOLM_ALGORITHM = Algorithm.Megolm
 
-export interface IMessage {
-    // 0 for pre-key messages, 1 for messages once an Olm session has been established
-    type?: number
-    body: string
-}
-
 export type OlmSessionsAllByUserDevice = {
     // userId -> []deviceInfo (devices without sessions)
     devicesWithoutSessions: Map<string, DeviceInfo[]>

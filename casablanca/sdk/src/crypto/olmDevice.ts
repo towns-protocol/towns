@@ -4,7 +4,7 @@
 import { dlog } from '../dlog'
 import { IndexedDBCryptoStore } from './store/indexeddb-crypto-store'
 import { CryptoStore, CryptoTxn, ISessionInfo, IWithheld } from './store/base'
-import { IMessage } from './olmLib'
+import { IMessage } from './algorithms/olm'
 import {
     OlmMegolmDelegate,
     Account,

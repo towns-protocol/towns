@@ -20,7 +20,7 @@ import {
     MEGOLM_ALGORITHM,
     OLM_ALGORITHM,
 } from '../olmLib'
-import { DeviceInfoMap } from '../deviceList'
+import { DeviceInfoMap, IOlmDevice } from '../deviceList'
 import {
     MegolmSession,
     MembershipOp,
@@ -36,11 +36,6 @@ import { PlainMessage } from '@bufbuild/protobuf'
 export interface IOutboundGroupSessionKey {
     chain_index: number
     key: string
-}
-
-export interface IOlmDevice<T = DeviceInfo> {
-    userId: string
-    deviceInfo: T
 }
 
 /** Note Jterzis 07/26/23: Several features are intentionally left out of this module,
