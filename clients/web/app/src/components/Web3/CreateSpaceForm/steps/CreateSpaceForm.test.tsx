@@ -11,6 +11,7 @@ import { TestApp, getWalletAddress, mockUseConnectivity } from 'test/testUtils'
 import { SpacesNew } from 'routes/SpacesNew'
 import { UseMockCreateSpaceReturn, mockCreateTransactionWithSpy } from 'test/transactionHookMock'
 import * as useRequireTransactionNetwork from 'hooks/useRequireTransactionNetwork'
+import { createTokenEntitlementStruct } from '@components/Web3/utils'
 import { useCreateSpaceFormStore } from '../CreateSpaceFormStore'
 import { EVERYONE, TOKEN_HOLDERS } from '../constants'
 
@@ -478,7 +479,9 @@ describe('<CreateSpaceForm />', () => {
                         visibility: 'public',
                     },
                     'Member',
-                    ['0x123'], // tokens
+                    ['0x123'].map((addr) =>
+                        createTokenEntitlementStruct({ contractAddress: addr }),
+                    ), // tokens
                     [zionClient.Permission.Read, zionClient.Permission.Write], // token permissions
                     [], // everyone permissions
                 )

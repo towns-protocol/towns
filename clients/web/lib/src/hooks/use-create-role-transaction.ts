@@ -9,11 +9,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { BlockchainTransactionType } from '../types/web3-types'
 import { Permission } from '../client/web3/ContractTypes'
 import { blockchainKeys } from '../query/query-keys'
-import { createExternalTokenStruct } from '../client/web3/ContractHelpers'
 import { useQueryClient } from '../query/queryClient'
 import { useTransactionStore } from '../store/use-transactions-store'
 import { useWeb3Context } from '../components/Web3ContextProvider'
 import { useZionClient } from './use-zion-client'
+import { TokenEntitlementDataTypes } from '../client/web3/v3/TokenEntitlementShim'
 
 /**
  * Hook to create a role with a transaction.
@@ -43,7 +43,7 @@ export function useCreateRoleTransaction() {
             spaceNetworkId: string,
             roleName: string,
             permissions: Permission[],
-            tokens: string[],
+            tokens: TokenEntitlementDataTypes.ExternalTokenStruct[],
             users: string[],
         ): Promise<RoleTransactionContext | undefined> {
             if (isTransacting.current) {
@@ -70,7 +70,7 @@ export function useCreateRoleTransaction() {
                     spaceNetworkId,
                     roleName,
                     permissions,
-                    createExternalTokenStruct(tokens),
+                    tokens,
                     users,
                     signer,
                 )

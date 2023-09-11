@@ -74,7 +74,12 @@ export { Membership, MessageType, RoomVisibility } from './types/zion-types'
 export type { RoomIdentifier } from './types/room-identifier'
 export { makeRoomIdentifier, toRoomIdentifier } from './types/room-identifier'
 export * from './types/timeline-types'
-export { WalletStatus, BlockchainTransactionType, isNullAddress } from './types/web3-types'
+export {
+    WalletStatus,
+    BlockchainTransactionType,
+    isNullAddress,
+    type TokenEntitlementStruct,
+} from './types/web3-types'
 export type { UserIdentifier } from './types/user-identifier'
 export {
     createUserIdFromEthereumAddress,

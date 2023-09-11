@@ -35,6 +35,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ethers } from 'ethers'
 import { MembershipRequirement, SpaceRoleSettings } from 'routes/SpaceRoleSettings'
 import { useEnvironment } from 'hooks/use-environment'
+import { createTokenEntitlmentStruct } from 'utils/contractHelpers'
 import { ChainSwitchingButton } from './Buttons/ChainSwitchingButton'
 
 interface Props {
@@ -136,7 +137,7 @@ export const CreateSpaceForm = (props: Props) => {
         await createSpaceTransactionWithRole(
             createSpaceInfo,
             'Member',
-            tokenAddresses,
+            tokenAddresses.map((addr) => createTokenEntitlmentStruct({ contractAddress: addr })),
             tokenGrantedPermissions,
             everyonePermissions,
         )

@@ -15,7 +15,10 @@ import { TestConstants } from './helpers/TestConstants'
 import { TransactionStatus } from '../../src/client/ZionClientTypes'
 import { ZionTestApp } from './helpers/ZionTestApp'
 import { ZionTestWeb3Provider } from './helpers/ZionTestWeb3Provider'
-import { getMemberNftAddress } from '../../src/client/web3/ContractHelpers'
+import {
+    createExternalTokenStruct,
+    getMemberNftAddress,
+} from '../../src/client/web3/ContractHelpers'
 import { makeUniqueName } from './helpers/TestUtils'
 import { useAddRoleToChannelTransaction } from '../../src/hooks/use-add-role-channel-transaction'
 import { useChannelData } from '../../src/hooks/use-channel-data'
@@ -187,7 +190,7 @@ function TestComponent(args: {
                     visibility: RoomVisibility.Public,
                 },
                 args.roleName,
-                [args.councilNftAddress],
+                createExternalTokenStruct([args.councilNftAddress]),
                 args.permissions,
             )
         }

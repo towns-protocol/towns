@@ -18,7 +18,10 @@ import { RoomVisibility } from 'use-zion-client/src/types/zion-types'
 import { TestConstants } from './helpers/TestConstants'
 import { ZionTestApp } from 'use-zion-client/tests/integration/helpers/ZionTestApp'
 import { ZionTestWeb3Provider } from 'use-zion-client/tests/integration/helpers/ZionTestWeb3Provider'
-import { getMemberNftAddress } from '../../src/client/web3/ContractHelpers'
+import {
+    createExternalTokenStruct,
+    getMemberNftAddress,
+} from '../../src/client/web3/ContractHelpers'
 import { makeUniqueName } from 'use-zion-client/tests/integration/helpers/TestUtils'
 import { useCreateSpaceTransaction } from 'use-zion-client/src/hooks/use-create-space-transaction'
 import { useSpacesFromContract } from 'use-zion-client/src/hooks/use-spaces-from-contract'
@@ -81,7 +84,7 @@ describe('spaceManagerContractHooks', () => {
                             visibility: RoomVisibility.Public,
                         },
                         'Zion Role',
-                        [zionTokenAddress],
+                        createExternalTokenStruct([zionTokenAddress]),
                         [Permission.Read, Permission.Write],
                     )
                     console.log(

@@ -16,7 +16,10 @@ import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
 import { TestConstants } from './helpers/TestConstants'
 import { ZionTestApp } from './helpers/ZionTestApp'
 import { ZionTestWeb3Provider } from './helpers/ZionTestWeb3Provider'
-import { getMemberNftAddress } from '../../src/client/web3/ContractHelpers'
+import {
+    createExternalTokenStruct,
+    getMemberNftAddress,
+} from '../../src/client/web3/ContractHelpers'
 import { makeUniqueName } from './helpers/TestUtils'
 import { useCreateSpaceTransaction } from '../../src/hooks/use-create-space-transaction'
 import { useRoleDetails } from '../../src/hooks/use-role-details'
@@ -119,7 +122,7 @@ function TestComponent(args: {
                     visibility: RoomVisibility.Public,
                 },
                 args.roleName,
-                [args.councilNftAddress],
+                createExternalTokenStruct([args.councilNftAddress]),
                 args.permissions,
             )
         }

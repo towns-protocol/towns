@@ -22,6 +22,7 @@ import {
     mockCreateTransactionWithSpy,
 } from 'test/transactionHookMock'
 import { EVERYONE_ADDRESS } from 'utils'
+import { createTokenEntitlementStruct } from '@components/Web3/utils'
 import { MOCK_CONTRACT_METADATA_ADDRESSES } from '../../../mocks/token-collections'
 import { useSettingsTransactionsStore } from './store/hooks/settingsTransactionStore'
 
@@ -477,7 +478,9 @@ describe(
                     memberRole.roleId.toNumber(),
                     memberRole.name,
                     [Lib.Permission.Write],
-                    MOCK_CONTRACT_METADATA_ADDRESSES,
+                    MOCK_CONTRACT_METADATA_ADDRESSES.map((addr) =>
+                        createTokenEntitlementStruct({ contractAddress: addr }),
+                    ),
                     [],
                 )
             })

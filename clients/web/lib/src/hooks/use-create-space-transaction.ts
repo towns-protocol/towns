@@ -10,12 +10,12 @@ import { BlockchainTransactionType } from '../types/web3-types'
 import { CreateSpaceInfo } from '../types/zion-types'
 import { Permission } from '../client/web3/ContractTypes'
 import { RoomIdentifier } from '../types/room-identifier'
-import { createExternalTokenStruct } from '../client/web3/ContractHelpers'
 import { useSyncSpace } from './use-sync-space'
 import { useTransactionStore } from '../store/use-transactions-store'
 import { useWeb3Context } from '../components/Web3ContextProvider'
 import { useZionClient } from './use-zion-client'
 import { ITownArchitectBase } from '../client/web3/v3/ITownArchitectShim'
+import { TokenEntitlementDataTypes } from '../client/web3/v3/TokenEntitlementShim'
 
 /**
  * Combine Matrix space creation and smart contract space
@@ -44,7 +44,7 @@ export function useCreateSpaceTransaction() {
         async function (
             createInfo: CreateSpaceInfo,
             roleName: string,
-            tokenAddresses: string[],
+            tokenAddresses: TokenEntitlementDataTypes.ExternalTokenStruct[],
             memberPermissions: Permission[],
             everyonePermissions: Permission[] = [],
         ): Promise<TransactionContext<RoomIdentifier> | undefined> {
@@ -74,7 +74,7 @@ export function useCreateSpaceTransaction() {
                             name: roleName,
                             permissions: memberPermissions,
                         },
-                        tokens: createExternalTokenStruct(tokenAddresses),
+                        tokens: tokenAddresses,
                         users: [],
                     }
                 } else {

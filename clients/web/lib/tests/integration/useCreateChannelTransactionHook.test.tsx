@@ -16,7 +16,10 @@ import { TestConstants } from './helpers/TestConstants'
 import { SpaceProtocol, TransactionStatus } from '../../src/client/ZionClientTypes'
 import { ZionTestApp } from './helpers/ZionTestApp'
 import { ZionTestWeb3Provider } from './helpers/ZionTestWeb3Provider'
-import { getMemberNftAddress } from '../../src/client/web3/ContractHelpers'
+import {
+    createExternalTokenStruct,
+    getMemberNftAddress,
+} from '../../src/client/web3/ContractHelpers'
 import { getPrimaryProtocol, makeUniqueName } from './helpers/TestUtils'
 import { useChannelData } from '../../src/hooks/use-channel-data'
 import { useCreateChannelTransaction } from '../../src/hooks/use-create-channel-transaction'
@@ -143,7 +146,7 @@ describe('useCreateChannelTransactionHook', () => {
                             visibility: RoomVisibility.Public,
                         },
                         'Test Role',
-                        [memberNftAddress],
+                        createExternalTokenStruct([memberNftAddress]),
                         [Permission.Read, Permission.Write, Permission.AddRemoveChannels],
                     )
                 }

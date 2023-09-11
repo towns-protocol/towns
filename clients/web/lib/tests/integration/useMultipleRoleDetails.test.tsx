@@ -12,7 +12,10 @@ import { RoomVisibility } from 'use-zion-client/src/types/zion-types'
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
 import { ZionTestApp } from './helpers/ZionTestApp'
 import { ZionTestWeb3Provider } from './helpers/ZionTestWeb3Provider'
-import { getMemberNftAddress } from '../../src/client/web3/ContractHelpers'
+import {
+    createExternalTokenStruct,
+    getMemberNftAddress,
+} from '../../src/client/web3/ContractHelpers'
 import { makeUniqueName } from './helpers/TestUtils'
 import { useCreateSpaceTransaction } from '../../src/hooks/use-create-space-transaction'
 import { useMultipleRoleDetails } from '../../src/hooks/use-role-details'
@@ -133,7 +136,7 @@ function TestComponentMultiple(args: {
                     visibility: RoomVisibility.Public,
                 },
                 args.roleName[0],
-                [args.councilNftAddress],
+                createExternalTokenStruct([args.councilNftAddress]),
                 args.permissions[0],
             )
 
@@ -143,7 +146,7 @@ function TestComponentMultiple(args: {
                     visibility: RoomVisibility.Public,
                 },
                 args.roleName[1],
-                [args.councilNftAddress],
+                createExternalTokenStruct([args.councilNftAddress]),
                 args.permissions[1],
             )
         }

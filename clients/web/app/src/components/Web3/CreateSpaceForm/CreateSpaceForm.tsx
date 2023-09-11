@@ -43,6 +43,7 @@ import {
     EVERYONE,
     TOKEN_HOLDERS,
 } from './constants'
+import { createTokenEntitlementStruct } from '../utils'
 
 type HeaderProps = {
     formId: string
@@ -233,7 +234,7 @@ export const CreateSpaceForm = () => {
         await createSpaceTransactionWithRole(
             createSpaceInfo,
             'Member',
-            tokens.map((t) => t.contractAddress),
+            tokens.map((t) => createTokenEntitlementStruct({ contractAddress: t.contractAddress })),
             tokenGrantedPermissions,
             everyonePermissions,
         )

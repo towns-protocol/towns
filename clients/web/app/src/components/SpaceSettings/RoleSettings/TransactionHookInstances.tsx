@@ -6,6 +6,7 @@ import {
     useDeleteRoleTransaction,
     useUpdateRoleTransaction,
 } from 'use-zion-client'
+import { createTokenEntitlementStruct } from '@components/Web3/utils'
 import { useSettingsRolesStore } from '../store/hooks/settingsRolesStore'
 import { useSettingsTransactionsStore } from '../store/hooks/settingsTransactionStore'
 import { ModifiedRole, modifiedRoleTypes } from '../store/hooks/useModifiedRoles'
@@ -74,7 +75,9 @@ export const UpdateRoleTransaction = ({ role, spaceId }: TransactionHookProps) =
                 +role.metadata.id,
                 role.metadata.name,
                 role.metadata.permissions,
-                role.metadata.tokens,
+                role.metadata.tokens.map((addr) =>
+                    createTokenEntitlementStruct({ contractAddress: addr }),
+                ),
                 role.metadata.users,
             )
         },
@@ -101,7 +104,9 @@ export const CreateRoleTransaction = ({ role, spaceId }: TransactionHookProps) =
                 spaceId,
                 role.metadata.name,
                 role.metadata.permissions,
-                role.metadata.tokens,
+                role.metadata.tokens.map((addr) =>
+                    createTokenEntitlementStruct({ contractAddress: addr }),
+                ),
                 role.metadata.users,
             )
         },
