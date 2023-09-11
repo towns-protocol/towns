@@ -2,7 +2,7 @@
  * sendAMessage
  *
  * // https://www.npmjs.com/package/jest-runner-groups
- * @group integration/load
+ * @group integration/load2
  *
  */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
@@ -18,6 +18,7 @@ import { RoomVisibility } from '../../src/types/zion-types'
 import { RoomIdentifier } from '../../src/types/room-identifier'
 
 import { waitFor } from '@testing-library/react'
+import { TestConstants } from '../integration/helpers/TestConstants'
 //Basic version of load test.
 //Scenario:
 //1. User 1 creates a space and a channel
@@ -26,10 +27,10 @@ import { waitFor } from '@testing-library/react'
 //4. User 11 joins the channel and we check that it receives last sent message from at least one of first 10 users and that it happens within 600 miliseconds.
 //   *Join channel - means user receives the latest message of at least on of the users from the channel
 
-describe('sendAMessage', () => {
+describe('loadtest1', () => {
     //Test is skipped until not fully implemented
     test('create room, invite user, accept invite, and send encrypted message', async () => {
-        const numClients = 11 // Ten users to generate messages and one to join the channel for measurement
+        const numClients = process.env.NUM_CLIENTS ? parseInt(process.env.NUM_CLIENTS, 10) : 2
         const numberOfMessages = 100 //Total number of messages to send per user
 
         // create clients
@@ -39,7 +40,7 @@ describe('sendAMessage', () => {
         //Bob is a user which will create space and channel
         const bob = clients['client_0']
         //Alice is a user who will join the created channel and retrieve messages from there
-        const alice = clients['client_10']
+        const alice = clients[`client_${numClients - 1}`]
 
         // bob creates a space
         await bob.fundWallet()
@@ -98,22 +99,13 @@ describe('sendAMessage', () => {
         const startTime = Date.now()
 
         await waitFor(() => {
-            expect(
-                checkLastMessageFromUser(numberOfMessages - 1, alice.getMessages(channelId)),
-            ).toBeTruthy()
-        })
+            expect(alice.getEventsDescription(channelId)).toContain(
+                'm' + String(numberOfMessages - 1),
+            )
+        }, TestConstants.DoubleDefaultWaitForTimeout)
 
         const endTime = Date.now()
         console.log(endTime - startTime)
         expect(endTime - startTime).toBeLessThan(600)
     }, 5000000) // end test
 }) // end describe
-
-function checkLastMessageFromUser(latestMessagePostfix: number, messages: string[]): boolean {
-    for (const message of messages) {
-        if (message.includes('m' + String(latestMessagePostfix))) {
-            return true
-        }
-    }
-    return false
-}
