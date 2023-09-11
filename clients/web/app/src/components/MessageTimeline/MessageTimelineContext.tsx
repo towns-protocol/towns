@@ -60,9 +60,7 @@ export const MessageTimelineWrapper = (props: {
     const messageReactionsMap = useTimelineReactions(channelId)
     const timelineActions = useTimelineMessageEditing()
     const handleReaction = useHandleReaction(channelId)
-
-    const { isRoomEncrypted } = useZionClient()
-    const isChannelEncrypted = isRoomEncrypted(channelId)
+    const isChannelEncrypted = true
 
     const { membersMap, members } = useSpaceMembers()
 

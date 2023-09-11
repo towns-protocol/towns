@@ -38,9 +38,9 @@ export const ChannelInfoPanel = () => {
         permission: Permission.ModifySpaceSettings,
     })
     const navigate = useNavigate()
-    const { isRoomEncrypted, leaveRoom } = useZionClient()
+    const { leaveRoom } = useZionClient()
 
-    const isEncrypted = channel && isRoomEncrypted(channel.id)
+    const isEncrypted = channel !== undefined
     const room = useRoom(channel?.id)
     const [activeModal, setActiveModal] = useState<'members' | 'settings' | undefined>(undefined)
 

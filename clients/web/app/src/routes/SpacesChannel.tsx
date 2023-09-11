@@ -61,11 +61,11 @@ const SpaceChannelWrapper = (props: { children: React.ReactElement }) => {
 const SpacesChannelComponent = (props: Props) => {
     const { messageId } = useParams()
     const { isTouch } = useDevice()
-    const { joinRoom, scrollback, sendMessage, isRoomEncrypted } = useZionClient()
+    const { joinRoom, scrollback, sendMessage } = useZionClient()
 
     const { spaceId, channelId, channel } = useChannelData()
 
-    const isChannelEncrypted = channel && isRoomEncrypted(channel.id)
+    const isChannelEncrypted = channel !== undefined
 
     const myMembership = useMyMembership(channelId)
 

@@ -1921,23 +1921,6 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
     }
 
     /************************************************
-     * isRoomEncrypted
-     ************************************************/
-    public isRoomEncrypted(roomId: RoomIdentifier): boolean | undefined {
-        switch (roomId.protocol) {
-            case SpaceProtocol.Matrix:
-                if (!this.matrixClient) {
-                    return undefined
-                }
-                return this.matrixClient.isRoomEncrypted(roomId.networkId)
-            case SpaceProtocol.Casablanca:
-                return true
-            default:
-                staticAssertNever(roomId)
-        }
-    }
-
-    /************************************************
      * setRoomFullyReadData
      ************************************************/
     public async setRoomFullyReadData(

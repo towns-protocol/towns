@@ -18,7 +18,7 @@ import {
     UpdateChannelInfo,
 } from '../types/zion-types'
 import { MatrixError, MatrixEvent, MatrixScheduler } from 'matrix-js-sdk'
-import { useCallback, useMemo } from 'react'
+import { useMemo, useCallback } from 'react'
 
 import { FullyReadMarker, RoomMessageEvent } from '../types/timeline-types'
 import { ISpaceDapp } from 'client/web3/ISpaceDapp'
@@ -135,7 +135,6 @@ interface ZionClientImpl {
     getIsWalletRegisteredWithCasablanca: () => Promise<boolean>
     getServerVersions: () => Promise<IZionServerVersions | undefined>
     inviteUser: (roomId: RoomIdentifier, userId: string) => Promise<void>
-    isRoomEncrypted: (roomId: RoomIdentifier) => boolean | undefined
     joinRoom: (roomId: RoomIdentifier, parentNetworkId?: string) => Promise<Room | undefined>
     leaveRoom: (roomId: RoomIdentifier, parentNetworkId?: string) => Promise<void>
     logout: () => Promise<void>
@@ -183,10 +182,6 @@ export function useZionClient(): ZionClientImpl {
     const logout = useLogout()
     const sendReadReceipt = useSendReadReceipt(client)
     const resetFullyReadMarkers = useResetFullyReadMarkers()
-    const isRoomEncrypted = useCallback(
-        (roomId: RoomIdentifier) => client?.isRoomEncrypted(roomId),
-        [client],
-    )
     const blip = useCallback(() => casablancaClient?.blipSync(), [casablancaClient])
 
     return {
@@ -225,7 +220,6 @@ export function useZionClient(): ZionClientImpl {
         getIsWalletRegisteredWithCasablanca,
         getServerVersions: useWithCatch(client?.getServerVersions),
         inviteUser: useWithCatch(client?.inviteUser),
-        isRoomEncrypted,
         joinRoom: useWithCatch(client?.joinRoom),
         leaveRoom: useWithCatch(client?.leave),
         loginWithWalletToMatrix,
