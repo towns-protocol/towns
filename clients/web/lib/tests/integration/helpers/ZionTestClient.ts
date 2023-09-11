@@ -458,12 +458,12 @@ export class ZionTestClient extends ZionClient {
                 if (!stream) {
                     throw new Error('stream is undefined')
                 }
-                const events = Array.from(stream.view.events.keys() ?? []).map((k) => {
-                    const decryptedEvent = stream.view.decryptedEvents.get(k)
+                const events = stream.view.timeline.map((event) => {
+                    const decryptedEvent = stream.view.decryptedEvents.get(event.hashStr)
                     if (decryptedEvent) {
                         return toEvent_FromRiverEvent(decryptedEvent, userId)
                     }
-                    return toEventFromCasablancaEvent(stream.view.events.get(k)!, userId)
+                    return toEventFromCasablancaEvent(event, userId)
                 })
                 if (options?.excludeMiniblockHeaders === true) {
                     return events.filter((x) => x.content?.kind !== ZTEvent.MiniblockHeader)
