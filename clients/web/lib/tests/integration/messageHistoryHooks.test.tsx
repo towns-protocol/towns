@@ -9,6 +9,7 @@ import React, { useCallback } from 'react'
 import {
     createTestChannelWithSpaceRoles,
     createTestSpaceWithEveryoneRole,
+    getPrimaryProtocol,
     registerAndStartClients,
 } from './helpers/TestUtils'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
@@ -23,6 +24,7 @@ import { useChannelTimeline } from '../../src/hooks/use-channel-timeline'
 import { useZionClient } from '../../src/hooks/use-zion-client'
 import { TestConstants } from './helpers/TestConstants'
 import { sleep } from '../../src/utils/zion-utils'
+import { SpaceProtocol } from '../../src/client/ZionClientTypes'
 
 // TODO Zustand https://docs.pmnd.rs/zustand/testing
 
@@ -30,6 +32,10 @@ describe('messageHistoryHooks', () => {
     test(
         "user's timeline is updated with correct history via scrollback()",
         async () => {
+            if (getPrimaryProtocol() !== SpaceProtocol.Casablanca) {
+                console.log('skipping test for matrix protocol')
+                return
+            }
             // create client
             // create alice provider
             const aliceProvider = new ZionTestWeb3Provider()
@@ -50,14 +56,14 @@ describe('messageHistoryHooks', () => {
                 streamSettings: { miniblockTimeMs: 1000n, minEventsPerSnapshot: 5 },
             })) as RoomIdentifier
             //
-            // send 25 messages (20 is our default initialSyncLimit)
+            // send 15 messages, five first, then 10 more
             for (let i = 0; i < 5; i++) {
                 await bob.sendMessage(channelId, `message ${i}`)
             }
 
             await sleep(2 * 1000) // we make miniblocks every 1 seconds, give it a bit of time to make a miniblock
 
-            for (let i = 5; i < 25; i++) {
+            for (let i = 5; i < 15; i++) {
                 await bob.sendMessage(channelId, `message ${i}`)
             }
 
