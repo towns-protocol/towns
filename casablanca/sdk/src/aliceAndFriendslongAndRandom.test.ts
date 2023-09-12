@@ -1,6 +1,6 @@
 import { dlog } from './dlog'
 import seedrandom from 'seedrandom'
-import { converse } from './testDriver'
+import { converse } from './testDriver.test_util'
 
 const log = dlog('test:aliceAndFriends')
 
