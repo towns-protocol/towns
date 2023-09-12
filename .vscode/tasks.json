@@ -22,7 +22,7 @@
         "dependsOn": [
           "CheckNodeVersion",
           "YarnInstall",
-          "Stage 1"
+          "Stage 1",
         ],
         // Mark as the default build task so cmd/ctrl+shift+b will create them
         "group": {
@@ -180,9 +180,33 @@
         }
       },
       {
+        "label": "Register Local CA",
+        "type": "shell",
+        "command": "./casablanca/scripts/register-ca.sh",
+        "isBackground": true,
+        "problemMatcher": [],
+        "presentation": {
+          "group": "local-servers"
+        }
+      },
+      {
+        "label": "Generate Casablanca Cert",
+        "type": "shell",
+        "command": "./casablanca/scripts/generate-certs.sh",
+        "isBackground": true,
+        "problemMatcher": [],
+        "presentation": {
+          "group": "local-servers"
+        }
+      },
+      {
         "label": "Casablanca",
         "type": "shell",
         "command": "sleep 3 && ./scripts/start-local-casablanca.sh",
+        "dependsOn": [
+          "Register Local CA",
+          "Generate Casablanca Cert"
+        ],
         "isBackground": true,
         "problemMatcher": [],
         "presentation": {

@@ -252,6 +252,10 @@ jobs:
                   POSTGRES_PASSWORD: postgres
                   PGPASSWORD: postgres
 
+            - name: Setup River CA for testing certificates
+              run: ./scripts/register-ca.sh -s && ./scripts/generate-certs.sh
+              working-directory: casablanca
+
             - name: Run Casablanca node (without entitlements)
               run: yarn csb:start:no-entitlements &
 
@@ -398,6 +402,10 @@ jobs:
                   POSTGRES_PASSWORD: postgres
                   PGPASSWORD: postgres
 
+            - name: Setup River CA for testing certificates
+              run: ./scripts/register-ca.sh -s && ./scripts/generate-certs.sh
+              working-directory: casablanca
+
             - name: Start Casablanca node with entitlements
               run: yarn csb:start:entitlements  &
 
@@ -479,6 +487,10 @@ jobs:
               env:
                   POSTGRES_PASSWORD: postgres
                   PGPASSWORD: postgres
+
+            - name: Setup River CA for testing certificates
+              run: ./scripts/register-ca.sh -s && ./scripts/generate-certs.sh && cp node/run_files/*.pem node
+              working-directory: casablanca
 
             - name: Run node tests
               run: go test --race ./...

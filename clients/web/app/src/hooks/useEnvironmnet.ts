@@ -29,7 +29,7 @@ export const ENVIRONMENTS: TownsEnvironmentInfo[] = [
         id: TownsEnvironment.Local,
         name: 'Local',
         matrixUrl: 'http://localhost:8008',
-        casablancaUrl: 'http://localhost:5157',
+        casablancaUrl: 'https://localhost:5157',
         chainId: 31337,
         chain: foundryClone,
     },

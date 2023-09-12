@@ -4,6 +4,17 @@
 //    yarn node -r ../../../scripts/node-no-warn.js my-script.js
 //
 
+var path = require('path')
+var os = require('os')
+var fs = require('fs')
+
+var localRiverCA = path.join(os.homedir(), 'river-ca-cert.pem')
+
+if (!fs.existsSync(localRiverCA)) {
+    console.log('CA does not exist, did you forget to run ../scripts/register-ca.sh')
+}
+process.env.NODE_EXTRA_CA_CERTS = localRiverCA
+
 // Increase max listeners from 10 to 100 to avoid warnings for legitimate use cases.
 require('events').setMaxListeners(100)
 

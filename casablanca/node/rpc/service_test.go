@@ -2,6 +2,7 @@ package rpc_test
 
 import (
 	"context"
+	"crypto/tls"
 	"encoding/hex"
 	"fmt"
 	"math/rand"
@@ -298,10 +299,11 @@ func testServerAndClient(ctx context.Context, dbUrl string, dbSchemaName string,
 	if err != nil {
 		panic(err)
 	}
+	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 
 	client := protocolconnect.NewStreamServiceClient(
 		http.DefaultClient,
-		fmt.Sprintf("http://localhost:%d", port),
+		fmt.Sprintf("https://localhost:%d", port),
 	)
 
 	return client, closer

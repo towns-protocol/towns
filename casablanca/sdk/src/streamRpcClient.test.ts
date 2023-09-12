@@ -133,11 +133,11 @@ describe('streamRpcClient', () => {
     test('aliceTalksToBob', async () => {
         log('bobAndAliceConverse start')
 
-        const bob = makeStreamRpcClient('http://localhost:5158')
+        const bob = makeStreamRpcClient('https://localhost:5158')
         const bobsUserId = userIdFromAddress(bobsContext.creatorAddress)
         const bobsUserStreamId = makeUserStreamId(bobsUserId)
 
-        const alice = makeStreamRpcClient('http://localhost:5158')
+        const alice = makeStreamRpcClient('https://localhost:5158')
         const alicesUserId = userIdFromAddress(alicesContext.creatorAddress)
         const alicesUserStreamId = makeUserStreamId(alicesUserId)
 
