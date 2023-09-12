@@ -302,7 +302,7 @@ const ChannelRow = (props: {
     const { channelNetworkId, name, unread, mentionCount, muted } = props
 
     return (
-        <NavItem to={`channels/${channelNetworkId}`} padding="none">
+        <NavItem to={`channels/${channelNetworkId}/`} padding="none">
             <Stack
                 horizontal
                 alignItems="center"
