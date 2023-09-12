@@ -39,23 +39,99 @@ export function useTokenSearch<T extends Record<string, unknown>>({ data }: { da
     }
 }
 
-type UseWatchItemsParams = {
+type UseUpdateSelectedItemsParams = {
     initialItems?: TokenDataStruct[]
     onUpdate?: (item: TokenDataStruct[]) => void
 }
 
-export function useWatchItems({ initialItems, onUpdate }: UseWatchItemsParams) {
+export function useUpdateSelectedItems({ initialItems, onUpdate }: UseUpdateSelectedItemsParams) {
     const onUpdateRef = useRef(onUpdate)
     onUpdateRef.current = onUpdate
     const [selectedItems, setSelectedItems] = React.useState<TokenDataStruct[]>(initialItems ?? [])
+    const tokenIdsMap = React.useMemo(() => {
+        return selectedItems.reduce((acc: Record<string, number[]>, item) => {
+            acc[item.contractAddress] = item.tokenIds
+            return acc
+        }, {})
+    }, [selectedItems])
 
-    const onItemClick = useCallback(({ contractAddress }: TokenClickParameters) => {
+    const toggleContract = useCallback(({ contractAddress, tokenIds }: TokenClickParameters) => {
         setSelectedItems((prev) => {
             const isSelected = prev.map((t) => t.contractAddress).includes(contractAddress)
             if (isSelected) {
                 return prev.filter((t) => t.contractAddress !== contractAddress)
             }
-            return [...prev, { contractAddress }]
+            return [...prev, { contractAddress, tokenIds }]
+        })
+    }, [])
+
+    const removeContract = useCallback((contractAddress: string) => {
+        setSelectedItems((prev) => {
+            return prev.filter((t) => t.contractAddress !== contractAddress)
+        })
+    }, [])
+
+    const addContract = useCallback((contractAddress: string, tokenIds: number[]) => {
+        setSelectedItems((prev) => {
+            return [...prev, { contractAddress, tokenIds }]
+        })
+    }, [])
+
+    // adds the contract + tokenId to state if doesn't exist yet, otherwise just adds tokenId
+    const addTokenIdForContract = useCallback((contractAddress: string, tokenId: number) => {
+        setSelectedItems((state) => {
+            let item = state.find((t) => t.contractAddress === contractAddress)
+            // first time adding tokenId
+            if (!item) {
+                item = { contractAddress, tokenIds: [tokenId] }
+                state = [...state, item]
+                return state
+            }
+            const tokenIds = item.tokenIds ?? []
+            if (tokenIds.includes(tokenId)) {
+                return state
+            }
+
+            return state.map((t) => {
+                if (t.contractAddress === contractAddress) {
+                    return { ...t, tokenIds: [...tokenIds, tokenId] }
+                }
+                return t
+            })
+        })
+    }, [])
+
+    const removeTokenIdForContract = useCallback((contractAddress: string, tokenId: number) => {
+        setSelectedItems((state) => {
+            const item = state.find((t) => t.contractAddress === contractAddress)
+            if (!item) {
+                return state
+            }
+            const tokenIds = item?.tokenIds
+            if (!tokenIds) {
+                return state
+            }
+
+            // remove tokenId, and if no tokenIds left, remove item
+            return state
+                .map((t) => {
+                    if (t.contractAddress === contractAddress) {
+                        return { ...t, tokenIds: tokenIds.filter((id) => id !== tokenId) }
+                    }
+                    return t
+                })
+                .filter((t) => t.tokenIds.length > 0)
+        })
+    }, [])
+
+    const clearTokenIdsForContract = useCallback((contractAddress: string) => {
+        setSelectedItems((state) => {
+            return state.map((t) => {
+                if (t.contractAddress === contractAddress) {
+                    return { ...t, tokenIds: [] }
+                }
+                return t
+            })
         })
     }, [])
 
@@ -66,7 +142,13 @@ export function useWatchItems({ initialItems, onUpdate }: UseWatchItemsParams) {
 
     return {
         selectedItems,
-        onItemClick,
+        tokenIdsMap,
+        toggleContract,
+        removeContract,
+        addContract,
+        addTokenIdForContract,
+        removeTokenIdForContract,
+        clearTokenIdsForContract,
     }
 }
 

@@ -20,6 +20,7 @@ const FALLBACK = 'fallback'
 
 export type TokenAvatarProps = Partial<TokenProps> & {
     contractAddress: string
+    tokenIds: number[]
     size: AvatarProps['size']
     noLabel?: boolean
     noCopy?: boolean
@@ -36,6 +37,7 @@ export const TokenAvatar = (props: TokenAvatarProps) => {
         imgSrc,
         label,
         contractAddress,
+        tokenIds,
         onClick,
         size,
         noLabel,
@@ -109,7 +111,7 @@ export const TokenAvatar = (props: TokenAvatarProps) => {
                         background="level4"
                         border="faint"
                         color="default"
-                        onClick={(e) => onClick({ contractAddress }, e)}
+                        onClick={(e) => onClick({ contractAddress, tokenIds: [] }, e)}
                     />
                 )}
             </Box>
@@ -135,6 +137,7 @@ export const TokenAvatar = (props: TokenAvatarProps) => {
                 >
                     {(props) => (
                         <Box
+                            gap
                             {...props.triggerProps}
                             onClick={() => {
                                 clipboardCopyRef.current?.click()
@@ -143,6 +146,25 @@ export const TokenAvatar = (props: TokenAvatarProps) => {
                             <Text size="sm" color="default" textAlign="center" {...labelProps}>
                                 {_label}
                             </Text>
+                            {tokenIds.length > 0 && (
+                                <Box horizontal gap="xs" flexWrap="wrap">
+                                    {tokenIds.map((tokenId) => (
+                                        <Box
+                                            centerContent
+                                            background="level4"
+                                            key={contractAddress + tokenId.toString()}
+                                            rounded="full"
+                                            minWidth="x2"
+                                            padding="xs"
+                                            height="x2"
+                                        >
+                                            <Text display="block" size="xs">
+                                                {tokenId}
+                                            </Text>
+                                        </Box>
+                                    ))}
+                                </Box>
+                            )}
                         </Box>
                     )}
                 </TooltipRenderer>

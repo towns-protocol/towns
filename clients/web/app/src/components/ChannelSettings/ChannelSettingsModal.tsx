@@ -235,7 +235,7 @@ export function ChannelSettingsForm({
                                 />
                             </Stack>
 
-                            <Stack gap="sm">
+                            <Stack gap="sm" maxHeight="50vh" overflow="auto">
                                 {!rolesWithDetails ? (
                                     <Box gap paddingY="lg">
                                         <ButtonSpinner />

@@ -10,7 +10,7 @@ const withMock =
 interface CreateSpaceActions {
     setStep1: (step1: CreateSpaceFormState['step1']) => void
     setStep2: (step1: CreateSpaceFormState['step2']) => void
-    toggleToken: (contractAddress: string) => void
+    removeToken: (contractAddress: string) => void
     setTokens: (tokens: TokenDataStruct[]) => void
     clearTokens: () => void
     reset: () => void
@@ -57,15 +57,12 @@ export const useCreateSpaceFormStore = create<CreateSpaceFormState & CreateSpace
             }
         })
     },
-    toggleToken: (contractAddress: TokenDataStruct['contractAddress']) =>
+    removeToken: (contractAddress: TokenDataStruct['contractAddress']) =>
         set((state) => {
-            let tokens
+            let tokens = state.step1.tokens
 
             if (state.step1.tokens.map((t) => t.contractAddress).includes(contractAddress)) {
                 tokens = state.step1.tokens.filter((t) => t.contractAddress !== contractAddress)
-            } else {
-                // Evan TODO: add the rest of token struct props
-                tokens = [...state.step1.tokens, { contractAddress: contractAddress }]
             }
 
             return {

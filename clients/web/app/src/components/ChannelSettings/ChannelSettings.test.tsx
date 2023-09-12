@@ -78,7 +78,10 @@ vi.mock('use-zion-client', async () => {
                 topic: 'channel topic',
             }
         },
-        useMultipleRoleDetails: () => {
+        useMultipleRoleDetails: (): {
+            data: zionClient.RoleDetails[]
+            invalidateQuery: () => void
+        } => {
             return {
                 data: mockDataForUseMultipleRoleDetails,
                 invalidateQuery: () => null,

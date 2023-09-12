@@ -2,40 +2,24 @@ import { AnimatePresence } from 'framer-motion'
 import uniqBy from 'lodash/uniqBy'
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { getMemberNftAddress } from 'use-zion-client'
+import { Address } from 'wagmi'
 import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinner'
 import { FadeIn, FadeInBox } from '@components/Transitions'
-import { Box, BoxProps, Checkbox, MotionBox, Paragraph, Text, TextField } from '@ui'
+import { Box, BoxProps, MotionBox, Paragraph, Text, TextField } from '@ui'
 import { useCollectionsForOwner } from 'api/lib/tokenContracts'
-import { shortAddress } from 'ui/utils/utils'
 import { env } from 'utils'
 import { fetchVitalikTokens, vitalikAddress } from 'hooks/useNetworkForNftApi'
 import {
     AddressListSearch,
     SelectedItemsList,
     useTokenSearch,
-    useWatchItems,
+    useUpdateSelectedItems,
 } from '@components/AddressListSearch/AddressListSearch'
 import { useEnvironment } from 'hooks/useEnvironmnet'
 import { TokenDataStruct } from '@components/Web3/CreateSpaceForm/types'
 import { TokenAvatar } from './TokenAvatar'
-import { TokenData, TokenProps } from './types'
-
-const TokenCheckboxLabel = ({ imgSrc, label, contractAddress }: TokenProps) => {
-    return (
-        <Box flexDirection="row" alignItems="center" paddingY="sm">
-            <TokenAvatar
-                noLabel
-                contractAddress={contractAddress}
-                size="avatar_x4"
-                imgSrc={imgSrc}
-            />
-            <Box paddingX="md">
-                <Text>{label}</Text>
-            </Box>
-            <Text color="gray2">{shortAddress(contractAddress)}</Text>
-        </Box>
-    )
-}
+import { TokenPropsForVList } from './types'
+import { CustomTokenWrapper, TokenListItem } from './TokenListItem'
 
 const loadingMessages = [
     'Grabbing your NFTs...',
@@ -45,10 +29,13 @@ const loadingMessages = [
     'With all these NFTs you could build a bridge to the moon...',
 ]
 
-const Loader = () => {
-    const [message, setMessage] = useState(loadingMessages[0])
+const Loader = ({ simpleLoadingMessage }: { simpleLoadingMessage?: string }) => {
+    const [message, setMessage] = useState(simpleLoadingMessage ?? loadingMessages[0])
     const count = useRef(1)
     useEffect(() => {
+        if (simpleLoadingMessage) {
+            return
+        }
         const interval = setInterval(() => {
             setMessage(loadingMessages[count.current])
             count.current = count.current + 1
@@ -60,7 +47,7 @@ const Loader = () => {
         return () => {
             clearInterval(interval)
         }
-    }, [])
+    }, [simpleLoadingMessage])
     return (
         <Box centerContent paddingTop="md" flexDirection="row" gap="md">
             <ButtonSpinner />
@@ -71,40 +58,64 @@ const Loader = () => {
     )
 }
 
-type TokenPropsForVList = TokenData & { id: string }
-
 export function TokensList({
     wallet,
     showTokenList,
     initialItems,
     onUpdate,
     listMaxHeight,
+    singleContractAddress,
 }: {
     wallet: string
     showTokenList: boolean
     initialItems?: TokenDataStruct[]
     onUpdate: (items: TokenDataStruct[]) => void
     listMaxHeight?: BoxProps['maxHeight']
+    // if present, will not show the search input, and will only show the data for this address
+    singleContractAddress?: string
 }) {
     const { chainId } = useEnvironment()
     const zionTokenAddress = useMemo(() => getMemberNftAddress(chainId), [chainId])
-    const { data, isLoading, isError } = useCollectionsForOwner({
+    const showTokenSearch = !singleContractAddress
+
+    const {
+        data: nftApiData,
+        isLoading,
+        isError,
+    } = useCollectionsForOwner({
         wallet: fetchVitalikTokens ? vitalikAddress : wallet,
         zionTokenAddress,
         enabled: Boolean(chainId),
         chainId,
     })
 
-    const dataWithIdForVList = useMemo(() => {
-        const _data = data?.tokens.map((t) => ({ ...t, id: t.contractAddress })) ?? []
+    const nftApiDataWithId = useMemo(() => {
+        const _data =
+            nftApiData?.tokens
+                .map((t) => ({ ...t, id: t.contractAddress }))
+                .filter((t) => {
+                    if (singleContractAddress) {
+                        return t.contractAddress === singleContractAddress
+                    }
+                    return true
+                }) ?? []
         return uniqBy(_data, 'contractAddress')
-    }, [data])
+    }, [nftApiData?.tokens, singleContractAddress])
 
     const { search, results, setSearch, isCustomAddress } = useTokenSearch<TokenPropsForVList>({
-        data: dataWithIdForVList,
+        data: nftApiDataWithId,
     })
 
-    const { selectedItems, onItemClick } = useWatchItems({
+    const {
+        selectedItems,
+        tokenIdsMap,
+        addContract,
+        toggleContract,
+        removeContract,
+        addTokenIdForContract,
+        removeTokenIdForContract,
+        clearTokenIdsForContract,
+    } = useUpdateSelectedItems({
         initialItems,
         onUpdate: (items) => {
             onUpdate(items)
@@ -117,44 +128,49 @@ export function TokensList({
         <>
             <SelectedItemsList items={selectedItems}>
                 {({ item }) => {
-                    const token = data?.tokens.find((t) => t.contractAddress === item)
+                    const tokenDataFromApi = nftApiData?.tokens.find(
+                        (t) => t.contractAddress === item,
+                    )
+                    const tokenDataFromSelectedItems = selectedItems.find(
+                        (t) => t.contractAddress === item,
+                    )
                     return (
                         <TokenAvatar
-                            imgSrc={token?.imgSrc || ''}
-                            label={token?.label || ''}
+                            imgSrc={tokenDataFromApi?.imgSrc || ''}
+                            label={tokenDataFromApi?.label || ''}
                             contractAddress={item}
+                            tokenIds={tokenDataFromSelectedItems?.tokenIds ?? []}
                             size="avatar_md"
-                            onClick={onItemClick}
+                            onClick={({ contractAddress }) => removeContract(contractAddress)}
                         />
                     )
                 }}
             </SelectedItemsList>
-            <MotionBox layout="position">
-                <TextField
-                    data-testid="token-search"
-                    background="level2"
-                    placeholder="Search or paste contract address"
-                    onChange={(e) => setSearch(e.target.value)}
-                />
-            </MotionBox>
-            {isCustomAddress && (
-                <Box padding="md" background="level3" rounded="sm">
-                    <Checkbox
-                        name="tokens"
-                        width="100%"
-                        value={search}
-                        label={
-                            <TokenCheckboxLabel
-                                contractAddress={search}
-                                label="Add token"
-                                imgSrc=""
-                            />
-                        }
-                        checked={selectedItems.map((t) => t.contractAddress).includes(search)}
-                        onChange={() => onItemClick({ contractAddress: search })}
+            {showTokenSearch && (
+                <MotionBox layout="position">
+                    <TextField
+                        data-testid="token-search"
+                        background="level2"
+                        placeholder="Search or paste contract address"
+                        border="level3"
+                        onChange={(e) => setSearch(e.target.value)}
                     />
-                </Box>
+                </MotionBox>
             )}
+
+            <CustomTokenWrapper
+                address={search as Address}
+                selectedItems={selectedItems}
+                isCustomAddress={isCustomAddress}
+                tokenIdsMap={tokenIdsMap}
+                addTokenIdForContract={addTokenIdForContract}
+                removeTokenIdForContract={removeTokenIdForContract}
+                clearTokenIdsForContract={clearTokenIdsForContract}
+                toggleContract={toggleContract}
+                addContract={addContract}
+                removeContract={removeContract}
+            />
+
             <AnimatePresence mode="wait">
                 {isError && (
                     <FadeInBox key="error">
@@ -179,10 +195,14 @@ export function TokensList({
                 <AddressListSearch<TokenPropsForVList>
                     listMaxHeight={listMaxHeight ?? '500'}
                     noResults={noResults}
-                    noResultsText="No members found."
+                    noResultsText="No items found."
                     data={results}
                     loader={() => {
-                        return isLoading ? <Loader /> : undefined
+                        return isLoading ? (
+                            <Loader
+                                simpleLoadingMessage={!showTokenSearch ? 'Loading ...' : undefined}
+                            />
+                        ) : undefined
                     }}
                     header={() => (
                         <Box paddingBottom="md">
@@ -192,20 +212,17 @@ export function TokensList({
                         </Box>
                     )}
                     itemRenderer={(data) => (
-                        <Box key={data.contractAddress} paddingX="sm">
-                            <Checkbox
-                                name="tokens"
-                                width="100%"
-                                value={data.contractAddress}
-                                label={<TokenCheckboxLabel {...data} />}
-                                checked={selectedItems
-                                    .map((t) => t.contractAddress)
-                                    .includes(data.contractAddress)}
-                                onChange={() =>
-                                    onItemClick({ contractAddress: data.contractAddress })
-                                }
-                            />
-                        </Box>
+                        <TokenListItem
+                            data={data}
+                            selectedItems={selectedItems}
+                            tokenIds={tokenIdsMap[data.contractAddress] ?? []}
+                            clearTokenIdsForContract={clearTokenIdsForContract}
+                            removeTokenIdForContract={removeTokenIdForContract}
+                            addTokenIdForContract={addTokenIdForContract}
+                            toggleContract={toggleContract}
+                            addContract={addContract}
+                            removeContract={removeContract}
+                        />
                     )}
                 />
             )}

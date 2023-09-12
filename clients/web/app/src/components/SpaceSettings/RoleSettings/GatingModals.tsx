@@ -12,18 +12,20 @@ export function TokenListModal({
     loggedInWalletAddress,
     roleId,
     storeTokens,
+    singleContractAddress,
 }: {
-    setStoreTokens: (roleId: string, tokens: string[]) => void
+    setStoreTokens: (roleId: string, tokens: TokenDataStruct[]) => void
     hideTokenModal: () => void
     loggedInWalletAddress: string
     roleId: string
-    storeTokens: string[]
+    storeTokens: TokenDataStruct[]
+    singleContractAddress: string | undefined
 }) {
-    const [tokenListSelectedTokens, setTokenListSelectedTokens] = useState<string[]>(storeTokens)
+    const [tokenListSelectedTokens, setTokenListSelectedTokens] =
+        useState<TokenDataStruct[]>(storeTokens)
 
     const onTokensSelected = useEvent((addresses: TokenDataStruct[]) => {
-        const _addresses = addresses.map((t) => t.contractAddress)
-        setTokenListSelectedTokens(_addresses)
+        setTokenListSelectedTokens(addresses)
     })
     const onAddTokenClick = useEvent(() => {
         if (roleId && tokenListSelectedTokens) {
@@ -32,12 +34,15 @@ export function TokenListModal({
         hideTokenModal()
     })
 
-    const initialItems = useMemo(
-        () => storeTokens.map((address) => ({ contractAddress: address })),
-        [storeTokens],
-    )
+    // If we are editing a single token, we only want to show that token
+    const _initialItems = useMemo(() => {
+        return singleContractAddress
+            ? storeTokens.filter((t) => t.contractAddress === singleContractAddress)
+            : storeTokens
+    }, [singleContractAddress, storeTokens])
+
     return (
-        <ModalContainer stableTopAlignment onHide={hideTokenModal}>
+        <ModalContainer onHide={hideTokenModal}>
             <Stack gap>
                 <Stack horizontal justifyContent="spaceBetween" alignItems="center">
                     <Text strong>Edit tokens</Text>
@@ -47,7 +52,8 @@ export function TokenListModal({
                     showTokenList
                     listMaxHeight="300"
                     wallet={loggedInWalletAddress}
-                    initialItems={initialItems}
+                    singleContractAddress={singleContractAddress}
+                    initialItems={_initialItems}
                     onUpdate={onTokensSelected}
                 />
                 <Stack horizontal gap justifyContent="end">

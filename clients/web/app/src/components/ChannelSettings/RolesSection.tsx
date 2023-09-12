@@ -61,7 +61,7 @@ function RoleDetailsComponent(props: {
                     <TokenCheckboxLabel
                         label={props.role.name}
                         spaceId={props.spaceId}
-                        tokenAddresses={props.role.tokenAddresses}
+                        tokens={props.role.tokens}
                     />
                 }
                 value={props.role.id.toString()}

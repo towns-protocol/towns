@@ -6,10 +6,11 @@ import * as style from './Checkbox.css'
 
 type Props = {
     name: string
-    label: string | React.ReactNode
+    label?: string | React.ReactNode
     value?: string
     width?: BoxProps['width']
     onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void
+    onClick?: (e: React.MouseEvent<HTMLInputElement>) => void
     readOnly?: boolean
     disabled?: boolean
     checked?: boolean
@@ -33,7 +34,7 @@ export const Checkbox = (props: Props) => {
                 justifyContent="spaceBetween"
             >
                 <Box paddingRight="md">{label}</Box>
-                <Box className={style.checkboxWrapper}>
+                <Box className={style.checkboxWrapper} onClick={props.onClick}>
                     <input
                         data-testid={`checkbox-${name}`}
                         className={style.hiddenCheckbox}

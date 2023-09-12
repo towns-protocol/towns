@@ -1,21 +1,32 @@
 import React from 'react'
-import { RoomIdentifier } from 'use-zion-client'
+import { RoleDetails, RoomIdentifier } from 'use-zion-client'
+import { BigNumber } from 'ethers'
 import { Box } from '@ui'
 import { FetchedTokenAvatar } from './FetchedTokenAvatar'
 
+type Tokens = RoleDetails['tokens']
+
 export function TokenCheckboxLabel(props: {
     spaceId: RoomIdentifier
-    tokenAddresses: string[]
+    tokens: Tokens | undefined
     label: string
 }): JSX.Element {
     return (
         <Box>
             <Box>{props.label}</Box>
-            {props.tokenAddresses.length > 0 && (
+            {props.tokens && props.tokens.length > 0 && (
                 <Box horizontal gap="lg" paddingTop="md">
-                    {props.tokenAddresses.map((address) => (
-                        <FetchedTokenAvatar key={address} address={address} />
-                    ))}
+                    {props.tokens?.map((t) => {
+                        const address = t.contractAddress as string
+                        const tokenIds = t.tokenIds.map((t) => (t as BigNumber).toNumber())
+                        return (
+                            <FetchedTokenAvatar
+                                key={address}
+                                address={address}
+                                tokenIds={tokenIds}
+                            />
+                        )
+                    })}
                 </Box>
             )}
         </Box>

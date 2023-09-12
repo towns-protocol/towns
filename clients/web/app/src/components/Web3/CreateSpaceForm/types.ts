@@ -4,6 +4,7 @@ import { MEMBERSHIP_TYPE, SPACE_NAME, TOKENS } from './constants'
 // TODO: this should map to ExternalTokenStruct
 export type TokenDataStruct = {
     contractAddress: string
+    tokenIds: number[]
 }
 export interface CreateSpaceFormState {
     step1: {

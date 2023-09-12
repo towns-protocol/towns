@@ -1,37 +1,34 @@
 import React from 'react'
 import { useEvent } from 'react-use-event-hook'
 import { IconLabelButton, Stack } from '@ui'
-import { TokenDataStruct } from '@components/Web3/CreateSpaceForm/types'
 
 type Props = {
     label: string
-    data: TokenDataStruct[]
-    onAddTokenClick: () => void
-    onUpdate: (data: TokenDataStruct[]) => void
-    itemRenderer: (props: {
-        item: TokenDataStruct
-        onRemoveItem: (id: TokenDataStruct['contractAddress']) => void
-    }) => React.ReactNode
+    data: string[]
+    onClick: () => void
+    onUpdate: (data: string[]) => void
+    itemRenderer: (props: { item: string; onRemoveItem: (id: string) => void }) => React.ReactNode
 }
 
-export const TokenSelector = (props: Props) => {
+// TODO: this can probably be combined with TokenSelector with a generic type
+export const MemberSelector = (props: Props) => {
     const { data, itemRenderer } = props
 
     const onRemoveItem = useEvent((id: string) => {
-        props.onUpdate(data.filter((item) => item.contractAddress !== id))
+        props.onUpdate(data.filter((item) => item !== id))
     })
 
     return (
         <>
             <Stack horizontal gap flexWrap="wrap" alignItems="start">
                 {Object.values(data).map((item) => (
-                    <React.Fragment key={item.contractAddress}>
+                    <React.Fragment key={item}>
                         {itemRenderer({ item, onRemoveItem })}
                     </React.Fragment>
                 ))}
             </Stack>
             <Stack alignItems="start">
-                <IconLabelButton label={props.label} type="plus" onClick={props.onAddTokenClick} />
+                <IconLabelButton label={props.label} type="plus" onClick={props.onClick} />
             </Stack>
         </>
     )

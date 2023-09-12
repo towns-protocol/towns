@@ -234,7 +234,12 @@ export const CreateSpaceForm = () => {
         await createSpaceTransactionWithRole(
             createSpaceInfo,
             'Member',
-            tokens.map((t) => createTokenEntitlementStruct({ contractAddress: t.contractAddress })),
+            tokens.map((t) =>
+                createTokenEntitlementStruct({
+                    contractAddress: t.contractAddress,
+                    tokenIds: t.tokenIds,
+                }),
+            ),
             tokenGrantedPermissions,
             everyonePermissions,
         )

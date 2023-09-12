@@ -2,6 +2,7 @@ import { Permission } from 'use-zion-client'
 import { create } from 'zustand'
 import { combine } from 'zustand/middleware'
 import { immer } from 'zustand/middleware/immer'
+import { TokenDataStruct } from '@components/Web3/CreateSpaceForm/types'
 
 export type SpaceSettings = {
     spaceId: string
@@ -13,7 +14,7 @@ export type Role = {
     name: string
     color?: string
     permissions: Permission[]
-    tokens: string[]
+    tokens: TokenDataStruct[]
     users: string[]
 }
 
@@ -156,7 +157,7 @@ export const useSettingsRolesStore = create(
                         }
                     })
                 },
-                setTokens: (roleId: string, tokens: string[]) => {
+                setTokens: (roleId: string, tokens: TokenDataStruct[]) => {
                     set((state) => {
                         const role = state.modifiedSpace?.roles.find((role) => role.id === roleId)
                         if (role) {

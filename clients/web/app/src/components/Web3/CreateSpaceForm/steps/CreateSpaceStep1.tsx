@@ -32,6 +32,7 @@ const schema: z.ZodType<CreateSpaceFormState['step1']> = z
         tokens: z.array(
             z.object({
                 contractAddress: z.string(),
+                tokenIds: z.array(z.number()),
             }),
         ),
     })

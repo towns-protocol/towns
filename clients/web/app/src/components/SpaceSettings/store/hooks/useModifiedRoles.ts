@@ -98,9 +98,22 @@ export const useModifiedRoles = () => {
                     })
                 }
                 if (!isEqual(role.tokens.slice().sort(), snapshotRole?.tokens.slice().sort())) {
+                    let description = ''
+
+                    role.tokens.forEach((token, index) => {
+                        if (index > 0) {
+                            description += ', '
+                        }
+                        description += `${token.contractAddress}`
+
+                        if (token.tokenIds.length > 0) {
+                            description += ` - Token IDs: ${token.tokenIds.join(', ')}`
+                        }
+                    })
+
                     updatesToRole.push({
                         title: `Token gated membership`,
-                        description: `${role.tokens.join(', ')}`,
+                        description,
                         shouldDisplay: role.tokens.length > 0,
                     })
                 }

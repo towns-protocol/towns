@@ -54,6 +54,7 @@ export type FieldBaseProps = {
     paddingY?: BoxProps['paddingY']
     /** max length of the input */
     maxLength?: FormElementProps['maxLength']
+    border?: BoxProps['border']
 }
 
 type PassthroughProps = 'id' | 'name' | 'disabled' | 'autoComplete' | 'autoFocus' | 'maxLength'
@@ -95,6 +96,7 @@ export const Field = (props: Props) => {
         width,
         paddingY,
         paddingX = 'md',
+        border,
         ...inputProps
     } = props
 
@@ -103,7 +105,7 @@ export const Field = (props: Props) => {
     const id = props.id || props.name || label?.replace(/[^a-z]/gi, '_').toLowerCase() || ''
 
     return (
-        <Stack grow gap="md" width={width} borderRadius="sm">
+        <Stack grow gap="md" width={width} borderRadius="sm" border={border}>
             {label && renderLabel ? (
                 renderLabel(label)
             ) : (

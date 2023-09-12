@@ -111,6 +111,9 @@ const root = createGlobalTheme(':root', {
 
         safeAreaInsetTop: 'env(safe-area-inset-top)',
         safeAreaInsetBottom: 'env(safe-area-inset-bottom)',
+        '-xs': `${baseline * -0.5}px`,
+        '-sm': `${baseline * -1}px`,
+        '-md': `${baseline * -2}px`,
     } as const,
 
     dims: {

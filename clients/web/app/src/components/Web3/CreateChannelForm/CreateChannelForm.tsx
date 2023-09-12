@@ -59,15 +59,7 @@ export const CreateChannelForm = (props: Props) => {
         roledIds,
     )
     const rolesWithDetails = useMemo(() => {
-        const r = _rolesDetails
-            ?.filter((role) => role.permissions.includes(Permission.Read))
-            .map((role) => {
-                return {
-                    ...role,
-                    tokenAddresses: role.tokens.map((token) => token.contractAddress as string),
-                }
-            })
-        return r
+        return _rolesDetails?.filter((role) => role.permissions.includes(Permission.Read))
     }, [_rolesDetails])
 
     const {
@@ -223,7 +215,7 @@ export const CreateChannelForm = (props: Props) => {
                                 {...restOfNameProps}
                             />
                         </Stack>
-                        <Stack gap="sm">
+                        <Stack gap="sm" maxHeight="50vh" overflow="auto">
                             <Box paddingTop="md" paddingBottom="sm">
                                 <Text strong>Which roles have access to this channel</Text>
                             </Box>
@@ -243,7 +235,7 @@ export const CreateChannelForm = (props: Props) => {
                                                 <TokenCheckboxLabel
                                                     label={role.name}
                                                     spaceId={props.spaceId}
-                                                    tokenAddresses={role.tokenAddresses}
+                                                    tokens={role.tokens}
                                                 />
                                             }
                                             value={role.id.toString()}

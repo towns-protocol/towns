@@ -3,7 +3,7 @@ import { TokenDataStruct } from '@components/Web3/CreateSpaceForm/types'
 
 export type TokenClickParameters = {
     contractAddress: TokenDataStruct['contractAddress']
-    tokenIds?: number[] | undefined
+    tokenIds: TokenDataStruct['tokenIds']
 }
 export interface TokenProps extends TokenData {
     onClick?: (args: TokenClickParameters, e: React.MouseEvent) => void
@@ -21,3 +21,5 @@ export enum TokenType {
     ERC721 = 'ERC721',
     ERC20 = 'ERC20',
 }
+
+export type TokenPropsForVList = TokenData & { id: string }

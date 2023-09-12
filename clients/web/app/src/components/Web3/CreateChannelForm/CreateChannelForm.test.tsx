@@ -6,9 +6,8 @@ import { TestApp } from 'test/testUtils'
 import * as useContractRoles from 'hooks/useContractRoles'
 import { UseMockCreateChannelReturn, mockCreateTransactionWithSpy } from 'test/transactionHookMock'
 import * as useRequireTransactionNetwork from 'hooks/useRequireTransactionNetwork'
-import { everyoneRole, memberRole } from 'test/testMocks'
+import { everyoneRole, memberRole, roleDataWithBothRolesAssignedToChannel } from 'test/testMocks'
 import { CreateChannelForm } from '.'
-import { MOCK_CONTRACT_METADATA_ADDRESSES } from '../../../../mocks/token-collections'
 
 const Wrapper = ({
     onCreateChannel = vi.fn(),
@@ -39,39 +38,20 @@ const useMockedCreateChannelTransaction = (
     ...args: (typeof zionClient.useCreateChannelTransaction)['arguments']
 ) => useMockedCreateTransaction(...args) as UseMockCreateChannelReturn
 
+const mockDataForUseMultipleRoleDetails = roleDataWithBothRolesAssignedToChannel
+
 vi.mock('use-zion-client', async () => {
     const actual = (await vi.importActual('use-zion-client')) as typeof zionClient
     return {
         ...actual,
         useCurrentWalletEqualsSignedInAccount: () => true,
-        useMultipleRoleDetails: () => {
+        useMultipleRoleDetails: (): {
+            data: zionClient.RoleDetails[]
+            invalidateQuery: () => void
+        } => {
             return {
+                data: mockDataForUseMultipleRoleDetails,
                 invalidateQuery: () => null,
-                data: [
-                    {
-                        id: 7,
-                        name: 'Everyone',
-                        permissions: ['Read', 'Write'],
-                        tokens: [],
-                        users: ['0x1'],
-                        channels: [],
-                    },
-                    {
-                        id: 8,
-                        name: 'Member',
-                        permissions: ['Read', 'Write'],
-                        tokens: [
-                            {
-                                contractAddress: MOCK_CONTRACT_METADATA_ADDRESSES[0],
-                            },
-                            {
-                                contractAddress: MOCK_CONTRACT_METADATA_ADDRESSES[1],
-                            },
-                        ],
-                        users: [],
-                        channels: [],
-                    },
-                ],
             }
         },
     }

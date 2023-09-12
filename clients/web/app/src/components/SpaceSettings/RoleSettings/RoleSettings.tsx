@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo } from 'react'
 import { Outlet, useParams } from 'react-router-dom'
 import { useRoleDetails, useRoles } from 'use-zion-client'
+import { BigNumber } from 'ethers'
 import { Stack, Text } from '@ui'
 import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinner'
 import { useAllRoleDetails } from 'hooks/useAllRoleDetails'
@@ -106,7 +107,12 @@ function mapRoleStructToRole(
         permissions: roleDetails.permissions,
         // NFT API data (both Alchemy and Infura) lowercase all their contract addresses
         // perhaps we should do the same in lib?
-        tokens: roleDetails.tokens.map((t) => (t.contractAddress as string).toLowerCase()),
+        tokens: roleDetails.tokens.map((t) => {
+            return {
+                contractAddress: (t.contractAddress as string).toLowerCase(),
+                tokenIds: t.tokenIds.map((id) => (id as BigNumber).toNumber()),
+            }
+        }),
         users: roleDetails.users,
     }
 }

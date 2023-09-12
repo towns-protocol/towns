@@ -446,6 +446,7 @@ describe('<CreateSpaceForm />', () => {
                     tokens: [
                         {
                             contractAddress: '0x123',
+                            tokenIds: [],
                         },
                     ],
                 },

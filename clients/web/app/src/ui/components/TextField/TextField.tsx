@@ -3,6 +3,7 @@ import React, { InputHTMLAttributes, forwardRef } from 'react'
 import { Box } from '../Box/Box'
 import { Field, FieldBaseProps } from '../_internal/Field/Field'
 import * as styles from './TextField.css'
+import { TextProps } from '../Text/Text'
 
 type NativeInputProps = React.AllHTMLAttributes<HTMLInputElement>
 
@@ -16,12 +17,13 @@ type InputCallbackProps = {
 type Props = {
     placeholder?: string
     type?: NativeInputProps['type']
+    fontSize?: TextProps['fontSize']
 } & FieldBaseProps &
     InputCallbackProps &
     InputHTMLAttributes<HTMLInputElement>
 
 export const TextField = forwardRef<HTMLInputElement, Props>((props, ref) => {
-    const { type, placeholder, ...fieldProps } = props
+    const { type, placeholder, fontSize, ...fieldProps } = props
     return (
         <Field {...fieldProps}>
             {(overlays, { className, ...inputProps }) => (
@@ -33,6 +35,7 @@ export const TextField = forwardRef<HTMLInputElement, Props>((props, ref) => {
                         type={type}
                         placeholder={placeholder}
                         className={clsx(className, styles.input)}
+                        fontSize={fontSize}
                     />
                     {overlays}
                 </>

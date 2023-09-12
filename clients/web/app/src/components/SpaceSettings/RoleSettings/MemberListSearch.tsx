@@ -9,7 +9,7 @@ import {
     AddressListSearch,
     SelectedItemsList,
     useTokenSearch,
-    useWatchItems,
+    useUpdateSelectedItems,
 } from '@components/AddressListSearch/AddressListSearch'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { TokenClickParameters } from '@components/Tokens/types'
@@ -58,10 +58,12 @@ export function MemberList({
         () =>
             initialItems.map((i) => ({
                 contractAddress: i,
+                // token Ids don't apply for user gating
+                tokenIds: [],
             })),
         [initialItems],
     )
-    const { selectedItems: tokenStructItems, onItemClick } = useWatchItems({
+    const { selectedItems: tokenStructItems, toggleContract } = useUpdateSelectedItems({
         initialItems: _initialItems,
         onUpdate: (items) => {
             const _items = items.map(toAddress)
@@ -77,7 +79,11 @@ export function MemberList({
                 {({ item }) => {
                     const member = membersWithAddress.find((m) => m.address === item)
                     return (
-                        <SelectedMemberItem address={item} member={member} onClick={onItemClick} />
+                        <SelectedMemberItem
+                            address={item}
+                            member={member}
+                            onClick={toggleContract}
+                        />
                     )
                 }}
             </SelectedItemsList>
@@ -103,7 +109,7 @@ export function MemberList({
                             />
                         }
                         checked={tokenStructItems.map(toAddress).includes(search)}
-                        onChange={() => onItemClick({ contractAddress: search })}
+                        onChange={() => toggleContract({ contractAddress: search, tokenIds: [] })}
                     />
                 </Box>
             ) : (
@@ -116,7 +122,9 @@ export function MemberList({
                         <MemberCheckbox
                             item={data}
                             selectedItems={tokenStructItems.map(toAddress)}
-                            onItemClick={(address) => onItemClick({ contractAddress: address })}
+                            onItemClick={(address) =>
+                                toggleContract({ contractAddress: address, tokenIds: [] })
+                            }
                         />
                     )}
                 />
@@ -182,7 +190,7 @@ function SelectedMemberItem({
                     background="level4"
                     border="faint"
                     color="default"
-                    onClick={(e) => onClick({ contractAddress: address }, e)}
+                    onClick={(e) => onClick({ contractAddress: address, tokenIds: [] }, e)}
                 />
             </Box>
             <Text size="sm">{member?.name ? member.name : shortAddress(address)}</Text>

@@ -55,7 +55,7 @@ const schema = z.object({
 const TokenList = (props: Partial<UseFormReturn>) => {
     const { setError, clearErrors } = props
     const tokensSelectedInStep1 = useCreateSpaceFormStore((state) => state.step1.tokens)
-    const toggleToken = useCreateSpaceFormStore((state) => state.toggleToken)
+    const toggleToken = useCreateSpaceFormStore((state) => state.removeToken)
     const tokenCollectionsForWallet = useCachedTokensForWallet()
     function handleClick({ contractAddress }: TokenClickParameters, e: React.MouseEvent) {
         e.preventDefault()
@@ -89,6 +89,7 @@ const TokenList = (props: Partial<UseFormReturn>) => {
                         label={tokenData?.label || ''}
                         // a custom, user inputted token won't have a match, so pass the contract address directly
                         contractAddress={t.contractAddress}
+                        tokenIds={t.tokenIds}
                         onClick={handleClick}
                     />
                 )

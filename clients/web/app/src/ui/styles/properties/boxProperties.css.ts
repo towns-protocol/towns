@@ -10,6 +10,7 @@ export const border = {
     level4: `1px solid ${vars.color.background.level4}`,
     quote: `2px solid ${vars.color.background.level3}`,
     accent: `1px solid ${vars.color.background.accentTransparent}`,
+    textDefault: `1px solid ${vars.color.text.default}`,
     strong: `2px solid ${vars.color.text.default}`,
     strongLevel1: `2px solid ${vars.color.background.level1}`,
     inverted: `1px solid ${vars.color.text.inverted}`,

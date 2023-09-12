@@ -75,8 +75,11 @@ export const UpdateRoleTransaction = ({ role, spaceId }: TransactionHookProps) =
                 +role.metadata.id,
                 role.metadata.name,
                 role.metadata.permissions,
-                role.metadata.tokens.map((addr) =>
-                    createTokenEntitlementStruct({ contractAddress: addr }),
+                role.metadata.tokens.map((t) =>
+                    createTokenEntitlementStruct({
+                        contractAddress: t.contractAddress,
+                        tokenIds: t.tokenIds,
+                    }),
                 ),
                 role.metadata.users,
             )
@@ -104,8 +107,11 @@ export const CreateRoleTransaction = ({ role, spaceId }: TransactionHookProps) =
                 spaceId,
                 role.metadata.name,
                 role.metadata.permissions,
-                role.metadata.tokens.map((addr) =>
-                    createTokenEntitlementStruct({ contractAddress: addr }),
+                role.metadata.tokens.map((t) =>
+                    createTokenEntitlementStruct({
+                        contractAddress: t.contractAddress,
+                        tokenIds: t.tokenIds,
+                    }),
                 ),
                 role.metadata.users,
             )

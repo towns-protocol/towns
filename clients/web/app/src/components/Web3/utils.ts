@@ -4,13 +4,15 @@ import { TokenEntitlementStruct } from 'use-zion-client'
 // TBD if we need other params, they can be added one at a time
 export function createTokenEntitlementStruct({
     contractAddress,
+    tokenIds,
 }: {
     contractAddress: string
+    tokenIds?: number[]
 }): TokenEntitlementStruct {
     return {
         contractAddress,
         isSingleToken: false,
         quantity: 1,
-        tokenIds: [],
+        tokenIds: tokenIds ?? [],
     }
 }

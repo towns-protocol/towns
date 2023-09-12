@@ -1,12 +1,13 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { z } from 'zod'
 import { ContractMetadata, GetCollectionsForOwnerResponse } from '@token-worker/types'
-import { erc20ABI } from 'wagmi'
+import { Address, erc20ABI } from 'wagmi'
 import { ethers } from 'ethers'
 import { useMemo } from 'react'
-import { TokenProps } from '@components/Tokens/types'
+import { TokenProps, TokenType } from '@components/Tokens/types'
 import { env } from 'utils'
 import { fetchGoerli, fetchVitalikTokens, useNetworkForNftApi } from 'hooks/useNetworkForNftApi'
+import { getTokenType } from '@components/Web3/checkTokenType'
 import { axiosClient } from '../apiClient'
 
 const queryKey = 'tokenContractsForAddress'
@@ -112,17 +113,25 @@ async function getTokenContractsForAddress(
         throw new Error(`Error parsing ContractMetadataResponse:: ${parseResult.error}`)
     }
 
-    const tokens = parseResult.data.collections.map(mapToTokenProps)
+    const tokens = await Promise.all(parseResult.data.collections.map(mapToTokenProps))
     const nextPageKey = parseResult.data.pageKey
 
     return { tokens, nextPageKey }
 }
 
-function mapToTokenProps(token: ContractMetadata): TokenProps {
+async function mapToTokenProps(token: ContractMetadata): Promise<TokenProps> {
+    let type: TokenType | undefined
+    try {
+        type = token.address ? await getTokenType({ address: token.address as Address }) : undefined
+    } catch (error) {
+        console.error(`Error getting token type for ${token.address}`, error)
+    }
+
     return {
         imgSrc: token.imageUrl || '',
         label: token.name || '',
         contractAddress: token.address || '',
+        type,
     }
 }
 
@@ -131,6 +140,7 @@ function mapZionTokenToTokenProps(zionTokenAddress: string) {
         imgSrc: 'https://picsum.photos/id/99/400',
         label: 'Zion',
         contractAddress: zionTokenAddress,
+        type: undefined,
     }
 }
 

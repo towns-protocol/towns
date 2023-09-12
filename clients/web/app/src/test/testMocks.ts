@@ -2,6 +2,7 @@ import { BigNumber } from 'ethers'
 import * as zionClient from 'use-zion-client'
 import { Permission } from 'use-zion-client'
 import { EVERYONE_ADDRESS } from 'utils'
+import { createTokenEntitlementStruct } from '@components/Web3/utils'
 import { MOCK_CONTRACT_METADATA_ADDRESSES } from '../../mocks/token-collections'
 import { getWalletAddress } from './testUtils'
 
@@ -45,7 +46,7 @@ export const channelDataForRole: {
     disabled: false,
 }
 
-export const roleDataWithBothRolesAssignedToChannel = [
+export const roleDataWithBothRolesAssignedToChannel: zionClient.RoleDetails[] = [
     {
         id: 7,
         name: 'Everyone',
@@ -57,14 +58,16 @@ export const roleDataWithBothRolesAssignedToChannel = [
     {
         id: 8,
         name: 'Member',
-        permissions: ['Read', 'Write'],
+        permissions: [Permission.Read, Permission.Write],
         tokens: [
-            {
+            createTokenEntitlementStruct({
                 contractAddress: MOCK_CONTRACT_METADATA_ADDRESSES[0],
-            },
-            {
+                tokenIds: [],
+            }),
+            createTokenEntitlementStruct({
                 contractAddress: MOCK_CONTRACT_METADATA_ADDRESSES[1],
-            },
+                tokenIds: [],
+            }),
         ],
         users: [],
         channels: [channelDataForRole],
