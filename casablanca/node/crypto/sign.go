@@ -80,6 +80,25 @@ func NewWallet(ctx context.Context) (*Wallet, error) {
 		nil
 }
 
+func NewWalletFromPrivKey(ctx context.Context, privKey string) (*Wallet, error) {
+	log := dlog.CtxLog(ctx)
+	// create key pair from private key bytes
+	k, err := crypto.HexToECDSA(privKey)
+	if err != nil {
+		return nil, err
+	}
+	address := crypto.PubkeyToAddress(k.PublicKey)
+
+	log.Info("New wallet generated from key.", "address", address.Hex(), "publicKey", crypto.FromECDSAPub(&k.PublicKey))
+	return &Wallet{
+			PrivateKeyStruct: k,
+			PrivateKey:       crypto.FromECDSA(k),
+			Address:          address,
+			AddressStr:       address.Hex(),
+		},
+		nil
+}
+
 func LoadWallet(ctx context.Context, filename string) (*Wallet, error) {
 	log := dlog.CtxLog(ctx)
 
@@ -98,6 +117,68 @@ func LoadWallet(ctx context.Context, filename string) (*Wallet, error) {
 			AddressStr:       address.Hex(),
 		},
 		nil
+}
+
+func (w *Wallet) SaveWalletFromEnv(ctx context.Context, privateKeyFilename string, publicKeyFilename string, addressFilename string, overwrite bool) error {
+	log := dlog.CtxLog(ctx)
+
+	openFlags := os.O_WRONLY | os.O_CREATE | os.O_EXCL
+	if overwrite {
+		openFlags = os.O_WRONLY | os.O_CREATE | os.O_TRUNC
+	}
+
+	fAddr, err := os.OpenFile(addressFilename, openFlags, KEY_FILE_PERMISSIONS)
+	if err != nil {
+		return err
+	}
+	defer fAddr.Close()
+
+	_, err = fAddr.WriteString(w.AddressStr)
+	if err != nil {
+		return err
+	}
+
+	err = fAddr.Close()
+	if err != nil {
+		return err
+	}
+
+	fPriv, err := os.OpenFile(privateKeyFilename, os.O_WRONLY | os.O_CREATE | os.O_TRUNC, KEY_FILE_PERMISSIONS)
+	if err != nil {
+		return err
+	}
+	defer fPriv.Close()
+
+	fPub, err := os.OpenFile(publicKeyFilename, os.O_WRONLY | os.O_CREATE | os.O_TRUNC, KEY_FILE_PERMISSIONS)
+	if err != nil {
+		return err
+	}
+	defer fPub.Close()
+
+	k := hex.EncodeToString(w.PrivateKey)
+	_, err = fPriv.WriteString(k)
+	if err != nil {
+		return err
+	}
+
+	err = fPriv.Close()
+	if err != nil {
+		return err
+	}
+
+	k = hex.EncodeToString(crypto.FromECDSAPub(&w.PrivateKeyStruct.PublicKey))
+	_, err = fPub.WriteString(k)
+	if err != nil {
+		return err
+	}
+
+	err = fPub.Close()
+	if err != nil {
+		return err
+	}
+
+	log.Info("Wallet saved from env.", "address", w.Address.Hex(), "publicKey", crypto.FromECDSAPub(&w.PrivateKeyStruct.PublicKey))
+	return nil
 }
 
 func (w *Wallet) SaveWallet(ctx context.Context, privateKeyFilename string, publicKeyFilename string, addressFilename string, overwrite bool) error {

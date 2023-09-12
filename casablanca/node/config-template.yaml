@@ -3,6 +3,7 @@ dburl: postgres://postgres:postgres@localhost:<DB_PORT>/casablanca?sslmode=disab
 storageType: postgres
 address:
 useContract: <USE_CONTRACT>
+walletprivatekey:
 # HNT-2048 remove this line once RDK registration is implemented in the client
 skipDelegateCheck: true
 chain:

@@ -54,7 +54,6 @@ fi
 
 if [ "$SKIP_GENKEY" = true ]; then
     echo "Skipping wallet generation for instance '${INSTANCE_NAME}'"
-    exit 0
 elif [ ! -f "${INSTANCE_DIR}/wallet/private_key" ]; then
     echo "Generating a new wallet for instance '${INSTANCE_NAME}'"
     cd "$INSTANCE_DIR"
