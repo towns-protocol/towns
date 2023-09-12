@@ -236,7 +236,7 @@
       {
         "label": "Anvil",
         "type": "shell",
-        "command": "foundryup && ./scripts/start-local-blockchain.sh",
+        "command": "foundryup -v nightly-5cfed63071ef1bb06f90190d2f678f546bfc971c && ./scripts/start-local-blockchain.sh",
         "isBackground": true,
         "problemMatcher": [],
         "presentation": {
