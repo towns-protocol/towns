@@ -37,7 +37,6 @@ export const IconButton = forwardRef<HTMLDivElement, Props>((props, ref) => {
             background={
                 background ?? {
                     default: !isOpaque ? 'inherit' : isActive ? 'level3' : 'level2',
-                    hover: 'level3',
                 }
             }
             padding="xs"

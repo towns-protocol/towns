@@ -146,6 +146,9 @@ export const Playground = () => {
                     <Button tone="cta1" size="button_sm" icon="check">
                         Action
                     </Button>
+                    <Button size="button_sm" icon="info" />
+                    <Button size="button_md" icon="info" />
+                    <Button size="button_lg" icon="info" />
                 </Box>
                 <Divider label="icon label button" />
                 <Box gap alignSelf="start" minWidth="250" alignItems="start">

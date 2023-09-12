@@ -64,14 +64,18 @@ export const colorProperties = defineProperties({
                             '--background-hover': vars.color.background.readabilityHover,
                         },
                     },
-                    [`&${hoverableClass}:hover,&${hoverableClass}${hoverActiveClass}`]: {
-                        background: 'var(--background-hover)',
-                    },
                     [`${elevateClass} &`]: {
                         background: vars.color.background.level2,
                         vars: {
                             '--background': vars.color.background.level2,
                             '--background-hover': vars.color.background.level2Hover,
+                        },
+                    },
+                    [`&${hoverableClass}:hover, &${hoverableClass}${hoverActiveClass}`]: {
+                        '@media': {
+                            '(hover: hover)': {
+                                background: 'var(--background-hover)',
+                            },
                         },
                     },
                 },
@@ -93,7 +97,11 @@ export const colorProperties = defineProperties({
                         },
                     },
                     [`&${hoverableClass}:hover,&${hoverableClass}${hoverActiveClass}`]: {
-                        background: 'var(--background-hover)',
+                        '@media': {
+                            '(hover: hover)': {
+                                background: 'var(--background-hover)',
+                            },
+                        },
                     },
                 },
             },
@@ -104,6 +112,7 @@ export const colorProperties = defineProperties({
                     '--background': vars.color.background.level3,
                     '--background-hover': vars.color.background.level3Hover,
                 },
+
                 selectors: {
                     [`${elevateClass} &`]: {
                         background: vars.color.background.level4,
@@ -113,8 +122,12 @@ export const colorProperties = defineProperties({
                             '--background-hover': vars.color.background.level4Hover,
                         },
                     },
-                    [`&${hoverableClass}:hover,&${hoverableClass}${hoverActiveClass}`]: {
-                        background: 'var(--background-hover)',
+                    [`&${hoverableClass}:hover, &${hoverableClass}${hoverActiveClass}`]: {
+                        '@media': {
+                            '(hover: hover)': {
+                                background: 'var(--background-hover)',
+                            },
+                        },
                     },
                 },
             },
@@ -126,8 +139,12 @@ export const colorProperties = defineProperties({
                     '--background-hover': vars.color.background.level4Hover,
                 },
                 selectors: {
-                    [`&${hoverableClass}:hover,&${hoverableClass}${hoverActiveClass}`]: {
-                        background: 'var(--background-hover)',
+                    [`&${hoverableClass}:hover, &${hoverableClass}${hoverActiveClass}`]: {
+                        '@media': {
+                            '(hover: hover)': {
+                                background: 'var(--background-hover)',
+                            },
+                        },
                     },
                 },
             },
