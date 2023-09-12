@@ -360,8 +360,8 @@ const UserRow = (props: { member: RoomMember }) => {
                 width="100%"
             >
                 <Avatar size="avatar_x4" userId={member.userId} />
-                <Stack gap="sm">
-                    <Text fontWeight="medium" size="sm" color="default">
+                <Stack gap="sm" overflowX="hidden">
+                    <Text truncate fontWeight="medium" size="sm" color="default">
                         {getPrettyDisplayName(member).initialName}
                     </Text>
                     {accountAddress && (

@@ -430,9 +430,11 @@ export const SpaceInfoPanel = () => {
                                                 userId={matrixUserOwner.userId}
                                             />
                                         )}
-                                        <Box justifyContent="spaceBetween">
-                                            {matrixUserOwner &&
-                                                getPrettyDisplayName(matrixUserOwner).name}
+                                        <Box justifyContent="spaceBetween" overflow="hidden">
+                                            <Paragraph truncate>
+                                                {matrixUserOwner &&
+                                                    getPrettyDisplayName(matrixUserOwner).name}
+                                            </Paragraph>
                                             <Paragraph color="gray2">
                                                 {data?.owner ? shortAddress(data.owner) : ''}
                                             </Paragraph>

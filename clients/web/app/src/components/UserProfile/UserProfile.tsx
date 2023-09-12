@@ -139,7 +139,7 @@ export const UserProfile = (props: Props) => {
                         onChange,
                         handleSave,
                     }) => (
-                        <Stack grow padding gap="sm" background="level2" rounded="sm">
+                        <Stack grow padding gap="sm" background="level2" rounded="sm" width="100%">
                             <MotionStack
                                 grow
                                 horizontal
@@ -154,15 +154,16 @@ export const UserProfile = (props: Props) => {
                                 transition={transitions.button}
                             >
                                 {!isEditing ? (
-                                    <Box grow gap="sm">
+                                    <Box grow gap="sm" width="100%">
                                         <Box
                                             horizontal
                                             alignItems="center"
                                             gap="xs"
                                             height="x5"
+                                            overflow="hidden"
                                             onClick={canEdit && !isEditing ? handleEdit : undefined}
                                         >
-                                            <Paragraph strong size="lg" color="default">
+                                            <Paragraph truncate strong size="lg" color="default">
                                                 {displayName}
                                             </Paragraph>
                                             {/* {canEdit ? (

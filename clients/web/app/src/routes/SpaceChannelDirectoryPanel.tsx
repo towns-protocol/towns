@@ -91,12 +91,14 @@ const ChannelMemberRow = ({ user }: { user: RoomMember }) => {
             cursor="pointer"
             onClick={onNavigateClick}
         >
-            <Stack horizontal height="height_lg" gap="md">
+            <Stack horizontal height="height_lg" gap="md" width="100%">
                 <Box centerContent>
                     <Avatar userId={user.userId} size="avatar_x4" />
                 </Box>
-                <Stack grow gap="paragraph">
-                    <Paragraph color="default">{user.name}</Paragraph>
+                <Stack grow paddingX gap="paragraph" overflow="hidden">
+                    <Paragraph truncate color="default">
+                        {user.name}
+                    </Paragraph>
                     {userAddress && (
                         <ClipboardCopy
                             label={shortAddress(userAddress)}
