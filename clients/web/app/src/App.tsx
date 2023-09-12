@@ -110,7 +110,10 @@ export const App = () => {
                     <ReactQueryDevtools position="bottom-right" initialIsOpen={false} />
                 )}
                 <Notifications />
-                <ReloadPrompt />
+                {
+                    // the service worker won't exist in dev-mode and there's not need to check for updates
+                    (!env.IS_DEV || env.VITE_PUSH_NOTIFICATION_ENABLED) && <ReloadPrompt />
+                }
                 <ServiceWorkerSpacesSyncer />
             </>
         </ZionContextProvider>
