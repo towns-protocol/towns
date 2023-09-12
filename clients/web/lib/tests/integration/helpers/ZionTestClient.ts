@@ -110,6 +110,20 @@ export class ZionTestClient extends ZionClient {
     }
 
     /************************************************
+     * getUserId - returns the current user id for the primary protocol, or undefined if not logged in there
+     ************************************************/
+    getUserId(): string | undefined {
+        switch (this.opts.primaryProtocol) {
+            case SpaceProtocol.Matrix:
+                return this.auth?.userId
+            case SpaceProtocol.Casablanca:
+                return this.casablancaClient?.userId
+            default:
+                staticAssertNever(this.opts.primaryProtocol)
+        }
+    }
+
+    /************************************************
      * createSpace for testing
      *************************************************/
     public async createSpace(

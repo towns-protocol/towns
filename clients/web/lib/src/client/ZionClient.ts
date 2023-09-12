@@ -1760,24 +1760,19 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
      * canSendToDevice
      *************************************************/
     public async canSendToDeviceMessage(userId: string): Promise<boolean> {
-        switch (this.opts.primaryProtocol) {
-            case SpaceProtocol.Casablanca: {
-                if (!this.casablancaClient) {
-                    throw new Error('Casablanca client not initialized')
-                }
-                const devices = await this.casablancaClient.getStoredDevicesForUser(userId)
-                return devices.size > 0
+        if (isMatrixUserId(userId)) {
+            if (!this.matrixClient) {
+                throw new Error('matrix client is undefined')
             }
-            case SpaceProtocol.Matrix: {
-                if (!this.matrixClient) {
-                    throw new Error('matrix client is undefined')
-                }
 
-                const devices = this.matrixClient.getStoredDevicesForUser(userId)
-                return devices.length > 0
+            const devices = this.matrixClient.getStoredDevicesForUser(userId)
+            return devices.length > 0
+        } else {
+            if (!this.casablancaClient) {
+                throw new Error('Casablanca client not initialized')
             }
-            default:
-                return false
+            const devices = await this.casablancaClient.getStoredDevicesForUser(userId)
+            return devices.size > 0
         }
     }
 
@@ -1785,42 +1780,35 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
      * sendToDevice
      *************************************************/
     public async sendToDeviceMessage(userId: string, type: string, content: object) {
-        switch (this.opts.primaryProtocol) {
-            case SpaceProtocol.Casablanca: {
-                // todo casablanca look for user in casablanca
-                if (!this.casablancaClient) {
-                    throw new Error('Casablanca client not initialized')
-                }
-                const canSend = await this.canSendToDeviceMessage(userId)
-                if (!canSend) {
-                    throw new Error('cannot send to device for user ' + userId)
-                }
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-                if (isUserPayload_ToDevicePlainMessage(content)) {
-                    await this.casablancaClient.sendToDevicesMessage(userId, content, type)
-                    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-                } else if (isToDevicePlainMessage(content)) {
-                    await this.casablancaClient.sendToDevicesMessage(userId, content, type)
-                } else {
-                    throw new Error('unknown content type for send to device message')
-                }
-                return
+        if (isMatrixUserId(userId)) {
+            if (!this.matrixClient) {
+                throw new Error('matrix client is undefined')
             }
-            case SpaceProtocol.Matrix: {
-                if (!this.matrixClient) {
-                    throw new Error('matrix client is undefined')
-                }
 
-                const devices = this.matrixClient.getStoredDevicesForUser(userId)
-                const devicesInfo = devices.map((d) => ({ userId: userId, deviceInfo: d }))
-                await this.matrixClient.encryptAndSendToDevices(devicesInfo, {
-                    type,
-                    content,
-                })
-                return
+            const devices = this.matrixClient.getStoredDevicesForUser(userId)
+            const devicesInfo = devices.map((d) => ({ userId: userId, deviceInfo: d }))
+            await this.matrixClient.encryptAndSendToDevices(devicesInfo, {
+                type,
+                content,
+            })
+        } else {
+            // todo casablanca look for user in casablanca
+            if (!this.casablancaClient) {
+                throw new Error('Casablanca client not initialized')
             }
-            default:
-                return
+            const canSend = await this.canSendToDeviceMessage(userId)
+            if (!canSend) {
+                throw new Error('cannot send to device for user ' + userId)
+            }
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+            if (isUserPayload_ToDevicePlainMessage(content)) {
+                await this.casablancaClient.sendToDevicesMessage(userId, content, type)
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+            } else if (isToDevicePlainMessage(content)) {
+                await this.casablancaClient.sendToDevicesMessage(userId, content, type)
+            } else {
+                throw new Error('unknown content type for send to device message')
+            }
         }
     }
     /************************************************
@@ -2103,18 +2091,13 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
      * getUser
      ************************************************/
     public getUser(userId: string): User | undefined {
-        switch (this.opts.primaryProtocol) {
-            case SpaceProtocol.Matrix: {
-                const matrixUser = this.matrixClient?.getUser(userId)
-                return matrixUser ? toZionUser(matrixUser) : undefined
-            }
-            case SpaceProtocol.Casablanca: {
-                //TODO: Make real implementation when user profile support will be implemented
-                const casablancaUser = this.casablancaClient?.userId
-                return toZionCasablancaUser(casablancaUser)
-            }
-            default:
-                throw new Error('Unexpected primary protocol')
+        if (isMatrixUserId(userId)) {
+            const matrixUser = this.matrixClient?.getUser(userId)
+            return matrixUser ? toZionUser(matrixUser) : undefined
+        } else {
+            //TODO: Make real implementation when user profile support will be implemented
+            const casablancaUser = this.casablancaClient?.userId
+            return toZionCasablancaUser(casablancaUser)
         }
     }
 
@@ -2141,20 +2124,6 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
             }
         }
         return info
-    }
-
-    /************************************************
-     * getUserId
-     ************************************************/
-    public getUserId(): string | undefined {
-        switch (this.opts.primaryProtocol) {
-            case SpaceProtocol.Matrix:
-                return this.auth?.userId
-            case SpaceProtocol.Casablanca:
-                return this.casablancaClient?.userId
-            default:
-                staticAssertNever(this.opts.primaryProtocol)
-        }
     }
 
     /************************************************
@@ -2457,4 +2426,8 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
         }
         return f(this.matrixClient)
     }
+}
+
+function isMatrixUserId(userId: string) {
+    return userId.startsWith('@')
 }
