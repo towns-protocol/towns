@@ -46,7 +46,7 @@ func MakeServiceHandler(ctx context.Context, log *slog.Logger, dbUrl string, sto
 		store = storage.NewMemStorage()
 	} else {
 		schemaName := "s" + strings.ToLower(wallet.Address.String())
-		store, err = storage.NewPostgresEventStore(ctx, dbUrl, schemaName, true)
+		store, err = storage.NewPostgresEventStore(ctx, dbUrl, schemaName, false)
 		if err != nil {
 			log.Error("failed to create storage", "error", err)
 			return "", nil, err
