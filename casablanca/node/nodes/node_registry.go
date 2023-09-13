@@ -30,7 +30,7 @@ func NewNodeRegistry(ctx context.Context) *nodeRegistryImpl {
 	// Read the JSON file
 	data, err := os.ReadFile(NODE_REGISTRY_PATH)
 	if err != nil {
-		log.Error("Failed reading file", "err:", err)
+		log.Debug("Failed reading file", "err:", err)
 		return &nodeRegistryImpl{Nodes: []Node{}}
 	}
 
