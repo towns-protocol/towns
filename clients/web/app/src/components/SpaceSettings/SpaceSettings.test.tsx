@@ -2,6 +2,7 @@ import 'fake-indexeddb/auto'
 import React from 'react'
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
+// eslint-disable-next-line no-restricted-imports
 import * as Lib from 'use-zion-client'
 import userEvent from '@testing-library/user-event'
 import * as Router from 'react-router'

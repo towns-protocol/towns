@@ -1,6 +1,7 @@
 import { waitFor } from '@testing-library/react'
 import { ContractReceipt, ContractTransaction } from 'ethers'
 import { useCallback, useMemo, useState } from 'react'
+// eslint-disable-next-line no-restricted-imports
 import * as zionClient from 'use-zion-client'
 import { Mock, vi } from 'vitest'
 

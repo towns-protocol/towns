@@ -3,7 +3,7 @@ import { firstBy } from 'thenby'
 import {
     ChannelContextProvider,
     ThreadResult,
-    useMatrixCredentials,
+    useMyProfile,
     useSpaceId,
     useSpaceThreadRoots,
 } from 'use-zion-client'
@@ -25,7 +25,7 @@ function sortThreads(threads: ThreadResult[]) {
 }
 
 export const SpaceThreads = () => {
-    const { userId } = useMatrixCredentials()
+    const userId = useMyProfile()?.userId
     const spaceId = useSpaceId()
     const threadRoots = useSpaceThreadRoots()
     const { isTouch } = useDevice()

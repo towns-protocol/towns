@@ -2,12 +2,7 @@ import React, { useMemo } from 'react'
 import { matchRoutes, useLocation, useNavigate, useParams } from 'react-router'
 import { useSearchParams } from 'react-router-dom'
 import { useEvent } from 'react-use-event-hook'
-import {
-    getAccountAddress,
-    useMatrixCredentials,
-    useMyProfile,
-    useSpaceMembers,
-} from 'use-zion-client'
+import { getAccountAddress, useMyProfile, useSpaceMembers } from 'use-zion-client'
 import { useGetUserBio } from 'hooks/useUserBio'
 import { Box, Button, Icon, Paragraph, Stack, Text } from '@ui'
 import { UserProfile } from '@components/UserProfile/UserProfile'
@@ -73,7 +68,7 @@ export const SpaceProfile = (props: { children?: React.ReactNode }) => {
     const userAddress = isValid ? getAccountAddress(user.userId) : undefined
     const { data: userBio } = useGetUserBio(userAddress)
 
-    const { userId: loggedInUserId } = useMatrixCredentials()
+    const loggedInUserId = useMyProfile()?.userId
     const loggedInUserAddress = loggedInUserId ? getAccountAddress(loggedInUserId) : undefined
 
     const canEdit = loggedInUserAddress === userAddress

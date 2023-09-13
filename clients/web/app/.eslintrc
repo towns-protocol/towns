@@ -70,7 +70,19 @@
         "ignoreMemberSort": false
       }
     ],
-    "testing-library/no-debugging-utils": "off"
+    "testing-library/no-debugging-utils": "off",
+    "no-restricted-imports": [
+      "error",
+      {
+        "paths": [
+          {
+            "name": "use-zion-client",
+            "importNames": ["useMatrixCredentials", "useCasablancaCredentials"],
+            "message": "Please use useAuth for credentials or useMyProfile for userId."
+          }
+        ]
+      }
+    ]
   },
   "overrides": [
     {

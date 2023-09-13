@@ -3,6 +3,7 @@ import { fireEvent, render, screen, waitFor, within } from '@testing-library/rea
 
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { act } from 'react-dom/test-utils'
+// eslint-disable-next-line no-restricted-imports
 import * as zionClient from 'use-zion-client'
 import * as router from 'react-router'
 import userEvent from '@testing-library/user-event'

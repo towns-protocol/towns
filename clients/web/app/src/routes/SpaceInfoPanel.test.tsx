@@ -3,6 +3,7 @@ import 'fake-indexeddb/auto'
 import React from 'react'
 import { fireEvent, render, screen } from '@testing-library/react'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
+// eslint-disable-next-line no-restricted-imports
 import * as Lib from 'use-zion-client'
 import * as Router from 'react-router'
 import { TestApp, getWalletAddress } from 'test/testUtils'

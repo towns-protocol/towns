@@ -1,4 +1,5 @@
 import { BigNumber } from 'ethers'
+// eslint-disable-next-line no-restricted-imports
 import * as zionClient from 'use-zion-client'
 import { Permission } from 'use-zion-client'
 import { EVERYONE_ADDRESS } from 'utils'

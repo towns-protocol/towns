@@ -1,5 +1,6 @@
 import React from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+// eslint-disable-next-line no-restricted-imports
 import * as Lib from 'use-zion-client'
 import { afterEach, vi } from 'vitest'
 import { MemoryRouter } from 'react-router'

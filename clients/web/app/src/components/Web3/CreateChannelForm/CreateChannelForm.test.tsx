@@ -1,6 +1,7 @@
 import React from 'react'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
+// eslint-disable-next-line no-restricted-imports
 import * as zionClient from 'use-zion-client'
 import { TestApp } from 'test/testUtils'
 import * as useContractRoles from 'hooks/useContractRoles'

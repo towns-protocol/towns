@@ -3,7 +3,7 @@ import { NavLink } from 'react-router-dom'
 import {
     EventStatus,
     MentionResult,
-    useMatrixCredentials,
+    useMyProfile,
     useSpaceId,
     useSpaceMembers,
     useSpaceMentions,
@@ -24,7 +24,7 @@ import { TouchScrollToTopScrollId } from '@components/TouchTabBar/TouchScrollToT
 import { CentralPanelLayout } from './layouts/CentralPanelLayout'
 
 export const SpaceMentions = () => {
-    const { userId } = useMatrixCredentials()
+    const userId = useMyProfile()?.userId
     const mentions = useSpaceMentions()
     const { isTouch } = useDevice()
     const { loadingChannels, hasJoinedChannels } = useHasJoinedChannels()

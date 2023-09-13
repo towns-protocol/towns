@@ -7,11 +7,10 @@ import {
     SendMessageOptions,
     TimelineEvent,
     ZTEvent,
-    useCasablancaCredentials,
     useChannelData,
     useChannelTimeline,
-    useMatrixCredentials,
     useMyMembership,
+    useMyProfile,
     useSpaceMembers,
     useZionClient,
 } from 'use-zion-client'
@@ -27,7 +26,7 @@ import { Box, Button, Stack } from '@ui'
 import { useDevice } from 'hooks/useDevice'
 import { useIsChannelWritable } from 'hooks/useIsChannelWritable'
 import { useSpaceChannels } from 'hooks/useSpaceChannels'
-import { env } from 'utils'
+import { useAuth } from 'hooks/useAuth'
 import { CentralPanelLayout } from './layouts/CentralPanelLayout'
 
 type Props = {
@@ -95,16 +94,9 @@ const SpacesChannelComponent = (props: Props) => {
         useDisplayEncryptionProgress(channelMessages)
 
     const { members } = useSpaceMembers()
-    const matrixCredentials = useMatrixCredentials()
-    const riverCridentials = useCasablancaCredentials()
 
-    const loginWithRiver = env.VITE_PRIMARY_PROTOCOL === 'casablanca' ? true : false
-
-    const loggedInWalletAddress = loginWithRiver
-        ? riverCridentials.loggedInWalletAddress
-        : matrixCredentials.loggedInWalletAddress
-
-    const userId = loginWithRiver ? riverCridentials.userId : matrixCredentials.userId
+    const { loggedInWalletAddress } = useAuth()
+    const userId = useMyProfile()?.userId
 
     const channels = useSpaceChannels()
 
