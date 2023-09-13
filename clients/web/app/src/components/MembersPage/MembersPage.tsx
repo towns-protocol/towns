@@ -1,6 +1,6 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
-import { RoomMember, createUserIdFromString, useSpaceMembers } from 'use-zion-client'
+import { RoomMember, getAccountAddress, useSpaceMembers } from 'use-zion-client'
 import { CentralPanelLayout } from 'routes/layouts/CentralPanelLayout'
 import { shortAddress } from 'ui/utils/utils'
 import { Avatar, Grid, Paragraph, Stack } from '@ui'
@@ -53,7 +53,7 @@ export const MembersPageTouchModal = (props: { onHide: () => void }) => {
 }
 
 const GridProfile = ({ member }: { member: RoomMember }) => {
-    const accountAddress = createUserIdFromString(member.userId)?.accountAddress
+    const accountAddress = getAccountAddress(member.userId)
     const { createLink } = useCreateLink()
     const link = createLink({ profileId: member.userId })
 

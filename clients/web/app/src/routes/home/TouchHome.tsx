@@ -2,7 +2,7 @@ import React, { useCallback, useMemo, useState } from 'react'
 import {
     RoomMember,
     SpaceData,
-    createUserIdFromString,
+    getAccountAddress,
     useSpaceData,
     useSpaceMembers,
 } from 'use-zion-client'
@@ -345,7 +345,7 @@ const UserList = (props: { members: RoomMember[] }) => {
 
 const UserRow = (props: { member: RoomMember }) => {
     const { member } = props
-    const accountAddress = createUserIdFromString(member.userId)?.accountAddress
+    const accountAddress = getAccountAddress(member.userId)
     const { createLink } = useCreateLink()
     const link = createLink({ profileId: member.userId })
 

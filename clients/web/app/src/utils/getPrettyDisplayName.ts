@@ -1,5 +1,5 @@
 import { memoize } from 'lodash'
-import { createUserIdFromString } from 'use-zion-client'
+import { getAccountAddress } from 'use-zion-client'
 import { shortAddress } from 'ui/utils/utils'
 
 interface UserWithDisplayName {
@@ -52,7 +52,7 @@ export const _getPrettyDisplayName = memoize((name?: string, userId?: string) =>
 
     // even though the address is encoded in the name we want to use the actual
     // userId to prevent from faking it
-    const address = userId ? createUserIdFromString(userId)?.accountAddress : undefined
+    const address = userId ? getAccountAddress(userId) : undefined
 
     const suffix = address ? ` (${shortAddress(address)})` : undefined
 

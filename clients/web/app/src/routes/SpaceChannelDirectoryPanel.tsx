@@ -1,12 +1,7 @@
 import React, { useCallback } from 'react'
 import { useNavigate } from 'react-router'
 import { useEvent } from 'react-use-event-hook'
-import {
-    RoomMember,
-    createUserIdFromString,
-    useChannelData,
-    useChannelMembers,
-} from 'use-zion-client'
+import { RoomMember, getAccountAddress, useChannelData, useChannelMembers } from 'use-zion-client'
 import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
 import { Avatar, Box, Paragraph, Stack } from '@ui'
 import { atoms } from 'ui/styles/atoms.css'
@@ -65,11 +60,7 @@ const ChannelMemberRow = ({ user }: { user: RoomMember }) => {
     const link = useCreateLink().createLink({ profileId: user.userId })
     let userAddress
     if (isValid) {
-        userAddress = createUserIdFromString(user.userId)?.accountAddress
-        //TODO: createUserIdFromString is tuned for Matrix - when we will substitute it with River version we should remove the if-statement below
-        if (!userAddress) {
-            userAddress = user.userId
-        }
+        userAddress = getAccountAddress(user.userId)
     }
 
     const navigate = useNavigate()

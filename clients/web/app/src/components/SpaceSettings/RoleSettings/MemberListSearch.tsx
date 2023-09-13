@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react'
 import { RoomMember } from 'matrix-js-sdk'
-import { createUserIdFromString, useSpaceMembers } from 'use-zion-client'
+import { getAccountAddress, useSpaceMembers } from 'use-zion-client'
 import { Avatar, Box, Checkbox, IconButton, MotionBox, Text, TextField } from '@ui'
 import { shortAddress } from 'ui/utils/utils'
 
@@ -32,7 +32,7 @@ export function MemberList({
 
     const membersWithAddress: ResultsWithIdForVList[] = useMemo(() => {
         const mappedMembers = members.map((m) => {
-            const address = createUserIdFromString(m.userId)?.accountAddress ?? ''
+            const address = getAccountAddress(m.userId) ?? ''
             return {
                 userId: m.userId,
                 name: getPrettyDisplayName(m).name,

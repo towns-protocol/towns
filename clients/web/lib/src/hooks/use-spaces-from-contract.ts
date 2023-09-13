@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Permission } from '../client/web3/ContractTypes'
 import { RoomIdentifier } from '../types/room-identifier'
 import { SpaceItem } from '../types/zion-types'
-import { createUserIdFromString } from '../types/user-identifier'
+import { getAccountAddress } from '../types/user-identifier'
 import { useMatrixCredentials } from './use-matrix-credentials'
 import { useZionClient } from './use-zion-client'
 import { useZionClientEvent } from './use-zion-client-event'
@@ -42,7 +42,7 @@ export function useCasablancaSpacesFromContract(): UseSpaceFromContractReturn {
 export function useMatrixSpacesFromContract(): UseSpaceFromContractReturn {
     const { userId } = useMatrixCredentials()
     const myWalletAddress = useMemo(() => {
-        return userId ? createUserIdFromString(userId)?.accountAddress : undefined
+        return userId ? getAccountAddress(userId) : undefined
     }, [userId])
     const matrixSpaces = useSpacesFromContractWithAddress(myWalletAddress)
 

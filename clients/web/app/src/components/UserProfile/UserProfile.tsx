@@ -1,4 +1,4 @@
-import { createUserIdFromString, useZionClient } from 'use-zion-client'
+import { getAccountAddress, useZionClient } from 'use-zion-client'
 import React, { useEffect, useMemo, useState } from 'react'
 import { useEvent } from 'react-use-event-hook'
 import { toast } from 'react-hot-toast/headless'
@@ -48,7 +48,7 @@ export const UserProfile = (props: Props) => {
     const { mutateAsync: mutateAsyncBio } = useSetUserBio(userAddress)
 
     const resourceId = useMemo(() => {
-        return createUserIdFromString(userId ?? '')?.accountAddress ?? ''
+        return getAccountAddress(userId ?? '') ?? ''
     }, [userId])
 
     const onSaveItem = useEvent((id: string, content: undefined | string) => {

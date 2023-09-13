@@ -12,7 +12,7 @@ import {
 import {
     InviteData,
     RoomIdentifier,
-    createUserIdFromString,
+    getAccountAddress,
     getShortUsername,
     useMatrixCredentials,
 } from 'use-zion-client'
@@ -44,8 +44,8 @@ export function AppDrawer(props: Props): JSX.Element {
 
     const myWalletAddress = useMemo(() => {
         if (userId) {
-            const uid = createUserIdFromString(userId)
-            return uid?.accountAddress ? getShortUsername(uid.accountAddress) : undefined
+            const accountAddress = getAccountAddress(userId)
+            return accountAddress ? getShortUsername(accountAddress) : undefined
         }
     }, [userId])
 

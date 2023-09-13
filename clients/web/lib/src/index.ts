@@ -87,6 +87,7 @@ export {
     getShortUsername,
     getUsernameFromId,
     isUserIdentifier,
+    getAccountAddress,
 } from './types/user-identifier'
 
 export type { ISpaceDapp } from './client/web3/ISpaceDapp'

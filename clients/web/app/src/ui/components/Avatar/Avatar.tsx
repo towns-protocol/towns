@@ -1,7 +1,6 @@
 import { clsx } from 'clsx'
 import React, { forwardRef, useCallback, useEffect, useMemo } from 'react'
-import { createUserIdFromString } from 'use-zion-client'
-import { ethers } from 'ethers'
+import { getAccountAddress } from 'use-zion-client'
 import { ImageVariant, useImageSource } from '@components/UploadImage/useImageSource'
 import { useImageStore } from '@components/UploadImage/useImageStore'
 import { TooltipBox as Box, TooltipBoxProps as BoxProps } from '../Box/TooltipBox'
@@ -43,10 +42,7 @@ export type AvatarProps = Props
 function useAvatarImageSrc(props: { imageVariant?: ImageVariant; userId?: string }) {
     const { imageVariant = 'thumbnail100', userId } = props
     const resourceId = useMemo(() => {
-        if (userId && ethers.utils.isAddress(userId)) {
-            return userId
-        }
-        return createUserIdFromString(userId ?? '')?.accountAddress ?? ''
+        return getAccountAddress(userId ?? '') ?? ''
     }, [userId])
 
     const { imageSrc } = useImageSource(resourceId, imageVariant)

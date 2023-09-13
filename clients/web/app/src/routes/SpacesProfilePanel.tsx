@@ -3,7 +3,7 @@ import { matchRoutes, useLocation, useNavigate, useParams } from 'react-router'
 import { useSearchParams } from 'react-router-dom'
 import { useEvent } from 'react-use-event-hook'
 import {
-    createUserIdFromString,
+    getAccountAddress,
     useMatrixCredentials,
     useMyProfile,
     useSpaceMembers,
@@ -70,13 +70,11 @@ export const SpaceProfile = (props: { children?: React.ReactNode }) => {
 
     const isValid = !!user
 
-    const userAddress = isValid ? createUserIdFromString(user.userId)?.accountAddress : undefined
+    const userAddress = isValid ? getAccountAddress(user.userId) : undefined
     const { data: userBio } = useGetUserBio(userAddress)
 
     const { userId: loggedInUserId } = useMatrixCredentials()
-    const loggedInUserAddress = loggedInUserId
-        ? createUserIdFromString(loggedInUserId)?.accountAddress
-        : undefined
+    const loggedInUserAddress = loggedInUserId ? getAccountAddress(loggedInUserId) : undefined
 
     const canEdit = loggedInUserAddress === userAddress
 

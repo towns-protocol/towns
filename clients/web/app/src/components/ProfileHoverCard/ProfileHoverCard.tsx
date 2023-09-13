@@ -1,5 +1,5 @@
 import React from 'react'
-import { createUserIdFromString, useSpaceData, useSpaceMembers } from 'use-zion-client'
+import { getAccountAddress, useSpaceData, useSpaceMembers } from 'use-zion-client'
 import { shortAddress } from 'ui/utils/utils'
 import { useGetUserBio } from 'hooks/useUserBio'
 import { Paragraph } from 'ui/components/Text/Paragraph'
@@ -17,7 +17,7 @@ export const ProfileHoverCard = (props: Props) => {
     const { membersMap } = useSpaceMembers()
     const space = useSpaceData()
     const user = membersMap[userId]
-    const userAddress = createUserIdFromString(userId)?.accountAddress
+    const userAddress = getAccountAddress(userId)
     const { data: userBio } = useGetUserBio(userAddress)
 
     return user ? (
