@@ -15,14 +15,12 @@ import imgurJSON from './mocks/imgurJSON'
 jest.mock('unfurl.js')
 
 jest.mock('image-size', () => {
-    return {
-        default: jest.fn().mockImplementation(() => {
-            return {
-                width: 100,
-                height: 100,
-            }
-        }),
-    }
+    return jest.fn().mockImplementation(() => {
+        return {
+            width: 100,
+            height: 100,
+        }
+    })
 })
 
 const TWITTER_URL = 'https://twitter.com/twitter/status/1589417294794752000'

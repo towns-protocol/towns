@@ -9,7 +9,6 @@
         // "noResolve": true,                                /* Disallow `import`s, `require`s or `<reference>`s from expanding the number of files TypeScript should add to a project. */
         "noEmit": true /* Disable emitting files from a compilation. */,
         "strict": true /* Enable all strict type-checking options. */,
-        "esModuleInterop": true,
         // "noImplicitAny": true /* Enable error reporting for expressions and declarations with an implied `any` type.. */
         // "strictNullChecks": true,                         /* When type checking, take into account `null` and `undefined`. */
         // "strictFunctionTypes": true,                      /* When assigning functions, check to ensure parameters and the return values are subtype-compatible. */
@@ -29,9 +28,10 @@
         // "allowUnusedLabels": true,                        /* Disable error reporting for unused labels. */
         // "allowUnreachableCode": true,                     /* Disable error reporting for unreachable code. */
         "resolveJsonModule": true,
-        "allowSyntheticDefaultImports": true
+        "allowSyntheticDefaultImports": true,
         /* Completeness */
         // "skipDefaultLibCheck": true,                      /* Skip type checking .d.ts files that are included with TypeScript. */
         // "skipLibCheck": true /* Skip type checking all .d.ts files. */
+        "esModuleInterop": true
     }
 }
