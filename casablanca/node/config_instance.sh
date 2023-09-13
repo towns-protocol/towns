@@ -58,6 +58,10 @@ elif [ ! -f "${INSTANCE_DIR}/wallet/private_key" ]; then
     echo "Generating a new wallet for instance '${INSTANCE_NAME}'"
     cd "$INSTANCE_DIR"
     go run ../../node/main.go genkey
+    go run ../../node/main.go fund_wallet
 else
     echo "Using existing wallet for instance '${INSTANCE_NAME}'"
+    # Old wallets might not be funded yet
+    cd "$INSTANCE_DIR"
+    go run ../../node/main.go fund_wallet
 fi
