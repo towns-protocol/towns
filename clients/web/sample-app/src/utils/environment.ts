@@ -35,7 +35,7 @@ export const ENVIRONMENTS: TownsEnvironmentInfo[] = [
     {
         id: TownsEnvironment.Local,
         name: 'Local',
-        casablancaUrl: 'https://localhost:5157',
+        casablancaUrl: 'http://localhost:5157',
         matrixUrl: 'http://localhost:8008',
         chainId: foundry.id,
         chain: foundry,

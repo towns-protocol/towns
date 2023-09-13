@@ -16,16 +16,6 @@ Protobufs are generated for go and typescript
     cd node
     go generate -v -x protocol/gen.go
 
-# Setting up local CA for TLS
-
-First create the CA and register it with Mac OS:
-
-    scripts/register-ca.sh
-
-Then generate the TLS certificates for the node:
-
-    scripts/generate-ca.sh
-
 # Running Casablanca node
 
 Start storage backend, build node and start:

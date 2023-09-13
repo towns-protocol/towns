@@ -7,6 +7,7 @@ import (
 
 	"context"
 	"fmt"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
@@ -14,6 +15,7 @@ import (
 
 	"github.com/rs/cors"
 	"golang.org/x/net/http2"
+	"golang.org/x/net/http2/h2c"
 )
 
 func StartServer(ctx context.Context, cfg *config.Config, wallet *crypto.Wallet) (func(), int, error) {
@@ -47,6 +49,12 @@ func StartServer(ctx context.Context, cfg *config.Config, wallet *crypto.Wallet)
 	})
 
 	address := fmt.Sprintf("%s:%d", cfg.Address, cfg.Port)
+	httpListener, err := net.Listen("tcp", address)
+	if err != nil {
+		log.Error("failed to listen", "error", err)
+		return nil, 0, err
+	}
+	actualPort := httpListener.Addr().(*net.TCPAddr).Port
 
 	corsMiddleware := cors.New(cors.Options{
 		AllowCredentials: false,
@@ -56,19 +64,13 @@ func StartServer(ctx context.Context, cfg *config.Config, wallet *crypto.Wallet)
 		AllowedHeaders:   []string{"Origin", "X-Requested-With", "Accept", "Content-Type", "X-Grpc-Web", "X-User-Agent", "Connect-Protocol-Version"},
 	})
 
-	srv := &http.Server{
-		Addr:    address,
-		Handler: corsMiddleware.Handler(mux),
-	}
-
-	// Configure for HTTP/2
-	err = http2.ConfigureServer(srv, nil)
-	if err != nil {
-		log.Error("Failed to configure HTTP/2", "error", err)
-		return nil, 0, err
-	}
-
-	// Closure to shutdown the server gracefully
+	// For gRPC clients, it's convenient to support HTTP/2 without TLS. You can
+	// avoid x/net/http2 by using http.ListenAndServeTLS.
+	srv := &http.Server{Handler: h2c.NewHandler(corsMiddleware.Handler(mux), &http2.Server{})}
+	go func() {
+		err := srv.Serve(httpListener)
+		log.Info("Server stopped", "reason", err)
+	}()
 	closer := func() {
 		log.Info("closing server")
 		err := srv.Shutdown(ctx)
@@ -78,25 +80,15 @@ func StartServer(ctx context.Context, cfg *config.Config, wallet *crypto.Wallet)
 		}
 	}
 
-	// Run the server with TLS
-	go func() {
-		err := srv.ListenAndServeTLS("../cert.pem", "../key.pem")
-		if err != nil && err != http.ErrServerClosed {
-			log.Error("Server failed", "error", err)
-			os.Exit(1)
-		}
-		log.Info("Server stopped", "reason", err)
-	}()
-
-	log.Info("Listening", "addr", address)
+	log.Info("Listening", "addr", address+pattern)
 	log.Info("Using DB", "url", cfg.DbUrl)
 	if cfg.UseContract {
 		log.Info("Using chain", "id", cfg.Chain.ChainId)
 	} else {
 		log.Info("Running Without Entitlements")
 	}
-
-	return closer, cfg.Port, nil
+	log.Info("Available on port", "port", actualPort)
+	return closer, actualPort, nil
 }
 
 func RunServer(ctx context.Context, config *config.Config) error {

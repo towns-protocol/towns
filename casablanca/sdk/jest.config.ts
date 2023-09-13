@@ -1,22 +1,11 @@
-import path from 'path'
-import os from 'os'
-import { existsSync } from 'fs'
-
 import type { JestConfigWithTsJest } from 'ts-jest'
-
-const localRiverCA = path.join(os.homedir(), 'river-ca-cert.pem')
-
-if (!existsSync(localRiverCA)) {
-    console.log('CA does not exist, did you forget to run ../scripts/register-ca.sh')
-}
-process.env.NODE_EXTRA_CA_CERTS = localRiverCA
 
 const config: JestConfigWithTsJest = {
     preset: 'ts-jest/presets/default-esm',
     testEnvironment: './../jest.env.ts',
     testEnvironmentOptions: {
         browsers: ['chrome', 'firefox', 'safari'],
-        url: 'https://localhost:5158',
+        url: 'http://localhost:5158',
     },
     runner: 'groups',
     verbose: true,

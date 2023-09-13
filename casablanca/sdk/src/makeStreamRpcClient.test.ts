@@ -3,7 +3,7 @@ import { InfoRequest, InfoResponse } from '@river/proto'
 
 describe('protocol', () => {
     test('info', async () => {
-        const client = makeStreamRpcClient('https://localhost:5158')
+        const client = makeStreamRpcClient('http://localhost:5158')
         expect(client).toBeDefined()
 
         const abortController = new AbortController()
