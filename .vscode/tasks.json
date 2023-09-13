@@ -57,6 +57,7 @@
       {
         "label": "Stage 3",
         "dependsOn": [
+          "WatchWorkersCommon",
           "WatchSharedLib",
           "WatchCasablancaSdk",
           "WatchCasablancaMechOlm",
@@ -294,6 +295,16 @@
         }
       },
       {
+        "label": "WatchWorkersCommon",
+        "type": "shell",
+        "command": "cd servers/workers/worker-common && yarn watch",
+        "isBackground": true,
+        "problemMatcher": [],
+        "presentation": {
+          "group": "local-watch"
+        }
+      },
+      {
         "label": "WatchCasablancaProto",
         "type": "shell",
         "command": "cd casablanca/proto && yarn watch",
@@ -363,6 +374,7 @@
           "group": "local-mitm"
         }
       },
+     
       {
         "label": "UnfurlWorker",
         "type": "shell",
