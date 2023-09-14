@@ -1,9 +1,10 @@
 import { makeStreamRpcClient } from './makeStreamRpcClient'
 import { InfoRequest, InfoResponse } from '@river/proto'
+import { TEST_URL } from './util.test'
 
 describe('protocol', () => {
     test('info', async () => {
-        const client = makeStreamRpcClient('http://localhost:5158')
+        const client = makeStreamRpcClient(TEST_URL)
         expect(client).toBeDefined()
 
         const abortController = new AbortController()

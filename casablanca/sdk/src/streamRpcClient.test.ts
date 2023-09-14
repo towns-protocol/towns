@@ -6,6 +6,7 @@ import {
     makeRandomUserContext,
     makeRandomUserContextWithOldDelegate,
     makeTestRpcClient,
+    TEST_URL,
     timeoutIterable,
 } from './util.test'
 import _ from 'lodash'
@@ -133,11 +134,11 @@ describe('streamRpcClient', () => {
     test('aliceTalksToBob', async () => {
         log('bobAndAliceConverse start')
 
-        const bob = makeStreamRpcClient('http://localhost:5158')
+        const bob = makeStreamRpcClient(TEST_URL)
         const bobsUserId = userIdFromAddress(bobsContext.creatorAddress)
         const bobsUserStreamId = makeUserStreamId(bobsUserId)
 
-        const alice = makeStreamRpcClient('http://localhost:5158')
+        const alice = makeStreamRpcClient(TEST_URL)
         const alicesUserId = userIdFromAddress(alicesContext.creatorAddress)
         const alicesUserStreamId = makeUserStreamId(alicesUserId)
 

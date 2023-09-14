@@ -18,7 +18,7 @@ import _ from 'lodash'
 
 const log = dlog('csb:test:util')
 
-export const TEST_URL = 'http://localhost:5158'
+export const TEST_URL = global.origin // global.origin is populated by 'url' in jest.config.ts
 
 export const makeTestRpcClient = () => makeStreamRpcClient(TEST_URL)
 
