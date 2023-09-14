@@ -27,6 +27,7 @@ const config: JestConfigWithTsJest = {
         '(.+)\\.js': '$1',
     },
     collectCoverage: true,
+    coverageProvider: 'v8',
     coverageReporters: ['json', 'html'],
 }
 

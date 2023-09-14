@@ -29,6 +29,7 @@ const config: JestConfigWithTsJest = {
         '\\.(wasm)$': require.resolve('./tests/mock-wasm-file.js'),
     },
     collectCoverage: true,
+    coverageProvider: 'v8',
     coverageReporters: ['json', 'html'],
 }
 
