@@ -1,4 +1,4 @@
-import { Permission } from '../../src/client/web3/ContractTypes'
+import { Permission } from '@river/web3'
 import {
     createTestSpaceWithEveryoneRole,
     createTestSpaceWithZionMemberRole,

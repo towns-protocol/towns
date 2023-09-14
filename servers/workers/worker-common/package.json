@@ -19,10 +19,10 @@
         "watch": "tsc --watch"
     },
     "dependencies": {
+        "@river/web3": "workspace:^",
         "@towns/generated": "workspace:^",
         "ethers": "^5.7.2",
-        "siwe": "^2.1.3",
-        "use-zion-client": "workspace:^"
+        "siwe": "^2.1.3"
     },
     "devDependencies": {
         "@cloudflare/workers-types": "^4.20230710.1",

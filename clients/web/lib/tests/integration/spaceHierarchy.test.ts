@@ -11,7 +11,7 @@ import {
     waitForWithRetries,
 } from './helpers/TestUtils'
 
-import { Permission } from '../../src/client/web3/ContractTypes'
+import { Permission } from '@river/web3'
 import { RoomIdentifier } from '../../src/types/room-identifier'
 import { RoomVisibility } from '../../src/types/zion-types'
 import { TestConstants } from './helpers/TestConstants'

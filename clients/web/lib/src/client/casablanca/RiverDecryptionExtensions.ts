@@ -1,4 +1,3 @@
-import { Permission } from '../web3/ContractTypes'
 import {
     Client as CasablancaClient,
     RiverEvent,
@@ -9,9 +8,10 @@ import {
     make_ToDevice_KeyRequest,
     IndexedDBCryptoStore,
     userIdFromAddress,
+    MEGOLM_ALGORITHM,
 } from '@river/sdk'
+import { Permission } from '@river/web3'
 import { ToDeviceOp, KeyResponseKind, MegolmSession, ToDeviceMessage } from '@river/proto'
-import { MEGOLM_ALGORITHM } from '@river/sdk'
 import EventEmitter from 'events'
 import TypedEmitter from 'typed-emitter'
 import { Room } from '../../types/zion-types'

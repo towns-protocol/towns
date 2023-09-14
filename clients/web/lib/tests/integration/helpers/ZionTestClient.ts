@@ -21,7 +21,6 @@ import {
 import { UserIdentifier, createUserIdFromEthereumAddress } from '../../../src/types/user-identifier'
 
 import { CreateSpaceInfo } from '../../../src/types/zion-types'
-import { Permission } from '../../../src/client/web3/ContractTypes'
 import { RoleIdentifier } from '../../../src/types/web3-types'
 import { RoomIdentifier } from '../../../src/types/room-identifier'
 import { ZionClient } from '../../../src/client/ZionClient'
@@ -38,8 +37,7 @@ import {
 import { newMatrixLoginSession, newMatrixRegisterSession } from '../../../src/hooks/session'
 import { MatrixClient } from 'matrix-js-sdk'
 import { Client as CasablancaClient } from '@river/sdk'
-import { TokenEntitlementDataTypes } from '../../../src/client/web3/v3/TokenEntitlementShim'
-import { ITownArchitectBase } from '../../../src/client/web3/v3/ITownArchitectShim'
+import { TokenEntitlementDataTypes, Permission, ITownArchitectBase } from '@river/web3'
 
 export interface ZionTestClientProps {
     primaryProtocol?: SpaceProtocol

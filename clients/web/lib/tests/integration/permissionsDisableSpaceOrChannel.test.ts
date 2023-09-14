@@ -12,7 +12,7 @@ import {
     registerAndStartClients,
 } from 'use-zion-client/tests/integration/helpers/TestUtils'
 
-import { Permission } from 'use-zion-client/src/client/web3/ContractTypes'
+import { Permission } from '@river/web3'
 import { RoomVisibility } from 'use-zion-client/src/types/zion-types'
 import { SpaceProtocol } from '../../src/client/ZionClientTypes'
 import { TestConstants } from './helpers/TestConstants'

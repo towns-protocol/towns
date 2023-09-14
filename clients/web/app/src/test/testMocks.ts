@@ -1,7 +1,7 @@
 import { BigNumber } from 'ethers'
 // eslint-disable-next-line no-restricted-imports
 import * as zionClient from 'use-zion-client'
-import { Permission } from 'use-zion-client'
+import { Permission } from '@river/web3'
 import { EVERYONE_ADDRESS } from 'utils'
 import { createTokenEntitlementStruct } from '@components/Web3/utils'
 import { MOCK_CONTRACT_METADATA_ADDRESSES } from '../../mocks/token-collections'

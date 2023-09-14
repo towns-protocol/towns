@@ -10,10 +10,10 @@ import {
     waitForWithRetries,
 } from './helpers/TestUtils'
 
-import { Permission } from '../../src/client/web3/ContractTypes'
 import { RoomVisibility } from '../../src/types/zion-types'
 import { waitFor } from '@testing-library/dom'
 import { RoomMessageEvent } from '../../src/types/timeline-types'
+import { Permission } from '@river/web3'
 
 describe('editMessage', () => {
     // test: editMessage

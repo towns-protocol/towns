@@ -90,14 +90,6 @@ export {
     getAccountAddress,
 } from './types/user-identifier'
 
-export type { ISpaceDapp } from './client/web3/ISpaceDapp'
-export * from './client/web3/ContractTypes'
-export {
-    getMemberNftAddress,
-    getFilteredRolesFromSpace,
-    getPioneerNftAddress,
-    mintMockNFT,
-} from './client/web3/ContractHelpers'
 export {
     signMessageAbortController,
     signMessageAbortListener,
@@ -105,8 +97,6 @@ export {
 
 export * from './types/error-types'
 export * from './utils/zion-utils'
-
-export * from './client/web3/PioneerNFT'
 
 // buffer hack required for casalanca: https://github.com/randlabs/myalgo-connect/issues/27
 import buffer from 'buffer'
@@ -116,3 +106,5 @@ const { Buffer } = buffer
 if (!window.Buffer) {
     window.Buffer = Buffer
 }
+
+export * from '@river/web3'

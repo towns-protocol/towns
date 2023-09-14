@@ -1,4 +1,4 @@
-import { Permission } from 'use-zion-client'
+import { Permission } from '@river/web3'
 
 export const rolePermissionDescriptions: {
     [key in Permission]?: {

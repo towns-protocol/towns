@@ -8,7 +8,7 @@
         "anvil": "yarn workspace @towns/contracts exec anvil",
         "build": "turbo build",
         "cast": "yarn workspace @towns/contracts exec cast",
-        "csb:build": "yarn workspace @river/proto run build && yarn workspace @river/mecholm run build && yarn workspace @river/sdk run build && echo BUILD DONE || (echo BUILD ERROR; exit 1)",
+        "csb:build": "yarn workspace @river/proto run build && yarn workspace @river/mecholm run build && yarn workspace @river/web3 run build && yarn workspace @river/sdk run build && echo BUILD DONE || (echo BUILD ERROR; exit 1)",
         "csb:cb": "yarn csb:clean && yarn csb:build",
         "csb:clean": "yarn csb:command run clean",
         "csb:command": "bash -c 'yarn workspaces foreach --verbose $(yarn csb:list:include) $0 $@'",

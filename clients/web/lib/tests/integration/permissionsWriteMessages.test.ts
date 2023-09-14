@@ -11,7 +11,7 @@ import {
     waitForWithRetries,
 } from 'use-zion-client/tests/integration/helpers/TestUtils'
 
-import { Permission } from 'use-zion-client/src/client/web3/ContractTypes'
+import { Permission } from '@river/web3'
 import { TestConstants } from './helpers/TestConstants'
 import { waitFor } from '@testing-library/dom'
 import { RoomVisibility } from '../../src/types/zion-types'

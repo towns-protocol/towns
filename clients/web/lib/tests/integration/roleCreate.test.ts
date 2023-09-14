@@ -9,9 +9,8 @@ import {
     registerAndStartClient,
 } from 'use-zion-client/tests/integration/helpers/TestUtils'
 
-import { Permission } from 'use-zion-client/src/client/web3/ContractTypes'
 import { RoleIdentifier } from '../../src/types/web3-types'
-import { TokenEntitlementDataTypes } from '../../src/client/web3/v3/TokenEntitlementShim'
+import { TokenEntitlementDataTypes, Permission } from '@river/web3'
 
 import { TestConstants } from './helpers/TestConstants'
 

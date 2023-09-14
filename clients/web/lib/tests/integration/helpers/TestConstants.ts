@@ -3,7 +3,7 @@
 import { ethers } from 'ethers'
 import { waitForOptions } from '@testing-library/react'
 import { getJsonProvider, parseOptInt } from './TestUtils'
-import { MemberNFT } from '../../../src/client/web3/MemberNFT'
+import { MemberNFT } from '@river/web3'
 
 export class TestConstants {
     public static readonly EveryoneAddress = '0x0000000000000000000000000000000000000001'

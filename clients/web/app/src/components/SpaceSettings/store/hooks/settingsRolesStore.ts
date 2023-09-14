@@ -1,4 +1,4 @@
-import { Permission } from 'use-zion-client'
+import { Permission } from '@river/web3'
 import { create } from 'zustand'
 import { combine } from 'zustand/middleware'
 import { immer } from 'zustand/middleware/immer'

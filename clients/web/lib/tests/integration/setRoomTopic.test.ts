@@ -7,12 +7,11 @@ import {
     registerAndStartClient,
 } from './helpers/TestUtils'
 
-import { Permission } from '../../src/client/web3/ContractTypes'
 import { RoomIdentifier } from '../../src/types/room-identifier'
 import { RoomVisibility } from '../../src/types/zion-types'
-import { getFilteredRolesFromSpace } from '../../src/client/web3/ContractHelpers'
 import { TestConstants } from './helpers/TestConstants'
 import { assert } from 'console'
+import { getFilteredRolesFromSpace, Permission } from '@river/web3'
 
 describe('On-chain channel creation tests', () => {
     test('update space topic with owner role', async () => {
@@ -46,7 +45,7 @@ describe('On-chain channel creation tests', () => {
         ])) as RoomIdentifier
 
         const roleIds: number[] = []
-        const allowedRoles = await getFilteredRolesFromSpace(alice, roomId.networkId)
+        const allowedRoles = await getFilteredRolesFromSpace(alice.spaceDapp, roomId.networkId)
         for (const r of allowedRoles) {
             roleIds.push(r.roleId)
         }

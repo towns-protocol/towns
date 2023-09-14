@@ -13,7 +13,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 
 import { LoginStatus } from '../../src/hooks/login'
 import { useMyProfile } from '../../src/hooks/use-my-profile'
-import { Permission } from '../../src/client/web3/ContractTypes'
+import { Permission } from '@river/web3'
 import React, { useCallback, useEffect } from 'react'
 import { RoomIdentifier } from '../../src/types/room-identifier'
 import { RoomVisibility } from '../../src/types/zion-types'

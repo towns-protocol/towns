@@ -6,10 +6,6 @@
 import { MAXTRIX_ERROR, NoThrownError, getError } from './helpers/ErrorUtils'
 import { Room, RoomVisibility } from '../../src/types/zion-types'
 import {
-    createExternalTokenStruct,
-    getMemberNftAddress,
-} from '../../src/client/web3/ContractHelpers'
-import {
     createTestSpaceWithZionMemberRole,
     registerAndStartClient,
     registerAndStartClients,
@@ -17,11 +13,15 @@ import {
 } from 'use-zion-client/tests/integration/helpers/TestUtils'
 
 import { ContractReceipt } from 'ethers'
-import { Permission } from 'use-zion-client/src/client/web3/ContractTypes'
 import { RoleIdentifier } from '../../src/types/web3-types'
-import { TokenEntitlementDataTypes } from '../../src/client/web3/v3/TokenEntitlementShim'
 import { TestConstants } from './helpers/TestConstants'
 import { waitFor } from '@testing-library/react'
+import {
+    createExternalTokenStruct,
+    getMemberNftAddress,
+    Permission,
+    TokenEntitlementDataTypes,
+} from '@river/web3'
 
 describe('delete role', () => {
     test('delete token-gated role with a channel using it', async () => {

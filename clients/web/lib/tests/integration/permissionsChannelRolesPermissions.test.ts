@@ -14,8 +14,8 @@ import {
     waitForWithRetries,
 } from 'use-zion-client/tests/integration/helpers/TestUtils'
 
-import { Permission } from 'use-zion-client/src/client/web3/ContractTypes'
 import { TestConstants } from './helpers/TestConstants'
+import { Permission } from '@river/web3'
 
 describe('channel with roles and permissions', () => {
     test('join token-gated channel', async () => {

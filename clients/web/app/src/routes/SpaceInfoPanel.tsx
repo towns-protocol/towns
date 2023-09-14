@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router'
 import { Link } from 'react-router-dom'
 import { useEvent } from 'react-use-event-hook'
 import {
-    Permission,
     createUserIdFromEthereumAddress,
     useHasPermission,
     useSpaceData,
@@ -12,6 +11,7 @@ import {
     useSpaceMembers,
     useZionClient,
 } from 'use-zion-client'
+import { Permission } from '@river/web3'
 import { ClipboardCopy } from '@components/ClipboardCopy/ClipboardCopy'
 import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinner'
 import { ModalContainer } from '@components/Modals/ModalContainer'

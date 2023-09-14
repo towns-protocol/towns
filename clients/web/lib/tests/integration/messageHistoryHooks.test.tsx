@@ -15,7 +15,6 @@ import {
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 
 import { ChannelContextProvider } from '../../src/components/ChannelContextProvider'
-import { Permission } from '../../src/client/web3/ContractTypes'
 import { RegisterAndJoinSpace } from './helpers/TestComponents'
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
 import { ZionTestApp } from './helpers/ZionTestApp'
@@ -25,6 +24,7 @@ import { useZionClient } from '../../src/hooks/use-zion-client'
 import { TestConstants } from './helpers/TestConstants'
 import { sleep } from '../../src/utils/zion-utils'
 import { SpaceProtocol } from '../../src/client/ZionClientTypes'
+import { Permission } from '@river/web3'
 
 // TODO Zustand https://docs.pmnd.rs/zustand/testing
 

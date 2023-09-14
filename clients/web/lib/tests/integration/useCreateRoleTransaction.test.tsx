@@ -5,7 +5,6 @@
  * @group casablanca
  * @group dendrite
  */
-import { BasicRoleInfo, Permission } from '../../src/client/web3/ContractTypes'
 import React, { useCallback, useEffect } from 'react'
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 
@@ -16,10 +15,6 @@ import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
 import { TestConstants } from './helpers/TestConstants'
 import { ZionTestApp } from './helpers/ZionTestApp'
 import { ZionTestWeb3Provider } from './helpers/ZionTestWeb3Provider'
-import {
-    createExternalTokenStruct,
-    getMemberNftAddress,
-} from '../../src/client/web3/ContractHelpers'
 import { makeUniqueName } from './helpers/TestUtils'
 import { useCreateRoleTransaction } from '../../src/hooks/use-create-role-transaction'
 import { useCreateSpaceTransaction } from '../../src/hooks/use-create-space-transaction'
@@ -27,6 +22,12 @@ import { useRoleDetails } from '../../src/hooks/use-role-details'
 import { useRoles } from '../../src/hooks/use-roles'
 import { useSpacesFromContract } from '../../src/hooks/use-spaces-from-contract'
 import { TransactionStatus } from '../../src/client/ZionClientTypes'
+import {
+    createExternalTokenStruct,
+    getMemberNftAddress,
+    BasicRoleInfo,
+    Permission,
+} from '@river/web3'
 
 /**
  * This test suite tests the useRoles hook.

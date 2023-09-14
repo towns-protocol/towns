@@ -7,7 +7,6 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 
 import { BigNumber } from 'ethers'
 import { ChannelContextProvider } from '../../src/components/ChannelContextProvider'
-import { BasicRoleInfo, Permission } from '../../src/client/web3/ContractTypes'
 import { RegisterWallet, TransactionInfo } from './helpers/TestComponents'
 import { RoomVisibility } from 'use-zion-client/src/types/zion-types'
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
@@ -15,10 +14,6 @@ import { TestConstants } from './helpers/TestConstants'
 import { TransactionStatus } from '../../src/client/ZionClientTypes'
 import { ZionTestApp } from './helpers/ZionTestApp'
 import { ZionTestWeb3Provider } from './helpers/ZionTestWeb3Provider'
-import {
-    createExternalTokenStruct,
-    getMemberNftAddress,
-} from '../../src/client/web3/ContractHelpers'
 import { makeUniqueName } from './helpers/TestUtils'
 import { useAddRoleToChannelTransaction } from '../../src/hooks/use-add-role-channel-transaction'
 import { useChannelData } from '../../src/hooks/use-channel-data'
@@ -29,6 +24,12 @@ import { useRoles } from '../../src/hooks/use-roles'
 import { useSpacesFromContract } from '../../src/hooks/use-spaces-from-contract'
 import { useSpaceData } from '../../src/hooks/use-space-data'
 import { RoomIdentifier } from '../../src/types/room-identifier'
+import {
+    createExternalTokenStruct,
+    getMemberNftAddress,
+    BasicRoleInfo,
+    Permission,
+} from '@river/web3'
 
 /**
  * This test suite tests the useAddRolesToChannel hook.

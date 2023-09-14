@@ -2,11 +2,6 @@
  * @group casablanca
  * @group dendrite
  */
-import { Permission, RoleEntitlements } from 'use-zion-client/src/client/web3/ContractTypes'
-import {
-    createExternalTokenStruct,
-    getMemberNftAddress,
-} from '../../src/client/web3/ContractHelpers'
 import {
     createTestSpaceWithZionMemberRole,
     findRoleByName,
@@ -15,6 +10,12 @@ import {
 
 import { RoleIdentifier } from '../../src/types/web3-types'
 import { RoomVisibility } from '../../src/types/zion-types'
+import {
+    createExternalTokenStruct,
+    getMemberNftAddress,
+    Permission,
+    RoleEntitlements,
+} from '@river/web3'
 
 describe('channel settings', () => {
     test('get channel settings', async () => {

@@ -3,8 +3,8 @@ import { BigNumber, BigNumberish, ethers } from 'ethers'
 import { BasicRoleInfo } from './ContractTypes'
 import { MockERC721AShim } from './v3/MockERC721AShim'
 import { TokenEntitlementDataTypes } from './v3/TokenEntitlementShim'
-import { ZionClient } from '../ZionClient'
 import { getContractsInfoV3 } from './v3/IStaticContractsInfoV3'
+import { ISpaceDapp } from './ISpaceDapp'
 
 export function mintMockNFT(
     chainId: number,
@@ -51,10 +51,10 @@ export function createExternalTokenStruct(
 }
 
 export async function getFilteredRolesFromSpace(
-    client: ZionClient,
+    spaceDapp: ISpaceDapp,
     spaceNetworkId: string,
 ): Promise<BasicRoleInfo[]> {
-    const spaceRoles = await client.spaceDapp.getRoles(spaceNetworkId)
+    const spaceRoles = await spaceDapp.getRoles(spaceNetworkId)
     const filteredRoles: BasicRoleInfo[] = []
     // Filter out space roles which won't work when creating a channel
     for (const r of spaceRoles) {

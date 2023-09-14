@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
-import { getFilteredRolesFromSpace, useZionContext } from 'use-zion-client'
+import { useZionContext } from 'use-zion-client'
+import { getFilteredRolesFromSpace } from '@river/web3'
 
 export const useContractRoles = (spaceNetworkId?: string) => {
     const { client } = useZionContext()
@@ -11,7 +12,7 @@ export const useContractRoles = (spaceNetworkId?: string) => {
             if (!client || !spaceNetworkId) {
                 return Promise.resolve([])
             }
-            return getFilteredRolesFromSpace(client, spaceNetworkId)
+            return getFilteredRolesFromSpace(client.spaceDapp, spaceNetworkId)
         },
         {
             enabled: !!client && !!spaceNetworkId,

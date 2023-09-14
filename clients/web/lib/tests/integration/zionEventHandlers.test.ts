@@ -9,16 +9,16 @@ import {
 } from './helpers/TestUtils'
 import { RoomIdentifier } from '../../src/types/room-identifier'
 import { RoomVisibility } from '../../src/types/zion-types'
+
+import { waitFor } from '@testing-library/dom'
+import { SpaceProtocol } from '../../src/client/ZionClientTypes'
+import { sleep } from '../../src/utils/zion-utils'
 import {
     createExternalTokenStruct,
     getMemberNftAddress,
-} from '../../src/client/web3/ContractHelpers'
-import { ITownArchitectBase } from '../../src/client/web3/v3/ITownArchitectShim'
-
-import { waitFor } from '@testing-library/dom'
-import { Permission } from '../../src/client/web3/ContractTypes'
-import { SpaceProtocol } from '../../src/client/ZionClientTypes'
-import { sleep } from '../../src/utils/zion-utils'
+    ITownArchitectBase,
+    Permission,
+} from '@river/web3'
 
 describe('Zion event handlers test', () => {
     test('onCreateSpace', async () => {

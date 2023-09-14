@@ -1,9 +1,8 @@
 import { MatrixClient, Room as MatrixRoom } from 'matrix-js-sdk'
 
 import { IHierarchyRoom } from 'matrix-js-sdk/lib/@types/spaces'
-import { ISpaceDapp } from '../web3/ISpaceDapp'
 import { MatrixRoomIdentifier } from '../../types/room-identifier'
-import { Permission } from '../web3/ContractTypes'
+import { ISpaceDapp, Permission } from '@river/web3'
 import { blockchainKeys } from '../../query/query-keys'
 import { RoomHierarchy } from 'matrix-js-sdk/lib/room-hierarchy'
 import { queryClient } from '../../query/queryClient'

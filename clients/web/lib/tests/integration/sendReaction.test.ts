@@ -17,7 +17,7 @@ import {
     waitForWithRetries,
 } from './helpers/TestUtils'
 
-import { Permission } from '../../src/client/web3/ContractTypes'
+import { Permission } from '@river/web3'
 import { ReactionEvent, RoomMessageEvent, ZTEvent } from '../../src/types/timeline-types'
 import { RoomVisibility } from '../../src/types/zion-types'
 

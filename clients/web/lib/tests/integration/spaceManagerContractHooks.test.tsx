@@ -9,7 +9,6 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import { fireEvent, prettyDOM, render, screen, waitFor } from '@testing-library/react'
 
-import { Permission } from '../../src/client/web3/ContractTypes'
 import {
     RegisterWallet,
     TransactionInfo,
@@ -18,14 +17,11 @@ import { RoomVisibility } from 'use-zion-client/src/types/zion-types'
 import { TestConstants } from './helpers/TestConstants'
 import { ZionTestApp } from 'use-zion-client/tests/integration/helpers/ZionTestApp'
 import { ZionTestWeb3Provider } from 'use-zion-client/tests/integration/helpers/ZionTestWeb3Provider'
-import {
-    createExternalTokenStruct,
-    getMemberNftAddress,
-} from '../../src/client/web3/ContractHelpers'
 import { makeUniqueName } from 'use-zion-client/tests/integration/helpers/TestUtils'
 import { useCreateSpaceTransaction } from 'use-zion-client/src/hooks/use-create-space-transaction'
 import { useSpacesFromContract } from 'use-zion-client/src/hooks/use-spaces-from-contract'
 import { useZionClient } from 'use-zion-client/src/hooks/use-zion-client'
+import { createExternalTokenStruct, getMemberNftAddress, Permission } from '@river/web3'
 
 // TODO Zustand https://docs.pmnd.rs/zustand/testing
 

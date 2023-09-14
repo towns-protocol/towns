@@ -3,11 +3,6 @@
  * @group dendrite
  */
 import {
-    createExternalTokenStruct,
-    getMemberNftAddress,
-    getPioneerNftAddress,
-} from '../../src/client/web3/ContractHelpers'
-import {
     assertRoleEquals,
     createTestSpaceWithEveryoneRole,
     createTestSpaceWithZionMemberRole,
@@ -16,11 +11,17 @@ import {
 } from 'use-zion-client/tests/integration/helpers/TestUtils'
 
 import { BigNumber } from 'ethers'
-import { Permission, RoleDetails } from 'use-zion-client/src/client/web3/ContractTypes'
 import { RoleIdentifier } from '../../src/types/web3-types'
 import { RoomVisibility } from '../../src/types/zion-types'
-import { TokenEntitlementDataTypes } from '../../src/client/web3/v3/TokenEntitlementShim'
 import { TestConstants } from './helpers/TestConstants'
+import {
+    createExternalTokenStruct,
+    getMemberNftAddress,
+    getPioneerNftAddress,
+    Permission,
+    RoleDetails,
+    TokenEntitlementDataTypes,
+} from '@river/web3'
 
 describe('get role details', () => {
     test('get details of a role that no channel uses', async () => {

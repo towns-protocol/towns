@@ -7,7 +7,7 @@ import { createTestSpaceWithEveryoneRole, registerAndStartClients } from './help
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 
 import { LoginWithWallet } from './helpers/TestComponents'
-import { Permission } from '../../src/client/web3/ContractTypes'
+import { Permission } from '@river/web3'
 import React from 'react'
 import { RoomIdentifier } from '../../src/types/room-identifier'
 import { ZionTestApp } from './helpers/ZionTestApp'

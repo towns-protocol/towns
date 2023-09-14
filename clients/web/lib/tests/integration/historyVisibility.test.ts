@@ -4,7 +4,7 @@
  * @group dendrite
  */
 import { waitFor } from '@testing-library/react'
-import { Permission } from '../../src/client/web3/ContractTypes'
+import { Permission } from '@river/web3'
 import { RoomVisibility } from '../../src/types/zion-types'
 import { TestConstants } from './helpers/TestConstants'
 import {

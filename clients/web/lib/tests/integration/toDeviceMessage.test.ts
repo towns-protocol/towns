@@ -5,7 +5,7 @@
  */
 import { waitFor } from '@testing-library/dom'
 import { ClientEvent, MatrixEvent } from 'matrix-js-sdk'
-import { Permission } from '../../src/client/web3/ContractTypes'
+import { Permission } from '@river/web3'
 import { SpaceProtocol } from '../../src/client/ZionClientTypes'
 import { RoomVisibility } from '../../src/types/zion-types'
 import {

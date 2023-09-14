@@ -62,6 +62,7 @@
           "WatchCasablancaSdk",
           "WatchCasablancaMechOlm",
           "WatchCasablancaProto",
+          "WatchCasablancaWeb3",
           "App",
           "SampleApp",
           "Casablanca DebugApp",
@@ -308,6 +309,16 @@
         "label": "WatchCasablancaProto",
         "type": "shell",
         "command": "cd casablanca/proto && yarn watch",
+        "isBackground": true,
+        "problemMatcher": [],
+        "presentation": {
+          "group": "local-watch-proto"
+        }
+      },
+      {
+        "label": "WatchCasablancaWeb3",
+        "type": "shell",
+        "command": "cd casablanca/web3 && yarn watch",
         "isBackground": true,
         "problemMatcher": [],
         "presentation": {

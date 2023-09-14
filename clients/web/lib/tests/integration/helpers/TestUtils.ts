@@ -3,14 +3,8 @@ import {
     CreateSpaceInfo,
     RoomVisibility,
 } from 'use-zion-client/src/types/zion-types'
-import { BasicRoleInfo, Permission, RoleDetails } from '../../../src/client/web3/ContractTypes'
 import { BigNumber, Wallet, ethers } from 'ethers'
 import { ZionTestClient, ZionTestClientProps } from './ZionTestClient'
-import {
-    createExternalTokenStruct,
-    getFilteredRolesFromSpace,
-    getMemberNftAddress,
-} from 'use-zion-client/src/client/web3/ContractHelpers'
 
 import { EventTimeline } from 'matrix-js-sdk'
 import { RoomIdentifier } from 'use-zion-client/src/types/room-identifier'
@@ -21,7 +15,15 @@ import { waitFor } from '@testing-library/dom'
 import { SignerUndefinedError } from '../../../src/types/error-types'
 import { useTransactionStore } from '../../../src/store/use-transactions-store'
 import { BlockchainTransactionType } from '../../../src/types/web3-types'
-import { ITownArchitectBase } from '../../../src/client/web3/v3/ITownArchitectShim'
+import {
+    BasicRoleInfo,
+    Permission,
+    RoleDetails,
+    createExternalTokenStruct,
+    getFilteredRolesFromSpace,
+    getMemberNftAddress,
+    ITownArchitectBase,
+} from '@river/web3'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function assert(condition: any, msg?: string): asserts condition {
@@ -199,7 +201,7 @@ export async function createTestChannelWithSpaceRoles(
         // at least one role from the UI.
         // For testing, get the roles from the space and select all of them.
         const filteredRoles = await getFilteredRolesFromSpace(
-            client,
+            client.spaceDapp,
             createChannelInfo.parentSpaceId.networkId,
         )
         for (const r of filteredRoles) {
@@ -248,7 +250,7 @@ export async function findRoleByName(
     roles?: BasicRoleInfo[],
 ): Promise<RoleDetails | null> {
     let role: RoleDetails | null = null
-    roles = roles ?? (await getFilteredRolesFromSpace(client, spaceId))
+    roles = roles ?? (await getFilteredRolesFromSpace(client.spaceDapp, spaceId))
     for (const r of roles) {
         if (r.name === roleName) {
             // found

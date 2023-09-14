@@ -1,5 +1,5 @@
-import { Permission, RoomIdentifier, useHasPermission, useZionClient } from 'use-zion-client'
-
+import { RoomIdentifier, useHasPermission, useZionClient } from 'use-zion-client'
+import { Permission } from '@river/web3'
 import React from 'react'
 import { useEvent } from 'react-use-event-hook'
 import { useNavigate } from 'react-router'

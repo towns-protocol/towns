@@ -1,7 +1,5 @@
 import { SpaceIdentifier, ZionClientEvent } from '../client/ZionClientTypes'
 import { useEffect, useMemo, useState } from 'react'
-
-import { Permission } from '../client/web3/ContractTypes'
 import { RoomIdentifier } from '../types/room-identifier'
 import { SpaceItem } from '../types/zion-types'
 import { getAccountAddress } from '../types/user-identifier'
@@ -10,6 +8,7 @@ import { useZionClient } from './use-zion-client'
 import { useZionClientEvent } from './use-zion-client-event'
 import { useZionContext } from '../components/ZionContextProvider'
 import { useCasablancaCredentials } from './use-casablanca-credentials'
+import { Permission } from '@river/web3'
 import uniqBy from 'lodash/uniqBy'
 
 type UseSpaceFromContractReturn = {

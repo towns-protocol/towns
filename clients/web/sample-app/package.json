@@ -19,6 +19,7 @@
         "@mui/icons-material": "^5.10.9",
         "@mui/material": "^5.10.10",
         "@mui/styles": "^5.10.10",
+        "@river/web3": "workspace:^",
         "@towns/generated": "workspace:^",
         "@types/node": "^20.3.0",
         "@types/react": "^18.2.11",

@@ -1,20 +1,16 @@
 import {
-    createExternalTokenStruct,
-    getMemberNftAddress,
-} from '../../src/client/web3/ContractHelpers'
-import {
     createTestSpaceWithZionMemberRole,
     registerAndStartClient,
     registerAndStartClients,
     waitForWithRetries,
 } from 'use-zion-client/tests/integration/helpers/TestUtils'
 
-import { Permission } from 'use-zion-client/src/client/web3/ContractTypes'
 import { RoleIdentifier } from '../../src/types/web3-types'
 import { RoomIdentifier } from '../../src/types/room-identifier'
 import { RoomVisibility } from '../../src/types/zion-types'
 import { TestConstants } from './helpers/TestConstants'
 import { getAccountAddress } from '../../src/types/user-identifier'
+import { createExternalTokenStruct, getMemberNftAddress, Permission } from '@river/web3'
 
 describe('isEntitledToSpace and isEntitledToChannel tests', () => {
     test('server checks isEntitledToSpace true', async () => {

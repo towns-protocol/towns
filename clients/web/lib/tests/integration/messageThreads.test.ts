@@ -10,7 +10,7 @@ import {
     createTestChannelWithSpaceRoles,
     waitForWithRetries,
 } from './helpers/TestUtils'
-import { Permission } from '../../src/client/web3/ContractTypes'
+import { Permission } from '@river/web3'
 import { RoomIdentifier } from '../../src/types/room-identifier'
 import { TestConstants } from './helpers/TestConstants'
 import { waitFor } from '@testing-library/dom'

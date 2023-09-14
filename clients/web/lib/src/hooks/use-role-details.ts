@@ -1,10 +1,9 @@
 import { useQuery, useQueryClient } from '../query/queryClient'
 
 import { blockchainKeys } from '../query/query-keys'
-import { RoleDetails } from '../client/web3/ContractTypes'
 import { useCallback } from 'react'
 import { useZionContext } from '../components/ZionContextProvider'
-
+import { RoleDetails } from '@river/web3'
 /**
  * Convience function to get space role details.
  */

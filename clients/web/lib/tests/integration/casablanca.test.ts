@@ -10,7 +10,6 @@ import {
 } from '@river/sdk'
 import { bin_fromHexString, SignerContext } from '@river/sdk'
 import { ethers } from 'ethers'
-import { Permission } from '../../src/client/web3/ContractTypes'
 import { SpaceProtocol } from '../../src/client/ZionClientTypes'
 import { RoomVisibility } from '../../src/types/zion-types'
 import {
@@ -24,6 +23,7 @@ import {
     registerAndStartClients,
 } from './helpers/TestUtils'
 import { setTimeout } from 'timers/promises'
+import { Permission } from '@river/web3'
 import debug from 'debug'
 
 const log = debug('test:casablanca')

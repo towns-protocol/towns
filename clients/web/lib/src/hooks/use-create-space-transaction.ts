@@ -8,15 +8,12 @@ import { useCallback, useMemo, useRef, useState } from 'react'
 
 import { BlockchainTransactionType } from '../types/web3-types'
 import { CreateSpaceInfo } from '../types/zion-types'
-import { Permission } from '../client/web3/ContractTypes'
 import { RoomIdentifier } from '../types/room-identifier'
 import { useSyncSpace } from './use-sync-space'
 import { useTransactionStore } from '../store/use-transactions-store'
 import { useWeb3Context } from '../components/Web3ContextProvider'
 import { useZionClient } from './use-zion-client'
-import { ITownArchitectBase } from '../client/web3/v3/ITownArchitectShim'
-import { TokenEntitlementDataTypes } from '../client/web3/v3/TokenEntitlementShim'
-
+import { ITownArchitectBase, TokenEntitlementDataTypes, Permission } from '@river/web3'
 /**
  * Combine Matrix space creation and smart contract space
  * creation into one hook.

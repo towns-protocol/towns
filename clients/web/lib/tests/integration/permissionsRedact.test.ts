@@ -10,11 +10,10 @@ import {
     waitForWithRetries,
 } from 'use-zion-client/tests/integration/helpers/TestUtils'
 
-import { Permission } from 'use-zion-client/src/client/web3/ContractTypes'
 import { RoomVisibility } from '../../src/types/zion-types'
 import { ZTEvent } from '../../src/types/timeline-types'
-import { getFilteredRolesFromSpace } from '../../src/client/web3/ContractHelpers'
 import { waitFor } from '@testing-library/dom'
+import { getFilteredRolesFromSpace, Permission } from '@river/web3'
 
 // TODO: https://linear.app/hnt-labs/issue/HNT-1731/clientsweblibtestsintegrationpermissionsredacttestts
 describe.skip('redact messages', () => {
@@ -32,7 +31,7 @@ describe.skip('redact messages', () => {
             throw new Error('spaceId is undefined')
         }
         // create a channel for reading and writing
-        const roles = await getFilteredRolesFromSpace(alice, spaceId.networkId)
+        const roles = await getFilteredRolesFromSpace(alice.spaceDapp, spaceId.networkId)
         const channelId = await alice.createChannel(
             {
                 name: 'test channel',
@@ -85,7 +84,7 @@ describe.skip('redact messages', () => {
             throw new Error('spaceId is undefined')
         }
         // create a channel for reading and writing
-        const roles = await getFilteredRolesFromSpace(alice, spaceId.networkId)
+        const roles = await getFilteredRolesFromSpace(alice.spaceDapp, spaceId.networkId)
         const channelId = await alice.createChannel(
             {
                 name: 'test channel',
@@ -143,7 +142,7 @@ describe.skip('redact messages', () => {
             throw new Error('spaceId is undefined')
         }
         // get the roles for channel creation later
-        const roles = await getFilteredRolesFromSpace(alice, spaceId.networkId)
+        const roles = await getFilteredRolesFromSpace(alice.spaceDapp, spaceId.networkId)
         // create the moderator role with the permission to redact messages
         const permissions = [Permission.Read, Permission.Write, Permission.Redact]
         // add bob to the moderator role

@@ -18,6 +18,7 @@ export default defineConfig({
                 /.*.\/casablanca\/proto\/dist\/(.*\.js)$/,
                 /.*.\/casablanca\/sdk\/dist\/(.*\.js)$/,
                 /.*.\/casablanca\/mecholm\/dist\/(.*\.js)$/,
+                /.*.\/casablanca\/web3\/dist\/(.*\.js)$/,
                 'vitest-canvas-mock',
             ],
         },

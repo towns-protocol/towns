@@ -15,6 +15,7 @@ import {
     useZionClient,
 } from 'use-zion-client'
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Address } from 'wagmi'
 import { shallow } from 'zustand/shallow'
 import { toast } from 'react-hot-toast/headless'
 import { useNavigate } from 'react-router'
@@ -324,7 +325,7 @@ export const CreateSpaceForm = () => {
                         })
                     }
                     // trigger the mint animation
-                    setMintedTokenAddress(spaceInfo.address)
+                    setMintedTokenAddress(spaceInfo.address as Address)
                 }
             }
         },

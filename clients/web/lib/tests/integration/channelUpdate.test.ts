@@ -4,10 +4,6 @@
 import { MAXTRIX_ERROR, MatrixError, NoThrownError, getError } from './helpers/ErrorUtils'
 import { Room, RoomVisibility } from '../../src/types/zion-types'
 import {
-    createExternalTokenStruct,
-    getPioneerNftAddress,
-} from '../../src/client/web3/ContractHelpers'
-import {
     createTestSpaceWithZionMemberRole,
     findRoleByName,
     registerAndStartClients,
@@ -15,8 +11,8 @@ import {
 } from 'use-zion-client/tests/integration/helpers/TestUtils'
 
 import { ContractReceipt } from 'ethers'
-import { Permission } from 'use-zion-client/src/client/web3/ContractTypes'
 import { RoleIdentifier } from '../../src/types/web3-types'
+import { createExternalTokenStruct, getPioneerNftAddress, Permission } from '@river/web3'
 
 // TODO: skip for now, refactor to accommodate new contracts
 // https://linear.app/hnt-labs/issue/HNT-1641/testsintegrationchannelupdatetestts

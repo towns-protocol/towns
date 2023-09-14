@@ -1,14 +1,16 @@
 import { Env, worker } from '../src/index'
+import { Permission } from '@river/web3'
 
 const mockIsEntitled = jest.fn()
 
-jest.mock('use-zion-client/src/client/web3/SpaceDappFactory', () => {
+jest.mock('@river/web3', () => {
 	return {
 		createSpaceDapp() {
 			return {
 				isEntitledToSpace: mockIsEntitled,
 			}
 		},
+		Permission: jest.requireActual('@river/web3').Permission,
 	}
 })
 

@@ -1,9 +1,9 @@
 import { useCallback } from 'react'
 
-import { Permission } from '../client/web3/ContractTypes'
 import { useQuery } from '../query/queryClient'
 import { useZionClient } from './use-zion-client'
 import { blockchainKeys } from '../query/query-keys'
+import { Permission } from '@river/web3'
 
 interface Props {
     spaceId: string

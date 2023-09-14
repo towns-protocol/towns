@@ -2,8 +2,8 @@ import { useCallback, useEffect } from 'react'
 import { useQuery, useQueryClient } from '../query/queryClient'
 
 import { blockchainKeys } from '../query/query-keys'
-import { getFilteredRolesFromSpace } from '../client/web3/ContractHelpers'
 import { useZionContext } from '../components/ZionContextProvider'
+import { getFilteredRolesFromSpace } from '@river/web3'
 
 /**
  * Convience function to get space roles.
@@ -19,7 +19,7 @@ export function useRoles(_spaceId: string | undefined) {
             if (!client || !spaceId) {
                 return undefined
             }
-            return await getFilteredRolesFromSpace(client, spaceId)
+            return await getFilteredRolesFromSpace(client.spaceDapp, spaceId)
         },
         [client, spaceId],
     )

@@ -17,22 +17,18 @@ import { foundry, hardhat, localhost } from 'wagmi/chains'
 import {
     CreateSpaceInfo,
     Membership,
-    Permission,
     RoomIdentifier,
     RoomVisibility,
     SpaceProtocol,
     TransactionStatus,
-    getMemberNftAddress,
-    getPioneerNftAddress,
-    mintMockNFT,
     useCasablancaStore,
     useCreateSpaceTransaction,
     useMatrixStore,
     useWeb3Context,
     useZionClient,
 } from 'use-zion-client'
+import { Permission, getMemberNftAddress, getPioneerNftAddress, mintMockNFT } from '@river/web3'
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-
 import { ethers } from 'ethers'
 import { MembershipRequirement, SpaceRoleSettings } from 'routes/SpaceRoleSettings'
 import { useEnvironment } from 'hooks/use-environment'

@@ -22,12 +22,8 @@ import { MatrixError, MatrixEvent, MatrixScheduler } from 'matrix-js-sdk'
 import { useMemo, useCallback } from 'react'
 
 import { FullyReadMarker, RoomMessageEvent } from '../types/timeline-types'
-import { ISpaceDapp } from 'client/web3/ISpaceDapp'
 import { MatrixSpaceHierarchy } from '../client/matrix/SyncSpace'
-import { Permission } from '../client/web3/ContractTypes'
 import { RoomIdentifier } from '../types/room-identifier'
-import { ITownArchitectBase } from '../client/web3/v3/ITownArchitectShim'
-import { TokenEntitlementDataTypes } from '../client/web3/v3/TokenEntitlementShim'
 import { ZionClient } from '../client/ZionClient'
 import { useLogout } from './MatrixClient/useLogout'
 import { useMatrixStore } from '../store/use-matrix-store'
@@ -39,6 +35,7 @@ import { useCasablancaWalletSignIn } from './use-casablanca-wallet-signin'
 import { isTestEnv } from '../utils/zion-utils'
 import { ethers } from 'ethers'
 import { create } from 'zustand'
+import { ITownArchitectBase, ISpaceDapp, TokenEntitlementDataTypes, Permission } from '@river/web3'
 
 export type ZionErrorStoreState = {
     errors: string[]

@@ -1,8 +1,8 @@
-import { Permission } from 'client/web3/ContractTypes'
 import { blockchainKeys } from '../query/query-keys'
 import { useCallback } from 'react'
 import { useQuery } from '../query/queryClient'
 import { useZionClient } from './use-zion-client'
+import { Permission } from '@river/web3'
 
 export function useChannelSettings(spaceId: string, channelId: string) {
     const { spaceDapp } = useZionClient()

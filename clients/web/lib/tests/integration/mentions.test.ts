@@ -3,7 +3,7 @@
  * @group dendrite
  */
 import { waitFor } from '@testing-library/dom'
-import { Permission } from '../../src/client/web3/ContractTypes'
+import { Permission } from '@river/web3'
 import { RoomVisibility } from '../../src/types/zion-types'
 import { ZTEvent } from '../../src/types/timeline-types'
 import {

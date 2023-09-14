@@ -2,7 +2,6 @@
  * @group casablanca
  * @group dendrite
  */
-import { Permission, RoleDetails } from 'use-zion-client/src/client/web3/ContractTypes'
 import {
     assertRoleEquals,
     createTestSpaceWithEveryoneRole,
@@ -10,15 +9,16 @@ import {
     findRoleByName,
     registerAndStartClients,
 } from 'use-zion-client/tests/integration/helpers/TestUtils'
-import {
-    createExternalTokenStruct,
-    getFilteredRolesFromSpace,
-    getPioneerNftAddress,
-} from '../../src/client/web3/ContractHelpers'
-
 import { ContractReceipt } from 'ethers'
 import { TestConstants } from './helpers/TestConstants'
-import { TokenEntitlementDataTypes } from '../../src/client/web3/v3/TokenEntitlementShim'
+import {
+    getFilteredRolesFromSpace,
+    Permission,
+    TokenEntitlementDataTypes,
+    createExternalTokenStruct,
+    getPioneerNftAddress,
+    RoleDetails,
+} from '@river/web3'
 
 describe('update role', () => {
     test('Update Everyone role with multicall', async () => {
@@ -31,7 +31,7 @@ describe('update role', () => {
         }
         // get current role details
         const spaceNetworkId = roomId.networkId
-        const roles = await getFilteredRolesFromSpace(alice, spaceNetworkId)
+        const roles = await getFilteredRolesFromSpace(alice.spaceDapp, spaceNetworkId)
         const roleDetails = await findRoleByName(alice, spaceNetworkId, 'Everyone', roles)
         if (!roleDetails) {
             throw new Error('roleDetails is undefined')
@@ -75,7 +75,7 @@ describe('update role', () => {
         }
         // get current role details
         const spaceNetworkId = roomId.networkId
-        const roles = await getFilteredRolesFromSpace(alice, spaceNetworkId)
+        const roles = await getFilteredRolesFromSpace(alice.spaceDapp, spaceNetworkId)
         const roleDetails = await findRoleByName(alice, spaceNetworkId, 'Member', roles)
         if (!roleDetails) {
             throw new Error('roleDetails is undefined')
@@ -153,7 +153,7 @@ describe('update role', () => {
         }
         // get current role details for the Moderator role and the Member role
         const spaceNetworkId = roomId.networkId
-        let roles = await getFilteredRolesFromSpace(alice, spaceNetworkId)
+        let roles = await getFilteredRolesFromSpace(alice.spaceDapp, spaceNetworkId)
         const expectedMemberRole = await findRoleByName(alice, spaceNetworkId, 'Member', roles)
         if (!expectedMemberRole) {
             throw new Error('expectedMemberRole is undefined')
@@ -195,7 +195,7 @@ describe('update role', () => {
 
         /** Assert */
         expect(receipt?.status).toEqual(1)
-        roles = await getFilteredRolesFromSpace(alice, spaceNetworkId)
+        roles = await getFilteredRolesFromSpace(alice.spaceDapp, spaceNetworkId)
         for (const role of roles) {
             const actual = await alice.spaceDapp.getRole(spaceNetworkId, role.roleId)
             expect(actual).toBeDefined()
@@ -248,7 +248,7 @@ describe('update role', () => {
         }
         // get current role details for the Moderator role and the Member role
         const spaceNetworkId = roomId.networkId
-        let roles = await getFilteredRolesFromSpace(alice, spaceNetworkId)
+        let roles = await getFilteredRolesFromSpace(alice.spaceDapp, spaceNetworkId)
         const expectedMemberRole = await findRoleByName(alice, spaceNetworkId, 'Member', roles)
         if (!expectedMemberRole) {
             throw new Error('expectedMemberRole is undefined')
@@ -290,7 +290,7 @@ describe('update role', () => {
 
         /** Assert */
         expect(receipt?.status).toEqual(1)
-        roles = await getFilteredRolesFromSpace(alice, spaceNetworkId)
+        roles = await getFilteredRolesFromSpace(alice.spaceDapp, spaceNetworkId)
         for (const role of roles) {
             const actual = await alice.spaceDapp.getRole(spaceNetworkId, role.roleId)
             expect(actual).toBeDefined()

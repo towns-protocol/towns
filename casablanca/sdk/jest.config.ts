@@ -9,7 +9,7 @@ const config: JestConfigWithTsJest = {
     },
     runner: 'groups',
     verbose: true,
-    testTimeout: 60000,
+    testTimeout: 120000,
     modulePathIgnorePatterns: ['/dist/'],
     testPathIgnorePatterns: ['/dist/', '/node_modules/', 'util.test.ts'],
     setupFilesAfterEnv: ['jest-extended/all', './../jest.matchers.ts'],

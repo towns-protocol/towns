@@ -72,15 +72,9 @@ import { sendMatrixMessage, sendMatrixNotice } from './matrix/SendMessage'
 import { toZionRoom, toZionUser } from '../store/use-matrix-store'
 import { toZionCasablancaUser } from '../store/use-casablanca-store'
 import { CryptoStore } from 'matrix-js-sdk/lib/crypto/store/base'
-import { ISpaceDapp } from './web3/ISpaceDapp'
 import { MatrixDbManager } from './matrix/MatrixDbManager'
-import { Permission } from './web3/ContractTypes'
-import { PioneerNFT } from './web3/PioneerNFT'
 import { PushNotificationClient } from './PushNotificationClient'
-import { RoleIdentifier } from '../types/web3-types'
 import { SignerUndefinedError } from '../types/error-types'
-import { TokenEntitlementDataTypes } from './web3/v3/TokenEntitlementShim'
-import { SpaceInfo } from './web3/SpaceInfo'
 import { SyncState } from 'matrix-js-sdk/lib/sync'
 import {
     createCasablancaChannel,
@@ -102,8 +96,16 @@ import { toZionRoomFromStream } from './casablanca/CasablancaUtils'
 import { sendFullyReadMarkers } from './casablanca/SendFullyReadMarkers'
 import { RiverDecryptionExtension } from './casablanca/RiverDecryptionExtensions'
 import { isToDevicePlainMessage } from '@river/sdk'
-import { createSpaceDapp } from './web3/SpaceDappFactory'
-import { ITownArchitectBase } from './web3/v3/ITownArchitectShim'
+import { RoleIdentifier } from '../types/web3-types'
+import {
+    createSpaceDapp,
+    ITownArchitectBase,
+    ISpaceDapp,
+    Permission,
+    PioneerNFT,
+    TokenEntitlementDataTypes,
+    SpaceInfo,
+} from '@river/web3'
 
 /***
  * Zion Client

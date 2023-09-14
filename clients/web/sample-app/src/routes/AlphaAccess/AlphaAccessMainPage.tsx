@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
-import { PioneerNFT, PioneerNFTContractState, useWeb3Context } from 'use-zion-client'
+import { useWeb3Context } from 'use-zion-client'
+import { PioneerNFT, PioneerNFTContractState } from '@river/web3'
 import { ethers } from 'ethers'
 import { ContractState } from './ContractState'
 import { TransactionReport, TransactionReports } from './TransactionReports'

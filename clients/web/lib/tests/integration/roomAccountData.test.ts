@@ -13,7 +13,7 @@ import {
 } from './helpers/TestUtils'
 
 import { FullyReadMarker } from '../../src/types/timeline-types'
-import { Permission } from '../../src/client/web3/ContractTypes'
+import { Permission } from '@river/web3'
 import { RoomIdentifier } from '../../src/types/room-identifier'
 import { SpaceProtocol, ZionAccountDataType } from '../../src/client/ZionClientTypes'
 import { waitFor } from '@testing-library/dom'

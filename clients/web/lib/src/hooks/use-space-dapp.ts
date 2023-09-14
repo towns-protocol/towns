@@ -1,8 +1,7 @@
 import { useMemo } from 'react'
 
-import { ISpaceDapp } from '../client/web3/ISpaceDapp'
 import { IWeb3Context } from '../components/Web3ContextProvider'
-import { createSpaceDapp } from '../client/web3/SpaceDappFactory'
+import { ISpaceDapp, createSpaceDapp } from '@river/web3'
 
 // a hook to create a SpaceDapp instance outside of matrix client context
 export const useSpaceDapp = ({

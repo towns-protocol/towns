@@ -5,10 +5,9 @@
 import { CONTRACT_ERROR, NoThrownError, getError } from './helpers/ErrorUtils'
 import { createTestSpaceWithZionMemberRole, registerAndStartClients } from './helpers/TestUtils'
 
-import { Permission } from '../../src/client/web3/ContractTypes'
 import { RoomIdentifier } from '../../src/types/room-identifier'
 import { RoomVisibility } from '../../src/types/zion-types'
-import { getFilteredRolesFromSpace } from '../../src/client/web3/ContractHelpers'
+import { getFilteredRolesFromSpace, Permission } from '@river/web3'
 
 describe('On-chain channel creation tests', () => {
     test('create channel with no roles', async () => {
@@ -55,7 +54,7 @@ describe('On-chain channel creation tests', () => {
         /* Act */
         // create a channel on-chain with roles from the space
         const roleIds: number[] = []
-        const allowedRoles = await getFilteredRolesFromSpace(alice, roomId.networkId)
+        const allowedRoles = await getFilteredRolesFromSpace(alice.spaceDapp, roomId.networkId)
         for (const r of allowedRoles) {
             roleIds.push(r.roleId)
         }
@@ -87,7 +86,7 @@ describe('On-chain channel creation tests', () => {
         /* Act */
         // create a channel on-chain with roles from the space
         const roleIds: number[] = []
-        const allowedRoles = await getFilteredRolesFromSpace(alice, roomId.networkId)
+        const allowedRoles = await getFilteredRolesFromSpace(alice.spaceDapp, roomId.networkId)
         for (const r of allowedRoles) {
             roleIds.push(r.roleId)
             // Duplicate the role

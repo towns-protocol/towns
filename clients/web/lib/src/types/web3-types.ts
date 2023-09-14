@@ -1,7 +1,7 @@
 import { Address, Chain, Connector } from 'wagmi'
 import { RoomIdentifier } from './room-identifier'
 import { useEthersProvider } from '../hooks/Web3Context/useEthersProvider'
-import { TokenEntitlementDataTypes } from '../client/web3/v3/TokenEntitlementShim'
+import { TokenEntitlementDataTypes } from '@river/web3'
 
 export const NULL_ADDRESS: Address = '0x0000000000000000000000000000000000000000'
 

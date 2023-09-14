@@ -9,7 +9,7 @@ import {
     registerAndStartClient,
 } from './helpers/TestUtils'
 
-import { Permission } from '../../src/client/web3/ContractTypes'
+import { Permission } from '@river/web3'
 import { TestConstants } from './helpers/TestConstants'
 import { act, waitFor } from '@testing-library/react'
 

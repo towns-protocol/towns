@@ -1,7 +1,7 @@
 import { SiweMessage } from 'siwe'
 import { ethers } from 'ethers'
 import { AuthEnv, Environment } from '..'
-import { Permission } from 'use-zion-client/src/client/web3/ContractTypes'
+import { Permission, createSpaceDapp } from '@river/web3'
 
 export interface Env extends AuthEnv {
     // Example binding to KV. Learn more at https://developers.cloudflare.com/workers/runtime-apis/kv/
@@ -84,27 +84,18 @@ export async function verifySpaceOwner(
     chainId: number = GOERLI,
     provider: ethers.providers.StaticJsonRpcProvider,
 ): Promise<boolean> {
-    // Using CommonJs import syntax to workaround a bug in importing this module.
-    // https://linear.app/hnt-labs/issue/HNT-2243/bug-in-import-of-istaticcontractsinfo-to-workers
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const module = require('use-zion-client/src/client/web3/SpaceDappFactory')
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    const createSpaceDapp = module.createSpaceDapp
     console.log('siweVerification verifySpaceOwner() params', {
         chainId,
         spaceId: decodeURIComponent(spaceId),
         address,
     })
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
     const spaceDapp = createSpaceDapp(chainId, provider)
     try {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
         const hasPermission: boolean = await spaceDapp.isEntitledToSpace(
             decodeURIComponent(spaceId),
             address,
             PERMISSION,
         )
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return hasPermission
     } catch (error) {
         console.error('spaceDapp.isEntitled error', (error as Error).message)

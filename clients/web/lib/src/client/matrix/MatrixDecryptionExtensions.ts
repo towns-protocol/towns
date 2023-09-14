@@ -1,4 +1,3 @@
-import { Permission } from '../web3/ContractTypes'
 import {
     MatrixClient,
     EventType as MatrixEventType,
@@ -13,6 +12,7 @@ import {
     Room,
     IRoomTimelineData,
 } from 'matrix-js-sdk'
+import { Permission } from '@river/web3'
 import { CryptoEvent, IMegolmSessionData } from 'matrix-js-sdk/lib/crypto'
 import uniq from 'lodash/uniq'
 import { createUserIdFromString } from '../../types/user-identifier'

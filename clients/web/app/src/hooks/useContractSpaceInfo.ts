@@ -1,8 +1,7 @@
 import { UseQueryResult, useQuery } from '@tanstack/react-query'
 import { useSpaceDapp, useWeb3Context } from 'use-zion-client'
-import type { SpaceInfo } from 'use-zion-client/src/client/web3/SpaceInfo'
+import { SpaceInfo } from '@river/web3'
 import { useEnvironment } from './useEnvironmnet'
-
 // Grab the space info without requiring matrix client to be initialized
 export const useContractSpaceInfo = (
     spaceId: string | undefined,

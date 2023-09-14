@@ -1,4 +1,4 @@
-import { Permission } from '../client/web3/ContractTypes'
+import { Permission } from '@river/web3'
 
 enum QuerKeysEnum {
     FirstBySpaceIds = 'spaceIds',

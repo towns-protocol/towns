@@ -8,7 +8,6 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 
 import { ChannelContextProvider } from '../../src/components/ChannelContextProvider'
-import { Permission } from '../../src/client/web3/ContractTypes'
 import { RegisterWallet, TransactionInfo } from './helpers/TestComponents'
 import { RoomIdentifier } from '../../src/types/room-identifier'
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
@@ -16,10 +15,6 @@ import { TestConstants } from './helpers/TestConstants'
 import { SpaceProtocol, TransactionStatus } from '../../src/client/ZionClientTypes'
 import { ZionTestApp } from './helpers/ZionTestApp'
 import { ZionTestWeb3Provider } from './helpers/ZionTestWeb3Provider'
-import {
-    createExternalTokenStruct,
-    getMemberNftAddress,
-} from '../../src/client/web3/ContractHelpers'
 import { getPrimaryProtocol, makeUniqueName } from './helpers/TestUtils'
 import { useChannelData } from '../../src/hooks/use-channel-data'
 import { useCreateChannelTransaction } from '../../src/hooks/use-create-channel-transaction'
@@ -31,6 +26,7 @@ import { ZTEvent } from '../../src/types/timeline-types'
 import { MatrixEvent, MsgType as MatrixMsgType, RoomEvent } from 'matrix-js-sdk'
 import { useZionContext } from '../../src/components/ZionContextProvider'
 import { useSpaceData } from '../../src/hooks/use-space-data'
+import { createExternalTokenStruct, getMemberNftAddress, Permission } from '@river/web3'
 
 describe('useCreateChannelTransactionHook', () => {
     test('user can create channel', async () => {

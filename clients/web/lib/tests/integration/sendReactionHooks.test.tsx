@@ -20,7 +20,7 @@ import {
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 
 import { ChannelContextProvider } from '../../src/components/ChannelContextProvider'
-import { Permission } from '../../src/client/web3/ContractTypes'
+import { Permission } from '@river/web3'
 import { RegisterAndJoinSpace } from './helpers/TestComponents'
 import { RoomIdentifier } from '../../src/types/room-identifier'
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'

@@ -32,6 +32,7 @@
     "dependencies": {
         "@matrix-org/olm": "^3.2.15",
         "@river/sdk": "workspace:^",
+        "@river/web3": "workspace:^",
         "@tanstack/react-query": "^4.14.3",
         "@towns/generated": "workspace:^",
         "@types/node-emoji": "^1.8.2",

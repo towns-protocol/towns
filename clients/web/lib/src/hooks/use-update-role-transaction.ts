@@ -7,13 +7,12 @@ import { SignerUndefinedError, toError } from '../types/error-types'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { BlockchainTransactionType } from '../types/web3-types'
-import { Permission } from '../client/web3/ContractTypes'
 import { blockchainKeys } from '../query/query-keys'
 import { useQueryClient } from '../query/queryClient'
 import { useTransactionStore } from '../store/use-transactions-store'
 import { useWeb3Context } from '../components/Web3ContextProvider'
 import { useZionClient } from './use-zion-client'
-import { TokenEntitlementDataTypes } from '../client/web3/v3/TokenEntitlementShim'
+import { TokenEntitlementDataTypes, Permission } from '@river/web3'
 
 /**
  * Hook to create a role with a transaction.

@@ -1,6 +1,6 @@
 import { ethers } from 'ethers'
 import React from 'react'
-import { PioneerNFTContractState } from 'use-zion-client'
+import { PioneerNFTContractState } from '@river/web3'
 import { Chain } from 'wagmi'
 
 export const ContractState = (props: {

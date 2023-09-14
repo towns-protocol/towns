@@ -11,16 +11,11 @@ import { RegisterWallet, TransactionInfo } from './helpers/TestComponents'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 
 import { ChannelContextProvider } from '../../src/components/ChannelContextProvider'
-import { Permission } from '../../src/client/web3/ContractTypes'
 import { SpaceContextProvider } from '../../src/components/SpaceContextProvider'
 import { TestConstants } from './helpers/TestConstants'
 import { TransactionStatus } from '../../src/client/ZionClientTypes'
 import { ZionTestApp } from './helpers/ZionTestApp'
 import { ZionTestWeb3Provider } from './helpers/ZionTestWeb3Provider'
-import {
-    createExternalTokenStruct,
-    getMemberNftAddress,
-} from '../../src/client/web3/ContractHelpers'
 import { makeUniqueName } from './helpers/TestUtils'
 import { useChannelData } from '../../src/hooks/use-channel-data'
 import { useCreateChannelTransaction } from '../../src/hooks/use-create-channel-transaction'
@@ -29,7 +24,7 @@ import { useRoles } from '../../src/hooks/use-roles'
 import { useSpacesFromContract } from '../../src/hooks/use-spaces-from-contract'
 import { useUpdateChannelTransaction } from '../../src/hooks/use-update-channel-transaction'
 import { useSpaceData } from '../../src/hooks/use-space-data'
-
+import { createExternalTokenStruct, getMemberNftAddress, Permission } from '@river/web3'
 /**
  * This test suite tests the useRoles hook.
  */
