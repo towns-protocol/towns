@@ -1,7 +1,6 @@
-import React, { useMemo, useState } from 'react'
+import React, { useState } from 'react'
 import { useParams } from 'react-router'
 import { useEvent } from 'react-use-event-hook'
-import { createUserIdFromEthereumAddress, useZionClient } from 'use-zion-client'
 import { Address } from 'wagmi'
 import { TokenSelector } from '@components/SpaceSettings/TokenSelector'
 import { Avatar, Box, Button, Divider, Icon, Paragraph, Stack, Text } from '@ui'
@@ -15,6 +14,7 @@ import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { TokenDataStruct } from '@components/Web3/CreateSpaceForm/types'
 import { useCheckTokenType } from '@components/Web3/checkTokenType'
 import { TokenType } from '@components/Tokens/types'
+import { useGetUserFromAddress } from 'hooks/useGetUserFromAddress'
 import { MemberListModal, TokenListModal } from './GatingModals'
 import { MemberSelector } from '../MemberSelector'
 
@@ -124,21 +124,7 @@ export const RoleSettingsGating = () => {
 }
 
 const MemberRenderer = (props: { item: string; onRemoveItem: (id: string) => void }) => {
-    const { chainId, matrixUrl } = useEnvironment()
-    const { client } = useZionClient()
-
-    const matrixuser = useMemo(() => {
-        if (!chainId) {
-            return undefined
-        }
-        const _homeserverUrl = new URL(matrixUrl || '')
-        const userId = createUserIdFromEthereumAddress(
-            props.item,
-            chainId,
-        ).matrixUserIdLocalpart.toLowerCase()
-        const matrixIdFromAddress = `@${userId}:${_homeserverUrl.hostname}`
-        return client?.getUser(matrixIdFromAddress)
-    }, [chainId, matrixUrl, props.item, client])
+    const member = useGetUserFromAddress(props.item)
 
     const onClick = useEvent(() => {
         props.onRemoveItem(props.item)
@@ -148,10 +134,10 @@ const MemberRenderer = (props: { item: string; onRemoveItem: (id: string) => voi
         if (props.item === EVERYONE_ADDRESS) {
             return <Avatar icon="people" size="avatar_x4" />
         }
-        if (!matrixuser) {
+        if (!member) {
             return <Avatar size="avatar_x4" />
         }
-        return <Avatar size="avatar_x4" userId={matrixuser.userId} />
+        return <Avatar size="avatar_x4" userId={member.userId} />
     }
 
     return (
@@ -166,9 +152,7 @@ const MemberRenderer = (props: { item: string; onRemoveItem: (id: string) => voi
         >
             {avatarContent()}
             <Text>
-                {props.item === EVERYONE_ADDRESS
-                    ? 'Everyone'
-                    : getPrettyDisplayName(matrixuser).name}
+                {props.item === EVERYONE_ADDRESS ? 'Everyone' : getPrettyDisplayName(member).name}
             </Text>
             <Text color="gray2">
                 {props.item === EVERYONE_ADDRESS

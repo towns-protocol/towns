@@ -1,10 +1,9 @@
-import React, { useCallback, useMemo, useRef, useState } from 'react'
+import React, { useCallback, useRef, useState } from 'react'
 import { toast } from 'react-hot-toast/headless'
 import { useNavigate } from 'react-router'
 import { Link } from 'react-router-dom'
 import { useEvent } from 'react-use-event-hook'
 import {
-    createUserIdFromEthereumAddress,
     useHasPermission,
     useSpaceData,
     useSpaceId,
@@ -52,8 +51,8 @@ import {
 } from 'api/lib/notificationSettings'
 import { useCreateLink } from 'hooks/useCreateLink'
 import { Panel, PanelButton } from '@components/Panel/Panel'
+import { useGetUserFromAddress } from 'hooks/useGetUserFromAddress'
 import { useContractSpaceInfo } from '../hooks/useContractSpaceInfo'
-import { useEnvironment } from '../hooks/useEnvironmnet'
 import { env } from '../utils/environment'
 import { AllChannelsList } from './AllChannelsList/AllChannelsList'
 
@@ -71,7 +70,7 @@ export const SpaceInfoPanel = () => {
     const space = useSpaceData()
     const { isTouch } = useDevice()
 
-    const { client, chainId, leaveRoom } = useZionClient()
+    const { client, leaveRoom } = useZionClient()
     const channels = useSpaceChannels()
     const { loggedInWalletAddress } = useAuth()
 
@@ -84,7 +83,6 @@ export const SpaceInfoPanel = () => {
         permission: Permission.ModifySpaceSettings,
     })
 
-    const { matrixUrl } = useEnvironment()
     const [isEdit, setIsEdit] = useState(false)
     const [editErrorMessage, setEditErrorMessage] = useState<string | null>(null)
     const textAreaRef = useRef<HTMLTextAreaElement>(null)
@@ -92,18 +90,7 @@ export const SpaceInfoPanel = () => {
 
     const { mutate, isLoading: isSettingSpaceTopic } = useSetSpaceTopic(space?.id)
 
-    const matrixUserOwner = useMemo(() => {
-        if (!data?.owner || !chainId) {
-            return undefined
-        }
-        const _homeserverUrl = new URL(matrixUrl || '')
-        const userId = createUserIdFromEthereumAddress(
-            data.owner,
-            chainId,
-        ).matrixUserIdLocalpart.toLowerCase()
-        const matrixIdFromOwnerAddress = `@${userId}:${_homeserverUrl.hostname}`
-        return client?.getUser(matrixIdFromOwnerAddress)
-    }, [client, data?.owner, matrixUrl, chainId])
+    const spaceOwner = useGetUserFromAddress(data?.owner)
 
     const { members } = useSpaceMembers()
     const [activeModal, setActiveModal] = useState<
@@ -214,8 +201,7 @@ export const SpaceInfoPanel = () => {
 
     const { createLink: createProfileLink } = useCreateLink()
 
-    const ownerProfileLink =
-        matrixUserOwner && createProfileLink({ profileId: matrixUserOwner.userId })
+    const ownerProfileLink = spaceOwner && createProfileLink({ profileId: spaceOwner.userId })
 
     return (
         <Panel modalPresentable label="Town Info" onClose={onClose}>
@@ -420,20 +406,17 @@ export const SpaceInfoPanel = () => {
                         <Paragraph strong color="default">
                             Owner
                         </Paragraph>
-                        {matrixUserOwner && ownerProfileLink ? (
+                        {spaceOwner && ownerProfileLink ? (
                             <>
                                 <Link to={ownerProfileLink + `?spaceInfo`}>
                                     <Box flexDirection="row" gap="sm">
-                                        {matrixUserOwner && (
-                                            <Avatar
-                                                size="avatar_x4"
-                                                userId={matrixUserOwner.userId}
-                                            />
+                                        {spaceOwner && (
+                                            <Avatar size="avatar_x4" userId={spaceOwner.userId} />
                                         )}
                                         <Box justifyContent="spaceBetween" overflow="hidden">
                                             <Paragraph truncate>
-                                                {matrixUserOwner &&
-                                                    getPrettyDisplayName(matrixUserOwner).name}
+                                                {spaceOwner &&
+                                                    getPrettyDisplayName(spaceOwner).name}
                                             </Paragraph>
                                             <Paragraph color="gray2">
                                                 {data?.owner ? shortAddress(data.owner) : ''}
