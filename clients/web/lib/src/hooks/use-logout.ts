@@ -1,13 +1,13 @@
-import { useZionContext } from '../../components/ZionContextProvider'
+import { useZionContext } from '../components/ZionContextProvider'
 import { useCallback } from 'react'
-import { useCredentialStore } from '../../store/use-credential-store'
-import { useMatrixStore } from '../../store/use-matrix-store'
-import { LoginStatus } from '../login'
+import { useCredentialStore } from '../store/use-credential-store'
+import { useMatrixStore } from '../store/use-matrix-store'
+import { LoginStatus } from './login'
 
 export const useLogout = () => {
-    const { homeServerUrl } = useZionContext()
+    const { homeServerUrl, casablancaServerUrl } = useZionContext()
     const { setLoginStatus } = useMatrixStore()
-    const { setMatrixCredentials } = useCredentialStore()
+    const { setMatrixCredentials, setCasablancaCredentials } = useCredentialStore()
 
     const { client } = useZionContext()
 
@@ -23,9 +23,20 @@ export const useLogout = () => {
                     console.error('Error logging out:', (ex as Error)?.stack)
                 }
             }
+
             setLoginStatus(LoginStatus.LoggedOut)
             setMatrixCredentials(homeServerUrl, null)
+            if (casablancaServerUrl) {
+                setCasablancaCredentials(casablancaServerUrl, null)
+            }
         },
-        [setLoginStatus, client, setMatrixCredentials, homeServerUrl],
+        [
+            setLoginStatus,
+            client,
+            setMatrixCredentials,
+            homeServerUrl,
+            casablancaServerUrl,
+            setCasablancaCredentials,
+        ],
     )
 }
