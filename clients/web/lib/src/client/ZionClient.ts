@@ -18,6 +18,7 @@ import {
 import {
     ChannelTransactionContext,
     ChannelUpdateTransactionContext,
+    CreateSpaceTransactionContext,
     IZionServerVersions,
     MatrixAuth,
     RoleTransactionContext,
@@ -401,7 +402,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
         memberEntitlements: ITownArchitectBase.MemberEntitlementStruct,
         everyonePermissions: Permission[],
         signer: ethers.Signer | undefined,
-    ): Promise<TransactionContext<RoomIdentifier>> {
+    ): Promise<CreateSpaceTransactionContext> {
         if (!signer) {
             throw new SignerUndefinedError()
         }
@@ -429,7 +430,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
     }
 
     public async waitForCreateSpaceTransaction(
-        context: TransactionContext<RoomIdentifier> | undefined,
+        context: CreateSpaceTransactionContext | undefined,
     ): Promise<TransactionContext<RoomIdentifier>> {
         if (!context?.transaction) {
             console.error('[waitForCreateSpaceTransaction] transaction is undefined')
@@ -454,6 +455,35 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
         if (receipt?.status === 1) {
             console.log('[waitForCreateSpaceTransaction] success', roomId)
             if (roomId) {
+                switch (roomId?.protocol) {
+                    case SpaceProtocol.Casablanca:
+                        // wait until the space and channel are minted on-chain
+                        // before creating the streams
+                        if (!this.casablancaClient) {
+                            throw new Error("Casablanca client doesn't exist")
+                        }
+                        await createCasablancaSpace(
+                            this.casablancaClient,
+                            context.spaceName ?? 'Untitled Space',
+                            roomId.networkId,
+                        )
+                        console.log('[waitForCreateSpaceTransaction] Space stream created', roomId)
+
+                        await this.createSpaceDefaultChannelRoom(
+                            roomId,
+                            'general',
+                            context.channelId,
+                        )
+                        console.log(
+                            '[waitForCreateSpaceTransaction] default channel stream created',
+                            context.channelId,
+                        )
+                        break
+                    case SpaceProtocol.Matrix:
+                        // no op because the room and channel creation logic is
+                        // different, and is handled in createSpaceTransaction
+                        break
+                }
                 // emiting the event here, because the web app calls different
                 // functions to create a space, and this is the only place
                 // that all different functions go through
@@ -503,7 +533,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
                 if (!this.casablancaClient) {
                     throw new Error("Casablanca client doesn't exist")
                 }
-                return createCasablancaSpace(this.casablancaClient, createSpaceInfo, networkId)
+                return createCasablancaSpace(this.casablancaClient, createSpaceInfo.name, networkId)
             default:
                 staticAssertNever(createSpaceInfo.spaceProtocol)
         }
@@ -514,7 +544,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
         memberEntitlements: ITownArchitectBase.MemberEntitlementStruct,
         everyonePermissions: Permission[],
         signer: ethers.Signer,
-    ): Promise<TransactionContext<RoomIdentifier>> {
+    ): Promise<CreateSpaceTransactionContext> {
         const spaceId: RoomIdentifier = makeCasablancaStreamIdentifier(makeUniqueSpaceStreamId())
         const channelId: RoomIdentifier = makeCasablancaStreamIdentifier(
             makeUniqueChannelStreamId(),
@@ -543,27 +573,13 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
             error = await this.onErrorLeaveSpaceRoomAndDecodeError(spaceId, err)
         }
 
-        if (!error) {
-            try {
-                await this.createSpaceRoom(createSpaceInfo, spaceId.networkId)
-                console.log('[createCasablancaSpaceTransaction] Space created', spaceId)
-
-                await this.createSpaceDefaultChannelRoom(spaceId, 'general', channelId)
-                console.log('[createCasablancaSpaceTransaction] default channel created', channelId)
-            } catch (err) {
-                console.error(
-                    '[createCasablancaSpaceTransaction] default channel creation failed',
-                    err,
-                )
-                error = err as Error
-            }
-        }
-
         return {
             transaction,
             receipt: undefined,
             status: transaction ? TransactionStatus.Pending : TransactionStatus.Failed,
             data: transaction ? spaceId : undefined,
+            channelId,
+            spaceName: createSpaceInfo.name,
             error,
         }
     }
@@ -573,7 +589,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
         memberEntitlements: ITownArchitectBase.MemberEntitlementStruct,
         everyonePermissions: Permission[],
         signer: ethers.Signer,
-    ): Promise<TransactionContext<RoomIdentifier>> {
+    ): Promise<CreateSpaceTransactionContext> {
         let transaction: ContractTransaction | undefined
         let error: Error | undefined
         let spaceId: RoomIdentifier | undefined = undefined
@@ -637,6 +653,8 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
             receipt: undefined,
             status: transaction ? TransactionStatus.Pending : TransactionStatus.Failed,
             data: transaction ? spaceId : undefined,
+            channelId,
+            spaceName: createSpaceInfo.name,
             error,
         }
     }

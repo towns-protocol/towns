@@ -4,6 +4,7 @@
 import {
     ChannelTransactionContext,
     ChannelUpdateTransactionContext,
+    CreateSpaceTransactionContext,
     IZionServerVersions,
     RoleTransactionContext,
     TransactionContext,
@@ -65,9 +66,9 @@ interface ZionClientImpl {
         memberEntitlements: ITownArchitectBase.MemberEntitlementStruct,
         everyonePermissions: Permission[],
         signer: ethers.Signer | undefined,
-    ) => Promise<TransactionContext<RoomIdentifier> | undefined>
+    ) => Promise<CreateSpaceTransactionContext | undefined>
     waitForCreateSpaceTransaction: (
-        context: TransactionContext<RoomIdentifier> | undefined,
+        context: CreateSpaceTransactionContext | undefined,
     ) => Promise<TransactionContext<RoomIdentifier> | undefined>
     createChannelTransaction: (
         createChannelInfo: CreateChannelInfo,

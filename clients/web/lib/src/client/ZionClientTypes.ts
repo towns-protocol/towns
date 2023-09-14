@@ -87,6 +87,11 @@ export interface TransactionContext<T> {
     error?: Error
 }
 
+export interface CreateSpaceTransactionContext extends TransactionContext<RoomIdentifier> {
+    spaceName?: string
+    channelId?: RoomIdentifier
+}
+
 export type ChannelTransactionContext = TransactionContext<RoomIdentifier>
 
 export interface ChannelUpdateTransactionContext extends TransactionContext<UpdateChannelInfo> {
