@@ -113,7 +113,7 @@
       {
         "label": "FoundryUp",
         "type": "shell",
-        "command": "foundryup",
+        "command": "./scripts/foundry-up.sh",
         "isBackground": true,
         "problemMatcher": [],
         "presentation": {
@@ -237,7 +237,7 @@
       {
         "label": "Anvil",
         "type": "shell",
-        "command": "foundryup -v nightly-ca67d15f4abd46394b324c50e21e66f306a1162d && ./scripts/start-local-blockchain.sh",
+        "command": "./scripts/foundry-up.sh && ./scripts/start-local-blockchain.sh",
         "isBackground": true,
         "problemMatcher": [],
         "presentation": {
@@ -257,7 +257,7 @@
       {
         "label": "BuildContractTypes",
         "type": "shell",
-        "command": "foundryup && ./scripts/build-contract-types.sh localhost",
+        "command": "./scripts/foundry-up.sh && ./scripts/build-contract-types.sh localhost",
         "isBackground": true,
         "problemMatcher": [],
         "presentation": {

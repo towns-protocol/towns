@@ -1,4 +1,6 @@
 name: Continuous Integration
+env:
+    FOUNDRY_VERSION: nightly-ca67d15f4abd46394b324c50e21e66f306a1162d
 on:
     schedule:
         # run during working hours
@@ -26,7 +28,6 @@ on:
                 required: false
                 default: false
                 type: boolean
-
 jobs:
     Dendrite:
         permissions: write-all
@@ -70,7 +71,7 @@ jobs:
             - name: Install Foundry
               uses: foundry-rs/foundry-toolchain@v1
               with:
-                  version: nightly-ca67d15f4abd46394b324c50e21e66f306a1162d
+                  version: ${{ env.FOUNDRY_VERSION }}
 
             - name: Install Forge modules
               run: ./scripts/install-deps.sh
@@ -205,7 +206,7 @@ jobs:
             - name: Install Foundry
               uses: foundry-rs/foundry-toolchain@v1
               with:
-                  version: nightly-ca67d15f4abd46394b324c50e21e66f306a1162d
+                  version: ${{ env.FOUNDRY_VERSION }}
 
             - name: Install Forge modules
               run: ./scripts/install-deps.sh
@@ -351,7 +352,7 @@ jobs:
             - name: Install Foundry
               uses: foundry-rs/foundry-toolchain@v1
               with:
-                  version: nightly-ca67d15f4abd46394b324c50e21e66f306a1162d
+                  version: ${{ env.FOUNDRY_VERSION }}
 
             - name: Install Forge modules
               run: ./scripts/install-deps.sh

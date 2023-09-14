@@ -9,7 +9,7 @@ Download [Foundry](https://github.com/foundry-rs/foundry)\
 `curl -L https://foundry.paradigm.xyz | bash`
 
 Then after reloading PATH, to install it run:\
-`foundryup`
+`./scripts/foundry-up.sh`
 
 If you see a warning about libusb, install it by running:\
 `brew install libusb`

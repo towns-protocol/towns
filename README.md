@@ -24,7 +24,7 @@ Welcome to the Harmony mono repo. Here you will find all of the components to ru
 
 ```
     curl -L https://foundry.paradigm.xyz | bash
-    foundryup
+    ./scripts/foundry-up.sh
     # If you see a warning about libusb, install it by running:\
     brew install libusb
 ```
