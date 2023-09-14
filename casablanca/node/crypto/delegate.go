@@ -32,18 +32,17 @@ func CheckDelegateSig(expectedAddress []byte, devicePubKey, delegateSig []byte) 
 	return nil
 }
 
-// TODO(HNT-1380): remove this function once transition to new delegate sig is complete
-func RecoverOldDelegateSigAddress(devicePubKey, delegateSig []byte) (*common.Address, error) {
-	if len(delegateSig) != 65 {
-		return nil, RpcErrorf(Err_BAD_EVENT_SIGNATURE, "Bad signature provided, expected 65 bytes, got %d", len(delegateSig))
+func RecoverEthereumMessageSignerAddress(content, signature []byte) (*common.Address, error) {
+	if len(signature) != 65 {
+		return nil, RpcErrorf(Err_BAD_EVENT_SIGNATURE, "Bad signature provided, expected 65 bytes, got %d", len(signature))
 	}
-	if delegateSig[64] != 27 && delegateSig[64] != 28 {
-		return nil, RpcErrorf(Err_BAD_EVENT_SIGNATURE, "Bad signature provided, expected recovery id 27 or 28, got %d", delegateSig[64])
+	if signature[64] != 27 && signature[64] != 28 {
+		return nil, RpcErrorf(Err_BAD_EVENT_SIGNATURE, "Bad signature provided, expected recovery id 27 or 28, got %d", signature[64])
 	}
-	delegateSig[64] -= 27
+	signature[64] -= 27
 
-	hash := accounts.TextHash(devicePubKey)
-	recoveredKey, err := secp256k1.RecoverPubkey(hash, delegateSig)
+	hash := accounts.TextHash(content)
+	recoveredKey, err := secp256k1.RecoverPubkey(hash, signature)
 	if err != nil {
 		return nil, err
 	}
@@ -51,14 +50,13 @@ func RecoverOldDelegateSigAddress(devicePubKey, delegateSig []byte) (*common.Add
 	return &address, nil
 }
 
-// TODO(HNT-1380): remove this function once transition to new delegate sig is complete
-func CheckOldDelegateSig(expectedAddress []byte, devicePubKey, delegateSig []byte) error {
-	recoveredAddress, err := RecoverOldDelegateSigAddress(devicePubKey, delegateSig)
+func CheckEthereumMessageSignature(expectedAddress []byte, devicePubKey, delegateSig []byte) error {
+	recoveredAddress, err := RecoverEthereumMessageSignerAddress(devicePubKey, delegateSig)
 	if err != nil {
 		return err
 	}
 	if !bytes.Equal(expectedAddress, recoveredAddress.Bytes()) {
-		return RpcErrorf(Err_BAD_EVENT_SIGNATURE, "(Old Delegate) Bad signature provided, computed address %x, event creatorAddress %x", recoveredAddress, expectedAddress)
+		return RpcErrorf(Err_BAD_EVENT_SIGNATURE, "(Ethereum Message) Bad signature provided, computed address %x, expected address %x", recoveredAddress, expectedAddress)
 	}
 	return nil
 }

@@ -37,6 +37,6 @@ func TestDelegateOld(t *testing.T) {
 	assert.NoError(t, err)
 	delegatSig[64] += 27
 
-	err = CheckOldDelegateSig(primaryWallet.Address.Bytes(), devicePubKey, delegatSig)
+	err = CheckEthereumMessageSignature(primaryWallet.Address.Bytes(), devicePubKey, delegatSig)
 	assert.NoError(t, err)
 }

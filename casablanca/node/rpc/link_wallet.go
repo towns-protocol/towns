@@ -77,14 +77,14 @@ func validateWalletLink(message *LinkWalletRequest) error {
 		return err
 	}
 	/**
-		* Using old style delegate signature here.
-	    * The old style signature is a signature produced by pop-up message signing by the ethereum wallet (e.g. Metamask)
+		* Using standard ethereum message signature here.
+	    * The signature is produced by pop-up message signing by the ethereum wallet (e.g. Metamask)
 	    * The message in this case is the public part of the River Root Key.
 	    * Specifically, the signature is calculated like this:
 	    *   1. Message := \x19Ethereum Signed Message:\n{length of message}{RootKey public part}
 	    *   2. Signature := Sign(keccak256(Message), wallet private key)
 	*/
-	err = crypto.CheckOldDelegateSig(walletAddressBytes, rootKeyPub, walletSig)
+	err = crypto.CheckEthereumMessageSignature(walletAddressBytes, rootKeyPub, walletSig)
 	if err != nil {
 		return err
 	}
