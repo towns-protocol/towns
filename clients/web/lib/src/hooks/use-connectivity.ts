@@ -11,51 +11,52 @@ export const registerWalletMsgToSign = `Click to register and accept the Towns T
 
 export function useConnectivity() {
     const { primaryProtocol } = useZionContext()
-    const loginWithCasablanca = primaryProtocol === SpaceProtocol.Casablanca
+    const isCasablancaProtocol = primaryProtocol === SpaceProtocol.Casablanca
     const matrixCredentials = useMatrixCredentials()
     const casablancaCredentials = useCasablancaCredentials()
 
-    const isAuthenticated = loginWithCasablanca
+    const isAuthenticated = isCasablancaProtocol
         ? casablancaCredentials.isAuthenticated
         : matrixCredentials.isAuthenticated
-    const loginStatus = loginWithCasablanca
+    const loginStatus = isCasablancaProtocol
         ? casablancaCredentials.loginStatus
         : matrixCredentials.loginStatus
-    const loginError = loginWithCasablanca
+    const loginError = isCasablancaProtocol
         ? casablancaCredentials.loginError
         : matrixCredentials.loginError
-    const loggedInWalletAddress = loginWithCasablanca
+    const loggedInWalletAddress = isCasablancaProtocol
         ? casablancaCredentials.loggedInWalletAddress
         : matrixCredentials.loggedInWalletAddress
 
     const {
         loginWithWalletToMatrix,
         registerWalletWithMatrix,
+        getIsWalletRegisteredWithMatrix,
         loginWithWalletToCasablanca,
         registerWalletWithCasablanca,
+        getIsWalletRegisteredWithCasablanca,
         userOnWrongNetworkForSignIn,
         logout: _logout,
     } = useZionClient()
     const { activeWalletAddress } = useWeb3Context()
 
-    const matrixLogin = useCallback(async () => {
-        await loginWithWalletToMatrix(loginMsgToSign)
-    }, [loginWithWalletToMatrix])
+    const login = useCallback(async () => {
+        return isCasablancaProtocol
+            ? await loginWithWalletToCasablanca(loginMsgToSign)
+            : await loginWithWalletToMatrix(loginMsgToSign)
+    }, [isCasablancaProtocol, loginWithWalletToCasablanca, loginWithWalletToMatrix])
 
-    const matrixRegister = useCallback(async () => {
-        await registerWalletWithMatrix(registerWalletMsgToSign)
-    }, [registerWalletWithMatrix])
+    const register = useCallback(async () => {
+        return isCasablancaProtocol
+            ? await registerWalletWithCasablanca(registerWalletMsgToSign)
+            : await registerWalletWithMatrix(registerWalletMsgToSign)
+    }, [isCasablancaProtocol, registerWalletWithCasablanca, registerWalletWithMatrix])
 
-    const riverLogin = useCallback(async () => {
-        await loginWithWalletToCasablanca(loginMsgToSign)
-    }, [loginWithWalletToCasablanca])
-
-    const riverRegister = useCallback(async () => {
-        await registerWalletWithCasablanca(registerWalletMsgToSign)
-    }, [registerWalletWithCasablanca])
-
-    const login = loginWithCasablanca ? riverLogin : matrixLogin
-    const register = loginWithCasablanca ? riverRegister : matrixRegister
+    const getIsWalletRegistered = useCallback(() => {
+        return isCasablancaProtocol
+            ? getIsWalletRegisteredWithCasablanca()
+            : getIsWalletRegisteredWithMatrix()
+    }, [getIsWalletRegisteredWithCasablanca, getIsWalletRegisteredWithMatrix, isCasablancaProtocol])
 
     const logout = useCallback(async () => {
         await _logout()
@@ -65,6 +66,7 @@ export function useConnectivity() {
         login,
         logout,
         register,
+        getIsWalletRegistered,
         activeWalletAddress,
         loggedInWalletAddress,
         isAuthenticated, // matrix status

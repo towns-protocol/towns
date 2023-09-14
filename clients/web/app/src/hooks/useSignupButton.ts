@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useZionClient } from 'use-zion-client'
+import { useAuth } from './useAuth'
 
 export enum SignupButtonStatus {
     Login = 'login.required',
@@ -32,8 +32,8 @@ const useSignUpButtonClick = (
 /**
  * async registration check fired once the wallet is unlocked
  **/
-const useCheckRegistrationStatusWhen = () => {
-    const { getIsWalletRegisteredWithMatrix } = useZionClient()
+const useCheckRegistrationStatus = () => {
+    const { getIsWalletRegistered } = useAuth()
     const [registrationStatus, setRegistrationStatus] = useState<SignupButtonStatus>()
     const checkedRef = useRef(false)
 
@@ -47,7 +47,7 @@ const useCheckRegistrationStatusWhen = () => {
         ;(async () => {
             try {
                 setRegistrationStatus(SignupButtonStatus.FetchingRegistrationStatus)
-                const isRegistered = await getIsWalletRegisteredWithMatrix()
+                const isRegistered = await getIsWalletRegistered()
                 if (isRegistered) {
                     setRegistrationStatus(SignupButtonStatus.Login)
                 } else {
@@ -63,7 +63,7 @@ const useCheckRegistrationStatusWhen = () => {
         return () => {
             cancelled = true
         }
-    }, [getIsWalletRegisteredWithMatrix])
+    }, [getIsWalletRegistered])
 
     return registrationStatus
 }
@@ -75,7 +75,7 @@ export const useSignupButton = ({
     login: () => void
     register: () => void
 }) => {
-    const registrationStatus = useCheckRegistrationStatusWhen()
+    const registrationStatus = useCheckRegistrationStatus()
     // actual state of the button based on connection AND registration
     const status = registrationStatus ?? SignupButtonStatus.FetchingRegistrationStatus
 

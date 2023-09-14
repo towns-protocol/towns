@@ -18,6 +18,7 @@ export function useAuth() {
         loginStatus,
         loginError,
         userOnWrongNetworkForSignIn,
+        getIsWalletRegistered,
     } = useConnectivity()
 
     const { disconnect } = useDisconnect()
@@ -64,6 +65,7 @@ export function useAuth() {
         login,
         logout,
         register,
+        getIsWalletRegistered,
         activeWalletAddress,
         loggedInWalletAddress,
         connectError,

@@ -90,6 +90,7 @@ export function mockUseConnectivity(): ReturnType<typeof Lib.useConnectivity> {
         login: () => Promise.resolve(),
         logout: () => Promise.resolve(),
         register: () => Promise.resolve(),
+        getIsWalletRegistered: () => Promise.resolve(true),
         activeWalletAddress: '0x6789',
         loggedInWalletAddress: '0x1234',
         isAuthenticated: true, // matrix status
