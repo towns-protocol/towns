@@ -9,8 +9,8 @@
     "town": "0xf5059a5D33d5853360D16C683c16e67980206f36",
     "walletLink": "0xa82fF9aFd8f496c3d6ac40E2a0F282E47488CFc9",
     "mockNFT": "0x7969c5eD335650692Bc04293B07F5BF2e7A673C0",
-    "entitlementChecker": "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707",
-    "entitlementGatedExample": "0xa513E6E4b8f2a923D98304ec87F64353C4D5C853"
+    "entitlementChecker": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+    "entitlementGatedExample": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512"
   },
   "5": {
     "spaceFactory": "0x59E16E32040Af97E56244562b569a244D3e59342",

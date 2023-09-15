@@ -122,7 +122,16 @@ func WaitForTransaction(client *ethclient.Client, tx *types.Transaction) *big.In
 					log.Error("Failed to marshal receipt", "err", err)
 					return nil
 				}
-				log.Error("Transaction failed with status but no logs were emitted.", "status", tx.Hash().Hex(), "rcp", rcp)
+				rpcClient := client.Client() // Access the underlying rpc.Client
+
+				var result map[string]interface{} // Replace with the actual type of the result
+
+				err = rpcClient.Call(&result, "debug_traceTransaction", tx.Hash(), map[string]interface{}{})
+				if err != nil {
+					log.Error("Failed to execute debug_traceTransaction: %v", err)
+				}
+				log.Error("Transaction failed with status but no logs were emitted.", "status", tx.Hash().Hex(), "rcp", rcp, "result", result)
+
 				return nil
 			}
 

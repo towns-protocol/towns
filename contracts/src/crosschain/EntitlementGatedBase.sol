@@ -75,10 +75,6 @@ abstract contract EntitlementGatedBase is IEntitlementGatedBase {
       revert EntitlementGated_TransactionNotRegistered();
     }
 
-    if (transaction.checkResult != NodeVoteStatus.NOT_VOTED) {
-      revert EntitlementGated_TransactionAlreadyCompleted();
-    }
-
     // find node in the array and update the vote, revert if node was not found
     bool found;
 

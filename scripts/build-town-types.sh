@@ -22,8 +22,8 @@ RIVER_TOWNS_WALLET_LINK_DIR="${RIVER_DIR}/${CHAIN}_towns_wallet_link"
 XCHAIN_DIR="servers/xchain/contracts"
 XCHAIN_PACKAGE="_xchain"
 
-#forge clean
-forge build --extra-output-files metadata --extra-output-files abi
+forge clean
+forge build --extra-output-files metadata --extra-output-files abi --force
 
 yarn typechain --target=ethers-v5 "contracts/out/**/?(IDiamond|IDiamondCut|ITownArchitect|IProxyManager|IPausable|IEntitlements|IChannel|IRoles|IMulticall|TokenEntitlement|IWalletLink|OwnableFacet|TokenPausableFacet|UserEntitlement|ITownOwner|MockERC721A).json" --out-dir "packages/generated/${CHAIN}/v3/typings"
 
@@ -55,12 +55,11 @@ go run github.com/ethereum/go-ethereum/cmd/abigen@v1.12.2 --abi contracts/out/En
 go run github.com/ethereum/go-ethereum/cmd/abigen@v1.12.2 --abi contracts/out/Pausable.sol/Pausable.abi.json --pkg "${CHAIN}_towns_pausable" --type "${CHAIN}_towns_pausable" --out "${DENDRITE_TOWNS_PAUSABLE_DIR}/${CHAIN}_towns_pausable.go"
 go run github.com/ethereum/go-ethereum/cmd/abigen@v1.12.2 --abi contracts/out/Pausable.sol/Pausable.abi.json --pkg "${CHAIN}_towns_pausable" --type "${CHAIN}_towns_pausable" --out "${RIVER_TOWNS_PAUSABLE_DIR}/${CHAIN}_towns_pausable.go"
 # Towns Delegation Registry
-go run github.com/ethereum/go-ethereum/cmd/abigen@v1.12.2 --abi contracts/out/Delegation.sol/Delegation.abi.json --pkg "${CHAIN}_towns_delegation" --type "${CHAIN}_towns_delegation" --out "${DENDRITE_TOWNS_DELEGATION_DIR}/${CHAIN}_towns_delegation.go"
-go run github.com/ethereum/go-ethereum/cmd/abigen@v1.12.2 --abi contracts/out/Delegation.sol/Delegation.abi.json --pkg "${CHAIN}_towns_delegation" --type "${CHAIN}_towns_delegation" --out "${RIVER_TOWNS_DELEGATION_DIR}/${CHAIN}_towns_delegation.go"
+#go run github.com/ethereum/go-ethereum/cmd/abigen@v1.12.2 --abi contracts/out/Delegation.sol/Delegation.abi.json --pkg "${CHAIN}_towns_delegation" --type "${CHAIN}_towns_delegation" --out "${DENDRITE_TOWNS_DELEGATION_DIR}/${CHAIN}_towns_delegation.go"
+#go run github.com/ethereum/go-ethereum/cmd/abigen@v1.12.2 --abi contracts/out/Delegation.sol/Delegation.abi.json --pkg "${CHAIN}_towns_delegation" --type "${CHAIN}_towns_delegation" --out "${RIVER_TOWNS_DELEGATION_DIR}/${CHAIN}_towns_delegation.go"
 # XChain Entitlements typings
-go run github.com/ethereum/go-ethereum/cmd/abigen@v1.12.2 --abi contracts/out/EntitlementChecker.sol/EntitlementChecker.abi.json --pkg "${CHAIN}${XCHAIN_PACKAGE}" --type "${CHAIN}EntitlementChecker" --out "${XCHAIN_DIR}/${CHAIN}_xchain_EntitlementChecker.go"
-go run github.com/ethereum/go-ethereum/cmd/abigen@v1.12.2 --abi contracts/out/IEntitlementCheckerEvents.sol/IEntitlementCheckerEvents.abi.json --pkg "${CHAIN}${XCHAIN_PACKAGE}" --type "${CHAIN}IEntitlementCheckerEvents" --out "${XCHAIN_DIR}/${CHAIN}_xchain_IEntitlementCheckerEvents.go"
-go run github.com/ethereum/go-ethereum/cmd/abigen@v1.12.2 --abi contracts/out/EntitlementGated.sol/EntitlementGated.abi.json --pkg "${CHAIN}${XCHAIN_PACKAGE}" --type "${CHAIN}EntitlementGated" --out "${XCHAIN_DIR}/${CHAIN}_xchain_EntitlementGated.go"
+go run github.com/ethereum/go-ethereum/cmd/abigen@v1.12.2 --abi contracts/out/IEntitlementChecker.sol/IEntitlementChecker.abi.json --pkg "${CHAIN}${XCHAIN_PACKAGE}" --type "${CHAIN}IEntitlementChecker" --out "${XCHAIN_DIR}/${CHAIN}_xchain_IEntitlementChecker.go"
+go run github.com/ethereum/go-ethereum/cmd/abigen@v1.12.2 --abi contracts/out/IEntitlementGated.sol/IEntitlementGated.abi.json --pkg "${CHAIN}${XCHAIN_PACKAGE}" --type "${CHAIN}IEntitlementGated" --out "${XCHAIN_DIR}/${CHAIN}_xchain_IEntitlementGated.go"
 # Towns WalletLink Registry
 go run github.com/ethereum/go-ethereum/cmd/abigen@v1.12.2 --abi contracts/out/WalletLink.sol/WalletLink.abi.json --pkg "${CHAIN}_towns_wallet_link" --type "${CHAIN}_towns_wallet_link" --out "${DENDRITE_TOWNS_WALLET_LINK_DIR}/${CHAIN}_towns_wallet_link.go"
 go run github.com/ethereum/go-ethereum/cmd/abigen@v1.12.2 --abi contracts/out/WalletLink.sol/WalletLink.abi.json --pkg "${CHAIN}_towns_wallet_link" --type "${CHAIN}_towns_wallet_link" --out "${RIVER_TOWNS_WALLET_LINK_DIR}/${CHAIN}_towns_wallet_link.go"

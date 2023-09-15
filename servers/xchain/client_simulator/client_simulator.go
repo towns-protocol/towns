@@ -48,17 +48,17 @@ func ClientSimulator() {
 		return
 	}
 
-	gatedContract, err := e.NewLocalhostEntitlementGated(*xc.GetGatedContractAddress(), client)
+	gatedContract, err := e.NewLocalhostIEntitlementGated(*xc.GetGatedContractAddress(), client)
 	if err != nil {
 		log.Error("Failed to parse contract ABI", "err", err)
 		return
 	}
 
-	resultPosted := make(chan *e.LocalhostIEntitlementCheckerEventsEntitlementCheckResultPosted)
+	resultPosted := make(chan *e.LocalhostIEntitlementGatedEntitlementCheckResultPosted)
 
-	checkRequestedResults := make(chan *e.LocalhostIEntitlementCheckerEventsEntitlementCheckRequested)
+	checkRequestedResults := make(chan *e.LocalhostIEntitlementCheckerEntitlementCheckRequested)
 
-	checkerFilterer, err := e.NewLocalhostIEntitlementCheckerEventsFilterer(*xc.GetCheckerContractAddress(), client)
+	checkerFilterer, err := e.NewLocalhostIEntitlementCheckerFilterer(*xc.GetCheckerContractAddress(), client)
 
 	if err != nil {
 		log.Error("Failed call NewEntitlementCheckerEventsFilterer", "err", err)
@@ -79,7 +79,7 @@ func ClientSimulator() {
 		checkRequestedSubCh = checkRequestedSub.Err()
 	}
 
-	gatedFilter, err := e.NewLocalhostIEntitlementCheckerEventsFilterer(*xc.GetGatedContractAddress(), client)
+	gatedFilter, err := e.NewLocalhostIEntitlementGatedFilterer(*xc.GetGatedContractAddress(), client)
 	if err != nil {
 		log.Error("Failed to parse contract ABI", "err", err)
 		return
@@ -170,9 +170,9 @@ func ClientSimulator() {
 			}
 			auth.Nonce = big.NewInt(int64(nonce))
 
-			tx, err = gatedContract.DeleteTransaction(auth, result.TransactionId)
+			tx, err = gatedContract.RemoveTransaction(auth, result.TransactionId)
 			if err != nil {
-				log.Error("Client DeleteTransaction error", "err", err)
+				log.Error("Client RemoveTransaction error", "err", err)
 				return
 			}
 			if resultSub != nil {
@@ -181,8 +181,8 @@ func ClientSimulator() {
 				log.Info("Client Unsubscribe resultSub")
 			}
 			go func() {
-				deleteBlockNum := xc.WaitForTransaction(client, tx)
-				log.Info("Client DeleteTransaction ", "TransactionId", hex.EncodeToString(result.TransactionId[:]), "blcokNumber", deleteBlockNum) // for verifying tx on Etherscan
+				removeBlockNum := xc.WaitForTransaction(client, tx)
+				log.Info("Client RemoveTransaction ", "TransactionId", hex.EncodeToString(result.TransactionId[:]), "blcokNumber", removeBlockNum) // for verifying tx on Etherscan
 			}()
 			return
 		case err := <-checkRequestedSubCh:

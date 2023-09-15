@@ -79,20 +79,20 @@
   },
   "ast": {
     "absolutePath": "contracts/src/crosschain/checker/EntitlementCheckerStorage.sol",
-    "id": 5822,
+    "id": 5812,
     "exportedSymbols": {
       "EntitlementCheckerStorage": [
-        5821
+        5811
       ],
       "EnumerableSet": [
-        120975
+        120958
       ]
     },
     "nodeType": "SourceUnit",
     "src": "39:503:32",
     "nodes": [
       {
-        "id": 5797,
+        "id": 5787,
         "nodeType": "PragmaDirective",
         "src": "39:24:32",
         "nodes": [],
@@ -104,23 +104,23 @@
         ]
       },
       {
-        "id": 5799,
+        "id": 5789,
         "nodeType": "ImportDirective",
         "src": "93:95:32",
         "nodes": [],
         "absolutePath": "lib/openzeppelin-contracts/contracts/utils/structs/EnumerableSet.sol",
         "file": "openzeppelin-contracts/contracts/utils/structs/EnumerableSet.sol",
         "nameLocation": "-1:-1:-1",
-        "scope": 5822,
-        "sourceUnit": 120976,
+        "scope": 5812,
+        "sourceUnit": 120959,
         "symbolAliases": [
           {
             "foreign": {
-              "id": 5798,
+              "id": 5788,
               "name": "EnumerableSet",
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
-              "referencedDeclaration": 120975,
+              "referencedDeclaration": 120958,
               "src": "101:13:32",
               "typeDescriptions": {}
             },
@@ -130,12 +130,12 @@
         "unitAlias": ""
       },
       {
-        "id": 5821,
+        "id": 5811,
         "nodeType": "ContractDefinition",
         "src": "204:337:32",
         "nodes": [
           {
-            "id": 5804,
+            "id": 5794,
             "nodeType": "VariableDeclaration",
             "src": "242:94:32",
             "nodes": [],
@@ -143,7 +143,7 @@
             "mutability": "constant",
             "name": "STORAGE_SLOT",
             "nameLocation": "268:12:32",
-            "scope": 5821,
+            "scope": 5811,
             "stateVariable": true,
             "storageLocation": "default",
             "typeDescriptions": {
@@ -151,7 +151,7 @@
               "typeString": "bytes32"
             },
             "typeName": {
-              "id": 5800,
+              "id": 5790,
               "name": "bytes32",
               "nodeType": "ElementaryTypeName",
               "src": "242:7:32",
@@ -164,7 +164,7 @@
               "arguments": [
                 {
                   "hexValue": "63726f7373636861696e2e456e7469746c656d656e74436865636b657253746f72616765",
-                  "id": 5802,
+                  "id": 5792,
                   "isConstant": false,
                   "isLValue": false,
                   "isPure": true,
@@ -186,7 +186,7 @@
                     "typeString": "literal_string \"crosschain.EntitlementCheckerStorage\""
                   }
                 ],
-                "id": 5801,
+                "id": 5791,
                 "name": "keccak256",
                 "nodeType": "Identifier",
                 "overloadedDeclarations": [],
@@ -197,7 +197,7 @@
                   "typeString": "function (bytes memory) pure returns (bytes32)"
                 }
               },
-              "id": 5803,
+              "id": 5793,
               "isConstant": false,
               "isLValue": false,
               "isPure": true,
@@ -216,7 +216,7 @@
             "visibility": "internal"
           },
           {
-            "id": 5808,
+            "id": 5798,
             "nodeType": "StructDefinition",
             "src": "341:55:32",
             "nodes": [],
@@ -224,37 +224,37 @@
             "members": [
               {
                 "constant": false,
-                "id": 5807,
+                "id": 5797,
                 "mutability": "mutable",
                 "name": "nodes",
                 "nameLocation": "386:5:32",
                 "nodeType": "VariableDeclaration",
-                "scope": 5808,
+                "scope": 5798,
                 "src": "361:30:32",
                 "stateVariable": false,
                 "storageLocation": "default",
                 "typeDescriptions": {
-                  "typeIdentifier": "t_struct$_AddressSet_$120688_storage_ptr",
+                  "typeIdentifier": "t_struct$_AddressSet_$120671_storage_ptr",
                   "typeString": "struct EnumerableSet.AddressSet"
                 },
                 "typeName": {
-                  "id": 5806,
+                  "id": 5796,
                   "nodeType": "UserDefinedTypeName",
                   "pathNode": {
-                    "id": 5805,
+                    "id": 5795,
                     "name": "EnumerableSet.AddressSet",
                     "nameLocations": [
                       "361:13:32",
                       "375:10:32"
                     ],
                     "nodeType": "IdentifierPath",
-                    "referencedDeclaration": 120688,
+                    "referencedDeclaration": 120671,
                     "src": "361:24:32"
                   },
-                  "referencedDeclaration": 120688,
+                  "referencedDeclaration": 120671,
                   "src": "361:24:32",
                   "typeDescriptions": {
-                    "typeIdentifier": "t_struct$_AddressSet_$120688_storage_ptr",
+                    "typeIdentifier": "t_struct$_AddressSet_$120671_storage_ptr",
                     "typeString": "struct EnumerableSet.AddressSet"
                   }
                 },
@@ -263,33 +263,33 @@
             ],
             "name": "Layout",
             "nameLocation": "348:6:32",
-            "scope": 5821,
+            "scope": 5811,
             "visibility": "public"
           },
           {
-            "id": 5820,
+            "id": 5810,
             "nodeType": "FunctionDefinition",
             "src": "400:139:32",
             "nodes": [],
             "body": {
-              "id": 5819,
+              "id": 5809,
               "nodeType": "Block",
               "src": "459:80:32",
               "nodes": [],
               "statements": [
                 {
                   "assignments": [
-                    5815
+                    5805
                   ],
                   "declarations": [
                     {
                       "constant": false,
-                      "id": 5815,
+                      "id": 5805,
                       "mutability": "mutable",
                       "name": "slot",
                       "nameLocation": "473:4:32",
                       "nodeType": "VariableDeclaration",
-                      "scope": 5819,
+                      "scope": 5809,
                       "src": "465:12:32",
                       "stateVariable": false,
                       "storageLocation": "default",
@@ -298,7 +298,7 @@
                         "typeString": "bytes32"
                       },
                       "typeName": {
-                        "id": 5814,
+                        "id": 5804,
                         "name": "bytes32",
                         "nodeType": "ElementaryTypeName",
                         "src": "465:7:32",
@@ -310,13 +310,13 @@
                       "visibility": "internal"
                     }
                   ],
-                  "id": 5817,
+                  "id": 5807,
                   "initialValue": {
-                    "id": 5816,
+                    "id": 5806,
                     "name": "STORAGE_SLOT",
                     "nodeType": "Identifier",
                     "overloadedDeclarations": [],
-                    "referencedDeclaration": 5804,
+                    "referencedDeclaration": 5794,
                     "src": "480:12:32",
                     "typeDescriptions": {
                       "typeIdentifier": "t_bytes32",
@@ -352,7 +352,7 @@
                   "evmVersion": "paris",
                   "externalReferences": [
                     {
-                      "declaration": 5812,
+                      "declaration": 5802,
                       "isOffset": false,
                       "isSlot": true,
                       "src": "515:6:32",
@@ -360,14 +360,14 @@
                       "valueSize": 1
                     },
                     {
-                      "declaration": 5815,
+                      "declaration": 5805,
                       "isOffset": false,
                       "isSlot": false,
                       "src": "525:4:32",
                       "valueSize": 1
                     }
                   ],
-                  "id": 5818,
+                  "id": 5808,
                   "nodeType": "InlineAssembly",
                   "src": "498:37:32"
                 }
@@ -379,47 +379,47 @@
             "name": "layout",
             "nameLocation": "409:6:32",
             "parameters": {
-              "id": 5809,
+              "id": 5799,
               "nodeType": "ParameterList",
               "parameters": [],
               "src": "415:2:32"
             },
             "returnParameters": {
-              "id": 5813,
+              "id": 5803,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 5812,
+                  "id": 5802,
                   "mutability": "mutable",
                   "name": "l",
                   "nameLocation": "456:1:32",
                   "nodeType": "VariableDeclaration",
-                  "scope": 5820,
+                  "scope": 5810,
                   "src": "441:16:32",
                   "stateVariable": false,
                   "storageLocation": "storage",
                   "typeDescriptions": {
-                    "typeIdentifier": "t_struct$_Layout_$5808_storage_ptr",
+                    "typeIdentifier": "t_struct$_Layout_$5798_storage_ptr",
                     "typeString": "struct EntitlementCheckerStorage.Layout"
                   },
                   "typeName": {
-                    "id": 5811,
+                    "id": 5801,
                     "nodeType": "UserDefinedTypeName",
                     "pathNode": {
-                      "id": 5810,
+                      "id": 5800,
                       "name": "Layout",
                       "nameLocations": [
                         "441:6:32"
                       ],
                       "nodeType": "IdentifierPath",
-                      "referencedDeclaration": 5808,
+                      "referencedDeclaration": 5798,
                       "src": "441:6:32"
                     },
-                    "referencedDeclaration": 5808,
+                    "referencedDeclaration": 5798,
                     "src": "441:6:32",
                     "typeDescriptions": {
-                      "typeIdentifier": "t_struct$_Layout_$5808_storage_ptr",
+                      "typeIdentifier": "t_struct$_Layout_$5798_storage_ptr",
                       "typeString": "struct EntitlementCheckerStorage.Layout"
                     }
                   },
@@ -428,7 +428,7 @@
               ],
               "src": "440:18:32"
             },
-            "scope": 5821,
+            "scope": 5811,
             "stateMutability": "pure",
             "virtual": false,
             "visibility": "internal"
@@ -441,11 +441,11 @@
         "contractKind": "library",
         "fullyImplemented": true,
         "linearizedBaseContracts": [
-          5821
+          5811
         ],
         "name": "EntitlementCheckerStorage",
         "nameLocation": "212:25:32",
-        "scope": 5822,
+        "scope": 5812,
         "usedErrors": [],
         "usedEvents": []
       }

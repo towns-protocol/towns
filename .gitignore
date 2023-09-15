@@ -84,3 +84,4 @@ servers/xchain/common/localhost_entitlementChecker.json
 servers/xchain/common/localhost_entitlementGatedExample.json
 packages/generated/localhost/addresses/entitlementChecker.json
 packages/generated/localhost/addresses/entitlementGatedExample.json
+servers/xchain/contracts/*.go

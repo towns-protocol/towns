@@ -177,7 +177,6 @@ contract EntitlementGatedTest is
 
         gated.postEntitlementCheckResult(transactionId, vote);
       } else {
-        vm.expectRevert(EntitlementGated_TransactionAlreadyCompleted.selector);
         gated.postEntitlementCheckResult(transactionId, vote);
       }
 

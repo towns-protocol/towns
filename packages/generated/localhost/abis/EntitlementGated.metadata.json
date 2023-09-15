@@ -155,11 +155,11 @@
       ]
     },
     "contracts/src/crosschain/EntitlementGatedBase.sol": {
-      "keccak256": "0x5ac5ad2389e9b552754edca2a8704cafc613a4841336b03efb559e9231e3bc03",
+      "keccak256": "0x53bd2d3598f709211eb057a3a2784c060a6e0dfb80c55d5bd5b8a8cc16678279",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://8502d0a96617a48bade56b65fc747b7239c2f265ef8efce5252fbcead830b218",
-        "dweb:/ipfs/QmWJDfrY8k5vDPUj6GroY4r6GX5rucDai7xcUAb3mptrzD"
+        "bzz-raw://0fa591144a88316a01e5152ea4eb4362cb62d6f884593722c01dfd43b5a13a16",
+        "dweb:/ipfs/Qmdt5KF9RHmSov4ExqpneJ4j8jWWWbyUrjWzcZkvzktJDd"
       ]
     },
     "contracts/src/crosschain/EntitlementGatedStorage.sol": {
