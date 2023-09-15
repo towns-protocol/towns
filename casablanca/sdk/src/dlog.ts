@@ -7,20 +7,17 @@ const hasOwnProperty = <Y extends PropertyKey>(obj: object, prop: Y): obj is Rec
     return Object.prototype.hasOwnProperty.call(obj, prop)
 }
 
-const cloneAndFormat = (
-    obj: unknown,
-    depth = 0,
-    seen = new Set<unknown>(),
-): unknown | unknown[] => {
+const cloneAndFormat = (obj: unknown, depth = 0, seen = new WeakSet()): unknown | unknown[] => {
     if (depth > MAX_CALL_STACK_SZ) {
         return 'MAX_CALL_STACK_SZ exceeded'
     }
 
-    if (seen.has(obj)) {
-        return '[circular reference]'
+    if (typeof obj === 'object' && obj !== null) {
+        if (seen.has(obj)) {
+            return '[circular reference]'
+        }
+        seen.add(obj)
     }
-
-    seen.add(obj)
 
     if (typeof obj === 'string') {
         return isHexString(obj) ? shortenHexString(obj) : obj

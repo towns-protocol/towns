@@ -77,7 +77,7 @@ describe('dlogTest', () => {
         }
     })
 
-    test('circular reference', () => {
+    test('circularReference', () => {
         const log = dlog('test:dlog')
         class A {
             b: B
@@ -93,5 +93,10 @@ describe('dlogTest', () => {
         }
         const a = new A()
         log('test circular:', { a })
+    })
+
+    test('numbers', () => {
+        const log = dlog('test:dlog')
+        log('test same number:', { a: 1, b: 1, c: 1, d: 2 })
     })
 })
