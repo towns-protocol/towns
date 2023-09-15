@@ -12,7 +12,7 @@ import (
 )
 
 type WalletLinkContract interface {
-	LinkWallet(rootKey common.Address) error
+	LinkWallet(rootKey common.Address, wallet common.Address, rootKeySignature []byte, walletSignature []byte) error
 	GetLinkedWallets(rootKey common.Address) ([]common.Address, error)
 }
 

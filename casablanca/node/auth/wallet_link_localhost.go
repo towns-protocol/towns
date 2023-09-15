@@ -38,7 +38,7 @@ func NewTownsWalletLinkLocalhost(ethClient *ethclient.Client, nodeWallet *crypto
 	return contract, nil
 }
 
-func (za *TownsWalletLinkLocalhost) LinkWallet(rootKey common.Address) error {
+func (za *TownsWalletLinkLocalhost) LinkWallet(rootKey common.Address, wallet common.Address, rootKeySignature []byte, walletSignature []byte) error {
 
 	gasLimit := uint64(1000000)
 	gasPrice, err := za.ethClient.SuggestGasPrice(context.Background())

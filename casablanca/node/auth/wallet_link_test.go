@@ -43,7 +43,7 @@ func TestWalletLink(t *testing.T) {
 		panic(err)
 	}
 
-	err = walletLink.LinkWallet(rootKey.Address)
+	err = walletLink.LinkWallet(rootKey.Address, wallet.Address, []byte{}, []byte{})
 	if err != nil {
 		panic(err)
 	}

@@ -46,8 +46,23 @@ func (s *Service) linkWallet(ctx context.Context, log *slog.Logger, req *connect
 	if err != nil {
 		return nil, RpcErrorf(Err_BAD_LINK_WALLET_BAD_SIGNATURE, "LinkWallet: error decoding root key id: %v", err)
 	}
+
+	walletAddress, err := hex.DecodeString(req.Msg.WalletAddress[2:])
+	if err != nil {
+		return nil, RpcErrorf(Err_BAD_LINK_WALLET_BAD_SIGNATURE, "LinkWallet: error decoding wallet address: %v", err)
+	}
+
+	rootKeySig, err := hex.DecodeString(req.Msg.RootKeySignature)
+	if err != nil {
+		return nil, RpcErrorf(Err_BAD_LINK_WALLET_BAD_SIGNATURE, "LinkWallet: error decoding root key signature: %v", err)
+	}
+
+	walletSig, err := hex.DecodeString(req.Msg.WalletSignature)
+	if err != nil {
+		return nil, RpcErrorf(Err_BAD_LINK_WALLET_BAD_SIGNATURE, "LinkWallet: error decoding wallet signature: %v", err)
+	}
 	//  TODO once HNT-2344 is implemented, we will pass wallet address and cross wallet-rootkey signatures to the contract
-	err = s.walletLinkContract.LinkWallet(common.BytesToAddress(rootKeyId))
+	err = s.walletLinkContract.LinkWallet(common.BytesToAddress(rootKeyId), common.Address(walletAddress), rootKeySig, walletSig)
 	if err != nil {
 		return nil, RpcErrorf(Err_BAD_LINK_WALLET_BAD_SIGNATURE, "LinkWallet: error linking wallet: %v", err)
 	}
