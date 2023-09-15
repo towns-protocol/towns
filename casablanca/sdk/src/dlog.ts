@@ -7,18 +7,31 @@ const hasOwnProperty = <Y extends PropertyKey>(obj: object, prop: Y): obj is Rec
     return Object.prototype.hasOwnProperty.call(obj, prop)
 }
 
-const cloneAndFormat = (obj: unknown): unknown | unknown[] => {
+const cloneAndFormat = (
+    obj: unknown,
+    depth = 0,
+    seen = new Set<unknown>(),
+): unknown | unknown[] => {
+    if (depth > MAX_CALL_STACK_SZ) {
+        return 'MAX_CALL_STACK_SZ exceeded'
+    }
+
+    if (seen.has(obj)) {
+        return '[circular reference]'
+    }
+
+    seen.add(obj)
+
     if (typeof obj === 'string') {
         return isHexString(obj) ? shortenHexString(obj) : obj
     }
-    let i = 0
 
     if (obj instanceof Uint8Array) {
         return shortenHexString(bin_toHexString(obj))
     }
 
     if (Array.isArray(obj)) {
-        return obj.map((e) => cloneAndFormat(e))
+        return obj.map((e) => cloneAndFormat(e, depth + 1), seen)
     }
 
     if (typeof obj === 'object' && obj !== null) {
@@ -29,12 +42,7 @@ const cloneAndFormat = (obj: unknown): unknown | unknown[] => {
                 newKey = shortenHexString(key)
             }
             if (hasOwnProperty(obj, key)) {
-                i++
-                // Prevent recursion too deep
-                if (i > MAX_CALL_STACK_SZ) {
-                    break
-                }
-                newObj[newKey] = cloneAndFormat(obj[key])
+                newObj[newKey] = cloneAndFormat(obj[key], depth + 1, seen)
             }
         }
         return newObj

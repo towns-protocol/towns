@@ -76,4 +76,22 @@ describe('dlogTest', () => {
             log('enabled', log.enabled)
         }
     })
+
+    test('circular reference', () => {
+        const log = dlog('test:dlog')
+        class A {
+            b: B
+            constructor() {
+                this.b = new B(this)
+            }
+        }
+        class B {
+            a: A
+            constructor(a: A) {
+                this.a = a
+            }
+        }
+        const a = new A()
+        log('test circular:', { a })
+    })
 })
