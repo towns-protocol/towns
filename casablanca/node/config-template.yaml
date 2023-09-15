@@ -16,6 +16,7 @@ log:
     file: logs/dev.log
     level: info
     console: true
+    nocolor: false
 metrics:
     enabled: <METRICS_ENABLED>
     port: <METRICS_PORT>

@@ -12,7 +12,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gologme/log"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -28,6 +27,8 @@ const (
 )
 
 func (s *PostgresEventStore) CreateStream(ctx context.Context, streamId string, genesisMiniblock []byte) error {
+	log := dlog.CtxLog(ctx)
+
 	defer infra.StoreExecutionTimeMetrics("CreateStreamMs", time.Now())
 
 	err := validateStreamId(streamId)
@@ -35,8 +36,6 @@ func (s *PostgresEventStore) CreateStream(ctx context.Context, streamId string, 
 		log.Error("Wrong streamId", streamId)
 		return err
 	}
-
-	log := dlog.CtxLog(ctx)
 
 	tx, err := startTx(ctx, s.pool)
 	if err != nil {
@@ -99,6 +98,8 @@ func (s *PostgresEventStore) CreateStream(ctx context.Context, streamId string, 
 }
 
 func (s *PostgresEventStore) GetStreamFromLastSnapshot(ctx context.Context, streamId string) (*GetStreamFromLastSnapshotResult, error) {
+	log := dlog.CtxLog(ctx)
+
 	infra.StoreExecutionTimeMetrics("GetStreamFromLastSnapshotMs", time.Now())
 
 	err := validateStreamId(streamId)
@@ -107,7 +108,6 @@ func (s *PostgresEventStore) GetStreamFromLastSnapshot(ctx context.Context, stre
 		return nil, err
 	}
 
-	log := dlog.CtxLog(ctx)
 	tx, err := startTx(ctx, s.pool)
 
 	if err != nil {
@@ -196,6 +196,8 @@ func (s *PostgresEventStore) GetStreamFromLastSnapshot(ctx context.Context, stre
 // Current generation of minipool should match minipoolGeneration,
 // and there should be exactly minipoolSlot events in the minipool.
 func (s *PostgresEventStore) AddEvent(ctx context.Context, streamId string, minipoolGeneration int, minipoolSlot int, envelope []byte) error {
+	log := dlog.CtxLog(ctx)
+
 	defer infra.StoreExecutionTimeMetrics("AddEventMs", time.Now())
 
 	err := validateStreamId(streamId)
@@ -203,8 +205,6 @@ func (s *PostgresEventStore) AddEvent(ctx context.Context, streamId string, mini
 		log.Error("Wrong streamId", streamId)
 		return err
 	}
-
-	log := dlog.CtxLog(ctx)
 
 	// Start transaction for making checks of minipool generation and slot
 	// If everything is ok we will add event to minipool and commit transaction
@@ -289,6 +289,8 @@ func (s *PostgresEventStore) AddEvent(ctx context.Context, streamId string, mini
 }
 
 func (s *PostgresEventStore) GetMiniblocks(ctx context.Context, streamId string, fromIndex int, toIndex int) ([][]byte, error) {
+	log := dlog.CtxLog(ctx)
+
 	defer infra.StoreExecutionTimeMetrics("GetMiniblocksMs", time.Now())
 
 	err := validateStreamId(streamId)
@@ -298,8 +300,6 @@ func (s *PostgresEventStore) GetMiniblocks(ctx context.Context, streamId string,
 	}
 
 	//TODO: do we want to validate here if blocks which are subject to read exist?
-	log := dlog.CtxLog(ctx)
-
 	//Read-only transactions does't require commit
 	tx, err := startTx(ctx, s.pool)
 	if err != nil {
@@ -363,6 +363,8 @@ func (s *PostgresEventStore) CreateBlock(
 	snapshotMiniblock bool,
 	envelopes [][]byte,
 ) error {
+	log := dlog.CtxLog(ctx)
+
 	defer infra.StoreExecutionTimeMetrics("CreateBlockMs", time.Now())
 
 	err := validateStreamId(streamId)
@@ -370,8 +372,6 @@ func (s *PostgresEventStore) CreateBlock(
 		log.Error("Wrong streamId", streamId)
 		return err
 	}
-
-	log := dlog.CtxLog(ctx)
 
 	tx, err := startTx(ctx, s.pool)
 	if err != nil {
@@ -472,6 +472,8 @@ func (s *PostgresEventStore) CreateBlock(
 // Checks if stream exists in the database
 // Should always be used in scope of open transaction tx
 func streamExists(ctx context.Context, tx pgx.Tx, streamId string) (bool, error) {
+	log := dlog.CtxLog(ctx)
+
 	defer infra.StoreExecutionTimeMetrics("streamExistsMs", time.Now())
 
 	err := validateStreamId(streamId)
@@ -492,6 +494,8 @@ func streamExists(ctx context.Context, tx pgx.Tx, streamId string) (bool, error)
 // Creates record in es table for the stream
 // Should always be used in scope of open transaction tx
 func createEventStreamInstance(ctx context.Context, tx pgx.Tx, streamId string) error {
+	log := dlog.CtxLog(ctx)
+
 	defer infra.StoreExecutionTimeMetrics("createEventStreamInstance", time.Now())
 
 	err := validateStreamId(streamId)
@@ -534,6 +538,8 @@ func (s *PostgresEventStore) GetStreams(ctx context.Context) ([]string, error) {
 * Delete minipool and miniblock tables associated with the stream and stream record from streams table
  */
 func (s *PostgresEventStore) DeleteStream(ctx context.Context, streamId string) error {
+	log := dlog.CtxLog(ctx)
+
 	defer infra.StoreExecutionTimeMetrics("DeleteStreamMs", time.Now())
 
 	err := validateStreamId(streamId)
