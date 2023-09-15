@@ -1,7 +1,7 @@
 import { ethers, BigNumber } from 'ethers'
 import { IStaticContractsInfoV3, getContractsInfoV3 } from './v3/IStaticContractsInfoV3'
 
-import { MemberNFTShim } from './shims/MemberNFTShim'
+import { MemberNFTShim } from './v3/MemberNFTShim'
 
 export interface MemberNFTContractState {
     contractBalance: BigNumber

@@ -1,7 +1,7 @@
 import { ethers, BigNumber } from 'ethers'
 import { IStaticContractsInfoV3, getContractsInfoV3 } from './v3/IStaticContractsInfoV3'
 
-import { PioneerNFTShim } from './shims/PioneerNFTShim'
+import { PioneerNFTShim } from './v3/PioneerNFTShim'
 
 export interface PioneerNFTContractState {
     contractBalance: BigNumber

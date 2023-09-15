@@ -14,7 +14,7 @@ import {
     MemberInterface as SepoliaInterface,
 } from '@towns/generated/sepolia/typings/Member'
 
-import { BaseContractShimV3 } from '../v3/BaseContractShimV3'
+import { BaseContractShimV3 } from './BaseContractShimV3'
 import { ethers } from 'ethers'
 import LocalhostAbi from '@towns/generated/localhost/abis/Member.abi.json' assert { type: 'json' }
 import GoerliAbi from '@towns/generated/goerli/abis/Member.abi.json' assert { type: 'json' }
