@@ -2,12 +2,12 @@ import React, { useCallback, useRef, useState } from 'react'
 import { Address, useBalance, useNetwork, useSwitchNetwork } from 'wagmi'
 import { useEvent } from 'react-use-event-hook'
 import { ethers, providers } from 'ethers'
-import { mintMockNFT, useWeb3Context } from 'use-zion-client'
+import { SpaceProtocol, mintMockNFT, useWeb3Context } from 'use-zion-client'
 import { debug } from 'debug'
 import { Box, Button, Divider, Stack, Text } from '@ui'
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { shortAddress } from 'ui/utils/utils'
-import { isTouch, useDevice } from 'hooks/useDevice'
+import { isTouch } from 'hooks/useDevice'
 
 import {
     ENVIRONMENTS,
@@ -33,6 +33,7 @@ type ModalProps = {
     casablancaUrl?: string
     chainId: number
     chainName: string
+    protocol: SpaceProtocol
     onSwitchEnvironment: (env: TownsEnvironmentInfo) => void
     onClear: () => void
 }
@@ -102,13 +103,13 @@ const DebugModal = ({
     casablancaUrl,
     chainId,
     chainName,
+    protocol,
     onHide,
     onSwitchEnvironment,
     onClear,
 }: ModalProps) => {
     const { accounts, provider } = useWeb3Context()
     const { chain: walletChain } = useNetwork()
-    const { isTouch } = useDevice()
 
     return (
         <ModalContainer onHide={onHide}>
@@ -119,6 +120,9 @@ const DebugModal = ({
                         `Default (${
                             ENVIRONMENTS.find((e) => e.matrixUrl === matrixUrl)?.name || 'Unknown'
                         })`}
+                </Text>
+                <Text strong size="sm">
+                    Protocol: {protocol}
                 </Text>
                 <Text strong size="sm">
                     MatrixUrl: {matrixUrl}
@@ -159,7 +163,7 @@ const DebugModal = ({
                         {CF_TUNNEL_PREFIX ? (
                             <Text color="error">Your environment is using tunnels</Text>
                         ) : (
-                            <Stack gap horizontal={!isTouch} justifyContent="end">
+                            <Stack gap justifyContent="end">
                                 {ENVIRONMENTS.map((env) => (
                                     <Button
                                         key={env.name}
@@ -167,7 +171,8 @@ const DebugModal = ({
                                         tone="accent"
                                         disabled={
                                             chainId === env.chainId &&
-                                            walletChain.id === env.chainId
+                                            walletChain.id === env.chainId &&
+                                            environment === env.id
                                         }
                                         onClick={() => onSwitchEnvironment(env)}
                                     >
@@ -253,6 +258,7 @@ const DebugBar = ({
     chainName: destinationChainName,
     matrixUrl,
     casablancaUrl,
+    protocol,
     setEnvironment,
     clearEnvironment,
 }: Props) => {
@@ -291,10 +297,12 @@ const DebugBar = ({
 
     const connectedChainId = chain?.id
     const synced = destinationChainId === connectedChainId
+
     const serverName =
-        env.VITE_PRIMARY_PROTOCOL === 'casablanca'
+        protocol === SpaceProtocol.Casablanca
             ? casablancaUrl?.replaceAll('https://', '').replaceAll('http://', '')
             : matrixUrl.replaceAll('https://', '').replaceAll('http://', '')
+
     const platform = !chain?.name
         ? `Not connected | server:${serverName}`
         : `wallet: ${chain.name} | server:${serverName}`
@@ -321,6 +329,7 @@ const DebugBar = ({
                 <DebugModal
                     environment={environment}
                     matrixUrl={matrixUrl}
+                    protocol={protocol}
                     casablancaUrl={casablancaUrl}
                     chainId={destinationChainId}
                     chainName={destinationChainName}

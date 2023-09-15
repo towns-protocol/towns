@@ -1,7 +1,7 @@
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import React, { useCallback, useMemo, useRef } from 'react'
 import { useLocation } from 'react-router'
-import { InitialSyncSortPredicate, SpaceProtocol, ZionContextProvider } from 'use-zion-client'
+import { InitialSyncSortPredicate, ZionContextProvider } from 'use-zion-client'
 import { Helmet } from 'react-helmet'
 
 import { Notifications } from '@components/Notifications/Notifications'
@@ -67,7 +67,7 @@ export const App = () => {
 
     return (
         <ZionContextProvider
-            primaryProtocol={env.VITE_PRIMARY_PROTOCOL as SpaceProtocol}
+            primaryProtocol={environment.protocol}
             casablancaServerUrl={environment.casablancaUrl}
             matrixServerUrl={environment.matrixUrl}
             onboardingOpts={{ skipAvatar: true }}
