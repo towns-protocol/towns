@@ -53,7 +53,7 @@
       "name": "Jest: current file in 'sdk/' Casablanca",
       "type": "node",
       "request": "launch",
-      "env": { "NODE_ENV": "development", "PRIMARY_PROTOCOL": "casablanca", "DEBUG": "csb:*", "DEBUG_DEPTH":"10"  },
+      "env": { "NODE_ENV": "development", "PRIMARY_PROTOCOL": "casablanca", "DEBUG": "csb:*,test:*", "DEBUG_DEPTH":"10"  },
       "program": "${workspaceFolder}/node_modules/.bin/jest",
       "runtimeArgs": ["--experimental-vm-modules", "--experimental-wasm-modules"],
       "args": ["${fileBasenameNoExtension}", "--config", "${workspaceFolder}/casablanca/sdk/jest.config.ts", "-i", "--no-cache", "--forceExit"],
