@@ -1,7 +1,11 @@
 #!/bin/bash
 
+
+# Change to script's directory
+cd -P -- "$(dirname -- "${BASH_SOURCE[0]}")"
+
 # Array of directories to process
-declare -a dirs=("sdk/src")
+declare -a dirs=("../sdk/src" "../web3/src")
 
 # Loop through each directory
 for dir in "${dirs[@]}"; do
@@ -26,6 +30,8 @@ for dir in "${dirs[@]}"; do
     # Append export statement to the array
     exports+=("export * from './$file'")
   done
+
+  echo "writing $dir/index.ts"
 
   # Append the sorted export statements to index.ts
   printf "%s\n" "${exports[@]}" >> index.ts
