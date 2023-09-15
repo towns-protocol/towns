@@ -180,7 +180,32 @@ func (s *Service) createStream(ctx context.Context, log *slog.Logger, req *conne
 		if !allowed {
 			return nil, status.Errorf(codes.PermissionDenied, "CreateStream: user %s is not allowed to create channels in space %s", user, inception.SpaceId)
 		}
+	case *SpacePayload_Inception:
+		user, err := common.AddressHex(inceptionEvent.Event.CreatorAddress)
+		if err != nil {
+			return nil, err
+		}
+		spaceInfo, err := StreamInfoFromInceptionPayload(inception, inception.StreamId, user)
+		if err != nil {
+			return nil, err
+		}
 
+		// check permissions
+		allowed, err := s.townsContract.IsAllowed(
+			ctx,
+			auth.AuthorizationArgs{
+				StreamId:   inception.StreamId,
+				UserId:     user,
+				Permission: auth.PermissionAddRemoveChannels,
+			},
+			spaceInfo,
+		)
+		if err != nil {
+			return nil, err
+		}
+		if !allowed {
+			return nil, status.Errorf(codes.PermissionDenied, "CreateStream: user %s is not allowed to create space %s", user, inception.StreamId)
+		}
 	default:
 		// No auth for other stream types yet.
 		break
