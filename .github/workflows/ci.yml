@@ -408,6 +408,9 @@ jobs:
             - name: Build & Test (with entitlements)
               run: yarn csb:turbo-no-sdk
 
+            - name: Run River Tests (with entitlements)
+              run: yarn workspace @river/sdk run test:ci:with-entitlements
+
             - name: Archive Casablanca log
               if: always()
               uses: actions/upload-artifact@v3

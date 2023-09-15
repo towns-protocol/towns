@@ -5837,6 +5837,7 @@ __metadata:
     "@jest/globals": ^29.5.0
     "@river/mecholm": "workspace:^"
     "@river/proto": "workspace:^"
+    "@river/web3": "workspace:^"
     "@types/debug": ^4.1.8
     "@types/jest": ^29.4.0
     "@types/lodash": ^4.14.186

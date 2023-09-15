@@ -19,6 +19,7 @@ import _ from 'lodash'
 const log = dlog('csb:test:util')
 
 export const TEST_URL = global.origin // global.origin is populated by 'url' in jest.config.ts
+export const TEST_URL_WITH_ENTITILEMENTS = 'http://localhost:5157'
 
 export const makeTestRpcClient = () => makeStreamRpcClient(TEST_URL)
 
@@ -56,8 +57,10 @@ export const makeRandomUserContext = async (): Promise<SignerContext> => {
 }
 
 // TODO(HNT-1380): remove
-export const makeRandomUserContextWithOldDelegate = async (): Promise<SignerContext> => {
-    const userPrimaryWallet = ethers.Wallet.createRandom()
+export const makeRandomUserContextWithOldDelegate = async (
+    wallet?: ethers.Wallet,
+): Promise<SignerContext> => {
+    const userPrimaryWallet = wallet ?? ethers.Wallet.createRandom()
     const devicePrivateKey = utils.randomPrivateKey()
     const devicePrivateKeyStr = bin_toHexString(devicePrivateKey)
 
