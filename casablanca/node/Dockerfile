@@ -27,7 +27,9 @@ RUN SKIP_GENKEY=true ./config_instance.sh docker-single \
     DB_PORT null \
     USE_CONTRACT true \
     METRICS_ENABLED false \
-    METRICS_PORT null
+    METRICS_PORT null \
+    LOG_NOCOLOR true \
+    LOG_LEVEL info
 
 FROM alpine:latest
 
@@ -48,6 +50,8 @@ COPY --from=base /build/run_docker.sh /usr/bin/run_docker.sh
 # CHAIN__NETWORKURL
 # METRICS__ENABLED
 # METRICS__PORT
+# LOG__LEVEL
+# LOG__NOCOLOR
 
 # This allows us to set the release version to anything, such as a commit hash, at build time.
 ARG RELEASE_VERSION="Unreleased"

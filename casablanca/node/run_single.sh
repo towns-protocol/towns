@@ -5,6 +5,8 @@ INSTANCE=single
 USE_CONTRACT=true
 METRICS_ENABLED=true
 RPC_PORT=5157
+LOG_NOCOLOR=false
+LOG_LEVEL=info
 
 # Parse command-line options
 args=() # Collect arguments to pass to the last command
@@ -30,7 +32,10 @@ done
     DB_PORT 5433 \
     USE_CONTRACT $USE_CONTRACT \
     METRICS_ENABLED $METRICS_ENABLED \
-    METRICS_PORT 8081
+    METRICS_PORT 8081 \
+    LOG_NOCOLOR ${LOG_NOCOLOR} \
+    LOG_LEVEL ${LOG_LEVEL}
+
 
 cd ./run_files/$INSTANCE
 echo "Running instance '$INSTANCE' with extra aguments: '${args[@]:-}'"

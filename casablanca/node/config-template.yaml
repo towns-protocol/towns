@@ -14,9 +14,9 @@ topChain:
     networkUrl: 'http://127.0.0.1:8545'
 log:
     file: logs/dev.log
-    level: info
+    level: <LOG_LEVEL>
     console: true
-    nocolor: false
+    noColor: <LOG_NOCOLOR>
 metrics:
     enabled: <METRICS_ENABLED>
     port: <METRICS_PORT>
