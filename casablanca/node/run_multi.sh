@@ -8,7 +8,10 @@ METRICS_PORT=8010
 DB_PORT=5433
 
 # Default number of instances
-NUM_INSTANCES=10
+NUM_INSTANCES=3
+
+CONFIG=false
+RUN=false
 
 # Parse command-line options
 args=() # Collect arguments to pass to the last command
@@ -23,6 +26,14 @@ while [[ "$#" -gt 0 ]]; do
             METRICS_ENABLED=false
             shift
             ;;
+        --config|-c)
+            CONFIG=true
+            shift
+            ;;
+        --run|-r)
+            RUN=true
+            shift
+            ;;    
         *)
             args+=("$1")
             shift
@@ -30,32 +41,48 @@ while [[ "$#" -gt 0 ]]; do
     esac
 done
 
-echo "{" > ./run_files/node_registry.json
-echo "  \"nodes\": [" >> ./run_files/node_registry.json
+if [ "$CONFIG" == "false" ] && [ "$RUN" == "false" ]; then
+  echo "--config to config. --run to run. Both to config and run."
+  exit 1
+fi
 
-for ((i=0; i<NUM_INSTANCES; i++)); do
-  printf -v INSTANCE "%02d" $i
-  I_RPC_PORT=$((RPC_PORT + i))
-  I_METRICS_PORT=$((METRICS_PORT + i))
-  # TODO: DB_PORT=$((DB_PORT + i))
+if [ "$CONFIG" == "true" ]; then
+    echo "{" > ./run_files/node_registry.json
+    echo "  \"nodes\": [" >> ./run_files/node_registry.json
 
-  ./config_instance.sh $INSTANCE \
-      RPC_PORT ${I_RPC_PORT} \
-      DB_PORT ${DB_PORT} \
-      USE_CONTRACT $USE_CONTRACT \
-      METRICS_ENABLED $METRICS_ENABLED \
-      METRICS_PORT ${I_METRICS_PORT}
+    for ((i=0; i<NUM_INSTANCES; i++)); do
+        printf -v INSTANCE "%02d" $i
+        I_RPC_PORT=$((RPC_PORT + i))
+        I_METRICS_PORT=$((METRICS_PORT + i))
+        # TODO: DB_PORT=$((DB_PORT + i))
 
-  pushd ./run_files/$INSTANCE
-  echo "Running instance '$INSTANCE' with extra aguments: '${args[@]:-}'"
-  go run --race ../../node/main.go run --config config/config.yaml "${args[@]:-}" &
-  echo $! > pid
-  popd
+        ./config_instance.sh $INSTANCE \
+            RPC_PORT ${I_RPC_PORT} \
+            DB_PORT ${DB_PORT} \
+            USE_CONTRACT $USE_CONTRACT \
+            METRICS_ENABLED $METRICS_ENABLED \
+            METRICS_PORT ${I_METRICS_PORT} \
+            NODE_REGISTRY ../node_registry.json \
+            LOG_NOCOLOR false \
+            LOG_LEVEL info
 
-  NODE_ADDRESS=$(cat ./run_files/$INSTANCE/wallet/node_address)
-  echo "    { \"name\": \"$INSTANCE\", \"address\": \"$NODE_ADDRESS\", \"rpc_port\": $I_RPC_PORT }," >> ./run_files/node_registry.json
-done
+        NODE_ADDRESS=$(cat ./run_files/$INSTANCE/wallet/node_address)
+        echo "    { \"name\": \"$INSTANCE\", \"address\": \"$NODE_ADDRESS\", \"url\": \"http://localhost:$I_RPC_PORT\" }," >> ./run_files/node_registry.json
+    done
 
-sed -i.bak '$ s/,$//' ./run_files/node_registry.json && rm ./run_files/node_registry.json.bak
-echo "  ]" >> ./run_files/node_registry.json
-echo "}" >> ./run_files/node_registry.json
+    sed -i.bak '$ s/,$//' ./run_files/node_registry.json && rm ./run_files/node_registry.json.bak
+    echo "  ]" >> ./run_files/node_registry.json
+    echo "}" >> ./run_files/node_registry.json
+fi
+
+if [ "$RUN" == "true" ]; then
+    for ((i=0; i<NUM_INSTANCES; i++)); do
+        printf -v INSTANCE "%02d" $i
+        pushd ./run_files/$INSTANCE
+        echo "Running instance '$INSTANCE' with extra aguments: '${args[@]:-}'"
+        LOGINSTANCE=true go run --race ../../node/main.go run --config config/config.yaml "${args[@]:-}" &
+        popd
+    done
+fi
+
+

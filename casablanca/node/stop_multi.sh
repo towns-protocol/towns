@@ -2,9 +2,10 @@
 cd -P -- "$(dirname -- "${BASH_SOURCE[0]}")"
 
 # Default number of instances to stop
-NUM_INSTANCES=10
+NUM_INSTANCES=3
 WAIT_TIME=1
 MAX_ATTEMPTS=5
+RPC_PORT=5170
 
 # Parse command-line options
 while [[ "$#" -gt 0 ]]; do
@@ -19,17 +20,18 @@ while [[ "$#" -gt 0 ]]; do
     esac
 done
 
+echo "Stopping $NUM_INSTANCES instances"
 for ((i=0; i<NUM_INSTANCES; i++)); do
   printf -v INSTANCE "%02d" $i
-  PID_FILE="./run_files/$INSTANCE/pid"
+  I_RPC_PORT=$((RPC_PORT + i))
 
-  # Check if PID file exists
-  if [ ! -f "$PID_FILE" ]; then
-    echo "No PID file found for instance '$INSTANCE'. Skipping..."
+  PID="$(lsof -t -i:${I_RPC_PORT} || true)"
+
+  # Check if PID is empty
+  if [ -z "$PID" ]; then
+    echo "No process found for instance '$INSTANCE' on port $I_RPC_PORT. Skipping..."
     continue
   fi
-
-  PID=$(cat "$PID_FILE")
 
   # Check if process exists before attempting to stop it
   if ! kill -0 $PID 2>/dev/null; then
@@ -39,7 +41,7 @@ for ((i=0; i<NUM_INSTANCES; i++)); do
   fi
 
   # Send SIGTERM (Ctrl-C)
-  echo "Stopping instance '$INSTANCE' with PID $PID"
+  echo "Stopping instance '$INSTANCE' with PID $PID on port $I_RPC_PORT"
   kill -SIGTERM $PID
 
   # Loop to check if process stops
@@ -56,8 +58,6 @@ for ((i=0; i<NUM_INSTANCES; i++)); do
   else
     echo "Instance '$INSTANCE' stopped successfully"
   fi
-
-  rm -f "$PID_FILE"
 done
 
 echo "All instances have been processed"

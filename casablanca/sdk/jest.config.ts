@@ -5,7 +5,7 @@ const config: JestConfigWithTsJest = {
     testEnvironment: './../jest.env.ts',
     testEnvironmentOptions: {
         browsers: ['chrome', 'firefox', 'safari'],
-        url: 'http://localhost:5158',
+        url: process.env.RIVER_TEST_URL || 'http://localhost:5158',
     },
     runner: 'groups',
     verbose: true,

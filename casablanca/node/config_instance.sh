@@ -22,6 +22,12 @@ cp "$TEMPLATE_FILE" "$OUTPUT_FILE"
 
 SKIP_GENKEY=${SKIP_GENKEY:-false}
 
+if [ "$(uname)" == "Darwin" ]; then  # macOS
+    SED_I="''"
+else  # Linux
+    SED_I=""
+fi
+
 # Parse key-value pairs from the arguments
 while [[ "$#" -gt 1 ]]; do
     key=$1
@@ -39,7 +45,7 @@ while [[ "$#" -gt 1 ]]; do
     fi
 
     # Substitute the key with the value
-    sed -i.bak "s/<${key}>/${value}/g" $OUTPUT_FILE && rm "${OUTPUT_FILE}.bak"
+    sed -i ${SED_I} "s^<${key}>^${value}^g" $OUTPUT_FILE
 
     shift 2
 done

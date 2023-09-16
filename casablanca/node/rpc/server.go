@@ -1,9 +1,14 @@
 package rpc
 
 import (
+	"casablanca/node/auth"
 	"casablanca/node/config"
 	"casablanca/node/crypto"
 	"casablanca/node/dlog"
+	"casablanca/node/events"
+	"casablanca/node/nodes"
+	"casablanca/node/protocol/protocolconnect"
+	"casablanca/node/storage"
 
 	"context"
 	"fmt"
@@ -13,25 +18,116 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/gologme/log"
 	"github.com/rs/cors"
+	"golang.org/x/exp/slog"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
 )
 
+func loadNodeRegistry(ctx context.Context, nodeRegistryPath string, localNode *nodes.LocalNode) (nodes.NodeRegistry, error) {
+	log := dlog.CtxLog(ctx)
+
+	if nodeRegistryPath == "" {
+		log.Warn("No node registry path specified, running in single node configuration")
+		return nodes.MakeSingleNodeRegistry(ctx, localNode), nil
+	}
+
+	log.Info("Loading node registry", "path", nodeRegistryPath)
+	return nodes.LoadNodeRegistry(ctx, nodeRegistryPath, localNode)
+}
+
+func createStore(ctx context.Context, dbUrl string, storageType string, address string) (storage.StreamStorage, error) {
+	if storageType == "in-memory" {
+		return storage.NewMemStorage(), nil
+	} else {
+		schema := storage.DbSchemaNameFromAddress(address)
+		store, err := storage.NewPostgresEventStore(ctx, dbUrl, schema, false)
+		if err != nil {
+			return nil, err
+		}
+		log.Info("Created postgres event store", "schema", schema)
+		return store, nil
+	}
+}
+
 func StartServer(ctx context.Context, cfg *config.Config, wallet *crypto.Wallet) (func(), int, error) {
 	log := dlog.CtxLog(ctx)
 
-	var chainConfig *config.ChainConfig
-	var topChainConfig *config.ChainConfig
-	if cfg.UseContract {
-		chainConfig = &cfg.Chain
-		topChainConfig = &cfg.TopChain
+	if wallet == nil {
+		var err error
+		wallet, err = crypto.LoadWallet(ctx, crypto.WALLET_PATH_PRIVATE_KEY)
+		if err != nil {
+			return nil, 0, err
+		}
 	}
 
-	pattern, handler, err := MakeServiceHandler(context.Background(), log, cfg.DbUrl, cfg.StorageType, chainConfig, topChainConfig, wallet, cfg.SkipDelegateCheck)
+	if cfg.LogInstance {
+		log = log.With("instance", fmt.Sprintf("%s on %d", wallet.AddressStr, cfg.Port))
+		slog.SetDefault(log)
+		ctx = dlog.CtxWithLog(ctx, log)
+	}
+
+	store, err := createStore(ctx, cfg.DbUrl, cfg.StorageType, wallet.AddressStr)
 	if err != nil {
 		return nil, 0, err
 	}
+
+	var townsContract auth.TownsContract
+	if cfg.UseContract {
+		log.Info("Using casablanca auth", "chain_config", cfg.Chain)
+		townsContract, err = auth.NewTownsContract(&cfg.Chain)
+		if err != nil {
+			log.Error("failed to create auth", "error", err)
+			return nil, 0, err
+		}
+	} else {
+		log.Warn("Using passthrough auth")
+		townsContract = auth.NewTownsPassThrough()
+	}
+
+	var walletLinkContract auth.WalletLinkContract
+	if cfg.UseContract {
+		log.Info("Using wallet link contract on", "chain_config", cfg.TopChain)
+		walletLinkContract, err = auth.NewTownsWalletLink(&cfg.TopChain, wallet)
+		if err != nil {
+			log.Error("failed to create wallet link contract", "error", err)
+			return nil, 0, err
+		}
+	} else {
+		log.Warn("Using no-op wallet linking contract")
+	}
+
+	streamService := &Service{
+		cache: events.NewStreamCache(
+			&events.StreamCacheParams{
+				Storage:    store,
+				Wallet:     wallet,
+				DefaultCtx: ctx,
+			},
+		),
+		townsContract:      townsContract,
+		walletLinkContract: walletLinkContract,
+		wallet:             wallet,
+		skipDelegateCheck:  cfg.SkipDelegateCheck,
+	}
+
+	nodeRegistry, err := loadNodeRegistry(
+		ctx,
+		cfg.NodeRegistry,
+		&nodes.LocalNode{
+			NodeAddress: wallet.AddressStr,
+			Stub:        streamService,
+			Syncer:      streamService,
+		},
+	)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	forwarder := nodes.NewForwarder(nodeRegistry, nodes.NewStreamRegistry(nodeRegistry))
+
+	pattern, handler := protocolconnect.NewStreamServiceHandler(forwarder)
 
 	mux := http.NewServeMux()
 	log.Info("Registering handler", "pattern", pattern)
@@ -94,6 +190,7 @@ func StartServer(ctx context.Context, cfg *config.Config, wallet *crypto.Wallet)
 func RunServer(ctx context.Context, config *config.Config) error {
 	closer, _, error := StartServer(ctx, config, nil)
 	if error != nil {
+		dlog.CtxLog(ctx).Error("Failed to start server", "error", error)
 		return error
 	}
 	defer closer()

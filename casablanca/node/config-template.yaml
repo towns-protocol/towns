@@ -23,3 +23,5 @@ metrics:
 # profiling is turned of by default (see profilngEnabled: false below)
 performanceTracking:
     profilingEnabled: false
+nodeRegistry: <NODE_REGISTRY>
+logInstance: false

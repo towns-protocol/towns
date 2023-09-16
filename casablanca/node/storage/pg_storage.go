@@ -617,6 +617,10 @@ func startTx(ctx context.Context, pool *pgxpool.Pool) (pgx.Tx, error) {
 	return tx, nil
 }
 
+func DbSchemaNameFromAddress(address string) string {
+	return "s" + strings.ToLower(address)
+}
+
 func NewPostgresEventStore(ctx context.Context, database_url string, database_schema_name string, clean bool) (*PostgresEventStore, error) {
 	defer infra.StoreExecutionTimeMetrics("NewPostgresEventStoreMs", time.Now())
 
