@@ -798,32 +798,32 @@
   },
   "ast": {
     "absolutePath": "contracts/src/diamond/facets/cut/DiamondCutFacet.sol",
-    "id": 6654,
+    "id": 6644,
     "exportedSymbols": {
       "DiamondCutBase": [
-        6594
+        6584
       ],
       "DiamondCutFacet": [
-        6653
+        6643
       ],
       "Facet": [
-        5998
+        5988
       ],
       "IDiamond": [
-        5980
+        5970
       ],
       "IDiamondCut": [
-        6758
+        6748
       ],
       "OwnableBase": [
-        7641
+        7631
       ]
     },
     "nodeType": "SourceUnit",
     "src": "39:816:38",
     "nodes": [
       {
-        "id": 6596,
+        "id": 6586,
         "nodeType": "PragmaDirective",
         "src": "39:24:38",
         "nodes": [],
@@ -835,23 +835,23 @@
         ]
       },
       {
-        "id": 6598,
+        "id": 6588,
         "nodeType": "ImportDirective",
         "src": "79:60:38",
         "nodes": [],
         "absolutePath": "contracts/src/diamond/IDiamond.sol",
         "file": "contracts/src/diamond/IDiamond.sol",
         "nameLocation": "-1:-1:-1",
-        "scope": 6654,
-        "sourceUnit": 5981,
+        "scope": 6644,
+        "sourceUnit": 5971,
         "symbolAliases": [
           {
             "foreign": {
-              "id": 6597,
+              "id": 6587,
               "name": "IDiamond",
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
-              "referencedDeclaration": 5980,
+              "referencedDeclaration": 5970,
               "src": "87:8:38",
               "typeDescriptions": {}
             },
@@ -861,23 +861,23 @@
         "unitAlias": ""
       },
       {
-        "id": 6600,
+        "id": 6590,
         "nodeType": "ImportDirective",
         "src": "140:46:38",
         "nodes": [],
         "absolutePath": "contracts/src/diamond/facets/cut/IDiamondCut.sol",
         "file": "./IDiamondCut.sol",
         "nameLocation": "-1:-1:-1",
-        "scope": 6654,
-        "sourceUnit": 6759,
+        "scope": 6644,
+        "sourceUnit": 6749,
         "symbolAliases": [
           {
             "foreign": {
-              "id": 6599,
+              "id": 6589,
               "name": "IDiamondCut",
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
-              "referencedDeclaration": 6758,
+              "referencedDeclaration": 6748,
               "src": "148:11:38",
               "typeDescriptions": {}
             },
@@ -887,23 +887,23 @@
         "unitAlias": ""
       },
       {
-        "id": 6602,
+        "id": 6592,
         "nodeType": "ImportDirective",
         "src": "215:61:38",
         "nodes": [],
         "absolutePath": "contracts/src/diamond/facets/Facet.sol",
         "file": "contracts/src/diamond/facets/Facet.sol",
         "nameLocation": "-1:-1:-1",
-        "scope": 6654,
-        "sourceUnit": 5999,
+        "scope": 6644,
+        "sourceUnit": 5989,
         "symbolAliases": [
           {
             "foreign": {
-              "id": 6601,
+              "id": 6591,
               "name": "Facet",
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
-              "referencedDeclaration": 5998,
+              "referencedDeclaration": 5988,
               "src": "223:5:38",
               "typeDescriptions": {}
             },
@@ -913,23 +913,23 @@
         "unitAlias": ""
       },
       {
-        "id": 6604,
+        "id": 6594,
         "nodeType": "ImportDirective",
         "src": "277:52:38",
         "nodes": [],
         "absolutePath": "contracts/src/diamond/facets/cut/DiamondCutBase.sol",
         "file": "./DiamondCutBase.sol",
         "nameLocation": "-1:-1:-1",
-        "scope": 6654,
-        "sourceUnit": 6595,
+        "scope": 6644,
+        "sourceUnit": 6585,
         "symbolAliases": [
           {
             "foreign": {
-              "id": 6603,
+              "id": 6593,
               "name": "DiamondCutBase",
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
-              "referencedDeclaration": 6594,
+              "referencedDeclaration": 6584,
               "src": "285:14:38",
               "typeDescriptions": {}
             },
@@ -939,23 +939,23 @@
         "unitAlias": ""
       },
       {
-        "id": 6606,
+        "id": 6596,
         "nodeType": "ImportDirective",
         "src": "330:81:38",
         "nodes": [],
         "absolutePath": "contracts/src/diamond/facets/ownable/OwnableBase.sol",
         "file": "contracts/src/diamond/facets/ownable/OwnableBase.sol",
         "nameLocation": "-1:-1:-1",
-        "scope": 6654,
-        "sourceUnit": 7642,
+        "scope": 6644,
+        "sourceUnit": 7632,
         "symbolAliases": [
           {
             "foreign": {
-              "id": 6605,
+              "id": 6595,
               "name": "OwnableBase",
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
-              "referencedDeclaration": 7641,
+              "referencedDeclaration": 7631,
               "src": "338:11:38",
               "typeDescriptions": {}
             },
@@ -965,17 +965,17 @@
         "unitAlias": ""
       },
       {
-        "id": 6653,
+        "id": 6643,
         "nodeType": "ContractDefinition",
         "src": "413:441:38",
         "nodes": [
           {
-            "id": 6627,
+            "id": 6617,
             "nodeType": "FunctionDefinition",
             "src": "493:110:38",
             "nodes": [],
             "body": {
-              "id": 6626,
+              "id": 6616,
               "nodeType": "Block",
               "src": "548:55:38",
               "nodes": [],
@@ -987,14 +987,14 @@
                         "expression": {
                           "arguments": [
                             {
-                              "id": 6621,
+                              "id": 6611,
                               "name": "IDiamondCut",
                               "nodeType": "Identifier",
                               "overloadedDeclarations": [],
-                              "referencedDeclaration": 6758,
+                              "referencedDeclaration": 6748,
                               "src": "573:11:38",
                               "typeDescriptions": {
-                                "typeIdentifier": "t_type$_t_contract$_IDiamondCut_$6758_$",
+                                "typeIdentifier": "t_type$_t_contract$_IDiamondCut_$6748_$",
                                 "typeString": "type(contract IDiamondCut)"
                               }
                             }
@@ -1002,11 +1002,11 @@
                           "expression": {
                             "argumentTypes": [
                               {
-                                "typeIdentifier": "t_type$_t_contract$_IDiamondCut_$6758_$",
+                                "typeIdentifier": "t_type$_t_contract$_IDiamondCut_$6748_$",
                                 "typeString": "type(contract IDiamondCut)"
                               }
                             ],
-                            "id": 6620,
+                            "id": 6610,
                             "name": "type",
                             "nodeType": "Identifier",
                             "overloadedDeclarations": [],
@@ -1017,7 +1017,7 @@
                               "typeString": "function () pure"
                             }
                           },
-                          "id": 6622,
+                          "id": 6612,
                           "isConstant": false,
                           "isLValue": false,
                           "isPure": true,
@@ -1029,11 +1029,11 @@
                           "src": "568:17:38",
                           "tryCall": false,
                           "typeDescriptions": {
-                            "typeIdentifier": "t_magic_meta_type_t_contract$_IDiamondCut_$6758",
+                            "typeIdentifier": "t_magic_meta_type_t_contract$_IDiamondCut_$6748",
                             "typeString": "type(contract IDiamondCut)"
                           }
                         },
-                        "id": 6623,
+                        "id": 6613,
                         "isConstant": false,
                         "isLValue": false,
                         "isPure": true,
@@ -1055,18 +1055,18 @@
                           "typeString": "bytes4"
                         }
                       ],
-                      "id": 6619,
+                      "id": 6609,
                       "name": "_addInterface",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 7082,
+                      "referencedDeclaration": 7072,
                       "src": "554:13:38",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_internal_nonpayable$_t_bytes4_$returns$__$",
                         "typeString": "function (bytes4)"
                       }
                     },
-                    "id": 6624,
+                    "id": 6614,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -1082,7 +1082,7 @@
                       "typeString": "tuple()"
                     }
                   },
-                  "id": 6625,
+                  "id": 6615,
                   "nodeType": "ExpressionStatement",
                   "src": "554:44:38"
                 }
@@ -1093,16 +1093,16 @@
             "kind": "function",
             "modifiers": [
               {
-                "id": 6617,
+                "id": 6607,
                 "kind": "modifierInvocation",
                 "modifierName": {
-                  "id": 6616,
+                  "id": 6606,
                   "name": "onlyInitializing",
                   "nameLocations": [
                     "531:16:38"
                   ],
                   "nodeType": "IdentifierPath",
-                  "referencedDeclaration": 6902,
+                  "referencedDeclaration": 6892,
                   "src": "531:16:38"
                 },
                 "nodeType": "ModifierInvocation",
@@ -1112,29 +1112,29 @@
             "name": "__DiamondCut_init",
             "nameLocation": "502:17:38",
             "parameters": {
-              "id": 6615,
+              "id": 6605,
               "nodeType": "ParameterList",
               "parameters": [],
               "src": "519:2:38"
             },
             "returnParameters": {
-              "id": 6618,
+              "id": 6608,
               "nodeType": "ParameterList",
               "parameters": [],
               "src": "548:0:38"
             },
-            "scope": 6653,
+            "scope": 6643,
             "stateMutability": "nonpayable",
             "virtual": false,
             "visibility": "external"
           },
           {
-            "id": 6652,
+            "id": 6642,
             "nodeType": "FunctionDefinition",
             "src": "637:215:38",
             "nodes": [],
             "body": {
-              "id": 6651,
+              "id": 6641,
               "nodeType": "Block",
               "src": "800:52:38",
               "nodes": [],
@@ -1143,23 +1143,23 @@
                   "expression": {
                     "arguments": [
                       {
-                        "id": 6646,
+                        "id": 6636,
                         "name": "facetCuts",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 6632,
+                        "referencedDeclaration": 6622,
                         "src": "818:9:38",
                         "typeDescriptions": {
-                          "typeIdentifier": "t_array$_t_struct$_FacetCut_$5979_memory_ptr_$dyn_memory_ptr",
+                          "typeIdentifier": "t_array$_t_struct$_FacetCut_$5969_memory_ptr_$dyn_memory_ptr",
                           "typeString": "struct IDiamond.FacetCut memory[] memory"
                         }
                       },
                       {
-                        "id": 6647,
+                        "id": 6637,
                         "name": "init",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 6634,
+                        "referencedDeclaration": 6624,
                         "src": "829:4:38",
                         "typeDescriptions": {
                           "typeIdentifier": "t_address",
@@ -1167,11 +1167,11 @@
                         }
                       },
                       {
-                        "id": 6648,
+                        "id": 6638,
                         "name": "initPayload",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 6636,
+                        "referencedDeclaration": 6626,
                         "src": "835:11:38",
                         "typeDescriptions": {
                           "typeIdentifier": "t_bytes_memory_ptr",
@@ -1182,7 +1182,7 @@
                     "expression": {
                       "argumentTypes": [
                         {
-                          "typeIdentifier": "t_array$_t_struct$_FacetCut_$5979_memory_ptr_$dyn_memory_ptr",
+                          "typeIdentifier": "t_array$_t_struct$_FacetCut_$5969_memory_ptr_$dyn_memory_ptr",
                           "typeString": "struct IDiamond.FacetCut memory[] memory"
                         },
                         {
@@ -1194,18 +1194,18 @@
                           "typeString": "bytes memory"
                         }
                       ],
-                      "id": 6645,
+                      "id": 6635,
                       "name": "_diamondCut",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 6123,
+                      "referencedDeclaration": 6113,
                       "src": "806:11:38",
                       "typeDescriptions": {
-                        "typeIdentifier": "t_function_internal_nonpayable$_t_array$_t_struct$_FacetCut_$5979_memory_ptr_$dyn_memory_ptr_$_t_address_$_t_bytes_memory_ptr_$returns$__$",
+                        "typeIdentifier": "t_function_internal_nonpayable$_t_array$_t_struct$_FacetCut_$5969_memory_ptr_$dyn_memory_ptr_$_t_address_$_t_bytes_memory_ptr_$returns$__$",
                         "typeString": "function (struct IDiamond.FacetCut memory[] memory,address,bytes memory)"
                       }
                     },
-                    "id": 6649,
+                    "id": 6639,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -1221,17 +1221,17 @@
                       "typeString": "tuple()"
                     }
                   },
-                  "id": 6650,
+                  "id": 6640,
                   "nodeType": "ExpressionStatement",
                   "src": "806:41:38"
                 }
               ]
             },
             "baseFunctions": [
-              6757
+              6747
             ],
             "documentation": {
-              "id": 6628,
+              "id": 6618,
               "nodeType": "StructuredDocumentation",
               "src": "607:27:38",
               "text": "@inheritdoc IDiamondCut"
@@ -1241,16 +1241,16 @@
             "kind": "function",
             "modifiers": [
               {
-                "id": 6639,
+                "id": 6629,
                 "kind": "modifierInvocation",
                 "modifierName": {
-                  "id": 6638,
+                  "id": 6628,
                   "name": "onlyOwner",
                   "nameLocations": [
                     "760:9:38"
                   ],
                   "nodeType": "IdentifierPath",
-                  "referencedDeclaration": 7551,
+                  "referencedDeclaration": 7541,
                   "src": "760:9:38"
                 },
                 "nodeType": "ModifierInvocation",
@@ -1262,18 +1262,18 @@
                     "arguments": [],
                     "expression": {
                       "argumentTypes": [],
-                      "id": 6641,
+                      "id": 6631,
                       "name": "_nextVersion",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 6928,
+                      "referencedDeclaration": 6918,
                       "src": "784:12:38",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_internal_view$__$returns$_t_uint32_$",
                         "typeString": "function () view returns (uint32)"
                       }
                     },
-                    "id": 6642,
+                    "id": 6632,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -1290,16 +1290,16 @@
                     }
                   }
                 ],
-                "id": 6643,
+                "id": 6633,
                 "kind": "modifierInvocation",
                 "modifierName": {
-                  "id": 6640,
+                  "id": 6630,
                   "name": "reinitializer",
                   "nameLocations": [
                     "770:13:38"
                   ],
                   "nodeType": "IdentifierPath",
-                  "referencedDeclaration": 6889,
+                  "referencedDeclaration": 6879,
                   "src": "770:13:38"
                 },
                 "nodeType": "ModifierInvocation",
@@ -1309,51 +1309,51 @@
             "name": "diamondCut",
             "nameLocation": "646:10:38",
             "parameters": {
-              "id": 6637,
+              "id": 6627,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 6632,
+                  "id": 6622,
                   "mutability": "mutable",
                   "name": "facetCuts",
                   "nameLocation": "689:9:38",
                   "nodeType": "VariableDeclaration",
-                  "scope": 6652,
+                  "scope": 6642,
                   "src": "662:36:38",
                   "stateVariable": false,
                   "storageLocation": "memory",
                   "typeDescriptions": {
-                    "typeIdentifier": "t_array$_t_struct$_FacetCut_$5979_memory_ptr_$dyn_memory_ptr",
+                    "typeIdentifier": "t_array$_t_struct$_FacetCut_$5969_memory_ptr_$dyn_memory_ptr",
                     "typeString": "struct IDiamond.FacetCut[]"
                   },
                   "typeName": {
                     "baseType": {
-                      "id": 6630,
+                      "id": 6620,
                       "nodeType": "UserDefinedTypeName",
                       "pathNode": {
-                        "id": 6629,
+                        "id": 6619,
                         "name": "IDiamond.FacetCut",
                         "nameLocations": [
                           "662:8:38",
                           "671:8:38"
                         ],
                         "nodeType": "IdentifierPath",
-                        "referencedDeclaration": 5979,
+                        "referencedDeclaration": 5969,
                         "src": "662:17:38"
                       },
-                      "referencedDeclaration": 5979,
+                      "referencedDeclaration": 5969,
                       "src": "662:17:38",
                       "typeDescriptions": {
-                        "typeIdentifier": "t_struct$_FacetCut_$5979_storage_ptr",
+                        "typeIdentifier": "t_struct$_FacetCut_$5969_storage_ptr",
                         "typeString": "struct IDiamond.FacetCut"
                       }
                     },
-                    "id": 6631,
+                    "id": 6621,
                     "nodeType": "ArrayTypeName",
                     "src": "662:19:38",
                     "typeDescriptions": {
-                      "typeIdentifier": "t_array$_t_struct$_FacetCut_$5979_storage_$dyn_storage_ptr",
+                      "typeIdentifier": "t_array$_t_struct$_FacetCut_$5969_storage_$dyn_storage_ptr",
                       "typeString": "struct IDiamond.FacetCut[]"
                     }
                   },
@@ -1361,12 +1361,12 @@
                 },
                 {
                   "constant": false,
-                  "id": 6634,
+                  "id": 6624,
                   "mutability": "mutable",
                   "name": "init",
                   "nameLocation": "712:4:38",
                   "nodeType": "VariableDeclaration",
-                  "scope": 6652,
+                  "scope": 6642,
                   "src": "704:12:38",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -1375,7 +1375,7 @@
                     "typeString": "address"
                   },
                   "typeName": {
-                    "id": 6633,
+                    "id": 6623,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
                     "src": "704:7:38",
@@ -1389,12 +1389,12 @@
                 },
                 {
                   "constant": false,
-                  "id": 6636,
+                  "id": 6626,
                   "mutability": "mutable",
                   "name": "initPayload",
                   "nameLocation": "735:11:38",
                   "nodeType": "VariableDeclaration",
-                  "scope": 6652,
+                  "scope": 6642,
                   "src": "722:24:38",
                   "stateVariable": false,
                   "storageLocation": "memory",
@@ -1403,7 +1403,7 @@
                     "typeString": "bytes"
                   },
                   "typeName": {
-                    "id": 6635,
+                    "id": 6625,
                     "name": "bytes",
                     "nodeType": "ElementaryTypeName",
                     "src": "722:5:38",
@@ -1418,12 +1418,12 @@
               "src": "656:94:38"
             },
             "returnParameters": {
-              "id": 6644,
+              "id": 6634,
               "nodeType": "ParameterList",
               "parameters": [],
               "src": "800:0:38"
             },
-            "scope": 6653,
+            "scope": 6643,
             "stateMutability": "nonpayable",
             "virtual": false,
             "visibility": "external"
@@ -1433,61 +1433,61 @@
         "baseContracts": [
           {
             "baseName": {
-              "id": 6607,
+              "id": 6597,
               "name": "IDiamondCut",
               "nameLocations": [
                 "441:11:38"
               ],
               "nodeType": "IdentifierPath",
-              "referencedDeclaration": 6758,
+              "referencedDeclaration": 6748,
               "src": "441:11:38"
             },
-            "id": 6608,
+            "id": 6598,
             "nodeType": "InheritanceSpecifier",
             "src": "441:11:38"
           },
           {
             "baseName": {
-              "id": 6609,
+              "id": 6599,
               "name": "DiamondCutBase",
               "nameLocations": [
                 "454:14:38"
               ],
               "nodeType": "IdentifierPath",
-              "referencedDeclaration": 6594,
+              "referencedDeclaration": 6584,
               "src": "454:14:38"
             },
-            "id": 6610,
+            "id": 6600,
             "nodeType": "InheritanceSpecifier",
             "src": "454:14:38"
           },
           {
             "baseName": {
-              "id": 6611,
+              "id": 6601,
               "name": "OwnableBase",
               "nameLocations": [
                 "470:11:38"
               ],
               "nodeType": "IdentifierPath",
-              "referencedDeclaration": 7641,
+              "referencedDeclaration": 7631,
               "src": "470:11:38"
             },
-            "id": 6612,
+            "id": 6602,
             "nodeType": "InheritanceSpecifier",
             "src": "470:11:38"
           },
           {
             "baseName": {
-              "id": 6613,
+              "id": 6603,
               "name": "Facet",
               "nameLocations": [
                 "483:5:38"
               ],
               "nodeType": "IdentifierPath",
-              "referencedDeclaration": 5998,
+              "referencedDeclaration": 5988,
               "src": "483:5:38"
             },
-            "id": 6614,
+            "id": 6604,
             "nodeType": "InheritanceSpecifier",
             "src": "483:5:38"
           }
@@ -1497,46 +1497,46 @@
         "contractKind": "contract",
         "fullyImplemented": true,
         "linearizedBaseContracts": [
-          6653,
-          5998,
-          7129,
-          7032,
-          6990,
-          7641,
-          7512,
-          6594,
-          6758,
-          6743
+          6643,
+          5988,
+          7119,
+          7022,
+          6980,
+          7631,
+          7502,
+          6584,
+          6748,
+          6733
         ],
         "name": "DiamondCutFacet",
         "nameLocation": "422:15:38",
-        "scope": 6654,
+        "scope": 6644,
         "usedErrors": [
+          6685,
+          6687,
+          6691,
           6695,
-          6697,
           6701,
           6705,
+          6707,
           6711,
           6715,
           6717,
           6721,
-          6725,
-          6727,
-          6731,
-          6768,
-          6770,
-          6772,
-          7019,
-          7021,
-          7500,
-          7504
+          6758,
+          6760,
+          6762,
+          7009,
+          7011,
+          7490,
+          7494
         ],
         "usedEvents": [
-          6742,
-          6776,
-          7026,
-          7031,
-          7511
+          6732,
+          6766,
+          7016,
+          7021,
+          7501
         ]
       }
     ],

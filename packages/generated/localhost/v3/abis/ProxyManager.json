@@ -534,29 +534,29 @@
   },
   "ast": {
     "absolutePath": "contracts/src/diamond/proxy/manager/ProxyManager.sol",
-    "id": 11626,
+    "id": 11616,
     "exportedSymbols": {
       "Facet": [
-        5998
+        5988
       ],
       "IProxyManager": [
-        11563
+        11553
       ],
       "OwnableBase": [
-        7641
+        7631
       ],
       "ProxyManager": [
-        11625
+        11615
       ],
       "ProxyManagerBase": [
-        11702
+        11692
       ]
     },
     "nodeType": "SourceUnit",
     "src": "39:866:90",
     "nodes": [
       {
-        "id": 11565,
+        "id": 11555,
         "nodeType": "PragmaDirective",
         "src": "39:24:90",
         "nodes": [],
@@ -568,23 +568,23 @@
         ]
       },
       {
-        "id": 11567,
+        "id": 11557,
         "nodeType": "ImportDirective",
         "src": "79:50:90",
         "nodes": [],
         "absolutePath": "contracts/src/diamond/proxy/manager/IProxyManager.sol",
         "file": "./IProxyManager.sol",
         "nameLocation": "-1:-1:-1",
-        "scope": 11626,
-        "sourceUnit": 11564,
+        "scope": 11616,
+        "sourceUnit": 11554,
         "symbolAliases": [
           {
             "foreign": {
-              "id": 11566,
+              "id": 11556,
               "name": "IProxyManager",
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
-              "referencedDeclaration": 11563,
+              "referencedDeclaration": 11553,
               "src": "87:13:90",
               "typeDescriptions": {}
             },
@@ -594,23 +594,23 @@
         "unitAlias": ""
       },
       {
-        "id": 11569,
+        "id": 11559,
         "nodeType": "ImportDirective",
         "src": "144:56:90",
         "nodes": [],
         "absolutePath": "contracts/src/diamond/proxy/manager/ProxyManagerBase.sol",
         "file": "./ProxyManagerBase.sol",
         "nameLocation": "-1:-1:-1",
-        "scope": 11626,
-        "sourceUnit": 11703,
+        "scope": 11616,
+        "sourceUnit": 11693,
         "symbolAliases": [
           {
             "foreign": {
-              "id": 11568,
+              "id": 11558,
               "name": "ProxyManagerBase",
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
-              "referencedDeclaration": 11702,
+              "referencedDeclaration": 11692,
               "src": "152:16:90",
               "typeDescriptions": {}
             },
@@ -620,23 +620,23 @@
         "unitAlias": ""
       },
       {
-        "id": 11571,
+        "id": 11561,
         "nodeType": "ImportDirective",
         "src": "201:81:90",
         "nodes": [],
         "absolutePath": "contracts/src/diamond/facets/ownable/OwnableBase.sol",
         "file": "contracts/src/diamond/facets/ownable/OwnableBase.sol",
         "nameLocation": "-1:-1:-1",
-        "scope": 11626,
-        "sourceUnit": 7642,
+        "scope": 11616,
+        "sourceUnit": 7632,
         "symbolAliases": [
           {
             "foreign": {
-              "id": 11570,
+              "id": 11560,
               "name": "OwnableBase",
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
-              "referencedDeclaration": 7641,
+              "referencedDeclaration": 7631,
               "src": "209:11:90",
               "typeDescriptions": {}
             },
@@ -646,23 +646,23 @@
         "unitAlias": ""
       },
       {
-        "id": 11573,
+        "id": 11563,
         "nodeType": "ImportDirective",
         "src": "283:61:90",
         "nodes": [],
         "absolutePath": "contracts/src/diamond/facets/Facet.sol",
         "file": "contracts/src/diamond/facets/Facet.sol",
         "nameLocation": "-1:-1:-1",
-        "scope": 11626,
-        "sourceUnit": 5999,
+        "scope": 11616,
+        "sourceUnit": 5989,
         "symbolAliases": [
           {
             "foreign": {
-              "id": 11572,
+              "id": 11562,
               "name": "Facet",
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
-              "referencedDeclaration": 5998,
+              "referencedDeclaration": 5988,
               "src": "291:5:90",
               "typeDescriptions": {}
             },
@@ -672,17 +672,17 @@
         "unitAlias": ""
       },
       {
-        "id": 11625,
+        "id": 11615,
         "nodeType": "ContractDefinition",
         "src": "360:544:90",
         "nodes": [
           {
-            "id": 11600,
+            "id": 11590,
             "nodeType": "FunctionDefinition",
             "src": "441:184:90",
             "nodes": [],
             "body": {
-              "id": 11599,
+              "id": 11589,
               "nodeType": "Block",
               "src": "528:97:90",
               "nodes": [],
@@ -691,11 +691,11 @@
                   "expression": {
                     "arguments": [
                       {
-                        "id": 11589,
+                        "id": 11579,
                         "name": "implementation",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 11583,
+                        "referencedDeclaration": 11573,
                         "src": "553:14:90",
                         "typeDescriptions": {
                           "typeIdentifier": "t_address",
@@ -710,18 +710,18 @@
                           "typeString": "address"
                         }
                       ],
-                      "id": 11588,
+                      "id": 11578,
                       "name": "_setImplementation",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 11701,
+                      "referencedDeclaration": 11691,
                       "src": "534:18:90",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_internal_nonpayable$_t_address_$returns$__$",
                         "typeString": "function (address)"
                       }
                     },
-                    "id": 11590,
+                    "id": 11580,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -737,7 +737,7 @@
                       "typeString": "tuple()"
                     }
                   },
-                  "id": 11591,
+                  "id": 11581,
                   "nodeType": "ExpressionStatement",
                   "src": "534:34:90"
                 },
@@ -748,14 +748,14 @@
                         "expression": {
                           "arguments": [
                             {
-                              "id": 11594,
+                              "id": 11584,
                               "name": "IProxyManager",
                               "nodeType": "Identifier",
                               "overloadedDeclarations": [],
-                              "referencedDeclaration": 11563,
+                              "referencedDeclaration": 11553,
                               "src": "593:13:90",
                               "typeDescriptions": {
-                                "typeIdentifier": "t_type$_t_contract$_IProxyManager_$11563_$",
+                                "typeIdentifier": "t_type$_t_contract$_IProxyManager_$11553_$",
                                 "typeString": "type(contract IProxyManager)"
                               }
                             }
@@ -763,11 +763,11 @@
                           "expression": {
                             "argumentTypes": [
                               {
-                                "typeIdentifier": "t_type$_t_contract$_IProxyManager_$11563_$",
+                                "typeIdentifier": "t_type$_t_contract$_IProxyManager_$11553_$",
                                 "typeString": "type(contract IProxyManager)"
                               }
                             ],
-                            "id": 11593,
+                            "id": 11583,
                             "name": "type",
                             "nodeType": "Identifier",
                             "overloadedDeclarations": [],
@@ -778,7 +778,7 @@
                               "typeString": "function () pure"
                             }
                           },
-                          "id": 11595,
+                          "id": 11585,
                           "isConstant": false,
                           "isLValue": false,
                           "isPure": true,
@@ -790,11 +790,11 @@
                           "src": "588:19:90",
                           "tryCall": false,
                           "typeDescriptions": {
-                            "typeIdentifier": "t_magic_meta_type_t_contract$_IProxyManager_$11563",
+                            "typeIdentifier": "t_magic_meta_type_t_contract$_IProxyManager_$11553",
                             "typeString": "type(contract IProxyManager)"
                           }
                         },
-                        "id": 11596,
+                        "id": 11586,
                         "isConstant": false,
                         "isLValue": false,
                         "isPure": true,
@@ -816,18 +816,18 @@
                           "typeString": "bytes4"
                         }
                       ],
-                      "id": 11592,
+                      "id": 11582,
                       "name": "_addInterface",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 7082,
+                      "referencedDeclaration": 7072,
                       "src": "574:13:90",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_internal_nonpayable$_t_bytes4_$returns$__$",
                         "typeString": "function (bytes4)"
                       }
                     },
-                    "id": 11597,
+                    "id": 11587,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -843,7 +843,7 @@
                       "typeString": "tuple()"
                     }
                   },
-                  "id": 11598,
+                  "id": 11588,
                   "nodeType": "ExpressionStatement",
                   "src": "574:46:90"
                 }
@@ -854,16 +854,16 @@
             "kind": "function",
             "modifiers": [
               {
-                "id": 11586,
+                "id": 11576,
                 "kind": "modifierInvocation",
                 "modifierName": {
-                  "id": 11585,
+                  "id": 11575,
                   "name": "onlyInitializing",
                   "nameLocations": [
                     "511:16:90"
                   ],
                   "nodeType": "IdentifierPath",
-                  "referencedDeclaration": 6902,
+                  "referencedDeclaration": 6892,
                   "src": "511:16:90"
                 },
                 "nodeType": "ModifierInvocation",
@@ -873,17 +873,17 @@
             "name": "__ProxyManager_init",
             "nameLocation": "450:19:90",
             "parameters": {
-              "id": 11584,
+              "id": 11574,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 11583,
+                  "id": 11573,
                   "mutability": "mutable",
                   "name": "implementation",
                   "nameLocation": "483:14:90",
                   "nodeType": "VariableDeclaration",
-                  "scope": 11600,
+                  "scope": 11590,
                   "src": "475:22:90",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -892,7 +892,7 @@
                     "typeString": "address"
                   },
                   "typeName": {
-                    "id": 11582,
+                    "id": 11572,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
                     "src": "475:7:90",
@@ -908,23 +908,23 @@
               "src": "469:32:90"
             },
             "returnParameters": {
-              "id": 11587,
+              "id": 11577,
               "nodeType": "ParameterList",
               "parameters": [],
               "src": "528:0:90"
             },
-            "scope": 11625,
+            "scope": 11615,
             "stateMutability": "nonpayable",
             "virtual": false,
             "visibility": "external"
           },
           {
-            "id": 11612,
+            "id": 11602,
             "nodeType": "FunctionDefinition",
             "src": "629:138:90",
             "nodes": [],
             "body": {
-              "id": 11611,
+              "id": 11601,
               "nodeType": "Block",
               "src": "721:46:90",
               "nodes": [],
@@ -933,11 +933,11 @@
                   "expression": {
                     "arguments": [
                       {
-                        "id": 11608,
+                        "id": 11598,
                         "name": "selector",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 11602,
+                        "referencedDeclaration": 11592,
                         "src": "753:8:90",
                         "typeDescriptions": {
                           "typeIdentifier": "t_bytes4",
@@ -952,18 +952,18 @@
                           "typeString": "bytes4"
                         }
                       ],
-                      "id": 11607,
+                      "id": 11597,
                       "name": "_getImplementation",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 11672,
+                      "referencedDeclaration": 11662,
                       "src": "734:18:90",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_internal_view$_t_bytes4_$returns$_t_address_$",
                         "typeString": "function (bytes4) view returns (address)"
                       }
                     },
-                    "id": 11609,
+                    "id": 11599,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -979,15 +979,15 @@
                       "typeString": "address"
                     }
                   },
-                  "functionReturnParameters": 11606,
-                  "id": 11610,
+                  "functionReturnParameters": 11596,
+                  "id": 11600,
                   "nodeType": "Return",
                   "src": "727:35:90"
                 }
               ]
             },
             "baseFunctions": [
-              11556
+              11546
             ],
             "functionSelector": "dc9cc645",
             "implemented": true,
@@ -996,17 +996,17 @@
             "name": "getImplementation",
             "nameLocation": "638:17:90",
             "parameters": {
-              "id": 11603,
+              "id": 11593,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 11602,
+                  "id": 11592,
                   "mutability": "mutable",
                   "name": "selector",
                   "nameLocation": "668:8:90",
                   "nodeType": "VariableDeclaration",
-                  "scope": 11612,
+                  "scope": 11602,
                   "src": "661:15:90",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -1015,7 +1015,7 @@
                     "typeString": "bytes4"
                   },
                   "typeName": {
-                    "id": 11601,
+                    "id": 11591,
                     "name": "bytes4",
                     "nodeType": "ElementaryTypeName",
                     "src": "661:6:90",
@@ -1030,17 +1030,17 @@
               "src": "655:25:90"
             },
             "returnParameters": {
-              "id": 11606,
+              "id": 11596,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 11605,
+                  "id": 11595,
                   "mutability": "mutable",
                   "name": "",
                   "nameLocation": "-1:-1:-1",
                   "nodeType": "VariableDeclaration",
-                  "scope": 11612,
+                  "scope": 11602,
                   "src": "712:7:90",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -1049,7 +1049,7 @@
                     "typeString": "address"
                   },
                   "typeName": {
-                    "id": 11604,
+                    "id": 11594,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
                     "src": "712:7:90",
@@ -1064,18 +1064,18 @@
               ],
               "src": "711:9:90"
             },
-            "scope": 11625,
+            "scope": 11615,
             "stateMutability": "view",
             "virtual": true,
             "visibility": "external"
           },
           {
-            "id": 11624,
+            "id": 11614,
             "nodeType": "FunctionDefinition",
             "src": "771:131:90",
             "nodes": [],
             "body": {
-              "id": 11623,
+              "id": 11613,
               "nodeType": "Block",
               "src": "857:45:90",
               "nodes": [],
@@ -1084,11 +1084,11 @@
                   "expression": {
                     "arguments": [
                       {
-                        "id": 11620,
+                        "id": 11610,
                         "name": "implementation",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 11614,
+                        "referencedDeclaration": 11604,
                         "src": "882:14:90",
                         "typeDescriptions": {
                           "typeIdentifier": "t_address",
@@ -1103,18 +1103,18 @@
                           "typeString": "address"
                         }
                       ],
-                      "id": 11619,
+                      "id": 11609,
                       "name": "_setImplementation",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 11701,
+                      "referencedDeclaration": 11691,
                       "src": "863:18:90",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_internal_nonpayable$_t_address_$returns$__$",
                         "typeString": "function (address)"
                       }
                     },
-                    "id": 11621,
+                    "id": 11611,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -1130,30 +1130,30 @@
                       "typeString": "tuple()"
                     }
                   },
-                  "id": 11622,
+                  "id": 11612,
                   "nodeType": "ExpressionStatement",
                   "src": "863:34:90"
                 }
               ]
             },
             "baseFunctions": [
-              11562
+              11552
             ],
             "functionSelector": "d784d426",
             "implemented": true,
             "kind": "function",
             "modifiers": [
               {
-                "id": 11617,
+                "id": 11607,
                 "kind": "modifierInvocation",
                 "modifierName": {
-                  "id": 11616,
+                  "id": 11606,
                   "name": "onlyOwner",
                   "nameLocations": [
                     "847:9:90"
                   ],
                   "nodeType": "IdentifierPath",
-                  "referencedDeclaration": 7551,
+                  "referencedDeclaration": 7541,
                   "src": "847:9:90"
                 },
                 "nodeType": "ModifierInvocation",
@@ -1163,17 +1163,17 @@
             "name": "setImplementation",
             "nameLocation": "780:17:90",
             "parameters": {
-              "id": 11615,
+              "id": 11605,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 11614,
+                  "id": 11604,
                   "mutability": "mutable",
                   "name": "implementation",
                   "nameLocation": "811:14:90",
                   "nodeType": "VariableDeclaration",
-                  "scope": 11624,
+                  "scope": 11614,
                   "src": "803:22:90",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -1182,7 +1182,7 @@
                     "typeString": "address"
                   },
                   "typeName": {
-                    "id": 11613,
+                    "id": 11603,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
                     "src": "803:7:90",
@@ -1198,12 +1198,12 @@
               "src": "797:32:90"
             },
             "returnParameters": {
-              "id": 11618,
+              "id": 11608,
               "nodeType": "ParameterList",
               "parameters": [],
               "src": "857:0:90"
             },
-            "scope": 11625,
+            "scope": 11615,
             "stateMutability": "nonpayable",
             "virtual": true,
             "visibility": "external"
@@ -1213,61 +1213,61 @@
         "baseContracts": [
           {
             "baseName": {
-              "id": 11574,
+              "id": 11564,
               "name": "IProxyManager",
               "nameLocations": [
                 "385:13:90"
               ],
               "nodeType": "IdentifierPath",
-              "referencedDeclaration": 11563,
+              "referencedDeclaration": 11553,
               "src": "385:13:90"
             },
-            "id": 11575,
+            "id": 11565,
             "nodeType": "InheritanceSpecifier",
             "src": "385:13:90"
           },
           {
             "baseName": {
-              "id": 11576,
+              "id": 11566,
               "name": "ProxyManagerBase",
               "nameLocations": [
                 "400:16:90"
               ],
               "nodeType": "IdentifierPath",
-              "referencedDeclaration": 11702,
+              "referencedDeclaration": 11692,
               "src": "400:16:90"
             },
-            "id": 11577,
+            "id": 11567,
             "nodeType": "InheritanceSpecifier",
             "src": "400:16:90"
           },
           {
             "baseName": {
-              "id": 11578,
+              "id": 11568,
               "name": "OwnableBase",
               "nameLocations": [
                 "418:11:90"
               ],
               "nodeType": "IdentifierPath",
-              "referencedDeclaration": 7641,
+              "referencedDeclaration": 7631,
               "src": "418:11:90"
             },
-            "id": 11579,
+            "id": 11569,
             "nodeType": "InheritanceSpecifier",
             "src": "418:11:90"
           },
           {
             "baseName": {
-              "id": 11580,
+              "id": 11570,
               "name": "Facet",
               "nameLocations": [
                 "431:5:90"
               ],
               "nodeType": "IdentifierPath",
-              "referencedDeclaration": 5998,
+              "referencedDeclaration": 5988,
               "src": "431:5:90"
             },
-            "id": 11581,
+            "id": 11571,
             "nodeType": "InheritanceSpecifier",
             "src": "431:5:90"
           }
@@ -1277,35 +1277,35 @@
         "contractKind": "contract",
         "fullyImplemented": true,
         "linearizedBaseContracts": [
-          11625,
-          5998,
-          7129,
-          7032,
-          6990,
-          7641,
-          7512,
-          11702,
-          11563,
-          11546
+          11615,
+          5988,
+          7119,
+          7022,
+          6980,
+          7631,
+          7502,
+          11692,
+          11553,
+          11536
         ],
         "name": "ProxyManager",
         "nameLocation": "369:12:90",
-        "scope": 11626,
+        "scope": 11616,
         "usedErrors": [
-          6770,
-          6772,
-          7019,
-          7021,
-          7500,
-          7504,
-          11541
+          6760,
+          6762,
+          7009,
+          7011,
+          7490,
+          7494,
+          11531
         ],
         "usedEvents": [
-          6776,
-          7026,
-          7031,
-          7511,
-          11545
+          6766,
+          7016,
+          7021,
+          7501,
+          11535
         ]
       }
     ],

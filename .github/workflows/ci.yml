@@ -28,6 +28,12 @@ on:
                 required: false
                 default: false
                 type: boolean
+            skip_xchain_node:
+                description: Skip XChain Node Tests
+                required: false
+                default: false
+                type: boolean
+
 jobs:
     Dendrite:
         permissions: write-all
@@ -487,6 +493,86 @@ jobs:
             - name: Run node tests
               run: go test --race ./...
               working-directory: casablanca/node
+
+            # If CI failed, we send a slack notification
+            - name: Slack notification
+              if: failure() && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
+              uses: rtCamp/action-slack-notify@v2
+              env:
+                  SLACK_WEBHOOK: ${{ secrets.SLACK_CI_CHANNEL_WEBHOOK_URL }}
+                  SLACK_TITLE: 'Failure'
+                  SLACK_USERNAME: 'CI'
+                  SLACK_ICON_EMOJI: ':boom:'
+                  SLACK_COLOR: '#FF0000'
+                  SLACK_MESSAGE: 'CI Failure on ${{ github.repository }}'
+
+    XChain_Node:
+        permissions: write-all
+        if: github.event_name != 'workflow_dispatch' || !inputs.skip_xchain_node
+        runs-on: ubuntu-latest-8-cores
+        timeout-minutes: 30
+        steps:
+            - name: Cancel previous runs
+              if: github.event_name != 'schedule'
+              uses: styfle/cancel-workflow-action@0.11.0
+              with:
+                  access_token: ${{ github.token }}
+
+            - name: Checkout code
+              uses: actions/checkout@v3
+
+            - name: Git submodules
+              run: git submodule update --init --recursive
+
+            - uses: actions/setup-node@v3
+              with:
+                  node-version: '20'
+                  cache: 'yarn'
+
+            - name: Install node dependencies
+              run: yarn install --immutable
+
+            - name: Maintain Turbo cache
+              uses: actions/cache@v3
+              with:
+                  path: node_modules/.cache/turbo
+                  key: ${{ runner.os }}-turbo-${{ github.run_id }}
+                  restore-keys: |
+                      ${{ runner.os }}-turbo-
+
+            - name: Install Foundry
+              uses: foundry-rs/foundry-toolchain@v1
+              with:
+                  version: ${{ env.FOUNDRY_VERSION }}
+
+            - name: Install Forge modules
+              run: ./scripts/install-deps.sh
+
+            - name: Setup Go
+              uses: actions/setup-go@v3
+              with:
+                  go-version: '1.20'
+                  cache: true
+                  cache-dependency-path: |
+                      servers/xchain/go.sum
+
+            - name: Start anvil
+              # Start anvil in the background, and wait for it to be ready
+              run: anvil & ./scripts/wait-for-blockchain.sh
+
+            - name: Deploy local zion governance contracts
+              run: ./scripts/deploy-entitlement-checker.sh
+
+            - name: Build town contract types
+              run: ./scripts/build-town-types.sh localhost --frozen
+
+            - name: Run node tests
+              run: go test --race ./...
+              working-directory: servers/xchain
+
+            - name: Build node
+              run: go build --race ./...
+              working-directory: servers/xchain
 
             # If CI failed, we send a slack notification
             - name: Slack notification
