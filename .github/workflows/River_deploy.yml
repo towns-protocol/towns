@@ -61,7 +61,9 @@ jobs:
                           "step": "Deploy River ECS",
                           "environment": "${{ github.event.inputs.environment || github.event.client_payload.environment }}",
                           "branch": "${{ github.ref }}",
-                          "url": "${{ github.event.workflow_run.url }}"
+                          "url": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}}",
+                          "commit": "${{ github.sha }}",
+                          "actor": "${{ github.actor }}"
                       }
               env:
                   SLACK_WEBHOOK_URL: ${{ secrets.SLACK_CD_WORKFLOW_WEBHOOK_URL }}
