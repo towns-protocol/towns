@@ -19,7 +19,6 @@ var (
 	logFile      string
 	logToConsole bool
 	logNoColor   bool
-	logFormat    string // "json" or "text"
 )
 
 var cmdConfig *config.Config
@@ -54,13 +53,7 @@ func initConfigAndLog() {
 			fmt.Printf("Failed to unmarshal config, error=%v\n", err)
 		}
 
-		if logFormat != "" {
-			if logFormat == "json" {
-				configStruct.Log.Format = "json"
-			} else if logFormat == "text" {
-				configStruct.Log.Format = "text"
-			}
-		} else if configStruct.Log.Format == "" {
+		if configStruct.Log.Format == "" {
 			configStruct.Log.Format = "text"
 		}
 
