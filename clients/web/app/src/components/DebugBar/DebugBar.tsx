@@ -281,7 +281,7 @@ const DebugBar = ({
                 await logout()
                 log('onSwitchEnvironment updating environment')
                 setEnvironment(env.id)
-                window.location.href = 'http://localhost:3000'
+                window.location.href = window.location.protocol + '//' + window.location.host
             }
         },
         [chain?.id, environment, logout, setEnvironment, switchNetwork],
