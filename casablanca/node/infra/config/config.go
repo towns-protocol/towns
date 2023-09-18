@@ -7,6 +7,7 @@ type LogConfig struct {
 	Console      bool   // Log to sederr if true
 	ConsoleLevel string // If not set, use Level
 	NoColor      bool
+	Format       string // "json" or "text"
 }
 
 type MetricsConfig struct {

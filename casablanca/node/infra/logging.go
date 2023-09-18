@@ -52,30 +52,41 @@ func InitLogFromConfig(c *config.LogConfig) {
 
 	var slogHandlers []slog.Handler
 	if c.Console {
+		var handler slog.Handler
+		var prettyHandlerOptions = &dlog.PrettyHandlerOptions{
+			Level:  &consoleLogLevel,
+			Colors: consoleColors,
+		}
+
+		if c.Format == "json" {
+			handler = dlog.NewPrettyJSONHandler(os.Stderr, prettyHandlerOptions)
+		} else {
+			// c.Format == "text"
+			handler = dlog.NewPrettyTextHandler(os.Stderr, prettyHandlerOptions)
+		}
 		slogHandlers = append(
 			slogHandlers,
-			dlog.NewPrettyTextHandler(
-				os.Stderr,
-				&dlog.PrettyHandlerOptions{
-					Level:  &consoleLogLevel,
-					Colors: consoleColors,
-				},
-			),
+			handler,
 		)
 	}
 
 	if c.File != "" {
 		file, err := os.OpenFile(c.File, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 		if err == nil {
+			var handler slog.Handler
+			var prettyHandlerOptions = &dlog.PrettyHandlerOptions{
+				Level:  &fileLogLevel,
+				Colors: dlog.ColorMap_Disabled,
+			}
+			if c.Format == "json" {
+				handler = dlog.NewPrettyJSONHandler(file, prettyHandlerOptions)
+			} else {
+				// c.Format == "text"
+				handler = dlog.NewPrettyTextHandler(file, prettyHandlerOptions)
+			}
 			slogHandlers = append(
 				slogHandlers,
-				dlog.NewPrettyTextHandler(
-					file,
-					&dlog.PrettyHandlerOptions{
-						Level:  &fileLogLevel,
-						Colors: dlog.ColorMap_Disabled,
-					},
-				),
+				handler,
 			)
 			// TODO: close file when program exits
 		} else {

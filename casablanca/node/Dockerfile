@@ -52,6 +52,7 @@ COPY --from=base /build/run_docker.sh /usr/bin/run_docker.sh
 # METRICS__PORT
 # LOG__LEVEL
 # LOG__NOCOLOR
+# LOG__FORMAT
 
 # This allows us to set the release version to anything, such as a commit hash, at build time.
 ARG RELEASE_VERSION="Unreleased"
