@@ -81,7 +81,7 @@ export const ENVIRONMENTS: TownsEnvironmentInfo[] = [
         casablancaUrl: 'https://river1-test.towns.com',
         chainId: 5,
         chain: goerli,
-        protocol: SpaceProtocol.Matrix,
+        protocol: SpaceProtocol.Casablanca,
     },
 ]
 
