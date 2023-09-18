@@ -15,14 +15,13 @@ export function useCasablancaSpaceHierarchies(casablancaClient?: CasablancaClien
             return
         }
 
-        //TODO:
-        //1.Add proper support for worldReadable, guestCanJoin, numjoinedMembers
-        // (not critical for Unreads bur definitely required for consistency and absence of surprises)
-        //2.Consider refactoring code using reduce (if it will be more readable)
-        const children: SpaceChild[] = []
-
         const result: SpaceHierarchies = {}
         spaceIds.forEach((spaceId) => {
+            //TODO:
+            //1.Add proper support for worldReadable, guestCanJoin, numjoinedMembers
+            // (not critical for Unreads bur definitely required for consistency and absence of surprises)
+            //2.Consider refactoring code using reduce (if it will be more readable)
+            const children: SpaceChild[] = []
             const spaceChannels = Array.from(
                 casablancaClient
                     .stream(spaceId.networkId)
