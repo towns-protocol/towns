@@ -23,6 +23,7 @@ export type TooltipOptions = {
     trigger?: (typeof Trigger)[keyof typeof Trigger]
     active?: boolean
     immediate?: boolean
+    removeOnClick?: boolean
     closeHandleRef?: MutableRefObject<undefined | (() => void)>
     alignRef?: RefObject<HTMLElement>
 }
@@ -36,6 +37,7 @@ type TriggerProps = {
     ref: RefObject<HTMLElement>
     onMouseEnter: () => void
     onMouseLeave: () => void
+    onMouseUp?: () => void
 }
 
 export const TooltipContext = createContext<{
@@ -51,6 +53,7 @@ export const TooltipRenderer = (props: Props) => {
         placement = 'vertical',
         tooltip: render,
         closeHandleRef,
+        removeOnClick,
     } = props
 
     const triggerRef = useRef<HTMLElement | null>(null)
@@ -112,6 +115,7 @@ export const TooltipRenderer = (props: Props) => {
                         ref: triggerRef,
                         onMouseEnter,
                         onMouseLeave,
+                        onMouseUp: removeOnClick ? onMouseLeave : undefined,
                     },
                 })}
 

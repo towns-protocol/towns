@@ -88,7 +88,11 @@ export const RichTextBottomToolbar = (props: Props) => {
                     {!editing ? (
                         <Box
                             tooltip="Giphy"
-                            tooltipOptions={{ placement: 'vertical', immediate: true }}
+                            tooltipOptions={{
+                                placement: 'vertical',
+                                immediate: true,
+                                removeOnClick: true,
+                            }}
                         >
                             <GiphyEntryDesktop
                                 threadId={props.threadId}
@@ -98,7 +102,11 @@ export const RichTextBottomToolbar = (props: Props) => {
                     ) : null}
                     <Box
                         tooltip="Emoji"
-                        tooltipOptions={{ placement: 'vertical', immediate: true }}
+                        tooltipOptions={{
+                            placement: 'vertical',
+                            immediate: true,
+                            removeOnClick: true,
+                        }}
                     >
                         <EmojiPickerButton onSelectEmoji={onSelectEmoji} />
                     </Box>
