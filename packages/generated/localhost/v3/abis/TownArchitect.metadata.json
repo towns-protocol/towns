@@ -958,11 +958,11 @@
       ]
     },
     "contracts/src/towns/facets/roles/IRoles.sol": {
-      "keccak256": "0xfec96325feceb563e53a45890d5ded1d1cc3618e6e85f940f23d932bd4c8540d",
+      "keccak256": "0x630c61d3be65a9e5b0d7318d58d733806e41f101050fceb9eb6065f32b2addc3",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://f0d02b124125e9da152639212cea23451f3e133488dedcb122bc1fbbefeec1e5",
-        "dweb:/ipfs/QmcZT6KsTTJcAwknCBAMWFBZAV1bn7ntD9jHnWvdGDDKMG"
+        "bzz-raw://a23a5ce51675208f8184df63a69347e45fe5a70cc7b708ffff0527eebfdd14f9",
+        "dweb:/ipfs/QmYc28XoZ6L1cdJutzo3qcoUvsn3Vq1Pfz56V1AyEZftri"
       ]
     },
     "contracts/src/utils/Factory.sol": {

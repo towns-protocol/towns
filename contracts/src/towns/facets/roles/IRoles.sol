@@ -25,6 +25,17 @@ interface IRolesBase {
   event RoleUpdated(address indexed updater, uint256 indexed roleId);
 
   event RoleRemoved(address indexed remover, uint256 indexed roleId);
+
+  // =============================================================
+  //                           Errors
+  // =============================================================
+  error Roles__RoleDoesNotExist();
+  error Roles__EntitlementAlreadyExists();
+  error Roles__EntitlementDoesNotExist();
+  error Roles__InvalidPermission();
+  error Roles__InvalidEntitlementAddress();
+  error Roles__PermissionAlreadyExists();
+  error Roles__PermissionDoesNotExist();
 }
 
 interface IRoles is IRolesBase {
