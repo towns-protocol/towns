@@ -18,6 +18,7 @@ const config: JestConfigWithTsJest = {
     },
     moduleNameMapper: {
         '\\.(wasm)$': require.resolve('./tests/mocks/file-mock.js'),
+        msgpackr: '<rootDir>/../../../node_modules/msgpackr/dist/node.cjs',
     },
     modulePathIgnorePatterns: ['/dist/'],
     testPathIgnorePatterns: ['/dist/', '/node_modules/'],
