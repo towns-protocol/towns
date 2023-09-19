@@ -5,14 +5,30 @@ import (
 	"fmt"
 	"strings"
 
+	. "casablanca/node/base"
+	. "casablanca/node/protocol"
+
 	"github.com/ethereum/go-ethereum/common"
 )
 
 const (
-	STREAM_USER_PREFIX            = "00"
-	STREAM_SPACE_PREFIX           = "11"
-	STREAM_CHANNEL_PREFIX         = "22"
-	STREAM_USER_DEVICE_KEY_PREFIX = "33"
+	STREAM_USER_PREFIX          = "00"
+	STREAM_USER_PREFIX_DASH     = "00-"
+	STREAM_USER_PREFIX_DASH_HEX = "00-0x"
+
+	STREAM_SPACE_PREFIX      = "11"
+	STREAM_SPACE_PREFIX_DASH = "11-"
+
+	STREAM_CHANNEL_PREFIX      = "22"
+	STREAM_CHANNEL_PREFIX_DASH = "22-"
+
+	STREAM_USER_DEVICE_KEY_PREFIX          = "33"
+	STREAM_USER_DEVICE_KEY_PREFIX_DASH     = "33-"
+	STREAM_USER_DEVICE_KEY_PREFIX_DASH_HEX = "33-0x"
+
+	STREAM_USER_SETTINGS_PREFIX          = "44"
+	STREAM_USER_SETTINGS_PREFIX_DASH     = "44-"
+	STREAM_USER_SETTINGS_PREFIX_DASH_HEX = "44-0x"
 )
 
 func AddressHex(address []byte) (string, error) {
@@ -35,15 +51,43 @@ func UserStreamIdFromAddress(address []byte) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return STREAM_USER_PREFIX + "-" + userId, nil
+	return STREAM_USER_PREFIX_DASH + userId, nil
 }
 
 func ValidUserStreamId(id string) bool {
-	return len(id) == 45 && strings.HasPrefix(id, STREAM_USER_PREFIX+"-0x")
+	return len(id) == 45 && strings.HasPrefix(id, STREAM_USER_PREFIX_DASH_HEX)
 }
 
 func ValidUserDeviceKeyStreamId(id string) bool {
-	return len(id) == 45 && strings.HasPrefix(id, STREAM_USER_DEVICE_KEY_PREFIX+"-0x")
+	return len(id) == 45 && strings.HasPrefix(id, STREAM_USER_DEVICE_KEY_PREFIX_DASH_HEX)
+}
+
+func ValidUserSettingsStreamId(id string) bool {
+	return len(id) == 45 && strings.HasPrefix(id, STREAM_USER_SETTINGS_PREFIX_DASH_HEX)
+}
+
+func CheckUserStreamIdForPrefix(streamId string, creatorUserId []byte, expectedPrefix string) error {
+	u, err := AddressHex(creatorUserId)
+	if err != nil {
+		return err
+	}
+	expected := expectedPrefix + u
+	if streamId == expected {
+		return nil
+	}
+	return RpcErrorf(Err_BAD_STREAM_ID, "Stream ID doesn't match creator address or expected prefix, streamId=%s, expected=%s", streamId, expected)
+}
+
+func CheckUserStreamId(streamId string, creatorUserId []byte) error {
+	return CheckUserStreamIdForPrefix(streamId, creatorUserId, STREAM_USER_PREFIX_DASH)
+}
+
+func CheckUserDeviceKeyStreamId(streamId string, creatorUserId []byte) error {
+	return CheckUserStreamIdForPrefix(streamId, creatorUserId, STREAM_USER_DEVICE_KEY_PREFIX_DASH)
+}
+
+func CheckUserSettingsStreamId(streamId string, creatorUserId []byte) error {
+	return CheckUserStreamIdForPrefix(streamId, creatorUserId, STREAM_USER_SETTINGS_PREFIX_DASH)
 }
 
 func UserDeviceKeyStreamIdFromId(id string) (string, error) {
@@ -69,9 +113,9 @@ func ChannelStreamIdFromName(channel string) string {
 }
 
 func ValidSpaceStreamId(id string) bool {
-	return strings.HasPrefix(id, STREAM_SPACE_PREFIX+"-")
+	return strings.HasPrefix(id, STREAM_SPACE_PREFIX_DASH)
 }
 
 func ValidChannelStreamId(id string) bool {
-	return strings.HasPrefix(id, STREAM_CHANNEL_PREFIX+"-")
+	return strings.HasPrefix(id, STREAM_CHANNEL_PREFIX_DASH)
 }
