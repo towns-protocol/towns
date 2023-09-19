@@ -4,7 +4,7 @@ pragma solidity ^0.8.19;
 // interfaces
 import {ITownArchitect, ITownArchitectBase} from "contracts/src/towns/facets/architect/ITownArchitect.sol";
 import {ITokenEntitlement} from "contracts/src/towns/entitlements/token/ITokenEntitlement.sol";
-import {IEntitlements} from "contracts/src/towns/facets/entitlements/IEntitlements.sol";
+import {IEntitlementsManager} from "contracts/src/towns/facets/entitlements/IEntitlementsManager.sol";
 import {IOwnableBase} from "contracts/src/diamond/facets/ownable/IERC173.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {IERC173} from "contracts/src/diamond/facets/ownable/IERC173.sol";
@@ -50,11 +50,16 @@ contract TownArchitectTest is
     assertEq(townAddress, townInstance, "Town address mismatch");
 
     // expect owner to be founder
-    assertTrue(IEntitlements(townAddress).isEntitledToTown(founder, "Read"));
+    assertTrue(
+      IEntitlementsManager(townAddress).isEntitledToTown(founder, "Read")
+    );
 
     // expect no one to be entitled
     assertFalse(
-      IEntitlements(townAddress).isEntitledToTown(_randomAddress(), "Read")
+      IEntitlementsManager(townAddress).isEntitledToTown(
+        _randomAddress(),
+        "Read"
+      )
     );
   }
 
@@ -112,7 +117,7 @@ contract TownArchitectTest is
     vm.prank(founder);
     address newTown = _createSimpleTown(townId);
 
-    assertTrue(IEntitlements(newTown).isEntitledToTown(founder, "Read"));
+    assertTrue(IEntitlementsManager(newTown).isEntitledToTown(founder, "Read"));
 
     (address townToken, , ) = townArchitect.getTownArchitectImplementations();
     uint256 tokenId = townArchitect.getTokenIdByTownId(townId);
@@ -125,9 +130,11 @@ contract TownArchitectTest is
     vm.prank(founder);
     IERC721(townToken).transferFrom(founder, buyer, tokenId);
 
-    assertFalse(IEntitlements(newTown).isEntitledToTown(founder, "Read"));
+    assertFalse(
+      IEntitlementsManager(newTown).isEntitledToTown(founder, "Read")
+    );
 
-    assertTrue(IEntitlements(newTown).isEntitledToTown(buyer, "Read"));
+    assertTrue(IEntitlementsManager(newTown).isEntitledToTown(buyer, "Read"));
   }
 
   function test_createTown_revert_when_paused(string memory name) external {

@@ -6,7 +6,7 @@ pragma solidity ^0.8.19;
 //interfaces
 import {IRoles} from "contracts/src/towns/facets/roles/IRoles.sol";
 import {IChannel} from "contracts/src/towns/facets/channels/IChannel.sol";
-import {IEntitlements} from "contracts/src/towns/facets/entitlements/IEntitlements.sol";
+import {IEntitlementsManager} from "contracts/src/towns/facets/entitlements/IEntitlementsManager.sol";
 import {IEntitlementBase} from "contracts/src/towns/entitlements/IEntitlement.sol";
 
 //libraries
@@ -93,11 +93,11 @@ contract ChannelsTest is ChannelsSetup, IEntitlementBase {
     assertEq(_channel.roleIds.length, roleIds.length);
 
     assertFalse(
-      IEntitlements(diamond).isEntitledToTown(_randomAddress(), "Write")
+      IEntitlementsManager(diamond).isEntitledToTown(_randomAddress(), "Write")
     );
 
     assertFalse(
-      IEntitlements(diamond).isEntitledToChannel(
+      IEntitlementsManager(diamond).isEntitledToChannel(
         channelId,
         _randomAddress(),
         "Write"

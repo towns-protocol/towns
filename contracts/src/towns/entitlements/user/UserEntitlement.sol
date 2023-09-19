@@ -42,7 +42,7 @@ contract UserEntitlement is
   string public constant description = "Entitlement for users";
   string public constant moduleType = "UserEntitlement";
 
-  modifier onlySpace() {
+  modifier onlyTown() {
     if (_msgSender() != TOWN_ADDRESS) {
       revert Entitlement__NotAllowed();
     }
@@ -66,7 +66,7 @@ contract UserEntitlement is
   /// @param newImplementation address of the new implementation
   function _authorizeUpgrade(
     address newImplementation
-  ) internal override onlySpace {}
+  ) internal override onlyTown {}
 
   function supportsInterface(
     bytes4 interfaceId
@@ -93,7 +93,7 @@ contract UserEntitlement is
   function setEntitlement(
     uint256 roleId,
     bytes calldata entitlementData
-  ) external onlySpace returns (bytes32 entitlementId) {
+  ) external onlyTown returns (bytes32 entitlementId) {
     entitlementId = keccak256(abi.encodePacked(roleId, entitlementData));
 
     address[] memory users = abi.decode(entitlementData, (address[]));
@@ -125,7 +125,7 @@ contract UserEntitlement is
   function removeEntitlement(
     uint256 roleId,
     bytes calldata entitlementData
-  ) external onlySpace returns (bytes32 entitlementId) {
+  ) external onlyTown returns (bytes32 entitlementId) {
     entitlementId = keccak256(abi.encodePacked(roleId, entitlementData));
 
     Entitlement memory entitlement = entitlementsById[entitlementId];

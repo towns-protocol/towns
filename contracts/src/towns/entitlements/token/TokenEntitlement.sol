@@ -45,7 +45,7 @@ contract TokenEntitlement is
   string public constant description = "Entitlement for tokens";
   string public constant moduleType = "TokenEntitlement";
 
-  modifier onlySpace() {
+  modifier onlyTown() {
     if (_msgSender() != SPACE_ADDRESS) {
       revert Entitlement__NotAllowed();
     }
@@ -69,7 +69,7 @@ contract TokenEntitlement is
   /// @param newImplementation address of the new implementation
   function _authorizeUpgrade(
     address newImplementation
-  ) internal override onlySpace {}
+  ) internal override onlyTown {}
 
   function supportsInterface(
     bytes4 interfaceId
@@ -96,7 +96,7 @@ contract TokenEntitlement is
   function setEntitlement(
     uint256 roleId,
     bytes calldata entitlementData
-  ) external onlySpace returns (bytes32 entitlementId) {
+  ) external onlyTown returns (bytes32 entitlementId) {
     entitlementId = keccak256(abi.encodePacked(roleId, entitlementData));
 
     ExternalToken[] memory externalTokens = abi.decode(
@@ -134,7 +134,7 @@ contract TokenEntitlement is
   function removeEntitlement(
     uint256 roleId,
     bytes calldata entitlementData
-  ) external onlySpace returns (bytes32 entitlementId) {
+  ) external onlyTown returns (bytes32 entitlementId) {
     entitlementId = keccak256(abi.encodePacked(roleId, entitlementData));
 
     entitlementIdsByRoleId[roleId].remove(entitlementId);

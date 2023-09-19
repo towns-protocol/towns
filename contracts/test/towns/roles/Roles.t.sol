@@ -4,7 +4,7 @@ pragma solidity ^0.8.19;
 //interfaces
 import {IRoles, IRolesBase} from "contracts/src/towns/facets/roles/IRoles.sol";
 import {IChannel} from "contracts/src/towns/facets/channels/IChannel.sol";
-import {IEntitlements} from "contracts/src/towns/facets/entitlements/IEntitlements.sol";
+import {IEntitlementsManager} from "contracts/src/towns/facets/entitlements/IEntitlementsManager.sol";
 import {IEntitlementBase} from "contracts/src/towns/entitlements/IEntitlement.sol";
 
 // libraries
@@ -14,7 +14,7 @@ import {RolesSetup} from "./RolesSetup.sol";
 
 // errors
 // solhint-disable-next-line max-line-length
-import {EntitlementsService__InvalidEntitlementInterface, EntitlementsService__InvalidEntitlementAddress, EntitlementsService__EntitlementDoesNotExist} from "contracts/src/towns/facets/entitlements/EntitlementsService.sol";
+import {EntitlementsService__InvalidEntitlementInterface, EntitlementsService__InvalidEntitlementAddress, EntitlementsService__EntitlementDoesNotExist} from "contracts/src/towns/facets/entitlements/EntitlementsManagerService.sol";
 // solhint-disable-next-line max-line-length
 import {Validator__InvalidStringLength, Validator__InvalidByteLength} from "contracts/src/utils/Validator.sol";
 // solhint-disable-next-line max-line-length
@@ -31,7 +31,9 @@ contract RolesTest is RolesSetup, IRolesBase, IEntitlementBase {
     permissions[0] = "Read";
 
     vm.prank(founder);
-    IEntitlements(diamond).addEntitlement(address(mockEntitlement));
+    IEntitlementsManager(diamond).addEntitlementModule(
+      address(mockEntitlement)
+    );
 
     IRoles.CreateEntitlement[]
       memory entitlements = new IRoles.CreateEntitlement[](1);
@@ -201,7 +203,9 @@ contract RolesTest is RolesSetup, IRolesBase, IEntitlementBase {
     permissions[0] = permission;
 
     vm.prank(founder);
-    IEntitlements(diamond).addEntitlement(address(mockEntitlement));
+    IEntitlementsManager(diamond).addEntitlementModule(
+      address(mockEntitlement)
+    );
 
     IRoles.CreateEntitlement[]
       memory entitlements = new IRoles.CreateEntitlement[](1);
@@ -296,8 +300,12 @@ contract RolesTest is RolesSetup, IRolesBase, IEntitlementBase {
 
     // add both entitlements to diamond
     vm.startPrank(founder);
-    IEntitlements(diamond).addEntitlement(address(mockEntitlement));
-    IEntitlements(diamond).addEntitlement(address(newMockEntitlement));
+    IEntitlementsManager(diamond).addEntitlementModule(
+      address(mockEntitlement)
+    );
+    IEntitlementsManager(diamond).addEntitlementModule(
+      address(newMockEntitlement)
+    );
     vm.stopPrank();
 
     // create an initial set of permissions
@@ -577,7 +585,9 @@ contract RolesTest is RolesSetup, IRolesBase, IEntitlementBase {
     vm.assume(bytes(roleName).length > 2);
 
     vm.prank(founder);
-    IEntitlements(diamond).addEntitlement(address(mockEntitlement));
+    IEntitlementsManager(diamond).addEntitlementModule(
+      address(mockEntitlement)
+    );
 
     IRoles.CreateEntitlement[]
       memory entitlements = new IRoles.CreateEntitlement[](1);
@@ -756,7 +766,9 @@ contract RolesTest is RolesSetup, IRolesBase, IEntitlementBase {
     vm.assume(bytes(roleName).length > 2);
 
     vm.prank(founder);
-    IEntitlements(diamond).addEntitlement(address(mockEntitlement));
+    IEntitlementsManager(diamond).addEntitlementModule(
+      address(mockEntitlement)
+    );
 
     // create a roles
     vm.prank(founder);
@@ -784,7 +796,9 @@ contract RolesTest is RolesSetup, IRolesBase, IEntitlementBase {
 
   function test_addRoleToEntitlement_revert_when_invalid_role() external {
     vm.prank(founder);
-    IEntitlements(diamond).addEntitlement(address(mockEntitlement));
+    IEntitlementsManager(diamond).addEntitlementModule(
+      address(mockEntitlement)
+    );
 
     IRoles.CreateEntitlement memory entitlement = CreateEntitlement({
       module: address(mockEntitlement),
@@ -825,7 +839,9 @@ contract RolesTest is RolesSetup, IRolesBase, IEntitlementBase {
     vm.assume(bytes(roleName).length > 2);
 
     vm.prank(founder);
-    IEntitlements(diamond).addEntitlement(address(mockEntitlement));
+    IEntitlementsManager(diamond).addEntitlementModule(
+      address(mockEntitlement)
+    );
 
     // create a roles
     vm.prank(founder);
@@ -858,7 +874,9 @@ contract RolesTest is RolesSetup, IRolesBase, IEntitlementBase {
     vm.assume(bytes(roleName).length > 2);
 
     vm.prank(founder);
-    IEntitlements(diamond).addEntitlement(address(mockEntitlement));
+    IEntitlementsManager(diamond).addEntitlementModule(
+      address(mockEntitlement)
+    );
 
     // create a role
     vm.prank(founder);
@@ -893,7 +911,9 @@ contract RolesTest is RolesSetup, IRolesBase, IEntitlementBase {
 
   function test_removeRoleFromEntitlement_revert_when_invalid_role() external {
     vm.prank(founder);
-    IEntitlements(diamond).addEntitlement(address(mockEntitlement));
+    IEntitlementsManager(diamond).addEntitlementModule(
+      address(mockEntitlement)
+    );
 
     IRoles.CreateEntitlement memory entitlement = CreateEntitlement({
       module: address(mockEntitlement),
@@ -934,7 +954,9 @@ contract RolesTest is RolesSetup, IRolesBase, IEntitlementBase {
     vm.assume(bytes(roleName).length > 2);
 
     vm.prank(founder);
-    IEntitlements(diamond).addEntitlement(address(mockEntitlement));
+    IEntitlementsManager(diamond).addEntitlementModule(
+      address(mockEntitlement)
+    );
 
     // create a roles
     vm.prank(founder);

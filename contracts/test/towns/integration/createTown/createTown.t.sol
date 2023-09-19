@@ -5,7 +5,7 @@ pragma solidity ^0.8.19;
 import {IERC173} from "contracts/src/diamond/facets/ownable/IERC173.sol";
 import {IChannel} from "contracts/src/towns/facets/channels/IChannel.sol";
 import {IChannel} from "contracts/src/towns/facets/channels/IChannel.sol";
-import {IEntitlements} from "contracts/src/towns/facets/entitlements/IEntitlements.sol";
+import {IEntitlementsManager} from "contracts/src/towns/facets/entitlements/IEntitlementsManager.sol";
 import {ITokenEntitlement} from "contracts/src/towns/entitlements/token/ITokenEntitlement.sol";
 import {IRoles, IRolesBase} from "contracts/src/towns/facets/roles/IRoles.sol";
 import {ITownArchitect, ITownArchitectBase} from "contracts/src/towns/facets/architect/ITownArchitect.sol";
@@ -48,8 +48,8 @@ contract Integration_CreateTown is
     address newTown = _createSimpleTown(townId);
 
     // look for user entitlement
-    IEntitlements.Entitlement[] memory entitlements = IEntitlements(newTown)
-      .getEntitlements();
+    IEntitlementsManager.Entitlement[]
+      memory entitlements = IEntitlementsManager(newTown).getEntitlements();
 
     address userEntitlement;
 
@@ -101,7 +101,7 @@ contract Integration_CreateTown is
 
     // members can access the town
     assertTrue(
-      IEntitlements(newTown).isEntitledToTown({
+      IEntitlementsManager(newTown).isEntitledToTown({
         user: member,
         permission: "Write"
       })
@@ -109,7 +109,7 @@ contract Integration_CreateTown is
 
     // however they cannot access the channel
     assertFalse(
-      IEntitlements(newTown).isEntitledToChannel({
+      IEntitlementsManager(newTown).isEntitledToChannel({
         channelId: "test2",
         user: member,
         permission: "Write"
@@ -122,7 +122,11 @@ contract Integration_CreateTown is
 
     // members can access the channel now
     assertTrue(
-      IEntitlements(newTown).isEntitledToChannel("test2", member, "Write")
+      IEntitlementsManager(newTown).isEntitledToChannel(
+        "test2",
+        member,
+        "Write"
+      )
     );
   }
 
@@ -158,7 +162,7 @@ contract Integration_CreateTown is
     address newTown = ITownArchitect(diamond).createTown(townInfo);
 
     assertTrue(
-      IEntitlements(newTown).isEntitledToTown(bob, "Read"),
+      IEntitlementsManager(newTown).isEntitledToTown(bob, "Read"),
       "Bob should be entitled to read"
     );
   }

@@ -1,0 +1,4476 @@
+{
+  "abi": [],
+  "bytecode": {
+    "object": "0x60206037600b82828239805160001a607314602a57634e487b7160e01b600052600060045260246000fd5b30600052607381538281f3fe73000000000000000000000000000000000000000030146080604052600080fd",
+    "sourceMap": "716:3936:153:-:0;;;;;;;;;;;;;;;-1:-1:-1;;;716:3936:153;;;;;;;;;;;;;;;;;",
+    "linkReferences": {}
+  },
+  "deployedBytecode": {
+    "object": "0x73000000000000000000000000000000000000000030146080604052600080fd",
+    "sourceMap": "716:3936:153:-:0;;;;;;;;",
+    "linkReferences": {}
+  },
+  "methodIdentifiers": {},
+  "rawMetadata": "{\"compiler\":{\"version\":\"0.8.20+commit.a1b79de6\"},\"language\":\"Solidity\",\"output\":{\"abi\":[],\"devdoc\":{\"kind\":\"dev\",\"methods\":{},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"contracts/src/towns/facets/entitlements/EntitlementsManagerService.sol\":\"EntitlementsManagerService\"},\"evmVersion\":\"paris\",\"libraries\":{},\"metadata\":{\"appendCBOR\":false,\"bytecodeHash\":\"none\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[\":@openzeppelin/=lib/openzeppelin-contracts/\",\":@prb/test/=lib/prb-test/src/\",\":ERC721A/=lib/ERC721A/contracts/\",\":council/=lib/council/contracts/\",\":ds-test/=lib/ds-test/src/\",\":erc4626-tests/=lib/operator-filter-registry/lib/openzeppelin-contracts/lib/erc4626-tests/\",\":forge-std/=lib/forge-std/src/\",\":openzeppelin-contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/\",\":openzeppelin-contracts/=lib/openzeppelin-contracts/\",\":operator-filter-registry/=lib/operator-filter-registry/\",\":prb-test/=lib/prb-test/src/\"]},\"sources\":{\"contracts/src/diamond/facets/introspection/IERC165.sol\":{\"keccak256\":\"0xa1dfa0449031fced106dd105c184823595398c876be53b4bb8d855937a435816\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://e98a9007bca24776e4580c9326cfbb72ffe56334229626c336545be8c2c6e6d2\",\"dweb:/ipfs/QmdqoQTUoDKqirUR3hscy4zBh4Kn2E1fRta1y9DfA43urV\"]},\"contracts/src/towns/entitlements/IEntitlement.sol\":{\"keccak256\":\"0x3c3733f40dcf373c19ea564ec9cbf49b33e96c27a80012e9be6f8d6d24e76c46\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://ba0686e15bc8bfac66d59f62e59832eaf6d4c1b636080f9b2367386d5dc72ecb\",\"dweb:/ipfs/QmemW17L8TkGWG9RHKWTpjq9WBtYX3dmZsiTtzDmYNNXwE\"]},\"contracts/src/towns/facets/entitlements/EntitlementsManagerService.sol\":{\"keccak256\":\"0xec231181537f2bd37bde9fe50a37e4ffca400e51467e20f804021130d091904d\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://c96e305f95f70cc80c9c603bdee50e8520fe2401541efc97144cfc2dba55c19e\",\"dweb:/ipfs/Qmb3MKgF65Yqx7d63Ej7AYNNzDZRiy9PjmyKxFASS2xBKE\"]},\"contracts/src/towns/facets/entitlements/EntitlementsManagerStorage.sol\":{\"keccak256\":\"0x2fa49a3dea8314e57341b402894a053fe4c3e4f6f682d3f6cfae79e999919340\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://ca673210755140e127ec9ed3c7716a3c4fc48d3c4cf66d6ccfca5144e2c9933d\",\"dweb:/ipfs/QmQajUVgwkg8dkeAb8Ext2dABL3PRPNsiDCxd7XXXuUdVD\"]},\"lib/openzeppelin-contracts/contracts/utils/structs/EnumerableSet.sol\":{\"keccak256\":\"0xc3ff3f5c4584e1d9a483ad7ced51ab64523201f4e3d3c65293e4ca8aeb77a961\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://d7d3dd6067a994690471b5fc71b6f81fac3847798b37d404f74db00b4d3c3d0e\",\"dweb:/ipfs/QmRHF1RarifjNi93RttouNPkYZGyu6CD926PgRDzD5iL35\"]}},\"version\":1}",
+  "metadata": {
+    "compiler": {
+      "version": "0.8.20+commit.a1b79de6"
+    },
+    "language": "Solidity",
+    "output": {
+      "abi": [],
+      "devdoc": {
+        "kind": "dev",
+        "methods": {},
+        "version": 1
+      },
+      "userdoc": {
+        "kind": "user",
+        "methods": {},
+        "version": 1
+      }
+    },
+    "settings": {
+      "remappings": [
+        "@openzeppelin/=lib/openzeppelin-contracts/",
+        "@prb/test/=lib/prb-test/src/",
+        "ERC721A/=lib/ERC721A/contracts/",
+        "council/=lib/council/contracts/",
+        "ds-test/=lib/ds-test/src/",
+        "erc4626-tests/=lib/operator-filter-registry/lib/openzeppelin-contracts/lib/erc4626-tests/",
+        "forge-std/=lib/forge-std/src/",
+        "openzeppelin-contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/",
+        "openzeppelin-contracts/=lib/openzeppelin-contracts/",
+        "operator-filter-registry/=lib/operator-filter-registry/",
+        "prb-test/=lib/prb-test/src/"
+      ],
+      "optimizer": {
+        "enabled": true,
+        "runs": 200
+      },
+      "metadata": {
+        "bytecodeHash": "none",
+        "appendCBOR": false
+      },
+      "compilationTarget": {
+        "contracts/src/towns/facets/entitlements/EntitlementsManagerService.sol": "EntitlementsManagerService"
+      },
+      "libraries": {}
+    },
+    "sources": {
+      "contracts/src/diamond/facets/introspection/IERC165.sol": {
+        "keccak256": "0xa1dfa0449031fced106dd105c184823595398c876be53b4bb8d855937a435816",
+        "urls": [
+          "bzz-raw://e98a9007bca24776e4580c9326cfbb72ffe56334229626c336545be8c2c6e6d2",
+          "dweb:/ipfs/QmdqoQTUoDKqirUR3hscy4zBh4Kn2E1fRta1y9DfA43urV"
+        ],
+        "license": "Apache-2.0"
+      },
+      "contracts/src/towns/entitlements/IEntitlement.sol": {
+        "keccak256": "0x3c3733f40dcf373c19ea564ec9cbf49b33e96c27a80012e9be6f8d6d24e76c46",
+        "urls": [
+          "bzz-raw://ba0686e15bc8bfac66d59f62e59832eaf6d4c1b636080f9b2367386d5dc72ecb",
+          "dweb:/ipfs/QmemW17L8TkGWG9RHKWTpjq9WBtYX3dmZsiTtzDmYNNXwE"
+        ],
+        "license": "Apache-2.0"
+      },
+      "contracts/src/towns/facets/entitlements/EntitlementsManagerService.sol": {
+        "keccak256": "0xec231181537f2bd37bde9fe50a37e4ffca400e51467e20f804021130d091904d",
+        "urls": [
+          "bzz-raw://c96e305f95f70cc80c9c603bdee50e8520fe2401541efc97144cfc2dba55c19e",
+          "dweb:/ipfs/Qmb3MKgF65Yqx7d63Ej7AYNNzDZRiy9PjmyKxFASS2xBKE"
+        ],
+        "license": "Apache-2.0"
+      },
+      "contracts/src/towns/facets/entitlements/EntitlementsManagerStorage.sol": {
+        "keccak256": "0x2fa49a3dea8314e57341b402894a053fe4c3e4f6f682d3f6cfae79e999919340",
+        "urls": [
+          "bzz-raw://ca673210755140e127ec9ed3c7716a3c4fc48d3c4cf66d6ccfca5144e2c9933d",
+          "dweb:/ipfs/QmQajUVgwkg8dkeAb8Ext2dABL3PRPNsiDCxd7XXXuUdVD"
+        ],
+        "license": "Apache-2.0"
+      },
+      "lib/openzeppelin-contracts/contracts/utils/structs/EnumerableSet.sol": {
+        "keccak256": "0xc3ff3f5c4584e1d9a483ad7ced51ab64523201f4e3d3c65293e4ca8aeb77a961",
+        "urls": [
+          "bzz-raw://d7d3dd6067a994690471b5fc71b6f81fac3847798b37d404f74db00b4d3c3d0e",
+          "dweb:/ipfs/QmRHF1RarifjNi93RttouNPkYZGyu6CD926PgRDzD5iL35"
+        ],
+        "license": "MIT"
+      }
+    },
+    "version": 1
+  },
+  "ast": {
+    "absolutePath": "contracts/src/towns/facets/entitlements/EntitlementsManagerService.sol",
+    "id": 32346,
+    "exportedSymbols": {
+      "EntitlementsManagerService": [
+        32345
+      ],
+      "EntitlementsManagerStorage": [
+        32381
+      ],
+      "EntitlementsService__EntitlementAlreadyExists": [
+        32013
+      ],
+      "EntitlementsService__EntitlementDoesNotExist": [
+        32011
+      ],
+      "EntitlementsService__ImmutableEntitlement": [
+        32009
+      ],
+      "EntitlementsService__InvalidEntitlementAddress": [
+        32005
+      ],
+      "EntitlementsService__InvalidEntitlementInterface": [
+        32007
+      ],
+      "EnumerableSet": [
+        120859
+      ],
+      "IERC165": [
+        7034
+      ],
+      "IEntitlement": [
+        27191
+      ]
+    },
+    "nodeType": "SourceUnit",
+    "src": "39:4614:153",
+    "nodes": [
+      {
+        "id": 31995,
+        "nodeType": "PragmaDirective",
+        "src": "39:24:153",
+        "nodes": [],
+        "literals": [
+          "solidity",
+          "^",
+          "0.8",
+          ".20"
+        ]
+      },
+      {
+        "id": 31997,
+        "nodeType": "ImportDirective",
+        "src": "79:79:153",
+        "nodes": [],
+        "absolutePath": "contracts/src/towns/entitlements/IEntitlement.sol",
+        "file": "contracts/src/towns/entitlements/IEntitlement.sol",
+        "nameLocation": "-1:-1:-1",
+        "scope": 32346,
+        "sourceUnit": 27192,
+        "symbolAliases": [
+          {
+            "foreign": {
+              "id": 31996,
+              "name": "IEntitlement",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "referencedDeclaration": 27191,
+              "src": "87:12:153",
+              "typeDescriptions": {}
+            },
+            "nameLocation": "-1:-1:-1"
+          }
+        ],
+        "unitAlias": ""
+      },
+      {
+        "id": 31999,
+        "nodeType": "ImportDirective",
+        "src": "159:79:153",
+        "nodes": [],
+        "absolutePath": "contracts/src/diamond/facets/introspection/IERC165.sol",
+        "file": "contracts/src/diamond/facets/introspection/IERC165.sol",
+        "nameLocation": "-1:-1:-1",
+        "scope": 32346,
+        "sourceUnit": 7035,
+        "symbolAliases": [
+          {
+            "foreign": {
+              "id": 31998,
+              "name": "IERC165",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "referencedDeclaration": 7034,
+              "src": "167:7:153",
+              "typeDescriptions": {}
+            },
+            "nameLocation": "-1:-1:-1"
+          }
+        ],
+        "unitAlias": ""
+      },
+      {
+        "id": 32001,
+        "nodeType": "ImportDirective",
+        "src": "253:95:153",
+        "nodes": [],
+        "absolutePath": "lib/openzeppelin-contracts/contracts/utils/structs/EnumerableSet.sol",
+        "file": "openzeppelin-contracts/contracts/utils/structs/EnumerableSet.sol",
+        "nameLocation": "-1:-1:-1",
+        "scope": 32346,
+        "sourceUnit": 120860,
+        "symbolAliases": [
+          {
+            "foreign": {
+              "id": 32000,
+              "name": "EnumerableSet",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "referencedDeclaration": 120859,
+              "src": "261:13:153",
+              "typeDescriptions": {}
+            },
+            "nameLocation": "-1:-1:-1"
+          }
+        ],
+        "unitAlias": ""
+      },
+      {
+        "id": 32003,
+        "nodeType": "ImportDirective",
+        "src": "349:76:153",
+        "nodes": [],
+        "absolutePath": "contracts/src/towns/facets/entitlements/EntitlementsManagerStorage.sol",
+        "file": "./EntitlementsManagerStorage.sol",
+        "nameLocation": "-1:-1:-1",
+        "scope": 32346,
+        "sourceUnit": 32382,
+        "symbolAliases": [
+          {
+            "foreign": {
+              "id": 32002,
+              "name": "EntitlementsManagerStorage",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "referencedDeclaration": 32381,
+              "src": "357:26:153",
+              "typeDescriptions": {}
+            },
+            "nameLocation": "-1:-1:-1"
+          }
+        ],
+        "unitAlias": ""
+      },
+      {
+        "id": 32005,
+        "nodeType": "ErrorDefinition",
+        "src": "440:55:153",
+        "nodes": [],
+        "errorSelector": "e0dc2ae0",
+        "name": "EntitlementsService__InvalidEntitlementAddress",
+        "nameLocation": "446:46:153",
+        "parameters": {
+          "id": 32004,
+          "nodeType": "ParameterList",
+          "parameters": [],
+          "src": "492:2:153"
+        }
+      },
+      {
+        "id": 32007,
+        "nodeType": "ErrorDefinition",
+        "src": "496:57:153",
+        "nodes": [],
+        "errorSelector": "f58a5f27",
+        "name": "EntitlementsService__InvalidEntitlementInterface",
+        "nameLocation": "502:48:153",
+        "parameters": {
+          "id": 32006,
+          "nodeType": "ParameterList",
+          "parameters": [],
+          "src": "550:2:153"
+        }
+      },
+      {
+        "id": 32009,
+        "nodeType": "ErrorDefinition",
+        "src": "555:50:153",
+        "nodes": [],
+        "errorSelector": "c08b012e",
+        "name": "EntitlementsService__ImmutableEntitlement",
+        "nameLocation": "561:41:153",
+        "parameters": {
+          "id": 32008,
+          "nodeType": "ParameterList",
+          "parameters": [],
+          "src": "602:2:153"
+        }
+      },
+      {
+        "id": 32011,
+        "nodeType": "ErrorDefinition",
+        "src": "606:53:153",
+        "nodes": [],
+        "errorSelector": "bd599b80",
+        "name": "EntitlementsService__EntitlementDoesNotExist",
+        "nameLocation": "612:44:153",
+        "parameters": {
+          "id": 32010,
+          "nodeType": "ParameterList",
+          "parameters": [],
+          "src": "656:2:153"
+        }
+      },
+      {
+        "id": 32013,
+        "nodeType": "ErrorDefinition",
+        "src": "660:54:153",
+        "nodes": [],
+        "errorSelector": "24060209",
+        "name": "EntitlementsService__EntitlementAlreadyExists",
+        "nameLocation": "666:45:153",
+        "parameters": {
+          "id": 32012,
+          "nodeType": "ParameterList",
+          "parameters": [],
+          "src": "711:2:153"
+        }
+      },
+      {
+        "id": 32345,
+        "nodeType": "ContractDefinition",
+        "src": "716:3936:153",
+        "nodes": [
+          {
+            "id": 32017,
+            "nodeType": "UsingForDirective",
+            "src": "755:49:153",
+            "nodes": [],
+            "global": false,
+            "libraryName": {
+              "id": 32014,
+              "name": "EnumerableSet",
+              "nameLocations": [
+                "761:13:153"
+              ],
+              "nodeType": "IdentifierPath",
+              "referencedDeclaration": 120859,
+              "src": "761:13:153"
+            },
+            "typeName": {
+              "id": 32016,
+              "nodeType": "UserDefinedTypeName",
+              "pathNode": {
+                "id": 32015,
+                "name": "EnumerableSet.AddressSet",
+                "nameLocations": [
+                  "779:13:153",
+                  "793:10:153"
+                ],
+                "nodeType": "IdentifierPath",
+                "referencedDeclaration": 120572,
+                "src": "779:24:153"
+              },
+              "referencedDeclaration": 120572,
+              "src": "779:24:153",
+              "typeDescriptions": {
+                "typeIdentifier": "t_struct$_AddressSet_$120572_storage_ptr",
+                "typeString": "struct EnumerableSet.AddressSet"
+              }
+            }
+          },
+          {
+            "id": 32021,
+            "nodeType": "UsingForDirective",
+            "src": "807:71:153",
+            "nodes": [],
+            "global": false,
+            "libraryName": {
+              "id": 32018,
+              "name": "EntitlementsManagerStorage",
+              "nameLocations": [
+                "813:26:153"
+              ],
+              "nodeType": "IdentifierPath",
+              "referencedDeclaration": 32381,
+              "src": "813:26:153"
+            },
+            "typeName": {
+              "id": 32020,
+              "nodeType": "UserDefinedTypeName",
+              "pathNode": {
+                "id": 32019,
+                "name": "EntitlementsManagerStorage.Layout",
+                "nameLocations": [
+                  "844:26:153",
+                  "871:6:153"
+                ],
+                "nodeType": "IdentifierPath",
+                "referencedDeclaration": 32368,
+                "src": "844:33:153"
+              },
+              "referencedDeclaration": 32368,
+              "src": "844:33:153",
+              "typeDescriptions": {
+                "typeIdentifier": "t_struct$_Layout_$32368_storage_ptr",
+                "typeString": "struct EntitlementsManagerStorage.Layout"
+              }
+            }
+          },
+          {
+            "id": 32024,
+            "nodeType": "VariableDeclaration",
+            "src": "882:37:153",
+            "nodes": [],
+            "constant": true,
+            "mutability": "constant",
+            "name": "IN_TOWN",
+            "nameLocation": "907:7:153",
+            "scope": 32345,
+            "stateVariable": true,
+            "storageLocation": "default",
+            "typeDescriptions": {
+              "typeIdentifier": "t_string_memory_ptr",
+              "typeString": "string"
+            },
+            "typeName": {
+              "id": 32022,
+              "name": "string",
+              "nodeType": "ElementaryTypeName",
+              "src": "882:6:153",
+              "typeDescriptions": {
+                "typeIdentifier": "t_string_storage_ptr",
+                "typeString": "string"
+              }
+            },
+            "value": {
+              "hexValue": "",
+              "id": 32023,
+              "isConstant": false,
+              "isLValue": false,
+              "isPure": true,
+              "kind": "string",
+              "lValueRequested": false,
+              "nodeType": "Literal",
+              "src": "917:2:153",
+              "typeDescriptions": {
+                "typeIdentifier": "t_stringliteral_c5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+                "typeString": "literal_string \"\""
+              },
+              "value": ""
+            },
+            "visibility": "internal"
+          },
+          {
+            "id": 32054,
+            "nodeType": "FunctionDefinition",
+            "src": "924:303:153",
+            "nodes": [],
+            "body": {
+              "id": 32053,
+              "nodeType": "Block",
+              "src": "985:242:153",
+              "nodes": [],
+              "statements": [
+                {
+                  "assignments": [
+                    32033
+                  ],
+                  "declarations": [
+                    {
+                      "constant": false,
+                      "id": 32033,
+                      "mutability": "mutable",
+                      "name": "ds",
+                      "nameLocation": "1033:2:153",
+                      "nodeType": "VariableDeclaration",
+                      "scope": 32053,
+                      "src": "991:44:153",
+                      "stateVariable": false,
+                      "storageLocation": "storage",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_struct$_Layout_$32368_storage_ptr",
+                        "typeString": "struct EntitlementsManagerStorage.Layout"
+                      },
+                      "typeName": {
+                        "id": 32032,
+                        "nodeType": "UserDefinedTypeName",
+                        "pathNode": {
+                          "id": 32031,
+                          "name": "EntitlementsManagerStorage.Layout",
+                          "nameLocations": [
+                            "991:26:153",
+                            "1018:6:153"
+                          ],
+                          "nodeType": "IdentifierPath",
+                          "referencedDeclaration": 32368,
+                          "src": "991:33:153"
+                        },
+                        "referencedDeclaration": 32368,
+                        "src": "991:33:153",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_struct$_Layout_$32368_storage_ptr",
+                          "typeString": "struct EntitlementsManagerStorage.Layout"
+                        }
+                      },
+                      "visibility": "internal"
+                    }
+                  ],
+                  "id": 32037,
+                  "initialValue": {
+                    "arguments": [],
+                    "expression": {
+                      "argumentTypes": [],
+                      "expression": {
+                        "id": 32034,
+                        "name": "EntitlementsManagerStorage",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 32381,
+                        "src": "1038:26:153",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_type$_t_contract$_EntitlementsManagerStorage_$32381_$",
+                          "typeString": "type(library EntitlementsManagerStorage)"
+                        }
+                      },
+                      "id": 32035,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": false,
+                      "lValueRequested": false,
+                      "memberLocation": "1072:6:153",
+                      "memberName": "layout",
+                      "nodeType": "MemberAccess",
+                      "referencedDeclaration": 32380,
+                      "src": "1038:40:153",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_function_internal_pure$__$returns$_t_struct$_Layout_$32368_storage_ptr_$",
+                        "typeString": "function () pure returns (struct EntitlementsManagerStorage.Layout storage pointer)"
+                      }
+                    },
+                    "id": 32036,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "kind": "functionCall",
+                    "lValueRequested": false,
+                    "nameLocations": [],
+                    "names": [],
+                    "nodeType": "FunctionCall",
+                    "src": "1038:42:153",
+                    "tryCall": false,
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_struct$_Layout_$32368_storage_ptr",
+                      "typeString": "struct EntitlementsManagerStorage.Layout storage pointer"
+                    }
+                  },
+                  "nodeType": "VariableDeclarationStatement",
+                  "src": "991:89:153"
+                },
+                {
+                  "condition": {
+                    "commonType": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    },
+                    "id": 32047,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "leftExpression": {
+                      "expression": {
+                        "baseExpression": {
+                          "expression": {
+                            "id": 32038,
+                            "name": "ds",
+                            "nodeType": "Identifier",
+                            "overloadedDeclarations": [],
+                            "referencedDeclaration": 32033,
+                            "src": "1091:2:153",
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_struct$_Layout_$32368_storage_ptr",
+                              "typeString": "struct EntitlementsManagerStorage.Layout storage pointer"
+                            }
+                          },
+                          "id": 32039,
+                          "isConstant": false,
+                          "isLValue": true,
+                          "isPure": false,
+                          "lValueRequested": false,
+                          "memberLocation": "1094:20:153",
+                          "memberName": "entitlementByAddress",
+                          "nodeType": "MemberAccess",
+                          "referencedDeclaration": 32364,
+                          "src": "1091:23:153",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_mapping$_t_address_$_t_struct$_Entitlement_$32359_storage_$",
+                            "typeString": "mapping(address => struct EntitlementsManagerStorage.Entitlement storage ref)"
+                          }
+                        },
+                        "id": 32041,
+                        "indexExpression": {
+                          "id": 32040,
+                          "name": "entitlement",
+                          "nodeType": "Identifier",
+                          "overloadedDeclarations": [],
+                          "referencedDeclaration": 32026,
+                          "src": "1115:11:153",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_address",
+                            "typeString": "address"
+                          }
+                        },
+                        "isConstant": false,
+                        "isLValue": true,
+                        "isPure": false,
+                        "lValueRequested": false,
+                        "nodeType": "IndexAccess",
+                        "src": "1091:36:153",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_struct$_Entitlement_$32359_storage",
+                          "typeString": "struct EntitlementsManagerStorage.Entitlement storage ref"
+                        }
+                      },
+                      "id": 32042,
+                      "isConstant": false,
+                      "isLValue": true,
+                      "isPure": false,
+                      "lValueRequested": false,
+                      "memberLocation": "1128:11:153",
+                      "memberName": "entitlement",
+                      "nodeType": "MemberAccess",
+                      "referencedDeclaration": 32356,
+                      "src": "1091:48:153",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_address",
+                        "typeString": "address"
+                      }
+                    },
+                    "nodeType": "BinaryOperation",
+                    "operator": "==",
+                    "rightExpression": {
+                      "arguments": [
+                        {
+                          "hexValue": "30",
+                          "id": 32045,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": true,
+                          "kind": "number",
+                          "lValueRequested": false,
+                          "nodeType": "Literal",
+                          "src": "1151:1:153",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_rational_0_by_1",
+                            "typeString": "int_const 0"
+                          },
+                          "value": "0"
+                        }
+                      ],
+                      "expression": {
+                        "argumentTypes": [
+                          {
+                            "typeIdentifier": "t_rational_0_by_1",
+                            "typeString": "int_const 0"
+                          }
+                        ],
+                        "id": 32044,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": true,
+                        "lValueRequested": false,
+                        "nodeType": "ElementaryTypeNameExpression",
+                        "src": "1143:7:153",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_type$_t_address_$",
+                          "typeString": "type(address)"
+                        },
+                        "typeName": {
+                          "id": 32043,
+                          "name": "address",
+                          "nodeType": "ElementaryTypeName",
+                          "src": "1143:7:153",
+                          "typeDescriptions": {}
+                        }
+                      },
+                      "id": 32046,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": true,
+                      "kind": "typeConversion",
+                      "lValueRequested": false,
+                      "nameLocations": [],
+                      "names": [],
+                      "nodeType": "FunctionCall",
+                      "src": "1143:10:153",
+                      "tryCall": false,
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_address",
+                        "typeString": "address"
+                      }
+                    },
+                    "src": "1091:62:153",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bool",
+                      "typeString": "bool"
+                    }
+                  },
+                  "id": 32052,
+                  "nodeType": "IfStatement",
+                  "src": "1087:136:153",
+                  "trueBody": {
+                    "id": 32051,
+                    "nodeType": "Block",
+                    "src": "1155:68:153",
+                    "statements": [
+                      {
+                        "errorCall": {
+                          "arguments": [],
+                          "expression": {
+                            "argumentTypes": [],
+                            "id": 32048,
+                            "name": "EntitlementsService__EntitlementDoesNotExist",
+                            "nodeType": "Identifier",
+                            "overloadedDeclarations": [],
+                            "referencedDeclaration": 32011,
+                            "src": "1170:44:153",
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_function_error_pure$__$returns$__$",
+                              "typeString": "function () pure"
+                            }
+                          },
+                          "id": 32049,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": false,
+                          "kind": "functionCall",
+                          "lValueRequested": false,
+                          "nameLocations": [],
+                          "names": [],
+                          "nodeType": "FunctionCall",
+                          "src": "1170:46:153",
+                          "tryCall": false,
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_tuple$__$",
+                            "typeString": "tuple()"
+                          }
+                        },
+                        "id": 32050,
+                        "nodeType": "RevertStatement",
+                        "src": "1163:53:153"
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
+            "implemented": true,
+            "kind": "function",
+            "modifiers": [],
+            "name": "checkEntitlement",
+            "nameLocation": "933:16:153",
+            "parameters": {
+              "id": 32027,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 32026,
+                  "mutability": "mutable",
+                  "name": "entitlement",
+                  "nameLocation": "958:11:153",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 32054,
+                  "src": "950:19:153",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 32025,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "950:7:153",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "949:21:153"
+            },
+            "returnParameters": {
+              "id": 32028,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "985:0:153"
+            },
+            "scope": 32345,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "internal"
+          },
+          {
+            "id": 32106,
+            "nodeType": "FunctionDefinition",
+            "src": "1231:498:153",
+            "nodes": [],
+            "body": {
+              "id": 32105,
+              "nodeType": "Block",
+              "src": "1303:426:153",
+              "nodes": [],
+              "statements": [
+                {
+                  "assignments": [
+                    32065
+                  ],
+                  "declarations": [
+                    {
+                      "constant": false,
+                      "id": 32065,
+                      "mutability": "mutable",
+                      "name": "ds",
+                      "nameLocation": "1351:2:153",
+                      "nodeType": "VariableDeclaration",
+                      "scope": 32105,
+                      "src": "1309:44:153",
+                      "stateVariable": false,
+                      "storageLocation": "storage",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_struct$_Layout_$32368_storage_ptr",
+                        "typeString": "struct EntitlementsManagerStorage.Layout"
+                      },
+                      "typeName": {
+                        "id": 32064,
+                        "nodeType": "UserDefinedTypeName",
+                        "pathNode": {
+                          "id": 32063,
+                          "name": "EntitlementsManagerStorage.Layout",
+                          "nameLocations": [
+                            "1309:26:153",
+                            "1336:6:153"
+                          ],
+                          "nodeType": "IdentifierPath",
+                          "referencedDeclaration": 32368,
+                          "src": "1309:33:153"
+                        },
+                        "referencedDeclaration": 32368,
+                        "src": "1309:33:153",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_struct$_Layout_$32368_storage_ptr",
+                          "typeString": "struct EntitlementsManagerStorage.Layout"
+                        }
+                      },
+                      "visibility": "internal"
+                    }
+                  ],
+                  "id": 32069,
+                  "initialValue": {
+                    "arguments": [],
+                    "expression": {
+                      "argumentTypes": [],
+                      "expression": {
+                        "id": 32066,
+                        "name": "EntitlementsManagerStorage",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 32381,
+                        "src": "1356:26:153",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_type$_t_contract$_EntitlementsManagerStorage_$32381_$",
+                          "typeString": "type(library EntitlementsManagerStorage)"
+                        }
+                      },
+                      "id": 32067,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": false,
+                      "lValueRequested": false,
+                      "memberLocation": "1390:6:153",
+                      "memberName": "layout",
+                      "nodeType": "MemberAccess",
+                      "referencedDeclaration": 32380,
+                      "src": "1356:40:153",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_function_internal_pure$__$returns$_t_struct$_Layout_$32368_storage_ptr_$",
+                        "typeString": "function () pure returns (struct EntitlementsManagerStorage.Layout storage pointer)"
+                      }
+                    },
+                    "id": 32068,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "kind": "functionCall",
+                    "lValueRequested": false,
+                    "nameLocations": [],
+                    "names": [],
+                    "nodeType": "FunctionCall",
+                    "src": "1356:42:153",
+                    "tryCall": false,
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_struct$_Layout_$32368_storage_ptr",
+                      "typeString": "struct EntitlementsManagerStorage.Layout storage pointer"
+                    }
+                  },
+                  "nodeType": "VariableDeclarationStatement",
+                  "src": "1309:89:153"
+                },
+                {
+                  "condition": {
+                    "commonType": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    },
+                    "id": 32079,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "leftExpression": {
+                      "expression": {
+                        "baseExpression": {
+                          "expression": {
+                            "id": 32070,
+                            "name": "ds",
+                            "nodeType": "Identifier",
+                            "overloadedDeclarations": [],
+                            "referencedDeclaration": 32065,
+                            "src": "1409:2:153",
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_struct$_Layout_$32368_storage_ptr",
+                              "typeString": "struct EntitlementsManagerStorage.Layout storage pointer"
+                            }
+                          },
+                          "id": 32071,
+                          "isConstant": false,
+                          "isLValue": true,
+                          "isPure": false,
+                          "lValueRequested": false,
+                          "memberLocation": "1412:20:153",
+                          "memberName": "entitlementByAddress",
+                          "nodeType": "MemberAccess",
+                          "referencedDeclaration": 32364,
+                          "src": "1409:23:153",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_mapping$_t_address_$_t_struct$_Entitlement_$32359_storage_$",
+                            "typeString": "mapping(address => struct EntitlementsManagerStorage.Entitlement storage ref)"
+                          }
+                        },
+                        "id": 32073,
+                        "indexExpression": {
+                          "id": 32072,
+                          "name": "entitlement",
+                          "nodeType": "Identifier",
+                          "overloadedDeclarations": [],
+                          "referencedDeclaration": 32056,
+                          "src": "1433:11:153",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_address",
+                            "typeString": "address"
+                          }
+                        },
+                        "isConstant": false,
+                        "isLValue": true,
+                        "isPure": false,
+                        "lValueRequested": false,
+                        "nodeType": "IndexAccess",
+                        "src": "1409:36:153",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_struct$_Entitlement_$32359_storage",
+                          "typeString": "struct EntitlementsManagerStorage.Entitlement storage ref"
+                        }
+                      },
+                      "id": 32074,
+                      "isConstant": false,
+                      "isLValue": true,
+                      "isPure": false,
+                      "lValueRequested": false,
+                      "memberLocation": "1446:11:153",
+                      "memberName": "entitlement",
+                      "nodeType": "MemberAccess",
+                      "referencedDeclaration": 32356,
+                      "src": "1409:48:153",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_address",
+                        "typeString": "address"
+                      }
+                    },
+                    "nodeType": "BinaryOperation",
+                    "operator": "!=",
+                    "rightExpression": {
+                      "arguments": [
+                        {
+                          "hexValue": "30",
+                          "id": 32077,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": true,
+                          "kind": "number",
+                          "lValueRequested": false,
+                          "nodeType": "Literal",
+                          "src": "1469:1:153",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_rational_0_by_1",
+                            "typeString": "int_const 0"
+                          },
+                          "value": "0"
+                        }
+                      ],
+                      "expression": {
+                        "argumentTypes": [
+                          {
+                            "typeIdentifier": "t_rational_0_by_1",
+                            "typeString": "int_const 0"
+                          }
+                        ],
+                        "id": 32076,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": true,
+                        "lValueRequested": false,
+                        "nodeType": "ElementaryTypeNameExpression",
+                        "src": "1461:7:153",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_type$_t_address_$",
+                          "typeString": "type(address)"
+                        },
+                        "typeName": {
+                          "id": 32075,
+                          "name": "address",
+                          "nodeType": "ElementaryTypeName",
+                          "src": "1461:7:153",
+                          "typeDescriptions": {}
+                        }
+                      },
+                      "id": 32078,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": true,
+                      "kind": "typeConversion",
+                      "lValueRequested": false,
+                      "nameLocations": [],
+                      "names": [],
+                      "nodeType": "FunctionCall",
+                      "src": "1461:10:153",
+                      "tryCall": false,
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_address",
+                        "typeString": "address"
+                      }
+                    },
+                    "src": "1409:62:153",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bool",
+                      "typeString": "bool"
+                    }
+                  },
+                  "id": 32084,
+                  "nodeType": "IfStatement",
+                  "src": "1405:137:153",
+                  "trueBody": {
+                    "id": 32083,
+                    "nodeType": "Block",
+                    "src": "1473:69:153",
+                    "statements": [
+                      {
+                        "errorCall": {
+                          "arguments": [],
+                          "expression": {
+                            "argumentTypes": [],
+                            "id": 32080,
+                            "name": "EntitlementsService__EntitlementAlreadyExists",
+                            "nodeType": "Identifier",
+                            "overloadedDeclarations": [],
+                            "referencedDeclaration": 32013,
+                            "src": "1488:45:153",
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_function_error_pure$__$returns$__$",
+                              "typeString": "function () pure"
+                            }
+                          },
+                          "id": 32081,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": false,
+                          "kind": "functionCall",
+                          "lValueRequested": false,
+                          "nameLocations": [],
+                          "names": [],
+                          "nodeType": "FunctionCall",
+                          "src": "1488:47:153",
+                          "tryCall": false,
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_tuple$__$",
+                            "typeString": "tuple()"
+                          }
+                        },
+                        "id": 32082,
+                        "nodeType": "RevertStatement",
+                        "src": "1481:54:153"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "expression": {
+                    "arguments": [
+                      {
+                        "id": 32090,
+                        "name": "entitlement",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 32056,
+                        "src": "1568:11:153",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        }
+                      }
+                    ],
+                    "expression": {
+                      "argumentTypes": [
+                        {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        }
+                      ],
+                      "expression": {
+                        "expression": {
+                          "id": 32085,
+                          "name": "ds",
+                          "nodeType": "Identifier",
+                          "overloadedDeclarations": [],
+                          "referencedDeclaration": 32065,
+                          "src": "1548:2:153",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_struct$_Layout_$32368_storage_ptr",
+                            "typeString": "struct EntitlementsManagerStorage.Layout storage pointer"
+                          }
+                        },
+                        "id": 32088,
+                        "isConstant": false,
+                        "isLValue": true,
+                        "isPure": false,
+                        "lValueRequested": false,
+                        "memberLocation": "1551:12:153",
+                        "memberName": "entitlements",
+                        "nodeType": "MemberAccess",
+                        "referencedDeclaration": 32367,
+                        "src": "1548:15:153",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_struct$_AddressSet_$120572_storage",
+                          "typeString": "struct EnumerableSet.AddressSet storage ref"
+                        }
+                      },
+                      "id": 32089,
+                      "isConstant": false,
+                      "isLValue": true,
+                      "isPure": false,
+                      "lValueRequested": false,
+                      "memberLocation": "1564:3:153",
+                      "memberName": "add",
+                      "nodeType": "MemberAccess",
+                      "referencedDeclaration": 120599,
+                      "src": "1548:19:153",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_function_internal_nonpayable$_t_struct$_AddressSet_$120572_storage_ptr_$_t_address_$returns$_t_bool_$attached_to$_t_struct$_AddressSet_$120572_storage_ptr_$",
+                        "typeString": "function (struct EnumerableSet.AddressSet storage pointer,address) returns (bool)"
+                      }
+                    },
+                    "id": 32091,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "kind": "functionCall",
+                    "lValueRequested": false,
+                    "nameLocations": [],
+                    "names": [],
+                    "nodeType": "FunctionCall",
+                    "src": "1548:32:153",
+                    "tryCall": false,
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bool",
+                      "typeString": "bool"
+                    }
+                  },
+                  "id": 32092,
+                  "nodeType": "ExpressionStatement",
+                  "src": "1548:32:153"
+                },
+                {
+                  "expression": {
+                    "id": 32103,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "leftHandSide": {
+                      "baseExpression": {
+                        "expression": {
+                          "id": 32093,
+                          "name": "ds",
+                          "nodeType": "Identifier",
+                          "overloadedDeclarations": [],
+                          "referencedDeclaration": 32065,
+                          "src": "1586:2:153",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_struct$_Layout_$32368_storage_ptr",
+                            "typeString": "struct EntitlementsManagerStorage.Layout storage pointer"
+                          }
+                        },
+                        "id": 32096,
+                        "isConstant": false,
+                        "isLValue": true,
+                        "isPure": false,
+                        "lValueRequested": false,
+                        "memberLocation": "1589:20:153",
+                        "memberName": "entitlementByAddress",
+                        "nodeType": "MemberAccess",
+                        "referencedDeclaration": 32364,
+                        "src": "1586:23:153",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_mapping$_t_address_$_t_struct$_Entitlement_$32359_storage_$",
+                          "typeString": "mapping(address => struct EntitlementsManagerStorage.Entitlement storage ref)"
+                        }
+                      },
+                      "id": 32097,
+                      "indexExpression": {
+                        "id": 32095,
+                        "name": "entitlement",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 32056,
+                        "src": "1610:11:153",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        }
+                      },
+                      "isConstant": false,
+                      "isLValue": true,
+                      "isPure": false,
+                      "lValueRequested": true,
+                      "nodeType": "IndexAccess",
+                      "src": "1586:36:153",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_struct$_Entitlement_$32359_storage",
+                        "typeString": "struct EntitlementsManagerStorage.Entitlement storage ref"
+                      }
+                    },
+                    "nodeType": "Assignment",
+                    "operator": "=",
+                    "rightHandSide": {
+                      "arguments": [
+                        {
+                          "id": 32100,
+                          "name": "entitlement",
+                          "nodeType": "Identifier",
+                          "overloadedDeclarations": [],
+                          "referencedDeclaration": 32056,
+                          "src": "1685:11:153",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_address",
+                            "typeString": "address"
+                          }
+                        },
+                        {
+                          "id": 32101,
+                          "name": "isImmutable",
+                          "nodeType": "Identifier",
+                          "overloadedDeclarations": [],
+                          "referencedDeclaration": 32058,
+                          "src": "1711:11:153",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_bool",
+                            "typeString": "bool"
+                          }
+                        }
+                      ],
+                      "expression": {
+                        "argumentTypes": [
+                          {
+                            "typeIdentifier": "t_address",
+                            "typeString": "address"
+                          },
+                          {
+                            "typeIdentifier": "t_bool",
+                            "typeString": "bool"
+                          }
+                        ],
+                        "expression": {
+                          "id": 32098,
+                          "name": "EntitlementsManagerStorage",
+                          "nodeType": "Identifier",
+                          "overloadedDeclarations": [],
+                          "referencedDeclaration": 32381,
+                          "src": "1625:26:153",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_type$_t_contract$_EntitlementsManagerStorage_$32381_$",
+                            "typeString": "type(library EntitlementsManagerStorage)"
+                          }
+                        },
+                        "id": 32099,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": false,
+                        "lValueRequested": false,
+                        "memberLocation": "1659:11:153",
+                        "memberName": "Entitlement",
+                        "nodeType": "MemberAccess",
+                        "referencedDeclaration": 32359,
+                        "src": "1625:45:153",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_type$_t_struct$_Entitlement_$32359_storage_ptr_$",
+                          "typeString": "type(struct EntitlementsManagerStorage.Entitlement storage pointer)"
+                        }
+                      },
+                      "id": 32102,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": false,
+                      "kind": "structConstructorCall",
+                      "lValueRequested": false,
+                      "nameLocations": [
+                        "1672:11:153",
+                        "1698:11:153"
+                      ],
+                      "names": [
+                        "entitlement",
+                        "isImmutable"
+                      ],
+                      "nodeType": "FunctionCall",
+                      "src": "1625:99:153",
+                      "tryCall": false,
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_struct$_Entitlement_$32359_memory_ptr",
+                        "typeString": "struct EntitlementsManagerStorage.Entitlement memory"
+                      }
+                    },
+                    "src": "1586:138:153",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_struct$_Entitlement_$32359_storage",
+                      "typeString": "struct EntitlementsManagerStorage.Entitlement storage ref"
+                    }
+                  },
+                  "id": 32104,
+                  "nodeType": "ExpressionStatement",
+                  "src": "1586:138:153"
+                }
+              ]
+            },
+            "implemented": true,
+            "kind": "function",
+            "modifiers": [],
+            "name": "addEntitlement",
+            "nameLocation": "1240:14:153",
+            "parameters": {
+              "id": 32059,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 32056,
+                  "mutability": "mutable",
+                  "name": "entitlement",
+                  "nameLocation": "1263:11:153",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 32106,
+                  "src": "1255:19:153",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 32055,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1255:7:153",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 32058,
+                  "mutability": "mutable",
+                  "name": "isImmutable",
+                  "nameLocation": "1281:11:153",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 32106,
+                  "src": "1276:16:153",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bool",
+                    "typeString": "bool"
+                  },
+                  "typeName": {
+                    "id": 32057,
+                    "name": "bool",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1276:4:153",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bool",
+                      "typeString": "bool"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1254:39:153"
+            },
+            "returnParameters": {
+              "id": 32060,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "1303:0:153"
+            },
+            "scope": 32345,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "internal"
+          },
+          {
+            "id": 32160,
+            "nodeType": "FunctionDefinition",
+            "src": "1733:515:153",
+            "nodes": [],
+            "body": {
+              "id": 32159,
+              "nodeType": "Block",
+              "src": "1790:458:153",
+              "nodes": [],
+              "statements": [
+                {
+                  "assignments": [
+                    32115
+                  ],
+                  "declarations": [
+                    {
+                      "constant": false,
+                      "id": 32115,
+                      "mutability": "mutable",
+                      "name": "ds",
+                      "nameLocation": "1838:2:153",
+                      "nodeType": "VariableDeclaration",
+                      "scope": 32159,
+                      "src": "1796:44:153",
+                      "stateVariable": false,
+                      "storageLocation": "storage",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_struct$_Layout_$32368_storage_ptr",
+                        "typeString": "struct EntitlementsManagerStorage.Layout"
+                      },
+                      "typeName": {
+                        "id": 32114,
+                        "nodeType": "UserDefinedTypeName",
+                        "pathNode": {
+                          "id": 32113,
+                          "name": "EntitlementsManagerStorage.Layout",
+                          "nameLocations": [
+                            "1796:26:153",
+                            "1823:6:153"
+                          ],
+                          "nodeType": "IdentifierPath",
+                          "referencedDeclaration": 32368,
+                          "src": "1796:33:153"
+                        },
+                        "referencedDeclaration": 32368,
+                        "src": "1796:33:153",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_struct$_Layout_$32368_storage_ptr",
+                          "typeString": "struct EntitlementsManagerStorage.Layout"
+                        }
+                      },
+                      "visibility": "internal"
+                    }
+                  ],
+                  "id": 32119,
+                  "initialValue": {
+                    "arguments": [],
+                    "expression": {
+                      "argumentTypes": [],
+                      "expression": {
+                        "id": 32116,
+                        "name": "EntitlementsManagerStorage",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 32381,
+                        "src": "1843:26:153",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_type$_t_contract$_EntitlementsManagerStorage_$32381_$",
+                          "typeString": "type(library EntitlementsManagerStorage)"
+                        }
+                      },
+                      "id": 32117,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": false,
+                      "lValueRequested": false,
+                      "memberLocation": "1877:6:153",
+                      "memberName": "layout",
+                      "nodeType": "MemberAccess",
+                      "referencedDeclaration": 32380,
+                      "src": "1843:40:153",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_function_internal_pure$__$returns$_t_struct$_Layout_$32368_storage_ptr_$",
+                        "typeString": "function () pure returns (struct EntitlementsManagerStorage.Layout storage pointer)"
+                      }
+                    },
+                    "id": 32118,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "kind": "functionCall",
+                    "lValueRequested": false,
+                    "nameLocations": [],
+                    "names": [],
+                    "nodeType": "FunctionCall",
+                    "src": "1843:42:153",
+                    "tryCall": false,
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_struct$_Layout_$32368_storage_ptr",
+                      "typeString": "struct EntitlementsManagerStorage.Layout storage pointer"
+                    }
+                  },
+                  "nodeType": "VariableDeclarationStatement",
+                  "src": "1796:89:153"
+                },
+                {
+                  "condition": {
+                    "commonType": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    },
+                    "id": 32129,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "leftExpression": {
+                      "expression": {
+                        "baseExpression": {
+                          "expression": {
+                            "id": 32120,
+                            "name": "ds",
+                            "nodeType": "Identifier",
+                            "overloadedDeclarations": [],
+                            "referencedDeclaration": 32115,
+                            "src": "1896:2:153",
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_struct$_Layout_$32368_storage_ptr",
+                              "typeString": "struct EntitlementsManagerStorage.Layout storage pointer"
+                            }
+                          },
+                          "id": 32121,
+                          "isConstant": false,
+                          "isLValue": true,
+                          "isPure": false,
+                          "lValueRequested": false,
+                          "memberLocation": "1899:20:153",
+                          "memberName": "entitlementByAddress",
+                          "nodeType": "MemberAccess",
+                          "referencedDeclaration": 32364,
+                          "src": "1896:23:153",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_mapping$_t_address_$_t_struct$_Entitlement_$32359_storage_$",
+                            "typeString": "mapping(address => struct EntitlementsManagerStorage.Entitlement storage ref)"
+                          }
+                        },
+                        "id": 32123,
+                        "indexExpression": {
+                          "id": 32122,
+                          "name": "entitlement",
+                          "nodeType": "Identifier",
+                          "overloadedDeclarations": [],
+                          "referencedDeclaration": 32108,
+                          "src": "1920:11:153",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_address",
+                            "typeString": "address"
+                          }
+                        },
+                        "isConstant": false,
+                        "isLValue": true,
+                        "isPure": false,
+                        "lValueRequested": false,
+                        "nodeType": "IndexAccess",
+                        "src": "1896:36:153",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_struct$_Entitlement_$32359_storage",
+                          "typeString": "struct EntitlementsManagerStorage.Entitlement storage ref"
+                        }
+                      },
+                      "id": 32124,
+                      "isConstant": false,
+                      "isLValue": true,
+                      "isPure": false,
+                      "lValueRequested": false,
+                      "memberLocation": "1933:11:153",
+                      "memberName": "entitlement",
+                      "nodeType": "MemberAccess",
+                      "referencedDeclaration": 32356,
+                      "src": "1896:48:153",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_address",
+                        "typeString": "address"
+                      }
+                    },
+                    "nodeType": "BinaryOperation",
+                    "operator": "==",
+                    "rightExpression": {
+                      "arguments": [
+                        {
+                          "hexValue": "30",
+                          "id": 32127,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": true,
+                          "kind": "number",
+                          "lValueRequested": false,
+                          "nodeType": "Literal",
+                          "src": "1956:1:153",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_rational_0_by_1",
+                            "typeString": "int_const 0"
+                          },
+                          "value": "0"
+                        }
+                      ],
+                      "expression": {
+                        "argumentTypes": [
+                          {
+                            "typeIdentifier": "t_rational_0_by_1",
+                            "typeString": "int_const 0"
+                          }
+                        ],
+                        "id": 32126,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": true,
+                        "lValueRequested": false,
+                        "nodeType": "ElementaryTypeNameExpression",
+                        "src": "1948:7:153",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_type$_t_address_$",
+                          "typeString": "type(address)"
+                        },
+                        "typeName": {
+                          "id": 32125,
+                          "name": "address",
+                          "nodeType": "ElementaryTypeName",
+                          "src": "1948:7:153",
+                          "typeDescriptions": {}
+                        }
+                      },
+                      "id": 32128,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": true,
+                      "kind": "typeConversion",
+                      "lValueRequested": false,
+                      "nameLocations": [],
+                      "names": [],
+                      "nodeType": "FunctionCall",
+                      "src": "1948:10:153",
+                      "tryCall": false,
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_address",
+                        "typeString": "address"
+                      }
+                    },
+                    "src": "1896:62:153",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bool",
+                      "typeString": "bool"
+                    }
+                  },
+                  "id": 32134,
+                  "nodeType": "IfStatement",
+                  "src": "1892:136:153",
+                  "trueBody": {
+                    "id": 32133,
+                    "nodeType": "Block",
+                    "src": "1960:68:153",
+                    "statements": [
+                      {
+                        "errorCall": {
+                          "arguments": [],
+                          "expression": {
+                            "argumentTypes": [],
+                            "id": 32130,
+                            "name": "EntitlementsService__EntitlementDoesNotExist",
+                            "nodeType": "Identifier",
+                            "overloadedDeclarations": [],
+                            "referencedDeclaration": 32011,
+                            "src": "1975:44:153",
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_function_error_pure$__$returns$__$",
+                              "typeString": "function () pure"
+                            }
+                          },
+                          "id": 32131,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": false,
+                          "kind": "functionCall",
+                          "lValueRequested": false,
+                          "nameLocations": [],
+                          "names": [],
+                          "nodeType": "FunctionCall",
+                          "src": "1975:46:153",
+                          "tryCall": false,
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_tuple$__$",
+                            "typeString": "tuple()"
+                          }
+                        },
+                        "id": 32132,
+                        "nodeType": "RevertStatement",
+                        "src": "1968:53:153"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "condition": {
+                    "expression": {
+                      "baseExpression": {
+                        "expression": {
+                          "id": 32135,
+                          "name": "ds",
+                          "nodeType": "Identifier",
+                          "overloadedDeclarations": [],
+                          "referencedDeclaration": 32115,
+                          "src": "2038:2:153",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_struct$_Layout_$32368_storage_ptr",
+                            "typeString": "struct EntitlementsManagerStorage.Layout storage pointer"
+                          }
+                        },
+                        "id": 32136,
+                        "isConstant": false,
+                        "isLValue": true,
+                        "isPure": false,
+                        "lValueRequested": false,
+                        "memberLocation": "2041:20:153",
+                        "memberName": "entitlementByAddress",
+                        "nodeType": "MemberAccess",
+                        "referencedDeclaration": 32364,
+                        "src": "2038:23:153",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_mapping$_t_address_$_t_struct$_Entitlement_$32359_storage_$",
+                          "typeString": "mapping(address => struct EntitlementsManagerStorage.Entitlement storage ref)"
+                        }
+                      },
+                      "id": 32138,
+                      "indexExpression": {
+                        "id": 32137,
+                        "name": "entitlement",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 32108,
+                        "src": "2062:11:153",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        }
+                      },
+                      "isConstant": false,
+                      "isLValue": true,
+                      "isPure": false,
+                      "lValueRequested": false,
+                      "nodeType": "IndexAccess",
+                      "src": "2038:36:153",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_struct$_Entitlement_$32359_storage",
+                        "typeString": "struct EntitlementsManagerStorage.Entitlement storage ref"
+                      }
+                    },
+                    "id": 32139,
+                    "isConstant": false,
+                    "isLValue": true,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "memberLocation": "2075:11:153",
+                    "memberName": "isImmutable",
+                    "nodeType": "MemberAccess",
+                    "referencedDeclaration": 32358,
+                    "src": "2038:48:153",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bool",
+                      "typeString": "bool"
+                    }
+                  },
+                  "id": 32144,
+                  "nodeType": "IfStatement",
+                  "src": "2034:119:153",
+                  "trueBody": {
+                    "id": 32143,
+                    "nodeType": "Block",
+                    "src": "2088:65:153",
+                    "statements": [
+                      {
+                        "errorCall": {
+                          "arguments": [],
+                          "expression": {
+                            "argumentTypes": [],
+                            "id": 32140,
+                            "name": "EntitlementsService__ImmutableEntitlement",
+                            "nodeType": "Identifier",
+                            "overloadedDeclarations": [],
+                            "referencedDeclaration": 32009,
+                            "src": "2103:41:153",
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_function_error_pure$__$returns$__$",
+                              "typeString": "function () pure"
+                            }
+                          },
+                          "id": 32141,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": false,
+                          "kind": "functionCall",
+                          "lValueRequested": false,
+                          "nameLocations": [],
+                          "names": [],
+                          "nodeType": "FunctionCall",
+                          "src": "2103:43:153",
+                          "tryCall": false,
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_tuple$__$",
+                            "typeString": "tuple()"
+                          }
+                        },
+                        "id": 32142,
+                        "nodeType": "RevertStatement",
+                        "src": "2096:50:153"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "expression": {
+                    "arguments": [
+                      {
+                        "id": 32150,
+                        "name": "entitlement",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 32108,
+                        "src": "2182:11:153",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        }
+                      }
+                    ],
+                    "expression": {
+                      "argumentTypes": [
+                        {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        }
+                      ],
+                      "expression": {
+                        "expression": {
+                          "id": 32145,
+                          "name": "ds",
+                          "nodeType": "Identifier",
+                          "overloadedDeclarations": [],
+                          "referencedDeclaration": 32115,
+                          "src": "2159:2:153",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_struct$_Layout_$32368_storage_ptr",
+                            "typeString": "struct EntitlementsManagerStorage.Layout storage pointer"
+                          }
+                        },
+                        "id": 32148,
+                        "isConstant": false,
+                        "isLValue": true,
+                        "isPure": false,
+                        "lValueRequested": false,
+                        "memberLocation": "2162:12:153",
+                        "memberName": "entitlements",
+                        "nodeType": "MemberAccess",
+                        "referencedDeclaration": 32367,
+                        "src": "2159:15:153",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_struct$_AddressSet_$120572_storage",
+                          "typeString": "struct EnumerableSet.AddressSet storage ref"
+                        }
+                      },
+                      "id": 32149,
+                      "isConstant": false,
+                      "isLValue": true,
+                      "isPure": false,
+                      "lValueRequested": false,
+                      "memberLocation": "2175:6:153",
+                      "memberName": "remove",
+                      "nodeType": "MemberAccess",
+                      "referencedDeclaration": 120626,
+                      "src": "2159:22:153",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_function_internal_nonpayable$_t_struct$_AddressSet_$120572_storage_ptr_$_t_address_$returns$_t_bool_$attached_to$_t_struct$_AddressSet_$120572_storage_ptr_$",
+                        "typeString": "function (struct EnumerableSet.AddressSet storage pointer,address) returns (bool)"
+                      }
+                    },
+                    "id": 32151,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "kind": "functionCall",
+                    "lValueRequested": false,
+                    "nameLocations": [],
+                    "names": [],
+                    "nodeType": "FunctionCall",
+                    "src": "2159:35:153",
+                    "tryCall": false,
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bool",
+                      "typeString": "bool"
+                    }
+                  },
+                  "id": 32152,
+                  "nodeType": "ExpressionStatement",
+                  "src": "2159:35:153"
+                },
+                {
+                  "expression": {
+                    "id": 32157,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "nodeType": "UnaryOperation",
+                    "operator": "delete",
+                    "prefix": true,
+                    "src": "2200:43:153",
+                    "subExpression": {
+                      "baseExpression": {
+                        "expression": {
+                          "id": 32153,
+                          "name": "ds",
+                          "nodeType": "Identifier",
+                          "overloadedDeclarations": [],
+                          "referencedDeclaration": 32115,
+                          "src": "2207:2:153",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_struct$_Layout_$32368_storage_ptr",
+                            "typeString": "struct EntitlementsManagerStorage.Layout storage pointer"
+                          }
+                        },
+                        "id": 32154,
+                        "isConstant": false,
+                        "isLValue": true,
+                        "isPure": false,
+                        "lValueRequested": false,
+                        "memberLocation": "2210:20:153",
+                        "memberName": "entitlementByAddress",
+                        "nodeType": "MemberAccess",
+                        "referencedDeclaration": 32364,
+                        "src": "2207:23:153",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_mapping$_t_address_$_t_struct$_Entitlement_$32359_storage_$",
+                          "typeString": "mapping(address => struct EntitlementsManagerStorage.Entitlement storage ref)"
+                        }
+                      },
+                      "id": 32156,
+                      "indexExpression": {
+                        "id": 32155,
+                        "name": "entitlement",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 32108,
+                        "src": "2231:11:153",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        }
+                      },
+                      "isConstant": false,
+                      "isLValue": true,
+                      "isPure": false,
+                      "lValueRequested": true,
+                      "nodeType": "IndexAccess",
+                      "src": "2207:36:153",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_struct$_Entitlement_$32359_storage",
+                        "typeString": "struct EntitlementsManagerStorage.Entitlement storage ref"
+                      }
+                    },
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_tuple$__$",
+                      "typeString": "tuple()"
+                    }
+                  },
+                  "id": 32158,
+                  "nodeType": "ExpressionStatement",
+                  "src": "2200:43:153"
+                }
+              ]
+            },
+            "implemented": true,
+            "kind": "function",
+            "modifiers": [],
+            "name": "removeEntitlement",
+            "nameLocation": "1742:17:153",
+            "parameters": {
+              "id": 32109,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 32108,
+                  "mutability": "mutable",
+                  "name": "entitlement",
+                  "nameLocation": "1768:11:153",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 32160,
+                  "src": "1760:19:153",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 32107,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "1760:7:153",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "1759:21:153"
+            },
+            "returnParameters": {
+              "id": 32110,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "1790:0:153"
+            },
+            "scope": 32345,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "internal"
+          },
+          {
+            "id": 32220,
+            "nodeType": "FunctionDefinition",
+            "src": "2252:667:153",
+            "nodes": [],
+            "body": {
+              "id": 32219,
+              "nodeType": "Block",
+              "src": "2459:460:153",
+              "nodes": [],
+              "statements": [
+                {
+                  "assignments": [
+                    32177
+                  ],
+                  "declarations": [
+                    {
+                      "constant": false,
+                      "id": 32177,
+                      "mutability": "mutable",
+                      "name": "ds",
+                      "nameLocation": "2507:2:153",
+                      "nodeType": "VariableDeclaration",
+                      "scope": 32219,
+                      "src": "2465:44:153",
+                      "stateVariable": false,
+                      "storageLocation": "storage",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_struct$_Layout_$32368_storage_ptr",
+                        "typeString": "struct EntitlementsManagerStorage.Layout"
+                      },
+                      "typeName": {
+                        "id": 32176,
+                        "nodeType": "UserDefinedTypeName",
+                        "pathNode": {
+                          "id": 32175,
+                          "name": "EntitlementsManagerStorage.Layout",
+                          "nameLocations": [
+                            "2465:26:153",
+                            "2492:6:153"
+                          ],
+                          "nodeType": "IdentifierPath",
+                          "referencedDeclaration": 32368,
+                          "src": "2465:33:153"
+                        },
+                        "referencedDeclaration": 32368,
+                        "src": "2465:33:153",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_struct$_Layout_$32368_storage_ptr",
+                          "typeString": "struct EntitlementsManagerStorage.Layout"
+                        }
+                      },
+                      "visibility": "internal"
+                    }
+                  ],
+                  "id": 32181,
+                  "initialValue": {
+                    "arguments": [],
+                    "expression": {
+                      "argumentTypes": [],
+                      "expression": {
+                        "id": 32178,
+                        "name": "EntitlementsManagerStorage",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 32381,
+                        "src": "2512:26:153",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_type$_t_contract$_EntitlementsManagerStorage_$32381_$",
+                          "typeString": "type(library EntitlementsManagerStorage)"
+                        }
+                      },
+                      "id": 32179,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": false,
+                      "lValueRequested": false,
+                      "memberLocation": "2546:6:153",
+                      "memberName": "layout",
+                      "nodeType": "MemberAccess",
+                      "referencedDeclaration": 32380,
+                      "src": "2512:40:153",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_function_internal_pure$__$returns$_t_struct$_Layout_$32368_storage_ptr_$",
+                        "typeString": "function () pure returns (struct EntitlementsManagerStorage.Layout storage pointer)"
+                      }
+                    },
+                    "id": 32180,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "kind": "functionCall",
+                    "lValueRequested": false,
+                    "nameLocations": [],
+                    "names": [],
+                    "nodeType": "FunctionCall",
+                    "src": "2512:42:153",
+                    "tryCall": false,
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_struct$_Layout_$32368_storage_ptr",
+                      "typeString": "struct EntitlementsManagerStorage.Layout storage pointer"
+                    }
+                  },
+                  "nodeType": "VariableDeclarationStatement",
+                  "src": "2465:89:153"
+                },
+                {
+                  "condition": {
+                    "commonType": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    },
+                    "id": 32191,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "leftExpression": {
+                      "expression": {
+                        "baseExpression": {
+                          "expression": {
+                            "id": 32182,
+                            "name": "ds",
+                            "nodeType": "Identifier",
+                            "overloadedDeclarations": [],
+                            "referencedDeclaration": 32177,
+                            "src": "2565:2:153",
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_struct$_Layout_$32368_storage_ptr",
+                              "typeString": "struct EntitlementsManagerStorage.Layout storage pointer"
+                            }
+                          },
+                          "id": 32183,
+                          "isConstant": false,
+                          "isLValue": true,
+                          "isPure": false,
+                          "lValueRequested": false,
+                          "memberLocation": "2568:20:153",
+                          "memberName": "entitlementByAddress",
+                          "nodeType": "MemberAccess",
+                          "referencedDeclaration": 32364,
+                          "src": "2565:23:153",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_mapping$_t_address_$_t_struct$_Entitlement_$32359_storage_$",
+                            "typeString": "mapping(address => struct EntitlementsManagerStorage.Entitlement storage ref)"
+                          }
+                        },
+                        "id": 32185,
+                        "indexExpression": {
+                          "id": 32184,
+                          "name": "entitlement",
+                          "nodeType": "Identifier",
+                          "overloadedDeclarations": [],
+                          "referencedDeclaration": 32162,
+                          "src": "2589:11:153",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_address",
+                            "typeString": "address"
+                          }
+                        },
+                        "isConstant": false,
+                        "isLValue": true,
+                        "isPure": false,
+                        "lValueRequested": false,
+                        "nodeType": "IndexAccess",
+                        "src": "2565:36:153",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_struct$_Entitlement_$32359_storage",
+                          "typeString": "struct EntitlementsManagerStorage.Entitlement storage ref"
+                        }
+                      },
+                      "id": 32186,
+                      "isConstant": false,
+                      "isLValue": true,
+                      "isPure": false,
+                      "lValueRequested": false,
+                      "memberLocation": "2602:11:153",
+                      "memberName": "entitlement",
+                      "nodeType": "MemberAccess",
+                      "referencedDeclaration": 32356,
+                      "src": "2565:48:153",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_address",
+                        "typeString": "address"
+                      }
+                    },
+                    "nodeType": "BinaryOperation",
+                    "operator": "==",
+                    "rightExpression": {
+                      "arguments": [
+                        {
+                          "hexValue": "30",
+                          "id": 32189,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": true,
+                          "kind": "number",
+                          "lValueRequested": false,
+                          "nodeType": "Literal",
+                          "src": "2625:1:153",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_rational_0_by_1",
+                            "typeString": "int_const 0"
+                          },
+                          "value": "0"
+                        }
+                      ],
+                      "expression": {
+                        "argumentTypes": [
+                          {
+                            "typeIdentifier": "t_rational_0_by_1",
+                            "typeString": "int_const 0"
+                          }
+                        ],
+                        "id": 32188,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": true,
+                        "lValueRequested": false,
+                        "nodeType": "ElementaryTypeNameExpression",
+                        "src": "2617:7:153",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_type$_t_address_$",
+                          "typeString": "type(address)"
+                        },
+                        "typeName": {
+                          "id": 32187,
+                          "name": "address",
+                          "nodeType": "ElementaryTypeName",
+                          "src": "2617:7:153",
+                          "typeDescriptions": {}
+                        }
+                      },
+                      "id": 32190,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": true,
+                      "kind": "typeConversion",
+                      "lValueRequested": false,
+                      "nameLocations": [],
+                      "names": [],
+                      "nodeType": "FunctionCall",
+                      "src": "2617:10:153",
+                      "tryCall": false,
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_address",
+                        "typeString": "address"
+                      }
+                    },
+                    "src": "2565:62:153",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bool",
+                      "typeString": "bool"
+                    }
+                  },
+                  "id": 32196,
+                  "nodeType": "IfStatement",
+                  "src": "2561:136:153",
+                  "trueBody": {
+                    "id": 32195,
+                    "nodeType": "Block",
+                    "src": "2629:68:153",
+                    "statements": [
+                      {
+                        "errorCall": {
+                          "arguments": [],
+                          "expression": {
+                            "argumentTypes": [],
+                            "id": 32192,
+                            "name": "EntitlementsService__EntitlementDoesNotExist",
+                            "nodeType": "Identifier",
+                            "overloadedDeclarations": [],
+                            "referencedDeclaration": 32011,
+                            "src": "2644:44:153",
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_function_error_pure$__$returns$__$",
+                              "typeString": "function () pure"
+                            }
+                          },
+                          "id": 32193,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": false,
+                          "kind": "functionCall",
+                          "lValueRequested": false,
+                          "nameLocations": [],
+                          "names": [],
+                          "nodeType": "FunctionCall",
+                          "src": "2644:46:153",
+                          "tryCall": false,
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_tuple$__$",
+                            "typeString": "tuple()"
+                          }
+                        },
+                        "id": 32194,
+                        "nodeType": "RevertStatement",
+                        "src": "2637:53:153"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "expression": {
+                    "components": [
+                      {
+                        "arguments": [],
+                        "expression": {
+                          "argumentTypes": [],
+                          "expression": {
+                            "arguments": [
+                              {
+                                "id": 32198,
+                                "name": "entitlement",
+                                "nodeType": "Identifier",
+                                "overloadedDeclarations": [],
+                                "referencedDeclaration": 32162,
+                                "src": "2731:11:153",
+                                "typeDescriptions": {
+                                  "typeIdentifier": "t_address",
+                                  "typeString": "address"
+                                }
+                              }
+                            ],
+                            "expression": {
+                              "argumentTypes": [
+                                {
+                                  "typeIdentifier": "t_address",
+                                  "typeString": "address"
+                                }
+                              ],
+                              "id": 32197,
+                              "name": "IEntitlement",
+                              "nodeType": "Identifier",
+                              "overloadedDeclarations": [],
+                              "referencedDeclaration": 27191,
+                              "src": "2718:12:153",
+                              "typeDescriptions": {
+                                "typeIdentifier": "t_type$_t_contract$_IEntitlement_$27191_$",
+                                "typeString": "type(contract IEntitlement)"
+                              }
+                            },
+                            "id": 32199,
+                            "isConstant": false,
+                            "isLValue": false,
+                            "isPure": false,
+                            "kind": "typeConversion",
+                            "lValueRequested": false,
+                            "nameLocations": [],
+                            "names": [],
+                            "nodeType": "FunctionCall",
+                            "src": "2718:25:153",
+                            "tryCall": false,
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_contract$_IEntitlement_$27191",
+                              "typeString": "contract IEntitlement"
+                            }
+                          },
+                          "id": 32200,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": false,
+                          "lValueRequested": false,
+                          "memberLocation": "2744:4:153",
+                          "memberName": "name",
+                          "nodeType": "MemberAccess",
+                          "referencedDeclaration": 27137,
+                          "src": "2718:30:153",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_function_external_view$__$returns$_t_string_memory_ptr_$",
+                            "typeString": "function () view external returns (string memory)"
+                          }
+                        },
+                        "id": 32201,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": false,
+                        "kind": "functionCall",
+                        "lValueRequested": false,
+                        "nameLocations": [],
+                        "names": [],
+                        "nodeType": "FunctionCall",
+                        "src": "2718:32:153",
+                        "tryCall": false,
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_string_memory_ptr",
+                          "typeString": "string memory"
+                        }
+                      },
+                      {
+                        "expression": {
+                          "baseExpression": {
+                            "expression": {
+                              "id": 32202,
+                              "name": "ds",
+                              "nodeType": "Identifier",
+                              "overloadedDeclarations": [],
+                              "referencedDeclaration": 32177,
+                              "src": "2758:2:153",
+                              "typeDescriptions": {
+                                "typeIdentifier": "t_struct$_Layout_$32368_storage_ptr",
+                                "typeString": "struct EntitlementsManagerStorage.Layout storage pointer"
+                              }
+                            },
+                            "id": 32203,
+                            "isConstant": false,
+                            "isLValue": true,
+                            "isPure": false,
+                            "lValueRequested": false,
+                            "memberLocation": "2761:20:153",
+                            "memberName": "entitlementByAddress",
+                            "nodeType": "MemberAccess",
+                            "referencedDeclaration": 32364,
+                            "src": "2758:23:153",
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_mapping$_t_address_$_t_struct$_Entitlement_$32359_storage_$",
+                              "typeString": "mapping(address => struct EntitlementsManagerStorage.Entitlement storage ref)"
+                            }
+                          },
+                          "id": 32205,
+                          "indexExpression": {
+                            "id": 32204,
+                            "name": "entitlement",
+                            "nodeType": "Identifier",
+                            "overloadedDeclarations": [],
+                            "referencedDeclaration": 32162,
+                            "src": "2782:11:153",
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_address",
+                              "typeString": "address"
+                            }
+                          },
+                          "isConstant": false,
+                          "isLValue": true,
+                          "isPure": false,
+                          "lValueRequested": false,
+                          "nodeType": "IndexAccess",
+                          "src": "2758:36:153",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_struct$_Entitlement_$32359_storage",
+                            "typeString": "struct EntitlementsManagerStorage.Entitlement storage ref"
+                          }
+                        },
+                        "id": 32206,
+                        "isConstant": false,
+                        "isLValue": true,
+                        "isPure": false,
+                        "lValueRequested": false,
+                        "memberLocation": "2795:11:153",
+                        "memberName": "entitlement",
+                        "nodeType": "MemberAccess",
+                        "referencedDeclaration": 32356,
+                        "src": "2758:48:153",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        }
+                      },
+                      {
+                        "arguments": [],
+                        "expression": {
+                          "argumentTypes": [],
+                          "expression": {
+                            "arguments": [
+                              {
+                                "id": 32208,
+                                "name": "entitlement",
+                                "nodeType": "Identifier",
+                                "overloadedDeclarations": [],
+                                "referencedDeclaration": 32162,
+                                "src": "2827:11:153",
+                                "typeDescriptions": {
+                                  "typeIdentifier": "t_address",
+                                  "typeString": "address"
+                                }
+                              }
+                            ],
+                            "expression": {
+                              "argumentTypes": [
+                                {
+                                  "typeIdentifier": "t_address",
+                                  "typeString": "address"
+                                }
+                              ],
+                              "id": 32207,
+                              "name": "IEntitlement",
+                              "nodeType": "Identifier",
+                              "overloadedDeclarations": [],
+                              "referencedDeclaration": 27191,
+                              "src": "2814:12:153",
+                              "typeDescriptions": {
+                                "typeIdentifier": "t_type$_t_contract$_IEntitlement_$27191_$",
+                                "typeString": "type(contract IEntitlement)"
+                              }
+                            },
+                            "id": 32209,
+                            "isConstant": false,
+                            "isLValue": false,
+                            "isPure": false,
+                            "kind": "typeConversion",
+                            "lValueRequested": false,
+                            "nameLocations": [],
+                            "names": [],
+                            "nodeType": "FunctionCall",
+                            "src": "2814:25:153",
+                            "tryCall": false,
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_contract$_IEntitlement_$27191",
+                              "typeString": "contract IEntitlement"
+                            }
+                          },
+                          "id": 32210,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": false,
+                          "lValueRequested": false,
+                          "memberLocation": "2840:10:153",
+                          "memberName": "moduleType",
+                          "nodeType": "MemberAccess",
+                          "referencedDeclaration": 27143,
+                          "src": "2814:36:153",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_function_external_view$__$returns$_t_string_memory_ptr_$",
+                            "typeString": "function () view external returns (string memory)"
+                          }
+                        },
+                        "id": 32211,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": false,
+                        "kind": "functionCall",
+                        "lValueRequested": false,
+                        "nameLocations": [],
+                        "names": [],
+                        "nodeType": "FunctionCall",
+                        "src": "2814:38:153",
+                        "tryCall": false,
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_string_memory_ptr",
+                          "typeString": "string memory"
+                        }
+                      },
+                      {
+                        "expression": {
+                          "baseExpression": {
+                            "expression": {
+                              "id": 32212,
+                              "name": "ds",
+                              "nodeType": "Identifier",
+                              "overloadedDeclarations": [],
+                              "referencedDeclaration": 32177,
+                              "src": "2860:2:153",
+                              "typeDescriptions": {
+                                "typeIdentifier": "t_struct$_Layout_$32368_storage_ptr",
+                                "typeString": "struct EntitlementsManagerStorage.Layout storage pointer"
+                              }
+                            },
+                            "id": 32213,
+                            "isConstant": false,
+                            "isLValue": true,
+                            "isPure": false,
+                            "lValueRequested": false,
+                            "memberLocation": "2863:20:153",
+                            "memberName": "entitlementByAddress",
+                            "nodeType": "MemberAccess",
+                            "referencedDeclaration": 32364,
+                            "src": "2860:23:153",
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_mapping$_t_address_$_t_struct$_Entitlement_$32359_storage_$",
+                              "typeString": "mapping(address => struct EntitlementsManagerStorage.Entitlement storage ref)"
+                            }
+                          },
+                          "id": 32215,
+                          "indexExpression": {
+                            "id": 32214,
+                            "name": "entitlement",
+                            "nodeType": "Identifier",
+                            "overloadedDeclarations": [],
+                            "referencedDeclaration": 32162,
+                            "src": "2884:11:153",
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_address",
+                              "typeString": "address"
+                            }
+                          },
+                          "isConstant": false,
+                          "isLValue": true,
+                          "isPure": false,
+                          "lValueRequested": false,
+                          "nodeType": "IndexAccess",
+                          "src": "2860:36:153",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_struct$_Entitlement_$32359_storage",
+                            "typeString": "struct EntitlementsManagerStorage.Entitlement storage ref"
+                          }
+                        },
+                        "id": 32216,
+                        "isConstant": false,
+                        "isLValue": true,
+                        "isPure": false,
+                        "lValueRequested": false,
+                        "memberLocation": "2897:11:153",
+                        "memberName": "isImmutable",
+                        "nodeType": "MemberAccess",
+                        "referencedDeclaration": 32358,
+                        "src": "2860:48:153",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_bool",
+                          "typeString": "bool"
+                        }
+                      }
+                    ],
+                    "id": 32217,
+                    "isConstant": false,
+                    "isInlineArray": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "nodeType": "TupleExpression",
+                    "src": "2710:204:153",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_tuple$_t_string_memory_ptr_$_t_address_$_t_string_memory_ptr_$_t_bool_$",
+                      "typeString": "tuple(string memory,address,string memory,bool)"
+                    }
+                  },
+                  "functionReturnParameters": 32172,
+                  "id": 32218,
+                  "nodeType": "Return",
+                  "src": "2703:211:153"
+                }
+              ]
+            },
+            "implemented": true,
+            "kind": "function",
+            "modifiers": [],
+            "name": "getEntitlement",
+            "nameLocation": "2261:14:153",
+            "parameters": {
+              "id": 32163,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 32162,
+                  "mutability": "mutable",
+                  "name": "entitlement",
+                  "nameLocation": "2289:11:153",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 32220,
+                  "src": "2281:19:153",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 32161,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2281:7:153",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "2275:29:153"
+            },
+            "returnParameters": {
+              "id": 32172,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 32165,
+                  "mutability": "mutable",
+                  "name": "name",
+                  "nameLocation": "2361:4:153",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 32220,
+                  "src": "2347:18:153",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_string_memory_ptr",
+                    "typeString": "string"
+                  },
+                  "typeName": {
+                    "id": 32164,
+                    "name": "string",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2347:6:153",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_string_storage_ptr",
+                      "typeString": "string"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 32167,
+                  "mutability": "mutable",
+                  "name": "moduleAddress",
+                  "nameLocation": "2381:13:153",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 32220,
+                  "src": "2373:21:153",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 32166,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2373:7:153",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 32169,
+                  "mutability": "mutable",
+                  "name": "moduleType",
+                  "nameLocation": "2416:10:153",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 32220,
+                  "src": "2402:24:153",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_string_memory_ptr",
+                    "typeString": "string"
+                  },
+                  "typeName": {
+                    "id": 32168,
+                    "name": "string",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2402:6:153",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_string_storage_ptr",
+                      "typeString": "string"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 32171,
+                  "mutability": "mutable",
+                  "name": "isImmutable",
+                  "nameLocation": "2439:11:153",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 32220,
+                  "src": "2434:16:153",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bool",
+                    "typeString": "bool"
+                  },
+                  "typeName": {
+                    "id": 32170,
+                    "name": "bool",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "2434:4:153",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bool",
+                      "typeString": "bool"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "2339:117:153"
+            },
+            "scope": 32345,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "internal"
+          },
+          {
+            "id": 32234,
+            "nodeType": "FunctionDefinition",
+            "src": "2923:170:153",
+            "nodes": [],
+            "body": {
+              "id": 32233,
+              "nodeType": "Block",
+              "src": "3018:75:153",
+              "nodes": [],
+              "statements": [
+                {
+                  "expression": {
+                    "arguments": [],
+                    "expression": {
+                      "argumentTypes": [],
+                      "expression": {
+                        "expression": {
+                          "arguments": [],
+                          "expression": {
+                            "argumentTypes": [],
+                            "expression": {
+                              "id": 32226,
+                              "name": "EntitlementsManagerStorage",
+                              "nodeType": "Identifier",
+                              "overloadedDeclarations": [],
+                              "referencedDeclaration": 32381,
+                              "src": "3031:26:153",
+                              "typeDescriptions": {
+                                "typeIdentifier": "t_type$_t_contract$_EntitlementsManagerStorage_$32381_$",
+                                "typeString": "type(library EntitlementsManagerStorage)"
+                              }
+                            },
+                            "id": 32227,
+                            "isConstant": false,
+                            "isLValue": false,
+                            "isPure": false,
+                            "lValueRequested": false,
+                            "memberLocation": "3058:6:153",
+                            "memberName": "layout",
+                            "nodeType": "MemberAccess",
+                            "referencedDeclaration": 32380,
+                            "src": "3031:33:153",
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_function_internal_pure$__$returns$_t_struct$_Layout_$32368_storage_ptr_$",
+                              "typeString": "function () pure returns (struct EntitlementsManagerStorage.Layout storage pointer)"
+                            }
+                          },
+                          "id": 32228,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": false,
+                          "kind": "functionCall",
+                          "lValueRequested": false,
+                          "nameLocations": [],
+                          "names": [],
+                          "nodeType": "FunctionCall",
+                          "src": "3031:35:153",
+                          "tryCall": false,
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_struct$_Layout_$32368_storage_ptr",
+                            "typeString": "struct EntitlementsManagerStorage.Layout storage pointer"
+                          }
+                        },
+                        "id": 32229,
+                        "isConstant": false,
+                        "isLValue": true,
+                        "isPure": false,
+                        "lValueRequested": false,
+                        "memberLocation": "3067:12:153",
+                        "memberName": "entitlements",
+                        "nodeType": "MemberAccess",
+                        "referencedDeclaration": 32367,
+                        "src": "3031:48:153",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_struct$_AddressSet_$120572_storage",
+                          "typeString": "struct EnumerableSet.AddressSet storage ref"
+                        }
+                      },
+                      "id": 32230,
+                      "isConstant": false,
+                      "isLValue": true,
+                      "isPure": false,
+                      "lValueRequested": false,
+                      "memberLocation": "3080:6:153",
+                      "memberName": "values",
+                      "nodeType": "MemberAccess",
+                      "referencedDeclaration": 120725,
+                      "src": "3031:55:153",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_function_internal_view$_t_struct$_AddressSet_$120572_storage_ptr_$returns$_t_array$_t_address_$dyn_memory_ptr_$attached_to$_t_struct$_AddressSet_$120572_storage_ptr_$",
+                        "typeString": "function (struct EnumerableSet.AddressSet storage pointer) view returns (address[] memory)"
+                      }
+                    },
+                    "id": 32231,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "kind": "functionCall",
+                    "lValueRequested": false,
+                    "nameLocations": [],
+                    "names": [],
+                    "nodeType": "FunctionCall",
+                    "src": "3031:57:153",
+                    "tryCall": false,
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_array$_t_address_$dyn_memory_ptr",
+                      "typeString": "address[] memory"
+                    }
+                  },
+                  "functionReturnParameters": 32225,
+                  "id": 32232,
+                  "nodeType": "Return",
+                  "src": "3024:64:153"
+                }
+              ]
+            },
+            "implemented": true,
+            "kind": "function",
+            "modifiers": [],
+            "name": "getEntitlements",
+            "nameLocation": "2932:15:153",
+            "parameters": {
+              "id": 32221,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "2947:2:153"
+            },
+            "returnParameters": {
+              "id": 32225,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 32224,
+                  "mutability": "mutable",
+                  "name": "entitlements",
+                  "nameLocation": "3002:12:153",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 32234,
+                  "src": "2985:29:153",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_array$_t_address_$dyn_memory_ptr",
+                    "typeString": "address[]"
+                  },
+                  "typeName": {
+                    "baseType": {
+                      "id": 32222,
+                      "name": "address",
+                      "nodeType": "ElementaryTypeName",
+                      "src": "2985:7:153",
+                      "stateMutability": "nonpayable",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_address",
+                        "typeString": "address"
+                      }
+                    },
+                    "id": 32223,
+                    "nodeType": "ArrayTypeName",
+                    "src": "2985:9:153",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_array$_t_address_$dyn_storage_ptr",
+                      "typeString": "address[]"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "2984:31:153"
+            },
+            "scope": 32345,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "internal"
+          },
+          {
+            "id": 32278,
+            "nodeType": "FunctionDefinition",
+            "src": "3274:476:153",
+            "nodes": [],
+            "body": {
+              "id": 32277,
+              "nodeType": "Block",
+              "src": "3338:412:153",
+              "nodes": [],
+              "statements": [
+                {
+                  "condition": {
+                    "commonType": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    },
+                    "id": 32244,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "lValueRequested": false,
+                    "leftExpression": {
+                      "id": 32239,
+                      "name": "entitlement",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 32236,
+                      "src": "3348:11:153",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_address",
+                        "typeString": "address"
+                      }
+                    },
+                    "nodeType": "BinaryOperation",
+                    "operator": "==",
+                    "rightExpression": {
+                      "arguments": [
+                        {
+                          "hexValue": "30",
+                          "id": 32242,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": true,
+                          "kind": "number",
+                          "lValueRequested": false,
+                          "nodeType": "Literal",
+                          "src": "3371:1:153",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_rational_0_by_1",
+                            "typeString": "int_const 0"
+                          },
+                          "value": "0"
+                        }
+                      ],
+                      "expression": {
+                        "argumentTypes": [
+                          {
+                            "typeIdentifier": "t_rational_0_by_1",
+                            "typeString": "int_const 0"
+                          }
+                        ],
+                        "id": 32241,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": true,
+                        "lValueRequested": false,
+                        "nodeType": "ElementaryTypeNameExpression",
+                        "src": "3363:7:153",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_type$_t_address_$",
+                          "typeString": "type(address)"
+                        },
+                        "typeName": {
+                          "id": 32240,
+                          "name": "address",
+                          "nodeType": "ElementaryTypeName",
+                          "src": "3363:7:153",
+                          "typeDescriptions": {}
+                        }
+                      },
+                      "id": 32243,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": true,
+                      "kind": "typeConversion",
+                      "lValueRequested": false,
+                      "nameLocations": [],
+                      "names": [],
+                      "nodeType": "FunctionCall",
+                      "src": "3363:10:153",
+                      "tryCall": false,
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_address",
+                        "typeString": "address"
+                      }
+                    },
+                    "src": "3348:25:153",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bool",
+                      "typeString": "bool"
+                    }
+                  },
+                  "id": 32249,
+                  "nodeType": "IfStatement",
+                  "src": "3344:101:153",
+                  "trueBody": {
+                    "id": 32248,
+                    "nodeType": "Block",
+                    "src": "3375:70:153",
+                    "statements": [
+                      {
+                        "errorCall": {
+                          "arguments": [],
+                          "expression": {
+                            "argumentTypes": [],
+                            "id": 32245,
+                            "name": "EntitlementsService__InvalidEntitlementAddress",
+                            "nodeType": "Identifier",
+                            "overloadedDeclarations": [],
+                            "referencedDeclaration": 32005,
+                            "src": "3390:46:153",
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_function_error_pure$__$returns$__$",
+                              "typeString": "function () pure"
+                            }
+                          },
+                          "id": 32246,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": false,
+                          "kind": "functionCall",
+                          "lValueRequested": false,
+                          "nameLocations": [],
+                          "names": [],
+                          "nodeType": "FunctionCall",
+                          "src": "3390:48:153",
+                          "tryCall": false,
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_tuple$__$",
+                            "typeString": "tuple()"
+                          }
+                        },
+                        "id": 32247,
+                        "nodeType": "RevertStatement",
+                        "src": "3383:55:153"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "clauses": [
+                    {
+                      "block": {
+                        "id": 32269,
+                        "nodeType": "Block",
+                        "src": "3561:106:153",
+                        "statements": [
+                          {
+                            "condition": {
+                              "id": 32263,
+                              "isConstant": false,
+                              "isLValue": false,
+                              "isPure": false,
+                              "lValueRequested": false,
+                              "nodeType": "UnaryOperation",
+                              "operator": "!",
+                              "prefix": true,
+                              "src": "3573:10:153",
+                              "subExpression": {
+                                "id": 32262,
+                                "name": "supported",
+                                "nodeType": "Identifier",
+                                "overloadedDeclarations": [],
+                                "referencedDeclaration": 32260,
+                                "src": "3574:9:153",
+                                "typeDescriptions": {
+                                  "typeIdentifier": "t_bool",
+                                  "typeString": "bool"
+                                }
+                              },
+                              "typeDescriptions": {
+                                "typeIdentifier": "t_bool",
+                                "typeString": "bool"
+                              }
+                            },
+                            "id": 32268,
+                            "nodeType": "IfStatement",
+                            "src": "3569:92:153",
+                            "trueBody": {
+                              "id": 32267,
+                              "nodeType": "Block",
+                              "src": "3585:76:153",
+                              "statements": [
+                                {
+                                  "errorCall": {
+                                    "arguments": [],
+                                    "expression": {
+                                      "argumentTypes": [],
+                                      "id": 32264,
+                                      "name": "EntitlementsService__InvalidEntitlementInterface",
+                                      "nodeType": "Identifier",
+                                      "overloadedDeclarations": [],
+                                      "referencedDeclaration": 32007,
+                                      "src": "3602:48:153",
+                                      "typeDescriptions": {
+                                        "typeIdentifier": "t_function_error_pure$__$returns$__$",
+                                        "typeString": "function () pure"
+                                      }
+                                    },
+                                    "id": 32265,
+                                    "isConstant": false,
+                                    "isLValue": false,
+                                    "isPure": false,
+                                    "kind": "functionCall",
+                                    "lValueRequested": false,
+                                    "nameLocations": [],
+                                    "names": [],
+                                    "nodeType": "FunctionCall",
+                                    "src": "3602:50:153",
+                                    "tryCall": false,
+                                    "typeDescriptions": {
+                                      "typeIdentifier": "t_tuple$__$",
+                                      "typeString": "tuple()"
+                                    }
+                                  },
+                                  "id": 32266,
+                                  "nodeType": "RevertStatement",
+                                  "src": "3595:57:153"
+                                }
+                              ]
+                            }
+                          }
+                        ]
+                      },
+                      "errorName": "",
+                      "id": 32270,
+                      "nodeType": "TryCatchClause",
+                      "parameters": {
+                        "id": 32261,
+                        "nodeType": "ParameterList",
+                        "parameters": [
+                          {
+                            "constant": false,
+                            "id": 32260,
+                            "mutability": "mutable",
+                            "name": "supported",
+                            "nameLocation": "3550:9:153",
+                            "nodeType": "VariableDeclaration",
+                            "scope": 32270,
+                            "src": "3545:14:153",
+                            "stateVariable": false,
+                            "storageLocation": "default",
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_bool",
+                              "typeString": "bool"
+                            },
+                            "typeName": {
+                              "id": 32259,
+                              "name": "bool",
+                              "nodeType": "ElementaryTypeName",
+                              "src": "3545:4:153",
+                              "typeDescriptions": {
+                                "typeIdentifier": "t_bool",
+                                "typeString": "bool"
+                              }
+                            },
+                            "visibility": "internal"
+                          }
+                        ],
+                        "src": "3544:16:153"
+                      },
+                      "src": "3536:131:153"
+                    },
+                    {
+                      "block": {
+                        "id": 32274,
+                        "nodeType": "Block",
+                        "src": "3674:72:153",
+                        "statements": [
+                          {
+                            "errorCall": {
+                              "arguments": [],
+                              "expression": {
+                                "argumentTypes": [],
+                                "id": 32271,
+                                "name": "EntitlementsService__InvalidEntitlementInterface",
+                                "nodeType": "Identifier",
+                                "overloadedDeclarations": [],
+                                "referencedDeclaration": 32007,
+                                "src": "3689:48:153",
+                                "typeDescriptions": {
+                                  "typeIdentifier": "t_function_error_pure$__$returns$__$",
+                                  "typeString": "function () pure"
+                                }
+                              },
+                              "id": 32272,
+                              "isConstant": false,
+                              "isLValue": false,
+                              "isPure": false,
+                              "kind": "functionCall",
+                              "lValueRequested": false,
+                              "nameLocations": [],
+                              "names": [],
+                              "nodeType": "FunctionCall",
+                              "src": "3689:50:153",
+                              "tryCall": false,
+                              "typeDescriptions": {
+                                "typeIdentifier": "t_tuple$__$",
+                                "typeString": "tuple()"
+                              }
+                            },
+                            "id": 32273,
+                            "nodeType": "RevertStatement",
+                            "src": "3682:57:153"
+                          }
+                        ]
+                      },
+                      "errorName": "",
+                      "id": 32275,
+                      "nodeType": "TryCatchClause",
+                      "src": "3668:78:153"
+                    }
+                  ],
+                  "externalCall": {
+                    "arguments": [
+                      {
+                        "expression": {
+                          "arguments": [
+                            {
+                              "id": 32255,
+                              "name": "IEntitlement",
+                              "nodeType": "Identifier",
+                              "overloadedDeclarations": [],
+                              "referencedDeclaration": 27191,
+                              "src": "3505:12:153",
+                              "typeDescriptions": {
+                                "typeIdentifier": "t_type$_t_contract$_IEntitlement_$27191_$",
+                                "typeString": "type(contract IEntitlement)"
+                              }
+                            }
+                          ],
+                          "expression": {
+                            "argumentTypes": [
+                              {
+                                "typeIdentifier": "t_type$_t_contract$_IEntitlement_$27191_$",
+                                "typeString": "type(contract IEntitlement)"
+                              }
+                            ],
+                            "id": 32254,
+                            "name": "type",
+                            "nodeType": "Identifier",
+                            "overloadedDeclarations": [],
+                            "referencedDeclaration": -27,
+                            "src": "3500:4:153",
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_function_metatype_pure$__$returns$__$",
+                              "typeString": "function () pure"
+                            }
+                          },
+                          "id": 32256,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": true,
+                          "kind": "functionCall",
+                          "lValueRequested": false,
+                          "nameLocations": [],
+                          "names": [],
+                          "nodeType": "FunctionCall",
+                          "src": "3500:18:153",
+                          "tryCall": false,
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_magic_meta_type_t_contract$_IEntitlement_$27191",
+                            "typeString": "type(contract IEntitlement)"
+                          }
+                        },
+                        "id": 32257,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": true,
+                        "lValueRequested": false,
+                        "memberLocation": "3519:11:153",
+                        "memberName": "interfaceId",
+                        "nodeType": "MemberAccess",
+                        "src": "3500:30:153",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_bytes4",
+                          "typeString": "bytes4"
+                        }
+                      }
+                    ],
+                    "expression": {
+                      "argumentTypes": [
+                        {
+                          "typeIdentifier": "t_bytes4",
+                          "typeString": "bytes4"
+                        }
+                      ],
+                      "expression": {
+                        "arguments": [
+                          {
+                            "id": 32251,
+                            "name": "entitlement",
+                            "nodeType": "Identifier",
+                            "overloadedDeclarations": [],
+                            "referencedDeclaration": 32236,
+                            "src": "3469:11:153",
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_address",
+                              "typeString": "address"
+                            }
+                          }
+                        ],
+                        "expression": {
+                          "argumentTypes": [
+                            {
+                              "typeIdentifier": "t_address",
+                              "typeString": "address"
+                            }
+                          ],
+                          "id": 32250,
+                          "name": "IERC165",
+                          "nodeType": "Identifier",
+                          "overloadedDeclarations": [],
+                          "referencedDeclaration": 7034,
+                          "src": "3461:7:153",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_type$_t_contract$_IERC165_$7034_$",
+                            "typeString": "type(contract IERC165)"
+                          }
+                        },
+                        "id": 32252,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": false,
+                        "kind": "typeConversion",
+                        "lValueRequested": false,
+                        "nameLocations": [],
+                        "names": [],
+                        "nodeType": "FunctionCall",
+                        "src": "3461:20:153",
+                        "tryCall": false,
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_contract$_IERC165_$7034",
+                          "typeString": "contract IERC165"
+                        }
+                      },
+                      "id": 32253,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": false,
+                      "lValueRequested": false,
+                      "memberLocation": "3482:17:153",
+                      "memberName": "supportsInterface",
+                      "nodeType": "MemberAccess",
+                      "referencedDeclaration": 7033,
+                      "src": "3461:38:153",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_function_external_view$_t_bytes4_$returns$_t_bool_$",
+                        "typeString": "function (bytes4) view external returns (bool)"
+                      }
+                    },
+                    "id": 32258,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "kind": "functionCall",
+                    "lValueRequested": false,
+                    "nameLocations": [],
+                    "names": [],
+                    "nodeType": "FunctionCall",
+                    "src": "3461:70:153",
+                    "tryCall": true,
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bool",
+                      "typeString": "bool"
+                    }
+                  },
+                  "id": 32276,
+                  "nodeType": "TryStatement",
+                  "src": "3451:295:153"
+                }
+              ]
+            },
+            "implemented": true,
+            "kind": "function",
+            "modifiers": [],
+            "name": "validateEntitlement",
+            "nameLocation": "3283:19:153",
+            "parameters": {
+              "id": 32237,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 32236,
+                  "mutability": "mutable",
+                  "name": "entitlement",
+                  "nameLocation": "3311:11:153",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 32278,
+                  "src": "3303:19:153",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 32235,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "3303:7:153",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "3302:21:153"
+            },
+            "returnParameters": {
+              "id": 32238,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "3338:0:153"
+            },
+            "scope": 32345,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "internal"
+          },
+          {
+            "id": 32300,
+            "nodeType": "FunctionDefinition",
+            "src": "3930:236:153",
+            "nodes": [],
+            "body": {
+              "id": 32299,
+              "nodeType": "Block",
+              "src": "4055:111:153",
+              "nodes": [],
+              "statements": [
+                {
+                  "expression": {
+                    "arguments": [
+                      {
+                        "id": 32289,
+                        "name": "entitlement",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 32280,
+                        "src": "4078:11:153",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        }
+                      }
+                    ],
+                    "expression": {
+                      "argumentTypes": [
+                        {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        }
+                      ],
+                      "id": 32288,
+                      "name": "checkEntitlement",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 32054,
+                      "src": "4061:16:153",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_function_internal_view$_t_address_$returns$__$",
+                        "typeString": "function (address) view"
+                      }
+                    },
+                    "id": 32290,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "kind": "functionCall",
+                    "lValueRequested": false,
+                    "nameLocations": [],
+                    "names": [],
+                    "nodeType": "FunctionCall",
+                    "src": "4061:29:153",
+                    "tryCall": false,
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_tuple$__$",
+                      "typeString": "tuple()"
+                    }
+                  },
+                  "id": 32291,
+                  "nodeType": "ExpressionStatement",
+                  "src": "4061:29:153"
+                },
+                {
+                  "expression": {
+                    "arguments": [
+                      {
+                        "id": 32296,
+                        "name": "role",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 32282,
+                        "src": "4156:4:153",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_uint256",
+                          "typeString": "uint256"
+                        }
+                      }
+                    ],
+                    "expression": {
+                      "argumentTypes": [
+                        {
+                          "typeIdentifier": "t_uint256",
+                          "typeString": "uint256"
+                        }
+                      ],
+                      "expression": {
+                        "arguments": [
+                          {
+                            "id": 32293,
+                            "name": "entitlement",
+                            "nodeType": "Identifier",
+                            "overloadedDeclarations": [],
+                            "referencedDeclaration": 32280,
+                            "src": "4116:11:153",
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_address",
+                              "typeString": "address"
+                            }
+                          }
+                        ],
+                        "expression": {
+                          "argumentTypes": [
+                            {
+                              "typeIdentifier": "t_address",
+                              "typeString": "address"
+                            }
+                          ],
+                          "id": 32292,
+                          "name": "IEntitlement",
+                          "nodeType": "Identifier",
+                          "overloadedDeclarations": [],
+                          "referencedDeclaration": 27191,
+                          "src": "4103:12:153",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_type$_t_contract$_IEntitlement_$27191_$",
+                            "typeString": "type(contract IEntitlement)"
+                          }
+                        },
+                        "id": 32294,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": false,
+                        "kind": "typeConversion",
+                        "lValueRequested": false,
+                        "nameLocations": [],
+                        "names": [],
+                        "nodeType": "FunctionCall",
+                        "src": "4103:25:153",
+                        "tryCall": false,
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_contract$_IEntitlement_$27191",
+                          "typeString": "contract IEntitlement"
+                        }
+                      },
+                      "id": 32295,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": false,
+                      "lValueRequested": false,
+                      "memberLocation": "4129:26:153",
+                      "memberName": "getEntitlementDataByRoleId",
+                      "nodeType": "MemberAccess",
+                      "referencedDeclaration": 27190,
+                      "src": "4103:52:153",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_function_external_view$_t_uint256_$returns$_t_array$_t_bytes_memory_ptr_$dyn_memory_ptr_$",
+                        "typeString": "function (uint256) view external returns (bytes memory[] memory)"
+                      }
+                    },
+                    "id": 32297,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "kind": "functionCall",
+                    "lValueRequested": false,
+                    "nameLocations": [],
+                    "names": [],
+                    "nodeType": "FunctionCall",
+                    "src": "4103:58:153",
+                    "tryCall": false,
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_array$_t_bytes_memory_ptr_$dyn_memory_ptr",
+                      "typeString": "bytes memory[] memory"
+                    }
+                  },
+                  "functionReturnParameters": 32287,
+                  "id": 32298,
+                  "nodeType": "Return",
+                  "src": "4096:65:153"
+                }
+              ]
+            },
+            "implemented": true,
+            "kind": "function",
+            "modifiers": [],
+            "name": "proxyGetEntitlementDataByRole",
+            "nameLocation": "3939:29:153",
+            "parameters": {
+              "id": 32283,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 32280,
+                  "mutability": "mutable",
+                  "name": "entitlement",
+                  "nameLocation": "3982:11:153",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 32300,
+                  "src": "3974:19:153",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 32279,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "3974:7:153",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 32282,
+                  "mutability": "mutable",
+                  "name": "role",
+                  "nameLocation": "4007:4:153",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 32300,
+                  "src": "3999:12:153",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 32281,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "3999:7:153",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "3968:47:153"
+            },
+            "returnParameters": {
+              "id": 32287,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 32286,
+                  "mutability": "mutable",
+                  "name": "",
+                  "nameLocation": "-1:-1:-1",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 32300,
+                  "src": "4039:14:153",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_array$_t_bytes_memory_ptr_$dyn_memory_ptr",
+                    "typeString": "bytes[]"
+                  },
+                  "typeName": {
+                    "baseType": {
+                      "id": 32284,
+                      "name": "bytes",
+                      "nodeType": "ElementaryTypeName",
+                      "src": "4039:5:153",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_bytes_storage_ptr",
+                        "typeString": "bytes"
+                      }
+                    },
+                    "id": 32285,
+                    "nodeType": "ArrayTypeName",
+                    "src": "4039:7:153",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_array$_t_bytes_storage_$dyn_storage_ptr",
+                      "typeString": "bytes[]"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "4038:16:153"
+            },
+            "scope": 32345,
+            "stateMutability": "view",
+            "virtual": false,
+            "visibility": "internal"
+          },
+          {
+            "id": 32322,
+            "nodeType": "FunctionDefinition",
+            "src": "4170:234:153",
+            "nodes": [],
+            "body": {
+              "id": 32321,
+              "nodeType": "Block",
+              "src": "4295:109:153",
+              "nodes": [],
+              "statements": [
+                {
+                  "expression": {
+                    "arguments": [
+                      {
+                        "id": 32310,
+                        "name": "entitlement",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 32302,
+                        "src": "4318:11:153",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        }
+                      }
+                    ],
+                    "expression": {
+                      "argumentTypes": [
+                        {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        }
+                      ],
+                      "id": 32309,
+                      "name": "checkEntitlement",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 32054,
+                      "src": "4301:16:153",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_function_internal_view$_t_address_$returns$__$",
+                        "typeString": "function (address) view"
+                      }
+                    },
+                    "id": 32311,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "kind": "functionCall",
+                    "lValueRequested": false,
+                    "nameLocations": [],
+                    "names": [],
+                    "nodeType": "FunctionCall",
+                    "src": "4301:29:153",
+                    "tryCall": false,
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_tuple$__$",
+                      "typeString": "tuple()"
+                    }
+                  },
+                  "id": 32312,
+                  "nodeType": "ExpressionStatement",
+                  "src": "4301:29:153"
+                },
+                {
+                  "expression": {
+                    "arguments": [
+                      {
+                        "id": 32317,
+                        "name": "role",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 32304,
+                        "src": "4377:4:153",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_uint256",
+                          "typeString": "uint256"
+                        }
+                      },
+                      {
+                        "id": 32318,
+                        "name": "entitlementData",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 32306,
+                        "src": "4383:15:153",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_bytes_memory_ptr",
+                          "typeString": "bytes memory"
+                        }
+                      }
+                    ],
+                    "expression": {
+                      "argumentTypes": [
+                        {
+                          "typeIdentifier": "t_uint256",
+                          "typeString": "uint256"
+                        },
+                        {
+                          "typeIdentifier": "t_bytes_memory_ptr",
+                          "typeString": "bytes memory"
+                        }
+                      ],
+                      "expression": {
+                        "arguments": [
+                          {
+                            "id": 32314,
+                            "name": "entitlement",
+                            "nodeType": "Identifier",
+                            "overloadedDeclarations": [],
+                            "referencedDeclaration": 32302,
+                            "src": "4349:11:153",
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_address",
+                              "typeString": "address"
+                            }
+                          }
+                        ],
+                        "expression": {
+                          "argumentTypes": [
+                            {
+                              "typeIdentifier": "t_address",
+                              "typeString": "address"
+                            }
+                          ],
+                          "id": 32313,
+                          "name": "IEntitlement",
+                          "nodeType": "Identifier",
+                          "overloadedDeclarations": [],
+                          "referencedDeclaration": 27191,
+                          "src": "4336:12:153",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_type$_t_contract$_IEntitlement_$27191_$",
+                            "typeString": "type(contract IEntitlement)"
+                          }
+                        },
+                        "id": 32315,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": false,
+                        "kind": "typeConversion",
+                        "lValueRequested": false,
+                        "nameLocations": [],
+                        "names": [],
+                        "nodeType": "FunctionCall",
+                        "src": "4336:25:153",
+                        "tryCall": false,
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_contract$_IEntitlement_$27191",
+                          "typeString": "contract IEntitlement"
+                        }
+                      },
+                      "id": 32316,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": false,
+                      "lValueRequested": false,
+                      "memberLocation": "4362:14:153",
+                      "memberName": "setEntitlement",
+                      "nodeType": "MemberAccess",
+                      "referencedDeclaration": 27159,
+                      "src": "4336:40:153",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_function_external_nonpayable$_t_uint256_$_t_bytes_memory_ptr_$returns$_t_bytes32_$",
+                        "typeString": "function (uint256,bytes memory) external returns (bytes32)"
+                      }
+                    },
+                    "id": 32319,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "kind": "functionCall",
+                    "lValueRequested": false,
+                    "nameLocations": [],
+                    "names": [],
+                    "nodeType": "FunctionCall",
+                    "src": "4336:63:153",
+                    "tryCall": false,
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bytes32",
+                      "typeString": "bytes32"
+                    }
+                  },
+                  "id": 32320,
+                  "nodeType": "ExpressionStatement",
+                  "src": "4336:63:153"
+                }
+              ]
+            },
+            "implemented": true,
+            "kind": "function",
+            "modifiers": [],
+            "name": "proxyAddRoleToEntitlement",
+            "nameLocation": "4179:25:153",
+            "parameters": {
+              "id": 32307,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 32302,
+                  "mutability": "mutable",
+                  "name": "entitlement",
+                  "nameLocation": "4218:11:153",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 32322,
+                  "src": "4210:19:153",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 32301,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "4210:7:153",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 32304,
+                  "mutability": "mutable",
+                  "name": "role",
+                  "nameLocation": "4243:4:153",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 32322,
+                  "src": "4235:12:153",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 32303,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "4235:7:153",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 32306,
+                  "mutability": "mutable",
+                  "name": "entitlementData",
+                  "nameLocation": "4266:15:153",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 32322,
+                  "src": "4253:28:153",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bytes_memory_ptr",
+                    "typeString": "bytes"
+                  },
+                  "typeName": {
+                    "id": 32305,
+                    "name": "bytes",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "4253:5:153",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bytes_storage_ptr",
+                      "typeString": "bytes"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "4204:81:153"
+            },
+            "returnParameters": {
+              "id": 32308,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "4295:0:153"
+            },
+            "scope": 32345,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "internal"
+          },
+          {
+            "id": 32344,
+            "nodeType": "FunctionDefinition",
+            "src": "4408:242:153",
+            "nodes": [],
+            "body": {
+              "id": 32343,
+              "nodeType": "Block",
+              "src": "4538:112:153",
+              "nodes": [],
+              "statements": [
+                {
+                  "expression": {
+                    "arguments": [
+                      {
+                        "id": 32332,
+                        "name": "entitlement",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 32324,
+                        "src": "4561:11:153",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        }
+                      }
+                    ],
+                    "expression": {
+                      "argumentTypes": [
+                        {
+                          "typeIdentifier": "t_address",
+                          "typeString": "address"
+                        }
+                      ],
+                      "id": 32331,
+                      "name": "checkEntitlement",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 32054,
+                      "src": "4544:16:153",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_function_internal_view$_t_address_$returns$__$",
+                        "typeString": "function (address) view"
+                      }
+                    },
+                    "id": 32333,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "kind": "functionCall",
+                    "lValueRequested": false,
+                    "nameLocations": [],
+                    "names": [],
+                    "nodeType": "FunctionCall",
+                    "src": "4544:29:153",
+                    "tryCall": false,
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_tuple$__$",
+                      "typeString": "tuple()"
+                    }
+                  },
+                  "id": 32334,
+                  "nodeType": "ExpressionStatement",
+                  "src": "4544:29:153"
+                },
+                {
+                  "expression": {
+                    "arguments": [
+                      {
+                        "id": 32339,
+                        "name": "role",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 32326,
+                        "src": "4623:4:153",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_uint256",
+                          "typeString": "uint256"
+                        }
+                      },
+                      {
+                        "id": 32340,
+                        "name": "entitlementData",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 32328,
+                        "src": "4629:15:153",
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_bytes_memory_ptr",
+                          "typeString": "bytes memory"
+                        }
+                      }
+                    ],
+                    "expression": {
+                      "argumentTypes": [
+                        {
+                          "typeIdentifier": "t_uint256",
+                          "typeString": "uint256"
+                        },
+                        {
+                          "typeIdentifier": "t_bytes_memory_ptr",
+                          "typeString": "bytes memory"
+                        }
+                      ],
+                      "expression": {
+                        "arguments": [
+                          {
+                            "id": 32336,
+                            "name": "entitlement",
+                            "nodeType": "Identifier",
+                            "overloadedDeclarations": [],
+                            "referencedDeclaration": 32324,
+                            "src": "4592:11:153",
+                            "typeDescriptions": {
+                              "typeIdentifier": "t_address",
+                              "typeString": "address"
+                            }
+                          }
+                        ],
+                        "expression": {
+                          "argumentTypes": [
+                            {
+                              "typeIdentifier": "t_address",
+                              "typeString": "address"
+                            }
+                          ],
+                          "id": 32335,
+                          "name": "IEntitlement",
+                          "nodeType": "Identifier",
+                          "overloadedDeclarations": [],
+                          "referencedDeclaration": 27191,
+                          "src": "4579:12:153",
+                          "typeDescriptions": {
+                            "typeIdentifier": "t_type$_t_contract$_IEntitlement_$27191_$",
+                            "typeString": "type(contract IEntitlement)"
+                          }
+                        },
+                        "id": 32337,
+                        "isConstant": false,
+                        "isLValue": false,
+                        "isPure": false,
+                        "kind": "typeConversion",
+                        "lValueRequested": false,
+                        "nameLocations": [],
+                        "names": [],
+                        "nodeType": "FunctionCall",
+                        "src": "4579:25:153",
+                        "tryCall": false,
+                        "typeDescriptions": {
+                          "typeIdentifier": "t_contract$_IEntitlement_$27191",
+                          "typeString": "contract IEntitlement"
+                        }
+                      },
+                      "id": 32338,
+                      "isConstant": false,
+                      "isLValue": false,
+                      "isPure": false,
+                      "lValueRequested": false,
+                      "memberLocation": "4605:17:153",
+                      "memberName": "removeEntitlement",
+                      "nodeType": "MemberAccess",
+                      "referencedDeclaration": 27169,
+                      "src": "4579:43:153",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_function_external_nonpayable$_t_uint256_$_t_bytes_memory_ptr_$returns$_t_bytes32_$",
+                        "typeString": "function (uint256,bytes memory) external returns (bytes32)"
+                      }
+                    },
+                    "id": 32341,
+                    "isConstant": false,
+                    "isLValue": false,
+                    "isPure": false,
+                    "kind": "functionCall",
+                    "lValueRequested": false,
+                    "nameLocations": [],
+                    "names": [],
+                    "nodeType": "FunctionCall",
+                    "src": "4579:66:153",
+                    "tryCall": false,
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bytes32",
+                      "typeString": "bytes32"
+                    }
+                  },
+                  "id": 32342,
+                  "nodeType": "ExpressionStatement",
+                  "src": "4579:66:153"
+                }
+              ]
+            },
+            "implemented": true,
+            "kind": "function",
+            "modifiers": [],
+            "name": "proxyRemoveRoleFromEntitlement",
+            "nameLocation": "4417:30:153",
+            "parameters": {
+              "id": 32329,
+              "nodeType": "ParameterList",
+              "parameters": [
+                {
+                  "constant": false,
+                  "id": 32324,
+                  "mutability": "mutable",
+                  "name": "entitlement",
+                  "nameLocation": "4461:11:153",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 32344,
+                  "src": "4453:19:153",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_address",
+                    "typeString": "address"
+                  },
+                  "typeName": {
+                    "id": 32323,
+                    "name": "address",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "4453:7:153",
+                    "stateMutability": "nonpayable",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_address",
+                      "typeString": "address"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 32326,
+                  "mutability": "mutable",
+                  "name": "role",
+                  "nameLocation": "4486:4:153",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 32344,
+                  "src": "4478:12:153",
+                  "stateVariable": false,
+                  "storageLocation": "default",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_uint256",
+                    "typeString": "uint256"
+                  },
+                  "typeName": {
+                    "id": 32325,
+                    "name": "uint256",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "4478:7:153",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_uint256",
+                      "typeString": "uint256"
+                    }
+                  },
+                  "visibility": "internal"
+                },
+                {
+                  "constant": false,
+                  "id": 32328,
+                  "mutability": "mutable",
+                  "name": "entitlementData",
+                  "nameLocation": "4509:15:153",
+                  "nodeType": "VariableDeclaration",
+                  "scope": 32344,
+                  "src": "4496:28:153",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_bytes_memory_ptr",
+                    "typeString": "bytes"
+                  },
+                  "typeName": {
+                    "id": 32327,
+                    "name": "bytes",
+                    "nodeType": "ElementaryTypeName",
+                    "src": "4496:5:153",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_bytes_storage_ptr",
+                      "typeString": "bytes"
+                    }
+                  },
+                  "visibility": "internal"
+                }
+              ],
+              "src": "4447:81:153"
+            },
+            "returnParameters": {
+              "id": 32330,
+              "nodeType": "ParameterList",
+              "parameters": [],
+              "src": "4538:0:153"
+            },
+            "scope": 32345,
+            "stateMutability": "nonpayable",
+            "virtual": false,
+            "visibility": "internal"
+          }
+        ],
+        "abstract": false,
+        "baseContracts": [],
+        "canonicalName": "EntitlementsManagerService",
+        "contractDependencies": [],
+        "contractKind": "library",
+        "fullyImplemented": true,
+        "linearizedBaseContracts": [
+          32345
+        ],
+        "name": "EntitlementsManagerService",
+        "nameLocation": "724:26:153",
+        "scope": 32346,
+        "usedErrors": [],
+        "usedEvents": []
+      }
+    ],
+    "license": "Apache-2.0"
+  },
+  "id": 153
+}

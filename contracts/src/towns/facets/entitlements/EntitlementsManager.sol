@@ -2,27 +2,31 @@
 pragma solidity ^0.8.20;
 
 // interfaces
-import {IEntitlements} from "./IEntitlements.sol";
+import {IEntitlementsManager} from "./IEntitlementsManager.sol";
 
 // libraries
 
 // contracts
-import {EntitlementsBase} from "./EntitlementsBase.sol";
+import {EntitlementsManagerBase} from "./EntitlementsManagerBase.sol";
 import {Entitled} from "../Entitled.sol";
 
-contract Entitlements is IEntitlements, EntitlementsBase, Entitled {
+contract EntitlementsManager is
+  IEntitlementsManager,
+  EntitlementsManagerBase,
+  Entitled
+{
   function addImmutableEntitlements(
     address[] memory entitlements
   ) external onlyOwner {
     _addImmutableEntitlements(entitlements);
   }
 
-  function addEntitlement(address entitlement) external onlyOwner {
-    _addEntitlement(entitlement);
+  function addEntitlementModule(address entitlement) external onlyOwner {
+    _addEntitlementModule(entitlement);
   }
 
-  function removeEntitlement(address entitlement) external onlyOwner {
-    _removeEntitlement(entitlement);
+  function removeEntitlementModule(address entitlement) external onlyOwner {
+    _removeEntitlementModule(entitlement);
   }
 
   function getEntitlements() external view returns (Entitlement[] memory) {

@@ -10,7 +10,7 @@ import {EnumerableSet} from "openzeppelin-contracts/contracts/utils/structs/Enum
 import {Validator} from "contracts/src/utils/Validator.sol";
 
 // services
-import {EntitlementsService} from "contracts/src/towns/facets/entitlements/EntitlementsService.sol";
+import {EntitlementsManagerService} from "contracts/src/towns/facets/entitlements/EntitlementsManagerService.sol";
 import {ChannelService} from "contracts/src/towns/facets/channels/ChannelService.sol";
 import {RolesStorage} from "./RolesStorage.sol";
 
@@ -37,13 +37,13 @@ abstract contract RolesBase is IRolesBase {
     roleId = _getNextRoleId();
 
     for (uint256 i = 0; i < entitlementsLen; ) {
-      EntitlementsService.validateEntitlement(entitlements[i].module);
+      EntitlementsManagerService.validateEntitlement(entitlements[i].module);
       entitlementAddresses[i] = entitlements[i].module;
 
       // check for empty address or data
       Validator.checkByteLength(entitlements[i].data);
 
-      EntitlementsService.proxyAddRoleToEntitlement(
+      EntitlementsManagerService.proxyAddRoleToEntitlement(
         entitlements[i].module,
         roleId,
         entitlements[i].data
@@ -122,8 +122,8 @@ abstract contract RolesBase is IRolesBase {
     address[] memory entitlementAddresses = new address[](entitlementsLen);
 
     for (uint256 i = 0; i < entitlementsLen; ) {
-      EntitlementsService.validateEntitlement(entitlements[i].module);
-      EntitlementsService.checkEntitlement(entitlements[i].module);
+      EntitlementsManagerService.validateEntitlement(entitlements[i].module);
+      EntitlementsManagerService.checkEntitlement(entitlements[i].module);
       entitlementAddresses[i] = entitlements[i].module;
       unchecked {
         i++;
@@ -175,12 +175,12 @@ abstract contract RolesBase is IRolesBase {
 
     // loop through old entitlements and remove them
     for (uint256 i = 0; i < currentEntitlementsLen; ) {
-      bytes[] memory entitlementData = EntitlementsService
+      bytes[] memory entitlementData = EntitlementsManagerService
         .proxyGetEntitlementDataByRole(currentEntitlements[i], roleId);
       uint256 entitlementDataLen = entitlementData.length;
 
       for (uint256 j = 0; j < entitlementDataLen; ) {
-        EntitlementsService.proxyRemoveRoleFromEntitlement(
+        EntitlementsManagerService.proxyRemoveRoleFromEntitlement(
           currentEntitlements[i],
           roleId,
           entitlementData[j]
@@ -200,7 +200,7 @@ abstract contract RolesBase is IRolesBase {
       // check for empty address or data
       Validator.checkByteLength(entitlements[i].data);
 
-      EntitlementsService.proxyAddRoleToEntitlement(
+      EntitlementsManagerService.proxyAddRoleToEntitlement(
         entitlements[i].module,
         roleId,
         entitlements[i].data
@@ -261,12 +261,12 @@ abstract contract RolesBase is IRolesBase {
 
     // remove role from entitlements
     for (uint256 i = 0; i < currentEntitlementsLen; ) {
-      bytes[] memory entitlementData = EntitlementsService
+      bytes[] memory entitlementData = EntitlementsManagerService
         .proxyGetEntitlementDataByRole(currentEntitlements[i], roleId);
       uint256 entitlementDataLen = entitlementData.length;
 
       for (uint256 j = 0; j < entitlementDataLen; j++) {
-        EntitlementsService.proxyRemoveRoleFromEntitlement(
+        EntitlementsManagerService.proxyRemoveRoleFromEntitlement(
           currentEntitlements[i],
           roleId,
           entitlementData[j]
@@ -423,13 +423,13 @@ abstract contract RolesBase is IRolesBase {
     _checkRoleExists(roleId);
 
     // check entitlements exists
-    EntitlementsService.checkEntitlement(entitlement.module);
+    EntitlementsManagerService.checkEntitlement(entitlement.module);
 
     // add entitlement to role
     _addEntitlementToRole(roleId, entitlement.module);
 
     // set entitlement to role
-    EntitlementsService.proxyAddRoleToEntitlement(
+    EntitlementsManagerService.proxyAddRoleToEntitlement(
       entitlement.module,
       roleId,
       entitlement.data
@@ -441,13 +441,13 @@ abstract contract RolesBase is IRolesBase {
     CreateEntitlement memory entitlement
   ) internal {
     // check entitlements exists
-    EntitlementsService.checkEntitlement(entitlement.module);
+    EntitlementsManagerService.checkEntitlement(entitlement.module);
 
     // remove entitlement from role
     _removeEntitlementFromRole(roleId, entitlement.module);
 
     // set entitlement to role
-    EntitlementsService.proxyRemoveRoleFromEntitlement(
+    EntitlementsManagerService.proxyRemoveRoleFromEntitlement(
       entitlement.module,
       roleId,
       entitlement.data

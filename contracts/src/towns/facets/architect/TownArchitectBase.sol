@@ -6,7 +6,7 @@ import {ITownArchitect, ITownArchitectBase} from "./ITownArchitect.sol";
 import {IEntitlement} from "contracts/src/towns/entitlements/IEntitlement.sol";
 import {IRoles, IRolesBase} from "contracts/src/towns/facets/roles/IRoles.sol";
 import {IChannel} from "contracts/src/towns/facets/channels/IChannel.sol";
-import {IEntitlements} from "contracts/src/towns/facets/entitlements/IEntitlements.sol";
+import {IEntitlementsManager} from "contracts/src/towns/facets/entitlements/IEntitlementsManager.sol";
 
 import {IProxyManager} from "contracts/src/diamond/proxy/manager/IProxyManager.sol";
 
@@ -106,7 +106,7 @@ abstract contract TownArchitectBase is Factory, ITownArchitectBase {
     entitlements[1] = tokenEntitlement;
 
     // set entitlements as immutable
-    IEntitlements(townAddress).addImmutableEntitlements(entitlements);
+    IEntitlementsManager(townAddress).addImmutableEntitlements(entitlements);
 
     // create everyone role with permissions
     uint256 everyoneRoleId = _createEveryoneEntitlement(

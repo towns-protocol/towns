@@ -32,7 +32,7 @@ abstract contract TownOwnerBase is ITownOwnerBase {
     return ds.factory;
   }
 
-  function _createTown(
+  function _mintTown(
     string memory name,
     string memory uri,
     uint256 tokenId,
