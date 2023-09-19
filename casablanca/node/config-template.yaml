@@ -17,6 +17,7 @@ log:
     level: <LOG_LEVEL>
     console: true
     noColor: <LOG_NOCOLOR>
+    format: text
 metrics:
     enabled: <METRICS_ENABLED>
     port: <METRICS_PORT>

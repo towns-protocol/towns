@@ -1,11 +1,15 @@
-import { useContractRead } from 'wagmi'
+import { erc20ABI, erc721ABI, useContractRead } from 'wagmi'
 import { readContract } from 'wagmi/actions'
 import { Address, isAddress, parseAbi } from 'viem'
 import { useMemo } from 'react'
 import { TokenType } from '@components/Tokens/types'
 
-const ERC165Abi = parseAbi([
+const erc165ABI = parseAbi([
     'function supportsInterface(bytes4 interfaceID) external view returns (bool)',
+])
+
+const erc1155ABI = parseAbi([
+    'function balanceOf(address _owner, uint256 _id) external view returns (uint256)',
 ])
 
 const interfaceIds = {
@@ -20,14 +24,14 @@ function readConfig(
     interfaceId: InterfaceId,
 ): {
     address: Address
-    abi: typeof ERC165Abi
+    abi: typeof erc165ABI
     functionName: 'supportsInterface'
     args: [InterfaceId]
     enabled: boolean
 } {
     return {
         address,
-        abi: ERC165Abi,
+        abi: erc165ABI,
         functionName: 'supportsInterface',
         args: [interfaceId],
         enabled: isAddress(address),
@@ -67,4 +71,42 @@ export async function getTokenType({ address }: { address: Address }) {
         return TokenType.ERC721
     }
     return TokenType.ERC20
+}
+
+type BalanceOfArgs = {
+    contractAddress: Address
+    walletAddress: Address
+}
+
+export async function balanceOfErc1155({
+    contractAddress,
+    walletAddress,
+    id,
+}: BalanceOfArgs & {
+    id: number
+}) {
+    return readContract({
+        address: contractAddress,
+        abi: erc1155ABI,
+        functionName: 'balanceOf',
+        args: [walletAddress, BigInt(id)],
+    })
+}
+
+export async function balanceOfErc721({ contractAddress, walletAddress }: BalanceOfArgs) {
+    return readContract({
+        address: contractAddress,
+        abi: erc721ABI,
+        functionName: 'balanceOf',
+        args: [walletAddress],
+    })
+}
+
+export async function balanceOfErc20({ contractAddress, walletAddress }: BalanceOfArgs) {
+    return readContract({
+        address: contractAddress,
+        abi: erc20ABI,
+        functionName: 'balanceOf',
+        args: [walletAddress],
+    })
 }

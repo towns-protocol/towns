@@ -192,6 +192,9 @@ export const SpaceJoin = (props: Props) => {
     const [notEntitled, setNotEntitled] = useState(false)
     const [maxLimitReached, setMaxLimitReached] = useState(false)
 
+    // TODO: use this to check if user is entitled to join before trying to join (join v2)
+    // const { data: userIsEntitled } = useUserIsEntitledByTokenBalance(joinData.networkId)
+
     const joinSpace = useCallback(async () => {
         if (!client) {
             return

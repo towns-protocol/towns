@@ -2,8 +2,9 @@ import { useCallback, useEffect } from 'react'
 import { useQuery, useQueryClient } from '../query/queryClient'
 
 import { blockchainKeys } from '../query/query-keys'
-import { useZionContext } from '../components/ZionContextProvider'
 import { getFilteredRolesFromSpace } from '@river/web3'
+import { useSpaceDapp } from './use-space-dapp'
+import { useWeb3Context } from '../components/Web3ContextProvider'
 
 /**
  * Convience function to get space roles.
@@ -11,17 +12,22 @@ import { getFilteredRolesFromSpace } from '@river/web3'
 export function useRoles(_spaceId: string | undefined) {
     const spaceId = _spaceId && _spaceId.length > 0 ? _spaceId : ''
     const queryClient = useQueryClient()
-    const { client } = useZionContext()
+    const { provider, chain } = useWeb3Context()
+
+    const spaceDapp = useSpaceDapp({
+        chainId: chain?.id,
+        provider,
+    })
 
     // function to get the roles for any space.
     const getRolesFromSpace = useCallback(
         async function () {
-            if (!client || !spaceId) {
+            if (!spaceDapp || !spaceId) {
                 return undefined
             }
-            return await getFilteredRolesFromSpace(client.spaceDapp, spaceId)
+            return await getFilteredRolesFromSpace(spaceDapp, spaceId)
         },
-        [client, spaceId],
+        [spaceDapp, spaceId],
     )
 
     useEffect(

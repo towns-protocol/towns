@@ -2,25 +2,32 @@ import { useQuery, useQueryClient } from '../query/queryClient'
 
 import { blockchainKeys } from '../query/query-keys'
 import { useCallback } from 'react'
-import { useZionContext } from '../components/ZionContextProvider'
 import { RoleDetails } from '@river/web3'
+import { useWeb3Context } from '../components/Web3ContextProvider'
+import { useSpaceDapp } from './use-space-dapp'
 /**
  * Convience function to get space role details.
  */
 
 export function useRoleDetails(spaceId: string, roleId: number) {
-    const { client } = useZionContext()
-    const isEnabled = spaceId.length > 0 && roleId >= 0
+    const { provider, chain } = useWeb3Context()
+
+    const spaceDapp = useSpaceDapp({
+        chainId: chain?.id,
+        provider,
+    })
+
+    const isEnabled = spaceDapp && spaceId.length > 0 && roleId >= 0
 
     const getRole = useCallback(
         async function () {
-            if (!client || !isEnabled) {
+            if (!spaceDapp || !isEnabled) {
                 return undefined
             }
-            const role = await client.spaceDapp.getRole(spaceId, roleId)
+            const role = await spaceDapp.getRole(spaceId, roleId)
             return role
         },
-        [client, isEnabled, roleId, spaceId],
+        [spaceDapp, isEnabled, roleId, spaceId],
     )
 
     const {
@@ -46,23 +53,28 @@ export function useRoleDetails(spaceId: string, roleId: number) {
 
 export function useMultipleRoleDetails(spaceId: string, roleIds: number[]) {
     const queryClient = useQueryClient()
-    const { client } = useZionContext()
-    const isEnabled = client && spaceId.length > 0 && roleIds.length > 0
+    const { provider, chain } = useWeb3Context()
+
+    const spaceDapp = useSpaceDapp({
+        chainId: chain?.id,
+        provider,
+    })
+    const isEnabled = spaceDapp && spaceId.length > 0 && roleIds.length > 0
 
     const getRoles = useCallback(
         async function (): Promise<RoleDetails[]> {
-            if (!client) {
+            if (!spaceDapp) {
                 return []
             }
 
             const getRolePromises: Promise<RoleDetails | null>[] = []
             for (const roleId of roleIds) {
-                getRolePromises.push(client.spaceDapp.getRole(spaceId, roleId))
+                getRolePromises.push(spaceDapp.getRole(spaceId, roleId))
             }
             const roles = await Promise.all(getRolePromises)
             return roles.filter((role) => role !== null) as RoleDetails[]
         },
-        [client, roleIds, spaceId],
+        [spaceDapp, roleIds, spaceId],
     )
 
     const queryData = useQuery<RoleDetails[]>(
