@@ -12,7 +12,7 @@ export enum SpaceProtocol {
 }
 
 export interface ZionOpts {
-    primaryProtocol: SpaceProtocol
+    primaryProtocol?: SpaceProtocol
     matrixServerUrl: string
     casablancaServerUrl?: string
     chainId: number

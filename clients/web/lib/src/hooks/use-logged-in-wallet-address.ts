@@ -9,7 +9,7 @@ export function useLoggedInWalletAddress({
 }: {
     matrixServerUrl: string
     casablancaServerUrl: string | undefined
-    primaryProtocol: SpaceProtocol
+    primaryProtocol?: SpaceProtocol
 }) {
     const isRiver = primaryProtocol === SpaceProtocol.Casablanca
 

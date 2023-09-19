@@ -54,7 +54,7 @@ export const App = () => {
             <Container maxWidth="md">
                 <ZionContextProvider
                     enableSpaceRootUnreads
-                    primaryProtocol={SpaceProtocol.Matrix}
+                    primaryProtocol={SpaceProtocol.Casablanca}
                     matrixServerUrl={matrixUrl}
                     casablancaServerUrl={casablancaUrl}
                     chainId={chainId}

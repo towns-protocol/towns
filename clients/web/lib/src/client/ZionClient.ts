@@ -409,6 +409,9 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
             throw new SignerUndefinedError()
         }
         if (!createSpaceInfo.spaceProtocol) {
+            if (!this.opts.primaryProtocol) {
+                throw new Error('primaryProtocol is undefined')
+            }
             createSpaceInfo.spaceProtocol = this.opts.primaryProtocol
         }
         switch (createSpaceInfo.spaceProtocol) {
@@ -523,6 +526,9 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
         networkId?: string,
     ): Promise<RoomIdentifier> {
         if (!createSpaceInfo.spaceProtocol) {
+            if (!this.opts.primaryProtocol) {
+                throw new Error('primaryProtocol is undefined')
+            }
             createSpaceInfo.spaceProtocol = this.opts.primaryProtocol
         }
         switch (createSpaceInfo.spaceProtocol) {

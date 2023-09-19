@@ -45,7 +45,7 @@ export interface IZionContext {
     clientSingleton?: ZionClient /// always set, can be use for matrix, this duplication can be removed once we transition to casablanca
     matrixClient?: MatrixClient /// set if we're logged in and matrix client is started
     casablancaClient?: CasablancaClient /// set if we're logged in and casablanca client is started
-    primaryProtocol: SpaceProtocol
+    primaryProtocol?: SpaceProtocol
     rooms: Record<string, Room | undefined>
     invitedToIds: RoomIdentifier[] // ordered list of invites (spaces and channels)
     spaceUnreads: Record<string, boolean> // spaceId -> aggregated hasUnread
