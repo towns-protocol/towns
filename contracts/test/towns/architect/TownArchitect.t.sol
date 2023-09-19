@@ -10,6 +10,7 @@ import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {IERC173} from "contracts/src/diamond/facets/ownable/IERC173.sol";
 import {IPausableBase, IPausable} from "contracts/src/diamond/facets/pausable/IPausable.sol";
 import {IGuardian} from "contracts/src/towns/facets/guardian/IGuardian.sol";
+import {IERC721ABase} from "contracts/src/diamond/facets/token/ERC721A/IERC721A.sol";
 
 // libraries
 
@@ -206,10 +207,22 @@ contract TownArchitectTest is
   function test_revertIfNetworkIdTaken(string memory networkId) external {
     vm.assume(bytes(networkId).length > 0);
 
+    address founder = _randomAddress();
+
+    vm.prank(founder);
     _createSimpleTown(networkId);
 
     vm.expectRevert(TownArchitectService__InvalidNetworkId.selector);
     vm.prank(_randomAddress());
+    _createSimpleTown(networkId);
+  }
+
+  function test_revertIfNotERC721Receiver(string memory networkId) external {
+    vm.assume(bytes(networkId).length > 0);
+
+    vm.expectRevert(
+      IERC721ABase.TransferToNonERC721ReceiverImplementer.selector
+    );
     _createSimpleTown(networkId);
   }
 

@@ -542,13 +542,10 @@
       ":ds-test/=lib/ds-test/src/",
       ":erc4626-tests/=lib/operator-filter-registry/lib/openzeppelin-contracts/lib/erc4626-tests/",
       ":forge-std/=lib/forge-std/src/",
-      ":murky/=lib/murky/src/",
       ":openzeppelin-contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/",
       ":openzeppelin-contracts/=lib/openzeppelin-contracts/",
       ":operator-filter-registry/=lib/operator-filter-registry/",
-      ":prb-test/=lib/prb-test/src/",
-      ":solmate/=lib/solmate/src/",
-      ":weird-erc20/=lib/solmate/lib/weird-erc20/src/"
+      ":prb-test/=lib/prb-test/src/"
     ]
   },
   "sources": {
@@ -833,11 +830,11 @@
       ]
     },
     "contracts/src/towns/facets/architect/TownArchitectBase.sol": {
-      "keccak256": "0xe8a79cf418bd58310b20adc743a323b5da4f75ceecd22804bcf8e911cd77ac35",
+      "keccak256": "0xd64675f789c4b5a54968571d97c7c9cc28df841416abbfc1f352131e48b2a78f",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://2a1a586be8aba0b3afc62b09993104832965d098f76a3637e130f85dda701d70",
-        "dweb:/ipfs/QmX4qDu39XXZzrLgGt3chTeKgDiJVPHNY1cLai6sTEQJ9w"
+        "bzz-raw://d0892e137a98c9c510dcc5efaef0dfa8e1fb77123b41c56fc5059ee24155e8c6",
+        "dweb:/ipfs/Qmb6bzgT3swNGDv9KcUicf4Av6gSpJ82j4gSYSoSKEKm41"
       ]
     },
     "contracts/src/towns/facets/architect/TownArchitectService.sol": {

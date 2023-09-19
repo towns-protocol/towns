@@ -315,6 +315,6 @@ abstract contract TownArchitectBase is Factory, ITownArchitectBase {
 
   function _transferTown(uint256 tokenId, address to) internal {
     TownArchitectStorage.Layout storage ds = TownArchitectStorage.layout();
-    TownOwner(ds.townToken).transferFrom(address(this), to, tokenId);
+    TownOwner(ds.townToken).safeTransferFrom(address(this), to, tokenId);
   }
 }
