@@ -2227,26 +2227,47 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
     /************************************************
      * scrollback
      ************************************************/
-    public async scrollback(roomId: RoomIdentifier, limit?: number): Promise<void> {
+    public async scrollback(
+        roomId: RoomIdentifier,
+        limit?: number,
+    ): Promise<{
+        terminus: boolean
+        eventCount: number
+        firstEventId?: string
+        firstEventTimestamp?: number
+    }> {
         switch (roomId.protocol) {
-            case SpaceProtocol.Matrix:
-                {
-                    if (!this.matrixClient) {
-                        throw new Error('matrix client is undefined')
-                    }
-                    const room = this.matrixClient.getRoom(roomId.networkId)
-                    if (!room) {
-                        throw new Error('room not found')
-                    }
-                    await this.matrixClient.scrollback(room, limit)
+            case SpaceProtocol.Matrix: {
+                if (!this.matrixClient) {
+                    throw new Error('matrix client is undefined')
                 }
-                break
-            case SpaceProtocol.Casablanca:
+                const room = this.matrixClient.getRoom(roomId.networkId)
+                if (!room) {
+                    throw new Error('room not found')
+                }
+                const resultRoom = await this.matrixClient.scrollback(room, limit)
+                return {
+                    terminus: resultRoom.oldState.paginationToken === null,
+                    eventCount: resultRoom.timeline.length,
+                    firstEventId: resultRoom.timeline.at(0)?.getId(),
+                    firstEventTimestamp: resultRoom.timeline.at(0)?.getTs(),
+                }
+            }
+            case SpaceProtocol.Casablanca: {
                 if (!this.casablancaClient) {
                     throw new Error('casablanca client is undefined')
                 }
-                await this.casablancaClient.scrollback(roomId.networkId)
-                break
+                const result = await this.casablancaClient.scrollback(roomId.networkId)
+                return {
+                    terminus: result.terminus,
+                    eventCount:
+                        this.casablancaClient?.stream(roomId.networkId)?.view?.timeline.length ?? 0,
+                    firstEventId: result.firstEvent?.hashStr,
+                    firstEventTimestamp: result.firstEvent
+                        ? Number(result.firstEvent.event.createdAtEpocMs)
+                        : undefined,
+                }
+            }
         }
     }
 

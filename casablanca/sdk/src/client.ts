@@ -67,6 +67,7 @@ import {
     make_UserSettingsPayload_FullyReadMarkers,
     make_UserSettingsPayload_Inception,
     unpackStreamResponse,
+    ParsedEvent,
 } from './types'
 import { shortenHexString } from './binary'
 import { CryptoStore } from './crypto/store/base'
@@ -966,14 +967,14 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         }
     }
 
-    async scrollback(streamId: string) {
+    async scrollback(streamId: string): Promise<{ terminus: boolean; firstEvent?: ParsedEvent }> {
         this.logCall('scrollback', streamId)
         const stream = this.stream(streamId)
         check(isDefined(stream), `stream not found: ${streamId}`)
         check(isDefined(stream.view.miniblockInfo), `stream not initialized: ${streamId}`)
         if (stream.view.miniblockInfo.terminusReached) {
             this.logCall('scrollback', streamId, 'terminus reached')
-            return
+            return { terminus: true, firstEvent: stream.view.timeline.at(0) }
         }
         const step = 2n // todo better step amount? https://linear.app/hnt-labs/issue/HNT-2242/pagination-step-amount
         const toExclusive = stream.view.miniblockInfo.min
@@ -984,6 +985,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
             toExclusive,
         })
         stream.prependEvents(response.miniblocks, response.terminus)
+        return { terminus: response.terminus, firstEvent: stream.view.timeline.at(0) }
     }
 
     async sendToDevicesMessage(
