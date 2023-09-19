@@ -194,12 +194,11 @@ func (s *Service) addChannelMessage(ctx context.Context, stream *Stream, view St
 
 func (s *Service) checkMembership(ctx context.Context, streamView StreamView, userId string) (bool, error) {
 	view := streamView.(JoinableStreamView)
-	members, err := view.JoinedUsers()
+	joined, err := view.IsUserJoined(userId)
 	if err != nil {
 		return false, status.Errorf(codes.Internal, "AddEvent: error getting joined users: %v", err)
 	}
-	exists := members.Contains(userId)
-	return exists, nil
+	return joined, nil
 }
 
 func (s *Service) updateChannel(ctx context.Context, stream *Stream, view StreamView, parsedEvent *ParsedEvent) error {

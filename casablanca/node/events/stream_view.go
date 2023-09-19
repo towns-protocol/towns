@@ -27,7 +27,7 @@ type StreamView interface {
 
 type JoinableStreamView interface {
 	StreamView
-	JoinedUsers() (mapset.Set[string], error)
+	IsUserJoined(userId string) (bool, error)
 }
 
 type UserDeviceStreamView interface {
@@ -257,7 +257,7 @@ func (r *streamViewImpl) forEachEvent(startBlock int, op func(e *ParsedEvent) (b
 	return r.minipool.forEachEvent(op)
 }
 
-func (r *streamViewImpl) JoinedUsers() (mapset.Set[string], error) {
+func (r *streamViewImpl) IsUserJoined(userId string) (bool, error) {
 	users := mapset.NewSet[string]()
 
 	_ = r.forEachEvent(0, func(e *ParsedEvent) (bool, error) {
@@ -290,7 +290,8 @@ func (r *streamViewImpl) JoinedUsers() (mapset.Set[string], error) {
 		return true, nil
 	})
 
-	return users, nil
+	exists := users.Contains(userId)
+	return exists, nil
 }
 
 func (r *streamViewImpl) IsDeviceIdRevoked(rdkId RdkId) (bool, error) {
