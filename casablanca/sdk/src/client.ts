@@ -1170,27 +1170,30 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
                     }
                     // 06/02/23 note: for now there's a one to one mapping between userIds - deviceIds, which is why
                     // we return the latest UserDeviceKey event for each user from their stream. This won't hold in the future
-                    // as user's will eventually have multiple devices per user.
-                    const payload = Array.from(
+                    // as user's will eventually have multiple devices per user, each with a different deviceId.
+
+                    const devicesFlat = Array.from(
                         stream.userDeviceKeyContent.uploadedDeviceKeys.values(),
-                    )[0]
+                    ).flatMap((value) => value)
+
+                    // return latest device key
+                    const payload = devicesFlat[devicesFlat.length - 1]
 
                     if (!returnFallbackKeys) {
-                        const deviceKeys = payload.map((v) => v.deviceKeys).filter(isDefined)
-                        // push all known device keys for all devices of user
-                        response.device_keys[userId] = deviceKeys
+                        if (isDefined(payload.deviceKeys)) {
+                            // push all known device keys for all devices of user
+                            if (!response.device_keys[userId]) {
+                                response.device_keys[userId] = []
+                            }
+                            response.device_keys[userId].push(payload.deviceKeys)
+                        }
                     } else {
-                        const fallbackKeys = payload
-                            .map((v) => {
-                                if (v.deviceKeys?.deviceId && v.fallbackKeys) {
-                                    const entry: FallbackKeyResponse = {
-                                        [v.deviceKeys.deviceId]: v.fallbackKeys,
-                                    }
-                                    return entry
-                                }
-                                return undefined
+                        const fallbackKeys: FallbackKeyResponse[] = []
+                        if (payload.deviceKeys?.deviceId && payload.fallbackKeys) {
+                            fallbackKeys.push({
+                                [payload.deviceKeys.deviceId]: payload.fallbackKeys,
                             })
-                            .filter(isDefined)
+                        }
                         // push all known device keys for all devices of user
                         if (fallbackKeys.length > 0) {
                             if (response.fallback_keys) {
@@ -1202,7 +1205,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
                 } catch (e) {
                     // return error in response
                     const response: IDownloadKeyResponse = {
-                        failures: { [userId]: { error: e } },
+                        failures: { [userId]: { error: <Error>e } },
                         device_keys: {},
                         fallback_keys: {},
                     }

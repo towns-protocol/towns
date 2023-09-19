@@ -226,6 +226,8 @@ export class RiverDecryptionExtension extends (EventEmitter as new () => TypedEm
                 {
                     eventId: event.getId() ?? '',
                     err: err,
+                    channelId: channelId,
+                    spaceId: spaceId,
                 },
             )
             return
@@ -246,11 +248,21 @@ export class RiverDecryptionExtension extends (EventEmitter as new () => TypedEm
         }
     }
 
-    private onChannelTimelineEvent = (streamId: string, event: ParsedEvent) => {
+    private onChannelTimelineEvent = (streamId: string, spaceId: string, event: ParsedEvent) => {
         ;(async () => {
+            if (
+                event.event.payload.case == 'channelPayload' &&
+                event.event.payload.value.content.case !== 'message'
+            ) {
+                console.log(
+                    'CDE::onChannelTimelineEvent - not a message, not attempting to decrypt',
+                )
+                return
+            }
             const riverEvent = new RiverEvent(
                 {
                     channel_id: streamId,
+                    space_id: spaceId,
                     payload: {
                         parsed_event: event.event.payload,
                         creator_user_id: userIdFromAddress(event.event.creatorAddress),
@@ -261,6 +273,15 @@ export class RiverDecryptionExtension extends (EventEmitter as new () => TypedEm
                 this.client,
                 event,
             )
+
+            const wire = riverEvent.getWireContentChannel()
+            if (wire === undefined || wire.content === undefined) {
+                console.log(
+                    'CDE::onChannelTimelineEvent - wire content channel undefined, not attempting to decrypt',
+                )
+                return
+            }
+
             if (riverEvent.shouldAttemptDecryption()) {
                 try {
                     await this.client.decryptEventIfNeeded(riverEvent)
@@ -520,14 +541,21 @@ export class RiverDecryptionExtension extends (EventEmitter as new () => TypedEm
             return
         }
 
+        const spaceId = roomRecord.spaceId
         console.log(
             `CDE::_startLookingForKeys found ${eligibleMemberIds.length} eligible members, sending key request`,
             {
                 to: requesteeId,
                 from: this.userId,
                 channelId,
+                spaceId,
             },
         )
+
+        if (!spaceId) {
+            console.error('CDE::_startLookingForKeys - no spaceId found', { channelId })
+            return
+        }
 
         // Get the users devices,
         // todo: we should figure out which devices are online
@@ -547,13 +575,6 @@ export class RiverDecryptionExtension extends (EventEmitter as new () => TypedEm
         const requestRecord: KeyRequestRecord = {
             timestamp: now,
             toDeviceIds: uniq([...seenDeviceIds, ...devices.map((d) => d.deviceId)]),
-        }
-
-        const spaceId = roomRecord.spaceId
-
-        if (!spaceId) {
-            console.error('CDE::_startLookingForKeys - no spaceId found', { channelId })
-            return
         }
 
         // todo: implement getSharedHistoryInboundGroupSessions for Megolm algorithm

@@ -29,7 +29,7 @@ export type StreamEvents = {
     ) => void
     spaceChannelDeleted: (spaceId: string, channelId: string) => void
     channelNewMessage: (channelId: string, message: RiverEvent) => void
-    channelTimelineEvent: (channelId: string, event: ParsedEvent) => void
+    channelTimelineEvent: (channelId: string, spaceId: string, event: ParsedEvent) => void
     channelUnreadMarkerUpdated: (fullyReadMarkers: Record<string, FullyReadMarkerContent>) => void
     toDeviceMessage: (streamId: string, event: RiverEvent) => void
     userDeviceKeyMessage: (
