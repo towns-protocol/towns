@@ -11,6 +11,26 @@ import type {
 
 const _abi = [
   {
+    inputs: [],
+    name: "TownArchitect__InvalidAddress",
+    type: "error",
+  },
+  {
+    inputs: [],
+    name: "TownArchitect__InvalidNetworkId",
+    type: "error",
+  },
+  {
+    inputs: [],
+    name: "TownArchitect__InvalidStringLength",
+    type: "error",
+  },
+  {
+    inputs: [],
+    name: "TownArchitect__NotContract",
+    type: "error",
+  },
+  {
     anonymous: false,
     inputs: [
       {

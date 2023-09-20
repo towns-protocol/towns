@@ -20,7 +20,7 @@ import {MockERC721} from "contracts/test/mocks/MockERC721.sol";
 
 // errors
 import {GateFacetService__NotAllowed} from "contracts/src/towns/facets/gate/GateService.sol";
-import {TownArchitectService__InvalidStringLength, TownArchitectService__InvalidNetworkId} from "contracts/src/towns/facets/architect/TownArchitectService.sol";
+import {Validator__InvalidStringLength} from "contracts/src/utils/Validator.sol";
 
 contract TownArchitectTest is
   TownArchitectSetup,
@@ -205,7 +205,7 @@ contract TownArchitectTest is
   function test_revertIfInvalidTownId() external {
     address founder = _randomAddress();
 
-    vm.expectRevert(TownArchitectService__InvalidStringLength.selector);
+    vm.expectRevert(Validator__InvalidStringLength.selector);
 
     vm.prank(founder);
     _createSimpleTown("");
@@ -219,7 +219,7 @@ contract TownArchitectTest is
     vm.prank(founder);
     _createSimpleTown(networkId);
 
-    vm.expectRevert(TownArchitectService__InvalidNetworkId.selector);
+    vm.expectRevert(TownArchitect__InvalidNetworkId.selector);
     vm.prank(_randomAddress());
     _createSimpleTown(networkId);
   }
