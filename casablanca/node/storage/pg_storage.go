@@ -120,7 +120,7 @@ func (s *PostgresEventStore) GetStreamFromLastSnapshot(ctx context.Context, stre
 			if errors.Is(err, pgx.ErrTxClosed) {
 				return
 			}
-			log.Error("GetStreamFromLastSnapshor: failed to rollback transaction", "error", err)
+			log.Error("GetStreamFromLastSnapshot: failed to rollback transaction", "error", err)
 		}
 	}()
 
