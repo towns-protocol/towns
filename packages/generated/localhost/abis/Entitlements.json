@@ -843,15 +843,28 @@
   "ast": {
     "absolutePath": "contracts/src/towns/facets/entitlements/Entitlements.sol",
 <<<<<<< HEAD
+    "id": 31603,
+=======
+<<<<<<< HEAD
     "id": 31804,
 =======
     "id": 31603,
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
     "exportedSymbols": {
       "Entitled": [
         29245
       ],
       "Entitlements": [
+<<<<<<< HEAD
+        31602
+      ],
+      "EntitlementsBase": [
+        31788
+      ],
+      "IEntitlements": [
+        32256
+=======
 <<<<<<< HEAD
         31803
       ],
@@ -869,6 +882,7 @@
       "IEntitlements": [
         32256
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
       ]
     },
     "nodeType": "SourceUnit",
@@ -876,10 +890,14 @@
     "nodes": [
       {
 <<<<<<< HEAD
+        "id": 31495,
+=======
+<<<<<<< HEAD
         "id": 31696,
 =======
         "id": 31495,
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
         "nodeType": "PragmaDirective",
         "src": "39:24:150",
         "nodes": [],
@@ -892,16 +910,33 @@
       },
       {
 <<<<<<< HEAD
+        "id": 31497,
+=======
+<<<<<<< HEAD
         "id": 31698,
 =======
         "id": 31497,
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
         "nodeType": "ImportDirective",
         "src": "79:50:150",
         "nodes": [],
         "absolutePath": "contracts/src/towns/facets/entitlements/IEntitlements.sol",
         "file": "./IEntitlements.sol",
         "nameLocation": "-1:-1:-1",
+<<<<<<< HEAD
+        "scope": 31603,
+        "sourceUnit": 32257,
+        "symbolAliases": [
+          {
+            "foreign": {
+              "id": 31496,
+              "name": "IEntitlements",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "referencedDeclaration": 32256,
+              "src": "87:13:150",
+=======
 <<<<<<< HEAD
         "scope": 31804,
         "sourceUnit": 32458,
@@ -927,6 +962,7 @@
               "referencedDeclaration": 32256,
               "src": "87:13:150",
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
               "typeDescriptions": {}
             },
             "nameLocation": "-1:-1:-1"
@@ -936,16 +972,33 @@
       },
       {
 <<<<<<< HEAD
+        "id": 31499,
+=======
+<<<<<<< HEAD
         "id": 31700,
 =======
         "id": 31499,
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
         "nodeType": "ImportDirective",
         "src": "158:56:150",
         "nodes": [],
         "absolutePath": "contracts/src/towns/facets/entitlements/EntitlementsBase.sol",
         "file": "./EntitlementsBase.sol",
         "nameLocation": "-1:-1:-1",
+<<<<<<< HEAD
+        "scope": 31603,
+        "sourceUnit": 31789,
+        "symbolAliases": [
+          {
+            "foreign": {
+              "id": 31498,
+              "name": "EntitlementsBase",
+              "nodeType": "Identifier",
+              "overloadedDeclarations": [],
+              "referencedDeclaration": 31788,
+              "src": "166:16:150",
+=======
 <<<<<<< HEAD
         "scope": 31804,
         "sourceUnit": 31990,
@@ -971,6 +1024,7 @@
               "referencedDeclaration": 31788,
               "src": "166:16:150",
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
               "typeDescriptions": {}
             },
             "nameLocation": "-1:-1:-1"
@@ -980,10 +1034,14 @@
       },
       {
 <<<<<<< HEAD
+        "id": 31501,
+=======
+<<<<<<< HEAD
         "id": 31702,
 =======
         "id": 31501,
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
         "nodeType": "ImportDirective",
         "src": "215:41:150",
         "nodes": [],
@@ -991,19 +1049,27 @@
         "file": "../Entitled.sol",
         "nameLocation": "-1:-1:-1",
 <<<<<<< HEAD
+        "scope": 31603,
+=======
+<<<<<<< HEAD
         "scope": 31804,
 =======
         "scope": 31603,
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
         "sourceUnit": 29246,
         "symbolAliases": [
           {
             "foreign": {
 <<<<<<< HEAD
+              "id": 31500,
+=======
+<<<<<<< HEAD
               "id": 31701,
 =======
               "id": 31500,
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
               "name": "Entitled",
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
@@ -1018,28 +1084,40 @@
       },
       {
 <<<<<<< HEAD
+        "id": 31602,
+=======
+<<<<<<< HEAD
         "id": 31803,
 =======
         "id": 31602,
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
         "nodeType": "ContractDefinition",
         "src": "258:1073:150",
         "nodes": [
           {
 <<<<<<< HEAD
+            "id": 31520,
+=======
+<<<<<<< HEAD
             "id": 31721,
 =======
             "id": 31520,
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
             "nodeType": "FunctionDefinition",
             "src": "329:142:150",
             "nodes": [],
             "body": {
 <<<<<<< HEAD
+              "id": 31519,
+=======
+<<<<<<< HEAD
               "id": 31720,
 =======
               "id": 31519,
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
               "nodeType": "Block",
               "src": "421:50:150",
               "nodes": [],
@@ -1048,6 +1126,14 @@
                   "expression": {
                     "arguments": [
                       {
+<<<<<<< HEAD
+                        "id": 31516,
+                        "name": "entitlements",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 31510,
+                        "src": "453:12:150",
+=======
 <<<<<<< HEAD
                         "id": 31717,
                         "name": "entitlements",
@@ -1063,6 +1149,7 @@
                         "referencedDeclaration": 31510,
                         "src": "453:12:150",
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
                         "typeDescriptions": {
                           "typeIdentifier": "t_array$_t_address_$dyn_memory_ptr",
                           "typeString": "address[] memory"
@@ -1076,6 +1163,14 @@
                           "typeString": "address[] memory"
                         }
                       ],
+<<<<<<< HEAD
+                      "id": 31515,
+                      "name": "_addImmutableEntitlements",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 31647,
+                      "src": "427:25:150",
+=======
 <<<<<<< HEAD
                       "id": 31716,
                       "name": "_addImmutableEntitlements",
@@ -1091,16 +1186,21 @@
                       "referencedDeclaration": 31647,
                       "src": "427:25:150",
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_internal_nonpayable$_t_array$_t_address_$dyn_memory_ptr_$returns$__$",
                         "typeString": "function (address[] memory)"
                       }
                     },
 <<<<<<< HEAD
+                    "id": 31517,
+=======
+<<<<<<< HEAD
                     "id": 31718,
 =======
                     "id": 31517,
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -1117,10 +1217,14 @@
                     }
                   },
 <<<<<<< HEAD
+                  "id": 31518,
+=======
+<<<<<<< HEAD
                   "id": 31719,
 =======
                   "id": 31518,
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
                   "nodeType": "ExpressionStatement",
                   "src": "427:39:150"
                 }
@@ -1128,16 +1232,26 @@
             },
             "baseFunctions": [
 <<<<<<< HEAD
+              32204
+=======
+<<<<<<< HEAD
               32405
 =======
               32204
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
             ],
             "functionSelector": "8bfc820f",
             "implemented": true,
             "kind": "function",
             "modifiers": [
               {
+<<<<<<< HEAD
+                "id": 31513,
+                "kind": "modifierInvocation",
+                "modifierName": {
+                  "id": 31512,
+=======
 <<<<<<< HEAD
                 "id": 31714,
                 "kind": "modifierInvocation",
@@ -1149,6 +1263,7 @@
                 "modifierName": {
                   "id": 31512,
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
                   "name": "onlyOwner",
                   "nameLocations": [
                     "411:9:150"
@@ -1165,23 +1280,35 @@
             "nameLocation": "338:24:150",
             "parameters": {
 <<<<<<< HEAD
+              "id": 31511,
+=======
+<<<<<<< HEAD
               "id": 31712,
 =======
               "id": 31511,
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
 <<<<<<< HEAD
+                  "id": 31510,
+=======
+<<<<<<< HEAD
                   "id": 31711,
 =======
                   "id": 31510,
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
                   "mutability": "mutable",
                   "name": "entitlements",
                   "nameLocation": "385:12:150",
                   "nodeType": "VariableDeclaration",
+<<<<<<< HEAD
+                  "scope": 31520,
+                  "src": "368:29:150",
+=======
 <<<<<<< HEAD
                   "scope": 31721,
                   "src": "368:29:151",
@@ -1189,6 +1316,7 @@
                   "scope": 31520,
                   "src": "368:29:150",
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
                   "stateVariable": false,
                   "storageLocation": "memory",
                   "typeDescriptions": {
@@ -1198,10 +1326,14 @@
                   "typeName": {
                     "baseType": {
 <<<<<<< HEAD
+                      "id": 31508,
+=======
+<<<<<<< HEAD
                       "id": 31709,
 =======
                       "id": 31508,
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
                       "name": "address",
                       "nodeType": "ElementaryTypeName",
                       "src": "368:7:150",
@@ -1212,10 +1344,14 @@
                       }
                     },
 <<<<<<< HEAD
+                    "id": 31509,
+=======
+<<<<<<< HEAD
                     "id": 31710,
 =======
                     "id": 31509,
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
                     "nodeType": "ArrayTypeName",
                     "src": "368:9:150",
                     "typeDescriptions": {
@@ -1230,38 +1366,54 @@
             },
             "returnParameters": {
 <<<<<<< HEAD
+              "id": 31514,
+=======
+<<<<<<< HEAD
               "id": 31715,
 =======
               "id": 31514,
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
               "nodeType": "ParameterList",
               "parameters": [],
               "src": "421:0:150"
             },
 <<<<<<< HEAD
+            "scope": 31602,
+=======
+<<<<<<< HEAD
             "scope": 31803,
 =======
             "scope": 31602,
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
             "stateMutability": "nonpayable",
             "virtual": false,
             "visibility": "external"
           },
           {
 <<<<<<< HEAD
+            "id": 31532,
+=======
+<<<<<<< HEAD
             "id": 31733,
 =======
             "id": 31532,
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
             "nodeType": "FunctionDefinition",
             "src": "475:103:150",
             "nodes": [],
             "body": {
 <<<<<<< HEAD
+              "id": 31531,
+=======
+<<<<<<< HEAD
               "id": 31732,
 =======
               "id": 31531,
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
               "nodeType": "Block",
               "src": "539:39:150",
               "nodes": [],
@@ -1270,6 +1422,14 @@
                   "expression": {
                     "arguments": [
                       {
+<<<<<<< HEAD
+                        "id": 31528,
+                        "name": "entitlement",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 31522,
+                        "src": "561:11:150",
+=======
 <<<<<<< HEAD
                         "id": 31729,
                         "name": "entitlement",
@@ -1285,6 +1445,7 @@
                         "referencedDeclaration": 31522,
                         "src": "561:11:150",
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
                         "typeDescriptions": {
                           "typeIdentifier": "t_address",
                           "typeString": "address"
@@ -1298,6 +1459,14 @@
                           "typeString": "address"
                         }
                       ],
+<<<<<<< HEAD
+                      "id": 31527,
+                      "name": "_addEntitlement",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 31666,
+                      "src": "545:15:150",
+=======
 <<<<<<< HEAD
                       "id": 31728,
                       "name": "_addEntitlement",
@@ -1313,16 +1482,21 @@
                       "referencedDeclaration": 31666,
                       "src": "545:15:150",
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_internal_nonpayable$_t_address_$returns$__$",
                         "typeString": "function (address)"
                       }
                     },
 <<<<<<< HEAD
+                    "id": 31529,
+=======
+<<<<<<< HEAD
                     "id": 31730,
 =======
                     "id": 31529,
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -1339,10 +1513,14 @@
                     }
                   },
 <<<<<<< HEAD
+                  "id": 31530,
+=======
+<<<<<<< HEAD
                   "id": 31731,
 =======
                   "id": 31530,
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
                   "nodeType": "ExpressionStatement",
                   "src": "545:28:150"
                 }
@@ -1350,16 +1528,26 @@
             },
             "baseFunctions": [
 <<<<<<< HEAD
+              32232
+=======
+<<<<<<< HEAD
               32433
 =======
               32232
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
             ],
             "functionSelector": "2c90a840",
             "implemented": true,
             "kind": "function",
             "modifiers": [
               {
+<<<<<<< HEAD
+                "id": 31525,
+                "kind": "modifierInvocation",
+                "modifierName": {
+                  "id": 31524,
+=======
 <<<<<<< HEAD
                 "id": 31726,
                 "kind": "modifierInvocation",
@@ -1371,6 +1559,7 @@
                 "modifierName": {
                   "id": 31524,
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
                   "name": "onlyOwner",
                   "nameLocations": [
                     "529:9:150"
@@ -1387,23 +1576,35 @@
             "nameLocation": "484:14:150",
             "parameters": {
 <<<<<<< HEAD
+              "id": 31523,
+=======
+<<<<<<< HEAD
               "id": 31724,
 =======
               "id": 31523,
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
 <<<<<<< HEAD
+                  "id": 31522,
+=======
+<<<<<<< HEAD
                   "id": 31723,
 =======
                   "id": 31522,
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
                   "mutability": "mutable",
                   "name": "entitlement",
                   "nameLocation": "507:11:150",
                   "nodeType": "VariableDeclaration",
+<<<<<<< HEAD
+                  "scope": 31532,
+                  "src": "499:19:150",
+=======
 <<<<<<< HEAD
                   "scope": 31733,
                   "src": "499:19:151",
@@ -1411,6 +1612,7 @@
                   "scope": 31532,
                   "src": "499:19:150",
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -1419,10 +1621,14 @@
                   },
                   "typeName": {
 <<<<<<< HEAD
+                    "id": 31521,
+=======
+<<<<<<< HEAD
                     "id": 31722,
 =======
                     "id": 31521,
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
                     "src": "499:7:150",
@@ -1439,38 +1645,54 @@
             },
             "returnParameters": {
 <<<<<<< HEAD
+              "id": 31526,
+=======
+<<<<<<< HEAD
               "id": 31727,
 =======
               "id": 31526,
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
               "nodeType": "ParameterList",
               "parameters": [],
               "src": "539:0:150"
             },
 <<<<<<< HEAD
+            "scope": 31602,
+=======
+<<<<<<< HEAD
             "scope": 31803,
 =======
             "scope": 31602,
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
             "stateMutability": "nonpayable",
             "virtual": false,
             "visibility": "external"
           },
           {
 <<<<<<< HEAD
+            "id": 31544,
+=======
+<<<<<<< HEAD
             "id": 31745,
 =======
             "id": 31544,
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
             "nodeType": "FunctionDefinition",
             "src": "582:109:150",
             "nodes": [],
             "body": {
 <<<<<<< HEAD
+              "id": 31543,
+=======
+<<<<<<< HEAD
               "id": 31744,
 =======
               "id": 31543,
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
               "nodeType": "Block",
               "src": "649:42:150",
               "nodes": [],
@@ -1479,6 +1701,14 @@
                   "expression": {
                     "arguments": [
                       {
+<<<<<<< HEAD
+                        "id": 31540,
+                        "name": "entitlement",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 31534,
+                        "src": "674:11:150",
+=======
 <<<<<<< HEAD
                         "id": 31741,
                         "name": "entitlement",
@@ -1494,6 +1724,7 @@
                         "referencedDeclaration": 31534,
                         "src": "674:11:150",
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
                         "typeDescriptions": {
                           "typeIdentifier": "t_address",
                           "typeString": "address"
@@ -1507,6 +1738,14 @@
                           "typeString": "address"
                         }
                       ],
+<<<<<<< HEAD
+                      "id": 31539,
+                      "name": "_removeEntitlement",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 31684,
+                      "src": "655:18:150",
+=======
 <<<<<<< HEAD
                       "id": 31740,
                       "name": "_removeEntitlement",
@@ -1522,16 +1761,21 @@
                       "referencedDeclaration": 31684,
                       "src": "655:18:150",
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_internal_nonpayable$_t_address_$returns$__$",
                         "typeString": "function (address)"
                       }
                     },
 <<<<<<< HEAD
+                    "id": 31541,
+=======
+<<<<<<< HEAD
                     "id": 31742,
 =======
                     "id": 31541,
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -1548,10 +1792,14 @@
                     }
                   },
 <<<<<<< HEAD
+                  "id": 31542,
+=======
+<<<<<<< HEAD
                   "id": 31743,
 =======
                   "id": 31542,
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
                   "nodeType": "ExpressionStatement",
                   "src": "655:31:150"
                 }
@@ -1559,16 +1807,26 @@
             },
             "baseFunctions": [
 <<<<<<< HEAD
+              32238
+=======
+<<<<<<< HEAD
               32439
 =======
               32238
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
             ],
             "functionSelector": "c9b968cd",
             "implemented": true,
             "kind": "function",
             "modifiers": [
               {
+<<<<<<< HEAD
+                "id": 31537,
+                "kind": "modifierInvocation",
+                "modifierName": {
+                  "id": 31536,
+=======
 <<<<<<< HEAD
                 "id": 31738,
                 "kind": "modifierInvocation",
@@ -1580,6 +1838,7 @@
                 "modifierName": {
                   "id": 31536,
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
                   "name": "onlyOwner",
                   "nameLocations": [
                     "639:9:150"
@@ -1596,23 +1855,35 @@
             "nameLocation": "591:17:150",
             "parameters": {
 <<<<<<< HEAD
+              "id": 31535,
+=======
+<<<<<<< HEAD
               "id": 31736,
 =======
               "id": 31535,
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
 <<<<<<< HEAD
+                  "id": 31534,
+=======
+<<<<<<< HEAD
                   "id": 31735,
 =======
                   "id": 31534,
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
                   "mutability": "mutable",
                   "name": "entitlement",
                   "nameLocation": "617:11:150",
                   "nodeType": "VariableDeclaration",
+<<<<<<< HEAD
+                  "scope": 31544,
+                  "src": "609:19:150",
+=======
 <<<<<<< HEAD
                   "scope": 31745,
                   "src": "609:19:151",
@@ -1620,6 +1891,7 @@
                   "scope": 31544,
                   "src": "609:19:150",
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -1628,10 +1900,14 @@
                   },
                   "typeName": {
 <<<<<<< HEAD
+                    "id": 31533,
+=======
+<<<<<<< HEAD
                     "id": 31734,
 =======
                     "id": 31533,
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
                     "src": "609:7:150",
@@ -1648,38 +1924,54 @@
             },
             "returnParameters": {
 <<<<<<< HEAD
+              "id": 31538,
+=======
+<<<<<<< HEAD
               "id": 31739,
 =======
               "id": 31538,
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
               "nodeType": "ParameterList",
               "parameters": [],
               "src": "649:0:150"
             },
 <<<<<<< HEAD
+            "scope": 31602,
+=======
+<<<<<<< HEAD
             "scope": 31803,
 =======
             "scope": 31602,
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
             "stateMutability": "nonpayable",
             "virtual": false,
             "visibility": "external"
           },
           {
 <<<<<<< HEAD
+            "id": 31555,
+=======
+<<<<<<< HEAD
             "id": 31756,
 =======
             "id": 31555,
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
             "nodeType": "FunctionDefinition",
             "src": "695:108:150",
             "nodes": [],
             "body": {
 <<<<<<< HEAD
+              "id": 31554,
+=======
+<<<<<<< HEAD
               "id": 31755,
 =======
               "id": 31554,
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
               "nodeType": "Block",
               "src": "767:36:150",
               "nodes": [],
@@ -1689,6 +1981,20 @@
                     "arguments": [],
                     "expression": {
                       "argumentTypes": [],
+<<<<<<< HEAD
+                      "id": 31551,
+                      "name": "_getEntitlements",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 31787,
+                      "src": "780:16:150",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_function_internal_view$__$returns$_t_array$_t_struct$_Entitlement_$32194_memory_ptr_$dyn_memory_ptr_$",
+                        "typeString": "function () view returns (struct IEntitlementsBase.Entitlement memory[] memory)"
+                      }
+                    },
+                    "id": 31552,
+=======
 <<<<<<< HEAD
                       "id": 31752,
                       "name": "_getEntitlements",
@@ -1716,6 +2022,7 @@
                     },
                     "id": 31552,
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -1727,6 +2034,14 @@
                     "src": "780:18:150",
                     "tryCall": false,
                     "typeDescriptions": {
+<<<<<<< HEAD
+                      "typeIdentifier": "t_array$_t_struct$_Entitlement_$32194_memory_ptr_$dyn_memory_ptr",
+                      "typeString": "struct IEntitlementsBase.Entitlement memory[] memory"
+                    }
+                  },
+                  "functionReturnParameters": 31550,
+                  "id": 31553,
+=======
 <<<<<<< HEAD
                       "typeIdentifier": "t_array$_t_struct$_Entitlement_$32395_memory_ptr_$dyn_memory_ptr",
                       "typeString": "struct IEntitlementsBase.Entitlement memory[] memory"
@@ -1742,6 +2057,7 @@
                   "functionReturnParameters": 31550,
                   "id": 31553,
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
                   "nodeType": "Return",
                   "src": "773:25:150"
                 }
@@ -1749,10 +2065,14 @@
             },
             "baseFunctions": [
 <<<<<<< HEAD
+              32255
+=======
+<<<<<<< HEAD
               32456
 =======
               32255
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
             ],
             "functionSelector": "487dc38c",
             "implemented": true,
@@ -1762,33 +2082,53 @@
             "nameLocation": "704:15:150",
             "parameters": {
 <<<<<<< HEAD
+              "id": 31545,
+=======
+<<<<<<< HEAD
               "id": 31746,
 =======
               "id": 31545,
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
               "nodeType": "ParameterList",
               "parameters": [],
               "src": "719:2:150"
             },
             "returnParameters": {
 <<<<<<< HEAD
+              "id": 31550,
+=======
+<<<<<<< HEAD
               "id": 31751,
 =======
               "id": 31550,
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
 <<<<<<< HEAD
+                  "id": 31549,
+=======
+<<<<<<< HEAD
                   "id": 31750,
 =======
                   "id": 31549,
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
                   "mutability": "mutable",
                   "name": "",
                   "nameLocation": "-1:-1:-1",
                   "nodeType": "VariableDeclaration",
+<<<<<<< HEAD
+                  "scope": 31555,
+                  "src": "745:20:150",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_array$_t_struct$_Entitlement_$32194_memory_ptr_$dyn_memory_ptr",
+=======
 <<<<<<< HEAD
                   "scope": 31756,
                   "src": "745:20:151",
@@ -1804,10 +2144,17 @@
                   "typeDescriptions": {
                     "typeIdentifier": "t_array$_t_struct$_Entitlement_$32194_memory_ptr_$dyn_memory_ptr",
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
                     "typeString": "struct IEntitlementsBase.Entitlement[]"
                   },
                   "typeName": {
                     "baseType": {
+<<<<<<< HEAD
+                      "id": 31547,
+                      "nodeType": "UserDefinedTypeName",
+                      "pathNode": {
+                        "id": 31546,
+=======
 <<<<<<< HEAD
                       "id": 31748,
                       "nodeType": "UserDefinedTypeName",
@@ -1819,11 +2166,29 @@
                       "pathNode": {
                         "id": 31546,
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
                         "name": "Entitlement",
                         "nameLocations": [
                           "745:11:150"
                         ],
                         "nodeType": "IdentifierPath",
+<<<<<<< HEAD
+                        "referencedDeclaration": 32194,
+                        "src": "745:11:150"
+                      },
+                      "referencedDeclaration": 32194,
+                      "src": "745:11:150",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_struct$_Entitlement_$32194_storage_ptr",
+                        "typeString": "struct IEntitlementsBase.Entitlement"
+                      }
+                    },
+                    "id": 31548,
+                    "nodeType": "ArrayTypeName",
+                    "src": "745:13:150",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_array$_t_struct$_Entitlement_$32194_storage_$dyn_storage_ptr",
+=======
 <<<<<<< HEAD
                         "referencedDeclaration": 32395,
                         "src": "745:11:151"
@@ -1857,6 +2222,7 @@
 =======
                       "typeIdentifier": "t_array$_t_struct$_Entitlement_$32194_storage_$dyn_storage_ptr",
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
                       "typeString": "struct IEntitlementsBase.Entitlement[]"
                     }
                   },
@@ -1866,29 +2232,41 @@
               "src": "744:22:150"
             },
 <<<<<<< HEAD
+            "scope": 31602,
+=======
+<<<<<<< HEAD
             "scope": 31803,
 =======
             "scope": 31602,
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
             "stateMutability": "view",
             "virtual": false,
             "visibility": "external"
           },
           {
 <<<<<<< HEAD
+            "id": 31568,
+=======
+<<<<<<< HEAD
             "id": 31769,
 =======
             "id": 31568,
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
             "nodeType": "FunctionDefinition",
             "src": "807:142:150",
             "nodes": [],
             "body": {
 <<<<<<< HEAD
+              "id": 31567,
+=======
+<<<<<<< HEAD
               "id": 31768,
 =======
               "id": 31567,
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
               "nodeType": "Block",
               "src": "903:46:150",
               "nodes": [],
@@ -1897,6 +2275,14 @@
                   "expression": {
                     "arguments": [
                       {
+<<<<<<< HEAD
+                        "id": 31564,
+                        "name": "entitlement",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 31557,
+                        "src": "932:11:150",
+=======
 <<<<<<< HEAD
                         "id": 31765,
                         "name": "entitlement",
@@ -1912,6 +2298,7 @@
                         "referencedDeclaration": 31557,
                         "src": "932:11:150",
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
                         "typeDescriptions": {
                           "typeIdentifier": "t_address",
                           "typeString": "address"
@@ -1925,6 +2312,20 @@
                           "typeString": "address"
                         }
                       ],
+<<<<<<< HEAD
+                      "id": 31563,
+                      "name": "_getEntitlement",
+                      "nodeType": "Identifier",
+                      "overloadedDeclarations": [],
+                      "referencedDeclaration": 31721,
+                      "src": "916:15:150",
+                      "typeDescriptions": {
+                        "typeIdentifier": "t_function_internal_view$_t_address_$returns$_t_struct$_Entitlement_$32194_memory_ptr_$",
+                        "typeString": "function (address) view returns (struct IEntitlementsBase.Entitlement memory)"
+                      }
+                    },
+                    "id": 31565,
+=======
 <<<<<<< HEAD
                       "id": 31764,
                       "name": "_getEntitlement",
@@ -1952,6 +2353,7 @@
                     },
                     "id": 31565,
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -1963,6 +2365,14 @@
                     "src": "916:28:150",
                     "tryCall": false,
                     "typeDescriptions": {
+<<<<<<< HEAD
+                      "typeIdentifier": "t_struct$_Entitlement_$32194_memory_ptr",
+                      "typeString": "struct IEntitlementsBase.Entitlement memory"
+                    }
+                  },
+                  "functionReturnParameters": 31562,
+                  "id": 31566,
+=======
 <<<<<<< HEAD
                       "typeIdentifier": "t_struct$_Entitlement_$32395_memory_ptr",
                       "typeString": "struct IEntitlementsBase.Entitlement memory"
@@ -1978,6 +2388,7 @@
                   "functionReturnParameters": 31562,
                   "id": 31566,
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
                   "nodeType": "Return",
                   "src": "909:35:150"
                 }
@@ -1985,10 +2396,14 @@
             },
             "baseFunctions": [
 <<<<<<< HEAD
+              32247
+=======
+<<<<<<< HEAD
               32448
 =======
               32247
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
             ],
             "functionSelector": "fba4ff9d",
             "implemented": true,
@@ -1998,23 +2413,35 @@
             "nameLocation": "816:14:150",
             "parameters": {
 <<<<<<< HEAD
+              "id": 31558,
+=======
+<<<<<<< HEAD
               "id": 31759,
 =======
               "id": 31558,
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
 <<<<<<< HEAD
+                  "id": 31557,
+=======
+<<<<<<< HEAD
                   "id": 31758,
 =======
                   "id": 31557,
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
                   "mutability": "mutable",
                   "name": "entitlement",
                   "nameLocation": "844:11:150",
                   "nodeType": "VariableDeclaration",
+<<<<<<< HEAD
+                  "scope": 31568,
+                  "src": "836:19:150",
+=======
 <<<<<<< HEAD
                   "scope": 31769,
                   "src": "836:19:151",
@@ -2022,6 +2449,7 @@
                   "scope": 31568,
                   "src": "836:19:150",
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -2030,10 +2458,14 @@
                   },
                   "typeName": {
 <<<<<<< HEAD
+                    "id": 31556,
+=======
+<<<<<<< HEAD
                     "id": 31757,
 =======
                     "id": 31556,
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
                     "src": "836:7:150",
@@ -2050,23 +2482,46 @@
             },
             "returnParameters": {
 <<<<<<< HEAD
+              "id": 31562,
+=======
+<<<<<<< HEAD
               "id": 31763,
 =======
               "id": 31562,
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
 <<<<<<< HEAD
+                  "id": 31561,
+=======
+<<<<<<< HEAD
                   "id": 31762,
 =======
                   "id": 31561,
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
                   "mutability": "mutable",
                   "name": "",
                   "nameLocation": "-1:-1:-1",
                   "nodeType": "VariableDeclaration",
+<<<<<<< HEAD
+                  "scope": 31568,
+                  "src": "883:18:150",
+                  "stateVariable": false,
+                  "storageLocation": "memory",
+                  "typeDescriptions": {
+                    "typeIdentifier": "t_struct$_Entitlement_$32194_memory_ptr",
+                    "typeString": "struct IEntitlementsBase.Entitlement"
+                  },
+                  "typeName": {
+                    "id": 31560,
+                    "nodeType": "UserDefinedTypeName",
+                    "pathNode": {
+                      "id": 31559,
+=======
 <<<<<<< HEAD
                   "scope": 31769,
                   "src": "883:18:151",
@@ -2096,11 +2551,21 @@
                     "pathNode": {
                       "id": 31559,
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
                       "name": "Entitlement",
                       "nameLocations": [
                         "883:11:150"
                       ],
                       "nodeType": "IdentifierPath",
+<<<<<<< HEAD
+                      "referencedDeclaration": 32194,
+                      "src": "883:11:150"
+                    },
+                    "referencedDeclaration": 32194,
+                    "src": "883:11:150",
+                    "typeDescriptions": {
+                      "typeIdentifier": "t_struct$_Entitlement_$32194_storage_ptr",
+=======
 <<<<<<< HEAD
                       "referencedDeclaration": 32395,
                       "src": "883:11:151"
@@ -2118,6 +2583,7 @@
                     "typeDescriptions": {
                       "typeIdentifier": "t_struct$_Entitlement_$32194_storage_ptr",
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
                       "typeString": "struct IEntitlementsBase.Entitlement"
                     }
                   },
@@ -2127,29 +2593,41 @@
               "src": "882:20:150"
             },
 <<<<<<< HEAD
+            "scope": 31602,
+=======
+<<<<<<< HEAD
             "scope": 31803,
 =======
             "scope": 31602,
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
             "stateMutability": "view",
             "virtual": false,
             "visibility": "external"
           },
           {
 <<<<<<< HEAD
+            "id": 31583,
+=======
+<<<<<<< HEAD
             "id": 31784,
 =======
             "id": 31583,
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
             "nodeType": "FunctionDefinition",
             "src": "953:162:150",
             "nodes": [],
             "body": {
 <<<<<<< HEAD
+              "id": 31582,
+=======
+<<<<<<< HEAD
               "id": 31783,
 =======
               "id": 31582,
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
               "nodeType": "Block",
               "src": "1062:53:150",
               "nodes": [],
@@ -2158,6 +2636,14 @@
                   "expression": {
                     "arguments": [
                       {
+<<<<<<< HEAD
+                        "id": 31578,
+                        "name": "user",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 31570,
+                        "src": "1093:4:150",
+=======
 <<<<<<< HEAD
                         "id": 31779,
                         "name": "user",
@@ -2173,12 +2659,21 @@
                         "referencedDeclaration": 31570,
                         "src": "1093:4:150",
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
                         "typeDescriptions": {
                           "typeIdentifier": "t_address",
                           "typeString": "address"
                         }
                       },
                       {
+<<<<<<< HEAD
+                        "id": 31579,
+                        "name": "permission",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 31572,
+                        "src": "1099:10:150",
+=======
 <<<<<<< HEAD
                         "id": 31780,
                         "name": "permission",
@@ -2194,6 +2689,7 @@
                         "referencedDeclaration": 31572,
                         "src": "1099:10:150",
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
                         "typeDescriptions": {
                           "typeIdentifier": "t_string_calldata_ptr",
                           "typeString": "string calldata"
@@ -2212,10 +2708,14 @@
                         }
                       ],
 <<<<<<< HEAD
+                      "id": 31577,
+=======
+<<<<<<< HEAD
                       "id": 31778,
 =======
                       "id": 31577,
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
                       "name": "_isEntitledToTown",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
@@ -2227,10 +2727,14 @@
                       }
                     },
 <<<<<<< HEAD
+                    "id": 31580,
+=======
+<<<<<<< HEAD
                     "id": 31781,
 =======
                     "id": 31580,
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -2247,12 +2751,17 @@
                     }
                   },
 <<<<<<< HEAD
+                  "functionReturnParameters": 31576,
+                  "id": 31581,
+=======
+<<<<<<< HEAD
                   "functionReturnParameters": 31777,
                   "id": 31782,
 =======
                   "functionReturnParameters": 31576,
                   "id": 31581,
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
                   "nodeType": "Return",
                   "src": "1068:42:150"
                 }
@@ -2260,10 +2769,14 @@
             },
             "baseFunctions": [
 <<<<<<< HEAD
+              32214
+=======
+<<<<<<< HEAD
               32415
 =======
               32214
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
             ],
             "functionSelector": "4ff8eb71",
             "implemented": true,
@@ -2273,23 +2786,35 @@
             "nameLocation": "962:16:150",
             "parameters": {
 <<<<<<< HEAD
+              "id": 31573,
+=======
+<<<<<<< HEAD
               "id": 31774,
 =======
               "id": 31573,
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
 <<<<<<< HEAD
+                  "id": 31570,
+=======
+<<<<<<< HEAD
                   "id": 31771,
 =======
                   "id": 31570,
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
                   "mutability": "mutable",
                   "name": "user",
                   "nameLocation": "992:4:150",
                   "nodeType": "VariableDeclaration",
+<<<<<<< HEAD
+                  "scope": 31583,
+                  "src": "984:12:150",
+=======
 <<<<<<< HEAD
                   "scope": 31784,
                   "src": "984:12:151",
@@ -2297,6 +2822,7 @@
                   "scope": 31583,
                   "src": "984:12:150",
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -2305,10 +2831,14 @@
                   },
                   "typeName": {
 <<<<<<< HEAD
+                    "id": 31569,
+=======
+<<<<<<< HEAD
                     "id": 31770,
 =======
                     "id": 31569,
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
                     "src": "984:7:150",
@@ -2323,14 +2853,22 @@
                 {
                   "constant": false,
 <<<<<<< HEAD
+                  "id": 31572,
+=======
+<<<<<<< HEAD
                   "id": 31773,
 =======
                   "id": 31572,
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
                   "mutability": "mutable",
                   "name": "permission",
                   "nameLocation": "1018:10:150",
                   "nodeType": "VariableDeclaration",
+<<<<<<< HEAD
+                  "scope": 31583,
+                  "src": "1002:26:150",
+=======
 <<<<<<< HEAD
                   "scope": 31784,
                   "src": "1002:26:151",
@@ -2338,6 +2876,7 @@
                   "scope": 31583,
                   "src": "1002:26:150",
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
                   "stateVariable": false,
                   "storageLocation": "calldata",
                   "typeDescriptions": {
@@ -2346,10 +2885,14 @@
                   },
                   "typeName": {
 <<<<<<< HEAD
+                    "id": 31571,
+=======
+<<<<<<< HEAD
                     "id": 31772,
 =======
                     "id": 31571,
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
                     "name": "string",
                     "nodeType": "ElementaryTypeName",
                     "src": "1002:6:150",
@@ -2365,23 +2908,35 @@
             },
             "returnParameters": {
 <<<<<<< HEAD
+              "id": 31576,
+=======
+<<<<<<< HEAD
               "id": 31777,
 =======
               "id": 31576,
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
 <<<<<<< HEAD
+                  "id": 31575,
+=======
+<<<<<<< HEAD
                   "id": 31776,
 =======
                   "id": 31575,
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
                   "mutability": "mutable",
                   "name": "",
                   "nameLocation": "-1:-1:-1",
                   "nodeType": "VariableDeclaration",
+<<<<<<< HEAD
+                  "scope": 31583,
+                  "src": "1056:4:150",
+=======
 <<<<<<< HEAD
                   "scope": 31784,
                   "src": "1056:4:151",
@@ -2389,6 +2944,7 @@
                   "scope": 31583,
                   "src": "1056:4:150",
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -2397,10 +2953,14 @@
                   },
                   "typeName": {
 <<<<<<< HEAD
+                    "id": 31574,
+=======
+<<<<<<< HEAD
                     "id": 31775,
 =======
                     "id": 31574,
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
                     "name": "bool",
                     "nodeType": "ElementaryTypeName",
                     "src": "1056:4:150",
@@ -2415,29 +2975,41 @@
               "src": "1055:6:150"
             },
 <<<<<<< HEAD
+            "scope": 31602,
+=======
+<<<<<<< HEAD
             "scope": 31803,
 =======
             "scope": 31602,
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
             "stateMutability": "view",
             "virtual": false,
             "visibility": "external"
           },
           {
 <<<<<<< HEAD
+            "id": 31601,
+=======
+<<<<<<< HEAD
             "id": 31802,
 =======
             "id": 31601,
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
             "nodeType": "FunctionDefinition",
             "src": "1119:210:150",
             "nodes": [],
             "body": {
 <<<<<<< HEAD
+              "id": 31600,
+=======
+<<<<<<< HEAD
               "id": 31801,
 =======
               "id": 31600,
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
               "nodeType": "Block",
               "src": "1262:67:150",
               "nodes": [],
@@ -2446,6 +3018,14 @@
                   "expression": {
                     "arguments": [
                       {
+<<<<<<< HEAD
+                        "id": 31595,
+                        "name": "channelId",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 31585,
+                        "src": "1296:9:150",
+=======
 <<<<<<< HEAD
                         "id": 31796,
                         "name": "channelId",
@@ -2461,12 +3041,21 @@
                         "referencedDeclaration": 31585,
                         "src": "1296:9:150",
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
                         "typeDescriptions": {
                           "typeIdentifier": "t_string_calldata_ptr",
                           "typeString": "string calldata"
                         }
                       },
                       {
+<<<<<<< HEAD
+                        "id": 31596,
+                        "name": "user",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 31587,
+                        "src": "1307:4:150",
+=======
 <<<<<<< HEAD
                         "id": 31797,
                         "name": "user",
@@ -2482,12 +3071,21 @@
                         "referencedDeclaration": 31587,
                         "src": "1307:4:150",
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
                         "typeDescriptions": {
                           "typeIdentifier": "t_address",
                           "typeString": "address"
                         }
                       },
                       {
+<<<<<<< HEAD
+                        "id": 31597,
+                        "name": "permission",
+                        "nodeType": "Identifier",
+                        "overloadedDeclarations": [],
+                        "referencedDeclaration": 31589,
+                        "src": "1313:10:150",
+=======
 <<<<<<< HEAD
                         "id": 31798,
                         "name": "permission",
@@ -2503,6 +3101,7 @@
                         "referencedDeclaration": 31589,
                         "src": "1313:10:150",
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
                         "typeDescriptions": {
                           "typeIdentifier": "t_string_calldata_ptr",
                           "typeString": "string calldata"
@@ -2525,10 +3124,14 @@
                         }
                       ],
 <<<<<<< HEAD
+                      "id": 31594,
+=======
+<<<<<<< HEAD
                       "id": 31795,
 =======
                       "id": 31594,
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
                       "name": "_isEntitledToChannel",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
@@ -2540,10 +3143,14 @@
                       }
                     },
 <<<<<<< HEAD
+                    "id": 31598,
+=======
+<<<<<<< HEAD
                     "id": 31799,
 =======
                     "id": 31598,
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -2560,12 +3167,17 @@
                     }
                   },
 <<<<<<< HEAD
+                  "functionReturnParameters": 31593,
+                  "id": 31599,
+=======
+<<<<<<< HEAD
                   "functionReturnParameters": 31794,
                   "id": 31800,
 =======
                   "functionReturnParameters": 31593,
                   "id": 31599,
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
                   "nodeType": "Return",
                   "src": "1268:56:150"
                 }
@@ -2573,10 +3185,14 @@
             },
             "baseFunctions": [
 <<<<<<< HEAD
+              32226
+=======
+<<<<<<< HEAD
               32427
 =======
               32226
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
             ],
             "functionSelector": "cea632bc",
             "implemented": true,
@@ -2586,23 +3202,35 @@
             "nameLocation": "1128:19:150",
             "parameters": {
 <<<<<<< HEAD
+              "id": 31590,
+=======
+<<<<<<< HEAD
               "id": 31791,
 =======
               "id": 31590,
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
 <<<<<<< HEAD
+                  "id": 31585,
+=======
+<<<<<<< HEAD
                   "id": 31786,
 =======
                   "id": 31585,
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
                   "mutability": "mutable",
                   "name": "channelId",
                   "nameLocation": "1169:9:150",
                   "nodeType": "VariableDeclaration",
+<<<<<<< HEAD
+                  "scope": 31601,
+                  "src": "1153:25:150",
+=======
 <<<<<<< HEAD
                   "scope": 31802,
                   "src": "1153:25:151",
@@ -2610,6 +3238,7 @@
                   "scope": 31601,
                   "src": "1153:25:150",
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
                   "stateVariable": false,
                   "storageLocation": "calldata",
                   "typeDescriptions": {
@@ -2618,10 +3247,14 @@
                   },
                   "typeName": {
 <<<<<<< HEAD
+                    "id": 31584,
+=======
+<<<<<<< HEAD
                     "id": 31785,
 =======
                     "id": 31584,
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
                     "name": "string",
                     "nodeType": "ElementaryTypeName",
                     "src": "1153:6:150",
@@ -2635,14 +3268,22 @@
                 {
                   "constant": false,
 <<<<<<< HEAD
+                  "id": 31587,
+=======
+<<<<<<< HEAD
                   "id": 31788,
 =======
                   "id": 31587,
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
                   "mutability": "mutable",
                   "name": "user",
                   "nameLocation": "1192:4:150",
                   "nodeType": "VariableDeclaration",
+<<<<<<< HEAD
+                  "scope": 31601,
+                  "src": "1184:12:150",
+=======
 <<<<<<< HEAD
                   "scope": 31802,
                   "src": "1184:12:151",
@@ -2650,6 +3291,7 @@
                   "scope": 31601,
                   "src": "1184:12:150",
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -2658,10 +3300,14 @@
                   },
                   "typeName": {
 <<<<<<< HEAD
+                    "id": 31586,
+=======
+<<<<<<< HEAD
                     "id": 31787,
 =======
                     "id": 31586,
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
                     "src": "1184:7:150",
@@ -2676,14 +3322,22 @@
                 {
                   "constant": false,
 <<<<<<< HEAD
+                  "id": 31589,
+=======
+<<<<<<< HEAD
                   "id": 31790,
 =======
                   "id": 31589,
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
                   "mutability": "mutable",
                   "name": "permission",
                   "nameLocation": "1218:10:150",
                   "nodeType": "VariableDeclaration",
+<<<<<<< HEAD
+                  "scope": 31601,
+                  "src": "1202:26:150",
+=======
 <<<<<<< HEAD
                   "scope": 31802,
                   "src": "1202:26:151",
@@ -2691,6 +3345,7 @@
                   "scope": 31601,
                   "src": "1202:26:150",
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
                   "stateVariable": false,
                   "storageLocation": "calldata",
                   "typeDescriptions": {
@@ -2699,10 +3354,14 @@
                   },
                   "typeName": {
 <<<<<<< HEAD
+                    "id": 31588,
+=======
+<<<<<<< HEAD
                     "id": 31789,
 =======
                     "id": 31588,
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
                     "name": "string",
                     "nodeType": "ElementaryTypeName",
                     "src": "1202:6:150",
@@ -2718,23 +3377,35 @@
             },
             "returnParameters": {
 <<<<<<< HEAD
+              "id": 31593,
+=======
+<<<<<<< HEAD
               "id": 31794,
 =======
               "id": 31593,
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
 <<<<<<< HEAD
+                  "id": 31592,
+=======
+<<<<<<< HEAD
                   "id": 31793,
 =======
                   "id": 31592,
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
                   "mutability": "mutable",
                   "name": "",
                   "nameLocation": "-1:-1:-1",
                   "nodeType": "VariableDeclaration",
+<<<<<<< HEAD
+                  "scope": 31601,
+                  "src": "1256:4:150",
+=======
 <<<<<<< HEAD
                   "scope": 31802,
                   "src": "1256:4:151",
@@ -2742,6 +3413,7 @@
                   "scope": 31601,
                   "src": "1256:4:150",
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -2750,10 +3422,14 @@
                   },
                   "typeName": {
 <<<<<<< HEAD
+                    "id": 31591,
+=======
+<<<<<<< HEAD
                     "id": 31792,
 =======
                     "id": 31591,
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
                     "name": "bool",
                     "nodeType": "ElementaryTypeName",
                     "src": "1256:4:150",
@@ -2768,10 +3444,14 @@
               "src": "1255:6:150"
             },
 <<<<<<< HEAD
+            "scope": 31602,
+=======
+<<<<<<< HEAD
             "scope": 31803,
 =======
             "scope": 31602,
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
             "stateMutability": "view",
             "virtual": false,
             "visibility": "external"
@@ -2782,15 +3462,25 @@
           {
             "baseName": {
 <<<<<<< HEAD
+              "id": 31502,
+=======
+<<<<<<< HEAD
               "id": 31703,
 =======
               "id": 31502,
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
               "name": "IEntitlements",
               "nameLocations": [
                 "283:13:150"
               ],
               "nodeType": "IdentifierPath",
+<<<<<<< HEAD
+              "referencedDeclaration": 32256,
+              "src": "283:13:150"
+            },
+            "id": 31503,
+=======
 <<<<<<< HEAD
               "referencedDeclaration": 32457,
               "src": "283:13:151"
@@ -2802,21 +3492,32 @@
             },
             "id": 31503,
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
             "nodeType": "InheritanceSpecifier",
             "src": "283:13:150"
           },
           {
             "baseName": {
 <<<<<<< HEAD
+              "id": 31504,
+=======
+<<<<<<< HEAD
               "id": 31705,
 =======
               "id": 31504,
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
               "name": "EntitlementsBase",
               "nameLocations": [
                 "298:16:150"
               ],
               "nodeType": "IdentifierPath",
+<<<<<<< HEAD
+              "referencedDeclaration": 31788,
+              "src": "298:16:150"
+            },
+            "id": 31505,
+=======
 <<<<<<< HEAD
               "referencedDeclaration": 31989,
               "src": "298:16:151"
@@ -2828,16 +3529,21 @@
             },
             "id": 31505,
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
             "nodeType": "InheritanceSpecifier",
             "src": "298:16:150"
           },
           {
             "baseName": {
 <<<<<<< HEAD
+              "id": 31506,
+=======
+<<<<<<< HEAD
               "id": 31707,
 =======
               "id": 31506,
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
               "name": "Entitled",
               "nameLocations": [
                 "316:8:150"
@@ -2847,10 +3553,14 @@
               "src": "316:8:150"
             },
 <<<<<<< HEAD
+            "id": 31507,
+=======
+<<<<<<< HEAD
             "id": 31708,
 =======
             "id": 31507,
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
             "nodeType": "InheritanceSpecifier",
             "src": "316:8:150"
           }
@@ -2861,16 +3571,29 @@
         "fullyImplemented": true,
         "linearizedBaseContracts": [
 <<<<<<< HEAD
+          31602,
+=======
+<<<<<<< HEAD
           31803,
 =======
           31602,
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
           29245,
           8257,
           8166,
           8066,
           7502,
           27123,
+<<<<<<< HEAD
+          31788,
+          32256,
+          32195
+        ],
+        "name": "Entitlements",
+        "nameLocation": "267:12:150",
+        "scope": 31603,
+=======
 <<<<<<< HEAD
           31989,
           32457,
@@ -2888,6 +3611,7 @@
         "nameLocation": "267:12:150",
         "scope": 31603,
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
         "usedErrors": [
           7490,
           7494,
@@ -2897,18 +3621,24 @@
           27120,
           27122,
 <<<<<<< HEAD
+=======
+<<<<<<< HEAD
           32001,
           32003,
           32005,
           32007,
           32009
 =======
+>>>>>>> main
           31800,
           31802,
           31804,
           31806,
           31808
+<<<<<<< HEAD
+=======
 >>>>>>> gr/hnt-2535-q-4-townarchitectservice-contract-could-be-implemented-in
+>>>>>>> main
         ],
         "usedEvents": [
           7501,
