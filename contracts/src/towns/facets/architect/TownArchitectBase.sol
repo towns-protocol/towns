@@ -165,7 +165,7 @@ abstract contract TownArchitectBase is Factory, ITownArchitectBase {
     );
 
     // emit event
-    emit TownCreated(townAddress);
+    emit TownCreated(msg.sender, tokenId, townAddress);
   }
 
   // =============================================================

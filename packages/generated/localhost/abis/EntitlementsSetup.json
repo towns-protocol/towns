@@ -1789,53 +1789,53 @@
   },
   "ast": {
     "absolutePath": "contracts/test/towns/entitlements/EntitlementsSetup.sol",
-    "id": 73940,
+    "id": 73949,
     "exportedSymbols": {
       "ChannelsHelper": [
-        72940
+        72949
       ],
       "Diamond": [
         5949
       ],
       "EntitlementsHelper": [
-        73939
+        73948
       ],
       "EntitlementsManager": [
-        31598
+        31605
       ],
       "EntitlementsSetup": [
-        73806
+        73815
       ],
       "FacetHelper": [
-        40868
+        40875
       ],
       "FacetTest": [
-        40797
+        40804
       ],
       "IDiamond": [
         5970
       ],
       "IEntitlementsManager": [
-        32245
+        32252
       ],
       "MockERC721": [
-        49684
+        49691
       ],
       "MockUserEntitlement": [
-        51041
+        51048
       ],
       "RolesHelper": [
-        82100
+        82109
       ],
       "TokenOwnableHelper": [
-        45956
+        45963
       ]
     },
     "nodeType": "SourceUnit",
     "src": "39:3634:300",
     "nodes": [
       {
-        "id": 73588,
+        "id": 73597,
         "nodeType": "PragmaDirective",
         "src": "39:24:300",
         "nodes": [],
@@ -1847,19 +1847,19 @@
         ]
       },
       {
-        "id": 73591,
+        "id": 73600,
         "nodeType": "ImportDirective",
         "src": "79:68:300",
         "nodes": [],
         "absolutePath": "contracts/src/diamond/Diamond.sol",
         "file": "contracts/src/diamond/Diamond.sol",
         "nameLocation": "-1:-1:-1",
-        "scope": 73940,
+        "scope": 73949,
         "sourceUnit": 5950,
         "symbolAliases": [
           {
             "foreign": {
-              "id": 73589,
+              "id": 73598,
               "name": "IDiamond",
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
@@ -1871,7 +1871,7 @@
           },
           {
             "foreign": {
-              "id": 73590,
+              "id": 73599,
               "name": "Diamond",
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
@@ -1885,23 +1885,23 @@
         "unitAlias": ""
       },
       {
-        "id": 73593,
+        "id": 73602,
         "nodeType": "ImportDirective",
         "src": "148:102:300",
         "nodes": [],
         "absolutePath": "contracts/src/towns/facets/entitlements/IEntitlementsManager.sol",
         "file": "contracts/src/towns/facets/entitlements/IEntitlementsManager.sol",
         "nameLocation": "-1:-1:-1",
-        "scope": 73940,
-        "sourceUnit": 32246,
+        "scope": 73949,
+        "sourceUnit": 32253,
         "symbolAliases": [
           {
             "foreign": {
-              "id": 73592,
+              "id": 73601,
               "name": "IEntitlementsManager",
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
-              "referencedDeclaration": 32245,
+              "referencedDeclaration": 32252,
               "src": "156:20:300",
               "typeDescriptions": {}
             },
@@ -1911,23 +1911,23 @@
         "unitAlias": ""
       },
       {
-        "id": 73596,
+        "id": 73605,
         "nodeType": "ImportDirective",
         "src": "279:74:300",
         "nodes": [],
         "absolutePath": "contracts/test/diamond/Facet.t.sol",
         "file": "contracts/test/diamond/Facet.t.sol",
         "nameLocation": "-1:-1:-1",
-        "scope": 73940,
-        "sourceUnit": 40869,
+        "scope": 73949,
+        "sourceUnit": 40876,
         "symbolAliases": [
           {
             "foreign": {
-              "id": 73594,
+              "id": 73603,
               "name": "FacetHelper",
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
-              "referencedDeclaration": 40868,
+              "referencedDeclaration": 40875,
               "src": "287:11:300",
               "typeDescriptions": {}
             },
@@ -1935,11 +1935,11 @@
           },
           {
             "foreign": {
-              "id": 73595,
+              "id": 73604,
               "name": "FacetTest",
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
-              "referencedDeclaration": 40797,
+              "referencedDeclaration": 40804,
               "src": "300:9:300",
               "typeDescriptions": {}
             },
@@ -1949,23 +1949,23 @@
         "unitAlias": ""
       },
       {
-        "id": 73598,
+        "id": 73607,
         "nodeType": "ImportDirective",
         "src": "354:100:300",
         "nodes": [],
         "absolutePath": "contracts/src/towns/facets/entitlements/EntitlementsManager.sol",
         "file": "contracts/src/towns/facets/entitlements/EntitlementsManager.sol",
         "nameLocation": "-1:-1:-1",
-        "scope": 73940,
-        "sourceUnit": 31599,
+        "scope": 73949,
+        "sourceUnit": 31606,
         "symbolAliases": [
           {
             "foreign": {
-              "id": 73597,
+              "id": 73606,
               "name": "EntitlementsManager",
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
-              "referencedDeclaration": 31598,
+              "referencedDeclaration": 31605,
               "src": "362:19:300",
               "typeDescriptions": {}
             },
@@ -1975,23 +1975,23 @@
         "unitAlias": ""
       },
       {
-        "id": 73600,
+        "id": 73609,
         "nodeType": "ImportDirective",
         "src": "467:94:300",
         "nodes": [],
         "absolutePath": "contracts/test/diamond/ownable/token/TokenOwnableSetup.sol",
         "file": "contracts/test/diamond/ownable/token/TokenOwnableSetup.sol",
         "nameLocation": "-1:-1:-1",
-        "scope": 73940,
-        "sourceUnit": 45957,
+        "scope": 73949,
+        "sourceUnit": 45964,
         "symbolAliases": [
           {
             "foreign": {
-              "id": 73599,
+              "id": 73608,
               "name": "TokenOwnableHelper",
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
-              "referencedDeclaration": 45956,
+              "referencedDeclaration": 45963,
               "src": "475:18:300",
               "typeDescriptions": {}
             },
@@ -2001,23 +2001,23 @@
         "unitAlias": ""
       },
       {
-        "id": 73602,
+        "id": 73611,
         "nodeType": "ImportDirective",
         "src": "562:79:300",
         "nodes": [],
         "absolutePath": "contracts/test/towns/channels/ChannelsSetup.sol",
         "file": "contracts/test/towns/channels/ChannelsSetup.sol",
         "nameLocation": "-1:-1:-1",
-        "scope": 73940,
-        "sourceUnit": 72941,
+        "scope": 73949,
+        "sourceUnit": 72950,
         "symbolAliases": [
           {
             "foreign": {
-              "id": 73601,
+              "id": 73610,
               "name": "ChannelsHelper",
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
-              "referencedDeclaration": 72940,
+              "referencedDeclaration": 72949,
               "src": "570:14:300",
               "typeDescriptions": {}
             },
@@ -2027,23 +2027,23 @@
         "unitAlias": ""
       },
       {
-        "id": 73604,
+        "id": 73613,
         "nodeType": "ImportDirective",
         "src": "642:70:300",
         "nodes": [],
         "absolutePath": "contracts/test/towns/roles/RolesSetup.sol",
         "file": "contracts/test/towns/roles/RolesSetup.sol",
         "nameLocation": "-1:-1:-1",
-        "scope": 73940,
-        "sourceUnit": 82101,
+        "scope": 73949,
+        "sourceUnit": 82110,
         "symbolAliases": [
           {
             "foreign": {
-              "id": 73603,
+              "id": 73612,
               "name": "RolesHelper",
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
-              "referencedDeclaration": 82100,
+              "referencedDeclaration": 82109,
               "src": "650:11:300",
               "typeDescriptions": {}
             },
@@ -2053,23 +2053,23 @@
         "unitAlias": ""
       },
       {
-        "id": 73606,
+        "id": 73615,
         "nodeType": "ImportDirective",
         "src": "723:63:300",
         "nodes": [],
         "absolutePath": "contracts/test/mocks/MockERC721.sol",
         "file": "contracts/test/mocks/MockERC721.sol",
         "nameLocation": "-1:-1:-1",
-        "scope": 73940,
-        "sourceUnit": 49685,
+        "scope": 73949,
+        "sourceUnit": 49692,
         "symbolAliases": [
           {
             "foreign": {
-              "id": 73605,
+              "id": 73614,
               "name": "MockERC721",
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
-              "referencedDeclaration": 49684,
+              "referencedDeclaration": 49691,
               "src": "731:10:300",
               "typeDescriptions": {}
             },
@@ -2079,23 +2079,23 @@
         "unitAlias": ""
       },
       {
-        "id": 73608,
+        "id": 73617,
         "nodeType": "ImportDirective",
         "src": "787:81:300",
         "nodes": [],
         "absolutePath": "contracts/test/mocks/MockUserEntitlement.sol",
         "file": "contracts/test/mocks/MockUserEntitlement.sol",
         "nameLocation": "-1:-1:-1",
-        "scope": 73940,
-        "sourceUnit": 51042,
+        "scope": 73949,
+        "sourceUnit": 51049,
         "symbolAliases": [
           {
             "foreign": {
-              "id": 73607,
+              "id": 73616,
               "name": "MockUserEntitlement",
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
-              "referencedDeclaration": 51041,
+              "referencedDeclaration": 51048,
               "src": "795:19:300",
               "typeDescriptions": {}
             },
@@ -2105,12 +2105,12 @@
         "unitAlias": ""
       },
       {
-        "id": 73806,
+        "id": 73815,
         "nodeType": "ContractDefinition",
         "src": "870:1679:300",
         "nodes": [
           {
-            "id": 73613,
+            "id": 73622,
             "nodeType": "VariableDeclaration",
             "src": "923:41:300",
             "nodes": [],
@@ -2118,37 +2118,37 @@
             "mutability": "mutable",
             "name": "entitlements",
             "nameLocation": "952:12:300",
-            "scope": 73806,
+            "scope": 73815,
             "stateVariable": true,
             "storageLocation": "default",
             "typeDescriptions": {
-              "typeIdentifier": "t_contract$_EntitlementsManager_$31598",
+              "typeIdentifier": "t_contract$_EntitlementsManager_$31605",
               "typeString": "contract EntitlementsManager"
             },
             "typeName": {
-              "id": 73612,
+              "id": 73621,
               "nodeType": "UserDefinedTypeName",
               "pathNode": {
-                "id": 73611,
+                "id": 73620,
                 "name": "EntitlementsManager",
                 "nameLocations": [
                   "923:19:300"
                 ],
                 "nodeType": "IdentifierPath",
-                "referencedDeclaration": 31598,
+                "referencedDeclaration": 31605,
                 "src": "923:19:300"
               },
-              "referencedDeclaration": 31598,
+              "referencedDeclaration": 31605,
               "src": "923:19:300",
               "typeDescriptions": {
-                "typeIdentifier": "t_contract$_EntitlementsManager_$31598",
+                "typeIdentifier": "t_contract$_EntitlementsManager_$31605",
                 "typeString": "contract EntitlementsManager"
               }
             },
             "visibility": "internal"
           },
           {
-            "id": 73616,
+            "id": 73625,
             "nodeType": "VariableDeclaration",
             "src": "968:25:300",
             "nodes": [],
@@ -2156,37 +2156,37 @@
             "mutability": "mutable",
             "name": "token",
             "nameLocation": "988:5:300",
-            "scope": 73806,
+            "scope": 73815,
             "stateVariable": true,
             "storageLocation": "default",
             "typeDescriptions": {
-              "typeIdentifier": "t_contract$_MockERC721_$49684",
+              "typeIdentifier": "t_contract$_MockERC721_$49691",
               "typeString": "contract MockERC721"
             },
             "typeName": {
-              "id": 73615,
+              "id": 73624,
               "nodeType": "UserDefinedTypeName",
               "pathNode": {
-                "id": 73614,
+                "id": 73623,
                 "name": "MockERC721",
                 "nameLocations": [
                   "968:10:300"
                 ],
                 "nodeType": "IdentifierPath",
-                "referencedDeclaration": 49684,
+                "referencedDeclaration": 49691,
                 "src": "968:10:300"
               },
-              "referencedDeclaration": 49684,
+              "referencedDeclaration": 49691,
               "src": "968:10:300",
               "typeDescriptions": {
-                "typeIdentifier": "t_contract$_MockERC721_$49684",
+                "typeIdentifier": "t_contract$_MockERC721_$49691",
                 "typeString": "contract MockERC721"
               }
             },
             "visibility": "internal"
           },
           {
-            "id": 73619,
+            "id": 73628,
             "nodeType": "VariableDeclaration",
             "src": "997:53:300",
             "nodes": [],
@@ -2194,37 +2194,37 @@
             "mutability": "mutable",
             "name": "mockImmutableEntitlement",
             "nameLocation": "1026:24:300",
-            "scope": 73806,
+            "scope": 73815,
             "stateVariable": true,
             "storageLocation": "default",
             "typeDescriptions": {
-              "typeIdentifier": "t_contract$_MockUserEntitlement_$51041",
+              "typeIdentifier": "t_contract$_MockUserEntitlement_$51048",
               "typeString": "contract MockUserEntitlement"
             },
             "typeName": {
-              "id": 73618,
+              "id": 73627,
               "nodeType": "UserDefinedTypeName",
               "pathNode": {
-                "id": 73617,
+                "id": 73626,
                 "name": "MockUserEntitlement",
                 "nameLocations": [
                   "997:19:300"
                 ],
                 "nodeType": "IdentifierPath",
-                "referencedDeclaration": 51041,
+                "referencedDeclaration": 51048,
                 "src": "997:19:300"
               },
-              "referencedDeclaration": 51041,
+              "referencedDeclaration": 51048,
               "src": "997:19:300",
               "typeDescriptions": {
-                "typeIdentifier": "t_contract$_MockUserEntitlement_$51041",
+                "typeIdentifier": "t_contract$_MockUserEntitlement_$51048",
                 "typeString": "contract MockUserEntitlement"
               }
             },
             "visibility": "internal"
           },
           {
-            "id": 73622,
+            "id": 73631,
             "nodeType": "VariableDeclaration",
             "src": "1054:44:300",
             "nodes": [],
@@ -2232,37 +2232,37 @@
             "mutability": "mutable",
             "name": "mockEntitlement",
             "nameLocation": "1083:15:300",
-            "scope": 73806,
+            "scope": 73815,
             "stateVariable": true,
             "storageLocation": "default",
             "typeDescriptions": {
-              "typeIdentifier": "t_contract$_MockUserEntitlement_$51041",
+              "typeIdentifier": "t_contract$_MockUserEntitlement_$51048",
               "typeString": "contract MockUserEntitlement"
             },
             "typeName": {
-              "id": 73621,
+              "id": 73630,
               "nodeType": "UserDefinedTypeName",
               "pathNode": {
-                "id": 73620,
+                "id": 73629,
                 "name": "MockUserEntitlement",
                 "nameLocations": [
                   "1054:19:300"
                 ],
                 "nodeType": "IdentifierPath",
-                "referencedDeclaration": 51041,
+                "referencedDeclaration": 51048,
                 "src": "1054:19:300"
               },
-              "referencedDeclaration": 51041,
+              "referencedDeclaration": 51048,
               "src": "1054:19:300",
               "typeDescriptions": {
-                "typeIdentifier": "t_contract$_MockUserEntitlement_$51041",
+                "typeIdentifier": "t_contract$_MockUserEntitlement_$51048",
                 "typeString": "contract MockUserEntitlement"
               }
             },
             "visibility": "internal"
           },
           {
-            "id": 73624,
+            "id": 73633,
             "nodeType": "VariableDeclaration",
             "src": "1103:24:300",
             "nodes": [],
@@ -2270,7 +2270,7 @@
             "mutability": "mutable",
             "name": "founder",
             "nameLocation": "1120:7:300",
-            "scope": 73806,
+            "scope": 73815,
             "stateVariable": true,
             "storageLocation": "default",
             "typeDescriptions": {
@@ -2278,7 +2278,7 @@
               "typeString": "address"
             },
             "typeName": {
-              "id": 73623,
+              "id": 73632,
               "name": "address",
               "nodeType": "ElementaryTypeName",
               "src": "1103:7:300",
@@ -2291,7 +2291,7 @@
             "visibility": "internal"
           },
           {
-            "id": 73627,
+            "id": 73636,
             "nodeType": "VariableDeclaration",
             "src": "1131:40:300",
             "nodes": [],
@@ -2299,7 +2299,7 @@
             "mutability": "mutable",
             "name": "immutableEntitlements",
             "nameLocation": "1150:21:300",
-            "scope": 73806,
+            "scope": 73815,
             "stateVariable": true,
             "storageLocation": "default",
             "typeDescriptions": {
@@ -2308,7 +2308,7 @@
             },
             "typeName": {
               "baseType": {
-                "id": 73625,
+                "id": 73634,
                 "name": "address",
                 "nodeType": "ElementaryTypeName",
                 "src": "1131:7:300",
@@ -2318,7 +2318,7 @@
                   "typeString": "address"
                 }
               },
-              "id": 73626,
+              "id": 73635,
               "nodeType": "ArrayTypeName",
               "src": "1131:9:300",
               "typeDescriptions": {
@@ -2329,12 +2329,12 @@
             "visibility": "internal"
           },
           {
-            "id": 73666,
+            "id": 73675,
             "nodeType": "FunctionDefinition",
             "src": "1176:280:300",
             "nodes": [],
             "body": {
-              "id": 73665,
+              "id": 73674,
               "nodeType": "Block",
               "src": "1209:247:300",
               "nodes": [],
@@ -2345,18 +2345,18 @@
                     "expression": {
                       "argumentTypes": [],
                       "expression": {
-                        "id": 73631,
+                        "id": 73640,
                         "name": "super",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
                         "referencedDeclaration": -25,
                         "src": "1215:5:300",
                         "typeDescriptions": {
-                          "typeIdentifier": "t_type$_t_super$_EntitlementsSetup_$73806_$",
+                          "typeIdentifier": "t_type$_t_super$_EntitlementsSetup_$73815_$",
                           "typeString": "type(contract super EntitlementsSetup)"
                         }
                       },
-                      "id": 73633,
+                      "id": 73642,
                       "isConstant": false,
                       "isLValue": false,
                       "isPure": false,
@@ -2364,14 +2364,14 @@
                       "memberLocation": "1221:5:300",
                       "memberName": "setUp",
                       "nodeType": "MemberAccess",
-                      "referencedDeclaration": 40790,
+                      "referencedDeclaration": 40797,
                       "src": "1215:11:300",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_internal_nonpayable$__$returns$__$",
                         "typeString": "function ()"
                       }
                     },
-                    "id": 73634,
+                    "id": 73643,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -2387,26 +2387,26 @@
                       "typeString": "tuple()"
                     }
                   },
-                  "id": 73635,
+                  "id": 73644,
                   "nodeType": "ExpressionStatement",
                   "src": "1215:13:300"
                 },
                 {
                   "expression": {
-                    "id": 73640,
+                    "id": 73649,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
                     "lValueRequested": false,
                     "leftHandSide": {
-                      "id": 73636,
+                      "id": 73645,
                       "name": "entitlements",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 73613,
+                      "referencedDeclaration": 73622,
                       "src": "1234:12:300",
                       "typeDescriptions": {
-                        "typeIdentifier": "t_contract$_EntitlementsManager_$31598",
+                        "typeIdentifier": "t_contract$_EntitlementsManager_$31605",
                         "typeString": "contract EntitlementsManager"
                       }
                     },
@@ -2415,11 +2415,11 @@
                     "rightHandSide": {
                       "arguments": [
                         {
-                          "id": 73638,
+                          "id": 73647,
                           "name": "diamond",
                           "nodeType": "Identifier",
                           "overloadedDeclarations": [],
-                          "referencedDeclaration": 40763,
+                          "referencedDeclaration": 40770,
                           "src": "1269:7:300",
                           "typeDescriptions": {
                             "typeIdentifier": "t_address",
@@ -2434,18 +2434,18 @@
                             "typeString": "address"
                           }
                         ],
-                        "id": 73637,
+                        "id": 73646,
                         "name": "EntitlementsManager",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 31598,
+                        "referencedDeclaration": 31605,
                         "src": "1249:19:300",
                         "typeDescriptions": {
-                          "typeIdentifier": "t_type$_t_contract$_EntitlementsManager_$31598_$",
+                          "typeIdentifier": "t_type$_t_contract$_EntitlementsManager_$31605_$",
                           "typeString": "type(contract EntitlementsManager)"
                         }
                       },
-                      "id": 73639,
+                      "id": 73648,
                       "isConstant": false,
                       "isLValue": false,
                       "isPure": false,
@@ -2457,36 +2457,36 @@
                       "src": "1249:28:300",
                       "tryCall": false,
                       "typeDescriptions": {
-                        "typeIdentifier": "t_contract$_EntitlementsManager_$31598",
+                        "typeIdentifier": "t_contract$_EntitlementsManager_$31605",
                         "typeString": "contract EntitlementsManager"
                       }
                     },
                     "src": "1234:43:300",
                     "typeDescriptions": {
-                      "typeIdentifier": "t_contract$_EntitlementsManager_$31598",
+                      "typeIdentifier": "t_contract$_EntitlementsManager_$31605",
                       "typeString": "contract EntitlementsManager"
                     }
                   },
-                  "id": 73641,
+                  "id": 73650,
                   "nodeType": "ExpressionStatement",
                   "src": "1234:43:300"
                 },
                 {
                   "expression": {
-                    "id": 73647,
+                    "id": 73656,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
                     "lValueRequested": false,
                     "leftHandSide": {
-                      "id": 73642,
+                      "id": 73651,
                       "name": "mockImmutableEntitlement",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 73619,
+                      "referencedDeclaration": 73628,
                       "src": "1283:24:300",
                       "typeDescriptions": {
-                        "typeIdentifier": "t_contract$_MockUserEntitlement_$51041",
+                        "typeIdentifier": "t_contract$_MockUserEntitlement_$51048",
                         "typeString": "contract MockUserEntitlement"
                       }
                     },
@@ -2496,7 +2496,7 @@
                       "arguments": [],
                       "expression": {
                         "argumentTypes": [],
-                        "id": 73645,
+                        "id": 73654,
                         "isConstant": false,
                         "isLValue": false,
                         "isPure": false,
@@ -2504,31 +2504,31 @@
                         "nodeType": "NewExpression",
                         "src": "1310:23:300",
                         "typeDescriptions": {
-                          "typeIdentifier": "t_function_creation_nonpayable$__$returns$_t_contract$_MockUserEntitlement_$51041_$",
+                          "typeIdentifier": "t_function_creation_nonpayable$__$returns$_t_contract$_MockUserEntitlement_$51048_$",
                           "typeString": "function () returns (contract MockUserEntitlement)"
                         },
                         "typeName": {
-                          "id": 73644,
+                          "id": 73653,
                           "nodeType": "UserDefinedTypeName",
                           "pathNode": {
-                            "id": 73643,
+                            "id": 73652,
                             "name": "MockUserEntitlement",
                             "nameLocations": [
                               "1314:19:300"
                             ],
                             "nodeType": "IdentifierPath",
-                            "referencedDeclaration": 51041,
+                            "referencedDeclaration": 51048,
                             "src": "1314:19:300"
                           },
-                          "referencedDeclaration": 51041,
+                          "referencedDeclaration": 51048,
                           "src": "1314:19:300",
                           "typeDescriptions": {
-                            "typeIdentifier": "t_contract$_MockUserEntitlement_$51041",
+                            "typeIdentifier": "t_contract$_MockUserEntitlement_$51048",
                             "typeString": "contract MockUserEntitlement"
                           }
                         }
                       },
-                      "id": 73646,
+                      "id": 73655,
                       "isConstant": false,
                       "isLValue": false,
                       "isPure": false,
@@ -2540,36 +2540,36 @@
                       "src": "1310:25:300",
                       "tryCall": false,
                       "typeDescriptions": {
-                        "typeIdentifier": "t_contract$_MockUserEntitlement_$51041",
+                        "typeIdentifier": "t_contract$_MockUserEntitlement_$51048",
                         "typeString": "contract MockUserEntitlement"
                       }
                     },
                     "src": "1283:52:300",
                     "typeDescriptions": {
-                      "typeIdentifier": "t_contract$_MockUserEntitlement_$51041",
+                      "typeIdentifier": "t_contract$_MockUserEntitlement_$51048",
                       "typeString": "contract MockUserEntitlement"
                     }
                   },
-                  "id": 73648,
+                  "id": 73657,
                   "nodeType": "ExpressionStatement",
                   "src": "1283:52:300"
                 },
                 {
                   "expression": {
-                    "id": 73654,
+                    "id": 73663,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
                     "lValueRequested": false,
                     "leftHandSide": {
-                      "id": 73649,
+                      "id": 73658,
                       "name": "mockEntitlement",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 73622,
+                      "referencedDeclaration": 73631,
                       "src": "1341:15:300",
                       "typeDescriptions": {
-                        "typeIdentifier": "t_contract$_MockUserEntitlement_$51041",
+                        "typeIdentifier": "t_contract$_MockUserEntitlement_$51048",
                         "typeString": "contract MockUserEntitlement"
                       }
                     },
@@ -2579,7 +2579,7 @@
                       "arguments": [],
                       "expression": {
                         "argumentTypes": [],
-                        "id": 73652,
+                        "id": 73661,
                         "isConstant": false,
                         "isLValue": false,
                         "isPure": false,
@@ -2587,31 +2587,31 @@
                         "nodeType": "NewExpression",
                         "src": "1359:23:300",
                         "typeDescriptions": {
-                          "typeIdentifier": "t_function_creation_nonpayable$__$returns$_t_contract$_MockUserEntitlement_$51041_$",
+                          "typeIdentifier": "t_function_creation_nonpayable$__$returns$_t_contract$_MockUserEntitlement_$51048_$",
                           "typeString": "function () returns (contract MockUserEntitlement)"
                         },
                         "typeName": {
-                          "id": 73651,
+                          "id": 73660,
                           "nodeType": "UserDefinedTypeName",
                           "pathNode": {
-                            "id": 73650,
+                            "id": 73659,
                             "name": "MockUserEntitlement",
                             "nameLocations": [
                               "1363:19:300"
                             ],
                             "nodeType": "IdentifierPath",
-                            "referencedDeclaration": 51041,
+                            "referencedDeclaration": 51048,
                             "src": "1363:19:300"
                           },
-                          "referencedDeclaration": 51041,
+                          "referencedDeclaration": 51048,
                           "src": "1363:19:300",
                           "typeDescriptions": {
-                            "typeIdentifier": "t_contract$_MockUserEntitlement_$51041",
+                            "typeIdentifier": "t_contract$_MockUserEntitlement_$51048",
                             "typeString": "contract MockUserEntitlement"
                           }
                         }
                       },
-                      "id": 73653,
+                      "id": 73662,
                       "isConstant": false,
                       "isLValue": false,
                       "isPure": false,
@@ -2623,17 +2623,17 @@
                       "src": "1359:25:300",
                       "tryCall": false,
                       "typeDescriptions": {
-                        "typeIdentifier": "t_contract$_MockUserEntitlement_$51041",
+                        "typeIdentifier": "t_contract$_MockUserEntitlement_$51048",
                         "typeString": "contract MockUserEntitlement"
                       }
                     },
                     "src": "1341:43:300",
                     "typeDescriptions": {
-                      "typeIdentifier": "t_contract$_MockUserEntitlement_$51041",
+                      "typeIdentifier": "t_contract$_MockUserEntitlement_$51048",
                       "typeString": "contract MockUserEntitlement"
                     }
                   },
-                  "id": 73655,
+                  "id": 73664,
                   "nodeType": "ExpressionStatement",
                   "src": "1341:43:300"
                 },
@@ -2643,14 +2643,14 @@
                       {
                         "arguments": [
                           {
-                            "id": 73661,
+                            "id": 73670,
                             "name": "mockImmutableEntitlement",
                             "nodeType": "Identifier",
                             "overloadedDeclarations": [],
-                            "referencedDeclaration": 73619,
+                            "referencedDeclaration": 73628,
                             "src": "1425:24:300",
                             "typeDescriptions": {
-                              "typeIdentifier": "t_contract$_MockUserEntitlement_$51041",
+                              "typeIdentifier": "t_contract$_MockUserEntitlement_$51048",
                               "typeString": "contract MockUserEntitlement"
                             }
                           }
@@ -2658,11 +2658,11 @@
                         "expression": {
                           "argumentTypes": [
                             {
-                              "typeIdentifier": "t_contract$_MockUserEntitlement_$51041",
+                              "typeIdentifier": "t_contract$_MockUserEntitlement_$51048",
                               "typeString": "contract MockUserEntitlement"
                             }
                           ],
-                          "id": 73660,
+                          "id": 73669,
                           "isConstant": false,
                           "isLValue": false,
                           "isPure": true,
@@ -2674,14 +2674,14 @@
                             "typeString": "type(address)"
                           },
                           "typeName": {
-                            "id": 73659,
+                            "id": 73668,
                             "name": "address",
                             "nodeType": "ElementaryTypeName",
                             "src": "1417:7:300",
                             "typeDescriptions": {}
                           }
                         },
-                        "id": 73662,
+                        "id": 73671,
                         "isConstant": false,
                         "isLValue": false,
                         "isPure": false,
@@ -2706,18 +2706,18 @@
                         }
                       ],
                       "expression": {
-                        "id": 73656,
+                        "id": 73665,
                         "name": "immutableEntitlements",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 73627,
+                        "referencedDeclaration": 73636,
                         "src": "1390:21:300",
                         "typeDescriptions": {
                           "typeIdentifier": "t_array$_t_address_$dyn_storage",
                           "typeString": "address[] storage ref"
                         }
                       },
-                      "id": 73658,
+                      "id": 73667,
                       "isConstant": false,
                       "isLValue": false,
                       "isPure": false,
@@ -2731,7 +2731,7 @@
                         "typeString": "function (address[] storage pointer,address)"
                       }
                     },
-                    "id": 73663,
+                    "id": 73672,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -2747,14 +2747,14 @@
                       "typeString": "tuple()"
                     }
                   },
-                  "id": 73664,
+                  "id": 73673,
                   "nodeType": "ExpressionStatement",
                   "src": "1390:61:300"
                 }
               ]
             },
             "baseFunctions": [
-              40790
+              40797
             ],
             "functionSelector": "0a9254e4",
             "implemented": true,
@@ -2763,88 +2763,88 @@
             "name": "setUp",
             "nameLocation": "1185:5:300",
             "overrides": {
-              "id": 73629,
+              "id": 73638,
               "nodeType": "OverrideSpecifier",
               "overrides": [],
               "src": "1200:8:300"
             },
             "parameters": {
-              "id": 73628,
+              "id": 73637,
               "nodeType": "ParameterList",
               "parameters": [],
               "src": "1190:2:300"
             },
             "returnParameters": {
-              "id": 73630,
+              "id": 73639,
               "nodeType": "ParameterList",
               "parameters": [],
               "src": "1209:0:300"
             },
-            "scope": 73806,
+            "scope": 73815,
             "stateMutability": "nonpayable",
             "virtual": false,
             "visibility": "public"
           },
           {
-            "id": 73805,
+            "id": 73814,
             "nodeType": "FunctionDefinition",
             "src": "1460:1087:300",
             "nodes": [],
             "body": {
-              "id": 73804,
+              "id": 73813,
               "nodeType": "Block",
               "src": "1555:992:300",
               "nodes": [],
               "statements": [
                 {
                   "assignments": [
-                    73675
+                    73684
                   ],
                   "declarations": [
                     {
                       "constant": false,
-                      "id": 73675,
+                      "id": 73684,
                       "mutability": "mutable",
                       "name": "tokenOwnableHelper",
                       "nameLocation": "1580:18:300",
                       "nodeType": "VariableDeclaration",
-                      "scope": 73804,
+                      "scope": 73813,
                       "src": "1561:37:300",
                       "stateVariable": false,
                       "storageLocation": "default",
                       "typeDescriptions": {
-                        "typeIdentifier": "t_contract$_TokenOwnableHelper_$45956",
+                        "typeIdentifier": "t_contract$_TokenOwnableHelper_$45963",
                         "typeString": "contract TokenOwnableHelper"
                       },
                       "typeName": {
-                        "id": 73674,
+                        "id": 73683,
                         "nodeType": "UserDefinedTypeName",
                         "pathNode": {
-                          "id": 73673,
+                          "id": 73682,
                           "name": "TokenOwnableHelper",
                           "nameLocations": [
                             "1561:18:300"
                           ],
                           "nodeType": "IdentifierPath",
-                          "referencedDeclaration": 45956,
+                          "referencedDeclaration": 45963,
                           "src": "1561:18:300"
                         },
-                        "referencedDeclaration": 45956,
+                        "referencedDeclaration": 45963,
                         "src": "1561:18:300",
                         "typeDescriptions": {
-                          "typeIdentifier": "t_contract$_TokenOwnableHelper_$45956",
+                          "typeIdentifier": "t_contract$_TokenOwnableHelper_$45963",
                           "typeString": "contract TokenOwnableHelper"
                         }
                       },
                       "visibility": "internal"
                     }
                   ],
-                  "id": 73680,
+                  "id": 73689,
                   "initialValue": {
                     "arguments": [],
                     "expression": {
                       "argumentTypes": [],
-                      "id": 73678,
+                      "id": 73687,
                       "isConstant": false,
                       "isLValue": false,
                       "isPure": false,
@@ -2852,31 +2852,31 @@
                       "nodeType": "NewExpression",
                       "src": "1601:22:300",
                       "typeDescriptions": {
-                        "typeIdentifier": "t_function_creation_nonpayable$__$returns$_t_contract$_TokenOwnableHelper_$45956_$",
+                        "typeIdentifier": "t_function_creation_nonpayable$__$returns$_t_contract$_TokenOwnableHelper_$45963_$",
                         "typeString": "function () returns (contract TokenOwnableHelper)"
                       },
                       "typeName": {
-                        "id": 73677,
+                        "id": 73686,
                         "nodeType": "UserDefinedTypeName",
                         "pathNode": {
-                          "id": 73676,
+                          "id": 73685,
                           "name": "TokenOwnableHelper",
                           "nameLocations": [
                             "1605:18:300"
                           ],
                           "nodeType": "IdentifierPath",
-                          "referencedDeclaration": 45956,
+                          "referencedDeclaration": 45963,
                           "src": "1605:18:300"
                         },
-                        "referencedDeclaration": 45956,
+                        "referencedDeclaration": 45963,
                         "src": "1605:18:300",
                         "typeDescriptions": {
-                          "typeIdentifier": "t_contract$_TokenOwnableHelper_$45956",
+                          "typeIdentifier": "t_contract$_TokenOwnableHelper_$45963",
                           "typeString": "contract TokenOwnableHelper"
                         }
                       }
                     },
-                    "id": 73679,
+                    "id": 73688,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -2888,7 +2888,7 @@
                     "src": "1601:24:300",
                     "tryCall": false,
                     "typeDescriptions": {
-                      "typeIdentifier": "t_contract$_TokenOwnableHelper_$45956",
+                      "typeIdentifier": "t_contract$_TokenOwnableHelper_$45963",
                       "typeString": "contract TokenOwnableHelper"
                     }
                   },
@@ -2897,53 +2897,53 @@
                 },
                 {
                   "assignments": [
-                    73683
+                    73692
                   ],
                   "declarations": [
                     {
                       "constant": false,
-                      "id": 73683,
+                      "id": 73692,
                       "mutability": "mutable",
                       "name": "channelsHelper",
                       "nameLocation": "1646:14:300",
                       "nodeType": "VariableDeclaration",
-                      "scope": 73804,
+                      "scope": 73813,
                       "src": "1631:29:300",
                       "stateVariable": false,
                       "storageLocation": "default",
                       "typeDescriptions": {
-                        "typeIdentifier": "t_contract$_ChannelsHelper_$72940",
+                        "typeIdentifier": "t_contract$_ChannelsHelper_$72949",
                         "typeString": "contract ChannelsHelper"
                       },
                       "typeName": {
-                        "id": 73682,
+                        "id": 73691,
                         "nodeType": "UserDefinedTypeName",
                         "pathNode": {
-                          "id": 73681,
+                          "id": 73690,
                           "name": "ChannelsHelper",
                           "nameLocations": [
                             "1631:14:300"
                           ],
                           "nodeType": "IdentifierPath",
-                          "referencedDeclaration": 72940,
+                          "referencedDeclaration": 72949,
                           "src": "1631:14:300"
                         },
-                        "referencedDeclaration": 72940,
+                        "referencedDeclaration": 72949,
                         "src": "1631:14:300",
                         "typeDescriptions": {
-                          "typeIdentifier": "t_contract$_ChannelsHelper_$72940",
+                          "typeIdentifier": "t_contract$_ChannelsHelper_$72949",
                           "typeString": "contract ChannelsHelper"
                         }
                       },
                       "visibility": "internal"
                     }
                   ],
-                  "id": 73688,
+                  "id": 73697,
                   "initialValue": {
                     "arguments": [],
                     "expression": {
                       "argumentTypes": [],
-                      "id": 73686,
+                      "id": 73695,
                       "isConstant": false,
                       "isLValue": false,
                       "isPure": false,
@@ -2951,31 +2951,31 @@
                       "nodeType": "NewExpression",
                       "src": "1663:18:300",
                       "typeDescriptions": {
-                        "typeIdentifier": "t_function_creation_nonpayable$__$returns$_t_contract$_ChannelsHelper_$72940_$",
+                        "typeIdentifier": "t_function_creation_nonpayable$__$returns$_t_contract$_ChannelsHelper_$72949_$",
                         "typeString": "function () returns (contract ChannelsHelper)"
                       },
                       "typeName": {
-                        "id": 73685,
+                        "id": 73694,
                         "nodeType": "UserDefinedTypeName",
                         "pathNode": {
-                          "id": 73684,
+                          "id": 73693,
                           "name": "ChannelsHelper",
                           "nameLocations": [
                             "1667:14:300"
                           ],
                           "nodeType": "IdentifierPath",
-                          "referencedDeclaration": 72940,
+                          "referencedDeclaration": 72949,
                           "src": "1667:14:300"
                         },
-                        "referencedDeclaration": 72940,
+                        "referencedDeclaration": 72949,
                         "src": "1667:14:300",
                         "typeDescriptions": {
-                          "typeIdentifier": "t_contract$_ChannelsHelper_$72940",
+                          "typeIdentifier": "t_contract$_ChannelsHelper_$72949",
                           "typeString": "contract ChannelsHelper"
                         }
                       }
                     },
-                    "id": 73687,
+                    "id": 73696,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -2987,7 +2987,7 @@
                     "src": "1663:20:300",
                     "tryCall": false,
                     "typeDescriptions": {
-                      "typeIdentifier": "t_contract$_ChannelsHelper_$72940",
+                      "typeIdentifier": "t_contract$_ChannelsHelper_$72949",
                       "typeString": "contract ChannelsHelper"
                     }
                   },
@@ -2996,53 +2996,53 @@
                 },
                 {
                   "assignments": [
-                    73691
+                    73700
                   ],
                   "declarations": [
                     {
                       "constant": false,
-                      "id": 73691,
+                      "id": 73700,
                       "mutability": "mutable",
                       "name": "rolesHelper",
                       "nameLocation": "1701:11:300",
                       "nodeType": "VariableDeclaration",
-                      "scope": 73804,
+                      "scope": 73813,
                       "src": "1689:23:300",
                       "stateVariable": false,
                       "storageLocation": "default",
                       "typeDescriptions": {
-                        "typeIdentifier": "t_contract$_RolesHelper_$82100",
+                        "typeIdentifier": "t_contract$_RolesHelper_$82109",
                         "typeString": "contract RolesHelper"
                       },
                       "typeName": {
-                        "id": 73690,
+                        "id": 73699,
                         "nodeType": "UserDefinedTypeName",
                         "pathNode": {
-                          "id": 73689,
+                          "id": 73698,
                           "name": "RolesHelper",
                           "nameLocations": [
                             "1689:11:300"
                           ],
                           "nodeType": "IdentifierPath",
-                          "referencedDeclaration": 82100,
+                          "referencedDeclaration": 82109,
                           "src": "1689:11:300"
                         },
-                        "referencedDeclaration": 82100,
+                        "referencedDeclaration": 82109,
                         "src": "1689:11:300",
                         "typeDescriptions": {
-                          "typeIdentifier": "t_contract$_RolesHelper_$82100",
+                          "typeIdentifier": "t_contract$_RolesHelper_$82109",
                           "typeString": "contract RolesHelper"
                         }
                       },
                       "visibility": "internal"
                     }
                   ],
-                  "id": 73696,
+                  "id": 73705,
                   "initialValue": {
                     "arguments": [],
                     "expression": {
                       "argumentTypes": [],
-                      "id": 73694,
+                      "id": 73703,
                       "isConstant": false,
                       "isLValue": false,
                       "isPure": false,
@@ -3050,31 +3050,31 @@
                       "nodeType": "NewExpression",
                       "src": "1715:15:300",
                       "typeDescriptions": {
-                        "typeIdentifier": "t_function_creation_nonpayable$__$returns$_t_contract$_RolesHelper_$82100_$",
+                        "typeIdentifier": "t_function_creation_nonpayable$__$returns$_t_contract$_RolesHelper_$82109_$",
                         "typeString": "function () returns (contract RolesHelper)"
                       },
                       "typeName": {
-                        "id": 73693,
+                        "id": 73702,
                         "nodeType": "UserDefinedTypeName",
                         "pathNode": {
-                          "id": 73692,
+                          "id": 73701,
                           "name": "RolesHelper",
                           "nameLocations": [
                             "1719:11:300"
                           ],
                           "nodeType": "IdentifierPath",
-                          "referencedDeclaration": 82100,
+                          "referencedDeclaration": 82109,
                           "src": "1719:11:300"
                         },
-                        "referencedDeclaration": 82100,
+                        "referencedDeclaration": 82109,
                         "src": "1719:11:300",
                         "typeDescriptions": {
-                          "typeIdentifier": "t_contract$_RolesHelper_$82100",
+                          "typeIdentifier": "t_contract$_RolesHelper_$82109",
                           "typeString": "contract RolesHelper"
                         }
                       }
                     },
-                    "id": 73695,
+                    "id": 73704,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -3086,7 +3086,7 @@
                     "src": "1715:17:300",
                     "tryCall": false,
                     "typeDescriptions": {
-                      "typeIdentifier": "t_contract$_RolesHelper_$82100",
+                      "typeIdentifier": "t_contract$_RolesHelper_$82109",
                       "typeString": "contract RolesHelper"
                     }
                   },
@@ -3095,53 +3095,53 @@
                 },
                 {
                   "assignments": [
-                    73699
+                    73708
                   ],
                   "declarations": [
                     {
                       "constant": false,
-                      "id": 73699,
+                      "id": 73708,
                       "mutability": "mutable",
                       "name": "entitlementsHelper",
                       "nameLocation": "1757:18:300",
                       "nodeType": "VariableDeclaration",
-                      "scope": 73804,
+                      "scope": 73813,
                       "src": "1738:37:300",
                       "stateVariable": false,
                       "storageLocation": "default",
                       "typeDescriptions": {
-                        "typeIdentifier": "t_contract$_EntitlementsHelper_$73939",
+                        "typeIdentifier": "t_contract$_EntitlementsHelper_$73948",
                         "typeString": "contract EntitlementsHelper"
                       },
                       "typeName": {
-                        "id": 73698,
+                        "id": 73707,
                         "nodeType": "UserDefinedTypeName",
                         "pathNode": {
-                          "id": 73697,
+                          "id": 73706,
                           "name": "EntitlementsHelper",
                           "nameLocations": [
                             "1738:18:300"
                           ],
                           "nodeType": "IdentifierPath",
-                          "referencedDeclaration": 73939,
+                          "referencedDeclaration": 73948,
                           "src": "1738:18:300"
                         },
-                        "referencedDeclaration": 73939,
+                        "referencedDeclaration": 73948,
                         "src": "1738:18:300",
                         "typeDescriptions": {
-                          "typeIdentifier": "t_contract$_EntitlementsHelper_$73939",
+                          "typeIdentifier": "t_contract$_EntitlementsHelper_$73948",
                           "typeString": "contract EntitlementsHelper"
                         }
                       },
                       "visibility": "internal"
                     }
                   ],
-                  "id": 73704,
+                  "id": 73713,
                   "initialValue": {
                     "arguments": [],
                     "expression": {
                       "argumentTypes": [],
-                      "id": 73702,
+                      "id": 73711,
                       "isConstant": false,
                       "isLValue": false,
                       "isPure": false,
@@ -3149,31 +3149,31 @@
                       "nodeType": "NewExpression",
                       "src": "1778:22:300",
                       "typeDescriptions": {
-                        "typeIdentifier": "t_function_creation_nonpayable$__$returns$_t_contract$_EntitlementsHelper_$73939_$",
+                        "typeIdentifier": "t_function_creation_nonpayable$__$returns$_t_contract$_EntitlementsHelper_$73948_$",
                         "typeString": "function () returns (contract EntitlementsHelper)"
                       },
                       "typeName": {
-                        "id": 73701,
+                        "id": 73710,
                         "nodeType": "UserDefinedTypeName",
                         "pathNode": {
-                          "id": 73700,
+                          "id": 73709,
                           "name": "EntitlementsHelper",
                           "nameLocations": [
                             "1782:18:300"
                           ],
                           "nodeType": "IdentifierPath",
-                          "referencedDeclaration": 73939,
+                          "referencedDeclaration": 73948,
                           "src": "1782:18:300"
                         },
-                        "referencedDeclaration": 73939,
+                        "referencedDeclaration": 73948,
                         "src": "1782:18:300",
                         "typeDescriptions": {
-                          "typeIdentifier": "t_contract$_EntitlementsHelper_$73939",
+                          "typeIdentifier": "t_contract$_EntitlementsHelper_$73948",
                           "typeString": "contract EntitlementsHelper"
                         }
                       }
                     },
-                    "id": 73703,
+                    "id": 73712,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -3185,7 +3185,7 @@
                     "src": "1778:24:300",
                     "tryCall": false,
                     "typeDescriptions": {
-                      "typeIdentifier": "t_contract$_EntitlementsHelper_$73939",
+                      "typeIdentifier": "t_contract$_EntitlementsHelper_$73948",
                       "typeString": "contract EntitlementsHelper"
                     }
                   },
@@ -3194,20 +3194,20 @@
                 },
                 {
                   "expression": {
-                    "id": 73710,
+                    "id": 73719,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
                     "lValueRequested": false,
                     "leftHandSide": {
-                      "id": 73705,
+                      "id": 73714,
                       "name": "token",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 73616,
+                      "referencedDeclaration": 73625,
                       "src": "1809:5:300",
                       "typeDescriptions": {
-                        "typeIdentifier": "t_contract$_MockERC721_$49684",
+                        "typeIdentifier": "t_contract$_MockERC721_$49691",
                         "typeString": "contract MockERC721"
                       }
                     },
@@ -3217,7 +3217,7 @@
                       "arguments": [],
                       "expression": {
                         "argumentTypes": [],
-                        "id": 73708,
+                        "id": 73717,
                         "isConstant": false,
                         "isLValue": false,
                         "isPure": false,
@@ -3225,31 +3225,31 @@
                         "nodeType": "NewExpression",
                         "src": "1817:14:300",
                         "typeDescriptions": {
-                          "typeIdentifier": "t_function_creation_nonpayable$__$returns$_t_contract$_MockERC721_$49684_$",
+                          "typeIdentifier": "t_function_creation_nonpayable$__$returns$_t_contract$_MockERC721_$49691_$",
                           "typeString": "function () returns (contract MockERC721)"
                         },
                         "typeName": {
-                          "id": 73707,
+                          "id": 73716,
                           "nodeType": "UserDefinedTypeName",
                           "pathNode": {
-                            "id": 73706,
+                            "id": 73715,
                             "name": "MockERC721",
                             "nameLocations": [
                               "1821:10:300"
                             ],
                             "nodeType": "IdentifierPath",
-                            "referencedDeclaration": 49684,
+                            "referencedDeclaration": 49691,
                             "src": "1821:10:300"
                           },
-                          "referencedDeclaration": 49684,
+                          "referencedDeclaration": 49691,
                           "src": "1821:10:300",
                           "typeDescriptions": {
-                            "typeIdentifier": "t_contract$_MockERC721_$49684",
+                            "typeIdentifier": "t_contract$_MockERC721_$49691",
                             "typeString": "contract MockERC721"
                           }
                         }
                       },
-                      "id": 73709,
+                      "id": 73718,
                       "isConstant": false,
                       "isLValue": false,
                       "isPure": false,
@@ -3261,33 +3261,33 @@
                       "src": "1817:16:300",
                       "tryCall": false,
                       "typeDescriptions": {
-                        "typeIdentifier": "t_contract$_MockERC721_$49684",
+                        "typeIdentifier": "t_contract$_MockERC721_$49691",
                         "typeString": "contract MockERC721"
                       }
                     },
                     "src": "1809:24:300",
                     "typeDescriptions": {
-                      "typeIdentifier": "t_contract$_MockERC721_$49684",
+                      "typeIdentifier": "t_contract$_MockERC721_$49691",
                       "typeString": "contract MockERC721"
                     }
                   },
-                  "id": 73711,
+                  "id": 73720,
                   "nodeType": "ExpressionStatement",
                   "src": "1809:24:300"
                 },
                 {
                   "assignments": [
-                    73713
+                    73722
                   ],
                   "declarations": [
                     {
                       "constant": false,
-                      "id": 73713,
+                      "id": 73722,
                       "mutability": "mutable",
                       "name": "cutCount",
                       "nameLocation": "1848:8:300",
                       "nodeType": "VariableDeclaration",
-                      "scope": 73804,
+                      "scope": 73813,
                       "src": "1840:16:300",
                       "stateVariable": false,
                       "storageLocation": "default",
@@ -3296,7 +3296,7 @@
                         "typeString": "uint256"
                       },
                       "typeName": {
-                        "id": 73712,
+                        "id": 73721,
                         "name": "uint256",
                         "nodeType": "ElementaryTypeName",
                         "src": "1840:7:300",
@@ -3308,10 +3308,10 @@
                       "visibility": "internal"
                     }
                   ],
-                  "id": 73715,
+                  "id": 73724,
                   "initialValue": {
                     "hexValue": "34",
-                    "id": 73714,
+                    "id": 73723,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": true,
@@ -3330,17 +3330,17 @@
                 },
                 {
                   "assignments": [
-                    73721
+                    73730
                   ],
                   "declarations": [
                     {
                       "constant": false,
-                      "id": 73721,
+                      "id": 73730,
                       "mutability": "mutable",
                       "name": "cuts",
                       "nameLocation": "1894:4:300",
                       "nodeType": "VariableDeclaration",
-                      "scope": 73804,
+                      "scope": 73813,
                       "src": "1867:31:300",
                       "stateVariable": false,
                       "storageLocation": "memory",
@@ -3350,10 +3350,10 @@
                       },
                       "typeName": {
                         "baseType": {
-                          "id": 73719,
+                          "id": 73728,
                           "nodeType": "UserDefinedTypeName",
                           "pathNode": {
-                            "id": 73718,
+                            "id": 73727,
                             "name": "IDiamond.FacetCut",
                             "nameLocations": [
                               "1867:8:300",
@@ -3370,7 +3370,7 @@
                             "typeString": "struct IDiamond.FacetCut"
                           }
                         },
-                        "id": 73720,
+                        "id": 73729,
                         "nodeType": "ArrayTypeName",
                         "src": "1867:19:300",
                         "typeDescriptions": {
@@ -3381,15 +3381,15 @@
                       "visibility": "internal"
                     }
                   ],
-                  "id": 73728,
+                  "id": 73737,
                   "initialValue": {
                     "arguments": [
                       {
-                        "id": 73726,
+                        "id": 73735,
                         "name": "cutCount",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 73713,
+                        "referencedDeclaration": 73722,
                         "src": "1925:8:300",
                         "typeDescriptions": {
                           "typeIdentifier": "t_uint256",
@@ -3404,7 +3404,7 @@
                           "typeString": "uint256"
                         }
                       ],
-                      "id": 73725,
+                      "id": 73734,
                       "isConstant": false,
                       "isLValue": false,
                       "isPure": true,
@@ -3417,10 +3417,10 @@
                       },
                       "typeName": {
                         "baseType": {
-                          "id": 73723,
+                          "id": 73732,
                           "nodeType": "UserDefinedTypeName",
                           "pathNode": {
-                            "id": 73722,
+                            "id": 73731,
                             "name": "IDiamond.FacetCut",
                             "nameLocations": [
                               "1905:8:300",
@@ -3437,7 +3437,7 @@
                             "typeString": "struct IDiamond.FacetCut"
                           }
                         },
-                        "id": 73724,
+                        "id": 73733,
                         "nodeType": "ArrayTypeName",
                         "src": "1905:19:300",
                         "typeDescriptions": {
@@ -3446,7 +3446,7 @@
                         }
                       }
                     },
-                    "id": 73727,
+                    "id": 73736,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -3467,28 +3467,28 @@
                 },
                 {
                   "expression": {
-                    "id": 73738,
+                    "id": 73747,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
                     "lValueRequested": false,
                     "leftHandSide": {
                       "baseExpression": {
-                        "id": 73729,
+                        "id": 73738,
                         "name": "cuts",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 73721,
+                        "referencedDeclaration": 73730,
                         "src": "1940:4:300",
                         "typeDescriptions": {
                           "typeIdentifier": "t_array$_t_struct$_FacetCut_$5969_memory_ptr_$dyn_memory_ptr",
                           "typeString": "struct IDiamond.FacetCut memory[] memory"
                         }
                       },
-                      "id": 73731,
+                      "id": 73740,
                       "indexExpression": {
                         "hexValue": "30",
-                        "id": 73730,
+                        "id": 73739,
                         "isConstant": false,
                         "isLValue": false,
                         "isPure": true,
@@ -3520,7 +3520,7 @@
                         {
                           "expression": {
                             "expression": {
-                              "id": 73734,
+                              "id": 73743,
                               "name": "IDiamond",
                               "nodeType": "Identifier",
                               "overloadedDeclarations": [],
@@ -3531,7 +3531,7 @@
                                 "typeString": "type(contract IDiamond)"
                               }
                             },
-                            "id": 73735,
+                            "id": 73744,
                             "isConstant": false,
                             "isLValue": false,
                             "isPure": false,
@@ -3546,7 +3546,7 @@
                               "typeString": "type(enum IDiamond.FacetCutAction)"
                             }
                           },
-                          "id": 73736,
+                          "id": 73745,
                           "isConstant": false,
                           "isLValue": false,
                           "isPure": true,
@@ -3570,18 +3570,18 @@
                           }
                         ],
                         "expression": {
-                          "id": 73732,
+                          "id": 73741,
                           "name": "tokenOwnableHelper",
                           "nodeType": "Identifier",
                           "overloadedDeclarations": [],
-                          "referencedDeclaration": 73675,
+                          "referencedDeclaration": 73684,
                           "src": "1950:18:300",
                           "typeDescriptions": {
-                            "typeIdentifier": "t_contract$_TokenOwnableHelper_$45956",
+                            "typeIdentifier": "t_contract$_TokenOwnableHelper_$45963",
                             "typeString": "contract TokenOwnableHelper"
                           }
                         },
-                        "id": 73733,
+                        "id": 73742,
                         "isConstant": false,
                         "isLValue": false,
                         "isPure": false,
@@ -3589,14 +3589,14 @@
                         "memberLocation": "1969:7:300",
                         "memberName": "makeCut",
                         "nodeType": "MemberAccess",
-                        "referencedDeclaration": 40834,
+                        "referencedDeclaration": 40841,
                         "src": "1950:26:300",
                         "typeDescriptions": {
                           "typeIdentifier": "t_function_external_nonpayable$_t_enum$_FacetCutAction_$5959_$returns$_t_struct$_FacetCut_$5969_memory_ptr_$",
                           "typeString": "function (enum IDiamond.FacetCutAction) external returns (struct IDiamond.FacetCut memory)"
                         }
                       },
-                      "id": 73737,
+                      "id": 73746,
                       "isConstant": false,
                       "isLValue": false,
                       "isPure": false,
@@ -3618,34 +3618,34 @@
                       "typeString": "struct IDiamond.FacetCut memory"
                     }
                   },
-                  "id": 73739,
+                  "id": 73748,
                   "nodeType": "ExpressionStatement",
                   "src": "1940:65:300"
                 },
                 {
                   "expression": {
-                    "id": 73749,
+                    "id": 73758,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
                     "lValueRequested": false,
                     "leftHandSide": {
                       "baseExpression": {
-                        "id": 73740,
+                        "id": 73749,
                         "name": "cuts",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 73721,
+                        "referencedDeclaration": 73730,
                         "src": "2011:4:300",
                         "typeDescriptions": {
                           "typeIdentifier": "t_array$_t_struct$_FacetCut_$5969_memory_ptr_$dyn_memory_ptr",
                           "typeString": "struct IDiamond.FacetCut memory[] memory"
                         }
                       },
-                      "id": 73742,
+                      "id": 73751,
                       "indexExpression": {
                         "hexValue": "31",
-                        "id": 73741,
+                        "id": 73750,
                         "isConstant": false,
                         "isLValue": false,
                         "isPure": true,
@@ -3677,7 +3677,7 @@
                         {
                           "expression": {
                             "expression": {
-                              "id": 73745,
+                              "id": 73754,
                               "name": "IDiamond",
                               "nodeType": "Identifier",
                               "overloadedDeclarations": [],
@@ -3688,7 +3688,7 @@
                                 "typeString": "type(contract IDiamond)"
                               }
                             },
-                            "id": 73746,
+                            "id": 73755,
                             "isConstant": false,
                             "isLValue": false,
                             "isPure": false,
@@ -3703,7 +3703,7 @@
                               "typeString": "type(enum IDiamond.FacetCutAction)"
                             }
                           },
-                          "id": 73747,
+                          "id": 73756,
                           "isConstant": false,
                           "isLValue": false,
                           "isPure": true,
@@ -3727,18 +3727,18 @@
                           }
                         ],
                         "expression": {
-                          "id": 73743,
+                          "id": 73752,
                           "name": "channelsHelper",
                           "nodeType": "Identifier",
                           "overloadedDeclarations": [],
-                          "referencedDeclaration": 73683,
+                          "referencedDeclaration": 73692,
                           "src": "2021:14:300",
                           "typeDescriptions": {
-                            "typeIdentifier": "t_contract$_ChannelsHelper_$72940",
+                            "typeIdentifier": "t_contract$_ChannelsHelper_$72949",
                             "typeString": "contract ChannelsHelper"
                           }
                         },
-                        "id": 73744,
+                        "id": 73753,
                         "isConstant": false,
                         "isLValue": false,
                         "isPure": false,
@@ -3746,14 +3746,14 @@
                         "memberLocation": "2036:7:300",
                         "memberName": "makeCut",
                         "nodeType": "MemberAccess",
-                        "referencedDeclaration": 40834,
+                        "referencedDeclaration": 40841,
                         "src": "2021:22:300",
                         "typeDescriptions": {
                           "typeIdentifier": "t_function_external_nonpayable$_t_enum$_FacetCutAction_$5959_$returns$_t_struct$_FacetCut_$5969_memory_ptr_$",
                           "typeString": "function (enum IDiamond.FacetCutAction) external returns (struct IDiamond.FacetCut memory)"
                         }
                       },
-                      "id": 73748,
+                      "id": 73757,
                       "isConstant": false,
                       "isLValue": false,
                       "isPure": false,
@@ -3775,34 +3775,34 @@
                       "typeString": "struct IDiamond.FacetCut memory"
                     }
                   },
-                  "id": 73750,
+                  "id": 73759,
                   "nodeType": "ExpressionStatement",
                   "src": "2011:61:300"
                 },
                 {
                   "expression": {
-                    "id": 73760,
+                    "id": 73769,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
                     "lValueRequested": false,
                     "leftHandSide": {
                       "baseExpression": {
-                        "id": 73751,
+                        "id": 73760,
                         "name": "cuts",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 73721,
+                        "referencedDeclaration": 73730,
                         "src": "2078:4:300",
                         "typeDescriptions": {
                           "typeIdentifier": "t_array$_t_struct$_FacetCut_$5969_memory_ptr_$dyn_memory_ptr",
                           "typeString": "struct IDiamond.FacetCut memory[] memory"
                         }
                       },
-                      "id": 73753,
+                      "id": 73762,
                       "indexExpression": {
                         "hexValue": "32",
-                        "id": 73752,
+                        "id": 73761,
                         "isConstant": false,
                         "isLValue": false,
                         "isPure": true,
@@ -3834,7 +3834,7 @@
                         {
                           "expression": {
                             "expression": {
-                              "id": 73756,
+                              "id": 73765,
                               "name": "IDiamond",
                               "nodeType": "Identifier",
                               "overloadedDeclarations": [],
@@ -3845,7 +3845,7 @@
                                 "typeString": "type(contract IDiamond)"
                               }
                             },
-                            "id": 73757,
+                            "id": 73766,
                             "isConstant": false,
                             "isLValue": false,
                             "isPure": false,
@@ -3860,7 +3860,7 @@
                               "typeString": "type(enum IDiamond.FacetCutAction)"
                             }
                           },
-                          "id": 73758,
+                          "id": 73767,
                           "isConstant": false,
                           "isLValue": false,
                           "isPure": true,
@@ -3884,18 +3884,18 @@
                           }
                         ],
                         "expression": {
-                          "id": 73754,
+                          "id": 73763,
                           "name": "rolesHelper",
                           "nodeType": "Identifier",
                           "overloadedDeclarations": [],
-                          "referencedDeclaration": 73691,
+                          "referencedDeclaration": 73700,
                           "src": "2088:11:300",
                           "typeDescriptions": {
-                            "typeIdentifier": "t_contract$_RolesHelper_$82100",
+                            "typeIdentifier": "t_contract$_RolesHelper_$82109",
                             "typeString": "contract RolesHelper"
                           }
                         },
-                        "id": 73755,
+                        "id": 73764,
                         "isConstant": false,
                         "isLValue": false,
                         "isPure": false,
@@ -3903,14 +3903,14 @@
                         "memberLocation": "2100:7:300",
                         "memberName": "makeCut",
                         "nodeType": "MemberAccess",
-                        "referencedDeclaration": 40834,
+                        "referencedDeclaration": 40841,
                         "src": "2088:19:300",
                         "typeDescriptions": {
                           "typeIdentifier": "t_function_external_nonpayable$_t_enum$_FacetCutAction_$5959_$returns$_t_struct$_FacetCut_$5969_memory_ptr_$",
                           "typeString": "function (enum IDiamond.FacetCutAction) external returns (struct IDiamond.FacetCut memory)"
                         }
                       },
-                      "id": 73759,
+                      "id": 73768,
                       "isConstant": false,
                       "isLValue": false,
                       "isPure": false,
@@ -3932,34 +3932,34 @@
                       "typeString": "struct IDiamond.FacetCut memory"
                     }
                   },
-                  "id": 73761,
+                  "id": 73770,
                   "nodeType": "ExpressionStatement",
                   "src": "2078:58:300"
                 },
                 {
                   "expression": {
-                    "id": 73771,
+                    "id": 73780,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
                     "lValueRequested": false,
                     "leftHandSide": {
                       "baseExpression": {
-                        "id": 73762,
+                        "id": 73771,
                         "name": "cuts",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 73721,
+                        "referencedDeclaration": 73730,
                         "src": "2142:4:300",
                         "typeDescriptions": {
                           "typeIdentifier": "t_array$_t_struct$_FacetCut_$5969_memory_ptr_$dyn_memory_ptr",
                           "typeString": "struct IDiamond.FacetCut memory[] memory"
                         }
                       },
-                      "id": 73764,
+                      "id": 73773,
                       "indexExpression": {
                         "hexValue": "33",
-                        "id": 73763,
+                        "id": 73772,
                         "isConstant": false,
                         "isLValue": false,
                         "isPure": true,
@@ -3991,7 +3991,7 @@
                         {
                           "expression": {
                             "expression": {
-                              "id": 73767,
+                              "id": 73776,
                               "name": "IDiamond",
                               "nodeType": "Identifier",
                               "overloadedDeclarations": [],
@@ -4002,7 +4002,7 @@
                                 "typeString": "type(contract IDiamond)"
                               }
                             },
-                            "id": 73768,
+                            "id": 73777,
                             "isConstant": false,
                             "isLValue": false,
                             "isPure": false,
@@ -4017,7 +4017,7 @@
                               "typeString": "type(enum IDiamond.FacetCutAction)"
                             }
                           },
-                          "id": 73769,
+                          "id": 73778,
                           "isConstant": false,
                           "isLValue": false,
                           "isPure": true,
@@ -4041,18 +4041,18 @@
                           }
                         ],
                         "expression": {
-                          "id": 73765,
+                          "id": 73774,
                           "name": "entitlementsHelper",
                           "nodeType": "Identifier",
                           "overloadedDeclarations": [],
-                          "referencedDeclaration": 73699,
+                          "referencedDeclaration": 73708,
                           "src": "2152:18:300",
                           "typeDescriptions": {
-                            "typeIdentifier": "t_contract$_EntitlementsHelper_$73939",
+                            "typeIdentifier": "t_contract$_EntitlementsHelper_$73948",
                             "typeString": "contract EntitlementsHelper"
                           }
                         },
-                        "id": 73766,
+                        "id": 73775,
                         "isConstant": false,
                         "isLValue": false,
                         "isPure": false,
@@ -4060,14 +4060,14 @@
                         "memberLocation": "2171:7:300",
                         "memberName": "makeCut",
                         "nodeType": "MemberAccess",
-                        "referencedDeclaration": 40834,
+                        "referencedDeclaration": 40841,
                         "src": "2152:26:300",
                         "typeDescriptions": {
                           "typeIdentifier": "t_function_external_nonpayable$_t_enum$_FacetCutAction_$5959_$returns$_t_struct$_FacetCut_$5969_memory_ptr_$",
                           "typeString": "function (enum IDiamond.FacetCutAction) external returns (struct IDiamond.FacetCut memory)"
                         }
                       },
-                      "id": 73770,
+                      "id": 73779,
                       "isConstant": false,
                       "isLValue": false,
                       "isPure": false,
@@ -4089,23 +4089,23 @@
                       "typeString": "struct IDiamond.FacetCut memory"
                     }
                   },
-                  "id": 73772,
+                  "id": 73781,
                   "nodeType": "ExpressionStatement",
                   "src": "2142:65:300"
                 },
                 {
                   "expression": {
-                    "id": 73776,
+                    "id": 73785,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
                     "lValueRequested": false,
                     "leftHandSide": {
-                      "id": 73773,
+                      "id": 73782,
                       "name": "founder",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 73624,
+                      "referencedDeclaration": 73633,
                       "src": "2214:7:300",
                       "typeDescriptions": {
                         "typeIdentifier": "t_address",
@@ -4118,18 +4118,18 @@
                       "arguments": [],
                       "expression": {
                         "argumentTypes": [],
-                        "id": 73774,
+                        "id": 73783,
                         "name": "_randomAddress",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 83030,
+                        "referencedDeclaration": 83039,
                         "src": "2224:14:300",
                         "typeDescriptions": {
                           "typeIdentifier": "t_function_internal_view$__$returns$_t_address_payable_$",
                           "typeString": "function () view returns (address payable)"
                         }
                       },
-                      "id": 73775,
+                      "id": 73784,
                       "isConstant": false,
                       "isLValue": false,
                       "isPure": false,
@@ -4151,23 +4151,23 @@
                       "typeString": "address"
                     }
                   },
-                  "id": 73777,
+                  "id": 73786,
                   "nodeType": "ExpressionStatement",
                   "src": "2214:26:300"
                 },
                 {
                   "assignments": [
-                    73779
+                    73788
                   ],
                   "declarations": [
                     {
                       "constant": false,
-                      "id": 73779,
+                      "id": 73788,
                       "mutability": "mutable",
                       "name": "tokenId",
                       "nameLocation": "2254:7:300",
                       "nodeType": "VariableDeclaration",
-                      "scope": 73804,
+                      "scope": 73813,
                       "src": "2246:15:300",
                       "stateVariable": false,
                       "storageLocation": "default",
@@ -4176,7 +4176,7 @@
                         "typeString": "uint256"
                       },
                       "typeName": {
-                        "id": 73778,
+                        "id": 73787,
                         "name": "uint256",
                         "nodeType": "ElementaryTypeName",
                         "src": "2246:7:300",
@@ -4188,15 +4188,15 @@
                       "visibility": "internal"
                     }
                   ],
-                  "id": 73784,
+                  "id": 73793,
                   "initialValue": {
                     "arguments": [
                       {
-                        "id": 73782,
+                        "id": 73791,
                         "name": "founder",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 73624,
+                        "referencedDeclaration": 73633,
                         "src": "2277:7:300",
                         "typeDescriptions": {
                           "typeIdentifier": "t_address",
@@ -4212,18 +4212,18 @@
                         }
                       ],
                       "expression": {
-                        "id": 73780,
+                        "id": 73789,
                         "name": "token",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 73616,
+                        "referencedDeclaration": 73625,
                         "src": "2264:5:300",
                         "typeDescriptions": {
-                          "typeIdentifier": "t_contract$_MockERC721_$49684",
+                          "typeIdentifier": "t_contract$_MockERC721_$49691",
                           "typeString": "contract MockERC721"
                         }
                       },
-                      "id": 73781,
+                      "id": 73790,
                       "isConstant": false,
                       "isLValue": false,
                       "isPure": false,
@@ -4231,14 +4231,14 @@
                       "memberLocation": "2270:6:300",
                       "memberName": "mintTo",
                       "nodeType": "MemberAccess",
-                      "referencedDeclaration": 49645,
+                      "referencedDeclaration": 49652,
                       "src": "2264:12:300",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_external_nonpayable$_t_address_$returns$_t_uint256_$",
                         "typeString": "function (address) external returns (uint256)"
                       }
                     },
-                    "id": 73783,
+                    "id": 73792,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -4261,11 +4261,11 @@
                   "expression": {
                     "arguments": [
                       {
-                        "id": 73787,
+                        "id": 73796,
                         "name": "cuts",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 73721,
+                        "referencedDeclaration": 73730,
                         "src": "2346:4:300",
                         "typeDescriptions": {
                           "typeIdentifier": "t_array$_t_struct$_FacetCut_$5969_memory_ptr_$dyn_memory_ptr",
@@ -4277,18 +4277,18 @@
                         "expression": {
                           "argumentTypes": [],
                           "expression": {
-                            "id": 73788,
+                            "id": 73797,
                             "name": "tokenOwnableHelper",
                             "nodeType": "Identifier",
                             "overloadedDeclarations": [],
-                            "referencedDeclaration": 73675,
+                            "referencedDeclaration": 73684,
                             "src": "2366:18:300",
                             "typeDescriptions": {
-                              "typeIdentifier": "t_contract$_TokenOwnableHelper_$45956",
+                              "typeIdentifier": "t_contract$_TokenOwnableHelper_$45963",
                               "typeString": "contract TokenOwnableHelper"
                             }
                           },
-                          "id": 73789,
+                          "id": 73798,
                           "isConstant": false,
                           "isLValue": false,
                           "isPure": false,
@@ -4296,14 +4296,14 @@
                           "memberLocation": "2385:5:300",
                           "memberName": "facet",
                           "nodeType": "MemberAccess",
-                          "referencedDeclaration": 45907,
+                          "referencedDeclaration": 45914,
                           "src": "2366:24:300",
                           "typeDescriptions": {
                             "typeIdentifier": "t_function_external_view$__$returns$_t_address_$",
                             "typeString": "function () view external returns (address)"
                           }
                         },
-                        "id": 73790,
+                        "id": 73799,
                         "isConstant": false,
                         "isLValue": false,
                         "isPure": false,
@@ -4326,18 +4326,18 @@
                             "expression": {
                               "argumentTypes": [],
                               "expression": {
-                                "id": 73793,
+                                "id": 73802,
                                 "name": "tokenOwnableHelper",
                                 "nodeType": "Identifier",
                                 "overloadedDeclarations": [],
-                                "referencedDeclaration": 73675,
+                                "referencedDeclaration": 73684,
                                 "src": "2446:18:300",
                                 "typeDescriptions": {
-                                  "typeIdentifier": "t_contract$_TokenOwnableHelper_$45956",
+                                  "typeIdentifier": "t_contract$_TokenOwnableHelper_$45963",
                                   "typeString": "contract TokenOwnableHelper"
                                 }
                               },
-                              "id": 73794,
+                              "id": 73803,
                               "isConstant": false,
                               "isLValue": false,
                               "isPure": false,
@@ -4345,14 +4345,14 @@
                               "memberLocation": "2465:11:300",
                               "memberName": "initializer",
                               "nodeType": "MemberAccess",
-                              "referencedDeclaration": 45955,
+                              "referencedDeclaration": 45962,
                               "src": "2446:30:300",
                               "typeDescriptions": {
                                 "typeIdentifier": "t_function_external_pure$__$returns$_t_bytes4_$",
                                 "typeString": "function () pure external returns (bytes4)"
                               }
                             },
-                            "id": 73795,
+                            "id": 73804,
                             "isConstant": false,
                             "isLValue": false,
                             "isPure": false,
@@ -4371,14 +4371,14 @@
                           {
                             "arguments": [
                               {
-                                "id": 73798,
+                                "id": 73807,
                                 "name": "token",
                                 "nodeType": "Identifier",
                                 "overloadedDeclarations": [],
-                                "referencedDeclaration": 73616,
+                                "referencedDeclaration": 73625,
                                 "src": "2498:5:300",
                                 "typeDescriptions": {
-                                  "typeIdentifier": "t_contract$_MockERC721_$49684",
+                                  "typeIdentifier": "t_contract$_MockERC721_$49691",
                                   "typeString": "contract MockERC721"
                                 }
                               }
@@ -4386,11 +4386,11 @@
                             "expression": {
                               "argumentTypes": [
                                 {
-                                  "typeIdentifier": "t_contract$_MockERC721_$49684",
+                                  "typeIdentifier": "t_contract$_MockERC721_$49691",
                                   "typeString": "contract MockERC721"
                                 }
                               ],
-                              "id": 73797,
+                              "id": 73806,
                               "isConstant": false,
                               "isLValue": false,
                               "isPure": true,
@@ -4402,14 +4402,14 @@
                                 "typeString": "type(address)"
                               },
                               "typeName": {
-                                "id": 73796,
+                                "id": 73805,
                                 "name": "address",
                                 "nodeType": "ElementaryTypeName",
                                 "src": "2490:7:300",
                                 "typeDescriptions": {}
                               }
                             },
-                            "id": 73799,
+                            "id": 73808,
                             "isConstant": false,
                             "isLValue": false,
                             "isPure": false,
@@ -4426,11 +4426,11 @@
                             }
                           },
                           {
-                            "id": 73800,
+                            "id": 73809,
                             "name": "tokenId",
                             "nodeType": "Identifier",
                             "overloadedDeclarations": [],
-                            "referencedDeclaration": 73779,
+                            "referencedDeclaration": 73788,
                             "src": "2516:7:300",
                             "typeDescriptions": {
                               "typeIdentifier": "t_uint256",
@@ -4454,7 +4454,7 @@
                             }
                           ],
                           "expression": {
-                            "id": 73791,
+                            "id": 73800,
                             "name": "abi",
                             "nodeType": "Identifier",
                             "overloadedDeclarations": [],
@@ -4465,7 +4465,7 @@
                               "typeString": "abi"
                             }
                           },
-                          "id": 73792,
+                          "id": 73801,
                           "isConstant": false,
                           "isLValue": false,
                           "isPure": true,
@@ -4479,7 +4479,7 @@
                             "typeString": "function (bytes4) pure returns (bytes memory)"
                           }
                         },
-                        "id": 73801,
+                        "id": 73810,
                         "isConstant": false,
                         "isLValue": false,
                         "isPure": false,
@@ -4512,7 +4512,7 @@
                         }
                       ],
                       "expression": {
-                        "id": 73785,
+                        "id": 73794,
                         "name": "Diamond",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
@@ -4523,7 +4523,7 @@
                           "typeString": "type(contract Diamond)"
                         }
                       },
-                      "id": 73786,
+                      "id": 73795,
                       "isConstant": false,
                       "isLValue": false,
                       "isPure": false,
@@ -4538,7 +4538,7 @@
                         "typeString": "type(struct Diamond.InitParams storage pointer)"
                       }
                     },
-                    "id": 73802,
+                    "id": 73811,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -4562,15 +4562,15 @@
                       "typeString": "struct Diamond.InitParams memory"
                     }
                   },
-                  "functionReturnParameters": 73672,
-                  "id": 73803,
+                  "functionReturnParameters": 73681,
+                  "id": 73812,
                   "nodeType": "Return",
                   "src": "2292:250:300"
                 }
               ]
             },
             "baseFunctions": [
-              40796
+              40803
             ],
             "functionSelector": "77bd3cc0",
             "implemented": true,
@@ -4579,29 +4579,29 @@
             "name": "diamondInitParams",
             "nameLocation": "1469:17:300",
             "overrides": {
-              "id": 73668,
+              "id": 73677,
               "nodeType": "OverrideSpecifier",
               "overrides": [],
               "src": "1504:8:300"
             },
             "parameters": {
-              "id": 73667,
+              "id": 73676,
               "nodeType": "ParameterList",
               "parameters": [],
               "src": "1486:2:300"
             },
             "returnParameters": {
-              "id": 73672,
+              "id": 73681,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 73671,
+                  "id": 73680,
                   "mutability": "mutable",
                   "name": "",
                   "nameLocation": "-1:-1:-1",
                   "nodeType": "VariableDeclaration",
-                  "scope": 73805,
+                  "scope": 73814,
                   "src": "1526:25:300",
                   "stateVariable": false,
                   "storageLocation": "memory",
@@ -4610,10 +4610,10 @@
                     "typeString": "struct Diamond.InitParams"
                   },
                   "typeName": {
-                    "id": 73670,
+                    "id": 73679,
                     "nodeType": "UserDefinedTypeName",
                     "pathNode": {
-                      "id": 73669,
+                      "id": 73678,
                       "name": "Diamond.InitParams",
                       "nameLocations": [
                         "1526:7:300",
@@ -4635,7 +4635,7 @@
               ],
               "src": "1525:27:300"
             },
-            "scope": 73806,
+            "scope": 73815,
             "stateMutability": "nonpayable",
             "virtual": false,
             "visibility": "public"
@@ -4645,16 +4645,16 @@
         "baseContracts": [
           {
             "baseName": {
-              "id": 73609,
+              "id": 73618,
               "name": "FacetTest",
               "nameLocations": [
                 "909:9:300"
               ],
               "nodeType": "IdentifierPath",
-              "referencedDeclaration": 40797,
+              "referencedDeclaration": 40804,
               "src": "909:9:300"
             },
-            "id": 73610,
+            "id": 73619,
             "nodeType": "InheritanceSpecifier",
             "src": "909:9:300"
           }
@@ -4662,65 +4662,65 @@
         "canonicalName": "EntitlementsSetup",
         "contractDependencies": [
           5949,
-          45956,
-          49684,
-          51041,
-          72940,
-          73939,
-          82100
+          45963,
+          49691,
+          51048,
+          72949,
+          73948,
+          82109
         ],
         "contractKind": "contract",
         "fullyImplemented": true,
         "linearizedBaseContracts": [
-          73806,
-          40797,
-          83200,
-          88679,
-          88000,
-          124929,
+          73815,
+          40804,
+          83209,
+          88688,
+          88009,
+          124938,
           5970
         ],
         "name": "EntitlementsSetup",
         "nameLocation": "888:17:300",
-        "scope": 73940,
+        "scope": 73949,
         "usedErrors": [
           5954
         ],
         "usedEvents": [
-          121962,
-          121966,
           121971,
-          121976,
-          121981,
-          121986,
-          121991,
-          121996,
+          121975,
+          121980,
+          121985,
+          121990,
+          121995,
           122000,
-          122004,
-          122008,
-          122012,
-          122016,
-          122022,
-          122029,
-          122036,
-          122043,
-          122050,
-          122057,
-          122064,
-          122070,
-          122076,
-          122082,
-          122088,
-          122094
+          122005,
+          122009,
+          122013,
+          122017,
+          122021,
+          122025,
+          122031,
+          122038,
+          122045,
+          122052,
+          122059,
+          122066,
+          122073,
+          122079,
+          122085,
+          122091,
+          122097,
+          122103
         ]
       },
       {
-        "id": 73939,
+        "id": 73948,
         "nodeType": "ContractDefinition",
         "src": "2551:1121:300",
         "nodes": [
           {
-            "id": 73811,
+            "id": 73820,
             "nodeType": "VariableDeclaration",
             "src": "2598:41:300",
             "nodes": [],
@@ -4728,62 +4728,62 @@
             "mutability": "mutable",
             "name": "entitlements",
             "nameLocation": "2627:12:300",
-            "scope": 73939,
+            "scope": 73948,
             "stateVariable": true,
             "storageLocation": "default",
             "typeDescriptions": {
-              "typeIdentifier": "t_contract$_EntitlementsManager_$31598",
+              "typeIdentifier": "t_contract$_EntitlementsManager_$31605",
               "typeString": "contract EntitlementsManager"
             },
             "typeName": {
-              "id": 73810,
+              "id": 73819,
               "nodeType": "UserDefinedTypeName",
               "pathNode": {
-                "id": 73809,
+                "id": 73818,
                 "name": "EntitlementsManager",
                 "nameLocations": [
                   "2598:19:300"
                 ],
                 "nodeType": "IdentifierPath",
-                "referencedDeclaration": 31598,
+                "referencedDeclaration": 31605,
                 "src": "2598:19:300"
               },
-              "referencedDeclaration": 31598,
+              "referencedDeclaration": 31605,
               "src": "2598:19:300",
               "typeDescriptions": {
-                "typeIdentifier": "t_contract$_EntitlementsManager_$31598",
+                "typeIdentifier": "t_contract$_EntitlementsManager_$31605",
                 "typeString": "contract EntitlementsManager"
               }
             },
             "visibility": "internal"
           },
           {
-            "id": 73822,
+            "id": 73831,
             "nodeType": "FunctionDefinition",
             "src": "2644:65:300",
             "nodes": [],
             "body": {
-              "id": 73821,
+              "id": 73830,
               "nodeType": "Block",
               "src": "2658:51:300",
               "nodes": [],
               "statements": [
                 {
                   "expression": {
-                    "id": 73819,
+                    "id": 73828,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
                     "lValueRequested": false,
                     "leftHandSide": {
-                      "id": 73814,
+                      "id": 73823,
                       "name": "entitlements",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 73811,
+                      "referencedDeclaration": 73820,
                       "src": "2664:12:300",
                       "typeDescriptions": {
-                        "typeIdentifier": "t_contract$_EntitlementsManager_$31598",
+                        "typeIdentifier": "t_contract$_EntitlementsManager_$31605",
                         "typeString": "contract EntitlementsManager"
                       }
                     },
@@ -4793,7 +4793,7 @@
                       "arguments": [],
                       "expression": {
                         "argumentTypes": [],
-                        "id": 73817,
+                        "id": 73826,
                         "isConstant": false,
                         "isLValue": false,
                         "isPure": false,
@@ -4801,31 +4801,31 @@
                         "nodeType": "NewExpression",
                         "src": "2679:23:300",
                         "typeDescriptions": {
-                          "typeIdentifier": "t_function_creation_nonpayable$__$returns$_t_contract$_EntitlementsManager_$31598_$",
+                          "typeIdentifier": "t_function_creation_nonpayable$__$returns$_t_contract$_EntitlementsManager_$31605_$",
                           "typeString": "function () returns (contract EntitlementsManager)"
                         },
                         "typeName": {
-                          "id": 73816,
+                          "id": 73825,
                           "nodeType": "UserDefinedTypeName",
                           "pathNode": {
-                            "id": 73815,
+                            "id": 73824,
                             "name": "EntitlementsManager",
                             "nameLocations": [
                               "2683:19:300"
                             ],
                             "nodeType": "IdentifierPath",
-                            "referencedDeclaration": 31598,
+                            "referencedDeclaration": 31605,
                             "src": "2683:19:300"
                           },
-                          "referencedDeclaration": 31598,
+                          "referencedDeclaration": 31605,
                           "src": "2683:19:300",
                           "typeDescriptions": {
-                            "typeIdentifier": "t_contract$_EntitlementsManager_$31598",
+                            "typeIdentifier": "t_contract$_EntitlementsManager_$31605",
                             "typeString": "contract EntitlementsManager"
                           }
                         }
                       },
-                      "id": 73818,
+                      "id": 73827,
                       "isConstant": false,
                       "isLValue": false,
                       "isPure": false,
@@ -4837,17 +4837,17 @@
                       "src": "2679:25:300",
                       "tryCall": false,
                       "typeDescriptions": {
-                        "typeIdentifier": "t_contract$_EntitlementsManager_$31598",
+                        "typeIdentifier": "t_contract$_EntitlementsManager_$31605",
                         "typeString": "contract EntitlementsManager"
                       }
                     },
                     "src": "2664:40:300",
                     "typeDescriptions": {
-                      "typeIdentifier": "t_contract$_EntitlementsManager_$31598",
+                      "typeIdentifier": "t_contract$_EntitlementsManager_$31605",
                       "typeString": "contract EntitlementsManager"
                     }
                   },
-                  "id": 73820,
+                  "id": 73829,
                   "nodeType": "ExpressionStatement",
                   "src": "2664:40:300"
                 }
@@ -4859,49 +4859,49 @@
             "name": "",
             "nameLocation": "-1:-1:-1",
             "parameters": {
-              "id": 73812,
+              "id": 73821,
               "nodeType": "ParameterList",
               "parameters": [],
               "src": "2655:2:300"
             },
             "returnParameters": {
-              "id": 73813,
+              "id": 73822,
               "nodeType": "ParameterList",
               "parameters": [],
               "src": "2658:0:300"
             },
-            "scope": 73939,
+            "scope": 73948,
             "stateMutability": "nonpayable",
             "virtual": false,
             "visibility": "public"
           },
           {
-            "id": 73840,
+            "id": 73849,
             "nodeType": "FunctionDefinition",
             "src": "2713:128:300",
             "nodes": [],
             "body": {
-              "id": 73839,
+              "id": 73848,
               "nodeType": "Block",
               "src": "2756:85:300",
               "nodes": [],
               "statements": [
                 {
                   "expression": {
-                    "id": 73832,
+                    "id": 73841,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
                     "lValueRequested": false,
                     "leftHandSide": {
-                      "id": 73827,
+                      "id": 73836,
                       "name": "entitlements",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 73811,
+                      "referencedDeclaration": 73820,
                       "src": "2762:12:300",
                       "typeDescriptions": {
-                        "typeIdentifier": "t_contract$_EntitlementsManager_$31598",
+                        "typeIdentifier": "t_contract$_EntitlementsManager_$31605",
                         "typeString": "contract EntitlementsManager"
                       }
                     },
@@ -4911,7 +4911,7 @@
                       "arguments": [],
                       "expression": {
                         "argumentTypes": [],
-                        "id": 73830,
+                        "id": 73839,
                         "isConstant": false,
                         "isLValue": false,
                         "isPure": false,
@@ -4919,31 +4919,31 @@
                         "nodeType": "NewExpression",
                         "src": "2777:23:300",
                         "typeDescriptions": {
-                          "typeIdentifier": "t_function_creation_nonpayable$__$returns$_t_contract$_EntitlementsManager_$31598_$",
+                          "typeIdentifier": "t_function_creation_nonpayable$__$returns$_t_contract$_EntitlementsManager_$31605_$",
                           "typeString": "function () returns (contract EntitlementsManager)"
                         },
                         "typeName": {
-                          "id": 73829,
+                          "id": 73838,
                           "nodeType": "UserDefinedTypeName",
                           "pathNode": {
-                            "id": 73828,
+                            "id": 73837,
                             "name": "EntitlementsManager",
                             "nameLocations": [
                               "2781:19:300"
                             ],
                             "nodeType": "IdentifierPath",
-                            "referencedDeclaration": 31598,
+                            "referencedDeclaration": 31605,
                             "src": "2781:19:300"
                           },
-                          "referencedDeclaration": 31598,
+                          "referencedDeclaration": 31605,
                           "src": "2781:19:300",
                           "typeDescriptions": {
-                            "typeIdentifier": "t_contract$_EntitlementsManager_$31598",
+                            "typeIdentifier": "t_contract$_EntitlementsManager_$31605",
                             "typeString": "contract EntitlementsManager"
                           }
                         }
                       },
-                      "id": 73831,
+                      "id": 73840,
                       "isConstant": false,
                       "isLValue": false,
                       "isPure": false,
@@ -4955,17 +4955,17 @@
                       "src": "2777:25:300",
                       "tryCall": false,
                       "typeDescriptions": {
-                        "typeIdentifier": "t_contract$_EntitlementsManager_$31598",
+                        "typeIdentifier": "t_contract$_EntitlementsManager_$31605",
                         "typeString": "contract EntitlementsManager"
                       }
                     },
                     "src": "2762:40:300",
                     "typeDescriptions": {
-                      "typeIdentifier": "t_contract$_EntitlementsManager_$31598",
+                      "typeIdentifier": "t_contract$_EntitlementsManager_$31605",
                       "typeString": "contract EntitlementsManager"
                     }
                   },
-                  "id": 73833,
+                  "id": 73842,
                   "nodeType": "ExpressionStatement",
                   "src": "2762:40:300"
                 },
@@ -4973,14 +4973,14 @@
                   "expression": {
                     "arguments": [
                       {
-                        "id": 73836,
+                        "id": 73845,
                         "name": "entitlements",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 73811,
+                        "referencedDeclaration": 73820,
                         "src": "2823:12:300",
                         "typeDescriptions": {
-                          "typeIdentifier": "t_contract$_EntitlementsManager_$31598",
+                          "typeIdentifier": "t_contract$_EntitlementsManager_$31605",
                           "typeString": "contract EntitlementsManager"
                         }
                       }
@@ -4988,11 +4988,11 @@
                     "expression": {
                       "argumentTypes": [
                         {
-                          "typeIdentifier": "t_contract$_EntitlementsManager_$31598",
+                          "typeIdentifier": "t_contract$_EntitlementsManager_$31605",
                           "typeString": "contract EntitlementsManager"
                         }
                       ],
-                      "id": 73835,
+                      "id": 73844,
                       "isConstant": false,
                       "isLValue": false,
                       "isPure": true,
@@ -5004,14 +5004,14 @@
                         "typeString": "type(address)"
                       },
                       "typeName": {
-                        "id": 73834,
+                        "id": 73843,
                         "name": "address",
                         "nodeType": "ElementaryTypeName",
                         "src": "2815:7:300",
                         "typeDescriptions": {}
                       }
                     },
-                    "id": 73837,
+                    "id": 73846,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -5027,8 +5027,8 @@
                       "typeString": "address"
                     }
                   },
-                  "functionReturnParameters": 73826,
-                  "id": 73838,
+                  "functionReturnParameters": 73835,
+                  "id": 73847,
                   "nodeType": "Return",
                   "src": "2808:28:300"
                 }
@@ -5041,23 +5041,23 @@
             "name": "deploy",
             "nameLocation": "2722:6:300",
             "parameters": {
-              "id": 73823,
+              "id": 73832,
               "nodeType": "ParameterList",
               "parameters": [],
               "src": "2728:2:300"
             },
             "returnParameters": {
-              "id": 73826,
+              "id": 73835,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 73825,
+                  "id": 73834,
                   "mutability": "mutable",
                   "name": "",
                   "nameLocation": "-1:-1:-1",
                   "nodeType": "VariableDeclaration",
-                  "scope": 73840,
+                  "scope": 73849,
                   "src": "2747:7:300",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -5066,7 +5066,7 @@
                     "typeString": "address"
                   },
                   "typeName": {
-                    "id": 73824,
+                    "id": 73833,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
                     "src": "2747:7:300",
@@ -5081,18 +5081,18 @@
               ],
               "src": "2746:9:300"
             },
-            "scope": 73939,
+            "scope": 73948,
             "stateMutability": "nonpayable",
             "virtual": false,
             "visibility": "public"
           },
           {
-            "id": 73852,
+            "id": 73861,
             "nodeType": "FunctionDefinition",
             "src": "2845:95:300",
             "nodes": [],
             "body": {
-              "id": 73851,
+              "id": 73860,
               "nodeType": "Block",
               "src": "2901:39:300",
               "nodes": [],
@@ -5101,14 +5101,14 @@
                   "expression": {
                     "arguments": [
                       {
-                        "id": 73848,
+                        "id": 73857,
                         "name": "entitlements",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 73811,
+                        "referencedDeclaration": 73820,
                         "src": "2922:12:300",
                         "typeDescriptions": {
-                          "typeIdentifier": "t_contract$_EntitlementsManager_$31598",
+                          "typeIdentifier": "t_contract$_EntitlementsManager_$31605",
                           "typeString": "contract EntitlementsManager"
                         }
                       }
@@ -5116,11 +5116,11 @@
                     "expression": {
                       "argumentTypes": [
                         {
-                          "typeIdentifier": "t_contract$_EntitlementsManager_$31598",
+                          "typeIdentifier": "t_contract$_EntitlementsManager_$31605",
                           "typeString": "contract EntitlementsManager"
                         }
                       ],
-                      "id": 73847,
+                      "id": 73856,
                       "isConstant": false,
                       "isLValue": false,
                       "isPure": true,
@@ -5132,14 +5132,14 @@
                         "typeString": "type(address)"
                       },
                       "typeName": {
-                        "id": 73846,
+                        "id": 73855,
                         "name": "address",
                         "nodeType": "ElementaryTypeName",
                         "src": "2914:7:300",
                         "typeDescriptions": {}
                       }
                     },
-                    "id": 73849,
+                    "id": 73858,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -5155,15 +5155,15 @@
                       "typeString": "address"
                     }
                   },
-                  "functionReturnParameters": 73845,
-                  "id": 73850,
+                  "functionReturnParameters": 73854,
+                  "id": 73859,
                   "nodeType": "Return",
                   "src": "2907:28:300"
                 }
               ]
             },
             "baseFunctions": [
-              40805
+              40812
             ],
             "functionSelector": "b6010cab",
             "implemented": true,
@@ -5172,29 +5172,29 @@
             "name": "facet",
             "nameLocation": "2854:5:300",
             "overrides": {
-              "id": 73842,
+              "id": 73851,
               "nodeType": "OverrideSpecifier",
               "overrides": [],
               "src": "2874:8:300"
             },
             "parameters": {
-              "id": 73841,
+              "id": 73850,
               "nodeType": "ParameterList",
               "parameters": [],
               "src": "2859:2:300"
             },
             "returnParameters": {
-              "id": 73845,
+              "id": 73854,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 73844,
+                  "id": 73853,
                   "mutability": "mutable",
                   "name": "",
                   "nameLocation": "-1:-1:-1",
                   "nodeType": "VariableDeclaration",
-                  "scope": 73852,
+                  "scope": 73861,
                   "src": "2892:7:300",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -5203,7 +5203,7 @@
                     "typeString": "address"
                   },
                   "typeName": {
-                    "id": 73843,
+                    "id": 73852,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
                     "src": "2892:7:300",
@@ -5218,35 +5218,35 @@
               ],
               "src": "2891:9:300"
             },
-            "scope": 73939,
+            "scope": 73948,
             "stateMutability": "view",
             "virtual": false,
             "visibility": "public"
           },
           {
-            "id": 73929,
+            "id": 73938,
             "nodeType": "FunctionDefinition",
             "src": "2944:641:300",
             "nodes": [],
             "body": {
-              "id": 73928,
+              "id": 73937,
               "nodeType": "Block",
               "src": "3012:573:300",
               "nodes": [],
               "statements": [
                 {
                   "assignments": [
-                    73863
+                    73872
                   ],
                   "declarations": [
                     {
                       "constant": false,
-                      "id": 73863,
+                      "id": 73872,
                       "mutability": "mutable",
                       "name": "selectors_",
                       "nameLocation": "3034:10:300",
                       "nodeType": "VariableDeclaration",
-                      "scope": 73928,
+                      "scope": 73937,
                       "src": "3018:26:300",
                       "stateVariable": false,
                       "storageLocation": "memory",
@@ -5256,7 +5256,7 @@
                       },
                       "typeName": {
                         "baseType": {
-                          "id": 73861,
+                          "id": 73870,
                           "name": "bytes4",
                           "nodeType": "ElementaryTypeName",
                           "src": "3018:6:300",
@@ -5265,7 +5265,7 @@
                             "typeString": "bytes4"
                           }
                         },
-                        "id": 73862,
+                        "id": 73871,
                         "nodeType": "ArrayTypeName",
                         "src": "3018:8:300",
                         "typeDescriptions": {
@@ -5276,12 +5276,12 @@
                       "visibility": "internal"
                     }
                   ],
-                  "id": 73869,
+                  "id": 73878,
                   "initialValue": {
                     "arguments": [
                       {
                         "hexValue": "37",
-                        "id": 73867,
+                        "id": 73876,
                         "isConstant": false,
                         "isLValue": false,
                         "isPure": true,
@@ -5303,7 +5303,7 @@
                           "typeString": "int_const 7"
                         }
                       ],
-                      "id": 73866,
+                      "id": 73875,
                       "isConstant": false,
                       "isLValue": false,
                       "isPure": true,
@@ -5316,7 +5316,7 @@
                       },
                       "typeName": {
                         "baseType": {
-                          "id": 73864,
+                          "id": 73873,
                           "name": "bytes4",
                           "nodeType": "ElementaryTypeName",
                           "src": "3051:6:300",
@@ -5325,7 +5325,7 @@
                             "typeString": "bytes4"
                           }
                         },
-                        "id": 73865,
+                        "id": 73874,
                         "nodeType": "ArrayTypeName",
                         "src": "3051:8:300",
                         "typeDescriptions": {
@@ -5334,7 +5334,7 @@
                         }
                       }
                     },
-                    "id": 73868,
+                    "id": 73877,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": true,
@@ -5355,28 +5355,28 @@
                 },
                 {
                   "expression": {
-                    "id": 73876,
+                    "id": 73885,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
                     "lValueRequested": false,
                     "leftHandSide": {
                       "baseExpression": {
-                        "id": 73870,
+                        "id": 73879,
                         "name": "selectors_",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 73863,
+                        "referencedDeclaration": 73872,
                         "src": "3068:10:300",
                         "typeDescriptions": {
                           "typeIdentifier": "t_array$_t_bytes4_$dyn_memory_ptr",
                           "typeString": "bytes4[] memory"
                         }
                       },
-                      "id": 73872,
+                      "id": 73881,
                       "indexExpression": {
                         "hexValue": "30",
-                        "id": 73871,
+                        "id": 73880,
                         "isConstant": false,
                         "isLValue": false,
                         "isPure": true,
@@ -5406,18 +5406,18 @@
                     "rightHandSide": {
                       "expression": {
                         "expression": {
-                          "id": 73873,
+                          "id": 73882,
                           "name": "IEntitlementsManager",
                           "nodeType": "Identifier",
                           "overloadedDeclarations": [],
-                          "referencedDeclaration": 32245,
+                          "referencedDeclaration": 32252,
                           "src": "3084:20:300",
                           "typeDescriptions": {
-                            "typeIdentifier": "t_type$_t_contract$_IEntitlementsManager_$32245_$",
+                            "typeIdentifier": "t_type$_t_contract$_IEntitlementsManager_$32252_$",
                             "typeString": "type(contract IEntitlementsManager)"
                           }
                         },
-                        "id": 73874,
+                        "id": 73883,
                         "isConstant": false,
                         "isLValue": false,
                         "isPure": true,
@@ -5425,14 +5425,14 @@
                         "memberLocation": "3105:24:300",
                         "memberName": "addImmutableEntitlements",
                         "nodeType": "MemberAccess",
-                        "referencedDeclaration": 32193,
+                        "referencedDeclaration": 32200,
                         "src": "3084:45:300",
                         "typeDescriptions": {
                           "typeIdentifier": "t_function_declaration_nonpayable$_t_array$_t_address_$dyn_memory_ptr_$returns$__$",
                           "typeString": "function IEntitlementsManager.addImmutableEntitlements(address[] memory)"
                         }
                       },
-                      "id": 73875,
+                      "id": 73884,
                       "isConstant": false,
                       "isLValue": false,
                       "isPure": true,
@@ -5452,34 +5452,34 @@
                       "typeString": "bytes4"
                     }
                   },
-                  "id": 73877,
+                  "id": 73886,
                   "nodeType": "ExpressionStatement",
                   "src": "3068:70:300"
                 },
                 {
                   "expression": {
-                    "id": 73884,
+                    "id": 73893,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
                     "lValueRequested": false,
                     "leftHandSide": {
                       "baseExpression": {
-                        "id": 73878,
+                        "id": 73887,
                         "name": "selectors_",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 73863,
+                        "referencedDeclaration": 73872,
                         "src": "3144:10:300",
                         "typeDescriptions": {
                           "typeIdentifier": "t_array$_t_bytes4_$dyn_memory_ptr",
                           "typeString": "bytes4[] memory"
                         }
                       },
-                      "id": 73880,
+                      "id": 73889,
                       "indexExpression": {
                         "hexValue": "31",
-                        "id": 73879,
+                        "id": 73888,
                         "isConstant": false,
                         "isLValue": false,
                         "isPure": true,
@@ -5509,18 +5509,18 @@
                     "rightHandSide": {
                       "expression": {
                         "expression": {
-                          "id": 73881,
+                          "id": 73890,
                           "name": "IEntitlementsManager",
                           "nodeType": "Identifier",
                           "overloadedDeclarations": [],
-                          "referencedDeclaration": 32245,
+                          "referencedDeclaration": 32252,
                           "src": "3160:20:300",
                           "typeDescriptions": {
-                            "typeIdentifier": "t_type$_t_contract$_IEntitlementsManager_$32245_$",
+                            "typeIdentifier": "t_type$_t_contract$_IEntitlementsManager_$32252_$",
                             "typeString": "type(contract IEntitlementsManager)"
                           }
                         },
-                        "id": 73882,
+                        "id": 73891,
                         "isConstant": false,
                         "isLValue": false,
                         "isPure": true,
@@ -5528,14 +5528,14 @@
                         "memberLocation": "3181:16:300",
                         "memberName": "isEntitledToTown",
                         "nodeType": "MemberAccess",
-                        "referencedDeclaration": 32203,
+                        "referencedDeclaration": 32210,
                         "src": "3160:37:300",
                         "typeDescriptions": {
                           "typeIdentifier": "t_function_declaration_view$_t_address_$_t_string_calldata_ptr_$returns$_t_bool_$",
                           "typeString": "function IEntitlementsManager.isEntitledToTown(address,string calldata) view returns (bool)"
                         }
                       },
-                      "id": 73883,
+                      "id": 73892,
                       "isConstant": false,
                       "isLValue": false,
                       "isPure": true,
@@ -5555,34 +5555,34 @@
                       "typeString": "bytes4"
                     }
                   },
-                  "id": 73885,
+                  "id": 73894,
                   "nodeType": "ExpressionStatement",
                   "src": "3144:62:300"
                 },
                 {
                   "expression": {
-                    "id": 73892,
+                    "id": 73901,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
                     "lValueRequested": false,
                     "leftHandSide": {
                       "baseExpression": {
-                        "id": 73886,
+                        "id": 73895,
                         "name": "selectors_",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 73863,
+                        "referencedDeclaration": 73872,
                         "src": "3212:10:300",
                         "typeDescriptions": {
                           "typeIdentifier": "t_array$_t_bytes4_$dyn_memory_ptr",
                           "typeString": "bytes4[] memory"
                         }
                       },
-                      "id": 73888,
+                      "id": 73897,
                       "indexExpression": {
                         "hexValue": "32",
-                        "id": 73887,
+                        "id": 73896,
                         "isConstant": false,
                         "isLValue": false,
                         "isPure": true,
@@ -5612,18 +5612,18 @@
                     "rightHandSide": {
                       "expression": {
                         "expression": {
-                          "id": 73889,
+                          "id": 73898,
                           "name": "IEntitlementsManager",
                           "nodeType": "Identifier",
                           "overloadedDeclarations": [],
-                          "referencedDeclaration": 32245,
+                          "referencedDeclaration": 32252,
                           "src": "3228:20:300",
                           "typeDescriptions": {
-                            "typeIdentifier": "t_type$_t_contract$_IEntitlementsManager_$32245_$",
+                            "typeIdentifier": "t_type$_t_contract$_IEntitlementsManager_$32252_$",
                             "typeString": "type(contract IEntitlementsManager)"
                           }
                         },
-                        "id": 73890,
+                        "id": 73899,
                         "isConstant": false,
                         "isLValue": false,
                         "isPure": true,
@@ -5631,14 +5631,14 @@
                         "memberLocation": "3249:19:300",
                         "memberName": "isEntitledToChannel",
                         "nodeType": "MemberAccess",
-                        "referencedDeclaration": 32215,
+                        "referencedDeclaration": 32222,
                         "src": "3228:40:300",
                         "typeDescriptions": {
                           "typeIdentifier": "t_function_declaration_view$_t_string_calldata_ptr_$_t_address_$_t_string_calldata_ptr_$returns$_t_bool_$",
                           "typeString": "function IEntitlementsManager.isEntitledToChannel(string calldata,address,string calldata) view returns (bool)"
                         }
                       },
-                      "id": 73891,
+                      "id": 73900,
                       "isConstant": false,
                       "isLValue": false,
                       "isPure": true,
@@ -5658,34 +5658,34 @@
                       "typeString": "bytes4"
                     }
                   },
-                  "id": 73893,
+                  "id": 73902,
                   "nodeType": "ExpressionStatement",
                   "src": "3212:65:300"
                 },
                 {
                   "expression": {
-                    "id": 73900,
+                    "id": 73909,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
                     "lValueRequested": false,
                     "leftHandSide": {
                       "baseExpression": {
-                        "id": 73894,
+                        "id": 73903,
                         "name": "selectors_",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 73863,
+                        "referencedDeclaration": 73872,
                         "src": "3283:10:300",
                         "typeDescriptions": {
                           "typeIdentifier": "t_array$_t_bytes4_$dyn_memory_ptr",
                           "typeString": "bytes4[] memory"
                         }
                       },
-                      "id": 73896,
+                      "id": 73905,
                       "indexExpression": {
                         "hexValue": "33",
-                        "id": 73895,
+                        "id": 73904,
                         "isConstant": false,
                         "isLValue": false,
                         "isPure": true,
@@ -5715,18 +5715,18 @@
                     "rightHandSide": {
                       "expression": {
                         "expression": {
-                          "id": 73897,
+                          "id": 73906,
                           "name": "IEntitlementsManager",
                           "nodeType": "Identifier",
                           "overloadedDeclarations": [],
-                          "referencedDeclaration": 32245,
+                          "referencedDeclaration": 32252,
                           "src": "3299:20:300",
                           "typeDescriptions": {
-                            "typeIdentifier": "t_type$_t_contract$_IEntitlementsManager_$32245_$",
+                            "typeIdentifier": "t_type$_t_contract$_IEntitlementsManager_$32252_$",
                             "typeString": "type(contract IEntitlementsManager)"
                           }
                         },
-                        "id": 73898,
+                        "id": 73907,
                         "isConstant": false,
                         "isLValue": false,
                         "isPure": true,
@@ -5734,14 +5734,14 @@
                         "memberLocation": "3320:20:300",
                         "memberName": "addEntitlementModule",
                         "nodeType": "MemberAccess",
-                        "referencedDeclaration": 32221,
+                        "referencedDeclaration": 32228,
                         "src": "3299:41:300",
                         "typeDescriptions": {
                           "typeIdentifier": "t_function_declaration_nonpayable$_t_address_$returns$__$",
                           "typeString": "function IEntitlementsManager.addEntitlementModule(address)"
                         }
                       },
-                      "id": 73899,
+                      "id": 73908,
                       "isConstant": false,
                       "isLValue": false,
                       "isPure": true,
@@ -5761,34 +5761,34 @@
                       "typeString": "bytes4"
                     }
                   },
-                  "id": 73901,
+                  "id": 73910,
                   "nodeType": "ExpressionStatement",
                   "src": "3283:66:300"
                 },
                 {
                   "expression": {
-                    "id": 73908,
+                    "id": 73917,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
                     "lValueRequested": false,
                     "leftHandSide": {
                       "baseExpression": {
-                        "id": 73902,
+                        "id": 73911,
                         "name": "selectors_",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 73863,
+                        "referencedDeclaration": 73872,
                         "src": "3355:10:300",
                         "typeDescriptions": {
                           "typeIdentifier": "t_array$_t_bytes4_$dyn_memory_ptr",
                           "typeString": "bytes4[] memory"
                         }
                       },
-                      "id": 73904,
+                      "id": 73913,
                       "indexExpression": {
                         "hexValue": "34",
-                        "id": 73903,
+                        "id": 73912,
                         "isConstant": false,
                         "isLValue": false,
                         "isPure": true,
@@ -5818,18 +5818,18 @@
                     "rightHandSide": {
                       "expression": {
                         "expression": {
-                          "id": 73905,
+                          "id": 73914,
                           "name": "IEntitlementsManager",
                           "nodeType": "Identifier",
                           "overloadedDeclarations": [],
-                          "referencedDeclaration": 32245,
+                          "referencedDeclaration": 32252,
                           "src": "3371:20:300",
                           "typeDescriptions": {
-                            "typeIdentifier": "t_type$_t_contract$_IEntitlementsManager_$32245_$",
+                            "typeIdentifier": "t_type$_t_contract$_IEntitlementsManager_$32252_$",
                             "typeString": "type(contract IEntitlementsManager)"
                           }
                         },
-                        "id": 73906,
+                        "id": 73915,
                         "isConstant": false,
                         "isLValue": false,
                         "isPure": true,
@@ -5837,14 +5837,14 @@
                         "memberLocation": "3392:23:300",
                         "memberName": "removeEntitlementModule",
                         "nodeType": "MemberAccess",
-                        "referencedDeclaration": 32227,
+                        "referencedDeclaration": 32234,
                         "src": "3371:44:300",
                         "typeDescriptions": {
                           "typeIdentifier": "t_function_declaration_nonpayable$_t_address_$returns$__$",
                           "typeString": "function IEntitlementsManager.removeEntitlementModule(address)"
                         }
                       },
-                      "id": 73907,
+                      "id": 73916,
                       "isConstant": false,
                       "isLValue": false,
                       "isPure": true,
@@ -5864,34 +5864,34 @@
                       "typeString": "bytes4"
                     }
                   },
-                  "id": 73909,
+                  "id": 73918,
                   "nodeType": "ExpressionStatement",
                   "src": "3355:69:300"
                 },
                 {
                   "expression": {
-                    "id": 73916,
+                    "id": 73925,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
                     "lValueRequested": false,
                     "leftHandSide": {
                       "baseExpression": {
-                        "id": 73910,
+                        "id": 73919,
                         "name": "selectors_",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 73863,
+                        "referencedDeclaration": 73872,
                         "src": "3430:10:300",
                         "typeDescriptions": {
                           "typeIdentifier": "t_array$_t_bytes4_$dyn_memory_ptr",
                           "typeString": "bytes4[] memory"
                         }
                       },
-                      "id": 73912,
+                      "id": 73921,
                       "indexExpression": {
                         "hexValue": "35",
-                        "id": 73911,
+                        "id": 73920,
                         "isConstant": false,
                         "isLValue": false,
                         "isPure": true,
@@ -5921,18 +5921,18 @@
                     "rightHandSide": {
                       "expression": {
                         "expression": {
-                          "id": 73913,
+                          "id": 73922,
                           "name": "IEntitlementsManager",
                           "nodeType": "Identifier",
                           "overloadedDeclarations": [],
-                          "referencedDeclaration": 32245,
+                          "referencedDeclaration": 32252,
                           "src": "3446:20:300",
                           "typeDescriptions": {
-                            "typeIdentifier": "t_type$_t_contract$_IEntitlementsManager_$32245_$",
+                            "typeIdentifier": "t_type$_t_contract$_IEntitlementsManager_$32252_$",
                             "typeString": "type(contract IEntitlementsManager)"
                           }
                         },
-                        "id": 73914,
+                        "id": 73923,
                         "isConstant": false,
                         "isLValue": false,
                         "isPure": true,
@@ -5940,14 +5940,14 @@
                         "memberLocation": "3467:14:300",
                         "memberName": "getEntitlement",
                         "nodeType": "MemberAccess",
-                        "referencedDeclaration": 32236,
+                        "referencedDeclaration": 32243,
                         "src": "3446:35:300",
                         "typeDescriptions": {
-                          "typeIdentifier": "t_function_declaration_view$_t_address_$returns$_t_struct$_Entitlement_$32183_memory_ptr_$",
+                          "typeIdentifier": "t_function_declaration_view$_t_address_$returns$_t_struct$_Entitlement_$32190_memory_ptr_$",
                           "typeString": "function IEntitlementsManager.getEntitlement(address) view returns (struct IEntitlementsManagerBase.Entitlement memory)"
                         }
                       },
-                      "id": 73915,
+                      "id": 73924,
                       "isConstant": false,
                       "isLValue": false,
                       "isPure": true,
@@ -5967,34 +5967,34 @@
                       "typeString": "bytes4"
                     }
                   },
-                  "id": 73917,
+                  "id": 73926,
                   "nodeType": "ExpressionStatement",
                   "src": "3430:60:300"
                 },
                 {
                   "expression": {
-                    "id": 73924,
+                    "id": 73933,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
                     "lValueRequested": false,
                     "leftHandSide": {
                       "baseExpression": {
-                        "id": 73918,
+                        "id": 73927,
                         "name": "selectors_",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 73863,
+                        "referencedDeclaration": 73872,
                         "src": "3496:10:300",
                         "typeDescriptions": {
                           "typeIdentifier": "t_array$_t_bytes4_$dyn_memory_ptr",
                           "typeString": "bytes4[] memory"
                         }
                       },
-                      "id": 73920,
+                      "id": 73929,
                       "indexExpression": {
                         "hexValue": "36",
-                        "id": 73919,
+                        "id": 73928,
                         "isConstant": false,
                         "isLValue": false,
                         "isPure": true,
@@ -6024,18 +6024,18 @@
                     "rightHandSide": {
                       "expression": {
                         "expression": {
-                          "id": 73921,
+                          "id": 73930,
                           "name": "IEntitlementsManager",
                           "nodeType": "Identifier",
                           "overloadedDeclarations": [],
-                          "referencedDeclaration": 32245,
+                          "referencedDeclaration": 32252,
                           "src": "3512:20:300",
                           "typeDescriptions": {
-                            "typeIdentifier": "t_type$_t_contract$_IEntitlementsManager_$32245_$",
+                            "typeIdentifier": "t_type$_t_contract$_IEntitlementsManager_$32252_$",
                             "typeString": "type(contract IEntitlementsManager)"
                           }
                         },
-                        "id": 73922,
+                        "id": 73931,
                         "isConstant": false,
                         "isLValue": false,
                         "isPure": true,
@@ -6043,14 +6043,14 @@
                         "memberLocation": "3533:15:300",
                         "memberName": "getEntitlements",
                         "nodeType": "MemberAccess",
-                        "referencedDeclaration": 32244,
+                        "referencedDeclaration": 32251,
                         "src": "3512:36:300",
                         "typeDescriptions": {
-                          "typeIdentifier": "t_function_declaration_view$__$returns$_t_array$_t_struct$_Entitlement_$32183_memory_ptr_$dyn_memory_ptr_$",
+                          "typeIdentifier": "t_function_declaration_view$__$returns$_t_array$_t_struct$_Entitlement_$32190_memory_ptr_$dyn_memory_ptr_$",
                           "typeString": "function IEntitlementsManager.getEntitlements() view returns (struct IEntitlementsManagerBase.Entitlement memory[] memory)"
                         }
                       },
-                      "id": 73923,
+                      "id": 73932,
                       "isConstant": false,
                       "isLValue": false,
                       "isPure": true,
@@ -6070,32 +6070,32 @@
                       "typeString": "bytes4"
                     }
                   },
-                  "id": 73925,
+                  "id": 73934,
                   "nodeType": "ExpressionStatement",
                   "src": "3496:61:300"
                 },
                 {
                   "expression": {
-                    "id": 73926,
+                    "id": 73935,
                     "name": "selectors_",
                     "nodeType": "Identifier",
                     "overloadedDeclarations": [],
-                    "referencedDeclaration": 73863,
+                    "referencedDeclaration": 73872,
                     "src": "3570:10:300",
                     "typeDescriptions": {
                       "typeIdentifier": "t_array$_t_bytes4_$dyn_memory_ptr",
                       "typeString": "bytes4[] memory"
                     }
                   },
-                  "functionReturnParameters": 73858,
-                  "id": 73927,
+                  "functionReturnParameters": 73867,
+                  "id": 73936,
                   "nodeType": "Return",
                   "src": "3563:17:300"
                 }
               ]
             },
             "baseFunctions": [
-              40811
+              40818
             ],
             "functionSelector": "6e25b978",
             "implemented": true,
@@ -6104,29 +6104,29 @@
             "name": "selectors",
             "nameLocation": "2953:9:300",
             "overrides": {
-              "id": 73854,
+              "id": 73863,
               "nodeType": "OverrideSpecifier",
               "overrides": [],
               "src": "2977:8:300"
             },
             "parameters": {
-              "id": 73853,
+              "id": 73862,
               "nodeType": "ParameterList",
               "parameters": [],
               "src": "2962:2:300"
             },
             "returnParameters": {
-              "id": 73858,
+              "id": 73867,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 73857,
+                  "id": 73866,
                   "mutability": "mutable",
                   "name": "",
                   "nameLocation": "-1:-1:-1",
                   "nodeType": "VariableDeclaration",
-                  "scope": 73929,
+                  "scope": 73938,
                   "src": "2995:15:300",
                   "stateVariable": false,
                   "storageLocation": "memory",
@@ -6136,7 +6136,7 @@
                   },
                   "typeName": {
                     "baseType": {
-                      "id": 73855,
+                      "id": 73864,
                       "name": "bytes4",
                       "nodeType": "ElementaryTypeName",
                       "src": "2995:6:300",
@@ -6145,7 +6145,7 @@
                         "typeString": "bytes4"
                       }
                     },
-                    "id": 73856,
+                    "id": 73865,
                     "nodeType": "ArrayTypeName",
                     "src": "2995:8:300",
                     "typeDescriptions": {
@@ -6158,18 +6158,18 @@
               ],
               "src": "2994:17:300"
             },
-            "scope": 73939,
+            "scope": 73948,
             "stateMutability": "pure",
             "virtual": false,
             "visibility": "public"
           },
           {
-            "id": 73938,
+            "id": 73947,
             "nodeType": "FunctionDefinition",
             "src": "3589:81:300",
             "nodes": [],
             "body": {
-              "id": 73937,
+              "id": 73946,
               "nodeType": "Block",
               "src": "3650:20:300",
               "nodes": [],
@@ -6177,7 +6177,7 @@
                 {
                   "expression": {
                     "hexValue": "",
-                    "id": 73935,
+                    "id": 73944,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": true,
@@ -6191,15 +6191,15 @@
                     },
                     "value": ""
                   },
-                  "functionReturnParameters": 73934,
-                  "id": 73936,
+                  "functionReturnParameters": 73943,
+                  "id": 73945,
                   "nodeType": "Return",
                   "src": "3656:9:300"
                 }
               ]
             },
             "baseFunctions": [
-              40816
+              40823
             ],
             "functionSelector": "9ce110d7",
             "implemented": true,
@@ -6208,29 +6208,29 @@
             "name": "initializer",
             "nameLocation": "3598:11:300",
             "overrides": {
-              "id": 73931,
+              "id": 73940,
               "nodeType": "OverrideSpecifier",
               "overrides": [],
               "src": "3624:8:300"
             },
             "parameters": {
-              "id": 73930,
+              "id": 73939,
               "nodeType": "ParameterList",
               "parameters": [],
               "src": "3609:2:300"
             },
             "returnParameters": {
-              "id": 73934,
+              "id": 73943,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 73933,
+                  "id": 73942,
                   "mutability": "mutable",
                   "name": "",
                   "nameLocation": "-1:-1:-1",
                   "nodeType": "VariableDeclaration",
-                  "scope": 73938,
+                  "scope": 73947,
                   "src": "3642:6:300",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -6239,7 +6239,7 @@
                     "typeString": "bytes4"
                   },
                   "typeName": {
-                    "id": 73932,
+                    "id": 73941,
                     "name": "bytes4",
                     "nodeType": "ElementaryTypeName",
                     "src": "3642:6:300",
@@ -6253,7 +6253,7 @@
               ],
               "src": "3641:8:300"
             },
-            "scope": 73939,
+            "scope": 73948,
             "stateMutability": "pure",
             "virtual": false,
             "visibility": "public"
@@ -6263,34 +6263,34 @@
         "baseContracts": [
           {
             "baseName": {
-              "id": 73807,
+              "id": 73816,
               "name": "FacetHelper",
               "nameLocations": [
                 "2582:11:300"
               ],
               "nodeType": "IdentifierPath",
-              "referencedDeclaration": 40868,
+              "referencedDeclaration": 40875,
               "src": "2582:11:300"
             },
-            "id": 73808,
+            "id": 73817,
             "nodeType": "InheritanceSpecifier",
             "src": "2582:11:300"
           }
         ],
         "canonicalName": "EntitlementsHelper",
         "contractDependencies": [
-          31598
+          31605
         ],
         "contractKind": "contract",
         "fullyImplemented": true,
         "linearizedBaseContracts": [
-          73939,
-          40868,
+          73948,
+          40875,
           5970
         ],
         "name": "EntitlementsHelper",
         "nameLocation": "2560:18:300",
-        "scope": 73940,
+        "scope": 73949,
         "usedErrors": [
           5954
         ],

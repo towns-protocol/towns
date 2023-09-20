@@ -173,6 +173,18 @@
           {
             "indexed": true,
             "internalType": "address",
+            "name": "townCreator",
+            "type": "address"
+          },
+          {
+            "indexed": true,
+            "internalType": "uint256",
+            "name": "townId",
+            "type": "uint256"
+          },
+          {
+            "indexed": false,
+            "internalType": "address",
             "name": "town",
             "type": "address"
           }
@@ -808,11 +820,11 @@
       ]
     },
     "contracts/src/towns/facets/architect/ITownArchitect.sol": {
-      "keccak256": "0x30c8c23af8ecefe7c2e783d6b6cbf92e0ffccdd7f410ffa3b94a6994f20bb22f",
+      "keccak256": "0x63c13811042a0f880b8fb5d46ea6a1bc2350739599e998bac2e06e3725a7077f",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://d408b677a032a886eba8ab0c4e2aa33f78f60d3696bcac3af677ce23bddabf06",
-        "dweb:/ipfs/QmWh7771EGxsLn1tnL3X8PG419pQfmFHhsTk7zbPjHD6Hv"
+        "bzz-raw://c77177d4cc5e2e2844f5e3a923e43c52ce7780768e4a98577eb494283dc07ca1",
+        "dweb:/ipfs/QmUw2hQr6gZKYjbKj8Zu3j1iM2pX5ekbopSZiJhQAbHDyX"
       ]
     },
     "contracts/src/towns/facets/architect/TownArchitect.sol": {
@@ -824,11 +836,11 @@
       ]
     },
     "contracts/src/towns/facets/architect/TownArchitectBase.sol": {
-      "keccak256": "0x32c5880d9b325dc320d5e8d5c264cfc78b0cf779eeec0d6ecf98f1d7e8793f73",
+      "keccak256": "0xfdeaededd8da0a719df566a8bfa665346e9488b60df468f4a8020c61403347d9",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://b98c6dd46d6b8efe11ab45e94d86796a386ec3a9f8d6375c27148f141fed6458",
-        "dweb:/ipfs/QmQVJ8gisGm5D5Xfbk4PCRwyhtPX9LmvkxWMmZwZafbALk"
+        "bzz-raw://f593b26de85e4fb83847d70b47ee45a7f68048d2832a7dcd64ccd057a240a9c7",
+        "dweb:/ipfs/QmcB3dehmMSdXMbsexNEBJQoCAWtLDMAr8kq99Lw3JVBKg"
       ]
     },
     "contracts/src/towns/facets/architect/TownArchitectStorage.sol": {
