@@ -34,6 +34,9 @@ export const useZionClientListener = (opts: ZionOpts) => {
     }
 
     const startMatrixClient = useCallback(async () => {
+        if (opts.primaryProtocol !== 'matrix') {
+            return
+        }
         if (!clientSingleton.current || !matrixCredentials) {
             console.log(
                 'Matrix client listener not started: clientSingleton.current, chainId, accessToken, userId, or deviceId is undefined.',
@@ -72,9 +75,18 @@ export const useZionClientListener = (opts: ZionOpts) => {
             setMatrixLoginStatus(LoginStatus.LoggedOut)
             setMatrixCredentials(opts.matrixServerUrl, null)
         }
-    }, [matrixCredentials, opts.matrixServerUrl, setMatrixLoginStatus, setMatrixCredentials])
+    }, [
+        opts.primaryProtocol,
+        opts.matrixServerUrl,
+        matrixCredentials,
+        setMatrixLoginStatus,
+        setMatrixCredentials,
+    ])
 
     const startCasablancaClient = useCallback(async () => {
+        if (opts.primaryProtocol !== 'casablanca') {
+            return
+        }
         if (!clientSingleton.current || !casablancaCredentials) {
             console.log('casablanca client listener not yet started:', {
                 singleton: clientSingleton.current !== undefined,
@@ -121,6 +133,7 @@ export const useZionClientListener = (opts: ZionOpts) => {
     }, [
         casablancaCredentials,
         opts.casablancaServerUrl,
+        opts.primaryProtocol,
         setCasablancaCredentials,
         setCasablancaLoginStatus,
     ])

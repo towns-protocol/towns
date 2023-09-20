@@ -7,7 +7,7 @@ import {IEntitlementBase} from "contracts/src/towns/entitlements/IEntitlement.so
 
 // libraries
 import {EnumerableSet} from "openzeppelin-contracts/contracts/utils/structs/EnumerableSet.sol";
-import {EntitlementsStorage} from "contracts/src/towns/facets/entitlements/EntitlementsStorage.sol";
+import {EntitlementsManagerStorage} from "contracts/src/towns/facets/entitlements/EntitlementsManagerStorage.sol";
 
 // contracts
 import {TokenOwnableBase} from "contracts/src/diamond/facets/ownable/token/TokenOwnableBase.sol";
@@ -25,7 +25,8 @@ abstract contract Entitled is IEntitlementBase, TokenOwnableBase, PausableBase {
   ) internal view returns (bool entitled) {
     if (user == _owner()) return true;
 
-    EntitlementsStorage.Layout storage ds = EntitlementsStorage.layout();
+    EntitlementsManagerStorage.Layout storage ds = EntitlementsManagerStorage
+      .layout();
 
     uint256 entitlementCount = ds.entitlements.length();
 

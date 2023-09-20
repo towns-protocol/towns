@@ -11,6 +11,7 @@ import (
 	"context"
 	"encoding/hex"
 
+	mapset "github.com/deckarep/golang-set/v2"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
@@ -26,7 +27,7 @@ type StreamView interface {
 
 type JoinableStreamView interface {
 	StreamView
-	JoinedUsers() (map[string]struct{}, error)
+	IsUserJoined(userId string) (bool, error)
 }
 
 type UserDeviceStreamView interface {
@@ -256,8 +257,8 @@ func (r *streamViewImpl) forEachEvent(startBlock int, op func(e *ParsedEvent) (b
 	return r.minipool.forEachEvent(op)
 }
 
-func (r *streamViewImpl) JoinedUsers() (map[string]struct{}, error) {
-	users := make(map[string]struct{})
+func (r *streamViewImpl) IsUserJoined(userId string) (bool, error) {
+	users := mapset.NewSet[string]()
 
 	_ = r.forEachEvent(0, func(e *ParsedEvent) (bool, error) {
 		switch payload := e.Event.Payload.(type) {
@@ -266,9 +267,9 @@ func (r *streamViewImpl) JoinedUsers() (map[string]struct{}, error) {
 			case *SpacePayload_Membership:
 				user := spacePayload.Membership.UserId
 				if spacePayload.Membership.GetOp() == MembershipOp_SO_JOIN {
-					users[user] = struct{}{}
+					users.Add(user)
 				} else if spacePayload.Membership.GetOp() == MembershipOp_SO_LEAVE {
-					delete(users, user)
+					users.Remove(user)
 				}
 			default:
 				break
@@ -278,9 +279,9 @@ func (r *streamViewImpl) JoinedUsers() (map[string]struct{}, error) {
 			case *ChannelPayload_Membership:
 				user := channelPayload.Membership.UserId
 				if channelPayload.Membership.GetOp() == MembershipOp_SO_JOIN {
-					users[user] = struct{}{}
+					users.Add(user)
 				} else if channelPayload.Membership.GetOp() == MembershipOp_SO_LEAVE {
-					delete(users, user)
+					users.Remove(user)
 				}
 			default:
 				break
@@ -289,7 +290,8 @@ func (r *streamViewImpl) JoinedUsers() (map[string]struct{}, error) {
 		return true, nil
 	})
 
-	return users, nil
+	exists := users.Contains(userId)
+	return exists, nil
 }
 
 func (r *streamViewImpl) IsDeviceIdRevoked(rdkId RdkId) (bool, error) {

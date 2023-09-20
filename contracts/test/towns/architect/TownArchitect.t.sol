@@ -4,12 +4,13 @@ pragma solidity ^0.8.19;
 // interfaces
 import {ITownArchitect, ITownArchitectBase} from "contracts/src/towns/facets/architect/ITownArchitect.sol";
 import {ITokenEntitlement} from "contracts/src/towns/entitlements/token/ITokenEntitlement.sol";
-import {IEntitlements} from "contracts/src/towns/facets/entitlements/IEntitlements.sol";
+import {IEntitlementsManager} from "contracts/src/towns/facets/entitlements/IEntitlementsManager.sol";
 import {IOwnableBase} from "contracts/src/diamond/facets/ownable/IERC173.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {IERC173} from "contracts/src/diamond/facets/ownable/IERC173.sol";
 import {IPausableBase, IPausable} from "contracts/src/diamond/facets/pausable/IPausable.sol";
 import {IGuardian} from "contracts/src/towns/facets/guardian/IGuardian.sol";
+import {IERC721ABase} from "contracts/src/diamond/facets/token/ERC721A/IERC721A.sol";
 
 // libraries
 
@@ -19,7 +20,7 @@ import {MockERC721} from "contracts/test/mocks/MockERC721.sol";
 
 // errors
 import {GateFacetService__NotAllowed} from "contracts/src/towns/facets/gate/GateService.sol";
-import {TownArchitectService__InvalidStringLength, TownArchitectService__InvalidNetworkId} from "contracts/src/towns/facets/architect/TownArchitectService.sol";
+import {Validator__InvalidStringLength} from "contracts/src/utils/Validator.sol";
 
 contract TownArchitectTest is
   TownArchitectSetup,
@@ -49,11 +50,16 @@ contract TownArchitectTest is
     assertEq(townAddress, townInstance, "Town address mismatch");
 
     // expect owner to be founder
-    assertTrue(IEntitlements(townAddress).isEntitledToTown(founder, "Read"));
+    assertTrue(
+      IEntitlementsManager(townAddress).isEntitledToTown(founder, "Read")
+    );
 
     // expect no one to be entitled
     assertFalse(
-      IEntitlements(townAddress).isEntitledToTown(_randomAddress(), "Read")
+      IEntitlementsManager(townAddress).isEntitledToTown(
+        _randomAddress(),
+        "Read"
+      )
     );
   }
 
@@ -111,7 +117,7 @@ contract TownArchitectTest is
     vm.prank(founder);
     address newTown = _createSimpleTown(townId);
 
-    assertTrue(IEntitlements(newTown).isEntitledToTown(founder, "Read"));
+    assertTrue(IEntitlementsManager(newTown).isEntitledToTown(founder, "Read"));
 
     (address townToken, , ) = townArchitect.getTownArchitectImplementations();
     uint256 tokenId = townArchitect.getTokenIdByTownId(townId);
@@ -124,9 +130,11 @@ contract TownArchitectTest is
     vm.prank(founder);
     IERC721(townToken).transferFrom(founder, buyer, tokenId);
 
-    assertFalse(IEntitlements(newTown).isEntitledToTown(founder, "Read"));
+    assertFalse(
+      IEntitlementsManager(newTown).isEntitledToTown(founder, "Read")
+    );
 
-    assertTrue(IEntitlements(newTown).isEntitledToTown(buyer, "Read"));
+    assertTrue(IEntitlementsManager(newTown).isEntitledToTown(buyer, "Read"));
   }
 
   function test_createTown_revert_when_paused(string memory name) external {
@@ -197,7 +205,7 @@ contract TownArchitectTest is
   function test_revertIfInvalidTownId() external {
     address founder = _randomAddress();
 
-    vm.expectRevert(TownArchitectService__InvalidStringLength.selector);
+    vm.expectRevert(Validator__InvalidStringLength.selector);
 
     vm.prank(founder);
     _createSimpleTown("");
@@ -206,10 +214,22 @@ contract TownArchitectTest is
   function test_revertIfNetworkIdTaken(string memory networkId) external {
     vm.assume(bytes(networkId).length > 0);
 
+    address founder = _randomAddress();
+
+    vm.prank(founder);
     _createSimpleTown(networkId);
 
-    vm.expectRevert(TownArchitectService__InvalidNetworkId.selector);
+    vm.expectRevert(TownArchitect__InvalidNetworkId.selector);
     vm.prank(_randomAddress());
+    _createSimpleTown(networkId);
+  }
+
+  function test_revertIfNotERC721Receiver(string memory networkId) external {
+    vm.assume(bytes(networkId).length > 0);
+
+    vm.expectRevert(
+      IERC721ABase.TransferToNonERC721ReceiverImplementer.selector
+    );
     _createSimpleTown(networkId);
   }
 

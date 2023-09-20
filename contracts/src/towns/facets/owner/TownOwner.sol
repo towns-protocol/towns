@@ -45,7 +45,7 @@ contract TownOwner is
     address town
   ) external onlyFactory returns (uint256 tokenId) {
     tokenId = _nextTokenId();
-    _createTown(name, uri, tokenId, town, networkId);
+    _mintTown(name, uri, tokenId, town, networkId);
     _safeMint(msg.sender, 1);
   }
 

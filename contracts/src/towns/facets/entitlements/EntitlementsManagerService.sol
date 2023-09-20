@@ -7,7 +7,7 @@ import {IERC165} from "contracts/src/diamond/facets/introspection/IERC165.sol";
 
 // libraries
 import {EnumerableSet} from "openzeppelin-contracts/contracts/utils/structs/EnumerableSet.sol";
-import {EntitlementsStorage} from "./EntitlementsStorage.sol";
+import {EntitlementsManagerStorage} from "./EntitlementsManagerStorage.sol";
 
 // contracts
 error EntitlementsService__InvalidEntitlementAddress();
@@ -17,14 +17,15 @@ error EntitlementsService__ImmutableEntitlement();
 error EntitlementsService__EntitlementDoesNotExist();
 error EntitlementsService__EntitlementAlreadyExists();
 
-library EntitlementsService {
+library EntitlementsManagerService {
   using EnumerableSet for EnumerableSet.AddressSet;
-  using EntitlementsStorage for EntitlementsStorage.Layout;
+  using EntitlementsManagerStorage for EntitlementsManagerStorage.Layout;
 
   string internal constant IN_TOWN = "";
 
   function checkEntitlement(address entitlement) internal view {
-    EntitlementsStorage.Layout storage ds = EntitlementsStorage.layout();
+    EntitlementsManagerStorage.Layout storage ds = EntitlementsManagerStorage
+      .layout();
 
     if (ds.entitlementByAddress[entitlement].entitlement == address(0)) {
       revert EntitlementsService__EntitlementDoesNotExist();
@@ -32,21 +33,21 @@ library EntitlementsService {
   }
 
   function addEntitlement(address entitlement, bool isImmutable) internal {
-    EntitlementsStorage.Layout storage ds = EntitlementsStorage.layout();
+    EntitlementsManagerStorage.Layout storage ds = EntitlementsManagerStorage
+      .layout();
 
     if (ds.entitlementByAddress[entitlement].entitlement != address(0)) {
       revert EntitlementsService__EntitlementAlreadyExists();
     }
 
     ds.entitlements.add(entitlement);
-    ds.entitlementByAddress[entitlement] = EntitlementsStorage.Entitlement({
-      entitlement: entitlement,
-      isImmutable: isImmutable
-    });
+    ds.entitlementByAddress[entitlement] = EntitlementsManagerStorage
+      .Entitlement({entitlement: entitlement, isImmutable: isImmutable});
   }
 
   function removeEntitlement(address entitlement) internal {
-    EntitlementsStorage.Layout storage ds = EntitlementsStorage.layout();
+    EntitlementsManagerStorage.Layout storage ds = EntitlementsManagerStorage
+      .layout();
 
     if (ds.entitlementByAddress[entitlement].entitlement == address(0)) {
       revert EntitlementsService__EntitlementDoesNotExist();
@@ -57,7 +58,6 @@ library EntitlementsService {
     }
 
     ds.entitlements.remove(entitlement);
-    delete ds.entitlementByAddress[entitlement].entitlement;
     delete ds.entitlementByAddress[entitlement];
   }
 
@@ -73,7 +73,8 @@ library EntitlementsService {
       bool isImmutable
     )
   {
-    EntitlementsStorage.Layout storage ds = EntitlementsStorage.layout();
+    EntitlementsManagerStorage.Layout storage ds = EntitlementsManagerStorage
+      .layout();
 
     if (ds.entitlementByAddress[entitlement].entitlement == address(0)) {
       revert EntitlementsService__EntitlementDoesNotExist();
@@ -92,7 +93,7 @@ library EntitlementsService {
     view
     returns (address[] memory entitlements)
   {
-    return EntitlementsStorage.layout().entitlements.values();
+    return EntitlementsManagerStorage.layout().entitlements.values();
   }
 
   // =============================================================

@@ -63,9 +63,9 @@ func TestLoad(t *testing.T) {
 	assert.Equal(t, parsedEvent(t, inception).Event.GetInceptionPayload().GetStreamId(), ip.GetStreamId())
 	assert.Equal(t, "streamid$1", ip.GetStreamId())
 
-	users, err := view.JoinedUsers()
+	joined, err := view.IsUserJoined("userid$1") // joined is only valid on space and channel views
 	assert.NoError(t, err)
-	assert.NotNil(t, users["userid$1"])
+	assert.False(t, joined)
 
 	last := view.LastEvent()
 	assert.NotNil(t, last)

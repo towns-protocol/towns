@@ -17,4 +17,5 @@ type Service struct {
 	walletLinkContract auth.WalletLinkContract
 	wallet             *crypto.Wallet
 	skipDelegateCheck  bool
+	exitSignal         chan error
 }

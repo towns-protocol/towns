@@ -62,22 +62,32 @@ export default [
   },
   {
     "inputs": [],
-    "name": "TownArchitectService__InvalidAddress",
+    "name": "TownArchitect__InvalidAddress",
     "type": "error"
   },
   {
     "inputs": [],
-    "name": "TownArchitectService__InvalidNetworkId",
+    "name": "TownArchitect__InvalidNetworkId",
     "type": "error"
   },
   {
     "inputs": [],
-    "name": "TownArchitectService__InvalidStringLength",
+    "name": "TownArchitect__InvalidStringLength",
     "type": "error"
   },
   {
     "inputs": [],
-    "name": "TownArchitectService__NotContract",
+    "name": "TownArchitect__NotContract",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "Validator__InvalidAddress",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "Validator__InvalidStringLength",
     "type": "error"
   },
   {

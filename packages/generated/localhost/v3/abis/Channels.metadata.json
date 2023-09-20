@@ -456,13 +456,10 @@
       ":ds-test/=lib/ds-test/src/",
       ":erc4626-tests/=lib/operator-filter-registry/lib/openzeppelin-contracts/lib/erc4626-tests/",
       ":forge-std/=lib/forge-std/src/",
-      ":murky/=lib/murky/src/",
       ":openzeppelin-contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/",
       ":openzeppelin-contracts/=lib/openzeppelin-contracts/",
       ":operator-filter-registry/=lib/operator-filter-registry/",
-      ":prb-test/=lib/prb-test/src/",
-      ":solmate/=lib/solmate/src/",
-      ":weird-erc20/=lib/solmate/lib/weird-erc20/src/"
+      ":prb-test/=lib/prb-test/src/"
     ]
   },
   "sources": {
@@ -571,11 +568,11 @@
       ]
     },
     "contracts/src/towns/facets/Entitled.sol": {
-      "keccak256": "0x9a4a44f9b7829dda47a0beb43076f2382bda72333571001eb8a6fb69d723b2c2",
+      "keccak256": "0xf5721025a7f69dbfd8d597801acf1493bd171552b62ccccc26dd3bde8bd7719e",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://2d9ae9e5668e5f1efa28dff702ee50eec69df427c6eaee3321859cbad206bc82",
-        "dweb:/ipfs/QmaMQsyVzREskdSfarp6eVWPmttJY2zTh2Xr37zCfwX6QP"
+        "bzz-raw://219d11ab3a4afb1ebe08fc51257afdcaf7623b52a027456606827f10b2120e97",
+        "dweb:/ipfs/QmTxGsSLB3xyj6665ijh5PuDhgD8aefpgJNpkcSC6STkyC"
       ]
     },
     "contracts/src/towns/facets/Permissions.sol": {
@@ -626,12 +623,12 @@
         "dweb:/ipfs/QmcwXjVTwYJHirEktW1UgjntZYSFdHihMqVUNyhdGDwpZ4"
       ]
     },
-    "contracts/src/towns/facets/entitlements/EntitlementsStorage.sol": {
-      "keccak256": "0x6a8cd3a19ff1c836849d48be28f94b08f2864b4f26823a3af3e5741ff106a2a1",
+    "contracts/src/towns/facets/entitlements/EntitlementsManagerStorage.sol": {
+      "keccak256": "0x2fa49a3dea8314e57341b402894a053fe4c3e4f6f682d3f6cfae79e999919340",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://3950f0448e01b6dbe94b4e3ea84ff8c5bc5d3da4966c1e848da5d40738b0a647",
-        "dweb:/ipfs/QmbTtp8PdYYZbsuuseRVJeUVQHUKJwfwDXWqtFQRDz9yDp"
+        "bzz-raw://ca673210755140e127ec9ed3c7716a3c4fc48d3c4cf66d6ccfca5144e2c9933d",
+        "dweb:/ipfs/QmQajUVgwkg8dkeAb8Ext2dABL3PRPNsiDCxd7XXXuUdVD"
       ]
     },
     "contracts/src/utils/StringSet.sol": {
@@ -643,11 +640,11 @@
       ]
     },
     "contracts/src/utils/Validator.sol": {
-      "keccak256": "0x51ec816c6e6dda4973556e0446a1dfcec872e73352838315a1140683c4cb4001",
+      "keccak256": "0xc3711af9d2db5524ada0fcdd6a41e176aeafc3423f79400894def7c3c22568f8",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://b747e47602719190bd080f69913233de5a39a2b6afa4c7c9ebd591e93282de93",
-        "dweb:/ipfs/QmTc74S4UBYrmHEDc7Z17ohc2MC6hfxfRWSqk1qkE1S3b1"
+        "bzz-raw://1427d925bf4d9f0ea065c60a7afcff8439dbd62cfa3e4a34e301b1b85df2a184",
+        "dweb:/ipfs/QmYETDCx4zhBUqkgmYhyyb1un469ZeuhCpeY4RdtRoYvEz"
       ]
     },
     "lib/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol": {

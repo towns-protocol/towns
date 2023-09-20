@@ -28,6 +28,7 @@ contract Roles is IRoles, RolesBase, Entitled {
   function getRoleById(
     uint256 roleId
   ) external view override returns (Role memory) {
+    _checkRoleExists(roleId);
     return _getRoleById(roleId);
   }
 
@@ -38,11 +39,13 @@ contract Roles is IRoles, RolesBase, Entitled {
     CreateEntitlement[] memory entitlements
   ) external override {
     _validatePermission(Permissions.ModifyRoles);
+    _checkRoleExists(roleId);
     _updateRole(roleId, roleName, permissions, entitlements);
   }
 
   function removeRole(uint256 roleId) external override {
     _validatePermission(Permissions.ModifyRoles);
+    _checkRoleExists(roleId);
     _removeRole(roleId);
   }
 
@@ -53,6 +56,7 @@ contract Roles is IRoles, RolesBase, Entitled {
     string[] memory permissions
   ) external override {
     _validatePermission(Permissions.ModifyRoles);
+    _checkRoleExists(roleId);
     _addPermissionsToRole(roleId, permissions);
   }
 
@@ -61,6 +65,7 @@ contract Roles is IRoles, RolesBase, Entitled {
     string[] memory permissions
   ) external override {
     _validatePermission(Permissions.ModifyRoles);
+    _checkRoleExists(roleId);
     _removePermissionsFromRole(roleId, permissions);
   }
 
@@ -76,6 +81,7 @@ contract Roles is IRoles, RolesBase, Entitled {
     CreateEntitlement memory entitlement
   ) external {
     _validatePermission(Permissions.ModifyRoles);
+    _checkRoleExists(roleId);
     _addRoleToEntitlement(roleId, entitlement);
   }
 
@@ -84,6 +90,7 @@ contract Roles is IRoles, RolesBase, Entitled {
     CreateEntitlement memory entitlement
   ) external {
     _validatePermission(Permissions.ModifyRoles);
+    _checkRoleExists(roleId);
     _removeRoleFromEntitlement(roleId, entitlement);
   }
 }

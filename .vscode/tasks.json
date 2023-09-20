@@ -72,7 +72,8 @@
           "PushNotificationsWorker",
           "Dendrite (from source)",
           "Casablanca",
-          "Casablanca-No-Entitlements"
+          "Casablanca-No-Entitlements",
+          "Start Load Testing Redis",
         ],
         "group": {
           "kind": "build",
@@ -175,6 +176,16 @@
         "label": "Dendrite (from docker compose)",
         "type": "shell",
         "command": "./scripts/start-local-dendrite.sh --docker-compose-only",
+        "isBackground": true,
+        "problemMatcher": [],
+        "presentation": {
+          "group": "local-servers"
+        }
+      },
+      {
+        "label": "Start Load Testing Redis",
+        "type": "shell",
+        "command": "./scripts/start_load_testing_redis.sh",
         "isBackground": true,
         "problemMatcher": [],
         "presentation": {

@@ -294,7 +294,7 @@ func testServerAndClient(ctx context.Context, dbUrl string, dbSchemaName string,
 		}
 	}
 
-	closer, port, err := rpc.StartServer(ctx, cfg, wallet)
+	closer, port, _, err := rpc.StartServer(ctx, cfg, wallet)
 	if err != nil {
 		panic(err)
 	}

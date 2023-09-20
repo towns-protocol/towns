@@ -8,7 +8,7 @@ import {EnumerableSet} from "openzeppelin-contracts/contracts/utils/structs/Enum
 
 // contracts
 
-library EntitlementsStorage {
+library EntitlementsManagerStorage {
   bytes32 internal constant STORAGE_SLOT =
     keccak256("towns.contracts.storage.Entitlement");
 

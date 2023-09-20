@@ -25,9 +25,9 @@ XCHAIN_PACKAGE="_xchain"
 forge clean
 forge build --extra-output-files metadata --extra-output-files abi --force
 
-yarn typechain --target=ethers-v5 "contracts/out/**/?(IDiamond|IDiamondCut|ITownArchitect|IProxyManager|IPausable|IEntitlements|IChannel|IRoles|IMulticall|TokenEntitlement|IWalletLink|OwnableFacet|TokenPausableFacet|UserEntitlement|ITownOwner|MockERC721A).json" --out-dir "packages/generated/${CHAIN}/v3/typings"
+yarn typechain --target=ethers-v5 "contracts/out/**/?(IDiamond|IDiamondCut|ITownArchitect|IProxyManager|IPausable|IEntitlementsManager|IChannel|IRoles|IMulticall|TokenEntitlement|IWalletLink|OwnableFacet|TokenPausableFacet|UserEntitlement|ITownOwner|MockERC721A).json" --out-dir "packages/generated/${CHAIN}/v3/typings"
 
-mkdir -p $ABI_DIR && cp -a contracts/out/{Diamond,DiamondCutFacet,TownArchitect,ProxyManager,Pausable,Entitlements,Channels,Roles,Multicall,OwnableFacet,TokenEntitlement,WalletLink,TokenPausableFacet,UserEntitlement,TownOwner,MockERC721A}.sol/* "$ABI_DIR"
+mkdir -p $ABI_DIR && cp -a contracts/out/{Diamond,DiamondCutFacet,TownArchitect,ProxyManager,Pausable,EntitlementsManager,Channels,Roles,Multicall,OwnableFacet,TokenEntitlement,WalletLink,TokenPausableFacet,UserEntitlement,TownOwner,MockERC721A}.sol/* "$ABI_DIR"
 
 # Copy the json abis to TS files for type inference
 for file in $ABI_DIR/*.abi.json; do
@@ -49,8 +49,8 @@ go run github.com/ethereum/go-ethereum/cmd/abigen@v1.12.2 --abi contracts/out/To
 go run github.com/ethereum/go-ethereum/cmd/abigen@v1.12.2 --abi contracts/out/Channels.sol/Channels.abi.json --pkg "${CHAIN}_towns_channels" --type "${CHAIN}_towns_channels" --out "${DENDRITE_TOWNS_CHANNELS_DIR}/${CHAIN}_towns_channels.go"
 go run github.com/ethereum/go-ethereum/cmd/abigen@v1.12.2 --abi contracts/out/Channels.sol/Channels.abi.json --pkg "${CHAIN}_towns_channels" --type "${CHAIN}_towns_channels" --out "${RIVER_TOWNS_CHANNELS_DIR}/${CHAIN}_towns_channels.go"
 # Town Entitlements typings
-go run github.com/ethereum/go-ethereum/cmd/abigen@v1.12.2 --abi contracts/out/Entitlements.sol/Entitlements.abi.json --pkg "${CHAIN}_towns_entitlements" --type "${CHAIN}_towns_entitlements" --out "${DENDRITE_TOWNS_ENTITLEMENTS_DIR}/${CHAIN}_towns_entitlements.go"
-go run github.com/ethereum/go-ethereum/cmd/abigen@v1.12.2 --abi contracts/out/Entitlements.sol/Entitlements.abi.json --pkg "${CHAIN}_towns_entitlements" --type "${CHAIN}_towns_entitlements" --out "${RIVER_TOWNS_ENTITLEMENTS_DIR}/${CHAIN}_towns_entitlements.go"
+go run github.com/ethereum/go-ethereum/cmd/abigen@v1.12.2 --abi contracts/out/EntitlementsManager.sol/EntitlementsManager.abi.json --pkg "${CHAIN}_towns_entitlements" --type "${CHAIN}_towns_entitlements" --out "${DENDRITE_TOWNS_ENTITLEMENTS_DIR}/${CHAIN}_towns_entitlements.go"
+go run github.com/ethereum/go-ethereum/cmd/abigen@v1.12.2 --abi contracts/out/EntitlementsManager.sol/EntitlementsManager.abi.json --pkg "${CHAIN}_towns_entitlements" --type "${CHAIN}_towns_entitlements" --out "${RIVER_TOWNS_ENTITLEMENTS_DIR}/${CHAIN}_towns_entitlements.go"
 # Town Pausable typings
 go run github.com/ethereum/go-ethereum/cmd/abigen@v1.12.2 --abi contracts/out/Pausable.sol/Pausable.abi.json --pkg "${CHAIN}_towns_pausable" --type "${CHAIN}_towns_pausable" --out "${DENDRITE_TOWNS_PAUSABLE_DIR}/${CHAIN}_towns_pausable.go"
 go run github.com/ethereum/go-ethereum/cmd/abigen@v1.12.2 --abi contracts/out/Pausable.sol/Pausable.abi.json --pkg "${CHAIN}_towns_pausable" --type "${CHAIN}_towns_pausable" --out "${RIVER_TOWNS_PAUSABLE_DIR}/${CHAIN}_towns_pausable.go"

@@ -24,7 +24,7 @@ import {OwnableFacet} from "contracts/src/diamond/facets/ownable/OwnableFacet.so
 import {TokenOwnableFacet} from "contracts/src/diamond/facets/ownable/token/TokenOwnableFacet.sol";
 import {DiamondCutFacet} from "contracts/src/diamond/facets/cut/DiamondCutFacet.sol";
 import {DiamondLoupeFacet} from "contracts/src/diamond/facets/loupe/DiamondLoupeFacet.sol";
-import {Entitlements} from "contracts/src/towns/facets/entitlements/Entitlements.sol";
+import {EntitlementsManager} from "contracts/src/towns/facets/entitlements/EntitlementsManager.sol";
 import {Channels} from "contracts/src/towns/facets/channels/Channels.sol";
 import {Roles} from "contracts/src/towns/facets/roles/Roles.sol";
 import {TokenPausableFacet} from "contracts/src/diamond/facets/pausable/token/TokenPausableFacet.sol";
@@ -72,7 +72,7 @@ contract DeployTown is Deployer {
     tokenOwnable = address(new TokenOwnableFacet());
     diamondCut = address(new DiamondCutFacet());
     diamondLoupe = address(new DiamondLoupeFacet());
-    entitlements = address(new Entitlements());
+    entitlements = address(new EntitlementsManager());
     channels = address(new Channels());
     roles = address(new Roles());
     tokenPausable = address(new TokenPausableFacet());

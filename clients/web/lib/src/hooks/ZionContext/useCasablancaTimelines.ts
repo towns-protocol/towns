@@ -139,8 +139,16 @@ export function useCasablancaTimelines(casablancaClient: CasablancaClient | unde
                 timelineEvents.set(stream.streamId, [])
                 console.log('$$$ useCasablancaTimelines load streamId', stream.streamId)
                 stream.view.timeline.forEach((event) => {
-                    if (stream.view.contentKind === 'channelContent') {
-                        casablancaClient.emit('channelTimelineEvent', stream.streamId, event)
+                    if (
+                        stream.view.contentKind === 'channelContent' &&
+                        stream.view.channelContent.spaceId !== undefined
+                    ) {
+                        casablancaClient.emit(
+                            'channelTimelineEvent',
+                            stream.streamId,
+                            stream.view.channelContent.spaceId,
+                            event,
+                        )
                     }
                     const parsedEvent = toEvent(event, casablancaClient.userId)
                     timelineEvents.get(stream.streamId)?.push(parsedEvent)

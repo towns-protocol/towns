@@ -34,6 +34,11 @@ interface ITownArchitectBase {
   }
 
   event TownCreated(address indexed town);
+
+  error TownArchitect__InvalidStringLength();
+  error TownArchitect__InvalidNetworkId();
+  error TownArchitect__InvalidAddress();
+  error TownArchitect__NotContract();
 }
 
 interface ITownArchitect is ITownArchitectBase {

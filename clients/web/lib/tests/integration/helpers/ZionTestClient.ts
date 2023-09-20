@@ -111,6 +111,9 @@ export class ZionTestClient extends ZionClient {
      * getUserId - returns the current user id for the primary protocol, or undefined if not logged in there
      ************************************************/
     getUserId(): string | undefined {
+        if (!this.opts.primaryProtocol) {
+            return undefined
+        }
         switch (this.opts.primaryProtocol) {
             case SpaceProtocol.Matrix:
                 return this.auth?.userId
@@ -384,6 +387,9 @@ export class ZionTestClient extends ZionClient {
     }
 
     public async loginWalletAndStartClient(): Promise<void> {
+        if (!this.opts.primaryProtocol) {
+            return
+        }
         switch (this.opts.primaryProtocol) {
             case SpaceProtocol.Matrix:
                 {
@@ -409,6 +415,9 @@ export class ZionTestClient extends ZionClient {
     }
 
     public async isUserRegistered(): Promise<boolean> {
+        if (!this.opts.primaryProtocol) {
+            throw new Error('primaryProtocol is undefined')
+        }
         switch (this.opts.primaryProtocol) {
             case SpaceProtocol.Matrix: {
                 const matrixClient = ZionClient.createMatrixClient(this.opts)

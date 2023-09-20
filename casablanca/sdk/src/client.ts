@@ -67,6 +67,7 @@ import {
     make_UserSettingsPayload_FullyReadMarkers,
     make_UserSettingsPayload_Inception,
     unpackStreamResponse,
+    ParsedEvent,
 } from './types'
 import { shortenHexString } from './binary'
 import { CryptoStore } from './crypto/store/base'
@@ -966,14 +967,14 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         }
     }
 
-    async scrollback(streamId: string) {
+    async scrollback(streamId: string): Promise<{ terminus: boolean; firstEvent?: ParsedEvent }> {
         this.logCall('scrollback', streamId)
         const stream = this.stream(streamId)
         check(isDefined(stream), `stream not found: ${streamId}`)
         check(isDefined(stream.view.miniblockInfo), `stream not initialized: ${streamId}`)
         if (stream.view.miniblockInfo.terminusReached) {
             this.logCall('scrollback', streamId, 'terminus reached')
-            return
+            return { terminus: true, firstEvent: stream.view.timeline.at(0) }
         }
         const step = 2n // todo better step amount? https://linear.app/hnt-labs/issue/HNT-2242/pagination-step-amount
         const toExclusive = stream.view.miniblockInfo.min
@@ -984,6 +985,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
             toExclusive,
         })
         stream.prependEvents(response.miniblocks, response.terminus)
+        return { terminus: response.terminus, firstEvent: stream.view.timeline.at(0) }
     }
 
     async sendToDevicesMessage(
@@ -1168,27 +1170,30 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
                     }
                     // 06/02/23 note: for now there's a one to one mapping between userIds - deviceIds, which is why
                     // we return the latest UserDeviceKey event for each user from their stream. This won't hold in the future
-                    // as user's will eventually have multiple devices per user.
-                    const payload = Array.from(
+                    // as user's will eventually have multiple devices per user, each with a different deviceId.
+
+                    const devicesFlat = Array.from(
                         stream.userDeviceKeyContent.uploadedDeviceKeys.values(),
-                    )[0]
+                    ).flatMap((value) => value)
+
+                    // return latest device key
+                    const payload = devicesFlat[devicesFlat.length - 1]
 
                     if (!returnFallbackKeys) {
-                        const deviceKeys = payload.map((v) => v.deviceKeys).filter(isDefined)
-                        // push all known device keys for all devices of user
-                        response.device_keys[userId] = deviceKeys
+                        if (isDefined(payload.deviceKeys)) {
+                            // push all known device keys for all devices of user
+                            if (!response.device_keys[userId]) {
+                                response.device_keys[userId] = []
+                            }
+                            response.device_keys[userId].push(payload.deviceKeys)
+                        }
                     } else {
-                        const fallbackKeys = payload
-                            .map((v) => {
-                                if (v.deviceKeys?.deviceId && v.fallbackKeys) {
-                                    const entry: FallbackKeyResponse = {
-                                        [v.deviceKeys.deviceId]: v.fallbackKeys,
-                                    }
-                                    return entry
-                                }
-                                return undefined
+                        const fallbackKeys: FallbackKeyResponse[] = []
+                        if (payload.deviceKeys?.deviceId && payload.fallbackKeys) {
+                            fallbackKeys.push({
+                                [payload.deviceKeys.deviceId]: payload.fallbackKeys,
                             })
-                            .filter(isDefined)
+                        }
                         // push all known device keys for all devices of user
                         if (fallbackKeys.length > 0) {
                             if (response.fallback_keys) {
@@ -1200,7 +1205,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
                 } catch (e) {
                     // return error in response
                     const response: IDownloadKeyResponse = {
-                        failures: { [userId]: { error: e } },
+                        failures: { [userId]: { error: <Error>e } },
                         device_keys: {},
                         fallback_keys: {},
                     }

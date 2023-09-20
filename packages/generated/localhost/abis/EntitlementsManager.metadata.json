@@ -1,0 +1,541 @@
+{
+  "compiler": {
+    "version": "0.8.20+commit.a1b79de6"
+  },
+  "language": "Solidity",
+  "output": {
+    "abi": [
+      {
+        "inputs": [],
+        "name": "Entitlement__InvalidValue",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "Entitlement__NotAllowed",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "Entitlement__ValueAlreadyExists",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "EntitlementsService__EntitlementAlreadyExists",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "EntitlementsService__EntitlementDoesNotExist",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "EntitlementsService__ImmutableEntitlement",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "EntitlementsService__InvalidEntitlementAddress",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "EntitlementsService__InvalidEntitlementInterface",
+        "type": "error"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "account",
+            "type": "address"
+          }
+        ],
+        "name": "Ownable__NotOwner",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "Ownable__ZeroAddress",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "Pausable__NotPaused",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "Pausable__Paused",
+        "type": "error"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": true,
+            "internalType": "address",
+            "name": "previousOwner",
+            "type": "address"
+          },
+          {
+            "indexed": true,
+            "internalType": "address",
+            "name": "newOwner",
+            "type": "address"
+          }
+        ],
+        "name": "OwnershipTransferred",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": false,
+            "internalType": "address",
+            "name": "account",
+            "type": "address"
+          }
+        ],
+        "name": "Paused",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": false,
+            "internalType": "address",
+            "name": "account",
+            "type": "address"
+          }
+        ],
+        "name": "Unpaused",
+        "type": "event"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "entitlement",
+            "type": "address"
+          }
+        ],
+        "name": "addEntitlementModule",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address[]",
+            "name": "entitlements",
+            "type": "address[]"
+          }
+        ],
+        "name": "addImmutableEntitlements",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "entitlement",
+            "type": "address"
+          }
+        ],
+        "name": "getEntitlement",
+        "outputs": [
+          {
+            "components": [
+              {
+                "internalType": "string",
+                "name": "name",
+                "type": "string"
+              },
+              {
+                "internalType": "address",
+                "name": "moduleAddress",
+                "type": "address"
+              },
+              {
+                "internalType": "string",
+                "name": "moduleType",
+                "type": "string"
+              },
+              {
+                "internalType": "bool",
+                "name": "isImmutable",
+                "type": "bool"
+              }
+            ],
+            "internalType": "struct IEntitlementsManagerBase.Entitlement",
+            "name": "",
+            "type": "tuple"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "getEntitlements",
+        "outputs": [
+          {
+            "components": [
+              {
+                "internalType": "string",
+                "name": "name",
+                "type": "string"
+              },
+              {
+                "internalType": "address",
+                "name": "moduleAddress",
+                "type": "address"
+              },
+              {
+                "internalType": "string",
+                "name": "moduleType",
+                "type": "string"
+              },
+              {
+                "internalType": "bool",
+                "name": "isImmutable",
+                "type": "bool"
+              }
+            ],
+            "internalType": "struct IEntitlementsManagerBase.Entitlement[]",
+            "name": "",
+            "type": "tuple[]"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "string",
+            "name": "channelId",
+            "type": "string"
+          },
+          {
+            "internalType": "address",
+            "name": "user",
+            "type": "address"
+          },
+          {
+            "internalType": "string",
+            "name": "permission",
+            "type": "string"
+          }
+        ],
+        "name": "isEntitledToChannel",
+        "outputs": [
+          {
+            "internalType": "bool",
+            "name": "",
+            "type": "bool"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "user",
+            "type": "address"
+          },
+          {
+            "internalType": "string",
+            "name": "permission",
+            "type": "string"
+          }
+        ],
+        "name": "isEntitledToTown",
+        "outputs": [
+          {
+            "internalType": "bool",
+            "name": "",
+            "type": "bool"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "entitlement",
+            "type": "address"
+          }
+        ],
+        "name": "removeEntitlementModule",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      }
+    ],
+    "devdoc": {
+      "events": {
+        "OwnershipTransferred(address,address)": {
+          "details": "This emits when ownership of a contract changes."
+        }
+      },
+      "kind": "dev",
+      "methods": {
+        "addEntitlementModule(address)": {
+          "params": {
+            "entitlement": "The entitlement to add"
+          }
+        },
+        "addImmutableEntitlements(address[])": {
+          "params": {
+            "entitlements": "The entitlements to add"
+          }
+        },
+        "getEntitlement(address)": {
+          "params": {
+            "entitlement": "The entitlement to get"
+          },
+          "returns": {
+            "_0": "The entitlement module address"
+          }
+        },
+        "getEntitlements()": {
+          "returns": {
+            "_0": "The entitlement modules"
+          }
+        },
+        "isEntitledToChannel(string,address,string)": {
+          "params": {
+            "channelId": "The channel to check",
+            "permission": "The permission to check",
+            "user": "The user to check"
+          },
+          "returns": {
+            "_0": "True if the user is entitled to the permission, false otherwise"
+          }
+        },
+        "isEntitledToTown(address,string)": {
+          "params": {
+            "permission": "The permission to check",
+            "user": "The user to check"
+          },
+          "returns": {
+            "_0": "True if the user is entitled to the permission, false otherwise"
+          }
+        },
+        "removeEntitlementModule(address)": {
+          "params": {
+            "entitlement": "The entitlement to remove"
+          }
+        }
+      },
+      "version": 1
+    },
+    "userdoc": {
+      "kind": "user",
+      "methods": {
+        "addEntitlementModule(address)": {
+          "notice": "Adds an entitlement to the town"
+        },
+        "addImmutableEntitlements(address[])": {
+          "notice": "Allows the town owner to add immutable entitlements to the town"
+        },
+        "getEntitlement(address)": {
+          "notice": "Gets an entitlement from the town"
+        },
+        "getEntitlements()": {
+          "notice": "Gets all entitlements from the town"
+        },
+        "isEntitledToChannel(string,address,string)": {
+          "notice": "Checks if a user is entitled to a permission in a channel"
+        },
+        "isEntitledToTown(address,string)": {
+          "notice": "Checks if a user is entitled to a permission in the town"
+        },
+        "removeEntitlementModule(address)": {
+          "notice": "Removes an entitlement from the town"
+        }
+      },
+      "version": 1
+    }
+  },
+  "settings": {
+    "compilationTarget": {
+      "contracts/src/towns/facets/entitlements/EntitlementsManager.sol": "EntitlementsManager"
+    },
+    "evmVersion": "paris",
+    "libraries": {},
+    "metadata": {
+      "appendCBOR": false,
+      "bytecodeHash": "none"
+    },
+    "optimizer": {
+      "enabled": true,
+      "runs": 200
+    },
+    "remappings": [
+      ":@openzeppelin/=lib/openzeppelin-contracts/",
+      ":@prb/test/=lib/prb-test/src/",
+      ":ERC721A/=lib/ERC721A/contracts/",
+      ":council/=lib/council/contracts/",
+      ":ds-test/=lib/ds-test/src/",
+      ":erc4626-tests/=lib/operator-filter-registry/lib/openzeppelin-contracts/lib/erc4626-tests/",
+      ":forge-std/=lib/forge-std/src/",
+      ":openzeppelin-contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/",
+      ":openzeppelin-contracts/=lib/openzeppelin-contracts/",
+      ":operator-filter-registry/=lib/operator-filter-registry/",
+      ":prb-test/=lib/prb-test/src/"
+    ]
+  },
+  "sources": {
+    "contracts/src/diamond/facets/introspection/IERC165.sol": {
+      "keccak256": "0xa1dfa0449031fced106dd105c184823595398c876be53b4bb8d855937a435816",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://e98a9007bca24776e4580c9326cfbb72ffe56334229626c336545be8c2c6e6d2",
+        "dweb:/ipfs/QmdqoQTUoDKqirUR3hscy4zBh4Kn2E1fRta1y9DfA43urV"
+      ]
+    },
+    "contracts/src/diamond/facets/ownable/IERC173.sol": {
+      "keccak256": "0x76db3de67cf685fd097cba11229f8fcb1ddb25612193a9ced697508706a237fe",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://3f6de17931a0734b33ffa015f207efaba72e71ffe7f5ca3a95178525546de620",
+        "dweb:/ipfs/QmXuw9kx5fAER4jYBHUDLpbB2mQhEkwBrZPa96JgEEY9nD"
+      ]
+    },
+    "contracts/src/diamond/facets/ownable/token/TokenOwnableBase.sol": {
+      "keccak256": "0x61304bf241c1d14017416d3cc1742960f6157411d90a1464b8bde23bd322da89",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://ac41ce2830e16be806340ea576a1885db9ecd02cc4f5002bfdeb4dfd4ac0115e",
+        "dweb:/ipfs/QmXqE8xZjwkFA2YgfV3eExFVEMqHizVSBTxyNDhM9WVrEZ"
+      ]
+    },
+    "contracts/src/diamond/facets/ownable/token/TokenOwnableStorage.sol": {
+      "keccak256": "0xea4323b3cc8794cb9008bf79180555b0dc248c52e0b030024d6b4ac9fdd6af0b",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://dce6d6130309fce1126b8a4b493cc14666c59d1f7685107f07fb685d2cf31773",
+        "dweb:/ipfs/QmVrC5tmJWZYgZ7ruKW6uDU8QDeZgbh3QcZD9aWHrX2Duh"
+      ]
+    },
+    "contracts/src/diamond/facets/pausable/IPausable.sol": {
+      "keccak256": "0x51faf4ca7fa88bc4bf2699bab34692f0a43a316d0b3f95a8d7271935ef243a78",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://e4ff1050ba7ec1bc7de90f562d8ccf7875f4faea0f12ca5101f22619f2dd6de2",
+        "dweb:/ipfs/QmeczRzWavYXmirfEbwGg5uLeLdXaENtFAzmxxFsggUHsW"
+      ]
+    },
+    "contracts/src/diamond/facets/pausable/PausableBase.sol": {
+      "keccak256": "0xfdeeba59a9f9b6a31203aa45f9244767b5d790dbcf36c920cc0ec5471505e47f",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://72d6eb74b90e658834c9b9f6a9e391722c3eb3992aef2d4694c1a91473b291a1",
+        "dweb:/ipfs/QmXVV8mTt8LmFDhzn3Lm3BMLXNdJTzUMbMrpBjnUaMzm5F"
+      ]
+    },
+    "contracts/src/diamond/facets/pausable/PausableStorage.sol": {
+      "keccak256": "0x7aaa1baa71b080cf67876cb383b505be55ff2661b4bafc7f01428d509c201296",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://68231325f3a66baf6b96cb34d1432a675ff1d36fc15500cec97de12fc823bcd1",
+        "dweb:/ipfs/QmVQb23iSSbYQJqk3EB9vT5fjSp6J8Uj2AwgEaHMSkF6wa"
+      ]
+    },
+    "contracts/src/towns/entitlements/IEntitlement.sol": {
+      "keccak256": "0x3c3733f40dcf373c19ea564ec9cbf49b33e96c27a80012e9be6f8d6d24e76c46",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://ba0686e15bc8bfac66d59f62e59832eaf6d4c1b636080f9b2367386d5dc72ecb",
+        "dweb:/ipfs/QmemW17L8TkGWG9RHKWTpjq9WBtYX3dmZsiTtzDmYNNXwE"
+      ]
+    },
+    "contracts/src/towns/facets/Entitled.sol": {
+      "keccak256": "0xf5721025a7f69dbfd8d597801acf1493bd171552b62ccccc26dd3bde8bd7719e",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://219d11ab3a4afb1ebe08fc51257afdcaf7623b52a027456606827f10b2120e97",
+        "dweb:/ipfs/QmTxGsSLB3xyj6665ijh5PuDhgD8aefpgJNpkcSC6STkyC"
+      ]
+    },
+    "contracts/src/towns/facets/entitlements/EntitlementsManager.sol": {
+      "keccak256": "0xb348490c3e28cf8d5ff2ced284e7cf9b7d37f1a852996e8d3d15d431842b8d59",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://8c1f47eff7cb027dbb8a1b1492f76d2eb1c2eee7b4b43fb99124d810e718c565",
+        "dweb:/ipfs/QmZMbG3HEC9YSKFBMyC7WeXzCrcCsSKZuJArzenVSKyHuJ"
+      ]
+    },
+    "contracts/src/towns/facets/entitlements/EntitlementsManagerBase.sol": {
+      "keccak256": "0xf7723ec8d39d24ccc64b5f3aa25e3330d2f0d29c0b5f0549c3a0ded411a48627",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://6092dfce4d99e35d1cd4b309127c09179f69532ee152ac1daddca94d4311a56d",
+        "dweb:/ipfs/QmUe2tp7PUroYL2zV7RRxDbfweQEcVZNiTN6FcrLxTcB3C"
+      ]
+    },
+    "contracts/src/towns/facets/entitlements/EntitlementsManagerService.sol": {
+      "keccak256": "0xec231181537f2bd37bde9fe50a37e4ffca400e51467e20f804021130d091904d",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://c96e305f95f70cc80c9c603bdee50e8520fe2401541efc97144cfc2dba55c19e",
+        "dweb:/ipfs/Qmb3MKgF65Yqx7d63Ej7AYNNzDZRiy9PjmyKxFASS2xBKE"
+      ]
+    },
+    "contracts/src/towns/facets/entitlements/EntitlementsManagerStorage.sol": {
+      "keccak256": "0x2fa49a3dea8314e57341b402894a053fe4c3e4f6f682d3f6cfae79e999919340",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://ca673210755140e127ec9ed3c7716a3c4fc48d3c4cf66d6ccfca5144e2c9933d",
+        "dweb:/ipfs/QmQajUVgwkg8dkeAb8Ext2dABL3PRPNsiDCxd7XXXuUdVD"
+      ]
+    },
+    "contracts/src/towns/facets/entitlements/IEntitlementsManager.sol": {
+      "keccak256": "0x5168b9751e1a2a55dbadcaff261aecd936c526387c9b26ad97b1ed38c091d9be",
+      "license": "Apache-2.0",
+      "urls": [
+        "bzz-raw://394dc6dfe499dc42d1cf82a0805b82c75b65578795a3f4e311e68a8c02de1fea",
+        "dweb:/ipfs/QmcLZ7XeMuFAY561YKoMR2oFssakWCTyME6rxTMAiDU6wV"
+      ]
+    },
+    "lib/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol": {
+      "keccak256": "0xab28a56179c1db258c9bf5235b382698cb650debecb51b23d12be9e241374b68",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://daae589a9d6fa7e55f99f86c0a16796ca490f243fb3693632c3711c0646c1d56",
+        "dweb:/ipfs/QmR3zpd7wNw3rcUdekwiv6FYHJqksuTCXLVioTxu6Fbxk3"
+      ]
+    },
+    "lib/openzeppelin-contracts/contracts/utils/introspection/IERC165.sol": {
+      "keccak256": "0x447a5f3ddc18419d41ff92b3773fb86471b1db25773e07f877f548918a185bf1",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://be161e54f24e5c6fae81a12db1a8ae87bc5ae1b0ddc805d82a1440a68455088f",
+        "dweb:/ipfs/QmP7C3CHdY9urF4dEMb9wmsp1wMxHF6nhA2yQE5SKiPAdy"
+      ]
+    },
+    "lib/openzeppelin-contracts/contracts/utils/structs/EnumerableSet.sol": {
+      "keccak256": "0xc3ff3f5c4584e1d9a483ad7ced51ab64523201f4e3d3c65293e4ca8aeb77a961",
+      "license": "MIT",
+      "urls": [
+        "bzz-raw://d7d3dd6067a994690471b5fc71b6f81fac3847798b37d404f74db00b4d3c3d0e",
+        "dweb:/ipfs/QmRHF1RarifjNi93RttouNPkYZGyu6CD926PgRDzD5iL35"
+      ]
+    }
+  },
+  "version": 1
+}

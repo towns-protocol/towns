@@ -6,47 +6,57 @@ import {ITownArchitect, ITownArchitectBase} from "./ITownArchitect.sol";
 import {IEntitlement} from "contracts/src/towns/entitlements/IEntitlement.sol";
 import {IRoles, IRolesBase} from "contracts/src/towns/facets/roles/IRoles.sol";
 import {IChannel} from "contracts/src/towns/facets/channels/IChannel.sol";
-import {IEntitlements} from "contracts/src/towns/facets/entitlements/IEntitlements.sol";
+import {IEntitlementsManager} from "contracts/src/towns/facets/entitlements/IEntitlementsManager.sol";
 
 import {IProxyManager} from "contracts/src/diamond/proxy/manager/IProxyManager.sol";
 
 // libraries
+import {StringSet} from "contracts/src/utils/StringSet.sol";
+import {Validator} from "contracts/src/utils/Validator.sol";
+import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 import {TownArchitectStorage} from "./TownArchitectStorage.sol";
-import {TownArchitectService} from "./TownArchitectService.sol";
 
 // contracts
-
 import {Factory} from "contracts/src/utils/Factory.sol";
 import {TownProxy} from "contracts/src/towns/facets/proxy/TownProxy.sol";
 
 // modules
 
 import {TownOwner} from "contracts/src/towns/facets/owner/TownOwner.sol";
-import {UserEntitlement} from "contracts/src/towns/entitlements/user/UserEntitlement.sol";
-import {TokenEntitlement} from "contracts/src/towns/entitlements/token/TokenEntitlement.sol";
 import {ERC1967Proxy} from "openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
 abstract contract TownArchitectBase is Factory, ITownArchitectBase {
+  using StringSet for StringSet.Set;
+
+  address internal constant EVERYONE_ADDRESS = address(1);
+
   function _getTownById(string memory townId) internal view returns (address) {
-    return TownArchitectService.getTownById(townId);
+    TownArchitectStorage.Layout storage ds = TownArchitectStorage.layout();
+    return ds.townById[townId];
   }
 
   function _getTokenIdByTownId(
     string memory townId
   ) internal view returns (uint256) {
-    return TownArchitectService.getTokenIdByTownId(townId);
+    TownArchitectStorage.Layout storage ds = TownArchitectStorage.layout();
+    return ds.tokenIdByTownId[townId];
   }
 
   function _setImplementations(
     address townToken,
-    address userEntitlementImplementation,
-    address tokenEntitlementImplementation
+    address userEntitlement,
+    address tokenEntitlement
   ) internal {
-    TownArchitectService.setImplementations(
-      townToken,
-      userEntitlementImplementation,
-      tokenEntitlementImplementation
-    );
+    if (!Address.isContract(townToken)) revert TownArchitect__NotContract();
+    if (!Address.isContract(userEntitlement))
+      revert TownArchitect__NotContract();
+    if (!Address.isContract(tokenEntitlement))
+      revert TownArchitect__NotContract();
+
+    TownArchitectStorage.Layout storage ds = TownArchitectStorage.layout();
+    ds.townToken = townToken;
+    ds.userEntitlement = userEntitlement;
+    ds.tokenEntitlement = tokenEntitlement;
   }
 
   function _getImplementations()
@@ -69,22 +79,32 @@ abstract contract TownArchitectBase is Factory, ITownArchitectBase {
     TownInfo memory townInfo
   ) internal returns (address townAddress) {
     // validate id length
-    TownArchitectService.checkStringLength(townInfo.id);
+    Validator.checkStringLength(townInfo.id);
+
+    TownArchitectStorage.Layout storage ds = TownArchitectStorage.layout();
 
     // validate the network id isn't already taken
-    TownArchitectService.checkNetworkIdAvailability(townInfo.id);
+    if (ds.townIds.contains(townInfo.id))
+      revert TownArchitect__InvalidNetworkId();
 
     // mint the town owner token
-    uint256 tokenId = _getNextTokenId();
+    uint256 tokenId = TownOwner(ds.townToken).nextTokenId();
 
     // save the town owner token id by network id hash
     townAddress = _getTownDeploymentAddress(townInfo.id, tokenId);
 
     // save town info to storage
-    TownArchitectService.setTown(townInfo.id, tokenId, townAddress);
+    ds.townIds.add(townInfo.id);
+    ds.tokenIdByTownId[townInfo.id] = tokenId;
+    ds.townById[townInfo.id] = townAddress;
 
     // mint token to TownArchitect
-    _mintTown(townInfo.name, townInfo.uri, townInfo.id, townAddress);
+    TownOwner(ds.townToken).mintTown(
+      townInfo.name,
+      townInfo.uri,
+      townInfo.id,
+      townAddress
+    );
 
     // deploy town
     townAddress = _deployTown(townInfo.id, tokenId);
@@ -106,7 +126,7 @@ abstract contract TownArchitectBase is Factory, ITownArchitectBase {
     entitlements[1] = tokenEntitlement;
 
     // set entitlements as immutable
-    IEntitlements(townAddress).addImmutableEntitlements(entitlements);
+    IEntitlementsManager(townAddress).addImmutableEntitlements(entitlements);
 
     // create everyone role with permissions
     uint256 everyoneRoleId = _createEveryoneEntitlement(
@@ -137,8 +157,12 @@ abstract contract TownArchitectBase is Factory, ITownArchitectBase {
       townInfo.channel
     );
 
-    // transfer nft
-    _transferTown(tokenId, msg.sender);
+    // transfer nft to msg.sender
+    TownOwner(ds.townToken).safeTransferFrom(
+      address(this),
+      msg.sender,
+      tokenId
+    );
 
     // emit event
     emit TownCreated(townAddress);
@@ -178,7 +202,7 @@ abstract contract TownArchitectBase is Factory, ITownArchitectBase {
     if (member.users.length != 0) {
       // validate users
       for (uint256 i = 0; i < member.users.length; i++) {
-        TownArchitectService.checkAddress(member.users[i]);
+        Validator.checkAddress(member.users[i]);
       }
 
       IRoles(town).addRoleToEntitlement(
@@ -210,7 +234,7 @@ abstract contract TownArchitectBase is Factory, ITownArchitectBase {
       memory entitlements = new IRolesBase.CreateEntitlement[](1);
 
     address[] memory users = new address[](1);
-    users[0] = TownArchitectService.EVERYONE_ADDRESS;
+    users[0] = EVERYONE_ADDRESS;
 
     entitlements[0] = IRolesBase.CreateEntitlement({
       module: userEntitlement,
@@ -294,27 +318,8 @@ abstract contract TownArchitectBase is Factory, ITownArchitectBase {
     );
   }
 
-  // =============================================================
-  //                         NFT Minting
-  // =============================================================
-
   function _getNextTokenId() internal view returns (uint256 tokenId) {
     TownArchitectStorage.Layout storage ds = TownArchitectStorage.layout();
     tokenId = TownOwner(ds.townToken).nextTokenId();
-  }
-
-  function _mintTown(
-    string memory name,
-    string memory uri,
-    string memory networkId,
-    address townAddress
-  ) internal {
-    TownArchitectStorage.Layout storage ds = TownArchitectStorage.layout();
-    TownOwner(ds.townToken).mintTown(name, uri, networkId, townAddress);
-  }
-
-  function _transferTown(uint256 tokenId, address to) internal {
-    TownArchitectStorage.Layout storage ds = TownArchitectStorage.layout();
-    TownOwner(ds.townToken).transferFrom(address(this), to, tokenId);
   }
 }

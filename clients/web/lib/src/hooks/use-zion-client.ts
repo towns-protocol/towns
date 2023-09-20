@@ -142,7 +142,18 @@ interface ZionClientImpl {
     registerWalletWithMatrix: (statement: string) => Promise<void>
     registerWalletWithCasablanca: (statement: string) => Promise<void>
     resetFullyReadMarkers: () => void
-    scrollback: (roomId: RoomIdentifier, limit?: number) => Promise<void>
+    scrollback: (
+        roomId: RoomIdentifier,
+        limit?: number,
+    ) => Promise<
+        | {
+              terminus: boolean
+              eventCount: number
+              firstEventId?: string
+              firstEventTimestamp?: number
+          }
+        | undefined
+    >
     sendMessage: (
         roomId: RoomIdentifier,
         message: string,

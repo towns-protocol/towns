@@ -2,52 +2,52 @@
 pragma solidity ^0.8.20;
 
 // interfaces
-import {IEntitlementsBase} from "./IEntitlements.sol";
+import {IEntitlementsManagerBase} from "./IEntitlementsManager.sol";
 
 // libraries
-import {EntitlementsService} from "contracts/src/towns/facets/entitlements/EntitlementsService.sol";
+import {EntitlementsManagerService} from "contracts/src/towns/facets/entitlements/EntitlementsManagerService.sol";
 
 // contracts
 
-contract EntitlementsBase is IEntitlementsBase {
+contract EntitlementsManagerBase is IEntitlementsManagerBase {
   function _addImmutableEntitlements(address[] memory entitlements) internal {
     for (uint256 i = 0; i < entitlements.length; i++) {
-      EntitlementsService.validateEntitlement(entitlements[i]);
-      EntitlementsService.addEntitlement(entitlements[i], true);
+      EntitlementsManagerService.validateEntitlement(entitlements[i]);
+      EntitlementsManagerService.addEntitlement(entitlements[i], true);
     }
   }
 
-  function _addEntitlement(address entitlement) internal {
+  function _addEntitlementModule(address entitlement) internal {
     // validate permission
 
     // validate entitlement
-    EntitlementsService.validateEntitlement(entitlement);
+    EntitlementsManagerService.validateEntitlement(entitlement);
 
     // set entitlement
-    EntitlementsService.addEntitlement(entitlement, false);
+    EntitlementsManagerService.addEntitlement(entitlement, false);
   }
 
-  function _removeEntitlement(address entitlement) internal {
+  function _removeEntitlementModule(address entitlement) internal {
     // validate permission
 
     // validate entitlement
-    EntitlementsService.validateEntitlement(entitlement);
+    EntitlementsManagerService.validateEntitlement(entitlement);
 
     // set entitlement
-    EntitlementsService.removeEntitlement(entitlement);
+    EntitlementsManagerService.removeEntitlement(entitlement);
   }
 
   function _getEntitlement(
     address entitlement
   ) internal view returns (Entitlement memory module) {
-    EntitlementsService.validateEntitlement(entitlement);
+    EntitlementsManagerService.validateEntitlement(entitlement);
 
     (
       string memory name,
       address entitlementAddress,
       string memory moduleType,
       bool isImmutable
-    ) = EntitlementsService.getEntitlement(entitlement);
+    ) = EntitlementsManagerService.getEntitlement(entitlement);
 
     module = Entitlement({
       name: name,
@@ -62,7 +62,8 @@ contract EntitlementsBase is IEntitlementsBase {
     view
     returns (Entitlement[] memory modules)
   {
-    address[] memory entitlements = EntitlementsService.getEntitlements();
+    address[] memory entitlements = EntitlementsManagerService
+      .getEntitlements();
 
     modules = new Entitlement[](entitlements.length);
 
@@ -72,7 +73,7 @@ contract EntitlementsBase is IEntitlementsBase {
         address entitlementAddress,
         string memory moduleType,
         bool isImmutable
-      ) = EntitlementsService.getEntitlement(entitlements[i]);
+      ) = EntitlementsManagerService.getEntitlement(entitlements[i]);
 
       modules[i] = Entitlement({
         name: name,

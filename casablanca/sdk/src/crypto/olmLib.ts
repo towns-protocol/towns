@@ -449,9 +449,6 @@ export async function encryptMessageForDevice(
         sessionId,
         JSON.stringify(payload),
     )
-    console.log(
-        `[encryptMessageForDevice]:: Using Olm session ${sessionId} for target device ${deviceKey}`,
-    )
 }
 
 /**

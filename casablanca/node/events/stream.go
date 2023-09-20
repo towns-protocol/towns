@@ -9,6 +9,7 @@ import (
 	. "casablanca/node/base"
 	. "casablanca/node/protocol"
 
+	mapset "github.com/deckarep/golang-set/v2"
 	"github.com/gologme/log"
 	"google.golang.org/protobuf/proto"
 )
@@ -26,7 +27,7 @@ type Stream struct {
 	mu        sync.RWMutex
 	view      *streamViewImpl
 	loadError error
-	receivers map[chan<- *StreamAndCookie]bool
+	receivers mapset.Set[chan<- *StreamAndCookie]
 
 	miniblockTicker           *time.Ticker
 	miniblockTickerContext    context.Context
@@ -263,14 +264,14 @@ func (s *Stream) AddEvent(ctx context.Context, event *ParsedEvent) (*SyncCookie,
 }
 
 func (s *Stream) notifySubscribers(envelopes []*Envelope, newSyncCookie *SyncCookie, prevSyncCookie *SyncCookie) {
-	if len(s.receivers) > 0 {
+	if s.receivers != nil && s.receivers.Cardinality() > 0 {
 		update := &StreamAndCookie{
 			StreamId:           s.streamId,
 			Events:             envelopes,
 			NextSyncCookie:     newSyncCookie,
 			OriginalSyncCookie: prevSyncCookie,
 		}
-		for receiver := range s.receivers {
+		for receiver := range s.receivers.Iter() {
 			receiver <- update
 		}
 	}
@@ -325,9 +326,9 @@ func (s *Stream) Sub(ctx context.Context, cookie *SyncCookie, receiver chan<- *S
 		}
 
 		if s.receivers == nil {
-			s.receivers = make(map[chan<- *StreamAndCookie]bool)
+			s.receivers = mapset.NewSet[chan<- *StreamAndCookie]()
 		}
-		s.receivers[receiver] = true
+		s.receivers.Add(receiver)
 
 		if slot < int64(s.view.minipool.events.Len()) {
 			envelopes := make([]*Envelope, 0, s.view.minipool.events.Len()-int(slot))
@@ -345,9 +346,9 @@ func (s *Stream) Sub(ctx context.Context, cookie *SyncCookie, receiver chan<- *S
 		}
 	} else {
 		if s.receivers == nil {
-			s.receivers = make(map[chan<- *StreamAndCookie]bool)
+			s.receivers = mapset.NewSet[chan<- *StreamAndCookie]()
 		}
-		s.receivers[receiver] = true
+		s.receivers.Add(receiver)
 
 		envelopes := make([]*Envelope, 0, 16)
 		err := s.view.forEachEvent(int(cookie.MiniblockNum), func(e *ParsedEvent) (bool, error) {
@@ -381,7 +382,7 @@ func (s *Stream) Unsub(receiver chan<- *StreamAndCookie) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	if s.receivers != nil {
-		delete(s.receivers, receiver)
+		s.receivers.Remove(receiver)
 	}
 }
 
@@ -393,11 +394,11 @@ func (s *Stream) ForceFlush(ctx context.Context) {
 	defer s.mu.Unlock()
 	s.view = nil
 	s.loadError = nil
-	if s.receivers != nil && len(s.receivers) > 0 {
+	if s.receivers != nil && s.receivers.Cardinality() > 0 {
 		empty := &StreamAndCookie{
 			StreamId: s.streamId,
 		}
-		for r := range s.receivers {
+		for r := range s.receivers.Iter() {
 			r <- empty
 		}
 	}
