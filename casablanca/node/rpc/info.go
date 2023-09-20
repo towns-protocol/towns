@@ -2,6 +2,7 @@ package rpc
 
 import (
 	"context"
+	"errors"
 
 	connect_go "github.com/bufbuild/connect-go"
 	"golang.org/x/exp/slog"
@@ -33,11 +34,10 @@ func (s *Service) Info(ctx context.Context, req *connect_go.Request[protocol.Inf
 }
 
 func (s *Service) info(ctx context.Context, log *slog.Logger, request *connect_go.Request[protocol.InfoRequest]) (*connect_go.Response[protocol.InfoResponse], error) {
+	// TODO: flag to disable debug requests
 	if request.Msg.Debug == "error" {
-		// TODO: flag
 		return nil, RpcError(protocol.Err_DEBUG_ERROR, "Error requested through Info request")
 	} else if request.Msg.Debug == "panic" {
-		// TODO: flag
 		log.Error("panic requested through Info request")
 		panic("panic requested through Info request")
 	} else if request.Msg.Debug == "flush_cache" {
@@ -45,6 +45,12 @@ func (s *Service) info(ctx context.Context, log *slog.Logger, request *connect_g
 		s.cache.ForceFlushAll(ctx)
 		return connect_go.NewResponse(&protocol.InfoResponse{
 			Graffiti: "cache flushed",
+		}), nil
+	} else if request.Msg.Debug == "exit" {
+		log.Info("GOT REQUEST TO EXIT NODE")
+		s.exitSignal <- errors.New("info_debug_exit")
+		return connect_go.NewResponse(&protocol.InfoResponse{
+			Graffiti: "exiting...",
 		}), nil
 	} else {
 		// TODO: set graffiti in config

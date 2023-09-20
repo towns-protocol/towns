@@ -31,7 +31,7 @@ func TestServerAndClient(ctx context.Context, dbUrl string) (protocolconnect.Str
 		panic(err)
 	}
 
-	closer, port, err := rpc.StartServer(ctx, cfg, wallet)
+	closer, port, _, err := rpc.StartServer(ctx, cfg, wallet)
 	if err != nil {
 		panic(err)
 	}

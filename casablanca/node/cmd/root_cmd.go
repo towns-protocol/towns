@@ -31,6 +31,11 @@ var rootCmd = &cobra.Command{
 func Execute() {
 	err := rootCmd.Execute()
 	if err != nil {
+		if err.Error() == "info_debug_exit" {
+			fmt.Println("Exiting with code 22 to initiate a restart")
+			os.Exit(22)
+			return
+		}
 		os.Exit(1)
 	}
 }

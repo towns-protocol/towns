@@ -268,6 +268,9 @@ jobs:
             - name: Run SDK Tests (without entitlements)
               run: yarn run turbo run build test:ci --filter=@river/sdk
 
+            - name: Run Node Restart Tests (without entitlements)
+              run: yarn workspace @river/sdk run test:restart
+
             - name: Run Node Flush Tests (without entitlements)
               run: yarn workspace @river/sdk run test:node-minipool-flush
 

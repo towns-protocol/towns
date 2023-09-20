@@ -40,4 +40,22 @@ done
 
 cd ./run_files/$INSTANCE
 echo "Running instance '$INSTANCE' with extra aguments: '${args[@]:-}'"
-go run --race ../../node/main.go run "${args[@]:-}"
+
+set +e
+while true; do
+  temp_file=$(mktemp)
+
+  go run --race ../../node/main.go run "${args[@]:-}"  | tee "$temp_file"
+
+  # go run masks exit code, so exit code 22 is not making it here.
+  grep_result=$(grep "Exiting with code 22 to initiate a restart" "$temp_file")
+
+  rm -f "$temp_file"
+
+  # Use the grep_result variable in an if statement
+  if [ -n "$grep_result" ]; then
+    echo "RESTARTING"
+  else
+    break
+  fi
+done

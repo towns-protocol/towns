@@ -18,7 +18,6 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/gologme/log"
 	"github.com/rs/cors"
 	"golang.org/x/exp/slog"
 	"golang.org/x/net/http2"
@@ -38,6 +37,7 @@ func loadNodeRegistry(ctx context.Context, nodeRegistryPath string, localNode *n
 }
 
 func createStore(ctx context.Context, dbUrl string, storageType string, address string) (storage.StreamStorage, error) {
+	log := dlog.CtxLog(ctx)
 	if storageType == "in-memory" {
 		return storage.NewMemStorage(), nil
 	} else {
@@ -51,14 +51,14 @@ func createStore(ctx context.Context, dbUrl string, storageType string, address 
 	}
 }
 
-func StartServer(ctx context.Context, cfg *config.Config, wallet *crypto.Wallet) (func(), int, error) {
+func StartServer(ctx context.Context, cfg *config.Config, wallet *crypto.Wallet) (func(), int, chan error, error) {
 	log := dlog.CtxLog(ctx)
 
 	if wallet == nil {
 		var err error
 		wallet, err = crypto.LoadWallet(ctx, crypto.WALLET_PATH_PRIVATE_KEY)
 		if err != nil {
-			return nil, 0, err
+			return nil, 0, nil, err
 		}
 	}
 
@@ -70,7 +70,7 @@ func StartServer(ctx context.Context, cfg *config.Config, wallet *crypto.Wallet)
 
 	store, err := createStore(ctx, cfg.DbUrl, cfg.StorageType, wallet.AddressStr)
 	if err != nil {
-		return nil, 0, err
+		return nil, 0, nil, err
 	}
 
 	var townsContract auth.TownsContract
@@ -79,7 +79,7 @@ func StartServer(ctx context.Context, cfg *config.Config, wallet *crypto.Wallet)
 		townsContract, err = auth.NewTownsContract(&cfg.Chain)
 		if err != nil {
 			log.Error("failed to create auth", "error", err)
-			return nil, 0, err
+			return nil, 0, nil, err
 		}
 	} else {
 		log.Warn("Using passthrough auth")
@@ -92,7 +92,7 @@ func StartServer(ctx context.Context, cfg *config.Config, wallet *crypto.Wallet)
 		walletLinkContract, err = auth.NewTownsWalletLink(&cfg.TopChain, wallet)
 		if err != nil {
 			log.Error("failed to create wallet link contract", "error", err)
-			return nil, 0, err
+			return nil, 0, nil, err
 		}
 	} else {
 		log.Warn("Using no-op wallet linking contract")
@@ -110,6 +110,7 @@ func StartServer(ctx context.Context, cfg *config.Config, wallet *crypto.Wallet)
 		walletLinkContract: walletLinkContract,
 		wallet:             wallet,
 		skipDelegateCheck:  cfg.SkipDelegateCheck,
+		exitSignal:         make(chan error, 1),
 	}
 
 	nodeRegistry, err := loadNodeRegistry(
@@ -122,7 +123,7 @@ func StartServer(ctx context.Context, cfg *config.Config, wallet *crypto.Wallet)
 		},
 	)
 	if err != nil {
-		return nil, 0, err
+		return nil, 0, nil, err
 	}
 
 	forwarder := nodes.NewForwarder(nodeRegistry, nodes.NewStreamRegistry(nodeRegistry))
@@ -148,7 +149,7 @@ func StartServer(ctx context.Context, cfg *config.Config, wallet *crypto.Wallet)
 	httpListener, err := net.Listen("tcp", address)
 	if err != nil {
 		log.Error("failed to listen", "error", err)
-		return nil, 0, err
+		return nil, 0, nil, err
 	}
 	actualPort := httpListener.Addr().(*net.TCPAddr).Port
 
@@ -184,20 +185,26 @@ func StartServer(ctx context.Context, cfg *config.Config, wallet *crypto.Wallet)
 		log.Info("Running Without Entitlements")
 	}
 	log.Info("Available on port", "port", actualPort)
-	return closer, actualPort, nil
+	return closer, actualPort, streamService.exitSignal, nil
 }
 
 func RunServer(ctx context.Context, config *config.Config) error {
-	closer, _, error := StartServer(ctx, config, nil)
+	log := dlog.CtxLog(ctx)
+
+	closer, _, exitSignal, error := StartServer(ctx, config, nil)
 	if error != nil {
-		dlog.CtxLog(ctx).Error("Failed to start server", "error", error)
+		log.Error("Failed to start server", "error", error)
 		return error
 	}
 	defer closer()
 
-	exitSignal := make(chan os.Signal, 1)
-	signal.Notify(exitSignal, syscall.SIGINT, syscall.SIGTERM)
-	<-exitSignal
+	osSignal := make(chan os.Signal, 1)
+	signal.Notify(osSignal, syscall.SIGINT, syscall.SIGTERM)
+	go func() {
+		sig := <-osSignal
+		log.Info("Got OS signal", "signal", sig.String())
+		exitSignal <- nil
+	}()
 
-	return nil
+	return <-exitSignal
 }
