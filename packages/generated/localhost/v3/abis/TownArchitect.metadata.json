@@ -836,11 +836,11 @@
       ]
     },
     "contracts/src/towns/facets/architect/TownArchitectBase.sol": {
-      "keccak256": "0xfdeaededd8da0a719df566a8bfa665346e9488b60df468f4a8020c61403347d9",
+      "keccak256": "0xb20d00e29a3cb293b5b356f45b8f6f715e58677b80eafdfc42923becee5e5f9a",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://f593b26de85e4fb83847d70b47ee45a7f68048d2832a7dcd64ccd057a240a9c7",
-        "dweb:/ipfs/QmcB3dehmMSdXMbsexNEBJQoCAWtLDMAr8kq99Lw3JVBKg"
+        "bzz-raw://f483460337dee790a6b86a75291d06412339a8632dbdb9995d701ac002b3cbce",
+        "dweb:/ipfs/QmPjbQsfeMuAVvnh8fooByqqbH4GERNmvUJrsBUccsoMGC"
       ]
     },
     "contracts/src/towns/facets/architect/TownArchitectStorage.sol": {

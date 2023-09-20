@@ -90,8 +90,8 @@ abstract contract TownArchitectBase is Factory, ITownArchitectBase {
     // mint the town owner token
     uint256 tokenId = TownOwner(ds.townToken).nextTokenId();
 
-    // save the town owner token id by network id hash
-    townAddress = _getTownDeploymentAddress(townInfo.id, tokenId);
+    // deploy town
+    townAddress = _deployTown(townInfo.id, tokenId);
 
     // save town info to storage
     ds.townIds.add(townInfo.id);
@@ -105,9 +105,6 @@ abstract contract TownArchitectBase is Factory, ITownArchitectBase {
       townInfo.id,
       townAddress
     );
-
-    // deploy town
-    townAddress = _deployTown(townInfo.id, tokenId);
 
     // deploy user entitlement
     address userEntitlement = _deployEntitlement(
