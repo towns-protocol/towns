@@ -39,6 +39,7 @@ func loadNodeRegistry(ctx context.Context, nodeRegistryPath string, localNode *n
 func createStore(ctx context.Context, dbUrl string, storageType string, address string) (storage.StreamStorage, error) {
 	log := dlog.CtxLog(ctx)
 	if storageType == "in-memory" {
+		log.Warn("Using in-memory storage")
 		return storage.NewMemStorage(), nil
 	} else {
 		schema := storage.DbSchemaNameFromAddress(address)
@@ -54,18 +55,20 @@ func createStore(ctx context.Context, dbUrl string, storageType string, address 
 func StartServer(ctx context.Context, cfg *config.Config, wallet *crypto.Wallet) (func(), int, chan error, error) {
 	log := dlog.CtxLog(ctx)
 
+	if cfg.LogInstance {
+		log = log.With("instance", fmt.Sprintf("%s on %d", wallet.AddressStr, cfg.Port))
+		slog.SetDefault(log)
+		ctx = dlog.CtxWithLog(ctx, log)
+	}
+
+	log.Info("Starting server", "config", cfg)
+
 	if wallet == nil {
 		var err error
 		wallet, err = crypto.LoadWallet(ctx, crypto.WALLET_PATH_PRIVATE_KEY)
 		if err != nil {
 			return nil, 0, nil, err
 		}
-	}
-
-	if cfg.LogInstance {
-		log = log.With("instance", fmt.Sprintf("%s on %d", wallet.AddressStr, cfg.Port))
-		slog.SetDefault(log)
-		ctx = dlog.CtxWithLog(ctx, log)
 	}
 
 	store, err := createStore(ctx, cfg.DbUrl, cfg.StorageType, wallet.AddressStr)

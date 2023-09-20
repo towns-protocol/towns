@@ -42,6 +42,7 @@ describe('streamRpcClient', () => {
 
     test('makeStreamRpcClient', async () => {
         const client = makeTestRpcClient()
+        log('makeStreamRpcClient', 'TEST_URL', TEST_URL)
         expect(client).toBeDefined()
         const result = await client.info({ debug: 'graffiti' })
         expect(result).toBeDefined()

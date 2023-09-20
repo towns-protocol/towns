@@ -621,23 +621,23 @@ func DbSchemaNameFromAddress(address string) string {
 	return "s" + strings.ToLower(address)
 }
 
-func NewPostgresEventStore(ctx context.Context, database_url string, database_schema_name string, clean bool) (*PostgresEventStore, error) {
+func NewPostgresEventStore(ctx context.Context, database_url string, databaseSchemaName string, clean bool) (*PostgresEventStore, error) {
 	defer infra.StoreExecutionTimeMetrics("NewPostgresEventStoreMs", time.Now())
 
 	log := dlog.CtxLog(ctx)
 
 	pool_conf, err := pgxpool.ParseConfig(database_url)
-
-	//In general, it should be possible to add database schema name into database url as a parameter search_path (&search_path=database_schema_name)
-	//For some reason it doesn't work so have to put it into config explicitly
-	pool_conf.ConnConfig.RuntimeParams["search_path"] = database_schema_name
 	if err != nil {
 		return nil, err
 	}
+
+	//In general, it should be possible to add database schema name into database url as a parameter search_path (&search_path=database_schema_name)
+	//For some reason it doesn't work so have to put it into config explicitly
+	pool_conf.ConnConfig.RuntimeParams["search_path"] = databaseSchemaName
+
 	pool_conf.ConnConfig.DefaultQueryExecMode = pgx.QueryExecModeSimpleProtocol
 
 	pool, err := pgxpool.NewWithConfig(ctx, pool_conf)
-
 	if err != nil {
 		return nil, err
 	}
@@ -649,7 +649,7 @@ func NewPostgresEventStore(ctx context.Context, database_url string, database_sc
 		}
 	}
 
-	err = initStorage(ctx, pool)
+	err = initStorage(ctx, pool, databaseSchemaName)
 	if err != nil {
 		return nil, err
 	}
@@ -672,7 +672,7 @@ func NewPostgresEventStore(ctx context.Context, database_url string, database_sc
 		}
 	}()
 
-	store := &PostgresEventStore{pool: pool, debugCtl: make(chan struct{}), schemaName: database_schema_name}
+	store := &PostgresEventStore{pool: pool, debugCtl: make(chan struct{}), schemaName: databaseSchemaName}
 
 	return store, nil
 }
@@ -730,7 +730,7 @@ func cleanStorage(ctx context.Context, pool *pgxpool.Pool) error {
 //go:embed init_db.sql
 var schema string
 
-func initStorage(ctx context.Context, pool *pgxpool.Pool) error {
+func initStorage(ctx context.Context, pool *pgxpool.Pool, databaseSchemaName string) error {
 	defer infra.StoreExecutionTimeMetrics("initStorageMs", time.Now())
 
 	log := dlog.CtxLog(ctx)
@@ -754,24 +754,28 @@ func initStorage(ctx context.Context, pool *pgxpool.Pool) error {
 
 	//check if schema exists
 	var schemaExists bool
-	err = tx.QueryRow(context.Background(), "SELECT EXISTS(SELECT 1 FROM information_schema.schemata WHERE schema_name = $1)", pool.Config().ConnConfig.Config.RuntimeParams["search_path"]).Scan(&schemaExists)
+	err = tx.QueryRow(
+		ctx,
+		"SELECT EXISTS(SELECT 1 FROM information_schema.schemata WHERE schema_name = $1)",
+		databaseSchemaName).Scan(&schemaExists)
 	if err != nil {
-		log.Error("Error checking schema existence:", err)
+		log.Error("Error checking schema existence:", "error", err)
+		return err
 	}
 
 	if !schemaExists {
-		createSchemaQuery := fmt.Sprintf("CREATE SCHEMA \"%s\"", pool.Config().ConnConfig.Config.RuntimeParams["search_path"])
-		_, err := tx.Exec(context.Background(), createSchemaQuery)
+		createSchemaQuery := fmt.Sprintf("CREATE SCHEMA \"%s\"", databaseSchemaName)
+		_, err := tx.Exec(ctx, createSchemaQuery)
 		if err != nil {
-			log.Error("Error creating schema:", pool.Config().ConnConfig.Config.RuntimeParams["search_path"], err)
+			log.Error("Error creating schema:", "schema", databaseSchemaName, "error", err)
 			return err
 		}
-		fmt.Println("Schema created successfully")
+		log.Info("Schema created", "schema", databaseSchemaName)
 	} else {
-		fmt.Println("Schema already exists")
+		log.Info("Schema already exists", "schema", databaseSchemaName)
 	}
 
-	_, err = tx.Exec(context.Background(), schema)
+	_, err = tx.Exec(ctx, schema)
 	if err != nil {
 		return err
 	}
