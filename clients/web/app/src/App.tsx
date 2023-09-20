@@ -25,18 +25,6 @@ const DebugBar = React.lazy(() => import('@components/DebugBar/DebugBar'))
 
 FontLoader.init()
 
-// evan aug 2023, remove this after a couple months
-// https://linear.app/hnt-labs/issue/HNT-1876/remove-the-indexeddb-deletion-code-after-some-time
-try {
-    // towns/mute-settings - not needed anymore
-    const DBDeleteRequest = window.indexedDB.deleteDatabase('towns/mute-settings')
-    DBDeleteRequest.onerror = (event) => {
-        console.error('[DBDeleteRequest] Error deleting database', event)
-    }
-} catch (error) {
-    console.error('[DBDeleteRequest] indexedDB error', error)
-}
-
 export const App = () => {
     const { theme } = useStore((state) => ({
         theme: state.theme,
