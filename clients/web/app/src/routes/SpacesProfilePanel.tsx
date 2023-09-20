@@ -87,6 +87,7 @@ export const SpaceProfile = (props: { children?: React.ReactNode }) => {
             {isValid ? (
                 <UserProfile
                     center
+                    key={user.userId}
                     userId={user.userId}
                     displayName={getPrettyDisplayName(user).name}
                     userAddress={userAddress}
