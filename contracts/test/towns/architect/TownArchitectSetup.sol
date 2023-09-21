@@ -12,6 +12,7 @@ import {ProxyManagerHelper} from "contracts/test/diamond/proxy/ProxyManagerSetup
 import {ERC721HolderHelper} from "contracts/test/towns/holder/ERC721HolderSetup.sol";
 import {OwnableHelper} from "contracts/test/diamond/ownable/OwnableSetup.sol";
 import {PausableHelper} from "contracts/test/diamond/pausable/PausableSetup.sol";
+import {PlatformRequirementsHelper} from "contracts/test/towns/platform/requirements/PlatformRequirementsSetup.sol";
 import {TownOwnerImplementation} from "contracts/test/towns/owner/TownOwnerSetup.sol";
 
 import {MultiInit} from "contracts/src/diamond/initializers/MultiInit.sol";
@@ -48,6 +49,7 @@ abstract contract TownArchitectSetup is FacetTest {
     ERC721HolderHelper holderHelper = new ERC721HolderHelper();
     OwnableHelper ownableHelper = new OwnableHelper();
     PausableHelper pausableHelper = new PausableHelper();
+    PlatformRequirementsHelper platformReqsHelper = new PlatformRequirementsHelper();
     TownOwnerImplementation townOwnerImplementation = new TownOwnerImplementation();
 
     TownImplementationHelper townHelper = new TownImplementationHelper();
@@ -63,20 +65,22 @@ abstract contract TownArchitectSetup is FacetTest {
     townImplementation = address(townHelper.createImplementation(deployer));
 
     // cuts
-    IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](5);
+    IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](6);
     cuts[0] = townArchitectHelper.makeCut(IDiamond.FacetCutAction.Add);
     cuts[1] = proxyManagerHelper.makeCut(IDiamond.FacetCutAction.Add);
     cuts[2] = holderHelper.makeCut(IDiamond.FacetCutAction.Add);
     cuts[3] = ownableHelper.makeCut(IDiamond.FacetCutAction.Add);
     cuts[4] = pausableHelper.makeCut(IDiamond.FacetCutAction.Add);
+    cuts[5] = platformReqsHelper.makeCut(IDiamond.FacetCutAction.Add);
 
-    address[] memory initAddresses = new address[](4);
-    bytes[] memory initDatas = new bytes[](4);
+    address[] memory initAddresses = new address[](5);
+    bytes[] memory initDatas = new bytes[](5);
 
     initAddresses[0] = townArchitectHelper.facet();
     initAddresses[1] = proxyManagerHelper.facet();
     initAddresses[2] = ownableHelper.facet();
     initAddresses[3] = pausableHelper.facet();
+    initAddresses[4] = platformReqsHelper.facet();
 
     initDatas[0] = abi.encodeWithSelector(
       townArchitectHelper.initializer(),
@@ -89,6 +93,14 @@ abstract contract TownArchitectSetup is FacetTest {
     );
     initDatas[2] = ownableHelper.makeInitData(abi.encode(deployer));
     initDatas[3] = pausableHelper.makeInitData("");
+    initDatas[4] = abi.encodeWithSelector(
+      platformReqsHelper.initializer(),
+      deployer, // feeRecipient
+      0, // membershipBps
+      0, // membershipFee
+      1_000, // membershipMintLimit
+      365 days // membershipDuration
+    );
 
     return
       Diamond.InitParams({
