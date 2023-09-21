@@ -3,16 +3,17 @@ import React, { useMemo, useRef } from 'react'
 import { Outlet, useMatch } from 'react-router'
 import { DirectMessages } from '@components/DirectMessages/DirectMessages'
 import { PotentiallyUnusedSuspenseLoader } from '@components/Loaders/SuspenseLoader'
+import { SearchModal } from '@components/SearchModal/SearchModal'
+import { usePrepopulateChannels } from '@components/SearchModal/hooks/usePrepopulateChannels'
 import { MainSideBar, SpaceSideBar } from '@components/SideBars'
 import { SpaceSidebarLoadingPlaceholder } from '@components/SideBars/SpaceSideBar/SpaceSideBarLoading'
 import { Box, Stack } from '@ui'
 import { useContractAndServerSpaceData } from 'hooks/useContractAndServerSpaceData'
 import { usePersistPanes } from 'hooks/usePersistPanes'
+import { useSpaceChannels } from 'hooks/useSpaceChannels'
+import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
 import { PATHS } from 'routes'
 import { atoms } from 'ui/styles/atoms.css'
-import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
-import { usePrepopulateChannels } from '@components/SearchModal/hooks/usePrepopulateChannels'
-import { useSpaceChannels } from 'hooks/useSpaceChannels'
 import * as styles from './AppPanelLayout.css'
 import { PersistAndFadeWelcomeLogo } from './WelcomeLayout'
 
@@ -38,6 +39,7 @@ export const AppPanelLayout = () => {
 
     const channels = useSpaceChannels()
     const preloadIds = useMemo(() => channels.map((c) => c.id), [channels])
+
     usePrepopulateChannels(preloadIds)
 
     return (
@@ -84,6 +86,7 @@ export const AppPanelLayout = () => {
                 </Allotment>
             </Box>
             <PersistAndFadeWelcomeLogo />
+            <SearchModal />
         </Stack>
     )
 }

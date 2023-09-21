@@ -111,11 +111,20 @@ export const CenteredModalContainer = (props: Props) => {
 
     return (
         <Box>
-            <Box
+            <MotionBox
                 absoluteFill
                 cursor="crosshair"
                 style={{ background: `rgba(0,0,0,0.3)`, backdropFilter: `blur(4px)` }}
                 pointerEvents="auto"
+                transition={{
+                    type: 'spring',
+                    damping: 50,
+                    stiffness: 500,
+                    restDelta: 0.01,
+                }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
                 onClick={props.onHide}
             />
             <Box
@@ -133,16 +142,26 @@ export const CenteredModalContainer = (props: Props) => {
                         : undefined
                 }
             >
-                <Box
+                <MotionBox
                     padding
                     border
                     rounded="md"
                     background="level1"
                     minWidth={minWidth}
                     pointerEvents="auto"
+                    style={{ maxWidth: `calc(100vw - 200px)`, maxHeight: `calc(100vh - 32px)` }}
+                    transition={{
+                        type: 'spring',
+                        damping: 50,
+                        stiffness: 500,
+                        restDelta: 0.01,
+                    }}
+                    initial={{ y: 8 }}
+                    animate={{ y: 0 }}
+                    exit={{ y: 8 }}
                 >
                     {props.children}
-                </Box>
+                </MotionBox>
             </Box>
         </Box>
     )

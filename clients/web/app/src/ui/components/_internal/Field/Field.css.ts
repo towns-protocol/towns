@@ -13,7 +13,3 @@ export const field = style({
         },
     },
 })
-
-export const fieldFocused = style({
-    background: 'level2',
-})
