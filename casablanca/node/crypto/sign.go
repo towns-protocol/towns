@@ -7,8 +7,10 @@ import (
 	"encoding/binary"
 	"encoding/hex"
 	"io"
+	"math/big"
 	"os"
 
+	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/crypto/secp256k1"
@@ -143,13 +145,13 @@ func (w *Wallet) SaveWalletFromEnv(ctx context.Context, privateKeyFilename strin
 		return err
 	}
 
-	fPriv, err := os.OpenFile(privateKeyFilename, os.O_WRONLY | os.O_CREATE | os.O_TRUNC, KEY_FILE_PERMISSIONS)
+	fPriv, err := os.OpenFile(privateKeyFilename, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, KEY_FILE_PERMISSIONS)
 	if err != nil {
 		return err
 	}
 	defer fPriv.Close()
 
-	fPub, err := os.OpenFile(publicKeyFilename, os.O_WRONLY | os.O_CREATE | os.O_TRUNC, KEY_FILE_PERMISSIONS)
+	fPub, err := os.OpenFile(publicKeyFilename, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, KEY_FILE_PERMISSIONS)
 	if err != nil {
 		return err
 	}
@@ -253,4 +255,34 @@ func RecoverSignerPublicKey(hash, signature []byte) ([]byte, error) {
 
 func PublicKeyToAddress(publicKey []byte) common.Address {
 	return common.BytesToAddress(crypto.Keccak256(publicKey[1:])[12:])
+}
+
+func PackWithNonce(address common.Address, nonce uint64) ([]byte, error) {
+	addressTy, err := abi.NewType("address", "address", nil)
+	if err != nil {
+		return nil, err
+	}
+
+	uint256Ty, _ := abi.NewType("uint256", "uint256", nil)
+	if err != nil {
+		return nil, err
+	}
+	arguments := abi.Arguments{
+		{
+			Type: addressTy,
+		},
+		{
+			Type: uint256Ty,
+		},
+	}
+	bytes, err := arguments.Pack(address, big.NewInt(int64(nonce)))
+	if err != nil {
+		return nil, err
+	}
+
+	hasher := sha3.NewLegacyKeccak256()
+	hasher.Write(bytes)
+	bytes = hasher.Sum(nil)
+
+	return bytes, nil
 }
