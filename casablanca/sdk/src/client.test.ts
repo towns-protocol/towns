@@ -764,4 +764,42 @@ describe('clientTest', () => {
             expect(keys).toContain('alice-fallback-key')
         }
     })
+
+    test('aliceLeavesChannelsWhenLeavingSpace', async () => {
+        log('aliceLeavesChannelsWhenLeavingSpace')
+
+        // Bob gets created, creates a space, and creates a channel.
+        await expect(bobsClient.createNewUser()).toResolve()
+        await expect(bobsClient.initCrypto()).toResolve()
+        await bobsClient.startSync()
+
+        const bobsSpaceId = makeSpaceStreamId('bobs-space-' + genId())
+        await expect(bobsClient.createSpace(bobsSpaceId, { name: "Bob's Space" })).toResolve()
+
+        const bobsChannelId = makeChannelStreamId('bobs-channel-' + genId())
+        const bobsChannelName = 'Bobs channel'
+        const bobsChannelTopic = 'Bobs channel topic'
+
+        await expect(
+            bobsClient.createChannel(bobsSpaceId, bobsChannelName, bobsChannelTopic, bobsChannelId),
+        ).toResolve()
+        await expect(bobsClient.waitForStream(bobsChannelId)).toResolve()
+
+        // Alice gest created.
+        await expect(alicesClient.createNewUser()).toResolve()
+        await expect(alicesClient.initCrypto()).toResolve()
+        await alicesClient.startSync()
+
+        await expect(alicesClient.joinStream(bobsSpaceId)).toResolve()
+        await expect(alicesClient.joinStream(bobsChannelId)).toResolve()
+        const channelStream = bobsClient.stream(bobsChannelId)
+        expect(channelStream).toBeDefined()
+        expect(channelStream?.view.getMemberships().joinedUsers).toContain(alicesClient.userId)
+
+        // leave the space
+        await expect(alicesClient.leaveStream(bobsSpaceId)).toResolve()
+
+        // the channel should be left as well
+        expect(channelStream?.view.getMemberships().joinedUsers).not.toContain(alicesClient.userId)
+    })
 })

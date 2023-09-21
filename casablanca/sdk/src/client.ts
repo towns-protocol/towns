@@ -954,6 +954,13 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
                 'leaveChannel',
             )
         } else if (isSpaceStreamId(streamId)) {
+            const channelIds =
+                this.stream(streamId)?.view.spaceContent.spaceChannelsMetadata.keys() ?? []
+
+            for (const channelId of channelIds) {
+                await this.leaveStream(channelId)
+            }
+
             return this.makeEventAndAddToStream(
                 streamId,
                 make_SpacePayload_Membership({
