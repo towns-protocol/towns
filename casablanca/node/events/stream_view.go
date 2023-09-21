@@ -3,15 +3,12 @@ package events
 import (
 	"bytes"
 	. "casablanca/node/base"
-	. "casablanca/node/crypto"
 	"casablanca/node/dlog"
 	. "casablanca/node/protocol"
 	"casablanca/node/storage"
 	. "casablanca/node/utils"
 	"context"
-	"encoding/hex"
 
-	mapset "github.com/deckarep/golang-set/v2"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
@@ -25,17 +22,6 @@ type StreamView interface {
 	SyncCookie() *SyncCookie
 }
 
-type JoinableStreamView interface {
-	StreamView
-	IsUserJoined(userId string) (bool, error)
-}
-
-type UserDeviceStreamView interface {
-	StreamView
-	// the set of river device key ids that are revoked
-	// river device id is a 256 bit keccak hash of the RDK's public key
-	IsDeviceIdRevoked(rdkId RdkId) (bool, error)
-}
 
 func MakeStreamView(preceedingMiniblocks [][]byte, streamData *storage.GetStreamFromLastSnapshotResult) (*streamViewImpl, error) {
 	// TODO: make sure both client and node can init from snapshot and remove preceedingMiniblocks param.
@@ -257,77 +243,6 @@ func (r *streamViewImpl) forEachEvent(startBlock int, op func(e *ParsedEvent) (b
 	return r.minipool.forEachEvent(op)
 }
 
-func (r *streamViewImpl) IsUserJoined(userId string) (bool, error) {
-	users := mapset.NewSet[string]()
-
-	_ = r.forEachEvent(0, func(e *ParsedEvent) (bool, error) {
-		switch payload := e.Event.Payload.(type) {
-		case *StreamEvent_SpacePayload:
-			switch spacePayload := payload.SpacePayload.Content.(type) {
-			case *SpacePayload_Membership:
-				user := spacePayload.Membership.UserId
-				if spacePayload.Membership.GetOp() == MembershipOp_SO_JOIN {
-					users.Add(user)
-				} else if spacePayload.Membership.GetOp() == MembershipOp_SO_LEAVE {
-					users.Remove(user)
-				}
-			default:
-				break
-			}
-		case *StreamEvent_ChannelPayload:
-			switch channelPayload := payload.ChannelPayload.Content.(type) {
-			case *ChannelPayload_Membership:
-				user := channelPayload.Membership.UserId
-				if channelPayload.Membership.GetOp() == MembershipOp_SO_JOIN {
-					users.Add(user)
-				} else if channelPayload.Membership.GetOp() == MembershipOp_SO_LEAVE {
-					users.Remove(user)
-				}
-			default:
-				break
-			}
-		}
-		return true, nil
-	})
-
-	exists := users.Contains(userId)
-	return exists, nil
-}
-
-func (r *streamViewImpl) IsDeviceIdRevoked(rdkId RdkId) (bool, error) {
-	isRevoked := false
-	_ = r.forEachEvent(0, func(e *ParsedEvent) (bool, error) {
-		switch payload := e.Event.Payload.(type) {
-		case *StreamEvent_UserDeviceKeyPayload:
-			switch devicePayload := payload.UserDeviceKeyPayload.Content.(type) {
-			case *UserDeviceKeyPayload_UserDeviceKey_:
-				deviceKeys := devicePayload.UserDeviceKey.GetDeviceKeys()
-				deviceId, err := hex.DecodeString(deviceKeys.DeviceId)
-				if err != nil {
-					return false, err
-				}
-				eventRdkId, err := RdkIdFromSlice(deviceId)
-				if err != nil {
-					return false, err
-				}
-				switch devicePayload.UserDeviceKey.GetRiverKeyOp() {
-				case RiverKeyOp_RDKO_KEY_REVOKE:
-					if eventRdkId == rdkId {
-						isRevoked = true
-						return false, nil
-					}
-				default:
-					break
-				}
-			}
-		default:
-			break
-		}
-		return true, nil
-	})
-
-	return isRevoked, nil
-}
 
 func (r *streamViewImpl) LastEvent() *ParsedEvent {
 	lastEvent := r.minipool.lastEvent()
