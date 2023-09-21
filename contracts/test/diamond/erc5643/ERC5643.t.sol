@@ -3,6 +3,7 @@ pragma solidity ^0.8.19;
 
 // interfaces
 import {IERC5643, IERC5643Base} from "contracts/src/diamond/facets/token/ERC5643/IERC5643.sol";
+import {IERC721A} from "contracts/src/diamond/facets/token/ERC721A/IERC721A.sol";
 
 // libraries
 
@@ -15,7 +16,7 @@ contract ERC5643Test is ERC5643Setup, IERC5643Base {
 
     uint256 tokenId = subscription.mintTo(to);
 
-    assertEq(subscription.ownerOf(tokenId), to);
+    assertEq(IERC721A(diamond).ownerOf(tokenId), to);
     assertEq(subscription.expiresAt(tokenId) - block.timestamp, 30 days);
   }
 
@@ -41,7 +42,7 @@ contract ERC5643Test is ERC5643Setup, IERC5643Base {
     uint256 duration = 30 days;
 
     vm.prank(to);
-    subscription.setApprovalForAll(operator, true);
+    IERC721A(diamond).setApprovalForAll(operator, true);
 
     // go past the duration
     vm.warp(block.timestamp + 31 days);
