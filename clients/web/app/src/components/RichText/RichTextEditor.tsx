@@ -337,6 +337,7 @@ const RichTextEditorWithoutBoundary = (props: Props) => {
                         ErrorBoundary={LexicalErrorBoundary}
                     />
                 </RichTextUI>
+
                 <Stack
                     horizontal
                     paddingBottom="sm"
@@ -346,6 +347,7 @@ const RichTextEditorWithoutBoundary = (props: Props) => {
                 >
                     <RichTextBottomToolbar
                         editing={isEditing}
+                        focused={focused}
                         threadId={props.threadId}
                         threadPreview={props.threadPreview}
                         visible={!isTouch || focused || !isEditorEmpty}

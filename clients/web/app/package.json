@@ -67,6 +67,7 @@
         "react-helmet": "^6.1.0",
         "react-hook-form": "^7.38.0",
         "react-hot-toast": "^2.4.0",
+        "react-hotkeys-hook": "^4.4.1",
         "react-intersection-observer": "^9.4.0",
         "react-modal-sheet": "^1.10.2",
         "react-router": "^6.4.2",

@@ -4,7 +4,7 @@ import { $getSelection, $isRangeSelection } from 'lexical'
 import { GiphyEntryDesktop, GiphyEntryTouch } from '@components/Giphy/GiphyEntry'
 import { EmojiPickerButton, EmojiPickerButtonTouch } from '@components/EmojiPickerButton'
 import { useDevice } from 'hooks/useDevice'
-import { Box, IconButton, Stack } from '@ui'
+import { IconButton, Stack } from '@ui'
 import { MotionIconButton } from 'ui/components/Motion/MotionComponents'
 import { $createEmojiNode } from './nodes/EmojiNode'
 
@@ -13,6 +13,7 @@ type Props = {
     threadPreview?: string
     visible: boolean
     editing?: boolean
+    focused?: boolean
     isFormattingToolbarOpen: boolean
     setIsFormattingToolbarOpen: (isFormattingToolbarOpen: boolean) => void
 }
@@ -21,7 +22,12 @@ export const RichTextBottomToolbar = (props: Props) => {
     const { isTouch } = useDevice()
     const [editor] = useLexicalComposerContext()
 
-    const { isFormattingToolbarOpen, setIsFormattingToolbarOpen, editing = false } = props
+    const {
+        isFormattingToolbarOpen,
+        setIsFormattingToolbarOpen,
+        editing: isEditing = false,
+        focused: isFocused = false,
+    } = props
 
     const onSelectEmoji = useCallback(
         (data: EmojiPickerSelection) => {
@@ -62,7 +68,7 @@ export const RichTextBottomToolbar = (props: Props) => {
                             onClick={onFormattingButtonClicked}
                         />
                     )}
-                    {!editing && (
+                    {!isEditing && (
                         <GiphyEntryTouch
                             key="giphy"
                             threadId={props.threadId}
@@ -85,31 +91,15 @@ export const RichTextBottomToolbar = (props: Props) => {
                         tooltipOptions={{ placement: 'vertical', immediate: true }}
                         onClick={onFormattingButtonClicked}
                     />
-                    {!editing ? (
-                        <Box
-                            tooltip="Giphy"
-                            tooltipOptions={{
-                                placement: 'vertical',
-                                immediate: true,
-                                removeOnClick: true,
-                            }}
-                        >
-                            <GiphyEntryDesktop
-                                threadId={props.threadId}
-                                threadPreview={props.threadPreview}
-                            />
-                        </Box>
+                    {!isEditing ? (
+                        <GiphyEntryDesktop
+                            parentFocused={isFocused}
+                            threadId={props.threadId}
+                            threadPreview={props.threadPreview}
+                        />
                     ) : null}
-                    <Box
-                        tooltip="Emoji"
-                        tooltipOptions={{
-                            placement: 'vertical',
-                            immediate: true,
-                            removeOnClick: true,
-                        }}
-                    >
-                        <EmojiPickerButton onSelectEmoji={onSelectEmoji} />
-                    </Box>
+
+                    <EmojiPickerButton parentFocused={isFocused} onSelectEmoji={onSelectEmoji} />
                 </>
             )}
         </Stack>

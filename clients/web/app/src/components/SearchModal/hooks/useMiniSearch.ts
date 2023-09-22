@@ -17,7 +17,7 @@ export const useMiniSearch = (messages: EventDocument[], _search: string) => {
                 storeFields: ['key', 'channelId', 'body', 'source'],
             }),
     )
-    const search = useDebounce(_search, 500)
+    const search = useDebounce(_search, 250)
 
     useEffect(() => {
         const filteredMessages = uniqBy(

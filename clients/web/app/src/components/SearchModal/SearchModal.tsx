@@ -15,6 +15,8 @@ import { ZRoomMessageEvent } from '@components/MessageTimeline/util/getEventsByD
 import { ModalContainer } from '@components/Modals/ModalContainer'
 import { Box, Icon, Paragraph, Stack, TextField } from '@ui'
 import { useSpaceChannels } from 'hooks/useSpaceChannels'
+import { useShortcut } from 'hooks/useShortcut'
+import { atoms } from 'ui/styles/atoms.css'
 import { useMessageIndex } from './hooks/useMessageIndex'
 // import { useOramaSearch } from './hooks/useOramaSearch'
 import { useMiniSearch } from './hooks/useMiniSearch'
@@ -27,22 +29,17 @@ log.enabled = true
 export const SearchModal = () => {
     const [isVisible, setIsVisible] = useState(false)
 
-    useEffect(() => {
-        const onKeyDown = (e: KeyboardEvent) => {
-            if (e.key === 'g' && e.metaKey === true) {
-                e.preventDefault()
-                setIsVisible((t) => !t)
-            }
-        }
-        window.addEventListener('keydown', onKeyDown)
-        return () => {
-            window.removeEventListener('keydown', onKeyDown)
-        }
-    }, [])
-
     const onHide = () => {
         setIsVisible(false)
     }
+
+    useShortcut(
+        'DisplaySearchModal',
+        () => {
+            setIsVisible((t) => !t)
+        },
+        { enableOnFormTags: true },
+    )
 
     const { messages } = useMessageIndex()
 
@@ -67,19 +64,7 @@ const SearchModalContainer = (props: { onHide: () => void; messages: SearchItem[
 
     const results = useMiniSearch(messages, value)
 
-    useEffect(() => {
-        const onKeyDown = (e: KeyboardEvent) => {
-            if (e.key === 'Escape') {
-                props.onHide()
-            }
-        }
-        window.addEventListener('keyup', onKeyDown)
-        return () => {
-            window.removeEventListener('keyup', onKeyDown)
-        }
-    })
-
-    // hide modal on navigation
+    useShortcut('DismissDialog', props.onHide, { enableOnFormTags: true })
 
     const location = useLocation()
     const initialLocation = useRef(`${location.pathname}#${location.hash}`)
@@ -109,25 +94,34 @@ const SearchModalContainer = (props: { onHide: () => void; messages: SearchItem[
                         onChange={onChange}
                     />
                 </Box>
-                <Stack gap overflow="scroll" maxHeight="500">
-                    {results.length === 0 ? (
-                        <Box centerContent grow color="gray2">
-                            <Stack horizontal centerContent gap padding="x4">
-                                <Paragraph>No results</Paragraph>
-                            </Stack>
-                        </Box>
-                    ) : (
-                        results.map((item) => (
-                            <ResultItem
-                                key={item.key}
-                                event={item.source}
-                                channelId={item.channelId}
-                                highligtTerms={item.terms}
-                                misc={miscProps}
-                            />
-                        ))
-                    )}
-                </Stack>
+                {results.length > 0 || value ? (
+                    <Stack gap overflow="scroll" maxHeight="500">
+                        {results.length === 0 && value ? (
+                            <Box centerContent grow color="gray2">
+                                <Stack horizontal centerContent gap padding="x4">
+                                    <Paragraph>
+                                        No matches for{' '}
+                                        <span className={atoms({ color: 'default' })}>
+                                            &quot;{value}&quot;
+                                        </span>
+                                    </Paragraph>
+                                </Stack>
+                            </Box>
+                        ) : (
+                            results.map((item) => (
+                                <ResultItem
+                                    key={item.key}
+                                    event={item.source}
+                                    channelId={item.channelId}
+                                    highligtTerms={item.terms}
+                                    misc={miscProps}
+                                />
+                            ))
+                        )}
+                    </Stack>
+                ) : (
+                    <></>
+                )}
             </Stack>
         </ModalContainer>
     )

@@ -1,10 +1,12 @@
-import React, { useCallback, useContext, useEffect, useRef } from 'react'
+import React, { useCallback, useContext, useRef } from 'react'
 import { RoomIdentifier, useZionClient } from 'use-zion-client'
 import { EmojiPickerButton } from '@components/EmojiPickerButton'
 import { Box, IconButton, MotionStack, Stack } from '@ui'
 import { useOpenMessageThread } from 'hooks/useOpenThread'
 import { vars } from 'ui/styles/vars.css'
 import { MessageTimelineContext } from '@components/MessageTimeline/MessageTimelineContext'
+import { useShortcut } from 'hooks/useShortcut'
+import { ShortcutTooltip } from '@components/Shortcuts/ShortcutTooltip'
 import { DeleteMessagePrompt } from './DeleteMessagePrompt'
 
 type Props = {
@@ -54,26 +56,6 @@ export const MessageContextMenu = (props: Props) => {
     )
     const ref = useRef<HTMLDivElement>(null)
 
-    useEffect(() => {
-        const onKeyDown = (e: KeyboardEvent) => {
-            if (!document.activeElement?.contains(ref.current)) {
-                return
-            }
-            if (props.canReply && e.key === 't') {
-                onThreadClick()
-                e.preventDefault()
-            }
-            if (props.canEdit && e.key === 'e') {
-                onEditClick()
-                e.preventDefault()
-            }
-        }
-        window.addEventListener('keydown', onKeyDown)
-        return () => {
-            window.removeEventListener('keydown', onKeyDown)
-        }
-    }, [onEditClick, onThreadClick, props.canEdit, props.canReply])
-
     const [showDeletePrompt, setShowDeletePrompt] = React.useState(false)
 
     const onDeleteClick = useCallback(() => {
@@ -91,6 +73,35 @@ export const MessageContextMenu = (props: Props) => {
     const onDeleteCancel = useCallback(() => {
         setShowDeletePrompt(false)
     }, [])
+
+    useShortcut(
+        'EditMessage',
+        useCallback(() => {
+            if (props.canEdit) {
+                timelineContext?.timelineActions.onSelectEditingMessage(props.eventId)
+            }
+        }, [props.canEdit, props.eventId, timelineContext?.timelineActions]),
+        [],
+    )
+    useShortcut(
+        'ReplyToMessage',
+        useCallback(() => {
+            if (props.canReply) {
+                onOpenMessageThread(props.eventId)
+            }
+        }, [onOpenMessageThread, props.canReply, props.eventId]),
+        [],
+    )
+
+    useShortcut(
+        'DeleteMessage',
+        useCallback(() => {
+            if (props.canEdit) {
+                setShowDeletePrompt(true)
+            }
+        }, [props.canEdit]),
+        [],
+    )
 
     return (
         <MotionStack pointerEvents="auto" position="topRight" {...animation} ref={ref}>
@@ -111,15 +122,32 @@ export const MessageContextMenu = (props: Props) => {
                     alignItems="center"
                 >
                     {props.canEdit && (
-                        <IconButton icon="edit" size="square_sm" onClick={onEditClick} />
+                        <IconButton
+                            icon="edit"
+                            size="square_sm"
+                            tooltip={<ShortcutTooltip action="EditMessage" />}
+                            onClick={onEditClick}
+                        />
                     )}
 
                     {props.canReply && (
-                        <IconButton icon="threads" size="square_sm" onClick={onThreadClick} />
+                        <IconButton
+                            icon="threads"
+                            size="square_sm"
+                            tooltip={<ShortcutTooltip action="ReplyToMessage" />}
+                            onClick={onThreadClick}
+                        />
                     )}
-                    {props.canReact && <EmojiPickerButton onSelectEmoji={onSelectEmoji} />}
+                    {props.canReact && (
+                        <EmojiPickerButton
+                            parentFocused
+                            tooltip={<ShortcutTooltip action="ReactToMessage" />}
+                            onSelectEmoji={onSelectEmoji}
+                        />
+                    )}
                     {props.canEdit && (
                         <IconButton
+                            tooltip={<ShortcutTooltip action="DeleteMessage" />}
                             icon="delete"
                             size="square_sm"
                             color="error"

@@ -27,6 +27,7 @@ import { useDevice } from 'hooks/useDevice'
 import { useIsChannelWritable } from 'hooks/useIsChannelWritable'
 import { useSpaceChannels } from 'hooks/useSpaceChannels'
 import { useAuth } from 'hooks/useAuth'
+import { RegisterChannelShortcuts } from '@components/Shortcuts/RegisterChannelShortcuts'
 import { CentralPanelLayout } from './layouts/CentralPanelLayout'
 
 type Props = {
@@ -151,8 +152,10 @@ const SpacesChannelComponent = (props: Props) => {
             myMembership,
         })
     }, [channel, channelId, displayDecryptionProgress, myMembership])
+
     return (
         <CentralPanelLayout>
+            {!isTouch && <RegisterChannelShortcuts />}
             {!channel || !channelId || displayDecryptionProgress || !myMembership ? (
                 <>
                     {channel ? (

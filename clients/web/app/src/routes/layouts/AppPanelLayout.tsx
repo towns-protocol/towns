@@ -3,8 +3,8 @@ import React, { useMemo, useRef } from 'react'
 import { Outlet, useMatch } from 'react-router'
 import { DirectMessages } from '@components/DirectMessages/DirectMessages'
 import { PotentiallyUnusedSuspenseLoader } from '@components/Loaders/SuspenseLoader'
-import { SearchModal } from '@components/SearchModal/SearchModal'
 import { usePrepopulateChannels } from '@components/SearchModal/hooks/usePrepopulateChannels'
+import { ShortcutModal } from '@components/Shortcuts/ShortcutModal'
 import { MainSideBar, SpaceSideBar } from '@components/SideBars'
 import { SpaceSidebarLoadingPlaceholder } from '@components/SideBars/SpaceSideBar/SpaceSideBarLoading'
 import { Box, Stack } from '@ui'
@@ -14,6 +14,7 @@ import { useSpaceChannels } from 'hooks/useSpaceChannels'
 import { useSpaceIdFromPathname } from 'hooks/useSpaceInfoFromPathname'
 import { PATHS } from 'routes'
 import { atoms } from 'ui/styles/atoms.css'
+import { SearchModal } from '@components/SearchModal/SearchModal'
 import * as styles from './AppPanelLayout.css'
 import { PersistAndFadeWelcomeLogo } from './WelcomeLayout'
 
@@ -86,6 +87,7 @@ export const AppPanelLayout = () => {
                 </Allotment>
             </Box>
             <PersistAndFadeWelcomeLogo />
+            <ShortcutModal />
             <SearchModal />
         </Stack>
     )

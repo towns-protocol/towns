@@ -14,12 +14,12 @@ const Trigger = {
 type Props = {
     layoutId?: string
     placement?: Placement
-    // margin?: { x: number; y: number }
     children?: (renderProps: { triggerProps: TriggerProps }) => React.ReactNode
     render: JSX.Element | undefined
     trigger?: (typeof Trigger)[keyof typeof Trigger]
     onClose?: () => void
     tabIndex?: number
+    toggleRef?: React.MutableRefObject<(() => void) | undefined>
 }
 
 type TriggerProps = {
@@ -49,6 +49,7 @@ export const CardOpener = (props: Props) => {
         placement = 'horizontal',
         onClose,
         tabIndex,
+        toggleRef,
     } = props
 
     const { rootLayerRef } = useZLayerContext()
@@ -64,6 +65,14 @@ export const CardOpener = (props: Props) => {
     const [bounds, setBounds] = useState(createBounds())
 
     useEffect(() => {
+        if (toggleRef) {
+            toggleRef.current = () => {
+                setActive((a) => !a)
+            }
+        }
+    }, [toggleRef])
+
+    useEffect(() => {
         const onResize = () => {
             setBounds(createBounds())
         }
@@ -74,12 +83,12 @@ export const CardOpener = (props: Props) => {
     }, [])
 
     useEffect(() => {
-        if (!triggerRef) {
+        if (!triggerRef || !active) {
             return
         }
         const domRect = triggerRef.getBoundingClientRect()
         setTriggerRect(domRect)
-    }, [triggerRef, active, bounds])
+    }, [triggerRef, bounds, active])
 
     const updateCoordsFromEvent = useEvent((e: React.MouseEvent) => {
         if (triggerRef) {
@@ -146,11 +155,13 @@ export const CardOpener = (props: Props) => {
         }
     }, [active, trigger])
 
+    const onCloseRef = useRef(onClose)
+    onCloseRef.current = onClose
+
     useEffect(() => {
-        if (!active) {
-            onClose?.()
+        if (!active && onCloseRef.current) {
+            onCloseRef.current()
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [active])
 
     const onClick = useCallback(
