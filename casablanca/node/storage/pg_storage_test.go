@@ -51,6 +51,11 @@ func TestPostgresEventStore(t *testing.T) {
 		t.Fatal("Expected error, got nil")
 	}
 
+	streamsNumber, _ := pgEventStore.GetStreamsNumber(ctx)
+	if streamsNumber != 0 {
+		t.Fatal("Expected to find zero streams, found different number")
+	}
+
 	streamId1 := "11-0sfdsf_sdfds1"
 	streamId2 := "11-0sfdsf_sdfds2"
 	streamId3 := "11-0sfdsf_sdfds3"
@@ -70,6 +75,11 @@ func TestPostgresEventStore(t *testing.T) {
 	err = pgEventStore.CreateStream(ctx, streamId1, genesisMiniblock)
 	if err != nil {
 		t.Fatal(err)
+	}
+
+	streamsNumber, _ = pgEventStore.GetStreamsNumber(ctx)
+	if streamsNumber != 1 {
+		t.Fatal("Expected to find one stream, found different number")
 	}
 
 	streamFromLastSnaphot, streamRetrievalError := pgEventStore.GetStreamFromLastSnapshot(ctx, streamId1)

@@ -467,6 +467,21 @@ func (s *PostgresEventStore) CreateBlock(
 	return nil
 }
 
+func (s *PostgresEventStore) GetStreamsNumber(ctx context.Context) (int, error) {
+	log := dlog.CtxLog(ctx)
+
+	defer infra.StoreExecutionTimeMetrics("GetStreamNumbers", time.Now())
+
+	var count int
+	row := s.pool.QueryRow(ctx, "SELECT COUNT(stream_name) FROM es")
+	if err := row.Scan(&count); err != nil {
+		log.Error("GetStreamsNumber getting streams number error", "error", err)
+		return 0, err
+	}
+
+	return count, nil
+}
+
 // Non-API helpers
 //
 // Checks if stream exists in the database

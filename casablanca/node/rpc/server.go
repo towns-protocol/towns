@@ -47,7 +47,14 @@ func createStore(ctx context.Context, dbUrl string, storageType string, address 
 		if err != nil {
 			return nil, err
 		}
+
+		streamsCount, err := store.GetStreamsNumber(ctx)
+		if err != nil {
+			return nil, err
+		}
+
 		log.Info("Created postgres event store", "schema", schema)
+		log.Info("Current number of streams in the store", "totalStreamsCount", streamsCount)
 		return store, nil
 	}
 }
