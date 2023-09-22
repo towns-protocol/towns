@@ -35,4 +35,10 @@ interface ITownOwner is ITownOwnerBase {
   ) external returns (uint256 tokenId);
 
   function getTownInfo(address townAddress) external view returns (Town memory);
+
+  function updateTownInfo(
+    address townAddress,
+    string memory name,
+    string memory uri
+  ) external;
 }

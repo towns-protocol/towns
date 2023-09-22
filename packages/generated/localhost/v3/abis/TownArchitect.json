@@ -525,7 +525,7 @@
     "setTownArchitectImplementations(address,address,address)": "51ec4c1d",
     "ungateByToken(address)": "edddeb4d"
   },
-  "rawMetadata": "{\"compiler\":{\"version\":\"0.8.20+commit.a1b79de6\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[],\"name\":\"Factory__FailedDeployment\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"GateFacetService__NotAllowed\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"Initializable_InInitializingState\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"Initializable_NotInInitializingState\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"Introspection_AlreadySupported\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"Introspection_NotSupported\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"}],\"name\":\"Ownable__NotOwner\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"Ownable__ZeroAddress\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"Pausable__NotPaused\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"Pausable__Paused\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"ReentrancyGuard__ReentrantCall\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"TownArchitect__InvalidAddress\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"TownArchitect__InvalidNetworkId\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"TownArchitect__InvalidStringLength\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"TownArchitect__NotContract\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"Validator__InvalidAddress\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"Validator__InvalidStringLength\",\"type\":\"error\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint32\",\"name\":\"version\",\"type\":\"uint32\"}],\"name\":\"Initialized\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"bytes4\",\"name\":\"interfaceId\",\"type\":\"bytes4\"}],\"name\":\"InterfaceAdded\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"bytes4\",\"name\":\"interfaceId\",\"type\":\"bytes4\"}],\"name\":\"InterfaceRemoved\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"previousOwner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"OwnershipTransferred\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"}],\"name\":\"Paused\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"townCreator\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"townId\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"town\",\"type\":\"address\"}],\"name\":\"TownCreated\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"}],\"name\":\"Unpaused\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"townOwner\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"userEntitlementImplementation\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"tokenEntitlementImplementation\",\"type\":\"address\"}],\"name\":\"__TownArchitect_init\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"townId\",\"type\":\"string\"}],\"name\":\"computeTown\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"components\":[{\"internalType\":\"string\",\"name\":\"id\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"name\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"uri\",\"type\":\"string\"},{\"components\":[{\"internalType\":\"string\",\"name\":\"name\",\"type\":\"string\"},{\"internalType\":\"string[]\",\"name\":\"permissions\",\"type\":\"string[]\"}],\"internalType\":\"struct ITownArchitectBase.RoleInfo\",\"name\":\"everyoneEntitlement\",\"type\":\"tuple\"},{\"components\":[{\"components\":[{\"internalType\":\"string\",\"name\":\"name\",\"type\":\"string\"},{\"internalType\":\"string[]\",\"name\":\"permissions\",\"type\":\"string[]\"}],\"internalType\":\"struct ITownArchitectBase.RoleInfo\",\"name\":\"role\",\"type\":\"tuple\"},{\"components\":[{\"internalType\":\"address\",\"name\":\"contractAddress\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"quantity\",\"type\":\"uint256\"},{\"internalType\":\"bool\",\"name\":\"isSingleToken\",\"type\":\"bool\"},{\"internalType\":\"uint256[]\",\"name\":\"tokenIds\",\"type\":\"uint256[]\"}],\"internalType\":\"struct ITokenEntitlement.ExternalToken[]\",\"name\":\"tokens\",\"type\":\"tuple[]\"},{\"internalType\":\"address[]\",\"name\":\"users\",\"type\":\"address[]\"}],\"internalType\":\"struct ITownArchitectBase.MemberEntitlement\",\"name\":\"memberEntitlement\",\"type\":\"tuple\"},{\"components\":[{\"internalType\":\"string\",\"name\":\"id\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"metadata\",\"type\":\"string\"}],\"internalType\":\"struct ITownArchitectBase.ChannelInfo\",\"name\":\"channel\",\"type\":\"tuple\"}],\"internalType\":\"struct ITownArchitectBase.TownInfo\",\"name\":\"townInfo\",\"type\":\"tuple\"}],\"name\":\"createTown\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"token\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"quantity\",\"type\":\"uint256\"}],\"name\":\"gateByToken\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"townId\",\"type\":\"string\"}],\"name\":\"getTokenIdByTownId\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getTownArchitectImplementations\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"townToken\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"userEntitlementImplementation\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"tokenEntitlementImplementation\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"townId\",\"type\":\"string\"}],\"name\":\"getTownById\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"token\",\"type\":\"address\"}],\"name\":\"isTokenGated\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"townToken\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"userEntitlementImplementation\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"tokenEntitlementImplementation\",\"type\":\"address\"}],\"name\":\"setTownArchitectImplementations\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"token\",\"type\":\"address\"}],\"name\":\"ungateByToken\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}],\"devdoc\":{\"events\":{\"OwnershipTransferred(address,address)\":{\"details\":\"This emits when ownership of a contract changes.\"}},\"kind\":\"dev\",\"methods\":{\"createTown((string,string,string,(string,string[]),((string,string[]),(address,uint256,bool,uint256[])[],address[]),(string,string)))\":{\"params\":{\"townInfo\":\"Town information\"}}},\"version\":1},\"userdoc\":{\"events\":{\"InterfaceAdded(bytes4)\":{\"notice\":\"Emitted when an interface is added to the contract via `_addInterface`.\"},\"InterfaceRemoved(bytes4)\":{\"notice\":\"Emitted when an interface is removed from the contract via `_removeInterface`.\"}},\"kind\":\"user\",\"methods\":{\"createTown((string,string,string,(string,string[]),((string,string[]),(address,uint256,bool,uint256[])[],address[]),(string,string)))\":{\"notice\":\"Creates a new town\"}},\"version\":1}},\"settings\":{\"compilationTarget\":{\"contracts/src/towns/facets/architect/TownArchitect.sol\":\"TownArchitect\"},\"evmVersion\":\"paris\",\"libraries\":{},\"metadata\":{\"appendCBOR\":false,\"bytecodeHash\":\"none\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[\":@openzeppelin/=lib/openzeppelin-contracts/\",\":@prb/test/=lib/prb-test/src/\",\":ERC721A/=lib/ERC721A/contracts/\",\":council/=lib/council/contracts/\",\":ds-test/=lib/ds-test/src/\",\":erc4626-tests/=lib/operator-filter-registry/lib/openzeppelin-contracts/lib/erc4626-tests/\",\":forge-std/=lib/forge-std/src/\",\":openzeppelin-contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/\",\":openzeppelin-contracts/=lib/openzeppelin-contracts/\",\":operator-filter-registry/=lib/operator-filter-registry/\",\":prb-test/=lib/prb-test/src/\"]},\"sources\":{\"contracts/src/diamond/facets/Facet.sol\":{\"keccak256\":\"0x8213b85d1271bc3c2aa9842979c8ad825066c4c9addc55296d53b6747e5198ba\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://b4e88e869c99e65f0caeb9d03938e78c578a869783b9f20c05f4ba52e7ca493d\",\"dweb:/ipfs/QmRqPmg8BYD1V6Cd8kfihCQ7nn2DAsgRjGW2MJvc7Evnjt\"]},\"contracts/src/diamond/facets/initializable/Initializable.sol\":{\"keccak256\":\"0x2a4f3a99b3b3ac6c2c18431cea80b40774c1d8265ddefac21b26da561e069096\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://36dbba730942b1fd345f242051ea7f33e979f70392fbd929d8522c0c9c6dd367\",\"dweb:/ipfs/QmYMvYnvg9zQJpDQX9yMHZ1AET9Vx7UXtDenXAs1JhfPpd\"]},\"contracts/src/diamond/facets/initializable/InitializableStorage.sol\":{\"keccak256\":\"0x99dfe047dbb8df48a7490f63939420dd990fb5fd3b3a03c42d0cb9c6f4f9eefa\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://5e8f6d4bff257324e4544cacadd9fee42bada459f457fb707fef90bcfe0e895a\",\"dweb:/ipfs/QmYWEam5VcMt5ViNMKRkaxoD84MK2MewS5iWwSES589Vma\"]},\"contracts/src/diamond/facets/introspection/IERC165.sol\":{\"keccak256\":\"0xa1dfa0449031fced106dd105c184823595398c876be53b4bb8d855937a435816\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://e98a9007bca24776e4580c9326cfbb72ffe56334229626c336545be8c2c6e6d2\",\"dweb:/ipfs/QmdqoQTUoDKqirUR3hscy4zBh4Kn2E1fRta1y9DfA43urV\"]},\"contracts/src/diamond/facets/introspection/IntrospectionBase.sol\":{\"keccak256\":\"0x503b6ce030f8a760e9a877545b35307d05bbb704b501095795ab2168fe40db59\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://769658fed18c26f67dec9bf4ca18dd595c0343bc8ea21bb3e50595eca3401265\",\"dweb:/ipfs/QmVuqWH5eKqBJbNEtXzybgZ7ahtjTraMew8CMb4TuVUyo6\"]},\"contracts/src/diamond/facets/introspection/IntrospectionStorage.sol\":{\"keccak256\":\"0xd2ec3bbe4d15f9232006b41e0a80a5127006243ee596754af77bd3926045782a\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://8c47e18bfd34a687ce9ec75dc1f1fa5bca088e97e59aad2ac3fdb0989d06d7e6\",\"dweb:/ipfs/QmdktQXV7PKABzh43SZqemdTG25RxMaMsgpXTTUvZUxmfU\"]},\"contracts/src/diamond/facets/ownable/IERC173.sol\":{\"keccak256\":\"0x76db3de67cf685fd097cba11229f8fcb1ddb25612193a9ced697508706a237fe\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://3f6de17931a0734b33ffa015f207efaba72e71ffe7f5ca3a95178525546de620\",\"dweb:/ipfs/QmXuw9kx5fAER4jYBHUDLpbB2mQhEkwBrZPa96JgEEY9nD\"]},\"contracts/src/diamond/facets/ownable/OwnableBase.sol\":{\"keccak256\":\"0xdab71f70fb02899801d2330e861918f67ec84a89e2e15074b4a3ef132d9c78d3\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://9f37d1dbeb745d1c61aa983c0de7e1d2da21f5b6354167492c528b5599323f07\",\"dweb:/ipfs/QmdHYdsXyohNAPqthXvo7ro3TS6rf8Y6gE6y6NhUWnYnwq\"]},\"contracts/src/diamond/facets/ownable/OwnableStorage.sol\":{\"keccak256\":\"0x1d2aa559d8156f0ae1d6adeffa46fa04697b533e94f8872fd4e1c6ec99be4be3\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://136f0417a3c58ae4b80c640355fa9b46ea1d3ae06943d08d6164db10833652a6\",\"dweb:/ipfs/QmUv5FULyBPKL3LXtdeuBwoLFF4JtWNo3uUsoNeXoh7den\"]},\"contracts/src/diamond/facets/ownable/token/TokenOwnableBase.sol\":{\"keccak256\":\"0x61304bf241c1d14017416d3cc1742960f6157411d90a1464b8bde23bd322da89\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://ac41ce2830e16be806340ea576a1885db9ecd02cc4f5002bfdeb4dfd4ac0115e\",\"dweb:/ipfs/QmXqE8xZjwkFA2YgfV3eExFVEMqHizVSBTxyNDhM9WVrEZ\"]},\"contracts/src/diamond/facets/ownable/token/TokenOwnableStorage.sol\":{\"keccak256\":\"0xea4323b3cc8794cb9008bf79180555b0dc248c52e0b030024d6b4ac9fdd6af0b\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://dce6d6130309fce1126b8a4b493cc14666c59d1f7685107f07fb685d2cf31773\",\"dweb:/ipfs/QmVrC5tmJWZYgZ7ruKW6uDU8QDeZgbh3QcZD9aWHrX2Duh\"]},\"contracts/src/diamond/facets/pausable/IPausable.sol\":{\"keccak256\":\"0x51faf4ca7fa88bc4bf2699bab34692f0a43a316d0b3f95a8d7271935ef243a78\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://e4ff1050ba7ec1bc7de90f562d8ccf7875f4faea0f12ca5101f22619f2dd6de2\",\"dweb:/ipfs/QmeczRzWavYXmirfEbwGg5uLeLdXaENtFAzmxxFsggUHsW\"]},\"contracts/src/diamond/facets/pausable/PausableBase.sol\":{\"keccak256\":\"0xfdeeba59a9f9b6a31203aa45f9244767b5d790dbcf36c920cc0ec5471505e47f\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://72d6eb74b90e658834c9b9f6a9e391722c3eb3992aef2d4694c1a91473b291a1\",\"dweb:/ipfs/QmXVV8mTt8LmFDhzn3Lm3BMLXNdJTzUMbMrpBjnUaMzm5F\"]},\"contracts/src/diamond/facets/pausable/PausableStorage.sol\":{\"keccak256\":\"0x7aaa1baa71b080cf67876cb383b505be55ff2661b4bafc7f01428d509c201296\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://68231325f3a66baf6b96cb34d1432a675ff1d36fc15500cec97de12fc823bcd1\",\"dweb:/ipfs/QmVQb23iSSbYQJqk3EB9vT5fjSp6J8Uj2AwgEaHMSkF6wa\"]},\"contracts/src/diamond/facets/reentrancy/IReentrancyGuard.sol\":{\"keccak256\":\"0x507dfdcf6a41cf53878f7bd5ce7e1b0d6e55143eb6a797c7d898677c6ff745dd\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://41eb17240f7ad1c9db7e3545aac935be523a2bce38ac82fe7105d55ac274b2ef\",\"dweb:/ipfs/QmeaSfDMhH4MzMyZLUeiC62S4yZKiUFo5xQnAxwzMKJRaW\"]},\"contracts/src/diamond/facets/reentrancy/ReentrancyGuard.sol\":{\"keccak256\":\"0x4d4a1255bdb69707eacf1268582e817b7df99f295fbe5600307324c3b9a98b9a\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://7032a949862a25195309aa00468e3ca98e1cd2debc24b917097bc1305ecb80f6\",\"dweb:/ipfs/QmWqZQtHJtUkx2Evw486iDWnTa6SEJffKyXcPScsV8VJXJ\"]},\"contracts/src/diamond/facets/reentrancy/ReentrancyGuardStorage.sol\":{\"keccak256\":\"0xe1adcec11c7ed6bfbbacfdf6807cd302e740728a579a89417e7f15a1f0f31916\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://76dbe11f006b449792ed47c699d266ea89706a2babe0e7177a287283aa9f15f1\",\"dweb:/ipfs/Qmd1AZpAYqzejHFBjpenbMwDWHFhYX7MQTNc18PKtDdoNd\"]},\"contracts/src/diamond/facets/token/ERC721A/ERC721A.sol\":{\"keccak256\":\"0x74f577e801da89a4ef870f3d64ef84a77ecb01b9d6d741f53f36e7f75570256b\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://4e13805c3737a44396de6c045d9ef779327d13fd2a4d26bcce26fd81b0977ee8\",\"dweb:/ipfs/QmaRyiBHKgbL1ZGHn1xhjLBfcDksWjvFhZH1VCpz7SDJ8y\"]},\"contracts/src/diamond/facets/token/ERC721A/ERC721ABase.sol\":{\"keccak256\":\"0xcf937a02837fa345aa34c5d945914039ea94d3ad81bd6f62c58c8896a863d952\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://b5891907b99f3ed86edc6c69aa04b8df38da5bc9c0437983d11f30c6c5ca0055\",\"dweb:/ipfs/QmRSrE2tMJUJeEUjSZe62qYX6fswz4mSeUbWHzeUJmAsN4\"]},\"contracts/src/diamond/facets/token/ERC721A/ERC721AStorage.sol\":{\"keccak256\":\"0xd6940108c888555331b972b7ea5d4842ddeb7c222feab4565c166c12f85900ba\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://ecbc54202867c7b11e57ca2cbcbe33aa5701ea1593a70bfa82a0ccc358682767\",\"dweb:/ipfs/QmScG3JBtGEoDgxipmP8EbAgZxZF9F8aWaZ9gYBqqBweNH\"]},\"contracts/src/diamond/facets/token/ERC721A/IERC721A.sol\":{\"keccak256\":\"0x1473085ffec67f1e059e56baa36be6d3379f7b876147cd62b9854cea8f52cce9\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://6b3bd85f29ed8e16ad5622e40966c92b58baf988880da4a676142957462ded06\",\"dweb:/ipfs/QmSkGb7ByX4DTvNPh6egoSAs71b7w1NHoYfPUPT9LdtJY9\"]},\"contracts/src/diamond/proxy/IProxy.sol\":{\"keccak256\":\"0x56c8fafe5e06a8ad2a80f19d0eb8ac68c8cd42fc00d8501cb65201849fb62799\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://2767795c4790a270e44e882e237ceb68afbcb75d811a94a5f9c32c7e16cf8e4d\",\"dweb:/ipfs/QmSWLUpnNk2G7x1PscxecJD3mWbnXo2R7kAkF2qjjquW91\"]},\"contracts/src/diamond/proxy/Proxy.sol\":{\"keccak256\":\"0x633c279137c71720b2134030c8c9843adb5b34c90587c8c29b60d32ec9ba5353\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://d73f89f3198fe2a65890d28648d64377ecee50caf2cd62a787c00aafe5b21708\",\"dweb:/ipfs/QmZnHjDoZBnmCqod18WPSm7jdREwy1f7yhuq7Z3RJmE6Jh\"]},\"contracts/src/diamond/proxy/managed/IManagedProxy.sol\":{\"keccak256\":\"0xeb89a77b1dba2f6fe1a370de65c2950738bd1b6cadbd11635fabb1133d4754a0\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://6e8cddcb3f93cbb32114752e525dd68f362faeaa67a3d41b9122e7bdc280a75e\",\"dweb:/ipfs/QmZ3tgrTxBKM9g4zr7bxcYyX9LPzjagwUcsVk28fz54b9N\"]},\"contracts/src/diamond/proxy/managed/ManagedProxyBase.sol\":{\"keccak256\":\"0xe0d7fb721d82cd1a2b74bcb5dd71f54e0385850f307e586d55bd44d6d98ad0e3\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://4b0851980314e0767e33b42c7b51bb949ecedc9fd4d998807a440064b25b12b1\",\"dweb:/ipfs/QmRVtyXb4biz5Bf8wkLBDARUFbPis6Gbpa3GDS9DceTfS1\"]},\"contracts/src/diamond/proxy/managed/ManagedProxyStorage.sol\":{\"keccak256\":\"0xaf9b74c79325034f4b89b12884f50e17f2efa5063c088b21ac57a4d407901fc5\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://1c0e72dc6789b447ef08361e4e1212ade1cfbe7b780a98eee03a9bebe5e1d471\",\"dweb:/ipfs/QmTWcKYrngL4ZSnZq9CY6tvRm3zDtFron9Y2tXLW7nzHeA\"]},\"contracts/src/diamond/proxy/manager/IProxyManager.sol\":{\"keccak256\":\"0xb819bdc5f86c7cbd5b47e19908b878cc330ad1ca41ca03e59f682a42344a4211\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://05789a58b582d4a2b0940f5195137aa8a0b49ddfde6bac1351643184a65e088f\",\"dweb:/ipfs/QmXKh6Axoh1hFQJeNoiGYwwWz2u6pSyzwJG62hfpSEVxCH\"]},\"contracts/src/diamond/utils/multicall/IMulticall.sol\":{\"keccak256\":\"0x0f1a1884b290dc829323fa6d01e0dedc785ff582e9dbffd52e44e6f2fc7beff6\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://1ce824d7f2b31f53a807bf6d6d7e9d0eaaf2d81b75fa316cda616e29cb4669a9\",\"dweb:/ipfs/QmWyiRtGKtX6Kfng8Az2ujKDZdqjnfwxMuD1rQEZz6aki5\"]},\"contracts/src/diamond/utils/multicall/Multicall.sol\":{\"keccak256\":\"0x5b0a743ee7054cb63b3b79247f13bc4e1e07e9cf2ed94635994702cc04718f73\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://bf78cb081075c1554f27fc9a5c07a933bcfdcd05c7be9d44085eef8b552f6e2a\",\"dweb:/ipfs/QmZjw3s1NiBUJP2hQousSyRpTxZV8bvHhGQpUAQHTDGZ9e\"]},\"contracts/src/towns/entitlements/IEntitlement.sol\":{\"keccak256\":\"0x3c3733f40dcf373c19ea564ec9cbf49b33e96c27a80012e9be6f8d6d24e76c46\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://ba0686e15bc8bfac66d59f62e59832eaf6d4c1b636080f9b2367386d5dc72ecb\",\"dweb:/ipfs/QmemW17L8TkGWG9RHKWTpjq9WBtYX3dmZsiTtzDmYNNXwE\"]},\"contracts/src/towns/entitlements/token/ITokenEntitlement.sol\":{\"keccak256\":\"0xb912f89f96c3402e5db3f6972747e4fff0e448af4e8c2aa9125bd82798e7b328\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://13df00b4187cd6636864a784009aed1fe1ba6253b790d3cf7a6db2800e43b3cd\",\"dweb:/ipfs/QmWQxEWsG9hVeKh6n8fz1yePGGJ8DcFtMkz2iYtv3Edh3U\"]},\"contracts/src/towns/facets/architect/ITownArchitect.sol\":{\"keccak256\":\"0x63c13811042a0f880b8fb5d46ea6a1bc2350739599e998bac2e06e3725a7077f\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://c77177d4cc5e2e2844f5e3a923e43c52ce7780768e4a98577eb494283dc07ca1\",\"dweb:/ipfs/QmUw2hQr6gZKYjbKj8Zu3j1iM2pX5ekbopSZiJhQAbHDyX\"]},\"contracts/src/towns/facets/architect/TownArchitect.sol\":{\"keccak256\":\"0x76ddbf166c47596d06693d1241569128b1a250a683847e31a9763a4347484487\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://472d60eff584f1e4c9de400177a4f2f5b9e5d45ee14217f95bef3edeee7b7df1\",\"dweb:/ipfs/QmPGfgLGWeELxr5NKYayiHYjXwqzxt6jJbb4yF2paXV6nv\"]},\"contracts/src/towns/facets/architect/TownArchitectBase.sol\":{\"keccak256\":\"0xb20d00e29a3cb293b5b356f45b8f6f715e58677b80eafdfc42923becee5e5f9a\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://f483460337dee790a6b86a75291d06412339a8632dbdb9995d701ac002b3cbce\",\"dweb:/ipfs/QmPjbQsfeMuAVvnh8fooByqqbH4GERNmvUJrsBUccsoMGC\"]},\"contracts/src/towns/facets/architect/TownArchitectStorage.sol\":{\"keccak256\":\"0x22c5edf790763e3594104bddece0b8efceebd291dd1469f8daa7056a19577403\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://124e4aa12922e951df010e28587465d70cb69540cfa0cd2b83f6756b4cc1727f\",\"dweb:/ipfs/QmRreTp3ykNpB64y53oW2yYhpYnxsAsS8pCkenB6JFoPK7\"]},\"contracts/src/towns/facets/channels/IChannel.sol\":{\"keccak256\":\"0xad2a848fd582f0e648d14c6271100bfdbcc238c293f1d99c9a514987ba223e9b\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://0485777d5ee61dd66929b9dc191bb2b3ae13288b9b6bdc87f6fd29a0bf249570\",\"dweb:/ipfs/QmcwXjVTwYJHirEktW1UgjntZYSFdHihMqVUNyhdGDwpZ4\"]},\"contracts/src/towns/facets/entitlements/IEntitlementsManager.sol\":{\"keccak256\":\"0x5168b9751e1a2a55dbadcaff261aecd936c526387c9b26ad97b1ed38c091d9be\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://394dc6dfe499dc42d1cf82a0805b82c75b65578795a3f4e311e68a8c02de1fea\",\"dweb:/ipfs/QmcLZ7XeMuFAY561YKoMR2oFssakWCTyME6rxTMAiDU6wV\"]},\"contracts/src/towns/facets/gate/GateBase.sol\":{\"keccak256\":\"0x28d2888dcfa32e71b1276b7330a281bd3bd96967621a3857818523b56f8b6b2f\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://85179fe257f94e4d35fb0bf007cc71146fffab389dc45511c2a789c5643fd29e\",\"dweb:/ipfs/QmVonaMj4SNwpZParyrDUXNZoikyXZJbFZRWHJ1xwtusaf\"]},\"contracts/src/towns/facets/gate/GateService.sol\":{\"keccak256\":\"0xebe7651f02ef1a3be88fca2496cafa2b580832969f97972ed57a35c9034091fd\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://477a6cdfa2420de06f9905c5f31f479b557f147e45ea81873a1df2bcc2d26255\",\"dweb:/ipfs/QmRns8Kv2QNbw7mBjywchXPAp3mpkGJV4Y4v98cYbyEfxo\"]},\"contracts/src/towns/facets/gate/GateStorage.sol\":{\"keccak256\":\"0xc6026263ee2e62e07af9a53f5c18f2d997f30d459b896f3fe6252956bd06277d\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://71964316e0bb5bfef7c4f8a9fed20c7f3e0692e2dbe30c4d1f0cb43162003fc2\",\"dweb:/ipfs/QmfNvU6wuvzjFzCZPLrsgmxN18QcYjWhGMk9qQfYvQWraY\"]},\"contracts/src/towns/facets/guardian/GuardianBase.sol\":{\"keccak256\":\"0x05818bc7af6dddd9f2604e8f21ec209a8461eaa34bfc4a86387d50d3b71f329a\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://6a6609601f40cb454db7a90b3aee3a4d0cc42c387519dcd0d912efbdf2ce814d\",\"dweb:/ipfs/QmXpsua23NXQUKp9ky2szUiFRVH1nQjwBmEZcBcbJHxkiJ\"]},\"contracts/src/towns/facets/guardian/GuardianStorage.sol\":{\"keccak256\":\"0x100d5a6cffd5b39943ab3fe084e452cb926ba99f5b12edf68571a6f91a0192ce\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://498557050ac7fef1fe8ec654b98f50dff34cbf0474735bd12ea6dd68040edc4e\",\"dweb:/ipfs/QmSSnL5Ku16admU3iziT5uys53EoJndAMn9wqt7mGw1doJ\"]},\"contracts/src/towns/facets/guardian/IGuardian.sol\":{\"keccak256\":\"0xf781f78bf2734e510489aafac2abbaaca1236040c2a1fd070aa8ced5d2939ccd\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://407d76a8056279afc6c12131a5c1e651a9f84d0b5b1635132b0932723a3102bc\",\"dweb:/ipfs/QmevKHxfcRtHeWypqwtDMrC7i4Jb2AZ8Yz6v8Wo65sGn66\"]},\"contracts/src/towns/facets/owner/ITownOwner.sol\":{\"keccak256\":\"0xc9bed4a6a8cc02d7cc3d843d302ca50b8099e3027ec67747dd03ca42b47295d7\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://f26b167d44e828446bb3b739f90aa20860cf023cbe79fe2efbde248b28813219\",\"dweb:/ipfs/QmbKBpiv1dK8GJZiSCtYn6s2BESNuVoHYLrgCmABc3ytkA\"]},\"contracts/src/towns/facets/owner/TownOwner.sol\":{\"keccak256\":\"0x5f9ee3dfe7aa2a54ce9fd9ff4a6ff7a7ebde540ccb13853edcb2df4c7fd2428c\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://33aa8b51c976e39725989a7b5378f66f4c8fd13796ae0ac6e7ffa180bf8e7b80\",\"dweb:/ipfs/QmYEKDuX7ybpfSkjkdL3t3Fo3p2EJn5niVM82hsiwMM8xX\"]},\"contracts/src/towns/facets/owner/TownOwnerBase.sol\":{\"keccak256\":\"0x4de734ce73b2443e44b03697f2467e014c0d3a6a3270fd9b82f4aa0a6eaab899\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://50dbf3026c2134cb6c53903954d64e1e015e382330646ac74125eed0949e6f0b\",\"dweb:/ipfs/QmRy9ejUjeDZBzPb5kkVdBDsbpZDbdoo9rTWVmW82LvpRL\"]},\"contracts/src/towns/facets/owner/TownOwnerStorage.sol\":{\"keccak256\":\"0x2522290f38a311818e6749d3b767008339701f36bdfae249662637cec4deeb46\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://52d8edaabc0ffaf613d9cbe3e46e350bf86b34e6eaee60812381f1f141e8eb34\",\"dweb:/ipfs/QmXEWWRtYSL1fmJ7PkRrP921bM1465PbFmc8cmY8PAgjXd\"]},\"contracts/src/towns/facets/proxy/TownProxy.sol\":{\"keccak256\":\"0x56fa9e309e5e3b7840c47935284fc4aa65e08626529049f6d05d3c486552a964\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://13a6357277ea2735c561cb9ad7a67ae1cc84e1019b0806d8682dce69e08dace7\",\"dweb:/ipfs/QmQMKp2fk9gzR6N67Y7yZ6BFYT15Nz1o8LLAVarN61Eobi\"]},\"contracts/src/towns/facets/roles/IRoles.sol\":{\"keccak256\":\"0x630c61d3be65a9e5b0d7318d58d733806e41f101050fceb9eb6065f32b2addc3\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://a23a5ce51675208f8184df63a69347e45fe5a70cc7b708ffff0527eebfdd14f9\",\"dweb:/ipfs/QmYc28XoZ6L1cdJutzo3qcoUvsn3Vq1Pfz56V1AyEZftri\"]},\"contracts/src/utils/Factory.sol\":{\"keccak256\":\"0x998698edb1bc5bc4979dd225d245f859dae86c3fe3577cda1b9ab16b5ebdd3b5\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://9f04fada0bc4005de88d3483bec079f35acbccfb4cd99b870fb83167eef0bd03\",\"dweb:/ipfs/QmbJjh3QLiv41oz3dKmEmNVRhqfxsoDgnVHHxSA5N1WGaW\"]},\"contracts/src/utils/StringSet.sol\":{\"keccak256\":\"0x47235bcc7b60e9d244156cdd2d0defe4c1a8eb6d078f4426b4fb8c094dd41781\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://07d0eee74639221183100bb2aedaea7d6e8b0ebe31608e6cb86b135a89240c66\",\"dweb:/ipfs/QmbSLb1uhWVz7bVrBJTiTk9dWjD7xBmUiRJECdnaGWVVcR\"]},\"contracts/src/utils/Validator.sol\":{\"keccak256\":\"0xc3711af9d2db5524ada0fcdd6a41e176aeafc3423f79400894def7c3c22568f8\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://1427d925bf4d9f0ea065c60a7afcff8439dbd62cfa3e4a34e301b1b85df2a184\",\"dweb:/ipfs/QmYETDCx4zhBUqkgmYhyyb1un469ZeuhCpeY4RdtRoYvEz\"]},\"lib/openzeppelin-contracts/contracts/interfaces/draft-IERC1822.sol\":{\"keccak256\":\"0x1d4afe6cb24200cc4545eed814ecf5847277dfe5d613a1707aad5fceecebcfff\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://383fb7b8181016ac5ccf07bc9cdb7c1b5045ea36e2cc4df52bcbf20396fc7688\",\"dweb:/ipfs/QmYJ7Cg4WmE3rR8KGQxjUCXFfTH6TcwZ2Z1f6tPrq7jHFr\"]},\"lib/openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Proxy.sol\":{\"keccak256\":\"0xa2b22da3032e50b55f95ec1d13336102d675f341167aa76db571ef7f8bb7975d\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://96b6d77a20bebd4eb06b801d3d020c7e82be13bd535cb0d0a6b7181c51dab5d5\",\"dweb:/ipfs/QmPUR9Cv9jNFdQX6PtBfaBW1ZCnKwiu65R2VD5kbdanDyn\"]},\"lib/openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Upgrade.sol\":{\"keccak256\":\"0xabf3f59bc0e5423eae45e459dbe92e7052c6983628d39008590edc852a62f94a\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://89c2a0f70157c13845be5cb49b078a6374fee3a78fa950052a3af26190255da8\",\"dweb:/ipfs/QmUcvMEQH1oMM2pUyMuDiBUKdvvnTz1NRB8bmPHrVq8725\"]},\"lib/openzeppelin-contracts/contracts/proxy/Proxy.sol\":{\"keccak256\":\"0xc130fe33f1b2132158531a87734153293f6d07bc263ff4ac90e85da9c82c0e27\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://8831721b6f4cc26534d190f9f1631c3f59c9ff38efdd911f85e0882b8e360472\",\"dweb:/ipfs/QmQZnLErZNStirSQ13ZNWQgvEYUtGE5tXYwn4QUPaVUfPN\"]},\"lib/openzeppelin-contracts/contracts/proxy/beacon/IBeacon.sol\":{\"keccak256\":\"0xd50a3421ac379ccb1be435fa646d66a65c986b4924f0849839f08692f39dde61\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://ada1e030c0231db8d143b44ce92b4d1158eedb087880cad6d8cc7bd7ebe7b354\",\"dweb:/ipfs/QmWZ2NHZweRpz1U9GF6R1h65ri76dnX7fNxLBeM2t5N5Ce\"]},\"lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol\":{\"keccak256\":\"0x9750c6b834f7b43000631af5cc30001c5f547b3ceb3635488f140f60e897ea6b\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://5a7d5b1ef5d8d5889ad2ed89d8619c09383b80b72ab226e0fe7bde1636481e34\",\"dweb:/ipfs/QmebXWgtEfumQGBdVeM6c71McLixYXQP5Bk6kKXuoY4Bmr\"]},\"lib/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol\":{\"keccak256\":\"0xab28a56179c1db258c9bf5235b382698cb650debecb51b23d12be9e241374b68\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://daae589a9d6fa7e55f99f86c0a16796ca490f243fb3693632c3711c0646c1d56\",\"dweb:/ipfs/QmR3zpd7wNw3rcUdekwiv6FYHJqksuTCXLVioTxu6Fbxk3\"]},\"lib/openzeppelin-contracts/contracts/utils/Address.sol\":{\"keccak256\":\"0xf96f969e24029d43d0df89e59d365f277021dac62b48e1c1e3ebe0acdd7f1ca1\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://ec772b45a624be516f1c81970caa8a2e144301e9d0921cbc1a2789fef39a1269\",\"dweb:/ipfs/QmNyjwxCrGhQMyzLD93oUobJXVe9ceJvRvfXwbEtuxPiEj\"]},\"lib/openzeppelin-contracts/contracts/utils/StorageSlot.sol\":{\"keccak256\":\"0xd5c50c54bf02740ebd122ff06832546cb5fa84486d52695a9ccfd11666e0c81d\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://39e096c60a6eb1c6a257122d515496bd92d0c6a693a8f07acb6aa4b1263e95d4\",\"dweb:/ipfs/QmPs5trJBacCiSkezP6tpevapuRYWNY6mqSFzsMCJj7e6B\"]},\"lib/openzeppelin-contracts/contracts/utils/introspection/IERC165.sol\":{\"keccak256\":\"0x447a5f3ddc18419d41ff92b3773fb86471b1db25773e07f877f548918a185bf1\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://be161e54f24e5c6fae81a12db1a8ae87bc5ae1b0ddc805d82a1440a68455088f\",\"dweb:/ipfs/QmP7C3CHdY9urF4dEMb9wmsp1wMxHF6nhA2yQE5SKiPAdy\"]},\"lib/openzeppelin-contracts/contracts/utils/structs/EnumerableSet.sol\":{\"keccak256\":\"0xc3ff3f5c4584e1d9a483ad7ced51ab64523201f4e3d3c65293e4ca8aeb77a961\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://d7d3dd6067a994690471b5fc71b6f81fac3847798b37d404f74db00b4d3c3d0e\",\"dweb:/ipfs/QmRHF1RarifjNi93RttouNPkYZGyu6CD926PgRDzD5iL35\"]}},\"version\":1}",
+  "rawMetadata": "{\"compiler\":{\"version\":\"0.8.20+commit.a1b79de6\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[],\"name\":\"Factory__FailedDeployment\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"GateFacetService__NotAllowed\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"Initializable_InInitializingState\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"Initializable_NotInInitializingState\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"Introspection_AlreadySupported\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"Introspection_NotSupported\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"}],\"name\":\"Ownable__NotOwner\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"Ownable__ZeroAddress\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"Pausable__NotPaused\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"Pausable__Paused\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"ReentrancyGuard__ReentrantCall\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"TownArchitect__InvalidAddress\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"TownArchitect__InvalidNetworkId\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"TownArchitect__InvalidStringLength\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"TownArchitect__NotContract\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"Validator__InvalidAddress\",\"type\":\"error\"},{\"inputs\":[],\"name\":\"Validator__InvalidStringLength\",\"type\":\"error\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint32\",\"name\":\"version\",\"type\":\"uint32\"}],\"name\":\"Initialized\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"bytes4\",\"name\":\"interfaceId\",\"type\":\"bytes4\"}],\"name\":\"InterfaceAdded\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"bytes4\",\"name\":\"interfaceId\",\"type\":\"bytes4\"}],\"name\":\"InterfaceRemoved\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"previousOwner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"OwnershipTransferred\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"}],\"name\":\"Paused\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"townCreator\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"uint256\",\"name\":\"townId\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"town\",\"type\":\"address\"}],\"name\":\"TownCreated\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"}],\"name\":\"Unpaused\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"townOwner\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"userEntitlementImplementation\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"tokenEntitlementImplementation\",\"type\":\"address\"}],\"name\":\"__TownArchitect_init\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"townId\",\"type\":\"string\"}],\"name\":\"computeTown\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"components\":[{\"internalType\":\"string\",\"name\":\"id\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"name\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"uri\",\"type\":\"string\"},{\"components\":[{\"internalType\":\"string\",\"name\":\"name\",\"type\":\"string\"},{\"internalType\":\"string[]\",\"name\":\"permissions\",\"type\":\"string[]\"}],\"internalType\":\"struct ITownArchitectBase.RoleInfo\",\"name\":\"everyoneEntitlement\",\"type\":\"tuple\"},{\"components\":[{\"components\":[{\"internalType\":\"string\",\"name\":\"name\",\"type\":\"string\"},{\"internalType\":\"string[]\",\"name\":\"permissions\",\"type\":\"string[]\"}],\"internalType\":\"struct ITownArchitectBase.RoleInfo\",\"name\":\"role\",\"type\":\"tuple\"},{\"components\":[{\"internalType\":\"address\",\"name\":\"contractAddress\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"quantity\",\"type\":\"uint256\"},{\"internalType\":\"bool\",\"name\":\"isSingleToken\",\"type\":\"bool\"},{\"internalType\":\"uint256[]\",\"name\":\"tokenIds\",\"type\":\"uint256[]\"}],\"internalType\":\"struct ITokenEntitlement.ExternalToken[]\",\"name\":\"tokens\",\"type\":\"tuple[]\"},{\"internalType\":\"address[]\",\"name\":\"users\",\"type\":\"address[]\"}],\"internalType\":\"struct ITownArchitectBase.MemberEntitlement\",\"name\":\"memberEntitlement\",\"type\":\"tuple\"},{\"components\":[{\"internalType\":\"string\",\"name\":\"id\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"metadata\",\"type\":\"string\"}],\"internalType\":\"struct ITownArchitectBase.ChannelInfo\",\"name\":\"channel\",\"type\":\"tuple\"}],\"internalType\":\"struct ITownArchitectBase.TownInfo\",\"name\":\"townInfo\",\"type\":\"tuple\"}],\"name\":\"createTown\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"token\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"quantity\",\"type\":\"uint256\"}],\"name\":\"gateByToken\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"townId\",\"type\":\"string\"}],\"name\":\"getTokenIdByTownId\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"getTownArchitectImplementations\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"townToken\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"userEntitlementImplementation\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"tokenEntitlementImplementation\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"string\",\"name\":\"townId\",\"type\":\"string\"}],\"name\":\"getTownById\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"token\",\"type\":\"address\"}],\"name\":\"isTokenGated\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"townToken\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"userEntitlementImplementation\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"tokenEntitlementImplementation\",\"type\":\"address\"}],\"name\":\"setTownArchitectImplementations\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"token\",\"type\":\"address\"}],\"name\":\"ungateByToken\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}],\"devdoc\":{\"events\":{\"OwnershipTransferred(address,address)\":{\"details\":\"This emits when ownership of a contract changes.\"}},\"kind\":\"dev\",\"methods\":{\"createTown((string,string,string,(string,string[]),((string,string[]),(address,uint256,bool,uint256[])[],address[]),(string,string)))\":{\"params\":{\"townInfo\":\"Town information\"}}},\"version\":1},\"userdoc\":{\"events\":{\"InterfaceAdded(bytes4)\":{\"notice\":\"Emitted when an interface is added to the contract via `_addInterface`.\"},\"InterfaceRemoved(bytes4)\":{\"notice\":\"Emitted when an interface is removed from the contract via `_removeInterface`.\"}},\"kind\":\"user\",\"methods\":{\"createTown((string,string,string,(string,string[]),((string,string[]),(address,uint256,bool,uint256[])[],address[]),(string,string)))\":{\"notice\":\"Creates a new town\"}},\"version\":1}},\"settings\":{\"compilationTarget\":{\"contracts/src/towns/facets/architect/TownArchitect.sol\":\"TownArchitect\"},\"evmVersion\":\"paris\",\"libraries\":{},\"metadata\":{\"appendCBOR\":false,\"bytecodeHash\":\"none\"},\"optimizer\":{\"enabled\":true,\"runs\":200},\"remappings\":[\":@openzeppelin/=lib/openzeppelin-contracts/\",\":@prb/test/=lib/prb-test/src/\",\":ERC721A/=lib/ERC721A/contracts/\",\":council/=lib/council/contracts/\",\":ds-test/=lib/ds-test/src/\",\":erc4626-tests/=lib/operator-filter-registry/lib/openzeppelin-contracts/lib/erc4626-tests/\",\":forge-std/=lib/forge-std/src/\",\":openzeppelin-contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/\",\":openzeppelin-contracts/=lib/openzeppelin-contracts/\",\":operator-filter-registry/=lib/operator-filter-registry/\",\":prb-test/=lib/prb-test/src/\"]},\"sources\":{\"contracts/src/diamond/facets/Facet.sol\":{\"keccak256\":\"0x8213b85d1271bc3c2aa9842979c8ad825066c4c9addc55296d53b6747e5198ba\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://b4e88e869c99e65f0caeb9d03938e78c578a869783b9f20c05f4ba52e7ca493d\",\"dweb:/ipfs/QmRqPmg8BYD1V6Cd8kfihCQ7nn2DAsgRjGW2MJvc7Evnjt\"]},\"contracts/src/diamond/facets/initializable/Initializable.sol\":{\"keccak256\":\"0x2a4f3a99b3b3ac6c2c18431cea80b40774c1d8265ddefac21b26da561e069096\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://36dbba730942b1fd345f242051ea7f33e979f70392fbd929d8522c0c9c6dd367\",\"dweb:/ipfs/QmYMvYnvg9zQJpDQX9yMHZ1AET9Vx7UXtDenXAs1JhfPpd\"]},\"contracts/src/diamond/facets/initializable/InitializableStorage.sol\":{\"keccak256\":\"0x99dfe047dbb8df48a7490f63939420dd990fb5fd3b3a03c42d0cb9c6f4f9eefa\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://5e8f6d4bff257324e4544cacadd9fee42bada459f457fb707fef90bcfe0e895a\",\"dweb:/ipfs/QmYWEam5VcMt5ViNMKRkaxoD84MK2MewS5iWwSES589Vma\"]},\"contracts/src/diamond/facets/introspection/IERC165.sol\":{\"keccak256\":\"0xa1dfa0449031fced106dd105c184823595398c876be53b4bb8d855937a435816\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://e98a9007bca24776e4580c9326cfbb72ffe56334229626c336545be8c2c6e6d2\",\"dweb:/ipfs/QmdqoQTUoDKqirUR3hscy4zBh4Kn2E1fRta1y9DfA43urV\"]},\"contracts/src/diamond/facets/introspection/IntrospectionBase.sol\":{\"keccak256\":\"0x503b6ce030f8a760e9a877545b35307d05bbb704b501095795ab2168fe40db59\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://769658fed18c26f67dec9bf4ca18dd595c0343bc8ea21bb3e50595eca3401265\",\"dweb:/ipfs/QmVuqWH5eKqBJbNEtXzybgZ7ahtjTraMew8CMb4TuVUyo6\"]},\"contracts/src/diamond/facets/introspection/IntrospectionStorage.sol\":{\"keccak256\":\"0xd2ec3bbe4d15f9232006b41e0a80a5127006243ee596754af77bd3926045782a\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://8c47e18bfd34a687ce9ec75dc1f1fa5bca088e97e59aad2ac3fdb0989d06d7e6\",\"dweb:/ipfs/QmdktQXV7PKABzh43SZqemdTG25RxMaMsgpXTTUvZUxmfU\"]},\"contracts/src/diamond/facets/ownable/IERC173.sol\":{\"keccak256\":\"0x76db3de67cf685fd097cba11229f8fcb1ddb25612193a9ced697508706a237fe\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://3f6de17931a0734b33ffa015f207efaba72e71ffe7f5ca3a95178525546de620\",\"dweb:/ipfs/QmXuw9kx5fAER4jYBHUDLpbB2mQhEkwBrZPa96JgEEY9nD\"]},\"contracts/src/diamond/facets/ownable/OwnableBase.sol\":{\"keccak256\":\"0xdab71f70fb02899801d2330e861918f67ec84a89e2e15074b4a3ef132d9c78d3\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://9f37d1dbeb745d1c61aa983c0de7e1d2da21f5b6354167492c528b5599323f07\",\"dweb:/ipfs/QmdHYdsXyohNAPqthXvo7ro3TS6rf8Y6gE6y6NhUWnYnwq\"]},\"contracts/src/diamond/facets/ownable/OwnableStorage.sol\":{\"keccak256\":\"0x1d2aa559d8156f0ae1d6adeffa46fa04697b533e94f8872fd4e1c6ec99be4be3\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://136f0417a3c58ae4b80c640355fa9b46ea1d3ae06943d08d6164db10833652a6\",\"dweb:/ipfs/QmUv5FULyBPKL3LXtdeuBwoLFF4JtWNo3uUsoNeXoh7den\"]},\"contracts/src/diamond/facets/ownable/token/TokenOwnableBase.sol\":{\"keccak256\":\"0x61304bf241c1d14017416d3cc1742960f6157411d90a1464b8bde23bd322da89\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://ac41ce2830e16be806340ea576a1885db9ecd02cc4f5002bfdeb4dfd4ac0115e\",\"dweb:/ipfs/QmXqE8xZjwkFA2YgfV3eExFVEMqHizVSBTxyNDhM9WVrEZ\"]},\"contracts/src/diamond/facets/ownable/token/TokenOwnableStorage.sol\":{\"keccak256\":\"0xea4323b3cc8794cb9008bf79180555b0dc248c52e0b030024d6b4ac9fdd6af0b\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://dce6d6130309fce1126b8a4b493cc14666c59d1f7685107f07fb685d2cf31773\",\"dweb:/ipfs/QmVrC5tmJWZYgZ7ruKW6uDU8QDeZgbh3QcZD9aWHrX2Duh\"]},\"contracts/src/diamond/facets/pausable/IPausable.sol\":{\"keccak256\":\"0x51faf4ca7fa88bc4bf2699bab34692f0a43a316d0b3f95a8d7271935ef243a78\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://e4ff1050ba7ec1bc7de90f562d8ccf7875f4faea0f12ca5101f22619f2dd6de2\",\"dweb:/ipfs/QmeczRzWavYXmirfEbwGg5uLeLdXaENtFAzmxxFsggUHsW\"]},\"contracts/src/diamond/facets/pausable/PausableBase.sol\":{\"keccak256\":\"0xfdeeba59a9f9b6a31203aa45f9244767b5d790dbcf36c920cc0ec5471505e47f\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://72d6eb74b90e658834c9b9f6a9e391722c3eb3992aef2d4694c1a91473b291a1\",\"dweb:/ipfs/QmXVV8mTt8LmFDhzn3Lm3BMLXNdJTzUMbMrpBjnUaMzm5F\"]},\"contracts/src/diamond/facets/pausable/PausableStorage.sol\":{\"keccak256\":\"0x7aaa1baa71b080cf67876cb383b505be55ff2661b4bafc7f01428d509c201296\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://68231325f3a66baf6b96cb34d1432a675ff1d36fc15500cec97de12fc823bcd1\",\"dweb:/ipfs/QmVQb23iSSbYQJqk3EB9vT5fjSp6J8Uj2AwgEaHMSkF6wa\"]},\"contracts/src/diamond/facets/reentrancy/IReentrancyGuard.sol\":{\"keccak256\":\"0x507dfdcf6a41cf53878f7bd5ce7e1b0d6e55143eb6a797c7d898677c6ff745dd\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://41eb17240f7ad1c9db7e3545aac935be523a2bce38ac82fe7105d55ac274b2ef\",\"dweb:/ipfs/QmeaSfDMhH4MzMyZLUeiC62S4yZKiUFo5xQnAxwzMKJRaW\"]},\"contracts/src/diamond/facets/reentrancy/ReentrancyGuard.sol\":{\"keccak256\":\"0x4d4a1255bdb69707eacf1268582e817b7df99f295fbe5600307324c3b9a98b9a\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://7032a949862a25195309aa00468e3ca98e1cd2debc24b917097bc1305ecb80f6\",\"dweb:/ipfs/QmWqZQtHJtUkx2Evw486iDWnTa6SEJffKyXcPScsV8VJXJ\"]},\"contracts/src/diamond/facets/reentrancy/ReentrancyGuardStorage.sol\":{\"keccak256\":\"0xe1adcec11c7ed6bfbbacfdf6807cd302e740728a579a89417e7f15a1f0f31916\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://76dbe11f006b449792ed47c699d266ea89706a2babe0e7177a287283aa9f15f1\",\"dweb:/ipfs/Qmd1AZpAYqzejHFBjpenbMwDWHFhYX7MQTNc18PKtDdoNd\"]},\"contracts/src/diamond/facets/token/ERC721A/ERC721A.sol\":{\"keccak256\":\"0x74f577e801da89a4ef870f3d64ef84a77ecb01b9d6d741f53f36e7f75570256b\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://4e13805c3737a44396de6c045d9ef779327d13fd2a4d26bcce26fd81b0977ee8\",\"dweb:/ipfs/QmaRyiBHKgbL1ZGHn1xhjLBfcDksWjvFhZH1VCpz7SDJ8y\"]},\"contracts/src/diamond/facets/token/ERC721A/ERC721ABase.sol\":{\"keccak256\":\"0xcf937a02837fa345aa34c5d945914039ea94d3ad81bd6f62c58c8896a863d952\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://b5891907b99f3ed86edc6c69aa04b8df38da5bc9c0437983d11f30c6c5ca0055\",\"dweb:/ipfs/QmRSrE2tMJUJeEUjSZe62qYX6fswz4mSeUbWHzeUJmAsN4\"]},\"contracts/src/diamond/facets/token/ERC721A/ERC721AStorage.sol\":{\"keccak256\":\"0xd6940108c888555331b972b7ea5d4842ddeb7c222feab4565c166c12f85900ba\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://ecbc54202867c7b11e57ca2cbcbe33aa5701ea1593a70bfa82a0ccc358682767\",\"dweb:/ipfs/QmScG3JBtGEoDgxipmP8EbAgZxZF9F8aWaZ9gYBqqBweNH\"]},\"contracts/src/diamond/facets/token/ERC721A/IERC721A.sol\":{\"keccak256\":\"0x1473085ffec67f1e059e56baa36be6d3379f7b876147cd62b9854cea8f52cce9\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://6b3bd85f29ed8e16ad5622e40966c92b58baf988880da4a676142957462ded06\",\"dweb:/ipfs/QmSkGb7ByX4DTvNPh6egoSAs71b7w1NHoYfPUPT9LdtJY9\"]},\"contracts/src/diamond/proxy/IProxy.sol\":{\"keccak256\":\"0x56c8fafe5e06a8ad2a80f19d0eb8ac68c8cd42fc00d8501cb65201849fb62799\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://2767795c4790a270e44e882e237ceb68afbcb75d811a94a5f9c32c7e16cf8e4d\",\"dweb:/ipfs/QmSWLUpnNk2G7x1PscxecJD3mWbnXo2R7kAkF2qjjquW91\"]},\"contracts/src/diamond/proxy/Proxy.sol\":{\"keccak256\":\"0x633c279137c71720b2134030c8c9843adb5b34c90587c8c29b60d32ec9ba5353\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://d73f89f3198fe2a65890d28648d64377ecee50caf2cd62a787c00aafe5b21708\",\"dweb:/ipfs/QmZnHjDoZBnmCqod18WPSm7jdREwy1f7yhuq7Z3RJmE6Jh\"]},\"contracts/src/diamond/proxy/managed/IManagedProxy.sol\":{\"keccak256\":\"0xeb89a77b1dba2f6fe1a370de65c2950738bd1b6cadbd11635fabb1133d4754a0\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://6e8cddcb3f93cbb32114752e525dd68f362faeaa67a3d41b9122e7bdc280a75e\",\"dweb:/ipfs/QmZ3tgrTxBKM9g4zr7bxcYyX9LPzjagwUcsVk28fz54b9N\"]},\"contracts/src/diamond/proxy/managed/ManagedProxyBase.sol\":{\"keccak256\":\"0xe0d7fb721d82cd1a2b74bcb5dd71f54e0385850f307e586d55bd44d6d98ad0e3\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://4b0851980314e0767e33b42c7b51bb949ecedc9fd4d998807a440064b25b12b1\",\"dweb:/ipfs/QmRVtyXb4biz5Bf8wkLBDARUFbPis6Gbpa3GDS9DceTfS1\"]},\"contracts/src/diamond/proxy/managed/ManagedProxyStorage.sol\":{\"keccak256\":\"0xaf9b74c79325034f4b89b12884f50e17f2efa5063c088b21ac57a4d407901fc5\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://1c0e72dc6789b447ef08361e4e1212ade1cfbe7b780a98eee03a9bebe5e1d471\",\"dweb:/ipfs/QmTWcKYrngL4ZSnZq9CY6tvRm3zDtFron9Y2tXLW7nzHeA\"]},\"contracts/src/diamond/proxy/manager/IProxyManager.sol\":{\"keccak256\":\"0xb819bdc5f86c7cbd5b47e19908b878cc330ad1ca41ca03e59f682a42344a4211\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://05789a58b582d4a2b0940f5195137aa8a0b49ddfde6bac1351643184a65e088f\",\"dweb:/ipfs/QmXKh6Axoh1hFQJeNoiGYwwWz2u6pSyzwJG62hfpSEVxCH\"]},\"contracts/src/diamond/utils/multicall/IMulticall.sol\":{\"keccak256\":\"0x0f1a1884b290dc829323fa6d01e0dedc785ff582e9dbffd52e44e6f2fc7beff6\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://1ce824d7f2b31f53a807bf6d6d7e9d0eaaf2d81b75fa316cda616e29cb4669a9\",\"dweb:/ipfs/QmWyiRtGKtX6Kfng8Az2ujKDZdqjnfwxMuD1rQEZz6aki5\"]},\"contracts/src/diamond/utils/multicall/Multicall.sol\":{\"keccak256\":\"0x5b0a743ee7054cb63b3b79247f13bc4e1e07e9cf2ed94635994702cc04718f73\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://bf78cb081075c1554f27fc9a5c07a933bcfdcd05c7be9d44085eef8b552f6e2a\",\"dweb:/ipfs/QmZjw3s1NiBUJP2hQousSyRpTxZV8bvHhGQpUAQHTDGZ9e\"]},\"contracts/src/towns/entitlements/IEntitlement.sol\":{\"keccak256\":\"0x3c3733f40dcf373c19ea564ec9cbf49b33e96c27a80012e9be6f8d6d24e76c46\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://ba0686e15bc8bfac66d59f62e59832eaf6d4c1b636080f9b2367386d5dc72ecb\",\"dweb:/ipfs/QmemW17L8TkGWG9RHKWTpjq9WBtYX3dmZsiTtzDmYNNXwE\"]},\"contracts/src/towns/entitlements/token/ITokenEntitlement.sol\":{\"keccak256\":\"0xb912f89f96c3402e5db3f6972747e4fff0e448af4e8c2aa9125bd82798e7b328\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://13df00b4187cd6636864a784009aed1fe1ba6253b790d3cf7a6db2800e43b3cd\",\"dweb:/ipfs/QmWQxEWsG9hVeKh6n8fz1yePGGJ8DcFtMkz2iYtv3Edh3U\"]},\"contracts/src/towns/facets/architect/ITownArchitect.sol\":{\"keccak256\":\"0x63c13811042a0f880b8fb5d46ea6a1bc2350739599e998bac2e06e3725a7077f\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://c77177d4cc5e2e2844f5e3a923e43c52ce7780768e4a98577eb494283dc07ca1\",\"dweb:/ipfs/QmUw2hQr6gZKYjbKj8Zu3j1iM2pX5ekbopSZiJhQAbHDyX\"]},\"contracts/src/towns/facets/architect/TownArchitect.sol\":{\"keccak256\":\"0x76ddbf166c47596d06693d1241569128b1a250a683847e31a9763a4347484487\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://472d60eff584f1e4c9de400177a4f2f5b9e5d45ee14217f95bef3edeee7b7df1\",\"dweb:/ipfs/QmPGfgLGWeELxr5NKYayiHYjXwqzxt6jJbb4yF2paXV6nv\"]},\"contracts/src/towns/facets/architect/TownArchitectBase.sol\":{\"keccak256\":\"0xb20d00e29a3cb293b5b356f45b8f6f715e58677b80eafdfc42923becee5e5f9a\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://f483460337dee790a6b86a75291d06412339a8632dbdb9995d701ac002b3cbce\",\"dweb:/ipfs/QmPjbQsfeMuAVvnh8fooByqqbH4GERNmvUJrsBUccsoMGC\"]},\"contracts/src/towns/facets/architect/TownArchitectStorage.sol\":{\"keccak256\":\"0x22c5edf790763e3594104bddece0b8efceebd291dd1469f8daa7056a19577403\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://124e4aa12922e951df010e28587465d70cb69540cfa0cd2b83f6756b4cc1727f\",\"dweb:/ipfs/QmRreTp3ykNpB64y53oW2yYhpYnxsAsS8pCkenB6JFoPK7\"]},\"contracts/src/towns/facets/channels/IChannel.sol\":{\"keccak256\":\"0xad2a848fd582f0e648d14c6271100bfdbcc238c293f1d99c9a514987ba223e9b\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://0485777d5ee61dd66929b9dc191bb2b3ae13288b9b6bdc87f6fd29a0bf249570\",\"dweb:/ipfs/QmcwXjVTwYJHirEktW1UgjntZYSFdHihMqVUNyhdGDwpZ4\"]},\"contracts/src/towns/facets/entitlements/IEntitlementsManager.sol\":{\"keccak256\":\"0x5168b9751e1a2a55dbadcaff261aecd936c526387c9b26ad97b1ed38c091d9be\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://394dc6dfe499dc42d1cf82a0805b82c75b65578795a3f4e311e68a8c02de1fea\",\"dweb:/ipfs/QmcLZ7XeMuFAY561YKoMR2oFssakWCTyME6rxTMAiDU6wV\"]},\"contracts/src/towns/facets/gate/GateBase.sol\":{\"keccak256\":\"0x28d2888dcfa32e71b1276b7330a281bd3bd96967621a3857818523b56f8b6b2f\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://85179fe257f94e4d35fb0bf007cc71146fffab389dc45511c2a789c5643fd29e\",\"dweb:/ipfs/QmVonaMj4SNwpZParyrDUXNZoikyXZJbFZRWHJ1xwtusaf\"]},\"contracts/src/towns/facets/gate/GateService.sol\":{\"keccak256\":\"0xebe7651f02ef1a3be88fca2496cafa2b580832969f97972ed57a35c9034091fd\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://477a6cdfa2420de06f9905c5f31f479b557f147e45ea81873a1df2bcc2d26255\",\"dweb:/ipfs/QmRns8Kv2QNbw7mBjywchXPAp3mpkGJV4Y4v98cYbyEfxo\"]},\"contracts/src/towns/facets/gate/GateStorage.sol\":{\"keccak256\":\"0xc6026263ee2e62e07af9a53f5c18f2d997f30d459b896f3fe6252956bd06277d\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://71964316e0bb5bfef7c4f8a9fed20c7f3e0692e2dbe30c4d1f0cb43162003fc2\",\"dweb:/ipfs/QmfNvU6wuvzjFzCZPLrsgmxN18QcYjWhGMk9qQfYvQWraY\"]},\"contracts/src/towns/facets/guardian/GuardianBase.sol\":{\"keccak256\":\"0x05818bc7af6dddd9f2604e8f21ec209a8461eaa34bfc4a86387d50d3b71f329a\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://6a6609601f40cb454db7a90b3aee3a4d0cc42c387519dcd0d912efbdf2ce814d\",\"dweb:/ipfs/QmXpsua23NXQUKp9ky2szUiFRVH1nQjwBmEZcBcbJHxkiJ\"]},\"contracts/src/towns/facets/guardian/GuardianStorage.sol\":{\"keccak256\":\"0x100d5a6cffd5b39943ab3fe084e452cb926ba99f5b12edf68571a6f91a0192ce\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://498557050ac7fef1fe8ec654b98f50dff34cbf0474735bd12ea6dd68040edc4e\",\"dweb:/ipfs/QmSSnL5Ku16admU3iziT5uys53EoJndAMn9wqt7mGw1doJ\"]},\"contracts/src/towns/facets/guardian/IGuardian.sol\":{\"keccak256\":\"0xf781f78bf2734e510489aafac2abbaaca1236040c2a1fd070aa8ced5d2939ccd\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://407d76a8056279afc6c12131a5c1e651a9f84d0b5b1635132b0932723a3102bc\",\"dweb:/ipfs/QmevKHxfcRtHeWypqwtDMrC7i4Jb2AZ8Yz6v8Wo65sGn66\"]},\"contracts/src/towns/facets/owner/ITownOwner.sol\":{\"keccak256\":\"0x8f02d28faa3b57b7d888d32bdb3c79bd81d75af49fe20aff0410b1b5f4f3cede\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://20c25669a70c3f83e0529d96c31c82f78e8e65bc2dc655daf7fb99e087f67476\",\"dweb:/ipfs/QmfK7yrk2XZeB23HjxyXsFcdSQVzaXLX3MWuvp8rnwP1wD\"]},\"contracts/src/towns/facets/owner/TownOwner.sol\":{\"keccak256\":\"0x5f9ee3dfe7aa2a54ce9fd9ff4a6ff7a7ebde540ccb13853edcb2df4c7fd2428c\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://33aa8b51c976e39725989a7b5378f66f4c8fd13796ae0ac6e7ffa180bf8e7b80\",\"dweb:/ipfs/QmYEKDuX7ybpfSkjkdL3t3Fo3p2EJn5niVM82hsiwMM8xX\"]},\"contracts/src/towns/facets/owner/TownOwnerBase.sol\":{\"keccak256\":\"0x4de734ce73b2443e44b03697f2467e014c0d3a6a3270fd9b82f4aa0a6eaab899\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://50dbf3026c2134cb6c53903954d64e1e015e382330646ac74125eed0949e6f0b\",\"dweb:/ipfs/QmRy9ejUjeDZBzPb5kkVdBDsbpZDbdoo9rTWVmW82LvpRL\"]},\"contracts/src/towns/facets/owner/TownOwnerStorage.sol\":{\"keccak256\":\"0x2522290f38a311818e6749d3b767008339701f36bdfae249662637cec4deeb46\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://52d8edaabc0ffaf613d9cbe3e46e350bf86b34e6eaee60812381f1f141e8eb34\",\"dweb:/ipfs/QmXEWWRtYSL1fmJ7PkRrP921bM1465PbFmc8cmY8PAgjXd\"]},\"contracts/src/towns/facets/proxy/TownProxy.sol\":{\"keccak256\":\"0x56fa9e309e5e3b7840c47935284fc4aa65e08626529049f6d05d3c486552a964\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://13a6357277ea2735c561cb9ad7a67ae1cc84e1019b0806d8682dce69e08dace7\",\"dweb:/ipfs/QmQMKp2fk9gzR6N67Y7yZ6BFYT15Nz1o8LLAVarN61Eobi\"]},\"contracts/src/towns/facets/roles/IRoles.sol\":{\"keccak256\":\"0x630c61d3be65a9e5b0d7318d58d733806e41f101050fceb9eb6065f32b2addc3\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://a23a5ce51675208f8184df63a69347e45fe5a70cc7b708ffff0527eebfdd14f9\",\"dweb:/ipfs/QmYc28XoZ6L1cdJutzo3qcoUvsn3Vq1Pfz56V1AyEZftri\"]},\"contracts/src/utils/Factory.sol\":{\"keccak256\":\"0x998698edb1bc5bc4979dd225d245f859dae86c3fe3577cda1b9ab16b5ebdd3b5\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://9f04fada0bc4005de88d3483bec079f35acbccfb4cd99b870fb83167eef0bd03\",\"dweb:/ipfs/QmbJjh3QLiv41oz3dKmEmNVRhqfxsoDgnVHHxSA5N1WGaW\"]},\"contracts/src/utils/StringSet.sol\":{\"keccak256\":\"0x47235bcc7b60e9d244156cdd2d0defe4c1a8eb6d078f4426b4fb8c094dd41781\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://07d0eee74639221183100bb2aedaea7d6e8b0ebe31608e6cb86b135a89240c66\",\"dweb:/ipfs/QmbSLb1uhWVz7bVrBJTiTk9dWjD7xBmUiRJECdnaGWVVcR\"]},\"contracts/src/utils/Validator.sol\":{\"keccak256\":\"0xc3711af9d2db5524ada0fcdd6a41e176aeafc3423f79400894def7c3c22568f8\",\"license\":\"Apache-2.0\",\"urls\":[\"bzz-raw://1427d925bf4d9f0ea065c60a7afcff8439dbd62cfa3e4a34e301b1b85df2a184\",\"dweb:/ipfs/QmYETDCx4zhBUqkgmYhyyb1un469ZeuhCpeY4RdtRoYvEz\"]},\"lib/openzeppelin-contracts/contracts/interfaces/draft-IERC1822.sol\":{\"keccak256\":\"0x1d4afe6cb24200cc4545eed814ecf5847277dfe5d613a1707aad5fceecebcfff\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://383fb7b8181016ac5ccf07bc9cdb7c1b5045ea36e2cc4df52bcbf20396fc7688\",\"dweb:/ipfs/QmYJ7Cg4WmE3rR8KGQxjUCXFfTH6TcwZ2Z1f6tPrq7jHFr\"]},\"lib/openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Proxy.sol\":{\"keccak256\":\"0xa2b22da3032e50b55f95ec1d13336102d675f341167aa76db571ef7f8bb7975d\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://96b6d77a20bebd4eb06b801d3d020c7e82be13bd535cb0d0a6b7181c51dab5d5\",\"dweb:/ipfs/QmPUR9Cv9jNFdQX6PtBfaBW1ZCnKwiu65R2VD5kbdanDyn\"]},\"lib/openzeppelin-contracts/contracts/proxy/ERC1967/ERC1967Upgrade.sol\":{\"keccak256\":\"0xabf3f59bc0e5423eae45e459dbe92e7052c6983628d39008590edc852a62f94a\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://89c2a0f70157c13845be5cb49b078a6374fee3a78fa950052a3af26190255da8\",\"dweb:/ipfs/QmUcvMEQH1oMM2pUyMuDiBUKdvvnTz1NRB8bmPHrVq8725\"]},\"lib/openzeppelin-contracts/contracts/proxy/Proxy.sol\":{\"keccak256\":\"0xc130fe33f1b2132158531a87734153293f6d07bc263ff4ac90e85da9c82c0e27\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://8831721b6f4cc26534d190f9f1631c3f59c9ff38efdd911f85e0882b8e360472\",\"dweb:/ipfs/QmQZnLErZNStirSQ13ZNWQgvEYUtGE5tXYwn4QUPaVUfPN\"]},\"lib/openzeppelin-contracts/contracts/proxy/beacon/IBeacon.sol\":{\"keccak256\":\"0xd50a3421ac379ccb1be435fa646d66a65c986b4924f0849839f08692f39dde61\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://ada1e030c0231db8d143b44ce92b4d1158eedb087880cad6d8cc7bd7ebe7b354\",\"dweb:/ipfs/QmWZ2NHZweRpz1U9GF6R1h65ri76dnX7fNxLBeM2t5N5Ce\"]},\"lib/openzeppelin-contracts/contracts/token/ERC20/IERC20.sol\":{\"keccak256\":\"0x9750c6b834f7b43000631af5cc30001c5f547b3ceb3635488f140f60e897ea6b\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://5a7d5b1ef5d8d5889ad2ed89d8619c09383b80b72ab226e0fe7bde1636481e34\",\"dweb:/ipfs/QmebXWgtEfumQGBdVeM6c71McLixYXQP5Bk6kKXuoY4Bmr\"]},\"lib/openzeppelin-contracts/contracts/token/ERC721/IERC721.sol\":{\"keccak256\":\"0xab28a56179c1db258c9bf5235b382698cb650debecb51b23d12be9e241374b68\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://daae589a9d6fa7e55f99f86c0a16796ca490f243fb3693632c3711c0646c1d56\",\"dweb:/ipfs/QmR3zpd7wNw3rcUdekwiv6FYHJqksuTCXLVioTxu6Fbxk3\"]},\"lib/openzeppelin-contracts/contracts/utils/Address.sol\":{\"keccak256\":\"0xf96f969e24029d43d0df89e59d365f277021dac62b48e1c1e3ebe0acdd7f1ca1\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://ec772b45a624be516f1c81970caa8a2e144301e9d0921cbc1a2789fef39a1269\",\"dweb:/ipfs/QmNyjwxCrGhQMyzLD93oUobJXVe9ceJvRvfXwbEtuxPiEj\"]},\"lib/openzeppelin-contracts/contracts/utils/StorageSlot.sol\":{\"keccak256\":\"0xd5c50c54bf02740ebd122ff06832546cb5fa84486d52695a9ccfd11666e0c81d\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://39e096c60a6eb1c6a257122d515496bd92d0c6a693a8f07acb6aa4b1263e95d4\",\"dweb:/ipfs/QmPs5trJBacCiSkezP6tpevapuRYWNY6mqSFzsMCJj7e6B\"]},\"lib/openzeppelin-contracts/contracts/utils/introspection/IERC165.sol\":{\"keccak256\":\"0x447a5f3ddc18419d41ff92b3773fb86471b1db25773e07f877f548918a185bf1\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://be161e54f24e5c6fae81a12db1a8ae87bc5ae1b0ddc805d82a1440a68455088f\",\"dweb:/ipfs/QmP7C3CHdY9urF4dEMb9wmsp1wMxHF6nhA2yQE5SKiPAdy\"]},\"lib/openzeppelin-contracts/contracts/utils/structs/EnumerableSet.sol\":{\"keccak256\":\"0xc3ff3f5c4584e1d9a483ad7ced51ab64523201f4e3d3c65293e4ca8aeb77a961\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://d7d3dd6067a994690471b5fc71b6f81fac3847798b37d404f74db00b4d3c3d0e\",\"dweb:/ipfs/QmRHF1RarifjNi93RttouNPkYZGyu6CD926PgRDzD5iL35\"]}},\"version\":1}",
   "metadata": {
     "compiler": {
       "version": "0.8.20+commit.a1b79de6"
@@ -1426,10 +1426,10 @@
         "license": "Apache-2.0"
       },
       "contracts/src/towns/facets/owner/ITownOwner.sol": {
-        "keccak256": "0xc9bed4a6a8cc02d7cc3d843d302ca50b8099e3027ec67747dd03ca42b47295d7",
+        "keccak256": "0x8f02d28faa3b57b7d888d32bdb3c79bd81d75af49fe20aff0410b1b5f4f3cede",
         "urls": [
-          "bzz-raw://f26b167d44e828446bb3b739f90aa20860cf023cbe79fe2efbde248b28813219",
-          "dweb:/ipfs/QmbKBpiv1dK8GJZiSCtYn6s2BESNuVoHYLrgCmABc3ytkA"
+          "bzz-raw://20c25669a70c3f83e0529d96c31c82f78e8e65bc2dc655daf7fb99e087f67476",
+          "dweb:/ipfs/QmfK7yrk2XZeB23HjxyXsFcdSQVzaXLX3MWuvp8rnwP1wD"
         ],
         "license": "Apache-2.0"
       },
@@ -1590,16 +1590,16 @@
   },
   "ast": {
     "absolutePath": "contracts/src/towns/facets/architect/TownArchitect.sol",
-    "id": 29522,
+    "id": 29835,
     "exportedSymbols": {
       "Facet": [
         5988
       ],
       "GateBase": [
-        32256
+        32569
       ],
       "ITownArchitect": [
-        29338
+        29651
       ],
       "OwnableBase": [
         7615
@@ -1611,17 +1611,17 @@
         8668
       ],
       "TownArchitect": [
-        29521
+        29834
       ],
       "TownArchitectBase": [
-        30304
+        30617
       ]
     },
     "nodeType": "SourceUnit",
     "src": "39:2623:141",
     "nodes": [
       {
-        "id": 29340,
+        "id": 29653,
         "nodeType": "PragmaDirective",
         "src": "39:24:141",
         "nodes": [],
@@ -1633,23 +1633,23 @@
         ]
       },
       {
-        "id": 29342,
+        "id": 29655,
         "nodeType": "ImportDirective",
         "src": "79:87:141",
         "nodes": [],
         "absolutePath": "contracts/src/towns/facets/architect/ITownArchitect.sol",
         "file": "contracts/src/towns/facets/architect/ITownArchitect.sol",
         "nameLocation": "-1:-1:-1",
-        "scope": 29522,
-        "sourceUnit": 29339,
+        "scope": 29835,
+        "sourceUnit": 29652,
         "symbolAliases": [
           {
             "foreign": {
-              "id": 29341,
+              "id": 29654,
               "name": "ITownArchitect",
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
-              "referencedDeclaration": 29338,
+              "referencedDeclaration": 29651,
               "src": "87:14:141",
               "typeDescriptions": {}
             },
@@ -1659,23 +1659,23 @@
         "unitAlias": ""
       },
       {
-        "id": 29344,
+        "id": 29657,
         "nodeType": "ImportDirective",
         "src": "195:58:141",
         "nodes": [],
         "absolutePath": "contracts/src/towns/facets/architect/TownArchitectBase.sol",
         "file": "./TownArchitectBase.sol",
         "nameLocation": "-1:-1:-1",
-        "scope": 29522,
-        "sourceUnit": 30305,
+        "scope": 29835,
+        "sourceUnit": 30618,
         "symbolAliases": [
           {
             "foreign": {
-              "id": 29343,
+              "id": 29656,
               "name": "TownArchitectBase",
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
-              "referencedDeclaration": 30304,
+              "referencedDeclaration": 30617,
               "src": "203:17:141",
               "typeDescriptions": {}
             },
@@ -1685,23 +1685,23 @@
         "unitAlias": ""
       },
       {
-        "id": 29346,
+        "id": 29659,
         "nodeType": "ImportDirective",
         "src": "254:70:141",
         "nodes": [],
         "absolutePath": "contracts/src/towns/facets/gate/GateBase.sol",
         "file": "contracts/src/towns/facets/gate/GateBase.sol",
         "nameLocation": "-1:-1:-1",
-        "scope": 29522,
-        "sourceUnit": 32257,
+        "scope": 29835,
+        "sourceUnit": 32570,
         "symbolAliases": [
           {
             "foreign": {
-              "id": 29345,
+              "id": 29658,
               "name": "GateBase",
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
-              "referencedDeclaration": 32256,
+              "referencedDeclaration": 32569,
               "src": "262:8:141",
               "typeDescriptions": {}
             },
@@ -1711,19 +1711,19 @@
         "unitAlias": ""
       },
       {
-        "id": 29348,
+        "id": 29661,
         "nodeType": "ImportDirective",
         "src": "325:81:141",
         "nodes": [],
         "absolutePath": "contracts/src/diamond/facets/ownable/OwnableBase.sol",
         "file": "contracts/src/diamond/facets/ownable/OwnableBase.sol",
         "nameLocation": "-1:-1:-1",
-        "scope": 29522,
+        "scope": 29835,
         "sourceUnit": 7616,
         "symbolAliases": [
           {
             "foreign": {
-              "id": 29347,
+              "id": 29660,
               "name": "OwnableBase",
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
@@ -1737,19 +1737,19 @@
         "unitAlias": ""
       },
       {
-        "id": 29350,
+        "id": 29663,
         "nodeType": "ImportDirective",
         "src": "407:92:141",
         "nodes": [],
         "absolutePath": "contracts/src/diamond/facets/reentrancy/ReentrancyGuard.sol",
         "file": "contracts/src/diamond/facets/reentrancy/ReentrancyGuard.sol",
         "nameLocation": "-1:-1:-1",
-        "scope": 29522,
+        "scope": 29835,
         "sourceUnit": 8669,
         "symbolAliases": [
           {
             "foreign": {
-              "id": 29349,
+              "id": 29662,
               "name": "ReentrancyGuard",
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
@@ -1763,19 +1763,19 @@
         "unitAlias": ""
       },
       {
-        "id": 29352,
+        "id": 29665,
         "nodeType": "ImportDirective",
         "src": "500:84:141",
         "nodes": [],
         "absolutePath": "contracts/src/diamond/facets/pausable/PausableBase.sol",
         "file": "contracts/src/diamond/facets/pausable/PausableBase.sol",
         "nameLocation": "-1:-1:-1",
-        "scope": 29522,
+        "scope": 29835,
         "sourceUnit": 8242,
         "symbolAliases": [
           {
             "foreign": {
-              "id": 29351,
+              "id": 29664,
               "name": "PausableBase",
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
@@ -1789,19 +1789,19 @@
         "unitAlias": ""
       },
       {
-        "id": 29354,
+        "id": 29667,
         "nodeType": "ImportDirective",
         "src": "585:61:141",
         "nodes": [],
         "absolutePath": "contracts/src/diamond/facets/Facet.sol",
         "file": "contracts/src/diamond/facets/Facet.sol",
         "nameLocation": "-1:-1:-1",
-        "scope": 29522,
+        "scope": 29835,
         "sourceUnit": 5989,
         "symbolAliases": [
           {
             "foreign": {
-              "id": 29353,
+              "id": 29666,
               "name": "Facet",
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
@@ -1815,17 +1815,17 @@
         "unitAlias": ""
       },
       {
-        "id": 29521,
+        "id": 29834,
         "nodeType": "ContractDefinition",
         "src": "648:2013:141",
         "nodes": [
           {
-            "id": 29386,
+            "id": 29699,
             "nodeType": "FunctionDefinition",
             "src": "787:298:141",
             "nodes": [],
             "body": {
-              "id": 29385,
+              "id": 29698,
               "nodeType": "Block",
               "src": "957:128:141",
               "nodes": [],
@@ -1834,11 +1834,11 @@
                   "expression": {
                     "arguments": [
                       {
-                        "id": 29380,
+                        "id": 29693,
                         "name": "townOwner",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 29370,
+                        "referencedDeclaration": 29683,
                         "src": "990:9:141",
                         "typeDescriptions": {
                           "typeIdentifier": "t_address",
@@ -1846,11 +1846,11 @@
                         }
                       },
                       {
-                        "id": 29381,
+                        "id": 29694,
                         "name": "userEntitlementImplementation",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 29372,
+                        "referencedDeclaration": 29685,
                         "src": "1007:29:141",
                         "typeDescriptions": {
                           "typeIdentifier": "t_address",
@@ -1858,11 +1858,11 @@
                         }
                       },
                       {
-                        "id": 29382,
+                        "id": 29695,
                         "name": "tokenEntitlementImplementation",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 29374,
+                        "referencedDeclaration": 29687,
                         "src": "1044:30:141",
                         "typeDescriptions": {
                           "typeIdentifier": "t_address",
@@ -1885,18 +1885,18 @@
                           "typeString": "address"
                         }
                       ],
-                      "id": 29379,
+                      "id": 29692,
                       "name": "_setImplementations",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 29675,
+                      "referencedDeclaration": 29988,
                       "src": "963:19:141",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_internal_nonpayable$_t_address_$_t_address_$_t_address_$returns$__$",
                         "typeString": "function (address,address,address)"
                       }
                     },
-                    "id": 29383,
+                    "id": 29696,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -1912,7 +1912,7 @@
                       "typeString": "tuple()"
                     }
                   },
-                  "id": 29384,
+                  "id": 29697,
                   "nodeType": "ExpressionStatement",
                   "src": "963:117:141"
                 }
@@ -1923,10 +1923,10 @@
             "kind": "function",
             "modifiers": [
               {
-                "id": 29377,
+                "id": 29690,
                 "kind": "modifierInvocation",
                 "modifierName": {
-                  "id": 29376,
+                  "id": 29689,
                   "name": "onlyInitializing",
                   "nameLocations": [
                     "940:16:141"
@@ -1942,17 +1942,17 @@
             "name": "__TownArchitect_init",
             "nameLocation": "796:20:141",
             "parameters": {
-              "id": 29375,
+              "id": 29688,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 29370,
+                  "id": 29683,
                   "mutability": "mutable",
                   "name": "townOwner",
                   "nameLocation": "830:9:141",
                   "nodeType": "VariableDeclaration",
-                  "scope": 29386,
+                  "scope": 29699,
                   "src": "822:17:141",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -1961,7 +1961,7 @@
                     "typeString": "address"
                   },
                   "typeName": {
-                    "id": 29369,
+                    "id": 29682,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
                     "src": "822:7:141",
@@ -1975,12 +1975,12 @@
                 },
                 {
                   "constant": false,
-                  "id": 29372,
+                  "id": 29685,
                   "mutability": "mutable",
                   "name": "userEntitlementImplementation",
                   "nameLocation": "853:29:141",
                   "nodeType": "VariableDeclaration",
-                  "scope": 29386,
+                  "scope": 29699,
                   "src": "845:37:141",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -1989,7 +1989,7 @@
                     "typeString": "address"
                   },
                   "typeName": {
-                    "id": 29371,
+                    "id": 29684,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
                     "src": "845:7:141",
@@ -2003,12 +2003,12 @@
                 },
                 {
                   "constant": false,
-                  "id": 29374,
+                  "id": 29687,
                   "mutability": "mutable",
                   "name": "tokenEntitlementImplementation",
                   "nameLocation": "896:30:141",
                   "nodeType": "VariableDeclaration",
-                  "scope": 29386,
+                  "scope": 29699,
                   "src": "888:38:141",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -2017,7 +2017,7 @@
                     "typeString": "address"
                   },
                   "typeName": {
-                    "id": 29373,
+                    "id": 29686,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
                     "src": "888:7:141",
@@ -2033,23 +2033,23 @@
               "src": "816:114:141"
             },
             "returnParameters": {
-              "id": 29378,
+              "id": 29691,
               "nodeType": "ParameterList",
               "parameters": [],
               "src": "957:0:141"
             },
-            "scope": 29521,
+            "scope": 29834,
             "stateMutability": "nonpayable",
             "virtual": false,
             "visibility": "external"
           },
           {
-            "id": 29398,
+            "id": 29711,
             "nodeType": "FunctionDefinition",
             "src": "1089:104:141",
             "nodes": [],
             "body": {
-              "id": 29397,
+              "id": 29710,
               "nodeType": "Block",
               "src": "1155:38:141",
               "nodes": [],
@@ -2058,11 +2058,11 @@
                   "expression": {
                     "arguments": [
                       {
-                        "id": 29394,
+                        "id": 29707,
                         "name": "token",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 29388,
+                        "referencedDeclaration": 29701,
                         "src": "1182:5:141",
                         "typeDescriptions": {
                           "typeIdentifier": "t_address",
@@ -2077,18 +2077,18 @@
                           "typeString": "address"
                         }
                       ],
-                      "id": 29393,
+                      "id": 29706,
                       "name": "_isTokenGated",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 32243,
+                      "referencedDeclaration": 32556,
                       "src": "1168:13:141",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_internal_view$_t_address_$returns$_t_bool_$",
                         "typeString": "function (address) view returns (bool)"
                       }
                     },
-                    "id": 29395,
+                    "id": 29708,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -2104,15 +2104,15 @@
                       "typeString": "bool"
                     }
                   },
-                  "functionReturnParameters": 29392,
-                  "id": 29396,
+                  "functionReturnParameters": 29705,
+                  "id": 29709,
                   "nodeType": "Return",
                   "src": "1161:27:141"
                 }
               ]
             },
             "baseFunctions": [
-              29325
+              29638
             ],
             "functionSelector": "1c05bbc7",
             "implemented": true,
@@ -2121,17 +2121,17 @@
             "name": "isTokenGated",
             "nameLocation": "1098:12:141",
             "parameters": {
-              "id": 29389,
+              "id": 29702,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 29388,
+                  "id": 29701,
                   "mutability": "mutable",
                   "name": "token",
                   "nameLocation": "1119:5:141",
                   "nodeType": "VariableDeclaration",
-                  "scope": 29398,
+                  "scope": 29711,
                   "src": "1111:13:141",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -2140,7 +2140,7 @@
                     "typeString": "address"
                   },
                   "typeName": {
-                    "id": 29387,
+                    "id": 29700,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
                     "src": "1111:7:141",
@@ -2156,17 +2156,17 @@
               "src": "1110:15:141"
             },
             "returnParameters": {
-              "id": 29392,
+              "id": 29705,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 29391,
+                  "id": 29704,
                   "mutability": "mutable",
                   "name": "",
                   "nameLocation": "-1:-1:-1",
                   "nodeType": "VariableDeclaration",
-                  "scope": 29398,
+                  "scope": 29711,
                   "src": "1149:4:141",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -2175,7 +2175,7 @@
                     "typeString": "bool"
                   },
                   "typeName": {
-                    "id": 29390,
+                    "id": 29703,
                     "name": "bool",
                     "nodeType": "ElementaryTypeName",
                     "src": "1149:4:141",
@@ -2189,18 +2189,18 @@
               ],
               "src": "1148:6:141"
             },
-            "scope": 29521,
+            "scope": 29834,
             "stateMutability": "view",
             "virtual": false,
             "visibility": "external"
           },
           {
-            "id": 29413,
+            "id": 29726,
             "nodeType": "FunctionDefinition",
             "src": "1229:113:141",
             "nodes": [],
             "body": {
-              "id": 29412,
+              "id": 29725,
               "nodeType": "Block",
               "src": "1302:40:141",
               "nodes": [],
@@ -2209,11 +2209,11 @@
                   "expression": {
                     "arguments": [
                       {
-                        "id": 29408,
+                        "id": 29721,
                         "name": "token",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 29400,
+                        "referencedDeclaration": 29713,
                         "src": "1321:5:141",
                         "typeDescriptions": {
                           "typeIdentifier": "t_address",
@@ -2221,11 +2221,11 @@
                         }
                       },
                       {
-                        "id": 29409,
+                        "id": 29722,
                         "name": "quantity",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 29402,
+                        "referencedDeclaration": 29715,
                         "src": "1328:8:141",
                         "typeDescriptions": {
                           "typeIdentifier": "t_uint256",
@@ -2244,18 +2244,18 @@
                           "typeString": "uint256"
                         }
                       ],
-                      "id": 29407,
+                      "id": 29720,
                       "name": "_gateByToken",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 32218,
+                      "referencedDeclaration": 32531,
                       "src": "1308:12:141",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_internal_nonpayable$_t_address_$_t_uint256_$returns$__$",
                         "typeString": "function (address,uint256)"
                       }
                     },
-                    "id": 29410,
+                    "id": 29723,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -2271,24 +2271,24 @@
                       "typeString": "tuple()"
                     }
                   },
-                  "id": 29411,
+                  "id": 29724,
                   "nodeType": "ExpressionStatement",
                   "src": "1308:29:141"
                 }
               ]
             },
             "baseFunctions": [
-              29332
+              29645
             ],
             "functionSelector": "5b560b67",
             "implemented": true,
             "kind": "function",
             "modifiers": [
               {
-                "id": 29405,
+                "id": 29718,
                 "kind": "modifierInvocation",
                 "modifierName": {
-                  "id": 29404,
+                  "id": 29717,
                   "name": "onlyOwner",
                   "nameLocations": [
                     "1292:9:141"
@@ -2304,17 +2304,17 @@
             "name": "gateByToken",
             "nameLocation": "1238:11:141",
             "parameters": {
-              "id": 29403,
+              "id": 29716,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 29400,
+                  "id": 29713,
                   "mutability": "mutable",
                   "name": "token",
                   "nameLocation": "1258:5:141",
                   "nodeType": "VariableDeclaration",
-                  "scope": 29413,
+                  "scope": 29726,
                   "src": "1250:13:141",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -2323,7 +2323,7 @@
                     "typeString": "address"
                   },
                   "typeName": {
-                    "id": 29399,
+                    "id": 29712,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
                     "src": "1250:7:141",
@@ -2337,12 +2337,12 @@
                 },
                 {
                   "constant": false,
-                  "id": 29402,
+                  "id": 29715,
                   "mutability": "mutable",
                   "name": "quantity",
                   "nameLocation": "1273:8:141",
                   "nodeType": "VariableDeclaration",
-                  "scope": 29413,
+                  "scope": 29726,
                   "src": "1265:16:141",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -2351,7 +2351,7 @@
                     "typeString": "uint256"
                   },
                   "typeName": {
-                    "id": 29401,
+                    "id": 29714,
                     "name": "uint256",
                     "nodeType": "ElementaryTypeName",
                     "src": "1265:7:141",
@@ -2366,23 +2366,23 @@
               "src": "1249:33:141"
             },
             "returnParameters": {
-              "id": 29406,
+              "id": 29719,
               "nodeType": "ParameterList",
               "parameters": [],
               "src": "1302:0:141"
             },
-            "scope": 29521,
+            "scope": 29834,
             "stateMutability": "nonpayable",
             "virtual": false,
             "visibility": "external"
           },
           {
-            "id": 29425,
+            "id": 29738,
             "nodeType": "FunctionDefinition",
             "src": "1346:89:141",
             "nodes": [],
             "body": {
-              "id": 29424,
+              "id": 29737,
               "nodeType": "Block",
               "src": "1403:32:141",
               "nodes": [],
@@ -2391,11 +2391,11 @@
                   "expression": {
                     "arguments": [
                       {
-                        "id": 29421,
+                        "id": 29734,
                         "name": "token",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 29415,
+                        "referencedDeclaration": 29728,
                         "src": "1424:5:141",
                         "typeDescriptions": {
                           "typeIdentifier": "t_address",
@@ -2410,18 +2410,18 @@
                           "typeString": "address"
                         }
                       ],
-                      "id": 29420,
+                      "id": 29733,
                       "name": "_ungateByToken",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 32230,
+                      "referencedDeclaration": 32543,
                       "src": "1409:14:141",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_internal_nonpayable$_t_address_$returns$__$",
                         "typeString": "function (address)"
                       }
                     },
-                    "id": 29422,
+                    "id": 29735,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -2437,24 +2437,24 @@
                       "typeString": "tuple()"
                     }
                   },
-                  "id": 29423,
+                  "id": 29736,
                   "nodeType": "ExpressionStatement",
                   "src": "1409:21:141"
                 }
               ]
             },
             "baseFunctions": [
-              29337
+              29650
             ],
             "functionSelector": "edddeb4d",
             "implemented": true,
             "kind": "function",
             "modifiers": [
               {
-                "id": 29418,
+                "id": 29731,
                 "kind": "modifierInvocation",
                 "modifierName": {
-                  "id": 29417,
+                  "id": 29730,
                   "name": "onlyOwner",
                   "nameLocations": [
                     "1393:9:141"
@@ -2470,17 +2470,17 @@
             "name": "ungateByToken",
             "nameLocation": "1355:13:141",
             "parameters": {
-              "id": 29416,
+              "id": 29729,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 29415,
+                  "id": 29728,
                   "mutability": "mutable",
                   "name": "token",
                   "nameLocation": "1377:5:141",
                   "nodeType": "VariableDeclaration",
-                  "scope": 29425,
+                  "scope": 29738,
                   "src": "1369:13:141",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -2489,7 +2489,7 @@
                     "typeString": "address"
                   },
                   "typeName": {
-                    "id": 29414,
+                    "id": 29727,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
                     "src": "1369:7:141",
@@ -2505,23 +2505,23 @@
               "src": "1368:15:141"
             },
             "returnParameters": {
-              "id": 29419,
+              "id": 29732,
               "nodeType": "ParameterList",
               "parameters": [],
               "src": "1403:0:141"
             },
-            "scope": 29521,
+            "scope": 29834,
             "stateMutability": "nonpayable",
             "virtual": false,
             "visibility": "external"
           },
           {
-            "id": 29447,
+            "id": 29760,
             "nodeType": "FunctionDefinition",
             "src": "1439:180:141",
             "nodes": [],
             "body": {
-              "id": 29446,
+              "id": 29759,
               "nodeType": "Block",
               "src": "1547:72:141",
               "nodes": [],
@@ -2531,7 +2531,7 @@
                     "arguments": [
                       {
                         "expression": {
-                          "id": 29438,
+                          "id": 29751,
                           "name": "msg",
                           "nodeType": "Identifier",
                           "overloadedDeclarations": [],
@@ -2542,7 +2542,7 @@
                             "typeString": "msg"
                           }
                         },
-                        "id": 29439,
+                        "id": 29752,
                         "isConstant": false,
                         "isLValue": false,
                         "isPure": false,
@@ -2564,18 +2564,18 @@
                           "typeString": "address"
                         }
                       ],
-                      "id": 29437,
+                      "id": 29750,
                       "name": "_checkTokenGate",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 32255,
+                      "referencedDeclaration": 32568,
                       "src": "1553:15:141",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_internal_view$_t_address_$returns$__$",
                         "typeString": "function (address) view"
                       }
                     },
-                    "id": 29440,
+                    "id": 29753,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -2591,7 +2591,7 @@
                       "typeString": "tuple()"
                     }
                   },
-                  "id": 29441,
+                  "id": 29754,
                   "nodeType": "ExpressionStatement",
                   "src": "1553:27:141"
                 },
@@ -2599,14 +2599,14 @@
                   "expression": {
                     "arguments": [
                       {
-                        "id": 29443,
+                        "id": 29756,
                         "name": "townInfo",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 29428,
+                        "referencedDeclaration": 29741,
                         "src": "1605:8:141",
                         "typeDescriptions": {
-                          "typeIdentifier": "t_struct$_TownInfo_$29251_memory_ptr",
+                          "typeIdentifier": "t_struct$_TownInfo_$29564_memory_ptr",
                           "typeString": "struct ITownArchitectBase.TownInfo memory"
                         }
                       }
@@ -2614,22 +2614,22 @@
                     "expression": {
                       "argumentTypes": [
                         {
-                          "typeIdentifier": "t_struct$_TownInfo_$29251_memory_ptr",
+                          "typeIdentifier": "t_struct$_TownInfo_$29564_memory_ptr",
                           "typeString": "struct ITownArchitectBase.TownInfo memory"
                         }
                       ],
-                      "id": 29442,
+                      "id": 29755,
                       "name": "_createTown",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 29912,
+                      "referencedDeclaration": 30225,
                       "src": "1593:11:141",
                       "typeDescriptions": {
-                        "typeIdentifier": "t_function_internal_nonpayable$_t_struct$_TownInfo_$29251_memory_ptr_$returns$_t_address_$",
+                        "typeIdentifier": "t_function_internal_nonpayable$_t_struct$_TownInfo_$29564_memory_ptr_$returns$_t_address_$",
                         "typeString": "function (struct ITownArchitectBase.TownInfo memory) returns (address)"
                       }
                     },
-                    "id": 29444,
+                    "id": 29757,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -2645,25 +2645,25 @@
                       "typeString": "address"
                     }
                   },
-                  "functionReturnParameters": 29436,
-                  "id": 29445,
+                  "functionReturnParameters": 29749,
+                  "id": 29758,
                   "nodeType": "Return",
                   "src": "1586:28:141"
                 }
               ]
             },
             "baseFunctions": [
-              29279
+              29592
             ],
             "functionSelector": "ba656dbd",
             "implemented": true,
             "kind": "function",
             "modifiers": [
               {
-                "id": 29431,
+                "id": 29744,
                 "kind": "modifierInvocation",
                 "modifierName": {
-                  "id": 29430,
+                  "id": 29743,
                   "name": "nonReentrant",
                   "nameLocations": [
                     "1502:12:141"
@@ -2676,10 +2676,10 @@
                 "src": "1502:12:141"
               },
               {
-                "id": 29433,
+                "id": 29746,
                 "kind": "modifierInvocation",
                 "modifierName": {
-                  "id": 29432,
+                  "id": 29745,
                   "name": "whenNotPaused",
                   "nameLocations": [
                     "1515:13:141"
@@ -2695,41 +2695,41 @@
             "name": "createTown",
             "nameLocation": "1448:10:141",
             "parameters": {
-              "id": 29429,
+              "id": 29742,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 29428,
+                  "id": 29741,
                   "mutability": "mutable",
                   "name": "townInfo",
                   "nameLocation": "1480:8:141",
                   "nodeType": "VariableDeclaration",
-                  "scope": 29447,
+                  "scope": 29760,
                   "src": "1464:24:141",
                   "stateVariable": false,
                   "storageLocation": "memory",
                   "typeDescriptions": {
-                    "typeIdentifier": "t_struct$_TownInfo_$29251_memory_ptr",
+                    "typeIdentifier": "t_struct$_TownInfo_$29564_memory_ptr",
                     "typeString": "struct ITownArchitectBase.TownInfo"
                   },
                   "typeName": {
-                    "id": 29427,
+                    "id": 29740,
                     "nodeType": "UserDefinedTypeName",
                     "pathNode": {
-                      "id": 29426,
+                      "id": 29739,
                       "name": "TownInfo",
                       "nameLocations": [
                         "1464:8:141"
                       ],
                       "nodeType": "IdentifierPath",
-                      "referencedDeclaration": 29251,
+                      "referencedDeclaration": 29564,
                       "src": "1464:8:141"
                     },
-                    "referencedDeclaration": 29251,
+                    "referencedDeclaration": 29564,
                     "src": "1464:8:141",
                     "typeDescriptions": {
-                      "typeIdentifier": "t_struct$_TownInfo_$29251_storage_ptr",
+                      "typeIdentifier": "t_struct$_TownInfo_$29564_storage_ptr",
                       "typeString": "struct ITownArchitectBase.TownInfo"
                     }
                   },
@@ -2739,17 +2739,17 @@
               "src": "1458:34:141"
             },
             "returnParameters": {
-              "id": 29436,
+              "id": 29749,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 29435,
+                  "id": 29748,
                   "mutability": "mutable",
                   "name": "",
                   "nameLocation": "-1:-1:-1",
                   "nodeType": "VariableDeclaration",
-                  "scope": 29447,
+                  "scope": 29760,
                   "src": "1538:7:141",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -2758,7 +2758,7 @@
                     "typeString": "address"
                   },
                   "typeName": {
-                    "id": 29434,
+                    "id": 29747,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
                     "src": "1538:7:141",
@@ -2773,35 +2773,35 @@
               ],
               "src": "1537:9:141"
             },
-            "scope": 29521,
+            "scope": 29834,
             "stateMutability": "nonpayable",
             "virtual": false,
             "visibility": "external"
           },
           {
-            "id": 29465,
+            "id": 29778,
             "nodeType": "FunctionDefinition",
             "src": "1654:176:141",
             "nodes": [],
             "body": {
-              "id": 29464,
+              "id": 29777,
               "nodeType": "Block",
               "src": "1729:101:141",
               "nodes": [],
               "statements": [
                 {
                   "assignments": [
-                    29455
+                    29768
                   ],
                   "declarations": [
                     {
                       "constant": false,
-                      "id": 29455,
+                      "id": 29768,
                       "mutability": "mutable",
                       "name": "tokenId",
                       "nameLocation": "1743:7:141",
                       "nodeType": "VariableDeclaration",
-                      "scope": 29464,
+                      "scope": 29777,
                       "src": "1735:15:141",
                       "stateVariable": false,
                       "storageLocation": "default",
@@ -2810,7 +2810,7 @@
                         "typeString": "uint256"
                       },
                       "typeName": {
-                        "id": 29454,
+                        "id": 29767,
                         "name": "uint256",
                         "nodeType": "ElementaryTypeName",
                         "src": "1735:7:141",
@@ -2822,23 +2822,23 @@
                       "visibility": "internal"
                     }
                   ],
-                  "id": 29458,
+                  "id": 29771,
                   "initialValue": {
                     "arguments": [],
                     "expression": {
                       "argumentTypes": [],
-                      "id": 29456,
+                      "id": 29769,
                       "name": "_getNextTokenId",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 30303,
+                      "referencedDeclaration": 30616,
                       "src": "1753:15:141",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_internal_view$__$returns$_t_uint256_$",
                         "typeString": "function () view returns (uint256)"
                       }
                     },
-                    "id": 29457,
+                    "id": 29770,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -2861,11 +2861,11 @@
                   "expression": {
                     "arguments": [
                       {
-                        "id": 29460,
+                        "id": 29773,
                         "name": "townId",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 29449,
+                        "referencedDeclaration": 29762,
                         "src": "1809:6:141",
                         "typeDescriptions": {
                           "typeIdentifier": "t_string_memory_ptr",
@@ -2873,11 +2873,11 @@
                         }
                       },
                       {
-                        "id": 29461,
+                        "id": 29774,
                         "name": "tokenId",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 29455,
+                        "referencedDeclaration": 29768,
                         "src": "1817:7:141",
                         "typeDescriptions": {
                           "typeIdentifier": "t_uint256",
@@ -2896,18 +2896,18 @@
                           "typeString": "uint256"
                         }
                       ],
-                      "id": 29459,
+                      "id": 29772,
                       "name": "_getTownDeploymentAddress",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 30162,
+                      "referencedDeclaration": 30475,
                       "src": "1783:25:141",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_internal_view$_t_string_memory_ptr_$_t_uint256_$returns$_t_address_$",
                         "typeString": "function (string memory,uint256) view returns (address)"
                       }
                     },
-                    "id": 29462,
+                    "id": 29775,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -2923,15 +2923,15 @@
                       "typeString": "address"
                     }
                   },
-                  "functionReturnParameters": 29453,
-                  "id": 29463,
+                  "functionReturnParameters": 29766,
+                  "id": 29776,
                   "nodeType": "Return",
                   "src": "1776:49:141"
                 }
               ]
             },
             "baseFunctions": [
-              29286
+              29599
             ],
             "functionSelector": "ac6eec37",
             "implemented": true,
@@ -2940,17 +2940,17 @@
             "name": "computeTown",
             "nameLocation": "1663:11:141",
             "parameters": {
-              "id": 29450,
+              "id": 29763,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 29449,
+                  "id": 29762,
                   "mutability": "mutable",
                   "name": "townId",
                   "nameLocation": "1689:6:141",
                   "nodeType": "VariableDeclaration",
-                  "scope": 29465,
+                  "scope": 29778,
                   "src": "1675:20:141",
                   "stateVariable": false,
                   "storageLocation": "memory",
@@ -2959,7 +2959,7 @@
                     "typeString": "string"
                   },
                   "typeName": {
-                    "id": 29448,
+                    "id": 29761,
                     "name": "string",
                     "nodeType": "ElementaryTypeName",
                     "src": "1675:6:141",
@@ -2974,17 +2974,17 @@
               "src": "1674:22:141"
             },
             "returnParameters": {
-              "id": 29453,
+              "id": 29766,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 29452,
+                  "id": 29765,
                   "mutability": "mutable",
                   "name": "",
                   "nameLocation": "-1:-1:-1",
                   "nodeType": "VariableDeclaration",
-                  "scope": 29465,
+                  "scope": 29778,
                   "src": "1720:7:141",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -2993,7 +2993,7 @@
                     "typeString": "address"
                   },
                   "typeName": {
-                    "id": 29451,
+                    "id": 29764,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
                     "src": "1720:7:141",
@@ -3008,18 +3008,18 @@
               ],
               "src": "1719:9:141"
             },
-            "scope": 29521,
+            "scope": 29834,
             "stateMutability": "view",
             "virtual": false,
             "visibility": "external"
           },
           {
-            "id": 29477,
+            "id": 29790,
             "nodeType": "FunctionDefinition",
             "src": "1856:113:141",
             "nodes": [],
             "body": {
-              "id": 29476,
+              "id": 29789,
               "nodeType": "Block",
               "src": "1931:38:141",
               "nodes": [],
@@ -3028,11 +3028,11 @@
                   "expression": {
                     "arguments": [
                       {
-                        "id": 29473,
+                        "id": 29786,
                         "name": "townId",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 29467,
+                        "referencedDeclaration": 29780,
                         "src": "1957:6:141",
                         "typeDescriptions": {
                           "typeIdentifier": "t_string_memory_ptr",
@@ -3047,18 +3047,18 @@
                           "typeString": "string memory"
                         }
                       ],
-                      "id": 29472,
+                      "id": 29785,
                       "name": "_getTownById",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 29589,
+                      "referencedDeclaration": 29902,
                       "src": "1944:12:141",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_internal_view$_t_string_memory_ptr_$returns$_t_address_$",
                         "typeString": "function (string memory) view returns (address)"
                       }
                     },
-                    "id": 29474,
+                    "id": 29787,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -3074,15 +3074,15 @@
                       "typeString": "address"
                     }
                   },
-                  "functionReturnParameters": 29471,
-                  "id": 29475,
+                  "functionReturnParameters": 29784,
+                  "id": 29788,
                   "nodeType": "Return",
                   "src": "1937:27:141"
                 }
               ]
             },
             "baseFunctions": [
-              29311
+              29624
             ],
             "functionSelector": "11a8b382",
             "implemented": true,
@@ -3091,17 +3091,17 @@
             "name": "getTownById",
             "nameLocation": "1865:11:141",
             "parameters": {
-              "id": 29468,
+              "id": 29781,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 29467,
+                  "id": 29780,
                   "mutability": "mutable",
                   "name": "townId",
                   "nameLocation": "1891:6:141",
                   "nodeType": "VariableDeclaration",
-                  "scope": 29477,
+                  "scope": 29790,
                   "src": "1877:20:141",
                   "stateVariable": false,
                   "storageLocation": "memory",
@@ -3110,7 +3110,7 @@
                     "typeString": "string"
                   },
                   "typeName": {
-                    "id": 29466,
+                    "id": 29779,
                     "name": "string",
                     "nodeType": "ElementaryTypeName",
                     "src": "1877:6:141",
@@ -3125,17 +3125,17 @@
               "src": "1876:22:141"
             },
             "returnParameters": {
-              "id": 29471,
+              "id": 29784,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 29470,
+                  "id": 29783,
                   "mutability": "mutable",
                   "name": "",
                   "nameLocation": "-1:-1:-1",
                   "nodeType": "VariableDeclaration",
-                  "scope": 29477,
+                  "scope": 29790,
                   "src": "1922:7:141",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -3144,7 +3144,7 @@
                     "typeString": "address"
                   },
                   "typeName": {
-                    "id": 29469,
+                    "id": 29782,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
                     "src": "1922:7:141",
@@ -3159,18 +3159,18 @@
               ],
               "src": "1921:9:141"
             },
-            "scope": 29521,
+            "scope": 29834,
             "stateMutability": "view",
             "virtual": false,
             "visibility": "external"
           },
           {
-            "id": 29489,
+            "id": 29802,
             "nodeType": "FunctionDefinition",
             "src": "1973:135:141",
             "nodes": [],
             "body": {
-              "id": 29488,
+              "id": 29801,
               "nodeType": "Block",
               "src": "2063:45:141",
               "nodes": [],
@@ -3179,11 +3179,11 @@
                   "expression": {
                     "arguments": [
                       {
-                        "id": 29485,
+                        "id": 29798,
                         "name": "townId",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 29479,
+                        "referencedDeclaration": 29792,
                         "src": "2096:6:141",
                         "typeDescriptions": {
                           "typeIdentifier": "t_string_memory_ptr",
@@ -3198,18 +3198,18 @@
                           "typeString": "string memory"
                         }
                       ],
-                      "id": 29484,
+                      "id": 29797,
                       "name": "_getTokenIdByTownId",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 29611,
+                      "referencedDeclaration": 29924,
                       "src": "2076:19:141",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_internal_view$_t_string_memory_ptr_$returns$_t_uint256_$",
                         "typeString": "function (string memory) view returns (uint256)"
                       }
                     },
-                    "id": 29486,
+                    "id": 29799,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -3225,15 +3225,15 @@
                       "typeString": "uint256"
                     }
                   },
-                  "functionReturnParameters": 29483,
-                  "id": 29487,
+                  "functionReturnParameters": 29796,
+                  "id": 29800,
                   "nodeType": "Return",
                   "src": "2069:34:141"
                 }
               ]
             },
             "baseFunctions": [
-              29318
+              29631
             ],
             "functionSelector": "9c7843c2",
             "implemented": true,
@@ -3242,17 +3242,17 @@
             "name": "getTokenIdByTownId",
             "nameLocation": "1982:18:141",
             "parameters": {
-              "id": 29480,
+              "id": 29793,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 29479,
+                  "id": 29792,
                   "mutability": "mutable",
                   "name": "townId",
                   "nameLocation": "2020:6:141",
                   "nodeType": "VariableDeclaration",
-                  "scope": 29489,
+                  "scope": 29802,
                   "src": "2006:20:141",
                   "stateVariable": false,
                   "storageLocation": "memory",
@@ -3261,7 +3261,7 @@
                     "typeString": "string"
                   },
                   "typeName": {
-                    "id": 29478,
+                    "id": 29791,
                     "name": "string",
                     "nodeType": "ElementaryTypeName",
                     "src": "2006:6:141",
@@ -3276,17 +3276,17 @@
               "src": "2000:30:141"
             },
             "returnParameters": {
-              "id": 29483,
+              "id": 29796,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 29482,
+                  "id": 29795,
                   "mutability": "mutable",
                   "name": "",
                   "nameLocation": "-1:-1:-1",
                   "nodeType": "VariableDeclaration",
-                  "scope": 29489,
+                  "scope": 29802,
                   "src": "2054:7:141",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -3295,7 +3295,7 @@
                     "typeString": "uint256"
                   },
                   "typeName": {
-                    "id": 29481,
+                    "id": 29794,
                     "name": "uint256",
                     "nodeType": "ElementaryTypeName",
                     "src": "2054:7:141",
@@ -3309,18 +3309,18 @@
               ],
               "src": "2053:9:141"
             },
-            "scope": 29521,
+            "scope": 29834,
             "stateMutability": "view",
             "virtual": false,
             "visibility": "external"
           },
           {
-            "id": 29502,
+            "id": 29815,
             "nodeType": "FunctionDefinition",
             "src": "2112:241:141",
             "nodes": [],
             "body": {
-              "id": 29501,
+              "id": 29814,
               "nodeType": "Block",
               "src": "2314:39:141",
               "nodes": [],
@@ -3330,18 +3330,18 @@
                     "arguments": [],
                     "expression": {
                       "argumentTypes": [],
-                      "id": 29498,
+                      "id": 29811,
                       "name": "_getImplementations",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 29699,
+                      "referencedDeclaration": 30012,
                       "src": "2327:19:141",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_internal_view$__$returns$_t_address_$_t_address_$_t_address_$",
                         "typeString": "function () view returns (address,address,address)"
                       }
                     },
-                    "id": 29499,
+                    "id": 29812,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -3357,15 +3357,15 @@
                       "typeString": "tuple(address,address,address)"
                     }
                   },
-                  "functionReturnParameters": 29497,
-                  "id": 29500,
+                  "functionReturnParameters": 29810,
+                  "id": 29813,
                   "nodeType": "Return",
                   "src": "2320:28:141"
                 }
               ]
             },
             "baseFunctions": [
-              29295
+              29608
             ],
             "functionSelector": "18c7f066",
             "implemented": true,
@@ -3374,23 +3374,23 @@
             "name": "getTownArchitectImplementations",
             "nameLocation": "2121:31:141",
             "parameters": {
-              "id": 29490,
+              "id": 29803,
               "nodeType": "ParameterList",
               "parameters": [],
               "src": "2152:2:141"
             },
             "returnParameters": {
-              "id": 29497,
+              "id": 29810,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 29492,
+                  "id": 29805,
                   "mutability": "mutable",
                   "name": "townToken",
                   "nameLocation": "2205:9:141",
                   "nodeType": "VariableDeclaration",
-                  "scope": 29502,
+                  "scope": 29815,
                   "src": "2197:17:141",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -3399,7 +3399,7 @@
                     "typeString": "address"
                   },
                   "typeName": {
-                    "id": 29491,
+                    "id": 29804,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
                     "src": "2197:7:141",
@@ -3413,12 +3413,12 @@
                 },
                 {
                   "constant": false,
-                  "id": 29494,
+                  "id": 29807,
                   "mutability": "mutable",
                   "name": "userEntitlementImplementation",
                   "nameLocation": "2230:29:141",
                   "nodeType": "VariableDeclaration",
-                  "scope": 29502,
+                  "scope": 29815,
                   "src": "2222:37:141",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -3427,7 +3427,7 @@
                     "typeString": "address"
                   },
                   "typeName": {
-                    "id": 29493,
+                    "id": 29806,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
                     "src": "2222:7:141",
@@ -3441,12 +3441,12 @@
                 },
                 {
                   "constant": false,
-                  "id": 29496,
+                  "id": 29809,
                   "mutability": "mutable",
                   "name": "tokenEntitlementImplementation",
                   "nameLocation": "2275:30:141",
                   "nodeType": "VariableDeclaration",
-                  "scope": 29502,
+                  "scope": 29815,
                   "src": "2267:38:141",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -3455,7 +3455,7 @@
                     "typeString": "address"
                   },
                   "typeName": {
-                    "id": 29495,
+                    "id": 29808,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
                     "src": "2267:7:141",
@@ -3470,18 +3470,18 @@
               ],
               "src": "2189:122:141"
             },
-            "scope": 29521,
+            "scope": 29834,
             "stateMutability": "view",
             "virtual": false,
             "visibility": "external"
           },
           {
-            "id": 29520,
+            "id": 29833,
             "nodeType": "FunctionDefinition",
             "src": "2357:302:141",
             "nodes": [],
             "body": {
-              "id": 29519,
+              "id": 29832,
               "nodeType": "Block",
               "src": "2531:128:141",
               "nodes": [],
@@ -3490,11 +3490,11 @@
                   "expression": {
                     "arguments": [
                       {
-                        "id": 29514,
+                        "id": 29827,
                         "name": "townToken",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 29504,
+                        "referencedDeclaration": 29817,
                         "src": "2564:9:141",
                         "typeDescriptions": {
                           "typeIdentifier": "t_address",
@@ -3502,11 +3502,11 @@
                         }
                       },
                       {
-                        "id": 29515,
+                        "id": 29828,
                         "name": "userEntitlementImplementation",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 29506,
+                        "referencedDeclaration": 29819,
                         "src": "2581:29:141",
                         "typeDescriptions": {
                           "typeIdentifier": "t_address",
@@ -3514,11 +3514,11 @@
                         }
                       },
                       {
-                        "id": 29516,
+                        "id": 29829,
                         "name": "tokenEntitlementImplementation",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 29508,
+                        "referencedDeclaration": 29821,
                         "src": "2618:30:141",
                         "typeDescriptions": {
                           "typeIdentifier": "t_address",
@@ -3541,18 +3541,18 @@
                           "typeString": "address"
                         }
                       ],
-                      "id": 29513,
+                      "id": 29826,
                       "name": "_setImplementations",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 29675,
+                      "referencedDeclaration": 29988,
                       "src": "2537:19:141",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_internal_nonpayable$_t_address_$_t_address_$_t_address_$returns$__$",
                         "typeString": "function (address,address,address)"
                       }
                     },
-                    "id": 29517,
+                    "id": 29830,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -3568,24 +3568,24 @@
                       "typeString": "tuple()"
                     }
                   },
-                  "id": 29518,
+                  "id": 29831,
                   "nodeType": "ExpressionStatement",
                   "src": "2537:117:141"
                 }
               ]
             },
             "baseFunctions": [
-              29304
+              29617
             ],
             "functionSelector": "51ec4c1d",
             "implemented": true,
             "kind": "function",
             "modifiers": [
               {
-                "id": 29511,
+                "id": 29824,
                 "kind": "modifierInvocation",
                 "modifierName": {
-                  "id": 29510,
+                  "id": 29823,
                   "name": "onlyOwner",
                   "nameLocations": [
                     "2521:9:141"
@@ -3601,17 +3601,17 @@
             "name": "setTownArchitectImplementations",
             "nameLocation": "2366:31:141",
             "parameters": {
-              "id": 29509,
+              "id": 29822,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 29504,
+                  "id": 29817,
                   "mutability": "mutable",
                   "name": "townToken",
                   "nameLocation": "2411:9:141",
                   "nodeType": "VariableDeclaration",
-                  "scope": 29520,
+                  "scope": 29833,
                   "src": "2403:17:141",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -3620,7 +3620,7 @@
                     "typeString": "address"
                   },
                   "typeName": {
-                    "id": 29503,
+                    "id": 29816,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
                     "src": "2403:7:141",
@@ -3634,12 +3634,12 @@
                 },
                 {
                   "constant": false,
-                  "id": 29506,
+                  "id": 29819,
                   "mutability": "mutable",
                   "name": "userEntitlementImplementation",
                   "nameLocation": "2434:29:141",
                   "nodeType": "VariableDeclaration",
-                  "scope": 29520,
+                  "scope": 29833,
                   "src": "2426:37:141",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -3648,7 +3648,7 @@
                     "typeString": "address"
                   },
                   "typeName": {
-                    "id": 29505,
+                    "id": 29818,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
                     "src": "2426:7:141",
@@ -3662,12 +3662,12 @@
                 },
                 {
                   "constant": false,
-                  "id": 29508,
+                  "id": 29821,
                   "mutability": "mutable",
                   "name": "tokenEntitlementImplementation",
                   "nameLocation": "2477:30:141",
                   "nodeType": "VariableDeclaration",
-                  "scope": 29520,
+                  "scope": 29833,
                   "src": "2469:38:141",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -3676,7 +3676,7 @@
                     "typeString": "address"
                   },
                   "typeName": {
-                    "id": 29507,
+                    "id": 29820,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
                     "src": "2469:7:141",
@@ -3692,12 +3692,12 @@
               "src": "2397:114:141"
             },
             "returnParameters": {
-              "id": 29512,
+              "id": 29825,
               "nodeType": "ParameterList",
               "parameters": [],
               "src": "2531:0:141"
             },
-            "scope": 29521,
+            "scope": 29834,
             "stateMutability": "nonpayable",
             "virtual": false,
             "visibility": "external"
@@ -3707,37 +3707,37 @@
         "baseContracts": [
           {
             "baseName": {
-              "id": 29355,
+              "id": 29668,
               "name": "ITownArchitect",
               "nameLocations": [
                 "676:14:141"
               ],
               "nodeType": "IdentifierPath",
-              "referencedDeclaration": 29338,
+              "referencedDeclaration": 29651,
               "src": "676:14:141"
             },
-            "id": 29356,
+            "id": 29669,
             "nodeType": "InheritanceSpecifier",
             "src": "676:14:141"
           },
           {
             "baseName": {
-              "id": 29357,
+              "id": 29670,
               "name": "TownArchitectBase",
               "nameLocations": [
                 "694:17:141"
               ],
               "nodeType": "IdentifierPath",
-              "referencedDeclaration": 30304,
+              "referencedDeclaration": 30617,
               "src": "694:17:141"
             },
-            "id": 29358,
+            "id": 29671,
             "nodeType": "InheritanceSpecifier",
             "src": "694:17:141"
           },
           {
             "baseName": {
-              "id": 29359,
+              "id": 29672,
               "name": "OwnableBase",
               "nameLocations": [
                 "715:11:141"
@@ -3746,28 +3746,28 @@
               "referencedDeclaration": 7615,
               "src": "715:11:141"
             },
-            "id": 29360,
+            "id": 29673,
             "nodeType": "InheritanceSpecifier",
             "src": "715:11:141"
           },
           {
             "baseName": {
-              "id": 29361,
+              "id": 29674,
               "name": "GateBase",
               "nameLocations": [
                 "730:8:141"
               ],
               "nodeType": "IdentifierPath",
-              "referencedDeclaration": 32256,
+              "referencedDeclaration": 32569,
               "src": "730:8:141"
             },
-            "id": 29362,
+            "id": 29675,
             "nodeType": "InheritanceSpecifier",
             "src": "730:8:141"
           },
           {
             "baseName": {
-              "id": 29363,
+              "id": 29676,
               "name": "PausableBase",
               "nameLocations": [
                 "742:12:141"
@@ -3776,13 +3776,13 @@
               "referencedDeclaration": 8241,
               "src": "742:12:141"
             },
-            "id": 29364,
+            "id": 29677,
             "nodeType": "InheritanceSpecifier",
             "src": "742:12:141"
           },
           {
             "baseName": {
-              "id": 29365,
+              "id": 29678,
               "name": "ReentrancyGuard",
               "nameLocations": [
                 "758:15:141"
@@ -3791,13 +3791,13 @@
               "referencedDeclaration": 8668,
               "src": "758:15:141"
             },
-            "id": 29366,
+            "id": 29679,
             "nodeType": "InheritanceSpecifier",
             "src": "758:15:141"
           },
           {
             "baseName": {
-              "id": 29367,
+              "id": 29680,
               "name": "Facet",
               "nameLocations": [
                 "777:5:141"
@@ -3806,20 +3806,20 @@
               "referencedDeclaration": 5988,
               "src": "777:5:141"
             },
-            "id": 29368,
+            "id": 29681,
             "nodeType": "InheritanceSpecifier",
             "src": "777:5:141"
           }
         ],
         "canonicalName": "TownArchitect",
         "contractDependencies": [
-          34402,
-          114647
+          34724,
+          115319
         ],
         "contractKind": "contract",
         "fullyImplemented": true,
         "linearizedBaseContracts": [
-          29521,
+          29834,
           5988,
           7119,
           7022,
@@ -3828,17 +3828,17 @@
           8606,
           8241,
           8150,
-          32256,
+          32569,
           7615,
           7502,
-          30304,
-          29338,
-          29268,
-          38160
+          30617,
+          29651,
+          29581,
+          38482
         ],
         "name": "TownArchitect",
         "nameLocation": "657:13:141",
-        "scope": 29522,
+        "scope": 29835,
         "usedErrors": [
           6760,
           6762,
@@ -3849,14 +3849,14 @@
           8139,
           8141,
           8605,
-          29261,
-          29263,
-          29265,
-          29267,
-          32270,
-          38084,
-          39557,
-          39561
+          29574,
+          29576,
+          29578,
+          29580,
+          32583,
+          38406,
+          39879,
+          39883
         ],
         "usedEvents": [
           6766,
@@ -3865,7 +3865,7 @@
           7501,
           8145,
           8149,
-          29259
+          29572
         ]
       }
     ],

@@ -57,6 +57,7 @@ export interface ITownOwnerInterface extends utils.Interface {
     "mintTown(string,string,string,address)": FunctionFragment;
     "nextTokenId()": FunctionFragment;
     "setFactory(address)": FunctionFragment;
+    "updateTownInfo(address,string,string)": FunctionFragment;
   };
 
   getFunction(
@@ -65,6 +66,7 @@ export interface ITownOwnerInterface extends utils.Interface {
       | "mintTown"
       | "nextTokenId"
       | "setFactory"
+      | "updateTownInfo"
   ): FunctionFragment;
 
   encodeFunctionData(
@@ -88,6 +90,14 @@ export interface ITownOwnerInterface extends utils.Interface {
     functionFragment: "setFactory",
     values: [PromiseOrValue<string>]
   ): string;
+  encodeFunctionData(
+    functionFragment: "updateTownInfo",
+    values: [
+      PromiseOrValue<string>,
+      PromiseOrValue<string>,
+      PromiseOrValue<string>
+    ]
+  ): string;
 
   decodeFunctionResult(
     functionFragment: "getTownInfo",
@@ -99,6 +109,10 @@ export interface ITownOwnerInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "setFactory", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "updateTownInfo",
+    data: BytesLike
+  ): Result;
 
   events: {
     "TownOwner__SetFactory(address)": EventFragment;
@@ -177,6 +191,13 @@ export interface ITownOwner extends BaseContract {
       factory: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
+
+    updateTownInfo(
+      townAddress: PromiseOrValue<string>,
+      name: PromiseOrValue<string>,
+      uri: PromiseOrValue<string>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
   };
 
   getTownInfo(
@@ -199,6 +220,13 @@ export interface ITownOwner extends BaseContract {
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
+  updateTownInfo(
+    townAddress: PromiseOrValue<string>,
+    name: PromiseOrValue<string>,
+    uri: PromiseOrValue<string>,
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
   callStatic: {
     getTownInfo(
       townAddress: PromiseOrValue<string>,
@@ -217,6 +245,13 @@ export interface ITownOwner extends BaseContract {
 
     setFactory(
       factory: PromiseOrValue<string>,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
+    updateTownInfo(
+      townAddress: PromiseOrValue<string>,
+      name: PromiseOrValue<string>,
+      uri: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<void>;
   };
@@ -253,6 +288,13 @@ export interface ITownOwner extends BaseContract {
       factory: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
+
+    updateTownInfo(
+      townAddress: PromiseOrValue<string>,
+      name: PromiseOrValue<string>,
+      uri: PromiseOrValue<string>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
   };
 
   populateTransaction: {
@@ -273,6 +315,13 @@ export interface ITownOwner extends BaseContract {
 
     setFactory(
       factory: PromiseOrValue<string>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    updateTownInfo(
+      townAddress: PromiseOrValue<string>,
+      name: PromiseOrValue<string>,
+      uri: PromiseOrValue<string>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
   };
