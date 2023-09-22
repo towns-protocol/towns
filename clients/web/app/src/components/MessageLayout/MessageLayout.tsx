@@ -182,11 +182,13 @@ export const MessageLayout = (props: Props) => {
                                     isTouch ? undefined : <ProfileHoverCard userId={senderId} />
                                 }
                             >
-                                <Link to={`profile/${senderId}`} tabIndex={-1}>
-                                    <Text truncate fontWeight="strong" color="default" as="span">
-                                        {name}&nbsp;
-                                    </Text>
-                                </Link>
+                                {profileLink ? (
+                                    <Link to={profileLink ?? ''} tabIndex={-1}>
+                                        <UserName name={name} />
+                                    </Link>
+                                ) : (
+                                    <UserName name={name} />
+                                )}
                             </Box>
                         )}
                         {props.channelLabel ? (
@@ -297,6 +299,12 @@ export const MessageLayout = (props: Props) => {
         </Stack>
     )
 }
+
+const UserName = ({ name }: { name: string }) => (
+    <Text truncate fontWeight="strong" color="default" as="span">
+        {name}&nbsp;
+    </Text>
+)
 
 export const RedactedMessageLayout = (props: {
     event: ZRoomMessageRedactedEvent

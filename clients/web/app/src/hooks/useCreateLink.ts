@@ -12,16 +12,19 @@ const profilePaths = [
         path: `/profile?/:profileId?`,
         replace: `/me`,
     },
-    { path: `/${PATHS.SPACES}/:spaceId/:customPath/profile?/:profileId?` },
+    // matches channel, profile
     {
-        path: `/${PATHS.SPACES}/:spaceId/${PATHS.CHANNELS}/:channelId/:channelPanel/:channelPanelParam`,
+        path: `/${PATHS.SPACES}/:spaceId/${PATHS.CHANNELS}/:channelId/:channelPanel?/:channelPanelParam?`,
         replace: `/${PATHS.SPACES}/:spaceId/${PATHS.CHANNELS}/:channelId/profile/:profileId`,
     },
-    { path: `/${PATHS.SPACES}/:spaceId/profile?/:profileId?` },
+    // wildcard matching for one level deep profiles such as threads/mentions
+    { path: `/${PATHS.SPACES}/:spaceId/:customPath/profile?/:profileId?` },
     {
         path: `/${PATHS.SPACES}/:spaceId/home/profile?/:profileId?`,
         replace: `/${PATHS.SPACES}/:spaceId/profile/:profileId`,
     },
+    // TODO: may not need this
+    { path: `/${PATHS.SPACES}/:spaceId/profile?/:profileId?` },
 ] satisfies Path[]
 
 const townInfoPaths: Path[] = [
