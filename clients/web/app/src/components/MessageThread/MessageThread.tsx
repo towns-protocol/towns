@@ -87,7 +87,7 @@ export const MessageThread = (props: {
 
     const { isChannelWritable } = useIsChannelWritable(spaceId, channelId, loggedInWalletAddress)
 
-    return parentMessage && involvedUsers.length > 1 ? (
+    return parentMessage ? (
         <MessageTimelineWrapper
             events={messagesWithParent}
             spaceId={spaceId}
