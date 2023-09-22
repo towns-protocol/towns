@@ -18,49 +18,83 @@ contract WalletLink is IWalletLink, WalletLinkBase, Facet {
   /**
    * @inheritdoc IWalletLink
    */
-  function linkForAll(address rootKey, bool value) external {
-    _linkForAll(rootKey, value);
+  function linkWalletToRootKey(
+    address wallet,
+    bytes calldata walletSignature,
+    address rootKey,
+    bytes calldata rootKeySignature,
+    uint256 nonce
+  ) external {
+    _linkWalletToRootKey(
+      wallet,
+      walletSignature,
+      rootKey,
+      rootKeySignature,
+      nonce
+    );
   }
 
-  /**
-   * @inheritdoc IWalletLink
-   */
-  function revokeAllLinks() external {
-    _revokeAllLinks();
+  function removeLinkViaRootKey(
+    address rootKey,
+    bytes calldata rootKeySignature,
+    address wallet,
+    uint256 removeNonce
+  ) external {
+    _removeLinkViaRootKey(rootKey, rootKeySignature, wallet, removeNonce);
   }
 
-  /**
-   * @inheritdoc IWalletLink
-   */
-  function revokeLink(address rootKey) external {
-    _revokeLink(rootKey, msg.sender);
+  function removeLinkViaWallet(
+    address wallet,
+    bytes calldata walletSignature,
+    address rootKey,
+    uint256 removeNonce
+  ) external {
+    _removeLinkViaWallet(wallet, walletSignature, rootKey, removeNonce);
   }
 
   /*
    * @inheritdoc IWalletLink
    */
-  function getLinksByRootKey(
+  function getWalletsByRootKey(
     address rootKey
-  ) external view returns (WalletLinkInfo[] memory info) {
-    return _getLinksByRootKey(rootKey);
+  ) external view returns (address[] memory wallets) {
+    return _getWalletsByRootKey(rootKey);
   }
 
   /**
    * @inheritdoc IWalletLink
    */
-  function getLinksForAll(
+  function getRootKeyForWallet(
     address wallet
-  ) external view returns (address[] memory delegates) {
-    return _getRootKeyFor(wallet);
+  ) external view returns (address rootKey) {
+    return _getRootKeyForWallet(wallet);
   }
 
   /**
    * @inheritdoc IWalletLink
    */
-  function checkLinkForAll(
+  function checkIfLinked(
     address rootKey,
     address wallet
   ) external view returns (bool) {
-    return _checkLinkForAll(rootKey, wallet);
+    return _checkIfLinked(rootKey, wallet);
+  }
+
+  function getLatestNonceForRootKey(
+    address rootKey
+  ) external view override returns (uint256) {
+    return _getLatestNonceForRootKey(rootKey);
+  }
+
+  function getLatestRemoveNonceForWallet(
+    address wallet
+  ) external view override returns (uint256) {
+    return _getLatestRemoveNonceForWallet(wallet);
+  }
+
+  function getLatestRemoveNonceForRootKey(
+    address rootKey
+  ) external view override returns (uint256) {
+    return _getLatestRemoveNonceForRootKey(rootKey);
   }
 }

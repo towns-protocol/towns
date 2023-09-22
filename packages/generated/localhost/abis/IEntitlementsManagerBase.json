@@ -71,20 +71,20 @@
   },
   "ast": {
     "absolutePath": "contracts/src/towns/facets/entitlements/IEntitlementsManager.sol",
-    "id": 32200,
+    "id": 32513,
     "exportedSymbols": {
       "IEntitlementsManager": [
-        32199
+        32512
       ],
       "IEntitlementsManagerBase": [
-        32138
+        32451
       ]
     },
     "nodeType": "SourceUnit",
     "src": "39:2059:153",
     "nodes": [
       {
-        "id": 32128,
+        "id": 32441,
         "nodeType": "PragmaDirective",
         "src": "39:24:153",
         "nodes": [],
@@ -96,12 +96,12 @@
         ]
       },
       {
-        "id": 32138,
+        "id": 32451,
         "nodeType": "ContractDefinition",
         "src": "107:154:153",
         "nodes": [
           {
-            "id": 32137,
+            "id": 32450,
             "nodeType": "StructDefinition",
             "src": "146:113:153",
             "nodes": [],
@@ -109,12 +109,12 @@
             "members": [
               {
                 "constant": false,
-                "id": 32130,
+                "id": 32443,
                 "mutability": "mutable",
                 "name": "name",
                 "nameLocation": "178:4:153",
                 "nodeType": "VariableDeclaration",
-                "scope": 32137,
+                "scope": 32450,
                 "src": "171:11:153",
                 "stateVariable": false,
                 "storageLocation": "default",
@@ -123,7 +123,7 @@
                   "typeString": "string"
                 },
                 "typeName": {
-                  "id": 32129,
+                  "id": 32442,
                   "name": "string",
                   "nodeType": "ElementaryTypeName",
                   "src": "171:6:153",
@@ -136,12 +136,12 @@
               },
               {
                 "constant": false,
-                "id": 32132,
+                "id": 32445,
                 "mutability": "mutable",
                 "name": "moduleAddress",
                 "nameLocation": "196:13:153",
                 "nodeType": "VariableDeclaration",
-                "scope": 32137,
+                "scope": 32450,
                 "src": "188:21:153",
                 "stateVariable": false,
                 "storageLocation": "default",
@@ -150,7 +150,7 @@
                   "typeString": "address"
                 },
                 "typeName": {
-                  "id": 32131,
+                  "id": 32444,
                   "name": "address",
                   "nodeType": "ElementaryTypeName",
                   "src": "188:7:153",
@@ -164,12 +164,12 @@
               },
               {
                 "constant": false,
-                "id": 32134,
+                "id": 32447,
                 "mutability": "mutable",
                 "name": "moduleType",
                 "nameLocation": "222:10:153",
                 "nodeType": "VariableDeclaration",
-                "scope": 32137,
+                "scope": 32450,
                 "src": "215:17:153",
                 "stateVariable": false,
                 "storageLocation": "default",
@@ -178,7 +178,7 @@
                   "typeString": "string"
                 },
                 "typeName": {
-                  "id": 32133,
+                  "id": 32446,
                   "name": "string",
                   "nodeType": "ElementaryTypeName",
                   "src": "215:6:153",
@@ -191,12 +191,12 @@
               },
               {
                 "constant": false,
-                "id": 32136,
+                "id": 32449,
                 "mutability": "mutable",
                 "name": "isImmutable",
                 "nameLocation": "243:11:153",
                 "nodeType": "VariableDeclaration",
-                "scope": 32137,
+                "scope": 32450,
                 "src": "238:16:153",
                 "stateVariable": false,
                 "storageLocation": "default",
@@ -205,7 +205,7 @@
                   "typeString": "bool"
                 },
                 "typeName": {
-                  "id": 32135,
+                  "id": 32448,
                   "name": "bool",
                   "nodeType": "ElementaryTypeName",
                   "src": "238:4:153",
@@ -219,7 +219,7 @@
             ],
             "name": "Entitlement",
             "nameLocation": "153:11:153",
-            "scope": 32138,
+            "scope": 32451,
             "visibility": "public"
           }
         ],
@@ -230,26 +230,26 @@
         "contractKind": "interface",
         "fullyImplemented": true,
         "linearizedBaseContracts": [
-          32138
+          32451
         ],
         "name": "IEntitlementsManagerBase",
         "nameLocation": "117:24:153",
-        "scope": 32200,
+        "scope": 32513,
         "usedErrors": [],
         "usedEvents": []
       },
       {
-        "id": 32199,
+        "id": 32512,
         "nodeType": "ContractDefinition",
         "src": "263:1834:153",
         "nodes": [
           {
-            "id": 32147,
+            "id": 32460,
             "nodeType": "FunctionDefinition",
             "src": "454:74:153",
             "nodes": [],
             "documentation": {
-              "id": 32141,
+              "id": 32454,
               "nodeType": "StructuredDocumentation",
               "src": "326:125:153",
               "text": "@notice Allows the town owner to add immutable entitlements to the town\n @param entitlements The entitlements to add"
@@ -261,17 +261,17 @@
             "name": "addImmutableEntitlements",
             "nameLocation": "463:24:153",
             "parameters": {
-              "id": 32145,
+              "id": 32458,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 32144,
+                  "id": 32457,
                   "mutability": "mutable",
                   "name": "entitlements",
                   "nameLocation": "505:12:153",
                   "nodeType": "VariableDeclaration",
-                  "scope": 32147,
+                  "scope": 32460,
                   "src": "488:29:153",
                   "stateVariable": false,
                   "storageLocation": "memory",
@@ -281,7 +281,7 @@
                   },
                   "typeName": {
                     "baseType": {
-                      "id": 32142,
+                      "id": 32455,
                       "name": "address",
                       "nodeType": "ElementaryTypeName",
                       "src": "488:7:153",
@@ -291,7 +291,7 @@
                         "typeString": "address"
                       }
                     },
-                    "id": 32143,
+                    "id": 32456,
                     "nodeType": "ArrayTypeName",
                     "src": "488:9:153",
                     "typeDescriptions": {
@@ -305,23 +305,23 @@
               "src": "487:31:153"
             },
             "returnParameters": {
-              "id": 32146,
+              "id": 32459,
               "nodeType": "ParameterList",
               "parameters": [],
               "src": "527:0:153"
             },
-            "scope": 32199,
+            "scope": 32512,
             "stateMutability": "nonpayable",
             "virtual": false,
             "visibility": "external"
           },
           {
-            "id": 32157,
+            "id": 32470,
             "nodeType": "FunctionDefinition",
             "src": "765:109:153",
             "nodes": [],
             "documentation": {
-              "id": 32148,
+              "id": 32461,
               "nodeType": "StructuredDocumentation",
               "src": "532:230:153",
               "text": "@notice Checks if a user is entitled to a permission in the town\n @param user The user to check\n @param permission The permission to check\n @return True if the user is entitled to the permission, false otherwise"
@@ -333,17 +333,17 @@
             "name": "isEntitledToTown",
             "nameLocation": "774:16:153",
             "parameters": {
-              "id": 32153,
+              "id": 32466,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 32150,
+                  "id": 32463,
                   "mutability": "mutable",
                   "name": "user",
                   "nameLocation": "804:4:153",
                   "nodeType": "VariableDeclaration",
-                  "scope": 32157,
+                  "scope": 32470,
                   "src": "796:12:153",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -352,7 +352,7 @@
                     "typeString": "address"
                   },
                   "typeName": {
-                    "id": 32149,
+                    "id": 32462,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
                     "src": "796:7:153",
@@ -366,12 +366,12 @@
                 },
                 {
                   "constant": false,
-                  "id": 32152,
+                  "id": 32465,
                   "mutability": "mutable",
                   "name": "permission",
                   "nameLocation": "830:10:153",
                   "nodeType": "VariableDeclaration",
-                  "scope": 32157,
+                  "scope": 32470,
                   "src": "814:26:153",
                   "stateVariable": false,
                   "storageLocation": "calldata",
@@ -380,7 +380,7 @@
                     "typeString": "string"
                   },
                   "typeName": {
-                    "id": 32151,
+                    "id": 32464,
                     "name": "string",
                     "nodeType": "ElementaryTypeName",
                     "src": "814:6:153",
@@ -395,17 +395,17 @@
               "src": "790:54:153"
             },
             "returnParameters": {
-              "id": 32156,
+              "id": 32469,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 32155,
+                  "id": 32468,
                   "mutability": "mutable",
                   "name": "",
                   "nameLocation": "-1:-1:-1",
                   "nodeType": "VariableDeclaration",
-                  "scope": 32157,
+                  "scope": 32470,
                   "src": "868:4:153",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -414,7 +414,7 @@
                     "typeString": "bool"
                   },
                   "typeName": {
-                    "id": 32154,
+                    "id": 32467,
                     "name": "bool",
                     "nodeType": "ElementaryTypeName",
                     "src": "868:4:153",
@@ -428,18 +428,18 @@
               ],
               "src": "867:6:153"
             },
-            "scope": 32199,
+            "scope": 32512,
             "stateMutability": "view",
             "virtual": false,
             "visibility": "external"
           },
           {
-            "id": 32169,
+            "id": 32482,
             "nodeType": "FunctionDefinition",
             "src": "1156:143:153",
             "nodes": [],
             "documentation": {
-              "id": 32158,
+              "id": 32471,
               "nodeType": "StructuredDocumentation",
               "src": "878:275:153",
               "text": "@notice Checks if a user is entitled to a permission in a channel\n @param channelId The channel to check\n @param user The user to check\n @param permission The permission to check\n @return True if the user is entitled to the permission, false otherwise"
@@ -451,17 +451,17 @@
             "name": "isEntitledToChannel",
             "nameLocation": "1165:19:153",
             "parameters": {
-              "id": 32165,
+              "id": 32478,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 32160,
+                  "id": 32473,
                   "mutability": "mutable",
                   "name": "channelId",
                   "nameLocation": "1206:9:153",
                   "nodeType": "VariableDeclaration",
-                  "scope": 32169,
+                  "scope": 32482,
                   "src": "1190:25:153",
                   "stateVariable": false,
                   "storageLocation": "calldata",
@@ -470,7 +470,7 @@
                     "typeString": "string"
                   },
                   "typeName": {
-                    "id": 32159,
+                    "id": 32472,
                     "name": "string",
                     "nodeType": "ElementaryTypeName",
                     "src": "1190:6:153",
@@ -483,12 +483,12 @@
                 },
                 {
                   "constant": false,
-                  "id": 32162,
+                  "id": 32475,
                   "mutability": "mutable",
                   "name": "user",
                   "nameLocation": "1229:4:153",
                   "nodeType": "VariableDeclaration",
-                  "scope": 32169,
+                  "scope": 32482,
                   "src": "1221:12:153",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -497,7 +497,7 @@
                     "typeString": "address"
                   },
                   "typeName": {
-                    "id": 32161,
+                    "id": 32474,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
                     "src": "1221:7:153",
@@ -511,12 +511,12 @@
                 },
                 {
                   "constant": false,
-                  "id": 32164,
+                  "id": 32477,
                   "mutability": "mutable",
                   "name": "permission",
                   "nameLocation": "1255:10:153",
                   "nodeType": "VariableDeclaration",
-                  "scope": 32169,
+                  "scope": 32482,
                   "src": "1239:26:153",
                   "stateVariable": false,
                   "storageLocation": "calldata",
@@ -525,7 +525,7 @@
                     "typeString": "string"
                   },
                   "typeName": {
-                    "id": 32163,
+                    "id": 32476,
                     "name": "string",
                     "nodeType": "ElementaryTypeName",
                     "src": "1239:6:153",
@@ -540,17 +540,17 @@
               "src": "1184:85:153"
             },
             "returnParameters": {
-              "id": 32168,
+              "id": 32481,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 32167,
+                  "id": 32480,
                   "mutability": "mutable",
                   "name": "",
                   "nameLocation": "-1:-1:-1",
                   "nodeType": "VariableDeclaration",
-                  "scope": 32169,
+                  "scope": 32482,
                   "src": "1293:4:153",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -559,7 +559,7 @@
                     "typeString": "bool"
                   },
                   "typeName": {
-                    "id": 32166,
+                    "id": 32479,
                     "name": "bool",
                     "nodeType": "ElementaryTypeName",
                     "src": "1293:4:153",
@@ -573,18 +573,18 @@
               ],
               "src": "1292:6:153"
             },
-            "scope": 32199,
+            "scope": 32512,
             "stateMutability": "view",
             "virtual": false,
             "visibility": "external"
           },
           {
-            "id": 32175,
+            "id": 32488,
             "nodeType": "FunctionDefinition",
             "src": "1397:60:153",
             "nodes": [],
             "documentation": {
-              "id": 32170,
+              "id": 32483,
               "nodeType": "StructuredDocumentation",
               "src": "1303:91:153",
               "text": "@notice Adds an entitlement to the town\n @param entitlement The entitlement to add"
@@ -596,17 +596,17 @@
             "name": "addEntitlementModule",
             "nameLocation": "1406:20:153",
             "parameters": {
-              "id": 32173,
+              "id": 32486,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 32172,
+                  "id": 32485,
                   "mutability": "mutable",
                   "name": "entitlement",
                   "nameLocation": "1435:11:153",
                   "nodeType": "VariableDeclaration",
-                  "scope": 32175,
+                  "scope": 32488,
                   "src": "1427:19:153",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -615,7 +615,7 @@
                     "typeString": "address"
                   },
                   "typeName": {
-                    "id": 32171,
+                    "id": 32484,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
                     "src": "1427:7:153",
@@ -631,23 +631,23 @@
               "src": "1426:21:153"
             },
             "returnParameters": {
-              "id": 32174,
+              "id": 32487,
               "nodeType": "ParameterList",
               "parameters": [],
               "src": "1456:0:153"
             },
-            "scope": 32199,
+            "scope": 32512,
             "stateMutability": "nonpayable",
             "virtual": false,
             "visibility": "external"
           },
           {
-            "id": 32181,
+            "id": 32494,
             "nodeType": "FunctionDefinition",
             "src": "1563:63:153",
             "nodes": [],
             "documentation": {
-              "id": 32176,
+              "id": 32489,
               "nodeType": "StructuredDocumentation",
               "src": "1461:99:153",
               "text": "@notice Removes an entitlement from the town\n @param entitlement The entitlement to remove"
@@ -659,17 +659,17 @@
             "name": "removeEntitlementModule",
             "nameLocation": "1572:23:153",
             "parameters": {
-              "id": 32179,
+              "id": 32492,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 32178,
+                  "id": 32491,
                   "mutability": "mutable",
                   "name": "entitlement",
                   "nameLocation": "1604:11:153",
                   "nodeType": "VariableDeclaration",
-                  "scope": 32181,
+                  "scope": 32494,
                   "src": "1596:19:153",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -678,7 +678,7 @@
                     "typeString": "address"
                   },
                   "typeName": {
-                    "id": 32177,
+                    "id": 32490,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
                     "src": "1596:7:153",
@@ -694,23 +694,23 @@
               "src": "1595:21:153"
             },
             "returnParameters": {
-              "id": 32180,
+              "id": 32493,
               "nodeType": "ParameterList",
               "parameters": [],
               "src": "1625:0:153"
             },
-            "scope": 32199,
+            "scope": 32512,
             "stateMutability": "nonpayable",
             "virtual": false,
             "visibility": "external"
           },
           {
-            "id": 32190,
+            "id": 32503,
             "nodeType": "FunctionDefinition",
             "src": "1784:109:153",
             "nodes": [],
             "documentation": {
-              "id": 32182,
+              "id": 32495,
               "nodeType": "StructuredDocumentation",
               "src": "1630:151:153",
               "text": "@notice Gets an entitlement from the town\n @param entitlement The entitlement to get\n @return entitlements The entitlement module address"
@@ -722,17 +722,17 @@
             "name": "getEntitlement",
             "nameLocation": "1793:14:153",
             "parameters": {
-              "id": 32185,
+              "id": 32498,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 32184,
+                  "id": 32497,
                   "mutability": "mutable",
                   "name": "entitlement",
                   "nameLocation": "1821:11:153",
                   "nodeType": "VariableDeclaration",
-                  "scope": 32190,
+                  "scope": 32503,
                   "src": "1813:19:153",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -741,7 +741,7 @@
                     "typeString": "address"
                   },
                   "typeName": {
-                    "id": 32183,
+                    "id": 32496,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
                     "src": "1813:7:153",
@@ -757,41 +757,41 @@
               "src": "1807:29:153"
             },
             "returnParameters": {
-              "id": 32189,
+              "id": 32502,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 32188,
+                  "id": 32501,
                   "mutability": "mutable",
                   "name": "entitlements",
                   "nameLocation": "1879:12:153",
                   "nodeType": "VariableDeclaration",
-                  "scope": 32190,
+                  "scope": 32503,
                   "src": "1860:31:153",
                   "stateVariable": false,
                   "storageLocation": "memory",
                   "typeDescriptions": {
-                    "typeIdentifier": "t_struct$_Entitlement_$32137_memory_ptr",
+                    "typeIdentifier": "t_struct$_Entitlement_$32450_memory_ptr",
                     "typeString": "struct IEntitlementsManagerBase.Entitlement"
                   },
                   "typeName": {
-                    "id": 32187,
+                    "id": 32500,
                     "nodeType": "UserDefinedTypeName",
                     "pathNode": {
-                      "id": 32186,
+                      "id": 32499,
                       "name": "Entitlement",
                       "nameLocations": [
                         "1860:11:153"
                       ],
                       "nodeType": "IdentifierPath",
-                      "referencedDeclaration": 32137,
+                      "referencedDeclaration": 32450,
                       "src": "1860:11:153"
                     },
-                    "referencedDeclaration": 32137,
+                    "referencedDeclaration": 32450,
                     "src": "1860:11:153",
                     "typeDescriptions": {
-                      "typeIdentifier": "t_struct$_Entitlement_$32137_storage_ptr",
+                      "typeIdentifier": "t_struct$_Entitlement_$32450_storage_ptr",
                       "typeString": "struct IEntitlementsManagerBase.Entitlement"
                     }
                   },
@@ -800,18 +800,18 @@
               ],
               "src": "1859:33:153"
             },
-            "scope": 32199,
+            "scope": 32512,
             "stateMutability": "view",
             "virtual": false,
             "visibility": "external"
           },
           {
-            "id": 32198,
+            "id": 32511,
             "nodeType": "FunctionDefinition",
             "src": "1998:97:153",
             "nodes": [],
             "documentation": {
-              "id": 32191,
+              "id": 32504,
               "nodeType": "StructuredDocumentation",
               "src": "1897:98:153",
               "text": "@notice Gets all entitlements from the town\n @return entitlements The entitlement modules"
@@ -823,56 +823,56 @@
             "name": "getEntitlements",
             "nameLocation": "2007:15:153",
             "parameters": {
-              "id": 32192,
+              "id": 32505,
               "nodeType": "ParameterList",
               "parameters": [],
               "src": "2022:2:153"
             },
             "returnParameters": {
-              "id": 32197,
+              "id": 32510,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 32196,
+                  "id": 32509,
                   "mutability": "mutable",
                   "name": "entitlements",
                   "nameLocation": "2081:12:153",
                   "nodeType": "VariableDeclaration",
-                  "scope": 32198,
+                  "scope": 32511,
                   "src": "2060:33:153",
                   "stateVariable": false,
                   "storageLocation": "memory",
                   "typeDescriptions": {
-                    "typeIdentifier": "t_array$_t_struct$_Entitlement_$32137_memory_ptr_$dyn_memory_ptr",
+                    "typeIdentifier": "t_array$_t_struct$_Entitlement_$32450_memory_ptr_$dyn_memory_ptr",
                     "typeString": "struct IEntitlementsManagerBase.Entitlement[]"
                   },
                   "typeName": {
                     "baseType": {
-                      "id": 32194,
+                      "id": 32507,
                       "nodeType": "UserDefinedTypeName",
                       "pathNode": {
-                        "id": 32193,
+                        "id": 32506,
                         "name": "Entitlement",
                         "nameLocations": [
                           "2060:11:153"
                         ],
                         "nodeType": "IdentifierPath",
-                        "referencedDeclaration": 32137,
+                        "referencedDeclaration": 32450,
                         "src": "2060:11:153"
                       },
-                      "referencedDeclaration": 32137,
+                      "referencedDeclaration": 32450,
                       "src": "2060:11:153",
                       "typeDescriptions": {
-                        "typeIdentifier": "t_struct$_Entitlement_$32137_storage_ptr",
+                        "typeIdentifier": "t_struct$_Entitlement_$32450_storage_ptr",
                         "typeString": "struct IEntitlementsManagerBase.Entitlement"
                       }
                     },
-                    "id": 32195,
+                    "id": 32508,
                     "nodeType": "ArrayTypeName",
                     "src": "2060:13:153",
                     "typeDescriptions": {
-                      "typeIdentifier": "t_array$_t_struct$_Entitlement_$32137_storage_$dyn_storage_ptr",
+                      "typeIdentifier": "t_array$_t_struct$_Entitlement_$32450_storage_$dyn_storage_ptr",
                       "typeString": "struct IEntitlementsManagerBase.Entitlement[]"
                     }
                   },
@@ -881,7 +881,7 @@
               ],
               "src": "2059:35:153"
             },
-            "scope": 32199,
+            "scope": 32512,
             "stateMutability": "view",
             "virtual": false,
             "visibility": "external"
@@ -891,16 +891,16 @@
         "baseContracts": [
           {
             "baseName": {
-              "id": 32139,
+              "id": 32452,
               "name": "IEntitlementsManagerBase",
               "nameLocations": [
                 "297:24:153"
               ],
               "nodeType": "IdentifierPath",
-              "referencedDeclaration": 32138,
+              "referencedDeclaration": 32451,
               "src": "297:24:153"
             },
-            "id": 32140,
+            "id": 32453,
             "nodeType": "InheritanceSpecifier",
             "src": "297:24:153"
           }
@@ -910,12 +910,12 @@
         "contractKind": "interface",
         "fullyImplemented": false,
         "linearizedBaseContracts": [
-          32199,
-          32138
+          32512,
+          32451
         ],
         "name": "IEntitlementsManager",
         "nameLocation": "273:20:153",
-        "scope": 32200,
+        "scope": 32513,
         "usedErrors": [],
         "usedEvents": []
       }
