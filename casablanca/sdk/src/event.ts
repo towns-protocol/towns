@@ -79,7 +79,6 @@ export function isUserPayload_ToDevicePlainMessage(
 
 function isClearEvent(content: any): content is IClearEvent {
     return (
-        'type' in content &&
         'content' in content &&
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         ('value' in content.content || 'msgtype' in content.content)
