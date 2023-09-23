@@ -36,7 +36,9 @@ func (s *Service) Info(ctx context.Context, req *connect_go.Request[protocol.Inf
 func (s *Service) info(ctx context.Context, log *slog.Logger, request *connect_go.Request[protocol.InfoRequest]) (*connect_go.Response[protocol.InfoResponse], error) {
 	// TODO: flag to disable debug requests
 	if request.Msg.Debug == "error" {
-		return nil, RpcError(protocol.Err_DEBUG_ERROR, "Error requested through Info request")
+		return nil, RiverError(protocol.Err_DEBUG_ERROR, "Error requested through Info request")
+	} else if request.Msg.Debug == "error_untyped" {
+		return nil, errors.New("Error requested through Info request")
 	} else if request.Msg.Debug == "panic" {
 		log.Error("panic requested through Info request")
 		panic("panic requested through Info request")

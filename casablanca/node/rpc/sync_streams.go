@@ -56,7 +56,7 @@ func (s *Service) SyncLocalStreams(ctx context.Context, syncPos []*SyncCookie, s
 	log := dlog.CtxLog(ctx)
 
 	if len(syncPos) <= 0 {
-		return RpcError(Err_BAD_ARGS, "SyncLocalStreams: SyncPos is empty")
+		return RiverError(Err_BAD_ARGS, "SyncLocalStreams: SyncPos is empty")
 	}
 
 	receiver := make(chan *StreamAndCookie, 128) // TODO: setting, also may be proportional to number of requested streams.
@@ -112,7 +112,7 @@ func (s *Service) SyncLocalStreams(ctx context.Context, syncPos []*SyncCookie, s
 					return nil // TODO: error code to initiate sync backoff?
 				}
 			} else {
-				return RpcError(Err_INTERNAL_ERROR, "SyncLocalStreams: channel unexpectedly closed")
+				return RiverError(Err_INTERNAL_ERROR, "SyncLocalStreams: channel unexpectedly closed")
 			}
 		case <-ctx.Done():
 			log.Debug("SyncLocalStreams: context done", "syncPos", syncPos)

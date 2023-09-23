@@ -8,7 +8,7 @@ import (
 
 func StreamInfoFromInceptionPayload(payload IsInceptionPayload, streamId string, userId string) (*common.StreamInfo, error) {
 	if payload == nil {
-		return nil, RpcErrorf(Err_STREAM_NO_INCEPTION_EVENT, "no inception payload for stream %s", streamId)
+		return nil, RiverErrorf(Err_STREAM_NO_INCEPTION_EVENT, "no inception payload for stream %s", streamId)
 	}
 
 	switch inception := payload.(type) {
@@ -34,6 +34,6 @@ func StreamInfoFromInceptionPayload(payload IsInceptionPayload, streamId string,
 			StreamType: common.UserSettings,
 		}, nil
 	default:
-		return nil, RpcErrorf(Err_STREAM_BAD_EVENT, "unimplemented stream type %T", inception)
+		return nil, RiverErrorf(Err_STREAM_BAD_EVENT, "unimplemented stream type %T", inception)
 	}
 }

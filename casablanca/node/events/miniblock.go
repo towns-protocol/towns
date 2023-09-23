@@ -11,17 +11,17 @@ import (
 
 func Make_GenisisMiniblockHeader(parsedEvents []*ParsedEvent) (*MiniblockHeader, error) {
 	if len(parsedEvents) <= 0 {
-		return nil, RpcError(Err_STREAM_EMPTY, "no events to make genisis miniblock header")
+		return nil, RiverError(Err_STREAM_EMPTY, "no events to make genisis miniblock header")
 	}
 	if parsedEvents[0].Event.GetInceptionPayload() == nil {
-		return nil, RpcError(Err_STREAM_NO_INCEPTION_EVENT, "first event must be inception event")
+		return nil, RiverError(Err_STREAM_NO_INCEPTION_EVENT, "first event must be inception event")
 	}
 	for _, event := range parsedEvents[1:] {
 		if event.Event.GetInceptionPayload() != nil {
-			return nil, RpcError(Err_BAD_EVENT, "inception event can only be first event")
+			return nil, RiverError(Err_BAD_EVENT, "inception event can only be first event")
 		}
 		if event.Event.GetMiniblockHeader() != nil {
-			return nil, RpcError(Err_BAD_EVENT, "block header can't be a block event")
+			return nil, RiverError(Err_BAD_EVENT, "block header can't be a block event")
 		}
 	}
 
@@ -125,7 +125,7 @@ func NewMiniblockInfoFromProto(pb *Miniblock) (*miniblockInfo, error) {
 
 func NewMiniblockInfoFromParsed(headerEvent *ParsedEvent, events []*ParsedEvent) (*miniblockInfo, error) {
 	if headerEvent.Event.GetMiniblockHeader() == nil {
-		return nil, RpcError(Err_BAD_EVENT, "header event must be a block header")
+		return nil, RiverError(Err_BAD_EVENT, "header event must be a block header")
 	}
 
 	envelopes := make([]*Envelope, len(events))
@@ -146,4 +146,3 @@ func NewMiniblockInfoFromParsed(headerEvent *ParsedEvent, events []*ParsedEvent)
 func (b *miniblockInfo) ToBytes() ([]byte, error) {
 	return proto.Marshal(b.proto)
 }
-
