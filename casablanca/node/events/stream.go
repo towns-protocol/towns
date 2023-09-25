@@ -1,6 +1,7 @@
 package events
 
 import (
+	"casablanca/node/dlog"
 	"casablanca/node/storage"
 	"context"
 	"sync"
@@ -10,7 +11,6 @@ import (
 	. "casablanca/node/protocol"
 
 	mapset "github.com/deckarep/golang-set/v2"
-	"github.com/gologme/log"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -146,6 +146,8 @@ func (s *Stream) makeMiniblock(ctx context.Context) error {
 func (s *Stream) maybeMakeMiniblock(ctx context.Context) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+
+	log := dlog.CtxLog(ctx)
 
 	// Do nothing if not loaded since it's possible for tick to arrive after stream is unloaded.
 	if s.view == nil {
