@@ -130,7 +130,7 @@ jobs:
               run: yarn test:unit
 
             - name: E2E Tests
-              if: github.event_name != 'pull_request'
+              if: github.event_name != 'pull_request' && github.event_name != 'schedule'
               run: yarn test:dendrite:e2e
 
             # If CI failed, we send a slack notification
