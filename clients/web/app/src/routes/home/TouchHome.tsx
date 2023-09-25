@@ -44,6 +44,7 @@ import { PersistAndFadeWelcomeLogo } from 'routes/layouts/WelcomeLayout'
 import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
 import { atoms } from 'ui/styles/atoms.css'
 import { vars } from 'ui/styles/vars.css'
+import { ImageVariants, useImageSource } from '@components/UploadImage/useImageSource'
 import { shortAddress } from 'ui/utils/utils'
 import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { ChannelItem } from '../AllChannelsList/AllChannelsList'
@@ -124,6 +125,7 @@ export const TouchHome = () => {
     const onDisplayMainPanel = useCallback(() => {
         setActiveOverlay('main-panel')
     }, [])
+    const { imageSrc } = useImageSource(space?.id.slug ?? '', ImageVariants.thumbnail300)
 
     const channels = useSpaceChannels()
     const preloadIds = useMemo(() => channels.map((c) => c.id), [channels])
@@ -139,8 +141,10 @@ export const TouchHome = () => {
                     <CheckValidSpaceOrInvite>
                         <AnimatePresence>
                             <BlurredBackground
-                                spaceSlug={space?.id.slug ?? ''}
-                                hidden={isSearching}
+                                height="x20"
+                                imageSrc={imageSrc}
+                                initial={{ filter: `blur(50px)` }}
+                                animate={{ filter: 'blur(5px)', opacity: isSearching ? 0 : 1 }}
                             />
                             <MotionStack
                                 absoluteFill

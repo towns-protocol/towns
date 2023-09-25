@@ -1,11 +1,18 @@
 import React from 'react'
-import { MotionBox } from '@ui'
-import { ImageVariants, useImageSource } from '@components/UploadImage/useImageSource'
+import { BoxProps, MotionBox } from '@ui'
+import { MotionBoxProps } from 'ui/components/Motion/MotionComponents'
 import * as styles from './BlurredBackground.css'
 
-export const BlurredBackground = (props: { spaceSlug: string; hidden: boolean }) => {
-    const { hidden, spaceSlug } = props
-    const { imageSrc } = useImageSource(spaceSlug, ImageVariants.thumbnail300)
+type Props = {
+    imageSrc: string
+    blur?: number
+    height?: BoxProps['height']
+    initial?: MotionBoxProps['initial']
+    animate?: MotionBoxProps['animate']
+}
+
+export const BlurredBackground = (props: Props) => {
+    const { imageSrc, height, blur, initial, animate } = props
     return (
         <MotionBox
             layout
@@ -13,14 +20,17 @@ export const BlurredBackground = (props: { spaceSlug: string; hidden: boolean })
             top="none"
             left="none"
             right="none"
-            height="x20"
+            height={height ?? '100%'}
             pointerEvents="none"
-            initial={{ filter: 'blur(50px)' }}
-            animate={{ filter: 'blur(5px)', opacity: hidden ? 0 : 1 }}
+            initial={initial}
+            animate={animate}
             key={imageSrc}
             transition={{ duration: 0.7 }}
             className={styles.blurredBackgroundStyle}
-            style={{ backgroundImage: `url(${imageSrc})` }}
+            style={{
+                backgroundImage: `url(${imageSrc})`,
+                filter: blur ? `blur(${blur}px)` : 'initial',
+            }}
         />
     )
 }
