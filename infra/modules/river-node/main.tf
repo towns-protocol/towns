@@ -104,7 +104,23 @@ resource "aws_ecs_task_definition" "river-fargate" {
       {
         name = "STORAGE_TYPE",
         value = "postgres"
-      }
+      },
+      {
+        name = "SKIP_GENKEY",
+        value = "true"
+      },
+      {
+        name = "LOG__FORMAT",
+        value = "json"
+      },
+      {
+        name = "LOG__LEVEL",
+        value = "info"
+      },
+      {
+        name = "LOG__NO_COLOR",
+        value = "true"
+      },
     ]
 
     logConfiguration = {
