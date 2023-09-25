@@ -1,6 +1,6 @@
-import { useDeferredValue, useEffect, useMemo } from 'react'
-import { useTimelineStore } from 'use-zion-client'
 import debug from 'debug'
+import { useDeferredValue, useMemo } from 'react'
+import { useTimelineStore } from 'use-zion-client'
 import { isRoomMessage } from '@components/MessageTimeline/util/getEventsByDate'
 import { useSpaceChannels } from 'hooks/useSpaceChannels'
 import { useThrottledValue } from 'hooks/useThrottledValue'
@@ -25,6 +25,7 @@ export const useMessageIndex = () => {
                     .filter((e) => e.content?.msgType !== 'm.bad.encrypted')
                     .map((e) => ({
                         key: e.eventId,
+                        type: 'message' as const,
                         channelId: channel.id.networkId,
                         body: e.content?.body ?? '',
                         source: e,
@@ -32,10 +33,6 @@ export const useMessageIndex = () => {
             })
             .filter(notUndefined)
     }, [channels, timelines])
-
-    useEffect(() => {
-        log(`indexing ${messages.length} messages`)
-    }, [messages])
 
     return { messages }
 }

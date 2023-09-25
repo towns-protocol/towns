@@ -7,7 +7,7 @@ import {
     useSpaceId,
     useSpaceMembers,
 } from 'use-zion-client'
-import { Message } from '@components/MessageLayout'
+import { MessageLayout } from '@components/MessageLayout'
 import { RichTextPreview } from '@components/RichText/RichTextEditor'
 import { Box, BoxProps } from '@ui'
 import { useDevice } from 'hooks/useDevice'
@@ -29,7 +29,7 @@ const createMessageLink = (
     return `${channelSegment}${threadSegment}${eventSegment}`
 }
 
-export const MessageResultItem = (
+export const IsolatedMessageItem = (
     props: {
         result: MessageResult
         userId?: string
@@ -78,7 +78,7 @@ export const MessageResultItem = (
             elevate={!isTouch}
             rounded="sm"
         >
-            <Message
+            <MessageLayout
                 relativeDate
                 background="inherit"
                 tabIndex={-1}
@@ -107,7 +107,7 @@ export const MessageResultItem = (
                             : undefined
                     }
                 />
-            </Message>
+            </MessageLayout>
         </Box>
     )
 

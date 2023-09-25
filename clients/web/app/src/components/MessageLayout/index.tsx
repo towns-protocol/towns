@@ -1,1 +1,1 @@
-export { MessageLayout as Message } from './MessageLayout'
+export { MessageLayout } from './MessageLayout'

@@ -14,7 +14,7 @@ export const useMiniSearch = (messages: EventDocument[], _search: string) => {
             new MiniSearch<EventDocument>({
                 idField: 'key',
                 fields: ['body'],
-                storeFields: ['key', 'channelId', 'body', 'source'],
+                storeFields: ['key', 'channelId', 'body'],
             }),
     )
     const search = useDebounce(_search, 250)
@@ -28,7 +28,6 @@ export const useMiniSearch = (messages: EventDocument[], _search: string) => {
             .filter((m) => !miniSearch.has(m.id))
 
         miniSearch.addAll(filteredMessages)
-        log(`added ${filteredMessages.length} messages to miniSearch ${miniSearch.documentCount}`)
     }, [messages, miniSearch])
 
     const results = useMemo(() => {

@@ -1,7 +1,7 @@
 import React from 'react'
 import { useMyProfile, useSpaceMentions } from 'use-zion-client'
 import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinner'
-import { MessageResultItem } from '@components/MessageResultItem/MessageResultItem'
+import { IsolatedMessageItem } from '@components/ResultItem/IsolatedMessageItem'
 import { NoJoinedChannelsFallback } from '@components/NoJoinedChannelsFallback'
 import { TouchNavBar } from '@components/TouchNavBar/TouchNavBar'
 import { TouchScrollToTopScrollId } from '@components/TouchTabBar/TouchScrollToTopScrollId'
@@ -55,7 +55,7 @@ export const SpaceMentions = () => {
                             {mentions.map((m) => {
                                 return (
                                     m.type === 'mention' && (
-                                        <MessageResultItem
+                                        <IsolatedMessageItem
                                             result={m}
                                             key={m.event.eventId}
                                             userId={userId}

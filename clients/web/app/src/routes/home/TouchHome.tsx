@@ -14,10 +14,10 @@ import {
 } from 'use-zion-client'
 import { SomethingWentWrong } from '@components/Errors/SomethingWentWrong'
 import { NavItem } from '@components/NavItem/_NavItem'
-import { ResultItem } from '@components/SearchModal/SearchModal'
+import { MessageResultItem } from '@components/SearchModal/SearchModal'
 import { useMessageIndex } from '@components/SearchModal/hooks/useMessageIndex'
 import { useMiniSearch } from '@components/SearchModal/hooks/useMiniSearch'
-import { usePrepopulateChannels } from '@components/SearchModal/hooks/usePrepopulateChannels'
+import { usePrepopulateChannels } from 'hooks/usePrepopulateChannels'
 import { TouchHomeOverlay } from '@components/TouchHomeOverlay/TouchHomeOverlay'
 import { BlurredBackground } from '@components/TouchLayoutHeader/BlurredBackground'
 import { TouchLayoutHeader } from '@components/TouchLayoutHeader/TouchLayoutHeader'
@@ -100,6 +100,7 @@ export const TouchHome = () => {
     }
 
     const { channelsWithMentionCountsAndUnread } = useChannelsWithMentionCountsAndUnread()
+
     const filteredChannels = useMemo(() => {
         return fuzzysort
             .go(searchString, channelsWithMentionCountsAndUnread, { key: 'name', all: true })
@@ -410,7 +411,7 @@ const MessageList = (props: { messages: SearchResult[] }) => {
     )
     return props.messages.map((m) => (
         <Box key={m.key} paddingX="none" paddingY="xs">
-            <ResultItem
+            <MessageResultItem
                 channelId={m.channelId}
                 event={m.source}
                 highligtTerms={m.terms}
