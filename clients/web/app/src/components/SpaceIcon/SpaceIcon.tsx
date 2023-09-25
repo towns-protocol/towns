@@ -1,6 +1,6 @@
 import React from 'react'
 import { AnimatePresence } from 'framer-motion'
-import { Box, BoxProps, MotionBox, Text } from '@ui'
+import { Box, BoxProps, Heading, MotionBox } from '@ui'
 import { InteractiveTownsToken } from '@components/TownsToken/InteractiveTownsToken'
 import { TownsTokenProps } from '@components/TownsToken/TownsToken'
 import { ImageVariant, ImageVariants, useImageSource } from '@components/UploadImage/useImageSource'
@@ -94,11 +94,11 @@ const SpaceIconInitials = (props: {
     letterFontSize?: LetterStylesVariantProps
     children?: React.ReactNode
 }) => (
-    <Text
+    <Heading
         strong
         textTransform="uppercase"
         className={LetterStyles(props.letterFontSize ? { fontSize: props.letterFontSize } : {})}
     >
         {props.children}
-    </Text>
+    </Heading>
 )
