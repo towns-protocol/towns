@@ -25,6 +25,10 @@ export const Shortcuts = {
             keys: 'Escape',
             description: 'Dismiss dialogs',
         },
+        ClearAllUnreads: {
+            keys: 'Shift+Escape',
+            description: 'Mark all towns as read',
+        },
     },
     Navigation: {
         DisplayTownInfo: {

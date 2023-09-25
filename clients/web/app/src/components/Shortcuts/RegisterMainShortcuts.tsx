@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router'
-import { useSpaceContext, useZionContext } from 'use-zion-client'
+import { useSpaceContext, useZionClient, useZionContext } from 'use-zion-client'
 import { useShortcut } from 'hooks/useShortcut'
 import { PATHS } from 'routes'
 import { useCreateLink } from 'hooks/useCreateLink'
@@ -38,6 +38,12 @@ export const RegisterMainShortcuts = () => {
     )
     useShortcut('CreateNewTown', () => {
         navigate(`/${PATHS.SPACES}/new`)
+    })
+
+    const { resetFullyReadMarkers } = useZionClient()
+
+    useShortcut('ClearAllUnreads', () => {
+        resetFullyReadMarkers()
     })
 
     useShortcut('DisplayTownInfo', () => {
