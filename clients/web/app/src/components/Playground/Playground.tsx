@@ -1,5 +1,4 @@
-import axios, { AxiosResponse } from 'axios'
-import React, { useEffect, useState } from 'react'
+import React from 'react'
 import { toast } from 'react-hot-toast/headless'
 
 import { AddressPill } from '@components/AddressPill'
@@ -29,7 +28,7 @@ import {
 import { Accordion, AccordionGroup } from 'ui/components/Accordion/Accordion'
 import { FormRender } from 'ui/components/Form/Form'
 import { vars } from 'ui/styles/vars.css'
-import { env } from 'utils'
+import { BottomBar } from '@components/Web3/MembershipNFT/BottomBar'
 import { VListExample } from '../../ui/components/VList/example/VListExample'
 import { Container } from './components/PlaygroundContainer'
 import { PageColors } from './pages/PageColors'
@@ -40,12 +39,6 @@ const A3 = Array(3)
     .map((_, i) => i)
 
 export const Playground = () => {
-    const [mockData, setMockData] = useState<AxiosResponse | null>(null)
-    useEffect(() => {
-        if (env.IS_DEV) {
-            axios.get('/mock-endpoint').then(setMockData)
-        }
-    }, [])
     return (
         <Stack position="relative">
             <PageText />
@@ -116,9 +109,6 @@ export const Playground = () => {
                         },
                     ]}
                 />
-            </Container>
-            <Container label="Mock Data">
-                <p>{mockData?.data.name}</p>
             </Container>
 
             <PageColors />
@@ -355,6 +345,12 @@ export const Playground = () => {
             <Container darkOnly label="VList" padding="none">
                 <Stack>
                     <VListExample />
+                </Stack>
+            </Container>
+
+            <Container darkOnly label="Bottom Bar">
+                <Stack paddingY="lg">
+                    <BottomBar text="Join" onClick={() => void 0} />
                 </Stack>
             </Container>
         </Stack>
