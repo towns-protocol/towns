@@ -14,13 +14,13 @@ interface IWalletLinkBase {
   }
 
   /// @notice Emitted when a user links their wallet to a rootKey
-  event LinkWalletToRootKey(address wallet, address rootKey);
+  event LinkForAll(address wallet, address rootKey, bool value);
 
-  /// @notice Emitted when a user removes a wallet from a rootKey, via the rootkey
-  event RemoveLinkViaRootKey(address wallet, address rootKey);
+  /// @notice Emitted when a user revokes all links for a given wallet
+  event RevokeAllLinks(address wallet);
 
-  /// @notice Emitted when a user removes a wallet from a rootKey, via the wallet
-  event RemoveLinkViaWallet(address wallet, address rootKey);
+  /// @notice Emitted when a user revokes a single link for a given rootKey
+  event RevokeLink(address wallet, address rootKey);
 
   // =============================================================
   //                      Errors
@@ -30,102 +30,52 @@ interface IWalletLinkBase {
 
 interface IWalletLink is IWalletLinkBase {
   /**
-   * @param wallet an ethereum wallet address
-   * @param walletSignature A signature signing the hash of the rootKey's public key with the wallet's private key
-   * @param rootKey the public key of the users rootkey used as an ethereum address
-   * @param rootKeySignature a signature signing the has of the wallet address with the rootKey's private key
-   * @param nonce a nonce used to prevent replay attacks, nonce must always be higher than previous nonce
+   *
+   * @param rootKey The key to link
+   * @param value Whether to enable or disable linking for this address
    */
-  function linkWalletToRootKey(
-    address wallet,
-    bytes calldata walletSignature,
-    address rootKey,
-    bytes calldata rootKeySignature,
-    uint256 nonce
-  ) external;
+  function linkForAll(address rootKey, bool value) external;
 
   /**
-   * @notice Called via the rootkey signing a message to a remove a wallet from itself
-   * @param rootKey the public key of the users rootkey used as an ethereum address
-   * @param rootKeySignature A signature signing the hash of the wallet's public key with the root keys's private key
-   * @param wallet the ethereum wallet to remove from the root key
-   * @param removeNonce a nonce used to prevent replay attacks, nonce must always be higher than previous nonce
+   * @notice Revoke all root keys for a given wallet
    */
-  function removeLinkViaRootKey(
-    address rootKey,
-    bytes calldata rootKeySignature,
-    address wallet,
-    uint256 removeNonce
-  ) external;
+  function revokeAllLinks() external;
 
   /**
-   * @notice Called via a wallet to remove itself from a root key
-   * @param wallet the ethereum wallet to remove from the root key
-   * @param walletSignature A signature signing the hash of the rootKey's public key with the wallet's private key
-   * @param rootKey the public key of the users rootkey used as an ethereum address
-   * @param removeNonce a nonce used to prevent replay attacks, nonce must always be higher than previous nonce
+   * @notice Revoke a specific rootKey for all their permissions
+   * @param rootKey The key to revoke
    */
-  function removeLinkViaWallet(
-    address wallet,
-    bytes calldata walletSignature,
-    address rootKey,
-    uint256 removeNonce
-  ) external;
+  function revokeLink(address rootKey) external;
 
   // =============================================================
   //                      External - Read
   // =============================================================
 
   /**
-   * @notice Returns all wallets linked to a root key
-   * @param rootKey the public key of the users rootkey to find associated wallets for
-   * @return wallets an array of ethereum wallets linked to this root key
+   * @notice Get all links for a given rootKey
+   * @param rootKey The rootKey to query
+   * @return info An array of linking info
    */
-  function getWalletsByRootKey(
+  function getLinksByRootKey(
     address rootKey
-  ) external view returns (address[] memory wallets);
+  ) external view returns (WalletLinkInfo[] memory info);
 
   /**
-   * @notice Returns the root key for a given wallet
-   * @param wallet the ethereum wallet to find associated root key for
-   * @return rootKey the rootkey that this wallet is linked to
+   * @notice Returns an array of root keys for a given wallet
+   * @param wallet The wallet who issued the link
+   * @return addresses Array root keys for a given wallet
    */
-  function getRootKeyForWallet(
+  function getLinksForAll(
     address wallet
-  ) external view returns (address rootKey);
+  ) external view returns (address[] memory);
 
   /**
-   * @notice checks if a root key and wallet are linked
-   * @param rootKey the public key of the users rootkey to check
-   * @param wallet the ethereum wallet to check
-   * @return areLinked boolean if they are linked together
+   * @notice Returns true if the root key is linked to a wallet
+   * @param rootKey The key to act on your behalf
+   * @param wallet The wallet who issued the linking
    */
-  function checkIfLinked(
+  function checkLinkForAll(
     address rootKey,
     address wallet
   ) external view returns (bool);
-
-  /**
-   * @notice gets the latest nonce for a rootkey to use a higher one for next link action
-   * @param rootKey the public key of the users rootkey to check
-   */
-  function getLatestNonceForRootKey(
-    address rootKey
-  ) external view returns (uint256);
-
-  /**
-   * @notice gets the latest Remove nonce for a wallet to use a higher one for next remove action
-   * @param wallet the ethereum wallet to get the nonce for
-   */
-  function getLatestRemoveNonceForWallet(
-    address wallet
-  ) external view returns (uint256);
-
-  /**
-   * @notice gets the latest Remove nonce for a rootkey to use a higher one for next remove action
-   * @param rootKey the public key of the users rootkey to get the nonce for
-   */
-  function getLatestRemoveNonceForRootKey(
-    address rootKey
-  ) external view returns (uint256);
 }

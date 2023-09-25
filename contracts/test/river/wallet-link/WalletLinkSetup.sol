@@ -68,18 +68,14 @@ contract WalletLinkHelper is FacetHelper {
   }
 
   function selectors() public pure override returns (bytes4[] memory) {
-    bytes4[] memory selectors_ = new bytes4[](9);
+    bytes4[] memory selectors_ = new bytes4[](6);
     uint256 idx;
-    selectors_[idx++] = IWalletLink.linkWalletToRootKey.selector;
-    selectors_[idx++] = IWalletLink.removeLinkViaRootKey.selector;
-    selectors_[idx++] = IWalletLink.removeLinkViaWallet.selector;
-
-    selectors_[idx++] = IWalletLink.getWalletsByRootKey.selector;
-    selectors_[idx++] = IWalletLink.getRootKeyForWallet.selector;
-    selectors_[idx++] = IWalletLink.checkIfLinked.selector;
-    selectors_[idx++] = IWalletLink.getLatestNonceForRootKey.selector;
-    selectors_[idx++] = IWalletLink.getLatestRemoveNonceForRootKey.selector;
-    selectors_[idx++] = IWalletLink.getLatestRemoveNonceForWallet.selector;
+    selectors_[idx++] = IWalletLink.linkForAll.selector;
+    selectors_[idx++] = IWalletLink.revokeAllLinks.selector;
+    selectors_[idx++] = IWalletLink.revokeLink.selector;
+    selectors_[idx++] = IWalletLink.getLinksByRootKey.selector;
+    selectors_[idx++] = IWalletLink.getLinksForAll.selector;
+    selectors_[idx++] = IWalletLink.checkLinkForAll.selector;
     return selectors_;
   }
 

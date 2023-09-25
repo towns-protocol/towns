@@ -14,16 +14,19 @@ library WalletLinkStorage {
     keccak256("river.wallet-link.WalletLinkStorage");
 
   struct Layout {
-    // mapping RootKeys to Ethereum Wallets is a 1 to many relationship, a root key can have many wallets
-    mapping(address => address[]) rootKeysToWallets;
-    // mapping Ethereum Wallets to RootKeys is a 1 to 1 relationship, a wallet can only be linked to 1 root key
-    mapping(address => address) walletsToRootKeys;
-    //mapping that stores all nonces used by a given root key
-    mapping(address => uint256) rootKeysToHighestNonce;
-    //mapping that stores all nonces used by a wallet for removing from a root key
-    mapping(address => uint256) walletsToHighestRemoveNonce;
-    //mapping that stores all nonces used by a rootkey for removing a wallet from it
-    mapping(address => uint256) rootKeysToHighestRemoveNonce;
+    /// @notice The global delegation mapping
+    /// @dev wallet -> wallet version -> rootKeyHash
+    mapping(address => mapping(uint256 => EnumerableSet.Bytes32Set)) links;
+    /// @notice A mapping of wallets to versions (for cheap revocation)
+    mapping(address => uint256) walletVersion;
+    /// @notice A mapping of wallets to delegates to versions (for cheap revocation)
+    mapping(address => mapping(address => uint256)) rootKeyVersion;
+    /// @notice A secondary mapping to return onchain enumerability of links that a given address can perform
+    /// @dev wallet -> rootKeyHashes
+    mapping(address => EnumerableSet.Bytes32Set) rootKeyHashes;
+    /// @notice A secondary mapping used to return delegation information about a delegation
+    /// @dev rootKeyHash -> delegationInfo
+    mapping(bytes32 => IWalletLinkBase.WalletLinkInfo) rootKeyInfo;
   }
 
   function layout() internal pure returns (Layout storage s) {
