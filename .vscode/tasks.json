@@ -72,8 +72,7 @@
           "PushNotificationsWorker",
           "Dendrite (from source)",
           "Casablanca",
-          "Casablanca-No-Entitlements",
-          "Start Load Testing Redis",
+          "Casablanca-No-Entitlements"
         ],
         "group": {
           "kind": "build",
@@ -185,7 +184,7 @@
       {
         "label": "Start Load Testing Redis",
         "type": "shell",
-        "command": "./scripts/start_load_testing_redis.sh",
+        "command": "./scripts/start-load-testing-redis.sh",
         "isBackground": true,
         "problemMatcher": [],
         "presentation": {
