@@ -256,7 +256,7 @@ export const CreateChannelForm = (props: Props) => {
                                 </Link>
                             </Box>
 
-                            {env.IS_DEV ? (
+                            {env.DEV ? (
                                 <Box color="negative" maxWidth="400">
                                     <Text size="sm">
                                         DEV message: If you are not seeing token display data here,

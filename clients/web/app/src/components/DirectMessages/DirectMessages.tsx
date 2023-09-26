@@ -38,7 +38,7 @@ export const DirectMessages = (props: Props) => {
                 </Box>
             )}
 
-            {env.IS_DEV ? (
+            {env.DEV ? (
                 <DummyThreads />
             ) : (
                 <Stack centerContent grow scroll>

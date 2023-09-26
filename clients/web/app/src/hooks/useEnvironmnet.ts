@@ -97,7 +97,7 @@ const PRIMARY_PROTOCOL = env.VITE_PRIMARY_PROTOCOL as SpaceProtocol
 export function useEnvironment() {
     let _environment: TownsEnvironment | undefined
 
-    if (env.IS_DEV) {
+    if (env.DEV) {
         _environment = CF_TUNNEL_PREFIX
             ? TownsEnvironment.Tunnel
             : (localStorage.getItem(TOWNS_DEV_ENV) as TownsEnvironment)
@@ -130,7 +130,7 @@ export function useEnvironment() {
 
     return useMemo(
         () => ({
-            environment, // only defined if IS_DEV
+            environment, // only defined if DEV
             chainId,
             chainName,
             matrixUrl,

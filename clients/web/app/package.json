@@ -4,7 +4,7 @@
     "private": true,
     "type": "module",
     "scripts": {
-        "build": "tsc && NODE_OPTIONS=--max_old_space_size=32768 vite build",
+        "build": "tsc && NODE_OPTIONS=--max_old_space_size=32768 vite build --mode ${MODE:-production}",
         "build-preview": "yarn build && yarn preview --port 3002",
         "coverage": "vitest run --coverage",
         "dev": "vite",

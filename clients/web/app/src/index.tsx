@@ -9,14 +9,12 @@ import { Main } from 'Main'
 import { env } from 'utils'
 
 console.log(
-    `%c\n\nTOWNS\n%c${APP_VERSION}[${APP_COMMIT_HASH}]\n${env.IS_DEV ? 'DEV' : ''}${'\n'.repeat(
-        3,
-    )}`,
+    `%c\n\nTOWNS\n%c${APP_VERSION}[${APP_COMMIT_HASH}]\n${env.DEV ? 'DEV' : ''}${'\n'.repeat(3)}`,
     `font-size:32px;font-weight:bold;font-family:sans-serif;`,
     ``,
 )
 
-if (env.IS_DEV) {
+if (env.DEV) {
     // Register runtime-error overlay
     // From: https://github.com/vitejs/vite/issues/2076
     const showErrorOverlay = (event: ErrorEvent) => {
@@ -57,20 +55,16 @@ if (env.IS_DEV) {
     })
 }
 
-if (
-    env.VITE_DD_CLIENT_TOKEN &&
-    env.VITE_PRIMARY_PROTOCOL === 'casablanca' &&
-    !!env.VITE_DD_SERVICE_NAME
-) {
+if (env.VITE_DD_CLIENT_TOKEN && env.VITE_PRIMARY_PROTOCOL === 'casablanca') {
     datadogLogs.init({
         clientToken: env.VITE_DD_CLIENT_TOKEN,
-        service: env.VITE_DD_SERVICE_NAME,
+        service: 'towns',
         forwardConsoleLogs: 'all',
         forwardErrorsToLogs: true,
         sessionSampleRate: 100,
-        // TODO: get the env name: https://linear.app/hnt-labs/issue/HNT-2357/we-should-have-a-canonical-accessor-for-environment-name-instead-of
+        env: env.MODE,
     })
-    console.info("datadogLogs initialized with service name: '" + env.VITE_DD_SERVICE_NAME + "'")
+    console.info(`datadogLogs initialized for env: ${env.MODE}`)
 } else {
     console.info('datadogLogs not initialized')
 }

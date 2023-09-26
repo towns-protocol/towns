@@ -27,7 +27,7 @@ function startDBWithTerminationListener() {
 }
 
 export function handleNotifications(worker: ServiceWorkerGlobalScope) {
-    const prod = !env.IS_DEV
+    const prod = !env.DEV
     if (prod) {
         console.log(`sw: handleNotifications() was called.`)
     }

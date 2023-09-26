@@ -13,8 +13,8 @@ export const hasGoerliParam = () => {
     return hasQueryParam('goerli')
 }
 
-export const fetchVitalikTokens = env.IS_DEV && hasVitalkTokensParam()
-export const fetchGoerli = env.IS_DEV && hasGoerliParam()
+export const fetchVitalikTokens = env.DEV && hasVitalkTokensParam()
+export const fetchGoerli = env.DEV && hasGoerliParam()
 export const vitalikAddress = '0xd8da6bf26964af9d7eed9e03e53415d37aa96045'
 const GOERLI = 'eth-goerli'
 const MAINNET = 'eth-mainnet'

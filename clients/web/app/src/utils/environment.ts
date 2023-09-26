@@ -5,27 +5,26 @@ const baseUrlSchema = z.union([z.string().url(), z.literal('/')])
 // VITE expresses booleans in many different ways.
 // first we capture all possible ways,
 // we then coerce them to a boolean via the following function
-const boolish = z.union([
-    z.literal('1'),
-    z.literal('0'),
-    z.literal(''),
-    z.literal(0),
-    z.literal(1),
-    z.literal('true'),
-    z.literal('false'),
-    z.boolean(),
-])
-
-const coerceBoolish = (value: z.TypeOf<typeof boolish>) => {
-    return value === '1' || value === true || value === 'true' || value === 1
-}
+const boolish = z
+    .union([
+        z.literal('1'),
+        z.literal('0'),
+        z.literal(''),
+        z.literal(0),
+        z.literal(1),
+        z.literal('true'),
+        z.literal('false'),
+        z.boolean(),
+    ])
+    .transform((value) => {
+        return value === '1' || value === true || value === 'true' || value === 1
+    })
 
 const envSchema = z.object({
     MODE: z.string(),
     DEV: boolish,
-    PROD: boolish,
     BASE_URL: baseUrlSchema,
-    DESTROY_PROD_SERVICE_WORKER: boolish.transform(coerceBoolish).default(false),
+    DESTROY_PROD_SERVICE_WORKER: boolish.default(false),
     VITE_CF_TUNNEL_PREFIX: z.string().optional(),
     VITE_TYPEFORM_ALPHA_URL: z.string().optional(),
     VITE_IGNORE_IS_DEV_CHECKS: z.string().optional(),
@@ -45,9 +44,9 @@ const envSchema = z.object({
     VITE_AMPLITUDE_KEY: z.string().nullish(), // making this optional since we want to allow local development without it
     VITE_GLEAP_API_KEY: z.string().optional(), // making this optional since we want to allow local development without it
 
-    VITE_PUSH_NOTIFICATION_ENABLED: boolish.transform(coerceBoolish).default(false), // making this optional since we want to allow local development with / without it
-    VITE_DISABLE_SENTRY: boolish.transform(coerceBoolish).default(false), // making this optional since we want to allow local development with / without it
-    VITE_DISABLE_DEBUG_BARS: boolish.transform(coerceBoolish).default(false),
+    VITE_PUSH_NOTIFICATION_ENABLED: boolish.default(false), // making this optional since we want to allow local development with / without it
+    VITE_DISABLE_SENTRY: boolish.default(false), // making this optional since we want to allow local development with / without it
+    VITE_DISABLE_DEBUG_BARS: boolish.default(false),
 
     VITE_WEB_PUSH_APPLICATION_SERVER_KEY: z.string().optional(), // making this optional since we want to allow local development without it
     VITE_WEB_PUSH_WORKER_URL: z.string().optional(), // url to the web push worker
@@ -56,7 +55,6 @@ const envSchema = z.object({
     VITE_WALLET_CONNECT_PROJECT_ID: z.string().default('stringtopreventerror'),
 
     VITE_DD_CLIENT_TOKEN: z.string().optional(), // used for datadog client side monitoring
-    VITE_DD_SERVICE_NAME: z.string().optional(), // used for datadog client side monitoring
 })
 
 const parsed = envSchema.safeParse(import.meta.env)
@@ -79,16 +77,19 @@ if (rawEnv.VITE_CF_TUNNEL_PREFIX) {
     }
 }
 
+if (import.meta.env.PROD) {
+    if (import.meta.env.MODE === 'production') {
+        throw new Error('"production" is not a valid mode. Set a mode via the `MODE` env var.')
+        // 'production' is the default mode name (the NODE_ENV of vite).
+        // we want to make sure this value is intentionally set, so we throw if we
+        // see the default value. in our case, our environments are named "test-alpha",
+        // "test-beta", "alpha", "beta".
+    }
+}
+
 export const env = {
     ...rawEnv,
     ...tunnelOverrides,
-    IS_DEV: coerceBoolish(rawEnv.DEV),
 }
 
-// hacky workaround b/c framer motion throws weird errors when running tests
-export function swapValueInTests<O, X>(orignalValue: O, testValue: X) {
-    if (env.MODE === 'test') {
-        return testValue
-    }
-    return orignalValue
-}
+console.log('MODE', env.MODE)

@@ -179,7 +179,7 @@ export function TokensList({
                         </Paragraph>
                     </FadeInBox>
                 )}
-                {env.IS_DEV && chainId === 31337 && (
+                {env.DEV && chainId === 31337 && (
                     <FadeInBox key="dev-message" maxWidth="400">
                         <Paragraph size="sm" color="error">
                             DEV message: Localhost will only return the zion token for anvil
