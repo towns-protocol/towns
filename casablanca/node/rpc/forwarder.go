@@ -1,8 +1,9 @@
-package nodes
+package rpc
 
 import (
 	. "casablanca/node/base"
 	"casablanca/node/dlog"
+	. "casablanca/node/nodes"
 	. "casablanca/node/protocol"
 	"context"
 

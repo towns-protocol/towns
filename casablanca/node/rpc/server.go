@@ -136,7 +136,7 @@ func StartServer(ctx context.Context, cfg *config.Config, wallet *crypto.Wallet)
 		return nil, 0, nil, err
 	}
 
-	forwarder := nodes.NewForwarder(nodeRegistry, nodes.NewStreamRegistry(nodeRegistry))
+	forwarder := NewForwarder(nodeRegistry, nodes.NewStreamRegistry(nodeRegistry))
 
 	pattern, handler := protocolconnect.NewStreamServiceHandler(forwarder)
 
