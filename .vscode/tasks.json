@@ -1,460 +1,459 @@
 {
-    "version": "2.0.0",
-    "presentation": {
-      "echo": false,
-      "reveal": "always",
-      "focus": false,
-      "panel": "dedicated",
-      "showReuseMessage": true
+  "version": "2.0.0",
+  "presentation": {
+    "echo": false,
+    "reveal": "always",
+    "focus": false,
+    "panel": "dedicated",
+    "showReuseMessage": true
+  },
+  "tasks": [
+    {
+      // start local dev:
+      //
+      // 1. yarn install
+      // 2. start anvil
+      // 3. deploy contracts
+      // 4. starts all servers and clients
+      //
+      // it's important to do in this order since the servers
+      // and use the artifacts of the contracts in their builds
+      "label": "~Start Local Dev~",
+      "dependsOn": [
+        "CheckNodeVersion",
+        "YarnInstall",
+        "Stage 1"
+      ],
+      // Mark as the default build task so cmd/ctrl+shift+b will create them
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "dependsOrder": "sequence"
     },
-    "tasks": [
-      {
-        // start local dev:
-        // 
-        // 1. yarn install
-        // 2. start anvil
-        // 3. deploy contracts
-        // 4. starts all servers and clients
-        // 
-        // it's important to do in this order since the servers
-        // and use the artifacts of the contracts in their builds
-        "label": "~Start Local Dev~",
-        "dependsOn": [
-          "CheckNodeVersion",
-          "YarnInstall",
-          "Stage 1"
-        ],
-        // Mark as the default build task so cmd/ctrl+shift+b will create them
-        "group": {
-          "kind": "build",
-          "isDefault": true
-        },
-        "dependsOrder": "sequence"
+    {
+      "label": "Stage 1",
+      "dependsOn": [
+        "Anvil",
+        "Stage 2"
+      ],
+      "group": {
+        "kind": "build",
+        "isDefault": false
       },
-      {
-        "label": "Stage 1",
-        "dependsOn": [
-          "Anvil",
-          "Stage 2"
-        ],
-        "group": {
-          "kind": "build",
-          "isDefault": false
-        },
+    },
+    {
+      "label": "Stage 2",
+      "dependsOn": [
+        "DeployZionGovernance",
+        "Stage 3"
+      ],
+      "group": {
+        "kind": "build",
+        "isDefault": false
       },
-      {
-        "label": "Stage 2",
-        "dependsOn": [
-          "DeployZionGovernance",
-          "Stage 3"
-        ],
-        "group": {
-          "kind": "build",
-          "isDefault": false
-        },
-        "dependsOrder": "sequence"
+      "dependsOrder": "sequence"
+    },
+    {
+      "label": "Stage 3",
+      "dependsOn": [
+        "WatchWorkersCommon",
+        "WatchSharedLib",
+        "WatchCasablancaSdk",
+        "WatchCasablancaMechOlm",
+        "WatchCasablancaProto",
+        "WatchCasablancaWeb3",
+        "App",
+        "SampleApp",
+        "Casablanca DebugApp",
+        "UnfurlWorker",
+        "TokenWorker",
+        "GatewayWorker",
+        "PushNotificationsWorker",
+        "Dendrite (from source)",
+        "Casablanca",
+        "Casablanca-No-Entitlements"
+      ],
+      "group": {
+        "kind": "build",
+        "isDefault": false
       },
-      {
-        "label": "Stage 3",
-        "dependsOn": [
-          "WatchWorkersCommon",
-          "WatchSharedLib",
-          "WatchCasablancaSdk",
-          "WatchCasablancaMechOlm",
-          "WatchCasablancaProto",
-          "WatchCasablancaWeb3",
-          "App",
-          "SampleApp",
-          "Casablanca DebugApp",
-          "UnfurlWorker",
-          "TokenWorker",
-          "GatewayWorker",
-          "PushNotificationsWorker",
-          "Dendrite (from source)",
-          "Casablanca",
-          "Casablanca-No-Entitlements"
-        ],
-        "group": {
-          "kind": "build",
-          "isDefault": false
-        },
-        "problemMatcher": []
+      "problemMatcher": []
+    },
+    {
+      "label": "~Start Local Dev Casablanca Only~",
+      "dependsOn": [
+        "Casablanca",
+        "Casablanca-No-Entitlements",
+        "Anvil",
+        "DeployZionGovernance",
+        "WatchCasablancaSdk",
+        "WatchCasablancaMechOlm"
+      ],
+      "problemMatcher": [],
+    },
+    {
+      "label": "Start Anvil, Deploy Contracts",
+      "dependsOn": [
+        "DeployZionGovernance",
+        "Anvil"
+      ],
+      "group": {
+        "kind": "build",
+        "isDefault": false
+      }
+    },
+    {
+      // Optional worker that's only required if testing the gateway worker with siwe verification
+      "label": "Start SIWE worker",
+      "type": "shell",
+      "command": "cd servers/workers/siwe-worker && yarn dev:local",
+      "isBackground": true,
+      "problemMatcher": [],
+    },
+    {
+      "label": "FoundryUp",
+      "type": "shell",
+      "command": "./scripts/foundry-up.sh",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "group": "ephemeral"
+      }
+    },
+    {
+      "label": "CheckNodeVersion",
+      "type": "shell",
+      "command": "./scripts/check-node-version.sh",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "group": "ephemeral"
+      }
+    },
+    {
+      "label": "DummyTask",
+      "type": "shell",
+      "command": "echo 'Dummy task... sometimes this is just needed.'",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "group": "ephemeral"
+      }
+    },
+    {
+      "label": "YarnInstall",
+      "type": "shell",
+      "command": "yarn",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "group": "ephemeral"
+      }
+    },
+    {
+      "label": "YarnClean & Cleanup",
+      "type": "shell",
+      "command": "./scripts/yarn-clean.sh",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "group": "ephemeral"
+      }
+    },
+    {
+      "label": "Dendrite (from source)",
+      "type": "shell",
+      "command": "./scripts/start-local-dendrite.sh",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "group": "local-servers"
+      }
+    },
+    {
+      "label": "Dendrite (from docker compose)",
+      "type": "shell",
+      "command": "./scripts/start-local-dendrite.sh --docker-compose-only",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "group": "local-servers"
+      }
+    },
+    {
+      "label": "Start Load Testing Redis",
+      "type": "shell",
+      "command": "./scripts/start-load-testing-redis.sh",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "group": "local-servers"
+      }
+    },
+    {
+      "label": "Casablanca",
+      "type": "shell",
+      "command": "sleep 3 && ./scripts/start-local-casablanca.sh",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "group": "local-servers"
+      }
+    },
+    {
+      "label": "Casablanca-No-Entitlements",
+      "type": "shell",
+      "command": "./scripts/wait-for-casablanca.sh && yarn run --top-level csb:start:no-entitlements",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "group": "local-servers"
+      }
+    },
+    {
+      "label": "Stop Casablanca",
+      "type": "shell",
+      "command": "./casablanca/scripts/stop_node.sh",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "group": "local-servers"
+      }
+    },
+    {
+      "label": "Both Casablancas",
+      "dependsOn": [
+        "Casablanca",
+        "Casablanca-No-Entitlements"
+      ],
+      "group": {
+        "kind": "build",
       },
-      {
-        "label": "~Start Local Dev Casablanca Only~",
-        "dependsOn": [
-          "Casablanca",
-          "Casablanca-No-Entitlements",
-          "Anvil",
-          "DeployZionGovernance",
-          "WatchCasablancaSdk",
-          "WatchCasablancaMechOlm"
-        ],
-        "problemMatcher": [],
+      "problemMatcher": [],
+    },
+    {
+      "label": "Restart Casablanca",
+      "dependsOn": [
+        "Stop Casablanca",
+        "DummyTask",
+        "Both Casablancas"
+      ],
+      "group": {
+        "kind": "build",
       },
-      {
-        "label": "Start Anvil, Deploy Contracts",
-        "dependsOn": [
-          "DeployZionGovernance",
-          "Anvil"
-        ],
-        "group": {
-          "kind": "build",
-          "isDefault": false
-        }
-      },
-      {
-        // Optional worker that's only required if testing the gateway worker with siwe verification
-        "label": "Start SIWE worker",
-        "type": "shell",
-        "command": "cd servers/workers/siwe-worker && yarn dev:local",
-        "isBackground": true,
-        "problemMatcher": [],
-      },
-      {
-        "label": "FoundryUp",
-        "type": "shell",
-        "command": "./scripts/foundry-up.sh",
-        "isBackground": true,
-        "problemMatcher": [],
-        "presentation": {
-          "group": "ephemeral"
-        }
-      },
-      {
-        "label": "CheckNodeVersion",
-        "type": "shell",
-        "command": "./scripts/check-node-version.sh",
-        "isBackground": true,
-        "problemMatcher": [],
-        "presentation": {
-          "group": "ephemeral"
-        }
-      },
-      {
-        "label": "DummyTask",
-        "type": "shell",
-        "command": "echo 'Dummy task... sometimes this is just needed.'",
-        "isBackground": true,
-        "problemMatcher": [],
-        "presentation": {
-          "group": "ephemeral"
-        }
-      },
-      {
-        "label": "YarnInstall",
-        "type": "shell",
-        "command": "yarn",
-        "isBackground": true,
-        "problemMatcher": [],
-        "presentation": {
-          "group": "ephemeral"
-        }
-      },
-      {
-        "label": "YarnClean & Cleanup",
-        "type": "shell",
-        "command": "./scripts/yarn-clean.sh",
-        "isBackground": true,
-        "problemMatcher": [],
-        "presentation": {
-          "group": "ephemeral"
-        }
-      },
-      {
-        "label": "Dendrite (from source)",
-        "type": "shell",
-        "command": "./scripts/start-local-dendrite.sh",
-        "isBackground": true,
-        "problemMatcher": [],
-        "presentation": {
-          "group": "local-servers"
-        }
-      },
-      {
-        "label": "Dendrite (from docker compose)",
-        "type": "shell",
-        "command": "./scripts/start-local-dendrite.sh --docker-compose-only",
-        "isBackground": true,
-        "problemMatcher": [],
-        "presentation": {
-          "group": "local-servers"
-        }
-      },
-      {
-        "label": "Start Load Testing Redis",
-        "type": "shell",
-        "command": "./scripts/start-load-testing-redis.sh",
-        "isBackground": true,
-        "problemMatcher": [],
-        "presentation": {
-          "group": "local-servers"
-        }
-      },
-      {
-        "label": "Casablanca",
-        "type": "shell",
-        "command": "sleep 3 && ./scripts/start-local-casablanca.sh",
-        "isBackground": true,
-        "problemMatcher": [],
-        "presentation": {
-          "group": "local-servers"
-        }
-      },
-      {
-        "label": "Casablanca-No-Entitlements",
-        "type": "shell",
-        "command": "./scripts/wait-for-casablanca.sh && yarn run --top-level csb:start:no-entitlements",
-        "isBackground": true,
-        "problemMatcher": [],
-        "presentation": {
-          "group": "local-servers"
-        }
-      },
-      {
-        "label": "Stop Casablanca",
-        "type": "shell",
-        "command": "./casablanca/scripts/stop_node.sh",
-        "isBackground": true,
-        "problemMatcher": [],
-        "presentation": {
-          "group": "local-servers"
-        }
-      },
-      {
-        "label": "Both Casablancas",
-        "dependsOn": [
-          "Casablanca",
-          "Casablanca-No-Entitlements"
-        ],
-        "group": {
-          "kind": "build",
-        },
-        "problemMatcher": [],
-      },
-      {
-        "label": "Restart Casablanca",
-        "dependsOn": [
-          "Stop Casablanca",
-          "DummyTask",
-          "Both Casablancas"
-        ],
-        "group": {
-          "kind": "build",
-        },
-        "dependsOrder": "sequence",
-        "problemMatcher": [],
-      },
-      {
-        "label": "Anvil",
-        "type": "shell",
-        "command": "./scripts/foundry-up.sh && ./scripts/start-local-blockchain.sh",
-        "isBackground": true,
-        "problemMatcher": [],
-        "presentation": {
-          "group": "local-servers"
-        }
-      },
-      {
-        "label": "DeployZionGovernance",
-        "type": "shell",
-        "command": "./scripts/wait-for-blockchain.sh && ./scripts/deploy-zion-governance-contracts.sh",
-        "isBackground": true,
-        "problemMatcher": [],
-        "presentation": {
-          "group": "ephemeral"
-        }
-      },
-      {
-        "label": "BuildContractTypes",
-        "type": "shell",
-        "command": "./scripts/foundry-up.sh && ./scripts/build-contract-types.sh localhost",
-        "isBackground": true,
-        "problemMatcher": [],
-        "presentation": {
-          "group": "ephemeral"
-        }
-      },
-      {
-        "label": "WatchSharedLib",
-        "type": "shell",
-        "command": "cd clients/web/lib && yarn watch",
-        "isBackground": true,
-        "problemMatcher": [],
-        "presentation": {
-          "group": "local-watch"
-        }
-      },
-      {
-        "label": "WatchCasablancaSdk",
-        "type": "shell",
-        "command": "cd casablanca/sdk && yarn watch",
-        "isBackground": true,
-        "problemMatcher": [],
-        "presentation": {
-          "group": "local-watch"
-        }
-      },
-      {
-        "label": "WatchCasablancaMechOlm",
-        "type": "shell",
-        "command": "cd casablanca/mecholm && yarn watch",
-        "isBackground": true,
-        "problemMatcher": [],
-        "presentation": {
-          "group": "local-watch"
-        }
-      },
-      {
-        "label": "WatchWorkersCommon",
-        "type": "shell",
-        "command": "cd servers/workers/worker-common && yarn watch",
-        "isBackground": true,
-        "problemMatcher": [],
-        "presentation": {
-          "group": "local-watch"
-        }
-      },
-      {
-        "label": "WatchCasablancaProto",
-        "type": "shell",
-        "command": "cd casablanca/proto && yarn watch",
-        "isBackground": true,
-        "problemMatcher": [],
-        "presentation": {
-          "group": "local-watch-proto"
-        }
-      },
-      {
-        "label": "WatchCasablancaWeb3",
-        "type": "shell",
-        "command": "cd casablanca/web3 && yarn watch",
-        "isBackground": true,
-        "problemMatcher": [],
-        "presentation": {
-          "group": "local-watch-proto"
-        }
-      },
-      {
-        "label": "WatchCasablancaProto_Go",
-        "type": "shell",
-        "command": "cd casablanca/proto && yarn watch:go",
-        "isBackground": true,
-        "problemMatcher": [],
-        "presentation": {
-          "group": "local-watch-proto"
-        }
-      },
-      {
-        "label": "App",
-        "type": "shell",
-        "command": "cd clients/web/app && yarn dev",
-        "isBackground": true,
-        "problemMatcher": [],
-        "presentation": {
-          "group": "local-clients"
-        }
-      },
-      {
-        "label": "SampleApp",
-        "type": "shell",
-        "command": "cd clients/web/sample-app && yarn dev",
-        "isBackground": true,
-        "problemMatcher": [],
-        "presentation": {
-          "group": "local-clients"
-        }
-      },
-      {
-        "label": "Casablanca DebugApp",
-        "type": "shell",
-        "command": "./scripts/wait-for-casablanca.sh && cd casablanca/debug-app && yarn dev",
-        "isBackground": true,
-        "problemMatcher": [],
-        "presentation": {
-          "group": "local-clients"
-        }
-      },
-      {
-        "label": "MITM - Casablanca",
-        "type": "shell",
-        "command": "mitmweb -p 7105 --mode reverse:http://localhost:7104/",
-        "isBackground": true,
-        "problemMatcher": [],
-        "presentation": {
-          "group": "local-mitm"
-        }
-      },
-      {
-        "label": "MITM - Dendrite",
-        "type": "shell",
-        "command": "mitmweb -p 8009 --mode reverse:http://localhost:8008/",
-        "isBackground": true,
-        "problemMatcher": [],
-        "presentation": {
-          "group": "local-mitm"
-        }
-      },
-     
-      {
-        "label": "UnfurlWorker",
-        "type": "shell",
-        "command": "sleep 1 && cd servers/workers/unfurl-worker && yarn dev:local",
-        "isBackground": true,
-        "problemMatcher": [],
-        "presentation": {
-          "group": "local-workers"
-        }
-      },
-      {
-        "label": "TokenWorker",
-        "type": "shell",
-        "command": "sleep 2 && cd servers/workers/token-worker && yarn dev:local",
-        "isBackground": true,
-        "problemMatcher": [],
-        "presentation": {
-          "group": "local-workers"
-        }
-      },
-      {
-        "label": "GatewayWorker",
-        "type": "shell",
-        "command": "sleep 3 && cd servers/workers/gateway-worker && yarn dev:local",
-        "isBackground": true,
-        "problemMatcher": [],
-        "presentation": {
-          "group": "local-workers"
-        }
-      },
-      {
-        "label": "PushNotificationsWorker",
-        "type": "shell",
-        "command": "sleep 4 && cd servers/workers/push-notification-worker && ./scripts/start-local-push-worker.sh",
-        "isBackground": true,
-        "problemMatcher": [],
-        "presentation": {
-          "group": "local-workers"
-        }
-      },
-      {
-        "label": "KillAllLocalDev",
-        "type": "shell",
-        "command": "./scripts/kill-all-local-dev.sh -y",
-        "isBackground": true,
-        "problemMatcher": [],
-        "presentation": {
-          "group": "ephemeral"
-        }
-      },
-      {
-        "label": "Start Local Blockscout",
-        "type": "shell",
-        "command": "./scripts/start-local-blockscout.sh",
-        "isBackground": true,
-        "problemMatcher": [],
-        "presentation": {
-          "group": "ephemeral"
-        }
-      },
-    ]
-  }
+      "dependsOrder": "sequence",
+      "problemMatcher": [],
+    },
+    {
+      "label": "Anvil",
+      "type": "shell",
+      "command": "./scripts/foundry-up.sh && ./scripts/start-local-blockchain.sh",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "group": "local-servers"
+      }
+    },
+    {
+      "label": "DeployZionGovernance",
+      "type": "shell",
+      "command": "./scripts/wait-for-blockchain.sh && ./scripts/deploy-zion-governance-contracts.sh",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "group": "ephemeral"
+      }
+    },
+    {
+      "label": "BuildContractTypes",
+      "type": "shell",
+      "command": "./scripts/foundry-up.sh && ./scripts/build-town-types.sh localhost",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "group": "ephemeral"
+      }
+    },
+    {
+      "label": "WatchSharedLib",
+      "type": "shell",
+      "command": "cd clients/web/lib && yarn watch",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "group": "local-watch"
+      }
+    },
+    {
+      "label": "WatchCasablancaSdk",
+      "type": "shell",
+      "command": "cd casablanca/sdk && yarn watch",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "group": "local-watch"
+      }
+    },
+    {
+      "label": "WatchCasablancaMechOlm",
+      "type": "shell",
+      "command": "cd casablanca/mecholm && yarn watch",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "group": "local-watch"
+      }
+    },
+    {
+      "label": "WatchWorkersCommon",
+      "type": "shell",
+      "command": "cd servers/workers/worker-common && yarn watch",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "group": "local-watch"
+      }
+    },
+    {
+      "label": "WatchCasablancaProto",
+      "type": "shell",
+      "command": "cd casablanca/proto && yarn watch",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "group": "local-watch-proto"
+      }
+    },
+    {
+      "label": "WatchCasablancaWeb3",
+      "type": "shell",
+      "command": "cd casablanca/web3 && yarn watch",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "group": "local-watch-proto"
+      }
+    },
+    {
+      "label": "WatchCasablancaProto_Go",
+      "type": "shell",
+      "command": "cd casablanca/proto && yarn watch:go",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "group": "local-watch-proto"
+      }
+    },
+    {
+      "label": "App",
+      "type": "shell",
+      "command": "cd clients/web/app && yarn dev",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "group": "local-clients"
+      }
+    },
+    {
+      "label": "SampleApp",
+      "type": "shell",
+      "command": "cd clients/web/sample-app && yarn dev",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "group": "local-clients"
+      }
+    },
+    {
+      "label": "Casablanca DebugApp",
+      "type": "shell",
+      "command": "./scripts/wait-for-casablanca.sh && cd casablanca/debug-app && yarn dev",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "group": "local-clients"
+      }
+    },
+    {
+      "label": "MITM - Casablanca",
+      "type": "shell",
+      "command": "mitmweb -p 7105 --mode reverse:http://localhost:7104/",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "group": "local-mitm"
+      }
+    },
+    {
+      "label": "MITM - Dendrite",
+      "type": "shell",
+      "command": "mitmweb -p 8009 --mode reverse:http://localhost:8008/",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "group": "local-mitm"
+      }
+    },
+    {
+      "label": "UnfurlWorker",
+      "type": "shell",
+      "command": "sleep 1 && cd servers/workers/unfurl-worker && yarn dev:local",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "group": "local-workers"
+      }
+    },
+    {
+      "label": "TokenWorker",
+      "type": "shell",
+      "command": "sleep 2 && cd servers/workers/token-worker && yarn dev:local",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "group": "local-workers"
+      }
+    },
+    {
+      "label": "GatewayWorker",
+      "type": "shell",
+      "command": "sleep 3 && cd servers/workers/gateway-worker && yarn dev:local",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "group": "local-workers"
+      }
+    },
+    {
+      "label": "PushNotificationsWorker",
+      "type": "shell",
+      "command": "sleep 4 && cd servers/workers/push-notification-worker && ./scripts/start-local-push-worker.sh",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "group": "local-workers"
+      }
+    },
+    {
+      "label": "KillAllLocalDev",
+      "type": "shell",
+      "command": "./scripts/kill-all-local-dev.sh -y",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "group": "ephemeral"
+      }
+    },
+    {
+      "label": "Start Local Blockscout",
+      "type": "shell",
+      "command": "./scripts/start-local-blockscout.sh",
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": {
+        "group": "ephemeral"
+      }
+    },
+  ]
+}

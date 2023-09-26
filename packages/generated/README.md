@@ -5,7 +5,7 @@
 From the root of the repo, run:
 
 ```bash
-./scripts/build-contract-types.sh
+./scripts/build-town-types.sh
 ```
 
 ## How to install this package in a workspace?

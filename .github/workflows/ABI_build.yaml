@@ -63,7 +63,7 @@ jobs:
               working-directory: lib/forge-std/src
               run: cp console.sol Console.sol
             - name: Build Types
-              run: bash scripts/build-contract-types.sh
+              run: bash scripts/build-town-types.sh
 
     lint-types:
         runs-on: ubuntu-latest
