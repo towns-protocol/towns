@@ -150,7 +150,7 @@ func (n *nodeRegistryImpl) GetRemoteSyncStubForAddress(address string) (StreamSe
 	if stub != nil {
 		return stub, nil
 	} else {
-		return nil, RiverErrorf(Err_INTERNAL_ERROR, "Remote stub requested for local node, address=%s", address)
+		return nil, RiverErrorf(Err_INTERNAL, "Remote stub requested for local node, address=%s", address)
 	}
 }
 
@@ -160,7 +160,7 @@ func (n *nodeRegistryImpl) NumNodes() int {
 
 func (n *nodeRegistryImpl) GetNodeAddressByIndex(index int) (string, error) {
 	if index < 0 || index >= len(n.nodesFlat) {
-		return "", RiverErrorf(Err_INTERNAL_ERROR, "Invalid node index, index=%d", index)
+		return "", RiverErrorf(Err_INTERNAL, "Invalid node index, index=%d", index)
 	}
 	return n.nodesFlat[index].address, nil
 }

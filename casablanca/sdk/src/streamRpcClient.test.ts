@@ -1,5 +1,5 @@
 import { makeEvent, makeEvents, SignerContext, unpackEnvelopes } from './sign'
-import { Err, MembershipOp, SyncStreamsResponse, SyncCookie } from '@river/proto'
+import { MembershipOp, SyncStreamsResponse, SyncCookie } from '@river/proto'
 import { dlog } from './dlog'
 import {
     makeEvent_test,
@@ -63,9 +63,7 @@ describe('streamRpcClient', () => {
         log('error', err)
         expect(err).toBeDefined()
         log('error', err!.toString())
-        expect(err!.toString()).toContain(
-            '[invalid_argument] 1:DEBUG_ERROR: Error requested through Info request',
-        )
+        expect(err!.toString()).toContain('Error requested through Info request')
     })
 
     test('error_untyped', async () => {
@@ -408,32 +406,6 @@ describe('streamRpcClient', () => {
         aliceAbortControllerMultipleStreams.abort()
     })
 
-    // TODO: harden stream creation and enable this test
-    test.skip('errorCodeTransmitted', async () => {
-        const bob = makeTestRpcClient()
-        await expect(
-            bob.createStream({
-                events: [
-                    await makeEvent(
-                        bobsContext,
-                        make_UserPayload_Inception({
-                            streamId: 'foo',
-                        }),
-                        [],
-                    ),
-                ],
-                streamId: 'foo',
-            }),
-        ).rejects.toThrow(expect.objectContaining({ code: Err.BAD_STREAM_ID }))
-
-        await expect(
-            bob.createStream({
-                events: [],
-                streamId: undefined,
-            }),
-        ).rejects.toThrow(expect.objectContaining({ code: Err.BAD_STREAM_CREATION_PARAMS }))
-    })
-
     test('cantAddWithBadHash', async () => {
         const bob = makeTestRpcClient()
         const bobsUserId = userIdFromAddress(bobsContext.creatorAddress)
@@ -519,8 +491,7 @@ describe('streamRpcClient', () => {
             }),
         ).rejects.toThrow(
             expect.objectContaining({
-                message:
-                    '[invalid_argument] 3:BAD_STREAM_CREATION_PARAMS: CreateStream: bad hash on event index: 1',
+                message: expect.stringContaining('19:BAD_STREAM_CREATION_PARAMS'),
             }),
         )
 
@@ -541,9 +512,7 @@ describe('streamRpcClient', () => {
             }),
         ).rejects.toThrow(
             expect.objectContaining({
-                message: expect.stringContaining(
-                    '[invalid_argument] 3:BAD_STREAM_CREATION_PARAMS: CreateStream: bad hash on event index: 1',
-                ),
+                message: expect.stringContaining('19:BAD_STREAM_CREATION_PARAMS'),
             }),
         )
 
@@ -576,8 +545,7 @@ describe('streamRpcClient', () => {
             }),
         ).rejects.toThrow(
             expect.objectContaining({
-                message:
-                    '[unknown] rpc error: code = InvalidArgument desc = AddEvent: event has no prev events',
+                message: expect.stringContaining('AddEvent: event has no prev events'),
             }),
         )
 
@@ -691,7 +659,7 @@ describe('streamRpcClient', () => {
                 streamId: channelId,
                 event: badEvent,
             }),
-        ).rejects.toThrow(/^\[invalid_argument\] 7:BAD_EVENT_SIGNATURE:.*$/)
+        ).rejects.toThrow(/22:BAD_EVENT_SIGNATURE/)
     })
 })
 

@@ -23,7 +23,7 @@ func (m *memStorage) CreateStream(ctx context.Context, streamId string, genesisM
 	defer m.mutex.Unlock()
 
 	if _, ok := m.streams[streamId]; ok {
-		return RiverError(Err_STREAM_ALREADY_EXISTS, "Stream already exists")
+		return RiverError(Err_ALREADY_EXISTS, "Stream already exists")
 	}
 	m.streams[streamId] = &memStream{
 		miniblocks:        [][]byte{genesisMiniblock},
@@ -39,7 +39,7 @@ func (m *memStorage) GetStreamFromLastSnapshot(ctx context.Context, streamId str
 
 	stream, ok := m.streams[streamId]
 	if !ok {
-		return nil, RiverError(Err_STREAM_NOT_FOUND, "Stream not found")
+		return nil, RiverError(Err_NOT_FOUND, "Stream not found")
 	}
 	return &GetStreamFromLastSnapshotResult{
 		StartMiniblockNumber: stream.lastSnapshotIndex,
@@ -54,7 +54,7 @@ func (m *memStorage) GetMiniblocks(ctx context.Context, streamId string, fromInd
 
 	stream, ok := m.streams[streamId]
 	if !ok {
-		return nil, RiverError(Err_STREAM_NOT_FOUND, "Stream not found")
+		return nil, RiverError(Err_NOT_FOUND, "Stream not found")
 	}
 	if fromIndex < 0 || fromIndex >= len(stream.miniblocks) || toIndex <= fromIndex || toIndex > len(stream.miniblocks) {
 		return nil, RiverError(Err_BAD_BLOCK_NUMBER, "Invalid miniblock index")
@@ -68,7 +68,7 @@ func (m *memStorage) AddEvent(ctx context.Context, streamId string, minipoolGene
 
 	stream, ok := m.streams[streamId]
 	if !ok {
-		return RiverError(Err_STREAM_NOT_FOUND, "Stream not found")
+		return RiverError(Err_NOT_FOUND, "Stream not found")
 	}
 	if minipoolGeneration != len(stream.miniblocks) {
 		return RiverError(Err_BAD_BLOCK_NUMBER, "Invalid minipool generation")
@@ -94,7 +94,7 @@ func (m *memStorage) CreateBlock(
 
 	stream, ok := m.streams[streamId]
 	if !ok {
-		return RiverError(Err_STREAM_NOT_FOUND, "Stream not found")
+		return RiverError(Err_NOT_FOUND, "Stream not found")
 	}
 	if minipoolGeneration != len(stream.miniblocks) {
 		return RiverError(Err_BAD_BLOCK_NUMBER, "Invalid minipool generation")

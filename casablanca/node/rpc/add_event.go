@@ -396,7 +396,7 @@ func (s *Service) checkStaleDelegate(ctx context.Context, parsedEvents []*Parsed
 				// no stale delegates yet
 				return nil
 			}
-			return RiverErrorf(Err_INTERNAL_ERROR, "AddEvent: error getting user device key stream: %v", err)
+			return RiverErrorf(Err_INTERNAL, "AddEvent: error getting user device key stream: %v", err)
 		}
 		view := userDeviceKeyStreamView.(UserDeviceStreamView)
 
@@ -408,7 +408,7 @@ func (s *Service) checkStaleDelegate(ctx context.Context, parsedEvents []*Parsed
 		}
 		isRevoked, err := view.IsDeviceIdRevoked(rdkId)
 		if err != nil {
-			return RiverErrorf(Err_INTERNAL_ERROR, "AddEvent: error getting river device keys: %v", err)
+			return RiverErrorf(Err_INTERNAL, "AddEvent: error getting river device keys: %v", err)
 		}
 		if isRevoked {
 			return RiverErrorf(Err_STALE_DELEGATE, "AddEvent: stale delegate")

@@ -88,6 +88,12 @@ func Format(writer io.Writer, v reflect.Value, opts FormatOpts) {
 	tw.Flush()
 }
 
+// Implement for custom formatting, first message is printed, then any tag pairs.
+type TaggedObject interface {
+	Message() string
+	ForEachTag(func(name string, value any) bool)
+}
+
 type printer struct {
 	io.Writer
 	tw      *tabwriter.Writer
@@ -144,8 +150,9 @@ func (p *printer) catchPanic(v reflect.Value, method string) {
 }
 
 var (
-	durationType = reflect.TypeOf(time.Duration(0))
-	errorType    = reflect.TypeOf((*error)(nil)).Elem()
+	durationType     = reflect.TypeOf(time.Duration(0))
+	errorType        = reflect.TypeOf((*error)(nil)).Elem()
+	taggedObjectType = reflect.TypeOf((*TaggedObject)(nil)).Elem()
 )
 
 func (p *printer) printValue(v reflect.Value, showType, quote bool, key bool) {
@@ -257,6 +264,11 @@ func (p *printer) printValue(v reflect.Value, showType, quote bool, key bool) {
 }
 
 func (p *printer) printError(err error) {
+	if tagged, ok := err.(TaggedObject); ok {
+		p.printTagged(tagged, ColorMap_ErrorText)
+		return
+	}
+
 	str := err.Error()
 	if str == "" {
 		str = "(empty error)"
@@ -357,13 +369,59 @@ func isProto(v reflect.Value) bool {
 	return f.Type.PkgPath() == "google.golang.org/protobuf/internal/impl"
 }
 
-func (p *printer) printStruct(v reflect.Value, showType bool) {
-	t := v.Type()
-
-	if t.Implements(errorType) {
-		p.printError(v.Interface().(error))
+func (p *printer) printTagged(v TaggedObject, msgColorNum int) {
+	if v == nil {
+		p.printNil("")
 		return
 	}
+
+	OpenColor(p.Writer, p.opts.Colors[msgColorNum])
+	p.writeString(v.Message())
+	CloseColor(p.Writer, p.opts.Colors[msgColorNum])
+
+	expand := !canInlineTagged(v)
+	pp := p
+	if expand {
+		writeByte(p, '\n')
+		pp = p.indent()
+	} else {
+		pp.writeString("; ")
+	}
+	prevPrinted := false
+	v.ForEachTag(func(name string, val any) bool {
+		tp := reflect.TypeOf(val)
+		value := reflect.ValueOf(val)
+
+		if p.opts.SkipNilAndEmpty && !Nonzero(value) && tp.Kind() != reflect.Bool {
+			return true
+		}
+
+		if !expand && prevPrinted {
+			pp.writeString(", ")
+		}
+
+		if name != "" {
+			OpenColor(pp.Writer, p.opts.Colors[ColorMap_LogFieldKey])
+			pp.writeString(name)
+			CloseColor(pp.Writer, p.opts.Colors[ColorMap_LogFieldKey])
+			pp.writeString(" = ")
+		}
+		pp.printValue(value, false, true, false)
+		prevPrinted = true
+
+		if expand {
+			pp.writeString(",\n")
+		}
+
+		return true
+	})
+	if expand {
+		pp.tw.Flush()
+	}
+}
+
+func (p *printer) printStruct(v reflect.Value, showType bool) {
+	t := v.Type()
 
 	isProto := isProto(v)
 
@@ -375,6 +433,16 @@ func (p *printer) printStruct(v reflect.Value, showType bool) {
 			return // don't print v again
 		}
 		p.visited[vis] = p.depth
+	}
+
+	if t.Implements(errorType) {
+		p.printError(v.Interface().(error))
+		return
+	}
+
+	if t.Implements(taggedObjectType) {
+		p.printTagged(v.Interface().(TaggedObject), ColorMap_Message)
+		return
 	}
 
 	OpenColor(p.Writer, p.opts.Colors[ColorMap_Brace])
@@ -483,6 +551,19 @@ func (p *printer) printMap(v reflect.Value, showType bool) {
 	CloseColor(p.Writer, p.opts.Colors[ColorMap_Brace])
 }
 
+func canInlineTagged(v TaggedObject) bool {
+	ret := true
+	v.ForEachTag(func(name string, value any) bool {
+		r := unwrapInterface(reflect.ValueOf(value))
+		if canExpand(r.Type()) {
+			ret = false
+			return false
+		}
+		return true
+	})
+	return ret
+}
+
 func canInline(t reflect.Type) bool {
 	// nolint:exhaustive
 	switch t.Kind() {
@@ -575,4 +656,11 @@ func getField(v reflect.Value, i int) reflect.Value {
 		val = val.Elem()
 	}
 	return val
+}
+
+func unwrapInterface(v reflect.Value) reflect.Value {
+	if v.Kind() == reflect.Interface && !v.IsNil() {
+		return v.Elem()
+	}
+	return v
 }

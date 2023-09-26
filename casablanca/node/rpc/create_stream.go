@@ -96,7 +96,7 @@ func (s *Service) createStream(ctx context.Context, log *slog.Logger, req *Creat
 	}
 
 	if streamView == nil {
-		return nil, RiverError(Err_INTERNAL_ERROR, "CreateStream: stream not created, but there is no error")
+		return nil, RiverError(Err_INTERNAL, "CreateStream: stream not created, but there is no error")
 	}
 
 	return &CreateStreamResponse{

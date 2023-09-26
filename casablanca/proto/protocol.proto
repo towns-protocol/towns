@@ -535,40 +535,103 @@ service StreamService {
     rpc Info(InfoRequest) returns (InfoResponse);
 }
 
+// Codes from 1 to 16 match gRPC/Connect codes.
 enum Err {
     ERR_UNSPECIFIED = 0;
-    DEBUG_ERROR = 1;
-    BAD_STREAM_ID = 2;
-    BAD_STREAM_CREATION_PARAMS = 3;
-    STREAM_ALREADY_EXISTS = 4;
-    INTERNAL_ERROR_SWITCH = 5;
-    BAD_EVENT_ID = 6;
-    BAD_EVENT_SIGNATURE = 7;
-    BAD_HASH_FORMAT = 8;
-    BAD_PREV_EVENTS = 9;
-    NO_EVENT_SPECIFIED = 10;
-    BAD_EVENT = 11;
-    USER_CANT_POST = 12;
-    STREAM_NOT_FOUND = 13;
-    STREAM_BAD_HASHES = 14;
-    STREAM_EMPTY = 15;
-    STREAM_BAD_EVENT = 16;
-    BAD_DELEGATE_SIG = 17;
-    BAD_PUBLIC_KEY = 18;
-    BAD_PAYLOAD = 19;
-    BAD_HEX_STRING = 20;
-    BAD_EVENT_HASH = 21;
-    BAD_ARGS = 22;
-    BAD_SYNC_COOKIE = 23;
-    INTERNAL_ERROR = 24;
-    DUPLICATE_EVENT = 25;
-    BAD_BLOCK = 26;
-    STREAM_NO_INCEPTION_EVENT = 27;
-    BAD_BLOCK_NUMBER = 28;
-    BAD_MINIPOOL_SLOT = 29;
-    BAD_CREATOR_ADDRESS = 30;
-    STALE_DELEGATE = 31;
-    BAD_LINK_WALLET_BAD_SIGNATURE = 32;
-    BAD_ROOT_KEY_ID = 33;
-    UNKNOWN_NODE = 34;
+
+    // Canceled indicates that the operation was canceled, typically by the
+	// caller.
+    CANCELED = 1;
+
+	// Unknown indicates that the operation failed for an unknown reason.
+	UNKNOWN = 2;
+
+	// InvalidArgument indicates that client supplied an invalid argument.
+	INVALID_ARGUMENT  = 3;
+
+	// DeadlineExceeded indicates that deadline expired before the operation
+	// could complete.
+	DEADLINE_EXCEEDED  = 4;
+
+	// NotFound indicates that some requested entity (for example, a file or
+	// directory) was not found.
+	NOT_FOUND  = 5;
+
+	// AlreadyExists indicates that client attempted to create an entity (for
+	// example, a file or directory) that already exists.
+	ALREADY_EXISTS  = 6;
+
+	// PermissionDenied indicates that the caller doesn't have permission to
+	// execute the specified operation.
+	PERMISSION_DENIED  = 7;
+
+	// ResourceExhausted indicates that some resource has been exhausted. For
+	// example, a per-user quota may be exhausted or the entire file system may
+	// be full.
+	RESOURCE_EXHAUSTED  = 8;
+
+	// FailedPrecondition indicates that the system is not in a state
+	// required for the operation's execution.
+	FAILED_PRECONDITION  = 9;
+
+	// Aborted indicates that operation was aborted by the system, usually
+	// because of a concurrency issue such as a sequencer check failure or
+	// transaction abort.
+	ABORTED  = 10;
+
+	// OutOfRange indicates that the operation was attempted past the valid
+	// range (for example, seeking past end-of-file).
+	OUT_OF_RANGE = 11;
+
+	// Unimplemented indicates that the operation isn't implemented,
+	// supported, or enabled in this service.
+	UNIMPLEMENTED = 12;
+
+	// Internal indicates that some invariants expected by the underlying
+	// system have been broken. This code is reserved for serious errors.
+	INTERNAL = 13;
+
+	// Unavailable indicates that the service is currently unavailable. This
+	// is usually temporary, so clients can back off and retry idempotent
+	// operations.
+	UNAVAILABLE = 14;
+
+	// DataLoss indicates that the operation has resulted in unrecoverable
+	// data loss or corruption.
+	DATA_LOSS = 15;
+
+	// Unauthenticated indicates that the request does not have valid
+	// authentication credentials for the operation.
+	UNAUTHENTICATED = 16;
+
+    DEBUG_ERROR = 17;
+    BAD_STREAM_ID = 18;
+    BAD_STREAM_CREATION_PARAMS = 19;
+    INTERNAL_ERROR_SWITCH = 20;
+    BAD_EVENT_ID = 21;
+    BAD_EVENT_SIGNATURE = 22;
+    BAD_HASH_FORMAT = 23;
+    BAD_PREV_EVENTS = 24;
+    NO_EVENT_SPECIFIED = 25;
+    BAD_EVENT = 26;
+    USER_CANT_POST = 27;
+    STREAM_BAD_HASHES = 28;
+    STREAM_EMPTY = 29;
+    STREAM_BAD_EVENT = 30;
+    BAD_DELEGATE_SIG = 31;
+    BAD_PUBLIC_KEY = 32;
+    BAD_PAYLOAD = 33;
+    BAD_HEX_STRING = 34;
+    BAD_EVENT_HASH = 35;
+    BAD_SYNC_COOKIE = 36;
+    DUPLICATE_EVENT = 37;
+    BAD_BLOCK = 38;
+    STREAM_NO_INCEPTION_EVENT = 39;
+    BAD_BLOCK_NUMBER = 40;
+    BAD_MINIPOOL_SLOT = 41;
+    BAD_CREATOR_ADDRESS = 42;
+    STALE_DELEGATE = 43;
+    BAD_LINK_WALLET_BAD_SIGNATURE = 44;
+    BAD_ROOT_KEY_ID = 45;
+    UNKNOWN_NODE = 46;
 }

@@ -1,6 +1,8 @@
 package nodes
 
 import (
+	. "casablanca/node/base"
+	"casablanca/node/dlog"
 	. "casablanca/node/protocol"
 	"context"
 	"sync"
@@ -23,6 +25,21 @@ type syncDispatcher struct {
 }
 
 func (f *forwarderImpl) SyncStreams(
+	ctx context.Context,
+	req *connect_go.Request[SyncStreamsRequest],
+	res *connect_go.ServerStream[SyncStreamsResponse],
+) error {
+	log := dlog.CtxLog(ctx) // TODO: use ctxAndLogForRequest
+	log.Debug("fwd.SyncStreams ENTER", "syncPos", req.Msg.SyncPos)
+	e := f.syncStreamsIml(ctx, req, res)
+	if e != nil {
+		return AsRiverError(e).Func("fwd.SyncStreams").LogWarn(log).AsConnectError()
+	}
+	log.Debug("fwd.SyncStreams LEAVE")
+	return nil
+}
+
+func (f *forwarderImpl) syncStreamsIml(
 	ctx context.Context,
 	req *connect_go.Request[SyncStreamsRequest],
 	res *connect_go.ServerStream[SyncStreamsResponse],

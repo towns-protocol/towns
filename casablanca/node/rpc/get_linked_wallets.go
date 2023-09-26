@@ -33,7 +33,6 @@ func (s *Service) GetLinkedWallets(ctx context.Context, req *connect_go.Request[
 }
 
 func (s *Service) getLinkedWallets(ctx context.Context, log *slog.Logger, req *connect_go.Request[GetLinkedWalletsRequest]) (*connect_go.Response[GetLinkedWalletsResponse], error) {
-
 	log.Debug("GetLinkedWallets", "request", req.Msg)
 
 	rootKeyId, err := hex.DecodeString(req.Msg.RootKeyId)
@@ -43,7 +42,7 @@ func (s *Service) getLinkedWallets(ctx context.Context, log *slog.Logger, req *c
 
 	wallets, err := s.walletLinkContract.GetLinkedWallets(common.BytesToAddress(rootKeyId))
 	if err != nil {
-		return nil, RiverErrorf(Err_INTERNAL_ERROR, "GetLinkedWallets: error getting linked wallets: %v", err)
+		return nil, RiverErrorf(Err_INTERNAL, "GetLinkedWallets: error getting linked wallets: %v", err)
 	}
 
 	var addresses []string

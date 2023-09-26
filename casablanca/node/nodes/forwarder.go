@@ -1,6 +1,8 @@
 package nodes
 
 import (
+	. "casablanca/node/base"
+	"casablanca/node/dlog"
 	. "casablanca/node/protocol"
 	"context"
 
@@ -37,6 +39,17 @@ func (f *forwarderImpl) getStubForStream(streamId string, newStream bool) (Strea
 }
 
 func (f *forwarderImpl) CreateStream(ctx context.Context, req *connect_go.Request[CreateStreamRequest]) (*connect_go.Response[CreateStreamResponse], error) {
+	log := dlog.CtxLog(ctx) // TODO: use ctxAndLogForRequest
+	log.Debug("fwd.CreateStream ENTER", "streamId", req.Msg.StreamId)
+	r, e := f.createStreamImpl(ctx, req)
+	if e != nil {
+		return nil, AsRiverError(e).Func("fwd.CreateStream").Tag("streamId", req.Msg.StreamId).LogWarn(log).AsConnectError()
+	}
+	log.Debug("fwd.CreateStream LEAVE", "response", r.Msg)
+	return r, nil
+}
+
+func (f *forwarderImpl) createStreamImpl(ctx context.Context, req *connect_go.Request[CreateStreamRequest]) (*connect_go.Response[CreateStreamResponse], error) {
 	stub, err := f.getStubForStream(req.Msg.StreamId, true)
 	if err != nil {
 		return nil, err
@@ -46,6 +59,17 @@ func (f *forwarderImpl) CreateStream(ctx context.Context, req *connect_go.Reques
 }
 
 func (f *forwarderImpl) GetStream(ctx context.Context, req *connect_go.Request[GetStreamRequest]) (*connect_go.Response[GetStreamResponse], error) {
+	log := dlog.CtxLog(ctx) // TODO: use ctxAndLogForRequest
+	log.Debug("fwd.GetStream ENTER", "streamId", req.Msg.StreamId)
+	r, e := f.getStreamImpl(ctx, req)
+	if e != nil {
+		return nil, AsRiverError(e).Func("fwd.GetStream").Tag("streamId", req.Msg.StreamId).LogWarn(log).AsConnectError()
+	}
+	log.Debug("fwd.GetStream LEAVE", "response", r.Msg)
+	return r, nil
+}
+
+func (f *forwarderImpl) getStreamImpl(ctx context.Context, req *connect_go.Request[GetStreamRequest]) (*connect_go.Response[GetStreamResponse], error) {
 	stub, err := f.getStubForStream(req.Msg.StreamId, false)
 	if err != nil {
 		return nil, err
@@ -55,6 +79,17 @@ func (f *forwarderImpl) GetStream(ctx context.Context, req *connect_go.Request[G
 }
 
 func (f *forwarderImpl) GetMiniblocks(ctx context.Context, req *connect_go.Request[GetMiniblocksRequest]) (*connect_go.Response[GetMiniblocksResponse], error) {
+	log := dlog.CtxLog(ctx) // TODO: use ctxAndLogForRequest
+	log.Debug("fwd.GetMiniblocks ENTER", "req", req.Msg)
+	r, e := f.getMiniblocksImpl(ctx, req)
+	if e != nil {
+		return nil, AsRiverError(e).Func("fwd.GetMiniblocks").Tag("streamId", req.Msg.StreamId).LogWarn(log).AsConnectError()
+	}
+	log.Debug("fwd.GetMiniblocks LEAVE", "response", r.Msg)
+	return r, nil
+}
+
+func (f *forwarderImpl) getMiniblocksImpl(ctx context.Context, req *connect_go.Request[GetMiniblocksRequest]) (*connect_go.Response[GetMiniblocksResponse], error) {
 	stub, err := f.getStubForStream(req.Msg.StreamId, false)
 	if err != nil {
 		return nil, err
@@ -64,6 +99,17 @@ func (f *forwarderImpl) GetMiniblocks(ctx context.Context, req *connect_go.Reque
 }
 
 func (f *forwarderImpl) AddEvent(ctx context.Context, req *connect_go.Request[AddEventRequest]) (*connect_go.Response[AddEventResponse], error) {
+	log := dlog.CtxLog(ctx) // TODO: use ctxAndLogForRequest
+	log.Debug("fwd.AddEvent ENTER", "req", req.Msg)
+	r, e := f.addEventImpl(ctx, req)
+	if e != nil {
+		return nil, AsRiverError(e).Func("fwd.AddEvent").Tag("streamId", req.Msg.StreamId).LogWarn(log).AsConnectError()
+	}
+	log.Debug("fwd.AddEvent LEAVE", "response", r.Msg)
+	return r, nil
+}
+
+func (f *forwarderImpl) addEventImpl(ctx context.Context, req *connect_go.Request[AddEventRequest]) (*connect_go.Response[AddEventResponse], error) {
 	stub, err := f.getStubForStream(req.Msg.StreamId, false)
 	if err != nil {
 		return nil, err

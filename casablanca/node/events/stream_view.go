@@ -169,7 +169,7 @@ func MaxInt_(a, b int) int {
 func (r *streamViewImpl) copyAndApplyBlock(miniblock *miniblockInfo) (*streamViewImpl, error) {
 	header := miniblock.headerEvent.Event.GetMiniblockHeader()
 	if header == nil {
-		return nil, RiverErrorf(Err_INTERNAL_ERROR, "streamViewImpl: non block event not allowed, stream=%s, event=%s", r.streamId, miniblock.headerEvent.ShortDebugStr())
+		return nil, RiverErrorf(Err_INTERNAL, "streamViewImpl: non block event not allowed, stream=%s, event=%s", r.streamId, miniblock.headerEvent.ShortDebugStr())
 	}
 
 	lastBlock := r.lastBlock()
@@ -230,7 +230,7 @@ func (r *streamViewImpl) InceptionPayload() IsInceptionPayload {
 
 func (r *streamViewImpl) forEachEvent(startBlock int, op func(e *ParsedEvent) (bool, error)) error {
 	if startBlock < 0 || startBlock > len(r.blocks) {
-		return RiverErrorf(Err_BAD_ARGS, "iterateEvents: bad startBlock, startBlock=%d", startBlock)
+		return RiverErrorf(Err_INVALID_ARGUMENT, "iterateEvents: bad startBlock, startBlock=%d", startBlock)
 	}
 
 	for i := startBlock; i < len(r.blocks); i++ {
