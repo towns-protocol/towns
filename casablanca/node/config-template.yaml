@@ -26,3 +26,6 @@ performanceTracking:
     profilingEnabled: false
 nodeRegistry: <NODE_REGISTRY>
 logInstance: false
+pushNotification:
+    url: '' # URL to the push notification worker. Default empty string disables it.
+    authToken: '' # auth token for the push notification worker

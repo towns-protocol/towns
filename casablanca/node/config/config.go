@@ -18,6 +18,7 @@ type Config struct {
 	// TODO HNT-2048 remove once RDK registration/revoke is implemented in the client
 	SkipDelegateCheck   bool
 	PerformanceTracking PerformanceTrackingConfig
+	PushNotification    PushNotificationConfig
 	NodeRegistry        string
 	WalletPrivateKey    string
 	LogInstance         bool
@@ -30,4 +31,9 @@ type ChainConfig struct {
 
 type PerformanceTrackingConfig struct {
 	ProfilingEnabled bool
+}
+
+type PushNotificationConfig struct {
+	AuthToken string
+	Url       string
 }
