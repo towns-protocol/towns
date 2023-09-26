@@ -23,6 +23,8 @@ var (
 func (s *Service) LinkWallet(ctx context.Context, req *connect_go.Request[LinkWalletRequest]) (*connect_go.Response[LinkWalletResponse], error) {
 	ctx, log := ctxAndLogForRequest(ctx, req)
 
+	log.Debug("LinkWallet ENTER", "request", req.Msg)
+
 	res, err := s.linkWallet(ctx, log, req)
 	if err != nil {
 		log.Warn("LinkWallet ERROR", "error", err)
@@ -38,33 +40,32 @@ func (s *Service) linkWallet(ctx context.Context, log *slog.Logger, req *connect
 
 	err := validateWalletLink(req.Msg)
 	if err != nil {
-		return nil, RiverErrorf(Err_BAD_LINK_WALLET_BAD_SIGNATURE, "LinkWallet: error validating wallet link: %v", err)
+		return nil, WrapRiverError(Err_BAD_LINK_WALLET_BAD_SIGNATURE, err).Func("LinkWallet").Message("error validating wallet link")
 	}
-	log.Debug("LinkWallet", "request", req.Msg)
 
 	rootKeyId, err := hex.DecodeString(req.Msg.RootKeyId)
 	if err != nil {
-		return nil, RiverErrorf(Err_BAD_LINK_WALLET_BAD_SIGNATURE, "LinkWallet: error decoding root key id: %v", err)
+		return nil, WrapRiverError(Err_BAD_LINK_WALLET_BAD_SIGNATURE, err).Func("LinkWallet").Message("error decoding root key id")
 	}
 
 	walletAddress, err := hex.DecodeString(req.Msg.WalletAddress[2:])
 	if err != nil {
-		return nil, RiverErrorf(Err_BAD_LINK_WALLET_BAD_SIGNATURE, "LinkWallet: error decoding wallet address: %v", err)
+		return nil, WrapRiverError(Err_BAD_LINK_WALLET_BAD_SIGNATURE, err).Func("LinkWallet").Message("error decoding wallet address")
 	}
 
 	rootKeySig, err := hex.DecodeString(req.Msg.RootKeySignature)
 	if err != nil {
-		return nil, RiverErrorf(Err_BAD_LINK_WALLET_BAD_SIGNATURE, "LinkWallet: error decoding root key signature: %v", err)
+		return nil, WrapRiverError(Err_BAD_LINK_WALLET_BAD_SIGNATURE, err).Func("LinkWallet").Message("error decoding root key signature")
 	}
 
 	walletSig, err := hex.DecodeString(req.Msg.WalletSignature)
 	if err != nil {
-		return nil, RiverErrorf(Err_BAD_LINK_WALLET_BAD_SIGNATURE, "LinkWallet: error decoding wallet signature: %v", err)
+		return nil, WrapRiverError(Err_BAD_LINK_WALLET_BAD_SIGNATURE, err).Func("LinkWallet").Message("error decoding wallet signature")
 	}
 	//  TODO once HNT-2344 is implemented, we will pass wallet address and cross wallet-rootkey signatures to the contract
 	err = s.walletLinkContract.LinkWallet(common.BytesToAddress(rootKeyId), common.Address(walletAddress), rootKeySig, walletSig)
 	if err != nil {
-		return nil, RiverErrorf(Err_BAD_LINK_WALLET_BAD_SIGNATURE, "LinkWallet: error linking wallet: %v", err)
+		return nil, WrapRiverError(Err_BAD_LINK_WALLET_BAD_SIGNATURE, err).Func("LinkWallet").Message("error linking wallet")
 	}
 
 	return &connect_go.Response[LinkWalletResponse]{Msg: &LinkWalletResponse{}}, nil
@@ -76,7 +77,6 @@ func (s *Service) linkWallet(ctx context.Context, log *slog.Logger, req *connect
 // 2. The root key signed the wallet address
 // 3. The root key is already registered (user stream already exist)
 func validateWalletLink(message *LinkWalletRequest) error {
-
 	walletAddressBytes, err := hex.DecodeString(message.WalletAddress[2:])
 	if err != nil {
 		return err

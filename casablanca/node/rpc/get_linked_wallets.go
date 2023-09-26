@@ -21,6 +21,8 @@ var (
 func (s *Service) GetLinkedWallets(ctx context.Context, req *connect_go.Request[GetLinkedWalletsRequest]) (*connect_go.Response[GetLinkedWalletsResponse], error) {
 	ctx, log := ctxAndLogForRequest(ctx, req)
 
+	log.Debug("GetLinkedWallets ENTER", "request", req.Msg)
+
 	res, err := s.getLinkedWallets(ctx, log, req)
 	if err != nil {
 		log.Warn("GetLinkedWallets ERROR", "error", err)
@@ -33,16 +35,14 @@ func (s *Service) GetLinkedWallets(ctx context.Context, req *connect_go.Request[
 }
 
 func (s *Service) getLinkedWallets(ctx context.Context, log *slog.Logger, req *connect_go.Request[GetLinkedWalletsRequest]) (*connect_go.Response[GetLinkedWalletsResponse], error) {
-	log.Debug("GetLinkedWallets", "request", req.Msg)
-
 	rootKeyId, err := hex.DecodeString(req.Msg.RootKeyId)
 	if err != nil {
-		return nil, RiverErrorf(Err_BAD_ROOT_KEY_ID, "GetLinkedWallets: error decoding root key id: %v", err)
+		return nil, WrapRiverError(Err_BAD_ROOT_KEY_ID, err).Func("GetLinkedWallets").Message("error decoding root key id")
 	}
 
 	wallets, err := s.walletLinkContract.GetLinkedWallets(common.BytesToAddress(rootKeyId))
 	if err != nil {
-		return nil, RiverErrorf(Err_INTERNAL, "GetLinkedWallets: error getting linked wallets: %v", err)
+		return nil, WrapRiverError(Err_INTERNAL, err).Func("GetLinkedWallets").Message("error getting linked wallets")
 	}
 
 	var addresses []string

@@ -26,23 +26,22 @@ func (s *Service) CreateStream(ctx context.Context, req *connect_go.Request[Crea
 
 	resMsg, err := s.createStream(ctx, log, req.Msg)
 	if err != nil {
-		log.Warn("CreateStream ERROR", "error", err)
 		createStreamRequests.Fail()
-		return nil, err
+		return nil, AsRiverError(err).Func("CreateStream").Tag("streamId", req.Msg.StreamId).LogWarn(log)
 	}
-	log.Debug("CreateStream: DONE", "response", resMsg)
+	log.Debug("DONE", "response", resMsg)
 	createStreamRequests.Pass()
 	return connect_go.NewResponse(resMsg), nil
 }
 
 func (s *Service) createStream(ctx context.Context, log *slog.Logger, req *CreateStreamRequest) (*CreateStreamResponse, error) {
 	if len(req.Events) == 0 {
-		return nil, RiverErrorf(Err_BAD_STREAM_CREATION_PARAMS, "CreateStream: no events")
+		return nil, RiverError(Err_BAD_STREAM_CREATION_PARAMS, "no events")
 	}
 
 	parsedEvents, err := ParseEvents(req.Events)
 	if err != nil {
-		return nil, RiverErrorf(Err_BAD_STREAM_CREATION_PARAMS, "CreateStream: error parsing events: %v", err)
+		return nil, err
 	}
 
 	log.Debug("CreateStream", "request", req, "events", parsedEvents)
@@ -50,7 +49,6 @@ func (s *Service) createStream(ctx context.Context, log *slog.Logger, req *Creat
 	if !s.skipDelegateCheck {
 		err = s.checkStaleDelegate(ctx, parsedEvents)
 		if err != nil {
-			log.Debug("CreateStream: stale delegate", "error", err)
 			return nil, err
 		}
 	}
@@ -59,11 +57,11 @@ func (s *Service) createStream(ctx context.Context, log *slog.Logger, req *Creat
 	inceptionPayload := inceptionEvent.Event.GetInceptionPayload()
 
 	if inceptionPayload == nil {
-		return nil, RiverErrorf(Err_BAD_STREAM_CREATION_PARAMS, "CreateStream: first event is not an inception event")
+		return nil, RiverError(Err_BAD_STREAM_CREATION_PARAMS, "first event is not an inception event")
 	}
 
 	if inceptionPayload.GetStreamId() != req.StreamId {
-		return nil, RiverErrorf(Err_BAD_STREAM_CREATION_PARAMS, "CreateStream: stream id in request does not match stream id in inception event")
+		return nil, RiverError(Err_BAD_STREAM_CREATION_PARAMS, "stream id in request does not match stream id in inception event")
 	}
 
 	if err := validateHashes(parsedEvents); err != nil {
@@ -88,7 +86,7 @@ func (s *Service) createStream(ctx context.Context, log *slog.Logger, req *Creat
 		streamView, err = s.createStream_UserSettings(ctx, log, parsedEvents, inception)
 
 	default:
-		err = RiverErrorf(Err_BAD_STREAM_CREATION_PARAMS, "CreateStream: invalid stream kind %T", inception)
+		err = RiverError(Err_BAD_STREAM_CREATION_PARAMS, "invalid stream kind")
 	}
 
 	if err != nil {
@@ -96,7 +94,7 @@ func (s *Service) createStream(ctx context.Context, log *slog.Logger, req *Creat
 	}
 
 	if streamView == nil {
-		return nil, RiverError(Err_INTERNAL, "CreateStream: stream not created, but there is no error")
+		return nil, RiverError(Err_INTERNAL, "stream not created, but there is no error")
 	}
 
 	return &CreateStreamResponse{
@@ -116,7 +114,7 @@ func (s *Service) createStream_Channel(
 	inception *ChannelPayload_Inception,
 ) (StreamView, error) {
 	if len(parsedEvents) != 2 {
-		return nil, RiverErrorf(Err_BAD_STREAM_CREATION_PARAMS, "CreateStream: channel stream must have exactly two events")
+		return nil, RiverError(Err_BAD_STREAM_CREATION_PARAMS, "channel stream must have exactly two events")
 	}
 	inceptionEvent := parsedEvents[0]
 	joinEvent := parsedEvents[1]
@@ -128,10 +126,10 @@ func (s *Service) createStream_Channel(
 
 	// Validation of creation params.
 	if !ValidChannelStreamId(inception.StreamId) {
-		return nil, RiverErrorf(Err_BAD_STREAM_ID, "CreateStream: invalid channel stream id '%s'", inception.StreamId)
+		return nil, RiverError(Err_BAD_STREAM_ID, "invalid channel stream id")
 	}
 	if inception.SpaceId == "" {
-		return nil, RiverErrorf(Err_BAD_STREAM_CREATION_PARAMS, "CreateStream: space id must not be empty for channel stream")
+		return nil, RiverError(Err_BAD_STREAM_CREATION_PARAMS, "space id must not be empty for channel stream")
 	}
 	if err := validateChannelJoinEvent(joinEvent); err != nil {
 		return nil, err
@@ -201,7 +199,7 @@ func (s *Service) createStream_Space(
 	inception *SpacePayload_Inception,
 ) (StreamView, error) {
 	if len(parsedEvents) != 2 {
-		return nil, RiverErrorf(Err_BAD_STREAM_CREATION_PARAMS, "CreateStream: space stream must have exactly two events")
+		return nil, RiverError(Err_BAD_STREAM_CREATION_PARAMS, "space stream must have exactly two events")
 	}
 	inceptionEvent := parsedEvents[0]
 	joinEvent := parsedEvents[1]
@@ -216,7 +214,7 @@ func (s *Service) createStream_Space(
 
 	// Validation of creation params.
 	if !ValidSpaceStreamId(inception.StreamId) {
-		return nil, RiverErrorf(Err_BAD_STREAM_ID, "CreateStream: invalid space stream id '%s'", inception.StreamId)
+		return nil, RiverError(Err_BAD_STREAM_ID, "invalid space stream id")
 	}
 	if err := validateSpaceJoinEvent(joinEvent); err != nil {
 		return nil, err
@@ -258,7 +256,7 @@ func (s *Service) createStream_User(
 	inception *UserPayload_Inception,
 ) (StreamView, error) {
 	if len(parsedEvents) != 1 {
-		return nil, RiverErrorf(Err_BAD_STREAM_CREATION_PARAMS, "CreateStream: user stream must have only one event")
+		return nil, RiverError(Err_BAD_STREAM_CREATION_PARAMS, "user stream must have only one event")
 	}
 
 	// Validation of creation params.
@@ -285,7 +283,7 @@ func (s *Service) createStream_UserDeviceKey(
 	inception *UserDeviceKeyPayload_Inception,
 ) (StreamView, error) {
 	if len(parsedEvents) != 1 {
-		return nil, RiverErrorf(Err_BAD_STREAM_CREATION_PARAMS, "CreateStream: user device key stream must have only one event")
+		return nil, RiverError(Err_BAD_STREAM_CREATION_PARAMS, "user device key stream must have only one event")
 	}
 
 	// Validation of creation params.
@@ -312,7 +310,7 @@ func (s *Service) createStream_UserSettings(
 	inception *UserSettingsPayload_Inception,
 ) (StreamView, error) {
 	if len(parsedEvents) != 1 {
-		return nil, RiverErrorf(Err_BAD_STREAM_CREATION_PARAMS, "CreateStream: user settings stream must have only one event")
+		return nil, RiverError(Err_BAD_STREAM_CREATION_PARAMS, "user settings stream must have only one event")
 	}
 
 	// Validation of creation params.
@@ -358,7 +356,7 @@ func (s *Service) authAddRemoveChannelsInSpace(
 		return err
 	}
 	if !allowed {
-		return status.Errorf(codes.PermissionDenied, "CreateStream: user %s is not allowed to create channels in space %s", userId, spaceId)
+		return status.Errorf(codes.PermissionDenied, "user %s is not allowed to create channels in space %s", userId, spaceId)
 	}
 	return nil
 }
@@ -369,7 +367,7 @@ func validateHashes(events []*ParsedEvent) error {
 			continue
 		}
 		if len(event.Event.PrevEvents) != 1 || !bytes.Equal(event.Event.PrevEvents[0], events[i-1].Hash) {
-			return RiverErrorf(Err_BAD_STREAM_CREATION_PARAMS, "CreateStream: bad hash on event index: %d", i)
+			return RiverError(Err_BAD_STREAM_CREATION_PARAMS, "bad hash on event", "event_index", i)
 		}
 	}
 	return nil
@@ -378,11 +376,11 @@ func validateHashes(events []*ParsedEvent) error {
 func validateChannelJoinEvent(event *ParsedEvent) error {
 	payload, ok := event.Event.GetPayload().(*StreamEvent_ChannelPayload)
 	if !ok {
-		return RiverErrorf(Err_BAD_STREAM_CREATION_PARAMS, "CreateStream: second event is not a channel payload")
+		return RiverError(Err_BAD_STREAM_CREATION_PARAMS, "second event is not a channel payload")
 	}
 	membershipPayload, ok := payload.ChannelPayload.GetContent().(*ChannelPayload_Membership)
 	if !ok {
-		return RiverErrorf(Err_BAD_STREAM_CREATION_PARAMS, "CreateStream: second event is not a channel join event")
+		return RiverError(Err_BAD_STREAM_CREATION_PARAMS, "second event is not a channel join event")
 	}
 	return validateJoinEventPayload(event, membershipPayload.Membership)
 }
@@ -390,11 +388,11 @@ func validateChannelJoinEvent(event *ParsedEvent) error {
 func validateSpaceJoinEvent(event *ParsedEvent) error {
 	payload, ok := event.Event.GetPayload().(*StreamEvent_SpacePayload)
 	if !ok {
-		return RiverErrorf(Err_BAD_STREAM_CREATION_PARAMS, "CreateStream: second event is not a channel payload")
+		return RiverError(Err_BAD_STREAM_CREATION_PARAMS, "second event is not a channel payload")
 	}
 	membershipPayload, ok := payload.SpacePayload.GetContent().(*SpacePayload_Membership)
 	if !ok {
-		return RiverErrorf(Err_BAD_STREAM_CREATION_PARAMS, "CreateStream: second event is not a channel join event")
+		return RiverError(Err_BAD_STREAM_CREATION_PARAMS, "second event is not a channel join event")
 	}
 	return validateJoinEventPayload(event, membershipPayload.Membership)
 
@@ -406,10 +404,10 @@ func validateJoinEventPayload(event *ParsedEvent, membership *Membership) error 
 		return err
 	}
 	if membership.GetOp() != MembershipOp_SO_JOIN {
-		return RiverErrorf(Err_BAD_STREAM_CREATION_PARAMS, "CreateStream: bad join op %d", membership.GetOp())
+		return RiverError(Err_BAD_STREAM_CREATION_PARAMS, "bad join op", "op", membership.GetOp())
 	}
 	if membership.UserId != creatorUserId {
-		return RiverErrorf(Err_BAD_STREAM_CREATION_PARAMS, "CreateStream: bad join user id '%s', created by '%s'", membership.UserId, creatorUserId)
+		return RiverError(Err_BAD_STREAM_CREATION_PARAMS, "bad join user", "id", membership.UserId, "created_by", creatorUserId)
 	}
 	return nil
 }

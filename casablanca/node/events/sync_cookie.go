@@ -38,7 +38,7 @@ func SyncCookieValidate(cookie *SyncCookie) error {
 		len(cookie.MiniblockHash) <= 0 ||
 		cookie.MinipoolInstance == "" ||
 		cookie.MinipoolSlot < 0 {
-		return RiverErrorf(Err_BAD_SYNC_COOKIE, "Bad SyncCookie %v", cookie)
+		return RiverError(Err_BAD_SYNC_COOKIE, "Bad SyncCookie", "cookie=", cookie)
 	}
 	return nil
 }

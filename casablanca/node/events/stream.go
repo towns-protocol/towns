@@ -308,11 +308,11 @@ func (s *Stream) addEventImpl(ctx context.Context, event *ParsedEvent) (*SyncCoo
 
 func (s *Stream) Sub(ctx context.Context, cookie *SyncCookie, receiver chan<- *StreamAndCookie) (*StreamAndCookie, error) {
 	if cookie.StreamId != s.streamId {
-		return nil, RiverErrorf(Err_BAD_SYNC_COOKIE, "Stream.Sub: cookie.StreamId=%s, s.streamId=%s", cookie.StreamId, s.streamId)
+		return nil, RiverError(Err_BAD_SYNC_COOKIE, "bad stream id", "cookie.StreamId", cookie.StreamId, "s.streamId", s.streamId)
 	}
 	slot := cookie.MinipoolSlot
 	if slot < 0 {
-		return nil, RiverErrorf(Err_BAD_SYNC_COOKIE, "Stream.Sub: bad slot, cookie.MinipoolSlot=%d", slot)
+		return nil, RiverError(Err_BAD_SYNC_COOKIE, "bad slot", "cookie.MinipoolSlot", slot).Func("Stream.Sub")
 	}
 
 	s.mu.Lock()
@@ -324,7 +324,7 @@ func (s *Stream) Sub(ctx context.Context, cookie *SyncCookie, receiver chan<- *S
 
 	if cookie.MinipoolInstance == s.view.minipool.instance {
 		if slot > int64(s.view.minipool.events.Len()) {
-			return nil, RiverErrorf(Err_BAD_SYNC_COOKIE, "Stream.Sub: bad slot")
+			return nil, RiverError(Err_BAD_SYNC_COOKIE, "Stream.Sub: bad slot")
 		}
 
 		if s.receivers == nil {

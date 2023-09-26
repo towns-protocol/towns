@@ -27,17 +27,17 @@ func CheckDelegateSig(expectedAddress []byte, devicePubKey, delegateSig []byte) 
 		return err
 	}
 	if !bytes.Equal(expectedAddress, recoveredAddress.Bytes()) {
-		return RiverErrorf(Err_BAD_EVENT_SIGNATURE, "Bad signature provided, computed address %x, event creatorAddress %x", recoveredAddress, expectedAddress)
+		return RiverError(Err_BAD_EVENT_SIGNATURE, "Bad signature provided", "computed_address", recoveredAddress, "event_creatorAddress", expectedAddress)
 	}
 	return nil
 }
 
 func RecoverEthereumMessageSignerAddress(content, signature []byte) (*common.Address, error) {
 	if len(signature) != 65 {
-		return nil, RiverErrorf(Err_BAD_EVENT_SIGNATURE, "Bad signature provided, expected 65 bytes, got %d", len(signature))
+		return nil, RiverError(Err_BAD_EVENT_SIGNATURE, "Bad signature provided, expected 65 bytes", "len", len(signature))
 	}
 	if signature[64] != 27 && signature[64] != 28 {
-		return nil, RiverErrorf(Err_BAD_EVENT_SIGNATURE, "Bad signature provided, expected recovery id 27 or 28, got %d", signature[64])
+		return nil, RiverError(Err_BAD_EVENT_SIGNATURE, "Bad signature provided, expected recovery id 27 or 28", "id", signature[64])
 	}
 	signature[64] -= 27
 
@@ -56,7 +56,7 @@ func CheckEthereumMessageSignature(expectedAddress []byte, devicePubKey, delegat
 		return err
 	}
 	if !bytes.Equal(expectedAddress, recoveredAddress.Bytes()) {
-		return RiverErrorf(Err_BAD_EVENT_SIGNATURE, "(Ethereum Message) Bad signature provided, computed address %x, expected address %x", recoveredAddress, expectedAddress)
+		return RiverError(Err_BAD_EVENT_SIGNATURE, "(Ethereum Message) Bad signature provided", "computed address", recoveredAddress, "expected address", expectedAddress)
 	}
 	return nil
 }

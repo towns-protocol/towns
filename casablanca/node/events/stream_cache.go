@@ -57,7 +57,7 @@ func (s *streamCacheImpl) GetStream(ctx context.Context, streamId string) (*Stre
 
 func (s *streamCacheImpl) CreateStream(ctx context.Context, streamId string, genesisMiniblockEvents []*ParsedEvent) (*Stream, StreamView, error) {
 	if existing, _ := s.cache.Load(streamId); existing != nil {
-		return nil, nil, RiverErrorf(Err_ALREADY_EXISTS, "stream already exists, %s", streamId)
+		return nil, nil, RiverError(Err_ALREADY_EXISTS, "stream already exists", "streamId", streamId)
 	}
 
 	stream, view, err := createStream(ctx, s.params, streamId, genesisMiniblockEvents)

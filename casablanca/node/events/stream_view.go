@@ -25,11 +25,11 @@ type StreamView interface {
 func MakeStreamView(preceedingMiniblocks [][]byte, streamData *storage.GetStreamFromLastSnapshotResult) (*streamViewImpl, error) {
 	// TODO: make sure both client and node can init from snapshot and remove preceedingMiniblocks param.
 	if len(preceedingMiniblocks) != streamData.StartMiniblockNumber {
-		return nil, RiverErrorf(Err_STREAM_BAD_EVENT, "MakeStreamView: not enogh preceeding blocks")
+		return nil, RiverError(Err_STREAM_BAD_EVENT, "not enogh preceeding blocks").Func("MakeStreamView")
 	}
 
 	if len(streamData.Miniblocks) <= 0 {
-		return nil, RiverErrorf(Err_STREAM_EMPTY, "MakeStreamView: no blocks")
+		return nil, RiverError(Err_STREAM_EMPTY, "no blocks").Func("MakeStreamView")
 	}
 
 	allBlocks := preceedingMiniblocks
@@ -50,11 +50,11 @@ func MakeStreamView(preceedingMiniblocks [][]byte, streamData *storage.GetStream
 
 	snapshot := miniblocks[streamData.StartMiniblockNumber].headerEvent.Event.GetMiniblockHeader().GetSnapshot()
 	if snapshot == nil {
-		return nil, RiverErrorf(Err_STREAM_BAD_EVENT, "MakeStreamView: no snapshot")
+		return nil, RiverError(Err_STREAM_BAD_EVENT, "no snapshot").Func("MakeStreamView")
 	}
 	streamId := snapshot.GetInceptionPayload().GetStreamId()
 	if streamId == "" {
-		return nil, RiverErrorf(Err_STREAM_BAD_EVENT, "MakeStreamView: no streamId")
+		return nil, RiverError(Err_STREAM_BAD_EVENT, "no streamId").Func("MakeStreamView")
 	}
 
 	minipoolEvents := NewOrderedMap[string, *ParsedEvent](len(streamData.MinipoolEnvelopes))
@@ -169,15 +169,15 @@ func MaxInt_(a, b int) int {
 func (r *streamViewImpl) copyAndApplyBlock(miniblock *miniblockInfo) (*streamViewImpl, error) {
 	header := miniblock.headerEvent.Event.GetMiniblockHeader()
 	if header == nil {
-		return nil, RiverErrorf(Err_INTERNAL, "streamViewImpl: non block event not allowed, stream=%s, event=%s", r.streamId, miniblock.headerEvent.ShortDebugStr())
+		return nil, RiverError(Err_INTERNAL, "streamViewImpl: non block event not allowed", "stream", r.streamId, "event", miniblock.headerEvent.ShortDebugStr())
 	}
 
 	lastBlock := r.lastBlock()
 	if header.MiniblockNum != lastBlock.header().MiniblockNum+1 {
-		return nil, RiverErrorf(Err_BAD_BLOCK, "streamViewImpl: block number mismatch, expected=%d, actual=%d", lastBlock.header().MiniblockNum+1, header.MiniblockNum)
+		return nil, RiverError(Err_BAD_BLOCK, "streamViewImpl: block number mismatch", "expected", lastBlock.header().MiniblockNum+1, "actual", header.MiniblockNum)
 	}
 	if !bytes.Equal(lastBlock.headerEvent.Hash, header.PrevMiniblockHash) {
-		return nil, RiverErrorf(Err_BAD_BLOCK, "streamViewImpl: block hash mismatch, expected=%s, actual=%s", FormatHashFromString(string(lastBlock.headerEvent.Hash)), FormatHashFromString(string(header.PrevMiniblockHash)))
+		return nil, RiverError(Err_BAD_BLOCK, "streamViewImpl: block hash mismatch", "expected", FormatHashFromString(string(lastBlock.headerEvent.Hash)), "actual", FormatHashFromString(string(header.PrevMiniblockHash)))
 	}
 
 	remaining := make(map[string]*ParsedEvent, MaxInt_(r.minipool.events.Len()-len(header.EventHashes), 0))
@@ -189,7 +189,7 @@ func (r *streamViewImpl) copyAndApplyBlock(miniblock *miniblockInfo) (*streamVie
 		if _, ok := remaining[e.HashStr]; ok {
 			delete(remaining, e.HashStr)
 		} else {
-			return nil, RiverErrorf(Err_BAD_BLOCK, "streamViewImpl: block event not found, stream=%s, event_hash=%s", r.streamId, FormatHashFromString(e.HashStr))
+			return nil, RiverError(Err_BAD_BLOCK, "streamViewImpl: block event not found", "stream", r.streamId, "event_hash", FormatHashFromString(e.HashStr))
 		}
 	}
 
@@ -230,7 +230,7 @@ func (r *streamViewImpl) InceptionPayload() IsInceptionPayload {
 
 func (r *streamViewImpl) forEachEvent(startBlock int, op func(e *ParsedEvent) (bool, error)) error {
 	if startBlock < 0 || startBlock > len(r.blocks) {
-		return RiverErrorf(Err_INVALID_ARGUMENT, "iterateEvents: bad startBlock, startBlock=%d", startBlock)
+		return RiverError(Err_INVALID_ARGUMENT, "iterateEvents: bad startBlock", "startBlock", startBlock)
 	}
 
 	for i := startBlock; i < len(r.blocks); i++ {

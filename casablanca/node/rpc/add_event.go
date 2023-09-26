@@ -384,11 +384,11 @@ func (s *Service) checkStaleDelegate(ctx context.Context, parsedEvents []*Parsed
 
 		creator, err := common.AddressHex(parsedEvent.Event.CreatorAddress)
 		if err != nil {
-			return RiverErrorf(Err_BAD_CREATOR_ADDRESS, "AddEvent: invalid user id: %v", err)
+			return err
 		}
 		userDeviceStreamId, err := common.UserDeviceKeyStreamIdFromId(creator)
 		if err != nil {
-			return RiverErrorf(Err_BAD_CREATOR_ADDRESS, "AddEvent: invalid user id: %v", err)
+			return err
 		}
 		_, userDeviceKeyStreamView, err := s.cache.GetStream(ctx, userDeviceStreamId)
 		if err != nil {
@@ -396,7 +396,7 @@ func (s *Service) checkStaleDelegate(ctx context.Context, parsedEvents []*Parsed
 				// no stale delegates yet
 				return nil
 			}
-			return RiverErrorf(Err_INTERNAL, "AddEvent: error getting user device key stream: %v", err)
+			return err
 		}
 		view := userDeviceKeyStreamView.(UserDeviceStreamView)
 
@@ -404,14 +404,14 @@ func (s *Service) checkStaleDelegate(ctx context.Context, parsedEvents []*Parsed
 
 		rdkId, err := crypto.RdkIdFromPubKey(signerPubKey)
 		if err != nil {
-			return RiverErrorf(Err_BAD_PUBLIC_KEY, "AddEvent: invalid signer public key: %v", err)
+			return err
 		}
 		isRevoked, err := view.IsDeviceIdRevoked(rdkId)
 		if err != nil {
-			return RiverErrorf(Err_INTERNAL, "AddEvent: error getting river device keys: %v", err)
+			return err
 		}
 		if isRevoked {
-			return RiverErrorf(Err_STALE_DELEGATE, "AddEvent: stale delegate")
+			return RiverError(Err_STALE_DELEGATE, "stale delegate").Func("AddEvent.checkStaleDelegate")
 		}
 	}
 	return nil

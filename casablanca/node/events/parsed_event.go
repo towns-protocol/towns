@@ -35,7 +35,7 @@ type FullEvent struct {
 func ParseEvent(envelope *Envelope) (*ParsedEvent, error) {
 	hash := TownsHash(envelope.Event)
 	if !bytes.Equal(hash, envelope.Hash) {
-		return nil, RiverErrorf(Err_BAD_EVENT_HASH, "Bad hash provided, computed %x, got %x", hash, envelope.Hash)
+		return nil, RiverError(Err_BAD_EVENT_HASH, "Bad hash provided", "computed", hash, "got", envelope.Hash)
 	}
 
 	signerPubKey, err := RecoverSignerPublicKey(hash, envelope.Signature)
@@ -56,13 +56,13 @@ func ParseEvent(envelope *Envelope) (*ParsedEvent, error) {
 			// TODO(HNT-1380): once we switch to the new signing model, remove this call
 			err2 := CheckEthereumMessageSignature(streamEvent.CreatorAddress, signerPubKey, streamEvent.DelegateSig)
 			if err2 != nil {
-				return nil, RiverErrorf(Err_BAD_EVENT_SIGNATURE, "%s and (old delegate) %s", err.Error(), err2.Error())
+				return nil, WrapRiverError(Err_BAD_EVENT_SIGNATURE, err).Message("Bad signature").Func("ParseEvent").Tag("error2", err2)
 			}
 		}
 	} else {
 		address := PublicKeyToAddress(signerPubKey)
 		if !bytes.Equal(address.Bytes(), streamEvent.CreatorAddress) {
-			return nil, RiverErrorf(Err_BAD_EVENT_SIGNATURE, "Bad signature provided, computed address %x, event creatorAddress %x", address, streamEvent.CreatorAddress)
+			return nil, RiverError(Err_BAD_EVENT_SIGNATURE, "Bad signature provided", "computed address", address, "event creatorAddress", streamEvent.CreatorAddress)
 		}
 	}
 

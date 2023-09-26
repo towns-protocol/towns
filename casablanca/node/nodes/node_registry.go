@@ -95,7 +95,7 @@ func LoadNodeRegistry(ctx context.Context, nodeRegistryPath string, localNode *L
 		n.nodesFlat = append(n.nodesFlat, nn)
 	}
 	if !localFound {
-		return nil, RiverErrorf(Err_UNKNOWN_NODE, "Local node not found in registry, localAddress=%s", localNode.NodeAddress)
+		return nil, RiverError(Err_UNKNOWN_NODE, "Local node not found in registry", "localAddress", localNode.NodeAddress)
 	}
 	return n, nil
 }
@@ -117,7 +117,7 @@ func MakeSingleNodeRegistry(ctx context.Context, localNode *LocalNode) *nodeRegi
 func (n *nodeRegistryImpl) getRemoteStubForAddress(address string) (StreamServiceClient, error) {
 	node := n.nodes[address]
 	if node == nil {
-		return nil, RiverErrorf(Err_UNKNOWN_NODE, "No record for node, address=%s", address)
+		return nil, RiverError(Err_UNKNOWN_NODE, "No record for node", "address", address)
 	}
 
 	if node.local {
@@ -150,7 +150,7 @@ func (n *nodeRegistryImpl) GetRemoteSyncStubForAddress(address string) (StreamSe
 	if stub != nil {
 		return stub, nil
 	} else {
-		return nil, RiverErrorf(Err_INTERNAL, "Remote stub requested for local node, address=%s", address)
+		return nil, RiverError(Err_INTERNAL, "Remote stub requested for local node", "address", address)
 	}
 }
 
@@ -160,7 +160,7 @@ func (n *nodeRegistryImpl) NumNodes() int {
 
 func (n *nodeRegistryImpl) GetNodeAddressByIndex(index int) (string, error) {
 	if index < 0 || index >= len(n.nodesFlat) {
-		return "", RiverErrorf(Err_INTERNAL, "Invalid node index, index=%d", index)
+		return "", RiverError(Err_INTERNAL, "Invalid node index", "index", index)
 	}
 	return n.nodesFlat[index].address, nil
 }

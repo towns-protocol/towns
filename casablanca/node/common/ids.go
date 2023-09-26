@@ -75,7 +75,7 @@ func CheckUserStreamIdForPrefix(streamId string, creatorUserId []byte, expectedP
 	if streamId == expected {
 		return nil
 	}
-	return RiverErrorf(Err_BAD_STREAM_ID, "Stream ID doesn't match creator address or expected prefix, streamId=%s, expected=%s", streamId, expected)
+	return RiverError(Err_BAD_STREAM_ID, "Stream ID doesn't match creator address or expected prefix", "streamId", streamId, "expected", expected)
 }
 
 func CheckUserStreamId(streamId string, creatorUserId []byte) error {
@@ -92,14 +92,14 @@ func CheckUserSettingsStreamId(streamId string, creatorUserId []byte) error {
 
 func UserDeviceKeyStreamIdFromId(id string) (string, error) {
 	if len(id) != 42 {
-		return "", fmt.Errorf("invalid id length %s", id)
+		return "", RiverError(Err_BAD_STREAM_ID, "invalid id length", "id", id)
 	}
 	return STREAM_USER_DEVICE_KEY_PREFIX + "-" + id, nil
 }
 
 func UserStreamIdFromId(id string) (string, error) {
 	if len(id) != 42 {
-		return "", fmt.Errorf("invalid id length %s", id)
+		return "", RiverError(Err_BAD_STREAM_ID, "invalid id length", "id", id)
 	}
 	return STREAM_USER_PREFIX + "-" + id, nil
 }
