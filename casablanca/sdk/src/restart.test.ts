@@ -64,7 +64,6 @@ describe('nodeRestart', () => {
             bobsContext,
             make_SpacePayload_Inception({
                 streamId: spacedStreamId,
-                name: 'Bobs space',
             }),
             [],
         )

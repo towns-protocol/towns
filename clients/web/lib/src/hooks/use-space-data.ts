@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
     Channel,
     ChannelGroup,
@@ -15,8 +15,13 @@ import { useRoom, useRoomNames } from './use-room'
 import { useZionContext } from '../components/ZionContextProvider'
 import { useSpaceContext } from '../components/SpaceContextProvider'
 import { useCasablancaStream } from './CasablancClient/useCasablancaStream'
-import { Stream } from '@river/sdk'
+import { Client as CasablancaClient, Stream, isSpaceStreamId } from '@river/sdk'
 import isEqual from 'lodash/isEqual'
+import { useSpaceDapp } from './use-space-dapp'
+import { SpaceInfo } from '@river/web3'
+import { useWeb3Context } from '../components/Web3ContextProvider'
+import { useQuery } from '../query/queryClient'
+import { blockchainKeys } from '../query/query-keys'
 
 /// returns default space if no space slug is provided
 export function useSpaceData(inSpaceId?: RoomIdentifier): SpaceData | undefined {
@@ -181,13 +186,104 @@ function toChannelGroups(
     return [toChannelGroup('Channels', children, roomNames)]
 }
 
+export function useSpaceNames(client?: CasablancaClient) {
+    const { provider, chain } = useWeb3Context()
+
+    const spaceDapp = useSpaceDapp({
+        chainId: chain?.id,
+        provider,
+    })
+
+    const isEnabled = spaceDapp && client && client.streams.size > 0
+
+    const streamSize = client?.streams.size
+    const spaceIds = useMemo(() => {
+        if (!isEnabled || !client || streamSize == 0) {
+            return []
+        }
+        return Array.from(client.streams.keys()).filter((stream) => isSpaceStreamId(stream))
+    }, [isEnabled, client, streamSize])
+
+    const getSpaceNames = useCallback(
+        async function (): Promise<SpaceInfo[]> {
+            if (!spaceDapp || !isEnabled) {
+                return []
+            }
+            const getSpaceInfoPromises: Promise<SpaceInfo | undefined>[] = []
+            for (const streamId of spaceIds) {
+                getSpaceInfoPromises.push(spaceDapp.getSpaceInfo(streamId))
+            }
+            const spaceInfos = await Promise.all(getSpaceInfoPromises)
+            return spaceInfos.filter((spaceInfo) => spaceInfo !== undefined) as SpaceInfo[]
+        },
+        [spaceDapp, isEnabled, spaceIds],
+    )
+
+    const queryData = useQuery<SpaceInfo[]>(
+        blockchainKeys.spaceNames(spaceIds),
+        getSpaceNames,
+        // options for the query.
+        {
+            enabled: isEnabled,
+            refetchOnMount: true,
+        },
+    )
+
+    return {
+        data: queryData.data,
+        isLoading: queryData.isLoading,
+    }
+}
+
+export function useSpaceName(spaceId: string) {
+    const { provider, chain } = useWeb3Context()
+    const spaceDapp = useSpaceDapp({
+        chainId: chain?.id,
+        provider,
+    })
+
+    const isEnabled = spaceDapp && spaceId.length > 0
+
+    const getSpaceName = useCallback(
+        async function () {
+            if (!spaceDapp || !isEnabled || !spaceId || spaceId.length === 0) {
+                return undefined
+            }
+            const info = await spaceDapp.getSpaceInfo(spaceId)
+            return info?.name ?? ''
+        },
+        [spaceDapp, isEnabled, spaceId],
+    )
+
+    const {
+        isLoading,
+        data: spaceName,
+        error,
+    } = useQuery(
+        blockchainKeys.spaceName(spaceId),
+        getSpaceName,
+        // options for the query.
+        {
+            enabled: isEnabled,
+            refetchOnMount: true,
+        },
+    )
+
+    return {
+        isLoading,
+        spaceName,
+        error,
+    }
+}
+
 function useSpaceRollup(streamId: RoomIdentifier | undefined): SpaceData | undefined {
     const { casablancaClient } = useZionContext()
     const stream = useCasablancaStream(streamId)
+    const { isLoading, spaceName, error } = useSpaceName(streamId?.networkId ?? '')
     const [space, setSpace] = useState<SpaceData | undefined>(undefined)
 
     useEffect(() => {
-        if (!stream || !casablancaClient) {
+        if (!stream || !casablancaClient || isLoading) {
             return
         }
         if (stream.view.contentKind !== 'spaceContent') {
@@ -200,12 +296,13 @@ function useSpaceRollup(streamId: RoomIdentifier | undefined): SpaceData | undef
         // wrap the update op, we get the channel ids and
         // rollup the space channels into a space
         const update = () => {
-            const memberships = stream.view.getMemberships()
-            if (!memberships.isMemberJoined()) {
-                return
-            }
             const channelIds = Array.from(stream.view.spaceContent.spaceChannelsMetadata.keys())
-            const newSpace = rollupSpace(stream, userId, channelIds)
+            console.log(
+                `useSpaceRollup: updating space ${stream.streamId} with spaceName ${
+                    spaceName ?? ''
+                }`,
+            )
+            const newSpace = rollupSpace(stream, userId, channelIds, spaceName)
             setSpace((prev) => {
                 if (isEqual(prev, newSpace)) {
                     return prev
@@ -236,11 +333,16 @@ function useSpaceRollup(streamId: RoomIdentifier | undefined): SpaceData | undef
             casablancaClient.off('streamMyMembershipUpdated', onSpaceChannelUpdated)
             setSpace(undefined)
         }
-    }, [casablancaClient, stream])
+    }, [casablancaClient, stream, isLoading, spaceName, error])
     return space
 }
 
-function rollupSpace(stream: Stream, userId: string, channels: string[]): SpaceData | undefined {
+function rollupSpace(
+    stream: Stream,
+    userId: string,
+    channels: string[],
+    spaceName?: string,
+): SpaceData | undefined {
     if (stream.view.contentKind !== 'spaceContent') {
         throw new Error('stream is not a space')
     }
@@ -249,7 +351,7 @@ function rollupSpace(stream: Stream, userId: string, channels: string[]): SpaceD
 
     return {
         id: makeRoomIdentifier(stream.view.streamId),
-        name: stream.view.spaceContent.name ?? stream.view.streamId,
+        name: spaceName ?? stream.view.streamId,
         avatarSrc: '',
         channelGroups: [
             {

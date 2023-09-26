@@ -6,10 +6,9 @@ import {
 
 export async function createCasablancaSpace(
     casablancaClient: CasablancaClient,
-    spaceName: string,
     networkId: string | undefined,
 ): Promise<CasablancaStreamIdentifier> {
-    const result = await casablancaClient.createSpace(networkId, { name: spaceName })
+    const result = await casablancaClient.createSpace(networkId)
     await casablancaClient.waitForStream(result.streamId)
     return makeCasablancaStreamIdentifier(result.streamId)
 }

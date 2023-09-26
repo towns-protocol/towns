@@ -176,7 +176,7 @@ export const converse = async (conversation: string[][], testName: string): Prom
 
         const spaceId = makeUniqueSpaceStreamId()
         log(`${testName} creating town ${spaceId}`)
-        await alice.client.createSpace(spaceId, { name: "Bob's Space" })
+        await alice.client.createSpace(spaceId)
         await alice.client.waitForStream(spaceId)
 
         // Invite and join space.

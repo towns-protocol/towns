@@ -4,9 +4,11 @@ import { makeRoomIdentifier } from '../../types/room-identifier'
 import { SpaceItem } from '../../types/zion-types'
 import isEqual from 'lodash/isEqual'
 import { SnapshotCaseType } from '@river/proto'
+import { useSpaceNames } from '../../hooks/use-space-data'
 
 export function useCasablancaSpaces(casablancaClient?: CasablancaClient): SpaceItem[] {
     const [spaces, setSpaces] = useState<SpaceItem[]>([])
+    const { data: spaceInfo } = useSpaceNames(casablancaClient)
 
     useEffect(() => {
         if (!casablancaClient) {
@@ -25,7 +27,8 @@ export function useCasablancaSpaces(casablancaClient?: CasablancaClient): SpaceI
                     (stream: Stream) =>
                         ({
                             id: makeRoomIdentifier(stream.view.streamId),
-                            name: stream.view.spaceContent.name ?? '',
+                            name:
+                                spaceInfo?.find((i) => i.networkId == stream.streamId)?.name ?? '',
                             avatarSrc: '',
                         } satisfies SpaceItem),
                 )

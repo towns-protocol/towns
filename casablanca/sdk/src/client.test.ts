@@ -96,7 +96,7 @@ describe('clientTest', () => {
         const bobsSpaceId = makeSpaceStreamId('bobs-space-' + genId())
         const bobsChannelName = 'Bobs channel'
         const bobsChannelTopic = 'Bobs channel topic'
-        await expect(bobsClient.createSpace(bobsSpaceId, { name: "Bob's Space" })).toResolve()
+        await expect(bobsClient.createSpace(bobsSpaceId)).toResolve()
 
         await expect(
             bobsClient.createChannel(
@@ -301,7 +301,7 @@ describe('clientTest', () => {
         await expect(bobsClient.initCrypto()).toResolve()
         await bobsClient.startSync()
 
-        const spaceId = bobsClient.createSpace(undefined, { name: 'Bobs space' })
+        const spaceId = bobsClient.createSpace(undefined)
         await expect(spaceId).toResolve()
         const { streamId } = await spaceId
         const channelName = 'Bobs channel'
@@ -377,7 +377,7 @@ describe('clientTest', () => {
         await bobsClient.startSync()
 
         const bobsSpaceId = makeSpaceStreamId('bobs-space-' + genId())
-        await expect(bobsClient.createSpace(bobsSpaceId, { name: "Bob's Space" })).toResolve()
+        await expect(bobsClient.createSpace(bobsSpaceId)).toResolve()
 
         const bobsChannelId = makeChannelStreamId('bobs-channel-' + genId())
         const bobsChannelName = 'Bobs channel'
@@ -423,7 +423,7 @@ describe('clientTest', () => {
         await bobsClient.startSync()
 
         const bobsSpaceId = makeSpaceStreamId('bobs-space-' + genId())
-        await expect(bobsClient.createSpace(bobsSpaceId, { name: "Bob's Space" })).toResolve()
+        await expect(bobsClient.createSpace(bobsSpaceId)).toResolve()
 
         const bobsChannelId = makeChannelStreamId('bobs-channel-' + genId())
         const bobsChannelName = 'Bobs channel'
@@ -774,7 +774,7 @@ describe('clientTest', () => {
         await bobsClient.startSync()
 
         const bobsSpaceId = makeSpaceStreamId('bobs-space-' + genId())
-        await expect(bobsClient.createSpace(bobsSpaceId, { name: "Bob's Space" })).toResolve()
+        await expect(bobsClient.createSpace(bobsSpaceId)).toResolve()
 
         const bobsChannelId = makeChannelStreamId('bobs-channel-' + genId())
         const bobsChannelName = 'Bobs channel'

@@ -359,10 +359,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         stream.initialize(streamAndCookie, snapshot, miniblocks)
     }
 
-    async createSpace(
-        spaceId: string | undefined,
-        metadata: { name: string },
-    ): Promise<{ streamId: string }> {
+    async createSpace(spaceId: string | undefined): Promise<{ streamId: string }> {
         spaceId = spaceId ?? makeUniqueSpaceStreamId()
         this.logCall('createSpace', spaceId)
         assert(this.userStreamId !== undefined, 'streamId must be set')
@@ -374,7 +371,6 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
             this.signerContext,
             make_SpacePayload_Inception({
                 streamId,
-                name: metadata.name,
             }),
             [],
         )

@@ -5,6 +5,7 @@ import { User, RoomMember, Room, Membership, getMembershipFor } from '../types/z
 import { makeRoomIdentifier } from '../types/room-identifier'
 
 import { Client as CasablancaClient, isSpaceStreamId, isChannelStreamId, Stream } from '@river/sdk'
+import { SpaceInfo } from '@river/web3'
 
 export type CasablancaStoreStates = {
     loginStatus: LoginStatus
@@ -50,7 +51,11 @@ export function toZionCasablancaUser(theUser: string | undefined): User {
  * @param client - The Casablanca client.
  * @returns Room entity filled with data for specific stream. Throw error if membership is not valid or streamId is not associated with a channel or space.
  */
-export function toZionCasablancaRoom(streamId: string, client: CasablancaClient): Room {
+export function toZionCasablancaRoom(
+    streamId: string,
+    client: CasablancaClient,
+    spaceInfos?: SpaceInfo[],
+): Room {
     //reject if client is not defined
     if (!client) {
         throw new Error('Client not defined')
@@ -60,6 +65,7 @@ export function toZionCasablancaRoom(streamId: string, client: CasablancaClient)
     if (!userId) {
         throw new Error('User not logged in')
     }
+    const info = spaceInfos ?? []
 
     //reject if streamId is not associated with a channel or space
     if (!isSpaceStreamId(streamId) && !isChannelStreamId(streamId)) {
@@ -87,7 +93,7 @@ export function toZionCasablancaRoom(streamId: string, client: CasablancaClient)
             .get(parentSpace)
             ?.view.spaceContent.spaceChannelsMetadata.get(streamId)?.topic
     } else {
-        name = client.streams.get(streamId)?.view.spaceContent.name ?? ''
+        name = info.filter((i) => i !== undefined).find((i) => i.networkId == streamId)?.name ?? ''
     }
 
     return {

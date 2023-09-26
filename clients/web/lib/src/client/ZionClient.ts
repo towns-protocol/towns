@@ -467,11 +467,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
                         if (!this.casablancaClient) {
                             throw new Error("Casablanca client doesn't exist")
                         }
-                        await createCasablancaSpace(
-                            this.casablancaClient,
-                            context.spaceName ?? 'Untitled Space',
-                            roomId.networkId,
-                        )
+                        await createCasablancaSpace(this.casablancaClient, roomId.networkId)
                         console.log('[waitForCreateSpaceTransaction] Space stream created', roomId)
 
                         await this.createSpaceDefaultChannelRoom(
@@ -541,7 +537,7 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
                 if (!this.casablancaClient) {
                     throw new Error("Casablanca client doesn't exist")
                 }
-                return createCasablancaSpace(this.casablancaClient, createSpaceInfo.name, networkId)
+                return createCasablancaSpace(this.casablancaClient, networkId)
             default:
                 staticAssertNever(createSpaceInfo.spaceProtocol)
         }

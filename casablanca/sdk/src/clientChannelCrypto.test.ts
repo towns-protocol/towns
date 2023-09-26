@@ -48,7 +48,7 @@ describe('clientCryptoTest', () => {
 
         // bob creates space, channel and invites alice
         const bobsSpaceId = makeSpaceStreamId('bobs-space-' + genId())
-        await expect(bobsClient.createSpace(bobsSpaceId, { name: "Bob's Space" })).toResolve()
+        await expect(bobsClient.createSpace(bobsSpaceId)).toResolve()
 
         const bobsChannelId = makeChannelStreamId('bobs-channel-' + genId())
         const bobsChannelName = 'Bobs channel'
@@ -142,7 +142,7 @@ describe('clientCryptoTest', () => {
 
         // bob creates space, channel and invites alice
         const bobsSpaceId = makeSpaceStreamId('bobs-space-' + genId())
-        await expect(bobsClient.createSpace(bobsSpaceId, { name: "Bob's Space" })).toResolve()
+        await expect(bobsClient.createSpace(bobsSpaceId)).toResolve()
 
         const bobsChannelId = makeChannelStreamId('bobs-channel-' + genId())
         const bobsChannelName = 'Bobs channel'
@@ -248,7 +248,7 @@ describe('clientCryptoTest', () => {
 
         // bob creates space, channel and invites alice
         const bobsSpaceId = makeSpaceStreamId('bobs-space-' + genId())
-        await expect(bobsClient.createSpace(bobsSpaceId, { name: "Bob's Space" })).toResolve()
+        await expect(bobsClient.createSpace(bobsSpaceId)).toResolve()
 
         const bobsChannelId = makeChannelStreamId('bobs-channel-' + genId())
         const bobsChannelName = 'Bobs channel'
@@ -343,7 +343,7 @@ describe('clientCryptoTest', () => {
 
         // bob creates space, channel and invites alice
         const bobsSpaceId = makeSpaceStreamId('bobs-space-' + genId())
-        await expect(bobsClient.createSpace(bobsSpaceId, { name: "Bob's Space" })).toResolve()
+        await expect(bobsClient.createSpace(bobsSpaceId)).toResolve()
 
         const bobsChannelId = makeChannelStreamId('bobs-channel-' + genId())
         const bobsChannelName = 'Bobs channel'
@@ -439,7 +439,7 @@ describe('clientCryptoTest', () => {
 
         // bob creates space, channel and invites alice
         const bobsSpaceId = makeSpaceStreamId('bobs-space-' + genId())
-        await expect(bobsClient.createSpace(bobsSpaceId, { name: "Bob's Space" })).toResolve()
+        await expect(bobsClient.createSpace(bobsSpaceId)).toResolve()
 
         const bobsChannelId = makeChannelStreamId('bobs-channel-' + genId())
         const bobsChannelName = 'Bobs channel'
@@ -539,7 +539,7 @@ describe('clientCryptoTest', () => {
 
         // bob creates space, channel and invites alice
         const bobsSpaceId = makeSpaceStreamId('bobs-space-' + genId())
-        await expect(bobsClient.createSpace(bobsSpaceId, { name: "Bob's Space" })).toResolve()
+        await expect(bobsClient.createSpace(bobsSpaceId)).toResolve()
 
         const bobsChannelId = makeChannelStreamId('bobs-channel-' + genId())
         const bobsChannelName = 'Bobs channel'
@@ -637,7 +637,7 @@ describe('clientCryptoTest', () => {
 
         // bob creates space, channel and invites alice
         const bobsSpaceId = makeSpaceStreamId('bobs-space-' + genId())
-        await expect(bobsClient.createSpace(bobsSpaceId, { name: "Bob's Space" })).toResolve()
+        await expect(bobsClient.createSpace(bobsSpaceId)).toResolve()
 
         const bobsChannelId = makeChannelStreamId('bobs-channel-' + genId())
         const bobsChannelName = 'Bobs channel'
@@ -812,7 +812,7 @@ describe('clientCryptoTest', () => {
 
         // bob creates space, channel and invites alice
         const bobsSpaceId = makeSpaceStreamId('bobs-space-' + genId())
-        await expect(bobsClient.createSpace(bobsSpaceId, { name: "Bob's Space" })).toResolve()
+        await expect(bobsClient.createSpace(bobsSpaceId)).toResolve()
 
         const bobsChannelId = makeChannelStreamId('bobs-channel-' + genId())
         const bobsChannelName = 'Bobs channel'
@@ -892,7 +892,7 @@ describe('clientCryptoTest', () => {
 
         // bob creates space, channel and invites alice
         const bobsSpaceId = makeSpaceStreamId('bobs-space-' + genId())
-        await expect(bobsClient.createSpace(bobsSpaceId, { name: "Bob's Space" })).toResolve()
+        await expect(bobsClient.createSpace(bobsSpaceId)).toResolve()
 
         const bobsChannelId = makeChannelStreamId('bobs-channel-' + genId())
         const bobsChannelName = 'Bobs channel'
@@ -971,7 +971,7 @@ describe('clientCryptoTest', () => {
 
         // bob creates space, channel and invites alice
         const bobsSpaceId = makeSpaceStreamId('bobs-space-' + genId())
-        await expect(bobsClient.createSpace(bobsSpaceId, { name: "Bob's Space" })).toResolve()
+        await expect(bobsClient.createSpace(bobsSpaceId)).toResolve()
 
         const bobsChannelId = makeChannelStreamId('bobs-channel-' + genId())
         const bobsChannelName = 'Bobs channel'

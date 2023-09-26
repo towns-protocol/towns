@@ -19,6 +19,8 @@ export const blockchainKeys = {
     roles: (spaceId: string) => [QuerKeysEnum.FirstBySpaceIds, spaceId] as const,
     roleDetails: (spaceId: string, roleId: number) =>
         [QuerKeysEnum.FirstBySpaceIds, spaceId, QuerKeysEnum.ThenByRoleIds, roleId] as const,
+    spaceName: (spaceId: string) => [QuerKeysEnum.FirstBySpaceIds, spaceId] as const,
+    spaceNames: (spaceIds: string[]) => [QuerKeysEnum.FirstBySpaceIds, spaceIds] as const,
     multipleRoleDetails: (spaceId: string, roleIds?: number[]) =>
         roleIds
             ? ([

@@ -184,7 +184,6 @@ func createSpace(ctx context.Context, wallet *crypto.Wallet, client protocolconn
 		wallet,
 		events.Make_SpacePayload_Inception(
 			spaceStreamId,
-			"test space",
 			nil,
 		),
 		nil,

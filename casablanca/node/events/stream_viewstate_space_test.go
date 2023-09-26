@@ -29,7 +29,6 @@ func makeTestSpaceStream(t *testing.T, wallet *crypto.Wallet, userId string, spa
 		wallet,
 		Make_SpacePayload_Inception(
 			spaceId,
-			spaceId,
 			streamSettings,
 		),
 		nil,

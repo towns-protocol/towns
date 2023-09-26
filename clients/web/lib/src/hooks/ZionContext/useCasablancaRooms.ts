@@ -3,9 +3,11 @@ import { useEffect, useState } from 'react'
 import { toZionCasablancaRoom } from '../../store/use-casablanca-store'
 import { Room } from '../../types/zion-types'
 import isEqual from 'lodash/isEqual'
+import { useSpaceNames } from '../use-space-data'
 
 export function useCasablancaRooms(client?: CasablancaClient): Record<string, Room | undefined> {
     const [rooms, setRooms] = useState<Record<string, Room | undefined>>({})
+    const { data: spaceInfo, isLoading } = useSpaceNames(client)
 
     //TODO: placeholder for working with Rooms in Casablanca
     useEffect(() => {
@@ -20,8 +22,7 @@ export function useCasablancaRooms(client?: CasablancaClient): Record<string, Ro
             if (!memberships?.isMemberJoined()) {
                 return
             }
-
-            const newRoom = streamId ? toZionCasablancaRoom(streamId, client) : undefined
+            const newRoom = streamId ? toZionCasablancaRoom(streamId, client, spaceInfo) : undefined
             setRooms((prev) =>
                 isEqual(prev[streamId], newRoom) ? prev : { ...prev, [streamId]: newRoom },
             )
@@ -34,7 +35,7 @@ export function useCasablancaRooms(client?: CasablancaClient): Record<string, Ro
                     return isSpaceStreamId(stream) || isChannelStreamId(stream)
                 })
                 .reduce((acc: Record<string, Room | undefined>, stream: string) => {
-                    acc[stream] = toZionCasablancaRoom(stream, client)
+                    acc[stream] = toZionCasablancaRoom(stream, client, spaceInfo)
                     return acc
                 }, {})
             setRooms(allChannelsAndSpaces)
@@ -66,6 +67,6 @@ export function useCasablancaRooms(client?: CasablancaClient): Record<string, Ro
             client.off('userLeftStream', onUserLeftStream)
             setRooms({})
         }
-    }, [client])
+    }, [client, isLoading, spaceInfo])
     return rooms
 }
