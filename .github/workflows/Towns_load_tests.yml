@@ -1,0 +1,136 @@
+name: 'Run Towns Load Tests'
+env:
+    FOUNDRY_VERSION: nightly-ca67d15f4abd46394b324c50e21e66f306a1162d
+
+on:
+    workflow_dispatch: # A load test was manually triggered
+        inputs:
+            test_type:
+                description: 'Test Type'
+                required: true
+                default: 'all'
+                type: choice
+                options:
+                    - receiver
+                    - initiator
+                    - all
+    schedule: # A load test was scheduled
+        - cron: '0 0 * * *' # Every day at midnight UTC
+jobs:
+    set-test-type:
+        runs-on: ubuntu-latest
+        outputs:
+            test_type: ${{ steps.set-test-type.outputs.test_type }}
+        steps:
+            - name: Set test_type for cron jobs
+              id: set-test-type
+              run: |
+                  if [ "${{ github.event_name }}" == "schedule" ]; then
+                      echo "::set-output name=test_type::all"
+                  else
+                      echo "::set-output name=test_type::${{ github.event.inputs.test_type }}"
+                  fi
+
+    run_load_tests:
+        needs: set-test-type
+        runs-on: ubuntu-latest-8-cores
+        timeout-minutes: 30
+        services:
+            postgres-casablanca:
+                image: postgres:latest
+                env:
+                    POSTGRES_USER: postgres
+                    POSTGRES_PASSWORD: postgres
+                ports:
+                    # Maps tcp port 5433 on service container to the host
+                    - 5433:5432
+                options: >-
+                    --health-cmd pg_isready
+                    --health-interval 10s
+                    --health-timeout 5s
+                    --health-retries 5
+                    --name casablanca_postgres_container
+            redis:
+                image: redis:latest
+                ports:
+                    - '6379:6379'
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v3
+
+            - name: Increase max_connections in Postgres
+              run: |
+                  docker exec -i casablanca_postgres_container bash << EOF
+                    echo 'max_connections = 1000' >> /var/lib/postgresql/data/postgresql.conf
+                    echo 'shared_buffers = 2GB' >> /var/lib/postgresql/data/postgresql.conf
+                  EOF
+                  docker restart --time 0 casablanca_postgres_container
+                  sleep 5
+
+            - name: Git submodules
+              run: git submodule update --init --recursive
+
+            - name: Setup Go
+              uses: actions/setup-go@v3
+              with:
+                  go-version: '1.20'
+                  cache: true
+                  cache-dependency-path: |
+                      servers/**/go.sum
+                      casablanca/node/go.sum
+
+            - name: Install Foundry
+              uses: foundry-rs/foundry-toolchain@v1
+              with:
+                  version: ${{ env.FOUNDRY_VERSION }}
+
+            - name: Install Forge modules
+              run: ./scripts/install-deps.sh
+
+            - uses: actions/setup-node@v3
+              with:
+                  node-version: '18.13.0'
+                  cache: 'yarn'
+
+            - name: Install node dependencies
+              run: yarn install --immutable
+
+            - name: Build town types
+              run: ./scripts/build-town-types.sh localhost --frozen
+
+            - name: Start anvil
+              # Start anvil in the background, and wait for it to be ready
+              run: anvil & ./scripts/wait-for-blockchain.sh
+
+            - name: Deploy local zion governance contracts
+              run: ./scripts/deploy-zion-governance-contracts.sh
+
+            - name: Casablanca create db
+              run: psql -h localhost -p 5433 -U postgres -f scripts/sql/create_db.sql
+              working-directory: casablanca
+              env:
+                  POSTGRES_PASSWORD: postgres
+                  PGPASSWORD: postgres
+
+            - name: Start Casablanca node with entitlements
+              run: yarn csb:start:entitlements &
+
+            - name: Wait for Casablanca (with entitlements) node to be up
+              run: yarn csb:wait:entitlements
+
+            - name: Run Load Tests
+              working-directory: ./clients/web/lib
+              run: DATADOG_API_KEY=${{ secrets.DD_TOWNS_LOAD_TESTING_KEY }} yarn test:load:${{ needs.set-test-type.outputs.test_type }}
+
+            # If failed, we send a slack notification
+            - name: Slack notification
+              if: failure() && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
+              uses: rtCamp/action-slack-notify@v2
+              env:
+                  SLACK_WEBHOOK: ${{ secrets.SLACK_CI_CHANNEL_WEBHOOK_URL }}
+                  SLACK_TITLE: 'Failure'
+                  SLACK_USERNAME: 'CI'
+                  SLACK_ICON_EMOJI: ':boom:'
+                  SLACK_COLOR: '#FF0000'
+                  SLACK_MESSAGE: 'CI Failure on ${{ github.repository }}'

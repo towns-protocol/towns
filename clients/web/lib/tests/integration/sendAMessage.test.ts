@@ -2,7 +2,6 @@
  * sendAMessage
  *
  * // https://www.npmjs.com/package/jest-runner-groups
- * @group integration/load1
  * @group casablanca
  * @group dendrite
  *
