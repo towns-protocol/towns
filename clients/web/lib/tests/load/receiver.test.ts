@@ -66,7 +66,7 @@ describe('loadtest1', () => {
         //Send metric to Datadog
         const API_KEY = process.env.DATADOG_API_KEY
         // Define metric properties
-        const METRIC_NAME = 'loadtest_1.execution_time'
+        const METRIC_NAME = 'loadtest:receiver.execution_time'
         const METRIC_VALUE = endTime - startTime
         const HOSTNAME = 'my_host'
         const TAGS = 'environment:test'
