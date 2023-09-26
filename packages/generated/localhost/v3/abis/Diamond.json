@@ -741,7 +741,7 @@
         7119
       ],
       "Proxy": [
-        11301
+        11320
       ]
     },
     "nodeType": "SourceUnit",
@@ -794,7 +794,7 @@
         "file": "./proxy/Proxy.sol",
         "nameLocation": "-1:-1:-1",
         "scope": 5950,
-        "sourceUnit": 11302,
+        "sourceUnit": 11321,
         "symbolAliases": [
           {
             "foreign": {
@@ -802,7 +802,7 @@
               "name": "Proxy",
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
-              "referencedDeclaration": 11301,
+              "referencedDeclaration": 11320,
               "src": "156:5:34",
               "typeDescriptions": {}
             },
@@ -1499,7 +1499,7 @@
               ]
             },
             "baseFunctions": [
-              11300
+              11319
             ],
             "implemented": true,
             "kind": "function",
@@ -1584,7 +1584,7 @@
                 "510:5:34"
               ],
               "nodeType": "IdentifierPath",
-              "referencedDeclaration": 11301,
+              "referencedDeclaration": 11320,
               "src": "510:5:34"
             },
             "id": 5889,
@@ -1665,8 +1665,8 @@
           7450,
           6584,
           6733,
-          11301,
-          11261,
+          11320,
+          11280,
           5970
         ],
         "name": "Diamond",
@@ -1688,7 +1688,7 @@
           6758,
           7009,
           7011,
-          11257
+          11276
         ],
         "usedEvents": [
           6732,

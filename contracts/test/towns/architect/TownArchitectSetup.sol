@@ -22,13 +22,13 @@ import {TokenEntitlement} from "contracts/src/towns/entitlements/token/TokenEnti
 
 import {TownImplementationHelper} from "contracts/test/towns/Town.t.sol";
 
-abstract contract TownArchitectSetup is FacetTest {
+contract TownArchitectSetup is FacetTest {
   address internal townToken;
   address internal userEntitlement;
   address internal tokenEntitlement;
   address internal townImplementation;
 
-  TownArchitect internal townArchitect;
+  TownArchitect public townArchitect;
 
   function setUp() public override {
     super.setUp();
@@ -96,8 +96,8 @@ abstract contract TownArchitectSetup is FacetTest {
     initDatas[4] = abi.encodeWithSelector(
       platformReqsHelper.initializer(),
       deployer, // feeRecipient
-      0, // membershipBps
-      0, // membershipFee
+      500, // membershipBps 5%
+      1 ether, // membershipFee
       1_000, // membershipMintLimit
       365 days // membershipDuration
     );

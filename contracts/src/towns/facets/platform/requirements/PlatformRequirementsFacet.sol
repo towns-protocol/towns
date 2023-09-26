@@ -22,7 +22,7 @@ contract PlatformRequirementsFacet is
     uint16 membershipBps,
     uint256 membershipFee,
     uint256 membershipMintLimit,
-    uint256 membershipDuration
+    uint64 membershipDuration
   ) external onlyInitializing {
     _addInterface(type(IPlatformRequirements).interfaceId);
     _setFeeRecipient(feeRecipient);
@@ -53,7 +53,7 @@ contract PlatformRequirementsFacet is
   }
 
   /// @inheritdoc IPlatformRequirements
-  function getMembershipDuration() external view returns (uint256) {
+  function getMembershipDuration() external view returns (uint64) {
     return _getMembershipDuration();
   }
 
@@ -78,7 +78,7 @@ contract PlatformRequirementsFacet is
   }
 
   /// @inheritdoc IPlatformRequirements
-  function setMembershipDuration(uint256 duration) external onlyOwner {
+  function setMembershipDuration(uint64 duration) external onlyOwner {
     _setMembershipDuration(duration);
   }
 

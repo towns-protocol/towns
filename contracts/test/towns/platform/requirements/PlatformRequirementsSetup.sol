@@ -35,7 +35,7 @@ abstract contract PlatformRequirementsSetup is FacetTest {
     uint16 membershipBps = 0;
     uint256 membershipFee = 0;
     uint256 membershipMintLimit = 1_000;
-    uint256 membershipDuration = 365 days;
+    uint64 membershipDuration = 365 days;
 
     IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](2);
     uint256 index;

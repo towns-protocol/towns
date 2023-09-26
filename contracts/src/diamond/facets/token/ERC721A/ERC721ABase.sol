@@ -73,6 +73,27 @@ abstract contract ERC721ABase is IERC721ABase {
   }
 
   // =============================================================
+  //                           EXTERNAL
+  // =============================================================
+  function _totalSupply() internal view returns (uint256) {
+    // Counter underflow is impossible as _burnCounter cannot be incremented
+    // more than `_currentIndex - _startTokenId()` times.
+    unchecked {
+      return
+        ERC721AStorage.layout()._currentIndex -
+        ERC721AStorage.layout()._burnCounter -
+        _startTokenId();
+    }
+  }
+
+  function _balanceOf(address owner) internal view returns (uint256) {
+    if (owner == address(0)) revert BalanceQueryForZeroAddress();
+    return
+      ERC721AStorage.layout()._packedAddressData[owner] &
+      _BITMASK_ADDRESS_DATA_ENTRY;
+  }
+
+  // =============================================================
   //                   TOKEN COUNTING OPERATIONS
   // =============================================================
 

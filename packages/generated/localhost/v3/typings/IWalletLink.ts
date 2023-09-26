@@ -4,7 +4,6 @@
 import type {
   BaseContract,
   BigNumber,
-  BigNumberish,
   BytesLike,
   CallOverrides,
   ContractTransaction,
@@ -27,168 +26,125 @@ import type {
   PromiseOrValue,
 } from "./common";
 
+export declare namespace IWalletLinkBase {
+  export type WalletLinkInfoStruct = {
+    wallet: PromiseOrValue<string>;
+    rootKey: PromiseOrValue<string>;
+  };
+
+  export type WalletLinkInfoStructOutput = [string, string] & {
+    wallet: string;
+    rootKey: string;
+  };
+}
+
 export interface IWalletLinkInterface extends utils.Interface {
   functions: {
-    "checkIfLinked(address,address)": FunctionFragment;
-    "getLatestNonceForRootKey(address)": FunctionFragment;
-    "getLatestRemoveNonceForRootKey(address)": FunctionFragment;
-    "getLatestRemoveNonceForWallet(address)": FunctionFragment;
-    "getRootKeyForWallet(address)": FunctionFragment;
-    "getWalletsByRootKey(address)": FunctionFragment;
-    "linkWalletToRootKey(address,bytes,address,bytes,uint256)": FunctionFragment;
-    "removeLinkViaRootKey(address,bytes,address,uint256)": FunctionFragment;
-    "removeLinkViaWallet(address,bytes,address,uint256)": FunctionFragment;
+    "checkLinkForAll(address,address)": FunctionFragment;
+    "getLinksByRootKey(address)": FunctionFragment;
+    "getLinksForAll(address)": FunctionFragment;
+    "linkForAll(address,bool)": FunctionFragment;
+    "revokeAllLinks()": FunctionFragment;
+    "revokeLink(address)": FunctionFragment;
   };
 
   getFunction(
     nameOrSignatureOrTopic:
-      | "checkIfLinked"
-      | "getLatestNonceForRootKey"
-      | "getLatestRemoveNonceForRootKey"
-      | "getLatestRemoveNonceForWallet"
-      | "getRootKeyForWallet"
-      | "getWalletsByRootKey"
-      | "linkWalletToRootKey"
-      | "removeLinkViaRootKey"
-      | "removeLinkViaWallet"
+      | "checkLinkForAll"
+      | "getLinksByRootKey"
+      | "getLinksForAll"
+      | "linkForAll"
+      | "revokeAllLinks"
+      | "revokeLink"
   ): FunctionFragment;
 
   encodeFunctionData(
-    functionFragment: "checkIfLinked",
+    functionFragment: "checkLinkForAll",
     values: [PromiseOrValue<string>, PromiseOrValue<string>]
   ): string;
   encodeFunctionData(
-    functionFragment: "getLatestNonceForRootKey",
+    functionFragment: "getLinksByRootKey",
     values: [PromiseOrValue<string>]
   ): string;
   encodeFunctionData(
-    functionFragment: "getLatestRemoveNonceForRootKey",
+    functionFragment: "getLinksForAll",
     values: [PromiseOrValue<string>]
   ): string;
   encodeFunctionData(
-    functionFragment: "getLatestRemoveNonceForWallet",
+    functionFragment: "linkForAll",
+    values: [PromiseOrValue<string>, PromiseOrValue<boolean>]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "revokeAllLinks",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "revokeLink",
     values: [PromiseOrValue<string>]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "getRootKeyForWallet",
-    values: [PromiseOrValue<string>]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "getWalletsByRootKey",
-    values: [PromiseOrValue<string>]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "linkWalletToRootKey",
-    values: [
-      PromiseOrValue<string>,
-      PromiseOrValue<BytesLike>,
-      PromiseOrValue<string>,
-      PromiseOrValue<BytesLike>,
-      PromiseOrValue<BigNumberish>
-    ]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "removeLinkViaRootKey",
-    values: [
-      PromiseOrValue<string>,
-      PromiseOrValue<BytesLike>,
-      PromiseOrValue<string>,
-      PromiseOrValue<BigNumberish>
-    ]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "removeLinkViaWallet",
-    values: [
-      PromiseOrValue<string>,
-      PromiseOrValue<BytesLike>,
-      PromiseOrValue<string>,
-      PromiseOrValue<BigNumberish>
-    ]
   ): string;
 
   decodeFunctionResult(
-    functionFragment: "checkIfLinked",
+    functionFragment: "checkLinkForAll",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "getLatestNonceForRootKey",
+    functionFragment: "getLinksByRootKey",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "getLatestRemoveNonceForRootKey",
+    functionFragment: "getLinksForAll",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "linkForAll", data: BytesLike): Result;
   decodeFunctionResult(
-    functionFragment: "getLatestRemoveNonceForWallet",
+    functionFragment: "revokeAllLinks",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(
-    functionFragment: "getRootKeyForWallet",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "getWalletsByRootKey",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "linkWalletToRootKey",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "removeLinkViaRootKey",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "removeLinkViaWallet",
-    data: BytesLike
-  ): Result;
+  decodeFunctionResult(functionFragment: "revokeLink", data: BytesLike): Result;
 
   events: {
-    "LinkWalletToRootKey(address,address)": EventFragment;
-    "RemoveLinkViaRootKey(address,address)": EventFragment;
-    "RemoveLinkViaWallet(address,address)": EventFragment;
+    "LinkForAll(address,address,bool)": EventFragment;
+    "RevokeAllLinks(address)": EventFragment;
+    "RevokeLink(address,address)": EventFragment;
   };
 
-  getEvent(nameOrSignatureOrTopic: "LinkWalletToRootKey"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "RemoveLinkViaRootKey"): EventFragment;
-  getEvent(nameOrSignatureOrTopic: "RemoveLinkViaWallet"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "LinkForAll"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "RevokeAllLinks"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "RevokeLink"): EventFragment;
 }
 
-export interface LinkWalletToRootKeyEventObject {
+export interface LinkForAllEventObject {
+  wallet: string;
+  rootKey: string;
+  value: boolean;
+}
+export type LinkForAllEvent = TypedEvent<
+  [string, string, boolean],
+  LinkForAllEventObject
+>;
+
+export type LinkForAllEventFilter = TypedEventFilter<LinkForAllEvent>;
+
+export interface RevokeAllLinksEventObject {
+  wallet: string;
+}
+export type RevokeAllLinksEvent = TypedEvent<
+  [string],
+  RevokeAllLinksEventObject
+>;
+
+export type RevokeAllLinksEventFilter = TypedEventFilter<RevokeAllLinksEvent>;
+
+export interface RevokeLinkEventObject {
   wallet: string;
   rootKey: string;
 }
-export type LinkWalletToRootKeyEvent = TypedEvent<
+export type RevokeLinkEvent = TypedEvent<
   [string, string],
-  LinkWalletToRootKeyEventObject
+  RevokeLinkEventObject
 >;
 
-export type LinkWalletToRootKeyEventFilter =
-  TypedEventFilter<LinkWalletToRootKeyEvent>;
-
-export interface RemoveLinkViaRootKeyEventObject {
-  wallet: string;
-  rootKey: string;
-}
-export type RemoveLinkViaRootKeyEvent = TypedEvent<
-  [string, string],
-  RemoveLinkViaRootKeyEventObject
->;
-
-export type RemoveLinkViaRootKeyEventFilter =
-  TypedEventFilter<RemoveLinkViaRootKeyEvent>;
-
-export interface RemoveLinkViaWalletEventObject {
-  wallet: string;
-  rootKey: string;
-}
-export type RemoveLinkViaWalletEvent = TypedEvent<
-  [string, string],
-  RemoveLinkViaWalletEventObject
->;
-
-export type RemoveLinkViaWalletEventFilter =
-  TypedEventFilter<RemoveLinkViaWalletEvent>;
+export type RevokeLinkEventFilter = TypedEventFilter<RevokeLinkEvent>;
 
 export interface IWalletLink extends BaseContract {
   connect(signerOrProvider: Signer | Provider | string): this;
@@ -217,318 +173,188 @@ export interface IWalletLink extends BaseContract {
   removeListener: OnEvent<this>;
 
   functions: {
-    checkIfLinked(
+    checkLinkForAll(
       rootKey: PromiseOrValue<string>,
       wallet: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<[boolean]>;
 
-    getLatestNonceForRootKey(
+    getLinksByRootKey(
       rootKey: PromiseOrValue<string>,
       overrides?: CallOverrides
-    ): Promise<[BigNumber]>;
+    ): Promise<
+      [IWalletLinkBase.WalletLinkInfoStructOutput[]] & {
+        info: IWalletLinkBase.WalletLinkInfoStructOutput[];
+      }
+    >;
 
-    getLatestRemoveNonceForRootKey(
-      rootKey: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<[BigNumber]>;
-
-    getLatestRemoveNonceForWallet(
+    getLinksForAll(
       wallet: PromiseOrValue<string>,
       overrides?: CallOverrides
-    ): Promise<[BigNumber]>;
+    ): Promise<[string[]]>;
 
-    getRootKeyForWallet(
-      wallet: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<[string] & { rootKey: string }>;
-
-    getWalletsByRootKey(
+    linkForAll(
       rootKey: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<[string[]] & { wallets: string[] }>;
-
-    linkWalletToRootKey(
-      wallet: PromiseOrValue<string>,
-      walletSignature: PromiseOrValue<BytesLike>,
-      rootKey: PromiseOrValue<string>,
-      rootKeySignature: PromiseOrValue<BytesLike>,
-      nonce: PromiseOrValue<BigNumberish>,
+      value: PromiseOrValue<boolean>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
-    removeLinkViaRootKey(
-      rootKey: PromiseOrValue<string>,
-      rootKeySignature: PromiseOrValue<BytesLike>,
-      wallet: PromiseOrValue<string>,
-      removeNonce: PromiseOrValue<BigNumberish>,
+    revokeAllLinks(
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
 
-    removeLinkViaWallet(
-      wallet: PromiseOrValue<string>,
-      walletSignature: PromiseOrValue<BytesLike>,
+    revokeLink(
       rootKey: PromiseOrValue<string>,
-      removeNonce: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
   };
 
-  checkIfLinked(
+  checkLinkForAll(
     rootKey: PromiseOrValue<string>,
     wallet: PromiseOrValue<string>,
     overrides?: CallOverrides
   ): Promise<boolean>;
 
-  getLatestNonceForRootKey(
+  getLinksByRootKey(
     rootKey: PromiseOrValue<string>,
     overrides?: CallOverrides
-  ): Promise<BigNumber>;
+  ): Promise<IWalletLinkBase.WalletLinkInfoStructOutput[]>;
 
-  getLatestRemoveNonceForRootKey(
-    rootKey: PromiseOrValue<string>,
-    overrides?: CallOverrides
-  ): Promise<BigNumber>;
-
-  getLatestRemoveNonceForWallet(
+  getLinksForAll(
     wallet: PromiseOrValue<string>,
-    overrides?: CallOverrides
-  ): Promise<BigNumber>;
-
-  getRootKeyForWallet(
-    wallet: PromiseOrValue<string>,
-    overrides?: CallOverrides
-  ): Promise<string>;
-
-  getWalletsByRootKey(
-    rootKey: PromiseOrValue<string>,
     overrides?: CallOverrides
   ): Promise<string[]>;
 
-  linkWalletToRootKey(
-    wallet: PromiseOrValue<string>,
-    walletSignature: PromiseOrValue<BytesLike>,
+  linkForAll(
     rootKey: PromiseOrValue<string>,
-    rootKeySignature: PromiseOrValue<BytesLike>,
-    nonce: PromiseOrValue<BigNumberish>,
+    value: PromiseOrValue<boolean>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
-  removeLinkViaRootKey(
-    rootKey: PromiseOrValue<string>,
-    rootKeySignature: PromiseOrValue<BytesLike>,
-    wallet: PromiseOrValue<string>,
-    removeNonce: PromiseOrValue<BigNumberish>,
+  revokeAllLinks(
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
-  removeLinkViaWallet(
-    wallet: PromiseOrValue<string>,
-    walletSignature: PromiseOrValue<BytesLike>,
+  revokeLink(
     rootKey: PromiseOrValue<string>,
-    removeNonce: PromiseOrValue<BigNumberish>,
     overrides?: Overrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
 
   callStatic: {
-    checkIfLinked(
+    checkLinkForAll(
       rootKey: PromiseOrValue<string>,
       wallet: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<boolean>;
 
-    getLatestNonceForRootKey(
+    getLinksByRootKey(
       rootKey: PromiseOrValue<string>,
       overrides?: CallOverrides
-    ): Promise<BigNumber>;
+    ): Promise<IWalletLinkBase.WalletLinkInfoStructOutput[]>;
 
-    getLatestRemoveNonceForRootKey(
-      rootKey: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    getLatestRemoveNonceForWallet(
+    getLinksForAll(
       wallet: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    getRootKeyForWallet(
-      wallet: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<string>;
-
-    getWalletsByRootKey(
-      rootKey: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<string[]>;
 
-    linkWalletToRootKey(
-      wallet: PromiseOrValue<string>,
-      walletSignature: PromiseOrValue<BytesLike>,
+    linkForAll(
       rootKey: PromiseOrValue<string>,
-      rootKeySignature: PromiseOrValue<BytesLike>,
-      nonce: PromiseOrValue<BigNumberish>,
+      value: PromiseOrValue<boolean>,
       overrides?: CallOverrides
     ): Promise<void>;
 
-    removeLinkViaRootKey(
-      rootKey: PromiseOrValue<string>,
-      rootKeySignature: PromiseOrValue<BytesLike>,
-      wallet: PromiseOrValue<string>,
-      removeNonce: PromiseOrValue<BigNumberish>,
-      overrides?: CallOverrides
-    ): Promise<void>;
+    revokeAllLinks(overrides?: CallOverrides): Promise<void>;
 
-    removeLinkViaWallet(
-      wallet: PromiseOrValue<string>,
-      walletSignature: PromiseOrValue<BytesLike>,
+    revokeLink(
       rootKey: PromiseOrValue<string>,
-      removeNonce: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<void>;
   };
 
   filters: {
-    "LinkWalletToRootKey(address,address)"(
+    "LinkForAll(address,address,bool)"(
       wallet?: null,
-      rootKey?: null
-    ): LinkWalletToRootKeyEventFilter;
-    LinkWalletToRootKey(
+      rootKey?: null,
+      value?: null
+    ): LinkForAllEventFilter;
+    LinkForAll(
       wallet?: null,
-      rootKey?: null
-    ): LinkWalletToRootKeyEventFilter;
+      rootKey?: null,
+      value?: null
+    ): LinkForAllEventFilter;
 
-    "RemoveLinkViaRootKey(address,address)"(
-      wallet?: null,
-      rootKey?: null
-    ): RemoveLinkViaRootKeyEventFilter;
-    RemoveLinkViaRootKey(
-      wallet?: null,
-      rootKey?: null
-    ): RemoveLinkViaRootKeyEventFilter;
+    "RevokeAllLinks(address)"(wallet?: null): RevokeAllLinksEventFilter;
+    RevokeAllLinks(wallet?: null): RevokeAllLinksEventFilter;
 
-    "RemoveLinkViaWallet(address,address)"(
+    "RevokeLink(address,address)"(
       wallet?: null,
       rootKey?: null
-    ): RemoveLinkViaWalletEventFilter;
-    RemoveLinkViaWallet(
-      wallet?: null,
-      rootKey?: null
-    ): RemoveLinkViaWalletEventFilter;
+    ): RevokeLinkEventFilter;
+    RevokeLink(wallet?: null, rootKey?: null): RevokeLinkEventFilter;
   };
 
   estimateGas: {
-    checkIfLinked(
+    checkLinkForAll(
       rootKey: PromiseOrValue<string>,
       wallet: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
-    getLatestNonceForRootKey(
+    getLinksByRootKey(
       rootKey: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
-    getLatestRemoveNonceForRootKey(
-      rootKey: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    getLatestRemoveNonceForWallet(
+    getLinksForAll(
       wallet: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
-    getRootKeyForWallet(
-      wallet: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    getWalletsByRootKey(
+    linkForAll(
       rootKey: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<BigNumber>;
-
-    linkWalletToRootKey(
-      wallet: PromiseOrValue<string>,
-      walletSignature: PromiseOrValue<BytesLike>,
-      rootKey: PromiseOrValue<string>,
-      rootKeySignature: PromiseOrValue<BytesLike>,
-      nonce: PromiseOrValue<BigNumberish>,
+      value: PromiseOrValue<boolean>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
-    removeLinkViaRootKey(
-      rootKey: PromiseOrValue<string>,
-      rootKeySignature: PromiseOrValue<BytesLike>,
-      wallet: PromiseOrValue<string>,
-      removeNonce: PromiseOrValue<BigNumberish>,
+    revokeAllLinks(
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
 
-    removeLinkViaWallet(
-      wallet: PromiseOrValue<string>,
-      walletSignature: PromiseOrValue<BytesLike>,
+    revokeLink(
       rootKey: PromiseOrValue<string>,
-      removeNonce: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
   };
 
   populateTransaction: {
-    checkIfLinked(
+    checkLinkForAll(
       rootKey: PromiseOrValue<string>,
       wallet: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
-    getLatestNonceForRootKey(
+    getLinksByRootKey(
       rootKey: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
-    getLatestRemoveNonceForRootKey(
-      rootKey: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    getLatestRemoveNonceForWallet(
+    getLinksForAll(
       wallet: PromiseOrValue<string>,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
-    getRootKeyForWallet(
-      wallet: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    getWalletsByRootKey(
+    linkForAll(
       rootKey: PromiseOrValue<string>,
-      overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    linkWalletToRootKey(
-      wallet: PromiseOrValue<string>,
-      walletSignature: PromiseOrValue<BytesLike>,
-      rootKey: PromiseOrValue<string>,
-      rootKeySignature: PromiseOrValue<BytesLike>,
-      nonce: PromiseOrValue<BigNumberish>,
+      value: PromiseOrValue<boolean>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
-    removeLinkViaRootKey(
-      rootKey: PromiseOrValue<string>,
-      rootKeySignature: PromiseOrValue<BytesLike>,
-      wallet: PromiseOrValue<string>,
-      removeNonce: PromiseOrValue<BigNumberish>,
+    revokeAllLinks(
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
 
-    removeLinkViaWallet(
-      wallet: PromiseOrValue<string>,
-      walletSignature: PromiseOrValue<BytesLike>,
+    revokeLink(
       rootKey: PromiseOrValue<string>,
-      removeNonce: PromiseOrValue<BigNumberish>,
       overrides?: Overrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
   };

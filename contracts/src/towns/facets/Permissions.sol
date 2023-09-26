@@ -10,4 +10,5 @@ pragma solidity ^0.8.19;
 library Permissions {
   string public constant ModifyChannels = "AddRemoveChannels";
   string public constant ModifyRoles = "ModifySpaceSettings";
+  string public constant JoinTown = "JoinTown";
 }

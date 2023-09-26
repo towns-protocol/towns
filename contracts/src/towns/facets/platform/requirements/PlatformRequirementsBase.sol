@@ -62,13 +62,13 @@ abstract contract PlatformRequirementsBase is IPlatformRequirementsBase {
   }
 
   // Membership Duration
-  function _setMembershipDuration(uint256 duration) internal {
+  function _setMembershipDuration(uint64 duration) internal {
     if (duration == 0) revert Platform__InvalidMembershipDuration();
     PlatformRequirementsStorage.layout().membershipDuration = duration;
     emit PlatformMembershipDurationSet(duration);
   }
 
-  function _getMembershipDuration() internal view returns (uint256) {
+  function _getMembershipDuration() internal view returns (uint64) {
     return PlatformRequirementsStorage.layout().membershipDuration;
   }
 }

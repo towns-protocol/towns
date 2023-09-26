@@ -12,11 +12,11 @@ library PlatformRequirementsStorage {
     keccak256("towns.facets.platform.requirements.PlatformRequirementsStorage");
 
   struct Layout {
-    address feeRecipient;
-    uint16 membershipBps;
     uint256 membershipFee;
     uint256 membershipMintLimit;
-    uint256 membershipDuration;
+    address feeRecipient;
+    uint64 membershipDuration;
+    uint16 membershipBps;
   }
 
   function layout() internal pure returns (Layout storage l) {

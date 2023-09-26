@@ -129,7 +129,7 @@ contract PlatformRequirementsTest is
   }
 
   function test_setMembershipDuration() public {
-    uint256 newMembershipDuration = 1 days;
+    uint64 newMembershipDuration = 1 days;
 
     vm.expectRevert(
       abi.encodeWithSelector(Ownable__NotOwner.selector, address(this))
@@ -145,7 +145,7 @@ contract PlatformRequirementsTest is
     emit PlatformMembershipDurationSet(newMembershipDuration);
     platformReqs.setMembershipDuration(newMembershipDuration);
 
-    uint256 membershipDuration = platformReqs.getMembershipDuration();
+    uint64 membershipDuration = platformReqs.getMembershipDuration();
     assertEq(membershipDuration, newMembershipDuration);
   }
 }

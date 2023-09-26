@@ -61,20 +61,40 @@ abstract contract Entitled is IEntitlementBase, TokenOwnableBase, PausableBase {
 
   function _isAllowed(
     string memory channelId,
+    string memory permission,
+    address caller
+  ) internal view returns (bool) {
+    return
+      _owner() == caller ||
+      (!_paused() &&
+        _isEntitled(channelId, caller, bytes32(abi.encodePacked(permission))));
+  }
+
+  function _isAllowed(
+    string memory channelId,
     string memory permission
   ) internal view returns (bool) {
     return
-      _owner() == msg.sender ||
+      _owner() == _msgSenderEntitled() ||
       (!_paused() &&
         _isEntitled(
           channelId,
-          msg.sender,
+          _msgSenderEntitled(),
           bytes32(abi.encodePacked(permission))
         ));
   }
 
   function _validatePermission(string memory permission) internal view {
     if (!_isAllowed(IN_TOWN, permission)) {
+      revert Entitlement__NotAllowed();
+    }
+  }
+
+  function _validatePermission(
+    string memory permission,
+    address caller
+  ) internal view {
+    if (!_isAllowed(IN_TOWN, permission, caller)) {
       revert Entitlement__NotAllowed();
     }
   }
@@ -86,5 +106,14 @@ abstract contract Entitled is IEntitlementBase, TokenOwnableBase, PausableBase {
     if (!_isAllowed(channelId, permission)) {
       revert Entitlement__NotAllowed();
     }
+  }
+
+  /**
+   * @dev Returns the message sender (defaults to `msg.sender`).
+   *
+   * If you are writing GSN compatible contracts, you need to override this function.
+   */
+  function _msgSenderEntitled() internal view virtual returns (address) {
+    return msg.sender;
   }
 }

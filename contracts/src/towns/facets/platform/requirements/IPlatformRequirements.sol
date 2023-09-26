@@ -79,14 +79,14 @@ interface IPlatformRequirements is IPlatformRequirementsBase {
    * @notice Set the membership duration
    * @param duration The membership duration
    */
-  function setMembershipDuration(uint256 duration) external;
+  function setMembershipDuration(uint64 duration) external;
 
   /**
    * @notice Get the membership duration
    * @dev This is the duration of a membership in seconds
    * @return The membership duration
    */
-  function getMembershipDuration() external view returns (uint256);
+  function getMembershipDuration() external view returns (uint64);
 
   /**
    * @notice Get the denominator
