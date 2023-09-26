@@ -106,6 +106,15 @@ jobs:
             - name: Deploy local zion governance contracts
               run: ./scripts/deploy-zion-governance-contracts.sh
 
+            - name: Wait for postgres to be ready
+              run: |
+                  docker exec -i casablanca_postgres_container bash << EOF
+                    until pg_isready -h localhost -p 5432 -U postgres; do
+                      echo "Waiting for postgres to be ready..."
+                      sleep 2
+                    done
+                  EOF
+
             - name: Casablanca create db
               run: psql -h localhost -p 5433 -U postgres -f scripts/sql/create_db.sql
               working-directory: casablanca
