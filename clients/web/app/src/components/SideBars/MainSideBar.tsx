@@ -38,7 +38,7 @@ export const MainSideBar = () => {
                     />
                 </TransitionItem>
             ))}
-            {(env.IS_DEV || isHolderOfPioneerNft) && (
+            {(env.DEV || isHolderOfPioneerNft) && (
                 <TransitionItem key="new">
                     <ActionNavItem
                         id={`${PATHS.SPACES}/new`}

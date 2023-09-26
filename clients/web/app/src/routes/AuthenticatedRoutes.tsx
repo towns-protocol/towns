@@ -85,7 +85,7 @@ export const AuthenticatedRoutes = () => {
                     <>
                         <Route path={`${PATHS.SPACES}/new/v2`} element={<CreateSpaceFormV2 />} />
                         <Route element={<AppPanelLayout />}>
-                            {(env.IS_DEV || isHolderOfPioneerNft) && (
+                            {(env.DEV || isHolderOfPioneerNft) && (
                                 <>
                                     <Route path={`${PATHS.SPACES}/new`} element={<SpacesNew />} />
                                 </>

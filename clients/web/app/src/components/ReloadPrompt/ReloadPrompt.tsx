@@ -22,7 +22,7 @@ export const ReloadPrompt = () => {
     } = useRegisterSW({
         onRegisteredSW(swUrl, r) {
             log('registered:' + r)
-            if (import.meta.env.DEV) {
+            if (env.DEV) {
                 if (env.VITE_PUSH_NOTIFICATION_ENABLED) {
                     // doesn't seem to update the service worker in dev mode without this
                     updateServiceWorker(true)
@@ -200,7 +200,7 @@ async function clearAllWorkers() {
     }
 }
 
-if (env.IS_DEV) {
+if (env.DEV) {
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
     window.clearAllWorkers = () => clearAllWorkers().then(window.location.reload)

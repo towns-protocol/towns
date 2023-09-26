@@ -68,9 +68,9 @@ export const RegisterForm = () => {
                     // this needs to be done before the registerWallet call
                     if (!data.profilePic?.[0] && loggedInWalletAddress) {
                         if (
-                            !env.IS_DEV ||
+                            !env.DEV ||
                             // only upload an image locally when actually want to using ?registrationUpload
-                            (env.IS_DEV && window.location.search.includes('registrationUpload'))
+                            (env.DEV && window.location.search.includes('registrationUpload'))
                         ) {
                             try {
                                 // upload to CF a random image

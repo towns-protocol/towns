@@ -5,7 +5,7 @@ import { CreateSpaceFormState, TokenDataStruct } from './types'
 import { StoreMockForManualSubmissionsNotToBeUsedInTests } from './mock'
 
 const withMock =
-    env.IS_DEV && new URLSearchParams(window.location.search).get('spaceFormMock') === 'true'
+    env.DEV && new URLSearchParams(window.location.search).get('spaceFormMock') === 'true'
 
 interface CreateSpaceActions {
     setStep1: (step1: CreateSpaceFormState['step1']) => void

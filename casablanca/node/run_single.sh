@@ -37,7 +37,6 @@ done
     LOG_NOCOLOR ${LOG_NOCOLOR} \
     LOG_LEVEL ${LOG_LEVEL}
 
-
 cd ./run_files/$INSTANCE
 echo "Running instance '$INSTANCE' with extra aguments: '${args[@]:-}'"
 

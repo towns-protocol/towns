@@ -87,11 +87,7 @@ export const App = () => {
                     />
                 </Helmet>
                 <AnalyticsProvider>
-                    <>
-                        {env.IS_DEV && !env.VITE_DISABLE_DEBUG_BARS && (
-                            <DebugBar {...environment} />
-                        )}
-                    </>
+                    <>{env.DEV && !env.VITE_DISABLE_DEBUG_BARS && <DebugBar {...environment} />}</>
                     <AllRoutes />
                 </AnalyticsProvider>
                 {!env.VITE_DISABLE_DEBUG_BARS && (
@@ -100,7 +96,7 @@ export const App = () => {
                 <Notifications />
                 {
                     // the service worker won't exist in dev-mode and there's not need to check for updates
-                    (!env.IS_DEV || env.VITE_PUSH_NOTIFICATION_ENABLED) && <ReloadPrompt />
+                    (!env.DEV || env.VITE_PUSH_NOTIFICATION_ENABLED) && <ReloadPrompt />
                 }
                 <ServiceWorkerSpacesSyncer />
             </>

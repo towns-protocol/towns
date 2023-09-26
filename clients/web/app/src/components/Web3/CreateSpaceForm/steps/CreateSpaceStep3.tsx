@@ -6,7 +6,7 @@ import { InteractiveTownsToken } from '@components/TownsToken/InteractiveTownsTo
 import { env } from 'utils'
 import { useCreateSpaceFormStore } from '../CreateSpaceFormStore'
 
-const DEBUG = env.IS_DEV && false
+const DEBUG = env.DEV && false
 
 export const CreateSpaceStep3 = ({ onSubmit, id }: FormStepProps) => {
     const { mintedTokenAddress, name } = useCreateSpaceFormStore(
