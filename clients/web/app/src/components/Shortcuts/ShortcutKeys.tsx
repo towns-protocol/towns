@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { Fragment } from 'react'
 import { Box, Paragraph, Text } from '@ui'
 
 export const DisplayShortcutRow = (props: {
@@ -11,7 +11,7 @@ export const DisplayShortcutRow = (props: {
         {/* shortcut container (in case there's more than one) */}
         <Box horizontal gap="xs" alignItems="center">
             {props.shortcuts.map((shortcut, i) => (
-                <>
+                <Fragment key={`${shortcut}`}>
                     {i > 0 && (
                         <Box>
                             <Paragraph color="gray2">
@@ -20,7 +20,7 @@ export const DisplayShortcutRow = (props: {
                         </Box>
                     )}
                     <ShortcutKeys keys={shortcut} size={props.size} />
-                </>
+                </Fragment>
             ))}
         </Box>
     </>
