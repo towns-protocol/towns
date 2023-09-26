@@ -3,6 +3,10 @@ export const TOKEN_HOLDERS = 'tokenHolders'
 export const MEMBERSHIP_TYPE = 'membershipType'
 export const TOKENS = 'tokens'
 export const SPACE_NAME = 'spaceName'
+
+// TODO: clean up this file when further along with v2 space form
+export const ROLE_MINTER = 'minter'
+export const ROLE_MEMBER = 'member'
 export const TEMPORARY_SPACE_ICON_URL = 'temporarySpaceIconUrl'
 
 // See error types: https://github.com/HereNotThere/harmony/blob/main/contracts/src/libraries/Errors.sol

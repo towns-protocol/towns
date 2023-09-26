@@ -17,6 +17,8 @@ type Props<T extends FieldValues> = {
     formFieldName: Path<T>
     type: UseOnImageChangeEventProps<T>['type']
     imageRestrictions?: UseOnImageChangeEventProps<T>['imageRestrictions']
+    overrideUploadCb?: UseOnImageChangeEventProps<T>['overrideUploadCb']
+    uploadIconPosition?: BoxProps['position']
 } & Pick<UseFormReturn<T>, 'setError' | 'clearErrors' | 'formState' | 'register'>
 
 const config: BoxProps = {
@@ -37,9 +39,12 @@ export const LargeUploadImageTemplate = <T extends FieldValues>(props: Props<T>)
         formState,
         setError,
         clearErrors,
+        overrideUploadCb,
+        uploadIconPosition = 'topRight',
     } = props
 
     const { onChange, isLoading } = useOnImageChangeEvent({
+        overrideUploadCb,
         resourceId,
         type,
         imageRestrictions,
@@ -75,7 +80,7 @@ export const LargeUploadImageTemplate = <T extends FieldValues>(props: Props<T>)
 
             {canEdit && (
                 <>
-                    <Box position="topRight" padding="md">
+                    <Box position={uploadIconPosition} padding="md">
                         <Box
                             centerContent
                             disabled={isLoading}
