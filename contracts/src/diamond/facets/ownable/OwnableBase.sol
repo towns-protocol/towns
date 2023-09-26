@@ -17,12 +17,6 @@ abstract contract OwnableBase is IOwnableBase {
     _;
   }
 
-  function _checkOwner(address owner) internal view {
-    if (owner != _owner()) {
-      revert Ownable__NotOwner(owner);
-    }
-  }
-
   function _owner() internal view returns (address owner) {
     return OwnableStorage.layout().owner;
   }

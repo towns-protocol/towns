@@ -1531,15 +1531,39 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
                 if (!this.matrixClient) {
                     throw new Error('matrix client is undefined')
                 }
-                await this.matrixClient.leave(roomId.networkId)
 
-                const spaceId = parentNetworkId ? makeMatrixRoomIdentifier(parentNetworkId) : roomId
-                const channelNetworkId = parentNetworkId ? roomId.networkId : undefined
-                await this.setChannelMembershipDataOnSpace({
-                    spaceId,
-                    channelNetworkId,
-                    membershipStatus: Membership.Leave,
-                })
+                // leaving a space, leave all channels too
+                if (!parentNetworkId) {
+                    const channels = this.getAllChannelMembershipsFromSpace(roomId)
+                    for (const channelId in channels) {
+                        try {
+                            await this.matrixClient.leave(channelId)
+                            await this.setChannelMembershipDataOnSpace({
+                                spaceId: roomId,
+                                channelNetworkId: channelId,
+                                membershipStatus: Membership.Leave,
+                            })
+                        } catch (error) {
+                            console.error('leave channel while leaving space failed', error)
+                        }
+
+                        await this.matrixClient.leave(roomId.networkId)
+                        await this.setChannelMembershipDataOnSpace({
+                            spaceId: roomId,
+                            membershipStatus: Membership.Leave,
+                        })
+                    }
+                }
+                // leaving a channel
+                else {
+                    await this.matrixClient.leave(roomId.networkId)
+                    await this.setChannelMembershipDataOnSpace({
+                        spaceId: makeMatrixRoomIdentifier(parentNetworkId),
+                        channelNetworkId: roomId.networkId,
+                        membershipStatus: Membership.Leave,
+                    })
+                }
+
                 break
             }
             case SpaceProtocol.Casablanca:

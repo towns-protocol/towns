@@ -10,6 +10,7 @@ export const ToneName = {
     ENS: 'etherum',
     Positive: 'positive',
     Negative: 'negative',
+    None: 'none',
 } as const
 
 export type ToneNameType = (typeof ToneName)[keyof typeof ToneName]

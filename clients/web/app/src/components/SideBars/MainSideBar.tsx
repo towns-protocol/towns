@@ -9,8 +9,11 @@ import { Box } from '@ui'
 import { useIsHolderOfPioneerNFT } from 'api/lib/isHolderOfToken'
 import { PATHS } from 'routes'
 import { env } from 'utils'
+import { RegisterMainShortcuts } from '@components/Shortcuts/RegisterMainShortcuts'
+import { useDevice } from 'hooks/useDevice'
 
 export const MainSideBar = () => {
+    const { isTouch } = useDevice()
     const { spaces } = useZionContext()
     const { spaceId } = useSpaceContext()
     const invites = useInvites()
@@ -18,6 +21,7 @@ export const MainSideBar = () => {
 
     return (
         <SideBar elevateReadability paddingY="sm" height="100%">
+            {!isTouch && <RegisterMainShortcuts />}
             <TransitionItem key="profile">
                 <ProfileCardButton />
             </TransitionItem>

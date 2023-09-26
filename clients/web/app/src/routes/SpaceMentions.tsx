@@ -1,26 +1,13 @@
 import React from 'react'
-import { NavLink } from 'react-router-dom'
-import {
-    EventStatus,
-    MentionResult,
-    useMyProfile,
-    useSpaceId,
-    useSpaceMembers,
-    useSpaceMentions,
-} from 'use-zion-client'
-import { PATHS } from 'routes'
+import { useMyProfile, useSpaceMentions } from 'use-zion-client'
+import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinner'
+import { IsolatedMessageItem } from '@components/ResultItem/IsolatedMessageItem'
+import { NoJoinedChannelsFallback } from '@components/NoJoinedChannelsFallback'
+import { TouchNavBar } from '@components/TouchNavBar/TouchNavBar'
+import { TouchScrollToTopScrollId } from '@components/TouchTabBar/TouchScrollToTopScrollId'
 import { Box, Heading, Icon, Paragraph, Stack } from '@ui'
-import { RichTextPreview } from '@components/RichText/RichTextEditor'
-import { Message } from '@components/MessageLayout'
-import { getIsRoomMessageContent, getMessageBody } from 'utils/ztevent_util'
-import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { useDevice } from 'hooks/useDevice'
 import { useHasJoinedChannels } from 'hooks/useHasJoinedChannels'
-import { NoJoinedChannelsFallback } from '@components/NoJoinedChannelsFallback'
-import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinner'
-import { TouchNavBar } from '@components/TouchNavBar/TouchNavBar'
-import { useSpaceChannels } from 'hooks/useSpaceChannels'
-import { TouchScrollToTopScrollId } from '@components/TouchTabBar/TouchScrollToTopScrollId'
 import { CentralPanelLayout } from './layouts/CentralPanelLayout'
 
 export const SpaceMentions = () => {
@@ -65,11 +52,11 @@ export const SpaceMentions = () => {
                             paddingX={{ touch: 'none', default: 'lg' }}
                             paddingY={{ touch: 'md', default: 'lg' }}
                         >
-                            {mentions.map((m, index, mentions) => {
+                            {mentions.map((m) => {
                                 return (
                                     m.type === 'mention' && (
-                                        <MentionBox
-                                            mention={m}
+                                        <IsolatedMessageItem
+                                            result={m}
                                             key={m.event.eventId}
                                             userId={userId}
                                         />
@@ -87,66 +74,5 @@ export const SpaceMentions = () => {
                 )}
             </Stack>
         </CentralPanelLayout>
-    )
-}
-
-const MentionBox = (props: { mention: MentionResult; userId?: string }) => {
-    const { mention } = props
-    const { isTouch } = useDevice()
-    const { slug: spaceSlug } = useSpaceId() ?? {}
-    const { slug: channelSlug } = mention.channel.id
-
-    const content = getIsRoomMessageContent(mention.event)
-
-    const { membersMap, members } = useSpaceMembers()
-    const channels = useSpaceChannels()
-    const sender = membersMap[mention.event.sender.id]
-
-    if (!content) {
-        return null
-    }
-
-    const channelSegment = `/${PATHS.SPACES}/${spaceSlug}/channels/${channelSlug}`
-    const threadSegment = mention.thread ? `/replies/${mention.thread.eventId}` : ``
-    const eventSegment = `#${mention.event.eventId}`
-    const link = `${channelSegment}${threadSegment}${eventSegment}`
-
-    return (
-        <NavLink to={link}>
-            <Box
-                hoverable
-                elevate={!isTouch}
-                rounded="md"
-                border={mention.unread ? 'level3' : 'none'}
-                overflow="hidden"
-            >
-                <Message
-                    relativeDate
-                    avatarSize={isTouch ? 'avatar_x4' : 'avatar_md'}
-                    padding={{ touch: 'md', default: 'lg' }}
-                    key={mention.event.eventId}
-                    messageSourceAnnotation={`${
-                        mention.thread ? `Thread in` : ``
-                    } #${mention.channel.label.toLowerCase()}`}
-                    timestamp={mention.event.createdAtEpocMs}
-                    userId={sender?.userId}
-                    senderId={sender?.userId}
-                    name={getPrettyDisplayName(sender).name}
-                >
-                    <RichTextPreview
-                        members={members}
-                        channels={channels}
-                        content={getMessageBody(mention.event.eventId, content)}
-                        statusAnnotation={
-                            content.replacedMsgId !== undefined
-                                ? 'edited'
-                                : mention.event.status === EventStatus.NOT_SENT
-                                ? 'not-sent'
-                                : undefined
-                        }
-                    />
-                </Message>
-            </Box>
-        </NavLink>
     )
 }

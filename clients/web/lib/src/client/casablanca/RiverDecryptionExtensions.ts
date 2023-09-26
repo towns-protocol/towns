@@ -323,10 +323,7 @@ export class RiverDecryptionExtension extends (EventEmitter as new () => TypedEm
             }
             const intendedDeviceKey = event.getWireContentToDevice().content.device_key
             if (intendedDeviceKey !== this.client.olmDevice.deviceCurve25519Key) {
-                console.log(
-                    'CDE::onToDeviceEvent - not intended for this device, not attempting to decrypt',
-                    intendedDeviceKey,
-                )
+                // not intended for this device, not attempting to decrypt',
                 return
             }
             try {

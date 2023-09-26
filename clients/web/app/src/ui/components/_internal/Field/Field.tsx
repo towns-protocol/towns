@@ -55,6 +55,7 @@ export type FieldBaseProps = {
     /** max length of the input */
     maxLength?: FormElementProps['maxLength']
     border?: BoxProps['border']
+    maxWidth?: BoxProps['maxWidth']
 }
 
 type PassthroughProps = 'id' | 'name' | 'disabled' | 'autoComplete' | 'autoFocus' | 'maxLength'

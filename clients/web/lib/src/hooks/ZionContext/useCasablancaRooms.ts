@@ -15,6 +15,12 @@ export function useCasablancaRooms(client?: CasablancaClient): Record<string, Ro
 
         // helpers
         const updateState = (streamId: string) => {
+            const stream = client.streams.get(streamId)
+            const memberships = stream?.view.getMemberships()
+            if (!memberships?.isMemberJoined()) {
+                return
+            }
+
             const newRoom = streamId ? toZionCasablancaRoom(streamId, client) : undefined
             setRooms((prev) =>
                 isEqual(prev[streamId], newRoom) ? prev : { ...prev, [streamId]: newRoom },

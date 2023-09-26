@@ -13,10 +13,11 @@ import {
     userIdFromAddress,
 } from './id'
 import { StreamRpcClientType } from './makeStreamRpcClient'
-import { makeEvent, SignerContext, unpackEnvelopes } from './sign'
+import { makeEvent, SignerContext, unpackEnvelope, unpackEnvelopes } from './sign'
 import {
     getChannelPayload,
     getMessagePayload,
+    getMiniblockHeader,
     make_ChannelPayload_Inception,
     make_ChannelPayload_Membership,
     make_ChannelPayload_Message,
@@ -81,7 +82,7 @@ describe('nodeRestart', () => {
             streamId: spacedStreamId,
         })
 
-        const channelId = await createNewChannelAndPostHello(
+        const { channelId } = await createNewChannelAndPostHello(
             bobsContext,
             spacedStreamId,
             bobsUserId,
@@ -110,13 +111,18 @@ describe('nodeRestart', () => {
         await expect(getStreamAndExpectHello(bob, channelId)).toResolve()
 
         log('Creating another channel, post hello')
-        const channelId2 = await createNewChannelAndPostHello(
+        const { channelId: channelId2 } = await createNewChannelAndPostHello(
             bobsContext,
             spacedStreamId,
             bobsUserId,
             bob,
         )
         await expect(getStreamAndExpectHello(bob, channelId2)).toResolve()
+
+        await countStreamBlocksAndSnapshots(bob, bobsUserStreamId)
+        await countStreamBlocksAndSnapshots(bob, spacedStreamId)
+        await countStreamBlocksAndSnapshots(bob, channelId)
+        await countStreamBlocksAndSnapshots(bob, channelId2)
 
         log('done')
     })
@@ -137,6 +143,10 @@ const createNewChannelAndPostHello = async (
             streamId: channelId,
             spaceId: spacedStreamId,
             channelProperties: { text: channelProperties },
+            settings: {
+                miniblockTimeMs: 100n,
+                minEventsPerSnapshot: 100,
+            },
         }),
         [],
     )
@@ -148,7 +158,7 @@ const createNewChannelAndPostHello = async (
         }),
         [channelInceptionEvent.hash],
     )
-    const nextHash = channelJoinEvent.hash
+    let nextHash = channelJoinEvent.hash
     const channelEvents = [channelInceptionEvent, channelJoinEvent]
     log('creating channel with events=', channelEvents)
     await bob.createStream({
@@ -171,7 +181,25 @@ const createNewChannelAndPostHello = async (
     expect(channelCreatePayload?.channelId).toEqual(channelId)
     expect(channelCreatePayload?.channelProperties?.text).toEqual(channelProperties)
 
-    // Post hello to the channel
+    // Post 1000 hellos to the channel
+    for (let i = 0; i < 1000; i++) {
+        const e = await makeEvent(
+            bobsContext,
+            make_ChannelPayload_Message({
+                text: `hello ${i}`,
+            }),
+            [nextHash],
+        )
+        nextHash = e.hash
+        await expect(
+            bob.addEvent({
+                streamId: channelId,
+                event: e,
+            }),
+        ).toResolve()
+    }
+
+    // Post just hello to the channel
     const helloEvent = await makeEvent(
         bobsContext,
         make_ChannelPayload_Message({
@@ -179,6 +207,7 @@ const createNewChannelAndPostHello = async (
         }),
         [nextHash],
     )
+    const lastHash = helloEvent.hash
     await expect(
         bob.addEvent({
             streamId: channelId,
@@ -186,7 +215,7 @@ const createNewChannelAndPostHello = async (
         }),
     ).toResolve()
 
-    return channelId
+    return { channelId, lastHash }
 }
 
 const getStreamAndExpectHello = async (bob: StreamRpcClientType, channelId: string) => {
@@ -197,4 +226,40 @@ const getStreamAndExpectHello = async (bob: StreamRpcClientType, channelId: stri
     const hello = lastEventFiltered(unpackEnvelopes(channel2.stream!.events), getMessagePayload)
     expect(hello).toBeDefined()
     expect(hello?.text).toEqual('hello')
+}
+
+const countStreamBlocksAndSnapshots = async (bob: StreamRpcClientType, streamId: string) => {
+    const stream = await bob.getStream({ streamId: streamId })
+    expect(stream).toBeDefined()
+    expect(stream.stream).toBeDefined()
+    expect(stream.stream?.streamId).toEqual(streamId)
+
+    const minipoolEventNum = stream.stream!.events.length
+    let totalEvents = minipoolEventNum
+    const miniblocks = stream.miniblocks.length
+    let snapshots = 0
+    for (const mb of stream.miniblocks) {
+        const header = getMiniblockHeader(unpackEnvelope(mb.header!))
+        expect(header).toBeDefined()
+
+        totalEvents += mb.events.length
+
+        if (header?.snapshot !== undefined) {
+            snapshots++
+        }
+    }
+    log(
+        'Counted snapshots',
+        'streamId=',
+        streamId,
+        'miniblocks=',
+        miniblocks,
+        'snapshots=',
+        snapshots,
+        'minipoolEventNum=',
+        minipoolEventNum,
+        'totalEvents=',
+        totalEvents,
+    )
+    return { miniblocks, snapshots, minipoolEventNum, totalEvents }
 }

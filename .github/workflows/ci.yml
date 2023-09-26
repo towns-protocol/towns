@@ -110,8 +110,8 @@ jobs:
             - name: Lint
               run: yarn lint
 
-            - name: Build contract types
-              run: ./scripts/build-contract-types.sh localhost --frozen
+            - name: Build town types
+              run: ./scripts/build-town-types.sh localhost --frozen
 
             - name: Start dendrite
               run: ./scripts/start-local-dendrite.sh --skip-postgres &
@@ -130,7 +130,7 @@ jobs:
               run: yarn test:unit
 
             - name: E2E Tests
-              if: github.event_name != 'pull_request'
+              if: github.event_name != 'pull_request' && github.event_name != 'schedule'
               run: yarn test:dendrite:e2e
 
             # If CI failed, we send a slack notification
@@ -242,8 +242,8 @@ jobs:
             - name: Syncpack
               run: yarn syncpack:check
 
-            - name: Build contract types
-              run: ./scripts/build-contract-types.sh localhost --frozen
+            - name: Build town types
+              run: ./scripts/build-town-types.sh localhost --frozen
 
             - name: Start anvil
               # Start anvil in the background, and wait for it to be ready
@@ -391,8 +391,8 @@ jobs:
             - name: Syncpack
               run: yarn syncpack:check
 
-            - name: Build contract types
-              run: ./scripts/build-contract-types.sh localhost --frozen
+            - name: Build town types
+              run: ./scripts/build-town-types.sh localhost --frozen
 
             - name: Start anvil
               # Start anvil in the background, and wait for it to be ready
@@ -511,7 +511,7 @@ jobs:
 
     XChain_Node:
         permissions: write-all
-        if: false && ( github.event_name != 'workflow_dispatch' || !inputs.skip_xchain_node )
+        if: ( github.event_name != 'workflow_dispatch' || !inputs.skip_xchain_node )
         runs-on: ubuntu-latest-8-cores
         timeout-minutes: 30
         steps:

@@ -34,7 +34,7 @@ export const ChannelSettingsCard = (props: Props) => {
 
     const onLeaveClick = useEvent(async () => {
         setTownRouteBookmark(spaceId.slug, '')
-        await leaveRoom(channelId)
+        await leaveRoom(channelId, spaceId.slug)
         navigate(`/${PATHS.SPACES}/${spaceId.slug}/`)
     })
 

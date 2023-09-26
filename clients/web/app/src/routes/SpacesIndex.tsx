@@ -1,5 +1,5 @@
 import React, { ComponentProps, forwardRef } from 'react'
-import { Message } from '@components/MessageLayout'
+import { MessageLayout } from '@components/MessageLayout'
 import { Box, BoxProps } from '@ui'
 
 export const LiquidContainer = forwardRef<HTMLElement, { fullbleed?: boolean } & BoxProps>(
@@ -70,8 +70,8 @@ const FakeSpaceMessages = () => (
   </LiquidContainer>
 );
 */
-export const RoundedMessage = (props: ComponentProps<typeof Message>) => (
-    <Message rounded="sm" padding="paragraph" background="default" {...props} />
+export const RoundedMessage = (props: ComponentProps<typeof MessageLayout>) => (
+    <MessageLayout rounded="sm" padding="paragraph" background="default" {...props} />
 )
 
 /*

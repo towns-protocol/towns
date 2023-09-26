@@ -27,7 +27,7 @@ resource "aws_secretsmanager_secret_version" "rds_river_node_credentials" {
   "host": "${module.rds_aurora_postgresql.cluster_endpoint}",
   "port": ${module.rds_aurora_postgresql.cluster_port},
   "dbClusterIdentifier": "${module.rds_aurora_postgresql.cluster_id}",
-  "dbConnectionString": "postgresql://river:${random_password.rds_river_node_postgresql_password.result}@${module.rds_aurora_postgresql.cluster_endpoint}:${module.rds_aurora_postgresql.cluster_port}/river?sslmode=disable"
+  "dbConnectionString": "postgresql://river:${random_password.rds_river_node_postgresql_password.result}@${module.rds_aurora_postgresql.cluster_endpoint}:${module.rds_aurora_postgresql.cluster_port}/river?sslmode=disable&pool_max_conns=1000"
 }
 EOF
 }

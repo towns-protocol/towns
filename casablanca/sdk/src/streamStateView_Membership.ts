@@ -60,6 +60,13 @@ export class StreamStateView_Membership {
         }
     }
 
+    /**
+     * If no userId is provided, checks current user
+     */
+    isMemberJoined(userId?: string): boolean {
+        return this.joinedUsers.has(userId ?? this.userId)
+    }
+
     private maybeEmitMyMembershipChange(
         userId: string,
         emitter: TypedEmitter<StreamEvents> | undefined,

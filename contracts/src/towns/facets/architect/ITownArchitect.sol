@@ -8,6 +8,10 @@ import {ITokenEntitlement} from "contracts/src/towns/entitlements/token/ITokenEn
 
 // contracts
 interface ITownArchitectBase {
+  // =============================================================
+  //                           STRUCTS
+  // =============================================================
+
   struct ChannelInfo {
     string id;
     string metadata;
@@ -33,7 +37,19 @@ interface ITownArchitectBase {
     ChannelInfo channel;
   }
 
-  event TownCreated(address indexed town);
+  // =============================================================
+  //                           EVENTS
+  // =============================================================
+
+  event TownCreated(
+    address indexed townCreator,
+    uint256 indexed townId,
+    address town
+  );
+
+  // =============================================================
+  //                           ERRORS
+  // =============================================================
 
   error TownArchitect__InvalidStringLength();
   error TownArchitect__InvalidNetworkId();

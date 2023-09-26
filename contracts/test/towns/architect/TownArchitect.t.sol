@@ -38,7 +38,7 @@ contract TownArchitectTest is
 
     // expect town to be created
     vm.expectEmit(true, true, true, true, address(townArchitect));
-    emit TownCreated(possibleTown);
+    emit TownCreated(founder, 0, possibleTown);
 
     address townInstance = _createSimpleTown(name);
     vm.stopPrank();

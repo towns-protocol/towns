@@ -38,12 +38,12 @@ func (s *Service) getLinkedWallets(ctx context.Context, log *slog.Logger, req *c
 
 	rootKeyId, err := hex.DecodeString(req.Msg.RootKeyId)
 	if err != nil {
-		return nil, RpcErrorf(Err_BAD_ROOT_KEY_ID, "GetLinkedWallets: error decoding root key id: %v", err)
+		return nil, RiverErrorf(Err_BAD_ROOT_KEY_ID, "GetLinkedWallets: error decoding root key id: %v", err)
 	}
 
 	wallets, err := s.walletLinkContract.GetLinkedWallets(common.BytesToAddress(rootKeyId))
 	if err != nil {
-		return nil, RpcErrorf(Err_INTERNAL_ERROR, "GetLinkedWallets: error getting linked wallets: %v", err)
+		return nil, RiverErrorf(Err_INTERNAL_ERROR, "GetLinkedWallets: error getting linked wallets: %v", err)
 	}
 
 	var addresses []string

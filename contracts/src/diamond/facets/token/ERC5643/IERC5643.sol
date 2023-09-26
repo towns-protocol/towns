@@ -11,6 +11,7 @@ interface IERC5643Base {
   error ERC5643__InvalidTokenId(uint256 tokenId);
   error ERC5643__SubscriptionNotRenewable(uint256 tokenId);
   error ERC5643__NotApprovedOrOwner();
+  error ERC5643__DurationZero();
 
   /// @notice Emitted when a subscription expiration changes
   /// @dev When a subscription is canceled, the expiration value should also be 0.

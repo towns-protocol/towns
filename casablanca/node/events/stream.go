@@ -1,6 +1,7 @@
 package events
 
 import (
+	"casablanca/node/dlog"
 	"casablanca/node/storage"
 	"context"
 	"sync"
@@ -10,7 +11,6 @@ import (
 	. "casablanca/node/protocol"
 
 	mapset "github.com/deckarep/golang-set/v2"
-	"github.com/gologme/log"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -146,6 +146,8 @@ func (s *Stream) makeMiniblock(ctx context.Context) error {
 func (s *Stream) maybeMakeMiniblock(ctx context.Context) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+
+	log := dlog.CtxLog(ctx)
 
 	// Do nothing if not loaded since it's possible for tick to arrive after stream is unloaded.
 	if s.view == nil {
@@ -306,11 +308,11 @@ func (s *Stream) addEventImpl(ctx context.Context, event *ParsedEvent) (*SyncCoo
 
 func (s *Stream) Sub(ctx context.Context, cookie *SyncCookie, receiver chan<- *StreamAndCookie) (*StreamAndCookie, error) {
 	if cookie.StreamId != s.streamId {
-		return nil, RpcErrorf(Err_BAD_SYNC_COOKIE, "Stream.Sub: cookie.StreamId=%s, s.streamId=%s", cookie.StreamId, s.streamId)
+		return nil, RiverErrorf(Err_BAD_SYNC_COOKIE, "Stream.Sub: cookie.StreamId=%s, s.streamId=%s", cookie.StreamId, s.streamId)
 	}
 	slot := cookie.MinipoolSlot
 	if slot < 0 {
-		return nil, RpcErrorf(Err_BAD_SYNC_COOKIE, "Stream.Sub: bad slot, cookie.MinipoolSlot=%d", slot)
+		return nil, RiverErrorf(Err_BAD_SYNC_COOKIE, "Stream.Sub: bad slot, cookie.MinipoolSlot=%d", slot)
 	}
 
 	s.mu.Lock()
@@ -322,7 +324,7 @@ func (s *Stream) Sub(ctx context.Context, cookie *SyncCookie, receiver chan<- *S
 
 	if cookie.MinipoolInstance == s.view.minipool.instance {
 		if slot > int64(s.view.minipool.events.Len()) {
-			return nil, RpcErrorf(Err_BAD_SYNC_COOKIE, "Stream.Sub: bad slot")
+			return nil, RiverErrorf(Err_BAD_SYNC_COOKIE, "Stream.Sub: bad slot")
 		}
 
 		if s.receivers == nil {

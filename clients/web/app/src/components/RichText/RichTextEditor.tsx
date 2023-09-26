@@ -59,6 +59,7 @@ import { TabIndentationPlugin } from './plugins/TabIndentationPlugin'
 import { MentionHoverPlugin } from './plugins/MentionHoverPlugin'
 import { RichTextBottomToolbar } from './RichTextBottomToolbar'
 import { singleEmojiMessage } from './RichTextEditor.css'
+import { HightlightNode, createHighlightTransformer } from './nodes/HightlightNode'
 
 type Props = {
     onSend?: (value: string, options: SendTextMessageOptions | undefined) => void
@@ -95,6 +96,7 @@ const nodes = [
     ListItemNode,
     ListNode,
     MentionNode,
+    HightlightNode,
     ChannelMentionNode,
     ChannelLinkNode,
     QuoteNode,
@@ -102,6 +104,7 @@ const nodes = [
 interface IUseTransformers {
     members: RoomMember[]
     channels: Channel[]
+    highlightTerms?: string[]
 }
 
 // either we filter out, or selectively import if this filter list gets too large
@@ -109,7 +112,7 @@ const filteredDefaultTransforms = TRANSFORMERS.filter((t) => !isEqual(t, HEADING
     // map all links to custom, with target="_blank"
     .map((t) => (isEqual(t, LINK) ? BLANK_LINK : t))
 
-const useTransformers = ({ members, channels }: IUseTransformers) => {
+const useTransformers = ({ members, channels, highlightTerms }: IUseTransformers) => {
     const transformers = useMemo(() => {
         const names = members
             .filter((m) => notUndefined(m.name))
@@ -120,8 +123,9 @@ const useTransformers = ({ members, channels }: IUseTransformers) => {
             createChannelLinkTransformer(channelHashtags),
             CHECK_LIST,
             ...filteredDefaultTransforms,
+            ...(highlightTerms?.length ? [createHighlightTransformer(highlightTerms)] : []),
         ]
-    }, [members, channels])
+    }, [members, channels, highlightTerms])
     return { transformers }
 }
 
@@ -133,6 +137,7 @@ export const RichTextPreview = React.memo(
         channels?: Channel[]
         onMentionClick?: (mentionName: string) => void
         onMentionHover?: (element?: HTMLElement, userId?: string) => void
+        highlightTerms?: string[]
     }) => {
         const {
             content,
@@ -141,12 +146,13 @@ export const RichTextPreview = React.memo(
             onMentionHover,
             channels = [],
             members = [],
+            highlightTerms,
         } = props
 
         // note: unnecessary repetition here, could be optimised by handling above
         // inside e.g. space context or timeline
 
-        const { transformers } = useTransformers({ members, channels })
+        const { transformers } = useTransformers({ members, channels, highlightTerms })
 
         const initialConfig = useInitialConfig(
             props.content,
@@ -183,7 +189,6 @@ export const RichTextPreview = React.memo(
                     ) : (
                         <> </>
                     )}
-
                     <RichTextPlugin
                         ErrorBoundary={LexicalErrorBoundary}
                         contentEditable={
@@ -302,6 +307,7 @@ const RichTextEditorWithoutBoundary = (props: Props) => {
         : isFormattingToolbarOpen && focused
 
     const background = isEditing && !isTouch ? 'level1' : 'level2'
+
     return (
         <Stack
             background={background}
@@ -331,6 +337,7 @@ const RichTextEditorWithoutBoundary = (props: Props) => {
                         ErrorBoundary={LexicalErrorBoundary}
                     />
                 </RichTextUI>
+
                 <Stack
                     horizontal
                     paddingBottom="sm"
@@ -340,6 +347,7 @@ const RichTextEditorWithoutBoundary = (props: Props) => {
                 >
                     <RichTextBottomToolbar
                         editing={isEditing}
+                        focused={focused}
                         threadId={props.threadId}
                         threadPreview={props.threadPreview}
                         visible={!isTouch || focused || !isEditorEmpty}

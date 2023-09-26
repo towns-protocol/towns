@@ -19,7 +19,8 @@ export const ChannelUsersPill = (props: { spaceId: RoomIdentifier; channelId: Ro
             if (eventIds[i].content?.kind !== ZTEvent.RoomMessage) {
                 continue
             }
-            if (!lastUniqueIds.includes(eventIds[i].sender.id)) {
+            const senderId = eventIds[i].sender.id
+            if (!lastUniqueIds.includes(senderId) && members.some((m) => m.userId === senderId)) {
                 lastUniqueIds.push(eventIds[i].sender.id)
             }
         }

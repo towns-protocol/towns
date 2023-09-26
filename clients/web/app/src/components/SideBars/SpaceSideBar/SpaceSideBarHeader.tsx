@@ -1,9 +1,8 @@
 import React, { useCallback, useState } from 'react'
-import { matchPath, useLocation, useNavigate } from 'react-router'
+import { useNavigate } from 'react-router'
 import { useEvent } from 'react-use-event-hook'
 import { Membership, SpaceData, useMyMembership, useSpaceMembers } from 'use-zion-client'
 import { AnimatePresence } from 'framer-motion'
-import { useChannelIdFromPathname } from 'hooks/useChannelIdFromPathname'
 import { useContractSpaceInfo } from 'hooks/useContractSpaceInfo'
 import { useEnvironment } from 'hooks/useEnvironmnet'
 import { PATHS } from 'routes'
@@ -14,6 +13,7 @@ import { InteractiveSpaceIcon } from '@components/SpaceIcon'
 import { CopySpaceLink } from '@components/CopySpaceLink/CopySpaceLink'
 import { FadeIn } from '@components/Transitions'
 import { OpenInEtherscan } from '@components/Tooltips/OpenInEtherscan'
+import { useCreateLink } from 'hooks/useCreateLink'
 import * as styles from './SpaceSideBar.css'
 
 export const SpaceSideBarHeader = (props: {
@@ -23,9 +23,7 @@ export const SpaceSideBarHeader = (props: {
     scrollOffset: number
 }) => {
     const { opaqueHeaderBar, space } = props
-    const currentChannelId = useChannelIdFromPathname()
     const { chainName } = useEnvironment()
-    const { pathname } = useLocation()
 
     const { members } = useSpaceMembers()
     const { data: spaceInfo } = useContractSpaceInfo(space.id.networkId)
@@ -47,19 +45,13 @@ export const SpaceSideBarHeader = (props: {
         )
     })
 
+    const { createLink } = useCreateLink()
+
     const onTokenClick = useEvent(() => {
-        const currentSpacePathWithoutInfo = matchPath(
-            `${PATHS.SPACES}/:spaceSlug/:current`,
-            pathname,
-        )
-
-        let path
-
-        if (currentChannelId) {
-            path = `/${PATHS.SPACES}/${space.id.slug}/channels/${currentChannelId}/info`
-        } else if (currentSpacePathWithoutInfo) {
-            path = `/${PATHS.SPACES}/${space.id.slug}/${currentSpacePathWithoutInfo?.params.current}/info`
-        }
+        const path = createLink({
+            spaceId: space.id.networkId,
+            panel: 'townInfo',
+        })
 
         if (path) {
             navigate(path)

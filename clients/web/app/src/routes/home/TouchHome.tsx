@@ -1,17 +1,28 @@
+import { ErrorBoundary } from '@sentry/react'
+import { AnimatePresence } from 'framer-motion'
+import fuzzysort from 'fuzzysort'
+import { SearchResult } from 'minisearch'
 import React, { useCallback, useMemo, useState } from 'react'
+import { Outlet } from 'react-router'
 import {
     RoomMember,
     SpaceData,
     getAccountAddress,
     useSpaceData,
     useSpaceMembers,
+    useTimelineStore,
 } from 'use-zion-client'
-import { ErrorBoundary } from '@sentry/react'
-import { AnimatePresence } from 'framer-motion'
-import { Outlet } from 'react-router'
-import fuzzysort from 'fuzzysort'
-import { atoms } from 'ui/styles/atoms.css'
+import { SomethingWentWrong } from '@components/Errors/SomethingWentWrong'
+import { NavItem } from '@components/NavItem/_NavItem'
+import { MessageResultItem } from '@components/SearchModal/SearchModal'
+import { useMessageIndex } from '@components/SearchModal/hooks/useMessageIndex'
+import { useMiniSearch } from '@components/SearchModal/hooks/useMiniSearch'
+import { usePrepopulateChannels } from 'hooks/usePrepopulateChannels'
+import { TouchHomeOverlay } from '@components/TouchHomeOverlay/TouchHomeOverlay'
+import { BlurredBackground } from '@components/TouchLayoutHeader/BlurredBackground'
 import { TouchLayoutHeader } from '@components/TouchLayoutHeader/TouchLayoutHeader'
+import { TouchScrollToTopScrollId } from '@components/TouchTabBar/TouchScrollToTopScrollId'
+import { VisualViewportContextProvider } from '@components/VisualViewportContext/VisualViewportContext'
 import {
     Avatar,
     Badge,
@@ -26,21 +37,18 @@ import {
     Text,
     TextField,
 } from '@ui'
-import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
-import { SomethingWentWrong } from '@components/Errors/SomethingWentWrong'
-import { TouchHomeOverlay } from '@components/TouchHomeOverlay/TouchHomeOverlay'
-import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
-import { shortAddress } from 'ui/utils/utils'
-import { NavItem } from '@components/NavItem/_NavItem'
-import { useCreateLink } from 'hooks/useCreateLink'
-import { BlurredBackground } from '@components/TouchLayoutHeader/BlurredBackground'
-import { VisualViewportContextProvider } from '@components/VisualViewportContext/VisualViewportContext'
 import { useChannelsWithMentionCountsAndUnread } from 'hooks/useChannelsWithMentionCountsAndUnread'
+import { useCreateLink } from 'hooks/useCreateLink'
+import { useSpaceChannels } from 'hooks/useSpaceChannels'
 import { PersistAndFadeWelcomeLogo } from 'routes/layouts/WelcomeLayout'
-import { TouchScrollToTopScrollId } from '@components/TouchTabBar/TouchScrollToTopScrollId'
+import { ButtonSpinner } from 'ui/components/Spinner/ButtonSpinner'
+import { atoms } from 'ui/styles/atoms.css'
 import { vars } from 'ui/styles/vars.css'
-import { TouchTabBarLayout } from '../layouts/TouchTabBarLayout'
+import { ImageVariants, useImageSource } from '@components/UploadImage/useImageSource'
+import { shortAddress } from 'ui/utils/utils'
+import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { ChannelItem } from '../AllChannelsList/AllChannelsList'
+import { TouchTabBarLayout } from '../layouts/TouchTabBarLayout'
 import { CheckValidSpaceOrInvite } from './CheckValidSpaceOrInvite'
 
 const transition = {
@@ -93,6 +101,7 @@ export const TouchHome = () => {
     }
 
     const { channelsWithMentionCountsAndUnread } = useChannelsWithMentionCountsAndUnread()
+
     const filteredChannels = useMemo(() => {
         return fuzzysort
             .go(searchString, channelsWithMentionCountsAndUnread, { key: 'name', all: true })
@@ -116,6 +125,14 @@ export const TouchHome = () => {
     const onDisplayMainPanel = useCallback(() => {
         setActiveOverlay('main-panel')
     }, [])
+    const { imageSrc } = useImageSource(space?.id.slug ?? '', ImageVariants.thumbnail300)
+
+    const channels = useSpaceChannels()
+    const preloadIds = useMemo(() => channels.map((c) => c.id), [channels])
+    usePrepopulateChannels(preloadIds)
+
+    const { messages } = useMessageIndex()
+    const messageResults = useMiniSearch(messages, searchString)
 
     return (
         <ErrorBoundary fallback={ErrorFallbackComponent}>
@@ -124,8 +141,10 @@ export const TouchHome = () => {
                     <CheckValidSpaceOrInvite>
                         <AnimatePresence>
                             <BlurredBackground
-                                spaceSlug={space?.id.slug ?? ''}
-                                hidden={isSearching}
+                                height="x20"
+                                imageSrc={imageSrc}
+                                initial={{ filter: `blur(50px)` }}
+                                animate={{ filter: 'blur(5px)', opacity: isSearching ? 0 : 1 }}
                             />
                             <MotionStack
                                 absoluteFill
@@ -213,10 +232,17 @@ export const TouchHome = () => {
                                                     <UserList members={filteredMembers} />
                                                 </>
                                             )}
+                                            {messageResults.length > 0 && (
+                                                <>
+                                                    <SectionHeader title="Messages" />
+                                                    <MessageList messages={messageResults} />
+                                                </>
+                                            )}
                                             {isSearching &&
                                                 searchString.length > 0 &&
                                                 filteredChannels.length === 0 &&
                                                 readChannels.length === 0 &&
+                                                messageResults.length === 0 &&
                                                 filteredMembers.length === 0 && (
                                                     <NoResults searchString={searchString} />
                                                 )}
@@ -360,14 +386,14 @@ const UserRow = (props: { member: RoomMember }) => {
                 width="100%"
             >
                 <Avatar size="avatar_x4" userId={member.userId} />
-                <Stack gap="sm" overflowX="hidden">
+                <Stack gap="sm" overflowX="hidden" paddingY="xxs">
                     <Text truncate fontWeight="medium" size="sm" color="default">
                         {getPrettyDisplayName(member).initialName}
                     </Text>
                     {accountAddress && (
-                        <Text truncate color="gray2" size="sm">
+                        <Paragraph color="gray2" size="sm">
                             {shortAddress(accountAddress)}
-                        </Text>
+                        </Paragraph>
                     )}
                 </Stack>
                 <Box grow />
@@ -375,6 +401,28 @@ const UserRow = (props: { member: RoomMember }) => {
             </Stack>
         </NavItem>
     )
+}
+
+const MessageList = (props: { messages: SearchResult[] }) => {
+    const { members } = useSpaceMembers()
+    const channels = useSpaceChannels()
+    const { threadsStats } = useTimelineStore(({ threadsStats }) => ({
+        threadsStats,
+    }))
+    const miscProps = useMemo(
+        () => ({ channels, members, threadsStats }),
+        [channels, members, threadsStats],
+    )
+    return props.messages.map((m) => (
+        <Box key={m.key} paddingX="none" paddingY="xs">
+            <MessageResultItem
+                channelId={m.channelId}
+                event={m.source}
+                highligtTerms={m.terms}
+                misc={miscProps}
+            />
+        </Box>
+    ))
 }
 
 const SectionHeader = (props: { title: string }) => {

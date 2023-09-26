@@ -36,6 +36,18 @@ const _abi = [
       {
         indexed: true,
         internalType: "address",
+        name: "townCreator",
+        type: "address",
+      },
+      {
+        indexed: true,
+        internalType: "uint256",
+        name: "townId",
+        type: "uint256",
+      },
+      {
+        indexed: false,
+        internalType: "address",
         name: "town",
         type: "address",
       },

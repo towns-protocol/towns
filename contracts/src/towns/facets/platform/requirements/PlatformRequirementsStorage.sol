@@ -7,12 +7,16 @@ pragma solidity ^0.8.19;
 
 // contracts
 
-library PrimarySaleStorage {
+library PlatformRequirementsStorage {
   bytes32 internal constant STORAGE_SLOT =
-    keccak256("towns.facets.membership.sale.storage");
+    keccak256("towns.facets.platform.requirements.PlatformRequirementsStorage");
 
   struct Layout {
-    address primarySaleRecipient;
+    uint256 membershipFee;
+    uint256 membershipMintLimit;
+    address feeRecipient;
+    uint64 membershipDuration;
+    uint16 membershipBps;
   }
 
   function layout() internal pure returns (Layout storage l) {

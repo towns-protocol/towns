@@ -9,10 +9,13 @@ import {IDiamond, Diamond} from "contracts/src/diamond/Diamond.sol";
 // helpers
 import {FacetHelper, FacetTest} from "contracts/test/diamond/Facet.t.sol";
 import {IntrospectionHelper} from "contracts/test/diamond/introspection/IntrospectionSetup.sol";
+import {ERC721AHelper} from "contracts/test/diamond/erc721a/ERC721ASetup.sol";
+
 import {MultiInit} from "contracts/src/diamond/initializers/MultiInit.sol";
 
 // contracts
 import {ERC5643Mock} from "contracts/test/mocks/MockERC5643.sol";
+import {ERC5643} from "contracts/src/diamond/facets/token/ERC5643/ERC5643.sol";
 
 abstract contract ERC5643Setup is FacetTest {
   ERC5643Mock internal subscription;
@@ -27,23 +30,28 @@ abstract contract ERC5643Setup is FacetTest {
     override
     returns (Diamond.InitParams memory)
   {
-    ERC5643Helper erc5643Helper = new ERC5643Helper();
+    ERC5643MockHelper erc5643Helper = new ERC5643MockHelper();
     IntrospectionHelper introspectionHelper = new IntrospectionHelper();
+    ERC721AHelper erc721aHelper = new ERC721AHelper();
+
     MultiInit multiInit = new MultiInit();
 
-    address[] memory addresses = new address[](2);
-    bytes[] memory payloads = new bytes[](2);
+    address[] memory addresses = new address[](3);
+    bytes[] memory payloads = new bytes[](3);
 
-    IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](2);
+    IDiamond.FacetCut[] memory cuts = new IDiamond.FacetCut[](3);
 
     cuts[0] = erc5643Helper.makeCut(IDiamond.FacetCutAction.Add);
     cuts[1] = introspectionHelper.makeCut(IDiamond.FacetCutAction.Add);
+    cuts[2] = erc721aHelper.makeCut(IDiamond.FacetCutAction.Add);
 
     addresses[0] = erc5643Helper.facet();
     addresses[1] = introspectionHelper.facet();
+    addresses[2] = erc721aHelper.facet();
 
     payloads[0] = erc5643Helper.makeInitData("");
     payloads[1] = introspectionHelper.makeInitData("");
+    payloads[2] = erc721aHelper.makeInitData("My NFT", "MNFT");
 
     return
       Diamond.InitParams({
@@ -59,33 +67,53 @@ abstract contract ERC5643Setup is FacetTest {
 }
 
 contract ERC5643Helper is FacetHelper {
-  ERC5643Mock internal subscription;
+  ERC5643 internal subscription;
 
   constructor() {
-    subscription = new ERC5643Mock();
+    subscription = new ERC5643();
   }
 
-  function facet() public view override returns (address) {
+  function facet() public view virtual override returns (address) {
     return address(subscription);
   }
 
-  function initializer() public view override returns (bytes4) {
-    return subscription.init.selector;
+  function initializer() public view virtual override returns (bytes4) {
+    return subscription.__ERC5643_init.selector;
   }
 
-  function selectors() public view override returns (bytes4[] memory) {
-    bytes4[] memory selectors_ = new bytes4[](8);
+  function selectors() public view virtual override returns (bytes4[] memory) {
+    bytes4[] memory selectors_ = new bytes4[](4);
 
     selectors_[0] = subscription.renewSubscription.selector;
     selectors_[1] = subscription.cancelSubscription.selector;
     selectors_[2] = subscription.expiresAt.selector;
     selectors_[3] = subscription.isRenewable.selector;
 
-    // ERC721
-    selectors_[4] = subscription.mintTo.selector;
-    selectors_[5] = subscription.ownerOf.selector;
-    selectors_[6] = subscription.balanceOf.selector;
-    selectors_[7] = subscription.setApprovalForAll.selector;
+    return selectors_;
+  }
+}
+
+contract ERC5643MockHelper is ERC5643Helper {
+  ERC5643Mock internal mock;
+
+  constructor() {
+    mock = new ERC5643Mock();
+  }
+
+  function facet() public view override returns (address) {
+    return address(mock);
+  }
+
+  function selectors() public view override returns (bytes4[] memory) {
+    bytes4[] memory currentSelectors_ = super.selectors();
+    bytes4[] memory selectors_ = new bytes4[](currentSelectors_.length + 1);
+    uint256 index;
+
+    for (uint256 i = 0; i < currentSelectors_.length; i++) {
+      selectors_[index++] = currentSelectors_[i];
+    }
+
+    selectors_[index] = mock.mintTo.selector;
 
     return selectors_;
   }

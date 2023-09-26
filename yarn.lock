@@ -13894,6 +13894,7 @@ __metadata:
     lexical: ^0.12.0
     lodash: ^4.17.21
     matrix-js-sdk: 25.0.0-rc.1
+    minisearch: ^6.1.0
     msw: ^1.0.1
     push-notification-worker: "workspace:^"
     react: ^18.2.0
@@ -13902,6 +13903,7 @@ __metadata:
     react-helmet: ^6.1.0
     react-hook-form: ^7.38.0
     react-hot-toast: ^2.4.0
+    react-hotkeys-hook: ^4.4.1
     react-intersection-observer: ^9.4.0
     react-modal-sheet: ^1.10.2
     react-router: ^6.4.2
@@ -17422,6 +17424,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"minisearch@npm:^6.1.0":
+  version: 6.1.0
+  resolution: "minisearch@npm:6.1.0"
+  checksum: c169e9d917afc2812c2302d2291e6b12f3c6fcd8fbbbaa11ac524a0fd220a0e8e0c5fc82845a6b9e13a14de0908d9810f3c0affca200a02bf4abfa485241940f
+  languageName: node
+  linkType: hard
+
 "minizlib@npm:^2.1.1, minizlib@npm:^2.1.2":
   version: 2.1.2
   resolution: "minizlib@npm:2.1.2"
@@ -19184,6 +19193,16 @@ __metadata:
     react: ">=16"
     react-dom: ">=16"
   checksum: 910214496d6821af8e643c5f7087eff6c76f1395756f3d6cf1fc07a599c582c443cbb5a4cadfc58205acf0845b77a2a10a4ca49b385e772b72edc57dfd38d016
+  languageName: node
+  linkType: hard
+
+"react-hotkeys-hook@npm:^4.4.1":
+  version: 4.4.1
+  resolution: "react-hotkeys-hook@npm:4.4.1"
+  peerDependencies:
+    react: ">=16.8.1"
+    react-dom: ">=16.8.1"
+  checksum: c03d5d013ec41f3a63a3dd7d704d2fc98fba227811f7a1222af8651705f1cef983b7ccc4325f9910fec920156b14b4f05101882dc7d0bde1601ba56c01d5f162
   languageName: node
   linkType: hard
 

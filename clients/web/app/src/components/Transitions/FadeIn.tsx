@@ -3,7 +3,7 @@ import { HTMLMotionProps, motion } from 'framer-motion'
 import { BoxProps, MotionBox } from '@ui'
 
 type Props = {
-    children: React.ReactNode
+    children?: React.ReactNode
     delay?: boolean | number
     fast?: boolean
     disabled?: boolean

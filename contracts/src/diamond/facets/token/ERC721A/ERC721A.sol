@@ -45,27 +45,15 @@ contract ERC721A is IERC721A, ERC721ABase, Facet {
    * Burned tokens will reduce the count.
    * To get the total number of tokens minted, please see {_totalMinted}.
    */
-  function totalSupply() public view virtual override returns (uint256) {
-    // Counter underflow is impossible as _burnCounter cannot be incremented
-    // more than `_currentIndex - _startTokenId()` times.
-    unchecked {
-      return
-        ERC721AStorage.layout()._currentIndex -
-        ERC721AStorage.layout()._burnCounter -
-        _startTokenId();
-    }
+  function totalSupply() public view virtual returns (uint256) {
+    return _totalSupply();
   }
 
   /**
    * @dev Returns the number of tokens in `owner`'s account.
    */
-  function balanceOf(
-    address owner
-  ) public view virtual override returns (uint256) {
-    if (owner == address(0)) revert BalanceQueryForZeroAddress();
-    return
-      ERC721AStorage.layout()._packedAddressData[owner] &
-      _BITMASK_ADDRESS_DATA_ENTRY;
+  function balanceOf(address owner) public view virtual returns (uint256) {
+    return _balanceOf(owner);
   }
 
   // =============================================================

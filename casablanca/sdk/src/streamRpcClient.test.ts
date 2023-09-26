@@ -52,9 +52,37 @@ describe('streamRpcClient', () => {
     test('error', async () => {
         const client = makeTestRpcClient()
         expect(client).toBeDefined()
-        await expect(client.info({ debug: 'error' })).rejects.toThrow(
+
+        let err: Error | undefined = undefined
+        try {
+            await client.info({ debug: 'error' })
+        } catch (e) {
+            expect(e).toBeInstanceOf(Error)
+            err = e as Error
+        }
+        log('error', err)
+        expect(err).toBeDefined()
+        log('error', err!.toString())
+        expect(err!.toString()).toContain(
             '[invalid_argument] 1:DEBUG_ERROR: Error requested through Info request',
         )
+    })
+
+    test('error_untyped', async () => {
+        const client = makeTestRpcClient()
+        expect(client).toBeDefined()
+
+        let err: Error | undefined = undefined
+        try {
+            await client.info({ debug: 'error_untyped' })
+        } catch (e) {
+            expect(e).toBeInstanceOf(Error)
+            err = e as Error
+        }
+        log('error_untyped', err)
+        expect(err).toBeDefined()
+        log('error_untyped', err!.toString())
+        expect(err!.toString()).toContain('[unknown] Error requested through Info request')
     })
 
     test('panic', async () => {

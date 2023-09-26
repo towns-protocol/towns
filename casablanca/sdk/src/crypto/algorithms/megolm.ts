@@ -22,16 +22,18 @@ import {
 } from '../olmLib'
 import { DeviceInfoMap, IOlmDevice } from '../deviceList'
 import {
+    ChannelMessage,
     MegolmSession,
     MembershipOp,
+    ToDeviceMessage,
     ToDeviceMessage_KeyResponse,
     ToDeviceOp,
     UserPayload_ToDevice,
 } from '@river/proto'
-import { IChannelContent, IClearContent, RiverEvent } from '../../event'
+import { IChannelContent, IClearContent, IClearEvent, RiverEvent } from '../../event'
 import * as olmLib from '../olmLib'
 import { IEventDecryptionResult, IncomingRoomKeyRequest } from '../crypto'
-import { PlainMessage } from '@bufbuild/protobuf'
+import { PlainMessage, toPlainMessage } from '@bufbuild/protobuf'
 
 export interface IOutboundGroupSessionKey {
     chain_index: number
@@ -944,16 +946,61 @@ export class MegolmEncryption extends EncryptionAlgorithm {
         if (devicesInRoomList === null) {
             throw new Error(`Failed to get devices in room ${channelId}`)
         }
+
+        if (!content.case || !content.value) {
+            throw new Error(`Megolm: No content found`)
+        }
+
         const [devicesInRoom] = devicesInRoomList
 
         // todo: check if any of these devices are not yet known to the user.
         // if so, warn the user so they can verify or ignore.
+        let type: string
+        let encoded: string
+        switch (content.case) {
+            case 'post': {
+                const message = new ChannelMessage({
+                    payload: {
+                        case: content.case,
+                        value: content.value,
+                    },
+                })
+                encoded = message.toJsonString()
+                type = 'channelMessage'
+                break
+            }
+            case 'edit':
+            case 'redaction':
+            case 'reaction': {
+                const message = new ChannelMessage({
+                    payload: {
+                        case: content.case,
+                        value: content.value,
+                    },
+                })
+                encoded = message.toJsonString()
+                type = 'channelMessage'
+                break
+            }
+            case 'request':
+            case 'response': {
+                const message = new ToDeviceMessage({
+                    payload: {
+                        case: content.case,
+                        value: content.value,
+                    },
+                })
+                encoded = message.toJsonString()
+                type = 'toDeviceMessage'
+                break
+            }
+        }
 
         const session = await this.ensureOutboundSession(channelId, devicesInRoom, true)
         const payloadJson = {
             channel_id: channelId,
-            type: eventType,
-            content: content,
+            type: type,
+            content: encoded,
         }
 
         if (session === null) {
@@ -1155,10 +1202,34 @@ export class MegolmDecryption extends DecryptionAlgorithm {
         }
 
         const payload = JSON.parse(res.result)
+        if (!isValidPayload(payload)) {
+            throw new DecryptionError(
+                'PROTOBUF_MISSING_INFORMATION',
+                'unable to find required protobuf information',
+            )
+        }
+        let clearEvent: IClearEvent | undefined
+
+        const type = payload.type
+        const protoContent = payload.content
+        if (type === 'channelMessage') {
+            const message = ChannelMessage.fromJsonString(protoContent)
+            const plainMessage = toPlainMessage(message)
+            clearEvent = {
+                content: plainMessage.payload,
+            }
+        } else if (type === 'toDeviceMessage') {
+            const message = ToDeviceMessage.fromJsonString(protoContent)
+            const plainMessage = toPlainMessage(message)
+
+            clearEvent = {
+                content: plainMessage.payload,
+            }
+        }
+
         // todo: tighten event type to avoid this
         // https://linear.app/hnt-labs/issue/HNT-1837/tighten-content-type-of-riverevent
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-        const channel_id = payload.channel_id as string
+        const channel_id = payload.channel_id
 
         // belt-and-braces check that the room id matches that indicated by the HS
         // (this is somewhat redundant, since the megolm session is scoped to the
@@ -1170,8 +1241,15 @@ export class MegolmDecryption extends DecryptionAlgorithm {
             )
         }
 
+        if (!clearEvent) {
+            throw new DecryptionError(
+                'PROTOBUF_DECODING_FAILED',
+                'unable to find matching protobuf for message type ' + type,
+            )
+        }
+
         return {
-            clearEvent: payload,
+            clearEvent: clearEvent,
             senderCurve25519Key: res.senderKey,
         }
     }
@@ -1607,4 +1685,19 @@ export class MegolmDecryption extends DecryptionAlgorithm {
             }
         }
     }
+}
+
+function isValidPayload(
+    obj: unknown,
+): obj is { content: string; type: string; channel_id: string } {
+    return (
+        obj !== null &&
+        typeof obj === 'object' &&
+        'content' in obj &&
+        typeof obj.content === 'string' &&
+        'type' in obj &&
+        typeof obj.type === 'string' &&
+        'channel_id' in obj &&
+        typeof obj.channel_id === 'string'
+    )
 }

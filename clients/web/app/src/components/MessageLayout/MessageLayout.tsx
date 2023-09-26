@@ -121,19 +121,19 @@ export const MessageLayout = (props: Props) => {
         <Stack
             horizontal
             ref={ref}
+            background="level1"
             onMouseEnter={onMouseEnter}
             {...boxProps}
             hoverable={isSelectable}
             elevate={isEditing || isHighlight}
             hoverActive={isEditing || isHighlight}
-            background="level1"
             {...backgroundProps}
-            tabIndex={0}
+            tabIndex={props.tabIndex ?? 0}
             onDoubleClick={!isTouch && canReply ? onDoubleClick : undefined}
         >
             {/* left / avatar gutter */}
             {/* snippet: center avatar with name row by keeping the size of the containers equal  */}
-            <Box minWidth={isTouch ? 'x6' : 'x8'}>
+            <Box minWidth={isTouch ? 'x5' : 'x8'}>
                 {displayContext === 'single' || displayContext === 'head' ? (
                     senderId ? (
                         <AvatarComponent
@@ -182,11 +182,13 @@ export const MessageLayout = (props: Props) => {
                                     isTouch ? undefined : <ProfileHoverCard userId={senderId} />
                                 }
                             >
-                                <Link to={`profile/${senderId}`}>
-                                    <Text truncate fontWeight="strong" color="default" as="span">
-                                        {name}&nbsp;
-                                    </Text>
-                                </Link>
+                                {profileLink ? (
+                                    <Link to={profileLink ?? ''} tabIndex={-1}>
+                                        <UserName name={name} />
+                                    </Link>
+                                ) : (
+                                    <UserName name={name} />
+                                )}
                             </Box>
                         )}
                         {props.channelLabel ? (
@@ -298,6 +300,12 @@ export const MessageLayout = (props: Props) => {
     )
 }
 
+const UserName = ({ name }: { name: string }) => (
+    <Text truncate fontWeight="strong" color="default" as="span">
+        {name}&nbsp;
+    </Text>
+)
+
 export const RedactedMessageLayout = (props: {
     event: ZRoomMessageRedactedEvent
     replies?: ThreadStats
@@ -382,7 +390,7 @@ const AvatarComponent = (props: AvatarProps & { userId?: string; link?: string }
 const ActiveAvatar = (props: AvatarProps & { userId: string; link: string }) => {
     const { userId, ...avatarProps } = props
     return (
-        <Link to={props.link}>
+        <Link to={props.link} tabIndex={-1}>
             <Avatar userId={userId} {...avatarProps} />
         </Link>
     )

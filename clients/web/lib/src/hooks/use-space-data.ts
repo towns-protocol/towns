@@ -200,6 +200,10 @@ function useSpaceRollup(streamId: RoomIdentifier | undefined): SpaceData | undef
         // wrap the update op, we get the channel ids and
         // rollup the space channels into a space
         const update = () => {
+            const memberships = stream.view.getMemberships()
+            if (!memberships.isMemberJoined()) {
+                return
+            }
             const channelIds = Array.from(stream.view.spaceContent.spaceChannelsMetadata.keys())
             const newSpace = rollupSpace(stream, userId, channelIds)
             setSpace((prev) => {

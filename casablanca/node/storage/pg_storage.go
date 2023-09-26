@@ -120,7 +120,7 @@ func (s *PostgresEventStore) GetStreamFromLastSnapshot(ctx context.Context, stre
 			if errors.Is(err, pgx.ErrTxClosed) {
 				return
 			}
-			log.Error("GetStreamFromLastSnapshor: failed to rollback transaction", "error", err)
+			log.Error("GetStreamFromLastSnapshot: failed to rollback transaction", "error", err)
 		}
 	}()
 
@@ -465,6 +465,21 @@ func (s *PostgresEventStore) CreateBlock(
 	}
 
 	return nil
+}
+
+func (s *PostgresEventStore) GetStreamsNumber(ctx context.Context) (int, error) {
+	log := dlog.CtxLog(ctx)
+
+	defer infra.StoreExecutionTimeMetrics("GetStreamNumbers", time.Now())
+
+	var count int
+	row := s.pool.QueryRow(ctx, "SELECT COUNT(stream_name) FROM es")
+	if err := row.Scan(&count); err != nil {
+		log.Error("GetStreamsNumber getting streams number error", "error", err)
+		return 0, err
+	}
+
+	return count, nil
 }
 
 // Non-API helpers

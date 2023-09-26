@@ -13,10 +13,6 @@ contract ERC5643Mock is ERC5643 {
   uint64 public constant MAXIMUM_DURATION = 30 days;
   uint64 public constant MINIMUM_DURATION = 1 days;
 
-  function init() external onlyInitializing {
-    __ERC5643_init("MockERC5643", "MERC5643");
-  }
-
   function mintTo(address to) external returns (uint256 tokenId) {
     tokenId = _nextTokenId();
     _mint(to, 1);

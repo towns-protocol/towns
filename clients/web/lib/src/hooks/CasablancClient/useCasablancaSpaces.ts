@@ -16,6 +16,10 @@ export function useCasablancaSpaces(casablancaClient?: CasablancaClient): SpaceI
         const updateSpaces = () => {
             const streams = Array.from(casablancaClient.streams.values())
                 .filter((stream: Stream) => stream.view.contentKind === 'spaceContent')
+                .filter((stream: Stream) => {
+                    const memberships = stream.view.getMemberships()
+                    return memberships.isMemberJoined()
+                })
                 .sort((a: Stream, b: Stream) => a.view.streamId.localeCompare(b.view.streamId))
                 .map(
                     (stream: Stream) =>

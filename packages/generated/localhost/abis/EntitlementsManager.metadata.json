@@ -465,11 +465,11 @@
       ]
     },
     "contracts/src/towns/facets/Entitled.sol": {
-      "keccak256": "0xf5721025a7f69dbfd8d597801acf1493bd171552b62ccccc26dd3bde8bd7719e",
+      "keccak256": "0x7aa843d40e4efd1a09e1ec302af382911989aba7999e1a0ec2619293b0598710",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://219d11ab3a4afb1ebe08fc51257afdcaf7623b52a027456606827f10b2120e97",
-        "dweb:/ipfs/QmTxGsSLB3xyj6665ijh5PuDhgD8aefpgJNpkcSC6STkyC"
+        "bzz-raw://75d60caab15dacfc58082c74dff1abfbb68b2415d30a88308772123ff16c5369",
+        "dweb:/ipfs/QmdAx6MjAwMWyfK8rEFWCRohff49ELCND6vxmvU8hwZzNU"
       ]
     },
     "contracts/src/towns/facets/entitlements/EntitlementsManager.sol": {

@@ -1,10 +1,10 @@
 import React, { Ref, forwardRef } from 'react'
 import { useDevice } from 'hooks/useDevice'
-import { Box, BoxProps } from '../Box/Box'
+import { TooltipBox, TooltipBoxProps } from '../Box/TooltipBox'
 
 type Pill = {
     children: React.ReactNode | React.ReactNode[] | string
-} & BoxProps
+} & TooltipBoxProps
 
 export const Pill = forwardRef((props: Pill, ref: Ref<HTMLElement> | undefined) => {
     const { isTouch } = useDevice()
@@ -15,7 +15,7 @@ export const Pill = forwardRef((props: Pill, ref: Ref<HTMLElement> | undefined) 
         ...boxProps
     } = props
     return (
-        <Box
+        <TooltipBox
             centerContent
             horizontal
             hoverable
@@ -32,6 +32,6 @@ export const Pill = forwardRef((props: Pill, ref: Ref<HTMLElement> | undefined) 
             {...boxProps}
         >
             {children}
-        </Box>
+        </TooltipBox>
     )
 })

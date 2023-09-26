@@ -3,15 +3,12 @@ package events
 import (
 	"bytes"
 	. "casablanca/node/base"
-	. "casablanca/node/crypto"
 	"casablanca/node/dlog"
 	. "casablanca/node/protocol"
 	"casablanca/node/storage"
 	. "casablanca/node/utils"
 	"context"
-	"encoding/hex"
 
-	mapset "github.com/deckarep/golang-set/v2"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
@@ -25,26 +22,14 @@ type StreamView interface {
 	SyncCookie() *SyncCookie
 }
 
-type JoinableStreamView interface {
-	StreamView
-	IsUserJoined(userId string) (bool, error)
-}
-
-type UserDeviceStreamView interface {
-	StreamView
-	// the set of river device key ids that are revoked
-	// river device id is a 256 bit keccak hash of the RDK's public key
-	IsDeviceIdRevoked(rdkId RdkId) (bool, error)
-}
-
 func MakeStreamView(preceedingMiniblocks [][]byte, streamData *storage.GetStreamFromLastSnapshotResult) (*streamViewImpl, error) {
 	// TODO: make sure both client and node can init from snapshot and remove preceedingMiniblocks param.
 	if len(preceedingMiniblocks) != streamData.StartMiniblockNumber {
-		return nil, RpcErrorf(Err_STREAM_BAD_EVENT, "MakeStreamView: not enogh preceeding blocks")
+		return nil, RiverErrorf(Err_STREAM_BAD_EVENT, "MakeStreamView: not enogh preceeding blocks")
 	}
 
 	if len(streamData.Miniblocks) <= 0 {
-		return nil, RpcErrorf(Err_STREAM_EMPTY, "MakeStreamView: no blocks")
+		return nil, RiverErrorf(Err_STREAM_EMPTY, "MakeStreamView: no blocks")
 	}
 
 	allBlocks := preceedingMiniblocks
@@ -65,11 +50,11 @@ func MakeStreamView(preceedingMiniblocks [][]byte, streamData *storage.GetStream
 
 	snapshot := miniblocks[streamData.StartMiniblockNumber].headerEvent.Event.GetMiniblockHeader().GetSnapshot()
 	if snapshot == nil {
-		return nil, RpcErrorf(Err_STREAM_BAD_EVENT, "MakeStreamView: no snapshot")
+		return nil, RiverErrorf(Err_STREAM_BAD_EVENT, "MakeStreamView: no snapshot")
 	}
 	streamId := snapshot.GetInceptionPayload().GetStreamId()
 	if streamId == "" {
-		return nil, RpcErrorf(Err_STREAM_BAD_EVENT, "MakeStreamView: no streamId")
+		return nil, RiverErrorf(Err_STREAM_BAD_EVENT, "MakeStreamView: no streamId")
 	}
 
 	minipoolEvents := NewOrderedMap[string, *ParsedEvent](len(streamData.MinipoolEnvelopes))
@@ -111,7 +96,7 @@ func (r *streamViewImpl) GetMinipoolGeneration() int {
 
 func (r *streamViewImpl) copyAndAddEvent(event *ParsedEvent) (*streamViewImpl, error) {
 	if event.Event.GetMiniblockHeader() != nil {
-		return nil, RpcError(Err_BAD_EVENT, "streamViewImpl: block event not allowed")
+		return nil, RiverError(Err_BAD_EVENT, "streamViewImpl: block event not allowed")
 	}
 
 	// TODO: HNT-1843: Re-enable block-aware event duplicate checks
@@ -184,15 +169,15 @@ func MaxInt_(a, b int) int {
 func (r *streamViewImpl) copyAndApplyBlock(miniblock *miniblockInfo) (*streamViewImpl, error) {
 	header := miniblock.headerEvent.Event.GetMiniblockHeader()
 	if header == nil {
-		return nil, RpcErrorf(Err_INTERNAL_ERROR, "streamViewImpl: non block event not allowed, stream=%s, event=%s", r.streamId, miniblock.headerEvent.ShortDebugStr())
+		return nil, RiverErrorf(Err_INTERNAL_ERROR, "streamViewImpl: non block event not allowed, stream=%s, event=%s", r.streamId, miniblock.headerEvent.ShortDebugStr())
 	}
 
 	lastBlock := r.lastBlock()
 	if header.MiniblockNum != lastBlock.header().MiniblockNum+1 {
-		return nil, RpcErrorf(Err_BAD_BLOCK, "streamViewImpl: block number mismatch, expected=%d, actual=%d", lastBlock.header().MiniblockNum+1, header.MiniblockNum)
+		return nil, RiverErrorf(Err_BAD_BLOCK, "streamViewImpl: block number mismatch, expected=%d, actual=%d", lastBlock.header().MiniblockNum+1, header.MiniblockNum)
 	}
 	if !bytes.Equal(lastBlock.headerEvent.Hash, header.PrevMiniblockHash) {
-		return nil, RpcErrorf(Err_BAD_BLOCK, "streamViewImpl: block hash mismatch, expected=%s, actual=%s", FormatHashFromString(string(lastBlock.headerEvent.Hash)), FormatHashFromString(string(header.PrevMiniblockHash)))
+		return nil, RiverErrorf(Err_BAD_BLOCK, "streamViewImpl: block hash mismatch, expected=%s, actual=%s", FormatHashFromString(string(lastBlock.headerEvent.Hash)), FormatHashFromString(string(header.PrevMiniblockHash)))
 	}
 
 	remaining := make(map[string]*ParsedEvent, MaxInt_(r.minipool.events.Len()-len(header.EventHashes), 0))
@@ -204,7 +189,7 @@ func (r *streamViewImpl) copyAndApplyBlock(miniblock *miniblockInfo) (*streamVie
 		if _, ok := remaining[e.HashStr]; ok {
 			delete(remaining, e.HashStr)
 		} else {
-			return nil, RpcErrorf(Err_BAD_BLOCK, "streamViewImpl: block event not found, stream=%s, event_hash=%s", r.streamId, FormatHashFromString(e.HashStr))
+			return nil, RiverErrorf(Err_BAD_BLOCK, "streamViewImpl: block event not found, stream=%s, event_hash=%s", r.streamId, FormatHashFromString(e.HashStr))
 		}
 	}
 
@@ -245,7 +230,7 @@ func (r *streamViewImpl) InceptionPayload() IsInceptionPayload {
 
 func (r *streamViewImpl) forEachEvent(startBlock int, op func(e *ParsedEvent) (bool, error)) error {
 	if startBlock < 0 || startBlock > len(r.blocks) {
-		return RpcErrorf(Err_BAD_ARGS, "iterateEvents: bad startBlock, startBlock=%d", startBlock)
+		return RiverErrorf(Err_BAD_ARGS, "iterateEvents: bad startBlock, startBlock=%d", startBlock)
 	}
 
 	for i := startBlock; i < len(r.blocks); i++ {
@@ -255,78 +240,6 @@ func (r *streamViewImpl) forEachEvent(startBlock int, op func(e *ParsedEvent) (b
 		}
 	}
 	return r.minipool.forEachEvent(op)
-}
-
-func (r *streamViewImpl) IsUserJoined(userId string) (bool, error) {
-	users := mapset.NewSet[string]()
-
-	_ = r.forEachEvent(0, func(e *ParsedEvent) (bool, error) {
-		switch payload := e.Event.Payload.(type) {
-		case *StreamEvent_SpacePayload:
-			switch spacePayload := payload.SpacePayload.Content.(type) {
-			case *SpacePayload_Membership:
-				user := spacePayload.Membership.UserId
-				if spacePayload.Membership.GetOp() == MembershipOp_SO_JOIN {
-					users.Add(user)
-				} else if spacePayload.Membership.GetOp() == MembershipOp_SO_LEAVE {
-					users.Remove(user)
-				}
-			default:
-				break
-			}
-		case *StreamEvent_ChannelPayload:
-			switch channelPayload := payload.ChannelPayload.Content.(type) {
-			case *ChannelPayload_Membership:
-				user := channelPayload.Membership.UserId
-				if channelPayload.Membership.GetOp() == MembershipOp_SO_JOIN {
-					users.Add(user)
-				} else if channelPayload.Membership.GetOp() == MembershipOp_SO_LEAVE {
-					users.Remove(user)
-				}
-			default:
-				break
-			}
-		}
-		return true, nil
-	})
-
-	exists := users.Contains(userId)
-	return exists, nil
-}
-
-func (r *streamViewImpl) IsDeviceIdRevoked(rdkId RdkId) (bool, error) {
-	isRevoked := false
-	_ = r.forEachEvent(0, func(e *ParsedEvent) (bool, error) {
-		switch payload := e.Event.Payload.(type) {
-		case *StreamEvent_UserDeviceKeyPayload:
-			switch devicePayload := payload.UserDeviceKeyPayload.Content.(type) {
-			case *UserDeviceKeyPayload_UserDeviceKey_:
-				deviceKeys := devicePayload.UserDeviceKey.GetDeviceKeys()
-				deviceId, err := hex.DecodeString(deviceKeys.DeviceId)
-				if err != nil {
-					return false, err
-				}
-				eventRdkId, err := RdkIdFromSlice(deviceId)
-				if err != nil {
-					return false, err
-				}
-				switch devicePayload.UserDeviceKey.GetRiverKeyOp() {
-				case RiverKeyOp_RDKO_KEY_REVOKE:
-					if eventRdkId == rdkId {
-						isRevoked = true
-						return false, nil
-					}
-				default:
-					break
-				}
-			}
-		default:
-			break
-		}
-		return true, nil
-	})
-
-	return isRevoked, nil
 }
 
 func (r *streamViewImpl) LastEvent() *ParsedEvent {

@@ -1,4 +1,4 @@
-package events
+package utils
 
 type OrderedMap[K comparable, V any] struct {
 	Map    map[K]V
