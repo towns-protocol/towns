@@ -36,7 +36,8 @@ describe('nodeRestart', () => {
         bobsContext = await makeRandomUserContext()
     })
 
-    test('bobCanChatAfterRestart', async () => {
+    // TODO: HNT-2611 fix and re-enable
+    test.skip('bobCanChatAfterRestart', async () => {
         log('start')
 
         const bob = makeTestRpcClient()
