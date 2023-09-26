@@ -307,25 +307,25 @@
   },
   "ast": {
     "absolutePath": "contracts/src/crosschain/EntitlementGated.sol",
-    "id": 4985,
+    "id": 5381,
     "exportedSymbols": {
       "EntitlementGated": [
-        4984
+        5380
       ],
       "EntitlementGatedBase": [
-        5374
+        5770
       ],
       "IEntitlementGated": [
-        5472
+        5868
       ]
     },
     "nodeType": "SourceUnit",
-    "src": "39:815:26",
+    "src": "39:815:27",
     "nodes": [
       {
-        "id": 4929,
+        "id": 5325,
         "nodeType": "PragmaDirective",
-        "src": "39:24:26",
+        "src": "39:24:27",
         "nodes": [],
         "literals": [
           "solidity",
@@ -335,24 +335,24 @@
         ]
       },
       {
-        "id": 4931,
+        "id": 5327,
         "nodeType": "ImportDirective",
-        "src": "79:58:26",
+        "src": "79:58:27",
         "nodes": [],
         "absolutePath": "contracts/src/crosschain/IEntitlementGated.sol",
         "file": "./IEntitlementGated.sol",
         "nameLocation": "-1:-1:-1",
-        "scope": 4985,
-        "sourceUnit": 5473,
+        "scope": 5381,
+        "sourceUnit": 5869,
         "symbolAliases": [
           {
             "foreign": {
-              "id": 4930,
+              "id": 5326,
               "name": "IEntitlementGated",
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
-              "referencedDeclaration": 5472,
-              "src": "87:17:26",
+              "referencedDeclaration": 5868,
+              "src": "87:17:27",
               "typeDescriptions": {}
             },
             "nameLocation": "-1:-1:-1"
@@ -361,24 +361,24 @@
         "unitAlias": ""
       },
       {
-        "id": 4933,
+        "id": 5329,
         "nodeType": "ImportDirective",
-        "src": "166:64:26",
+        "src": "166:64:27",
         "nodes": [],
         "absolutePath": "contracts/src/crosschain/EntitlementGatedBase.sol",
         "file": "./EntitlementGatedBase.sol",
         "nameLocation": "-1:-1:-1",
-        "scope": 4985,
-        "sourceUnit": 5375,
+        "scope": 5381,
+        "sourceUnit": 5771,
         "symbolAliases": [
           {
             "foreign": {
-              "id": 4932,
+              "id": 5328,
               "name": "EntitlementGatedBase",
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
-              "referencedDeclaration": 5374,
-              "src": "174:20:26",
+              "referencedDeclaration": 5770,
+              "src": "174:20:27",
               "typeDescriptions": {}
             },
             "nameLocation": "-1:-1:-1"
@@ -387,31 +387,31 @@
         "unitAlias": ""
       },
       {
-        "id": 4984,
+        "id": 5380,
         "nodeType": "ContractDefinition",
-        "src": "232:621:26",
+        "src": "232:621:27",
         "nodes": [
           {
-            "id": 4947,
+            "id": 5343,
             "nodeType": "FunctionDefinition",
-            "src": "314:76:26",
+            "src": "314:76:27",
             "nodes": [],
             "body": {
-              "id": 4946,
+              "id": 5342,
               "nodeType": "Block",
-              "src": "343:47:26",
+              "src": "343:47:27",
               "nodes": [],
               "statements": [
                 {
                   "expression": {
                     "arguments": [
                       {
-                        "id": 4943,
+                        "id": 5339,
                         "name": "checker",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 4939,
-                        "src": "377:7:26",
+                        "referencedDeclaration": 5335,
+                        "src": "377:7:27",
                         "typeDescriptions": {
                           "typeIdentifier": "t_address",
                           "typeString": "address"
@@ -425,18 +425,18 @@
                           "typeString": "address"
                         }
                       ],
-                      "id": 4942,
+                      "id": 5338,
                       "name": "__EntitlementGatedBase_init",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 5029,
-                      "src": "349:27:26",
+                      "referencedDeclaration": 5425,
+                      "src": "349:27:27",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_internal_nonpayable$_t_address_$returns$__$",
                         "typeString": "function (address)"
                       }
                     },
-                    "id": 4944,
+                    "id": 5340,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -445,16 +445,16 @@
                     "nameLocations": [],
                     "names": [],
                     "nodeType": "FunctionCall",
-                    "src": "349:36:26",
+                    "src": "349:36:27",
                     "tryCall": false,
                     "typeDescriptions": {
                       "typeIdentifier": "t_tuple$__$",
                       "typeString": "tuple()"
                     }
                   },
-                  "id": 4945,
+                  "id": 5341,
                   "nodeType": "ExpressionStatement",
-                  "src": "349:36:26"
+                  "src": "349:36:27"
                 }
               ]
             },
@@ -464,18 +464,18 @@
             "name": "",
             "nameLocation": "-1:-1:-1",
             "parameters": {
-              "id": 4940,
+              "id": 5336,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 4939,
+                  "id": 5335,
                   "mutability": "mutable",
                   "name": "checker",
-                  "nameLocation": "334:7:26",
+                  "nameLocation": "334:7:27",
                   "nodeType": "VariableDeclaration",
-                  "scope": 4947,
-                  "src": "326:15:26",
+                  "scope": 5343,
+                  "src": "326:15:27",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -483,10 +483,10 @@
                     "typeString": "address"
                   },
                   "typeName": {
-                    "id": 4938,
+                    "id": 5334,
                     "name": "address",
                     "nodeType": "ElementaryTypeName",
-                    "src": "326:7:26",
+                    "src": "326:7:27",
                     "stateMutability": "nonpayable",
                     "typeDescriptions": {
                       "typeIdentifier": "t_address",
@@ -496,52 +496,52 @@
                   "visibility": "internal"
                 }
               ],
-              "src": "325:17:26"
+              "src": "325:17:27"
             },
             "returnParameters": {
-              "id": 4941,
+              "id": 5337,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "343:0:26"
+              "src": "343:0:27"
             },
-            "scope": 4984,
+            "scope": 5380,
             "stateMutability": "nonpayable",
             "virtual": false,
             "visibility": "internal"
           },
           {
-            "id": 4952,
+            "id": 5348,
             "nodeType": "FunctionDefinition",
-            "src": "394:97:26",
+            "src": "394:97:27",
             "nodes": [],
             "baseFunctions": [
-              5455
+              5851
             ],
             "functionSelector": "4cdf3ab8",
             "implemented": false,
             "kind": "function",
             "modifiers": [],
             "name": "getEntitlementOperations",
-            "nameLocation": "403:24:26",
+            "nameLocation": "403:24:27",
             "parameters": {
-              "id": 4948,
+              "id": 5344,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "427:2:26"
+              "src": "427:2:27"
             },
             "returnParameters": {
-              "id": 4951,
+              "id": 5347,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 4950,
+                  "id": 5346,
                   "mutability": "mutable",
                   "name": "",
                   "nameLocation": "-1:-1:-1",
                   "nodeType": "VariableDeclaration",
-                  "scope": 4952,
-                  "src": "477:12:26",
+                  "scope": 5348,
+                  "src": "477:12:27",
                   "stateVariable": false,
                   "storageLocation": "memory",
                   "typeDescriptions": {
@@ -549,10 +549,10 @@
                     "typeString": "bytes"
                   },
                   "typeName": {
-                    "id": 4949,
+                    "id": 5345,
                     "name": "bytes",
                     "nodeType": "ElementaryTypeName",
-                    "src": "477:5:26",
+                    "src": "477:5:27",
                     "typeDescriptions": {
                       "typeIdentifier": "t_bytes_storage_ptr",
                       "typeString": "bytes"
@@ -561,22 +561,22 @@
                   "visibility": "internal"
                 }
               ],
-              "src": "476:14:26"
+              "src": "476:14:27"
             },
-            "scope": 4984,
+            "scope": 5380,
             "stateMutability": "view",
             "virtual": true,
             "visibility": "external"
           },
           {
-            "id": 4959,
+            "id": 5355,
             "nodeType": "FunctionDefinition",
-            "src": "495:81:26",
+            "src": "495:81:27",
             "nodes": [],
             "body": {
-              "id": 4958,
+              "id": 5354,
               "nodeType": "Block",
-              "src": "539:37:26",
+              "src": "539:37:27",
               "nodes": [],
               "statements": [
                 {
@@ -584,18 +584,18 @@
                     "arguments": [],
                     "expression": {
                       "argumentTypes": [],
-                      "id": 4955,
+                      "id": 5351,
                       "name": "_requestEntitlementCheck",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 5145,
-                      "src": "545:24:26",
+                      "referencedDeclaration": 5541,
+                      "src": "545:24:27",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_internal_nonpayable$__$returns$__$",
                         "typeString": "function ()"
                       }
                     },
-                    "id": 4956,
+                    "id": 5352,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -604,80 +604,80 @@
                     "nameLocations": [],
                     "names": [],
                     "nodeType": "FunctionCall",
-                    "src": "545:26:26",
+                    "src": "545:26:27",
                     "tryCall": false,
                     "typeDescriptions": {
                       "typeIdentifier": "t_tuple$__$",
                       "typeString": "tuple()"
                     }
                   },
-                  "id": 4957,
+                  "id": 5353,
                   "nodeType": "ExpressionStatement",
-                  "src": "545:26:26"
+                  "src": "545:26:27"
                 }
               ]
             },
             "baseFunctions": [
-              5458
+              5854
             ],
             "functionSelector": "d7eca30a",
             "implemented": true,
             "kind": "function",
             "modifiers": [],
             "name": "requestEntitlementCheck",
-            "nameLocation": "504:23:26",
+            "nameLocation": "504:23:27",
             "parameters": {
-              "id": 4953,
+              "id": 5349,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "527:2:26"
+              "src": "527:2:27"
             },
             "returnParameters": {
-              "id": 4954,
+              "id": 5350,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "539:0:26"
+              "src": "539:0:27"
             },
-            "scope": 4984,
+            "scope": 5380,
             "stateMutability": "nonpayable",
             "virtual": false,
             "visibility": "external"
           },
           {
-            "id": 4973,
+            "id": 5369,
             "nodeType": "FunctionDefinition",
-            "src": "580:164:26",
+            "src": "580:164:27",
             "nodes": [],
             "body": {
-              "id": 4972,
+              "id": 5368,
               "nodeType": "Block",
-              "src": "683:61:26",
+              "src": "683:61:27",
               "nodes": [],
               "statements": [
                 {
                   "expression": {
                     "arguments": [
                       {
-                        "id": 4968,
+                        "id": 5364,
                         "name": "transactionId",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 4961,
-                        "src": "717:13:26",
+                        "referencedDeclaration": 5357,
+                        "src": "717:13:27",
                         "typeDescriptions": {
                           "typeIdentifier": "t_bytes32",
                           "typeString": "bytes32"
                         }
                       },
                       {
-                        "id": 4969,
+                        "id": 5365,
                         "name": "result",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 4964,
-                        "src": "732:6:26",
+                        "referencedDeclaration": 5360,
+                        "src": "732:6:27",
                         "typeDescriptions": {
-                          "typeIdentifier": "t_enum$_NodeVoteStatus_$5408",
+                          "typeIdentifier": "t_enum$_NodeVoteStatus_$5804",
                           "typeString": "enum IEntitlementGatedBase.NodeVoteStatus"
                         }
                       }
@@ -689,22 +689,22 @@
                           "typeString": "bytes32"
                         },
                         {
-                          "typeIdentifier": "t_enum$_NodeVoteStatus_$5408",
+                          "typeIdentifier": "t_enum$_NodeVoteStatus_$5804",
                           "typeString": "enum IEntitlementGatedBase.NodeVoteStatus"
                         }
                       ],
-                      "id": 4967,
+                      "id": 5363,
                       "name": "_postEntitlementCheckResult",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 5352,
-                      "src": "689:27:26",
+                      "referencedDeclaration": 5748,
+                      "src": "689:27:27",
                       "typeDescriptions": {
-                        "typeIdentifier": "t_function_internal_nonpayable$_t_bytes32_$_t_enum$_NodeVoteStatus_$5408_$returns$__$",
+                        "typeIdentifier": "t_function_internal_nonpayable$_t_bytes32_$_t_enum$_NodeVoteStatus_$5804_$returns$__$",
                         "typeString": "function (bytes32,enum IEntitlementGatedBase.NodeVoteStatus)"
                       }
                     },
-                    "id": 4970,
+                    "id": 5366,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -713,41 +713,41 @@
                     "nameLocations": [],
                     "names": [],
                     "nodeType": "FunctionCall",
-                    "src": "689:50:26",
+                    "src": "689:50:27",
                     "tryCall": false,
                     "typeDescriptions": {
                       "typeIdentifier": "t_tuple$__$",
                       "typeString": "tuple()"
                     }
                   },
-                  "id": 4971,
+                  "id": 5367,
                   "nodeType": "ExpressionStatement",
-                  "src": "689:50:26"
+                  "src": "689:50:27"
                 }
               ]
             },
             "baseFunctions": [
-              5466
+              5862
             ],
             "functionSelector": "f4efb0bb",
             "implemented": true,
             "kind": "function",
             "modifiers": [],
             "name": "postEntitlementCheckResult",
-            "nameLocation": "589:26:26",
+            "nameLocation": "589:26:27",
             "parameters": {
-              "id": 4965,
+              "id": 5361,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 4961,
+                  "id": 5357,
                   "mutability": "mutable",
                   "name": "transactionId",
-                  "nameLocation": "629:13:26",
+                  "nameLocation": "629:13:27",
                   "nodeType": "VariableDeclaration",
-                  "scope": 4973,
-                  "src": "621:21:26",
+                  "scope": 5369,
+                  "src": "621:21:27",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -755,10 +755,10 @@
                     "typeString": "bytes32"
                   },
                   "typeName": {
-                    "id": 4960,
+                    "id": 5356,
                     "name": "bytes32",
                     "nodeType": "ElementaryTypeName",
-                    "src": "621:7:26",
+                    "src": "621:7:27",
                     "typeDescriptions": {
                       "typeIdentifier": "t_bytes32",
                       "typeString": "bytes32"
@@ -768,76 +768,76 @@
                 },
                 {
                   "constant": false,
-                  "id": 4964,
+                  "id": 5360,
                   "mutability": "mutable",
                   "name": "result",
-                  "nameLocation": "663:6:26",
+                  "nameLocation": "663:6:27",
                   "nodeType": "VariableDeclaration",
-                  "scope": 4973,
-                  "src": "648:21:26",
+                  "scope": 5369,
+                  "src": "648:21:27",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
-                    "typeIdentifier": "t_enum$_NodeVoteStatus_$5408",
+                    "typeIdentifier": "t_enum$_NodeVoteStatus_$5804",
                     "typeString": "enum IEntitlementGatedBase.NodeVoteStatus"
                   },
                   "typeName": {
-                    "id": 4963,
+                    "id": 5359,
                     "nodeType": "UserDefinedTypeName",
                     "pathNode": {
-                      "id": 4962,
+                      "id": 5358,
                       "name": "NodeVoteStatus",
                       "nameLocations": [
-                        "648:14:26"
+                        "648:14:27"
                       ],
                       "nodeType": "IdentifierPath",
-                      "referencedDeclaration": 5408,
-                      "src": "648:14:26"
+                      "referencedDeclaration": 5804,
+                      "src": "648:14:27"
                     },
-                    "referencedDeclaration": 5408,
-                    "src": "648:14:26",
+                    "referencedDeclaration": 5804,
+                    "src": "648:14:27",
                     "typeDescriptions": {
-                      "typeIdentifier": "t_enum$_NodeVoteStatus_$5408",
+                      "typeIdentifier": "t_enum$_NodeVoteStatus_$5804",
                       "typeString": "enum IEntitlementGatedBase.NodeVoteStatus"
                     }
                   },
                   "visibility": "internal"
                 }
               ],
-              "src": "615:58:26"
+              "src": "615:58:27"
             },
             "returnParameters": {
-              "id": 4966,
+              "id": 5362,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "683:0:26"
+              "src": "683:0:27"
             },
-            "scope": 4984,
+            "scope": 5380,
             "stateMutability": "nonpayable",
             "virtual": false,
             "visibility": "external"
           },
           {
-            "id": 4983,
+            "id": 5379,
             "nodeType": "FunctionDefinition",
-            "src": "748:103:26",
+            "src": "748:103:27",
             "nodes": [],
             "body": {
-              "id": 4982,
+              "id": 5378,
               "nodeType": "Block",
-              "src": "807:44:26",
+              "src": "807:44:27",
               "nodes": [],
               "statements": [
                 {
                   "expression": {
                     "arguments": [
                       {
-                        "id": 4979,
+                        "id": 5375,
                         "name": "transactionId",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 4975,
-                        "src": "832:13:26",
+                        "referencedDeclaration": 5371,
+                        "src": "832:13:27",
                         "typeDescriptions": {
                           "typeIdentifier": "t_bytes32",
                           "typeString": "bytes32"
@@ -851,18 +851,18 @@
                           "typeString": "bytes32"
                         }
                       ],
-                      "id": 4978,
+                      "id": 5374,
                       "name": "_removeTransaction",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 5373,
-                      "src": "813:18:26",
+                      "referencedDeclaration": 5769,
+                      "src": "813:18:27",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_internal_nonpayable$_t_bytes32_$returns$__$",
                         "typeString": "function (bytes32)"
                       }
                     },
-                    "id": 4980,
+                    "id": 5376,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -871,41 +871,41 @@
                     "nameLocations": [],
                     "names": [],
                     "nodeType": "FunctionCall",
-                    "src": "813:33:26",
+                    "src": "813:33:27",
                     "tryCall": false,
                     "typeDescriptions": {
                       "typeIdentifier": "t_tuple$__$",
                       "typeString": "tuple()"
                     }
                   },
-                  "id": 4981,
+                  "id": 5377,
                   "nodeType": "ExpressionStatement",
-                  "src": "813:33:26"
+                  "src": "813:33:27"
                 }
               ]
             },
             "baseFunctions": [
-              5471
+              5867
             ],
             "functionSelector": "f7332550",
             "implemented": true,
             "kind": "function",
             "modifiers": [],
             "name": "removeTransaction",
-            "nameLocation": "757:17:26",
+            "nameLocation": "757:17:27",
             "parameters": {
-              "id": 4976,
+              "id": 5372,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 4975,
+                  "id": 5371,
                   "mutability": "mutable",
                   "name": "transactionId",
-                  "nameLocation": "783:13:26",
+                  "nameLocation": "783:13:27",
                   "nodeType": "VariableDeclaration",
-                  "scope": 4983,
-                  "src": "775:21:26",
+                  "scope": 5379,
+                  "src": "775:21:27",
                   "stateVariable": false,
                   "storageLocation": "default",
                   "typeDescriptions": {
@@ -913,10 +913,10 @@
                     "typeString": "bytes32"
                   },
                   "typeName": {
-                    "id": 4974,
+                    "id": 5370,
                     "name": "bytes32",
                     "nodeType": "ElementaryTypeName",
-                    "src": "775:7:26",
+                    "src": "775:7:27",
                     "typeDescriptions": {
                       "typeIdentifier": "t_bytes32",
                       "typeString": "bytes32"
@@ -925,15 +925,15 @@
                   "visibility": "internal"
                 }
               ],
-              "src": "774:23:26"
+              "src": "774:23:27"
             },
             "returnParameters": {
-              "id": 4977,
+              "id": 5373,
               "nodeType": "ParameterList",
               "parameters": [],
-              "src": "807:0:26"
+              "src": "807:0:27"
             },
-            "scope": 4984,
+            "scope": 5380,
             "stateMutability": "nonpayable",
             "virtual": false,
             "visibility": "external"
@@ -943,33 +943,33 @@
         "baseContracts": [
           {
             "baseName": {
-              "id": 4934,
+              "id": 5330,
               "name": "IEntitlementGated",
               "nameLocations": [
-                "270:17:26"
+                "270:17:27"
               ],
               "nodeType": "IdentifierPath",
-              "referencedDeclaration": 5472,
-              "src": "270:17:26"
+              "referencedDeclaration": 5868,
+              "src": "270:17:27"
             },
-            "id": 4935,
+            "id": 5331,
             "nodeType": "InheritanceSpecifier",
-            "src": "270:17:26"
+            "src": "270:17:27"
           },
           {
             "baseName": {
-              "id": 4936,
+              "id": 5332,
               "name": "EntitlementGatedBase",
               "nameLocations": [
-                "289:20:26"
+                "289:20:27"
               ],
               "nodeType": "IdentifierPath",
-              "referencedDeclaration": 5374,
-              "src": "289:20:26"
+              "referencedDeclaration": 5770,
+              "src": "289:20:27"
             },
-            "id": 4937,
+            "id": 5333,
             "nodeType": "InheritanceSpecifier",
-            "src": "289:20:26"
+            "src": "289:20:27"
           }
         ],
         "canonicalName": "EntitlementGated",
@@ -977,28 +977,28 @@
         "contractKind": "contract",
         "fullyImplemented": false,
         "linearizedBaseContracts": [
-          4984,
-          5374,
-          5472,
-          5448
+          5380,
+          5770,
+          5868,
+          5844
         ],
         "name": "EntitlementGated",
-        "nameLocation": "250:16:26",
-        "scope": 4985,
+        "nameLocation": "250:16:27",
+        "scope": 5381,
         "usedErrors": [
-          5430,
-          5432,
-          5434,
-          5436,
-          5438,
-          5440
+          5826,
+          5828,
+          5830,
+          5832,
+          5834,
+          5836
         ],
         "usedEvents": [
-          5447
+          5843
         ]
       }
     ],
     "license": "Apache-2.0"
   },
-  "id": 26
+  "id": 27
 }

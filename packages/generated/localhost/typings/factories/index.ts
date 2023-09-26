@@ -2,12 +2,14 @@
 /* tslint:disable */
 /* eslint-disable */
 export * as mockTokenSol from "./MockToken.sol";
+export * as acl from "./acl";
 export * as entitlements from "./entitlements";
 export * as interfaces from "./interfaces";
+export * as libraries from "./libraries";
+export * as registry from "./registry";
 export * as token from "./token";
 export * as user from "./user";
 export { CouncilStaking__factory } from "./CouncilStaking__factory";
-export { Errors__factory } from "./Errors__factory";
 export { Events__factory } from "./Events__factory";
 export { IEntitlementChecker__factory } from "./IEntitlementChecker__factory";
 export { IEntitlementGated__factory } from "./IEntitlementGated__factory";
