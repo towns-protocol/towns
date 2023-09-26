@@ -5,6 +5,8 @@ docs
 storybook-static
 .storybook
 
+infra/*
+
 servers/*
 !servers/workers
 servers/workers/**/coverage/*

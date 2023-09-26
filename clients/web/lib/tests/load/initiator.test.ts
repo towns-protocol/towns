@@ -1,8 +1,7 @@
 /**
  *
  * // https://www.npmjs.com/package/jest-runner-groups
- * @group integration/load2
- *
+ * @group integration/load
  */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import {
