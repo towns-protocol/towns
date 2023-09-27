@@ -40,7 +40,9 @@ describe('space invite', () => {
             }
         } catch (e) {
             /** Assert */
-            expect((e as Error).message).toMatch(new RegExp('Inviter not allowed|PermissionDenied'))
+            expect((e as Error).message).toMatch(
+                new RegExp('Inviter not allowed|permission_denied'),
+            )
             return
         }
         expect(true).toEqual(false)
@@ -190,7 +192,7 @@ describe('space invite', () => {
                 expect(error.data).toHaveProperty('errcode', MAXTRIX_ERROR.M_FORBIDDEN)
             } else {
                 // Casablanca
-                expect((e as Error).message).toMatch(new RegExp('PermissionDenied'))
+                expect((e as Error).message).toMatch(new RegExp('permission_denied'))
             }
         }
     }) // end test

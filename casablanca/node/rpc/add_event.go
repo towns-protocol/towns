@@ -4,9 +4,7 @@ import (
 	"context"
 	"encoding/hex"
 
-	connect_go "github.com/bufbuild/connect-go"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
+	"github.com/bufbuild/connect-go"
 
 	"casablanca/node/auth"
 	. "casablanca/node/base"
@@ -22,41 +20,41 @@ var (
 	addEventRequests = infra.NewSuccessMetrics("add_event_requests", serviceRequests)
 )
 
-func (s *Service) AddEvent(ctx context.Context, req *connect_go.Request[AddEventRequest]) (*connect_go.Response[AddEventResponse], error) {
+func (s *Service) AddEvent(ctx context.Context, req *connect.Request[AddEventRequest]) (*connect.Response[AddEventResponse], error) {
 	ctx, log := ctxAndLogForRequest(ctx, req)
 
 	parsedEvent, err := ParseEvent(req.Msg.Event)
 	if err != nil {
-		log.Warn("AddEvent ERROR: failed to parse events", "request", req.Msg, "error", err)
+		log.Warn("srv.AddEvent ERROR: failed to parse events", "request", req.Msg, "error", err)
 		addEventRequests.Fail()
-		return nil, err
+		return nil, AsRiverError(err).Func("srv.AddEvent").Tag("streamId", req.Msg.StreamId)
 	}
 
-	log.Debug("AddEvent ENTER", "streamId", req.Msg.StreamId, "event", parsedEvent)
-
-	if !s.skipDelegateCheck {
-		err = s.checkStaleDelegate(ctx, []*ParsedEvent{parsedEvent})
-		if err != nil {
-			log.Debug("AddEvent ERROR: stale delegate", "request", req.Msg, "error", err)
-			return nil, err
-		}
-	}
+	log.Debug("srv.AddEvent ENTER", "streamId", req.Msg.StreamId, "event", parsedEvent)
 
 	err = s.addParsedEvent(ctx, req.Msg.StreamId, parsedEvent)
 	if err == nil {
-		log.Debug("AddEvent LEAVE", "streamId", req.Msg.StreamId)
+		log.Debug("srv.AddEvent LEAVE", "streamId", req.Msg.StreamId)
 		addEventRequests.Pass()
-		return connect_go.NewResponse(&AddEventResponse{}), nil
+		return connect.NewResponse(&AddEventResponse{}), nil
 	} else {
 		addEventRequests.Fail()
-		log.Warn("AddEvent ERROR", "streamId", req.Msg.StreamId, "error", err)
-		return nil, err
+		log.Warn("srv.AddEvent ERROR", "streamId", req.Msg.StreamId, "error", err)
+		return nil, AsRiverError(err).Func("srv.AddEvent").Tag("streamId", req.Msg.StreamId)
 	}
 }
 
 func (s *Service) addParsedEvent(ctx context.Context, streamId string, parsedEvent *ParsedEvent) error {
+	var err error
+	if !s.skipDelegateCheck {
+		err = s.checkStaleDelegate(ctx, []*ParsedEvent{parsedEvent})
+		if err != nil {
+			return err
+		}
+	}
+
 	if len(parsedEvent.Event.PrevEvents) == 0 {
-		return status.Errorf(codes.InvalidArgument, "AddEvent: event has no prev events")
+		return RiverError(Err_INVALID_ARGUMENT, "event has no prev events")
 	}
 
 	stream, streamView, err := s.cache.GetStream(ctx, streamId)
@@ -68,7 +66,7 @@ func (s *Service) addParsedEvent(ctx context.Context, streamId string, parsedEve
 	// check if previous event's hashes match
 	// for _, prevEvent := range parsedEvent.PrevEventStrs {
 	// 	if !streamView.HasEvent(prevEvent) {
-	// 		return status.Errorf(codes.InvalidArgument, "AddEvent: prev event not found")
+	// 		return status.Errorf(codes.InvalidArgument, "prev event not found")
 	// 	}
 	// }
 
@@ -78,75 +76,110 @@ func (s *Service) addParsedEvent(ctx context.Context, streamId string, parsedEve
 	// make sure the stream event is of the same type as the inception event
 	err = streamEvent.VerifyPayloadTypeMatchesStreamType(streamView.InceptionPayload())
 	if err != nil {
-		return status.Errorf(codes.InvalidArgument, "streamId: %s AddEvent: %v", streamId, err)
+		return err
 	}
 
 	// custom business logic...
 	switch payload := streamEvent.Payload.(type) {
 	case *StreamEvent_ChannelPayload:
-		switch channelPayload := payload.ChannelPayload.Content.(type) {
-		case *ChannelPayload_Inception_:
-			return status.Errorf(codes.InvalidArgument, "AddEvent: event is an inception event")
-		case *ChannelPayload_Membership:
-			membership := channelPayload.Membership
-			return s.addMembershipEvent(ctx, stream, streamView, parsedEvent, membership)
-		case *ChannelPayload_Message:
-			return s.addChannelMessage(ctx, stream, streamView, parsedEvent)
-		default:
-			return status.Errorf(codes.InvalidArgument, "AddEvent: Channel event has no valid payload for type %T", payload.ChannelPayload.Content)
-		}
+		return s.addChannelPayload(ctx, payload, stream, streamView, parsedEvent)
+
 	case *StreamEvent_SpacePayload:
-		switch spacePayload := payload.SpacePayload.Content.(type) {
-		case *SpacePayload_Inception_:
-			return status.Errorf(codes.InvalidArgument, "AddEvent: event is an inception event")
-		case *SpacePayload_Membership:
-			membership := spacePayload.Membership
-			return s.addMembershipEvent(ctx, stream, streamView, parsedEvent, membership)
-		case *SpacePayload_Channel_:
-			return s.updateChannel(ctx, stream, streamView, parsedEvent)
-		default:
-			return status.Errorf(codes.InvalidArgument, "AddEvent: Space event has no valid payload for type %T", payload.SpacePayload.Content)
-		}
+		return s.addSpacePayload(ctx, payload, stream, streamView, parsedEvent)
+
 	case *StreamEvent_UserPayload:
-		switch payload.UserPayload.Content.(type) {
-		case *UserPayload_Inception_:
-			return status.Errorf(codes.InvalidArgument, "AddEvent: event is an inception event")
-		case *UserPayload_UserMembership_:
-			return status.Errorf(codes.InvalidArgument, "AddEvent: adding UserMembership is unimplemented")
-		case *UserPayload_ToDevice_:
-			_, err = stream.AddEvent(ctx, parsedEvent)
-			return err
-		default:
-			return status.Errorf(codes.InvalidArgument, "AddEvent: User event has no valid payload for type %T", payload.UserPayload.Content)
-		}
+		return s.addUserPayload(ctx, payload, stream, parsedEvent)
+
 	case *StreamEvent_UserDeviceKeyPayload:
-		switch userDevicePayload := payload.UserDeviceKeyPayload.Content.(type) {
-		case *UserDeviceKeyPayload_Inception_:
-			return status.Errorf(codes.InvalidArgument, "AddEvent: event is an inception event")
-		case *UserDeviceKeyPayload_UserDeviceKey_:
-			if userDevicePayload.UserDeviceKey.RiverKeyOp != nil {
-				// RDK registration/revoke has to be done directly by the user
-				if len(parsedEvent.Event.DelegateSig) > 0 {
-					return status.Errorf(codes.InvalidArgument, "AddEvent: RiverDeviceKey event cannot be delegated")
-				}
-			}
-			err = s.addUserDeviceKeyEvent(ctx, stream, streamView, parsedEvent, userDevicePayload.UserDeviceKey)
-			return err
-		default:
-			return status.Errorf(codes.InvalidArgument, "AddEvent: UserDeviceKey event has no valid payload for type %T", payload.UserDeviceKeyPayload.Content)
-		}
+		return s.addUserDeviceKeyPayload(ctx, payload, parsedEvent, stream, streamView)
+
 	case *StreamEvent_UserSettingsPayload:
-		switch payload.UserSettingsPayload.Content.(type) {
-		case *UserSettingsPayload_Inception_:
-			return status.Errorf(codes.InvalidArgument, "AddEvent: event is an inception event")
-		case *UserSettingsPayload_FullyReadMarkers_:
-			_, err = stream.AddEvent(ctx, parsedEvent)
-			return err
-		default:
-			return status.Errorf(codes.InvalidArgument, "AddEvent: UserSettings event has no valid payload for type %T", payload.UserSettingsPayload.Content)
-		}
+		return s.addUserSettingsPayload(ctx, payload, stream, parsedEvent)
+
 	default:
-		return status.Errorf(codes.InvalidArgument, "AddEvent: event has no valid payload for type %T", streamEvent.Payload)
+		return RiverError(Err_INVALID_ARGUMENT, "unknown payload type")
+	}
+}
+
+func (s *Service) addChannelPayload(ctx context.Context, payload *StreamEvent_ChannelPayload, stream SyncStream, streamView StreamView, parsedEvent *ParsedEvent) error {
+	switch content := payload.ChannelPayload.Content.(type) {
+	case *ChannelPayload_Inception_:
+		return RiverError(Err_INVALID_ARGUMENT, "can't add inception event")
+
+	case *ChannelPayload_Membership:
+		return s.addMembershipEvent(ctx, stream, streamView, parsedEvent, content.Membership)
+
+	case *ChannelPayload_Message:
+		return s.addChannelMessage(ctx, stream, streamView, parsedEvent)
+
+	default:
+		return RiverError(Err_INVALID_ARGUMENT, "unknown content type")
+	}
+}
+
+func (s *Service) addSpacePayload(ctx context.Context, payload *StreamEvent_SpacePayload, stream SyncStream, streamView StreamView, parsedEvent *ParsedEvent) error {
+	switch content := payload.SpacePayload.Content.(type) {
+	case *SpacePayload_Inception_:
+		return RiverError(Err_INVALID_ARGUMENT, "can't add inception event")
+
+	case *SpacePayload_Membership:
+		return s.addMembershipEvent(ctx, stream, streamView, parsedEvent, content.Membership)
+
+	case *SpacePayload_Channel_:
+		return s.updateChannel(ctx, stream, streamView, parsedEvent)
+
+	default:
+		return RiverError(Err_INVALID_ARGUMENT, "unknown content type")
+	}
+}
+
+func (*Service) addUserPayload(ctx context.Context, payload *StreamEvent_UserPayload, stream Stream, parsedEvent *ParsedEvent) error {
+	switch payload.UserPayload.Content.(type) {
+	case *UserPayload_Inception_:
+		return RiverError(Err_INVALID_ARGUMENT, "can't add inception event")
+
+	case *UserPayload_UserMembership_:
+		return RiverError(Err_INVALID_ARGUMENT, "can't add UserMembership")
+
+	case *UserPayload_ToDevice_:
+		_, err := stream.AddEvent(ctx, parsedEvent)
+		return err
+
+	default:
+		return RiverError(Err_INVALID_ARGUMENT, "unknown content type")
+	}
+}
+
+func (s *Service) addUserDeviceKeyPayload(ctx context.Context, payload *StreamEvent_UserDeviceKeyPayload, parsedEvent *ParsedEvent, stream Stream, streamView StreamView) error {
+	// RDK registration/revoke has to be done directly by the user
+	switch payload := payload.UserDeviceKeyPayload.Content.(type) {
+	case *UserDeviceKeyPayload_Inception_:
+		return RiverError(Err_INVALID_ARGUMENT, "can't add inception event")
+
+	case *UserDeviceKeyPayload_UserDeviceKey_:
+		if payload.UserDeviceKey.RiverKeyOp != nil {
+			if len(parsedEvent.Event.DelegateSig) > 0 {
+				return RiverError(Err_INVALID_ARGUMENT, "RiverDeviceKey event cannot be delegated")
+			}
+		}
+		return s.addUserDeviceKeyEvent(ctx, stream, streamView, parsedEvent, payload.UserDeviceKey)
+
+	default:
+		return RiverError(Err_INVALID_ARGUMENT, "unknown content type")
+	}
+}
+
+func (*Service) addUserSettingsPayload(ctx context.Context, payload *StreamEvent_UserSettingsPayload, stream Stream, parsedEvent *ParsedEvent) error {
+	switch payload.UserSettingsPayload.Content.(type) {
+	case *UserSettingsPayload_Inception_:
+		return RiverError(Err_INVALID_ARGUMENT, "can't add inception event")
+
+	case *UserSettingsPayload_FullyReadMarkers_:
+		_, err := stream.AddEvent(ctx, parsedEvent)
+		return err
+
+	default:
+		return RiverError(Err_INVALID_ARGUMENT, "unknown content type")
 	}
 }
 
@@ -159,7 +192,7 @@ func (s *Service) addChannelMessage(ctx context.Context, stream Stream, view Str
 
 	info, err := StreamInfoFromInceptionPayload(view.InceptionPayload(), streamId, user)
 	if err != nil {
-		return status.Errorf(codes.Internal, "AddEvent: error getting stream info: %v", err)
+		return err
 	}
 
 	allowed, err := s.townsContract.IsAllowed(
@@ -172,20 +205,19 @@ func (s *Service) addChannelMessage(ctx context.Context, stream Stream, view Str
 		info,
 	)
 	if err != nil {
-		return status.Errorf(codes.InvalidArgument, "AddEvent: failed to get permissions: %v", err)
+		return err
 	}
 	if !allowed {
-		return status.Errorf(codes.PermissionDenied, "AddEvent: user %s is not allowed to write to channel %s", user, streamId)
+		return RiverError(Err_PERMISSION_DENIED, "user is not allowed to write to stream", "user", user)
 	}
 
 	// check if user is a member of the channel
 	member, err := s.checkMembership(ctx, view, user)
 	if err != nil {
-		return status.Errorf(codes.Internal, "AddEvent: error getting joined users: %v", err)
+		return err
 	}
 	if !member {
-
-		return status.Errorf(codes.InvalidArgument, "AddEvent: user %s is not a member of channel %s", user, streamId)
+		return RiverError(Err_PERMISSION_DENIED, "user is not a member of channel", "user", user)
 	}
 
 	_, err = stream.AddEvent(ctx, parsedEvent)
@@ -194,20 +226,21 @@ func (s *Service) addChannelMessage(ctx context.Context, stream Stream, view Str
 
 func (s *Service) checkMembership(ctx context.Context, streamView StreamView, userId string) (bool, error) {
 	view := streamView.(JoinableStreamView)
-	joined, err := view.IsUserJoined(userId)
-	if err != nil {
-		return false, status.Errorf(codes.Internal, "AddEvent: error getting joined users: %v", err)
+	if view == nil {
+		return false, RiverError(Err_INTERNAL, "stream is not joinable")
 	}
-	return joined, nil
+	return view.IsUserJoined(userId)
 }
 
 func (s *Service) updateChannel(ctx context.Context, stream Stream, view StreamView, parsedEvent *ParsedEvent) error {
 	if (parsedEvent.Event.GetSpacePayload() == nil) || (parsedEvent.Event.GetSpacePayload().GetChannel() == nil) {
-		return status.Error(codes.InvalidArgument, "AddEvent: invalid channel update event")
+		return RiverError(Err_INVALID_ARGUMENT, "invalid channel update event")
 	}
+
 	if parsedEvent.Event.GetSpacePayload().GetChannel().Op != ChannelOp_CO_UPDATED {
-		return status.Errorf(codes.InvalidArgument, "AddEvent: only update channel is supported at this point. Received channel op %v", parsedEvent.Event.GetSpacePayload().GetChannel().Op)
+		return RiverError(Err_INVALID_ARGUMENT, "only update channel is supported at this point", "op", parsedEvent.Event.GetSpacePayload().GetChannel().Op)
 	}
+
 	_, err := stream.AddEvent(ctx, parsedEvent)
 	return err
 }
@@ -217,7 +250,7 @@ func (s *Service) addMembershipEvent(ctx context.Context, stream Stream, view St
 	userId := membership.UserId
 	userStreamId, err := common.UserStreamIdFromId(userId)
 	if err != nil {
-		return status.Errorf(codes.InvalidArgument, "AddEvent: invalid user id %s", userId)
+		return err
 	}
 
 	// Check if user stream exists
@@ -225,42 +258,44 @@ func (s *Service) addMembershipEvent(ctx context.Context, stream Stream, view St
 	if err != nil {
 		return err
 	}
+
 	// Check if user is a member of the channel
 	member, err := s.checkMembership(ctx, view, userId)
 	if err != nil {
-		return status.Errorf(codes.Internal, "AddEvent: error getting joined users: %v", err)
+		return err
 	}
+
 	creator, err := common.AddressHex(parsedEvent.Event.CreatorAddress)
 	if err != nil {
-		return status.Errorf(codes.InvalidArgument, "AddEvent: invalid user id: %v", err)
+		return err
 	}
 
 	permission := auth.PermissionUndefined
 	switch membership.Op {
 	case MembershipOp_SO_INVITE:
-		{
-			if member {
-				return status.Errorf(codes.InvalidArgument, "AddEvent: user %s is already a member of channel %s", userId, streamId)
-			}
-
-			userId = creator
-			permission = auth.PermissionInvite
+		if member {
+			return RiverError(Err_FAILED_PRECONDITION, "user is already a member of channel", "user", userId)
 		}
+		userId = creator
+		permission = auth.PermissionInvite
+
 	case MembershipOp_SO_JOIN:
 		if userId != creator {
-			return status.Errorf(codes.InvalidArgument, "AddEvent: user %s must join themselves, channel %s", userId, streamId)
+			return RiverError(Err_PERMISSION_DENIED, "user must join themselves", "user", userId)
 		}
 		if member {
-			return status.Errorf(codes.InvalidArgument, "AddEvent: user %s is already a member of channel %s", userId, streamId)
+			return RiverError(Err_FAILED_PRECONDITION, "user is already a member of channel", "user", userId)
 		}
 		// join event should be allowed for read only users
 		permission = auth.PermissionRead
+
 	case MembershipOp_SO_LEAVE:
 		// TODO-ENT: add check that the creator is either the user or the admin
 		if !member {
-			return status.Errorf(codes.InvalidArgument, "AddEvent: user %s is not a member of channel %s", userId, streamId)
+			return RiverError(Err_FAILED_PRECONDITION, "user is not a member of channel", "user", userId)
 		}
 		permission = auth.PermissionRead
+
 	case MembershipOp_SO_UNSPECIFIED:
 		permission = auth.PermissionUndefined
 	}
@@ -268,7 +303,7 @@ func (s *Service) addMembershipEvent(ctx context.Context, stream Stream, view St
 	if permission != auth.PermissionUndefined {
 		info, err := StreamInfoFromInceptionPayload(view.InceptionPayload(), streamId, userId)
 		if err != nil {
-			return status.Errorf(codes.Internal, "AddEvent: error getting stream info: %v", err)
+			return err
 		}
 
 		allowed, err := s.townsContract.IsAllowed(
@@ -281,16 +316,16 @@ func (s *Service) addMembershipEvent(ctx context.Context, stream Stream, view St
 			info,
 		)
 		if err != nil {
-			return status.Errorf(codes.InvalidArgument, "AddEvent: failed to get permissions: %v", err)
+			return err
 		}
 		if !allowed {
-			return status.Errorf(codes.PermissionDenied, "AddEvent: user %s is not allowed to write to stream %s", userId, streamId)
+			return RiverError(Err_PERMISSION_DENIED, "user is not allowed to write to stream", "user", userId)
 		}
 	}
 
 	_, err = stream.AddEvent(ctx, parsedEvent)
 	if err != nil {
-		return status.Errorf(codes.Internal, "AddEvent: error adding event to storage: %v", err)
+		return err
 	}
 
 	return s.addDerivedMembershipEventToUserStream(ctx, userStream, userStreamView, streamId, parsedEvent, membership.Op)
@@ -331,14 +366,16 @@ func (s *Service) checkUserDeviceKeyEvent(ctx context.Context,
 	// only creator is allowed to add to user device key stream
 	creator, err := common.AddressHex(parsedEvent.Event.CreatorAddress)
 	if err != nil {
-		return status.Errorf(codes.InvalidArgument, "AddEvent: invalid user id: %v", err)
+		return err
 	}
+
 	deviceStreamId, err := common.UserDeviceKeyStreamIdFromId(creator)
 	if err != nil {
-		return status.Errorf(codes.InvalidArgument, "AddEvent: invalid user id: %v", err)
+		return err
 	}
+
 	if streamView.StreamId() != deviceStreamId {
-		return status.Errorf(codes.InvalidArgument, "AddEvent: only creator is allowed to add to user device key stream")
+		return RiverError(Err_PERMISSION_DENIED, "only creator is allowed to add to user device key stream")
 	}
 
 	return err
@@ -348,16 +385,19 @@ func (s *Service) checkRiverKeyManagementEvent(ctx context.Context, stream Strea
 	if payload.RiverKeyOp == nil {
 		return nil
 	}
+
 	if payload.DeviceKeys == nil {
-		return status.Errorf(codes.InvalidArgument, "AddEvent: river key op requires device keys")
+		return RiverError(Err_INVALID_ARGUMENT, "river key op requires device keys")
 	}
+
 	deviceId := payload.GetDeviceKeys().DeviceId
 	rdkId, err := hex.DecodeString(deviceId)
 	if err != nil {
-		return status.Errorf(codes.InvalidArgument, "AddEvent: invalid river device key id: %v", err)
+		return err
 	}
+
 	if len(rdkId) != crypto.TOWNS_HASH_SIZE {
-		return status.Errorf(codes.InvalidArgument, "AddEvent: invalid river device key id")
+		return RiverError(Err_INVALID_ARGUMENT, "invalid river device key id")
 	}
 
 	return nil

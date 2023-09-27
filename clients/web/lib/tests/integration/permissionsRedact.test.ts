@@ -123,7 +123,7 @@ describe.skip('redact messages', () => {
 
         /** Assert */
         // verify that error was thrown for redaction
-        expect(error.message).toMatch(new RegExp('Unauthorised|PermissionDenied'))
+        expect(error.message).toMatch(new RegExp('Unauthorised|permission_denied'))
         // verify that the message is NOT redacted
         expect(alice.getMessages(channelId)).toContain(message)
     })

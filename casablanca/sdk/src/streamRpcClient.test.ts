@@ -543,7 +543,7 @@ describe('streamRpcClient', () => {
             }),
         ).rejects.toThrow(
             expect.objectContaining({
-                message: expect.stringContaining('AddEvent: event has no prev events'),
+                message: expect.stringContaining('event has no prev events'),
             }),
         )
 

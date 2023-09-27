@@ -62,7 +62,7 @@ describe('write messages', () => {
         try {
             await alice.sendMessage(roomId, 'Hello Bob!')
         } catch (e) {
-            expect((e as Error).message).toMatch(new RegExp('Unauthorised|PermissionDenied'))
+            expect((e as Error).message).toMatch(new RegExp('Unauthorised|permission_denied'))
         }
         //expect(consoleErrorSpy).toHaveBeenCalled()
         await waitFor(

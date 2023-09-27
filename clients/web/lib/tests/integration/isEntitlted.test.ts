@@ -59,7 +59,7 @@ describe('isEntitledToSpace and isEntitledToChannel tests', () => {
         /** Act */
         /** Assert */
         await expect(bob.joinRoom(spaceId)).rejects.toThrow(
-            new RegExp('Unauthorised|PermissionDenied'),
+            new RegExp('Unauthorised|permission_denied'),
         )
     }) // end test
 
@@ -143,7 +143,7 @@ describe('isEntitledToSpace and isEntitledToChannel tests', () => {
         // join the town. let the server enforce the channel entitlement check
         /** Assert */
         await expect(bob.joinRoom(channelId, spaceId.networkId)).rejects.toThrow(
-            new RegExp('Unauthorised|PermissionDenied'),
+            new RegExp('Unauthorised|permission_denied'),
         )
     }) // end test
 

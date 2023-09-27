@@ -107,7 +107,7 @@ describe('channel with roles and permissions', () => {
 
         // join the channel
         await expect(bob.joinRoom(channelId)).rejects.toThrow(
-            new RegExp('Unauthorised|PermissionDenied'),
+            new RegExp('Unauthorised|permission_denied'),
         )
     }) // end test
 })

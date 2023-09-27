@@ -123,7 +123,7 @@ describe('delete role', () => {
         // check if error has property name
         if (error.name == 'ConnectError') {
             // Casablanca
-            expect(error.message).toContain('PermissionDenied')
+            expect(error.message).toContain('permission_denied')
         } else {
             expect(error).toHaveProperty('name', MAXTRIX_ERROR.M_FORBIDDEN)
         }
@@ -243,7 +243,7 @@ describe('delete role', () => {
         expect(error).not.toBeInstanceOf(NoThrownError)
         if (error.name == 'ConnectError') {
             // Casablanca
-            expect(error.message).toContain('PermissionDenied')
+            expect(error.message).toContain('permission_denied')
         } else {
             expect(error).toHaveProperty('name', MAXTRIX_ERROR.M_FORBIDDEN)
         }
