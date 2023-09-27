@@ -4150,7 +4150,6 @@ type MediaPayload_Snapshot struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// inception
 	Inception *MediaPayload_Inception `protobuf:"bytes,1,opt,name=inception,proto3" json:"inception,omitempty"`
 }
 
