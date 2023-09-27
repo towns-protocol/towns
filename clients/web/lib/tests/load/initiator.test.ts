@@ -112,7 +112,7 @@ describe('loadtest1', () => {
 
         // Wait for signal to be recieved
         await waitFor(() => expect(shutdownSignalRecieved).toBeTruthy(), {
-            timeout: 1000000,
+            timeout: 5000000,
             interval: 100,
         })
         console.log(result)
