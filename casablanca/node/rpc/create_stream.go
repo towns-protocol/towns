@@ -209,7 +209,7 @@ func (s *Service) createStream_Space(
 		return nil, err
 	}
 
-	var userStream *Stream
+	var userStream Stream
 	var userView StreamView
 
 	// Validation of creation params.

@@ -150,7 +150,7 @@ func (s *Service) addParsedEvent(ctx context.Context, streamId string, parsedEve
 	}
 }
 
-func (s *Service) addChannelMessage(ctx context.Context, stream *Stream, view StreamView, parsedEvent *ParsedEvent) error {
+func (s *Service) addChannelMessage(ctx context.Context, stream Stream, view StreamView, parsedEvent *ParsedEvent) error {
 	streamId := view.StreamId()
 	user, err := common.AddressHex(parsedEvent.Event.CreatorAddress)
 	if err != nil {
@@ -201,7 +201,7 @@ func (s *Service) checkMembership(ctx context.Context, streamView StreamView, us
 	return joined, nil
 }
 
-func (s *Service) updateChannel(ctx context.Context, stream *Stream, view StreamView, parsedEvent *ParsedEvent) error {
+func (s *Service) updateChannel(ctx context.Context, stream Stream, view StreamView, parsedEvent *ParsedEvent) error {
 	if (parsedEvent.Event.GetSpacePayload() == nil) || (parsedEvent.Event.GetSpacePayload().GetChannel() == nil) {
 		return status.Error(codes.InvalidArgument, "AddEvent: invalid channel update event")
 	}
@@ -212,7 +212,7 @@ func (s *Service) updateChannel(ctx context.Context, stream *Stream, view Stream
 	return err
 }
 
-func (s *Service) addMembershipEvent(ctx context.Context, stream *Stream, view StreamView, parsedEvent *ParsedEvent, membership *Membership) error {
+func (s *Service) addMembershipEvent(ctx context.Context, stream Stream, view StreamView, parsedEvent *ParsedEvent, membership *Membership) error {
 	streamId := view.StreamId()
 	userId := membership.UserId
 	userStreamId, err := common.UserStreamIdFromId(userId)
@@ -296,7 +296,7 @@ func (s *Service) addMembershipEvent(ctx context.Context, stream *Stream, view S
 	return s.addDerivedMembershipEventToUserStream(ctx, userStream, userStreamView, streamId, parsedEvent, membership.Op)
 }
 
-func (s *Service) addDerivedMembershipEventToUserStream(ctx context.Context, userStream *Stream, userStreamView StreamView, originStreamId string, originEvent *ParsedEvent, op MembershipOp) error {
+func (s *Service) addDerivedMembershipEventToUserStream(ctx context.Context, userStream Stream, userStreamView StreamView, originStreamId string, originEvent *ParsedEvent, op MembershipOp) error {
 	inviterId, err := common.AddressHex(originEvent.Event.CreatorAddress)
 	if err != nil {
 		return err
@@ -325,7 +325,7 @@ func (s *Service) addDerivedMembershipEventToUserStream(ctx context.Context, use
 }
 
 func (s *Service) checkUserDeviceKeyEvent(ctx context.Context,
-	stream *Stream,
+	stream Stream,
 	streamView StreamView,
 	parsedEvent *ParsedEvent) error {
 	// only creator is allowed to add to user device key stream
@@ -344,7 +344,7 @@ func (s *Service) checkUserDeviceKeyEvent(ctx context.Context,
 	return err
 }
 
-func (s *Service) checkRiverKeyManagementEvent(ctx context.Context, stream *Stream, streamView StreamView, parsedEvent *ParsedEvent, payload *UserDeviceKeyPayload_UserDeviceKey) error {
+func (s *Service) checkRiverKeyManagementEvent(ctx context.Context, stream Stream, streamView StreamView, parsedEvent *ParsedEvent, payload *UserDeviceKeyPayload_UserDeviceKey) error {
 	if payload.RiverKeyOp == nil {
 		return nil
 	}
@@ -363,7 +363,7 @@ func (s *Service) checkRiverKeyManagementEvent(ctx context.Context, stream *Stre
 	return nil
 }
 
-func (s *Service) addUserDeviceKeyEvent(ctx context.Context, stream *Stream, streamView StreamView, parsedEvent *ParsedEvent, payload *UserDeviceKeyPayload_UserDeviceKey) error {
+func (s *Service) addUserDeviceKeyEvent(ctx context.Context, stream Stream, streamView StreamView, parsedEvent *ParsedEvent, payload *UserDeviceKeyPayload_UserDeviceKey) error {
 	err := s.checkUserDeviceKeyEvent(ctx, stream, streamView, parsedEvent)
 	if err != nil {
 		return err

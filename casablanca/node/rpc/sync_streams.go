@@ -60,7 +60,7 @@ func (s *Service) SyncLocalStreams(ctx context.Context, syncPos []*SyncCookie, s
 	}
 
 	receiver := make(chan *StreamAndCookie, 128) // TODO: setting, also may be proportional to number of requested streams.
-	subs := make([]*Stream, 0, len(syncPos))
+	subs := make([]SyncStream, 0, len(syncPos))
 	defer func() {
 		for _, sub := range subs {
 			sub.Unsub(receiver)

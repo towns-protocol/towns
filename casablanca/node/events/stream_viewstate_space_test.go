@@ -59,7 +59,8 @@ func TestSpaceViewState(t *testing.T) {
 	})
 	// create a stream
 	spaceEvents := makeTestSpaceStream(t, user1Wallet, "user_1", "space_1", nil)
-	stream, _, err := streamCache.CreateStream(ctx, "streamid$1", spaceEvents)
+	s, _, err := streamCache.CreateStream(ctx, "streamid$1", spaceEvents)
+	stream := s.(*streamImpl)
 	assert.NoError(t, err)
 	assert.NotNil(t, stream)
 	// add two more membership events

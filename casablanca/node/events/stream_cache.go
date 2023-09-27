@@ -16,8 +16,8 @@ type StreamCacheParams struct {
 }
 
 type StreamCache interface {
-	GetStream(ctx context.Context, streamId string) (*Stream, StreamView, error)
-	CreateStream(ctx context.Context, streamId string, events []*ParsedEvent) (*Stream, StreamView, error)
+	GetStream(ctx context.Context, streamId string) (SyncStream, StreamView, error)
+	CreateStream(ctx context.Context, streamId string, events []*ParsedEvent) (SyncStream, StreamView, error)
 	ForceFlushAll(ctx context.Context)
 }
 
@@ -32,15 +32,15 @@ func NewStreamCache(params *StreamCacheParams) *streamCacheImpl {
 	}
 }
 
-func (s *streamCacheImpl) GetStream(ctx context.Context, streamId string) (*Stream, StreamView, error) {
+func (s *streamCacheImpl) GetStream(ctx context.Context, streamId string) (SyncStream, StreamView, error) {
 	entry, _ := s.cache.Load(streamId)
 	if entry == nil {
-		entry, _ = s.cache.LoadOrStore(streamId, &Stream{
+		entry, _ = s.cache.LoadOrStore(streamId, &streamImpl{
 			params:   s.params,
 			streamId: streamId,
 		})
 	}
-	stream := entry.(*Stream)
+	stream := entry.(*streamImpl)
 
 	streamView, err := stream.GetView(ctx)
 
@@ -55,7 +55,7 @@ func (s *streamCacheImpl) GetStream(ctx context.Context, streamId string) (*Stre
 	}
 }
 
-func (s *streamCacheImpl) CreateStream(ctx context.Context, streamId string, genesisMiniblockEvents []*ParsedEvent) (*Stream, StreamView, error) {
+func (s *streamCacheImpl) CreateStream(ctx context.Context, streamId string, genesisMiniblockEvents []*ParsedEvent) (SyncStream, StreamView, error) {
 	if existing, _ := s.cache.Load(streamId); existing != nil {
 		return nil, nil, RiverError(Err_ALREADY_EXISTS, "stream already exists", "streamId", streamId)
 	}
@@ -77,7 +77,7 @@ func (s *streamCacheImpl) CreateStream(ctx context.Context, streamId string, gen
 
 func (s *streamCacheImpl) ForceFlushAll(ctx context.Context) {
 	s.cache.Range(func(key, value interface{}) bool {
-		stream := value.(*Stream)
+		stream := value.(*streamImpl)
 		stream.ForceFlush(ctx)
 		return true
 	})

@@ -14,7 +14,19 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-type Stream struct {
+type Stream interface {
+	GetView(ctx context.Context) (StreamView, error)
+	GetMiniblocks(ctx context.Context, fromIndex int, toIndex int) ([]*Miniblock, bool, error)
+	AddEvent(ctx context.Context, event *ParsedEvent) (*SyncCookie, error)
+}
+
+type SyncStream interface {
+	Stream
+	Sub(ctx context.Context, cookie *SyncCookie, receiver chan<- *StreamAndCookie) (*StreamAndCookie, error)
+	Unsub(receiver chan<- *StreamAndCookie)
+}
+
+type streamImpl struct {
 	params *StreamCacheParams
 
 	streamId string
@@ -36,7 +48,7 @@ type Stream struct {
 
 // Should be called with lock held
 // Either view or loadError will be set in Stream.
-func (s *Stream) loadInternal(ctx context.Context) {
+func (s *streamImpl) loadInternal(ctx context.Context) {
 	if s.view != nil || s.loadError != nil {
 		return
 	}
@@ -66,7 +78,7 @@ func (s *Stream) loadInternal(ctx context.Context) {
 	}
 }
 
-func (s *Stream) startTicker(miniblockTimeMs uint64) {
+func (s *streamImpl) startTicker(miniblockTimeMs uint64) {
 	s.miniblockTickerContext, s.miniblockTickerCancelFunc = context.WithCancel(s.params.DefaultCtx)
 	if miniblockTimeMs == 0 {
 		miniblockTimeMs = 2000
@@ -75,7 +87,7 @@ func (s *Stream) startTicker(miniblockTimeMs uint64) {
 	go s.miniblockTick(s.miniblockTickerContext)
 }
 
-func (s *Stream) miniblockTick(ctx context.Context) {
+func (s *streamImpl) miniblockTick(ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():
@@ -86,7 +98,7 @@ func (s *Stream) miniblockTick(ctx context.Context) {
 	}
 }
 
-func (s *Stream) stopTicker() {
+func (s *streamImpl) stopTicker() {
 	// Should be called under lock.
 	if s.miniblockTicker == nil {
 		s.miniblockTicker.Stop()
@@ -99,7 +111,7 @@ func (s *Stream) stopTicker() {
 	s.miniblockTickerContext = nil
 }
 
-func (s *Stream) makeMiniblock(ctx context.Context) error {
+func (s *streamImpl) makeMiniblock(ctx context.Context) error {
 	miniblockHeader, envelopes := s.view.makeMiniblockHeader(ctx)
 
 	prevHashes := [][]byte{s.view.LastEvent().Hash}
@@ -143,7 +155,7 @@ func (s *Stream) makeMiniblock(ctx context.Context) error {
 	return nil
 }
 
-func (s *Stream) maybeMakeMiniblock(ctx context.Context) {
+func (s *streamImpl) maybeMakeMiniblock(ctx context.Context) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -166,7 +178,7 @@ func (s *Stream) maybeMakeMiniblock(ctx context.Context) {
 	}
 }
 
-func createStream(ctx context.Context, params *StreamCacheParams, streamId string, genesisMiniblockEvents []*ParsedEvent) (*Stream, *streamViewImpl, error) {
+func createStream(ctx context.Context, params *StreamCacheParams, streamId string, genesisMiniblockEvents []*ParsedEvent) (*streamImpl, *streamViewImpl, error) {
 	header, err := Make_GenisisMiniblockHeader(genesisMiniblockEvents)
 	if err != nil {
 		return nil, nil, err
@@ -209,7 +221,7 @@ func createStream(ctx context.Context, params *StreamCacheParams, streamId strin
 		return nil, nil, err
 	}
 
-	stream := &Stream{
+	stream := &streamImpl{
 		params:   params,
 		streamId: streamId,
 		view:     view,
@@ -217,7 +229,7 @@ func createStream(ctx context.Context, params *StreamCacheParams, streamId strin
 	return stream, view, nil
 }
 
-func (s *Stream) GetView(ctx context.Context) (StreamView, error) {
+func (s *streamImpl) GetView(ctx context.Context) (StreamView, error) {
 	s.mu.RLock()
 	view := s.view
 	loadError := s.loadError
@@ -235,7 +247,7 @@ func (s *Stream) GetView(ctx context.Context) (StreamView, error) {
 // Returns
 // miniblocks: with indexes from fromIndex inclusive, to toIndex exlusive
 // terminus: true if fromIndex is 0, or if there are no more blocks because they've been garbage collected
-func (s *Stream) GetMiniblocks(ctx context.Context, fromIndex int, toIndex int) ([]*Miniblock, bool, error) {
+func (s *streamImpl) GetMiniblocks(ctx context.Context, fromIndex int, toIndex int) ([]*Miniblock, bool, error) {
 	blocks, err := s.params.Storage.GetMiniblocks(ctx, s.streamId, fromIndex, toIndex)
 	if err != nil {
 		return nil, false, err
@@ -254,7 +266,7 @@ func (s *Stream) GetMiniblocks(ctx context.Context, fromIndex int, toIndex int) 
 	return miniblocks, terminus, nil
 }
 
-func (s *Stream) AddEvent(ctx context.Context, event *ParsedEvent) (*SyncCookie, error) {
+func (s *streamImpl) AddEvent(ctx context.Context, event *ParsedEvent) (*SyncCookie, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.loadInternal(ctx)
@@ -265,7 +277,7 @@ func (s *Stream) AddEvent(ctx context.Context, event *ParsedEvent) (*SyncCookie,
 	return s.addEventImpl(ctx, event)
 }
 
-func (s *Stream) notifySubscribers(envelopes []*Envelope, newSyncCookie *SyncCookie, prevSyncCookie *SyncCookie) {
+func (s *streamImpl) notifySubscribers(envelopes []*Envelope, newSyncCookie *SyncCookie, prevSyncCookie *SyncCookie) {
 	if s.receivers != nil && s.receivers.Cardinality() > 0 {
 		update := &StreamAndCookie{
 			StreamId:           s.streamId,
@@ -280,7 +292,7 @@ func (s *Stream) notifySubscribers(envelopes []*Envelope, newSyncCookie *SyncCoo
 }
 
 // Lock must be taken.
-func (s *Stream) addEventImpl(ctx context.Context, event *ParsedEvent) (*SyncCookie, error) {
+func (s *streamImpl) addEventImpl(ctx context.Context, event *ParsedEvent) (*SyncCookie, error) {
 	envelopeBytes, err := event.GetEnvelopeBytes()
 	if err != nil {
 		return nil, err
@@ -306,7 +318,7 @@ func (s *Stream) addEventImpl(ctx context.Context, event *ParsedEvent) (*SyncCoo
 	return newSyncCookie, nil
 }
 
-func (s *Stream) Sub(ctx context.Context, cookie *SyncCookie, receiver chan<- *StreamAndCookie) (*StreamAndCookie, error) {
+func (s *streamImpl) Sub(ctx context.Context, cookie *SyncCookie, receiver chan<- *StreamAndCookie) (*StreamAndCookie, error) {
 	if cookie.StreamId != s.streamId {
 		return nil, RiverError(Err_BAD_SYNC_COOKIE, "bad stream id", "cookie.StreamId", cookie.StreamId, "s.streamId", s.streamId)
 	}
@@ -380,7 +392,7 @@ func (s *Stream) Sub(ctx context.Context, cookie *SyncCookie, receiver chan<- *S
 
 // It's ok to unsub non-existing receiver.
 // Such situation arises during ForceFlush.
-func (s *Stream) Unsub(receiver chan<- *StreamAndCookie) {
+func (s *streamImpl) Unsub(receiver chan<- *StreamAndCookie) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	if s.receivers != nil {
@@ -391,7 +403,7 @@ func (s *Stream) Unsub(receiver chan<- *StreamAndCookie) {
 // ForceFlush transitions Stream object to unloaded state.
 // All subbed receivers will receive empty response and must
 // terminate corresponding sync loop.
-func (s *Stream) ForceFlush(ctx context.Context) {
+func (s *streamImpl) ForceFlush(ctx context.Context) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.view = nil
