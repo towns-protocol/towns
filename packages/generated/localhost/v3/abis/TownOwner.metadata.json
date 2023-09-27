@@ -1086,11 +1086,11 @@
       ]
     },
     "contracts/src/towns/facets/owner/TownOwner.sol": {
-      "keccak256": "0x5f9ee3dfe7aa2a54ce9fd9ff4a6ff7a7ebde540ccb13853edcb2df4c7fd2428c",
+      "keccak256": "0xf3039beac1c11143f2a289fd120db2b7e5d15cc61c176ab655e95c3390e3d4d3",
       "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://33aa8b51c976e39725989a7b5378f66f4c8fd13796ae0ac6e7ffa180bf8e7b80",
-        "dweb:/ipfs/QmYEKDuX7ybpfSkjkdL3t3Fo3p2EJn5niVM82hsiwMM8xX"
+        "bzz-raw://46a2c157223475297e6ae54e16cf4ccc53ce68eace5d73e518c2fbb0f1146f51",
+        "dweb:/ipfs/QmYpGv8AsBk796gPTQajFLvrqsYXykAFVPFFRPomSwmWZE"
       ]
     },
     "contracts/src/towns/facets/owner/TownOwnerBase.sol": {

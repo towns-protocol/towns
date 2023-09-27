@@ -4,7 +4,7 @@ pragma solidity ^0.8.19;
 // interfaces
 
 // libraries
-import {console2} from "forge-std/console2.sol";
+import {console} from "forge-std/console.sol";
 
 // contracts
 import {CommonBase} from "forge-std/Base.sol";
@@ -18,32 +18,32 @@ abstract contract DeployHelpers is CommonBase {
 
   function debug(string memory message) internal view {
     if (DEBUG) {
-      console2.log(string.concat("[DEBUG]: ", message));
+      console.log(string.concat("[DEBUG]: ", message));
     }
   }
 
   function debug(string memory message, string memory arg) internal view {
     if (DEBUG) {
-      console2.log(string.concat("[DEBUG]: ", message), arg);
+      console.log(string.concat("[DEBUG]: ", message), arg);
     }
   }
 
   function debug(string memory message, address arg) internal view {
     if (DEBUG) {
-      console2.log(string.concat("[DEBUG]: ", message), arg);
+      console.log(string.concat("[DEBUG]: ", message), arg);
     }
   }
 
   function info(string memory message, string memory arg) internal view {
-    console2.log(string.concat("[INFO]: ", message), arg);
+    console.log(string.concat("[INFO]: ", message), arg);
   }
 
   function info(string memory message, address arg) internal view {
-    console2.log(string.concat("[INFO]: ", unicode"✅ ", message), arg);
+    console.log(string.concat("[INFO]: ", unicode"✅ ", message), arg);
   }
 
   function warn(string memory message, address arg) internal view {
-    console2.log(string.concat("[WARN]: ", unicode"⚠️ ", message), arg);
+    console.log(string.concat("[WARN]: ", unicode"⚠️ ", message), arg);
   }
 
   // =============================================================

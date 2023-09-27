@@ -7,7 +7,6 @@ import {IEntitlement} from "contracts/src/towns/entitlements/IEntitlement.sol";
 import {IRoles, IRolesBase} from "contracts/src/towns/facets/roles/IRoles.sol";
 import {IChannel} from "contracts/src/towns/facets/channels/IChannel.sol";
 import {IEntitlementsManager} from "contracts/src/towns/facets/entitlements/IEntitlementsManager.sol";
-
 import {IProxyManager} from "contracts/src/diamond/proxy/manager/IProxyManager.sol";
 
 // libraries

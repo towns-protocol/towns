@@ -46,7 +46,7 @@ contract TownOwner is
   ) external onlyFactory returns (uint256 tokenId) {
     tokenId = _nextTokenId();
     _mintTown(name, uri, tokenId, town, networkId);
-    _safeMint(msg.sender, 1);
+    _mint(msg.sender, 1);
   }
 
   function getTownInfo(address town) external view returns (Town memory) {
