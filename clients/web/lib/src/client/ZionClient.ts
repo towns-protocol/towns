@@ -1083,6 +1083,25 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
     }
 
     /************************************************
+     * Media
+     *************************************************/
+    public async createMediaStream(
+        spaceId: string,
+        channelId: string,
+        chunkCount: number,
+    ): Promise<string> {
+        if (!this.casablancaClient) {
+            throw new Error("Casablanca client doesn't exist")
+        }
+        const { streamId } = await this.casablancaClient.createMediaStream(
+            spaceId,
+            channelId,
+            chunkCount,
+        )
+        return streamId
+    }
+
+    /************************************************
      * isEntitled
      *************************************************/
     public async isEntitled(
@@ -1731,6 +1750,55 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
                                 },
                             })
                             break
+                        case MessageType.EmbeddedMedia:
+                            await this.casablancaClient.sendChannelMessage_EmbeddedMedia(
+                                roomId.networkId,
+                                {
+                                    threadId: options.threadId,
+                                    threadPreview: options.threadPreview,
+                                    content: {
+                                        content: options.content,
+                                        info: {
+                                            sizeBytes: options.info.sizeBytes,
+                                            mimetype: options.info.mimetype,
+                                            widthPixels: options.info.widthPixels,
+                                            heightPixels: options.info.heightPixels,
+                                        },
+                                    },
+                                },
+                            )
+                            break
+                        case MessageType.ChunkedMedia:
+                            await this.casablancaClient.sendChannelMessage_Media(roomId.networkId, {
+                                threadId: options?.threadId,
+                                threadPreview: options?.threadPreview,
+                                content: {
+                                    streamId: options.streamId,
+                                    info: {
+                                        sizeBytes: options.info.sizeBytes,
+                                        mimetype: options.info.mimetype,
+                                        widthPixels: options.info.widthPixels,
+                                        heightPixels: options.info.heightPixels,
+                                    },
+                                    encryption: {
+                                        case: 'aesgcm',
+                                        value: {
+                                            iv: options.iv,
+                                            secretKey: options.secretKey,
+                                        },
+                                    },
+                                    thumbnail: {
+                                        info: {
+                                            sizeBytes: options.thumbnail.info.sizeBytes,
+                                            mimetype: options.thumbnail.info.mimetype,
+                                            widthPixels: options.thumbnail.info.widthPixels,
+                                            heightPixels: options.thumbnail.info.heightPixels,
+                                        },
+                                        content: options.thumbnail.content,
+                                    },
+                                },
+                            })
+                            break
                         default:
                             staticAssertNever(options)
                     }
@@ -1740,6 +1808,13 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
             default:
                 staticAssertNever(roomId)
         }
+    }
+
+    public async sendMediaPayload(streamId: string, data: Uint8Array, chunkIndex: number) {
+        if (!this.casablancaClient) {
+            throw new Error('Casablanca client not initialized')
+        }
+        await this.casablancaClient.sendMediaPayload(streamId, data, chunkIndex)
     }
 
     public async sendBlockTxn(roomId: RoomIdentifier, txn: BlockchainTransactionEvent) {

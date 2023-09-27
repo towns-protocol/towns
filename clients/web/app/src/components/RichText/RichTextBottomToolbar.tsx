@@ -1,11 +1,14 @@
 import React, { useCallback } from 'react'
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext'
 import { $getSelection, $isRangeSelection } from 'lexical'
+import { SpaceProtocol } from 'use-zion-client'
 import { GiphyEntryDesktop, GiphyEntryTouch } from '@components/Giphy/GiphyEntry'
 import { EmojiPickerButton, EmojiPickerButtonTouch } from '@components/EmojiPickerButton'
 import { useDevice } from 'hooks/useDevice'
-import { IconButton, Stack } from '@ui'
-import { MotionIconButton } from 'ui/components/Motion/MotionComponents'
+import { Box, IconButton, Stack } from '@ui'
+import { MotionIcon, MotionIconButton } from 'ui/components/Motion/MotionComponents'
+import { useMediaDropContext } from '@components/MediaDropContext/MediaDropContext'
+import { useEnvironment } from 'hooks/useEnvironmnet'
 import { $createEmojiNode } from './nodes/EmojiNode'
 
 type Props = {
@@ -21,6 +24,8 @@ type Props = {
 export const RichTextBottomToolbar = (props: Props) => {
     const { isTouch } = useDevice()
     const [editor] = useLexicalComposerContext()
+    const mediaDropContext = useMediaDropContext()
+    const { protocol } = useEnvironment()
 
     const {
         isFormattingToolbarOpen,
@@ -52,6 +57,21 @@ export const RichTextBottomToolbar = (props: Props) => {
         },
         [setIsFormattingToolbarOpen, editor, isFormattingToolbarOpen],
     )
+
+    const didSelectImages = useCallback(
+        (event: React.ChangeEvent<HTMLInputElement>) => {
+            const fileList = event.target.files
+            if (!fileList) {
+                return
+            }
+            const files = Array.from(fileList)
+            mediaDropContext.addFiles?.(files)
+            event.target.value = ''
+        },
+        [mediaDropContext],
+    )
+
+    const mediaInputId = 'media' + mediaDropContext.id
 
     return (
         <Stack horizontal gap="xs" alignItems="center">
@@ -101,6 +121,35 @@ export const RichTextBottomToolbar = (props: Props) => {
 
                     <EmojiPickerButton parentFocused={isFocused} onSelectEmoji={onSelectEmoji} />
                 </>
+            )}
+
+            {protocol === SpaceProtocol.Casablanca && (
+                <label htmlFor={mediaInputId}>
+                    {props.visible && (
+                        <Box
+                            padding="xs"
+                            tooltip={isTouch ? undefined : 'Upload image'}
+                            tooltipOptions={{ immediate: true, placement: 'vertical' }}
+                        >
+                            <MotionIcon
+                                type="camera"
+                                size="square_sm"
+                                color="gray2"
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                            />
+                        </Box>
+                    )}
+                    <input
+                        type="file"
+                        name="image-file-input"
+                        id={mediaInputId}
+                        accept="image/*"
+                        style={{ display: 'none' }}
+                        onChange={didSelectImages}
+                    />
+                </label>
             )}
         </Stack>
     )

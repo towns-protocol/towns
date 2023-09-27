@@ -28,6 +28,7 @@ import { useIsChannelWritable } from 'hooks/useIsChannelWritable'
 import { useSpaceChannels } from 'hooks/useSpaceChannels'
 import { useAuth } from 'hooks/useAuth'
 import { RegisterChannelShortcuts } from '@components/Shortcuts/RegisterChannelShortcuts'
+import { MediaDropContextProvider } from '@components/MediaDropContext/MediaDropContext'
 import { CentralPanelLayout } from './layouts/CentralPanelLayout'
 
 type Props = {
@@ -109,6 +110,12 @@ const SpacesChannelComponent = (props: Props) => {
         ? `You don't have permission to send messages to this channel`
         : `Loading permissions`
 
+    const imageUploadTitle = isChannelWritable
+        ? `Upload to #${channel?.label}`
+        : isChannelWritable === false
+        ? `You don't have permission to send media to this channel`
+        : `Loading permissions`
+
     const onLoadMore = useCallback(() => {
         scrollback(channelId, 100)
     }, [channelId, scrollback])
@@ -182,7 +189,7 @@ const SpacesChannelComponent = (props: Props) => {
                     </Button>
                 </Box>
             ) : (
-                <>
+                <MediaDropContextProvider title={imageUploadTitle} id="channel">
                     <MessageTimelineWrapper
                         key={channelId.slug}
                         spaceId={spaceId}
@@ -236,7 +243,7 @@ const SpacesChannelComponent = (props: Props) => {
                             onSend={onSend}
                         />
                     </Box>
-                </>
+                </MediaDropContextProvider>
             )}
         </CentralPanelLayout>
     )

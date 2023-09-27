@@ -82,6 +82,11 @@ interface ZionClientImpl {
     waitForUpdateChannelTransaction: (
         context: ChannelUpdateTransactionContext | undefined,
     ) => Promise<ChannelUpdateTransactionContext | undefined>
+    createMediaStream: (
+        spaceId: string,
+        channelId: string,
+        chunkCount: number,
+    ) => Promise<string | undefined>
     createRoleTransaction: (
         spaceNetworkId: string,
         roleName: string,
@@ -160,6 +165,7 @@ interface ZionClientImpl {
         options?: SendMessageOptions,
     ) => Promise<void>
     sendReaction: (roomId: RoomIdentifier, eventId: string, reaction: string) => Promise<void>
+    sendMediaPayload: (streamId: string, data: Uint8Array, chunkIndex: number) => Promise<void>
     sendReadReceipt: (marker: FullyReadMarker) => Promise<void>
     setAvatarUrl: (ravatarUrl: string) => Promise<void>
     setDisplayName: (displayName: string) => Promise<void>
@@ -204,6 +210,8 @@ export function useZionClient(): ZionClientImpl {
             client?.waitForCreateSpaceTransaction,
             ZionClientEvent.NewSpace,
         ),
+        createMediaStream: useWithCatch(client?.createMediaStream),
+
         createChannelTransaction: useWithCatch(client?.createChannelTransaction),
         waitForCreateChannelTransaction: useWithCatch(
             client?.waitForCreateChannelTransaction,
@@ -241,6 +249,7 @@ export function useZionClient(): ZionClientImpl {
         scrollback: useWithCatch(client?.scrollback),
         sendMessage: useWithCatch(client?.sendMessage),
         sendReaction: useWithCatch(client?.sendReaction),
+        sendMediaPayload: useWithCatch(client?.sendMediaPayload),
         sendReadReceipt: useWithCatch(sendReadReceipt),
         syncSpace: useWithCatch(client?.syncSpace),
         setDisplayName: useWithCatch(client?.setDisplayName),

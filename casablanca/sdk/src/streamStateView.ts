@@ -20,6 +20,7 @@ import { StreamStateView_User } from './streamStateView_User'
 import { StreamStateView_UserSettings } from './streamStateView_UserSettings'
 import { StreamStateView_UserDeviceKeys } from './streamStateView_UserDeviceKey'
 import { StreamStateView_Membership } from './streamStateView_Membership'
+import { StreamStateView_Media } from './streamStateView_Media'
 
 const log = dlog('csb:streams')
 
@@ -76,6 +77,12 @@ export class StreamStateView {
         return this._userDeviceKeyContent
     }
 
+    private readonly _mediaContent?: StreamStateView_Media
+    get mediaContent(): StreamStateView_Media {
+        check(isDefined(this._mediaContent), `mediaContent not defined for ${this.contentKind}`)
+        return this._mediaContent
+    }
+
     constructor(userId: string, streamId: string, snapshot: Snapshot | undefined) {
         check(isDefined(snapshot), `Stream is empty ${streamId}`, Err.STREAM_EMPTY)
 
@@ -120,6 +127,9 @@ export class StreamStateView {
                     snapshot.content.value.inception,
                 )
                 break
+            case 'mediaContent':
+                this._mediaContent = new StreamStateView_Media(snapshot.content.value.inception)
+                break
             case undefined:
                 check(false, `Snapshot has no content ${streamId}`, Err.STREAM_BAD_EVENT)
                 break
@@ -147,6 +157,9 @@ export class StreamStateView {
                 break
             case 'userDeviceKeyContent':
                 this.userDeviceKeyContent.initialize(snapshot, snapshot.content.value, emitter)
+                break
+            case 'mediaContent':
+                this.mediaContent.initialize(snapshot, snapshot.content.value, emitter)
                 break
             case undefined:
                 check(false, `Snapshot has no content ${this.streamId}`, Err.STREAM_BAD_EVENT)
@@ -211,6 +224,9 @@ export class StreamStateView {
                 case 'userDeviceKeyPayload':
                     this.userDeviceKeyContent?.appendEvent(event, payload.value, emitter)
                     break
+                case 'mediaPayload':
+                    this.mediaContent?.appendEvent(event, payload.value, emitter)
+                    break
                 case 'miniblockHeader':
                     this.updateMiniblockInfo(payload.value, { max: payload.value.miniblockNum })
                     break
@@ -260,6 +276,10 @@ export class StreamStateView {
                     break
                 case 'userDeviceKeyPayload':
                     this.userDeviceKeyContent?.prependEvent(event, payload.value, emitter)
+                    break
+                case 'mediaPayload':
+                    // append / prepend are identical for media content
+                    this.mediaContent?.appendEvent(event, payload.value, emitter)
                     break
                 case 'miniblockHeader':
                     this.updateMiniblockInfo(payload.value, { min: payload.value.miniblockNum })
@@ -400,6 +420,8 @@ export class StreamStateView {
                 throw new Error('User settings content has no memberships')
             case 'userDeviceKeyContent':
                 throw new Error('User device key content has no memberships')
+            case 'mediaContent':
+                throw new Error('Media content has no memberships')
             case undefined:
                 throw new Error('Stream has no content')
             default:

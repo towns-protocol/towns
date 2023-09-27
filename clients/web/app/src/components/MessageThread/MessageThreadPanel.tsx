@@ -18,6 +18,7 @@ import { atoms } from 'ui/styles/atoms.css'
 import { useDevice } from 'hooks/useDevice'
 import { useAuth } from 'hooks/useAuth'
 import { Panel } from '@components/Panel/Panel'
+import { MediaDropContextProvider } from '@components/MediaDropContext/MediaDropContext'
 
 type Props = {
     messageId: string
@@ -60,54 +61,62 @@ export const MessageThreadPanel = (props: Props) => {
 
     const { isChannelWritable } = useIsChannelWritable(spaceId, channelId, loggedInWalletAddress)
 
+    const imageUploadTitle = isChannelWritable
+        ? `Upload to thread`
+        : isChannelWritable === false
+        ? `You don't have permission to send media to this channel`
+        : `Loading permissions`
+
     return (
         <Panel label={panelLabel} onClose={props.onClose}>
-            <Stack
-                grow
-                position="relative"
-                overflow="hidden"
-                justifyContent={{ default: 'start', touch: 'end' }}
-                width="100%"
-            >
-                <Box justifySelf="end" overflow="hidden">
-                    <MessageTimelineWrapper
-                        spaceId={spaceId}
-                        channelId={channelId}
-                        threadParentId={messageId}
-                        events={messagesWithParent}
-                        isChannelWritable={isChannelWritable}
-                    >
-                        <MessageTimeline
-                            align="top"
-                            highlightId={props.highlightId}
-                            groupByUser={false}
-                        />
-                    </MessageTimelineWrapper>
-                </Box>
-            </Stack>
-            {isChannelWritable && (
-                <Box
-                    paddingX={{ default: 'md', touch: 'none' }}
-                    paddingBottom={{ default: 'lg', touch: 'none' }}
-                    paddingTop={{ default: 'none', touch: 'none' }}
-                    bottom={isTouch ? 'sm' : 'none'}
+            <MediaDropContextProvider title={imageUploadTitle} id="thread-panel">
+                <Stack
+                    grow
+                    position="relative"
+                    overflow="hidden"
+                    justifyContent={{ default: 'start', touch: 'end' }}
+                    width="100%"
                 >
-                    <RichTextEditor
-                        isFullWidthOnTouch
-                        autoFocus={!isTouch}
-                        editable={!!isChannelWritable}
-                        displayButtons="on-focus"
-                        placeholder="Reply..."
-                        storageId={`${channelId.networkId}-${messageId}`}
-                        threadId={messageId}
-                        channels={channels}
-                        members={members}
-                        background="level2"
-                        userId={userId}
-                        onSend={onSend}
-                    />
-                </Box>
-            )}
+                    <Box justifySelf="end" overflow="hidden">
+                        <MessageTimelineWrapper
+                            spaceId={spaceId}
+                            channelId={channelId}
+                            threadParentId={messageId}
+                            events={messagesWithParent}
+                            isChannelWritable={isChannelWritable}
+                        >
+                            <MessageTimeline
+                                align="top"
+                                highlightId={props.highlightId}
+                                groupByUser={false}
+                            />
+                        </MessageTimelineWrapper>
+                    </Box>
+                </Stack>
+                {isChannelWritable && (
+                    <Box
+                        paddingX={{ default: 'md', touch: 'none' }}
+                        paddingBottom={{ default: 'lg', touch: 'none' }}
+                        paddingTop={{ default: 'none', touch: 'none' }}
+                        bottom={isTouch ? 'sm' : 'none'}
+                    >
+                        <RichTextEditor
+                            isFullWidthOnTouch
+                            autoFocus={!isTouch}
+                            editable={!!isChannelWritable}
+                            displayButtons="on-focus"
+                            placeholder="Reply..."
+                            storageId={`${channelId.networkId}-${messageId}`}
+                            threadId={messageId}
+                            channels={channels}
+                            members={members}
+                            background="level2"
+                            userId={userId}
+                            onSend={onSend}
+                        />
+                    </Box>
+                )}
+            </MediaDropContextProvider>
         </Panel>
     )
 }

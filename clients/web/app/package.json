@@ -48,6 +48,7 @@
         "@types/ua-parser-js": "^0.7.36",
         "allotment": "^1.17.0",
         "axios": "^1.2.6",
+        "browser-image-compression": "^2.0.2",
         "clsx": "^1.2.1",
         "date-fns": "^2.29.3",
         "debug": "^4.3.4",

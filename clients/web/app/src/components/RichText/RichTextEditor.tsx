@@ -22,8 +22,8 @@ import {
     Channel,
     Mention,
     RoomMember,
-    SendImageMessageOptions,
     SendTextMessageOptions,
+    SpaceProtocol,
 } from 'use-zion-client'
 import { NodeEventPlugin } from '@lexical/react/LexicalNodeEventPlugin'
 import * as fieldStyles from 'ui/components/_internal/Field/Field.css'
@@ -34,6 +34,7 @@ import { useNetworkStatus } from 'hooks/useNetworkStatus'
 import { SomethingWentWrong } from '@components/Errors/SomethingWentWrong'
 import { atoms } from 'ui/styles/atoms.css'
 import { useDevice } from 'hooks/useDevice'
+import { useEnvironment } from 'hooks/useEnvironmnet'
 import { MessageStatusAnnotation, useInitialConfig } from './hooks/useInitialConfig'
 import { AnnotationNode } from './nodes/AnnotationNode'
 import { ChannelLinkNode, createChannelLinkTransformer } from './nodes/ChannelLinkNode'
@@ -59,11 +60,11 @@ import { TabIndentationPlugin } from './plugins/TabIndentationPlugin'
 import { MentionHoverPlugin } from './plugins/MentionHoverPlugin'
 import { RichTextBottomToolbar } from './RichTextBottomToolbar'
 import { singleEmojiMessage } from './RichTextEditor.css'
+import { PasteImagePlugin } from './plugins/PasteImagePlugin'
 import { HightlightNode, createHighlightTransformer } from './nodes/HightlightNode'
 
 type Props = {
     onSend?: (value: string, options: SendTextMessageOptions | undefined) => void
-    onSendImage?: (imageTitle: string, options: SendImageMessageOptions) => Promise<void>
     onCancel?: () => void
     autoFocus?: boolean
     editable?: boolean
@@ -256,6 +257,9 @@ const RichTextEditorWithoutBoundary = (props: Props) => {
     const { transformers } = useTransformers({ members, channels })
     const { isTouch } = useDevice()
     const [isEditorEmpty, setIsEditorEmpty] = useState(true)
+    const [imageCount, setImageCount] = useState(0)
+    const [isSendingImages, setIsSendingImages] = useState<boolean>(false)
+    const { protocol } = useEnvironment()
 
     const userInput = useStore((state) =>
         props.storageId ? state.channelMessageInputMap[props.storageId] : undefined,
@@ -292,6 +296,27 @@ const RichTextEditorWithoutBoundary = (props: Props) => {
         setIsAttemptingSend(true)
     }, [])
 
+    const sendImage = useCallback(() => {
+        if (imageCount === 0) {
+            return
+        }
+        setIsSendingImages(true)
+    }, [imageCount, setIsSendingImages])
+
+    const onSendImageFailed = useCallback(() => {
+        setIsSendingImages(false)
+    }, [])
+
+    const imageCountUpdated = useCallback(
+        (count: number) => {
+            setImageCount(count)
+            if (imageCount === 0) {
+                setIsSendingImages(false)
+            }
+        },
+        [setImageCount, imageCount, setIsSendingImages],
+    )
+
     if (!editable) {
         return (
             <RichTextUIContainer
@@ -318,33 +343,58 @@ const RichTextEditorWithoutBoundary = (props: Props) => {
             borderBottom={!isTouch ? 'default' : 'none'}
         >
             <LexicalComposer initialConfig={initialConfig}>
-                <RichTextUI
-                    focused={focused || !isEditorEmpty}
-                    editing={isEditing}
-                    background={background}
-                    attemptingToSend={isAttemptingSend}
-                    threadId={props.threadId}
-                    threadPreview={props.threadPreview}
-                    showFormattingToolbar={showFormattingToolbar}
-                    canShowInlineToolbar={!isTouch && !showFormattingToolbar}
-                    key="editor"
-                >
-                    <RichTextPlugin
-                        contentEditable={
-                            <ContentEditable className={inputClassName} tabIndex={tabIndex} />
-                        }
-                        placeholder={<RichTextPlaceholder placeholder={placeholder} />}
-                        ErrorBoundary={LexicalErrorBoundary}
+                <Stack horizontal gap centerContent width="100%" paddingRight="sm">
+                    <Box grow>
+                        <RichTextUI
+                            focused={focused || !isEditorEmpty}
+                            editing={isEditing}
+                            background={background}
+                            attemptingToSend={isAttemptingSend}
+                            threadId={props.threadId}
+                            threadPreview={props.threadPreview}
+                            showFormattingToolbar={showFormattingToolbar}
+                            canShowInlineToolbar={!isTouch && !showFormattingToolbar}
+                            key="editor"
+                        >
+                            <RichTextPlugin
+                                contentEditable={
+                                    <ContentEditable
+                                        className={inputClassName}
+                                        tabIndex={tabIndex}
+                                    />
+                                }
+                                placeholder={<RichTextPlaceholder placeholder={placeholder} />}
+                                ErrorBoundary={LexicalErrorBoundary}
+                            />
+                        </RichTextUI>
+                    </Box>
+                    <Box grow />
+                    <SendMarkdownPlugin
+                        displayButtons={props.displayButtons ?? 'on-focus'}
+                        disabled={isOffline}
+                        focused={focused}
+                        isEditing={isEditing ?? false}
+                        isEditorEmpty={isEditorEmpty}
+                        setIsEditorEmpty={setIsEditorEmpty}
+                        hasImage={imageCount > 0}
+                        key="markdownplugin"
+                        onSendImage={sendImage}
+                        onSend={onSendCb}
+                        onSendAttemptWhileDisabled={onSendAttemptWhileDisabled}
+                        onCancel={props.onCancel}
                     />
-                </RichTextUI>
+                </Stack>
 
-                <Stack
-                    horizontal
-                    paddingBottom="sm"
-                    paddingX="md"
-                    insetX="xxs"
-                    alignContent="center"
-                >
+                <Stack gap shrink paddingX paddingBottom="sm">
+                    {protocol === SpaceProtocol.Casablanca && (
+                        <PasteImagePlugin
+                            isSendingImages={isSendingImages}
+                            setIsSendingImages={setIsSendingImages}
+                            setImageCount={imageCountUpdated}
+                            threadId={props.threadId}
+                            imageUploadFailed={onSendImageFailed}
+                        />
+                    )}
                     <RichTextBottomToolbar
                         editing={isEditing}
                         focused={focused}
@@ -355,21 +405,8 @@ const RichTextEditorWithoutBoundary = (props: Props) => {
                         setIsFormattingToolbarOpen={setIsFormattingToolbarOpen}
                         key="toolbar"
                     />
-
-                    <Box grow />
-                    <SendMarkdownPlugin
-                        displayButtons={props.displayButtons ?? 'on-focus'}
-                        disabled={isOffline}
-                        focused={focused}
-                        isEditing={isEditing ?? false}
-                        isEditorEmpty={isEditorEmpty}
-                        setIsEditorEmpty={setIsEditorEmpty}
-                        key="markdownplugin"
-                        onSend={onSendCb}
-                        onSendAttemptWhileDisabled={onSendAttemptWhileDisabled}
-                        onCancel={props.onCancel}
-                    />
                 </Stack>
+                <Box grow />
 
                 <OnFocusPlugin autoFocus={props.autoFocus} onFocusChange={onFocusChange} />
                 <ClearEditorPlugin />

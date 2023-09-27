@@ -837,7 +837,7 @@ func GetStream(ctx context.Context, streamId string) ([]*protocol.Envelope, erro
 }
 
 func validateStreamId(streamId string) error {
-	pattern := `^(00-|11-|22-|33-|44-)[\w\d_-]*$`
+	pattern := `^(00-|11-|22-|33-|44-|55-)[\w\d_-]*$`
 	match, _ := regexp.MatchString(pattern, streamId)
 	if !match {
 		return fmt.Errorf("Wrong stream id %s", streamId)

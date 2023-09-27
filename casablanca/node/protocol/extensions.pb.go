@@ -10,6 +10,7 @@ type IsSpacePayload_Content = isSpacePayload_Content
 type IsChannelPayload_Content = isChannelPayload_Content
 type IsUserSettingsPayload_Content = isUserSettingsPayload_Content
 type IsUserDeviceKeyPayload_Content = isUserDeviceKeyPayload_Content
+type IsMediaPayload_Content = isMediaPayload_Content
 
 type IsInceptionPayload interface {
 	isInceptionPayload()
@@ -21,6 +22,7 @@ func (*SpacePayload_Inception) isInceptionPayload() {}
 func (*ChannelPayload_Inception) isInceptionPayload() {}
 func (*UserSettingsPayload_Inception) isInceptionPayload() {}
 func (*UserDeviceKeyPayload_Inception) isInceptionPayload() {}
+func (*MediaPayload_Inception) isInceptionPayload() {}
 
 func (e *Snapshot) GetInceptionPayload() IsInceptionPayload {
 	switch e.Content.(type) {
@@ -50,6 +52,12 @@ func (e *Snapshot) GetInceptionPayload() IsInceptionPayload {
 		return r
 	case *Snapshot_UserDeviceKeyContent:
 		r := e.Content.(*Snapshot_UserDeviceKeyContent).UserDeviceKeyContent.GetInception()
+		if r == nil {
+			return nil
+		}
+		return r
+	case *Snapshot_MediaContent:
+		r := e.Content.(*Snapshot_MediaContent).MediaContent.GetInception()
 		if r == nil {
 			return nil
 		}
@@ -91,6 +99,12 @@ func (e *StreamEvent) GetInceptionPayload() IsInceptionPayload {
 			return nil
 		}
 		return r
+	case *StreamEvent_MediaPayload:
+		r := e.Payload.(*StreamEvent_MediaPayload).MediaPayload.GetInception()
+		if r == nil {
+			return nil
+		}
+		return r
 	default:
 		return nil
 	}
@@ -122,6 +136,11 @@ func (e *StreamEvent) VerifyPayloadTypeMatchesStreamType(i IsInceptionPayload) e
 		_, ok := i.(*UserDeviceKeyPayload_Inception)
 		if !ok {
 			return fmt.Errorf("inception type mismatch: *protocol.StreamEvent_UserDeviceKeyPayload::%T vs %T", e.GetUserDeviceKeyPayload().Content, i)
+		}
+	case *StreamEvent_MediaPayload:
+		_, ok := i.(*MediaPayload_Inception)
+		if !ok {
+			return fmt.Errorf("inception type mismatch: *protocol.StreamEvent_MediaPayload::%T vs %T", e.GetMediaPayload().Content, i)
 		}
 	default:
 		return fmt.Errorf("inception type type not handled: %T vs %T", e.Payload, i)

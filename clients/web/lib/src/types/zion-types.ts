@@ -153,6 +153,8 @@ export enum MessageType {
     Text = 'm.text',
     GM = 'm.gm',
     Image = 'm.Image',
+    EmbeddedMedia = 'm.embedded_media',
+    ChunkedMedia = 'm.chunked_media',
 }
 
 export interface ThreadIdOptions {
@@ -197,6 +199,39 @@ export type SendImageMessageOptions = ThreadIdOptions & {
     }
 }
 
+export type SendEmbeddedMediaOptions = ThreadIdOptions & {
+    messageType: MessageType.EmbeddedMedia
+    content: Uint8Array
+    info: {
+        sizeBytes: bigint
+        mimetype: string
+        widthPixels: number
+        heightPixels: number
+    }
+}
+
+export type SendChunkedMediaMessageOptions = ThreadIdOptions & {
+    messageType: MessageType.ChunkedMedia
+    streamId: string
+    iv: Uint8Array
+    secretKey: Uint8Array
+    info: {
+        sizeBytes: bigint
+        mimetype: string
+        widthPixels: number
+        heightPixels: number
+    }
+    thumbnail: {
+        info: {
+            sizeBytes: bigint
+            mimetype: string
+            widthPixels: number
+            heightPixels: number
+        }
+        content: Uint8Array
+    }
+}
+
 export interface SendZionReactionOptions {
     targetEventId: string
 }
@@ -209,6 +244,8 @@ export type SendMessageOptionsBase =
     | SendTextMessageOptions
     | SendGMOptions
     | SendImageMessageOptions
+    | SendEmbeddedMediaOptions
+    | SendChunkedMediaMessageOptions
 
 export type SendMessageOptions = SendMessageOptionsBase & SpaceIdOptions
 

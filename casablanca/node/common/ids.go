@@ -29,6 +29,9 @@ const (
 	STREAM_USER_SETTINGS_PREFIX          = "44"
 	STREAM_USER_SETTINGS_PREFIX_DASH     = "44-"
 	STREAM_USER_SETTINGS_PREFIX_DASH_HEX = "44-0x"
+
+	STREAM_MEDIA_PREFIX      = "55"
+	STREAM_MEDIA_PREFIX_DASH = "55-"
 )
 
 func AddressHex(address []byte) (string, error) {
@@ -88,6 +91,10 @@ func CheckUserDeviceKeyStreamId(streamId string, creatorUserId []byte) error {
 
 func CheckUserSettingsStreamId(streamId string, creatorUserId []byte) error {
 	return CheckUserStreamIdForPrefix(streamId, creatorUserId, STREAM_USER_SETTINGS_PREFIX_DASH)
+}
+
+func CheckMediaStreamId(streamId string) bool {
+	return strings.HasPrefix(streamId, STREAM_MEDIA_PREFIX_DASH)
 }
 
 func UserDeviceKeyStreamIdFromId(id string) (string, error) {

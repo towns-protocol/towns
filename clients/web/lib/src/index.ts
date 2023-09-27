@@ -20,6 +20,7 @@ export { useChannelThread } from './hooks/use-channel-thread'
 export { useChannelTimeline } from './hooks/use-channel-timeline'
 export { useChannelThreadStat } from './hooks/use-channel-thread-stat'
 export { useChannelThreadStats } from './hooks/use-channel-thread-stats'
+export { useChunkedMedia } from './hooks/use-chunked-media'
 export { useCreateChannelTransaction } from './hooks/use-create-channel-transaction'
 export { useCreateRoleTransaction } from './hooks/use-create-role-transaction'
 export { useCreateSpaceTransaction } from './hooks/use-create-space-transaction'
@@ -97,6 +98,7 @@ export {
 
 export * from './types/error-types'
 export * from './utils/zion-utils'
+export * from './utils/crypto-utils'
 
 // buffer hack required for casalanca: https://github.com/randlabs/myalgo-connect/issues/27
 import buffer from 'buffer'

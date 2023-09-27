@@ -68,6 +68,12 @@ func make_SnapshotContent(iPayload IsInceptionPayload) (IsSnapshot_Content, erro
 				Inception: payload,
 			},
 		}, nil
+	case *MediaPayload_Inception:
+		return &Snapshot_MediaContent{
+			MediaContent: &MediaPayload_Snapshot{
+				Inception: payload,
+			},
+		}, nil
 	default:
 		return nil, fmt.Errorf("unknown inception payload type %T", iPayload)
 	}

@@ -83,7 +83,7 @@ message StreamEvent {
         UserPayload user_payload = 103;
         UserSettingsPayload user_settings_payload = 104;
         UserDeviceKeyPayload user_device_key_payload = 105;
-        
+        MediaPayload media_payload = 106;
     }
 }
 
@@ -133,6 +133,7 @@ message Snapshot {
         UserPayload.Snapshot user_content = 103;
         UserSettingsPayload.Snapshot user_settings_content = 104;
         UserDeviceKeyPayload.Snapshot user_device_key_content = 105;
+        MediaPayload.Snapshot media_content = 106;
     }
 }
 
@@ -363,6 +364,29 @@ message UserDeviceKeyPayload {
     }
 }
 
+message MediaPayload {
+    message Snapshot {
+        Inception inception = 1;
+    }
+    
+    message Inception {
+        string stream_id = 1;
+        string space_id = 2;
+        string channel_id = 3;
+        int32 chunk_count = 4;
+        StreamSettings settings = 5;
+    }
+
+    message Chunk {
+        bytes data = 1;
+        int32 chunk_index = 2;
+    }
+
+    oneof content {
+        Inception inception = 1;
+        Chunk chunk = 2;
+    }
+}
 
 enum MembershipOp {
     SO_UNSPECIFIED = 0;

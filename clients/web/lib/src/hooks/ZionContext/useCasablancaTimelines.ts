@@ -344,6 +344,10 @@ function toTownsContent(eventId: string, message: ParsedEvent): TownsContentResu
                 message.event.payload.value,
                 description,
             )
+        case 'mediaPayload':
+            return {
+                error: `${description} mediaPayload not supported?`,
+            }
         default:
             try {
                 if (message.event.payload && message.event.payload.value) {
@@ -621,6 +625,50 @@ function toTownsContent_ChannelPayload_Message_Post(
                     wireContent: {},
                 } satisfies RoomMessageEvent,
             }
+        case 'embeddedMedia':
+            return {
+                content: {
+                    kind: ZTEvent.RoomMessage,
+                    body: '',
+                    msgType: MessageType.EmbeddedMedia,
+                    inReplyTo: value.threadId,
+                    threadPreview: value.threadPreview,
+                    mentions: [],
+                    replacedMsgId: replacedMsgId,
+                    content: {
+                        content: value.content.value.content,
+                        mimetype: value.content.value.info?.mimetype,
+                        widthPixels: value.content.value.info?.widthPixels,
+                        heightPixels: value.content.value.info?.heightPixels,
+                        sizeBytes: value.content.value.info?.sizeBytes,
+                    },
+                    wireContent: {},
+                } satisfies RoomMessageEvent,
+            }
+        case 'chunkedMedia':
+            return {
+                content: {
+                    kind: ZTEvent.RoomMessage,
+                    body: '',
+                    msgType: MessageType.ChunkedMedia,
+                    inReplyTo: value.threadId,
+                    threadPreview: value.threadPreview,
+                    mentions: [],
+                    replacedMsgId: replacedMsgId,
+                    content: {
+                        streamId: value.content.value.streamId,
+                        mimetype: value.content.value.info?.mimetype,
+                        widthPixels: value.content.value.info?.widthPixels,
+                        heightPixels: value.content.value.info?.heightPixels,
+                        sizeBytes: value.content.value.info?.sizeBytes,
+                        iv: value.content.value.encryption.value?.iv,
+                        secretKey: value.content.value.encryption.value?.secretKey,
+                        thumbnail: value.content.value.thumbnail?.content,
+                    },
+                    wireContent: {},
+                } satisfies RoomMessageEvent,
+            }
+
         default:
             return undefined
     }

@@ -85,6 +85,9 @@ func (s *Service) createStream(ctx context.Context, log *slog.Logger, req *Creat
 	case *UserSettingsPayload_Inception:
 		streamView, err = s.createStream_UserSettings(ctx, log, parsedEvents, inception)
 
+	case *MediaPayload_Inception:
+		streamView, err = s.createStream_Media(ctx, log, parsedEvents, inception)
+
 	default:
 		err = RiverError(Err_BAD_STREAM_CREATION_PARAMS, "invalid stream kind")
 	}
@@ -320,6 +323,28 @@ func (s *Service) createStream_UserSettings(
 	}
 
 	// TODO: Authorization.
+
+	streamId := inception.GetStreamId()
+	_, streamView, err := s.cache.CreateStream(ctx, streamId, parsedEvents)
+	if err != nil {
+		return nil, err
+	}
+
+	return streamView, nil
+}
+
+func (s *Service) createStream_Media(
+	ctx context.Context,
+	log *slog.Logger,
+	parsedEvents []*ParsedEvent,
+	inception *MediaPayload_Inception,
+) (StreamView, error) {
+
+	if !CheckMediaStreamId(inception.StreamId) {
+		return nil, RiverErrorf(Err_BAD_STREAM_ID, "CreateStream: invalid space stream id '%s'", inception.StreamId)
+	}
+
+	// TODO: Authorization. (HNT-2506)
 
 	streamId := inception.GetStreamId()
 	_, streamView, err := s.cache.CreateStream(ctx, streamId, parsedEvents)

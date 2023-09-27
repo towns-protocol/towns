@@ -29,6 +29,8 @@ import {
     Snapshot,
     Miniblock,
     StreamAndCookie,
+    MediaPayload_Inception,
+    MediaPayload_Chunk,
 } from '@river/proto'
 import { keccak256 } from 'ethereum-cryptography/keccak'
 import { isDefined } from './check'
@@ -480,6 +482,34 @@ export const getMessagePayloadContent_Text = (
         throw new Error('Expected text message')
     }
     return content.payload.value.content.value
+}
+
+export const make_MediaPayload_Inception = (
+    value: PlainMessage<MediaPayload_Inception>,
+): PlainMessage<StreamEvent>['payload'] => {
+    return {
+        case: 'mediaPayload',
+        value: {
+            content: {
+                case: 'inception',
+                value,
+            },
+        },
+    }
+}
+
+export const make_MediaPayload_Chunk = (
+    value: PlainMessage<MediaPayload_Chunk>,
+): PlainMessage<StreamEvent>['payload'] => {
+    return {
+        case: 'mediaPayload',
+        value: {
+            content: {
+                case: 'chunk',
+                value,
+            },
+        },
+    }
 }
 
 function processMapToObjectValue(value: any): any {

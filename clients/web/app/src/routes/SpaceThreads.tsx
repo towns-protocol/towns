@@ -16,6 +16,7 @@ import { NoJoinedChannelsFallback } from '@components/NoJoinedChannelsFallback'
 import { ButtonSpinner } from '@components/Login/LoginButton/Spinner/ButtonSpinner'
 import { TouchNavBar } from '@components/TouchNavBar/TouchNavBar'
 import { TouchScrollToTopScrollId } from '@components/TouchTabBar/TouchScrollToTopScrollId'
+import { MediaDropContextProvider } from '@components/MediaDropContext/MediaDropContext'
 import { CentralPanelLayout } from './layouts/CentralPanelLayout'
 
 function sortThreads(threads: ThreadResult[]) {
@@ -58,16 +59,22 @@ export const SpaceThreads = () => {
                                     key={thread.parentId}
                                     channelId={channel.id}
                                 >
-                                    <>
-                                        <MessageThread
-                                            userId={userId}
-                                            parentId={thread.parentId}
-                                            channelId={channel.id}
-                                            channelLabel={channel.label}
-                                            spaceId={spaceId}
-                                        />
-                                        {isTouch && index < threads.length - 1 && <Divider />}
-                                    </>
+                                    <MediaDropContextProvider
+                                        disableDrop
+                                        title=""
+                                        id={thread.parentId}
+                                    >
+                                        <>
+                                            <MessageThread
+                                                userId={userId}
+                                                parentId={thread.parentId}
+                                                channelId={channel.id}
+                                                channelLabel={channel.label}
+                                                spaceId={spaceId}
+                                            />
+                                            {isTouch && index < threads.length - 1 && <Divider />}
+                                        </>
+                                    </MediaDropContextProvider>
                                 </ChannelContextProvider>
                             )
                         })}

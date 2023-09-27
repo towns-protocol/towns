@@ -96,6 +96,9 @@ func (s *Service) addParsedEvent(ctx context.Context, streamId string, parsedEve
 	case *StreamEvent_UserSettingsPayload:
 		return s.addUserSettingsPayload(ctx, payload, stream, parsedEvent)
 
+	case *StreamEvent_MediaPayload:
+		return s.addMediaPayload(ctx, payload, stream, streamView, parsedEvent)
+
 	default:
 		return RiverError(Err_INVALID_ARGUMENT, "unknown payload type")
 	}
@@ -175,6 +178,20 @@ func (*Service) addUserSettingsPayload(ctx context.Context, payload *StreamEvent
 		return RiverError(Err_INVALID_ARGUMENT, "can't add inception event")
 
 	case *UserSettingsPayload_FullyReadMarkers_:
+		_, err := stream.AddEvent(ctx, parsedEvent)
+		return err
+
+	default:
+		return RiverError(Err_INVALID_ARGUMENT, "unknown content type")
+	}
+}
+
+func (s *Service) addMediaPayload(ctx context.Context, payload *StreamEvent_MediaPayload, stream SyncStream, streamView StreamView, parsedEvent *ParsedEvent) error {
+	switch payload.MediaPayload.Content.(type) {
+	case *MediaPayload_Inception_:
+		return RiverError(Err_INVALID_ARGUMENT, "can't add inception event")
+
+	case *MediaPayload_Chunk_:
 		_, err := stream.AddEvent(ctx, parsedEvent)
 		return err
 

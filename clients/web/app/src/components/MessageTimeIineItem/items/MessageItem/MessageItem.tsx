@@ -10,6 +10,8 @@ import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { useDevice } from 'hooks/useDevice'
 import { TooltipRenderer } from '@ui'
 import { ProfileHoverCard } from '@components/ProfileHoverCard/ProfileHoverCard'
+import { ChunkedMedia } from '@components/ChunkedMedia/ChunkedMedia'
+import { EmbeddedMedia } from '@components/EmbeddedMedia/EmbeddedMedia'
 import {
     MessageTimelineContext,
     MessageTimelineType,
@@ -128,6 +130,23 @@ export const MessageItem = (props: Props) => {
                             height={event.content.content.info?.thumbnail_info?.h}
                         />
                     )
+                ) : event.content.msgType === MessageType.EmbeddedMedia ? (
+                    <EmbeddedMedia
+                        mimetype={event.content.content.mimetype}
+                        width={event.content.content.widthPixels}
+                        height={event.content.content.heightPixels}
+                        content={event.content.content.content}
+                    />
+                ) : event.content.msgType === MessageType.ChunkedMedia ? (
+                    <ChunkedMedia
+                        mimetype={event.content.content.mimetype}
+                        width={event.content.content.widthPixels}
+                        height={event.content.content.heightPixels}
+                        streamId={event.content.content.streamId}
+                        iv={event.content.content.iv}
+                        secretKey={event.content.content.secretKey}
+                        thumbnail={event.content.content.thumbnail}
+                    />
                 ) : (
                     <>
                         <MessageBody

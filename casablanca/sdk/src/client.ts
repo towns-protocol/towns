@@ -9,6 +9,7 @@ import {
     ChannelMessage_Post_Content_Text,
     ChannelMessage_Post_Content_Image,
     ChannelMessage_Post_Content_GM,
+    ChannelMessage_Post_Content_ChunkedMedia,
     ChannelMessage_Reaction,
     ChannelMessage_Redaction,
     StreamEvent,
@@ -26,6 +27,7 @@ import {
     GetStreamResponse,
     CreateStreamResponse,
     StreamSettings,
+    ChannelMessage_Post_Content_EmbeddedMedia,
 } from '@river/proto'
 
 import { Crypto, EncryptionTarget } from './crypto/crypto'
@@ -40,6 +42,7 @@ import {
     isChannelStreamId,
     isSpaceStreamId,
     makeUniqueChannelStreamId,
+    makeUniqueMediaStreamId,
     makeUniqueSpaceStreamId,
     makeUserDeviceKeyStreamId,
     makeUserSettingsStreamId,
@@ -67,7 +70,9 @@ import {
     make_UserSettingsPayload_FullyReadMarkers,
     make_UserSettingsPayload_Inception,
     unpackStreamResponse,
+    make_MediaPayload_Inception,
     ParsedEvent,
+    make_MediaPayload_Chunk,
 } from './types'
 import { shortenHexString } from './binary'
 import { CryptoStore } from './crypto/store/base'
@@ -433,6 +438,44 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         return { streamId: channelId }
     }
 
+    async createMediaStream(
+        spaceId: string,
+        channelId: string,
+        chunkCount: number,
+        streamSettings?: PlainMessage<StreamSettings>,
+    ): Promise<{ streamId: string }> {
+        const streamId = makeUniqueMediaStreamId()
+
+        this.logCall('createMedia', channelId, spaceId, streamId)
+        assert(this.userStreamId !== undefined, 'userStreamId must be set')
+        assert(isSpaceStreamId(spaceId), 'spaceId must be a valid streamId')
+        assert(isChannelStreamId(channelId), 'channelId must be a valid streamId')
+
+        const inceptionEvent = await makeEvent(
+            this.signerContext,
+            make_MediaPayload_Inception({
+                streamId,
+                spaceId,
+                channelId,
+                chunkCount,
+                settings: streamSettings,
+            }),
+            [],
+        )
+
+        const response = await this.rpcClient.createStream({
+            events: [inceptionEvent],
+            streamId: streamId,
+        })
+        const { streamAndCookie, snapshot, miniblocks } = unpackStreamResponse(response)
+        const stream = new Stream(this.userId, streamId, snapshot, this, this.logEmitFromStream)
+
+        // TODO: add support for creating/getting a stream without syncing (HNT-2686)
+        this.streams.set(streamId, stream)
+        stream.initialize(streamAndCookie, snapshot, miniblocks)
+        return { streamId: streamId }
+    }
+
     async updateChannel(
         spaceId: string,
         channelId: string,
@@ -529,7 +572,7 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
         stream.updateDecrypted(event)
     }
 
-    private async getStream(streamId: string): Promise<StreamStateView> {
+    async getStream(streamId: string): Promise<StreamStateView> {
         try {
             this.logCall('getStream', streamId)
             const response = await this.rpcClient.getStream({ streamId })
@@ -826,6 +869,52 @@ export class Client extends (EventEmitter as new () => TypedEmitter<EmittedEvent
                 },
             },
         })
+    }
+
+    async sendChannelMessage_EmbeddedMedia(
+        streamId: string,
+        payload: Omit<PlainMessage<ChannelMessage_Post>, 'content'> & {
+            content: PlainMessage<ChannelMessage_Post_Content_EmbeddedMedia>
+        },
+    ): Promise<void> {
+        const { content, ...options } = payload
+        return this.sendChannelMessage(streamId, {
+            case: 'post',
+            value: {
+                ...options,
+                content: {
+                    case: 'embeddedMedia',
+                    value: content,
+                },
+            },
+        })
+    }
+
+    async sendChannelMessage_Media(
+        streamId: string,
+        payload: Omit<PlainMessage<ChannelMessage_Post>, 'content'> & {
+            content: PlainMessage<ChannelMessage_Post_Content_ChunkedMedia>
+        },
+    ): Promise<void> {
+        const { content, ...options } = payload
+        return this.sendChannelMessage(streamId, {
+            case: 'post',
+            value: {
+                ...options,
+                content: {
+                    case: 'chunkedMedia',
+                    value: content,
+                },
+            },
+        })
+    }
+
+    async sendMediaPayload(streamId: string, data: Uint8Array, chunkIndex: number): Promise<void> {
+        const payload = make_MediaPayload_Chunk({
+            data: data,
+            chunkIndex: chunkIndex,
+        })
+        return this.makeEventAndAddToStream(streamId, payload, 'sendMedia')
     }
 
     async sendChannelMessage_Reaction(
