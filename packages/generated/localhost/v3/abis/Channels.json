@@ -1029,32 +1029,32 @@
   },
   "ast": {
     "absolutePath": "contracts/src/towns/facets/channels/Channels.sol",
-    "id": 31650,
+    "id": 31647,
     "exportedSymbols": {
       "ChannelBase": [
-        30853
+        30850
       ],
       "Channels": [
-        31649
+        31646
       ],
       "Entitled": [
-        29479
+        29476
       ],
       "Facet": [
-        6384
+        6381
       ],
       "IChannel": [
-        31725
+        31722
       ],
       "Permissions": [
-        29491
+        29488
       ]
     },
     "nodeType": "SourceUnit",
     "src": "39:1717:160",
     "nodes": [
       {
-        "id": 31510,
+        "id": 31507,
         "nodeType": "PragmaDirective",
         "src": "39:24:160",
         "nodes": [],
@@ -1066,23 +1066,23 @@
         ]
       },
       {
-        "id": 31512,
+        "id": 31509,
         "nodeType": "ImportDirective",
         "src": "79:40:160",
         "nodes": [],
         "absolutePath": "contracts/src/towns/facets/channels/IChannel.sol",
         "file": "./IChannel.sol",
         "nameLocation": "-1:-1:-1",
-        "scope": 31650,
-        "sourceUnit": 31726,
+        "scope": 31647,
+        "sourceUnit": 31723,
         "symbolAliases": [
           {
             "foreign": {
-              "id": 31511,
+              "id": 31508,
               "name": "IChannel",
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
-              "referencedDeclaration": 31725,
+              "referencedDeclaration": 31722,
               "src": "87:8:160",
               "typeDescriptions": {}
             },
@@ -1092,23 +1092,23 @@
         "unitAlias": ""
       },
       {
-        "id": 31514,
+        "id": 31511,
         "nodeType": "ImportDirective",
         "src": "134:71:160",
         "nodes": [],
         "absolutePath": "contracts/src/towns/facets/Permissions.sol",
         "file": "contracts/src/towns/facets/Permissions.sol",
         "nameLocation": "-1:-1:-1",
-        "scope": 31650,
-        "sourceUnit": 29492,
+        "scope": 31647,
+        "sourceUnit": 29489,
         "symbolAliases": [
           {
             "foreign": {
-              "id": 31513,
+              "id": 31510,
               "name": "Permissions",
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
-              "referencedDeclaration": 29491,
+              "referencedDeclaration": 29488,
               "src": "142:11:160",
               "typeDescriptions": {}
             },
@@ -1118,23 +1118,23 @@
         "unitAlias": ""
       },
       {
-        "id": 31516,
+        "id": 31513,
         "nodeType": "ImportDirective",
         "src": "220:61:160",
         "nodes": [],
         "absolutePath": "contracts/src/diamond/facets/Facet.sol",
         "file": "contracts/src/diamond/facets/Facet.sol",
         "nameLocation": "-1:-1:-1",
-        "scope": 31650,
-        "sourceUnit": 6385,
+        "scope": 31647,
+        "sourceUnit": 6382,
         "symbolAliases": [
           {
             "foreign": {
-              "id": 31515,
+              "id": 31512,
               "name": "Facet",
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
-              "referencedDeclaration": 6384,
+              "referencedDeclaration": 6381,
               "src": "228:5:160",
               "typeDescriptions": {}
             },
@@ -1144,23 +1144,23 @@
         "unitAlias": ""
       },
       {
-        "id": 31518,
+        "id": 31515,
         "nodeType": "ImportDirective",
         "src": "282:65:160",
         "nodes": [],
         "absolutePath": "contracts/src/towns/facets/Entitled.sol",
         "file": "contracts/src/towns/facets/Entitled.sol",
         "nameLocation": "-1:-1:-1",
-        "scope": 31650,
-        "sourceUnit": 29480,
+        "scope": 31647,
+        "sourceUnit": 29477,
         "symbolAliases": [
           {
             "foreign": {
-              "id": 31517,
+              "id": 31514,
               "name": "Entitled",
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
-              "referencedDeclaration": 29479,
+              "referencedDeclaration": 29476,
               "src": "290:8:160",
               "typeDescriptions": {}
             },
@@ -1170,23 +1170,23 @@
         "unitAlias": ""
       },
       {
-        "id": 31520,
+        "id": 31517,
         "nodeType": "ImportDirective",
         "src": "348:46:160",
         "nodes": [],
         "absolutePath": "contracts/src/towns/facets/channels/ChannelBase.sol",
         "file": "./ChannelBase.sol",
         "nameLocation": "-1:-1:-1",
-        "scope": 31650,
-        "sourceUnit": 30854,
+        "scope": 31647,
+        "sourceUnit": 30851,
         "symbolAliases": [
           {
             "foreign": {
-              "id": 31519,
+              "id": 31516,
               "name": "ChannelBase",
               "nodeType": "Identifier",
               "overloadedDeclarations": [],
-              "referencedDeclaration": 30853,
+              "referencedDeclaration": 30850,
               "src": "356:11:160",
               "typeDescriptions": {}
             },
@@ -1196,17 +1196,17 @@
         "unitAlias": ""
       },
       {
-        "id": 31649,
+        "id": 31646,
         "nodeType": "ContractDefinition",
         "src": "396:1359:160",
         "nodes": [
           {
-            "id": 31550,
+            "id": 31547,
             "nodeType": "FunctionDefinition",
             "src": "460:231:160",
             "nodes": [],
             "body": {
-              "id": 31549,
+              "id": 31546,
               "nodeType": "Block",
               "src": "583:108:160",
               "nodes": [],
@@ -1216,18 +1216,18 @@
                     "arguments": [
                       {
                         "expression": {
-                          "id": 31539,
+                          "id": 31536,
                           "name": "Permissions",
                           "nodeType": "Identifier",
                           "overloadedDeclarations": [],
-                          "referencedDeclaration": 29491,
+                          "referencedDeclaration": 29488,
                           "src": "609:11:160",
                           "typeDescriptions": {
-                            "typeIdentifier": "t_type$_t_contract$_Permissions_$29491_$",
+                            "typeIdentifier": "t_type$_t_contract$_Permissions_$29488_$",
                             "typeString": "type(library Permissions)"
                           }
                         },
-                        "id": 31540,
+                        "id": 31537,
                         "isConstant": false,
                         "isLValue": false,
                         "isPure": true,
@@ -1235,7 +1235,7 @@
                         "memberLocation": "621:14:160",
                         "memberName": "ModifyChannels",
                         "nodeType": "MemberAccess",
-                        "referencedDeclaration": 29484,
+                        "referencedDeclaration": 29481,
                         "src": "609:26:160",
                         "typeDescriptions": {
                           "typeIdentifier": "t_string_memory_ptr",
@@ -1250,21 +1250,21 @@
                           "typeString": "string memory"
                         }
                       ],
-                      "id": 31538,
+                      "id": 31535,
                       "name": "_validatePermission",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [
-                        29431,
-                        29450
+                        29428,
+                        29447
                       ],
-                      "referencedDeclaration": 29431,
+                      "referencedDeclaration": 29428,
                       "src": "589:19:160",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_internal_view$_t_string_memory_ptr_$returns$__$",
                         "typeString": "function (string memory) view"
                       }
                     },
-                    "id": 31541,
+                    "id": 31538,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -1280,7 +1280,7 @@
                       "typeString": "tuple()"
                     }
                   },
-                  "id": 31542,
+                  "id": 31539,
                   "nodeType": "ExpressionStatement",
                   "src": "589:47:160"
                 },
@@ -1288,11 +1288,11 @@
                   "expression": {
                     "arguments": [
                       {
-                        "id": 31544,
+                        "id": 31541,
                         "name": "channelId",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 31530,
+                        "referencedDeclaration": 31527,
                         "src": "657:9:160",
                         "typeDescriptions": {
                           "typeIdentifier": "t_string_memory_ptr",
@@ -1300,11 +1300,11 @@
                         }
                       },
                       {
-                        "id": 31545,
+                        "id": 31542,
                         "name": "metadata",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 31532,
+                        "referencedDeclaration": 31529,
                         "src": "668:8:160",
                         "typeDescriptions": {
                           "typeIdentifier": "t_string_memory_ptr",
@@ -1312,11 +1312,11 @@
                         }
                       },
                       {
-                        "id": 31546,
+                        "id": 31543,
                         "name": "roleIds",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 31535,
+                        "referencedDeclaration": 31532,
                         "src": "678:7:160",
                         "typeDescriptions": {
                           "typeIdentifier": "t_array$_t_uint256_$dyn_memory_ptr",
@@ -1339,18 +1339,18 @@
                           "typeString": "uint256[] memory"
                         }
                       ],
-                      "id": 31543,
+                      "id": 31540,
                       "name": "_createChannel",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 30669,
+                      "referencedDeclaration": 30666,
                       "src": "642:14:160",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_internal_nonpayable$_t_string_memory_ptr_$_t_string_memory_ptr_$_t_array$_t_uint256_$dyn_memory_ptr_$returns$__$",
                         "typeString": "function (string memory,string memory,uint256[] memory)"
                       }
                     },
-                    "id": 31547,
+                    "id": 31544,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -1366,14 +1366,14 @@
                       "typeString": "tuple()"
                     }
                   },
-                  "id": 31548,
+                  "id": 31545,
                   "nodeType": "ExpressionStatement",
                   "src": "642:44:160"
                 }
               ]
             },
             "baseFunctions": [
-              31675
+              31672
             ],
             "functionSelector": "51f83cea",
             "implemented": true,
@@ -1382,17 +1382,17 @@
             "name": "createChannel",
             "nameLocation": "469:13:160",
             "parameters": {
-              "id": 31536,
+              "id": 31533,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 31530,
+                  "id": 31527,
                   "mutability": "mutable",
                   "name": "channelId",
                   "nameLocation": "502:9:160",
                   "nodeType": "VariableDeclaration",
-                  "scope": 31550,
+                  "scope": 31547,
                   "src": "488:23:160",
                   "stateVariable": false,
                   "storageLocation": "memory",
@@ -1401,7 +1401,7 @@
                     "typeString": "string"
                   },
                   "typeName": {
-                    "id": 31529,
+                    "id": 31526,
                     "name": "string",
                     "nodeType": "ElementaryTypeName",
                     "src": "488:6:160",
@@ -1414,12 +1414,12 @@
                 },
                 {
                   "constant": false,
-                  "id": 31532,
+                  "id": 31529,
                   "mutability": "mutable",
                   "name": "metadata",
                   "nameLocation": "531:8:160",
                   "nodeType": "VariableDeclaration",
-                  "scope": 31550,
+                  "scope": 31547,
                   "src": "517:22:160",
                   "stateVariable": false,
                   "storageLocation": "memory",
@@ -1428,7 +1428,7 @@
                     "typeString": "string"
                   },
                   "typeName": {
-                    "id": 31531,
+                    "id": 31528,
                     "name": "string",
                     "nodeType": "ElementaryTypeName",
                     "src": "517:6:160",
@@ -1441,12 +1441,12 @@
                 },
                 {
                   "constant": false,
-                  "id": 31535,
+                  "id": 31532,
                   "mutability": "mutable",
                   "name": "roleIds",
                   "nameLocation": "562:7:160",
                   "nodeType": "VariableDeclaration",
-                  "scope": 31550,
+                  "scope": 31547,
                   "src": "545:24:160",
                   "stateVariable": false,
                   "storageLocation": "memory",
@@ -1456,7 +1456,7 @@
                   },
                   "typeName": {
                     "baseType": {
-                      "id": 31533,
+                      "id": 31530,
                       "name": "uint256",
                       "nodeType": "ElementaryTypeName",
                       "src": "545:7:160",
@@ -1465,7 +1465,7 @@
                         "typeString": "uint256"
                       }
                     },
-                    "id": 31534,
+                    "id": 31531,
                     "nodeType": "ArrayTypeName",
                     "src": "545:9:160",
                     "typeDescriptions": {
@@ -1479,23 +1479,23 @@
               "src": "482:91:160"
             },
             "returnParameters": {
-              "id": 31537,
+              "id": 31534,
               "nodeType": "ParameterList",
               "parameters": [],
               "src": "583:0:160"
             },
-            "scope": 31649,
+            "scope": 31646,
             "stateMutability": "nonpayable",
             "virtual": false,
             "visibility": "external"
           },
           {
-            "id": 31563,
+            "id": 31560,
             "nodeType": "FunctionDefinition",
             "src": "695:140:160",
             "nodes": [],
             "body": {
-              "id": 31562,
+              "id": 31559,
               "nodeType": "Block",
               "src": "795:40:160",
               "nodes": [],
@@ -1504,11 +1504,11 @@
                   "expression": {
                     "arguments": [
                       {
-                        "id": 31559,
+                        "id": 31556,
                         "name": "channelId",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 31552,
+                        "referencedDeclaration": 31549,
                         "src": "820:9:160",
                         "typeDescriptions": {
                           "typeIdentifier": "t_string_memory_ptr",
@@ -1523,18 +1523,18 @@
                           "typeString": "string memory"
                         }
                       ],
-                      "id": 31558,
+                      "id": 31555,
                       "name": "_getChannel",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 30704,
+                      "referencedDeclaration": 30701,
                       "src": "808:11:160",
                       "typeDescriptions": {
-                        "typeIdentifier": "t_function_internal_view$_t_string_memory_ptr_$returns$_t_struct$_Channel_$31661_memory_ptr_$",
+                        "typeIdentifier": "t_function_internal_view$_t_string_memory_ptr_$returns$_t_struct$_Channel_$31658_memory_ptr_$",
                         "typeString": "function (string memory) view returns (struct IChannelBase.Channel memory)"
                       }
                     },
-                    "id": 31560,
+                    "id": 31557,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -1546,19 +1546,19 @@
                     "src": "808:22:160",
                     "tryCall": false,
                     "typeDescriptions": {
-                      "typeIdentifier": "t_struct$_Channel_$31661_memory_ptr",
+                      "typeIdentifier": "t_struct$_Channel_$31658_memory_ptr",
                       "typeString": "struct IChannelBase.Channel memory"
                     }
                   },
-                  "functionReturnParameters": 31557,
-                  "id": 31561,
+                  "functionReturnParameters": 31554,
+                  "id": 31558,
                   "nodeType": "Return",
                   "src": "801:29:160"
                 }
               ]
             },
             "baseFunctions": [
-              31684
+              31681
             ],
             "functionSelector": "7cd7ee3d",
             "implemented": true,
@@ -1567,17 +1567,17 @@
             "name": "getChannel",
             "nameLocation": "704:10:160",
             "parameters": {
-              "id": 31553,
+              "id": 31550,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 31552,
+                  "id": 31549,
                   "mutability": "mutable",
                   "name": "channelId",
                   "nameLocation": "734:9:160",
                   "nodeType": "VariableDeclaration",
-                  "scope": 31563,
+                  "scope": 31560,
                   "src": "720:23:160",
                   "stateVariable": false,
                   "storageLocation": "memory",
@@ -1586,7 +1586,7 @@
                     "typeString": "string"
                   },
                   "typeName": {
-                    "id": 31551,
+                    "id": 31548,
                     "name": "string",
                     "nodeType": "ElementaryTypeName",
                     "src": "720:6:160",
@@ -1601,41 +1601,41 @@
               "src": "714:33:160"
             },
             "returnParameters": {
-              "id": 31557,
+              "id": 31554,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 31556,
+                  "id": 31553,
                   "mutability": "mutable",
                   "name": "channel",
                   "nameLocation": "786:7:160",
                   "nodeType": "VariableDeclaration",
-                  "scope": 31563,
+                  "scope": 31560,
                   "src": "771:22:160",
                   "stateVariable": false,
                   "storageLocation": "memory",
                   "typeDescriptions": {
-                    "typeIdentifier": "t_struct$_Channel_$31661_memory_ptr",
+                    "typeIdentifier": "t_struct$_Channel_$31658_memory_ptr",
                     "typeString": "struct IChannelBase.Channel"
                   },
                   "typeName": {
-                    "id": 31555,
+                    "id": 31552,
                     "nodeType": "UserDefinedTypeName",
                     "pathNode": {
-                      "id": 31554,
+                      "id": 31551,
                       "name": "Channel",
                       "nameLocations": [
                         "771:7:160"
                       ],
                       "nodeType": "IdentifierPath",
-                      "referencedDeclaration": 31661,
+                      "referencedDeclaration": 31658,
                       "src": "771:7:160"
                     },
-                    "referencedDeclaration": 31661,
+                    "referencedDeclaration": 31658,
                     "src": "771:7:160",
                     "typeDescriptions": {
-                      "typeIdentifier": "t_struct$_Channel_$31661_storage_ptr",
+                      "typeIdentifier": "t_struct$_Channel_$31658_storage_ptr",
                       "typeString": "struct IChannelBase.Channel"
                     }
                   },
@@ -1644,18 +1644,18 @@
               ],
               "src": "770:24:160"
             },
-            "scope": 31649,
+            "scope": 31646,
             "stateMutability": "view",
             "virtual": false,
             "visibility": "external"
           },
           {
-            "id": 31574,
+            "id": 31571,
             "nodeType": "FunctionDefinition",
             "src": "839:105:160",
             "nodes": [],
             "body": {
-              "id": 31573,
+              "id": 31570,
               "nodeType": "Block",
               "src": "912:32:160",
               "nodes": [],
@@ -1665,18 +1665,18 @@
                     "arguments": [],
                     "expression": {
                       "argumentTypes": [],
-                      "id": 31570,
+                      "id": 31567,
                       "name": "_getChannels",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 30785,
+                      "referencedDeclaration": 30782,
                       "src": "925:12:160",
                       "typeDescriptions": {
-                        "typeIdentifier": "t_function_internal_view$__$returns$_t_array$_t_struct$_Channel_$31661_memory_ptr_$dyn_memory_ptr_$",
+                        "typeIdentifier": "t_function_internal_view$__$returns$_t_array$_t_struct$_Channel_$31658_memory_ptr_$dyn_memory_ptr_$",
                         "typeString": "function () view returns (struct IChannelBase.Channel memory[] memory)"
                       }
                     },
-                    "id": 31571,
+                    "id": 31568,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -1688,19 +1688,19 @@
                     "src": "925:14:160",
                     "tryCall": false,
                     "typeDescriptions": {
-                      "typeIdentifier": "t_array$_t_struct$_Channel_$31661_memory_ptr_$dyn_memory_ptr",
+                      "typeIdentifier": "t_array$_t_struct$_Channel_$31658_memory_ptr_$dyn_memory_ptr",
                       "typeString": "struct IChannelBase.Channel memory[] memory"
                     }
                   },
-                  "functionReturnParameters": 31569,
-                  "id": 31572,
+                  "functionReturnParameters": 31566,
+                  "id": 31569,
                   "nodeType": "Return",
                   "src": "918:21:160"
                 }
               ]
             },
             "baseFunctions": [
-              31692
+              31689
             ],
             "functionSelector": "9575f6ac",
             "implemented": true,
@@ -1709,56 +1709,56 @@
             "name": "getChannels",
             "nameLocation": "848:11:160",
             "parameters": {
-              "id": 31564,
+              "id": 31561,
               "nodeType": "ParameterList",
               "parameters": [],
               "src": "859:2:160"
             },
             "returnParameters": {
-              "id": 31569,
+              "id": 31566,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 31568,
+                  "id": 31565,
                   "mutability": "mutable",
                   "name": "channels",
                   "nameLocation": "902:8:160",
                   "nodeType": "VariableDeclaration",
-                  "scope": 31574,
+                  "scope": 31571,
                   "src": "885:25:160",
                   "stateVariable": false,
                   "storageLocation": "memory",
                   "typeDescriptions": {
-                    "typeIdentifier": "t_array$_t_struct$_Channel_$31661_memory_ptr_$dyn_memory_ptr",
+                    "typeIdentifier": "t_array$_t_struct$_Channel_$31658_memory_ptr_$dyn_memory_ptr",
                     "typeString": "struct IChannelBase.Channel[]"
                   },
                   "typeName": {
                     "baseType": {
-                      "id": 31566,
+                      "id": 31563,
                       "nodeType": "UserDefinedTypeName",
                       "pathNode": {
-                        "id": 31565,
+                        "id": 31562,
                         "name": "Channel",
                         "nameLocations": [
                           "885:7:160"
                         ],
                         "nodeType": "IdentifierPath",
-                        "referencedDeclaration": 31661,
+                        "referencedDeclaration": 31658,
                         "src": "885:7:160"
                       },
-                      "referencedDeclaration": 31661,
+                      "referencedDeclaration": 31658,
                       "src": "885:7:160",
                       "typeDescriptions": {
-                        "typeIdentifier": "t_struct$_Channel_$31661_storage_ptr",
+                        "typeIdentifier": "t_struct$_Channel_$31658_storage_ptr",
                         "typeString": "struct IChannelBase.Channel"
                       }
                     },
-                    "id": 31567,
+                    "id": 31564,
                     "nodeType": "ArrayTypeName",
                     "src": "885:9:160",
                     "typeDescriptions": {
-                      "typeIdentifier": "t_array$_t_struct$_Channel_$31661_storage_$dyn_storage_ptr",
+                      "typeIdentifier": "t_array$_t_struct$_Channel_$31658_storage_$dyn_storage_ptr",
                       "typeString": "struct IChannelBase.Channel[]"
                     }
                   },
@@ -1767,18 +1767,18 @@
               ],
               "src": "884:27:160"
             },
-            "scope": 31649,
+            "scope": 31646,
             "stateMutability": "view",
             "virtual": false,
             "visibility": "external"
           },
           {
-            "id": 31595,
+            "id": 31592,
             "nodeType": "FunctionDefinition",
             "src": "948:221:160",
             "nodes": [],
             "body": {
-              "id": 31594,
+              "id": 31591,
               "nodeType": "Block",
               "src": "1060:109:160",
               "nodes": [],
@@ -1788,18 +1788,18 @@
                     "arguments": [
                       {
                         "expression": {
-                          "id": 31584,
+                          "id": 31581,
                           "name": "Permissions",
                           "nodeType": "Identifier",
                           "overloadedDeclarations": [],
-                          "referencedDeclaration": 29491,
+                          "referencedDeclaration": 29488,
                           "src": "1086:11:160",
                           "typeDescriptions": {
-                            "typeIdentifier": "t_type$_t_contract$_Permissions_$29491_$",
+                            "typeIdentifier": "t_type$_t_contract$_Permissions_$29488_$",
                             "typeString": "type(library Permissions)"
                           }
                         },
-                        "id": 31585,
+                        "id": 31582,
                         "isConstant": false,
                         "isLValue": false,
                         "isPure": true,
@@ -1807,7 +1807,7 @@
                         "memberLocation": "1098:14:160",
                         "memberName": "ModifyChannels",
                         "nodeType": "MemberAccess",
-                        "referencedDeclaration": 29484,
+                        "referencedDeclaration": 29481,
                         "src": "1086:26:160",
                         "typeDescriptions": {
                           "typeIdentifier": "t_string_memory_ptr",
@@ -1822,21 +1822,21 @@
                           "typeString": "string memory"
                         }
                       ],
-                      "id": 31583,
+                      "id": 31580,
                       "name": "_validatePermission",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [
-                        29431,
-                        29450
+                        29428,
+                        29447
                       ],
-                      "referencedDeclaration": 29431,
+                      "referencedDeclaration": 29428,
                       "src": "1066:19:160",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_internal_view$_t_string_memory_ptr_$returns$__$",
                         "typeString": "function (string memory) view"
                       }
                     },
-                    "id": 31586,
+                    "id": 31583,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -1852,7 +1852,7 @@
                       "typeString": "tuple()"
                     }
                   },
-                  "id": 31587,
+                  "id": 31584,
                   "nodeType": "ExpressionStatement",
                   "src": "1066:47:160"
                 },
@@ -1860,11 +1860,11 @@
                   "expression": {
                     "arguments": [
                       {
-                        "id": 31589,
+                        "id": 31586,
                         "name": "channelId",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 31576,
+                        "referencedDeclaration": 31573,
                         "src": "1134:9:160",
                         "typeDescriptions": {
                           "typeIdentifier": "t_string_memory_ptr",
@@ -1872,11 +1872,11 @@
                         }
                       },
                       {
-                        "id": 31590,
+                        "id": 31587,
                         "name": "metadata",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 31578,
+                        "referencedDeclaration": 31575,
                         "src": "1145:8:160",
                         "typeDescriptions": {
                           "typeIdentifier": "t_string_memory_ptr",
@@ -1884,11 +1884,11 @@
                         }
                       },
                       {
-                        "id": 31591,
+                        "id": 31588,
                         "name": "disabled",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 31580,
+                        "referencedDeclaration": 31577,
                         "src": "1155:8:160",
                         "typeDescriptions": {
                           "typeIdentifier": "t_bool",
@@ -1911,18 +1911,18 @@
                           "typeString": "bool"
                         }
                       ],
-                      "id": 31588,
+                      "id": 31585,
                       "name": "_updateChannel",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 30810,
+                      "referencedDeclaration": 30807,
                       "src": "1119:14:160",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_internal_nonpayable$_t_string_memory_ptr_$_t_string_memory_ptr_$_t_bool_$returns$__$",
                         "typeString": "function (string memory,string memory,bool)"
                       }
                     },
-                    "id": 31592,
+                    "id": 31589,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -1938,14 +1938,14 @@
                       "typeString": "tuple()"
                     }
                   },
-                  "id": 31593,
+                  "id": 31590,
                   "nodeType": "ExpressionStatement",
                   "src": "1119:45:160"
                 }
               ]
             },
             "baseFunctions": [
-              31702
+              31699
             ],
             "functionSelector": "9c02812e",
             "implemented": true,
@@ -1954,17 +1954,17 @@
             "name": "updateChannel",
             "nameLocation": "957:13:160",
             "parameters": {
-              "id": 31581,
+              "id": 31578,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 31576,
+                  "id": 31573,
                   "mutability": "mutable",
                   "name": "channelId",
                   "nameLocation": "990:9:160",
                   "nodeType": "VariableDeclaration",
-                  "scope": 31595,
+                  "scope": 31592,
                   "src": "976:23:160",
                   "stateVariable": false,
                   "storageLocation": "memory",
@@ -1973,7 +1973,7 @@
                     "typeString": "string"
                   },
                   "typeName": {
-                    "id": 31575,
+                    "id": 31572,
                     "name": "string",
                     "nodeType": "ElementaryTypeName",
                     "src": "976:6:160",
@@ -1986,12 +1986,12 @@
                 },
                 {
                   "constant": false,
-                  "id": 31578,
+                  "id": 31575,
                   "mutability": "mutable",
                   "name": "metadata",
                   "nameLocation": "1019:8:160",
                   "nodeType": "VariableDeclaration",
-                  "scope": 31595,
+                  "scope": 31592,
                   "src": "1005:22:160",
                   "stateVariable": false,
                   "storageLocation": "memory",
@@ -2000,7 +2000,7 @@
                     "typeString": "string"
                   },
                   "typeName": {
-                    "id": 31577,
+                    "id": 31574,
                     "name": "string",
                     "nodeType": "ElementaryTypeName",
                     "src": "1005:6:160",
@@ -2013,12 +2013,12 @@
                 },
                 {
                   "constant": false,
-                  "id": 31580,
+                  "id": 31577,
                   "mutability": "mutable",
                   "name": "disabled",
                   "nameLocation": "1038:8:160",
                   "nodeType": "VariableDeclaration",
-                  "scope": 31595,
+                  "scope": 31592,
                   "src": "1033:13:160",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -2027,7 +2027,7 @@
                     "typeString": "bool"
                   },
                   "typeName": {
-                    "id": 31579,
+                    "id": 31576,
                     "name": "bool",
                     "nodeType": "ElementaryTypeName",
                     "src": "1033:4:160",
@@ -2042,23 +2042,23 @@
               "src": "970:80:160"
             },
             "returnParameters": {
-              "id": 31582,
+              "id": 31579,
               "nodeType": "ParameterList",
               "parameters": [],
               "src": "1060:0:160"
             },
-            "scope": 31649,
+            "scope": 31646,
             "stateMutability": "nonpayable",
             "virtual": false,
             "visibility": "external"
           },
           {
-            "id": 31610,
+            "id": 31607,
             "nodeType": "FunctionDefinition",
             "src": "1173:146:160",
             "nodes": [],
             "body": {
-              "id": 31609,
+              "id": 31606,
               "nodeType": "Block",
               "src": "1230:89:160",
               "nodes": [],
@@ -2068,18 +2068,18 @@
                     "arguments": [
                       {
                         "expression": {
-                          "id": 31601,
+                          "id": 31598,
                           "name": "Permissions",
                           "nodeType": "Identifier",
                           "overloadedDeclarations": [],
-                          "referencedDeclaration": 29491,
+                          "referencedDeclaration": 29488,
                           "src": "1256:11:160",
                           "typeDescriptions": {
-                            "typeIdentifier": "t_type$_t_contract$_Permissions_$29491_$",
+                            "typeIdentifier": "t_type$_t_contract$_Permissions_$29488_$",
                             "typeString": "type(library Permissions)"
                           }
                         },
-                        "id": 31602,
+                        "id": 31599,
                         "isConstant": false,
                         "isLValue": false,
                         "isPure": true,
@@ -2087,7 +2087,7 @@
                         "memberLocation": "1268:14:160",
                         "memberName": "ModifyChannels",
                         "nodeType": "MemberAccess",
-                        "referencedDeclaration": 29484,
+                        "referencedDeclaration": 29481,
                         "src": "1256:26:160",
                         "typeDescriptions": {
                           "typeIdentifier": "t_string_memory_ptr",
@@ -2102,21 +2102,21 @@
                           "typeString": "string memory"
                         }
                       ],
-                      "id": 31600,
+                      "id": 31597,
                       "name": "_validatePermission",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [
-                        29431,
-                        29450
+                        29428,
+                        29447
                       ],
-                      "referencedDeclaration": 29431,
+                      "referencedDeclaration": 29428,
                       "src": "1236:19:160",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_internal_view$_t_string_memory_ptr_$returns$__$",
                         "typeString": "function (string memory) view"
                       }
                     },
-                    "id": 31603,
+                    "id": 31600,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -2132,7 +2132,7 @@
                       "typeString": "tuple()"
                     }
                   },
-                  "id": 31604,
+                  "id": 31601,
                   "nodeType": "ExpressionStatement",
                   "src": "1236:47:160"
                 },
@@ -2140,11 +2140,11 @@
                   "expression": {
                     "arguments": [
                       {
-                        "id": 31606,
+                        "id": 31603,
                         "name": "channelId",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 31597,
+                        "referencedDeclaration": 31594,
                         "src": "1304:9:160",
                         "typeDescriptions": {
                           "typeIdentifier": "t_string_memory_ptr",
@@ -2159,18 +2159,18 @@
                           "typeString": "string memory"
                         }
                       ],
-                      "id": 31605,
+                      "id": 31602,
                       "name": "_removeChannel",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 30822,
+                      "referencedDeclaration": 30819,
                       "src": "1289:14:160",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_internal_nonpayable$_t_string_memory_ptr_$returns$__$",
                         "typeString": "function (string memory)"
                       }
                     },
-                    "id": 31607,
+                    "id": 31604,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -2186,14 +2186,14 @@
                       "typeString": "tuple()"
                     }
                   },
-                  "id": 31608,
+                  "id": 31605,
                   "nodeType": "ExpressionStatement",
                   "src": "1289:25:160"
                 }
               ]
             },
             "baseFunctions": [
-              31708
+              31705
             ],
             "functionSelector": "05b2cfbc",
             "implemented": true,
@@ -2202,17 +2202,17 @@
             "name": "removeChannel",
             "nameLocation": "1182:13:160",
             "parameters": {
-              "id": 31598,
+              "id": 31595,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 31597,
+                  "id": 31594,
                   "mutability": "mutable",
                   "name": "channelId",
                   "nameLocation": "1210:9:160",
                   "nodeType": "VariableDeclaration",
-                  "scope": 31610,
+                  "scope": 31607,
                   "src": "1196:23:160",
                   "stateVariable": false,
                   "storageLocation": "memory",
@@ -2221,7 +2221,7 @@
                     "typeString": "string"
                   },
                   "typeName": {
-                    "id": 31596,
+                    "id": 31593,
                     "name": "string",
                     "nodeType": "ElementaryTypeName",
                     "src": "1196:6:160",
@@ -2236,23 +2236,23 @@
               "src": "1195:25:160"
             },
             "returnParameters": {
-              "id": 31599,
+              "id": 31596,
               "nodeType": "ParameterList",
               "parameters": [],
               "src": "1230:0:160"
             },
-            "scope": 31649,
+            "scope": 31646,
             "stateMutability": "nonpayable",
             "virtual": false,
             "visibility": "external"
           },
           {
-            "id": 31629,
+            "id": 31626,
             "nodeType": "FunctionDefinition",
             "src": "1323:208:160",
             "nodes": [],
             "body": {
-              "id": 31628,
+              "id": 31625,
               "nodeType": "Block",
               "src": "1413:118:160",
               "nodes": [],
@@ -2261,11 +2261,11 @@
                   "expression": {
                     "arguments": [
                       {
-                        "id": 31618,
+                        "id": 31615,
                         "name": "channelId",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 31612,
+                        "referencedDeclaration": 31609,
                         "src": "1446:9:160",
                         "typeDescriptions": {
                           "typeIdentifier": "t_string_calldata_ptr",
@@ -2274,18 +2274,18 @@
                       },
                       {
                         "expression": {
-                          "id": 31619,
+                          "id": 31616,
                           "name": "Permissions",
                           "nodeType": "Identifier",
                           "overloadedDeclarations": [],
-                          "referencedDeclaration": 29491,
+                          "referencedDeclaration": 29488,
                           "src": "1457:11:160",
                           "typeDescriptions": {
-                            "typeIdentifier": "t_type$_t_contract$_Permissions_$29491_$",
+                            "typeIdentifier": "t_type$_t_contract$_Permissions_$29488_$",
                             "typeString": "type(library Permissions)"
                           }
                         },
-                        "id": 31620,
+                        "id": 31617,
                         "isConstant": false,
                         "isLValue": false,
                         "isPure": true,
@@ -2293,7 +2293,7 @@
                         "memberLocation": "1469:14:160",
                         "memberName": "ModifyChannels",
                         "nodeType": "MemberAccess",
-                        "referencedDeclaration": 29484,
+                        "referencedDeclaration": 29481,
                         "src": "1457:26:160",
                         "typeDescriptions": {
                           "typeIdentifier": "t_string_memory_ptr",
@@ -2312,18 +2312,18 @@
                           "typeString": "string memory"
                         }
                       ],
-                      "id": 31617,
+                      "id": 31614,
                       "name": "_validateChannelPermission",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 29468,
+                      "referencedDeclaration": 29465,
                       "src": "1419:26:160",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_internal_view$_t_string_memory_ptr_$_t_string_memory_ptr_$returns$__$",
                         "typeString": "function (string memory,string memory) view"
                       }
                     },
-                    "id": 31621,
+                    "id": 31618,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -2339,7 +2339,7 @@
                       "typeString": "tuple()"
                     }
                   },
-                  "id": 31622,
+                  "id": 31619,
                   "nodeType": "ExpressionStatement",
                   "src": "1419:65:160"
                 },
@@ -2347,11 +2347,11 @@
                   "expression": {
                     "arguments": [
                       {
-                        "id": 31624,
+                        "id": 31621,
                         "name": "channelId",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 31612,
+                        "referencedDeclaration": 31609,
                         "src": "1508:9:160",
                         "typeDescriptions": {
                           "typeIdentifier": "t_string_calldata_ptr",
@@ -2359,11 +2359,11 @@
                         }
                       },
                       {
-                        "id": 31625,
+                        "id": 31622,
                         "name": "roleId",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 31614,
+                        "referencedDeclaration": 31611,
                         "src": "1519:6:160",
                         "typeDescriptions": {
                           "typeIdentifier": "t_uint256",
@@ -2382,18 +2382,18 @@
                           "typeString": "uint256"
                         }
                       ],
-                      "id": 31623,
+                      "id": 31620,
                       "name": "_addRoleToChannel",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 30837,
+                      "referencedDeclaration": 30834,
                       "src": "1490:17:160",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_internal_nonpayable$_t_string_calldata_ptr_$_t_uint256_$returns$__$",
                         "typeString": "function (string calldata,uint256)"
                       }
                     },
-                    "id": 31626,
+                    "id": 31623,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -2409,14 +2409,14 @@
                       "typeString": "tuple()"
                     }
                   },
-                  "id": 31627,
+                  "id": 31624,
                   "nodeType": "ExpressionStatement",
                   "src": "1490:36:160"
                 }
               ]
             },
             "baseFunctions": [
-              31716
+              31713
             ],
             "functionSelector": "42bb09b2",
             "implemented": true,
@@ -2425,17 +2425,17 @@
             "name": "addRoleToChannel",
             "nameLocation": "1332:16:160",
             "parameters": {
-              "id": 31615,
+              "id": 31612,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 31612,
+                  "id": 31609,
                   "mutability": "mutable",
                   "name": "channelId",
                   "nameLocation": "1370:9:160",
                   "nodeType": "VariableDeclaration",
-                  "scope": 31629,
+                  "scope": 31626,
                   "src": "1354:25:160",
                   "stateVariable": false,
                   "storageLocation": "calldata",
@@ -2444,7 +2444,7 @@
                     "typeString": "string"
                   },
                   "typeName": {
-                    "id": 31611,
+                    "id": 31608,
                     "name": "string",
                     "nodeType": "ElementaryTypeName",
                     "src": "1354:6:160",
@@ -2457,12 +2457,12 @@
                 },
                 {
                   "constant": false,
-                  "id": 31614,
+                  "id": 31611,
                   "mutability": "mutable",
                   "name": "roleId",
                   "nameLocation": "1393:6:160",
                   "nodeType": "VariableDeclaration",
-                  "scope": 31629,
+                  "scope": 31626,
                   "src": "1385:14:160",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -2471,7 +2471,7 @@
                     "typeString": "uint256"
                   },
                   "typeName": {
-                    "id": 31613,
+                    "id": 31610,
                     "name": "uint256",
                     "nodeType": "ElementaryTypeName",
                     "src": "1385:7:160",
@@ -2486,23 +2486,23 @@
               "src": "1348:55:160"
             },
             "returnParameters": {
-              "id": 31616,
+              "id": 31613,
               "nodeType": "ParameterList",
               "parameters": [],
               "src": "1413:0:160"
             },
-            "scope": 31649,
+            "scope": 31646,
             "stateMutability": "nonpayable",
             "virtual": false,
             "visibility": "external"
           },
           {
-            "id": 31648,
+            "id": 31645,
             "nodeType": "FunctionDefinition",
             "src": "1535:218:160",
             "nodes": [],
             "body": {
-              "id": 31647,
+              "id": 31644,
               "nodeType": "Block",
               "src": "1630:123:160",
               "nodes": [],
@@ -2511,11 +2511,11 @@
                   "expression": {
                     "arguments": [
                       {
-                        "id": 31637,
+                        "id": 31634,
                         "name": "channelId",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 31631,
+                        "referencedDeclaration": 31628,
                         "src": "1663:9:160",
                         "typeDescriptions": {
                           "typeIdentifier": "t_string_calldata_ptr",
@@ -2524,18 +2524,18 @@
                       },
                       {
                         "expression": {
-                          "id": 31638,
+                          "id": 31635,
                           "name": "Permissions",
                           "nodeType": "Identifier",
                           "overloadedDeclarations": [],
-                          "referencedDeclaration": 29491,
+                          "referencedDeclaration": 29488,
                           "src": "1674:11:160",
                           "typeDescriptions": {
-                            "typeIdentifier": "t_type$_t_contract$_Permissions_$29491_$",
+                            "typeIdentifier": "t_type$_t_contract$_Permissions_$29488_$",
                             "typeString": "type(library Permissions)"
                           }
                         },
-                        "id": 31639,
+                        "id": 31636,
                         "isConstant": false,
                         "isLValue": false,
                         "isPure": true,
@@ -2543,7 +2543,7 @@
                         "memberLocation": "1686:14:160",
                         "memberName": "ModifyChannels",
                         "nodeType": "MemberAccess",
-                        "referencedDeclaration": 29484,
+                        "referencedDeclaration": 29481,
                         "src": "1674:26:160",
                         "typeDescriptions": {
                           "typeIdentifier": "t_string_memory_ptr",
@@ -2562,18 +2562,18 @@
                           "typeString": "string memory"
                         }
                       ],
-                      "id": 31636,
+                      "id": 31633,
                       "name": "_validateChannelPermission",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 29468,
+                      "referencedDeclaration": 29465,
                       "src": "1636:26:160",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_internal_view$_t_string_memory_ptr_$_t_string_memory_ptr_$returns$__$",
                         "typeString": "function (string memory,string memory) view"
                       }
                     },
-                    "id": 31640,
+                    "id": 31637,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -2589,7 +2589,7 @@
                       "typeString": "tuple()"
                     }
                   },
-                  "id": 31641,
+                  "id": 31638,
                   "nodeType": "ExpressionStatement",
                   "src": "1636:65:160"
                 },
@@ -2597,11 +2597,11 @@
                   "expression": {
                     "arguments": [
                       {
-                        "id": 31643,
+                        "id": 31640,
                         "name": "channelId",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 31631,
+                        "referencedDeclaration": 31628,
                         "src": "1730:9:160",
                         "typeDescriptions": {
                           "typeIdentifier": "t_string_calldata_ptr",
@@ -2609,11 +2609,11 @@
                         }
                       },
                       {
-                        "id": 31644,
+                        "id": 31641,
                         "name": "roleId",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 31633,
+                        "referencedDeclaration": 31630,
                         "src": "1741:6:160",
                         "typeDescriptions": {
                           "typeIdentifier": "t_uint256",
@@ -2632,18 +2632,18 @@
                           "typeString": "uint256"
                         }
                       ],
-                      "id": 31642,
+                      "id": 31639,
                       "name": "_removeRoleFromChannel",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 30852,
+                      "referencedDeclaration": 30849,
                       "src": "1707:22:160",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_internal_nonpayable$_t_string_calldata_ptr_$_t_uint256_$returns$__$",
                         "typeString": "function (string calldata,uint256)"
                       }
                     },
-                    "id": 31645,
+                    "id": 31642,
                     "isConstant": false,
                     "isLValue": false,
                     "isPure": false,
@@ -2659,14 +2659,14 @@
                       "typeString": "tuple()"
                     }
                   },
-                  "id": 31646,
+                  "id": 31643,
                   "nodeType": "ExpressionStatement",
                   "src": "1707:41:160"
                 }
               ]
             },
             "baseFunctions": [
-              31724
+              31721
             ],
             "functionSelector": "499061b5",
             "implemented": true,
@@ -2675,17 +2675,17 @@
             "name": "removeRoleFromChannel",
             "nameLocation": "1544:21:160",
             "parameters": {
-              "id": 31634,
+              "id": 31631,
               "nodeType": "ParameterList",
               "parameters": [
                 {
                   "constant": false,
-                  "id": 31631,
+                  "id": 31628,
                   "mutability": "mutable",
                   "name": "channelId",
                   "nameLocation": "1587:9:160",
                   "nodeType": "VariableDeclaration",
-                  "scope": 31648,
+                  "scope": 31645,
                   "src": "1571:25:160",
                   "stateVariable": false,
                   "storageLocation": "calldata",
@@ -2694,7 +2694,7 @@
                     "typeString": "string"
                   },
                   "typeName": {
-                    "id": 31630,
+                    "id": 31627,
                     "name": "string",
                     "nodeType": "ElementaryTypeName",
                     "src": "1571:6:160",
@@ -2707,12 +2707,12 @@
                 },
                 {
                   "constant": false,
-                  "id": 31633,
+                  "id": 31630,
                   "mutability": "mutable",
                   "name": "roleId",
                   "nameLocation": "1610:6:160",
                   "nodeType": "VariableDeclaration",
-                  "scope": 31648,
+                  "scope": 31645,
                   "src": "1602:14:160",
                   "stateVariable": false,
                   "storageLocation": "default",
@@ -2721,7 +2721,7 @@
                     "typeString": "uint256"
                   },
                   "typeName": {
-                    "id": 31632,
+                    "id": 31629,
                     "name": "uint256",
                     "nodeType": "ElementaryTypeName",
                     "src": "1602:7:160",
@@ -2736,12 +2736,12 @@
               "src": "1565:55:160"
             },
             "returnParameters": {
-              "id": 31635,
+              "id": 31632,
               "nodeType": "ParameterList",
               "parameters": [],
               "src": "1630:0:160"
             },
-            "scope": 31649,
+            "scope": 31646,
             "stateMutability": "nonpayable",
             "virtual": false,
             "visibility": "external"
@@ -2751,61 +2751,61 @@
         "baseContracts": [
           {
             "baseName": {
-              "id": 31521,
+              "id": 31518,
               "name": "IChannel",
               "nameLocations": [
                 "417:8:160"
               ],
               "nodeType": "IdentifierPath",
-              "referencedDeclaration": 31725,
+              "referencedDeclaration": 31722,
               "src": "417:8:160"
             },
-            "id": 31522,
+            "id": 31519,
             "nodeType": "InheritanceSpecifier",
             "src": "417:8:160"
           },
           {
             "baseName": {
-              "id": 31523,
+              "id": 31520,
               "name": "ChannelBase",
               "nameLocations": [
                 "427:11:160"
               ],
               "nodeType": "IdentifierPath",
-              "referencedDeclaration": 30853,
+              "referencedDeclaration": 30850,
               "src": "427:11:160"
             },
-            "id": 31524,
+            "id": 31521,
             "nodeType": "InheritanceSpecifier",
             "src": "427:11:160"
           },
           {
             "baseName": {
-              "id": 31525,
+              "id": 31522,
               "name": "Entitled",
               "nameLocations": [
                 "440:8:160"
               ],
               "nodeType": "IdentifierPath",
-              "referencedDeclaration": 29479,
+              "referencedDeclaration": 29476,
               "src": "440:8:160"
             },
-            "id": 31526,
+            "id": 31523,
             "nodeType": "InheritanceSpecifier",
             "src": "440:8:160"
           },
           {
             "baseName": {
-              "id": 31527,
+              "id": 31524,
               "name": "Facet",
               "nameLocations": [
                 "450:5:160"
               ],
               "nodeType": "IdentifierPath",
-              "referencedDeclaration": 6384,
+              "referencedDeclaration": 6381,
               "src": "450:5:160"
             },
-            "id": 31528,
+            "id": 31525,
             "nodeType": "InheritanceSpecifier",
             "src": "450:5:160"
           }
@@ -2815,49 +2815,49 @@
         "contractKind": "contract",
         "fullyImplemented": true,
         "linearizedBaseContracts": [
-          31649,
-          6384,
-          7515,
-          7418,
-          7376,
-          29479,
-          8637,
-          8546,
-          8446,
-          7898,
-          27294,
-          30853,
-          31725,
-          31662
+          31646,
+          6381,
+          7512,
+          7415,
+          7373,
+          29476,
+          8634,
+          8543,
+          8443,
+          7895,
+          27291,
+          30850,
+          31722,
+          31659
         ],
         "name": "Channels",
         "nameLocation": "405:8:160",
-        "scope": 31650,
+        "scope": 31647,
         "usedErrors": [
-          7158,
-          7405,
-          7407,
-          7886,
-          7890,
-          8535,
-          8537,
-          27289,
-          27291,
-          27293,
-          30863,
-          30865,
-          30867,
-          30869,
-          30871,
-          40853
+          7155,
+          7402,
+          7404,
+          7883,
+          7887,
+          8532,
+          8534,
+          27286,
+          27288,
+          27290,
+          30860,
+          30862,
+          30864,
+          30866,
+          30868,
+          40850
         ],
         "usedEvents": [
-          7162,
-          7412,
-          7417,
-          7897,
-          8541,
-          8545
+          7159,
+          7409,
+          7414,
+          7894,
+          8538,
+          8542
         ]
       }
     ],

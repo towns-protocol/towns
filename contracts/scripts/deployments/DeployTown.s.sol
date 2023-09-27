@@ -9,7 +9,7 @@ import {IDiamond, Diamond} from "contracts/src/diamond/Diamond.sol";
 //contracts
 import {Deployer} from "../common/Deployer.s.sol";
 
-import {OwnableHelper} from "contracts/test/diamond/ownable/OwnableSetup.sol";
+import {OwnablePendingHelper} from "contracts/test/diamond/ownable/pending/OwnablePendingSetup.sol";
 import {TokenOwnableHelper} from "contracts/test/diamond/ownable/token/TokenOwnableSetup.sol";
 import {DiamondCutHelper} from "contracts/test/diamond/cut/DiamondCutSetup.sol";
 import {DiamondLoupeHelper} from "contracts/test/diamond/loupe/DiamondLoupeSetup.sol";
@@ -20,7 +20,7 @@ import {TokenPausableHelper} from "contracts/test/diamond/pausable/token/TokenPa
 import {IntrospectionHelper} from "contracts/test/diamond/introspection/IntrospectionSetup.sol";
 
 // Facets
-import {OwnableFacet} from "contracts/src/diamond/facets/ownable/OwnableFacet.sol";
+import {OwnablePendingFacet} from "contracts/src/diamond/facets/ownable/pending/OwnablePendingFacet.sol";
 import {TokenOwnableFacet} from "contracts/src/diamond/facets/ownable/token/TokenOwnableFacet.sol";
 import {DiamondCutFacet} from "contracts/src/diamond/facets/cut/DiamondCutFacet.sol";
 import {DiamondLoupeFacet} from "contracts/src/diamond/facets/loupe/DiamondLoupeFacet.sol";
@@ -34,7 +34,7 @@ import {MultiInit} from "contracts/src/diamond/initializers/MultiInit.sol";
 
 contract DeployTown is Deployer {
   TokenOwnableHelper tokenOwnableHelper = new TokenOwnableHelper();
-  OwnableHelper ownableHelper = new OwnableHelper();
+  OwnablePendingHelper ownableHelper = new OwnablePendingHelper();
   DiamondCutHelper diamondCutHelper = new DiamondCutHelper();
   DiamondLoupeHelper diamondLoupeHelper = new DiamondLoupeHelper();
   EntitlementsHelper entitlementsHelper = new EntitlementsHelper();
@@ -68,7 +68,7 @@ contract DeployTown is Deployer {
     address deployer
   ) public override returns (address) {
     vm.startBroadcast(deployerPK);
-    ownable = address(new OwnableFacet());
+    ownable = address(new OwnablePendingFacet());
     tokenOwnable = address(new TokenOwnableFacet());
     diamondCut = address(new DiamondCutFacet());
     diamondLoupe = address(new DiamondLoupeFacet());
@@ -118,7 +118,7 @@ contract DeployTown is Deployer {
     initAddresses[2] = diamondLoupe;
     initAddresses[3] = introspection;
 
-    initDatas[0] = ownableHelper.makeInitData(abi.encode(deployer));
+    initDatas[0] = ownableHelper.makeInitData(deployer);
     initDatas[1] = diamondCutHelper.makeInitData("");
     initDatas[2] = diamondLoupeHelper.makeInitData("");
     initDatas[3] = introspectionHelper.makeInitData("");
