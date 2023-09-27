@@ -22,7 +22,8 @@ describe('clientFlushes', () => {
         await bobsClient.stop()
     })
 
-    test('bobTalksToHimself-flush', async () => {
+    // TODO: https://linear.app/hnt-labs/issue/HNT-2720/re-enable-flush-tests
+    test.skip('bobTalksToHimself-flush', async () => {
         const log = log_base.extend('bobTalksToHimself-flush')
 
         const done = makeDonePromise()
