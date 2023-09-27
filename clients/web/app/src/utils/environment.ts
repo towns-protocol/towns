@@ -77,15 +77,15 @@ if (rawEnv.VITE_CF_TUNNEL_PREFIX) {
     }
 }
 
-if (import.meta.env.PROD) {
-    if (import.meta.env.MODE === 'production') {
-        throw new Error('"production" is not a valid mode. Set a mode via the `MODE` env var.')
-        // 'production' is the default mode name (the NODE_ENV of vite).
-        // we want to make sure this value is intentionally set, so we throw if we
-        // see the default value. in our case, our environments are named "test-alpha",
-        // "test-beta", "alpha", "beta".
-    }
-}
+// if (import.meta.env.PROD) {
+//     if (import.meta.env.MODE === 'production') {
+//         throw new Error('"production" is not a valid mode. Set a mode via the `MODE` env var.')
+//         // 'production' is the default mode name (the NODE_ENV of vite).
+//         // we want to make sure this value is intentionally set, so we throw if we
+//         // see the default value. in our case, our environments are named "test-alpha",
+//         // "test-beta", "alpha", "beta".
+//     }
+// }
 
 export const env = {
     ...rawEnv,
