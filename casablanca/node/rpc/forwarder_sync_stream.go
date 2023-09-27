@@ -20,11 +20,6 @@ type syncNode struct {
 	closed bool
 }
 
-type syncDispatcher struct {
-	remotes map[string]*syncNode
-	local   []*SyncCookie
-}
-
 func (f *forwarderImpl) SyncStreams(
 	ctx context.Context,
 	req *connect_go.Request[SyncStreamsRequest],
@@ -32,39 +27,51 @@ func (f *forwarderImpl) SyncStreams(
 ) error {
 	log := dlog.CtxLog(ctx) // TODO: use ctxAndLogForRequest
 	log.Debug("fwd.SyncStreams ENTER", "syncPos", req.Msg.SyncPos)
-	e := f.syncStreamsIml(ctx, req, res)
+	e := f.syncStreamsImpl(ctx, req, res)
 	if e != nil {
-		return AsRiverError(e).Func("fwd.SyncStreams").LogWarn(log).AsConnectError()
+		err := AsRiverError(e).Func("fwd.SyncStreams")
+		if err.Code == Err_CANCELED {
+			// Context is canceled when client disconnects, so this is normal case.
+			_ = err.LogDebug(log)
+		} else {
+			_ = err.LogWarn(log)
+		}
+		return err.AsConnectError()
 	}
 	log.Debug("fwd.SyncStreams LEAVE")
 	return nil
 }
 
-func (f *forwarderImpl) syncStreamsIml(
+func (f *forwarderImpl) syncStreamsImpl(
 	ctx context.Context,
 	req *connect_go.Request[SyncStreamsRequest],
 	res *connect_go.ServerStream[SyncStreamsResponse],
 ) error {
-	disp := &syncDispatcher{
-		remotes: make(map[string]*syncNode),
-		local:   make([]*SyncCookie, 0, 8),
-	}
+	log := dlog.CtxLog(ctx)
 
+	local := make([]*SyncCookie, 0, 8)
 	localNodeAddress := f.nodeRegistry.GetLocalNode().NodeAddress
+
+	remotes := make(map[string]*syncNode)
+	defer func() {
+		for _, remote := range remotes {
+			remote.close()
+		}
+	}()
 
 	// TODO: extend syncCookie to include NodeAddress.
 	// TODO: (once above is implemented) handle the case when node is no longer available.
 	for _, cookie := range req.Msg.SyncPos {
-		nodeAddresses, err := f.streamRegistry.GetNodeAddressesForStream(cookie.StreamId, false)
+		nodeAddresses, err := f.streamRegistry.GetNodeAddressesForStream(ctx, cookie.StreamId)
 		if err != nil {
 			return err
 		}
 
 		nodeAddr := nodeAddresses[0]
 		if nodeAddr == localNodeAddress {
-			disp.local = append(disp.local, cookie)
+			local = append(local, cookie)
 		} else {
-			remote, ok := disp.remotes[nodeAddr]
+			remote, ok := remotes[nodeAddr]
 			if !ok {
 				stub, err := f.nodeRegistry.GetRemoteSyncStubForAddress(nodeAddr)
 				if err != nil {
@@ -75,28 +82,22 @@ func (f *forwarderImpl) syncStreamsIml(
 					syncPos: []*SyncCookie{cookie},
 					stub:    stub,
 				}
-				disp.remotes[nodeAddr] = remote
+				remotes[nodeAddr] = remote
 			} else {
 				remote.syncPos = append(remote.syncPos, cookie)
 			}
 		}
 	}
 
-	// Shortcut to local-only if there are no remote streams to sync.
-	// TODO: I guess it's not going to work with side-channel sub/unsub.
-	if len(disp.remotes) == 0 {
-		return f.nodeRegistry.GetLocalNode().Stub.SyncStreams(ctx, req, res)
-	}
-
 	syncCtx, cancelSync := context.WithCancel(ctx)
 
 	respChan := make(chan syncResult, 64)
 
-	if len(disp.local) > 0 {
-		syncLocalNode(syncCtx, f.nodeRegistry.GetLocalNode().Syncer, disp.local, respChan)
+	if len(local) > 0 {
+		go syncLocalNode(syncCtx, f.nodeRegistry.GetLocalNode().Syncer, local, respChan)
 	}
 
-	for _, remote := range disp.remotes {
+	for _, remote := range remotes {
 		go remote.syncRemoteNode(syncCtx, respChan)
 	}
 
@@ -106,31 +107,31 @@ ForwardLoop:
 		select {
 		case <-ctx.Done():
 			lastError = ctx.Err()
+			log.Debug("fwd.SyncStreams: context done", "err", lastError)
 			break ForwardLoop
 		case resp := <-respChan:
 			if resp.err != nil {
 				lastError = resp.err
+				log.Debug("fwd.SyncStreams: received error in forward loop", "err", lastError)
 				break ForwardLoop
 			}
 
+			log.Debug("fwd.SyncStreams: received update in forward loop", "resp", resp.resp)
 			if err := res.Send(resp.resp); err != nil {
 				lastError = err
+				log.Debug("fwd.SyncStreams: failed to send update", "resp", "err", lastError)
 				break ForwardLoop
 			}
 		}
 	}
 
 	cancelSync()
-	for _, remote := range disp.remotes {
-		remote.close()
-	}
 
 	if lastError != nil {
 		return lastError
 	}
 
-	// TODO: currently there is no way to terminate sync from client, so this should never be reached...
-	// TODO: how disconnected clients are detected?
+	log.Error("fwd.SyncStreams: sync always should be terminated by context cancel.")
 	return nil
 }
 
@@ -140,7 +141,10 @@ type syncResult struct {
 }
 
 func syncLocalNode(ctx context.Context, syncer LocalStreamSyncer, syncPos []*SyncCookie, respChannel chan<- syncResult) {
+	log := dlog.CtxLog(ctx)
+
 	if ctx.Err() != nil {
+		log.Debug("fwd.SyncStreams: syncLocalNode not starting", "context_error", ctx.Err())
 		return
 	}
 
@@ -149,9 +153,11 @@ func syncLocalNode(ctx context.Context, syncer LocalStreamSyncer, syncPos []*Syn
 		syncPos,
 		func(update *StreamAndCookie) error {
 			if ctx.Err() != nil {
+				log.Debug("fwd.SyncStreams: syncLocalNode not sending", "context_error", ctx.Err())
 				return ctx.Err()
 			}
 
+			log.Debug("fwd.SyncStreams: syncLocalNode sending", "update", update)
 			updates := []*StreamAndCookie{update}
 			respChannel <- syncResult{resp: &SyncStreamsResponse{
 				Streams: updates,
@@ -161,6 +167,7 @@ func syncLocalNode(ctx context.Context, syncer LocalStreamSyncer, syncPos []*Syn
 	)
 
 	if err != nil {
+		log.Debug("fwd.SyncStreams: syncLocalNode failed", "err", err)
 		respChannel <- syncResult{err: err}
 	}
 }
@@ -171,7 +178,9 @@ func syncLocalNode(ctx context.Context, syncer LocalStreamSyncer, syncPos []*Syn
 // Without control signals there is no clean way to do so, so for now both ctx is canceled and Close is called
 // async hoping this will trigger Receive to abort.
 func (n *syncNode) syncRemoteNode(ctx context.Context, respChannel chan<- syncResult) {
+	log := dlog.CtxLog(ctx)
 	if ctx.Err() != nil || n.isClosed() {
+		log.Debug("fwd.SyncStreams: syncRemoteNode not starting", "context_error", ctx.Err())
 		return
 	}
 
@@ -183,27 +192,31 @@ func (n *syncNode) syncRemoteNode(ctx context.Context, respChannel chan<- syncRe
 			},
 		},
 	)
-
 	if err != nil {
+		log.Debug("fwd.SyncStreams: syncRemoteNode remote SyncStreams failed", "err", err)
 		respChannel <- syncResult{err: err}
 		return
 	}
 
 	if !n.setStream(stream) {
+		log.Debug("fwd.SyncStreams: syncRemoteNode already closed")
 		// means that n.close() was already called.
 		stream.Close()
 		return
 	}
 
 	if ctx.Err() != nil {
+		log.Debug("fwd.SyncStreams: syncRemoteNode not receiving", "context_error", ctx.Err())
 		return
 	}
 
 	for stream.Receive() {
 		if ctx.Err() != nil || n.isClosed() {
+			log.Debug("fwd.SyncStreams: syncRemoteNode receive canceled", "context_error", ctx.Err())
 			return
 		}
 
+		log.Debug("fwd.SyncStreams: syncRemoteNode received update", "resp", stream.Msg())
 		respChannel <- syncResult{resp: stream.Msg()}
 	}
 
@@ -212,6 +225,7 @@ func (n *syncNode) syncRemoteNode(ctx context.Context, respChannel chan<- syncRe
 	}
 
 	if err := stream.Err(); err != nil {
+		log.Debug("fwd.SyncStreams: syncRemoteNode receive failed", "err", err)
 		respChannel <- syncResult{err: err}
 		return
 	}

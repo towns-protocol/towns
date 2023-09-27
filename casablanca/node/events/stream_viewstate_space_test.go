@@ -65,7 +65,7 @@ func TestSpaceViewState(t *testing.T) {
 	assert.NotNil(t, stream)
 	// add two more membership events
 	// user_2
-	_, err = stream.AddEvent(
+	err = stream.AddEvent(
 		ctx,
 		parsedEvent(
 			t,
@@ -82,7 +82,7 @@ func TestSpaceViewState(t *testing.T) {
 	)
 	assert.NoError(t, err)
 	// user_3
-	_, err = stream.AddEvent(
+	err = stream.AddEvent(
 		ctx,
 		parsedEvent(
 			t,

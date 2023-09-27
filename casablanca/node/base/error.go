@@ -140,8 +140,14 @@ func AsRiverError(err error) *RiverErrorImpl {
 		return e
 	}
 	if err != nil {
+		code := protocol.Err_UNKNOWN
+		if err == context.Canceled {
+			code = protocol.Err_CANCELED
+		} else if err == context.DeadlineExceeded {
+			code = protocol.Err_DEADLINE_EXCEEDED
+		}
 		return &RiverErrorImpl{
-			Code: protocol.Err_UNKNOWN,
+			Code: code,
 			Base: err,
 		}
 	} else {

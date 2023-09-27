@@ -10,6 +10,8 @@ import (
 	"net/http"
 	"os"
 	"sync"
+
+	"github.com/bufbuild/connect-go"
 )
 
 type LocalNode struct {
@@ -21,12 +23,14 @@ type LocalNode struct {
 type NodeRegistry interface {
 	GetStubForAddress(address string) (StreamService, error)
 	GetRemoteSyncStubForAddress(address string) (StreamServiceClientOnly, error)
+	CheckNodeIsValid(address string) error
 
 	// Next two methods are required for hash-based stream placement, they will be removed once on-chain registry is implemented.
 	NumNodes() int
 	GetNodeAddressByIndex(index int) (string, error)
 
 	GetLocalNode() *LocalNode
+	ContainsLocalNode(addrs []string) bool
 }
 
 type nodeJson struct {
@@ -125,7 +129,7 @@ func (n *nodeRegistryImpl) getRemoteStubForAddress(address string) (StreamServic
 	}
 
 	node.initStub.Do(func() {
-		node.remoteStub = NewStreamServiceClient(n.httpClient, node.url)
+		node.remoteStub = NewStreamServiceClient(n.httpClient, node.url, connect.WithGRPC())
 	})
 	return node.remoteStub, nil
 }
@@ -154,6 +158,14 @@ func (n *nodeRegistryImpl) GetRemoteSyncStubForAddress(address string) (StreamSe
 	}
 }
 
+func (n *nodeRegistryImpl) CheckNodeIsValid(address string) error {
+	node, ok := n.nodes[address]
+	if !ok || node == nil {
+		return RiverError(Err_UNKNOWN_NODE, "No record for node", "address", address)
+	}
+	return nil
+}
+
 func (n *nodeRegistryImpl) NumNodes() int {
 	return len(n.nodesFlat)
 }
@@ -167,4 +179,13 @@ func (n *nodeRegistryImpl) GetNodeAddressByIndex(index int) (string, error) {
 
 func (n *nodeRegistryImpl) GetLocalNode() *LocalNode {
 	return n.localNode
+}
+
+func (n *nodeRegistryImpl) ContainsLocalNode(addrs []string) bool {
+	for _, addr := range addrs {
+		if addr == n.localNode.NodeAddress {
+			return true
+		}
+	}
+	return false
 }

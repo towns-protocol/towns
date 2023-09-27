@@ -5,6 +5,7 @@ import (
 	"casablanca/node/crypto"
 	"casablanca/node/events"
 	"casablanca/node/infra"
+	"casablanca/node/nodes"
 )
 
 var (
@@ -18,4 +19,6 @@ type Service struct {
 	wallet             *crypto.Wallet
 	skipDelegateCheck  bool
 	exitSignal         chan error
+	nodeRegistry       nodes.NodeRegistry
+	streamRegistry     nodes.StreamRegistry
 }

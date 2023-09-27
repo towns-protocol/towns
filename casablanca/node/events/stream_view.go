@@ -80,6 +80,47 @@ func MakeStreamView(preceedingMiniblocks [][]byte, streamData *storage.GetStream
 	}, nil
 }
 
+func MakeRemoteStreamView(resp *GetStreamResponse) (*streamViewImpl, error) {
+	if len(resp.Miniblocks) <= 0 {
+		return nil, RiverError(Err_STREAM_EMPTY, "no blocks").Func("MakeStreamViewFromRemote")
+	}
+
+	miniblocks := make([]*miniblockInfo, len(resp.Miniblocks))
+	for i, binMiniblock := range resp.Miniblocks {
+		miniblock, err := NewMiniblockInfoFromProto(binMiniblock)
+		if err != nil {
+			return nil, err
+		}
+		miniblocks[i] = miniblock
+	}
+
+	snapshot := miniblocks[0].headerEvent.Event.GetMiniblockHeader().GetSnapshot()
+	if snapshot == nil {
+		return nil, RiverError(Err_STREAM_BAD_EVENT, "no snapshot").Func("MakeStreamView")
+	}
+	streamId := snapshot.GetInceptionPayload().GetStreamId()
+	if streamId == "" {
+		return nil, RiverError(Err_STREAM_BAD_EVENT, "no streamId").Func("MakeStreamView")
+	}
+
+	minipoolEvents := NewOrderedMap[string, *ParsedEvent](len(resp.Stream.Events))
+	for _, e := range resp.Stream.Events {
+		parsed, err := ParseEvent(e)
+		if err != nil {
+			return nil, err
+		}
+		minipoolEvents.Set(parsed.HashStr, parsed)
+	}
+
+	return &streamViewImpl{
+		streamId:      streamId,
+		blocks:        miniblocks,
+		minipool:      newMiniPoolInstance(minipoolEvents),
+		snapshot:      snapshot,
+		snapshotIndex: int(miniblocks[0].headerEvent.Event.GetMiniblockHeader().GetMiniblockNum()),
+	}, nil
+}
+
 type streamViewImpl struct {
 	streamId string
 

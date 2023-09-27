@@ -29,7 +29,7 @@ func (s *Service) CreateStream(ctx context.Context, req *connect_go.Request[Crea
 		createStreamRequests.Fail()
 		return nil, AsRiverError(err).Func("CreateStream").Tag("streamId", req.Msg.StreamId).LogWarn(log)
 	}
-	log.Debug("DONE", "response", resMsg)
+	log.Debug("CreateStream: DONE", "response", resMsg)
 	createStreamRequests.Pass()
 	return connect_go.NewResponse(resMsg), nil
 }
@@ -44,7 +44,7 @@ func (s *Service) createStream(ctx context.Context, log *slog.Logger, req *Creat
 		return nil, err
 	}
 
-	log.Debug("CreateStream", "request", req, "events", parsedEvents)
+	log.Debug("CreateStream ENTER", "request", req, "events", parsedEvents)
 
 	if !s.skipDelegateCheck {
 		err = s.checkStaleDelegate(ctx, parsedEvents)
@@ -139,13 +139,13 @@ func (s *Service) createStream_Channel(
 	}
 
 	// Load space. Check if it exists. Used later for auth and to add the channel to the space.
-	spaceStream, spaceView, err := s.cache.GetStream(ctx, inception.SpaceId)
+	spaceStream, spaceView, err := s.loadStream(ctx, inception.SpaceId)
 	if err != nil {
 		return nil, err
 	}
 
 	// Load user.
-	userStream, userView, err := s.cache.GetStream(ctx, creatorUserStreamId)
+	userStream, userView, err := s.loadStream(ctx, creatorUserStreamId)
 	if err != nil {
 		return nil, err
 	}
@@ -182,7 +182,7 @@ func (s *Service) createStream_Channel(
 		return nil, err
 	}
 
-	_, err = spaceStream.AddEvent(ctx, spaceStreamEvent)
+	err = spaceStream.AddEvent(ctx, spaceStreamEvent)
 	if err != nil {
 		return nil, err
 	}
@@ -224,7 +224,7 @@ func (s *Service) createStream_Space(
 	}
 
 	// Load user.
-	userStream, userView, err = s.cache.GetStream(ctx, creatorUserId)
+	userStream, userView, err = s.loadStream(ctx, creatorUserId)
 	if err != nil {
 		return nil, err
 	}

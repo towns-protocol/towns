@@ -15,9 +15,8 @@ import (
 )
 
 type Stream interface {
-	GetView(ctx context.Context) (StreamView, error)
 	GetMiniblocks(ctx context.Context, fromIndex int, toIndex int) ([]*Miniblock, bool, error)
-	AddEvent(ctx context.Context, event *ParsedEvent) (*SyncCookie, error)
+	AddEvent(ctx context.Context, event *ParsedEvent) error
 }
 
 type SyncStream interface {
@@ -45,6 +44,8 @@ type streamImpl struct {
 	miniblockTickerContext    context.Context
 	miniblockTickerCancelFunc context.CancelFunc
 }
+
+var _ SyncStream = (*streamImpl)(nil)
 
 // Should be called with lock held
 // Either view or loadError will be set in Stream.
@@ -266,12 +267,12 @@ func (s *streamImpl) GetMiniblocks(ctx context.Context, fromIndex int, toIndex i
 	return miniblocks, terminus, nil
 }
 
-func (s *streamImpl) AddEvent(ctx context.Context, event *ParsedEvent) (*SyncCookie, error) {
+func (s *streamImpl) AddEvent(ctx context.Context, event *ParsedEvent) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.loadInternal(ctx)
 	if s.loadError != nil {
-		return nil, s.loadError
+		return s.loadError
 	}
 
 	return s.addEventImpl(ctx, event)
@@ -292,22 +293,22 @@ func (s *streamImpl) notifySubscribers(envelopes []*Envelope, newSyncCookie *Syn
 }
 
 // Lock must be taken.
-func (s *streamImpl) addEventImpl(ctx context.Context, event *ParsedEvent) (*SyncCookie, error) {
+func (s *streamImpl) addEventImpl(ctx context.Context, event *ParsedEvent) error {
 	envelopeBytes, err := event.GetEnvelopeBytes()
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	err = s.params.Storage.AddEvent(ctx, s.streamId, len(s.view.blocks), s.view.minipool.nextSlotNumber(), envelopeBytes)
 	// TODO: for some classes of errors, it's not clear if event was added or not
 	// for those, perhaps entire Stream structure should be scrapped and reloaded
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	newSV, err := s.view.copyAndAddEvent(event)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	prevSyncCookie := s.view.SyncCookie()
 	s.view = newSV
@@ -315,7 +316,7 @@ func (s *streamImpl) addEventImpl(ctx context.Context, event *ParsedEvent) (*Syn
 
 	s.notifySubscribers([]*Envelope{event.Envelope}, newSyncCookie, prevSyncCookie)
 
-	return newSyncCookie, nil
+	return nil
 }
 
 func (s *streamImpl) Sub(ctx context.Context, cookie *SyncCookie, receiver chan<- *StreamAndCookie) (*StreamAndCookie, error) {

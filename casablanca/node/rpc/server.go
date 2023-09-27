@@ -62,12 +62,6 @@ func createStore(ctx context.Context, dbUrl string, storageType string, address 
 func StartServer(ctx context.Context, cfg *config.Config, wallet *crypto.Wallet) (func(), int, chan error, error) {
 	log := dlog.CtxLog(ctx)
 
-	if cfg.LogInstance {
-		log = log.With("instance", fmt.Sprintf("%s on %d", wallet.AddressStr, cfg.Port))
-		slog.SetDefault(log)
-		ctx = dlog.CtxWithLog(ctx, log)
-	}
-
 	log.Info("Starting server", "config", cfg)
 
 	if wallet == nil {
@@ -76,6 +70,12 @@ func StartServer(ctx context.Context, cfg *config.Config, wallet *crypto.Wallet)
 		if err != nil {
 			return nil, 0, nil, err
 		}
+	}
+
+	if cfg.LogInstance {
+		log = log.With("instance", fmt.Sprintf("%s on %d", wallet.AddressStr, cfg.Port))
+		slog.SetDefault(log)
+		ctx = dlog.CtxWithLog(ctx, log)
 	}
 
 	store, err := createStore(ctx, cfg.DbUrl, cfg.StorageType, wallet.AddressStr)
@@ -123,7 +123,7 @@ func StartServer(ctx context.Context, cfg *config.Config, wallet *crypto.Wallet)
 		exitSignal:         make(chan error, 1),
 	}
 
-	nodeRegistry, err := loadNodeRegistry(
+	streamService.nodeRegistry, err = loadNodeRegistry(
 		ctx,
 		cfg.NodeRegistry,
 		&nodes.LocalNode{
@@ -135,8 +135,9 @@ func StartServer(ctx context.Context, cfg *config.Config, wallet *crypto.Wallet)
 	if err != nil {
 		return nil, 0, nil, err
 	}
+	streamService.streamRegistry = nodes.NewStreamRegistry(streamService.nodeRegistry)
 
-	forwarder := NewForwarder(nodeRegistry, nodes.NewStreamRegistry(nodeRegistry))
+	forwarder := NewForwarder(streamService.nodeRegistry, streamService.streamRegistry)
 
 	pattern, handler := protocolconnect.NewStreamServiceHandler(forwarder)
 

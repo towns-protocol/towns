@@ -67,7 +67,7 @@ if [ "$CONFIG" == "true" ]; then
             LOG_LEVEL info
 
         NODE_ADDRESS=$(cat ./run_files/$INSTANCE/wallet/node_address)
-        echo "    { \"name\": \"$INSTANCE\", \"address\": \"$NODE_ADDRESS\", \"url\": \"http://localhost:$I_RPC_PORT\" }," >> ./run_files/node_registry.json
+        echo "    { \"name\": \"$INSTANCE\", \"address\": \"$NODE_ADDRESS\", \"url\": \"http://localhost:$I_RPC_PORT\", \"port\": $I_RPC_PORT }," >> ./run_files/node_registry.json
     done
 
     sed -i.bak '$ s/,$//' ./run_files/node_registry.json && rm ./run_files/node_registry.json.bak
@@ -76,8 +76,8 @@ if [ "$CONFIG" == "true" ]; then
 fi
 
 if [ "$RUN" == "true" ]; then
-    for ((i=0; i<NUM_INSTANCES; i++)); do
-        printf -v INSTANCE "%02d" $i
+    jq ".nodes[].name" ./run_files/node_registry.json | while read -r INSTANCE; do
+        INSTANCE=${INSTANCE//\"}
         pushd ./run_files/$INSTANCE
         echo "Running instance '$INSTANCE' with extra aguments: '${args[@]:-}'"
         LOGINSTANCE=true go run --race ../../node/main.go run --config config/config.yaml "${args[@]:-}" &

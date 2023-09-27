@@ -1,11 +1,13 @@
 package nodes
 
 import (
+	"context"
 	"hash/fnv"
 )
 
 type StreamRegistry interface {
-	GetNodeAddressesForStream(streamId string, newStream bool) ([]string, error)
+	GetNodeAddressesForStream(ctx context.Context, streamId string) ([]string, error)
+	AllocateStream(ctx context.Context, streamId string) ([]string, error)
 }
 
 // Temp implementation that hashed the streamId and returns the node that is responsible for it.
@@ -28,7 +30,7 @@ func hashStringToUint64(s string) uint64 {
 	return h.Sum64()
 }
 
-func (sr *streamRegistryImpl) GetNodeAddressesForStream(streamId string, newStream bool) ([]string, error) {
+func (sr *streamRegistryImpl) GetNodeAddressesForStream(ctx context.Context, streamId string) ([]string, error) {
 	h := hashStringToUint64(streamId)
 	index := h % uint64(sr.nodeRegistry.NumNodes())
 	addr, err := sr.nodeRegistry.GetNodeAddressByIndex(int(index))
@@ -36,4 +38,8 @@ func (sr *streamRegistryImpl) GetNodeAddressesForStream(streamId string, newStre
 		return nil, err
 	}
 	return []string{addr}, nil
+}
+
+func (sr *streamRegistryImpl) AllocateStream(ctx context.Context, streamId string) ([]string, error) {
+	return sr.GetNodeAddressesForStream(ctx, streamId)
 }

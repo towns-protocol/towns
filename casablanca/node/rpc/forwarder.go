@@ -23,8 +23,8 @@ func NewForwarder(nodeRegistry NodeRegistry, streamRegistry StreamRegistry) *for
 	}
 }
 
-func (f *forwarderImpl) getStubForStream(streamId string, newStream bool) (StreamService, error) {
-	nodeAddress, err := f.streamRegistry.GetNodeAddressesForStream(streamId, newStream)
+func (f *forwarderImpl) getStubForStream(ctx context.Context, streamId string) (StreamService, error) {
+	nodeAddress, err := f.streamRegistry.GetNodeAddressesForStream(ctx, streamId)
 	if err != nil {
 		return nil, err
 	}
@@ -51,7 +51,7 @@ func (f *forwarderImpl) CreateStream(ctx context.Context, req *connect_go.Reques
 }
 
 func (f *forwarderImpl) createStreamImpl(ctx context.Context, req *connect_go.Request[CreateStreamRequest]) (*connect_go.Response[CreateStreamResponse], error) {
-	stub, err := f.getStubForStream(req.Msg.StreamId, true)
+	stub, err := f.getStubForStream(ctx, req.Msg.StreamId)
 	if err != nil {
 		return nil, err
 	}
@@ -71,7 +71,7 @@ func (f *forwarderImpl) GetStream(ctx context.Context, req *connect_go.Request[G
 }
 
 func (f *forwarderImpl) getStreamImpl(ctx context.Context, req *connect_go.Request[GetStreamRequest]) (*connect_go.Response[GetStreamResponse], error) {
-	stub, err := f.getStubForStream(req.Msg.StreamId, false)
+	stub, err := f.getStubForStream(ctx, req.Msg.StreamId)
 	if err != nil {
 		return nil, err
 	}
@@ -91,7 +91,7 @@ func (f *forwarderImpl) GetMiniblocks(ctx context.Context, req *connect_go.Reque
 }
 
 func (f *forwarderImpl) getMiniblocksImpl(ctx context.Context, req *connect_go.Request[GetMiniblocksRequest]) (*connect_go.Response[GetMiniblocksResponse], error) {
-	stub, err := f.getStubForStream(req.Msg.StreamId, false)
+	stub, err := f.getStubForStream(ctx, req.Msg.StreamId)
 	if err != nil {
 		return nil, err
 	}
@@ -106,12 +106,12 @@ func (f *forwarderImpl) AddEvent(ctx context.Context, req *connect_go.Request[Ad
 	if e != nil {
 		return nil, AsRiverError(e).Func("fwd.AddEvent").Tag("streamId", req.Msg.StreamId).LogWarn(log).AsConnectError()
 	}
-	log.Debug("fwd.AddEvent LEAVE", "response", r.Msg)
+	log.Debug("fwd.AddEvent LEAVE", "streamId", req.Msg.StreamId)
 	return r, nil
 }
 
 func (f *forwarderImpl) addEventImpl(ctx context.Context, req *connect_go.Request[AddEventRequest]) (*connect_go.Response[AddEventResponse], error) {
-	stub, err := f.getStubForStream(req.Msg.StreamId, false)
+	stub, err := f.getStubForStream(ctx, req.Msg.StreamId)
 	if err != nil {
 		return nil, err
 	}
