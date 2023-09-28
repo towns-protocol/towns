@@ -15,6 +15,7 @@ import { useCreateLink } from 'hooks/useCreateLink'
 import { useDevice } from 'hooks/useDevice'
 import { useFocused } from 'hooks/useFocused'
 import { ZRoomMessageRedactedEvent } from '@components/MessageTimeline/util/getEventsByDate'
+import { getPrettyDisplayName } from 'utils/getPrettyDisplayName'
 import { MessageContextMenu } from './MessageContextMenu'
 import { MessageModalSheet } from './MessageModalSheet'
 
@@ -300,11 +301,15 @@ export const MessageLayout = (props: Props) => {
     )
 }
 
-const UserName = ({ name }: { name: string }) => (
-    <Text truncate fontWeight="strong" color="default" as="span">
-        {name}&nbsp;
-    </Text>
-)
+const UserName = ({ name }: { name: string }) => {
+    const { name: displayName } = getPrettyDisplayName({ displayName: name, userId: '' })
+
+    return (
+        <Text truncate fontWeight="strong" color="default" as="span">
+            {displayName}&nbsp;
+        </Text>
+    )
+}
 
 export const RedactedMessageLayout = (props: {
     event: ZRoomMessageRedactedEvent
