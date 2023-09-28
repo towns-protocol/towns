@@ -2,7 +2,6 @@ package rpc_test
 
 import (
 	"context"
-	"encoding/hex"
 	"fmt"
 	"math/rand"
 	"net/http"
@@ -62,6 +61,7 @@ func createUserDeviceKeyStream(ctx context.Context, wallet *crypto.Wallet, clien
 		events.Make_UserDeviceKeyPayload_Inception(
 			userDeviceKeyStreamId,
 			userId,
+			nil,
 		),
 		nil,
 	)
@@ -76,12 +76,6 @@ func createUserDeviceKeyStream(ctx context.Context, wallet *crypto.Wallet, clien
 		return nil, nil, err
 	}
 	return res.Msg.Stream.NextSyncCookie, inception.Hash, nil
-}
-
-func getDeviceId(wallet *crypto.Wallet) (string, error) {
-	publicKey := eth_crypto.FromECDSAPub(&wallet.PrivateKeyStruct.PublicKey)
-	hash := crypto.TownsHash(publicKey)
-	return hex.EncodeToString(hash), nil
 }
 
 func makeDelegateSig(primaryWallet *crypto.Wallet, deviceWallet *crypto.Wallet) ([]byte, error) {
@@ -100,14 +94,14 @@ func revokeDeviceId(ctx context.Context, wallet *crypto.Wallet, deviceWallet *cr
 	if err != nil {
 		return nil, err
 	}
-	deviceId, err := getDeviceId(deviceWallet)
+	deviceId, err := crypto.GetDeviceId(deviceWallet)
 	if err != nil {
 		return nil, err
 	}
 	registerEvent, err := events.MakeEnvelopeWithPayload(
 		wallet,
 		events.Make_UserDeviceKeyPayload_RevokeUserDeviceKey(
-			userDeviceKeyStreamId, userId, deviceId,
+			userId, deviceId,
 		),
 		[][]byte{hash},
 	)

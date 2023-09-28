@@ -59,17 +59,7 @@ func (s *streamImpl) loadInternal(ctx context.Context) {
 		return
 	}
 
-	// TODO: stop reading preceding miniblocks once snapshots work end-to-end.
-	var preceedingMiniblocks [][]byte
-	if streamData.StartMiniblockNumber > 0 {
-		preceedingMiniblocks, err = s.params.Storage.GetMiniblocks(ctx, s.streamId, 0, streamData.StartMiniblockNumber)
-		if err != nil {
-			s.loadError = err
-			return
-		}
-	}
-
-	view, err := MakeStreamView(preceedingMiniblocks, streamData)
+	view, err := MakeStreamView(streamData)
 	if err != nil {
 		s.loadError = err
 	} else {
@@ -214,7 +204,7 @@ func createStream(ctx context.Context, params *StreamCacheParams, streamId strin
 	}
 
 	// TODO: redundant parsing here.
-	view, err := MakeStreamView(nil, &storage.GetStreamFromLastSnapshotResult{
+	view, err := MakeStreamView(&storage.GetStreamFromLastSnapshotResult{
 		StartMiniblockNumber: 0,
 		Miniblocks:           [][]byte{serializedMiniblock},
 	})
@@ -320,6 +310,7 @@ func (s *streamImpl) addEventImpl(ctx context.Context, event *ParsedEvent) error
 }
 
 func (s *streamImpl) Sub(ctx context.Context, cookie *SyncCookie, receiver chan<- *StreamAndCookie) (*StreamAndCookie, error) {
+	log := dlog.CtxLog(ctx)
 	if cookie.StreamId != s.streamId {
 		return nil, RiverError(Err_BAD_SYNC_COOKIE, "bad stream id", "cookie.StreamId", cookie.StreamId, "s.streamId", s.streamId)
 	}
@@ -366,7 +357,14 @@ func (s *streamImpl) Sub(ctx context.Context, cookie *SyncCookie, receiver chan<
 		s.receivers.Add(receiver)
 
 		envelopes := make([]*Envelope, 0, 16)
-		err := s.view.forEachEvent(int(cookie.MiniblockNum), func(e *ParsedEvent) (bool, error) {
+		// aellis 9/2023 if the sync cookie passes a miniblockNum that's too old for the view,
+		// we just start with the first block that we have loaded
+		miniblockIndex, err := s.view.indexOfMiniblockWithNum(cookie.MiniblockNum)
+		if err != nil {
+			log.Warn("Stream.Sub: out of date cookie.MiniblockNum sending all known blocks.", "error", err.Error())
+			miniblockIndex = 0
+		}
+		err = s.view.forEachEvent(miniblockIndex, func(e *ParsedEvent) (bool, error) {
 			envelopes = append(envelopes, e.Envelope)
 			return true, nil
 		})

@@ -196,20 +196,21 @@ func Make_UserPayload_Inception(streamId string, settings *StreamSettings) *Stre
 	}
 }
 
-func Make_UserDeviceKeyPayload_Inception(streamId string, userId string) *StreamEvent_UserDeviceKeyPayload {
+func Make_UserDeviceKeyPayload_Inception(streamId string, userId string, settings *StreamSettings) *StreamEvent_UserDeviceKeyPayload {
 	return &StreamEvent_UserDeviceKeyPayload{
 		UserDeviceKeyPayload: &UserDeviceKeyPayload{
 			Content: &UserDeviceKeyPayload_Inception_{
 				Inception: &UserDeviceKeyPayload_Inception{
 					StreamId: streamId,
 					UserId:   userId,
+					Settings: settings,
 				},
 			},
 		},
 	}
 }
 
-func Make_UserDeviceKeyPayload_RevokeUserDeviceKey(streamId string, userId string, deviceId string) *StreamEvent_UserDeviceKeyPayload {
+func Make_UserDeviceKeyPayload_RevokeUserDeviceKey(userId string, deviceId string) *StreamEvent_UserDeviceKeyPayload {
 	return &StreamEvent_UserDeviceKeyPayload{
 		UserDeviceKeyPayload: &UserDeviceKeyPayload{
 			Content: &UserDeviceKeyPayload_UserDeviceKey_{

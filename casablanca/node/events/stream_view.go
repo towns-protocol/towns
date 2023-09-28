@@ -22,25 +22,14 @@ type StreamView interface {
 	SyncCookie() *SyncCookie
 }
 
-func MakeStreamView(preceedingMiniblocks [][]byte, streamData *storage.GetStreamFromLastSnapshotResult) (*streamViewImpl, error) {
-	// TODO: make sure both client and node can init from snapshot and remove preceedingMiniblocks param.
-	if len(preceedingMiniblocks) != streamData.StartMiniblockNumber {
-		return nil, RiverError(Err_STREAM_BAD_EVENT, "not enogh preceeding blocks").Func("MakeStreamView")
-	}
+func MakeStreamView(streamData *storage.GetStreamFromLastSnapshotResult) (*streamViewImpl, error) {
 
 	if len(streamData.Miniblocks) <= 0 {
 		return nil, RiverError(Err_STREAM_EMPTY, "no blocks").Func("MakeStreamView")
 	}
 
-	allBlocks := preceedingMiniblocks
-	if len(preceedingMiniblocks) == 0 {
-		allBlocks = streamData.Miniblocks
-	} else {
-		allBlocks = append(allBlocks, streamData.Miniblocks...)
-	}
-
-	miniblocks := make([]*miniblockInfo, len(allBlocks))
-	for i, binMiniblock := range allBlocks {
+	miniblocks := make([]*miniblockInfo, len(streamData.Miniblocks))
+	for i, binMiniblock := range streamData.Miniblocks {
 		miniblock, err := NewMiniblockInfoFromBytes(binMiniblock)
 		if err != nil {
 			return nil, err
@@ -267,6 +256,17 @@ func (r *streamViewImpl) StreamId() string {
 
 func (r *streamViewImpl) InceptionPayload() IsInceptionPayload {
 	return r.snapshot.GetInceptionPayload()
+}
+
+func (r *streamViewImpl) indexOfMiniblockWithNum(mininblockNum int64) (int, error) {
+	if len(r.blocks) > 0 {
+		diff := mininblockNum - r.blocks[0].header().MiniblockNum
+		if diff >= 0 && diff < int64(len(r.blocks)) {
+			return int(diff), nil
+		}
+		return 0, RiverErrorf(Err_INVALID_ARGUMENT, "indexOfMiniblockWithNum index not found: requested=%d min=%d, max=%d", mininblockNum, r.blocks[0].header().MiniblockNum, r.blocks[len(r.blocks)-1].header().MiniblockNum)
+	}
+	return 0, RiverErrorf(Err_INVALID_ARGUMENT, "indexOfMiniblockWithNum No blocks loaded: requested=%d, stream=%s", mininblockNum, r.streamId)
 }
 
 func (r *streamViewImpl) forEachEvent(startBlock int, op func(e *ParsedEvent) (bool, error)) error {

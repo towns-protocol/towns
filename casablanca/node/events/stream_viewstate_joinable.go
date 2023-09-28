@@ -14,7 +14,24 @@ type JoinableStreamView interface {
 func (r *streamViewImpl) IsUserJoined(userId string) (bool, error) {
 	users := mapset.NewSet[string]()
 
-	_ = r.forEachEvent(0, func(e *ParsedEvent) (bool, error) {
+	switch snapshotContent := r.snapshot.Content.(type) {
+	case *Snapshot_SpaceContent:
+		for _, member := range snapshotContent.SpaceContent.GetMemberships() {
+			if member.GetOp() == MembershipOp_SO_JOIN {
+				users.Add(member.UserId)
+			}
+		}
+	case *Snapshot_ChannelContent:
+		for _, member := range snapshotContent.ChannelContent.GetMemberships() {
+			if member.GetOp() == MembershipOp_SO_JOIN {
+				users.Add(member.UserId)
+			}
+		}
+	default:
+		break
+	}
+
+	err := r.forEachEvent(r.snapshotIndex+1, func(e *ParsedEvent) (bool, error) {
 		switch payload := e.Event.Payload.(type) {
 		case *StreamEvent_SpacePayload:
 			switch spacePayload := payload.SpacePayload.Content.(type) {
@@ -43,6 +60,10 @@ func (r *streamViewImpl) IsUserJoined(userId string) (bool, error) {
 		}
 		return true, nil
 	})
+
+	if err != nil {
+		return false, err
+	}
 
 	exists := users.Contains(userId)
 	return exists, nil

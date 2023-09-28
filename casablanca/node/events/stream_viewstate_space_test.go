@@ -59,7 +59,7 @@ func TestSpaceViewState(t *testing.T) {
 	})
 	// create a stream
 	spaceEvents := makeTestSpaceStream(t, user1Wallet, "user_1", "space_1", nil)
-	s, _, err := streamCache.CreateStream(ctx, "streamid$1", spaceEvents)
+	s, view1, err := streamCache.CreateStream(ctx, "streamid$1", spaceEvents)
 	stream := s.(*streamImpl)
 	assert.NoError(t, err)
 	assert.NotNil(t, stream)
@@ -76,10 +76,13 @@ func TestSpaceViewState(t *testing.T) {
 					protocol.MembershipOp_SO_JOIN,
 					"user_2",
 				),
-				[][]byte{spaceEvents[1].Hash},
+				[][]byte{view1.LastEvent().Hash},
 			),
 		),
 	)
+	assert.NoError(t, err)
+	// refresh view
+	_, err = stream.GetView(ctx)
 	assert.NoError(t, err)
 	// user_3
 	err = stream.AddEvent(
@@ -98,6 +101,14 @@ func TestSpaceViewState(t *testing.T) {
 		),
 	)
 	assert.NoError(t, err)
+	// refresh view
+	view1, err = stream.GetView(ctx)
+	assert.NoError(t, err)
+	// check that users are joined when loading from the snapshot
+	spaceViewStateTest_CheckUserJoined(t, view1.(JoinableStreamView), "user_1", true)
+	spaceViewStateTest_CheckUserJoined(t, view1.(JoinableStreamView), "user_2", true)
+	spaceViewStateTest_CheckUserJoined(t, view1.(JoinableStreamView), "user_3", true)
+
 	// make a miniblock
 	err = stream.makeMiniblock(ctx)
 	assert.NoError(t, err)
@@ -110,23 +121,22 @@ func TestSpaceViewState(t *testing.T) {
 	miniblockProtoBytes, err := proto.Marshal(miniblock)
 	assert.NoError(t, err)
 	// load up a brand new view from the latest snapshot result
-	var view StreamView
-	view, err = MakeStreamView(nil, &storage.GetStreamFromLastSnapshotResult{
+	var view2 StreamView
+	view2, err = MakeStreamView(&storage.GetStreamFromLastSnapshotResult{
 		Miniblocks: [][]byte{miniblockProtoBytes},
 	})
 	assert.NoError(t, err)
-	assert.NotNil(t, view)
+	assert.NotNil(t, view2)
 
-	joinableView := view.(JoinableStreamView)
-	user1Joined, err := joinableView.IsUserJoined("user_1")
-	assert.NoError(t, err)
-	user2Joined, err := joinableView.IsUserJoined("user_2")
-	assert.NoError(t, err)
-	user3Joined, err := joinableView.IsUserJoined("user_3")
-	assert.NoError(t, err)
+	// check that users are joined when loading from the snapshot
+	spaceViewStateTest_CheckUserJoined(t, view2.(JoinableStreamView), "user_1", true)
+	spaceViewStateTest_CheckUserJoined(t, view2.(JoinableStreamView), "user_2", true)
+	spaceViewStateTest_CheckUserJoined(t, view2.(JoinableStreamView), "user_3", true)
 
-	// verify membership todo HNT-2070 this fails if you don't pass preceding blocks
-	assert.False(t, user1Joined) // this should be true
-	assert.True(t, user2Joined)
-	assert.True(t, user3Joined)
+}
+
+func spaceViewStateTest_CheckUserJoined(t *testing.T, view JoinableStreamView, userId string, expected bool) {
+	joined, err := view.IsUserJoined(userId)
+	assert.NoError(t, err)
+	assert.Equal(t, expected, joined)
 }
