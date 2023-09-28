@@ -26,6 +26,7 @@ import {
     SpaceProtocol,
 } from 'use-zion-client'
 import { NodeEventPlugin } from '@lexical/react/LexicalNodeEventPlugin'
+import { toast } from 'react-hot-toast/headless'
 import * as fieldStyles from 'ui/components/_internal/Field/Field.css'
 import { notUndefined } from 'ui/utils/utils'
 import { useStore } from 'store/store'
@@ -62,6 +63,7 @@ import { RichTextBottomToolbar } from './RichTextBottomToolbar'
 import { singleEmojiMessage } from './RichTextEditor.css'
 import { PasteImagePlugin } from './plugins/PasteImagePlugin'
 import { HightlightNode, createHighlightTransformer } from './nodes/HightlightNode'
+import { ImageUploadFailedToast } from './ImageUploadFailedToast'
 
 type Props = {
     onSend?: (value: string, options: SendTextMessageOptions | undefined) => void
@@ -305,6 +307,9 @@ const RichTextEditorWithoutBoundary = (props: Props) => {
 
     const onSendImageFailed = useCallback(() => {
         setIsSendingImages(false)
+        toast.custom((t) => {
+            return <ImageUploadFailedToast toast={t} />
+        })
     }, [])
 
     const imageCountUpdated = useCallback(
