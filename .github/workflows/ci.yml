@@ -8,8 +8,8 @@ on:
     pull_request:
     workflow_dispatch: # Allow manual trigger in GitHub UI
         inputs:
-            skip_dendrite:
-                description: Skip Dendrite Tests
+            skip_common_ci:
+                description: Skip Common CI checks (i.e linting, prettier, etc)
                 required: false
                 default: false
                 type: boolean
@@ -35,24 +35,11 @@ on:
                 type: boolean
 
 jobs:
-    Dendrite:
+    Common_CI:
         permissions: write-all
-        if: github.event_name != 'workflow_dispatch' || !inputs.skip_dendrite
+        if: github.event_name != 'workflow_dispatch' || !inputs.skip_common_ci
         runs-on: ubuntu-latest-8-cores
         timeout-minutes: 30
-        services:
-            postgres-dendrite:
-                image: postgres:latest
-                env:
-                    POSTGRES_USER: dendrite
-                    POSTGRES_PASSWORD: itsasecret
-                ports:
-                    - 5432:5432
-                options: >-
-                    --health-cmd pg_isready
-                    --health-interval 10s
-                    --health-timeout 5s
-                    --health-retries 5
 
         steps:
             - name: Cancel previous runs
@@ -119,9 +106,6 @@ jobs:
             - name: Build town types
               run: ./scripts/build-town-types.sh localhost --frozen
 
-            - name: Start dendrite
-              run: ./scripts/start-local-dendrite.sh --skip-postgres &
-
             - name: Start anvil
               # Start anvil in the background, and wait for it to be ready
               run: anvil & ./scripts/wait-for-blockchain.sh
@@ -129,15 +113,8 @@ jobs:
             - name: Deploy local zion governance contracts
               run: ./scripts/deploy-zion-governance-contracts.sh
 
-            - name: Wait for dendrite to be ready
-              run: yarn drt:wait
-
             - name: Unit Tests
               run: yarn test:unit
-
-            - name: E2E Tests
-              if: github.event_name != 'pull_request' && github.event_name != 'schedule'
-              run: yarn test:dendrite:e2e
 
             # If CI failed, we send a slack notification
             - name: Slack notification
@@ -302,7 +279,7 @@ jobs:
 
     Casablanca_Client_Entitlements:
         permissions: write-all
-        if: github.event_name != 'workflow_dispatch' || !inputs.skip_casablanca_client_enti
+        if: github.event_name != 'workflow_dispatch' || !inputs.skip_casablanca_client_entitlements
         runs-on: ubuntu-latest-8-cores
         timeout-minutes: 30
         services:
