@@ -72,37 +72,37 @@
   },
   {
     "inputs": [],
-    "name": "RolesService__EntitlementAlreadyExists",
+    "name": "Roles__EntitlementAlreadyExists",
     "type": "error"
   },
   {
     "inputs": [],
-    "name": "RolesService__EntitlementDoesNotExist",
+    "name": "Roles__EntitlementDoesNotExist",
     "type": "error"
   },
   {
     "inputs": [],
-    "name": "RolesService__InvalidEntitlementAddress",
+    "name": "Roles__InvalidEntitlementAddress",
     "type": "error"
   },
   {
     "inputs": [],
-    "name": "RolesService__InvalidPermission",
+    "name": "Roles__InvalidPermission",
     "type": "error"
   },
   {
     "inputs": [],
-    "name": "RolesService__PermissionAlreadyExists",
+    "name": "Roles__PermissionAlreadyExists",
     "type": "error"
   },
   {
     "inputs": [],
-    "name": "RolesService__PermissionDoesNotExist",
+    "name": "Roles__PermissionDoesNotExist",
     "type": "error"
   },
   {
     "inputs": [],
-    "name": "RolesService__RoleDoesNotExist",
+    "name": "Roles__RoleDoesNotExist",
     "type": "error"
   },
   {

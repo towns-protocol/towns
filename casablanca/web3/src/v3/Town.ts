@@ -99,6 +99,10 @@ export class Town {
         return this.entitlements
     }
 
+    public get TownOwner(): ITownOwnerShim {
+        return this.townOwner
+    }
+
     public getTownInfo(): Promise<ITownOwnerBase.TownStruct> {
         return this.townOwner.read.getTownInfo(this.address)
     }

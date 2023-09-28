@@ -6,6 +6,21 @@
   "output": {
     "abi": [
       {
+        "inputs": [],
+        "name": "EntitlementChecker_InsufficientNumberOfNodes",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "EntitlementChecker_NodeAlreadyRegistered",
+        "type": "error"
+      },
+      {
+        "inputs": [],
+        "name": "EntitlementChecker_NodeNotRegistered",
+        "type": "error"
+      },
+      {
         "anonymous": false,
         "inputs": [
           {
@@ -41,18 +56,25 @@
         "inputs": [
           {
             "indexed": true,
-            "internalType": "bytes32",
-            "name": "transactionId",
-            "type": "bytes32"
-          },
-          {
-            "indexed": false,
-            "internalType": "enum IEntitlementCheckerEvents.NodeVoteStatus",
-            "name": "result",
-            "type": "uint8"
+            "internalType": "address",
+            "name": "nodeAddress",
+            "type": "address"
           }
         ],
-        "name": "EntitlementCheckResultPosted",
+        "name": "NodeRegistered",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          {
+            "indexed": true,
+            "internalType": "address",
+            "name": "nodeAddress",
+            "type": "address"
+          }
+        ],
+        "name": "NodeUnregistered",
         "type": "event"
       },
       {
@@ -111,66 +133,16 @@
         "type": "function"
       },
       {
-        "inputs": [
-          {
-            "internalType": "address",
-            "name": "",
-            "type": "address"
-          }
-        ],
-        "name": "nodes",
-        "outputs": [
-          {
-            "internalType": "address",
-            "name": "",
-            "type": "address"
-          }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-      },
-      {
-        "inputs": [
-          {
-            "internalType": "uint256",
-            "name": "",
-            "type": "uint256"
-          }
-        ],
-        "name": "nodesArray",
-        "outputs": [
-          {
-            "internalType": "address",
-            "name": "",
-            "type": "address"
-          }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-      },
-      {
         "inputs": [],
         "name": "registerNode",
-        "outputs": [
-          {
-            "internalType": "bool",
-            "name": "",
-            "type": "bool"
-          }
-        ],
+        "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"
       },
       {
         "inputs": [],
         "name": "unregisterNode",
-        "outputs": [
-          {
-            "internalType": "bool",
-            "name": "",
-            "type": "bool"
-          }
-        ],
+        "outputs": [],
         "stateMutability": "nonpayable",
         "type": "function"
       }
@@ -188,7 +160,7 @@
   },
   "settings": {
     "compilationTarget": {
-      "contracts/src/crosschain/EntitlementChecker.sol": "EntitlementChecker"
+      "contracts/src/crosschain/checker/EntitlementChecker.sol": "EntitlementChecker"
     },
     "evmVersion": "paris",
     "libraries": {},
@@ -215,44 +187,44 @@
     ]
   },
   "sources": {
-    "contracts/src/crosschain/EntitlementChecker.sol": {
-      "keccak256": "0x28c2b265d3e69376f7f97cf601c0899325d5baba27dbc8a067e3b4fda6ba87b6",
-      "license": "MIT",
+    "contracts/src/crosschain/checker/EntitlementChecker.sol": {
+      "keccak256": "0x3786a42f409bbc6110b0fa0c8da2432da887aa69c5ca8467f8231d4e8b993c09",
+      "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://ed82e8e2caf2ac39bfe8d5030efb0425702a85ef59a7470f912fe99798694879",
-        "dweb:/ipfs/QmXXoAYdQXGCMcZdUDKmNeH5xhNWZ8b1NNWuiHwEXbwmEh"
+        "bzz-raw://ba796edab43ee7d751d55e67d91d842a0f1ecd39080278ee3c8bf348405423d0",
+        "dweb:/ipfs/QmbznscDXHz5dE9rVBt67zNmME8FXbDsD7wg4ve7Xt3QW8"
       ]
     },
-    "contracts/src/crosschain/IEntitlementChecker.sol": {
-      "keccak256": "0x94de9de695e3d670312dfba784bd2cb8b61610aec17891074fe530bbb5e459c0",
-      "license": "MIT",
+    "contracts/src/crosschain/checker/EntitlementCheckerBase.sol": {
+      "keccak256": "0xa68eca83ddee09c7b614729189af87b9cf1c06b41e2e3b055514139e643da29d",
+      "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://d62403df2139ddd4e26bb4987d02db0c4b0ffff06aa76508c88fab69c7f570c2",
-        "dweb:/ipfs/QmatDTSs82dr6LFifooZqe91YiEpFf2on19h6QNza1zJwg"
+        "bzz-raw://53df49fe76c010d592ba009030aa42dd92c0353e8d86b9d129074730a16a779d",
+        "dweb:/ipfs/QmWHpC2Dpfjh5MkgF5vAQbNBpCy3wUkrXGS51BafvZgLXr"
       ]
     },
-    "contracts/src/crosschain/IEntitlementCheckerEvents.sol": {
-      "keccak256": "0xd92c50c58665221673b0c680b1b1ab35ed4d217de192b190f5f4388defcec1e8",
-      "license": "MIT",
+    "contracts/src/crosschain/checker/EntitlementCheckerStorage.sol": {
+      "keccak256": "0x31800262b31c904ac1e7bd21b5ccbb2ef0d35dd9329a07828d4382bb1cf7896a",
+      "license": "Apache-2.0",
       "urls": [
-        "bzz-raw://7ca7990018f8fec37c7cf5139ef94c427c2dd3bb873861658c664d62f85e80f2",
-        "dweb:/ipfs/QmWTNTbjD5PWEVva82NqCUqrQWWem9y9F6wXEdVz1dc3hJ"
+        "bzz-raw://a58f0963f1c405771f2bbeceda8c7b41b7cbfa533b46db082cc6cb3c3d3e68a4",
+        "dweb:/ipfs/QmUTti16QXFXK9rjCDJg3WBJTb4GTKPCYwuxXDv7f2UH3y"
       ]
     },
-    "contracts/src/utils/Bytes32ToHexString.sol": {
-      "keccak256": "0xe86c086b5e433b519b54b1a13042a5ab079934db48146d9ce90ee624f6a30a45",
+    "contracts/src/crosschain/checker/IEntitlementChecker.sol": {
+      "keccak256": "0x409247398c6bfce94d86a3d7f12b6e86dc9c008546f95b9f511ddfffd9e2b222",
       "license": "MIT",
       "urls": [
-        "bzz-raw://46034bc59a2bb0c3890f4bf0fc7d12652239ea87445cabfd32969abbb9417575",
-        "dweb:/ipfs/QmQjKfCvBStVFg3NqK4WZtp8ENLzN2SGHgusQbSqyJAbQU"
+        "bzz-raw://85d9b22629977cdc607ba80e2b3e9d4e0d8ffa125eb66d75ea0e920a0685e5a9",
+        "dweb:/ipfs/Qmcn5V1iGQMVgvnFkQv8Qrz7oMdrxSsPu1txGwsHsUwHVR"
       ]
     },
-    "lib/forge-std/src/console2.sol": {
-      "keccak256": "0xcd5706f5a7025825d9fd389c89b49bf571f9abaea8a062dc4048320b5b43bf46",
+    "lib/openzeppelin-contracts/contracts/utils/structs/EnumerableSet.sol": {
+      "keccak256": "0xc3ff3f5c4584e1d9a483ad7ced51ab64523201f4e3d3c65293e4ca8aeb77a961",
       "license": "MIT",
       "urls": [
-        "bzz-raw://c066485a7d4bd18d44efb4c89274b0959e8066b9a480383a2ce07d7f31555f88",
-        "dweb:/ipfs/QmckeYfA5FtAjcxaytq69Dpj6uY57tbQ61kNPPxXi9kgbW"
+        "bzz-raw://d7d3dd6067a994690471b5fc71b6f81fac3847798b37d404f74db00b4d3c3d0e",
+        "dweb:/ipfs/QmRHF1RarifjNi93RttouNPkYZGyu6CD926PgRDzD5iL35"
       ]
     }
   },

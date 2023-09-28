@@ -174,6 +174,20 @@ export class SpaceDappV3 implements ISpaceDapp {
         }
     }
 
+    public async updateSpaceName(
+        spaceId: string,
+        name: string,
+        signer: ethers.Signer,
+    ): Promise<ContractTransaction> {
+        const town = await this.getTown(spaceId)
+        if (!town) {
+            throw new Error(`Town with spaceId "${spaceId}" is not found.`)
+        }
+        const townInfo = await town.getTownInfo()
+        // update the town name
+        return town.TownOwner.write(signer).updateTownInfo(town.Address, name, townInfo.uri)
+    }
+
     public async isEntitledToSpace(
         spaceId: string,
         user: string,

@@ -1272,6 +1272,30 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
         }
     }
 
+    public async updateSpaceNameTransaction(
+        spaceNetworkId: string,
+        name: string,
+        signer: ethers.Signer | undefined,
+    ): Promise<TransactionContext<void>> {
+        if (!signer) {
+            throw new SignerUndefinedError()
+        }
+        let transaction: ContractTransaction | undefined = undefined
+        let error: Error | undefined = undefined
+        try {
+            transaction = await this.spaceDapp.updateSpaceName(spaceNetworkId, name, signer)
+            console.log(`[updateSpaceNameTransaction] transaction created` /*, transaction*/)
+        } catch (err) {
+            error = await this.spaceDapp.parseSpaceError(spaceNetworkId, err)
+        }
+
+        return createTransactionContext({
+            transaction,
+            status: transaction ? TransactionStatus.Pending : TransactionStatus.Failed,
+            error,
+        })
+    }
+
     public async updateRoleTransaction(
         spaceNetworkId: string,
         roleId: number,
@@ -1353,6 +1377,55 @@ export class ZionClient implements MatrixDecryptionExtensionDelegate {
             receipt,
             error,
         }
+    }
+
+    public async waitForUpdateSpaceNameTransaction(
+        context: TransactionContext<void> | undefined,
+    ): Promise<TransactionContext<void>> {
+        if (!context?.transaction) {
+            console.error('[waitForUpdateSpaceNameTransaction] transaction is undefined')
+            return createTransactionContext({
+                status: TransactionStatus.Failed,
+                error: new Error('[waitForUpdateSpaceNameTransaction] transaction is undefined'),
+            })
+        }
+
+        let transaction: ContractTransaction | undefined = undefined
+        let receipt: ContractReceipt | undefined = undefined
+        let error: Error | undefined = undefined
+
+        try {
+            transaction = context.transaction
+            receipt = await this.opts.web3Provider?.waitForTransaction(transaction.hash)
+            if (receipt?.status === 1) {
+                console.log('[waitForUpdateSpaceNameTransaction] success')
+                return createTransactionContext({
+                    status: TransactionStatus.Success,
+                    transaction,
+                    receipt,
+                })
+            } else if (receipt?.status === 0) {
+                await this.throwTransactionError(receipt)
+            } else {
+                // receipt.status is undefined
+                throw new Error('Failed to update space name')
+            }
+        } catch (err) {
+            console.error('[waitForUpdateSpaceNameTransaction] error', err)
+            if (err instanceof Error) {
+                error = err
+            } else {
+                error = new Error(`update space name failed: ${JSON.stringify(err)}`)
+            }
+        }
+
+        // got here without success
+        return createTransactionContext({
+            status: TransactionStatus.Failed,
+            transaction,
+            receipt,
+            error,
+        })
     }
 
     public async waitForUpdateRoleTransaction(

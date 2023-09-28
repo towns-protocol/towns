@@ -20,6 +20,7 @@ import { useUpdateChannelTransaction } from '../../../src/hooks/use-update-chann
 import { useCreateRoleTransaction } from '../../../src/hooks/use-create-role-transaction'
 import { useDeleteRoleTransaction } from '../../../src/hooks/use-delete-role-transaction'
 import { useUpdateRoleTransaction } from '../../../src/hooks/use-update-role-transaction'
+import { useUpdateSpaceNameTransaction } from '../../../src/hooks/use-update-space-name-transaction'
 import { getPrimaryProtocol } from './TestUtils'
 import { staticAssertNever } from '../../../src/utils/zion-utils'
 
@@ -227,7 +228,8 @@ export function TransactionInfo<
         | ReturnType<typeof useAddRoleToChannelTransaction>
         | ReturnType<typeof useCreateRoleTransaction>
         | ReturnType<typeof useUpdateRoleTransaction>
-        | ReturnType<typeof useDeleteRoleTransaction>,
+        | ReturnType<typeof useDeleteRoleTransaction>
+        | ReturnType<typeof useUpdateSpaceNameTransaction>,
 >(props: {
     for: T
 

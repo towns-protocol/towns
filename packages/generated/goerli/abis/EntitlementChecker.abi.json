@@ -1,5 +1,20 @@
 [
   {
+    "inputs": [],
+    "name": "EntitlementChecker_InsufficientNumberOfNodes",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "EntitlementChecker_NodeAlreadyRegistered",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "EntitlementChecker_NodeNotRegistered",
+    "type": "error"
+  },
+  {
     "anonymous": false,
     "inputs": [
       {
@@ -35,18 +50,25 @@
     "inputs": [
       {
         "indexed": true,
-        "internalType": "bytes32",
-        "name": "transactionId",
-        "type": "bytes32"
-      },
-      {
-        "indexed": false,
-        "internalType": "enum IEntitlementCheckerEvents.NodeVoteStatus",
-        "name": "result",
-        "type": "uint8"
+        "internalType": "address",
+        "name": "nodeAddress",
+        "type": "address"
       }
     ],
-    "name": "EntitlementCheckResultPosted",
+    "name": "NodeRegistered",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "nodeAddress",
+        "type": "address"
+      }
+    ],
+    "name": "NodeUnregistered",
     "type": "event"
   },
   {
@@ -105,66 +127,16 @@
     "type": "function"
   },
   {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "name": "nodes",
-    "outputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "name": "nodesArray",
-    "outputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
     "inputs": [],
     "name": "registerNode",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
+    "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
   },
   {
     "inputs": [],
     "name": "unregisterNode",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
+    "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
   }

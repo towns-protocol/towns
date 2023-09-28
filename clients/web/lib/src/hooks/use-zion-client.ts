@@ -119,6 +119,9 @@ interface ZionClientImpl {
     waitForUpdateRoleTransaction: (
         context: TransactionContext<void> | undefined,
     ) => Promise<TransactionContext<void> | undefined>
+    waitForUpdateSpaceNameTransaction: (
+        context: TransactionContext<void> | undefined,
+    ) => Promise<TransactionContext<void> | undefined>
     deleteRoleTransaction: (
         spaceNetworkId: string,
         roleId: number,
@@ -176,6 +179,11 @@ interface ZionClientImpl {
         spaceId: RoomIdentifier,
         walletAddress: string,
     ) => Promise<MatrixSpaceHierarchy | undefined>
+    updateSpaceNameTransaction: (
+        spaceId: string,
+        name: string,
+        signer: ethers.Signer | undefined,
+    ) => Promise<TransactionContext<void> | undefined>
     blip: () => void
     userOnWrongNetworkForSignIn: boolean
 }
@@ -232,6 +240,8 @@ export function useZionClient(): ZionClientImpl {
         waitForUpdateRoleTransaction: useWithCatch(client?.waitForUpdateRoleTransaction),
         deleteRoleTransaction: useWithCatch(client?.deleteRoleTransaction),
         waitForDeleteRoleTransaction: useWithCatch(client?.waitForDeleteRoleTransaction),
+        waitForUpdateSpaceNameTransaction: useWithCatch(client?.waitForUpdateSpaceNameTransaction),
+        updateSpaceNameTransaction: useWithCatch(client?.updateSpaceNameTransaction),
         editMessage: useWithCatch(client?.editMessage),
         getIsWalletRegisteredWithMatrix,
         getIsWalletRegisteredWithCasablanca,

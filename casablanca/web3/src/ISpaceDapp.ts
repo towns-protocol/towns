@@ -87,6 +87,11 @@ export interface ISpaceDapp {
         signer: ethers.Signer,
     ) => Promise<ContractTransaction>
     updateRole: (params: UpdateRoleParams, signer: ethers.Signer) => Promise<ContractTransaction>
+    updateSpaceName: (
+        spaceId: string,
+        name: string,
+        signer: ethers.Signer,
+    ) => Promise<ContractTransaction>
     setSpaceAccess: (
         spaceId: string,
         disabled: boolean,

@@ -30,6 +30,7 @@ export enum BlockchainTransactionType {
     UpdateRole = 'updateRole',
     CreateRole = 'createRole',
     DeleteRole = 'deleteRole',
+    UpdateSpaceName = 'updateSpaceName',
 }
 
 export type BlockchainTransaction = {

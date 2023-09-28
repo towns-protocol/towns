@@ -11,10 +11,42 @@ import type {
 
 const _abi = [
   {
+    inputs: [],
+    name: "TownArchitect__InvalidAddress",
+    type: "error",
+  },
+  {
+    inputs: [],
+    name: "TownArchitect__InvalidNetworkId",
+    type: "error",
+  },
+  {
+    inputs: [],
+    name: "TownArchitect__InvalidStringLength",
+    type: "error",
+  },
+  {
+    inputs: [],
+    name: "TownArchitect__NotContract",
+    type: "error",
+  },
+  {
     anonymous: false,
     inputs: [
       {
         indexed: true,
+        internalType: "address",
+        name: "townCreator",
+        type: "address",
+      },
+      {
+        indexed: true,
+        internalType: "uint256",
+        name: "townId",
+        type: "uint256",
+      },
+      {
+        indexed: false,
         internalType: "address",
         name: "town",
         type: "address",

@@ -11,22 +11,65 @@ import type {
 
 const _abi = [
   {
+    inputs: [],
+    name: "EntitlementGated_InvalidAddress",
+    type: "error",
+  },
+  {
+    inputs: [],
+    name: "EntitlementGated_NodeAlreadyVoted",
+    type: "error",
+  },
+  {
+    inputs: [],
+    name: "EntitlementGated_NodeNotFound",
+    type: "error",
+  },
+  {
+    inputs: [],
+    name: "EntitlementGated_TransactionAlreadyCompleted",
+    type: "error",
+  },
+  {
+    inputs: [],
+    name: "EntitlementGated_TransactionAlreadyRegistered",
+    type: "error",
+  },
+  {
+    inputs: [],
+    name: "EntitlementGated_TransactionNotRegistered",
+    type: "error",
+  },
+  {
+    anonymous: false,
     inputs: [
       {
+        indexed: true,
         internalType: "bytes32",
         name: "transactionId",
         type: "bytes32",
       },
-    ],
-    name: "deleteTransaction",
-    outputs: [
       {
-        internalType: "bool",
-        name: "",
-        type: "bool",
+        indexed: false,
+        internalType: "enum IEntitlementGatedBase.NodeVoteStatus",
+        name: "result",
+        type: "uint8",
       },
     ],
-    stateMutability: "nonpayable",
+    name: "EntitlementCheckResultPosted",
+    type: "event",
+  },
+  {
+    inputs: [],
+    name: "getEntitlementOperations",
+    outputs: [
+      {
+        internalType: "bytes",
+        name: "",
+        type: "bytes",
+      },
+    ],
+    stateMutability: "view",
     type: "function",
   },
   {
@@ -37,32 +80,33 @@ const _abi = [
         type: "bytes32",
       },
       {
-        internalType: "enum IEntitlementCheckerEvents.NodeVoteStatus",
+        internalType: "enum IEntitlementGatedBase.NodeVoteStatus",
         name: "result",
         type: "uint8",
       },
     ],
     name: "postEntitlementCheckResult",
-    outputs: [
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
       {
-        internalType: "bool",
-        name: "",
-        type: "bool",
+        internalType: "bytes32",
+        name: "transactionId",
+        type: "bytes32",
       },
     ],
+    name: "removeTransaction",
+    outputs: [],
     stateMutability: "nonpayable",
     type: "function",
   },
   {
     inputs: [],
     name: "requestEntitlementCheck",
-    outputs: [
-      {
-        internalType: "bool",
-        name: "",
-        type: "bool",
-      },
-    ],
+    outputs: [],
     stateMutability: "nonpayable",
     type: "function",
   },

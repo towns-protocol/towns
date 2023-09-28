@@ -213,16 +213,21 @@ export interface ITownArchitectInterface extends utils.Interface {
   ): Result;
 
   events: {
-    "TownCreated(address)": EventFragment;
+    "TownCreated(address,uint256,address)": EventFragment;
   };
 
   getEvent(nameOrSignatureOrTopic: "TownCreated"): EventFragment;
 }
 
 export interface TownCreatedEventObject {
+  townCreator: string;
+  townId: BigNumber;
   town: string;
 }
-export type TownCreatedEvent = TypedEvent<[string], TownCreatedEventObject>;
+export type TownCreatedEvent = TypedEvent<
+  [string, BigNumber, string],
+  TownCreatedEventObject
+>;
 
 export type TownCreatedEventFilter = TypedEventFilter<TownCreatedEvent>;
 
@@ -416,10 +421,16 @@ export interface ITownArchitect extends BaseContract {
   };
 
   filters: {
-    "TownCreated(address)"(
-      town?: PromiseOrValue<string> | null
+    "TownCreated(address,uint256,address)"(
+      townCreator?: PromiseOrValue<string> | null,
+      townId?: PromiseOrValue<BigNumberish> | null,
+      town?: null
     ): TownCreatedEventFilter;
-    TownCreated(town?: PromiseOrValue<string> | null): TownCreatedEventFilter;
+    TownCreated(
+      townCreator?: PromiseOrValue<string> | null,
+      townId?: PromiseOrValue<BigNumberish> | null,
+      town?: null
+    ): TownCreatedEventFilter;
   };
 
   estimateGas: {

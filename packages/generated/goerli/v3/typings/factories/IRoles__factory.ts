@@ -8,6 +8,41 @@ import type { IRoles, IRolesInterface } from "../IRoles";
 
 const _abi = [
   {
+    inputs: [],
+    name: "Roles__EntitlementAlreadyExists",
+    type: "error",
+  },
+  {
+    inputs: [],
+    name: "Roles__EntitlementDoesNotExist",
+    type: "error",
+  },
+  {
+    inputs: [],
+    name: "Roles__InvalidEntitlementAddress",
+    type: "error",
+  },
+  {
+    inputs: [],
+    name: "Roles__InvalidPermission",
+    type: "error",
+  },
+  {
+    inputs: [],
+    name: "Roles__PermissionAlreadyExists",
+    type: "error",
+  },
+  {
+    inputs: [],
+    name: "Roles__PermissionDoesNotExist",
+    type: "error",
+  },
+  {
+    inputs: [],
+    name: "Roles__RoleDoesNotExist",
+    type: "error",
+  },
+  {
     anonymous: false,
     inputs: [
       {
