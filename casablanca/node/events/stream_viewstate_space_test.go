@@ -123,7 +123,8 @@ func TestSpaceViewState(t *testing.T) {
 	// load up a brand new view from the latest snapshot result
 	var view2 StreamView
 	view2, err = MakeStreamView(&storage.GetStreamFromLastSnapshotResult{
-		Miniblocks: [][]byte{miniblockProtoBytes},
+		StartMiniblockNumber: 1,
+		Miniblocks:           [][]byte{miniblockProtoBytes},
 	})
 	assert.NoError(t, err)
 	assert.NotNil(t, view2)

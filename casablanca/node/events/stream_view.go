@@ -37,7 +37,8 @@ func MakeStreamView(streamData *storage.GetStreamFromLastSnapshotResult) (*strea
 		miniblocks[i] = miniblock
 	}
 
-	snapshot := miniblocks[streamData.StartMiniblockNumber].headerEvent.Event.GetMiniblockHeader().GetSnapshot()
+	snapshotIndex := 0
+	snapshot := miniblocks[snapshotIndex].headerEvent.Event.GetMiniblockHeader().GetSnapshot()
 	if snapshot == nil {
 		return nil, RiverError(Err_STREAM_BAD_EVENT, "no snapshot").Func("MakeStreamView")
 	}
@@ -65,7 +66,7 @@ func MakeStreamView(streamData *storage.GetStreamFromLastSnapshotResult) (*strea
 		blocks:        miniblocks,
 		minipool:      newMiniPoolInstance(minipoolEvents),
 		snapshot:      snapshot,
-		snapshotIndex: streamData.StartMiniblockNumber,
+		snapshotIndex: snapshotIndex,
 	}, nil
 }
 
