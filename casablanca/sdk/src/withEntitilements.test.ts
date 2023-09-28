@@ -29,11 +29,11 @@ import {
 import { makeStreamRpcClient } from './makeStreamRpcClient'
 import { ethers, Wallet } from 'ethers'
 
-const base_log = dlog('csb:test:workflows')
+const base_log = dlog('csb:test:withEntitlements')
 
 const makeTestRpcClient = () => makeStreamRpcClient(TEST_URL_WITH_ENTITILEMENTS)
 
-describe('workflows', () => {
+describe('withEntitlements', () => {
     let bobsWallet: Wallet
     let bobsContext: SignerContext
 
@@ -42,8 +42,8 @@ describe('workflows', () => {
         bobsContext = await makeRandomUserContextWithOldDelegate(bobsWallet)
     })
 
-    test('creationSideEffects', async () => {
-        const log = base_log.extend('creationSideEffects')
+    test('createSpaceAndChannel', async () => {
+        const log = base_log.extend('createSpaceAndChannel')
 
         log('start')
 
@@ -55,7 +55,7 @@ describe('workflows', () => {
         log('mintReceipt', mintReceipt)
         const spaceDapp = new SpaceDappV3(chainId, provider)
 
-        // createe a user stream
+        // create a user stream
         const bob = makeTestRpcClient()
         const bobsUserId = userIdFromAddress(bobsContext.creatorAddress)
         const bobsUserStreamId = makeUserStreamId(bobsUserId)
@@ -170,7 +170,6 @@ describe('workflows', () => {
         expect(joinPayload?.op).toEqual(MembershipOp.SO_JOIN)
         expect(joinPayload?.streamId).toEqual(channelId)
 
-        log('Bob created channel')
         log('Done')
     })
 })
