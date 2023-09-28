@@ -700,7 +700,7 @@ describe('clientCryptoTest', () => {
             const client = i % 2 == 0 ? alicesClient : bobsClient
             const senderKey = i % 2 == 0 ? aliceSenderKey : bobSenderKey
             const senderUser = i % 2 == 0 ? alicesClient.userId : bobsClient.userId
-            console.log(`Encrypting message ${i} with sender key ${senderKey}, ${senderUser}}`)
+            log(`Encrypting message ${i} with sender key ${senderKey}, ${senderUser}}`)
             events.push({
                 event: new RiverEvent({
                     content: content,

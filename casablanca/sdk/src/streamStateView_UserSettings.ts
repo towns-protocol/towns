@@ -13,6 +13,9 @@ import { ParsedEvent } from './types'
 import { EmittedEvents } from './client'
 import { logNever } from './check'
 import { StreamEvents } from './streamEvents'
+import { dlog } from './dlog'
+
+const log = dlog('csb:stream')
 
 export class StreamStateView_UserSettings {
     readonly streamId: string
@@ -73,7 +76,7 @@ export class StreamStateView_UserSettings {
     ): void {
         const { content } = payload
         if (content === undefined) {
-            console.error('Content with FullyReadMarkers is undefined')
+            log('Content with FullyReadMarkers is undefined')
             return
         }
 

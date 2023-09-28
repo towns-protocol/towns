@@ -11,6 +11,9 @@ import {
 import { IOlmDevice } from '../deviceList'
 import { InboundGroupSessionData } from '../olmDevice'
 import { safeSet } from '../../utils'
+import { dlog } from '../../dlog'
+
+const log = dlog('csb:crypto:local')
 
 /**
  * Internal module. Partial localStorage backed storage for e2e.
@@ -421,8 +424,8 @@ function getJsonItem<T>(store: Storage, key: string): T | null {
         // JSON.parse(null) === null, so this returns null.
         return JSON.parse(store.getItem(key)!)
     } catch (e) {
-        console.log(`Error: Failed to get key %s: %s", ${key}, ${(<Error>e).message}`)
-        console.log(`${(<Error>e).stack}`)
+        log(`Error: Failed to get key %s: %s", ${key}, ${(<Error>e).message}`)
+        log(`${(<Error>e).stack}`)
     }
     return null
 }

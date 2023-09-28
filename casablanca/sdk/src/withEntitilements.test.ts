@@ -29,7 +29,7 @@ import {
 import { makeStreamRpcClient } from './makeStreamRpcClient'
 import { ethers, Wallet } from 'ethers'
 
-const base_log = dlog('test:workflows')
+const base_log = dlog('csb:test:workflows')
 
 const makeTestRpcClient = () => makeStreamRpcClient(TEST_URL_WITH_ENTITILEMENTS)
 
@@ -99,7 +99,7 @@ describe('workflows', () => {
             provider.wallet,
         )
         const receipt = await transaction.wait()
-        console.log('receipt', receipt)
+        log('receipt', receipt)
         expect(receipt.status).toEqual(1)
         // then on the river node
         const spaceInceptionEvent = await makeEvent(

@@ -203,7 +203,7 @@ export class OlmDevice {
         // note jterzis 07/19/23: deprecating ed25519 key in favor of TDK
         // see: https://linear.app/hnt-labs/issue/HNT-1796/tdk-signature-storage-curve25519-key
         this.deviceDoNotUseKey = e2eKeys.ed25519
-        console.log(
+        log(
             `OlmDevice.init: deviceCurve25519Key: ${
                 this.deviceCurve25519Key
             }, fallbackKey ${JSON.stringify(this.fallbackKey)}`,

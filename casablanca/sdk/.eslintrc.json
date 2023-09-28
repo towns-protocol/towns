@@ -14,6 +14,7 @@
     "plugins": ["@typescript-eslint", "import"],
     "ignorePatterns": ["dist/**", ".turbo/**", "node_modules/**", "jest.config.ts"],
     "rules": {
+        "no-console": "error",
         "import/no-extraneous-dependencies": [
             "error",
             {

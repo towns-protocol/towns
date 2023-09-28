@@ -17,7 +17,7 @@ import { LocalStorageCryptoStore } from './local-storage-crypto-store'
 import { MemoryCryptoStore } from './memory-crypto-store'
 import * as IndexedDBCryptoStoreBackend from './indexeddb-crypto-store-backend'
 
-const log = dlog('csb:indexeddb-crypto-store')
+const log = dlog('csb:crypto:indexdb')
 
 // todo: fix lint issues and remove exception see: https://linear.app/hnt-labs/issue/HNT-1721/address-linter-overrides-in-matrix-encryption-code-from-sdk
 /* eslint-disable @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/restrict-template-expressions, @typescript-eslint/no-unused-vars */
@@ -162,24 +162,24 @@ export class IndexedDBCryptoStore implements CryptoStore {
                 return
             }
 
-            console.log(`removing indexeddb instance ${this.dbName}`)
+            log(`removing indexeddb instance ${this.dbName}`)
             const req = this.indexedDB.deleteDatabase(this.dbName)
 
             req.onblocked = () => {
-                console.log(`can't yet delete indexeddb due to open connections`)
+                log(`can't yet delete indexeddb due to open connections`)
             }
 
             req.onerror = (e) => {
-                console.log(`error deleting indexeddb instance ${this.dbName}: ${e}`)
+                log(`error deleting indexeddb instance ${this.dbName}: ${e}`)
                 reject(req.error)
             }
 
             req.onsuccess = () => {
-                console.log(`deleted indexeddb instance ${this.dbName}`)
+                log(`deleted indexeddb instance ${this.dbName}`)
                 resolve()
             }
         }).catch((e) => {
-            console.log(`unable to delete indexeddb instance ${this.dbName}: ${e}`)
+            log(`unable to delete indexeddb instance ${this.dbName}: ${e}`)
         })
     }
 

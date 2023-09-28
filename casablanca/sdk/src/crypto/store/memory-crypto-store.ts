@@ -15,6 +15,9 @@ import { InboundGroupSessionData } from '../olmDevice'
 import { safeSet, promiseTry } from '../../utils'
 import { RDK, RK } from '../rk'
 import isEqual from 'lodash/isEqual'
+import { dlog } from '../../dlog'
+
+const log = dlog('csb:crypto:memory')
 
 /**
  * Internal module. in-memory storage for e2e.
@@ -85,7 +88,7 @@ export class MemoryCryptoStore implements CryptoStore {
 
             if (existing) {
                 // this entry matches the request - return it.
-                console.log(
+                log(
                     `already have key request outstanding for ` +
                         `${requestBody.channel_id} / ${requestBody.session_id}: ` +
                         `not sending another`,
@@ -95,9 +98,7 @@ export class MemoryCryptoStore implements CryptoStore {
 
             // we got to the end of the list without finding a match
             // - add the new request.
-            console.log(
-                `enqueueing key request for ${requestBody.channel_id} / ` + requestBody.session_id,
-            )
+            log(`enqueueing key request for ${requestBody.channel_id} / ` + requestBody.session_id)
             this.outgoingRoomKeyRequests.push(request)
             return request
         })
@@ -200,7 +201,7 @@ export class MemoryCryptoStore implements CryptoStore {
             }
 
             if (req.state !== expectedState) {
-                console.log(
+                log(
                     `Cannot update room key request from ${expectedState} ` +
                         `as it was already updated to ${req.state}`,
                 )
@@ -230,7 +231,7 @@ export class MemoryCryptoStore implements CryptoStore {
             }
 
             if (req.state != expectedState) {
-                console.log(
+                log(
                     `Cannot delete room key request in state ${req.state} ` +
                         `(expected ${expectedState})`,
                 )

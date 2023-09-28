@@ -61,6 +61,7 @@ export function checkNever(value: never, message?: string, code?: Err, data?: an
  * @param data Optional data to include in the error
  */
 export function logNever(value: never, message?: string): void {
+    // eslint-disable-next-line no-console
     console.warn(message ?? `Unhandled switch value: ${value}`)
 }
 
